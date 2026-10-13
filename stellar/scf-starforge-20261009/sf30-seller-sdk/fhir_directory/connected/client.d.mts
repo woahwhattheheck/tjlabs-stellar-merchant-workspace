@@ -1,4 +1,5 @@
 // MIT. Native directory input types follow its installed source-owned JSON catalogues.
+import type * as Returned from '../directory_operating_return.mjs';
 import type * as Operating from '../directory_operating_plan.mjs';
 import type {CommandCatalog} from '../../../distribution/discovery/catalog.mjs';
 import type * as Gravity from '../../fhir_referral/connected/client.mjs';
@@ -50,7 +51,9 @@ export type DirectoryConformanceReviewInput={"label":string;"actor":string;"asse
 export type DirectoryConformanceCompareInput={"label":string;"actor":string;"beforeAssessmentId":SHA256;"afterAssessmentId":SHA256;"scopeNote":string;"note"?:string};
 export type DirectoryConformanceCollection='conformancePlans'|'conformanceAssessments'|'conformanceReviews'|'conformanceComparisons';
 export type DirectoryConformanceFileCollection='assessments'|'reviews'|'comparisons';
-export type DirectoryConformanceFileKind='report'|'findings'|'rows'|'index'|'rules'|'summary'|'package';
+export type DirectoryConformanceOriginalFileKind='report'|'findings'|'rows'|'index'|'rules'|'summary'|'package';
+export type DirectoryForeignKeyFileKind='foreignKeys'|'foreignKeyCandidates'|'foreignKeyMatches'|'foreignKeyCoverage';
+export type DirectoryConformanceFileKind=DirectoryConformanceOriginalFileKind|DirectoryForeignKeyFileKind;
 export type DirectoryConformanceSeverity='error'|'warning'|'not-evaluated';
 export type DirectoryConformanceOutcome='pass'|'annotation'|'error'|'warning'|'not-evaluated';
 export type DirectoryConformanceCounts=Record<DirectoryConformanceOutcome,number>;
@@ -68,6 +71,56 @@ export interface DirectoryConformanceRow{
 export interface DirectoryConformancePage<T>{
  assessmentId:SHA256;rows:T[];total:number;offset:number;limit:number;nextOffset:number|null;bytes:number;byteBudget:number;
 }
+export type DirectoryForeignKeyState='resolved'|'ambiguous'|'missing-target'|'null-reference'|'invalid-key'|
+ 'target-table-unavailable'|'representation-not-tabular'|'unsupported-declaration'|'nonmatching-value';
+export type DirectoryForeignKeyCandidateState='value'|'null'|'invalid'|'nonmatching'|'representation-not-tabular';
+export interface DirectoryForeignKeyRef extends DirectoryRecordRef{
+ nativeRef:Json;table?:string;rowOrdinal?:number;rowSha256?:SHA256;resourceSha256?:SHA256;
+ memberName?:string;memberSha256?:SHA256;pointer?:string;rawRange?:Json;representation?:string;
+ parentRecordId?:SHA256|null;nativeId?:string|null;
+}
+export interface DirectoryForeignKeyComponent{
+ field:string;pointer:string;originalPointer:string;fieldDeclaration:Json;physical:Json;state:string;
+ headerPositions?:number[];logicalNull?:boolean;matchedMarker?:Json;logical?:Json;reason?:string;
+}
+export interface DirectoryForeignKeyTargetCoverage{
+ targetTable:string;groupId:SHA256;presentSelectedDocuments:number;establishedTabularCoverage:boolean;
+ candidateStates:Partial<Record<DirectoryForeignKeyCandidateState,number>>;scope:string;
+}
+export interface DirectoryForeignKeyOutcome{
+ id:SHA256;schema:'stellar-forge.directory-conformance-foreign-keys.v1';kind:'outcome';
+ declarationId:SHA256;table:string;ref:DirectoryForeignKeyRef;source:Json;requirement:Json;
+ representation:string;state:DirectoryForeignKeyState;constraintOutcome:'pass'|'error'|'not-evaluated';
+ resolutionOutcome:DirectoryForeignKeyState;components:DirectoryForeignKeyComponent[];
+ keyJson:string|null;keySha256:SHA256|null;candidateCount:number;candidateGroupId:SHA256|null;
+ targetCoverage:DirectoryForeignKeyTargetCoverage|null;targetMatches:string;nullPolicy:string|null;
+}
+export interface DirectoryForeignKeyCandidate{
+ id:SHA256;schema:'stellar-forge.directory-conformance-foreign-keys.v1';kind:'candidate';
+ groupId:SHA256;table:string;ref:DirectoryForeignKeyRef;representation:string;
+ state:DirectoryForeignKeyCandidateState;components:DirectoryForeignKeyComponent[];
+ keyJson:string|null;keySha256:SHA256|null;reason?:string;
+}
+export interface DirectoryForeignKeyMatch{
+ id:SHA256;schema:'stellar-forge.directory-conformance-foreign-keys.v1';kind:'match';
+ outcomeId:SHA256;candidateId:SHA256;declarationId:SHA256;sourceRef:DirectoryForeignKeyRef;
+ targetRef:DirectoryForeignKeyRef;keySha256:SHA256;groupId:SHA256;
+}
+export interface DirectoryForeignKeySummary{
+ implementationEdition:string;declaredForeignKeys:number;selectedDeclarations:number;
+ declaredCompositeKeys:number;selectedCompositeKeys:number;
+ outcomeRows:number;candidateRows:number;matchRows:number;states:Record<DirectoryForeignKeyState,number>;
+}
+export interface DirectoryForeignKeyCoverage extends DirectoryForeignKeySummary{
+ schema:'stellar-forge.directory-conformance-foreign-keys.v1';policy:JsonObject;originalStandard:Json;
+ originalDatapackageVersion:Json;subjectKind:'sources'|'editions';subjectId:SHA256;
+ selectedChildTables:string[];selectedSources:Json[];contextOriginalRows:number;
+ declarations:Json[];targetGroups:Json[];tableDomains:Json[];limits:JsonObject;meaning:string;
+}
+export type DirectoryForeignKeyFilters={table?:string;state?:string;ruleId?:SHA256;sourceId?:SHA256;recordId?:SHA256};
+export type DirectoryForeignKeyCandidateFilters={table?:string;state?:string;groupId?:SHA256;sourceId?:SHA256;recordId?:SHA256};
+export type DirectoryForeignKeyMatchFilters={outcomeId?:SHA256;candidateId?:SHA256};
+export type DirectoryForeignKeyPage<T>=DirectoryConformancePage<T>&{byteBudget:4194304};
 export interface DirectoryConformanceSummary{
  schema:'stellar-forge.directory-conformance.v1';planId:SHA256;requestSha256:SHA256;
  selectedRows:number;originalRows:number;populations:Record<string,number>;findings:number;
@@ -75,6 +128,7 @@ export interface DirectoryConformanceSummary{
  checks:Array<{code:string}&DirectoryConformanceCounts>;
  tableChecks:Array<{table:string;code:string}&DirectoryConformanceCounts>;
  ruleCoverage:Record<string,number>;rules:number;formatPolicy:'annotation'|'assert';meaning:string;
+ foreignKeys?:DirectoryForeignKeySummary;
 }
 export type DirectoryConformancePlan=DirectoryConformancePlanInput&{
  id:SHA256;schema:'stellar-forge.directory-conformance.v1';population:Record<string,number>;
@@ -83,7 +137,7 @@ export type DirectoryConformancePlan=DirectoryConformancePlanInput&{
 export type DirectoryConformanceAssessment=DirectoryConformanceAssessInput&{
  id:SHA256;schema:'stellar-forge.directory-conformance.v1';requestSha256:SHA256;subjectKind:'sources'|'editions';
  subjectId:SHA256;family:'hsds-3.3.1'|'fhir-hsd-1.0.0';engine:JsonObject;summary:DirectoryConformanceSummary;
- files:Record<DirectoryConformanceFileKind,FileIdentity>;createdAt?:string;
+ files:Record<DirectoryConformanceOriginalFileKind,FileIdentity>&Partial<Record<DirectoryForeignKeyFileKind,FileIdentity>>;createdAt?:string;
 };
 export type DirectoryConformanceReview=DirectoryConformanceReviewInput&{
  id:SHA256;schema:'stellar-forge.directory-conformance.v1';requestSha256:SHA256;planId:SHA256;
@@ -105,6 +159,9 @@ export interface DirectoryConformanceArguments{
  directory_conformance_findings:{workspace:WorkspaceAlias;assessmentId:SHA256}&DirectoryConformanceFindingFilters&Pick<DirectoryPageInput,'offset'|'limit'>;
  directory_conformance_finding:{workspace:WorkspaceAlias;assessmentId:SHA256;findingId:SHA256};
  directory_conformance_rows:{workspace:WorkspaceAlias;assessmentId:SHA256;table?:string}&Pick<DirectoryPageInput,'offset'|'limit'>;
+ directory_conformance_foreign_keys:{workspace:WorkspaceAlias;assessmentId:SHA256}&DirectoryForeignKeyFilters&Pick<DirectoryPageInput,'offset'|'limit'>;
+ directory_conformance_foreign_key_candidates:{workspace:WorkspaceAlias;assessmentId:SHA256}&DirectoryForeignKeyCandidateFilters&Pick<DirectoryPageInput,'offset'|'limit'>;
+ directory_conformance_foreign_key_matches:{workspace:WorkspaceAlias;assessmentId:SHA256}&DirectoryForeignKeyMatchFilters&Pick<DirectoryPageInput,'offset'|'limit'>;
  directory_conformance_file:{workspace:WorkspaceAlias;collection:DirectoryConformanceFileCollection;recordId:SHA256;fileKind:DirectoryConformanceFileKind};
 }
 export interface DirectoryConformanceResultValues{
@@ -113,6 +170,9 @@ export interface DirectoryConformanceResultValues{
  directory_conformance_findings:DirectoryConformancePage<DirectoryConformanceFinding>;
  directory_conformance_finding:DirectoryConformanceFinding;
  directory_conformance_rows:DirectoryConformancePage<DirectoryConformanceRow>;
+ directory_conformance_foreign_keys:DirectoryForeignKeyPage<DirectoryForeignKeyOutcome>;
+ directory_conformance_foreign_key_candidates:DirectoryForeignKeyPage<DirectoryForeignKeyCandidate>;
+ directory_conformance_foreign_key_matches:DirectoryForeignKeyPage<DirectoryForeignKeyMatch>;
  directory_conformance_file:Json;
 }
 
@@ -123,6 +183,100 @@ export type DirectoryOperatingPlanCopyInput=Operating.DirectoryOperatingPlanCopy
 export type DirectoryOperatingPlanCompareInput=Operating.DirectoryOperatingPlanCompareInput;
 export type DirectoryOperatingPlanExportInput=Operating.DirectoryOperatingPlanExportInput;
 export type DirectoryOperatingPlanStepInput=Operating.DirectoryOperatingPlanStepInput;
+
+/** Complete source-native correction input. JSON values remain lexical strings; CSV positions are physical. */
+export type DirectoryCorrectionCollection='correctionPlans'|'correctionPreviews'|'corrections';
+export interface DirectoryCorrectionEditBasis extends DirectoryRecordRef{
+ rowSha256:SHA256;resourceSha256:SHA256;memberSha256:SHA256;reason:string;
+}
+export type DirectoryCorrectionEdit=DirectoryCorrectionEditBasis&(
+ {action:'json-set';pointer:string;valueJson:string}|
+ {action:'json-remove';pointer:string}|
+ {action:'csv-cell';column:number;value:string}|
+ {action:'csv-row';cells:string[]}
+);
+export interface DirectoryCorrectionPrepareInput{
+ label:string;editionId:SHA256;actor:string;note?:string;predecessorId?:SHA256|null;edits:DirectoryCorrectionEdit[];
+}
+export interface DirectoryCorrectionPreviewInput{planId:SHA256}
+export interface DirectoryCorrectionApplyInput{previewId:SHA256;expectedEditionId:SHA256;actor:string;note?:string}
+export interface DirectoryCorrectionExportInput{correctionId:SHA256;actor:string;label?:string;note?:string}
+export interface DirectoryCorrectionFile{sha256:SHA256;bytes:number;role:string}
+export interface DirectoryCorrectedSource{
+ sourceId:SHA256;derivedSourceId:SHA256;originalFile:DirectoryCorrectionFile;
+ derivedFile:DirectoryCorrectionFile;indexFile:DirectoryCorrectionFile;
+ changedMembers:Array<{name:string;originalFile:DirectoryCorrectionFile;derivedFile:DirectoryCorrectionFile;
+ ranges:Array<{start:number;end:number;originalSha256:SHA256}>}>;
+}
+export interface DirectoryCorrectionPlan extends DirectoryCorrectionPrepareInput{
+ schema:'stellar-forge.directory-correction-plan.v1';id:SHA256;createdAt:string;
+ predecessorId:SHA256|null;note:string;targets:Json;
+ files:{input:DirectoryCorrectionFile};summary:{edits:number;rows:number;sources:number};
+}
+export interface DirectoryCorrectionPreview{
+ schema:'stellar-forge.directory-correction-preview.v1';id:SHA256;createdAt:string;
+ planId:SHA256;editionId:SHA256;candidateEditionId:SHA256;comparisonId:SHA256;
+ sources:DirectoryCorrectedSource[];files:{changes:DirectoryCorrectionFile;review:DirectoryCorrectionFile};summary:JsonObject;
+}
+export interface DirectoryCorrectionAccepted{
+ schema:'stellar-forge.directory-correction.v1';id:SHA256;createdAt:string;stage:'accepted';
+ planId:SHA256;previewId:SHA256;editionId:SHA256;beforeEditionId:SHA256;
+ expectedEditionId:SHA256;comparisonId:SHA256;sources:DirectoryCorrectedSource[];
+ actor:string;note:string;files:{changes:DirectoryCorrectionFile;review:DirectoryCorrectionFile};summary:JsonObject;
+}
+export type DirectoryCorrectionRecord=DirectoryCorrectionPlan|DirectoryCorrectionPreview|DirectoryCorrectionAccepted;
+export interface DirectoryCorrectionChange{
+ ordinal:number;edit:DirectoryCorrectionEdit;originalRow:JsonObject;memberName:string;rootRecordId:SHA256;
+ before:{present:boolean;valueJson?:string};after:{present:boolean;valueJson?:string};
+ [key:string]:unknown;
+}
+export interface DirectoryCorrectionPage{
+ kind:DirectoryCorrectionCollection;recordId:SHA256;rows:Array<DirectoryCorrectionChange|{ordinal:number;edit:DirectoryCorrectionEdit}>;
+ total:number;offset:number;limit:number;nextOffset:number|null;bytes:number;byteBudget:4194304;
+}
+export interface DirectoryCorrectionExport{
+ id:SHA256;kind:'correction';recordId:SHA256;name:string;contentType:string;
+ file:DirectoryCorrectionFile;actor:string;label:string;createdAt:string;[key:string]:unknown;
+}
+export interface DirectoryCorrectionArguments{
+ directory_correction_prepare:{workspace:WorkspaceAlias;correction_prepare:DirectoryCorrectionPrepareInput};
+ directory_correction_preview:{workspace:WorkspaceAlias;correction_preview:DirectoryCorrectionPreviewInput};
+ directory_correction_apply:{workspace:WorkspaceAlias;correction_apply:DirectoryCorrectionApplyInput};
+ directory_correction_export:{workspace:WorkspaceAlias;correction_export:DirectoryCorrectionExportInput};
+ directory_correction_rows:{workspace:WorkspaceAlias;collection:DirectoryCorrectionCollection;recordId:SHA256;offset?:number;limit?:number};
+ directory_correction_file:{workspace:WorkspaceAlias;collection:DirectoryCorrectionCollection;recordId:SHA256;fileKind:'input'|'changes'|'review'};
+}
+export interface DirectoryCorrectionResultValues{
+ directory_correction_prepare:DirectoryCorrectionPlan;directory_correction_preview:DirectoryCorrectionPreview;
+ directory_correction_apply:DirectoryCorrectionAccepted;directory_correction_export:DirectoryCorrectionExport;
+ directory_correction_rows:DirectoryCorrectionPage;
+}
+
+export interface DirectoryOperatingReturnArguments {
+ directory_operating_return_prepare:{workspace:WorkspaceAlias;operating_return_prepare:Returned.DirectoryOperatingReturnPrepareInput};
+ directory_operating_return_revise:{workspace:WorkspaceAlias;operating_return_revise:Returned.DirectoryOperatingReturnReviseInput};
+ directory_operating_return_complete:{workspace:WorkspaceAlias;operating_return_complete:Returned.DirectoryOperatingReturnCompleteInput};
+ directory_operating_return_apply:{workspace:WorkspaceAlias;operating_return_apply:Returned.DirectoryOperatingReturnApplyInput};
+ directory_operating_return_receive:{workspace:WorkspaceAlias;operating_return_receive:Returned.DirectoryOperatingReturnReceiveInput};
+ directory_operating_return_export:{workspace:WorkspaceAlias;operating_return_export:Returned.DirectoryOperatingReturnExportInput};
+ directory_operating_return_review:{workspace:WorkspaceAlias;recordId:SHA256};
+ directory_operating_return_comparison:{workspace:WorkspaceAlias;recordId:SHA256};
+ directory_operating_return_input:{workspace:WorkspaceAlias;recordId:SHA256};
+ directory_operating_return_rows:{workspace:WorkspaceAlias;recordId:SHA256;offset?:number;limit?:number}&Returned.DirectoryOperatingReturnFilters;
+ directory_operating_return_file:{workspace:WorkspaceAlias;recordId:SHA256;fileKind:'review'|'comparison'|'input'};
+}
+export interface DirectoryOperatingReturnResultValues {
+ directory_operating_return_prepare:Returned.DirectoryOperatingReturnSaved;
+ directory_operating_return_revise:Returned.DirectoryOperatingReturnSaved;
+ directory_operating_return_complete:Returned.DirectoryOperatingReturnSaved;
+ directory_operating_return_apply:Returned.DirectoryOperatingReturnApplied;
+ directory_operating_return_receive:Returned.DirectoryOperatingReturnSaved;
+ directory_operating_return_export:Returned.DirectoryOperatingReturnExport;
+ directory_operating_return_review:Returned.OperatingPlanReturn;
+ directory_operating_return_comparison:Returned.OperatingReturnComparison;
+ directory_operating_return_input:Returned.DirectoryOperatingReturnAcceptedInput;
+ directory_operating_return_rows:Returned.DirectoryOperatingReturnPage;
+}
 export interface DirectoryOperatingArguments {
  directory_operating_plan_step:{workspace:WorkspaceAlias;operating_plan_step:Operating.DirectoryOperatingPlanStepInput};
  directory_operating_plan_preview:{workspace:WorkspaceAlias;operating_plan_create:Operating.DirectoryOperatingPlanCreateInput};
@@ -154,11 +308,87 @@ export interface DirectoryOperatingResultValues {
  directory_operating_basis:Operating.DirectoryOperatingBasis;
 }
 
-export type DirectoryCollection='operatingPlans'|DirectoryConformanceCollection|"connections"|"discoveries"|"requests"|"importProfiles"|"sources"|"editions"|"comparisons"|"operations"|"mappings"|"mappingPreviews"|"sourceConversions"|"selections"|"referralJoins"|"handoffs"|"exports"|"receivingReviews"|"receives";
+
+export type DirectoryWorksheetCollection='correctionWorksheets'|'correctionWorksheetImports'|'correctionWorksheetReturns'|'correctionWorksheetReviews';
+export interface DirectoryWorksheetRef extends DirectoryRecordRef{rowSha256:SHA256;resourceSha256:SHA256;memberSha256:SHA256}
+export interface DirectoryWorksheetPrepareInput{label:string;editionId:SHA256;actor:string;note?:string;predecessorId?:SHA256|null;rows:DirectoryWorksheetRef[]}
+export interface DirectoryWorksheetExportInput{worksheetId:SHA256;actor:string;label?:string;note?:string}
+export interface DirectoryWorksheetImportInput{worksheetId:SHA256;actor:string;filename:string;expectedSha256?:SHA256;expectedBytes?:number;note?:string}
+export interface DirectoryWorksheetChoice{changeId:SHA256;decision:'accept'|'keep-original';reason:string}
+export interface DirectoryWorksheetReviewInput{returnId:SHA256;label:string;actor:string;note?:string;choices:DirectoryWorksheetChoice[]}
+export type DirectoryWorksheetCandidate={rowKey:SHA256;reason:string}&(
+ {representation:'json';valueJson:string}|{representation:'csv';cells:string[]});
+export interface DirectoryWorksheetReturnDocument{
+ schema:'stellar-forge.directory-correction-worksheet-return.v1';workspaceId:UUID;worksheetId:SHA256;editionId:SHA256;
+ returnedBy:string;returnedAt:string;note?:string;candidates:DirectoryWorksheetCandidate[];
+}
+export type DirectoryWorksheetRow={rowKey:SHA256;ref:DirectoryWorksheetRef;table:string;memberName:string;pointer:string;rowOrdinal:number;nativeId?:string|null}&(
+ {representation:'json';valueJson:string}|{representation:'csv';cells:string[];headers:string[]});
+export interface DirectoryWorksheetDocument{
+ schema:'stellar-forge.directory-correction-worksheet.v1';workspaceId:UUID;worksheetId:SHA256;editionId:SHA256;
+ label:string;actor:string;note:string;rows:DirectoryWorksheetRow[];
+}
+export interface DirectoryWorksheetPrepared extends DirectoryWorksheetPrepareInput{
+ schema:'stellar-forge.directory-correction-worksheet.v1';id:SHA256;createdAt:string;workspaceId:UUID;
+ predecessorId:SHA256|null;note:string;targets:Json;
+ files:{input:DirectoryCorrectionFile;rows:DirectoryCorrectionFile};
+ summary:{rows:number;jsonRows:number;csvRows:number;sources:number};
+}
+export interface DirectoryWorksheetImport extends DirectoryWorksheetImportInput{
+ schema:'stellar-forge.directory-correction-worksheet-import.v1';id:SHA256;createdAt:string;workspaceId:UUID;editionId:SHA256;
+ files:{input:DirectoryCorrectionFile};
+}
+export interface DirectoryWorksheetPresence{present:boolean;type?:string;valueJson?:string}
+export interface DirectoryWorksheetChange{
+ changeId:SHA256;ordinal:number;rowKey:SHA256;ref:DirectoryWorksheetRef;table:string;memberName:string;
+ rowPointer:string;representation:'json'|'csv';action:DirectoryCorrectionEdit['action'];pointer?:string;column?:number;
+ before:DirectoryWorksheetPresence;after:DirectoryWorksheetPresence;reason:string;
+ edit:DirectoryCorrectionEdit;state:'proposed';
+}
+export interface DirectoryWorksheetReturn{
+ schema:'stellar-forge.directory-correction-worksheet-return-record.v1';id:SHA256;createdAt:string;workspaceId:UUID;
+ importId:SHA256;worksheetId:SHA256;editionId:SHA256;actor:string;returnedBy:string;returnedAt:string;note:string;
+ files:{original:DirectoryCorrectionFile;changes:DirectoryCorrectionFile};
+ summary:{rows:number;proposedRows:number;omittedRows:number;unchangedRows:number;changedRows:number;changes:number;jsonChanges:number;csvChanges:number};
+}
+export type DirectoryWorksheetDecision=Omit<DirectoryWorksheetChange,'state'>&DirectoryWorksheetChoice&{state:'accept'|'keep-original';customerReason:string};
+export interface DirectoryWorksheetReview{
+ schema:'stellar-forge.directory-correction-worksheet-review.v1';id:SHA256;createdAt:string;workspaceId:UUID;
+ label:string;actor:string;note:string;returnId:SHA256;worksheetId:SHA256;editionId:SHA256;planId:SHA256|null;
+ outcome:'plan-prepared'|'no-edits-selected';summary:{changes:number;accepted:number;keptOriginal:number};
+ files:{input:DirectoryCorrectionFile;decisions:DirectoryCorrectionFile};
+}
+export type DirectoryWorksheetRecord=DirectoryWorksheetPrepared|DirectoryWorksheetImport|DirectoryWorksheetReturn|DirectoryWorksheetReview;
+export interface DirectoryWorksheetPage{
+ kind:DirectoryWorksheetCollection;recordId:SHA256;rows:Array<DirectoryWorksheetRow|DirectoryWorksheetChange|DirectoryWorksheetDecision>;
+ total:number;offset:number;limit:number;nextOffset:number|null;bytes:number;byteBudget:4194304;
+}
+export interface DirectoryWorksheetExport extends Omit<DirectoryCorrectionExport,'kind'>{kind:'correction-worksheet'}
+export interface DirectoryWorksheetArguments{
+ directory_correction_worksheet_prepare:{workspace:WorkspaceAlias;correction_worksheet_prepare:DirectoryWorksheetPrepareInput};
+ directory_correction_worksheet_export:{workspace:WorkspaceAlias;correction_worksheet_export:DirectoryWorksheetExportInput};
+ directory_correction_worksheet_import:{workspace:WorkspaceAlias;correction_worksheet_import:DirectoryWorksheetImportInput};
+ directory_correction_worksheet_review:{workspace:WorkspaceAlias;correction_worksheet_review:DirectoryWorksheetReviewInput};
+ directory_correction_worksheet_receive:{workspace:WorkspaceAlias;importId:SHA256;input:string;expectedSha256?:SHA256};
+ directory_correction_worksheet_document:{workspace:WorkspaceAlias;worksheetId:SHA256};
+ directory_correction_worksheet_rows:{workspace:WorkspaceAlias;collection:DirectoryWorksheetCollection;recordId:SHA256;offset?:number;limit?:number;rowKey?:SHA256;state?:string};
+ directory_correction_worksheet_file:{workspace:WorkspaceAlias;collection:DirectoryWorksheetCollection;recordId:SHA256;fileKind:'input'|'rows'|'worksheet'|'original'|'changes'|'decisions'};
+}
+export interface DirectoryWorksheetResultValues{
+ directory_correction_worksheet_prepare:DirectoryWorksheetPrepared;
+ directory_correction_worksheet_export:DirectoryWorksheetExport;
+ directory_correction_worksheet_import:DirectoryWorksheetImport;
+ directory_correction_worksheet_review:DirectoryWorksheetReview;
+ directory_correction_worksheet_receive:DirectoryWorksheetReturn;
+ directory_correction_worksheet_document:DirectoryWorksheetDocument;
+ directory_correction_worksheet_rows:DirectoryWorksheetPage;
+}
+
+export type DirectoryCollection=DirectoryWorksheetReconciliationCollection|DirectoryWorksheetCollection|DirectoryCorrectionCollection|'operatingPlanReturns'|'operatingPlans'|DirectoryConformanceCollection|"connections"|"discoveries"|"requests"|"importProfiles"|"sources"|"editions"|"comparisons"|"operations"|"mappings"|"mappingPreviews"|"sourceConversions"|"selections"|"referralJoins"|"handoffs"|"exports"|"receivingReviews"|"receives";
 export type DirectoryState={schema:'stellar-forge.human-services-directory.v1';workspaceId:UUID}&
  Partial<Record<DirectoryCollection,Json[]>>;
 export type NativeState=Gravity.NativeState&{directory:DirectoryState};
-export interface DirectoryAddedArguments extends DirectoryConformanceArguments,DirectoryOperatingArguments{
+export interface DirectoryAddedArguments extends DirectoryConformanceArguments,DirectoryOperatingArguments,DirectoryOperatingReturnArguments,DirectoryCorrectionArguments,DirectoryWorksheetArguments,DirectoryWorksheetReconciliationArguments{
  directory_link_targets:{workspace:WorkspaceAlias;editionId:SHA256;sourceId:SHA256;linkId:SHA256}&Pick<DirectorySourcePageInput,'offset'|'limit'>;
  directory_index_file:{workspace:WorkspaceAlias;collection:'sources'|'editions'|'comparisons';recordId:SHA256};
  directory_source_record_file:{workspace:WorkspaceAlias}&DirectoryRecordRef;
@@ -205,21 +435,22 @@ export interface DirectoryAddedArguments extends DirectoryConformanceArguments,D
  directory_workspace_import:{workspace:WorkspaceAlias;input:string;expectedSha256?:SHA256};
  directory_handoff_import:{workspace:WorkspaceAlias;input:string;expectedSha256?:SHA256};
 }
-export type DirectoryNativeBodyAction="directory_operating_plan_step"|"directory_operating_plan_preview"|"directory_operating_plan_create"|"directory_operating_plan_save"|"directory_operating_plan_receive"|"directory_operating_plan_copy"|"directory_operating_plan_compare"|"directory_operating_plan_export"|"directory_conformance_plan"|"directory_conformance_assess"|"directory_conformance_review"|"directory_conformance_compare"|"directory_connection_save"|"directory_discover"|"directory_import_profile_save"|"directory_request_save"|"directory_acquire"|"directory_edition_save"|"directory_compare"|"directory_mapping_save"|"directory_mapping_preview"|"directory_mapping_apply"|"directory_selection_save"|"directory_referral_join"|"directory_handoff_prepare"|"directory_receiving_save"|"directory_export_prepare";
+export type DirectoryNativeBodyAction="directory_correction_worksheet_reconciliation_prepare"|"directory_correction_worksheet_reconciliation_review"|"directory_correction_worksheet_reconciliation_export"|"directory_correction_worksheet_prepare"|"directory_correction_worksheet_export"|"directory_correction_worksheet_import"|"directory_correction_worksheet_review"|"directory_operating_return_prepare"|"directory_operating_return_revise"|"directory_operating_return_complete"|"directory_operating_return_apply"|"directory_operating_return_receive"|"directory_operating_return_export"|"directory_operating_plan_step"|"directory_operating_plan_preview"|"directory_operating_plan_create"|"directory_operating_plan_save"|"directory_operating_plan_receive"|"directory_operating_plan_copy"|"directory_operating_plan_compare"|"directory_operating_plan_export"|"directory_conformance_plan"|"directory_conformance_assess"|"directory_conformance_review"|"directory_conformance_compare"|"directory_connection_save"|"directory_discover"|"directory_import_profile_save"|"directory_request_save"|"directory_acquire"|"directory_edition_save"|"directory_compare"|"directory_mapping_save"|"directory_mapping_preview"|"directory_mapping_apply"|"directory_selection_save"|"directory_referral_join"|"directory_handoff_prepare"|"directory_receiving_save"|"directory_export_prepare"|"directory_correction_prepare"|"directory_correction_preview"|"directory_correction_apply"|"directory_correction_export";
 type OriginalReceive=Gravity.GravityReferralActionArguments['receive_export'];
 export type HumanServicesDirectoryActionArguments=
  Omit<Gravity.GravityReferralActionArguments,'input_apply'|'receive_export'>&DirectoryAddedArguments&{
  input_apply:Omit<Gravity.GravityReferralActionArguments['input_apply'],'action'>&{
  action:Gravity.GravityReferralActionArguments['input_apply']['action']|DirectoryNativeBodyAction};
  receive_export:(Omit<OriginalReceive,'kind'>&{kind:OriginalReceive['kind']|'directory-handoff'})|
- (Omit<OriginalReceive,'kind'>&{kind:'directory-source';importProfileId:SHA256});
+ (Omit<OriginalReceive,'kind'>&{kind:'directory-source';importProfileId:SHA256})|
+ (Omit<OriginalReceive,'kind'>&{kind:'directory-correction-worksheet-return';importId:SHA256});
 };
 type InheritedResult<T>=T extends Gravity.RetainedResult<infer V>?RetainedResult<V>:
  T extends Gravity.FileManifest?FileManifest:T;
 export type HumanServicesDirectoryActionResults=Omit<{
  [A in keyof Gravity.GravityReferralActionResults]:InheritedResult<Gravity.GravityReferralActionResults[A]>
 },'state'>&{state:RetainedResult<NativeState>}&{
- [A in keyof DirectoryAddedArguments]:RetainedResult<A extends keyof DirectoryOperatingResultValues?DirectoryOperatingResultValues[A]:A extends keyof DirectoryConformanceResultValues?DirectoryConformanceResultValues[A]:A extends 'directory_state'?NativeState:Json>
+ [A in keyof DirectoryAddedArguments]:RetainedResult<A extends keyof DirectoryWorksheetReconciliationResultValues?DirectoryWorksheetReconciliationResultValues[A]:A extends keyof DirectoryWorksheetResultValues?DirectoryWorksheetResultValues[A]:A extends keyof DirectoryCorrectionResultValues?DirectoryCorrectionResultValues[A]:A extends keyof DirectoryOperatingReturnResultValues?DirectoryOperatingReturnResultValues[A]:A extends keyof DirectoryOperatingResultValues?DirectoryOperatingResultValues[A]:A extends keyof DirectoryConformanceResultValues?DirectoryConformanceResultValues[A]:A extends 'directory_state'?NativeState:Json>
 };
 export type HumanServicesDirectoryAction=keyof HumanServicesDirectoryActionArguments;
 type Camel<S extends string>=S extends `${infer A}_${infer B}`?`${A}${Capitalize<Camel<B>>}`:S;
@@ -264,10 +495,50 @@ export function assessHumanServicesDirectoryConformance(options:{
 }&({plan:DirectoryConformancePlanInput;planId?:never}|{plan?:never;planId:SHA256})):
  Promise<{planId:SHA256;planResult?:RetainedResult<DirectoryConformancePlan>;result:RetainedResult<DirectoryConformanceAssessment>;assessment:DirectoryConformanceAssessment}>;
 export function iterateHumanServicesDirectoryConformance(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;assessmentId:SHA256;limit?:number;requestOptions?:RequestOptions;
+ kind?:'findings';filters?:DirectoryConformanceFindingFilters;
+}):AsyncGenerator<{page:DirectoryConformancePage<DirectoryConformanceFinding>;result:RetainedResult},void,unknown>;
+export function iterateHumanServicesDirectoryConformance(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;assessmentId:SHA256;limit?:number;requestOptions?:RequestOptions;
+ kind:'rows';filters?:{table?:string};
+}):AsyncGenerator<{page:DirectoryConformancePage<DirectoryConformanceRow>;result:RetainedResult},void,unknown>;
+export function iterateHumanServicesDirectoryConformance(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;assessmentId:SHA256;limit?:number;requestOptions?:RequestOptions;
+ kind:'foreign_keys';filters?:DirectoryForeignKeyFilters;
+}):AsyncGenerator<{page:DirectoryConformancePage<DirectoryForeignKeyOutcome>;result:RetainedResult},void,unknown>;
+export function iterateHumanServicesDirectoryConformance(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;assessmentId:SHA256;limit?:number;requestOptions?:RequestOptions;
+ kind:'foreign_key_candidates';filters?:DirectoryForeignKeyCandidateFilters;
+}):AsyncGenerator<{page:DirectoryConformancePage<DirectoryForeignKeyCandidate>;result:RetainedResult},void,unknown>;
+export function iterateHumanServicesDirectoryConformance(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;assessmentId:SHA256;limit?:number;requestOptions?:RequestOptions;
+ kind:'foreign_key_matches';filters?:DirectoryForeignKeyMatchFilters;
+}):AsyncGenerator<{page:DirectoryConformancePage<DirectoryForeignKeyMatch>;result:RetainedResult},void,unknown>;
+export function iterateHumanServicesDirectoryConformance(options:{
  client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;assessmentId:SHA256;
  limit?:number;requestOptions?:RequestOptions;
-}&({kind?:'findings';filters?:DirectoryConformanceFindingFilters}|{kind:'rows';filters?:{table?:string}})):
- AsyncGenerator<{page:DirectoryConformancePage<DirectoryConformanceFinding|DirectoryConformanceRow>;result:RetainedResult},void,unknown>;
+}&({kind?:'findings';filters?:DirectoryConformanceFindingFilters}|{kind:'rows';filters?:{table?:string}}|
+ {kind:'foreign_keys';filters?:DirectoryForeignKeyFilters}|
+ {kind:'foreign_key_candidates';filters?:DirectoryForeignKeyCandidateFilters}|
+ {kind:'foreign_key_matches';filters?:DirectoryForeignKeyMatchFilters})):
+ AsyncGenerator<{page:DirectoryConformancePage<DirectoryConformanceFinding|DirectoryConformanceRow|DirectoryForeignKeyOutcome|DirectoryForeignKeyCandidate|DirectoryForeignKeyMatch>;result:RetainedResult},void,unknown>;
+export function iterateHumanServicesDirectoryForeignKeys(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;assessmentId:SHA256;limit?:number;requestOptions?:RequestOptions;
+ kind?:'outcomes';filters?:DirectoryForeignKeyFilters;
+}):AsyncGenerator<{page:DirectoryForeignKeyPage<DirectoryForeignKeyOutcome>;result:RetainedResult},void,unknown>;
+export function iterateHumanServicesDirectoryForeignKeys(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;assessmentId:SHA256;limit?:number;requestOptions?:RequestOptions;
+ kind:'candidates';filters?:DirectoryForeignKeyCandidateFilters;
+}):AsyncGenerator<{page:DirectoryForeignKeyPage<DirectoryForeignKeyCandidate>;result:RetainedResult},void,unknown>;
+export function iterateHumanServicesDirectoryForeignKeys(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;assessmentId:SHA256;limit?:number;requestOptions?:RequestOptions;
+ kind:'matches';filters?:DirectoryForeignKeyMatchFilters;
+}):AsyncGenerator<{page:DirectoryForeignKeyPage<DirectoryForeignKeyMatch>;result:RetainedResult},void,unknown>;
+export function iterateHumanServicesDirectoryForeignKeys(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;assessmentId:SHA256;limit?:number;requestOptions?:RequestOptions;
+}&({kind?:'outcomes';filters?:DirectoryForeignKeyFilters}|{kind:'candidates';filters?:DirectoryForeignKeyCandidateFilters}|
+ {kind:'matches';filters?:DirectoryForeignKeyMatchFilters})):
+ AsyncGenerator<{page:DirectoryForeignKeyPage<DirectoryForeignKeyOutcome|DirectoryForeignKeyCandidate|DirectoryForeignKeyMatch>;result:RetainedResult},void,unknown>;
 export function downloadHumanServicesDirectoryConformance(options:
  Omit<DownloadOptions,'exportId'|'expectedManifestSha256'|'client'>&{
  client:HumanServicesDirectoryClient;collection:DirectoryConformanceFileCollection;recordId:SHA256;
@@ -288,3 +559,177 @@ export function downloadHumanServicesDirectoryOperatingPlan(options:
  Omit<DownloadOptions,'exportId'|'expectedManifestSha256'|'client'>&{
  client:HumanServicesDirectoryClient;input:DirectoryOperatingPlanExportInput;requestOptions?:RequestOptions;
  }):Promise<{prepared:Operating.DirectoryOperatingExport;prepareResult:RetainedResult;result:RetainedResult;receipt:DownloadReceipt}>;
+
+export function changeHumanServicesDirectoryOperatingReturn<A extends keyof Returned.DirectoryOperatingReturnInputs>(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;action:A;input:Returned.DirectoryOperatingReturnInputs[A];requestOptions?:RequestOptions;
+}):Promise<{result:RetainedResult;saved:A extends 'apply'?Returned.DirectoryOperatingReturnApplied:Returned.DirectoryOperatingReturnSaved}>;
+export function readHumanServicesDirectoryOperatingReturn(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;recordId:SHA256;requestOptions?:RequestOptions;
+}):Promise<{record:Returned.DirectoryOperatingReturnRecord;review:Returned.OperatingPlanReturn;
+ comparison:Returned.OperatingReturnComparison;input:Returned.DirectoryOperatingReturnAcceptedInput;
+ results:Record<'record'|'review'|'comparison'|'input',RetainedResult>}>;
+export function iterateHumanServicesDirectoryOperatingReturn(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;recordId:SHA256;
+ filters?:Returned.DirectoryOperatingReturnFilters;limit?:number;requestOptions?:RequestOptions;
+}):AsyncGenerator<{page:Returned.DirectoryOperatingReturnPage;result:RetainedResult},void,unknown>;
+export function downloadHumanServicesDirectoryOperatingReturnFile(options:
+ Omit<DownloadOptions,'exportId'|'expectedManifestSha256'|'client'>&{
+ client:HumanServicesDirectoryClient;recordId:SHA256;fileKind?:'review'|'comparison'|'input';requestOptions?:RequestOptions;
+ }):Promise<{record:Returned.DirectoryOperatingReturnRecord;recordResult:RetainedResult;result:RetainedResult;receipt:DownloadReceipt;payload:string}>;
+export function downloadHumanServicesDirectoryOperatingReturn(options:
+ Omit<DownloadOptions,'exportId'|'expectedManifestSha256'|'client'>&{
+ client:HumanServicesDirectoryClient;input:Returned.DirectoryOperatingReturnExportInput;requestOptions?:RequestOptions;
+ }):Promise<{prepared:Returned.DirectoryOperatingReturnExport;prepareResult:RetainedResult;result:RetainedResult;receipt:DownloadReceipt;payload:string}>;
+
+export type * from '../directory_operating_return.mjs';
+
+export function changeHumanServicesDirectoryCorrection(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;requestOptions?:RequestOptions;
+}&(
+ {action:'prepare';input:DirectoryCorrectionPrepareInput}|
+ {action:'preview';input:DirectoryCorrectionPreviewInput}|
+ {action:'apply';input:DirectoryCorrectionApplyInput}
+)):Promise<{result:RetainedResult<DirectoryCorrectionRecord>;record:DirectoryCorrectionRecord}>;
+export function readHumanServicesDirectoryCorrection(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;collection:DirectoryCorrectionCollection;
+ recordId:SHA256;requestOptions?:RequestOptions
+}):Promise<{result:RetainedResult<DirectoryCorrectionRecord>;record:DirectoryCorrectionRecord}>;
+export function iterateHumanServicesDirectoryCorrection(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;collection:DirectoryCorrectionCollection;
+ recordId:SHA256;limit?:number;requestOptions?:RequestOptions
+}):AsyncGenerator<{result:RetainedResult<DirectoryCorrectionPage>;page:DirectoryCorrectionPage}>;
+export function downloadHumanServicesDirectoryCorrectionFile(options:Omit<DownloadOptions,'exportId'>&{
+ client:HumanServicesDirectoryClient;collection:DirectoryCorrectionCollection;recordId:SHA256;
+ fileKind:'input'|'changes'|'review';requestOptions?:RequestOptions
+}):Promise<{record:DirectoryCorrectionRecord;recordResult:RetainedResult<DirectoryCorrectionRecord>;
+ result:RetainedResult;receipt:DownloadReceipt;payload:string}>;
+export function downloadHumanServicesDirectoryCorrection(options:Omit<DownloadOptions,'exportId'>&{
+ client:HumanServicesDirectoryClient;input:DirectoryCorrectionExportInput;requestOptions?:RequestOptions
+}):Promise<{prepared:DirectoryCorrectionExport;prepareResult:RetainedResult<DirectoryCorrectionExport>;
+ result:RetainedResult;receipt:DownloadReceipt;payload:string}>;
+
+export function readHumanServicesDirectoryWorksheet(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;collection:DirectoryWorksheetCollection;recordId:SHA256;requestOptions?:RequestOptions
+}):Promise<{record:DirectoryWorksheetRecord;result:RetainedResult<DirectoryWorksheetRecord>}>;
+export function receiveHumanServicesDirectoryWorksheet(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;input:string;expectedSha256?:SHA256;requestOptions?:RequestOptions
+}&({profile:DirectoryWorksheetImportInput;importId?:never}|{profile?:never;importId:SHA256})):Promise<{
+ importId:SHA256;importResult?:RetainedResult<DirectoryWorksheetImport>;result:RetainedResult<DirectoryWorksheetReturn>;record:DirectoryWorksheetReturn
+}>;
+export function iterateHumanServicesDirectoryWorksheet(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;collection:DirectoryWorksheetCollection;recordId:SHA256;
+ limit?:number;rowKey?:SHA256;state?:string;requestOptions?:RequestOptions
+}):AsyncGenerator<{result:RetainedResult<DirectoryWorksheetPage>;page:DirectoryWorksheetPage}>;
+export function downloadHumanServicesDirectoryWorksheetFile(options:Omit<DownloadOptions,'exportId'>&{
+ client:HumanServicesDirectoryClient;collection:DirectoryWorksheetCollection;recordId:SHA256;
+ fileKind:'input'|'rows'|'worksheet'|'original'|'changes'|'decisions';requestOptions?:RequestOptions
+}):Promise<{record:DirectoryWorksheetRecord;recordResult:RetainedResult<DirectoryWorksheetRecord>;
+ result:RetainedResult;receipt:DownloadReceipt;payload:string;descriptor:FileIdentity}>;
+export function downloadHumanServicesDirectoryWorksheet(options:Omit<DownloadOptions,'exportId'>&{
+ client:HumanServicesDirectoryClient;input:DirectoryWorksheetExportInput;requestOptions?:RequestOptions
+}):Promise<{prepared:DirectoryWorksheetExport;prepareResult:RetainedResult<DirectoryWorksheetExport>;
+ result:RetainedResult;receipt:DownloadReceipt;payload:string}>;
+
+
+export type DirectoryWorksheetReconciliationCollection='correctionWorksheetReconciliations'|'correctionWorksheetReconciliationReviews';
+export type DirectoryWorksheetReconciliationState='proposable'|'already-applied'|'conflict'|'unbound'|'structure-conflict';
+export type DirectoryWorksheetReconciliationDecision='accept-proposed'|'keep-current'|'resolve-row';
+export interface DirectoryWorksheetCurrentBinding{
+ rowKey:SHA256;original:DirectoryWorksheetRef;current:DirectoryWorksheetRef|null;reason:string;
+}
+export interface DirectoryWorksheetReconciliationPrepareInput{
+ label:string;actor:string;returnId:SHA256;currentEditionId:SHA256;predecessorId?:SHA256|null;
+ bindings:DirectoryWorksheetCurrentBinding[];note?:string;
+}
+export interface DirectoryWorksheetReconciliationChoice{
+ changeId:SHA256;decision:DirectoryWorksheetReconciliationDecision;reason:string;
+}
+export type DirectoryWorksheetRowResolution={rowKey:SHA256;reason:string}&(
+ {representation:'json';valueJson:string}|{representation:'csv';cells:string[]});
+export interface DirectoryWorksheetReconciliationReviewInput{
+ label:string;actor:string;reconciliationId:SHA256;choices:DirectoryWorksheetReconciliationChoice[];
+ rowResolutions?:DirectoryWorksheetRowResolution[];note?:string;
+}
+export interface DirectoryWorksheetReconciliationExportInput{
+ reconciliationId:SHA256;reviewId?:SHA256|null;actor:string;label?:string;note?:string;
+}
+export type DirectoryWorksheetCurrentProjection={ref:DirectoryWorksheetRef;table:string;memberName:string;pointer:string;rowOrdinal:number;nativeId:string|null}&(
+ {representation:'json';valueJson:string}|{representation:'csv';cells:string[];headers:string[]});
+export interface DirectoryWorksheetReconciliationRow{
+ rowKey:SHA256;binding:DirectoryWorksheetCurrentBinding;original:DirectoryWorksheetRow;
+ proposed:DirectoryWorksheetCandidate|null;current:DirectoryWorksheetCurrentProjection|null;
+ changeIds:SHA256[];state:'bound'|'unbound';
+}
+export interface DirectoryWorksheetThreeWayChange{
+ changeId:SHA256;ordinal:number;rowKey:SHA256;originalChange:DirectoryWorksheetChange;
+ originalRef:DirectoryWorksheetRef;currentRef:DirectoryWorksheetRef|null;
+ representation:'json'|'csv';action:DirectoryCorrectionEdit['action'];pointer?:string;column?:number;
+ base:DirectoryWorksheetPresence;proposed:DirectoryWorksheetPresence;current:DirectoryWorksheetPresence|null;
+ state:DirectoryWorksheetReconciliationState;blocker:string|null;bindingReason:string;customerReason:string;
+ currentHeaders?:string[];originalHeaders?:string[];currentCellCount?:number;originalCellCount?:number;
+}
+export interface DirectoryWorksheetThreeWayDecision extends DirectoryWorksheetThreeWayChange{
+ decision:DirectoryWorksheetReconciliationDecision;reviewerReason:string;emitsEdit:boolean;
+ resolutionRowKey?:SHA256;resolution?:DirectoryWorksheetRowResolution;
+}
+export interface DirectoryWorksheetReconciliationPrepared{
+ schema:'stellar-forge.directory-worksheet-reconciliation.v1';id:SHA256;createdAt:string;workspaceId:UUID;
+ label:string;actor:string;note:string;returnId:SHA256;worksheetId:SHA256;baseEditionId:SHA256;
+ currentEditionId:SHA256;predecessorId:SHA256|null;bindings:DirectoryWorksheetCurrentBinding[];targets:Json;
+ summary:{rows:number;boundRows:number;unboundRows:number;changes:number;proposable:number;
+  alreadyApplied:number;conflicts:number;structureConflicts:number;unboundChanges:number};
+ files:{input:DirectoryCorrectionFile;rows:DirectoryCorrectionFile;comparison:DirectoryCorrectionFile};
+}
+export interface DirectoryWorksheetReconciliationReview{
+ schema:'stellar-forge.directory-worksheet-reconciliation-review.v1';id:SHA256;createdAt:string;workspaceId:UUID;
+ label:string;actor:string;note:string;reconciliationId:SHA256;returnId:SHA256;worksheetId:SHA256;
+ baseEditionId:SHA256;currentEditionId:SHA256;predecessorId:SHA256|null;planId:SHA256|null;
+ outcome:'plan-prepared'|'no-edits-selected';
+ summary:{changes:number;acceptedProposals:number;keptCurrent:number;resolvedChanges:number;rowResolutions:number;edits:number};
+ files:{input:DirectoryCorrectionFile;decisions:DirectoryCorrectionFile};
+}
+export type DirectoryWorksheetReconciliationRecord=DirectoryWorksheetReconciliationPrepared|DirectoryWorksheetReconciliationReview;
+export interface DirectoryWorksheetReconciliationPage{
+ kind:DirectoryWorksheetReconciliationCollection;recordId:SHA256;
+ rows:Array<DirectoryWorksheetThreeWayChange|DirectoryWorksheetThreeWayDecision>;
+ total:number;offset:number;limit:number;nextOffset:number|null;bytes:number;byteBudget:4194304;
+}
+export interface DirectoryWorksheetReconciliationExport extends Omit<DirectoryCorrectionExport,'kind'>{
+ kind:'correction-worksheet-reconciliation';reviewId:SHA256|null;exportInput:DirectoryWorksheetReconciliationExportInput;
+}
+export interface DirectoryWorksheetReconciliationArguments{
+ directory_correction_worksheet_reconciliation_prepare:{workspace:WorkspaceAlias;correction_worksheet_reconciliation_prepare:DirectoryWorksheetReconciliationPrepareInput};
+ directory_correction_worksheet_reconciliation_review:{workspace:WorkspaceAlias;correction_worksheet_reconciliation_review:DirectoryWorksheetReconciliationReviewInput};
+ directory_correction_worksheet_reconciliation_export:{workspace:WorkspaceAlias;correction_worksheet_reconciliation_export:DirectoryWorksheetReconciliationExportInput};
+ directory_correction_worksheet_reconciliation_catalogue:{workspace:WorkspaceAlias};
+ directory_correction_worksheet_reconciliation_rows:{workspace:WorkspaceAlias;collection:DirectoryWorksheetReconciliationCollection;recordId:SHA256;offset?:number;limit?:number;rowKey?:SHA256;state?:DirectoryWorksheetReconciliationState|DirectoryWorksheetReconciliationDecision};
+ directory_correction_worksheet_reconciliation_file:{workspace:WorkspaceAlias;collection:DirectoryWorksheetReconciliationCollection;recordId:SHA256;fileKind:'input'|'rows'|'comparison'|'decisions'};
+}
+export interface DirectoryWorksheetReconciliationResultValues{
+ directory_correction_worksheet_reconciliation_prepare:DirectoryWorksheetReconciliationPrepared;
+ directory_correction_worksheet_reconciliation_review:DirectoryWorksheetReconciliationReview;
+ directory_correction_worksheet_reconciliation_export:DirectoryWorksheetReconciliationExport;
+ directory_correction_worksheet_reconciliation_rows:DirectoryWorksheetReconciliationPage;
+}
+export function prepareDirectoryWorksheetReconciliation(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;input:DirectoryWorksheetReconciliationPrepareInput;requestOptions?:RequestOptions
+}):Promise<{record:DirectoryWorksheetReconciliationPrepared;result:RetainedResult<DirectoryWorksheetReconciliationPrepared>}>;
+export function reviewDirectoryWorksheetReconciliation(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;input:DirectoryWorksheetReconciliationReviewInput;requestOptions?:RequestOptions
+}):Promise<{record:DirectoryWorksheetReconciliationReview;result:RetainedResult<DirectoryWorksheetReconciliationReview>}>;
+export function getDirectoryWorksheetReconciliationRecord(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;collection:DirectoryWorksheetReconciliationCollection;recordId:SHA256;requestOptions?:RequestOptions
+}):Promise<{record:DirectoryWorksheetReconciliationRecord;result:RetainedResult<DirectoryWorksheetReconciliationRecord>}>;
+export function directoryWorksheetReconciliationRows(options:{
+ client:HumanServicesDirectoryClient;workspace:WorkspaceAlias;collection:DirectoryWorksheetReconciliationCollection;recordId:SHA256;
+ limit?:number;rowKey?:SHA256;state?:DirectoryWorksheetReconciliationState|DirectoryWorksheetReconciliationDecision;requestOptions?:RequestOptions
+}):AsyncGenerator<{result:RetainedResult<DirectoryWorksheetReconciliationPage>;page:DirectoryWorksheetReconciliationPage}>;
+export function directoryWorksheetReconciliationFile(options:Omit<DownloadOptions,'exportId'>&{
+ client:HumanServicesDirectoryClient;collection:DirectoryWorksheetReconciliationCollection;recordId:SHA256;
+ fileKind:'input'|'rows'|'comparison'|'decisions';requestOptions?:RequestOptions
+}):Promise<{record:DirectoryWorksheetReconciliationRecord;recordResult:RetainedResult<DirectoryWorksheetReconciliationRecord>;
+ result:RetainedResult;receipt:DownloadReceipt;payload:string;descriptor:FileIdentity}>;
+export function exportDirectoryWorksheetReconciliation(options:Omit<DownloadOptions,'exportId'>&{
+ client:HumanServicesDirectoryClient;input:DirectoryWorksheetReconciliationExportInput;requestOptions?:RequestOptions
+}):Promise<{prepared:DirectoryWorksheetReconciliationExport;prepareResult:RetainedResult<DirectoryWorksheetReconciliationExport>;
+ result:RetainedResult;receipt:DownloadReceipt;payload:string}>;

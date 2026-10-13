@@ -1,0 +1,34 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "data-preparation-jobs",
+  "description": "Commission a saved original SQL pipeline through the existing paid Jobs and receive its whole editable customer project.",
+  "commands": {
+    "pipeline-jobs": "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/jobs/cli.mjs",
+    "pipeline-request": "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/jobs/request-handoff-cli.mjs"
+  },
+  "commandDescriptions": {
+    "pipeline-jobs": "Prepare a complete saved-pipeline order, configure its original Jobs merchant and receive the independent editable result.",
+    "pipeline-request": "Review the original pipeline catalog and hand a complete prepared order to its existing private Request customer."
+  },
+  "exports": {
+    "./seller/data-preparation/jobs": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/jobs/index.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/jobs/index.mjs"
+    },
+    "./seller/data-preparation/jobs/customer": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/jobs/customer.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/jobs/customer.mjs"
+    },
+    "./seller/data-preparation/jobs/request-handoff": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/jobs/request-handoff.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/jobs/request-handoff.mjs"
+    }
+  },
+  "components": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/jobs"
+  ],
+  "supportFiles": [
+    "products/data-preparation/COMMISSIONING.md",
+    "products/data-preparation/COMMISSIONING_AGENT.md"
+  ]
+}

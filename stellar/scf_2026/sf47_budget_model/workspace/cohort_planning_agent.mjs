@@ -9,7 +9,8 @@ import {COHORT_DELIVERY_SCHEDULE_SCHEMA,seedCohortDeliveryScheduling,scheduleCoh
 
 import {COHORT_DELIVERY_INPUT_SCHEMA,COHORT_DELIVERY_COMPARISON_SCHEMA,
   compareCohortDelivery,reopenCohortDeliveryComparison,
-  exportCohortDeliveryCsv,exportCohortDeliveryHtml} from './cohort_delivery_comparison.mjs';
+  exportCohortDeliveryCsv,exportCohortDeliveryHtml,COHORT_RECORDED_COST_PLAN_SCHEMA,
+  planCohortFromRecordedCosts,reopenCohortRecordedCostPlan,exportCohortRecordedCostPlanCsv,inspectCohortTaskMeasurements} from './cohort_delivery_comparison.mjs';
 
 export const COHORT_PLAN_EDITION_SCHEMA='stellar-forge.sf47-cohort-plan-edition.v1';
 export const COHORT_ADOPTION_SEED_SCHEMA='stellar-forge.sf47-cohort-adoption-seed.v1';
@@ -62,6 +63,7 @@ function originalDocument(value){
 }
 function planOf(value){
   const document=originalDocument(value);
+  if(document.schema===COHORT_RECORDED_COST_PLAN_SCHEMA)return reopenCohortRecordedCostPlan(document).candidate;
   if(document.schema===COHORT_PLAN_SCHEMA)return document;
   if(document.schema===COHORT_PLAN_EDITION_SCHEMA)return object(document.plan,'Complete edition plan');
   if(document.schema===COHORT_PLAN_REPORT_SCHEMA&&document.kind==='PLAN')return object(document.input,'Complete report input');
@@ -84,8 +86,15 @@ function checkedDocument(value){
     const recordedDelivery=document.schema===COHORT_DELIVERY_INPUT_SCHEMA?compareCohortDelivery(document):reopenCohortDeliveryComparison(document);
     return {document:recordedDelivery,recordedDelivery};
   }
-  let deliverySchedule=null,comparison=null;
+  let deliverySchedule=null,comparison=null,recordedCostPlan=null;
+  if(document.schema===COHORT_RECORDED_COST_PLAN_SCHEMA){recordedCostPlan=reopenCohortRecordedCostPlan(document);comparison=recordedCostPlan.comparison;}
+  if(document.recordedCostPlan){
+    recordedCostPlan=reopenCohortRecordedCostPlan(document.recordedCostPlan);
+    need(same(document.recordedCostPlanComparison,compareCohortPlans(recordedCostPlan,document.plan)),
+      'GRANT_ADOPTION_REPORT','Keep the complete comparison from the recorded-cost proposal to this saved successor.');
+  }
   if(wrapper.schema===COHORT_ADOPTION_REVIEW_SCHEMA){
+    if(wrapper.recordedCostPlan)recordedCostPlan=reopenCohortRecordedCostPlan(wrapper.recordedCostPlan);
     if(wrapper.comparison)comparison=reopenCohortPlanComparison(wrapper.comparison);
     if(wrapper.deliverySchedule)deliverySchedule=reopenCohortDeliverySchedule(wrapper.deliverySchedule);
   }
@@ -109,7 +118,7 @@ function checkedDocument(value){
     }
   }else if(document.schema===COHORT_PLAN_REPORT_SCHEMA)verifyReport(document);
   const plan=normalizeCohortPlan(planOf(document));
-  return {document,plan,deliverySchedule,comparison};
+  return {document,plan,deliverySchedule,comparison,recordedCostPlan};
 }
 async function currentCase(client,selected,expected){
   caseId(selected);version(expected);
@@ -144,6 +153,26 @@ async function currentDeliverySources(client,current,comparison){
   return {plan:clone(plan),review:{id:response.value.id,version:response.value.version,
     businessSha256:response.value.businessSha256,measurementSha256:response.value.cohort.source.measurementSha256,
     previewSha256:response.value.cohort.previewSha256}};
+}
+
+async function currentTaskMeasurementSources(client,current,costPlan){
+  const selected=new Map();
+  for(const row of costPlan.choices.allocations){
+    for(const basis of [row.measurement,...(row.measurementHistory||[]).map(previous=>previous.measurement)].filter(Boolean)){
+      const catalog=inspectCohortTaskMeasurements(basis.original),key=catalog.sourceId,prior=selected.get(key);
+      need(!prior||same(prior.original.source,catalog.original.source)&&same(prior.original.edition,catalog.original.edition),
+        'GRANT_ADOPTION_MEASUREMENT_CHANGED','One original measurement source cannot carry conflicting saved editions.');
+      selected.set(key,catalog);
+    }
+  }
+  for(const catalog of selected.values()){
+    const original=catalog.original,source=current.sources.find(row=>row.id===catalog.sourceId);
+    need(source&&same(source,original.source),'GRANT_ADOPTION_MEASUREMENT_CHANGED',
+      'The selected task measurement source differs from this case. Keep the old basis and explicitly select its current original.');
+    const saved=await client.read('task-outcome',{caseId:current.program.id,comparisonId:catalog.comparisonId,revision:catalog.revision});
+    need(same(saved.value?.source,original.source)&&same(saved.value?.edition,original.edition),
+      'GRANT_ADOPTION_MEASUREMENT_CHANGED','The complete selected Task Outcomes revision differs from its native original. Select that saved revision again.');
+  }
 }
 
 function sourceCase(current){
@@ -194,6 +223,7 @@ export function reviewCohortAdoption(value,{nativeSeed}={}){
     ?{source:comparison.currentSource,rule:comparison.currentRule}:undefined);
   const report=evaluateCohortPlan(checked.plan,{nativeSeed:selectedSeed});
   return {schema:COHORT_ADOPTION_REVIEW_SCHEMA,document:checked.document,plan:checked.plan,report,
+    ...(checked.recordedCostPlan?{recordedCostPlan:checked.recordedCostPlan}:{}),
     ...(checked.deliverySchedule?{deliverySchedule:checked.deliverySchedule}:{}),
     ...(checked.comparison?{comparison:checked.comparison}:{})};
 }
@@ -202,6 +232,7 @@ export async function reviewGrantCohortAdoption(client,selected,expected,documen
   if(checked.recordedDelivery)return {...reviewCohortAdoption(document),case:sourceCase(current),
     nativeSources:await currentDeliverySources(client,current,checked.recordedDelivery)};
   if(!checked.plan)return {...reviewCohortAdoption(document),case:sourceCase(current)};
+  if(checked.recordedCostPlan){await currentDeliverySources(client,current,checked.recordedCostPlan.sourceDocument);await currentTaskMeasurementSources(client,current,checked.recordedCostPlan);}
   const nativeSeed=await currentSeed(client,current,checked.plan.rule.target.tranche);
   return {...reviewCohortAdoption(document,{nativeSeed}),case:sourceCase(current),nativeSeed};
 }
@@ -217,6 +248,12 @@ function mergeEditableFields(original,fields,depth=0){
 /** Apply explicit whole-row edits while retaining the complete predecessor comparison. */
 export function editCohortAdoption(document,changes,{title,note=''}={}){
   const checked=checkedDocument(document);
+  if(Array.isArray(changes)&&changes.length===1&&changes[0].action==='FROM_RECORDED_COSTS'){
+    const change=exact(changes[0],['action','recordedDocument','choices'],['action','recordedDocument','choices']);
+    need(checked.plan,'GRANT_ADOPTION_INPUT','Select a complete future plan.');
+    const result=planCohortFromRecordedCosts(change.recordedDocument,checked.document,change.choices);
+    return reviewCohortAdoption(result);
+  }
   need(checked.plan&&Array.isArray(changes)&&changes.length>0&&changes.length<=2000,
     'GRANT_ADOPTION_INPUT','Select a complete plan and explicit row or plan edits.');
   const plan=clone(checked.plan),collections=['buyers','merchants','facilitators','operations','schedules','workshares','capacityPools','fundingGroups'];
@@ -249,7 +286,7 @@ export function editCohortAdoption(document,changes,{title,note=''}={}){
     }
   }
   const normalized=normalizeCohortPlan(plan),report=evaluateCohortPlan(normalized);
-  return {schema:COHORT_ADOPTION_REVIEW_SCHEMA,document:normalized,plan:normalized,report,changes:clone(changes),
+  return {schema:COHORT_ADOPTION_REVIEW_SCHEMA,document:normalized,plan:normalized,report,changes:clone(changes),...(checked.recordedCostPlan?{recordedCostPlan:clone(checked.recordedCostPlan)}:{}),
     comparison:compareCohortPlans(checked.document,normalized,{title:title??normalized.name+' · complete plan edits',note})};
 }
 
@@ -273,7 +310,7 @@ export async function rebaseGrantCohortAdoption(client,selected,expected,documen
   const nativeSeed=await currentSeed(client,current,checked.plan.rule.target.tranche);
   const plan=normalizeCohortPlan({...clone(checked.plan),source:{...clone(nativeSeed.source),
     planId:current.program.planId,planRevision:current.program.planRevision},rule:clone(nativeSeed.rule)});
-  return {schema:COHORT_ADOPTION_REVIEW_SCHEMA,case:sourceCase(current),document:plan,plan,nativeSeed,
+  return {schema:COHORT_ADOPTION_REVIEW_SCHEMA,case:sourceCase(current),document:plan,plan,nativeSeed,...(checked.recordedCostPlan?{recordedCostPlan:clone(checked.recordedCostPlan)}:{}),
     report:evaluateCohortPlan(plan,{nativeSeed}),
     comparison:compareCohortPlans(checked.document,plan,{title:plan.name+' · current source',note:'Explicit rebase on the original current case; the complete previous document is retained.'})};
 }
@@ -307,6 +344,7 @@ export async function prepareGrantCohortAdoption(client,selected,body){
     filename='sf47-cohort-delivery-'+input.recording.editionId+'.json';
   }else if(checked.plan){
     need(checked.plan.source.programId===selected,'GRANT_ADOPTION_SOURCE_CHANGED','Save this plan in its original Operations case.');
+    if(checked.recordedCostPlan){await currentDeliverySources(client,current,checked.recordedCostPlan.sourceDocument);await currentTaskMeasurementSources(client,current,checked.recordedCostPlan);}
     nativeSeed=await currentSeed(client,current,checked.plan.rule.target.tranche);
     const report=evaluateCohortPlan(checked.plan,{nativeSeed});
     const comparison=checked.deliverySchedule?compareCohortPlans(checked.deliverySchedule.sourceDocument,checked.deliverySchedule.candidate,
@@ -314,6 +352,7 @@ export async function prepareGrantCohortAdoption(client,selected,body){
       :checked.comparison;
     document={schema:COHORT_PLAN_EDITION_SCHEMA,editionId,createdAt:body.createdAt,actor:body.actor,
       parentSourceId:parent?.id??null,plan:clone(checked.plan),report,nativeSeed:clone(nativeSeed),
+      ...(checked.recordedCostPlan?{recordedCostPlan:clone(checked.recordedCostPlan),recordedCostPlanComparison:compareCohortPlans(checked.recordedCostPlan,checked.plan)}:{}),
       ...(checked.deliverySchedule?{deliverySchedule:clone(checked.deliverySchedule)}:{}),
       ...(comparison?{comparison:clone(comparison)}:{})};
     filename='sf47-cohort-plan-tranche-'+checked.plan.rule.target.tranche+'-'+editionId+'.json';
@@ -474,7 +513,7 @@ export function exportCohortAdoption(document,format='JSON'){
   let bytes,mediaType,extension;
   if(format==='JSON'){bytes=rawJson(document);mediaType='application/json';extension='json';}
   if(format==='CSV'){
-    const value=original.schema===COHORT_PLAN_COMPARISON_SCHEMA?exportCohortPlanComparisonCsv(checked.comparison):
+    const value=checked.recordedCostPlan?exportCohortRecordedCostPlanCsv(checked.recordedCostPlan)+['saved_successor','current',JSON.stringify(document)].map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')+'\r\n':original.schema===COHORT_PLAN_COMPARISON_SCHEMA?exportCohortPlanComparisonCsv(checked.comparison):
       checked.deliverySchedule?exportCohortDeliveryScheduleCsv(checked.deliverySchedule):exportCohortPlanCsv(reviewCohortAdoption(document).report);
     bytes=Buffer.from(value,'utf8');mediaType='text/csv; charset=utf-8';extension='csv';
   }
@@ -489,6 +528,11 @@ export function exportCohortAdoption(document,format='JSON'){
     }else{
       html+='<h2>Baseline</h2>'+reportHtml(checked.comparison.before)+'<h2>Successor</h2>'+reportHtml(checked.comparison.after);
       html+=table('Comparison findings',checked.comparison.findings,['code','message']);
+    }
+    if(checked.recordedCostPlan){
+      html+=table('Recorded cost basis',checked.recordedCostPlan.derivations,['targetScheduleId','sourceServiceId','outputQuantity','outputUnit','outputSource','supplierCoverage','laborCoverage','derivedEconomics','coverageNote']);
+      html+=table('Selected task measurements',checked.recordedCostPlan.derivations.filter(row=>row.measurement).map(row=>({targetScheduleId:row.targetScheduleId,...row.measurement})),['targetScheduleId','customer','task','comparisonId','revision','kind','observationId','quantity','unit','basis','status','acceptance','method','serviceBasis']);
+      html+=table('Original cost portions',checked.recordedCostPlan.costBalances,['costId','costType','selectedShare','unselectedShare']);
     }
     if(checked.deliverySchedule){
       const allocation=checked.deliverySchedule;

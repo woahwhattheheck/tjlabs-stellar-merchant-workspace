@@ -459,8 +459,11 @@ class DatasetteAnalysis:
                     self.record["current_edition"] = identity
                     self._emit("COMPLETE", edition_id=identity, reused=True)
                     return current
-                require(raw_edition["rows"], "DATASETTE_EMPTY_SELECTION",
-                        "The source selection contains no rows. Choose the intended complete selection.")
+                empty_csv = (not raw_edition["rows"]
+                             and raw_edition["source"].get("source_mode") == "original-csv"
+                             and bool(raw_edition["source"].get("source_columns")))
+                require(raw_edition["rows"] or empty_csv, "DATASETTE_EMPTY_SELECTION",
+                        "The source selection contains no rows or retained original CSV header.")
                 raw_edition["source"]["edition_id"] = identity
                 reviewed_keys = raw_edition.get("review", {}).get("keys")
                 if isinstance(reviewed_keys, dict):
@@ -488,7 +491,10 @@ class DatasetteAnalysis:
                     self.directory / identity / "source-document",
                     collections=plan["collections"], edition=raw_edition)
                 for key, collection in plan["collections"].items():
-                    if not collection["rows"]:
+                    # A complete header-only CSV is a real zero-row source table.
+                    # The maintained response projection imports its declared
+                    # columns and original bytes through the ordinary native path.
+                    if not collection["rows"] and not (empty_csv and key == "plants"):
                         continue
                     current["collections"][key] = self._prepare_collection(
                         current, key, collection, document,

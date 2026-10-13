@@ -25,6 +25,9 @@ export interface GrantReportingValues {
   startDate?: string | null;
   asOfDate: string;
   paths: GrantReportingPaths;
+  /** Optional original checkout and recipe retained by native capture and portable receiving. */
+  sourceRoot?: string | null;
+  sourceSelection?: string | null;
 }
 export interface GrantReportingFullInput extends GrantReportingValues {
   id: string;
@@ -32,7 +35,7 @@ export interface GrantReportingFullInput extends GrantReportingValues {
   catalog: CommandCatalog;
   /** Complete native case/show response, including program, plan, records and sources. */
   case: Record<string, unknown> | string;
-  /** Complete original planning source book or its native wrapper. */
+  /** Complete original book, retained book wrapper or Source Tables agent response; original file bytes stay retained. */
   sourceProject: Record<string, unknown> | string;
   sourceRoot?: string | null;
   sourceSelection?: string | null;

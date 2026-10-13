@@ -1,0 +1,240 @@
+{
+  "schema": "tjlabs.coursestorm.implementation-profile.v1",
+  "reviewedAt": "2026-10-13T05:36:00Z",
+  "purpose": "Source-bound implementation handover for the existing TONDO/CourseStorm relationship.",
+  "sourceEdition": "Official public documentation retrieved 2026-10-13",
+  "currency": "USD",
+  "sources": [
+    {
+      "id": "pricing",
+      "url": "https://www.coursestorm.com/pricing",
+      "facts": "Annual-billing monthly equivalents and monthly-billing starting prices; Stripe processing and USD2.49 per registration; tier feature lists."
+    },
+    {
+      "id": "faq",
+      "url": "https://www.coursestorm.com/faqs",
+      "facts": "Catalogue importer covers classes/instructors/locations. Student profile import is assisted by Customer Success and separately quoted. Website widget, family registration and API integration described."
+    },
+    {
+      "id": "import-format",
+      "url": "https://coursestorm.atlassian.net/wiki/spaces/CSHD/pages/4489321/Formatting%2BYour%2BCatalog%2BSpreadsheet%2Bfor%2BImport",
+      "facts": "Official import template/export recommended; CSV preferred over spreadsheet formats.",
+      "retrieval": "Official indexed search excerpt; full page rendering returned inaccessible."
+    },
+    {
+      "id": "import-process",
+      "url": "https://coursestorm.atlassian.net/wiki/spaces/CSHD/pages/4489349/Importing%2BClasses",
+      "facts": "Import maps input columns to provider fields and presents invalid cells in an editable browser sheet.",
+      "retrieval": "Official indexed search excerpt; direct page returned Confluence shell."
+    },
+    {
+      "id": "catalogues",
+      "url": "https://coursestorm.atlassian.net/wiki/spaces/CSHD/pages/3816620048/Managing%2BYour%2BCatalogs",
+      "facts": "Retain previous catalogues as history; use exported headings to prepare the next catalogue.",
+      "retrieval": "Official indexed search excerpt; direct page returned Confluence shell."
+    },
+    {
+      "id": "payment-schedules",
+      "url": "https://www.coursestorm.com/blog/custom-payment-plan-schedules",
+      "published": "2019-06-11",
+      "facts": "Describes a deposit/final-paid-date plan and a custom weekly/monthly schedule using start date and amount. Confirm current account behavior."
+    },
+    {
+      "id": "sessions",
+      "url": "https://www.coursestorm.com/blog/course-sessions-duplicate-class",
+      "published": "2017-12-05",
+      "facts": "Each class session has its own registration, roster and waiting list, sharing class information. Confirm current account behavior."
+    },
+    {
+      "id": "attendance",
+      "url": "https://www.coursestorm.com/blog/new-feature-attendance-tracking",
+      "published": "2023-12-12",
+      "facts": "Attendance is recorded by date from the class roster. Available on Pro and All Access."
+    },
+    {
+      "id": "api",
+      "url": "https://coursestorm.atlassian.net/wiki/spaces/CSHD/pages/4980805/REST%2BAPI",
+      "facts": "Initial API account requested through support; accepted API user invitation provides unique API password and endpoint.",
+      "retrieval": "Official indexed search excerpt; direct page returned Confluence shell."
+    },
+    {
+      "id": "cancellation",
+      "url": "https://coursestorm.atlassian.net/wiki/spaces/CSHD/pages/3446407190/Cancelling%2BRegistrations",
+      "facts": "Cancelling a registration on a payment plan cancels future scheduled payments.",
+      "retrieval": "Official indexed search excerpt."
+    }
+  ],
+  "plans": [
+    {
+      "name": "Starter",
+      "startingAnnualBillingMonthlyEquivalentMinor": "9900",
+      "annualSubscriptionMinor": "118800",
+      "startingMonthlySubscriptionMinor": "11900",
+      "twelveMonthsAtMonthlyBillingMinor": "142800",
+      "annualBillingSavingMinor": "24000"
+    },
+    {
+      "name": "Core",
+      "startingAnnualBillingMonthlyEquivalentMinor": "16900",
+      "annualSubscriptionMinor": "202800",
+      "startingMonthlySubscriptionMinor": "21900",
+      "twelveMonthsAtMonthlyBillingMinor": "262800",
+      "annualBillingSavingMinor": "60000"
+    },
+    {
+      "name": "Pro",
+      "startingAnnualBillingMonthlyEquivalentMinor": "26900",
+      "annualSubscriptionMinor": "322800",
+      "startingMonthlySubscriptionMinor": "32900",
+      "twelveMonthsAtMonthlyBillingMinor": "394800",
+      "annualBillingSavingMinor": "72000"
+    },
+    {
+      "name": "All Access",
+      "startingAnnualBillingMonthlyEquivalentMinor": "39900",
+      "annualSubscriptionMinor": "478800",
+      "startingMonthlySubscriptionMinor": "49900",
+      "twelveMonthsAtMonthlyBillingMinor": "598800",
+      "annualBillingSavingMinor": "120000"
+    }
+  ],
+  "perRegistrationFeeMinor": "249",
+  "processingFee": "Actual Stripe/account quote required; not included in these calculations.",
+  "economics": {
+    "formula": "annual fixed subscription + 249 * actual billable registration events, in USD cents; then add actual processing, migration and implementation charges",
+    "assumptions": {
+      "students": 100,
+      "schoolYearMonths": 10,
+      "interpretation": "Illustrative equal enrolment cohort; not TONDO's actual student count or an assertion of CourseStorm's fee-counting rules."
+    },
+    "scenarios": [
+      {
+        "plan": "Pro",
+        "billing": "annual",
+        "registrationEvents": 100,
+        "annualSubscriptionMinor": "322800",
+        "registrationFeesMinor": "24900",
+        "totalBeforeProcessingAndServicesMinor": "347700",
+        "scenario": "One annual/term registration for each of 100 students"
+      },
+      {
+        "plan": "Pro",
+        "billing": "annual",
+        "registrationEvents": 1000,
+        "annualSubscriptionMinor": "322800",
+        "registrationFeesMinor": "249000",
+        "totalBeforeProcessingAndServicesMinor": "571800",
+        "scenario": "Ten monthly registrations for each of 100 students"
+      },
+      {
+        "plan": "All Access",
+        "billing": "annual",
+        "registrationEvents": 100,
+        "annualSubscriptionMinor": "478800",
+        "registrationFeesMinor": "24900",
+        "totalBeforeProcessingAndServicesMinor": "503700",
+        "scenario": "One annual/term registration for each of 100 students"
+      },
+      {
+        "plan": "All Access",
+        "billing": "annual",
+        "registrationEvents": 1000,
+        "annualSubscriptionMinor": "478800",
+        "registrationFeesMinor": "249000",
+        "totalBeforeProcessingAndServicesMinor": "727800",
+        "scenario": "Ten monthly registrations for each of 100 students"
+      }
+    ],
+    "extraRegistrationFeeMinor": "224100"
+  },
+  "capabilitySelection": {
+    "starter": [
+      "family accounts",
+      "catalogue",
+      "rosters/waitlists/transfers",
+      "card processing"
+    ],
+    "core": [
+      "custom registration form",
+      "price-adjusting questions",
+      "reminders/roster emails"
+    ],
+    "pro": [
+      "payment plans",
+      "class age restrictions",
+      "instructor access",
+      "attendance"
+    ],
+    "allAccess": [
+      "class sessions",
+      "custom payment methods",
+      "integrations"
+    ],
+    "decisions": [
+      {
+        "id": "monthly-model",
+        "question": "Can one continuing enrollment use a defined monthly payment schedule, accommodate midyear changes and retain class frequency without a new registration every month?",
+        "receive": "Actual configured class, full payment schedule and fee-counting answer."
+      },
+      {
+        "id": "registration-count",
+        "question": "When are USD2.49 fees assessed for sessions, recurring months, transfers, cancellations and refunds?",
+        "receive": "Written provider rules and actual example fee/payout export."
+      },
+      {
+        "id": "sibling-basis",
+        "question": "The terms specify10%off the second child's tuition and the form gives siblings a25USD registration fee. Which actual student/enrollment receives each rule, and how do senior discounts or card tuition charges combine?",
+        "receive": "Named school decision and corresponding provider configuration."
+      },
+      {
+        "id": "agreement",
+        "question": "How does the selected tier retain the signed four-page agreement and chosen terms/make-up edition, including guardian, emergency contact and consent records?",
+        "receive": "Actual form fields, retained signature/reference behavior and exported record."
+      },
+      {
+        "id": "migration",
+        "question": "Which student profile, family relationship, enrollment, historic payment and agreement fields can be migrated, by whom and for what one-time price?",
+        "receive": "Official tenant import template and Customer Success quote."
+      },
+      {
+        "id": "api-scope",
+        "question": "Which read/write endpoints, event hooks, limits and API entitlement apply to this account?",
+        "receive": "Provider endpoint/schema and account entitlement; secrets remain in host configuration."
+      },
+      {
+        "id": "attendance-entitlement",
+        "question": "Does provider attendance consume any credit balance or attendance entitlement, or is it a dated roster record only?",
+        "receive": "Actual product behavior and chosen responsibility for tuition/credit ledger."
+      },
+      {
+        "id": "tier",
+        "question": "Which complete tier and billing commitment supports the selected real workflow?",
+        "receive": "Written account quote including processing, registrations, assisted migration and integration."
+      }
+    ]
+  },
+  "currentProduct": {
+    "repo": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "classIntakePullRequest": 1147,
+    "mergedCommit": "0c293a287e19d0a648a2725f28491c87ff0f3134",
+    "sourceCommit": "84b02942db2fee920e6cf3062da416d75e00faba",
+    "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/class_intake",
+    "csvExport": "course_sheet(view) / reports/coursestorm-reviewed-catalogue.csv",
+    "csvSemantics": "Reviewed, hidden, human-mapped class catalogue. Requires explicit chosen catalogue/rows, dated window, price, USD and capacity. Family/student/history migration is handled as a separately selected operation."
+  },
+  "schoolSources": {
+    "programmeEditions": [
+      "homepage-2026-2027",
+      "artclasses-2026-2027",
+      "registration-pdf-2026-2027"
+    ],
+    "documents": [
+      "Student-Registration-Form-1-1-1.pdf",
+      "Calendar-2026-27.pdf",
+      "Terms-Conditions-2026-2027.pdf"
+    ],
+    "calendarFixture": "tondo-actual-calendar-2026-2027.json",
+    "policyFixture": "tondo-actual-policy-comparison-2026-2027.json",
+    "registrationFixture": "tondo-registration-pdf-2026-2027-facts.json"
+  }
+}

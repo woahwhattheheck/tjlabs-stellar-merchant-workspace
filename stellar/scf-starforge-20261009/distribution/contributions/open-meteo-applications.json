@@ -1,0 +1,34 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "open-meteo-applications",
+  "description": "Managed Open-Meteo Weather applications over original customer settings, report receiving, renewal and native buyer recovery",
+  "components": [
+    "stellar/scf-starforge-20261009/partners/open-meteo-operations"
+  ],
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/partners/open-meteo-operations/APPLICATIONS.md",
+    "stellar/scf-starforge-20261009/partners/open-meteo-operations/applications-launcher.d.mts"
+  ],
+  "applicationProviders": {
+    "open-meteo-weather": "stellar/scf-starforge-20261009/partners/open-meteo-operations/applications-provider.mjs"
+  },
+  "exports": {
+    "./partners/open-meteo/applications": "./source/stellar/scf-starforge-20261009/partners/open-meteo-operations/applications-provider.mjs",
+    "./partners/open-meteo/managed": {
+      "types": "./source/stellar/scf-starforge-20261009/partners/open-meteo-operations/applications-launcher.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/partners/open-meteo-operations/applications-launcher.mjs"
+    }
+  },
+  "browserAssets": [
+    {
+      "server": "stellar/scf-starforge-20261009/partners/open-meteo-operations/server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/partners/open-meteo-operations/browser-assets.json"
+    }
+  ],
+  "commands": {
+    "weather-managed": "stellar/scf-starforge-20261009/partners/open-meteo-operations/applications-launcher.mjs"
+  },
+  "commandDescriptions": {
+    "weather-managed": "Open the original Weather customer workspace through managed Applications"
+  }
+}

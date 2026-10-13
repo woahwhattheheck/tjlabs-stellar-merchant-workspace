@@ -7,16 +7,17 @@ import {join} from 'node:path';
 import {accountingWorkspaceBinding} from '../../workspace/binding.mjs';
 import {need,plain,field,identifier,dateValue,currencyKey,minor,money,json,sha,customerExport,renderCustomerTar} from '../core.mjs';
 import {readBankStatementSource} from './source.mjs';
+import {assembleCamtPages} from './assembly.mjs';
 import {BankReceiptsWorkspace} from '../bank-receipts-workspace.mjs';
 import {normalizeBankAccount,bankAccountSummary,bankSourceMatches} from '../bank-receipts.mjs';
 import {bindStatementIntakeAccount,statementSourceEntry,recordStatementCoverage,releaseStatementCoverage} from '../bank-coverage.mjs';
 import {BANK_SCHEMA,BANK_CLOSE_SCHEMA,BANK_REQUEST_BYTES,BANK_SOURCE_BYTES,BANK_ROW_LIMIT,now,clone,
   emptyBank,bankData,record,activeMatch,activeCloses,assertOpenDate,amountOf,transactionIdentity,financialFingerprint,
-  compactSourceRow,normalizeAccount,sourcePreview,previewIdentity,prepareMatch,matchView,matchSuggestions,
+  compactSourceRow,compactExcludedRow,camtMessageSummary,normalizeAccount,sourcePreview,previewIdentity,prepareMatch,matchView,matchSuggestions,
   accountSummary,importSummary,closePreview,closeDocuments} from './domain.mjs';
 export {BANK_REQUEST_BYTES};
 
-const EXT={OFX:'ofx',QFX:'qfx',CSV:'csv'};
+const EXT={OFX:'ofx',QFX:'qfx',CSV:'csv',CAMT053:'xml'};
 const selectedFilters=query=>({accountId:query.accountId??'',status:query.status??'',search:String(query.search??'').toLowerCase().slice(0,300)});
 async function privateDirectory(path) {
   await mkdir(path,{mode:0o700});
@@ -53,7 +54,7 @@ function sourceInput(value) {
   need(plain(value),'INVALID_BANK_SOURCE','Provide the original source file and its explicit format.');
   const report=readBankStatementSource(value);
   need(report.bytes.length<=BANK_SOURCE_BYTES,'BANK_SOURCE_TOO_LARGE','Choose an original statement up to 16 MB.',413);
-  need(report.statements.reduce((sum,row)=>sum+row.rows.length+row.pendingRows.length,0)<=BANK_ROW_LIMIT,
+  need(report.statements.reduce((sum,row)=>sum+row.rows.length+row.pendingRows.length+(row.excludedRows?.filter(entry=>entry.row?.camt||entry.camt).length??0),0)<=BANK_ROW_LIMIT,
     'BANK_SOURCE_ROW_LIMIT','Choose at most 50,000 original statement rows.',413);
   return report;
 }
@@ -179,8 +180,9 @@ export class BankStatementsWorkspace {
       const imported={id:importId,accountId:account.id,statementId:statement.id,kind:statement.kind,
         file:clone(report.file),format:report.format,reviewSha256:value.reviewSha256,sourceAccount:clone(statement.account),
         interpretation:clone(report.interpretation),period:clone(statement.period),balances:clone(statement.balances),
+        camtMessage:camtMessageSummary(report.camt),camt:clone(statement.camt),
         issues:clone([...report.issues,...statement.issues]),sourceSummary:clone(statement.summary),
-        excludedRows:clone(statement.excludedRows),rowIds,pendingRows:statement.pendingRows.map(compactSourceRow),
+        excludedRows:statement.excludedRows.map(compactExcludedRow),rowIds,pendingRows:statement.pendingRows.map(compactSourceRow),
         createdAt:now(),actor,requestId,supersedesImportId:prior?.id??null,files:{}};
       for(const source of statement.rows) {
         const compact=compactSourceRow(source);
@@ -432,16 +434,67 @@ export class BankStatementsWorkspace {
     return {id:row.id,name:row.name,period:clone(row.period),runId:row.runId,exportId:row.exportId,
       closeSha256:row.closeSha256,createdAt:row.createdAt};
   }
+  async _assemblePages(value) {
+    need(plain(value)&&Array.isArray(value.importIds)&&value.importIds.length>0&&value.importIds.length<=1000,
+      'CAMT_PAGE_SELECTION_REQUIRED','Select one to 1,000 retained original statement imports.');
+    const account=this.account(value.accountId),pages=[],reports=new Map(),descriptors=new Map();
+    let retainedBytes=0,entryCount=0;
+    for(const id of value.importIds) {
+      const imported=this.importRow(id),descriptor=imported.files['parsed.json'];
+      need(descriptor&&Number.isSafeInteger(descriptor.bytes)&&descriptor.bytes>0,'CAMT_RETAINED_REPORT_REQUIRED','Receive the complete retained page report.',409);
+      if(!descriptors.has(descriptor.sha256)){descriptors.set(descriptor.sha256,new Set());retainedBytes+=descriptor.bytes;}
+      descriptors.get(descriptor.sha256).add(imported.statementId);
+    }
+    need(retainedBytes<=128_000_000,'CAMT_ASSEMBLY_REPORT_LIMIT',
+      'The complete selected parsed reports exceed the 128 MB receiving budget. Receive a smaller complete account statement.',413);
+    for(const id of value.importIds) {
+      const imported=this.importRow(id);
+      need(imported.accountId===account.id&&imported.format==='CAMT053','CAMT_ORIGINAL_PAGE_REQUIRED',
+        'Select original CAMT imports for this saved bank account.');
+      need(!this.data().imports.some(row=>row.supersedesImportId===imported.id),'CAMT_PAGE_INTERPRETATION_SUPERSEDED',
+        'Select the current reviewed interpretation of this original page.',409);
+      const descriptor=imported.files['parsed.json'];
+      need(descriptor,'CAMT_RETAINED_REPORT_REQUIRED','Receive the original complete source report for this page.',409);
+      let report=reports.get(descriptor.sha256);
+      if(!report) {
+        report=JSON.parse((await this._importFile(imported,'parsed.json')).toString('utf8'));
+        const selectedIds=descriptors.get(descriptor.sha256);
+        report={file:report.file,format:report.format,issues:report.issues,camt:camtMessageSummary(report.camt),
+          statements:report.statements.filter(statement=>selectedIds.has(statement.id))};
+        reports.set(descriptor.sha256,report);
+      }
+      need(report.file.sha256===imported.file.sha256&&report.format==='CAMT053','CAMT_RETAINED_REPORT_CHANGED',
+        'The saved page must bind to its retained original file.',409);
+      const statement=report.statements.find(row=>row.id===imported.statementId);
+      need(statement,'CAMT_RETAINED_STATEMENT_REQUIRED','The retained file must contain its selected original statement.',409);
+      entryCount+=statement.rows.length+statement.pendingRows.length+statement.excludedRows.filter(row=>row.row?.camt||row.camt).length;
+      need(entryCount<=BANK_ROW_LIMIT,'CAMT_ASSEMBLY_ROW_LIMIT','Review at most 50,000 original entries in one complete statement.',413);
+      pages.push({importId:imported.id,file:imported.file,reviewSha256:imported.reviewSha256,
+        reportIssues:report.issues,message:report.camt,statement});
+    }
+    return assembleCamtPages(account,pages,{groupingNote:value.groupingNote,summaryScope:value.summaryScope});
+  }
+  async previewAssembly(value) {
+    return this.workspace.serial(async()=>({revision:this.workspace.state.revision,workspaceId:this.binding().workspaceId,
+      ...await this._assemblePages(value)}));
+  }
+  async _sourceAssembly(value) {
+    if(value.sourceClosing?.kind!=='CAMT_PAGE_ASSEMBLY')return null;
+    const assembly=await this._assemblePages({...value.sourceClosing,accountId:value.accountId});
+    need(assembly.id===value.sourceClosing.id,'CAMT_PAGE_REVIEW_CHANGED',
+      'Review the selected complete original page assembly again before closing.',409);
+    return assembly;
+  }
   async previewClose(value) {
     return this.workspace.serial(async()=>{
-      const report=closePreview(this.receivables.data(),this.account(value.accountId),value,this._periodClose(value.periodCloseId));
+      const report=closePreview(this.receivables.data(),this.account(value.accountId),value,this._periodClose(value.periodCloseId),await this._sourceAssembly(value));
       return {revision:this.workspace.state.revision,workspaceId:this.binding().workspaceId,...report};
     });
   }
   async retainClose(value) {
     return this._mutate('period_closed',value,async(data,actor,requestId)=>{
       const bank=bankData(data),account=this.account(value.accountId),
-        report=closePreview(data,account,value,this._periodClose(value.periodCloseId));
+        report=closePreview(data,account,value,this._periodClose(value.periodCloseId),await this._sourceAssembly(value));
       need(value.reviewSha256===report.reviewSha256,'BANK_CLOSE_REVIEW_CHANGED',
         'Review the current complete reconciliation before retaining its close.',409);
       need(report.ready,'BANK_CLOSE_UNRESOLVED','Resolve every source row, matching difference and bank balance difference before closing.',409);
@@ -531,11 +584,19 @@ export class BankStatementsWorkspace {
         return !current||current.financialSha256!==row.financialSha256||current.status!==row.status||
           (activeMatch(bank,row.id)?.id??null)!==(report.matches.find(match=>match.transactionId===row.id)?.id??null);
       }).map(row=>row.id);
-      const current=closePreview(this.receivables.data(),this.account(close.accountId),{
-        accountId:close.accountId,from:report.from,until:report.until,openingBalance:report.openingBalance,
+      const input={accountId:close.accountId,from:report.from,until:report.until,openingBalance:report.openingBalance,
         closingBalance:report.closingBalance,balanceNote:report.balanceNote,
-        ...(report.sourceClosing?{sourceClosing:{importId:report.sourceClosing.importId,id:report.sourceClosing.closing.id}}:{})
-      },report.periodClose);
+        ...(report.sourceClosing?{sourceClosing:report.sourceClosing.kind==='CAMT_PAGE_ASSEMBLY'?
+          report.sourceClosing.assembly.sourceClosing:{importId:report.sourceClosing.importId,id:report.sourceClosing.closing.id}}:{})};
+      let current;
+      try{current=closePreview(this.receivables.data(),this.account(close.accountId),input,report.periodClose,await this._sourceAssembly(input));}
+      catch(error){
+        if(report.sourceClosing?.kind!=='CAMT_PAGE_ASSEMBLY')throw error;
+        const unbound={...input,balanceNote:report.balanceNote||'Current comparison against the retained original multi-page close.'};
+        delete unbound.sourceClosing;
+        current=closePreview(this.receivables.data(),this.account(close.accountId),unbound,report.periodClose);
+        current.problems.push({code:error.code??'CAMT_PAGE_REVIEW_CHANGED',message:error.message});
+      }
       return {close:clone(close),report,reopening:clone(bank.reopenings.find(row=>row.closeId===id)??null),
         currentProblems:current.problems.filter(problem=>problem.code!=='BANK_CLOSE_OVERLAP'),currentDifference:current.difference,
         changedTransactionIds:changed,newTransactionIds:bank.transactions.filter(row=>row.accountId===close.accountId&&row.postedDate&&row.postedDate>=close.from&&row.postedDate<=close.until&&!report.transactions.some(prior=>prior.id===row.id)).map(row=>row.id),revision:this.workspace.state.revision};

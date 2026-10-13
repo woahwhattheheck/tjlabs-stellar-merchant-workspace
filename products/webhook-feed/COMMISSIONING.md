@@ -107,6 +107,14 @@ Export the original received events:
 
 The export creates window-01.ndjson and window-01.ndjson.manifest.json. Preserve both. The manifest retains source/page references, file identity, count and sequence boundary. Repeating the same export destination completes or reopens that selected export; use a new destination for a later window. Each export contains the retained subscription snapshot. A later export can include previously delivered events, so the destination adapter must apply its agreed idempotency key using the preserved event identities.
 
+For a customer whose destination is analytical work, use the maintained
+[Event Analysis programme](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_FEED_ANALYSIS.md).
+It consumes these same complete files into the existing Analysis database,
+retains every individual event and exact projected value, reviews cumulative
+later windows, and produces full typed tables, saved report publications,
+workbooks and a complete customer workspace handover. Existing customer report
+and worksheet choices remain part of that reviewed continuation.
+
 Implement the agreed database/API load with the destination's original transaction and idempotency behavior. Keep each source event's identity through transformation. Where the destination already implements idempotency, use its supported contract. Otherwise include a durable acceptance ledger or transactional key in the customer-specific adapter. Record the source window, accepted events, rejected or unresolved items and the actual destination acknowledgment in the original workorder.
 
 The acceptance owner opens the delivered result in the customer's existing application and completes the agreed task. Review missing, null, exact numeric, event-index and timestamp meaning there, rather than stopping at a successful HTTP response.

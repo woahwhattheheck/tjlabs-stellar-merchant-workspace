@@ -1,0 +1,72 @@
+{
+  "schema": "stellar-forge.distribution-source-selection.v1",
+  "id": "airgradient-customer",
+  "title": "AirGradient customer operations",
+  "description": "Complete retained indoor and outdoor source reporting, sixty selected measurements, both customer editions, independent editable receiving and the original Applications lifecycle.",
+  "base": {
+    "commands": [
+      "installation",
+      "runtime-profile",
+      "runtime-install",
+      "runtime-workspace",
+      "runtime-transfer",
+      "releases"
+    ],
+    "exports": [
+      "./runtime-profile",
+      "./installation",
+      "./installation/cli",
+      "./installation/product",
+      "./installation/runtime",
+      "./runtime-install",
+      "./runtime-transfer",
+      "./runtime-workspace",
+      "./runtime-workspace/server",
+      "./seller/releases",
+      "./package.json",
+      "./manifest.json"
+    ],
+    "features": [
+      "schema",
+      "openapi"
+    ],
+    "applicationProviders": [],
+    "merchantProviders": [],
+    "browserAssets": [
+      "stellar/scf-starforge-20261009/distribution/runtime-workspace/server.mjs"
+    ]
+  },
+  "contributions": [
+    "airgradient-operations"
+  ],
+  "components": [
+    "stellar/scf-starforge-20261009/partners/airgradient-operations",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace",
+    "stellar/scf-starforge-20261009/distribution/python-runtime",
+    "stellar/scf-starforge-20261009/sf46-release"
+  ],
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/distribution/build.mjs",
+    "stellar/scf-starforge-20261009/distribution/git-object-receiving.py",
+    "stellar/scf-starforge-20261009/distribution/runtime-unpack.py",
+    "stellar/scf-starforge-20261009/distribution/BUILDING.md",
+    "stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md",
+    "stellar/scf-starforge-20261009/distribution/RUNTIME_TRANSFER.md"
+  ],
+  "excludeFiles": [
+    "stellar/scf-starforge-20261009/distribution/index.mjs"
+  ],
+  "product": {
+    "schema": "stellar-forge.merchant-product-package.v1",
+    "description": "AirGradient customer source reporting, complete saved editions and independent editable receiving.",
+    "readme": "stellar/scf-starforge-20261009/partners/airgradient-operations/CUSTOMER_RECEIVING.md",
+    "bin": {
+      "starforge": "stellar/scf-starforge-20261009/distribution/cli.mjs",
+      "starforge-airgradient": "stellar/scf-starforge-20261009/partners/airgradient-operations/cli.mjs"
+    },
+    "repository": {
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "directory": ""
+    }
+  }
+}

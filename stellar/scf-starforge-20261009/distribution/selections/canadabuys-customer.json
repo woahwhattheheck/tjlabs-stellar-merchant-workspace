@@ -1,0 +1,75 @@
+{
+  "schema": "stellar-forge.distribution-source-selection.v1",
+  "id": "canadabuys-customer",
+  "title": "CanadaBuys customer operations and complete workspace receiving",
+  "description": "Original CanadaBuys procurement and bidder application, authenticated MCP customer commands, retained publication downloads and complete offline workspace receiving",
+  "base": {
+    "commands": [
+      "runtime-profile",
+      "runtime-install"
+    ],
+    "exports": [
+      "./runtime-profile",
+      "./runtime-install",
+      "./package.json",
+      "./manifest.json"
+    ],
+    "features": [],
+    "applicationProviders": [],
+    "merchantProviders": [],
+    "browserAssets": []
+  },
+  "contributions": [
+    "canadabuys",
+    "merchant-provider-canadabuys-workspaces"
+  ],
+  "components": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys"
+  ],
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/distribution/build.mjs",
+    "stellar/scf-starforge-20261009/distribution/build-state.mjs",
+    "stellar/scf-starforge-20261009/distribution/git-source.mjs",
+    "stellar/scf-starforge-20261009/distribution/git-object-receiving.py",
+    "stellar/scf-starforge-20261009/distribution/browser-assets.mjs",
+    "stellar/scf-starforge-20261009/distribution/product-package.mjs",
+    "stellar/scf-starforge-20261009/distribution/specification.mjs",
+    "stellar/scf-starforge-20261009/distribution/source-selection.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-profile.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-profile-cli.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-install.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-unpack.py",
+    "stellar/scf-starforge-20261009/distribution/cli.mjs",
+    "stellar/scf-starforge-20261009/distribution/workspace.mjs",
+    "stellar-forge/mcp-paid-agent/http-tools.mjs",
+    "stellar-forge/mcp-merchant-operator/canadabuys-client.mjs",
+    "stellar-forge/mcp-merchant-operator/canadabuys-download.mjs",
+    "stellar-forge/mcp-merchant-operator/canadabuys-operations.mjs",
+    "stellar-forge/mcp-merchant-operator/canadabuys-workspace.mjs",
+    "stellar-forge/mcp-merchant-operator/canadabuys-cli.mjs",
+    "stellar-forge/mcp-merchant-operator/canadabuys-client.d.mts",
+    "stellar-forge/mcp-merchant-operator/canadabuys-download.d.mts",
+    "stellar-forge/mcp-merchant-operator/canadabuys-operations.d.mts",
+    "stellar-forge/mcp-merchant-operator/CANADABUYS_CUSTOMER.md",
+    "stellar-forge/mcp-merchant-operator/catalog/canadabuys-workspace.mjs",
+    "stellar-forge/mcp-merchant-operator/providers/canadabuys-workspaces.mjs",
+    "stellar-forge/mcp-merchant-operator/examples/run-canadabuys-customer-receiving.mjs",
+    "stellar-forge/mcp-merchant-operator/CANADABUYS_EVIDENCE_INTAKE.md",
+    "stellar-forge/mcp-merchant-operator/examples/run-canadabuys-intake-receiving.mjs"
+  ],
+  "product": {
+    "schema": "stellar-forge.merchant-product-package.v1",
+    "description": "CanadaBuys source, bidder decisions and authenticated customer receiving",
+    "repository": {
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "directory": ""
+    },
+    "readme": "stellar-forge/mcp-merchant-operator/CANADABUYS_CUSTOMER.md",
+    "bin": {
+      "starforge": "stellar/scf-starforge-20261009/distribution/cli.mjs",
+      "canadabuys": "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/cli.mjs",
+      "canadabuys-customer": "stellar-forge/mcp-merchant-operator/canadabuys-cli.mjs"
+    }
+  }
+}

@@ -74,7 +74,9 @@
     "merchant-provider-tools",
     "utility-energy",
     "leap-intervals",
-    "gridfabric-plaid"
+    "gridfabric-plaid",
+    "operator-discovery",
+    "gridfabric-procedures"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",

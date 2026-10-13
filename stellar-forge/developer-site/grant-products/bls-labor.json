@@ -15,6 +15,12 @@
           "bytes": 16841,
           "sha256": "6c6be4112428599bc25e705efa5f519f64bf3277df0b12e71003ffce43970d9c",
           "git_blob": "7b69e910a6ff30bfc9818da86dd307de314e3f24"
+        },
+        {
+          "commit": "8a9c1240a2cbb6600683e9ee27e5d70fcd361011",
+          "bytes": 18376,
+          "sha256": "637769cc226f3b9969816ff47287f98577c5550f579d4fe9f73190caeccbce8c",
+          "git_blob": "57dda3845fb8135b588825c569cc22ed39e4082a"
         }
       ]
     },
@@ -27,6 +33,12 @@
       "editions": [
         {
           "commit": "353f917bb4e152b1bced7055b9dbe29c17ff76a8",
+          "bytes": 12868,
+          "sha256": "53db621b6a0a7164b6b43980430e5b2d364974b794ca1ab728fd55755f8feeab",
+          "git_blob": "6d949648ee368475807256095f8ea54164306f07"
+        },
+        {
+          "commit": "8a9c1240a2cbb6600683e9ee27e5d70fcd361011",
           "bytes": 12868,
           "sha256": "53db621b6a0a7164b6b43980430e5b2d364974b794ca1ab728fd55755f8feeab",
           "git_blob": "6d949648ee368475807256095f8ea54164306f07"
@@ -45,6 +57,12 @@
           "bytes": 7761,
           "sha256": "2c61c9110228b47af36477de47d3aeed1491fda5996c7307240bad3178e4a25b",
           "git_blob": "f725dc1bdf6873fe42683b2b9797af9e790bbfd7"
+        },
+        {
+          "commit": "8a9c1240a2cbb6600683e9ee27e5d70fcd361011",
+          "bytes": 11033,
+          "sha256": "f097375d950e927fe05e7830fe1b9884d2d4f9cb8e419cc8d35446fd955c339c",
+          "git_blob": "a1f19e7329ad1dfdaa962a5bbba3a27a2404ec5b"
         }
       ]
     },
@@ -60,6 +78,44 @@
           "bytes": 10201,
           "sha256": "b2c6196ddeaa82ef9ca98e2813b6b44907d0bc7b5dc7ffc2da184ea859bf0639",
           "git_blob": "bff15e5916aebb5903b47bc1251fa52c05226f04"
+        },
+        {
+          "commit": "8a9c1240a2cbb6600683e9ee27e5d70fcd361011",
+          "bytes": 10201,
+          "sha256": "b2c6196ddeaa82ef9ca98e2813b6b44907d0bc7b5dc7ffc2da184ea859bf0639",
+          "git_blob": "bff15e5916aebb5903b47bc1251fa52c05226f04"
+        }
+      ]
+    },
+    {
+      "id": "bls-regional-calculation-engine",
+      "label": "Exact regional resident and workplace calculations from original BLS observations",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/regional.py",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "required": false,
+      "editions": [
+        {
+          "commit": "8a9c1240a2cbb6600683e9ee27e5d70fcd361011",
+          "bytes": 37511,
+          "sha256": "016cefa0f542d2104b7aba068ac22f752a79ebc4e4df312cac8af86b11221908",
+          "git_blob": "e81cadd71e8f405aee66f568f3840859de302668"
+        }
+      ]
+    },
+    {
+      "id": "bls-regional-analysis-operating-guide",
+      "label": "Complete regional customer report, editable revisions and receiving guide",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/REGIONAL_ANALYSIS.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "required": false,
+      "editions": [
+        {
+          "commit": "8a9c1240a2cbb6600683e9ee27e5d70fcd361011",
+          "bytes": 12274,
+          "sha256": "188b64fd57cfdeb8215c98a318fd87c841430bd5beb0a908dbc8e8a43a8d621c",
+          "git_blob": "25dcf6ca09d9fd88ba0d72c4d4e6785b320794d5"
         }
       ]
     }

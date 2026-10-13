@@ -1,0 +1,364 @@
+https://github.com/user-attachments/assets/a29f3b1b-ad82-4c29-9c84-b289d8f96a5b
+
+# vellar-facilitator
+
+An x402 payment facilitator for Stellar with **Bazaar discovery**: verify and
+settle HTTP-402 payments for any seller, and let agents find payable resources
+without hardcoded integrations.
+
+> **Status: live on Stellar testnet and mainnet.** 11 x402 settlements
+> confirmed on mainnet (Sept 17-21, 2026; see
+> [`docs/mainnet-evidence.md`](./docs/mainnet-evidence.md) for the full
+> transaction table). 15 testnet proofs verify exactly on the ledger,
+> including 6 settlements from the canonical x402 e2e suite with unmodified
+> clients (see [`docs/decisions.md`](./docs/decisions.md)).
+>
+> **The pre-mainnet security review is complete.** See
+> [`docs/closing-state.md`](./docs/closing-state.md) for every finding with its
+> final status, and [`docs/security-audit.md`](./docs/security-audit.md) for the
+> detail. Running it is documented in
+> [`docs/operator-runbook.md`](./docs/operator-runbook.md).
+
+## Two things to know before you evaluate the hosted instance
+
+Both are properties of *this deployment*, not of the code, and both are more
+surprising to find by experiment than to be told.
+
+**1. The hosted instance runs on Railway (paid, always-on) — no cold start.**
+
+The catalog lives in libSQL/Turso rather than on the container, so listings
+and ownership bindings survive a restart.
+
+**2. THE TRUST LAYER IS INERT HERE. Every verification badge reads `"unknown"`,
+and `?verified_only=true` is refused with an explicit 400.** Not a bug and not
+misconfiguration:
+
+```json
+"trust": { "verification": "unknown", "acceptsVerification": ["unknown"], … }
+```
+
+The verdicts come from a **verification API that is deployed nowhere**, and this
+is a **deliberate deferral with a known dependency chain**, not an oversight or a
+missing config value:
+
+```
+  trust badges  ←  a verdict source
+                     ←  worker-service deployed        (needs a Docker host)
+                          ←  ATTESTOR_SECRET_KEY       (needs an attestor)
+                               ←  M5 multisig design   (unresolved)
+```
+
+Each link is blocked by the one below it, and the bottom one is a design decision
+in the wallet repository, not a deployment task here. **Nothing about this is
+switching on soon**, and it will not be switched on to produce testnet badges —
+turning it on for a demo would mean standing up a Docker host and minting an
+attestor key ahead of the multisig design that is supposed to govern it, which
+inverts the thing the attestor exists for.
+
+So `VERIFICATION_API_URL` is deliberately unset, and every verdict degrades to
+`"unknown"` — the honest default, since the alternative is asserting a trust
+level nothing backs. Tracked as **F4-ts**.
+
+Two prerequisites are being done in the wallet repo regardless, because they are
+defects in the API's design rather than in its deployment: **per-record
+timestamps** (the current response has none, so "newest verdict" falls back to
+array order) and **endpoint authentication** (it is unauthenticated, which would
+make it a trust root anyone could impersonate). Neither produces a badge here;
+both must be true before one would be worth trusting.
+
+**What this does NOT mean.** Two different things in that block are called
+"verified", and only one of them is inert:
+
+| Field | State here | What it is |
+| --- | --- | --- |
+| `verification`, `acceptsVerification` | **inert — always `"unknown"`** | Third-party attestation of the *payee*, from the absent API |
+| `ownerVerified` | **working, proven live** | Whether the resource's own 402 challenge names its bound `payTo` — fetched by this facilitator, no external service involved |
+
+So ownership verification works and is enforced; *reputation* verification is
+switched off. If you filter on `verified_only`, you are asking about the inert
+one, and the API now says so instead of pretending: a 400 with
+`verified_only_unavailable` and a pointer at `ownerVerified`.
+
+That refusal replaced an older, worse behaviour: a silent `items: []` — a
+correct-looking answer to a question this deployment cannot answer, which read
+as "nothing here is verified" when the truth was "nothing is being checked".
+
+## What it does
+
+| Endpoint | Purpose |
+| --- | --- |
+| `POST /verify` | Verify a payment by re-simulation on Soroban RPC (runs the payer's `__check_auth`, including any on-chain spending policy) |
+| `POST /settle` | Submit the payment on-chain, sponsoring the network fee — buyers hold only the payment asset, no XLM |
+| `GET /supported` | Advertise scheme/network/extensions/signers to sellers, plus `catalogAssets` — the live set of assets the catalog actually holds, grouped by network |
+| `GET /discovery/resources` | List cataloged x402 resources (filters: `type`, `payTo`, `scheme`, `network`, `extensions`, `asset`‡, `verified_only`†; `limit`/`offset`) |
+| `GET /discovery/search` | Hybrid search over the catalog — a lexical scorer (synonyms, stemming, weighted fields) fused with Voyage AI embeddings by RRF (`query`, same filters, cursor-paginated) |
+| `GET /health` | Liveness, plus the deployed `commit`, `uptimeSeconds`, `catalogSize`, `catalogFrozen` when bindings are frozen, and `unverifiableEntries` when any seller advertises an address the facilitator cannot fetch |
+
+† `verified_only` is **refused with a 400** (`verified_only_unavailable`) on
+this deployment. The verdicts it filters on come from a service that is deployed
+nowhere — see *Two things to know* above — so an empty list would describe the
+deployment, not the resources. `ownerVerified` is the field that works.
+
+‡ `asset` filters listings to those accepting a given SEP-41 asset (exact,
+case-sensitive match on the contract address). Discovery only — the facilitator
+stays asset-agnostic at settle time and runs no allowlist.
+[`docs/asset-support.md`](./docs/asset-support.md) covers USDC and USDT0,
+including USDT0's clawback/revocability flags and why that risk sits with the
+seller rather than a non-custodial facilitator.
+
+**Smart accounts welcome.** Policy-governed smart-account payments cost ~130k
+stroops of simulation fee (the policy contract runs inside `__check_auth`);
+hosted facilitators defaulting to a 50k ceiling reject them. This facilitator
+defaults to **500,000** (`MAX_TX_FEE_STROOPS`) — the exact bug that motivated
+this project, fixed from day one. That default is sized from evidence that
+carries its provenance ([`docs/decision-fee-thresholds.md`](./docs/decision-fee-thresholds.md)):
+the most expensive verified reading is **140,331** stroops simulated for a
+freshly provisioned policy-governed wallet (28,711 is the worst hash-verifiable
+charge on-chain), so 500,000 clears it by ~3.6x while bounding worst-case
+sponsor drain per settle at 0.05 XLM.
+
+**Bazaar catalogs itself.** When a payment settles and its payload carries the
+official [`bazaar` discovery extension](https://www.npmjs.com/package/@x402/extensions),
+the resource is upserted into the catalog automatically — no registration
+step. Catalog-on-settle keeps unpaid spam out; route templates and service
+metadata are validated/sanitized by the official extractor (catalog-poisoning
+guard).
+
+**Discovery responses carry a `trust` block.** Alongside the standard resource
+fields, each entry reports `settlements`, `uniquePayers` and `lastSettled`, plus
+`verification` / `acceptsVerification` / `ownerVerified`. Two things to know
+before you build on it:
+
+- **`observedSettlements` and `statsSource` disclose provenance.** `settlements`
+  may include a base loaded from durable storage, which has no independent source
+  of truth — a settlement count cannot be re-derived from the chain. `statsSource`
+  reads `"persisted"` when any part of it was inherited rather than witnessed, and
+  `observedSettlements` counts only what this process saw. **If you need a number
+  you can rely on, use that one.**
+- **If you are a seller, advertise your PUBLIC address.** The `resource.url` in
+  your 402 is what gets cataloged and what ownership verification re-fetches. A
+  `http://localhost:…` value (the default in `examples/seller.mjs`) can never be
+  verified — it is not https and not reachable — so your entry is served
+  permanently unverified. `PUBLIC_BASE_URL` is how the example declares its real
+  address; `/health` reports `unverifiableEntries` when any entry is in this state.
+- **Verification verdicts read `"unknown"` on this deployment and
+  `?verified_only=true` is refused with a 400** — see *Two things to know* at the top.
+  `ownerVerified` is the field that does work here.
+
+## Integration limits
+
+Worth knowing before you point a client at it:
+
+| Limit | Value |
+| --- | --- |
+| Rate limit | 60 requests/min per IP (`/health` exempt) |
+| Request body | 32 KiB, applied to every route |
+| `/settle` refusals | `503 settlement_refused` with a `reason` — `sponsor_balance_low`, `spend_ceiling`, `rate_limited_payto`, `rate_limited_url`, `unbound_pool_exhausted`, `pool_exhausted` (`retryable: true` — see docs/channel-pool-design.md §4) |
+
+Refusals are deliberately loud and carry a reason. Spend controls are **log-only
+on testnet and enforced on pubnet**, so a testnet client will see them in logs
+before it ever sees a 503.
+
+**The catalog survives a restart.** It used to not: the container's filesystem
+went with every spin-down, taking listings and ownership bindings. Since
+2026-08-11 the catalog is in libSQL/Turso, verified live across a 42-second cold
+start with the binding intact. An empty catalog now means an empty catalog, not a
+restart — if yours is missing, something else is wrong.
+
+The keep-alive workflow's full arc, honestly: disabled at first for workspace
+pool-budget reasons, **re-enabled 2026-08-11** against measured headroom,
+**retired 2026-08-15** when measurement showed GitHub's cron delivery (18–52
+minute gaps) could never beat the 15-minute idle timeout — hours spent, warmth
+not delivered — and **partially revived 2026-08-21** as `keep-warm.yml`: every
+10 minutes, reviewer hours only, documented as best-effort margin rather than
+a warm-window promise, since GitHub's delivery is the same scheduler that
+failed the measurement. The durable catalog had already removed half the
+reason to want it; the real fix remains a paid always-on instance, which is
+budgeted-not-bought as of 2026-08-15 (`render.yaml` holds the one-line change
+and its price).
+
+**Resource-URL ownership is trust-on-first-use.** The first settlement for a
+canonical URL (`origin + pathname`) binds it to that payment's `payTo`; later
+settlements with a different `payTo` are refused from the catalog, though the
+payment itself still settles. If you are a seller, be the first to settle for
+your own URL. Changing that address afterwards currently needs an operator —
+see runbook §1.
+
+## Run
+
+```sh
+npm install
+cp .env.example .env   # set SPONSOR_SECRET_KEY (funded testnet account)
+npm run dev            # http://localhost:4100
+```
+
+One-time setup, if you will be pushing branches:
+
+```sh
+git config core.hooksPath .githooks   # refuses pushes to a merged PR's branch
+```
+
+Tests and typecheck:
+
+```sh
+npm test        # includes wire-shape tests driven by the unmodified
+                # canonical HTTPFacilitatorClient + withBazaar client
+npm run typecheck
+```
+
+These are in-process tests against the canonical client library. They are **not**
+the x402-foundation e2e conformance suite, which needs three funded Stellar
+accounts. That suite **was** run on 2026-09-08 against the hosted instance
+(upstream HEAD `241df66`): **6 of 10 scenarios passed**, each settling a real
+payment re-checked against Horizon. The other four never executed — the
+`typescript/http/next` and `typescript/mcp` servers fail to start, and they fail
+the same way against the suite's own bundled reference facilitator, so the cause
+is upstream rather than here. The pubnet half remains unrun because there is no
+pubnet deployment.
+[`docs/conformance-report.md`](./docs/conformance-report.md) is the honest
+scorecard: what is verified live against the hosted instance, the settled
+transaction hashes re-checked against Horizon, the six e2e hashes with the
+command that produced them, and the gaps still open — a pubnet deployment, and
+search ranking quality (hybrid semantic search has shipped and is measured, but
+five of ten semantic queries still miss first place on a single seller's
+catalog, so it is not claimed as met).
+
+## MCP discovery server (for AI agents)
+
+`src/mcp.ts` exposes the catalog as MCP tools (`x402_list_resources`,
+`x402_search_resources`) over stdio, backed by the same HTTP API via the
+official `withBazaar` client. Point any MCP client at it:
+
+```json
+{
+  "mcpServers": {
+    "vellar-x402-discovery": {
+      "command": "npx",
+      "args": ["tsx", "src/mcp.ts"],
+      "cwd": "/path/to/vellar-facilitator",
+      "env": { "FACILITATOR_URL": "http://localhost:4100" }
+    }
+  }
+}
+```
+
+**This server finds resources; it does not pay for them.** It holds no keys, by
+design — the facilitator is neutral infrastructure that strangers point wallets
+at, so giving it custody would invert its trust model.
+
+The **payer** side is published separately as
+[`vellar-mcp-x402-payer`](https://www.npmjs.com/package/vellar-mcp-x402-payer)
+on npm (source:
+[`packages/mcp-x402-payer`](https://github.com/Vellar-Wallet/vellar-sdk/tree/main/packages/mcp-x402-payer)
+in the `vellar-sdk` repo). It runs locally beside the agent, holds exactly one
+key, and enforces a spend limit — on-chain via a Vellar smart account's policy
+when configured with one, and in-process otherwise. Its README is explicit that
+only the first is a defence against a compromised agent. An agent typically
+connects to both: this one to discover, that one to pay.
+
+**[`docs/using-it.md`](./docs/using-it.md)** — how to point at a running
+facilitator, split by role:
+
+- **Merchants** — what to change in your resource server, what your 402 must
+  declare, the five requirements for ownership verification, and what the silent
+  unverified case looks like.
+- **Buyers/agents** — what you need on your side (and what the sponsor covers, so
+  you know what you do *not* need to hold), discovery, and paying.
+
+Plus what will bite you on the hosted instance, and who this is ready for.
+[`docs/guide.md`](./docs/guide.md) is the different thing: running a facilitator
+locally and walking the loop with both example scripts.
+
+## End-to-end examples
+
+`examples/` contains the full loop, live-verified on testnet:
+
+- **`seller.mjs`** — an Express API with one paid route that declares the
+  bazaar discovery extension (price, input schema, output example).
+- **`buyer-classic.mjs`** — a plain Stellar keypair pays it, built entirely on
+  the **official** x402 client (`@x402/stellar/exact/client` +
+  `@x402/core/client`). ~12 lines of payment logic: no hand-assembled
+  transaction, no hand-signed auth entry, no second funded account, and the
+  discovery extension is echoed for you.
+- **`buyer.mjs`** — an agent pays it from a Vellar smart account with an
+  ed25519 session key (V1 credentials), echoing the discovery extension so
+  the facilitator catalogs the resource on settlement. Hand-rolled by
+  necessity: the official client cannot sign for a smart account
+  ([`docs/upstream-issue-smart-accounts.md`](./docs/upstream-issue-smart-accounts.md)).
+
+See [`docs/guide.md`](./docs/guide.md) for the walkthrough.
+
+## Architecture
+
+Composes the official Coinbase x402 packages rather than reimplementing the
+protocol: `x402Facilitator` (`@x402/core`) orchestrates; `ExactStellarScheme`
+(`@x402/stellar`) implements Stellar verify/settle; `@x402/extensions/bazaar`
+supplies the discovery data model, validation, and canonical client. This
+repo adds the HTTP service, correct Stellar configuration, the Bazaar catalog
+(storage, filtering, search, persistence), auto-cataloging ingestion, the MCP
+server, and the test suite. Full spec: [`technical-doc.md`](./technical-doc.md).
+
+Payment flow, end to end:
+
+```mermaid
+sequenceDiagram
+    participant Buyer
+    participant Seller
+    participant Facilitator
+    participant SorobanRPC
+    participant Catalog
+
+    Buyer->>Seller: GET /resource
+    Seller-->>Buyer: 402 + x402 header (amount, payTo, asset)
+    Buyer->>Facilitator: POST /settle (x402 payload)
+    Facilitator->>SorobanRPC: simulateTransaction (re-verify)
+    SorobanRPC-->>Facilitator: simulation result
+    Facilitator->>SorobanRPC: sendTransaction (sponsor fee-bumped)
+    SorobanRPC-->>Facilitator: settlement confirmed
+    Facilitator->>Catalog: auto-catalog resource (Bazaar extension)
+    Facilitator-->>Buyer: 200 + X-PAYMENT-RESPONSE
+    Buyer->>Seller: GET /resource (with proof)
+    Seller-->>Buyer: 200 + resource content
+```
+
+Bazaar discovery loop:
+
+```mermaid
+flowchart LR
+    A["Agent / Buyer"] -->|search query| B["/discovery/search"]
+    B --> C{"Catalog"}
+    C -->|ranked results| A
+    A -->|GET resource URL| D["Seller endpoint"]
+    D -->|402 challenge| A
+    A -->|POST /settle| E["Facilitator"]
+    E -->|settled| C
+```
+
+## Relationship to Vellar
+
+Separate infrastructure from the [Vellar wallet](https://github.com/Vellar-Wallet/vellar-dapp)
+and [vellar-sdk](https://github.com/Vellar-Wallet/vellar-sdk) (the x402
+**payer** side). Any x402 client can use this facilitator — Vellar wallets and
+non-Vellar wallets alike. Shared expertise, not shared code.
+
+## upto settlement contract
+
+The deployed `upto` contract is
+[`CCZL7CTRS6GWEYXDYD54DZM3OUHQW2S2A4KSU75SH275P3SFZLL4YQAN`](docs/upto-vellar-deployment.md),
+Vellar's own **MIT-licensed** implementation of the x402 `upto` scheme, built
+from [`contracts/upto-vellar/`](contracts/upto-vellar/). The design brief was
+committed before the implementation, and the ordering is checkable in the git
+history. First settlement verified on-chain at ledger 4587956: 0.01 USDC settled
+against a 0.05 USDC ceiling, which is the metered-billing property `upto` exists
+for.
+
+`upto` is still **EXPERIMENTAL** and should not be described as
+production-ready: it does not use the channel pool, so concurrent `upto`
+settlements can fail with `txBadSeq`, and the upstream wire format is still in
+review ([x402#3134](https://github.com/x402-foundation/x402/pull/3134)).
+
+## License
+
+Apache-2.0 for the facilitator itself. The Soroban crates differ:
+`contracts/upto-vellar` is **MIT**, `contracts/bond-escrow` is Apache-2.0.
+Each crate's `Cargo.toml` is the authority.

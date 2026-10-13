@@ -909,9 +909,123 @@ purchase and do not add a transaction or provider data acquisition.
 
 ## Native MPP merchant and customer
 
-Use `starforge mpp-workspace` or **Applications → Native MPP merchant and customer** to create or attach one original native workspace. Its retained product opens the original merchant/customer browser and merchant agent together. Configure the merchant’s exact resources and prices, receive its customer contract, review the payer limits and governor settings, prepare one stable purchase ID, and continue the original consent, payment and recovery workflow.
+Use `starforge mpp-workspace` or **Applications → Native MPP merchant and
+customer** to create or attach one original native workspace. The retained
+product opens its merchant/customer browser and merchant agent together.
+Select its existing Charge workflow for an original governed purchase or
+**Channel work** for a funded sequence of useful recurring requests. Both use
+the same product session and original native workspace ownership.
 
-The [native MPP operating guide](../mpp-workspace/OPERATING.md) gives the exact runtime selection, private setup, browser and typed client commands, managed terminal and original purchase recovery. Its [receiving guide](../mpp-workspace/RECEIVING.md) carries all twelve generated customer files and the original response bytes, including interrupted transfer and reopen. Existing purchases retain their accepted profile and request while current customer inputs move to a later revision.
+The [native MPP operating guide](../mpp-workspace/OPERATING.md) supplies the
+complete runtime and private setup. Its original payment runtime selects
+`@stellar/mpp 0.7.1`, `mppx 0.6.29` and Stellar SDK `15.1.0`; receive
+that selection in its retained directory before opening the product. Keep the
+controlling terminal available for the actual customer or financial
+authorization. Managed Applications retains that terminal with the original
+process.
+
+### Operate an original Charge purchase
+
+Configure the merchant's actual resources, origin, routes and prices. Receive
+the complete customer contract, review payer limits and governor settings,
+then prepare one stable purchase ID. Execute that original consent, payment
+and delivery workflow. A retained purchase keeps its accepted profile and
+request while the current customer configuration can move to a later
+revision.
+
+The [customer receiving guide](../mpp-workspace/RECEIVING.md) carries all twelve
+generated customer files and the original response bytes. If execution or
+transfer is interrupted, inspect the original purchase and job, continue its
+existing recovery and receive the saved complete result.
+
+### Open the customer's channel and authorize its useful task
+
+In **Channel work → Open a channel**, select the actual network, deployed
+WASM edition or complete host WASM file, token, funder, merchant recipient,
+commitment key, initial deposit and refund period. Preparation retains the
+whole code, one salt and the derived channel identity before signing. Optional
+upload and channel creation remain separate original stages within the
+selected total fee authority.
+
+Use the original opening ID to inspect or resume a pending opening. Its
+completed state installs the same channel stream and funder profile. The
+[opening workflow](../../stellar/scf-starforge-20261009/mpp-channel/README.md#open-and-initially-fund-a-channel)
+gives the full input and transaction states; the original product commands
+are `channel opening-template`, `opening-prepare`, `opening-execute`,
+`opening-resume` and `openings`.
+
+Receive the merchant's actual channel contract and select its useful priced
+route and authorized source edition. Save the task with its operator, total
+amount in token base units, per-purchase maximum, purchase count and expiry.
+**Authorize task budget** approves that selected edition in the product's
+terminal. Editing a task retains its earlier editions and committed spending;
+the revised edition receives its own authorization.
+
+### Complete and recover a real work list
+
+Each work item uses the original task ID, one stable purchase ID and the
+complete actual request. **Execute** signs that purchase's retained cumulative
+target; **Resume** continues the same purchase and response. A stopped task
+allows existing work to recover while preventing new reservations.
+
+The full work-list file uses schema
+`stellar-forge.mpp-channel-work.v1`. Its items contain `taskId`,
+`purchaseId` and `request`. Run it through the original installed product
+and receive the actual response files:
+
+~~~sh
+starforge mpp-workspace channel run --dir "$MPP_PRODUCT" \
+  --input "$ACTUAL_CHANNEL_WORK_LIST" --out "$WORK_RESULT"
+starforge mpp-workspace channel response --dir "$MPP_PRODUCT" \
+  --id "$ORIGINAL_PURCHASE_ID" --out "$PAID_RESPONSE"
+~~~
+
+Keep the same work-list and purchase identities after an interruption.
+`channel job --id "$ORIGINAL_JOB_ID"` reads an accepted operation still
+running in the product. The typed JavaScript/TypeScript and
+[Python customer clients](../../stellar/scf-starforge-20261009/mpp-channel/python/README.md)
+attach to that same history. The merchant MCP supplies the corresponding
+status, original-record, operation and complete-file tools under console
+alias `native`.
+
+### Collect, replenish and recover channel funds
+
+Read **Channel funds** for the balance, cumulative amount already collected,
+observation ledger and refund state. The application reads balance and
+withdrawal accounting from the same ledger. A new paid commitment consumes
+its unpaid difference above amounts already collected, while task authority
+continues to enforce its original caps.
+
+Select the actual operation and keep its original ID:
+
+| Customer or merchant action | Original preparation/execution | Completed behavior |
+| --- | --- | --- |
+| Collect earned work and continue service | `collection-prepare` / `collection-execute` | **COLLECTED** leaves the channel open for later purchases |
+| Collect and close the merchant channel | `close-prepare` / `close-execute` | **SETTLED** retains the original final settlement |
+| Add an explicit amount of customer funds | `funding-prepare` / `funding-execute`, `action:"top_up"` | Funds enter the selected channel; task caps remain their separately authorized values |
+| Start the original funder refund period | Same funding commands, `action:"close_start"` | The actual ledger deadline is retained and fresh commitments stop |
+| Return the remaining balance after the deadline | Same funding commands, `action:"refund"` | The original contract returns the remaining balance to its selected funder |
+
+Each operation retains its exact signer reference, parties, token, fee
+authority, signed envelope and hash. Use its original resume/reconcile command
+after a lost response. When the original RPC no longer retains the possible
+inclusion window, select an archival RPC for the same network through that
+operation's reconcile input. The
+[financial operating course](../../stellar/scf-starforge-20261009/mpp-channel/README.md#fund-collect-and-return-the-original-channel)
+defines every field and terminal state.
+
+### Receive the whole operating channel
+
+Use [complete operating-channel receiving](../mpp-workspace/RECEIVING.md#6-receive-a-complete-operating-channel)
+to move the selected original stream into the receiving product. The handover
+carries full code and opening history, task and merchant editions, original
+purchases and paid files, funding/collection/refund state and native SDK state.
+Prepared and interrupted signed operations retain their original identities.
+
+Open the received channel and an original paid response, then continue the
+agreed next customer task using the receiving host's actual configuration.
+Keep useful paid work, commitment acceptance and on-chain collections visible
+as their distinct events in the original commissioning case.
 
 ## 12. Operate and hand over a Timescale data product
 

@@ -77,6 +77,21 @@ The [complete composition guide](COMPOSITION.md) includes JSON orders, grouped C
 starforge document-merchant compose --help
 ~~~
 
+## Customer production browser
+
+The saved **Document production** application opens the customer's existing Request, Checkout, Jobs and Resource library with a document workspace at `/documents/`. Choose complete CSV/JSON data and editable templates, prepare the exact document set, review its saved native price, and receive every finished PDF together with its source. The browser keeps the full dataset and source plan available for download and exports the original Collection for customer handover.
+
+The same customer can start this workspace from the installed command:
+
+~~~sh
+starforge document-merchant compose serve \
+  --workspace-options /srv/starforge/private/customer-options.json \
+  --provider snaplab \
+  --merchant-origin https://YOUR_MERCHANT_ORIGIN
+~~~
+
+The private options file contains the customer's complete original Jobs and nested Checkout options. Use the existing customer directory, operator and allowed file roots. The [composition guide](COMPOSITION.md) covers that configuration, saved Applications selection, complete uploads, source restoration, price review and original interrupted-job receiving.
+
 ## Customer batch fulfillment
 
 The installed `document-merchant batch` commands turn a customer's reports, invoices or cards into a complete delivered document set. They use the original Request, native Checkout, Jobs and Resource library; the saved plan binds all source files and prices before execution. See [the complete batch workflow](BATCHES.md) for configuration, price review, continuation and portable customer delivery.
@@ -88,3 +103,24 @@ starforge document-merchant batch --help
 ## Saved Applications operation
 
 [APPLICATIONS.md](APPLICATIONS.md) covers the complete saved Document merchant: review and prepare the provider configuration, start the original native Jobs service, open its authenticated operator, fulfill whole-file customer requests, then stop and reopen that same merchant. The installed CLI exposes `review`, `inspect-service` and `launch`; JS/TS uses the same original service lifetime.
+
+
+## Ordered invoice and report bundles
+
+After receiving the original PDFs, use the same Document production browser's Ordered PDF bundle step or `document-merchant assemble` to prepare exact customer order, review the original assembly price, fulfill and receive every volume, and export one complete customer archive. The PDFMint-backed `assemblePdfs` function is enabled explicitly with its own native payment terms. Single-PDF volumes retain their original bytes without a merge purchase. See [ASSEMBLY.md](./ASSEMBLY.md) for complete merchant setup, local/batch source intake, CLI commands, continuation, output units and independent customer receiving.
+
+## Reuse an existing commerce installation
+
+The [commissioning workflow](COMMISSIONING.md) reads a retained original sf66 commerce setup, selects its exact native offer, reuses the existing funded operator and facilitator, and prepares the complete document merchant and customer options. `document-merchant commission` covers source review, resumable setup, inspection and the original service lifetime. The generated Case Desk options connect a saved customer HTML edition directly to the maintained paid PDF receiving and attachment workflow.
+
+### Existing native account profile
+
+The same `commission review` and `commission prepare` commands accept `--account-source FILE` for an existing native operator profile and facilitator policy. This retains the original payer, signer, operator policy and spending ledger while creating the document service and complete customer/Case Desk settings. See [direct account commissioning](COMMISSIONING.md#use-an-existing-operator-account-directly) for the full source contract and operating commands.
+
+The existing **Document merchant** Applications entry also accepts the complete commissioning options JSON. It prepares on first Start and owns the same original managed service/facilitator lifetime through Open, Stop and reopen. See [commissioning in Applications](APPLICATIONS.md#commission-the-existing-account-in-applications).
+
+Existing invoices and reports can enter through **Bundle existing PDFs** in Document production. The browser retains their full PDF bytes and chosen order, prepares the original assembly price, follows existing paid jobs and downloads all final volumes and sources in one complete bundle. The [assembly operating guide](ASSEMBLY.md#existing-pdf-intake-in-the-customer-browser) includes uploads, large local source plans, interruption recovery and installed API use.
+
+### Correct a saved customer document
+
+Document production can select individual invoices or reports from a saved set, edit their complete records and templates, and prepare a new source set containing only those replacements. An unchanged repeat preserves the selected rendered source. Both flows retain the original task reference and source relationship, then use the existing merchant quote, customer checkout, full PDF receiving and Collection export. See [Correct selected documents](COMPOSITION.md#correct-selected-documents-or-order-an-unchanged-repeat) for the browser and CLI workflow.

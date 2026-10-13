@@ -1,6 +1,6 @@
 # Source Tables workbench
 
-Use Source Tables to turn complete CSV or TSV files into reviewed native merchant resources. One editable project retains the original files, field decisions, earlier source editions, complete comparisons and the merchant's existing route and payment settings.
+Use Source Tables to turn complete delimited files or explicitly selected document tables into reviewed native merchant resources. One editable project retains the original files, field decisions, earlier source editions, complete comparisons and the merchant's existing route and payment settings.
 
 The selected installation includes the browser workbench, native CLI, typed interface, original merchant and buyer commands, managed Applications and runtime transfer. The [field and source guide](../../stellar-forge/developer-site/SOURCE_TABLES.md) gives the exact parsing, mapping, comparison and archive contracts.
 
@@ -74,6 +74,16 @@ The [runtime installation guide](../../stellar/scf-starforge-20261009/distributi
 Use **Integer text** for zero-padded identifiers and large integers, and **Decimal text** for exact amounts or measurements whose digits and scale must survive unchanged. An empty string, JSON null and an omitted field are separate choices. The workbench retains quoted newlines, source line endings, Unicode and a UTF-8 BOM. Its full review processes every row.
 
 The exported resource includes `fields`, `keyFields`, `source` and all mapped `rows`. A table can retain a 16 MiB original source and up to 100,000 records; its complete selected native resource must fit the original generator's 1 MiB limit. Use the existing dataset/database workflow for larger publications.
+
+## Prepare tables from a document
+
+Open a table-preserving HTML or Markdown extraction, or reopen its retained document-source JSON. Keep the original document URL, filename and supplied page locations with that source. Select the original table, header rows, data rows and columns, then choose how merged cells and whitespace contribute to the output.
+
+Inspect the projected values and their original cell locations. Receive the selection as a new resource or as the next source edition of an existing table, then continue through the ordinary field mapping and retained review. The complete extraction remains in the editable project; omitted rows remain available for a later selection. Projected editions retain their complete selection and cell origins even when two different selections produce the same CSV text.
+
+The native commands are `document-inspect`, `document-init`, `document-add` and `document-edition`. The [document intake guide](../../stellar-forge/developer-site/SOURCE_TABLES.md#receive-tables-extracted-from-a-document) includes exact command arguments, the typed `source-document-tables` interface, all six original WAGO supplier tables and the complete native receiving programme.
+
+Native workspace exports include the original extraction and source metadata under `source-tables/documents/`, plus explicit selections, projections and row origins under `source-tables/projections/`. Reopening checks those records against the original source before restoring its reviewed resources.
 
 ## Update and explain changes
 
@@ -149,3 +159,22 @@ Open `source-tables/project.json` from the delivered workspace in the recipient'
 Browser saves use an expected revision in one IndexedDB transaction. If another tab saved the same project, open its newer revision or save the current work as a separate browser copy. Download the project before changing host, port or browser.
 
 For an existing commissioning case, attach the complete exported material through its current source-bundle writer and original request, terms and case revision. The [source guide](../../stellar-forge/developer-site/SOURCE_TABLES.md#existing-sf49-commissioning) describes that receiving relationship.
+
+## Retain unfinished document preparations
+
+Every opened extraction and its per-table preparation now travels in the editable project before it is received into field mapping. Header/data ranges, columns, exclusion notes, merged-cell and whitespace choices, preview position, destination and CSV filename remain separate for each original table. Incomplete range text remains editable. Switching the retained extraction or table reopens its preceding choices.
+
+Use **Save in browser**, **Save as copy** or **Download project** for the complete project, including unfinished intake. The existing browser revision comparison preserves conflicting saves. The unload prompt includes intake edits. Opening another project first asks about unsaved changes, then restores that project's own sources and preparations.
+
+**Download all preparations** produces a complete document-intake JSON with original extractions and every table's working choices. Open that file through **Open extracted text / source JSON**. Receiving keeps preceding different choices in **Earlier preparation**, and restoring an earlier preparation retains the work it replaces. The original source identity is revalidated; arbitrary changed source bytes cannot be substituted. Project downloads remain available when browser storage is unavailable.
+
+A restored target from another project remains visibly unresolved until an existing current destination is selected. Preparing the CSV always uses the original document projection engine, and **Use in field mapping** continues through the original source-edition/mapping/review path. Native workspace export still requires every received resource's current review. Unreceived preparations remain source material in the complete project; they do not become a merchant resource implicitly.
+
+The same complete intake can move through the installed CLI:
+
+```sh
+starforge source-tables intake-export --project project.json --out new-preparations.json
+starforge source-tables intake-open --project another-project.json --source new-preparations.json --out new-project-with-preparations.json
+```
+
+All CLI outputs use a new path and preserve their input files. Earlier projects without the optional intake field keep their original shape and behavior. Complete preparation files use the existing 128 MiB project receiving limit.

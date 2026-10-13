@@ -41,65 +41,69 @@ export class CollectionsWorkspace {
   }
   async save(value) {
     this.guard(value);
-    return this.receivables._mutate('collection_case_saved', value, async (data, actor) => {
-      const effectiveDate = dateValue(value.effectiveDate, 'case effective date'), terms = collectionTerms(value);
-      need(terms.nextActionDate >= effectiveDate, 'INVALID_COLLECTION_FOLLOW_UP',
-        'Choose a next follow-up date on or after this effective date.');
-      let row;
-      if (value.id) {
-        row = this.row(value.id); this.expected(row, value); collectionDate(row, effectiveDate);
-        need(this.summary(row.id, effectiveDate).status === 'OPEN', 'COLLECTION_CASE_CLOSED',
-          'Reopen the closed case before changing its assignment.', 409);
-        this.append(row, actor, {kind: 'UPDATE', effectiveDate, terms,
-          note: field(value.note ?? '', 'assignment note', 6000, true)});
-      } else {
-        const invoice = this.receivables._invoice(value.invoiceId);
-        need(invoice.status === 'ISSUED' && invoice.document, 'COLLECTION_ISSUED_INVOICE_REQUIRED',
-          'Open a collection case for an issued invoice.', 409);
-        const original = invoiceSummary(invoice, data, effectiveDate);
-        need(original.issueDate <= effectiveDate && minor(original.amountDue, original.currency) > 0n,
-          'COLLECTION_OUTSTANDING_INVOICE_REQUIRED', 'Choose an invoice with a balance on this effective date.');
-        const duplicate = collectionRows(data).find(item => item.invoiceId === invoice.id);
-        need(!duplicate, 'COLLECTION_CASE_EXISTS', 'This invoice already has a retained case. Open or reopen it.', 409);
-        row = {schema: COLLECTION_CASE_SCHEMA, id: randomUUID(), version: 0, invoiceId: invoice.id,
-          customerId: original.customerId, currency: currencyOf(original.currency), openedDate: effectiveDate,
-          createdAt: now(), createdBy: actor, events: []};
-        this.append(row, actor, {kind: 'OPEN', effectiveDate, terms, invoiceBasis: original,
-          note: field(value.note ?? '', 'opening note', 6000, true)});
-        (data.collectionCases ??= []).push(row);
-      }
-      return {collectionCaseId: row.id, collectionAsOf: effectiveDate};
-    });
+    return this.receivables._mutate('collection_case_saved', value, async (data, actor) => this.saveInTransaction(data, actor, value));
+  }
+  saveInTransaction(data, actor, value) {
+    const effectiveDate = dateValue(value.effectiveDate, 'case effective date'), terms = collectionTerms(value);
+    need(terms.nextActionDate >= effectiveDate, 'INVALID_COLLECTION_FOLLOW_UP',
+      'Choose a next follow-up date on or after this effective date.');
+    let row;
+    if (value.id) {
+      row = this.row(value.id); this.expected(row, value); collectionDate(row, effectiveDate);
+      need(this.summary(row.id, effectiveDate).status === 'OPEN', 'COLLECTION_CASE_CLOSED',
+        'Reopen the closed case before changing its assignment.', 409);
+      this.append(row, actor, {kind: 'UPDATE', effectiveDate, terms,
+        note: field(value.note ?? '', 'assignment note', 6000, true)});
+    } else {
+      const invoice = this.receivables._invoice(value.invoiceId);
+      need(invoice.status === 'ISSUED' && invoice.document, 'COLLECTION_ISSUED_INVOICE_REQUIRED',
+        'Open a collection case for an issued invoice.', 409);
+      const original = invoiceSummary(invoice, data, effectiveDate);
+      need(original.issueDate <= effectiveDate && minor(original.amountDue, original.currency) > 0n,
+        'COLLECTION_OUTSTANDING_INVOICE_REQUIRED', 'Choose an invoice with a balance on this effective date.');
+      const duplicate = collectionRows(data).find(item => item.invoiceId === invoice.id);
+      need(!duplicate, 'COLLECTION_CASE_EXISTS', 'This invoice already has a retained case. Open or reopen it.', 409);
+      row = {schema: COLLECTION_CASE_SCHEMA, id: randomUUID(), version: 0, invoiceId: invoice.id,
+        customerId: original.customerId, currency: currencyOf(original.currency), openedDate: effectiveDate,
+        createdAt: now(), createdBy: actor, events: []};
+      this.append(row, actor, {kind: 'OPEN', effectiveDate, terms, invoiceBasis: original,
+        note: field(value.note ?? '', 'opening note', 6000, true)});
+      (data.collectionCases ??= []).push(row);
+    }
+    return {collectionCaseId: row.id, collectionAsOf: effectiveDate};
   }
   async activity(id, value) {
     this.guard(value); identifier(id, 'collection case');
-    return this.receivables._mutate('collection_activity_recorded', {...value, collectionCaseId: id}, async (data, actor) => {
-      const row = this.row(id); this.expected(row, value);
-      const effectiveDate = collectionDate(row, value.effectiveDate), summary = this.summary(id, effectiveDate);
-      need(summary.status === 'OPEN' || ['NOTE', 'CONTACT'].includes(value.kind),
-        'COLLECTION_CASE_CLOSED', 'Reopen the case before recording a new promise or dispute.', 409);
-      const event = normalizeCollectionActivity({...value, effectiveDate}, summary);
-      const saved = this.append(row, actor, event);
-      return {collectionCaseId: row.id, collectionEventId: saved.id, collectionAsOf: effectiveDate};
-    });
+    return this.receivables._mutate('collection_activity_recorded', {...value, collectionCaseId: id}, async (data, actor) => this.activityInTransaction(data, actor, id, value));
+  }
+  activityInTransaction(data, actor, id, value) {
+    const row = this.row(id); this.expected(row, value);
+    const effectiveDate = collectionDate(row, value.effectiveDate), summary = this.summary(id, effectiveDate);
+    need(summary.status === 'OPEN' || ['NOTE', 'CONTACT'].includes(value.kind),
+      'COLLECTION_CASE_CLOSED', 'Reopen the case before recording a new promise or dispute.', 409);
+    const event = normalizeCollectionActivity({...value, effectiveDate}, summary);
+    const saved = this.append(row, actor, event);
+    return {collectionCaseId: row.id, collectionEventId: saved.id, collectionAsOf: effectiveDate};
   }
   async transition(id, value, kind) {
     this.guard(value); identifier(id, 'collection case');
     need(['CLOSE', 'REOPEN'].includes(kind), 'INVALID_COLLECTION_TRANSITION', 'Choose Close or Reopen.');
-    return this.receivables._mutate('collection_case_' + kind.toLowerCase(), {...value, collectionCaseId: id}, async (data, actor) => {
-      const row = this.row(id); this.expected(row, value);
-      const effectiveDate = collectionDate(row, value.effectiveDate), current = this.summary(id, effectiveDate);
-      need(current.status === (kind === 'CLOSE' ? 'OPEN' : 'CLOSED'), 'COLLECTION_STATUS_CHANGED',
-        kind === 'CLOSE' ? 'The case is already closed.' : 'The case is already open.', 409);
-      const event = {kind, effectiveDate, note: field(value.note, 'case reason', 6000)};
-      if (kind === 'REOPEN') {
-        event.nextActionDate = dateValue(value.nextActionDate, 'next follow-up date');
-        need(event.nextActionDate >= effectiveDate, 'INVALID_COLLECTION_FOLLOW_UP',
-          'Choose a next follow-up date on or after reopening.');
-      }
-      this.append(row, actor, event);
-      return {collectionCaseId: row.id, collectionAsOf: effectiveDate};
-    });
+    return this.receivables._mutate('collection_case_' + kind.toLowerCase(), {...value, collectionCaseId: id}, async (data, actor) => this.transitionInTransaction(data, actor, id, value, kind));
+  }
+  transitionInTransaction(data, actor, id, value, kind) {
+    need(['CLOSE','REOPEN'].includes(kind), 'INVALID_COLLECTION_TRANSITION', 'Choose Close or Reopen.');
+    const row = this.row(id); this.expected(row, value);
+    const effectiveDate = collectionDate(row, value.effectiveDate), current = this.summary(id, effectiveDate);
+    need(current.status === (kind === 'CLOSE' ? 'OPEN' : 'CLOSED'), 'COLLECTION_STATUS_CHANGED',
+      kind === 'CLOSE' ? 'The case is already closed.' : 'The case is already open.', 409);
+    const event = {kind, effectiveDate, note: field(value.note, 'case reason', 6000)};
+    if (kind === 'REOPEN') {
+      event.nextActionDate = dateValue(value.nextActionDate, 'next follow-up date');
+      need(event.nextActionDate >= effectiveDate, 'INVALID_COLLECTION_FOLLOW_UP',
+        'Choose a next follow-up date on or after reopening.');
+    }
+    this.append(row, actor, event);
+    return {collectionCaseId: row.id, collectionAsOf: effectiveDate};
   }
   async reminder(id, query = {}) {
     return this.workspace.serial(async () => {

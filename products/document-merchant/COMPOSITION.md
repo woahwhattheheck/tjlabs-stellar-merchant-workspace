@@ -16,6 +16,140 @@ The same command can run from the repository:
 node /absolute/merchant-repository/products/document-merchant/composition-cli.mjs --help
 ~~~
 
+## Use Document production in the browser
+
+The browser operates the same saved source, native batch, customer Request, Checkout, Jobs and Resource library as the CLI. Its starting page lists existing document sets and opens their original source and receiving state. Closing a tab leaves the running local service available; stopping the service drains its current work and releases the original customer directory.
+
+Use the complete private options JSON that already selects this customer. The native checkout configuration is nested under `checkout`; for example:
+
+~~~json
+{
+  "directory": "/absolute/existing-customer-workspace",
+  "checkout": {
+    "operatorWorkspace": "/absolute/existing-operator-workspace",
+    "runtimeDirectory": "/absolute/merchant-repository/stellar/scf-starforge-20261009/sf88-operator-buyer-cli"
+  }
+}
+~~~
+
+An original Node buyer profile uses `checkout.operatorProfile` in place of `checkout.operatorWorkspace`. Retain the customer's other configuration, including any existing buyer roots, file roots, native timeout settings or input storage. The options file and standalone buyer profile are private files. The customer and operator directories remain the original private directories.
+
+The service opens this complete options object through the original customer model. Keep one running owner of that customer directory. If the existing general Jobs application is open, stop that original application before opening Document production; its already saved requests and results remain in the same directory.
+
+Start the browser:
+
+~~~sh
+starforge document-merchant compose serve \
+  --workspace-options /absolute/private/customer-options.json \
+  --provider snaplab \
+  --merchant-origin https://your-commissioned-merchant.example
+~~~
+
+Replace the example origin with the actual document merchant's HTTPS origin. The command prints one complete startup JSON line containing `documentUrl`. Open that private local URL. The same startup record links to original Request, Checkout, Jobs, Collections, Resource library and job resolutions. All links use one local host and customer token.
+
+Repository execution uses the same CLI leaf:
+
+~~~sh
+node /absolute/merchant-repository/products/document-merchant/composition-cli.mjs serve \
+  --workspace-options /absolute/private/customer-options.json \
+  --provider snaplab \
+  --merchant-origin https://your-commissioned-merchant.example
+~~~
+
+The saved composition root defaults to:
+
+~~~text
+<original customer directory>/artifacts/document-compositions
+~~~
+
+Use `--source-root /absolute/allowed/private/compositions` to select another root inside that customer's existing allowed file roots. The controller validates this against the original customer, and it creates a private child directory for each document set. The default customer artifact root is already accepted by the original file intake.
+
+| Service option | Meaning |
+| --- | --- |
+| `--workspace-options FILE` | Complete private original customer JSON; required |
+| `--provider mintpdf|snaplab|pdfmint` | Initial renderer selection; defaults to `mintpdf` |
+| `--merchant-origin HTTPS_ORIGIN` | Initial actual merchant origin; each document set retains its own selected origin |
+| `--source-root DIR` | Existing allowed input root containing this customer's saved compositions |
+| `--intake-key-env NAME` | Name of the original intake key in the private process environment |
+| `--deadline-ms N` | Receiving wait per operation, 1000–3600000 milliseconds; default 300000 |
+| `--poll-ms N` | Receiving poll interval, 250–30000 milliseconds; default 1500 |
+| `--port N` | Local port; `0` selects an available port |
+| `--expected-selection SHA` | Optional exact service selection returned by `inspect-service` |
+
+Provider API keys remain with the original merchant's provider configuration. The optional intake environment name selects this customer's existing intake access. Credential values are kept in their private files or process environment.
+
+### Prepare a complete saved document set
+
+Select **New document set**. **Starting example** offers the complete JSON order, grouped CSV order line and Markdown report recipes. Choose **Load example** to load the matching dataset, templates and mappings; replace the example data with the actual complete customer files.
+
+Choose the document set ID, name, renderer and **Commissioned merchant HTTPS origin**. The source form accepts a complete CSV or JSON file and the selected HTML or Markdown templates. Its complete recipe editor controls record grouping, JSON pointers, task references, optional templates and provider settings. **Apply mapping** reconciles the selected recipe with the source form.
+
+Select **Prepare and save documents** to retain the complete dataset, configuration, templates, generated document source, source review and portable plan. This creates the source edition before any merchant quote or checkout. The saved page shows the source SHA256, document count and parent task count. **Download complete source plan** returns the full portable JSON; **Download source review** returns the whole readable source review.
+
+A changed dataset or template becomes a new document set ID. Reopening a saved set selects its original source and batch. Selecting **Refresh** reloads the current saved state, including work completed through another ordinary CLI lifetime after this service stopped.
+
+### Price, render and receive on the original customer
+
+Select **Prepare merchant price** to stage the saved document source into the original file intake and prepare each native request. The page shows the aggregate price and the document requests behind it. **Exact saved quote** exposes the original batch SHA; **Download complete native plan** returns that saved plan.
+
+Select **Render at this saved price** to use the displayed exact native plan. The original checkout and payment controls operate on their original intent, review, attempt and result records. The browser's Checkout link opens the same customer's existing approval interface.
+
+The document table follows each source through its actual request, checkout, job and file receiving. **Receive existing jobs** continues original accepted jobs without replacing their request or checkout. The current operation can be stopped through **Stop current operation**. The controller aborts and drains its active work; the saved source, native records and any received outputs remain available for continuation.
+
+Each received PDF and source file is a complete download through the original verified resource transfer route. A PDF becomes available when its actual native output receiver reports it received. The browser does not require copying resource bytes into a separate delivery store.
+
+### Export complete customer editions
+
+Select **Export received documents** to create an explicit customer export edition through the original Resource library Collection. It includes the actual received documents, original source and document metadata together with the full composition plan.
+
+The saved page lists completed export editions and any partial export directory. **Continue this export** resumes the exact incomplete edition. A later newly requested export has its own edition ID, preserving earlier customer files while allowing updated Collection notes or annotations to be included.
+
+Downloads use the original verified file descriptor and complete transfer route. Source plans, source reviews, native plans, PDFs and exported Collections retain their full bytes. Use the downloaded artifact when reviewing or delivering large content.
+
+### Receive a complete portable source plan
+
+The **Receive source plan** form accepts the original composition ID, complete source-plan SHA256 and one source location:
+
+| Source location | Supported size and handling |
+| --- | --- |
+| **Complete source plan** browser file | One complete UTF-8 JSON file up to 28 MiB, received within the existing authenticated request body |
+| **Or full local source file path** | One complete local plan up to 192 MiB, selected from the original customer's allowed file roots |
+
+Choose one location for the operation. Supply the SHA from the original saved source, preserving its composition ID. The receiver restores the full dataset, configuration, templates, generated sources and source review. It checks the saved source against those bytes before reopening the native batch. A restored source plan can be priced by its selected original customer; an existing native batch continues using the already staged inputs.
+
+For larger plans, place the complete original file inside an allowed local input root and use its physical path in the form. The full file remains a native file read; it does not pass through a partial browser upload. The CLI `receive-source` command below provides the same source receiving operation.
+
+### Save Document production in Applications
+
+Choose **Document production** in the installed Applications catalog. Its application kind is `document-composition`, and its original command is `document-merchant compose serve`.
+
+Select the **Private customer options JSON**, optional saved composition root, initial renderer and actual merchant origin. Optional receiving settings use the same values as the CLI. **Private environment JSON** is the existing Applications environment file for the original intake credential; the catalog stores the file selection and hash.
+
+Review and save this complete selection through the original Applications flow, then start it. The application opens the document browser and links to the same customer Request, Checkout, Jobs, library and Collections. Stop and reopen it through that same saved application.
+
+The managed application shares the original `job-checkout` resource identity for the actual customer directory, so two saved application kinds cannot open simultaneous customer owners. It retains the existing customer's `job-workspace-launch.json` and verifies the actual running process, instance, checkout selection, private launch path and complete original URLs. The document page is an extension of that original host.
+
+Applications binds the selected product modules, browser manifest and assets, imported implementation, native checkout runtime and private configuration files. Saved datasets, generated source editions and growing customer journals can change during ordinary operation without changing the launch selection. Updating the actual service source or customer checkout configuration is reviewed through the existing Applications selection process.
+
+### Inspect the service before opening it
+
+This command reads the complete source/configuration selection without opening the customer or starting HTTP:
+
+~~~sh
+starforge document-merchant compose inspect-service \
+  --workspace-options /absolute/private/customer-options.json \
+  --provider snaplab \
+  --merchant-origin https://your-commissioned-merchant.example \
+  --out /absolute/private/document-service-selection.json
+~~~
+
+It prints a compact review with the exact selection SHA, customer/checkout paths, saved composition root, configuration file pins and implementation counts. The optional new output file retains the complete selection, including every source file pin. Supply that selection SHA with `serve --expected-selection` to reopen the reviewed configuration.
+
+The managed `--managed-source` argument is supplied by the original Applications launcher. Normal CLI operation uses the installed command's own source. Both paths compare the selected implementation and the original running customer's launch.
+
+Ctrl-C or the original Applications Stop action closes host admission, drains document HTTP and background operations, closes the original native controllers and releases the customer. Reopening the same customer lists its saved document sets and resumes their original work.
+
+
 ## Choose the existing merchant and customer
 
 Use the original commissioned document merchant and the existing private customer options JSON. That customer configuration selects its original Request and Checkout stores, Resource library, native operator and allowed input-file roots. Keep the same customer directory through preparation, payment continuation and receiving.
@@ -519,3 +653,116 @@ A parent order containing an invoice and greeting is one parent task reference a
 | 130 | An interrupted active command drained its original customer |
 
 The full original interfaces are documented in [BATCHES.md](BATCHES.md), [OPERATING.md](OPERATING.md), [composition.mjs](composition.mjs), and [composition-cli.mjs](composition-cli.mjs). The typed API is in [composition.d.mts](composition.d.mts).
+
+
+## Ordered invoice and report bundles
+
+After receiving the original PDFs, use the same Document production browser's Ordered PDF bundle step or `document-merchant assemble` to prepare exact customer order, review the original assembly price, fulfill and receive every volume, and export one complete customer archive. The PDFMint-backed `assemblePdfs` function is enabled explicitly with its own native payment terms. Single-PDF volumes retain their original bytes without a merge purchase. See [ASSEMBLY.md](./ASSEMBLY.md) for complete merchant setup, local/batch source intake, CLI commands, continuation, output units and independent customer receiving.
+
+## Assemble PDFs that already exist
+
+Use **Bundle existing PDFs** in the same Document production application to upload complete invoices or reports, choose their order, review the original assembly price, receive the paid volumes and export the complete customer bundle. It also receives the original whole assembly source plan from an upload or a declared local file. [Existing PDF intake](ASSEMBLY.md#existing-pdf-intake-in-the-customer-browser) covers complete source and export continuation, limits, original payment units and the installed API. The same customer owner and Resource library remain in use.
+
+
+## Correct selected documents or order an unchanged repeat
+
+A saved source set can contain many customer records and several documents per record. Use the selected-document workflow when a customer needs a corrected invoice, updated report or another unchanged rendering. It creates a new source set for only the chosen documents. The original source, merchant requests, paid jobs and PDFs retain their existing identities.
+
+### Browser workflow
+
+Open the original saved set in **Document production**. Select the affected documents using the checkboxes in **Documents and receiving**. **Select this page** selects every document on the current page; selection is retained when you move through further pages of that same source. **Clear selection** clears the whole selection. The selected count covers all pages.
+
+Choose **Edit selected documents** or **Repeat selected documents**. The editor loads complete original records and the selected template bodies. CSV line items have already been grouped by the original recipe, so the selected record includes all its original line items. Selecting an invoice for one order and a greeting for another produces those two documents; it does not render the other record/template combinations.
+
+Give the new set a distinct ID, name and reason. For a correction, edit the fields under **Selected record**. Numeric fields retain their numeric type, and CSV strings remain strings. **Complete record JSON** includes every nested field and line item; use **Apply complete record** after editing that view. Each selected template has its full editable source. Keep the selected record keys and original business task references. A different order or business task belongs in a new document set.
+
+An unchanged repeat loads the same source with record/template editing disabled. It preserves every selected generated-source hash. Repeat is an explicit new rendering request; its provider response and resulting PDF may reflect the provider's current rendering environment.
+
+Choose **Download editable draft** whenever work needs to continue later. This file includes all selected editable records and templates, the original source SHA256, exact selected document IDs, mode, new ID/name and reason. Open the original source set and use **Continue a saved correction draft** to reload it. The original source is checked again when the derived source is saved. A draft is limited to 32 MiB.
+
+Choose **Prepare selected source documents**. The resulting saved set includes the complete edited records, templates, generated HTML/Markdown, original task references and parent source relationship. Its heading identifies the original set and reason, with **Open original document set** returning to the earlier results. Download the generated source documents or the complete source review before purchasing.
+
+The remaining controls are the original production workflow:
+
+1. **Prepare merchant price** prepares only the new set's selected document requests.
+2. Review the exact network, asset, recipient, payment flow, document count and amount.
+3. **Render at this saved price** purchases those requests through the original customer checkout.
+4. **Receive existing jobs** continues accepted requests and receives their complete PDF/source/request/render files.
+5. **Export received documents** produces the complete original Collection and source plan.
+
+A selected replacement remains under its original business task reference and has a new document-set ID, native request and reviewed price. The operator retains the original and replacement files in their respective saved sets.
+
+### CLI workflow
+
+First read the original saved source and record its exact returned SHA256:
+
+~~~sh
+starforge document-merchant compose source \
+  --directory /absolute/private/documents/original-orders
+~~~
+
+The complete source plan lists each document's ID, record key, template and original task reference. Write a selection file using the actual IDs from that plan:
+
+~~~json
+{
+  "id": "orders-corrected-20261013",
+  "name": "Corrected customer invoices",
+  "mode": "correction",
+  "reason": "Correct the line-item description requested by the customer.",
+  "documentIds": ["ACTUAL_ORIGINAL_DOCUMENT_ID"]
+}
+~~~
+
+Create the complete editable draft:
+
+~~~sh
+starforge document-merchant compose correction-draft \
+  --directory /absolute/private/documents/original-orders \
+  --sha256 ACTUAL_ORIGINAL_SOURCE_SHA256 \
+  --selection /absolute/private/correction-selection.json \
+  --out /absolute/private/correction-draft.json
+~~~
+
+The command returns the full draft's path, byte count and SHA256. Edit its complete `records` and `templates` fields. Retain its original `parent` and selected `documentIds`. Set `mode` to `repeat` for an unchanged repeat and retain the original records and template contents.
+
+Review the generated result and optionally save the complete portable plan:
+
+~~~sh
+starforge document-merchant compose review-correction \
+  --parent-directory /absolute/private/documents/original-orders \
+  --draft /absolute/private/correction-draft.json \
+  --out /absolute/private/correction-plan.json
+~~~
+
+Save and materialize the corrected source using the original receiver:
+
+~~~sh
+starforge document-merchant compose correct \
+  --parent-directory /absolute/private/documents/original-orders \
+  --draft /absolute/private/correction-draft.json \
+  --directory /absolute/private/documents/orders-corrected-20261013
+~~~
+
+The returned source receipt includes the exact source SHA256, generated document counts, full source/preview paths and the original batch directory. Repeating the command with identical source reopens the same saved result. Changed bytes cannot replace an already saved derived source under that ID.
+
+Continue with the original commands:
+
+~~~sh
+starforge document-merchant compose prepare \
+  --directory /absolute/private/documents/orders-corrected-20261013 \
+  --workspace-options /absolute/private/customer-options.json
+
+starforge document-merchant compose run \
+  --directory /absolute/private/documents/orders-corrected-20261013 \
+  --workspace-options /absolute/private/customer-options.json \
+  --approve-plan ACTUAL_RETURNED_NATIVE_PLAN_SHA256 \
+  --out /absolute/private/corrected-orders-receiving
+~~~
+
+The original `receive`, `review-batch`, `open`, `export`, `receive-source` and `receive-collection` commands operate on that same saved derived set. A partial native run keeps its original requests and can be continued with the original saved price. The full exported source retains the exact parent source ID/SHA and each selected original document's ID, source SHA and business task reference.
+
+### Source contract
+
+The optional `correction` member of a composition request carries `stellar-forge.document-correction.v1`, mode, reason, parent source ID/SHA and the exact selected record/template pairs. Older requests omit it and retain their previous normalization and source bytes. The source compiler requires every selected pair to generate exactly one document; a changed condition cannot silently remove a selected replacement. It also requires the original task reference to remain equal. An unchanged repeat must preserve every selected generated-source hash.
+
+The helper `documentCorrectionDraft` loads complete grouped records and templates from a saved composition receipt. `composeDocumentCorrection` regenerates selected source without touching native requests. `stageDocumentCorrection` reads the original saved source and saves the derived plan through the existing composition receiver. Browser operations use the original authenticated host and its background-operation lifetime. Payment and complete file receiving stay in the original batch.

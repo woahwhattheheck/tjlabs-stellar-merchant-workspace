@@ -18,13 +18,13 @@ function need(value, code, message) {
 function flags(args) {
   const result = {};
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--resume' || args[i] === '--offline' || args[i] === '--bank') {
+    if (args[i] === '--resume' || args[i] === '--offline' || args[i] === '--bank' || args[i] === '--commissioning') {
       need(!result[args[i]], 'PACKAGE_ARGUMENTS', 'Use each flag once.');
       result[args[i]] = true; continue;
     }
     need(['--repo', '--ref', '--out', '--python'].includes(args[i]) &&
       result[args[i]] === undefined && args[i + 1], 'PACKAGE_ARGUMENTS',
-      'Use --repo CHECKOUT --ref ORIGINAL_COMMIT --out PRIVATE_DIRECTORY [--resume] [--offline] [--bank] [--python EXECUTABLE].');
+      'Use --repo CHECKOUT --ref ORIGINAL_COMMIT --out PRIVATE_DIRECTORY [--resume] [--offline] [--bank | --commissioning] [--python EXECUTABLE].');
     result[args[i]] = args[++i];
   }
   need(result['--repo'] && result['--out'] && /^[a-f0-9]{40}$/.test(result['--ref'] ?? ''),
@@ -42,7 +42,9 @@ async function privateJson(path, value) {
 function progress(value) { process.stderr.write('[selected receivables] ' + JSON.stringify(value) + '\n'); }
 
 export async function receiveSelectedReceivables({repository, ref, output, resume = false,
-  offline = false, bank = false, python = 'python3'} = {}) {
+  offline = false, bank = false, commissioning = false, python = 'python3'} = {}) {
+  need(!(bank && commissioning), 'PACKAGE_ARGUMENTS', 'Choose one original product selection.');
+  if (commissioning) return receiveSelectedCommissioning({repository, ref, output, resume, offline, python});
   const repo = await realpath(resolve(repository)), out = resolve(output);
   need(/^[a-f0-9]{40}$/.test(ref ?? ''), 'PACKAGE_SOURCE_REF', 'Use the full original source commit.');
   const commit = run('git', ['-C', repo, 'rev-parse', '--verify', ref + '^{commit}']).trim();
@@ -213,14 +215,162 @@ export async function receiveSelectedReceivables({repository, ref, output, resum
     throw error;
   }
 }
+
+/** Receive the complete commissioning recipe through the original builder and installed command. */
+export async function receiveSelectedCommissioning({repository, ref, output, resume = false,
+  offline = false, python = 'python3'} = {}) {
+  const recipe = 'merchant-commissioning-collections';
+  const root = receivables + '/commissioning-collections';
+  const repo = await realpath(resolve(repository)), out = resolve(output);
+  need(/^[a-f0-9]{40}$/.test(ref ?? ''), 'PACKAGE_SOURCE_REF', 'Use the full original source commit.');
+  const commit = run('git', ['-C', repo, 'rev-parse', '--verify', ref + '^{commit}']).trim();
+  need(commit === ref && run('git', ['-C', repo, 'rev-parse', 'HEAD']).trim() === commit,
+    'PACKAGE_CHECKOUT', 'Use the complete maintained checkout at the selected original commit.');
+  run('git', ['-C', repo, 'diff', '--exit-code', commit, '--',
+    distribution + '/*.mjs', distribution + '/runtime-unpack.py']);
+  if (!resume) await mkdir(out, {mode: 0o700});
+  else need((await stat(out)).isDirectory(), 'PACKAGE_OUTPUT', 'Resume the original output directory.');
+  need(await realpath(out) === out && !((await stat(out)).mode & 0o077),
+    'PACKAGE_OUTPUT', 'Use a real private output directory.');
+  let phase = 'commissioning-build';
+  try {
+    const {buildDistribution} = await import(pathToFileURL(join(repo, distribution, 'build.mjs')));
+    const built = await buildDistribution({repository: repo, ref: commit, output: join(out, 'build'),
+      selection: recipe, offline, resume, python, onProgress: event => {
+        if (['selected', 'materializing', 'materialized', 'packaged', 'reused'].includes(event.phase)) progress(event);
+      }});
+    need(built.status === 'PACKAGED' && built.sourceCommit === commit &&
+      built.sourceSelection?.id === recipe, 'PACKAGE_RECEIPT', 'Keep the original commissioning build result.');
+    const stage = join(out, 'build', 'package'), manifest = await readJson(join(stage, 'manifest.json')),
+      metadata = await readJson(join(stage, 'package.json'));
+    need(manifest.sourceCommit === commit && manifest.sourceSelection?.id === recipe &&
+      metadata.name === built.packageName, 'PACKAGE_MANIFEST', 'The installed source must match the selected original build.');
+    const required = ['source.mjs', 'domain.mjs', 'reports.mjs', 'workspace.mjs', 'http.mjs', 'server.mjs',
+      'client.mjs', 'client.d.ts', 'cli.mjs', 'cli.d.ts', 'application-provider.mjs', 'browser-assets.json',
+      'public/index.html', 'public/app.mjs', 'public/styles.css', 'public/config.json', 'README.md'].map(name => root + '/' + name);
+    required.push(receivables + '/xero/client.mjs', receivables + '/xero/server.mjs',
+      receivables + '/xero/cash-commissioning.mjs', receivables + '/xero/cash-workspace.mjs',
+      receivables + '/bank-parsers/bridge.py', receivables + '/bank-parsers/ofx_intake.py',
+      receivables + '/bank-parsers/mt940_engine.py',
+      distribution + '/contributions/merchant-commissioning-collections.json',
+      distribution + '/contributions/commissioning-agent.json', root + '/MCP.md');
+    required.push(...['accounting-commissioning.mjs', 'catalog/accounting-commissioning.mjs',
+      'accounting-commissioning-client.mjs', 'accounting-commissioning-client.d.mts',
+      'accounting-commissioning-cli.mjs', 'accounting-commissioning-cli.d.mts']
+      .map(name => 'stellar-forge/mcp-merchant-operator/' + name));
+    const names = new Set(manifest.files.map(file => file.path));
+    for (const path of required) need(names.has(path), 'PACKAGE_ENTRY',
+      'The original commissioning product is missing its runtime source: ' + path);
+    const contributions = new Set(manifest.distributionContributions.map(row => row.id));
+    for (const id of ['merchant-receivables', 'merchant-receivables-xero', recipe, 'commissioning-agent'])
+      need(contributions.has(id), 'PACKAGE_CONTRIBUTION', 'Keep the original selected contribution: ' + id);
+    for (const [key, runtime, declaration] of [
+      ['./merchant/receivables/commissioning/client', 'client.mjs', 'client.d.ts'],
+      ['./merchant/receivables/commissioning/operations', 'cli.mjs', 'cli.d.ts'],
+    ]) {
+      const entry = metadata.exports[key];
+      need(entry?.default === './source/' + root + '/' + runtime &&
+        entry?.types === './source/' + root + '/' + declaration,
+        'PACKAGE_TYPED_EXPORT', 'Keep the original installed declaration and runtime: ' + key);
+    }
+    for (const [key, runtime, declaration] of [
+      ['./merchant/accounting-commissioning', 'accounting-commissioning-client.mjs', 'accounting-commissioning-client.d.mts'],
+      ['./merchant/accounting-commissioning/operations', 'accounting-commissioning-cli.mjs', 'accounting-commissioning-cli.d.mts'],
+    ]) {
+      const entry = metadata.exports[key], prefix = './source/stellar-forge/mcp-merchant-operator/';
+      need(entry?.default === prefix + runtime && entry?.types === prefix + declaration,
+        'PACKAGE_TYPED_EXPORT', 'Keep the installed agent declaration and runtime: ' + key);
+    }
+    phase = 'commissioning-install';
+    const consumer = join(out, 'consumer');
+    if (!resume) {
+      await mkdir(consumer, {mode: 0o700});
+      await privateJson(join(consumer, 'package.json'), {name: 'commissioning-receiving',
+        version: '1.0.0', private: true, type: 'module'});
+    }
+    const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+    const installOutput = run(npm, ['install', '--ignore-scripts', '--no-audit', '--no-fund',
+      '--package-lock=false', offline ? '--offline' : '--prefer-offline', built.archive], {cwd: consumer});
+    phase = 'commissioning-installed-command';
+    const executable = join(consumer, 'node_modules', '.bin',
+      process.platform === 'win32' ? 'starforge.cmd' : 'starforge');
+    const help = run(executable, ['commissioning-collections', '--help'], {cwd: consumer});
+    need(['source-file', 'candidates', 'preview', 'capture', 'export', 'prepare', 'execute', 'reconcile',
+      'baselineCaptureId'].every(word => help.includes(word)),
+      'PACKAGE_COMMAND', 'The installed command must expose the complete source, review and recovery workflow.');
+    const agentHelp = run(executable, ['merchant-accounting-commissioning', '--help'], {cwd: consumer});
+    need(['source-inspect', 'source-import', 'capture-export', 'request-lookup', 'prepare', 'execute',
+      'reconcile', 'download'].every(word => agentHelp.includes(word)),
+      'PACKAGE_COMMAND', 'The installed agent command must expose complete original source and capture recovery.');
+    phase = 'commissioning-installed-exports';
+    const importProgram = [
+      "import {readFile} from 'node:fs/promises';",
+      "import {join} from 'node:path';",
+      "import {pathToFileURL} from 'node:url';",
+      "const name = process.argv[1], root = process.argv[2];",
+      "const prefix = name + '/merchant/receivables/commissioning';",
+      "const client = await import(prefix + '/client'), operations = await import(prefix + '/operations');",
+      "const workspace = await import(prefix), server = await import(prefix + '/server');",
+      "const agent = await import(name + '/merchant/accounting-commissioning');",
+      "const agentOperations = await import(name + '/merchant/accounting-commissioning/operations');",
+      "for (const key of ['createAccountingCommissioningClient','connectAccountingCommissioningClient','accountingCommissioningImportArguments','accountingCommissioningCaptureArguments'])",
+      "  if (typeof agent[key] !== 'function') throw new Error('Missing installed agent export: ' + key);",
+      "for (const key of ['prepareAccountingCommissioningOperation','runAccountingCommissioningOperation','downloadAccountingCommissioningFile'])",
+      "  if (typeof agentOperations[key] !== 'function') throw new Error('Missing installed agent operation: ' + key);",
+      "for (const key of ['CommissioningCollectionsClient','CommissioningCollectionsApiError','createCommissioningCollectionsClient','commissioningImportArguments','commissioningCaptureArguments'])",
+      "  if (typeof client[key] !== 'function') throw new Error('Missing installed client export: ' + key);",
+      "for (const key of ['parseCommissioningCollectionsArguments','runCommissioningCollectionsCli'])",
+      "  if (typeof operations[key] !== 'function') throw new Error('Missing installed operations export: ' + key);",
+      "if (typeof workspace.CommissioningCollectionsWorkspace !== 'function' || typeof server.createCommissioningCollectionsServer !== 'function') throw new Error('Missing original installed workspace/service');",
+      "const source = join(process.cwd(),'node_modules',name,'source',root);",
+      "const provider = (await import(pathToFileURL(join(source,'application-provider.mjs')))).default;",
+      "if (provider.id !== 'merchant-commissioning-collections' || typeof provider.prepare !== 'function' || typeof provider.createObserver !== 'function') throw new Error('Missing original managed Applications provider');",
+      "let assetBytes = 0;",
+      "for (const path of ['/receivables/commissioning/','/receivables/commissioning/app.mjs','/receivables/commissioning/client.mjs','/receivables/xero/client.mjs','/receivables/commissioning/styles.css','/receivables/commissioning/config.json']) {",
+      "  const asset = await server.commissioningCollectionsAsset(path);",
+      "  if (!asset?.bytes?.length) throw new Error('Missing original installed browser asset: ' + path);",
+      "  assetBytes += asset.bytes.length;",
+      "}",
+      "console.log(JSON.stringify({client:true,operations:true,agentClient:true,agentOperations:true,workspace:true,server:true,applicationProvider:provider.id,assetBytes}));",
+    ].join('\n');
+    const imported = JSON.parse(run(process.execPath,
+      ['--input-type=module', '--eval', importProgram, metadata.name, root], {cwd: consumer}));
+    phase = 'commissioning-installed-source';
+    const installedSource = [];
+    for (const path of required) {
+      const bytes = await readFile(join(consumer, 'node_modules', metadata.name, 'source', path));
+      const original = run('git', ['-C', repo, 'show', commit + ':' + path], {encoding: null});
+      need(bytes.length === original.length && hash(bytes) === hash(original),
+        'PACKAGE_INSTALLED_SOURCE', 'The installed source differs from the original commit: ' + path);
+      installedSource.push({path, bytes: bytes.length, sha256: hash(bytes)});
+    }
+    const result = {schema: 'stellar-forge.selected-receivables-receiving.v1', status: 'RECEIVED',
+      sourceCommit: commit, sourceSelection: recipe, build: built,
+      manifestSha256: hash(await readFile(join(stage, 'manifest.json'))),
+      packagedRuntimeEntries: required.length, installedExports: imported, installedSources: installedSource,
+      installedCommand: {command: 'starforge commissioning-collections --help', exitCode: 0,
+        outputBytes: Buffer.byteLength(help), sha256: hash(help)},
+      installedAgentCommand: {command: 'starforge merchant-accounting-commissioning --help', exitCode: 0,
+        outputBytes: Buffer.byteLength(agentHelp), sha256: hash(agentHelp)},
+      installation: {directory: consumer, outputBytes: Buffer.byteLength(installOutput)},
+      completedAt: new Date().toISOString()};
+    const resultFile = join(out, 'selected-commissioning-receiving-' + Date.now() + '.json');
+    await privateJson(resultFile, result);
+    return {...result, resultFile};
+  } catch (error) {
+    error.phase = phase; error.sourceCommit = commit; error.output = out;
+    throw error;
+  }
+}
+
 async function main(args) {
   if (args.length === 1 && args[0] === '--help') {
-    console.log('node SELECTED_RECEIVABLES_CHECK.mjs --repo CHECKOUT --ref ORIGINAL_COMMIT --out PRIVATE_DIRECTORY [--resume] [--offline] [--bank] [--python EXECUTABLE]');
+    console.log('node SELECTED_RECEIVABLES_CHECK.mjs --repo CHECKOUT --ref ORIGINAL_COMMIT --out PRIVATE_DIRECTORY [--resume] [--offline] [--bank | --commissioning] [--python EXECUTABLE]');
     return;
   }
   const input = flags(args);
   const result = await receiveSelectedReceivables({repository: input['--repo'], ref: input['--ref'],
-    output: input['--out'], resume: input['--resume'], offline: input['--offline'], bank: input['--bank'], python: input['--python']});
+    output: input['--out'], resume: input['--resume'], offline: input['--offline'], bank: input['--bank'], commissioning: input['--commissioning'], python: input['--python']});
   process.stdout.write(json(result));
 }
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url)

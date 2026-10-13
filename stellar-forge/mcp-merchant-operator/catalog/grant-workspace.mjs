@@ -2,6 +2,8 @@
 import {grantCohortAdoptionTools} from './grant-cohort-adoption.mjs';
 import {grantCohortDeliveryTools} from './grant-cohort-delivery.mjs';
 import {grantPlanningSourceTools} from './grant-planning-sources.mjs';
+import {grantReportingCaptureTools} from './grant-reporting-capture.mjs';
+import {grantProcedureTools} from './grant-procedures.mjs';
 import {GRANT_CASE_ACTIONS,GRANT_MAX_BUNDLE_BYTES,GRANT_TRANSFER_CHUNK_BYTES as CHUNK} from '../../../stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs';
 
 const str = (maximum = 12000) => ({type:'string', maxLength:maximum});
@@ -10,6 +12,13 @@ const alias = {type:'string', pattern:'^[a-z0-9][a-z0-9_-]{0,63}$'};
 const digest = {type:'string', pattern:'^[a-f0-9]{64}$'};
 const integer = {type:'integer', minimum:1, maximum:10000000};
 const id = prefix => ({type:'string', pattern:'^' + prefix + '-[a-f0-9]{32}$'});
+const deliveryAgendaCases = {type:'array',items:id('operation'),minItems:1,uniqueItems:true};
+const deliveryAgendaVersions = {
+  type:'object',minProperties:1,
+  propertyNames:{pattern:'^operation-[a-f0-9]{32}$'},
+  additionalProperties:{type:'integer',minimum:1,maximum:10000000},
+  description:'Exactly one original current version for every selected case; omit to read current versions.'
+};
 const object = {type:'object', additionalProperties:true};
 const ws = {workspace:alias};
 const requestIdentifier = {type:'string', pattern:'^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$'};
@@ -92,6 +101,59 @@ const statementInput={type:'object',additionalProperties:false,
   ]};
 const statementModelInput={...modelInput,inputs:statementInput};
 const statementInspectionModelInput={...modelInput,inputs:statementInspectionInput};
+// Delivery risks reuse the original case review, source and command history.
+const riskId = {type:'string',pattern:'^[a-z][a-z0-9-]{1,99}$'};
+const riskDate = {type:'string',pattern:'^[0-9]{4}-[0-9]{2}-[0-9]{2}$'};
+const nullableRiskDate = {anyOf:[riskDate,{type:'null'}]};
+const riskOwner = {anyOf:[nonempty(12000),{type:'null'}],
+  description:'Original case contributor ID, or null when explicitly unassigned.'};
+const riskEvidence = {
+  sourceIds:{type:'array',items:id('source'),uniqueItems:true},
+  sourceNote:str(12000),
+  sourceBasis:{enum:['ATTACHED_SOURCE','OPERATOR_ENTRY'],
+    description:'Native engine recomputes this field from actual attached source references.'}
+};
+const riskReviewRef = {type:'object',additionalProperties:false,
+  properties:{reviewId:id('review'),reviewSha256:digest},required:['reviewId','reviewSha256']};
+const riskAction = {type:'object',additionalProperties:false,properties:{
+  id:riskId,title:nonempty(500),description:str(12000),ownerId:riskOwner,ownerNote:str(4000),
+  status:{enum:['PLANNED','IN_PROGRESS','DONE','CANCELLED']},
+  dueOn:nullableRiskDate,completedOn:nullableRiskDate,progress:str(12000),...riskEvidence
+},required:['id','title','description','ownerId','ownerNote','status','dueOn','completedOn','progress','sourceIds','sourceNote']};
+const riskRecord = {type:'object',additionalProperties:false,properties:{
+  id:riskId,kind:{enum:['RISK','ISSUE']},title:nonempty(500),description:str(12000),
+  category:{enum:['DELIVERY','STAFFING','CUSTOMER','FUNDING','TECHNICAL','SECURITY','EXTERNAL','OTHER']},
+  identifiedOn:riskDate,ownerId:riskOwner,ownerNote:str(4000),
+  status:{enum:['OPEN','MONITORING','MITIGATING','RESOLVED','CLOSED']},
+  likelihood:{enum:['UNASSESSED','UNLIKELY','POSSIBLE','LIKELY','NOT_APPLICABLE']},
+  impact:{enum:['UNASSESSED','MINOR','MODERATE','MAJOR']},
+  priority:{enum:['UNASSESSED','LOW','MEDIUM','HIGH']},
+  assessmentNote:str(12000),trigger:str(12000),nextReviewOn:nullableRiskDate,
+  costIds:{type:'array',items:nonempty(300),uniqueItems:true},...riskEvidence,
+  review:{type:'object',additionalProperties:false,
+    properties:{on:nullableRiskDate,by:str(300),note:str(12000)},required:['on','by','note']},
+  resolution:{type:'object',additionalProperties:false,
+    properties:{on:nullableRiskDate,note:str(12000)},required:['on','note']},
+  actions:{type:'array',maxItems:100,items:riskAction}
+},required:['id','kind','title','description','category','identifiedOn','ownerId','ownerNote','status',
+  'likelihood','impact','priority','assessmentNote','trigger','nextReviewOn','costIds','sourceIds','sourceNote',
+  'review','resolution','actions'],
+allOf:[{if:{properties:{kind:{const:'ISSUE'}},required:['kind']},
+  then:{properties:{likelihood:{const:'NOT_APPLICABLE'}}},
+  else:{properties:{likelihood:{enum:['UNASSESSED','UNLIKELY','POSSIBLE','LIKELY']}}}}]};
+const riskDocument = {type:'object',additionalProperties:false,properties:{
+  schema:{const:'stellar-forge.sf47-delivery-risks.v1'},name:nonempty(300),asOfDate:riskDate,note:str(12000),
+  supersedes:{anyOf:[{type:'null'},riskReviewRef]},
+  risks:{type:'array',maxItems:200,items:riskRecord,
+    description:'Complete register with stable risk and action IDs, including resolved and closed entries.'}
+},required:['schema','name','asOfDate','note','supersedes','risks']};
+const riskSaveCommand = {type:'object',additionalProperties:false,properties:{
+  expectedVersion:integer,...originalRequest,note:nonempty(12000),action:{const:'risk-register.save'},
+  data:{type:'object',additionalProperties:false,
+    properties:{document:riskDocument,expectedPreviewSha256:digest},
+    required:['document','expectedPreviewSha256']}
+},required:['expectedVersion','requestId','actor','note','action','data']};
+
 // Contributor Engagements reuse the original reviews, retained sources and allocators.
 const engagementId = {type:'string', pattern:'^[a-z][a-z0-9-]{1,99}$'};
 const engagementDate = {type:'string', pattern:'^[0-9]{4}-[0-9]{2}-[0-9]{2}$'};
@@ -368,10 +430,14 @@ export const grantWorkspaceTools = [
       note:str(12000), planning:object, filename:nonempty(240)},
     ['workspace','input','expectedInputSha256','kind','name','requestId']),
   ...grantPlanningSourceTools,
+  ...grantReportingCaptureTools,
+  ...grantProcedureTools,
   tool('cases', 'Read original operating case summaries, optionally for a selected saved plan.',
     {...ws, planId:id('plan')}, ['workspace'], true),
   tool('case', 'Read the entire original operating case, pinned plan, eight record collections, source metadata, reviews, forecasts and portfolios.',
     {...ws, caseId:id('operation')}, ['workspace','caseId'], true),
+  tool('operating_workflows', 'Read the complete six-family saved operating workflow index at one original case version: statement originals, account reconciliation editions, funding editions, award terms, cohort delivery and grant procedures. Each entry retains its original summary and exact selection. The complete response uses the existing retained snapshot and paging tools.',
+    {...ws, caseId:id('operation'), expectedVersion:integer}, ['workspace','caseId','expectedVersion'], true),
   tool('case_report', 'Read original delivery, invoice allocation, native asset and grant receipt reporting without reinterpretation.',
     {...ws, caseId:id('operation')}, ['workspace','caseId'], true),
   tool('amendments', 'Read the original selected case baseline, complete saved plan revision choices and immutable amendment summaries.',
@@ -444,6 +510,21 @@ export const grantWorkspaceTools = [
   tool('work_intake_apply', 'Apply the complete reviewed work/invoice intake in one original transaction. The exact preview SHA, case version, intake edition and request ID preserve all native created/matched records and original source links.',
     {...ws,...caseSelection,...originalRequest,intakeId:id('intake'),expectedRevision:integer,...intakeModelInput,expectedPreviewSha256:digest},
     ['workspace','caseId','expectedVersion','requestId','actor','intakeId','expectedRevision','expectedPreviewSha256']),
+  tool('risks', 'Read the complete original Delivery risks register and immutable edition history, newest first, against the current case source.',
+    {...ws,caseId:id('operation')},['workspace','caseId'],true),
+  tool('risk_register', 'Open one saved Delivery risks edition with its complete document, source, report and current source comparison.',
+    {...ws,caseId:id('operation'),reviewId:id('review')},['workspace','caseId','reviewId'],true),
+  tool('risk_history', 'Read one stable risk or issue across every saved register edition, including its retained mitigation actions and reviews.',
+    {...ws,caseId:id('operation'),riskId},['workspace','caseId','riskId'],true),
+  tool('risk_seed', 'Prepare an editable Delivery risks register from the actual case contributors, packages and sources. An optional reviewId selects the original edition; a successor retains all previous stable risk and action IDs.',
+    {...ws,...caseSelection,reviewId:id('review')},['workspace','caseId','expectedVersion'],true),
+  tool('risk_preview', 'Preview the complete operator-authored risk register, ownership, mitigation actions, review dates, attached sources and native findings. Dates and assessments come from the recorded document. Supply inputs inline or one complete input reference; inputPointer /document selects a seed or preview document.',
+    {...ws,...caseSelection,...modelInput,inputs:riskDocument},['workspace','caseId','expectedVersion'],true),
+  tool('risk_save', 'Save the complete reviewed Delivery risks edition through original risk-register.save. Retain the current case version, exact document, preview SHA256, stable original request ID, operator and nonempty review note. The native command preserves immutable history and exact-request recovery.',
+    {...ws,...caseSelection,...modelInput,inputs:riskDocument,...originalRequest,note:nonempty(12000),expectedPreviewSha256:digest},
+    ['workspace','caseId','expectedVersion','requestId','actor','note','expectedPreviewSha256']),
+  tool('risk_request', 'Look up the original saved risk-register.save request without writing. Supply the whole original command as inputs or an exact retained input reference, including its original reviewed version, request ID, actor, note, action, complete document and preview digest. A found result must match this complete original command; preserve it after an interrupted connection.',
+    {...ws,caseId:id('operation'),...modelInput,inputs:riskSaveCommand},['workspace','caseId'],true),
   tool('engagements', 'Read every original Contributor Engagements edition and its retained receiving summaries. Full source documents and response bytes remain available through the original native snapshots.',
     {...ws,caseId:id('operation')}, ['workspace','caseId'], true),
   tool('engagement', 'Reopen one complete immutable Contributor Engagements review, its source, report, current source comparison and prior Forecast/Portfolio receiving records.',
@@ -578,6 +659,15 @@ export const grantWorkspaceTools = [
     {...ws,...caseSelection,...installationSelection,...modelInput,sourceId:id('source'),expectedSourceSha256:digest,
       cycleIds:{type:'array',items:{type:'string',pattern:'^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$'},minItems:1,maxItems:100,uniqueItems:true}},
     ['workspace','caseId','expectedVersion','sourceId','expectedSourceSha256','cycleIds','installationId','expectedRevision'],true),
+  tool('installation_effort_seed', 'Prepare complete original Installation effort and support inputs from the selected source, current native Work inventory and saved case-local phase allocations. Supply an optional complete edited document inline or through the existing verified input reference. The returned /document continues through the original installation_preview and installation_save.',
+    {...ws,...caseSelection,installationId:id('installation'),expectedRevision:installationRevision,...modelInput,asOfDate:supportDate},
+    ['workspace','caseId','expectedVersion','installationId','expectedRevision','asOfDate'],true),
+  tool('installation_effort_selection', 'Open a complete native Forecast draft from the exact current saved Installation effort editions and their reviewed phase remainders. Keep matching original commercial task and source identities. Original cash, price and cost inputs remain in the complete /inputs object for the normal Forecast preview/save, followed by original Portfolio seed.',
+    {...ws,...caseSelection,forecastId:id('forecast'),name:nonempty(300),note:str(12000),
+      installationSelections:{type:'array',minItems:1,maxItems:100,items:{type:'object',additionalProperties:false,
+        properties:{taskId:nonempty(150),installationId:id('installation'),installationRevision,installationSha256:digest},
+        required:['taskId','installationId','installationRevision','installationSha256']}}},
+    ['workspace','caseId','expectedVersion','forecastId','installationSelections'],true),
   tool('installation_preview', 'Review the complete selected customer installation against the original case version and current saved edition. Supply the document as inputs or one exact retained input with inputPointer /document from the seed.',
     {...ws,...caseSelection,...installationSelection,...modelInput,returnReview:installationReviewRef},
     ['workspace','caseId','expectedVersion','installationId','expectedRevision'],true),
@@ -634,6 +724,9 @@ export const grantWorkspaceTools = [
     ['workspace','caseId','expectedVersion','requestId','actor','expectedPreviewSha256']),
   tool('completion', 'Read payment-based 90-calendar-day completion clocks, original and confirmed deadlines, current recorded form outcomes, and complete original deliverable assignments. The selected calendar date does not reconstruct historical issuer decisions.',
     {...ws,caseId:id('operation'),asOfDate:supportDate},['workspace','caseId'],true),
+  tool('delivery_agenda', 'Read one complete delivery agenda over explicitly selected existing cases in this original workspace. Every row retains its own case identity, mode, version and native calendar source. asOfDate evaluates current retained records. A supplied expectedVersions map must cover exactly the selected cases; one changed case rejects the complete selection. Export all selected rows through merchant_grant_export with kind delivery-agenda and the returned complete selection.',
+    {...ws,caseIds:deliveryAgendaCases,asOfDate:supportDate,expectedVersions:deliveryAgendaVersions},
+    ['workspace','caseIds'],true),
   tool('delivery_calendar', 'Read the complete dated grant agenda, original payment-derived completion deadlines, issuer-confirmed extensions, saved deliverables and submitted forms. Native dates keep their original meaning; asOfDate evaluates current retained records. Export the same case as ICS, CSV or JSON through merchant_grant_export.',
     {...ws,caseId:id('operation'),asOfDate:supportDate,expectedVersion:{type:'integer',minimum:1,maximum:10000000}},
     ['workspace','caseId'],true),
@@ -697,13 +790,13 @@ export const grantWorkspaceTools = [
     {...ws, ...caseSelection, ...originalInput, ...originalRequest, filename:nonempty(240), kind:nonempty(80),
       mediaType:nonempty(200), sourceUrl:str(2000), observedAt:str(100)},
     ['workspace','caseId','expectedVersion','input','expectedInputSha256','requestId','actor','filename','kind','mediaType']),
-  tool('export', 'Plan ZIPs accept an exact saved revision; omission selects the current original plan. Cost-funding exports select caseId, revision, expectedVersion and expectedReportSha256; they include the full period report, every allocation and remainder, source/assignment changes, original native case and all funding history. Task-outcomes exports retain the complete operating case, all comparison revisions, offline HTML and complete effort/cost CSVs; select caseId, comparisonId, revision and current expectedVersion. For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, Contributor Engagements review with complete case and source handover, completion preparation, selected installation handover, complete returned receiving case selected by reviewId, complete dated delivery queue, grant delivery calendar and saved customer-use calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account, complete dated cash account with correction sources and whole case, full account reconciliation with saved original editions and native case, original settlement review and its source archive, source, scenario or dated CSV export for verified byte paging and host download.',
-    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','installation-return','implementation','implementation-original','delivery-queue','settlement','delivery-calendar','customer-use-calendar','performance','supplier-account','cash-account','account-reconciliation','commercial','engagement','task-outcomes','cost-funding']},
+  tool('export', 'Delivery risk-register exports select caseId and reviewId, retaining the complete original case, all saved register editions, selected JSON, CSV and offline HTML. Plan ZIPs accept an exact saved revision; omission selects the current original plan. Cost-funding exports select caseId, revision, expectedVersion and expectedReportSha256; they include the full period report, every allocation and remainder, source/assignment changes, original native case and all funding history. Task-outcomes exports retain the complete operating case, all comparison revisions, offline HTML and complete effort/cost CSVs; select caseId, comparisonId, revision and current expectedVersion. For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, Contributor Engagements review with complete case and source handover, completion preparation, selected installation handover, complete returned receiving case selected by reviewId, complete dated delivery queue, grant delivery calendar, the full explicitly selected multi-case delivery agenda and saved customer-use calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account, complete dated cash account with correction sources and whole case, full account reconciliation with saved original editions and native case, original settlement review and its source archive, source, scenario or dated CSV export for verified byte paging and host download.',
+    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','installation-return','implementation','implementation-original','delivery-queue','settlement','delivery-calendar','delivery-agenda','customer-use-calendar','performance','supplier-account','cash-account','account-reconciliation','commercial','engagement','task-outcomes','cost-funding','risk-register']},
       planId:id('plan'), caseId:id('operation'), forecastId:id('forecast'), portfolioId:id('portfolio'), sourceId:id('source'), reviewId:{anyOf:[id('review'),id('settlement')]},
       fromRevision:planComparisonRevision,toRevision:planComparisonRevision,toPlanId:id('plan'),expectedComparisonSha256:digest,
       installationId:id('installation'),comparisonId:id('task-outcomes'),billingId:commercialIdentifier,revision:planComparisonRevision,sha256:digest,asOfDate:supportDate,
-      installationRefs:customerUseInstallationRefs,
-      format:{enum:['ics','csv','json'],description:'Grant delivery calendar defaults to ICS; customer-use calendar defaults to JSON.'},
+      installationRefs:customerUseInstallationRefs,caseIds:deliveryAgendaCases,expectedVersions:deliveryAgendaVersions,
+      format:{enum:['ics','csv','json'],description:'Grant delivery calendar and multi-case delivery agenda default to ICS; customer-use calendar defaults to JSON.'},
       reconciliationId:id('reconciliation'),contributorId:id('person'),network:str(200),currency:str(40),asset:str(500),startDate:supportDate,endDate:supportDate,expectedVersion:{type:'integer',minimum:1,maximum:10000000},expectedReportSha256:digest},
     ['workspace','kind'], true),
   tool('snapshot', 'Inspect an exact retained JSON snapshot or one original JSON pointer. Large values remain available through rows and the complete file.',

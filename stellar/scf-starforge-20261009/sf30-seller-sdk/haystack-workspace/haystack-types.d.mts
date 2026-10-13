@@ -1,6 +1,6 @@
 import type { Buffer } from 'node:buffer';
 
-export type HaystackFormat = 'json-v4';
+export type HaystackFormat = 'json-v4' | 'zinc';
 export type HaystackKind = 'null' | 'bool' | 'str' | 'number' | 'marker' | 'remove' |
   'na' | 'ref' | 'date' | 'time' | 'dateTime' | 'uri' | 'coord' |
   'xstr' | 'symbol' | 'list' | 'dict' | 'grid';
@@ -46,11 +46,11 @@ export interface HaystackParseResult {
     sha256: string;
     bytes: number;
     format: HaystackFormat;
-    mediaType: 'application/json';
+    mediaType: 'application/json' | 'text/zinc; charset=utf-8';
     bom: boolean;
   };
 }
-export const SUPPORTED_FORMATS: readonly ['json-v4'];
+export const SUPPORTED_FORMATS: readonly ['json-v4', 'zinc'];
 export const MAX_VALUE_DEPTH: 128;
 export class HaystackError extends Error {
   readonly status: 400;

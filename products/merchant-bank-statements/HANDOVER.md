@@ -12,9 +12,11 @@ For a new accounting workspace, first follow the installation guide's original o
 
 ## 1. Review and receive the original statement
 
-Choose the actual OFX, QFX or CSV file in Bank reconciliation and select its format.
+Choose the actual CAMT.053, OFX, QFX or CSV file in Bank reconciliation and select its format.
 
 OFX/QFX preview retains its original financial institution, account, currency, dates, native identifiers, posted entries, pending observations and balance records. CSV preview uses an explicit mapping: delimiter, header record, source columns, dates, decimal/group separators, signed amount or debit/credit columns, account/currency and any posted/pending status values.
+
+CAMT.053 receives the supported .02 and .08 structures from their exact original namespaces. Review the account's original identity, statement references, reporting period, page information and balances. One original entry remains one cash movement; its nested transaction details, fees, reversals and references remain attached to that entry. For several account or page sections in one file, receive each intended section into its saved account. The [CAMT source guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/CAMT053.md) explains the full original review.
 
 Read the preview's complete account and source summary before receiving. Create or select the intended account, then receive the reviewed account section. If an existing Bank receipts account is ambiguous, select that original intake account explicitly.
 
@@ -88,6 +90,22 @@ Keep a pending observation, excluded source row, duplicate and deleted/replaced 
 Select the account and original inclusive statement dates. Supply the opening balance immediately before the included transactions and the closing balance immediately after them. Where the source provides a complete balance pair, choose that original record.
 
 OFX download coverage dates are retained as acquisition context. Select the original CLOSING/CCCLOSING balance pair or explicitly mapped CSV balance cells for the cash period; otherwise enter the statement's actual balances and their source explanation.
+
+### Connect the original CAMT pages
+
+For a complete statement delivered in pages, receive all original pages first. In **Close statement → Combine original statement pages**:
+
+1. Select each relevant retained import for the same account. Selection stays attached while paging through the complete import list.
+2. Select the original bank's summary scope. The default uses the first page's complete-statement summary. A bank supplying separate page summaries requires the corresponding choice and a retained explanation.
+3. Review the page numbers and final-page flag, exact original period, sequence/grouping basis, each opening and closing boundary, booked movement and source issues. Download the complete review when handing the source decision to another operator.
+4. Choose **Use these original statement balances** when the source review is eligible. The application binds the ordinary close to the selected source imports and their exact assembled review.
+5. Finish the period's existing transaction, receipt, refund and posting review. Retain the complete close with its original request identity.
+
+The first opening and final closing remain original bank balances. Intermediate boundaries connect the pages, and every original booked entry must still have exactly one current posted cash binding. Every posted transaction in the account period must also be covered by the selected complete original pages. An empty page still belongs to the original source set. A changed source interpretation requires a fresh page review; the earlier retained close remains available with its original files.
+
+The [complete page guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/PAGE_ASSEMBLY.md) includes `assembly-preview`, typed API requests and the original-workspace native receiving course.
+
+### Review and export the close
 
 Preview the close. It calculates the original opening balance plus posted signed movements and compares the result with the source closing balance. Review each remaining source or matching problem and any adjacent period continuity. Save when the difference is zero and the selected period's current posted movements have complete exact matches.
 
@@ -164,7 +182,41 @@ starforge receivables remittance-operation \
 
 A stale revision directs the operator to review the current workspace. Keep the original source, retained request and prior result together so the next review starts from the current original record.
 
-## 8. Transfer continued customer work
+## 8. Receive the complete accountant review
+
+In the Bank header, choose **Accountant receiving** and select the original `account.tar`. Receive an earlier and replacement close together when reviewing a correction. The reader checks the complete file manifest, original source bytes, reconciliation, editable snapshot and nested customer archives, then shows those retained editions.
+
+Read the original close, transaction and posting lineage, source imports and customer records. For an assembled statement, the reconciliation carries the full page review and every selected XML file. A source-bound note can identify the original close, transaction, posting, source import or customer. Retain the review edition with the reviewer and its summary. The accountant's review keeps its own history; the original Bank operator applies financial changes in the existing accounting workspace.
+
+The installed bank command can receive and export the same complete review:
+
+~~~sh
+starforge bank-statements accountant create \
+  --directory /private/original-accountant-review \
+  --name "Original bank period" --archive /private/merchant-close.tar
+
+starforge bank-statements accountant add \
+  --directory /private/original-accountant-review \
+  --archive /private/merchant-replacement-close.tar
+
+starforge bank-statements accountant export \
+  --directory /private/original-accountant-review \
+  --out /private/original-accountant-review.tar
+
+starforge bank-statements accountant receive \
+  --bundle /private/original-accountant-review.tar \
+  --directory /private/received-accountant-review
+
+starforge bank-statements accountant prepare \
+  --directory /private/received-accountant-review \
+  --out /private/complete-accountant-handover
+~~~
+
+Add the replacement archive only when that actual original close exists. The complete handover includes the review archive, all original closes, the standalone reader and its full source. Keep each exported review with the customer's private working files. The browser's own stored review belongs to its browser profile and local address; exporting and receiving the complete archive transfers its history.
+
+The [accountant receiving guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/ACCOUNTANT_RECEIVING.md) covers source-bound notes, comparison, parallel review histories and the browser/native receiving course.
+
+## 9. Transfer continued customer work
 
 Give the receiving operator the original package/source identity, installation profile or complete runtime transfer, and the original private accounting workspace through the existing whole-workspace recovery operation. Retain its statement originals, parsed reports, saved closes and source configuration with it.
 
@@ -177,3 +229,7 @@ A complete accountant close is the portable period handover. The original accoun
 The original bank source includes one complete account lifecycle in [EXERCISE.mjs](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/EXERCISE.mjs), with its original Bank receipts continuation and browser operation. It creates a private working case, receives its complete original OFX/CSV sources, performs the described receipt/refund/correction/close operations, downloads all original archives and reopens the saved account.
 
 Its retained native result identifies the actual case files and outcomes. A delivered demonstration uses those complete returned originals and its source commit. The [example guide](EXAMPLE.md) explains the original account arithmetic and the files to open in a received case.
+
+## Hand over the complete source preparation
+
+Before or during financial intake, download the complete **Statement collection**. It includes every original file, exact byte identity, separate working interpretation and inclusion/exclusion note. Another operator opens it as a separate collection and prepares its current account/statement reviews against the receiving bank workspace. Existing financial imports and superseding interpretations determine intake progress. Retain this preparation alongside the issued account close and accountant archive when those later steps are complete. The [complete collection guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_COLLECTIONS.md) documents native preparation, full source inspection and exact-original extraction.

@@ -81,9 +81,28 @@ The returned **/grant.html** URL is the current application. The retained purcha
 
 The existing equipped receiving owner can select the new four source pins, open the current answers and companion, follow Prepare submission, and receive the original print/downloads through that same run. The manuscript, original retained purchase and operating guide provide the complete customer demonstration.
 
+## Publish the complete reviewer walkthrough
+
+The full editable procedure lives at **dist/grant-data/financial-walkthrough.md**. Its generated **dist/grant-financial-walkthrough.html** uses the same native Markdown renderer and grayscale grant stylesheet. The page supplies a contents rail, complete command blocks, accessible table scrolling, the full Markdown download and browser print layout.
+
+It follows the actual installed choices: the merchant's source and accounting setup, original useful paid output, invoice and customer-credit review, Stellar or bank receiving, refund/paid-credit movement, bank account close, collection schedule, customer service close, Xero return and continued operation. The original portable customer billing case supplies completed paid/open invoice states, both planning databases and independent account receiving.
+
+After changing the complete guide, run its source-owned renderer **before** the ordinary four-file application composition:
+
+~~~sh
+node stellar-forge/developer-site/grant-financial-walkthrough.mjs \
+  --directory /absolute/current/developer-site/dist
+~~~
+
+The installed command is **starforge grant-financial-walkthrough** with the same arguments. It reads the complete existing source index, renders the guide through **renderGrantMarkdown**, and updates its two exact source/page identities under **financial_operations.reviewer_walkthrough**. The following **grant-compose** run preserves that descriptor and returns the original four current reader pins.
+
+The browser manifest declares both the readable page and complete Markdown route. The original **grant-reviewer** contribution supplies the command and export and includes the generator through its existing developer-site component. The **merchant-receivables** contribution carries the same complete Markdown and product entry into its installed consumers; all use this one editable source.
+
+The financial source register keeps the original request and measures. It connects the 139-path public release and its 46 native receivables operations to the exact 275-file original-programme capsule, the maintained bank application and the completed customer billing handover. The application and companion describe each selected operation and its original result separately.
+
 ## Source modules
 
-**grant-financial-operations.mjs** extracts and receives the single financial chapter and attaches five selected original product source entries. It is a pure composition helper. **grant-compose.mjs** remains the sole native four-file authoring entry. Its original **grant-customers.mjs**, **grant-datasette.mjs**, **grant-entry.mjs** and **grant-submission.mjs** continue the customer chapter projection, selected Datasette product, guided reviewer opening and issuer-workspace attachment.
+**grant-financial-operations.mjs** extracts and receives the single financial chapter and attaches fourteen selected original product source entries and retains the original bank operating sources. It is a pure composition helper. **grant-compose.mjs** remains the sole native four-file authoring entry. Its original **grant-customers.mjs**, **grant-datasette.mjs**, **grant-entry.mjs** and **grant-submission.mjs** continue the customer chapter projection, selected Datasette product, guided reviewer opening and issuer-workspace attachment.
 
 Both repository distributions use these same source modules and the same four reader routes. Keep later application composition changes additive to this shared pipeline so a customer chapter or editorial refresh retains the other accepted product sections and current preparation workflow.
 

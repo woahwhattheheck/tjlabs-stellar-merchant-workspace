@@ -30,6 +30,13 @@ starforge odk-central-workspace serve \
 
 Applications owns the existing private listener and connection file. Its printed operator URL opens the same workspace in the browser. The host Authorization environment variable remains the credential source for Central requests; connection records retain the variable name.
 
+To open this same operator through an existing remote HTTPS proxy, select its
+actual stable loopback `--port` and `--external-origin`. Applications provides
+the matching **Local port** and **Trusted browser HTTPS origin**
+settings. The returned `browserUrl` is for the remote browser; the original
+`origin` and `url` remain local control addresses. Existing authentication,
+the complete workspace and native client lifetime remain shared.
+
 See [APPLICATIONS_MCP.md](./APPLICATIONS_MCP.md) for Applications, managed-host and MCP configuration. See [native/RECEIVING.md](./native/RECEIVING.md) for the original actual-provider receiving operation.
 
 ## Customer commissioning and portable publishing
@@ -55,6 +62,41 @@ starforge odk-central-workspace publisher-receive --workspace /private/received-
 ```
 
 Read [PUBLISHER_TRANSFER.md](./PUBLISHER_TRANSFER.md) for full source custody, partial preparation, exact replay and destination activation.
+
+## Read Central through its existing private Codespaces port
+
+A private Codespaces forwarded Central API needs the existing GitHub proxy
+credential alongside Central authentication. Add an environment **alias** to the
+original connection:
+
+```json
+{
+  "id": "field-central",
+  "name": "Field operations",
+  "url": "https://ACTUAL-CODESPACE-PORT.app.github.dev",
+  "authEnv": "CENTRAL_AUTHORIZATION",
+  "codespacesTokenEnv": "GITHUB_TOKEN"
+}
+```
+
+Use the actual selected Central URL and existing host environment names.
+`codespacesTokenEnv` is optional, must differ from `authEnv`, and is allowed
+only for HTTPS `<one-label>.app.github.dev` on port 443. Other origins omit it.
+Both credential values are resolved from the process environment at request
+time; only aliases are saved. The proxy header remains within the original
+same-origin/API-path redirect boundary.
+
+The field connection form, connection JSON, CLI
+`--codespaces-token-env GITHUB_TOKEN` and merchant source profile use that
+same field. A saved connection ID rejects a changed or omitted proxy alias.
+Complete archives and commissioning handovers carry the alias so a receiving
+host can supply its own authorized environment.
+
+This upstream Central API URL is separate from the reporting operator's
+`externalOrigin`. Browser proxy cookies do not authenticate native API calls.
+Keep the original service, port visibility, workspace and operation. Read the
+[Central host guide](central-host/HOST.md) before changing an already selected
+host configuration.
 
 ## Complete command workflow
 
@@ -228,3 +270,15 @@ The desk uses the existing private listener and Store at `/form-releases/`.
 Its [complete operating and integration guide](release-review/README.md) covers
 current-draft source receiving, original file downloads, revision recovery,
 native compatibility, trusted authoring composition and publication receiving.
+
+## Customer programme
+
+The main operator's **Customer programme** view brings the original commissioning agreement, selected forms, both period plans, current edition reviews, frozen handover selections, customer files, warehouse operations and form-release reviews into one view. It uses the existing authenticated state endpoints and original download tickets. Each continuation opens the original commissioning, edition, warehouse or release desk; the programme view creates no records and runs no capture or publication automatically.
+
+Choose a retained programme or reopen the last selection for this workspace. **Refresh programme** reads all mounted desks again. The view labels the commissioning revision and observation time and rejects a response from another workspace. A missing optional desk leaves the programme available with that desk's actual error. Current review decisions are shown with their editions, while each handover displays the reviews frozen into its original delivery selection. Portable receiving uses the original commissioning workspace/revision condition; an archive from another workspace cannot mark a handover received.
+
+Customer report and dataset buttons download each exact retained original file. The original handover documents, complete portable archive when present, and warehouse period-report ZIP remain directly accessible. The commissioning deep link selects the requested existing programme without dispatching an operation.
+
+For the existing native receiver, `native/customer-programme-browser.mjs` opens the already-running application and an explicitly selected original commission. It checks the two saved period labels, desktop/mobile layout, original document download hash, exact commissioning deep link, reopen selection and original edition navigation. It closes its browser and retains screenshots plus a JSON receipt in the chosen private output directory. Run with `--url ORIGINAL_OPERATOR_URL --token-file PRIVATE_TOKEN_FILE --output PRIVATE_REVIEW_DIRECTORY --commission ORIGINAL_COMMISSION_ID`; `--playwright MODULE_PATH` and `--chrome EXECUTABLE_PATH` reuse the receiver's installed browser. The script starts no server, capture or data writer. Use the saved receiver's commission ID after its original two-period progression.
+
+When the original agreement includes `source_receiving.captureId`, the programme also opens that retained **Original source edition** through the same edition viewer. This preserves the distinction between the complete initial source cohort and the selected reporting-period plans. For the released Central demonstration, that original cohort contains doubleRepeat, simple and binaryType; its two reporting datasets deliberately select simple only. Root/repeat rows, original form/submission versions and retained media remain available in the original edition viewer. The native browser continuation follows this exact saved source reference when present.

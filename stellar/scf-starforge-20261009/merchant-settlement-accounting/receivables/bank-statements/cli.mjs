@@ -2,20 +2,27 @@
 // SPDX-License-Identifier: MIT
 import {constants} from 'node:fs';
 import {open,mkdir,lstat} from 'node:fs/promises';
-import {resolve,isAbsolute,dirname,join} from 'node:path';
+import {resolve,isAbsolute,dirname,join,basename} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {openAccountingWorkspace} from '../../workspace/store.mjs';
 import {accountingWorkspaceBinding} from '../../workspace/binding.mjs';
 import {ReceivablesWorkspace} from '../store.mjs';
 import {BankStatementsWorkspace,BANK_REQUEST_BYTES} from './store.mjs';
 import {need,json,sha} from '../core.mjs';
+import {BANK_SOURCE_BYTES,BANK_ROW_LIMIT} from './domain.mjs';
+import {readBankStatementSource} from './source.mjs';
 
 const HELP='Merchant bank statements and cash reconciliation\n\n'+
+  'starforge bank-statements collection help\n'+
+  'starforge bank-statements accountant help\n'+
   'starforge bank-statements serve --directory /private/accounting [--port 8448]\n'+
   'starforge bank-statements state --directory /private/accounting\n'+
   'starforge bank-statements transactions --directory /private/accounting --account UUID [--status UNMATCHED] [--offset 0] [--limit 100]\n'+
   'starforge bank-statements detail --directory /private/accounting --id TRANSACTION_UUID\n'+
+  'starforge bank-statements prepare-source --file /private/statement.xml --format CAMT053 --out /private/source.json [--account-namespace BANK] [--message-version camt.053.001.08] [--detail-policy PRESERVE_ONLY] [--namespace-mode DECLARED] [--reference-policy ACCOUNT_SERVICER_REFERENCE]\n'+
+  'starforge bank-statements prepare-source --file /private/statement.csv --format CSV --csv-mapping /private/mapping.json --out /private/source.json\n'+
   'starforge bank-statements source-preview --directory /private/accounting --input /private/source.json\n'+
+  'starforge bank-statements assembly-preview --directory /private/accounting --input /private/pages.json\n'+
   'starforge bank-statements close-preview --directory /private/accounting --input /private/close.json\n'+
   'starforge bank-statements apply --directory /private/accounting --action ACTION --input /private/request.json [--id UUID]\n'+
   'starforge bank-statements operation --directory /private/accounting --request ORIGINAL_REQUEST_ID\n'+
@@ -26,12 +33,13 @@ const HELP='Merchant bank statements and cash reconciliation\n\n'+
   'starforge bank-statements export --directory /private/accounting --id CLOSE_UUID --out /private/new-handover\n\n'+
   'Actions: account, receive-source, match, receive-receipt, undo, resolve, close, reopen.\n'+
   'Every mutation retains revision, actor and one stable requestId; workspaceId optionally binds it to the original directory.\n'+
-  'Source JSON is {source:{format:OFX|QFX|CSV,file:{name,dataBase64},csv?:explicit mapping}}.\n'+
+  'Source JSON is {source:{format:OFX|QFX|CSV|CAMT053,file:{name,dataBase64},csv?:explicit mapping,camt?:selected interpretation}}.\n'+
   'Dates and amounts remain explicit source calendar dates and exact decimal strings. Review source and close hashes before apply.\n'+
   'Downloads and output directories are create-only. The complete close export includes originals, editable JSON, postings, HTML and customer accounts.\n';
-const COMMANDS=new Set(['help','--help','serve','state','transactions','detail','source-preview','close-preview','apply','operation','import','close','file','export']);
+const COMMANDS=new Set(['help','--help','prepare-source','serve','state','transactions','detail','source-preview','assembly-preview','close-preview','apply','operation','import','close','file','export']);
 const FLAGS=new Set(['directory','outbox','proof-dir','terms','recovered-dir','port','account','status','search','offset','limit',
-  'id','input','action','request','kind','name','out','expected-workspace-id','expected-sources-sha256']);
+  'id','input','action','request','kind','name','out','expected-workspace-id','expected-sources-sha256',
+  'file','format','text-encoding','account-namespace','csv-mapping','message-version','detail-policy','namespace-mode','reference-policy']);
 export function parseBankArguments(argv) {
   const [command='help',...rest]=argv,flags={};need(COMMANDS.has(command),'UNKNOWN_BANK_COMMAND','Choose a documented bank-statement command.');
   for(let i=0;i<rest.length;i+=2) {
@@ -57,9 +65,55 @@ async function outputFile(path,bytes) {
   try{await handle.writeFile(bytes);await handle.sync();}finally{await handle.close();}
   return {path,bytes:bytes.length,sha256:sha(bytes)};
 }
+async function prepareSource(flags) {
+  const allowed=new Set(['file','format','out','text-encoding','account-namespace','csv-mapping','message-version','detail-policy','namespace-mode','reference-policy']);
+  for(const flag of Object.keys(flags))need(allowed.has(flag),'INVALID_PREPARE_SOURCE_OPTION','Use only original-file preparation options.',400,{flag});
+  const format=String(flags.format||'').toUpperCase();
+  need(['OFX','QFX','CSV','CAMT053'].includes(format),'INVALID_BANK_SOURCE_FORMAT','Select OFX, QFX, CSV or CAMT053 explicitly.');
+  need(format==='CSV'||!flags['csv-mapping'],'UNEXPECTED_BANK_CSV_MAPPING','CSV mapping applies only to the CSV source format.');
+  need(format==='CAMT053'||!(flags['message-version']||flags['detail-policy']||flags['namespace-mode']||flags['reference-policy']),'UNEXPECTED_BANK_CAMT_OPTIONS','CAMT interpretation options apply only to CAMT053.');
+  const inputPath=absolute(flags.file,'original source'),outputPath=absolute(flags.out,'prepared source');
+  const handle=await open(inputPath,constants.O_RDONLY|(constants.O_NOFOLLOW??0)|(constants.O_NONBLOCK??0));
+  let bytes;
+  try {
+    const before=await handle.stat();
+    need(before.isFile()&&before.size>0&&before.size<=BANK_SOURCE_BYTES,'INVALID_BANK_ORIGINAL','Choose one complete original statement within the 16 MB limit.');
+    bytes=await handle.readFile();
+    const after=await handle.stat();
+    need(bytes.length===before.size&&before.size===after.size&&before.mtimeMs===after.mtimeMs&&before.ctimeMs===after.ctimeMs,
+      'BANK_ORIGINAL_CHANGED','The original source changed during reading. Prepare its complete saved file.',409);
+  }finally{await handle.close();}
+  const source={format,file:{name:basename(inputPath),dataBase64:bytes.toString('base64')}};
+  if(flags['text-encoding'])source.textEncoding=flags['text-encoding'];
+  if(flags['account-namespace'])source.accountNamespace=flags['account-namespace'];
+  if(format==='CSV') {
+    need(flags['csv-mapping'],'BANK_CSV_MAPPING_REQUIRED','Select the complete explicit CSV mapping JSON with --csv-mapping.');
+    source.csv=await inputFile(flags['csv-mapping']);
+  }
+  if(format==='CAMT053'&&(flags['message-version']||flags['detail-policy']||flags['namespace-mode']||flags['reference-policy'])) {
+    source.camt={};
+    if(flags['message-version'])source.camt.messageVersion=flags['message-version'];
+    if(flags['detail-policy'])source.camt.detailPolicy=flags['detail-policy'];
+    if(flags['namespace-mode'])source.camt.namespaceMode=flags['namespace-mode'];
+    if(flags['reference-policy'])source.camt.referencePolicy=flags['reference-policy'];
+  }
+  const report=readBankStatementSource(source);
+  const recordCount=report.statements.reduce((sum,statement)=>sum+statement.rows.length+statement.pendingRows.length+
+    (statement.excludedRows?.filter(row=>row.row?.camt||row.camt).length??0),0);
+  need(recordCount<=BANK_ROW_LIMIT,'BANK_SOURCE_ROW_LIMIT','Choose at most 50,000 original statement rows.',413);
+  const request=Buffer.from(json({source}),'utf8');
+  need(request.length<=BANK_REQUEST_BYTES,'BANK_PREPARED_SOURCE_TOO_LARGE','The complete prepared request exceeds the workspace 24 MB request limit.',413);
+  return {schema:'stellar-forge.bank-prepared-source.v1',...await outputFile(outputPath,request),
+    sourceFile:report.file,format:report.format,statementCount:report.statements.length,recordCount,
+    statements:report.statements.map(statement=>({id:statement.id,account:statement.account,period:statement.period,
+      summary:statement.summary,issues:statement.issues})),issues:report.issues};
+}
 export async function runBankStatementsCli(argv=process.argv.slice(2)) {
+  if(argv[0]==='collection'){const {runBankCollectionCli}=await import('./collection-cli.mjs');return runBankCollectionCli(argv.slice(1));}
+  if(argv[0]==='accountant'){const {runAccountantReceivingCli}=await import('./accountant-receiving/cli.mjs');return runAccountantReceivingCli(argv.slice(1));}
   const {command,flags}=parseBankArguments(argv);
   if(command==='help'||command==='--help'){process.stdout.write(HELP);return;}
+  if(command==='prepare-source'){const result=await prepareSource(flags);process.stdout.write(json(result));return result;}
   const options={directory:absolute(flags.directory,'accounting workspace')};
   for(const [flag,key]of [['outbox','outboxDir'],['proof-dir','proofDir'],['terms','termsFile'],['recovered-dir','recoveredDir']])
     if(flags[flag])options[key]=absolute(flags[flag],flag);
@@ -81,6 +135,7 @@ export async function runBankStatementsCli(argv=process.argv.slice(2)) {
     else if(command==='transactions')result=await bank.transactions({accountId:flags.account,status:flags.status,search:flags.search,offset:flags.offset,limit:flags.limit});
     else if(command==='detail')result=await bank.detail(flags.id);
     else if(command==='source-preview')result=await bank.previewSource(await inputFile(flags.input));
+    else if(command==='assembly-preview')result=await bank.previewAssembly(await inputFile(flags.input));
     else if(command==='close-preview')result=await bank.previewClose(await inputFile(flags.input));
     else if(command==='operation')result=await bank.getOperation(flags.request);
     else if(command==='import')result=await bank.importDetail(flags.id);

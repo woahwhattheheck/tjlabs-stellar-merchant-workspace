@@ -1,3 +1,4 @@
+import { RozoFinanceService, ROZO_FINANCE_COMMANDS } from './finance-service.mjs';
 import { VERSION, assert, fail, id, text, fields, integer, iso, canonical, jsonDigest, digest, clone, newId, validateProfile, validateOrder, validateDecision, merchantCreateBody, validatePayment, settlementRow, findAsset, PAYMENT_STATUSES } from './model.mjs';
 import { connectionFor, connectionBinding, requireProfileConnection, merchantCall, readPayment, readOriginalOrder, paymentPage, receiveCallback, capturedHttp } from './provider.mjs';
 import { nativeBinding, runNative, selectCheckoutLink } from './checkout.mjs';
@@ -6,7 +7,7 @@ import { createReport, reportFiles, compareReports } from './reports.mjs';
 import { decoderBinding, stellarJobInput, captureStellar, contractProjection } from './stellar.mjs';
 
 export const STATE_SCHEMA='stellar-forge.rozo-payments-state.v1';
-export const COMMANDS=['profile.save','order.save','orders.import','decision.save','payment.attach','merchant.create','merchant.register','payment.refresh','payment.lookup','checkout.create','checkout.quote','checkout.status','checkout.resume','native.recover','sdk.fee','sdk.create','sdk.refresh','sdk.register','capture.payments','capture.active','capture.stellar','schedule.save','report.save','evidence.link','workspace.export','workspace.handover'];
+export const COMMANDS=['profile.save','order.save','orders.import','decision.save','payment.attach','merchant.create','merchant.register','payment.refresh','payment.lookup','checkout.create','checkout.quote','checkout.status','checkout.resume','native.recover','sdk.fee','sdk.create','sdk.refresh','sdk.register','capture.payments','capture.active','capture.stellar','schedule.save','report.save','evidence.link','workspace.export','workspace.handover',...ROZO_FINANCE_COMMANDS];
 const external=new Set(['merchant.create','merchant.register','payment.refresh','payment.lookup','checkout.create','checkout.quote','checkout.status','checkout.resume','native.recover','sdk.fee','sdk.create','sdk.refresh','sdk.register','capture.payments','capture.active','capture.stellar']);
 const pending=(workspace,request,reason)=>({schema:'stellar-forge.rozo-pending-result.v1',state:'pending',workspaceId:workspace.meta().workspaceId,requestId:request.id,fingerprint:request.fingerprint,reason});
 function fileBytes(file){
@@ -39,7 +40,8 @@ function nativeCreateDispatched(workspace,requestId){
   return workspace.capturesFor(requestId).some(c=>c.kind==='native_dispatch'&&c.request.method==='POST'&&(/\/create-invoice(?:\?|$)/.test(c.request.url)||(/\/payment-api(?:\/payments)?(?:\?|$)/.test(c.request.url)&&!c.request.url.includes('dryrun'))));
 }
 export class RozoService {
-  constructor({workspace,connections={},environment=process.env,publisherSelections={},fetchImpl=globalThis.fetch,sourceIdentity=null,delivery={}}){
+  constructor({workspace,connections={},environment=process.env,publisherSelections={},fetchImpl=globalThis.fetch,sourceIdentity=null,delivery={},accounting=null,buyer=null,accountingId=null,buyerId=null}){
+    this.finance=new RozoFinanceService({workspace,accounting,buyer,accountingId,buyerId});
     this.workspace=workspace;this.connections=connections;this.environment=environment;this.publisherSelections=publisherSelections;this.fetchImpl=fetchImpl;this.sourceIdentity=sourceIdentity;this.delivery=delivery;this.transferring=false;this.active=new Map();this.closed=false;this.stop=new AbortController();this.watchTimer=null;this.watchRunning=null;
   }
   profile(profileId){id(profileId,'profileId');const p=this.workspace.get('profile',profileId);assert(p,'PROFILE_MISSING','Save or select the original merchant profile.',404);return p;}
@@ -66,7 +68,7 @@ export class RozoService {
     let selected=null,rows=[];
     if(profileId){selected=this.profile(profileId);rows=this.rows(profileId);if(query)rows=rows.filter(r=>[r.paymentId,r.orderId,r.status].some(v=>String(v??'').toLowerCase().includes(query.toLowerCase())));if(status)rows=rows.filter(r=>r.status===status);if(unresolved)rows=rows.filter(r=>r.unresolved.length);}
     const requests=this.workspace.requests({limit:200}).items;
-    return {schema:STATE_SCHEMA,workspace:this.workspace.meta(),sourceIdentity:this.sourceIdentity,profiles,selected,
+    return {schema:STATE_SCHEMA,workspace:this.workspace.meta(),sourceIdentity:this.sourceIdentity,finance:{accountingId:this.finance.accountingId,buyerId:this.finance.buyerId},profiles,selected,
       connections:Object.entries(this.connections).map(([alias,c])=>({alias,type:c.type,appId:c.appId??null,hasWebhookSecret:Boolean(c.webhookSecretEnv&&this.environment[c.webhookSecretEnv]),publisher:c.publisher??null})),
       payments:{total:rows.length,offset,limit,nextOffset:offset+limit<rows.length?offset+limit:null,items:rows.slice(offset,offset+limit)},
       orders:profileId?this.workspace.list('order',{all:true}).items.filter(r=>r.value.profileId===profileId):[],
@@ -100,6 +102,7 @@ export class RozoService {
   }
   async perform(envelope,options){
     const w=this.workspace,p=envelope.payload;
+    if(envelope.command.startsWith('finance.'))return this.finance.execute(envelope);
     if(envelope.command.startsWith('workspace.'))return this.exportWorkspace(envelope);
     if(!external.has(envelope.command))return w.commit(envelope,context=>{
       switch(envelope.command){

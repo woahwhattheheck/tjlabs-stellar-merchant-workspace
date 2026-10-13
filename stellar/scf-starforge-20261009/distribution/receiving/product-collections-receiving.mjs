@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // MIT. Complete receiving of product source, installed Collections and original recovery.
 import { constants, createReadStream } from 'node:fs';
-import { open, readFile, writeFile, mkdir, lstat, realpath, readdir, rename, chmod } from 'node:fs/promises';
+import { open, readFile, writeFile, mkdir, lstat, realpath, readdir, rename, chmod, link, unlink } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash, randomUUID, randomBytes } from 'node:crypto';
@@ -13,6 +13,10 @@ import { runtimeCommand, inspectRuntimeInstall } from '../runtime-install.mjs';
 import { saveJSON, operationLease, processIdentity } from '../runtime-workspace/storage.mjs';
 import { validateCollectionPlan, resolveCollectionEdition, stableJson } from '../../sf88-operator-buyer-cli/collection-composer/plan.mjs';
 import { openProductCollectionsBrowser } from './product-collections-browser.mjs';
+import { parsePlanPackage } from '../../sf88-operator-buyer-cli/collection-composer/package-format.mjs';
+
+import { readCustomerUseSource, customerUseDocument, canonical, customerUseReview, customerUseCsv } from '../../sf88-operator-buyer-cli/collection-composer/customer-use-definition.mjs';
+import { inspectCustomerUseReturn } from '../../sf88-operator-buyer-cli/collection-composer/customer-use-return.mjs';
 
 export const RECEIVING_SCHEMA = 'stellar-forge.product-collections-receiving.v1';
 const JOURNAL_SCHEMA = 'stellar-forge.product-collections-receiving-state.v1';
@@ -42,7 +46,7 @@ function disjoint(left, right) {
 /** Select actual existing files, two real plan revisions and two explicit periods. */
 export function validateReceivingInput(value) {
   fields(value, ['schema', 'operationId', 'outputDirectory', 'source', 'runtime',
-    'collections', 'recovery', 'browser', 'operationTimeoutSeconds']);
+    'collections', 'recovery', 'browser', 'operationTimeoutSeconds', 'customerUse', 'planAdoption']);
   need(value.schema === RECEIVING_SCHEMA && typeof value.operationId === 'string'
     && value.operationId.length > 0 && value.operationId.length <= 200, 'RECEIVING_OPERATION_REQUIRED');
   absolute(value.outputDirectory);
@@ -108,6 +112,71 @@ export function validateReceivingInput(value) {
   if (value.operationTimeoutSeconds !== undefined)
     need(Number.isSafeInteger(value.operationTimeoutSeconds) && value.operationTimeoutSeconds >= 60
       && value.operationTimeoutSeconds <= 86400, 'RECEIVING_OPERATION_TIMEOUT_INVALID');
+
+  if (value.customerUse !== undefined) {
+    const selected = value.customerUse;
+    fields(selected, ['calendar', 'commissionFiles', 'actor', 'expectedHeadSha256', 'requestIds', 'buyerReturn']);
+    const pin = value => {
+      fields(value, ['path', 'bytes', 'sha256']); absolute(value.path);
+      need(Number.isSafeInteger(value.bytes) && value.bytes > 0 && HASH.test(value.sha256 ?? ''),
+        'RECEIVING_COMPLETE_CUSTOMER_USE_FILE_REQUIRED');
+    };
+    pin(selected.calendar);
+    need(selected.calendar.bytes <= 32 * 1024 * 1024
+      && Array.isArray(selected.commissionFiles) && selected.commissionFiles.length === 2,
+    'RECEIVING_ORIGINAL_CALENDAR_AND_TWO_COMMISSION_REVISIONS_REQUIRED');
+    selected.commissionFiles.forEach(value => {
+      pin(value); need(value.bytes <= 2 * 1024 * 1024, 'RECEIVING_COMMISSION_FILE_TOO_LARGE');
+    });
+    need(typeof selected.actor === 'string' && selected.actor.trim().length > 0
+      && selected.actor.length <= 200 && !selected.actor.includes('\0')
+      && (selected.expectedHeadSha256 === null || HASH.test(selected.expectedHeadSha256 ?? '')),
+    'RECEIVING_ORIGINAL_COMMISSION_HEAD_AND_ACTOR_REQUIRED');
+    fields(selected.requestIds, ['save', 'prepare', 'create', 'capture']);
+    const uuids = [];
+    for (const key of ['save', 'prepare', 'create']) {
+      need(Array.isArray(selected.requestIds[key]) && selected.requestIds[key].length === 2,
+        'RECEIVING_ORIGINAL_CUSTOMER_USE_REQUESTS_REQUIRED');
+      uuids.push(...selected.requestIds[key]);
+    }
+    uuids.push(selected.requestIds.capture);
+    need(uuids.every(value => typeof value === 'string'
+      && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(value))
+      && new Set(uuids).size === uuids.length, 'RECEIVING_DISTINCT_RETAINED_CUSTOMER_USE_REQUESTS_REQUIRED');
+    fields(selected.buyerReturn, ['bindingIds', 'maxVerifyBytes', 'requireSavedResponses']);
+    need(Array.isArray(selected.buyerReturn.bindingIds) && selected.buyerReturn.bindingIds.length > 0
+      && selected.buyerReturn.bindingIds.length <= 2000 && selected.buyerReturn.bindingIds.every(value => ID.test(value))
+      && new Set(selected.buyerReturn.bindingIds).size === selected.buyerReturn.bindingIds.length
+      && Number.isSafeInteger(selected.buyerReturn.maxVerifyBytes) && selected.buyerReturn.maxVerifyBytes > 0
+      && selected.buyerReturn.maxVerifyBytes <= 1073741824
+      && selected.buyerReturn.requireSavedResponses === true,
+    'RECEIVING_EXPLICIT_ORIGINAL_BUYER_RETURN_REQUIRED');
+  }
+  if (value.planAdoption !== undefined) {
+    const selected = value.planAdoption;
+    fields(selected, ['sourcePeriod','recipientDirectory','bindings','headerSelections','period']);
+    need(selected.sourcePeriod === 0 || selected.sourcePeriod === 1, 'RECEIVING_ADOPTION_SOURCE_PERIOD_REQUIRED');
+    absolute(selected.recipientDirectory);
+    disjoint(value.recovery.stateRoot, selected.recipientDirectory);
+    for (const path of [value.outputDirectory, value.source.repository, value.runtime.workspaceDirectory,
+      value.runtime.installedDirectory, value.recovery.retainedStateRoot].filter(Boolean))
+      disjoint(path, selected.recipientDirectory);
+    fields(selected.bindings, ['path','bytes','sha256']); absolute(selected.bindings.path);
+    need(Number.isSafeInteger(selected.bindings.bytes) && selected.bindings.bytes > 0
+      && selected.bindings.bytes <= 2 * 1024 * 1024 && HASH.test(selected.bindings.sha256 ?? ''),
+    'RECEIVING_EXACT_ADOPTION_BINDINGS_REQUIRED');
+    disjoint(value.recovery.stateRoot, selected.bindings.path);
+    fields(selected.period, ['collectionId','name','values']);
+    need(ID.test(selected.period.collectionId ?? '') && typeof selected.period.name === 'string'
+      && selected.period.name.trim().length > 0 && selected.period.name.length <= 160
+      && plain(selected.period.values) && Object.values(selected.period.values).every(value => typeof value === 'string')
+      && !value.collections.periods.some(period => period.collectionId === selected.period.collectionId),
+    'RECEIVING_DISTINCT_ADOPTED_PERIOD_REQUIRED');
+    need(selected.headerSelections === undefined || Array.isArray(selected.headerSelections)
+      && selected.headerSelections.every(row => plain(row) && typeof row.key === 'string'
+        && Array.isArray(row.names) && row.names.every(name => typeof name === 'string')),
+    'RECEIVING_SHARED_HEADER_SELECTION_INVALID');
+  }
   return JSON.parse(JSON.stringify(value));
 }
 async function present(path) {
@@ -207,6 +276,25 @@ async function receiveFile(host, item, path, signal) {
   try { await parent.sync(); } finally { await parent.close(); }
   return { path, bytes, sha256: item.sha256 };
 }
+async function retainBytes(path, bytes) {
+  await directory(dirname(path), { create: true, privateMode: true });
+  if (await present(path)) {
+    const actual = await fileIdentity(path);
+    need(actual.bytes === bytes.length && actual.sha256 === sha(bytes), 'RECEIVING_FROZEN_FILE_CHANGED');
+    return;
+  }
+  const temporary = path + '.partial-' + randomUUID(), handle = await open(temporary, 'wx', 0o600);
+  try { await handle.writeFile(bytes); await handle.sync(); } finally { await handle.close(); }
+  try { await link(temporary, path); } catch (error) {
+    if (error.code !== 'EEXIST') throw error;
+    const actual = await fileIdentity(path);
+    need(actual.bytes === bytes.length && actual.sha256 === sha(bytes), 'RECEIVING_FROZEN_FILE_CHANGED');
+  }
+  await unlink(temporary);
+  const parent = await open(dirname(path), constants.O_RDONLY | constants.O_DIRECTORY);
+  try { await parent.sync(); } finally { await parent.close(); }
+}
+
 function memberPath(root, name) {
   need(typeof name === 'string' && name.length > 0 && !isAbsolute(name)
     && !name.includes('\\') && name.split('/').every(part => part && part !== '.' && part !== '..'),
@@ -315,12 +403,20 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
   }
   async function startCollection(mode) {
     const receivingDirectory = join(config.outputDirectory, 'receiving-workspace');
-    const selected = mode === 'receiving' ? receivingDirectory : config.collections.directory;
+    const selected = mode === 'receiving' ? receivingDirectory
+      : mode === 'adoption' ? config.planAdoption.recipientDirectory : config.collections.directory;
     const command = await runtimeCommand({ directory: journal.runtime.directory,
       args: ['buyer-collections-workspace', mode === 'receiving' ? '--receiving-directory' : '--directory',
         selected, '--port', '0', '--startup-format', 'json'] });
     need(command.sourceCommit === config.source.commit, 'RECEIVING_INSTALLED_SOURCE_CHANGED');
-    const saved = journal.listener;
+    let saved = journal.listener;
+    if (saved && await processIdentity(saved.pid) === saved.processStart
+      && (saved.mode !== mode || saved.selected !== selected)) {
+      need(saved.sourceCommit === config.source.commit
+        && [config.collections.directory, receivingDirectory, config.planAdoption?.recipientDirectory].includes(saved.selected),
+      'RECEIVING_EXISTING_LISTENER_SELECTION_CHANGED');
+      collection = { ...saved }; await closeCollection(); saved = null;
+    }
     if (saved && await processIdentity(saved.pid) === saved.processStart) {
       need(saved.mode === mode && saved.selected === selected && saved.sourceCommit === config.source.commit,
         'RECEIVING_EXISTING_LISTENER_SELECTION_CHANGED');
@@ -371,7 +467,7 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
     }
     collection.host = endpoint(collection.url, 'collections');
     const status = await original(collection.host, '/api/status');
-    need(mode === 'receiving' || status.directory === config.collections.directory,
+    need(mode === 'receiving' || status.directory === selected,
       'RECEIVING_ORIGINAL_COLLECTION_STORE_CHANGED');
     return collection;
   }
@@ -402,7 +498,379 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
       await delay(1500, undefined, { signal });
     }
   }
+
+  async function customerUseInputs() {
+    const selected = config.customerUse;
+    if (!selected) return null;
+    const retained = journal.customerUseInputs;
+    if (retained) {
+      for (const pin of [retained.calendar, ...retained.commissions]) {
+        const actual = await fileIdentity(pin.path);
+        need(actual.bytes === pin.bytes && actual.sha256 === pin.sha256, 'RECEIVING_RETAINED_CUSTOMER_USE_INPUT_CHANGED');
+      }
+      return retained;
+    }
+    const sources = [selected.calendar, ...selected.commissionFiles], copies = [];
+    for (let index = 0; index < sources.length; index++) {
+      const pin = sources[index], raw = await regular(pin.path, index === 0 ? 32 * 1024 * 1024 : 2 * 1024 * 1024);
+      need(raw.length === pin.bytes && sha(raw) === pin.sha256, 'RECEIVING_CUSTOMER_USE_ORIGINAL_INPUT_CHANGED');
+      const path = join(config.outputDirectory, 'inputs', index === 0 ? 'original-customer-use-calendar.json'
+        : 'original-customer-use-commission-' + (index - 1) + '.json');
+      await retainBytes(path, raw);
+      copies.push({ path, bytes: raw.length, sha256: sha(raw), originalPath: pin.path });
+    }
+    const calendar = readCustomerUseSource(await regular(copies[0].path, 32 * 1024 * 1024));
+    const documents = [];
+    const nativePlans = journal.planInputs.map(pin => pin.definitionSha256);
+    for (let index = 0; index < 2; index++) {
+      const value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await regular(copies[index + 1].path)));
+      const document = customerUseDocument(value, calendar.value, calendar.sha256);
+      need(document.periods.length === 2, 'RECEIVING_COMMISSION_TWO_ORIGINAL_PERIODS_REQUIRED');
+      for (let periodIndex = 0; periodIndex < 2; periodIndex++) {
+        const period = config.collections.periods[periodIndex], bound = document.periods.find(row => row.collectionId === period.collectionId);
+        need(bound && bound.planId === journal.planInputs[periodIndex].planId
+          && bound.planSha256 === nativePlans[periodIndex] && bound.name === period.name
+          && canonical(bound.values) === canonical(period.values), 'RECEIVING_COMMISSION_PLAN_PERIOD_SELECTION_CHANGED');
+      }
+      need(selected.buyerReturn.bindingIds.every(id => document.bindings.some(binding => binding.id === id)),
+        'RECEIVING_ORIGINAL_RETURN_BINDING_MISSING');
+      documents.push(document);
+    }
+    need(documents[0].id === documents[1].id && canonical(documents[0]) !== canonical(documents[1]),
+      'RECEIVING_TWO_EXPLICIT_COMMISSION_REVISIONS_REQUIRED');
+    journal.customerUseInputs = { calendar: copies[0], commissions: copies.slice(1),
+      commissionId: documents[0].id, source: calendar.value.source, selections: calendar.value.selection };
+    await persist();
+    return journal.customerUseInputs;
+  }
+  async function retainedCustomerUseDocument(index) {
+    const inputs = journal.customerUseInputs;
+    const calendar = readCustomerUseSource(await regular(inputs.calendar.path, 32 * 1024 * 1024));
+    const raw = await regular(inputs.commissions[index].path, 2 * 1024 * 1024);
+    need(raw.length === inputs.commissions[index].bytes && sha(raw) === inputs.commissions[index].sha256,
+      'RECEIVING_RETAINED_CUSTOMER_USE_INPUT_CHANGED');
+    const value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(raw));
+    const document = customerUseDocument(value, calendar.value, calendar.sha256);
+    for (let periodIndex = 0; periodIndex < document.periods.length; periodIndex++) {
+      const period = document.periods[periodIndex];
+      const pin = journal.planInputs.find(row => row.planId === period.planId && row.definitionSha256 === period.planSha256);
+      need(pin, 'RECEIVING_ORIGINAL_COMMISSION_PLAN_CHANGED');
+      const plan = validateCollectionPlan(JSON.parse(await regular(pin.retained)));
+      need(sha(encoded(plan)) === pin.definitionSha256, 'RECEIVING_RETAINED_PLAN_INPUT_CHANGED');
+      document.periods[periodIndex] = { ...period, values: resolveCollectionEdition(plan, period).values };
+    }
+    return document;
+  }
+  async function customerUseAction(key, operation, input) {
+    const selected = journal.customerUseInputs, prefix = '/api/customer-use/commissions';
+    const path = operation === 'save' ? prefix : prefix + '/' + selected.commissionId + '/' + operation;
+    // Freeze the full original native action before dispatch. Reentry uses the
+    // same request UUID and native controller's own request/result recovery.
+    await retainBytes(join(config.outputDirectory, 'customer-use', 'requests', key + '.json'),
+      encoded({ operationId: config.operationId, path, input }));
+    const result = await original(collection.host, path, input);
+    await artifact('customer-use/actions/' + key + '.json', result);
+    return result;
+  }
+  async function saveCustomerUse() {
+    const inputs = await customerUseInputs(), selected = config.customerUse;
+    const raw = await regular(inputs.calendar.path, 32 * 1024 * 1024);
+    let imported = await original(collection.host, '/api/customer-use/sources/' + inputs.calendar.sha256,
+      undefined, { optional: true });
+    if (!imported) {
+      const response = await fetch(new URL('/api/customer-use/sources/' + inputs.calendar.sha256, collection.host.origin), {
+        method: 'POST', headers: { ...headers(collection.host), 'content-type': 'application/octet-stream',
+          'x-customer-use-name': encodeURIComponent(basename(inputs.calendar.originalPath)) }, body: raw, signal });
+      imported = await response.json();
+      need(response.ok, imported.error || 'RECEIVING_CALENDAR_IMPORT_FAILED');
+    }
+    need(imported.metadata?.sha256 === inputs.calendar.sha256 && imported.metadata.bytes === inputs.calendar.bytes
+      && canonical(imported.source.source) === canonical(inputs.source), 'RECEIVING_IMPORTED_CALENDAR_CHANGED');
+    await artifact('customer-use/original-calendar-import.json', imported);
+    const revisions = journal.customerUseRevisions ??= [];
+    for (let index = 0; index < 2; index++) {
+      const document = await retainedCustomerUseDocument(index);
+      if (!revisions[index]) {
+        const result = await customerUseAction('save-' + index, 'save', { document,
+          expectedHeadSha256: index === 0 ? selected.expectedHeadSha256 : revisions[index - 1].sha256,
+          actor: selected.actor, requestId: selected.requestIds.save[index] });
+        need(result.id === inputs.commissionId && HASH.test(result.sha256 ?? '')
+          && result.requestId === selected.requestIds.save[index], 'RECEIVING_ORIGINAL_COMMISSION_SAVE_CHANGED');
+        revisions[index] = result; await persist();
+      }
+      const reopened = await original(collection.host, '/api/customer-use/commissions/' + inputs.commissionId
+        + '/revisions/' + revisions[index].sha256);
+      need(reopened.selected.sha256 === revisions[index].sha256
+        && canonical(reopened.document) === canonical(document)
+        && reopened.calendar.metadata.sha256 === inputs.calendar.sha256,
+      'RECEIVING_SAVED_COMMISSION_REVISION_CHANGED');
+      await artifact('customer-use/revision-' + index + '.json', reopened);
+    }
+    need(revisions[1].parentSha256 === revisions[0].sha256
+      && revisions[1].revision === revisions[0].revision + 1,
+    'RECEIVING_COMMISSION_REVISIONS_NOT_CONSECUTIVE');
+    await browser.showCustomerUse(collectionsPage, revisions[1], 'saved-customer-use-commission');
+    return { source: inputs.calendar, sourceCase: inputs.source, commissionId: inputs.commissionId,
+      revisions: revisions.map(row => ({ id: row.id, revision: row.revision, sha256: row.sha256,
+        parentSha256: row.parentSha256, documentSha256: row.documentSha256, requestId: row.requestId })) };
+  }
+  async function customerUsePeriod(index, operation, edition) {
+    const selected = config.customerUse, revision = journal.customerUseRevisions[1];
+    const input = { sha256: revision.sha256, collectionId: config.collections.periods[index].collectionId,
+      actor: selected.actor, requestId: selected.requestIds[operation][index] };
+    if (operation === 'create') {
+      need(edition?.editionSha256 && edition.preview?.previewSha256, 'RECEIVING_ORIGINAL_PERIOD_REVIEW_REQUIRED');
+      input.expectedEditionSha256 = edition.editionSha256;
+      input.expectedPreviewSha256 = edition.preview.previewSha256;
+    }
+    const result = await customerUseAction(operation + '-' + index, operation, input);
+    const native = result.current ?? result.native;
+    need(result.requestId === input.requestId && result.commission?.id === revision.id
+      && result.commission.sha256 === revision.sha256 && native?.collectionId === input.collectionId,
+    'RECEIVING_COMMISSION_PERIOD_RESULT_CHANGED');
+    await browser.openEdition(collectionsPage, input.collectionId);
+    return native;
+  }
+  async function verifyCustomerUse(name) {
+    const selected = journal.completed.SAVE_ORIGINAL_CUSTOMER_USE, inputs = journal.customerUseInputs;
+    const result = await original(collection.host, '/api/customer-use/receiving');
+    const current = result.commissions.find(row => row.id === selected.commissionId);
+    need(current && current.currentHead.sha256 === selected.revisions[1].sha256
+      && current.source.sha256 === inputs.calendar.sha256 && current.source.bytes === inputs.calendar.bytes
+      && current.periods.length === 2 && current.periods.every(row => !row.error)
+      && current.responses.every(row => !row.error), 'RECEIVING_ORIGINAL_COMMISSION_RECEIVING_CHANGED');
+    for (let index = 0; index < 2; index++) {
+      const revision = selected.revisions[index], view = await original(collection.host, '/api/customer-use/commissions/'
+        + selected.commissionId + '/revisions/' + revision.sha256);
+      const document = await retainedCustomerUseDocument(index);
+      need(view.selected.sha256 === revision.sha256 && view.selected.documentSha256 === revision.documentSha256
+        && canonical(view.document) === canonical(document)
+        && canonical(view.calendar.source.source) === canonical(inputs.source),
+      'RECEIVING_ORIGINAL_COMMISSION_HISTORY_CHANGED');
+    }
+    await artifact('customer-use/' + name + '.json', result);
+    return current;
+  }
+  async function receiveCustomerUseReturn() {
+    const selected = config.customerUse, revision = journal.customerUseRevisions[1], commissionId = revision.id;
+    const prior = await original(collection.host, '/api/customer-use/commissions/' + commissionId
+      + '/actions/' + selected.requestIds.capture, undefined, { optional: true });
+    const view = await original(collection.host, '/api/customer-use/commissions/' + commissionId + '/revisions/' + revision.sha256);
+    const failures = [];
+    if (!prior?.result) {
+    for (const bindingId of selected.buyerReturn.bindingIds) {
+      const row = view.observations.rows.find(row => row.bindingId === bindingId);
+      need(row, 'RECEIVING_ORIGINAL_BUYER_BINDING_CHANGED');
+      for (const request of row.requests) {
+        const item = request.item;
+        if (request.error || !item?.job || item.error || item.job.outcome?.responseFile?.status !== 'SAVED')
+          failures.push({ bindingId, collectionId: request.selection.collectionId,
+            requestKey: request.selection.requestKey, intentId: request.request?.intentId ?? null,
+            state: item?.state ?? null, responseStatus: item?.job?.outcome?.responseFile?.status ?? null,
+            error: request.error ?? item?.error ?? null });
+      }
+      for (const response of row.responses) if (response.error || response.nativeFile?.status !== 'SAVED')
+        failures.push({ bindingId, selection: response.selection, error: response.error ?? null });
+    }
+    await artifact('customer-use/original-buyer-observations-before-return.json', { view, unavailable: failures });
+    need(failures.length === 0, 'RECEIVING_ORIGINAL_BUYER_RESULTS_REQUIRED',
+      'Use the original Collections approval/run/recovery controls for the selected requests, then continue this exact receiving input; no buyer was called by this receiver.');
+    }
+    const captured = await customerUseAction('capture', 'capture', { sha256: revision.sha256,
+      bindingIds: selected.buyerReturn.bindingIds, maxVerifyBytes: selected.buyerReturn.maxVerifyBytes,
+      actor: selected.actor, requestId: selected.requestIds.capture });
+    need(captured.requestId === selected.requestIds.capture && captured.commission?.id === commissionId
+      && captured.commission.sha256 === revision.sha256, 'RECEIVING_ORIGINAL_BUYER_CAPTURE_CHANGED');
+    const returnPath = '/api/customer-use/commissions/' + commissionId + '/returns/' + selected.requestIds.capture;
+    const returned = await receiveFile(collection.host, { ...captured.file, url: returnPath },
+      join(config.outputDirectory, 'customer-use', 'original-buyer-return.json'), signal);
+    const raw = await regular(returned.path, 16 * 1024 * 1024), report = inspectCustomerUseReturn(raw);
+    need(report.customerUse.commission.revisionSha256 === revision.sha256
+      && report.customerUse.source.calendarSha256 === journal.customerUseInputs.calendar.sha256
+      && canonical(report.customerUse.bindings.map(row => row.id).sort()) === canonical([...selected.buyerReturn.bindingIds].sort()),
+    'RECEIVING_RETURN_COMMISSION_BINDING_CHANGED');
+    need(report.rows.length > 0 && report.rows.every(row => row.output?.state === 'VERIFIED'),
+      'RECEIVING_ORIGINAL_RETURN_OUTPUT_NOT_VERIFIED',
+      'Retain the original capture and its actual output verification; do not label a limited or unavailable output complete.');
+    await artifact('customer-use/original-buyer-return-review.json', report);
+    const exported = [];
+    for (const format of ['json', 'csv']) {
+      const path = join(config.outputDirectory, 'customer-use', 'complete-commission.' + format);
+      let bytes;
+      if (await present(path)) bytes = await regular(path, 64 * 1024 * 1024);
+      else {
+        const target = new URL('/api/customer-use/commissions/' + commissionId + '/revisions/'
+          + revision.sha256 + '/export/' + format, collection.host.origin);
+        const response = await fetch(target, { headers: headers(collection.host), signal });
+        need(response.ok && response.headers.get('x-customer-use-revision') === revision.sha256,
+          'RECEIVING_COMMISSION_EXPORT_FAILED');
+        bytes = Buffer.from(await response.arrayBuffer());
+        need(bytes.length <= 64 * 1024 * 1024 && sha(bytes) === response.headers.get('x-content-sha256'),
+          'RECEIVING_COMMISSION_EXPORT_CHANGED');
+      }
+      if (format === 'csv') need(sha(bytes) === sha(customerUseCsv(customerUseReview(view.document, view.calendar.source))),
+        'RECEIVING_FROZEN_COMMISSION_CSV_CHANGED');
+      else {
+        const packet = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+        need(packet.schema === 'stellar-forge.sf88.customer-use-commissioning.v1.export'
+          && packet.selectedSha256 === revision.sha256 && packet.currentHead.sha256 === revision.sha256
+          && packet.current.selected.sha256 === revision.sha256
+          && canonical(packet.current.document) === canonical(view.document)
+          && packet.revisions.length === view.history.length
+          && packet.revisions.every((row, index) => row.sha256 === view.history[index].sha256
+            && sha(Buffer.from(JSON.stringify(row.record, null, 2) + '\n')) === row.sha256)
+          && packet.sources.some(row => row.metadata.sha256 === journal.customerUseInputs.calendar.sha256
+            && row.encoding === 'base64'
+            && sha(Buffer.from(row.content, 'base64')) === journal.customerUseInputs.calendar.sha256),
+        'RECEIVING_FROZEN_COMMISSION_EXPORT_CHANGED');
+      }
+      await retainBytes(path, bytes); exported.push(await fileIdentity(path));
+    }
+    await browser.showCustomerUse(collectionsPage, revision, 'original-buyer-return', {
+      requestId: selected.requestIds.capture, returnSha256: returned.sha256 });
+    return { commissionId, revisionSha256: revision.sha256, calendarSha256: journal.customerUseInputs.calendar.sha256,
+      captureRequestId: selected.requestIds.capture, originalIntents: report.rows.map(row => row.intentId),
+      file: returned, exports: exported, sourceCase: journal.customerUseInputs.source,
+      originalBuyerSource: report.buyerSource, counts: report.counts };
+  }
+
+  async function adoptionBindings() {
+    const selected = config.planAdoption.bindings;
+    const stat = await lstat(selected.path);
+    need(stat.isFile() && !stat.isSymbolicLink() && stat.uid === process.getuid()
+      && (stat.mode & 0o077) === 0, 'RECEIVING_PRIVATE_ADOPTION_BINDINGS_REQUIRED');
+    const raw = await regular(selected.path, 2 * 1024 * 1024);
+    need(raw.length === selected.bytes && sha(raw) === selected.sha256, 'RECEIVING_ADOPTION_BINDINGS_CHANGED');
+    const input = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(raw));
+    fields(input, ['planId','name','description','operatorBindings','outputDirectory',
+      'deliveryParameter','deliveryValue','requestBindings']);
+    need(ID.test(input.planId ?? '') && typeof input.name === 'string'
+      && Array.isArray(input.operatorBindings) && input.operatorBindings.length > 0,
+    'RECEIVING_LOCAL_ADOPTION_SELECTION_REQUIRED');
+    absolute(input.outputDirectory); disjoint(config.recovery.stateRoot, input.outputDirectory);
+    for (const binding of input.operatorBindings) {
+      fields(binding, ['groupId','operatorWorkspace','operatorConfigFile']);
+      need(typeof binding.groupId === 'string'
+        && (binding.operatorWorkspace !== undefined) !== (binding.operatorConfigFile !== undefined),
+      'RECEIVING_LOCAL_OPERATOR_BINDING_REQUIRED');
+      const path = absolute(binding.operatorWorkspace ?? binding.operatorConfigFile);
+      disjoint(config.recovery.stateRoot, path);
+    }
+    need(input.requestBindings === undefined || Array.isArray(input.requestBindings),
+      'RECEIVING_LOCAL_REQUEST_BINDINGS_REQUIRED');
+    for (const request of input.requestBindings ?? []) {
+      fields(request, ['key','ticketFile','headers','omitHeaders']);
+      need(typeof request.key === 'string', 'RECEIVING_LOCAL_REQUEST_BINDINGS_REQUIRED');
+      if (request.ticketFile !== undefined)
+        disjoint(config.recovery.stateRoot, absolute(request.ticketFile));
+    }
+    return input;
+  }
+  async function receivePlanAdoption() {
+    const selected = config.planAdoption;
+    // Source export finishes before this same installed listener is moved to the
+    // already-existing recipient store. No additional host or work queue is created.
+    const shared = await step('EXPORT_COMPLETE_REQUEST_PLAN', async () => {
+      const sourceId = config.collections.periods[selected.sourcePeriod].collectionId;
+      const edition = await original(collection.host, '/api/composer/editions/' + sourceId);
+      need(edition.phase === 'CREATED' && edition.editionSha256, 'RECEIVING_SOURCE_EDITION_REQUIRED');
+      const packet = await browser.sharePlan(collectionsPage, edition, selected.headerSelections ?? []);
+      let manifest, footer, records = 0;
+      for await (const record of parsePlanPackage(createReadStream(packet.file.path))) {
+        if (record.type === 'manifest') manifest = record.manifest;
+        if (record.type === 'complete') footer = record;
+        records++;
+      }
+      need(footer?.packageSha256 === packet.packageSha256
+        && stableJson(manifest) === stableJson(packet.manifest), 'RECEIVING_SHARED_FILE_CHANGED');
+      await artifact('plan-adoption/source-package.json', packet);
+      return { ...packet, recordCount: records };
+    });
+    const pinned = await fileIdentity(shared.file.path);
+    need(pinned.bytes === shared.file.bytes && pinned.sha256 === shared.file.sha256,
+      'RECEIVING_SHARED_FILE_CHANGED');
+    const bindings = await adoptionBindings();
+    need(bindings.operatorBindings.length === shared.manifest.operators.length
+      && new Set(bindings.operatorBindings.map(item => item.groupId)).size === bindings.operatorBindings.length,
+    'RECEIVING_WHOLE_PLAN_OPERATOR_BINDINGS_REQUIRED');
+    for (const group of shared.manifest.operators) {
+      const binding = bindings.operatorBindings.find(item => item.groupId === group.id);
+      need(binding && (binding.operatorWorkspace ?? binding.operatorConfigFile) !== group.path,
+        'RECEIVING_DISTINCT_RECIPIENT_OPERATOR_REQUIRED');
+    }
+    await collectionsPage?.close(); collectionsPage = null; await closeCollection();
+    await startCollection('adoption');
+    collectionsPage = await browser.collectionsPage(collection.url);
+    const adopted = await step('ADOPT_COMPLETE_REQUEST_PLAN', async () => {
+      return browser.adoptSharedPlan(collectionsPage, shared, bindings, async reviewed => {
+        const groups = new Map(shared.manifest.sources.map(source => [source.key, source.operatorGroup]));
+        for (const operator of reviewed.operators) {
+          const source = shared.manifest.operators.find(group => group.id === groups.get(operator.key));
+          need(source && operator.configSha256 !== source.configSha256,
+            'RECEIVING_DISTINCT_RECIPIENT_OPERATOR_REQUIRED');
+        }
+        need(!journal.adoptionReview || journal.adoptionReview.reviewSha256 === reviewed.reviewSha256,
+          'RECEIVING_ADOPTION_REVIEW_CHANGED');
+        const values = selected.period.values;
+        need(reviewed.plan.parameters.every(parameter => Object.hasOwn(values, parameter.name)),
+          'RECEIVING_EXPLICIT_ADOPTED_PERIOD_VALUES_REQUIRED');
+        const resolved = resolveCollectionEdition(reviewed.plan, {
+          planId: reviewed.plan.id, planSha256: sha(encoded(reviewed.plan)), collectionId: selected.period.collectionId,
+          name: selected.period.name, values });
+        // A recipient ticket is reviewed for this exact future operation by the
+        // original period preparation below, not reused as sender authority.
+        journal.adoptionReview = { reviewSha256: reviewed.reviewSha256, packageSha256: shared.packageSha256,
+          planId: reviewed.plan.id, planSha256: sha(encoded(reviewed.plan)),
+          operatorSources: reviewed.operators.map(({ key, configFile, configSha256, manifestSha256 }) =>
+            ({ key, configFile, configSha256, ...(manifestSha256 ? { manifestSha256 } : {}) })),
+          requestKeys: resolved.requests.map(request => request.key) };
+        await persist();
+      });
+    });
+    need(adopted.saved.planSha256 === journal.adoptionReview.planSha256
+      && adopted.adoption.packageSha256 === shared.packageSha256,
+    'RECEIVING_RETAINED_ADOPTION_CHANGED');
+    const edition = await step('CREATE_ADOPTED_BUYER_PERIOD', async () => {
+      let result = await original(collection.host, '/api/composer/editions/' + selected.period.collectionId,
+        undefined, { optional: true });
+      if (!result) result = await browser.preparePeriod(collectionsPage, adopted.saved, selected.period);
+      else if (result.phase === 'PREPARING') {
+        result = await original(collection.host, '/api/composer/editions/prepare', {
+          planId: adopted.saved.id, planSha256: adopted.saved.planSha256,
+          collectionId: selected.period.collectionId, name: selected.period.name, values: selected.period.values });
+        await browser.openEdition(collectionsPage, result.collectionId);
+      } else await browser.openEdition(collectionsPage, result.collectionId);
+      need(result.planId === adopted.saved.id && result.planSha256 === adopted.saved.planSha256
+        && stableJson(result.values) === stableJson(selected.period.values),
+      'RECEIVING_ADOPTED_PERIOD_CHANGED');
+      result = await browser.createPeriod(collectionsPage, result);
+      need(result.phase === 'CREATED', 'RECEIVING_ADOPTED_COLLECTION_REQUIRED');
+      const shown = await browser.showCollection(collectionsPage, result, 'adopted-independent-buyer-collection');
+      const exported = await retainCollection(shown.edition, 'adopted-buyer-period');
+      return { ...exported, editionSha256: shown.edition.editionSha256,
+        planSha256: shown.edition.planSha256, workspaceByIntent: shown.workspaceByIntent };
+    });
+    await collectionsPage.close(); collectionsPage = null; await closeCollection();
+    await startCollection('adoption'); collectionsPage = await browser.collectionsPage(collection.url);
+    return step('REOPEN_ADOPTED_BUYER_WORKSPACE', async () => {
+      const saved = await browser.openPlan(collectionsPage, adopted.saved);
+      need(saved.planSha256 === adopted.saved.planSha256 && stableJson(saved.plan) === stableJson(adopted.saved.plan),
+        'RECEIVING_REOPENED_ADOPTED_PLAN_CHANGED');
+      const current = await original(collection.host, '/api/composer/editions/' + selected.period.collectionId);
+      need(current.phase === 'CREATED' && current.editionSha256 === edition.editionSha256
+        && current.collection.manifestSha256 === edition.manifestSha256, 'RECEIVING_REOPENED_ADOPTED_COLLECTION_CHANGED');
+      await browser.showCollection(collectionsPage, current, 'reopened-adopted-buyer-collection');
+      const receipt = { sourcePeriod: shared.manifest.origin, packageSha256: shared.packageSha256,
+        packageFile: shared.file, recipientDirectory: selected.recipientDirectory,
+        adoptedPlan: { id: saved.id, planSha256: saved.planSha256 },
+        period: edition, review: journal.adoptionReview };
+      await artifact('plan-adoption/complete-recipient-journey.json', receipt);
+      return receipt;
+    });
+  }
+
   async function ensureEdition(index) {
+    if (config.customerUse) return customerUsePeriod(index, 'prepare');
     const saved = journal.plans[index], period = config.collections.periods[index];
     const payload = { planId: saved.id, planSha256: saved.planSha256,
       collectionId: period.collectionId, name: period.name, values: period.values };
@@ -540,6 +1008,16 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
         browserDriver: await fileIdentity(fileURLToPath(new URL('./product-collections-browser.mjs', import.meta.url))),
         plans };
     });
+    if (config.customerUse) await step('RETAIN_CUSTOMER_USE_INPUTS', customerUseInputs);
+    if (config.planAdoption) await step('RETAIN_ADOPTION_SELECTION', async () => {
+      await directory(config.planAdoption.recipientDirectory, { privateMode: true });
+      const input = await adoptionBindings();
+      const identity = await fileIdentity(config.planAdoption.bindings.path);
+      await artifact('plan-adoption/recipient-selection.json', { ...identity,
+        recipientDirectory: config.planAdoption.recipientDirectory, planId: input.planId,
+        sourcePeriod: config.planAdoption.sourcePeriod, period: config.planAdoption.period });
+      return identity;
+    });
     browser = await openProductCollectionsBrowser({ ...config.browser, outputDirectory: config.outputDirectory });
     runtimeServer = await startRuntimeWorkspace({ directory: config.runtime.workspaceDirectory, port: 0 });
     runtimeHost = endpoint(runtimeServer.url, 'runtime');
@@ -658,9 +1136,11 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
         await artifact('collections/saved-plan-revisions.json', journal.plans);
         return journal.plans.map(value => ({ id: value.id, planSha256: value.planSha256 }));
       });
+      if (config.customerUse) await step('SAVE_ORIGINAL_CUSTOMER_USE', saveCustomerUse);
       const first = await step('CREATE_FIRST_PERIOD', async () => {
         let edition = await ensureEdition(0);
-        edition = await browser.createPeriod(collectionsPage, edition);
+        edition = config.customerUse ? await customerUsePeriod(0, 'create', edition)
+          : await browser.createPeriod(collectionsPage, edition);
         need(edition.phase === 'CREATED', 'RECEIVING_FIRST_PERIOD_NOT_CREATED');
         if (config.collections.enqueueFirstPeriod) {
           const queued = await original(collection.host, '/api/collections/' + edition.collectionId + '/enqueue',
@@ -758,6 +1238,8 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
       await collectionsPage.goto(collection.url);
       await collectionsPage.locator('#open-composer').waitFor({ state: 'visible' });
     } else need(status.directory === config.collections.directory, 'RECEIVING_RESTORED_COLLECTION_STORE_CHANGED');
+    if (config.customerUse) await step('RECEIVE_ORIGINAL_CUSTOMER_USE_HISTORY',
+      () => verifyCustomerUse('after-native-restore'));
     await step('REOPEN_SAVED_PLANS_AND_CREATE_LATER_PERIOD', async () => {
       for (const plan of journal.plans) {
         const reopened = await browser.openPlan(collectionsPage, plan);
@@ -769,7 +1251,8 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
       need(edition.editionSha256 === previous.editionSha256 && edition.planSha256 === previous.planSha256
         && edition.preview?.previewSha256 === previous.previewSha256
         && ['PREPARED', 'CREATED'].includes(edition.phase), 'RECEIVING_RESTORED_PERIOD_CHANGED');
-      edition = await browser.createPeriod(collectionsPage, edition);
+      edition = config.customerUse ? await customerUsePeriod(1, 'create', edition)
+        : await browser.createPeriod(collectionsPage, edition);
       const shown = await browser.showCollection(collectionsPage, edition, 'later-period-restored-collection');
       const exported = await retainCollection(shown.edition, 'later-period');
       return { ...exported, editionSha256: shown.edition.editionSha256,
@@ -796,6 +1279,52 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
       return { periods, installedSourceCommit: journal.runtime.sourceCommit,
         restoredStateRoot: config.recovery.stateRoot, retainedOriginalStateRoot: config.recovery.retainedStateRoot };
     });
+
+    if (config.customerUse) {
+      const buyerReturn = await step('CAPTURE_ORIGINAL_CUSTOMER_USE_RETURN', receiveCustomerUseReturn);
+      await collectionsPage.close(); collectionsPage = null; await closeCollection();
+      await startCollection('collections');
+      collectionsPage = await browser.collectionsPage(collection.url);
+      await step('REOPEN_EXACT_CUSTOMER_USE_RETURN', async () => {
+        const original = await verifyCustomerUse('final-native-reopen');
+        const returned = await receiveFile(collection.host, { bytes: buyerReturn.file.bytes, sha256: buyerReturn.file.sha256,
+          url: '/api/customer-use/commissions/' + buyerReturn.commissionId + '/returns/' + buyerReturn.captureRequestId },
+        join(config.outputDirectory, 'customer-use', 'reopened-original-buyer-return.json'), signal);
+        need(returned.sha256 === buyerReturn.file.sha256, 'RECEIVING_REOPENED_BUYER_RETURN_CHANGED');
+        await browser.showCustomerUse(collectionsPage, journal.customerUseRevisions[1], 'reopened-customer-use-return', {
+          requestId: buyerReturn.captureRequestId, returnSha256: buyerReturn.file.sha256 });
+        return { original, returned, commissionId: buyerReturn.commissionId, captureRequestId: buyerReturn.captureRequestId };
+      });
+      const finalReview = await step('REVIEW_FINAL_CUSTOMER_USE_NATIVE_BACKUP', async () => {
+        const review = await original(collection.host, '/api/recovery/review', { stateRoot: config.recovery.stateRoot });
+        need(HASH.test(review.profile?.reviewSha256 ?? ''), 'RECEIVING_FINAL_BACKUP_REVIEW_REQUIRED');
+        await artifact('customer-use/final-native-recovery-review.json', review);
+        return review;
+      });
+      await step('FINAL_CUSTOMER_USE_NATIVE_BACKUP', async () => {
+        const review = finalReview;
+        const saved = await recovery('customer-use-final-snapshot', 'SNAPSHOT', {
+          stateRoot: config.recovery.stateRoot, output: join(config.outputDirectory, 'customer-use-final-encrypted-backup'),
+          expectedReviewSha256: review.profile.reviewSha256, passEnv: config.recovery.passphraseEnv, quiesced: true });
+        need(HASH.test(saved.result?.recordSha256 ?? ''), 'RECEIVING_FINAL_CUSTOMER_USE_BACKUP_REQUIRED');
+        const selected = await original(collection.host, '/api/recovery/' + saved.requestId + '/files', {});
+        need(selected.recordSha256 === saved.result.recordSha256, 'RECEIVING_FINAL_CUSTOMER_USE_BACKUP_CHANGED');
+        const root = join(config.outputDirectory, 'received-customer-use-final-backup'), files = [];
+        for (const item of selected.files)
+          files.push(await receiveFile(collection.host, item, memberPath(root, item.relativePath), signal));
+        const verified = await recovery('verify-customer-use-final-snapshot', 'VERIFY', {
+          bundle: root, passEnv: config.recovery.passphraseEnv, python: config.recovery.python,
+          expected: saved.result.recordSha256, expectedStateRoot: config.recovery.stateRoot });
+        need(verified.result.recordSha256 === saved.result.recordSha256,
+          'RECEIVING_FINAL_CUSTOMER_USE_BACKUP_VERIFICATION_CHANGED');
+        await browser.showRecovery(collectionsPage, saved.requestId, 'complete-customer-use-backup');
+        return { requestId: saved.requestId, verifyRequestId: verified.requestId,
+          recordSha256: saved.result.recordSha256, bundle: root, files };
+      });
+    }
+
+    if (config.planAdoption) await receivePlanAdoption();
+
     await collectionsPage.close(); collectionsPage = null; await closeCollection();
     if (runtimePage) { await runtimePage.close(); runtimePage = null; }
     if (runtimeServer) { await runtimeServer.close(); runtimeServer = null; }
@@ -809,7 +1338,17 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
       backup: { requestId: backup.requestId, recordSha256: backup.recordSha256, bundle: backup.bundle },
       restoreRequestId: restored.requestId, originalStateRoot: config.recovery.stateRoot,
       retainedOriginalStateRoot: config.recovery.retainedStateRoot, views: views.artifacts,
-      originalRequestIds: journal.ids };
+      originalRequestIds: journal.ids,
+      ...(config.planAdoption ? { planAdoption: journal.completed.REOPEN_ADOPTED_BUYER_WORKSPACE } : {}),
+      ...(config.customerUse ? { customerUse: {
+        source: journal.completed.SAVE_ORIGINAL_CUSTOMER_USE,
+        restored: journal.completed.RECEIVE_ORIGINAL_CUSTOMER_USE_HISTORY,
+        buyerReturn: journal.completed.CAPTURE_ORIGINAL_CUSTOMER_USE_RETURN,
+        reopened: journal.completed.REOPEN_EXACT_CUSTOMER_USE_RETURN,
+        finalBackup: journal.completed.FINAL_CUSTOMER_USE_NATIVE_BACKUP,
+        originalRequestIds: config.customerUse.requestIds,
+        execution: 'Existing Collections operator owns approvals and native buyer execution; this receiver captures actual retained results.'
+      } } : {}) };
     await artifact('RESULT.json', result);
     journal.completed.PRODUCT_JOURNEY = result; await persist();
     return await packageDelivery(result);

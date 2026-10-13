@@ -197,6 +197,14 @@ Reopening this application retains declared input and purchase handles, existing
 
 An interrupted setup continues in the same private directory through the original merchant initializer. The customer launch becomes available to MCP after its connection and client configuration are complete. Original paid work continues to use the same Buyer, Inbox, application request and allowance state.
 
+## Review customer navigation on an existing received workspace
+
+The maintained `customer-navigation-programme.mjs` opens the original configured customer and exercises its portfolio, retained requests, exact response downloads and browser drafts at desktop, tablet and phone widths. Supply one JSON input with schema `stellar-forge.sf101.customer-navigation-programme.v1`, an absolute `directory` for the programme output, the existing `configFile`, exact `expectedWorkspaceId` and `expectedRevision`, and actual installed `playwright` module and `chromium` executable paths.
+
+Run `node customer-navigation-programme.mjs /private/navigation-input.json` from the installed source. Use a quiescent customer whose original tasks have completed. The programme uses the normal private loopback server and rejects browser mutations and external requests. It reads existing profile/request identities, verifies all downloaded response bytes, checks portfolio selection and request-draft identity after reload, records viewport measurements and screenshots, closes its listener and browser, and compares the original workspace bytes.
+
+The output directory retains its full input, native failures, screenshots, original response downloads and completed result. These files may contain private customer data. Reopening the same completed programme returns its original result. A changed source/input or later customer revision should receive a new output directory; it must not relabel a prior completion.
+
 ## Programmatic use
 
 The installed package exports the customer model, configuration, server and configured CLI lifecycle:
@@ -230,7 +238,7 @@ Customer-history JSON, original buyer HTML and exact response/proof downloads pr
 
 The **Pass portfolio** is the starting view. It lists each connected or prepared pass by its original merchant order and gateway. Search by pass name, order, gateway or purchased plan hash. The availability filter includes active, low, exhausted, unrefreshed, unavailable-claim and archived passes.
 
-Each row shows the merchant's allowance fields together:
+Each pass keeps its identity, availability, allowance, saved work and actions together in a readable panel. At narrower widths those sections stack without moving actions outside the page. Each pass shows the merchant's allowance fields together:
 
 | Field | Meaning |
 | --- | --- |
@@ -247,7 +255,7 @@ The last refresh timestamp and returned error stay visible beside retained value
 
 ### Refresh a set of passes
 
-Use **Refresh active passes**, or select rows and choose **Refresh selected**. The browser saves one action containing the exact profile-ID selection. The server retains that selection atomically, reuses each already active refresh and sends remaining work through the existing four-worker queue. Archived passes and unavailable claims are returned as skipped rows. Resulting tasks appear in each pass's original operation history.
+Use **Refresh active passes**, or select passes and choose **Refresh selected**. The portfolio shows up to 25 matching passes per page. **Select this page** and **Clear this page** affect only that page; **Clear selection** clears the entire selection. The selected count covers every filter and page. Selection, filters and page are retained in this browser's original workspace draft, including after reload. Selecting a pass does not send a refresh. The browser saves one action containing the exact profile-ID selection. The server retains that selection atomically, reuses each already active refresh and sends remaining work through the existing four-worker queue. Archived passes and unavailable claims are returned as skipped rows. Resulting tasks appear in each pass's original operation history.
 
 Search text, filters and the threshold form remain in place during refreshes. Per-pass allowance and request counts update as original tasks finish. A stale workspace revision returns the existing revision-conflict response; inspect and rebase that saved action through **Saved actions**.
 
@@ -259,7 +267,7 @@ Every saved request contains its original profile, purchased route, stable reque
 
 ### Continue the recovery queue
 
-**Request recovery** lists original ATTENTION and RECOVERY_READY requests across the portfolio. Each row identifies the pass and original order, route, state and last error. Pages contain up to 100 requests.
+**Request recovery** lists original ATTENTION and RECOVERY_READY requests across the portfolio. Each row identifies the pass and original order, route, state and last error. Pages contain up to 100 requests. At phone widths, each saved-request, recovery, operation and action row displays its labelled fields vertically. Its existing links and same-request actions remain available beside those fields.
 
 **Open request** displays its original input, response and history. **Recover result** queues the existing original result-recovery operation. Response downloads retain their byte count and SHA-256 verification. The pass must be active and its original claim available to contact the merchant.
 
@@ -301,3 +309,7 @@ POST bodies use the existing operationId and expectedRevision contract. Replacem
 The model exposes portfolioRequests(), configurePortfolio(), refreshPortfolio() and prepareReplacement(). Existing workspace files reopen with no selected default and a five-unit threshold. Original request and purchase identities retain their existing state format.
 
 Configured shutdown retains one close owner through task draining, approval closure, STOPPED publication and lease release. The original CLI supplies a stable beforeRelease callback, publishing the launch state while holding the workspace lease. A cleanup failure retains closeOwner, closePhase and recovery.close on the error. Continue that same owner's close operation; completed stages and the original lease-release promise remain retained for its lifetime. The configured CLI exposes customerWorkspaceRecovery when its lifetime needs further cleanup, preserving the original launch path and close operation.
+
+## Complete encrypted customer handover
+
+The installed `api-pass-recovery` command and `api-pass-workspace recovery` subcommand capture and receive the original customer workspace through its existing encrypted recovery engine. An initialized managed Buyer retains its ledger; an absent or empty Buyer keeps its original absence without initialization. The complete customer, original inbox, generated or manual agent state and original input/result files stay under their saved identities. Its browser verifies a handover before restoration and explicitly opens the original customer without purchase or API dispatch. See [RECOVERY.md](./RECOVERY.md) for the original-source prerequisites, stable operation/continuation contract, full receiving programme and agent/file interface.

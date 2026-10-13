@@ -53,7 +53,7 @@ When no matching receipt exists, receiving creates the same OPERATOR_RECORDED ca
 
 ## Dated balances and corrections
 
-Every proposed allocation uses the original invoice amount due and receipt funds available on its selected date. The date must follow both invoice issue and receipt dates. A receipt's later allocations, dated refunds and refund reservations are checked across all affected intervals. An unreconciled verified outgoing refund return must be received through its original refund workflow before another allocation can use those funds.
+Every proposed allocation uses the original invoice amount due and receipt funds available on its selected date. The allocation date must be on or after the invoice issue date and the receipt's effective accounting date: its saved accounting date when present, otherwise its received date. A receipt's later allocations, dated refunds and refund reservations are checked across all affected intervals. An unreconciled verified outgoing refund return must be received through its original refund workflow before another allocation can use those funds.
 
 The complete batch must be conflict-free. A valid earlier group in a CSV does not become a partial save when a later group conflicts. Preview runs against a copy of the original ledger. Apply checks the reviewed digest and current original workspace revision, then commits all changes together.
 

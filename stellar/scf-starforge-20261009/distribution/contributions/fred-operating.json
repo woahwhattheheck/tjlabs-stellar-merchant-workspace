@@ -1,0 +1,39 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "fred-operating",
+  "description": "Complete FRED economic customer Operating Plans, native source receiving, typed procedure client and pure MCP tools",
+  "components": [
+    "stellar/scf-starforge-20261009/distribution/discovery",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating"
+  ],
+  "commands": {
+    "fred-operating-plan": "stellar/scf-starforge-20261009/distribution/discovery/fred-operating-cli.mjs"
+  },
+  "commandDescriptions": {
+    "fred-operating-plan": "Retain complete original economic projects, prepare customer procedures, record returned evidence and receive full source and plan histories"
+  },
+  "exports": {
+    "./operator/fred/operating-plan": {
+      "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/fred-operating-plan.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/fred-operating-plan.mjs"
+    },
+    "./operator/fred/operating-source": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/source.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/source.mjs"
+    },
+    "./operator/fred/operating-client": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/fred-operating.d.mts",
+      "import": "./source/stellar-forge/mcp-merchant-operator/fred-operating.mjs"
+    },
+    "./operator/fred/operating-cli": {
+      "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/fred-operating-cli.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/fred-operating-cli.mjs"
+    }
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/distribution/discovery/FRED_OPERATING_PLANS_CLI.md",
+    "stellar-forge/mcp-merchant-operator/FRED_OPERATING_PLANS.md",
+    "stellar-forge/mcp-merchant-operator/catalog/fred-operating.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/SOURCE.md"
+  ]
+}

@@ -137,3 +137,16 @@ original library for complete-text indexing, multilingual/byte-range queries,
 all-page exports, saved-query recovery, source refresh and cancellation, original
 annotations, authenticated HTTP requests, and verified downloads. It leaves a usable
 private library and reports, and prints their paths. Its data are authored examples.
+
+## Installed package imports
+
+The content-search application uses its own package namespace so it can be installed alongside the existing research workspace:
+
+| Export under `@tokenjunkielabs/starforge-merchant` | Module |
+| --- | --- |
+| `/buyer/content-research` | Complete-file search engine and types |
+| `/buyer/content-research/client` | Typed client |
+| `/buyer/content-research/reports` | Saved findings and reporting |
+| `/buyer/content-research/server` | HTTP application server |
+
+The original `/buyer/research` and `/buyer/research/server` exports continue to open the separate research workspace. The earlier content-search `/buyer/research/client` and `/buyer/research/reports` aliases remain available for existing consumers; new integrations should use the `/buyer/content-research` namespace consistently. The installed `starforge buyer-research` command is unchanged.

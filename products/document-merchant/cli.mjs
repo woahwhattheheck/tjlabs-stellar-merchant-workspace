@@ -16,6 +16,8 @@ import {
   reviewDocumentMerchant
 } from './setup.mjs';
 import {readDocumentSupplierUsage} from './renderer.mjs';
+import {runDocumentCommissioningCommand} from './commissioning-cli.mjs';
+import {runDocumentAssemblyCommand} from './assembly-cli.mjs';
 import {runDocumentBatchCommand} from './batch-cli.mjs';
 import {runDocumentCompositionCommand} from './composition-cli.mjs';
 import {readDocumentServiceSelection, runDocumentServiceCommand} from './launch.mjs';
@@ -25,9 +27,12 @@ const HELP = [
   'Starforge document merchant', '',
   'Install and run a complete HTML or Markdown document service on the existing paid Jobs engine.', '',
   '  document-merchant providers',
+  '  document-merchant commission --help',
   '  document-merchant batch --help',
+  '  document-merchant assemble --help',
   '  document-merchant compose --help',
-  '  document-merchant template --provider mintpdf|snaplab|pdfmint [--anonymous] [--out NEW_FILE]',
+  '  document-merchant compose serve --workspace-options FILE [--provider ID] [--merchant-origin URL]',
+  '  document-merchant template --provider mintpdf|snaplab|pdfmint [--anonymous] [--assembly] [--out NEW_FILE]',
   '  document-merchant review --request FILE --directory DIR',
   '  document-merchant prepare --request FILE --directory DIR',
   '  document-merchant inspect --directory DIR',
@@ -52,6 +57,7 @@ const HELP = [
   'serve uses the already prepared original Jobs service, factory, worker and customer/operator workspaces.',
   'For native payments include --native-factory MODULE and --start-worker.',
   'jobs forwards the original status, create, work, show, outputs, output-file, retry and cancel operations.',
+  'compose serve opens Document production with complete data/template input and the original customer.',
   'The original customer Request application stages the whole source file before checkout.'
 ].join('\n');
 function commandError(message) {return documentError('DOCUMENT_COMMAND_INVALID', message);}
@@ -122,6 +128,8 @@ function serviceOptions(out) {
 export async function runDocumentCommand(argv = process.argv.slice(2), {print = value => console.log(value)} = {}) {
   if (!argv.length || argv.length === 1 && ['--help', '-h', 'help'].includes(argv[0])) return print(HELP);
   const [command, ...tail] = argv;
+  if (command === 'commission') return runDocumentCommissioningCommand(tail,{print});
+  if (command === 'assemble') return runDocumentAssemblyCommand(tail,{print});
   if (command === 'batch') return runDocumentBatchCommand(tail,{print});
   if (command === 'compose') return runDocumentCompositionCommand(tail,{print});
   const emit = value => print(JSON.stringify(value, null, 2));
@@ -130,8 +138,8 @@ export async function runDocumentCommand(argv = process.argv.slice(2), {print = 
     return emit(documentProviders());
   }
   if (command === 'template') {
-    const out = options(tail, ['--provider', '--anonymous', '--out'], ['--anonymous']);
-    const value = documentSetupTemplate(required(out, '--provider'), {anonymous: out.has('--anonymous')});
+    const out = options(tail, ['--provider', '--anonymous', '--assembly', '--out'], ['--anonymous', '--assembly']);
+    const value = documentSetupTemplate(required(out, '--provider'), {anonymous: out.has('--anonymous'), assembly: out.has('--assembly')});
     return emit(out.has('--out') ? await save(out.get('--out'), value) : value);
   }
   if (command === 'prepare' || command === 'review') {

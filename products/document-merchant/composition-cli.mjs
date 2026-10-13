@@ -2,7 +2,7 @@
 // MIT. Complete dataset/template composition over the original document batch customer.
 import {dirname,resolve,join} from 'node:path';
 import {realpathSync} from 'node:fs';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import {
   absolute,ownedDirectory,ownedBytes,writeExact,encoded,parse,digest,plain
 } from '../../stellar/scf-starforge-20261009/sf101-merchant-receiver/api-application/workspace/configuration.mjs';
@@ -10,6 +10,7 @@ import {acquireStateLease} from '../../stellar/scf-starforge-20261009/merchant-f
 import {startJobCustomerWorkspace} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/server.mjs';
 import {inspectDocumentMerchant} from './setup.mjs';
 import {documentError,defaultDocumentSettings} from './contracts.mjs';
+import {documentCorrectionDraft,composeDocumentCorrection,stageDocumentCorrection} from './corrections.mjs';
 import {
   documentCompositionTemplate,reviewDocumentComposition,prepareDocumentComposition,
   readDocumentComposition,receiveDocumentComposition,prepareDocumentCompositionBatch,
@@ -25,11 +26,16 @@ function need(condition,code,message){if(!condition)throw documentError(code,mes
 const HELP=[
   'Document composition: CSV or JSON records and templates to original paid document jobs','',
   'document-merchant compose COMMAND [OPTIONS]','',
+  'serve --workspace-options FILE [--provider PROVIDER --merchant-origin HTTPS_ORIGIN --port PORT]',
+  'inspect-service --workspace-options FILE [--provider PROVIDER --merchant-origin HTTPS_ORIGIN --out NEW_FILE]',
   'template --provider mintpdf|snaplab|pdfmint [--out NEW_FILE]',
   'template --merchant-directory EXISTING_MERCHANT [--out NEW_FILE]',
   'review --request FILE --source-root DIR',
   'stage --directory SOURCE_DIR [--request FILE --source-root DIR]',
   'source --directory SOURCE_DIR [--sha256 SAVED_SOURCE_SHA]',
+  'correction-draft --directory ORIGINAL_SOURCE_DIR --sha256 ORIGINAL_SOURCE_SHA --selection FILE --out NEW_DRAFT',
+  'review-correction --parent-directory ORIGINAL_SOURCE_DIR --draft FILE [--out NEW_COMPLETE_PLAN]',
+  'correct --parent-directory ORIGINAL_SOURCE_DIR --draft FILE --directory NEW_SOURCE_DIR',
   'prepare --directory SOURCE_DIR --workspace-options FILE [--request FILE --source-root DIR]',
   'show --directory SOURCE_DIR --workspace-options FILE',
   'review-batch --directory SOURCE_DIR --workspace-options FILE --out NEW_REPORT_DIR',
@@ -39,6 +45,8 @@ const HELP=[
   'export --directory SOURCE_DIR --workspace-options FILE --out NEW_EXPORT_DIR',
   'receive-source --source COMPLETE_PLAN_JSON --directory DESTINATION --sha256 SOURCE_SHA',
   'receive-collection --archive FILE --destination DIR --library-state DIR --sha256 ARCHIVE_SHA','',
+  'serve/inspect-service: --source-root DIR --intake-key-env NAME --deadline-ms N --poll-ms N are optional.',
+  'serve: --expected-selection SHA reuses a reviewed service selection; Applications also supplies --managed-source.',
   'prepare/run: --intake-key-env NAME selects the original intake credential from the environment.',
   'run/receive: --deadline-ms 1000..3600000 and --poll-ms 250..30000 select each original receiving wait.',
   'run/receive: --out NEW_REPORT_DIR saves the complete original results, CSV and readable report.',
@@ -52,12 +60,19 @@ const HELP=[
   'The operating guide is products/document-merchant/COMPOSITION.md.'
 ].join('\n')+'\n';
 
+const SERVICE=['--workspace-options','--source-root','--provider','--merchant-origin',
+  '--intake-key-env','--deadline-ms','--poll-ms','--port'];
 const CUSTOMER=['--directory','--workspace-options'];
 const ACCEPTED=Object.freeze({
+  serve:[...SERVICE,'--managed-source','--expected-selection'],
+  'inspect-service':[...SERVICE,'--out'],
   template:['--provider','--merchant-directory','--out'],
   review:['--request','--source-root'],
   stage:['--directory','--request','--source-root'],
   source:['--directory','--sha256'],
+  'correction-draft':['--directory','--sha256','--selection','--out'],
+  'review-correction':['--parent-directory','--draft','--out'],
+  correct:['--parent-directory','--draft','--directory'],
   prepare:[...CUSTOMER,'--request','--source-root','--intake-key-env'],
   show:CUSTOMER,
   'review-batch':[...CUSTOMER,'--out'],
@@ -133,6 +148,25 @@ async function saveJson(file,value){
     return {path:file,bytes:bytes.length,sha256:digest(bytes)};
   }finally{await lease.close();}
 }
+function serviceOptions(flags){
+  return {
+    workspaceOptionsFile:absolute(required(flags,'--workspace-options')),
+    sourceRoot:flags.has('--source-root')?absolute(flags.get('--source-root')):null,
+    provider:flags.get('--provider')??'mintpdf',merchantOrigin:flags.get('--merchant-origin')??null,
+    intakeKeyEnvironment:flags.get('--intake-key-env')??null,
+    deadlineMs:number(flags,'--deadline-ms',300000,1000,3600000),
+    pollMs:number(flags,'--poll-ms',1500,250,30000),port:number(flags,'--port',0,0,65535)
+  };
+}
+function serviceSummary(selection){
+  return {
+    schema:'stellar-forge.document-composition-service-review.v1',selectionSha256:selection.selectionSha256,
+    sourceDirectory:selection.sourceDirectory,customer:selection.customer,sourceRoot:selection.sourceRoot,
+    options:selection.options,configurationFiles:selection.configurationFiles,
+    implementation:{sourceFiles:selection.sourceFiles.length,nativeFiles:selection.nativeFiles.length,
+      bytes:[...selection.sourceFiles,...selection.nativeFiles].reduce((total,file)=>total+file.bytes,0)}
+  };
+}
 function sourceSummary(received){
   const plan=received.plan;
   return {
@@ -141,6 +175,7 @@ function sourceSummary(received){
     directory:received.directory,planPath:received.planPath,sha256:received.sha256,bytes:received.bytes,
     batchDirectory:received.batchDirectory??join(received.directory,'batch'),
     batchInputPath:received.batchInputPath,previewPath:received.previewPath,counts:received.counts,
+    ...(plan.request.correction?{correction:plan.request.correction}:{}),
     dataset:plan.files.filter(file=>file.role==='dataset').map(({content,...file})=>file),
     templates:plan.request.templates.map(template=>({
       id:template.id,format:template.format,
@@ -218,8 +253,38 @@ export async function runDocumentCompositionCommand(argv=process.argv.slice(2),{
     code:'DOCUMENT_COMPOSITION_CANCELLED'}));
   process.once('SIGINT',stop);process.once('SIGTERM',stop);
   const emit=value=>{print(JSON.stringify(value,null,2)+'\n');return value;};
-  let workspace,host;
+  let workspace,host,service;
   try{
+    if(command==='serve'||command==='inspect-service'){
+      const selectedOptions=serviceOptions(flags);
+      need(!flags.has('--managed-source')||flags.has('--expected-selection'),
+        'DOCUMENT_COMPOSITION_MANAGED_SELECTION_REQUIRED');
+      if(flags.has('--expected-selection'))exactSha(flags,'--expected-selection');
+      const sourceDirectory=flags.has('--managed-source')?absolute(flags.get('--managed-source')):null;
+      const original=sourceDirectory
+        ?await import(pathToFileURL(join(sourceDirectory,'composition-service.mjs')).href)
+        :await import('./composition-service.mjs');
+      need(original.DOCUMENT_COMPOSITION_SERVICE_SELECTION_SCHEMA===
+        'stellar-forge.document-composition-service-selection.v1'&&
+        typeof original.openDocumentCompositionService==='function'&&
+        typeof original.readDocumentCompositionServiceSelection==='function'&&
+        typeof original.assertDocumentCompositionServiceSelection==='function',
+        'DOCUMENT_COMPOSITION_SERVICE_SOURCE_REQUIRED');
+      if(command==='inspect-service'){
+        const selection=original.assertDocumentCompositionServiceSelection(
+          await original.readDocumentCompositionServiceSelection(selectedOptions));
+        const saved=flags.has('--out')?await saveJson(flags.get('--out'),selection):null;
+        return emit({...serviceSummary(selection),...(saved?{selectionFile:saved}:{})});
+      }
+      service=await original.openDocumentCompositionService(selectedOptions,{
+        signal:controller.signal,expectedSelection:flags.get('--expected-selection'),
+        launchSourceDirectory:dirname(fileURLToPath(import.meta.url))
+      });
+      // The original Applications line observer receives one complete bound startup announcement.
+      print(JSON.stringify(service.announcement)+'\n');
+      await service.closed;
+      return service.announcement;
+    }
     if(command==='template'){
       need(flags.has('--provider')!==flags.has('--merchant-directory'),
         'DOCUMENT_COMPOSITION_TEMPLATE_SELECTION_REQUIRED',
@@ -242,6 +307,27 @@ export async function runDocumentCompositionCommand(argv=process.argv.slice(2),{
         need(value.templates.length>0,'DOCUMENT_COMPOSITION_MERCHANT_FORMAT_REQUIRED');
       }else value=documentCompositionTemplate(required(flags,'--provider'));
       return emit(flags.has('--out')?await saveJson(flags.get('--out'),value):value);
+    }
+    if(command==='correction-draft'){
+      const source=await readDocumentComposition(absolute(required(flags,'--directory')),{
+        requireFiles:false,expectedSha256:exactSha(flags,'--sha256'),signal:controller.signal});
+      const selected=parse(await ownedBytes(absolute(required(flags,'--selection')),1048576,{privateMode:false}));
+      need(plain(selected)&&Object.keys(selected).every(key=>['id','name','mode','reason','documentIds'].includes(key)),
+        'DOCUMENT_CORRECTION_SELECTION_REQUIRED');
+      const draft=documentCorrectionDraft({source,...selected});
+      const saved=await saveJson(required(flags,'--out'),draft);
+      return emit({schema:draft.schema,id:draft.id,parent:draft.parent,documents:draft.documentIds.length,draft:saved});
+    }
+    if(command==='review-correction'||command==='correct'){
+      const sourceDirectory=absolute(required(flags,'--parent-directory'));
+      const draft=parse(await ownedBytes(absolute(required(flags,'--draft')),32*1048576,{privateMode:false}));
+      if(command==='correct')return emit(sourceSummary(await stageDocumentCorrection({
+        sourceDirectory,directory:absolute(required(flags,'--directory')),draft,signal:controller.signal})));
+      const source=await readDocumentComposition(sourceDirectory,{
+        requireFiles:false,expectedSha256:draft?.parent?.sourceSha256,signal:controller.signal});
+      const plan=composeDocumentCorrection({source,draft});
+      const saved=flags.has('--out')?await saveJson(flags.get('--out'),plan):null;
+      return emit({...reviewSummary(plan),correction:plan.request.correction,...(saved?{completeSource:saved}:{})});
     }
     if(command==='review'){
       required(flags,'--request');required(flags,'--source-root');
@@ -332,7 +418,9 @@ export async function runDocumentCompositionCommand(argv=process.argv.slice(2),{
     throw error;
   }finally{
     process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);
-    try{await host?.close();}finally{await workspace?.close();}
+    try{await service?.close();}finally{
+      try{await host?.close();}finally{await workspace?.close();}
+    }
   }
 }
 function directEntry(){

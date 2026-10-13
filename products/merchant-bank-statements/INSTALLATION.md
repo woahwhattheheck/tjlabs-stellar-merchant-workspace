@@ -111,7 +111,8 @@ The local service provides these connected desks:
 
 | Desk | Address on the same running service | Work |
 | --- | --- | --- |
-| Bank reconciliation | /bank-statements/ | Complete statement receiving, exact posting parts, correction and account close. |
+| Bank reconciliation | /bank-statements/ | Original source intake, complete CAMT page assembly, exact posting parts, correction and account close. |
+| Accountant receiving | /bank-statements/accountant-receiving/ | Open complete original account archives, compare editions and retain an independent accountant review. |
 | Receivables | /receivables/ | Customer invoices, original payments, Bank receipts, credit/refund controls and cash planning. |
 | Customer statements | /customer-statements/ | Original customers, dated balances and account delivery. |
 | Payment plans | /payment-plans/ | Original installment schedules and collections. |
@@ -156,6 +157,28 @@ A bank close exports the original statement files, full bank transactions and po
 The working accounting directory also contains records needed for continued editing. Keep that original directory with its bank-statement originals and saved close files through the existing whole-workspace recovery process. Preserve the selected source inputs with their original source identities.
 
 An installed runtime and a customer accounting directory have separate lifecycles. Runtime upgrade/recovery uses a new runtime directory while the original customer directory keeps its identity and original financial history.
+
+### Receive the bank and accountant workflow in the installed release
+
+Use a committed release containing the complete page assembly and accountant receiving source. Multi-page assembly merged at `c15e2ea80154078886011d792e0aa7be6a5a94b2`; the complete accountant reader is part of that same source lineage. The existing bank selection carries the full accounting component, so its source package includes both workflows with their browser assets and guides.
+
+The receiving engineer follows one merchant period:
+
+| Stage | Installed action | Material carried forward |
+| --- | --- | --- |
+| Original statement | Receive the actual complete source and select its original account sections. | Exact original bytes, selected account and complete source interpretation. |
+| Complete pages | Combine every original page, inspect the period and boundaries, and select the assembled source balances. | Full page review, original import IDs and source-bound balance selection. |
+| Cash and close | Match or classify every included booked movement and retain the reviewed balanced close. | Original financial records, retained close, transaction/posting exports and complete account archive. |
+| Accountant review | Open the original account archive, compare available editions and retain source-bound notes. | Original closes plus the accountant's separately retained review history. |
+| Receiving operator | Export and cold-receive the complete accountant review; reopen the original accounting workspace for continued financial work. | Portable review and original financial workspace with their own existing identities. |
+
+Open the accountant desk from the Bank header. The installed nested command exposes the same reader:
+
+~~~sh
+starforge bank-statements accountant help
+~~~
+
+The [complete page guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/PAGE_ASSEMBLY.md) includes the native `PAGE_ASSEMBLY_RECEIVE.mjs` course against an existing private workspace with original pages and reviewed postings. The [accountant guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/ACCOUNTANT_RECEIVING.md) supplies the complete browser, CLI, comparison, review export and receiving instructions. Follow the same original operation and output directory when continuing either receiving course.
 
 ## 6. Move the source and dependencies to another operator
 
@@ -237,3 +260,9 @@ The maintained source contracts are:
 - [Original bank client and request types](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/client.d.ts).
 - [Original bank source formats](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_FORMATS.md).
 - [Complete financial operating workflow](../merchant-workspace/FINANCIAL_OPERATIONS.md).
+
+## Whole original-file preparation
+
+The installed Bank navigation includes **Statement collections**. The source-owned asset registry includes its original-file model and industrial collection desk. Open several complete original files, preserve a separate interpretation for each, and use the existing financial source editor for their account/statement intake. The full collection can be downloaded and reopened independently.
+
+The native entry point is `starforge bank-statements collection help`. Its `prepare`, `inspect` and `extract` commands receive a complete explicit file manifest, run the original source parser across included files, and recover each exact original in a private create-only directory. See the [complete guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_COLLECTIONS.md) for manifest fields and operating commands. The selected bank package already includes the original source parser, domain and complete source-owned asset tree used by this workflow.

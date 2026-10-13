@@ -7,6 +7,7 @@ import {need,object,parseJson} from '../node/store.mjs';
 import {isResearchCustomerCall,runResearchCustomerCall} from './research-customer-delivery.mjs';
 import {isResearchCommerceCall,runResearchCommerceCall} from './research-commerce-delivery.mjs';
 import {isResearchQuotesCall,runResearchQuotesCall} from './research-quotes-delivery.mjs';
+import {isResearchQuoteProgrammeCall,runResearchQuoteProgrammeCall} from './research-quote-programme-delivery.mjs';
 import {createResearchDocumentSource} from './research-document-source.mjs';
 import {citationReviewInput,citationDigest} from '../research-dossiers/citation-updates.mjs';
 import {exportCitationFile,receiveCitationFile} from './research-citation-delivery.mjs';
@@ -47,6 +48,13 @@ async function dispatch(client,action,input,signal){
     case 'citation-updates':return client.citationUpdates(dossierId,options);
     case 'citation-review':return client.reviewCitationUpdate(dossierId,body);
     case 'citation-export':return exportCitationFile(client,input);
+    case 'study-flow':return client.studyFlow(dossierId,requestOptions);
+    case 'study-flow-sources':return client.studyFlowSources(dossierId,requestOptions);
+    case 'study-flow-report':return client.studyFlowReport(dossierId,requestOptions);
+    case 'study-flow-preview':return client.previewStudyFlow(dossierId,body,{signal});
+    case 'study-flow-import-counts':return client.importStudyFlowCounts(dossierId,body,{signal});
+    case 'study-flow-review':return client.reviewStudyFlow(dossierId,body,{signal});
+    case 'study-flow-export':return client.exportStudyFlow(dossierId,requestOptions);
     case 'extraction':return readResearchExtraction(client,dossierId,options,{signal});
     case 'extraction-source-values':return readResearchExtraction(client,dossierId,options,{sourceValues:true,signal});
     case 'extraction-publications':return readResearchExtraction(client,dossierId,options,{publication:true,signal});
@@ -96,6 +104,8 @@ function originalResearchClient(request,{signal}={}){
 export async function runResearchCall(request,{signal}={}){
   need(object(request)&&request.schema===SCHEMA&&typeof request.action==='string'&&object(request.input),
     'RESEARCH_PYTHON_REQUEST_INVALID');
+  if(isResearchQuoteProgrammeCall(request.action))return runResearchQuoteProgrammeCall(request,{signal,
+    openClient:()=>originalResearchClient(request,{signal})});
   if(isResearchQuotesCall(request.action))return runResearchQuotesCall(request,{signal,
     openClient:()=>originalResearchClient(request,{signal})});
   if(isResearchCommerceCall(request.action))return runResearchCommerceCall(request,{signal,
@@ -140,17 +150,19 @@ export async function runResearchCall(request,{signal}={}){
 }
 function writeResearchOutput(stream,text){
  return new Promise((resolve,reject)=>{
-  let settled=false;
-  const finish=error=>{
-   if(settled)return;settled=true;
-   // A failed Writable callback can precede its queued error event. Keep the
-   // once listener until that event so stderr/stdout failure cannot strand
-   // native owners by becoming an uncaught process error.
-   if(!error)stream.removeListener('error',onError);
-   error?reject(error):resolve();
-  },onError=error=>finish(error);
-  stream.once('error',onError);
-  try{stream.write(text,finish);}catch(error){finish(error);}
+  const cleanup=()=>{stream.removeListener('error',failed);stream.removeListener('close',closed);};
+  const failed=error=>{cleanup();reject(error);};
+  const closed=()=>{cleanup();reject(stream.errored??new Error('The output stream closed before its write completed.'));};
+  stream.once('error',failed);stream.once('close',closed);
+  try{stream.write(text,error=>{
+   if(error){
+    // A Writable callback can precede its queued error. Keep ownership until
+    // that event or close, unless the stream has already closed.
+    if(stream.closed)cleanup();
+    reject(error);return;
+   }
+   cleanup();resolve();
+  });}catch(error){cleanup();reject(error);}
  });
 }
 async function researchMain(){

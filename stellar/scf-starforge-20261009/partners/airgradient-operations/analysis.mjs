@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 import {MEASURES,need,now,digest,envelope,verifyEnvelope,locationKey} from './contract.mjs';
 import {normalizeCapture,reportingBins} from './source.mjs';
+import {verifyRetainedCapture} from './source-intake.mjs';
 
 export function reviewReport({plan,project,connection,tasks,captures,baseline=null}){
  verifyEnvelope(plan,'plan');verifyEnvelope(project,'project-revision');
  const byTask=new Map(tasks.map(x=>[x.task_key,x])),source=[],metadata={},series=[],issues=[];
  for(const task of plan.tasks){
   const state=byTask.get(task.key);if(state?.status!=='COMPLETE'||!state.capture_id){issues.push({task:task.key,status:state?.status??'PENDING',code:state?.error??null});continue;}
-  const capture=captures(state.capture_id);need(capture.metadata.status===200&&capture.metadata.planId===plan.id&&capture.metadata.taskKey===task.key&&capture.metadata.requestSha256===task.requestSha256&&capture.metadata.connectionSha256===connection.sha256,'CAPTURE_PLAN_CHANGED');
+  const capture=captures(state.capture_id);if(plan.sourceSetId)verifyRetainedCapture(capture.metadata,task,plan);need((plan.sourceSetId?capture.metadata.origin==='retained-source':capture.metadata.status===200)&&capture.metadata.planId===plan.id&&capture.metadata.taskKey===task.key&&capture.metadata.requestSha256===task.requestSha256&&capture.metadata.connectionSha256===connection.sha256,'CAPTURE_PLAN_CHANGED');
   const normalized=normalizeCapture(capture.raw,task,connection,plan.period);source.push(capture.metadata);
   if(normalized.metadata)metadata[task.locationKey]=normalized.metadata;
   series.push(...normalized.series.filter(row=>project.value.measures.includes(row.measure)).map(row=>({...row,captureId:capture.metadata.id})));
@@ -34,7 +35,7 @@ export function reviewReport({plan,project,connection,tasks,captures,baseline=nu
   title:plan.title,organisation:study.organisation,owner:study.owner,period:plan.period,notes:plan.notes,baselineReportId:baseline?.id??null,
   rows,issues,sources:source,locationMetadata:metadata,seriesSha256:digest(series),seriesRows:series.length,
   interpretation:connection.kind==='map-public'?'Coverage counts returned non-null provider time buckets in the selected UTC period. Means are equally weighted means of returned bucket means. Operating thresholds are customer-supplied criteria.':'Coverage counts selected reporting bins containing a non-null provider value. Each bin is the equally weighted mean of returned provider aggregates whose timestamps fall in that bin; the report mean weights populated reporting bins equally. The API selects five- or sixty-minute aggregates. Original timestamps and returned datapoints are retained alongside every received value. Operating thresholds apply to these reporting-bin means.',
-  provenance:{provider:connection.title,sourceUrl:connection.sourceUrl,aggregation:'Original provider-returned values retained.'},
+  provenance:{provider:connection.title,sourceUrl:connection.sourceUrl,aggregation:'Original provider-returned values retained.',...(plan.sourceSetId?{sourceSetId:plan.sourceSetId,sourceSetSha256:plan.sourceSetSha256,acquisition:'Selected from the retained original source collection. Original request periods and retrieval windows remain attached.'}:{})},
   readiness:issues.length||rows.some(x=>x.status!=='READY')?'REVIEW_GAPS':'READY'};
  return {...body,reviewSha256:digest(body)};
 }

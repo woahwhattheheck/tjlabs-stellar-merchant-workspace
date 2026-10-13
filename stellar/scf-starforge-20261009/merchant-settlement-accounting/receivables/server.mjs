@@ -15,6 +15,9 @@ import {CustomerStatementWorkspace, STATEMENT_REQUEST_BYTES} from '../customer-s
 import {customerStatementAsset, handleCustomerStatementRequest} from '../customer-statements/server.mjs';
 
 const STATIC = await readBrowserAssets(new URL('./browser-assets.json', import.meta.url));
+
+// Original response files remain capped at 1.5 MB; JSON escaping needs a larger wire envelope.
+const CUSTOMER_ACCOUNT_REQUEST_BYTES = 4_000_000;
 const LOOPBACK = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
 const DOCUMENT_NAMES = new Set(['invoice.json', 'invoice.html', 'invoice.csv', 'manifest.json', 'status.json', 'credit.json', 'credit.html', 'credit.csv']);
 
@@ -122,7 +125,7 @@ export async function receivablesAsset(path, {apiPath = '/api/receivables', uiPa
   apiPath = basePath(apiPath, '/api/receivables'); uiPath = basePath(uiPath, '/receivables');
   if (path !== uiPath && !path.startsWith(uiPath + '/')) return null;
   const name = path === uiPath ? 'index.html' : path.slice(uiPath.length + 1) || 'index.html';
-  if (name === 'config.json') return {bytes: Buffer.from(JSON.stringify({apiPath, uiPath, requestBytes: RECEIVABLE_REQUEST_BYTES})), type: 'application/json; charset=utf-8'};
+  if (name === 'config.json') return {bytes: Buffer.from(JSON.stringify({apiPath, uiPath, requestBytes: RECEIVABLE_REQUEST_BYTES, customerAccountRequestBytes: CUSTOMER_ACCOUNT_REQUEST_BYTES})), type: 'application/json; charset=utf-8'};
   const entry = STATIC.get('/receivables/' + name);
   return entry ? {bytes: await readFile(entry.url), type: entry.type} : null;
 }
@@ -146,6 +149,19 @@ export async function handleReceivablesRequest(receivables, {method, path, query
       result = {schema, workspaceId, sourcesSha256};
     }
     else if (route === '' || route === 'state') result = await receivables.state({asOf: search.get('asOf') || undefined});
+    else if (route === 'customer-accounts') result = await receivables.customerAccountResponses({customerId:search.get('customerId')||undefined,search:search.get('search')||undefined});
+    else if (parts[0] === 'customer-accounts' && parts[1] === 'operations' && parts.length === 3)
+      result = await receivables.customerAccountOperation(parts[2]);
+    else if (parts[0] === 'customer-accounts' && parts[1] === 'responses' && parts.length === 3)
+      result = await receivables.customerResponse(parts[2]);
+    else if (parts[0] === 'customer-accounts' && parts[1] === 'responses' && parts[3] === 'files' && parts.length === 4) {
+      const selected = await receivables.customerResponseFile(parts[2], search.get('name'));
+      return {file:selected,type:selected.type};
+    }
+    else if (parts[0] === 'customer-accounts' && parts[2] === 'files' && parts.length === 3) {
+      const selected = await receivables.customerAccountFile(parts[1],search.get('name'));
+      return {file:selected,type:selected.type};
+    }
     else if (route === 'remittances') result = await receivables.remittances();
     else if (parts[0] === 'remittances' && parts[1] === 'operations' && parts.length === 3)
       result = await receivables.remittanceOperation(parts[2]);
@@ -268,6 +284,14 @@ export async function handleReceivablesRequest(receivables, {method, path, query
   } else if (method === 'POST') {
     if (!value || Array.isArray(value) || typeof value !== 'object') throw problem('INVALID_JSON', 'Send a JSON operator request.');
     if (route === 'settings') result = await receivables.settings(value);
+    else if (route === 'customer-accounts/preview') result = await receivables.previewCustomerAccount(value);
+    else if (route === 'customer-accounts') result = await receivables.publishCustomerAccount(value);
+    else if (route === 'customer-accounts/responses/preview') result = await receivables.previewCustomerResponse(value);
+    else if (route === 'customer-accounts/responses') result = await receivables.receiveCustomerResponse(value);
+    else if (parts[0] === 'customer-accounts' && parts[1] === 'responses' && parts.length === 4 && parts[3] === 'preview')
+      result = await receivables.previewCustomerResponseReview(parts[2],value);
+    else if (parts[0] === 'customer-accounts' && parts[1] === 'responses' && parts.length === 4 && parts[3] === 'review')
+      result = await receivables.reviewCustomerResponse(parts[2],value);
     else if (route === 'remittances/preview') result = await receivables.previewRemittance(value);
     else if (route === 'remittances') result = await receivables.applyRemittance(value);
     else if (route === 'credit-control/policies') result = await receivables.saveCreditPolicy(value);
@@ -351,6 +375,8 @@ export async function createReceivablesHandler(receivables, {apiPath = '/api/rec
     try { url = new URL(request.url || '/', 'http://localhost'); } catch { return false; }
     const api = url.pathname === apiPath || url.pathname.startsWith(apiPath + '/');
     const ui = url.pathname === uiPath || url.pathname.startsWith(uiPath + '/');
+    const customerAccountIntake = url.pathname === apiPath + '/customer-accounts/responses' ||
+      url.pathname === apiPath + '/customer-accounts/responses/preview';
     const customer = statements && (url.pathname === '/customer-statements' || url.pathname.startsWith('/customer-statements/') ||
       url.pathname === '/api/customer-statements' || url.pathname.startsWith('/api/customer-statements/'));
     const planUi = url.pathname === '/payment-plans' || url.pathname.startsWith('/payment-plans/');
@@ -375,7 +401,7 @@ export async function createReceivablesHandler(receivables, {apiPath = '/api/rec
         }
       }
       if (request.method !== 'GET' && request.method !== 'POST') throw problem('METHOD_NOT_ALLOWED', 'Use a supported workspace operation.', 405);
-      const value = mutation ? await body(request, bankRequest ? BANK_REQUEST_BYTES : planRequest ? PAYMENT_PLAN_REQUEST_BYTES : customer ? STATEMENT_REQUEST_BYTES : RECEIVABLE_REQUEST_BYTES) : undefined;
+      const value = mutation ? await body(request, bankRequest ? BANK_REQUEST_BYTES : planRequest ? PAYMENT_PLAN_REQUEST_BYTES : customer ? STATEMENT_REQUEST_BYTES : customerAccountIntake ? CUSTOMER_ACCOUNT_REQUEST_BYTES : RECEIVABLE_REQUEST_BYTES) : undefined;
       const parameters = {method: request.method, path: url.pathname, query: Object.fromEntries(url.searchParams), value, apiPath,
         expectedWorkspaceId: request.headers['x-accounting-workspace-id'],
         expectedSourcesSha256: request.headers['x-accounting-sources-sha256']};

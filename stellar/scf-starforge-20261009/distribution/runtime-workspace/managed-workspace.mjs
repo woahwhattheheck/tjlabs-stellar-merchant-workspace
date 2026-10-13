@@ -3,13 +3,14 @@ import { mkdir, readdir, lstat, realpath } from 'node:fs/promises';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
+import { managedResult } from './managed-result.mjs';
 import { applicationEnvironment } from './application-environment.mjs';
 import { validateApplicationProviderBinding } from './application-providers.mjs';
 import { validatePythonManagedCommand, pythonManagedLaunch } from '../python-runtime/application-lifecycle.mjs';
 import { activate, rollback, doctor } from '../../sf46-release/product.mjs';
 import { inspectMerchantRuntime, adoptMerchantRuntime, inspectInstalledRuntime } from '../../sf46-release/runtime-package.mjs';
 import { HOME_SCHEMA, MANIFEST, releaseId, validateId, verifyRelease, atomicFile, withHomeLock } from '../../sf46-release/release-core.mjs';
-import { absolute, privateDirectory, makePrivate, regular, readJSON, saveJSON, recordId, operationId,
+import { absolute, privateDirectory, optionalPrivateEntries, makePrivate, regular, readJSON, saveJSON, recordId, operationId,
   plain, need, digest, json, canonical, now, workerAlive, processIdentity, operationLease } from './storage.mjs';
 
 export const managedOperationFields = Object.freeze({
@@ -37,7 +38,6 @@ export async function initializeManagedWorkspace(root) {
   }
 }
 async function homeRecord(root, homeId) {
-  await initializeManagedWorkspace(root);
   const record = await readJSON(pathFor(root, 'managed-homes', homeId));
   need(record.id === homeId && absolute(record.directory), 'MANAGED_HOME_RECORD_INVALID');
   return record;
@@ -112,7 +112,6 @@ export async function openManagedHome(root, { directory, label } = {}) {
 // selector and review inventory used by the Managed workspace.
 export async function managedHome(root, homeId) {
   recordId(homeId);
-  await initializeManagedWorkspace(root);
   const record = await readJSON(pathFor(root, 'managed-homes', homeId), true);
   if (!record) return null;
   need(record.id === homeId && absolute(record.directory), 'MANAGED_HOME_RECORD_INVALID');
@@ -120,8 +119,7 @@ export async function managedHome(root, homeId) {
   catch (error) { return { ...record, phase: 'UNAVAILABLE', error: asError(error), releases: [], active: null }; }
 }
 export async function managedState(root, { homeId = null } = {}) {
-  await initializeManagedWorkspace(root);
-  const names = (await readdir(join(root, 'managed-homes'))).filter(name => /^[a-f0-9]{24}\.json$/.test(name)).sort();
+  const names = (await optionalPrivateEntries(join(root, 'managed-homes'))).filter(name => /^[a-f0-9]{24}\.json$/.test(name)).sort();
   const homes = await Promise.all(names.map(async name => {
     const record = await readJSON(join(root, 'managed-homes', name));
     try { return await homeView(record); }
@@ -130,7 +128,7 @@ export async function managedState(root, { homeId = null } = {}) {
   const selected = homeId ? homes.find(item => item.id === recordId(homeId)) ?? null : homes[0] ?? null;
   const reviews = [];
   if (selected) {
-    const names = (await readdir(join(root, 'managed-reviews'))).filter(name => /^[a-f0-9]{24}\.json$/.test(name));
+    const names = (await optionalPrivateEntries(join(root, 'managed-reviews'))).filter(name => /^[a-f0-9]{24}\.json$/.test(name));
     for (const name of names) {
       const review = await readJSON(join(root, 'managed-reviews', name));
       if (review.homeId === selected.id) reviews.push({ ...review, current: review.homeRevision === selected.revision });
@@ -391,9 +389,9 @@ export async function recoverManagedOperation(root, id) {
     if (commandResult && state.phase !== 'SUCCEEDED') {
       await saveJSON(join(directory, 'state.json'), { ...state, phase: 'SUCCEEDED', completedAt: commandResult.completedAt,
         updatedAt: now(), result: commandResult, recoveredFrom: state.phase }, true);
-      return { operationId: id, phase: 'SUCCEEDED', result: commandResult, reopened: true };
+      return { operationId: id, phase: 'SUCCEEDED', ...managedResult({ phase: 'SUCCEEDED', result: commandResult }, commandResult), reopened: true };
     }
-    if (state.phase === 'SUCCEEDED') return { operationId: id, phase: state.phase, reopened: true };
+    if (state.phase === 'SUCCEEDED') return { operationId: id, phase: state.phase, ...managedResult(state, commandResult), reopened: true };
     need(!await workerAlive(state), 'RUNTIME_WORKSPACE_OPERATION_RUNNING');
     if (request.operation === 'managed-run' && await readJSON(join(directory, 'command-launch.json'), true)) {
       if (await managedCommandAlive(state))
@@ -405,7 +403,7 @@ export async function recoverManagedOperation(root, id) {
           'The launch record has no retained process identity. Original output and host status supply its operating outcome.' };
       await saveJSON(join(directory, 'state.json'), { ...state, phase: 'SUCCEEDED', completedAt: now(),
         updatedAt: now(), result, recoveredFrom: state.phase }, true);
-      return { operationId: id, phase: 'SUCCEEDED', reconciled: true, result };
+      return { operationId: id, phase: 'SUCCEEDED', reconciled: true, ...managedResult({ phase: 'SUCCEEDED', result }) };
     }
     // These original operations are idempotent or use a retained source/selection/file guard.
     const attempt = (state.attempt ?? 1) + 1;

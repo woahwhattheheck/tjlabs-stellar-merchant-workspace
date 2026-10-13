@@ -2,7 +2,7 @@
 
 The labor workspace turns complete original Bureau of Labor Statistics captures into an editable regional analysis project. It keeps LAUS resident labor and QCEW workplace employment and wages as separate original projections, with their source files, dictionaries, footnotes, capture receipts and source identities.
 
-An analyst can receive a retained ZIP or capture the selected official files, keep several source editions, read every selected observation, save revisioned notes, produce complete county briefings, compare releases, publish original datasets and hand the full editable project to another operator. The browser and typed client use the same saved requests and workspace.
+An analyst can receive a retained ZIP or capture the selected official files, keep several source editions, read every selected observation, save revisioned notes, produce complete county briefings and saved regional analyses, compare releases, publish original datasets and hand the full editable project to another operator. The browser and typed client use the same saved requests and workspace.
 
 ## Install and open
 
@@ -73,9 +73,9 @@ starforge bls-labor-workspace --python /absolute/python \
   --name "Northeast Kingdom labor analysis"
 ~~~
 
-This command continues the same saved intake if restarted. It imports the original files through the maintained capture engine, selects the source edition, produces six complete county briefings and one complete resident-labor change report, saves the original analyst note, exports the editable project, and reopens it in a separate received-workspace directory. The output names the complete original-receiving.json, source counts, report files, archive and reopened workspace.
+This command continues the same saved intake if restarted. It imports the original files through the maintained capture engine, selects the source edition, produces six complete county briefings and one complete resident-labor change report, saves two complete regional analysis revisions and the original analyst note, exports the editable project, and reopens it in a separate received-regional-workspace directory. Earlier case handovers remain retained. The output names the complete original-receiving.json, source counts, report files, archive and reopened workspace.
 
-The case retains these seven outputs:
+The case retains these seven original briefings, plus the full regional labor/workplace report and its saved customer-commentary revision:
 
 | Customer output | Original content |
 | --- | --- |
@@ -130,6 +130,16 @@ A customer briefing uses the currently selected source edition, projection and e
 Choose **Original source values** for the original observations. Choose **LAUS change from the same period one year earlier** to retain the exact prior original observation and decimal difference. Matching requires the same series, period, unit, residence basis, seasonal status and annual coverage. Rate changes use percentage points. Incomparable or unavailable observations retain the reason; no missing month is filled.
 
 **Compare complete source editions** joins original observation identities across the two selected editions. The result retains added, removed, changed and unchanged observations, complete before/after rows and changed field names. Acquisition identity is separate from a changed original value or footnote.
+
+## Save a complete regional analysis
+
+Choose **Regional analysis** in the same browser. Select the original edition, complete county membership, years, LAUS adjustment and period kinds, and one QCEW ownership/industry/size group. Save customer commentary with regional totals, original county observations, separate resident/workplace charts and exact annual differences.
+
+The regional rate uses total unemployed residents and total civilian labor force. Workplace employment totals and derived weekly wages retain their original county inputs. Unavailable members and unequal annual coverage remain explicit. Every statistic keeps its source edition, complete source membership and exact fractional value.
+
+**Revise this analysis** opens the saved definition for a new revision. A received definition opens in the full restored project, with its original source and parent report. Complete report JSON, CSV, HTML, original-observation stream, editable definition, revision comparison and analysis ZIP are available for every saved analysis.
+
+See the [complete regional analysis guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/REGIONAL_ANALYSIS.md) for the method, customer files, API and exact original NEK receiving programme. The local browser also opens that complete guide.
 
 ## Publish and receive original datasets
 
@@ -249,3 +259,36 @@ After an interrupted request, client.resume reads the retained complete request 
 ## Recurring regional service
 
 The saved project supports a practical recurring analyst service: receive the next official source edition, compare it with the previous release, update the customer's county commentary, publish the selected complete datasets and deliver the new briefings with the same original definitions and source files. The receiving workspace lets a customer or another analyst continue that work with all original records and edits.
+
+## Customer-agent operation of the same analyst workspace
+
+The installed BLS selection now supplies the source-owned `bls-analyst-workspaces` Merchant provider alongside its existing Applications entry and dataset publisher. Browser, typed client and customer-agent tools operate the same SQLite project and original source editions. The analyst provider uses the completed county/regional engines above; the existing publisher tools continue their original candidate, review, release and customer workflow.
+
+The complete configuration and host setup are in [workspace/MERCHANT_SETUP.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/MERCHANT_SETUP.md). Configure aliases for an existing original analyst directory, its original input files and separate customer receiving destinations. Managed mode attaches to the existing Applications listener. Owned mode starts the same Python `cli.py --workspace DIRECTORY serve --port 0` and closes only that child. An Applications restart or changed installed source requires reopening its new attachment.
+
+The original NEK case remains the retained 21,024,420-byte archive `NEK_Vitality_Official_Sources_20261011.zip`, SHA256 `3473bd56195b486c41a5042f5d9be4cfbf82bcf0d257528fe724b18caea9a28e`. Its original receiving course above creates the saved analyst project and exact LAUS408/QCEW96 source edition. The same case can now be continued through the installed Merchant host. The current connection contains only the aliases selected by its operator; native publisher/SF88/Vitality connection material stays in the original host file.
+
+### Complete operator course
+
+1. Call `merchant_bls_analyst_workspaces`, choose the configured original NEK alias, and open it. Retain the returned workspace ID, current instance ID, source binding and actual state. Page `state` until the original source editions, reports and operations are completely received; each collection returns its own next offset. Use `edition` for the full selected original manifest and source selection.
+2. Read `observations` for the chosen edition and `laus` or `qcew`, continuing its original next offset. Preserve raw values, source member/row, disclosure status, period, statistical basis and adjustment. Regional analysis uses the same exact complete source membership and calculation definitions described in the existing regional guide.
+3. Reopen the full saved `regional-definition` for an actual regional report. Submit its complete document to `merchant_bls_analyst_definition_preview`; this resolves the original edition and returns the complete next-analysis input. Save a `regional` operation with that input, a stable original operation ID and the current workspace revision. Save commentary through the original `note` operation. Report/compare/select and original publisher operations use the same existing input schemas as the browser and typed CLI.
+4. Read `merchant_bls_analyst_operation` until the original accepted operation has completed or returned an actual failure. HTTP acceptance leaves the saved operation visible while its original worker runs. The returned saved intent, actual request, current state and original result remain together. After an uncertain response inspect this record, then call `merchant_bls_analyst_resume` with the same ID.
+5. Export every intended original report file through `merchant_bls_analyst_export` using kind `report`, its actual saved report ID and an original filename listed by the report metadata. Regional report files include the complete analysis and original observations, CSV/JSON/HTML, definition and full analysis ZIP as declared by that original edition. For source delivery choose kind `source`, original edition ID and exact manifest member. A stable export ID retains that complete file.
+6. Read the retained file through `merchant_bls_analyst_file_read`. Record its returned SHA256, whole byte count, read ID and next offset, and continue to the terminal offset. The maintained reader streams and hashes an owned read-only descriptor; it does not load or duplicate the whole source in memory. After a host restart reopen the same export ID with its SHA256 and previous offset, omitting the expired process read ID. Release the read when finished.
+7. Save the original `export` operation with its current revision and optional label. When complete, choose kind `export` and that operation ID to receive the entire editable ZIP. This retains complete source captures, observation database, analyst notes, regional definitions, report editions, source selection and original operations. Host credentials and live listener files remain local.
+8. To receive that original ZIP into a separate configured customer directory, save kind `receive` with its configured `sourceFile` and `destination` aliases. The agent first retains and verifies the complete original ZIP upload, then invokes the existing receive engine with its exact SHA256. The original extraction manifest and independent project reopening remain authoritative. Add the received directory to the host connection when it is ready to operate as its own alias.
+9. For original dataset publication save `native-receive` with the selected original source SHA, projections, reviewer, note and existing plan/run IDs as described in `NATIVE_RECEIVING.md`. Read `native-state` and the original operation. `merchant_bls_analyst_stop` sends a stop request only to the matching live native-receive subprocess; the original operation and publication stages remain available to resume.
+10. Close the exact current returned instance. Managed mode detaches the customer-agent interface while Applications retains ownership. Owned mode first closes accepted client work and retained readers, then drains its original Python owner. A failed descriptor/process close can be continued with the same instance identity.
+
+### Source import and saved requests
+
+The agent accepts host-selected source aliases for `import` and `receive`. It does not accept a customer-supplied arbitrary archive or destination path. The complete file is streamed into the existing upload route with its original SHA256; the server checks that checksum before publishing the upload. The same upload ID can be repeated after an uncertain response. Its saved receipt points to the retained immutable bytes used by the original workspace operation.
+
+Each agent operation retains a complete immutable intent and complete actual request under `agent-requests/`. Its logical input, original source byte identity, configured aliases, selected receiving destination and workspace identity travel in the whole editable project. A completed original result can be read after external source files change. An unsatisfied request requires its original retained upload/source and receiving binding. A relocated project retains the original history; prepare a new operation against its current host aliases when an incomplete original request belongs to a different original directory.
+
+### Typed installed interface
+
+`@tjlabs/stellar-merchant-workspace/seller/bls-labor/workspace` retains the original `openBlsLaborWorkspaceClient` API and typed methods. It now adds exact listener verification, operation lookup, targeted native stop and explicit client close. Original request files publish atomically. Complete downloads verify the server's original full byte length and SHA256 before publication.
+
+`./seller/bls-labor/workspace/agent` exports `attachBlsAnalystWorkspace` and `BlsAnalystClient` with the same durable operation and full-file receiving used by Merchant. `./seller/bls-labor/workspace/merchant` exports the source-owned runtime and configuration reader. The complete current source remains in the same selected BLS component; no separate customer product or source schema is required.

@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
+import { credentialHeader, representationHeader } from '../../sf88-operator-buyer-cli/collection-composer/package-format.mjs';
 
 const need = (value, code) => { if (!value) throw Object.assign(new Error(code), { code }); };
 const digest = value => createHash('sha256').update(value).digest('hex');
@@ -325,6 +326,155 @@ export async function openProductCollectionsBrowser({ playwrightModule, executab
     await capture(current, name, root.locator('.composer-period-review'));
     return value;
   }
+
+  async function showCustomerUse(current, selected, name, returnedSelection) {
+    await current.locator('#open-customer-use').click();
+    const root = current.locator('#customer-use-panel');
+    await root.waitFor({ state: 'visible' });
+    const savedList = byName(root, 'Saved commissions');
+    if (await savedList.isVisible()) await savedList.click();
+    const listing = await responseFor(current, '/api/customer-use/commissions', 'GET',
+      () => byName(root, 'Refresh saved work').click());
+    const index = listing.commissions.findIndex(row => row.id === selected.id);
+    need(index >= 0, 'RECEIVING_CUSTOMER_USE_COMMISSION_NOT_VISIBLE');
+    const head = listing.commissions[index];
+    let view = await responseFor(current, '/api/customer-use/commissions/' + selected.id + '/revisions/' + head.sha256,
+      'GET', () => byName(root, 'Open').nth(index).click());
+    await root.getByLabel('Saved history', { exact: true }).waitFor({ state: 'visible' });
+    if (head.sha256 !== selected.sha256) {
+      view = await responseFor(current, '/api/customer-use/commissions/' + selected.id + '/revisions/' + selected.sha256,
+        'GET', () => root.getByLabel('Saved history', { exact: true }).selectOption(selected.sha256));
+    }
+    need(view.selected.id === selected.id && view.selected.sha256 === selected.sha256
+      && view.selected.documentSha256 === selected.documentSha256,
+    'RECEIVING_VISIBLE_CUSTOMER_USE_REVISION_CHANGED');
+    need(await root.getByLabel('Stable commission reference', { exact: true }).inputValue() === selected.id,
+      'RECEIVING_VISIBLE_CUSTOMER_USE_REFERENCE_CHANGED');
+    await byName(root, 'Useful tasks').click();
+    await capture(current, name + '-uses', root);
+    await byName(root, 'Periods and review').click();
+    await capture(current, name + '-periods', root);
+    await byName(root, 'Buyer results').click();
+    await capture(current, name + '-buyer-results', root);
+    if (returnedSelection) {
+      const returned = view.returns.find(row => row.requestId === returnedSelection.requestId);
+      need(returned?.state === 'RETURNED' && returned.file.sha256 === returnedSelection.returnSha256,
+        'RECEIVING_VISIBLE_ORIGINAL_RETURN_MISSING');
+      const row = root.getByRole('row').filter({ hasText: returnedSelection.returnSha256 });
+      need(await row.count() === 1, 'RECEIVING_VISIBLE_ORIGINAL_RETURN_AMBIGUOUS');
+      const file = await download(current, row, 'Download exact return', name + '-buyer-return.json');
+      need(file.sha256 === returnedSelection.returnSha256 && file.bytes === returned.file.bytes,
+        'RECEIVING_BROWSER_ORIGINAL_RETURN_CHANGED');
+    }
+    const exported = await download(current, root, 'Export saved JSON', name + '-commission.json');
+    const payload = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(exported.raw));
+    need(payload.selectedSha256 === selected.sha256
+      && payload.revisions.some(row => row.sha256 === selected.sha256),
+    'RECEIVING_BROWSER_COMMISSION_EXPORT_CHANGED');
+    return { selected: view.selected, calendar: view.calendar.metadata,
+      periods: view.periods.map(row => ({ collectionId: row.selection.collectionId,
+        phase: row.native?.phase ?? null, error: row.error })), returns: view.returns,
+      downloaded: { path: exported.path, bytes: exported.bytes, sha256: exported.sha256 } };
+  }
+
+  async function sharePlan(current, edition, headerSelections = []) {
+    const selectedKeys = new Set();
+    for (const row of headerSelections) {
+      const request = edition.requests.find(request => request.key === row.key);
+      need(request && !selectedKeys.has(row.key) && new Set(row.names).size === row.names.length,
+        'RECEIVING_SHARED_HEADER_SELECTION_INVALID');
+      selectedKeys.add(row.key);
+      const headers = request.operation?.headers ?? {};
+      need(row.names.every(name => Object.hasOwn(headers, name)
+        && !credentialHeader(name) && !representationHeader(name)),
+      'RECEIVING_SHARED_HEADER_SELECTION_INVALID');
+    }
+    await openEdition(current, edition.collectionId);
+    const root = current.locator('#composer-panel');
+    await byName(root, 'Share plan and inputs').click();
+    await root.getByRole('heading', { name: 'Share plan and inputs', exact: true }).waitFor();
+    const selected = new Map(headerSelections.map(item => [item.key, new Set(item.names)]));
+    let checkbox = 0;
+    for (const request of edition.requests) for (const name of Object.keys(request.operation?.headers ?? {})) {
+      if (credentialHeader(name) || representationHeader(name)) continue;
+      await root.getByRole('checkbox').nth(checkbox++).setChecked(selected.get(request.key)?.has(name) === true);
+    }
+    await capture(current, 'shared-plan-source-period', root);
+    const response = current.waitForResponse(value => new URL(value.url()).pathname === '/api/composer/sharing/export'
+      && value.request().method() === 'POST');
+    let file, descriptor;
+    try {
+      file = await download(current, root, 'Create and download shared plan', edition.collectionId + '.request-plan.jsonl');
+      descriptor = await returned(await response);
+    } catch (error) { response.catch(() => {}); throw error; }
+    await idle(root);
+    need(descriptor.bytes === file.bytes && descriptor.sha256 === file.sha256
+      && descriptor.manifest.origin.collectionId === edition.collectionId
+      && descriptor.manifest.origin.editionSha256 === edition.editionSha256,
+    'RECEIVING_SHARED_PACKAGE_SOURCE_CHANGED');
+    return { packageSha256: descriptor.packageSha256, manifest: descriptor.manifest,
+      file: { path: file.path, bytes: file.bytes, sha256: file.sha256 } };
+  }
+  async function adoptSharedPlan(current, shared, input, beforeSave) {
+    const { root } = await library(current);
+    await responseFor(current, '/api/composer/sharing/packages', 'GET',
+      () => byName(root, 'Shared plans').click());
+    await idle(root);
+    const complete = await responseFor(current,
+      '/api/composer/sharing/packages/' + shared.packageSha256 + '/complete', 'POST',
+      () => root.locator('input[type="file"]').setInputFiles(shared.file.path));
+    await idle(root);
+    need(complete.phase === 'READY' && complete.packageSha256 === shared.packageSha256
+      && same(complete.manifest, shared.manifest), 'RECEIVING_COMPLETE_SHARED_PLAN_CHANGED');
+    await root.getByRole('heading', { name: 'Adopt shared plan', exact: true }).waitFor();
+    await root.getByLabel('Local plan reference', { exact: true }).fill(input.planId);
+    await root.getByLabel('Plan name', { exact: true }).fill(input.name);
+    await root.getByLabel('Description', { exact: true }).fill(input.description ?? shared.manifest.plan.description ?? '');
+    for (let index = 0; index < shared.manifest.operators.length; index++) {
+      const group = shared.manifest.operators[index], binding = input.operatorBindings.find(item => item.groupId === group.id);
+      need(binding, 'RECEIVING_LOCAL_OPERATOR_BINDING_REQUIRED');
+      const card = root.locator('section.composer-card').nth(index);
+      const key = binding.operatorWorkspace !== undefined ? 'operatorWorkspace' : 'operatorConfigFile';
+      await card.locator('select').selectOption(key);
+      await card.getByLabel('Local absolute path', { exact: true }).fill(binding[key]);
+    }
+    await root.getByLabel('Local response directory', { exact: true }).fill(input.outputDirectory);
+    await root.getByLabel('Delivery parameter', { exact: true }).fill(input.deliveryParameter);
+    await root.getByLabel('Delivery value', { exact: true }).fill(input.deliveryValue);
+    const required = shared.manifest.sources.filter(source => source.ticket || source.headers.some(item => item.kind === 'local'));
+    for (let index = 0; index < required.length; index++) {
+      const source = required[index], binding = (input.requestBindings ?? []).find(item => item.key === source.key) ?? {};
+      const card = root.locator('section.composer-card').nth(shared.manifest.operators.length + index);
+      if (source.ticket) {
+        need(typeof binding.ticketFile === 'string', 'RECEIVING_LOCAL_TICKET_REQUIRED');
+        await card.getByLabel('Local operation ticket file', { exact: true }).fill(binding.ticketFile);
+      }
+      for (const header of source.headers.filter(item => item.kind === 'local')) {
+        const omitted = (binding.omitHeaders ?? []).some(name => name.toLowerCase() === header.name.toLowerCase());
+        await card.getByLabel('Omit ' + header.name + ' in this local plan', { exact: true }).setChecked(omitted);
+        if (!omitted) {
+          const value = Object.entries(binding.headers ?? {}).find(([name]) => name.toLowerCase() === header.name.toLowerCase())?.[1];
+          need(typeof value === 'string', 'RECEIVING_LOCAL_HEADER_REQUIRED');
+          await card.getByLabel('Local ' + header.name + ' value', { exact: true }).fill(value);
+        }
+      }
+    }
+    const reviewed = await responseFor(current, '/api/composer/sharing/packages/' + shared.packageSha256 + '/review',
+      'POST', () => byName(root, 'Review local plan').click());
+    await idle(root);
+    need(reviewed.packageSha256 === shared.packageSha256, 'RECEIVING_ADOPTION_PACKAGE_CHANGED');
+    await beforeSave(reviewed);
+    await capture(current, 'recipient-local-adoption-review', root.locator('[data-adoption-review]'));
+    const adopted = await responseFor(current, '/api/composer/sharing/packages/' + shared.packageSha256 + '/adopt',
+      'POST', () => byName(root, 'Save adopted revision').click());
+    await idle(root);
+    need(adopted.adoption.reviewSha256 === reviewed.reviewSha256
+      && same(adopted.saved.plan, reviewed.plan), 'RECEIVING_ADOPTED_REVISION_CHANGED');
+    await root.locator('[data-plan-form]').waitFor({ state: 'visible' });
+    await capture(current, 'adopted-plan-original-editor', root.locator('[data-plan-form]'));
+    return adopted;
+  }
+
   async function showRecovery(current, requestId, name) {
     const root = current.locator('#recovery-panel');
     let history = await responseFor(current, '/api/recovery/history', 'POST',
@@ -343,7 +493,7 @@ export async function openProductCollectionsBrowser({ playwrightModule, executab
   }
   return { page, capture, runtimePage, sourceDiscovery, reopenSource, runtimeReady,
     collectionsPage, library, savePlan, openPlan, inspectSavedCatalog, preparePeriod, openEdition,
-    createPeriod, showCollection, showPrepared, showRecovery,
+    createPeriod, showCollection, showPrepared, showRecovery, showCustomerUse, sharePlan, adoptSharedPlan,
     async finish() {
       await writeFile(join(outputDirectory, 'browser-observations.json'),
         JSON.stringify({ artifacts: [...new Map(artifacts.map(item => [item.path, item])).values()],

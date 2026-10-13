@@ -13,6 +13,8 @@ import {
 import { seedCohortPlanFromCalendar } from "./cohort_planning_calendar.mjs";
 import { COHORT_DELIVERY_SCHEDULE_SCHEMA, seedCohortDeliveryScheduling, scheduleCohortDelivery, reopenCohortDeliverySchedule, exportCohortDeliveryScheduleCsv } from "./cohort_planning_scheduling.mjs";
 
+import {COHORT_RECORDED_COST_PLAN_SCHEMA,seedCohortRecordedCostPlan,planCohortFromRecordedCosts,reopenCohortRecordedCostPlan,exportCohortRecordedCostPlanCsv,inspectCohortTaskMeasurements,bindCohortRecordedCostMeasurement} from "./cohort_delivery_comparison.mjs";
+
 const EDITION_SCHEMA = "stellar-forge.sf47-cohort-plan-edition.v1";
 const MAX_INPUT_BYTES = 64 * 1024 * 1024;
 const HELP = [
@@ -28,6 +30,16 @@ const HELP = [
   "  node cohort_planning_cli.mjs schedule --input plan.json [--constraints choices.json] [--method first-fit|resolve-conflicts] [--name TEXT] [--output allocation.json]",
   "  node cohort_planning_cli.mjs schedule-plan --input allocation.json [--output successor.json]",
   "  node cohort_planning_cli.mjs schedule-compare --input allocation.json [--output comparison.json]",
+  "",
+  "  node cohort_planning_cli.mjs recorded-cost-seed --recorded delivery.json --baseline future-plan.json [--output choices.json]",
+  "  node cohort_planning_cli.mjs recorded-cost-plan --recorded delivery.json --baseline future-plan.json --choices choices.json [--output cost-plan.json]",
+  "  node cohort_planning_cli.mjs task-measurements --input saved-task-response.json [--output measurements.json]",
+  "  node cohort_planning_cli.mjs recorded-cost-bind --choices choices.json --allocation ID --measurement saved-task-response.json --kind INSTALLED|FOLLOWUP [--observation ID] [--case RECEIVING_CASE_ID] --service-basis TEXT [--output bound-choices.json]",
+  "  node cohort_planning_cli.mjs recorded-cost-reopen --input cost-plan.json [--output verified-cost-plan.json]",
+  "",
+  "Recorded-cost planning counts completed useful tasks and converts supplier cost to each future schedule’s underlying request units.",
+  "Complete originals, task/request quantities, existing funding and purchased prices remain retained.",
+  "Partial cost coverage remains unknown. CSV/evaluate accept the complete resulting cost-plan document.",
   "",
   "Seed options:",
   "  --as-of ISO_TIMESTAMP       Explicit observation time; defaults to native seed time.",
@@ -74,6 +86,11 @@ function parse(argv) {
     evaluate: ["input", "native-seed", "output"],
     csv: ["input", "output"],
     compare: ["baseline", "candidate", "name", "note", "output"],
+    "task-measurements": ["input","output"],
+    "recorded-cost-bind": ["choices","allocation","measurement","kind","observation","case","service-basis","output"],
+    "recorded-cost-seed": ["recorded","baseline","output"],
+    "recorded-cost-plan": ["recorded","baseline","choices","output"],
+    "recorded-cost-reopen": ["input","output"],
     "schedule-seed": ["input", "output"],
     schedule: ["input", "constraints", "method", "max-search-steps", "name", "output"],
     "schedule-plan": ["input", "output"],
@@ -87,10 +104,11 @@ function parse(argv) {
     if (i + 1 >= argv.length || argv[i + 1].startsWith("--")) fail("INVALID_ARGUMENT", flag + " requires one value.", flag);
     options[key] = argv[i + 1];
   }
-  const required = command === "calendar" ? ["native-seed", "calendar"] : command === "seed" ? ["native-seed"] : command === "compare" ? ["baseline", "candidate"] : ["input"];
+  const required = command === "recorded-cost-bind" ? ["choices","allocation","measurement","kind","service-basis"] : command === "recorded-cost-plan" ? ["recorded","baseline","choices"] : command === "recorded-cost-seed" ? ["recorded","baseline"] : command === "calendar" ? ["native-seed", "calendar"] : command === "seed" ? ["native-seed"] : command === "compare" ? ["baseline", "candidate"] : ["input"];
   for (const key of required) if (!options[key]) fail("INVALID_ARGUMENT", "--" + key + " is required.", key);
   if (command === "compare" && options.baseline === "-" && options.candidate === "-")
     fail("INVALID_ARGUMENT", "Read at most one comparison source from stdin; use a file for the other.", "input");
+  if (["recorded","baseline","choices","measurement"].filter(key=>options[key]==="-").length>1)fail("INVALID_ARGUMENT","Read at most one complete recorded-cost input from stdin.","input");
   if (options.constraints === "-") fail("INVALID_ARGUMENT", "Use a separate file for scheduling constraints.", "constraints");
   if (options["native-seed"] === "-") fail("INVALID_ARGUMENT", "Use a separate file for the native seed.", "native-seed");
   return { command, options };
@@ -120,6 +138,7 @@ async function readJson(filename) {
 }
 
 function planFrom(value) {
+  if (value?.schema === COHORT_RECORDED_COST_PLAN_SCHEMA) return reopenCohortRecordedCostPlan(value).candidate;
   if (value?.schema === COHORT_PLAN_SCHEMA) return value;
   if (value?.schema === COHORT_PLAN_REPORT_SCHEMA && value.kind === "PLAN") return value.input;
   if (value?.schema === EDITION_SCHEMA) return value.plan;
@@ -171,6 +190,21 @@ async function main(argv) {
       if (!Number.isSafeInteger(settings.planRevision)) fail("INVALID_ARGUMENT", "Plan revision exceeds the supported integer range.", "plan-revision");
     }
     result = command === "calendar" ? seedCohortPlanFromCalendar(nativeSeed, await readJson(options.calendar), { ...settings, ...(options.group ? { groupId: options.group } : {}) }) : seedCohortPlan(nativeSeed, settings);
+  } else if (command === "recorded-cost-seed" || command === "recorded-cost-plan") {
+    const recorded=await readJson(options.recorded),baseline=await readJson(options.baseline);
+    result=command==="recorded-cost-seed"?seedCohortRecordedCostPlan(recorded,baseline):planCohortFromRecordedCosts(recorded,baseline,await readJson(options.choices));
+  } else if (command === "task-measurements") {
+    result=inspectCohortTaskMeasurements(await readJson(options.input));
+  } else if (command === "recorded-cost-bind") {
+    result=await readJson(options.choices);
+    if(!Array.isArray(result.allocations))fail("INVALID_ARGUMENT","Open the complete recorded-cost choices.","choices");
+    const found=result.allocations.filter(row=>row.id===options.allocation);
+    if(found.length!==1)fail("INVALID_ARGUMENT","Select one original allocation identity.","allocation");
+    const next=bindCohortRecordedCostMeasurement(found[0],await readJson(options.measurement),
+      {kind:options.kind,observationId:options.observation||"",serviceBasis:options["service-basis"],...(options.case?{caseId:options.case}:{})});
+    result.allocations=result.allocations.map(row=>row.id===options.allocation?next:row);
+  } else if (command === "recorded-cost-reopen") {
+    result=reopenCohortRecordedCostPlan(await readJson(options.input));
   } else if (command === "evaluate") {
     const input = planFrom(await readJson(options.input));
     const nativeSeed = options["native-seed"] ? await readJson(options["native-seed"]) : undefined;
@@ -199,7 +233,7 @@ async function main(argv) {
     result = compareCohortPlans(baseline, candidate, { ...(options.name !== undefined ? { title: options.name } : {}), ...(options.note !== undefined ? { note: options.note } : {}) });
   } else {
     const document = await readJson(options.input);
-    result = document?.schema === COHORT_PLAN_COMPARISON_SCHEMA ? exportCohortPlanComparisonCsv(document) : document?.schema === COHORT_DELIVERY_SCHEDULE_SCHEMA ? exportCohortDeliveryScheduleCsv(document) : exportCohortPlanCsv(reportFrom(document));
+    result = document?.schema === COHORT_RECORDED_COST_PLAN_SCHEMA ? exportCohortRecordedCostPlanCsv(document) : document?.recordedCostPlan ? exportCohortRecordedCostPlanCsv(document.recordedCostPlan)+["saved_successor","current",JSON.stringify(document)].map(v=>'"'+String(v).replaceAll('"','""')+'"').join(",")+"\r\n" : document?.schema === COHORT_PLAN_COMPARISON_SCHEMA ? exportCohortPlanComparisonCsv(document) : document?.schema === COHORT_DELIVERY_SCHEDULE_SCHEMA ? exportCohortDeliveryScheduleCsv(document) : exportCohortPlanCsv(reportFrom(document));
   }
   await output(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n", options.output);
 }

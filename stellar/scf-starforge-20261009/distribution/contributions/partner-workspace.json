@@ -1,0 +1,48 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "partner-workspace",
+  "description": "Complete original mobility and education source workbenches, managed staff applications and independent receiving",
+  "components": [
+    "products/partner-workspace"
+  ],
+  "supportFiles": [
+    "products/partner-workspace/native/files.py",
+    "products/partner-workspace/native/source.py",
+    "products/partner-workspace/native/manage.py",
+    "products/partner-workspace/native/operations.py",
+    "products/partner-workspace/native/launch.py",
+    "products/partner-workspace/client.d.mts",
+    "products/partner-workspace/workspace.d.mts",
+    "products/partner-workspace/native/API.md",
+    "products/partner-workspace/SCF.md",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/mobility-source-review.json",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/education-quality-review.json",
+    "products/partner-workspace/receiving/run-installed.py",
+    "products/partner-workspace/receiving/README.md",
+    "products/partner-workspace/receiving/select-original.py"
+  ],
+  "commands": {
+    "partner-workspace": "products/partner-workspace/cli.mjs",
+    "partner-commission": "products/partner-workspace/commission.mjs"
+  },
+  "commandDescriptions": {
+    "partner-workspace": "Install, operate and independently receive original mobility and education workbenches",
+    "partner-commission": "Join complete original partner source and Workshare to Customer Installation"
+  },
+  "exports": {
+    "./merchant/partner": {
+      "types": "./source/products/partner-workspace/client.d.mts",
+      "import": "./source/products/partner-workspace/client.mjs"
+    },
+    "./merchant/mcp/partner": {
+      "types": "./source/products/partner-workspace/workspace.d.mts",
+      "import": "./source/products/partner-workspace/workspace.mjs"
+    }
+  },
+  "applicationProviders": {
+    "partner-workspace": "products/partner-workspace/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "partner-workspaces": "products/partner-workspace/merchant-provider.mjs"
+  }
+}

@@ -13,8 +13,8 @@ spec.loader.exec_module(original)
 SCHEMA = "stellar-forge.tind-managed-binding.v1"
 STARTUP = "stellar-forge.tind-workspace-launch.v1"
 SOURCE_FILES = (
-    "marc.py", "migration.py", "native.py", "source_cases.py", "cli.py", "cli.mjs", "server.py",
-    "managed.py", "browser.mjs", "index.html", "style.css", "application-provider.mjs",
+    "marc.py", "live.py", "migration.py", "native.py", "native_jobs.py", "source_cases.py", "source_files.py", "production_waves.py", "cli.py", "cli.mjs", "server.py",
+    "managed.py", "client.mjs", "client.d.mts", "merchant.mjs", "merchant.d.mts", "merchant-provider.mjs", "merchant-setup.mjs", "catalog.mjs", "browser.mjs", "index.html", "style.css", "application-provider.mjs",
 )
 
 def inspect_binding(directory):
@@ -36,4 +36,4 @@ def startup(server, binding, token):
     console = "http://127.0.0.1:" + str(server.server_port) + "/#" + token
     return {"schema": STARTUP, "status": "TIND_WORKSPACE_READY", "workspace": binding["workspace"],
             "bindingSha256": binding["sha256"], "sourceRoot": binding["sourceRoot"], "python": binding["python"],
-            "console": console, "url": console, "pid": os.getpid()}
+            "console": console, "url": console, "pid": os.getpid(), "instanceId": server.instance_id}

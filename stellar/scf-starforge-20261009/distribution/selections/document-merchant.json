@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "document-merchant",
   "title": "Paid document merchant and customer",
-  "description": "Complete CSV/JSON template composition and HTML/Markdown document generation with managed Applications setup/start/reopen, original merchant payment, whole-file request, native job, named PDF/source package, supplier usage and customer receiving.",
+  "description": "Complete document merchant and customer browser with original native payment and job receiving: CSV/JSON datasets, grouped records, full HTML/Markdown templates, saved quotes, PDF/source output and portable Collections. Ordered PDF assembly preserves complete sources and delivers all received volumes in one customer archive.",
   "base": {
     "commands": [
       "installation",
@@ -136,7 +136,8 @@
     "stellar/scf-starforge-20261009/native-facilitator",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting",
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/public",
-    "stellar/scf-starforge-20261009/distribution/python-runtime"
+    "stellar/scf-starforge-20261009/distribution/python-runtime",
+    "stellar/scf-starforge-20261009/sf66-demo-launcher"
   ],
   "supportFiles": [
     "stellar/scf-starforge-20261009/distribution/browser-assets.mjs",
@@ -202,14 +203,24 @@
     "products/document-merchant/examples/batch/invoice.html",
     "products/document-merchant/examples/batch/greeting.html",
     "products/document-merchant/examples/batch/order.json",
-    "products/document-merchant/examples/batch/customer-options.json"
+    "products/document-merchant/examples/batch/customer-options.json",
+    "products/document-merchant/composition-browser-assets.json",
+    "products/document-merchant/composition-workspace.d.mts",
+    "products/document-merchant/composition-server.d.mts",
+    "products/document-merchant/composition-service.d.mts",
+    "products/document-merchant/GRANT.md",
+    "products/document-merchant/ASSEMBLY.md",
+    "products/document-merchant/assembly.d.mts",
+    "products/document-merchant/examples/ordered-pdfs.json",
+    "products/document-merchant/COMMISSIONING.md",
+    "products/document-merchant/commissioning.d.mts"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Complete document merchant setup, CSV/JSON templates, native paid document batches, HTML or Markdown rendering, PDF and editable-source receiving",
+    "description": "Document merchants, complete dataset/template production, customer browser and CLI, original paid jobs and full PDF/source Collection receiving.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

@@ -25,13 +25,37 @@
       "path": "stellar/scf_2026/sf47_budget_model/workspace/COHORT-PLANNING.md",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
-      "commit": "b923b22687b0726b86000e685c60a07cfbad5b72",
+      "commit": "c6e5fc41ac2213096f3cc99ee0d51209f053ee48",
       "editions": [
         {
           "commit": "b923b22687b0726b86000e685c60a07cfbad5b72",
           "git_blob": "4ec3ecf18e897397cf54311e62f6f6e78a6861e0",
           "bytes": 71019,
           "sha256": "8b831566d21894c0f502b4d57c1535d6b242c90a02ea4de8a391c4a529249fed"
+        },
+        {
+          "commit": "bb47c6e3f2e8b86aba2e352522d6c29b6ea9cb2d",
+          "git_blob": "4eece7571e55c1f968f5d0fcc0db77f73af97b07",
+          "bytes": 83226,
+          "sha256": "e7daccaf21187a304c0c51b134d7f3f0cb123be89c57c8509ce1097c93b9caa9"
+        },
+        {
+          "commit": "13200897c9c1ef90fea1dc95c8dd27b2bb7cba13",
+          "git_blob": "8345390fe6ce58c8a37f8291cd41ba1237dfb45f",
+          "bytes": 89778,
+          "sha256": "81bd0487ef4c4139e7ea24bc356e4b99fc0d1e9f4ff5f24d078bcbabfdcc17b1"
+        },
+        {
+          "commit": "003e2f2014677891e9eddbd170228e8dc8084530",
+          "git_blob": "79f784b1907314557d415e3faf4a9546a095ce11",
+          "bytes": 90491,
+          "sha256": "11ac275f1272cb0afceb4dde6987281264d348f77bb72ec8265de5dd6790a7d3"
+        },
+        {
+          "commit": "c6e5fc41ac2213096f3cc99ee0d51209f053ee48",
+          "git_blob": "8a2c1b9ee7734e00d344577e8d0418f6f678d101",
+          "bytes": 92293,
+          "sha256": "043929e86ecbe82b972a71f0422f7a5057f2450fe272b86098c0403e9e01aac5"
         }
       ]
     },
@@ -53,17 +77,29 @@
     },
     {
       "id": "cohort-adoption-recorded-delivery",
-      "label": "Original intent placement, actual delivery comparison and editable receiving",
+      "label": "Original intent placement, delivery and commercial reconciliation with complete receiving",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/COHORT-DELIVERY.md",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
-      "commit": "b923b22687b0726b86000e685c60a07cfbad5b72",
+      "commit": "193ddbdcf4ef69f220014751d7e872c2dede4c14",
       "editions": [
         {
           "commit": "b923b22687b0726b86000e685c60a07cfbad5b72",
           "git_blob": "0f8841b65102ec47f66f76b90995f69591ce8d3b",
           "bytes": 18986,
           "sha256": "ef8765e308052a38bb80526e7b9d085886806561575e3370fca7841f5ea96f1f"
+        },
+        {
+          "commit": "80e82c047a5ba69955d96fa5e7bd9ad9a6bb45e3",
+          "git_blob": "51c217d1db2883a0dac0f58d6920aab1dd30dffd",
+          "bytes": 29136,
+          "sha256": "b6ab2e06dcfb3969ed82895a22cc3d10112da6b0a6b72fcaa1893c1ba10d12c1"
+        },
+        {
+          "commit": "193ddbdcf4ef69f220014751d7e872c2dede4c14",
+          "git_blob": "a1df781a4ac07c1d64c4a74d81bbc8167ec06798",
+          "bytes": 37408,
+          "sha256": "060cb6e5c0738b70ac45aff568f22ba11d613df16713f4b956dde424ca1f1e34"
         }
       ]
     },
@@ -96,6 +132,52 @@
           "git_blob": "3f3f1b57f35bc9ccefae33e44bb34fe3ee9dea72",
           "bytes": 45280,
           "sha256": "2230323a45f96009591e12d68479e1c55d092d9100dcee1f7c93664f8b922294"
+        }
+      ]
+    },
+    {
+      "id": "cohort-adoption-commercial-engine",
+      "label": "Exact recorded settlement, shared service cost, refund and contribution calculation",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/cohort_delivery_comparison.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "c6e5fc41ac2213096f3cc99ee0d51209f053ee48",
+      "editions": [
+        {
+          "commit": "80e82c047a5ba69955d96fa5e7bd9ad9a6bb45e3",
+          "git_blob": "a51c3c150d1270d64fc8e5965b322447ae314b4d",
+          "bytes": 68162,
+          "sha256": "fe2f990b65d2b1a97ac08481e8c5a793ff8ab1cff55ccd16ec12f09053ab3741"
+        },
+        {
+          "commit": "193ddbdcf4ef69f220014751d7e872c2dede4c14",
+          "git_blob": "1ac9bd9a7a5e608c5d61e5ff7ebc185cd3a8d223",
+          "bytes": 85345,
+          "sha256": "443748c0046705d27603c067cfbb338cb0495bf9b238237da4982cbc8b9a17bd"
+        },
+        {
+          "commit": "bb47c6e3f2e8b86aba2e352522d6c29b6ea9cb2d",
+          "git_blob": "8bd3f1280897c0bddaa67458ce55bf1d9a59b712",
+          "bytes": 95227,
+          "sha256": "441105c5c0fe5498f1dccf5fb2d3f47eb5726d42874dd360f30d528f311c708e"
+        },
+        {
+          "commit": "13200897c9c1ef90fea1dc95c8dd27b2bb7cba13",
+          "git_blob": "1d25ba2c0321296a2264590a3a6c217558e825b1",
+          "bytes": 104567,
+          "sha256": "e3d479f10221ea47870665a5c41c5aa1dd21ca24f36e233e867f305f8fd2eb71"
+        },
+        {
+          "commit": "003e2f2014677891e9eddbd170228e8dc8084530",
+          "git_blob": "a7a09ad5306c50a450f3c242ea2345a3983222dd",
+          "bytes": 104955,
+          "sha256": "9b056b64607aacf9b4bba9e04670c4e26b8dd8c195b2851a91758315b9b5cef1"
+        },
+        {
+          "commit": "c6e5fc41ac2213096f3cc99ee0d51209f053ee48",
+          "git_blob": "8646c1f620d0ef91914a5fbc3cebddaf33161925",
+          "bytes": 106082,
+          "sha256": "e79c995335c9f47e85eedc462422969643de2973a063ef87cf21965aabbd1506"
         }
       ]
     }

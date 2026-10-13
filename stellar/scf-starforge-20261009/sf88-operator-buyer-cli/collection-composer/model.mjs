@@ -1,5 +1,7 @@
 // MIT — Retained authoring over the original SF88 builder and collection controller.
 import { createHash } from 'node:crypto';
+import { openPlanExchange } from './exchange.mjs';
+import { openCollectionInputLibrary } from './input-library.mjs';
 import { readdir, lstat, realpath } from 'node:fs/promises';
 import { join, resolve, dirname, isAbsolute } from 'node:path';
 import { isDeepStrictEqual as same } from 'node:util';
@@ -189,9 +191,8 @@ export function openCollectionComposer({ collections } = {}) {
       live(); return await action();
     } finally { if (releaseAuthoring) await releaseAuthoring(); await releaseRoot(); }
   }
-  async function savePlan({ plan: input } = {}) {
+  async function retainPlan(input) {
     const plan = validateCollectionPlan(input), raw = json(plan), planSha256 = hash(raw);
-    return mutate(async () => {
       const parent = join(plansDirectory, plan.id), location = join(parent, planSha256);
       await initializationDirectory(parent, { create: true });
       await initializationDirectory(location, { create: true });
@@ -200,7 +201,9 @@ export function openCollectionComposer({ collections } = {}) {
         { schema: 'stellar-forge.sf88.collection-plan-revision.v1', id: plan.id, planSha256,
           savedAt: new Date().toISOString() }, { resume: true, ignore: ['savedAt'] });
       return { ...revision, plan };
-    });
+  }
+  async function savePlan({ plan: input } = {}) {
+    return mutate(() => retainPlan(input));
   }
   async function inspectPlan(id, planSha256) {
     live(); checkedId(id); checkedHash(planSha256);
@@ -468,7 +471,39 @@ export function openCollectionComposer({ collections } = {}) {
     }
     return { configFiles: [...new Set(configFiles)], operatorConfigFiles: [...new Set(operatorConfigFiles)] };
   }
-  return Object.freeze({ directory, savePlan, inspectPlan, listPlans, prepareEdition, createEdition,
+  const sharing = openPlanExchange({ directory, mutate, live, retainPlan,
+    async preparedSource(collectionId, expectedEditionSha256) {
+      const source = await readEdition(collectionId);
+      need(source.edition && source.editionSha256 === expectedEditionSha256, 'COLLECTION_EDITION_REVIEW_CHANGED');
+      await verifyFiles(source.base, source.edition.files);
+      return source;
+    },
+    async reviewLocalRequest(request) {
+      const discovery = await readDiscovery(request.discoveryFile), operator = await readOperator(request);
+      const body = request.bodyFile === undefined ? undefined : await readRequestBody({ bodyFile: absolute(request.bodyFile) });
+      const selected = { rowIndex: request.rowIndex, acceptIndex: request.acceptIndex,
+        intentId: request.intentId, url: request.url, method: request.method,
+        ...(body === undefined ? {} : { bodyFile: request.bodyFile, ...requestBodyPin(body) }),
+        ...(request.headers === undefined ? {} : { headers: request.headers }),
+        ...(request.ticketFile === undefined ? {} : { ticketFile: absolute(request.ticketFile) }),
+        ...(request.ticketHeader === undefined ? {} : { ticketHeader: request.ticketHeader }),
+        responseOut: absolute(request.responseOut) };
+      const { draft } = prepareReview(discovery, selected);
+      const ticket = await loadOperationTicket(draft.operation, { requireCurrent: true });
+      const configured = { ...draft };
+      for (const key of ['operator','signerModule','evidenceDir','trustedPayer','buyerTransport','requestTimeoutMs'])
+        if (operator.original[key] !== undefined) configured[key] = operator.original[key];
+      const selectedOperation = boundOperator(operator.original, configured, operator.manifest);
+      const present = await lstat(request.responseOut).catch(error => { if (error.code === 'ENOENT') return null; throw error; });
+      need(present === null, 'COLLECTION_EDITION_OUTPUT_EXISTS');
+      return { configFile: operator.path, configSha256: hash(operator.raw),
+        ...(operator.manifestBytes ? { manifestSha256: hash(operator.manifestBytes) } : {}),
+        expect: selectedOperation.op.expect, ticket: operationTicketView(ticket),
+        responseOut: request.responseOut };
+    },
+  });
+  const inputs = openCollectionInputLibrary({directory,mutate,live,inspectCatalog:inspectCollectionCatalog});
+  return Object.freeze({ directory, inputs, sharing, savePlan, inspectPlan, listPlans, prepareEdition, createEdition,
     inspectEdition, listEditions, inspectRecoverySources, inspectCatalog: inspectCollectionCatalog,
     close() { closed = true; } });
 }

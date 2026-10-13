@@ -28,6 +28,7 @@ sys.path.insert(0, str(SDK))
 import capture
 import project
 import source_bundle_archive as archives
+from regional_workspace import save_regional as save_regional_analysis, REGIONAL_FILES
 from analysis import (PROJECTIONS, FILTER_COLUMNS, DERIVED_COLUMNS, encoded, filters,
                       report_input, briefing_rows, year_change, matches, compare_observation, methodology, html_document)
 
@@ -117,6 +118,7 @@ class Workspace:
         self.publishers = {}
         self.worker = None
         self.native_child = None
+        self.native_operation_id = None
         self.native_lock = threading.RLock()
         self.closing = False
         try:
@@ -170,10 +172,12 @@ class Workspace:
             raise
 
     def close(self):
-        self.closing = True
+        with self.db_lock:
+            self.closing = True
+            worker = self.worker
         self.stop_native_child()
-        if self.worker and self.worker.is_alive() and self.worker is not threading.current_thread():
-            self.worker.join()
+        if worker and worker.is_alive() and worker is not threading.current_thread():
+            worker.join()
         self.stop_publishers()
         if self.db is not None:
             self.db.close()
@@ -195,6 +199,21 @@ class Workspace:
             with contextlib.suppress(ProcessLookupError):
                 os.killpg(child.pid, signal.SIGKILL)
             child.wait()
+
+
+    def stop_native_operation(self, operation_id):
+        """Stop only this saved original native publication subprocess."""
+        operation_id = identifier(operation_id)
+        with self.native_lock:
+            child = self.native_child
+            if child is None or child.poll() is not None:
+                operation = self.operation(operation_id)
+                require(operation["kind"] == "native-receive", "Choose the original native receiving operation.")
+                return {"operation_id": operation_id, "state": operation["state"], "signal_sent": False}
+            require(self.native_operation_id == operation_id, "The live child belongs to another original operation.")
+            with contextlib.suppress(ProcessLookupError):
+                os.killpg(child.pid, signal.SIGTERM)
+            return {"operation_id": operation_id, "state": "stop-requested", "signal_sent": True}
 
     def revision(self):
         with self.db_lock:
@@ -274,7 +293,7 @@ class Workspace:
                 "Use id, kind, input and expected_revision.")
         operation_id = identifier(request["id"])
         kind = request["kind"]
-        require(kind in ("capture", "import", "select", "note", "report", "compare", "export", "publisher-open", "publisher-stop", "receive", "native-receive"),
+        require(kind in ("capture", "import", "select", "note", "report", "compare", "regional", "export", "publisher-open", "publisher-stop", "receive", "native-receive"),
                 "Choose a supported BLS workspace operation.")
         require(isinstance(request["input"], dict), "Operation input must be an object.")
         require(type(request["expected_revision"]) is int and request["expected_revision"] >= 0,
@@ -304,10 +323,15 @@ class Workspace:
             except BaseException:
                 self.work_lock.release()
                 raise
-        if background:
-            self.worker = threading.Thread(target=self._perform, args=(operation_id,), name="bls-operation", daemon=False)
-            self.worker.start()
-            return self.operation(operation_id)
+            if background:
+                self.worker = threading.Thread(target=self._perform, args=(operation_id,), name="bls-operation", daemon=False)
+                try:
+                    self.worker.start()
+                except BaseException:
+                    self.db.execute("UPDATE operations SET state='interrupted',updated=? WHERE id=?", (stamp(), operation_id))
+                    self.work_lock.release()
+                    raise
+                return self.operation(operation_id)
         self._perform(operation_id)
         result = self.operation(operation_id)
         if result["state"] == "failed":
@@ -322,6 +346,7 @@ class Workspace:
             request = json.loads(row["input"])
             action = {"capture": self.acquire, "import": self.acquire, "select": self.select,
                       "note": self.save_note, "report": self.save_report, "compare": self.save_comparison,
+                      "regional": self.save_regional,
                       "export": self.export_project, "publisher-open": self.open_publisher,
                       "publisher-stop": self.stop_publisher, "receive": self.receive,
                       "native-receive": self.native_receive}[row["kind"]]
@@ -499,6 +524,9 @@ class Workspace:
         root = self.directory / "reports" / identifier(report_id)
         root.mkdir(mode=0o700, exist_ok=True)
         return root
+
+    def save_regional(self, operation_id, value, operation):
+        return save_regional_analysis(self, operation_id, value, operation)
 
     def save_report(self, operation_id, value, operation):
         request = report_input(value)
@@ -782,6 +810,7 @@ class Workspace:
                 child = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=output, stderr=errors,
                                          start_new_session=True)
                 self.native_child = child
+                self.native_operation_id = operation_id
             try:
                 code = child.wait()
             except BaseException:
@@ -791,6 +820,7 @@ class Workspace:
                 with self.native_lock:
                     if self.native_child is child:
                         self.native_child = None
+                        self.native_operation_id = None
             for stream in (output, errors):
                 stream.flush()
                 os.fsync(stream.fileno())
@@ -833,6 +863,8 @@ class Workspace:
                                                                   "received-handover.json", "analysis.sqlite", "bls-native.connection.json"}:
                     continue
                 if any(part.startswith(".source-archive-") or part.startswith(".bls-writing-") for part in relative.parts):
+                    continue
+                if relative.parts[0] == "agent-requests" and path.name.endswith(".partial"):
                     continue
                 info = path.lstat()
                 if stat.S_ISDIR(info.st_mode):
@@ -889,7 +921,8 @@ class Workspace:
         identifier(item_id)
         if kind == "report":
             metadata = self.report(item_id)
-            require(name in ("rows.jsonl", "report.csv", "report.json", "report.html") and name in metadata["files"],
+            allowed = REGIONAL_FILES if metadata.get("kind") == "regional" else ("rows.jsonl", "report.csv", "report.json", "report.html")
+            require(name in allowed and name in metadata["files"],
                     "Choose an original saved report file.")
             path = self.directory / "reports" / item_id / name
             require(file_pin(path) == metadata["files"][name], "The complete report file changed.")

@@ -68,6 +68,16 @@ dialog{width:min(1050px,94vw);max-height:90vh;border:1px solid #777;padding:24px
 <div class="field"><label for="p-notes">Profile notes</label><textarea id="p-notes"></textarea></div>
 <div class="bar"><button class="primary" type="submit">Save profile revision</button></div><div id="profile-history"></div></form></section>
 <section id="pane-evidence" hidden><h2>Documents &amp; evidence</h2><p class="muted">Retain the solicitation, amendments, annexes and supplier documents. Source access and document review remain visible separately.</p>
+<details class="panel" id="document-intake"><summary>Import a document set</summary>
+<p>Select the original RFP, workbook and amendments together. Review each file's title, type and edition, then save the set to the selected notice. Each document opens separately for review.</p>
+<div class="grid"><div class="field"><label for="intake-files">Original files</label><input id="intake-files" type="file" multiple><span class="help">Up to 100 files, 64 MiB per file and 128 MiB combined.</span></div>
+<div class="field"><label for="intake-source">Common source URL</label><input id="intake-source" type="url" placeholder="Publisher event or document URL"></div></div>
+<div class="bar"><button type="button" id="intake-preview">Preview files</button><button type="button" id="intake-restore">Restore prepared intake</button><input id="intake-restore-file" type="file" accept=".json,application/json" hidden></div>
+<div id="intake-preview-list"></div>
+<div class="bar"><button type="button" id="intake-prepare">Prepare intake</button><button type="button" id="intake-save" class="primary">Save prepared documents</button><button type="button" id="intake-download">Download prepared intake</button><button type="button" id="intake-rebase">Refresh save revision</button><button type="button" id="intake-reset">Start a new intake</button></div>
+<p id="intake-state" class="note" role="status">Choose files for the selected notice.</p>
+<p class="help">A prepared intake keeps the complete files in this browser for recovery. Its downloaded copy can restore the same request. Saving is one transaction; retrying the unchanged request reopens the original saved documents.</p>
+</details>
 <div id="evidence-list"></div><div class="bar"><button id="evidence-new">Add document</button><span id="evidence-revision" class="saved"></span></div>
 <form id="evidence-form" class="panel" data-kind="evidence"><div class="grid">
 <div class="field"><label for="e-title">Document title</label><input id="e-title" required></div>
@@ -120,7 +130,7 @@ dialog{width:min(1050px,94vw);max-height:90vh;border:1px solid #777;padding:24px
 </div><h3>Next actions</h3><div id="decision-actions"></div><button type="button" id="action-add">Add action</button>
 <div class="bar"><button type="button" id="decision-assess">Review selected context</button><button class="primary" type="submit">Save decision revision</button><button type="button" id="decision-compare">Compare saved decision with current records</button></div>
 <div id="decision-assessment"></div><div id="decision-comparison"></div><div id="decision-reports" class="bar"></div><div id="decision-history"></div></form>
-<div class="panel"><h3>Complete workspace delivery</h3><p>Export the selected notice with original CSV sources, workshares, assessments, referenced company profiles and documents, and all included saved editions.</p><a id="package-link" class="button">Download selected workspace package</a><p class="help">Receive the package through Sources &amp; handoffs in the procurement workspace, or the existing CLI and merchant tools.</p></div>
+<div class="panel"><h3>Complete workspace delivery</h3><p>Export the selected notice with retained CSV sources, any separately captured notice HTML and complete field mappings, workshares, assessments, referenced company profiles and documents, and all included saved editions.</p><a id="package-link" class="button">Download selected workspace package</a><p class="help">Receive the package through Sources &amp; handoffs in the procurement workspace, or the existing CLI and merchant tools.</p></div>
 </section><footer id="footer">Saved records are shared with the existing procurement workspace.</footer>
 </main></div><dialog id="record-dialog"><div class="bar"><h2 class="grow" id="dialog-title">Saved edition</h2><button id="dialog-close">Close</button></div><div id="dialog-body"></div></dialog>
 <script>
@@ -302,6 +312,137 @@ $('e-file').addEventListener('change',()=>{const file=$('e-file').files[0];if(fi
 $('e-review').addEventListener('change',()=>{if(val('e-review')==='REVIEWED'&&!val('e-reviewed'))set('e-reviewed',new Date().toISOString());});
 $('r-assessment').addEventListener('change',()=>{if(['MET','NOT_MET','NOT_APPLICABLE'].includes(val('r-assessment'))&&!val('r-reviewed'))set('r-reviewed',new Date().toISOString());});
 window.addEventListener('beforeunload',e=>{if(state.dirty.size){e.preventDefault();e.returnValue='';}});
-run(()=>refresh()).catch(()=>{});
+
+const intake={drafts:[],draftNoticeId:null,request:null,completed:null,loadedWorkspace:null};
+function intakeDatabase(){
+ return new Promise((resolve,reject)=>{
+  const request=indexedDB.open('canadabuys-document-intake',1);
+  request.onupgradeneeded=()=>request.result.createObjectStore('pending',{keyPath:'workspaceId'});
+  request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
+ });
+}
+async function intakeStorage(mode,value){
+ const database=await intakeDatabase();
+ try{return await new Promise((resolve,reject)=>{
+  const transaction=database.transaction('pending',mode==='get'?'readonly':'readwrite'),store=transaction.objectStore('pending');
+  const request=mode==='get'?store.get(value):mode==='put'?store.put(value):store.delete(value);
+  let result;request.onsuccess=()=>{result=request.result;};
+  transaction.oncomplete=()=>resolve(result);transaction.onerror=()=>reject(transaction.error);transaction.onabort=()=>reject(transaction.error||new Error('Intake recovery save was interrupted.'));
+ });}finally{database.close();}
+}
+function intakeSummary(){
+ const request=intake.request,name=request?title(state.notices.find(n=>n.id===request.noticeId)):'';
+ $('intake-state').textContent=intake.completed
+  ?'Saved '+intake.completed.records.length+' documents to '+name+'. Open each document below to review its contents.'
+  :request?'Prepared '+request.documents.length+' documents for '+name+'. The original request is retained for saving or retry.'
+  :intake.drafts.length?intake.drafts.length+' files ready for metadata review. Prepare the intake to retain it.':'Choose files for the selected notice.';
+}
+async function restoreIntake(){
+ if(!state.workspace||intake.loadedWorkspace===state.workspace.id)return;
+ intake.loadedWorkspace=state.workspace.id;
+ try{const saved=await intakeStorage('get',state.workspace.id);if(saved){intake.request=saved;intake.drafts=[];$('document-intake').open=true;renderIntake();}}
+ catch(error){$('intake-state').textContent='Browser recovery storage could not be opened: '+error.message;}
+}
+function renderIntake(){
+ const documents=intake.request?.documents||intake.drafts,frozen=!!intake.request;
+ $('intake-preview-list').innerHTML=documents.length?table(['Original file','Document type','Edition and source','Earlier document'],documents.map((document,index)=>{
+  const field=(key,type='text')=>'<input type="'+type+'" data-intake-index="'+index+'" data-intake-field="'+key+'" value="'+esc(document[key]||'')+'"'+(frozen?' disabled':'')+'>';
+  const choices=['SOLICITATION','AMENDMENT','ANNEX','QUESTIONS_AND_ANSWERS','SUPPLIER','REGISTRATION','CERTIFICATION','SECURITY','PAST_PERFORMANCE','OTHER'];
+  const previous=state.evidence.filter(e=>e.noticeId===(intake.request?.noticeId||state.notice?.id));
+  return ['<label>Title'+field('title')+'</label><small>'+esc(document.localOrigin)+' · '+Number(document.bytes).toLocaleString()+' bytes</small>',
+   '<label>Type<select data-intake-index="'+index+'" data-intake-field="kind"'+(frozen?' disabled':'')+'>'+choices.map(kind=>'<option'+(kind===document.kind?' selected':'')+'>'+kind+'</option>').join('')+'</select></label>',
+   '<label>Publisher version'+field('version')+'</label><label>Source URL'+field('sourceUrl','url')+'</label><label>Issued date'+field('issuedAt')+'</label>',
+   '<label>Supersedes<select data-intake-index="'+index+'" data-intake-field="supersedes"'+(frozen?' disabled':'')+'><option value="">None</option>'+previous.map(r=>'<option value="'+esc(r.id)+'"'+(r.id===document.supersedes?' selected':'')+'>'+esc(r.title)+' · r'+r.revision+'</option>').join('')+'</select></label>'];
+ })):'';
+ intakeSummary();
+}
+$('intake-preview-list').addEventListener('input',event=>{
+ const element=event.target,index=Number(element.dataset.intakeIndex),key=element.dataset.intakeField;
+ if(!intake.request&&Number.isSafeInteger(index)&&intake.drafts[index]&&['title','kind','version','sourceUrl','issuedAt','supersedes'].includes(key))
+  intake.drafts[index][key]=element.value||(['issuedAt','supersedes'].includes(key)?null:'');
+});
+function checkIntakeRequest(request){
+ if(!request||request.workspaceId!==state.workspace?.id||typeof request.commandId!=='string'||!request.commandId.trim()||
+   !Number.isSafeInteger(request.expectedRevision)||request.expectedRevision<0||typeof request.noticeId!=='string'||
+   !Array.isArray(request.documents)||!request.documents.length||request.documents.length>100||
+   request.documents.some(d=>!d||typeof d.bodyBase64!=='string'||typeof d.capturedAt!=='string'))
+  throw new Error('Choose a complete prepared intake for this same workspace.');
+ if(!state.notices.some(n=>n.id===request.noticeId))throw new Error('The original intake notice is not present in this workspace.');
+}
+bind('intake-preview',async()=>{
+ if(intake.request)throw new Error('The prepared intake is retained. Save it or start a new intake before changing its files.');
+ if(!state.notice)throw new Error('Select a notice before preparing its documents.');
+ const files=[...$('intake-files').files];
+ if(!files.length||files.length>100||files.some(file=>file.size>64*1024*1024)||files.reduce((n,f)=>n+f.size,0)>128*1024*1024)
+  throw new Error('Choose 1–100 original files within the displayed size limits.');
+ const drafts=[],capturedAt=new Date().toISOString();
+ for(const file of files){
+  const bytes=new Uint8Array(await file.arrayBuffer());let binary='';
+  for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
+  const digest=new Uint8Array(await crypto.subtle.digest('SHA-256',bytes));
+  drafts.push({title:file.name,kind:'OTHER',sourceUrl:val('intake-source'),localOrigin:file.name,
+   bodyBase64:btoa(binary),bytes:bytes.length,sha256:[...digest].map(v=>v.toString(16).padStart(2,'0')).join(''),
+   capturedAt,language:'unknown',version:'',issuedAt:null,supersedes:null,
+   relatedNoticeIdentifiers:[state.notice.summary?.solicitationNumber].filter(Boolean),
+   review:{state:'UNREVIEWED',note:''}});
+ }
+ intake.drafts=drafts;intake.draftNoticeId=state.notice.id;intake.completed=null;renderIntake();status('Review the title, type and publisher edition for each original file.');
+});
+bind('intake-prepare',async()=>{
+ if(intake.request)throw new Error('This intake is already prepared. Save or download its original request.');
+ if(!state.notice||!intake.drafts.length)throw new Error('Select a notice and preview its original files first.');
+ if(state.notice.id!==intake.draftNoticeId)throw new Error('Return to the notice used for this file preview, or preview a new set for the selected notice.');
+ const workspace=await api('/api/workspace');
+ const request={workspaceId:workspace.workspace.id,noticeId:state.notice.id,expectedRevision:workspace.workspace.revision,
+  commandId:'document-intake-'+crypto.randomUUID(),documents:JSON.parse(JSON.stringify(intake.drafts))};
+ checkIntakeRequest(request);
+ await intakeStorage('put',request);
+ intake.request=request;intake.completed=null;renderIntake();status('Complete document intake prepared and retained. Save when the file metadata is ready.');
+});
+bind('intake-save',async()=>{
+ if(!intake.request)throw new Error('Prepare the document intake first.');
+ if(!discard())return;
+ checkIntakeRequest(intake.request);
+ let result;
+ try{result=await api('/api/bidder/evidence-intake',{method:'POST',body:intake.request});}
+ catch(error){if(error.code==='REVISION_CONFLICT')error.message+=' Use Refresh save revision to retain these same files and retry against the current workspace.';throw error;}
+ intake.completed=result;state.dirty.clear();
+ await refresh();tab('evidence');renderIntake();
+ status((result.alreadyApplied?'Reopened the original saved intake: ':'Saved the document intake: ')+result.records.length+' documents. Review each saved original and update the affected requirements and decisions.');
+});
+bind('intake-rebase',async()=>{
+ if(!intake.request)throw new Error('Prepare or restore the original intake first.');
+ const current=await api('/api/workspace');
+ if(current.workspace.id!==intake.request.workspaceId)throw new Error('Open the original intake workspace.');
+ const updated={...intake.request,applyRevision:current.workspace.revision};
+ await intakeStorage('put',updated);intake.request=updated;renderIntake();
+ status('Refreshed the save revision. The original files, notice and intake identity are retained; save to reconcile or complete this intake.');
+});
+bind('intake-download',async()=>{
+ if(!intake.request)throw new Error('Prepare the document intake first.');
+ const blob=new Blob([JSON.stringify(intake.request,null,2)+'\n'],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
+ link.href=url;link.download='canadabuys-'+intake.request.commandId+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+bind('intake-reset',async()=>{
+ if((intake.request||intake.drafts.length)&&!confirm('Start a new intake? Keep the downloaded original request if the previous save still needs recovery.'))return;
+ if(intake.request)await intakeStorage('delete',intake.request.workspaceId);
+ intake.request=null;intake.completed=null;intake.drafts=[];$('intake-files').value='';renderIntake();
+});
+$('intake-restore').addEventListener('click',()=>{
+ if(state.busy)return;
+ if(intake.request){status('An intake is already retained. Complete it or start a new intake before restoring another.',true);return;}
+ $('intake-restore-file').value='';
+ $('intake-restore-file').click();
+});
+$('intake-restore-file').addEventListener('change',()=>run(async()=>{
+ const file=$('intake-restore-file').files[0];if(!file)return;
+ if(intake.request)throw new Error('An intake is already retained.');
+ if(file.size>256*1024*1024)throw new Error('Prepared intake exceeds the operator request limit.');
+ const request=JSON.parse(await file.text());checkIntakeRequest(request);await intakeStorage('put',request);
+ intake.request=request;intake.drafts=[];intake.completed=null;renderIntake();status('Restored the original prepared intake. Saving will reconcile its original commands.');
+}).catch(()=>{}));
+window.addEventListener('beforeunload',event=>{if(intake.drafts.length&&!intake.request){event.preventDefault();event.returnValue='';}});
+
+run(async()=>{await refresh();await restoreIntake();}).catch(()=>{});
 })();
 </script></body></html>

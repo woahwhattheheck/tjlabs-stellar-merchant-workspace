@@ -9,6 +9,53 @@ export const directoryNativeContract=JSON.parse(readFileSync(new URL('../directo
 export const directorySourceContract=JSON.parse(readFileSync(new URL('../directory-source-schema.json',import.meta.url),'utf8'));
 export const directoryConformanceContract=JSON.parse(readFileSync(new URL('../directory-conformance-schema.json',import.meta.url),'utf8'));
 export const directoryOperatingPlansContract=JSON.parse(readFileSync(new URL('../directory-operating-plans-schema.json',import.meta.url),'utf8'));
+export const directoryOperatingReturnsContract=JSON.parse(readFileSync(new URL('../directory-operating-returns-schema.json',import.meta.url),'utf8'));
+export const directoryWorksheetReconciliationContract=JSON.parse(readFileSync(new URL('../directory-correction-worksheet-reconciliation-schema.json',import.meta.url),'utf8'));
+export const directoryCorrectionWorksheetsContract=JSON.parse(readFileSync(new URL('../directory-correction-worksheets-schema.json',import.meta.url),'utf8'));
+export const directoryCorrectionsContract=JSON.parse(readFileSync(new URL('../directory-corrections-schema.json',import.meta.url),'utf8'));
+export const directoryForeignKeyQueries=Object.freeze([
+  {
+    "key": "conformance_foreign_keys",
+    "action": "directory_conformance_foreign_keys",
+    "route": "foreign-keys",
+    "filters": [
+      "table",
+      "state",
+      "ruleId",
+      "sourceId",
+      "recordId"
+    ],
+    "description": "Read every original declared foreign-key outcome, keeping existence, ambiguity, physical values and selected coverage separate."
+  },
+  {
+    "key": "conformance_foreign_key_candidates",
+    "action": "directory_conformance_foreign_key_candidates",
+    "route": "foreign-key-candidates",
+    "filters": [
+      "table",
+      "state",
+      "groupId",
+      "sourceId",
+      "recordId"
+    ],
+    "description": "Read every retained target candidate, including null, invalid and non-tabular original rows; do not choose an ambiguous candidate."
+  },
+  {
+    "key": "conformance_foreign_key_matches",
+    "action": "directory_conformance_foreign_key_matches",
+    "route": "foreign-key-matches",
+    "filters": [
+      "outcomeId",
+      "candidateId"
+    ],
+    "description": "Read every original outcome-to-candidate match with both unchanged source references and exact key identity."
+  }
+].map(row=>{
+  const schemaValue=directoryConformanceContract.querySchemas?.[row.key];
+  need(schemaValue?.type==='object'&&schemaValue.additionalProperties===false&&schemaValue.properties?.offset&&schemaValue.properties?.limit,
+    'HUMAN_SERVICES_DIRECTORY_FOREIGN_KEY_CONTRACT','Install the complete source-owned foreign-key catalogue with this client.');
+  return Object.freeze({...row,schemaValue});
+}));
 export const directoryInputSchemas=directoryNativeContract.inputSchemas;
 export const directorySourceInputSchemas=directorySourceContract.inputSchemas;
 const sourceRoutes=[
@@ -82,7 +129,7 @@ const selected={workspace:alias};
 export const directoryCollections=Object.freeze([
   'connections','discoveries','requests','importProfiles','sources','editions','comparisons','operations',
   'mappings','mappingPreviews','sourceConversions','selections','referralJoins','handoffs','exports','receivingReviews','receives',
-  ...directoryConformanceContract.recordKinds,'operatingPlans'
+  ...directoryConformanceContract.recordKinds,'operatingPlans','operatingPlanReturns',...directoryCorrectionsContract.collections,...directoryCorrectionWorksheetsContract.collections,...directoryWorksheetReconciliationContract.collections
 ]);
 function tool(action,description,properties={},required=[],options={}){
   return {name:TOOL_PREFIX+action,description,
@@ -93,6 +140,45 @@ function tool(action,description,properties={},required=[],options={}){
 }
 const originalId=str('Exact original record or operation ID.',{pattern:'^[A-Za-z0-9][A-Za-z0-9_.:-]{0,95}$'});
 const added=[
+  tool('directory_correction_worksheet_reconciliation_catalogue','Read the exact native three-way reconciliation input catalogue.'),
+  tool('directory_correction_worksheet_reconciliation_rows','Read complete typed base, customer proposal and current comparisons or immutable operator decisions.',{
+    collection:str('Exact reconciliation collection.',{enum:directoryWorksheetReconciliationContract.collections}),
+    recordId:hash('Exact immutable reconciliation or review ID.'),offset:page.offset,limit:page.limit,
+    rowKey:hash('Optional exact original worksheet row key.'),state:str('Exact native comparison state or review decision.',{enum:[...directoryWorksheetReconciliationContract.states,...directoryWorksheetReconciliationContract.decisions]})
+  },['collection','recordId']),
+  tool('directory_correction_worksheet_reconciliation_file','Receive the entire original input, row graph, comparison or decisions file, including records larger than the page budget.',{
+    collection:str('Exact reconciliation collection.',{enum:directoryWorksheetReconciliationContract.collections}),
+    recordId:hash('Exact immutable reconciliation or review ID.'),
+    fileKind:str('Complete native file kind.',{enum:['input','rows','comparison','decisions']})
+  },['collection','recordId','fileKind']),
+
+  tool('directory_correction_worksheet_rows','Read complete selected worksheet rows, original returned differences or explicit review decisions with exact immutable row keys.',{
+    collection:str('Exact worksheet collection.',{enum:directoryCorrectionWorksheetsContract.collections}),
+    recordId:hash('Exact immutable worksheet record.'),offset:page.offset,limit:page.limit,
+    rowKey:hash('Optional exact worksheet row key.'),state:str('Optional exact original, proposed or reviewed change state.',{enum:['original','proposed','accept','keep-original']})
+  },['collection','recordId']),
+  tool('directory_correction_worksheet_file','Receive the entire original worksheet, rows, returned file, changes or decisions. Full files remain available when one change exceeds the page budget.',{
+    collection:str('Exact worksheet collection.',{enum:directoryCorrectionWorksheetsContract.collections}),
+    recordId:hash('Exact immutable worksheet record.'),
+    fileKind:str('Original complete file kind.',{enum:['input','rows','worksheet','original','changes','decisions']})
+  },['collection','recordId','fileKind']),
+  tool('directory_correction_worksheet_document','Read the complete immutable original worksheet document, including exact original values and physical CSV cells.',{
+    worksheetId:hash('Exact prepared worksheet ID.')
+  },['worksheetId']),
+  tool('directory_correction_worksheet_receive','Receive the complete original customer returned file through its already saved immutable intake record.',{
+    importId:hash('Exact saved worksheet import ID.'),input:alias,
+    expectedSha256:hash('Complete unchanged returned-file SHA-256.')
+  },['importId','input'],{mutates:true}),
+
+  tool('directory_correction_rows','Read every retained ordered edit or original before/after change for the selected immutable correction record.',{
+    collection:str('Exact native correction collection.',{enum:directoryCorrectionsContract.collections}),
+    recordId:hash('Exact immutable correction record ID.'),offset:page.offset,limit:page.limit
+  },['collection','recordId']),
+  tool('directory_correction_file','Receive the entire original plan input, change JSONL or complete review graph with its native byte identity.',{
+    collection:str('Exact native correction collection.',{enum:directoryCorrectionsContract.collections}),
+    recordId:hash('Exact immutable correction record ID.'),
+    fileKind:str('Plans expose input; previews and accepted corrections expose changes and review.',{enum:['input','changes','review']})
+  },['collection','recordId','fileKind']),
   tool('directory_state','Read complete native state including original directory sources, reviews, selections and receiving.'),
   tool('directory_catalogue','Read the installed native directory and source input catalogues.'),
   tool('directory_guidance','Read every original published mapping and the explicit reviewed migration definitions.'),
@@ -181,11 +267,24 @@ const added=[
     assessmentId:hash('Saved conformance assessment ID.'),offset:page.offset,limit:page.limit,
     table:str('Exact original table or resource type.',{maxLength:128})
   },['assessmentId']),
+  ...directoryForeignKeyQueries.map(row=>tool(row.action,row.description,{
+    assessmentId:hash('Exact saved immutable conformance assessment ID.'),...row.schemaValue.properties
+  },['assessmentId'])),
   tool('directory_conformance_file','Retain the full selected report, finding index, original row file, rule catalogue or complete conformance package.',{
     collection:str('Original conformance file collection.',{enum:['assessments','reviews','comparisons']}),
     recordId:hash('Exact saved conformance record ID.'),
     fileKind:str('Select a file declared in this record’s files map.',{enum:directoryConformanceContract.fileKinds})
   },['collection','recordId','fileKind']),
+  ...['review','comparison','input'].map(kind=>tool('directory_operating_return_'+kind,
+    'Read the complete original returned-procedure '+kind+' with both saved histories and exact decisions.',
+    {recordId:hash('Original immutable operatingPlanReturns record ID.')},['recordId'])),
+  tool('directory_operating_return_rows','Read each complete original returned-procedure change with explicit choices, coupled work/results and contiguous paging.',{
+    recordId:hash('Original immutable return record ID.'),...directoryOperatingReturnsContract.inputSchemas.operating_return_rows.properties
+  },['recordId']),
+  tool('directory_operating_return_file','Retain the entire original return review, comparison or accepted input without truncation.',{
+    recordId:hash('Original immutable return record ID.'),
+    fileKind:str('Exact original retained return file.',{enum:directoryOperatingReturnsContract.fileKinds})
+  },['recordId','fileKind']),
   tool('directory_operating_catalog','Read the complete original command registration catalogue used by the selected Directory product.'),
   ...['document','draft','input','basis'].map(kind=>tool('directory_operating_'+kind,
     {document:'Read every saved revision of the complete original OperatingPlan.',
@@ -215,8 +314,9 @@ const inherited=gravityReferralMerchantTools.map(original=>{
   row.description='Original Gravity/eLTSS workspace: '+row.description;
   if(action==='input_apply')row.inputSchema.properties.action.enum=Object.keys(nativeInputActions);
   if(action==='receive_export'){
-    row.inputSchema.properties.kind.enum.push('directory-source','directory-handoff');
+    row.inputSchema.properties.kind.enum.push('directory-source','directory-handoff','directory-correction-worksheet-return');
     row.inputSchema.properties.importProfileId=hash('Required saved native import profile for a directory-source receive.');
+    row.inputSchema.properties.importId=hash('Required saved worksheet import for a directory-correction-worksheet-return receive.');
   }
   if(action==='workspace_packet'||action==='workspace_import')
     row.description+=' This directory provider selects its complete directory-plus-Gravity archive.';
@@ -227,6 +327,10 @@ export const humanServicesDirectoryActions=Object.freeze(Object.fromEntries(huma
   row.name.slice(TOOL_PREFIX.length),row
 ])));
 function validate(value,schema,path){
+  if(schema.oneOf){
+    let matches=0;for(const choice of schema.oneOf){try{validate(value,choice,path);matches++;}catch(error){if(error.code!=='HUMAN_SERVICES_DIRECTORY_INPUT_INVALID')throw error;}}
+    need(matches===1,'HUMAN_SERVICES_DIRECTORY_INPUT_INVALID',path+' must match exactly one declared native input variant.');return;
+  }
   if(schema.anyOf){
     const accepted=schema.anyOf.some(choice=>{
       try{validate(value,choice,path);return true;}
@@ -272,5 +376,7 @@ export function validateHumanServicesDirectoryArguments(name,args={}){
   validate(args,row.inputSchema,action);
   if(action==='receive_export'&&args.kind==='directory-source')
     validate(args.importProfileId,{type:'string',pattern:SHA},action+'.importProfileId');
+  if(action==='receive_export'&&args.kind==='directory-correction-worksheet-return')
+    validate(args.importId,{type:'string',pattern:SHA},action+'.importId');
   return action;
 }

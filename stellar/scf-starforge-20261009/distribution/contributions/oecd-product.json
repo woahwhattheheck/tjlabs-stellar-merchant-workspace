@@ -1,0 +1,17 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "oecd-product",
+  "components": [
+    "products/oecd"
+  ],
+  "commands": {
+    "oecd-product": "products/oecd/cli.mjs"
+  },
+  "commandDescriptions": {
+    "oecd-product": "Complete OECD source, analyst, installed merchant and customer operation"
+  },
+  "exports": {
+    "./products/oecd": "./source/products/oecd/cli.mjs"
+  },
+  "description": "Complete OECD source, analyst, installed merchant and customer operations"
+}

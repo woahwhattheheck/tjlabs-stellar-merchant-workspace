@@ -76,7 +76,7 @@ python3 /absolute/installed/iati/reconciliation_receiving.py \
   --output /absolute/private/fcdo-financial-reconciliation-cb2a-20261012
 ```
 
-The existing native SF30 executable and Node configuration are inherited from the original application's environment. Supply `--node /absolute/node` when that host has an explicit Node path.
+The XML native worker is the installed `dataset-handler.mjs`, launched by `xml/native.mjs`. Set `SF30_XML_NODE` to the accepting host’s installed Node executable; the original CLI children inherit it. Supply the same executable with `--node /absolute/node` for the embedded operator continuation.
 
 When the original organisation operating case has been exported from this same composed application source edition, add:
 
@@ -193,6 +193,44 @@ Use the complete current helper directory supplied by the Library skill, contain
 The programme inspects the individual file result, including status and library_file_id. Exit zero alone does not mean the file was saved. A successful saved file is recorded under checkpointUploads with its original stable file identity; repeating the operation reuses that successful acknowledgement. A returned per-file transfer error is preserved with the complete local archive path and original error code, so the accepting operator can correct that exact transfer while the file remains available.
 
 If the helper's URL transfer returns transfer_failed, inspect the accepting runtime's actual transfer route and azcopy availability through the existing owner. Use the helper's returned workspace-path route when supplied. A private runtime path from a process that has already ended cannot substitute for readable bytes in the live uploader. The existing helper owns upload finalization, and the receiving programme retains the full closed archive throughout that operation.
+
+### Receive the original completed archive
+
+The original completed 12 October receiving archive predates the closed-case checkpoint format. The same `--restore-checkpoint` option accepts that exact saved file and adopts its original native workspaces directly:
+
+| Original complete archive | Retained value |
+| --- | --- |
+| Filename | FCDO_Financial_Complete_Receiving_20261012_005.zip |
+| Bytes | 21,928,589 |
+| SHA256 | 08ea94052fe0f676a9cb0f88910b9887028aa0452996b77094647c992d64e639 |
+| Members | 447 |
+| Saved case | 5fa5c6d7736b4f100d04b00c19d86bfbf58c9f8d619dfefa7b12e54c44390ecd |
+| Saved revision | 5 |
+| Captured source edition | 516e9460a85a727c2e43d582614d245ec31a28b569c783ad0b7b70c9b7faea56 |
+
+The programme verifies the whole saved-file identity before reading its original `fcdo-financial-operation/` directory. It retains both native workspaces, complete source/request/revision history, reports, packets and original operator outputs. The captured `installed-application/`, `runtime-continuations/` and delivery summaries are preserved under `restored-complete-archives/<archive-sha256>/source/`. The same directory also retains the untouched original operation state and a full member-to-destination manifest with every actual byte count and SHA256.
+
+The complete state is published after all selected original files have been copied and verified. A repeated command resumes its original marker and complete files. The captured complete source edition remains in the operation history; the existing source-edition flow exports and receives the same case with the currently installed application.
+
+The first legacy format is bound to this exact original saved artifact. Newly generated closed-case archives use their complete `checkpoint.json` manifest, described below.
+
+### Use the original operated Chromium runtime
+
+The completed archive retains the original `runtime-continuations/playwright-original-149-final.mjs` wrapper (1,046 bytes, SHA256 `8325973bf0e324d9178931a856a2ec3f9f10834c035b82e18c4ba25528820924`). Selecting that restored file with `--playwright` preserves its original browser arguments and environment merging. The programme continues to use one browser context while changing the viewport for the phone view.
+
+The observed original host used:
+
+| Runtime input | Actual original value |
+| --- | --- |
+| Node | /opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node |
+| Imported Playwright module | /opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs |
+| Chromium | /workspace/scratch/48db003d0b1c/shared-chromium-149-20261012/native/chromium |
+| Chromium bytes | 199,908,472 |
+| Chromium SHA256 | 434d2607c55941dcaa7fdd19b0800ee90488922fd9744a6642ef527ba8fabf63 |
+| LD_LIBRARY_PATH | /workspace/scratch/48db003d0b1c/shared-chromium-149-20261012/native:/workspace/scratch/48db003d0b1c/shared-chromium-149-20261012/native/al2023/lib |
+| Font | /workspace/scratch/48db003d0b1c/shared-chromium-149-20261012/native/fonts/fonts/Open_Sans/OpenSans-Regular.ttf |
+
+Use the accepting host's actually installed executable and library locations. Regenerate the private font configuration for that host: `FONTCONFIG_FILE` points to its own complete `fontconfig/fonts.conf`, and `FONTCONFIG_PATH` points to that directory. Its font directory selects the installed Open Sans directory above. The earlier temporary fontconfig path belongs to the recorded original run.
 
 ### Restore the same saved operation
 

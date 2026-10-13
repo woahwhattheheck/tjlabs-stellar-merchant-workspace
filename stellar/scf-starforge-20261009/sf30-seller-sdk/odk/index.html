@@ -10,6 +10,7 @@
 <div class="layout">
 <nav aria-label="Workspace">
 <button data-pane="overview" class="selected">Overview</button>
+<button data-pane="programme">Customer programme</button>
 <button data-pane="sources">Central connections</button>
 <button data-pane="plans">Capture plans</button>
 <button data-pane="editions">Reporting editions</button>
@@ -26,8 +27,15 @@
 <section class="pane" id="overview">
 <div class="page-heading"><div><h1>Field data operations</h1><p>Capture an original reporting cohort, review its source coverage and prepare the selected outputs.</p></div><button data-pane="sources">Choose source forms</button></div>
 <div id="metrics" class="metrics"></div>
+<div class="programme-entry"><h2>Customer delivery</h2><p>Follow the selected forms through both reporting periods and open their original handover files.</p><button data-pane="programme">Open customer programme</button></div>
 <h2>Current work</h2><div id="pending-operations"></div><div id="recent-captures"></div>
 <div class="steps"><div><h3>1. Select the cohort</h3><p>Choose existing Central projects and forms, then define the reporting dates.</p></div><div><h3>2. Review the source</h3><p>Inspect root and repeat rows, original form versions, submission history and media coverage.</p></div><div><h3>3. Deliver the analysis</h3><p>Compare periods, define indicators, create readable reports and export approved datasets.</p></div></div>
+</section>
+<section class="pane" id="programme" hidden>
+<div class="page-heading"><div><h1>Customer programme</h1><p>Selected source forms, both reporting periods and the original customer handover.</p></div><button id="refresh-programme" type="button">Refresh programme</button></div>
+<div class="toolbar"><label>Saved programme<select id="programme-select"></select></label></div>
+<p id="programme-status" class="help" role="status" aria-live="polite">Open this view to read the original programme records.</p>
+<div id="programme-body"></div>
 </section>
 <section class="pane" id="sources" hidden>
 <h1>Central connections</h1><p>Connect an authorized Central user, then select the forms for a reporting cohort.</p>
@@ -36,8 +44,9 @@
 <label>Connection name<input name="name" required placeholder="Field operations"></label>
 <label>Central server URL<input name="url" type="url" required placeholder="https://central.example.org"></label>
 <label>Authorization environment variable<input name="authEnv" required pattern="[A-Z_][A-Z0-9_]*" placeholder="CENTRAL_AUTHORIZATION"></label>
+<label>Codespaces proxy token environment variable (optional)<input name="codespacesTokenEnv" pattern="[A-Z_][A-Z0-9_]*" placeholder="CODESPACES_PROXY_TOKEN" autocomplete="off"></label>
 <label class="check"><input name="allowLoopback" type="checkbox">Allow HTTP for a local Central server</label>
-<p class="help wide">The named host variable contains the complete Central Authorization header. This workspace uses the existing user and project access.</p>
+<p class="help wide">The authorization variable contains the complete Central Authorization header. For a private Codespaces URL, optionally name a separate host variable containing its proxy token. Enter variable names only. This workspace uses the existing user and project access.</p>
 <button>Verify and add connection</button>
 </form></details>
 <div id="connection-list"></div>

@@ -7,6 +7,7 @@ import { pipeline } from 'node:stream/promises';
 import { fileURLToPath } from 'node:url';
 import { fault } from '../odata/state.mjs';
 import { verifyFile } from './store.mjs';
+import { odkExternalOrigin } from './connection.mjs';
 
 const assets=new Map([['/',{file:'index.html',type:'text/html; charset=utf-8'}],
   ['/ui.mjs',{file:'ui.mjs',type:'text/javascript; charset=utf-8'}],['/ui.css',{file:'ui.css',type:'text/css; charset=utf-8'}]]);
@@ -18,7 +19,7 @@ const errorRecord=(error,operationId)=>({code:error.code||'CENTRAL_HTTP',message
   status:Number.isInteger(error.status)?error.status:500,operationId:operationId??null,
   details:{...(error.details??{}),...(error.providerStatus?{providerStatus:error.providerStatus}:{}),
     ...(error.receipt?{receipt:error.receipt}:{}),...(error.retryAfter?{retryAfter:error.retryAfter}:{})}});
-export async function createCentralServer({workspace,host='127.0.0.1',port=0,token=randomBytes(32).toString('hex'),extensions=[]}={}) {
+export async function createCentralServer({workspace,host='127.0.0.1',port=0,token=randomBytes(32).toString('hex'),extensions=[],externalOrigin}={}) {
   if(!workspace?.directory)throw fault('CENTRAL_SERVER_WORKSPACE','Open the original Central workspace before starting its operator.');
   if(!['127.0.0.1','::1','localhost'].includes(host))throw fault('CENTRAL_SERVER_HOST','Bind the private Central operator to a loopback host.');
   if(!Number.isSafeInteger(port)||port<0||port>65535)throw fault('CENTRAL_SERVER_PORT','Choose an available local port.');
@@ -37,6 +38,7 @@ export async function createCentralServer({workspace,host='127.0.0.1',port=0,tok
     }
     return extension;
   });
+  const selectedExternalOrigin=externalOrigin===undefined?null:odkExternalOrigin(externalOrigin);
   let origin=null,closed=false;const tickets=new Map();
   const authorize=request=>same(request.headers.authorization,'Bearer '+token);
   const json=(response,status,value)=>{response.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',
@@ -78,9 +80,14 @@ export async function createCentralServer({workspace,host='127.0.0.1',port=0,tok
   const server=createServer(async(request,response)=>{
     let operationId=null;
     try{
-      const address=new URL(request.url,origin||'http://127.0.0.1');
-      if(request.headers.origin&&request.headers.origin!==origin)throw fault('CENTRAL_ORIGIN','Use this operator origin for workspace requests.',403);
-      if(origin&&request.headers.host!==new URL(origin).host)throw fault('CENTRAL_HOST','Use the original private operator address.',403);
+      const requestHost=request.headers.host;
+      const requestOrigin=origin&&requestHost===new URL(origin).host?origin:
+        selectedExternalOrigin&&requestHost===new URL(selectedExternalOrigin).host?selectedExternalOrigin:null;
+      if(!requestOrigin)throw fault('CENTRAL_HOST','Use the original private address or the explicitly selected external operator address.',403);
+      if(request.headers.origin&&request.headers.origin!==requestOrigin)
+        throw fault('CENTRAL_ORIGIN','Use the exact operator origin associated with this request Host.',403);
+      const address=new URL(request.url,requestOrigin);
+      if(address.origin!==requestOrigin)throw fault('CENTRAL_ORIGIN','Keep the request on its selected operator origin.',403);
       if(['GET','HEAD'].includes(request.method)&&mountedAssets.has(address.pathname)){
         const asset=mountedAssets.get(address.pathname),bytes=await readFile(asset.url);
         response.writeHead(200,{'Content-Type':asset.type,'Content-Length':String(bytes.length),'Cache-Control':'no-store',
@@ -138,5 +145,6 @@ export async function createCentralServer({workspace,host='127.0.0.1',port=0,tok
   const address=server.address(),selectedHost=host.includes(':')?'['+host+']':host;
   origin='http://'+selectedHost+':'+address.port;
   return {directory:workspace.directory,origin,url:origin+'/#token='+encodeURIComponent(token),token,
+    ...(selectedExternalOrigin?{browserOrigin:selectedExternalOrigin,browserUrl:selectedExternalOrigin+'/#token='+encodeURIComponent(token)}:{}),
     async close(){if(closed)return;closed=true;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections?.();});tickets.clear();}};
 }

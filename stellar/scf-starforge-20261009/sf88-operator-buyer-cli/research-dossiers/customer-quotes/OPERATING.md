@@ -214,6 +214,22 @@ file. Complete quotation exports can be reopened using Python alone on another
 computer. The installed `stellar-forge-research quotes-*` commands and the full
 `examples/research_quotes_receiving.py` programme use these same operators.
 
+The [Python quotation programme guide](../../python/RESEARCH-QUOTE-PROGRAMMES.md)
+carries the complete selected programme to a second original Research workspace.
+`ResearchWorkspace.quote_programmes()` creates the retained source programme,
+submits and applies exact native steps, exports the full case/dossier/quotation
+and publication package, and prepares its destination receiving review. The
+original CaseStore and customer dossier writers save that reviewed selection.
+The same Python call and native step remain available for recovery and explicit
+replay after subsequent customer work.
+
+A `CASE_RECORD` export and `prepare-case-transfer` input use the maintained native
+602,962,240-byte bound. Python retains the complete body in its original file
+while the native operation records only its source workspace, case, revision and
+SHA. Package and step replies expose complete file descriptors, so the process
+output remains usable with large original cases. Full files remain accessible
+through the original `FileDelivery` reader.
+
 ## Native HTTP interface
 
 All quotation routes use the original Research authorization and original workspace/instance headers. Request JSON accepts up to 96 MiB plus 65,536 bytes so the complete original commercial receiving inputs can pass through. JSON responses use the existing 64 MiB client budget. Each streamed retained file is bounded by 256 MiB.
@@ -595,3 +611,8 @@ The Research contribution carries the quotation browser, contracts, native contr
 The quotation server and distribution builder read the same [browser asset manifest](browser-assets.json). Its nine routes map the embedded commercial editor, receiving desk and tariff desk to their complete original source files. The maintained browser asset reader travels with this source selection.
 
 The original Research launcher, Customer updates, Paid delivery, Buyer Runbook, SF101 checkout and saved customer receiving remain the operating path. A full native continuation can therefore proceed from the existing customer case and observed pricing version through quotation, revised evidence work, frozen paid delivery, actual Buyer receiving and a complete realized report.
+
+
+## Complete customer programmes in the browser
+
+Open **Customer programmes** from this quotation workspace. Select the actual Research project and original commercial case, then use these same native forms to prepare the quotation, customer response, frozen paid delivery and realized report as saved programme steps. The full programme desk carries those original inputs and files into a portable archive, resumes an interrupted upload, shows the actual destination receiving review and saves through the original case and dossier writers. Its [complete operating guide](PROGRAMME_BROWSER.md) includes browser, typed-client and authenticated HTTP selections, restart behavior and whole-package receiving. The installed Python and terminal programme workflows operate the same native records.

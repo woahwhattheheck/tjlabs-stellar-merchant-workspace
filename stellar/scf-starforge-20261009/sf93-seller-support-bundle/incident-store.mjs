@@ -10,6 +10,8 @@ import {checkPayload} from './notifications.mjs';
 import {slackTimestamp,validSlackReceipt,validSlackRequest} from './notifications-slack.mjs';
 import {OBJECT_FILES,readObjectObservationFiles} from './object-observation.mjs';
 import {CKAN_FILES,CKAN_FILE_LIMIT,readCkanObservationFiles} from './ckan-observation.mjs';
+import {OAUTH_FILES,readOAuthObservationFiles} from './oauth-observation.mjs';
+import {X402_FILES,X402_FILE_LIMIT,readX402ObservationFiles} from './x402-observation.mjs';
 import {validateRecoveryState,recoveryView} from './incident-recovery-model.mjs';
 import {createSnapshotPins} from './incident-snapshot-pins.mjs';
 
@@ -107,19 +109,21 @@ function references(state) {
 function parseCapture(bytes,id) {
   if(hash(bytes)!==id)fail('CAPTURE_DIGEST_MISMATCH');
   const value=decode(bytes);
-  const ckan=value?.kind==='CKAN_WORKBENCH';
-  const names=ckan?CKAN_FILES:value?.kind==='OBJECT_SESSION'?OBJECT_FILES:PACKET_FILES;
-  if(bytes.length>(ckan?MAX_CAPTURE:LEGACY_CAPTURE_LIMIT))fail('CAPTURE_SIZE_LIMIT');
-  if(value?.schema!==CAPTURE_SCHEMA||(value.kind!==undefined&&!['OBJECT_SESSION','CKAN_WORKBENCH'].includes(value.kind))||!value.files||
+  const ckan=value?.kind==='CKAN_WORKBENCH',oauth=value?.kind==='OAUTH_RESOURCE',x402=value?.kind==='X402_MERCHANT';
+  const names=x402?X402_FILES:oauth?OAUTH_FILES:ckan?CKAN_FILES:value?.kind==='OBJECT_SESSION'?OBJECT_FILES:PACKET_FILES;
+  if(bytes.length>(ckan||x402?MAX_CAPTURE:LEGACY_CAPTURE_LIMIT))fail('CAPTURE_SIZE_LIMIT');
+  if(value?.schema!==CAPTURE_SCHEMA||(value.kind!==undefined&&!['OBJECT_SESSION','CKAN_WORKBENCH','OAUTH_RESOURCE','X402_MERCHANT'].includes(value.kind))||!value.files||
       Object.keys(value.files).length!==names.length||names.some(name=>typeof value.files[name]!=='string'))fail('CAPTURE_INVALID');
   const files={};
   for(const name of names) {
     const data=Buffer.from(value.files[name],'base64');
-    if(data.length>(ckan?CKAN_FILE_LIMIT:2_000_000)||!data.length||data.toString('base64')!==value.files[name])fail('CAPTURE_INVALID');
+    if(data.length>(x402?X402_FILE_LIMIT:ckan?CKAN_FILE_LIMIT:2_000_000)||!data.length||data.toString('base64')!==value.files[name])fail('CAPTURE_INVALID');
     files[name]=data;
   }
   if(value.kind==='OBJECT_SESSION')readObjectObservationFiles(files);
   if(ckan)readCkanObservationFiles(files);
+  if(oauth)readOAuthObservationFiles(files);
+  if(x402)readX402ObservationFiles(files);
   return files;
 }
 export async function openIncidentStore(directory) {
@@ -194,13 +198,13 @@ export async function openIncidentStore(directory) {
         },
         async capture(packet) {
           if(readonly)fail('READ_ONLY_TRANSACTION');
-          const object=packet.kind==='OBJECT_SESSION',ckan=packet.kind==='CKAN_WORKBENCH';
-          const names=ckan?CKAN_FILES:object?OBJECT_FILES:PACKET_FILES;
+          const object=packet.kind==='OBJECT_SESSION',ckan=packet.kind==='CKAN_WORKBENCH',oauth=packet.kind==='OAUTH_RESOURCE',x402=packet.kind==='X402_MERCHANT';
+          const names=x402?X402_FILES:oauth?OAUTH_FILES:ckan?CKAN_FILES:object?OBJECT_FILES:PACKET_FILES;
           const files=Object.fromEntries(names.map(name=>[name,packet.files[name].toString('base64')]));
-          const bytes=Buffer.from(JSON.stringify({schema:CAPTURE_SCHEMA,...(ckan?{kind:'CKAN_WORKBENCH'}:object?{kind:'OBJECT_SESSION'}:{}),files})+'\n'),id=hash(bytes);
+          const bytes=Buffer.from(JSON.stringify({schema:CAPTURE_SCHEMA,...(x402?{kind:'X402_MERCHANT'}:oauth?{kind:'OAUTH_RESOURCE'}:ckan?{kind:'CKAN_WORKBENCH'}:object?{kind:'OBJECT_SESSION'}:{}),files})+'\n'),id=hash(bytes);
           // Check the actual serialized wrapper, including all base64 expansion.
-          if(bytes.length>(ckan?MAX_CAPTURE:LEGACY_CAPTURE_LIMIT))fail('CAPTURE_SIZE_LIMIT');
-          if(object||ckan)parseCapture(bytes,id);
+          if(bytes.length>(ckan||x402?MAX_CAPTURE:LEGACY_CAPTURE_LIMIT))fail('CAPTURE_SIZE_LIMIT');
+          if(object||ckan||oauth||x402)parseCapture(bytes,id);
           const path=join(captureDirectory,'capture-'+id+'.json');
           let exists=false;
           try {const existing=await readPrivateFile(path,MAX_CAPTURE);parseCapture(existing,id);exists=true;}
@@ -214,7 +218,7 @@ export async function openIncidentStore(directory) {
             census.bytes+=bytes.length;census.count++;
           }
           return {id,bytes:bytes.length,generatedAt:packet.report.generatedAt,sessionId:packet.report.observation.sessionId,
-            ...(ckan?{kind:'CKAN_WORKBENCH'}:object?{kind:'OBJECT_SESSION'}:{})};
+            ...(x402?{kind:'X402_MERCHANT'}:oauth?{kind:'OAUTH_RESOURCE'}:ckan?{kind:'CKAN_WORKBENCH'}:object?{kind:'OBJECT_SESSION'}:{})};
         },
         async readCapture(ref) {
           if(!ref||!/^[a-f0-9]{64}$/.test(ref.id??''))fail('CAPTURE_REFERENCE_INVALID');

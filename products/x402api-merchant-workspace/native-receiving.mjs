@@ -13,7 +13,7 @@ import { parseArgs } from 'node:util';
 import { openMerchantWorkspace } from './workspace.mjs';
 import { startMerchantServer, loadMerchantConfiguration } from './server.mjs';
 import { createProvider } from './provider.mjs';
-import { createProtocolFixture, publishedWebhookVectors } from './fixtures/protocol-fixture.mjs';
+import { createProtocolFixture, publishedWebhookVectors } from './receiving-protocol.mjs';
 import { verifyWebhook, verifyReceipt, canonicalJson, digestBytes } from './protocol.mjs';
 import { createFulfillment, describeFile } from './fulfillment/file-delivery.mjs';
 

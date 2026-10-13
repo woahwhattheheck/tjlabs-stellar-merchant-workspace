@@ -1,6 +1,8 @@
 // MIT. Live SF93 operations inside the existing SF74 merchant case workspace.
 import {parseWorkspace} from './workspace-file.mjs';
 import {mountIncidentRecoveryDesk} from './incident-recovery-desk.mjs';
+import {mountOAuthRegistration,renderOAuthStatus,renderOAuthDetail} from './oauth-desk.mjs';
+import {mountX402Registration,renderX402Status,renderX402Detail} from './x402-desk.mjs';
 
 const add=(parent,tag,text,className='')=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;parent.append(n);return n;};
 const button=(parent,text,action,className='secondary')=>{const n=add(parent,'button',text,className);n.type='button';n.addEventListener('click',action);return n;};
@@ -12,7 +14,15 @@ const labels={ENDPOINT_UNAVAILABLE:'Endpoint unavailable',OBSERVER_INCOMPLETE:'I
   CKAN_SOURCE_UNAVAILABLE:'CKAN source unavailable',CKAN_IDENTITY_CHANGED:'CKAN project identity changed',
   CKAN_SOURCE_INTEGRITY:'CKAN source integrity',CKAN_OPERATION_FAILED:'CKAN operation failed',
   CKAN_OPERATION_OVERDUE:'CKAN operation overdue',CKAN_REVIEW_PENDING:'CKAN refresh review pending',
-  CKAN_PUBLICATION_PENDING:'CKAN publication pending'};
+  CKAN_PUBLICATION_PENDING:'CKAN publication pending',
+  OAUTH_SOURCE_UNAVAILABLE:'OAuth source unavailable',OAUTH_CONFIGURATION_CHANGED:'OAuth authority configuration changed',
+  OAUTH_SOURCE_INTEGRITY:'OAuth source continuity',OAUTH_OBSERVER_INCOMPLETE:'OAuth observations incomplete',
+  OAUTH_VERIFIER_UNAVAILABLE:'OAuth verifier unavailable',OAUTH_HOST_AUTHORITY_ERROR:'OAuth host callback error',
+  OAUTH_JWKS_UNAVAILABLE:'OAuth issuer keys unavailable',OAUTH_JWKS_RATE_LIMITED:'OAuth issuer key service rate limited',
+  X402_SOURCE_UNAVAILABLE:'Merchant source unavailable',X402_IDENTITY_CHANGED:'Merchant identity changed',
+  X402_PAYMENT_UNRESOLVED:'Merchant payment unresolved',X402_VERIFIED_RECEIPT_OUTPUT_PENDING:'Verified receipt awaiting output',
+  X402_FULFILLMENT_INTERRUPTED:'Merchant fulfillment interrupted',X402_RESULT_CONTRADICTION:'Merchant receipt/result contradiction',
+  X402_AUTHORITY_REJECTED:'Merchant authority rejected'};
 const human=value=>String(value??'').toLowerCase().replaceAll('_',' ').replace(/^\w/,c=>c.toUpperCase());
 const when=value=>value?new Date(value).toLocaleString():'—';
 const terminal=new Set(['DELIVERED','CANCELLED']);
@@ -20,7 +30,7 @@ const terminal=new Set(['DELIVERED','CANCELLED']);
 export function mountIncidentDesk({root,exportCase,importCase}) {
   const abort=new AbortController();
   let destroyed=false,busy=false,sequence=0,selection=0,offset=0,timer=null,current=null,detail=null,selectedId=null;
-  let configDirty=false,loadedConfigRevision=null,prepared=null,recovery=null;
+  let configDirty=false,loadedConfigRevision=null,prepared=null,recovery=null,oauthRegistration=null,x402Registration=null;
   let objectReview=null,objectEpoch=0,objectChoicesKey='';
   let ckanReview=null,ckanEpoch=0,ckanChoicesKey='';
   const downloads=new Set();
@@ -44,6 +54,8 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   const objectStatus=add(root,'section',undefined,'runtime-captures');objectStatus.id='incident-object-status';objectStatus.hidden=true;
 
   const ckanStatus=add(root,'section',undefined,'runtime-captures');ckanStatus.id='incident-ckan-status';ckanStatus.hidden=true;
+  const oauthStatus=add(root,'section',undefined,'runtime-captures');oauthStatus.id='incident-oauth-status';oauthStatus.hidden=true;
+  const x402Status=add(root,'section',undefined,'runtime-captures');x402Status.id='incident-x402-status';x402Status.hidden=true;
   const workerPanel=add(root,'div',undefined,'incident-worker');
   const workerCopy=add(workerPanel,'div');add(workerCopy,'h3','Watcher');
   const workerState=add(workerCopy,'p','','incident-worker-state'),workerObserved=add(workerCopy,'p','','hint');
@@ -71,6 +83,8 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   const facts=add(details,'div',undefined,'scope');
   const objectDetails=add(details,'div',undefined,'runtime-captures');objectDetails.id='incident-object-captures';
   const ckanDetails=add(details,'div',undefined,'runtime-captures');ckanDetails.id='incident-ckan-captures';
+  const oauthDetails=add(details,'div',undefined,'runtime-captures');oauthDetails.id='incident-oauth-captures';
+  const x402Details=add(details,'div',undefined,'runtime-captures');x402Details.id='incident-x402-captures';
   const acknowledgeForm=add(details,'form',undefined,'incident-ack-form');
   const operatorLabel=add(acknowledgeForm,'label','Operator name'),operator=add(operatorLabel,'input');
   operator.id='incident-operator';operator.required=true;operator.maxLength=160;operator.autocomplete='name';
@@ -167,7 +181,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   configText.id='incident-config-json';configText.rows=14;configText.spellcheck=false;configText.maxLength=60000;
   const configActions=add(configForm,'div',undefined,'actions');
   const saveConfig=add(configActions,'button','Apply configuration');saveConfig.type='submit';saveConfig.id='incident-config-save';
-  const reloadConfig=button(configActions,'Reload current settings',()=>{configDirty=false;loadedConfigRevision=null;invalidateObject();invalidateCkan();drawConfig();controls();});
+  const reloadConfig=button(configActions,'Reload current settings',()=>{configDirty=false;loadedConfigRevision=null;invalidateObject();invalidateCkan();oauthRegistration?.invalidate();x402Registration?.invalidate();drawConfig();controls();});
   const verify=button(configActions,'Verify Slack workspace',()=>perform('destination',()=>({expectedConfigRevision:current.configRevision})));verify.id='incident-destination';
   const destinationStatus=add(configPanel,'p','','hint');destinationStatus.setAttribute('role','status');
 
@@ -182,6 +196,26 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     if(!response.ok)throw Object.assign(new Error(data.detail||data.error||'The incident operation could not complete.'),{code:data.error,status:response.status});
     return data;
   }
+  oauthRegistration=mountOAuthRegistration({root:configPanel,readCurrent:()=>current,
+    readDraft:()=>configText.value,writeDraft(text){configText.value=text;configDirty=true;drawConfig();controls();},
+    request:body=>api(base()+'/inspect-oauth',body),
+    async run(action){
+      if(destroyed||busy)throw new Error('Wait for the current incident operation to finish.');
+      busy=true;sequence++;clearTimeout(timer);controls();
+      try{return await action();}finally{busy=false;controls();schedule();}
+    },
+    isBusy:()=>busy,isCurrentRevision:()=>Boolean(current)&&loadedConfigRevision===current.configRevision,
+    say,signal:abort.signal});
+  x402Registration=mountX402Registration({root:configPanel,readCurrent:()=>current,
+    readDraft:()=>configText.value,writeDraft(text){configText.value=text;configDirty=true;drawConfig();controls();},
+    request:body=>api(base()+'/inspect-x402',body),
+    async run(action){
+      if(destroyed||busy)throw new Error('Wait for the current incident operation to finish.');
+      busy=true;sequence++;clearTimeout(timer);controls();
+      try{return await action();}finally{busy=false;controls();schedule();}
+    },
+    isBusy:()=>busy,isCurrentRevision:()=>Boolean(current)&&loadedConfigRevision===current.configRevision,
+    say,signal:abort.signal});
   function controls() {
     source.disabled=busy;search.disabled=busy;stateFilter.disabled=busy;merchant.disabled=busy;applyFilter.disabled=busy;
     refreshButton.disabled=busy||!source.value;previous.disabled=busy||offset===0;next.disabled=busy||!current?.page.hasMore;
@@ -199,7 +233,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     inspectCkan.disabled=busy||!current||!ckanSource.value||loadedConfigRevision!==current.configRevision;
     ckanDraft.disabled=busy||!ckanReview||!current||loadedConfigRevision!==current.configRevision;
     for(const node of queueRows.querySelectorAll('button'))node.disabled=busy||!operator.value.trim();
-    recovery?.refreshControls();
+    recovery?.refreshControls();oauthRegistration?.controls();x402Registration?.controls();
   }
   function drawConfig() {
     if(!current)return;
@@ -209,6 +243,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     if(!configDirty&&loadedConfigRevision!==current.configRevision) {
       configText.value=JSON.stringify(current.config,null,2);loadedConfigRevision=current.configRevision;
     }
+    oauthRegistration?.update();x402Registration?.update();
     configSummary.textContent='Loaded revision '+loadedConfigRevision+' · current revision '+current.configRevision+
       (configDirty?' · unsaved edits':'')+(configDirty&&loadedConfigRevision!==current.configRevision?' · reload current settings before applying a new edit.':'');
   }
@@ -391,14 +426,15 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     const worker=current.worker;
     workerState.textContent=(worker.ownership==='console'?'This console · ':worker.ownership==='external'?'Recorded external service · ':'')+human(worker.status);
     workerObserved.textContent='Last sweep: '+when(worker.recorded?.lastSweepAt)+(worker.error?' · '+human(worker.error):'');
-    badge.textContent=current.source.label;drawConfig();drawObjects();drawCkan();controls();
+    badge.textContent=current.source.label;drawConfig();drawObjects();drawCkan();renderOAuthStatus(oauthStatus,current.merchants);renderX402Status(x402Status,current.merchants);controls();
   }
   function fact(label,value){const row=add(facts,'div',undefined,'scope-row');add(row,'b',label);add(row,'span',String(value??'—'));}
   function drawDetail() {
-    details.hidden=!detail;objectDetails.replaceChildren();ckanDetails.replaceChildren();if(!detail){controls();return;}
+    details.hidden=!detail;objectDetails.replaceChildren();ckanDetails.replaceChildren();oauthDetails.replaceChildren();x402Details.replaceChildren();if(!detail){controls();return;}
     const incident=detail.incident;
     for(const [side,summary]of Object.entries(detail.objectObservations??{}))objectFacts(objectDetails,summary,human(side)+' original Object capture');
     for(const [side,summary]of Object.entries(detail.ckanObservations??{}))ckanFacts(ckanDetails,summary,human(side)+' original CKAN capture');
+    renderOAuthDetail(oauthDetails,detail.oauthObservations);renderX402Detail(x402Details,detail.x402Observations);
     routeChoices.replaceChildren();
     for(const choice of detail.routes??[]){const option=add(routeChoices,'option');option.value=choice.id;option.label=choice.method+' '+(choice.path??'')+' · '+choice.sides.join(' and ');}
     captureStatus.textContent=Object.entries(detail.captureProblems??{}).map(([side,problem])=>human(side)+' capture: '+problem.detail).join(' ');
@@ -469,7 +505,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
         destinationStatus.textContent=result.accepted?'Verified workspace '+result.teamId+' · actor '+result.actorId+' · channel '+result.channelId:human(result.reason);
         say(result.accepted?'Slack workspace and actor verified.':'Slack verification needs attention.',!result.accepted);
       } else {
-        if(action==='configure'){configDirty=false;loadedConfigRevision=null;invalidateObject();invalidateCkan();destinationStatus.textContent='';}
+        if(action==='configure'){configDirty=false;loadedConfigRevision=null;invalidateObject();invalidateCkan();oauthRegistration?.invalidate();x402Registration?.invalidate();destinationStatus.textContent='';}
         if(action==='ack')notes.value='';
         say(action==='start'?'Watcher start requested. Its state appears above.':action==='stop'?'This console’s watcher stopped and drained.':
           action==='configure'?'Watcher configuration applied.':action==='ack'?'Incident acknowledged.':action==='notify'?'Operator reminder queued.':'Operation completed.');
@@ -528,6 +564,8 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     selection++;sequence++;offset=0;selectedId=null;current=null;detail=null;configDirty=false;loadedConfigRevision=null;
     invalidateObject();objectChoicesKey='';objectStatus.replaceChildren();objectStatus.hidden=true;
     invalidateCkan();ckanChoicesKey='';ckanStatus.replaceChildren();ckanStatus.hidden=true;
+    oauthRegistration?.clear();oauthStatus.replaceChildren();oauthStatus.hidden=true;
+    x402Registration?.clear();x402Status.replaceChildren();x402Status.hidden=true;
     destinationStatus.textContent='';merchant.value='';routeId.value='';configText.value='';configSummary.textContent='Loading settings…';listRows.replaceChildren();
     clearPrepared();recovery?.update(null);drawDetail();await refresh({force:true});
   }
@@ -562,5 +600,5 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     if(navigation){navigation.hidden=false;navigation.closest('.workflow').classList.add('has-incidents');}
     say('Choose an incident to review, or operate the selected watcher.');refresh();
   }).catch(error=>{if(!destroyed){root.hidden=false;say(error.message,true);}});
-  return {destroy(){destroyed=true;clearTimeout(timer);clearPrepared();recovery?.destroy();abort.abort();root.replaceChildren();}};
+  return {destroy(){destroyed=true;clearTimeout(timer);clearPrepared();recovery?.destroy();oauthRegistration?.destroy();x402Registration?.destroy();abort.abort();root.replaceChildren();}};
 }

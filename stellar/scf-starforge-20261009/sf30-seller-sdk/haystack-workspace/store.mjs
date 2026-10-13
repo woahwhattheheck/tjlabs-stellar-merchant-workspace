@@ -1,3 +1,5 @@
+import { previewProjection, projectionRead, projectionRows, compareProjections, previewProjectionReturn } from "./projection-model.mjs";
+import { makeProjectionDelivery } from "./projection-reports.mjs";
 import { stringifyJson } from "./json-codec.mjs";
 import { promises as fs, constants as FS } from "node:fs";
 import { join, resolve } from "node:path";
@@ -16,6 +18,7 @@ import { intakeImport, intakeSummary, semanticModelRows, semanticModelRead, prev
   previewSemanticReturn, applySemanticReturn } from "./semantic-model.mjs";
 import { runSemanticNative, semanticCatalog } from "./semantic-native.mjs";
 import { makeSemanticReport, semanticNativeDelivery } from "./semantic-reports.mjs";
+import { readVolttronAction, previewVolttronReturn, applyVolttronReturn, volttronDelivery } from "./volttron-registry.mjs";
 
 function assertRevision(state, expectedRevision) {
   integer(expectedRevision, "reviewed workspace revision");
@@ -30,6 +33,29 @@ function range(raw, metadata, { offset = 0, length = 262144 } = {}) {
     complete: offset + bytes.length === raw.length, base64: bytes.toString("base64"), chunkSha256: sha256(bytes) };
 }
 function fileSignature(stat) { return [stat.dev, stat.ino, stat.size, stat.mtimeNs, stat.ctimeNs].join(":"); }
+async function verifiedPublishedStateSignature(path, expectedBytes) {
+  const file = await fs.open(path, FS.O_RDONLY | (FS.O_NOFOLLOW || 0));
+  try {
+    const before = await file.stat({ bigint: true }), signature = fileSignature(before);
+    need(before.isFile() && before.size === BigInt(expectedBytes.length),
+      "The published workspace differs from the complete validated bytes.", "HAYSTACK_WORKSPACE_CHANGED", 409);
+    const digestor = createHash("sha256"), chunk = Buffer.alloc(262144);
+    let position = 0;
+    while (position < expectedBytes.length) {
+      const { bytesRead } = await file.read(chunk, 0, Math.min(chunk.length, expectedBytes.length - position), position);
+      need(bytesRead > 0, "The published workspace ended before its complete validated bytes.",
+        "HAYSTACK_WORKSPACE_CHANGED", 409);
+      digestor.update(chunk.subarray(0, bytesRead)); position += bytesRead;
+    }
+    const after = await file.stat({ bigint: true }), current = await fs.lstat(path, { bigint: true });
+    need(digestor.digest("hex") === sha256(expectedBytes) &&
+      fileSignature(after) === signature && current.isFile() && !current.isSymbolicLink() &&
+      fileSignature(current) === signature,
+      "The original workspace changed while its published bytes were verified.", "HAYSTACK_WORKSPACE_CHANGED", 409);
+    return signature;
+  } finally { await file.close(); }
+}
+
 
 // Recovery journals and claims are immutable. A successor links a new claim
 // after a released or dead predecessor; it never removes a predecessor claim.
@@ -401,6 +427,8 @@ export class HaystackWorkspace {
         const nativeModel = semanticNativeModel(state, args);
         const received = await runSemanticNative(this.directory, operationId, { action: "validate", model: nativeModel });
         result = retainSemanticValidation(state, args, received.result, received.execution);
+      } else if (action === "volttron.return.apply") {
+        result = applyVolttronReturn(state, args, verifyBundle(base64(args.base64, PACKAGE_MAX_BYTES)));
       } else if (action === "semantic.return.apply") {
         result = applySemanticReturn(state, args, verifyBundle(base64(args.base64, PACKAGE_MAX_BYTES)));
       } else {
@@ -414,7 +442,13 @@ export class HaystackWorkspace {
       const saved = seal(state), bytes = Buffer.from(stringifyJson(saved) + "\n");
       need(bytes.length <= STATE_MAX_BYTES, "This complete workspace exceeds 128 MiB. Export the retained history and continue the next project in a new workspace.", "HAYSTACK_SIZE", 413);
       validateState(saved);
+      this.stateCache = null;
       await atomicWrite(this.statePath, bytes);
+      // The cache binds the already validated state to the exact published
+      // bytes and held-file/path identity. A later external change still takes
+      // the complete normal read/validation path.
+      const signature = await verifiedPublishedStateSignature(this.statePath, bytes);
+      this.stateCache = { signature, state: saved };
       return { ...outcome, replayed: false };
     });
   }
@@ -477,16 +511,34 @@ export class HaystackWorkspace {
   }
   async prepareDelivery(args) {
     const operationId = id(args.operationId), argumentsSha256 = digest({ action: "delivery.prepare", args });
+    const projectionKind = ["projection-grid", "projection-lineage", "projection-report"].includes(args.kind);
     const semanticKind = ["semantic-report", "semantic-dictionary", "semantic-output"].includes(args.kind);
-    if (semanticKind) {
+    if (projectionKind) {
+      need(args.projectionId && args.modelId === undefined && args.editionId === undefined && args.sourceId === undefined && args.role === undefined && args.validationId === undefined && args.name === undefined, "Choose one complete projection version without unrelated source or model selectors.");
+    } else {
+      need(args.projectionId === undefined, "Use projection identity only for a projection delivery.");
+    }
+    const volttronKind = ["volttron-report", "volttron-output", "volttron-receiving-output"].includes(args.kind);
+    if (!volttronKind) need(args.registryEditionId === undefined && args.receivingId === undefined, "Use registry selectors only for a VOLTTRON delivery.");
+    if (volttronKind) {
+      need(args.editionId === undefined && args.sourceId === undefined && args.role === undefined &&
+        args.modelId === undefined && args.versionId === undefined && args.validationId === undefined && args.projectionId === undefined,
+        "Registry deliveries retain their own exact edition or receiving record; omit unrelated grid/model selectors.");
+      if (args.kind === "volttron-report") need(args.registryEditionId && args.receivingId === undefined && args.name === undefined &&
+        (args.format === undefined || ["json", "csv", "html"].includes(args.format)), "Choose one saved registry edition for its complete review report.");
+      else if (args.kind === "volttron-output") need(args.registryEditionId && args.name && args.receivingId === undefined && args.format === undefined,
+        "Choose an exact retained registry/configuration filename from one saved edition.");
+      else need(args.receivingId && args.name && args.registryEditionId === undefined && args.format === undefined,
+        "Choose an exact original output filename from one retained receiving record.");
+    } else if (semanticKind) {
       need(args.editionId === undefined && args.sourceId === undefined && args.role === undefined, "Semantic reports retain the chosen model version and its own complete source context.");
       if (args.kind === "semantic-output") need(args.validationId && args.name && args.modelId === undefined && args.versionId === undefined && args.format === undefined, "Download an exact retained native output by its validation and filename.");
       else need(args.modelId && args.validationId === undefined && args.name === undefined, "Choose one complete model version for its report or dictionary.");
-    } else need(args.modelId === undefined && args.versionId === undefined && args.validationId === undefined && args.name === undefined, "Use model selectors only for a semantic delivery.");
+    } else if (!projectionKind) need(args.modelId === undefined && args.versionId === undefined && args.validationId === undefined && args.name === undefined, "Use model selectors only for a semantic delivery.");
     if (args.kind === "workspace") need(args.format === undefined && args.editionId === undefined && args.sourceId === undefined && args.role === undefined,
       "The complete workspace delivery includes every source, edition and application file; omit report-only fields.");
     else if (args.kind === "work-register") need(args.editionId === undefined && args.sourceId === undefined && args.role === undefined, "The complete corrective-work register retains every finding and review; omit asset-report scope fields.");
-    else if (args.kind === "native-grid") need(args.sourceId && args.role === undefined && (args.format === undefined || args.format === "json"), "Native grid delivery needs one selected source and JSON format.");
+    else if (args.kind === "native-grid") need(args.sourceId && args.role === undefined && (args.format === undefined || ["json", "zinc"].includes(args.format)), "Native grid delivery needs one selected source and JSON or Zinc format.");
     else need(args.sourceId === undefined, "Register and diagnostic reports use their complete selected source set.");
     return this.withWriter(async () => {
       const target = this.deliveryDirectory(operationId);
@@ -498,21 +550,31 @@ export class HaystackWorkspace {
       }
       const state = await this.read(); assertRevision(state, args.expectedRevision);
       need(!state.operations.some(item => item.id === operationId), "This identity belongs to an original saved mutation.", "HAYSTACK_OPERATION", 409);
-      const result = args.kind === "workspace" ? await buildBundle(state) :
+      const result = volttronKind ? volttronDelivery(state, args) :
+        projectionKind ? makeProjectionDelivery(state, args, { stream: true }) : args.kind === "workspace" ? await buildBundle(state) :
         args.kind === "work-register" ? makeWorkReport(state, args) :
         ["semantic-report", "semantic-dictionary"].includes(args.kind) ? makeSemanticReport(state, args) :
         args.kind === "semantic-output" ? semanticNativeDelivery(state, args) :
         args.kind === "native-grid" ? nativeGrid(state, args) : makeReport(state, args);
-      const bytes = Buffer.from(result.bytes);
-      need(bytes.length <= PACKAGE_MAX_BYTES, "This complete delivery exceeds 192 MiB.", "HAYSTACK_SIZE", 413);
-      const manifest = { format: "commons.haystack.delivery.v1", operationId, arguments: clone(args), argumentsSha256,
-        workspaceId: state.workspaceId, revision: state.revision, name: result.name, mediaType: result.mediaType,
-        sha256: sha256(bytes), bytes: bytes.length, kind: args.kind, createdAt: now() };
-      manifest.manifestSha256 = digest(manifest);
       const temporary = target + ".pending-" + newId();
       await fs.mkdir(temporary, { mode: 0o700 });
+      let manifest;
       try {
-        await createOnlyFile(join(temporary, "payload"), bytes);
+        const chunks = result.chunks || [Buffer.isBuffer(result.bytes) ? result.bytes : Buffer.from(result.bytes)];
+        const digestor = createHash("sha256"); let byteLength = 0;
+        const payload = await fs.open(join(temporary, "payload"), "wx", 0o600);
+        try {
+          for await (const value of chunks) {
+            const chunk = Buffer.isBuffer(value) ? value : Buffer.from(value);
+            need(byteLength + chunk.length <= PACKAGE_MAX_BYTES, "This complete delivery exceeds 192 MiB.", "HAYSTACK_SIZE", 413);
+            await payload.writeFile(chunk); digestor.update(chunk); byteLength += chunk.length;
+          }
+          await payload.sync();
+        } finally { await payload.close(); }
+        manifest = { format: "commons.haystack.delivery.v1", operationId, arguments: clone(args), argumentsSha256,
+          workspaceId: state.workspaceId, revision: state.revision, name: result.name, mediaType: result.mediaType,
+          sha256: digestor.digest("hex"), bytes: byteLength, kind: args.kind, createdAt: now() };
+        manifest.manifestSha256 = digest(manifest);
         await createOnlyFile(join(temporary, "manifest.json"), Buffer.from(stringifyJson(manifest) + "\n"));
         await syncDirectory(temporary); await fs.rename(temporary, target); await syncDirectory(join(this.directory, "deliveries"));
       } finally { await fs.rm(temporary, { recursive: true, force: true }); }
@@ -527,7 +589,7 @@ export class HaystackWorkspace {
     if (action === "semantic.catalog") return semanticCatalog();
     if (action === "source.read") {
       const original = await this.originalSource(args.sourceId);
-      return range(original.bytes, { sourceId: original.source.id, sha256: original.source.id, name: original.source.name, mediaType: "application/json" }, args);
+      return range(original.bytes, { sourceId: original.source.id, sha256: original.source.id, name: original.source.name, mediaType: original.source.format === "zinc" ? "text/zinc; charset=utf-8" : "application/json" }, args);
     }
     const state = await this.read();
     if (action === "workspace.status") return summary(state);
@@ -557,6 +619,13 @@ export class HaystackWorkspace {
     assertRevision(state, args.expectedRevision);
     const envelope = { workspaceId: state.workspaceId, revision: state.revision, ...(args.editionId ? { editionId: args.editionId } : {}) };
     const paginate = items => ({ ...envelope, ...page(items, args) });
+    if (action === "projection.list") return paginate(projectionRows(state));
+    if (action === "projection.read") return { ...envelope, ...projectionRead(state, args) };
+    if (action === "projection.preview") return { ...envelope, ...previewProjection(state, args) };
+    if (action === "projection.compare") return { ...envelope, ...compareProjections(state, args) };
+    if (action === "projection.return.preview") return { ...envelope, ...previewProjectionReturn(state, args) };
+    if (action === "volttron.return.preview") return { ...envelope, ...previewVolttronReturn(state, verifyBundle(base64(args.base64, PACKAGE_MAX_BYTES))) };
+    if (action.startsWith("volttron.")) return { ...envelope, ...readVolttronAction(state, action, args) };
     if (action === "semantic.intakes.list") return paginate((state.semantics?.intakes || []).map(intakeSummary));
     if (action === "semantic.intake.read") {
       const intake = state.semantics?.intakes.find(row => row.id === id(args.intakeId));

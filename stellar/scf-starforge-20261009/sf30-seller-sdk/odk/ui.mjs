@@ -29,13 +29,13 @@ function fieldsFor(capture,tableId,{scalar=false}={}){const selected=capture?.ta
 function tableLabel(capture,item){return (capture.forms.find(value=>value.key===item.formKey)?.name||'Form')+' / '+item.name;}
 function tableOptions(id,capture){options(id,capture.tables,{label:item=>tableLabel(capture,item)});}
 function pane(name){for(const item of document.querySelectorAll('.pane'))item.hidden=item.id!==name||!workspace;for(const item of document.querySelectorAll('nav [data-pane]'))item.classList.toggle('selected',item.dataset.pane===name);writeStorage('pane',name);}
-document.addEventListener('click',event=>{const target=event.target.closest('[data-pane]');if(target)pane(target.dataset.pane);});
+document.addEventListener('click',event=>{const target=event.target.closest('[data-pane]');if(target){pane(target.dataset.pane);if(target.dataset.pane==='programme')void loadProgramme().catch(showError);}});
 function detail(title,...content){$('detail-title').textContent=title;replace('detail-content',...content);if(!$('detail-dialog').open)$('detail-dialog').showModal();}
 bind('close-detail',()=>$('detail-dialog').close());
 async function request(path,{method='GET',body}={}){
   let response;
   try{response=await fetch(path,{method,headers:{Authorization:'Bearer '+token,...(body===undefined?{}:{'Content-Type':'application/json'})},
-    ...(body===undefined?{}:{body:JSON.stringify(body)}),cache:'no-store',credentials:'omit'});}
+    ...(body===undefined?{}:{body:JSON.stringify(body)}),cache:'no-store',credentials:'same-origin'});}
   catch(cause){const error=new Error('The host response was lost. Reopen the retained operation before retrying.');error.code='CENTRAL_CONNECTION_LOST';error.uncertain=true;error.cause=cause;throw error;}
   let value;try{value=await response.json();}catch{const error=new Error('The host returned an unreadable response. Reopen the retained operation.');error.code='CENTRAL_RESPONSE';error.uncertain=true;throw error;}
   if(!response.ok||value.ok===false){const original=value.error??value,error=new Error(original.message||response.statusText);Object.assign(error,original,{status:response.status});
@@ -105,13 +105,13 @@ function schedulePoll(){clearTimeout(pollTimer);if(document.visibilityState==='v
   try{await refresh({quiet:true});if(edition&&workspace.captures.find(item=>item.id===edition.id)?.revision!==edition.revision){const value=await action('edition',{id:edition.id});if(edition?.id===value.id){edition=value;renderEditionSummary();}}}catch(error){showError(error);}finally{schedulePoll();}
 },3000);}
 async function refresh({quiet=false}={}){if(refreshing)return refreshing;refreshing=(async()=>{workspace=await request('/api/state');$('unlock').hidden=true;
-  reconcilePending();renderState();pane(readStorage('pane')||'overview');if(!quiet)notice('Workspace current · '+date(new Date().toISOString()));schedulePoll();return workspace;
+  reconcilePending();renderState();pane(readStorage('pane')||'overview');if(!quiet)notice('Workspace current · '+date(new Date().toISOString()));if(readStorage('pane')==='programme')void loadProgramme().catch(showError);schedulePoll();return workspace;
 })();try{return await refreshing;}finally{refreshing=null;}}
 document.addEventListener('visibilitychange',schedulePoll);
 bind('refresh',()=>refresh());
 form('unlock-form',async()=>{token=$('operator-token').value.trim();writeStorage('token',token);await refresh();$('operator-token').value='';});
 form('connection-form',async data=>{const result=await retainedAction('connect',{id:uuid(),name:data.get('name'),url:data.get('url'),
-  authEnv:data.get('authEnv'),allowLoopback:data.has('allowLoopback')});await refresh();$('source-connection').value=result.id;$('plan-connection').value=result.id;selectedConnection=result.id;selectedForms=[];renderSelectedForms();$('new-connection').open=false;notice('Central connection verified. Load its projects to choose forms.');});
+  authEnv:data.get('authEnv'),...(data.get('codespacesTokenEnv')?{codespacesTokenEnv:data.get('codespacesTokenEnv')}:{}),allowLoopback:data.has('allowLoopback')});await refresh();$('source-connection').value=result.id;$('plan-connection').value=result.id;selectedConnection=result.id;selectedForms=[];renderSelectedForms();$('new-connection').open=false;notice('Central connection verified. Load its projects to choose forms.');});
 bind('load-projects',async()=>{const connectionId=chosen('source-connection','a Central connection'),result=await action('projects',{connectionId});
   options('source-project',result.projects,{label:item=>item.name||String(item.id)});projectForms=[];replace('source-forms',empty(result.projects.length?'Choose a project and load its forms.':'This Central user has no accessible projects.'));notice(result.projects.length+' projects received.');});
 $('source-connection').addEventListener('change',()=>{$('source-project').replaceChildren();projectForms=[];replace('source-forms',empty('Load projects from this connection.'));});
@@ -335,6 +335,178 @@ form('publisher-activation-form',async data=>{
   await refresh({quiet:true});notice('The received native release is selected.');
 });
 bind('create-archive',async()=>{notice('Creating the complete portable workspace. Keep this original operation available.');const result=await retainedAction('backup',{id:uuid()});await refresh({quiet:true});notice('Complete portable archive created.');showOutput(result);});
+
+// Customer programme projection. Reads the original records; it performs no host writes.
+function customerProgramme(state,{workspaceId,warehouse=null,releases=null}={}) {
+  if(!state||state.workspaceId!==workspaceId)throw new Error('The programme response belongs to another workspace. Reopen the original private link.');
+  for(const source of [warehouse,releases])if(source&&source.workspaceId!==workspaceId)
+    throw new Error('A connected desk belongs to another workspace. Refresh the original listener.');
+  const list=x=>Array.isArray(x)?x:[],newest=x=>[...list(x)].sort((a,b)=>String(b.createdAt||b.updatedAt||'').localeCompare(String(a.createdAt||a.updatedAt||''))||String(b.id).localeCompare(String(a.id)));
+  return {workspaceId,revision:state.revision,drafts:list(state.drafts),storageReopenRequired:Boolean(state.storageReopenRequired||warehouse?.storageReopenRequired),
+    commissions:newest(state.commissions).map(c=>{
+      const d=c.definition,a=d.agreement,decisions=a.customer_decisions??{};
+      const periods=d.periods.map((p,index)=>{
+        const plan=d.plans[index],captures=newest(c.captures).filter(x=>x.planId===plan.id);
+        const accepted=captures.filter(x=>x.status==='COMPLETE'&&x.decision?.decision==='accept');
+        return {...p,index,plan,captures,accepted};
+      });
+      const deliveries=newest(c.deliveries).map(delivery=>{
+        const incoming=state.receivedArchive;
+        const received=delivery.status==='READY_FOR_ARCHIVE'&&incoming?.workspaceId===workspaceId&&
+          Number.isSafeInteger(delivery.preparedWorkspaceRevision)&&Number.isSafeInteger(incoming.workspaceRevision)&&
+          delivery.preparedWorkspaceRevision<=incoming.workspaceRevision;
+        return {...delivery,displayStatus:received?'RECEIVED_PORTABLE':delivery.status,
+          selectedCaptures:list(delivery.request?.captures??delivery.selection?.captures),
+          outputs:[...list(delivery.datasets).map(x=>({...x,kind:'Dataset'})),...list(delivery.reports).map(x=>({...x,kind:'Report'}))]};
+      });
+      const operations=newest(warehouse?.operations).filter(x=>x.context?.commissioningId===c.id);
+      const formMatches=form=>d.forms.some(f=>String(f.projectId)===String(form?.projectId)&&f.formId===form?.formId);
+      const snapshots=list(releases?.snapshots).filter(x=>formMatches(x.form));
+      const snapshotIds=new Set(snapshots.map(x=>x.id));
+      const reviews=list(releases?.reviews).filter(x=>snapshotIds.has(x.baselineId)||snapshotIds.has(x.candidateId));
+      let next={label:'Open commissioning',description:'Review the original source agreement and install its period plans.',desk:'commissioning'};
+      if(c.status==='INSTALLED'){
+        const waiting=periods.find(p=>!p.accepted.length);
+        if(waiting){
+          const current=waiting.captures[0];
+          next=current?{label:'Review '+waiting.label,description:'Open the retained edition to inspect source coverage and its receiving decision.',editionId:current.id}:
+            {label:'Receive '+waiting.label,description:'Continue this saved period in the original commissioning desk.',desk:'commissioning'};
+        }else if(!deliveries.length)next={label:'Prepare the customer handover',description:'Both periods have an accepted edition. Select the original editions and prepare their agreed outputs.',desk:'commissioning'};
+        else if(!['COMPLETE','RECEIVED_PORTABLE'].includes(deliveries[0].displayStatus))
+          next={label:'Continue retained handover',description:'The latest handover is '+deliveries[0].displayStatus+'. Resume its existing operation in commissioning.',desk:'commissioning'};
+        else next={label:'Open customer files',description:'The retained handover and its original reports, datasets and source agreement are available below.',section:'programme-deliveries'};
+      }
+      if(state.storageReopenRequired||warehouse?.storageReopenRequired)next={label:'Reopen original workspace',description:'An original desk reports an uncertain storage result. Reopen the same workspace before continuing its writes.',desk:'commissioning'};
+      return {id:c.id,status:c.status,error:c.error,name:a.name||a.opportunity_id||c.id,opportunityId:a.opportunity_id,
+        sourceDefinition:c.sourceDefinition,agreementSha256:d.agreementSha256,sourceCaptureId:typeof a.source_receiving?.captureId==='string'?a.source_receiving.captureId:null,decisions,schedule:d.schedule,forms:d.forms,
+        periods,deliveries,outputs:list(d.outputs),indicators:list(d.indicators),operations,reviews,next};
+    })};
+}
+
+let programmeLoad=null,programmeData=null,programmeErrors=[],programmeObserved=null;
+function openProgrammeDesk(desk,commissionId){
+  const path=desk==='commissioning'?'/commissioning/':desk==='warehouse'?'/warehouse/':'/form-releases/';
+  location.assign(path+(commissionId&&desk==='commissioning'?'?commission='+encodeURIComponent(commissionId):'')+'#token='+encodeURIComponent(token));
+}
+function programmeAction(label,fn){return button(label,fn);}
+function programmeScroll(id){$(id).scrollIntoView({behavior:'smooth',block:'start'});$(id).focus({preventScroll:true});}
+function programmeTable(headers,rows){const wrap=node('div',null,'programme-table');wrap.append(table(headers,rows));return wrap;}
+function programmeFacts(rows){const dl=node('dl',null,'programme-facts');for(const [label,value]of rows){dl.append(node('dt',label),node('dd',typeof value==='object'?pretty(value):value??'—'));}return dl;}
+async function loadProgramme(){
+  if(programmeLoad)return programmeLoad;
+  if(!workspace)return;
+  const identity=workspace.id;
+  programmeLoad=(async()=>{
+    $('programme-status').textContent='Reading the original programme records…';
+    const paths=['/api/commissioning/state','/api/warehouse/state','/api/form-releases/state'];
+    const observed=await Promise.allSettled(paths.map(path=>request(path)));
+    if(!workspace||workspace.id!==identity)return;
+    if(observed[0].status!=='fulfilled'){
+      programmeData=null;replace('programme-body',empty(observed[0].reason.status===404?'The commissioning desk is not mounted on this listener. Open the complete installed ODK application.':observed[0].reason.message));
+      $('programme-select').replaceChildren();$('programme-status').textContent='Programme records could not be refreshed.';return;
+    }
+    programmeErrors=observed.slice(1).flatMap((result,index)=>result.status==='rejected'?[{desk:index===0?'Warehouse':'Form releases',message:result.reason.status===404?'Desk not mounted on this listener.':result.reason.message}]:[]);
+    programmeData=customerProgramme(observed[0].value,{workspaceId:identity,
+      warehouse:observed[1].status==='fulfilled'?observed[1].value:null,releases:observed[2].status==='fulfilled'?observed[2].value:null});
+    programmeObserved=new Date().toISOString();
+    const previous=$('programme-select').value||readStorage('programme:'+identity);
+    options('programme-select',programmeData.commissions,{label:x=>x.name+' · '+x.id});
+    if(programmeData.commissions.some(x=>x.id===previous))$('programme-select').value=previous;
+    renderProgramme();
+  })();
+  try{return await programmeLoad;}catch(error){programmeData=null;replace('programme-body',empty(error.message));$('programme-status').textContent='Programme records could not be refreshed.';throw error;}
+  finally{programmeLoad=null;}
+}
+function renderProgramme(){
+  if(!programmeData||!workspace||programmeData.workspaceId!==workspace.id)return;
+  const selected=programmeData.commissions.find(x=>x.id===$('programme-select').value);
+  $('programme-status').textContent='Programme revision '+programmeData.revision+' · read '+date(programmeObserved);
+  const body=node('div');
+  for(const issue of programmeErrors)body.append(node('p',issue.desk+': '+issue.message,'help'));
+  if(!selected){
+    body.append(node('h2','Set up the customer programme'),node('p',programmeData.drafts.length+' saved source agreement'+(programmeData.drafts.length===1?'':'s')+'. Complete or select the original agreement in commissioning.'),
+      programmeAction('Open customer commissioning',()=>openProgrammeDesk('commissioning')));
+    if(programmeData.drafts.length)body.append(programmeTable(['Saved agreement','Revision','State'],programmeData.drafts.map(x=>[x.id,x.revision,x.status??'Retained draft'])));
+    replace('programme-body',body);return;
+  }
+  const c=selected;writeStorage('programme:'+workspace.id,c.id);
+  const top=node('section',null,'programme-card');
+  top.append(node('h2',c.name),programmeFacts([['Customer / opportunity',c.opportunityId],['Programme',c.id+' · '+c.status],
+    ['Project owner',c.decisions.accountable_project_owner],['Technical receiver',c.decisions.technical_receiver],
+    ['Central server',c.decisions.authorized_central_origin],['Reporting timezone',c.decisions.reporting_timezone],
+    ['Delivery calendar',(c.schedule.status??'')+' · '+(c.schedule.start??'Date to be selected')+' → '+(c.schedule.finish??'Date to be selected')+' · '+c.schedule.workingDays+' working days']]));
+  if(c.error)top.append(node('p',c.error.message,'error'));
+  const next=node('div',null,'programme-next');next.append(node('h3','Continue this programme'),node('p',c.next.description),
+    programmeAction(c.next.label,()=>c.next.editionId?openEdition(c.next.editionId):c.next.section?programmeScroll(c.next.section):openProgrammeDesk(c.next.desk,c.id)));
+  top.append(next);body.append(top);
+  const scope=node('section',null,'programme-card');scope.append(node('h2','Agreed source and outputs'),
+    programmeTable(['Project','Existing form'],c.forms.map(f=>[f.projectId,f.formId])));
+  if(c.sourceCaptureId){
+    const original=workspace.captures.find(capture=>capture.id===c.sourceCaptureId);
+    const source=node('div',null,'programme-next');source.append(node('h3','Original source edition'),
+      node('p',(original?.label?original.label+' · ':'')+c.sourceCaptureId),
+      node('p','Open the original source cohort to inspect its form versions, root and repeat rows, submission histories and retained media.'));
+    const open=programmeAction('Open original source edition',()=>openEdition(c.sourceCaptureId));open.id='programme-source-edition';open.disabled=!original;source.append(open);
+    if(!original)source.append(node('p','This reference is retained in the agreement; the original edition is not present in the current workspace.','help'));
+    scope.append(source);
+  }
+  const outputRows=c.outputs.map(x=>[x.name,x.formId+' / '+x.table,(x.fields??[]).join(', ')]);
+  if(outputRows.length)scope.append(node('h3','Approved dataset fields'),programmeTable(['Dataset','Source table','Fields'],outputRows));
+  if(c.indicators.length)scope.append(node('h3','Report measures'),programmeTable(['Measure','Source table','Calculation'],c.indicators.map(x=>[x.name,x.formId+' / '+x.table,[x.operation,x.field].filter(Boolean).join(' ')])));
+  const policy=node('details');policy.append(node('summary','Source policy and agreement version'),programmeFacts([
+    ['Late edits',c.decisions.late_edit_policy],['Review states',c.decisions.review_state_inclusion],['Media retention',c.decisions.media_retention_selection],
+    ['Saved agreement',c.sourceDefinition?.draftId+' / revision '+c.sourceDefinition?.draftRevision],['Agreement SHA-256',c.agreementSha256]]));
+  scope.append(policy,programmeAction('Open this agreement in commissioning',()=>openProgrammeDesk('commissioning',c.id)));body.append(scope);
+  const periods=node('section',null,'programme-card');periods.append(node('h2','Reporting periods'));
+  for(const period of c.periods){
+    const card=node('section',null,'programme-period');card.append(node('h3',period.label),
+      node('p',date(period.scope.submittedFrom)+' through '+date(period.scope.submittedBefore)+' (end exclusive)'),
+      node('p','Plan '+period.plan.id+' · '+period.accepted.length+' accepted edition'+(period.accepted.length===1?'':'s')));
+    if(period.captures.length)card.append(programmeTable(['Edition','Capture','Rows','Current review','Open'],period.captures.map(capture=>[
+      capture.label?capture.label+' · '+capture.id:capture.id,capture.status,capture.rowCount??'—',capture.decision?.decision??'Awaiting review',
+      programmeAction('Open edition',()=>openEdition(capture.id))])));
+    else card.append(empty('This period has no retained capture.'));
+    card.append(programmeAction('Continue period in commissioning',()=>openProgrammeDesk('commissioning',c.id)));periods.append(card);
+  }
+  body.append(periods);
+  const deliveries=node('section',null,'programme-card');deliveries.id='programme-deliveries';deliveries.tabIndex=-1;
+  deliveries.append(node('h2','Customer handover'));
+  if(!c.deliveries.length)deliveries.append(empty('Select both accepted editions in commissioning to prepare the agreed customer files.'));
+  for(const delivery of c.deliveries){
+    const card=node('article',null,'programme-delivery');card.append(node('h3','Handover '+delivery.id),node('p',delivery.displayStatus+' · prepared '+date(delivery.preparedAt||delivery.createdAt)));
+    if(delivery.error)card.append(node('p',delivery.error.message,'error'));
+    card.append(programmeTable(['Reporting period','Frozen edition','Original review'],delivery.selectedCaptures.map(x=>[
+      c.periods[x.period]?.label??String(x.period),x.captureId,x.reviewId])));
+    const documents=node('div',null,'file-list');for(const file of delivery.documents??[])documents.append(programmeAction(file.name,()=>download({kind:'source',hash:file.sha256,name:file.name})));card.append(documents);
+    for(const output of delivery.outputs){
+      const group=node('details');group.append(node('summary',output.kind+' · '+(output.name||output.id)+' · '+(c.periods[output.period]?.label??'')));
+      const files=node('div',null,'file-list');for(const path of output.files??[])files.append(programmeAction(path,()=>download({kind:'export',id:output.id,path})));
+      group.append(files);card.append(group);
+    }
+    if(delivery.archive?.files?.length){card.append(node('h4','Complete portable workspace'),outputFiles({...delivery.archive,kind:'archive'}));}
+    else if(delivery.displayStatus==='RECEIVED_PORTABLE')card.append(node('p','This handover was received with the original portable workspace. Its retained customer files are available above.'));
+    if(!['COMPLETE','RECEIVED_PORTABLE'].includes(delivery.displayStatus))card.append(programmeAction('Continue this retained handover',()=>openProgrammeDesk('commissioning',c.id)));
+    deliveries.append(card);
+  }
+  body.append(deliveries);
+  const warehouse=node('section',null,'programme-card');warehouse.append(node('h2','Reporting warehouse'));
+  if(c.operations.length)warehouse.append(programmeTable(['Operation','Action','Period','State','Rows','Original result'],c.operations.map(op=>{
+    const files=node('div',null,'file-list');
+    if(op.report?.sha256)files.append(programmeAction('Download period report',()=>download({kind:'source',hash:op.report.sha256,name:op.report.name||'period-report.zip'})));
+    if(op.resultReceipt?.sha256)files.append(programmeAction('Operation result',()=>download({kind:'source',hash:op.resultReceipt.sha256,name:op.resultReceipt.name||'warehouse-result.json'})));
+    return [op.id,op.action,op.context?.period?.label??op.context?.period?.index??'',op.status,op.rowCount??'—',files];
+  })));
+  else warehouse.append(empty('No warehouse operations are retained for this programme.'));
+  warehouse.append(programmeAction('Open reporting warehouse',()=>openProgrammeDesk('warehouse')));body.append(warehouse);
+  const releases=node('section',null,'programme-card');releases.append(node('h2','Form release reviews'));
+  if(c.reviews.length)releases.append(programmeTable(['Review','State','Revision'],c.reviews.map(x=>[x.name||x.id,x.status,x.revision])));
+  else releases.append(empty('No release review is retained for the selected programme forms.'));
+  releases.append(programmeAction('Open form release desk',()=>openProgrammeDesk('form-releases')));body.append(releases);
+  replace('programme-body',body);
+}
+bind('refresh-programme',()=>loadProgramme());
+$('programme-select').addEventListener('change',renderProgramme);
+
 try{for(const item of JSON.parse(readStorage('pending')||'[]'))if(item?.id&&pendingCollection(item.method))pending.set(item.id,item);}catch{/* A malformed browser draft cannot alter the host workspace. */}
 const fragment=new URLSearchParams(location.hash.slice(1));token=fragment.get('token')||readStorage('token')||'';
 if(fragment.has('token')){writeStorage('token',token);history.replaceState(null,'',location.pathname+location.search);}

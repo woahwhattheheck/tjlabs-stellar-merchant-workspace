@@ -2,6 +2,7 @@
 import { createApprovalPanel } from '/approval-panel.mjs';
 import { createCollectionRecoveryPanel } from '/recovery.mjs';
 import { createCollectionComposerPanel } from '/composer.mjs';
+import { createCustomerUsePanel } from '/customer-use.mjs';
 const $ = id => document.getElementById(id);
 const sessionKey = 'starforge.collections.' + location.origin;
 const state = { token: '', connected: false, busy: false, status: null,
@@ -30,6 +31,22 @@ const composerPanel = createCollectionComposerPanel({ host: $('composer-panel'),
     buttons();
   },
   onBusy: value => { state.composerBusy = value; buttons(); if (!value) resumePendingConnection(); } });
+const customerUsePanel = createCustomerUsePanel({host:$('customer-use-panel'),api,
+  onPlans:()=>{showView('composer');buttons();},
+  onOpen:async({edition,intentIds})=>{
+    if(!state.connected||!edition.collection?.id)return;
+    const token=state.token,directory=state.status?.directory;
+    await selectCollection(edition.collection.id);
+    if(!state.connected||state.token!==token||state.status?.directory!==directory||state.selectedId!==edition.collection.id)return;
+    const known=new Set(state.current.items.map(item=>item.intentId));
+    state.selected=new Set(intentIds.filter(id=>known.has(id)));
+    $('shared-workspace').value='';
+    $('intent-workspaces').value=Object.entries(edition.workspaceByIntent??{})
+      .filter(([intent])=>state.selected.has(intent)).map(([intent,directory])=>intent+'='+directory).join('\n');
+    renderCurrent();buttons();$('detail-panel').scrollIntoView({block:'start',behavior:'smooth'});
+    say('Original active bound requests selected. Review each existing payment and receiving operation before execution.');
+  },
+  onBusy:value=>{state.customerUseBusy=value;buttons();if(!value)resumePendingConnection();}});
 const recordedStates = new Set(['ATTEMPT_RECORDED', 'RECOVERED']);
 const queuedStates = new Set(['QUEUED']);
 const errors = {
@@ -93,7 +110,7 @@ function humanError(error) {
 }
 function locked() {
   state.connected = false; state.token = ''; state.pendingToken = null;
-  recoveryPanel.disconnect(); composerPanel.disconnect();
+  recoveryPanel.disconnect(); composerPanel.disconnect(); customerUsePanel.disconnect();
   state.generation += 1; state.approvalGeneration += 1;
   state.approval = null; state.approvalDecision = null; approvalPanel.disconnect();
   try { sessionStorage.removeItem(sessionKey); } catch {}
@@ -101,20 +118,22 @@ function locked() {
   $('lock').hidden = true; $('connection-state').textContent = 'Locked';
   $('session-key').focus();
 }
-async function api(path, input, { blob = false, stream = false, signal } = {}) {
+async function api(path, input, { blob = false, stream = false, signal, raw = false, contentType, headers: additionalHeaders = {} } = {}) {
   const token = state.token;
   const headers = { Authorization: 'Bearer ' + token };
   const options = { method: input === undefined ? 'GET' : 'POST', headers,
     cache: 'no-store', credentials: 'omit', redirect: 'error', signal };
   if (input !== undefined) {
-    headers['Content-Type'] = 'application/json'; options.body = JSON.stringify(input);
+    headers['Content-Type'] = raw ? contentType ?? 'application/octet-stream' : 'application/json';
+    if(raw&&Object.hasOwn(additionalHeaders,'X-Customer-Use-Name'))headers['X-Customer-Use-Name']=additionalHeaders['X-Customer-Use-Name'];
+    options.body = raw ? input : JSON.stringify(input);
   }
   const response = await fetch(path, options);
   if (!response.ok) {
     let payload;
     try { payload = await response.json(); } catch {}
-    const error = Object.assign(new Error(payload?.error ?? 'HTTP_' + response.status),
-      { code: payload?.error ?? 'HTTP_' + response.status });
+    const error = Object.assign(new Error(payload?.message ?? payload?.error ?? 'HTTP_' + response.status),
+      { code: payload?.error ?? 'HTTP_' + response.status, status: response.status, details: payload?.details });
     if (response.status === 401 && state.token === token) locked();
     throw error;
   }
@@ -128,18 +147,24 @@ function showView(view) {
   $('recovery-panel').hidden = view !== 'recovery'; recoveryPanel.setVisible(view === 'recovery');
   $('composer-panel').hidden = view !== 'composer'; composerPanel.setVisible(view === 'composer');
   $('open-composer').setAttribute('aria-current', String(view === 'composer'));
+  $('customer-use-panel').hidden = view !== 'customer-use'; customerUsePanel.setVisible(view === 'customer-use');
+  $('open-customer-use').setAttribute('aria-current',String(view==='customer-use'));
 }
 const actionIds = ['preview-button', 'save-collection', 'enqueue', 'export',
   'recover', 'cancel', 'run-command', 'run-browser', 'refresh', 'refresh-detail', 'new-collection'];
 function buttons() {
-  const working = state.busy || state.composerBusy;
-  composerPanel.setBlocked(state.busy || state.recoveryBusy || !state.connected);
+  const working = state.busy || state.composerBusy || state.customerUseBusy;
+  composerPanel.setBlocked(state.busy || state.recoveryBusy || state.customerUseBusy || !state.connected);
+  customerUsePanel.setBlocked(state.busy || state.recoveryBusy || state.composerBusy || !state.connected);
+  $('open-customer-delivery').disabled=working||state.recoveryBusy||!state.connected;
+  $('open-customer-use').disabled=working||state.recoveryBusy||!state.connected;
+  $('open-customer-use').hidden=!state.status?.directory;
   $('open-composer').disabled = working || state.recoveryBusy || !state.connected;
   $('open-composer').hidden = !state.status?.directory;
   $('empty-compose').hidden = !state.status?.directory;
   $('empty-compose').disabled = working || state.recoveryBusy || !state.connected;
   for (const id of actionIds) $(id).disabled = working || !state.connected;
-  $('open-recovery').disabled = !state.connected;
+  $('open-recovery').disabled = working || !state.connected;
   $('new-collection').hidden = !state.status?.directory;
   $('empty-create').hidden = !state.status?.directory;
   const running = activeRunStates.has(state.execution?.state);
@@ -173,7 +198,7 @@ function buttons() {
     'recover', 'cancel', 'run-command', 'run-browser', 'new-collection', 'empty-create']) $(id).disabled = true;
 }
 async function task(label, operation) {
-  if (state.busy || state.composerBusy || state.recoveryBusy) return;
+  if (state.busy || state.composerBusy || state.customerUseBusy || state.recoveryBusy) return;
   state.busy = true; buttons(); say(label);
   try { await operation(); }
   catch (error) { say(humanError(error), 'error'); }
@@ -183,7 +208,7 @@ async function task(label, operation) {
   }
 }
 function resumePendingConnection() {
-  if (state.busy || state.composerBusy || state.recoveryBusy || !state.pendingToken) return;
+  if (state.busy || state.composerBusy || state.customerUseBusy || state.recoveryBusy || !state.pendingToken) return;
   const token = state.pendingToken; state.pendingToken = null;
   void task('Reconnecting to the workspace…', async () => { await connect(token); say('Private session refreshed.'); });
 }
@@ -396,7 +421,7 @@ async function selectCollection(id) {
   renderList(); buttons();
 }
 function beginCreate() {
-  if (state.busy || state.composerBusy || state.recoveryBusy || !state.status?.directory) return;
+  if (state.busy || state.composerBusy || state.customerUseBusy || state.recoveryBusy || !state.status?.directory) return;
   state.preview = null; $('preview-panel').hidden = true;
   $('collection-id').value = 'collection-' + crypto.randomUUID().slice(0, 8);
   $('collection-name').value = ''; $('config-files').value = '';
@@ -424,7 +449,7 @@ async function connect(token) {
   try { sessionStorage.setItem(sessionKey, state.token); } catch {}
   $('connection').hidden = true; $('workspace').hidden = false; $('lock').hidden = false;
   $('session-key').value = '';
-  renderLocations(); await refresh(); await recoveryPanel.connect(status); composerPanel.connect(status);
+  renderLocations(); await refresh(); await recoveryPanel.connect(status); composerPanel.connect(status); customerUsePanel.connect(status);
   if (!status.directory) showView('recovery'); buttons();
 }
 function renderExecution() {
@@ -668,9 +693,17 @@ $('export').addEventListener('click', () => task('Saving results export…', asy
   $('export-panel').hidden = false;
   say('Results exported to the saved workspace location.');
 }));
+$('open-customer-delivery').addEventListener('click', () => {
+  if (!state.connected || state.busy || state.composerBusy || state.customerUseBusy || state.recoveryBusy) return;
+  window.open('/customer-delivery#' + encodeURIComponent(state.token), '_blank', 'noopener');
+});
 $('open-recovery').addEventListener('click', () => { showView('recovery'); buttons(); });
+$('open-customer-use').addEventListener('click',()=>{
+  if(state.busy||state.composerBusy||state.customerUseBusy||state.recoveryBusy)return;
+  showView('customer-use');buttons();$('customer-use-panel').scrollIntoView({block:'start',behavior:'smooth'});
+});
 for (const id of ['open-composer', 'empty-compose']) $(id).addEventListener('click', () => {
-  if (state.busy || state.composerBusy || state.recoveryBusy) return;
+  if (state.busy || state.composerBusy || state.customerUseBusy || state.recoveryBusy) return;
   showView('composer'); buttons(); $('composer-panel').scrollIntoView({ block: 'start', behavior: 'smooth' });
 });
 $('lock').addEventListener('click', () => { locked(); say('Workspace locked in this tab.'); });
@@ -684,7 +717,7 @@ window.addEventListener('hashchange', () => {
   const token = location.hash.slice(1);
   if (!token) return;
   history.replaceState(null, '', location.pathname);
-  if (state.busy || state.composerBusy || state.recoveryBusy) { state.pendingToken = token; return; }
+  if (state.busy || state.composerBusy || state.customerUseBusy || state.recoveryBusy) { state.pendingToken = token; return; }
   void task('Reconnecting to the workspace…', async () => { await connect(token); say('Private session refreshed.'); });
 });
 let initialToken = location.hash.slice(1);
@@ -698,8 +731,8 @@ if (initialToken) {
 } else locked();
 setInterval(() => {
   void recoveryPanel.refresh();
-  if (!state.connected || state.busy || state.composerBusy || document.hidden
-    || (state.view === 'create' || state.view === 'composer') && !activeRunStates.has(state.execution?.state)) return;
+  if (!state.connected || state.busy || state.composerBusy || state.customerUseBusy || document.hidden
+    || (state.view === 'create' || state.view === 'composer' || state.view === 'customer-use') && !activeRunStates.has(state.execution?.state)) return;
   refresh({ silent: true }).catch(error => {
     state.approval = null; state.approvalDecision = null; approvalPanel.disconnect();
     if (state.connected) say(humanError(error), 'error');

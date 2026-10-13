@@ -22,8 +22,9 @@ export class CanadaBuysClient {
     this.maxResponseBytes = maxResponseBytes;
   }
 
-  async request(path, { method = 'GET', body, signal, raw = false, binary = false, timeoutMs = this.timeoutMs } = {}) {
+  async request(path, { method = 'GET', body, signal, raw = false, binary = false, onChunk, timeoutMs = this.timeoutMs } = {}) {
     if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1) throw new TypeError('Use a positive integer request timeout.');
+    if (onChunk !== undefined && (typeof onChunk !== 'function' || (!raw && !binary))) throw new TypeError('A download sink requires raw or binary response mode.');
     const url = new URL(path, this.baseUrl);
     if (url.origin !== this.baseUrl || url.username || url.password) throw new TypeError('Requests must target the configured operator origin.');
     const controller = new AbortController();
@@ -43,7 +44,10 @@ export class CanadaBuysClient {
         throw new CanadaBuysClientError('Response exceeds the configured client limit.', { code: 'RESPONSE_TOO_LARGE', status: response.status });
       }
       const reader = response.body?.getReader();
-      const chunks = [];
+      const streaming = response.ok && typeof onChunk === 'function';
+      const binaryResponse = binary && response.ok;
+      const decoder = binaryResponse ? null : new TextDecoder('utf-8', { fatal: true });
+      const chunks = [], textParts = [];
       let bytes = 0;
       if (reader) {
         try {
@@ -52,22 +56,46 @@ export class CanadaBuysClient {
             if (done) break;
             bytes += value.byteLength;
             if (bytes > this.maxResponseBytes) {
-              await reader.cancel();
               throw new CanadaBuysClientError('Response exceeds the configured client limit.', { code: 'RESPONSE_TOO_LARGE', status: response.status });
             }
-            chunks.push(value);
+            if (streaming) {
+              if (decoder) decoder.decode(value, { stream: true });
+              // Await the caller's durable write before reading another chunk.
+              await onChunk(value);
+            } else if (binaryResponse) chunks.push(value);
+            else textParts.push(decoder.decode(value, { stream: true }));
           }
+        } catch (error) {
+          await reader.cancel().catch(() => {});
+          throw error;
         } finally { reader.releaseLock(); }
       }
-      const joined = new Uint8Array(bytes);
-      let position = 0;
-      for (const chunk of chunks) { joined.set(chunk, position); position += chunk.byteLength; }
-      if (binary && response.ok) return {
-        mime: response.headers.get('content-type') ?? 'application/octet-stream',
-        filename: response.headers.get('content-disposition')?.match(/filename="?([^";]+)"?/)?.[1] ?? null,
-        body: joined, bytes
-      };
-      const bodyText = new TextDecoder('utf-8', { fatal: true }).decode(joined);
+      if (streaming) {
+        if (decoder) decoder.decode();
+        return {
+          mime: response.headers.get('content-type') ?? 'application/octet-stream',
+          filename: response.headers.get('content-disposition')?.match(/filename="?([^";]+)"?/)?.[1] ?? null,
+          bytes
+        };
+      }
+      if (binaryResponse) {
+        const joined = new Uint8Array(bytes);
+        let position = 0;
+        for (const chunk of chunks) { joined.set(chunk, position); position += chunk.byteLength; }
+        chunks.length = 0;
+        return {
+          mime: response.headers.get('content-type') ?? 'application/octet-stream',
+          filename: response.headers.get('content-disposition')?.match(/filename="?([^";]+)"?/)?.[1] ?? null,
+          body: joined, bytes
+        };
+      }
+      textParts.push(decoder.decode());
+      const bodyText = textParts.join('');
+      textParts.length = 0;
+      // A successful raw download is retained as text. Parsing its JSON media
+      // type would allocate a second complete report that the caller never uses.
+      if (raw && response.ok) return { mime: response.headers.get('content-type') ?? 'application/octet-stream',
+        filename: response.headers.get('content-disposition')?.match(/filename="?([^";]+)"?/)?.[1] ?? null, body: bodyText, bytes };
       let value;
       const json = response.headers.get('content-type')?.includes('json');
       if (json && bodyText) {
@@ -81,8 +109,6 @@ export class CanadaBuysClient {
           status: response.status, details: error?.details ?? null,
         });
       }
-      if (raw) return { mime: response.headers.get('content-type') ?? 'application/octet-stream',
-        filename: response.headers.get('content-disposition')?.match(/filename="?([^";]+)"?/)?.[1] ?? null, body: bodyText, bytes };
       if (!json || !bodyText) throw new CanadaBuysClientError('Expected an operator JSON response.', { code: 'INVALID_RESPONSE', status: response.status });
       return value;
     } finally {
@@ -91,6 +117,7 @@ export class CanadaBuysClient {
     }
   }
 
+  bidderIntakeEvidence(intake, options = {}) { return this.request('/api/bidder/evidence-intake', { ...options, method: 'POST', body: intake }); }
   bidderStatus(options) { return this.request('/api/bidder/status', options); }
   bidderList(kind, { noticeId, offset = 0, limit = 100, ...options } = {}) {
     const query = new URLSearchParams({ offset, limit });
@@ -133,8 +160,8 @@ export class CanadaBuysClient {
   compare(before, after, options) {
     return this.request('/api/compare?' + new URLSearchParams({ before, after }), options);
   }
-  importCsv(rawText, { stream, label, url, retrievedAt, expectedRevision, expectedSha256, ...options } = {}) {
-    return this.request('/api/import', { ...options, method: 'POST', body: { rawText, stream, label, url, retrievedAt, expectedRevision, expectedSha256 } });
+  importCsv(rawText, { stream, label, url, retrievedAt, expectedRevision, expectedSha256, response, coverage, bodyKind, derivation, derivationSha256, ...options } = {}) {
+    return this.request('/api/import', { ...options, method: 'POST', body: { rawText, stream, label, url, retrievedAt, expectedRevision, expectedSha256, response, coverage, bodyKind, derivation, derivationSha256 } });
   }
   createWorkshare(workshare, expectedRevision, options = {}) {
     return this.request('/api/workshares', { ...options, method: 'POST', body: { ...workshare, expectedRevision } });
@@ -151,6 +178,12 @@ export class CanadaBuysClient {
     const query = new URLSearchParams({ format, scope });
     for (const noticeId of noticeIds) query.append('noticeId', noticeId);
     return this.request('/api/export?' + query, { ...options, raw: true });
+  }
+  reportTo(onChunk, { format = 'json', scope = 'all', noticeIds = [], ...options } = {}) {
+    if (typeof onChunk !== 'function') throw new TypeError('Supply a report chunk consumer.');
+    const query = new URLSearchParams({ format, scope });
+    for (const noticeId of noticeIds) query.append('noticeId', noticeId);
+    return this.request('/api/export?' + query, { ...options, raw: true, binary: false, onChunk });
   }
   exportPackage({ scope = 'all', noticeIds = [], ...options } = {}) {
     const query = new URLSearchParams({ scope });

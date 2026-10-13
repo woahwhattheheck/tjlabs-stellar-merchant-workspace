@@ -4,12 +4,14 @@ import {loopbackOrigin} from './bundle.mjs';
 import {slackTeamId,slackChannelId} from './notifications-slack.mjs';
 import {normalizeObjectSource,OBJECT_KINDS} from './object-observation.mjs';
 import {normalizeCkanSource,CKAN_KINDS} from './ckan-observation.mjs';
+import {normalizeOAuthSource,OAUTH_KINDS} from './oauth-observation.mjs';
+import {normalizeX402Source,X402_KINDS} from './x402-observation.mjs';
 
 export const CONFIG_SCHEMA = 'stellar-forge.seller-watch-config.v1';
 export const hash = value => createHash('sha256').update(value).digest('hex');
 export const idPattern = /^[A-Za-z0-9_-]{1,64}$/;
 export const kinds = ['ENDPOINT_UNAVAILABLE','OBSERVER_INCOMPLETE','HTTP_5XX',
-  'DISCONNECTED','DELIVERY_UNAVAILABLE','DELIVERY_BACKLOG','DELIVERY_EXHAUSTED',...OBJECT_KINDS,...CKAN_KINDS];
+  'DISCONNECTED','DELIVERY_UNAVAILABLE','DELIVERY_BACKLOG','DELIVERY_EXHAUSTED',...OBJECT_KINDS,...CKAN_KINDS,...OAUTH_KINDS,...X402_KINDS];
 export const activeIncident = item => ['OPEN','ACKNOWLEDGED'].includes(item.status);
 const fail = field => {throw new TypeError('SF93_CONFIG_INVALID: '+field);};
 function fields(value, names, label) {
@@ -54,10 +56,22 @@ export function compileConfig(input) {
   if (!Array.isArray(c.merchants) || c.merchants.length<1 || c.merchants.length>8) fail('1..8 merchants required');
   const ids = new Set();
   for (const value of c.merchants) {
-    const m = fields(value,['id','label','seller','ops','delivery','object','ckan'],'merchant');
+    const m = fields(value,['id','label','seller','ops','delivery','object','ckan','oauth','x402'],'merchant');
     const id = text(m.id,64,'merchant.id',idPattern);
     if (ids.has(id) || ['__proto__','constructor','prototype'].includes(id)) fail('duplicate or reserved merchant.id');
     ids.add(id);
+    if (m.x402 !== undefined) {
+      if (m.oauth !== undefined || m.object !== undefined || m.ckan !== undefined || m.seller !== undefined || m.ops !== undefined || m.delivery !== undefined)
+        fail('x402 source cannot also select another source');
+      result.merchants.push({id,label:text(m.label ?? id,120,'merchant.label'),x402:normalizeX402Source(m.x402)});
+      continue;
+    }
+    if (m.oauth !== undefined) {
+      if (m.object !== undefined || m.ckan !== undefined || m.seller !== undefined || m.ops !== undefined || m.delivery !== undefined)
+        fail('oauth source cannot also select another source');
+      result.merchants.push({id,label:text(m.label ?? id,120,'merchant.label'),oauth:normalizeOAuthSource(m.oauth)});
+      continue;
+    }
     if (m.ckan !== undefined) {
       if (m.object !== undefined || m.seller !== undefined || m.ops !== undefined || m.delivery !== undefined)
         fail('ckan source cannot also select another source');
@@ -111,7 +125,11 @@ export function compileConfig(input) {
   return result;
 }
 export const configHash = config => hash(JSON.stringify(config));
-export const merchantBinding = (config, merchant) => merchant.ckan
+export const merchantBinding = (config, merchant) => merchant.x402
+  ? hash(JSON.stringify({id:merchant.id,x402:merchant.x402,failurePolls:config.failurePolls,recoveryPolls:config.recoveryPolls}))
+  : merchant.oauth
+  ? hash(JSON.stringify({id:merchant.id,oauth:merchant.oauth,failurePolls:config.failurePolls,recoveryPolls:config.recoveryPolls}))
+  : merchant.ckan
   ? hash(JSON.stringify({id:merchant.id,ckan:merchant.ckan,failurePolls:config.failurePolls,recoveryPolls:config.recoveryPolls}))
   : merchant.object
   ? hash(JSON.stringify({id:merchant.id,object:merchant.object,failurePolls:config.failurePolls,recoveryPolls:config.recoveryPolls}))

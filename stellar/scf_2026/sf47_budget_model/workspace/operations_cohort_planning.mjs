@@ -1,7 +1,10 @@
+import {COHORT_WORKING_SESSION_MAX_BYTES,COHORT_WORKING_STATE_FIELDS,captureCohortPlanningState,cohortWorkingSessionSha256,createCohortWorkingSession,reopenCohortWorkingSession,describeCohortWorkingState,storeCohortWorkingSnapshots,loadCohortWorkingSnapshots} from './cohort_planning_session.mjs';
 import {COHORT_PLAN_SCHEMA, COHORT_PLAN_REPORT_SCHEMA, COHORT_PLAN_COMPARISON_SCHEMA, seedCohortPlan, evaluateCohortPlan, exportCohortPlanCsv, compareCohortPlans, reopenCohortPlanComparison, exportCohortPlanComparisonCsv} from './cohort_planning.mjs';
 
 import {seedCohortPlanFromCalendar} from './cohort_planning_calendar.mjs';
 import {COHORT_DELIVERY_SCHEDULE_SCHEMA, seedCohortDeliveryScheduling, scheduleCohortDelivery, reopenCohortDeliverySchedule, exportCohortDeliveryScheduleCsv} from './cohort_planning_scheduling.mjs';
+
+import {COHORT_RECORDED_COST_PLAN_SCHEMA,seedCohortRecordedCostPlan,planCohortFromRecordedCosts,reopenCohortRecordedCostPlan,exportCohortRecordedCostPlanCsv,reopenCohortDeliveryComparison,inspectCohortTaskMeasurements,bindCohortRecordedCostMeasurement} from './cohort_delivery_comparison.mjs';
 
 const EDITION_SCHEMA='stellar-forge.sf47-cohort-plan-edition.v1';
 const SESSION_SCHEMA='stellar-forge.sf47-cohort-planning-session.v1';
@@ -19,7 +22,7 @@ const classes=[['UNKNOWN','Unassigned'],['INDEPENDENT_OPERATOR','Independent ope
 const environments=[['UNKNOWN','Unassigned'],['LOCAL','Local'],['TESTNET','Testnet'],['MAINNET','Mainnet'],['OTHER','Other']];
 const collections=['buyers','merchants','facilitators','operations','schedules','workshares','capacityPools','fundingGroups'];
 const metrics=['scheduledTasks','scheduledRequests','plannedPaymentRequests','plannedPaidPurchases','plannedCompleteTasks','plannedCompletePurchases','independentPurchaseOpportunities','allowanceUnits'];
-const tabNames=[['setup','Plan & calendar'],['participants','Participants'],['operations','Useful operations'],['schedules','Schedules & prepaid'],['workshares','Workshares & sensitivity'],['capacity','Capacity & pricing'],['scheduling','Schedule delivery'],['funding','Funding groups'],['report','Day & target report'],['compare','Compare plans'],['editions','Saved editions']];
+const tabNames=[['setup','Plan & calendar'],['participants','Participants'],['operations','Useful operations'],['schedules','Schedules & prepaid'],['workshares','Workshares & sensitivity'],['capacity','Capacity & pricing'],['recorded-cost','Recorded cost basis'],['scheduling','Schedule delivery'],['funding','Funding groups'],['report','Day & target report'],['compare','Compare plans'],['editions','Saved editions']];
 const note=text=>'<p class="cp-note">'+esc(text)+'</p>';
 const empty=text=>'<p class="cp-empty">'+esc(text)+'</p>';
 const badge=text=>'<span class="cp-badge">'+esc(text)+'</span>';
@@ -72,7 +75,8 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   const sourceOptions=()=>{const values=new Map();for(const item of [...(state.latestSeed?.sources||[]),...(caseValue.sources||[])])values.set(item.id,item);return [...values.values()].map(item=>[item.id,item.filename+' · '+String(item.sha256||'').slice(0,12)]);};
   const inputMatchesReport=()=>Boolean(state.report&&plan()&&state.reportInput===JSON.stringify(plan()));
   function persist(critical=false){
-    const retained={};for(const key of ['schema','caseId','plan','report','reportInput','rowDrafts','lastEditorKey','selectedDate','caseRefreshReceipt','latestSeed','tranche','tab','editor','editorDraft','pending','accepted','priorDrafts','parentSourceId','savedSourceId','savedEnvelope','filter','pages','reportSection','importText','incomingCalendar','comparison','comparisonSelections','comparisonHistory','comparisonIncoming','comparisonSavedSourceId','comparisonMetric','schedulingResult','schedulingInput','schedulingEditorId','schedulingOptions'])retained[key]=state[key];
+    const retained={};for(const key of ['recordedCostMeasurementEditor','recordedCostSource','recordedCostBaseline','recordedCostChoices','recordedCostPreview','recordedCostPlan','recordedCostDraft','recordedCostSelectedSource','recordedCostHistory','schema','caseId','plan','report','reportInput','rowDrafts','lastEditorKey','selectedDate','caseRefreshReceipt','latestSeed','tranche','tab','editor','editorDraft','pending','accepted','priorDrafts','parentSourceId','savedSourceId','savedEnvelope','filter','pages','reportSection','importText','incomingCalendar','comparison','comparisonSelections','comparisonHistory','comparisonIncoming','comparisonSavedSourceId','comparisonMetric','schedulingResult','schedulingInput','schedulingEditorId','schedulingOptions','viewedSource','rejected','workingSnapshots','workingHistory','workingIncoming','workingSnapshotIds','workingStorage'])retained[key]=state[key];
+    if(state.workingStorage==='INDEXED_DB'){delete retained.workingSnapshots;retained.workingSnapshotIds=Object.keys(state.workingSnapshots||{}).length?Object.keys(state.workingSnapshots):state.workingSnapshotIds||[];}
     try{sessionStorage.setItem(storageKey,JSON.stringify(retained));state.storageWarning='';}catch(error){state.storageWarning='This browser could not retain the latest local draft. Download its JSON before closing this tab.';if(critical)throw new Error('The browser could not retain the exact source request before dispatch. Download the draft or free this site’s session storage, then save again. '+error.message);}
   }
   function controls(){
@@ -109,12 +113,12 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   }
   function rememberPrior(reason){
     if(!plan())return;
-    state.priorDrafts.push({id:uid('prior'),retainedAt:now(),reason,plan:copy(plan()),report:state.report?copy(state.report):null,reportInput:state.reportInput,parentSourceId:state.parentSourceId,savedSourceId:state.savedSourceId});
+    state.priorDrafts.push({id:uid('prior'),retainedAt:now(),reason,plan:copy(plan()),report:state.report?copy(state.report):null,reportInput:state.reportInput,...(state.recordedCostPlan?{recordedCostPlan:copy(state.recordedCostPlan)}:{}),parentSourceId:state.parentSourceId,savedSourceId:state.savedSourceId});
   }
   async function newPlan(tranche=state.tranche){
     const seed=await refreshSource(tranche);rememberPrior('New plan from the current source');
     state.plan=seedCohortPlan(seed,{asOfAt:now(),windowStart:caseValue.program.calendarStart||new Date().toISOString().slice(0,10),name:caseValue.program.name+' · tranche '+state.tranche+' cohort plan',planId:caseValue.program.planId,planRevision:caseValue.program.planRevision,draftId:uid('cohort-plan')});
-    state.parentSourceId=null;state.savedSourceId=null;state.savedEnvelope=null;state.editor=null;state.editorDraft=null;state.pages={};state.tab='setup';
+    state.recordedCostPlan=null;state.parentSourceId=null;state.savedSourceId=null;state.savedEnvelope=null;state.editor=null;state.editorDraft=null;state.pages={};state.tab='setup';
     evaluate();state.notice='Opened a new plan from the current case. Earlier local drafts remain in Saved editions.';
   }
   function sourceFields(row){const options=sourceOptions();for(const id of row.sourceIds||[])if(!options.some(item=>item[0]===id))options.push([id,'Retained source identity · '+id]);return '<fieldset class="cp-wide"><legend>Source identity</legend><div class="cp-fields">'+field('Attached originals','sourceIds',row.sourceIds||[],{options,multiple:true,wide:true})+field('Source reference and estimate basis','sourceNote',row.sourceNote||'',{area:true,wide:true})+'</div></fieldset>';}
@@ -145,7 +149,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       (p?'<p class="cp-report-state" data-cp-report-state>'+esc(inputMatchesReport()?'Report matches this draft.':'Draft changed. Update the report to calculate these inputs.')+'</p>':'')+
       (state.incomingCalendar?'<aside class="cp-recovery"><h3>Received customer-use calendar</h3><p>The complete selected Installation editions and native Cohort seed are retained for an editable adoption plan.</p>'+btn('Open calendar as new plan','receive-calendar')+'</aside>':'')+
       (pending?'<aside class="cp-recovery"><h3>Original save awaiting its result</h3><p>The exact source attachment request is retained for case version '+esc(pending.payload.expectedVersion)+'. Continue it to recover the original receipt.</p><code>'+esc(pending.payload.requestId)+'</code><div class="cp-actions">'+btn('Continue original save','retry','data-cp-recovery="true"')+btn('Download retained request','pending-export','data-cp-recovery="true"')+'</div></aside>':'')+
-      (accepted?'<aside class="cp-recovery"><h3>Edition accepted</h3><p>Read back the original source file to finish this save.</p>'+btn('Read back saved source','readback','data-cp-recovery="true"')+'</aside>':'')+
+      (accepted||state.caseRefreshReceipt?'<aside class="cp-recovery"><h3>Edition accepted</h3><p>Read back the original source file to finish this save.</p>'+btn('Read back saved source','readback','data-cp-recovery="true"')+'</aside>':'')+
       (p&&p.source.programId!==caseId?'<p class="cp-alert">This imported plan belongs to '+esc(p.source.programId)+'. Its original source and report are available here. Open that original case to attach an edition.</p>':'');
   }
   function navigation(){return '<nav class="cp-tabs" aria-label="Cohort planning sections">'+tabNames.map(([key,title])=>btn(title,'tab','data-tab="'+key+'" data-cp-view="true" aria-current="'+(key===state.tab?'page':'false')+'"',!plan()&&!['setup','editions','compare'].includes(key))).join('')+'</nav>';}
@@ -488,6 +492,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   function editionEnvelope(report,actor,editionId=uid('cohort-edition'),createdAt=now()){
     const delivery=schedulingApplied()?reopenCohortDeliverySchedule(state.schedulingResult):null;
     return {schema:EDITION_SCHEMA,editionId,createdAt,actor,parentSourceId:state.parentSourceId||null,plan:copy(plan()),report:report?copy(report):null,
+      ...(state.recordedCostPlan?{recordedCostPlan:copy(reopenCohortRecordedCostPlan(state.recordedCostPlan)),recordedCostPlanComparison:report?compareCohortPlans(state.recordedCostPlan,plan()):null}:{}),
       ...(delivery?{deliverySchedule:copy(delivery),comparison:compareCohortPlans(delivery.sourceDocument,delivery.candidate,
         {title:delivery.candidate.name+' · delivery allocation',note:delivery.constraints.note||''})}:{})};
   }
@@ -516,7 +521,22 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     state.viewedSource={meta:copy(source),raw,envelope};state.accepted=null;state.caseRefreshReceipt=result;
     state.notice='Saved and reopened '+source.filename+' as a new source edition in this case.';
     try{persist(true);}catch(error){state.accepted=accepted;throw error;}
-    if(available()){state.caseRefreshReceipt=null;persist();await onCaseUpdated(next,result);if(available())inform(isComparison?'Saved the complete comparison and both original plan documents in this case.':'Saved the complete cohort plan and report as an original case source.');}
+    if(available()){await refreshRetainedCaseReceipt({next,source,raw});if(available())inform(isComparison?'Saved the complete comparison and both original plan documents in this case.':'Saved the complete cohort plan and report as an original case source.');}
+  }
+  async function refreshRetainedCaseReceipt(verified=null){
+    const result=state.caseRefreshReceipt,viewed=state.viewedSource;
+    if(!result||!available())return;
+    if(result.id!==caseId||!Number.isInteger(result.version)||result.version<1||viewed?.meta?.id!==result.recordId||typeof viewed.raw!=='string')
+      throw new Error('The retained source receipt does not match its original case and opened source.');
+    const next=verified?.next||await saveApi(prefix),source=verified?.source||next?.sources?.find(row=>row.id===result.recordId);
+    if(next?.program?.id!==caseId||next.program.version<result.version||!source)
+      throw new Error('The retained accepted source has not appeared in its original case readback.');
+    const raw=verified?verified.raw:await readSource(source);
+    if(source.id!==result.recordId||raw!==viewed.raw||source.filename!==viewed.meta.filename)
+      throw new Error('The retained source receipt differs from the exact original reopened source.');
+    if(!available()||state.caseRefreshReceipt!==result||state.viewedSource!==viewed)return;
+    caseValue=next;await onCaseUpdated(next,result);
+    if(state.caseRefreshReceipt===result){state.caseRefreshReceipt=null;persist();}
   }
   async function sendPending(){
     if(state.inflight){await state.inflight;if(state.accepted)await finishAccepted();return;}
@@ -545,6 +565,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     if(caseValue.program.state!=='OPEN')throw new Error('Open the original Operations case before attaching a new source edition.');
     const actor=String((await getActor())??'').trim();if(!actor)throw new Error('Enter the recording operator in Operations before saving.');
     await refreshSource();
+    await checkRecordedCostSource();
     const report=evaluate(),createdAt=now(),editionId=uid('cohort-edition'),envelope=editionEnvelope(report,actor,editionId,createdAt);
     const raw=JSON.stringify(envelope,null,2)+'\n';
     if(new TextEncoder().encode(raw).length>8*1024*1024)throw new Error('The complete plan and report exceed one original 8 MiB source attachment. Download the complete JSON to retain it.');
@@ -554,6 +575,12 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     state.pending={payload,raw,editionId};persist(true);await sendPending();
   }
   function openDocument(document,{meta=null,raw=null}={}){
+    if(document?.schema===COHORT_RECORDED_COST_PLAN_SCHEMA){
+      const value=reopenCohortRecordedCostPlan(document);
+      openDocument(value.candidate);state.recordedCostSource=copy(value.sourceDocument);state.recordedCostBaseline=copy(value.planDocument);
+      state.recordedCostChoices=copy(value.choices);state.recordedCostPreview=copy(value);state.recordedCostPlan=copy(value);
+      state.tab='recorded-cost';persist();return;
+    }
     if(document?.schema===COHORT_DELIVERY_SCHEDULE_SCHEMA){
       const result=reopenCohortDeliverySchedule(document);
       openDocument(copy(result.candidate),{meta:null,raw:null});
@@ -570,6 +597,8 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     let report,openedDelivery=null;
     try{
       report=evaluateCohortPlan(copy(supplied),{nativeSeed:state.latestSeed?copy(state.latestSeed):undefined});
+      if(envelope?.recordedCostPlan){reopenCohortRecordedCostPlan(envelope.recordedCostPlan);
+        if((envelope.report||envelope.recordedCostPlanComparison)&&JSON.stringify(envelope.recordedCostPlanComparison)!==JSON.stringify(compareCohortPlans(envelope.recordedCostPlan,supplied)))throw new Error('Keep the complete recorded-cost proposal and its successor comparison.');}
       if(envelope?.deliverySchedule){
         openedDelivery=reopenCohortDeliverySchedule(envelope.deliverySchedule);
         if(JSON.stringify(report.input)!==JSON.stringify(openedDelivery.candidate))
@@ -581,7 +610,9 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       throw error;
     }
     rememberPrior(meta?'Opened source '+meta.id:'Imported plan JSON');
-    state.plan=copy(supplied);state.report=report;state.reportInput=JSON.stringify(state.plan);state.tranche=Number(supplied.rule.target.tranche);
+    state.plan=copy(supplied);state.recordedCostPlan=envelope?.recordedCostPlan?copy(envelope.recordedCostPlan):null;
+    if(state.recordedCostPlan){state.recordedCostSource=copy(state.recordedCostPlan.sourceDocument);state.recordedCostBaseline=copy(state.recordedCostPlan.planDocument);state.recordedCostChoices=copy(state.recordedCostPlan.choices);state.recordedCostPreview=copy(state.recordedCostPlan);}
+    state.report=report;state.reportInput=JSON.stringify(state.plan);state.tranche=Number(supplied.rule.target.tranche);
     state.parentSourceId=meta?.id||envelope?.parentSourceId||null;state.savedSourceId=meta?.id||null;state.savedEnvelope=envelope?copy(envelope):null;
     if(openedDelivery){state.schedulingResult=openedDelivery;state.schedulingOptions=schedulingOptionsFor(openedDelivery);state.schedulingInput=JSON.stringify(openedDelivery.sourceDocument);captureSchedulingComparison(openedDelivery);}
     if(meta)state.viewedSource={meta:copy(meta),raw,envelope:document};
@@ -606,7 +637,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   let planningReadSequence=0;
   function planningFingerprint(){
     return JSON.stringify([state.plan,state.parentSourceId,state.savedSourceId,state.editor,state.editorDraft,state.rowDrafts,
-      state.comparison,state.schedulingResult,state.schedulingOptions,state.pending,state.accepted]);
+      state.comparison,state.schedulingResult,state.schedulingOptions,state.recordedCostSource,state.recordedCostBaseline,state.recordedCostChoices,state.recordedCostPlan,state.recordedCostDraft,state.recordedCostMeasurementEditor,state.pending,state.accepted]);
   }
   function receivePlanning(document,{meta=null,raw=null,origin={}}={},expected,sequence){
     if(!available()||sequence!==planningReadSequence||planningFingerprint()!==expected){
@@ -744,7 +775,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     return state.comparison;
   }
   function comparisonDocumentPlan(document){
-    const candidate=document?.schema===EDITION_SCHEMA?document.plan:document?.schema===COHORT_PLAN_REPORT_SCHEMA&&document.kind==='PLAN'?document.input:document;
+    const candidate=document?.schema===COHORT_RECORDED_COST_PLAN_SCHEMA?reopenCohortRecordedCostPlan(document).candidate:document?.schema===EDITION_SCHEMA?document.plan:document?.schema===COHORT_PLAN_REPORT_SCHEMA&&document.kind==='PLAN'?document.input:document;
     if(candidate?.schema!==COHORT_PLAN_SCHEMA)throw new Error('Choose a complete plan, saved edition, or plan report for this side.');
     return candidate;
   }
@@ -1122,11 +1153,279 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       jsonDetail('Complete editable successor',result.candidate)+'</body></html>';
   }
 
+
+  function workingGraph(){
+    state.workingSnapshots??={};state.workingHistory??=[];state.workingIncoming??=[];
+    return {snapshots:state.workingSnapshots,history:state.workingHistory,incoming:state.workingIncoming};
+  }
+  function workingFingerprint(){
+    return JSON.stringify([captureCohortPlanningState(state),state.workingSnapshots,state.workingHistory,state.workingIncoming]);
+  }
+  async function workingDocument(selected=null){
+    workingGraph();
+    const value=selected?{...copy(state.workingSnapshots[selected.snapshotSha256]),workingSnapshots:state.workingSnapshots,
+      workingHistory:state.workingHistory,workingIncoming:state.workingIncoming}:state;
+    return createCohortWorkingSession(value,{sessionId:uid('working-session'),exportedAt:now(),transportActive:Boolean(state.inflight)});
+  }
+  async function downloadWorkingSession(selected=null){
+    const document=await workingDocument(selected),raw=JSON.stringify(document,null,2)+'\n';
+    if(new TextEncoder().encode(raw).length>COHORT_WORKING_SESSION_MAX_BYTES)
+      throw new Error('The complete readable working session exceeds 64 MiB. Keep the original case and its retained source exports.');
+    download(raw,cleanName(document.snapshots[document.current.snapshotSha256].plan?.name||caseValue.program.name)+'-working-session.json');
+  }
+  async function mergeWorkingSession(document,origin){
+    workingGraph();
+    const durable=await storeCohortWorkingSnapshots(caseId,{...state.workingSnapshots,...document.snapshots});
+    workingGraph();
+    const snapshots={...state.workingSnapshots};
+    for(const [id,snapshot] of Object.entries(document.snapshots)){
+      if(snapshots[id]&&JSON.stringify(snapshots[id])!==JSON.stringify(snapshot))
+        throw new Error('A retained snapshot identity differs from the incoming complete state.');
+      snapshots[id]=copy(snapshot);
+    }
+    const history=copy(state.workingHistory),incoming=copy(state.workingIncoming);
+    const all=new Map([...history,...incoming].map(row=>[row.id,row]));
+    const items=[['incoming',document.current],...document.history.map(row=>['history',row]),...document.incoming.map(row=>['incoming',row])];
+    for(let index=0;index<items.length;index++){
+      const [kind,row]=items[index],id='working-import-'+origin.sha256+'-'+index;
+      if(all.has(id)){if(all.get(id).snapshotSha256!==row.snapshotSha256)throw new Error('The incoming working entry differs from its prior retained source.');continue;}
+      const entry={...copy(row),id,origin:{...copy(row.origin||{}),importedFrom:{...copy(origin),sessionId:document.sessionId,
+        exportedAt:document.exportedAt,entryId:row.id}},reason:index===0?'Opened complete working session: '+origin.filename:row.reason};
+      (kind==='history'?history:incoming).push(entry);all.set(id,entry);
+    }
+    state.workingSnapshots=snapshots;state.workingHistory=history;state.workingIncoming=incoming;
+    state.workingStorage=durable?'INDEXED_DB':'INLINE';state.workingSnapshotIds=durable?Object.keys(snapshots):[];
+    state.notice='The complete incoming working session is retained in Saved editions. Review it and choose Open as working session; current edits remain selected.';
+    persist();
+  }
+  async function importWorkingSession(){
+    const file=await chooseFile('.json,application/json');if(!file)return;
+    if(file.size>COHORT_WORKING_SESSION_MAX_BYTES)throw new Error('Choose a complete working session no larger than 64 MiB.');
+    const raw=await file.text();
+    if(new TextEncoder().encode(raw).length>COHORT_WORKING_SESSION_MAX_BYTES)throw new Error('The complete working session exceeds 64 MiB.');
+    const document=await reopenCohortWorkingSession(raw.replace(/^\uFEFF/,''),{caseId});
+    const sha256=await cohortWorkingSessionSha256(raw);
+    // File reads always enter this data-only inbox. Disposed mounts share the original state object.
+    await mergeWorkingSession(document,{filename:file.name,bytes:new TextEncoder().encode(raw).length,sha256,receivedAt:now()});
+    if(available())state.tab='editions';
+    persist();
+  }
+  async function adoptWorkingSession(id){
+    workingGraph();
+    if(isPending())throw new Error('Continue the original source request before replacing its working editor.');
+    const entry=[...state.workingIncoming,...state.workingHistory].find(row=>row.id===id);
+    if(!entry)throw new Error('Choose a retained complete working session.');
+    const expected=workingFingerprint(),original=await workingDocument();
+    const next=await saveApi(prefix);
+    if(next?.program?.id!==caseId)throw new Error('The current readback belongs to a different original case.');
+    if(!available()||isPending()||workingFingerprint()!==expected)
+      throw new Error('The working selection changed during source readback. The incoming session remains in Saved editions for explicit opening.');
+    const incoming=copy(state.workingSnapshots[entry.snapshotSha256]);
+    const snapshots={...copy(state.workingSnapshots),...original.snapshots};
+    const history=copy(state.workingHistory),queued=state.workingIncoming.filter(row=>row.id!==id).map(copy);
+    history.push({...original.current,reason:'Prior work before opening '+entry.id,origin:{caseId,selectedEntryId:entry.id}});
+    if(!history.some(row=>row.id===entry.id))history.push({...copy(entry),reason:'Opened original working session: '+entry.reason});
+    const durable=await storeCohortWorkingSnapshots(caseId,snapshots);
+    if(!available()||isPending()||workingFingerprint()!==expected)throw new Error('The current editor changed while retaining the complete predecessor. The incoming working session remains selected for later review.');
+    const candidate={...incoming,workingSnapshots:snapshots,workingHistory:history,workingIncoming:queued,
+      workingStorage:durable?'INDEXED_DB':'INLINE',workingSnapshotIds:durable?Object.keys(snapshots):[],
+      inflight:null,error:'',storageWarning:'',notice:'Opened the complete retained working session. Its previous editor and all source selections remain in Saved editions.'};
+    // Persist the complete successor before replacing the shared state object. A storage failure retains both selections.
+    const retained={};for(const key of [...COHORT_WORKING_STATE_FIELDS,'workingSnapshots','workingHistory','workingIncoming','workingStorage','workingSnapshotIds'])
+      if(candidate[key]!==undefined)retained[key]=candidate[key];
+    if(durable)delete retained.workingSnapshots;
+    try{sessionStorage.setItem(storageKey,JSON.stringify(retained));}
+    catch(error){throw new Error('The browser could not retain the complete opened session. Download the working-session JSON to keep all selections; the current editor remains open. '+error.message);}
+    planningReadSequence++;comparisonReadSequence++;
+    for(const key of Object.keys(state))delete state[key];
+    Object.assign(state,candidate);caseValue=next;comparisonCacheKey='';comparisonCache=null;
+    state.tab='editions';
+  }
+  function workingSessionsView(){
+    const graph=workingGraph();
+    if([...graph.history,...graph.incoming].some(row=>!graph.snapshots[row.snapshotSha256]))return section('Complete working session',note('Opening the complete retained working archive. The current plan remains selected.')+btn('Open working-session JSON','working-import','data-cp-view="true"'));
+    const rows=values=>values.slice().reverse().map(row=>{
+      const snapshot=graph.snapshots[row.snapshotSha256],summary=describeCohortWorkingState(snapshot);
+      return [esc(row.retainedAt)+'<small>'+esc(row.reason)+'</small>',
+        '<strong>'+esc(summary.name)+'</strong><small>Tranche '+esc(summary.tranche)+' · source v'+esc(summary.sourceVersion)+'</small>'+
+        '<small>'+summary.unfinishedRows+' unfinished rows · '+summary.priorDrafts+' earlier drafts · '+summary.comparisonHistory+' comparison revisions · '+summary.incomingSources+' incoming sources</small>'+
+        (summary.allocationMethod?'<small>Allocation: '+esc(summary.allocationMethod)+'</small>':'')+
+        (summary.originalRequest?'<small>Original source request: '+esc(summary.originalRequest)+' · '+esc(summary.requestId)+'</small>':'')+
+        (row.transportActive?'<small>The original source transport was active when this state was captured. Its same-request continuation is retained.</small>':''),
+        '<span class="cp-identity">'+esc(row.snapshotSha256)+'</span><small>'+esc(row.origin?.importedFrom?.filename||row.origin?.filename||'Original working state')+'</small>',
+        btn('Open as working session','working-adopt','data-id="'+esc(row.id)+'"',isPending())+' '+btn('Download complete session','working-selected-json','data-id="'+esc(row.id)+'" data-cp-view="true"')];
+    });
+    return section('Complete working session',
+      note('Carry the entire original case editor between browsers: unfinished input text, prior drafts, both comparison sources and history, allocation choices, incoming source documents and the exact pending or accepted save request. Opening a file first retains it beside current work; opening its selected state preserves the predecessor.')+
+      '<div class="cp-actions">'+btn('Download working session','working-json','data-cp-view="true"')+
+      btn('Open working-session JSON','working-import','data-cp-view="true"')+'</div>'+
+      (graph.incoming.length?'<h4>Incoming working sessions</h4>'+table(['Retained','Complete work','Original identity',''],rows(graph.incoming)):'')+
+      (graph.history.length?'<h4>Earlier working sessions</h4>'+table(['Retained','Complete work','Original identity',''],rows(graph.history)):''));
+  }
+
+
+  
+
+  function taskMeasurementEditor(){
+    if(!state.recordedCostMeasurementEditor)state.recordedCostMeasurementEditor={sourceId:'',source:null,kind:'INSTALLED',observationId:'',serviceBasis:''};
+    return state.recordedCostMeasurementEditor;
+  }
+  function taskMeasurementView(){
+    const editor=taskMeasurementEditor(),catalog=editor.source?inspectCohortTaskMeasurements(editor.source):null;
+    const sources=(caseValue.sources||[]).filter(row=>row.customerTaskOutcomes?.schema==='stellar-forge.sf47-customer-task-outcomes.v1');
+    const current=state.recordedCostDraft?.measurement;
+    return '<fieldset><legend>Use a saved task measurement</legend>'+note('Select the original saved comparison and one complete installed or recurring task. Its count and unit are retained from that source; measurement basis, operator review and customer response stay separate. Refreshing the source list does not replace the current allocation.')+
+      '<label>Saved measurement edition<select data-cp-task-measurement="sourceId"><option value="">Select original comparison…</option>'+
+      sources.map(row=>'<option value="'+esc(row.id)+'"'+(editor.sourceId===row.id?' selected':'')+'>'+esc(row.filename)+' · r'+esc(row.customerTaskOutcomes.revision)+'</option>').join('')+'</select></label>'+
+      btn('Open selected saved measurement','recorded-task-load','',!editor.sourceId)+
+      (catalog?'<p><strong>'+esc(catalog.customer)+' — '+esc(catalog.task)+'</strong><br>'+esc(catalog.comparisonId)+' · revision '+esc(catalog.revision)+' · '+esc(catalog.unit)+'<br>Original measurement case '+esc(catalog.caseId)+'<br>Selected receiving case '+esc(caseId)+'</p>'+
+        '<label>Original installed / recurring task<select data-cp-task-observation>'+catalog.observations.map(row=>'<option value="'+esc(JSON.stringify([row.kind,row.observationId]))+'"'+(row.kind===editor.kind&&row.observationId===editor.observationId?' selected':'')+'>'+esc(row.label)+' · '+esc(fmt(row.quantity))+' '+esc(row.unit)+' · '+esc(row.basis)+'</option>').join('')+'</select></label>'+
+        table(['Task','Count','Original basis / state','Customer response','Source and scope'],catalog.observations.map(row=>[esc(row.label),esc(fmt(row.quantity))+' '+esc(row.unit),esc(row.basis)+' / '+esc(row.status),esc(row.acceptance?.status||'Not recorded for initial method'),esc(row.method.sourceReference)+'<br>'+esc(row.method.population)+'<br>'+esc(row.method.period)+'<br>'+esc(row.method.output)+'<br>'+esc(row.method.quality)+(row.usable?'':'<br>'+esc(row.unavailable.join(' ')))]))+
+        '<label>Why this task and selected costs describe the same service output<textarea data-cp-task-measurement="serviceBasis">'+esc(editor.serviceBasis)+'</textarea></label>'+
+        btn('Use this complete measurement in allocation','recorded-task-bind')+
+        jsonDetail('Complete original saved task comparison and selected sources',catalog.original):'')+
+      (current?note('Allocation is bound to '+current.original.edition.id+' revision '+current.original.edition.revision+' / '+current.kind+(current.observationId?' / '+current.observationId:'')+'. Keep this source or explicitly select another edition.')+btn('Continue with a manual denominator; retain prior measurement','recorded-task-manual')+jsonDetail('Current allocation’s original measurement',current):'')+
+      (state.recordedCostDraft?.measurementHistory?.length?jsonDetail('Earlier retained measurement choices',state.recordedCostDraft.measurementHistory):'')+'</fieldset>';
+  }
+  async function loadTaskMeasurement(){
+    const editor=taskMeasurementEditor(),selected=editor.sourceId;
+    await refreshSource();
+    const meta=caseValue.sources.find(row=>row.id===selected&&row.customerTaskOutcomes?.schema==='stellar-forge.sf47-customer-task-outcomes.v1');
+    if(!meta)throw new Error('Select an original saved Task Outcomes source in this case.');
+    const mark=meta.customerTaskOutcomes;
+    const native=await saveApi(prefix+'/task-outcomes/'+encodeURIComponent(mark.id)+'?revision='+mark.revision);
+    const raw=JSON.parse(await readSource(meta));
+    const equal=(a,b)=>{const order=x=>Array.isArray(x)?x.map(order):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,order(x[k])])):x;return JSON.stringify(order(a))===JSON.stringify(order(b));};
+    if(!equal(native.source,meta)||!equal(native.edition,raw))throw new Error('The saved task response differs from its original retained source. Refresh the selection.');
+    const catalog=inspectCohortTaskMeasurements(native);
+    if(editor!==state.recordedCostMeasurementEditor||editor.sourceId!==selected)throw new Error('The measurement selection changed while its source was opening. Current work is retained.');
+    editor.source=copy(catalog.original);
+    if(!catalog.observations.some(row=>row.kind===editor.kind&&row.observationId===editor.observationId)){editor.kind='INSTALLED';editor.observationId='';}
+    state.notice='Opened the exact saved measurement. Review its complete scope and explicitly use it in the allocation.';
+  }
+  function bindTaskMeasurement(){
+    const editor=taskMeasurementEditor();
+    if(!editor.source||editor.source.source.id!==editor.sourceId)throw new Error('Open the currently selected original measurement first.');
+    state.recordedCostDraft=bindCohortRecordedCostMeasurement(state.recordedCostDraft||{},editor.source,
+      {kind:editor.kind,observationId:editor.observationId,serviceBasis:editor.serviceBasis,caseId});
+    state.notice='Retained the original count, unit, complete saved comparison and explicit service relationship. Keep the allocation, then calculate the whole future plan.';
+  }
+  function manualTaskMeasurement(){
+    const draft=state.recordedCostDraft||{};
+    if(draft.measurement){
+      draft.measurementHistory=[...(draft.measurementHistory||[]),{measurement:copy(draft.measurement),outputQuantity:draft.outputQuantity,outputUnit:draft.outputUnit,outputSource:draft.outputSource}];
+      delete draft.measurement;
+    }
+    state.recordedCostDraft=draft;
+    state.notice='The allocation is editable manually; its earlier saved measurement remains retained.';
+  }
+  function recordedCostState(){
+    if(!state.recordedCostChoices)state.recordedCostChoices={name:plan()?.name+' · recorded cost basis',note:'',quantityBasis:'COMPLETED_TASKS',allocations:[]};
+    return state.recordedCostChoices;
+  }
+  function recordedCostView(){
+    const source=state.recordedCostSource,commercial=source?.commercial,choices=recordedCostState(),preview=state.recordedCostPreview;
+    const options=(caseValue.sources||[]).filter(row=>row.filename?.startsWith('sf47-cohort-delivery-'));
+    const select=(name,rows,value)=>'<select name="'+esc(name)+'">'+rows.map(([id,title])=>'<option value="'+esc(id)+'"'+(id===value?' selected':'')+'>'+esc(title)+'</option>').join('')+'</select>';
+    const input=(name,value='')=>'<input name="'+esc(name)+'" value="'+esc(value)+'"'+(state.recordedCostDraft?.measurement&&['outputQuantity','outputUnit','outputSource'].includes(name)?' readonly':'')+'>';
+    const draft=state.recordedCostDraft||{},selected=choices.allocations.find(row=>row.id===draft.id);
+    const parts=draft.costs||selected?.costs||[];
+    return section('Recorded costs → future plan',note('Open the intended future plan first. Choose the complete saved delivery reconciliation, identify the useful output actually delivered, and select its cost portions. This changes only the future schedules you select. Existing funding groups, purchased prices, dates and source records remain attached to their original documents.')+
+      '<div class="cp-actions"><label>Original delivery edition<select data-cp-recorded-source><option value="">Select saved comparison…</option>'+options.map(row=>'<option value="'+esc(row.id)+'"'+(state.recordedCostSelectedSource===row.id?' selected':'')+'>'+esc(row.filename)+'</option>').join('')+'</select></label>'+
+      btn(source?'Refresh selected original and keep choices':'Open original commercial result','recorded-cost-load','',!state.recordedCostSelectedSource||!plan())+
+      btn('Capture current plan as future baseline','recorded-cost-baseline','',!plan())+'</div>'+
+      (state.recordedCostBaseline?note('Future baseline: '+(state.recordedCostBaseline.plan?.name||state.recordedCostBaseline.name||state.recordedCostBaseline.input?.name)+'. Its complete original document is retained.'):note('Opening the source captures the current complete plan as the baseline.')))+
+      (commercial?section('Measured output and actual cost portions',
+        jsonDetail('Complete original recorded result and frozen sources',source)+
+        table(['Original service','Recorded cost','Source rows'],commercial.services.map(row=>[esc(row.label),esc(row.knownRecordedCost)+' '+esc(commercial.currency),esc(row.recordedCostIds.join(', '))]))+
+        '<form data-cp-recorded-cost-form class="cp-form"><label>Allocation identity'+input('id',draft.id||'')+'</label>'+
+        '<label>Future schedule'+select('targetScheduleId',rowOptions('schedules'),draft.targetScheduleId)+'</label>'+
+        '<label>Original service'+select('sourceServiceId',commercial.services.map(row=>[row.id,row.label]),draft.sourceServiceId)+'</label>'+
+        taskMeasurementView()+
+        '<label>Completed useful tasks'+input('outputQuantity',draft.outputQuantity||'')+'</label>'+
+        '<label>Useful-output unit'+input('outputUnit',draft.outputUnit||'')+'</label>'+
+        '<label>Original measurement/source basis'+input('outputSource',draft.outputSource||'')+'</label>'+
+        '<label>Supplier cost coverage'+select('supplierCoverage',[['PARTIAL','Partial / unknown remainder'],['COMPLETE','Complete for this measured output']],draft.supplierCoverage)+'</label>'+
+        '<label>Labor coverage'+select('laborCoverage',[['PARTIAL','Partial / unknown remainder'],['COMPLETE','Complete for this measured output']],draft.laborCoverage)+'</label>'+
+        '<label>Coverage and distinct-cost explanation'+input('coverageNote',draft.coverageNote||'')+'</label>'+
+        table(['Select actual portion (0–1)','Original service / cost','Kind','Amount / hours','Source'],commercial.costs.filter(row=>['SUPPLIER','OTHER','LABOR'].includes(row.costType)).map(row=>[
+          '<input name="share:'+esc(row.id)+'" value="'+esc(parts.find(item=>item.costId===row.id)?.share||'')+'" aria-label="'+esc('Portion of '+row.label)+'">',
+          esc(row.serviceId)+'<br>'+esc(row.label),esc(row.costType),esc(fmt(row.calculatedAmount))+' '+esc(commercial.currency)+'<br>'+esc(fmt(row.activeHours))+' hours',
+          esc(row.sourceReference)+(row.originalCost?'<small>'+esc(row.originalCost.recordId)+' / '+esc(row.originalCost.lineId)+'</small>':'')]))+
+        '<button type="submit">Keep complete allocation</button>'+btn('Clear allocation form','recorded-cost-clear')+'</form>'+
+        note('Count completed useful tasks. One measured result must correspond to one complete future task; explain that relationship in the source or saved measurement basis. Supplier cost per task is distributed across the selected schedule’s requests per task. Labor hours stay per task. Leave an unselected cost share empty; all shares of each cost total at most 1. Payment fees retain their original model. Partial coverage stays unknown; complete coverage needs its entered explanation.')+
+        table(['Allocation','Future schedule','Measured output','Coverage',''],choices.allocations.map(row=>[esc(row.id),esc(row.targetScheduleId),esc(row.outputQuantity)+' '+esc(row.outputUnit)+(row.measurement?'<small>'+esc(row.measurement.original.edition.id)+' / r'+esc(row.measurement.original.edition.revision)+'</small>':''),esc(row.supplierCoverage)+' supplier / '+esc(row.laborCoverage)+' labor',btn('Edit','recorded-cost-edit','data-id="'+esc(row.id)+'"')+btn('Remove','recorded-cost-remove','data-id="'+esc(row.id)+'"')]))+
+        '<label>Successor name<input data-cp-recorded-choice="name" value="'+esc(choices.name)+'"></label><label>Planning note<textarea data-cp-recorded-choice="note">'+esc(choices.note)+'</textarea></label>'+
+        '<div class="cp-actions">'+btn('Calculate complete successor','recorded-cost-calculate','',!choices.allocations.length)+btn('Download full editable source and choices','recorded-cost-working')+'</div>'):'')+
+      (preview?section('Reviewed cost basis and prospective result',
+        (preview.choices.quantityBasis?note('Supplier / task is the selected useful-output cost. Supplier / request is the rate used by the original calculator. The request multiplier is taken from the retained future schedule.'):note('This historical proposal retains its original calculation. Choose Calculate complete successor to convert completed tasks into the selected schedule’s request units before applying a new cost basis.'))+
+        table(['Future schedule','Measured tasks','Requests / task','Corresponding requests','Supplier / task','Supplier / request','Hours / task','Hourly cost'],preview.derivations.map(row=>[esc(row.targetScheduleId),esc(row.outputQuantity)+' '+esc(row.outputUnit),esc(fmt(row.quantityBasis?.requestsPerTask)),esc(fmt(row.quantityBasis?.correspondingRequests)),esc(fmt(row.quantityBasis?.supplierCostPerTask)),esc(fmt(row.derivedEconomics.unitCost)),esc(fmt(row.derivedEconomics.activeHoursPerTask)),esc(fmt(row.derivedEconomics.hourlyCost))]))+
+        table(['Future schedule','Original measurement','Basis / review','Customer response','Service relationship'],preview.derivations.filter(row=>row.measurement).map(row=>[esc(row.targetScheduleId),esc(row.measurement.comparisonId)+' / r'+esc(row.measurement.revision)+' / '+esc(row.measurement.observationId||'Installed'),esc(row.measurement.basis)+' / '+esc(row.measurement.status),esc(row.measurement.acceptance?.status||'Not recorded for initial method'),esc(row.measurement.serviceBasis)]))+
+        table(['Actual cost row','Selected share','Unselected share'],preview.costBalances.map(row=>[esc(row.costId),esc(row.selectedShare),esc(row.unselectedShare)]))+
+        '<div class="cp-actions">'+btn('Apply to editable future plan','recorded-cost-adopt')+btn('Apply and save complete edition','recorded-cost-save')+
+        btn('Open before / after comparison','recorded-cost-compare')+btn('Complete JSON','recorded-cost-json')+btn('Complete CSV','recorded-cost-csv')+'</div>'+
+        moneyReport(preview.report)+capacityReport(preview.report)+servicePricingReport(preview.report)+jsonDetail('Complete original costs, future baseline, choices and derived plan',preview)):'')+
+      (state.recordedCostPlan?section('Applied original cost basis',note('This immutable proposal remains with the editable successor. Further manual plan edits are shown separately in its complete saved comparison.')+jsonDetail('Retained applied proposal',state.recordedCostPlan)):'');
+  }
+  async function loadRecordedCostSource(){
+    if(!plan())throw new Error('Open the intended future plan first.');
+    const selected=state.recordedCostSelectedSource;
+    await refreshSource();
+    const meta=caseValue.sources.find(row=>row.id===selected&&row.filename?.startsWith('sf47-cohort-delivery-'));
+    if(!meta)throw new Error('Select the complete original saved delivery comparison in this case.');
+    const original=reopenCohortDeliveryComparison(JSON.parse(await readSource(meta)));
+    if(original.source.programId!==caseId||!original.commercial)throw new Error('Choose this case’s complete commercial reconciliation.');
+    if(state.recordedCostSource)state.recordedCostHistory=[...(state.recordedCostHistory||[]),{source:copy(state.recordedCostSource),baseline:copy(state.recordedCostBaseline),choices:copy(recordedCostState()),preview:copy(state.recordedCostPreview)}];
+    state.recordedCostSource=original;
+    if(!state.recordedCostBaseline)state.recordedCostBaseline=editionEnvelope(inputMatchesReport()?state.report:null,'');
+    state.recordedCostChoices=state.recordedCostChoices||seedCohortRecordedCostPlan(original,state.recordedCostBaseline);
+    state.recordedCostPreview=null;state.tab='recorded-cost';
+    state.notice='Opened the complete original comparison. Existing cost shares, output measurements and rates remain explicit.';
+  }
+  function calculateRecordedCost(){
+    const value=planCohortFromRecordedCosts(state.recordedCostSource,state.recordedCostBaseline,recordedCostState());
+    state.recordedCostPreview=value;state.recordedCostChoices=copy(value.choices);persist();return value;
+  }
+  function adoptRecordedCost(){
+    const value=reopenCohortRecordedCostPlan(state.recordedCostPreview);
+    if(!value.choices.quantityBasis)throw new Error('Calculate a complete successor with the selected request units before applying this historical proposal. Its original document remains retained.');
+    if(JSON.stringify(value.choices)!==JSON.stringify(recordedCostState())||JSON.stringify(value.sourceDocument)!==JSON.stringify(state.recordedCostSource)||JSON.stringify(value.planDocument)!==JSON.stringify(state.recordedCostBaseline))
+      throw new Error('Recalculate the complete currently selected costs, baseline and choices before applying.');
+    rememberPrior('Applied reviewed recorded-cost basis');
+    state.plan=copy(value.candidate);state.recordedCostPlan=copy(value);state.savedEnvelope=null;state.savedSourceId=null;
+    state.report=value.report;state.reportInput=JSON.stringify(state.plan);state.tab='recorded-cost';
+    state.notice='Applied the reviewed estimates to the future plan. Funding identities and all original source documents remain retained.';
+  }
+  async function checkRecordedCostSource(){
+    if(!state.recordedCostPlan)return;
+    const result=reopenCohortRecordedCostPlan(state.recordedCostPlan),source=result.sourceDocument;
+    const meta=caseValue.sources.find(row=>row.id===source.input.recording.planSourceId);
+    if(!meta)throw new Error('The original cost comparison’s saved plan source is absent from this case.');
+    const original=JSON.parse(await readSource(meta));
+    const equal=(a,b)=>{const order=x=>Array.isArray(x)?x.map(order):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,order(x[k])])):x;return JSON.stringify(order(a))===JSON.stringify(order(b));};
+    const review=await saveApi(prefix+'/reviews/'+encodeURIComponent(source.source.reviewId));
+    if(!equal(original,source.input.planDocument)||!equal(review,source.input.review))
+      throw new Error('The recorded-cost basis differs from its original saved plan or frozen review. Keep the retained proposal and select the complete original source again.');
+    const measurements=new Map();
+    for(const allocation of result.choices.allocations)for(const basis of [allocation.measurement,...(allocation.measurementHistory||[]).map(row=>row.measurement)].filter(Boolean)){
+      const catalog=inspectCohortTaskMeasurements(basis.original),prior=measurements.get(catalog.sourceId);
+      if(prior&&(!equal(prior.original.source,catalog.original.source)||!equal(prior.original.edition,catalog.original.edition)))throw new Error('Conflicting original measurement editions use one source identity.');
+      measurements.set(catalog.sourceId,catalog);
+    }
+    for(const catalog of measurements.values()){
+      const meta=caseValue.sources.find(row=>row.id===catalog.sourceId);
+      if(!meta||!equal(meta,catalog.original.source))throw new Error('A selected original task measurement differs from the current case source.');
+      const native=await saveApi(prefix+'/task-outcomes/'+encodeURIComponent(catalog.comparisonId)+'?revision='+catalog.revision);
+      if(!equal(native.source,catalog.original.source)||!equal(native.edition,catalog.original.edition))
+        throw new Error('Select the complete original saved task revision again before saving this cost basis.');
+    }
+  }
+
   function editions(){
     const selected=state.viewedSource,sources=(caseValue.sources||[]).filter(row=>row.filename?.startsWith('sf47-cohort-plan-'));
     const other=(caseValue.sources||[]).filter(row=>!sources.some(value=>value.id===row.id)&&(row.mediaType==='application/json'||/\.json$/i.test(row.filename||'')));
     const actions='<div class="cp-actions">'+btn('Import plan or report JSON','import-json')+btn('Download plan JSON','export-json','data-cp-view="true"',!plan())+btn('Download editable rows CSV','rows-csv','data-cp-view="true"',!plan())+btn('Import editable rows CSV','rows-import','',!plan())+btn('Download complete case ZIP','case-export','data-cp-view="true"')+'</div>';
-    return section('Saved source editions',note('Each edition contains the complete entered plan and its calculated report. Saving adds a new original source record. The complete case ZIP includes those native sources and their existing case history.')+actions+
+    return workingSessionsView()+section('Saved source editions',note('Each edition contains the complete entered plan and its calculated report. Saving adds a new original source record. The complete case ZIP includes those native sources and their existing case history.')+actions+
       (sources.length?table(['Edition source','Captured','Bytes / identity',''],sources.map(row=>['<strong>'+esc(row.filename)+'</strong><small>'+esc(row.id)+'</small>',esc(row.createdAt||row.observedAt),esc(row.bytes)+'<small>'+esc(row.sha256)+'</small>',btn(row.filename.includes('-comparison-')?'Open comparison':'Open original plan','open-source','data-id="'+esc(row.id)+'" data-cp-view="true"')+' '+btn('Use as baseline','comparison-source-baseline','data-id="'+esc(row.id)+'"',row.filename.includes('-comparison-'))])):empty('No cohort planning source edition is attached to this case yet.'))+
       (other.length?'<details><summary>Open another retained JSON source</summary>'+table(['Original source',''],other.map(row=>[esc(row.filename)+'<small>'+esc(row.id)+'</small>',btn('Open JSON source','open-source','data-id="'+esc(row.id)+'" data-cp-view="true"')]))+'</details>':''))+
       (selected?section('Opened original source','<p><strong>'+esc(selected.meta.filename)+'</strong><br><span class="cp-identity">'+esc(selected.meta.id)+' · '+esc(selected.meta.sha256)+'</span></p>'+
@@ -1140,7 +1439,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     if(!available())return;
     const dialog=$('dialog.cp-dialog'),scroll=dialog?.scrollTop||0,focus=document.activeElement?.dataset?.cpField;
     if(dialog?.open)dialog.close();
-    const body=state.tab==='setup'?setup():state.tab==='editions'?editions():state.tab==='compare'?comparisonView():!plan()?setup():state.tab==='participants'?participants():state.tab==='operations'?operations():state.tab==='schedules'?schedules():state.tab==='workshares'?workshares():state.tab==='capacity'?capacitySetup():state.tab==='scheduling'?schedulingView():state.tab==='funding'?fundingSetup():reportView();
+    const body=state.tab==='setup'?setup():state.tab==='editions'?editions():state.tab==='compare'?comparisonView():!plan()?setup():state.tab==='participants'?participants():state.tab==='operations'?operations():state.tab==='schedules'?schedules():state.tab==='workshares'?workshares():state.tab==='capacity'?capacitySetup():state.tab==='recorded-cost'?recordedCostView():state.tab==='scheduling'?schedulingView():state.tab==='funding'?fundingSetup():reportView();
     root.innerHTML=header()+navigation()+body+editor();
     const resumed=$('dialog.cp-dialog');if(resumed){resumed.showModal();resumed.scrollTop=scroll;if(focus){const target=[...resumed.querySelectorAll('[data-cp-field]')].find(el=>el.dataset.cpField===focus);target?.focus({preventScroll:true});}}
     controls();
@@ -1148,6 +1447,11 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   function closeEditor(){if(state.editor){state.rowDrafts[state.editor.key]={editor:copy(state.editor),data:copy(state.editorDraft)};state.lastEditorKey=state.editor.key;}state.editor=null;state.editorDraft=null;state.editorError='';persist();}
   root.addEventListener('input',event=>{
     const el=event.target;if(!editable())return;
+    if(el.hasAttribute('data-cp-task-measurement')){taskMeasurementEditor()[el.dataset.cpTaskMeasurement]=el.value;persist();if(el.dataset.cpTaskMeasurement==='sourceId')render();return;}
+    if(el.hasAttribute('data-cp-task-observation')){const [kind,observationId]=JSON.parse(el.value);Object.assign(taskMeasurementEditor(),{kind,observationId});persist();return;}
+    if(el.hasAttribute('data-cp-recorded-source')){state.recordedCostSelectedSource=el.value;persist();render();return;}
+    if(el.dataset.cpRecordedChoice){recordedCostState()[el.dataset.cpRecordedChoice]=el.value;state.recordedCostPreview=null;persist();return;}
+    const costForm=el.closest('[data-cp-recorded-cost-form]');if(costForm){const values=Object.fromEntries(new FormData(costForm));state.recordedCostDraft={...state.recordedCostDraft,...Object.fromEntries(Object.entries(values).filter(([key])=>!key.startsWith('share:')))};state.recordedCostDraft.costs=Object.entries(values).filter(([key,value])=>key.startsWith('share:')&&value.trim()&&!/^0(?:\.0+)?$/.test(value.trim())).map(([key,share])=>({costId:key.slice(6),share:share.trim()}));persist();return;}
     if(el.hasAttribute('data-cp-filter')){state.filter=el.value;return;}
     if(el.dataset.cpSchedulingOption)return;
     if(el.dataset.cpComparisonSelect){comparisonState();state.comparisonSelections[el.dataset.cpComparisonSelect]=el.value;persist();return;}
@@ -1181,6 +1485,14 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     if(el.dataset.cpControl&&state.editor)switchControl(el);
   });
   root.addEventListener('submit',event=>{
+    if(event.target.matches('[data-cp-recorded-cost-form]')){
+      event.preventDefault();if(!editable())return;
+      run(async()=>{const values=Object.fromEntries(new FormData(event.target)),row={...state.recordedCostDraft,...Object.fromEntries(Object.entries(values).filter(([key])=>!key.startsWith('share:')))};
+        row.id=row.id.trim()||uid('cost-basis');row.costs=Object.entries(values).filter(([key,value])=>key.startsWith('share:')&&value.trim()&&!/^0(?:\.0+)?$/.test(value.trim())).map(([key,share])=>({costId:key.slice(6),share:share.trim()}));
+        const choices=recordedCostState(),i=choices.allocations.findIndex(item=>item.id===row.id);
+        if(i<0)choices.allocations.push(row);else choices.allocations[i]=row;
+        state.recordedCostDraft=copy(row);state.recordedCostPreview=null;state.notice='Retained the complete measured output and selected actual-cost shares. Calculate to review all constraints.';});return;
+    }
     if(!event.target.matches('[data-cp-plan],[data-cp-editor]'))return;
     event.preventDefault();
     if(!editable())return;
@@ -1193,6 +1505,21 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     const action=target.dataset.cpAction;
     run(async()=>{
       if(action==='tab'){state.tab=target.dataset.tab;if(state.tab==='scheduling'&&plan()&&!isPending())ensureScheduling();return;}
+      if(action==='recorded-task-load'){await loadTaskMeasurement();return;}
+      if(action==='recorded-task-bind'){bindTaskMeasurement();return;}
+      if(action==='recorded-task-manual'){manualTaskMeasurement();return;}
+      if(action==='recorded-cost-load'){await loadRecordedCostSource();return;}
+      if(action==='recorded-cost-baseline'){state.recordedCostBaseline=editionEnvelope(inputMatchesReport()?state.report:null,'');state.recordedCostPreview=null;return;}
+      if(action==='recorded-cost-clear'){state.recordedCostDraft={};return;}
+      if(action==='recorded-cost-edit'){state.recordedCostDraft=copy(recordedCostState().allocations.find(row=>row.id===target.dataset.id));return;}
+      if(action==='recorded-cost-remove'){recordedCostState().allocations=recordedCostState().allocations.filter(row=>row.id!==target.dataset.id);state.recordedCostPreview=null;return;}
+      if(action==='recorded-cost-calculate'){calculateRecordedCost();return;}
+      if(action==='recorded-cost-adopt'){adoptRecordedCost();return;}
+      if(action==='recorded-cost-save'){adoptRecordedCost();await saveEdition();return;}
+      if(action==='recorded-cost-compare'){const result=reopenCohortRecordedCostPlan(state.recordedCostPreview);adoptComparison(result.comparison);return;}
+      if(action==='recorded-cost-working'){await downloadWorkingSession();return;}
+      if(action==='recorded-cost-json'){download(JSON.stringify(reopenCohortRecordedCostPlan(state.recordedCostPreview),null,2)+'\n','recorded-cost-plan.json');return;}
+      if(action==='recorded-cost-csv'){download(exportCohortRecordedCostPlanCsv(state.recordedCostPreview),'recorded-cost-plan.csv','text/csv');return;}
       if(action==='scheduling-setup'){ensureScheduling();return;}
       if(action==='scheduling-policy'){ensureScheduling();state.schedulingEditorId=target.dataset.id;state.tab='scheduling';return;}
       if(action==='scheduling-calculate'){calculateScheduling();state.tab='scheduling';return;}
@@ -1262,7 +1589,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       if(action==='evaluate'){evaluate();state.tab='report';state.notice='Calculated the named schedule, payment groups, costs, and original proposed targets.';return;}
       if(action==='save'){await saveEdition();return;}
       if(action==='retry'){await sendPending();return;}
-      if(action==='readback'){await finishAccepted();return;}
+      if(action==='readback'){if(state.accepted)await finishAccepted();else await refreshRetainedCaseReceipt();return;}
       if(action==='pending-export'){const retained=state.pending||state.accepted;if(retained)download(JSON.stringify(retained,null,2)+'\n','cohort-original-source-request.json');return;}
       if(action==='edit'||action==='copy-row'){openEditor(target.dataset.kind,target.dataset.id||null,action==='copy-row');return;}
       if(action==='editor-close'){closeEditor();return;}
@@ -1278,6 +1605,10 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       }
       if(action==='receive-calendar'){await receiveCalendar();return;}
       if(action==='calendar-original'||action==='calendar-seed'){const original=plan()?.calendarSource;if(original)download(JSON.stringify(action==='calendar-original'?original.selection:original.cohortSeed,null,2)+'\n',cleanName(plan().name)+'-'+action+'.json');return;}
+      if(action==='working-json'){await downloadWorkingSession();return;}
+      if(action==='working-import'){await importWorkingSession();return;}
+      if(action==='working-adopt'){await adoptWorkingSession(target.dataset.id);return;}
+      if(action==='working-selected-json'){workingGraph();const selected=[...state.workingIncoming,...state.workingHistory].find(row=>row.id===target.dataset.id);if(selected)await downloadWorkingSession(selected);return;}
       if(action==='import-json'){await importJson();return;}
       if(action==='export-json'){exportJson();return;}
       if(action==='rows-csv'){download(editableCsv(),cleanName(plan().name)+'-editable-rows.csv','text/csv');return;}
@@ -1291,22 +1622,26 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       if(action==='restore-prior'){
         const previous=state.priorDrafts.find(row=>row.id===target.dataset.id);if(!previous)return;
         const restored=copy(previous);rememberPrior('Restored prior draft '+restored.id);
-        state.plan=restored.plan;state.report=restored.report;state.reportInput=restored.reportInput||'';state.parentSourceId=restored.parentSourceId;state.savedSourceId=restored.savedSourceId;state.savedEnvelope=null;state.editor=null;state.editorDraft=null;state.pages={};
+        state.plan=restored.plan;state.recordedCostPlan=restored.recordedCostPlan||null;state.report=restored.report;state.reportInput=restored.reportInput||'';state.parentSourceId=restored.parentSourceId;state.savedSourceId=restored.savedSourceId;state.savedEnvelope=null;state.editor=null;state.editorDraft=null;state.pages={};
         try{evaluate();}catch(error){state.error=error.message;}state.tab='setup';state.notice='Restored the original prior planning state as this editable draft.';return;
       }
-      if(action==='prior-json'){const previous=state.priorDrafts.find(row=>row.id===target.dataset.id);if(previous)download(JSON.stringify({schema:EDITION_SCHEMA,editionId:previous.id,createdAt:previous.retainedAt,actor:'',parentSourceId:previous.parentSourceId,plan:previous.plan,report:previous.report},null,2)+'\n',cleanName(previous.plan.name)+'-'+previous.id+'.json');}
+      if(action==='prior-json'){const previous=state.priorDrafts.find(row=>row.id===target.dataset.id);if(previous)download(JSON.stringify({schema:EDITION_SCHEMA,editionId:previous.id,createdAt:previous.retainedAt,actor:'',parentSourceId:previous.parentSourceId,plan:previous.plan,report:previous.report,...(previous.recordedCostPlan?{recordedCostPlan:previous.recordedCostPlan,recordedCostPlanComparison:compareCohortPlans(previous.recordedCostPlan,previous.plan)}:{})},null,2)+'\n',cleanName(previous.plan.name)+'-'+previous.id+'.json');}
     });
   });
   render();
   const ready=(async()=>{
     busy=true;controls();
     try{
+      if(state.workingStorage==='INDEXED_DB'&&(state.workingSnapshotIds||[]).some(id=>!state.workingSnapshots?.[id])){
+        const retained=await loadCohortWorkingSnapshots(caseId,state.workingSnapshotIds);
+        state.workingSnapshots={...retained,...state.workingSnapshots};
+      }
       if(state.inflight){try{await state.inflight;}catch(error){state.error=error.message;}}
       if(state.accepted){await finishAccepted();return;}
       if(state.incomingCalendar&&!state.pending){await receiveCalendar();return;}
       if(!plan()&&!state.pending)await newPlan(state.tranche);
       else{await refreshSource();if(plan()){try{evaluate();}catch(error){state.error=error.message;}}}
-      if(state.caseRefreshReceipt&&available()){const result=state.caseRefreshReceipt;state.caseRefreshReceipt=null;persist();await onCaseUpdated(caseValue,result);}
+      if(state.caseRefreshReceipt&&available())await refreshRetainedCaseReceipt();
     }catch(error){state.error=error.message||String(error);}
     finally{busy=false;persist();if(available())render();}
   })();

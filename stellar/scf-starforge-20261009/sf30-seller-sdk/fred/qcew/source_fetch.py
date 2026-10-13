@@ -153,24 +153,112 @@ class RemoteZip(io.RawIOBase):
             self.local.close()
             self.local = None
         super().close()
-def acquire(directory, years, areas):
+
+def read_programme(path):
+    path = pathlib.Path(path)
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > 64 * 1024:
+        raise ValueError("Select the complete programme JSON file of at most 64 KiB")
+    raw = path.read_bytes()
+    if len(raw) > 64 * 1024: raise ValueError("The complete programme exceeds 64 KiB")
+    value = json.loads(raw.decode("utf-8-sig"))
+    if not isinstance(value, dict) or value.get("schema") != "stellar-forge.qcew-native-programme.v1":
+        raise ValueError("Select the complete county production programme")
+    if set(value) - {"schema", "operation", "initial", "successor"}:
+        raise ValueError("The county programme contains an unsupported selection")
+    if not isinstance(value.get("operation"), str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}", value["operation"]):
+        raise ValueError("Keep one explicit original operation identity")
+    periods = []
+    for name in ("initial", "successor"):
+        item = value.get(name)
+        if not isinstance(item, dict) or type(item.get("year")) is not int or not 1990 <= item["year"] <= 2100 or type(item.get("quarter")) is not int or not 1 <= item["quarter"] <= 4:
+            raise ValueError("Choose a QCEW year and quarter")
+        periods.append({"year": item["year"], "quarter": item["quarter"]})
+    if periods[0]["year"] * 4 + periods[0]["quarter"] >= periods[1]["year"] * 4 + periods[1]["quarter"]:
+        raise ValueError("The successor report must follow the initial report")
+    return {"sha256": digest(raw), "value": {"schema": value["schema"], "operation": value["operation"], "initial": periods[0], "successor": periods[1]}}
+
+def validate_retained_file(directory, source):
+    name = source.get("file")
+    if not isinstance(name, str) or not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,199}", name):
+        raise ValueError("The original source filename is unsafe")
+    path = directory / name
+    if path.is_symlink() or not path.is_file():
+        raise ValueError("Retain each complete original source as an ordinary file")
+    packed = path.read_bytes()
+    raw = gzip.decompress(packed)
+    if len(raw) > MAX_MEMBER or len(raw) != source["bytes"] or digest(raw) != source["sha256"] or digest(packed) != source["gzipSha256"]:
+        raise ValueError("Retained complete original source changed")
+    if source.get("memberCrc32") is not None and format(__import__("zlib").crc32(raw) & 0xffffffff, "08x") != source["memberCrc32"]:
+        raise ValueError("Retained original member CRC differs")
+    return len(packed)
+
+def validate_completed_intake(manifest, request, operation, diagnostic_seed):
+    if manifest.get("operation") != operation or not isinstance(manifest.get("completedAt"), str):
+        raise ValueError("Retain the original completed operation identity")
+    archives = manifest.get("archives")
+    sources = manifest.get("sources")
+    if not isinstance(archives, list) or not isinstance(sources, list) or len(archives) != len(request["years"]):
+        raise ValueError("The completed intake has an incomplete original inventory")
+    by_year = {}
+    for archive in archives:
+        year = archive.get("year")
+        if year not in request["years"] or year in by_year or archive.get("complete") is not True:
+            raise ValueError("The completed intake lost an original archive year")
+        expected_url = "https://data.bls.gov/cew/data/files/" + str(year) + "/csv/" + str(year) + "_qtrly_by_area.zip"
+        if archive.get("sourceUrl") != expected_url or not archive.get("requests") or not isinstance(archive.get("inventory"), list):
+            raise ValueError("The completed archive lost its original source receipt")
+        by_year[year] = archive
+    names = set()
+    for source in sources:
+        archive = by_year.get(source.get("year"))
+        if archive is None or source.get("area") not in request["areas"] or source.get("file") in names or source.get("sourceUrl") != archive["sourceUrl"]:
+            raise ValueError("The completed intake contains an unbound or repeated source")
+        names.add(source["file"])
+        matches = [item for item in archive["inventory"] if item.get("name") == source.get("member")]
+        if len(matches) != 1 or matches[0].get("bytes") != source.get("bytes") or matches[0].get("crc32") != source.get("memberCrc32") or matches[0].get("compressedBytes") != source.get("memberCompressedBytes"):
+            raise ValueError("The completed original member differs from the retained archive inventory")
+    for year, archive in by_year.items():
+        selected = [source for source in sources if source["year"] == year]
+        if archive.get("selectedMemberCount") != len(selected) or any(not any(source["area"] == area for source in selected) for area in request["areas"]):
+            raise ValueError("The completed intake omitted a requested original year/area member")
+    if diagnostic_seed != (manifest.get("seed") is not None):
+        raise ValueError("The original diagnostic source selection changed")
+    if diagnostic_seed and manifest["seed"].get("receipt", {}).get("requestedUrl") != "https://data.bls.gov/cew/data/api/2025/4/area/06075.csv":
+        raise ValueError("The original diagnostic source identity changed")
+    if manifest.get("pendingMembers"):
+        raise ValueError("The completed intake still has unfinished original members")
+    if manifest.get("originalBytes") != sum(source["bytes"] for source in sources) or manifest.get("storedBytes") != sum(source["gzipBytes"] for source in sources):
+        raise ValueError("The completed source inventory byte totals differ")
+
+def acquire(directory, years, areas, programme=None):
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     os.chmod(directory, 0o700)
     lock = open(directory / "source.lock", "a+b")
     fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
     manifest_path = directory / "source-manifest.json"
-    request = {"years":years,"areas":areas,"sourceKind":"current_published_annual_naics_archives","reportPeriods":["2025-Q4","2026-Q1"]}
+    operation = programme["value"]["operation"] if programme else "NEED-REGIONAL-REPORTS-9B2C-20261012"
+    diagnostic_seed = programme is None
+    report_periods = [str(programme["value"][name]["year"]) + "-Q" + str(programme["value"][name]["quarter"]) for name in ("initial", "successor")] if programme else ["2025-Q4", "2026-Q1"]
+    if programme and any(programme["value"][name]["year"] not in years for name in ("initial", "successor")):
+        raise ValueError("Acquire every original programme year")
+    request = {"years":years,"areas":areas,"sourceKind":"current_published_annual_naics_archives","reportPeriods":report_periods}
+    if programme: request.update({"programmeSha256":programme["sha256"],"programme":programme["value"],"diagnosticSeed":None})
     if manifest_path.exists():
-        manifest = json.loads(manifest_path.read_text())
-        if manifest.get("schema") != SCHEMA or manifest.get("request") != request: raise ValueError("Retained source directory belongs to another intake")
+        retained_bytes = manifest_path.read_bytes()
+        manifest = json.loads(retained_bytes.decode("utf-8"))
+        if manifest.get("schema") != SCHEMA or manifest.get("request") != request or manifest.get("operation") != operation: raise ValueError("Retained source directory belongs to another intake")
         for source in manifest["sources"]:
-            packed = (directory / source["file"]).read_bytes()
-            raw = gzip.decompress(packed)
-            if len(raw) != source["bytes"] or digest(raw) != source["sha256"] or digest(packed) != source["gzipSha256"]: raise ValueError("Retained complete original source changed")
+            if validate_retained_file(directory, source) != source["gzipBytes"]:
+                raise ValueError("Retained original compressed byte count differs")
+        if manifest.get("seed"): validate_retained_file(directory, manifest["seed"])
+        if manifest.get("complete") is True:
+            validate_completed_intake(manifest, request, operation, diagnostic_seed)
+            emit({"phase":"complete_reused","manifest":str(manifest_path),"operation":operation,"members":len(manifest["sources"]),"years":len(manifest["archives"]),"originalBytes":manifest["originalBytes"],"storedBytes":manifest["storedBytes"],"manifestSha256":digest(retained_bytes)})
+            return manifest
     else:
-        manifest = {"schema":SCHEMA,"operation":"NEED-REGIONAL-REPORTS-9B2C-20261012","request":request,"startedAt":now(),"sources":[],"archives":[],"seed":None,"complete":False}
+        manifest = {"schema":SCHEMA,"operation":operation,"request":request,"startedAt":now(),"sources":[],"archives":[],"seed":None,"complete":False}
         save_json(manifest_path, manifest)
-    if not manifest.get("seed"):
+    if diagnostic_seed and not manifest.get("seed"):
         url = "https://data.bls.gov/cew/data/api/2025/4/area/06075.csv"
         response, receipt = fetch(url)
         try: raw = response.read(MAX_MEMBER + 1)
@@ -250,13 +338,178 @@ def acquire(directory, years, areas):
     save_json(manifest_path, manifest)
     emit({"phase":"complete","manifest":str(manifest_path),"members":len(manifest["sources"]),"years":len(manifest["archives"]),"originalBytes":manifest["originalBytes"],"storedBytes":manifest["storedBytes"],"manifestSha256":digest(manifest_path.read_bytes())})
     return manifest
+def slice_url(year, quarter, area):
+    return "https://data.bls.gov/cew/data/api/" + str(year) + "/" + str(quarter) + "/area/" + area + ".csv"
+
+def retained_slice(entry, url):
+    if entry.get("sourceUrl") != url: raise ValueError("Retained file belongs to another original BLS slice")
+    path = pathlib.Path(entry["file"])
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > MAX_MEMBER:
+        raise ValueError("Select the complete regular retained original CSV")
+    with path.open("rb") as source: raw = source.read(MAX_MEMBER + 1)
+    if not raw or len(raw) > MAX_MEMBER: raise ValueError("Retained original CSV exceeds capacity")
+    if not re.fullmatch(r"[a-f0-9]{64}", entry.get("sha256", "")) or digest(raw) != entry["sha256"]:
+        raise ValueError("The complete materialized original CSV hash changed")
+    receipt = json.loads(json.dumps(entry["receipt"]))
+    upload = receipt.get("upload", {})
+    if (receipt.get("kind") != "retained_provider_file" or receipt.get("provider") != "Notion"
+            or receipt.get("sourceUrl") != url or not isinstance(receipt.get("recordedAt"), str)
+            or upload.get("status") != "uploaded" or upload.get("content_length") != len(raw)
+            or upload.get("content_type", "").split(";")[0].strip() != "text/csv"
+            or not re.fullmatch(r"[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}", upload.get("file_upload_id", ""))):
+        raise ValueError("Retain the actual complete provider upload receipt with its original CSV")
+    receipt.update({"completedAt":now(),"bytes":len(raw),"sha256":digest(raw)})
+    return raw, receipt
+
+def acquire_slices(directory, periods, areas, operation, received_path=None, programme=None):
+    """Retain complete published API files, with original HTTP or provider-file receipts."""
+    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if directory.is_symlink(): raise ValueError("Use a private owned intake directory")
+    os.chmod(directory, 0o700)
+    received, received_digest = {}, None
+    if received_path:
+        path = pathlib.Path(received_path)
+        if path.is_symlink() or not path.is_file() or path.stat().st_size > 8 * 1024 * 1024:
+            raise ValueError("Select the complete retained-slices descriptor")
+        raw_descriptor = path.read_bytes()
+        descriptor = json.loads(raw_descriptor.decode("utf-8"))
+        if descriptor.get("schema") != "stellar-forge.qcew-retained-slices.v1" or descriptor.get("operation") != operation:
+            raise ValueError("Retained originals belong to another source operation")
+        received_digest = digest(raw_descriptor)
+        for entry in descriptor.get("sources", []):
+            key = (entry.get("year"), entry.get("quarter"), entry.get("area"))
+            if key in received: raise ValueError("The retained source descriptor repeats a quarterly slice")
+            received[key] = entry
+        expected = {(year, quarter, area) for year, quarter in periods for area in areas}
+        if set(received) != expected: raise ValueError("The retained source descriptor must contain every selected slice exactly once")
+    years = sorted({year for year, _ in periods})
+    period_names = [str(year) + "-Q" + str(quarter) for year, quarter in periods]
+    request = {"years":years,"areas":areas,"sourceKind":"current_published_quarterly_api_slices","periods":period_names}
+    if received_digest: request["receivedManifestSha256"] = received_digest
+    if programme:
+        selected = [str(programme["value"][name]["year"])+"-Q"+str(programme["value"][name]["quarter"]) for name in ("initial","successor")]
+        if programme["value"]["operation"] != operation or any(value not in period_names for value in selected):
+            raise ValueError("Retain the programme identity and every original report period")
+        request.update({"programmeSha256":programme["sha256"],"programme":programme["value"],"reportPeriods":selected})
+    manifest_path = directory / "source-manifest.json"
+    with open(directory / "source.lock", "a+b") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        if manifest_path.exists():
+            manifest = json.loads(manifest_path.read_text())
+            if manifest.get("schema") != SCHEMA or manifest.get("operation") != operation or manifest.get("request") != request:
+                raise ValueError("Retained source directory belongs to another original intake")
+        else:
+            manifest = {"schema":SCHEMA,"operation":operation,"request":request,"startedAt":now(),
+                        "sources":[],"archives":[],"seed":None,"complete":False}
+            save_json(manifest_path, manifest)
+        expected_keys = {(year, quarter, area) for year, quarter in periods for area in areas}
+        retained_keys = [(entry.get("year"), entry.get("quarter"), entry.get("area")) for entry in manifest["sources"]]
+        if len(retained_keys) != len(set(retained_keys)) or not set(retained_keys).issubset(expected_keys):
+            raise ValueError("Retained intake repeats or adds an unselected quarterly source")
+        for year, quarter in periods:
+            for area in areas:
+                url = slice_url(year, quarter, area)
+                filename = str(year) + "-q" + str(quarter) + "-" + area + ".csv.gz"
+                pending_path = directory / (filename + ".pending.json")
+                entry = next((item for item in manifest["sources"] if (item["year"], item["quarter"], item["area"]) == (year, quarter, area)), None)
+                if entry:
+                    if entry["file"] != filename or entry["sourceUrl"] != url: raise ValueError("Retained original slice identity differs")
+                    target = directory / filename
+                    if target.is_symlink() or not target.is_file(): raise ValueError("Retained original slice is not a regular file")
+                    packed = target.read_bytes()
+                    raw = gzip.decompress(packed)
+                    summary = original_summary(raw, area, year)
+                    if (len(raw) != entry["bytes"] or digest(raw) != entry["sha256"] or digest(packed) != entry["gzipSha256"]
+                            or summary["periods"] != [str(year)+"-Q"+str(quarter)] or summary["columns"] != entry["columns"]
+                            or summary["rowCount"] != entry["rowCount"]):
+                        raise ValueError("Retained complete original quarterly slice changed")
+                    emit({"phase":"slice_reused","year":year,"quarter":quarter,"area":area,"sha256":entry["sha256"]})
+                    continue
+                if pending_path.exists():
+                    if pending_path.is_symlink() or pending_path.stat().st_size > 96 * 1024 * 1024:
+                        raise ValueError("Retained pending quarterly source exceeds capacity")
+                    pending = json.loads(pending_path.read_text())
+                    entry, packed = pending["entry"], base64.b64decode(pending["gzipBody"], validate=True)
+                    raw = gzip.decompress(packed)
+                    if (entry.get("file") != filename or entry.get("sourceUrl") != url
+                            or (entry.get("year"),entry.get("quarter"),entry.get("area")) != (year,quarter,area)
+                            or len(raw) != entry.get("bytes") or digest(raw) != entry.get("sha256")
+                            or digest(packed) != entry.get("gzipSha256")):
+                        raise ValueError("Retained pending original quarterly source changed")
+                else:
+                    if received:
+                        raw, receipt = retained_slice(received[(year,quarter,area)], url)
+                    else:
+                        response, receipt = fetch(url)
+                        try: raw = response.read(MAX_MEMBER + 1)
+                        finally: response.close()
+                        if not raw or len(raw) > MAX_MEMBER or receipt["status"] != 200 or receipt["finalUrl"] != url:
+                            raise ValueError("Read one complete original quarterly CSV response")
+                        length = next((value for key, value in receipt["headers"].items() if key.lower() == "content-length"), None)
+                        if length is not None and int(length) != len(raw): raise ValueError("Original quarterly CSV Content-Length differs")
+                        receipt.update({"kind":"official_http","sourceUrl":url,"completedAt":now(),"bytes":len(raw),"sha256":digest(raw)})
+                    packed = gzip.compress(raw, mtime=0)
+                    summary = original_summary(raw, area, year)
+                    if summary["periods"] != [str(year)+"-Q"+str(quarter)]:
+                        raise ValueError("The original CSV contains a different quarterly period")
+                    entry = {"sourceKind":"quarterly_api_slice","area":area,"year":year,"quarter":quarter,
+                             "file":filename,"bytes":len(raw),"sha256":digest(raw),"gzipBytes":len(packed),
+                             "gzipSha256":digest(packed),"sourceUrl":url,"receipt":receipt,
+                             "rowCount":summary["rowCount"],"columns":summary["columns"],"periods":summary["periods"],
+                             "withheldRows":summary["withheldRows"],"classification":"Published NAICS"}
+                    # One atomic complete checkpoint retains both original bytes and their
+                    # actual receipt before publishing the separately named gzip member.
+                    save_json(pending_path, {"entry":entry,"gzipBody":base64.b64encode(packed).decode("ascii")})
+                summary = original_summary(raw, area, year)
+                if summary["periods"] != [str(year)+"-Q"+str(quarter)] or summary["rowCount"] != entry["rowCount"] or summary["columns"] != entry["columns"]:
+                    raise ValueError("The complete pending CSV header, rows or period changed")
+                target = directory / filename
+                if target.exists():
+                    if target.is_symlink() or not target.is_file() or target.read_bytes() != packed:
+                        raise ValueError("An earlier original quarterly file differs; preserve it in its own intake")
+                else: atomic(target, packed)
+                manifest["sources"].append(entry)
+                save_json(manifest_path, manifest)
+                pending_path.unlink()
+                emit({"phase":"slice_complete","year":year,"quarter":quarter,"area":area,"bytes":len(raw),
+                      "rows":summary["rowCount"],"withheldRows":summary["withheldRows"],"sha256":entry["sha256"]})
+        if len(manifest["sources"]) != len(expected_keys): raise ValueError("The original source intake is incomplete")
+        if not manifest.get("complete"):
+            manifest.update({"complete":True,"completedAt":now(),"originalBytes":sum(source["bytes"] for source in manifest["sources"]),
+                             "storedBytes":sum(source["gzipBytes"] for source in manifest["sources"])})
+            save_json(manifest_path, manifest)
+        emit({"phase":"complete","manifest":str(manifest_path),"members":len(manifest["sources"]),"periods":period_names,
+              "originalBytes":manifest["originalBytes"],"storedBytes":manifest["storedBytes"],"manifestSha256":digest(manifest_path.read_bytes())})
+        return manifest
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--directory", required=True)
-    parser.add_argument("--years", default="1990:2026")
+    parser.add_argument("--years")
+    parser.add_argument("--periods", help="Complete quarterly API slices, for example 2025-Q1,2026-Q1")
+    parser.add_argument("--operation", help="Original quarterly-source operation; defaults to the selected programme identity")
+    parser.add_argument("--received-slices", help="Complete descriptor of retained original provider files")
     parser.add_argument("--areas", default=",".join(AREAS))
+    parser.add_argument("--programme", help="The exact native programme JSON; retains its operation/periods and omits the legacy San Francisco diagnostic")
     options = parser.parse_args()
-    ends = options.years.split(":")
+    areas = list(dict.fromkeys(options.areas.split(",")))
+    if not areas or any(not re.fullmatch(r"(?:US000|\d{5})", area) for area in areas): raise ValueError("Use original BLS area codes")
+    programme = read_programme(options.programme) if options.programme else None
+    if options.periods:
+        operation = options.operation or (programme["value"]["operation"] if programme else "QCEW-QUARTERLY-SOURCE-INTAKE")
+        if options.years is not None: raise ValueError("Select either annual archive years or exact quarterly slices")
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}", operation): raise ValueError("Keep one source operation identity")
+        periods = []
+        for item in options.periods.split(","):
+            match = re.fullmatch(r"(199[0-9]|20[0-9]{2}|2100)-Q([1-4])", item)
+            if not match: raise ValueError("Select original quarterly periods as YYYY-Qq")
+            value = (int(match.group(1)), int(match.group(2)))
+            if value in periods: raise ValueError("Select each original quarterly period once")
+            periods.append(value)
+        acquire_slices(pathlib.Path(options.directory).resolve(), periods, areas, operation, options.received_slices, programme=programme)
+        return
+    if options.received_slices or options.operation: raise ValueError("Quarterly source options require --periods")
+    ends = (options.years or "1990:2026").split(":")
     if len(ends) == 1: years = [int(ends[0])]
     else:
         if len(ends) != 2: raise ValueError("Use YEAR or FIRST:LAST")
@@ -264,7 +517,7 @@ def main():
     if not years or min(years) < 1990 or max(years) > 2100: raise ValueError("Choose original NAICS archive years")
     areas = list(dict.fromkeys(options.areas.split(",")))
     if not areas or any(not re.fullmatch(r"(?:US000|\d{5})", area) for area in areas): raise ValueError("Use original BLS area codes")
-    acquire(pathlib.Path(options.directory).resolve(), years, areas)
+    acquire(pathlib.Path(options.directory).resolve(), years, areas, programme=programme)
 if __name__ == "__main__":
     try: main()
     except Exception as error:

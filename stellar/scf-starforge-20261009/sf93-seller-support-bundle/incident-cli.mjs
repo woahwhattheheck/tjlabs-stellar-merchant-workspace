@@ -9,6 +9,7 @@ import {exportIncidentSnapshot,inspectIncidentSnapshot,receiveIncidentSnapshot,
 import {inspectSlackDestination} from './notifications-slack.mjs';
 import {runIncidentWatch} from './watch.mjs';
 import {reviewObjectSource} from './object-source.mjs';
+import {reviewX402Source} from './x402-source.mjs';
 import {acknowledgeIncident,configureIncidents,incidentStatus,remindIncident,
   operateNotification,pruneIncidents,exportIncident} from './incident-operator.mjs';
 
@@ -16,6 +17,9 @@ const usage=`SF93 merchant incident operations (Node 22+, Linux flock)
 
 review-object --session ORIGINAL_DIRECTORY [--max-bytes N] [--max-chunks N] [--timeout-ms N]
               [--financial-after-seconds N] [--output-after-seconds N]
+review-x402 --endpoint http://127.0.0.1:PORT/api/observation --token-env ENV
+            [--timeout-ms N] [--payment-after-seconds N] [--output-after-seconds N]
+            [--polling summary] [--inputs-sha256 REVIEWED_INPUTS_SHA256]
 init      --state NEW_DIRECTORY --config PRIVATE_CONFIG
 run       --state DIRECTORY
 status    --state DIRECTORY [--details]
@@ -50,7 +54,7 @@ Individual restored deliveries still require the original explicit retry action.
 Snapshot directory publication uses the original SF88 Linux/Python 3 no-replace helper.
 See INCIDENT_RECOVERY.md and INCIDENT_OPERATIONS.md for complete receiving and case import.
 `;
-const shapes={'review-object':['session','max-bytes','max-chunks','timeout-ms','financial-after-seconds','output-after-seconds'],init:['config'],run:[],status:[],destination:[],ack:['incident','revision','by','note-file'],
+const shapes={'review-x402':['endpoint','token-env','timeout-ms','payment-after-seconds','output-after-seconds','polling','inputs-sha256'],'review-object':['session','max-bytes','max-chunks','timeout-ms','financial-after-seconds','output-after-seconds'],init:['config'],run:[],status:[],destination:[],ack:['incident','revision','by','note-file'],
   notify:['incident','revision'],retry:['event','attempts','by'],cancel:['event','attempts','by'],
   configure:['config','config-revision'],prune:[],export:['incident','revision','workspace','route','out'],
   snapshot:['out','operation','revision'],'inspect-snapshot':['snapshot','manifest-sha'],
@@ -64,11 +68,11 @@ function parse(args) {
     const flag=flags[i];
     if(command==='status'&&flag==='--details'&&!Object.hasOwn(values,'details')){values.details=true;continue;}
     const key=flag.slice(2);
-    if(!flag.startsWith('--')||!(['review-object','inspect-snapshot'].includes(command)?shapes[command]:['state',...shapes[command]]).includes(key)||Object.hasOwn(values,key)||
+    if(!flag.startsWith('--')||!(['review-x402','review-object','inspect-snapshot'].includes(command)?shapes[command]:['state',...shapes[command]]).includes(key)||Object.hasOwn(values,key)||
         !flags[i+1]||flags[i+1].startsWith('--'))throw new TypeError(usage);
     values[key]=flags[++i];
   }
-  const required=command==='review-object'?['session']:command==='inspect-snapshot'?shapes[command]:
+  const required=command==='review-x402'?['endpoint','token-env']:command==='review-object'?['session']:command==='inspect-snapshot'?shapes[command]:
     ['state',...shapes[command].filter(key=>key!=='note-file'||command==='abandon-snapshot')];
   if(required.some(key=>!values[key]))throw new TypeError(usage);
   for(const key of ['revision','attempts','config-revision'])if(values[key]!==undefined) {
@@ -76,7 +80,7 @@ function parse(args) {
     values[key]=Number(values[key]);
     if(!Number.isSafeInteger(values[key])||values[key]<(key==='attempts'?0:1))throw new TypeError('Invalid --'+key);
   }
-  for(const key of ['max-bytes','max-chunks','timeout-ms','financial-after-seconds','output-after-seconds'])if(values[key]!==undefined) {
+  for(const key of ['max-bytes','max-chunks','timeout-ms','financial-after-seconds','payment-after-seconds','output-after-seconds'])if(values[key]!==undefined) {
     if(!/^(0|[1-9]\d*)$/.test(values[key]))throw new TypeError('Expected an exact integer for --'+key);
     values[key]=Number(values[key]);
     if(!Number.isSafeInteger(values[key]))throw new TypeError('Invalid --'+key);
@@ -87,6 +91,18 @@ const privateText=async(path,max)=>new TextDecoder('utf-8',{fatal:true}).decode(
 export async function main(args=process.argv.slice(2)) {
   const parsed=parse(args);if(!parsed){process.stdout.write(usage);return;}
   const {command,values:v}=parsed;
+  if(command==='review-x402') {
+    const controller=new AbortController(),stop=()=>controller.abort();
+    process.once('SIGINT',stop);process.once('SIGTERM',stop);
+    try {
+      const names={'timeout-ms':'timeoutMs','payment-after-seconds':'paymentAfterSeconds','output-after-seconds':'outputAfterSeconds',
+        'polling':'polling','inputs-sha256':'inputsSha256'};
+      const input={endpoint:v.endpoint,tokenEnv:v['token-env'],...Object.fromEntries(Object.entries(names)
+        .filter(([flag])=>v[flag]!==undefined).map(([flag,key])=>[key,v[flag]]))};
+      const result=await reviewX402Source(input,{signal:controller.signal});
+      process.stdout.write(JSON.stringify(result,null,2)+'\n');return result;
+    } finally {process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);}
+  }
   if(command==='review-object') {
     const controller=new AbortController(),stop=()=>controller.abort();
     process.once('SIGINT',stop);process.once('SIGTERM',stop);

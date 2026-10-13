@@ -294,6 +294,20 @@ so another operator can continue it after interruption. Start with
 `application-setup-export`, `application-setup-prepare`,
 `application-setup-status` and `application-setup-save`.
 
+## Complete Application output
+
+Applications and Launch Groups open the same original operation output with
+live tailing, fixed-end historical paging, byte navigation, in-page search and
+a complete original-byte download. A long commissioning run can be inspected
+and handed over without starting another operation. Browser selections stay
+with their actual Runtime workspace, Application and run.
+
+The [complete output guide](OUTPUT.md) covers original source identity,
+UTF-8 byte ranges, growing files, replacement recovery, authenticated streamed
+downloads and the native **application-output-page** / **application-output-export**
+commands. Existing terminal input and Application lifecycle controls continue
+to operate their original requests.
+
 ## Application API and retained records
 
 The workspace model and server can be embedded in another local operator tool:
@@ -352,6 +366,46 @@ Original installation state remains inside each actual runtime directory.
 The server binds loopback, requires the private URL capability for API access,
 and checks the exact origin for writes. It retains the existing operator
 workspace pattern: private real directories, fixed local assets, request field
-allowlists and explicit original helper calls. Keep the workspace and its
-runtime directories with the operator's normal host backup; use the original
-runtime installer and deployment recovery procedures for their contents.
+allowlists and explicit original helper calls. Use **Workspace backup** for the complete included workspace and retained
+history. Preserve its declared external runtime and data directories through
+their existing native backup and recovery procedures.
+
+## Complete workspace backup and receiving
+
+**Workspace backup** reviews the complete included workspace and its external
+bindings, creates a sealed archive, resumes archive uploads and restores the
+original workspace location. Retained receiving operations preserve the
+original identities and history. Review the restored external bindings before
+opening the original workspace through its normal runtime and Applications
+controls.
+
+See [Complete workspace backup and receiving](WORKSPACE_BACKUP.md) for the
+browser, headless commands, independent receiving view and model/API contract.
+
+## Operation status and retained output
+
+The Operations and Managed releases views expose **Refresh operation status** for each original request. If a native process check is unavailable, that row carries its error while installed runtimes and the rest of the workspace remain accessible. The displayed uncertainty preserves the original phase and source identity. Read [operation observation and recovery](MANAGED_OPERATIONS.md#read-operation-status-when-a-native-probe-is-unavailable) for the nullable activity fields, direct API and CLI reads, retained log states and original recovery controls.
+
+## Customer operating procedures
+
+**Operating procedures** keeps recurring customer work in the original Operating Plan format alongside explicitly selected Runtime source records. Edit instructions and carried files, preserve every saved revision, record a named operator's assessment with actual captured originals, review returned work through the maintained return engine, and export or independently receive the complete procedure history.
+
+The pane and `procedure-state`, `procedure-open`, `procedure-create`, `procedure-save`, `procedure-record`, `procedure-return`, `procedure-decide`, `procedure-apply`, `procedure-receive` and `procedure-export` commands use the existing Runtime workspace. They retain exact requests and compare the current record before changes. Runtime installation, application starts and archive restore remain explicit actions in their original controls.
+
+Read [Runtime operating procedures](RUNTIME_PROCEDURES.md) for complete source selection, browser request recovery, revision and returned-work review, carried files, full JSON/HTML delivery and original CLI request formats.
+
+
+### Complete operation output and prior installation attempts
+
+The Operations screen now reads the entire original worker output for every
+Runtime workflow. **Read installation attempts** opens actual retained npm
+attempts in the registered runtime, including earlier attempts after a later
+installation. Both use the same reader as Applications and Launch Groups:
+fixed-end paging, UTF-8 byte navigation, exact page search, per-source restoration,
+live tail and complete original-byte download. The original worker, current
+installer state, managed outcome and recovery operation remain authoritative.
+
+See [OUTPUT.md](OUTPUT.md#runtime-operations-and-installation-attempt-handover)
+for the full operator journey, source-bound API, native `output-sources`,
+`output-page` and exclusive `output-export` commands, and the existing native
+customer/backup receiving course.

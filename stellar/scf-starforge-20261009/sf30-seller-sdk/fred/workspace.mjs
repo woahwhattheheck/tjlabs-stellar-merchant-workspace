@@ -27,6 +27,24 @@ import { readFredProject, fredProjectView, getFredCapture, configureFredProject,
   getFredReleasePlan, downloadFredReleasePlan, acquireFredPlannedVintage } from './project.mjs';
 import { startFredMerchant, readFredMerchant, prepareFredPurchase, executeFredPurchase,
   recoverFredPurchase, exportFredPurchase } from './merchant.mjs';
+import { selectQcewPublication } from './qcew/project.mjs';
+import { readQcewMerchant, startQcewMerchant } from './qcew/merchant.mjs';
+import { prepareQcewPurchase, executeQcewPurchase, recoverQcewPurchase, exportQcewPurchase, listQcewPurchases,
+  receiveQcewPurchase, readQcewPurchaseReceiving, exportQcewPurchaseReceiving } from './qcew/purchase.mjs';
+
+const fredMerchantEngine = { read: readFredMerchant, start: startFredMerchant, prepare: prepareFredPurchase,
+  execute: executeFredPurchase, recover: recoverFredPurchase, download: exportFredPurchase };
+const countyMerchantEngine = { read: readQcewMerchant, start: startQcewMerchant, prepare: prepareQcewPurchase,
+  execute: executeQcewPurchase, recover: recoverQcewPurchase, download: exportQcewPurchase };
+async function selectEconomicPublication(directory, publicationId) {
+  const state = await readFredProject(directory);
+  const county = state.qcew?.publications?.some(item => item.id === publicationId);
+  need(!(county && state.publications.some(item => item.id === publicationId)),
+    'The original publication identity is ambiguous.', 'FRED_PUBLICATION_CONFLICT', 409);
+  return county ? { kind: 'QCEW', directory: await selectQcewPublication(directory, publicationId), engine: countyMerchantEngine } :
+    { kind: 'FRED', directory: await selectFredPublication(directory, publicationId), engine: fredMerchantEngine };
+}
+
 
 const securityHeaders = { 'cache-control': 'no-store', 'x-content-type-options': 'nosniff',
   'referrer-policy': 'no-referrer', 'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" };
@@ -86,11 +104,18 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
     ['/recurring.js', ['recurring.js', 'text/javascript; charset=utf-8']],
     ['/releases.js', ['releases.js', 'text/javascript; charset=utf-8']],
     ['/ddp.js', ['ddp.js', 'text/javascript; charset=utf-8']],
+    ['/alfred.js', ['alfred.js', 'text/javascript; charset=utf-8']],
+    ['/source/model.mjs', ['../model.mjs', 'text/javascript; charset=utf-8']],
+    ['/source/alfred/model.mjs', ['../alfred/model.mjs', 'text/javascript; charset=utf-8']],
+    ['/source/ddp/csv.mjs', ['../ddp/csv.mjs', 'text/javascript; charset=utf-8']],
+    ['/alfred-guide', ['../alfred/README.md', 'text/plain; charset=utf-8']],
     ['/ddp-guide', ['../ddp/PROJECT.md', 'text/plain; charset=utf-8']],
     ['/ddp-published.js', ['ddp-published.js', 'text/javascript; charset=utf-8']],
     ['/ddp-published-guide', ['../ddp/PUBLISHED-WORKSPACE.md', 'text/plain; charset=utf-8']],
     ['/qcew.js', ['qcew.js', 'text/javascript; charset=utf-8']],
+    ['/customer-work.mjs', ['customer-work.mjs', 'text/javascript; charset=utf-8']],
     ['/qcew-guide', ['../qcew/WORKSPACE.md', 'text/plain; charset=utf-8']],
+    ['/county-merchant-guide', ['../qcew/MERCHANT.md', 'text/plain; charset=utf-8']],
     ['/recurring-guide', ['../TEMPLATES.md', 'text/plain; charset=utf-8']] ]);
   const publishedHttp = createFredDdpPublicationHttp({ directory });
   const assets = new Map();
@@ -99,9 +124,17 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
   const instanceId = randomUUID(), startedAt = new Date().toISOString();
   const launchView = () => ({ schema: FRED_WORKSPACE_STARTUP, state: 'LISTENING', binding,
     instanceId, startedAt, buyerConfigured: Boolean(buyer) });
-  let merchant = null, runningPublication = null, pending = null, closing = false, origin;
-  const runtimeView = () => merchant ? { publicationId: runningPublication, url: merchant.url, mode: merchant.mode,
+  let merchant = null, runningPublication = null, runningKind = null, pending = null, closing = false, origin;
+  const runtimeView = () => merchant ? { publicationId: runningPublication, kind: runningKind, url: merchant.url, mode: merchant.mode,
     editionId: merchant.editionId, snapshot: merchant.snapshot, resource: merchant.resource } : null;
+  const originalPurchase = async (request,selected) => {
+    operationId(request.intentId);
+    const purchase=await readPrivateJson(join(selected.directory,'customer-requests',request.intentId,'prepared.json'),131072);
+    need(purchase.intentId===request.intentId,'The retained native customer intent changed.','FRED_PURCHASE_CHANGED',409);
+    need(request.expectedPurchaseSha256===undefined || request.expectedPurchaseSha256===purchase.purchaseSha256,
+      'Open the original prepared customer request.','FRED_PURCHASE_CHANGED',409);
+    return purchase;
+  };
   const run = async request => {
     const id = request.id, expectedRevision = request.expectedRevision, common = { directory, id, expectedRevision };
     if (FRED_DDP_ACTIONS.has(request.action))
@@ -135,31 +168,39 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
       case 'abandon': return abandonFredOperation({ ...common, pendingId: request.pendingId });
       case 'merchant-start': {
         need(!merchant, 'Stop the currently owned merchant before selecting another publication.', 'FRED_MERCHANT_RUNNING', 409);
-        const selected = await selectFredPublication(directory, request.publicationId);
-        merchant = await startFredMerchant({ directory: selected, port: merchantPort, facilitator, allowLocalFacilitator });
-        runningPublication = request.publicationId; return runtimeView();
+        const selected = await selectEconomicPublication(directory, request.publicationId);
+        merchant = await selected.engine.start({ directory: selected.directory, port: merchantPort, facilitator, allowLocalFacilitator });
+        runningPublication = request.publicationId; runningKind = selected.kind; return runtimeView();
       }
       case 'merchant-stop': {
         need(!merchant || request.publicationId === runningPublication, 'Choose the original running merchant.', 'FRED_MERCHANT_CHANGED', 409);
         if (merchant) await merchant.close();
-        merchant = null; runningPublication = null; return { state: 'STOPPED' };
+        merchant = null; runningPublication = null; runningKind = null; return { state: 'STOPPED' };
       }
       case 'prepare': {
-        const selected = await selectFredPublication(directory, request.publicationId);
-        return prepareFredPurchase({ directory: selected, intentId: request.intentId, query: new URLSearchParams(request.query ?? ''),
+        const selected = await selectEconomicPublication(directory, request.publicationId);
+        return selected.engine.prepare({ directory: selected.directory, intentId: request.intentId, query: new URLSearchParams(request.query ?? ''),
           file: request.file ?? null, previous: request.previous ?? null, acceptIndex: request.acceptIndex ?? 0 });
       }
       case 'buy': {
         need(buyer, 'Start this workspace with the existing buyer configuration.', 'FRED_BUYER_REQUIRED');
-        const selected = await selectFredPublication(directory, request.publicationId);
-        operationId(request.intentId);
-        const purchase = await readPrivateJson(join(selected, 'customer-requests', request.intentId, 'prepared.json'), 131072);
-        return output(await executeFredPurchase({ directory: selected, buyer, purchase, signal: abort.signal }));
+        const selected = await selectEconomicPublication(directory, request.publicationId);
+        const purchase=await originalPurchase(request,selected);
+        return output(await selected.engine.execute({ directory: selected.directory, buyer, purchase, signal: abort.signal }));
       }
       case 'recover': {
         need(buyer, 'Start this workspace with the existing buyer configuration.', 'FRED_BUYER_REQUIRED');
-        const selected = await selectFredPublication(directory, request.publicationId);
-        return output(await recoverFredPurchase({ directory: selected, buyer, intentId: request.intentId }));
+        const selected = await selectEconomicPublication(directory, request.publicationId);
+        await originalPurchase(request,selected);
+        return output(await selected.engine.recover({ directory: selected.directory, buyer, intentId: request.intentId }));
+      }
+      case 'receive-county-purchase': {
+        need(buyer, 'Start this workspace with the original configured buyer.', 'FRED_BUYER_REQUIRED');
+        const selected = await selectEconomicPublication(directory, request.publicationId);
+        need(selected.kind === 'QCEW', 'Choose the original county-report publication.');
+        await originalPurchase(request,selected);
+        return receiveQcewPurchase({ directory: selected.directory, buyer, intentId: request.intentId,
+          receivingDirectory: request.receivingDirectory ?? null });
       }
       default: need(false, 'Unknown economic workspace action.');
     }
@@ -167,6 +208,10 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
   const execute = async request => {
     need(request && typeof request === 'object' && !Array.isArray(request) && typeof request.action === 'string',
       'Select a workspace action.');
+      need(request.projectId===undefined || request.projectId===binding.projectId,
+        'Continue this request in its original economic project.','FRED_WORKSPACE_BINDING_CHANGED',409);
+      need((await readFredProject(directory)).id===binding.projectId,
+        'The original project directory changed before dispatch.','FRED_WORKSPACE_BINDING_CHANGED',409);
     need(!pending, 'The original workspace action is still running; read its state.', 'FRED_WORKSPACE_BUSY', 409);
     if (request.action === 'ddp-published-run') {
       let retained, rejected;
@@ -192,13 +237,20 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
       need(typeof supplied === 'string' && supplied.length === expected.length &&
         timingSafeEqual(Buffer.from(supplied), Buffer.from(expected)), 'Use the original workspace session.', 'FRED_SESSION_REQUIRED', 403);
       need(!closing, 'The workspace is closing.', 'FRED_WORKSPACE_CLOSING', 503);
+      const selectedProject=req.headers['x-fred-project-id'];
+      need(selectedProject===undefined || selectedProject===binding.projectId,
+        'Use the original selected economic project.','FRED_WORKSPACE_BINDING_CHANGED',409);
+      need((await readFredProject(directory)).id===binding.projectId,
+        'The original project directory changed.','FRED_WORKSPACE_BINDING_CHANGED',409);
+      res.setHeader('x-fred-project-id',binding.projectId);
       if (req.method === 'GET' && url.pathname === '/api/launch') {
         need((await readFredProject(directory)).id === binding.projectId,
           'The original project directory changed.', 'FRED_WORKSPACE_BINDING_CHANGED', 409);
         return send(res, 200, launchView());
       }
       if (req.method === 'GET' && url.pathname === '/api/state')
-        return send(res, 200, { project: await fredProjectView(directory), merchant: runtimeView(),
+        return send(res, 200, { project: await fredProjectView(directory),
+          workspace:{projectId:binding.projectId,directory}, merchant: runtimeView(),
           busy: pending?.action ?? null, buyerConfigured: Boolean(buyer) });
       if (req.method === 'GET' && url.pathname.startsWith('/api/qcew/')) {
         const result = await readQcewWorkspace({ directory, projectId: binding.projectId, url, environment });
@@ -295,17 +347,21 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
       if (req.method === 'GET' && url.pathname === '/api/bundle')
         return sendJsonFile(res, 200, await exportFredProject({ directory }), 'fred-economic-project.json');
       if (req.method === 'GET' && url.pathname === '/api/publication') {
-        const selected = await selectFredPublication(directory, url.searchParams.get('publication'));
-        const { edition, plan, offers } = await readFredMerchant(selected);
-        const names = await readdir(join(selected, 'customer-requests')).catch(error => { if (error.code === 'ENOENT') return []; throw error; });
+        const selected = await selectEconomicPublication(directory, url.searchParams.get('publication'));
+        const merchant = await selected.engine.read(selected.directory), { edition, plan, offers } = merchant;
+        if (selected.kind === 'QCEW') return send(res, 200, { kind: selected.kind, edition, plan, offers,
+          requests: await listQcewPurchases(selected.directory, { merchant }) });
+        const names = await readdir(join(selected.directory, 'customer-requests')).catch(error => { if (error.code === 'ENOENT') return []; throw error; });
         const requests = [];
         for (const name of names) {
           if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$/.test(name)) continue;
-          const saved = await readPrivateJson(join(selected, 'customer-requests', name, 'prepared.json'), 131072);
+          let saved;
+          try { saved = await readPrivateJson(join(selected.directory, 'customer-requests', name, 'prepared.json'), 131072); }
+          catch (error) { if (error.code === 'ENOENT') continue; throw error; }
           requests.push({ intentId: saved.intentId, url: saved.url, file: saved.file, purchaseSha256: saved.purchaseSha256 });
         }
         const { directory: privateDirectory, ...publicEdition } = edition;
-        return send(res, 200, { edition: publicEdition, plan, offers, requests });
+        return send(res, 200, { kind: selected.kind, edition: publicEdition, plan, offers, requests });
       }
       if (req.method === 'GET' && url.pathname === '/api/preview') {
         const selected = await selectFredPublication(directory, url.searchParams.get('publication'));
@@ -316,14 +372,33 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
         const context = { query }, admission = dataset.admit(context), result = admission === true ? dataset.handle(context) : admission;
         return send(res, result.status, { mode: 'ORIGINAL_DATASET_PREVIEW', ...result.body });
       }
+      if (req.method === 'GET' && url.pathname === '/api/customer-request') {
+        const selected=await selectEconomicPublication(directory,url.searchParams.get('publication'));
+        const purchase=await originalPurchase({intentId:url.searchParams.get('intent')},selected);
+        return send(res,200,{projectId:binding.projectId,kind:selected.kind,purchase});
+      }
       if (req.method === 'GET' && url.pathname === '/api/customer-download') {
         need(buyer, 'Start the workspace with the original buyer configuration.');
-        const selected = await selectFredPublication(directory, url.searchParams.get('publication'));
-        const result = await exportFredPurchase({ directory: selected, buyer, intentId: url.searchParams.get('intent') });
+        const selected = await selectEconomicPublication(directory, url.searchParams.get('publication'));
+        const result = await selected.engine.download({ directory: selected.directory, buyer, intentId: url.searchParams.get('intent') });
         return send(res, 200, result.bytes, result.contentType, result.filename);
       }
       if (await publishedHttp.handle({ req, res, url, body, send })) return;
       if (await handleFredDdpHttp({ req, res, url, directory, body, send, sendJsonFile, execute, busy: () => Boolean(pending) })) return;
+      if (req.method === 'GET' && url.pathname === '/api/customer-received') {
+        const selected = await selectEconomicPublication(directory, url.searchParams.get('publication'));
+        need(selected.kind === 'QCEW', 'Choose the original county-report purchase.');
+        const intentId = url.searchParams.get('intent'), file = url.searchParams.get('file');
+        if (file !== null) {
+          const result = await exportQcewPurchaseReceiving({ directory: selected.directory, intentId,
+            file, editionId: url.searchParams.get('edition') });
+          return send(res, 200, result.bytes, result.contentType, result.filename);
+        }
+        const received = await readQcewPurchaseReceiving({ directory: selected.directory, intentId });
+        return send(res, 200, { receipt: received.receipt, directory: received.directory,
+          editions: received.editions.map(item => ({ manifest: item.manifest,
+            title: item.report.profile.definition.title, period: item.report.period })) });
+      }
       if (req.method === 'POST' && ['/api/action', '/api/qcew/action'].includes(url.pathname)) {
         const countyAction = url.pathname === '/api/qcew/action';
         const request = await body(req, countyAction ? QCEW_WORKSPACE_REQUEST_BYTES : Math.max(MAX_DDP_CAPTURE_BYTES, MAX_CAPTURE_BYTES * 2));
@@ -343,14 +418,14 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
   });
   server.headersTimeout = 10000; server.requestTimeout = 120000; server.keepAliveTimeout = 1000;
   await new Promise((done, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', done); });
-  origin = 'http://127.0.0.1:' + server.address().port;
+  origin = new URL('http://127.0.0.1:' + server.address().port).origin;
   let closePromise;
   return { server, directory, url: origin + '/#' + token, origin,
     startup: { ...launchView(), url: origin + '/#' + token }, close: () => closePromise ??= (async () => {
     closing = true; publishedHttp.close(); abort.abort();
     await pending?.task.catch(() => {});
     try { if (merchant) await merchant.close(); }
-    finally { merchant = null; runningPublication = null;
+    finally { merchant = null; runningPublication = null; runningKind = null;
       await new Promise((done, reject) => { server.close(error => error ? reject(error) : done()); server.closeIdleConnections?.(); }); }
   })() };
 }

@@ -11,7 +11,7 @@ const hash = value => createHash('sha256').update(value).digest('hex');
 function need(ok, message) { if (!ok) throw new Error(message); }
 function argumentsOf(args) {
   const values = {}, allowed = new Set(['source-root', 'original-directory', 'work-directory', 'input',
-    'bundle', 'phase', 'api-key-env', 'migration', 'interrupt-after-responses']);
+    'bundle', 'phase', 'api-key-env', 'migration', 'interrupt-after-responses', 'source-mode', 'metadata', 'acquisition']);
   for (let index = 0; index < args.length; index += 2) {
     const key = args[index]?.replace(/^--/, '');
     need(args[index]?.startsWith('--') && allowed.has(key) && args[index + 1] !== undefined &&
@@ -23,6 +23,12 @@ function argumentsOf(args) {
   need(['prepare', 'complete'].includes(values.phase), 'Choose prepare or complete for this same native operation.');
   values['api-key-env'] ??= 'FRED_API_KEY';
   need(/^[A-Z_][A-Z0-9_]{0,127}$/.test(values['api-key-env']), 'Name the existing FRED key environment variable.');
+  values['source-mode'] ??= 'API_VINTAGE';
+  need(['API_VINTAGE', 'ALFRED_VINTAGE'].includes(values['source-mode']), 'Choose API_VINTAGE or ALFRED_VINTAGE for this original acquisition.');
+  need(values['source-mode'] === 'ALFRED_VINTAGE' || values.metadata === undefined,
+    'Historical ALFRED metadata belongs to an explicitly selected ALFRED acquisition.');
+  if (values.acquisition !== undefined) need(/^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$/.test(values.acquisition),
+    'Choose the original native acquisition operation ID.');
   const interruption = Number(values['interrupt-after-responses'] ?? '2');
   need(Number.isSafeInteger(interruption) && interruption >= 0 && interruption <= 10, 'Choose 0–10 actual responses for the single interruption check.');
   values.interruption = interruption;
@@ -263,16 +269,69 @@ async function complete() {
   const planFile = await project.downloadFredDdpMigration({ directory: projectDirectory, migrationId });
   const plan = JSON.parse(planFile.body.toString('utf8'));
   need(plan.summary.ready, 'The retained migration must include its complete reviewed mapping and observation window.');
-  const operationId = 'ddp-observations-' + plan.id.slice(-64);
+  const alfred = options['source-mode'] === 'ALFRED_VINTAGE';
+  let metadata, metadataSha256, selectedOperation;
+  if (alfred) {
+    if (options.metadata) {
+      const handle = await open(resolve(options.metadata), fsConstants.O_RDONLY | fsConstants.O_NOFOLLOW);
+      try {
+        const info = await handle.stat();
+        need(info.isFile() && info.size <= 64 * 1024 * 1024, 'Choose the complete original metadata file within its64MiB capacity.');
+        const bytes = await handle.readFile();
+        need(bytes.length === info.size, 'The original historical metadata file changed while reading.');
+        metadata = JSON.parse(bytes.toString('utf8'));
+      } finally { await handle.close(); }
+      need(Array.isArray(metadata), 'Historical metadata must be the complete original edition array.');
+      const { readFredAlfredMetadata } = await import(pathToFileURL(join(sourceRoot, FRED, 'alfred/model.mjs')).href);
+      const selectedSeries = new Set(plan.acquisitions.flatMap(item => item.selection.series));
+      const seen = new Set();
+      for (const edition of metadata) {
+        const series = edition?.series?.value;
+        need(typeof series === 'string' && selectedSeries.has(series) && !seen.has(series),
+          'Keep one historical metadata edition per actual planned FRED series.');
+        seen.add(series);
+        readFredAlfredMetadata(edition, { series, vintage: plan.input.asOf });
+      }
+      metadata = [...metadata].sort((a, b) => a.series.value < b.series.value ? -1 : a.series.value > b.series.value ? 1 : 0);
+      metadataSha256 = hash(model.canonical(metadata));
+    }
+    const candidates = [...state.operations.map(item => ({ ...item, payload: item.result })), ...(state.pending ? [state.pending] : [])];
+    if (options.acquisition) {
+      selectedOperation = candidates.find(item => item.id === options.acquisition);
+      need(selectedOperation?.kind === 'ddp-migration-acquire' && selectedOperation.payload?.migrationId === migrationId &&
+        selectedOperation.payload?.sourceMode === 'ALFRED_VINTAGE' && SHA.test(selectedOperation.payload?.metadataSha256 ?? ''),
+        'Select the original retained ALFRED acquisition for this migration.');
+    } else if (metadata === undefined && state.pending?.kind === 'ddp-migration-acquire' &&
+        state.pending.payload?.migrationId === migrationId && state.pending.payload?.sourceMode === 'ALFRED_VINTAGE') {
+      selectedOperation = state.pending;
+    }
+    if (selectedOperation) {
+      need(metadataSha256 === undefined || metadataSha256 === selectedOperation.payload.metadataSha256,
+        'Continue the original acquisition with the same complete metadata editions.');
+      metadataSha256 = selectedOperation.payload.metadataSha256;
+    } else metadataSha256 ??= hash(model.canonical([]));
+  }
+  const operationId = alfred ? selectedOperation?.id ?? 'ddp-alfred-' + hash(model.canonical({
+    migrationId, sourceMode: 'ALFRED_VINTAGE', metadataSha256
+  })) : 'ddp-observations-' + plan.id.slice(-64);
+  need(alfred || options.acquisition === undefined || options.acquisition === operationId,
+    'Continue the original API acquisition ID for this saved migration.');
   const completed = state.operations.find(item => item.id === operationId);
-  need(completed || typeof process.env[state.apiKeyEnv] === 'string' && process.env[state.apiKeyEnv].trim().length > 0,
+  need(alfred || completed || typeof process.env[state.apiKeyEnv] === 'string' && process.env[state.apiKeyEnv].trim().length > 0,
     'Run this same prepared project in the existing native environment carrying ' + state.apiKeyEnv + '.');
+  const artifactId = alfred ? operationId : migrationId;
+  const targetReceiver = alfred ? join(work, 'received-' + operationId) : receiverDirectory;
+  const originDirectory = alfred ? join(work, 'reports-origin', operationId) : join(work, 'reports-origin');
+  const receivedDirectory = alfred ? join(work, 'reports-received', operationId) : join(work, 'reports-received');
   const expectedRevision = state.pending?.id === operationId ? state.pending.expectedRevision : state.revision;
   let requests = 0;
   const measuredFetch = async (...args) => { requests++; return fetch(...args); };
-  const interruptionPath = join(work, 'interruption-' + plan.id + '.json');
+  const interruptionPath = join(work, 'interruption-' + artifactId + '.json');
   let interruption = await optionalJson(interruptionPath);
-  const request = { directory: projectDirectory, id: operationId, expectedRevision, migrationId };
+  const request = { directory: projectDirectory, id: operationId, expectedRevision, migrationId,
+    ...(alfred ? { sourceMode: 'ALFRED_VINTAGE', metadataSha256, ...(metadata === undefined ? {} : { metadata }) } : {}) };
+  record('native-acquisition-selected', { operationId, migrationId, expectedRevision,
+    sourceMode: alfred ? 'ALFRED_VINTAGE' : 'API_VINTAGE', ...(alfred ? { metadataSha256 } : {}) });
   let acquired;
   if (!completed && options.interruption > 0 && !interruption) {
     const controller = new AbortController();
@@ -307,54 +366,80 @@ async function complete() {
   const replay = await project.acquireFredDdpMigration({ ...request, expectedRevision: finalState.revision, fetchImpl: measuredFetch });
   need(replay.replayed === true && replay.receivingId === acquired.receivingId,
     'The completed native acquisition did not replay its original saved report.');
+  if (alfred) need(acquired.sourceMode === 'ALFRED_VINTAGE' && acquired.metadataSha256 === metadataSha256,
+    'The completed receiving must retain this exact historical source mode and metadata identity.');
+  const completedSummaryPath = join(work, 'completed-' + artifactId + '-summary.json');
+  if (alfred) {
+    const previous = await optionalJson(completedSummaryPath);
+    if (previous) {
+      need(previous.projectId === finalState.id && previous.migrationId === migrationId &&
+        previous.operationId === operationId && previous.receivingId === acquired.receivingId &&
+        previous.sourceMode === 'ALFRED_VINTAGE' && previous.metadataSha256 === metadataSha256,
+        'The original historical receiving summary changed its source or result identity.');
+      const completeIdentity = await fileIdentity(previous.completeProject.path);
+      need(completeIdentity.bytes === previous.completeProject.bytes &&
+        completeIdentity.sha256 === previous.completeProject.sha256,
+        'The original complete historical project artifact changed.');
+      for (const group of ['origin', 'received']) for (const file of previous.reports[group]) {
+        const retained = acquired.receiving.files.find(item => item.path === basename(file.path));
+        const actual = await fileIdentity(file.path);
+        need(retained && retained.bytes === file.bytes && retained.sha256 === file.sha256 &&
+          actual.bytes === file.bytes && actual.sha256 === file.sha256,
+          'The retained complete historical receiving files changed.');
+      }
+      record('native-project-receiving-complete', { ...previous, replayed: true,
+        currentRevision: finalState.revision, originalHttpRequestsThisInvocation: requests });
+      return previous;
+    }
+  }
   const originReports = [];
   for (const format of ['json', 'csv', 'html']) {
     const value = await project.downloadFredDdpReceiving({ directory: projectDirectory, receivingId: acquired.receivingId, format });
     need(value.bytes === value.body.length && value.sha256 === hash(value.body), 'The original receiving file differs from its saved byte identity.');
-    originReports.push(await exactFile(join(work, 'reports-origin', value.path), value.body));
+    originReports.push(await exactFile(join(originDirectory, value.path), value.body));
   }
   let bundle = await project.exportFredProject({ directory: projectDirectory, qcewSourceContexts: contexts });
-  const completeArtifact = await saveJson(join(work, 'complete-' + migrationId + '.json'), bundle);
+  const completeArtifact = await saveJson(join(work, 'complete-' + artifactId + '.json'), bundle);
   const originalBundle = { schema: bundle.schema, bundleSha256: bundle.bundleSha256,
     qcew: bundle.qcew ? { sourceCaptures: bundle.qcew.captures.length, editions: bundle.qcew.editions.length } : null };
   bundle = null;
-  const received = await receiveBundleFile(completeArtifact.path, receiverDirectory);
+  const received = await receiveBundleFile(completeArtifact.path, targetReceiver);
   need(received.inputBytes === completeArtifact.bytes && received.inputSha256 === completeArtifact.sha256,
     'The complete on-disk project changed before receiving.');
-  const reopened = await project.readFredProject(receiverDirectory);
+  const reopened = await project.readFredProject(targetReceiver);
   need(reopened.id === finalState.id && reopened.revision === finalState.revision && !reopened.pending,
     'The receiving directory lost the complete original project identity, revision or completed state.');
   const receivedReports = [];
   for (const [index, format] of ['json', 'csv', 'html'].entries()) {
-    const value = await project.downloadFredDdpReceiving({ directory: receiverDirectory, receivingId: acquired.receivingId, format });
+    const value = await project.downloadFredDdpReceiving({ directory: targetReceiver, receivingId: acquired.receivingId, format });
     const original = originReports[index];
     const originalIdentity = await fileIdentity(original.path);
     need(value.bytes === original.bytes && value.sha256 === original.sha256 && hash(value.body) === original.sha256 &&
       originalIdentity.bytes === original.bytes && originalIdentity.sha256 === original.sha256,
       'The received original ' + format + ' report changed.');
-    receivedReports.push(await exactFile(join(work, 'reports-received', value.path), value.body));
+    receivedReports.push(await exactFile(join(receivedDirectory, value.path), value.body));
   }
-  const rawCrosswalk = await project.getFredDdpCrosswalk({ directory: receiverDirectory, crosswalkId: plan.crosswalkId });
-  const rawPackage = await project.getFredDdpPackage({ directory: receiverDirectory, packageId: plan.packageId });
+  const rawCrosswalk = await project.getFredDdpCrosswalk({ directory: targetReceiver, crosswalkId: plan.crosswalkId });
+  const rawPackage = await project.getFredDdpPackage({ directory: targetReceiver, packageId: plan.packageId });
   for (const original of [rawCrosswalk, rawPackage])
     need(hash(Buffer.from(original.file.base64, 'base64')) === original.file.sha256,
       'The received complete original Board source bytes changed.');
-  const receivedPlan = await project.downloadFredDdpMigration({ directory: receiverDirectory, migrationId });
+  const receivedPlan = await project.downloadFredDdpMigration({ directory: targetReceiver, migrationId });
   need(receivedPlan.body.equals(planFile.body), 'The receiving directory changed the full reviewed migration plan.');
-  const reexported = await project.exportFredProject({ directory: receiverDirectory, qcewSourceContexts: contexts });
+  const reexported = await project.exportFredProject({ directory: targetReceiver, qcewSourceContexts: contexts });
   const reexportedIdentity = jsonIdentity(reexported);
   need(reexported.bundleSha256 === originalBundle.bundleSha256 &&
     reexportedIdentity.bytes === completeArtifact.bytes && reexportedIdentity.sha256 === completeArtifact.sha256,
     'The complete original project changed after separate receiving and reopening.');
   const result = { projectId: finalState.id, revision: finalState.revision, schema: originalBundle.schema,
     migrationId, receivingId: acquired.receivingId, receivingSummary: acquired.receiving.summary,
+    ...(alfred ? { operationId, sourceMode: 'ALFRED_VINTAGE', metadataSha256 } : {}),
     captureIds: acquired.captureIds, originalHttpRequestsThisInvocation: requests, interruption,
     compactSourceImportAndCompletedAcquisitionReplay: true, bundleSha256: originalBundle.bundleSha256,
     completeProject: completeArtifact, receivedProjectId: received.projectId ?? reopened.id,
     reports: { origin: originReports, received: receivedReports },
     originalSourceBytesPreserved: true, fullPlanBytesPreserved: true, fullProjectBytesPreserved: true,
     qcew: originalBundle.qcew };
-  const completedSummaryPath = join(work, 'completed-' + migrationId + '-summary.json');
   const previous = await optionalJson(completedSummaryPath);
   if (previous) {
     need(previous.projectId === result.projectId && previous.migrationId === result.migrationId &&

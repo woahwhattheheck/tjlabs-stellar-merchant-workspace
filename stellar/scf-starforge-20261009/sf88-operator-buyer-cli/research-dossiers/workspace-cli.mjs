@@ -11,6 +11,9 @@ import {DOCUMENT_COMMANDS,main as documentMain} from './document-workspace-cli.m
 import {ELIGIBILITY_COMMANDS,main as eligibilityMain} from './eligibility-cli.mjs';
 import {RISK_OF_BIAS_COMMANDS,main as riskOfBiasMain} from './risk-of-bias/cli.mjs';
 import {CUSTOMER_UPDATE_COMMANDS,main as customerUpdateMain} from './customer-updates/cli.mjs';
+import {CUSTOMER_HANDOVER_RETURN_COMMAND,runCustomerHandoverReturnsCli} from './customer-updates/handover-returns-cli.mjs';
+import {CUSTOMER_HANDOVER_DESK_COMMAND,runCustomerHandoverDeskCli} from './customer-updates/handover-desk-cli.mjs';
+import {CUSTOMER_HANDOVER_INTAKE_COMMAND,runCustomerHandoverIntakeCli} from './customer-updates/handover-intake-cli.mjs';
 import {RESEARCH_COMMERCE_COMMANDS,main as researchCommerceMain} from './customer-commerce/cli.mjs';
 import {RESEARCH_QUOTES_COMMANDS,main as researchQuotesMain} from './customer-quotes/cli.mjs';
 import {RESEARCH_QUOTE_PROGRAMME_COMMANDS,main as quotationProgrammeMain} from './customer-quotes/programme-cli.mjs';
@@ -21,6 +24,14 @@ import {TEMPLATE_EXCHANGE_COMMANDS,main as templateMain} from './template-exchan
 import {parseJson,need,safeCode} from '../node/store.mjs';
 
 const usage=String.raw`Research workspace client
+
+Customer handover first use:
+  customer-handover-intake --connection-file FILE --directory DIR --engine-root DIR --engine-manifest FILE --engine-manifest-sha256 SHA
+  Read customer-updates/HANDOVER_INTAKE.md to select an original delivery, review scope and open its desk.
+
+Customer handover operator:
+  customer-handover-desk --connection-file FILE --run-directory DIR --selection FILE --selection-sha256 SHA
+  Read customer-updates/HANDOVER_DESK.md for complete browser review, recovery and editable delivery.
 
   research-client COMMAND --connection-file /private/application-url.json --directory /original/dossier-store [OPTIONS]
   research-dossiers remote COMMAND --connection-file /private/application-url.json --directory /original/dossier-store [OPTIONS]
@@ -97,6 +108,10 @@ Commission and deliver complete recurring customer work in the same dossier:
   customer-updates|customer-updates-record|customer-updates-preview|customer-updates-save
   customer-updates-work|customer-updates-export|customer-updates-source-plan
   customer-updates-handover|customer-updates-inspect|customer-updates-receive|customer-updates-operation
+  customer-handover-returns help
+
+Continue a real customer-updates handover through sequential reviewed returns,
+cumulative native item/round limits, complete source/archive and editable receiving.
 
 Quote and deliver a complete customer evidence programme:
   quotes-help
@@ -212,6 +227,9 @@ const commandOptions=Object.freeze({
 const compact=value=>value?.dossier?{...value,dossier:researchSummary(value.dossier)}:value;
 const selected=value=>Object.fromEntries(Object.entries(value).filter(([,item])=>item!==undefined));
 export async function main(argv=process.argv.slice(2),{output=process.stdout}={}){
+  if(argv[0]===CUSTOMER_HANDOVER_INTAKE_COMMAND)return runCustomerHandoverIntakeCli(argv,{stdout:output});
+  if(argv[0]===CUSTOMER_HANDOVER_DESK_COMMAND)return runCustomerHandoverDeskCli(argv,{stdout:output});
+  if(argv[0]===CUSTOMER_HANDOVER_RETURN_COMMAND)return runCustomerHandoverReturnsCli(argv,{stdout:output});
   if(DOSSIER_RETURN_COMMANDS.includes(argv[0]))return dossierReturnMain(argv,{output});
   if(RIS_COMMANDS.includes(argv[0]))return risMain(argv,{output});
   if(RESEARCH_QUOTATION_SETUP_COMMANDS.includes(argv[0])){

@@ -23,7 +23,7 @@ import zipfile
 from stellar_forge_buyer import ResearchWorkspace, ResearchQuoteBundle
 from stellar_forge_buyer.errors import BuyerError, StateError
 from stellar_forge_buyer.research_quotes import (
-    COMMANDS, _INPUT_LIMIT, _FILE_LIMIT, _object, _retained_file,
+    COMMANDS, _INPUT_LIMIT, _FILE_LIMIT, _CASE_TRANSFER_LIMIT, _input_maximum, _object, _retained_file,
 )
 from stellar_forge_buyer.research_commerce import NATIVE_WRITES, FILE_PARTS
 from stellar_forge_buyer.research_workspace import ResearchError, _json, _request_id
@@ -38,7 +38,7 @@ _TOP = {"schema", "operationId", "workspaceId", "dossierId", "caseId", "steps",
         "operations", "caseExports", "commerceExports", "replayCallId"}
 _STEP = {"callId", "family", "command", "source", "caseId", "action", "profile"}
 _CORE = {"callId", "family", "command", "source"}
-_KINDS = {"CASE", "BRIEF", "RESPONSE", "PUBLICATION", "REALIZED"}
+_KINDS = {"CASE", "CASE_TRANSFER", "BRIEF", "RESPONSE", "PUBLICATION", "REALIZED"}
 
 
 def need(ok, code):
@@ -75,10 +75,10 @@ def relative_file(value):
     return selected
 
 
-def source_descriptor(value):
+def source_descriptor(value, maximum=_INPUT_LIMIT):
     fields(value, {"file", "sha256", "bytes"}, {"file", "sha256", "bytes"})
     relative_file(value["file"]); exact_hash(value["sha256"])
-    need(type(value["bytes"]) is int and 0 < value["bytes"] <= _INPUT_LIMIT,
+    need(type(value["bytes"]) is int and 0 < value["bytes"] <= maximum,
          "RESEARCH_QUOTATION_SOURCE_SIZE_INVALID")
     return value
 
@@ -110,7 +110,8 @@ def selection(value):
             need("commerce-" + item["command"].removeprefix("commerce-") in NATIVE_WRITES and
                  not ({"caseId", "action", "profile"} & set(item)),
                  "RESEARCH_QUOTATION_RECEIVING_COMMAND_INVALID")
-        source = source_descriptor(item["source"])
+        source = source_descriptor(item["source"], _input_maximum(item["command"])
+                                   if item["family"] == "quotes" else _INPUT_LIMIT)
         need(source["file"] not in sources or sources[source["file"]] == source,
              "RESEARCH_QUOTATION_RECEIVING_SOURCE_CHANGED")
         sources[source["file"]] = source
@@ -136,7 +137,7 @@ def selection(value):
                {"name", "source", "tariff", "sha256", "bytes"})
         name(item["name"]); exact_hash(item["sha256"])
         need(item["name"] not in names and type(item["tariff"]) is bool and
-             type(item["bytes"]) is int and 0 <= item["bytes"] <= _FILE_LIMIT,
+             type(item["bytes"]) is int and 0 <= item["bytes"] <= (_FILE_LIMIT if item["tariff"] else _CASE_TRANSFER_LIMIT),
              "RESEARCH_QUOTATION_RECEIVING_EXPORTS_INVALID")
         names.add(item["name"])
         source = source_descriptor(item["source"])
@@ -168,7 +169,7 @@ def original_file(root, relative, *, maximum):
 def retain_bytes(path, body):
     private_directory(path.parent)
     if path.exists() or path.is_symlink():
-        need(read(path, max(_INPUT_LIMIT, _FILE_LIMIT)) == body, "RESEARCH_QUOTATION_RETAINED_FILE_CHANGED")
+        need(read(path, max(_INPUT_LIMIT, _FILE_LIMIT, _CASE_TRANSFER_LIMIT)) == body, "RESEARCH_QUOTATION_RETAINED_FILE_CHANGED")
     else:
         write(path, body, exclusive=True)
 
@@ -203,16 +204,16 @@ def capture(root, source_path, expected_sha256):
     for relative, descriptor in sources.items():
         destination = retained / relative_file(relative)
         if destination.exists() or destination.is_symlink():
-            data = read(destination, _INPUT_LIMIT)
+            data = read(destination, _CASE_TRANSFER_LIMIT)
             donor = source_path.parent / relative_file(relative)
             if donor.exists() or donor.is_symlink():
-                need(original_file(source_path.parent, relative, maximum=_INPUT_LIMIT) == data,
+                need(original_file(source_path.parent, relative, maximum=_CASE_TRANSFER_LIMIT) == data,
                      "RESEARCH_QUOTATION_RECEIVING_SOURCE_CHANGED")
         else:
             donor_root = source_path.parent
             if not (donor_root / relative_file(relative)).exists():
                 donor_root = donor_root / "inputs"
-            data = original_file(donor_root, relative, maximum=_INPUT_LIMIT)
+            data = original_file(donor_root, relative, maximum=_CASE_TRANSFER_LIMIT)
         need(len(data) == descriptor["bytes"] and digest(data) == descriptor["sha256"],
              "RESEARCH_QUOTATION_RECEIVING_SOURCE_CHANGED")
         _object(data)

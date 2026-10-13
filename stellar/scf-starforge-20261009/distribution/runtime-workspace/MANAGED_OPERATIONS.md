@@ -92,6 +92,52 @@ Native-command recovery first checks its recorded process identity. The command 
 
 The original installer controls remain in their existing views. Runtime recovery and managed selection compose through the actual READY directory.
 
+## Read operation status when a native probe is unavailable
+
+A runtime refresh retains each operation's original phase and result. It observes up to four operations at a time and shares simultaneous reads of the same operation. Completed observations are refreshed on the next request. If the native lease probe fails, the remaining rows in that refresh still read their records and visible process identities; they defer additional native probes.
+
+An unavailable observation belongs to its operation. Other runtimes, application navigation, retained requests and output remain readable. **OBSERVATION_UNAVAILABLE** means the current worker or command could not be observed. The record's original phase remains available separately. An operation is shown as **INTERRUPTED** only after its running record has been observed without an active worker or command.
+
+Use **Refresh operation status** in either the Operations or Managed releases view to recheck that original UUID directly. **Status check detail** shows its observation source, time and error. The command label distinguishes a running process, an ended process and unavailable status. **Open retained output** remains available in all three cases. A worker log that has not been created is shown explicitly; an unreadable log reports its actual error while preserving the operation selection.
+
+The **Applications** view uses the same observation reader for its runtime connection, current launch, paged history, output and terminal. **Refresh applications** reloads those original records. An unknown process keeps the application's saved settings, retained output and original saved addresses visible with an explicit status note. A new start or settings edit waits for that process to become observable. Terminal output and input receipts remain readable while input controls require an observed active terminal. Actual input submission still performs its own original strict lease check.
+
+Application groups use those same observations when displaying a selected run. An uncertain member keeps its original run and output visible, sets the group phase to **OBSERVATION_UNAVAILABLE**, and prevents **Continue**. A pending stop remains visible while any member's status is uncertain. Group start, review, member actions and stop still perform their original strict lifecycle reads.
+
+Status observation does not authorize recovery, stop, activation, installation or another launch. Those actions retain their existing process checks, source comparisons and original exclusive lease. The workspace never changes an operation's persisted phase merely because its status probe failed. After an operation becomes observable again, its existing recovery controls follow its actual retained phase.
+
+The capability-protected browser API supplies:
+- `GET /api/state`: the original runtime state plus `operationObservation` with `CURRENT` or `PARTIAL`, total rows and unavailable operation IDs.
+- `GET /api/operation-status?operationId=UUID`: one freshly observed original operation, without refreshing the whole workspace.
+- `GET /api/log?operationId=UUID`: the original log tail, or `available: false` with `NOT_CREATED` or `UNAVAILABLE` and its error.
+
+Each observed row has `observation.status` (`CURRENT` or `UNAVAILABLE`), `source` (`RETAINED`, `PROCESS`, `LEASE` or `RECORD`), `checkedAt` and an optional error. `workerActive` and `commandActive` are nullable: `null` means the status is unknown. Consumers must not treat `null` as evidence that the original process ended. The existing strict internal mutation checks continue to throw when their authoritative observation fails.
+
+~~~sh
+starforge runtime-workspace operation-status --workspace /srv/starforge/operator --operation-id UUID
+starforge runtime-workspace operation-log --workspace /srv/starforge/operator --operation-id UUID
+~~~
+
+Programmatic consumers use `workspace.operationStatus({ operationId })` and `workspace.logs({ operationId })` on the same object returned by `openRuntimeWorkspace`.
+
+### Receive the original managed outcome
+
+An operation's `SUCCEEDED` phase records completion of its worker or recovery. Read the retained command outcome separately. A recovered original command can have `RECONCILED` or `OUTCOME_UNAVAILABLE` with `exitCode: null`; those values preserve the absence of an observed exit code.
+
+Applications state, history and output, the original managed operation view, and repeated managed recovery expose the same fields:
+
+| Field | Original evidence |
+| --- | --- |
+| `result` | The complete `command-result.json` value when present; otherwise the original `state.json.result` only after phase `SUCCEEDED`; otherwise null |
+| `commandResult` | The original command receipt, or null when that file is absent |
+| `resultSource` | `command-result.json` when the command receipt exists; `state.json` when a SUCCEEDED state explicitly retains `result` (including null); otherwise null |
+
+These reads leave both original files unchanged. A later original command receipt takes precedence over an earlier recovery record. The command's recorded exit code, signal, message and outcome are returned intact. Repeating recovery of a completed operation returns its same retained result under the existing operation lease.
+
+The Applications overview displays `RECONCILED` or `OUTCOME_UNAVAILABLE` for those inactive recovered runs; their original operation phase remains `SUCCEEDED`. History shows the complete outcome and its receipt source. Output keeps the original logs alongside that outcome. Operators use the command's own operating procedure to decide whether a new reviewed start is appropriate.
+
+The terminal endpoint preserves its existing `result` from `terminal-exit.json`. Its additional `managedOutcome` contains the three fields above, so a terminal without a retained exit receipt can still show the original managed recovery. Terminal readiness, input delivery and active-lease checks keep their existing meanings.
+
 ## Headless commands
 
 ~~~sh

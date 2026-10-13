@@ -1,0 +1,12 @@
+{
+  "schema": "commons.canadabuys-customer-native-transport.v1",
+  "operationId": "CANADABUYS-AGENT-CUSTOMER-6BA15-20261012",
+  "sourceCommit": "950bbacb7a55b53c43b74164679e0070cb1f9154",
+  "wireBytes": 1272004,
+  "wireSha256": "d8882f32aeab098c7af69d188d6d89feff03c4be631674ef5106f62d33a6156b",
+  "inputBytes": 4219373,
+  "inputSha256": "7b8e9da2183f227a1976783687dd576b1ed8c152ee104347be4d14f7144da764",
+  "compressedBytes": 954002,
+  "encoding": "deflate-raw/base64",
+  "compressor": "pako 2.1.0"
+}

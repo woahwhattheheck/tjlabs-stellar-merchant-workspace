@@ -116,7 +116,7 @@ export default {
   catalog({common,field}){
     return [{id:'bls-labor-workspace',command:'bls-labor-workspace',title:'BLS regional labor workspace',terminal:false,
       requiredSource:ROOT+'/bls-labor/workspace/managed.py',
-      description:'Receive official LAUS and QCEW sources, analyze resident labor and workplace measures, save county briefings, publish original datasets and receive complete editable projects.',
+      description:'Receive official LAUS and QCEW sources, analyze resident labor and workplace measures, save county briefings and complete regional analysis revisions, publish original datasets and receive complete editable projects.',
       fields:[
         field('workspaceDirectory','Original labor workspace','path',true,'Choose the private workspace initialized or received by the BLS labor workspace command.'),
         field('pythonExecutable','Existing Python executable','path',true,'Absolute Python 3.11+ executable; the selected original environment stays in use.'),

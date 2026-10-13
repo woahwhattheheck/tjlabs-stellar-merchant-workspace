@@ -1,10 +1,11 @@
 // MIT. Complete Research quote workflow around the maintained SF74 commercial desk.
 import {mountCommercialDesk} from './native/commercial-desk.mjs';
+import {newProgrammeFormBinding,runProgrammeFormRequest} from './programme-session.mjs';
 const $=id=>document.getElementById(id),copy=value=>structuredClone(value),uuid=()=>crypto.randomUUID(),
  now=()=>new Date().toISOString(),pretty=value=>JSON.stringify(value,null,2),BASE='/api/customer-quotes',
  tokenKey='research-dossiers-session:'+location.origin,MAX_RESPONSE=64*1024*1024,MAX_FILE=256*1024*1024;
 const state={token:sessionStorage.getItem(tokenKey)||'',workspaceId:null,instanceId:null,configuration:null,
- tab:'cases',caseId:null,form:null,operationId:null,operation:null,caseOffset:0,caseQuery:'',actor:{id:'',name:''},serial:0};
+ programme:null,tab:'cases',caseId:null,form:null,operationId:null,operation:null,caseOffset:0,caseQuery:'',actor:{id:'',name:''},serial:0};
 const writes=new Set(),writeErrors=new Map(),active=new Map();let database,nativeDesk=null,admissions=0,connecting=false;
 const need=(ok,message)=>{if(!ok)throw new Error(message);};
 const stable=value=>Array.isArray(value)?value.map(stable):value&&typeof value==='object'?
@@ -43,7 +44,8 @@ async function flush(){await Promise.all([...writes]);if(writeErrors.size)throw 
 function edit(key,value){
  need(state.form,'Open a working form.');state.form.data[key]=copy(value);state.form.updatedAt=now();retain(state.form);
 }
-function selection(){return {key:'selection:'+scope(),tab:state.tab,caseId:state.caseId,formKey:state.form?.key??null,
+const selectionKey=()=>'selection:'+scope()+(state.programme?'programme:'+state.programme.programme.input.id:'');
+function selection(){return {key:selectionKey(),tab:state.tab,caseId:state.caseId,formKey:state.form?.key??null,
  operationId:state.operationId,actor:copy(state.actor)};}
 function actor(){need(state.actor.id.trim()&&state.actor.name.trim(),'Enter the operator ID and recorded-by name.');return copy(state.actor);}
 function headerOptions(body){return {method:body===undefined?'GET':'POST',redirect:'error',signal:AbortSignal.timeout(900000),
@@ -82,7 +84,12 @@ function dispatch(route,body,options={}){
  return result.finally(()=>{admissions--;});
 }
 async function dispatchAdmitted(route,body,{replay=false,recordKey}={}){
- await flush();const selected=copy(body),inputSha256=await hash({route,body:selected}),
+ await flush();
+ if(!recordKey&&state.form?.programmeId)need(state.form.programmeId===state.programme?.programme.input.id,
+  'This complete working form belongs to another programme. Reopen that programme before submitting it.');
+ const selected=copy(body),prior=recordKey?await get(recordKey):null,
+  programmeId=prior?(prior.programme?.programmeId??null):(state.programme?.programme.input.id??null),
+  inputSha256=await hash({route,body:selected,...(programmeId?{programmeId}:{})}),
   key=recordKey??'request:'+scope()+inputSha256;
  if(active.has(key))return active.get(key);
  const operation=(async()=>{
@@ -90,11 +97,17 @@ async function dispatchAdmitted(route,body,{replay=false,recordKey}={}){
   if(record)need(record.workspaceId===state.workspaceId&&record.route===route&&same(record.body,selected)&&
    record.inputSha256===inputSha256,'This saved request belongs to different inputs.');
   else record={key,schema:'sf88-research-quote-browser-request/v1',workspaceId:state.workspaceId,
-   route,body:selected,inputSha256,createdAt:now(),attempts:0,status:'PENDING',firstResult:null,lastResult:null};
+   route,body:selected,inputSha256,...(programmeId?{programme:newProgrammeFormBinding(programmeId,state.programme?.programme.input.caseId)}:{}),
+   createdAt:now(),attempts:0,status:'PENDING',firstResult:null,lastResult:null};
   if(record.status==='COMPLETE'&&!replay)return copy(record.firstResult);
+  const resumeProgramme=record.status!=='COMPLETE',originalProgrammeComplete=record.firstResult!==null;
   record={...record,status:'PENDING',attempts:record.attempts+1,lastAttempt:now()};await put(record);
   let result;
-  try{result=await api(BASE+route,{body:selected});}
+  try{
+   result=record.programme?await runProgrammeFormRequest({binding:record.programme,route,body:selected,replay,resume:resumeProgramme,
+    originalComplete:originalProgrammeComplete,api,message,
+    persist:async binding=>{record={...record,programme:binding};await put(record);}}):await api(BASE+route,{body:selected});
+  }
   catch(error){
    const retained={...record,status:error.outcomeUnknown===false?'REJECTED':'PENDING',
     error:{message:error.message,code:error.error??error.code??null,outcomeUnknown:error.outcomeUnknown!==false}};
@@ -171,7 +184,7 @@ async function originalCaseDownload(caseId,kind,args){
 }
 async function newForm(kind,data={}){
  await flush();const requestId=uuid(),value={key:'form:'+scope()+uuid(),schema:'sf88-research-quote-working-form/v1',
-  workspaceId:state.workspaceId,kind,createdAt:now(),updatedAt:now(),data:{requestId,...copy(data)}};
+  workspaceId:state.workspaceId,programmeId:state.programme?.programme.input.id??null,kind,createdAt:now(),updatedAt:now(),data:{requestId,...copy(data)}};
  await put(value);return value;
 }
 async function go(tab,{form=null,operationId=null,caseId=state.caseId}={}){
@@ -285,7 +298,9 @@ async function casesPanel(parent,ticket){
  field(library,'Search existing case names, customers, owners, and work',state.caseQuery,{change:value=>{state.caseQuery=value;}});
  bar.append(button('Search cases',async()=>{state.caseOffset=0;await render();}),
   button('Create case from Research project',async()=>{
-   const form=await newForm('case',{caseId:uuid(),dossierId:'',revision:'',projectId:'',briefId:''});await go('cases',{form});
+   const programme=state.programme?.programme.input;
+   const form=await newForm('case',{caseId:programme?.caseId??uuid(),dossierId:programme?.dossierId??'',
+    revision:programme?.revision??'',projectId:programme?.projectId??'',briefId:''});await go('cases',{form});
   }));
  const value=await api(BASE+'/cases'+params({q:state.caseQuery,offset:state.caseOffset,limit:20}));if(ticket!==state.serial)return;
  const page=value.result,list=node('div',null,{class:'list'});library.append(list);
@@ -667,7 +682,8 @@ async function configurationPanel(parent){
   details(item,'Actual native payment terms',merchant.payment);
  }
  if(state.configuration.merchants.errors.length)details(section,'Existing merchant configuration errors',state.configuration.merchants.errors);
- toolbar(section).append(button('Refresh original connections',async()=>{state.configuration=await api(BASE+'/configuration');await render();}));
+ toolbar(section).append(button('Refresh original connections',async()=>{state.configuration=await api(BASE+'/configuration');
+await render();}));
  const advanced=panel(parent,'Original native pricing operations');
  advanced.append(node('p','Use the maintained SF97 inputs for saved pricing reviews, planning scenarios, supplier-cost editions, and repricing. Each complete request and result remains in Saved work.'));
  const key='pricing-form:'+scope(),saved=await get(key),form=saved??{key,profile:'',action:'state',text:'{}',updatedAt:now()};
@@ -692,6 +708,11 @@ async function render(){
  nativeDesk?.destroy();nativeDesk=null;
  document.querySelectorAll('[data-tab]').forEach(item=>item.setAttribute('aria-pressed',String(item.dataset.tab===state.tab)));
  const parent=$('workspace');parent.replaceChildren();
+ const programme=state.programme?.programme.input;
+ const context=panel(parent,programme?'Customer programme: '+programme.name:'Customer quotation work');
+ if(programme)context.append(node('p','Each submitted original request is retained as a step in this programme. The complete delivery and receiving history stay with it.'));
+ link(toolbar(context),programme?'Open this complete programme':'Open customer programmes',
+  '/customer-quote-programmes.html'+(programme?'?programme='+encodeURIComponent(programme.id):'')).removeAttribute('target');
  if(state.operationId){await operationPanel(parent,ticket);return;}
  if(state.tab==='cases'){await casesPanel(parent,ticket);return;}
  if(state.tab==='history'){await historyPanel(parent,ticket);return;}
@@ -718,11 +739,16 @@ async function connectOriginal(){
   'Install the complete customer quotation source in the original Research application.');
  state.workspaceId=status.workspaceId;state.instanceId=status.instanceId;sessionStorage.setItem(tokenKey,state.token);
  state.configuration=await api(BASE+'/configuration');
- const saved=await get('selection:'+scope());
- state.tab=saved?.tab??'cases';state.caseId=saved?.caseId??null;state.operationId=saved?.operationId??null;
+ const programmeId=new URLSearchParams(location.search).get('programme');
+ state.programme=programmeId?await api('/api/customer-quote-programmes/programmes/'+encodeURIComponent(programmeId)):null;
+ if(state.programme)need(state.programme.programme.workspaceId===state.workspaceId,
+  'The selected programme belongs to another Research workspace.');
+ const saved=await get(selectionKey());
+ state.tab=saved?.tab??'cases';state.caseId=state.programme?.programme.input.caseId??saved?.caseId??null;state.operationId=saved?.operationId??null;
  state.form=saved?.formKey?await get(saved.formKey):null;state.actor=saved?.actor??{id:'',name:''};
  $('identity').textContent='Research '+state.workspaceId+' · original case workspace '+state.configuration.cases.workspaceId;
- message('Opened the original Research and quotation workspace.');await render();
+ message(state.programme?'Opened quotation forms for '+state.programme.programme.input.name+'.':
+  'Opened the original Research and quotation workspace.');await render();
 }
 $('token').value=state.token;$('connect').addEventListener('click',()=>act(connect));
 document.querySelectorAll('[data-tab]').forEach(item=>item.addEventListener('click',()=>act(()=>go(item.dataset.tab))));

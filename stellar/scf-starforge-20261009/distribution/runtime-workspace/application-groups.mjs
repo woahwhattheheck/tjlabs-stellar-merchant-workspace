@@ -2,7 +2,7 @@
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { applicationRunState, reviewApplicationStart } from './applications-core.mjs';
-import { makePrivate, privateDirectory, readJSON, saveJSON, recordId, operationId,
+import { makePrivate, privateDirectory, optionalPrivateEntries, readJSON, saveJSON, recordId, operationId,
   operationLease, plain, need, digest, json, canonical, now } from './storage.mjs';
 
 const GROUP = 'stellar-forge.application-group.v1';
@@ -92,19 +92,21 @@ function accepted(member, operation) {
   return member.acceptedOutcome?.identity === outcomeIdentity(operation);
 }
 function settledOrLaunched(member, operation) {
-  if (!operation) return false;
+  if (!operation || operation.active === null) return false;
   const phase = memberPhase(operation);
   if (phase === 'SUCCEEDED') return true;
   if (phase === 'RUNNING' && operation.active && !operation.stop && operation.state?.commandProcess) return true;
   return !operation.active && acceptedFinalPhases.includes(phase) && accepted(member, operation);
 }
-async function observedMembers(root, run) {
+async function observedMembers(root, run, observations = null) {
   return Promise.all(run.members.map(async member => {
-    const operation = await applicationRunState(root, originalInput(member));
+    const operation = await applicationRunState(root, originalInput(member), observations);
     return { ...member, operation, operationPhase: operation ? memberPhase(operation) : null };
   }));
 }
 function progress(run, members) {
+  const uncertain = members.some(member => member.operation?.active === null ||
+    member.operation?.phase === 'OBSERVATION_UNAVAILABLE');
   const next = members.find(member => !member.operation);
   let waiting = null;
   for (const member of members) {
@@ -115,25 +117,26 @@ function progress(run, members) {
     }
   }
   const outstanding = members.some(member => member.operation &&
-    (member.operation.active || ['PENDING', 'QUEUED', 'RUNNING', 'INTERRUPTED'].includes(member.operation.phase)));
+    (member.operation.active !== false || ['PENDING', 'QUEUED', 'RUNNING', 'INTERRUPTED', 'OBSERVATION_UNAVAILABLE'].includes(member.operation.phase)));
   const needsReview = Boolean(next?.error?.code === 'APPLICATION_GROUP_REVIEW_CHANGED');
-  const phase = run.stopRequestedAt ? (outstanding ? 'STOPPING' : 'STOPPED') :
+  const phase = uncertain ? 'OBSERVATION_UNAVAILABLE' : run.stopRequestedAt ? (outstanding ? 'STOPPING' : 'STOPPED') :
     needsReview ? 'REVIEW_REQUIRED' : waiting ? 'ATTENTION' :
     !next ? (members.every(member => member.operation && !member.operation.active) ? 'COMPLETED' : 'LAUNCHED') : members.some(member => member.operation) ? 'IN_PROGRESS' : 'REVIEWED';
   return { phase, nextApplicationId: next?.applicationId ?? null,
     waitingApplicationId: waiting?.applicationId ?? null,
-    canContinue: !run.stopRequestedAt && Boolean(next) && !waiting && !needsReview,
+    canContinue: !uncertain && !run.stopRequestedAt && Boolean(next) && !waiting && !needsReview,
     started: members.filter(member => member.operation).length, total: members.length };
 }
-async function runView(root, run) {
-  const members = await observedMembers(root, run);
+async function runView(root, run, observations = null) {
+  const members = await observedMembers(root, run, observations);
   return { ...run, ...progress(run, members), members };
 }
-export async function applicationGroupsState(root, { groupId = null, runId = null, limit = 20, cursor = null } = {}) {
-  await initializeApplicationGroups(root);
+export async function applicationGroupsState(root, { groupId = null, runId = null, limit = 20, cursor = null } = {}, observations = null) {
+  if (!observations) await initializeApplicationGroups(root);
   need(Number.isInteger(limit) && limit >= 1 && limit <= 50, 'APPLICATION_GROUP_PAGE_INVALID');
   if (cursor) operationId(cursor);
-  const ids = (await readdir(join(root, 'application-groups'))).filter(name => /^[a-f0-9]{24}$/.test(name));
+  const ids = (await (observations ? optionalPrivateEntries(join(root, 'application-groups')) :
+    readdir(join(root, 'application-groups')))).filter(name => /^[a-f0-9]{24}$/.test(name));
   const groups = [];
   for (const id of ids) {
     const value = await readJSON(join(groupPath(root, id), 'group.json'), true);
@@ -161,7 +164,7 @@ export async function applicationGroupsState(root, { groupId = null, runId = nul
     history: { items: page.map(item => ({ id: item.id, label: item.label, groupRevision: item.groupRevision,
       createdAt: item.createdAt, updatedAt: item.updatedAt, stopped: Boolean(item.stopRequestedAt), members: item.members.length })),
       total: history.length, nextCursor: start + page.length < history.length ? page.at(-1).id : null },
-    run: selectedRunId ? await runView(root, await runRecord(root, groupId, selectedRunId)) : null } };
+    run: selectedRunId ? await runView(root, await runRecord(root, groupId, selectedRunId), observations) : null } };
 }
 export async function saveApplicationGroup(root, { requestId, groupId = null, expectedRevision = null, label, applicationIds } = {}) {
   operationId(requestId);

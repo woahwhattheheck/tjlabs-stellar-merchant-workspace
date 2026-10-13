@@ -1,0 +1,263 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "oauth-support",
+  "heading": "## OAuth resource operations and complete customer support",
+  "sources": [
+    {
+      "id": "oauth-support-console",
+      "label": "OAuth customer console, observations, case comparison and repair owners",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/OAUTH_SUPPORT.md",
+      "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+      "editions": [
+        {
+          "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+          "bytes": 13544,
+          "sha256": "f966ff35ead4b32fef0ddb91eca8e323093f58b694a6a009981bc4d6ee0af6ac",
+          "git_blob": "6c2d3535632132ad5fed332208bfe282f3cf414a"
+        }
+      ]
+    },
+    {
+      "id": "oauth-original-observation-contract",
+      "label": "Original redacted OAuth observation schema and counter conservation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/oauth-observation-contract.mjs",
+      "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+      "editions": [
+        {
+          "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+          "bytes": 10501,
+          "sha256": "3f6477da902f4d2091d0c9551571ffee2cf102f873041bf5f91b7c555b55a6ea",
+          "git_blob": "b59a50772be0df8a2ab36f8095808f8cd8818d80"
+        }
+      ]
+    },
+    {
+      "id": "oauth-original-condition-codec",
+      "label": "Original OAuth source codec and shared incident/recovery classifier",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf93-seller-support-bundle/oauth-observation.mjs",
+      "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+      "editions": [
+        {
+          "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+          "bytes": 12589,
+          "sha256": "b848c20b57fadd4952e9b30c1fe945dcd406809120943b7d73169efab049d754",
+          "git_blob": "51702ea455d92814dc7e7b10540eac66050d57d8"
+        }
+      ]
+    },
+    {
+      "id": "oauth-complete-customer-receiver",
+      "label": "Original incident-to-case, portable export/import and independent reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/oauth-receiving.mjs",
+      "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+      "editions": [
+        {
+          "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+          "bytes": 42240,
+          "sha256": "4f8192a11087ee6c9ffdd0afd222418d4f9b7a46a04f9790d2a14db3743adc7f",
+          "git_blob": "73172bdc9e56c47efda7478c3282ebd98d3cf98c"
+        }
+      ]
+    },
+    {
+      "id": "oauth-original-native-programme",
+      "label": "Original JOSE, protected MCP, SF93 and customer receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf93-seller-support-bundle/oauth-native-programme.mjs",
+      "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+      "editions": [
+        {
+          "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+          "bytes": 23449,
+          "sha256": "ec8e727251d5b9261805a96d6b0db61772262cee6df3e77c250889265a8d583e",
+          "git_blob": "fea5cfbc4381896f8b706d51d48842773f897619"
+        }
+      ]
+    },
+    {
+      "id": "oauth-retained-receiving-context",
+      "label": "Original producer source preservation and supported cold continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf93-seller-support-bundle/oauth-receive-context.mjs",
+      "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+      "editions": [
+        {
+          "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+          "bytes": 21848,
+          "sha256": "6e964a9802ebad22a6c3e2e08affe265e03094117a18c8b2e94a1ca1efd5d1c7",
+          "git_blob": "e46b9c596631073c56433f5a85d7a18d2b2910f2"
+        }
+      ]
+    },
+    {
+      "id": "oauth-customer-receiving-guide",
+      "label": "Complete native and retained receiving operation, receipts and limits",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/OAUTH_RECEIVING.md",
+      "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+      "editions": [
+        {
+          "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+          "bytes": 22644,
+          "sha256": "1c69dfc3ddc6b64817f8335aad73ffde5c1366c7f698f6191b99eb158e6a1d49",
+          "git_blob": "a1232ad91098fc86b6e7e67e492a2df83ace3fb2"
+        }
+      ]
+    },
+    {
+      "id": "oauth-support-mcp-guide",
+      "label": "Typed MCP discovery, source alias inspection and original customer flow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/OAUTH_MCP.md",
+      "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+      "editions": [
+        {
+          "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+          "bytes": 5214,
+          "sha256": "6e68e5aa225b6b9c6e5cfee91d081d4bbeff91896408ddb33752829aef57ca75",
+          "git_blob": "b299f50cc8fb496c9dc25305df18d3021a20f258"
+        }
+      ]
+    },
+    {
+      "id": "oauth-support-installation-selection",
+      "label": "Complete selected Support installation and original OAuth operator declaration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/merchant-support.json",
+      "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+      "editions": [
+        {
+          "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+          "bytes": 5940,
+          "sha256": "e3be51dccb6c140ede412c1d43a43c3f95c268ced745f31f6a027e47d1d447ce",
+          "git_blob": "89a4a102fbbd380af93e771e049e0ad8d83af108"
+        }
+      ]
+    },
+    {
+      "id": "oauth-support-package-guide",
+      "label": "Installed Support dependencies, operator and complete source closure",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/merchant-support/PACKAGE_README.md",
+      "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+      "editions": [
+        {
+          "commit": "d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d",
+          "bytes": 14193,
+          "sha256": "7217187ba1f71a50384c621e70b463d92e1b5fc8b698fad1613af68f57d5c400",
+          "git_blob": "35de48d8ee91d09c7486b419333f57e22b49d5b2"
+        }
+      ]
+    },
+    {
+      "id": "oauth-support-operating-workflow",
+      "label": "Support case to editable customer operating plan and returned work",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/OAUTH_SUPPORT_OPERATING_PLANS.md",
+      "commit": "4927939b0776218d13e911d0472ca320af459f28",
+      "editions": [
+        {
+          "commit": "4927939b0776218d13e911d0472ca320af459f28",
+          "bytes": 13211,
+          "sha256": "eee66cd6a4881af8a8f91320ae53b5ce5d5f3b5cb17a820166f720f336ac8273",
+          "git_blob": "66500e299117081d5756ca30f812e2f70b6973a3"
+        }
+      ]
+    },
+    {
+      "id": "oauth-support-operating-model",
+      "label": "Original plan construction, source inspection and append-only result recording",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/support-operating-plan.mjs",
+      "commit": "4927939b0776218d13e911d0472ca320af459f28",
+      "editions": [
+        {
+          "commit": "4927939b0776218d13e911d0472ca320af459f28",
+          "bytes": 19006,
+          "sha256": "4be18752721d1e038637b6c5e08aee9dca457d05f7b5816216132655e2495e0c",
+          "git_blob": "35d33ebb817fe5e15195271527533dbabbe39752"
+        }
+      ]
+    },
+    {
+      "id": "oauth-support-operating-source",
+      "label": "Full original case lineage and immutable companion capture and receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/oauth-operating-source.mjs",
+      "commit": "4927939b0776218d13e911d0472ca320af459f28",
+      "editions": [
+        {
+          "commit": "4927939b0776218d13e911d0472ca320af459f28",
+          "bytes": 29421,
+          "sha256": "59a7c2520a6ceb61d52b4851868557e859fa80b9f5b6a1279c95a2c3b81a7ee8",
+          "git_blob": "8a444af72ada0e0eab2dca4c2ce4f6b8c325c8f9"
+        }
+      ]
+    },
+    {
+      "id": "oauth-support-operating-cli",
+      "label": "Installed source capture, plan creation, recording and complete-history receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/support-operating-cli.mjs",
+      "commit": "4927939b0776218d13e911d0472ca320af459f28",
+      "editions": [
+        {
+          "commit": "4927939b0776218d13e911d0472ca320af459f28",
+          "bytes": 8734,
+          "sha256": "3d93fb162b013774a326b9af591cf08260a84ac59c6e71eaf6b8041259d51c80",
+          "git_blob": "c56b7d23e284eb6b34e1b31796cb700d621c4610"
+        }
+      ]
+    },
+    {
+      "id": "oauth-support-operating-browser",
+      "label": "Existing Operating Plans browser: selected Support sources and returned evidence",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/public/support-operating-plan.mjs",
+      "commit": "4927939b0776218d13e911d0472ca320af459f28",
+      "editions": [
+        {
+          "commit": "4927939b0776218d13e911d0472ca320af459f28",
+          "bytes": 25177,
+          "sha256": "0259f91d7aae9def3763fa5b892e4710705941967440c5d83611928258fb587f",
+          "git_blob": "2c9f96b70b1b11c66d6ad19e8d8751b04b25089b"
+        }
+      ]
+    },
+    {
+      "id": "oauth-support-operating-receiving",
+      "label": "Original case snapshot selection, verification and exact receiving receipt",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/OAUTH_OPERATING_RECEIVING.md",
+      "commit": "4927939b0776218d13e911d0472ca320af459f28",
+      "editions": [
+        {
+          "commit": "4927939b0776218d13e911d0472ca320af459f28",
+          "bytes": 12444,
+          "sha256": "a11e8870f5a05817f62c88a527e03e2694a6e360deef9cd6b897ae8c33e592e9",
+          "git_blob": "3d088a82c9060aa9ebc3c9cd7bced28070e0e594"
+        }
+      ]
+    }
+  ]
+}

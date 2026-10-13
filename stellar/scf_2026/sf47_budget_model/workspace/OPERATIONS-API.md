@@ -10,6 +10,10 @@ This is an extension of the original SF47 planning workspace. It preserves budge
 
 The original Operations service adds `list_work_intakes`, `work_intake` and `preview_work_intake`. The `work-intake.upload`, `work-intake.save` and `work-intake.apply` actions execute inside its existing request transaction. Full case exports retain `workIntakes` and current `workIntakeRefs`; receiving validates complete immutable editions and their native record links. Older cases keep their original snapshot shape. [Complete work/invoice source contract](WORK_INTAKE.md) describes fields, routes, CLI and typed/MCP access.
 
+## Installation effort and support
+
+`POST /api/operations/{case}/installation-effort-seed` accepts the current case version, saved Installation identity/edition, selected asOfDate and optional complete same-edition document. Its complete input uses `document.effort.schema = "stellar-forge.sf47-installation-effort.v1"`. Persist it through the original Installation preview/save transaction. `POST /api/operations/{case}/installation-effort-selection` accepts an original forecastId and exact saved Installation selections to return complete native Forecast inputs from reviewed phase remainders. [Installation effort and support](INSTALLATION_EFFORT.md) specifies the SDK/CLI/MCP operation, source pointers, original Work and support meanings, and full receiving.
+
 ## Public interfaces
 
 `operations.py`: `Operations(workspace)` with `list(plan_id=None)`, `create(body)`, `read(id)`, `command(id,body)`, `history(id,after=0,limit=100)`, `source(id,source_id)`, `report(id)`, `export(id)`, `import_bundle(raw,name,request_id,actor)`.

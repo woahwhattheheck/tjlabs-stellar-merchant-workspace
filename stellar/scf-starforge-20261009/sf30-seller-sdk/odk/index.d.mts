@@ -8,6 +8,8 @@ export interface CentralScope {
 export interface CentralFormSelection {projectId:number|string;formId:string}
 export interface CentralConnectionInput {
   id?:string;name:string;url:string;authEnv:string;allowLoopback?:boolean;
+  /** Existing host environment alias for the selected private HTTPS Codespaces origin; never a token value. */
+  codespacesTokenEnv?:string;
 }
 export interface CentralPlanInput {
   id?:string;name:string;connectionId:string;forms:CentralFormSelection[];scope:CentralScope;
@@ -112,9 +114,10 @@ export interface CentralExtensionStore {
 export type CentralWorkspaceExtension=(context:{workspace:CentralWorkspace;store:CentralExtensionStore})=>Awaitable<unknown>;
 export function openCentralWorkspace(options:{directory:string;fetchImpl?:typeof fetch;extend?:CentralWorkspaceExtension}):Promise<CentralWorkspace>;
 export interface CentralServer {
-  url:string;origin:string;directory:string;token:string;close():Promise<void>;
+  /** Original local control endpoint; browser endpoints are present only for explicit externalOrigin. */
+  url:string;origin:string;browserOrigin?:string;browserUrl?:string;directory:string;token:string;close():Promise<void>;
 }
-export function createCentralServer(options:{workspace:CentralWorkspace;host?:string;port?:number;token?:string;extensions?:CentralServerExtension[]}):Promise<CentralServer>;
+export function createCentralServer(options:{workspace:CentralWorkspace;host?:string;port?:number;token?:string;externalOrigin?:string;extensions?:CentralServerExtension[]}):Promise<CentralServer>;
 export interface RestoreCentralResult extends CentralReceivedArchive {
   schema:'stellar-forge.odk-central-workspace.v1';directory:string;replayed?:boolean;currentWorkspaceRevision?:number;
 }
@@ -125,7 +128,7 @@ export const ODK_STARTUP_SCHEMA:'stellar-forge.odk-central-workspace-startup.v1'
 export interface CentralConnectionValue {
   schema:typeof ODK_CONNECTION_SCHEMA;instanceId:string;directory:string;
   directoryIdentity:{dev:string;ino:string};workspaceId:string;operator:string;pid:number;
-  startedAt:string;origin:string;url:string;
+  startedAt:string;origin:string;url:string;browserOrigin?:string;browserUrl?:string;
 }
 export interface CentralConnection {
   path:string;sha256:string;value:CentralConnectionValue;token:string;
@@ -199,7 +202,7 @@ export class CentralWorkspaceClient {
 }
 export function connectCentralWorkspace(options:{connectionFile:string;directory?:string;fetchImpl?:typeof fetch}):Promise<CentralWorkspaceClient>;
 export interface CentralManagedOptions {
-  directory:string;operator?:string;port?:number;restoreArchive?:string;restoreSha256?:string;
+  directory:string;operator?:string;port?:number;externalOrigin?:string;restoreArchive?:string;restoreSha256?:string;
   fetchImpl?:typeof fetch;signal?:AbortSignal;
   commissioningConnection?:CentralCommissioningConnectionInput;
   commissioningConnectionFile?:string;commissioningEnvironmentFile?:string;
@@ -267,11 +270,11 @@ export interface CentralCommissioningHostReference {
   sourceCommit?:string;release?:string;observedAt?:string;
 }
 export interface CentralCommissioningConnectionInput {
-  id?:string;connectionId?:string;name?:string;url:string;authEnv:string;
+  id?:string;connectionId?:string;name?:string;url:string;authEnv:string;codespacesTokenEnv?:string;
   allowLoopback?:boolean;hostReference?:CentralCommissioningHostReference;
 }
 export interface CentralCommissioningConnection {
-  connectionId?:string;name:string;url:string;authEnv:string;allowLoopback:boolean;
+  connectionId?:string;name:string;url:string;authEnv:string;allowLoopback:boolean;codespacesTokenEnv?:string;
   hostReference?:CentralCommissioningHostReference;
 }
 export interface CentralCommissioningHostHandover extends RecordValue {

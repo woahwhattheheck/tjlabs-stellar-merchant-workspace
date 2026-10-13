@@ -148,7 +148,8 @@ export function qcewReportRowSelection(profile,reportPeriod) {
     periods:[...new Set([...periods.history,periods.baseline,periods.current].map(periodKey))].sort(),sizeCode:'0'};
 }
 
-export function buildQcewReport({capture,cpiCapture,profile,period:reportPeriod,sourceContext=null}={}) {
+export function buildQcewReport({capture,cpiCapture,profile,period:reportPeriod,sourceContext=null,methodologyVersion=2}={}) {
+  need([1,2].includes(methodologyVersion),'Use the retained report methodology version.');
   profile=validateQcewProfile(profile);
   const definition=profile.definition,periods=profilePeriods(profile,reportPeriod);
   const areas=new Set(definition.regions.flatMap(item=>item.areas));
@@ -192,7 +193,7 @@ export function buildQcewReport({capture,cpiCapture,profile,period:reportPeriod,
   for(const cell of currentCells) statuses[cell.weeklyWage.status]=(statuses[cell.weeklyWage.status]??0)+1;
   const sourcesUsed=new Set([...trace.values()].map(item=>item.file).filter(Boolean));
   const result={
-    schema:QCEW_REPORT,profile:clone(profile),period:periods.current,periodLabel:periodKey(periods.current),
+    schema:QCEW_REPORT,...(methodologyVersion===2?{methodologyVersion:2}:{}),profile:clone(profile),period:periods.current,periodLabel:periodKey(periods.current),
     baseline:periods.baseline,priceBase:periods.priceBase,
     source:{captureSha256:capture.captureSha256,...model.sourceSummary,files:model.sourceFiles.filter(item=>sourcesUsed.has(item.file))},
     cpi:{captureSha256:cpiCapture.captureSha256,series:prices.metadata,quarterly:definition.price.quarterly,base:baseCpi},
@@ -204,11 +205,14 @@ export function buildQcewReport({capture,cpiCapture,profile,period:reportPeriod,
       coverage:definition.coverage==='complete'?'An aggregate is unavailable when any required component is withheld or unavailable. Original absent cells from 2001 onward are structural zeros only where the complete original area/period source exists and the same industry/aggregation/period classification is present in the retained original source catalogue.':'Only disclosed components are aggregated; every incomplete aggregate is labelled as disclosed components. It is not a full regional total.',
       history:'Each historical point uses the same quarter as this edition. The 1990–2000 NAICS archive is reconstructed from SIC; missing cells in those years cannot be treated as structural zeros. Expanded total/UI ownership groups before 1995 remain unavailable when the original international-government component cannot be recovered.',
       prices:definition.price.dollars==='nominal'?'Original nominal dollars.':'Constant dollars of '+periodKey(periods.priceBase)+', using '+definition.price.seriesId+' and '+(definition.price.quarterly==='quarter_end'?'the original quarter-end monthly observation.':'the mean of all three original monthly observations. Missing observations remain unavailable.'),
-      sourceEdition:'Current published original archive files retained during '+model.sourceSummary.retrievedFrom+' through '+model.sourceSummary.retrievedThrough+'. Historical observations can reflect publisher revisions.',
+      sourceEdition:(model.intake.request?.sourceKind==='current_published_quarterly_api_slices'?'Current published original quarterly area CSV slices retained during ':'Current published original archive files retained during ')+model.sourceSummary.retrievedFrom+' through '+model.sourceSummary.retrievedThrough+'. Historical observations can reflect publisher revisions.',
       seasonality:'QCEW employment and wages are not seasonally adjusted. The selected CPI source is labelled '+prices.metadata.seasonalAdjustment+'.',
+      ...(methodologyVersion===2?{comparisons:"Changes compare the retained unadjusted QCEW levels for the selected periods. They can reflect establishment reclassification, location or ownership updates and publisher revisions as well as economic changes. They are not the administratively adjusted over-the-year changes in the County Employment and Wages news release."}:{}),
       interpretation:'Average wages reflect the mix of jobs and paid compensation. Regional ratios compare the configured industries and ownerships; they do not measure a constant-worker wage or cost-of-living difference.',
       citations:[
-        {title:'QCEW original downloadable files',url:'https://www.bls.gov/cew/downloadable-data-files.htm'},
+        model.intake.request?.sourceKind==='current_published_quarterly_api_slices'
+          ?{title:'QCEW original quarterly area CSV API',url:'https://www.bls.gov/cew/additional-resources/open-data/home.htm'}
+          :{title:'QCEW original downloadable files',url:'https://www.bls.gov/cew/downloadable-data-files.htm'},
         {title:'QCEW original quarterly fields',url:'https://www.bls.gov/cew/about-data/downloadable-file-layouts/quarterly/naics-based-quarterly-layout.htm'},
         {title:'QCEW disclosure and historical availability',url:'https://www.bls.gov/cew/questions-and-answers.htm'},
         {title:'BLS average weekly wage calculation',url:'https://www.bls.gov/cew/publications/factsheets/fluctuations-in-average-weekly-wages.htm'},
@@ -224,9 +228,13 @@ export function validateQcewReport(report,{capture,cpiCapture,sourceContext=null
   const identity=clone(report);delete identity.id;
   need(definitionHash(identity)===report.id,'The saved county report changed.');
   validateQcewProfile(report.profile);
+  const hasMethodologyVersion=Object.hasOwn(report,'methodologyVersion');
+  need(!hasMethodologyVersion||report.methodologyVersion===2,'The saved report methodology version is unsupported.');
+  const methodologyVersion=hasMethodologyVersion?2:1;
+  if(methodologyVersion===2)need(report.methodology?.comparisons==="Changes compare the retained unadjusted QCEW levels for the selected periods. They can reflect establishment reclassification, location or ownership updates and publisher revisions as well as economic changes. They are not the administratively adjusted over-the-year changes in the County Employment and Wages news release.",'The current report must retain its complete comparison-method qualification.');
   if(capture||cpiCapture) {
     need(capture&&cpiCapture,'Validate both original QCEW and price-index sources together.');
-    const rebuilt=buildQcewReport({capture,cpiCapture,profile:report.profile,period:report.period,sourceContext});
+    const rebuilt=buildQcewReport({capture,cpiCapture,profile:report.profile,period:report.period,sourceContext,methodologyVersion});
     need(canonical(rebuilt)===canonical(report),'The county report differs from its complete original sources and saved profile.');
   }
   return report;

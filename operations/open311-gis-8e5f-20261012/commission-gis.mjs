@@ -8,6 +8,8 @@ import { randomUUID, createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { spawn } from 'node:child_process';
 
+import { validateAnalystPlan, selectFullAnalyst, supervisorHandoff, validateSupervisorSelection } from './full-analyst.mjs';
+
 const sha = value => createHash('sha256').update(value).digest('hex');
 const json = value => JSON.stringify(value, null, 2) + '\n';
 const check = (condition, message) => { if (!condition) throw new Error(message); };
@@ -438,7 +440,16 @@ export async function runGISCommissioning(config) {
       check(inspected.summary?.rows === item.expectedRows, 'The original source population differs: ' + item.name);
       item.inspection = inspected; originals.push(item);
     }
+    const planPath = join(output, 'inputs', 'analyst-plan.json');
+    const selectedPlanBytes = await exists(planPath) ? await regularBytes(planPath) :
+      config.analystPlan ? await regularBytes(resolve(config.analystPlan)) : null;
+    if (selectedPlanBytes && config.analystPlan && await exists(resolve(config.analystPlan)))
+      check((await regularBytes(resolve(config.analystPlan))).equals(selectedPlanBytes), 'Keep the original complete analyst plan.');
+    const fullPlan = selectedPlanBytes ? JSON.parse(selectedPlanBytes.toString('utf8')) : null;
+    if (fullPlan) validateAnalystPlan(fullPlan);
     const input = {
+      ...(fullPlan ? { analystPlan: { filename: 'analyst-plan.json', id: fullPlan.id,
+        bytes: selectedPlanBytes.length, sha256: sha(selectedPlanBytes) } } : {}),
       schema: CONTINUATION_SCHEMA, product: relative(sourceRoot, product).split(sep).join('/'),
       source, driver: { bytes: driver.length, sha256: sha(driver) },
       edition: config.edition ?? savedInput?.edition ?? null,
@@ -449,6 +460,7 @@ export async function runGISCommissioning(config) {
     if (savedInput) equal(savedInput, input, 'Preserve the exact original source, inputs and selected report for this programme.');
     else await publish(join(output, 'INPUT.json'), input);
     for (const item of originals) await publish(item.path, item.body);
+    if (fullPlan) await publish(planPath, selectedPlanBytes);
     const run = await envelope(join(output, 'RUN.json'), { schema: CONTINUATION_SCHEMA, runId: randomUUID(),
       inputSha256: sha(stable(input)), startedAt: timestamp(), node: process.version,
       origin: await directoryIdentity(output), selectedSourceDirectory: sourceRoot });
@@ -495,6 +507,7 @@ export async function runGISCommissioning(config) {
     const phase = (...args) => programme.phase(...args);
     const once = (...args) => programme.once(...args);
     for (const item of originals) await recordFile('inputs/' + item.filename, 'application/json');
+    if (fullPlan) await recordFile('inputs/analyst-plan.json', 'application/json');
     const originalCreated = JSON.parse(originals[0].originalText), originalUpdated = JSON.parse(originals[1].originalText);
     const originalRecords = new Map([...originalCreated.requests, ...originalUpdated.requests].map(row => [row.serviceRequestId, row]));
     check(originalRecords.size === 104, 'The original collections do not contain 104 distinct request identities.');
@@ -644,8 +657,9 @@ export async function runGISCommissioning(config) {
         check(row.geometry?.type === 'Point' && row.geometry.coordinates[0] === Number(row.source.long) &&
           row.geometry.coordinates[1] === Number(row.source.lat), 'The geographic point differs from the original longitude/latitude.');
       }
-      const editRows = [sourceRows[0], sourceRows.at(-1), sourceRows[1]], keys = editRows.map(row => row.key);
-      check(new Set(keys).size === 3, 'Choose three distinct original cases for the internal analyst work.');
+      const fullSelection = fullPlan ? selectFullAnalyst(fullPlan, sourceRows) : null;
+      const editRows = fullPlan ? sourceRows : [sourceRows[0], sourceRows.at(-1), sourceRows[1]], keys = editRows.map(row => row.key);
+      check(new Set(keys).size === (fullPlan ? 104 : 3), 'Retain every selected original case once.');
       await once('original-map-and-case-reading', async () => {
         await navigate(page, 'cases', '#case-handoff');
         await page.locator('#case-handoff').selectOption(originalHandoff.id);
@@ -681,7 +695,7 @@ export async function runGISCommissioning(config) {
         });
       const returnedPath = join(output, 'inputs', 'boston-analyst-return.gpkg');
       const analystSelection = { source: { bytes: gpkgBytes.length, sha256: sha(gpkgBytes) }, handoffId: originalHandoff.id,
-        cases: editRows.map((row, index) => ({ key: row.key, serviceRequestId: row.serviceRequestId,
+        cases: fullSelection ? fullSelection.cases : editRows.map((row, index) => ({ key: row.key, serviceRequestId: row.serviceRequestId,
           assignedTeam: 'TJLabs internal commissioning desk', workOrderId: 'TJL-GIS-' + row.serviceRequestId,
           priority: index === 2 ? 'review' : 'normal', action: index === 2 ? 'defer' : 'dispatch',
           note: 'Internal commissioning assignment for the retained original case. Source geography and source disposition remain attached.' })) };
@@ -692,10 +706,13 @@ export async function runGISCommissioning(config) {
           await copyFile(join(output, 'downloads', 'boston-analyst-original.gpkg'), temporary, constants.COPYFILE_EXCL);
           const edited = new DatabaseSync(temporary);
           try {
-            const statement = edited.prepare('UPDATE open311_features SET assigned_team=?,work_order_id=?,priority=?,action=?,analyst_note=? WHERE feature_key=?');
+            const statement = edited.prepare(fullPlan ?
+              'UPDATE open311_features SET assigned_team=?,priority=?,action=?,analyst_note=? WHERE feature_key=?' :
+              'UPDATE open311_features SET assigned_team=?,work_order_id=?,priority=?,action=?,analyst_note=? WHERE feature_key=?');
             edited.exec('BEGIN IMMEDIATE');
             for (const row of analystSelection.cases) {
-              const result = statement.run(row.assignedTeam, row.workOrderId, row.priority, row.action, row.note, row.key);
+              const result = statement.run(...(fullPlan ? [row.assignedTeam, row.priority, row.action, row.note, row.key] :
+                [row.assignedTeam, row.workOrderId, row.priority, row.action, row.note, row.key]));
               check(Number(result.changes) === 1, 'The native geographic edit did not select exactly one original feature.');
             }
             edited.exec('COMMIT');
@@ -710,7 +727,8 @@ export async function runGISCommissioning(config) {
         try {
           for (const row of analystSelection.cases) {
             const actual = edited.prepare('SELECT assigned_team,work_order_id,priority,action,analyst_note FROM open311_features WHERE feature_key=?').get(row.key);
-            equal(actual && { ...actual }, { assigned_team: row.assignedTeam, work_order_id: row.workOrderId,
+            equal(actual && { ...actual }, { assigned_team: row.assignedTeam,
+              work_order_id: fullPlan ? sourceRows.find(source => source.key === row.key).operator.workOrderId : row.workOrderId,
               priority: row.priority, action: row.action, analyst_note: row.note }, 'The saved analyst assignment changed.');
           }
         } finally { edited.close(); }
@@ -724,13 +742,13 @@ export async function runGISCommissioning(config) {
       const receivedReturn = await programme.action('analyst-return', page, sender, '/api/return', async () => {
         await navigate(page, 'review', '#return-form');
         await page.locator('#return-form select[name="handoffId"]').selectOption(originalHandoff.id);
-        await page.locator('#return-form input[name="analyst"]').fill('TJLabs GIS commissioning operator');
+        await page.locator('#return-form input[name="analyst"]').fill(fullPlan ? '32C2 Boston source analyst' : 'TJLabs GIS commissioning operator');
         await page.locator('#return-form input[name="name"]').fill('Boston retained-source dispatch review');
         await page.locator('#return-file').setInputFiles(returnedPath);
         await page.locator('#return-form button[type="submit"]').click();
       });
       const returned = sender.workspace.returned(receivedReturn.returned.id);
-      equal(returned.summary.counts, { changes: 3, conflicts: 0, missing: 0, unchanged: 101 }, 'The analyst return did not isolate the three actual edits.');
+      equal(returned.summary.counts, { changes: fullPlan ? 104 : 3, conflicts: 0, missing: 0, unchanged: fullPlan ? 0 : 101 }, 'The analyst return changed its selected original edits.');
       const changes = editRows.map(row => returned.changes.find(change => change.key === row.key));
       check(changes.every(Boolean), 'A returned native edit has no source-linked proposal.');
       async function openReview() {
@@ -739,6 +757,81 @@ export async function runGISCommissioning(config) {
         await page.locator('[data-action="export"][data-kind="returned"][data-return-id="' + returned.summary.id + '"]').waitFor({ state: 'visible' });
         await page.locator('#decision-form').waitFor({ state: 'visible' });
       }
+      let reviewedHandoff, dispatchKeys;
+      if (fullPlan) {
+        const handoff = await once('full-supervisor-handoff', async () => {
+          const value = supervisorHandoff({ runId: run.runId, inputSha256: run.inputSha256,
+            plan: fullPlan, returned, workspace: sender.workspace.state(),
+            handoffId: originalHandoff.id, sourceRows });
+          await save('inputs/supervisor-input.json', value);
+          await save('downloads/boston-analyst-supervisor-workspace.json', json(sender.workspace.workspaceExport()));
+          return value;
+        });
+        const handoffBytes = await regularBytes(join(output, 'inputs', 'supervisor-input.json'));
+        const selectionPath = join(output, 'inputs', 'supervisor-selection.json');
+        let selectionBytes = await exists(selectionPath) ? await regularBytes(selectionPath) :
+          config.supervisorSelection && await exists(resolve(config.supervisorSelection))
+            ? await regularBytes(resolve(config.supervisorSelection)) : null;
+        if (!selectionBytes) {
+          const pending = new Error('The original analyst return is ready for its independent supervisor.');
+          pending.code = 'AWAITING_SUPERVISOR';
+          pending.details = { supervisorInput: join(output, 'inputs', 'supervisor-input.json'),
+            supervisorWorkspace: join(output, 'downloads', 'boston-analyst-supervisor-workspace.json'),
+            handoffSha256: sha(handoffBytes), returnId: handoff.returnId, handoffId: handoff.handoffId,
+            workspace: handoff.workspace, proposals: handoff.proposals.length, totals: handoff.totals };
+          throw pending;
+        }
+        if (config.supervisorSelection && await exists(resolve(config.supervisorSelection)))
+          check((await regularBytes(resolve(config.supervisorSelection))).equals(selectionBytes),
+            'Keep the original selected supervisor decision.');
+        const selection = JSON.parse(selectionBytes.toString('utf8'));
+        const decision = validateSupervisorSelection(selection, handoff, sha(handoffBytes));
+        await save('inputs/supervisor-selection.json', selectionBytes);
+        dispatchKeys = decision.dispatchKeys;
+        const reviewed = await programme.action('review-full-supervisor', page, sender, '/api/decision', async () => {
+          const current = sender.workspace.state();
+          check(current.workspaceId === selection.workspaceId && current.revision === selection.expectedRevision,
+            'The original supervisor workspace changed before its decision.');
+          await openReview();
+          for (const row of selection.decisions)
+            await page.locator('[data-review-choice="' + row.proposalId + '"]').selectOption(row.choice);
+          await page.waitForFunction(async ({ directory, returnId, choices }) => {
+            const db = await new Promise((done, reject) => {
+              const opening = indexedDB.open('open311-geographic-handoff', 1);
+              opening.onsuccess = () => done(opening.result); opening.onerror = () => reject(opening.error);
+            });
+            try {
+              const draft = await new Promise((done, reject) => {
+                const reading = db.transaction('saved').objectStore('saved').get('drafts:directory:' + directory);
+                reading.onsuccess = () => done(reading.result); reading.onerror = () => reject(reading.error);
+              });
+              return draft?.decision?.reviewChoices?.returnId === returnId &&
+                choices.every(row => draft.decision.reviewChoices.values?.[row.proposalId] === row.choice);
+            } finally { db.close(); }
+          }, { directory: senderDirectory, returnId: returned.summary.id, choices: selection.decisions });
+          await page.reload({ waitUntil: 'domcontentloaded' });
+          await openReview();
+          for (const row of selection.decisions)
+            check(await page.locator('[data-review-choice="' + row.proposalId + '"]').inputValue() === row.choice,
+              'The original complete supervisor choice did not survive reload.');
+          await screenshot(page, '04-complete-supervisor-review.png');
+          await page.locator('#decision-form input[name="reviewer"]').fill(selection.reviewer);
+          await page.locator('#decision-form textarea[name="note"]').fill(selection.note);
+          await page.locator('#decision-form button[type="submit"]').click();
+        });
+        check(reviewed.decision.accepted === decision.accepted.length &&
+          reviewed.decision.rejected === decision.rejected.length, 'The supervisor saved different proposal choices.');
+        reviewedHandoff = reviewed.handoff;
+        check(reviewedHandoff.counts.dispatchReady === dispatchKeys.length,
+          'The complete supervisor review changed its individual dispatch cohort.');
+        const finalReturn = sender.workspace.returned(returned.summary.id);
+        check(finalReturn.decisions.some(row => row.id === reviewed.decision.id),
+          'The original independent supervisor decision is absent from the retained return.');
+        await phase('partial-review-and-persistent-operator-choice', {
+          returnId: returned.summary.id, originalFileSha256: returned.summary.sha256,
+          supervisor: selection.reviewer, originalPlanId: fullPlan.id, totals: handoff.totals,
+          decisions: [reviewed.decision], reviewedHandoff });
+      } else {
       const firstDecision = await programme.action('review-first', page, sender, '/api/decision', async () => {
         await openReview();
         await page.locator('[data-review-choice="' + changes[0].id + '"]').selectOption('accept');
@@ -783,13 +876,16 @@ export async function runGISCommissioning(config) {
         await page.locator('#decision-form textarea[name="note"]').fill('Accept the remaining original dispatch assignment after the retained partial review.');
         await page.locator('#decision-form button[type="submit"]').click();
       });
-      const reviewedHandoff = secondDecision.handoff;
+      reviewedHandoff = secondDecision.handoff;
       check(reviewedHandoff.counts.dispatchReady === 2, 'The final review did not retain exactly two dispatch-ready cases.');
       const finalReturn = sender.workspace.returned(returned.summary.id);
       check([firstDecision, secondDecision].every(result => finalReturn.decisions.some(decision => decision.id === result.decision.id)),
         'The complete original analyst review history was not retained.');
       await phase('partial-review-and-persistent-operator-choice', { returnId: returned.summary.id,
         originalFileSha256: returned.summary.sha256, decisions: [firstDecision.decision, secondDecision.decision], reviewedHandoff });
+
+        dispatchKeys = keys.slice(0, 2);
+      }
 
       const mapping = [
         { name: 'request', field: 'serviceRequestId' }, { name: 'assigned_team', field: 'assignedTeam' },
@@ -798,19 +894,19 @@ export async function runGISCommissioning(config) {
         { name: 'source_notes', field: 'sourceStatusNotes' }, { name: 'operator_note', field: 'note' }
       ];
       const madeDispatch = await programme.action('reviewed-dispatch', page, sender, '/api/dispatch', async () => {
-        await selectCases(page, reviewedHandoff.id, keys.slice(0, 2));
+        await selectCases(page, reviewedHandoff.id, dispatchKeys);
         await navigate(page, 'dispatch', '#dispatch-form');
         await page.locator('#dispatch-form input[name="name"]').fill('Boston internal commissioning dispatch');
         await page.locator('#dispatch-form select[name="handoffId"]').selectOption(reviewedHandoff.id);
         await page.locator('#dispatch-form input[name="destination"]').fill('TJLabs receiving desk');
         await page.locator('#dispatch-form select[name="scope"]').selectOption('selected');
-        await page.locator('#dispatch-form textarea[name="note"]').fill('Complete internal operating handover from two accepted original-case assignments.');
+        await page.locator('#dispatch-form textarea[name="note"]').fill('Complete internal operating handover from the independently accepted original-case assignments.');
         await page.locator('#dispatch-form details').evaluate(node => { node.open = true; });
         await page.locator('#dispatch-form textarea[name="columns"]').fill(json(mapping));
         await page.locator('#dispatch-form button[type="submit"]').click();
       });
       const dispatch = sender.workspace.dispatch(madeDispatch.dispatch.id);
-      equal(dispatch.rows.map(row => row.key).sort(), keys.slice(0, 2).sort(), 'The dispatch lost its cross-page selected cases.');
+      equal(dispatch.rows.map(row => row.key).sort(), [...dispatchKeys].sort(), 'The dispatch lost its cross-page selected cases.');
       equal(dispatch.definition.columns, mapping, 'The saved destination mapping differs from the operator selection.');
       await navigate(page, 'dispatch', '#dispatch-form');
       await page.locator('#dispatch-selection').selectOption(dispatch.summary.id);
@@ -822,9 +918,9 @@ export async function runGISCommissioning(config) {
           'downloads/boston-dispatch.' + kind, bytes => {
             if (kind === 'gpkg') {
               const decoded = api.readGeoPackage(bytes, { directory: output });
-              check(decoded.rows.length === 2, 'The dispatch GeoPackage lost a selected row.');
+              check(decoded.rows.length === dispatchKeys.length, 'The dispatch GeoPackage lost a selected row.');
               equal(decoded.rows.map(row => row.properties.feature_key).sort(),
-                [...keys.slice(0, 2)].sort(), 'The dispatch GeoPackage changed its selected feature identities.');
+                [...dispatchKeys].sort(), 'The dispatch GeoPackage changed its selected feature identities.');
             } else {
               const expected = sender.workspace.exportFile({ kind, dispatchId: dispatch.summary.id }).body;
               check(bytes.equals(Buffer.from(expected)), 'The complete browser dispatch differs from its saved native edition: ' + kind);
@@ -833,7 +929,7 @@ export async function runGISCommissioning(config) {
         dispatchFiles[kind] = { bytes: body.length, sha256: sha(body) };
       }
       const csvRows = api.csvDecode((await regularBytes(join(output, 'downloads', 'boston-dispatch.csv'))).toString('utf8'));
-      check(csvRows.length === 2 && csvRows.every(row => row.feature_key && row.source_sha256 && row.handoff_id && row.handoff_sha256),
+      check(csvRows.length === dispatchKeys.length && csvRows.every(row => row.feature_key && row.source_sha256 && row.handoff_id && row.handoff_sha256),
         'The mapped dispatch CSV lost its original case identities.');
       await screenshot(page, '05-reviewed-dispatch.png');
       const senderPackageBytes = await download(page, page.locator('#download-workspace'), 'downloads/boston-complete-gis-workspace.json', bytes => {
@@ -882,7 +978,7 @@ export async function runGISCommissioning(config) {
       });
       const continued = await makeHandoff(receivingPage, receiver, 'recipient-continued-handoff',
         'Receiving desk continued Boston review', selectedSourceIds, reviewedHandoff.id);
-      check(continued.counts.rows === 104 && continued.counts.dispatchReady === 2,
+      check(continued.counts.rows === 104 && continued.counts.dispatchReady === dispatchKeys.length,
         'The receiving operator could not continue the complete reviewed handoff.');
       const receivedBytes = await download(receivingPage, receivingPage.locator('#download-workspace'),
         'downloads/boston-received-editable-workspace.json', bytes => {
@@ -901,7 +997,7 @@ export async function runGISCommissioning(config) {
       await receiver.close(); receiver = null;
       await sender.close(); sender = null;
       return { imported, originalHandoff, reportHandoff, selectedSourceIds, editRows, reviewedHandoff,
-        dispatch, mapping, continued, receivingRequest, recovery, originalReceiverId,
+        dispatch, dispatchKeys, mapping, continued, receivingRequest, recovery, originalReceiverId,
         senderPackageFile: 'downloads/boston-complete-gis-workspace.json',
         receivedPackageFile: 'downloads/boston-received-editable-workspace.json',
         browserErrors: [] };
@@ -1069,7 +1165,7 @@ export async function runGISCommissioning(config) {
       '# Boston geographic operating handover', '',
       'Original operation: ' + run.runId + '. Original source edition: ' + (input.edition ?? 'the complete INPUT.json inventory') + '.', '',
       'This directory contains the complete original municipal inputs, analyst file, reviewed dispatch, native receiving history and editable workspaces.',
-      'The three analyst assignments are labelled internal commissioning work. Two accepted original cases form the destination dispatch.', '',
+      (fullPlan ? 'All104 original cases have source-bound analyst recommendations and an independent supervisor decision;48 individual cases form the reviewed dispatch.' : 'The three analyst assignments are labelled internal commissioning work. Two accepted original cases form the destination dispatch.'), '',
       '## Open the delivered work', '',
       '- Open index.html for the complete handover file links.',
       '- Open downloads/boston-dispatch.html for the reviewed destination handover.',
@@ -1103,7 +1199,7 @@ export async function runGISCommissioning(config) {
     ];
     await save('index.html', '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
       '<title>Boston geographic operating handover</title><style>body{font:16px/1.55 system-ui,sans-serif;max-width:960px;margin:40px auto;padding:0 24px;background:#f5f6f8;color:#152538}h1{line-height:1.15}li{margin:.75em 0}a{color:#17478b}section{background:white;padding:24px;border:1px solid #d8dee8;border-radius:12px}code{overflow-wrap:anywhere}</style>' +
-      '<main><h1>Boston geographic operating handover</h1><p>104 original case identities · two reviewed internal dispatch assignments · continued recipient workspaces.</p>' +
+      '<main><h1>Boston geographic operating handover</h1><p>104 original case identities · ' + browserResult.dispatchKeys.length + ' reviewed internal dispatch assignments · continued recipient workspaces.</p>' +
       '<p>Operation <code>' + htmlEscape(run.runId) + '</code>. The original source status and coordinates remain attached to each internal assignment.</p>' +
       '<section><h2>Delivered work</h2><ul>' + links.map(([label, name]) => '<li><a href="' + htmlEscape(name) + '">' + htmlEscape(label) + '</a></li>').join('') +
       '</ul></section><h2>Receiving and continued work</h2><p>The guide explains native CLI receiving and reopening the editable SQLite desks. Later recipient editions remain valid alongside the frozen original exports. Complete request and attempt history is retained in the same directory.</p></main></html>\n', 'text/html');
@@ -1167,7 +1263,7 @@ export async function runGISCommissioning(config) {
     if (provider) { try { await provider.close(); } catch (problem) { closed.push(errorValue(problem)); } provider = null; }
     if (reopened) { try { reopened.close(); } catch (problem) { closed.push(errorValue(problem)); } reopened = null; }
     if (browser) {
-      if (programme) {
+      if (programme && error.code !== 'AWAITING_SUPERVISOR') {
         for (const [index, page] of browser.contexts().flatMap(context => context.pages()).entries()) {
           try {
             const body = await page.screenshot({ fullPage: true, timeout: 10000 });
@@ -1180,6 +1276,13 @@ export async function runGISCommissioning(config) {
     if (receiver) { try { await receiver.close(); } catch (problem) { closed.push(errorValue(problem)); } receiver = null; }
     if (sender) { try { await sender.close(); } catch (problem) { closed.push(errorValue(problem)); } sender = null; }
     if (!programme) throw error;
+    if (error.code === 'AWAITING_SUPERVISOR') {
+      const waiting = programme.bound({ state: 'awaiting-supervisor', output, attemptId: programme.attempt,
+        completedAt: timestamp(), ...error.details, closeErrors: closed });
+      await envelope(join(programme.attemptRoot, 'supervisor-ready.json'), waiting);
+      console.log('OPEN311_GIS_SUPERVISOR_READY ' + JSON.stringify(waiting));
+      return waiting;
+    }
     const result = programme.bound({ state: 'failed', output, attemptId: programme.attempt, startedAt: attemptStarted,
       completedAt: timestamp(), error: errorValue(error), browserErrors: programme.browserErrors, closeErrors: closed,
       continuation: 'Use this same original output and configuration; retained requests are reconciled before replay.' });
@@ -1198,7 +1301,7 @@ export async function runGISCommissioning(config) {
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   try {
     const result = await runGISCommissioning(JSON.parse(await readFile(process.argv[2], 'utf8')));
-    if (result.state !== 'passed') process.exitCode = 1;
+    if (!['passed', 'awaiting-supervisor'].includes(result.state)) process.exitCode = 1;
   } catch (error) {
     console.error('OPEN311_GIS_ERROR ' + JSON.stringify(errorValue(error))); process.exitCode = 1;
   }

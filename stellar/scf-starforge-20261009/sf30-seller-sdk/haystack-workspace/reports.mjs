@@ -71,9 +71,11 @@ export function makeReport(state, args) {
   return { bytes: Buffer.from(body), mediaType: format === "json" ? "application/json" : format === "csv" ? "text/csv; charset=utf-8" : "text/html; charset=utf-8",
     name: "haystack-" + (diagnostics ? "diagnostics" : (args.role || "all") + "-register") + "-r" + state.revision + "." + format };
 }
-export function nativeGrid(state, { sourceId, editionId }) {
+export function nativeGrid(state, { sourceId, editionId, format = "json" }) {
   const view = editionId ? editionView(state, editionId) : analyzed(state), item = view.grids.find(grid => grid.sourceId === sourceId);
   need(item, "Choose a source in the selected current or saved edition.", "HAYSTACK_SOURCE_MISSING", 404);
-  return { bytes: Buffer.from(encodeGrid(item.grid, { format: "json-v4" })), mediaType: "application/json",
-    name: "haystack-" + sourceId.slice(0, 12) + "-r" + state.revision + ".json" };
+  need(["json", "zinc"].includes(format), "Choose JSON or Zinc for a native grid.");
+  return { bytes: Buffer.from(encodeGrid(item.grid, { format: format === "zinc" ? "zinc" : "json-v4" })),
+    mediaType: format === "zinc" ? "text/zinc; charset=utf-8" : "application/json",
+    name: "haystack-" + sourceId.slice(0, 12) + "-r" + state.revision + (format === "zinc" ? ".zinc" : ".json") };
 }

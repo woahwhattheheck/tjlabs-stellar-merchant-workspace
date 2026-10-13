@@ -22,7 +22,13 @@ Use **Find in case**, or **Ctrl+K / Command+K** while focus is inside Operations
 
 Select a record to inspect its original fields and linked case references. **Open original editor** returns eligible records to their existing editing flow using the current role permissions; cash records use the retained correction flow. Saved forecast and portfolio results open in their original desks. A forecast handoff first preserves any open forecast inputs in a complete downloadable file. Moving between sections preserves each child desk's own drafts and request recovery. Escape closes the finder and restores focus to the control that opened it.
 
-For the full navigation, search, source coverage and keyboard workflow, see [Grant Operations operating desk](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATING_DESK.md).
+The finder also reads the original saved workflow catalogue for the selected case version: account statements and reconciliation editions, cost-funding editions, issuer-terms revisions, cohort-delivery comparisons and operating procedures. Each result retains its original source or record identity, selected revision and available source summary. **Search coverage** identifies the returned populations; the native-record search remains usable while these saved workflows load or a catalogue read is retried. Only sections available to the current role appear in the results.
+
+Use the saved-workflow action to continue the selected original desk. Statement results retain the full original file and interpretation beside the current statement draft; **Open selected original statement** applies that retained choice. Reconciliation and funding retain their local drafts while opening the chosen saved edition. Issuer terms open the exact selected revision, including an earlier revision of the same workspace. Procedures keep their existing working drafts and verify the original retained source before opening. Cohort delivery reopens its complete source through the original comparison engine; an unsaved comparison is retained under **Retained comparison drafts**, where it can be resumed or downloaded. Finish an outstanding original save request before selecting another workflow in the same child desk.
+
+For the full navigation, search, source coverage and keyboard workflow, see [Grant Operations operating desk](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATING_DESK.md). The complete saved-edition and source handoff is described in [Saved workflows](../../stellar/scf_2026/sf47_budget_model/workspace/SAVED_WORKFLOWS.md).
+
+Each section loads its own desk when you open it. A loading message remains in that section until its original controls are ready. If the desk code cannot be loaded, use **Retry loading** in the same section; the case stays selected. Returning to an opened section uses the original retained draft and request recovery. A saved-workflow result waits for its original desk to load before applying the selected source or edition. See [Desk loading and recovery](../../stellar/scf_2026/sf47_budget_model/workspace/DESK_LOADING.md) for the complete operator workflow.
 
 ## 1. What the operator retains
 
@@ -420,6 +426,22 @@ The six typed Merchant calls—merchant_grant_installations, merchant_grant_inst
 The selected product includes both matching managed-launch readers and the complete original runtime files they bind, including the Installation and implementation-evidence modules. After adopting a new source edition, review and reopen the managed application, then continue its original case and saved request identities.
 
 
+
+### Review phase effort and support
+
+Open the current saved customer Installation and select **Read current work and phases** for an explicit as-of date. The original Workshare supplies the complete phase list, owners, dependencies and quoted effort. The review brings those phases together with the case's actual Work records and the allocations already retained in other saved Installations.
+
+Receive timesheets through the existing **Work / invoice intake** or **Bulk ledger intake**, or record the original work in **Work**. Use **Add work allocation** to select the native Work identities and allocate their hours to the matching source phases. Each allocation retains the original Work content digest and note. The existing Work review lifecycle continues to own submission, acceptance and corrections.
+
+For each phase, record the reviewer's remaining-work estimate and the original sources and observations used for that estimate. An unentered remainder stays unentered; explicit zero records the reviewer's decision that no work remains. Select **Apply reviewed remaining hours**, then **Review complete installation** and **Save reviewed edition**. The new edition retains its original source, checks, delivery assignments and previous editions together with the effort review.
+
+A support allowance retains the included hours, selected phase IDs, the original acceptance or handoff event, the calendar-day period and pointers to the complete original scope wording. The source values remain attached to the saved review. Use the customer's actual terms when deciding which work belongs inside that allowance. For example, a delivery handover phase and included operator sessions retain their original meanings; a separate support window records its own source, period and reviewer interpretation.
+
+Select **Open remaining-work forecast**, choose the saved Forecast, and map its commercial tasks to the exact current saved effort editions. Review and save that Forecast, then continue its original commercial tasks and phase selections in Portfolio. The shared allocation still includes support work after the commercial delivery boundary. Keep the original prices, costs, invoice and collection inputs, observed cash, capacity calendars and contributor terms in the same planning case.
+
+The CLI exposes **installation-effort-seed** and **installation-effort-selection** under `starforge grant-workspace operations`. The typed client methods are `installationEffortSeed` and `installationEffortSelection`; the Merchant tools are `merchant_grant_installation_effort_seed` and `merchant_grant_installation_effort_selection`. All use the current case version and exact original Installation selection. The seed returns the complete editable document for the existing Installation preview/save workflow.
+
+The [complete effort and support guide](../../stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_EFFORT.md) includes the input fields, native report meanings, complete SDK and CLI recipes, reviewed-hour selection, recovery and receiving. Export the complete selected Installation or operating case to carry its effort review, original Work and Invoice records, source attachments and saved planning inputs together.
 
 ### Complete CoCart and Blockscout workorders
 

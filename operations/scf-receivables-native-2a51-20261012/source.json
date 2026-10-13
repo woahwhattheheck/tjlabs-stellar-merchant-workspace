@@ -1,0 +1,606 @@
+{
+  "schema": "commons.native-receiving-source.v1",
+  "operation": "SCF-RECEIVABLES-NATIVE-2A51-20261012",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "sourceCommit": "94ad1dd33fd1616303d52faa8b1cd98745c6cfc5",
+  "sourceTree": "811b11553f07876efaa39fc57c05f2762af098b5",
+  "sourceCapsule": "7fcaec7a66deb03c5d9fed00f193138218d8c323",
+  "sourceCapsuleBytes": 1874163,
+  "files": [
+    {
+      "path": "LICENSE",
+      "gitBlob": "2d2a35a69e3896b7c6b885c1faebae2f2f8bc9c1",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/browser-assets.mjs",
+      "gitBlob": "63801fa838c0479e6ae156d9f155461f02df0cfb",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/merchant-receivables.json",
+      "gitBlob": "d89b6de902939f26a7353955bcec888ef0dfcccb",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-provider.mjs",
+      "gitBlob": "8ee253de89866a761ed415412e654e6c79235ff1",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs",
+      "gitBlob": "ad324ba35f477871856a8fab8f18a7c873004201",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs",
+      "gitBlob": "1c2a8f3a3488bc1c687ad9fdfb2fba7964baaedc",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/accountant/buyer-source.mjs",
+      "gitBlob": "72dd853451fcf9396df6f236bbc5a1e97935c535",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/accountant/cryptoworth-csv.mjs",
+      "gitBlob": "f9746085eceb06ca646add277a776f3c6ef26814",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/adjustments.mjs",
+      "gitBlob": "6554e1ec62d9bdae28e6bba1417ab0d65fe7ad72",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/cli.mjs",
+      "gitBlob": "4fc563a39e0520641bdb01b3202b341b55e572b3",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/customer-statements/README.md",
+      "gitBlob": "79ddd9024b98da34577dda00e4cbdf8f53b5e1b9",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/customer-statements/cli.mjs",
+      "gitBlob": "b8ae21d64624cf0b9882508692382ecde2036f38",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/customer-statements/core.mjs",
+      "gitBlob": "34f0c321e12c256bed8181d24f6882551981f553",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/customer-statements/native-usage.mjs",
+      "gitBlob": "21ff7348c423969e2563e36713fc70b98e7fb432",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/customer-statements/public/app.mjs",
+      "gitBlob": "fd4a6f90ef82343d43ca51478278d6e613fc00c1",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/customer-statements/public/index.html",
+      "gitBlob": "0e78443a1ec9e15e2e3738274bb02a1c2e429e35",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/customer-statements/public/style.css",
+      "gitBlob": "945ec5847f5254595424141d83ea170028802ca5",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/customer-statements/server.mjs",
+      "gitBlob": "888effa198134396bb02f3d4484dd69948cde30f",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/customer-statements/store.mjs",
+      "gitBlob": "6697e6ae32120d3ce91aa40279eb8d08d21e7610",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/pricing.mjs",
+      "gitBlob": "9d92e6d949eae1489c205173487715f88b860cf7",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/EXERCISE.mjs",
+      "gitBlob": "033ae261caf720f1de950fb3273b35a8dd05598e",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/README.md",
+      "gitBlob": "49b3e0c2204a0a5f2f29c24bf10ed035371c0e4e",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/application-provider.mjs",
+      "gitBlob": "36b3c8c5bd397a2b867ef07c133aac737d51f1d3",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/browser-assets.json",
+      "gitBlob": "5e4c6ede7abd78cd45470af05a80be3fd07fcd07",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cli.mjs",
+      "gitBlob": "ccecc94346ed80cc33baa69aaa380367ab0fc9d2",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/client.d.ts",
+      "gitBlob": "d465d3e122daf5db5b70cfdb91478c639fa6324b",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/client.mjs",
+      "gitBlob": "ec81e5ef1ccc7d5bbdbe54d81655ac2f115f46fb",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/core.mjs",
+      "gitBlob": "a2d65dc70a892a5b235fa8a1d90e47ffabe3bbca",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/public/app.mjs",
+      "gitBlob": "adab9385fd66d687789a08730703d7be20e8cada",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/public/config.json",
+      "gitBlob": "a48078c5832f8f3623aefc7a27f0fdd3c6e9d339",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/public/index.html",
+      "gitBlob": "cf928316003b27ea261286c655d2c6e89df6051b",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/public/styles.css",
+      "gitBlob": "ed41f0edb594bf61cbafe2d9a076592c456ea7a2",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/quote-import.mjs",
+      "gitBlob": "3fe352a83204d0ead3ed47aa6012a7b2ec7a453f",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/server.mjs",
+      "gitBlob": "0d0675fc92ba452118b702ce151d7226561ab19b",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/store.mjs",
+      "gitBlob": "3300d1c9e6d87ac94ab09bcd4c57227c6adb25d7",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/reconcile.mjs",
+      "gitBlob": "2d53a76d72622befad37bca98b5797ce03255f33",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/recovery.mjs",
+      "gitBlob": "3c789e4c0af48bf3e68407a013cbf326408e48cf",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/adjustments-workspace.mjs",
+      "gitBlob": "679aaee22942811da9eb3d4a55d4264bbcc5bf52",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/binding.mjs",
+      "gitBlob": "1e6b182cdb257045f21a0c6e637a9d20c4ad9b91",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/buyer-startup.mjs",
+      "gitBlob": "3bbb310466d8d96d7d2d7054c07f2f32b08ccffe",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/period-workspace.mjs",
+      "gitBlob": "8c377e9315b661a930ceda0ce34ab231fa41b4c0",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/pricing-workspace.mjs",
+      "gitBlob": "4da19c75777366f96b14002927b0c8940aec49a0",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/store.mjs",
+      "gitBlob": "87334de170d2aa35d14951058cc461e85ad8f8ec",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/http-methods.mjs",
+      "gitBlob": "06d82311e7cd4ebec0a5421b00f5c57205a673cf",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/operations/history.mjs",
+      "gitBlob": "951c57647b9682de4aa19e836e7f91173cdb4082",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/route-path.mjs",
+      "gitBlob": "4884fc0106dd3221f80490c1b30aac00c648f433",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/seller.mjs",
+      "gitBlob": "eabd88d563f388bc25e3a68d89d9d687cfe9887c",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf31-buyer-client/public-transport.mjs",
+      "gitBlob": "323233a1b27ecc032ce5c62dab11e1bb1c57a3a1",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf31-buyer-client/request-body.mjs",
+      "gitBlob": "9505955700d595d3fc69aef41dcac48da1570d72",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf43-agent-commerce/verify.mjs",
+      "gitBlob": "262d68a31e5c9f41e9809a3f45c77d4e39bd5d60",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial-pricing.mjs",
+      "gitBlob": "c2712a86557392fa96ece88507e94554ff55cf44",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial-quote.mjs",
+      "gitBlob": "59e78b77910be2db597d3ccda07afdb88cf85f52",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/commissioning.mjs",
+      "gitBlob": "d259c34bcdcb53c54f5afb88aec7a2d07cf2a15d",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/service-commitments.mjs",
+      "gitBlob": "6b2a7f9c97625fb7af45c969d2e948868aa19dee",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/source-bundle-reference.mjs",
+      "gitBlob": "8444cf673c6a92eb4f84d73d3ea2c9bb04d3efd2",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf85-live-402-capture/proxy-connect.mjs",
+      "gitBlob": "e8d669d584ee4767afd1fd21eddd44bfc99c3732",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/networks.json",
+      "gitBlob": "2f92b8e3f8498fd07136c7f9b741c9e8fe3c3aa8",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/rpc-transport.mjs",
+      "gitBlob": "45c384769225c2c4979d2b222b5758c2b8a61bf1",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/terms.mjs",
+      "gitBlob": "e7de12283d30a475ca4a265258f8c403a96e90a9",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/verify.mjs",
+      "gitBlob": "671fb616736aa3645460f1ebba01b8b7fd7f4e6c",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package.json",
+      "gitBlob": "038f1824d7e2703b449fe50a5446b988d8f3bc3f",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/analyze.mjs",
+      "gitBlob": "f6e3fb7cb2c767d3781a2bfa474fe58e19a2a6ed",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/native-reconcile.mjs",
+      "gitBlob": "8f1a472958e6f6128d0954655f54ed15935f9484",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/planning/scenarios.mjs",
+      "gitBlob": "df1fcb5ac1bec090a95369d61fd1f43bf4b704b3",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf98-merchant-delivery/outbox.mjs",
+      "gitBlob": "48e4f643601fb8464f695dd8e8785f4ad9e0f21c",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-requests.mjs",
+      "gitBlob": "047101484f6748bf3d206c33b501e3998850c0ee",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-requests-workspace.mjs",
+      "gitBlob": "1d69c7194a93e55e32a6a8b14b917ecd2cce159a",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-requests-verifier.mjs",
+      "gitBlob": "d6b862f9d0d69f7e2a987c452199f40d269ef234",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-requests.d.ts",
+      "gitBlob": "d5be14259272d57b89d29744b60f9d2497952f7f",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-requests-workspace.d.ts",
+      "gitBlob": "e2173eb3259d4cc340f252d54bbee773a49cbf44",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-requests-verifier.d.ts",
+      "gitBlob": "26739ed6365406950639e1fd5466355fbf431d84",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/PAYMENT_REQUESTS.md",
+      "gitBlob": "383ae9f4f727239ec7edc2b2405e75a377068568",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/public/payment-requests.mjs",
+      "gitBlob": "326d6adecd403fd4cc7880380779bb9c65289d1b",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/selections/merchant-receivables.json",
+      "gitBlob": "28b32b1a3f29229c9e249876e06d79e87d96b381",
+      "role": "original-source"
+    },
+    {
+      "path": "PAYMENT_CHECK.mjs",
+      "gitBlob": "9020c4e40784b676fbc57d0fc1c7c58580be6474",
+      "role": "receiving-program"
+    },
+    {
+      "path": "PAYMENT_CHECK_README.md",
+      "gitBlob": "f008fb9b9baaf52c554364f19d451c0f63065ba2",
+      "role": "receiving-program"
+    },
+    {
+      "path": "products/merchant-receivables/README.md",
+      "gitBlob": "f67bf0bcb39bbb434cc9d077f1de5fe2dfe6b370",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/customer-statements/period-usage.mjs",
+      "gitBlob": "dd43d0095ca63d8eb72921333b7a86affa53cf3e",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/tariff-source.mjs",
+      "gitBlob": "9b54c6ff1731ac7dffaa1fb4b1aa7c55985881fa",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/model.mjs",
+      "gitBlob": "349da8b9d7bfbd3cdd488b008cca6f45e22406eb",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/workspace.mjs",
+      "gitBlob": "96cfe6bb8b900a2b562571687455d148b3da0cde",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/planning/workspace.mjs",
+      "gitBlob": "10e112b1a63a5f86eda06d623ff2472da26f3d1b",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting.mjs",
+      "gitBlob": "2873346e26ecacb10af2aa05ac5d9cf344ab6ebe",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting-receivables.mjs",
+      "gitBlob": "ed88acb767e90c70e5ac8c30e579948bfff961fc",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/accounting.mjs",
+      "gitBlob": "e1549b82106f972337c822b824660040d6de9b55",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/catalog/accounting.mjs",
+      "gitBlob": "d463751482afa1dac8612f9af2de016a254da192",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting-maintenance-client.mjs",
+      "gitBlob": "eac2cfa6875c865f6041bed74d63d98fde625ffb",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/retained-download.mjs",
+      "gitBlob": "3c60903f673f00cf36920537d09bf4c54b318b8e",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/serve.mjs",
+      "gitBlob": "082122ec84d445058026afd4211ed8cf643b390c",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/operation-error.mjs",
+      "gitBlob": "4b51af8f56c62d9d98d38d990cbfc5b97a19696b",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting-receivables-cli.d.mts",
+      "gitBlob": "cbf09c2111c7adcc2896d8172f9102beb07b2ff4",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting-receivables-cli.mjs",
+      "gitBlob": "6f36c6858318fded77dc93163991ad88dd70caba",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting-receivables-client.d.mts",
+      "gitBlob": "fa863d14c7828300d2d621a675594e0938e5dd14",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting-receivables-client.mjs",
+      "gitBlob": "0c5c3e9c5d7abfed777e426faaaf5470fa9b5910",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/receivables-agent.json",
+      "gitBlob": "6713806f5c9b2e57e52b87d152d8d1b5ca64e861",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/catalog/accounting-receivables.mjs",
+      "gitBlob": "36cd7722a751d1adba54aad5f68145f5b521e4c5",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/ACCOUNTING_RECEIVABLES.md",
+      "gitBlob": "d4c7756e84d2136b10d74831496d4d7fcb26cb66",
+      "role": "original-source"
+    },
+    {
+      "path": "MCP_RECEIVABLES_CHECK.mjs",
+      "gitBlob": "568669a6e3de268aa34c4aa17427582585c4fcf9",
+      "role": "receiving-program"
+    },
+    {
+      "path": "MCP_RECEIVABLES_CHECK_DEPENDENCIES.json",
+      "gitBlob": "22af72572e3fc1ab6f3f2400104d322e22caa15d",
+      "role": "receiving-program"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/EXERCISE.mjs",
+      "gitBlob": "a8e8b04314b8fcc6f26720db375f971b8dcdfee4",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/README.md",
+      "gitBlob": "f6f57e3993585ce3a70dbc20869c49b8c52ddeb6",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/application-provider.mjs",
+      "gitBlob": "f098a52c352d0591d7eb8f000f151650835226b6",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/browser-assets.json",
+      "gitBlob": "7181ce557249b7c808658229277f78e1a72b9ca5",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/cli.mjs",
+      "gitBlob": "a09bea64875cc62f84d20dc0e8d88fb505455c0c",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/client.d.ts",
+      "gitBlob": "b450bdc6f2bd0cb123d91a52f273d91a6faaaf3e",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/client.mjs",
+      "gitBlob": "d641c2331a5c59ca72d7593bea1c8d5593702cda",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/core.mjs",
+      "gitBlob": "e6fcbcb1d3cce7f49dafe042daadf078c512d6aa",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/public/app.mjs",
+      "gitBlob": "c0013496602d3a7c629d9802fe02ea1ba0906f34",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/public/config.json",
+      "gitBlob": "f489db699d435008854a96a55580bb4ac79f3ab0",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/public/index.html",
+      "gitBlob": "5d94e74952f7f7329f2c370db203f0d96ef460bc",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/public/styles.css",
+      "gitBlob": "9efc8b70f3775501e655d1f728488c303f1a2719",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/server.mjs",
+      "gitBlob": "ea92d77aa32ca5bc03cb5535d9132d41ac8d926e",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/store.mjs",
+      "gitBlob": "e2773d39c24bf9858cf38bf58d4613796076304c",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting-statements.mjs",
+      "gitBlob": "d07e6b5c509e531a72130a6564a94c6ac03615bb",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/catalog/accounting-statements.mjs",
+      "gitBlob": "6d968bd23893c94ebe2b08ca0e214f1cd300d001",
+      "role": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/service-agreements-errors.mjs",
+      "gitBlob": "502ddf664c4f4935bf5748a7c1a8c819cea3ccec",
+      "role": "original-source"
+    }
+  ],
+  "programs": [
+    "PAYMENT_CHECK.mjs",
+    "MCP_RECEIVABLES_CHECK.mjs"
+  ],
+  "dependencyCapsule": "0907e1444c7418266e128db60b3e94a02496d34f",
+  "dependencyCapsuleBytes": 3583591,
+  "dependencySourceFiles": 603,
+  "sourceCorrection": {
+    "gitBlob": "bbc06b338f4ee7b51640ec0e241b05d39e71cee8",
+    "originalResultCapsule": "80c16d4ce00247d6675fe3d7b1b9c445011cc27f",
+    "programs": [
+      "MCP_RECEIVABLES_CHECK.mjs"
+    ],
+    "note": "The accepted PAYMENT_CHECK result remains retained. Resume the original MCP programme with the two maintained registration repairs and the exact frozen CLI direct host-files import. All programme and accounting engine bytes are unchanged."
+  }
+}

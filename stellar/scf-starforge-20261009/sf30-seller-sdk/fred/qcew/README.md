@@ -66,7 +66,7 @@ The default request contains eleven exact BLS area codes:
 
 The collector first retains the complete current 2025 Q4 San Francisco API slice as a separate diagnostic source. It then retrieves the original quarterly NAICS by-area ZIP for every selected year. It preserves each selected CSV member in full, the original central-directory inventory, member CRC and length, response headers, returned byte ranges and file hashes. HTTP ranges reduce transfer when supported; a server returning the full archive is handled explicitly. Only this operation's temporary archive is removed after its members are retained.
 
-The collector resumes the same directory after interruption. It validates retained complete members, saves a newly returned member before parsing and requires the original archive representation to remain unchanged during continuation. When a publisher revises an unfinished archive, retain that intake and start a new dated source directory for the revised edition. Do not combine different revisions inside one original archive.
+The collector resumes the same directory after interruption. It validates retained complete members and the diagnostic source, saves a newly returned member before parsing and requires the original archive representation to remain unchanged during continuation. Reopening a completed intake validates its whole requested year/area inventory and returns the original manifest byte-for-byte, preserving its completion time and capture SHA without another source request. When a publisher revises an unfinished archive, retain that intake and start a new dated source directory for the revised edition. Do not combine different revisions inside one original archive.
 
 The current API uses `qtrly_estabs`; titled historical archives use `qtrly_estabs_count`. The reader maps that one field to the calculation name. The actual 1990 archive repeats an unused taxable-wage-change heading; the complete original header is preserved and calculation keys must remain unambiguous.
 
@@ -114,6 +114,8 @@ Saving normalizes the complete definition and returns its immutable profile SHA.
 | Industry charts | Five highest current weekly wages | Up to five explicit retained industry codes |
 | Price adjustment | CPIAUCSL, quarter end, report-quarter dollars | Nominal or constant dollars; quarter end or mean; report-quarter or fixed base |
 | Publisher and sponsor | Operator profile | Publisher, methods owner, contact, sponsor name/line and public URL |
+
+The report’s changes are calculated from retained unadjusted QCEW levels. Establishment reclassification, location or ownership updates and publisher revisions can affect those changes. They differ from the administratively adjusted over-the-year changes in the County Employment and Wages news release; see [BLS QCEW questions and answers, question 17](https://www.bls.gov/cew/questions-and-answers.htm). New report models retain this qualification in methodology version 2, which flows into their complete HTML/PDF and Methods Markdown. Existing saved report models without a version retain their original version 1 calculation and rendered bytes when reopened. Numeric aggregation, disclosure and price conventions are unchanged.
 
 These choices are material. A report using third-month employment differs from one using quarterly mean employment. A county/Bay ratio differs from a county/California ratio. A 2019 comparison differs from a 2007 comparison. The saved definition and generated methods make those decisions visible in every edition.
 
@@ -242,3 +244,123 @@ Original references:
 - [BLS average weekly wage calculation](https://www.bls.gov/cew/publications/factsheets/fluctuations-in-average-weekly-wages.htm)
 - [Original CPIAUCSL public table](https://fred.stlouisfed.org/data/CPIAUCSL)
 - [Original NEED San Francisco county wage report](https://www.needecon.org/RegionalReports/San_Francisco_County/QCEWWages_San_Francisco_County.pdf)
+
+## Select a regional production programme
+
+The complete native journey accepts an explicit programme alongside the production profile. The profile selects the geography, industry rows, calculations and publication conventions; the programme selects the operation identity and the two report periods. Both editions, the replay of the original production request, the complete project export, and independent receiving use the existing source, calculation and transaction models.
+
+The included `examples/philadelphia-profile.json` selects Philadelphia, Bucks, Chester, Delaware and Montgomery counties as one focus region, with Pennsylvania and the United States as comparators. It retains the total and twelve original BLS supersectors, quarterly mean employment, average weekly wages calculated from summed original wages and employment, nominal dollars and complete disclosure coverage. Employment is summed across disjoint county and ownership rows before division; a withheld component remains unavailable. The same-quarter baseline and historical table start in 2025.
+
+The companion `examples/philadelphia-programme.json` selects 2025 Q1 and 2026 Q1. Use the current original BLS files for both years so that the earlier period includes the publisher's released revisions. The complete source manifest and original members remain in the received project.
+
+Collect the selected original annual by-area members:
+
+```sh
+python3 stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/source_fetch.py \
+  --directory /absolute/owned/philadelphia-original-intake \
+  --years 2025:2026 \
+  --areas 42017,42029,42045,42091,42101,42000,US000 \
+  --programme stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/examples/philadelphia-programme.json
+```
+
+Use the collector's complete original intake. With `--programme`, its manifest retains the exact programme-file SHA, original operation and selected report periods; the unrelated legacy San Francisco diagnostic is omitted. The selected years must include both report years, plus every history/baseline year required by the profile. Without this option, the collector preserves the existing NEED request and diagnostic behavior. A programme cannot relabel an existing intake; continue that directory with its original selection. Continue the same unfinished intake only while its original archive representations are unchanged.
+
+Run both report editions and the complete receiving journey:
+
+```sh
+node stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/native-journey.mjs \
+  --directory /absolute/owned/philadelphia-production \
+  --intake-directory /absolute/owned/philadelphia-original-intake \
+  --cpi stellar/scf-starforge-20261009/sf30-seller-sdk/fred/sources/cpiaucsl-20261012.public-table.json \
+  --profile stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/examples/philadelphia-profile.json \
+  --programme stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/examples/philadelphia-programme.json \
+  --chromium /absolute/chromium \
+  --pdfinfo /absolute/pdfinfo
+```
+
+Replace the absolute paths with the operation's actual owned directories and installed executables. The retained original CPI wrapper remains part of the complete FRED project. This nominal-dollar profile applies no price-adjustment factor. Add `--original-project /absolute/existing-complete-project.json` when continuing from a complete exported economic project.
+
+The programme document has this complete shape:
+
+```json
+{
+  "schema": "stellar-forge.qcew-native-programme.v1",
+  "operation": "PHILADELPHIA-QCEW-TWO-EDITION-PRODUCTION",
+  "initial": {
+    "year": 2025,
+    "quarter": 1
+  },
+  "successor": {
+    "year": 2026,
+    "quarter": 1
+  }
+}
+```
+
+The operation is a stable identifier of at most 160 letters, digits, underscores, periods, colons or hyphens, beginning with a letter or digit. The successor must follow the initial period. Unsupported programme fields and invalid periods are rejected before production begins. The complete programme file is limited to 64 KiB.
+
+The operation journal retains the exact programme-file SHA together with the normalized selections, complete profile identity and original input identities. Purpose-specific request IDs derive from that programme SHA. An unchanged repeated invocation reuses the original imports and production requests. Keep its directory through interruption; a different programme or profile belongs in a separately selected operation directory. Editing even the formatting of the selected programme changes its exact input identity.
+
+Omitting `--programme` retains the existing NEED operation identity, original request IDs, 2025 Q4 initial edition, 2026 Q1 successor and original journal selection shape. Existing native operations therefore resume under their original identity.
+
+The completed directory includes `journey.json`, `native-result.json`, the complete source project, both report editions, `complete-project.json` and an independently received project. Each edition retains its full report model, HTML, native PDF when requested, calculation CSV, original selected rows and methodology; the successor also retains its predecessor comparison. The received project reopens the original files and exports the same complete project content. Customer authoring, saved edition history, downloaded originals and the paid receiving workflow remain part of the same product.
+
+## Complete quarterly area CSV intake
+
+The same report and project workflow also accepts complete current published BLS quarterly area CSV slices. Use this route when the selected programme needs specific released quarters. Each input remains the complete original area CSV, including every ownership, industry and aggregation row, original disclosure flags, field names and published values. The collector does not trim the originals to the report's selected industries.
+
+The intake identifies this source family as current_published_quarterly_api_slices. It retains the exact official URL, area, year and quarter, complete source bytes and SHA256, gzip identity, original header, row count and acquisition receipt. Annual ZIP members retain their existing source contract. Quarterly inputs are not represented as annual archive members.
+
+Run from this qcew source directory, choosing an existing private operation directory and the exact saved programme:
+
+```sh
+python3 source_fetch.py --directory /absolute/operation/original-intake --periods 2025-Q1,2026-Q1 --areas 42101,42017,42029,42045,42091,42000,US000 --programme /absolute/operation/programme.json
+```
+
+Each requested area must have one complete source for every selected period. Two different quarters for the same area and year are retained separately. Duplicate area/quarter coverage, wrong-period rows, inconsistent headers, truncated response lengths and changed original bytes are rejected. The saved programme must use the same operation and both report periods must be present in the selected intake.
+
+### Receive original files already retained by a connected provider
+
+When the official files have already been acquired and retained, download those exact files to the selected private operation directory and compute each complete file's SHA256. Keep the original provider receipt. Pass a descriptor with schema stellar-forge.qcew-retained-slices.v1, the original operation ID, and a sources array containing every requested area and quarter:
+
+```json
+{
+  "schema": "stellar-forge.qcew-retained-slices.v1",
+  "operation": "YOUR-ORIGINAL-OPERATION",
+  "sources": [
+    {
+      "year": 2025,
+      "quarter": 1,
+      "area": "42101",
+      "sourceUrl": "https://data.bls.gov/cew/data/api/2025/1/area/42101.csv",
+      "file": "/absolute/operation/originals/2025-q1-42101.csv",
+      "sha256": "THE_ACTUAL_COMPLETE_FILE_SHA256",
+      "receipt": {
+        "kind": "retained_provider_file",
+        "provider": "Notion",
+        "sourceUrl": "https://data.bls.gov/cew/data/api/2025/1/area/42101.csv",
+        "recordedAt": "THE_ACTUAL_PROVIDER_RECEIPT_TIMESTAMP",
+        "upload": {
+          "file_upload_id": "THE_ORIGINAL_UPLOAD_ID",
+          "filename": "THE_ORIGINAL_FILENAME",
+          "content_type": "THE_ORIGINAL_CSV_CONTENT_TYPE",
+          "content_length": "THE_ACTUAL_ORIGINAL_BYTE_LENGTH",
+          "status": "uploaded"
+        }
+      }
+    }
+  ]
+}
+```
+
+The displayed receipt values are placeholders for the actual acquisition response. Preserve that complete response, including any additional provider fields. The receipt must identify an uploaded CSV and its byte length must match the complete downloaded original. The reader verifies the official source URL, provider identity, upload identifier and native-computed byte/hash result. A temporary signed download URL is transport only; it does not replace the official source URL or become a report citation.
+
+```sh
+python3 source_fetch.py --directory /absolute/operation/original-intake --periods 2025-Q1,2026-Q1 --areas 42101,42017,42029,42045,42091,42000,US000 --programme /absolute/operation/programme.json --received-slices /absolute/operation/retained-slices.json
+```
+
+The private source lock and one complete pending checkpoint preserve both original bytes and their acquisition receipt before publishing each gzip member. Resuming the same request validates and reuses complete saved files. A finished intake reopens without changing its completion timestamp or manifest identity. Keep the descriptor and operation directory unchanged across a resumed operation; a changed selection belongs in a separately selected intake.
+
+After acquisition, use the existing native-journey or CLI import/profile/produce path with this original-intake directory. The source reader checks the entire selected matrix and all original rows, then the maintained report engine, complete source context, project export and independent receiving retain the same originals. Report methods and original-file links identify the quarterly API source explicitly. Existing annual-source report wording, citations and rebuilt report identities remain unchanged.
+
+Official source documentation: https://www.bls.gov/cew/additional-resources/open-data/home.htm . Quarter availability and revisions follow the publisher's current release catalogue. Calculated changes compare the retained unadjusted CSV values under the saved methodology; the County Employment and Wages news release separately publishes administratively adjusted over-the-year changes.

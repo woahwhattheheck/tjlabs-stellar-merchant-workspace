@@ -1,4 +1,5 @@
 // MIT. Industrial launch-group workflow over retained original Application requests.
+import { createApplicationOutputReader } from './application-output.mjs';
 const make = (tag, text, className) => {
   const node = document.createElement(tag);
   if (text !== undefined) node.textContent = text;
@@ -19,6 +20,10 @@ const facts = values => {
 const detail = (title, value) => {
   const node = make('details'); node.append(make('summary', title), make('pre', JSON.stringify(value, null, 2))); return node;
 };
+const observationUnavailable = operation => operation?.active === null || operation?.phase === 'OBSERVATION_UNAVAILABLE';
+const groupObservationUnavailable = run => run?.phase === 'OBSERVATION_UNAVAILABLE' ||
+  Boolean(run?.members?.some(member => observationUnavailable(member.operation)));
+const operationLabel = phase => phase === 'OBSERVATION_UNAVAILABLE' ? 'STATUS UNAVAILABLE' : phase;
 export function createApplicationGroupsView({ root, api, getState, openApplication, message, error }) {
   let scope = 0, navigation = 0, loading = false, refreshAgain = false, busy = false, workGeneration = 0;
   let workspaceId = null, selectedId = null, selectedRunId = null, data = null, applications = [], applicationsReadAt = 0;
@@ -43,7 +48,10 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
   const runPanel = make('section', undefined, 'panel'), historyPanel = make('details'), historyContent = make('div');
   historyPanel.append(make('summary', 'Retained group runs'), historyContent); root.append(runPanel, historyPanel);
   const outputPanel = make('section', undefined, 'panel'), outputTitle = make('h3'), outputStatus = make('p', undefined, 'note'), outputText = make('pre');
-  outputPanel.append(outputTitle, outputStatus, outputText); outputPanel.hidden = true; root.append(outputPanel);
+  const outputReaderRoot = make('div');
+  outputPanel.append(outputTitle, outputStatus, outputReaderRoot); outputPanel.hidden = true; root.append(outputPanel);
+  const outputReader = createApplicationOutputReader({ root: outputReaderRoot, api,
+    getWorkspaceId: () => getState()?.workspaceId, error, output: outputText });
 
   const stamp = () => ({ scope, workspaceId: getState()?.workspaceId, navigation });
   const current = own => scope === own.scope && getState()?.workspaceId === own.workspaceId && navigation === own.navigation;
@@ -161,7 +169,27 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
     pendingPanel.replaceChildren(pendingText);
     if (pending) pendingPanel.append(button('Recover saved request', () => mutate(pending.path, pending.body, pending.label, true)));
   }
+  function reviewObservationUnavailable(value = review) {
+    const run = data?.selected?.run;
+    if (groupObservationUnavailable(run)) return true;
+    return Boolean(value?.members?.some(member => {
+      const application = applications.find(item => item.id === member.applicationId);
+      return application?.phase === 'UNAVAILABLE' || observationUnavailable(application?.adoption) ||
+        observationUnavailable(application?.current);
+    }));
+  }
+  function canUseReview(value = review) {
+    return Boolean(value?.ready && value.id && value === review && !reviewObservationUnavailable(value) &&
+      value.groupId === selectedId && (!value.runId || value.runId === data?.selected?.run?.id));
+  }
+  function canContinueRun(run) {
+    const currentRun = data?.selected?.run;
+    return Boolean(run && currentRun?.id === run.id && currentRun.version === run.version &&
+      currentRun.canContinue && !groupObservationUnavailable(currentRun));
+  }
   async function requestReview(forRun) {
+    if (groupObservationUnavailable(data?.selected?.run))
+      throw new Error('Refresh this group to observe its original operations before reviewing another launch.');
     const own = stamp();
     await work(async () => {
       const value = await api('/api/application-groups/review', { groupId: selectedId, ...(forRun ? { runId: forRun.id } : {}) });
@@ -185,12 +213,15 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
       }
       reviewContent.append(section);
     }
+    if (reviewObservationUnavailable()) reviewContent.append(make('p',
+      'Process status is unavailable for this selection. The retained review is still available; refresh the group before starting or continuing it.', 'note'));
     if (review.overlaps?.length) reviewContent.append(make('p', 'Some members share an original workspace. The group waits for the earlier operation to finish before starting the next member that uses it.', 'note'));
     reviewActions.replaceChildren(button(review.runId ? 'Use reviewed remaining members' : 'Start reviewed group', () => {
+      if (!canUseReview()) throw new Error('Refresh this group and confirm its process status before using the retained review.');
       if (review.runId) return mutate('/api/application-groups/apply-review', { groupId: review.groupId,
         runId: review.runId, reviewId: review.id, expectedVersion: review.runVersion }, 'Remaining review');
       return mutate('/api/application-groups/start', { groupId: review.groupId, requestId: crypto.randomUUID(), reviewId: review.id }, 'Group start');
-    }, !review.ready || !review.id), button('Close review', () => { review = null; renderReview(); }));
+    }, !canUseReview()), button('Close review', () => { review = null; renderReview(); }));
   }
   function renderRun() {
     const selected = data?.selected, run = selected?.run;
@@ -200,21 +231,26 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
     if (!selected) { runPanel.append(make('p', 'Create a group or choose a saved group to begin.', 'note')); return; }
     runPanel.append(make('h3', selected.label), facts([['Group', selected.id], ['Saved revision', selected.revision], ['Ordered members', selected.applicationIds.length]]));
     const actions = make('div', undefined, 'actions');
-    actions.append(button('Review a new run', () => requestReview(null)),
+    actions.append(button('Review a new run', () => requestReview(null), groupObservationUnavailable(run)),
       button('Edit selection', () => loadEditor(selected)));
     runPanel.append(actions);
     if (!run) { runPanel.append(make('p', 'Review this group to start its first retained run.', 'note')); return; }
-    const runHeading = make('div', undefined, 'section-title'); runHeading.append(make('h3', 'Current selection: ' + run.label), make('span', run.phase, 'status')); runPanel.append(runHeading);
+    const runHeading = make('div', undefined, 'section-title'); runHeading.append(make('h3', 'Current selection: ' + run.label), make('span', operationLabel(run.phase), 'status')); runPanel.append(runHeading);
     runPanel.append(facts([['Group run', run.id], ['Progress', run.started + ' of ' + run.total + ' original operations retained'],
       ['Created', displayTime(run.createdAt)], ['Progress version', run.version]]),
       detail('Exact run dates', { createdAt: run.createdAt, updatedAt: run.updatedAt }));
+    if (groupObservationUnavailable(run)) runPanel.append(make('p',
+      'The current process status could not be observed. This group is not marked finished and Continue remains disabled. Its saved selection, original requests and retained output are still available below. Refresh group to observe it again.', 'note'));
     if (run.groupRevision !== selected.revision) runPanel.append(make('p', 'This run retains an earlier saved selection. Its member order and original operations remain available below.', 'note'));
     if (run.waitingApplicationId) runPanel.append(make('p', 'Waiting on ' + (run.members.find(item => item.applicationId === run.waitingApplicationId)?.label ?? run.waitingApplicationId) + '. Open its output, recover its original request, or accept its final result before continuing.', 'note'));
     const controls = make('div', undefined, 'actions'), next = run.members.find(item => item.applicationId === run.nextApplicationId);
-    controls.append(button(next ? 'Continue: ' + next.label : 'All members retained', () => mutate('/api/application-groups/continue', {
-      groupId: selected.id, runId: run.id, applicationId: next.applicationId, expectedVersion: run.version,
-    }, 'Group continuation'), !run.canContinue),
-    button('Review remaining members', () => requestReview(run), !next || Boolean(run.stopRequestedAt)),
+    controls.append(button(next ? 'Continue: ' + next.label : 'All members retained', () => {
+      if (!canContinueRun(run) || !next) throw new Error('Refresh the group before continuing its original run.');
+      return mutate('/api/application-groups/continue', {
+        groupId: selected.id, runId: run.id, applicationId: next.applicationId, expectedVersion: run.version,
+      }, 'Group continuation');
+    }, !canContinueRun(run)),
+    button('Review remaining members', () => requestReview(run), !next || Boolean(run.stopRequestedAt) || groupObservationUnavailable(run)),
     button(run.stopRequestedAt ? 'Retry stopping group' : 'Stop group', () => mutate('/api/application-groups/stop', {
       groupId: selected.id, runId: run.id,
     }, 'Group stop'), run.phase === 'STOPPED'));
@@ -223,8 +259,13 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
     for (const member of run.members) {
       const row = make('li'), operation = member.operation;
       const phase = member.operationPhase ?? operation?.phase ?? (run.stopRequestedAt ? 'NOT STARTED' : member.error ? 'NEEDS ATTENTION' : 'REVIEWED');
-      const head = make('div', undefined, 'section-title'); head.append(make('strong', member.label), make('span', phase, 'status')); row.append(head);
+      const head = make('div', undefined, 'section-title'); head.append(make('strong', member.label), make('span', operationLabel(observationUnavailable(operation) ? 'OBSERVATION_UNAVAILABLE' : phase), 'status')); row.append(head);
       row.append(facts([['Application', member.applicationId], ['Saved revision', member.applicationRevision], ['Original request', member.operationId]]));
+      if (observationUnavailable(operation)) {
+        row.append(make('p', 'Process status is unavailable. The saved operation and output remain accessible; it has not been treated as stopped or completed.', 'note'));
+        if (operation.observation?.error) row.append(make('p',
+          operation.observation.error.code + ': ' + operation.observation.error.message, 'note'));
+      }
       if (member.error) row.append(make('p', member.error.code + ': ' + member.error.message, 'message'));
       if (operation?.result ?? operation?.state?.result ?? operation?.state?.error)
         row.append(detail('Original operation result', operation.result ?? operation.state?.result ?? operation.state?.error));
@@ -238,11 +279,11 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
         memberActions.append(button('Original output', () => showOutput(member)),
           button('Recover original request', () => mutate('/api/application-groups/member', {
             groupId: selected.id, runId: run.id, applicationId: member.applicationId, action: 'recover',
-          }, 'Member recovery'), Boolean(run.stopRequestedAt) || operation.active || !['PENDING', 'QUEUED', 'INTERRUPTED', 'FAILED'].includes(operation.phase)),
+          }, 'Member recovery'), Boolean(run.stopRequestedAt) || operation.active !== false || !['PENDING', 'QUEUED', 'INTERRUPTED', 'FAILED'].includes(operation.phase)),
           button('Stop member', () => mutate('/api/application-groups/member', {
             groupId: selected.id, runId: run.id, applicationId: member.applicationId, action: 'stop',
           }, 'Member stop'), !operation.active && !['PENDING', 'QUEUED', 'RUNNING', 'INTERRUPTED'].includes(operation.phase)));
-        if (!operation.active && ['FAILED', 'CANCELLED', 'RECONCILED', 'OUTCOME_UNAVAILABLE'].includes(phase) && !run.stopRequestedAt)
+        if (operation.active === false && ['FAILED', 'CANCELLED', 'RECONCILED', 'OUTCOME_UNAVAILABLE'].includes(phase) && !run.stopRequestedAt)
           memberActions.append(button('Accept result; allow next', () => mutate('/api/application-groups/member', {
             groupId: selected.id, runId: run.id, applicationId: member.applicationId, action: 'accept-result', expectedVersion: run.version,
           }, 'Accepted member result')));
@@ -286,14 +327,17 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
     const result = await api(query('/api/applications/output', { applicationId: selected.applicationId, operationId: selected.operationId }));
     if (!current(own) || generation !== outputGeneration || outputSelection !== selected) return;
     outputPanel.hidden = false; outputTitle.textContent = selected.label + ' — original output';
-    outputStatus.textContent = result.phase + ' · ' + selected.operationId + ' · ' + result.output.offset + '–' + result.output.totalBytes + ' bytes';
-    outputText.textContent = result.output.text + (result.result ? '\n\nOriginal result\n' + JSON.stringify(result.result, null, 2) : '');
+    const unavailable = result.output.available === false;
+    outputStatus.textContent = operationLabel(result.phase) + ' · ' + selected.operationId + (unavailable
+      ? result.output.state === 'NOT_CREATED' ? ' · worker output has not been created yet' : ' · retained output is currently unavailable'
+      : ' · ' + result.output.offset + '–' + result.output.totalBytes + ' bytes');
+    await outputReader.update({ applicationId: selected.applicationId, operationId: selected.operationId });
   }
   function render() {
     if (!workspaceId) return;
     selector.replaceChildren(new Option('Choose a saved group', ''), ...(data?.groups ?? []).map(item => new Option(item.label + ' · ' + item.applicationIds.length + ' members', item.id)));
     selector.value = selectedId ?? ''; selector.disabled = busy;
-    toolbar.replaceChildren(button('Create group', () => loadEditor()), button('Refresh group', refresh));
+    toolbar.replaceChildren(button('Create group', () => loadEditor()), button('Refresh group', async () => { applicationsReadAt = 0; await refresh(); }));
     renderPending(); renderEditor(); renderReview(); renderRun(); renderHistory();
   }
   async function refresh() {
@@ -324,7 +368,7 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
     reset() {
       scope++; navigation++; workGeneration++; workspaceId = null; selectedId = selectedRunId = null; data = null; review = null;
       cursor = null; cursorTrail = []; applications = []; applicationsReadAt = 0; runSignature = '';
-      outputSelection = null; outputGeneration++; outputPanel.hidden = reviewPanel.hidden = true;
+      outputSelection = null; outputGeneration++; outputReader.reset(); outputPanel.hidden = reviewPanel.hidden = true;
       busy = false; draft = { groupId: null, expectedRevision: null, label: '', applicationIds: [] }; dirty = false; draftRetained = true; choicePage = 0; name.value = '';
     },
   };

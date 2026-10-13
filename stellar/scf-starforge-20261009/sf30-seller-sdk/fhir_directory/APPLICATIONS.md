@@ -87,3 +87,36 @@ Open **Operating Plans** after starting the saved Human Services Directory works
 The source basis and all saved procedures remain in the same Directory workspace. Opening a historical revision is read-only until an explicit save; closing and reopening Applications preserves the native saved-head chain and complete original inputs. The connected client can read the same document, draft, basis and accepted input while borrowing this running application.
 
 The [complete Operating Plans guide](OPERATING_PLANS.md) contains the exact native/connected inputs, complete operating drivers, JSON/Markdown/HTML downloads and fresh editable-workspace receiving. Working browser drafts remain distinct from native saved revisions. Full workspace receiving preserves the original OperatingPlan model, every saved revision and all selected native source files.
+
+## Original relationship results
+
+In **Conformance → Assessments**, open a saved current HSDS relationship assessment. The same managed application displays all original outcomes, candidates, matching edges and coverage. Complete details reopen the original row and its retained physical values. Existence and identity resolution remain separate, so an ambiguous passing relationship keeps every eligible target visible.
+
+The **Original table domains** panel shows which original tables belong to the selected edition, the exact coverage state and the original table row count. Explicit zero-row tables display **0**. Tables outside the edition remain identified separately. Complete-file buttons receive the original JSONL datasets and coverage JSON rather than only the displayed page.
+
+Earlier assessments retain their original implementation and applicable files. The same application's stop/reopen lifecycle and complete editable export carry these immutable assessments alongside source records, referral choices and Operating Plans. The [complete relationship receiving guide](CONFORMANCE_FOREIGN_KEY_CLIENTS.md) describes the full browser/SDK/Merchant journey, original history reopening and a separately received customer workspace.
+
+## Returned customer procedures
+
+The same managed Directory application includes **Returned procedures**. It reopens the complete saved plan basis, imports full returned histories, retains explicit original-model choices and saves a completed review before receiving its result. All controls freeze during pending reads or saves; complete working JSON preserves unfinished custom text and exact pending requests across reload. Historical reviews remain immutable and reopen from the return library.
+
+Managed Save/Start/open/Stop/reopen uses the same original workspace and authenticated operator. Full workspace receiving includes the original `operatingPlanReturns` collection and all review/comparison/input files, with model replay and source-basis verification. Completion, plan save and applied receipt are separate recoverable stages. The original installed application consumer retains these collections through its generic complete record handling; the dedicated full operator/Merchant/customer course and source semantics are documented in [OPERATING_RETURNS.md](OPERATING_RETURNS.md).
+
+
+## Source correction workbench
+
+The installed Human Services Directory application includes **Source corrections**. It opens exact original edition rows, preserves complete lexical JSON and physical CSV values, saves ordered plans, builds separate candidates, and accepts explicitly reviewed candidates. All prior source, conformance, Operating Plans and returned-procedure records remain available.
+
+Working correction JSON, unfinished editor values and pending request bodies stay in the selected browser session and can be downloaded completely. Before leaving, retain the complete working JSON if browser storage reports a capacity failure. The application does not write to the source publisher.
+
+The same original workspace export/import includes every correction input, preview/review file, original and derived source/member/index and accepted candidate lineage. Read [SOURCE_CORRECTIONS.md](SOURCE_CORRECTIONS.md) for ordinary use and [CORRECTION_CLIENTS.md](CORRECTION_CLIENTS.md) for the complete operated customer handover.
+
+## Complete customer worksheet round
+
+Open **Customer worksheets** in the same managed Directory instance. Select original HSDS rows, export the portable customer editor, receive exact returned bytes and record every decision. **Open prepared correction plan** opens the original correction workbench, where preview and acceptance remain separate. Working inputs persist with original pending requests; full files remain available above the interactive page budget. The installed source includes all three original customer assets and the complete native/client courses. See [CORRECTION_WORKSHEETS.md](CORRECTION_WORKSHEETS.md) and [CORRECTION_WORKSHEET_CLIENTS.md](CORRECTION_WORKSHEET_CLIENTS.md).
+
+## Returned worksheet three-way review
+
+The installed Directory application includes **Three-way review** and the customer worksheet's **Review against current edition** action. Select a specific current edition and match every original worksheet row. Original, customer-proposed and current presence/type/lexical values are shown together. Each decision is retained before a normal current-edition correction plan is prepared; its preview and acceptance remain separate source-correction actions.
+
+Working JSON retains exact pending inputs and full unfinished row resolutions. A failed reopen preserves the original saved text and offers retry/download. Both immutable reconciliation collections, complete comparisons/decisions and source files are verified by the existing whole workspace receiver. See [WORKSHEET_RECONCILIATION.md](WORKSHEET_RECONCILIATION.md).

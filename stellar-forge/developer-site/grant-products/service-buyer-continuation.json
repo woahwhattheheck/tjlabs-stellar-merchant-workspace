@@ -1,0 +1,205 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "service-buyer-continuation",
+  "heading": "## Service recovery that reaches the buyer’s books",
+  "sources": [
+    {
+      "id": "service-buyer-draft-review",
+      "label": "Complete editable draft review and exact native scope",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/service-buyer-draft.mjs",
+      "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+      "editions": [
+        {
+          "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+          "git_blob": "89e018f771acf958c35e2a965ed25d3687a32e5e",
+          "sha256": "438f10675ce91bbbf679ec009fa81dade0079feb1d77551ea374db1824a8ad1d",
+          "bytes": 3965
+        }
+      ]
+    },
+    {
+      "id": "service-buyer-operator",
+      "label": "Complete Service and Buyer staff operator",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/adjustments.mjs",
+      "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+      "editions": [
+        {
+          "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+          "git_blob": "c748029e59ee84362e5213e4a130905e067e6e7a",
+          "sha256": "b54044e537d195d224d53acf58688625b0dc8f9bc0c85664de18e6f83ad93950",
+          "bytes": 62424
+        }
+      ]
+    },
+    {
+      "id": "service-buyer-interface",
+      "label": "Industrial Service and Buyer operator interface",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/adjustments.html",
+      "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+      "editions": [
+        {
+          "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+          "git_blob": "d85dd55236e8aa2cf616e61a4d643bcd39e85c01",
+          "sha256": "ad628b9c7f3d0949dafb5904c0eee9f1c923b44d7b50abe581957f1b9158fc0f",
+          "bytes": 17379
+        }
+      ]
+    },
+    {
+      "id": "service-buyer-server",
+      "label": "Original Support server and current complete case APIs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/server.mjs",
+      "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+      "editions": [
+        {
+          "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+          "git_blob": "9e7a514fff7aaaf04d0e517d2b9415cfba1895bd",
+          "sha256": "893652f68d4df48fd1fcf713525956623ab273bb4619df30ea65e7892fd695d9",
+          "bytes": 57443
+        }
+      ]
+    },
+    {
+      "id": "service-buyer-browser-receiving",
+      "label": "Whole two-origin Buyer workbench receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/service-buyer-workbench-receiving.mjs",
+      "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+      "editions": [
+        {
+          "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+          "git_blob": "3241f1673d55c1e074b46d8e548e16b3bd7eec7e",
+          "sha256": "1de9b83eab8d2be90b665d31c6ec875b47f436b1e74a3686970bf6afc575fa94",
+          "bytes": 26194
+        }
+      ]
+    },
+    {
+      "id": "service-buyer-native-controller",
+      "label": "Original native operation and completed-programme continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/service-adjustment-native.mjs",
+      "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+      "editions": [
+        {
+          "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+          "git_blob": "e0b46dc7520532aa8f6df36a2b7a2025447def1c",
+          "sha256": "b42eb351f242d042976e966f6e3e43ea6fbe191a0d1e1618594c87c0e2fd3abb",
+          "bytes": 48135
+        }
+      ]
+    },
+    {
+      "id": "service-buyer-native-journey",
+      "label": "Original complete Service adjustment journey",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/service-adjustment-journey.mjs",
+      "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+      "editions": [
+        {
+          "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+          "git_blob": "c2512485e0f8d054c3a5c263db6c45db05ee23dc",
+          "sha256": "984750d888641211223f1fc49748a4754a23700c2ddd3627de48268677044d33",
+          "bytes": 45893
+        }
+      ]
+    },
+    {
+      "id": "service-buyer-receiving-guide",
+      "label": "Full current Buyer workbench receiving procedure",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/SERVICE_BUYER_WORKBENCH_RECEIVING.md",
+      "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+      "editions": [
+        {
+          "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+          "git_blob": "0a6a583d4607fc36ca96f1fbd0fb7ee6b0c9e145",
+          "sha256": "542f98624356ce1966d17bcbddbef7543f8984f4a7b52bfbc9ec4a12fdcdb8cd",
+          "bytes": 8865
+        }
+      ]
+    },
+    {
+      "id": "service-buyer-adjustment-guide",
+      "label": "Complete Service adjustment and Buyer operating guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/SERVICE_ADJUSTMENT_HANDOVER.md",
+      "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+      "editions": [
+        {
+          "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+          "git_blob": "cc07d6db812a306b4e76b89e61914f0d3c80297c",
+          "sha256": "76e8ae70ff771f12856cda2f9da1e9fecf3d67d2047fe0e2afe3678a780fa525",
+          "bytes": 23023
+        }
+      ]
+    },
+    {
+      "id": "service-buyer-buyer-guide",
+      "label": "Original Buyer and Accountant complete handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/SERVICE_BUYER_HANDOVER.md",
+      "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+      "editions": [
+        {
+          "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+          "git_blob": "9572d9bc12bbdff8806d22ff2765161720f65ccc",
+          "sha256": "18193db8d02863f08d2a0ff576fe118c57bec3629ea27a1ee87d13f6accaa01c",
+          "bytes": 27120
+        }
+      ]
+    },
+    {
+      "id": "service-buyer-saved-work",
+      "label": "Original retained Buyer action and outcome projection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/service-buyer-workbench.mjs",
+      "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+      "editions": [
+        {
+          "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+          "git_blob": "b495f3c3b2192bfad7fd81330aa2bb0c415afe36",
+          "sha256": "33f997f45663334c82350cfdd0015d4346df2dbe705253125549c9a310e6362b",
+          "bytes": 6536
+        }
+      ]
+    },
+    {
+      "id": "service-buyer-installed-selection",
+      "label": "Maintained complete Merchant Support runtime selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/merchant-support.json",
+      "commit": "7c46e9d72ba3bf5adc4eb2bd1faa3b4f2fc43b03",
+      "editions": [
+        {
+          "commit": "2376da289ec79bbc46fc158c17d8846b684fd862",
+          "git_blob": "226a5b91ec2e853e7e1361b1846084402a109bd2",
+          "sha256": "dfabc400c3420fe665c4ead5293910320e96859c64380a2ae6da0ef709fddc56",
+          "bytes": 6000
+        },
+        {
+          "commit": "7c46e9d72ba3bf5adc4eb2bd1faa3b4f2fc43b03",
+          "git_blob": "1cba4406bda54f6f9e59f33272fee2d42e97c904",
+          "sha256": "6b85ad6f4fe7cfba1174070d6603eb27f2d9e92e01e7fe39435ad5d4a2a87ed8",
+          "bytes": 6123
+        }
+      ]
+    }
+  ]
+}

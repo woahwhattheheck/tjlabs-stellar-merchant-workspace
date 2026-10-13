@@ -254,3 +254,13 @@ No index or query cache enters the original transfer. Rebuilding it on a receivi
 host uses the retained complete source and the installed maintained ranker. The
 Atlas contribution registers this guide, typed API and journey in the existing
 Starforge package, preserving the existing Atlas and buyer commands.
+
+## Receive a complete catalog review
+
+The grant reader can save a complete original page with its applied search and
+selected row/payment alternative. Atlas receives that file into this same saved
+capture and request editor. The original review remains downloadable after full
+workspace transfer and cold receiving. The existing search journey accepts
+`reviewFile` to exercise that entire path alongside the original query corpus.
+See [CATALOG_REVIEW.md](CATALOG_REVIEW.md) for the complete browser, CLI, typed API
+and native receiving contract.

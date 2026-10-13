@@ -36,6 +36,13 @@
         "client.mjs",
         "text/javascript"
       ]
+    ],
+    [
+      "/assets/customer-delivery.mjs",
+      [
+        "public/customer-delivery.mjs",
+        "text/javascript"
+      ]
     ]
   ]
 }

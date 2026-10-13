@@ -9,7 +9,7 @@
   },
   "commandDescriptions": {
     "bls-publisher": "Publish official BLS labor observations and original customer deliveries",
-    "bls-labor-workspace": "Receive original LAUS and QCEW sources, save county briefings and comparisons, publish native datasets and reopen the complete editable project.",
+    "bls-labor-workspace": "Receive original LAUS and QCEW sources, save regional analysis revisions and county briefings, publish native datasets and reopen complete editable customer projects.",
     "bls-native-receiving": "Continue one saved BLS publication and original customer receiving operation."
   },
   "exports": {
@@ -17,10 +17,24 @@
     "./seller/bls-labor/publisher": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/publisher/model.mjs",
     "./seller/bls-labor/publisher/plan": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/publisher/plan.mjs",
     "./seller/bls-labor/release": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/release.mjs",
-    "./seller/bls-labor/workspace": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/client.mjs",
-    "./seller/bls-labor/workspace/native-receiving": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/native-receiving.mjs"
+    "./seller/bls-labor/workspace": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/client.mjs"
+    },
+    "./seller/bls-labor/workspace/native-receiving": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/native-receiving.mjs",
+    "./seller/bls-labor/workspace/agent": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/agent-client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/agent-client.mjs"
+    },
+    "./seller/bls-labor/workspace/merchant": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/merchant.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/merchant.mjs"
+    }
   },
   "applicationProviders": {
     "bls-labor-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "bls-analyst-workspaces": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/merchant-provider.mjs"
   }
 }

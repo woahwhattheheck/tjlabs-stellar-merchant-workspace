@@ -23,7 +23,8 @@
       "merchant-accounting-adjustments",
       "buyer-expenses",
       "merchant-accounting-pricing",
-      "merchant-accounting-recovery"
+      "merchant-accounting-recovery",
+      "mcp-oauth"
     ],
     "exports": [
       "./runtime-profile",
@@ -60,7 +61,11 @@
       "./merchant/repricing",
       "./merchant/quote-prices",
       "./merchant/repricing-source",
-      "./merchant/accounting-pricing"
+      "./merchant/accounting-pricing",
+      "./mcp/oauth-resource",
+      "./mcp/oauth-host",
+      "./mcp/oauth-discovery",
+      "./mcp/oauth-operator"
     ],
     "features": [
       "schema",
@@ -93,7 +98,9 @@
     "merchant-payment-plans",
     "receivables-agent",
     "customer-closing",
-    "merchant-service-agreements"
+    "merchant-service-agreements",
+    "operator-discovery",
+    "merchant-support-operating"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
@@ -129,7 +136,11 @@
     "products/merchant-payment-plans/README.md",
     "products/merchant-service-agreements/README.md",
     "stellar-forge/mcp-paid-agent/package.json",
-    "stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENT_WORKBENCH.md"
+    "stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENT_WORKBENCH.md",
+    "stellar-forge/mcp-paid-agent/oauth-resource.d.mts",
+    "stellar-forge/mcp-paid-agent/oauth-host.d.mts",
+    "stellar-forge/mcp-paid-agent/oauth-discovery.d.mts",
+    "stellar-forge/mcp-paid-agent/oauth-resource-cli.d.mts"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
@@ -145,5 +156,8 @@
     "bin": {
       "starforge": "stellar/scf-starforge-20261009/distribution/cli.mjs"
     }
+  },
+  "sourceFormats": {
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/reference/zotero/itemJSON.js": "json"
   }
 }

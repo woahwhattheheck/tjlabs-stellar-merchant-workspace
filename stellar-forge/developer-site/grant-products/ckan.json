@@ -1,0 +1,165 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "ckan",
+  "heading": "## CKAN merchant editions, analytical customer use and staff Support",
+  "sources": [
+    {
+      "id": "ckan-merchant-operations",
+      "label": "CKAN merchant editions and original installed operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/ckan/OPERATING.md",
+      "editions": [
+        {
+          "commit": "9763693a2e0ba2cebf3ee9145be304ec1a0a552d",
+          "bytes": 18193,
+          "git_blob": "e4c352b81723fed59584007175f91a177e5f3f03"
+        }
+      ]
+    },
+    {
+      "id": "ckan-complete-workspace-receiving",
+      "label": "Complete CKAN publisher workspace and customer handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/ckan/RECEIVING.md",
+      "editions": [
+        {
+          "commit": "9763693a2e0ba2cebf3ee9145be304ec1a0a552d",
+          "bytes": 11990,
+          "git_blob": "b3c1364b105c8a5b78ef74dfd4a64f665e9208ae"
+        }
+      ]
+    },
+    {
+      "id": "ckan-reviewed-source-meaning",
+      "label": "Original CKAN dictionary, reviewed publication and customer meaning",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/SEMANTIC_WORKFLOW.md",
+      "commit": "f6c37fede046f2e234da5cd35421415f06969654"
+    },
+    {
+      "id": "ckan-analytical-customer-receiving",
+      "label": "Original Python, SQLite and DuckDB semantic receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/SEMANTICS.md",
+      "commit": "38bcf07416c67e44f5be5c251cb3c4edaa803ba3"
+    },
+    {
+      "id": "ckan-merchant-support",
+      "label": "CKAN source monitoring and complete staff case handoff",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/ckan/SUPPORT.md",
+      "commit": "496e1e1d2f69bc66bd6c3ef24c5d830c04ecc68c"
+    },
+    {
+      "id": "ckan-support-agent-recovery",
+      "label": "Original incident snapshot, receive, reopen and reconciliation through Merchant",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/RECOVERY_MCP.md",
+      "commit": "b4569b07d8929ef013c69da425467c548eb3e47a"
+    },
+    {
+      "id": "ckan-zurich-source-dictionary",
+      "label": "Source-owned Zürich field meanings and existing semantic precedence",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/semantics.mjs",
+      "commit": "ee5131fe7a2531be6954f002a2689bd32c742b75",
+      "editions": [
+        {
+          "commit": "ee5131fe7a2531be6954f002a2689bd32c742b75",
+          "bytes": 27577,
+          "git_blob": "36210a170b66d43ec90b3557a8adb19a0b53a6a1"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "ckan-zurich-publisher-programme",
+      "label": "Complete original two-period capture, publication and publisher receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/examples/zurich-portal-use.mjs",
+      "commit": "ee5131fe7a2531be6954f002a2689bd32c742b75",
+      "editions": [
+        {
+          "commit": "ee5131fe7a2531be6954f002a2689bd32c742b75",
+          "bytes": 20291,
+          "git_blob": "14db64cfce00e702f536a3672a6554ecd3dfc453"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "ckan-zurich-customer-programme",
+      "label": "Original editable customer queries, reports, workbook and complete receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/zurich_portal_use.py",
+      "commit": "ee5131fe7a2531be6954f002a2689bd32c742b75",
+      "editions": [
+        {
+          "commit": "ee5131fe7a2531be6954f002a2689bd32c742b75",
+          "bytes": 25968,
+          "git_blob": "95f76eac16ebbc6e230fb2bd9e68c459becaaf46"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "ckan-zurich-portal-use-operating",
+      "label": "Whole two-period source, publisher, customer and cold receiving procedure",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/ZURICH_PORTAL_USE.md",
+      "commit": "ee5131fe7a2531be6954f002a2689bd32c742b75",
+      "editions": [
+        {
+          "commit": "ee5131fe7a2531be6954f002a2689bd32c742b75",
+          "bytes": 8943,
+          "git_blob": "d73faf454d7af308a29a4809f27e54acc34bc61d"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "ckan-zurich-complete-source",
+      "label": "Complete original 175-file source for the saved two-period customer programme",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": ".swarm-delivery/liip-zurich-source-814b-20261013/source-packet.json",
+      "commit": "56fc16cabd3fd0931930b8805d7f85d7c0602071",
+      "editions": [
+        {
+          "commit": "56fc16cabd3fd0931930b8805d7f85d7c0602071",
+          "bytes": 2971442,
+          "git_blob": "ca880fc02cfb72a7bcf5cd796ab659fabae322d0",
+          "sha256": "d357ea970c52c9e80b4d2cee0f2ef71e649740fef35f75d8b9be93a9f46db11d"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "ckan-zurich-saved-customer-continuation",
+      "label": "Original saved customer receiving, private runtime and complete output preservation",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": ".swarm-delivery/liip-zurich-source-814b-20261013/run-customer-continuation.py",
+      "commit": "56fc16cabd3fd0931930b8805d7f85d7c0602071",
+      "editions": [
+        {
+          "commit": "56fc16cabd3fd0931930b8805d7f85d7c0602071",
+          "bytes": 15537,
+          "git_blob": "3761e49639b304a53a334874fb59d8b076f01d86",
+          "sha256": "301e1b6c38f01beb97b4a6c403e4fbc3a23cfb9c667c9dfd3d6f9f3f52d3dba3"
+        }
+      ],
+      "required": false
+    }
+  ]
+}

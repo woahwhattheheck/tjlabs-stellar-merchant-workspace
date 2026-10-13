@@ -1,3 +1,4 @@
+import { supportOperatingTools } from './support-operating.mjs';
 import {commercialTools} from './commercial.mjs';
 import {serviceAdjustmentTools} from './service-adjustments.mjs';
 import {casePackageTools} from './case-packages.mjs';
@@ -43,12 +44,24 @@ const sourceTools = new Set(['merchant_support_profiles', 'merchant_support_conf
 function supportTools(tool) {
   const read = { readOnly: true, idempotent: true };
   return [
+    ...supportOperatingTools(tool),
     ...serviceTools(tool),
     ...serviceRenewalTools(tool),
     ...serviceAdjustmentTools(tool),
     ...casePackageTools(tool),
     ...commercialTools(tool),
-    tool('merchant_support_incident_sources', 'Inspect the original support connection mode, configured incident source IDs/labels, named saved Object/CKAN selections, bound source-file digest and host default. Reads no arbitrary path and starts no watcher.', {}, [], read),
+    tool('merchant_support_incident_sources', 'Inspect the original support connection mode, configured incident source IDs/labels, named saved Object/CKAN selections and registered OAuth resources, bound source-file digest and host default. Reads no arbitrary path and starts no watcher.', {}, [], read),
+    tool('merchant_support_oauth_inspect', 'Read a named original OAuth observation resource from the private host incident-source configuration. Uses the registered endpoint, credential reference, resource and configuration identity; returns the original authority, stage-check interpretation and exact source observation. Review its returned registration before using the original watcher profile.',
+      { incidentSource, oauthSourceId: { type:'string',minLength:1,maxLength:64,
+          description:'Choose a registered oauthResources ID from merchant_support_incident_sources; the original manager enforces its 64-byte UTF-8 limit.' },
+        expectedConfigRevision:{type:'integer',minimum:1,maximum:9007199254740991},
+        timeoutMs:{type:'integer',minimum:100,maximum:30000},
+        windowMinutes:{type:'integer',minimum:1,maximum:60},
+        unavailableMinimum:{type:'integer',minimum:1,maximum:1000000000},
+        unavailablePercent:{type:'integer',minimum:0,maximum:100},
+        hostErrorMinimum:{type:'integer',minimum:1,maximum:1000000000},
+        hostErrorPercent:{type:'integer',minimum:0,maximum:100} },
+      ['oauthSourceId','expectedConfigRevision'],{...read,openWorld:true}),
     tool('merchant_support_ckan_inspect', 'Inspect a named original CKAN workspace from the private incident source configuration. Retains both saved workbench reads and the complete selected source, refresh and publication cohort. Returns the exact reviewed CKAN registration and original operational summary for the existing watcher profile.',
       { incidentSource, ckanSourceId: { type:'string',pattern:'^[A-Za-z0-9_-]{1,64}$' },
         expectedConfigRevision:{type:'integer',minimum:1},

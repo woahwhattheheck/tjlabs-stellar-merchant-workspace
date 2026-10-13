@@ -18,6 +18,89 @@ The same executable delegates data subcommands to the original Central CLI. Its 
 
 The private workspace's odk.connection.json belongs to the current Application instance. Stopping Applications removes that instance's connection, closes HTTP, settles captures and closes the original database and lifetime lease. A replacement instance writes a new private connection; clients inspect and reconnect explicitly. Closing an SDK or MCP attachment leaves the Application running.
 
+## Open through an existing trusted HTTPS proxy
+
+The reporting operator can use an explicitly selected external HTTPS origin
+while its listener and native clients remain on loopback. In Applications,
+set **Local port** to the actual forwarded local port and
+**Trusted browser HTTPS origin** to the exact HTTPS origin returned by the
+existing proxy. Review and save that complete application selection before
+starting it.
+
+The equivalent command uses the same managed service:
+
+~~~sh
+starforge odk-central-workspace serve \
+  --workspace /absolute/private/field-workspace \
+  --operator "Field reporting operator" \
+  --port "$ODK_OPERATOR_PORT" \
+  --external-origin "$ODK_OPERATOR_EXTERNAL_ORIGIN"
+~~~
+
+Set those two host variables to the actual port and origin first; the flags
+make the selection explicit. The HTTPS origin has no credentials, path,
+query or fragment. External mode requires a stable nonzero local port.
+A typical Codespaces forwarding origin has the form
+`https://CODESPACE-NAME-PORT.app.github.dev`; copy the actual selected port's
+address rather than using the editor URL. Keep the proxy's upstream protocol
+HTTP for this original HTTP listener.
+
+The existing proxy must preserve the browser Host, Origin, Authorization,
+request bodies and response streams. The server matches each request to
+either its exact local Host and Origin or the explicitly configured external
+pair. It ignores forwarded headers when deciding trust, permits no arbitrary
+cross-origin browser requests, and retains the original bearer authentication.
+Selecting an origin does not configure a proxy, change port visibility,
+change a Central account, or start another workspace.
+
+Startup retains `origin` and `url` as the original local control addresses.
+When configured, it additionally reports `browserOrigin` and `browserUrl`.
+The saved private connection binds both browser fields to the same original
+token and instance. Applications verifies these fields against its reviewed
+selection and opens the browser URL. The existing MCP browser actions return
+that same configured browser address; other MCP, CLI and SDK calls continue
+through the local listener. Commissioning, warehouse and form-release browser
+links share the selected external origin. Original downloads remain relative
+to that browser origin and stream through the same authenticated service.
+
+A private Codespaces forwarded port also requires the existing GitHub browser
+session. That proxy authentication is separate from the operator's bearer token
+and from Central's own credentials. Preserve the selected port visibility.
+See [GitHub's port-forwarding documentation](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace).
+
+On a receiving host, select that host's actual proxy origin when starting the
+received archive; do not copy a former host's runtime connection as a new
+listener. Keep the original archive SHA, workspace identity and receiving
+operation. An unchanged local-only launch emits the original local addresses
+and needs no external-origin setting.
+
+This setting serves the reporting workspace. The released Central Docker
+service has its own upstream TLS, domain and administrator configuration,
+documented in [Central host operations](central-host/HOST.md).
+
+## Native API access through a private Codespaces port
+
+Add optional `codespacesTokenEnv` to the Central source connection or the
+selected merchant `workspaces.<alias>.connections.<profile>` object. It names
+an existing proxy credential environment variable and must differ from the
+original `authEnv`. The connection must name the actual HTTPS
+`<one-label>.app.github.dev` Central origin on the default port. Null, empty
+values and other origins are rejected.
+
+`merchant_odk_source_connect` continues to select that original host profile.
+The commissioning handover, saved inspection and period installation preserve
+the same alias. Supply its value through the existing process environment when
+starting the managed application or original native receiver. The optional
+`commissioningEnvironment` file still supplies only Central Authorization;
+the host's generated `connection-secret.json` does not acquire a proxy token.
+
+The transport sends `X-Github-Token` only to the selected Codespaces origin,
+alongside Central Authorization where required. Configuration, tool inputs,
+saved source and connection output contain aliases rather than token values.
+On receiving, supply both aliases in the receiving environment before continuing
+the original source inspection or capture. Retain the complete saved connection
+and request IDs; alias changes cannot silently replay earlier selections.
+
 ## Reopen a complete received archive
 
 Applications accepts the original archive plus its reviewed SHA-256 before opening the workspace. Select a new or truly empty directory:

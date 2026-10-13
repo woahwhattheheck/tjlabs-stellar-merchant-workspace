@@ -1,12 +1,15 @@
 // MIT. Complete local operator workflow composed into the original Merchant Applications lifecycle.
 import {createServer} from 'node:http';
+import {Readable} from 'node:stream';
+import {pipeline} from 'node:stream/promises';
+import {jsonDocumentChunks} from './json-stream.mjs';
 import {readFile} from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {readBrowserAssets} from '../../distribution/browser-assets.mjs';
 import {readNativeDirectory} from '../stellarcarbon-statements/store.mjs';
-import {GiveCreditWorkspace,sealSource,MAX_INPUT_BYTES,MAX_WORKSPACE_BYTES} from './store.mjs';
+import {GiveCreditWorkspace,MAX_INPUT_BYTES,MAX_WORKSPACE_BYTES} from './store.mjs';
 import {need,copy,receiveRegistryFiles,receiveCarbon,sourceSummary} from './source.mjs';
 import {editionFor,donationsPage,donationDetail,transfersPage,transferDetail,poolRegister,providerPayoutCandidates,nativePayments,
   prepareAllocation,prepareBridge,prepareStatement,statementVersion,compareEditions,transactionFor} from './engine.mjs';
@@ -24,6 +27,11 @@ function send(response,status,value){const bytes=Buffer.from(JSON.stringify(valu
 function download(response,name,type,content){
   const bytes=Buffer.from(content);response.writeHead(200,{'Content-Type':type,'Content-Length':bytes.length,
     'Content-Disposition':'attachment; filename="'+name.replace(/[^a-zA-Z0-9._-]/g,'_')+'"'});response.end(bytes);
+}
+async function downloadJSON(response,name,value){
+  response.writeHead(200,{'Content-Type':'application/json; charset=utf-8',
+    'Content-Disposition':'attachment; filename="'+name.replace(/[^a-zA-Z0-9._-]/g,'_')+'"'});
+  await pipeline(Readable.from(jsonDocumentChunks(value,{pretty:true})),response);
 }
 async function body(request,maximum=MAX_INPUT_BYTES){
   need(/^application\/json(?:;|$)/i.test(request.headers['content-type']||''),'JSON_REQUIRED','Send an original JSON operation.',415);
@@ -59,6 +67,8 @@ export async function createGiveCreditServer({directory,port=0,expectedWorkspace
   port=Number(port);need(Number.isInteger(port)&&port>=0&&port<=65535,'INVALID_PORT','Choose a local port from 0 to 65535.');
   const workspace=await GiveCreditWorkspace.open(directory,{expectedWorkspaceId});
   const captures={registry:{status:'IDLE'},ledger:{status:'IDLE'}},tasks={},controllers={},receivedServices=[];
+  try{for(const kind of ['registry','ledger']){const checkpoint=await workspace.captureStatus(kind);if(checkpoint)captures[kind]={status:'SAVED',checkpoint};}}
+  catch(error){await workspace.close();throw error;}
   let closed=false;
   const server=createServer(async(request,response)=>{
     headers(response);
@@ -78,9 +88,20 @@ export async function createGiveCreditServer({directory,port=0,expectedWorkspace
       if(request.method==='GET'){
         if(parts[1]==='health'){send(response,200,{schema:STARTUP_SCHEMA,workspaceId:workspace.state.workspaceId,directory:workspace.directory});return;}
         if(parts[1]==='state'){send(response,200,{...await workspace.overview(),captures:copy(captures)});return;}
-        if(parts[1]==='capture'){send(response,200,parts[2]?captures[parts[2]]:captures);return;}
-        if(parts[1]==='handover'){download(response,'givecredit-workspace.json','application/json; charset=utf-8',JSON.stringify(await workspace.handover(),null,2)+'\n');return;}
-        const state=await workspace.snapshot();
+        if(parts[1]==='capture'){
+          if(parts[2]){
+            const kind=parts[2];need(['registry','ledger'].includes(kind),'CAPTURE_KIND','Choose registry or ledger capture.');
+            if(parts[3]==='checkpoint'){
+              const retained=await workspace.captureCheckpoint(kind);need(retained,'CAPTURE_CHECKPOINT_MISSING','No saved checkpoint is available.',404);
+              await downloadJSON(response,'givecredit-'+kind+'-checkpoint.json',retained);return;
+            }
+            send(response,200,{...captures[kind],checkpoint:await workspace.captureStatus(kind)});return;
+          }
+          const current={};for(const kind of ['registry','ledger'])current[kind]={...captures[kind],checkpoint:await workspace.captureStatus(kind)};
+          send(response,200,current);return;
+        }
+        if(parts[1]==='handover'){await downloadJSON(response,'givecredit-workspace.json',await workspace.readonlyHandover());return;}
+        const state=await workspace.readonlySnapshot();
         if(parts[1]==='choices'){send(response,200,choices(state,query));return;}
         if(parts[1]==='donations'){send(response,200,parts[2]?donationDetail(state,query.editionId,parts[2],query.ledgerEditionId):donationsPage(state,query));return;}
         if(parts[1]==='transfers'){send(response,200,parts[2]?transferDetail(state,query.editionId,parts[2]):transfersPage(state,query));return;}
@@ -93,7 +114,7 @@ export async function createGiveCreditServer({directory,port=0,expectedWorkspace
             need(Number.isSafeInteger(offset)&&offset>=0&&Number.isInteger(limit)&&limit>=1&&limit<=500,'INVALID_PAGE','Choose a valid source page.');
             send(response,200,{table:parts[4],items:rows.slice(offset,offset+limit),total:rows.length,offset,limit,nextOffset:offset+limit<rows.length?offset+limit:null});return;
           }
-          if(parts[3]==='source'){download(response,'givecredit-'+source.kind+'-source.json','application/json; charset=utf-8',JSON.stringify(source,null,2)+'\n');return;}
+          if(parts[3]==='source'){await downloadJSON(response,'givecredit-'+source.kind+'-source.json',source);return;}
           if(parts[3]==='files'&&parts[4]){
             const file=originalFiles(source)[Number(parts[4])];need(file,'SOURCE_FILE_REQUIRED','Choose an original source file.',404);
             download(response,file.name.split('/').at(-1),file.name.endsWith('.ndjson')?'application/x-ndjson; charset=utf-8':'application/json; charset=utf-8',file.content);return;
@@ -127,7 +148,7 @@ export async function createGiveCreditServer({directory,port=0,expectedWorkspace
         send(response,201,service.startup);return;
       }
       if(parts[1]==='preview'){
-        const state=await workspace.snapshot(),kind=parts[2]||'statement';
+        const state=await workspace.readonlySnapshot(),kind=parts[2]||'statement';
         const result=kind==='allocation'?prepareAllocation(state,value.value):kind==='bridge'?prepareBridge(state,value.value):prepareStatement(state,value.value);
         send(response,200,result);return;
       }
@@ -137,23 +158,31 @@ export async function createGiveCreditServer({directory,port=0,expectedWorkspace
       if(parts[1]==='capture'){
         const kind=parts[2];need(['registry','ledger'].includes(kind),'CAPTURE_KIND','Choose registry or ledger acquisition.');
         if(parts[3]==='stop'){controllers[kind]?.abort();send(response,202,captures[kind]);return;}
+        if(parts[3]==='checkpoint'){
+          need(!tasks[kind],'CAPTURE_RUNNING','Pause the original acquisition before receiving a checkpoint.',409);
+          need(options.revision===workspace.state.revision,'STALE_WORKSPACE','Refresh the current workspace before receiving.',409);
+          need(value.source?.kind===kind,'CAPTURE_KIND','Receive a checkpoint of the selected source kind.');
+          const checkpoint=await workspace.saveCapture(kind,value.source,{phase:'operator-import'});
+          captures[kind]={status:'SAVED',checkpoint};send(response,200,captures[kind]);return;
+        }
         need(!tasks[kind],'CAPTURE_RUNNING','This source acquisition is already running.',409);
         need(options.revision===workspace.state.revision,'STALE_WORKSPACE','Refresh the current workspace before acquisition.',409);
         const input={...(value.value||{})};
-        if(kind==='ledger'&&input.registryEditionId){input.registrySource=editionFor(await workspace.snapshot(),input.registryEditionId,'registry');delete input.registryEditionId;}
+        if(kind==='ledger'&&input.registryEditionId){input.registrySource=editionFor(await workspace.readonlySnapshot(),input.registryEditionId,'registry');delete input.registryEditionId;}
         const checkpoint=input.resume?await workspace.captureCheckpoint(kind):undefined,requestId=options.requestId||randomUUID();
         controllers[kind]=new AbortController();captures[kind]={status:'RUNNING',startedAt:new Date().toISOString(),records:0};
         const task=(async()=>{
           try{
-            const onProgress=async progress=>{if(progress.checkpoint)await workspace.saveCapture(kind,progress.checkpoint);
-              captures[kind]={...captures[kind],phase:progress.phase||kind,table:progress.table||null,records:progress.rows||null};};
-            const source=await (kind==='registry'?captureRegistry:captureLedger)({...input,checkpoint,onProgress,signal:controllers[kind].signal});
-            const result=await workspace.serial(()=>workspace.applyUnlocked('import',{source:sealSource(source),label:value.label},
+            const onProgress=async progress=>{const checkpoint=progress.checkpoint?await workspace.saveCapture(kind,progress.checkpoint,{phase:progress.phase}):captures[kind].checkpoint;
+              captures[kind]={...captures[kind],checkpoint,phase:progress.phase||kind,table:progress.table||null,records:progress.rows||null};};
+            const source=await (kind==='registry'?captureRegistry:captureLedger)({...input,checkpoint,checkpointMode:'borrowed',onProgress,signal:controllers[kind].signal});
+            const result=await workspace.serial(()=>workspace.importUnlocked(source,value.label,
               {...options,requestId,revision:workspace.state.revision}));
             captures[kind]={...captures[kind],status:'COMPLETE',completedAt:new Date().toISOString(),editionId:result.edition.id};
-          }catch(error){if(error.checkpoint)await workspace.saveCapture(kind,error.checkpoint);
-            captures[kind]={...captures[kind],status:'INTERRUPTED',error:{code:error.code||'CAPTURE_INTERRUPTED',message:error.message}};
-          }finally{tasks[kind]=null;controllers[kind]=null;}
+          }catch(error){let checkpointError=null;
+            if(error.checkpoint)try{captures[kind].checkpoint=await workspace.saveCapture(kind,error.checkpoint,{phase:'interrupted'});}catch(failure){checkpointError={code:failure.code||'CHECKPOINT_SAVE_FAILED',message:failure.message};}
+            captures[kind]={...captures[kind],status:'INTERRUPTED',error:{code:error.code||'CAPTURE_INTERRUPTED',message:error.message},checkpointError};
+          }finally{await workspace.releaseCapture(kind);tasks[kind]=null;controllers[kind]=null;}
         })();
         tasks[kind]=task;send(response,202,captures[kind]);return;
       }

@@ -8,6 +8,8 @@ import {seedGrantCohortAdoption,reviewGrantCohortAdoption,editCohortAdoption,reb
   inspectGrantCohortAdoptionRequest,saveGrantCohortAdoption,openGrantCohortAdoption,exportCohortAdoption}
   from '../../stellar/scf_2026/sf47_budget_model/workspace/cohort_planning_agent.mjs';
 import {grantPlanningSourceVerbs,executeGrantPlanningSourceTool} from './grant-planning-sources.mjs';
+import {grantReportingCaptureVerbs,executeGrantReportingCaptureTool} from './grant-reporting-capture.mjs';
+import {grantProcedureVerbs,executeGrantProcedureTool} from './grant-procedures.mjs';
 import {GRANT_MAX_WORKBOOK_HANDOVER_BYTES} from '../../stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs';
 export {grantWorkspaceTools} from './catalog/grant-workspace.mjs';
 import {GRANT_TRANSFER_CHUNK_BYTES as CHUNK} from '../../stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs';
@@ -188,6 +190,8 @@ function presentation(value, base = '') {
 export class MerchantGrantWorkspaces {
   #config; #clients = new Map(); #readers = new RetainedFileReads({errorPrefix:'GRANT'});
   #planningHandovers = new Map();
+  #reportingCaptures = new Map();
+  #procedureOperations = new Map();
   #closing = false; #close; #pending = new Set();
   constructor(config) { this.#config = config; }
   get summary() { return {configured:Boolean(this.#config.grantWorkspaces),
@@ -542,6 +546,19 @@ export class MerchantGrantWorkspaces {
         ({workspace, label:value.label, selectionSha256:value.selectionSha256, allowStart:value.allowStart,
           inputs:Object.keys(value.inputs)}))};
     const binding = this.#binding(alias);
+    if (grantReportingCaptureVerbs.has(verb)) return executeGrantReportingCaptureTool(verb,args,{
+      binding,root:()=>this.#root(alias),directory,immutable,pending:this.#reportingCaptures,
+      load:(input,expected)=>this.#input(alias,input,expected),
+      loadRetained:(id,expected)=>this.#loadSnapshot(alias,id,expected),
+      retain:(original,selection)=>this.#snapshot(alias,original,selection),
+    });
+    if (grantProcedureVerbs.has(verb)) return executeGrantProcedureTool(verb,args,{
+      binding,root:()=>this.#root(alias),directory,immutable,pending:this.#procedureOperations,
+      client:()=>this.#client(alias),
+      load:(input,expected)=>this.#input(alias,input,expected),
+      loadRetained:(id,expected)=>this.#loadSnapshot(alias,id,expected),
+      retain:(original,selection)=>this.#snapshot(alias,original,selection),
+    });
     if (verb === 'receive_begin') return this.#receiveBegin(alias, args);
     if (verb === 'receive_chunk') return this.#receiveChunk(alias, args);
     if (verb === 'receive_status') return this.#transferStatus(await this.#transfer(alias, args.transferId));
@@ -595,10 +612,11 @@ export class MerchantGrantWorkspaces {
     if (verb === 'close') return client.detach(args.expectedInstanceId);
     const rest = Object.fromEntries(Object.entries(args).filter(([key]) => key !== 'workspace'));
     const reads = {plans:'plans', plan:'plan', plan_history:'plan-history', plan_comparison:'plan-comparison', cases:'cases', case:'case',
-      case_report:'case-report', case_history:'case-history', amendments:'amendments', amendment:'amendment', forecasts:'forecasts', forecast:'forecast',
+      case_report:'case-report', operating_workflows:'operating-workflows', case_history:'case-history', amendments:'amendments', amendment:'amendment', forecasts:'forecasts', forecast:'forecast',
       portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
       settlements:'settlements',settlement:'settlement',
-      engagements:'engagements', engagement:'engagement', delivery_calendar:'delivery-calendar',
+      risks:'risks', risk_register:'risk-register', risk_history:'risk-history',
+      engagements:'engagements', engagement:'engagement', delivery_calendar:'delivery-calendar', delivery_agenda:'delivery-agenda',
       work_intakes:'work-intakes',work_intake:'work-intake',task_outcomes:'task-outcomes',task_outcome:'task-outcome',
       cost_funding:'cost-funding',funding_edition:'funding-edition',funding_request:'funding-request',
       ledger_intake:'ledger-intake',ledger_intake_original:'ledger-intake-original',
@@ -684,6 +702,19 @@ export class MerchantGrantWorkspaces {
       original=verb==='funding_preview'?await client.fundingPreview(caseId,{...body,inputs:complete}):
         await retainGrantFundingSave({directory:await this.#root(alias),client,caseId,body:{...body,inputs:complete}});
     }
+    else if (verb === 'risk_seed') {
+      const {caseId,...body}=rest; original=await client.riskSeed(caseId,body);
+    }
+    else if (verb === 'risk_preview'||verb === 'risk_save') {
+      const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;
+      const document=await this.#modelInputs(alias,args,'Complete delivery risk register',GRANT_MAX_SOURCE_BYTES);
+      original=verb==='risk_preview'?await client.riskPreview(caseId,{...body,document}):
+        await client.riskSave(caseId,{...body,document});
+    }
+    else if (verb === 'risk_request') {
+      const command=await this.#modelInputs(alias,args,'Original delivery risk save command',GRANT_MAX_SOURCE_BYTES);
+      original=await client.riskRequest(args.caseId,{command});
+    }
     else if (verb === 'task_outcomes_seed') original=await client.taskOutcomesSeed(args.caseId,args.expectedVersion);
     else if (verb === 'task_outcomes_preview'||verb === 'task_outcomes_save') {
       const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;
@@ -742,6 +773,16 @@ export class MerchantGrantWorkspaces {
       if(inputs!==undefined||input!==undefined||inputPointer!==undefined||expectedInputSha256!==undefined)
         body.document=await this.#modelInputs(alias,args,'Installation');
       original=await client.installationWorkflowSeed(caseId,body);
+    }
+    else if (verb === 'installation_effort_seed') {
+      const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;
+      if(inputs!==undefined||input!==undefined||inputPointer!==undefined||expectedInputSha256!==undefined)
+        body.document=await this.#modelInputs(alias,args,'Installation');
+      original=await client.installationEffortSeed(caseId,body);
+    }
+    else if (verb === 'installation_effort_selection') {
+      const {caseId,...body}=rest;
+      original=await client.installationEffortSelection(caseId,body);
     }
     else if (verb === 'installation_preview'||verb === 'installation_save') {
       const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;
@@ -933,7 +974,7 @@ export class MerchantGrantWorkspaces {
     } else throw failure('GRANT_TOOL_UNKNOWN', 'Choose an original grant operation.');
     return this.#snapshot(alias, original, {tool:name, ...Object.fromEntries(Object.entries(rest).filter(([key]) =>
       ['planId','caseId','intakeId','forecastId','portfolioId','alternativeId','sourceId','reviewId','reviewSha256','installationId','revision','after','before','limit','kind','format',
-        'requestId','expectedRevision','expectedVersion','input','inputPointer','expectedInputSha256',
+        'requestId','riskId','expectedRevision','expectedVersion','input','inputPointer','expectedInputSha256',
         'workshareCaseId','expectedSourceSha256','packetSourceId','expectedPacketSha256','installationRefs','groupId',
         'expectedPreparedSha256','parentSourceId','expectedParentSha256','planSourceId','expectedPlanSha256','expectedReviewBusinessSha256',
         'filename','expectedPreviewSha256','deploymentId','tranche','asOfDate','asOfAt','receiptId','cohortReviewIds','implementationReviewIds','sha256',

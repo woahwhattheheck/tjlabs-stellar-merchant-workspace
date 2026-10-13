@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { acquireReleaseLease } from '../../../sf82-seller-pilot/release-process.mjs';
 import { atomic, digest, formatted, now, stable, writeNew } from '../../odata/state.mjs';
-import { normalizeCentralUrl, formPath, formVersionPath, submissionPath, segment } from '../source.mjs';
+import { normalizeCentralUrl, normalizeCodespacesTokenEnv, centralRequestHeaders, formPath, formVersionPath, submissionPath, segment } from '../source.mjs';
 import { receiveCentralWorkspace } from './receive.mjs';
 import { RELEASED_FIXTURES } from './released-fixtures.mjs';
 import { receiveReleasedCentralPeriods } from './receive-released-periods.mjs';
@@ -144,11 +144,12 @@ export async function runReleasedCentralFixture({connection,operationId=DEFAULT_
     const base=normalizeCentralUrl(connection.url,{allowLoopback:connection.allowLoopback===true}),api=new URL('v1/',base);
     requireValue(/^[A-Z][A-Z0-9_]{0,127}$/.test(connection.authEnv??''),
       'CENTRAL_FIXTURE_AUTH','Name the retained complete Authorization header in the existing host environment.');
-    const authorization=process.env[connection.authEnv];
-    requireValue(authorization&&!/[\r\n]/.test(authorization),'CENTRAL_FIXTURE_AUTH','Load the original host credential into its selected environment reference before startup.');
-    requireValue(Object.keys(connection).every(key=>['id','name','url','authEnv','allowLoopback'].includes(key)),
+    requireValue(Object.keys(connection).every(key=>['id','name','url','authEnv','allowLoopback','codespacesTokenEnv'].includes(key)),
       'CENTRAL_FIXTURE_AUTH','Keep only the original connection reference and source endpoint.');
-    connection={...connection,url:base};
+    const proxyEnv=normalizeCodespacesTokenEnv(connection.codespacesTokenEnv,base,connection.authEnv);
+    connection={...connection,url:base,...(proxyEnv===undefined?{}:{codespacesTokenEnv:proxyEnv})};
+    centralRequestHeaders(connection); // Validate both existing host secrets before binding or dispatch.
+
     const request={operationId,connection,directory:root,workspaceDirectory:workspace,outputDirectory:output,
       restoreDirectory:restored,projectId:projectId===null?null:String(projectId),fixtureSha256:digest(stable(RELEASED_FIXTURES))};
     const requestSha256=digest(stable(request)),journalPath=join(root,'fixture-operation.json');
@@ -177,8 +178,8 @@ export async function runReleasedCentralFixture({connection,operationId=DEFAULT_
       const url=new URL(path,rootPath?base:api);
       requireValue(url.origin===api.origin&&(rootPath||url.pathname.startsWith(api.pathname))&&!url.username&&!url.password&&!url.hash,
         'CENTRAL_FIXTURE_BOUNDARY','Keep the native request on the selected original Central service.');
-      const bytes=body===null?null:Buffer.isBuffer(body)?body:Buffer.from(body,'utf8'),headers={Accept:'application/json'};
-      if(!rootPath)headers.Authorization=authorization;
+      const bytes=body===null?null:Buffer.isBuffer(body)?body:Buffer.from(body,'utf8'),
+        headers=centralRequestHeaders(connection,{authenticated:!rootPath});
       if(contentType)headers['Content-Type']=contentType;
       const requestId=randomUUID(),beganAt=now();let response;
       lease.assertHeld();

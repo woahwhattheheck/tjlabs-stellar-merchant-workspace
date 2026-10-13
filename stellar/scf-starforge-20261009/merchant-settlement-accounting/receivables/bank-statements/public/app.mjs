@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
+import {sourceInputForItem} from './source-collection-model.mjs';
+import {installSourceCollections} from './source-collections.mjs';
 import { BankStatementsClient } from './sdk/client.mjs';
 import { ReceivablesClient } from './client.mjs';
+import {camtStatementHtml,camtEntryHtml,camtEntrySummary,originalStatementRows} from './camt.mjs';
 
 const $ = (selector, scope = document) => scope.querySelector(selector);
 const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
@@ -19,9 +22,11 @@ const ctx = {
  sourceFile:null,sourcePreview:null,sourceStatementId:'',sourceMapping:null,sourceEdit:0,sourceFileLoad:0,sourceFileLoading:false,sourceLoadingName:'',
  tx:{items:[],total:0,offset:0,limit:50,revision:null},filters:{status:'',search:''},txLoad:0,
  overviewPage:0,closeListPage:0,detail:null,detailLoad:0,parts:[],detailDrafts:new Map(),
- closeDraft:{from:'',until:'',openingBalance:'',closingBalance:'',balanceNote:'',sourceClosing:'',periodCloseId:'',name:'',note:''},
+ closeDraft:{from:'',until:'',openingBalance:'',closingBalance:'',balanceNote:'',sourceClosing:'',periodCloseId:'',name:'',note:'',pageImportIds:'[]',groupingNote:'',summaryScope:'STATEMENT'},
+ assemblyPreview:null,assemblySignature:null,assemblyPage:0,assemblyLoad:0,
  closePreview:null,closePage:0,record:null,recordLoad:0,db:null,storageProblem:null,invoiceDetail:null,invoiceLoad:0
 };
+let sourceCollections=null;
 const MAP_FIELDS = [
  ['postedDate','Posted date'],['amount','Signed amount'],['debit','Debit'],['credit','Credit'],['providerId','Provider transaction ID'],
  ['payee','Payee / description'],['memo','Memo'],['reference','Reference'],['checkNumber','Check number'],['type','Transaction type'],
@@ -94,11 +99,12 @@ async function refreshState({render=true}={}){
  if(!state||!Array.isArray(state.accounts)||!Number.isInteger(state.revision)||!state.workspaceId)throw new Error('The bank workspace returned an incomplete state.');
  if(ctx.state&&ctx.state.workspaceId!==state.workspaceId)throw new Error('The server opened a different workspace. Reload this page to open its own recovery records.');
  ctx.state=state;ctx.loaded=true;
+ if(ctx.assemblySignature&&ctx.assemblySignature!==assemblySignature())invalidateAssembly();
  if(ctx.accountId&&!state.accounts.some(x=>x.id===ctx.accountId))ctx.accountId='';
  const picker=$('#account-picker');picker.innerHTML=option('','All accounts',ctx.accountId)+state.accounts.map(x=>option(x.id,x.name+' · '+x.currency.code,ctx.accountId)).join('');
  $('#workspace-identity').textContent='Workspace '+state.workspaceId+' · revision '+state.revision;
  $('#connection').textContent='Connected · revision '+state.revision+' · '+new Date().toLocaleTimeString();
- if(render){renderOverview();if(ctx.tab==='close')renderClose();if(ctx.sourcePreview)renderSourcePreview();lockForms();}
+ if(render){renderOverview();if(ctx.tab==='collection')sourceCollections?.render();if(ctx.tab==='close')renderClose();if(ctx.sourcePreview)renderSourcePreview();lockForms();}
  return state;
 }
 async function completePending(result){
@@ -193,18 +199,26 @@ function renderOverview(){
  lockForms();
 }
 function defaultMapping(){
- return {format:'OFX',textEncoding:'',accountNamespace:'',delimiter:',',headerRow:'1',dateFormat:'YMD',decimalSeparator:'.',groupSeparator:'',amountMode:'SIGNED',accountName:'',bankId:'',branchId:'',accountId:'',accountType:'CHECKING',currency:'USD',scale:'2',postedStatuses:'Booked',pendingStatuses:'Pending',balanceRecords:'[]',skipRecords:'[]',columns:{}};
+ return {format:'OFX',textEncoding:'',accountNamespace:'',camtMessageVersion:'',camtNamespaceMode:'DECLARED',camtReferencePolicy:'ACCOUNT_SERVICER_REFERENCE',camtDetailPolicy:'PRESERVE_ONLY',delimiter:',',headerRow:'1',dateFormat:'YMD',decimalSeparator:'.',groupSeparator:'',amountMode:'SIGNED',accountName:'',bankId:'',branchId:'',accountId:'',accountType:'CHECKING',currency:'USD',scale:'2',postedStatuses:'Booked',pendingStatuses:'Pending',balanceRecords:'[]',skipRecords:'[]',columns:{}};
 }
 function renderImport(){
  const d=ctx.sourceMapping||defaultMapping();
+ const collectionLabel=sourceCollections?.workingLabel();
  const headerFields=MAP_FIELDS.map(([key,label])=>field(label,'col-'+key,d.columns[key]||'','text','data-source-field placeholder="Header or #column"')).join('');
  $('#view-import').innerHTML=
- '<section class="panel"><div class="section-heading"><div><h2>Original statement file</h2><p class="small muted">Choose the complete bank export. OFX and QFX provide native account and transaction identity; CSV uses your explicit source mapping.</p></div></div><form id="source-form"><div class="grid three">'+
- '<label>Original file<input id="statement-file" type="file" accept=".ofx,.qfx,.csv,.tsv,.txt,application/x-ofx,application/vnd.intu.qfx,text/csv"></label>'+
- selectField('File format','format',[{value:'OFX',label:'OFX bank statement'},{value:'QFX',label:'QFX bank statement'},{value:'CSV',label:'Mapped CSV'}],d.format,null,'data-source-field')+
+ (collectionLabel?'<section class="panel"><p>Working collection: <strong>'+esc(collectionLabel)+'</strong></p><button type="button" data-tab="collection">Return to all original files</button></section>':'')+
+ '<section class="panel"><div class="section-heading"><div><h2>Original statement file</h2><p class="small muted">Choose the complete bank export. OFX, QFX and CAMT.053 XML provide original account and transaction records; CSV uses your explicit source mapping.</p></div></div><form id="source-form"><div class="grid three">'+
+ '<label>Original file<input id="statement-file" type="file" accept=".ofx,.qfx,.xml,.csv,.tsv,.txt,application/x-ofx,application/vnd.intu.qfx,application/xml,text/xml,text/csv"></label>'+
+ selectField('File format','format',[{value:'OFX',label:'OFX bank statement'},{value:'QFX',label:'QFX bank statement'},{value:'CAMT053',label:'CAMT.053 XML statement'},{value:'CSV',label:'Mapped CSV'}],d.format,null,'data-source-field')+
  selectField('Original text encoding','textEncoding',[{value:'',label:'Use original declaration / UTF-8'},{value:'utf-8',label:'UTF-8'},{value:'windows-1252',label:'Windows-1252'},{value:'iso-8859-1',label:'ISO-8859-1'},{value:'utf-16le',label:'UTF-16 LE'},{value:'utf-16be',label:'UTF-16 BE'},{value:'us-ascii',label:'ASCII'}],d.textEncoding,null,'data-source-field')+'</div>'+
  '<div id="source-file-summary" class="file-summary mt14"></div>'+
  '<div id="native-options" class="mt14">'+field('Institution namespace when the original file has no bank/FI identity','accountNamespace',d.accountNamespace,'text','data-source-field maxlength="255" placeholder="Stable institution reference"')+'</div>'+
+ '<fieldset id="camt-options" class="mt16" '+(d.format==='CAMT053'?'':'hidden')+'><legend>CAMT.053 source interpretation</legend><div class="grid two">'+
+ selectField('Original XML elements','camtNamespaceMode',[{value:'DECLARED',label:'Use the original declared namespace'},{value:'UNQUALIFIED',label:'Unqualified elements — select the message version'}],d.camtNamespaceMode||'DECLARED',null,'data-source-field')+
+ selectField('Expected message version','camtMessageVersion',[{value:'',label:'Read the original supported namespace'},{value:'camt.053.001.02',label:'camt.053.001.02'},{value:'camt.053.001.08',label:'camt.053.001.08'}],d.camtMessageVersion,null,'data-source-field')+
+ selectField('Booking reference identity','camtReferencePolicy',[{value:'ACCOUNT_SERVICER_REFERENCE',label:'Account-servicer reference identifies the booking'},{value:'SOURCE_ENTRY',label:'Keep separate entries; review overlapping files'}],d.camtReferencePolicy||'ACCOUNT_SERVICER_REFERENCE',null,'data-source-field')+
+ selectField('Transaction detail amounts','camtDetailPolicy',[{value:'PRESERVE_ONLY',label:'Preserve the original entry amount'},{value:'ENTRY_CURRENCY_TX_AMT',label:'Also check details stated in the entry currency'}],d.camtDetailPolicy,null,'data-source-field')+
+ '</div><p class="small muted mt10">Each booked entry remains one cash row. Original detail amounts, charges, reversals and remittance fields remain attached to that entry. For an original with unqualified XML elements, select Unqualified and its documented message version; original bytes remain unchanged. When the bank reuses a booking reference for separate entries, select Keep separate entries; the reference stays visible and overlaps require review.</p></fieldset>'+
  '<fieldset id="csv-options" class="mt16" '+(d.format==='CSV'?'':'hidden')+'><legend>CSV source mapping</legend><div class="grid four">'+
  selectField('Delimiter','delimiter',[{value:',',label:'Comma'},{value:';',label:'Semicolon'},{value:'\t',label:'Tab'},{value:'|',label:'Pipe'}],d.delimiter,null,'data-source-field')+
  field('Header logical record','headerRow',d.headerRow,'number','data-source-field min="1" max="100000"')+
@@ -223,7 +237,7 @@ function renderImport(){
  '<details><summary>Original opening / closing records and source exclusions</summary><p class="small muted">Select balance records from the file. Keep record numbers and a reason for each excluded footer. These original selections are included in the reviewed import.</p><div class="grid two">'+area('Balance record selections (JSON)','balanceRecords',d.balanceRecords,'data-source-field spellcheck="false"')+area('Excluded record selections (JSON)','skipRecords',d.skipRecords,'data-source-field spellcheck="false"')+'</div><p class="small mono">[{"recordNumber":3,"kind":"OPENING","amountColumn":"Balance","dateColumn":"Date"},{"recordNumber":40,"kind":"CLOSING","amountColumn":"Balance","dateColumn":"Date"}]</p></details>'+
  '<details><summary>Original source text</summary><p class="small muted">The first 100,000 decoded characters are available here for choosing the header and mapping. Download opens the complete original file.</p><pre id="source-text-preview"></pre></details></fieldset>'+
  '<div class="form-footer"><div class="actions"><button type="button" data-action="download-source">Download original</button><button type="button" data-action="download-source-draft">Download file + mapping</button><label class="button-label small">Restore file + mapping<input type="file" id="restore-source-draft" accept=".json" class="file-picker"></label></div><button type="submit" class="primary" id="preview-source-button">Review original source</button></div></form></section><div id="source-preview"></div>';
- $('#native-options').hidden=false;$('#csv-options').disabled=d.format!=='CSV';renderSourceFile();if(ctx.sourcePreview)renderSourcePreview();lockForms();
+ $('#native-options').hidden=false;$('#csv-options').disabled=d.format!=='CSV';$('#camt-options').disabled=d.format!=='CAMT053';renderSourceFile();if(ctx.sourcePreview)renderSourcePreview();lockForms();
 }
 function renderSourceFile(){
  const node=$('#source-file-summary');if(!node)return;
@@ -243,26 +257,16 @@ function captureMapping(){
  const values=formObject(form),prior=ctx.sourceMapping||defaultMapping(),columns={};
  for(const[key]of MAP_FIELDS)columns[key]=values['col-'+key]??prior.columns?.[key]??'';
  ctx.sourceMapping={...prior,...Object.fromEntries(Object.keys(prior).filter(x=>x!=='columns').map(key=>[key,values[key]??prior[key]])),columns};
- writeSmall('source-mapping',ctx.sourceMapping);return ctx.sourceMapping;
+ writeSmall('source-mapping',ctx.sourceMapping);sourceCollections?.mappingChanged(ctx.sourceFile,ctx.sourceMapping);return ctx.sourceMapping;
 }
-function mappedColumn(value){if(!String(value||'').trim())return undefined;const raw=String(value).trim();return /^#\d+$/.test(raw)?Number(raw.slice(1)):raw;}
 function sourceInput(){
  if(ctx.sourceFileLoading)throw new Error('Wait for the selected original file to finish loading.');
  if(!ctx.sourceFile)throw new Error('Choose the original bank statement file first.');
- const d=captureMapping(),source={format:d.format,file:{name:ctx.sourceFile.name,dataBase64:ctx.sourceFile.dataBase64}};
- if(d.textEncoding)source.textEncoding=d.textEncoding;
- if(d.accountNamespace)source.accountNamespace=d.accountNamespace.trim();
- if(d.format==='CSV'){
-  const columns=Object.fromEntries(MAP_FIELDS.map(([key])=>[key,mappedColumn(d.columns[key])]).filter(([,value])=>value!==undefined));
-  source.csv={delimiter:d.delimiter,headerRow:Number(d.headerRow),dateFormat:d.dateFormat,decimalSeparator:d.decimalSeparator,groupSeparator:d.groupSeparator,amountMode:d.amountMode,
-   account:{bankId:d.bankId,branchId:d.branchId,accountId:d.accountId,accountType:d.accountType,currency:d.currency.toUpperCase()},columns,
-   balanceRecords:JSON.parse(d.balanceRecords||'[]'),skipRecords:JSON.parse(d.skipRecords||'[]')};
-  if(columns.status!==undefined)source.csv.statusValues={posted:d.postedStatuses.split(',').map(x=>x.trim()).filter(Boolean),pending:d.pendingStatuses.split(',').map(x=>x.trim()).filter(Boolean)};
- }
- return source;
+ return sourceInputForItem({file:ctx.sourceFile,mapping:captureMapping()});
 }
 async function chooseFile(file){
  if(!file)return;
+ captureMapping();await sourceCollections?.flush();sourceCollections?.detach();
  const generation=++ctx.sourceFileLoad;captureMapping();resetSourcePreview();
  ctx.sourceFileLoading=true;ctx.sourceLoadingName=file.name;renderSourceFile();
  try{
@@ -271,9 +275,10 @@ async function chooseFile(file){
   const sha256=crypto.subtle?[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join(''):null;
   if(generation!==ctx.sourceFileLoad)return;
   const saved={name:file.name,bytes:bytes.length,dataBase64:base64(bytes),sha256},ext=file.name.toLowerCase().split('.').at(-1),d=structuredClone(captureMapping());
-  d.format=ext==='qfx'?'QFX':['csv','tsv'].includes(ext)?'CSV':ext==='ofx'?'OFX':d.format;
+  d.format=ext==='qfx'?'QFX':['csv','tsv'].includes(ext)?'CSV':ext==='ofx'?'OFX':ext==='xml'?'CAMT053':d.format;
   if(ext==='tsv')d.delimiter='\t';
   await dbWrite(storageKey('source-file'),saved);
+  if(generation!==ctx.sourceFileLoad)return;
   // Completed storage transactions remain the fallback until a later complete file commits.
   ctx.sourceFile=saved;ctx.sourceMapping=d;writeSmall('source-mapping',d);
  }catch(error){if(generation===ctx.sourceFileLoad)throw error;}
@@ -290,6 +295,7 @@ async function previewSource(){
   ctx.sourcePreview={...preview,reviewSha256:result.reviewSha256||preview.reviewSha256};
   ctx.sourceStatementId=preview.statements.find(x=>x.kind!=='CLOSING_INFORMATION')?.id||preview.statements[0]?.id||'';
   ctx.previewSourceInput=structuredClone(source);renderSourcePreview();
+  await sourceCollections?.previewed(ctx.sourceFile,captureMapping(),ctx.sourcePreview);
  }finally{if(button.isConnected){button.disabled=ctx.sourceFileLoading;button.textContent=ctx.sourceFileLoading?'Reading selected file…':'Review original source';}}
 }
 function receiptIntakeBinding(source,accountId){
@@ -340,9 +346,9 @@ function renderSourcePreview(){
  const sample=source?.sample||source?.rows?.slice(0,20)||[];
  node.innerHTML='<section class="panel"><div class="section-heading"><div><h2>Review and retain source</h2><p class="small muted">'+esc(preview.file?.name)+' · '+esc(preview.file?.bytes)+' bytes · '+esc(preview.format)+'</p></div><button type="button" data-action="download-source-preview">Download preview</button></div>'+
  issuesHtml(preview.issues)+selectField('Original account statement','source-statement',preview.statements.map(x=>({value:x.id,label:x.account.accountId+' · '+x.account.currency+' · '+x.kind+' · '+(x.summary?.postedCount||0)+' rows'})),ctx.sourceStatementId,null)+
- (source?'<div class="grid two mt15"><div class="source-note"><p><strong>'+esc(source.account.accountType||source.account.kind)+' · '+esc(source.account.accountId)+'</strong></p><p class="small">'+esc(source.account.financialInstitution?.name||source.account.bankId||'Selected institution')+' · '+esc(source.account.currency)+'</p><p class="small">Source coverage: '+esc(source.period.from||'unspecified')+' to '+esc(source.period.until||'unspecified')+' ('+esc(source.period.kind.replaceAll('_',' ').toLowerCase())+')</p><p class="small">Posted rows '+esc(source.summary?.postedCount||0)+' · pending '+esc(source.pendingCount??source.pendingRows?.length??0)+' · source review '+esc(source.summary?.invalidPostedCount||0)+'</p></div><div class="source-note"><p class="small">Ledger snapshot: '+esc(source.balances.ledger?.amount??'not supplied')+' '+esc(source.account.currency)+'</p><p class="small">Available snapshot: '+esc(source.balances.available?.amount??'not supplied')+' '+esc(source.account.currency)+'</p><p class="small">Original closing pairs: '+source.balances.closing.length+'</p><p class="small muted">Download coverage and the row date range are distinct from a complete statement close.</p></div></div>'+issuesHtml(source.issues)+
+ (source?'<div class="grid two mt15"><div class="source-note"><p><strong>'+esc(source.account.accountType||source.account.kind)+' · '+esc(source.account.accountId)+'</strong></p><p class="small">'+esc(source.account.financialInstitution?.name||source.account.bankId||'Selected institution')+' · '+esc(source.account.currency)+'</p><p class="small">Source coverage: '+esc(source.period.from||'unspecified')+' to '+esc(source.period.until||'unspecified')+' ('+esc(source.period.kind.replaceAll('_',' ').toLowerCase())+')</p><p class="small">Posted rows '+esc(source.summary?.postedCount||0)+' · pending '+esc(source.pendingCount??source.pendingRows?.length??0)+' · source review '+esc(source.summary?.invalidPostedCount||0)+'</p></div><div class="source-note"><p class="small">Ledger snapshot: '+esc(source.balances.ledger?.amount??'not supplied')+' '+esc(source.account.currency)+'</p><p class="small">Available snapshot: '+esc(source.balances.available?.amount??'not supplied')+' '+esc(source.account.currency)+'</p><p class="small">Original closing pairs: '+source.balances.closing.length+'</p><p class="small muted">Download coverage and the row date range are distinct from a complete statement close.</p></div></div>'+issuesHtml(source.issues)+camtStatementHtml(preview,source)+
  '<details><summary>Original source identity and interpretation</summary><dl class="key-values"><dt>Institution/account identity</dt><dd class="mono">'+esc(source.account.identitySha256||'Supply an explicit institution namespace, then review again')+'</dd><dt>Original file SHA256</dt><dd class="mono">'+esc(preview.file?.sha256)+'</dd><dt>Source review</dt><dd class="mono">'+esc(preview.reviewSha256)+'</dd><dt>Original account basis</dt><dd><pre>'+esc(json(source.account.identityBasis))+'</pre></dd></dl></details>'+
- '<h3 class="heading-gap">Source row preview</h3><div class="table-wrap"><table><thead><tr><th>Record</th><th>Date</th><th>Payee / reference</th><th class="amount">Amount</th><th>ID / review</th></tr></thead><tbody>'+sample.map(row=>'<tr><td>'+esc(row.source?.recordNumber??'—')+'</td><td>'+esc(row.postedDate)+'</td><td>'+esc(row.payee||row.memo)+'<small>'+esc(row.reference)+'</small></td><td class="amount">'+esc(row.amount)+' '+esc(row.currency)+'</td><td><span class="mono">'+esc(row.providerId||'No native ID')+'</span>'+issuesHtml(row.issues)+'</td></tr>').join('')+(sample.length?'':'<tr><td colspan="5" class="empty">This source section contains balance information without posted transactions.</td></tr>')+'</tbody></table></div><p class="small muted mt8">'+sample.length+' preview rows shown. All retained transaction rows are available in the paged Transactions view and complete parsed-file download.</p>'+
+ '<h3 class="heading-gap">Source row preview</h3><div class="table-wrap"><table><thead><tr><th>Record</th><th>Date</th><th>Payee / reference</th><th class="amount">Amount</th><th>ID / review</th></tr></thead><tbody>'+sample.map(row=>'<tr><td>'+esc(row.source?.recordNumber??'—')+'</td><td>'+esc(row.postedDate)+'</td><td>'+esc(row.payee||row.memo)+'<small>'+esc(row.reference)+'</small>'+camtEntrySummary(row)+'</td><td class="amount">'+esc(row.amount)+' '+esc(row.currency)+'</td><td><span class="mono">'+esc(row.providerId||'No native ID')+'</span>'+issuesHtml(row.issues)+'</td></tr>').join('')+(sample.length?'':'<tr><td colspan="5" class="empty">This source section contains balance information without posted transactions.</td></tr>')+'</tbody></table></div><p class="small muted mt8">'+sample.length+' preview rows shown. All retained transaction rows are available in the paged Transactions view and complete parsed-file download.</p>'+
  '<div class="grid two mt20"><form id="receive-source-form" class="stack"><h3>Retain in an existing bank account</h3>'+selectField('Merchant bank account','accountId',existing.map(x=>({value:x.id,label:x.name+' · '+x.currency.code})),selectedExisting,existing.length?'Choose exact account…':'Add this original account first')+receiptIntakeBindingForm(source,selectedExisting)+(previousImports.length?selectField('Revise an earlier interpretation of these exact bytes','supersedesImportId',previousImports.map(x=>({value:x.id,label:(x.file.name||x.id)+' · '+formatDate(x.createdAt||x.importedAt)+' · prior review '+x.reviewSha256})),ctx.sourceSupersedesId||'','Choose the prior interpretation…','required')+'<p class="small muted">A revised interpretation retains this same file, identifies the prior import, and opens explicit replacement/deletion reviews. Existing cash decisions remain until you review and apply those corrections.</p>':'')+'<label class="check-line"><input type="checkbox" name="reviewed" required><span>I reviewed this original account, source mapping and transaction coverage.</span></label><button type="submit" class="primary" data-mutation data-unavailable="'+(!existing.length)+'" '+(!existing.length?'disabled':'')+'>Retain original statement</button></form>'+
  '<form id="bank-account-form" class="stack"><h3>Add this bank account</h3>'+field('Account name','name',ctx.sourceMapping?.accountName||((source.account.accountType||'Bank')+' '+source.account.accountId),'text','required maxlength="160"')+field('Decimal places','scale',ctx.sourceMapping?.scale||'2','number','required min="0" max="6"')+area('Account note','note','','maxlength="3000"')+'<button type="submit" data-mutation data-unavailable="'+(!source.account.identitySha256)+'" '+(!source.account.identitySha256?'disabled':'')+'>Add selected source account</button></form></div>':'<p class="empty">No supported account section returned.</p>')+'</section>';
  lockForms();
@@ -350,7 +356,7 @@ function renderSourcePreview(){
 
 function transactionRow(row){
  const match=row.match,amount=row.valuation?.amount??row.amount,currency=row.valuation?.currency?.code||ctx.state.accounts.find(x=>x.id===row.accountId)?.currency.code||row.currency;
- return '<tr><td>'+esc(row.postedDate||'Review date')+'</td><td><strong>'+esc(row.payee||row.extendedName||row.memo||'Bank transaction')+'</strong><small>'+esc(row.reference||row.checkNumber)+'</small></td><td class="amount">'+esc(amount)+' '+esc(currency)+'</td><td>'+badge(row.status)+(match?' '+badge('MATCHED'):'')+(row.closed?' '+badge('CLOSED'):'')+'</td><td class="mono">'+esc(row.providerId||'CSV source row')+'</td><td><button type="button" class="small" data-action="open-transaction" data-id="'+esc(row.id)+'">Review</button></td></tr>';
+ return '<tr><td>'+esc(row.postedDate||'Review date')+'</td><td><strong>'+esc(row.payee||row.extendedName||row.memo||'Bank transaction')+'</strong><small>'+esc(row.reference||row.checkNumber)+'</small></td><td class="amount">'+esc(amount)+' '+esc(currency)+'</td><td>'+badge(row.status)+(match?' '+badge('MATCHED'):'')+(row.closed?' '+badge('CLOSED'):'')+'</td><td class="mono">'+esc(row.providerId||'Original source row')+'</td><td><button type="button" class="small" data-action="open-transaction" data-id="'+esc(row.id)+'">Review</button></td></tr>';
 }
 function renderTransactions(){
  const statuses=['POSTED','OVERLAP_REVIEW','CONFLICT','CORRECTION_REVIEW','INVALID','FOREIGN_CURRENCY','DUPLICATE','SUPERSEDED','DELETED','EXCLUDED'];
@@ -461,8 +467,8 @@ function renderTransactionDetail(draft=null){
  const targetChoices=resolutionTargets(selectedDecision,tx);
  let positive=false,zero=false;try{const amount=minor(effectiveAmount,account.currency.scale);positive=amount>0n;zero=amount===0n;}catch{}
  $('#detail-body').innerHTML=
- '<section class="panel"><div class="section-heading"><div><h3>'+esc(account.name)+'</h3><p class="small muted">'+esc(tx.reference||tx.checkNumber||'')+'</p></div><div class="actions">'+badge(tx.status)+(tx.match?badge('MATCHED'):'')+(closed?badge('CLOSED'):'')+'</div></div><dl class="key-values"><dt>Account amount</dt><dd><strong class="amount">'+esc(effectiveAmount)+' '+esc(account.currency.code)+'</strong></dd><dt>Original source amount</dt><dd>'+esc(tx.amount)+' '+esc(tx.currency)+'</dd><dt>Posted date</dt><dd>'+esc(tx.postedDate)+' <span class="small muted">'+esc(tx.postedAtRaw||'')+'</span></dd><dt>Bank transaction ID</dt><dd class="mono">'+esc(tx.providerId||'Original CSV row without provider ID')+'</dd><dt>Original reference</dt><dd>'+esc(tx.reference||'—')+'</dd><dt>Memo</dt><dd>'+esc(tx.memo||'—')+'</dd><dt>Source</dt><dd>'+sourceLinks(tx)+'</dd><dt>Workspace transaction</dt><dd class="mono">'+esc(tx.id)+'</dd></dl>'+
- (tx.valuation?'<p class="source-note small">Reviewed account-currency value: '+esc(tx.valuation.amount)+' '+esc(account.currency.code)+' · '+esc(tx.valuation.reason||tx.valuation.note||'')+'</p>':'')+issuesHtml(sourceIssue)+
+ '<section class="panel"><div class="section-heading"><div><h3>'+esc(account.name)+'</h3><p class="small muted">'+esc(tx.reference||tx.checkNumber||'')+'</p></div><div class="actions">'+badge(tx.status)+(tx.match?badge('MATCHED'):'')+(closed?badge('CLOSED'):'')+'</div></div><dl class="key-values"><dt>Account amount</dt><dd><strong class="amount">'+esc(effectiveAmount)+' '+esc(account.currency.code)+'</strong></dd><dt>Original source amount</dt><dd>'+esc(tx.amount)+' '+esc(tx.currency)+'</dd><dt>Posted date</dt><dd>'+esc(tx.postedDate)+' <span class="small muted">'+esc(tx.postedAtRaw||'')+'</span></dd><dt>Bank transaction ID</dt><dd class="mono">'+esc(tx.providerId||'Original source row without provider ID')+'</dd><dt>Original reference</dt><dd>'+esc(tx.reference||'—')+'</dd><dt>Memo</dt><dd>'+esc(tx.memo||'—')+'</dd><dt>Source</dt><dd>'+sourceLinks(tx)+'</dd><dt>Workspace transaction</dt><dd class="mono">'+esc(tx.id)+'</dd></dl>'+
+ (tx.valuation?'<p class="source-note small">Reviewed account-currency value: '+esc(tx.valuation.amount)+' '+esc(account.currency.code)+' · '+esc(tx.valuation.reason||tx.valuation.note||'')+'</p>':'')+issuesHtml(sourceIssue)+camtEntryHtml(tx)+
  transactionLineage(tx)+(closed?'<p class="source-note small">This transaction belongs to a saved close. Open that close from Overview to record its reopening before changing this transaction.</p>':'')+'</section>'+
  (tx.match?'<section class="panel"><div class="section-heading"><h3>Recorded posting parts</h3><span class="small muted">'+esc(formatDate(tx.match.createdAt||tx.match.at))+'</span></div><div class="table-wrap"><table><thead><tr><th>Kind</th><th>Original record</th><th class="amount">Amount</th><th>Note</th></tr></thead><tbody>'+tx.match.parts.map(part=>'<tr><td>'+esc(part.kind)+'</td><td>'+esc(part.target?.reference||part.reference||part.targetId||'Accountant posting')+'<small>'+esc(part.ledgerCode||'')+'</small></td><td class="amount">'+esc(part.amount)+'</td><td>'+esc(part.note)+'</td></tr>').join('')+'</tbody></table></div><p class="small muted mt10">'+esc(tx.match.reason)+'</p><form id="undo-form" class="mt14"><fieldset data-mutation-fields data-unavailable="'+Boolean(closed)+'"><legend>Undo this match</legend>'+area('Reason','reason',draft?.undo?.reason||'','required maxlength="4000"')+'<div class="form-footer"><span class="small muted">The original posting history remains with the transaction.</span><button type="submit" data-mutation data-unavailable="'+Boolean(closed)+'">Undo original match</button></div></fieldset></form></section>':'')+
  (!tx.match?'<section class="panel"><h3>'+(zero?'Confirm the original zero-amount transaction':'Match existing payments or classify the bank amount')+'</h3>'+(zero?'<p class="source-note small mt12">The bank reports an exact zero amount. Leave posting parts empty and record the source explanation to retain this as a reviewed zero-cash transaction.</p>':'')+'<p class="small muted mt5">Posting parts must total the signed account amount. A receipt plus a negative bank fee can explain a net deposit.</p><form id="match-form"><fieldset data-mutation-fields data-unavailable="'+(!postable)+'" class="mt14"><legend>Exact posting parts</legend><div id="posting-parts"></div><div class="actions mt12"><button type="button" data-action="add-part">Add posting part</button><button type="button" data-action="add-fee">Add balancing fee</button></div><div id="posting-total"></div>'+area('Match explanation','reason',draft?.match?.reason||'','required maxlength="4000" class="mt15"')+'<div class="form-footer"><span class="small muted">Select the original receipt or refund for every customer-money part.</span><button type="submit" class="primary" data-mutation data-unavailable="'+(!postable)+'">' +(zero?'Confirm zero amount':'Record exact match')+ '</button></div></fieldset></form></section>':'')+
@@ -628,7 +634,7 @@ async function openSourceRow(importId,rowId){
  while(returned&&!visited.has(returned.import.id)){
   visited.add(returned.import.id);
   if(returned.import.file.sha256!==requested.import.file.sha256)throw new Error('An interpretation predecessor does not retain these same original file bytes.');
-  for(const statement of returned.report.statements||[]){row=[...(statement.rows||[]),...(statement.pendingRows||[])].find(value=>value.id===rowId);if(row)break;}
+  for(const statement of returned.report.statements||[]){row=originalStatementRows(statement).find(value=>value.id===rowId);if(row)break;}
   if(row||!returned.import.supersedesImportId)break;
   returned=await ctx.client.importDetail(returned.import.supersedesImportId);
   if(!currentRecordRead(generation))return;
@@ -639,7 +645,7 @@ async function openSourceRow(importId,rowId){
  $('#record-title').textContent='Original bank source row';
  $('#record-body').innerHTML='<section class="panel"><h3>'+esc(returned.import.file.name)+'</h3><p class="small mono">'+esc(returned.import.file.sha256)+'</p>'+
   (prior?'<p class="source-note small">This row was removed or reclassified by a later interpretation. These are its retained fields from the earlier interpretation of the same original bytes.</p><div class="actions mt12"><button type="button" data-action="open-import" data-id="'+esc(importId)+'">Current interpretation</button><button type="button" data-action="open-import" data-id="'+esc(originalImportId)+'">Original row interpretation</button></div>':'')+
-  '<div class="actions mt12"><button type="button" data-action="import-file" data-id="'+esc(originalImportId)+'" data-file="original">Download original file</button><button type="button" data-action="import-file" data-id="'+esc(originalImportId)+'" data-file="parsed.json">Download complete parsed file</button></div><dl class="key-values"><dt>Source pointer</dt><dd class="mono">'+esc(row.source.pointer)+'</dd><dt>Record / lines</dt><dd>'+esc(row.source.recordNumber)+' · '+esc(row.source.lineStart)+'–'+esc(row.source.lineEnd)+'</dd><dt>Original bytes</dt><dd>'+esc(row.source.byteStart)+'–'+esc(row.source.byteEnd)+'</dd><dt>Original amount</dt><dd>'+esc(row.amountRaw)+' · '+esc(row.currency)+'</dd></dl><h3>Exact decoded source record</h3><pre>'+esc(row.source.raw)+'</pre>'+issuesHtml(row.issues)+'<details><summary>Complete original fields</summary><pre>'+esc(json(row.original))+'</pre></details></section>';
+  '<div class="actions mt12"><button type="button" data-action="import-file" data-id="'+esc(originalImportId)+'" data-file="original">Download original file</button><button type="button" data-action="import-file" data-id="'+esc(originalImportId)+'" data-file="parsed.json">Download complete parsed file</button></div><dl class="key-values"><dt>Source pointer</dt><dd class="mono">'+esc(row.source.pointer)+'</dd><dt>Record / lines</dt><dd>'+esc(row.source.recordNumber)+' · '+esc(row.source.lineStart)+'–'+esc(row.source.lineEnd)+'</dd><dt>Original bytes</dt><dd>'+esc(row.source.byteStart)+'–'+esc(row.source.byteEnd)+'</dd><dt>Original amount</dt><dd>'+esc(row.amountRaw)+' · '+esc(row.currency)+'</dd></dl>'+camtEntryHtml(row)+'<h3>Exact decoded source record</h3><pre>'+esc(row.source.raw)+'</pre>'+issuesHtml(row.issues)+'<details><summary>Complete original fields</summary><pre>'+esc(json(row.original))+'</pre></details></section>';
 }
 async function openImport(id){
  const generation=beginRecordRead('Retained bank statement'),returned=await ctx.client.importDetail(id);
@@ -649,21 +655,99 @@ async function openImport(id){
 }
 
 function renderImportRecord(){
- const {id,data,page,statementId}=ctx.record,report=data.report,selected=report.statements.find(x=>x.id===statementId)||report.statements[0],all=[...(selected?.rows||[]),...(selected?.pendingRows||[])],items=all.slice(page*50,(page+1)*50);
+ const {id,data,page,statementId}=ctx.record,report=data.report,selected=report.statements.find(x=>x.id===statementId)||report.statements[0],all=originalStatementRows(selected),items=all.slice(page*50,(page+1)*50);
  $('#record-title').textContent='Retained statement · '+data.import.file.name;
  $('#record-body').innerHTML='<section class="panel"><div class="section-heading"><div><h3>'+esc(data.import.file.name)+'</h3><p class="mono">'+esc(data.import.file.sha256)+'</p></div><div class="actions"><button type="button" data-action="import-file" data-id="'+esc(id)+'" data-file="original">Original file</button><button type="button" data-action="import-file" data-id="'+esc(id)+'" data-file="parsed.json">Complete parsed file</button></div></div>'+
  selectField('Original statement section','record-statement',report.statements.map(x=>({value:x.id,label:x.account.accountId+' · '+x.account.currency+' · '+x.kind})),selected?.id||'',null)+
- issuesHtml(report.issues)+issuesHtml(selected?.issues)+
- '<div class="table-wrap mt14"><table><thead><tr><th>Record</th><th>Date</th><th>Payee</th><th class="amount">Original amount</th><th>Status / source</th></tr></thead><tbody>'+items.map(row=>'<tr><td>'+esc(row.source.recordNumber)+'</td><td>'+esc(row.postedDate)+'</td><td>'+esc(row.payee||row.memo)+'</td><td class="amount">'+esc(row.amount)+' '+esc(row.currency)+'</td><td>'+badge(row.status)+' <button type="button" class="small" data-action="open-source-row" data-id="'+esc(id)+'" data-row="'+esc(row.id)+'">Original row</button>'+issuesHtml(row.issues)+'</td></tr>').join('')+(items.length?'':'<tr><td colspan="5" class="empty">This original section contains no transaction records.</td></tr>')+'</tbody></table></div>'+pagerHtml('import-record-page',page,all.length,50)+
- '<details><summary>Original balances and source interpretation</summary><pre>'+esc(json({period:selected?.period,balances:selected?.balances,interpretation:report.interpretation,csv:report.csv?{...report.csv,preamble:report.csv.preamble?.map(x=>({source:x.source,cells:x.cells}))}:undefined,native:report.native}))+'</pre></details></section>';
+ issuesHtml(report.issues)+issuesHtml(selected?.issues)+camtStatementHtml(report,selected)+
+ '<div class="table-wrap mt14"><table><thead><tr><th>Record</th><th>Date</th><th>Payee</th><th class="amount">Original amount</th><th>Status / source</th></tr></thead><tbody>'+items.map(row=>'<tr><td>'+esc(row.source.recordNumber)+'</td><td>'+esc(row.postedDate)+'</td><td>'+esc(row.payee||row.memo)+'</td><td class="amount">'+esc(row.amount)+' '+esc(row.currency)+'</td><td>'+badge(row.status)+camtEntrySummary(row)+' <button type="button" class="small" data-action="open-source-row" data-id="'+esc(id)+'" data-row="'+esc(row.id)+'">Original row</button>'+issuesHtml(row.issues)+'</td></tr>').join('')+(items.length?'':'<tr><td colspan="5" class="empty">This original section contains no transaction records.</td></tr>')+'</tbody></table></div>'+pagerHtml('import-record-page',page,all.length,50)+
+ '<details><summary>Original balances and source interpretation</summary><pre>'+esc(json({period:selected?.period,balances:selected?.balances,interpretation:report.interpretation,csv:report.csv?{...report.csv,preamble:report.csv.preamble?.map(x=>({source:x.source,cells:x.cells}))}:undefined,native:report.native,camt:report.camt?{...report.camt,sourceTree:undefined}:undefined,camtStatement:selected?.camt}))+'</pre></details></section>';
 }
 
 function closingSources(accountId=ctx.accountId){
- return (ctx.state?.imports||[]).filter(item=>item.accountId===accountId).flatMap(item=>(item.balances?.closing||[]).filter(row=>row.eligible&&row.opening&&row.closing).map(row=>({
+ const sources=(ctx.state?.imports||[]).filter(item=>item.accountId===accountId).flatMap(item=>(item.balances?.closing||[]).filter(row=>row.eligible&&row.opening&&row.closing).map(row=>({
   value:JSON.stringify({importId:item.id,id:row.id}),
   label:(row.from||'?')+' to '+(row.until||'?')+' · '+row.opening.amount+' → '+row.closing.amount+' '+row.currency+' · '+item.file.name,
   source:row,import:item
  })));
+ const assembly=ctx.assemblyPreview;
+ if(assembly?.eligible&&assembly.accountId===accountId&&ctx.assemblySignature===assemblySignature())sources.push({
+  value:JSON.stringify(assembly.sourceClosing),label:assembly.period.from+' to '+assembly.period.until+' · '+assembly.pages.length+
+   ' original pages · '+assembly.closing.opening.amount+' → '+assembly.closing.closing.amount+' '+assembly.currency.code,
+  source:assembly.closing,assembly});
+ return sources;
+}
+function selectedPageImports(){
+ try{const ids=JSON.parse(ctx.closeDraft.pageImportIds||'[]');return Array.isArray(ids)?[...new Set(ids.filter(id=>typeof id==='string'))]:[];}catch{return [];}
+}
+function assemblyInput(){return {accountId:ctx.accountId,importIds:selectedPageImports(),groupingNote:ctx.closeDraft.groupingNote||'',summaryScope:ctx.closeDraft.summaryScope||'STATEMENT'};}
+function assemblySignature(){
+ const input=assemblyInput(),selected=new Set(input.importIds),imports=ctx.state?.imports||[];
+ return JSON.stringify({input,sources:input.importIds.map(id=>{
+  const row=imports.find(item=>item.id===id);
+  return {id,reviewSha256:row?.reviewSha256??null,statementId:row?.statementId??null,fileSha256:row?.file?.sha256??null,
+   successors:imports.filter(item=>item.supersedesImportId===id).map(item=>({id:item.id,reviewSha256:item.reviewSha256})).sort((a,b)=>a.id.localeCompare(b.id))};
+ })});
+}
+function captureAssemblyDraft(){
+ const form=$('#assembly-form');
+ if(form){ctx.closeDraft.groupingNote=form.elements.groupingNote.value;ctx.closeDraft.summaryScope=form.elements.summaryScope.value;}
+ writeSmall('close-draft:'+ctx.accountId,ctx.closeDraft);
+}
+function invalidateAssembly(){
+ ctx.assemblyPreview=null;ctx.assemblySignature=null;ctx.assemblyLoad++;
+ invalidateClosePreview();
+ const output=$('#assembly-review');if(output)output.innerHTML='';
+}
+function assemblyReviewHtml(report){
+ if(!report)return '';
+ const pages=report.pages||[],shown=pages.slice((ctx.assemblyReviewPage||0)*25,((ctx.assemblyReviewPage||0)+1)*25);
+ return '<section class="source-note mt16"><h3>Complete statement page review</h3><p>'+badge(report.eligible?'READY':'REVIEW REQUIRED')+
+  ' · '+esc(report.entryCount)+' original entries · '+esc(report.bookedCount)+' booked · '+esc(report.bookedNet)+' '+esc(report.currency.code)+
+  '</p>'+issuesHtml(report.issues)+
+  '<div class="table-wrap"><table><thead><tr><th>Page</th><th>Original file / statement</th><th>Opening boundary</th><th>Booked movement</th><th>Closing boundary</th></tr></thead><tbody>'+
+  shown.map(page=>'<tr><td>'+esc(page.pagination?.page)+(page.pagination?.last?' · final':'')+'</td><td><button type="button" class="small" data-action="open-import" data-id="'+esc(page.importId)+'">'+
+   esc(page.file.name)+'</button><br>'+esc(page.originalStatementId)+'</td><td class="amount">'+esc(page.opening?.amount??'Review')+'</td><td class="amount">'+
+   esc(page.bookedNet)+'</td><td class="amount">'+esc(page.closing?.amount??'Review')+'</td></tr>').join('')+'</tbody></table></div>'+
+  pagerHtml('assembly-review-page',ctx.assemblyReviewPage||0,pages.length,25)+
+  '<p class="small">Original grouping: '+esc(report.grouping.basis.replaceAll('_',' '))+'. Summary scope: '+esc(report.selection.summaryScope)+
+  '. Every boundary and summary remains available in the complete review.</p><div class="actions">'+
+  (report.eligible?'<button type="button" data-action="use-assembly">Use these original statement balances</button>':'')+
+  '<button type="button" data-action="download-assembly">Download complete page review</button></div></section>';
+}
+function renderAssembly(){
+ const all=ctx.state?.imports||[],successors=new Map();
+ for(const item of all)if(item.supersedesImportId)successors.set(item.supersedesImportId,item.id);
+ const imports=all.filter(item=>item.accountId===ctx.accountId&&item.format==='CAMT053');
+ if(!imports.length)return '';
+ const selected=new Set(selectedPageImports()),page=ctx.assemblyPage||0,items=imports.slice(page*25,(page+1)*25);
+ return '<section class="panel"><h2>Combine original statement pages</h2><p class="small muted">Receive each original page through Import, then select its saved statement section here. Review the complete page sequence, original balance boundaries and transaction summary before using the final statement balances.</p>'+
+  '<form id="assembly-form" class="stack"><div class="table-wrap"><table><thead><tr><th>Select</th><th>Original file / statement</th><th>Page</th><th>Original period</th><th>Sequence</th></tr></thead><tbody>'+
+  items.map(item=>'<tr><td><label><input type="checkbox" data-page-import="'+esc(item.id)+'"'+(selected.has(item.id)?' checked':'')+
+   (successors.has(item.id)&&!selected.has(item.id)?' disabled':'')+' aria-label="Select original '+esc(item.file.name)+'"></label></td><td>'+esc(item.file.name)+'<br>'+esc(item.camt?.statementId||item.statementId)+
+   '<p class="small">'+(successors.has(item.id)?'Superseded by '+esc(successors.get(item.id)):'Current interpretation')+'</p><p class="small mono">'+esc(item.reviewSha256)+'</p>'+
+   '</td><td>'+esc(item.camt?.pagination?.page??'Unspecified')+(item.camt?.pagination?.last?' · final':'')+'</td><td>'+esc(item.period?.from||'Unspecified')+
+   ' to '+esc(item.period?.until||'Unspecified')+'</td><td>'+esc(item.camt?.sequences?.electronic||item.camt?.sequences?.legal||'Unspecified')+'</td></tr>').join('')+
+  '</tbody></table></div>'+pagerHtml('assembly-import-page',page,imports.length,25)+'<p class="small">'+selected.size+' original page imports selected across all pages.</p>'+
+  '<div class="grid two">'+selectField('Original transaction-summary scope','summaryScope',[{value:'STATEMENT',label:'Complete statement (first-page summary)'},{value:'PAGE',label:'Separate original summary for each page'}],ctx.closeDraft.summaryScope||'STATEMENT',null)+
+  area('Original bank grouping and summary convention','groupingNote',ctx.closeDraft.groupingNote||'','maxlength="4000"')+'</div>'+
+  '<p class="small muted">Explain the original bank convention when statement identifiers change without a common sequence, or when its summaries cover separate pages.</p>'+
+  '<div class="actions"><button type="button" data-action="preview-assembly" id="preview-assembly-button">Review selected original pages</button>'+
+  '<button type="button" data-action="clear-assembly">Clear page selection</button></div></form><div id="assembly-review">'+
+  assemblyReviewHtml(ctx.assemblyPreview)+'</div></section>';
+}
+async function previewAssembly(){
+ captureCloseDraft();captureAssemblyDraft();
+ const input=assemblyInput(),signature=assemblySignature(),generation=++ctx.assemblyLoad,button=$('#preview-assembly-button');
+ ctx.assemblySignature=signature;
+ if(!input.importIds.length)throw new Error('Select the retained original pages for this account statement.');
+ if(button){button.disabled=true;button.textContent='Reading original statement pages…';}
+ try {
+  const report=await ctx.client.previewAssembly(input);
+  if(generation!==ctx.assemblyLoad||signature!==assemblySignature())return;
+  if(!report?.id||!Array.isArray(report.pages)||!Array.isArray(report.issues))throw new Error('The original page review is incomplete.');
+  ctx.assemblyPreview=report;ctx.assemblySignature=signature;ctx.assemblyReviewPage=0;invalidateClosePreview();renderClose();
+ } finally{if(button?.isConnected){button.disabled=false;button.textContent='Review selected original pages';}}
 }
 function captureCloseDraft(){
  const form=$('#close-form');if(!form)return ctx.closeDraft;
@@ -678,6 +762,9 @@ function closeInput(){
  const account=chosenAccount();if(!account)throw new Error('Select the bank account to close.');
  const draft=captureCloseDraft(),input={accountId:account.id,from:draft.from,until:draft.until,openingBalance:draft.openingBalance,closingBalance:draft.closingBalance,balanceNote:draft.balanceNote};
  if(draft.sourceClosing)input.sourceClosing=JSON.parse(draft.sourceClosing);
+ if(input.sourceClosing?.kind==='CAMT_PAGE_ASSEMBLY'&&
+  (ctx.assemblyPreview?.id!==input.sourceClosing.id||ctx.assemblySignature!==assemblySignature()))
+   throw new Error('Review these retained original pages again before reviewing the complete reconciliation.');
  if(draft.periodCloseId)input.periodCloseId=draft.periodCloseId;
  if(!input.from||!input.until||input.from>input.until)throw new Error('Enter an ordered statement period.');
  minor(input.openingBalance,account.currency.scale);minor(input.closingBalance,account.currency.scale);
@@ -694,10 +781,14 @@ function renderClose(){
  const account=chosenAccount();
  if(!account){$('#view-close').innerHTML='<section class="panel"><h2>Close a bank statement</h2><p class="empty">Select a bank account above to review a complete statement period and its original balances.</p></section>';return;}
  const d=ctx.closeDraft,sources=closingSources(),pinned=sources.find(x=>x.value===d.sourceClosing);
- if(d.sourceClosing&&!pinned)d.sourceClosing='';
+ if(d.sourceClosing&&!pinned){
+  let saved;try{saved=JSON.parse(d.sourceClosing);}catch{}
+  if(saved?.kind==='CAMT_PAGE_ASSEMBLY')sources.push({value:d.sourceClosing,label:'Saved original page selection — review selected pages again'});
+  else d.sourceClosing='';
+ }
  const periods=(ctx.state.periodCloses||[]).map(row=>({value:row.id,label:(row.name||row.period?.label||row.id)+' · '+(row.from||row.period?.from||'')+' to '+(row.until||row.period?.until||'')}));
  const readonly=pinned?' readonly':'';
- $('#view-close').innerHTML='<section class="panel"><div class="section-heading"><div><h2>Close statement · '+esc(account.name)+'</h2><p class="small muted">Compare the bank’s opening and closing balances with every posted transaction and its receipt, refund or accounting classification.</p></div><button type="button" data-tab="transactions">Review transactions</button></div>'+
+ $('#view-close').innerHTML=renderAssembly()+'<section class="panel"><div class="section-heading"><div><h2>Close statement · '+esc(account.name)+'</h2><p class="small muted">Compare the bank’s opening and closing balances with every posted transaction and its receipt, refund or accounting classification.</p></div><button type="button" data-tab="transactions">Review transactions</button></div>'+
  '<form id="close-form" class="stack">'+selectField('Balance source','sourceClosing',sources,d.sourceClosing,'Enter balances from an original statement')+
  '<p class="small muted">'+(pinned?'Dates and balances are bound to the selected original closing record.':'Enter the bank’s complete statement dates and balances. Download coverage or the earliest/latest transaction date alone does not establish a complete statement period.')+'</p>'+
  '<div class="grid four">'+field('First statement date','from',d.from,'date','required'+readonly)+field('Last statement date','until',d.until,'date','required'+readonly)+field('Opening balance · '+account.currency.code,'openingBalance',d.openingBalance,'text','required inputmode="decimal"'+readonly)+field('Closing balance · '+account.currency.code,'closingBalance',d.closingBalance,'text','required inputmode="decimal"'+readonly)+'</div>'+
@@ -782,9 +873,10 @@ async function restoreCloseFile(file){
  const data=JSON.parse(await file.text());
  if(data?.schema!=='stellar-forge.bank-close-working-inputs.v1'||data.workspaceId!==ctx.state.workspaceId||data.accountId!==ctx.accountId||!data.inputs)throw new Error('Choose a working-input file for this original bank account and workspace.');
  for(const key of Object.keys(ctx.closeDraft))ctx.closeDraft[key]=String(data.inputs[key]??'');
- writeSmall('close-draft:'+ctx.accountId,ctx.closeDraft);invalidateClosePreview();renderClose();notice('Original working reconciliation inputs restored.');
+ writeSmall('close-draft:'+ctx.accountId,ctx.closeDraft);invalidateAssembly();renderClose();notice('Original working reconciliation inputs restored. Review the retained pages again when using a page assembly.');
 }
 async function restoreSourceFile(file){
+ captureMapping();await sourceCollections?.flush();sourceCollections?.detach();
  const generation=++ctx.sourceFileLoad;captureMapping();resetSourcePreview();
  ctx.sourceFileLoading=true;ctx.sourceLoadingName=file.name;renderSourceFile();
  try{
@@ -796,6 +888,7 @@ async function restoreSourceFile(file){
   if(generation!==ctx.sourceFileLoad)return;
   const saved={...data.file,bytes:bytes.length,sha256:digest},mapping={...defaultMapping(),...data.mapping,columns:{...defaultMapping().columns,...data.mapping.columns}};
   await dbWrite(storageKey('source-file'),saved);
+  if(generation!==ctx.sourceFileLoad)return;
   ctx.sourceFile=saved;ctx.sourceMapping=mapping;writeSmall('source-mapping',mapping);
   if(generation===ctx.sourceFileLoad)notice('Complete original bank source and its mapping restored. Review the source before retaining an import.');
  }catch(error){if(generation===ctx.sourceFileLoad)throw error;}
@@ -806,18 +899,20 @@ async function selectAccount(id){
  if(ctx.accountId===id)return;
  captureCloseDraft();saveDetailDraft();ctx.accountId=id;writeSmall('account-id',id);
  $('#account-picker').value=id;
- ctx.closeDraft={from:'',until:'',openingBalance:'',closingBalance:'',balanceNote:'',sourceClosing:'',periodCloseId:'',name:'',note:'',...readSmall('close-draft:'+id,{})};
+ ctx.closeDraft={from:'',until:'',openingBalance:'',closingBalance:'',balanceNote:'',sourceClosing:'',periodCloseId:'',name:'',note:'',pageImportIds:'[]',groupingNote:'',summaryScope:'STATEMENT',...readSmall('close-draft:'+id,{})};
+ invalidateAssembly();ctx.assemblyPage=0;
  invalidateClosePreview();ctx.overviewPage=0;ctx.closeListPage=0;ctx.tx.offset=0;
  closeTransactionDialog();closeRecordDialog();
  renderOverview();if(ctx.tab==='transactions')await loadTransactions(0);if(ctx.tab==='close')renderClose();
 }
 async function setTab(tab){
- if(!['overview','import','transactions','close'].includes(tab))return;
+ if(!['overview','collection','import','transactions','close'].includes(tab))return;
+ if(ctx.tab==='import'){captureMapping();await sourceCollections?.flush();}
  if(ctx.tab==='close')captureCloseDraft();
  ctx.tab=tab;writeSmall('tab',tab);
  for(const button of $$('[data-tab]')){if(button.closest('nav')){if(button.dataset.tab===tab)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');}}
  for(const node of $$('.view'))node.hidden=node.id!=='view-'+tab;
- if(tab==='overview')renderOverview();else if(tab==='import')renderImport();else if(tab==='transactions'){renderTransactions();await loadTransactions();}else renderClose();
+ if(tab==='overview')renderOverview();else if(tab==='collection')await sourceCollections?.open();else if(tab==='import')renderImport();else if(tab==='transactions'){renderTransactions();await loadTransactions();}else renderClose();
  lockForms();
 }
 function clickHandler(event){
@@ -851,11 +946,25 @@ function clickHandler(event){
   else if(action==='transactions-page')await loadTransactions(Math.max(0,page)*ctx.tx.limit);
   else if(action==='open-transaction')await openTransaction(id);
   else if(action==='open-source-row')await openSourceRow(id,button.dataset.row);
+  else if(action==='camt-entry-page'){
+   const container=button.closest('[data-camt-entry]'),row=button.closest('#record-body')?ctx.record?.row:ctx.detail?.transaction;
+   if(!container||!row||row.id!==container.dataset.camtRow)throw new Error('Open the current original entry before paging its details.');
+   container.outerHTML=camtEntryHtml(row,{offset:Number(button.dataset.offset)});
+  }
   else if(action==='import-record-page'){ctx.record.page=Math.max(0,page);renderImportRecord();}
   else if(action==='add-part'){ctx.parts=readParts();ctx.parts.push({kind:'INCOME',amount:'',note:'',reference:'',ledgerCode:'',targetId:''});renderParts();saveDetailDraft();}
   else if(action==='remove-part'){ctx.parts=readParts();ctx.parts.splice(Number(button.dataset.index),1);renderParts();saveDetailDraft();}
   else if(action==='add-fee'){ctx.parts=readParts();let amount='';try{const remainder=postingDifference();if(remainder.difference<0n)amount=money(remainder.difference,remainder.scale);}catch{}ctx.parts.push({kind:'FEE',amount,note:'Bank processing fee',reference:'',ledgerCode:'',targetId:''});renderParts();saveDetailDraft();}
-  else if(action==='download-close-draft'){captureCloseDraft();localDownload('bank-reconciliation-working-inputs.json',json({schema:'stellar-forge.bank-close-working-inputs.v1',workspaceId:ctx.state.workspaceId,accountId:ctx.accountId,inputs:ctx.closeDraft}));}
+  else if(action==='preview-assembly')await previewAssembly();
+  else if(action==='assembly-import-page'){captureCloseDraft();captureAssemblyDraft();ctx.assemblyPage=Math.max(0,page);renderClose();}
+  else if(action==='assembly-review-page'){ctx.assemblyReviewPage=Math.max(0,page);$('#assembly-review').innerHTML=assemblyReviewHtml(ctx.assemblyPreview);}
+  else if(action==='use-assembly'){
+   if(!ctx.assemblyPreview?.eligible||ctx.assemblySignature!==assemblySignature())throw new Error('Review the complete current original page selection first.');
+   chooseClosingSource(JSON.stringify(ctx.assemblyPreview.sourceClosing));
+  }
+  else if(action==='download-assembly'){if(ctx.assemblyPreview)localDownload('bank-original-page-review.json',json(ctx.assemblyPreview));}
+  else if(action==='clear-assembly'){captureCloseDraft();ctx.closeDraft.pageImportIds='[]';invalidateAssembly();writeSmall('close-draft:'+ctx.accountId,ctx.closeDraft);renderClose();}
+  else if(action==='download-close-draft'){captureCloseDraft();captureAssemblyDraft();localDownload('bank-reconciliation-working-inputs.json',json({schema:'stellar-forge.bank-close-working-inputs.v1',workspaceId:ctx.state.workspaceId,accountId:ctx.accountId,inputs:ctx.closeDraft}));}
   else if(action==='download-close-preview'){if(ctx.closePreview)localDownload('bank-reconciliation-review.json',json(ctx.closePreview));}
   else if(action==='close-transaction-page'){ctx.closePage=Math.max(0,page);renderClosePreview();}
   else if(action==='close-problem-page'){ctx.closeProblemPage=Math.max(0,page);renderClosePreview();}
@@ -873,7 +982,7 @@ function submitHandler(event){
   else if(form.id==='bank-account-form'){
    const source=selectedSource();if(!source?.account.identitySha256)throw new Error('Review a source with a complete institution/account identity first.');
    const values=formObject(form),scale=Number(values.scale);if(!Number.isInteger(scale)||scale<0||scale>6)throw new Error('Enter an integer currency scale from 0 to 6.');
-   ctx.sourceMapping.accountName=values.name;ctx.sourceMapping.scale=String(scale);writeSmall('source-mapping',ctx.sourceMapping);
+   ctx.sourceMapping.accountName=values.name;ctx.sourceMapping.scale=String(scale);writeSmall('source-mapping',ctx.sourceMapping);sourceCollections?.mappingChanged(ctx.sourceFile,ctx.sourceMapping);
    const result=await mutate('/accounts',{account:{name:values.name,currency:{code:source.account.currency,scale},sourceIdentitySha256:source.account.identitySha256,note:values.note}},'Bank account');
    if(result?.account?.id){await selectAccount(result.account.id);renderSourcePreview();}
   }
@@ -916,7 +1025,7 @@ function changeHandler(event){
   else if(input.name==='record-statement'){ctx.record.statementId=input.value;ctx.record.page=0;renderImportRecord();}
   else if(input.matches('[data-source-field]')){
    captureMapping();resetSourcePreview();
-   if(input.name==='format'){const csv=input.value==='CSV';$('#csv-options').hidden=!csv;$('#csv-options').disabled=!csv;$('#native-options').hidden=false;}
+   if(input.name==='format'){const csv=input.value==='CSV';$('#csv-options').hidden=!csv;$('#csv-options').disabled=!csv;$('#native-options').hidden=false;const camt=input.value==='CAMT053';$('#camt-options').hidden=!camt;$('#camt-options').disabled=!camt;}
    if(input.name==='textEncoding')renderSourceFile();
   }
   else if(input.closest('#posting-parts')){
@@ -951,6 +1060,11 @@ function changeHandler(event){
    updateReceiptTotal();saveDetailDraft();
   }
   else if(input.closest('#resolve-form')){updateResolveFields();saveDetailDraft();}
+  else if(input.closest('#assembly-form')){
+   captureCloseDraft();captureAssemblyDraft();
+   if(input.dataset.pageImport){const selected=new Set(selectedPageImports());if(input.checked)selected.add(input.dataset.pageImport);else selected.delete(input.dataset.pageImport);ctx.closeDraft.pageImportIds=JSON.stringify([...selected]);}
+   invalidateAssembly();writeSmall('close-draft:'+ctx.accountId,ctx.closeDraft);renderClose();
+  }
   else if(input.closest('#close-form')){
    if(input.name==='sourceClosing')chooseClosingSource(input.value);
    else{captureCloseDraft();invalidateClosePreview();}
@@ -963,6 +1077,7 @@ function inputHandler(event){
  if(input.closest('#posting-parts')){ctx.parts=readParts();updatePostingTotal();saveDetailDraft();}
  else if(input.closest('#receipt-form')){updateReceiptTotal();saveDetailDraft();}
  else if(input.closest('#detail-dialog')&&input.name)saveDetailDraft();
+ if(input.closest('#assembly-form')&&input.name==='groupingNote'){captureAssemblyDraft();invalidateAssembly();}
  if(input.closest('#close-form')&&input.name!=='sourceClosing'){captureCloseDraft();invalidateClosePreview();}
 }
 function run(work){return Promise.resolve().then(work).catch(error=>{notice(errorMessage(error),'error');return null;});}
@@ -974,7 +1089,7 @@ async function boot(){
  document.addEventListener('click',clickHandler);document.addEventListener('submit',submitHandler);document.addEventListener('change',changeHandler);document.addEventListener('input',inputHandler);
  $('#detail-dialog').addEventListener('cancel',()=>{saveDetailDraft();ctx.detailLoad++;ctx.invoiceLoad++;ctx.detail=null;ctx.invoiceDetail=null;});
  $('#record-dialog').addEventListener('cancel',()=>{ctx.recordLoad++;ctx.record=null;});
- window.addEventListener('pagehide',()=>{saveDetailDraft();captureCloseDraft();if(ctx.state)writeSmall('actor',$('#actor').value);});
+ window.addEventListener('pagehide',()=>{saveDetailDraft();captureCloseDraft();captureMapping();if(ctx.state)writeSmall('actor',$('#actor').value);});
  try{
   const response=await fetch(new URL('./config.json',location.href),{credentials:'same-origin',cache:'no-store'});if(!response.ok)throw new Error('Workspace configuration could not be opened.');
   ctx.config=await response.json();
@@ -990,6 +1105,32 @@ async function boot(){
   ctx.closeDraft={...ctx.closeDraft,...readSmall('close-draft:'+ctx.accountId,{})};
   try{ctx.sourceFile=await dbRead(storageKey('source-file'));ctx.pending=await dbRead(storageKey('pending'));}
   catch(error){ctx.storageProblem=error;notice('Original retry storage could not open. '+errorMessage(error),'error');}
+  
+  sourceCollections=installSourceCollections({
+   root:$('#view-collection'),workspaceId:ctx.state.workspaceId,getImports:()=>ctx.state?.imports||[],
+   readIndex:()=>dbRead(storageKey('source-collections-index')),
+   readCollection:id=>dbRead(storageKey('source-collection:'+id)),
+   saveCollection:async(collection,index)=>{
+    const db=await openDb();
+    await new Promise((resolve,reject)=>{const tx=db.transaction('records','readwrite'),records=tx.objectStore('records');
+     records.put(collection,storageKey('source-collection:'+collection.id));records.put(index,storageKey('source-collections-index'));
+     tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Collection save was interrupted.'));});
+   },
+   uuid,defaultMapping,download:localDownload,notice,run,
+   openItem:async(item)=>{
+    if(ctx.sourceFileLoading)throw new Error('Wait for the current source file to finish loading.');
+    const generation=++ctx.sourceFileLoad;resetSourcePreview();ctx.sourceFileLoading=true;ctx.sourceLoadingName=item.file.name;renderSourceFile();
+    try{
+     await dbWrite(storageKey('source-file'),item.file);
+     if(generation!==ctx.sourceFileLoad)return;
+     ctx.sourceFile=structuredClone(item.file);ctx.sourceMapping={...defaultMapping(),...structuredClone(item.mapping),columns:{...defaultMapping().columns,...structuredClone(item.mapping.columns)}};
+     writeSmall('source-mapping',ctx.sourceMapping);ctx.sourceFileLoading=false;ctx.sourceLoadingName='';
+     await setTab('import');notice('Opened '+item.file.name+'. Its complete original and working interpretation remain in the collection.');
+    }finally{if(generation===ctx.sourceFileLoad){ctx.sourceFileLoading=false;ctx.sourceLoadingName='';renderImport();}}
+   }
+  });
+  try{await sourceCollections.init();}catch(error){notice('Original statement collections need attention. '+errorMessage(error),'error');}
+
   renderPending();renderOverview();renderImport();renderTransactions();renderClose();
   const query=new URLSearchParams(location.search),requested=query.get('view'),transactionId=query.get('transaction');
   await setTab(transactionId?'transactions':requested||readSmall('tab','overview'));

@@ -17,6 +17,70 @@
           "git_blob": "9e0d2ecafa3afe5399d29e593e5640ab8bbb4517"
         }
       ]
+    },
+    {
+      "id": "canadabuys-installed-customer",
+      "label": "Installed CanadaBuys customer operations, retained downloads and offline receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/CANADABUYS_CUSTOMER.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b3c52362c64027ba5744c5a459432eb7aeede9b7",
+          "bytes": 23481,
+          "sha256": "f3ad0b46d873f0c30a499eb2d6e6ce16de45a89c10dd10629d80a7a8b0621110",
+          "git_blob": "48ef4482116fcced24be6edfa9e6090d9cff70c5"
+        }
+      ]
+    },
+    {
+      "id": "canadabuys-original-document-intake",
+      "label": "Complete original solicitation, workbook and amendment intake",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/EVIDENCE_INTAKE.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "e25ee1acf25fdc88c724a1ad8ab9d1f9f5b5d644",
+          "bytes": 6434,
+          "sha256": "e3140df11981762f541aa96a09fec6eefc523a51f5a7e1a42d2b89254bc6be4f",
+          "git_blob": "2ce051a7e58a492de27b6a2a9afeee07ea04767d"
+        }
+      ]
+    },
+    {
+      "id": "canadabuys-native-workshare-installation",
+      "label": "Original CanadaBuys Workshare editions and explicit Grant Installation mapping",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/CANADABUYS_NATIVE_WORKSHARES.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "243533c2bbdc2bffc108d8087e04811f2e3bbe7d",
+          "bytes": 20770,
+          "sha256": "30f9e904c35f76901a2bcda5513156016cdccb5c232bfca916d675a0a53428c1",
+          "git_blob": "86ff1716de12a0cad2352f3fcb8ada25ac5651e5"
+        }
+      ]
+    },
+    {
+      "id": "canadabuys-installation-source-desk",
+      "label": "Complete native source package, browser review and existing Installation preparation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_SOURCE_DESK.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "243533c2bbdc2bffc108d8087e04811f2e3bbe7d",
+          "bytes": 30115,
+          "sha256": "d174a358c9512aea797aaf0bcbf05246a0cec70e9cfa928e9442c4289eb81918",
+          "git_blob": "785f938a95db75899d611d6a7128da5ffe0d5945"
+        }
+      ]
     }
   ]
 }

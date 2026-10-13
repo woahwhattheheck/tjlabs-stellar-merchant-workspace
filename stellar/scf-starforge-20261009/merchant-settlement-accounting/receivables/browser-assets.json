@@ -127,6 +127,34 @@
         "../remittances-client.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/receivables/customer-account-client.mjs",
+      [
+        "../customer-account-client.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/receivables/customer-account-response.mjs",
+      [
+        "customer-account-response.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/receivables/customer-account-customer.mjs",
+      [
+        "customer-account-customer.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/receivables/customer-account.css",
+      [
+        "customer-account.css",
+        "text/css; charset=utf-8"
+      ]
     ]
   ]
 }

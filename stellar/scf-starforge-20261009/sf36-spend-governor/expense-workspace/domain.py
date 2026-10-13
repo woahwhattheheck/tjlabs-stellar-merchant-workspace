@@ -329,6 +329,9 @@ def period_view(period, items, sources, centers, dispositions, closed_transfers=
                 "result_preview_bytes":(detail.get("result_preview") or {}).get("bodyBytes"),
                 "missing":item["missing"], "source_kind":row.get("source_kind", "sf36_ledger"),
                 "data_context":detail.get("data_context", "operational"),
+                **({key:detail.get(key) for key in ("rozo_origin_id", "rozo_profile_id", "rozo_report_id", "rozo_report_sha256",
+                    "rozo_source_sha256", "rozo_payment_id", "rozo_movement_id", "rozo_asset", "rozo_purchase",
+                    "evidence_class", "independent_chain_proof")} if row.get("source_kind") == "rozo_report" else {}),
                 **({key:detail.get(key) for key in ("node_intent_id", "node_command_id", "node_context_sha256",
                     "node_source_sha256", "node_source_bytes", "source_observed_at", "attempt_created_at",
                     "accounting_completed_at", "record_authority", "chain_observation", "http_status", "buyer_status")}
@@ -363,6 +366,20 @@ def period_view(period, items, sources, centers, dispositions, closed_transfers=
             continue
         if row["state"] in ("not_dispatched", "unpaid"):
             continue
+        if row["state"] == "rozo_unresolved":
+            issue("ROZO_PURCHASE_UNRESOLVED", item,
+                  "The original ROZO source has no exact provider-confirmed purchase amount and source date. Retain the source outcome and carry or exclude it until its original successor is reviewed; no payment or reservation is inferred.")
+            continue
+        if row.get("source_kind") == "rozo_report" and (
+                row.get("native_detail", {}).get("rozo_movement", {}).get("unresolved") or
+                row.get("native_detail", {}).get("rozo_movement", {}).get("issues")):
+            original = row["native_detail"]["rozo_movement"]
+            review = issue("ROZO_PROVIDER_SOURCE_REVIEW", item,
+                "The retained ROZO purchase carries original reconciliation issues. Review the full provider evidence before recognising its exact units; provider confirmation is not independent chain proof.",
+                group={"issues": original.get("issues", []), "unresolved": original.get("unresolved", [])},
+                kinds=["accept_provider_evidence", "carry_forward", "exclude_from_period"])
+            if not review["resolved"] or review["disposition"]["kind"] != "accept_provider_evidence":
+                continue
         if row["state"] == "accounting_unresolved":
             issue("NODE_ACCOUNTING_UNRESOLVED", item,
                   "The original Node accounting command has no finalized SF36 result. Retain its native outcome and carry or exclude it while the original operation owner recovers it; no ledger balance is inferred.")
@@ -504,6 +521,6 @@ def period_view(period, items, sources, centers, dispositions, closed_transfers=
             "by_cost_center": group_amounts(candidates, ("center_code", "center_name")),
             "by_project": group_amounts(candidates, ("project",)), "outstanding_reservations": exposures,
             "outstanding_totals": group_amounts(exposures), "native_payment_outcomes":native_outcomes,
-            "basis": "Original SF36 ledger projections, retained MCP quote/payment observations, original Node accounting exports and original customer refund packets; each native operation retains its original provenance",
+            "basis": "Original SF36 ledger projections, retained MCP quote/payment observations, original Node accounting exports, explicitly selected ROZO provider-report purchases and original customer refund packets; each native operation retains its original provenance",
             "date_basis": "Operator-assigned recognition dates; original reservation or quote-creation days retain their own source meaning",
             "unit_basis": "Exact native base-unit strings, grouped by network and asset; no fiat conversion"}

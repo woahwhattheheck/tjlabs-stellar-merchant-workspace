@@ -10,8 +10,16 @@ export const GRANT_PORTFOLIO_MAX_ACTION_BYTES = 1024 * 1024;
 const HASH = /^[0-9a-f]{64}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const OPERATION = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/;
-const TABLES = new Set(['entities','financial','links','decisions','candidates','changes','sources']);
-const ACTIONS = new Set(['source.receive','portfolio.save','review.save','portfolio.export','portfolio.receive']);
+const TABLES = new Set(['entities','financial','links','decisions','candidates','changes','sources','planning_scenarios','planning_lines',
+  ...['nodes','partners','grants','milestones','indicators','observations','risks','issues','documents',
+      'reports','closures','bindings','positions','results'].map(name => 'programme_' + name),
+  ...['rounds','applications','checks','assignments','assessments','decisions','agreements','claims','monitoring',
+      'positions','calculations'].map(name => 'awards_' + name),
+  ...['committees','meetings','decisions','evaluations','findings','responses','followups','follow_through'].map(name=>'governance_'+name)]);
+const DATAVERSE_ACTIONS = new Set(["dataverse.spec.save","dataverse.profile.save","dataverse.preflight","dataverse.plan","dataverse.apply","dataverse.export","dataverse.import","dataverse.configure","dataverse.delivery.prepare","dataverse.delivery.receive","dataverse.staff.capture","dataverse.staff.programme"]);
+const SUPPORT_ACTIONS = ["support.contract.save","support.contract.acceptance","support.issue.open","support.issue.triage","support.issue.acknowledge","support.issue.plan","support.issue.workaround","support.issue.correction","support.issue.validate","support.issue.close","support.issue.reopen","support.issue.note","support.issue.clock-review","support.delivery.prepare","support.delivery.receive"];
+const ACTIONS = new Set(['source.receive','portfolio.save','review.save','portfolio.export','portfolio.receive', ...DATAVERSE_ACTIONS, ...SUPPORT_ACTIONS]);
+const NATIVE_RECORD = /^alm-[0-9a-f]{64}$/;
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const issue = (code, message, details = {}) => Object.assign(new Error(message), { code: 'GRANT_PORTFOLIO_' + code, ...details });
 const need = (condition, code, message) => { if (!condition) throw issue(code, message); };
@@ -44,18 +52,21 @@ function retainedRequest(value, id) {
   return value;
 }
 function descriptor(response, expected = {}) {
+  const media = (response.headers.get('content-type') ?? '').split(';', 1)[0].trim().toLowerCase();
+  const expectedMedia = expected.contentType ?? 'application/zip';
+  need(['application/zip','application/json'].includes(expectedMedia), 'FILE_TYPE', 'Select the original declared file representation.');
   const count = response.headers.get('content-length'), sha256 = response.headers.get('x-content-sha256');
   need(/^(0|[1-9]\d*)$/.test(count ?? '') && Number.isSafeInteger(Number(count)) &&
     Number(count) <= GRANT_PORTFOLIO_MAX_PACKET_BYTES && HASH.test(sha256 ?? '') &&
     response.headers.get('etag') === '"' + sha256 + '"' &&
-    /^application\/zip(?:;|$)/i.test(response.headers.get('content-type') ?? ''),
+    media === expectedMedia,
   'FILE_RESPONSE', 'The original complete file descriptor is missing or changed.');
   need(expected.sha256 === undefined || expected.sha256 === sha256, 'FILE_CHANGED', 'The received file is a different original object.');
   need(expected.bytes === undefined || expected.bytes === Number(count), 'FILE_CHANGED', 'The original file length changed.');
   const disposition = response.headers.get('content-disposition') ?? '';
   const filename = /^attachment;\s*filename="([A-Za-z0-9][A-Za-z0-9._-]{0,199})"$/.exec(disposition)?.[1] ??
-    'grant-portfolio-' + sha256 + '.zip';
-  return {sha256, bytes:Number(count), filename};
+    'grant-portfolio-' + sha256 + (media === 'application/json' ? '.json' : '.zip');
+  return {sha256, bytes:Number(count), filename, contentType:media};
 }
 async function boundedJson(response, maximum) {
   const length = response.headers.get('content-length');
@@ -178,6 +189,179 @@ export class GrantPortfolioClient {
     return this.#json('/api/detail?' + query({...selection({portfolioId:input.portfolioId, revision:input.revision}),
       sourceId:checked(input.sourceId, HASH, 'source SHA-256'), entityKey:checked(input.entityKey, HASH, 'entity key')}), undefined, options);
   }
+  governanceSchema(options) { return this.#json('/api/governance/schema', undefined, options); }
+  governanceRecord(input, options) { return this.#governance('record', input, options); }
+  governanceHistory(input, options) { return this.#governance('history', input, options); }
+  governanceReview(input, options) { return this.#governance('review', input, options); }
+  governancePosition(input, options) { return this.#governance('position', input, options); }
+  async #governance(route, input, options) {
+    need(plain(input), 'INPUT', 'Select the complete original governance read.');
+    const detail=route!=='position';
+    exact(input, detail?['portfolioId','revision','collection','id']:['portfolioId','revision','nodeId','grantId']);
+    checked(input.portfolioId, UUID, 'portfolio ID'); revision(input.revision);
+    checked(input[detail?'id':'nodeId'], UUID, 'governance record ID');
+    if(detail) need(['committees','meetings','decisions','evaluations','findings','responses','followups'].includes(input.collection),
+      'REGISTER','Select a governance register.');
+    else if(input.grantId!==undefined&&input.grantId!==null) checked(input.grantId,UUID,'grant ID');
+    const result=await this.#json('/api/governance/'+route+'?'+query(Object.fromEntries(Object.entries(input).filter(([,v])=>v!==null))),undefined,options);
+    need(plain(result)&&result.schema==='stellar-forge.grant-governance.v1'&&result.portfolioId===input.portfolioId&&
+      result.revision===input.revision&&HASH.test(result.snapshot)&&Number.isSafeInteger(result.governanceRevision)&&result.governanceRevision>0,
+      'RESPONSE','The complete governance selection differs.');
+    return result;
+  }
+  awardsSchema(options) { return this.#json('/api/awards/schema', undefined, options); }
+  awardsRecord(input, options) { return this.#awards('record', input, options); }
+  awardsHistory(input, options) { return this.#awards('history', input, options); }
+  awardsRound(input, options) { return this.#awards('round', input, options); }
+  awardsPosition(input, options) { return this.#awards('position', input, options); }
+  awardsFinancial(input, options) { return this.#awards('financial', input, options); }
+  async #awards(route, input, options) {
+    const detail = route === 'record' || route === 'history', financial = route === 'financial';
+    const extra = detail ? ['collection','id'] : financial ? ['offset','limit','search'] : [route === 'round' ? 'roundId' : 'applicationId'];
+    exact(input, ['portfolioId','revision', ...extra], ['portfolioId','revision', ...(financial ? [] : extra)]);
+    selection({portfolioId:input.portfolioId, revision:input.revision});
+    if (detail) {
+      checked(input.id, UUID, 'award record ID');
+      need(['rounds','applications','checks','assignments','assessments','decisions','agreements','claims','monitoring'].includes(input.collection),
+        'REGISTER', 'Select a maintained award register.');
+    } else if (!financial) checked(input[extra[0]], UUID, 'award selection ID');
+    if (financial) {
+      need(input.offset === undefined || Number.isSafeInteger(input.offset) && input.offset >= 0, 'PAGE', 'Use a nonnegative row offset.');
+      need(input.limit === undefined || Number.isSafeInteger(input.limit) && input.limit >= 1 && input.limit <= 250, 'PAGE', 'Select one to 250 original rows.');
+      need(input.search === undefined || typeof input.search === 'string' && input.search.length <= 1000, 'SEARCH', 'Use the complete row search.');
+    }
+    const result = await this.#json('/api/awards/' + route + '?' + query(input), undefined, options);
+    need(plain(result) && result.schema === 'stellar-forge.grant-awards.v1' && result.portfolioId === input.portfolioId &&
+      result.revision === input.revision && HASH.test(result.snapshot ?? '') &&
+      Number.isSafeInteger(result.awardsRevision) && result.awardsRevision >= 0,
+      'AWARDS_SELECTION', 'The award read differs from the original selected portfolio revision.');
+    if (financial) need(Array.isArray(result.rows) && result.rows.length <= (input.limit ?? 50) &&
+      result.offset === (input.offset ?? 0) && Number.isSafeInteger(result.total) && result.total >= 0 &&
+      (result.nextOffset === null || result.nextOffset === result.offset + result.rows.length && result.nextOffset > result.offset) &&
+      result.rows.every(item => plain(item.record) && plain(item.reference) &&
+        HASH.test(item.reference.sha256 ?? '') && item.reference.sourceId === item.record.sourceId &&
+        item.reference.rowKey === item.record.rowKey),
+      'AWARDS_FINANCIAL', 'The complete original financial row page changed.');
+    return result;
+  }
+  programmeDonorReport(input,options) {
+    exact(input,['portfolioId','revision','id'],['portfolioId','revision','id']);
+    selection({portfolioId:input.portfolioId,revision:input.revision});
+    checked(input.id,UUID,'donor report ID');
+    return this.#json('/api/programme/donor-report?'+query(input),undefined,options);
+  }
+  planningSchema(options) { return this.#json('/api/planning/schema', undefined, options); }
+  planningRecord(input, options) { return this.#planning('record', input, options); }
+  planningHistory(input, options) { return this.#planning('history', input, options); }
+  planningSummary(input, options) { return this.#planning('summary', input, options); }
+  #planningSelection(route, input) {
+    const detail = route === 'record' || route === 'history';
+    exact(input, ['portfolioId','revision', ...(detail ? ['collection','id'] :
+      ['scenarioId','compareScenarioId','granularity', ...(route === 'report' ? ['format'] : [])])],
+      ['portfolioId','revision', ...(detail ? ['collection','id'] : ['scenarioId']),
+        ...(route === 'report' ? ['format'] : [])]);
+    selection({portfolioId:input.portfolioId, revision:input.revision});
+    if (detail) {
+      checked(input.id, UUID, 'planning record ID');
+      need(['scenarios','lines'].includes(input.collection), 'PLANNING_REGISTER', 'Select scenarios or budget lines.');
+    } else {
+      checked(input.scenarioId, UUID, 'planning scenario ID');
+      if (input.compareScenarioId !== undefined) checked(input.compareScenarioId, UUID, 'comparison scenario ID');
+      if (input.granularity !== undefined) need(['month','year'].includes(input.granularity),
+        'PLANNING_PERIOD', 'Select month or year periods.');
+    }
+    if (route === 'report') need(['json','csv','html'].includes(input.format),
+      'PLANNING_FORMAT', 'Select the complete JSON, CSV or HTML report.');
+    return input;
+  }
+  async #planning(route, input, options) {
+    this.#planningSelection(route, input);
+    const result = await this.#json('/api/planning/' + route + '?' + query(input), undefined, options);
+    need(plain(result) && result.schema === 'stellar-forge.grant-budget-planning.v1' &&
+      result.portfolioId === input.portfolioId && result.revision === input.revision &&
+      HASH.test(result.snapshot ?? '') && Number.isSafeInteger(result.planningRevision) &&
+      result.planningRevision >= 0, 'PLANNING_SELECTION', 'The original planning revision differs.');
+    if (route === 'summary') need(result.scenario?.id === input.scenarioId && plain(result.summary),
+      'PLANNING_SCENARIO', 'The summary belongs to another original scenario.');
+    else if (route === 'record') need(result.collection === input.collection && result.record?.id === input.id,
+      'PLANNING_RECORD', 'The original planning record differs.');
+    else need(result.collection === input.collection && result.id === input.id && Array.isArray(result.history),
+      'PLANNING_HISTORY', 'The original planning history differs.');
+    return result;
+  }
+  openPlanningReport(input, options = {}) {
+    this.#planningSelection('report', input);
+    return this.#track(async () => {
+      const response = await this.#http('/api/planning/report?' + query(input), options);
+      if (!response.ok) return this.#response(response);
+      try {
+        const bytes = response.headers.get('content-length'), sha256 = response.headers.get('x-content-sha256'),
+          contentType = (response.headers.get('content-type') ?? '').split(';')[0].trim(),
+          wanted = {json:'application/json',csv:'text/csv',html:'text/html'}[input.format],
+          filename = /^attachment;\s*filename="([A-Za-z0-9][A-Za-z0-9._-]{0,199})"$/.exec(response.headers.get('content-disposition') ?? '')?.[1];
+        need(/^[1-9]\d*$/.test(bytes ?? '') && Number.isSafeInteger(Number(bytes)) &&
+          Number(bytes) <= GRANT_PORTFOLIO_MAX_PACKET_BYTES && HASH.test(sha256 ?? '') &&
+          response.headers.get('etag') === '"' + sha256 + '"' && contentType === wanted && filename,
+          'PLANNING_REPORT', 'The complete native report descriptor is missing or changed.');
+        return {descriptor:{bytes:Number(bytes),sha256,contentType,filename},response};
+      } catch (error) { await response.body?.cancel().catch(() => {}); throw error; }
+    });
+  }
+  async downloadPlanningReport(input, filename, options) {
+    return saveGrantPortfolioFile(await this.openPlanningReport(input, options), filename);
+  }
+  programmeSchema(options) { return this.#json('/api/programme/schema', undefined, options); }
+  programmeRecord(input, options) { return this.#programme('record', input, options); }
+  programmeHistory(input, options) { return this.#programme('history', input, options); }
+  programmePosition(input, options) { return this.#programme('position', input, options); }
+  programmeQa(input, options) { return this.#programme('qa', input, options); }
+  #programme(route, input, options) {
+    const detail = route === 'record' || route === 'history';
+    const extra = detail ? ['collection','id'] : ['nodeId','grantId'];
+    exact(input, ['portfolioId','revision', ...extra],
+      ['portfolioId','revision', ...(detail ? ['collection','id'] : ['nodeId'])]);
+    selection({portfolioId:input.portfolioId, revision:input.revision});
+    checked(input[detail ? 'id' : 'nodeId'], UUID, 'programme record ID');
+    if (input.grantId !== undefined) checked(input.grantId, UUID, 'grant ID');
+    if (detail) need(['nodes','partners','grants','milestones','indicators','observations','risks','issues',
+      'documents','reports','closures'].includes(input.collection), 'REGISTER', 'Select a programme register.');
+    return this.#json('/api/programme/' + route + '?' + query(input), undefined, options);
+  }
+  uploadProgrammeDocument({body, bytes, sha256}, options = {}) {
+    need(Number.isSafeInteger(bytes) && bytes > 0 && bytes <= GRANT_PORTFOLIO_MAX_PACKET_BYTES,
+      'DOCUMENT_SIZE', 'Select a complete original document up to 4 GiB.');
+    if (sha256 !== undefined) checked(sha256, HASH, 'document SHA-256');
+    return this.#track(async () => {
+      const result = await this.#response(await this.#http('/api/programme/upload', {...options, body,
+        headers:{'content-type':'application/octet-stream', 'content-length':String(bytes),
+          ...(sha256 === undefined ? {} : {'x-content-sha256':sha256})}}));
+      need(HASH.test(result.sha256 ?? '') && result.bytes === bytes &&
+        (sha256 === undefined || result.sha256 === sha256),
+      'DOCUMENT_CHANGED', 'The complete document upload differs from its selected bytes.');
+      return result;
+    });
+  }
+  openProgrammeDocument(input, options = {}) {
+    exact(input, ['portfolioId','revision','id'], ['portfolioId','revision','id']);
+    selection({portfolioId:input.portfolioId, revision:input.revision});
+    checked(input.id, UUID, 'document ID');
+    return this.#track(async () => {
+      const record = await this.programmeRecord({...input, collection:'documents'}, options);
+      need(plain(record.record?.object), 'DOCUMENT', 'The selected document has no original uploaded file.');
+      const expected = record.record.object;
+      const response = await this.#http('/api/programme/document?' + query(input), options);
+      if (!response.ok) return this.#response(response);
+      try {
+        need(response.headers.get('content-length') === String(expected.bytes) &&
+          response.headers.get('x-content-sha256') === expected.sha256 &&
+          response.headers.get('etag') === '"' + expected.sha256 + '"' &&
+          response.headers.get('content-type') === expected.contentType &&
+          response.headers.get('content-disposition') === 'attachment; filename="' + expected.filename + '"',
+        'DOCUMENT_CHANGED', 'The original document descriptor changed.');
+        return {descriptor:expected, response};
+      } catch (error) { await response.body?.cancel().catch(() => {}); throw error; }
+    });
+  }
   async action(input, options) {
     exact(input, ['operationId','action','payload','expectedRevision'], ['operationId','action','payload']);
     checked(input.operationId, OPERATION, 'operation ID'); need(ACTIONS.has(input.action), 'ACTION', 'Select an original portfolio action.');
@@ -234,27 +418,28 @@ export class GrantPortfolioClient {
     const {expectedRevision, ...requestOptions} = options;
     return this.action({operationId, action:'portfolio.receive', payload, ...(expectedRevision === undefined ? {} : {expectedRevision})}, requestOptions);
   }
-  upload({body, bytes, sha256}, options = {}) {
+  upload({body, bytes, sha256, contentType = 'application/zip'}, options = {}) {
     need(Number.isSafeInteger(bytes) && bytes >= 1 && bytes <= GRANT_PORTFOLIO_MAX_PACKET_BYTES,
-      'PACKET_SIZE', 'Select a complete original ZIP of 1 byte to 4 GiB.');
+      'PACKET_SIZE', 'Select a complete original file of 1 byte to 4 GiB.');
+    need(['application/zip','application/octet-stream'].includes(contentType), 'UPLOAD_TYPE', 'Use the original ZIP upload or the declared native source-file upload.');
     if (sha256 !== undefined) checked(sha256, HASH, 'packet SHA-256');
     return this.#track(async () => {
-      const uploaded = await this.#response(await this.#http('/api/upload', {...options, body,
-        headers:{'content-type':'application/zip', 'content-length':String(bytes)}}));
+      const uploaded = await this.#response(await this.#http(contentType === 'application/zip' ? '/api/upload' : '/api/dataverse/upload', {...options, body,
+        headers:{'content-type':contentType, 'content-length':String(bytes)}}));
       need(plain(uploaded) && HASH.test(uploaded.sha256 ?? '') && uploaded.bytes === bytes &&
         (sha256 === undefined || uploaded.sha256 === sha256), 'PACKET_CHANGED', 'The uploaded original packet differs from its selected bytes.');
       return uploaded;
     });
   }
   /** Streams a trusted local file from its original open inode. MCP callers use configured handles. */
-  async uploadFile(filename, {sha256, ...options} = {}) {
+  async uploadFile(filename, {sha256, contentType = 'application/zip', ...options} = {}) {
     const {handle, info} = await regularFile(filename, GRANT_PORTFOLIO_MAX_PACKET_BYTES);
     let stream;
     try {
       const expected = sha256 ?? await hashHandle(handle);
       checked(expected, HASH, 'packet SHA-256');
       stream = handle.createReadStream({autoClose:false, start:0});
-      const result = await this.upload({body:stream, bytes:info.size, sha256:expected}, options);
+      const result = await this.upload({body:stream, bytes:info.size, sha256:expected, contentType}, options);
       const after = await handle.stat(), current = await lstat(resolve(filename));
       need(after.dev === info.dev && after.ino === info.ino && after.size === info.size &&
         after.mtimeMs === info.mtimeMs && after.ctimeMs === info.ctimeMs &&
@@ -265,11 +450,11 @@ export class GrantPortfolioClient {
   /** Consume or cancel the returned complete original stream; dispose aborts borrowed HTTP work. */
   openObject(sha256, options = {}) { return this.#openFile('/api/object?' + query({sha256:checked(sha256, HASH, 'object SHA-256')}), {...options, sha256}); }
   openExport(id, options = {}) { return this.#openFile('/api/export?' + query({id:checked(id, HASH, 'export SHA-256')}), {...options, sha256:id}); }
-  #openFile(path, {sha256, bytes, ...options}) {
+  #openFile(path, {sha256, bytes, contentType = 'application/zip', ...options}) {
     return this.#track(async () => {
       const response = await this.#http(path, options);
       if (!response.ok) await this.#response(response);
-      try { return {descriptor:descriptor(response, {sha256, bytes}), response}; }
+      try { return {descriptor:descriptor(response, {sha256, bytes, contentType}), response}; }
       catch (error) { await response.body?.cancel().catch(() => {}); throw error; }
     });
   }
@@ -278,6 +463,74 @@ export class GrantPortfolioClient {
   }
   async downloadExport(id, filename, options = {}) {
     return this.#track(async () => saveGrantPortfolioFile(await this.openExport(id, options), filename));
+  }
+  dataverseSchema(options) { return this.#json('/api/dataverse/schema', undefined, options); }
+  async dataverseRecords(input = {}, options) {
+    exact(input, ['portfolioId','revision','kind','offset','limit']);
+    const offset = input.offset ?? 0, limit = input.limit ?? 50;
+    need(Number.isSafeInteger(offset) && offset >= 0 && Number.isSafeInteger(limit) && limit >= 1 && limit <= 250,
+      'PAGE', 'Select a nonnegative offset and 1 to 250 native records.');
+    if (input.portfolioId !== undefined) checked(input.portfolioId, UUID, 'portfolio ID');
+    if (input.revision !== undefined) revision(input.revision);
+    if (input.kind !== undefined) need(typeof input.kind === 'string' && /^[a-z][a-z-]{0,63}$/.test(input.kind),
+      'KIND', 'Select an original native record kind.');
+    const page = await this.#json('/api/dataverse/records?' + query({...input, offset, limit}), undefined, options);
+    need(plain(page) && Array.isArray(page.rows) && page.rows.length <= limit && page.offset === offset &&
+      Number.isSafeInteger(page.total) && page.total >= 0 &&
+      (page.nextOffset === null || page.nextOffset === offset + page.rows.length && page.nextOffset > offset),
+      'NATIVE_PAGE', 'The native record page changed or is incomplete.');
+    return page;
+  }
+  async dataverseRecord(id, options) {
+    checked(id, NATIVE_RECORD, 'native record ID');
+    const value = await this.#json('/api/dataverse/record?' + query({id}), undefined, options);
+    need(plain(value) && value.id === id && value.schema === 'tjlabs.pmrs.dataverse-record-view/v1' &&
+      plain(value.file) && HASH.test(value.file.sha256 ?? '') &&
+      Number.isSafeInteger(value.file.bytes) && value.file.bytes > 0,
+      'NATIVE_RECORD', 'The returned original native record descriptor differs.');
+    return value;
+  }
+  async dataverseEvents(operationId, {offset = 0, limit = 50, ...options} = {}) {
+    checked(operationId, OPERATION, 'operation ID');
+    need(Number.isSafeInteger(offset) && offset >= 0 && Number.isSafeInteger(limit) && limit >= 1 && limit <= 250,
+      'PAGE', 'Select a nonnegative offset and 1 to 250 native events.');
+    const page = await this.#json('/api/dataverse/events?' + query({operationId, offset, limit}), undefined, options);
+    need(plain(page) && Array.isArray(page.rows) && page.rows.length <= limit && page.offset === offset &&
+      Number.isSafeInteger(page.total) && page.total >= 0 &&
+      (page.nextOffset === null || page.nextOffset === offset + page.rows.length && page.nextOffset > offset),
+      'NATIVE_EVENTS', 'The complete native event page is missing or changed.');
+    return page;
+  }
+  /** Uses the original admit/execute path; repeat or resume only this exact operation ID. */
+  dataverseAction(operationId, action, payload, {expectedRevision, ...options} = {}) {
+    need(DATAVERSE_ACTIONS.has(action), 'ACTION', 'Select a maintained native solution, staff capture or reviewed staff programme action.');
+    return this.action({operationId, action, payload, ...(expectedRevision === undefined ? {} : {expectedRevision})}, options);
+  }
+  /** The complete raw JSON file preserves decimal tokens; no JSON.parse is implied. */
+  openDataverseRecord(id, options = {}) {
+    return this.#openFile('/api/dataverse/record-file?' + query({id:checked(id, NATIVE_RECORD, 'native record ID')}),
+      {...options, contentType:'application/json'});
+  }
+  openDataverseEvidence(input, options = {}) {
+    exact(input, ['operationId','kind','key'], ['operationId','kind','key']);
+    checked(input.operationId, OPERATION, 'operation ID');
+    need(['native-request','step','event'].includes(input.kind), 'EVIDENCE', 'Select original native-request, step or event evidence.');
+    if (input.kind === 'event') need(/^[1-9]\d{0,11}$/.test(String(input.key)), 'EVIDENCE', 'Use the original positive event sequence.');
+    else checked(input.key, OPERATION, 'native evidence key');
+    return this.#openFile('/api/dataverse/evidence?' + query(input), {...options, contentType:'application/json'});
+  }
+  openDataverseDelivery(id, options = {}) {
+    return this.#openFile('/api/dataverse/delivery?' + query({id:checked(id, NATIVE_RECORD, 'native handover record ID')}),
+      {...options, contentType:'application/zip'});
+  }
+  async downloadDataverseRecord(id, filename, options = {}) {
+    return this.#track(async () => saveGrantPortfolioFile(await this.openDataverseRecord(id, options), filename));
+  }
+  async downloadDataverseEvidence(input, filename, options = {}) {
+    return this.#track(async () => saveGrantPortfolioFile(await this.openDataverseEvidence(input, options), filename));
+  }
+  async downloadDataverseDelivery(id, filename, options = {}) {
+    return this.#track(async () => saveGrantPortfolioFile(await this.openDataverseDelivery(id, options), filename));
   }
   async dispose() {
     if (!this.#closed) { this.#closed = true; this.#controller.abort(issue('CLOSED', 'The borrowed portfolio client is closing.')); }

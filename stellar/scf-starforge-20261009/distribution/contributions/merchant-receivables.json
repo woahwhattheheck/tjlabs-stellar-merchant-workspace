@@ -1,12 +1,14 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-receivables",
-  "description": "Customer invoicing and service quotations; Stellar collection, refunds and credit transfers; installment schedules and account delivery; collections and reminders; cash scenarios and edition comparisons; credit policies and account decisions; original bank statements, source coverage and balanced reconciliation; remittance CSV receiving and invoice allocations.",
+  "description": "Customer invoicing and service quotations; Stellar collection, refunds and credit transfers; installment schedules and account delivery; collections and reminders; cash scenarios and edition comparisons; credit policies and account decisions; original bank statements, source coverage and balanced reconciliation; remittance CSV receiving and invoice allocations; dated customer account packages, offline invoice responses and reviewed original collection activity.",
   "commands": {
-    "receivables": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cli.mjs"
+    "receivables": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cli.mjs",
+    "customer-account": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/customer-account-cli.mjs"
   },
   "commandDescriptions": {
-    "receivables": "Operate invoices, original bank receipts, customer credit decisions, collection, refunds and cash plans in the original accounting workspace"
+    "receivables": "Operate invoices, original bank receipts, customer credit decisions, collection, refunds and cash plans in the original accounting workspace",
+    "customer-account": "Publish original customer accounts, receive offline responses and review entries through original collection cases"
   },
   "exports": {
     "./merchant/receivables": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/store.mjs",
@@ -46,6 +48,24 @@
     "./merchant/receivables/remittances-client": {
       "types": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/remittances-client.d.ts",
       "default": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/remittances-client.mjs"
+    },
+    "./merchant/accounting-receivables/financial-control": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/accounting-financial-control.d.mts",
+      "default": "./source/stellar-forge/mcp-merchant-operator/accounting-financial-control.mjs"
+    },
+    "./merchant/receivables/customer-account-response": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/customer-account-response.mjs",
+    "./merchant/receivables/customer-account-response-workspace": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/customer-account-response-workspace.mjs",
+    "./merchant/receivables/customer-account-client": {
+      "types": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/customer-account-client.d.ts",
+      "default": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/customer-account-client.mjs"
+    },
+    "./merchant/accounting-receivables/customer-responses": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/accounting-customer-responses.d.mts",
+      "default": "./source/stellar-forge/mcp-merchant-operator/accounting-customer-responses.mjs"
+    },
+    "./merchant/accounting-receivables/customer-response-previews": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/accounting-customer-response-client.d.mts",
+      "default": "./source/stellar-forge/mcp-merchant-operator/accounting-customer-response-client.mjs"
     }
   },
   "supportFiles": [
@@ -73,7 +93,19 @@
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/client.d.ts",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/source.d.ts",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/remittances-client.d.ts",
-    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/REMITTANCES.md"
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/REMITTANCES.md",
+    "stellar-forge/mcp-merchant-operator/accounting-financial-control.d.mts",
+    "stellar-forge/mcp-merchant-operator/ACCOUNTING_FINANCIAL_CONTROL.md",
+    "stellar-forge/developer-site/dist/grant-data/financial-walkthrough.md",
+    "products/merchant-workspace/REVIEWER_WALKTHROUGH.md",
+    "products/merchant-workspace/FINANCIAL_OPERATIONS.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/customer-account-client.d.ts",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/CUSTOMER_ACCOUNT_RESPONSES.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/public/customer-account-customer.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/public/customer-account.css",
+    "stellar-forge/mcp-merchant-operator/accounting-customer-responses.d.mts",
+    "stellar-forge/mcp-merchant-operator/accounting-customer-response-client.d.mts",
+    "stellar-forge/mcp-merchant-operator/ACCOUNTING_CUSTOMER_RESPONSES.md"
   ],
   "browserAssets": [
     {

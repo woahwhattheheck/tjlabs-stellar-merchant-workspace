@@ -142,6 +142,8 @@ Central host.
 | --- | --- |
 | Workspace directory | Original field database, source bodies, plans, reviews and exports |
 | Operator | Accountable name retained by the running field application |
+| Local port | Actual stable local port forwarded by an existing HTTPS proxy; optional for local-only use |
+| Trusted browser HTTPS origin | Exact reviewed external origin for remote browser use; requires the stable local port |
 | Commissioning connection | Existing Central URL, native connection ID and Authorization environment alias |
 | Commissioning environment | Private JSON containing the selected alias's complete Authorization value |
 | Reporting warehouse profiles | Private profile file naming the installed PostgreSQL operator, its private workspace, database environment alias and SQL schema |
@@ -152,6 +154,27 @@ Central host.
 Applications verifies the startup record, selected directory identity, workspace
 UUID, private connection file and actual authenticated listener. Customer
 commissioning and Reporting warehouse open on that same listener and original Store.
+
+For an existing remote HTTPS proxy, select the actual loopback port and browser
+origin in those two application fields, or pass `--port` and `--external-origin`
+to the same `odk-central-workspace serve` command. The original listener remains
+on loopback. Its `origin` and `url` remain the local control addresses; the
+additional `browserUrl` opens the configured remote browser. Applications and
+the typed browser tools use that selected browser address, including the
+commissioning, warehouse and form-release screens.
+
+Use the actual forwarded port URL supplied by Codespaces or the existing proxy.
+Keep its upstream HTTP connection pointed at the selected local port and
+preserve Host, Origin, Authorization and complete response streams. The server
+trusts only the explicitly selected exact origin, never forwarded headers.
+A private Codespaces port retains its existing GitHub browser authentication;
+the same-origin field requests retain that proxy session as well as their
+original bearer token. Selecting the origin changes no port visibility.
+
+See [trusted HTTPS proxy configuration](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odk/APPLICATIONS_MCP.md#open-through-an-existing-trusted-https-proxy)
+for the full startup, saved-connection and customer-reopen contract. Central's
+released Docker host keeps its separate native domain and upstream TLS
+configuration.
 
 For direct host operation, prepare the selected private parent directories and
 start the original application:
@@ -176,6 +199,35 @@ For a Central service using a local CA, set NODE_EXTRA_CA_CERTS to the existing
 host's returned CA path before Node starts. The selected Authorization value
 stays in the private host environment. The connection and source agreement
 record its alias.
+
+## Reach the existing private Codespaces Central API
+
+Native health checks, fixture publication and captures through a private
+Codespaces port need the existing GitHub proxy credential as well as Central
+authentication. The host selection uses `codespaces_token_env`; its emitted
+connection uses `codespacesTokenEnv` beside the original `authEnv`. These
+are distinct environment aliases, never credential values.
+
+This selection is restricted to the actual HTTPS
+`<one-label>.app.github.dev` origin on port 443 with host mode `upstream`.
+The transport reads the current process environment for each request and sends
+`X-Github-Token` within the original origin/redirect boundary. Preserve the
+existing Central service and port visibility. Read the host guide's
+first-selection and immutable-configuration instructions before changing a
+bound host.
+
+Use the complete current host and reporting product together. The field form,
+CLI `--codespaces-token-env`, source JSON and merchant profile accept the same
+alias. Commissioning retains it through host handover, inspection, period
+installation and full source capture. Complete transfer retains the reference;
+the receiving host supplies its own existing authorized environment. The
+generated `connection-secret.json` continues to contain Central authentication
+only.
+
+Keep the upstream Central URL distinct from the reporting operator's
+`externalOrigin`. See the
+[Central host guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odk/central-host/HOST.md)
+for exact configuration and continuation.
 
 ## Prepare, operate and hand over the Central service
 

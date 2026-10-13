@@ -3,7 +3,7 @@
 Use the existing Request Collections workspace's **Request plans** panel for the
 complete customer workflow. The maintained [authoring guide](../collections/AUTHORING.md)
 covers catalog selection, saved revisions, named periods, original collection
-creation, later operations and receiving.
+creation, portable source sharing, independent buyer adoption and receiving.
 
 ## Local model
 
@@ -87,6 +87,72 @@ The read and write methods return complete JSON. Open a created period's
 `collection.id` in the original Collections screen for queueing, browser or
 terminal approval, original attempt recovery and received-output export.
 
+## Private local catalog and body inputs
+
+`composer.inputs` retains real device or host files under the same authoring subtree and recovery lease. The browser's Saved inputs library and request editor, the original CLI, and the nested HTTP client share one private upload identity. Uploaded catalogs pass the original inspector; arbitrary request body bytes remain unchanged. Ready files are selected through the original `discoveryFile` and `bodyFile` fields.
+
+| Local method | Input | Result |
+| --- | --- | --- |
+| `begin` | `{manifest}` | Start/resume status |
+| `list` | `{kind?,query?,offset?,limit?}` | Paginated metadata |
+| `inspect` | `{uploadId}` | Verified manifest, chunks and ready input |
+| `receiveChunk` | `{uploadId,index,source}` | Compact chunk receipt |
+| `complete` | `{uploadId}` | Durable ready original source |
+| `file` | `{uploadId}` | Original pinned download descriptor |
+| `catalog` | `{uploadId}` | Original catalog inspector view |
+
+The local model accepts a Buffer, Uint8Array or async byte iterable for one chunk. The HTTP client's equivalent `receiveChunk` accepts Uint8Array, ArrayBuffer or Blob, and `downloadFile` returns the authenticated original stream. Every call uses the existing listener and optional cancellation signal.
+
+`input-format.mjs` is the shared browser/Node contract. A manifest records kind, display name, total length and ordered 1 MiB chunk hashes. Its upload ID is SHA-256 over UTF-8 `inputManifestJson(manifest)`. Native limits remain 1 MiB for a catalog and 16 MiB for a body. Empty bodies have no chunks and retain an actual zero-byte file.
+
+Completion streams the exact verified chunks to a private durable source, validates the original catalog when selected, publishes immutable ready metadata, then removes duplicate chunks. Interrupted uploads resume the same manifest; interrupted completion reuses its exact source. Ready input inspection and download verify the retained actual bytes. The original recovery includes this subtree, while its existing operator prerequisites remain unchanged.
+
+Use `input-import`, `input-list`, `input-show`, `input-file` and `input-catalog` in `buyer-collection-plans`. The [complete guide](../collections/AUTHORING.md#add-catalog-and-body-files-from-this-device) covers upload/resume, device selection, local CLI examples and the eight fixed API routes.
+
+## Portable plans and independent buyer adoption
+
+`composer.sharing` joins data transfer to the same authoring facade and recovery lease. It exports an exact prepared period's selected catalog and body objects, then lets a recipient bind existing local operators and save a new immutable plan.
+
+| Method | Input | Result |
+| --- | --- | --- |
+| `exportPackage` | `collectionId`, `expectedEditionSha256`, optional per-request `headerSelections` | Complete portable file descriptor and manifest |
+| `listPackages` | none | Original package summaries and receiving progress |
+| `inspectPackage` | `{packageSha256}` | Full manifest, phase and per-object received bytes |
+| `receiveManifest` | `{manifest}` | Existing/new receiving state for that exact package |
+| `receiveChunk` | Package/object hashes, offset and Base64 bytes | Compact object receipt |
+| `finishReceiving` | `{packageSha256}` | Complete object verification and ready status |
+| `packageFile` | `{packageSha256}` | Create/reopen a full portable file for a ready package |
+| `reviewAdoption` | Recipient plan name/ID, operator/request bindings and delivery selection | Complete source/local-operator review with `reviewSha256` |
+| `adoptPlan` | Same selection plus `expectedReviewSha256` | `{saved, adoption}` through original plan retention |
+
+Package objects are addressed by SHA-256 and retained under the original authoring tree. Shared manifests preserve the original plan and prepared-period references, original request keys, catalog/body objects and operator-group metadata. Local operator and source placeholders in the portable definition are replaced only by an explicit adoption selection.
+
+Access-ticket metadata describes the recipient's required local input. Representation headers are retained; selected noncredential custom headers can be included explicitly. Other headers require a local value or explicit omission. Existing operator preparation, ticket checks, payment terms and spending-limit checks run when the recipient reviews its bindings.
+
+A reviewed adoption records every retained source and the chosen local operator configuration. `adoptPlan` reads those inputs again and saves only the matching review. It returns the original `SavedPlan` shape, so the normal editor, `prepareEdition`, `createEdition` and original collection execution continue from that result.
+
+### Streaming package contract
+
+`package-format.mjs` is shared by Node and the existing browser. Its `parsePlanPackage(asyncIterableOfUint8Array)` yields:
+
+```js
+{ type: 'manifest', manifest }
+{ type: 'object', sha256, offset, base64 }
+{ type: 'complete', packageSha256 }
+```
+
+The complete file must have a final newline. The parser validates the manifest and portable plan identities, object order, exact offsets and complete byte counts. Exhaust its iterator before calling `finishReceiving`; a completion record followed by additional content is an invalid file.
+
+Objects use 64 KiB raw chunks with a smaller final chunk when needed. The package maximum is 128 MiB of unique source objects and a 16 MiB manifest. `receiveManifest` and `inspectPackage` return each object's saved `receivedBytes`; a repeated receive can skip complete retained chunks. Each accepted chunk returns only its own package/object identity and progress, avoiding repeated full-manifest responses. Completion verifies the entire original object hash.
+
+The portable plan retains source URL parameters and begins with the selected edition's values. Adopted catalog/body references point at the retained package objects. The selected delivery parameter changes the output namespace. A business request that needs a new body or catalog uses actual new inputs and another original plan revision.
+
+### Client and command-line continuation
+
+The HTTP client's nested `sharing` methods match the local model. All methods accept the original optional `{signal}`. The additional `downloadPackage({packageSha256})` makes an authenticated GET and returns the fetch response; stream `response.body` as needed. First use `exportPackage` or `packageFile` to prepare the complete file. The client uses a fixed same-origin route with the original private session.
+
+The CLI adds `share-export`, `share-receive`, `share-list`, `share-show`, `share-file`, `adopt-review` and `adopt`. It uses the shared parser and the same local model, including resumable object receipt and guarded adoption. The [complete authoring guide](../collections/AUTHORING.md) provides the browser and command-line sequence, exact binding examples, API paths and receiving corrections.
+
 ## CLI
 
 Run `starforge buyer-collection-plans --help` in a distribution that includes
@@ -103,3 +169,7 @@ the original Collections command remains responsible for its setup and run.
 
 The composer uses the native Linux `flock` command already required by the
 original Collections controller.
+
+## Saved customer-use commissioning
+
+[Customer-use commissioning](CUSTOMER_USE.md) joins exact Grant Installation calendars to these original saved plans and periods. Its complete browser, CLI and typed client retain immutable commissioning revisions, reuse original buyer requests and return verified native evidence through the existing Grant receiving workflow. The same encrypted Collections handover retains the complete authoring history.

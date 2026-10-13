@@ -6,8 +6,20 @@
 <header><div><strong>STELLAR FORGE</strong><h1>Grist source workspace</h1><p>Capture · review · retain · publish</p></div><div id="summary" class="summary">Opening private workspace…</div></header>
 <div id="notice" role="status" aria-live="polite" hidden></div>
 <section id="recovery" class="recovery" hidden aria-labelledby="recovery-title"><h2 id="recovery-title">Retained request</h2><p><code id="recovery-id"></code></p><p id="recovery-message"></p><div class="actions"><button id="check-operation" type="button">Check original receipt</button><button id="resume-operation" type="button">Resume retained request</button><button id="retry-operation" type="button">Retry identical request</button><button id="dismiss-operation" type="button">Acknowledge recorded failure</button></div><label id="retry-file-label" hidden>Reselect the same source packet<input id="retry-file" type="file" accept=".json,application/json"></label></section>
-<nav aria-label="Workspace"><button data-view="overview" aria-current="page">Overview</button><button data-view="acquire">Capture source</button><button data-view="review">Review columns</button><button data-view="versions">Saved versions</button><button data-view="deploy">Publish &amp; operate</button></nav>
+
+<section id="op-recovery" class="recovery" hidden aria-labelledby="op-recovery-title">
+<h2 id="op-recovery-title">Retained operating-plan request</h2><p><code id="op-request-id"></code></p><p id="op-request-state"></p>
+<div class="actions"><button id="op-check" type="button">Read original plan receipt</button><button id="op-retry" type="button">Retry exact retained request</button><button id="op-resume" type="button">Resume original interrupted request</button><button id="op-ack" type="button">Acknowledge recorded rejection</button><button id="op-request-download" type="button">Download exact request</button></div><div id="op-request-detail"></div>
+</section>
+<nav aria-label="Workspace"><button data-view="overview" aria-current="page">Overview</button><button data-view="acquire">Capture source</button><button data-view="review">Review columns</button><button data-view="versions">Saved versions</button><button data-view="deploy">Publish &amp; operate</button><button data-view="operating">Operating plans</button></nav>
 <main id="main">
+<details id="op-complete-editor">
+<summary>Complete operating editor recovery</summary>
+<p id="op-editor-storage-state" class="note">Open the original workspace to restore its working editor.</p>
+<p class="help">Each window keeps a separate complete copy with original source selections, unfinished text, returned files and retained requests. A complete download remains available if browser storage fails.</p>
+<div class="actions"><button id="op-editor-download" type="button">Download complete working editor</button><label>Open complete working editor<input id="op-editor-open" type="file" accept=".json,application/json"></label></div>
+<div class="actions"><button id="op-editor-list" type="button">List saved editors</button><label>Original workspace copies<select id="op-editor-copies"><option value="">No copy selected</option></select></label><button id="op-editor-open-saved" type="button">Open saved editor as separate copy</button></div>
+</details>
 <fieldset id="workspace-controls" disabled><legend class="visually-hidden">Source workspace controls</legend>
 <section data-panel="overview">
 <div class="section-title"><h2>Retained work</h2><button id="refresh" type="button">Refresh workspace</button></div>
@@ -53,6 +65,56 @@
 <h3>Prepared packages and release operations</h3><div id="deployment-packages" class="table-wrap"></div><div class="pager"><button id="deploy-prev" type="button">Previous</button><span id="deploy-page"></span><button id="deploy-next" type="button">Next</button></div>
 <form id="stage-form"><div class="grid"><label>Prepared package request ID<input id="stage-package" required></label><label>Package source SHA256<input id="stage-sha" required pattern="[a-f0-9]{64}"></label><label>New release ID<input id="stage-id" required></label><label>Release label<input id="stage-label" required maxlength="240"></label></div><button type="submit">Stage in original release store</button></form>
 <div class="actions"><button id="open-release-console" type="button">Open original release controls</button><button id="close-release-console" type="button">Close release console</button><a id="release-link" target="_blank" rel="noreferrer" hidden>Open release window</a></div><p class="help">The original release console compares and activates the exact staged release, runs or restarts the existing merchant, and retains rollback and customer receiving. Selection and the actually running release remain visible there.</p><div id="release-state"></div>
+</section>
+
+<section data-panel="operating" hidden aria-labelledby="op-title">
+<div class="section-title"><h2 id="op-title">Operating plans</h2><button id="op-refresh" type="button">Refresh saved procedures</button></div>
+<p>Turn retained Grist documents, captures and source versions into a customer procedure. Author work, owners, dates and recorded results; keep the complete saved history. These controls do not contact Grist, execute commands, publish a resource or send a payment.</p>
+<p id="op-state" class="note">Opening original plan store…</p>
+<div id="op-plans" class="table-wrap"></div>
+<div class="pager"><button id="op-plan-prev" type="button">Previous procedures</button><span id="op-plan-page"></span><button id="op-plan-next" type="button">Next procedures</button></div>
+<details><summary>Create a procedure from retained source</summary>
+<div class="grid"><label>Source kind<select id="op-source-kind"><option value="documents">Document catalogs</option><option value="discoveries">Table discoveries</option><option value="captures">Complete captures</option><option value="versions">Saved source versions</option><option value="operations">Original operations</option></select></label><button id="op-source-refresh" type="button">Read retained source</button></div>
+<p class="help">Select exact retained records across pages and source kinds. Their original identities become procedure bindings. An empty selection creates a manual procedure; add its authored steps in the same editor.</p>
+<p id="op-source-origin" class="path"></p><div id="op-sources" class="table-wrap"></div>
+<div class="pager"><button id="op-source-prev" type="button">Previous sources</button><span id="op-source-page"></span><button id="op-source-next" type="button">Next sources</button></div>
+<h3>Selected original records</h3><div id="op-selected-sources"></div>
+<form id="op-create"><div class="grid">
+<label>New stable plan ID<input name="planId" maxlength="128" pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,127}" required autocomplete="off"></label>
+<label>Title<input name="title" maxlength="300" required></label>
+<label>Customer<input name="customer" maxlength="1000"></label><label>Operating owner<input name="owner" maxlength="1000"></label>
+<label>Period or recurrence<input name="period" maxlength="1000"></label>
+<label>Useful outcome<textarea name="purpose" rows="3" maxlength="32000"></textarea></label>
+<label>Receiving and continuation<textarea name="receiving" rows="3" maxlength="32000"></textarea></label>
+<label>Notes<textarea name="notes" rows="3" maxlength="32000"></textarea></label>
+</div><button type="submit">Create original procedure</button></form>
+</details>
+<details><summary>Adopt a complete saved procedure</summary>
+<p>Use an original Grist procedure JSON exported from this workspace. Adoption retains its source binding and complete history; an existing identity is not overwritten. A generic plan returned to an existing procedure belongs in Returned work below.</p>
+<form id="op-adopt"><label>Complete original procedure JSON<input id="op-adopt-file" type="file" accept=".json,application/json"></label><p id="op-adopt-retained" class="help"></p><button type="submit">Adopt original identity and history</button></form>
+</details>
+<p id="op-draft-retained" class="note"></p><div class="actions"><button id="op-restore-draft" type="button">Restore retained browser draft</button><label>Open editable draft backup<input id="op-draft-file" type="file" accept=".json,application/json"></label></div>
+<p class="help">Each window retains its complete working editor in browser storage, bound to the original workspace settings and creation identity. Selected source identities, authored fields, returned files and exact pending requests remain together. Complete editor downloads reopen through the recovery controls above; complete procedure exports remain the native customer handover.</p>
+<section id="op-editor" hidden aria-label="Procedure editor">
+<div class="section-title"><h3>Editable next revision</h3><div class="actions"><button id="op-save" type="button">Save procedure revision</button><button id="op-reload" type="button">Reload saved procedure</button><button id="op-draft-download" type="button">Download editable draft</button></div></div>
+<div id="op-plan-fields" class="grid"></div>
+<h3>Operating steps</h3><div class="actions"><label>Selected step<select id="op-step"></select></label><button id="op-add-step" type="button">Add manual step</button><button id="op-step-up" type="button">Move earlier</button><button id="op-step-down" type="button">Move later</button><button id="op-remove-step" type="button">Remove from next revision</button></div>
+<div id="op-step-fields" class="grid"></div>
+<h3>Retain the source observation</h3>
+<p>Capture reads the already-retained records bound to this procedure. It appends the selected source observation to the same procedure and leaves authored work, step status and recorded results unchanged.</p>
+<div class="grid"><label>Observation scope<select id="op-capture-scope"><option value="all">All retained source bindings</option><option value="selected">Selected source-bound step</option></select></label><button id="op-capture" type="button">Capture current retained observations</button></div>
+<div id="op-bindings"></div>
+<details><summary>Complete saved revision history</summary><div id="op-history"></div><div id="op-history-detail"></div></details>
+<h3>Export and receive</h3><div class="actions"><button data-op-export="json" type="button">Complete procedure JSON</button><button data-op-export="plan" type="button">Original operating plan JSON</button><button data-op-export="markdown" type="button">Readable Markdown</button><button data-op-export="html" type="button">Readable HTML</button></div>
+<p class="help">Exports contain the saved procedure. Save edits first, or download the editable draft separately. Complete JSON retains editable history; readable files are staff handover views.</p>
+<h3>Returned work</h3>
+<label>Complete returned plan or Grist procedure<input id="op-return-file" type="file" accept=".json,application/json"></label><p id="op-incoming" class="note">No returned plan selected.</p>
+<div class="grid"><label>Original review ID<input id="op-review-id" readonly></label><label>Reviewing operator<input id="op-return-reviewer" maxlength="1000"></label><label>Review notes<textarea id="op-return-notes" rows="3" maxlength="32000"></textarea></label></div>
+<div class="actions"><button id="op-preview-return" type="button">Compare returned work</button><button id="op-receive" type="button">Receive unchanged forward history</button><button id="op-review-download" type="button">Download current return review</button></div>
+<p class="help">Forward receiving only extends identical shared history. For divergent work, compare every changed field and complete step, choose current, returned, shared or a complete custom JSON value, then compare again. The original engine keeps work and its recorded results together and requires a complete step order.</p>
+<div id="op-return-comparison"></div>
+<button id="op-apply-return" type="button">Apply this complete reviewed return</button>
+</section>
 </section>
 </fieldset>
 </main><footer>Private local operator · Node 24 · Original Grist REST source and Stellar Forge publication engines</footer>

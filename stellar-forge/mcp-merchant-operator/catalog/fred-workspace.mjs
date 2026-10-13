@@ -1,4 +1,5 @@
 // MIT. Static FRED tool metadata; imports no source, merchant or buyer runtime.
+import { fredOperatingTools } from './fred-operating.mjs';
 import { MAX_RETAINED_CHUNK_BYTES } from '../retained-file-contracts.mjs';
 const alias = { type: 'string', pattern: '^[a-z0-9][a-z0-9_-]{0,63}$' };
 const operation = { type: 'string', pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$' };
@@ -112,6 +113,7 @@ export const fredFileSelection = {
 };
 export function fredWorkspaceTools(tool) {
   return [
+    ...fredOperatingTools(tool),
     tool('merchant_fred_workspaces', 'List original configured economic workspace aliases and source/profile names.', {}, [], read),
     tool('merchant_fred_status', 'Inspect the original project, revision, source and publication counts, native merchant, buyer configuration and pending acquisition.', workspace, ['workspace'], read),
     tool('merchant_fred_inputs', 'List host-retained source aliases and the complete configured public merchant/payment profiles.', workspace, ['workspace'], read),
@@ -217,8 +219,10 @@ export function fredWorkspaceTools(tool) {
     tool('merchant_fred_ddp_migration', 'Open a saved DDP migration and page original series, mappings or acquisition selections. Its receiving inventory joins completed native FRED batches. Use file_read kind ddp-migration for the full immutable plan.', {
       ...workspace, migrationId: ddpMigrationId, section: ddpPlanSection, ...ddpPage
     }, ['workspace', 'migrationId'], read),
-    tool('merchant_fred_ddp_migration_acquire', 'Acquire every exact native FRED batch in the saved DDP migration through the existing private key binding and save the complete reconciliation. One original operation owns all batches and its receivingId; resume with that same id and revision. The original captures remain usable in the analyst and recurring-briefing workflow.', {
-      ...recorded, migrationId: ddpMigrationId
+    tool('merchant_fred_ddp_migration_acquire', 'Acquire every saved migration batch and its complete reconciliation. The default API_VINTAGE uses the original host key binding; explicit ALFRED_VINTAGE retains the official historical download column and optional complete historical metadata editions. metadataInput names a configured alfred-metadata JSON array, metadataFileSha256 pins its file bytes, and metadataSha256 pins the canonical sorted editions. Resume the same id/revision/migration/source mode and metadata identity; omit the alias after the native operation has staged it. Full source captures remain usable in analyst reports and complete v5/v6 receiving.', {
+      ...recorded, migrationId: ddpMigrationId,
+      sourceMode: { type: 'string', enum: ['API_VINTAGE', 'ALFRED_VINTAGE'] },
+      metadataInput: alias, metadataFileSha256: digest, metadataSha256: digest
     }, ['workspace', 'id', 'expectedRevision', 'migrationId'], { ...change, openWorld: true }),
     tool('merchant_fred_ddp_receiving', 'Read a completed original DDP-to-FRED reconciliation. Page all rows or changed rows, filter an original seriesId, and retain source/target metadata and reviewed meaning bindings. Download the complete JSON, CSV or offline HTML with file_read kind ddp-receiving; use a complete project export to reopen every original source, plan and result (v5 for DDP, v6 when QCEW is retained).', {
       ...workspace, receivingId: ddpReceivingId, seriesId: ddpSeriesId,
@@ -229,7 +233,7 @@ export function fredWorkspaceTools(tool) {
     }, ['workspace', 'id', 'expectedRevision', 'selection'], change),
     tool('merchant_fred_capture', 'Acquire official FRED API responses through the original workspace environment and retained acquisition. Reuse this same ID and revision for continuation.', recorded,
       ['workspace', 'id', 'expectedRevision'], { ...change, openWorld: true }),
-    tool('merchant_fred_import', 'Import the complete declared public table or retained API capture. Exact source text, metadata and bytes pass to the original project importer.', {
+    tool('merchant_fred_import', 'Import the complete declared public table, API capture or ALFRED historical capture. Exact source text, vintage column, historical metadata and bytes pass to the original project importer.', {
       ...recorded, input: alias, expectedSha256: digest
     }, ['workspace', 'id', 'expectedRevision', 'input'], change),
     tool('merchant_fred_combine', 'Combine one to fifty distinct retained public-table captures into a complete economic edition. The native model preserves each publisher, frequency, unit and retrieval basis.', {

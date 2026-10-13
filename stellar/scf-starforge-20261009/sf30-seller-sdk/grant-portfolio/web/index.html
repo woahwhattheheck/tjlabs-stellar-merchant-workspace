@@ -5,6 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Grant Portfolio</title>
 <link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/programme.css">
+<link rel="stylesheet" href="/awards.css">
+<link rel="stylesheet" href="/governance.css">
+<script src="/donor-reporting.js" defer></script>
+<link rel="stylesheet" href="/budget-planning.css">
+<link rel="stylesheet" href="/recipient-project.css">
+<script src="/recipient-project.js" defer></script>
+<script src="/programme.js" defer></script>
+<script src="/governance-exchange.js" defer></script>
+<script src="/governance.js" defer></script>
+<script src="/awards-exchange.js" defer></script>
+<script src="/awards.js" defer></script>
+<script src="/budget-planning.js" defer></script>
 <script src="/app.js" defer></script>
 </head>
 <body>
@@ -16,11 +29,16 @@
 <aside>
   <nav aria-label="Workspace">
     <button data-view="portfolios" class="active">Portfolios</button>
+    <button data-view="programme">Programme delivery</button>
+    <button data-view="awards">Applications and awards</button>
+    <button data-view="governance">Governance and evaluation</button>
+    <button data-view="planning">Budget and forecast</button>
     <button data-view="sources">Source editions</button>
     <button data-view="review">Review records</button>
     <button data-view="ledger">Financial ledger</button>
     <button data-view="history">Revision history</button>
     <button data-view="requests">Saved operations</button>
+    <button id="open-support" type="button">Defect support</button>
   </nav>
   <div class="side-note">IATI and 360Giving<br>Original records and complete source handoffs</div>
 </aside>

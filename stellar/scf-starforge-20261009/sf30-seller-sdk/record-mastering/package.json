@@ -21,6 +21,7 @@
     "*.mjs",
     "*.d.mts",
     "schema.sql",
+    "browser-assets.json",
     "ui",
     "example",
     "README.md",

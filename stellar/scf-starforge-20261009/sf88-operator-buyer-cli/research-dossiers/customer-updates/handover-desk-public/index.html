@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Research handover</title><link rel="stylesheet" href="/desk.css">
+<script type="module" src="/desk.js"></script>
+</head>
+<body>
+<header><div><p class="eyebrow">Research / Customer delivery</p><h1 id="customer">Handover and returns</h1></div><button id="refresh" type="button">Refresh saved state</button></header>
+<main>
+<div id="notice" role="status" aria-live="polite">Connecting to the selected workspace…</div>
+<section aria-labelledby="scope-title"><h2 id="scope-title">Selected delivery</h2><div id="scope" class="facts"></div><p id="job" role="status" aria-live="polite"></p><button id="initialize" type="button" hidden>Initialize this delivery</button></section>
+<div class="layout"><aside><h2>Return rounds</h2><nav id="rounds" aria-label="Return rounds"></nav><section class="compact"><h2>Finish the delivery</h2><p>Build the complete editable handover and independently reopen its accepted dossier.</p><button id="complete" type="button">Build and receive handover</button><div id="final-files"></div></section></aside>
+<section id="round-panel" aria-labelledby="round-title">
+<h2 id="round-title">Choose a return round</h2><p id="round-summary"></p>
+<div id="source-panel" hidden><label for="source">Complete original return file</label><input id="source" type="file" accept=".json,.gz,.gzip,.bin,application/json,application/gzip,application/octet-stream"><p id="source-note"></p><div class="actions"><button id="upload" type="button">Retain original file</button><button id="prepare" type="button">Prepare complete comparison</button></div></div>
+<div id="review-panel" hidden>
+<div id="comparison-facts" class="facts"></div>
+<p class="explanation">Read each change and the complete original values. Choose the published action for every item. Each choice applies to this saved comparison.</p>
+<div id="request-state" class="callout" hidden></div>
+<div id="draft-conflict" class="callout" hidden><p>Another saved draft is available. Your current edits remain here. Export them before selecting the saved version if you want to keep both.</p><button id="use-saved" type="button">Use the saved draft</button></div>
+<div class="review-fields"><label>Reviewer<input id="reviewer" type="text" maxlength="512" autocomplete="name"></label><label>Review note<textarea id="review-note" rows="3" maxlength="16000"></textarea></label></div>
+<div class="toolbar"><label>Show<select id="filter"><option value="all">All changes</option><option value="undecided">Awaiting a choice</option></select></label><span id="decision-count"></span><label class="file-control">Import saved review file<input id="import-draft" type="file" accept=".json,application/json"></label></div>
+<div id="items"></div>
+<div class="pagination"><button id="previous" type="button">Previous changes</button><span id="page-label"></span><button id="next" type="button">Next changes</button></div>
+<div class="actions"><button id="save-draft" type="button">Save review draft</button><button id="export-draft" type="button">Export current edits</button><button id="apply" type="button">Apply saved decisions</button><button id="recover" type="button" hidden>Recover original request</button></div>
+<p id="save-state" role="status" aria-live="polite"></p>
+</div>
+<section id="downloads-section" hidden><h3>Original files and reports</h3><div id="round-files"></div></section>
+</section></div>
+</main>
+<dialog id="value-dialog"><div class="dialog-header"><h2 id="value-title">Complete value</h2><button id="close-value" type="button">Close</button></div><p id="value-identity"></p><pre id="value-body"></pre></dialog>
+<noscript>This private operator requires JavaScript. The installed research-customer-handover-returns command operates the same saved delivery.</noscript>
+</body></html>

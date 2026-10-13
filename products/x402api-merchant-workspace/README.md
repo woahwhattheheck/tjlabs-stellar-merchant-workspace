@@ -18,6 +18,7 @@ For the maintained package, Node 24 profile and **Applications → Merchant invo
 - Run the customer's fulfillment adapter once, reconcile interrupted work, and
   recover a previously returned result without rerunning the business operation.
 - Download the retained result, with its size and SHA-256 checked on every read.
+- Search and page the complete invoice register by original state, creation dates and payment option, then export every selected invoice as exact CSV or JSON.
 
 The server keeps the tenant credential and webhook secrets in its environment.
 The browser uses a separate operator token. The wallet handoff contains the
@@ -198,6 +199,16 @@ reconciles the same invoice and does not create a new charge or authorization.
 A definitive failed authorization remains attached to its original invoice
 for review.
 
+## Complete invoice register
+
+Use **Apply filters** to select original invoices by text, state, inclusive UTC
+creation dates and frozen payment option. Paging remains tied to the displayed
+store/history revision. **Download CSV** and **Download JSON** include every
+matching invoice across all pages, preserving exact atomic amounts and separate
+receipt/result outcomes. The same workflow is available in received-project
+review. [The full register guide](INVOICE_REGISTER.md) covers selection, complete
+exports, exact amount handling and the native/HTTP interfaces.
+
 ## HTTP interface
 
 All /api/ routes require Authorization: Bearer <operator token>. The token
@@ -206,6 +217,8 @@ belongs in a header, never a URL.
 | Method and route | Operation |
 | --- | --- |
 | GET /api/state | Public operator configuration and invoice projections |
+| GET /api/register | Complete filtered invoice counts and revision-bound page |
+| GET /api/register/export | Prepare full selected CSV/JSON and single-use streamed download |
 | POST /api/orders | Retain one invoice with its stable UUID and exact terms |
 | GET /api/orders/:id | Invoice, progress and selected activity history |
 | POST /api/orders/:id/charge | Create or reconcile its original charge |
@@ -230,15 +243,36 @@ A completed paid replay returns the saved original result.
 
 ## Restart, backup and transfer
 
+Use **Project handover** in the installed merchant browser to export the complete
+project. The archive carries a consistent SQLite snapshot, every retained result,
+original configuration and handler inputs, and the complete installed source.
+The export keeps its original operation across browser or process interruption.
+
+Receive the package with `x402api-merchant-project receive`, then open its returned
+review configuration with `x402api-merchant review`. The review browser exposes the
+original invoices, payment requests, activity and full result downloads. The
+receiver preserves the original snapshot and prepares a separate runtime with
+relocated result storage. Its source archive supports later onward handover.
+
+Open a completed received project through **Applications → Received merchant review**
+to keep its exact receiving/source selection and managed start, stop and cold reopen.
+[RECEIVED_REVIEW.md](RECEIVED_REVIEW.md) gives the complete private credential setup,
+original invoice/file review and the existing-case receiving programme.
+
+[PORTABLE_PROJECT.md](PORTABLE_PROJECT.md) gives the complete browser, command-line,
+configuration and activation procedure. The existing Node 24 / Python 3.11 Linux
+operator profile supplies both runtimes; the merchant adds no package dependency.
+
 Stop the server gracefully before copying a workspace. The server drains
 accepted requests and active fulfillment handlers before closing the store
 and releasing its kernel lease. If a returned result cannot yet be retained,
 the close operation remains retryable with those same bytes held in memory.
 
-Copy the entire private state directory, its configuration, selected
-fulfillment files and complete application source. Keep secret configuration
-in the destination service's existing secret system. Start only one service
-owner for a given state directory.
+For a production move, export the stopped original workspace at cutover and
+receive that final operation into its selected destination. Keep the existing
+tenant and webhook environment references in the destination service's normal
+secret configuration. Start the receiving deployment after the original service
+has stopped and retained its actual returns.
 
 The store reclassifies a previous owner's unfinished handler attempt only
 after acquiring the original kernel lease. Completed results are checked and
@@ -264,3 +298,25 @@ integration guide and the live hosted API documentation:
 protocol.mjs attributes the retained canonical JSON implementation to its
 original wallet source. The original SF31 writer, SF88 reader and runtime
 lease remain in their existing repository paths.
+
+## Complete portable merchant
+
+Use the same CLI to export the whole business workspace, inspect every retained file, open its offline invoice viewer, or restore a fresh working directory. [The complete handover guide](./PORTABLE.md) covers the original database, all fulfillment editions, local file relocation and the full original five-invoice receiving programme. The restored configuration can also be reviewed and opened through the maintained **Applications → Merchant invoices** workflow described in [Install and operate](./OPERATING.md).
+
+## Read-only incident and customer Support workflow
+
+The original running owner exposes authenticated GET /api/observation. Review it with support-watch review-x402, register the exact returned merchant identity, and use the existing Incident desk to retain an issue and prepare a customer Support case. Original receipt verification, unresolved payment age and fulfillment outcomes remain separate. The monitor reads complete bounded operational metadata and performs no payment or fulfillment.
+
+See [Merchant payment and delivery support](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/X402_MERCHANT_SUPPORT.md) for the complete source registration, paged order review, before/after case, frozen HTML handover and fresh receiving workflow.
+
+## Receive an archive through Applications
+
+[Receive merchant project](PROJECT_INTAKE.md) opens the complete original archive inventory before receiving, retains the original request across interruptions, and opens the received invoices through the same managed application. Use its complete manifest and receipt downloads for the customer handover.
+
+## HTTP operator client and installed CLI
+
+The [operator client and CLI](OPERATOR_CLIENT.md) connect to the existing application with pinned store and tenant identity. They cover invoice creation and reconciliation, payment envelopes and buyer authorization, revision-bound complete register exports, retained-result downloads, observations and complete project delivery. The Node client includes TypeScript declarations; the installed `x402api-merchant-operator` command keeps the credential in its existing environment variable. Portable exports include the complete client source and guide.
+
+## Complete invoice intake
+
+Use **Import invoices** to retain an original CSV/JSON accounting export, map and review all rows, then create or resume the same original draft invoices. The existing operator client and CLI support the whole workflow. See [INVOICE_INTAKE.md](./INVOICE_INTAKE.md) for exact amounts, source mapping, conflict handling, original-operation recovery and portable handover.

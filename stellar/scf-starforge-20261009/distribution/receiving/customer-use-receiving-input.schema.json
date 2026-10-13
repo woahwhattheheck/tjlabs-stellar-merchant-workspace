@@ -1,0 +1,283 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "stellar-forge.product-collections-receiving.customer-use-input.v1",
+  "title": "Original Calendar customer-use receiving selection",
+  "description": "Required customerUse extension to the existing complete product receiving input. Contains no actual customer selections; the original operator supplies full native files and IDs. The native receiver also checks every original base input field and file binding. Optional planAdoption continues the same installed journey in an existing independent buyer workspace; its private binding file selects every actual local operator.",
+  "type": "object",
+  "required": [
+    "schema",
+    "operationId",
+    "customerUse"
+  ],
+  "properties": {
+    "schema": {
+      "const": "stellar-forge.product-collections-receiving.v1"
+    },
+    "operationId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "customerUse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "calendar",
+        "commissionFiles",
+        "actor",
+        "expectedHeadSha256",
+        "requestIds",
+        "buyerReturn"
+      ],
+      "properties": {
+        "calendar": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "bytes",
+            "sha256"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 2,
+              "description": "Actual absolute canonical private file path."
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 33554432
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        "commissionFiles": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "bytes",
+              "sha256"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 2,
+                "description": "Actual absolute canonical private file path."
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 2097152
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          }
+        },
+        "actor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "expectedHeadSha256": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          ]
+        },
+        "requestIds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "save",
+            "prepare",
+            "create",
+            "capture"
+          ],
+          "properties": {
+            "save": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+              }
+            },
+            "prepare": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+              }
+            },
+            "create": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+              }
+            },
+            "capture": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+            }
+          }
+        },
+        "buyerReturn": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "bindingIds",
+            "maxVerifyBytes",
+            "requireSavedResponses"
+          ],
+          "properties": {
+            "bindingIds": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 2000,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$"
+              }
+            },
+            "maxVerifyBytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1073741824
+            },
+            "requireSavedResponses": {
+              "const": true
+            }
+          }
+        }
+      }
+    },
+    "planAdoption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourcePeriod",
+        "recipientDirectory",
+        "bindings",
+        "period"
+      ],
+      "properties": {
+        "sourcePeriod": {
+          "type": "integer",
+          "enum": [
+            0,
+            1
+          ]
+        },
+        "recipientDirectory": {
+          "type": "string",
+          "minLength": 2,
+          "description": "Canonical existing private Collections directory, outside original recovery stateRoot and separate from output/source/runtime/retained roots."
+        },
+        "bindings": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "bytes",
+            "sha256"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 2,
+              "description": "Canonical existing same-owner private0600 file outside original recovery stateRoot."
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2097152
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        "headerSelections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key",
+              "names"
+            ],
+            "properties": {
+              "key": {
+                "type": "string",
+                "minLength": 1
+              },
+              "names": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              }
+            }
+          }
+        },
+        "period": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "collectionId",
+            "name",
+            "values"
+          ],
+          "properties": {
+            "collectionId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            },
+            "values": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Every actual adopted-plan parameter explicitly supplied, including the delivery parameter."
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -75,3 +75,17 @@ export {FLOW_SCHEMA,FLOW_DEFINITION_SCHEMA,FLOW_OPERATION_SCHEMA,FLOW_TEMPLATES,
 export {studyFlowModel,studyFlowPage,studyFlowSource,studyFlowReport,previewStudyFlow,
   recordStudyFlowOperation,validateStudyFlowState,validateStudyFlowTransition} from './study-flow/model.mjs';
 export {studyFlowSvg,studyFlowHtml,exportStudyFlowReport} from './study-flow/render.mjs';
+
+export {createResearchQuoteProgrammesClient} from './customer-quotes/programme-client.mjs';
+export {openResearchQuoteProgrammeDesk,RESEARCH_QUOTE_PROGRAMME_DESK} from './customer-quotes/programme-desk.mjs';
+export {researchQuoteProgrammeJobInput,RESEARCH_QUOTE_PROGRAMME_JOB_FIELDS} from './customer-quotes/programme-job.mjs';
+export {createResearchQuoteProgrammeArchive,receiveResearchQuoteProgrammeArchive,
+ openResearchQuoteProgrammeArchive,RESEARCH_QUOTE_PROGRAMME_ARCHIVE_LIMIT} from './customer-quotes/programme-archive.mjs';
+export {startResearchQuoteProgrammeUpload,inspectResearchQuoteProgrammeUpload,appendResearchQuoteProgrammeUpload,
+ finishResearchQuoteProgrammeUpload,RESEARCH_QUOTE_PROGRAMME_UPLOAD_CHUNK} from './customer-quotes/programme-upload.mjs';
+
+export {ResearchQuoteProgrammeTransfers} from './customer-quotes/programme-transfer.mjs';
+
+export {ResearchProgrammeOperator,RESEARCH_PROGRAMME_OPERATOR_SCHEMA,RESEARCH_PROGRAMME_OPERATOR_COMMANDS,
+ researchProgrammeOperatorConfiguration,readResearchProgrammeOperatorConfiguration}
+ from '../../../../stellar-forge/mcp-merchant-operator/research-programme-operator.mjs';

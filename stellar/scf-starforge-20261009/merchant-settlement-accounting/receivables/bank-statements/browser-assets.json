@@ -71,6 +71,97 @@
         "../SOURCE_FORMATS.md",
         "text/markdown; charset=utf-8"
       ]
+    ],
+    [
+      "/bank-statements/camt.mjs",
+      [
+        "camt.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/CAMT053.md",
+      [
+        "../CAMT053.md",
+        "text/markdown; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/accountant-receiving",
+      [
+        "../accountant-receiving/index.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/accountant-receiving/",
+      [
+        "../accountant-receiving/index.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/accountant-receiving/index.html",
+      [
+        "../accountant-receiving/index.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/accountant-receiving/core.mjs",
+      [
+        "../accountant-receiving/core.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/accountant-receiving/storage.mjs",
+      [
+        "../accountant-receiving/storage.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/accountant-receiving/app.mjs",
+      [
+        "../accountant-receiving/app.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/accountant-receiving/style.css",
+      [
+        "../accountant-receiving/style.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/accountant-receiving/ACCOUNTANT_RECEIVING.md",
+      [
+        "../accountant-receiving/ACCOUNTANT_RECEIVING.md",
+        "text/markdown; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/source-collection-model.mjs",
+      [
+        "source-collection-model.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/source-collections.mjs",
+      [
+        "source-collections.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/SOURCE_COLLECTIONS.md",
+      [
+        "../SOURCE_COLLECTIONS.md",
+        "text/markdown; charset=utf-8"
+      ]
     ]
   ]
 }

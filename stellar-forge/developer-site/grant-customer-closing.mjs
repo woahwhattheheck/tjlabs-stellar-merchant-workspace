@@ -25,6 +25,18 @@ const COMPONENTS=[
   {id:'merchant-customer-closing-browser',label:'Original customer workbench browser assets',path:ROOT+'accounting-statement-cycle-browser-assets.json',
     operator_workflow:'The same served setup, cycle, customer handover and service-planner browser modules in the installed product.'},
 ];
+const CALENDAR_COMPONENTS=[
+  {id:'merchant-customer-service-calendars-guide',label:'Recurring customer calendar operating and receiving guide',path:ROOT+'ACCOUNTING_STATEMENT_SERVICE_CALENDARS.md',
+    operator_workflow:'Weekly/monthly calendar editions, original customer/pass identity, actual capture review, interrupted settings/preparation recovery and complete receiving.'},
+  {id:'merchant-customer-service-calendars-store',label:'Original calendar, service-plan and saved-cycle continuation',path:ROOT+'accounting-statement-service-schedules.mjs',
+    operator_workflow:'UTC period generation, immutable settings, exact original plan requests, cycle ownership and merged complete history receiving.'},
+  {id:'merchant-customer-service-calendars-browser',label:'Installed service calendar browser workflow',path:ROOT+'cycle-public/service-schedules.mjs',
+    operator_workflow:'Customer period selection, native preview, complete exports, original settings/plan recovery and preservation of newer browser drafts.'},
+  {id:'merchant-customer-service-calendars-terminal',label:'Installed customer-service-calendar command',path:ROOT+'accounting-statement-service-schedules-cli.mjs',
+    operator_workflow:'Use the existing local workbench to save, review, prepare, recover, export and receive complete customer calendar requests.'},
+  {id:'merchant-customer-service-calendars-types',label:'Typed calendar and original preparation interfaces',path:ROOT+'accounting-statement-service-schedules.d.mts',
+    operator_workflow:'Full settings, calendar windows, selected capture plans, original cycle references and portable history contracts.'},
+];
 const escape=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 function need(value,message){if(!value)throw new Error(message);}
 function chapter(markdown){
@@ -37,16 +49,23 @@ function chapter(markdown){
   return selected;
 }
 /** Register this customer source independently of other original financial components. */
-export function attachCustomerClosingSources(sourceIndex,{customerClosingCommit,productAndFinanceMarkdown}){
+export function attachCustomerClosingSources(sourceIndex,{customerClosingCommit,customerServiceCalendarsCommit=null,productAndFinanceMarkdown}){
   need(sourceIndex?.schema==='stellar-forge.grant-reviewer-source-index.v1'&&Array.isArray(sourceIndex.sources),
     'Use the original reviewer source index.');
   need(typeof customerClosingCommit==='string'&&/^[a-f0-9]{40}$/.test(customerClosingCommit),
     'Select the complete merged customer-closing product commit.');
+  need(customerServiceCalendarsCommit===null||typeof customerServiceCalendarsCommit==='string'&&/^[a-f0-9]{40}$/.test(customerServiceCalendarsCommit),
+    'Select the complete merged service-calendar product commit.');
   chapter(productAndFinanceMarkdown);
   const index=JSON.parse(JSON.stringify(sourceIndex));
   const sources=COMPONENTS.map(component=>({...component,kind:'maintained-product',repository:REPOSITORY,
     source_commit:customerClosingCommit,url:REPOSITORY+'blob/'+customerClosingCommit+'/'+component.path,
     application_operation:CUSTOMER_CLOSING_OPERATION}));
+  const calendarSources=customerServiceCalendarsCommit?CALENDAR_COMPONENTS.map(component=>({...component,
+    kind:'maintained-product',repository:REPOSITORY,source_commit:customerServiceCalendarsCommit,
+    url:REPOSITORY+'blob/'+customerServiceCalendarsCommit+'/'+component.path,
+    application_operation:CUSTOMER_CLOSING_OPERATION})):[];
+  sources.push(...calendarSources);
   for(const source of sources){
     const positions=index.sources.map((value,i)=>value.id===source.id?i:-1).filter(i=>i>=0);
     need(positions.length<=1,'Keep one original customer source entry for '+source.id+'.');
@@ -70,9 +89,30 @@ export function attachCustomerClosingSources(sourceIndex,{customerClosingCommit,
     financial_meaning:'Original purchase amounts, service allowance activity and separately issued invoice/receipt records retain their own financial identities.',
     funded_work:'Selected customer source/identity adaptation, accountable handover and production recovery within the original six priced packages.',
   };
+  if(customerServiceCalendarsCommit){
+    workflow.service_calendars={
+      source_commit:customerServiceCalendarsCommit,source_ids:calendarSources.map(source=>source.id),
+      application_navigation:'Service calendars',installed_command:'customer-service-calendar',
+      typed_export:'./merchant/customer-closing/service-schedules',
+      original_native_operation:workflow.native_receiving_operation,
+      native_receiving_entrypoint:workflow.native_receiving_entrypoint,
+      native_receiving_source_commit:customerServiceCalendarsCommit,
+      native_receiving_guide:REPOSITORY+'blob/'+customerServiceCalendarsCommit+'/'+ROOT+'ACCOUNTING_STATEMENT_SERVICE_CALENDARS.md',
+      stages:['Save the original customer and purchased-pass calendar edition',
+        'Read the UTC period window and review actual opening and closing captures',
+        'Retain the complete chosen plan before preparing its original cycle',
+        'Recover the original save or preparation while preserving newer local drafts',
+        'Receive all calendar editions and the original saved cycle archive',
+        'Refresh corrected or withdrawn statement history and reopen after restart'],
+      receiving_meaning:'The original period-only prepared cycle and the native period/cumulative issuing cycle keep separate provenance in the complete customer programme.',
+    };
+    workflow.stages.splice(3,0,'Saved recurring calendar and reviewed actual capture boundaries',
+      'Original settings/preparation recovery and complete calendar receiving');
+  }
   index.customer_closing=workflow;
   index.narrative_source={...index.narrative_source,customer_closing_product_commit:customerClosingCommit,
-    customer_closing_application_operation:CUSTOMER_CLOSING_OPERATION};
+    customer_closing_application_operation:CUSTOMER_CLOSING_OPERATION,
+    ...(customerServiceCalendarsCommit?{customer_service_calendars_product_commit:customerServiceCalendarsCommit}:{})};
   return {sourceIndex:index,customerClosing:workflow,customerClosingSources:sources};
 }
 function withoutPrevious(html){
@@ -85,6 +125,18 @@ function withoutPrevious(html){
     html=html.slice(0,start)+html.slice(after);
   }
   return html.replace(/<a data-grant-customer-closing-jump="v1"[^>]*>[\s\S]*?<\/a>/g,'');
+}
+function calendarOpening(workflow){
+  const calendar=workflow.service_calendars;if(!calendar)return '';
+  need(/^[a-f0-9]{40}$/.test(calendar.source_commit||''),'Retain the selected service-calendar source identity.');
+  const guide=REPOSITORY+'blob/'+calendar.source_commit+'/'+ROOT+'ACCOUNTING_STATEMENT_SERVICE_CALENDARS.md';
+  return '<section aria-labelledby="review-customer-calendar-title"><h4 id="review-customer-calendar-title">Continue recurring service calendars</h4>'+
+    '<p>In the same Customer statements application, open <strong>Service calendars</strong>. Save the original customer and purchased pass with its weekly or monthly cadence, first opening date, due interval and optional final service date. Saved editions retain that original assignment.</p>'+
+    '<ol class="grant-entry-steps"><li><strong>Review the period.</strong> Read the service window, choose actual native opening and closing captures, and explicitly accept any difference from the scheduled boundaries. Open the complete native usage preview.</li>'+
+    '<li><strong>Prepare and recover.</strong> Save the complete chosen plan and prepare its original cycle. Recover an interrupted settings save or preparation through its original request. Later edits in the browser remain available.</li>'+
+    '<li><strong>Issue and continue.</strong> Open the saved cycle and use its existing issue or resume action. Refresh the calendar to see current linked correction and withdrawal history.</li>'+
+    '<li><strong>Receive the whole workspace.</strong> Download the whole-window HTML/CSV and complete calendar JSON. Receive its settings and original plan history together with the saved cycle archive, then reopen that original cycle after restart.</li></ol>'+
+    '<p>The terminal command <code>customer-service-calendar</code> uses the same running workbench. <a href="'+escape(guide)+'" target="_blank" rel="noopener noreferrer">Complete calendar, recovery and receiving guide</a></p></section>';
 }
 function opening(workflow){
   const base=REPOSITORY+'blob/'+workflow.source_commit+'/'+ROOT;
@@ -109,6 +161,7 @@ function opening(workflow){
     '<li><strong>Hand over.</strong> Download the grouped customer packet, extract it and open index.html. Use the complete private cycle archive to continue the operator’s saved work.</li></ol>'+
     '<p>'+link('ACCOUNTING_STATEMENT_SERVICE_PLANNER.md','Full service-period planning guide')+' · '+
     link('examples/CUSTOMER_CLOSING_WORKBENCH.md','Original native customer programme')+'</p></section></div>'+
+    calendarOpening(workflow)+
     '<p><a href="'+escape(CHAPTER)+'">Read the complete customer workflow and its funded installation role</a></p>'+
     '<p class="grant-entry-caption">The original retained purchase establishes its payment and returned output. This customer service continuation opens its own original pass, captures and statements. Purchase amounts, service activity and customer invoice records keep their original meaning.</p>'+
     '</section>\n'+END+'\n';

@@ -28,7 +28,7 @@ export interface FredDdpReceivingSummary {
 }
 export interface FredDdpReceiving {
   schema:'stellar-forge.fred-ddp-receiving.v1';id:string;planId:string;packageId:string;packageSha256:string;crosswalkId:string;crosswalkSha256:string;
-  source:{sourceMode:'DDP_CURRENT_PUBLISHED';package:FredDdpFileDescriptor;crosswalk:FredDdpFileDescriptor;fredAsOf:string;bookmark:string|null;note:string};
+  source:{sourceMode:'DDP_CURRENT_PUBLISHED';targetSourceMode?:'ALFRED_VINTAGE';package:FredDdpFileDescriptor;crosswalk:FredDdpFileDescriptor;fredAsOf:string;bookmark:string|null;note:string};
   captures:Array<{id:string;captureSha256:string;selection:FredDdpFredSelection}>;
   meanings:FredDdpReceivingMeaning[];rows:FredDdpReceivingRow[];summary:FredDdpReceivingSummary;
 }

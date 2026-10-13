@@ -14,6 +14,16 @@ let currentStage='START',browserServer,browser,listener,output,page;
 const stages=[],captures=[],downloads=[],errors=[];
 async function write(name,body){await fs.mkdir(path.dirname(path.join(output,name)),{recursive:true});await fs.writeFile(path.join(output,name),body,{mode:0o600});return{name,bytes:Buffer.byteLength(body),sha256:sha(body)};}
 async function stage(name,detail={}){currentStage=name;stages.push({name,at:new Date().toISOString(),...detail});await write('progress.json',json({operation:'SCF-GRANT-CURRENT-REVIEW-81CF-20261012',stages}));console.log('SCF_STAGE '+name);}
+async function nativeProcessIdentity(pid){
+  const base='/proc/'+pid;
+  const [raw,boot,namespace]=await Promise.all([
+    fs.readFile(base+'/stat','utf8'),fs.readFile('/proc/sys/kernel/random/boot_id','utf8'),fs.readlink(base+'/ns/pid')
+  ]);
+  const fields=raw.slice(raw.lastIndexOf(')')+2).trim().split(/\s+/);
+  return{pid,host_id:require('node:os').hostname(),boot_id:boot.trim(),pid_namespace:namespace,
+    start_ticks:fields[19],parent_pid:Number(fields[1]),process_group_id:Number(fields[2]),
+    session_id:Number(fields[3]),process_state:fields[0]};
+}
 async function settle(p,kind){
   const root=kind==='review'?'#review-workspace':'#workspace-root',error=kind==='review'?'#review-error':'#error';
   await p.waitForFunction(selector=>document.querySelector(selector)&&!document.querySelector(selector).inert,root,{timeout:30000});
@@ -85,6 +95,10 @@ async function stop(){
   listener=await startGrantApplication({port:cfg.port||0});
   const origin=new URL(listener.url).origin;
   browserServer=await chromium.launchServer({headless:true,executablePath:cfg.chromium,args:['--no-sandbox','--disable-dev-shm-usage'],env:{...process.env,TMPDIR:process.env.TMPDIR}});
+  const launchedBrowser=browserServer.process();need(launchedBrowser&&launchedBrowser.pid,'Retain the actual launched browser process');
+  await stage('browser-process-started',{owned_processes:[{
+    owner:await nativeProcessIdentity(process.pid),process:await nativeProcessIdentity(launchedBrowser.pid)
+  }]});
   browser=await chromium.connect(browserServer.wsEndpoint());
   const context=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true});
   page=await context.newPage();

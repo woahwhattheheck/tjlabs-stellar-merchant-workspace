@@ -1,0 +1,3164 @@
+{
+  "schema": "commons.research-source-table.v1",
+  "operation_id": "SPC-ANNUAL-PLANNING-SOURCE-675D-20261013",
+  "document": {
+    "title": "SPC Budget - Financial year ending 31 December 2026",
+    "publisher": "Pacific Community (SPC)",
+    "source_url": "https://www.spc.int/DigitalLibrary/Doc/SPC/Annual_Reports/Green_Book/English/39006_SPC_BUDGET_FINANCIAL_YEAR_ENDING_31_DECEMBER_2026_1.pdf?attachment=true",
+    "collection_url": "https://www.spc.int/Digitallibrary/SPC/Collection/CRGA_55",
+    "section": "Expenditure by Programme (EUR) – 2025R / 2026",
+    "table_identifier": "e1",
+    "source_page": null,
+    "publication_date": null
+  },
+  "capture": {
+    "route": "Primary document's complete indexed HTML table returned by web search",
+    "query": "site:spc.int \"12,316,059\"",
+    "retrieval_ref": "turn181search0",
+    "complete_table_closing_tag": true,
+    "pdf_direct_open": {
+      "result": "HTTP 403"
+    },
+    "original_html_sha256": "2fbca6df80b3b1ebec11d7e1206ca2cd2391043801f77d90b268515f8cbcd52e",
+    "recorded_at": "2026-10-13T04:46:57Z",
+    "retrieval_window": {
+      "not_before": "2026-10-13T04:41:44Z",
+      "not_after": "2026-10-13T04:46:57Z"
+    }
+  },
+  "semantics": {
+    "period_labels": [
+      "2025R",
+      "2026"
+    ],
+    "currency": "EUR",
+    "published_measure": "budget expenditure",
+    "planning_classification": "forecast",
+    "blank_cell": "Preserved as null with source_cell_blank=true; no imputed zero.",
+    "totals": "Chapter, programme and income totals remain separate source rows and must not be summed with member programme rows.",
+    "revision": "2025R remains the publisher's exact revised-year label; 2026 is a separate published annual planning edition.",
+    "time_allocation": "No monthly distribution, future-year extension or transaction actuals are supplied.",
+    "source_names": "Original published spelling, including Agriculture Sytems Programme, is retained."
+  },
+  "counts": {
+    "table_rows": 43,
+    "programme_rows": 21,
+    "amount_rows": 31,
+    "long_amount_cells": 248,
+    "blank_amount_cells": 33
+  },
+  "rows": [
+    {
+      "source_key": "spc-budget-2026-table-e1-row-001",
+      "source_row_index": 1,
+      "kind": "header",
+      "published_label": "",
+      "chapter": null,
+      "original_cells": [
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "2025R",
+          "colspan": 4
+        },
+        {
+          "text": "2026",
+          "colspan": 4
+        }
+      ],
+      "amounts": null,
+      "published_measure": null
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-002",
+      "source_row_index": 2,
+      "kind": "header",
+      "published_label": "",
+      "chapter": null,
+      "original_cells": [
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "Unrestricted (Core)",
+          "colspan": 1
+        },
+        {
+          "text": "Restricted Programme",
+          "colspan": 1
+        },
+        {
+          "text": "Restricted Project",
+          "colspan": 1
+        },
+        {
+          "text": "Total",
+          "colspan": 1
+        },
+        {
+          "text": "Unrestricted (Core)",
+          "colspan": 1
+        },
+        {
+          "text": "Restricted Programme",
+          "colspan": 1
+        },
+        {
+          "text": "Restricted Project",
+          "colspan": 1
+        },
+        {
+          "text": "Total",
+          "colspan": 1
+        }
+      ],
+      "amounts": null,
+      "published_measure": null
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-003",
+      "source_row_index": 3,
+      "kind": "income_total",
+      "published_label": "TOTAL INCOME",
+      "chapter": null,
+      "original_cells": [
+        {
+          "text": "TOTAL INCOME",
+          "colspan": 1
+        },
+        {
+          "text": "22,225,584",
+          "colspan": 1
+        },
+        {
+          "text": "23,231,531",
+          "colspan": 1
+        },
+        {
+          "text": "89,181,615",
+          "colspan": 1
+        },
+        {
+          "text": "134,638,730",
+          "colspan": 1
+        },
+        {
+          "text": "24,143,366",
+          "colspan": 1
+        },
+        {
+          "text": "19,257,183",
+          "colspan": 1
+        },
+        {
+          "text": "91,976,734",
+          "colspan": 1
+        },
+        {
+          "text": "135,377,283",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "24,143,366",
+            "amount_decimal": "24143366",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "19,257,183",
+            "amount_decimal": "19257183",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "91,976,734",
+            "amount_decimal": "91976734",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "135,377,283",
+            "amount_decimal": "135377283",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "22,225,584",
+            "amount_decimal": "22225584",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "23,231,531",
+            "amount_decimal": "23231531",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "89,181,615",
+            "amount_decimal": "89181615",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "134,638,730",
+            "amount_decimal": "134638730",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_income"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-004",
+      "source_row_index": 4,
+      "kind": "section_heading",
+      "published_label": "EXPENDITURE BY PROGRAMME",
+      "chapter": null,
+      "original_cells": [
+        {
+          "text": "EXPENDITURE BY PROGRAMME",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 8
+        }
+      ],
+      "amounts": null,
+      "published_measure": null
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-005",
+      "source_row_index": 5,
+      "kind": "section_heading",
+      "published_label": "PROGRAMME ACTIVITIES",
+      "chapter": null,
+      "original_cells": [
+        {
+          "text": "PROGRAMME ACTIVITIES",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 8
+        }
+      ],
+      "amounts": null,
+      "published_measure": null
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-006",
+      "source_row_index": 6,
+      "kind": "chapter_heading",
+      "published_label": "CHAPTER 1 – EDUCATIONAL QUALITY AND ASSESSMENT PROGRAMME (EQAP)",
+      "chapter": "CHAPTER 1 – EDUCATIONAL QUALITY AND ASSESSMENT PROGRAMME (EQAP)",
+      "original_cells": [
+        {
+          "text": "CHAPTER 1 – EDUCATIONAL QUALITY AND ASSESSMENT PROGRAMME (EQAP)",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 8
+        }
+      ],
+      "amounts": null,
+      "published_measure": null
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-007",
+      "source_row_index": 7,
+      "kind": "programme",
+      "published_label": "Educational Quality and Assessment Programme",
+      "chapter": "CHAPTER 1 – EDUCATIONAL QUALITY AND ASSESSMENT PROGRAMME (EQAP)",
+      "original_cells": [
+        {
+          "text": "Educational Quality and Assessment Programme",
+          "colspan": 1
+        },
+        {
+          "text": "432,404",
+          "colspan": 1
+        },
+        {
+          "text": "6,456,059",
+          "colspan": 1
+        },
+        {
+          "text": "1,579,312",
+          "colspan": 1
+        },
+        {
+          "text": "8,467,775",
+          "colspan": 1
+        },
+        {
+          "text": "439,613",
+          "colspan": 1
+        },
+        {
+          "text": "4,357,932",
+          "colspan": 1
+        },
+        {
+          "text": "1,013,452",
+          "colspan": 1
+        },
+        {
+          "text": "5,810,997",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "439,613",
+            "amount_decimal": "439613",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "4,357,932",
+            "amount_decimal": "4357932",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "1,013,452",
+            "amount_decimal": "1013452",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "5,810,997",
+            "amount_decimal": "5810997",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "432,404",
+            "amount_decimal": "432404",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "6,456,059",
+            "amount_decimal": "6456059",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "1,579,312",
+            "amount_decimal": "1579312",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "8,467,775",
+            "amount_decimal": "8467775",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-008",
+      "source_row_index": 8,
+      "kind": "chapter_total",
+      "published_label": "TOTAL CHAPTER 1",
+      "chapter": "CHAPTER 1 – EDUCATIONAL QUALITY AND ASSESSMENT PROGRAMME (EQAP)",
+      "original_cells": [
+        {
+          "text": "TOTAL CHAPTER 1",
+          "colspan": 1
+        },
+        {
+          "text": "432,404",
+          "colspan": 1
+        },
+        {
+          "text": "6,456,059",
+          "colspan": 1
+        },
+        {
+          "text": "1,579,312",
+          "colspan": 1
+        },
+        {
+          "text": "8,467,775",
+          "colspan": 1
+        },
+        {
+          "text": "439,613",
+          "colspan": 1
+        },
+        {
+          "text": "4,357,932",
+          "colspan": 1
+        },
+        {
+          "text": "1,013,452",
+          "colspan": 1
+        },
+        {
+          "text": "5,810,997",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "439,613",
+            "amount_decimal": "439613",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "4,357,932",
+            "amount_decimal": "4357932",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "1,013,452",
+            "amount_decimal": "1013452",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "5,810,997",
+            "amount_decimal": "5810997",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "432,404",
+            "amount_decimal": "432404",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "6,456,059",
+            "amount_decimal": "6456059",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "1,579,312",
+            "amount_decimal": "1579312",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "8,467,775",
+            "amount_decimal": "8467775",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-009",
+      "source_row_index": 9,
+      "kind": "chapter_heading",
+      "published_label": "CHAPTER 2 – FISHERIES, AQUACULTURE AND MARINE ECOSYSTEMS (FAME)",
+      "chapter": "CHAPTER 2 – FISHERIES, AQUACULTURE AND MARINE ECOSYSTEMS (FAME)",
+      "original_cells": [
+        {
+          "text": "CHAPTER 2 – FISHERIES, AQUACULTURE AND MARINE ECOSYSTEMS (FAME)",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 8
+        }
+      ],
+      "amounts": null,
+      "published_measure": null
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-010",
+      "source_row_index": 10,
+      "kind": "programme",
+      "published_label": "Director’s Office",
+      "chapter": "CHAPTER 2 – FISHERIES, AQUACULTURE AND MARINE ECOSYSTEMS (FAME)",
+      "original_cells": [
+        {
+          "text": "Director’s Office",
+          "colspan": 1
+        },
+        {
+          "text": "1,177,287",
+          "colspan": 1
+        },
+        {
+          "text": "1,317,941",
+          "colspan": 1
+        },
+        {
+          "text": "4,936,866",
+          "colspan": 1
+        },
+        {
+          "text": "7,432,094",
+          "colspan": 1
+        },
+        {
+          "text": "1,313,265",
+          "colspan": 1
+        },
+        {
+          "text": "971,443",
+          "colspan": 1
+        },
+        {
+          "text": "7,510,390",
+          "colspan": 1
+        },
+        {
+          "text": "9,795,098",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "1,313,265",
+            "amount_decimal": "1313265",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "971,443",
+            "amount_decimal": "971443",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "7,510,390",
+            "amount_decimal": "7510390",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "9,795,098",
+            "amount_decimal": "9795098",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "1,177,287",
+            "amount_decimal": "1177287",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "1,317,941",
+            "amount_decimal": "1317941",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "4,936,866",
+            "amount_decimal": "4936866",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "7,432,094",
+            "amount_decimal": "7432094",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-011",
+      "source_row_index": 11,
+      "kind": "programme",
+      "published_label": "Coastal Fisheries and Aquaculture Programme",
+      "chapter": "CHAPTER 2 – FISHERIES, AQUACULTURE AND MARINE ECOSYSTEMS (FAME)",
+      "original_cells": [
+        {
+          "text": "Coastal Fisheries and Aquaculture Programme",
+          "colspan": 1
+        },
+        {
+          "text": "989,514",
+          "colspan": 1
+        },
+        {
+          "text": "545,865",
+          "colspan": 1
+        },
+        {
+          "text": "4,671,552",
+          "colspan": 1
+        },
+        {
+          "text": "6,206,931",
+          "colspan": 1
+        },
+        {
+          "text": "923,778",
+          "colspan": 1
+        },
+        {
+          "text": "747,256",
+          "colspan": 1
+        },
+        {
+          "text": "4,098,806",
+          "colspan": 1
+        },
+        {
+          "text": "5,769,840",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "923,778",
+            "amount_decimal": "923778",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "747,256",
+            "amount_decimal": "747256",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "4,098,806",
+            "amount_decimal": "4098806",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "5,769,840",
+            "amount_decimal": "5769840",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "989,514",
+            "amount_decimal": "989514",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "545,865",
+            "amount_decimal": "545865",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "4,671,552",
+            "amount_decimal": "4671552",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "6,206,931",
+            "amount_decimal": "6206931",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-012",
+      "source_row_index": 12,
+      "kind": "programme",
+      "published_label": "Oceanic Fisheries Programme",
+      "chapter": "CHAPTER 2 – FISHERIES, AQUACULTURE AND MARINE ECOSYSTEMS (FAME)",
+      "original_cells": [
+        {
+          "text": "Oceanic Fisheries Programme",
+          "colspan": 1
+        },
+        {
+          "text": "1,032,932",
+          "colspan": 1
+        },
+        {
+          "text": "1,034,519",
+          "colspan": 1
+        },
+        {
+          "text": "13,066,779",
+          "colspan": 1
+        },
+        {
+          "text": "15,134,230",
+          "colspan": 1
+        },
+        {
+          "text": "931,126",
+          "colspan": 1
+        },
+        {
+          "text": "622,532",
+          "colspan": 1
+        },
+        {
+          "text": "15,918,925",
+          "colspan": 1
+        },
+        {
+          "text": "17,472,583",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "931,126",
+            "amount_decimal": "931126",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "622,532",
+            "amount_decimal": "622532",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "15,918,925",
+            "amount_decimal": "15918925",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "17,472,583",
+            "amount_decimal": "17472583",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "1,032,932",
+            "amount_decimal": "1032932",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "1,034,519",
+            "amount_decimal": "1034519",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "13,066,779",
+            "amount_decimal": "13066779",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "15,134,230",
+            "amount_decimal": "15134230",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-013",
+      "source_row_index": 13,
+      "kind": "chapter_total",
+      "published_label": "TOTAL CHAPTER 2",
+      "chapter": "CHAPTER 2 – FISHERIES, AQUACULTURE AND MARINE ECOSYSTEMS (FAME)",
+      "original_cells": [
+        {
+          "text": "TOTAL CHAPTER 2",
+          "colspan": 1
+        },
+        {
+          "text": "3,199,733",
+          "colspan": 1
+        },
+        {
+          "text": "2,898,325",
+          "colspan": 1
+        },
+        {
+          "text": "22,675,197",
+          "colspan": 1
+        },
+        {
+          "text": "28,773,255",
+          "colspan": 1
+        },
+        {
+          "text": "3,168,169",
+          "colspan": 1
+        },
+        {
+          "text": "2,341,231",
+          "colspan": 1
+        },
+        {
+          "text": "27,528,121",
+          "colspan": 1
+        },
+        {
+          "text": "33,037,521",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "3,168,169",
+            "amount_decimal": "3168169",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "2,341,231",
+            "amount_decimal": "2341231",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "27,528,121",
+            "amount_decimal": "27528121",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "33,037,521",
+            "amount_decimal": "33037521",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "3,199,733",
+            "amount_decimal": "3199733",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "2,898,325",
+            "amount_decimal": "2898325",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "22,675,197",
+            "amount_decimal": "22675197",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "28,773,255",
+            "amount_decimal": "28773255",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-014",
+      "source_row_index": 14,
+      "kind": "chapter_heading",
+      "published_label": "CHAPTER 3 – GEOSCIENCE, ENERGY AND MARITIME (GEM) DIVISION",
+      "chapter": "CHAPTER 3 – GEOSCIENCE, ENERGY AND MARITIME (GEM) DIVISION",
+      "original_cells": [
+        {
+          "text": "CHAPTER 3 – GEOSCIENCE, ENERGY AND MARITIME (GEM) DIVISION",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 8
+        }
+      ],
+      "amounts": null,
+      "published_measure": null
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-015",
+      "source_row_index": 15,
+      "kind": "programme",
+      "published_label": "Director’s Office",
+      "chapter": "CHAPTER 3 – GEOSCIENCE, ENERGY AND MARITIME (GEM) DIVISION",
+      "original_cells": [
+        {
+          "text": "Director’s Office",
+          "colspan": 1
+        },
+        {
+          "text": "1,412,783",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "1,412,783",
+          "colspan": 1
+        },
+        {
+          "text": "1,437,784",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "1,437,784",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "1,437,784",
+            "amount_decimal": "1437784",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Project": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Total": {
+            "source_text": "1,437,784",
+            "amount_decimal": "1437784",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "1,412,783",
+            "amount_decimal": "1412783",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Project": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Total": {
+            "source_text": "1,412,783",
+            "amount_decimal": "1412783",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-016",
+      "source_row_index": 16,
+      "kind": "programme",
+      "published_label": "Disaster and Community Resilience Programme",
+      "chapter": "CHAPTER 3 – GEOSCIENCE, ENERGY AND MARITIME (GEM) DIVISION",
+      "original_cells": [
+        {
+          "text": "Disaster and Community Resilience Programme",
+          "colspan": 1
+        },
+        {
+          "text": "489,500",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "12,365,702",
+          "colspan": 1
+        },
+        {
+          "text": "12,855,202",
+          "colspan": 1
+        },
+        {
+          "text": "489,500",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "13,023,612",
+          "colspan": 1
+        },
+        {
+          "text": "13,513,112",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "489,500",
+            "amount_decimal": "489500",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Project": {
+            "source_text": "13,023,612",
+            "amount_decimal": "13023612",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "13,513,112",
+            "amount_decimal": "13513112",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "489,500",
+            "amount_decimal": "489500",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Project": {
+            "source_text": "12,365,702",
+            "amount_decimal": "12365702",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "12,855,202",
+            "amount_decimal": "12855202",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-017",
+      "source_row_index": 17,
+      "kind": "programme",
+      "published_label": "Oceans and Maritime Programme",
+      "chapter": "CHAPTER 3 – GEOSCIENCE, ENERGY AND MARITIME (GEM) DIVISION",
+      "original_cells": [
+        {
+          "text": "Oceans and Maritime Programme",
+          "colspan": 1
+        },
+        {
+          "text": "275,396",
+          "colspan": 1
+        },
+        {
+          "text": "1,626,493",
+          "colspan": 1
+        },
+        {
+          "text": "7,672,730",
+          "colspan": 1
+        },
+        {
+          "text": "9,574,619",
+          "colspan": 1
+        },
+        {
+          "text": "310,268",
+          "colspan": 1
+        },
+        {
+          "text": "1,518,775",
+          "colspan": 1
+        },
+        {
+          "text": "5,150,837",
+          "colspan": 1
+        },
+        {
+          "text": "6,979,880",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "310,268",
+            "amount_decimal": "310268",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "1,518,775",
+            "amount_decimal": "1518775",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "5,150,837",
+            "amount_decimal": "5150837",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "6,979,880",
+            "amount_decimal": "6979880",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "275,396",
+            "amount_decimal": "275396",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "1,626,493",
+            "amount_decimal": "1626493",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "7,672,730",
+            "amount_decimal": "7672730",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "9,574,619",
+            "amount_decimal": "9574619",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-018",
+      "source_row_index": 18,
+      "kind": "programme",
+      "published_label": "Georesources and Energy Programme",
+      "chapter": "CHAPTER 3 – GEOSCIENCE, ENERGY AND MARITIME (GEM) DIVISION",
+      "original_cells": [
+        {
+          "text": "Georesources and Energy Programme",
+          "colspan": 1
+        },
+        {
+          "text": "344,600",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "6,348,612",
+          "colspan": 1
+        },
+        {
+          "text": "6,693,212",
+          "colspan": 1
+        },
+        {
+          "text": "372,857",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "7,129,468",
+          "colspan": 1
+        },
+        {
+          "text": "7,502,325",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "372,857",
+            "amount_decimal": "372857",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Project": {
+            "source_text": "7,129,468",
+            "amount_decimal": "7129468",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "7,502,325",
+            "amount_decimal": "7502325",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "344,600",
+            "amount_decimal": "344600",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Project": {
+            "source_text": "6,348,612",
+            "amount_decimal": "6348612",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "6,693,212",
+            "amount_decimal": "6693212",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-019",
+      "source_row_index": 19,
+      "kind": "chapter_total",
+      "published_label": "TOTAL CHAPTER 3",
+      "chapter": "CHAPTER 3 – GEOSCIENCE, ENERGY AND MARITIME (GEM) DIVISION",
+      "original_cells": [
+        {
+          "text": "TOTAL CHAPTER 3",
+          "colspan": 1
+        },
+        {
+          "text": "2,522,279",
+          "colspan": 1
+        },
+        {
+          "text": "1,626,493",
+          "colspan": 1
+        },
+        {
+          "text": "26,387,044",
+          "colspan": 1
+        },
+        {
+          "text": "30,535,816",
+          "colspan": 1
+        },
+        {
+          "text": "2,610,409",
+          "colspan": 1
+        },
+        {
+          "text": "1,518,775",
+          "colspan": 1
+        },
+        {
+          "text": "25,303,917",
+          "colspan": 1
+        },
+        {
+          "text": "29,433,101",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "2,610,409",
+            "amount_decimal": "2610409",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "1,518,775",
+            "amount_decimal": "1518775",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "25,303,917",
+            "amount_decimal": "25303917",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "29,433,101",
+            "amount_decimal": "29433101",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "2,522,279",
+            "amount_decimal": "2522279",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "1,626,493",
+            "amount_decimal": "1626493",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "26,387,044",
+            "amount_decimal": "26387044",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "30,535,816",
+            "amount_decimal": "30535816",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-020",
+      "source_row_index": 20,
+      "kind": "chapter_heading",
+      "published_label": "CHAPTER 4 – LAND RESOURCES DIVISION (LRD)",
+      "chapter": "CHAPTER 4 – LAND RESOURCES DIVISION (LRD)",
+      "original_cells": [
+        {
+          "text": "CHAPTER 4 – LAND RESOURCES DIVISION (LRD)",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 8
+        }
+      ],
+      "amounts": null,
+      "published_measure": null
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-021",
+      "source_row_index": 21,
+      "kind": "programme",
+      "published_label": "Director’s Office",
+      "chapter": "CHAPTER 4 – LAND RESOURCES DIVISION (LRD)",
+      "original_cells": [
+        {
+          "text": "Director’s Office",
+          "colspan": 1
+        },
+        {
+          "text": "2,471,002",
+          "colspan": 1
+        },
+        {
+          "text": "203,603",
+          "colspan": 1
+        },
+        {
+          "text": "467,744",
+          "colspan": 1
+        },
+        {
+          "text": "3,142,349",
+          "colspan": 1
+        },
+        {
+          "text": "2,348,642",
+          "colspan": 1
+        },
+        {
+          "text": "127,131",
+          "colspan": 1
+        },
+        {
+          "text": "335,839",
+          "colspan": 1
+        },
+        {
+          "text": "2,811,612",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "2,348,642",
+            "amount_decimal": "2348642",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "127,131",
+            "amount_decimal": "127131",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "335,839",
+            "amount_decimal": "335839",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "2,811,612",
+            "amount_decimal": "2811612",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "2,471,002",
+            "amount_decimal": "2471002",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "203,603",
+            "amount_decimal": "203603",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "467,744",
+            "amount_decimal": "467744",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "3,142,349",
+            "amount_decimal": "3142349",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-022",
+      "source_row_index": 22,
+      "kind": "programme",
+      "published_label": "Genetic Resources Programme",
+      "chapter": "CHAPTER 4 – LAND RESOURCES DIVISION (LRD)",
+      "original_cells": [
+        {
+          "text": "Genetic Resources Programme",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "1,449,479",
+          "colspan": 1
+        },
+        {
+          "text": "1,449,479",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "1,245,855",
+          "colspan": 1
+        },
+        {
+          "text": "1,245,855",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Programme": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Project": {
+            "source_text": "1,245,855",
+            "amount_decimal": "1245855",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "1,245,855",
+            "amount_decimal": "1245855",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Programme": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Project": {
+            "source_text": "1,449,479",
+            "amount_decimal": "1449479",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "1,449,479",
+            "amount_decimal": "1449479",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-023",
+      "source_row_index": 23,
+      "kind": "programme",
+      "published_label": "Natural Resources Management Programme",
+      "chapter": "CHAPTER 4 – LAND RESOURCES DIVISION (LRD)",
+      "original_cells": [
+        {
+          "text": "Natural Resources Management Programme",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "3,986,691",
+          "colspan": 1
+        },
+        {
+          "text": "3,986,691",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "3,907,376",
+          "colspan": 1
+        },
+        {
+          "text": "3,907,376",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Programme": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Project": {
+            "source_text": "3,907,376",
+            "amount_decimal": "3907376",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "3,907,376",
+            "amount_decimal": "3907376",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Programme": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Project": {
+            "source_text": "3,986,691",
+            "amount_decimal": "3986691",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "3,986,691",
+            "amount_decimal": "3986691",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-024",
+      "source_row_index": 24,
+      "kind": "programme",
+      "published_label": "Agriculture Sytems Programme",
+      "chapter": "CHAPTER 4 – LAND RESOURCES DIVISION (LRD)",
+      "original_cells": [
+        {
+          "text": "Agriculture Sytems Programme",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "954,977",
+          "colspan": 1
+        },
+        {
+          "text": "954,977",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "1,960,191",
+          "colspan": 1
+        },
+        {
+          "text": "1,960,191",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Programme": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Project": {
+            "source_text": "1,960,191",
+            "amount_decimal": "1960191",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "1,960,191",
+            "amount_decimal": "1960191",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Programme": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Project": {
+            "source_text": "954,977",
+            "amount_decimal": "954977",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "954,977",
+            "amount_decimal": "954977",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-025",
+      "source_row_index": 25,
+      "kind": "chapter_total",
+      "published_label": "TOTAL CHAPTER 4",
+      "chapter": "CHAPTER 4 – LAND RESOURCES DIVISION (LRD)",
+      "original_cells": [
+        {
+          "text": "TOTAL CHAPTER 4",
+          "colspan": 1
+        },
+        {
+          "text": "2,471,002",
+          "colspan": 1
+        },
+        {
+          "text": "203,603",
+          "colspan": 1
+        },
+        {
+          "text": "6,858,891",
+          "colspan": 1
+        },
+        {
+          "text": "9,533,496",
+          "colspan": 1
+        },
+        {
+          "text": "2,348,642",
+          "colspan": 1
+        },
+        {
+          "text": "127,131",
+          "colspan": 1
+        },
+        {
+          "text": "7,449,261",
+          "colspan": 1
+        },
+        {
+          "text": "9,925,034",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "2,348,642",
+            "amount_decimal": "2348642",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "127,131",
+            "amount_decimal": "127131",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "7,449,261",
+            "amount_decimal": "7449261",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "9,925,034",
+            "amount_decimal": "9925034",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "2,471,002",
+            "amount_decimal": "2471002",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "203,603",
+            "amount_decimal": "203603",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "6,858,891",
+            "amount_decimal": "6858891",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "9,533,496",
+            "amount_decimal": "9533496",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-026",
+      "source_row_index": 26,
+      "kind": "chapter_heading",
+      "published_label": "CHAPTER 5 – PUBLIC HEALTH DIVISION (PHD)",
+      "chapter": "CHAPTER 5 – PUBLIC HEALTH DIVISION (PHD)",
+      "original_cells": [
+        {
+          "text": "CHAPTER 5 – PUBLIC HEALTH DIVISION (PHD)",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 8
+        }
+      ],
+      "amounts": null,
+      "published_measure": null
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-027",
+      "source_row_index": 27,
+      "kind": "programme",
+      "published_label": "Director’s Office",
+      "chapter": "CHAPTER 5 – PUBLIC HEALTH DIVISION (PHD)",
+      "original_cells": [
+        {
+          "text": "Director’s Office",
+          "colspan": 1
+        },
+        {
+          "text": "844,635",
+          "colspan": 1
+        },
+        {
+          "text": "1,126,434",
+          "colspan": 1
+        },
+        {
+          "text": "1,726,182",
+          "colspan": 1
+        },
+        {
+          "text": "3,697,251",
+          "colspan": 1
+        },
+        {
+          "text": "1,223,950",
+          "colspan": 1
+        },
+        {
+          "text": "1,099,400",
+          "colspan": 1
+        },
+        {
+          "text": "1,299,577",
+          "colspan": 1
+        },
+        {
+          "text": "3,622,927",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "1,223,950",
+            "amount_decimal": "1223950",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "1,099,400",
+            "amount_decimal": "1099400",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "1,299,577",
+            "amount_decimal": "1299577",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "3,622,927",
+            "amount_decimal": "3622927",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "844,635",
+            "amount_decimal": "844635",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "1,126,434",
+            "amount_decimal": "1126434",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "1,726,182",
+            "amount_decimal": "1726182",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "3,697,251",
+            "amount_decimal": "3697251",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-028",
+      "source_row_index": 28,
+      "kind": "programme",
+      "published_label": "Surveillance, Preparedness and Response Programme",
+      "chapter": "CHAPTER 5 – PUBLIC HEALTH DIVISION (PHD)",
+      "original_cells": [
+        {
+          "text": "Surveillance, Preparedness and Response Programme",
+          "colspan": 1
+        },
+        {
+          "text": "62,509",
+          "colspan": 1
+        },
+        {
+          "text": "385,993",
+          "colspan": 1
+        },
+        {
+          "text": "653,716",
+          "colspan": 1
+        },
+        {
+          "text": "1,102,218",
+          "colspan": 1
+        },
+        {
+          "text": "49,871",
+          "colspan": 1
+        },
+        {
+          "text": "463,605",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "513,476",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "49,871",
+            "amount_decimal": "49871",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "463,605",
+            "amount_decimal": "463605",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Total": {
+            "source_text": "513,476",
+            "amount_decimal": "513476",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "62,509",
+            "amount_decimal": "62509",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "385,993",
+            "amount_decimal": "385993",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "653,716",
+            "amount_decimal": "653716",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "1,102,218",
+            "amount_decimal": "1102218",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-029",
+      "source_row_index": 29,
+      "kind": "programme",
+      "published_label": "Non-Communicable Diseases Prevention and Control Programme",
+      "chapter": "CHAPTER 5 – PUBLIC HEALTH DIVISION (PHD)",
+      "original_cells": [
+        {
+          "text": "Non-Communicable Diseases Prevention and Control Programme",
+          "colspan": 1
+        },
+        {
+          "text": "47,586",
+          "colspan": 1
+        },
+        {
+          "text": "498,294",
+          "colspan": 1
+        },
+        {
+          "text": "810,971",
+          "colspan": 1
+        },
+        {
+          "text": "1,356,851",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "477,973",
+          "colspan": 1
+        },
+        {
+          "text": "550,000",
+          "colspan": 1
+        },
+        {
+          "text": "1,027,973",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Programme": {
+            "source_text": "477,973",
+            "amount_decimal": "477973",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "550,000",
+            "amount_decimal": "550000",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "1,027,973",
+            "amount_decimal": "1027973",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "47,586",
+            "amount_decimal": "47586",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "498,294",
+            "amount_decimal": "498294",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "810,971",
+            "amount_decimal": "810971",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "1,356,851",
+            "amount_decimal": "1356851",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-030",
+      "source_row_index": 30,
+      "kind": "programme",
+      "published_label": "Clinical Services Programme",
+      "chapter": "CHAPTER 5 – PUBLIC HEALTH DIVISION (PHD)",
+      "original_cells": [
+        {
+          "text": "Clinical Services Programme",
+          "colspan": 1
+        },
+        {
+          "text": "319,092",
+          "colspan": 1
+        },
+        {
+          "text": "393,441",
+          "colspan": 1
+        },
+        {
+          "text": "1,759,665",
+          "colspan": 1
+        },
+        {
+          "text": "2,472,198",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "344,550",
+          "colspan": 1
+        },
+        {
+          "text": "457,473",
+          "colspan": 1
+        },
+        {
+          "text": "802,023",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Programme": {
+            "source_text": "344,550",
+            "amount_decimal": "344550",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "457,473",
+            "amount_decimal": "457473",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "802,023",
+            "amount_decimal": "802023",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "319,092",
+            "amount_decimal": "319092",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "393,441",
+            "amount_decimal": "393441",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "1,759,665",
+            "amount_decimal": "1759665",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "2,472,198",
+            "amount_decimal": "2472198",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-031",
+      "source_row_index": 31,
+      "kind": "programme",
+      "published_label": "Health Integration and Innovation Programme",
+      "chapter": "CHAPTER 5 – PUBLIC HEALTH DIVISION (PHD)",
+      "original_cells": [
+        {
+          "text": "Health Integration and Innovation Programme",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "4,737",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "4,737",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Programme": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Project": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Total": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Programme": {
+            "source_text": "4,737",
+            "amount_decimal": "4737",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Total": {
+            "source_text": "4,737",
+            "amount_decimal": "4737",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-032",
+      "source_row_index": 32,
+      "kind": "programme",
+      "published_label": "Laboratory Strengthening Programme",
+      "chapter": "CHAPTER 5 – PUBLIC HEALTH DIVISION (PHD)",
+      "original_cells": [
+        {
+          "text": "Laboratory Strengthening Programme",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "162,167",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "162,167",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "174,109",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 1
+        },
+        {
+          "text": "174,109",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Programme": {
+            "source_text": "174,109",
+            "amount_decimal": "174109",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Total": {
+            "source_text": "174,109",
+            "amount_decimal": "174109",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Restricted Programme": {
+            "source_text": "162,167",
+            "amount_decimal": "162167",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "",
+            "amount_decimal": null,
+            "source_cell_blank": true
+          },
+          "Total": {
+            "source_text": "162,167",
+            "amount_decimal": "162167",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-033",
+      "source_row_index": 33,
+      "kind": "chapter_total",
+      "published_label": "TOTAL CHAPTER 5",
+      "chapter": "CHAPTER 5 – PUBLIC HEALTH DIVISION (PHD)",
+      "original_cells": [
+        {
+          "text": "TOTAL CHAPTER 5",
+          "colspan": 1
+        },
+        {
+          "text": "1,273,822",
+          "colspan": 1
+        },
+        {
+          "text": "2,571,066",
+          "colspan": 1
+        },
+        {
+          "text": "4,950,534",
+          "colspan": 1
+        },
+        {
+          "text": "8,795,422",
+          "colspan": 1
+        },
+        {
+          "text": "1,273,821",
+          "colspan": 1
+        },
+        {
+          "text": "2,559,637",
+          "colspan": 1
+        },
+        {
+          "text": "2,307,050",
+          "colspan": 1
+        },
+        {
+          "text": "6,140,508",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "1,273,821",
+            "amount_decimal": "1273821",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "2,559,637",
+            "amount_decimal": "2559637",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "2,307,050",
+            "amount_decimal": "2307050",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "6,140,508",
+            "amount_decimal": "6140508",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "1,273,822",
+            "amount_decimal": "1273822",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "2,571,066",
+            "amount_decimal": "2571066",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "4,950,534",
+            "amount_decimal": "4950534",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "8,795,422",
+            "amount_decimal": "8795422",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-034",
+      "source_row_index": 34,
+      "kind": "chapter_heading",
+      "published_label": "CHAPTER 6 – HUMAN RIGHTS AND SOCIAL DEVELOPMENT DIVISION (HRSD)",
+      "chapter": "CHAPTER 6 – HUMAN RIGHTS AND SOCIAL DEVELOPMENT DIVISION (HRSD)",
+      "original_cells": [
+        {
+          "text": "CHAPTER 6 – HUMAN RIGHTS AND SOCIAL DEVELOPMENT DIVISION (HRSD)",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 8
+        }
+      ],
+      "amounts": null,
+      "published_measure": null
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-035",
+      "source_row_index": 35,
+      "kind": "programme",
+      "published_label": "Human Rights and Social Development Division",
+      "chapter": "CHAPTER 6 – HUMAN RIGHTS AND SOCIAL DEVELOPMENT DIVISION (HRSD)",
+      "original_cells": [
+        {
+          "text": "Human Rights and Social Development Division",
+          "colspan": 1
+        },
+        {
+          "text": "918,775",
+          "colspan": 1
+        },
+        {
+          "text": "2,816,362",
+          "colspan": 1
+        },
+        {
+          "text": "12,742,953",
+          "colspan": 1
+        },
+        {
+          "text": "16,478,090",
+          "colspan": 1
+        },
+        {
+          "text": "918,775",
+          "colspan": 1
+        },
+        {
+          "text": "1,181,759",
+          "colspan": 1
+        },
+        {
+          "text": "12,407,932",
+          "colspan": 1
+        },
+        {
+          "text": "14,508,466",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "918,775",
+            "amount_decimal": "918775",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "1,181,759",
+            "amount_decimal": "1181759",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "12,407,932",
+            "amount_decimal": "12407932",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "14,508,466",
+            "amount_decimal": "14508466",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "918,775",
+            "amount_decimal": "918775",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "2,816,362",
+            "amount_decimal": "2816362",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "12,742,953",
+            "amount_decimal": "12742953",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "16,478,090",
+            "amount_decimal": "16478090",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-036",
+      "source_row_index": 36,
+      "kind": "chapter_total",
+      "published_label": "TOTAL CHAPTER 6",
+      "chapter": "CHAPTER 6 – HUMAN RIGHTS AND SOCIAL DEVELOPMENT DIVISION (HRSD)",
+      "original_cells": [
+        {
+          "text": "TOTAL CHAPTER 6",
+          "colspan": 1
+        },
+        {
+          "text": "918,775",
+          "colspan": 1
+        },
+        {
+          "text": "2,816,362",
+          "colspan": 1
+        },
+        {
+          "text": "12,742,953",
+          "colspan": 1
+        },
+        {
+          "text": "16,478,090",
+          "colspan": 1
+        },
+        {
+          "text": "918,775",
+          "colspan": 1
+        },
+        {
+          "text": "1,181,759",
+          "colspan": 1
+        },
+        {
+          "text": "12,407,932",
+          "colspan": 1
+        },
+        {
+          "text": "14,508,466",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "918,775",
+            "amount_decimal": "918775",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "1,181,759",
+            "amount_decimal": "1181759",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "12,407,932",
+            "amount_decimal": "12407932",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "14,508,466",
+            "amount_decimal": "14508466",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "918,775",
+            "amount_decimal": "918775",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "2,816,362",
+            "amount_decimal": "2816362",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "12,742,953",
+            "amount_decimal": "12742953",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "16,478,090",
+            "amount_decimal": "16478090",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-037",
+      "source_row_index": 37,
+      "kind": "chapter_heading",
+      "published_label": "CHAPTER 7 – STATISTICS FOR DEVELOPMENT DIVISION (SDD)",
+      "chapter": "CHAPTER 7 – STATISTICS FOR DEVELOPMENT DIVISION (SDD)",
+      "original_cells": [
+        {
+          "text": "CHAPTER 7 – STATISTICS FOR DEVELOPMENT DIVISION (SDD)",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 8
+        }
+      ],
+      "amounts": null,
+      "published_measure": null
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-038",
+      "source_row_index": 38,
+      "kind": "programme",
+      "published_label": "Statistics for Development Division",
+      "chapter": "CHAPTER 7 – STATISTICS FOR DEVELOPMENT DIVISION (SDD)",
+      "original_cells": [
+        {
+          "text": "Statistics for Development Division",
+          "colspan": 1
+        },
+        {
+          "text": "1,396,523",
+          "colspan": 1
+        },
+        {
+          "text": "1,559,119",
+          "colspan": 1
+        },
+        {
+          "text": "2,921,584",
+          "colspan": 1
+        },
+        {
+          "text": "5,877,226",
+          "colspan": 1
+        },
+        {
+          "text": "1,511,502",
+          "colspan": 1
+        },
+        {
+          "text": "1,844,447",
+          "colspan": 1
+        },
+        {
+          "text": "975,142",
+          "colspan": 1
+        },
+        {
+          "text": "4,331,091",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "1,511,502",
+            "amount_decimal": "1511502",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "1,844,447",
+            "amount_decimal": "1844447",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "975,142",
+            "amount_decimal": "975142",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "4,331,091",
+            "amount_decimal": "4331091",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "1,396,523",
+            "amount_decimal": "1396523",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "1,559,119",
+            "amount_decimal": "1559119",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "2,921,584",
+            "amount_decimal": "2921584",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "5,877,226",
+            "amount_decimal": "5877226",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-039",
+      "source_row_index": 39,
+      "kind": "chapter_total",
+      "published_label": "TOTAL CHAPTER 7",
+      "chapter": "CHAPTER 7 – STATISTICS FOR DEVELOPMENT DIVISION (SDD)",
+      "original_cells": [
+        {
+          "text": "TOTAL CHAPTER 7",
+          "colspan": 1
+        },
+        {
+          "text": "1,396,523",
+          "colspan": 1
+        },
+        {
+          "text": "1,559,119",
+          "colspan": 1
+        },
+        {
+          "text": "2,921,584",
+          "colspan": 1
+        },
+        {
+          "text": "5,877,226",
+          "colspan": 1
+        },
+        {
+          "text": "1,511,502",
+          "colspan": 1
+        },
+        {
+          "text": "1,844,447",
+          "colspan": 1
+        },
+        {
+          "text": "975,142",
+          "colspan": 1
+        },
+        {
+          "text": "4,331,091",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "1,511,502",
+            "amount_decimal": "1511502",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "1,844,447",
+            "amount_decimal": "1844447",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "975,142",
+            "amount_decimal": "975142",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "4,331,091",
+            "amount_decimal": "4331091",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "1,396,523",
+            "amount_decimal": "1396523",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "1,559,119",
+            "amount_decimal": "1559119",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "2,921,584",
+            "amount_decimal": "2921584",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "5,877,226",
+            "amount_decimal": "5877226",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-040",
+      "source_row_index": 40,
+      "kind": "chapter_heading",
+      "published_label": "CHAPTER 8 – CLIMATE CHANGE AND ENVIRONMENTAL SUSTAINABILITY (CCES)",
+      "chapter": "CHAPTER 8 – CLIMATE CHANGE AND ENVIRONMENTAL SUSTAINABILITY (CCES)",
+      "original_cells": [
+        {
+          "text": "CHAPTER 8 – CLIMATE CHANGE AND ENVIRONMENTAL SUSTAINABILITY (CCES)",
+          "colspan": 1
+        },
+        {
+          "text": "",
+          "colspan": 8
+        }
+      ],
+      "amounts": null,
+      "published_measure": null
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-041",
+      "source_row_index": 41,
+      "kind": "programme",
+      "published_label": "Climate Change and Environmental Sustainability",
+      "chapter": "CHAPTER 8 – CLIMATE CHANGE AND ENVIRONMENTAL SUSTAINABILITY (CCES)",
+      "original_cells": [
+        {
+          "text": "Climate Change and Environmental Sustainability",
+          "colspan": 1
+        },
+        {
+          "text": "1,079,663",
+          "colspan": 1
+        },
+        {
+          "text": "5,100,504",
+          "colspan": 1
+        },
+        {
+          "text": "5,748,303",
+          "colspan": 1
+        },
+        {
+          "text": "11,928,470",
+          "colspan": 1
+        },
+        {
+          "text": "1,173,646",
+          "colspan": 1
+        },
+        {
+          "text": "5,326,271",
+          "colspan": 1
+        },
+        {
+          "text": "5,816,142",
+          "colspan": 1
+        },
+        {
+          "text": "12,316,059",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "1,173,646",
+            "amount_decimal": "1173646",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "5,326,271",
+            "amount_decimal": "5326271",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "5,816,142",
+            "amount_decimal": "5816142",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "12,316,059",
+            "amount_decimal": "12316059",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "1,079,663",
+            "amount_decimal": "1079663",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "5,100,504",
+            "amount_decimal": "5100504",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "5,748,303",
+            "amount_decimal": "5748303",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "11,928,470",
+            "amount_decimal": "11928470",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-042",
+      "source_row_index": 42,
+      "kind": "chapter_total",
+      "published_label": "TOTAL CHAPTER 8",
+      "chapter": "CHAPTER 8 – CLIMATE CHANGE AND ENVIRONMENTAL SUSTAINABILITY (CCES)",
+      "original_cells": [
+        {
+          "text": "TOTAL CHAPTER 8",
+          "colspan": 1
+        },
+        {
+          "text": "1,079,663",
+          "colspan": 1
+        },
+        {
+          "text": "5,100,504",
+          "colspan": 1
+        },
+        {
+          "text": "5,748,303",
+          "colspan": 1
+        },
+        {
+          "text": "11,928,470",
+          "colspan": 1
+        },
+        {
+          "text": "1,173,646",
+          "colspan": 1
+        },
+        {
+          "text": "5,326,271",
+          "colspan": 1
+        },
+        {
+          "text": "5,816,142",
+          "colspan": 1
+        },
+        {
+          "text": "12,316,059",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "1,173,646",
+            "amount_decimal": "1173646",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "5,326,271",
+            "amount_decimal": "5326271",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "5,816,142",
+            "amount_decimal": "5816142",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "12,316,059",
+            "amount_decimal": "12316059",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "1,079,663",
+            "amount_decimal": "1079663",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "5,100,504",
+            "amount_decimal": "5100504",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "5,748,303",
+            "amount_decimal": "5748303",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "11,928,470",
+            "amount_decimal": "11928470",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    },
+    {
+      "source_key": "spc-budget-2026-table-e1-row-043",
+      "source_row_index": 43,
+      "kind": "programme_total",
+      "published_label": "TOTAL PROGRAMME EXPENDITURE",
+      "chapter": null,
+      "original_cells": [
+        {
+          "text": "TOTAL PROGRAMME EXPENDITURE",
+          "colspan": 1
+        },
+        {
+          "text": "13,294,201",
+          "colspan": 1
+        },
+        {
+          "text": "23,231,531",
+          "colspan": 1
+        },
+        {
+          "text": "83,863,818",
+          "colspan": 1
+        },
+        {
+          "text": "120,389,550",
+          "colspan": 1
+        },
+        {
+          "text": "13,444,577",
+          "colspan": 1
+        },
+        {
+          "text": "19,257,183",
+          "colspan": 1
+        },
+        {
+          "text": "82,801,017",
+          "colspan": 1
+        },
+        {
+          "text": "115,502,777",
+          "colspan": 1
+        }
+      ],
+      "amounts": {
+        "2026": {
+          "Unrestricted (Core)": {
+            "source_text": "13,444,577",
+            "amount_decimal": "13444577",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "19,257,183",
+            "amount_decimal": "19257183",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "82,801,017",
+            "amount_decimal": "82801017",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "115,502,777",
+            "amount_decimal": "115502777",
+            "source_cell_blank": false
+          }
+        },
+        "2025R": {
+          "Unrestricted (Core)": {
+            "source_text": "13,294,201",
+            "amount_decimal": "13294201",
+            "source_cell_blank": false
+          },
+          "Restricted Programme": {
+            "source_text": "23,231,531",
+            "amount_decimal": "23231531",
+            "source_cell_blank": false
+          },
+          "Restricted Project": {
+            "source_text": "83,863,818",
+            "amount_decimal": "83863818",
+            "source_cell_blank": false
+          },
+          "Total": {
+            "source_text": "120,389,550",
+            "amount_decimal": "120389550",
+            "source_cell_blank": false
+          }
+        }
+      },
+      "published_measure": "budget_expenditure"
+    }
+  ]
+}

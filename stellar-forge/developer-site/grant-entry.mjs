@@ -1,4 +1,5 @@
 // MIT. The reviewer opening uses the existing grant page, purchase workbench and source routes.
+import { attachGrantCatalogReview, GRANT_CATALOG_ASSETS, GRANT_CATALOG_SOURCE } from './grant-catalog.mjs';
 export const GRANT_ENTRY_SCHEMA = 'stellar-forge.grant-reviewer-entry.v1';
 const START = '<!-- grant-reviewer-entry:start -->';
 const END = '<!-- grant-reviewer-entry:end -->';
@@ -145,11 +146,14 @@ export function composeGrantEntry(templateHtml){
   }
   if(!html.includes(STYLE)){need(html.includes('</head>'),'Keep the existing page head.');html=html.replace('</head>',STYLE+'\n</head>');}
   if(!html.includes(SCRIPT)){need(html.includes('</body>'),'Keep the existing page body.');html=html.replace('</body>',SCRIPT+'\n</body>');}
+  html=attachGrantCatalogReview(html);
   return {html,links,entry:{schema:GRANT_ENTRY_SCHEMA,provider:'grant-reviewer',command:'grant-demo',
     browser:'/grant-entry-browser.mjs',stylesheet:'/grant-entry.css',opening:'#review-the-product',operating:'#review-operate',
     runningWorkbench:'#review-open-running',connectionSchema:'stellar-forge.grant-reviewer-workbench-connection.v1',
     packetSchema:'stellar-forge.grant-reviewer-packet.v1',maximumPacketBytes:8*1024*1024,
-    reportDownload:'/example-download.mjs',companionReader:links.companionReader}};
+    reportDownload:'/example-download.mjs',companionReader:links.companionReader,
+    catalogReview:{opening:'#review-catalog',browser:'/grant-catalog-browser.mjs',guide:'/grant-catalog-guide.md',
+      source:GRANT_CATALOG_SOURCE,selectionSchema:'stellar-forge.sf61.catalog-review.v1',provider:'atlas',command:'atlas-workspace'}}};
 }
 export function declareGrantEntryAssets(manifest){
   need(manifest&&manifest.schema==='stellar-forge.browser-assets.v1'&&Array.isArray(manifest.routes),'Select the original browser asset manifest.');
@@ -158,7 +162,8 @@ export function declareGrantEntryAssets(manifest){
     ['/grant-entry-browser.mjs','grant-entry-browser.mjs','text/javascript; charset=utf-8'],
     ['/grant-entry.css','grant-entry.css','text/css; charset=utf-8'],
     ['/example-download.mjs','example-download.mjs','text/javascript; charset=utf-8'],
-    ['/onboarding.mjs','onboarding.mjs','text/javascript; charset=utf-8']
+    ['/onboarding.mjs','onboarding.mjs','text/javascript; charset=utf-8'],
+    ...GRANT_CATALOG_ASSETS
   ]){
     const existing=copy.routes.filter(row=>row[0]===route);
     need(existing.length<=1&&(!existing.length||JSON.stringify(existing[0][1])===JSON.stringify([file,type])),'Keep the original '+route+' declaration.');

@@ -127,7 +127,7 @@
           <div class="shell-field">
             <label for="shell-candidate-captured">Candidate capture time, if known</label>
             <input id="shell-candidate-captured" name="candidate-captured" type="text" autocomplete="off" placeholder="2026-10-12T15:00:00Z">
-            <small>Original file name and last modified time are retained separately.</small>
+            <small>The complete source retains its original capture and provenance metadata.</small>
           </div>
           <div class="shell-field shell-full">
             <label for="shell-numeric-format">Native numeric values</label>
@@ -194,7 +194,7 @@
       elements.form.inert = busy;
       for (const role of ['baseline', 'candidate']) {
         elements[role + 'Save'].disabled = !report || busy;
-        const archived = Boolean(report?.[role]?.source?.native?.archive?.sha256);
+        const archived = report?.[role]?.source?.kind === 'datasette-native-edition';
         elements[role + 'Archive'].hidden = !archived;
         elements[role + 'Archive'].disabled = busy;
         const preserved = elements[role + 'Format'].value === 'source-json';
@@ -365,11 +365,26 @@
         } catch (failure) { showError(failure); }
       });
       elements[role + 'Archive'].addEventListener('click', () => run(async () => {
-        const receipt = report?.[role]?.source?.native?.archive;
-        if (!receipt) return;
+        const identity = sourceTools.nativeSourceIdentity(report?.[role]);
+        if (!identity) return;
+        let receipt = report[role].source.native.archive;
+        if (!receipt) {
+          const response = await fetch('./api/native-source/status');
+          const status = await response.json();
+          if (!response.ok || status.error) {
+            throw Object.assign(new Error(status.error?.message || 'The completed source archive could not be located.'), {code: status.error?.code});
+          }
+          const matches = Object.values(status.nativeSources || {}).filter(value =>
+            value.editionSha256 === identity.editionSha256 && value.captureSha256 === identity.captureSha256);
+          if (!matches.length) throw Object.assign(new Error('Keep the complete original native source archive and manifest beside this workspace.'), {code: 'NATIVE_ARCHIVE_REQUIRED'});
+          receipt = matches[0];
+        }
         let content = uploadedArchives.get(receipt.sha256);
         if (!content) {
-          const response = await fetch('./api/native-source/archive/' + receipt.sha256);
+          const url = new URL('./api/native-source/archive/' + receipt.sha256, window.location.href);
+          url.searchParams.set('edition', identity.editionSha256);
+          url.searchParams.set('capture', identity.captureSha256);
+          const response = await fetch(url);
           if (!response.ok) {
             const result = await response.json();
             throw Object.assign(new Error(result.error?.message || 'The original native archive could not be opened.'), {code: result.error?.code});

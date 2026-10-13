@@ -56,6 +56,12 @@
           "git_blob": "d13236165fc1f1bc3d46ec379a9f5538cde03d5b",
           "sha256": "c34e1e2359fa5626f7522e725f2d09c859e2d41e3469d3881ff8374a4e66cb27",
           "bytes": 15328
+        },
+        {
+          "commit": "0a019ffe48fadbb71adf1dcd9324932ff086b7b2",
+          "git_blob": "8fe7dc8f5e10d0d3f150023ee6dcfb39732e86b0",
+          "sha256": "f41fd36de678d2351b35a92b9bb042220c4cde23e4700947b2e5d05f635969d5",
+          "bytes": 16133
         }
       ]
     },
@@ -84,6 +90,96 @@
           "git_blob": "c649f135aa51fb73013f69d234a0d9f5159e4b74",
           "sha256": "aec61f1ab05418a3c69c58f7fa44f093201d59f665b73f27fe7ce974bec78854",
           "bytes": 36792
+        }
+      ]
+    },
+    {
+      "id": "preparation-pipeline-commissioning",
+      "label": "Complete original paid pipeline configuration, purchase and editable customer receiving",
+      "path": "products/data-preparation/COMMISSIONING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "editions": [
+        {
+          "commit": "71e7f79171bc3c3022729208fc15a0214414d7e2",
+          "git_blob": "01bee215cfd9e275bedbaf4b3552dc2638a8fc51",
+          "sha256": "fd12236a6c7802ab8761c4ace166105dcfa0f9ab32841ca81ebcd192702611e1",
+          "bytes": 16716
+        }
+      ]
+    },
+    {
+      "id": "preparation-pipeline-jobs-selection",
+      "label": "Complete installed preparation and paid-Jobs product selection",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/data-preparation-jobs.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "editions": [
+        {
+          "commit": "71e7f79171bc3c3022729208fc15a0214414d7e2",
+          "git_blob": "aba6d5cc6112e4a0616a287e2fb1bd460d60be72",
+          "sha256": "35a0950ce41b2a868f825f34d6d0d373337888e8ae75c31fb73749a6d4ab0f88",
+          "bytes": 13064
+        },
+        {
+          "commit": "964cc8307e6bd70b7d15775c73ec2ba966fee74b",
+          "git_blob": "d65429e3c9660721bd88cd116490b445d917e0a8",
+          "sha256": "5f48440eafcec6b068e9c63c52c52ceb1c5fe20908dcdd6054e289d1df0be9c9",
+          "bytes": 13120
+        }
+      ]
+    },
+    {
+      "id": "preparation-pipeline-jobs-customer",
+      "label": "Typed complete original result-package and editable project receiving",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/jobs/customer.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "editions": [
+        {
+          "commit": "71e7f79171bc3c3022729208fc15a0214414d7e2",
+          "git_blob": "5c0e4363ac3aebb8bd2fd572b58468f668e16314",
+          "sha256": "5f820cdb8842ef763a14b4d98e1e6e286306489586e85b587056396106da8003",
+          "bytes": 16912
+        }
+      ]
+    },
+    {
+      "id": "preparation-pipeline-commissioning-browser",
+      "label": "Complete saved-pipeline browser commissioning, Request continuation and editable result receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "products/data-preparation/COMMISSIONING_BROWSER.md",
+      "editions": [
+        {
+          "commit": "964cc8307e6bd70b7d15775c73ec2ba966fee74b",
+          "git_blob": "cfd44609ca44b1219018695dd36f2953e1745b20",
+          "sha256": "13daf0879671938da1257d3d1d77fca864c32de83016d559e652504ad291c348",
+          "bytes": 14064
+        }
+      ]
+    },
+    {
+      "id": "preparation-pipeline-commissioning-agent",
+      "label": "Complete nine-operation agent commissioning and original Request/Buyer customer workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "products/data-preparation/COMMISSIONING_AGENT.md",
+      "editions": [
+        {
+          "commit": "964cc8307e6bd70b7d15775c73ec2ba966fee74b",
+          "git_blob": "69485c88e80f2be1f8a01089fd99b86396b358c2",
+          "sha256": "d509dfb7c766f8385381c0880f45af9dff24cb92c1f4ab45c0754a801a1a0da5",
+          "bytes": 20181
+        }
+      ]
+    },
+    {
+      "id": "preparation-pipeline-request-handoff",
+      "label": "Original Request identity, catalog binding and complete sealed-input continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/jobs/request-handoff.mjs",
+      "editions": [
+        {
+          "commit": "964cc8307e6bd70b7d15775c73ec2ba966fee74b",
+          "git_blob": "6cec65b38946bca1fd523e1292c0e7b3c01f0c10",
+          "sha256": "029dcbe16fb98632d683c76238cd4208088b1d9032ad4392f8b8f4f31c1c0778",
+          "bytes": 15364
         }
       ]
     }

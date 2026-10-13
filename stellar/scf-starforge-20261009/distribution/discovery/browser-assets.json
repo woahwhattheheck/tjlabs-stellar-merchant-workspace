@@ -155,6 +155,174 @@
         "../catalog.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/operating-plan-return.html",
+      [
+        "operating-plan-return.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/operating-plan-return.mjs",
+      [
+        "operating-plan-return.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/operating-plan-return.css",
+      [
+        "operating-plan-return.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/operating-return-core/operating-plan-return.mjs",
+      [
+        "../operating-plan-return.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/operating-return-core/operating-plan.mjs",
+      [
+        "../operating-plan.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/operating-return-core/catalog.mjs",
+      [
+        "../catalog.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/operating-plan-returns.md",
+      [
+        "../OPERATING_PLAN_RETURNS.md",
+        "text/plain; charset=utf-8"
+      ]
+    ],
+    [
+      "/support-operating-plan.mjs",
+      [
+        "support-operating-plan.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/support-operating-plan.css",
+      [
+        "support-operating-plan.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/support-operating-core/support-operating-plan.mjs",
+      [
+        "../support-operating-plan.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/support-operating-core/operating-plan.mjs",
+      [
+        "../operating-plan.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/support-operating-core/catalog.mjs",
+      [
+        "../catalog.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/operating-return-core/operating-plan-return-workbook.mjs",
+      [
+        "../operating-plan-return-workbook.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/support-operating-return.mjs",
+      [
+        "support-operating-return.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/support-operating-core/support-operating-return.mjs",
+      [
+        "../support-operating-return.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/support-operating-core/operating-plan-return.mjs",
+      [
+        "../operating-plan-return.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/stellar-forge/developer-site/dist/source-document-tables.mjs",
+      [
+        "../../../../../stellar-forge/developer-site/dist/source-document-tables.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/stellar-forge/developer-site/dist/source-table-intake.mjs",
+      [
+        "../../../../../stellar-forge/developer-site/dist/source-table-intake.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/fred-operating-plan.mjs",
+      [
+        "fred-operating-plan.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/fred-operating-plan.css",
+      [
+        "fred-operating-plan.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/fred-operating-core/fred-operating-plan.mjs",
+      [
+        "../fred-operating-plan.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/fred-operating-core/operating-plan.mjs",
+      [
+        "../operating-plan.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/fred-operating-core/catalog.mjs",
+      [
+        "../catalog.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/fred-operating-browser.md",
+      [
+        "../FRED_OPERATING_BROWSER.md",
+        "text/plain; charset=utf-8"
+      ]
     ]
   ]
 }

@@ -377,6 +377,43 @@ Successful receiving updates the last delivered source baseline. Later source ed
 
 A prepared batch can be withdrawn before native submission. A batch already sent continues through its original native result; a revised selection is frozen as a new batch. An explicit OAI deletion requires the staff withdrawal or exclusion decision and actual native withdrawal result.
 
+
+## Continue destination jobs and receive original outcomes
+
+Open **Destination jobs** after the original native transfer has been submitted or interrupted. Bind the actual job ID and its documented GET URL to that exact transfer. Retain the original documentation URL, literal non-secret headers, existing authorization environment name, operator and source note. The URL must belong to the selected TIND institution. Saving a changed current GET contract for the same original job retains its preceding contract, operator, source note and selection time. Earlier observations keep their exact original request. This binding describes the institution's actual contract; the application does not infer an endpoint from the MARCXML file name or assign meanings to undocumented status strings.
+
+Choose **Read the original job now** to save one GET observation. It keeps the exact request, original HTTP status and headers, unchanged response bytes and observation time. A network error stays in the history; select another explicit read to observe the job again. An interrupted GET whose response never completed can resume under its same original observation ID after reopening. A returned HTTP error remains an observed response, with its bytes available for inspection.
+
+If the institution's original authenticated browser or export has already returned the job response, receive its unchanged file and actual HTTP receipt in the same desk. The receipt contains `method: "GET"`, the exact requested `url`, returned `finalURL`, integer `status`, response `headers` as name/value pairs, and `observedAt` including timezone. Request credentials and session cookies are omitted from the saved response headers. This is the same original observation path as direct GET, with the source operator and acquisition note retained.
+
+### Review the source and bind its record results
+
+Choose an observation and read its complete original response. A successful HTTP response permits result interpretation; HTTP success alone does not mark records as accepted. Select the actual observed job state and either enter explicitly reviewed original record results or declare a JSON result mapping.
+
+A reviewed record names its exact source `identifier` and the observed `accepted`, `failed`, `pending` or `withdrawn` state. Accepted and withdrawn records include their actual `nativeId`; a failed result retains its original `error`. Omit records not reported by this response. The receiver shows the number of unreported members of the exact transferred MARCXML file.
+
+For a JSON response, the mapping declares `records`, `identifier`, `status`, optional `nativeId` and `error` JSON Pointers, plus `statuses`: a literal mapping from the returned strings to their reviewed meanings. The records pointer selects the original array; the other pointers select values within each original row. Empty pointer selects the complete value. Literal `~` and `/` in field names use RFC 6901's `~0` and `~1` escapes. An absent field, unknown status or record from another transferred file must be resolved in the original source before receiving.
+
+Preview the complete result, enter the operator and interpretation note, then choose **Receive these reviewed outcomes**. The saved request binds the exact response identity, current project revision, selected mapping and complete result rows. Editing the source or interpretation requires another preview. The existing native receipt engine records these outcomes against the original batch and transfer. Continue that same batch through current destination export, original file/access receiving and reconciliation; the production wave reads its existing result.
+
+### Reopen, download and command operation
+
+Saved jobs, observations and reviews live in the same original SQLite database. Complete editable handover includes that database and every unchanged response object. Reopen the received migration, bind the existing local authorization environment when operating the original tenant, and select the saved job. **Download complete job history** streams its binding, original transfer, all observation metadata and bytes, and every receiving review and receipt into one archive. Its final file is published only after the complete archive is synchronized.
+
+All lists expose `offset`, `limit` and `next`; continue until `next` is null. The browser lists jobs and observations independently. Original response and review JSON remain subject to the existing 8 MiB save envelope. The browser accepts a response file up to 6 MiB before base64 encoding; the complete envelope is checked before sending. Direct GET retains responses up to the existing object limit, and an oversized response remains downloadable while the operator selects the institution's actual narrower result page for interactive review.
+
+~~~sh
+starforge tind-migration --workspace /private/repository destination-jobs --project ORIGINAL_PROJECT_ID
+starforge tind-migration --workspace /private/repository destination-jobs --project ORIGINAL_PROJECT_ID --id SAVED_JOB_BINDING_ID
+starforge tind-migration --workspace /private/repository job-read --project ORIGINAL_PROJECT_ID --job SAVED_JOB_BINDING_ID --id ORIGINAL_READ_OPERATION
+starforge tind-migration --workspace /private/repository job-preview --project ORIGINAL_PROJECT_ID --input /private/review-input.json
+starforge tind-migration --workspace /private/repository job-export --project ORIGINAL_PROJECT_ID --job SAVED_JOB_BINDING_ID --out /private/original-job-history.zip
+~~~
+
+Use ordinary saved apply requests for `native-job-bind`, `native-job-import` and `native-job-receive`. The bind input is `{transferId,nativeJobId,url,documentation,headers,authorizationEnvironment,reviewer,note}`. The imported response input is `{jobId,bodyBase64,transport,reviewer,note}`. A preview input is `{jobId,observationId,status,mode,records,mapping}`, where mode is `reviewed` or `json`. Receiving uses that same exact input plus `expectedPreviewSha256`, `reviewer` and `note`. Preserve its saved operation ID and expected project revision when replaying a lost response.
+
+The application owns all original native worker lifetimes. Closing stops further export pages, allows each current request to return or record its interruption, joins the owned workers and then closes the database. A complete workspace handover waits until the source/native worker is inactive. Submitted requests retain their original transfer identity throughout shutdown and recovery.
+
 ## Complete editable handover
 
 In **Handover**, download the complete working package. The producer streams its SQLite backup, original OAI responses and reviewed editions, mappings, TIND source and browser assets, native export pages, exact native request/response objects, frozen batches, staff decisions and every retained source file.
@@ -474,6 +511,102 @@ Create uses `projectId: null` and `expectedRevision: null`. Later operations sel
 
 A retained browser native-task document has `task` in place of `kind`; continue that task through its corresponding `native-search` or `native-send` CLI with the same operation ID and exact saved input. Native read and write histories remain in the workspace database across desk restarts.
 
+
+## Acquire original source documents
+
+The **Native export and files** desk can acquire the original repository documents directly into the existing migration. A saved acquisition contains the exact source record/file pairs, original HTTPS URLs, expected file names, roles and access terms. Its original selection and every returned HTTP status, final URL, validator and byte checkpoint stay in the same database.
+
+### Select and acquire the complete population
+
+In **Acquire original repository documents**, enter the selection title, selecting operator and the original acquisition authority. Import or edit the complete JSON array of document rows. The source identifier must belong to the selected migration:
+
+```json
+[
+  {
+    "identifier": "ACTUAL_ORIGINAL_OAI_IDENTIFIER",
+    "id": "original-article",
+    "filename": "article.pdf",
+    "url": "https://actual-repository.example/original-document.pdf",
+    "role": "article",
+    "mediaType": "application/pdf",
+    "access": {
+      "metadata": "public",
+      "files": "public",
+      "releaseDate": "",
+      "restriction": "",
+      "licenseURI": ""
+    }
+  }
+]
+```
+
+Use the original document's direct URL from its publisher or retained source page. Each row can also name the original `expectedSha256`, `expectedBytes`, `maximumBytes` and an array of actual `redirectOrigins`. The default allowance is the existing 1 TiB file limit. Up to 5,000 complete rows fit in one selection, subject to the original 8 MiB encoded save limit. Prepare additional selections for larger catalogues.
+
+The receiver follows HTTPS redirects within the original source origin and the explicitly selected redirect origins. It never forwards an Authorization header to another origin. A source using private query credentials should be received through its existing authenticated stable endpoint and host authorization environment. Supply the name of that environment variable in the selection; its value stays on the host.
+
+Save the selection, open it, then choose **Acquire or resume these original files**. Each document is streamed in 1 MiB chunks. Durable checkpoints flush and synchronize the original file before saving its byte count and prefix hash in SQLite. Other selected files continue when one original source returns an error.
+
+The desk shows each original HTTP result, exact bytes, checksum, actual returned media type and remaining source error. **Open original history** shows the complete selected row and all attempts. **Download original bytes** opens the completed original for inspection. A publisher login or error page that arrives as HTTP 200 is still the actual returned document: compare its bytes and actual media type with the intended file before receiving it.
+
+### Pause and continue the same acquisition
+
+Choose **Pause after saving current bytes** before exporting the workspace or moving to another original byte operation. The current read records its complete durable prefix. Reopen the same acquisition and continue its original rows after a restart. A browser save whose response was lost retains the exact operation request in the desk's existing IndexedDB queue.
+
+A resumed HTTP range uses `Range` and `If-Range` with the same strong ETag. The receiver verifies the exact starting offset and selected total length, and checks the returned validator when present. An If-Range response may omit unchanged representation headers under RFC 9110. A server that returns a new full response starts that document from byte zero. A source without a strong ETag also restarts from byte zero. Checkpoints are rehashed before reuse, and bytes written after the last durable checkpoint are truncated before continuation. The receiver checks the selected expected length and SHA-256 when supplied.
+
+The original publisher's request spacing is selected per acquisition; the default is 2.1 seconds between documents. Active source workers stop and save their stream before the application closes its database.
+
+### Receive the existing source operator's original file
+
+When the institution's existing browser or export has already acquired a document, open **Receive an original file from the existing source browser or authorized export**. Choose the acquisition row, its actual complete local file and the original HTTP receipt: requested URL, returned URL, GET/200, response header pairs and observed time. The receiver streams the file into this same acquisition, checks its declared or selected identity, and retains the original result with the receiving operator and context. Private authentication headers are omitted. A changed completed document starts a new acquisition and later follows explicit replacement receiving.
+
+The same operation is available through ordinary apply kind `source-download-import`. Its input is `{acquisitionId,id,path,transport,reviewer,note}`. Source browser downloads and authenticated exports therefore join the same file review, native batch and editable handover as direct HTTP acquisition.
+
+### Receive reviewed files into the migration
+
+Select the completed files and choose **Prepare selected completed files for receiving**. The complete receiving rows remain editable. Review the actual original bytes, file name, role, actual media type and every access/release term. Enter the receiving operator and document review note, then receive the selection.
+
+The operation copies the exact original bytes into the migration's existing bound file tree. A migration without a file tree receives them under its own private source directory and binds that directory automatically. Current native observations for the same byte identity stay with the file. Receiving changed bytes for an existing file also requires its exact current `replaceSha256` in the selected row, so the full replacement has a retained before/after source decision.
+
+The resulting files appear in the existing original-file desk and frozen native batch manifests. Their source acquisition IDs, original URLs, actual returned URL, bytes and source observations travel with the existing metadata, file access review and native receiving history. HTTP acquisition completes the original source-file stage; native file attachment and destination access continue through the existing TIND receiving workflow.
+
+### Original command operation
+
+Create the selection with the ordinary `apply` command and a saved request containing kind `source-download-plan`, the current project/revision and this input:
+
+```json
+{
+  "title": "Original institution documents",
+  "reviewer": "Actual source operator",
+  "note": "Original publisher document URLs and source access terms selected",
+  "interval": 2.1,
+  "authorizationEnvironment": null,
+  "files": ["REPLACE_WITH_THE_COMPLETE_ORIGINAL_DOCUMENT_ROWS"]
+}
+```
+
+The save returns its acquisition ID. Use the same ID throughout the original operation:
+
+```sh
+starforge tind-migration --workspace /private/repository source-downloads \
+  --project ACTUAL_PROJECT_ID
+
+starforge tind-migration --workspace /private/repository source-download-run \
+  --project ACTUAL_PROJECT_ID --id ORIGINAL_ACQUISITION_ID
+
+starforge tind-migration --workspace /private/repository source-downloads \
+  --project ACTUAL_PROJECT_ID --id ORIGINAL_ACQUISITION_ID --offset 0 --limit 50
+
+starforge tind-migration --workspace /private/repository source-download-export \
+  --project ACTUAL_PROJECT_ID --id ORIGINAL_ACQUISITION_ID
+```
+
+The run command optionally accepts `--only /private/selected-acquisition-row-ids.json` to continue an exact subset. Its original source selection remains unchanged. Receive completed files with a normal `source-download-adopt` apply operation; input contains `acquisitionId`, `reviewer`, `note` and the complete editable `files` receiving rows from the desk. Each row names its acquisition row `id` and selected file metadata, role and access.
+
+A complete editable handover includes the original acquisition database, returned source bytes and durable partial files, plus all adopted migration files. Receiving relocates this original cache with the workspace; pending acquisitions can continue from their retained byte checkpoints. A metadata-only handover omits the acquisition binary tree and the adopted source tree. Its selection and HTTP history remain available, and the original acquisition can reacquire omitted bytes on the receiving host. Bind the intended receiving file tree before adopting into a project that previously used another host's directory.
+
+HTTP range and validator behavior follows [RFC 9110, sections 13.1.5 and 14](https://www.rfc-editor.org/rfc/rfc9110.html). Original source-document acquisition remains independent from the selected institution's native Batchuploader and object-storage contracts.
+
 ## Source and native references
 
 - [Original OAI operator source](../../stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/): repository transport, reviewed editions and incremental history.
@@ -526,3 +659,275 @@ python3 /absolute/commons/opportunities/discoverygarden_msu2026112_20261012/tind
 This reuses the original received response identities, selects all eleven exact GetRecord sources, reviews and builds the actual collection, applies all eleven original staff cases, and writes the complete editable records, mapped MARCXML, native source export, operator page and whole-workspace handover. The result includes its actual collection operation, edition, build, project, review and archive identities.
 
 The existing complete Endeavors edition remains available in the same workspace. Each output directory retains its own exact receiving context, source selection and saved TIND/case requests. Continue an interrupted run with the same selected mode and output directory.
+
+
+## Operate complete production waves
+
+Production waves retain the exact original record membership selected from the repository's OAI sets. A plan captures its source edition, profile, working revision, responsible operator and scope. Each selected record appears once, including records omitted from new delivery because they were already received or deliberately excluded. A record belonging to several selected sets is assigned to the first sorted matching set, and the original complete set list stays with that record.
+
+Open **Production waves**, choose all records or the actual source collections, choose the maximum records per wave, and save the plan. The default of 500 is an application planning choice. Each wave can contain up to 10,000 records; the existing native batch still uses its selected MARCXML record/byte partitioning. The complete census and its waves are stored in the original SQLite workspace.
+
+### Review and continue the same records
+
+Open a wave to see current ready, received, excluded, changed, unresolved, deferred, prepared or receiving records. Its selected membership is stable even when the source edition advances. **Open record** uses the original metadata/access/identifier decision desk. Save corrections there, then use **Accept current source and mapping for this wave** with the responsible operator and a scope note. This records each prior/current content identity and retains the original review history.
+
+Use **Defer selected records** for exceptions that must continue separately; the record stays in the original wave with the operator's reason. **Include selected records again** restores its participation. A deferred record prevents a wave from being described as completely received. An explicit staff exclusion remains its ordinary source decision.
+
+A record is already received only when the original confirmed native batch matches its current intended fields, native identity, record access and exact file roles/bytes/access, with the original file receiving results complete. Later source, mapping, staff or file changes re-enter the work. Source timestamps alone do not force another native write when the intended received result is unchanged.
+
+### Prepare and receive the original native batch
+
+Choose **Prepare original native batch**. The wave checks its reviewed source/mapping identity and passes the exact ready identifiers to the existing frozen batch engine. A changed record requires the explicit wave review above. When selected, **Prepare the reviewed ready records now** preserves unresolved records as exceptions in the same wave while preparing the ready portion.
+
+The returned batch retains its production plan and wave identity, original MARCXML parts, full record/file intentions, source edition and destination export. Continue it through **Open native delivery**, using the existing native request, result and file/access receiving controls. A new wave preparation does not replace an unfinished original batch: complete that batch or use its existing explicit withdrawal operation first.
+
+After receiving the actual native result, complete current destination export and original file observations, choose **Reconcile this original batch** in the wave. This invokes the unchanged record/file reconciliation engine and keeps its complete report and counts. Remaining records stay in the wave; a later ready portion creates its own linked batch. Completed and withdrawn batches remain visible in history.
+
+### Source continuation, full exports and receiving
+
+A newer OAI edition can add records outside a saved plan. Create a following production plan from the current complete collections to select those records and changed work. Earlier plans, exact membership, completed native outcomes and staff decisions remain in the same project. The full plan export includes every selected member, omission, wave decision and original native batch reference as streaming JSON Lines.
+
+All production tables travel in the original complete workspace handover. The same installed application opens the saved plans after receiving the whole archive; native credentials remain in the selected runtime configuration. The full source acquisition from PR1059 continues to preserve original document bytes, HTTP history and access decisions in this same project.
+
+### Original command interface
+
+Inspect the real collections and saved waves:
+
+~~~sh
+python3 /absolute/installed/oai-pmh/tind/cli.py --workspace /private/original-workspace production-collections --project ORIGINAL_PROJECT_ID
+python3 /absolute/installed/oai-pmh/tind/cli.py --workspace /private/original-workspace production-plans --project ORIGINAL_PROJECT_ID
+python3 /absolute/installed/oai-pmh/tind/cli.py --workspace /private/original-workspace production-plans --project ORIGINAL_PROJECT_ID --id SAVED_PLAN_ID
+python3 /absolute/installed/oai-pmh/tind/cli.py --workspace /private/original-workspace production-wave --project ORIGINAL_PROJECT_ID --id SAVED_WAVE_ID
+python3 /absolute/installed/oai-pmh/tind/cli.py --workspace /private/original-workspace production-export --project ORIGINAL_PROJECT_ID --id SAVED_PLAN_ID --out /private/complete-production-plan.jsonl
+~~~
+
+All list operations expose offset, limit and next. Continue until next is null. The full production-export streams all records and refuses to overwrite an existing output.
+
+Save one complete original apply request before running it. It uses the existing operationId, kind, projectId, expectedRevision and input envelope. The source state command provides the current project revision. A production-plan input has title, reviewer, note, recordsPerWave and selection:
+
+~~~json
+{"title":"Original Scholars Junction staff receiving","reviewer":"ACTUAL_OPERATOR","note":"Reviewed original collections, access cases and exact selected population","recordsPerWave":500,"selection":{"all":true,"sets":[],"unassigned":false,"includeReceived":false}}
+~~~
+
+The other operation kinds use these exact inputs:
+
+| Kind | Complete operation input |
+| --- | --- |
+| production-review | waveId, reviewer, note |
+| production-disposition | waveId, identifiers, disposition (include or defer), reviewer, note |
+| production-prepare | waveId, readyOnly, reviewer, note |
+| production-reconcile | waveId, batchId, reviewer, note |
+
+Replay an interrupted saved request unchanged. The original operation ledger returns its retained result; future changes use a new operation and current revision.
+
+### Join the existing MSU workshare
+
+The existing commissioning workorder retains its agreed work packages, effort, commercial terms and responsible delivery participants. This capability supplies its collection-wave, exception, changed-source, cutover and handover operations. The original eleven-record staff cohort and complete fifteen-record Endeavors edition remain separate selectable projects in the same Scholars Junction workspace; the seven public original-document selections retain their original receiving driver and source rights. The distinct CIIM169 case retains its own original source.
+
+
+## Customer agent operation of the same TIND workspace
+
+The installed **tind-migration** product now registers the source-owned
+**tind-workspaces** Merchant provider. Its 13 tools use the same original
+Python server, SQLite projects, source editions, staff decisions, production
+waves and native destination jobs as the industrial desktop. The typed Node
+client is maintained beside the Python application at
+`stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/client.mjs`;
+its declaration file is `client.d.mts`. The selected package exposes ordered
+`./tind/client` and `./tind/merchant` type/import entries. The Merchant runtime has its own
+`merchant.d.mts` declaration. No browser-to-agent record conversion is needed.
+
+### Select the actual existing workspace
+
+Keep the complete installed TIND source. The provider and typed client source
+are included by the existing TIND selection and its original contribution.
+After receiving a full editable migration, open its original workspace with
+the maintained TIND application or select that received directory in the host
+connection. The direct Node client can also operate the received Python source
+from its original `source/oai-pmh/tind` directory.
+
+A private connection file uses this shape; replace the paths and alias with
+the actual selected host values:
+
+```json
+{
+  "schema": "stellar-forge.tind-workspace-connection.v1",
+  "workspaces": {
+    "scholars-junction": {
+      "label": "Scholars Junction migration",
+      "directory": "/private/actual-msu-workspace",
+      "mode": "managed",
+      "files": {
+        "native-export": "/private/actual-export.xml"
+      },
+      "directories": {
+        "source-documents": "/private/actual-source-documents"
+      },
+      "authorizationEnvironments": ["TIND_AUTHORIZATION"]
+    }
+  }
+}
+```
+
+Connection files are private regular files (0600); workspace and export
+directories are canonical private directories (0700). File and directory
+aliases bind the actual selected host objects. Updating a configured source
+file requires reloading the connection so the new original identity is
+selected. Host paths and executable selection remain in this connection,
+rather than tool arguments.
+
+In **managed** mode, first open the same workspace in Applications. The agent
+reads its private `oai/tind/live.json`, authenticates against the actual
+listener, and binds the exact random instance ID, original workspace marker,
+source binding, process identity and session. An Applications restart requires
+closing the old attachment and opening the new instance. Closing the agent
+attachment leaves Applications and its worker in control.
+
+In **owned** mode, configure `"mode":"owned"` and the absolute
+`"pythonExecutable"`. The host starts the same original `cli.py serve`
+with the configured environment and a local ephemeral port. It owns only that
+child. Closing requests the original graceful shutdown, drains accepted
+requests and workers, and releases descriptors. The original SQLite owner
+continues to prevent two independent processes from opening one workspace.
+Authorization values come from the configured process environment; tool
+arguments name only permitted environment variables.
+
+Register the source-owned provider with the maintained host:
+
+```sh
+starforge merchant-providers init tind-workspaces --options /private/tind-setup.json
+```
+
+The options document contains the actual `directory`, `connection`,
+optional `name` and optional existing `releaseStore`.
+The complete [setup contract](../../stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/MERCHANT_SETUP.md)
+also shows the direct host API. Use the returned `merchant-mcp.json` with the
+existing Merchant MCP launcher. Initialization retains the whole existing host
+configuration and its other source families. Repeating the exact same setup
+completes an interrupted original initialization or reopens it.
+
+### Complete customer workflow
+
+| Tool | Original customer action |
+| --- | --- |
+| `merchant_tind_workspaces` | See configured aliases, source aliases, environment names and current attachments. |
+| `merchant_tind_open` | Attach or start the selected original listener and return its actual instance and projects. |
+| `merchant_tind_view` | Read source records, files, staff cases, acquisition, production plans/waves, native jobs and original observations. |
+| `merchant_tind_preview` | Review actual staff collection choices or the original destination job result. |
+| `merchant_tind_save` | Save the original complete migration operation, exact expected revision and stable operation ID. |
+| `merchant_tind_native_start` | Continue original source acquisition, institution export, exact frozen-batch send or documented job GET. |
+| `merchant_tind_operation` | Read the exact saved request and actual current persisted outcome. |
+| `merchant_tind_resume` | Continue that same retained request after interruption. |
+| `merchant_tind_source_pause` | Checkpoint the actual running source acquisition. |
+| `merchant_tind_export` | Prepare a frozen original file, native package or complete editable handover. |
+| `merchant_tind_file_read` | Receive its complete bytes in bounded chunks, with original byte count and SHA-256. |
+| `merchant_tind_file_release` | Close the original read descriptor while retaining its complete file. |
+| `merchant_tind_close` | Detach or close only the returned actual live instance. |
+
+Start with `merchant_tind_open`, retain the actual project ID and revision,
+and inspect that project's source edition and existing staff decisions.
+The view names are `state`, `history`, `records`, `record`, `original`,
+`production-collections`, `production-plans`, `production-wave`,
+`source-downloads`, `files`, `file-history`, `source-cases`,
+`source-case`, `source-case-reviews`, `destination-jobs` and
+`job-observation`. Original paginated views return their next position;
+continue until the actual end.
+
+Saved operations preserve the original Python request:
+`{operationId,kind,projectId,expectedRevision,input}`.
+Use `projectId:null` and `expectedRevision:null` only for the original
+`create` operation. The supported kinds are the complete existing source,
+record, file, staff-case, production-wave and destination-job operations
+documented above. A received source edition is selected through the original
+`edition` operation; it remains attached to its original OAI/XML source.
+
+For `destination-file` and `source-download-import`, pass the configured
+`sourceFile` alias alongside the request and omit `input.path`.
+For `file-root`, use `fileDirectory` and omit `input.path`.
+The immutable request also retains a `sourceBinding`: the original canonical
+path, device/inode and, for a file, complete byte count, SHA-256 and nanosecond
+modification/change identity. An unsatisfied resume rechecks the configured
+alias and this original binding. The Python intake verifies the actual received
+bytes before committing. A completed original operation can return its saved
+receipt without reopening a source that has since moved.
+
+Original per-record file rows still use their relative member paths beneath
+the reviewed root. Access, embargo, checksum and original source decisions
+remain in the same migration records.
+
+For the existing MSU case, continue its real staff collection and complete
+Endeavors edition. Read the reviewed wave membership, preserve its explicit
+exclusions and exceptions, prepare its actual batch, then select that frozen
+batch for the original documented native transfer. Read the saved native
+operation after acceptance. Bind/read or import the actual destination job
+response, preview the exact record interpretation, receive it through
+`native-job-receive`, then reconcile the existing wave. The distinct
+CIIM169 workspace retains its own original source and identity.
+
+### Lost responses and saved operation recovery
+
+The agent writes a complete immutable input before sending and an atomic
+attempt/result journal under `oai/tind/agent-requests`. These documents
+contain the original request and authorization variable names, not the live
+session token. The original database also retains the actual operation and
+its exact request hash. A network timeout does not create another operation.
+
+On `TIND_OUTCOME_UNKNOWN`, call `merchant_tind_operation` with the same
+operation ID and kind. Its `saved` document is the exact input and attempt;
+`observed` reads the original database and current worker. When continuation
+is needed, call `merchant_tind_resume` with that same ID. If the process
+stopped after preparing the immutable request but before recording its first
+attempt, the retained original input still supports continuation.
+
+Native acceptance and destination completion stay separate. A search or
+source download can continue its original saved cursor/prefix. An interrupted
+job GET continues its retained exact request. An uncertain destination write
+uses the original native recovery rules and actual returned observation;
+resuming does not replace it with an unrelated send. The full request body,
+including its envelope, must fit within the original 8 MiB limit.
+
+The provider serializes ordinary work per workspace while allowing source
+pause and exact-instance close to reach active work. If a descriptor close fails, repeat close with the same actual instance;
+the owner retains its descriptors and retries their original drain. Closing leaves an
+interrupted request attached to its original ID for reopening. Projects in
+different configured workspaces retain independent owners.
+
+### Receive complete original files and editable projects
+
+Prepare a download with a stable `exportId`, exact `kind` and original
+query. Supported kinds are `record`, `batch`, `batch-file`, `handover`,
+`production-plan`, `source-acquisition`, `source-document`,
+`source-cases`, `source-case-review`, `file-receipt`,
+`destination-job` and `job-response`. The returned file includes its
+complete byte count and SHA-256. The original server streams it with those
+identities, and the client verifies the completed bytes before publishing
+the retained export.
+
+A stable export ID freezes one original selection. Reusing it returns that
+file rather than silently generating a newer workspace. The export also
+retains the original project-revision selection. Choose a new export ID for
+a later completed edition. Keep the host's customer export directory outside
+the source workspace so full handovers cannot recursively include themselves.
+
+Read the retained file with `merchant_tind_file_read`. Start at offset zero,
+then use the returned `nextOffset`, `readId` and `expectedSha256`.
+Read until `nextOffset` is null and verify the assembled byte count and
+digest. Each original read owns a read-only descriptor, so large complete
+handovers are hashed and delivered with bounded memory rather than copied
+into a buffer. The original TIND package limit is 4 TiB, subject to the real
+host's available storage. At most four retained reads remain open.
+
+Read IDs are temporary. After host restart or reader expiry, select the same
+`exportId`, `expectedSha256` and offset without the expired read ID. The
+complete frozen file remains in the private host export directory. Releasing
+a read closes its descriptor and keeps that file.
+
+A `handover` export includes original source files by default. An explicit
+`{"files":false}` selects the existing metadata-only form. For complete
+customer delivery, receive the full handover, use the original `receive`
+command and reopen the received project following the earlier receiving
+section. The handover includes complete saved agent requests and typed client
+source. It excludes the current private live connection and incomplete
+transport stages; opening the received workspace creates a fresh listener
+identity. The installed Merchant host can then bind the received directory
+through its actual new private connection.

@@ -283,6 +283,40 @@ export class TaskDeskClient {
     return this.#request(this.#taskPath(taskId) + "/packet/archive", { signal: options?.signal, mode: "raw" });
   }
 
+  /** Read the original complete packet's exact delivery selection. */
+  inspectCustomerTask(taskId, options) {
+    return this.#request(this.#taskPath(taskId) + "/customer-deliveries/inspect-task", { signal: options?.signal });
+  }
+  listCustomerDeliveries(taskId, options) {
+    return this.#request(this.#taskPath(taskId) + "/customer-deliveries", { signal: options?.signal });
+  }
+  previewCustomerDelivery(taskId, input, options) {
+    return this.#request(this.#taskPath(taskId) + "/customer-deliveries/preview", {
+      method: "POST", body: input, signal: options?.signal,
+    });
+  }
+  /** Send the same reviewed native request once; retain it for explicit same-ID continuation. */
+  prepareCustomerDelivery(taskId, input, options) {
+    const deliveryId = input?.request?.id;
+    segment(deliveryId, "deliveryId");
+    segment(input?.expectedPreviewSha256, "expectedPreviewSha256");
+    return this.#request(this.#taskPath(taskId) + "/customer-deliveries/prepare", {
+      method: "POST", body: { ...input, requestId: deliveryId }, signal: options?.signal,
+    });
+  }
+  getCustomerDelivery(taskId, deliveryId, options) {
+    return this.#request(this.#taskPath(taskId) + "/customer-deliveries/named/" + segment(deliveryId, "deliveryId"),
+      { signal: options?.signal });
+  }
+  /** Complete verified native package stream; consuming or aborting it does not change preparation. */
+  downloadCustomerDelivery(taskId, deliveryId, options) {
+    return this.#request(this.#taskPath(taskId) + "/customer-deliveries/named/" + segment(deliveryId, "deliveryId") + "/download",
+      { signal: options?.signal, mode: "raw" });
+  }
+  createCustomerSourceManifest(input, options) {
+    return this.#request("/api/customer-delivery/source-manifest", { method: "POST", body: input, signal: options?.signal });
+  }
+
   /** Poll retained metadata. Cancellation or timeout affects this wait only. */
   async waitForOperation(operationId, { signal, pollIntervalMs = 1000, timeoutMs = 0 } = {}) {
     segment(operationId, "operationId");

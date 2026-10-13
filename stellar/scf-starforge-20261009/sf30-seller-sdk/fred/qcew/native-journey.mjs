@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { privateDirectory, atomicJson } from '../../routescan/quota.mjs';
-import { need, canonical } from './model.mjs';
+import { need, canonical, period, periodOrdinal } from './model.mjs';
 import { defaultSanFranciscoProfile, createQcewProfile, validateQcewProfile } from './profile.mjs';
 import { sha256, sealQcewIntakeWithContext, qcewCaptureContextStats, readQcewOriginalMember } from './source.mjs';
 import { qcewReportRowSelection } from './calculate.mjs';
@@ -16,18 +16,37 @@ import { FRED_DDP_PROJECT_BUNDLE_MAX_BYTES } from '../ddp/project-validation.mjs
 import { initializeFredProject, readFredProject, importFredCapture, exportFredProject, receiveFredProject, getFredCapture } from '../project.mjs';
 const execute=promisify(execFile);
 const OPERATION='NEED-REGIONAL-REPORTS-9B2C-20261012';
+export function normalizeQcewNativeProgramme(input) {
+  need(input && typeof input === 'object' && !Array.isArray(input) &&
+    input.schema === 'stellar-forge.qcew-native-programme.v1',
+    'Select the complete county production programme.');
+  need(Object.keys(input).every(key => ['schema','operation','initial','successor'].includes(key)),
+    'The county programme contains an unsupported selection.');
+  need(typeof input.operation === 'string' && /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$/.test(input.operation),
+    'Keep one explicit original operation identity.');
+  const initial=period(input.initial),successor=period(input.successor);
+  need(periodOrdinal(initial)<periodOrdinal(successor),'The successor report must follow the initial report.');
+  return {schema:input.schema,operation:input.operation,initial,successor};
+}
+
 async function inputJson(path,limit) {
   const stat=await lstat(path);need(stat.isFile()&&!stat.isSymbolicLink()&&stat.size<=limit,'Read the complete original input file.');
   const bytes=await readFile(path);return {value:JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes)),sha256:sha256(bytes)};
 }
-export async function runQcewNativeJourney({directory,intakeDirectory,cpiFile,profileFile=null,chromium=null,originalProjectBundle=null,pdfinfo='pdfinfo'}={}) {
+export async function runQcewNativeJourney({directory,intakeDirectory,cpiFile,profileFile=null,chromium=null,originalProjectBundle=null,pdfinfo='pdfinfo',programmeFile=null}={}) {
+  const selectedProgramme=programmeFile?await inputJson(resolve(programmeFile),64*1024):null;
+  const programme=selectedProgramme?normalizeQcewNativeProgramme(selectedProgramme.value):
+    {operation:OPERATION,initial:{year:2025,quarter:4},successor:{year:2026,quarter:1}};
+  const requestId=(legacy,role)=>selectedProgramme?'qcew-'+selectedProgramme.sha256.slice(0,32)+'-'+role:legacy;
+  const initialPeriod=programme.initial,successorPeriod=programme.successor;
   directory=await privateDirectory(resolve(directory));intakeDirectory=resolve(intakeDirectory);
   const cpiOriginal=await inputJson(resolve(cpiFile),8*1024*1024),cpiCapture=sealFredPublicTable(cpiOriginal.value);
   const profileInput=profileFile?(await inputJson(resolve(profileFile),64*1024)).value:null;
   const profile=profileInput?(profileInput.schema?validateQcewProfile(profileInput):createQcewProfile(profileInput)):defaultSanFranciscoProfile();
   const sourceProject=join(directory,'project'),receivedProject=join(directory,'received-project'),sourceContexts=new Map();
-  const identity={operation:OPERATION,intakeDirectory,cpiSha256:cpiOriginal.sha256,profileId:profile.id,
-    pdf:Boolean(chromium),originalProjectBundle:originalProjectBundle?resolve(originalProjectBundle):null};
+  const identity={operation:programme.operation,intakeDirectory,cpiSha256:cpiOriginal.sha256,profileId:profile.id,
+    pdf:Boolean(chromium),originalProjectBundle:originalProjectBundle?resolve(originalProjectBundle):null,
+    ...(selectedProgramme?{programmeSha256:selectedProgramme.sha256,programme}: {})};
   let retained=null;
   try {retained=JSON.parse(await readFile(join(directory,'journey.json'),'utf8'));}
   catch(error) {if(error.code!=='ENOENT')throw error;}
@@ -47,38 +66,38 @@ export async function runQcewNativeJourney({directory,intakeDirectory,cpiFile,pr
       if(originalProjectBundle) {
         const original=(await inputJson(resolve(originalProjectBundle),FRED_DDP_PROJECT_BUNDLE_MAX_BYTES)).value;
         await receiveFredProject({directory:sourceProject,bundle:original,qcewSourceContexts:sourceContexts});
-      } else await initializeFredProject({directory:sourceProject,title:'County wage report production',selection:cpiCapture.selection});
+      } else await initializeFredProject({directory:sourceProject,title:selectedProgramme?profile.definition.title:'County wage report production',selection:cpiCapture.selection});
       const state=await readFredProject(sourceProject);return {id:state.id,revision:state.revision,captures:state.captures.length};
     });
     const common=async(id)=>({directory:sourceProject,id,expectedRevision:(await readFredProject(sourceProject)).revision});
-    await step('retain_original_cpi',async()=>importFredCapture({...await common('need-qcew-original-cpi-20261012'),capture:cpiCapture}));
+    await step('retain_original_cpi',async()=>importFredCapture({...await common(requestId('need-qcew-original-cpi-20261012','original-cpi')),capture:cpiCapture}));
     let sealed;
     await step('admit_complete_original_qcew_once',async()=>{
-      const selections=[{year:2025,quarter:4},{year:2026,quarter:1}].map(when=>qcewReportRowSelection(profile,when));
+      const selections=[initialPeriod,successorPeriod].map(when=>qcewReportRowSelection(profile,when));
       sealed=await sealQcewIntakeWithContext(intakeDirectory,{selections});
       sourceContexts.set(sealed.capture.captureSha256,sealed.sourceContext);
       return qcewCaptureContextStats(sealed.sourceContext);
     });
     const sourceContext=sealed.sourceContext;
     const source=await step('retain_complete_original_qcew',async()=>importQcewSource({
-      ...await common('need-qcew-original-source-20261012'),capture:sealed.capture,sourceContext
+      ...await common(requestId('need-qcew-original-source-20261012','original-source')),capture:sealed.capture,sourceContext
     }));
     await step('save_reusable_production_profile',async()=>{
-      const value=await saveQcewProfile({...await common('need-qcew-profile-20261012'),profile});
+      const value=await saveQcewProfile({...await common(requestId('need-qcew-profile-20261012','profile')),profile});
       return {profileId:value.profile.id,revision:value.revision,replayed:value.replayed??false};
     });
-    const initialRequest={...await common('need-qcew-2025-q4-20261012'),captureSha256:source.captureSha256,
-      cpiCaptureSha256:cpiCapture.captureSha256,profileId:profile.id,period:{year:2025,quarter:4},browserPath:chromium,sourceContext};
-    const initial=await step('produce_complete_2025_q4',async()=>produceQcewEdition(initialRequest));
+    const initialRequest={...await common(requestId('need-qcew-2025-q4-20261012','initial')),captureSha256:source.captureSha256,
+      cpiCaptureSha256:cpiCapture.captureSha256,profileId:profile.id,period:initialPeriod,browserPath:chromium,sourceContext};
+    const initial=await step('produce_complete_'+initialPeriod.year+'_q'+initialPeriod.quarter,async()=>produceQcewEdition(initialRequest));
     await step('replay_original_production_request',async()=>{
       const replay=await produceQcewEdition(initialRequest);
       need(replay.replayed===true&&replay.edition.id===initial.edition.id&&replay.edition.manifestSha256===initial.edition.manifestSha256,
         'The original production request did not replay its saved edition.');
       return {editionId:replay.edition.id,revision:replay.revision,replayed:true};
     });
-    const successor=await step('produce_complete_2026_q1_successor',async()=>produceQcewEdition({
-      ...await common('need-qcew-2026-q1-20261012'),captureSha256:source.captureSha256,cpiCaptureSha256:cpiCapture.captureSha256,
-      profileId:profile.id,period:{year:2026,quarter:1},previousEditionId:initial.edition.id,browserPath:chromium,sourceContext
+    const successor=await step('produce_complete_'+successorPeriod.year+'_q'+successorPeriod.quarter+'_successor',async()=>produceQcewEdition({
+      ...await common(requestId('need-qcew-2026-q1-20261012','successor')),captureSha256:source.captureSha256,cpiCaptureSha256:cpiCapture.captureSha256,
+      profileId:profile.id,period:successorPeriod,previousEditionId:initial.edition.id,browserPath:chromium,sourceContext
     }));
     const editions=[];
     for(const entry of [initial.edition,successor.edition]) {
@@ -114,13 +133,13 @@ export async function runQcewNativeJourney({directory,intakeDirectory,cpiFile,pr
       return results;
     });
     await step('reopen_complete_original_sources',async()=>{
-      const originalFile=editions[0].report.source.files.find(file=>file.area==='06075'&&file.year===2025)??editions[0].report.source.files[0];
+      const originalFile=editions[0].report.source.files.find(file=>file.area===(selectedProgramme?profile.definition.regions.find(region=>region.id===profile.definition.focus).areas[0]:'06075')&&file.year===initialPeriod.year)??editions[0].report.source.files[0];
       const before=await readQcewOriginalMember(sourceProject,source.captureSha256,originalFile.file,{context:sourceContext});
       const after=await readQcewOriginalMember(receivedProject,source.captureSha256,originalFile.file,{context:sourceContext});
       need(before.sha256===after.sha256&&before.bytes.equals(after.bytes),'The complete original county source changed during receiving.');
       const retainedCpi=await getFredCapture(receivedProject,cpiCapture.captureSha256);
       need(canonical(retainedCpi)===canonical(cpiCapture),'The original complete CPI table changed during receiving.');
-      return {originalMember:originalFile.member,bytes:after.bytes.length,sha256:after.sha256,cpiCaptureSha256:cpiCapture.captureSha256};
+      return {originalMember:originalFile.member??originalFile.file,bytes:after.bytes.length,sha256:after.sha256,cpiCaptureSha256:cpiCapture.captureSha256};
     });
     const reopenedBundle=await exportFredProject({directory:receivedProject,qcewSourceContexts:sourceContexts});
     await step('export_received_project_and_replay_receiving',async()=>{
@@ -133,7 +152,7 @@ export async function runQcewNativeJourney({directory,intakeDirectory,cpiFile,pr
     need(qcewCaptureContextStats(sourceContext).fullCsvPasses===1,
       'The complete source operation repeated an already admitted original CSV pass.');
     journal.status='completed';journal.completedAt=new Date().toISOString();
-    const result={schema:'stellar-forge.qcew-native-result.v1',operation:OPERATION,startedAt:journal.startedAt,completedAt:journal.completedAt,
+    const result={schema:'stellar-forge.qcew-native-result.v1',operation:programme.operation,startedAt:journal.startedAt,completedAt:journal.completedAt,
       runtime:{node:process.version,platform:process.platform,architecture:process.arch},project:await viewQcewProject({directory:sourceProject}),
       originalSource:source.source,sourceParsing,cpiOriginal:{sha256:cpiOriginal.sha256,tableSha256:cpiOriginal.value.sha256,observations:cpiOriginal.value.observation_count},
       reports:editions.map(edition=>({edition:edition.entry,period:edition.report.periodLabel,availability:edition.report.availability,
@@ -148,15 +167,15 @@ export async function runQcewNativeJourney({directory,intakeDirectory,cpiFile,pr
   }
 }
 async function main(args=process.argv.slice(2)) {
-  const flags={},allowed=new Set(['directory','intake-directory','cpi','profile','chromium','original-project','pdfinfo']);
+  const flags={},allowed=new Set(['directory','intake-directory','cpi','profile','chromium','original-project','pdfinfo','programme']);
   for(let i=0;i<args.length;i+=2) {
     need(/^--[a-z-]+$/.test(args[i])&&allowed.has(args[i].slice(2))&&args[i+1]&&!args[i+1].startsWith('--'),
-      'Use --directory ABS --intake-directory ABS --cpi ORIGINAL_JSON [--profile JSON] [--chromium ABS] [--original-project COMPLETE_JSON].');
+      'Use --directory ABS --intake-directory ABS --cpi ORIGINAL_JSON [--profile JSON] [--chromium ABS] [--original-project COMPLETE_JSON] [--programme JSON].');
     const key=args[i].slice(2);need(flags[key]===undefined,'Do not repeat native journey options.');flags[key]=args[i+1];
   }
   need(flags.directory&&flags['intake-directory']&&flags.cpi,'Select the retained native operation and complete original source inputs.');
   return runQcewNativeJourney({directory:flags.directory,intakeDirectory:flags['intake-directory'],cpiFile:flags.cpi,
-    profileFile:flags.profile??null,chromium:flags.chromium??null,originalProjectBundle:flags['original-project']??null,pdfinfo:flags.pdfinfo??'pdfinfo'});
+    profileFile:flags.profile??null,chromium:flags.chromium??null,originalProjectBundle:flags['original-project']??null,pdfinfo:flags.pdfinfo??'pdfinfo',programmeFile:flags.programme??null});
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href)
   main().catch(error=>{console.error(JSON.stringify({code:error.code??'QCEW_NATIVE_FAILED',message:error.message}));process.exitCode=1;});

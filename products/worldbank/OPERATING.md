@@ -118,9 +118,12 @@ starforge worldbank-product analysis --python /srv/starforge/python/bin/python \
   --prefix north_america --resume
 ~~~
 
-Choose a different stable operation ID and view prefix for another edition.
-An omitted operation ID derives from the handover digest. Continue interruptions
-with the same command and directory.
+This prepare command creates an initial analytical customer edition. An omitted
+operation ID derives from the handover digest. Continue interruptions with the
+same command and directory. For a later approved edition of the same customer's
+monitoring workbook, use the [recurring customer workflow](RECURRING.md): it keeps
+the same view, edited SQL, report definition and workbook while retaining prior
+editions. Use a separate prepare operation/view only for an independent analysis.
 
 The maintained adapter first runs the original package importer and World Bank
 review/export engine. Its regenerated CSV must match the customer CSV byte for

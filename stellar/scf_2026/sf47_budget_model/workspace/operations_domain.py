@@ -360,7 +360,7 @@ def allocated_lines(invoice, amount):
     return [(invoice["lines"][index]["costId"], Decimal(value * sign) / 100) for index, value, _ in parts]
 
 
-def report(program, plan, records, sources, completionPlans=None, installationRefs=None, workIntakeRefs=None):
+def report(program, plan, records, sources, completionPlans=None, installationRefs=None, workIntakeRefs=None, expenseRecords=None):
     package = {row["id"]: {"id": row["id"], "tranche": row["tranche"],
                 "plannedUsd": usd(row["amount_usd"]), "plannedHours": str(row.get("estimated_hours", "")),
                 "recordedHours": ZERO, "acceptedHours": ZERO, "preawardHours": ZERO,
@@ -538,6 +538,10 @@ def report(program, plan, records, sources, completionPlans=None, installationRe
     original_node = node_report({"sources": sources})
     if original_node is not None:
         result["delivery"]["nodeAccounting"] = original_node
+    if expenseRecords and (expenseRecords.get("intakes") or expenseRecords.get("attributions")):
+        from operations_expenses import expense_report
+        result["expenseAttribution"] = expense_report({"program": program, "plan": plan, "records": records,
+            "sources": sources, "expenseRecords": expenseRecords})
     from operations_settlement import report as merchant_settlement_report
     original_merchant = merchant_settlement_report({"sources": sources, "records": records})
     if original_merchant is not None:

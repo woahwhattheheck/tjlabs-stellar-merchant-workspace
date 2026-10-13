@@ -18,9 +18,9 @@ const installationRefs={type:'array',maxItems:1000,items:{type:'object',addition
   properties:{id:id('installation'),revision:{type:'integer',minimum:1},sha256:digest},required:['id','revision','sha256']}};
 const comparisonOptions={type:'object',additionalProperties:false,properties:{title:nonempty(500),note:str(12000)}};
 const changes={type:'array',minItems:1,maxItems:2000,items:{type:'object',additionalProperties:false,
-  properties:{action:{enum:['PLAN','UPDATE','ADD','REMOVE']},
+  properties:{action:{enum:['PLAN','UPDATE','ADD','REMOVE','FROM_RECORDED_COSTS']},
     collection:{enum:['buyers','merchants','facilitators','operations','schedules','workshares','capacityPools','fundingGroups']},
-    id:nonempty(300),fields:object,value:object,beforeId:nonempty(300)},required:['action']}};
+    id:nonempty(300),fields:object,value:object,beforeId:nonempty(300),recordedDocument:object,choices:object},required:['action']}};
 const tool=(suffix,description,properties,required,readOnly=true,rules={})=>({
   name:'merchant_grant_'+suffix,description,
   annotations:{readOnlyHint:readOnly,destructiveHint:false,idempotentHint:true,openWorldHint:false},
@@ -33,7 +33,7 @@ export const grantCohortAdoptionTools=[
     ['workspace','caseId','expectedVersion','source']),
   tool('adoption_review','Calculate the complete adoption document against the current original native case/seed. The result retains the entered plan and original rule, reports current-source differences, and calculates full tasks, payments, capacity, prices and proposed targets.',
     {...ws,...caseSelection,...modelInput},['workspace','caseId','expectedVersion'],true,oneInput),
-  tool('adoption_edit','Apply explicit plan or keyed row edits to the complete retained document and return the full successor, calculated report and original before/after comparison. UPDATE merges selected nested object fields, arrays remain complete replacements, and row identity/source origin stay original. PLAN edits names, dates, calendar, sensitivity, note or scheduling choices; original source/rules use adoption_rebase.',
+  tool('adoption_edit','Apply explicit plan or keyed row edits to the complete retained document and return the full successor, calculated report and original before/after comparison. UPDATE merges selected nested object fields, arrays remain complete replacements, and row identity/source origin stay original. FROM_RECORDED_COSTS as the only change accepts a complete recordedDocument and explicit choices, derives future service costs/hours, retains all original sources and returns a complete cost-basis successor. Measured quantities count completed useful tasks; supplier unitCost is divided by the target requestsPerTask because the original calculator charges that rate per underlying request. Derivations retain both task and request quantities; labor remains per task. New normalized choices carry quantityBasis:COMPLETED_TASKS, while complete earlier documents reopen with their original calculation. Each allocation may include measurement {schema:stellar-forge.sf47-cohort-task-measurement.v1, original:the full merchant_grant_task_outcome response, kind:INSTALLED or FOLLOWUP, observationId, serviceBasis, optional caseId for the actual selected receiving case}; its count/unit/reference are derived from that saved source when omitted, or must match when supplied. Original review/prepare checks the selected native revision; existing measurementHistory retains prior selections. PLAN edits names, dates, calendar, sensitivity, note or scheduling choices; original source/rules use adoption_rebase.',
     {...ws,...modelInput,changes,options:comparisonOptions},['workspace','changes'],true,oneInput),
   tool('adoption_rebase','Explicitly rebase the whole adoption plan on its original current case and native proposed rule. Retain every editable row and the complete predecessor comparison. This uses the same original-case operation as the browser.',
     {...ws,...caseSelection,...modelInput},['workspace','caseId','expectedVersion'],true,oneInput),

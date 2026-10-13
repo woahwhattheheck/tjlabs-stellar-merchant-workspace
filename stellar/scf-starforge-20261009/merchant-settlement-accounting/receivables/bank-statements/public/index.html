@@ -11,7 +11,7 @@
   <a class="skip-link" href="#main">Skip to workspace</a>
   <header class="masthead">
     <div><p class="eyebrow">Merchant workspace</p><h1>Bank reconciliation</h1></div>
-    <div class="header-actions"><a id="receivables-link" href="/receivables/">Receivables</a><button type="button" data-action="refresh">Refresh</button></div>
+    <div class="header-actions"><a href="./accountant-receiving/">Accountant receiving</a><a id="receivables-link" href="/receivables/">Receivables</a><button type="button" data-action="refresh">Refresh</button></div>
   </header>
   <div class="workspace-bar">
     <label>Bank account<select id="account-picker"><option value="">All accounts</option></select></label>
@@ -20,6 +20,7 @@
   </div>
   <nav class="tabs" aria-label="Bank workspace">
     <button type="button" data-tab="overview" aria-current="page">Overview</button>
+    <button type="button" data-tab="collection">Statement collections</button>
     <button type="button" data-tab="import">Import statement</button>
     <button type="button" data-tab="transactions">Transactions</button>
     <button type="button" data-tab="close">Close statement</button>
@@ -28,6 +29,7 @@
   <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
   <main id="main" tabindex="-1">
     <section id="view-overview" class="view"></section>
+    <section id="view-collection" class="view" hidden></section>
     <section id="view-import" class="view" hidden></section>
     <section id="view-transactions" class="view" hidden></section>
     <section id="view-close" class="view" hidden></section>

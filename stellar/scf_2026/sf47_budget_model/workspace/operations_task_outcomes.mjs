@@ -1,4 +1,5 @@
 // Complete customer task comparison editor over the original Grant Operations case.
+import {createOutcomeWorkbookDesk} from './task-outcomes-workbook-desk.mjs';
 const SCHEMA = 'stellar-forge.sf47-customer-task-outcomes.v1';
 const STORAGE = 'sf47.customer-task-outcomes.';
 const CATEGORIES = ['ACQUISITION','PROCESSING','CORRECTION','RECEIVING','OTHER'];
@@ -26,10 +27,14 @@ function same(a,b) {return JSON.stringify(a)===JSON.stringify(b);}
 function receiveDraftRows(current, incoming) {
   for(const [id,row] of incoming){
     const retained=current[id];
-    if(retained&&(!same(retained.inputs,row.inputs)||String(retained.note||'')!==row.note))
+    if(retained&&(!same(retained.inputs,row.inputs)||String(retained.note||'')!==row.note||
+       retained.workbook&&row.workbook&&!same(retained.workbook,row.workbook)))
       throw Error('The retained draft or save note differs. Download the current editor recovery before reconciling the complete writing.');
   }
-  for(const [id,row] of incoming)if(!Object.hasOwn(current,id))current[id]=row;
+  for(const [id,row] of incoming){
+    if(!Object.hasOwn(current,id))current[id]=row;
+    else if(!current[id].workbook&&row.workbook)current[id].workbook=clone(row.workbook);
+  }
 }
 function terminalRejection(error) {
   const status=Number(error.status ?? error.details?.status ?? error.statusCode);
@@ -45,7 +50,7 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
   if(!session.initialized){
     let saved;try{saved=JSON.parse(sessionStorage.getItem(storageKey)||'null');}catch{}
     if(saved?.schema===SCHEMA+'.editor'&&saved.caseId===caseId){
-      for(const key of ['drafts','selection','pending','receipt','notice'])
+      for(const key of ['drafts','selection','pending','pendingWorkbook','receipt','notice'])
         if(!Object.hasOwn(session,key)&&Object.hasOwn(saved,key))session[key]=saved[key];
     }
     session.initialized=true;
@@ -54,11 +59,14 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
   const $=selector=>root.querySelector(selector);
   const draft=()=>session.selection?.mode==='draft'?session.drafts[session.selection.id]:null;
   const editable=()=>currentCase.program.state==='OPEN';
+  const workbookDesk=createOutcomeWorkbookDesk({root,session,getDraft:draft,getCurrent:()=>currentCase,
+    getInputs:()=>draft()?.inputs||(selected?{id:selected.edition.id,expectedRevision:selected.edition.revision,document:selected.edition.document}:null),
+    editable,available,persist,render,controls,run,notify,api,saveApi,mutationId,recordingActor,reload,onCase,validateInput,terminalRejection});
   function persist(){
     try{
       sessionStorage.setItem(storageKey,JSON.stringify({schema:SCHEMA+'.editor',caseId,
         planContentSha256:currentCase.plan.contentSha256,drafts:session.drafts,selection:session.selection,
-        pending:session.pending??null,receipt:session.receipt??null,notice:session.notice??''}));
+        pending:session.pending??null,pendingWorkbook:session.pendingWorkbook??null,receipt:session.receipt??null,notice:session.notice??''}));
       storageError='';
     }catch{storageError='Browser storage is full. Download the complete editor recovery or save a case edition to retain this work.';}
   }
@@ -68,10 +76,13 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
     const locked=busy||hostBusy||!ready;
     root.setAttribute('aria-busy',String(locked));
     root.querySelectorAll('button,input,select,textarea').forEach(el=>{
-      el.disabled=locked||el.dataset.fixed==='true'||(el.dataset.editor==='true'&&(!draft()||!editable()));
+      const pendingEdit=Boolean(session.pendingWorkbook)&&(el.dataset.editor==='true'||
+        ['new','sources','import-input','preview','save','reconcile','use-current','edit','clone','add-row','remove-row','add-followup','remove-followup'].includes(el.dataset.taskAction)||
+        ['choose','apply','refresh-review'].includes(el.dataset.taskWb));
+      el.disabled=locked||pendingEdit||el.dataset.fixed==='true'||(el.dataset.editor==='true'&&(!draft()||!editable()));
     });
     const save=$('[data-task-action="save"]');
-    if(save)save.disabled=locked||!editable()||!draft()?.preview||Boolean(session.pending);
+    if(save)save.disabled=locked||!editable()||!draft()?.preview||Boolean(session.pending||session.pendingWorkbook);
     const recover=$('[data-task-action="recover-save"]');
     if(recover)recover.disabled=locked||!session.pending;
     const warning=$('[data-task-storage]');if(warning)warning.textContent=storageError;
@@ -94,7 +105,7 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
     return '<button type="button" data-task-action="'+name+'" '+attrs+(fixed?' data-fixed="true" disabled':'')+'>'+esc(text)+'</button>';
   }
   function methods(document,side,title){
-    const m=document[side],prefix='document.'+side+'.';
+    const m=pathValue(document,side),prefix='document.'+side+'.';
     const sources=currentCase.sources.map(row=>[row.id,row.filename+' · '+row.sha256.slice(0,12)]);
     let content='<section class="task-method"><h4>'+esc(title)+'</h4><div class="task-fields">';
     content+=field('Method name',prefix+'name',m.name,{required:true});
@@ -110,13 +121,13 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
     content+=field('Whole-operation elapsed minutes',prefix+'elapsedMinutes',m.elapsedMinutes,{decimal:true,help:'Record the operation once; overlapping step times are not added.'});
     content+=field('Original case attachments',prefix+'sourceIds',m.sourceIds,{select:sources,multiple:true,wide:true});
     content+=field('Measurement source and method',prefix+'notes',m.notes,{wide:true,area:true});
-    content+='</div><h5>Active effort</h5><p>Enter person-minutes: two people working for 30 minutes is 60 person-minutes. Include manual corrections and receiving work. A blank value remains unknown.</p>';
+    content+='</div><h5>Active effort</h5><p>Enter person-minutes: two people working for 30 minutes is 60 person-minutes. Include manual corrections and receiving work. Browser session length, agent runtime and elapsed turnaround do not establish human effort. A blank value remains unknown.</p>';
     content+=m.effort.map((r,i)=>'<fieldset class="task-work-row"><legend>'+esc(r.label||'Work '+(i+1))+'</legend><div class="task-fields">'
       +field('Stable row ID',prefix+'effort.'+i+'.id',r.id)
       +field('Work description',prefix+'effort.'+i+'.label',r.label,{wide:true,required:true})
       +field('Category',prefix+'effort.'+i+'.category',r.category,{select:choice(CATEGORIES)})
       +field('Active person-minutes',prefix+'effort.'+i+'.personMinutes',r.personMinutes,{decimal:true})
-      +field('Hourly labour rate ('+document.currency+')',prefix+'effort.'+i+'.hourlyRate',r.hourlyRate,{decimal:true})
+      +field('Hourly labour rate ('+document.currency+')',prefix+'effort.'+i+'.hourlyRate',r.hourlyRate,{decimal:true,help:'Use an explicit valuation and record its source; leave blank for an unvalued effort comparison.'})
       +field('Original measurement and rate basis',prefix+'effort.'+i+'.notes',r.notes,{area:true,wide:true})
       +'</div>'+action('Remove work row','remove-row','data-side="'+side+'" data-list="effort" data-index="'+i+'"',!draft())+'</fieldset>').join('');
     content+=action('Add work row','add-row','data-side="'+side+'" data-list="effort"',!draft())+'<h5>Other costs</h5><p>Use '+esc(document.currency)+' throughout. These lines contain costs outside the labour calculation.</p>';
@@ -127,32 +138,83 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
       +'</div>'+action('Remove cost row','remove-row','data-side="'+side+'" data-list="costs" data-index="'+i+'"',!draft())+'</fieldset>').join('');
     return content+action('Add cost row','add-row','data-side="'+side+'" data-list="costs"',!draft())+'</section>';
   }
-  function reportView(report){
+  function reportView(report,afterLabel='Installed'){
     if(!report)return '<p class="task-empty">Review the complete comparison to calculate effort and cost.</p>';
     const metrics=[['Attempted tasks','attemptedTasks'],['Completed tasks','completedTasks'],['Incomplete tasks','incompleteTasks'],
       ['Elapsed minutes','elapsedMinutes'],['Active person-minutes','personMinutes'],['Labour cost','labourCost'],
       ['Other cost','otherCost'],['Total cost','totalCost'],['Person-minutes per completed task','personMinutesPerCompletedTask'],
       ['Cost per completed task','costPerCompletedTask']];
     return '<section class="task-report"><h4>Customer comparison</h4><p>'+esc(report.measurementBasis)+' · '+esc(report.currency)+' · '+esc(report.unit)+'</p>'
-      +table(['Measurement','Prior','Installed'],metrics.map(([name,key])=>[esc(name),esc(shown(report.baseline[key])),esc(shown(report.installed[key]))]))
+      +table(['Measurement','Prior',afterLabel],metrics.map(([name,key])=>[esc(name),esc(shown(report.baseline[key])),esc(shown(report.installed[key]))]))
       +'<p>'+esc(report.basis)+'</p><h5>Differences after scope review</h5>'
-      +table(['Measurement','Prior minus installed','Percent'],Object.entries(report.savings).map(([key,value])=>[esc(label(key.replace(/([A-Z])/g,' $1'))),esc(shown(value?.difference)),value?.percent==null?'Unknown':esc(value.percent)+'%']))
-      +'<h5>Scope changes</h5>'+table(['Field','Prior','Installed'],report.scopeDifferences.map(row=>[esc(row.field),esc(row.prior),esc(row.installed)]))
+      +table(['Measurement','Prior minus '+afterLabel.toLowerCase(),'Percent'],Object.entries(report.savings).map(([key,value])=>[esc(label(key.replace(/([A-Z])/g,' $1'))),esc(shown(value?.difference)),value?.percent==null?'Unknown':esc(value.percent)+'%']))
+      +'<h5>Scope changes</h5>'+table(['Field','Prior',afterLabel],report.scopeDifferences.map(row=>[esc(row.field),esc(row.prior),esc(row.installed)]))
       +'<h5>Review items</h5>'+table(['Field','Complete review item'],report.findings.map(row=>[esc(row.path),esc(row.message)]))+'</section>';
+  }
+  function recurringEditor(document){
+    const rows=document.followups||[];
+    const editing=draft();
+    const unsavedIds=new Set(editing?.unsavedFollowupIds||[]);
+    const savedIds=new Set((selected?.edition?.document?.followups||rows.filter(row=>!unsavedIds.has(row.id))).map(row=>row.id));
+    let content='<section class="task-recurring"><h4>Recurring customer observations</h4><p>Keep each later complete task against the same original baseline. Record its own source edition, population, period, output and customer response. Earlier observations remain in this case.</p>';
+    content+=action('Add recurring observation','add-followup','',!editing||!editable());
+    if(!rows.length)return content+'<p>No recurring observations recorded.</p></section>';
+    const selectedId=rows.some(row=>row.id===session.selection?.followupId)?session.selection.followupId:rows[0].id;
+    content+=table(['Observation','Original observation time','Operator review','Customer response',''],rows.map((r,i)=>[
+      esc(r.label),esc(r.method.observedAt||'Unknown'),esc(label(r.status)),esc(label(r.acceptance.status)),
+      action(r.id===selectedId?'Selected observation':'Open observation','select-followup','data-id="'+esc(r.id)+'"')
+        +(editing&&!savedIds.has(r.id)?action('Remove unsaved observation','remove-followup','data-index="'+i+'"'):'')]));
+    rows.forEach((row,i)=>{
+      if(row.id!==selectedId)return;
+      const path='document.followups.'+i+'.';
+      content+='<details open class="task-followup" id="task-followup-'+esc(row.id)+'"><summary>'+esc(row.label)+' · '+esc(label(row.acceptance.status))+'</summary><p>Original observation '+esc(row.id)+'.</p><div class="task-fields">'
+        +field('Observation name',path+'label',row.label,{required:true,wide:true})
+        +field('Original deployments',path+'deploymentIds',row.deploymentIds,{multiple:true,wide:true,select:currentCase.records.deployments.map(r=>[r.id,r.name||r.id])})
+        +field('Original purchase observations',path+'purchaseIds',row.purchaseIds,{multiple:true,wide:true,select:currentCase.records.purchases.map(r=>[r.id,(r.externalRef||r.id)+' · '+r.state])})+'</div>'
+        +methods(document,'followups.'+i+'.method','Complete recurring method')
+        +'<fieldset class="task-review"><legend>Recurring scope and outcome review</legend><div class="task-fields">'
+        +field('Comparability with original baseline',path+'comparison.decision',row.comparison.decision,{select:choice(['UNREVIEWED','COMPARABLE','NOT_COMPARABLE'])})
+        +field('Operator review state',path+'status',row.status,{select:choice(['DRAFT','REVIEWED'])})
+        +field('Complete scope decision and explanation',path+'comparison.reason',row.comparison.reason,{wide:true,area:true})
+        +field('Customer outcome and next work',path+'conclusion',row.conclusion,{wide:true,area:true})
+        +'</div></fieldset><fieldset class="task-review"><legend>Actual customer response</legend><div class="task-fields">'
+        +field('Response',path+'acceptance.status',row.acceptance.status,{select:choice(['PENDING','ACCEPTED','DECLINED'])})
+        +field('Actual receiving reviewer',path+'acceptance.by',row.acceptance.by)
+        +field('Original response time',path+'acceptance.at',row.acceptance.at,{help:'Enter the original ISO timestamp with its timezone; keep any original fractional seconds.'})
+        +field('Original response and source',path+'acceptance.note',row.acceptance.note,{wide:true,area:true,help:'Reference the actual customer response and attach its source to this observation. An operator review alone is not customer acceptance.'})
+        +'</div></fieldset></details>';
+    });
+    return content+'</section>';
+  }
+  function recurringReport(report){
+    if(!report?.series)return '';
+    const series=report.series;
+    return '<section class="task-recurring-report"><h4>Recurring outcome overview</h4><p>'+esc(series.basis)+'</p>'
+      +table(['Observations','Reviewed','Accepted','Declined','Pending','Accepted comparable observed'],[[
+        series.observations,series.reviewed,series.accepted,series.declined,series.pending,series.acceptedComparableObserved].map(esc)])
+      +'<p>Observed UTC dates of accepted comparable observations: '+esc(series.observedUtcDates.join(', ')||'None recorded')+'.</p>'
+      +table(['Observation','Completed tasks','Active person-minutes','Elapsed minutes','Total cost','Customer response'],report.followups.map(row=>[
+        esc(row.label),esc(shown(row.report.installed.completedTasks)),esc(shown(row.report.installed.personMinutes)),
+        esc(shown(row.report.installed.elapsedMinutes)),esc(shown(row.report.installed.totalCost)),esc(label(row.acceptance.status))]))
+      +report.followups.filter((row,i)=>row.id===session.selection?.followupId||(!report.followups.some(item=>item.id===session.selection?.followupId)&&i===0)).map(row=>'<details open><summary>'+esc(row.label)+' — complete baseline comparison</summary>'
+        +'<p>Whole-operation elapsed difference: '+esc(shown(row.elapsedMinutesDifference?.difference))+' minutes. Active effort remains separate.</p>'
+        +reportView(row.report,'Recurring')+'</details>').join('')+'</section>';
   }
   function render(){
     if(!available())return;
+    const expanded=[...root.querySelectorAll('.task-followup[open]')].map(node=>node.id);
     const editing=draft(),input=editing?.inputs,value=editing?.inputs?.document||selected?.edition?.document;
     const heading='<header class="task-heading"><div><h3>Customer task outcomes</h3><p>Compare the complete prior method and installed task, then retain the customer review with this grant case.</p></div><div class="task-actions">'
       +action('New comparison','new','',!editable())+action('Refresh saved work','refresh')+action('Attach original sources','sources')
       +action('Import draft input','import-input','',!editable())+action('Download editor recovery','recovery')+'</div></header>';
     const savedRows=heads.map(row=>[esc(row.customer)+'<small>'+esc(row.title)+'</small>',esc(row.status),esc(row.revision),esc(row.measurementBasis),
+      esc(row.recurring?.observations??0)+' / '+esc(row.recurring?.acceptedComparableObserved??0),
       action('Open','open','data-id="'+esc(row.id)+'" data-revision="'+row.revision+'"')]);
     const drafts=Object.entries(session.drafts).map(([id,row])=>[esc(row.inputs.document.customer||'Customer not entered'),esc(row.inputs.document.title),esc(row.inputs.expectedRevision),
       action('Continue draft','draft','data-id="'+esc(id)+'"')+action('Download draft','draft-download','data-id="'+esc(id)+'"')]);
     let body='<p data-task-notice role="status" aria-live="polite">'+esc(session.notice||'')+'</p><p data-task-storage role="alert">'+esc(storageError)+'</p>';
     if(session.pending)body+='<div class="task-pending"><strong>Original save retained</strong><p>'+esc(session.pending.request.requestId)+' · '+esc(session.pending.request.data.inputs.document.title)+'</p>'+action('Recover original save','recover-save')+'</div>';
-    body+='<details'+(!value?' open':'')+'><summary>Saved comparisons and retained drafts</summary><h4>Saved comparisons</h4>'+table(['Customer / task','State','Revision','Measurement basis',''],savedRows)
+    body+='<details'+(!value?' open':'')+'><summary>Saved comparisons and retained drafts</summary><h4>Saved comparisons</h4>'+table(['Customer / task','State','Revision','Measurement basis','Recurring / accepted comparable observed',''],savedRows)
       +'<h4>Unfinished inputs</h4>'+table(['Customer','Task','Based on revision',''],drafts)+'</details>';
     if(value){
       const edition=selected?.edition;
@@ -185,10 +247,13 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
         +field('Whole-scope comparison and explanation','document.comparison.reason',value.comparison.reason,{area:true,wide:true,help:'Explain population, period, output, quality and any material differences before using the calculated savings.'})
         +field('Customer outcome and next work','document.conclusion',value.conclusion,{area:true,wide:true})+'</div>';
       if(editing)body+='<label>Save note<textarea data-task-note data-editor="true" rows="3">'+esc(editing.note||'')+'</textarea></label>';
-      body+='</fieldset>'+reportView(editing?.preview?.report||(!editing?edition.report:null));
+      const calculation=editing?.preview?.report||(!editing?edition.report:null);
+      body+='</fieldset>'+recurringEditor(value)+workbookDesk.render()+reportView(calculation)+recurringReport(calculation);
       if(!editing)body+='<details><summary>Complete original case, source and installation selection</summary><pre>'+esc(JSON.stringify(edition.source,null,2))+'</pre></details>';
     }
+    if(!value&&session.pendingWorkbook)body+=workbookDesk.render();
     root.innerHTML=heading+body+'<input hidden type="file" data-task-file accept=".json,application/json">';
+    root.querySelectorAll('.task-followup').forEach(node=>{if(expanded.includes(node.id))node.open=true;});
     controls();
   }
   async function reload(){
@@ -208,8 +273,9 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
     const seeded=await api('/api/operations/'+caseId+'/task-outcomes-seed',{expectedVersion:currentCase.program.version});
     if(!available())return;
     if(document){seeded.inputs.document=clone(document);seeded.inputs.document.title+=' — new comparison';seeded.inputs.document.status='DRAFT';
-      seeded.inputs.document.comparison={decision:'UNREVIEWED',reason:''};}
-    session.drafts[seeded.inputs.id]={inputs:seeded.inputs,note:''};
+      seeded.inputs.document.comparison={decision:'UNREVIEWED',reason:''};
+      for(const row of seeded.inputs.document.followups||[]){row.status='DRAFT';row.comparison={decision:'UNREVIEWED',reason:''};row.acceptance={status:'PENDING',by:'',at:null,note:''};row.conclusion='';}}
+    session.drafts[seeded.inputs.id]={inputs:seeded.inputs,note:'',unsavedFollowupIds:(seeded.inputs.document.followups||[]).map(row=>row.id)};
     session.selection={id:seeded.inputs.id,mode:'draft'};selected=null;persist();render();
   }
   function editingSelected(){
@@ -219,6 +285,7 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
     session.selection={id,mode:'draft'};persist();render();
   }
   async function preview(){
+    if(session.pendingWorkbook)throw Error('Recover the original workbook source request before reviewing or saving.');
     const d=draft();if(!d)throw Error('Open a retained draft first.');
     const original=clone(d.inputs),signature=JSON.stringify(original);
     const value=await api('/api/operations/'+caseId+'/task-outcomes-preview',{expectedVersion:currentCase.program.version,inputs:original});
@@ -250,7 +317,7 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
   }
   async function save(){
     const d=draft();if(!d?.preview)throw Error('Review the complete input before saving.');
-    if(session.pending)throw Error('Recover the retained original save before issuing another save.');
+    if(session.pending||session.pendingWorkbook)throw Error('Recover the retained original request before issuing another save.');
     if(d.previewSignature!==JSON.stringify(d.inputs)||d.preview.source.case.version!==currentCase.program.version)throw Error('Review the current draft and case before saving.');
     const payload={expectedVersion:currentCase.program.version,actor:recordingActor(),note:d.note||'',
       action:'task-outcomes.save',data:{inputs:clone(d.preview.inputs),expectedPreviewSha256:d.preview.previewSha256}};
@@ -275,7 +342,7 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
     }else{delete d.preview;delete d.previewSignature;persist();render();notify('Current case and comparison revision loaded; your entire draft is retained.');}
   }
   root.addEventListener('input',event=>{
-    const d=draft();if(!d||busy||hostBusy||!ready||!editable())return;
+    const d=draft();if(!d||busy||hostBusy||!ready||!editable()||session.pendingWorkbook)return;
     if(event.target.matches('[data-task-note]')){d.note=event.target.value;persist();return;}
     const path=event.target.dataset.taskPath;if(!path)return;
     let value=event.target.multiple?[...event.target.selectedOptions].map(row=>row.value):event.target.value;
@@ -283,7 +350,7 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
       if(!value)d.inputs.document.installation=null;
       else{const cut=value.lastIndexOf('@');d.inputs.document.installation={id:value.slice(0,cut),revision:Number(value.slice(cut+1))};}
     }else{
-      if(path.endsWith('observedAt')||/(?:personMinutes|hourlyRate|elapsedMinutes|attemptedTasks|completedTasks|amount)$/.test(path))value=value===''?null:value;
+      if(path.endsWith('observedAt')||path.endsWith('acceptance.at')||/(?:personMinutes|hourlyRate|elapsedMinutes|attemptedTasks|completedTasks|amount)$/.test(path))value=value===''?null:value;
       setPath(d.inputs,path,value);
     }
     delete d.preview;delete d.previewSignature;persist();controls();
@@ -293,32 +360,51 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
     if(event.target.matches('[data-task-file]')){
       const file=event.target.files?.[0];if(!file)return;
       void run(async()=>{
+        if(session.pending||session.pendingWorkbook)throw Error('Recover the original pending request before importing another editor.');
         if(file.size>32*1024*1024)throw Error('Use a complete JSON input or editor recovery up to 32 MiB.');
         let value;try{value=JSON.parse(await file.text());}catch{throw Error('The complete JSON input cannot be read.');}
         if(value.schema===SCHEMA+'.editor'){
           if(value.caseId!==caseId&&value.caseId!==currentCase.program.origin?.programId)throw Error('This recovery belongs to another case.');
           if(value.planContentSha256!==currentCase.plan.contentSha256)throw Error('This recovery belongs to another pinned plan.');
           if(value.pending)throw Error('Recover the original pending save in its original case before transferring this editor recovery.');
-          const incoming=Object.entries(value.drafts||{}).map(([id,row])=>{
+          if(value.pendingWorkbook&&value.caseId!==caseId)throw Error('Recover the workbook source request in its original case before transferring this editor.');
+          const incoming=await Promise.all(Object.entries(value.drafts||{}).map(async([id,row])=>{
             if(!row||typeof row!=='object'||Array.isArray(row))throw Error('Use the complete retained draft and save note.');
             validateInput(row.inputs);if(id!==row.inputs.id)throw Error('The recovery draft identity differs.');
             if(row.note!==undefined&&typeof row.note!=='string')throw Error('Keep the complete original save note as text.');
             const received={inputs:clone(row.inputs),note:row.note??''};
+            if(row.unsavedFollowupIds!==undefined){
+              const known=new Set((row.inputs.document.followups||[]).map(item=>item.id));
+              if(!Array.isArray(row.unsavedFollowupIds)||row.unsavedFollowupIds.some(id=>typeof id!=='string'||!known.has(id))
+                 ||new Set(row.unsavedFollowupIds).size!==row.unsavedFollowupIds.length)
+                throw Error('Retain the original unique unsaved observation identities from this complete draft.');
+              received.unsavedFollowupIds=[...row.unsavedFollowupIds];
+            }else if(row.inputs.expectedRevision===0){
+              received.unsavedFollowupIds=(row.inputs.document.followups||[]).map(item=>item.id);
+            }
             if(row.basedOn!==undefined){
               if(!Number.isSafeInteger(row.basedOn)||row.basedOn<0||row.basedOn>row.inputs.expectedRevision)
                 throw Error('Keep the original saved revision used to begin this draft.');
               received.basedOn=row.basedOn;
             }
+            if(row.workbook)received.workbook=await workbookDesk.recoverDraftWorkbook(row.workbook,row.inputs);
             return [id,received];
-          });
-          receiveDraftRows(session.drafts,incoming);
+          }));
+          const nextDrafts=clone(session.drafts);receiveDraftRows(nextDrafts,incoming);
+          const pendingWorkbook=workbookDesk.recoverPending(value.pendingWorkbook,nextDrafts);
+          session.drafts=nextDrafts;session.pendingWorkbook=pendingWorkbook;
           const id=value.selection?.mode==='draft'&&Object.hasOwn(session.drafts,value.selection.id)
             ?value.selection.id:incoming[0]?.[0];
-          if(id)session.selection={id,mode:'draft'};
+          if(id){
+            session.selection={id,mode:'draft'};
+            if((session.drafts[id].inputs.document.followups||[]).some(row=>row.id===value.selection?.followupId))
+              session.selection.followupId=value.selection.followupId;
+          }
         }else{
           const inputs=value.inputs||value;validateInput(inputs);
           if(session.drafts[inputs.id]&&!same(session.drafts[inputs.id].inputs,inputs))throw Error('A different retained draft already uses this identity.');
-          if(!Object.hasOwn(session.drafts,inputs.id))session.drafts[inputs.id]={inputs:clone(inputs),note:''};
+          if(!Object.hasOwn(session.drafts,inputs.id))session.drafts[inputs.id]={inputs:clone(inputs),note:'',
+            ...(inputs.expectedRevision===0?{unsavedFollowupIds:(inputs.document.followups||[]).map(row=>row.id)}:{})};
           session.selection={id:inputs.id,mode:'draft'};
         }
         selected=null;persist();render();notify('Complete draft input received. Review it against the current original case before saving.');
@@ -338,8 +424,22 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
     if(['title','customer','task','unit','currency','status','conclusion'].some(key=>typeof doc[key]!=='string')
        ||typeof doc.comparison.decision!=='string'||typeof doc.comparison.reason!=='string')
       throw Error('The complete comparison and review fields are required.');
-    for(const side of ['baseline','installed']){
-      const method=doc[side];
+    if(doc.followups!==undefined&&(!Array.isArray(doc.followups)||doc.followups.length>100))
+      throw Error('Use the complete recurring observation list, up to 100 observations.');
+    const observations=doc.followups||[],ids=new Set();
+    for(const row of observations){
+      if(!row||typeof row!=='object'||typeof row.id!=='string'||!row.id||ids.has(row.id)
+         ||['label','status','conclusion'].some(key=>typeof row[key]!=='string')
+         ||!row.comparison||typeof row.comparison.decision!=='string'||typeof row.comparison.reason!=='string'
+         ||!row.acceptance||['status','by','note'].some(key=>typeof row.acceptance[key]!=='string')
+         ||!(row.acceptance.at===null||typeof row.acceptance.at==='string')
+         ||!Array.isArray(row.deploymentIds)||!Array.isArray(row.purchaseIds))
+        throw Error('Retain every complete recurring method, stable identity, customer response and original selection.');
+      ids.add(row.id);
+    }
+    for(const method of [doc.baseline,doc.installed,...observations.map(row=>row.method)]){
+      if(!method||typeof method!=='object'||!Array.isArray(method.effort)||!Array.isArray(method.costs)||!Array.isArray(method.sourceIds))
+        throw Error('Retain the complete original method and its source/work/cost rows.');
       if(['name','basis','sourceReference','population','period','output','quality','notes'].some(key=>typeof method[key]!=='string')
          ||method.effort.length>100||method.costs.length>100
          ||method.effort.some(row=>!row||typeof row!=='object'||['id','label','category','notes'].some(key=>typeof row[key]!=='string'))
@@ -365,12 +465,14 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
       if(actionName==='reconcile'){await reconcile();return;}
       if(actionName==='use-current'){
         const d=session.drafts[target.dataset.id];if(!d||!d.reconciliation||d.reconciliation.currentRevision!==Number(target.dataset.revision))throw Error('Reopen the current saved edition first.');
+        const savedObservations=new Set((d.reconciliation.currentDocument.followups||[]).map(row=>row.id));
+        d.unsavedFollowupIds=(d.unsavedFollowupIds||[]).filter(id=>!savedObservations.has(id));
         d.inputs.expectedRevision=d.reconciliation.currentRevision;delete d.reconciliation;delete d.preview;delete d.previewSignature;
         persist();render();notify('Your complete draft now follows the reviewed current revision. Review the comparison again before saving.');return;
       }
       if(actionName==='recovery'){
         download(JSON.stringify({schema:SCHEMA+'.editor',caseId,planContentSha256:currentCase.plan.contentSha256,drafts:session.drafts,
-          selection:session.selection,pending:session.pending??null,receipt:session.receipt??null,notice:session.notice??''},null,2)+'\n',caseId+'-task-outcomes-editor.json');return;
+          selection:session.selection,pending:session.pending??null,pendingWorkbook:session.pendingWorkbook??null,receipt:session.receipt??null,notice:session.notice??''},null,2)+'\n',caseId+'-task-outcomes-editor.json');return;
       }
       if(actionName==='draft-download'){
         const d=session.drafts[target.dataset.id];if(!d)throw Error('The complete draft is unavailable.');
@@ -385,9 +487,37 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
         if(!available())return;
         download(await response.blob(),edition.id+'-r'+edition.revision+'.zip','application/zip');return;
       }
+      if(actionName==='select-followup'){
+        const value=draft()?.inputs.document||selected?.edition?.document;
+        if(!value?.followups?.some(row=>row.id===target.dataset.id))throw Error('Select a retained recurring observation.');
+        session.selection.followupId=target.dataset.id;persist();render();return;
+      }
+      if(actionName==='add-followup'||actionName==='remove-followup'){
+        const d=draft();if(!d||!editable())return;
+        if(actionName==='add-followup'){
+          d.inputs.document.followups ||= [];
+          if(d.inputs.document.followups.length>=100)throw Error('This comparison already retains 100 recurring observations.');
+          const id=uuid('observation-');
+          d.inputs.document.followups.push({id,label:'Recurring observation '+(d.inputs.document.followups.length+1),
+            method:{name:d.inputs.document.installed.name,basis:'UNRECORDED',observedAt:null,sourceReference:'',
+              population:'',period:'',output:'',quality:'',attemptedTasks:null,completedTasks:null,elapsedMinutes:null,
+              sourceIds:[],notes:'',effort:[],costs:[]},comparison:{decision:'UNREVIEWED',reason:''},
+            status:'DRAFT',conclusion:'',acceptance:{status:'PENDING',by:'',at:null,note:''},deploymentIds:[],purchaseIds:[]});
+          d.unsavedFollowupIds ||= [];d.unsavedFollowupIds.push(id);session.selection.followupId=id;
+        }else{
+          const index=Number(target.dataset.index),row=d.inputs.document.followups?.[index];
+          if(!row||!d.unsavedFollowupIds?.includes(row.id))throw Error('Retain saved observations and correct them in the next complete edition.');
+          d.inputs.document.followups.splice(index,1);d.unsavedFollowupIds=d.unsavedFollowupIds.filter(id=>id!==row.id);
+        }
+        delete d.preview;delete d.previewSignature;persist();render();
+        if(actionName==='add-followup'){
+          const last=root.querySelector('.task-followup:last-of-type');if(last){last.open=true;last.scrollIntoView?.({block:'start'});}
+        }
+        return;
+      }
       if(actionName==='add-row'||actionName==='remove-row'){
         const d=draft();if(!d||!editable())return;
-        const list=d.inputs.document[target.dataset.side]?.[target.dataset.list];if(!Array.isArray(list))return;
+        const list=pathValue(d.inputs.document,target.dataset.side)?.[target.dataset.list];if(!Array.isArray(list))return;
         if(actionName==='remove-row')list.splice(Number(target.dataset.index),1);
         else{
           if(list.length>=100)throw Error('The complete method already contains 100 rows in this section.');
@@ -409,5 +539,5 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
     }catch(error){notify(error.message||String(error),true);}
     finally{ready=true;if(available())controls();}
   })();
-  return {ready:initial,setHostBusy,dispose(){persist();active=false;window.removeEventListener('pagehide',pagehide);}};
+  return {ready:initial,setHostBusy,dispose(){persist();workbookDesk.dispose();active=false;window.removeEventListener('pagehide',pagehide);}};
 }

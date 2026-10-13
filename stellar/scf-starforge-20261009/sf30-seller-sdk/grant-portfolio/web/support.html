@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Defect support · Portfolio workspace</title>
+<link rel="stylesheet" href="/support/support.css">
+<script src="/support/support.js" type="module"></script>
+</head>
+<body>
+<header class="masthead">
+  <div><p class="eyebrow">Portfolio workspace</p><h1>Defect support</h1></div>
+  <nav aria-label="Workspace"><a id="workspace-link" href="/">Portfolio</a><button id="refresh" type="button">Refresh</button></nav>
+</header>
+<main id="main">
+  <p id="notice" class="notice" role="status" aria-live="polite"></p>
+  <section id="connect" class="panel" hidden>
+    <h2>Open your support workspace</h2>
+    <p>Use the private workspace connection provided when you started the portfolio application.</p>
+    <form id="connect-form"><label>Workspace connection<input id="connection" type="password" autocomplete="off" required></label>
+      <button type="submit">Open workspace</button></form>
+  </section>
+  <section id="application" hidden>
+    <div class="toolbar panel">
+      <label class="contract-control">Service contract<select id="contract-select"><option value="">All contracts</option></select></label>
+      <label class="operator-control">Operator<input id="operator" autocomplete="name" maxlength="300" placeholder="Your name"></label>
+      <div class="toolbar-buttons"><button id="new-report" class="primary">New report</button><button id="terms">Terms</button><button id="receive">Receive handover</button><button id="export">Prepare handover</button></div>
+    </div>
+    <section id="pending" class="panel pending" aria-label="Saved operation" hidden></section>
+    <div id="stats" class="stats" aria-label="Matching reports"></div>
+    <div class="split">
+      <section class="panel report-list" aria-labelledby="reports-heading">
+        <div class="section-heading"><h2 id="reports-heading">Reports</h2><button id="clear-selection" hidden>Close detail</button></div>
+        <form id="filters" class="filters">
+          <label>Search<input id="search" type="search" placeholder="Title or report details"></label>
+          <label>Status<select id="status-filter"><option value="">All statuses</option><option>received</option><option>triaged</option><option>acknowledged</option><option>planned</option><option>in-correction</option><option>ready-for-review</option><option>closed</option></select></label>
+          <button type="submit">Apply</button>
+        </form>
+        <div class="table-scroll"><table><thead><tr><th>Report</th><th>Owner / status</th><th>Acknowledgement</th></tr></thead><tbody id="reports"></tbody></table></div>
+        <p id="empty" class="empty" hidden>No matching reports. Create a report or receive an existing handover.</p>
+        <div class="pagination"><button id="previous">Previous</button><span id="page-info"></span><button id="next">Next</button></div>
+      </section>
+      <section id="detail" class="panel detail" aria-label="Selected support report" hidden></section>
+    </div>
+    <section id="delivery-result" class="panel" aria-label="Complete handover" hidden></section>
+    <p class="footnote">Critical reports: one business day to acknowledge. Other reports: two. Correction and workaround targets follow the recorded agreement. All displayed times include their timezone.</p>
+  </section>
+</main>
+<dialog id="editor" aria-labelledby="editor-title">
+  <form id="editor-form">
+    <div class="dialog-heading"><h2 id="editor-title"></h2><button id="cancel-editor" type="button" aria-label="Close form">Close</button></div>
+    <p id="editor-intro" class="muted"></p>
+    <div id="fields" class="fields"></div>
+    <p id="editor-error" class="form-error" role="alert"></p>
+    <div class="dialog-actions"><button id="submit-editor" class="primary" type="submit">Save</button></div>
+  </form>
+</dialog>
+</body>
+</html>

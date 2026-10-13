@@ -8,6 +8,10 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readBrowserAssets } from '../../distribution/browser-assets.mjs';
 import { openCollections } from './model.mjs';
 import { openCollectionComposer } from '../collection-composer/model.mjs';
+import { PLAN_PACKAGE_MANIFEST_BYTES } from '../collection-composer/package-format.mjs';
+import { openCustomerUseCommissioning } from '../collection-composer/customer-use-model.mjs';
+import { customerDeliveryRoutes } from './delivery/http.mjs';
+import { routeCustomerUse } from '../collection-composer/customer-use-http.mjs';
 import { openCollectionRecovery } from './recovery-jobs.mjs';
 import { collectionBundleFiles } from './recovery.mjs';
 import { createCollectionBrowserRunner } from './browser-run.mjs';
@@ -77,7 +81,7 @@ function errorStatus(error) {
   if (/NOT_FOUND$/.test(code)) return 404;
   if (/BUSY|CHANGED|CONFLICT|NOT_ENQUEUED|REVIEW_REQUIRED|MISSING_INPUT/.test(code))
     return 409;
-  if (/^COLLECTION_|^INBOX_|INVALID|REQUIRED/.test(code)) return 400;
+  if (/^COLLECTION_|^INBOX_|^CUSTOMER_DELIVERY_|INVALID|REQUIRED/.test(code)) return 400;
   return 500;
 }
 function selected(value, snapshot) {
@@ -114,11 +118,17 @@ export async function serveCollections(collections, {
     need(collections, 'COLLECTION_RECOVERY_SOURCE_NOT_OPEN', 409);
     return composer ??= openCollectionComposer({ collections });
   };
+  let customerUse = null;
+  const customerUseController = () => {
+    need(collections, 'COLLECTION_RECOVERY_SOURCE_NOT_OPEN', 409);
+    return customerUse ??= openCustomerUseCommissioning({ collections, composer: collectionComposer() });
+  };
   let recovery;
   try { recovery = await openCollectionRecovery({
     directory: receivingDirectory ?? join(collections.directory, 'recovery'),
     getCollections: () => collections, environment,
   }); } catch (error) { await runner?.close(); await approvals?.close(); throw error; }
+  const customerDelivery = customerDeliveryRoutes({ getCollections: () => collections, receivingDirectory: recovery.directory, mutate, jsonBody, downloadFile });
   const token = randomBytes(32).toString('hex');
   const reviews = new Map(), exports = new Map(), work = new Set(), transfers = new Set();
   let origin, closing = false, mutation = false;
@@ -209,9 +219,88 @@ export async function serveCollections(collections, {
           recoveryBusy: recovery.busy, busy: mutation || recovery.busy || Boolean(runner?.busy), paymentApproval:
             approvals ? 'original-browser' : 'original-terminal',
           command: 'buyer-collections', exportRoot: collections ? resolve(collections.directory, 'exports') : null,
-            agentApi: 1, recoveryApi: 1, connectionApi: 1, composerApi: 1 });
+            agentApi: 1, recoveryApi: 1, connectionApi: 1, composerApi: 1, customerUseApi: 1, customerDeliveryApi: 1, customerDeliveryPath: '/customer-delivery' });
+      if (await customerDelivery.route({ request, response, url, send })) return;
+      if (await routeCustomerUse({request,response,url,controller:customerUseController,mutate,send})) return;
       if (url.pathname.startsWith('/api/composer/')) {
         const authoring = collectionComposer();
+        if (url.pathname === '/api/composer/inputs' || url.pathname.startsWith('/api/composer/inputs/')) {
+          const inputs = authoring.inputs, base = '/api/composer/inputs';
+          if (url.pathname === base) {
+            if (request.method === 'GET') return send(await inputs.list());
+            need(request.method === 'POST','METHOD_NOT_ALLOWED',405);
+            const input = fields(await jsonBody(request),['manifest']);
+            return send(await mutate(()=>inputs.begin(input)),201);
+          }
+          if (url.pathname === base + '/list') {
+            need(request.method === 'POST','METHOD_NOT_ALLOWED',405);
+            return send(await inputs.list(fields(await jsonBody(request),['kind','query','offset','limit'])));
+          }
+          const route = /^\/api\/composer\/inputs\/([a-f0-9]{64})(?:\/(complete|file|catalog|chunks\/(0|[1-9][0-9]*)))?$/.exec(url.pathname);
+          need(route,'ROUTE_NOT_FOUND',404);
+          const uploadId = route[1], action = route[2];
+          if (!action) {
+            need(request.method === 'GET','METHOD_NOT_ALLOWED',405);
+            return send(await inputs.inspect({uploadId}));
+          }
+          if (action === 'file' || action === 'catalog') {
+            need(request.method === 'GET','METHOD_NOT_ALLOWED',405);
+            return action === 'file' ? downloadFile(response,await inputs.file({uploadId}))
+              : send(await inputs.catalog({uploadId}));
+          }
+          need(request.method === 'POST','METHOD_NOT_ALLOWED',405);
+          if (action === 'complete') {
+            fields(await jsonBody(request),[]);
+            return send(await mutate(()=>inputs.complete({uploadId})));
+          }
+          need(request.headers['content-type']?.split(';')[0].trim().toLowerCase() === 'application/octet-stream',
+            'COLLECTION_INPUT_BINARY_REQUIRED');
+          if (request.headers['content-length'] !== undefined)
+            need(/^(0|[1-9][0-9]*)$/.test(request.headers['content-length'])
+              && Number(request.headers['content-length'])<=1048576,'COLLECTION_INPUT_CHUNK_SIZE_INVALID');
+          return send(await mutate(()=>inputs.receiveChunk({uploadId,index:Number(route[3]),source:request})));
+        }
+        if (url.pathname.startsWith('/api/composer/sharing/')) {
+          const exchange = authoring.sharing, base = '/api/composer/sharing/packages';
+          const downloadable = value => ({ ...value, downloadUrl: base + '/' + value.packageSha256 + '/file' });
+          if (url.pathname === '/api/composer/sharing/export') {
+            need(request.method === 'POST', 'METHOD_NOT_ALLOWED', 405);
+            const input = fields(await jsonBody(request), ['collectionId','expectedEditionSha256','headerSelections']);
+            return send(downloadable(await mutate(() => exchange.exportPackage(input))), 201);
+          }
+          if (url.pathname === base) {
+            if (request.method === 'GET') return send(await exchange.listPackages());
+            need(request.method === 'POST', 'METHOD_NOT_ALLOWED', 405);
+            const input = fields(await jsonBody(request, PLAN_PACKAGE_MANIFEST_BYTES + 1024), ['manifest']);
+            return send(await mutate(() => exchange.receiveManifest(input)), 201);
+          }
+          const route = /^\/api\/composer\/sharing\/packages\/([a-f0-9]{64})(?:\/(chunks|complete|review|adopt|file))?$/.exec(url.pathname);
+          need(route, 'ROUTE_NOT_FOUND', 404);
+          const packageSha256 = route[1], action = route[2];
+          if (!action) {
+            need(request.method === 'GET', 'METHOD_NOT_ALLOWED', 405);
+            return send(await exchange.inspectPackage({ packageSha256 }));
+          }
+          if (action === 'file' && request.method === 'GET')
+            return downloadFile(response, await exchange.downloadPackage({ packageSha256 }));
+          need(request.method === 'POST', 'METHOD_NOT_ALLOWED', 405);
+          if (action === 'chunks') {
+            const input = fields(await jsonBody(request), ['objectSha256','offset','base64']);
+            return send(await mutate(() => exchange.receiveChunk({ ...input, packageSha256 })));
+          }
+          if (action === 'complete' || action === 'file') {
+            fields(await jsonBody(request), []);
+            const result = await mutate(() => action === 'complete'
+              ? exchange.finishReceiving({ packageSha256 }) : exchange.packageFile({ packageSha256 }));
+            return send(action === 'file' ? downloadable(result) : result);
+          }
+          const input = fields(await jsonBody(request, 2 * 1024 * 1024),
+            ['planId','name','description','operatorBindings','outputDirectory','deliveryParameter','deliveryValue',
+              'requestBindings', ...(action === 'adopt' ? ['expectedReviewSha256'] : [])]);
+          return send(await mutate(() => action === 'adopt'
+            ? exchange.adoptPlan({ ...input, packageSha256 })
+            : exchange.reviewAdoption({ ...input, packageSha256 })), action === 'adopt' ? 201 : 200);
+        }
         if (url.pathname === '/api/composer/catalog') {
           need(request.method === 'POST', 'METHOD_NOT_ALLOWED', 405);
           const input = fields(await jsonBody(request), ['path']);
@@ -473,7 +562,8 @@ export async function serveCollections(collections, {
     const operation = handle().catch(error => {
       if (response.headersSent || response.destroyed) response.destroy();
       else send({ error: /^[A-Z0-9_]{1,100}$/.test(String(error.code ?? ''))
-        ? error.code : 'COLLECTION_OPERATION_FAILED' }, errorStatus(error));
+        ? error.code : 'COLLECTION_OPERATION_FAILED',
+        ...(String(error.code??'').startsWith('CUSTOMER_USE_')?{message:error.message,...(error.details?{details:error.details}:{})}:{}) }, errorStatus(error));
     });
     work.add(operation);
     operation.finally(() => work.delete(operation));
@@ -509,6 +599,8 @@ export async function serveCollections(collections, {
           server.close(done);
           server.closeAllConnections?.();
         });
+        await customerDelivery.close();
+        await customerUse?.close();
         for (const model of adopted) await model.close();
         composer?.close();
         reviews.clear(); exports.clear();

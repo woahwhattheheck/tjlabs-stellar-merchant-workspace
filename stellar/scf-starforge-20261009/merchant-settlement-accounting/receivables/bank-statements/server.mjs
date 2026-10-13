@@ -51,6 +51,7 @@ export async function handleBankStatementsRequest(workspace,{method,path,query={
     if(route==='source-preview')result=await workspace.previewSource(value);
     else if(route==='accounts')result=await workspace.saveAccount(value);
     else if(route==='imports')result=await workspace.receiveSource(value);
+    else if(route==='assembly-preview')result=await workspace.previewAssembly(value);
     else if(route==='close-preview')result=await workspace.previewClose(value);
     else if(route==='closes')result=await workspace.retainClose(value);
     else if(parts[0]==='closes'&&parts.length===3&&parts[2]==='reopen')result=await workspace.reopenClose(parts[1],value);

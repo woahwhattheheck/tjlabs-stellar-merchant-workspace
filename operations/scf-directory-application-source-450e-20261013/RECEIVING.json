@@ -1,0 +1,107 @@
+{
+  "operation": "SCF-DIRECTORY-ASSEMBLY-450E-20261013",
+  "basis": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "36f1063dc7f4622b50ebc42074051c35cf2beb60",
+    "sourcePackage": {
+      "path": "operations/scf-grant-cumulative-source-25fd-20261013/source-package.json",
+      "bytes": 2142836,
+      "sha256": "0e7990991ad82345cac67623ac5a67dda8f83357a573b07ca33a055fda422563",
+      "gitBlob": "23999b55a964637bfe616bad89a68eeb2c5ee075"
+    },
+    "fullSourceCarrier": {
+      "git_blob": "0c2c4b6e30284b0b78ae70577b4a026aaae5048a",
+      "bytes": 7745042,
+      "sha256": "0e48e055193477b60beafce53e1ccde82678df5c796bd509227b687baebc515e"
+    }
+  },
+  "originalSources": 486,
+  "currentSources": 506,
+  "preservedOriginalSources": 486,
+  "changedOriginalSources": [],
+  "chaptersBefore": 78,
+  "chaptersAfter": 78,
+  "changedSubsection": "Service-directory commissioning and referral destinations",
+  "otherCompleteH2ChaptersUnchanged": 77,
+  "applicationByteIdentical": true,
+  "htmlByteIdentical": true,
+  "budget": {
+    "bytes": 597,
+    "sha256": "4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00",
+    "git_blob": "c62afa352e881c2cf81fe937649fe63fea3ceab5"
+  },
+  "budgetByteIdentical": true,
+  "selectedDeclarations": 44,
+  "registeredDirectorySources": 20,
+  "completeFourOutputReplayExact": true,
+  "executionEnvironment": "Original complete composer and original product registry executed in the connected JavaScript runtime with UTF-8/hash primitives; no filesystem, product process, browser, saved draft or Site was opened.",
+  "chapterReceiving": {
+    "schema": "stellar-forge.directory-grant-chapter-receiving.v1",
+    "parentHeading": "## Referral implementation: source changes, returned outcomes and complete receiving",
+    "heading": "### Service-directory commissioning and referral destinations",
+    "before": {
+      "bytes": 13268,
+      "sha256": "8a4acd8a948f870d7dcaa094c14052a8149a6b85839121995e7436ed3eea15c7"
+    },
+    "after": {
+      "bytes": 23568,
+      "sha256": "c0a49e5d282d9d4bbf04670c646d9196d57a5b329569b2ec833fa536effd81d1"
+    },
+    "prefixSha256": "f81adc0373e898dbfbd868316e1e9218f4f8867a24ca2b8b99c335d493b64ac0",
+    "suffixSha256": "367069c4542ffb4733496d064d8f339aeb2446bd8c03374164db6eb8ff9526ba",
+    "reused": false
+  },
+  "outputs": [
+    {
+      "path": "grant.html",
+      "bytes": 96472,
+      "sha256": "ce91d58ca77daa914f1f7c72defa0de438bfa2f37550e30c109792b1f7d0c806",
+      "git_blob": "6efbf15efd035c9efc7b8a3a0b028b15a784242f"
+    },
+    {
+      "path": "grant-data/application.md",
+      "bytes": 47371,
+      "sha256": "b9d27b29bb9c2d603b2bd013f07a1b8eb397cb8bca17ac57cae4da28a2b1abc1",
+      "git_blob": "ce39ca42245839be7d2b841703e92b714a5dd241"
+    },
+    {
+      "path": "grant-data/product-and-finance.md",
+      "bytes": 935804,
+      "sha256": "9c4bb1ea7f96ac3ce90e5283b2594ba6a541af1c9cb88c56e294da3d2751c378",
+      "git_blob": "0924a37797ec176663fc99a301a17c9577a0631b"
+    },
+    {
+      "path": "grant-data/source-index.json",
+      "bytes": 628350,
+      "sha256": "965d633755a3eb55d1dbe6c959e65679415916492c26c3c6ba5df9b8c066ee99",
+      "git_blob": "764afe815db5144b0748bbc1c9121122318dd4a3"
+    }
+  ],
+  "originalSourcePackageApi": {
+    "verified": true,
+    "functions": [
+      "createSourceBundle",
+      "createReviewerSourcePackage",
+      "openReviewerSourcePackage"
+    ],
+    "sourcePackage": {
+      "bytes": 2200232,
+      "sha256": "e1d7aa14f240634ac57f594ad3d8a2d6572e91d7e6d36ccfbb10b0a54d3cf78a",
+      "gitBlob": "e2621c9f1cda5f1890f95d02ca7af978f4288a65"
+    },
+    "bundleId": "8311bdd8b34a39a183d4b2a2e8c15e23cc9b6056fed67c5acba0954a42d6a672"
+  },
+  "completeSourceCarrier": {
+    "files": 271,
+    "decodedBytes": 7783862,
+    "bytes": 8288828,
+    "sha256": "00843291a0ab339bbbe20611be4e378817f4affb5c7e437a77107b3832e60c2e",
+    "gitBlob": "461b196c2abe8576d7e77786fa6606bf80e1b333",
+    "previous247Retained": true,
+    "selectedDirectoryFiles": 19,
+    "assemblyFiles": 5,
+    "originalBinaryUnchanged": true
+  },
+  "nativeRun": false,
+  "publicationMeaning": "Complete source composition and original package API receiving, for the existing cumulative publisher and original saved-case/Site operation."
+}

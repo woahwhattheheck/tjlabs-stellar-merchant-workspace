@@ -1,0 +1,33 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "merchant-support-operating",
+  "description": "Original OAuth/Support source retention, customer Operating Plans, complete returned work and full history receiving",
+  "components": [
+    "stellar/scf-starforge-20261009/distribution/discovery",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console"
+  ],
+  "commands": {
+    "support-operating-plan": "stellar/scf-starforge-20261009/distribution/discovery/support-operating-cli.mjs"
+  },
+  "commandDescriptions": {
+    "support-operating-plan": "Retain original Support evidence, record complete returned files, review customer changes and receive full plan histories"
+  },
+  "exports": {
+    "./merchant/support-operating-plans": {
+      "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/support-operating-plan.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/support-operating-plan.mjs"
+    },
+    "./merchant/support-operating-source": {
+      "types": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/oauth-operating-source.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/oauth-operating-source.mjs"
+    },
+    "./merchant/support-operating-returns": {
+      "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/support-operating-return.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/support-operating-return.mjs"
+    },
+    "./merchant/support-operating-return-source": {
+      "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/support-operating-return-native.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/support-operating-return-native.mjs"
+    }
+  }
+}

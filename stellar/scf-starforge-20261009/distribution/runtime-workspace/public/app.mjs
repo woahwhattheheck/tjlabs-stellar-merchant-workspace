@@ -1,10 +1,13 @@
 import { initImageWorkspace, imageOperationRecovery } from './image.mjs';
 import { createRuntimeTransferView } from './transfer.mjs';
+import { createWorkspaceReceivingView } from './workspace-receiving.mjs';
+import { createOperatingProceduresView } from './operating-procedures.mjs';
 import { createManagedWorkspaceView } from './managed.mjs';
 import { createApplicationsWorkspaceView } from './applications.mjs';
 import { createApplicationGroupsView } from './application-groups.mjs';
 import { createPythonWorkspaceView } from './python.mjs';
 import { createSourceBuildWorkspaceView } from './source-build.mjs';
+import { createRuntimeOutputView } from './runtime-output.mjs';
 // MIT. Industrial operator presentation; original runtime records remain authoritative.
 const $ = id => document.getElementById(id);
 const make = (tag, text, className) => { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (className) node.className = className; return node; };
@@ -39,6 +42,8 @@ function switchView(name) {
   if (name === 'applications') applications.refresh().catch(error);
   if (name === 'application-groups') applicationGroups.refresh().catch(error);
   if (name === 'transfers') transfers.refresh().catch(error);
+  if (name === 'workspace-backups') workspaceReceiving.refresh().catch(error);
+  if (name === 'operating-procedures') operatingProcedures.refresh().catch(error);
   if (name === 'python') python.refresh().catch(error);
   if (name === 'source-builds') sourceBuilds.refresh().catch(error);
 }
@@ -70,14 +75,14 @@ function cacheOptions() {
   return value;
 }
 function busy(runtimeId) {
-  return !!state?.operations.some(job => (job.runtimeId === runtimeId || job.targetId === runtimeId) && (job.workerActive || job.phase === 'QUEUED'));
+  return !!state?.operations.some(job => (job.runtimeId === runtimeId || job.targetId === runtimeId) && (job.workerActive || job.workerActive === null || job.commandActive || job.phase === 'QUEUED'));
 }
 function updateControls() {
   const value = selected(), exists = !!value, active = exists && busy(value.id);
   $('inspect').disabled = !value?.profile;
   $('install').disabled = !exists || active || !value.state;
   $('recover').disabled = !exists || active;
-  $('install-log').disabled = !value?.state?.logFile;
+  $('install-log').disabled = !value?.id;
   $('compare').disabled = !exists || !$('compare-after').value;
   $('create-handoff').disabled = !exists || value.phase !== 'READY';
   $('review-profile').disabled = !selectedArchive;
@@ -137,6 +142,12 @@ function renderOperations() {
       [job.cacheTransferId ? 'Runtime source transfer' : 'Image transfer', job.transferDirectory], ['Container output', job.containerDirectory], ['Product build', job.sourceBuildOutput]])
       if (path) article.append(make('p', label + ': ' + path));
     if (job.error) article.append(make('p', job.error.code + ': ' + job.error.message));
+    if (job.observation?.status === 'UNAVAILABLE') {
+      article.append(make('p', 'Current process status is unavailable. Open retained output or refresh this operation.', 'note'));
+      const detail = make('details');
+      detail.append(make('summary', 'Status check detail'), make('pre', JSON.stringify(job.observation, null, 2)));
+      article.append(detail);
+    }
     if (job.displayPhase === 'INTERRUPTED' && !job.homeId && !job.cacheTransferId && !job.sourceBuildId && !job.operation.startsWith('python-')) article.append(make('p', job.imageId || job.transferId
       ? imageOperationRecovery(job)
       : 'The workspace worker ended. Open its retained runtime and resume installation or recover into a new directory.', 'note'));
@@ -192,6 +203,8 @@ function renderOperations() {
       const open = make('button', 'Open runtime'); open.type = 'button';
       open.addEventListener('click', () => chooseRuntime(job.targetId ?? job.runtimeId)); actions.append(open);
     }
+    const observe = make('button', 'Refresh operation status'); observe.type = 'button';
+    observe.addEventListener('click', () => refreshOperation(job.id).catch(error)); actions.append(observe);
     const log = make('button', selectedLog === job.id ? 'Refresh selected worker log' : 'Open worker log'); log.type = 'button';
     log.addEventListener('click', () => openLog({ operationId: job.id }).catch(error)); actions.append(log);
     if (job.phase === 'QUEUED' && !job.sourceBuildId && !job.operation.startsWith('python-')) {
@@ -200,8 +213,29 @@ function renderOperations() {
     }
     article.append(actions);
     if (job.result) { const detail = make('details'); detail.open = expanded.has(job.id); detail.append(make('summary', 'Original operation result'), make('pre', JSON.stringify(job.result, null, 2))); article.append(detail); }
+    if (job.resultSource) article.append(make('p', 'Original receipt: ' + job.resultSource));
     list.append(article);
   }
+}
+function connectionStatus() {
+  const ids = state.operations.filter(job => job.observation?.status === 'UNAVAILABLE').map(job => job.id);
+  const unavailable = ids.length;
+  state.operationObservation = { status: unavailable ? 'PARTIAL' : 'CURRENT',
+    total: state.operations.length, unavailable, unavailableOperationIds: ids };
+  $('connection').textContent = unavailable
+    ? 'Connected · ' + unavailable + ' operation status ' + (unavailable === 1 ? 'check' : 'checks') + ' unavailable'
+    : state.operations.some(job => job.workerActive || job.commandActive) ? 'Operation in progress' : 'Connected';
+}
+async function refreshOperation(id) {
+  const requestedToken = token, workspaceId = state?.workspaceId;
+  const job = await api(query('/api/operation-status', { operationId: id }));
+  if (token !== requestedToken || state?.workspaceId !== workspaceId) return;
+  const index = state.operations.findIndex(item => item.id === id);
+  if (index < 0) state.operations.push(job);
+  else if ((state.operations[index].observation?.checkedAt ?? '') <= (job.observation?.checkedAt ?? ''))
+    state.operations[index] = job;
+  connectionStatus(); renderRuntime(); renderOperations();
+  if (view === 'managed') await managed.refresh();
 }
 async function refresh({ quiet = false } = {}) {
   if (loading) { refreshAgain = true; return; }
@@ -217,13 +251,19 @@ async function refresh({ quiet = false } = {}) {
         if (saved?.selectedId && value.runtimes.some(item => item.id === saved.selectedId)) {
           selectedId = saved.selectedId; value = await api(query('/api/state', { runtimeId: selectedId }));
         }
-        if (['runtime', 'profile', 'operations', 'deployment', 'managed', 'images', 'applications', 'application-groups', 'transfers', 'python', 'source-builds'].includes(saved?.view) && view === requestedView) view = saved.view;
+        if (['runtime', 'profile', 'operations', 'deployment', 'managed', 'images', 'applications', 'application-groups', 'transfers', 'python', 'source-builds', 'workspace-backups', 'operating-procedures'].includes(saved?.view) && view === requestedView) view = saved.view;
         logSelection = saved?.logSelection ?? null;
       } catch {}
     }
     if (token !== requestedToken) { refreshAgain = true; return; }
+    if (state?.workspaceId === value.workspaceId) {
+      // Preserve a newer direct operation refresh while the larger snapshot was loading.
+      const current = new Map(state.operations.map(job => [job.id, job]));
+      value.operations = value.operations.map(job =>
+        (current.get(job.id)?.observation?.checkedAt ?? '') > (job.observation?.checkedAt ?? '') ? current.get(job.id) : job);
+    }
     state = value; selectedId = value.selected?.id ?? selectedId;
-    $('connection').textContent = value.operations.some(job => job.workerActive) ? 'Operation in progress' : 'Connected';
+    connectionStatus();
     $('workspace-location').textContent = value.directory;
     $('runtime-home').textContent = 'New runtime directories: ' + value.runtimeHome;
     $('runtime-count').textContent = String(value.runtimes.length);
@@ -249,11 +289,18 @@ async function refresh({ quiet = false } = {}) {
     try { pending = JSON.parse(sessionStorage.getItem(pendingKey()) ?? 'null'); } catch { sessionStorage.removeItem(pendingKey()); }
     if (pending && value.operations.some(job => job.id === pending.requestId)) sessionStorage.removeItem(pendingKey());
     $('retry-request').hidden = !sessionStorage.getItem(pendingKey());
-    if (logSelection && view === 'operations' && $('log-panel').hidden) await openLog(logSelection);
+    if (logSelection && view === 'operations') {
+      if ($('log-panel').hidden) await openLog(logSelection);
+      else await runtimeOutput.update();
+    }
     prefs();
   } catch (value) {
     if (token !== requestedToken) { refreshAgain = true; return; }
     $('connection').textContent = 'Connection unavailable'; if (!quiet) error(value);
+    if (!state) {
+      if (view !== 'workspace-backups') switchView('workspace-backups');
+      else workspaceReceiving.refresh().catch(error);
+    }
   }
   finally { loading = false; if (refreshAgain) { refreshAgain = false; await refresh({ quiet }); } }
 }
@@ -352,11 +399,8 @@ async function operation(value) {
   return result;
 }
 async function openLog(value) {
-  const result = await api(query('/api/log', value));
-  logSelection = value; $('log-panel').hidden = false;
-  $('log-title').textContent = result.name;
-  $('log-detail').textContent = result.offset ? 'Showing the final ' + (result.totalBytes - result.offset) + ' of ' + result.totalBytes + ' bytes.' : result.totalBytes + ' retained bytes.';
-  $('log-text').textContent = result.text || '(The selected log is empty.)'; switchView('operations'); prefs();
+  $('log-panel').hidden = false; switchView('operations');
+  await runtimeOutput.open(value);
 }
 const images = initImageWorkspace({ root: $('image-workspace'), api, operation, refresh, openLog, message, error,
   switchView, getState: () => state, getToken: () => token, getView: () => view });
@@ -390,7 +434,7 @@ $('compare').addEventListener('click', async () => {
   } catch (value) { error(value); }
 });
 $('install-log').addEventListener('click', () => openLog({ runtimeId: selectedId }).catch(error));
-$('refresh-log').addEventListener('click', () => logSelection && openLog(logSelection).catch(error));
+
 $('retry-request').addEventListener('click', async () => {
   let scope;
   try {
@@ -438,6 +482,8 @@ $('download-handoff').addEventListener('click', () => {
   const link = make('a'); link.href = url; link.download = 'starforge-runtime-handoff.json'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 $('copy-handoff').addEventListener('click', () => handoff && navigator.clipboard.writeText(JSON.stringify(handoff, null, 2)).then(() => message('Deployment handoff copied.')).catch(error));
+const runtimeOutput = createRuntimeOutputView({ root: $('log-panel'), api, getWorkspaceId: () => state?.workspaceId, error,
+  onSelection: value => { logSelection = value; prefs(); } });
 const sourceBuilds = createSourceBuildWorkspaceView({ root: $('source-build-workspace'), api, getState: () => state,
   operation, refreshWorkspace: refresh, openLog, switchView, chooseRuntime, message, error,
   chooseArchive: async id => {
@@ -456,8 +502,13 @@ const sourceBuilds = createSourceBuildWorkspaceView({ root: $('source-build-work
 });
 const transfers = createRuntimeTransferView({ root: $('transfer-workspace'), api, getState: () => state,
   getToken: () => token, getView: () => view, operation, refreshWorkspace: refresh, openLog, switchView, message, error });
+const workspaceReceiving = createWorkspaceReceivingView({ root: $('workspace-receiving'), api,
+  getState: () => state, getToken: () => token, getView: () => view, message, error });
+const operatingProcedures = createOperatingProceduresView({ root: $('operating-procedures-workspace'), api,
+  getState: () => state, getToken: () => token, getView: () => view, message, error,
+  openLog, chooseRuntime, switchView, openApplication: id => applications.choose(id) });
 const managed = createManagedWorkspaceView({ api, getState: () => state, operation, refreshWorkspace: refresh,
-  openLog, switchView, message, error });
+  refreshOperation, openLog, switchView, message, error });
 const applications = createApplicationsWorkspaceView({ root: $('applications-workspace'), api, getState: () => state,
   refreshWorkspace: refresh, switchView, message, error });
 const applicationGroups = createApplicationGroupsView({ root: $('application-groups-workspace'), api, getState: () => state,
@@ -478,11 +529,14 @@ window.addEventListener('hashchange', () => {
   if (!location.hash) return;
   token = location.hash.slice(1); sessionStorage.setItem(tokenKey, token);
   history.replaceState(null, '', location.pathname);
+  runtimeOutput.reset();
   images.reset();
   managed.reset();
   applications.reset();
   applicationGroups.reset();
   transfers.reset();
+  workspaceReceiving.reset();
+  operatingProcedures.reset();
   python.reset();
   sourceBuilds.reset();
   archiveSelectionGeneration++;

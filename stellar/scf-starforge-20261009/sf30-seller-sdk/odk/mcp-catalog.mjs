@@ -67,7 +67,8 @@ const hostHandover=object({
   source:jsonObject,url:text(4096),mode:text(240),version:text(240),observed_at:text(100),
   compose_project:text(500),runtime:jsonObject,
   connection:object({id,name:text(240),url:text(4096),
-    authEnv:{type:'string',pattern:'^[A-Z_][A-Z0-9_]{0,127}$'},allowLoopback:{type:'boolean'}},['url','authEnv']),
+    authEnv:{type:'string',pattern:'^[A-Z_][A-Z0-9_]{0,127}$'},allowLoopback:{type:'boolean'},
+    codespacesTokenEnv:{type:'string',pattern:'^[A-Z_][A-Z0-9_]{0,127}$'}},['url','authEnv']),
   container_states:array(jsonObject,1000),backup_count:integer(),restore:{type:['object','null']},
   receiving_operation:{type:['string','object','null']},
 },['schema','operation_id','source','version','observed_at','connection','container_states']);
@@ -128,7 +129,7 @@ export function odkWorkspaceTools(tool){
     tool('merchant_odk_commissioning_browser','Return the authenticated commissioning URL on this same Applications-owned listener after verifying its original workspace identity.',scoped({}),['workspace'],read),
     tool('merchant_odk_warehouse_state','Read the original warehouse profiles, issued period datasets, approved source selections and saved operations with explicit array paging.',scoped({offset:integer(),limit:integer(1,1000)}),['workspace'],read),
     tool('merchant_odk_warehouse_browser','Return the authenticated Warehouse URL on this same managed Central listener after verifying the original workspace identity.',scoped({}),['workspace'],read),
-    tool('merchant_odk_source_connect','Bind the selected host-declared Central source profile, existing authorization environment alias and stable native connection ID. The original source owner verifies its account; no credential value enters tool input.',scoped({profile:alias}),['workspace','profile'],{idempotent:true,openWorld:true}),
+    tool('merchant_odk_source_connect','Bind the selected host-declared Central source profile, existing authorization and optional Codespaces proxy environment aliases, and stable native connection ID. The original source owner verifies its account; no credential value enters tool input.',scoped({profile:alias}),['workspace','profile'],{idempotent:true,openWorld:true}),
     tool('merchant_odk_capture_status','Read the exact original capture and its native background owner without starting another acquisition.',scoped({id}),['workspace','id'],read),
     tool('merchant_odk_dataset','Create or recover one accepted retained-table dataset using the host-declared publication terms and exact selected source fields. Keeps native field and parent keys and original semantic/source packages.',scoped({id,exportId:id,tableId:id,profile:alias,fields:array(text(2000),32),name:text(128),expectedSemanticSha256:hash}),['workspace','id','exportId','tableId','profile'],{idempotent:true}),
     tool('merchant_odk_release_prepare','Prepare an original SF82 release from the saved Central dataset export and optional host-declared runtime profile. Retains the original release ID and source package.',scoped({exportId:id,releaseId:id,label:text(240),runtime:alias}),['workspace','exportId','releaseId'],{idempotent:true}),

@@ -4,6 +4,9 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createRuntimeWorkspace, openRuntimeWorkspace } from './model.mjs';
 import { startRuntimeWorkspace } from './server.mjs';
+import { workspaceBackupCommands, workspaceBackupHelp, runWorkspaceBackupCommand } from './workspace-backup-cli.mjs';
+import { runtimeProcedureCommands, runtimeProcedureHelp, runRuntimeProcedureCommand } from './operating-procedures-cli.mjs';
+import { writeApplicationOutputDownload } from './application-output.mjs';
 import { readJSON } from './storage.mjs';
 import { fail, json, saveJSON } from './storage.mjs';
 import { inspectApplicationSetup, exportApplicationSetup, prepareApplicationSetup,
@@ -18,6 +21,8 @@ const HELP = `Starforge customer runtime workspace
   runtime-workspace attach --workspace DIRECTORY --runtime EXISTING_RUNTIME [--label NAME]
   runtime-workspace serve --workspace DIRECTORY [--port 8465]
   runtime-workspace status --workspace DIRECTORY [--runtime-id ID]
+  runtime-workspace operation-status --workspace DIRECTORY --operation-id UUID
+  runtime-workspace operation-log --workspace DIRECTORY --operation-id UUID
   runtime-workspace source-plans --workspace DIRECTORY [--query TEXT --limit 30 --cursor ID] [--receiving-query TEXT --receiving-status all --receiving-limit 30 --receiving-cursor ID]
   runtime-workspace source-plan-inspect --document COMPLETE_JSON
   runtime-workspace source-plan-save --workspace DIRECTORY --request COMPLETE_JSON
@@ -70,6 +75,12 @@ const HELP = `Starforge customer runtime workspace
   runtime-workspace application-stop --workspace DIRECTORY --application-id ID --operation-id UUID
   runtime-workspace application-recover --workspace DIRECTORY --application-id ID --operation-id UUID
   runtime-workspace application-output --workspace DIRECTORY --application-id ID --operation-id UUID
+  runtime-workspace output-sources --workspace DIRECTORY --operation-id UUID
+  runtime-workspace output-sources --workspace DIRECTORY --runtime-id ID [--cursor FILENAME] [--limit 50]
+  runtime-workspace output-page --workspace DIRECTORY (--operation-id UUID | --runtime-id ID --log-file FILENAME) [--selection TOKEN] [--offset BYTES] [--limit BYTES]
+  runtime-workspace output-export --workspace DIRECTORY (--operation-id UUID | --runtime-id ID --log-file FILENAME) [--selection TOKEN] --output NEW_FILE
+  runtime-workspace application-output-page --workspace DIRECTORY --application-id ID --operation-id UUID [--selection TOKEN] [--offset BYTES] [--limit BYTES]
+  runtime-workspace application-output-export --workspace DIRECTORY --application-id ID --operation-id UUID [--selection TOKEN] --output NEW_FILE
   runtime-workspace application-groups --workspace DIRECTORY [--group-id ID] [--run-id UUID] [--limit 20] [--cursor UUID]
   runtime-workspace application-group-save --workspace DIRECTORY --request PRIVATE_JSON
   runtime-workspace application-group-review --workspace DIRECTORY --group-id ID [--run-id UUID]
@@ -79,6 +90,10 @@ const HELP = `Starforge customer runtime workspace
   runtime-workspace application-group-member --workspace DIRECTORY --request PRIVATE_JSON
   runtime-workspace application-group-stop --workspace DIRECTORY --group-id ID --run-id UUID
 
+${workspaceBackupHelp}
+
+${runtimeProcedureHelp}
+
 The private browser receives an original archive or reuses an existing runtime,
 reviews exact dependency profiles, prepares and resumes original installations,
 compares upgrades, recovers into a new directory and exports the original
@@ -87,6 +102,8 @@ Install workers retain progress and continue across browser/server restarts.
 Linux, Node22.16+, Python3.11+, npm and flock are the original installer requirements.
 `;
 const allowed = {
+  ...workspaceBackupCommands,
+  ...runtimeProcedureCommands,
   'source-plans': ['--workspace', '--query', '--limit', '--cursor', '--receiving-query', '--receiving-status', '--receiving-limit', '--receiving-cursor'],
   'source-plan-inspect': ['--document'],
   'source-plan-save': ['--workspace', '--request'],
@@ -125,6 +142,11 @@ const allowed = {
   'application-stop': ['--workspace', '--application-id', '--operation-id'],
   'application-recover': ['--workspace', '--application-id', '--operation-id'],
   'application-output': ['--workspace', '--application-id', '--operation-id'],
+  'output-sources': ['--workspace', '--operation-id', '--runtime-id', '--cursor', '--limit'],
+  'output-page': ['--workspace', '--operation-id', '--runtime-id', '--log-file', '--selection', '--offset', '--limit'],
+  'output-export': ['--workspace', '--operation-id', '--runtime-id', '--log-file', '--selection', '--output'],
+  'application-output-page': ['--workspace', '--application-id', '--operation-id', '--selection', '--offset', '--limit'],
+  'application-output-export': ['--workspace', '--application-id', '--operation-id', '--selection', '--output'],
   'python-status': ['--workspace', '--runtime-id'],
   'python-review': ['--workspace', '--runtime-id', '--python', '--extras'],
   'python-operation': ['--workspace', '--request'], 'python-continue': ['--workspace', '--operation-id'],
@@ -138,6 +160,7 @@ const allowed = {
   'managed-config': ['--workspace', '--home-id', '--path'],
   init: ['--workspace', '--runtime-home'], attach: ['--workspace', '--runtime', '--label'],
   serve: ['--workspace', '--port'], status: ['--workspace', '--runtime-id'], handoff: ['--workspace', '--runtime-id'],
+  'operation-status': ['--workspace', '--operation-id'], 'operation-log': ['--workspace', '--operation-id'],
 };
 export async function main(argv = process.argv.slice(2)) {
   if (!argv.length || argv.length === 1 && argv[0] === '--help') { process.stdout.write(HELP); return; }
@@ -184,7 +207,9 @@ export async function main(argv = process.argv.slice(2)) {
   }
   const model = await openRuntimeWorkspace({ directory });
   let result;
-  if (command === 'application-setup-export') {
+  if (Object.hasOwn(workspaceBackupCommands, command)) result = await runWorkspaceBackupCommand(model, command, options);
+  else if (Object.hasOwn(runtimeProcedureCommands, command)) result = await runRuntimeProcedureCommand(model, command, options);
+  else if (command === 'application-setup-export') {
     if (!options['--application-id'] || !options['--output']) fail('APPLICATION_SETUP_EXPORT_SELECTION_REQUIRED');
     result = await exportApplicationSetup(model, { applicationId: options['--application-id'], output: options['--output'], name: options['--name'] ?? '' });
   } else if (command === 'application-setup-prepare') {
@@ -300,6 +325,38 @@ export async function main(argv = process.argv.slice(2)) {
     result = await model[method](await readJSON(resolve(options['--request'])));
   }
   else if (command === 'applications') result = await model.applicationsState({ historyLimit: options['--history-limit'] === undefined ? 1 : Number(options['--history-limit']) });
+  else if (['output-sources', 'output-page', 'output-export'].includes(command)) {
+    const input = {};
+    for (const [flag, name] of [['operation-id', 'operationId'], ['runtime-id', 'runtimeId'],
+      ['log-file', 'logFile'], ['selection', 'selection'], ['cursor', 'cursor']])
+      if (options['--' + flag] !== undefined) input[name] = options['--' + flag];
+    for (const name of ['offset', 'limit']) if (options['--' + name] !== undefined) {
+      if (!/^(?:0|[1-9][0-9]*)$/.test(options['--' + name]) ||
+          !Number.isSafeInteger(Number(options['--' + name]))) fail('RUNTIME_OUTPUT_PAGE_INVALID');
+      input[name] = Number(options['--' + name]);
+    }
+    if (command === 'output-sources') result = await model.runtimeOutputSources(input);
+    else if (command === 'output-page') result = await model.runtimeOutputPage(input);
+    else {
+      if (!options['--output']) fail('RUNTIME_OUTPUT_DESTINATION_REQUIRED');
+      result = await writeApplicationOutputDownload(await model.runtimeOutputDownload(input), resolve(options['--output']));
+    }
+  }
+  else if (['application-output-page', 'application-output-export'].includes(command)) {
+    if (!options['--application-id'] || !options['--operation-id']) fail('APPLICATION_OUTPUT_OPERATION_REQUIRED');
+    const input = { applicationId: options['--application-id'], operationId: options['--operation-id'],
+      ...(options['--selection'] ? { selection: options['--selection'] } : {}) };
+    for (const name of ['offset', 'limit']) if (options['--' + name] !== undefined) {
+      if (!/^(?:0|[1-9][0-9]*)$/.test(options['--' + name]) ||
+          !Number.isSafeInteger(Number(options['--' + name]))) fail('APPLICATION_OUTPUT_PAGE_INVALID');
+      input[name] = Number(options['--' + name]);
+    }
+    if (command === 'application-output-page') result = await model.applicationsOutputPage(input);
+    else {
+      if (!options['--output']) fail('APPLICATION_OUTPUT_DESTINATION_REQUIRED');
+      result = await writeApplicationOutputDownload(await model.applicationsOutputDownload(input), resolve(options['--output']));
+    }
+  }
   else if (command === 'application-history') {
     if (!options['--application-id']) fail('APPLICATION_ID_REQUIRED');
     result = await model.applicationsHistory({ applicationId: options['--application-id'],
@@ -360,6 +417,10 @@ export async function main(argv = process.argv.slice(2)) {
   } else if (command === 'handoff') {
     if (!options['--runtime-id']) fail('RUNTIME_WORKSPACE_RUNTIME_ID_REQUIRED');
     result = await model.handoff(options['--runtime-id']);
+  } else if (command === 'operation-status') result = await model.operationStatus({ operationId: options['--operation-id'] });
+  else if (command === 'operation-log') {
+    if (!options['--operation-id']) fail('RUNTIME_WORKSPACE_OPERATION_INVALID');
+    result = await model.logs({ operationId: options['--operation-id'] });
   } else result = await model.state({ runtimeId: options['--runtime-id'] ?? null });
   process.stdout.write(json(result));
 }

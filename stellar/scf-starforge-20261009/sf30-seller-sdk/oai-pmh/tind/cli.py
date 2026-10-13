@@ -67,6 +67,25 @@ def main():
     command = sub.add_parser("native-send")
     command.add_argument("--project", required=True); command.add_argument("--id", required=True)
     command.add_argument("--request", required=True); command.add_argument("--authorization-env")
+    command = sub.add_parser("destination-jobs"); command.add_argument("--project", required=True)
+    command.add_argument("--id"); command.add_argument("--offset", type=int, default=0); command.add_argument("--limit", type=int, default=50)
+    command = sub.add_parser("job-read"); command.add_argument("--project", required=True)
+    command.add_argument("--job", required=True); command.add_argument("--id", required=True)
+    command = sub.add_parser("job-preview"); command.add_argument("--project", required=True); command.add_argument("--input", required=True)
+    command = sub.add_parser("job-export"); command.add_argument("--project", required=True)
+    command.add_argument("--job", required=True); command.add_argument("--out", required=True)
+    command = sub.add_parser("source-downloads"); command.add_argument("--project", required=True)
+    command.add_argument("--id"); command.add_argument("--offset", type=int, default=0); command.add_argument("--limit", type=int, default=50)
+    command = sub.add_parser("source-download-run"); command.add_argument("--project", required=True); command.add_argument("--id", required=True)
+    command.add_argument("--only", help="JSON array of selected acquisition row IDs")
+    command = sub.add_parser("source-download-export"); command.add_argument("--project", required=True); command.add_argument("--id", required=True)
+    command = sub.add_parser("production-collections"); command.add_argument("--project", required=True)
+    command = sub.add_parser("production-plans"); command.add_argument("--project", required=True); command.add_argument("--id")
+    command.add_argument("--offset", type=int, default=0); command.add_argument("--limit", type=int, default=50)
+    command = sub.add_parser("production-wave"); command.add_argument("--project", required=True); command.add_argument("--id", required=True)
+    command.add_argument("--offset", type=int, default=0); command.add_argument("--limit", type=int, default=50)
+    command = sub.add_parser("production-export"); command.add_argument("--project", required=True); command.add_argument("--id", required=True)
+    command.add_argument("--out", required=True)
     args = parser.parse_args()
     if args.command == "profile-template":
         from marc import default_profile
@@ -119,6 +138,46 @@ def main():
                     with workspace.mutex:
                         item, _ = collection(workspace, args.project, args.id)
                         result = storage.load_json(workspace.object_path(item["original"]).read_bytes())
+                elif args.command == "production-collections":
+                    from production_waves import collection_inventory
+                    with workspace.mutex:
+                        result = collection_inventory(workspace, args.project)
+                elif args.command == "production-plans":
+                    from production_waves import list_plans, plan_view
+                    with workspace.mutex:
+                        result = plan_view(workspace, args.project, args.id, args.offset, args.limit) if args.id else list_plans(workspace, args.project, args.offset, args.limit)
+                elif args.command == "production-wave":
+                    from production_waves import wave_view
+                    with workspace.mutex:
+                        result = wave_view(workspace, args.project, args.id, args.offset, args.limit)
+                elif args.command == "production-export":
+                    from production_waves import write_export
+                    result = write_export(workspace, args.project, args.id, args.out)
+                elif args.command == "destination-jobs":
+                    from native_jobs import pages, view
+                    with workspace.mutex:
+                        result = view(workspace, args.project, args.id, args.offset, args.limit) if args.id else pages(workspace, args.project, offset=args.offset, limit=args.limit)
+                elif args.command == "job-read":
+                    from native_jobs import read
+                    result = read(workspace, args.project, args.job, args.id)
+                elif args.command == "job-preview":
+                    from native_jobs import preview
+                    with workspace.mutex:
+                        result = preview(workspace, args.project, document(args.input))
+                elif args.command == "job-export":
+                    from native_jobs import write_export
+                    result = write_export(workspace, args.project, args.job, args.out)
+                elif args.command == "source-downloads":
+                    from source_files import view, list_acquisitions
+                    with workspace.mutex:
+                        result = view(workspace, args.project, args.id, args.offset, args.limit) if args.id else list_acquisitions(workspace, args.project, args.offset, args.limit)
+                elif args.command == "source-download-run":
+                    from source_files import run
+                    result = run(workspace, args.project, args.id, only=document(args.only) if args.only else None)
+                elif args.command == "source-download-export":
+                    from source_files import full_document
+                    with workspace.mutex:
+                        result = full_document(workspace, args.project, args.id)
                 elif args.command == "files":
                     with workspace.mutex:
                         result = workspace.files(args.project, args.offset, args.limit, args.query)

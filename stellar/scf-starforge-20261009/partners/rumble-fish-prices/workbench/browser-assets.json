@@ -1,0 +1,41 @@
+{
+  "schema": "stellar-forge.browser-assets.v1",
+  "root": "./ui/",
+  "routes": [
+    [
+      "/_prices",
+      [
+        "index.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/_prices/",
+      [
+        "index.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/_prices/app.mjs",
+      [
+        "app.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/_prices/consumer.mjs",
+      [
+        "consumer.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/_prices/style.css",
+      [
+        "style.css",
+        "text/css; charset=utf-8"
+      ]
+    ]
+  ]
+}

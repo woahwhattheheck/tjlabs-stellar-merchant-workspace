@@ -1120,3 +1120,361 @@ JSON preserves the full selected original wrapper and its source, plan, allocati
 For another operator's editable case, use the existing merchant_grant_export with kind case and the original case_import operation. The saved adoption source travels with the native case package. A receiving case keeps its own identity while adoption_open preserves the source edition's original identities.
 
 Applications using the module directly pass their existing GrantWorkspaceClient to the exported functions. saveGrantCohortAdoption also takes a retainResponse callback that durably stores the complete native response before resolving; the Merchant owner supplies this using its existing immutable file writer.
+
+
+## Continue the complete working session
+
+Open **Cohort planning → Saved editions → Complete working session**. Choose
+**Download working session** to carry the complete editor to another browser
+that opens the same original Operations case. The file contains the current
+plan and report, every unfinished row and its literal input text, earlier
+drafts, both selected comparison sources, comparison history, incoming source
+documents, allocation choices and full decisions, opened source bytes, and
+the original pending or accepted source-attachment request.
+
+Choose **Open working-session JSON** in that case. The complete file enters
+**Incoming working sessions** while the current editor stays selected. Review
+its case/source version, unfinished-row and history counts, allocation method,
+original request identity and complete snapshot identity. **Open as working
+session** opens that exact state and retains the predecessor under **Earlier
+working sessions**. Each retained state has a complete-session download, and
+the main download includes the full earlier/incoming history. Reopening the
+same file reuses its original entry identities.
+
+A source file that finishes reading after another edit or a panel remount
+still enters the incoming list. Its arrival does not replace the current
+editor. Partial numeric/date text stays editable; the original row editor
+validates it when the operator applies the row. Changed calculated reports,
+allocation decisions, source snapshot identities, unsupported schemas and
+another case's working file are rejected before selection changes. Existing
+foreign-case comparison documents remain attached to their original sources.
+
+An original save travels with its exact actor, case version, request ID,
+source filename, original JSON and encoded request body. When the opened
+state contains a pending request, use **Continue original save**. When it
+contains an accepted result, use **Read back saved source**. These controls
+use the original `source.add` writer and verify the saved source bytes. The
+working-file reader accepts only that attachment action for restored native
+requests. Finish a currently selected request before opening a different
+working editor; a file can still be retained in the incoming list meanwhile.
+
+The browser retains immutable earlier/incoming snapshots in its larger
+IndexedDB archive and keeps their exact identities in the compact session
+cache. Complete snapshot writes finish before a successor is selected.
+A cache/archive failure preserves the currently selected editor and reports
+the failure. Keep the downloaded working-session JSON when moving browsers
+or clearing site data. A complete working file may contain up to 64 MiB; a
+native source attachment keeps the original 8 MiB limit.
+
+The portable schema is `stellar-forge.sf47-cohort-working-session.v1`.
+It contains one current entry, flat earlier/incoming entries and complete
+SHA-256-identified snapshots. Identical snapshots share one body. Each snapshot
+retains the original editor state, including the full documents behind its
+comparison and native request. Export/import validates all retained snapshots
+and exact request bytes; each full calculated report and saved allocation is
+checked with the original calculator. The session helper is
+`cohort_planning_session.mjs`, with its adjacent declaration. The original
+controller imports it directly, so the installed source closure carries this
+complete workflow.
+
+
+## Use recorded costs to prepare a future service plan
+
+The **Recorded cost basis** panel closes the loop between a complete saved delivery
+reconciliation and the next adoption plan. It uses the same capacity, funding,
+pricing and comparison engine as the rest of this desk.
+
+### Operator workflow
+
+1. Open the intended future plan in Customer adoption plan. Keep its actual
+   cadence, purchased funding groups, prices, capacity pools and source identities.
+   Every occurrence of a selected target schedule must be after the recorded
+   comparison's UTC cutoff day.
+2. Open **Recorded cost basis**, select the complete saved delivery comparison and
+   choose **Open original commercial result**. The complete current plan is
+   retained as the future baseline. **Capture current plan as future baseline**
+   explicitly replaces that baseline after you finish changing future dates.
+3. Add one allocation for each future schedule. Choose the original service, enter
+   the actual useful-output quantity, its unit and the original measurement basis.
+   This quantity is an entered operational measurement. The desk does not derive it
+   from payment count, purchased groups, scheduled tasks or requests.
+4. Enter the portion of each relevant original cost as a decimal share from zero to
+   one; leave other rows empty. Supplier and other delivery costs contribute to the
+   nonlabor estimate. Labor contributes its actual hours and calculated cost.
+   All selected rows must belong to the chosen original service. Payment fees stay
+   in the future plan's original payment model.
+5. State whether supplier and labor coverage are **PARTIAL** or **COMPLETE** for
+   the measured output, and enter the coverage explanation. Incomplete coverage or
+   an unknown selected cost remains unknown in the resulting estimate. A known
+   zero requires explicit complete coverage; the absence of a row alone does not
+   turn a partial category into zero.
+6. **Calculate complete successor** shows supplier cost per useful task and per
+   underlying request, the retained task/request conversion, hours per task and
+   hourly cost, selected/unselected source shares, full financial report,
+   capacity and price floors. Resolve an invalid source, cost share, currency,
+   measured output, or future-date constraint in the same retained form.
+7. Review **Open before / after comparison**, then **Apply to editable future
+   plan** or **Apply and save complete edition**. Further manual edits remain
+   editable in the original planning desk. The immutable original cost proposal
+   and its separate comparison to the saved successor travel with the edition.
+   Save uses the current original case version, the existing source attachment
+   action, retained request recovery and exact source readback.
+
+The browser working session includes the source, complete baseline, choices,
+unfinished allocation fields, earlier source selections and calculated/applied
+proposals. Saved editions and imported proposal JSON reopen that same source
+basis. Whole JSON and CSV exports retain the full original comparisons and
+derivations. The full case export includes the saved native source edition.
+
+### Cost and quantity meaning
+
+An allocation selects cost shares across a measured useful-output quantity.
+For example, an explicitly selected $12 materials cost and 1.25 actual labor
+hours at $4/hour, assigned to two measured useful results, produce $6 materials
+and 0.625 active hours per result at $4/hour. Running two future results costs
+$17 before the plan's original payment fees. The two measured results need not
+equal a payment count. The original payment and funding identities remain
+untouched. If each future task uses three requests, the same $6 materials per task
+becomes $2 per underlying request. Two tasks then use six requests and still cost
+$12 materials plus $5 labor, rather than charging the materials three times.
+The entered or saved measured unit must represent one complete future task; keep
+that relationship explicit in the original measurement/source basis.
+
+For each selected actual cost, the shares across *all* target allocations must
+sum to at most one. Unselected shares remain visible. Every selected contribution
+retains its whole original cost row, including any native Work, invoice,
+contributor, attachment and reviewed overlap witnesses. Resolve invoice-linked
+Work overlap in the original commercial reconciliation before deriving a plan.
+
+Supplier cost per completed task is selected supplier/other cost divided by measured
+completed tasks. The original planner charges `unitCost` per underlying request,
+so the derived `unitCost` additionally divides by the selected future schedule's
+`requestsPerTask`. The complete derivation retains both quantities, the exact
+corresponding request count and the supplier cost per task. Hours per task are
+selected labor hours divided by measured completed tasks.
+Hourly cost is selected labor cost divided by selected labor hours. Derived
+nonnegative rates are ceiling-rounded to twelve decimal places, while the
+underlying amounts, hours and shares remain exact decimal values. The original
+calculator then evaluates every future occurrence and its capacity allocation.
+Explicit complete zero labor cost and hours produces zero rates. Unknown labor
+valuation suppresses hourly cost while known hours can still inform capacity.
+
+The operation changes only the selected schedules' `economics.unitCost`,
+`economics.activeHoursPerTask`, `economics.hourlyCost` and the successor name.
+A schedule whose economics were absent receives the source currency with unknown revenue and payment-fee estimates; its cost and hours can then be reviewed without inventing sale terms. All other rows and fields are preserved. An already purchased group reused for
+future delivery is still prepaid; the calculator does not count another sale.
+
+### Complete source API
+
+`cohort_delivery_comparison.mjs` exports:
+
+- `seedCohortRecordedCostPlan(recordedDocument, planDocument)`
+- `planCohortFromRecordedCosts(recordedDocument, planDocument, choices)`
+- `reopenCohortRecordedCostPlan(document)`
+- `exportCohortRecordedCostPlanCsv(document)`
+
+A complete result has schema
+`stellar-forge.sf47-cohort-recorded-cost-plan.v1`, the whole `sourceDocument`,
+whole `planDocument`, normalized `choices`, `candidate`, `report`,
+`comparison`, per-allocation `derivations` and all `costBalances`.
+New normalized choices carry `quantityBasis: "COMPLETED_TASKS"`. Each derivation
+includes its completed tasks, requests per task, corresponding requests and
+supplier cost per task. A complete historical document without that marker reopens
+with its original calculation and bytes. Explicitly calculating a successor uses
+the current unit conversion; the browser retains the earlier complete proposal.
+Reopen recalculates and compares the complete result with these originals.
+The existing 8 MiB native attachment bound applies to the whole saved edition;
+source is never silently omitted to fit it.
+
+An illustrative allocation, using IDs from the selected original documents:
+
+```json
+{
+  "name": "Next customer service window",
+  "note": "Original measured output and dated actual-cost basis reviewed",
+  "quantityBasis": "COMPLETED_TASKS",
+  "allocations": [{
+    "id": "report-service-basis",
+    "targetScheduleId": "future-report-service",
+    "sourceServiceId": "funded:original-service",
+    "outputQuantity": "2",
+    "outputUnit": "completed useful report",
+    "outputSource": "Original completion register and reviewed source reference",
+    "supplierCoverage": "COMPLETE",
+    "laborCoverage": "COMPLETE",
+    "coverageNote": "Selected invoice portion is materials; selected Work is separately paid labor.",
+    "costs": [
+      {"costId": "original:materials-portion", "share": "1"},
+      {"costId": "original:labor-portion", "share": "1"}
+    ]
+  }]
+}
+```
+
+The maintained MCP `merchant_grant_adoption_edit` operation accepts
+`FROM_RECORDED_COSTS` as its sole change, with `recordedDocument` and
+`choices`. Its main document is the complete intended future plan. Review,
+prepare, save, request-status, open and export continue through the existing
+adoption tool family. Before native preparation, the complete original saved
+plan bytes and frozen review are checked against the original case. A prepared
+source edition retains `recordedCostPlan` and
+`recordedCostPlanComparison`; ordinary subsequent plan edits retain the basis.
+
+```sh
+node cohort_planning_cli.mjs recorded-cost-seed --recorded delivery.json --baseline future-plan.json --output choices.json
+node cohort_planning_cli.mjs recorded-cost-plan --recorded delivery.json --baseline future-plan.json --choices choices.json --output cost-plan.json
+node cohort_planning_cli.mjs recorded-cost-reopen --input cost-plan.json --output reopened-cost-plan.json
+node cohort_planning_cli.mjs evaluate --input cost-plan.json --output future-report.json
+node cohort_planning_cli.mjs csv --input cost-plan.json --output complete-cost-basis.csv
+```
+
+### Focused source exercise
+
+The maintained comparison, planning, adoption agent, browser and CLI modules were
+executed in V8 against the original native source contract, using an in-memory
+native-client/API transport and an in-memory browser adapter. The controlled
+two-result case above produced $6/result, 0.625 hours/result and $4/hour; preserved
+both original prepaid funding groups; surfaced the original no-new-charges result;
+retained unknowns for partial coverage; and rejected an excessive cost share, a
+past target schedule and a changed retained result. The original adoption
+prepare/save/request/open flow attached one complete 779,545-byte edition in the
+in-memory transport and reopened it exactly. The original browser form saved and
+reopened its complete source, and the working-session validator retained its cost
+basis. CLI calculation, complete reopen and CSV used the same production core.
+
+## Use saved Customer task outcomes as the output basis
+
+The **Recorded cost basis** allocation form can receive the original saved
+Customer task outcomes comparison. This connects the useful result to its
+selected delivery costs without retyping the completed-task count or losing the
+original population, period, output, quality and customer response.
+
+1. Open the intended future adoption plan and its original commercial
+   reconciliation as described above.
+2. In the allocation form, choose the **Saved measurement edition** and open
+   it. The source selector includes every original saved comparison revision,
+   including historical editions.
+3. Select **Initial installed method** or one exact recurring observation.
+   Review its whole task, completed count, stable unit, measurement basis,
+   scope, operator review and original customer response.
+4. Explain why that complete task and the selected commercial service costs
+   describe the same output. The product does not infer this relationship from
+   a matching customer name, purchase count or overlapping dates.
+5. Choose **Use this complete measurement in allocation**. Its count, unit and
+   original reference now come from that saved source. Select the actual cost
+   portions and coverage, then **Keep complete allocation**.
+6. Calculate the full successor, review its original measured scope alongside
+   the financial/capacity result, and apply or save the complete edition.
+
+A selected measurement keeps its **OBSERVED**, **ESTIMATED** or **MIXED** basis.
+The source's Draft/Reviewed decision and Pending/Accepted/Declined customer
+response remain separately visible. Selecting an estimate does not turn it into
+an observed result, and using a completed-task count does not record a sale or
+customer acceptance. A missing or zero count cannot divide the selected cost;
+complete that measurement through its original Customer task outcomes desk.
+The prior baseline is retained inside the original comparison but is not offered
+as the installed-service output denominator.
+
+Opening a source or refreshing the case does not replace the allocation's
+selected measurement. To use a later comparison revision, open that exact
+edition, review it and explicitly use it in the allocation. The complete former
+selection remains in **Earlier retained measurement choices**. The original
+count/unit/reference fields stay read-only while bound. **Continue with a manual
+denominator** retains the former measurement and makes the denominator editable
+for a separately explained planning assumption.
+
+The complete native response includes its original source metadata, saved
+comparison, original case/Installation/source selection and history directory.
+The retained planning document carries all of it. Native review and preparation
+reopen each selected comparison revision through the original Task Outcomes
+reader, which validates the original source and calculation. Newer comparison
+history can coexist with a pinned earlier edition. After complete case receiving,
+the measurement retains its original producer case identity. The planning desk
+records the selected receiving case separately and verifies the same original
+source through that case's native inventory and reader. An altered selected source
+requires explicit re-selection; the existing allocation and entered cost
+portions remain available for review.
+
+The full working-session download also retains an opened measurement that has
+not yet been applied, its selected observation and unfinished service explanation.
+The complete JSON and CSV retain every selected and earlier source. Readable
+HTML shows the original basis, review, customer response and scope beside the
+future schedule. The existing source.add request, recovery, saved-plan reopening
+and complete case transfer carry this operation without a separate source store.
+
+### Installed command and Merchant continuation
+
+Use the original Task Outcomes reader to export the complete response, including
+`source`, `edition` and `history`. Keep the original case and selected revision.
+Do not use `--inputs-only`, which intentionally omits its saved source.
+
+~~~sh
+starforge grant-workspace operations task-outcomes-show \
+  --workspace /absolute/private/grant --case ORIGINAL_CASE_ID \
+  --comparison ORIGINAL_COMPARISON_ID --revision SAVED_REVISION \
+  --output /absolute/working/saved-task-response.json
+
+node cohort_planning_cli.mjs task-measurements \
+  --input /absolute/working/saved-task-response.json \
+  --output /absolute/working/measurement-selection.json
+
+node cohort_planning_cli.mjs recorded-cost-bind \
+  --choices /absolute/working/cost-choices.json \
+  --allocation ORIGINAL_ALLOCATION_ID \
+  --measurement /absolute/working/saved-task-response.json \
+  --kind FOLLOWUP --observation ORIGINAL_OBSERVATION_ID \
+  --service-basis "Original scope and selected service-cost relationship" \
+  --output /absolute/working/bound-cost-choices.json
+
+node cohort_planning_cli.mjs recorded-cost-plan \
+  --recorded /absolute/working/commercial-result.json \
+  --baseline /absolute/working/future-plan.json \
+  --choices /absolute/working/bound-cost-choices.json \
+  --output /absolute/working/measured-cost-plan.json
+~~~
+
+Choose `--kind INSTALLED` and omit `--observation` for the original installed
+method. For a comparison opened from an independently received case, include
+`--case RECEIVING_CASE_ID`; the original producer identity remains in the saved
+source. The browser supplies its current selected case automatically. The source and choices commands keep existing destinations intact.
+
+The pure module exposes `inspectCohortTaskMeasurements` and
+`bindCohortRecordedCostMeasurement`. The latter receives the complete allocation,
+native saved response and explicit `{kind, observationId, serviceBasis, caseId?}`; it
+returns the complete editable allocation and retains an earlier selected
+measurement before accepting another. `planCohortFromRecordedCosts` checks the
+bound count/unit/reference and calculates through the same existing engine.
+
+Merchant agents obtain the full selected response through
+`merchant_grant_task_outcome`. In the existing adoption edit operation, select
+`FROM_RECORDED_COSTS` and keep the full original reconciliation and choices.
+An allocation's optional `measurement` is:
+
+~~~json
+{
+  "schema": "stellar-forge.sf47-cohort-task-measurement.v1",
+  "original": {"source": {}, "edition": {}, "history": []},
+  "kind": "FOLLOWUP",
+  "caseId": "ORIGINAL_OR_RECEIVING_CASE_ID",
+  "observationId": "ORIGINAL_OBSERVATION_ID",
+  "serviceBasis": "Original measured task and selected cost relationship"
+}
+~~~
+
+The empty objects above identify the fields; supply the entire native source,
+edition and history. Optional `caseId` names the selected case holding that source;
+omission retains the original producer case. Native preparation verifies the
+actual selected source and saved revision in that case. The operation derives `outputQuantity`, `outputUnit` and
+`outputSource` when omitted; supplied values must equal that original selection.
+Continue the existing adoption review, prepare, save, request recovery and open
+tools. The Task Outcomes writer, its original revisions and any measurement
+workbook remain in their own native workflow.
+
+The multi-request continuation used the same maintained modules and in-memory
+source/browser adapters: two measured tasks, three requests per future task,
+$12 selected materials and 1.25 hours at $4/hour produced $2/request,
+0.625 hours/task and $17 total for six requests. Purchased funding stayed exact.
+The full independently received-case prepare/save/recovery/reopen retained
+826,748 bytes, with both original and selected case identities unchanged.
+Earlier complete proposal documents reopened exactly with their original
+calculation; an explicit new calculation selected the current quantity basis.

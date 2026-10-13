@@ -1,5 +1,6 @@
 // MIT. Deterministic decision exports from the saved CanadaBuys context only.
 import { canonical, sha256, failure, plain } from './core.mjs';
+import { sourceProvenance, DERIVED_SOURCE_KIND } from './source-provenance.mjs';
 import { DECISION_CHOICES, compareDecisionContext, normalizeCapabilityProfile } from './bidder-desk-domain.mjs';
 
 export const DECISION_REPORT_SCHEMA = 'starforge.canadabuys.decision-report.v1';
@@ -60,6 +61,11 @@ function bindEnvelope(input) {
   }
   const entry = input.context.entry;
   const profile = input.context.profile;
+  const source = input.context.source;
+  if (source.bodyKind === DERIVED_SOURCE_KIND || source.derivation !== undefined) {
+    const provenance = sourceProvenance(source, { columns: source.columns, rows: [{ rowNumber: entry.rowNumber, row: entry.row }] }, source.stream, source.sha256);
+    if (provenance.id !== source.id) throw failure('DECISION_SOURCE_CHANGED', 'The frozen derived notice differs from its complete original evidence', 409);
+  }
   const identityPairs = [
     ['sourceEntryId', decision.sourceEntryId, entry.id],
     ['noticeId', decision.noticeId, entry.noticeId],
@@ -188,7 +194,9 @@ function renderHTML(bound) {
     referenceNumber: entry.summary.referenceNumber ?? null, solicitationNumber: entry.summary.solicitationNumber ?? null,
     amendmentNumber: entry.summary.amendmentNumber ?? null, publisherUpdatedDate: entry.summary.updatedDate ?? null,
     sourceRetrievedAt: source.retrievedAt ?? entry.importedAt, sourceSha256: source.sha256 ?? null,
-    sourceBytes: source.bytes ?? null, sourceCoverage: source.coverage ?? null
+    sourceBytes: source.bytes ?? null, sourceCoverage: source.coverage ?? null,
+    sourceBodyKind: source.bodyKind ?? null, derivationSha256: source.derivationSha256 ?? null,
+    capturedHTMLSha256: source.derivation?.original?.sha256 ?? null
   };
   const profileFacts = { id: profile.id ?? null, revision: profile.revision ?? null,
     label: profile.label, legalName: profile.legalName, operatingNames: profile.operatingNames || [],
@@ -273,7 +281,10 @@ function renderHTML(bound) {
       block(action.task), block(action.owner), block(action.dueAt), badge(action.status || 'UNRECORDED')
     ]), 'No next actions recorded.') + '</div></div></section>' +
     '<section aria-labelledby="selection"><h2 id="selection">Frozen source and supplier selection</h2><div class="grid"><div>' +
-    pairs(noticeFacts) + '<p>Original source: ' + link(source.url || entry.summary.noticeURL) + '</p>' +
+    pairs(noticeFacts) + '<p>Source: ' + link(source.url || entry.summary.noticeURL) + '</p>' +
+    (source.bodyKind === DERIVED_SOURCE_KIND ? '<p class="callout">Separately derived notice: this row is a documented transcription of a retained HTML page, not a row from the original federal CSV feed. Blank fields remain unknown.</p>' +
+      pairs({ jurisdiction: source.derivation.jurisdiction, originalHTMLBytes: source.derivation.original.bytes, originalHTMLRetrievedAt: source.derivation.original.retrievedAt, mappingNote: source.derivation.note }) +
+      table(['Derived column','Value','Evidence status','Original spans and normalization note'], source.derivation.fields.map(field => [block(field.column), block(field.value), badge(field.status), block({fragments:field.fragments,note:field.note})]), '') : '') +
     (entry.summary.noticeURLs?.en ? '<p>English notice: ' + link(entry.summary.noticeURLs.en) + '</p>' : '') +
     (entry.summary.noticeURLs?.fr ? '<p>French notice: ' + link(entry.summary.noticeURLs.fr) + '</p>' : '') +
     '</div><div>' + pairs(profileFacts) + '<h3>Supplier description</h3>' + block(profile.description) + '</div></div></section>' +
@@ -348,7 +359,7 @@ function renderCSV(bound) {
     context.source.url || '', '', context.source.sha256 || '');
   for (const [field, value] of Object.entries(context.entry)) if (field !== 'row') add('source-entry', context.entry.id, '', field, 'FROZEN',
     value, '', context.source.url || '', '', context.entry.rowSha256 || '');
-  for (const [field, value] of sourceFields(context)) add('original-row', context.entry.id, '', field, 'ORIGINAL_VALUE', value, '',
+  for (const [field, value] of sourceFields(context)) add(context.source.bodyKind === DERIVED_SOURCE_KIND ? 'derived-row' : 'original-row', context.entry.id, '', field, context.source.bodyKind === DERIVED_SOURCE_KIND ? 'TRANSCRIBED_VALUE' : 'ORIGINAL_VALUE', value, '',
     context.source.url || '', '', context.entry.rowSha256 || '');
   for (const [field, value] of Object.entries(context.profile)) add('supplier-profile', context.profile.id, context.profile.revision,
     field, 'FROZEN', value);

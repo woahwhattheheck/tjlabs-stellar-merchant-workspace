@@ -99,6 +99,69 @@
         "semantic-browser-state.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/projection.html",
+      [
+        "projection.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/projection.js",
+      [
+        "projection.js",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/projection.css",
+      [
+        "projection.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/PROJECTION.md",
+      [
+        "PROJECTION.md",
+        "text/markdown; charset=utf-8"
+      ]
+    ],
+    [
+      "/volttron.html",
+      [
+        "volttron.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/volttron.js",
+      [
+        "volttron.js",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/volttron.css",
+      [
+        "volttron.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/VOLTTRON_OPERATING.md",
+      [
+        "VOLTTRON_OPERATING.md",
+        "text/markdown; charset=utf-8"
+      ]
+    ],
+    [
+      "/ZINC_CONTRACT.md",
+      [
+        "ZINC_CONTRACT.md",
+        "text/markdown; charset=utf-8"
+      ]
     ]
   ]
 }

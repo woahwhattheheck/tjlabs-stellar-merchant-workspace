@@ -11,7 +11,10 @@ import struct
 RUNTIME_FILES = (
     "receive_current.py", "receive_review.py", "receive-pty.py",
     "scf_native_process.py", "README.md", "compose-runtime-carrier.py",
-    "receive-prepared-review.mjs",
+    "receive-prepared-review.mjs", "receive-current.cjs",
+    "receive-review-continuation.cjs", "receive_source.py",
+    "receive-source-package.mjs", "source-phase.mjs", "SOURCE_RECEIVING.md",
+    "receive-current-source-browser.mjs", "receive-source-browser.cjs",
 )
 
 

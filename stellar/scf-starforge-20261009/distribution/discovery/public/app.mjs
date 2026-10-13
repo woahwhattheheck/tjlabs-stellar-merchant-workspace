@@ -71,6 +71,12 @@ function selectItem(id, focus = false) {
     const planLink = node('a', 'Add to operating plan');
     planLink.href = '/operating-plan.html?add=' + encodeURIComponent(item.id);
     actions.append(planLink);
+    const supportLink = node('a', 'Select for Support procedure');
+    supportLink.href = '/operating-plan.html?prepare=support&supportRegistration=' + encodeURIComponent(item.id);
+    actions.append(supportLink);
+    const fredLink = node('a', 'Select for economic procedure');
+    fredLink.href = '/operating-plan.html?prepare=fred&fredRegistration=' + encodeURIComponent(item.id);
+    actions.append(fredLink);
     panel.append(actions);
     if (item.helpArgv) {
       heading(panel, 'Open native command help');

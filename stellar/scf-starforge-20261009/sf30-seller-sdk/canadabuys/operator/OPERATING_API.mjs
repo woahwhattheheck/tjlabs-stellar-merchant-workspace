@@ -41,6 +41,35 @@ async function atomicWrite(path, body) {
     throw error;
   }
 }
+async function retainReport(client, directory, name, options) {
+  const destination = join(directory, name);
+  const temporary = destination + '.' + randomUUID() + '.tmp';
+  const handle = await open(temporary, 'wx', 0o600);
+  const hash = createHash('sha256');
+  let bytes = 0;
+  try {
+    const response = await client.reportTo(async chunk => {
+      let offset = 0;
+      while (offset < chunk.byteLength) {
+        const written = await handle.write(chunk, offset, chunk.byteLength - offset);
+        need(written.bytesWritten > 0, 'The report output stopped accepting bytes.');
+        offset += written.bytesWritten;
+      }
+      hash.update(chunk);
+      bytes += chunk.byteLength;
+    }, options);
+    need(bytes === response.bytes, 'The complete report byte count changed during retention.');
+    await handle.sync();
+    await handle.close();
+    await rename(temporary, destination);
+    return {file:name, path:destination, bytes, sha256:hash.digest('hex'),
+      mime:response.mime, sourceFilename:response.filename};
+  } catch (error) {
+    await handle.close().catch(() => {});
+    await unlink(temporary).catch(() => {});
+    throw error;
+  }
+}
 async function optionalJSON(path) {
   try { return JSON.parse(await readFile(path, 'utf8')); }
   catch (error) { if (error.code === 'ENOENT') return null; throw error; }
@@ -55,13 +84,13 @@ async function optionalJSON(path) {
 export async function operateCanadaBuysApi({
   client, noticeId, outputDirectory, review, workshare, workshareId, receivingClient
 } = {}) {
-  need(client?.workspace && client?.notice && client?.createWorkshare, 'Supply the original CanadaBuysClient.');
+  need(client?.workspace && client?.notice && client?.createWorkshare && client?.reportTo, 'Supply the original CanadaBuysClient.');
   need(typeof noticeId === 'string' && noticeId.length > 0, 'Select a retained notice.');
   need(typeof outputDirectory === 'string' && outputDirectory.length > 0, 'Use the original operation output directory.');
   if (workshare?.noticeId) need(workshare.noticeId === noticeId, 'The workshare selects another notice.');
   const directory = resolve(outputDirectory);
   await mkdir(directory, {recursive:true, mode:0o700});
-  const initial = await client.workspace();
+  let initial = await client.workspace();
   need(initial.workspace?.id && initial.notices.some(item => item.id === noticeId), 'The original workspace must retain the selected notice.');
   const previous = await optionalJSON(join(directory, 'result.json'));
   if (previous) {
@@ -78,6 +107,7 @@ export async function operateCanadaBuysApi({
     receivingTarget:copy(previous?.receivingTarget || previous?.receiving?.before || previous?.receiving?.after || null),
     receiving:copy(previous?.receiving || null)
   };
+  initial = null;
   const save = async () => atomicWrite(join(directory, 'result.json'), json(result));
   const write = async (name, value) => {
     const body = typeof value === 'string' || Buffer.isBuffer(value) ? value : json(value);
@@ -100,14 +130,15 @@ export async function operateCanadaBuysApi({
       'Retain the complete original notice and history.');
     result.originalNotice = await write('original-notice.json', original);
     const sourceId = original.currentEntry.sourceId;
-    const sourceRead = await client.source(sourceId), source = sourceRead.source || sourceRead;
+    let sourceRead = await client.source(sourceId), source = sourceRead.source || sourceRead;
     need(typeof source.rawText === 'string', 'The source response must contain the complete original CSV.');
-    const originalBytes = Buffer.from(source.rawText);
+    let originalBytes = Buffer.from(source.rawText);
     need(source.bytes === originalBytes.length && source.sha256 === sha256(originalBytes), 'The original source bytes differ from their identity.');
     result.source = {id:sourceId, stream:source.stream, url:source.url, retrievedAt:source.retrievedAt,
       bytes:source.bytes, sha256:source.sha256, rowCount:source.rowCount,
       currentEntryId:original.currentEntry.id, rowNumber:original.currentEntry.rowNumber};
     result.downloads.originalSource = await write('original-source.csv', originalBytes);
+    sourceRead = null; source = null; originalBytes = null;
     await save();
 
     result.stage = 'qualification';
@@ -176,10 +207,9 @@ export async function operateCanadaBuysApi({
 
     result.stage = 'reports-and-package';
     for (const format of ['html','csv','json']) {
-      const report = await client.report({format, scope:'all'});
-      need(typeof report.body === 'string' && Buffer.byteLength(report.body) === report.bytes,
-        'The report response changed before retention.');
-      result.downloads['report_' + format] = await write('canadabuys-report.' + format, report.body);
+      result.downloads['report_' + format] = await retainReport(client, directory,
+        'canadabuys-report.' + format, {format, scope:'all'});
+      await save();
     }
     const exporting = await client.workspace();
     let pkg = null;
@@ -218,7 +248,7 @@ export async function operateCanadaBuysApi({
       need(receivedNotice.history?.some(entry => entry.id === original.currentEntry.id && entry.sourceId === sourceId),
         'The receiver must retain the original notice entry and source identity.');
       const receivedSourceRead = await receivingClient.source(sourceId), receivedSource = receivedSourceRead.source || receivedSourceRead;
-      need(typeof receivedSource.rawText === 'string' && sha256(Buffer.from(receivedSource.rawText)) === source.sha256,
+      need(typeof receivedSource.rawText === 'string' && sha256(Buffer.from(receivedSource.rawText)) === result.source.sha256,
         'The receiver changed the complete original source.');
       const reviewDifferences = differences(reviewFields(result.saved.review), reviewFields(receivedNotice.review));
       need(reviewDifferences.length === 0, 'The receiving workspace changed the saved qualification.');

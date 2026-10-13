@@ -26,9 +26,27 @@ import {
 export const DOCUMENT_SERVICE_SELECTION_SCHEMA = 'stellar-forge.document-service-selection.v1';
 export const DOCUMENT_SERVICE_SOURCE = 'products/document-merchant';
 export const DOCUMENT_SERVICE_SOURCE_FILES = Object.freeze([
-  'cli.mjs', 'launch.mjs', 'setup.mjs', 'contracts.mjs', 'renderer.mjs',
+  'commissioning.mjs','commissioning-facilitator.mjs','commissioning-cli.mjs','commissioning-application.mjs','application-provider.mjs',
+  'assembly.mjs','assembly-archive.mjs','assembly-cli.mjs','assembly-workspace.mjs','composition-public/pdf-bundles.mjs','examples/ordered-pdfs.json','cli.mjs', 'launch.mjs', 'setup.mjs', 'contracts.mjs', 'renderer.mjs',
   'batch.mjs', 'batch-cli.mjs', 'batch-render.mjs', 'composition.mjs', 'composition-cli.mjs',
-  'examples/report.html', 'examples/report.md', 'examples/composition/report-documents.json'
+  'composition-service.mjs',
+  'composition-workspace.mjs',
+  'composition-server.mjs',
+  'composition-browser-assets.json',
+  'composition-public/index.html',
+  'composition-public/app.mjs',
+  'composition-public/style.css',
+  'examples/report.html',
+  'examples/report.md',
+  'examples/composition/orders.json',
+  'examples/composition/invoice.html',
+  'examples/composition/greeting.html',
+  'examples/composition/order-documents.json',
+  'examples/composition/order-lines.csv',
+  'examples/composition/grouped-order-documents.json',
+  'examples/composition/reports.csv',
+  'examples/composition/report.md',
+  'examples/composition/report-documents.json'
 ]);
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const JOB_FILES = Object.freeze([
@@ -66,7 +84,7 @@ export function normalizeDocumentServiceOptions(value = {}) {
   return {directory, configurationFile, service: native};
 }
 
-async function sourceFiles() {
+export async function readDocumentServiceSources() {
   const files = [];
   requireDocument(await realpath(ROOT) === ROOT && await realpath(JOB_SERVICE_RUNTIME) === JOB_SERVICE_RUNTIME,
     'DOCUMENT_SERVICE_SOURCE_CHANGED', 'Use the selected installed document and original Jobs source.');
@@ -128,7 +146,7 @@ export async function readDocumentServiceSelection(rawOptions = {}) {
       providerConfig: review.providerConfig, customerSetup: review.customerSetup,
       files: review.files
     },
-    sourceFiles: await sourceFiles(), optionalFiles,
+    sourceFiles: await readDocumentServiceSources(), optionalFiles,
     summary: {
       name: compiled.serviceName, publicOrigin: compiled.publicOrigin,
       provider: review.request.provider, formats: review.request.formats,

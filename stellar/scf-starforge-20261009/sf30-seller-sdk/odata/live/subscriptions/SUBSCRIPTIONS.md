@@ -150,6 +150,8 @@ Repeating an earlier completed delivery returns that original receipt while pres
 
 ## External receiving
 
+The complete [remote subscriber client and command line](../../../../../../stellar-forge/mcp-merchant-operator/ODATA_SUBSCRIPTION_CUSTOMER.md) automate the full receiving workflow. **starforge odata-subscription-customer** selects explicit native edition SHAs, creates or reopens the original artifact, downloads every unchanged member with resumable retained-file reads, and invokes this same customer receiver. It also supports independent native backup/Analysis restore and reopening an older baseline in a separate customer. The maintained **odata-subscriptions** source selection includes this customer command and typed API.
+
 Download all files declared by the artifact record, preserving their relative paths. Its manifest is part of the inventory. The Deliveries screen exposes the files; MCP exposes bounded retained-file reads.
 
 On the receiving host, put the complete directory in an owned private location and declare it as an input:

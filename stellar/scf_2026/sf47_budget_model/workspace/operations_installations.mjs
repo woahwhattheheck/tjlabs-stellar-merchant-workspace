@@ -1,7 +1,11 @@
 // Complete customer installations in the original SF47 operating case.
 import {mountCommercialInstallations} from './operations_commercial_installations.mjs';
+import {mountInstallationSources} from './operations_installation_sources.mjs';
 import { workflowBoundCheck, workflowReportView, workflowIntakePanel } from './operations_installation_workflows.mjs';
+import { installationEffortFields, captureInstallationEffort, changeInstallationEffort, applyInstallationEffortReviews,
+  installationEffortReport, installationEffortPlanningPanel, captureInstallationEffortPlanning, hasUnappliedEffortReviews } from './operations_installation_effort.mjs';
 import {captureUseCalendar,useCalendarFields,useCalendarAction,useCalendarReport} from './operations_use_calendar.mjs';
+import {captureCommissioning,commissioningFields,commissioningAction,commissioningReport} from './operations_commissioning.mjs';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const copy=value=>structuredClone(value);
 const title=value=>String(value??'').toLowerCase().replaceAll('_',' ').replace(/^./,c=>c.toUpperCase());
@@ -35,10 +39,11 @@ function assign(object,path,value){
   current[bits.at(-1)]=value;
 }
 
-export function mountInstallations({container,current,api,saveApi,session,mutationId,recordingActor,onCase,onSources}){
+export function mountInstallations({container,current,api,saveApi,session,mutationId,recordingActor,onCase,onSources,onForecastInputs}){
   const root=document.createElement('section');root.className='installation-desk';
   const commercialRoot=document.createElement('section');commercialRoot.hidden=true;
-  root.setAttribute('aria-label','Customer installations');container.replaceChildren(commercialRoot,root);
+  const sourceRoot=document.createElement('section');sourceRoot.hidden=true;
+  root.setAttribute('aria-label','Customer installations');container.replaceChildren(commercialRoot,sourceRoot,root);
   if(!document.querySelector('link[data-installation-style]')){
     const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_installations.css';
     link.dataset.installationStyle='true';document.head.append(link);
@@ -52,7 +57,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     let stored;
     try{stored=JSON.parse(sessionStorage.getItem(storageKey)||'null');}catch{}
     if(stored?.schema==='sf47.installation-editor.v1'&&stored.caseId===caseId){
-      for(const key of ['drafts','draftKey','selected','mode','pending','accepted','notice','workshareIntake','workflowIntake','commercialOpen'])if(Object.hasOwn(stored,key))session[key]=stored[key];
+      for(const key of ['drafts','draftKey','selected','mode','pending','accepted','notice','workshareIntake','workflowIntake','commercialOpen','effortPlanning'])if(Object.hasOwn(stored,key))session[key]=stored[key];
       if(!session.requestOpen&&stored.requestOpen)session.requestOpen=stored.requestOpen;
     }
     if(stored?.schema==='sf47.installation-editor.v1'&&stored.caseId===caseId&&stored.commercialIntake)session.commercialIntake=stored.commercialIntake;
@@ -60,9 +65,10 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   }
   for(const [key,value] of Object.entries({drafts:{},draftKey:null,selected:null,mode:'saved',pending:null,accepted:null,
     inflight:null,notice:'',error:'',filter:'',workshareIntake:{open:false,sourceId:'',packetSourceId:'',caseId:'',target:'new'},
-    workflowIntake:{open:false,sourceId:'',target:'new',cycleIds:[]},commercialOpen:false,commercialIntake:{}}))if(!Object.hasOwn(session,key))session[key]=value;
+    workflowIntake:{open:false,sourceId:'',target:'new',cycleIds:[]},
+    effortPlanning:{open:false,forecastId:'',name:'',note:'',taskInstallations:{},forecast:null,installationChoices:[],lastSelection:null},commercialOpen:false,commercialIntake:{}}))if(!Object.hasOwn(session,key))session[key]=value;
   let active=true,hostBusy=false,busy=false,generation=0,caseValue=current,selectedRow=null,historyRows=[],nextBefore=null;
-  let preview=null,previewDraft=null,loading=false,workshareInventory=null,workflowInventory=null,commercialView=null;
+  let preview=null,previewDraft=null,loading=false,workshareInventory=null,workflowInventory=null,commercialView=null,sourceView=null;
   const $=selector=>root.querySelector(selector),available=()=>active&&root.isConnected;
   const draft=()=>session.draftKey?session.drafts[session.draftKey]:null;
   const editable=()=>caseValue.program.state==='OPEN'&&!hostBusy;
@@ -73,7 +79,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   const deployments=roles=>caseValue.records.deployments.filter(row=>roles.includes(row.role)).map(row=>[row.id,row.name+' · '+row.operator]);
   function persist(){
     const body={schema:'sf47.installation-editor.v1',caseId,requestOpen:session.requestOpen??null};
-    for(const key of ['drafts','draftKey','selected','mode','pending','accepted','notice','workshareIntake','workflowIntake','commercialOpen'])body[key]=session[key];
+    for(const key of ['drafts','draftKey','selected','mode','pending','accepted','notice','workshareIntake','workflowIntake','commercialOpen','effortPlanning'])body[key]=session[key];
     body.commercialIntake=Object.fromEntries(['sourceId','quoteKey','acceptanceKey','installationId'].filter(key=>Object.hasOwn(session.commercialIntake,key)).map(key=>[key,session.commercialIntake[key]]));
     try{sessionStorage.setItem(storageKey,JSON.stringify(body));}
     catch{session.storageNotice='The browser could not retain another local draft copy. Download the complete draft before closing this browser.';}
@@ -83,10 +89,10 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     if(!available())return;
     root.setAttribute('aria-busy',String(hostBusy||busy||!!session.inflight));
     for(const el of root.querySelectorAll('button,input,select,textarea')){
-      const isInput=el.matches('[data-installation-field],[data-installation-coordination],[data-installation-note],[data-use-field],[data-use-pattern]');
+      const isInput=el.matches('[data-installation-field],[data-installation-coordination],[data-installation-note],[data-use-field],[data-use-pattern],[data-installation-effort-field],[data-commissioning-field],[data-commissioning-ui],[data-commissioning-decision],[data-commissioning-review-select],[data-commissioning-output],[data-commissioning-call]');
       const save=el.dataset.installationAction==='save';
       el.disabled=el.dataset.installationFixed==='true'||hostBusy||
-        (save&&(!preview||!same(previewDraft?.document,draft()?.document)||previewDraft?.expectedRevision!==draft()?.expectedRevision))||
+        (save&&(hasUnappliedEffortReviews(draft())||!preview||!same(previewDraft?.document,draft()?.document)||previewDraft?.expectedRevision!==draft()?.expectedRevision))||
         (isInput?!editable():(busy||!!session.inflight));
     }
   }
@@ -96,6 +102,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     try{return await fn();}catch(error){failure(error);}finally{busy=false;if(available())render();}
   }
   function capture(){
+    captureInstallationEffortPlanning(root,session.effortPlanning);
     const value=draft();if(!value||session.mode!=='edit'||!$('[data-installation-editor]'))return;
     for(const input of root.querySelectorAll('[data-installation-field]')){
       const path=input.dataset.installationField;
@@ -105,7 +112,9 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       assign(value.document,path,selected);
     }
     captureCoordination(value);
+    captureInstallationEffort(root,value);
     captureUseCalendar(root,value.document,value.calendarUI??={});
+    captureCommissioning(root,value.document,value.commissioningUI??={});
     value.note=$('[data-installation-note]')?.value??value.note;
     value.dirty=true;
     if(previewDraft&&!same(previewDraft.document,value.document))preview=null;
@@ -250,6 +259,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       f('Original funded work packages','assignments.costIds',{choices:caseValue.plan.scenario.future_costs.map(row=>[row.id,row.id+' · tranche '+row.tranche]),multiple:true,wide:true})+
       f('Separate commercial workorder reference','assignments.commercialRef',{wide:true})+
       f('Actual effort and funding allocation','assignments.note',{area:true,wide:true,help:'Select original work once. Its recorded hours and funding basis stay attached to their original records.'}));
+    html+=installationEffortFields({draft:value,caseValue,editable:editable(),actor:recordingActor(),button});
     html+='<fieldset><legend>Installation acceptance and corrections</legend><p>The initial criteria come from the selected funding plan. Record the actual observation and select its original work, purchase, result or file.</p>'+
       d.checks.map((check,index)=>'<details class="installation-entry"'+(index===0?' open':'')+'><summary>'+esc(check.title||'Acceptance step '+(index+1))+' · '+esc(title(check.state))+'</summary><div class="installation-fields">'+
         f('Retained step identity','checks.'+index+'.id',{required:true,max:80})+
@@ -268,6 +278,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
         '</div>'+button('Remove acceptance step','remove-check','data-index="'+index+'"',!editable()||boundCheck(check))+'</details>').join('')+
       button('Add acceptance step','add-check','',!editable()||d.checks.length>=100)+'</fieldset>';
     html+=useCalendarFields(d,caseValue,value.calendarUI??={});
+    html+=commissioningFields(d,caseValue,value.commissioningUI??={});
     return html;
   }
   function reportView(value){
@@ -278,7 +289,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       '</strong></div><div><span>Selected source files</span><strong>'+report.sourceFiles+
       '</strong></div><div><span>Entered task amount</span><strong>'+esc(report.pricedTaskAtomic??'Unentered')+'</strong><small>Original atomic units</small></div></div>'+
       (report.findings.length?table(['Field or step','Current decision or observation'],report.findings.map(row=>[esc(row.field),esc(row.message)])):note('All entered configuration decisions and required acceptance steps are complete.'))+
-      workflowReportView(value)+useCalendarReport(report.useCalendar)+
+      workflowReportView(value)+useCalendarReport(report.useCalendar)+installationEffortReport(report.effort)+commissioningReport(report.commissioning)+
       '<h4>Original work and funded packages</h4>'+
       table(['Funding basis','Work package','Recorded hours','Accepted hours'],report.work.map(row=>[esc(row.fundingBasis),esc(row.costId||'Unassigned'),esc(row.recordedHours),esc(row.acceptedHours)]))+
       table(['Package','Tranche','Original planned hours','Original planned USD'],report.packages.map(row=>[esc(row.id),esc(row.tranche),esc(row.estimated_hours),esc(row.amount_usd)]))+
@@ -332,9 +343,12 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       button('New installation','new','',!editable()||!!session.pending||!!session.accepted)+
       button('Receive accepted quotation','commercial-open','',!editable()||!!session.pending||!!session.accepted)+
       button('Receive commercial Workshare','workshare-open','',!editable()||!!session.pending||!!session.accepted)+
-      button('Receive customer periods','workflow-open','',!editable()||!!session.pending||!!session.accepted))+
+      button('Prepare original source workshares','source-open','',!editable()||!!session.pending||!!session.accepted)+
+      button('Receive customer periods','workflow-open','',!editable()||!!session.pending||!!session.accepted)+
+       button('Remaining work forecast','effort-planning-show'))+
       '<p class="installation-message" role="'+(session.error?'alert':'status')+'" aria-live="polite">'+esc(session.error||session.notice)+'</p>'+
       (session.storageNotice?note(session.storageNotice):'')+worksharePanel()+workflowPanel()+
+       installationEffortPlanningPanel({state:session.effortPlanning,caseValue,button,canOpenForecast:!!onForecastInputs})+
       (session.pending?'<div class="installation-recovery"><h4>Original save request retained</h4><p>Recover this exact request before saving another edition. Your later form edits stay in their draft.</p>'+button('Recover original save','recover')+'<code>'+esc(session.pending.body.requestId)+'</code></div>':'')+
       (session.accepted?'<div class="installation-recovery"><h4>Edition saved; readback is pending</h4>'+button('Open saved result','readback')+'</div>':'')+
       (session.requestOpen&&!session.pending&&!session.accepted?'<div class="installation-recovery"><h4>Selected Installation handoff retained</h4><p>'+esc(session.requestOpen.id)+' · source edition '+esc(session.requestOpen.revision)+'</p>'+button('Open selected edition','queued-open')+'</div>':'')+
@@ -357,6 +371,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
         selectedRow?savedView(selectedRow):empty('Open a saved installation or prepare a new one from this case.'))+
       '</div></div><input type="file" data-installation-file hidden accept=".json,application/json">';
     controls();
+    sourceView?.setHostBusy(hostBusy||busy||!!session.inflight);sourceView?.refresh();
     commercialRoot.hidden=!session.commercialOpen;
     if(session.commercialOpen){ensureCommercial();commercialView.refresh();}
   }
@@ -446,6 +461,39 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
         else {closeCommercial();render();}
       }
     },session.commercialIntake);
+  }
+
+  function ensureSourceDesk(){
+    if(sourceView)return sourceView;
+    sourceView=mountInstallationSources(sourceRoot,{
+      context:()=>({caseId,planId:caseValue.program.planId,createdAt:caseValue.program.createdAt,version:caseValue.program.version}),
+      caseData:()=>caseValue,api,saveApi,recordingActor,
+      readOnlyReason:commercialReadOnly,
+      refreshCase:reloadCase,
+      close:()=>root.scrollIntoView({block:'start'}),
+      receiveDraft:async input=>{
+        const reason=commercialReadOnly();if(reason)return {applied:false,message:reason};
+        capture();
+        if(input.scope.caseId!==caseId||input.scope.version!==caseValue.program.version||
+           input.preview?.source.caseId!==caseId||input.preview.source.version!==caseValue.program.version||
+           !same(input.preview.document,input.document))
+          return {applied:false,message:'The original complete case or reviewed source changed. Review the current preparation again.'};
+        const key='source-'+crypto.randomUUID();
+        session.drafts[key]={key,token:crypto.randomUUID(),label:input.document.name+' · source preparation',
+          installationId:null,expectedRevision:0,document:copy(input.document),
+          note:'Receive complete source preparation '+input.sourcePreparationId+' for original Workshare '+input.workshareCaseId,dirty:true};
+        session.draftKey=key;session.mode='edit';session.selected=null;selectedRow=null;
+        preview=null;previewDraft=null;loading=false;
+        session.notice='Prepared the complete original source Workshare as a separate Installation draft. Review and save its native edition.';
+        persist();render();
+        let retained;try{retained=JSON.parse(sessionStorage.getItem(storageKey)||'null');}catch{}
+        if(retained?.drafts?.[key]?.token!==session.drafts[key].token)
+          return {applied:false,message:'The complete draft is open, but browser persistence failed. Download it or recover browser storage before leaving; the source preparation remains retained.'};
+        return {applied:true,draftKey:key};
+      }
+    });
+    sourceView.ready.catch(error=>{if(available())failure(error);});
+    return sourceView;
   }
 
   const sameWorkshareSource=(a,b)=>['sourceId','expectedSourceSha256','packetSourceId','expectedPacketSha256'].every(key=>a?.[key]===b?.[key]);
@@ -638,6 +686,120 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     }
     persist();
   }
+  async function readCurrentEffort(){
+    capture();const value=draft();
+    if(!value?.installationId||!value.document.workshare)throw new Error('Open a saved commercial installation to read its original phases and work.');
+    const original=copy(value),epoch=++generation;
+    await reloadCase();if(!own(epoch))return false;
+    const asOfDate=original.document.effort?.asOfDate||original.effortAsOfDate||new Date().toISOString().slice(0,10);
+    const result=await api(prefix+'/installation-effort-seed',{expectedVersion:caseValue.program.version,
+      installationId:original.installationId,expectedRevision:original.expectedRevision,asOfDate,document:original.document});
+    if(!own(epoch))return false;
+    if(result.schema!=='stellar-forge.sf47-installation-effort.v1'||result.source?.caseId!==caseId||
+      result.installationId!==original.installationId||result.expectedRevision!==original.expectedRevision||
+      !result.document?.effort||!Array.isArray(result.phaseSource?.phases)||!Array.isArray(result.workInventory))
+      throw new Error('Reopen the complete original Installation effort source.');
+    capture();const live=draft();
+    if(live?.token!==original.token||!same(live.document,original.document)){
+      session.notice='Read the original work source. Your later edits remain in their draft; read current work again to apply the refreshed inventory.';
+      persist();return false;
+    }
+    live.document=copy(result.document);live.effortContext=copy(result);live.dirty=true;
+    preview=null;previewDraft=null;
+    session.notice='Read '+result.phaseSource.phases.length+' original phases and '+result.workInventory.length+' work records through '+asOfDate+'.';
+    persist();return true;
+  }
+  async function applyRemainingReviews(){
+    capture();const value=draft();
+    if(!value?.document.effort)throw new Error('Read current work and phases before reviewing remaining hours.');
+    const original=copy(value),epoch=++generation;
+    await reloadCase();if(!own(epoch))return;
+    const result=await api(prefix+'/installation-preview',{expectedVersion:caseValue.program.version,
+      installationId:original.installationId,expectedRevision:original.expectedRevision,document:original.document});
+    if(!own(epoch))return;
+    capture();const live=draft();
+    if(live?.token!==original.token||!same(live.document,original.document)||
+      !same(live.effortReviewDrafts,original.effortReviewDrafts)||!same(live.effortReviewMeta,original.effortReviewMeta))
+      throw new Error('Your later edits are retained. Apply the remaining-hour review again with those current values.');
+    const count=applyInstallationEffortReviews(live,result.report,recordingActor());
+    if(live.effortContext)live.effortContext.report=copy(result.report);
+    preview=null;previewDraft=null;persist();
+    session.notice='Applied reviewed remaining hours for '+count+' original phase'+(count===1?'':'s')+'. Review and save the complete installation edition.';
+  }
+  async function rebindEffort(action,target){
+    capture();const original=draft(),index=Number(target.dataset.index);
+    const selected=copy(action==='effort-rebind'?original?.document.effort?.allocations[index]:original?.document.effort?.supportWindows[index]);
+    if(!selected)throw new Error('Reopen the selected effort allocation or support allowance.');
+    if(!await readCurrentEffort())return;
+    const value=draft(),live=action==='effort-rebind'?value.document.effort.allocations[index]:value.document.effort.supportWindows[index];
+    if(!live||(action==='effort-rebind'?(live.workId!==selected.workId||live.phaseId!==selected.phaseId):live.id!==selected.id))
+      throw new Error('Reopen the exact original allocation or allowance before adopting its current source.');
+    changeInstallationEffort(value,action,target,recordingActor());
+    preview=null;previewDraft=null;persist();
+    session.notice=action==='effort-rebind'?'Selected the corrected original work for this allocation. Review the complete updated effort.':
+      'Adopted the current original commercial terms for this support allowance. Review the complete updated effort.';
+  }
+  function showEffortPlanning(){
+    capture();session.effortPlanning.open=true;persist();
+  }
+  async function readEffortForecast(){
+    capture();const state=session.effortPlanning,forecastId=state.forecastId,epoch=++generation;
+    if(!forecastId)throw new Error('Select the complete original saved forecast.');
+    await reloadCase();if(!own(epoch))return;
+    const forecast=await api(prefix+'/forecasts/'+forecastId);
+    if(!own(epoch)||state.forecastId!==forecastId)return;
+    if(forecast.id!==forecastId||!Array.isArray(forecast.inputs?.commercial))throw new Error('Reopen the complete original saved forecast.');
+    state.forecast=forecast;state.installationChoices=list().map(row=>({id:row.id,name:row.name,revision:row.revision,sha256:row.sha256}));
+    state.name=state.name||'Reviewed delivery effort — '+forecast.inputs.name;
+    const tasks=new Set(forecast.inputs.commercial.map(row=>row.id)),ids=new Set(state.installationChoices.map(row=>row.id));
+    state.taskInstallations=Object.fromEntries(Object.entries(state.taskInstallations||{}).filter(([id,installation])=>tasks.has(id)&&ids.has(installation)));
+    const selected=selectedRow?.preview.document.workshare;
+    if(selected&&selectedRow.preview.report.effort?.readyForPlanning){
+      const task=forecast.inputs.commercial.find(row=>row.caseRef===selected.caseId&&
+        (row.sourceIds||[]).some(id=>id===selected.sourceId||caseValue.sources.find(source=>source.id===id)?.sha256===selected.sourceSha256));
+      if(task&&!state.taskInstallations[task.id])state.taskInstallations[task.id]=selectedRow.id;
+    }
+    session.notice='Opened the complete original forecast and current installation edition choices.';
+    persist();
+  }
+  async function openEffortForecast(){
+    capture();const state=session.effortPlanning;
+    if(!state.forecast||state.forecast.id!==state.forecastId)throw new Error('Read the selected saved forecast first.');
+    const original=copy(state),chosen=Object.entries(original.taskInstallations||{}).filter(([,id])=>id);
+    if(!chosen.length)throw new Error('Select at least one original customer task and reviewed installation.');
+    if(new Set(chosen.map(([,id])=>id)).size!==chosen.length)throw new Error('Select each installation for one original customer task.');
+    const epoch=++generation;await reloadCase();if(!own(epoch))return;
+    const selected=chosen.map(([id,installationId])=>{
+      const picked=original.installationChoices.find(row=>row.id===installationId),head=list().find(row=>row.id===installationId);
+      if(!picked||!head||head.revision!==picked.revision||(picked.sha256&&head.sha256!==picked.sha256))
+        throw new Error('An installation changed after the forecast was read. Read saved forecast again to review the current editions.');
+      return {taskId:'commercial/'+id,picked};
+    });
+    const editions=await Promise.all(selected.map(item=>api(prefix+'/installations/'+item.picked.id+'?revision='+item.picked.revision)));
+    if(!own(epoch))return;
+    const installationSelections=editions.map((row,index)=>{
+      const item=selected[index];
+      if(row.id!==item.picked.id||row.revision!==item.picked.revision||(item.picked.sha256&&row.sha256!==item.picked.sha256))
+        throw new Error('Reopen the exact selected Installation edition.');
+      return {taskId:item.taskId,installationId:row.id,installationRevision:row.revision,installationSha256:row.sha256};
+    });
+    const result=await api(prefix+'/installation-effort-selection',{expectedVersion:caseValue.program.version,
+      forecastId:original.forecastId,installationSelections,name:original.name,note:original.note});
+    if(!own(epoch))return;
+    capture();
+    if(state.forecastId!==original.forecastId||!same(state.taskInstallations,original.taskInstallations)||
+      state.name!==original.name||state.note!==original.note)
+      throw new Error('Your later forecast choices are retained. Open the remaining-work forecast again with those current choices.');
+    const received=result.selection?.installationSelections;
+    if(result.source?.caseId!==caseId||result.selection?.forecastId!==original.forecastId||
+      result.selection.forecastSha256!==original.forecast.sha256||!Array.isArray(received)||received.length!==installationSelections.length||
+      !installationSelections.every(item=>received.some(row=>['taskId','installationId','installationRevision','installationSha256'].every(key=>row[key]===item[key])))||
+      !Array.isArray(result.inputs?.commercial))throw new Error('Reopen the complete reviewed phase-effort handover.');
+    state.lastSelection=copy(result.selection);persist();
+    if(onForecastInputs)await onForecastInputs(copy(result.inputs),copy(result.selection));
+    else saveDownload(JSON.stringify(result,null,2)+'\n','installation-remaining-work-forecast.json');
+    session.notice='Prepared the complete forecast with the selected reviewed phase estimates.';
+  }
   async function newDraft(){
     capture();const epoch=++generation,seeded=await api(prefix+'/installation-seed',{expectedVersion:caseValue.program.version});
     if(!own(epoch))return;
@@ -678,11 +840,13 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   }
   async function previewDraftInput(){
     capture();const value=draft();if(!value)return;
+    if(hasUnappliedEffortReviews(value))throw new Error('Apply your entered remaining-hour reviews before reviewing the complete installation.');
     const epoch=generation,original=copy(value);
     const result=await api(prefix+'/installation-preview',{expectedVersion:caseValue.program.version,
       installationId:original.installationId,expectedRevision:original.expectedRevision,document:original.document});
     if(!own(epoch)||draft()?.token!==original.token||draft().installationId!==original.installationId||
       draft().expectedRevision!==original.expectedRevision||!same(draft().document,original.document))return;
+    if(value.effortContext&&result.report?.effort)value.effortContext.report=copy(result.report);
     preview=result;previewDraft=original;session.notice='Reviewed the complete installation against case version '+result.source.version+'.';
   }
   async function acceptReadback(){
@@ -694,7 +858,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       throw new Error('Reopen the exact original installation save result.');
     const matching=session.drafts[original.draftKey];
     if(matching?.token===original.draftToken){
-      const laterEdits=!same(matching.document,original.document)||matching.note!==original.note;
+      const laterEdits=!same(matching.document,original.document)||matching.note!==original.note||hasUnappliedEffortReviews(matching);
       if(laterEdits){
         const occupying=session.drafts[row.id];
         const retainedKey=occupying&&occupying.token!==matching.token?original.draftKey:row.id;
@@ -734,7 +898,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   }
   async function saveDraft(){
     capture();const value=draft();
-    if(!value||!preview||session.pending||session.accepted||previewDraft?.installationId!==value.installationId||
+    if(!value||!preview||hasUnappliedEffortReviews(value)||session.pending||session.accepted||previewDraft?.installationId!==value.installationId||
       previewDraft?.expectedRevision!==value.expectedRevision||!same(previewDraft?.document,value.document))
       throw new Error('Review this complete draft before saving.');
     if(!value.note.trim())throw new Error('Enter the reason for this saved edition.');
@@ -772,10 +936,20 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   }
   root.addEventListener('submit',event=>{if(event.target.matches('[data-installation-editor]')){event.preventDefault();run(previewDraftInput);}});
   root.addEventListener('input',event=>{
-    if(event.target.matches('[data-installation-field],[data-installation-coordination],[data-installation-note],[data-use-field],[data-use-pattern]')){capture();controls();}
+    if(event.target.matches('[data-effort-planning-field]')){captureInstallationEffortPlanning(root,session.effortPlanning);persist();controls();}
+    if(event.target.matches('[data-installation-field],[data-installation-coordination],[data-installation-note],[data-use-field],[data-use-pattern],[data-installation-effort-field],[data-commissioning-field],[data-commissioning-ui],[data-commissioning-decision],[data-commissioning-review-select],[data-commissioning-output],[data-commissioning-call]')){capture();controls();}
     if(event.target.matches('[data-installation-filter]')){session.filter=event.target.value;const start=event.target.selectionStart;render();const input=$('[data-installation-filter]');input.focus();try{input.setSelectionRange(start,start);}catch{}}
   });
   root.addEventListener('change',event=>{
+    if(event.target.matches('[data-effort-planning-field]')){
+      const key=event.target.dataset.effortPlanningField;
+      captureInstallationEffortPlanning(root,session.effortPlanning);
+      if(key==='forecastId'){session.effortPlanning.forecast=null;session.effortPlanning.taskInstallations={};}
+      persist();render();return;
+    }
+    if(event.target.matches('[data-installation-effort-field]')){
+      capture();if(event.target.tagName==='SELECT')render();else controls();return;
+    }
     if(event.target.matches('[data-workflow-period-field],[data-workflow-period-cycle]')){
       capture();
       if(event.target.matches('[data-workflow-period-field]')){
@@ -795,7 +969,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       if(key==='sourceId'||key==='packetSourceId'){workshareInventory=null;session.workshareIntake.caseId='';}
       persist();render();return;
     }
-    if(event.target.matches('[data-installation-field],[data-installation-coordination],[data-use-field],[data-use-pattern]')){
+    if(event.target.matches('[data-installation-field],[data-installation-coordination],[data-use-field],[data-use-pattern],[data-commissioning-field],[data-commissioning-ui],[data-commissioning-decision],[data-commissioning-review-select],[data-commissioning-output],[data-commissioning-call]')){
       capture();
       if(event.target.dataset.usePattern==='buyerDeploymentIds'||event.target.dataset.usePattern==='mode')render();
       else controls();
@@ -810,8 +984,20 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       const input=$('[data-installation-file]');input.value='';input.click();return;
     }
     run(async()=>{
+      if(action==='effort-planning-show')return showEffortPlanning();
+      if(action==='effort-planning-close'){capture();session.effortPlanning.open=false;persist();return;}
+      if(action==='effort-planning-read')return readEffortForecast();
+      if(action==='effort-planning-open')return openEffortForecast();
+      if(action==='effort-read')return readCurrentEffort();
+      if(action==='effort-apply-reviews')return applyRemainingReviews();
+      if(action==='effort-rebind'||action==='effort-rebind-support')return rebindEffort(action,target);
+      if(action.startsWith('effort-')){
+        capture();const value=draft();if(!value||!editable())return;
+        changeInstallationEffort(value,action,target,recordingActor());preview=null;previewDraft=null;persist();return;
+      }
       if(action==='queued-open'&&session.requestOpen)return openQueueRequest(session.requestOpen);
       if(action==='new')return newDraft();
+      if(action==='source-open'){capture();persist();const view=ensureSourceDesk();await view.open();return;}
       if(action==='workflow-open')return openWorkflow();
       if(action==='workflow-close'){capture();session.workflowIntake.open=false;persist();return;}
       if(action==='workflow-sources'){capture();persist();onSources?.();return;}
@@ -847,6 +1033,29 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
         if(own(epoch)&&same(session.selected,selected)){historyRows.push(...page.editions);nextBefore=page.nextBefore;}return;
       }
       capture();const value=draft();if(!value||!editable())return;
+      if(action.startsWith('commissioning-')){
+        const originalDocument=copy(value.document),originalUI=copy(value.commissioningUI??{}),workingUI=copy(originalUI);
+        const identity={key:value.key,token:value.token,installationId:value.installationId,expectedRevision:value.expectedRevision};
+        const workingDocument=copy(originalDocument);
+        const result=await commissioningAction(action,target,{document:workingDocument,context:caseValue,ui:workingUI,api,prefix,
+          expectedVersion:caseValue.program.version,installationId:value.installationId,expectedRevision:value.expectedRevision,actor:recordingActor()});
+        const next=result.document||workingDocument;
+        if(value.token!==identity.token||!same(value.document,originalDocument)){
+          if(!same(next,originalDocument)){
+            const key='commissioning-'+crypto.randomUUID();
+            session.drafts[key]={key,token:crypto.randomUUID(),installationId:identity.installationId,expectedRevision:identity.expectedRevision,
+              document:copy(next),commissioningUI:workingUI,note:'',dirty:true,label:'Customer commissioning preparation'};
+            session.notice='Kept the complete commissioning result as a separate retained draft. Your later form edits remain open.';
+          }
+        }else{
+          value.document=copy(next);value.dirty=true;
+          if(same(value.commissioningUI??{},originalUI))value.commissioningUI=workingUI;
+          if(result.message)session.notice=result.message;
+        }
+        preview=null;previewDraft=null;persist();return;
+      }
+      if(action==='use-calendar-disable'&&value.document.commissioning)
+        throw new Error('Remove or retain the commissioning correspondence explicitly before removing its customer-use calendar.');
       if(action.startsWith('use-calendar-')){
         const originalDocument=copy(value.document),originalUI=copy(value.calendarUI??{}),workingUI=copy(originalUI);
         const workingDocument=copy(originalDocument),identity={key:value.key,token:value.token,installationId:value.installationId,expectedRevision:value.expectedRevision};
@@ -927,6 +1136,6 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   }
   render();
   const ready=initialize().catch(error=>{failure(error);});
-  return {ready,setHostBusy(value){hostBusy=!!value;controls();commercialView?.refresh();},
-    dispose(){capture();active=false;++generation;commercialView?.destroy();persist();}};
+  return {ready,setHostBusy(value){hostBusy=!!value;controls();commercialView?.refresh();sourceView?.setHostBusy(hostBusy||busy||!!session.inflight);},
+    dispose(){capture();active=false;++generation;commercialView?.destroy();sourceView?.dispose();persist();}};
 }

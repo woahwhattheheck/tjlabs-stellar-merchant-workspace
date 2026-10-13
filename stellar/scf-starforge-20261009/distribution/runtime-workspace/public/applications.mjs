@@ -3,6 +3,7 @@ import { renderOpenApiApplicationReview } from './openapi-application.mjs';
 import { renderApplicationReview } from './application-review.mjs';
 import { renderAccountingApplicationReview } from './accounting-application.mjs';
 import { createOpenApiConnectionSetupView } from './openapi-connection-setup.mjs';
+import { createApplicationOutputReader } from './application-output.mjs';
 import { createApplicationLibrary } from './application-library.mjs';
 import { createApplicationDrafts } from './application-drafts.mjs';
 import { createGrantApplicationHandoffView } from './grant-application-handoff.mjs';
@@ -17,8 +18,16 @@ const button = (text, action) => {
   node.addEventListener('click', action); return node;
 };
 const query = (path, value) => path + '?' + new URLSearchParams(value);
-const readable = text => String(text ?? '').replace(/\x1b\][^\x07]*(?:\x07|\x1b\\)/g, '')
+const readable = text => String(text ?? '').replace(/\x1b\][^\x07]*?(?:\x07|\x1b\\)/g, '')
   .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+function outcomeText(result, source = null) {
+  if (!result) return source ? 'Original outcome is null · Receipt: ' + source : 'Original operation retained.';
+  const label = result.state ?? result.operation ?? 'Retained result';
+  const exit = result.exitCode !== null && result.exitCode !== undefined ? ', exit ' + result.exitCode : '';
+  const recovered = result.operation === 'original-command' &&
+    ['RECONCILED', 'OUTCOME_UNAVAILABLE'].includes(result.state) ? ' · Original exit outcome is unavailable.' : '';
+  return 'Original outcome: ' + label + exit + recovered + (source ? ' · Receipt: ' + source : '');
+}
 function facts(rows) {
   const node = element('dl', undefined, 'paths');
   for (const [label, value] of rows) {
@@ -75,7 +84,8 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
   const selected = () => data?.applications.find(item => item.id === selectedId) ?? null;
   const currentType = () => data?.catalog.find(item => item.id === kind.value);
   const header = element('div', undefined, 'section-title');
-  header.append(element('h2', 'Applications'), button('New application', () => edit(null)));
+  header.append(element('h2', 'Applications'), button('Refresh applications', () => refresh().catch(error)),
+    button('New application', () => edit(null)));
   const intro = element('p', 'Open the original merchant and buyer tools using an installed runtime. Application data, private URLs and process history stay with this workspace.', 'note');
   const libraryRoot = element('div'); libraryRoot.id = 'application-library';
   const draftRoot = element('div'); draftRoot.id = 'application-setup-drafts';
@@ -192,7 +202,12 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
   terminalActions.append(send, interrupt, eof);
   inputForm.append(element('p', 'This is the original application terminal. Review its current prompt, then enter the response yourself. Opening or refreshing this page sends no input.', 'note'),
     field('Terminal response', input), terminalActions, inputStatus);
-  outputPanel.append(outputDescription, output, inputForm);
+  const outputReaderRoot = element('div'), outputOutcome = element('p', '', 'note');
+  outputOutcome.hidden = true;
+  outputPanel.append(outputOutcome, outputReaderRoot, inputForm);
+  const outputReader = createApplicationOutputReader({ root: outputReaderRoot, api,
+    getWorkspaceId: () => getState()?.workspaceId, error, output });
+  outputDescription.hidden = true;
   root.replaceChildren(header, intro, libraryRoot, configuration, grantHandoffRoot, selectedPanel, history, outputPanel);
   const grantHandoff = createGrantApplicationHandoffView({
     root: grantHandoffRoot, api, getState, getApplications: () => data?.applications ?? [], message, error,
@@ -465,16 +480,20 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
       reviewResult.hidden = false;
     });
   });
+  function canStartApplication(app = selected()) {
+    return Boolean(app?.release) && !app.error && app.current?.active !== null && !app.current?.active &&
+      !['PENDING', 'QUEUED', 'RUNNING', 'INTERRUPTED', 'OBSERVATION_UNAVAILABLE'].includes(app.current?.phase);
+  }
   function renderStartReview() {
     if (!startReview || selected()?.id !== startReview.applicationId) { operationReview.hidden = true; return; }
     const reviewed = startReview;
     const start = button('Start reviewed application', () => act(async () => {
-      if (startReview !== reviewed) return;
+      if (startReview !== reviewed || selected()?.id !== reviewed.applicationId || !canStartApplication()) return;
       const submitted = { scope, navigationVersion };
       start.disabled = true;
       let result;
       try { result = await retainedRequest('/api/applications/start', { applicationId: reviewed.applicationId, reviewId: reviewed.id }); }
-      finally { start.disabled = false; }
+      finally { start.disabled = !canStartApplication(); }
       if (submitted.scope !== scope) return;
       if (submitted.navigationVersion === navigationVersion) followOperation(reviewed.applicationId, result.operationId);
       if (startReview === reviewed) startReview = null;
@@ -482,6 +501,7 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
         'The original workbook command is starting. Its operating result and output appear below.' :
         'The original application is starting. Its private URL will appear when its CLI prints it.');
     }));
+    start.disabled = !canStartApplication();
     operationReview.replaceChildren(element('h3', 'Start review'), facts([
       ['Original command', reviewed.command.pythonCommand ? reviewed.command.pythonCommand.executable + ' ' +
         reviewed.command.pythonCommand.argv.map(value => JSON.stringify(value)).join(' ') :
@@ -513,16 +533,22 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
     ]));
     if (!app.release && app.adoption?.state?.error?.message)
       details.append(element('p', app.adoption.state.error.message, 'note'));
-    const current = app.current, active = Boolean(current?.active), unsettled = ['PENDING', 'QUEUED', 'RUNNING', 'INTERRUPTED'].includes(current?.phase);
-    reviewStart.disabled = !app.release || active || unsettled;
+    const current = app.current, active = Boolean(current?.active), unknown = current?.active === null,
+      unsettled = ['PENDING', 'QUEUED', 'RUNNING', 'INTERRUPTED', 'OBSERVATION_UNAVAILABLE'].includes(current?.phase);
+    for (const observed of [app.adoption, current]) {
+      if (observed?.observation?.status !== 'UNAVAILABLE') continue;
+      details.append(element('p', 'Process status is unavailable for ' + observed.id + '. Its saved configuration and output remain accessible.', 'note'));
+      if (observed.observation.error) details.append(element('p', observed.observation.error.code + ': ' + observed.observation.error.message, 'note'));
+    }
+    reviewStart.disabled = !canStartApplication(app);
     stop.disabled = !current || !active && !unsettled;
     stop.textContent = current?.phase === 'PENDING' || current?.phase === 'QUEUED' ? 'Cancel pending start' : 'Stop application';
     reconnect.hidden = Boolean(app.release);
-    reconnect.disabled = Boolean(app.adoption?.active);
+    reconnect.disabled = Boolean(app.adoption?.active) || app.adoption?.active === null;
     reconnect.textContent = app.adoption?.active ? 'Connecting runtime…' :
       app.adoption?.phase === 'FAILED' ? 'Retry runtime connection' :
         ['QUEUED', 'INTERRUPTED'].includes(app.adoption?.phase) ? 'Resume runtime connection' : 'Continue runtime connection';
-    continueRun.hidden = !current || active || !unsettled;
+    continueRun.hidden = !current || active || unknown || !unsettled;
     continueRun.textContent = current?.phase === 'INTERRUPTED' ? 'Reconcile original operation' : 'Continue original start';
     editButton.disabled = active || unsettled;
     const woo = app.kind === 'woo-merchant';
@@ -572,7 +598,7 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
       navigationRecovery.replaceChildren(); delete navigationRecovery.dataset.signature;
     }
     const workbookCommand = ['python-workbooks', 'python-workbook-delivery'].includes(app.kind);
-    urlNote.textContent = workbookCommand ? (active ? 'The original workbook command is running. Its output is retained below.' :
+    urlNote.textContent = unknown ? 'Current process status is unavailable. Any address shown is the original saved address; refresh status to observe the current process. Retained output remains accessible.' : workbookCommand ? (active ? 'The original workbook command is running. Its output is retained below.' :
       current ? 'The original workbook command has ended. Open its retained outcome and complete output below.' :
       'Review a start to run this original workbook command.') : navigationChanged ?
       'The original process and saved addresses are still attached to this operation. To restore direct Open buttons here, stop it and review a new start from this Applications address.' :
@@ -590,9 +616,17 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
         actions.append(button('Open output', () => { navigationVersion++; selectedRun = run.id; saveSelection(); refreshOutput().catch(error); }));
         row.append(element('h3', run.command + ' · ' + run.phase),
           element('p', run.id + ' · ' + run.createdAt),
-          element('p', run.result?.state ? 'Original outcome: ' + run.result.state + (run.result.exitCode !== null && run.result.exitCode !== undefined ? ', exit ' + run.result.exitCode : '') :
-            run.active ? 'The original worker lease is held.' : 'Original operation retained.'),
-          actions); return row;
+          element('p', run.result || run.resultSource ? outcomeText(run.result, run.resultSource) :
+            run.active === null ? 'Current process status is unavailable. Original operation retained.' :
+              run.active ? 'The original worker or command is active.' : 'Original operation retained.'),
+          actions);
+        if (run.result || run.resultSource) {
+          const receipt = element('details'); receipt.append(element('summary', 'Complete retained outcome'),
+            element('pre', JSON.stringify({ result: run.result, resultSource: run.resultSource ?? null,
+              commandResult: run.commandResult ?? null }, null, 2)));
+          row.append(receipt);
+        }
+        return row;
       }));
     }
     if (!selectedRun || !pageRuns.some(run => run.id === selectedRun)) selectedRun = pageRuns[0]?.id ?? null;
@@ -606,11 +640,11 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
     const response = await api(query(run.terminal ? '/api/applications/terminal' : '/api/applications/output', { applicationId: app.id, operationId: id }));
     if (scope !== own || app.id !== selectedId || id !== selectedRun) return;
     outputPanel.hidden = false;
-    const bottom = output.scrollTop + output.clientHeight >= output.scrollHeight - 40;
-    output.textContent = readable(response.output.text);
-    if (bottom) output.scrollTop = output.scrollHeight;
-    outputDescription.textContent = id + ' · ' + response.output.totalBytes + ' retained output bytes' +
-      (response.output.offset ? ' · showing the last ' + (response.output.totalBytes - response.output.offset) + ' bytes' : '');
+    const outcome = run.terminal ? response.managedOutcome : response;
+    outputOutcome.hidden = !(outcome?.result || outcome?.resultSource);
+    outputOutcome.textContent = outputOutcome.hidden ? '' : outcomeText(outcome.result, outcome.resultSource);
+    await outputReader.update({ applicationId: app.id, operationId: id });
+    if (scope !== own || app.id !== selectedId || id !== selectedRun) return;
     inputForm.hidden = !run.terminal;
     input.disabled = send.disabled = interrupt.disabled = eof.disabled = !response.ready || sending;
     if (run.terminal) {
@@ -620,6 +654,8 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
       const receipt = pending && response.inputs.find(item => item.inputId === pending.inputId);
       if (receipt && receipt.state !== 'QUEUED') saveSaved('terminal-input', null);
       if (response.result) inputStatus.prepend(element('p', 'This terminal has ended. Its input and output belong to this original operation.', 'note'));
+      else if (!response.active && (response.managedOutcome?.result || response.managedOutcome?.resultSource))
+        inputStatus.prepend(element('p', outcomeText(response.managedOutcome.result, response.managedOutcome.resultSource), 'note'));
     }
   }
   async function terminalSend(text) {
@@ -725,7 +761,7 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
     async choose(id) { const own = scope; navigationVersion++; selectedId = id; selectedRun = null; resetHistory(id); switchView('applications'); await refresh(); if (scope === own && selectedId === id) library.visit(id); },
     reset() {
       scope++; navigationVersion++; data = null; selectedId = selectedRun = editingId = null; configurationReview = startReview = null;
-      resetHistory(null); initial = true; drafts.reset(); library.reset(); label.value = ''; kind.replaceChildren(); runtime.replaceChildren();
+      resetHistory(null); outputReader.reset(); initial = true; drafts.reset(); library.reset(); label.value = ''; kind.replaceChildren(); runtime.replaceChildren();
       selectedPanel.hidden = history.hidden = outputPanel.hidden = reviewResult.hidden = true; configuration.open = true;
       openapiSetup.reset(); grantHandoff.reset();
     },

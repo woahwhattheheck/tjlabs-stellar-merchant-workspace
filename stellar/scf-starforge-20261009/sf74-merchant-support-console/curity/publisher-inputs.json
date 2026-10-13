@@ -1,0 +1,101 @@
+{
+  "schema": "curity.publisher-inputs/v1",
+  "sourceContext": "PUBLISHER_EXAMPLE",
+  "sourceUrl": "https://curity.io/resources/learn/logging-best-practices/",
+  "observedDate": "2026-10-13",
+  "sourceStatus": "PRIMARY_WEB_READER_TRANSCRIPTION",
+  "description": "Exact published field values transcribed as JSON; original HTTP response bytes were not acquired. These are documentation examples, not a supplier export or an operated Curity instance.",
+  "examples": [
+    {
+      "id": "jsonlayout",
+      "name": "Curity_Publisher_JSONLayout.ndjson",
+      "format": "ndjson",
+      "content": "{\"timeMillis\":1741168884,\"thread\":\"req-171\",\"level\":\"INFO\",\"loggerName\":\"audit-events\",\"message\":\"access-token-issued [923cc315729340008510706b01990d8a authenticatedClient=\\\"spa-client\\\" authenticatedSubject=\\\"johndoe\\\" client=\\\"spa-client\\\" instant=\\\"2025-03-05T10:01:24.615014186Z\\\" server=\\\"CnxNuqLW\\\" subject=\\\"3b5aba986d28551691bf94caff6a29466f521c47365aee02e67517157d25d4c8\\\"] Access token issued for subject \\\"3b5aba986d28551691bf94caff6a29466f521c47365aee02e67517157d25d4c8\\\" with client \\\"spa-client\\\"\",\"endOfBatch\":true,\"loggerFqcn\":\"org.apache.logging.log4j.spi.AbstractLogger\",\"contextMap\":{\"RequestId\":\"yK0nYfVW\",\"SpanId\":\"90a3f360f1a7112c\",\"TraceId\":\"ce41b85c6f00f167baa53fd814d23c30\"},\"threadId\":42,\"threadPriority\":5,\"hostname\":\"curity-idsvr-runtime-65bddfd64f-cqm7s\"}\n",
+      "mapping": {
+        "schema": "curity.audit-mapping/v1",
+        "layout": "curity-message",
+        "messagePath": [
+          "message"
+        ],
+        "outerTimestamp": {
+          "path": [
+            "timeMillis"
+          ],
+          "unit": "literal-only"
+        }
+      }
+    },
+    {
+      "id": "structured-ingestion",
+      "name": "Curity_Publisher_Structured_Audit.json",
+      "format": "json",
+      "content": "{\n  \"eventTime\": \"2025-03-05T10:01:24.000Z\",\n  \"message\": \"\",\n  \"audit\": {\n    \"server\": \"CnxNuqLW\",\n    \"authenticatedSubject\": \"johndoe\",\n    \"subject\": \"3b5aba986d28551691bf94caff6a29466f521c47365aee02e67517157d25d4c8\",\n    \"client\": \"spa-client\",\n    \"id\": \"923cc315729340008510706b01990d8a\",\n    \"type\": \"access-token-issued\",\n    \"authenticatedClient\": \"spa-client\",\n    \"instant\": \"2025-03-05T10:01:24.615014186Z\"\n  }\n}\n",
+      "mapping": {
+        "schema": "curity.audit-mapping/v1",
+        "layout": "fields",
+        "contentPath": [
+          "audit"
+        ],
+        "fields": {
+          "type": [
+            "audit",
+            "type"
+          ],
+          "id": [
+            "audit",
+            "id"
+          ],
+          "instant": [
+            "audit",
+            "instant"
+          ],
+          "subject": [
+            "audit",
+            "subject"
+          ],
+          "client": [
+            "audit",
+            "client"
+          ],
+          "resource": [
+            "audit",
+            "resource"
+          ],
+          "authenticatedSubject": [
+            "audit",
+            "authenticatedSubject"
+          ],
+          "authenticatedClient": [
+            "audit",
+            "authenticatedClient"
+          ],
+          "acr": [
+            "audit",
+            "acr"
+          ],
+          "endpoint": [
+            "audit",
+            "endpoint"
+          ],
+          "session": [
+            "audit",
+            "session"
+          ],
+          "server": [
+            "audit",
+            "server"
+          ],
+          "message": [
+            "message"
+          ]
+        },
+        "outerTimestamp": {
+          "path": [
+            "eventTime"
+          ],
+          "unit": "literal-only"
+        }
+      }
+    }
+  ]
+}

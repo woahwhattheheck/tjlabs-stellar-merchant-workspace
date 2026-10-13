@@ -6,9 +6,23 @@ The original Workspace, Operations, forecast and portfolio implementations remai
 
 The complete Merchant setup, tools, input references, source-bound pages, downloads, same-ID recovery and receiving workflow are in [Grant workspaces through Merchant MCP](../../../../stellar-forge/mcp-merchant-operator/GRANT_WORKSPACES.md).
 
+## Named financial desk continuity
+
+[FINANCIAL_DESK_RECOVERY.md](FINANCIAL_DESK_RECOVERY.md) documents the complete ten-desk workflow, in-page same-operator sign-in, original pending-action recovery, earlier browser copies, and complete Issuer Terms / Customer Billing editor receiving. The public staff session returns its native `installationId`. Context-bound clients send `X-Grant-Staff` and `X-Grant-Installation` alongside the current cookie/CSRF credentials; the original role, assigned-case and financial command rules remain authoritative. Capture these identifiers before preparing or awaiting a write, and retain the original request body and actor through renewal or response recovery.
+
+## Delivery agenda across selected cases
+
+Open **Delivery agenda** in the original application to review multiple existing cases together, navigate to each original payment or Completion assignment, and export the complete selected cases. The typed client exposes `read('delivery-agenda', {caseIds, asOfDate, expectedVersions})` and `download('delivery-agenda', {...report.selection, format})`. Both use one original workspace snapshot; a supplied version map covers every selected case. The adjacent declarations include the complete report, original case metadata and wrapped native entries.
+
+[Delivery agenda](DELIVERY_AGENDA.md) covers the browser, source navigation, authenticated HTTP, CLI, Python operation, typed client, Merchant tools and complete exports.
+
 ## Installation delivery queue
 
 Read `client.read('delivery-queue', {caseId, asOfDate})` and download the complete handover with `client.download('delivery-queue', {caseId, asOfDate})`. The package now includes adjacent TypeScript declarations for the public client, complete queue, installation document and saved-edition workflow. [Installation delivery queue](DELIVERY_QUEUE.md) covers assignment editing, typed consumption, MCP paging, date semantics and complete receiving.
+
+## Installation effort and support
+
+`installationEffortSeed(caseId, body)` prepares the complete document and current native Work inventory for a saved Installation. `installationEffortSelection(caseId, body)` opens a complete original Forecast draft from exact saved effort editions. Effort persists through the existing `installationPreview` and `installationSave` methods. The typed document retains allocations, review identities and source-referenced support windows. [Installation effort and support](INSTALLATION_EFFORT.md) includes the complete seed/save/reopen recipe, hours selection, MCP tools and original receiving flow.
 
 ## Complete customer adoption operations
 
@@ -460,6 +474,73 @@ Import the selected handover through the original case receiver. Its response in
 
 The current complete catalogue adds `merchant_grant_implementation_source`, `merchant_grant_implementation_preview` and `merchant_grant_implementation_prepare`. These methods use the original case version and command journal. Preview/prepare accept the existing whole-file hash-verified input and optional JSON-pointer transport. `merchant_grant_export` supports `implementation` (case/review) and `implementation-original` (case/source/SHA-256). Completion preview/prepare accept optional ordered `implementationReviewIds` (up to 20 distinct original reviews). See [the complete operator, typed-client and source-provenance contract](IMPLEMENTATION_EVIDENCE.md). The selected complete catalogue has 67 tools; previous receipt records retain their original catalogue identities.
 
+## Delivery risks and mitigation
+
+Delivery risks belongs to the original grant operating case. It records named risks and issues, accountable contributors, affected delivery packages, mitigation actions, attached sources, dated reviews and resolutions. Operators set likelihood, impact and priority explicitly. The register's due findings use its recorded `asOfDate`; `ISSUE` entries use `NOT_APPLICABLE` likelihood. An unassigned owner is the explicit value `null`.
+
+| Client operation | Result |
+| --- | --- |
+| `read('risks', {caseId})` | Current source identity, latest register and every saved edition, newest first. |
+| `riskSeed(caseId, {expectedVersion, reviewId?})` | Editable complete document and actual case contributors, packages and source metadata. |
+| `riskPreview(caseId, {expectedVersion, document})` | Normalized document, complete report and exact preview SHA256. |
+| `riskSave(caseId, body)` | Immutable `risk-register.save` review with its native request identity. |
+| `riskRequest(caseId, {command})` | Original request lookup using the whole retained save command and fingerprint. |
+| `read('risk-register', {caseId, reviewId})` | Complete immutable review, report and current source comparison. |
+| `read('risk-history', {caseId, riskId})` | The same stable risk and its actions across saved register editions. |
+| `download('risk-register', {caseId, reviewId})` | Original complete case and all history, selected register JSON, action/risk CSVs and offline HTML. |
+
+Start from `riskSeed` and edit the returned complete document. Keep stable risk and action IDs across successor editions. A successor refers to the exact previous `reviewId` and `reviewSha256`; keep resolved and closed records in the register so their history remains available. Record each actual review in `review.on`, `review.by` and `review.note`. Resolution records carry the date and explanatory note. Select original contributor, package and source IDs from the seed. The native preview preserves previously linked retired packages and reports their current state.
+
+The native engine validates real civil dates, case ownership, source links, edition lineage and field bounds. Documents allow up to 200 risks and 100 actions per risk within 2 MiB of normalized JSON. Review owners can assign finance and reviewer read access through the existing staff desk. The existing case permissions govern save access.
+
+Retain the exact complete command before its first save. This example uses an already opened original `GrantWorkspaceClient`, the reviewed case version, and an operator-edited complete seed document:
+
+```js
+import {open, readFile} from 'node:fs/promises';
+import {dirname} from 'node:path';
+
+export async function prepareRiskReview(client, caseId, selection, requestFile) {
+  const {expectedVersion, document, requestId, actor, note} = selection;
+  const preview = (await client.riskPreview(caseId, {expectedVersion, document})).value;
+  const command = {
+    expectedVersion, requestId, actor, note, action:'risk-register.save',
+    data:{document:preview.document, expectedPreviewSha256:preview.previewSha256}
+  };
+  const retained = {caseId, command};
+  const file = await open(requestFile, 'wx', 0o600);
+  try {
+    await file.writeFile(JSON.stringify(retained) + '\n', 'utf8');
+    await file.sync();
+  } finally {
+    await file.close();
+  }
+  const parent = await open(dirname(requestFile), 'r');
+  try {
+    await parent.sync();
+  } finally {
+    await parent.close();
+  }
+  return retained;
+}
+
+export async function continueRiskReview(client, requestFile) {
+  const retained = JSON.parse(await readFile(requestFile, 'utf8'));
+  const {caseId, command} = retained;
+  const inspected = (await client.riskRequest(caseId, {command})).value;
+  if (inspected.found) return inspected.result;
+  // The native transaction validates the original version and full command.
+  return (await client.command(caseId, command)).value;
+}
+```
+
+A lost connection resumes through the same retained file. The native lookup checks the complete original command fingerprint and recovers the original saved result. If the original request is absent and its reviewed case version has changed, the native save reports that conflict; review the new case source and prepare a separately identified successor with the operator's updated input. Keep the original request record intact.
+
+Reopen the saved `recordId`, inspect the current source comparison, and download its complete export. The existing case importer receives that archive with all risk editions, source attachments and original review identities. The report keeps the historical source context alongside the receiving case identity.
+
+Merchant MCP exposes `merchant_grant_risks`, `merchant_grant_risk_register`, `merchant_grant_risk_history`, `merchant_grant_risk_seed`, `merchant_grant_risk_preview`, `merchant_grant_risk_save` and `merchant_grant_risk_request`. Preview and save accept the full document as `inputs`, or one verified host input, snapshot or transfer reference. Use `inputPointer: '/document'` for a native seed or preview snapshot. Request recovery takes the whole original command as `inputs`; for the example's retained file, use `inputPointer: '/command'`. It includes the original reviewed version, actor, note, request ID, action, document and preview digest. Native results remain complete retained snapshots, with the original byte paging and file download operations.
+
+Use `merchant_grant_export` with `kind: 'risk-register'`, `caseId` and `reviewId` to receive the full selected handover. Existing staff accounts, service connection ownership, source transfers and client shutdown rules apply unchanged.
+
 ## Contributor Engagements
 
 The complete typed client, eight Merchant tools and original Forecast/Portfolio receiving course are documented in [Contributor Engagements](ENGAGEMENTS.md#typed-client-and-merchant-mcp). They retain the original source attachments, immutable agreement reviews, decimal amounts, command identities and complete case exports. Both `engagement.prepare` and `engagement.receiving` require a nonempty recorded note; current Work/Invoice and Installation operations remain on their original implementations.
@@ -488,3 +569,31 @@ The full operating receiving entrypoint is `python3 STAFF_WORKFLOW_RECEIVING.py 
 ## Recorded cohort delivery agent
 
 The nine `merchant_grant_cohort_delivery_*` tools take the original saved adoption source and frozen review through explicit identity/intent editing, complete comparison, source refresh, reviewed preparation, native save/recovery and JSON/CSV/HTML receiving. They share the existing source request owner with the adoption tools. Source refresh retains invalidated choices in complete editable input with the exact finding, so the same edit operation repairs the association. The public typed module is `@tokenjunkielabs/starforge-merchant/grant/cohort-delivery-agent`. See [the complete source selection, tool, native request and receiving workflow](COHORT-DELIVERY.md#merchant-agent-workflow).
+
+
+## Continue a complete cohort editor between browsers
+
+The existing Cohort Planning panel now carries its entire working state
+through **Saved editions → Complete working session**. **Download working
+session** includes unfinished row text, all prior drafts, both complete
+comparison sources and history, incoming documents, full allocation choices
+and results, opened source bytes and the exact original source request.
+**Open working-session JSON** stages the full file beside current work;
+**Open as working session** retains the predecessor before selecting it.
+
+Continue through the same original Operations case. A transferred pending
+save reuses the original actor/version/request ID and JSON bytes through the
+existing `source.add` controls; its accepted source is read back through the
+original source API. The portable reader validates that precise attachment
+contract and rejects unrelated native actions. Agents can supply or retain
+the complete working JSON without flattening it into a single plan or losing
+unfinished operator text.
+
+The full schema and browser workflow are documented in
+[COHORT-PLANNING.md](COHORT-PLANNING.md#continue-the-complete-working-session).
+The selected controller imports `cohort_planning_session.mjs` directly and
+the adjacent declaration describes the complete file. Its immutable snapshot
+archive uses the browser's existing origin; the portable JSON includes all
+bodies for another browser. Read-only planning, original case ownership,
+Calendar/Installation identities and native source request recovery keep
+their existing client and Merchant dispatch paths.

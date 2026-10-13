@@ -1,0 +1,372 @@
+{
+  "schema": "tjlabs.tondo.complete-factual-edition.v1",
+  "edition": "registration-pdf-2026-2027",
+  "source": {
+    "url": "https://www.tondoartstudio.com/s/Student-Registration-Form-1-1-1.pdf",
+    "collectedAt": "2026-10-13T05:28:26Z",
+    "filename": "Student-Registration-Form-1-1-1.pdf",
+    "bytes": 3594789,
+    "sha256": "eec6450f43b9798892d77c3688dba20f3aa9f11e4da9055e9f63f6d9ae754e7a",
+    "pages": 4,
+    "programmePage": 2,
+    "policyPage": 3
+  },
+  "facts": {
+    "academicYear": "2026-2027",
+    "registrationFees": {
+      "newStudent": "50.00",
+      "returningStudent": "25.00",
+      "sibling": "25.00",
+      "currency": "USD",
+      "scope": "annual",
+      "sourcePage": 3
+    },
+    "siblingDiscount": {
+      "percent": "10",
+      "applicationBasis": "This form does not select a particular sibling; the separate Terms PDF identifies the second child",
+      "sourcePage": 3
+    },
+    "seniorDiscount": {
+      "percent": "15",
+      "eligibility": "Not specified in this form",
+      "stacking": "Not specified",
+      "sourcePage": 3
+    },
+    "tuition": {
+      "basis": "Flat monthly amount, independent of hours or weeks in the month; vacation absence does not reduce full tuition",
+      "sourcePage": 3
+    },
+    "paymentMethods": [
+      "Zelle",
+      "Venmo",
+      "personal check",
+      "cash",
+      "secure credit-card link on request"
+    ],
+    "creditCardTuitionSurcharge": {
+      "percent": "4",
+      "sourcePage": 3
+    },
+    "suppliesIncluded": true,
+    "schoolContact": {
+      "address": "21 Pine St, Suite 117, Rockaway, NJ 07866",
+      "phone": "201-496-0926",
+      "email": "tondoartstudio@gmail.com",
+      "sourcePage": 1
+    },
+    "linkedDocuments": {
+      "registration": "https://www.tondoartstudio.com/s/Student-Registration-Form-1-1-1.pdf",
+      "calendar": "https://www.tondoartstudio.com/s/Calendar-2026-27.pdf",
+      "terms": "https://www.tondoartstudio.com/s/Terms-Conditions-2026-2027.pdf"
+    }
+  },
+  "interpretation": {
+    "weekday": "0=Monday through6=Sunday",
+    "time": "24-hour local wall time from page2",
+    "capacity": "Unpublished; empty cell",
+    "location": "Header contains school address; programme venue remains a separate explicit selection",
+    "adultMaximumAge": "18+ has no upper age; empty max_age",
+    "calendar": "Use separately retained2026–2027 calendar",
+    "editionPrecedence": "The form and current web pages disagree. Preserve all three editions and make a sourced selection."
+  },
+  "sources": [
+    {
+      "kind": "programmes",
+      "table": {
+        "columns": [
+          "id",
+          "title",
+          "min_age",
+          "max_age",
+          "duration_minutes",
+          "capacity",
+          "location"
+        ],
+        "rows": [
+          [
+            "tondo-3-4",
+            "3-4 Years Old",
+            "3",
+            "4",
+            "45",
+            "",
+            ""
+          ],
+          [
+            "tondo-4-6",
+            "4-6 Years Old",
+            "4",
+            "6",
+            "60",
+            "",
+            ""
+          ],
+          [
+            "tondo-7-12",
+            "7-12 Years Old",
+            "7",
+            "12",
+            "90",
+            "",
+            ""
+          ],
+          [
+            "tondo-10-15",
+            "10-15 Years Old",
+            "10",
+            "15",
+            "90",
+            "",
+            ""
+          ],
+          [
+            "tondo-intensive-10-17",
+            "10-17 Years Old INTENSIVE",
+            "10",
+            "17",
+            "120",
+            "",
+            ""
+          ],
+          [
+            "tondo-adult-18-plus",
+            "Adult Classes18+ Years Old",
+            "18",
+            "",
+            "90",
+            "",
+            ""
+          ]
+        ]
+      },
+      "metadata": {
+        "label": "TONDO registration PDF2026–2027 programmes",
+        "filename": "tondo-registration-pdf-2026-2027-programmes.json",
+        "url": "https://www.tondoartstudio.com/s/Student-Registration-Form-1-1-1.pdf",
+        "retrievedAt": "2026-10-13T05:28:26Z",
+        "provenance": "public-derived",
+        "notice": "Complete factual page2 table, verified against rendered original four-page PDF; original PDF sha256 eec6450f43b9798892d77c3688dba20f3aa9f11e4da9055e9f63f6d9ae754e7a. Other publications remain separate source editions."
+      }
+    },
+    {
+      "kind": "plans",
+      "table": {
+        "columns": [
+          "id",
+          "programme_id",
+          "frequency",
+          "tuition",
+          "currency"
+        ],
+        "rows": [
+          [
+            "tondo-3-4-1x-week",
+            "tondo-3-4",
+            "1",
+            "147.00",
+            "USD"
+          ],
+          [
+            "tondo-4-6-1x-week",
+            "tondo-4-6",
+            "1",
+            "168.00",
+            "USD"
+          ],
+          [
+            "tondo-4-6-2x-week",
+            "tondo-4-6",
+            "2",
+            "305.00",
+            "USD"
+          ],
+          [
+            "tondo-7-12-1x-week",
+            "tondo-7-12",
+            "1",
+            "205.00",
+            "USD"
+          ],
+          [
+            "tondo-7-12-2x-week",
+            "tondo-7-12",
+            "2",
+            "370.00",
+            "USD"
+          ],
+          [
+            "tondo-7-12-3x-week",
+            "tondo-7-12",
+            "3",
+            "525.00",
+            "USD"
+          ],
+          [
+            "tondo-10-15-1x-week",
+            "tondo-10-15",
+            "1",
+            "205.00",
+            "USD"
+          ],
+          [
+            "tondo-10-15-2x-week",
+            "tondo-10-15",
+            "2",
+            "370.00",
+            "USD"
+          ],
+          [
+            "tondo-intensive-10-17-1x-week",
+            "tondo-intensive-10-17",
+            "1",
+            "245.00",
+            "USD"
+          ],
+          [
+            "tondo-intensive-10-17-2x-week",
+            "tondo-intensive-10-17",
+            "2",
+            "430.00",
+            "USD"
+          ],
+          [
+            "tondo-adult-18-plus-1x-week",
+            "tondo-adult-18-plus",
+            "1",
+            "205.00",
+            "USD"
+          ]
+        ]
+      },
+      "metadata": {
+        "label": "TONDO registration PDF2026–2027 plans",
+        "filename": "tondo-registration-pdf-2026-2027-plans.json",
+        "url": "https://www.tondoartstudio.com/s/Student-Registration-Form-1-1-1.pdf",
+        "retrievedAt": "2026-10-13T05:28:26Z",
+        "provenance": "public-derived",
+        "notice": "Complete factual page2 table, verified against rendered original four-page PDF; original PDF sha256 eec6450f43b9798892d77c3688dba20f3aa9f11e4da9055e9f63f6d9ae754e7a. Other publications remain separate source editions."
+      }
+    },
+    {
+      "kind": "slots",
+      "table": {
+        "columns": [
+          "id",
+          "programme_id",
+          "weekday",
+          "start",
+          "end"
+        ],
+        "rows": [
+          [
+            "tondo-3-4-weekday-4",
+            "tondo-3-4",
+            "4",
+            "16:30",
+            "17:15"
+          ],
+          [
+            "tondo-3-4-weekday-5",
+            "tondo-3-4",
+            "5",
+            "09:45",
+            "10:30"
+          ],
+          [
+            "tondo-4-6-weekday-1",
+            "tondo-4-6",
+            "1",
+            "16:15",
+            "17:15"
+          ],
+          [
+            "tondo-4-6-weekday-4",
+            "tondo-4-6",
+            "4",
+            "16:30",
+            "17:30"
+          ],
+          [
+            "tondo-7-12-weekday-1",
+            "tondo-7-12",
+            "1",
+            "17:30",
+            "19:00"
+          ],
+          [
+            "tondo-7-12-weekday-2",
+            "tondo-7-12",
+            "2",
+            "17:30",
+            "19:00"
+          ],
+          [
+            "tondo-7-12-weekday-4",
+            "tondo-7-12",
+            "4",
+            "17:30",
+            "19:00"
+          ],
+          [
+            "tondo-7-12-weekday-5",
+            "tondo-7-12",
+            "5",
+            "10:45",
+            "12:15"
+          ],
+          [
+            "tondo-10-15-weekday-0",
+            "tondo-10-15",
+            "0",
+            "17:30",
+            "19:00"
+          ],
+          [
+            "tondo-10-15-weekday-3",
+            "tondo-10-15",
+            "3",
+            "17:30",
+            "19:00"
+          ],
+          [
+            "tondo-10-15-weekday-4",
+            "tondo-10-15",
+            "4",
+            "17:30",
+            "19:00"
+          ],
+          [
+            "tondo-intensive-10-17-weekday-0",
+            "tondo-intensive-10-17",
+            "0",
+            "17:30",
+            "19:30"
+          ],
+          [
+            "tondo-intensive-10-17-weekday-3",
+            "tondo-intensive-10-17",
+            "3",
+            "17:30",
+            "19:30"
+          ],
+          [
+            "tondo-adult-18-plus-weekday-2",
+            "tondo-adult-18-plus",
+            "2",
+            "10:00",
+            "11:30"
+          ]
+        ]
+      },
+      "metadata": {
+        "label": "TONDO registration PDF2026–2027 slots",
+        "filename": "tondo-registration-pdf-2026-2027-slots.json",
+        "url": "https://www.tondoartstudio.com/s/Student-Registration-Form-1-1-1.pdf",
+        "retrievedAt": "2026-10-13T05:28:26Z",
+        "provenance": "public-derived",
+        "notice": "Complete factual page2 table, verified against rendered original four-page PDF; original PDF sha256 eec6450f43b9798892d77c3688dba20f3aa9f11e4da9055e9f63f6d9ae754e7a. Other publications remain separate source editions."
+      }
+    }
+  ]
+}
+

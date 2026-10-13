@@ -1,0 +1,121 @@
+{
+  "schema": "commons-scf-reviewer-customer-release/1",
+  "as_of": "2026-10-13T01:35:38Z",
+  "source": {
+    "repository": "woahwhattheheck/commons",
+    "commit": "b9d4636efe76311666d308dd4323210d4185bd7c",
+    "directory": "tools/scf_review_native_resume_20261012",
+    "files": 2377,
+    "bytes": 29180576,
+    "selection_sha256": "59d188a39026a5deb68379022b3600af0a8d35085cfdc8d876a1731392a8dc73",
+    "packet_index_sha256": "0df298515f1ff0449019d7693fbbfbc4ac700f8eda0d8dc4a0582c7430927ec4",
+    "part_count": 13,
+    "current_reviewer_packet_git_blob": "463f7d9afd6a871071fa1dc3818997763f9f52b9",
+    "materialization_result_sha256": "5cdf91bb93d0dbbc13dd56cf2d3202f9424b00b7f11ee219154518d2c560a135",
+    "native_import_result_sha256": "e23d2c7136e6d61f008d548144d00bc32d6da06f83deae0ba0f032c428fda2a1",
+    "native_imports": 5
+  },
+  "original_purchase": {
+    "bytes": 140587,
+    "sha256": "34979a3e06790eb4957edac734c4eea5931fead40cb77ae14d29c5c3ff8a674b",
+    "git_blob": "ab1981f497043633eceb6326d82c554265d5bf2e",
+    "new_payment_transactions": 0
+  },
+  "receiving": {
+    "run_id": "893f2ff4-9a12-4eb6-8fe2-43d57613be81",
+    "historical_run_id": "9611199b-4793-400b-a85d-f1efcc3ba1e7",
+    "historical_journals_reconstructed": false,
+    "stages": {
+      "workbench": {
+        "state": "COMPLETE",
+        "phases": 14,
+        "result": {
+          "path": "WORKBENCH-RESULT.json",
+          "bytes": 42014,
+          "sha256": "073da3b2b18fe263f4bdb33dd939783d262ba16fa9fd9ed5396e08c0bbee9c82"
+        },
+        "owned_resources_closed": true,
+        "new_payment_transactions": 0,
+        "checkpoint": {
+          "name": "SCF_Reviewer_Workbench_14_893f2ff4-9a12-4eb6-8fe2-43d57613be81.zip",
+          "bytes": 1327915,
+          "sha256": "d6d0a9e7cdc8908eab32a0ed874795cf489ae87b8d929d29981a186dce010f5e",
+          "version": 0,
+          "native_files": 96,
+          "runtime_references": 9,
+          "saved": true
+        }
+      },
+      "merchant": {
+        "state": "COMPLETE",
+        "phases": 12,
+        "result": {
+          "path": "merchant-client/MERCHANT-RESULT.json",
+          "bytes": 28347,
+          "sha256": "a7b05a8fee6ec80575c1a83d4c8c66202bce59f84457c8230bac04287ef922ad",
+          "workbench_result_sha256": "073da3b2b18fe263f4bdb33dd939783d262ba16fa9fd9ed5396e08c0bbee9c82"
+        },
+        "owned_resources_closed": true,
+        "new_payment_transactions": 0,
+        "checkpoint": {
+          "name": "SCF_Reviewer_Merchant_12_893f2ff4-9a12-4eb6-8fe2-43d57613be81.zip",
+          "bytes": 1576468,
+          "sha256": "173ce7f82292d64e8095cb9cdcf0979c860c10f75f176d4df86b6671229e46e3",
+          "native_files": 184,
+          "runtime_references": 9,
+          "saved": true
+        }
+      },
+      "console": {
+        "state": "CONTINUATION_REQUIRED",
+        "completed_phases": [
+          "configured_original_profile",
+          "native_source_and_original_intake"
+        ],
+        "active_phase": "complete_original_results",
+        "attempt_id": "b3f1eb64-3558-4ff5-83b6-98d02d8ed76f",
+        "returncode": -9,
+        "result": null,
+        "journal": {
+          "path": "customer-console/CONSOLE-STATE.json",
+          "bytes": 8399,
+          "sha256": "e54b89c6b2eda947844a37e08d87b0cf7b3bef10cfdbfe83f9eac6e0b2e148a2"
+        },
+        "carrier_closed_receipt": false,
+        "latest_finite_observation": {
+          "chunk": "6a5c75",
+          "returncode": 0,
+          "visible_node_or_chromium": false,
+          "memory_current": 8400871424,
+          "memory_max": 8589934592,
+          "oom_kill": 123
+        },
+        "completed_preceding_stages_replayed": false
+      }
+    }
+  },
+  "runtime": {
+    "node_version": "24.19.0",
+    "stellar_sdk_version": "16.3.1",
+    "x402_version": "2.28.0",
+    "binding_sha256": "0b49248abfe46d1d3bcc00b2fc015654c4b7968f7ebd8f659db12173eb62c2e2",
+    "packages": 9,
+    "credentials_included": false,
+    "runtime_bytes_in_checkpoints": false
+  },
+  "continuation": {
+    "tool": "RUN_RECOVERED_REVIEWER.py",
+    "through": "console",
+    "same_operation_required": true,
+    "completed_preceding_stages": "verify_and_reuse",
+    "final_console_result_required": true,
+    "checkpoint_relocation": "Recorded native layout only; use the original portable packet for independent workbench receiving"
+  },
+  "grant": {
+    "hours": 400,
+    "requested_usd": 38000,
+    "baseline_purchases": 18,
+    "baseline_stroops": 411000,
+    "changed": false
+  }
+}

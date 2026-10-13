@@ -15,9 +15,9 @@ export async function fundingHash(value){
 const keys=(value,expected)=>object(value)&&fundingEqual(Object.keys(value).sort(),[...expected].sort());
 const clone=value=>structuredClone(value);
 
-export function createFundingRequests({caseId,caseCreatedAt,call,memory={},available=()=>true,storage=localStorage}){
-  const scope={caseId,caseCreatedAt}, prefix=SCHEMA+':'+encodeURIComponent(caseId)+':'+encodeURIComponent(caseCreatedAt)+':';
-  memory.records ||= {};
+export function createFundingRequests({caseId,caseCreatedAt,call,memory={},available=()=>true,storage=localStorage,storageNamespace='',validateActor=()=>{}}){
+  const scope={caseId,caseCreatedAt}, prefix=(storageNamespace?storageNamespace+':':'')+SCHEMA+':'+encodeURIComponent(caseId)+':'+encodeURIComponent(caseCreatedAt)+':';
+  memory.records=Object.assign(Object.create(null),memory.records||{});
   const name=(id,kind)=>prefix+id+':'+kind;
   function read(id,kind){
     const entry=memory.records[id] ||= {};
@@ -113,6 +113,7 @@ export function createFundingRequests({caseId,caseCreatedAt,call,memory={},avail
     return (await inventory()).filter(row=>!row.closed);
   }
   async function prepare(request,reportSha256){
+    validateActor(request);
     check(available(),'Open the original selected case before preparing a save.');
     check(!(await pending()).length,'Reconcile the retained original funding request before preparing another.');
     const p={schema:SCHEMA,...scope,request:clone(request),
@@ -154,6 +155,7 @@ export function createFundingRequests({caseId,caseCreatedAt,call,memory={},avail
     check(!(await evidence(p)),'Keep the accepted original response; do not resubmit.');
     check(read(p.request.requestId,'rejected')===null,
       'This request has a definite rejection. Retain it, refresh the current source and prepare a reviewed successor.');
+    validateActor(p.request);
     retain(p.request.requestId,'request',p);
     let returned;
     try{returned=await call('/api/operations/'+caseId+'/command',clone(p.request));}
@@ -206,6 +208,7 @@ export function createFundingRequests({caseId,caseCreatedAt,call,memory={},avail
       check(!seen.has(id),'The recovery repeats an original request.');seen.add(id);
       if(row.returned!==null)await proof(row.returned,row.prepared);
       if(row.accepted!==null)await proof(row.accepted,row.prepared);
+      if(row.returned===null&&row.accepted===null)validateActor(row.prepared.request);
       check(row.returned===null||row.accepted===null||fundingEqual(row.returned,row.accepted),
         'The imported original returned and accepted results differ.');
     }

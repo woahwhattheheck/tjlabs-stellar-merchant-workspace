@@ -11,7 +11,7 @@ Usage:
   starforge buyer-task-desk --runtime SF88_DIRECTORY --state NODE_STATE \
     --inbox ORIGINAL_INBOX --tasks SAVED_TASKS --outputs COMPLETE_RESULTS \
     [--workspace ORIGINAL_OPERATOR_WORKSPACE] [--commerce ORIGINAL_COMMERCE_SESSION] [--port PORT] \
-    [--existing-task ORIGINAL_TASK --existing-output ORIGINAL_RESULTS]
+    [--existing-task ORIGINAL_TASK --existing-output ORIGINAL_RESULTS] [--delivery CUSTOMER_DELIVERY]
 
 From the Node package root, run node agents/task-desk/cli.mjs.
 From the original SF88 root, run node node/agents/task-desk/cli.mjs.
@@ -28,6 +28,7 @@ Use --port 0 (the default) to choose an available port.
 --existing-task    Optional original task directory containing task.json.
 --existing-output  Its recorded receiving destination or complete delivered packet.
                    Supply both existing-directory options together.
+--delivery   Optional separate private customer-delivery store for reviewed full packages.
 --port       Local port, 0 through 65535.
 --help       Print this help.
 
@@ -50,7 +51,7 @@ export async function main(args = process.argv.slice(2)) {
     options: {
       runtime: { type: 'string' }, state: { type: 'string' },
       inbox: { type: 'string' }, tasks: { type: 'string' },
-      outputs: { type: 'string' }, workspace: { type: 'string' }, commerce: { type: 'string' },
+      outputs: { type: 'string' }, workspace: { type: 'string' }, commerce: { type: 'string' }, delivery: { type: 'string' },
       'existing-task': { type: 'string' }, 'existing-output': { type: 'string' },
       port: { type: 'string' }, help: { type: 'boolean', short: 'h' },
     },
@@ -71,6 +72,10 @@ export async function main(args = process.argv.slice(2)) {
     const error = new Error('Supply --commerce with the original commerce session directory.');
     error.code = 'DESK_RPC_COMMERCE_REQUIRED'; throw error;
   }
+  if (values.delivery !== undefined && !values.delivery.trim()) {
+    const error = new Error('Supply --delivery with a separate private customer-delivery directory.');
+    error.code = 'DESK_DELIVERY_DIRECTORY'; throw error;
+  }
   const portText = values.port ?? '0';
   if (!/^(0|[1-9][0-9]*)$/.test(portText) || Number(portText) > 65535) {
     const error = new Error('--port must be an integer from 0 through 65535.');
@@ -85,6 +90,7 @@ export async function main(args = process.argv.slice(2)) {
     inbox, tasksDirectory: resolve(values.tasks), outputsDirectory: resolve(values.outputs),
     workspaceDirectory: values.workspace === undefined ? undefined : resolve(values.workspace),
     commerceDirectory: values.commerce === undefined ? undefined : resolve(values.commerce),
+    customerDeliveryDirectory: values.delivery === undefined ? undefined : resolve(values.delivery),
     existingTaskDirectory: values['existing-task'] === undefined ? undefined : resolve(values['existing-task']),
     existingOutputDirectory: values['existing-output'] === undefined ? undefined : resolve(values['existing-output']),
     port: Number(portText),
@@ -94,6 +100,7 @@ export async function main(args = process.argv.slice(2)) {
     url: desk.url, instanceId: desk.instanceId,
     inbox: inbox.directory, tasks: resolve(values.tasks), outputs: resolve(values.outputs),
     ...(values.commerce === undefined ? {} : { commerce: resolve(values.commerce) }),
+    ...(values.delivery === undefined ? {} : { customerDelivery: resolve(values.delivery) }),
     ...(values['existing-task'] === undefined ? {} : {
       existingTask: resolve(values['existing-task']), existingOutput: resolve(values['existing-output']),
     }),

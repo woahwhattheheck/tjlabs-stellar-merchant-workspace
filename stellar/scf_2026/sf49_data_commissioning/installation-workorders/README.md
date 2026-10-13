@@ -27,6 +27,10 @@ The maintained commercial importer remains the entry for an original customer Wo
 | GEOROBOTIX_CSAPI.md | Full GeoRobotix commissioning scope, exact selected archive/reference, operator/runtime setup, recovery and complete source/Installation handover |
 | industrial-reconciliation.json | Native historian or retained local sources → reviewed immutable editions → explicit normalization/tolerances → complete accounting, engineer decisions and editable customer receiving |
 | INDUSTRIAL_RECONCILIATION.md | Whole source/meaning intake, original Workshare phases and fee, Installation setup, operator/CLI/MCP workflow and independent complete receiving |
+| canadabuys-bidder-desk.json | Complete procurement source → reviewed capability/evidence/decision → original publication → editable independent customer receiving |
+| CANADABUYS_INSTALLATION.md | Original Workshare/source preparation, installed MCP customer, complete download/recovery and native Installation receiving |
+| canadabuys-source.mjs / canadabuys-commissioning.mjs | Complete native CanadaBuys package, selected Workshare revision and explicit phase/party/working-day mapping into the original Installation reader |
+| CANADABUYS_NATIVE_WORKSHARES.md | Native Workshare selection, complete local source preparation, existing-case save/export/receive and original owner handover |
 | supplier-catalogues.json | Complete supplier editions → selected customer import → full current recipient catalogue → customer receiving |
 | supplier-orders.json | Complete original order/profile/adapter → fulfilment and declared HTTPS → portable editable customer receiving |
 | source-inputs.py | Complete original packets and explicit effort sources → original native commissioning/packet formats |
@@ -38,6 +42,10 @@ The installed Grant Operations product exposes the same CLI as `starforge grant-
 Use the repository's maintained Linux/Node runtime. The preparation CLI uses Node's standard library; the sources command also uses Python's standard library and the original SF47 Workshare importer. These local preparation commands make no service calls. The selected customer applications retain their own native runtime/dependency requirements.
 
 ## Discover the installed customer programmes
+
+For CanadaBuys procurement commissioning, select **canadabuys-bidder-desk** and follow [CANADABUYS_INSTALLATION.md](CANADABUYS_INSTALLATION.md). It carries the complete retained source, decision and installed customer workflow into the original Workshare/Installation; its actual execution status remains in the original receiving records.
+
+For a Workshare already saved in the native CanadaBuys application, use `starforge grant-installation-workorder canadabuys` and [CANADABUYS_NATIVE_WORKSHARES.md](CANADABUYS_NATIVE_WORKSHARES.md). Its complete original package and revision, currency/cents and effort remain intact. Explicit party, phase and working-day selections feed the existing Installation source reader and complete-case receiver in the actual owner's saved case.
 
 ~~~sh
 starforge grant-installation-workorder profiles
@@ -256,3 +264,13 @@ The `template`, `revise`, `inspect` and `prepare` commands retain the complete p
 `property editor --out PRIVATE_DIRECTORY` produces the full offline editor, including the actual maintained compiler and original preparation core. It edits the whole ordered roster, opens all native/source inputs, exports every loaded file with its exact digest and reopens that complete input packet. It performs no service or native case call. The CLI and editor use the original Installation preview/save/return/import flow; 1FB3 retains the Property runtime and original paid HPD operation.
 
 Keep these complete additions with this directory: `property-inspections.json`, `property-commissioning-core.mjs`, `property-commissioning.mjs`, `property-commissioning-view.mjs` and `PROPERTY_COMMISSIONING.md`. The original `grant-operations` distribution selects this complete component and `sf47_budget_model`; its source collector carries these files and the native Workshare parser at their original relative paths.
+
+### Native CanadaBuys source in the browser desk
+
+`canadabuys package --source PRIVATE_PREPARATION --out PRIVATE_DIRECTORY/CanadaBuys_Source.zip` exports the complete verified five-file native preparation. In the existing Grant Operations case, retain that ZIP in **Prepare original source workshares**, receive its native source, review every selected Workshare edition and phase, and attach the complete set before opening the editable Installation. See [the native Workshare guide](CANADABUYS_NATIVE_WORKSHARES.md#open-the-prepared-source-in-the-existing-browser-desk) for the exact installed command and original-case flow.
+
+## Rialto customer receiving and Installation
+
+Select **rialto-customer** to connect one original paid HTTP service and useful customer request to its native commercial Workshare and Customer installation. The [complete Rialto programme](RIALTO_CUSTOMER.md) covers the actual service/request, original SF88 buyer, full private source receiving, native preview/save and independent case handover.
+
+The installed `starforge rialto-customer installation` command snapshots the complete original request and calls this directory’s maintained preparation core. It retains the exact native seed, bindings and profile, preserves all original commercial phases, funded assignments and acceptance checks, and produces the complete Installation document, preview envelope and workorder. The proposed USD 1,500 / five-working-day scope keeps its original USD 450 service, USD 650 buyer/receiving and USD 400 handover allocation; actual effort, milestones, account authority and observed acceptance remain in their original records.

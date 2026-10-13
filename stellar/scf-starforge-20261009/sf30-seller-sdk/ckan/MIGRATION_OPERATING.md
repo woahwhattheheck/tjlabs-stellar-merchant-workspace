@@ -98,6 +98,22 @@ The neighbouring **CKAN data merchant** entry keeps its original merchant
 configuration and project-alias workflow. Choose **DCAT catalog migration** for
 a document-migration workspace initialized with **starforge dcat init**.
 
+## Acquire following publisher editions
+
+The same migration section includes **Recurring catalogue sources**. Save the
+publisher's original document URL, profile, private token environment reference
+when needed, request limits and due-check interval. Acquire the current complete
+document, inspect its original HTTP history, and review its latest edition
+against an explicitly selected accepted release. Choose each accepted identity
+decision to carry forward; newly edited candidates remain explicit inputs.
+Source configuration versions, acquisition receipts and responses, reviews and
+release decisions travel together in the complete workspace.
+
+Use [Recurring catalogues](RECURRING_CATALOGS.md) for the complete source editor,
+conditional acquisition, publisher retry handling, exact baseline mapping
+selection, installed commands, agent interfaces and receiving continuation.
+The controls below continue to receive documents supplied directly as files.
+
 ## Receive the original catalogue
 
 Open **Catalogue migration → Receive an original catalogue document**.
@@ -224,7 +240,15 @@ identities.
 identifies the complete downloaded report bytes. Check downloads against the
 file hash; use the intrinsic review hash when recording a release decision.
 The browser retains original numeric values, including large integers and long
-decimals, throughout report display and typed identifier mapping.
+decimals, throughout report display and typed identifier mapping. New reviews
+identify their exact decimal comparison as **numeric_comparison: exact-decimal.v1**.
+They compare the values from the retained source and candidate independently of
+the unchanged GSA converter. If conversion rounds a decimal value, its before
+and after values appear as a field change for the original record. Existing
+saved reviews keep their original report bytes, hashes and release associations;
+prepare a new review of the same retained sources to obtain the corrected comparison.
+Catalogue, review and release lists show local dates; complete saved identities
+and downloaded files retain their exact recorded timestamps.
 
 The engine's **can_receive** result controls candidate selection. If the
 candidate needs correction, use its validation and conservation results to

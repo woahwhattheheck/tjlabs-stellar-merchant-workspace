@@ -1,0 +1,59 @@
+name: Original receivables native receiving
+
+run-name: "SCF-RECEIVABLES-NATIVE-2A51-20261012 · 94ad with maintained startup repair"
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Existing receiving operation
+        required: true
+        default: SCF-RECEIVABLES-NATIVE-2A51-20261012
+        type: choice
+        options:
+          - SCF-RECEIVABLES-NATIVE-2A51-20261012
+
+permissions:
+  contents: read
+
+concurrency:
+  group: SCF-RECEIVABLES-NATIVE-2A51-20261012
+  cancel-in-progress: false
+
+jobs:
+  original-native-receiving:
+    if: ${{ github.repository == 'woahwhattheheck/tjlabs-stellar-merchant-workspace' && github.event.repository.private == false && github.ref == 'refs/heads/main' && inputs.operation == 'SCF-RECEIVABLES-NATIVE-2A51-20261012' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Receive maintained startup repairs and resume the original MCP programme
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_RECEIVER_BLOB: 1d13d8b14c451ca8ef78f987b6ee9382e000dfce
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64, hashlib, json, os, pathlib, subprocess, sys, urllib.request
+          identity = os.environ["EXPECTED_RECEIVER_BLOB"]
+          request = urllib.request.Request(
+              "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/" + identity,
+              headers={"Accept":"application/vnd.github+json",
+                       "Authorization":"Bearer " + os.environ["GH_TOKEN"],
+                       "X-GitHub-Api-Version":"2022-11-28",
+                       "User-Agent":"scf-original-native-receiving"})
+          with urllib.request.urlopen(request, timeout=90) as response:
+              value = json.load(response)
+          if value.get("sha") != identity or value.get("encoding") != "base64":
+              raise ValueError("Original hosted receiver identity changed")
+          raw = base64.b64decode("".join(value["content"].split()), validate=True)
+          actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
+          if actual != identity:
+              raise ValueError("Original hosted receiver bytes changed")
+          parent = pathlib.Path(os.environ["RUNNER_TEMP"])
+          script = parent / ("scf-receiver-" + os.environ["GITHUB_RUN_ID"] + "-" + os.environ["GITHUB_RUN_ATTEMPT"] + ".py")
+          with script.open("xb") as handle:
+              handle.write(raw)
+          output = parent / ("scf-native-" + os.environ["GITHUB_RUN_ID"] + "-" + os.environ["GITHUB_RUN_ATTEMPT"])
+          raise SystemExit(subprocess.call([sys.executable, str(script), "--out", str(output)]))
+          PY

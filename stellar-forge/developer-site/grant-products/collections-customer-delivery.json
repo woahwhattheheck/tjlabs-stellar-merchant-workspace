@@ -1,0 +1,215 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "collections-customer-delivery",
+  "heading": "## Product selection, installation and recurring buyer work",
+  "sources": [
+    {
+      "id": "collections-customer-delivery-operating",
+      "label": "Complete customer response package and independent receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/delivery/OPERATOR.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "8fab5d59df005007c73157bf7705f5b8cac92863",
+          "git_blob": "5e6d59e150c52e95bc53d7821efa5d477a4f1a7d",
+          "bytes": 10487,
+          "sha256": "79da765a38b6c918419b5dc36766a8b18d555247a0382fdec88719de74c8b51d"
+        },
+        {
+          "commit": "b14a45d2acd498864e0df86b91a5caab844f48c2",
+          "git_blob": "7327b0f49a4bc8a48bcd654776c05abd1b3d536b",
+          "bytes": 21741,
+          "sha256": "910efb24038c520ca986c73cb8b6df06f5b4009cbc203068217a995aad4b5ace"
+        }
+      ]
+    },
+    {
+      "id": "collections-customer-delivery-package",
+      "label": "Complete original response/source package writer and receiver",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/delivery/format.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "8fab5d59df005007c73157bf7705f5b8cac92863",
+          "git_blob": "0404276c851c559096fe130e83b86bdfaa53310c",
+          "bytes": 17960,
+          "sha256": "8f9c6c9495118e50d3898c42d453661e9b47424b398415d805287c36414c12e4"
+        },
+        {
+          "commit": "b14a45d2acd498864e0df86b91a5caab844f48c2",
+          "git_blob": "04be40879618fb7d1a2b5a4f3c8eb451cdae982a",
+          "bytes": 20411,
+          "sha256": "00d65726f9ebe8cea45df50db9b6e27a8e2d6c55f3bbcdba04e014beb08a2726"
+        }
+      ]
+    },
+    {
+      "id": "collections-customer-delivery-selection",
+      "label": "Original saved output preview and fixed customer package selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/delivery/model.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "8fab5d59df005007c73157bf7705f5b8cac92863",
+          "git_blob": "4e923e690cca480eb76baecb644ab7d19919ea74",
+          "bytes": 12194,
+          "sha256": "0f5eed11a2ed3807ca7a4ef3b00b9f8d9288f75672eb466e7e15033725967025"
+        },
+        {
+          "commit": "b14a45d2acd498864e0df86b91a5caab844f48c2",
+          "git_blob": "d17b89f4c902d9d81f2ce092580ce21c9bfa6c06",
+          "bytes": 14822,
+          "sha256": "c3481a905e6bd28f623880b52dd1129638badf307a9495bc9897097aafa78696"
+        }
+      ]
+    },
+    {
+      "id": "collections-customer-delivery-receiving",
+      "label": "Original browser customer package and independent receiving course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/delivery/receiving/receive.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "8fab5d59df005007c73157bf7705f5b8cac92863",
+          "git_blob": "3d3ae7f29f8721c9625962e1371ae3530f1e4168",
+          "bytes": 16081,
+          "sha256": "88b58118f88d62c8872976313e2e563e1397e5aa8beae5ca63d7a28ab5a689b4"
+        },
+        {
+          "commit": "b14a45d2acd498864e0df86b91a5caab844f48c2",
+          "git_blob": "bfbcf317589c0afa420d291e558a9f5deb5b902f",
+          "bytes": 20943,
+          "sha256": "4a77a0bb14a16afbd81dddbab5f4fde6dc95c4587720855ae7acefdaafdd60bd"
+        }
+      ]
+    },
+    {
+      "id": "collections-customer-mcp-operating",
+      "label": "Registered MCP customer delivery, durable transport and original host operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/COLLECTION_DELIVERY.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7a2be1b40444ef7d5db31bbaf5ed62b3e045d518",
+          "git_blob": "c326a15dcf32e674b80193830364a4ac59819dfe",
+          "bytes": 15694,
+          "sha256": "a20b2267bd330e39baa0fd4552c2a55160b9269b1b0bb4bcdb2657b1fa4709b1"
+        },
+        {
+          "commit": "7d8e70f7150b23b1f33ac4c416facdc484c3d624",
+          "git_blob": "61d8e7adfed091d534eb150807db70562b3cb7a9",
+          "bytes": 31469,
+          "sha256": "7e445585cbee99c2a2610fa4365db627a513b35049ac3e9dd47ce50e993115c4"
+        }
+      ]
+    },
+    {
+      "id": "collections-customer-mcp-controller",
+      "label": "Original registered sender and recipient customer package controller",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/native-collection-delivery.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7a2be1b40444ef7d5db31bbaf5ed62b3e045d518",
+          "git_blob": "f2cb20d3d7542b5614a8824ec0c0c655bffbc3a5",
+          "bytes": 23069,
+          "sha256": "290ca1d20d8d8b89c55a91e61edfebdaf6f6669cecf111ea57a92db267199bd9"
+        },
+        {
+          "commit": "7d8e70f7150b23b1f33ac4c416facdc484c3d624",
+          "git_blob": "4978edbb21ed2e615e5778771e1defe97ef3e7aa",
+          "bytes": 30837,
+          "sha256": "3b28a21036699984398525aa029c45b23ab50268337abba711c89fbd65292a68"
+        }
+      ]
+    },
+    {
+      "id": "collections-customer-mcp-receiving",
+      "label": "Complete same-instance browser and MCP customer receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/native-collection-delivery-receiving.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7a2be1b40444ef7d5db31bbaf5ed62b3e045d518",
+          "git_blob": "7ef499a492e5cab0f14ce32cac1b8a019d936dc9",
+          "bytes": 18327,
+          "sha256": "9f3e030a480eeeee7f87336ab8d36a4442b60596ec894823348273ea42c4529a"
+        },
+        {
+          "commit": "7d8e70f7150b23b1f33ac4c416facdc484c3d624",
+          "git_blob": "4aceed26c5d2c91c5d4c541c1141114552f59c4e",
+          "bytes": 25717,
+          "sha256": "d78d4d04f64a933df34c447f9188f49879f918682f8893278599b6aea94b794c"
+        }
+      ]
+    },
+    {
+      "id": "collections-customer-installed-contribution",
+      "label": "Installed customer-delivery browser, CLI and MCP contribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/collection-customer-delivery.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7a2be1b40444ef7d5db31bbaf5ed62b3e045d518",
+          "git_blob": "dcde45110c4b6ce25b1ea40ef13f04647d5e429f",
+          "bytes": 2270,
+          "sha256": "a07544b462395bb3d8718cf53ea76ec16b4189c24bb988b25ebcb77952ec9f3f"
+        },
+        {
+          "commit": "b14a45d2acd498864e0df86b91a5caab844f48c2",
+          "git_blob": "76b04752cdb110e570a81c3262ee6bf56e650f0b",
+          "bytes": 2428,
+          "sha256": "2a3e2cc09a7136784e6fd62e1a8f9ee7de20d739862421acba4cca639576c293"
+        }
+      ]
+    },
+    {
+      "id": "collections-customer-delivery-inbox-task",
+      "label": "Complete received InboxTask selection, original attempt and settled recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/delivery/inbox-task.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b14a45d2acd498864e0df86b91a5caab844f48c2",
+          "git_blob": "8493f811b985fe0de5377703632b15b4baec9f1d",
+          "bytes": 11781,
+          "sha256": "34ef611eedb808a444325acc6c32d4199a539203c8de99ba5db1bb79cfc2673b"
+        }
+      ]
+    },
+    {
+      "id": "collections-customer-delivery-browser",
+      "label": "Saved recipient history, original task selection and full package reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/delivery/public/app.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b14a45d2acd498864e0df86b91a5caab844f48c2",
+          "git_blob": "ed74c3a3b66a5ba34eed1058e9fd9fcf13d6652f",
+          "bytes": 25307,
+          "sha256": "0eb564c03a6b962ba675bdc46fb99f544a85c000da3ea2372264df7d9117cf3f"
+        }
+      ]
+    }
+  ]
+}

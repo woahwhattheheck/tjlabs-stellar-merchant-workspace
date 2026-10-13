@@ -1,0 +1,35 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "merchant-remittances",
+  "heading": "## Merchant settlement, customer billing and accountant receiving",
+  "sources": [
+    {
+      "id": "merchant-remittance-desk",
+      "label": "Original customer remittance CSV, dated invoice allocation and complete source recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/REMITTANCES.md",
+      "commit": "4d8349987383312683eb554228f9122649233891",
+      "editions": [
+        {
+          "commit": "4d8349987383312683eb554228f9122649233891",
+          "bytes": 11189,
+          "sha256": "5464568b597fd2e25aabb3fba91cfe3dddee5f54ac2edd6168d761add52eb136"
+        }
+      ]
+    },
+    {
+      "id": "merchant-remittance-native",
+      "label": "Merchant MCP, typed remittance client, durable request recovery and original files",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/mcp-merchant-operator/ACCOUNTING_REMITTANCES.md",
+      "commit": "4d8349987383312683eb554228f9122649233891",
+      "editions": [
+        {
+          "commit": "4d8349987383312683eb554228f9122649233891",
+          "bytes": 10805,
+          "sha256": "7366be1e6f0e41e51b1b66ab057fb1d5f18f5d180f4bf94c62bfdb2d7dd9db9c"
+        }
+      ]
+    }
+  ]
+}

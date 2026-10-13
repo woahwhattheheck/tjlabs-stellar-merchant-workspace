@@ -1,4 +1,5 @@
 // MIT. Catalogue migration operator view; original values are rendered as text.
+import { renderDcatSources } from './dcat-sources.mjs';
 import { parseDcatJson, parseDcatJsonText, stringifyDcatJson, isExactCkanNumber } from './dcat-json.mjs';
 const pageSize = 25;
 const memories = new Map();
@@ -40,6 +41,13 @@ function select(name, entries, current) {
   return node;
 }
 function readable(value) { return String(value ?? '').replaceAll('_', ' ').toLowerCase(); }
+function readableTime(value) {
+  if (typeof value !== 'string' || !value) return String(value ?? '');
+  const date = new Date(value);
+  return Number.isFinite(date.valueOf())
+    ? date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+    : String(value ?? '');
+}
 function bind(control, callback) {
   control.addEventListener('input', callback);
   control.addEventListener('change', callback);
@@ -279,7 +287,7 @@ function migrationMemory(state) {
 }
 function catalogName(item) {
   return (item.label || item.id) + ' · ' + (item.profile || 'unclassified') + ' · ' +
-    (item.receivedAt ? item.receivedAt.slice(0, 19) : item.id);
+    (item.receivedAt ? readableTime(item.receivedAt) : item.id);
 }
 function findCatalog(dcat, id) { return dcat.catalogs.find(item => item.id === id); }
 function setChoice(control, memory, key) {
@@ -543,7 +551,7 @@ function releasePanel(ctx, dcat, summary, report, memory) {
   const targets = dcat.releases.filter(item => item.id !== dcat.activeReleaseId);
   if (!targets.some(item => item.id === memory.rollbackId)) memory.rollbackId = targets.at(-1)?.id ?? '';
   const rollback = setChoice(select('rollback-release', targets.map(item => [
-    item.id, (item.createdAt ?? '') + ' · ' + item.id + ' · review ' + item.reviewId
+    item.id, readableTime(item.createdAt) + ' · ' + item.id + ' · review ' + item.reviewId
   ]), memory.rollbackId), memory, 'rollbackId');
   const rollbackNote = el('textarea', { name: 'rollback-note', rows: '3', placeholder: 'Operator, release to restore, and reason' }, memory.rollbackNote);
   bind(rollbackNote, () => { memory.rollbackNote = rollbackNote.value; });
@@ -575,7 +583,7 @@ function releasePanel(ctx, dcat, summary, report, memory) {
       }, { disabled: Boolean(ctx.state.active) || targets.length === 0 })),
     card(title('Complete release history'),
       dcat.releases.length ? table(['Created', 'Release', 'Review', 'Preceding release', 'Candidate SHA-256', 'Decision'], dcat.releases.map(item => [
-        item.createdAt ?? '', item.id === dcat.activeReleaseId ? el('strong', {}, item.id + ' · active') : item.id,
+        readableTime(item.createdAt), item.id === dcat.activeReleaseId ? el('strong', {}, item.id + ' · active') : item.id,
         action(ctx, item.reviewId, async () => { memory.selectedReview = item.reviewId; await ctx.render(); }), item.previousReleaseId ?? 'Initial release', el('code', {}, item.sha256 ?? ''), item.note ?? ''
       ])) : note('The first cutover records the initial release.'),
       details('Complete saved release records', dcat.releases)));
@@ -590,10 +598,14 @@ export async function renderDcatMigration(ctx) {
     row(action(ctx, 'Refresh workspace', () => ctx.refresh()),
       action(ctx, 'Open complete workspace handover', () => ctx.openWorkspace()),
       action(ctx, 'Download operating guide', () => ctx.download('dcat/guide', 'MIGRATION_OPERATING.md'))));
+  ctx.view.append(await renderDcatSources(ctx, {
+    onReviewCreated: value => { memory.selectedReview = value; memory.filters = {}; },
+  }));
+  if (!ctx.current()) return;
   ctx.view.append(uploadPanel(ctx, memory), reviewPanel(ctx, dcat, memory));
   if (dcat.catalogs.length) ctx.view.append(card(title('Retained catalogue documents'),
     table(['Label', 'Profile', 'Original source', 'Received', 'Bytes', 'SHA-256'], dcat.catalogs.map(item => [
-      item.label || item.id, item.profile ?? '', item.origin ?? '', item.receivedAt ?? '',
+      item.label || item.id, item.profile ?? '', item.origin ?? '', readableTime(item.receivedAt),
       Number(item.bytes).toLocaleString(), el('code', {}, item.sha256)
     ]))));
   if (!dcat.reviews.length) {
@@ -608,7 +620,7 @@ export async function renderDcatMigration(ctx) {
   }
   if (!dcat.reviews.some(item => item.id === memory.selectedReview)) memory.selectedReview = dcat.reviews.at(-1).id;
   const chooseReview = select('saved-review', dcat.reviews.map(item => [
-    item.id, (item.label || item.id) + ' · ' + (item.status || 'saved') + ' · ' + (item.createdAt ?? '').slice(0, 19)
+    item.id, (item.label || item.id) + ' · ' + (item.status || 'saved') + ' · ' + readableTime(item.createdAt)
   ]), memory.selectedReview);
   chooseReview.addEventListener('change', () => ctx.protect(async () => {
     memory.selectedReview = chooseReview.value; memory.filters = {}; await ctx.render();

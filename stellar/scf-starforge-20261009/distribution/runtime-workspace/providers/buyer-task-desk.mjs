@@ -1,6 +1,7 @@
 // MIT. InboxTask desk in the original installed Applications lifecycle.
 import { join, relative, isAbsolute, sep } from 'node:path';
 import { inspectMerchantRuntime } from '../../../sf46-release/runtime-package.mjs';
+import { validateCustomerDirectory } from '../../../sf88-operator-buyer-cli/node/agents/task-desk/customer-delivery.mjs';
 import { Buyer } from '../../../sf88-operator-buyer-cli/node/client.mjs';
 import { selectRetainedTask, validateRetainedTaskStorage } from '../../../sf88-operator-buyer-cli/node/agents/task-desk/retained-task.mjs';
 import {
@@ -55,6 +56,8 @@ export function taskDeskApplication(common = []) {
         'The exact destination recorded by that task, or its complete delivered packet. A moved complete packet opens for reading and download.'),
       field('commerceDirectory', 'Original RPC commerce session', false,
         'Optional existing commerce session for listing and selecting its saved RPC read editions. It must contain the selected original Inbox.'),
+      field('customerDeliveryDirectory', 'Reviewed customer deliveries', false,
+        'Optional separate private store for complete task deliveries, their original review and replay. Keep this root when reopening delivery history.'),
       field('workspaceDirectory', 'Original operator workspace', false,
         'Optional original native operator workspace used by explicit execution.'),
       ...common,
@@ -126,6 +129,12 @@ export async function prepareTaskDeskApplication(settings, { inputPath, runtimeD
     }
   }
 
+  const customerDeliveryDirectory = settings.customerDeliveryDirectory === undefined
+    ? undefined : await directory('customerDeliveryDirectory', { missing: true });
+  if (customerDeliveryDirectory !== undefined) validateCustomerDirectory(customerDeliveryDirectory,
+    [tasksDirectory, outputsDirectory, inboxDirectory, workspaceDirectory, commerceDirectory,
+      retainedTask?.taskDirectory, retainedTask?.outputDirectory]);
+
   // The original runtime remains a separate operator-selected root. These are
   // the native entries consumed by the existing buyer and Inbox commands.
   for (const name of ['cli.mjs', 'queue-cli.mjs', 'request-body.mjs', 'workspace.mjs'])
@@ -133,26 +142,28 @@ export async function prepareTaskDeskApplication(settings, { inputPath, runtimeD
 
   // The managed release supplies this desk's code and all of its served assets.
   const runtime = await inspectMerchantRuntime(absolute(runtimeDirectory), { load: false, source: false });
-  for (const name of ['cli.mjs', 'server.mjs', 'retained-task.mjs', 'client.mjs', 'browser-assets.json',
-    'public/index.html', 'public/app.mjs', 'public/style.css'])
+  for (const name of ['cli.mjs', 'server.mjs', 'retained-task.mjs', 'customer-delivery.mjs', 'client.mjs', 'browser-assets.json',
+    'public/index.html', 'public/app.mjs', 'public/customer-delivery.mjs', 'public/style.css'])
     inputs.push(await inputPath(join(runtime.sourceRoot, DESK, name), 'file'));
 
   const args = ['--runtime', nativeRuntimeDirectory, '--state', stateDirectory,
     '--inbox', inboxDirectory, '--tasks', tasksDirectory, '--outputs', outputsDirectory];
   if (workspaceDirectory !== undefined) args.push('--workspace', workspaceDirectory);
   if (commerceDirectory !== undefined) args.push('--commerce', commerceDirectory);
+  if (customerDeliveryDirectory !== undefined) args.push('--delivery', customerDeliveryDirectory);
   if (retainedTask) args.push('--existing-task', retainedTask.taskDirectory,
     '--existing-output', retainedTask.outputDirectory);
   const resourceKey = resource(tasksDirectory);
   return { args, inputs, createDirectories, resourceKey,
     resourceKeys: [...new Set([resourceKey, resource(outputsDirectory),
+      ...(customerDeliveryDirectory ? [resource(customerDeliveryDirectory)] : []),
       ...(retainedTask ? [resource(retainedTask.taskDirectory), resource(retainedTask.outputDirectory)] : [])])].sort() };
 }
 
 function launchSelection(request) {
   need(request?.command === COMMAND && !request.pythonCommand && Array.isArray(request.args),
     'APPLICATION_TASK_DESK_STARTUP_CHANGED');
-  const allowed = new Set(['--runtime', '--state', '--inbox', '--tasks', '--outputs', '--workspace', '--commerce', '--port',
+  const allowed = new Set(['--runtime', '--state', '--inbox', '--tasks', '--outputs', '--workspace', '--commerce', '--delivery', '--port',
     '--existing-task', '--existing-output']);
   const values = new Map();
   need(request.args.length % 2 === 0, 'APPLICATION_TASK_DESK_STARTUP_CHANGED');
@@ -169,6 +180,7 @@ function launchSelection(request) {
   ]) selected[name] = absolute(values.get(flag));
   if (values.has('--workspace')) selected.workspaceDirectory = absolute(values.get('--workspace'));
   if (values.has('--commerce')) selected.commerceDirectory = absolute(values.get('--commerce'));
+  if (values.has('--delivery')) selected.customerDeliveryDirectory = absolute(values.get('--delivery'));
   need(values.has('--existing-task') === values.has('--existing-output'), 'APPLICATION_TASK_DESK_STARTUP_CHANGED');
   if (values.has('--existing-task')) {
     selected.existingTaskDirectory = absolute(values.get('--existing-task'));
@@ -210,6 +222,7 @@ export async function taskDeskStartup(request, announcement, context = {}) {
     announcement.inbox === selected.inboxDirectory &&
     announcement.tasks === selected.tasksDirectory && announcement.outputs === selected.outputsDirectory &&
     announcement.commerce === selected.commerceDirectory &&
+    announcement.customerDelivery === selected.customerDeliveryDirectory &&
     announcement.existingTask === selected.existingTaskDirectory &&
     announcement.existingOutput === selected.existingOutputDirectory,
   'APPLICATION_TASK_DESK_STARTUP_CHANGED', 'The task desk announcement differs from the saved application roots.');
@@ -226,6 +239,7 @@ export async function taskDeskStartup(request, announcement, context = {}) {
     status.roots?.inbox === selected.inboxDirectory &&
     status.roots?.tasks === selected.tasksDirectory && status.roots?.outputs === selected.outputsDirectory &&
     status.roots?.commerce === selected.commerceDirectory &&
+    status.roots?.customerDelivery === selected.customerDeliveryDirectory &&
     status.roots?.existingTask === selected.existingTaskDirectory &&
     status.roots?.existingOutput === selected.existingOutputDirectory &&
     typeof status.csrfToken === 'string' && status.csrfToken.length > 0,

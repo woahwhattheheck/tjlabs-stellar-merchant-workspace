@@ -15,6 +15,59 @@ def require(value, message):
 
 def digest(raw): return hashlib.sha256(raw).hexdigest()
 
+
+def retain_original_file(target, data):
+    """Atomically retain this original complete member, recovering its exact prefix."""
+    target = Path(target)
+    target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    previous = None
+    if target.exists() or target.is_symlink():
+        require(target.is_file() and not target.is_symlink(), "Use the original regular receiving member")
+        previous = target.stat()
+        actual = target.read_bytes()
+        if actual == data:
+            target.chmod(0o600)
+            with target.open("rb") as existing:
+                os.fsync(existing.fileno())
+            fd = os.open(target.parent, os.O_RDONLY)
+            try:
+                os.fsync(fd)
+            finally:
+                os.close(fd)
+            return
+        require(len(actual) < len(data) and data.startswith(actual),
+                "A different original receiving member already exists")
+    temporary = target.with_name("." + target.name + "." + os.urandom(12).hex() + ".receiving")
+    try:
+        with temporary.open("xb") as stream:
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary.chmod(0o600)
+        if previous is None:
+            try:
+                os.link(temporary, target)
+            except FileExistsError:
+                require(target.is_file() and not target.is_symlink() and target.read_bytes() == data,
+                        "The original receiving member changed during publication")
+        else:
+            current = target.stat()
+            require(not target.is_symlink()
+                    and (current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns)
+                    == (previous.st_dev, previous.st_ino, previous.st_size, previous.st_mtime_ns),
+                    "The partial original receiving member changed during recovery")
+            os.replace(temporary, target)
+        fd = os.open(target.parent, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
+
 def run(args):
     os.umask(0o077)
     root = Path(args.directory).absolute()
@@ -30,9 +83,7 @@ def run(args):
             target = original / path
             target.parent.mkdir(parents=True, exist_ok=True)
             data = source.read(item)
-            if target.exists(): require(target.read_bytes() == data, "Original received file changed")
-            else: target.write_bytes(data)
-            target.chmod(0o600)
+            retain_original_file(target, data)
     old = json.loads((original / "receiving.json").read_text())
     require(old["state"] == "COMPLETE" and old["steps"]["edition"]["rows"] == 32,
             "Use the completed original C271 source delivery")
@@ -58,6 +109,8 @@ def run(args):
     from stellar_forge_buyer.storage import dump, parse, write
     for path in (Path(args.package) / "stellar_forge_buyer" / "duckdb_analytics").rglob("*.py"):
         ast.parse(path.read_bytes(), filename=str(path))
+    record["state"] = "RUNNING"
+    record.pop("completed_at", None)
     keep("source_runtime", {"python": sys.version.split()[0], "source_commit": args.source_commit, "python_parse": "passed"})
     working = root / "warehouse"
     working.mkdir(exist_ok=True)
@@ -68,11 +121,22 @@ def run(args):
     descriptor = next(row for row in old["steps"]["portable_receiving"]["files"] if row["name"] == "warehouse.duckdb")
     require(snapshot.stat().st_size == descriptor["bytes"] and digest(snapshot.read_bytes()) == descriptor["sha256"],
             "Original portable database changed")
-    if not (working / "warehouse.duckdb").exists():
-        shutil.copyfile(snapshot, working / "warehouse.duckdb")
-        (working / "warehouse.duckdb").chmod(0o600)
+    warehouse_file = working / "warehouse.duckdb"
+    copy_pending = not any(name != "source_runtime" for name in record["steps"])
+    if not warehouse_file.exists():
+        retain_original_file(warehouse_file, snapshot.read_bytes())
+    elif copy_pending and warehouse_file.is_file() and not warehouse_file.is_symlink():
+        # The old caller could stop during its first direct copy, before any
+        # workspace/native step. Repair only a shorter exact source prefix in
+        # that phase. An existing operated database remains its own live state.
+        if warehouse_file.stat().st_size < descriptor["bytes"]:
+            prefix, source_bytes = warehouse_file.read_bytes(), snapshot.read_bytes()
+            if source_bytes.startswith(prefix):
+                retain_original_file(warehouse_file, source_bytes)
     workspace = DuckDBWorkspace(working, memory_limit="256MB", threads=1)
     require(workspace.identity()["workspace_id"] == old["workspace_id"], "Original workspace identity changed")
+    keep("workspace_opened", {"workspace_id": old["workspace_id"], "original_source": descriptor,
+                             "directory": str(working)})
     model = Analytics(workspace)
     server, control, launch = serve(workspace, export_root=root / "exports", handoff_root=root / "handoffs")
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -270,20 +334,21 @@ def run(args):
         exported = request("/api/analytics/exports", export_body)
         require(request("/api/analytics/exports", export_body) == exported, "Original complete export did not resume identically")
         inspected = inspect_package(exported["directory"], expected_manifest_sha256=exported["manifest_sha256"])
-        received_files = root / "downloaded-package"
+        received_files = root / ("downloaded-original-package" if args.node_helper else "downloaded-package")
         received_files.mkdir(exist_ok=True)
         for item in exported["files"]:
             if item["name"] not in {"analytical-workbook.zip", "report.html", "manifest.json"}: continue
             body = request("/api/exports/" + exported["export_id"] + "/file?name=" + quote(item["name"], safe=""), binary=True)
             require(len(body) == item["bytes"] and digest(body) == item["sha256"], "Original HTTP file changed")
-            destination = received_files / item["name"];destination.write_bytes(body);destination.chmod(0o600)
+            destination = received_files / item["name"]
+            retain_original_file(destination, body)
         html = (received_files / "report.html").read_text()
         require("<svg" in html and "&lt; &amp; &gt;" in html, "Original rendered chart/editorial receiving changed")
         keep("complete_export", {"export": exported, "files": len(inspected["files"]), "downloaded": [
             {"name": p.name, "bytes": p.stat().st_size, "sha256": digest(p.read_bytes())} for p in sorted(received_files.iterdir())]})
         if args.node_helper:
             node_input = root / "node-input.json"
-            node_input.write_text(json.dumps({"source_root": args.source_root, "workspace": str(working),
+            node_input.write_text(json.dumps({"operation_id": OPERATION, "source_root": args.source_root, "workspace": str(working),
                 "native_root": str(root / "native-agent"), "workspace_id": workspace_id, "launch": launch,
                 "original_edition": original_edition["edition_id"], "analysis": saved["id"], "result": result["result_id"],
                 "workbook": workbook2["id"], "report": report["report_id"], "export": exported,
@@ -293,30 +358,81 @@ def run(args):
                 env={**os.environ, "TMPDIR": str(root)})
             (root / "node-receiving.stdout").write_text(completed.stdout)
             (root / "node-receiving.stderr").write_text(completed.stderr)
+            if completed.returncode != 0:
+                print(json.dumps({"step": "browser_receiving_error", "returncode": completed.returncode,
+                                  "stderr": completed.stderr, "stdout": completed.stdout}), flush=True)
             require(completed.returncode == 0, "Original browser/MCP receiving needs its retained native error")
-            keep("browser_and_agent", json.loads((root / "node-receiving.json").read_text()))
+            browser_and_agent = json.loads((root / "node-receiving.json").read_text())
+            keep("browser_and_agent", browser_and_agent)
+            browser_receiving = browser_and_agent["steps"]["browser_workspace"]
+            require(browser_receiving["state"] == "COMPLETE"
+                    and browser_receiving["input"]["workspace_id"] == workspace_id
+                    and browser_receiving["input"]["report_id"] == report["report_id"],
+                    "Continue the original browser workspace and pinned report")
+            browser_export = browser_receiving["export"]
+            selected_export = request("/api/exports/" + quote(browser_export["export_id"], safe=""))
+            require(selected_export["workspace_id"] == workspace_id
+                    and selected_export["report_id"] == report["report_id"]
+                    and selected_export["state"] == "COMPLETE"
+                    and selected_export["manifest_sha256"] == browser_export["manifest_sha256"]
+                    and selected_export["archive"]["sha256"] == browser_export["archive"]["sha256"]
+                    and selected_export["archive"]["bytes"] == browser_export["archive"]["bytes"]
+                    and all(selected_export["browser_workspace"].get(key) == browser_receiving["browser"].get(key)
+                            for key in ("id", "revision", "state_sha256")),
+                    "The selected complete edited-workbook export changed")
+            browser_archive = root / "browser-workspace-receiving" / browser_receiving["files"]["portable_export"]["name"]
+            browser_bytes = browser_archive.read_bytes()
+            require(len(browser_bytes) == selected_export["archive"]["bytes"]
+                    and digest(browser_bytes) == selected_export["archive"]["sha256"],
+                    "The original complete edited-workbook download changed")
+            received_files = root / "downloaded-edited-package"
+            received_files.mkdir(exist_ok=True)
+            for item in selected_export["files"]:
+                if item["name"] not in {"analytical-workbook.zip", "report.html", "manifest.json"}:
+                    continue
+                body = browser_bytes if item["name"] == "analytical-workbook.zip" else request(
+                    "/api/exports/" + selected_export["export_id"] + "/file?name=" + quote(item["name"], safe=""),
+                    binary=True)
+                require(len(body) == item["bytes"] and digest(body) == item["sha256"],
+                        "The complete received edited-workbook file changed")
+                destination = received_files / item["name"]
+                retain_original_file(destination, body)
+            inspected = inspect_package(selected_export["directory"],
+                                        expected_manifest_sha256=selected_export["manifest_sha256"])
+            exported = selected_export
+            keep("complete_edited_export", {"export": exported, "files": len(inspected["files"]),
+                "browser_workspace": exported["browser_workspace"], "downloaded": [
+                    {"name": path.name, "bytes": path.stat().st_size, "sha256": digest(path.read_bytes())}
+                    for path in sorted(received_files.iterdir())]})
     finally:
         server.shutdown(); server.server_close(); thread.join(); workspace.close()
     if not closed.exists(): working.rename(closed)
-    extracted = root / "independent-package"
+    browser_selection = exported.get("browser_workspace")
+    receiving_prefix = "edited-" if browser_selection is not None else ""
+    extracted = root / (receiving_prefix + "independent-package")
     with zipfile.ZipFile(received_files / "analytical-workbook.zip") as archive:
         for item in archive.infolist():
             name = Path(item.filename)
             require(not name.is_absolute() and ".." not in name.parts and not item.is_dir(), "Package member changed")
-            path = extracted / name;path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(archive.read(item));path.chmod(0o600)
-    cold = root / "independent-workspace"
+            path = extracted / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            body = archive.read(item)
+            retain_original_file(path, body)
+    cold = root / (receiving_prefix + "independent-workspace")
     receipt = receive_package(extracted, cold, expected_manifest_sha256=exported["manifest_sha256"],
                               expected_workspace_id=workspace_id)
     repeated = receive_package(extracted, cold, expected_manifest_sha256=exported["manifest_sha256"],
                                expected_workspace_id=workspace_id)
     require(repeated["reused"] and receipt["reopened"] == repeated["reopened"], "Original receiving did not reopen identically")
+    if exported.get("browser_workspace") is not None:
+        require(receipt["reopened"].get("browser_workspace") == exported["browser_workspace"],
+                "The independent received browser revision changed")
     cli_env = {**os.environ, "PYTHONPATH": str(extracted / "application") + os.pathsep + os.pathsep.join(sys.path)}
     completed = subprocess.run([sys.executable, "-B", "-m", "stellar_forge_buyer.duckdb_cli", "--workspace", str(cold),
                                "analytics", "record", "reports", report["report_id"]],
                               env=cli_env, capture_output=True, text=True, timeout=120)
-    (root / "cold-cli.stdout").write_text(completed.stdout)
-    (root / "cold-cli.stderr").write_text(completed.stderr)
+    (root / (receiving_prefix + "cold-cli.stdout")).write_text(completed.stdout)
+    (root / (receiving_prefix + "cold-cli.stderr")).write_text(completed.stderr)
     require(completed.returncode == 0 and json.loads(completed.stdout)["report_id"] == report["report_id"],
             "Packaged application CLI did not reopen the retained report")
     with DuckDBWorkspace(cold, memory_limit="256MB", threads=1) as independent:
@@ -326,8 +442,11 @@ def run(args):
                    for key in original_report["sources"]]
         require(all(row["matched"] for row in checked), "Independent full-result fingerprint changed")
         dictionaries = {identity: digest(independent.semantics_bytes(identity)) for identity in original_report["source_editions"]}
-        keep("independent_receiving", {"receipt": receipt, "reused": repeated["reused"],
-            "full_results": checked, "original_dictionaries": dictionaries, "packaged_cli": "passed"})
+        keep("edited_independent_receiving" if browser_selection is not None else "independent_receiving", {
+            "receipt": receipt, "reused": repeated["reused"],
+            "package": str(extracted), "workspace": str(cold),
+            "full_results": checked, "original_dictionaries": dictionaries, "packaged_cli": "passed",
+            "browser_workspace": receipt["reopened"].get("browser_workspace")})
     record["state"] = "COMPLETE"
     record["completed_at"] = datetime.now(timezone.utc).isoformat()
     dump(record_path, record)

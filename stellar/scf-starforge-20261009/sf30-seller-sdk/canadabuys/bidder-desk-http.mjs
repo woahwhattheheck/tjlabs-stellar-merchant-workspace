@@ -11,6 +11,7 @@ export async function routeBidderDesk({workspace,request,response,url,requestJSO
  const query=url.searchParams;
  const read=()=>requestJSON(request,maxRequestBytes);
  if(method==='GET'&&segments.length===1&&segments[0]==='status'){sendJSON(response,200,desk.status());return true;}
+ if(method==='POST'&&segments.length===1&&segments[0]==='evidence-intake'){sendJSON(response,200,desk.intakeEvidence(await read()));return true;}
  if(method==='POST'&&segments.length===1&&segments[0]==='assess'){sendJSON(response,200,desk.assess(await read()));return true;}
  if(method==='POST'&&segments.length===1&&segments[0]==='fit'){
   const body=await read();sendJSON(response,200,desk.fit(body.profileId,body));return true;

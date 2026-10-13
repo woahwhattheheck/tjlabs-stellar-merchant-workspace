@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "document-merchant",
-  "description": "Install a complete document merchant with CSV/JSON and template preparation, source-native MintPDF, snaplab or PDFMint rendering, full-file customer input, provider usage and original paid Jobs delivery.",
+  "description": "Install a complete document merchant and customer browser: CSV/JSON datasets, document templates, original native prices, MintPDF/snaplab/PDFMint rendering, complete PDF/source receiving and portable Collections. Ordered PDF assembly preserves complete sources and delivers all received volumes in one customer archive.",
   "components": [
     "products/document-merchant"
   ],
@@ -30,13 +30,25 @@
     "products/document-merchant/examples/batch/invoice.html",
     "products/document-merchant/examples/batch/greeting.html",
     "products/document-merchant/examples/batch/order.json",
-    "products/document-merchant/examples/batch/customer-options.json"
+    "products/document-merchant/examples/batch/customer-options.json",
+    "products/document-merchant/composition-browser-assets.json",
+    "products/document-merchant/composition-workspace.d.mts",
+    "products/document-merchant/composition-server.d.mts",
+    "products/document-merchant/composition-service.d.mts",
+    "products/document-merchant/GRANT.md",
+    "products/document-merchant/ASSEMBLY.md",
+    "products/document-merchant/assembly.d.mts",
+    "products/document-merchant/examples/ordered-pdfs.json",
+    "products/document-merchant/COMMISSIONING.md",
+    "products/document-merchant/commissioning.d.mts",
+    "products/document-merchant/commissioning-application.d.mts",
+    "products/document-merchant/assembly-workspace.d.mts"
   ],
   "commands": {
     "document-merchant": "products/document-merchant/cli.mjs"
   },
   "commandDescriptions": {
-    "document-merchant": "Prepare a CSV/JSON document set, review its original batch prices, fulfill and receive complete PDF/source delivery, and operate the same saved merchant through Applications or CLI."
+    "document-merchant": "Prepare and operate document merchants; use the installed customer browser or CLI to compose complete data and templates, review original native prices, render, receive and export full documents."
   },
   "exports": {
     "./document-merchant": {
@@ -52,9 +64,46 @@
       "types": "./source/products/document-merchant/composition.d.mts",
       "import": "./source/products/document-merchant/composition.mjs"
     },
-    "./document-merchant/composition/cli": "./source/products/document-merchant/composition-cli.mjs"
+    "./document-merchant/composition/cli": "./source/products/document-merchant/composition-cli.mjs",
+    "./document-merchant/composition/workspace": {
+      "types": "./source/products/document-merchant/composition-workspace.d.mts",
+      "import": "./source/products/document-merchant/composition-workspace.mjs"
+    },
+    "./document-merchant/composition/server": {
+      "types": "./source/products/document-merchant/composition-server.d.mts",
+      "import": "./source/products/document-merchant/composition-server.mjs"
+    },
+    "./document-merchant/composition/service": {
+      "types": "./source/products/document-merchant/composition-service.d.mts",
+      "import": "./source/products/document-merchant/composition-service.mjs"
+    },
+    "./document-merchant/assembly": {
+      "types": "./source/products/document-merchant/assembly.d.mts",
+      "import": "./source/products/document-merchant/assembly.mjs"
+    },
+    "./document-merchant/assembly/cli": "./source/products/document-merchant/assembly-cli.mjs",
+    "./document-merchant/commissioning": {
+      "types": "./source/products/document-merchant/commissioning.d.mts",
+      "import": "./source/products/document-merchant/commissioning.mjs"
+    },
+    "./document-merchant/commissioning/cli": "./source/products/document-merchant/commissioning-cli.mjs",
+    "./document-merchant/commissioning/application": {
+      "types": "./source/products/document-merchant/commissioning-application.d.mts",
+      "import": "./source/products/document-merchant/commissioning-application.mjs"
+    },
+    "./document-merchant/assembly/workspace": {
+      "types": "./source/products/document-merchant/assembly-workspace.d.mts",
+      "import": "./source/products/document-merchant/assembly-workspace.mjs"
+    }
   },
   "applicationProviders": {
-    "document-merchant": "products/document-merchant/application-provider.mjs"
-  }
+    "document-merchant": "products/document-merchant/application-provider.mjs",
+    "document-composition": "products/document-merchant/composition-application-provider.mjs"
+  },
+  "browserAssets": [
+    {
+      "server": "products/document-merchant/composition-server.mjs",
+      "manifest": "products/document-merchant/composition-browser-assets.json"
+    }
+  ]
 }

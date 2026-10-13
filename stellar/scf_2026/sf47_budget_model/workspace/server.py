@@ -23,6 +23,9 @@ from model import Workspace, Problem, HERE, SOURCE_URL, canonical, csv_bytes, MA
 
 STATIC = {"/": ("index.html", "text/html; charset=utf-8"),
           "/app.mjs": ("app.mjs", "text/javascript; charset=utf-8"),
+          "/case-planning.mjs": ("case-planning.mjs", "text/javascript; charset=utf-8"),
+          "/case-planning.css": ("case-planning.css", "text/css; charset=utf-8"),
+          "/case-planning-guide.md": ("CASE_PLANNING.md", "text/markdown; charset=utf-8"),
           "/style.css": ("style.css", "text/css; charset=utf-8")}
 VERSION = "1.0.0"
 
@@ -61,14 +64,24 @@ class Server(ThreadingHTTPServer):
     block_on_close = True
     allow_reuse_address = True
 
-    def __init__(self, port, workspace, token):
+    def __init__(self, port, workspace, token, *, on_created=None):
         self.workspace, self.token = workspace, token
         self.staff = StaffAccess(workspace, token)
-        super().__init__(("127.0.0.1", port), Handler)
-        authority = "127.0.0.1" if self.server_port == 80 else f"127.0.0.1:{self.server_port}"
-        self.origin = "http://" + authority
-        self.allowed_hosts = {authority, f"127.0.0.1:{self.server_port}"}
-        self.allowed_origins = {self.origin, f"http://127.0.0.1:{self.server_port}"}
+        super().__init__(("127.0.0.1", port), Handler, bind_and_activate=False)
+        try:
+            # The original socket exists before binding; an owned receiving
+            # caller can retain it even when bind or activation fails.
+            if on_created is not None:
+                on_created(self)
+            self.server_bind()
+            self.server_activate()
+            authority = "127.0.0.1" if self.server_port == 80 else f"127.0.0.1:{self.server_port}"
+            self.origin = "http://" + authority
+            self.allowed_hosts = {authority, f"127.0.0.1:{self.server_port}"}
+            self.allowed_origins = {self.origin, f"http://127.0.0.1:{self.server_port}"}
+        except BaseException:
+            self.server_close()
+            raise
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -211,16 +224,17 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(200, {"revisions": workspace.history(pid)})
         if action and action.startswith("revision/"):
             return self.send(200, workspace.read(pid, int(action.split("/")[1])))
-        if action == "export.zip":
+        revision = None
+        if action in {"export.zip", "scenario.json", "daily.csv", "costs.csv"}:
             selected = parse_qs(parsed.query, keep_blank_values=True)
-            revision = None
             if selected:
                 values = selected.get("revision", [])
                 if set(selected) != {"revision"} or len(values) != 1 or not re.fullmatch(r"[1-9][0-9]{0,8}", values[0]):
-                    raise Problem("Select one positive saved revision for the original planning ZIP.", 422, "INVALID_REVISION")
+                    raise Problem("Select one positive saved revision for the original planning export.", 422, "INVALID_REVISION")
                 revision = int(values[0])
+        if action == "export.zip":
             return self.send(200, workspace.export(pid, revision), "application/zip", "sf47-planning-workspace.zip")
-        current = workspace.read(pid)
+        current = workspace.read(pid, revision)
         if action == "scenario.json":
             return self.send(200, json.dumps(current["scenario"], ensure_ascii=False, indent=2) + "\n",
                              "application/json; charset=utf-8", "sf47-scenario.json")
@@ -295,8 +309,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send(200, result)
 
 
-def create_server(workspace_path, source_path=None, port=0, access_file=None):
-    workspace = Workspace(workspace_path, source_path or HERE.parent / "sf10_current_candidate.json")
+def create_server(workspace_path, source_path=None, port=0, access_file=None, *, on_workspace=None, on_created=None):
+    workspace = Workspace(workspace_path, source_path or HERE.parent / "sf10_current_candidate.json",
+                          on_created=on_workspace)
     server = None
     try:
         token_path = workspace.root / "access.key"
@@ -307,7 +322,7 @@ def create_server(workspace_path, source_path=None, port=0, access_file=None):
         else:
             token = secrets.token_urlsafe(32)
             atomic_private(token_path, (token + "\n").encode())
-        server = Server(port, workspace, token)
+        server = Server(port, workspace, token, on_created=on_created)
         link = server.origin + "/#access=" + token
         access_path = Path(access_file).expanduser().resolve() if access_file else workspace.root / "open-workspace.html"
         page = ('<!doctype html><html lang="en"><meta charset="utf-8"><title>Open SF47 planning</title>'

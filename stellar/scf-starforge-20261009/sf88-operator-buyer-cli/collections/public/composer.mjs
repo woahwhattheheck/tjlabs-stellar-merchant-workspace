@@ -1,10 +1,46 @@
+import { createPlanSharingPanel } from '/plan-sharing.mjs';
+import { createPlanInputsPanel } from '/plan-inputs.mjs';
 export function createCollectionComposerPanel({ host, api, onCreated = async () => {}, onBusy = () => {} }) {
   const schema = 'stellar-forge.sf88.collection-plan.v1';
   const state = { connected: false, visible: false, blocked: false, busy: false, epoch: 0,
     workspace: null, attempted: false, plans: [], editions: [], draft: null, saved: null,
     dirty: false, tab: 'plan', requestIndex: 0, requestQuery: '', libraryQuery: '',
     catalogs: new Map(), headerTexts: new Map(), edition: null, period: null, referenceEdited: false };
-  let shell, notice, body, statusLabel, saveButton;
+  let shell, notice, body, statusLabel, saveButton, sharingReturnTab = 'plan', inputReturnTab = 'plan', inputRequest = null;
+  const inputs = createPlanInputsPanel({ api, run, say,
+    navigate(target) {
+      if (target === 'inputs') { if (state.tab !== 'inputs') inputReturnTab = state.tab; state.tab = 'inputs'; }
+      else state.tab = inputReturnTab;
+      render();
+    },
+    onSelected(input, catalog) {
+      const request = inputRequest;
+      if (!request || !state.draft?.requests.includes(request)) throw new Error('Open the original request before choosing an input file.');
+      if (input.kind === 'catalog') {
+        request.discoveryFile = input.path; request.rowIndex = -1; request.acceptIndex = -1; request.url = '';
+        state.catalogs.set(request, catalog);
+      } else request.bodyFile = input.path;
+      state.tab = 'plan'; inputRequest = null; dirty(); render();
+      say(input.kind === 'catalog' ? 'Catalog chosen. Select an actual saved offer and its advertised terms.' : 'Request body chosen. Save a plan revision to retain this choice.');
+      focusMain('.composer-request-editor');
+    },
+  });
+  function chooseInput(request, kind) { inputRequest = request; void inputs.show({ kind, select: true }); }
+
+  const sharing = createPlanSharingPanel({ api, run, say,
+    navigate(target) {
+      if (target === 'sharing') { if (state.tab !== 'sharing') sharingReturnTab = state.tab; state.tab = 'sharing'; }
+      else state.tab = sharingReturnTab;
+      render();
+    },
+    onAdopted(saved) {
+      clearPlan(); state.saved = saved; state.draft = clone(saved.plan); state.referenceEdited = true;
+      state.plans = [{ ...saved, name: saved.plan.name, description: saved.plan.description ?? '',
+        requestCount: saved.plan.requests.length, parameters: saved.plan.parameters },
+        ...state.plans.filter(item => item.id !== saved.id || item.planSha256 !== saved.planSha256)];
+      sharing.reset(); render();
+    },
+  });
   const el = (tag, text, className) => {
     const result = document.createElement(tag);
     if (text !== undefined && text !== null) result.textContent = String(text);
@@ -117,6 +153,7 @@ export function createCollectionComposerPanel({ host, api, onCreated = async () 
   }
   function dirty() { state.dirty = true; sync(); }
   function clearPlan() {
+    inputRequest = null;
     state.draft = null; state.saved = null; state.dirty = false; state.edition = null; state.period = null;
     state.catalogs.clear(); state.headerTexts.clear(); state.requestIndex = 0; state.requestQuery = ''; state.tab = 'plan';
   }
@@ -199,6 +236,8 @@ export function createCollectionComposerPanel({ host, api, onCreated = async () 
     });
     plan.requests = plan.requests.map((request, index) => {
       const original = state.draft.requests[index];
+      if (request.rowIndex < 0 || request.acceptIndex < 0)
+        throw new Error('Choose a saved offer and its advertised payment terms for ' + (request.name || 'request ' + (index + 1)) + '.');
       const text = state.headerTexts.get(original);
       if (text !== undefined) {
         let headers;
@@ -386,7 +425,8 @@ export function createCollectionComposerPanel({ host, api, onCreated = async () 
       field('Saved catalog file', request.discoveryFile, value => {
         request.discoveryFile = value; invalidateCatalog(request); dirty();
       }, { required: true, placeholder: '/absolute/path/catalog.json',
-        help: 'Use an existing saved catalog. Period parameters may select a different file for each edition.' }).wrap,
+        help: 'Choose or upload a saved catalog below, or enter a local path. Period parameters may select a different file for each edition.' }).wrap,
+      add(el('div', null, 'composer-actions'), button('Choose or upload catalog', () => chooseInput(request, 'catalog'))),
       renderCatalog(request));
     add(editor, grid(
       selectField('Method', ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'].map(value => [value, value]),
@@ -408,7 +448,8 @@ export function createCollectionComposerPanel({ host, api, onCreated = async () 
         { placeholder: '/absolute/path/results/{{month}}/response.json' }).wrap,
       field('Request body file', request.bodyFile, set('bodyFile'),
         { placeholder: '/absolute/path/inputs/{{month}}/request.json',
-          help: 'For requests with a body, choose the actual saved file for that period.' }).wrap));
+          help: 'Choose or upload the actual body file below, or enter its local path for this period.' }).wrap));
+    add(editor, button('Choose or upload request body', () => chooseInput(request, 'body')));
     const advanced = details('Request references and optional headers',
       grid(field('Request reference', request.key, set('key'), { required: true, maxLength: 40 }).wrap,
         field('Saved offer row', request.rowIndex, value => { request.rowIndex = Number(value); dirty(); },
@@ -564,6 +605,7 @@ export function createCollectionComposerPanel({ host, api, onCreated = async () 
     else add(actions, button('Continue original preparation', resumeEdition));
     add(actions, button('Refresh status', refreshEdition),
       button('Download period JSON', () => download(edition, edition.collectionId + '-period.json')));
+    if (edition.editionSha256) add(actions, button('Share plan and inputs', () => sharing.showExport(edition)));
     add(section, actions);
     return section;
   }
@@ -615,7 +657,9 @@ export function createCollectionComposerPanel({ host, api, onCreated = async () 
     const upload = el('input'); upload.type = 'file'; upload.accept = '.json,application/json'; upload.hidden = true;
     upload.addEventListener('change', () => { importPlan(upload.files?.[0]); upload.value = ''; });
     add(actions, button('New request plan', newPlan, 'primary'), button('Import plan JSON', () => upload.click()),
-      button('Saved periods', () => { state.tab = 'editions'; render(); }), upload);
+      button('Saved periods', () => { state.tab = 'editions'; render(); }),
+      button('Shared plans', () => sharing.showLibrary()),
+      button('Saved input files', () => { inputRequest = null; void inputs.show(); }), upload);
     add(section, actions, field('Find a plan', state.libraryQuery, value => { state.libraryQuery = value; draw(); }, { type: 'search' }).wrap, content);
     function draw() {
       const query = state.libraryQuery.toLowerCase().trim();
@@ -643,6 +687,8 @@ export function createCollectionComposerPanel({ host, api, onCreated = async () 
     notice = el('p', null, 'composer-notice'); notice.setAttribute('role', 'status'); notice.setAttribute('aria-live', 'polite'); notice.hidden = true;
     body = el('div', null, 'composer-main'); add(shell, notice, body); add(host, shell);
     if (!state.connected) { add(body, el('p', 'Open an existing Collections workspace to author request plans.')); sync(); return; }
+    if (state.tab === 'sharing') { sharing.render(body); sync(); return; }
+    if (state.tab === 'inputs') { inputs.render(body); sync(); return; }
     if (!state.draft) {
       if (state.tab === 'editions') add(body, button('All request plans', () => { state.tab = 'plan'; render(); }), renderEditions());
       else if (state.tab === 'period' && state.edition) add(body, button('All saved periods', () => { state.tab = 'editions'; render(); }), renderPeriod());
@@ -667,12 +713,15 @@ export function createCollectionComposerPanel({ host, api, onCreated = async () 
   return {
     connect(status) {
       const changed = state.workspace !== status.directory;
+      if (changed) { sharing.reset(); inputs.reset(); if (state.tab === 'sharing') state.tab = sharingReturnTab; }
+      else { sharing.reconnect(); inputs.reconnect(); }
       state.epoch++; state.busy = false; onBusy(false);
       state.connected = Boolean(status.directory); state.workspace = status.directory ?? null; state.attempted = false;
       if (changed) { clearPlan(); state.plans = []; state.editions = []; }
       render(); autoLoad();
     },
     disconnect() {
+      sharing.reset(); inputs.reset();
       state.epoch++; state.connected = false; state.busy = false; state.workspace = null; state.attempted = false;
       clearPlan(); state.plans = []; state.editions = []; onBusy(false); render();
     },
