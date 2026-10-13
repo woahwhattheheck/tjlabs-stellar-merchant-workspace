@@ -31,7 +31,7 @@ function nativeDraft(binding,record,current){
  if(!record){const value=clone(current);if(binding.type==='station')value.profileId='';if(binding.type==='mapping')value.mappingId='';return value;}
  if(binding.type==='station')return{profileId:record.id,stationId:record.stationId,label:record.label,owner:record.owner,note:record.note,active:record.active};
  if(binding.type==='mapping')return{mappingId:record.id,name:record.name,table:record.table,columns:clone(record.columns),note:record.note};
- return{subject:record.subject,note:record.note,status:record.status};
+ return{subject:record.subject,note:record.note,status:record.status,...(record.inspection?{inspection:{selection:clone(record.inspection.selection),expectedInspectionSha256:record.inspection.inspectionSha256,points:record.inspection.points.map(p=>clone(p.reference))}}:{})};
 }
 function setDraft(key,value,{known=true}={}){
  A.drafts[key]=clone(value);A.draftTokens[key]=crypto.randomUUID();
@@ -205,9 +205,10 @@ function renderEditions(){
  '<div class="actions"><label>Retained edition<select id="edition-select"><option value="">Choose an edition</option>'+editionOptions(e?.id)+'</select></label>'+button('load-edition','Open selected edition')+button('older-editions','Load older editions')+'</div>';
  if(!e)return body+'<p>Select a retained edition to inspect its source rows and datum evidence.</p>';
  body+='<article class="card"><h2>'+esc(e.profile.label)+'</h2><p>'+esc(e.stationMetadata?.name??e.query.stationId)+' · '+badge(e.complete?'SOURCE REQUESTS COMPLETE':'PARTIAL SOURCE')+'</p><p class="pin">Edition '+esc(e.id)+'</p>'+details('Original query and reference basis',e.query)+details('Coverage and metadata summary',e.summary)+'</article>';
+ body+=inspectionUI.render(e);
  body+='<div class="actions">'+A.schema.tables.map(t=>button('table',t.label,t.id,A.table===t.id?'aria-pressed="true"':'')).join('')+'</div><div id="rows-panel">'+renderRows()+'</div>';
  body+='<h2>Source review</h2>';const d=draft('review:'+e.id,{subject:'Source, datum and coverage review',note:'',status:'open'});
- body+='<form id="review-form"><div class="form-grid">'+field('review:'+e.id,'subject','Review subject',d.subject,'text','required')+select('review:'+e.id,'status','Review decision',A.schema.annotationStatuses,d.status)+area('review:'+e.id,'note','Review note and responsible reviewer',d.note,'class="wide"')+'</div><button type="submit" class="primary">Save source review</button></form>'+details('Retained review history',A.view.annotations.filter(a=>a.editionId===e.id));
+ body+='<form id="review-form"><div class="form-grid">'+field('review:'+e.id,'subject','Review subject',d.subject,'text','required')+select('review:'+e.id,'status','Review decision',A.schema.annotationStatuses,d.status)+area('review:'+e.id,'note','Review note and responsible reviewer',d.note,'class="wide"')+'</div>'+(d.inspection?details('Exact inspection attached to this entered review',d.inspection):'')+'<button type="submit" class="primary">Save source review</button></form>'+details('Retained review history',A.view.annotations.filter(a=>a.editionId===e.id));
  body+='<h2>Original response register</h2>'+table(['Resource','Recorded outcome','Bytes / SHA-256',''],e.pages.map((p,i)=>[esc(p.resource??p.product),esc(p.unavailable?p.reason:'HTTP '+(p.statusObserved??'unrecorded')+' · '+p.records+' records'),esc(p.bytes)+'<br><span class="pin">'+esc(p.sha256)+'</span>',button('source-detail','Receipt',String(i))+button('source-download','Original bytes',String(i))]));
  body+='<div class="actions">'+button('export-edition','Prepare edition export',e.id)+button('coastal-analysis','Build coastal workbook',e.id)+button('new-dataset','Prepare native dataset',e.id)+'</div>';return body;
 }
@@ -414,6 +415,7 @@ document.addEventListener('change',event=>{if(event.target.matches('select[data-
 document.addEventListener('submit',event=>{
  const form=event.target;if(!(form instanceof HTMLFormElement))return;event.preventDefault();
  void (async()=>{
+  if(form.id.startsWith('inspection-'))return inspectionUI.submit(form);
   if(form.id.startsWith('study-'))return studyUI.submit(form);
   if(form.id==='station-form'){
    const d=clone(draft('station',{}));if(!d.profileId)delete d.profileId;await perform('station.save',d,{draftKey:'station'});await refresh();return;
@@ -458,6 +460,7 @@ document.addEventListener('click',event=>{
  const cmd=control.dataset.cmd,id=control.dataset.id;
  if(!cmd)return;
  void(async()=>{
+  if(cmd.startsWith('inspection-'))return inspectionUI.click(cmd,id,control);
   if(cmd.startsWith('study-'))return studyUI.click(cmd,id,control);
   if(cmd==='navigate')return navigate(id);
   if(cmd==='draft-use-current'||cmd==='draft-keep')return resolveDraftConflict(cmd==='draft-use-current');
@@ -539,6 +542,7 @@ $('#close-dialog').onclick=()=>$('#dialog').close();
 $('#refresh').onclick=()=>{void refresh().catch(e=>notice(e.message,true));};
 window.addEventListener('beforeunload',event=>{if(A.pending){event.preventDefault();event.returnValue='';}});
 const studyUI=globalThis.createCoopsStudyView({A,$,$$,esc,clone,recordKey,details,table,button,heading,field,area,select,badge,draft,setDraft,clearDraft,api,perform,resumeOriginal,refresh,persist,renderPage,navigate,download,modal,notice});
+const inspectionUI=globalThis.createCoopsInspectionView({A,$,esc,clone,recordKey,details,table,button,field,select,draft,api,perform,persist,renderPage,modal,notice,download});
 async function initialize(){
  try{
   A.schema=await api('/api/schema');A.db=await database();A.key=A.schema.workspaceId;adoptView(await api('/api/view'));
