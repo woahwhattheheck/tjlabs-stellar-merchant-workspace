@@ -237,7 +237,7 @@ export function createSourceCollectionDesk(bridge){
     const value=currentCollection();
     const unresolved=value.rows.flatMap(row=>{
       const id=row.requests.at(-1),original=id?lookup(id):null;
-      return original&&original.state!=='REJECTED'&&(!original.receipt||bridge.pending()===id)?[{row,original}]:[];
+      return original&&(original.receipt||original.state!=='REJECTED')&&(!original.receipt||bridge.pending()===id)?[{row,original}]:[];
     });
     const pendingId=bridge.pending();
     if(pendingId)need(unresolved.some(item=>item.original.body.requestId===pendingId),
