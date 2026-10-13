@@ -356,7 +356,7 @@ Supply that configuration to the original Merchant host’s source-owned **zarrW
 
 Call **merchant_zarr_status**, then **merchant_zarr_connect**. The attachment checks the private connection, original workspace UUID/storage identity and actual server instance. It never starts another server.
 
-Tools cover preparation/apply, original operation/resume, complete typed result pages, frozen source verification, original publisher actions, complete source packet export/receive and immutable file ranges. Read-only progress and cancellation remain available during extraction. Disconnect drains accepted attachment calls and leaves application ownership intact.
+Tools cover preparation/apply, original operation/resume, complete typed result and comparison pages, comparison/report review, complete saved report ranges, frozen source verification, original publisher actions, complete source packet export/receive and immutable packet file ranges. Read-only progress and cancellation remain available during extraction. Disconnect drains accepted attachment calls and leaves application ownership intact.
 
 ## Applications
 

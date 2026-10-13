@@ -71,7 +71,7 @@ The direct Python equivalent is:
   status --directory /private/zarr-workspace
 ```
 
-Commands are `runtime`, `init`, `status`, `operation`, `result`, `frozen`, `apply`, `export`, `verify-packet` and `receive`. Results are one JSON document on stdout; errors are one JSON document on stderr with a nonzero exit code. No command requires parsing a status sentence.
+Commands are `runtime`, `init`, `status`, `operation`, `result`, `comparison`, `comparison-file`, `frozen`, `apply`, `export`, `verify-packet` and `receive`. Results are one JSON document on stdout; errors are one JSON document on stderr with a nonzero exit code. No command requires parsing a status sentence.
 
 `init` creates a new workspace or reopens a valid existing one. It does not reset a partial directory or missing database. Mutations arrive through standard input as:
 
@@ -103,6 +103,8 @@ The remaining mutation payloads are:
 | `run` | `selectionId` |
 | `review` | `resultId`, `contentSha256`, `decision`, `comment` |
 | `freeze` | `resultId`, accepted current `reviewId`, `title`, `valueType` |
+| `compare` | `leftResultId`, `rightResultId`, both `leftContentSha256` and `rightContentSha256`, `title`, `note`, literal `pairing: source-index` |
+| `comparison-review` | `comparisonId`, `contentSha256`, `decision`, `comment` |
 | `abandon` | interrupted `operationId`, explicit `reason` |
 
 Review decisions are `accepted`, `needs-changes` or `rejected`. Frozen value types are `text`, `number` or `boolean`. Every action carries its own original UUID and the current expected workspace revision. Replaying an exact completed request returns its original result before reading the external source again.
@@ -152,7 +154,7 @@ Export a closed, coherent source workspace under an original export UUID:
   --out /private/Zarr_Source_Workspace.zip
 ```
 
-An export snapshots the original SQLite while holding the original workspace mutation lock. It retains the complete source directories, original ZIPs, metadata, selections, typed results, reviews, frozen source files and original operation history. The packet includes the five complete Python application files and a usable `START.py`.
+An export snapshots the original SQLite while holding the original workspace mutation lock. It retains the complete source directories, original ZIPs, metadata, selections, typed results, reviews, frozen source files, saved comparisons with all three reports, comparison reviews and original operation history. A current packet includes the six complete Python application files and a usable `START.py`. Complete historical five-file applications remain accepted, and completed historical exports preserve their original application bytes.
 
 After extracting the complete packet into a private directory:
 
