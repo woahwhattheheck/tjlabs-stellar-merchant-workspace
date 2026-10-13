@@ -735,7 +735,8 @@
           "sha256": "aaec988586dc2dd79b252460ee7b77721cabd2fdb1763bb259b5910eccc0a30f",
           "git_blob": "cc964b684be9ab657177cbb4d30df68ab0a59faa"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-native-object-session-recovery-md",
@@ -751,7 +752,8 @@
           "sha256": "53ce27c42d5b15272f444da8b8129982908332a5034a9e60fcc36108505b47ab",
           "git_blob": "9211a755845d51fc521fb82ec42d6f64d65aaef3"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-native-object-cli-mjs",
@@ -767,7 +769,8 @@
           "sha256": "8c9053bdb0b0dacd033644ad0e8c45ed94d5233ed3fad01a690261d3c52afd3b",
           "git_blob": "f94e0975a1811d365b6fd10ca6e58a4a0558b710"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-native-object-comparison-core-mjs",
@@ -783,7 +786,8 @@
           "sha256": "87b495ea5c41f36dab8eca099cd41231f69672619686d95149e38f44de7b1b87",
           "git_blob": "d6603910361929dc7be83d61aa9e9bd63341f779"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-native-object-session-mjs",
@@ -799,7 +803,8 @@
           "sha256": "7f011673d553e42f9f80a6df29635af0a0da5a3b3a10e98cb5f154c2185686fc",
           "git_blob": "d8ca22399ccb602cc8fd95b03c6f6aa57d2afa74"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-native-workspace-recovery-mjs",
@@ -815,7 +820,8 @@
           "sha256": "e85c1131fb747e729c31c20e8d8e8a97f2a874094a76474189ce2bdfa97ead61",
           "git_blob": "af081515a74e06ea867d58fb304947f93c10b161"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-sdk-readme-md",
@@ -831,7 +837,8 @@
           "sha256": "8aa3454585be2bf2eb4f0bf4479f8c3ce4dc7ab8b7172e09f32dec9a42dabc4f",
           "git_blob": "1a0cc933742c52230c1d281fcece3ea24ad60600"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-sdk-index-d-mts",
@@ -847,7 +854,8 @@
           "sha256": "54a18e3f901838c1a14bf89a39c9011060e4922d57b3df96a512bde247cc813f",
           "git_blob": "009d9d5ad11c527c575dcdb78a5b1163c8f0cc86"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-sdk-index-mjs",
@@ -863,7 +871,8 @@
           "sha256": "b5b9a8455aeb93e0d3bbbaef15136e38071c8d33ee2939fe59d7966b2beb68f5",
           "git_blob": "d27da9a4ed7e88c3e6435c1092849647bbe2c39a"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-sdk-workspace-recovery-mjs",
@@ -879,7 +888,8 @@
           "sha256": "f06111ec6a817b250a37b44e72db592378c295331788e57a362c0955206ac74a",
           "git_blob": "494b668accb446b3089aa75de6236487a4175d62"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-guide-md",
@@ -895,7 +905,8 @@
           "sha256": "d52671fafdd081f72427d0d35335e45f8d6ab348b276cc5663550e64006f32af",
           "git_blob": "01e21ad66a63f8c43ba9f2dbeb39cc15dcf39e87"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-mcp-md",
@@ -911,7 +922,8 @@
           "sha256": "56dac8e77733c5a6daddd6ccf9d6fcebb415d190e6ed9f0f1fadca8349ad862f",
           "git_blob": "72d6fb2ca2dd9daea423c4f8998c66df36e8abb0"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-object-bundle-workspace-md",
@@ -927,7 +939,8 @@
           "sha256": "c8cb69f3bc39b90330be25c4196ddc9065648dda1122c52e4826a64bba31a776",
           "git_blob": "3e7f05d018ea8dc52ca39444fc1a0a369b674bf2"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-object-comparison-md",
@@ -943,7 +956,8 @@
           "sha256": "3b53d6b0352e72c371da0be374d845b516fad24effa6105bf45d7701e54b2d2f",
           "git_blob": "fee32326f885d4440780482d3251f4b7c33fe90e"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-object-sessions-md",
@@ -959,7 +973,8 @@
           "sha256": "d75990ac7ac9c1edcdedc32f5abbb1730db980a7b6d2a89646c00ddfa26681f1",
           "git_blob": "919dedbebcc947154457c08fd94001fb6fd38fda"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-recovery-bundles-md",
@@ -975,7 +990,8 @@
           "sha256": "62a20054853103e6735aec8dc7989bf4e805f9ee19af366456b13867d89122fb",
           "git_blob": "c1d821606f337d3e3508637f3a8a6e27352f839d"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-recovery-support-md",
@@ -991,7 +1007,8 @@
           "sha256": "e663e18ef120a1d096c53efa908c73e2d6618ec0ad7f5afd2c4f8f28dfd672a2",
           "git_blob": "158ccff9100ebe3e31140b20138f4e5c0ea8953c"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-app-mjs",
@@ -1007,7 +1024,8 @@
           "sha256": "bc442c5d6d04b8ff2ccf650b698b74a1e6faa42f0b43b0da536935b94de4d7df",
           "git_blob": "8ed62d2615f502076bec327269ea5c707d9671f9"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-browser-assets-json",
@@ -1023,7 +1041,8 @@
           "sha256": "b86dd97a4b8b327ca3921e70ae4e6458fa8aabdf1562a524e5493e3e2fc7edb0",
           "git_blob": "c3b0542c1b4f7e869cd986f4bf55c1d2944e1454"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-cli-mjs",
@@ -1039,7 +1058,8 @@
           "sha256": "a9269fe2edce4b2303d611801f247a4e32b2e2d5f47a1055432c78016594b743",
           "git_blob": "3b0ba17690260c27114fc71e75f44883b178d7ef"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-index-html",
@@ -1055,7 +1075,8 @@
           "sha256": "14bb61faed757e74dc3ae83290ae607e5cdc14294bbbb56cefcb4befdfaaf9c1",
           "git_blob": "a72ff18f0234141f30c9d5875a0068b993894101"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-merchant-catalog-mjs",
@@ -1071,7 +1092,8 @@
           "sha256": "73ddb65984dfbe514bf025a15a4db8cc6adb011b6b3b72d7964b3d5b148a8c92",
           "git_blob": "9a61954afc67a3d88fa6c0dcac4aff76bab3bd13"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-merchant-client-d-mts",
@@ -1087,7 +1109,8 @@
           "sha256": "79af99aabe43ed49d0284ae0e166f54653b254e4805ec078189a1eeaf26723ec",
           "git_blob": "6f98134cac8d873bde9efb360b0eca6f28aa2829"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-merchant-client-mjs",
@@ -1103,7 +1126,8 @@
           "sha256": "7cc2f5d91db7eaaa80da778c5082cc9bb9e8c89a589f44ecfc997c3e51415359",
           "git_blob": "5166fb544290b6a765634b8052414ae9700e77d2"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-model-mjs",
@@ -1119,7 +1143,8 @@
           "sha256": "258e460ff09ecb19df169d187edf127bbaee453b260b919f51337e89124ba4b4",
           "git_blob": "fc386f4ecbeab85af7a61c433106b5cca235a421"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-object-bundles-desk-mjs",
@@ -1135,7 +1160,8 @@
           "sha256": "727e68151202eb7064da706e5797cc6a4155dda9e89ce495f74c1b750d4ad847",
           "git_blob": "4c8b37875e04038ff8affc8efb858a81725ae917"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-object-bundles-mjs",
@@ -1151,7 +1177,8 @@
           "sha256": "45003037e8a77f94af8e6d51bf6cbd1006ddb3a890e44a2743cee2536fcaea21",
           "git_blob": "7a28be3e2d2ffdae89f82590093d22189b2e963b"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-object-comparisons-desk-mjs",
@@ -1167,7 +1194,8 @@
           "sha256": "6d3fe044e34474ca923f8fe345dc38c9730e2ac42bafba946329a5de3649db29",
           "git_blob": "1ee14449552722616f479092a6d5c3f1f421381c"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-object-comparisons-mjs",
@@ -1183,7 +1211,8 @@
           "sha256": "b74154ed85ddbcd9581e904d8c572950a201447fbba7048cfd1f0ee978d61c7b",
           "git_blob": "e9671a0b03e557be947146d6301d64523106ef7c"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-object-sessions-desk-mjs",
@@ -1199,7 +1228,8 @@
           "sha256": "6c502abe20e3b324579eca28719567f78470ed7098e1d44e3bc1acab138bdf6c",
           "git_blob": "4f9dc99c1b3ae89577e4c4fd6f04766cbbaf1764"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-object-sessions-mjs",
@@ -1215,7 +1245,8 @@
           "sha256": "33e391dc8b981067af5ebeda1d796dcaca414a3b97d2ceda2977e287f84b1ea6",
           "git_blob": "60701fadc2d474e4bd27de55e0e135e3a582fd47"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-recovery-bundle-format-mjs",
@@ -1231,7 +1262,8 @@
           "sha256": "7158c37416042d52cba197716ae50b44a3e6f8ef33fce3d375f9e26780a7c846",
           "git_blob": "2054ab2de8ff45eac407c472d55b7009bea56580"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-recovery-bundle-mjs",
@@ -1247,7 +1279,8 @@
           "sha256": "552f59d84ac736baabee5d92ff5a21a79c3171b81d2502a10bb7514ac50e4dfa",
           "git_blob": "a97dc90aa2b328611bf92c58d6122f23a7dbb48e"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-recovery-support-desk-mjs",
@@ -1263,7 +1296,8 @@
           "sha256": "6e4275db490b19eefd0ec603b327d44441ef789493a4c62d820e4caf8f283283",
           "git_blob": "3d9282e2caf4e6a6e9417544a693dbe64e990562"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-recovery-support-mjs",
@@ -1279,7 +1313,8 @@
           "sha256": "3bb781b609e5f37207d19f712eba1312cfaa3bc5ff9b756b6169b1289bb8f7fe",
           "git_blob": "e154d9e9588f11f7428bad7051394e2368d5daa3"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-server-mjs",
@@ -1295,7 +1330,8 @@
           "sha256": "03b0072a48a45dff75541b474d5d295dc076326b7b2e9965c3a6fe794a21be76",
           "git_blob": "dd4da53fe56906613f1230b7d3009765f9356e3a"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-style-css",
@@ -1311,7 +1347,8 @@
           "sha256": "6520e134c24fe0e7b7b934e143f8162d8455b0dd65a14317f4d1c4634deb8929",
           "git_blob": "26011380dd3069b850bb505d98f2d5eef2243c22"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-support-comparison-runtime-mjs",
@@ -1327,7 +1364,8 @@
           "sha256": "09b4db5c692e3b295e0058faf4fa122fa8b8380100e02f04aae75b18d982c3a6",
           "git_blob": "905f3384ee3e0fc28af13d5d1b35a8e4b1c4b0cb"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-support-recovery-runtime-mjs",
@@ -1343,7 +1381,8 @@
           "sha256": "e9ac09bc61c870342af4e51e5cc5d0768362c50b5b59456a64a220a632079621",
           "git_blob": "14e698e53f3155ec47b1fdfe121da2f09cee01ca"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-support-runtime-desk-mjs",
@@ -1359,7 +1398,8 @@
           "sha256": "40cb095635f17eb62af8febaec72de6ec69eca2696347582cb55df303e815ae0",
           "git_blob": "b8d2b565f850e008ee2a3a7580094337422f54c5"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-support-runtime-support-mjs",
@@ -1375,7 +1415,8 @@
           "sha256": "eeb3ccf9156216a0e6c3462e491b79a04e22ba6891608c75215682b66af01b03",
           "git_blob": "fe093d7f615d332f24b1fbf25434de61a6f24ce3"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-delivery-source-edition-delivery-mjs",
@@ -1391,7 +1432,8 @@
           "sha256": "e44ac918485420e96dec27cda0e42acb56e5e2550fc0ce9db83caaebcd66181f",
           "git_blob": "a3f191333b1ad4663da487f13030a7d43841f526"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-workspace-public-object-recovery-md",
@@ -1407,7 +1449,8 @@
           "sha256": "a06e57eaa0927fa2decf43cfdb005d883b9a049941edb6cade33700a3431efa2",
           "git_blob": "8843df226774829bed81e6f768dadbf69a7c891f"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "recovery-public-provider-merchant-recovery-json",
@@ -1423,7 +1466,8 @@
           "sha256": "93666040531b29d2258e748d669bf4032e875c9fd6a9744b5ad0edf3dfdf0a10",
           "git_blob": "bea4676ed48e9d5058eea82181367185146d6285"
         }
-      ]
+      ],
+      "required": false
     }
   ]
 }
