@@ -285,6 +285,59 @@ async function receiveReads(opening, credential, label) {
   }
   return { invoices, mode: state.mode, apiStateSha256: sha(encoding(state)), nativeUrlRecord: opening.operationId };
 }
+async function closeBrowser() {
+  const errors = [];
+  if (browserContext) {
+    try { await browserContext.close(); browserContext = null; }
+    catch (error) { errors.push(errorView(error)); }
+  }
+  if (browser) {
+    try {
+      await browser.close(); browser = null;
+      // A closed browser also owns and closes its remaining contexts.
+      browserContext = null;
+    } catch (error) { errors.push(errorView(error)); }
+  }
+  if (errors.length) throw Object.assign(new Error('The original browser close returned an error.'), {
+    code: 'RECEIVED_REVIEW_BROWSER_CLOSE_FAILED', errors
+  });
+}
+async function drainBrowser() {
+  let announced = null;
+  while (browser || browserContext) {
+    try { await closeBrowser(); }
+    catch (error) {
+      const detail = { operation: OPERATION, state: 'AWAITING_BROWSER_CLOSE',
+        error: errorView(error), errors: error.errors ?? [], at: new Date().toISOString() };
+      await retainCompleted('original-browser-close', () => save(join(ROOT, 'browser-close.json'), detail));
+      const notice = JSON.stringify(detail.errors);
+      if (notice !== announced) { emit(detail); announced = notice; }
+      if (browser || browserContext) await pause(1000);
+    }
+  }
+}
+async function verifyOpening(completed, label) {
+  assert.equal(completed.native?.state, 'STOPPED'); assert.equal(completed.native?.stopped, true);
+  assert.equal(completed.reads?.mode, 'review'); assert.equal(completed.reads.invoices.length, 5);
+  const record = await readJSON(join(ROOT, 'opening-' + label + '.json'));
+  const retained = record?.attempts?.find(value => value.operationId === completed.operationId);
+  assert(retained?.completed, 'Keep the complete original opening record.');
+  assert.deepEqual(retained.completed.result, { reads: completed.reads, browser: completed.browser });
+  assert.deepEqual(retained.completed.native, completed.native);
+  const native = await originalRun(completed.operationId, record.applicationId);
+  assert.equal(native.held, false); assert.deepEqual(native.result, completed.native);
+  const originalOrders = new Set(databaseSnapshot().orders.map(value => value.id));
+  assert.equal(new Set(completed.reads.invoices.map(value => value.merchantOrderId)).size, originalOrders.size);
+  for (const invoice of completed.reads.invoices) {
+    assert(originalOrders.has(invoice.merchantOrderId));
+    await originalFile(invoice.download.path, invoice.download);
+    await originalFile(invoice.envelope.path, invoice.envelope);
+  }
+  assert(completed.browser && Array.isArray(completed.browser.downloads) && completed.browser.downloads.length === 5);
+  for (const file of [...completed.browser.downloads, ...completed.browser.images])
+    await originalFile(file.path, file);
+  assert.deepEqual(completed.browser.pageErrors, []); assert.deepEqual(completed.browser.consoleErrors, []);
+}
 async function receiveBrowser(opening, scenario, reads, { label, review = true } = {}) {
   const require = createRequire(import.meta.url), loaded = require(values.playwright);
   const chromium = loaded.chromium ?? loaded.default?.chromium; assert(chromium?.launch);
@@ -372,7 +425,7 @@ async function receiveBrowser(opening, scenario, reads, { label, review = true }
       mode: 'ORIGINAL_RECEIVED_REVIEW_HTTP_GET_BRIDGE',
       dimensions: { phone }, images, downloads, requests, pageErrors: failures, consoleErrors };
   } finally {
-    await browserContext.close(); browserContext = null; await browser.close(); browser = null;
+    await closeBrowser();
   }
 }
 async function receive() {
@@ -399,11 +452,9 @@ async function receive() {
   if (prior) {
     assert.equal(prior.projectSha256, selectedProject.selectionSha256); assert.equal(prior.state, 'COMPLETE');
     assert.equal(prior.afterAllRowsSha256, before.allUserRowsSha256);
-    for (const phase of prior.openings)
-      for (const invoice of phase.reads.invoices) {
-        await originalFile(invoice.download.path, invoice.download);
-        await originalFile(invoice.envelope.path, invoice.envelope);
-      }
+    assert.equal(prior.openings.length, 2);
+    for (const [index, phase] of prior.openings.entries())
+      await verifyOpening(phase, ['desktop-phone', 'cold-reopen'][index]);
     return { ...prior, reopened: true };
   }
   const runtimeModel = await import(pathToFileURL(join(SOURCE, 'stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs')));
@@ -454,6 +505,7 @@ async function receive() {
       }
       await save(completePath, completed, { original: true });
     }
+    await verifyOpening(completed, label);
     assert.equal(databaseSnapshot().allUserRowsSha256, before.allUserRowsSha256);
     openings.push(completed);
     // End the first operator model and reopen the same persisted Applications workspace.
@@ -484,12 +536,11 @@ try { result = await receive(); }
 catch (error) {
   failure = error;
   await save(join(ROOT, 'continuation.json'), { operation: OPERATION, state: 'INCOMPLETE',
-    error: errorView(error), activeRun, at: new Date().toISOString() });
+    error: errorView(error), ...(error.errors ? { closeErrors: error.errors } : {}), activeRun, at: new Date().toISOString() });
   emit({ state: 'INCOMPLETE', operation: OPERATION, error: errorView(error), output: ROOT });
 } finally {
   try {
-    if (browserContext) await browserContext.close().catch(() => {});
-    if (browser) await browser.close().catch(() => {});
+    await drainBrowser();
     if (activeRun && model) await stopApplication(activeRun);
     if (model) await model.close();
   } finally {
