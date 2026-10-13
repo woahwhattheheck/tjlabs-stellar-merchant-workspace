@@ -1,6 +1,6 @@
 // MIT. Whole adoption operations over the original Grant workspace client.
 import type {Buffer} from 'node:buffer';
-import type {CohortDeliveryInput,CohortDeliveryComparison} from './cohort_delivery_comparison.mjs';
+import type {CohortDeliveryInput,CohortDeliveryComparison,CohortRecordedCostPlan,CohortRecordedCostChoices} from './cohort_delivery_comparison.mjs';
 import type {GrantWorkspaceClient,GrantJsonResponse,
   GrantCustomerUseCalendar,GrantCustomerUseEditionSelection} from './agent-client.mjs';
 import type {CohortPlan,CohortPlanDocument,CohortPlanReport,CohortPlanComparison,
@@ -34,9 +34,10 @@ export interface CohortAdoptionEdition {
   editionId: string; createdAt: TimestampText; actor: string; parentSourceId: string|null;
   plan: CohortPlan; report: CohortPlanReport; nativeSeed: NativeCohortPlanningSeed;
   deliverySchedule?: CohortDeliverySchedule; comparison?: CohortPlanComparison;
+  recordedCostPlan?:CohortRecordedCostPlan;recordedCostPlanComparison?:CohortPlanComparison;
 }
 export type CohortAdoptionDocument = CohortPlanDocument|CohortPlanComparison|CohortAdoptionEdition|
-  CohortAdoptionSeed|CohortAdoptionReview|CohortAdoptionPrepared|CohortAdoptionSaved|CohortDeliveryInput|CohortDeliveryComparison;
+  CohortAdoptionSeed|CohortAdoptionReview|CohortAdoptionPrepared|CohortAdoptionSaved|CohortDeliveryInput|CohortDeliveryComparison|CohortRecordedCostPlan;
 export interface CohortAdoptionSeed {
   schema: typeof COHORT_ADOPTION_SEED_SCHEMA; sourceKind: 'CASE'|'CALENDAR';
   case: CohortAdoptionCase; nativeSeed: NativeCohortPlanningSeed;
@@ -45,7 +46,8 @@ export interface CohortAdoptionSeed {
 }
 export interface CohortAdoptionReview {
   schema: typeof COHORT_ADOPTION_REVIEW_SCHEMA;
-  document: CohortPlanDocument|CohortPlanComparison|CohortAdoptionEdition|CohortDeliveryComparison;
+  document: CohortPlanDocument|CohortPlanComparison|CohortAdoptionEdition|CohortDeliveryComparison|CohortRecordedCostPlan;
+  recordedCostPlan?:CohortRecordedCostPlan;
   plan?: CohortPlan; report?: CohortPlanReport; comparison?: CohortPlanComparison;
   deliverySchedule?: CohortDeliverySchedule; case?: CohortAdoptionCase;
   nativeSeed?: NativeCohortPlanningSeed; changes?: CohortAdoptionEdit[];
@@ -64,6 +66,8 @@ export type CohortAdoptionSeedOptions = {
 export type CohortAdoptionCollection =
   'buyers'|'merchants'|'facilitators'|'operations'|'schedules'|'workshares'|'capacityPools'|'fundingGroups';
 export type CohortAdoptionEdit = {
+  action:'FROM_RECORDED_COSTS';recordedDocument:CohortDeliveryInput|CohortDeliveryComparison;choices:CohortRecordedCostChoices;
+}|{
   action: 'PLAN';
   fields: Partial<Pick<CohortPlan,'name'|'asOfAt'|'windowStart'|'calendar'|'sensitivity'|'note'|'deliveryScheduling'>>;
 }|{

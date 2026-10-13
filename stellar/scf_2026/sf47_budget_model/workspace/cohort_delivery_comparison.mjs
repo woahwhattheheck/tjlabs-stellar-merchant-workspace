@@ -3,7 +3,7 @@
  * Native review classifications remain authoritative; this module joins them to
  * planned purchase opportunities without turning requests or task uses into sales.
  */
-import {COHORT_PLAN_SCHEMA, COHORT_PLAN_REPORT_SCHEMA, evaluateCohortPlan} from './cohort_planning.mjs';
+import {COHORT_PLAN_SCHEMA, COHORT_PLAN_REPORT_SCHEMA, evaluateCohortPlan, compareCohortPlans} from './cohort_planning.mjs';
 
 export const COHORT_DELIVERY_INPUT_SCHEMA = 'stellar-forge.sf47-cohort-delivery-input.v1';
 export const COHORT_DELIVERY_COMPARISON_SCHEMA = 'stellar-forge.sf47-cohort-delivery-comparison.v1';
@@ -80,6 +80,7 @@ function seconds(ticks) {
 function dayOf(value) { return value ? timestamp(value, 'Original observation time').day : null; }
 function checkedPlan(document) {
   const source = object(document, 'planDocument');
+  if(source.schema===COHORT_RECORDED_COST_PLAN_SCHEMA)return evaluateCohortPlan(reopenCohortRecordedCostPlan(source).candidate);
   const plan = source.schema === EDITION_SCHEMA ? source.plan : source.schema === 'stellar-forge.sf47-delivery-schedule-report.v1' ? source.candidate :
     source.schema === COHORT_PLAN_REPORT_SCHEMA && source.kind === 'PLAN' ? source.input : source;
   if (!plan || plan.schema !== COHORT_PLAN_SCHEMA) fail('PLAN_DOCUMENT_REQUIRED', 'Select the full adoption plan, saved edition, or original plan report.', 'planDocument');
@@ -862,4 +863,107 @@ function ocHtml(commercial){
     '<h4>Linked Work and invoice cost review</h4>'+
     htmlTable(['Original Work','Invoice / line','Distinct costs reviewed','Actual source explanation'],
       r.overlaps.map(x=>[x.workId,x.invoiceId+' / '+x.lineId,x.reviewedDistinctCosts,x.note]));
+}
+
+/** Complete original actual-cost basis for a prospective adoption plan. */
+export const COHORT_RECORDED_COST_PLAN_SCHEMA='stellar-forge.sf47-cohort-recorded-cost-plan.v1';
+function fpDivide(a,b,path){
+  if(!b.n)fail('COST_PLAN_OUTPUT_REQUIRED','Enter a positive measured output quantity.',path);
+  const places=12,n=a.n*10n**BigInt(b.s+places),d=b.n*10n**BigInt(a.s);
+  return cmText({n:(n+d-1n)/d,s:places});
+}
+function fpSource(value){
+  return value.schema===COHORT_DELIVERY_COMPARISON_SCHEMA?reopenCohortDeliveryComparison(value):compareCohortDelivery(value);
+}
+export function seedCohortRecordedCostPlan(recordedDocument,planDocument){
+  const source=fpSource(recordedDocument),plan=checkedPlan(planDocument).input;
+  if(!source.commercial)fail('COST_PLAN_COMMERCIAL_REQUIRED','Calculate the complete commercial reconciliation first.','recordedDocument');
+  return {name:plan.name+' · recorded cost basis',note:'',allocations:[]};
+}
+export function planCohortFromRecordedCosts(recordedDocument,planDocument,raw){
+  const sourceDocument=fpSource(recordedDocument),baseline=checkedPlan(jsonSource(planDocument,'planDocument')),candidate=copy(baseline.input);
+  const commercial=sourceDocument.commercial;
+  if(!commercial)fail('COST_PLAN_COMMERCIAL_REQUIRED','Calculate the complete commercial reconciliation first.','recordedDocument');
+  if(sourceDocument.source.programId!==candidate.source.programId)fail('COST_PLAN_SOURCE_CASE','Use recorded results and a prospective plan from the same original case.','planDocument');
+  if(commercial.originalCostIntake?.unreviewedOverlaps.length)fail('COST_PLAN_COST_OVERLAP','Resolve the invoice-linked Work cost overlap in the original comparison before planning from those costs.','recordedDocument');
+  cmFields(raw,['name','note','allocations'],'choices');
+  const choices={name:cmRequired(raw.name,'choices.name',500),note:text(raw.note??'','choices.note'),allocations:[]};
+  const mappings=unique(list(raw.allocations,'choices.allocations',10000),'id','choices.allocations');
+  if(!mappings.length)fail('COST_PLAN_SELECTION_REQUIRED','Choose at least one measured output and future schedule.','choices.allocations');
+  const totals=new Map(),targets=new Set(),derivations=[];
+  for(const [index,mapping]of mappings.entries()){
+    const path='choices.allocations['+index+']';
+    cmFields(mapping,['id','targetScheduleId','sourceServiceId','outputQuantity','outputUnit','outputSource','supplierCoverage','laborCoverage','coverageNote','costs'],path);
+    const row={id:mapping.id,targetScheduleId:cmRequired(mapping.targetScheduleId,path+'.targetScheduleId',500),
+      sourceServiceId:cmRequired(mapping.sourceServiceId,path+'.sourceServiceId',500),
+      outputQuantity:cmText(cmDecimal(mapping.outputQuantity,path+'.outputQuantity')),
+      outputUnit:cmRequired(mapping.outputUnit,path+'.outputUnit',300),outputSource:cmRequired(mapping.outputSource,path+'.outputSource'),
+      supplierCoverage:mapping.supplierCoverage,laborCoverage:mapping.laborCoverage,
+      coverageNote:cmRequired(mapping.coverageNote,path+'.coverageNote'),costs:[]};
+    if(cmDecimal(row.outputQuantity,path).n===0n)fail('COST_PLAN_OUTPUT_REQUIRED','Enter the actual positive useful-output quantity, with its original measurement basis.',path);
+    if(!['PARTIAL','COMPLETE'].includes(row.supplierCoverage)||!['PARTIAL','COMPLETE'].includes(row.laborCoverage))
+      fail('COST_PLAN_COVERAGE_REQUIRED','Explicitly classify supplier and labor coverage as PARTIAL or COMPLETE.',path);
+    const schedule=candidate.schedules.find(item=>item.id===row.targetScheduleId);
+    const service=commercial.services.find(item=>item.id===row.sourceServiceId);
+    if(!schedule||targets.has(schedule.id)||!service)fail('COST_PLAN_SELECTION_REQUIRED','Select one distinct future schedule and one original commercial service per allocation.',path);
+    targets.add(schedule.id);
+    if(schedule.economics&&schedule.economics.currency!==commercial.currency)fail('COST_PLAN_CURRENCY','Use the same entered currency for the source costs and the selected future schedule.',path);
+    const occurrences=baseline.occurrences.filter(item=>item.scheduleId===schedule.id);
+    if(!occurrences.length||occurrences.some(item=>item.date<=dayOf(commercial.window.asOfAt)))
+      fail('COST_PLAN_FUTURE_SCHEDULE','Choose a schedule whose complete occurrences begin after the recorded comparison cutoff day. Keep completed work in its original plan.',path);
+    let supplier=cmZero,hours=cmZero,labor=cmZero,supplierUnknown=false,laborUnknown=false,hoursUnknown=false;
+    const contributions=[];
+    unique(list(mapping.costs,path+'.costs',100000),'costId',path+'.costs');
+    for(const selection of mapping.costs){
+      cmFields(selection,['costId','share'],path+'.costs');
+      const cost=commercial.costs.find(item=>item.id===selection.costId);
+      if(!cost||cost.serviceId!==service.id||!['SUPPLIER','LABOR','OTHER'].includes(cost.costType))
+        fail('COST_PLAN_COST_SELECTION','Select a supplier, other delivery cost or labor row from this original service. Keep payment fees in their original payment model.',path);
+      const share=cmDecimal(selection.share,path+'.share');
+      if(share.n<=0n||cmSub(share,{n:1n,s:0}).n>0n)fail('COST_PLAN_SHARE','Each selected share must be greater than zero and at most one.',path);
+      const total=cmAdd(totals.get(cost.id)||cmZero,share);
+      if(cmSub(total,{n:1n,s:0}).n>0n)fail('COST_PLAN_SHARE_EXCEEDED','The selected portions of '+cost.id+' exceed its complete recorded quantity or amount across mappings.',path);
+      totals.set(cost.id,total);row.costs.push({costId:cost.id,share:cmText(share)});
+      const amount=cost.calculatedAmount===null?null:cmMul(cmExact(cost.calculatedAmount,path),share);
+      const active=cost.costType==='LABOR'&&cost.activeHours!==null?cmMul(cmExact(cost.activeHours,path),share):null;
+      if(cost.costType==='LABOR'){if(amount===null)laborUnknown=true;else labor=cmAdd(labor,amount);if(active===null)hoursUnknown=true;else hours=cmAdd(hours,active);}
+      else if(amount===null)supplierUnknown=true;else supplier=cmAdd(supplier,amount);
+      contributions.push({costId:cost.id,costType:cost.costType,share:cmText(share),amount:amount===null?null:cmText(amount),activeHours:active===null?null:cmText(active),originalCost:copy(cost)});
+    }
+    const output=cmDecimal(row.outputQuantity,path),completeSupplier=row.supplierCoverage==='COMPLETE'&&!supplierUnknown,
+      completeHours=row.laborCoverage==='COMPLETE'&&!hoursUnknown,completeLabor=completeHours&&!laborUnknown;
+    const next={unitCost:completeSupplier?fpDivide(supplier,output,path):null,
+      activeHoursPerTask:completeHours?fpDivide(hours,output,path):null,
+      hourlyCost:completeLabor?(hours.n?fpDivide(labor,hours,path):labor.n===0n?'0':null):null};
+    derivations.push({id:row.id,targetScheduleId:row.targetScheduleId,sourceServiceId:row.sourceServiceId,
+      outputQuantity:row.outputQuantity,outputUnit:row.outputUnit,outputSource:row.outputSource,
+      sourceService:copy(service),originalEconomics:copy(schedule.economics),derivedEconomics:copy(next),
+      supplierCoverage:row.supplierCoverage,laborCoverage:row.laborCoverage,coverageNote:row.coverageNote,
+      knownSupplierCost:cmText(supplier),knownLaborCost:cmText(labor),knownActiveHours:cmText(hours),
+      supplierComplete:completeSupplier,laborComplete:completeLabor,hoursComplete:completeHours,contributions,
+      rounding:'Nonnegative derived rates are ceiling-rounded to 12 fractional places; original amounts and hours remain exact.'});
+    if(!schedule.economics)schedule.economics={currency:commercial.currency,unitRevenue:null,unitCost:null,feePerPayment:null,activeHoursPerTask:null,hourlyCost:null};
+    Object.assign(schedule.economics,next);choices.allocations.push(row);
+  }
+  candidate.name=choices.name;
+  const report=evaluateCohortPlan(candidate);
+  const comparison=compareCohortPlans(planDocument,report.input,{title:choices.name,note:choices.note});
+  const costBalances=commercial.costs.map(cost=>({costId:cost.id,costType:cost.costType,serviceId:cost.serviceId,
+    selectedShare:cmText(totals.get(cost.id)||cmZero),unselectedShare:cmText(cmSub({n:1n,s:0},totals.get(cost.id)||cmZero))}));
+  return jsonSource({schema:COHORT_RECORDED_COST_PLAN_SCHEMA,sourceDocument,planDocument:copy(planDocument),choices,
+    candidate:report.input,report,comparison,derivations,costBalances},'recordedCostPlan');
+}
+export function reopenCohortRecordedCostPlan(document){
+  if(document?.schema!==COHORT_RECORDED_COST_PLAN_SCHEMA)fail('COST_PLAN_DOCUMENT_REQUIRED','Open the complete recorded-cost planning document.','document');
+  const result=planCohortFromRecordedCosts(document.sourceDocument,document.planDocument,document.choices);
+  if(canonical(result)!==canonical(document))fail('COST_PLAN_DOCUMENT_CHANGED','The retained recorded-cost planning document differs from its full source and explicit choices.','document');
+  return result;
+}
+export function exportCohortRecordedCostPlanCsv(document){
+  const result=reopenCohortRecordedCostPlan(document),rows=[['section','id','complete_json'],
+    ['recorded_source','original',JSON.stringify(result.sourceDocument)],['baseline_plan','original',JSON.stringify(result.planDocument)],
+    ...result.derivations.map(row=>['derived_schedule',row.targetScheduleId,JSON.stringify(row)]),
+    ...result.costBalances.map(row=>['recorded_cost_balance',row.costId,JSON.stringify(row)]),
+    ['candidate_plan','successor',JSON.stringify(result.candidate)],['comparison','complete',JSON.stringify(result.comparison)]];
+  return rows.map(row=>row.map(value=>'"'+String(value).replaceAll('"','""')+'"').join(',')).join('\r\n')+'\r\n';
 }

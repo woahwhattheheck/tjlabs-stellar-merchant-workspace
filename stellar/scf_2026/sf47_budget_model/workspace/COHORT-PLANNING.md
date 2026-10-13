@@ -1176,3 +1176,153 @@ checked with the original calculator. The session helper is
 `cohort_planning_session.mjs`, with its adjacent declaration. The original
 controller imports it directly, so the installed source closure carries this
 complete workflow.
+
+
+## Use recorded costs to prepare a future service plan
+
+The **Recorded cost basis** panel closes the loop between a complete saved delivery
+reconciliation and the next adoption plan. It uses the same capacity, funding,
+pricing and comparison engine as the rest of this desk.
+
+### Operator workflow
+
+1. Open the intended future plan in Customer adoption plan. Keep its actual
+   cadence, purchased funding groups, prices, capacity pools and source identities.
+   Every occurrence of a selected target schedule must be after the recorded
+   comparison's UTC cutoff day.
+2. Open **Recorded cost basis**, select the complete saved delivery comparison and
+   choose **Open original commercial result**. The complete current plan is
+   retained as the future baseline. **Capture current plan as future baseline**
+   explicitly replaces that baseline after you finish changing future dates.
+3. Add one allocation for each future schedule. Choose the original service, enter
+   the actual useful-output quantity, its unit and the original measurement basis.
+   This quantity is an entered operational measurement. The desk does not derive it
+   from payment count, purchased groups, scheduled tasks or requests.
+4. Enter the portion of each relevant original cost as a decimal share from zero to
+   one; leave other rows empty. Supplier and other delivery costs contribute to the
+   nonlabor estimate. Labor contributes its actual hours and calculated cost.
+   All selected rows must belong to the chosen original service. Payment fees stay
+   in the future plan's original payment model.
+5. State whether supplier and labor coverage are **PARTIAL** or **COMPLETE** for
+   the measured output, and enter the coverage explanation. Incomplete coverage or
+   an unknown selected cost remains unknown in the resulting estimate. A known
+   zero requires explicit complete coverage; the absence of a row alone does not
+   turn a partial category into zero.
+6. **Calculate complete successor** shows the derived per-result supplier cost,
+   hours and hourly cost, selected/unselected source shares, full financial report,
+   capacity and price floors. Resolve an invalid source, cost share, currency,
+   measured output, or future-date constraint in the same retained form.
+7. Review **Open before / after comparison**, then **Apply to editable future
+   plan** or **Apply and save complete edition**. Further manual edits remain
+   editable in the original planning desk. The immutable original cost proposal
+   and its separate comparison to the saved successor travel with the edition.
+   Save uses the current original case version, the existing source attachment
+   action, retained request recovery and exact source readback.
+
+The browser working session includes the source, complete baseline, choices,
+unfinished allocation fields, earlier source selections and calculated/applied
+proposals. Saved editions and imported proposal JSON reopen that same source
+basis. Whole JSON and CSV exports retain the full original comparisons and
+derivations. The full case export includes the saved native source edition.
+
+### Cost and quantity meaning
+
+An allocation selects cost shares across a measured useful-output quantity.
+For example, an explicitly selected $12 materials cost and 1.25 actual labor
+hours at $4/hour, assigned to two measured useful results, produce $6 materials
+and 0.625 active hours per result at $4/hour. Running two future results costs
+$17 before the plan's original payment fees. The two measured results need not
+equal a payment count. The original payment and funding identities remain
+untouched.
+
+For each selected actual cost, the shares across *all* target allocations must
+sum to at most one. Unselected shares remain visible. Every selected contribution
+retains its whole original cost row, including any native Work, invoice,
+contributor, attachment and reviewed overlap witnesses. Resolve invoice-linked
+Work overlap in the original commercial reconciliation before deriving a plan.
+
+Supplier cost per result is selected supplier/other cost divided by measured
+outputs. Hours per result are selected labor hours divided by measured outputs.
+Hourly cost is selected labor cost divided by selected labor hours. Derived
+nonnegative rates are ceiling-rounded to twelve decimal places, while the
+underlying amounts, hours and shares remain exact decimal values. The original
+calculator then evaluates every future occurrence and its capacity allocation.
+Explicit complete zero labor cost and hours produces zero rates. Unknown labor
+valuation suppresses hourly cost while known hours can still inform capacity.
+
+The operation changes only the selected schedules' `economics.unitCost`,
+`economics.activeHoursPerTask`, `economics.hourlyCost` and the successor name.
+A schedule whose economics were absent receives the source currency with unknown revenue and payment-fee estimates; its cost and hours can then be reviewed without inventing sale terms. All other rows and fields are preserved. An already purchased group reused for
+future delivery is still prepaid; the calculator does not count another sale.
+
+### Complete source API
+
+`cohort_delivery_comparison.mjs` exports:
+
+- `seedCohortRecordedCostPlan(recordedDocument, planDocument)`
+- `planCohortFromRecordedCosts(recordedDocument, planDocument, choices)`
+- `reopenCohortRecordedCostPlan(document)`
+- `exportCohortRecordedCostPlanCsv(document)`
+
+A complete result has schema
+`stellar-forge.sf47-cohort-recorded-cost-plan.v1`, the whole `sourceDocument`,
+whole `planDocument`, normalized `choices`, `candidate`, `report`,
+`comparison`, per-allocation `derivations` and all `costBalances`.
+Reopen recalculates and compares the complete result with these originals.
+The existing 8 MiB native attachment bound applies to the whole saved edition;
+source is never silently omitted to fit it.
+
+An illustrative allocation, using IDs from the selected original documents:
+
+```json
+{
+  "name": "Next customer service window",
+  "note": "Original measured output and dated actual-cost basis reviewed",
+  "allocations": [{
+    "id": "report-service-basis",
+    "targetScheduleId": "future-report-service",
+    "sourceServiceId": "funded:original-service",
+    "outputQuantity": "2",
+    "outputUnit": "completed useful report",
+    "outputSource": "Original completion register and reviewed source reference",
+    "supplierCoverage": "COMPLETE",
+    "laborCoverage": "COMPLETE",
+    "coverageNote": "Selected invoice portion is materials; selected Work is separately paid labor.",
+    "costs": [
+      {"costId": "original:materials-portion", "share": "1"},
+      {"costId": "original:labor-portion", "share": "1"}
+    ]
+  }]
+}
+```
+
+The maintained MCP `merchant_grant_adoption_edit` operation accepts
+`FROM_RECORDED_COSTS` as its sole change, with `recordedDocument` and
+`choices`. Its main document is the complete intended future plan. Review,
+prepare, save, request-status, open and export continue through the existing
+adoption tool family. Before native preparation, the complete original saved
+plan bytes and frozen review are checked against the original case. A prepared
+source edition retains `recordedCostPlan` and
+`recordedCostPlanComparison`; ordinary subsequent plan edits retain the basis.
+
+```sh
+node cohort_planning_cli.mjs recorded-cost-seed --recorded delivery.json --baseline future-plan.json --output choices.json
+node cohort_planning_cli.mjs recorded-cost-plan --recorded delivery.json --baseline future-plan.json --choices choices.json --output cost-plan.json
+node cohort_planning_cli.mjs recorded-cost-reopen --input cost-plan.json --output reopened-cost-plan.json
+node cohort_planning_cli.mjs evaluate --input cost-plan.json --output future-report.json
+node cohort_planning_cli.mjs csv --input cost-plan.json --output complete-cost-basis.csv
+```
+
+### Focused source exercise
+
+The maintained comparison, planning, adoption agent, browser and CLI modules were
+executed in V8 against the original native source contract, using an in-memory
+native-client/API transport and an in-memory browser adapter. The controlled
+two-result case above produced $6/result, 0.625 hours/result and $4/hour; preserved
+both original prepaid funding groups; surfaced the original no-new-charges result;
+retained unknowns for partial coverage; and rejected an excessive cost share, a
+past target schedule and a changed retained result. The original adoption
+prepare/save/request/open flow attached one complete 779,545-byte edition in the
+in-memory transport and reopened it exactly. The original browser form saved and
+reopened its complete source, and the working-session validator retained its cost
+basis. CLI calculation, complete reopen and CSV used the same production core.
