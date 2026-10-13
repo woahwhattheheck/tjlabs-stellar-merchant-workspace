@@ -642,7 +642,7 @@ def _recover_receipt(s, operation):
             return
     if incoming.get("request_sha256") != s.state.get("request_sha256"):
         raise ValueError("The selected command receipt belongs to another original request.")
-    source = Path(incoming["path"])
+    source = Path(s.private_path(incoming["path"]))
     raw = source.read_bytes()
     receipt_hash = hashlib.sha256(raw).hexdigest()
     if any(item["sha256"] == receipt_hash for item in accepted.values()):
@@ -661,7 +661,9 @@ def _recover_receipt(s, operation):
             output.flush()
             os.fsync(output.fileno())
     _retain(s, retained, "original_native_receipt")
-    completed = json.loads(raw)
+    # Compare both receipts in the same receiving-workspace view while the
+    # complete incoming bytes remain unchanged in retained custody.
+    completed = s.resolve_private(json.loads(raw))
     for key in ("argv", "cwd", "started_at", "mutating", "stdin"):
         if completed.get(key) != original.get(key):
             raise ValueError("The native receipt does not match the exact original command " + key + ".")
@@ -689,7 +691,7 @@ def _recover_receipt(s, operation):
     s.state.setdefault("completed_commands", {})[label] = completed
     s.state.update(phase="native_prepared" if completed["returncode"] == 0 else "native_failed", pending_command=None)
     s.state["received_command_receipts"][label] = {"sha256": receipt_hash, "reason": incoming["reason"],
-        "label": label, "request_sha256": s.state["request_sha256"], "selection": incoming,
+        "label": label, "request_sha256": s.state.get("request_sha256"), "selection": incoming,
         "retained_path": str(retained)}
     s.save_state()
 
