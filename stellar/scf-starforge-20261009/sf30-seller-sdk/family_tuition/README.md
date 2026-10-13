@@ -115,4 +115,25 @@ Node 22+ and an existing Playwright/Chromium runtime are required. SF30_PLAYWRIG
 
 The packager retains immutable member selection before deterministic ZIP publication. A completed reentry validates and reuses the same archive. Owned server stdout is drained before closure and the parent flock spans the child lifetime. Preserve the complete failed attempt/source-selection record when applying a reviewed receiving-driver correction; do not overwrite an already completed receipt.
 
+## Continue with the actual original PDFs
+
+The separate `pdf_operate.py` reconstructs the exact funded 2026–27 revision3 into a new private workspace. It retains all three complete original PDFs, the third programme fixture and the actual18-date closure calendar. It keeps the original payment source unchanged, names the second child, adjusts that child's registration from50USD to the form's25USD sibling fee, and explicitly retains full September tuition despite the8September first class date. The original805USD example therefore becomes780USD due and220USD unallocated from the same1000USD receipt. The later2027–28 rollover case is untouched.
+
+Write an input JSON with these exact fields:
+
+```json
+{
+  "operationId": "TONDO-FAMILY-PDF-RECEIVING-7108-20261013",
+  "familyPacket": {"path": "/PRIVATE/Year_2026_Complete.zip", "bytes": 29979, "sha256": "42b4477c34f3cbceee79efb94cc24b58e546aec81844c10d97eb3b40fd429765"},
+  "originalsDirectory": "/PRIVATE/original-public-documents",
+  "outputDirectory": "/PRIVATE/pdf-receiving",
+  "actor": "Named receiving operator",
+  "at": "2026-10-13T06:00:22Z"
+}
+```
+
+Run `python3 -B pdf_operate.py --input /PRIVATE/pdf-input.json`. The originals directory must contain the unchanged filenames selected by the source fixtures: Student-Registration-Form-1-1-1.pdf, Calendar-2026-27.pdf and Terms-Conditions-2026-2027.pdf. Every full body is checked against the actual source byte count and SHA256. This course requires the original completed revision3 packet identified above; for another customer, use the general source/mapping/save interface with that customer's approved inputs.
+
+The result `pdf-operated-case.json` returns the exact saved family anchor and both workspace paths. Its complete packet preserves the earlier web-based revisions, all original requests, the new named policy/charge decisions and every original document. Independent receiving, same-packet replay, earlier-packet preservation and cold reopen are part of the course. The household, signed-agreement observation, capacities and staff confirmations remain clearly labelled engineering examples. Selecting the make-up policy and recording actual attendance are separate saved operations bound to this family revision.
+
 The complete deliverable provides executable source, source provenance, exact case history and a reusable recipient workflow. Configure it with approved household/payment documents and the institution's explicitly chosen programme, calendar and policy editions before an operational handover.

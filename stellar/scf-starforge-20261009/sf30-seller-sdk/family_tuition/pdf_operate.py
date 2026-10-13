@@ -31,7 +31,20 @@ def run(input_file):
    if len(raw)!=d["bytes"] or sha(raw)!=d["sha256"]:raise ValueError("Original public PDF differs: "+str(path))
    documents[d["filename"]]=(d,raw)
   selection={"schema":"class-intake.family-pdf-selection.v1","input":i,"inputSHA256":sha(incoming_raw),"engine":sha(pathlib.Path(__file__).with_name("workspace.py").read_bytes()),"driver":sha(pathlib.Path(__file__).read_bytes()),"facts":{n:{"bytes":len(b),"sha256":sha(b)} for n,b in facts.items()},"originalPDFs":{n:{"bytes":len(b),"sha256":sha(b)} for n,(d,b) in documents.items()}}
-  retain(output/"selection.json",canonical(selection));result_path=output/"pdf-operated-case.json"
+  selection_path=output/"selection.json"
+  if selection_path.exists() and selection_path.read_bytes()!=canonical(selection):
+   original_raw=selection_path.read_bytes();original=json.loads(original_raw)
+   if {k:v for k,v in original.items() if k!="driver"}!={k:v for k,v in selection.items() if k!="driver"}:raise ValueError("Source continuation changes the original input, engine, facts or complete PDFs")
+   proof=json.loads((output/"source-continuation.json").read_text())
+   keys={"schema","operationId","previousDriver","currentDriver","originalSelectionSha256","actor","at","reason"}
+   if set(proof)!=keys or proof["schema"]!="class-intake.family-source-continuation.v1" or proof["operationId"]!=i["operationId"] or proof["previousDriver"]!=original["driver"] or proof["currentDriver"]!=selection["driver"] or proof["originalSelectionSha256"]!=sha(original_raw) or proof["actor"]!=i["actor"]:raise ValueError("Complete original source-continuation receipt differs")
+   from workspace import stamp,text
+   stamp(proof["at"]);text(proof["reason"],"source correction reason")
+   previous_source=(output/"attempts"/"driver-before-result-summary.py").read_bytes()
+   if sha(previous_source)!=original["driver"]:raise ValueError("Retained complete original driver differs")
+   selection=original
+  else:retain(selection_path,canonical(selection))
+  result_path=output/"pdf-operated-case.json"
   if result_path.exists():
    result=json.loads(result_path.read_text())
    for d in result["files"]:verify(d)
@@ -71,8 +84,8 @@ def run(input_file):
    d["sibling"]["source"]=pdf_ids[policy["sources"]["terms"]["filename"]]
    d["sibling"].update(named("Terms page3 selects10%off the second child. Synthetic Student B is explicitly selected; no household-order inference."))
    d["calendar"]={"source":pdf_ids[calendar["source"]["filename"]],"excludedDates":calendar["excludedDates"],"state":"confirmed",**named("Actual complete2026–27 calendar,18closed dates. Selected enrollments begin no earlier than Sep8 and end no later than Jun26. Art shows do not imply closure.")}
-   selection=d["selections"]["programmes"];table=w.table(selection["source"],"json")
-   d["corrections"]=[{"kind":"programmes","source":selection["source"],"row":n+2,"field":"capacity","original":row[5],"value":"12",**named("Explicit synthetic capacity12 retained for this engineering case; actual programme capacity is unpublished.")} for n,row in enumerate(table["rows"])]
+   programme_selection=d["selections"]["programmes"];table=w.table(programme_selection["source"],"json")
+   d["corrections"]=[{"kind":"programmes","source":programme_selection["source"],"row":n+2,"field":"capacity","original":row[5],"value":"12",**named("Explicit synthetic capacity12 retained for this engineering case; actual programme capacity is unpublished.")} for n,row in enumerate(table["rows"])]
    d["chargeDecisions"]=[];d["allocations"]=[];d["exceptions"]=[];d["review"]={"status":"draft",**named("Calculate the named PDF/calendar selection before preserving exact receipt allocations.")}
    calculated=derive(d,w.base.source)
    sibling_charge=next(c for c in calculated["charges"] if c["kind"]=="registration" and c["student_id"]=="syn-student-b")
