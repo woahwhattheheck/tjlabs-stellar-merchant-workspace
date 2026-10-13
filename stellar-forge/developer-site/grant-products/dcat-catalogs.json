@@ -420,6 +420,118 @@
           "bytes": 19301
         }
       ]
+    },
+    {
+      "id": "dcat-installation-operator",
+      "label": "Complete catalogue scope, original Workshare and independent Installation receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/DCAT_INSTALLATION.md",
+      "commit": "ef5f84ecea16f0a059570028a14d60fe8f8ffdce",
+      "editions": [
+        {
+          "commit": "ef5f84ecea16f0a059570028a14d60fe8f8ffdce",
+          "git_blob": "228d97daf2b8290a66fb48d346507ab89f3a6b4a",
+          "sha256": "ab4f3555735fb39706505c76ee9917b29c3150897f288ada4a5092f8609c093d",
+          "bytes": 35435
+        }
+      ]
+    },
+    {
+      "id": "dcat-installation-scope-preparation",
+      "label": "Complete source record projection, explicit commissioning scope and original Installation preparation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-core.mjs",
+      "commit": "ef5f84ecea16f0a059570028a14d60fe8f8ffdce",
+      "editions": [
+        {
+          "commit": "ef5f84ecea16f0a059570028a14d60fe8f8ffdce",
+          "git_blob": "4ee3910deb5ed8800c53666aea935b899b1df91d",
+          "sha256": "222d19359a16ebe11b2f6c61b35e9666359ad44a37b20794a02fc913ea85bf27",
+          "bytes": 18682
+        }
+      ]
+    },
+    {
+      "id": "dcat-installation-complete-archive",
+      "label": "Original complete catalogue receiver and exact retained member custody",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-source.mjs",
+      "commit": "ef5f84ecea16f0a059570028a14d60fe8f8ffdce",
+      "editions": [
+        {
+          "commit": "ef5f84ecea16f0a059570028a14d60fe8f8ffdce",
+          "git_blob": "fbcf2618a20a6c06156249a632af1cb38895b809",
+          "sha256": "217da16d2afd9165a72b346f14d9f07455564101e8c6aae65ff0d65a2a114b50",
+          "bytes": 6980
+        }
+      ]
+    },
+    {
+      "id": "dcat-installation-native-source-custody",
+      "label": "Complete original catalogue archive attachments within Operations source and case budgets",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_dcat_sources.py",
+      "commit": "ef5f84ecea16f0a059570028a14d60fe8f8ffdce",
+      "editions": [
+        {
+          "commit": "ef5f84ecea16f0a059570028a14d60fe8f8ffdce",
+          "git_blob": "30a39f39397062b9fb963df24cc1058d0d72ef6f",
+          "sha256": "0d8832f429076f294a7f421f6f602ce63572a894a3837e569376dba3d336e4d6",
+          "bytes": 13378
+        }
+      ]
+    },
+    {
+      "id": "dcat-installation-retained-preparation",
+      "label": "Original immutable input, profile and preparation request service",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation/service.mjs",
+      "commit": "ef5f84ecea16f0a059570028a14d60fe8f8ffdce",
+      "editions": [
+        {
+          "commit": "ef5f84ecea16f0a059570028a14d60fe8f8ffdce",
+          "git_blob": "9648dfa78c4cf70bbee155e53464a88c974372d6",
+          "sha256": "1a8db157c07a1d311d69a2078f26af083d74f5491b4f664a06d2bb2eae84b8a4",
+          "bytes": 20395
+        }
+      ]
+    },
+    {
+      "id": "dcat-installation-installed-interface",
+      "label": "Complete installed preparation commands and hash-bound file export",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation.mjs",
+      "commit": "ef5f84ecea16f0a059570028a14d60fe8f8ffdce",
+      "editions": [
+        {
+          "commit": "ef5f84ecea16f0a059570028a14d60fe8f8ffdce",
+          "git_blob": "fb5a15a8d1d06f4d51623cbc59219ef7c27ee9cf",
+          "sha256": "a0a03878bf99d62de83af6519ff67bdecdaabed3bcb0e66d83e7482030e91735",
+          "bytes": 13334
+        }
+      ]
+    },
+    {
+      "id": "dcat-installation-customer-receiving",
+      "label": "Complete saved Installation, all original source files and independent two-application receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/DCAT_INSTALLATION_RECEIVING.md",
+      "commit": "ef5f84ecea16f0a059570028a14d60fe8f8ffdce",
+      "editions": [
+        {
+          "commit": "ef5f84ecea16f0a059570028a14d60fe8f8ffdce",
+          "git_blob": "c6fc1080076d578bf5a36bf3fb2aad6ca2d48456",
+          "sha256": "a31c7b47912e48c14e54290cb03bd28454ef8c78586bc4a7ffa45776ea966230",
+          "bytes": 12681
+        }
+      ]
     }
   ]
 }
