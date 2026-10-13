@@ -1,0 +1,30 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "reporting-programmes",
+  "description": "Complete recurring report definitions, source editions, actual run and delivery observations, and editable native handover on Source Tables",
+  "supportFiles": [
+    "products/source-tables/reporting/programme.mjs",
+    "products/source-tables/reporting/programme-cli.mjs",
+    "products/source-tables/reporting/programme.d.mts",
+    "products/source-tables/reporting/REPORTING_PROGRAMMES.md",
+    "products/source-tables/reporting/examples/create-programme.example.json",
+    "products/source-tables/reporting/desk-receive.mjs",
+    "products/source-tables/reporting/desk-receive.d.mts"
+  ],
+  "commands": {
+    "reporting-programme": "products/source-tables/reporting/programme-cli.mjs"
+  },
+  "commandDescriptions": {
+    "reporting-programme": "Create or advance a full reporting project; inspect original SQL/period/run/receipt history and export the complete native handover"
+  },
+  "exports": {
+    "./reporting-programmes": {
+      "types": "./source/products/source-tables/reporting/programme.d.mts",
+      "default": "./source/products/source-tables/reporting/programme.mjs"
+    },
+    "./reporting-programmes/desk": {
+      "types": "./source/products/source-tables/reporting/desk-receive.d.mts",
+      "default": "./source/products/source-tables/reporting/desk-receive.mjs"
+    }
+  }
+}
