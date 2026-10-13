@@ -1,13 +1,14 @@
 // MIT. Original-workspace browser, retained job continuation and explicit candidate decisions.
 import {createPublisherPanel} from './publisher.mjs';
 import {createSourceHistoryPanel} from './source-history.mjs';
+import {createCustomerReviewPanel} from './customer-review.mjs';
 const $=id=>document.getElementById(id),json=v=>JSON.stringify(v,null,2);
 const node=(tag,value)=>{const e=document.createElement(tag);if(value!==undefined)e.textContent=typeof value==='object'?json(value):String(value??'—');return e;};
 const detail=(title,value)=>{const e=node('details');e.append(node('summary',title),node('pre',value));return e;};
 const button=(label,key,value)=>{const e=node('button',label);e.type='button';e.dataset[key]=value;return e;};
 const facts=items=>{const e=node('dl');for(const[k,v]of items)e.append(node('dt',k),node('dd',v));return e;};
 let state=null,busy=false,publisher=null,selected=null,reviewPage=null,reviewOffset=0,reviewCriteria={status:'',search:''},sourceOffset=0,sourcePage=null,queryResult=null,querySnapshot=null,initialized=false;
-let noticeRevision=0,sourceHistoryPanel=null;
+let noticeRevision=0,sourceHistoryPanel=null,customerReviewPanel=null;
 let draft={schema:'stellar-forge.geoapify-editor.v1',fields:{},decisions:{},tab:'source'};
 const tokenKey='starforge-geoapify-token:'+location.origin,fragment=new URLSearchParams(location.hash.slice(1));
 const token=fragment.get('token')||sessionStorage.getItem(tokenKey);
@@ -21,7 +22,7 @@ function selectedDecisionDraft(){
     coordinateChoice:$('coordinate-choice').value,reviewer:$('reviewer').value,note:$('decision-note').value};
 }
 function capture(){
-  selectedDecisionDraft();if(sourceHistoryPanel)draft.sourceHistory=sourceHistoryPanel.capture();
+  selectedDecisionDraft();if(sourceHistoryPanel)draft.sourceHistory=sourceHistoryPanel.capture();if(customerReviewPanel)draft.customerReview=customerReviewPanel.capture();
   for(const e of document.querySelectorAll('input[id],select[id],textarea[id]')){
     if(e.type==='file'||e.id.startsWith('pub-')||['job-selection','coordinate-choice','reviewer','decision-note'].includes(e.id))continue;
     draft.fields[e.id]=e.type==='checkbox'?e.checked:e.value;
@@ -37,7 +38,7 @@ function applyDraft(value){
   draft=structuredClone(value);draft.decisions??={};
   for(const[id,value]of Object.entries(draft.fields)){const e=$(id);if(!e||e.type==='file'||e.id.startsWith('pub-'))continue;
     if(e.type==='checkbox')e.checked=value===true;else if(typeof value==='string')e.value=value;}
-  sourceHistoryPanel?.restore(draft.sourceHistory);switchTab(draft.tab??'source');return true;
+  sourceHistoryPanel?.restore(draft.sourceHistory);customerReviewPanel?.restore(draft.customerReview);switchTab(draft.tab??'source');return true;
 }
 document.addEventListener('input',event=>{if(event.target.matches('input,textarea,select'))saveLocal();});
 document.addEventListener('change',event=>{if(event.target.matches('input,textarea,select'))saveLocal();});
@@ -60,7 +61,7 @@ function clearSourceDisplay(){
   initialized=false;draft={schema:'stellar-forge.geoapify-editor.v1',fields:{},decisions:{},tab:'source'};
   for(const form of document.querySelectorAll('form'))if(!form.id.startsWith('pub-'))form.reset();
   for(const id of ['source-results','review-rows','prepared-summary'])$(id).replaceChildren();
-  $('address-detail').hidden=true;sourceHistoryPanel?.clear();
+  $('address-detail').hidden=true;sourceHistoryPanel?.clear();customerReviewPanel?.clear();
 }
 async function adoptState(next){
   const changed=state&&(next.id!==state.id||next.intake?.sha256!==state.intake?.sha256);
@@ -86,7 +87,7 @@ async function handle(work){
 }
 function bind(id,work){$(id).addEventListener('submit',event=>{event.preventDefault();void handle(work);});}
 function switchTab(name){
-  const names=['source','revisions','jobs','review','dataset','delivery','publisher'];if(!names.includes(name))name='source';
+  const names=['source','revisions','jobs','review','dataset','customer','delivery','publisher'];if(!names.includes(name))name='source';
   document.querySelectorAll('[data-section]').forEach(e=>e.hidden=e.dataset.section!==name);
   document.querySelectorAll('[data-tab]').forEach(e=>{if(e.dataset.tab===name)e.setAttribute('aria-current','page');else e.removeAttribute('aria-current');});
   draft.tab=name;
@@ -113,7 +114,7 @@ function controls(){
   $('query-form').querySelector('button').disabled=busy||!state.activeEditionId;
   $('query-next').disabled=busy||!queryResult?.body?.page?.nextCursor||querySnapshot!==state.editions.find(e=>e.id===state.activeEditionId)?.snapshot;
   $('merchant-form').querySelector('button').disabled=busy||!state.activeEditionId;
-  publisher?.controls(busy);sourceHistoryPanel?.controls(busy);
+  publisher?.controls(busy);sourceHistoryPanel?.controls(busy);customerReviewPanel?.controls(busy);
 }
 function renderJob(){
   const j=selectedJob(),area=$('job-summary');area.replaceChildren();$('request-body').hidden=true;
@@ -140,13 +141,13 @@ function render(){
   }
   $('exports').replaceChildren();
   for(const e of [...state.exports].reverse()){
-    const card=node('article');card.className='card';card.append(node('h3',e.createdAt+' · '+(e.editionId?'Frozen edition + workspace':'Complete working workspace')),node('p',e.directory));
+    const card=node('article');card.className='card';card.append(node('h3',e.createdAt+' · '+(e.issueId?'Customer review '+e.issueId:e.editionId?'Frozen edition + workspace':'Complete working workspace')),node('p',e.directory));
     const essential=e.files.filter(f=>!f.name.startsWith('raw/'));
     for(const f of essential){const b=button(f.name+' · '+f.bytes+' bytes','download',e.id);b.dataset.file=f.name;card.append(b);}
     const all=detail('Complete retained file manifest',e.files);card.append(all);$('exports').append(card);
   }
   if(querySnapshot&&querySnapshot!==state.editions.find(e=>e.id===state.activeEditionId)?.snapshot){queryResult=null;querySnapshot=null;$('query-result').textContent='Select a native query for this edition.';}
-  publisher?.render(state);sourceHistoryPanel?.render(busy);controls();
+  publisher?.render(state);sourceHistoryPanel?.render(busy);customerReviewPanel?.render(busy);controls();
 }
 async function fileInput(id,pathId){
   const file=$(id).files?.[0],path=$(pathId).value.trim();
@@ -277,6 +278,7 @@ async function publisherDownload(kind,id){
   const r=await request('/api/publisher/exports/'+encodeURIComponent(kind)+'/'+encodeURIComponent(id)),d=r.headers.get('content-disposition')??'';
   const match=/filename\*=UTF-8''([^;]+)/i.exec(d);saveBlob(await r.blob(),match?decodeURIComponent(match[1]):kind+'-'+id);
 }
+customerReviewPanel=createCustomerReviewPanel({getState:()=>state,perform,handle,download,fileInput,notice,persist:saveLocal});
 sourceHistoryPanel=createSourceHistoryPanel({getState:()=>state,perform,handle,saveEditor,notice,
   changedSource:refresh});
 publisher=createPublisherPanel({getState:()=>state,perform,download:publisherDownload,handle,notice,selectSection:name=>switchTab(name==='exports'?'delivery':name)});

@@ -26,6 +26,24 @@ const installationPayload={
  reopen:fields({preparation:alias,...installationPage},['preparation'])
 };
 for(const operation of ['inspect','prepare'])installationPayload[operation].oneOf=[{required:['sourceImport'],not:{required:['exportId']}},{required:['exportId'],not:{required:['sourceImport']}}];
+
+const customerId={type:'string',minLength:1,maxLength:160};
+const customerPage={offset:count(0,1000000),limit:count(1,100)};
+const customerSources={sourceOffset:count(0,1000000),sourceLimit:count(1,100)};
+const customerPayload={
+ issue:fields({requestId:customerId,editionId:id,title:{type:'string',minLength:1,maxLength:500},recipient:{type:'string',minLength:1,maxLength:500},
+   expectedRevision:revision},['requestId','editionId','title','recipient','expectedRevision']),
+ list:fields({kind:{enum:['issues','returns','adoptions']},issueId:customerId,...customerPage}),
+ inspect:fields({issueId:customerId,returnId:customerId,...customerPage,...customerSources},['issueId']),
+ export:fields({issueId:customerId,returnId:customerId,expectedRevision:revision},['issueId','expectedRevision']),
+ receive:fields({sourceImport:alias,expectedRevision:revision},['sourceImport','expectedRevision']),
+ preview:fields({returnId:customerId,status:{enum:['NO_CUSTOMER_CHOICE','SOURCE_CHANGED','RESPONSE_CHANGED','ALREADY_CURRENT','READY','CONFLICT']},...customerPage,...customerSources},['returnId']),
+ adopt:fields({returnId:customerId,requestId:customerId,expectedRevision:revision,expectedIntakeSha256:hash,expectedPreviewSha256:hash,
+   readyAll:{const:true},resolutions:{type:'array',minItems:1,maxItems:6000,items:fields({queryId,choice:{enum:['customer','current','skip']},expectedCurrentSha256:hash},['queryId','choice','expectedCurrentSha256'])},
+   reviewer:text,note:{type:'string',minLength:1,maxLength:4000}},['returnId','requestId','expectedRevision','expectedIntakeSha256','expectedPreviewSha256','reviewer','note'])
+};
+
+customerPayload.adopt.oneOf=[{required:['readyAll'],not:{required:['resolutions']}},{required:['resolutions'],not:{required:['readyAll']}}];
 const providerPayload={
  prepare:fields({expectedRevision:revision,expectedIntakeSha256:hash,maximumInputs:count(1,1000),queryIds:{type:'array',minItems:1,maxItems:1000,uniqueItems:true,items:queryId},refresh:{type:'boolean'},options},['expectedRevision']),
  request:fields({id,offset:count(0,1000),limit:count(1,250),eventOffset:count(0,Number.MAX_SAFE_INTEGER),eventLimit:count(1,100)},['id']),
@@ -92,6 +110,7 @@ function geoapifyWorkspaceTools(tool){
  tool('merchant_geoapify_merchant','Configure the selected edition using a host-declared public seller/payment profile and the original SF30 compiler.',scoped({profile:alias,expectedRevision:revision}),['workspace','profile','expectedRevision']),
  tool('merchant_geoapify_export','Export the complete workspace with original source, prepared requests, retained responses, decisions, unfinished forms and editions. A selected edition additionally exports native CSV/GeoJSON, review, query, provenance and configured seller files.',scoped({expectedRevision:revision}),['workspace','expectedRevision']),
  tool('merchant_geoapify_restore','Restore a host-declared complete .json.gz package into an empty original Geoapify workspace. Verify original files and dataset identities, then continue retained provider job IDs.',scoped({sourceImport:alias,expectedRevision:revision}),['workspace','sourceImport','expectedRevision']),
+ actionTool(tool,'merchant_geoapify_customer','Issue a complete source-bound frozen address review, export its offline customer working files, receive the full returned choices, compare issued/current/customer decisions and atomically adopt explicit resolutions through the original native decision writer. Original source groups, raw forms, customer attribution and history remain complete. Retry uncertain issue/adoption with the original requestId and payload.',customerPayload),
  actionTool(tool,'merchant_geoapify_installation','Inspect a complete retained Geoapify package and selected frozen edition, create original Workshare bindings, prepare the full Customer Installation, resume its retained request or independently reopen. Uses declared private directories and complete original inputs. Existing commercial phases, funding and OPEN checks stay with the native Installation writer.',installationPayload),
  tool('merchant_geoapify_file','Read original source exports, exact prepared provider requests or native publisher/customer files in retained byte chunks. Continue with readId/expectedSha256/nextOffset; EOF releases the snapshot.',scoped({kind:{enum:['source-export','provider-request','installation','installation-template','draft-csv','draft-review','buyer-config','session-manifest','session-csv','session-jsonl','session-review','facilitator-review','facilitator-response']},id,filename:{type:'string',maxLength:500},...chunk}),['workspace','kind','id'],read),
  tool('merchant_geoapify_file_release','Release an unfinished process-owned chunk read while retaining its original file.',scoped({readId:uuid}),['workspace','readId'],{idempotent:true}),

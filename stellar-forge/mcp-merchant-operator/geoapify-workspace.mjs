@@ -85,8 +85,8 @@ export async function readGeoapifyWorkspaceConfiguration(path) {
     const timeoutMs = count(input.timeoutMs ?? 120000, 'Provider timeout', 1000, 900000);
     const imports = Object.create(null), merchants = Object.create(null), buyers = Object.create(null), installations = Object.create(null);
     for (const [key, item] of entries(input.imports, 'retained imports')) {
-      if (!plain(item) || !['intake','response','package'].includes(item.kind))
-        throw failure('CONFIGURATION_ERROR', 'An import is an original CSV/JSON intake, generic-batch response, or complete package.');
+      if (!plain(item) || !['intake','response','package','customer-return'].includes(item.kind))
+        throw failure('CONFIGURATION_ERROR', 'An import is an original CSV/JSON intake, generic-batch response, complete package or full customer review return.');
       const allowed = item.kind === 'intake' ? ['label','kind','file','format','name','sourceURL','provenance','mapping'] :
         item.kind === 'response' ? ['label','kind','file','status','retryAfter'] : ['label','kind','file'];
       exact(item, allowed, ['kind','file']);
@@ -165,6 +165,30 @@ function sourceView(state, offset = 0, limit = 50) {
   }
   return result;
 }
+
+function customerIdentity(value) {
+  if(typeof value!=='string'||!value.trim()||value.length>160)throw failure('INVALID_PARAMS','Use the complete original customer operation identity, at most 160 characters.');
+  return value;
+}
+function customerRowView(row,offset,limit) {
+  const out={...row};
+  if(Array.isArray(row.sourceRows)){const listed=pageRows(row.sourceRows,offset,limit);out.sourceRows=listed.values;out.sourceRowsPage=listed.page;}
+  for(const key of ['candidates','issuedCandidates','currentCandidates'])if(Array.isArray(row[key])){
+    out[key]=row[key].map(candidate=>{
+      if(!Array.isArray(candidate.sourceCoordinates))return candidate;
+      const listed=pageRows(candidate.sourceCoordinates,offset,limit);
+      return {...candidate,sourceCoordinates:listed.values,sourceCoordinatesPage:listed.page};
+    });
+  }
+  return out;
+}
+function customerView(result,offset,limit) {
+  const out={...result};
+  for(const key of ['rows','queries'])if(Array.isArray(out[key]))out[key]=out[key].map(row=>customerRowView(row,offset,limit));
+  if(plain(out.project)){out.project={...out.project};if(Array.isArray(out.project.queries))out.project.queries=out.project.queries.map(row=>customerRowView(row,offset,limit));}
+  return out;
+}
+
 async function exactRetainedBytes(path, descriptor) {
   const bytes = await fileBytes(path, 256 * 1024 * 1024);
   if (bytes.length !== descriptor.bytes || createHash('sha256').update(bytes).digest('hex') !== descriptor.sha256)
@@ -284,6 +308,52 @@ export class MerchantGeoapifyWorkspaces {
       return { ...result, state: sourceView(result.state) };
     };
     switch (name) {
+
+      case 'merchant_geoapify_customer': {
+        const payload=args.payload??{};
+        if(!plain(payload))throw failure('INVALID_PARAMS','Use the complete original customer review selection.');
+        if(args.action==='issue'){
+          only(payload,['expectedRevision','requestId','editionId','title','recipient']);
+          customerIdentity(payload.requestId);originalId(payload.editionId);
+          return call('customer.issue',payload);
+        }
+        if(args.action==='list'){
+          only(payload,['kind','issueId','offset','limit']);
+          if(payload.kind!==undefined&&!['issues','returns','adoptions'].includes(payload.kind))throw failure('INVALID_PARAMS','Choose issued reviews, received returns or adoptions.');
+          if(payload.issueId!==undefined)customerIdentity(payload.issueId);
+          return call('customer.list',{...(payload.kind?{kind:payload.kind}:{}),...(payload.issueId?{issueId:payload.issueId}:{}),offset:count(payload.offset??0,'Customer history offset',0,1000000),limit:count(payload.limit??25,'Customer history page size',1,100)});
+        }
+        if(args.action==='inspect'||args.action==='preview'){
+          only(payload,args.action==='inspect'?['issueId','returnId','offset','limit','sourceOffset','sourceLimit']:
+            ['returnId','status','offset','limit','sourceOffset','sourceLimit']);
+          const {sourceOffset=0,sourceLimit=25,...selected}=payload;
+          if(args.action==='inspect')customerIdentity(selected.issueId);
+          if(selected.returnId!==undefined)customerIdentity(selected.returnId);
+          if(args.action==='preview'&&selected.returnId===undefined)throw failure('INVALID_PARAMS','Choose the original retained customer return.');
+          const offset=count(sourceOffset,'Grouped original source offset',0,1000000),limit=count(sourceLimit,'Grouped original source page size',1,100);
+          const response=await original.act('customer.'+args.action,{...selected,
+            offset:count(selected.offset??0,'Customer query offset',0,1000000),limit:count(selected.limit??25,'Customer query page size',1,100)});
+          return {...response,result:customerView(response.result,offset,limit),state:sourceView(response.state)};
+        }
+        if(args.action==='export'){
+          only(payload,['expectedRevision','issueId','returnId']);
+          customerIdentity(payload.issueId);if(payload.returnId!==undefined)customerIdentity(payload.returnId);
+          return call('customer.export',payload);
+        }
+        if(args.action==='receive'){
+          only(payload,['expectedRevision','sourceImport']);
+          const source=entry.imports[identifier(payload.sourceImport,'Customer return import')];
+          if(!source||source.kind!=='customer-return')throw failure('GEOAPIFY_IMPORT_NOT_CONFIGURED','Choose a declared complete original customer review return JSON.');
+          return call('customer.receive',{path:source.file,expectedRevision:payload.expectedRevision});
+        }
+        if(args.action==='adopt'){
+          only(payload,['expectedRevision','expectedIntakeSha256','returnId','expectedPreviewSha256','requestId','resolutions','readyAll','reviewer','note']);
+          customerIdentity(payload.returnId);customerIdentity(payload.requestId);
+          return call('customer.adopt',payload);
+        }
+        throw failure('INVALID_PARAMS','Choose issue, list, inspect, export, receive, preview or adopt.');
+      }
+
       case 'merchant_geoapify_installation': {
         const payload=args.payload??{};
         if(!plain(payload))throw failure('INVALID_PARAMS','Use the complete Installation action selection.');
