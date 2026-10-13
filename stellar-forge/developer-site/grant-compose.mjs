@@ -262,6 +262,9 @@ export function composeGrantApplication({
   }
   // Register complete canonical source identities before projecting reader links.
   receiveGrantCustomerSources(index, productAndFinanceMarkdown);
+  // Section receiving may already have projected private links from the companion.
+  // Retain their original identities in the matching public-index form before receiving it again.
+  index = projectGrantSourceIndex(index);
   receiveGrantProductSources(index, productAndFinanceMarkdown, productRegistrations);
   index = projectGrantSourceIndex(index);
   const reviewerEntry = composeGrantEntry(html);
