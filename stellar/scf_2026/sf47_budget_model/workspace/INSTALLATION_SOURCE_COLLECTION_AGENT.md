@@ -92,7 +92,7 @@ Pass this to use-existing. clear-existing removes an explicit link and requires 
       --actor "Receiving operator" --expected-sequence CURRENT_SEQUENCE \
       --expected-signature ORIGINAL_REVIEW_SHA256
 
-The original engine receives the entire reviewed collection serially. Each new row becomes the original file.add operation. A native draft change or unresolved original request is surfaced with the exact retained copy and journal state.
+The original engine receives the entire reviewed collection serially. Ctrl-C during receive asks the original loop to pause after its current native request and retain the complete checkpoint. Each new row becomes the original file.add operation. A native draft change or unresolved original request is surfaced with the exact retained copy and journal state.
 
 ## Interrupted replies and concurrent operators
 

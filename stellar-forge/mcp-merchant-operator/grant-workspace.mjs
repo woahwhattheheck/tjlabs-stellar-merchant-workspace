@@ -577,7 +577,7 @@ export class MerchantGrantWorkspaces {
         ({input, label:row.label, kind:row.kind, mediaType:row.mediaType, declaredSha256:row.sha256 ?? null}))};
       const file = binding.inputs[identifier(args.input)];
       need(file, 'GRANT_INPUT_NOT_CONFIGURED', 'Choose one original host input alias.');
-      const bytes = await readGrantAgentFile(file.file, GRANT_MAX_BUNDLE_BYTES);
+      const bytes = await readGrantAgentFile(file.file,file.kind==='source-working-copy'?SOURCE_COLLECTION_MAX_COPY_BYTES:GRANT_MAX_BUNDLE_BYTES);
       need(!file.sha256 || hash(bytes) === file.sha256, 'GRANT_INPUT_CHANGED', 'The declared original input changed.');
       return {workspace:alias, input:args.input, name:file.file.split(/[\\/]/).at(-1), bytes:bytes.length,
         sha256:hash(bytes), mediaType:file.mediaType, kind:file.kind};

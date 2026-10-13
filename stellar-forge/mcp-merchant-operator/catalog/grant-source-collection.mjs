@@ -28,7 +28,7 @@ export const grantSourceCollectionTools=[
     {...version,title:text(300),sourceUrl:str(12000),observedAt:str(300)},mutation),
   tool('stage','Stage whole original SHA-bound files through the original collection engine. Each source is at most8 MiB and the staged collection at most64 MiB; aliases resolve once and exact bytes remain in the durable copy.',
     {...version,files:{type:'array',minItems:1,maxItems:1024,items:{type:'object',additionalProperties:false,
-      properties:{input,expectedInputSha256:sha,name:text(240),type:text(200),lastModified:sequence},
+      properties:{input,expectedInputSha256:sha,name:text(240),type:text(200),lastModified:{type:'integer',minimum:-9007199254740991,maximum:9007199254740991}},
       required:['input','expectedInputSha256','name','type']}}},[...mutation,'files']),
   tool('edit','Edit the original collection title/defaults or exact row receiving metadata. The original engine validates fields and invalidates the prior review.',
     {...version,rowId:text(160),field:text(100),value:{type:['string','boolean']}},[...mutation,'field','value']),

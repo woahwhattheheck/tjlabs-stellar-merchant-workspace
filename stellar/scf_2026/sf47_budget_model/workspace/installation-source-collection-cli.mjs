@@ -141,7 +141,11 @@ export async function runInstallationSourceCollectionCLI(argv,{stdout=process.st
           }else if(action==='reconcile')args={retry:f['--retry']===true};
           if(['refresh','review','receive','reconcile','retire_rejected','use_existing'].includes(action))
             await client.open({expectedSelectionSha256:binding.selectionSha256});
-          result=await performInstallationSourceCollection(session.agent,action,args);
+          if(action==='receive'){
+            const pause=()=>session.agent.pause();process.once('SIGINT',pause);
+            try{result=await performInstallationSourceCollection(session.agent,action,args);}
+            finally{process.removeListener('SIGINT',pause);}
+          }else result=await performInstallationSourceCollection(session.agent,action,args);
         }
       }
     }catch(error){primary=error;throw error;}
