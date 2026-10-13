@@ -156,6 +156,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       const recovery=el.dataset.statementRecovery==='true';
       el.disabled=el.dataset.statementFixed==='true'||loading||busy||hostBusy||!!session.inflight||(!recovery&&!!(session.pending||session.accepted||session.setupPending))||(el.dataset.statementWrite==='true'&&caseValue.program.state!=='OPEN');
     });
+    root.querySelectorAll('[data-statement-row-select]').forEach(el=>{el.checked=session.batchSelection.includes(Number(el.dataset.statementRowSelect));el.disabled=!editable()||session.dirty;});
     const importButton=$('[data-statement-action="import"]');
     if(importButton)importButton.disabled=!editable()||session.dirty||!session.confirmed||!session.preview?.canImport;
     const warning=$('[data-statement-stale]');if(warning)warning.hidden=!session.dirty;
@@ -166,7 +167,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if(!row||!sameSetupValue(statementSetupSettings(session.inputs),row.settings)){delete session.inputs.statementSetup;session.notice='The account or interpretation changed. Save this mapping as a new setup edition to retain its reusable choice.';}
   }
   function clearBatch(){session.batchSelection=[];session.batchProposal=null;session.batchUndo=null;session.batchReviewPage=0;}
-  function changed(keepBatch=false){if(!keepBatch)clearBatch();session.editRevision++;session.dirty=true;session.confirmed=false;session.error='';schedulePersist();controls();}
+  function changed(keepBatch=false){if(!keepBatch)clearBatch();session.editRevision++;session.dirty=true;session.confirmed=false;session.error='';schedulePersist();if(!keepBatch)redrawBatch();controls();}
   function setDecision(number,patch){
     let decision=rowDecision(number);
     if(!decision){decision={rowNumber:number,action:'IMPORT'};session.inputs.decisions.push(decision);}
