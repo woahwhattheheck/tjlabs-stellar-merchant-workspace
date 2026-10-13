@@ -292,3 +292,9 @@ Before publishing workflow changes, use the maintained Commons `tools/hosted_ci_
 
 This carries Bryce's existing zero-spend instruction from [Commons RULES, CI and spend](https://github.com/woahwhattheheck/commons/blob/main/RULES.md#4-ci-and-spend) into this repository's consumed entry guidance. Original cost coordination: https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791755765336589 .
 
+
+## Installed agent operation
+
+The same complete reporting project is available through the original Merchant MCP host and the typed installed client. Follow [AGENT.md](AGENT.md) for host-declared inputs, private native store setup, full original input receiving, durable request custody, exact interrupted-operation recovery and whole project/archive downloads. The original browser, CLI, programme engine and desk adapter remain the same sources. An agent return can be reopened in this workbench while the previous complete workbench and its unfinished drafts stay retained.
+
+Use `starforge merchant-providers inspect reporting-programmes` to inspect the installed 17-tool catalogue without opening a workspace. `starforge merchant-providers init reporting-programmes --options HOST_SETUP_JSON` creates the ordinary Merchant host configuration; the original `merchant-mcp` or `merchant-mcp-stdio` command owns its transport. Actual provider SQL, schedules and recipient sends continue in their original accounts, with their returned files and outcomes received into the native project.

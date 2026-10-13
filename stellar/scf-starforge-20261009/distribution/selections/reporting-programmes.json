@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "reporting-programmes",
   "title": "Recurring reporting programmes",
-  "description": "Complete recurring report definitions, source editions, actual run and delivery observations, and editable native handover on Source Tables",
+  "description": "Complete recurring report definitions, original SQL/results, actual run and delivery observations, editable browser continuation and durable agent receiving through the maintained merchant host",
   "base": {
     "commands": [
       "installation",
@@ -74,7 +74,8 @@
     "dataset",
     "dataset-buyer",
     "collection-review",
-    "reporting-programmes"
+    "reporting-programmes",
+    "merchant-provider-tools"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
@@ -116,14 +117,15 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/service.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstream-service.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/application.mjs",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json",
+    "stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Complete recurring report definitions, source editions, actual run and delivery observations, and editable native handover on Source Tables",
+    "description": "Complete recurring report definitions, original SQL/results, actual run and delivery observations, editable browser continuation and durable agent receiving through the maintained merchant host",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""
