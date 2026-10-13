@@ -21,12 +21,13 @@ export type ZoteroMethod =
   'state'|'record.get'|'record.list'|'record.history'|'edition.get'|'project.get'|'project.page'|
   'capture.get'|'profile.save'|'capture.prepare'|'capture.control'|'documents.import'|
   'project.save'|'project.decide'|'edition.compare'|'research.get'|'research.preview'|
-  'research.prepare'|'research.receive';
+  'research.prepare'|'research.receive'|'project.return.prepare'|'project.return.import'|'project.return.preview'|'project.return.review'|'project.return.apply';
 export interface ZoteroClient {
   verify():Promise<{workspaceId:string;instanceId:string;active:true}>;
   state():Promise<Record<string,unknown>>;
   invoke<T=Record<string,unknown>>(method:ZoteroMethod,input?:Record<string,unknown>,requestId?:string|null):Promise<T>;
   importDocuments(bytes:Uint8Array,selection:{profileId:string;profileRevision:number;requestId:string}):Promise<Record<string,unknown>>;
+  importProjectReturn(bytes:Uint8Array,selection:{projectId:string;requestId:string}):Promise<Record<string,unknown>>;
   download(selection:{kind:string;id:string;revision?:number;role?:string;name?:string}):Promise<ZoteroFile>;
   exportWorkspace(requestId:string):Promise<ZoteroFile>;
   receiveWorkspace(bytes:Uint8Array,selection:{name:string;requestId:string}):Promise<Record<string,unknown>>;

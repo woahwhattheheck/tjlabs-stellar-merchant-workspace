@@ -71,7 +71,7 @@ export class ZoteroOperatorClient{
  request(op){op=requestId(op);return this.#tracked(()=>this.#lookup(op));}
  #lookup(op){return this.#request('/api/agent/request?'+query({requestId:op}));}
  save(value){
-  value=clone(value);need(plain(value)&&ZOTERO_AGENT_ACTIONS.includes(value.method)&&value.method!=='documents.import'&&plain(value.input),'ZOTERO_AGENT_REQUEST_INVALID');
+  value=clone(value);need(plain(value)&&ZOTERO_AGENT_ACTIONS.includes(value.method)&&!['documents.import','project.return.import'].includes(value.method)&&plain(value.input),'ZOTERO_AGENT_REQUEST_INVALID');
   value.requestId=requestId(value.requestId);return this.#tracked(()=>this.#request('/api/agent/save',{method:'POST',value}));
  }
  resume(op){op=requestId(op);return this.#tracked(()=>this.#request('/api/agent/resume',{method:'POST',value:{requestId:op}}));}
@@ -88,6 +88,20 @@ export class ZoteroOperatorClient{
    if(previous){need(same(previous.request,request),'ZOTERO_REQUEST_INPUT_CHANGED');if(previous.status==='COMPLETE'||previous.active)return previous;return this.#request('/api/agent/resume',{method:'POST',value:{requestId:op}});}
    await verifySource?.();const bytes=await sourceBytes(intent.source,LIMIT.capture);
    return this.#request('/api/agent/import?'+query(input),{method:'POST',bytes,headers:{'X-Zotero-Request-Id':op,'X-Zotero-Source-SHA256':intent.source.sha256}});
+  });
+ }
+ importProjectReturn(value,sourcePath,{sourceAlias=null,verifySource=null}={}){
+  value=clone(value);sourcePath=sourcePath&&resolve(sourcePath);const op=requestId(value.requestId);
+  need(plain(value)&&Object.keys(value).every(k=>['requestId','projectId'].includes(k)),'ZOTERO_AGENT_REQUEST_INVALID');
+  const input={projectId:value.projectId};
+  return this.#tracked(async()=>{
+   const path=join(this.#c.intents,op+'.project-return.json');let intent=await optionalJson(path);
+   if(intent)need(intent.workspaceId===this.workspaceId&&same(intent.input,input)&&intent.sourceAlias===sourceAlias&&(!sourcePath||intent.source.path===sourcePath),'ZOTERO_REQUEST_INPUT_CHANGED');
+   else{need(sourcePath,'ZOTERO_AGENT_FILE_REQUIRED');await verifySource?.();intent={workspaceId:this.workspaceId,requestId:op,input,sourceAlias,source:await originalFile(sourcePath,LIMIT.transfer)};await saveExact(path,intent);}
+   const request={requestId:op,method:'project.return.import',input,source:{bytes:intent.source.bytes,sha256:intent.source.sha256}},previous=await this.#lookup(op);
+   if(previous){need(same(previous.request,request),'ZOTERO_REQUEST_INPUT_CHANGED');if(previous.status==='COMPLETE'||previous.active)return previous;return this.#request('/api/agent/resume',{method:'POST',value:{requestId:op}});}
+   await verifySource?.();const bytes=await sourceBytes(intent.source,LIMIT.transfer);
+   return this.#request('/api/agent/project-return/import?'+query(input),{method:'POST',bytes,headers:{'X-Zotero-Request-Id':op,'X-Zotero-Source-SHA256':intent.source.sha256}});
   });
  }
  receive(value,sourcePath,{sourceAlias=null,verifySource=null}={}){

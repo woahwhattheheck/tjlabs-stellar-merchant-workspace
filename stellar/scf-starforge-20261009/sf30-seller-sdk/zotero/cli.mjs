@@ -40,6 +40,21 @@ const usage=String.raw`Zotero library and Research operator
   starforge zotero documents --library-type users|groups --library-id NUMERIC_ID
       --items ABS_ORIGINAL_ITEMS_JSON [--collections ABS_ORIGINAL_COLLECTIONS_JSON]
       --source-reference SOURCE --out ABS_DOCUMENT_SET
+  starforge zotero project-handover --connection ABS_PRIVATE_JSON --project PROJECT_ID
+      --project-revision N --request-id UUID --out ABS_COMPLETE_PROJECT_JSON
+  starforge zotero return-import --connection ABS_PRIVATE_JSON --project PROJECT_ID
+      --file ABS_COMPLETE_RETURNED_JSON --request-id UUID [--out ABS_RECEIPT_JSON]
+  starforge zotero return-preview --connection ABS_PRIVATE_JSON --id RETURN_ID
+      [--offset 0] [--limit 100] [--out ABS_COMPARISON_JSON]
+  starforge zotero return-review --connection ABS_PRIVATE_JSON --id RETURN_ID
+      --revision RETURN_REVISION --project-revision LOCAL_REVISION
+      --preview-sha256 EXACT_PREVIEW_SHA --choices-file ABS_CHOICES_JSON
+      [--note-file ABS_UTF8_TEXT] --request-id UUID [--out ABS_REVIEW_RECEIPT_JSON]
+  starforge zotero return-apply --connection ABS_PRIVATE_JSON --id RETURN_ID
+      --revision RETURN_REVISION --project-revision LOCAL_REVISION
+      --preview-sha256 EXACT_PREVIEW_SHA --request-id UUID [--out ABS_APPLY_RECEIPT_JSON]
+  starforge zotero return-download --connection ABS_PRIVATE_JSON --id RETURN_ID
+      [--role source] [--revision N] --out ABS_JSON
   starforge zotero state --connection ABS_PRIVATE_JSON
   starforge zotero shutdown --connection ABS_PRIVATE_JSON
 
@@ -84,11 +99,40 @@ export async function main(args=process.argv.slice(2)){
     const result=await receiveWorkspace(bytes,{directory:absolute(opts.state),requestId:requestId(opts['request-id'])});
     process.stdout.write(JSON.stringify(result)+'\n');return result;
   }
+  const integer=(value,{zero=false}={})=>{
+    need(typeof value==='string'&&/^(0|[1-9][0-9]*)$/.test(value),'ZOTERO_REVISION_REQUIRED');
+    const n=Number(value);need(Number.isSafeInteger(n)&&n>=(zero?0:1),'ZOTERO_REVISION_REQUIRED');return n;
+  };
+  const returnSelection=()=>{
+    need(typeof opts['preview-sha256']==='string'&&/^[a-f0-9]{64}$/.test(opts['preview-sha256']),'ZOTERO_RETURN_PREVIEW_REQUIRED');
+    return {id:opts.id,expectedRevision:integer(opts.revision),expectedProjectRevision:integer(opts['project-revision']),
+      previewSha256:opts['preview-sha256']};
+  };
   const connection=await loadZoteroConnection(absolute(opts.connection)),client=createZoteroClient(connection);
   try{
     await client.verify();let result;
     if(command==='state')result=await client.state();
-    else if(command==='invoke'){
+    else if(command==='project-handover'){
+      const prepared=await client.invoke('project.return.prepare',{projectId:opts.project,projectRevision:integer(opts['project-revision'])},requestId(opts['request-id']));
+      const file=await client.download({kind:'project-delivery',id:prepared.record.id,revision:prepared.record.revision});
+      result={delivery:prepared.record,file:await output(opts.out,file.bytes)};
+    }else if(command==='return-import'){
+      result=await client.importProjectReturn(await readBytes(absolute(opts.file),LIMIT.transfer),
+        {projectId:opts.project,requestId:requestId(opts['request-id'])});
+    }else if(command==='return-preview'){
+      result=await client.invoke('project.return.preview',{id:opts.id,offset:integer(opts.offset??'0',{zero:true}),limit:integer(opts.limit??'100')});
+    }else if(command==='return-review'){
+      const choices=parse(await readBytes(absolute(opts['choices-file']),LIMIT.control));
+      need(choices!==null&&typeof choices==='object'&&!Array.isArray(choices),'ZOTERO_RETURN_CHOICES_REQUIRED');
+      for(const side of Object.values(choices))need(['local','returned','base'].includes(side),'ZOTERO_RETURN_CHOICE_INVALID');
+      const note=opts['note-file']?new TextDecoder('utf-8',{fatal:true}).decode(await readBytes(absolute(opts['note-file']),LIMIT.control)):'';
+      result=await client.invoke('project.return.review',{...returnSelection(),choices,note},requestId(opts['request-id']));
+    }else if(command==='return-apply'){
+      result=await client.invoke('project.return.apply',returnSelection(),requestId(opts['request-id']));
+    }else if(command==='return-download'){
+      const file=await client.download({kind:'project-return',id:opts.id,...(opts.revision?{revision:integer(opts.revision)}:{}),...(opts.role?{role:opts.role}:{})});
+      result=await output(opts.out,file.bytes);
+    }else if(command==='invoke'){
       const input=opts['input-file']?parse(await readBytes(absolute(opts['input-file']),LIMIT.control)):{};
       result=await client.invoke(opts.method,input,opts['request-id']??null);
     }else if(command==='import')result=await client.importDocuments(await readBytes(absolute(opts.file),LIMIT.transfer),{
@@ -105,7 +149,11 @@ export async function main(args=process.argv.slice(2)){
       result={name:result.name,receipt:result.receipt,child:{workspaceId:result.connection.workspaceId,instanceId:result.connection.instanceId,active:true}};
     }else if(command==='shutdown')result=await client.shutdown();
     else throw Object.assign(new Error('ZOTERO_COMMAND_INVALID'),{code:'ZOTERO_COMMAND_INVALID'});
-    if(opts.out&&command!=='download'&&command!=='export')process.stdout.write(JSON.stringify(await output(opts.out,json(result)))+'\n');
+    if(['return-import','return-review','return-apply'].includes(command)){
+      // Replay is transport status, not a change to the immutable saved receipt.
+      const {replayed,...originalResult}=result;result=originalResult;
+    }
+    if(opts.out&&!['download','export','project-handover','return-download'].includes(command))process.stdout.write(JSON.stringify(await output(opts.out,json(result)))+'\n');
     else process.stdout.write(JSON.stringify(result)+'\n');
     return result;
   }finally{client.close();}

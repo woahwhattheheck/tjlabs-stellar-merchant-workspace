@@ -183,3 +183,11 @@ operate the important controls and inspect the actual returned images. Keep
 the original source, current runtime, saved results and rendered observations
 together. Source publication alone does not claim that this new agent course
 has completed on the native host.
+
+## Returned customer projects
+
+The same provider now exposes `merchant_zotero_return_import` for a configured returned file. Prepare an immutable selected project through `merchant_zotero_save` with `project.return.prepare`, export its `project-delivery` record and receive it into the original named child. The narrower packet contains that project's full saved history, source editions, original documents and profile history; choose the complete workspace export when linked Research dossiers must travel too.
+
+After the customer edits and returns a prepared project, import it against the original project ID. Use `project.return.preview` through the view tool, read every reported page, and save explicit local/returned/base choices through `project.return.review`. Read the saved return record for its complete choices. The original project is changed only by `project.return.apply` against the exact saved review, preview digest and current project revision. Reuse the same native request UUID after an uncertain response. Complete source bytes, common ancestry, review and applied result remain in the original editable workspace and its whole transfer.
+
+The complete original customer course and browser/CLI instructions are in [RETURNED_PROJECTS.md](./RETURNED_PROJECTS.md). The native source owner remains SDK12 / Root2D58 in the existing OSF programme.

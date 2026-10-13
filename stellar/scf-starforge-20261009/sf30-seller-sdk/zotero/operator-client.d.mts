@@ -1,6 +1,6 @@
 export type ZoteroRequestId=string;
-export type ZoteroReadMethod='state'|'record.get'|'record.list'|'record.history'|'edition.get'|'project.get'|'project.page'|'capture.get'|'research.get'|'research.preview';
-export type ZoteroMethod='profile.save'|'capture.prepare'|'capture.control'|'project.save'|'project.decide'|'edition.compare'|'research.prepare'|'research.receive';
+export type ZoteroReadMethod='state'|'record.get'|'record.list'|'record.history'|'edition.get'|'project.get'|'project.page'|'capture.get'|'research.get'|'research.preview'|'project.return.preview';
+export type ZoteroMethod='profile.save'|'capture.prepare'|'capture.control'|'project.save'|'project.decide'|'edition.compare'|'research.prepare'|'research.receive'|'project.return.prepare'|'project.return.review'|'project.return.apply';
 export interface ZoteroRequest{requestId:ZoteroRequestId;method:ZoteroMethod;input:Record<string,unknown>}
 export interface ZoteroAttachment{directory:string;mode?:'managed'|'owned';connectionFile?:string;researchDirectory?:string;exportDirectory:string;environment?:Record<string,string|undefined>}
 export interface ZoteroRequestRecord{id:string;revision:number;requestId:string;requestSha256:string;request:{requestId:string;method:string;input:Record<string,unknown>;source?:{bytes:number;sha256:string}};status:'PREPARED'|'RUNNING'|'COMPLETE'|'RESUME_REQUIRED';active:boolean;displayStatus:string;result:unknown;lastError:string|null}
@@ -16,6 +16,7 @@ export declare class ZoteroOperatorClient{
  resume(id:string):Promise<ZoteroRequestRecord>;
  cancel(requestId:string,captureId:string):Promise<ZoteroRequestRecord>;
  importDocuments(input:{requestId:string;profileId:string;profileRevision:number},sourcePath:string,options?:{sourceAlias?:string|null;verifySource?:()=>Promise<unknown>}):Promise<ZoteroRequestRecord>;
+ importProjectReturn(input:{requestId:string;projectId:string},sourcePath:string,options?:{sourceAlias?:string|null;verifySource?:()=>Promise<unknown>}):Promise<ZoteroRequestRecord>;
  receive(input:{requestId:string;name:string},sourcePath:string,options?:{sourceAlias?:string|null;verifySource?:()=>Promise<unknown>}):Promise<unknown>;
  receiver(name:string):Promise<unknown>;
  export(id:string,selection?:ZoteroExportSelection):Promise<ZoteroExport>;

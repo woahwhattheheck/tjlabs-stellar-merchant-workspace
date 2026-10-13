@@ -241,7 +241,7 @@ connects managed or owned aliases to the existing `workspace.sqlite`, original
 private listener and Research binding. The browser, CLI and customer agent use
 the same saved library and original operations.
 
-The fourteen tools cover current library/project views, exact saved mutation
+The fifteen tools cover current library/project views, exact saved mutation
 requests and replay, capture cancellation, configured original-file import,
 complete immutable exports, chunked file reading and original named receiving.
 Source imports retain all original bytes in the project. A lost response is
@@ -267,3 +267,11 @@ completed original library/browser receiving remains the base; the new
 customer-agent course is specified in the same native guide and follows that
 saved project. Original source terms, attachment access and Research history
 remain attached to the actual source.
+
+## Bring customer edits back into the author’s project
+
+[Returned projects](../../stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/RETURNED_PROJECTS.md) completes the same library workflow after independent receiving. Freeze an exact project revision as an editable project-delivery, let the customer continue its own source-linked decisions and findings, and import its returned file into the original project. The browser, CLI and customer agent share the same saved return records.
+
+Comparison uses the exact common project-history hash and original source edition, including a previously applied incoming branch. Independent changes are combined; divergent title, description, collection scope, item decisions, notes, finding content/deletions and finding order have explicit local, returned or base choices. Save the review before applying. The exact current project and reviewed preview are checked again in the original transaction, which preserves the whole incoming source and appends both the authored project revision and accepted return result. A later author edit requires fresh review; repeating an accepted UUID returns its original immutable result.
+
+The dedicated project-delivery contains the selected project’s history, referenced source editions, profile history and complete original source objects. Use the full workspace export when linked Research dossiers must travel too. After reconciliation, continue the existing Research handoff from the explicitly selected new project revision and deliver/reopen the complete progressed workspace. The full practical customer course is [Commissioning](./COMMISSIONING.md); it uses the existing SDK12 / Root2D58 OSF programme and the original source and commercial ownership.

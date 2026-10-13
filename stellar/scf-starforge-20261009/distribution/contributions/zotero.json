@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "zotero",
-  "description": "Zotero library capture, original Research review and complete independent receiving, durable customer-agent operation and complete original project receiving",
+  "description": "Zotero library capture, original Research review and complete independent receiving, durable customer-agent operation and complete original project receiving, source-bound returned-project review and atomic authored reconciliation",
   "components": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/zotero",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers",
@@ -40,7 +40,8 @@
     "./zotero/agent": {
       "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/merchant-agent.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/merchant-agent.mjs"
-    }
+    },
+    "./zotero/project-returns": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/project-returns.mjs"
   },
   "browserAssets": [
     {
