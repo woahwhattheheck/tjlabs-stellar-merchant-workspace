@@ -1,9 +1,13 @@
 // MIT. Local, read-only recipient UI for complete original catalogue handovers.
 import {openText,compareEditions,tableJsonl,materialCsv,TABLES,decodeBase64} from './core.mjs';
+import {createRecipientReviewPanel} from './review-panel.mjs';
+import {exportRecipientWorking,openRecipientWorking} from './review.mjs';
 export function mount(document){
  const root=document.getElementById('app'),template='<!doctype html>\n'+document.documentElement.outerHTML;
  const state={bundle:null,tab:'overview',edition:null,before:null,after:null,query:'',page:0,table:'catalog_decisions',review:null,selected:null,error:null,busy:false};
- const tabs=[['overview','Overview'],['materials','Materials'],['compare','Compare editions'],['decisions','Customer decisions'],['supplier','Supplier records'],['sources','Original sources'],['records','All retained records']];
+ let openEpoch=0;
+ let reviewPanel;
+ const tabs=[['review-return','Review and return'],['overview','Overview'],['materials','Materials'],['compare','Compare editions'],['decisions','Customer decisions'],['supplier','Supplier records'],['sources','Original sources'],['records','All retained records']];
  const text=(tag,value,attrs={})=>{const el=document.createElement(tag);el.textContent=String(value??'');for(const [key,v] of Object.entries(attrs))el.setAttribute(key,String(v));return el;};
  const el=(tag,attrs={},...children)=>{const n=document.createElement(tag);for(const [key,value] of Object.entries(attrs)){if(key.startsWith('on'))n.addEventListener(key.slice(2),value);else n.setAttribute(key,String(value));}for(const c of children.flat())if(c!==null&&c!==undefined)n.append(typeof c==='string'?document.createTextNode(c):c);return n;};
  const button=(label,action,attrs={})=>el('button',{type:'button',onclick:action,...attrs},label);
@@ -39,28 +43,36 @@ export function mount(document){
    button('Clear',()=>{state.query='';state.page=0;render();}));
  }
  const matches=v=>!state.query||JSON.stringify(v).toLocaleLowerCase('en-US').includes(state.query.toLocaleLowerCase('en-US'));
- function start(bundle){
+ function start(bundle,working={}){
+  openEpoch++;
   const editions=[...bundle.editions.keys()];
   Object.assign(state,{bundle,tab:'overview',edition:bundle.catalog.activeEditionId??editions.at(-1),before:editions[0],after:bundle.catalog.activeEditionId??editions.at(-1),query:'',page:0,selected:null,error:null,busy:false});
+  reviewPanel?.reset(working);
   render();
  }
  async function openFile(file){
-  if(!file)return;
+  if(!file||state.busy)return;
+  if(reviewPanel?.hasUnsaved()&&!document.defaultView.confirm('Keep your current work? Cancel to save the complete working review before opening a different bundle. Choose OK only after preserving it.'))return;
+  const generation=++openEpoch;
   state.busy=true;state.error=null;render();
   try{
    if(file.size>256*1024*1024)throw new Error('Choose a complete bundle of at most 256 MiB.');
    const bytes=new Uint8Array(await file.arrayBuffer()),source=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);
    // Give the progress status a paint before synchronous verification.
    await new Promise(resolve=>setTimeout(resolve,20));
+   if(generation!==openEpoch)return;
    start(openText(source,{name:file.name}));
-  }catch(error){state.busy=false;state.error=(error.code?error.code+': ':'')+error.message;render();}
+  }catch(error){if(generation!==openEpoch)return;state.busy=false;state.error=(error.code?error.code+': ':'')+error.message;render();}
  }
  function readerDownload(){
   const b=state.bundle,bytes=new TextEncoder().encode(b.text);let binary='';
   for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
   const payload=JSON.stringify({name:b.name,base64:btoa(binary),sha256:b.identity.sha256}).replaceAll('<','\\u003c');
-  const output=template.replace(/(<script id="catalog-payload" type="application\/json">)[\s\S]*?(<\/script>)/,(_all,start,end)=>start+payload+end);
+  let output=template.replace(/(<script id="catalog-payload" type="application\/json">)[\s\S]*?(<\/script>)/,(_all,start,end)=>start+payload+end);
   if(output===template&&!template.includes(payload))throw new Error('The complete reader template is unavailable.');
+  const working=reviewPanel?.snapshot();
+  const reviewPayload=working?JSON.stringify({review:working.review,draft:working.draft,author:working.author}).replaceAll('<','\\u003c'):'';
+  output=output.replace(/(<script id="catalog-review-payload" type="application\/json">)[\s\S]*?(<\/script>)/,(_all,start,end)=>start+reviewPayload+end);
   download('Material_Catalog_'+filename(b.catalog.id)+'.html',output,'text/html;charset=utf-8');
  }
  function overview(){
@@ -70,7 +82,7 @@ export function mount(document){
   const controls=el('div',{class:'toolbar'},button('Download unchanged original bundle',()=>download(b.name,b.text,'application/x-ndjson;charset=utf-8')),
    button('Download inspection manifest',()=>downloadJson('catalog-inspection.json',s)),
    button('Download complete offline reader',readerDownload,document.documentElement.dataset.standalone==='true'?{}:{disabled:'',title:'Build the standalone reader first'}));
-  return section('Complete recipient workspace',hint('This file opens the catalogue as it was exported. Customer decisions and supplier reviews are the retained original records; their recorded dates and revisions remain visible. Use the original operator to make changes.'),dl,controls,
+  return section('Complete recipient workspace',hint('This file opens the catalogue as it was exported. Customer decisions and supplier reviews are the retained original records; their recorded dates and revisions remain visible. Use Review and return to propose named customer decisions. Only the original author operator can adopt them.'),dl,controls,
    text('h3','Bundle inspection'),text('p',s.inspection),text('p',s.supplierInspection),
    text('h3','All retained tables'),detailTable(['Table','Records'],Object.entries(s.records).map(([key,count])=>row([key,count],()=>{state.table=key;state.tab='records';state.query='';state.page=0;render();}))));
  }
@@ -137,18 +149,21 @@ export function mount(document){
   if(state.busy)root.append(text('p','Reading and checking the complete original bundle…',{role:'status'}));
   if(!state.bundle){root.append(section('Open a catalogue handover',text('p','Choose the original material-catalog JSONL export. The complete catalogue, source files, customer history and supplier records remain on this device.'),hint('No account, connection or server is required for this standalone file. Keep the original bundle with the handover.')));return;}
   const b=state.bundle;
-  root.append(el('div',{class:'summary'},text('strong',b.catalog.title),text('span','Revision '+b.catalog.revision+' · '+b.header.exportedAt),button('Close bundle',()=>{Object.assign(state,{bundle:null,selected:null,error:null});render();})));
+  root.append(el('div',{class:'summary'},text('strong',b.catalog.title),text('span','Revision '+b.catalog.revision+' · '+b.header.exportedAt),button('Close bundle',()=>{if(reviewPanel?.hasUnsaved()&&!document.defaultView.confirm('Save the complete working review before closing? Cancel to keep this work open. Choose OK only after preserving it.'))return;openEpoch++;reviewPanel?.reset();Object.assign(state,{bundle:null,selected:null,error:null});render();})));
   root.append(el('nav',{'aria-label':'Catalogue sections'},tabs.map(([key,label])=>button(label,()=>{state.tab=key;state.query='';state.page=0;state.selected=null;render();},{'aria-current':state.tab===key?'page':'false'}))));
   let content;
-  try{content=state.tab==='overview'?overview():state.tab==='materials'?materials():state.tab==='compare'?comparison():state.tab==='decisions'?decisions():state.tab==='sources'?sources():records(state.tab==='supplier');}
+  try{content=state.tab==='review-return'?reviewPanel.render():state.tab==='overview'?overview():state.tab==='materials'?materials():state.tab==='compare'?comparison():state.tab==='decisions'?decisions():state.tab==='sources'?sources():records(state.tab==='supplier');}
   catch(error){content=section('Unable to display selection',text('p',error.message,{role:'alert'}));}
   root.append(el('main',{id:'content'},content));
   if(state.selected){
    const d=state.selected,panel=el('section',{class:'detail',tabindex:'-1','aria-label':'Selected record'},el('div',{class:'toolbar'},text('h2',d.title),button('Close detail',()=>{state.selected=null;render();}),button('Download record',()=>downloadJson(filename(d.title)+'.json',d.value))),text('pre',pretty(d.value)));
    root.append(panel);panel.focus({preventScroll:true});
   }
-  root.append(text('footer','Original catalogue handover · Read-only recipient · All source and record downloads preserve their declared scope.'));
+  root.append(text('footer','Original catalogue handover · Named proposals stay separate until explicit author adoption · Complete original source and history retained.'));
+  if(state.busy)for(const control of root.querySelectorAll('button,input,select,textarea'))control.disabled=true;
  }
+ reviewPanel=createRecipientReviewPanel(document,{bundle:()=>state.bundle,render,download,downloadReader:readerDownload,replace:(bundle,working)=>start(bundle,working)});
+ document.defaultView.addEventListener('beforeunload',event=>{if(reviewPanel.hasUnsaved()){event.preventDefault();event.returnValue='';}});
  render();
  const payload=document.getElementById('catalog-payload');
  if(payload?.textContent.trim()){
@@ -156,7 +171,9 @@ export function mount(document){
    const p=JSON.parse(payload.textContent),bytes=decodeBase64(p.base64);
    const bundle=openText(new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes),{name:p.name});
    if(p.sha256&&bundle.identity.sha256!==p.sha256)throw new Error('The embedded original bundle differs from the reader manifest.');
-   start(bundle);
+   const retained=document.getElementById('catalog-review-payload')?.textContent.trim();
+   let working={};if(retained){const record=JSON.parse(retained);working=openRecipientWorking(exportRecipientWorking(bundle,record.review??null,record.draft??{},record.author??null));}
+   start(bundle,working);
   }catch(error){state.error=error.message;render();}
  }
  return {openFile,getSummary:()=>state.bundle?.summary??null};

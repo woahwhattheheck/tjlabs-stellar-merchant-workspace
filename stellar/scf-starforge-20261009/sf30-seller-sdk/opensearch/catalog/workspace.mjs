@@ -11,6 +11,7 @@ import { exportCatalog, createCatalogQueryDraft } from './exports.mjs';
 import { exportCatalogBundle, importCatalogBundle } from './transfer.mjs';
 import { SupplierWorkspace } from './supplier/workspace.mjs';
 import { bmecatInputProfile, assertBMEcatCatalogMode } from './supplier/bmecat/projection.mjs';
+import { previewRecipientReview, receiveRecipientReview } from './recipient-return.mjs';
 import { setupCatalogImportStorage, inspectCatalogImportStorage, retireCatalogImportStage } from './import-storage.mjs';
 
 export const CATALOG_SCHEMA = 'stellar-forge.material-catalog.v1';
@@ -478,7 +479,9 @@ export class OpenSearchCatalogWorkspace {
       quantity: catalogQuantity(material, quantity, unit) };
   }
   saveDecision(request) {
-    return this.sync('catalog-decision', request, () => {
+    return this.sync('catalog-decision', request, () => this.writeDecision(request));
+  }
+  writeDecision(request, recipientReview) {
       positiveRevision(request.expectedCatalogRevision);
       const catalog = this.catalog(request.catalogId, request.expectedCatalogRevision);
       if (!catalog.activeEditionId) fail('CATALOG_EDITION_REQUIRED', 'Select the reviewed catalog edition first.');
@@ -498,11 +501,18 @@ export class OpenSearchCatalogWorkspace {
         catalogId: catalog.id, catalogRevision: catalog.revision, editionId: catalog.activeEditionId, tenantId: catalog.tenantId,
         customerId, description, materialKey: material.key, materialId: material.materialId, materialSha256: material.sha256,
         status: request.status, note: catalogText(request.note, 'Review note', 4000, true) ?? '', createdAt: prior?.createdAt ?? at, updatedAt: at };
+      if (recipientReview) decision.recipientReview = recipientReview;
+      const portable = [{type:'record',table:'catalog_decision_history',values:[decision.id,decision.revision,json(decision)]},
+        {type:'record',table:'catalog_decisions',values:[decision.id,catalog.id,contextKey,decision.revision,json(decision)]}];
+      if (portable.some(frame => Buffer.byteLength(json(frame)+'\n') > 8*1024*1024)) fail('CATALOG_RECIPIENT_RECORD_LIMIT', 'The complete returned review and decision exceed the original 8 MiB portable-record limit. Preserve this file and split the named review before adoption.');
       this.db.prepare('INSERT INTO catalog_decisions VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision,record_json=excluded.record_json')
         .run(decision.id, catalog.id, contextKey, decision.revision, json(decision));
       this.db.prepare('INSERT INTO catalog_decision_history VALUES(?,?,?)').run(decision.id, decision.revision, json(decision));
       return { decision: this.decisionView(decision, catalog) };
-    });
+  }
+  previewRecipientReview(reviewText) { this.open(); return previewRecipientReview(this, reviewText); }
+  receiveRecipientReview(request) {
+    return this.sync('catalog-recipient-review', request, () => receiveRecipientReview(this, request));
   }
   decisions({ catalogId, offset = 0, limit = 50 }) {
     const catalog = this.catalog(catalogId); ({ offset, limit } = page(offset, limit));
