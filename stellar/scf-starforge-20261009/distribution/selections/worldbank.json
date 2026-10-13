@@ -67,7 +67,8 @@
     "merchant-provider-receiving",
     "merchant-provider-tools",
     "merchant-console",
-    "worldbank-programmes"
+    "worldbank-programmes",
+    "operator-discovery"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
