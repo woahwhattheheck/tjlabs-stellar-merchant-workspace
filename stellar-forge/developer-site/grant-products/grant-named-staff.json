@@ -126,6 +126,141 @@
           "sha256": "c4fd7210cff3adc6c3acbf63aef19f0027abd48b28cf9a8cf09fa83d39fba39c"
         }
       ]
+    },
+    {
+      "id": "grant-named-staff-working-copy",
+      "label": "Complete contributor working-file model, original session recovery and native reconciliation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/engagement-working-copy.mjs",
+      "editions": [
+        {
+          "commit": "2e8c9198bd6b5d635fb20e59ec888b46019fafe1",
+          "bytes": 26082,
+          "sha256": "d3a5251f7d9cda2f8770b31d4efde287d83c6c47068e83f67b95f8b24913ada2",
+          "git_blob": "b21dcdc012ac41c50a985c7fd357a47b5fe69cd1"
+        }
+      ]
+    },
+    {
+      "id": "grant-named-staff-working-lookup",
+      "label": "Read-only original contributor request and receipt reconciliation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/engagement_working.py",
+      "editions": [
+        {
+          "commit": "2e8c9198bd6b5d635fb20e59ec888b46019fafe1",
+          "bytes": 6614,
+          "sha256": "726f40d268dc1e297ad19506d76f9422b2876ba4278b8e9cdedc84a5d676467c",
+          "git_blob": "875bca7dc2ef4ffa59820436800ca684f9f2c111"
+        }
+      ]
+    },
+    {
+      "id": "grant-named-staff-engagement-desk",
+      "label": "Complete installed agreement, cash and allocation preparation desk",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_engagements.mjs",
+      "editions": [
+        {
+          "commit": "2e8c9198bd6b5d635fb20e59ec888b46019fafe1",
+          "bytes": 90460,
+          "sha256": "84d034ef8de3405e1c41ee35b835718e8f0c5c85b62f7036825a26649ea6b29e",
+          "git_blob": "1102fcd6e6b5255610aa69deb8a954b2fc3079ae"
+        }
+      ]
+    },
+    {
+      "id": "grant-named-staff-working-store",
+      "label": "Complete active preparation and immutable checkpoint retention",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/engagement-working-store.mjs",
+      "editions": [
+        {
+          "commit": "2e8c9198bd6b5d635fb20e59ec888b46019fafe1",
+          "bytes": 15057,
+          "sha256": "fba4bf86621abf5064b4e972ebf77c26faa68a4c6d4e246a94b91bae5ee432e7",
+          "git_blob": "eb86c1efd31214e53f07714bab559a4bf44c9fe4"
+        }
+      ]
+    },
+    {
+      "id": "grant-named-staff-working-desk",
+      "label": "Named working-copy inspection, reopening and file controls",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/engagement-working-desk.mjs",
+      "editions": [
+        {
+          "commit": "2e8c9198bd6b5d635fb20e59ec888b46019fafe1",
+          "bytes": 24319,
+          "sha256": "33c05f28edeacb8ba784a94452fd17fc62c997b4f2cf05d6a63d0409037249c2",
+          "git_blob": "10e339c3e7016b5958a1e9cd9161003fe7947df0"
+        }
+      ]
+    },
+    {
+      "id": "grant-named-staff-working-style",
+      "label": "Complete working-copy presentation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/engagement-working-desk.css",
+      "editions": [
+        {
+          "commit": "2e8c9198bd6b5d635fb20e59ec888b46019fafe1",
+          "bytes": 7284,
+          "sha256": "f04785bebea0bb370f1557cef5d095bedcc009c78a9cc57f5216d29f2e78069e",
+          "git_blob": "86424e606599e4ca80e2b1cc68af74af7db95412"
+        }
+      ]
+    },
+    {
+      "id": "grant-named-staff-working-guide",
+      "label": "Contributor working-copy operator and complete receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/ENGAGEMENT_WORKING_COPIES.md",
+      "editions": [
+        {
+          "commit": "2e8c9198bd6b5d635fb20e59ec888b46019fafe1",
+          "bytes": 19558,
+          "sha256": "c71b61043b882575542f8072783511fd9fe2f7df868b91fd4747e6aa2885a4bb",
+          "git_blob": "c8ef94bafbaf402e7d71dc820080bb49fdde09a3"
+        }
+      ]
+    },
+    {
+      "id": "grant-named-staff-engagement-guide",
+      "label": "Original agreement book, dated Forecast and Portfolio workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/ENGAGEMENTS.md",
+      "editions": [
+        {
+          "commit": "a1774c23ef3e73ef2266a90a334eaf7f800c81c9",
+          "bytes": 35785,
+          "sha256": "7c1ae740c9a6138bf446ed682827812ae3891ef92c74db2840018091b56e8baf",
+          "git_blob": "4a78f652e254a44e97881e5527121ea329dd79ce"
+        }
+      ]
+    },
+    {
+      "id": "grant-named-staff-engagement-receiving",
+      "label": "Original complete contributor case receiving and independent native continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/ENGAGEMENTS_RECEIVING.md",
+      "editions": [
+        {
+          "commit": "a1774c23ef3e73ef2266a90a334eaf7f800c81c9",
+          "bytes": 31689,
+          "sha256": "b6a78b071642124fe0722a3aba51529c745385dd06fb6b0cc7bdbf0bbe612e64",
+          "git_blob": "686879126218aaf1ef1751b1d098b770cd1974d2"
+        }
+      ]
     }
   ]
 }
