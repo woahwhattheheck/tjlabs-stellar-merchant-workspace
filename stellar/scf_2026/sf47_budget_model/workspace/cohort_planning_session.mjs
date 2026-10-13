@@ -67,6 +67,13 @@ function checkReport(value,label){
   const calculated=evaluateCohortPlan(value.input);
   need(stable(comparableReport(value))===stable(comparableReport(calculated)),label+' differs from its original calculated inputs.');
 }
+function checkReportInput(value,raw,label){
+  if(raw===undefined||raw==='')return;
+  string(raw,label+' input',COHORT_WORKING_SESSION_MAX_BYTES);
+  need(value,label+' has recorded inputs without its calculated report.');
+  let input;try{input=JSON.parse(raw);}catch{fail(label+' input is not complete JSON.');}
+  need(stable(input)===stable(value.input),label+' input differs from its retained calculated source.');
+}
 function checkDocument(value,label){
   object(value,label);
   if(value.schema===COHORT_PLAN_SCHEMA){evaluateCohortPlan(value);return;}
@@ -91,7 +98,10 @@ function editor(value,data,label){
   optionalString(data.label,label+' label');
   if(value.kind==='schedules'){object(data.cadence,label+' cadence');object(data.payment,label+' payment');}
   if(value.kind==='capacityPools')object(data.hoursByWeekday,label+' weekday capacity');
-  if(value.variants!==undefined)object(value.variants,label+' saved choices');
+  const variants=object(value.variants,label+' saved choices');
+  map(variants.cadence,label+' saved cadence choices');map(variants.payment,label+' saved payment choices');
+  if(variants.economics!==null&&variants.economics!==undefined)object(variants.economics,label+' saved economics');
+  if(variants.fundingGroupIds!==undefined)array(variants.fundingGroupIds,label+' saved funding groups');
 }
 function comparison(value,label){
   if(value===null||value===undefined)return;
@@ -136,6 +146,7 @@ export function validateCohortPlanningState(value,caseId){
   if(value.plan)planShape(value.plan,'Working plan');
   checkReport(value.report,'Working report');
   for(const key of ['reportInput','selectedDate','filter','reportSection','importText','schedulingInput'])if(value[key]!==undefined)string(value[key],key,64*1024*1024);
+  checkReportInput(value.report,value.reportInput,'Working report');
   for(const key of ['lastEditorKey','parentSourceId','savedSourceId','comparisonSavedSourceId','comparisonMetric','schedulingEditorId'])optionalString(value[key],key);
   need(value.tab===undefined||tabs.includes(value.tab),'The retained panel is unsupported.');
   need(value.tranche===undefined||[2,3].includes(value.tranche),'The selected tranche is unsupported.');
@@ -146,11 +157,11 @@ export function validateCohortPlanningState(value,caseId){
   for(const row of array(value.priorDrafts||[],'Earlier drafts')){
     string(row.id,'Earlier draft id');string(row.retainedAt,'Earlier draft time');string(row.reason,'Earlier draft reason');
     planShape(row.plan,'Earlier draft');checkReport(row.report,'Earlier draft report');
-    optionalString(row.reportInput,'Earlier report input');
+    checkReportInput(row.report,row.reportInput,'Earlier draft report');
   }
   comparison(value.comparison,'Current comparison');
   if(value.comparisonSelections)for(const [key,selected] of Object.entries(map(value.comparisonSelections,'Comparison selection'))){need(['before','after'].includes(key),'Unsupported comparison side.');string(selected,'Comparison selection');}
-  for(const row of array(value.comparisonHistory||[],'Comparison history')){string(row.id,'Comparison history id');comparison(row.value,'Earlier comparison');}
+  for(const row of array(value.comparisonHistory||[],'Comparison history')){string(row.id,'Comparison history id');object(row.value,'Earlier comparison');comparison(row.value,'Earlier comparison');}
   for(const row of array(value.comparisonIncoming||[],'Incoming planning sources')){string(row.id,'Incoming source id');checkDocument(row.document,'Incoming planning source');}
   if(value.schedulingResult)reopenCohortDeliverySchedule(value.schedulingResult);
   if(value.schedulingOptions){
@@ -160,6 +171,13 @@ export function validateCohortPlanningState(value,caseId){
   }
   if(value.savedEnvelope)checkDocument(value.savedEnvelope,'Saved original edition');
   if(value.viewedSource){object(value.viewedSource.meta,'Opened source identity');string(value.viewedSource.meta.id,'Opened source id');string(value.viewedSource.meta.filename,'Opened source filename');if(value.viewedSource.raw!==null&&value.viewedSource.raw!==undefined)string(value.viewedSource.raw,'Opened original source',64*1024*1024);}
+  if(value.caseRefreshReceipt){
+    const receipt=object(value.caseRefreshReceipt,'Original source receipt');
+    need(receipt.id===caseId,'The original source receipt belongs to another case.');
+    integer(receipt.version,'Original source receipt version',1);string(receipt.recordId,'Original source receipt identity',1000);
+    need(value.viewedSource?.meta.id===receipt.recordId&&typeof value.viewedSource.raw==='string',
+      'The original source receipt must retain its exact opened source.');
+  }
   nativeRequest(value.pending,caseId,'Original pending request');
   nativeRequest(value.accepted,caseId,'Original accepted request',true);
   nativeRequest(value.rejected,caseId,'Original rejected request');

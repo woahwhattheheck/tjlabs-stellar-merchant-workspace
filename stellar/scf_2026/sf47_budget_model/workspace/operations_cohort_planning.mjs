@@ -520,6 +520,21 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     try{persist(true);}catch(error){state.accepted=accepted;throw error;}
     if(available()){state.caseRefreshReceipt=null;persist();await onCaseUpdated(next,result);if(available())inform(isComparison?'Saved the complete comparison and both original plan documents in this case.':'Saved the complete cohort plan and report as an original case source.');}
   }
+  async function refreshRetainedCaseReceipt(){
+    const result=state.caseRefreshReceipt,viewed=state.viewedSource;
+    if(!result||!available())return;
+    if(result.id!==caseId||!Number.isInteger(result.version)||result.version<1||viewed?.meta?.id!==result.recordId||typeof viewed.raw!=='string')
+      throw new Error('The retained source receipt does not match its original case and opened source.');
+    const next=await saveApi(prefix),source=next?.sources?.find(row=>row.id===result.recordId);
+    if(next?.program?.id!==caseId||next.program.version<result.version||!source)
+      throw new Error('The retained accepted source has not appeared in its original case readback.');
+    const raw=await readSource(source);
+    if(raw!==viewed.raw||source.filename!==viewed.meta.filename)
+      throw new Error('The retained source receipt differs from the exact original reopened source.');
+    if(!available()||state.caseRefreshReceipt!==result||state.viewedSource!==viewed)return;
+    caseValue=next;await onCaseUpdated(next,result);
+    if(state.caseRefreshReceipt===result){state.caseRefreshReceipt=null;persist();}
+  }
   async function sendPending(){
     if(state.inflight){await state.inflight;if(state.accepted)await finishAccepted();return;}
     if(!state.pending){if(state.accepted)await finishAccepted();return;}
@@ -1426,7 +1441,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       if(state.incomingCalendar&&!state.pending){await receiveCalendar();return;}
       if(!plan()&&!state.pending)await newPlan(state.tranche);
       else{await refreshSource();if(plan()){try{evaluate();}catch(error){state.error=error.message;}}}
-      if(state.caseRefreshReceipt&&available()){const result=state.caseRefreshReceipt;state.caseRefreshReceipt=null;persist();await onCaseUpdated(caseValue,result);}
+      if(state.caseRefreshReceipt&&available())await refreshRetainedCaseReceipt();
     }catch(error){state.error=error.message||String(error);}
     finally{busy=false;persist();if(available())render();}
   })();
