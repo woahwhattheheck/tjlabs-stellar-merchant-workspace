@@ -132,6 +132,7 @@ class Console:
                               "/awards-exchange.js": ("awards-exchange.js", "text/javascript; charset=utf-8"),
                               "/awards.css": ("awards.css", "text/css; charset=utf-8"),
                               "/budget-planning.js": ("budget-planning.js", "text/javascript; charset=utf-8"),
+                              "/budget-worksheet.js": ("budget-worksheet.js", "text/javascript; charset=utf-8"),
                               "/budget-planning.css": ("budget-planning.css", "text/css; charset=utf-8"),
                               "/style.css": ("style.css", "text/css; charset=utf-8")}
                     extra_static = extension_static_routes()
@@ -139,6 +140,8 @@ class Console:
                     extra_static["/governance-exchange-core.mjs"] = ("governance-exchange-core.mjs", "text/javascript; charset=utf-8")
                     extra_static["/stellar-expert/exact-json.mjs"] = (HERE.parent / "stellar-expert" / "exact-json.mjs", "text/javascript; charset=utf-8")
                     extra_static["/recipient-project-core.mjs"] = ("recipient-project-core.mjs", "text/javascript; charset=utf-8")
+                    extra_static["/budget-worksheet-core.mjs"] = ("budget-worksheet-core.mjs", "text/javascript; charset=utf-8")
+                    extra_static["/budget-worksheet-table.mjs"] = ("budget-worksheet-table.mjs", "text/javascript; charset=utf-8")
                     if path in static or path in extra_static:
                         if path in static:
                             filename, content_type = static[path]
