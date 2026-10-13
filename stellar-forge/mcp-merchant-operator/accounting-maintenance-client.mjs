@@ -150,7 +150,7 @@ export function createAccountingMaintenanceClient({ workspace, call } = {}) {
     /** Consume one original file, retaining its selectors and SHA on every chunk. */
     async *fileChunks(selection, { expectedSha256, chunkBytes = 65536, signal } = {}) {
       exact(selection, FILE_FIELDS);
-      if (!['response', 'report', 'export', 'collection', 'pricing', 'period', 'accountant', 'adjustment', 'qbo', 'xero', 'qbo-source-change', 'xero-source-change', 'customer-statement', 'customer-statement-preview', 'customer-usage-period-preview', 'cryptoworth', 'runbooks', 'portfolio', 'buyer-source', 'receivables-document', 'receivables-quote', 'receivables-preview', 'receivables-payment', 'receivables-refund', 'receivables-bank', 'receivables-remittance', 'receivables-customer'].includes(selection.kind))
+      if (!['response', 'report', 'export', 'collection', 'pricing', 'period', 'accountant', 'adjustment', 'qbo', 'xero', 'qbo-source-change', 'xero-source-change', 'customer-statement', 'customer-statement-preview', 'customer-usage-period-preview', 'cryptoworth', 'runbooks', 'portfolio', 'buyer-source', 'receivables-document', 'receivables-quote', 'receivables-preview', 'receivables-payment', 'receivables-refund', 'receivables-bank', 'receivables-remittance', 'receivables-customer', 'commissioning-source', 'commissioning-capture'].includes(selection.kind))
         throw fail('ARGUMENTS', 'Choose an original accounting file kind.');
       if (expectedSha256 !== undefined) identifier(expectedSha256, SHA, 'original file SHA256');
       number(chunkBytes, 1, 196608, 'chunkBytes');

@@ -1,11 +1,11 @@
 {
   "schema": "stellar-forge.xero-cash-native-check-manifest.v1",
-  "operation": "SCF-COMMISSIONING-COLLECTIONS-2A51-20261012",
+  "operation": "SCF-MCP-COMMISSIONING-COLLECTIONS-2A51-20261013",
   "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
   "program": {
     "path": "XERO_CASH_CHECK.mjs",
-    "bytes": 58743,
-    "gitBlob": "8f4ac3950204aa188c1badbcc3e0b1285ff85e10"
+    "bytes": 72230,
+    "gitBlob": "a3969dd37542b75623279b12b41f1dbf54193467"
   },
   "compiler": {
     "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/cash-commissioning.mjs",
@@ -17,7 +17,7 @@
   "workingDirectory": "The root of the complete maintained repository with the joined source below.",
   "runtime": {
     "node": "22 or later",
-    "network": "Only the original Xero and commissioning loopback HTTP services are contacted by this programme.",
+    "network": "Only the original Xero, commissioning and optional MerchantAccounting MCP loopback HTTP services are contacted by this programme.",
     "sourceProvider": "The original Xero Accounting JSON schema fixtures are constructed inside this private lifecycle. Source observations and exact bytes are retained by the production receiver.",
     "additionalPackages": []
   },
@@ -128,8 +128,14 @@
         "capsule": "b6d541d0f0869fe2241ee2e9a2da835f8fa6e8a6"
       },
       "guide": {
-        "gitBlob": "a9acccc247f03bc39b0555efbee7910d80f98bd7",
-        "bytes": 18787
+        "gitBlob": "d2aa6ab36292e6cdd9fad5af25474f33951b8397",
+        "bytes": 19352
+      },
+      "mergedProduct": {
+        "pullRequest": 993,
+        "sourceCommit": "aad181acf271e5e4f5939555ae9420a45209f1c8",
+        "mergedCommit": "0a075ade2fd93d15f553e39bb466c14a46532cb9",
+        "capsule": "a5d565f05bf2eccd4e0cc8c74c3c499b56a3aa7e"
       }
     }
   },
@@ -206,9 +212,116 @@
   },
   "selectedPackageCheck": {
     "path": "SELECTED_RECEIVABLES_CHECK.mjs",
-    "gitBlob": "0480a18fa35c8d23bfcd1b910c1e29cca6da2919",
-    "bytes": 24878,
+    "gitBlob": "092c14e9d79e69bf7601faa585d79f6a9225ec5b",
+    "bytes": 27285,
     "mode": "--commissioning",
-    "purpose": "Build and install the actual merchant-commissioning-collections selection; inspect installed command, typed imports and original browser assets."
+    "purpose": "Build and install the actual merchant-commissioning-collections selection; inspect native and agent commands, typed imports and exact original browser/module resources."
+  },
+  "optionalMCP": {
+    "flag": "--commissioning-mcp",
+    "command": "SCF_CASH_KEEP=1 SCF_CASH_RESULT=/absolute/private/result.json node XERO_CASH_CHECK.mjs --commissioning-mcp",
+    "baseCommit": "cbdbb3629b7da4d004cfb91799e7766bfab2b65c",
+    "sourceCapsule": "3e425f5a1b6ecdfa7fa5f79806e2555ab355e8bb",
+    "files": [
+      {
+        "path": "stellar-forge/mcp-merchant-operator/accounting-commissioning.mjs",
+        "bytes": 5861,
+        "gitBlob": "9aa96b0dc1fcfec0ce9280f58912dc939d6a5217"
+      },
+      {
+        "path": "stellar-forge/mcp-merchant-operator/catalog/accounting-commissioning.mjs",
+        "bytes": 7774,
+        "gitBlob": "79ea435a8402056dc79c986d445adfd196cd4355"
+      },
+      {
+        "path": "stellar-forge/mcp-merchant-operator/accounting.mjs",
+        "bytes": 65805,
+        "gitBlob": "88112ee77c4a2dbb6f4e8476fae58d9629bc983c",
+        "baseBlob": "59b64271d28bf2f2c9f56f27b3d0a8cbc2f5a0c8"
+      },
+      {
+        "path": "stellar-forge/mcp-merchant-operator/catalog/accounting.mjs",
+        "bytes": 27663,
+        "gitBlob": "ca491c8ed99beda83f87b45607c24997dcd10cb7",
+        "baseBlob": "37b23aa4508bb6e4f711e1528df08161e836a756"
+      },
+      {
+        "path": "stellar-forge/mcp-merchant-operator/accounting-maintenance-client.mjs",
+        "bytes": 13507,
+        "gitBlob": "00d8554b28402c14c6a82f16365809198493cc4a",
+        "baseBlob": "5424bd0ccd90a8c203f13604415bef6eb2a57875"
+      },
+      {
+        "path": "stellar-forge/mcp-merchant-operator/providers/accounting.mjs",
+        "bytes": 12428,
+        "gitBlob": "f072a531439b0a455e68d9862543be37fb38a250",
+        "baseBlob": "89d939f1a46e6bd4ab85e7f26c27891723937850"
+      }
+    ],
+    "clientPath": "stellar-forge/mcp-merchant-operator/accounting-commissioning-client.mjs",
+    "clientSource": "The exact typed client and durable CLI identities are pinned in sdkFiles; use their full original maintained dependency closure.",
+    "transport": {
+      "path": "stellar-forge/mcp-paid-agent/http-tools.mjs",
+      "sourceBlob": "1b0b2417a4f60671094b09b000faef8af47c410e",
+      "maximumRequestBytes": 33554432,
+      "maximumResponseBytes": 134217728
+    },
+    "ownership": "The programme closes its original HTTP services and AccountingWorkspace before opening that same directory through the original MerchantAccounting owner, then closes MCP before reopening the native owner.",
+    "lifecycle": [
+      "Declared receivablesInputs alias is inspected once; prepared source import retains exact original bytes after the configured file changes.",
+      "Both mutations use the original durable CLI preparation, execution and reconciliation functions, private saved operation files, typed SDK and real HTTP MCP protocol. Native source/capture IDs, action/intent hashes, replay and original pagination are preserved.",
+      "The complete native cohort review and baseline are retained; original source, review, snapshot and full private archive bytes are received through original SHA-pinned file reads.",
+      "Original uncertain-commit flags cross the production MCP error projector; the same request, immutable files and conserved ledger recover after closing and reopening the original owner."
+    ],
+    "sdkFiles": [
+      {
+        "path": "stellar-forge/mcp-merchant-operator/accounting-commissioning-client.mjs",
+        "gitBlob": "f67eb869ddeef0e84de76f6d9fe1d4713c46a4d0",
+        "bytes": 14216
+      },
+      {
+        "path": "stellar-forge/mcp-merchant-operator/accounting-commissioning-client.d.mts",
+        "gitBlob": "59bf8271f060e72ca5287435603d9963079da939",
+        "bytes": 12320
+      },
+      {
+        "path": "stellar-forge/mcp-merchant-operator/accounting-commissioning-cli.mjs",
+        "gitBlob": "2c43ca1130af79b59c51f18bad8d5156d4c437c5",
+        "bytes": 23445
+      },
+      {
+        "path": "stellar-forge/mcp-merchant-operator/accounting-commissioning-cli.d.mts",
+        "gitBlob": "a5d262b33ec3b41edc41fd7b539eda3e77af02ce",
+        "bytes": 2975
+      }
+    ],
+    "dependencyClosure": "Use the same complete maintained repository revision as the joined MCP commissioning product or its original selected recipe. The ordinary programme mode retains the standalone commissioning dependency closure; --commissioning-mcp dynamically loads the original MerchantAccounting host, HTTP transport, native file reader and typed SDK/CLI.",
+    "originalSourceCapsule": "3e425f5a1b6ecdfa7fa5f79806e2555ab355e8bb",
+    "sourceJoin": {
+      "baseCommit": "cbdbb3629b7da4d004cfb91799e7766bfab2b65c",
+      "note": "The shared host, parent catalog and provider retain the original financial-control, customer-account response and ROZO source, selection, lifecycle and recovery joins while adding the commissioning family."
+    },
+    "distributionFiles": [
+      {
+        "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/MCP.md",
+        "gitBlob": "8cb49baac6513b0f940e8d02d1a7e533c92e8c3c",
+        "bytes": 12979
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/README.md",
+        "gitBlob": "d2aa6ab36292e6cdd9fad5af25474f33951b8397",
+        "bytes": 19352
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/distribution/contributions/commissioning-agent.json",
+        "gitBlob": "9418f184aba5890d25cbca6dbba07ea8d4686fe9",
+        "bytes": 1540
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/distribution/selections/merchant-commissioning-collections.json",
+        "gitBlob": "f74f71e756a346f8a988e5a93463dfa66b94a519",
+        "bytes": 4022
+      }
+    ]
   }
 }

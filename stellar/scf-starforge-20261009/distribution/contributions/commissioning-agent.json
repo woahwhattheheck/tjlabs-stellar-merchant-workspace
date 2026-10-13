@@ -1,0 +1,29 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "commissioning-agent",
+  "description": "Original commissioning source, customer cash review and retained handover through the existing merchant agent owner",
+  "commands": {
+    "merchant-accounting-commissioning": "stellar-forge/mcp-merchant-operator/accounting-commissioning-cli.mjs"
+  },
+  "commandDescriptions": {
+    "merchant-accounting-commissioning": "Inspect original sources, prepare and reconcile immutable commissioning captures, and download private handovers through the original accounting MCP session"
+  },
+  "exports": {
+    "./merchant/accounting-commissioning": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/accounting-commissioning-client.d.mts",
+      "default": "./source/stellar-forge/mcp-merchant-operator/accounting-commissioning-client.mjs"
+    },
+    "./merchant/accounting-commissioning/operations": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/accounting-commissioning-cli.d.mts",
+      "default": "./source/stellar-forge/mcp-merchant-operator/accounting-commissioning-cli.mjs"
+    }
+  },
+  "supportFiles": [
+    "stellar-forge/mcp-merchant-operator/accounting-commissioning-client.d.mts",
+    "stellar-forge/mcp-merchant-operator/accounting-commissioning-cli.d.mts",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/MCP.md"
+  ],
+  "merchantProviders": {
+    "accounting": "stellar-forge/mcp-merchant-operator/providers/accounting.mjs"
+  }
+}
