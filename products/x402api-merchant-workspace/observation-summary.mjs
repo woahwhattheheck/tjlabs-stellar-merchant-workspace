@@ -18,6 +18,17 @@ const fail=(code,status=409)=>{throw Object.assign(new Error(code),{code,status}
 const need=(value,code='MERCHANT_OBSERVATION_METADATA_INVALID')=>{if(!value)fail(code);};
 const integer=value=>{const n=Number(value);need(Number.isSafeInteger(n)&&n>=0);return n;};
 const parsed=value=>value===null?null:JSON.parse(value);
+const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
+function fileMetadata(value) {
+  if(value===null)return;
+  need(plain(value)&&Number.isSafeInteger(value.bytes)&&value.bytes>=0&&HASH.test(value.sha256??'')&&
+    typeof value.contentType==='string'&&typeof value.fileName==='string');
+}
+function receiptMetadata(value) {
+  if(value===null)return;
+  need(plain(value)&&/^sha256:[a-f0-9]{64}$/.test(value.receiptDigest??'')&&instant(value.verifiedAt)&&
+    typeof value.signingKeyVersion==='string'&&typeof value.pinSource==='string'&&typeof value.deliveryId==='string');
+}
 const age=(value,now)=>instant(value)&&Date.parse(value)<=now+5000?Math.max(0,Math.floor((now-Date.parse(value))/1000)):null;
 const active=(state,signature,receipt)=>!receipt&&(!QUIET.has(state)||signature&&!TERMINAL.has(state));
 const emptyAges=()=>({requests:0,unknown:0,oldestPendingSeconds:0,oldestSince:null});
@@ -94,17 +105,28 @@ export function readMerchantObservationSummary(workspace,{historySequence=null}=
       "json_extract(o.frozen_json,'$.tenantId') AS tenant_id,json_extract(o.frozen_json,'$.template.resourceVersionId') AS resource_version_id,"+
       "json_extract(o.charge_identity_json,'$.paymentId') AS payment_id,"+
       "json_extract(o.data_json,'$.receiptVerification') AS receipt_verification,json_extract(o.data_json,'$.lastError.code') AS last_error,"+
-      "f.payment_id AS fulfillment_payment_id,f.state AS fulfillment_state,f.returned_bytes,f.returned_sha256,f.result_file_json,"+
+      "f.payment_id AS fulfillment_payment_id,f.state AS fulfillment_state,f.attempt,f.created_at AS fulfillment_created_at,f.updated_at AS fulfillment_updated_at,"+
+      "f.returned_bytes,f.returned_sha256,f.content_type,f.file_name,f.result_file_json,"+
       "COALESCE(e.rejected,0) AS rejected "+
       "FROM merchant_orders o LEFT JOIN merchant_fulfillments f ON f.order_id=o.id "+
       "LEFT JOIN (SELECT order_id,1 AS rejected FROM merchant_events WHERE state='REJECTED' AND json_extract(details_json,'$.code') IN ("+slots+") GROUP BY order_id) e ON e.order_id=o.id ORDER BY o.created_at,o.id");
     for(const raw of rows.iterate(...authorityCodes)) {
       need(UUID.test(raw.id)&&UUID.test(raw.tenant_id)&&UUID.test(raw.resource_version_id)&&STATES.has(raw.state));
       need(instant(raw.created_at)&&instant(raw.updated_at));
-      const verified=raw.receipt_verification!==null,unresolved=active(raw.state,raw.signature_sha256!==null,verified);
+      need(raw.payment_id===null||UUID.test(raw.payment_id));
+      const retainedReceipt=parsed(raw.receipt_verification);receiptMetadata(retainedReceipt);
+      const result=parsed(raw.result_file_json);fileMetadata(result);
+      if(raw.fulfillment_payment_id!==null) {
+        need(UUID.test(raw.fulfillment_payment_id)&&['CLAIMED','RUNNING','INTERRUPTED','RETURNED','COMPLETE'].includes(raw.fulfillment_state)&&
+          instant(raw.fulfillment_created_at)&&instant(raw.fulfillment_updated_at));
+        integer(raw.attempt);
+        fileMetadata(raw.returned_sha256===null?null:{bytes:integer(raw.returned_bytes),sha256:raw.returned_sha256,
+          contentType:raw.content_type,fileName:raw.file_name});
+      }
+      const verified=retainedReceipt!==null,unresolved=active(raw.state,raw.signature_sha256!==null,verified);
       const anchors=historicalAnchors(store,raw.id,unresolved);
       need(anchors.lastState===raw.state,'MERCHANT_OBSERVATION_HISTORY_DISAGREES');
-      const result=parsed(raw.result_file_json),resultComplete=raw.fulfillment_state==='COMPLETE'&&result!==null&&raw.returned_sha256!==null;
+      const resultComplete=raw.fulfillment_state==='COMPLETE'&&result!==null&&raw.returned_sha256!==null;
       const contradiction=raw.state==='COMPLETE'&&!resultComplete||resultComplete&&
         (!verified||raw.payment_id!==raw.fulfillment_payment_id||result.bytes!==integer(raw.returned_bytes)||result.sha256!==raw.returned_sha256);
       const row={id:raw.id,reference:raw.reference,title:raw.title,state:raw.state,paymentId:raw.payment_id??null,
