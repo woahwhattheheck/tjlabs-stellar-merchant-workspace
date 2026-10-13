@@ -10,7 +10,7 @@ Source implementation is merged in PR1669 / 3033fe4dc85d06f25b351691db76143697ff
 
 ## Receive the same original accounts
 
-Use the existing authorized artifact connection, Python 3.11+, Node 22+, installed Playwright and original Chrome 155.0.8059.39. Place the complete source part bodies at parts/part-01.json onward, plus this manifest and receiver. Supply the COMPLETE unchanged Library search result which selected the original Buyer archive at index 012, as a private local JSON file. The receiver passes that original result to the current bundled download helper; it is not published in the public source carrier.
+Use the existing authorized artifact connection, Python 3.11+, Node 22+, installed Playwright and original Chrome 155.0.8059.39. Place the complete source part bodies at parts/part-01.json onward, plus this manifest and receiver. Supply the COMPLETE unchanged Library search result which contains the exact frozen original Buyer archive, as a private local JSON file. The receiver resolves the one returned entry matching the frozen Library/file identity and passes that unchanged original result and its actual index to the current bundled download helper; it is not published in the public source carrier.
 
 ~~~sh
 python3 -u -B receive_complete.py \
