@@ -235,7 +235,7 @@ The twelve-month support workflow and its reviewed service calendar stay with th
 
 ## Complete export, independent receiving and later edits
 
-Use the existing ALM delivery operation to assemble the selected original portfolio archive, both actual managed and unmanaged solution exports, original specification/resources, exact target metadata and HTTP evidence, staff captures/programme, Support records and complete application source.
+Use dataverse.delivery.prepare to assemble the selected original portfolio archive, both actual managed and unmanaged solution exports, original specification/resources, exact target metadata and HTTP evidence, staff captures/programme and complete application source. To include the selected Support contract, issues, events, later native evidence and readable support handover, pass that actual retained ALM delivery to the original support.delivery.prepare action. Receive the complete Support package through support.delivery.receive; it adopts the enclosed original ALM and portfolio evidence in the same workspace transaction.
 
 The portable verifier must call:
 
