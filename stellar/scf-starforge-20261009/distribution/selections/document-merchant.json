@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "document-merchant",
   "title": "Paid document merchant and customer",
-  "description": "Complete HTML and Markdown document generation with original merchant payment, whole-file request, native job, named PDF/source package, supplier usage and customer receiving.",
+  "description": "Complete document merchant and customer browser with original native payment and job receiving: CSV/JSON datasets, grouped records, full HTML/Markdown templates, saved quotes, PDF/source output and portable Collections. Ordered PDF assembly preserves complete sources and delivers all received volumes in one customer archive.",
   "base": {
     "commands": [
       "installation",
@@ -180,14 +180,44 @@
     "products/document-merchant/examples/report.html",
     "products/document-merchant/examples/report.md",
     "products/prepaid-api/records.mjs",
-    "operations/scf-document-merchant-20261012/native-run.mjs"
+    "operations/scf-document-merchant-20261012/native-run.mjs",
+    "products/document-merchant/APPLICATIONS.md",
+    "products/document-merchant/launch.d.mts",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/applications.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_PROVIDERS.md",
+    "products/document-merchant/COMPOSITION.md",
+    "products/document-merchant/composition.d.mts",
+    "products/document-merchant/BATCHES.md",
+    "products/document-merchant/batch.d.mts",
+    "products/document-merchant/batch-render.d.mts",
+    "products/document-merchant/examples/composition/orders.json",
+    "products/document-merchant/examples/composition/invoice.html",
+    "products/document-merchant/examples/composition/greeting.html",
+    "products/document-merchant/examples/composition/order-documents.json",
+    "products/document-merchant/examples/composition/order-lines.csv",
+    "products/document-merchant/examples/composition/grouped-order-documents.json",
+    "products/document-merchant/examples/composition/reports.csv",
+    "products/document-merchant/examples/composition/report.md",
+    "products/document-merchant/examples/composition/report-documents.json",
+    "products/document-merchant/examples/batch/invoice.html",
+    "products/document-merchant/examples/batch/greeting.html",
+    "products/document-merchant/examples/batch/order.json",
+    "products/document-merchant/examples/batch/customer-options.json",
+    "products/document-merchant/composition-browser-assets.json",
+    "products/document-merchant/composition-workspace.d.mts",
+    "products/document-merchant/composition-server.d.mts",
+    "products/document-merchant/composition-service.d.mts",
+    "products/document-merchant/GRANT.md",
+    "products/document-merchant/ASSEMBLY.md",
+    "products/document-merchant/assembly.d.mts",
+    "products/document-merchant/examples/ordered-pdfs.json"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Complete document merchant setup, native paid requests, HTML or Markdown rendering, PDF and editable-source receiving",
+    "description": "Document merchants, complete dataset/template production, customer browser and CLI, original paid jobs and full PDF/source Collection receiving.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

@@ -1,5 +1,6 @@
 export type DocumentProviderId = 'mintpdf' | 'snaplab' | 'pdfmint';
 export type DocumentFormat = 'html' | 'markdown';
+export type DocumentJobFormat = DocumentFormat | 'pdf-set';
 export type JsonValue = null | boolean | number | string | JsonValue[] | {[key: string]: JsonValue};
 export interface DocumentProviderConfiguration {
   schema: 'stellar-forge.document-provider.v1';
@@ -46,6 +47,7 @@ export interface DocumentSetup {
   payment: {[key: string]: JsonValue};
   provider: DocumentProviderConfiguration;
   formats?: DocumentFormat[]; pathPrefix?: string;
+  assembly?: {payment:{[key:string]:JsonValue}};
   workerCount?: number; maxPending?: number; maxJobs?: number; memoryLimitMb?: number;
   inputStorage?: {maxBytes?: number; maxUploads?: number};
   intakeKeyEnvironment?: string | null;
@@ -58,6 +60,14 @@ export interface DocumentInstallation {
   provider: NormalizedDocumentProvider; payment: {[key: string]: JsonValue};
   functions: string[]; workerCount: number; maxPending: number; environmentNames: string[];
   files: Array<{name: string; bytes: number; sha256: string}>;
+}
+export interface DocumentPreparationReview {
+  schema: 'stellar-forge.document-merchant-review.v1'; state: 'NEW' | 'INCOMPLETE' | 'PREPARED';
+  directory: string; input: DocumentSetup; inputSha256: string; request: DocumentSetup;
+  jobsConfig: string; merchantState: string; providerConfig: string; customerSetup: string;
+  files: Array<{name: string; bytes: number; sha256: string}>;
+  configuration: {[key: string]: JsonValue}; supplierPrice: {[key: string]: JsonValue};
+  setupId?: string; planSha256?: string;
 }
 export interface DocumentWorkerContext {
   jobId: string; attemptId: string; signal?: AbortSignal;
@@ -79,16 +89,17 @@ export const DOCUMENT_PROVIDER_SCHEMA: 'stellar-forge.document-provider.v1';
 export const DOCUMENT_RENDER_SCHEMA: 'stellar-forge.document-render.v1';
 export const DOCUMENT_PLAN_SCHEMA: 'stellar-forge.document-merchant-plan.v1';
 export const DOCUMENT_INSTALLATION_SCHEMA: 'stellar-forge.document-merchant-installation.v1';
+export const DOCUMENT_REVIEW_SCHEMA: 'stellar-forge.document-merchant-review.v1';
 export const SOURCE_CHECKED_ON: string;
 export function documentProviders(): DocumentProvider[];
 export function documentProvider(id: DocumentProviderId): DocumentProvider;
 export function normalizeDocumentProvider(value: DocumentProviderConfiguration): NormalizedDocumentProvider;
 export function documentSettingsSchema(id: DocumentProviderId): {[key: string]: JsonValue};
 export function defaultDocumentSettings(id: DocumentProviderId): {[key: string]: JsonValue};
-export function documentInputSchema(provider: DocumentProviderId, format: DocumentFormat): {[key: string]: JsonValue};
-export function normalizeDocumentInput(provider: DocumentProviderId, format: DocumentFormat, input: DocumentInput):
+export function documentInputSchema(provider: DocumentProviderId, format: DocumentJobFormat): {[key: string]: JsonValue};
+export function normalizeDocumentInput(provider: DocumentProviderId, format: DocumentJobFormat, input: DocumentInput):
   {title: string; taskReference: string; settings: {[key: string]: JsonValue}};
-export function buildDocumentRequest(configuration: DocumentProviderConfiguration, format: DocumentFormat,
+export function buildDocumentRequest(configuration: DocumentProviderConfiguration, format: DocumentJobFormat,
   input: DocumentInput, sourceText: string): {
     provider: DocumentProviderId; url: string; method: 'POST'; contentType: 'application/json';
     bodyText: string; input: {title: string; taskReference: string; settings: {[key: string]: JsonValue}};
@@ -96,20 +107,32 @@ export function buildDocumentRequest(configuration: DocumentProviderConfiguratio
   };
 export function documentPriceReview(configuration: DocumentProviderConfiguration,
   counts?: {documents?: number; supplierUnits?: number}): {[key: string]: JsonValue};
-export function documentSetupTemplate(provider?: DocumentProviderId, options?: {anonymous?: boolean}): DocumentSetup;
+export function documentSetupTemplate(provider?: DocumentProviderId, options?: {anonymous?: boolean; assembly?: boolean}): DocumentSetup;
 export function normalizeDocumentSetup(value: DocumentSetup): DocumentSetup;
 export function documentJobConfiguration(request: DocumentSetup): {[key: string]: JsonValue};
 export function prepareDocumentMerchant(input: {directory: string; request: DocumentSetup}): Promise<DocumentInstallation>;
 export function inspectDocumentMerchant(directory: string): Promise<DocumentInstallation>;
+export function reviewDocumentMerchant(options: {directory: string; request?: DocumentSetup}): Promise<DocumentPreparationReview>;
 export function readDocumentSetupRequest(path: string): Promise<DocumentSetup>;
-export function renderDocumentBytes(configuration: DocumentProviderConfiguration, format: DocumentFormat,
+export function renderDocumentBytes(configuration: DocumentProviderConfiguration, format: DocumentJobFormat,
   input: DocumentInput, sourceBytes: Uint8Array, options?: DocumentFetchOptions & {
     jobId?: string | null; attemptId?: string | null; sourceDescriptor?: OriginalDocumentFile | null;
   }): Promise<DocumentOutputFiles>;
-export function renderPaidDocument(configuration: DocumentProviderConfiguration, format: DocumentFormat,
+export function renderPaidDocument(configuration: DocumentProviderConfiguration, format: DocumentJobFormat,
   input: DocumentInput, context: DocumentWorkerContext): Promise<DocumentOutputFiles>;
 export function readDocumentSupplierUsage(configuration: DocumentProviderConfiguration,
   options?: DocumentFetchOptions): Promise<{
     schema: 'stellar-forge.document-supplier-usage.v1'; provider: DocumentProviderId;
     observedAt: string; url: string; status: number; bytes: number; sha256: string; account: JsonValue;
   }>;
+export * from './batch.mjs';
+export * from './batch-render.mjs';
+export * from './launch.mjs';
+export * from './composition.mjs';
+
+export * from './composition-workspace.mjs';
+export * from './composition-server.mjs';
+
+export * from './composition-service.mjs';
+
+export * from './assembly.mjs';

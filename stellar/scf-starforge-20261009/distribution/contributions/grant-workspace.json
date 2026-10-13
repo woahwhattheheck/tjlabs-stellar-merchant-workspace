@@ -1,22 +1,43 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "grant-workspace",
-  "description": "Original Grant Operations application and complete customer installation workorders",
+  "description": "Original Grant Operations application, retained source preparation desk and complete customer installation workorders",
   "applicationProviders": {
     "grant-workspace": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/grant-workspace.mjs"
   },
   "commands": {
     "grant-installation-workorder": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare.mjs",
-    "grant-installation-receive": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/receive.mjs"
+    "grant-installation-receive": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/receive.mjs",
+    "grant-installation-source-desk": "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk.mjs"
   },
   "commandDescriptions": {
     "grant-installation-workorder": "Receive complete original Workshare sources and prepare a selected customer Installation workorder",
-    "grant-installation-receive": "Receive original customer Workshares into the current Installation case and reopen the complete case on the receiving host"
+    "grant-installation-receive": "Receive original customer Workshares into the current Installation case and reopen the complete case on the receiving host",
+    "grant-installation-source-desk": "Review retained original files, prepare source Workshares and attach complete outputs to the selected private Installation case"
   },
   "exports": {
     "./grant/installation-workorders": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare-core.mjs"
   },
   "components": [
-    "stellar/scf_2026/sf49_data_commissioning/installation-workorders"
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders",
+    "stellar/scf_2026/sf47_budget_model/workspace",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys"
+  ],
+  "supportFiles": [
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_sources.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_sources.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_sources.css",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_source_hash.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_SOURCE_DESK.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-receiving.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-receiving.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_agenda.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_agenda_http.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_agenda_cli.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_agenda.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_agenda.css",
+    "stellar/scf_2026/sf47_budget_model/workspace/DELIVERY_AGENDA.md"
   ]
 }

@@ -1,0 +1,214 @@
+{
+  "schema": "stellar-forge.xero-cash-native-check-manifest.v1",
+  "operation": "SCF-COMMISSIONING-COLLECTIONS-2A51-20261012",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "program": {
+    "path": "XERO_CASH_CHECK.mjs",
+    "bytes": 58743,
+    "gitBlob": "8f4ac3950204aa188c1badbcc3e0b1285ff85e10"
+  },
+  "compiler": {
+    "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/cash-commissioning.mjs",
+    "bytes": 87432,
+    "gitBlob": "3e6458c83bc697f4aa00d762bfa60a88a63cc8d0"
+  },
+  "status": "SOURCE_STAGED",
+  "command": "SCF_CASH_KEEP=1 SCF_CASH_RESULT=/absolute/private/result.json node XERO_CASH_CHECK.mjs",
+  "workingDirectory": "The root of the complete maintained repository with the joined source below.",
+  "runtime": {
+    "node": "22 or later",
+    "network": "Only the original Xero and commissioning loopback HTTP services are contacted by this programme.",
+    "sourceProvider": "The original Xero Accounting JSON schema fixtures are constructed inside this private lifecycle. Source observations and exact bytes are retained by the production receiver.",
+    "additionalPackages": []
+  },
+  "sourceJoin": {
+    "bank": {
+      "sourceCommit": "6b3dcb32ec126debfb56b1c7296776acad84b899",
+      "mergedCommit": "70a30a66683d094c0a3a685efdabcedc33937ab6",
+      "pullRequest": 554
+    },
+    "workspaceAndBrowser": {
+      "sourceCommit": "5d6f24e22a058eec14be0c18556c44dee1ef31e5",
+      "capsule": "4e7619a32f3e7749c1a29dd0e53ea066997bd024"
+    },
+    "httpClientServerCliTypes": {
+      "capsule": "8ced591bc66c033f8c42e5d91489d750240c627f",
+      "server": "5a490d86ee74145321d9937724983724024a389f",
+      "client": "1bc20676aceafd32ddb2488a356d83b8f792466e",
+      "recoveryCapsule": "ef956c5f00eb51a457f97e15dd830a26a42e3f71",
+      "types": "45b58b15b4049257b6fd1c3c34126c86e3d71dac"
+    },
+    "domain": "3e6458c83bc697f4aa00d762bfa60a88a63cc8d0",
+    "mergedXeroCash": {
+      "pullRequest": 781,
+      "sourceCommit": "5fb15956e6c11b98ce765e2581142793881e4621",
+      "mergedCommit": "a60419562a96b0342676a1007b1f90ceccbab46f",
+      "capsule": "95a5baf628aea3914fb55cf58116d3d7d175945f"
+    },
+    "commissioningCollections": {
+      "workspace": {
+        "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/workspace.mjs",
+        "gitBlob": "3cde97f086f13a0811249fb4f0f3bc43ee275fe2",
+        "sourceBytes": 32778
+      },
+      "domainFiles": [
+        {
+          "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/source.mjs",
+          "bytes": 15037,
+          "gitBlob": "5720ca1d0a5b1235b205d25dd2ff1054a4faf7c9"
+        },
+        {
+          "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/domain.mjs",
+          "bytes": 33320,
+          "gitBlob": "98ff8fc88002c9231cdd41c9002aa094ce9fff65"
+        },
+        {
+          "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/reports.mjs",
+          "bytes": 12528,
+          "gitBlob": "702f117967eea4698cba82ad6574c067ddfdcdde"
+        }
+      ],
+      "client": {
+        "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/client.mjs",
+        "bytes": 6706,
+        "gitBlob": "7719b85a3a15d6a8b7ecfccea693c8c378f06657"
+      },
+      "clientCliDistributionCapsule": "40e5f9df3a07bee97542b05278caf09ad4aa06a9",
+      "httpAndBrowser": {
+        "paths": [
+          "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/http.mjs",
+          "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/server.mjs",
+          "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/browser-assets.json",
+          "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/public/config.json",
+          "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/public/index.html",
+          "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/public/styles.css",
+          "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/public/app.mjs"
+        ],
+        "source": "Use the complete HTTP and browser postimages from the same joined commissioning product commit as this programme.",
+        "serverFactory": "createCommissioningCollectionsServer({workspace,receivables:controller,xero,port:0})",
+        "api": "/api/receivables/commissioning",
+        "browser": "/receivables/commissioning/",
+        "files": [
+          {
+            "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/http.mjs",
+            "bytes": 15023,
+            "gitBlob": "a2885503916ab443ff5bc78c221da329da569824"
+          },
+          {
+            "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/server.mjs",
+            "bytes": 8061,
+            "gitBlob": "18ebf5626f62e00564a421e7108f3ffe32af6853"
+          },
+          {
+            "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/browser-assets.json",
+            "bytes": 1294,
+            "gitBlob": "08836a09f1b64b787d0be0c9abe8094ca2db2d08"
+          },
+          {
+            "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/public/config.json",
+            "bytes": 308,
+            "gitBlob": "eaf066653f94cf805ac7b9ec8f1e6f3d9bc87bda"
+          },
+          {
+            "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/public/index.html",
+            "bytes": 9293,
+            "gitBlob": "1f751e16d9e6f512a2be253717d5e3768c85a089"
+          },
+          {
+            "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/public/styles.css",
+            "bytes": 7066,
+            "gitBlob": "ec0ef8ac2a606f84e5f5ab547952a650be515ab4"
+          },
+          {
+            "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/public/app.mjs",
+            "bytes": 65251,
+            "gitBlob": "8bef84d48430d3bdf937edfdb970625cdc397281"
+          }
+        ],
+        "capsule": "b6d541d0f0869fe2241ee2e9a2da835f8fa6e8a6"
+      },
+      "guide": {
+        "gitBlob": "a9acccc247f03bc39b0555efbee7910d80f98bd7",
+        "bytes": 18787
+      }
+    }
+  },
+  "originalSpecification": {
+    "repository": "XeroAPI/Xero-OpenAPI",
+    "commit": "fd9d44b04bf4934a7509b8e7ece51a9e0e462e4f",
+    "path": "xero_accounting.yaml",
+    "version": "19.1.0",
+    "url": "https://raw.githubusercontent.com/XeroAPI/Xero-OpenAPI/fd9d44b04bf4934a7509b8e7ece51a9e0e462e4f/xero_accounting.yaml"
+  },
+  "requiredRepositoryPaths": [
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/store.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/binding.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/core.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/store.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-receipts.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-receipts-workspace.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statement-source.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/refunds.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/refunds-workspace.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/domain.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/store.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/native-return.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/public/native-json.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/cash-commissioning.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/cash-workspace.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/server.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/client.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/public/cash-commissioning.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/workspace.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/source.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/domain.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/reports.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/server.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/browser-assets.json",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/client.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/public/app.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/http.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/public/config.json",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/public/index.html",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/public/styles.css"
+  ],
+  "dependencyClosure": "Use the complete maintained source checkout at the joined commissioning product revision, or the selected merchant-commissioning-collections recipe with its original declared dependency closure. The listed paths identify the business owners; they are not a replacement import resolver.",
+  "lifecycle": [
+    "Original private AccountingWorkspace and maintained Xero loopback server, customer, issuer, three first-cycle invoices, exact receipt allocations and retained bank-credit coverage.",
+    "Original Xero templates, prepared document handover and native JSON receiving establish source UUIDs before cash matching.",
+    "Direct payments, applied prepayments and overpayments are matched separately; payment currency, bank currency and IsReconciled remain distinct.",
+    "First cash cycle is captured and replayed with the exact retained operation; source and native files remain immutable.",
+    "Second billing invoice receives an original paid-invoice credit disposition and prepaid cash; an actual operator-recorded overpayment refund retains the original outflow.",
+    "The Xero cross-invoice credit representation consumes shared original credit, target allocation and released cash capacities once per cycle.",
+    "Actual previews exercise an inconsistent source remainder, omitted cash fields, declared payment totals with empty detail, and competing source matches without changing the ledger.",
+    "Second cycle retains original source JSON, customer cash advice, CSV/HTML reports, immutable baseline comparison and complete tar export.",
+    "Original AccountingWorkspace uncertain-commit metadata crosses the HTTP client before closing/reopening; exact original request replay, file SHA identities and dated cash recover on the same owner.",
+    "Import the original private workshare JSON, recover the exact source request, inspect actual paged invoice/allocation/saved-Xero candidates, and save the original unbound REVIEW baseline.",
+    "Retain a replacement source edition under the same stable project identities, then explicitly divide one immutable invoice line as 30/40/30 and one 90 allocation as 30/40/20 across source milestones, with the original 10 credit.",
+    "Bind the next invoice disposition/prepaid allocations, attribute original 175 receipts and 2 refund once, and retain original 170 invoice net, 160 allocated, 10 credit and 173 net physical cash as distinct cohort measures.",
+    "A competing 5 allocation portion returns an original shared-capacity finding without changing financial records; the corrected READY capture retains full snapshots, source/customer/Xero files, CSV/HTML and tar.",
+    "Both commissioning captures and source editions, original stable mutation intents, binary SHA identities and uncertain-commit metadata survive the same owner close/reopen."
+  ],
+  "optionalEnvironment": {
+    "SCF_CASH_AS_OF": "A valid YYYY-MM-DD fixture account date; defaults to current UTC date.",
+    "SCF_CASH_TMPDIR": "Existing writable parent for the private temporary account.",
+    "SCF_CASH_RESULT": "Absolute destination for the resulting single JSON record.",
+    "SCF_CASH_KEEP": "Set to 1 to preserve the complete private account and handover files after success."
+  },
+  "output": {
+    "schema": "stellar-forge.xero-cash-native-check.v1",
+    "status": [
+      "PASS",
+      "FAIL"
+    ],
+    "failure": "Exact stage, original code/details/stack and retained directory.",
+    "success": "Original Xero package/cycle/native IDs, commissioning source/capture IDs, exact source hashes, unchanged invoice hashes and complete lifecycle outcomes."
+  },
+  "selectedPackageCheck": {
+    "path": "SELECTED_RECEIVABLES_CHECK.mjs",
+    "gitBlob": "0480a18fa35c8d23bfcd1b910c1e29cca6da2919",
+    "bytes": 24878,
+    "mode": "--commissioning",
+    "purpose": "Build and install the actual merchant-commissioning-collections selection; inspect installed command, typed imports and original browser assets."
+  }
+}

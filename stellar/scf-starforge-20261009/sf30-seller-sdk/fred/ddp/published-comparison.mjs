@@ -47,7 +47,7 @@ async function sink(path){
 
 function sourceContext({packageCapture,crosswalk,plan,manifest,directory}={}){
   const source=inspectFredDdpPackage(packageCapture),mapping=inspectFredDdpCrosswalk(crosswalk);
-  validateFredDdpMigrationPlan(plan,{packageCapture,crosswalk});
+  validateFredDdpMigrationPlan(plan,{packageCapture,crosswalk,copy:false});
   validateFredPublishedManifest(manifest);
   need(plan.summary.ready&&manifest.planId===plan.id&&manifest.packageId===source.id&&manifest.crosswalkId===mapping.id&&manifest.errors.length===0,'Receive this same complete source population and current target collection.');
   const targets=new Map(manifest.captures.map(capture=>[capture.seriesId,capture])),original=new Map(source.series.map(series=>[series.id,series]));
@@ -169,8 +169,9 @@ async function buildComparison({packageCapture,plan,manifest,directory,outputDir
     const byPeriod=new Map();for(const row of targetRows){need(!byPeriod.has(row.key),'The native target period population must remain unique.');byPeriod.set(row.key,row);}
     const local=counts(),sourceMissingCodes={},matched=new Set(),sourcePeriods=new Set();
     const context={source_series_id:series.id,board_series_id:series.boardSeriesId,fred_series_id:selected.fredSeriesId};
+    const sourceObservations=series.observations;
     for(const sourceIndex of selected.sourceIndices){
-      const observation=series.observations[sourceIndex],periodKey=normalizeFredDdpPeriod(observation.period,selected.binding.periodRule).key,after=byPeriod.get(periodKey);
+      const observation=sourceObservations[sourceIndex],periodKey=normalizeFredDdpPeriod(observation.period,selected.binding.periodRule).key,after=byPeriod.get(periodKey);
       need(!sourcePeriods.has(periodKey),'The native source period population must remain unique after its reviewed calendar rule.');sourcePeriods.add(periodKey);
       const beforeMissing=fredDdpObservationMissing(observation.value,observation.status);if(beforeMissing)sourceMissingCodes[observation.status??'UNSPECIFIED']=(sourceMissingCodes[observation.status??'UNSPECIFIED']??0)+1;
       let status,difference=null;
@@ -224,7 +225,7 @@ async function writeReportHtml(outputDirectory,report){
   const sourceOnlyMissing=totals.MISSING_CHANGED===0?unavailable-totals.BOTH_MISSING:null;
   const availability=sourceOnlyMissing!==null&&sourceOnlyMissing>=0&&sourceOnlyMissing<=totals.SOURCE_ONLY?
     '<p>'+number(sourceOnlyMissing)+' of the '+number(totals.SOURCE_ONLY)+' Board-only periods contain unavailable Board data.</p>':'';
-  const html=`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Published-data comparison</title><style>body{font:14px system-ui,sans-serif;color:#171717;background:#fafafa;margin:0}main{max-width:1500px;padding:28px;margin:auto}h1{font-size:24px;font-weight:600}p{line-height:1.5}input{font:inherit;border:1px solid #999;padding:9px;width:min(440px,90%);background:white}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{text-align:left;padding:9px;border-bottom:1px solid #ccc}th{background:#e8e8e8}tbody tr:nth-child(even){background:#f0f0f0}.number{text-align:right;font-variant-numeric:tabular-nums}.scroll{overflow:auto}a{color:inherit}small{color:#555}</style><main>
+  const html=`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Published-data comparison</title><style>body{font:14px system-ui,sans-serif;color:#171717;background:#fafafa;margin:0}main{max-width:1500px;padding:28px;margin:auto}h1{font-size:24px;font-weight:600}p{line-height:1.5}input{font:inherit;border:1px solid #999;padding:9px;width:min(440px,90%);background:white}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{text-align:left;padding:9px;border-bottom:1px solid #ccc}th{background:#e8e8e8}tbody tr:nth-child(even){background:#f0f0f0}.number{text-align:right;font-variant-numeric:tabular-nums}.scroll{overflow:auto}a{color:inherit}small{color:#555;overflow-wrap:anywhere}</style><main>
 <h1>Published-data comparison</h1><p>${number(report.summary.seriesCount)} mapped source series · ${number(report.summary.sourceObservationCount)} original Board observations · ${number(report.summary.targetOriginalObservationCount)} retained FRED observations.</p>
 <p>All selected original periods use the saved calendar rules, including daily, weekly, biweekly, monthly, quarterly, semiannual and annual representations. Original numeric strings, missing statuses and exact original-file byte ranges remain in every record. Target sources use the current publication collected ${escape(report.targetRetrieval.from)} through ${escape(report.targetRetrieval.through)}.</p>
 <p>The Board statuses NA (Not available), ND (No data) and NC (Not calculable) retain their original values and compare as missing. ${number(unavailable)} selected Board observations are unavailable. Periods present in only one source describe coverage; figure differences and availability changes appear separately.</p>${availability}

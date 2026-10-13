@@ -579,7 +579,7 @@ and reopen its source, native runtime, editable workspace and release history.
 
 Use `pmtiles_starforge pmtiles-output` through the installed forwarder from
 section 2. The existing merchant MCP provider exposes the same saved operation
-through its seventeen paid-output tools; the complete host configuration and
+through its twenty paid-output tools; the complete host configuration and
 tool inputs are in [PMTILES_COMMERCE.md](../../stellar-forge/mcp-merchant-operator/PMTILES_COMMERCE.md).
 
 ### What the merchant retains
@@ -915,3 +915,571 @@ workspace closure. The complete installed merchant carries the paid-output
 and MCP/SF88 source and dependencies. The generic object descriptor change
 preserves the existing S3 descriptor contract and uses the same original
 native object engine.
+
+
+## 12. Native receiving and original purchase accounting
+
+This setup runs the paid-output phase of the existing PMTiles operation with
+the original Stellar testnet facilitator, funded SF88 operator workspace and
+approved HTTPS transport. The same receiving process owns these services,
+uses them for the original map and complete operations-package purchases,
+finalizes their original per-chunk accounting, then drains the services.
+
+The normal product continues to use the seller and buyer profiles configured
+by its operator. This optional setup is for an actual receiving host whose
+funded operator, facilitator configuration, certificate and signing
+credentials already exist. Select their original complete files and hashes
+before freezing the native input.
+
+### Complete installed source and host selection
+
+Use the complete installed merchant selected by
+[PMTILES_OPERATIONS.md](../../stellar/scf-starforge-20261009/distribution/selections/PMTILES_OPERATIONS.md).
+It supplies repository-root MCP, SF30, SF82, SF88, the native facilitator and
+the original operator/governor source. The map's portable ZIP supplies its
+declared map source/runtime/customer closure; the complete merchant
+installation supplies this paid receiving phase.
+
+The selected installation retains its exact source commit and manifest
+SHA256 in `merchantInstallation`. Its runtime selection includes native,
+operator, schema, OpenAPI and MCP capabilities. The existing PMTiles native
+profile retains the exact PMTiles/Martin executables, validator, browser
+bundle and worker. Reuse those selections in the original receiving
+operation.
+
+The host runs Linux, Node 22.16 or newer and the original Python operator
+runtime. Start the original Node process with `--use-system-ca`. The helper
+also gives native child processes the selected additional CA, the original
+system-CA option and `SF36_OBSERVER_USE_SYSTEM_CA=1`. Node reads
+`NODE_EXTRA_CA_CERTS` at process startup, so launch-time CA selection remains
+part of the receiving command.
+
+Where the original SF81 operator requires a controlling terminal, launch the
+original command through the host's existing util-linux `script` session.
+Keep that command and terminal with the original native operation.
+
+Primary runtime references:
+
+- [Node 22.16 command-line and environment options](https://nodejs.org/download/release/v22.16.0/docs/api/cli.html)
+- [Node 22.16 TLS API](https://nodejs.org/download/release/v22.16.0/docs/api/tls.html)
+
+### Select existing private material
+
+Create a private, owned `0600` JSON file with this schema. Replace each
+example path and SHA with the selected original file and its complete
+SHA256. The TLS certificate must cover the exact merchant hostname and
+match the selected private key.
+
+~~~json
+{
+  "schema": "starforge.pmtiles-native-environment.v1",
+  "operatorWorkspace": "/private/original-funded-operator",
+  "facilitatorConfiguration": "/private/original-facilitator.json",
+  "facilitatorConfigurationSha256": "ACTUAL_COMPLETE_FILE_SHA256",
+  "tls": {
+    "certificate": "/private/original-tls/server.pem",
+    "certificateSha256": "ACTUAL_COMPLETE_FILE_SHA256",
+    "key": "/private/original-tls/server-key.pem",
+    "keySha256": "ACTUAL_COMPLETE_FILE_SHA256",
+    "ca": "/private/original-tls/extra-ca.pem",
+    "caSha256": "ACTUAL_COMPLETE_FILE_SHA256"
+  },
+  "rpcTransport": {
+    "mode": "environment-proxy",
+    "proxyEnv": "HTTPS_PROXY"
+  },
+  "ports": {
+    "tls": 4312,
+    "proxy": 4313
+  }
+}
+~~~
+
+`operatorWorkspace` is the original SF88 workspace containing its
+`workspace.json`, `operator.json`, policy, reservation ledger, signer and
+private operator keys. The original `openWorkspace(..., {accounting:true})`
+validates that workspace and returns its private operator environment.
+The helper compares the selected buyer's operator, signer module, trusted
+payer, explicit-connect transport and evidence directory to those original
+fields. The original scheme, network, asset and recipient must match both
+the selected buyer operation and the advertised map payment terms before
+services start.
+
+`facilitatorConfiguration` uses the maintained
+`stellar-forge.native-facilitator.v1` schema. Its original signer environment
+names must already resolve in the host's private credential custody. Its
+network, RPC, permitted asset/recipient, payment flow and amount limits must
+cover the selected actual output prices. Preserve its original signer
+ownership directory.
+
+`rpcTransport.proxyEnv` selects the existing host HTTPS proxy. The helper
+keeps that captured upstream route for the original Stellar RPC authority.
+Its own CONNECT endpoint accepts only the selected merchant authority and
+that exact RPC authority. The merchant hostname is forwarded to the
+selected local SF82 seller through the original TLS certificate.
+
+All selected paths are canonical and absolute. Private JSON and the TLS key
+must be owned private files. Complete file hashes, regular-file identity,
+bounded reads and certificate/key correspondence are checked before
+services become ready. The private JSON contains file references and
+public configuration; signing secrets stay in their original environment
+and operator custody.
+
+The optional `ports.tls` and `ports.proxy` choose fixed loopback listeners.
+If omitted, the first startup selects free ports and retains them in
+`listeners.json`. Every continuation binds those original saved ports.
+The merchant, facilitator, TLS and CONNECT listeners must have distinct
+ports.
+
+### Join the original receiving input
+
+The original driver is:
+
+~~~text
+stellar/scf-starforge-20261009/sf30-seller-sdk/pmtiles/native-receiving.mjs
+~~~
+
+Its existing input schema is
+`starforge.pmtiles-native-receiving.v1`. Add the complete
+`outputCommerce` selection before the original operation retains its
+input. Keep its current directory, operation ID, source installation,
+native map profile, browser and original producer.
+
+This fragment illustrates the field names. Choose the actual payment
+tuple, private files, complete file hashes and funded budgets for the
+selected two downloads.
+
+~~~json
+{
+  "outputCommerce": {
+    "schema": "starforge.pmtiles-output-native-selection.v1",
+    "origin": "https://merchant.example.test",
+    "payment": {
+      "network": "stellar:testnet",
+      "asset": "ACTUAL_SELECTED_ASSET",
+      "payTo": "ACTUAL_SELECTED_RECIPIENT"
+    },
+    "runtime": {
+      "port": 4310,
+      "facilitator": "http://127.0.0.1:4311",
+      "allowLocalFacilitator": true
+    },
+    "buyer": {
+      "runtimeDirectory": "/private/installed/source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli",
+      "stateDirectory": "/private/pmtiles-buyer-state",
+      "configuration": "/private/pmtiles-buyer-configuration.json",
+      "configurationSha256": "ACTUAL_COMPLETE_FILE_SHA256",
+      "operatorProfile": "/private/original-operator-profile.json",
+      "operatorProfileSha256": "ACTUAL_COMPLETE_FILE_SHA256",
+      "operatorWorkspace": "/private/original-funded-operator"
+    },
+    "mapAtomic": "10000",
+    "operationsAtomic": "10000",
+    "mapBudgetAtomic": "1000000",
+    "operationsBudgetAtomic": "10000000",
+    "nativeEnvironment": {
+      "configuration": "/private/pmtiles-native-environment.json",
+      "configurationSha256": "ACTUAL_COMPLETE_FILE_SHA256"
+    }
+  }
+}
+~~~
+
+The numeric strings above illustrate atomic units. The returned exact
+catalog supplies the number of fixed requests and complete download cost
+for the actual map and full operations ZIP. Both selected budgets must
+cover their complete cost and remain within the original funded
+operator's applicable policy. Preserve other operations' existing
+reservations and allocated budgets.
+
+`buyer.runtimeDirectory` is the actual SF88 component directory whose
+`cli.mjs` and native Python bridge are installed. `stateDirectory` is the
+original buyer's private object/command state. `operatorWorkspace` is the
+original financial workspace. These are distinct selections.
+
+The optional `operatorProfile` pair is used when the original operator
+profile is separate from the buyer configuration. If omitted, the buyer
+configuration supplies its complete original profile. The selected buyer
+operation retains the exact HTTPS origin, network, asset, recipient,
+timeout and per-request ceiling. Each purchase then retains the chosen
+catalog URL, intent ID and exact lower price.
+
+The native environment uses the accounting workspace from its descriptor.
+If `buyer.operatorWorkspace` is also supplied, both selections must resolve
+to the same path. An existing externally managed receiving environment can
+omit `nativeEnvironment` and supply `buyer.operatorWorkspace` directly for
+the same final accounting phase.
+
+Run the original complete command after the input is frozen:
+
+~~~sh
+node --use-system-ca /ABS/COMPLETE_SOURCE/stellar/scf-starforge-20261009/sf30-seller-sdk/pmtiles/native-receiving.mjs /PRIVATE/original-input.json
+~~~
+
+The existing PMTiles operation first completes its map authoring,
+publication, customer receiving, MCP and managed Applications phases.
+After their owners drain, it calls the paid-output phase against that
+same saved producer and original published release.
+
+### Service ownership and retained continuation
+
+The helper exports:
+
+~~~js
+import {
+  validatePMTilesNativeEnvironmentSelection,
+  startPMTilesNativeEnvironment
+} from '@tokenjunkielabs/starforge-merchant/pmtiles/output-native-environment';
+
+const owned = await startPMTilesNativeEnvironment({
+  selection: {
+    configuration: '/private/pmtiles-native-environment.json',
+    configurationSha256: selectedCompleteFileSha256
+  },
+  commerce: selectedCommerce,
+  buyerConfiguration: originalBuyerConfiguration,
+  operatorProfile: originalOperatorProfile,
+  directory: '/private/original-receiving/native-environment',
+  signal
+});
+~~~
+
+Its return value is `{ready, environment, close}`.
+`environment` is private and is passed only to the original native
+operator. The public `ready` descriptor retains selected file hashes,
+workspace manifest identity, authorities, listener ports and actual
+facilitator readiness.
+
+The helper captures the process environment at entry and owns its changed
+values for this one receiving lifetime. This is necessary because the
+existing merchant Buyer creates native children from the process's
+original environment. A second environment owner in the same module
+cannot start concurrently. Close restores each unchanged owned value; a
+value changed by another owner is preserved and reported.
+
+Startup obtains the original native facilitator, starts its maintained
+HTTP server, observes native readiness and starts the two selected
+transport listeners. The paid receiving phase then starts its existing
+MCP operator and original SF82 seller.
+
+The normal completion order is:
+
+1. Complete both original SF88 purchases and retained assemblies.
+2. Adopt the selected map and receive the complete operations package.
+3. Finalize every original accounting range and retain its native output.
+4. Close and reopen the same MCP workspace to recover original purchase,
+   accounting and historical lifecycle records.
+5. Stop and drain the original SF82 seller and MCP owner.
+6. Stop transport admission, drain the original facilitator, finish the
+   owned sockets/listeners and restore the process environment.
+
+`close()` retains one shared promise. Startup failure invokes that same
+close path. The receiving caller attempts all acquired owners during
+cleanup and preserves both the original execution error and any close
+error.
+
+Retained environment files are:
+
+| File | Meaning |
+| --- | --- |
+| `input.json` | Exact private selection, source/configuration hashes and original public runtime bindings |
+| `listeners.json` | First selected facilitator, TLS and CONNECT listener ports |
+| `status.json` | Actual READY or closed state, selected hashes, transport counts and original drain result |
+
+Retain the original receiving directory and input across a disconnect.
+The source verifies an existing listener selection before reopening it.
+The completed paid result reopens its retained output/package/accounting
+files and checks their complete hashes.
+
+### Read and finalize original purchase accounting
+
+A configured merchant buyer may include
+`operatorWorkspace: "/private/original-funded-operator"`.
+This path is selected by the host. Tool arguments select only the
+existing buyer alias, purchase and native accounting range.
+
+| MCP suffix | Additional fields after `workspace, buyer, purchaseRequestId` | Original result |
+| --- | --- | --- |
+| `purchase_accounting` | Optional `offset, limit` | Native accounting VIEW range and command ID |
+| `purchase_finalize` | Optional `offset, limit` | Native SF36/SF86 finalization range and command ID |
+| `purchase_accounting_recover` | Optional `commandId` | Saved original command and last complete output |
+
+The default range is offset 0, limit 100; the original range limit is
+1–250. The response's `accounting.native.range.nextOffset` selects the next
+range. Continue until it is null. Preserve each complete returned native
+response and inspect its process status, interruption flag and entry
+outcomes.
+
+The CLI uses the corresponding `purchase-accounting`,
+`purchase-finalize` and `purchase-accounting-recover` commands. Put
+`operatorWorkspace` inside the customer connection's `buyer` object.
+For example:
+
+~~~json
+{
+  "purchaseRequestId": "customer-regional-operations-20261012",
+  "offset": 0,
+  "limit": 100
+}
+~~~
+
+~~~sh
+pmtiles_starforge pmtiles-output purchase-finalize \
+  --connection /private/customer-connection.json \
+  --request /private/original-accounting-range.json
+~~~
+
+After an interrupted accounting reply, use
+`purchase-accounting-recover` with the same purchase and, when available,
+the returned native `commandId`. It reads the existing command context,
+complete original output and first completion. A later incomplete command
+keeps the earlier complete original response available as
+`accounting.lastComplete`.
+
+Native finalization continues the original reservation/finalization
+engine. Repeating a range returns its original idempotent finalization
+outcome. The map chunk requests, complete assemblies and payment receipts
+remain attached to that same SF88 object.
+
+The complete native phase reconciles the original accounting command before
+continuing a range. It saves a completed page under its original `steps/`
+directory only after the complete range, native process and final outcomes
+have passed. Partial responses stay in their original SF88 command records,
+so that same idempotent range can continue after interruption. It checks
+every planned chunk reaches
+`FINALIZED` or `IDEMPOTENT_FINALIZED`, then reopens the exact saved
+accounting commands after MCP restart. Its result includes those file
+hashes alongside the original map, complete ZIP, seller release and
+customer receiving identities.
+
+
+# Browser operations for priced map delivery
+
+The **Paid map delivery** panel manages an existing PMTiles publication through
+the same merchant that serves its MCP tools. It prepares immutable prices,
+stages and operates the original SF82 seller, receives original SF88 objects,
+adopts purchased resources, reopens complete customer operations, and continues
+their original accounting.
+
+## Open the configured merchant
+
+Use the complete [PMTiles merchant installation](../../stellar/scf-starforge-20261009/distribution/selections/PMTILES_OPERATIONS.md)
+with native, operator, schema, OpenAPI and MCP features. The host's existing
+PMTiles connection selects the saved workspace and map runtime, seller runtime
+aliases, buyer aliases, and receiving targets. Configure those selections using
+[PMTILES_COMMERCE.md](../../stellar-forge/mcp-merchant-operator/PMTILES_COMMERCE.md).
+
+Start its existing authenticated merchant MCP server. With the installed
+`starforge` command and its selected private configuration:
+
+~~~sh
+starforge merchant-mcp serve \
+  --config /private/regional-merchant/merchant-mcp.json \
+  --port 3211 --token-env MCP_ACCESS_TOKEN
+~~~
+
+Save an alias request such as `{"workspace":"regional"}` in a private JSON file,
+then open the original workspace and read its console link:
+
+~~~sh
+starforge pmtiles-mcp call open \
+  --url http://127.0.0.1:3211 --request /private/regional-workspace.json
+
+starforge pmtiles-mcp call console \
+  --url http://127.0.0.1:3211 --request /private/regional-workspace.json
+~~~
+
+Open the exact returned private URL, including its current access-token
+fragment. The paid panel appears in that same map authoring page. Its calls use
+the same selected alias, original request queue and authoring owner.
+
+An ordinary standalone map authoring server has the map editor, preview and
+portable delivery tools. Open the workspace through the configured merchant
+when using paid seller and customer controls. The map operations ZIP includes
+the same browser assets; the full merchant installation supplies the configured
+payment and buyer runtime.
+
+## Select outputs and prices
+
+Choose **Offer** and **Use current publication**. The displayed release and
+manifest identify the exact map publication used by this draft.
+
+Add a published archive, style, sprite, glyph or other original resource.
+For complete source/runtime/workspace sales, choose **Prepare complete operations
+package**, then select that retained package and **Add output**. An operations
+package must contain the same published release selected by the offer.
+
+Every output row has a public ID, download filename, and price in atomic units
+for each request. Choose a configured buyer's public payment terms or enter
+the merchant's HTTPS origin, network, asset, recipient and timeout. Additional
+payment fields use the original offer compiler's JSON input.
+
+The panel displays both the price per request and the complete file cost:
+
+~~~text
+requests = ceil(original file bytes / bytes per paid request)
+complete cost = requests × atomic units per request
+~~~
+
+Prices and totals use exact integer arithmetic. An offer can contain at most
+64 outputs, 32 GiB of original bytes and 131,072 aggregate paid requests.
+The default request size is 921,600 bytes; the maximum is 1,048,576 bytes.
+Choose a larger request size when a small chunk size would exceed the original
+index limit.
+
+**Prepare priced offer** captures the complete original files, their hashes,
+fixed chunk boundaries, rights, release identity and payment terms. The result
+is a retained offer. Editing the draft afterward does not change that offer;
+prepare another request when the intended terms or source selection change.
+
+**Download offer draft** saves the current public form and selected source
+identities. A later publication leaves the earlier draft intact. Select the
+new publication deliberately before preparing an offer from its resources.
+
+## Review and operate a seller
+
+In **Seller**, open the retained offer. Review its complete costs and original
+source identities. **Verify retained files** reads the complete selected bodies;
+**Download buyer catalog** saves the exact public acquisition descriptor.
+
+Select a configured runtime alias, seller release ID and label, then choose
+**Stage selected offer**. This composes the existing SF82 release store and
+native seller. The browser selects a configured runtime; its fields do not
+accept arbitrary executable paths or facilitator credentials.
+
+Choose the staged release, then **Compare with active seller**. **Activate
+reviewed seller** checks the actual active release and generation again.
+If another operation changes the selection, compare the current state before
+activating.
+
+**Start selected seller** starts the selected original release and retains its
+native instance. **Stop owned seller** names that exact owned instance and
+drains the accepted native work. Current runtime status controls these buttons.
+A saved start response describes that earlier operation; reopening it does not
+make a stopped process run again.
+
+The source publication and priced seller release remain distinct selections.
+Stopping the paid seller leaves the original map workspace and its saved
+editions available.
+
+## Receive a complete customer purchase
+
+In **Customer**, select a retained offer, its exact output and a configured
+buyer. The panel shows the complete byte count, immutable snapshot, file hash,
+request count, per-request price and full cost. The selected buyer's host
+configuration retains its original origin, payment terms and per-request cap.
+
+Choose a total budget covering every request, then **Prepare purchase**. That
+retains one original SF88 object plan and its exact catalog/configuration.
+**Receive purchased file** continues that same object and assembles its original
+bytes. **Recover original purchase** reads and reconciles its retained native
+payment and response state after interruption.
+
+A completed map resource can be added through **Adopt received map source**.
+A completed operations ZIP can be reopened through **Receive complete
+operations**, using one of the host's receiving-target aliases.
+
+The adoption and receiving request IDs stay with the selected purchase.
+Keep the same ID when reopening the same imported resource or customer
+installation. Enter a new ID only when deliberately creating a separate
+customer receiving operation. Reopening the original operations request
+preserves that customer's later saved edits and release selection.
+
+The complete portable receiver verifies its original package, declared source,
+native runtime, frozen workspace and retained object bytes. The returned
+workspace and original serve command are the customer's actual operating
+handover. See [PORTABLE_HANDOVER.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/pmtiles/PORTABLE_HANDOVER.md).
+
+## Continue original accounting
+
+A buyer's configured `operatorWorkspace` selects the original financial
+workspace. The panel never asks for signer secrets or creates a replacement
+accounting database.
+
+Use **Read accounting range** to inspect a selected original range. Ranges
+start at offset zero, default to 100 entries, and allow at most 250 entries.
+**Use next range** selects the original returned `nextOffset`; a null value
+means that response has no next range.
+
+**Recover accounting command** reads the original retained command and its
+latest complete native response. **Finalize this range** reads that recovery
+first. A matching complete finalization is reused. Otherwise the same original
+range continues through the native idempotent finalizer.
+
+A response is complete only when it belongs to this purchase and exact range,
+reports an uninterrupted zero-exit native operation, includes every selected
+entry, and has finalized/idempotently-finalized outcomes. A partial command
+stays recoverable in its own original records. The browser keeps its selected
+request and range so a lost response does not turn a partial report into a
+finished page.
+
+The [native environment and accounting guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/pmtiles/commerce/NATIVE_ENVIRONMENT.md) describes
+the original funded operator, facilitator, private transport selection and
+full CLI/MCP continuation.
+
+## Reopen drafts and saved work
+
+The panel retains its public offer draft, selected records and original
+pending requests in browser storage, keyed by the browser origin, actual
+workspace ID and configured alias.
+
+After an interrupted request, choose **Recover this request**. The exact
+saved arguments and original request identity are reused. To continue editing
+another draft, choose **Keep request and continue editing**; the request remains
+in **Saved work**.
+
+Saved work reads the original offer, purchase, seller-operation and package
+directories with bounded pages. It also lists retained browser requests.
+Use an exact request ID to reopen an older record that is not on the current
+page. **Resume selected original request** calls its original operation with
+the stored arguments. A currently unavailable buyer alias is identified in the
+record so the operator can restore the intended host configuration.
+
+Changing the selected offer, customer or seller disables its controls until
+the selected original record has loaded. Late responses remain bound to their
+own workspace and request. A completed older operation does not replace a
+later selected purchase.
+
+A merchant close drains its owned work and closes the authoring server. Open
+the same workspace again and use its new private console link in the original
+tab. The saved authoring port preserves the browser origin; the new fragment
+updates the access token while the draft remains available. Keep the full
+customer workspace backup as described in the existing Object Buyer
+[OBJECTS.md](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/OBJECTS.md) when moving a customer
+to another host.
+
+## Read-only workbench API
+
+The additional MCP tool is `merchant_pmtiles_output_workbench`. Its required
+field is `workspace`; its sections are:
+
+| Section | Additional selectors | Returned original material |
+| --- | --- | --- |
+| `summary` | none | Current map publication, public buyer terms, runtime aliases, receiving targets and fresh seller status |
+| `sources` | optional decimal `after`, `limit` 1–50 | Exact resources from the current publication |
+| `offers`, `purchases`, `operations`, `packages` | optional stable-ID `after`, `limit` 1–50 | Bounded original saved records and continuation cursor |
+| `request` | `kind`: offer/purchase/operation/package; `requestId` | Exact public request, retained result and original resume arguments |
+
+This reader adds no second product ledger. Native execution continues to verify
+the selected file bodies and original engine identities.
+
+## Same original native receiving
+
+The complete native PMTiles driver supplies the original persistent
+`browserDirectory` and its existing `openBrowser({url,directory})` callback
+to the paid-output phase. That phase calls
+`exercisePMTilesCommerceBrowser` from the complete installed merchant source.
+
+The browser phase reopens the existing priced offer, deliberately loses one
+successful preparation response and recovers that exact saved request,
+stages/reviews/activates the original seller, starts and stops its owned
+instance, and reopens both original customer purchases. It reuses the exact
+map-adoption and complete-package receiving IDs and the original finalized
+accounting ranges. The edited price draft and map notes are retained through
+merchant close/open and the actual token change.
+
+The phase records complete original HTTP requests/results, current native
+status, browser storage and a screenshot. Its checkpoint completes only after
+the actual response passes the original operation checks. A resumed native
+carrier reads the same saved request before continuing. It shares the original
+producer, funded environment and purchased assemblies with the whole journey.

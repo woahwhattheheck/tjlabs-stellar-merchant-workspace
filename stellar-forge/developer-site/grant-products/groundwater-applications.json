@@ -1,0 +1,37 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "groundwater-applications",
+  "heading": "## Groundwater scenario modelling and receiving",
+  "sources": [
+    {
+      "id": "groundwater-application-operator",
+      "label": "Groundwater managed application and complete operator receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater-application/OPERATOR.md",
+      "editions": [
+        {
+          "commit": "9e1a847541a0888c4fb0ed951a1d201377de749b",
+          "bytes": 16108,
+          "sha256": "25b7a7f8ffe5e422d85214d10ebef558d33390407cf368c21a51e8309ff0387d",
+          "git_blob": "c78e14760f2604586ae338222c789c2a1205905e"
+        }
+      ]
+    },
+    {
+      "id": "groundwater-installed-operation",
+      "label": "Groundwater installed modelling, report and customer workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/groundwater/OPERATING.md",
+      "editions": [
+        {
+          "commit": "9e1a847541a0888c4fb0ed951a1d201377de749b",
+          "bytes": 24434,
+          "sha256": "e612328983d61d36a481621b382a16e6468f254f1e6e2403edbe14edb2ee264c",
+          "git_blob": "cb1cc72ad3f39d7e9bc1a5552cc70f7a12f0a6f7"
+        }
+      ]
+    }
+  ]
+}

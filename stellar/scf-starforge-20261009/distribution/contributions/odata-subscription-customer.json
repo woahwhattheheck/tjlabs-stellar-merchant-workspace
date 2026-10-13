@@ -1,0 +1,17 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "odata-subscription-customer",
+  "description": "Select exact published subscription editions, retain complete merchant artifacts, continue native customer receiving and independently reopen backups and Analysis.",
+  "commands": {
+    "odata-subscription-customer": "stellar-forge/mcp-merchant-operator/odata-subscription-cli.mjs"
+  },
+  "commandDescriptions": {
+    "odata-subscription-customer": "Download and resume complete OData subscriptions, receive ordered editions, reopen original backups and export Analysis."
+  },
+  "exports": {
+    "./operator/odata-subscription-client": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/odata-subscription-client.d.mts",
+      "import": "./source/stellar-forge/mcp-merchant-operator/odata-subscription-client.mjs"
+    }
+  }
+}

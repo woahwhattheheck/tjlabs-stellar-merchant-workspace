@@ -1,0 +1,38 @@
+{
+  "schema": "commons.conapi-complete-programme-source.v1",
+  "operation": "CONAPI-WORKFLOW-RECEIVING-DSCEB3-20261012",
+  "originalOperation": "SCF-DATASETTE-SOURCE-EDITIONS-07476-20261012",
+  "applicationRef": "e5520a2a962ccebc461d478edf6aebb4b6c7fb20",
+  "files": [
+    {
+      "path": "supplier_programme.py",
+      "bytes": 24537,
+      "sha256": "b2f2892fda8324bab77dd4bf3ae8a76d55efa7b9908a6c762366f4c682b6f99e"
+    },
+    {
+      "path": "run_conapi.mjs",
+      "bytes": 46875,
+      "sha256": "aa5234d893fb564cfa2ffa53d3f1a09641563165d75ded082f722c7a362c37a7"
+    },
+    {
+      "path": "preserve_delivery.py",
+      "bytes": 13071,
+      "sha256": "5a637dea893af24144b7ceb570f2ffe8219e560fed739f00be203167d6229f3c"
+    },
+    {
+      "path": "continue_conapi.py",
+      "bytes": 15613,
+      "sha256": "b51c3c4cdbde2582d433dac5aca332f1c143c83d7101cfe00c55436029c40bb0"
+    },
+    {
+      "path": "OPERATING.md",
+      "bytes": 21482,
+      "sha256": "73e23bab3b65e015ed3e4a41acb901aa5db3564ecf01fb2b4123aed156d21458"
+    },
+    {
+      "path": "workbook_following.py",
+      "bytes": 10136,
+      "sha256": "36279a939bcd285a21cfa26e22ca3de7717aba828e9beeb23c3b38b366ec1146"
+    }
+  ]
+}

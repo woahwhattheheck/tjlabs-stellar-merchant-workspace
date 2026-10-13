@@ -9,7 +9,8 @@ import {WeatherStore} from './store.mjs';
 import {absolute,privateDirectory,readPrivate,readJson,publish,publishJson} from './files.mjs';
 import {SCHEMA,FAMILIES,MAX_RESPONSE_BYTES,providerProfile,providerUrl,publicQuery,need,keys,sha,clone,canonical,parsePayload,ATTRIBUTION} from './contract.mjs';
 import {series,compare} from './analysis.mjs';
-const {Buyer,WorkspaceRecovery}=await native('sf88-operator-buyer-cli/node/index.mjs');
+import {readProviderResponse,isWeatherSourceRead} from './provider-response.mjs';
+const buyerModule=()=>native('sf88-operator-buyer-cli/node/index.mjs');
 const {createPublicHttpsFetch}=await native('sf31-buyer-client/public-transport.mjs');
 export async function initializeWeather({stateRoot,originalOperatorDirectory,sellerClient,setupDirectory,provider={mode:'evaluation'}}){
  absolute(stateRoot);await privateDirectory(stateRoot,{create:true});provider=providerProfile(provider);
@@ -36,10 +37,33 @@ export async function initializeWeather({stateRoot,originalOperatorDirectory,sel
  const workspace=await WeatherWorkspace.open(settings);await workspace.close();
  return {settings,stored};
 }
+export async function initializeWeatherReview({stateRoot}){
+ absolute(stateRoot);await privateDirectory(stateRoot,{create:true});
+ const settings={schema:SCHEMA,mode:'review',stateRoot,weatherDirectory:join(stateRoot,'weather'),provider:{mode:'evaluation'}};
+ let stored;
+ try{
+  const existing=await readJson(join(stateRoot,'settings.json'));
+  need(isDeepStrictEqual(existing,settings),'WEATHER_ALREADY_INITIALIZED');
+  stored={path:join(stateRoot,'settings.json'),reopened:true};
+ }catch(error){
+  if(error.code!=='ENOENT')throw error;
+  await privateDirectory(settings.weatherDirectory,{create:true});
+  stored=await publishJson(join(stateRoot,'settings.json'),settings);
+ }
+ const workspace=await WeatherWorkspace.open(settings);
+ try{return {settings,stored,originId:workspace.store.originId()};}finally{await workspace.close();}
+}
 export async function readWeatherSettings(path){const settings=await readJson(absolute(path));return validateSettings(settings);}
 function validateSettings(settings){
- keys(settings,['schema','stateRoot','weatherDirectory','buyerDirectory','originalOperatorDirectory','provider','sellerClient','sellerClientSha256','setupDirectory']);
+ keys(settings,['schema','mode','stateRoot','weatherDirectory','buyerDirectory','originalOperatorDirectory','provider','sellerClient','sellerClientSha256','setupDirectory']);
  need(settings.schema===SCHEMA,'WEATHER_SETTINGS_SCHEMA_INVALID');absolute(settings.stateRoot);
+ need(settings.mode===undefined||settings.mode==='review','WEATHER_SETTINGS_MODE_INVALID');
+ if(settings.mode==='review'){
+  need(!['buyerDirectory','originalOperatorDirectory','sellerClient','sellerClientSha256','setupDirectory'].some(key=>Object.hasOwn(settings,key)),'REVIEW_WORKSPACE_SETTINGS_INVALID');
+  absolute(settings.weatherDirectory);need(settings.weatherDirectory===join(settings.stateRoot,'weather'),'WEATHER_PATH_BINDING_CHANGED');
+  need(isDeepStrictEqual(settings.provider,{mode:'evaluation'}),'REVIEW_WORKSPACE_SETTINGS_INVALID');
+  return clone(settings);
+ }
  for(const key of ['weatherDirectory','buyerDirectory','originalOperatorDirectory']){absolute(settings[key]);need(settings[key].startsWith(settings.stateRoot+'/'),'WEATHER_PATH_OUTSIDE_STATE_ROOT');}
  need(settings.weatherDirectory===join(settings.stateRoot,'weather')&&settings.buyerDirectory===join(settings.stateRoot,'buyer'),'WEATHER_PATH_BINDING_CHANGED');
  providerProfile(settings.provider);
@@ -52,27 +76,36 @@ export class WeatherWorkspace{
   const settings=validateSettings(input);await privateDirectory(settings.stateRoot);
   const saved=await readJson(join(settings.stateRoot,'settings.json'));
   need(isDeepStrictEqual(settings,saved),'WEATHER_SETTINGS_CHANGED');
-  await privateDirectory(settings.originalOperatorDirectory);await privateDirectory(settings.buyerDirectory);
+  if(settings.mode!=='review'){await privateDirectory(settings.originalOperatorDirectory);await privateDirectory(settings.buyerDirectory);}
   const store=await WeatherStore.open(settings.weatherDirectory);
   try{
-   const buyer=new Buyer({runtimeDirectory:join(runtimeRoot,'sf88-operator-buyer-cli'),stateDirectory:settings.buyerDirectory,environment,timeoutMs:360000});
+   const buyer=settings.mode==='review'?null:new (await buyerModule()).Buyer({runtimeDirectory:join(runtimeRoot,'sf88-operator-buyer-cli'),stateDirectory:settings.buyerDirectory,environment,timeoutMs:360000});
    return new WeatherWorkspace(settings,store,buyer,environment);
   }catch(error){await store.close();throw error;}
  }
  constructor(settings,store,buyer,environment){this.settings=clone(settings);this.store=store;this.buyer=buyer;this.environment={...environment};this.tail=Promise.resolve();this.closed=false;this.active=null;}
  serial(fn){need(!this.closed,'WEATHER_WORKSPACE_CLOSED');const operation=this.tail.then(fn);this.tail=operation.catch(()=>{});return operation;}
- summary(){return this.serial(()=>this.store.summary());}
+ summary(){return this.serial(()=>({...this.store.summary(),mode:this.settings.mode??'operator'}));}
+ handover(id){return this.serial(()=>this.store.handover(id));}
+ reviewHandover(content){return this.serial(()=>this.store.reviewHandover(content));}
+ receiveHandover(content,options){return this.serial(()=>this.store.receiveHandover(content,options));}
+ requireOperator(){need(this.buyer!==null,'REVIEW_WORKSPACE_OPERATION_UNAVAILABLE');}
  saveSite(input){return this.serial(()=>this.store.saveSite(input));}
  saveRequest(input){return this.serial(()=>this.store.saveRequest(input));}
  saveDecision(input){return this.serial(()=>this.store.saveDecision(input));}
+ renewalChoices(reportId){return this.serial(()=>this.store.renewalChoices(reportId));}
+ reviewRenewal(input){return this.serial(()=>this.store.reviewRenewal(input));}
+ commitRenewal(input,options){return this.serial(()=>this.store.commitRenewal(input,options));}
  freezeReport(input){return this.serial(()=>this.store.freezeReport(input));}
  report(id){return this.serial(()=>this.store.report(id));}
  events(options){return this.serial(()=>this.store.events(options));}
  capture(id){return this.serial(()=>this.store.capture(id));}
+ sourceHistory(id,options){return this.serial(()=>this.store.sourceReads(id,options));}
+ providerRead(id){return this.serial(()=>this.store.providerRead(id));}
  series(id,variable,options){return this.serial(()=>series(this.store.capture(id).view,variable,options));}
  compare(left,right,options){return this.serial(()=>compare(this.store.capture(left).view,this.store.capture(right).view,options));}
  async sourceCapture(id,{expectedRevision,signal}={}){
-  return this.serial(async()=>{
+  this.requireOperator();return this.serial(async()=>{
    const q=this.store.beginSource(id,expectedRevision),request=q.spec.request,profile=this.settings.provider;
    const publicUrl=providerUrl(request,profile);let response,retainedRead;
    try{
@@ -83,17 +116,18 @@ export class WeatherWorkspace{
    if(profile.proxyEnv)need(this.environment[profile.proxyEnv]===process.env[profile.proxyEnv],'PROVIDER_PROXY_ENVIRONMENT_CHANGED');
    const fetch=createPublicHttpsFetch(options);
     response=await fetch(privateUrl.href,{method:'GET',headers:{accept:'application/json'},redirect:'manual',signal});
-    need(response.status===200,'WEATHER_PROVIDER_HTTP_'+response.status);
-    need(/^application\/json(?:;|$)/i.test(response.headers.get('content-type')??''),'WEATHER_PROVIDER_CONTENT_TYPE');
-    const reader=response.body.getReader(),chunks=[];let count=0;
-    try{for(;;){const {done,value}=await reader.read();if(done)break;count+=value.byteLength;need(count<=MAX_RESPONSE_BYTES,'WEATHER_RESPONSE_TOO_LARGE');chunks.push(Buffer.from(value));}}
-    catch(error){await reader.cancel().catch(()=>{});throw error;}
-    const bytes=Buffer.concat(chunks);
-    const provenance={kind:'PROVIDER_CAPTURE',sourceAttempt:q.sourceAttempt,
-     sourceUrl:publicUrl.href,providerMode:profile.mode,httpStatus:200,retrievedAt:new Date().toISOString(),
+    const received=await readProviderResponse(response),bytes=received.bytes;
+    const provenance={kind:response.status===200&&received.metadata.bodyComplete&&
+     /^application\/json(?:;|$)/i.test(received.metadata.contentType)?'PROVIDER_CAPTURE':'PROVIDER_RESPONSE',
+     sourceAttempt:q.sourceAttempt,sourceUrl:publicUrl.href,providerMode:profile.mode,
+     retrievedAt:new Date().toISOString(),...received.metadata,
      requestSha256:sha(Buffer.from(publicQuery(request).toString())),httpRequests:1,
      accounting:'A provider read; local HTTP request count is not the provider billing-unit count.',attribution:ATTRIBUTION};
-    retainedRead=this.store.retainSourceRead(id,q.specSha256,bytes,provenance);
+    retainedRead={...this.store.retainSourceRead(id,q.specSha256,bytes,provenance),
+     reprocessable:isWeatherSourceRead({provenance})};
+    need(received.metadata.bodyComplete,received.metadata.readErrorCode??'WEATHER_PROVIDER_READ_INTERRUPTED');
+    need(response.status===200,'WEATHER_PROVIDER_HTTP_'+response.status);
+    need(/^application\/json(?:;|$)/i.test(received.metadata.contentType),'WEATHER_PROVIDER_CONTENT_TYPE');
     const captured=this.store.attachCapture(id,q.specSha256,bytes,provenance);
     return {request:this.store.request(id),capture:withoutRaw(captured)};
    }catch(error){
@@ -103,9 +137,10 @@ export class WeatherWorkspace{
    }
   });
  }
- reprocessSource(id,{expectedRevision}={}){
-  return this.serial(()=>{const q=this.store.request(id),read=this.store.sourceRead(id);
-   need(q.native===null&&read?.specSha256===q.specSha256,'RETAINED_PROVIDER_READ_REQUIRED');
+ reprocessSource(id,{expectedRevision,sourceReadId}={}){
+  this.requireOperator();return this.serial(()=>{const q=this.store.request(id),read=sourceReadId?this.store.providerRead(sourceReadId):this.store.sourceRead(id);
+   need(q.native===null&&read?.requestId===id&&read?.specSha256===q.specSha256,'RETAINED_PROVIDER_READ_REQUIRED');
+   need(isWeatherSourceRead(read),'RETAINED_WEATHER_RESPONSE_REQUIRED');
    this.store.beginSource(id,expectedRevision,{reprocess:true});
    try{const capture=this.store.attachCapture(id,q.specSha256,read.raw,read.provenance);return {request:this.store.request(id),capture:withoutRaw(capture),sourceHttpRequests:0};}
    catch(error){this.store.sourceFailed(id,q.specSha256,{code:safeCode(error),retainedRead:{id:read.id,sha256:read.sha256,bytes:read.bytes},observedAt:new Date().toISOString()});throw error;}
@@ -119,7 +154,7 @@ export class WeatherWorkspace{
   return module.createSellerClient({buyer:this.buyer});
  }
  prepare(id,{expectedRevision,maxAtomic,acceptIndex=0,directEvaluation=false,signal}={}){
-  return this.serial(async()=>{
+  this.requireOperator();return this.serial(async()=>{
    let q=this.store.request(id);need(q.revision===expectedRevision,'REQUEST_REVISION_CHANGED');
    need(typeof maxAtomic==='string'&&/^[1-9]\d{0,37}$/.test(maxAtomic)&&Number.isSafeInteger(acceptIndex)&&acceptIndex>=0,'EXPLICIT_BUYER_BUDGET_REQUIRED');
    let record;
@@ -157,11 +192,11 @@ export class WeatherWorkspace{
  }
  inspect(id){return this.serial(async()=>{const q=this.store.request(id);return {request:q,native:q.native?await this.buyer.operation(q.native.request.intentId).inspect():null};});}
  execute(id,{signal}={}){
-  return this.serial(async()=>{const q=this.store.request(id);need(q.native?.review,'BUYER_NOT_PREPARED');
+  this.requireOperator();return this.serial(async()=>{const q=this.store.request(id);need(q.native?.review,'BUYER_NOT_PREPARED');
    const result=await this.buyer.operation(q.native.request.intentId).execute({review:q.native.review,signal});return this.consume(q,result);});
  }
  recover(id){
-  return this.serial(async()=>{const q=this.store.request(id);need(q.native?.review,'BUYER_NOT_PREPARED');
+  this.requireOperator();return this.serial(async()=>{const q=this.store.request(id);need(q.native?.review,'BUYER_NOT_PREPARED');
    const result=await this.buyer.operation(q.native.request.intentId).recover();
    if(!result)return {request:q,native:await this.buyer.operation(q.native.request.intentId).inspect(),capture:null};
    return this.consume(q,result);});
@@ -177,7 +212,7 @@ export class WeatherWorkspace{
    retrievedAt:result.record.recordedAt??new Date().toISOString(),delivery:result.delivery,native:result.native,attribution:ATTRIBUTION});
   return {request:this.store.request(q.id),...outcome,capture:withoutRaw(capture)};
  }
- recoverySelection(){return {directory:this.settings.originalOperatorDirectory,stateRoot:this.settings.stateRoot,
+ recoverySelection(){this.requireOperator();return {directory:this.settings.originalOperatorDirectory,stateRoot:this.settings.stateRoot,
   include:[this.settings.weatherDirectory,this.settings.buyerDirectory,join(this.settings.stateRoot,'settings.json'),
    ...(this.settings.sellerClient?[this.settings.sellerClient]:[]),...(this.settings.setupDirectory?[this.settings.setupDirectory]:[])]};}
  recoveryReview(){return this.serial(async()=>this.buyer.workspaceRecovery().inspect(this.recoverySelection()));}
@@ -220,10 +255,10 @@ export function cleanResult(result){
  return result;
 }
 export async function verifyWeather({bundle,expectedRecordSha256,passphraseEnv='OPEN_METEO_BACKUP_PASSPHRASE',environment=process.env,signal}){
- return new WorkspaceRecovery({runtimeDirectory:join(runtimeRoot,'sf88-operator-buyer-cli'),environment})
+ return new (await buyerModule()).WorkspaceRecovery({runtimeDirectory:join(runtimeRoot,'sf88-operator-buyer-cli'),environment})
   .verify({bundle: absolute(bundle),expectedRecordSha256,passphraseEnv,signal});
 }
 export async function restoreWeather({bundle,expectedRecordSha256,passphraseEnv='OPEN_METEO_BACKUP_PASSPHRASE',environment=process.env,signal}){
- return new WorkspaceRecovery({runtimeDirectory:join(runtimeRoot,'sf88-operator-buyer-cli'),environment})
+ return new (await buyerModule()).WorkspaceRecovery({runtimeDirectory:join(runtimeRoot,'sf88-operator-buyer-cli'),environment})
   .restore({bundle:absolute(bundle),expectedRecordSha256,passphraseEnv,signal});
 }

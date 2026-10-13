@@ -1,5 +1,7 @@
 # Customer quotations and realized Research delivery
 
+[Transfer a complete editable case](CASE_TRANSFER.md) · [Operate and receive a complete quotation programme](PROGRAMME.md)
+
 This workspace connects a customer quotation to the actual Research brief, frozen delivery, Stellar publication and receiving history. The quotation editor is the original SF74 commercial desk, including its saved pricing sources, customer responses, implementation planning and portable receiving. Supplier costs and pricing versions come from the original SF97 workspace. The selected merchant supplies the compiled checkout terms for the paid delivery.
 
 Open **Customer quotations** from the Research workspace. The page uses the same private listener, token, original dossier directory and saved history as Customer updates and Paid delivery.
@@ -201,6 +203,32 @@ The browser and terminal retain the full outgoing request before dispatch. An in
 An ID reused with different inputs is rejected. Review SHA and original source checks distinguish a deliberately new review from the replay of an already saved operation. A changed quote, source revision or checkout selection is resolved by opening that actual source and preparing a new request.
 
 The original workspace client admits a complete operation once. Metadata lookup and its dependent file transfer stay admitted while the client closes, and the host drains accepted quotation work before it closes Commerce, the original dossier owners and its listener. Failed native closers remain available to the original retry.
+
+## Python customer applications
+
+The complete [Python quotation workflow](../../python/RESEARCH-QUOTES.md) exposes
+the same original case/pricing, brief/response reviews, paid publication and
+realized-report operations through `ResearchWorkspace.quotes()`. It retains full
+raw inputs and replies, recovers the original request, and receives every native
+file. Complete quotation exports can be reopened using Python alone on another
+computer. The installed `stellar-forge-research quotes-*` commands and the full
+`examples/research_quotes_receiving.py` programme use these same operators.
+
+The [Python quotation programme guide](../../python/RESEARCH-QUOTE-PROGRAMMES.md)
+carries the complete selected programme to a second original Research workspace.
+`ResearchWorkspace.quote_programmes()` creates the retained source programme,
+submits and applies exact native steps, exports the full case/dossier/quotation
+and publication package, and prepares its destination receiving review. The
+original CaseStore and customer dossier writers save that reviewed selection.
+The same Python call and native step remain available for recovery and explicit
+replay after subsequent customer work.
+
+A `CASE_RECORD` export and `prepare-case-transfer` input use the maintained native
+602,962,240-byte bound. Python retains the complete body in its original file
+while the native operation records only its source workspace, case, revision and
+SHA. Package and step replies expose complete file descriptors, so the process
+output remains usable with large original cases. Full files remain accessible
+through the original `FileDelivery` reader.
 
 ## Native HTTP interface
 
@@ -583,3 +611,8 @@ The Research contribution carries the quotation browser, contracts, native contr
 The quotation server and distribution builder read the same [browser asset manifest](browser-assets.json). Its nine routes map the embedded commercial editor, receiving desk and tariff desk to their complete original source files. The maintained browser asset reader travels with this source selection.
 
 The original Research launcher, Customer updates, Paid delivery, Buyer Runbook, SF101 checkout and saved customer receiving remain the operating path. A full native continuation can therefore proceed from the existing customer case and observed pricing version through quotation, revised evidence work, frozen paid delivery, actual Buyer receiving and a complete realized report.
+
+
+## Complete customer programmes in the browser
+
+Open **Customer programmes** from this quotation workspace. Select the actual Research project and original commercial case, then use these same native forms to prepare the quotation, customer response, frozen paid delivery and realized report as saved programme steps. The full programme desk carries those original inputs and files into a portable archive, resumes an interrupted upload, shows the actual destination receiving review and saves through the original case and dossier writers. Its [complete operating guide](PROGRAMME_BROWSER.md) includes browser, typed-client and authenticated HTTP selections, restart behavior and whole-package receiving. The installed Python and terminal programme workflows operate the same native records.

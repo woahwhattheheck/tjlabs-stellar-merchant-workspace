@@ -14,6 +14,102 @@ The first source edition remains in the draft. **Read current source** acquires 
 
 A source/index mismatch leaves the working draft open. Read the current source again after the original composer finishes publishing its same edition.
 
+## Receive a complete source package
+
+Open **Source editions → Open source package** to compare a complete received
+application, source index, budget and product/finance companion with the current
+draft. The same four-file package can come from another operator's existing
+Source editions screen or the maintained `grant-export` command.
+
+Choose **Receive source and keep edited answers** after reviewing the comparison.
+Untouched answers receive the selected source; edited answers keep their full
+text and original baseline. The original draft ID, saved browser binding, issuer
+map, native plan selections, reviews and versions remain in place. A matching
+application with a different bundle can be selected through **Use these four
+reviewer files**, retaining the previous working version.
+
+Each retained source displays **Review these source files** and **Download retained
+source package** for its exact complete bundles. **Download source package** on the
+incoming edition shares that same four-file source. **Download full draft**
+continues to carry all received sources and the application's editorial history.
+The existing Save version and Browser drafts controls persist the received
+edition in the same saved record.
+
+The package opens from complete retained bytes. When the host's application
+source cannot be read, the empty editor still offers **Open source package** and
+opens the existing nine-answer model from that edition. Source URLs, file dates
+and the original application/bundle identities remain visible for the operator.
+
+See [submission handover](GRANT_HANDOVER.md#receive-and-share-a-source-package)
+for the complete source-package API and [native export](GRANT_EXPORT.md#receive-source-into-the-same-saved-draft)
+for the same source receiving from the terminal.
+
+## Select the concise working edition
+
+Under **Source editions**, choose **Read concise working edition** to open the
+dated nine-answer edition prepared from the complete original manuscript. Its
+funding request remains $38,000 for 400 prospective hours over 150 days. The
+working edition puts the problem, Stellar contribution, demonstrated results,
+six priced packages, measurement, capacity and applicant information in the
+answers themselves. This supports the issuer's requirement for a self-contained
+submission.
+
+The current full manuscript remains the default source. The concise edition is
+an explicit alternative: read the comparison, then use **Receive source and keep
+edited answers** or select individual source answers. Existing manual edits,
+issuer fields, native planning, review decisions, prepared submissions and saved
+versions remain in the original draft. Reading a source alone does not change
+an open draft.
+
+The concise package freezes four complete files: its nine-answer Markdown,
+source index, original budget and original product/finance companion. Its source
+index also retains the entire original manuscript with byte, SHA-256 and Git
+blob identities, the exact original source commit, and the original index
+identity. A later canonical publication does not silently change this frozen
+edition. **Read current source** returns to the current full manuscript for
+comparison.
+
+Use **Download source package** for this selected source, or download
+[the complete concise source package](dist/grant-data/reviewer-working-source.json)
+and open it through the existing source-package chooser on another installation.
+The [nine-answer Markdown](dist/grant-data/application-reviewer.md) and
+[complete source index](dist/grant-data/reviewer-working-index.json) are available
+for reading. Full draft export retains every selected source and the operator's
+editorial state.
+
+### Compose a later complete working edition
+
+After editing all nine answers against a selected original source, run:
+
+```sh
+node stellar-forge/developer-site/grant-reviewer-edition.mjs \
+  --application /absolute/edited-nine-answers.md \
+  --source-root /absolute/original/dist/grant-data \
+  --source-commit ORIGINAL_40_CHARACTER_COMMIT \
+  --out /absolute/new-reviewer-edition
+```
+
+The original source directory must contain its complete application, source
+index, budget and companion. The composer verifies original application and
+companion byte counts, SHA-256 and Git blob identities through the maintained
+source receiver. It retains the full original application and the financial
+source unchanged, then writes the three working-edition files to a new directory.
+A malformed source or reused output directory fails before an earlier edition
+can be overwritten.
+
+Review the actual issuer requirements and all nine answers before publishing a
+later working edition. The source index records the October 13 requirements
+review; it is a dated source statement, not an automatic programme update. Apply
+the real form's prompts and limits when available. Interest acknowledgment,
+invitation, submission and award retain their existing separate issuer states.
+
+Publish all three returned files together through the existing browser asset
+manifest and original source release. The submission route registration carries
+them through subsequent composition; the maintained static exporter also
+includes them. The complete package opens through the existing
+`openReviewerSourcePackage` and `receiveReviewerSource` functions, with the same
+original draft schema and receiving history.
+
 ## Edit the complete answers
 
 Choose one of the nine answers in the sidebar. Edit its full text and, if useful, add a working note. The preview shows the exact text selected for copying.
@@ -44,6 +140,47 @@ Each field keeps its own optional source URL and observation date, word limit, c
 Move fields into the issuer's order. Removing a field retains its preceding version. **Copy all form fields**, the answer-text download and the print packet follow that same order.
 
 **Download form map** retains the exact form profile, field prompts, limits, selected answer IDs and field text. Opening that map in another working draft retains the prior mapping before importing the selected one.
+
+## Receive answer changes into the actual form
+
+An issuer field retains the complete source answers used when its wording was
+copied or explicitly reviewed. In **Compare the selected source answers**, read
+the previous and current answer text. A changed source, a different answer
+selection or a changed answer order remains visible beside the full field.
+
+**Use the current answer wording** replaces the field with the selected complete
+answers. **Keep field wording and record this review** preserves the edited text
+and records the exact answers considered. Each choice retains the preceding
+full submission version. A working wording-decision note is part of the draft,
+including Save, full export, reopening and version restore.
+
+The **Answer coverage** panel links all nine manuscript areas to their mapped
+fields. An unmapped area stays visible so the operator can incorporate its useful
+facts where the actual form asks for them. This records editorial associations;
+the field's actual wording still needs to answer the issuer's prompt.
+
+**Refresh unchanged copied fields** updates all changed fields whose text still
+matches its last copied wording. It preserves edited fields and wording that an
+operator deliberately kept. Old form maps without retained baselines open with
+their complete original text and an initial comparison to make explicitly.
+
+Source receiving, plan application and direct answer editing can all change an
+answer used by a field. Those actions preserve the field until this comparison
+is resolved. Native plan receiving continues to use its existing exact package,
+price, tranche and target revision workflow.
+
+The same baselines and pending notes travel in **Download form map** and the
+complete editable draft. Preparing issuer-field output freezes the answer
+mapping, source-change state, wording decisions and exact output together.
+Later source updates leave that prepared edition unchanged. The printable
+handover includes the mapping at preparation and the existing later-output
+comparison. Earlier prepared editions reopen with their original contents.
+
+The SCF [submission criteria](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria)
+were read on October 13, 2026. They require the submission to carry the facts
+needed for review. Keep the six-package budget, complete outcomes and team facts
+in the actual answers, and record labels, limits and attachment instructions
+from the invited issuer form.
 
 ## Use the original SF47 budget and delivery plan
 
@@ -158,6 +295,24 @@ The caller retains a full version before a transition and validates the resultin
 For the original equipped reviewer Page, continue with the same edited application. Receive the next actual saved revision of its selected native plan, review the original package and answer changes, resolve the affected targets, and retain the full export before reopening that file and the saved browser draft. Restore the preceding version through **Saved versions** to continue either editorial state. Use the saved original plan revisions and their native calculations as the inputs to this journey.
 
 
+## Prepare customer operating work from the selected packages
+
+In **Planning**, use **Customer operating procedure** after choosing the
+original source revision and work packages. Enter the customer, operating owner,
+useful result and receiving instructions. An optional complete Command finder
+catalog lets each package retain an actual command or toolkit registration with
+its original source and runtime.
+
+**Create operating plan from selected work packages** downloads the complete
+editable JSON and keeps a prepared copy in this planning review. Save the
+submission to retain it. Import that JSON into **Command finder → Operating
+plans** to order detailed work, set actual due dates, enter exact command
+arguments and save recorded results as successive operating revisions.
+
+The [complete procedure guide](GRANT_OPERATING_PLANS.md) includes the same
+installed CLI and source-bound handover. It uses the native work-package scope,
+costs and relative windows already selected here.
+
 ## Review the required content
 
 **Required content** connects the nine answers to the issuer's current published criteria. Record an editorial status and a precise note locating the supporting content. The status is the operator's review decision.
@@ -212,7 +367,7 @@ For an equipped receiving operator, exercise the whole real workflow on the orig
 
 ## Primary issuer sources
 
-Reviewed October 12, 2026:
+Reviewed October 13, 2026:
 
 - [Build submission criteria](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria).
 - [Budget and deliverable guidance](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/budget-and-deliverable-guidelines).

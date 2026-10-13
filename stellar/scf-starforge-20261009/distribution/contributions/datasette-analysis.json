@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "datasette-analysis",
-  "description": "Datasette and original supplier CSV editions, native Analysis reports, complete editable review and workflow delivery",
+  "description": "Datasette and original supplier CSV editions, NLD data flows, native Analysis reports, complete editable review and workflow delivery",
   "components": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/datasette",
@@ -27,7 +27,7 @@
     "supplier-report": "products/conapi/supplier-report/supplier-report-cli.mjs"
   },
   "commandDescriptions": {
-    "datasette-analysis": "Operate source editions, native Analysis, original supplier review and complete API/JMS workflow delivery",
+    "datasette-analysis": "Operate source editions, NLD data flows, native Analysis, original supplier review and complete API/JMS workflow delivery",
     "supplier-report": "Review original supplier source changes and export the complete editable comparison"
   },
   "exports": {

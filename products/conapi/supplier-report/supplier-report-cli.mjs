@@ -6,8 +6,11 @@ import { createServer } from 'node:http';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   createEdition, reconcile, decideMany, finalize, exportCSV, exportHTML,
-  exportSQL, serializeWorkspace, reopenWorkspace
+  exportSQL, serializeWorkspace, reopenWorkspace, canonicalJSON
 } from './supplier-report.mjs';
+import {createWorkbookHost,workbookMain,workbookDeliveryMembers} from './review-workbook-host.mjs';
+import {reopenSourceEdition,serializeSourceEdition,nativeSourceIdentity} from './source-editions.mjs';
+import {readNativeSource,nativeDeliveryMembers,verifyNativeArchive,readSourceBytes,nativeRuntimeDocument,createNativeSourceHost} from './native-source-io.mjs';
 
 const USAGE = [
   'Supplier feed review',
@@ -16,36 +19,66 @@ const USAGE = [
   '    --rules rules.json --request REQUEST_ID --out workspace.json',
   '    [--baseline-source SOURCE_ID] [--candidate-source SOURCE_ID]',
   '    [--baseline-captured-at ISO_DATE] [--candidate-captured-at ISO_DATE] [--force]',
+  '    [--baseline-format csv|source-json|native-edition|native-archive]',
+  '    [--candidate-format csv|source-json|native-edition|native-archive]',
+  '    [--baseline-native-sha256 SHA] [--candidate-native-sha256 SHA]',
+  '    [--baseline-archive-sha256 SHA] [--candidate-archive-sha256 SHA]',
+  '    [--numeric-format source|plain-decimal] [--native-cache DIRECTORY] [--native-directory DATASETTE_DIRECTORY]',
+  '',
+  '  node supplier-report-cli.mjs native-source --input ORIGINAL --format native-edition|native-archive --out SOURCE.json',
+  '    [--id ID] [--source ID] [--captured-at ISO_DATE] [--native-sha256 SHA] [--archive-sha256 SHA]',
+  '    [--numeric-format source|plain-decimal] [--native-cache DIRECTORY] [--native-directory DATASETTE_DIRECTORY] [--force]',
+  '',
+  '  node supplier-report-cli.mjs receive --delivery ORIGINAL_DELIVERY --out-dir NEW_DIRECTORY',
+  '    [--native-cache DIRECTORY] [--native-directory DATASETTE_DIRECTORY]',
   '',
   '  node supplier-report-cli.mjs decide --workspace workspace.json --decisions decisions.json',
   '    --reviewer REVIEWER --expected-revision NUMBER --out reviewed.json [--finalize] [--force]',
   '',
   '  node supplier-report-cli.mjs export --workspace reviewed.json --out-dir NEW_DIRECTORY',
-  '    [--table-name supplier_feed_accepted]',
+  '    [--table-name supplier_feed_accepted] [--workbook-delivery REVIEW_DELIVERY_DIRECTORY]',
+  '    [--baseline-native-archive FILE] [--candidate-native-archive FILE]',
+  '    [--native-cache DIRECTORY] [--native-directory DATASETTE_DIRECTORY]',
   '',
   '  node supplier-report-cli.mjs inspect --workspace workspace.json',
-  '  node supplier-report-cli.mjs serve [--port 8765]',
+  '  node supplier-report-cli.mjs serve [--port 8765] [--native-cache DIRECTORY] [--native-directory DATASETTE_DIRECTORY]',
   '',
-  'Source timestamps default to the time the local file is read. File provenance is retained.',
+  '  node supplier-report-cli.mjs workbook-export --workspace WORKSPACE --out REVIEW.xlsx',
+  '  node supplier-report-cli.mjs workbook-review --workspace WORKSPACE --returned REVIEW.xlsx --out-dir REVIEW_DIRECTORY',
+  '    [--resolutions CHOICES.json] [--reviewed-at ISO_TIMESTAMP] [--python PYTHON_EXECUTABLE]',
+  '  node supplier-report-cli.mjs workbook-apply --workspace WORKSPACE --review-dir REVIEW_DIRECTORY',
+  '    --operation ORIGINAL_ID --out RESULT_WORKSPACE --delivery-dir NEW_DELIVERY [--finalize] [--force]',
+  '  node supplier-report-cli.mjs workbook-receive --packet COMPLETE_PACKET.json --out-dir NEW_DIRECTORY',
+  '    (or --delivery-dir ORIGINAL_DELIVERY in place of --packet)',
+  '',
+  'Workbook file conversion uses the installed Analysis Python environment; see WORKBOOK_REVIEW.md.',
+  'CSV timestamps default to file intake; native editions retain their original capture time.',
+  'source-json reopens a complete exported edition with its original IDs, rows, metadata and digests.',
   'All input text must be valid UTF-8. Export requires a new directory.',
   '--force permits replacing a regular output file for compare or decide.',
   '--finalize requires all review decisions to produce a conflict-free finalized result.',
-  'serve exposes only this package on http://127.0.0.1:8765; input files stay in the browser.'
+  'serve runs the original local workspace; native archive and XLSX conversion use that local host.'
 ].join('\n');
 
 const SCHEMAS = {
   compare: {
     required: ['baseline', 'candidate', 'rules', 'request', 'out'],
-    optional: ['baseline-source', 'candidate-source', 'baseline-captured-at', 'candidate-captured-at'],
+    optional: ['baseline-source', 'candidate-source', 'baseline-captured-at', 'candidate-captured-at',
+      'baseline-format', 'candidate-format', 'baseline-native-sha256', 'candidate-native-sha256',
+      'baseline-archive-sha256', 'candidate-archive-sha256', 'numeric-format', 'native-cache', 'native-directory'],
     flags: ['force']
   },
   decide: {
     required: ['workspace', 'decisions', 'reviewer', 'expected-revision', 'out'],
     optional: [], flags: ['force', 'finalize']
   },
-  export: { required: ['workspace', 'out-dir'], optional: ['table-name'], flags: [] },
+  export: { required: ['workspace', 'out-dir'], optional: ['table-name', 'workbook-delivery',
+    'baseline-native-archive', 'candidate-native-archive', 'native-cache', 'native-directory'], flags: [] },
+  'native-source': { required: ['input', 'format', 'out'], optional: ['id', 'source', 'captured-at',
+    'native-sha256', 'archive-sha256', 'numeric-format', 'native-cache', 'native-directory'], flags: ['force'] },
+  receive: { required: ['delivery', 'out-dir'], optional: ['native-cache', 'native-directory'], flags: [] },
   inspect: { required: ['workspace'], optional: [], flags: [] },
-  serve: { required: [], optional: ['port'], flags: [] }
+  serve: { required: [], optional: ['port', 'native-cache', 'native-directory'], flags: [] }
 };
 
 function error(message, code = 'CLI_ARGUMENT') {
@@ -211,20 +244,58 @@ async function editionFromFile(filename, options) {
   });
 }
 
+async function sourceForComparison(filename,role,options) {
+  const format=options[role+'-format'] || 'csv';
+  if(format==='source-json'){
+    if(options[role+'-source'] || options[role+'-captured-at'] || options[role+'-native-sha256'] || options[role+'-archive-sha256']){
+      throw error('A source-json input preserves its original identity, capture time and digests. Select the retained source file without overrides.','SOURCE_IDENTITY_PRESERVED');
+    }
+    const input=await readUTF8(filename);
+    return reopenSourceEdition(input.text);
+  }
+  if(format==='csv'){
+    if(options[role+'-native-sha256'] || options[role+'-archive-sha256']){
+      throw error('Native identity hashes require a native-edition or native-archive input for '+role+'.','SOURCE_FORMAT');
+    }
+    return editionFromFile(filename,{
+      id:options.request+':'+role,sourceId:options[role+'-source'],capturedAt:options[role+'-captured-at']
+    });
+  }
+  if(!['native-edition','native-archive'].includes(format)){
+    throw error('Source format must be csv, source-json, native-edition or native-archive.','SOURCE_FORMAT');
+  }
+  return readNativeSource({
+    filename,format,id:options.request+':'+role,
+    sourceId:options[role+'-source'],capturedAt:options[role+'-captured-at'],
+    expectedSha256:options[role+'-native-sha256'],archiveSha256:options[role+'-archive-sha256'],
+    numericFormat:options['numeric-format'] || 'source',
+    cacheDirectory:options['native-cache'] || path.resolve(options.out)+'.sources',
+    nativeDirectory:options['native-directory']
+  });
+}
+
 async function compareCommand(options) {
   const rulesInput = await readJSON(options.rules);
   const requestId = options.request;
-  const baseline = await editionFromFile(options.baseline, {
-    id: requestId + ':baseline', sourceId: options['baseline-source'],
-    capturedAt: options['baseline-captured-at']
-  });
-  const candidate = await editionFromFile(options.candidate, {
-    id: requestId + ':candidate', sourceId: options['candidate-source'],
-    capturedAt: options['candidate-captured-at']
-  });
+  const baseline = await sourceForComparison(options.baseline,'baseline',options);
+  const candidate = await sourceForComparison(options.candidate,'candidate',options);
   const report = reconcile({ requestId, baseline, candidate, rules: rulesInput.value });
   const saved = await atomicWrite(options.out, workspaceText(report), { force: Boolean(options.force) });
   process.stdout.write(json(summary(report, { workspace: saved })));
+}
+
+async function nativeSourceCommand(options) {
+  const edition=await readNativeSource({
+    filename:options.input,format:options.format,id:options.id,sourceId:options.source,
+    capturedAt:options['captured-at'],expectedSha256:options['native-sha256'],
+    archiveSha256:options['archive-sha256'],numericFormat:options['numeric-format'] || 'source',
+    cacheDirectory:options['native-cache'] || path.resolve(options.out)+'.sources',
+    nativeDirectory:options['native-directory']
+  });
+  const output=await atomicWrite(options.out,serializeSourceEdition(edition),{force:Boolean(options.force)});
+  process.stdout.write(json({source:output,id:edition.id,sourceId:edition.sourceId,
+    capturedAt:edition.capturedAt,rows:edition.rows.length,native:nativeSourceIdentity(edition),
+    archive:edition.source.native.archive}));
 }
 
 function parseRevision(value) {
@@ -272,11 +343,7 @@ function addSourceFile(files, side, edition) {
   if (typeof edition.rawCSV === 'string') {
     files.set(side + '-source.csv', edition.rawCSV);
   } else {
-    files.set(side + '-source.json', json({
-      id: edition.id, sourceId: edition.sourceId, capturedAt: edition.capturedAt,
-      source: edition.source, columns: edition.columns, rows: edition.rows,
-      sourceDigest: edition.sourceDigest, digest: edition.digest
-    }));
+    files.set(side + '-source.json', serializeSourceEdition(edition));
   }
 }
 
@@ -284,7 +351,11 @@ const DELIVERY_SOURCE_FILES = [
   'supplier-report-cli.mjs', 'supplier-report.mjs', 'review.html',
   'review-ui.mjs', 'review-ui.css', 'README.md', 'FIELD_GUIDE.md', 'SOURCE_NOTES.md',
   'catalogue-coverage.mjs', 'CATALOGUE_COVERAGE.md',
-  'supplier_attachments.py', 'NATIVE_ATTACHMENTS.md'
+  'supplier_attachments.py', 'NATIVE_ATTACHMENTS.md',
+  'review-workbook.mjs', 'review_workbook.py', 'review-workbook-ui.mjs',
+  'review-workbook-host.mjs', 'WORKBOOK_REVIEW.md',
+  'datasette-bridge.mjs', 'source-editions.mjs', 'native-source-io.mjs',
+  'native-runtime.json', 'NATIVE_EDITION_BRIDGE.md'
 ];
 
 async function deliverySources() {
@@ -340,10 +411,39 @@ function makeExportFiles(report, tableName, sources) {
 }
 
 async function exportCommand(options) {
-  const { report } = await loadWorkspace(options.workspace);
+  const input = await loadWorkspace(options.workspace);
+  const {report}=input;
   // Generate every requested artifact before opening the destination directory.
   const sources = await deliverySources();
+  if(options['native-directory'])sources.set('native-runtime.json',await nativeRuntimeDocument({nativeDirectory:options['native-directory']}));
+  const native=await nativeDeliveryMembers(report,{
+    directory:path.dirname(input.absolutePath),
+    archives:{baseline:options['baseline-native-archive'],candidate:options['candidate-native-archive']},
+    cacheDirectory:options['native-cache'],nativeDirectory:options['native-directory']
+  });
   const files = makeExportFiles(report, options['table-name'] || 'supplier_feed_accepted', sources);
+  if(native.files.length){
+    const manifest=JSON.parse(files.get('manifest.json'));files.delete('manifest.json');
+    for(const {filename,content} of native.files){
+      if(files.has(filename))throw error('Native source duplicates an existing export member: '+filename,'EXPORT_FORMAT');
+      files.set(filename,content);
+      manifest.files.push({filename,bytes:content.length,sha256:digest(content)});
+    }
+    manifest.nativeSources=native.sources;
+    files.set('manifest.json',json(manifest));
+  }
+  if (options['workbook-delivery']) {
+    const additions = await workbookDeliveryMembers(options['workbook-delivery'], report);
+    const manifest = JSON.parse(files.get('manifest.json'));
+    files.delete('manifest.json');
+    for (const {filename, content} of additions) {
+      if (files.has(filename)) throw error('Workbook delivery duplicates an existing export member: ' + filename, 'EXPORT_FORMAT');
+      files.set(filename, content);
+      const body = Buffer.isBuffer(content) ? content : Buffer.from(content, 'utf8');
+      manifest.files.push({filename, bytes: body.length, sha256: digest(body)});
+    }
+    files.set('manifest.json', json(manifest));
+  }
   const directory = path.resolve(options['out-dir']);
   await fs.mkdir(path.dirname(directory), { recursive: true });
   try {
@@ -362,22 +462,127 @@ async function exportCommand(options) {
   process.stdout.write(json(summary(report, { directory, files: [...files.keys()] })));
 }
 
+async function receiveCommand(options) {
+  const originalDirectory=path.resolve(options.delivery),destination=path.resolve(options['out-dir']);
+  if(originalDirectory===destination)throw error('Choose a new receiving directory.','OUTPUT_EXISTS');
+  const manifestInput=await readJSON(path.join(originalDirectory,'manifest.json'));
+  const manifest=manifestInput.value;
+  if(!manifest || manifest.format!=='conapi-supplier-delivery' || manifest.version!==1 || !Array.isArray(manifest.files)){
+    throw error('Choose a completed supplier delivery with its original manifest.','DELIVERY_MANIFEST');
+  }
+  const originals=new Map(),descriptors=new Map();
+  for(const member of manifest.files){
+    if(!member || typeof member.filename!=='string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,199}$/.test(member.filename) ||
+        member.filename==='manifest.json' || descriptors.has(member.filename) ||
+        !Number.isSafeInteger(member.bytes) || member.bytes<0 || !/^[a-f0-9]{64}$/.test(member.sha256)){
+      throw error('Every delivery member needs a unique basename and original byte identity.','DELIVERY_MANIFEST');
+    }
+    const original=await readSourceBytes(path.join(originalDirectory,member.filename));
+    if(original.bytes!==member.bytes || original.sha256!==member.sha256){
+      throw error('The received delivery member changed: '+member.filename,'DELIVERY_MEMBER_CHANGED');
+    }
+    descriptors.set(member.filename,member);originals.set(member.filename,original.content);
+  }
+  const requireMember=filename=>{
+    if(!originals.has(filename))throw error('The complete delivery is missing '+filename+'.','DELIVERY_INCOMPLETE');
+    return originals.get(filename);
+  };
+  const decode=filename=>{
+    try{return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(requireMember(filename));}
+    catch(failure){if(failure.code)throw failure;throw error(filename+' must be complete UTF-8.','INVALID_UTF8');}
+  };
+  const document=filename=>{
+    try{return JSON.parse(stripJSONBOM(decode(filename)));}
+    catch(failure){if(failure.code)throw failure;throw error(filename+' must be complete JSON.','INVALID_JSON');}
+  };
+  const report=reopenWorkspace(stripJSONBOM(decode('workspace.json')));
+  for(const key of ['requestId','comparisonId','revision','status']){
+    if(manifest[key]!==report[key])throw error('The delivery manifest belongs to another '+key+'.','DELIVERY_IDENTITY');
+  }
+  if(canonicalJSON(document('report.json'))!==canonicalJSON(report) ||
+      canonicalJSON(document('rules.json'))!==canonicalJSON(report.rules)){
+    throw error('The report and rules must reproduce the complete received workspace.','DELIVERY_REPORT_CHANGED');
+  }
+  for(const filename of ['changes.csv','report.html','supplier-report.mjs','supplier-report-cli.mjs',
+    'review.html','review-ui.mjs','review-ui.css'])requireMember(filename);
+  const nativeSources=manifest.nativeSources || {};
+  if(!nativeSources || typeof nativeSources!=='object' || Array.isArray(nativeSources) ||
+      Object.keys(nativeSources).some(key=>!['baseline','candidate'].includes(key))){
+    throw error('Native source bindings must identify the original baseline and candidate.','DELIVERY_NATIVE_BINDING');
+  }
+  for(const role of ['baseline','candidate']){
+    const edition=report[role];
+    if(typeof edition.rawCSV==='string'){
+      if(decode(role+'-source.csv')!==edition.rawCSV)throw error('The complete '+role+' CSV changed.','DELIVERY_SOURCE_CHANGED');
+    }else{
+      const source=reopenSourceEdition(decode(role+'-source.json'));
+      if(canonicalJSON(source)!==canonicalJSON(edition))throw error('The complete '+role+' source edition changed.','DELIVERY_SOURCE_CHANGED');
+    }
+    const identity=nativeSourceIdentity(edition);
+    if(identity){
+      for(const filename of ['datasette-bridge.mjs','source-editions.mjs','native-source-io.mjs','native-runtime.json'])requireMember(filename);
+      const selected=nativeSources[role],filename=role+'-native-source.datasette.json.gz',member=descriptors.get(filename);
+      if(!selected || selected.archive!==filename || !member || selected.bytes!==member.bytes ||
+          selected.sha256!==member.sha256 || selected.editionSha256!==identity.editionSha256 ||
+          selected.captureSha256!==identity.captureSha256){
+        throw error('The native '+role+' archive binding differs from its original edition.','DELIVERY_NATIVE_BINDING');
+      }
+      await verifyNativeArchive(edition,path.join(originalDirectory,filename),{
+        cacheDirectory:options['native-cache'] || destination+'.sources',nativeDirectory:options['native-directory']
+      });
+    }else if(nativeSources[role]){
+      throw error('A native archive is bound to a non-native '+role+' source.','DELIVERY_NATIVE_BINDING');
+    }
+  }
+  if(report.status==='reviewed'){
+    const result=finalize(report),lineage=document('lineage.json');
+    requireMember('accepted.sql');
+    if(decode('accepted.csv')!==exportCSV(report,{kind:'accepted'}))throw error('The accepted rows differ from the reviewed workspace.','DELIVERY_ACCEPTED_CHANGED');
+    const expected={requestId:result.requestId,comparisonId:result.comparisonId,revision:result.revision,
+      resultDigest:result.resultDigest,baselineEditionId:result.baselineEditionId,candidateEditionId:result.candidateEditionId,
+      columns:result.columns,rows:result.rows,provenance:result.provenance,summary:result.summary};
+    if(canonicalJSON(lineage)!==canonicalJSON(expected))throw error('The accepted lineage differs from the reviewed workspace.','DELIVERY_LINEAGE_CHANGED');
+  }else if(['accepted.csv','accepted.sql','lineage.json'].some(filename=>originals.has(filename))){
+    throw error('Final accepted outputs require the original reviewed workspace.','DELIVERY_STATUS');
+  }
+  const finalManifest=await readUTF8(manifestInput.absolutePath);
+  if(finalManifest.sha256!==manifestInput.sha256)throw error('The manifest changed during receiving.','DELIVERY_MANIFEST_CHANGED');
+  await fs.mkdir(path.dirname(destination),{recursive:true});
+  try{await fs.mkdir(destination,{mode:0o700});}
+  catch(failure){if(failure.code==='EEXIST')throw error('Receiving directory already exists; choose a new directory: '+destination,'OUTPUT_EXISTS');throw failure;}
+  try{
+    for(const [filename,content] of originals)await atomicWrite(path.join(destination,filename),content);
+    await atomicWrite(path.join(destination,'manifest.json'),manifestInput.text);
+  }catch(failure){
+    throw error('Receiving could not finish in '+destination+': '+failure.message+'. Completion is marked by manifest.json.',failure.code || 'DELIVERY_WRITE');
+  }
+  process.stdout.write(json(summary(report,{directory:destination,receivedFrom:originalDirectory,
+    manifestSha256:manifestInput.sha256,files:[...originals.keys(),'manifest.json'],nativeSources})));
+}
+
 async function serveCommand(options) {
   const rawPort = options.port || '8765';
   if (!/^[0-9]+$/.test(rawPort)) throw error('--port must be an integer');
   const port = Number(rawPort);
   if (!Number.isSafeInteger(port) || port < 1 || port > 65535) throw error('--port must be between 1 and 65535');
   const directory = fileURLToPath(new URL('.', import.meta.url));
+  const workbookHost = createWorkbookHost();
+  const nativeHost=createNativeSourceHost({cacheDirectory:options['native-cache'],nativeDirectory:options['native-directory'],directory});
   const allowed = new Map([
     ['/', ['review.html', 'text/html; charset=utf-8']],
     ['/review.html', ['review.html', 'text/html; charset=utf-8']],
     ['/supplier-report.mjs', ['supplier-report.mjs', 'text/javascript; charset=utf-8']],
+    ['/source-editions.mjs', ['source-editions.mjs', 'text/javascript; charset=utf-8']],
     ['/review-ui.mjs', ['review-ui.mjs', 'text/javascript; charset=utf-8']],
-    ['/review-ui.css', ['review-ui.css', 'text/css; charset=utf-8']]
+    ['/review-ui.css', ['review-ui.css', 'text/css; charset=utf-8']],
+    ['/review-workbook.mjs', ['review-workbook.mjs', 'text/javascript; charset=utf-8']],
+    ['/review-workbook-ui.mjs', ['review-workbook-ui.mjs', 'text/javascript; charset=utf-8']]
   ]);
   const server = createServer(async (request, response) => {
     response.setHeader('X-Content-Type-Options', 'nosniff');
     response.setHeader('Cache-Control', 'no-store');
+    if (await workbookHost.handle(request, response)) return;
+    if (await nativeHost.handle(request, response)) return;
     if (request.method !== 'GET' && request.method !== 'HEAD') {
       response.writeHead(405, { Allow: 'GET, HEAD' });
       response.end('Method not allowed');
@@ -407,15 +612,25 @@ async function serveCommand(options) {
     process.exitCode = 1;
   });
   for (const signal of ['SIGINT', 'SIGTERM']) {
-    process.once(signal, () => server.close(() => { process.exitCode = 0; }));
+    process.once(signal, () => {
+      const stopped = new Promise(resolve => server.close(resolve));
+      Promise.all([stopped, workbookHost.close(), nativeHost.close()]).then(() => { process.exitCode = 0; }, failure => {
+        process.stderr.write(json({error: failure.code || 'SERVER_CLOSE', message: failure.message})); process.exitCode = 1;
+      });
+    });
   }
 }
 
 async function main() {
+  if (['workbook-export', 'workbook-review', 'workbook-apply', 'workbook-receive'].includes(process.argv[2])) {
+    process.stdout.write(json(await workbookMain(process.argv.slice(2)))); return;
+  }
   const { command, options } = parseArguments(process.argv.slice(2));
   if (command === 'help') process.stdout.write(USAGE + '\n');
   else if (command === 'compare') await compareCommand(options);
   else if (command === 'decide') await decideCommand(options);
+  else if (command === 'native-source') await nativeSourceCommand(options);
+  else if (command === 'receive') await receiveCommand(options);
   else if (command === 'export') await exportCommand(options);
   else if (command === 'inspect') {
     const { report } = await loadWorkspace(options.workspace);

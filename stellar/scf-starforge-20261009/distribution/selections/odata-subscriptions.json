@@ -81,6 +81,7 @@
   "contributions": [
     "odata",
     "odata-subscriptions",
+    "odata-subscription-customer",
     "odata-collection-customer",
     "odata-comparison-customer",
     "dataset",

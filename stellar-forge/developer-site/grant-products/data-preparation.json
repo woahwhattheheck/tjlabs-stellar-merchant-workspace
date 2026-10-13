@@ -1,0 +1,139 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "data-preparation",
+  "heading": "## SQL preparation, reusable pipelines and complete analyst receiving",
+  "sources": [
+    {
+      "id": "preparation-workspace-operating",
+      "label": "Complete installed SQL preparation and managed pipeline operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "products/data-preparation/OPERATING.md",
+      "editions": [
+        {
+          "commit": "b47099ffa5acf15f2c70d9d12662ee81dca0d3fe",
+          "git_blob": "7984f61fb5a1150e1f44b1e8e5e6b9bce37720a1",
+          "sha256": "fd3af701539e424e3b2b33513bd778be8dae023e7e30ef02dee7fcd2524cf1ce",
+          "bytes": 37022
+        }
+      ]
+    },
+    {
+      "id": "preparation-pipeline-original-engine",
+      "label": "Original saved pipeline, stage execution and complete delivery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/pipelines/README.md",
+      "editions": [
+        {
+          "commit": "68ad5adf250e9f100f84d034881ebabc9fa48117",
+          "git_blob": "b9c5f6a818cba119da8febc6e0a3279769b2ea21",
+          "sha256": "796165b87e5aa448957608d78232e0b174c40de1f0e2553e5c00951ecd043f9e",
+          "bytes": 15889
+        }
+      ]
+    },
+    {
+      "id": "preparation-workspace-selection",
+      "label": "Complete installed data-preparation product selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/data-preparation-workspace.json",
+      "editions": [
+        {
+          "commit": "68ad5adf250e9f100f84d034881ebabc9fa48117",
+          "git_blob": "3bf0df6334532e909c85ab43276897cd3b3c789e",
+          "sha256": "0f5be18be68418c2e71b24a402ba1b89a23868b572f4665a9b4ddc0fd63f473a",
+          "bytes": 11171
+        }
+      ]
+    },
+    {
+      "id": "preparation-workspace-receiving",
+      "label": "Original complete preparation and pipeline customer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "products/data-preparation/RECEIVING.md",
+      "editions": [
+        {
+          "commit": "ca518e3aba84eed4dbc56147fa5ac9090904424e",
+          "git_blob": "d13236165fc1f1bc3d46ec379a9f5538cde03d5b",
+          "sha256": "c34e1e2359fa5626f7522e725f2d09c859e2d41e3469d3881ff8374a4e66cb27",
+          "bytes": 15328
+        },
+        {
+          "commit": "0a019ffe48fadbb71adf1dcd9324932ff086b7b2",
+          "git_blob": "8fe7dc8f5e10d0d3f150023ee6dcfb39732e86b0",
+          "sha256": "f41fd36de678d2351b35a92b9bb042220c4cde23e4700947b2e5d05f635969d5",
+          "bytes": 16133
+        }
+      ]
+    },
+    {
+      "id": "preparation-workspace-source",
+      "label": "Complete frozen source for original customer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "products/data-preparation/receiving-source.json",
+      "editions": [
+        {
+          "commit": "ca518e3aba84eed4dbc56147fa5ac9090904424e",
+          "git_blob": "c7e780d1373609674510ba3a0854fce393035333",
+          "sha256": "b1161bea0a8db2a9bf47e7d4c20e5e780ffec754db753e82f25d6ed40520ee23",
+          "bytes": 29468
+        }
+      ]
+    },
+    {
+      "id": "preparation-workspace-native-receiving",
+      "label": "Native original-case continuation, shutdown and complete preservation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "products/data-preparation/receiving.py",
+      "editions": [
+        {
+          "commit": "ca518e3aba84eed4dbc56147fa5ac9090904424e",
+          "git_blob": "c649f135aa51fb73013f69d234a0d9f5159e4b74",
+          "sha256": "aec61f1ab05418a3c69c58f7fa44f093201d59f665b73f27fe7ce974bec78854",
+          "bytes": 36792
+        }
+      ]
+    },
+    {
+      "id": "preparation-pipeline-commissioning",
+      "label": "Complete original paid pipeline configuration, purchase and editable customer receiving",
+      "path": "products/data-preparation/COMMISSIONING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "editions": [
+        {
+          "commit": "71e7f79171bc3c3022729208fc15a0214414d7e2",
+          "git_blob": "01bee215cfd9e275bedbaf4b3552dc2638a8fc51",
+          "sha256": "fd12236a6c7802ab8761c4ace166105dcfa0f9ab32841ca81ebcd192702611e1",
+          "bytes": 16716
+        }
+      ]
+    },
+    {
+      "id": "preparation-pipeline-jobs-selection",
+      "label": "Complete installed preparation and paid-Jobs product selection",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/data-preparation-jobs.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "editions": [
+        {
+          "commit": "71e7f79171bc3c3022729208fc15a0214414d7e2",
+          "git_blob": "aba6d5cc6112e4a0616a287e2fb1bd460d60be72",
+          "sha256": "35a0950ce41b2a868f825f34d6d0d373337888e8ae75c31fb73749a6d4ab0f88",
+          "bytes": 13064
+        }
+      ]
+    },
+    {
+      "id": "preparation-pipeline-jobs-customer",
+      "label": "Typed complete original result-package and editable project receiving",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/jobs/customer.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "editions": [
+        {
+          "commit": "71e7f79171bc3c3022729208fc15a0214414d7e2",
+          "git_blob": "5c0e4363ac3aebb8bd2fd572b58468f668e16314",
+          "sha256": "5f820cdb8842ef763a14b4d98e1e6e286306489586e85b587056396106da8003",
+          "bytes": 16912
+        }
+      ]
+    }
+  ]
+}

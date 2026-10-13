@@ -29,6 +29,7 @@ import {CustomerStatementWorkspace,STATEMENT_REQUEST_BYTES} from '../customer-st
 import {handleCustomerStatementRequest,customerStatementAsset} from '../customer-statements/server.mjs';
 import {XeroWorkspace,handleXeroRequest,XERO_REQUEST_BYTES} from './xero-workspace.mjs';
 import {QboWorkspace,handleQboRequest,QBO_REQUEST_BYTES} from './qbo-workspace.mjs';
+import {qboWorksheetMain,QBO_WORKSHEET_HELP} from './qbo-worksheet-cli.mjs';
 import {XERO_HELP,xeroMain} from './xero-cli.mjs';
 import {SourceChangeWorkspace,handleSourceChangeRequest,SOURCE_CHANGE_REQUEST_BYTES} from './source-changes.mjs';
 import {SOURCE_CHANGES_HELP,sourceChangesMain} from './source-changes-cli.mjs';
@@ -296,6 +297,7 @@ at /portfolio/clients/CLIENT_ALIAS/runbooks.html.
 Cryptoworth imports: open /cryptoworth.html or use the cryptoworth subcommand.
 Use the customer's original template and native Crypto IDs; retain the returned import.
 Xero journals: open /xero.html or use the xero subcommand.
+Buyer allocation worksheets: use the worksheet panel in /qbo.html or qbo-worksheet ACTION.
 Chart source changes: open /source-changes.html or use source-changes ACTION.
 Compare retained editions, review mappings and continue the exact unused-plan successor.
 Native Xero calls use STARFORGE_XERO_ACCESS_TOKEN from this process environment.
@@ -303,10 +305,11 @@ Operating backup and recovery: backup | inspect-backup | verify-backup | restore
 Use a recovery subcommand with --help for the original encrypted workflow.
 `;
 export async function main(argv=process.argv.slice(2)){
-  if(argv.length===1&&argv[0]==='--help'){process.stdout.write(HELP+'\n'+BUYER_HELP+'\n'+RECOVERY_HELP+'\n'+ADJUSTMENTS_HELP+'\n'+XERO_HELP+'\n'+CRYPTOWORTH_HELP+'\n'+RUNBOOK_HELP+'\n'+PORTFOLIO_HELP+'\n'+SOURCE_CHANGES_HELP);return;}
+  if(argv.length===1&&argv[0]==='--help'){process.stdout.write(HELP+'\n'+BUYER_HELP+'\n'+RECOVERY_HELP+'\n'+ADJUSTMENTS_HELP+'\n'+XERO_HELP+'\n'+CRYPTOWORTH_HELP+'\n'+RUNBOOK_HELP+'\n'+PORTFOLIO_HELP+'\n'+SOURCE_CHANGES_HELP+'\n'+QBO_WORKSHEET_HELP);return;}
   if(argv[0]==='runbooks')return runbooksMain(argv.slice(1));
   if(argv[0]==='portfolio')return portfolioMain(argv.slice(1));
   if(argv[0]==='source-changes')return sourceChangesMain(argv.slice(1));
+  if(argv[0]==='qbo-worksheet')return qboWorksheetMain(argv.slice(1));
   if(argv.includes('--managed-launch-sha256')){
     const {accountingManagedArguments,startManagedAccountingWorkspace}=await import('./managed-launch.mjs');
     const selected=accountingManagedArguments(argv);

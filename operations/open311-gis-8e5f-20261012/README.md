@@ -1,80 +1,151 @@
 # Boston geographic customer commissioning
 
-This operating program takes the original Boston collection and service report through the installed GIS browser, an editable GeoPackage, reviewed dispatch, a second browser receiving desk, the installed CLI, and the merchant client. It saves the full operating workspaces and usable dispatch files.
+This programme takes the original Boston collection and service report through the installed geographic browser, an editable GeoPackage, reviewed dispatch, a receiving desk, the installed CLI and the configured merchant client. It retains the complete operating workspaces and usable destination files.
 
-The input is the completed original Boston collection/reporting operation in `operations/open311-boston-8e5f-20261012/`. Its four source files contain the original 84 created cases, 21 updated cases, empty updated window, and combined 104-case report. The geographic program imports every original byte and uses the original case identities and coordinates. Its three analyst assignments are explicitly labelled internal commissioning work.
+The same output directory is an operation that can be continued. Before a browser mutation reaches the native server, the programme saves the actual browser-generated request ID and complete input. After an interruption it reads that ID through the original workspace operation API. A committed action returns its original result; an uncommitted captured request is replayed with its exact body and original revision. The original workspace’s transaction and revision checks remain authoritative.
 
-## Operating sequence
+The inputs remain the completed original Boston collection/reporting operation in `operations/open311-boston-8e5f-20261012/`: the original 84 created cases, 21 updated cases, empty updated window, and combined 104-case report. Every original input byte and case coordinate is retained. The three analyst assignments are explicitly labelled internal commissioning work.
 
-1. Import all four complete original files through the geographic browser and retain their source history. Create a 104-case collection handoff and a separate 104-case handoff from the selected service report.
-2. Read the map and both case pages, find a real case by its original identifier, and open its original source status note.
-3. Download the complete GeoPackage. Use native SQLite to assign three actual source rows in the editable analyst fields.
-4. Receive the edited package through the browser. Accept one proposal, reject one, reload the desk, and finish the remaining review. The saved decision history and pending reviewer choice survive reopening.
-5. Select the two accepted dispatch cases across the 100-row page boundary. Save the destination column mapping and download complete GeoPackage, GeoJSON, CSV, JSON and HTML dispatch files.
-6. Download the editable workspace. Receive it into a second initialized browser desk. Interrupt the HTTP response after the real server commit, then reload and recover the same saved operation. Continue the received handoff.
-7. Close the browser and native desks, reopen the saved SQLite workspace independently, and receive the resulting complete file again through the installed CLI.
-8. Open the original configured merchant integration, page all 104 cases in groups of 17, download the complete workspace and mapped dispatch file, and recover the original receiving operation.
+## Complete operating sequence
 
-The receiving operations keep a compact incoming-file descriptor alongside the original records and source files. The saved handover sizes show the actual change across each receiving hop.
+1. Import all four original files through the geographic browser. Retain their complete source history and create a 104-case collection handoff plus a separate 104-case handoff from the selected service report.
+2. Read the map and case pages, search by an original municipal identifier, and open that case’s retained source status note.
+3. Download the complete GeoPackage. Use native SQLite to assign three original source rows in the editable analyst fields. The selected rows, source hash and authored assignments are saved before the native edit.
+4. Receive the edited package through the browser. Accept one proposal and reject one. Reload the desk, save and reload the remaining reviewer choice through the original browser store, and finish the second decision. The original decisions remain in the same native history.
+5. Select the two accepted dispatch cases across the 100-row page boundary. Save the destination mapping and download complete GeoPackage, GeoJSON, CSV, JSON and HTML files.
+6. Download the editable sender workspace. Receive it into a second initialized browser desk. On the first actual receiving action, abort its HTTP response after the native commit, reload and recover the original saved operation. Continue the received handoff with a real new recipient operation.
+7. Close the browser and both native desks. Reopen the recipient SQLite database independently and receive the complete file again through the installed CLI using one retained CLI request ID.
+8. Open the original configured merchant integration. Page all 104 cases in groups of 17, download the complete recipient workspace and mapped dispatch file, and recover the original CLI receiving operation.
+9. Close the native consumers, verify the selected source and complete retained files, and publish the complete `journey.json`, readable `index.html`, and `PORTABLE.md`.
 
-## Direct use with a completed original Boston operation
+Each browser mutation has its own saved request and result. Each completed observation, export and operating phase has its own immutable result. Resuming after a later interruption does not require replaying earlier customer actions.
 
-Run with the existing Node 24 runtime and installed Playwright/Chromium. Supply a private JSON configuration with absolute paths:
+## Run the original programme
 
-```json
+Use the existing Node 24 or later runtime, installed Playwright/Chromium, and Linux util-linux `flock`. Supply a private JSON configuration:
+
+~~~json
 {
-  "gisProduct": "/absolute/source/stellar/scf-starforge-20261009/sf30-seller-sdk/open311/gis",
+  "gisProduct": "/absolute/selected-source/stellar/scf-starforge-20261009/sf30-seller-sdk/open311/gis",
+  "sourceRoot": "/absolute/selected-source",
   "collectionOutput": "/absolute/boston/delivery",
   "reportingOutput": "/absolute/boston/delivery/reporting",
-  "output": "/absolute/new-private-geographic-delivery",
+  "output": "/absolute/private-geographic-delivery",
   "playwrightModule": "/absolute/node_modules/playwright/index.js",
   "chromiumExecutablePath": "/absolute/chromium",
-  "edition": "3cb7d7ab61321c1ca4d73dfc2d52a8661a6d910f"
+  "edition": "the-actual-selected-source-edition",
+  "mode": "run"
 }
-```
+~~~
 
-```sh
+~~~sh
 node operations/open311-gis-8e5f-20261012/commission-gis.mjs /absolute/private-gis-job.json
-```
+~~~
 
-The four expected input paths are `created-collection.json`, `updated-collection.json`, `empty-updated-collection.json`, and `reporting/combined-observed-report-package.json`. If the complete reporting package has more than one report with 104 rows, select the original combined report with `reportId`. The program uses an empty private output directory.
+`sourceRoot` defaults to the repository or selected-source root five directories above the GIS product. The source directory must contain the whole GIS distribution selection and the original host-file, retained-file, configuration and quota dependencies. The programme hashes its complete selected source inventory, including internal symbolic-link targets, and its own driver. Git metadata, `node_modules`, Python bytecode and Python bytecode-cache directories are runtime or checkout material rather than selected source.
 
-The source directory must include the complete GIS distribution selection and the merchant integration's original host-file, retained-file, configuration and quota dependencies.
+Keep the mutable output outside the selected source tree. The initial output must be empty. The four expected files are:
 
-## Continue the existing whole-command receiver
+| Input | Relative location beneath the collection/reporting outputs | Original rows |
+| --- | --- | ---: |
+| Created collection | `created-collection.json` | 84 |
+| Updated collection | `updated-collection.json` | 21 |
+| Empty updated window | `empty-updated-collection.json` | 0 |
+| Combined source report | `reporting/combined-observed-report-package.json` | 104 |
 
-The existing `open311-boston-8e5f-20261012/run_native.py` bootstrap already supports a second complete operating phase through its `reporting` command. Use that continuation to run the geographic operation after the original Boston collection and reporting program finishes. Each phase retains its own result and output, and the existing receiver returns one complete ZIP.
+If the reporting package contains multiple 104-row reports, set `reportId` to the actual original combined report ID. `reportingOutput` can select its separate existing directory.
 
-The continuation packet has this shape:
+Optional execution settings are `timeoutMs` and `flockExecutable`. The browser uses the environment of the original native invocation; retain the selected host’s actual font, dynamic-library and Chromium settings. `sourceFiles` preserves supplied original source declarations alongside the actual source-byte inventory.
 
-```json
+## Continue an interrupted operation
+
+Rerun the same private configuration and physical output directory. Keep the original selected source, edition and input bytes. The programme can read already-frozen inputs if their original collection directory is no longer mounted; when an external input is still present it must match the frozen file exactly.
+
+| Retained boundary | Continuation behavior |
+| --- | --- |
+| `INPUT.json` | Complete source inventory, programme source, four input files and selected report |
+| `RUN.json` | Original operation UUID, start time and physical output identity |
+| `workspaces/` | Original SQLite inode, bound before the first action and checked before every incomplete continuation can reuse a saved step |
+| `actions/` | Actual HTTP input saved before submission, followed by its original native result; request kind, canonical input hash and result are verified |
+| `steps/` and `phases/` | Completed work received from its original result after a lost parent acknowledgement |
+| `cli/` | One CLI request, complete file identity, returned command output when observed, and original native result |
+| `attempts/` | Actual process entries, failures, browser errors and available failure screenshots |
+| `journey.json` | Immutable completed result, published only after all operating phases and file/native-workspace verification |
+
+A permanent private kernel lock serializes the programme. The original CLI command resolves the physical `cli.mjs` leaf before launching Node. This includes a composed product whose CLI is still a symbolic link after its parent directory has been resolved; the command receipt records that actual physical entry path. The native CLI child inherits a copy of that same held open-file description. If the parent ends while the CLI is still writing, another invocation cannot enter until the actual child releases its copy. Closing one copy never explicitly unlocks another owner’s descriptor.
+
+The browser capture keeps its generated request ID. The programme does not substitute an ID that the browser’s saved outbox has never seen. An interrupted exact request is read from the native workspace before any replay. A native revision or handoff-head conflict remains a concrete original selection conflict; the programme does not silently change a saved request, replace a current handoff or discard later operator work.
+
+The response-loss exercise is recorded only when the response was actually aborted after its native commit. If the process ends before that observation is retained, continuation records recovery through the saved native operation. A fresh browser after parent loss has fresh browser storage; it is not described as reopening an unobserved old IndexedDB outbox. The complete original receiving result remains recoverable in both cases.
+
+An earlier nonempty output from the old non-resumable driver lacks this pre-submission custody. It is preserved rather than silently interpreted as a new operation. Coordinate its actual existing native IDs and source with the original customer operator before choosing its next source edition. Existing completed operations are not restarted.
+
+## Completed receiving and later recipient work
+
+Running the same completed programme returns the original `journey.json`, including its original completion time. It verifies frozen artifacts and independently opens each actual workspace. Every original record and saved operation must remain byte-for-byte in the native package representation, with the same workspace identity and a revision at least as recent as the retained baseline.
+
+Later valid recipient additions are allowed. Current SQLite bytes, current revision and the last displayed title are not required to equal their original completion values. The programme never replaces a later recipient workspace with a frozen export to make a comparison pass.
+
+If an earlier merchant export was published before a parent interruption and the recipient subsequently advanced, the later actual complete merchant export is retained under its content hash. The prior edition remains alongside it. The final phase and handover index identify the actual selected recipient file.
+
+To inspect a copied completed handover, select the same source and new output location with `"mode": "inspect"`. Retained files use portable relative paths. Physical inode checks apply to incomplete continuation; a completed copy is checked through native package identities and complete original record/operation inclusion. A copied incomplete output is not an independent second writer.
+
+## Usable delivered files
+
+| Delivered material | Purpose |
+| --- | --- |
+| `index.html` and `PORTABLE.md` | Readable file index and native receiving instructions |
+| `inputs/` | Four original municipal/report files and edited analyst GeoPackage |
+| `analyst-selection.json` | Original source hash and three authored internal assignments |
+| `downloads/boston-analyst-original.gpkg` | Complete original 104-case geographic handoff |
+| `downloads/boston-dispatch.{gpkg,geojson,csv,json,html}` | Two reviewed cases and saved destination mapping |
+| `downloads/boston-complete-gis-workspace.json` | Complete sender source, review, dispatch and history |
+| `downloads/boston-received-editable-workspace.json` | Actual continued first recipient edition |
+| `downloads/boston-reopened-workspace.json` | Independently reopened native recipient |
+| `downloads/boston-cli-received-workspace.json` | Actual original CLI receiving hop |
+| `downloads/boston-merchant-workspace*.json` | Complete configured merchant observations |
+| `sender-workspace/`, `receiver-workspace/`, `cli-received-workspace/` | Editable original SQLite workspaces |
+| `merchant-gis-host.json` | Historical producing-host configuration and selected input |
+| `screenshots/` | Six original browser receiving views |
+| `actions/`, `cli/`, `steps/`, `phases/`, `attempts/` | Complete request, result and continuation history |
+| `journey.json` | Completed result and immutable artifact hashes |
+
+On another machine, receive the selected complete workspace JSON through the existing GIS CLI into a new native directory. Use a new request ID for that new receiving operation and reuse the same ID if its response is lost. The delivered `PORTABLE.md` gives the exact CLI argument shape.
+
+The historical host configuration contains producing-machine paths. Use the original GIS configuration API to select the new machine’s actual workspace/input paths and preserve the historical file.
+
+## Compose with the existing whole-command receiver
+
+The existing `open311-boston-8e5f-20261012/run_native.py` supports the geographic phase through its `reporting` command. `continue-boston.mjs` remains compatible: it reads the original Boston outputs, resolves the GIS source from the selected phase and calls `runGISCommissioning`.
+
+Keep business request `boston-geographic-8e5f-20261012-01`, existing source acquisition/installation ownership and the one customer receiving operation. Select the complete reviewed source before its next native phase; do not replace a file inside an already-dispatched immutable input.
+
+A reporting packet keeps this existing shape:
+
+~~~json
 {
   "op": "reporting",
   "requestId": "boston-geographic-8e5f-20261012-01",
   "files": [
     {
-      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/gis/index.mjs",
-      "content": "...complete original file body...",
-      "bytes": 1062,
-      "sha256": "...the complete file SHA-256...",
-      "gitBlob": "e2afbe86e7d2690b39411160101a251c996e58fb"
+      "path": "operations/open311-gis-8e5f-20261012/commission-gis.mjs",
+      "content": "...the complete selected programme body...",
+      "bytes": 0,
+      "sha256": "...the actual complete file SHA-256...",
+      "gitBlob": "...the actual selected Git blob..."
     }
   ],
-  "runner": "...complete continue-boston.mjs body...",
+  "runner": "...the complete original continue-boston.mjs body...",
   "options": {
-    "gisEdition": "3cb7d7ab61321c1ca4d73dfc2d52a8661a6d910f"
+    "gisEdition": "the-actual-selected-source-edition"
   }
 }
-```
+~~~
 
-Include every GIS product leaf, both operating modules and any missing original host dependencies in `files`. The illustration above shows the shape of one entry; the actual receiving packet contains the complete selected source closure. The maintained receiver's `--reporting-packet` accepts the retained packet, with `--reporting-git-blob` selecting its exact original Git identity. The whole-command launcher supports the corresponding reporting source input.
+The example explains the shape; fill it with actual complete bytes, sizes and hashes. Preserve every original GIS product leaf and host dependency. Update the selected driver and guide in the existing complete packet. The maintained receiver’s `--reporting-packet` and `--reporting-git-blob` select that exact packet and preserve its complete archive return.
 
-`continue-boston.mjs` resolves the GIS module from the second phase's source directory and opens the completed original Boston outputs from the first phase. It uses the existing phase timeout and the same archive return. Full source manifests, operating results and complete files stay in that archive.
+The programme does not create a second customer ZIP or native controller. The existing whole-command receiver includes this output, editable workspaces and complete history in its single archive.
 
-## Delivered files
+`OPEN311_GIS_PHASE` reports a retained completed operating phase. `OPEN311_GIS_COMPLETE` reports either the completed result or current failed attempt. Failures exit nonzero and retain the actual error. Completed replay reports `reused: true` without running the browser or customer mutations again.
 
-The private output contains the four complete original inputs; original and edited GeoPackages; five destination dispatch formats; the complete sender, receiving, reopened, CLI and merchant workspace JSON files; the independently saved SQLite workspace directories; the merchant host configuration; six browser screenshots; and `journey.json`.
-
-`OPEN311_GIS_PHASE` reports a completed actual operating step. `OPEN311_GIS_COMPLETE` reports the final state and output directory. The program exits nonzero on a failed operation and keeps the available work and original error in the same private output.
-
-The source is paired with the GIS product merged in public PR2453 and standalone PR404. Run results belong to the executing host and are saved with the actual source edition in `journey.json`.
+The source remains paired with the original GIS product merged in public PR2453 and standalone PR404. Native results belong to their actual host and selected edition; source publication and syntax alone are not a customer-run result.

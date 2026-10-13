@@ -240,6 +240,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._reply(403, {"ok": False, "error": {"code": "LOCAL_ORIGIN_REQUIRED"}})
         parsed = urllib.parse.urlsplit(self.path)
         public = {"/": HERE / "public/index.html", "/app.mjs": HERE / "public/app.mjs",
+                  "/workbook.mjs": HERE / "public/workbook.mjs",
                   "/cartography.mjs": HERE / "public/cartography.mjs", "/cartography.css": HERE / "public/cartography.css",
                   "/styles.css": HERE / "public/styles.css",
                   "/vector/json.mjs": HERE.parent / "vector/json.mjs"}

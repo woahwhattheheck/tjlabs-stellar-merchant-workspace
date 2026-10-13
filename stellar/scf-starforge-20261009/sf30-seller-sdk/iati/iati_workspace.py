@@ -163,6 +163,24 @@ def completed_packet_matches(output, sources, schema, metadata, entries):
                     return False
         return True
 
+def reconcile_export_stage(output, stage):
+    """Reconcile this original private publication stage while its lease is held."""
+    if stage.exists() or stage.is_symlink():
+        info = stage.lstat()
+        if not stat.S_ISREG(info.st_mode) or (os.name == "posix" and (info.st_uid != os.getuid() or info.st_mode & 0o077)):
+            raise InputError("Export stage is not an operator-owned private file")
+        if output.exists() and not output.is_symlink() and os.path.samefile(stage, output):
+            if info.st_nlink != 2:
+                raise InputError("Published export has an unexpected additional hard link")
+            stage.unlink()
+            sync_dir(output.parent)
+        else:
+            if info.st_nlink != 1:
+                raise InputError("Incomplete export has an unexpected hard link")
+            preserved = stage.with_name(stage.name + ".interrupted-" + os.urandom(8).hex())
+            os.rename(stage, preserved)
+            sync_dir(output.parent)
+
 def packet_write(output, sources, schema, metadata):
     """Stage the complete archive, then publish atomically without replacing a file."""
     entries = {name: {"bytes": regular(path, MAX_METADATA if name.endswith(".json") else MAX_PACKET).st_size,
@@ -176,21 +194,7 @@ def packet_write(output, sources, schema, metadata):
         raise InputError("Packet manifest exceeds 64 MiB")
     stage = output.parent / ("." + output.name + ".iati-export.partial")
     with export_lease(output):
-        if stage.exists() or stage.is_symlink():
-            info = stage.lstat()
-            if not stat.S_ISREG(info.st_mode) or (os.name == "posix" and (info.st_uid != os.getuid() or info.st_mode & 0o077)):
-                raise InputError("Export stage is not an operator-owned private file")
-            if output.exists() and not output.is_symlink() and os.path.samefile(stage, output):
-                if info.st_nlink != 2:
-                    raise InputError("Published export has an unexpected additional hard link")
-                stage.unlink()
-                sync_dir(output.parent)
-            else:
-                if info.st_nlink != 1:
-                    raise InputError("Incomplete export has an unexpected hard link")
-                preserved = stage.with_name(stage.name + ".interrupted-" + os.urandom(8).hex())
-                os.rename(stage, preserved)
-                sync_dir(output.parent)
+        reconcile_export_stage(output, stage)
         if output.exists() or output.is_symlink():
             if not completed_packet_matches(output, sources, schema, metadata, entries):
                 raise InputError("Completed output belongs to a different export; choose another output path")
@@ -211,7 +215,7 @@ def packet_write(output, sources, schema, metadata):
         return {"file": str(output), "bytes": output.stat().st_size,
                 "sha256": file_digest(output, MAX_PACKET), "reused": False}
 
-def packet_read(path, temp, expected_schema):
+def packet_read(path, temp, expected_schema, *, member_capacity=None):
     """Verify the full declared archive before importing any source or portfolio."""
     regular(path, MAX_PACKET)
     with zipfile.ZipFile(path) as archive:
@@ -221,12 +225,19 @@ def packet_read(path, temp, expected_schema):
             raise InputError("Packet has duplicate, missing or excessive members")
         total = 0
         for info in infos:
-            if (not re.fullmatch(r"(?:manifest|portfolio-history|requests|comparisons)\.json|reports/[A-Za-z0-9._-]+|packets/[0-9a-f]{64}\.zip", info.filename)
+            if member_capacity is None:
+                allowed = re.fullmatch(r"(?:manifest|portfolio-history|requests|comparisons)\.json|reports/[A-Za-z0-9._-]+|packets/[0-9a-f]{64}\.zip", info.filename)
+                limit = MAX_METADATA if info.filename.endswith(".json") else MAX_PACKET
+            else:
+                # Trusted installed modules may declare their own exact packet
+                # members while sharing this original complete archive reader.
+                limit = member_capacity(info.filename)
+                allowed = type(limit) is int and 0 <= limit <= MAX_PACKET
+            if (not allowed or any(part in {"", ".", ".."} for part in info.filename.split("/"))
                 or info.is_dir() or info.flag_bits & 1
                 or info.compress_type not in {zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED}
                 or stat.S_ISLNK(info.external_attr >> 16)):
                 raise InputError("Packet member path, type or compression is invalid")
-            limit = MAX_METADATA if info.filename.endswith(".json") else MAX_PACKET
             if info.file_size > limit:
                 raise InputError("Packet member exceeds its declared capacity")
             total += info.file_size
@@ -288,6 +299,16 @@ class IatiWorkspace(Workspace):
         self.results = IatiResults(self)
         from amp import AmpWorkspace
         self.amp = AmpWorkspace(self)
+        from geography import IatiGeography
+        self.geography = IatiGeography(self)
+        from document_evidence import DocumentEvidence
+        self.document_evidence = DocumentEvidence(self)
+
+    def close(self):
+        evidence = getattr(self, "document_evidence", None)
+        if evidence is not None:
+            evidence.close()
+        super().close()
 
     def presets(self):
         return source_presets()
@@ -827,4 +848,10 @@ class IatiWorkspace(Workspace):
         from amp.portable import SCHEMA as AMP_PACKET
         if isinstance(manifest, dict) and manifest.get("schema") == AMP_PACKET:
             return self.amp.receive(path)
+        from geography_portable import PACKET as GEOGRAPHY_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == GEOGRAPHY_PACKET:
+            return self.geography.receive({"path": path})
+        from document_evidence.portable import PACKET as DOCUMENT_EVIDENCE_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == DOCUMENT_EVIDENCE_PACKET:
+            return self.document_evidence.receive({"path": path})
         return super().import_packet(path)

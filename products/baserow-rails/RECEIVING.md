@@ -359,6 +359,81 @@ performs installation, the existing source customer program, real Rails HTTP,
 stopped export, offline receiving while its producer is unavailable, full
 target/history verification and recipient reopening as one retained journey.
 
+## Receive and configure the original source in the installed application
+
+The complete installed operator accepts a source before it has an importable
+mapping. Open **Read source and configure fields**, retain the original delivery,
+inspect every source row, and save the application field selection into a new
+review. The source review has its own complete handoff before a target import
+exists. Its full source, selected mapping and original history also travel in a
+later application handoff.
+
+The product CLI exposes the same source, mapping and import operations:
+
+~~~sh
+starforge baserow-rails dataset-source --ruby "$RUBY" -- candidates \
+  --application "$WORKING_APPLICATION" \
+  --runtime-source "$INSTALLED_RUBY_RUNTIME_SOURCE" \
+  --environment "$PRIVATE_RUBY_ENVIRONMENT" \
+  --out "$SOURCE_CANDIDATES_JSON"
+~~~
+
+WORKING_APPLICATION is the actual stopped managed application's working
+directory. INSTALLED_RUBY_RUNTIME_SOURCE is the current installed
+**distribution/ruby-runtime** source directory; PRIVATE_RUBY_ENVIRONMENT is the
+existing selected environment directory containing its retained definition and
+complete client. Use the native application and environment inspection results
+for these paths. The full `dataset-source --help` lists the original selection,
+source pages, context, remap, preview, import, history and complete file commands.
+
+### Continue the same actual customer through mapping and receiving
+
+The complete native mapping journey operates the installed application's current
+source. It uses real authenticated Rails forms and CSRF, runs the actual source
+CLI against the same authorized workspace, compares every original source row,
+imports the selected reviewed mapping, receives every original receipt and
+working-data output, then reopens an independent copied application while the
+producer is unavailable.
+
+Stop the original application first and keep the operation's output directory:
+
+~~~sh
+starforge baserow-rails dataset-mapping-lifecycle --ruby "$RUBY" -- run \
+  --application "$WORKING_APPLICATION" \
+  --runtime-source "$INSTALLED_RUBY_RUNTIME_SOURCE" \
+  --out "$ORIGINAL_MAPPING_JOURNEY"
+
+starforge baserow-rails dataset-mapping-lifecycle --ruby "$RUBY" -- reopen \
+  --runtime-source "$INSTALLED_RUBY_RUNTIME_SOURCE" \
+  --out "$ORIGINAL_MAPPING_JOURNEY"
+~~~
+
+Select the current complete client and its compatible Ruby bundle. The managed
+alternative calls the fixed **dataset-mapping-lifecycle** entry under the same
+runtime operation:
+
+~~~sh
+starforge ruby-runtime run --directory "$RUBY_RUNTIME" \
+  --id "$CURRENT_ENVIRONMENT_ID" --operation-id "$MAPPING_OPERATION_UUID" \
+  --entry dataset-mapping-lifecycle --wait -- \
+  run --application "$WORKING_APPLICATION" \
+  --runtime-source "$INSTALLED_RUBY_RUNTIME_SOURCE" \
+  --out "$ORIGINAL_MAPPING_JOURNEY"
+~~~
+
+Its selected environment must include the current source-mapping client and
+runtime support. A retained older environment keeps its original source; create
+and install the new selected edition through the normal environment procedure
+before using its new fixed entry.
+
+The result is **mapping-result.json**. Its relative files include complete source
+CSV/JSONL, source profile and every row page, selected mapping, full change
+preview, original import receipt and edition history, working records and
+attachments, and the independent received application. The original source,
+review, form and import IDs stay attached to a repeated invocation. **reopen**
+verifies the completed received application's full source, current targets,
+history and downloads without depending on the producing application directory.
+
 ## Continue data editions on the same completed customer
 
 The [managed data-edition continuation](../../stellar/scf-starforge-20261009/distribution/ruby-runtime/editions/examples/customer-editions.mjs)

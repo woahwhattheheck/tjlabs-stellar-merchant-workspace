@@ -181,11 +181,11 @@ export function htmlReport(view) {
     'h3{font-size:17px}section,article{break-inside:avoid}article{border-top:1px solid #d5d5d2;padding:18px 0}.muted{color:#62625e}' +
     '.prose{white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0}a{color:#202020;text-underline-offset:3px}' +
     'pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.6 ui-monospace,monospace;background:#f3f3f0;padding:12px;border:1px solid #deded8}' +
-    'table{border-collapse:collapse;width:100%}th,td{text-align:left;border:1px solid #d5d5d2;padding:8px;vertical-align:top}td pre{margin:0;padding:0;border:0;background:none}' +
+    'table{display:block;max-width:100%;overflow-x:auto;border-collapse:collapse;width:100%}th,td{text-align:left;border:1px solid #d5d5d2;padding:8px;vertical-align:top}td pre{margin:0;padding:0;border:0;background:none}' +
     '.source-file{padding:10px 12px;border:1px solid #ddd}.source-file summary{overflow-wrap:anywhere}.file-identity{font-size:12px;overflow-wrap:anywhere}' +
     'figure{margin:16px 0}figure img{display:block;max-width:100%;height:auto}figcaption{font-size:12px;color:#62625e}.file-text pre{max-height:36rem;overflow:auto}' +
-    'details{margin:10px 0}summary{cursor:pointer}.table{overflow-x:auto}footer{margin-top:40px;border-top:1px solid #ddd;padding-top:16px;font-size:12px}' +
-    '@media(max-width:600px){main{padding:24px 16px}h1{font-size:26px}}@media print{body{background:#fff}main{max-width:none;padding:0}a{text-decoration:none}details{break-inside:avoid}}' +
+    'details{margin:10px 0}summary{cursor:pointer;overflow-wrap:anywhere}.table{overflow-x:auto}footer{margin-top:40px;border-top:1px solid #ddd;padding-top:16px;font-size:12px}' +
+    '@media(max-width:600px){main{padding:24px 16px}h1{font-size:26px}}@media print{body{background:#fff}main{max-width:none;padding:0}table{display:table;max-width:none;overflow:visible}a{text-decoration:none}details{break-inside:avoid}}' +
     '</style></head><body><main><header><p class="muted">RESEARCH DOSSIER</p><h1>' + escape(view.title) +
     '</h1><div class="prose">' + escape(view.description) + '</div><p class="muted">Revision ' + view.revision +
     ' · ' + escape(view.updatedAt) + '</p></header>' + questions + '<section><h2>Selected sources</h2>' +

@@ -10,6 +10,8 @@ import {inspectSlackDestination} from '../sf93-seller-support-bundle/notificatio
 import {activeIncident,idPattern,kinds,compileConfig} from '../sf93-seller-support-bundle/incident-config.mjs';
 import {reviewObjectSource} from '../sf93-seller-support-bundle/object-source.mjs';
 import {reviewCkanSource} from '../sf93-seller-support-bundle/ckan-source.mjs';
+import {reviewOAuthSource} from '../sf93-seller-support-bundle/oauth-source.mjs';
+import {normalizeOAuthSource,oauthConditions} from '../sf93-seller-support-bundle/oauth-observation.mjs';
 import {parseWorkspace,MAX_WORKSPACE_BYTES} from './workspace-file.mjs';
 import {inspectRuntimeFiles,exportRuntimeHandoff,RUNTIME_SCHEMA} from './runtime-support.mjs';
 import {caseMetadata} from './case-store.mjs';
@@ -67,8 +69,11 @@ const publicSource=source=>({id:source.id,label:source.label,...(source.recovery
   {recovery:{enabled:true,workspaceId:source.recoveryAccess?.workspaceId??null,
     restored:Boolean(source.recoveryBaseId),baseSourceId:source.recoveryBaseId??source.id}}:{}),...(source.objectSessions?.size?
   {objectSessions:[...source.objectSessions.values()].map(({id,label})=>({id,label}))}:{}),...(source.ckanWorkspaces?.size?
-  {ckanWorkspaces:[...source.ckanWorkspaces.values()].map(({id,label})=>({id,label}))}:{})});
+  {ckanWorkspaces:[...source.ckanWorkspaces.values()].map(({id,label})=>({id,label}))}:{}),...(source.oauthResources?.size?
+  {oauthResources:[...source.oauthResources.values()].map(({id,label,oauth})=>({id,label,resource:oauth.resource,
+    configurationSha256:oauth.configurationSha256}))}:{})});
 const encodedFiles=files=>Object.fromEntries(Object.entries(files).map(([name,bytes])=>[name,bytes.toString('base64')]));
+const oauthSourceKey=source=>JSON.stringify([source.endpoint,source.tokenEnv,source.resource,source.configurationSha256]);
 
 const ORIGINAL_PROBLEMS={
   SF93_INCIDENT_NOT_FOUND:[404,'Incident was not found in this source.'],
@@ -93,6 +98,19 @@ export function incidentProblem(error) {
   if(typeof error?.code==='string'&&error.code.startsWith('INCIDENT_')&&
       Number.isInteger(error.status)&&error.status>=400&&error.status<=599)
     return {status:error.status,error:error.code,detail:error.message};
+  if(typeof error?.code==='string'&&/^OAUTH_[A-Z0-9_]+$/.test(error.code)) {
+    const code=error.code;
+    if(code==='OAUTH_OBSERVATION_ACCESS_DENIED')return {status:403,error:code,
+      detail:'The original OAuth host denied this operator’s observation read. Review its existing authority and configured operator.'};
+    if(['OAUTH_SOURCE_RATE_LIMITED','OAUTH_SOURCE_RETRY_AFTER'].includes(code))return {status:429,error:code,
+      detail:'The original observation source is cooling down. Respect its retained Retry-After before another read.'};
+    if(code==='OAUTH_OPERATOR_CREDENTIAL_REQUIRED')return {status:503,error:code,
+      detail:'The configured original OAuth operator credential is unavailable.'};
+    const invalid=/^OAUTH_(?:SOURCE_(?:REVIEW|ENDPOINT|EXACT_LOOPBACK_ENDPOINT|TOKEN_ENV|TIMEOUTMS|WINDOWMINUTES|UNAVAILABLEMINIMUM|UNAVAILABLEPERCENT|HOSTERRORMINIMUM|HOSTERRORPERCENT|RESOURCE|CONFIGURATION_SHA256)|REGISTRATION)_.*(?:INVALID|REQUIRED)$/.test(code)||code==='OAUTH_SOURCE_REVIEW_INVALID';
+    return {status:invalid?422:503,error:code,detail:invalid?
+      'The original OAuth source rejected the selected observation settings.':
+      'The original OAuth observation is unavailable or invalid. Retain this source result and review it with the host operator.'};
+  }
   const message=String(error?.message??'');
   const code=/^(SF93_[A-Z0-9_]+|FLEET_[A-Z0-9_]+)/.exec(message)?.[1];
   if(code&&ORIGINAL_PROBLEMS[code]) {
@@ -132,7 +150,7 @@ async function configuredIncidentSources(configPath) {
     throw fail('INCIDENT_SOURCES_CONFIG_INVALID','Use the original incident sources schema with at most eight sources.',422);
   const directories=new Set(),recoveryDirectories=new Set();
   for(const entry of config.sources) {
-    fields(entry,['id','label','directory','objectSessions','ckanWorkspaces','recoveryDirectory'],'incident source');
+    fields(entry,['id','label','directory','objectSessions','ckanWorkspaces','oauthResources','recoveryDirectory'],'incident source');
     const id=text(entry.id,64,'source ID');
     if(!SOURCE_ID.test(id)||['profiles','__proto__','constructor','prototype'].includes(id)||sources.has(id))
       throw fail('INCIDENT_SOURCES_CONFIG_INVALID','Source IDs must be distinct lowercase identifiers; profiles is reserved.',422);
@@ -142,7 +160,7 @@ async function configuredIncidentSources(configPath) {
     if(directories.has(directory))
       throw fail('INCIDENT_SOURCES_CONFIG_INVALID','Each original incident store may have only one source ID.',422);
     const store=directory===original.root?original:await openIncidentStore(directory);
-    const state=await store.read(),objectSessions=new Map(),ckanWorkspaces=new Map();
+    const state=await store.read(),objectSessions=new Map(),ckanWorkspaces=new Map(),oauthResources=new Map();
     if(entry.objectSessions!==undefined&&(!Array.isArray(entry.objectSessions)||entry.objectSessions.length>8))
       throw fail('INCIDENT_SOURCES_CONFIG_INVALID','Configure at most eight named original Object sessions.',422);
     for(const item of entry.objectSessions??[]) {
@@ -185,10 +203,25 @@ async function configuredIncidentSources(configPath) {
         throw fail('INCIDENT_SOURCES_CONFIG_INVALID','CKAN source ID has two different original directories.',422);
       if(!prior)ckanWorkspaces.set(merchant.id,{id:merchant.id,label:merchant.label,directory:merchant.ckan.directory});
     }
+    if(entry.oauthResources!==undefined&&(!Array.isArray(entry.oauthResources)||entry.oauthResources.length>8))
+      throw fail('INCIDENT_SOURCES_CONFIG_INVALID','Configure at most eight named original OAuth resources.',422);
+    for(const item of entry.oauthResources??[]) {
+      fields(item,['id','label','oauth'],'allowed OAuth resource');
+      const id=text(item.id,64,'OAuth source ID');
+      if(!idPattern.test(id)||['__proto__','constructor','prototype'].includes(id)||oauthResources.has(id))
+        throw fail('INCIDENT_SOURCES_CONFIG_INVALID','OAuth source IDs must be distinct identifiers.',422);
+      oauthResources.set(id,{id,label:text(item.label??id,120,'OAuth source label'),oauth:normalizeOAuthSource(item.oauth)});
+    }
+    for(const merchant of state.config.merchants.filter(row=>row.oauth)) {
+      const oauth=normalizeOAuthSource(merchant.oauth),prior=oauthResources.get(merchant.id);
+      if(prior&&oauthSourceKey(prior.oauth)!==oauthSourceKey(oauth))
+        throw fail('INCIDENT_SOURCES_CONFIG_INVALID','OAuth source ID has two different original authority selections.',422);
+      if(!prior)oauthResources.set(merchant.id,{id:merchant.id,label:merchant.label,oauth});
+    }
     directories.add(directory);
     sources.set(id,{id,label,directory,store,...(recovery?{recoveryDirectory:recovery.directory,recoveryIdentity:recovery}:{}),
       configuration:{revision:state.configRevision,sha256:state.configHash},
-      routeCache:new Map(),objectSessions,ckanWorkspaces});
+      routeCache:new Map(),objectSessions,ckanWorkspaces,oauthResources});
   }
   return {path,sha256:createHash('sha256').update(bytes).digest('hex'),sources};
 }
@@ -198,7 +231,8 @@ function sourceConfigurationView(selected) {
     sources:[...selected.sources.values()].map(source=>({id:source.id,label:source.label,directory:source.directory,
       configuration:{...source.configuration},...(source.recoveryIdentity?{recovery:{...source.recoveryIdentity}}:{}),...(source.objectSessions.size?
         {objectSessions:[...source.objectSessions.values()].map(row=>({...row}))}:{}),...(source.ckanWorkspaces.size?
-        {ckanWorkspaces:[...source.ckanWorkspaces.values()].map(row=>({...row}))}:{})}))};
+        {ckanWorkspaces:[...source.ckanWorkspaces.values()].map(row=>({...row}))}:{}),...(source.oauthResources.size?
+        {oauthResources:[...source.oauthResources.values()].map(row=>({...row,oauth:{...row.oauth}}))}:{})}))};
 }
 /** Private managed-launch projection. Live incidents, capture bodies and tokens stay in the original store. */
 export async function inspectIncidentSourcesConfiguration(configPath) {
@@ -272,16 +306,19 @@ export async function openIncidentSources({configPath,environment=process.env}={
     return {source:publicSource(source),revision:state.revision,configRevision:state.configRevision,
       configHash:state.configHash,config:structuredClone(state.config),worker:workerView(source,state),recovery:recoveryView(state),counters,
       serviceMerchants:[...serviceMerchants.values()].sort((a,b)=>a.label.localeCompare(b.label)||a.id.localeCompare(b.id)),
-      merchants:state.config.merchants.map(({id,label,object,ckan})=>({id,label,...(object?{kind:'OBJECT_SESSION',
+      merchants:state.config.merchants.map(({id,label,object,ckan,oauth})=>({id,label,...(object?{kind:'OBJECT_SESSION',
         observation:state.merchants[id]?.objectObservation??null}:ckan?{kind:'CKAN_WORKBENCH',
-        observation:state.merchants[id]?.ckanObservation??null}:{})})),filters:{q,status,merchant,kind},
+        observation:state.merchants[id]?.ckanObservation??null}:oauth?{kind:'OAUTH_RESOURCE',
+        observation:state.merchants[id]?.oauthObservation?{...state.merchants[id].oauthObservation,
+          conditions:state.merchants[id].oauthObservation.poll?.fresh===true?
+            oauthConditions(state.merchants[id].oauthObservation):null}:null}:{})})),filters:{q,status,merchant,kind},
       page:{offset,limit,total:selected.length,hasMore:offset+limit<selected.length},
       incidents:selected.slice(offset,offset+limit)};
   }
   async function view(sourceId,incidentId) {
     const source=sourceFor(sourceId);identifier(incidentId,'incident ID');
     return source.store.transaction(async(state,io)=>{
-      const incident=currentIncident(state,incidentId),routes=new Map(),captureProblems={},objectObservations={},ckanObservations={};
+      const incident=currentIncident(state,incidentId),routes=new Map(),captureProblems={},objectObservations={},ckanObservations={},oauthObservations={};
       for(const side of ['before','after']) {
         const ref=incident[side+'Capture'];if(!ref)continue;
         try {
@@ -295,12 +332,14 @@ export async function openIncidentSources({configPath,environment=process.env}={
               id:route.id,method:route.method,...(route.path===undefined?{}:{path:route.path})})),
               object:inspected.kind==='OBJECT_SESSION'?{observedAt:inspected.capturedAt,...inspected.object}:null,
               ckan:inspected.kind==='CKAN_WORKBENCH'?{observedAt:inspected.capturedAt,...inspected.ckan,
-                originalJson:JSON.stringify(inspected.ckan,null,2)}:null};
+                originalJson:JSON.stringify(inspected.ckan,null,2)}:null,
+              oauth:inspected.kind==='OAUTH_RESOURCE'?{observedAt:inspected.capturedAt,...inspected.oauth}:null};
             source.routeCache.set(ref.id,available);
             if(source.routeCache.size>64)source.routeCache.delete(source.routeCache.keys().next().value);
           }
           if(available.object)objectObservations[side]=available.object;
           if(available.ckan)ckanObservations[side]=available.ckan;
+          if(available.oauth)oauthObservations[side]=available.oauth;
           for(const route of available.routes) {
             const key=JSON.stringify(route),row=routes.get(key)??{...route,sides:[]};
             row.sides.push(side);routes.set(key,row);
@@ -315,7 +354,8 @@ export async function openIncidentSources({configPath,environment=process.env}={
         configHash:state.configHash,worker:workerView(source,state),incident:structuredClone(incident),
         latestNotificationId:latestNotificationId(state,incidentId),notifications,
         routes:[...routes.values()],captureProblems,...(Object.keys(objectObservations).length?{objectObservations}:{}),
-        ...(Object.keys(ckanObservations).length?{ckanObservations}:{})};
+        ...(Object.keys(ckanObservations).length?{ckanObservations}:{}),
+        ...(Object.keys(oauthObservations).length?{oauthObservations}:{})};
     },{readonly:true});
   }
   async function serviceSnapshot(sourceId,input) {
@@ -330,6 +370,9 @@ export async function openIncidentSources({configPath,environment=process.env}={
     const allowedCkan=new Set([...source.ckanWorkspaces.values()].map(row=>row.directory));
     if(config.merchants.some(merchant=>merchant.ckan&&!allowedCkan.has(merchant.ckan.directory)))
       throw fail('INCIDENT_CKAN_NOT_REGISTERED','Select an original CKAN workspace registered in this console’s private startup configuration.',409);
+    const allowedOAuth=new Set([...source.oauthResources.values()].map(row=>oauthSourceKey(row.oauth)));
+    if(config.merchants.some(merchant=>merchant.oauth&&!allowedOAuth.has(oauthSourceKey(merchant.oauth))))
+      throw fail('INCIDENT_OAUTH_NOT_REGISTERED','Select an original OAuth resource registered in this console’s private startup configuration.',409);
     return configureIncidents({directory:source.directory,config,
       expectedConfigRevision:integer(input.expectedConfigRevision,1,Number.MAX_SAFE_INTEGER,'configuration revision'),environment});
   }
@@ -392,6 +435,31 @@ export async function openIncidentSources({configPath,environment=process.env}={
       checkConfiguration(await source.store.read(),expected);
       return {source:publicSource(source),configRevision:expected,ckanSourceId:selected.id,label:selected.label,...review,
         originalJson:JSON.stringify(review.summary,null,2)};
+    } finally {reads.delete(pending);}
+  }
+  async function inspectOAuth(sourceId,input) {
+    const source=sourceFor(sourceId);
+    const options=['timeoutMs','windowMinutes','unavailableMinimum','unavailablePercent','hostErrorMinimum','hostErrorPercent'];
+    fields(input,['oauthSourceId','expectedConfigRevision',...options],'OAuth source review');
+    const expected=integer(input.expectedConfigRevision,1,Number.MAX_SAFE_INTEGER,'configuration revision');
+    const selected=source.oauthResources.get(text(input.oauthSourceId,64,'OAuth source ID'));
+    if(!selected)throw fail('INCIDENT_OAUTH_NOT_REGISTERED','Choose an original OAuth resource registered for this console.',404);
+    checkConfiguration(await source.store.read(),expected);
+    if(closing)throw fail('INCIDENT_SOURCES_CLOSED','The incident console is closing.',503);
+    const settings=normalizeOAuthSource({...selected.oauth,...Object.fromEntries(
+      options.filter(key=>own(input,key)).map(key=>[key,input[key]]))});
+    const pending=reviewOAuthSource({endpoint:settings.endpoint,tokenEnv:settings.tokenEnv,
+      ...Object.fromEntries(options.map(key=>[key,settings[key]]))},{signal:readAbort.signal,environment});
+    reads.add(pending);
+    try {
+      const result=await pending;
+      if(closing)throw fail('INCIDENT_SOURCES_CLOSED','The incident console is closing.',503);
+      checkConfiguration(await source.store.read(),expected);
+      if(oauthSourceKey(result.oauth)!==oauthSourceKey(selected.oauth))
+        throw fail('INCIDENT_OAUTH_IDENTITY_CHANGED','The original resource or authority changed. Ask its owner to review the registered source before adopting it.',409);
+      const {source:sourceObservation,...review}=result;
+      return {source:publicSource(source),configRevision:expected,oauthSourceId:selected.id,label:selected.label,
+        ...review,sourceObservation};
     } finally {reads.delete(pending);}
   }
   async function inspectDestination(sourceId,input) {
@@ -484,9 +552,11 @@ export async function openIncidentSources({configPath,environment=process.env}={
           [row.id,{id:row.id,label:row.label,directory:row.object.directory}]));
         const ckanWorkspaces=new Map(state.config.merchants.filter(row=>row.ckan).map(row=>
           [row.id,{id:row.id,label:row.label,directory:row.ckan.directory}]));
+        const oauthResources=new Map(state.config.merchants.filter(row=>row.oauth).map(row=>
+          [row.id,{id:row.id,label:row.label,oauth:normalizeOAuthSource(row.oauth)}]));
         restored={id,label:source.label.replace(/ · received .+$/,'')+' · received '+input.receiveName,
           directory:value.directory,store:await openIncidentStore(value.directory),
-          configuration:{revision:state.configRevision,sha256:state.configHash},routeCache:new Map(),objectSessions,ckanWorkspaces,
+          configuration:{revision:state.configRevision,sha256:state.configHash},routeCache:new Map(),objectSessions,ckanWorkspaces,oauthResources,
           recoveryDirectory:source.recoveryDirectory,recoveryBaseId:baseId,receivedIdentity:value.identity,
           recoveryAccess:await openIncidentRecoveryConsole({directory:value.directory,
             recoveryDirectory:source.recoveryDirectory,signal:readAbort.signal,allowContainedSource:true})};
@@ -532,6 +602,6 @@ export async function openIncidentSources({configPath,environment=process.env}={
     return {source:publicSource(source),incidentId,revision,
       handoff:result.handoff,html:result.html,report:result.report};
   }
-  return {profiles,configuration,list,view,serviceSnapshot,configure,acknowledge,notify,notification,inspectDestination,start,stop,close,prepareCase,inspectObject,inspectCkan,recoveryOverview,recoveryOperation};
+  return {profiles,configuration,list,view,serviceSnapshot,configure,acknowledge,notify,notification,inspectDestination,start,stop,close,prepareCase,inspectObject,inspectCkan,inspectOAuth,recoveryOverview,recoveryOperation};
 }
 

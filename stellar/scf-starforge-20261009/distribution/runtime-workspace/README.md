@@ -8,6 +8,12 @@ choose its adapters, review exact versions, prepare a runtime, follow installati
 inspect the result, compare an upgrade and hand the ready runtime to the existing
 merchant deployment controls.
 
+[Saved product plans](PRODUCT_PLANS.md) connect a complete capability basket and
+immutable source review to its original package and installed runtimes. Open a
+plan to continue native preparation or recovery, inspect a selected ready
+installation, export its original operating handoff and print a customer briefing
+with actual source and installed dependency versions.
+
 The command runs on the operator's Linux host with Node 22.16 or later, Python
 3.11 or later, npm and `flock`. The selected source can require a newer Node
 version; its profile reports that requirement before preparation. The browser
@@ -95,7 +101,10 @@ The existing model, CLI and browser share the same saved-plan records. Local
 reopens reuse the stored source inspection and original request UUID. Complete
 receiving inputs remain available for continuation or corrected source settings.
 See [Saved product plans](PRODUCT_PLANS.md) for the complete browser, CLI,
-typed API and import/export workflow.
+typed API and import/export workflow. **View / print briefing** opens a clean
+customer document with the saved purpose, full required capabilities, actual
+dependency declarations and original package state. Export self-contained HTML,
+complete Markdown or structured briefing data from the same saved plan.
 
 ## Receive a release and choose its adapters
 
@@ -346,3 +355,7 @@ workspace pattern: private real directories, fixed local assets, request field
 allowlists and explicit original helper calls. Keep the workspace and its
 runtime directories with the operator's normal host backup; use the original
 runtime installer and deployment recovery procedures for their contents.
+
+## Operation status and retained output
+
+The Operations and Managed releases views expose **Refresh operation status** for each original request. If a native process check is unavailable, that row carries its error while installed runtimes and the rest of the workspace remain accessible. The displayed uncertainty preserves the original phase and source identity. Read [operation observation and recovery](MANAGED_OPERATIONS.md#read-operation-status-when-a-native-probe-is-unavailable) for the nullable activity fields, direct API and CLI reads, retained log states and original recovery controls.

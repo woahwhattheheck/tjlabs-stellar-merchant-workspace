@@ -14,7 +14,7 @@ const within = (root, value) => {
 };
 // Only paths within the original store layout select a workspace root. This
 // avoids an old package path being mistaken for a later receiver nested inside it.
-const LAYOUT = new Set(['projects', 'packages', 'deployments', 'release-stores', 'previews', 'comparisons', 'request-sets', 'request-runs']);
+const LAYOUT = new Set(['projects', 'packages', 'deployments', 'release-stores', 'previews', 'comparisons', 'request-sets', 'request-runs', 'merchant-preparations']);
 export function workspaceOrigin(roots, path) {
   return [...roots].sort((a, b) => b.length - a.length || a.localeCompare(b)).find(root => {
     if (!within(root, path)) return false;

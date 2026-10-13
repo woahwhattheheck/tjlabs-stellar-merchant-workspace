@@ -1,15 +1,20 @@
+import {verifyProductSourceImports} from './grant-product-authoring-core.mjs';
+import {verifyIssuerProgrammes,issuerContextSection} from './grant-issuer-source.mjs';
+import {selectedIssuerContext} from './grant-issuer-core.mjs';
 // MIT. Exact original files and prepared output inside the existing submission draft.
 import {
   ANSWERS, REQUIREMENTS, SCHEMA, ENVELOPE, MAX_BYTES, makeSource, validateDraft,
-  validateSource, retainVersion, outputText, applicationOutput, fieldStatus,
+  validateSource, retainVersion, receiveSource, outputText, applicationOutput, fieldStatus, formSourceReview,
 } from './grant-submission-core.mjs';
 import {verifyPlanningSource} from './grant-plan-source.mjs';
 import {
-  HANDOVER_SCHEMA, BUNDLE_SCHEMA, EDITION_SCHEMA, RETURN_SCHEMA, SOURCE_ROLES,
+  HANDOVER_SCHEMA, BUNDLE_SCHEMA, SOURCE_PACKAGE_SCHEMA, EDITION_SCHEMA, RETURN_SCHEMA, SOURCE_ROLES,
   EVIDENCE_KINDS, RETURN_KINDS, canonical, safeFilename, referenceUrl,
   emptyHandover, emptySelection, handoverOf, authorSnapshot, hydrateAuthorSnapshot, validateHandover, originalObject,
   frozenEdition, editionFileDescriptors, changedItems,
 } from './grant-handover-core.mjs';
+
+export const MAX_SOURCE_PACKAGE_BYTES=MAX_BYTES*2+65536;
 
 const clone=value=>JSON.parse(JSON.stringify(value));
 const need=(value,message)=>{if(!value)throw new Error(message);};
@@ -123,6 +128,98 @@ export function retainSourceBundle(draft,received,{select=true,at=now()}={}) {
   if(select&&received.bundle.body.applicationSha256===result.currentSource)result.handover.selection.bundleId=received.bundle.id;
   return finish(result,at);
 }
+
+async function verifyRetainedObject(holder,object) {
+  const bytes=fileBytes(holder,object.sha256);
+  need(bytes.length===object.bytes&&encodeBase64(bytes)===object.base64&&await contentHash(bytes)===object.sha256,
+    'A retained original file differs from its complete byte identity.');
+}
+async function verifyReviewerBundle(holder,bundle) {
+  const files=new Map(bundle.body.files.map(row=>[row.role,row]));
+  const index=parse(fileBytes(holder,files.get('source-index').sha256));
+  need(index.schema==='stellar-forge.grant-reviewer-source-index.v1','Retain the original source-index schema.');
+  await verifyIndexed(fileBytes(holder,files.get('application').sha256),index.application,'application');
+  await verifyIndexed(fileBytes(holder,files.get('product-and-finance').sha256),index.product_and_finance,'product and finance companion');
+  const source=holder.sources.find(row=>row.sha256===bundle.body.applicationSha256);
+  need(decode(fileBytes(holder,files.get('application').sha256))===source.markdown,
+    'The bundle’s original application differs from the retained answer source.');
+}
+export async function verifyReviewerSource(received) {
+  need(received&&typeof received==='object'&&!Array.isArray(received),
+    'Open a complete four-file reviewer source package.');
+  received=clone(received);
+  await verifyOriginalApplication(received.source);
+  need(received.bundle?.schema===BUNDLE_SCHEMA&&Array.isArray(received.objects)&&received.objects.length<=SOURCE_ROLES.length,
+    'Retain the original reviewer bundle and all four file bodies.');
+  const objects=new Map();
+  for(const object of received.objects) {
+    need(object&&typeof object==='object','Retain each original source file.');
+    const prior=objects.get(object.sha256);
+    if(prior)need(same(prior,object),'The same source file identity has different complete bytes.');
+    else objects.set(object.sha256,object);
+  }
+  const holder={sources:[received.source],handover:{...emptyHandover(),
+    bundles:[received.bundle],objects:[...objects.values()]}};
+  // Reuse the original source/descriptor model without making an editorial draft.
+  validateHandover(holder);
+  const referenced=new Set(received.bundle.body.files.map(file=>file.sha256));
+  need(objects.size===referenced.size&&[...objects.keys()].every(hash=>referenced.has(hash)),
+    'A source package contains exactly its four reviewer files.');
+  need(received.bundle.body.files.reduce((total,file)=>total+file.bytes,0)<=MAX_BYTES,
+    'The complete reviewer source exceeds the existing draft intake budget.');
+  for(const object of holder.handover.objects)await verifyRetainedObject(holder,object);
+  need(await contentHash(canonical(received.bundle.body))===received.bundle.id,
+    'The reviewer source bundle differs from its retained content identity.');
+  await verifyReviewerBundle(holder,received.bundle);
+  return clone({source:received.source,bundle:received.bundle,objects:holder.handover.objects});
+}
+export async function createReviewerSourcePackage(received,{exportedAt=now()}={}) {
+  enteredDate(exportedAt,'Source package export');
+  const source=await verifyReviewerSource(received);
+  const text=JSON.stringify({schema:SOURCE_PACKAGE_SCHEMA,exportedAt,
+    sha256:await contentHash(JSON.stringify(source)),received:source})+'\n';
+  need(utf8(text).length<=MAX_SOURCE_PACKAGE_BYTES,
+    'The encoded source package exceeds the complete-file receiving allowance.');
+  return text;
+}
+export async function openReviewerSourcePackage(text) {
+  need(typeof text==='string'&&utf8(text).length<=MAX_SOURCE_PACKAGE_BYTES,
+    'Open a complete reviewer source package within the existing receiving allowance.');
+  const value=JSON.parse(text.replace(/^\uFEFF/,''));
+  need(value?.schema===SOURCE_PACKAGE_SCHEMA&&value.received&&typeof value.sha256==='string',
+    'Open the original four-file reviewer source package.');
+  enteredDate(value.exportedAt,'Source package export');
+  need(await contentHash(JSON.stringify(value.received))===value.sha256,
+    'The source package differs from its complete exported content.');
+  return verifyReviewerSource(value.received);
+}
+export async function reviewerSourceFromDraft(draft,bundleId) {
+  validateDraft(draft);validateHandover(draft);
+  need(typeof bundleId==='string','Select an original reviewer source bundle.');
+  const value=handoverOf(draft),bundle=value.bundles.find(row=>row.id===bundleId);
+  need(bundle,'Select a retained complete reviewer source bundle.');
+  const source=draft.sources.find(row=>row.sha256===bundle.body.applicationSha256);
+  const hashes=new Set(bundle.body.files.map(file=>file.sha256));
+  const objects=value.objects.filter(object=>hashes.has(object.sha256));
+  return verifyReviewerSource({source,bundle,objects});
+}
+export async function receiveReviewerSource(draft,received,{at=now(),planningOptions={}}={}) {
+  enteredDate(at,'Source receiving');
+  draft=clone(draft);
+  await verifyHandover(draft,{planningOptions});
+  const incoming=await verifyReviewerSource(received),value=handoverOf(draft);
+  const retained=value.bundles.find(row=>row.id===incoming.bundle.id);
+  if(retained)need(same(retained,incoming.bundle),'The retained reviewer bundle identity differs.');
+  if(draft.currentSource===incoming.source.sha256&&retained&&value.selection.bundleId===retained.id)
+    return clone(draft);
+  const next=draft.currentSource===incoming.source.sha256?
+    retainVersion(draft,'Before selecting reviewer source files',at):
+    receiveSource(draft,incoming.source,at);
+  const result=retainSourceBundle(next,incoming,{select:true,at});
+  await verifyHandover(result,{planningOptions});
+  return result;
+}
+
 export async function readReviewerSource({baseUrl,fetchImpl=globalThis.fetch,receivedAt=null}={}) {
   const base=new URL(baseUrl);referenceUrl(base.href);
   need(typeof fetchImpl==='function','Use the existing reader source connection.');
@@ -213,10 +310,13 @@ function sourceContext(draft) {
     issues.push('No complete four-file reviewer bundle was received for application '+sha+'. Its original application text is retained.');
   if(!value.selection.actor.trim())issues.push('No preparing operator name was entered.');
   if(!value.selection.evidenceIds.length)issues.push('No separate evidence files were selected for this prepared edition.');
+  const issuer=selectedIssuerContext(draft);
+  if(issuer && (draft.planningReview?.sourceSha!==issuer.body.plan.fileSha256 || draft.planningReview?.revision!==issuer.body.plan.revision))
+    issues.push('The selected issuer programme retains native plan revision '+issuer.body.plan.revision+'. Its exact plan can be received and reviewed through Native planning.');
   return {bundles,issues,selectedBundleId:current?.id||null};
 }
-export async function prepareSubmission(draft,{at=now()}={}) {
-  enteredDate(at,'Preparation time');await verifyHandover(draft);
+export async function prepareSubmission(draft,{at=now(),planningOptions={}}={}) {
+  enteredDate(at,'Preparation time');await verifyHandover(draft,{planningOptions});
   const selection=handoverOf(draft).selection,context=sourceContext(draft);
   const items=preparedItems(draft,{kind:selection.outputKind,format:selection.format});
   need(items.length>0,'Add the actual issuer fields or select the canonical answers.');
@@ -224,9 +324,11 @@ export async function prepareSubmission(draft,{at=now()}={}) {
   const snapshot=authorSnapshot(draft);
   const body={createdAt:at,title:selection.title,actor:selection.actor,note:selection.note,snapshot,
     selectedBundleId:context.selectedBundleId,bundleIds:context.bundles.map(row=>row.id),evidenceIds:[...selection.evidenceIds],
+    issuerProgrammeId:selection.issuerProgrammeId??null,
     output:{kind:selection.outputKind,format:selection.format,items,text:output,bytes:utf8(output).length,sha256:await contentHash(output)},
     fieldIssues:selection.outputKind==='fields'?draft.fields.map(row=>({id:row.id,label:row.label,
       ...fieldStatus(row,draft.form,selection.format)})):[],
+    fieldSourceReview:selection.outputKind==='fields'?formSourceReview(draft):null,
     contextIssues:context.issues,
     statusMeaning:'Prepared exact output and retained context. Preparation is not a submission, issuer receipt, award decision, payment or approval.',
   };
@@ -265,6 +367,9 @@ export function comparePrepared(draft,id) {
     const after=Object.prototype.hasOwnProperty.call(current,key)?current[key]:null;
     if(!same(before,after))context.push({key,before,after});
   }
+  const frozenIssuer=edition.body.issuerProgrammeId??null,currentIssuer=handoverOf(draft).selection.issuerProgrammeId??null;
+  if(frozenIssuer!==currentIssuer)context.push({key:'issuerProgramme',before:frozenIssuer?clone(selectedIssuerContext(draft,frozenIssuer).body):null,
+    after:currentIssuer?clone(selectedIssuerContext(draft,currentIssuer).body):null});
   const outputItems=changedItems(edition.body.output.items,currentItems);
   return {editionId:id,preparedAt:edition.body.createdAt,currentUpdatedAt:draft.updatedAt,
     outputKind:kind,format,outputItems,answers,fields,context,
@@ -274,29 +379,20 @@ export function comparePrepared(draft,id) {
 }
 export async function verifyHandover(draft,{planningOptions={}}={}) {
   validateDraft(draft);validateHandover(draft);
+  await verifyProductSourceImports(draft,contentHash);
   for(const source of draft.sources)await verifyOriginalApplication(source);
   for(const source of draft.planSources||[])await verifyPlanningSource(source,planningOptions);
   if(!draft.handover)return draft;
   const value=draft.handover;
-  for(const object of value.objects) {
-    const bytes=fileBytes(draft,object.sha256);
-    need(bytes.length===object.bytes&&encodeBase64(bytes)===object.base64&&await contentHash(bytes)===object.sha256,
-      'A retained original file differs from its complete byte identity.');
-  }
+  for(const object of value.objects)await verifyRetainedObject(draft,object);
   for(const collection of ['bundles','evidence','editions','returns'])for(const row of value[collection])
     need(await contentHash(canonical(row.body))===row.id,'The retained '+collection+' record differs from its original content identity.');
-  for(const bundle of value.bundles) {
-    const files=new Map(bundle.body.files.map(row=>[row.role,row])),index=parse(fileBytes(draft,files.get('source-index').sha256));
-    need(index.schema==='stellar-forge.grant-reviewer-source-index.v1','Retain the original source-index schema.');
-    await verifyIndexed(fileBytes(draft,files.get('application').sha256),index.application,'application');
-    await verifyIndexed(fileBytes(draft,files.get('product-and-finance').sha256),index.product_and_finance,'product and finance companion');
-    const source=draft.sources.find(row=>row.sha256===bundle.body.applicationSha256);
-    need(decode(fileBytes(draft,files.get('application').sha256))===source.markdown,
-      'The bundle’s original application differs from the retained answer source.');
-  }
+  await verifyIssuerProgrammes(draft,{planningOptions});
+  for(const bundle of value.bundles)await verifyReviewerBundle(draft,bundle);
   for(const edition of value.editions) {
     const body=edition.body,snapshot=hydrateAuthorSnapshot(draft,body.snapshot);
     validateDraft(snapshot);
+    await verifyProductSourceImports(snapshot,contentHash);
     for(const source of snapshot.sources) {
       await verifyOriginalApplication(source);
       need(draft.sources.some(row=>row.sha256===source.sha256&&row.markdown===source.markdown),
@@ -308,6 +404,9 @@ export async function verifyHandover(draft,{planningOptions={}}={}) {
       'The frozen output differs from its complete retained authoring state.');
     const expected=body.output.kind==='fields'?snapshot.fields.map(row=>({id:row.id,label:row.label,...fieldStatus(row,snapshot.form,body.output.format)})):[];
     need(same(expected,body.fieldIssues),'The frozen field observations differ from their actual retained fields.');
+    // Earlier prepared editions predate this observation and keep their exact bodies.
+    if(Object.prototype.hasOwnProperty.call(body,'fieldSourceReview'))need(same(body.fieldSourceReview,body.output.kind==='fields'?formSourceReview(snapshot):null),
+      'The prepared field source comparison differs from its frozen authoring state.');
   }
   return draft;
 }
@@ -361,9 +460,15 @@ export function preparedReport(draft,id) {
     ...body.evidenceIds.map(id=>{const item=handoverOf(draft).evidence.find(row=>row.id===id),e=item.body;return '<h3>'+escaped(e.title)+'</h3>'+para(e.kind+' · recorded '+e.createdAt+' · operator '+(e.actor||'not entered'))+
       para('Original observation '+(e.observedAt||'not entered'))+para(e.sourceUrl)+para(e.targets.map(row=>row.kind+': '+row.label+' ['+row.id+']').join('; ')||'No item-specific association was entered.')+pre(e.note)+para('Evidence '+id);}),
     ...body.contextIssues.map(para),
+    issuerContextSection(draft,body.issuerProgrammeId??null),
     '<h2>Recorded field observations</h2>',
     ...(body.fieldIssues.length?body.fieldIssues.map(row=>'<h3>'+escaped(row.label||row.id)+'</h3>'+para(JSON.stringify(row.counts))+
       (row.issues.length?row.issues.map(para).join(''):para('No issue from the recorded field conventions.'))):[para('Canonical-answer output; no issuer-field limit comparison was recorded.')]),
+    ...(body.fieldSourceReview?[
+      '<h2>Answer coverage and source wording at preparation</h2>',para(body.fieldSourceReview.meaning),
+      table(['Answer area','Mapped field identities'],body.fieldSourceReview.answers.map(row=>[row.title,row.fieldIds.join(', ')||'No association entered'])),
+      table(['Field','Source state','Changed answer identities','Last wording choice','Reviewed at'],body.fieldSourceReview.fields.map(row=>[row.label||row.id,row.status,row.changedAnswerIds.join(', '),row.choice||'',row.reviewedAt||''])),
+    ]:[]),
     '<h2>Original issuer observations</h2>',
     para('These are the operator’s retained observations and original files. File hashes identify received bytes; they do not independently authenticate an issuer or prove submission or approval.'),
     ...(returns.length?returns.map(row=>'<h3>'+escaped(row.body.kind)+'</h3>'+

@@ -36,7 +36,7 @@ DOCUMENT_KEYS = {"name", "statementSourceId", "periodStart", "periodEnd",
                  "links", "exclusions", "outstanding", "note"}
 SOURCE_ROW_FIELDS = ("rowNumber", "original", "reference", "date", "description", "direction",
                      "amount", "currency", "usdValue", "category", "tranche", "allocations",
-                     "action", "reason")
+                     "action", "reason", "sourceLine", "identityBasis", "providerReference", "nativeIdentity")
 MAX_SOURCE = 8 * 1024 * 1024
 MAX_SOURCES = 24 * 1024 * 1024
 
@@ -94,7 +94,7 @@ def needed_sources(context):
         marker = row.get("statement")
         if isinstance(marker, dict) and marker.get("schema") == statements.SCHEMA:
             ids.add(row["id"])
-            if marker.get("role") == "CSV":
+            if marker.get("role") in ("CSV", "ORIGINAL"):
                 ids.add(marker.get("reviewSourceId"))
     return ids
 
@@ -129,7 +129,7 @@ def load_statements(context, events, files):
     for metadata in context["sources"].values():
         marker = metadata.get("statement")
         if (not isinstance(marker, dict) or marker.get("schema") != statements.SCHEMA
-                or marker.get("role") != "CSV"):
+                or marker.get("role") not in ("CSV", "ORIGINAL")):
             continue
         review_metadata = context["sources"].get(marker.get("reviewSourceId"))
         if not review_metadata:
@@ -160,7 +160,7 @@ def load_statements(context, events, files):
                 or projected["headers"] != original.get("headers")
                 or projected["balance"] != original.get("balance")
                 or len(projected["rows"]) != len(original["rows"])):
-            fail("The retained statement interpretation differs from its original CSV.", "RECONCILIATION_SOURCE")
+            fail("The retained statement interpretation differs from its original file.", "RECONCILIATION_SOURCE")
         for actual, retained in zip(projected["rows"], original["rows"]):
             if any(actual.get(key) != retained.get(key) for key in SOURCE_ROW_FIELDS):
                 fail("A statement row differs from its original mapped source.", "RECONCILIATION_SOURCE")
@@ -257,18 +257,73 @@ def normalize_document(value, context, original_statements):
     return document
 
 
+def _cash_before_void(context, event, after):
+    """Read one original native void through its exact command/source binding."""
+    def invalid():
+        fail("The saved reconciliation requires the original cash void history.", "RECONCILIATION_HISTORY")
+
+    if not isinstance(event, dict) or event.get("version") != after["version"]:
+        invalid()
+    if event.get("action") == "cash.void":
+        if event.get("kind") != "cash" or event.get("after") != after:
+            invalid()
+        before = event.get("before")
+    elif event.get("action") == "settlement.correct":
+        try:
+            original = event["after"]
+            review = original["review"]
+            change = event["sourceChange"]
+            source_before, source_after = change["before"], change["after"]
+            retained = context["sources"][review["sourceId"]]
+            history = retained["settlementHandoff"]["reviews"]
+            position = next(index for index, value in enumerate(history) if value["id"] == review["id"])
+            changes = review["cashChanges"]
+            selected = [value for value in changes if value.get("after") == after]
+            if (event.get("kind") != "settlementReceiving"
+                    or review.get("schema") != "scf.operations.settlement-receiving.v1.review"
+                    or review.get("type") != "CORRECTION" or review["version"] != event["version"]
+                    or review["id"] != event["recordId"] or review["requestId"] != event["requestId"]
+                    or review["actor"] != text(event["actor"], "Original settlement operator", 300, True)
+                    or digest({key: value for key, value in review.items() if key != "sha256"}) != review["sha256"]
+                    or history[position] != review or position == 0
+                    or event["before"].get("reviewId") != review["previousReviewId"]
+                    or review["previousReviewId"] != history[position - 1]["id"]
+                    or source_before["id"] != retained["id"] or source_after["id"] != retained["id"]
+                    or any(value != retained["sha256"] for value in
+                           (source_before["sha256"], source_after["sha256"],
+                            review["sourceSha256"], original["sourceSha256"]))
+                    or source_before["settlementHandoff"]["reviews"] != history[:position]
+                    or source_after["settlementHandoff"]["reviews"] != history[:position + 1]
+                    or event["before"].get("cash") != [value.get("before") for value in changes]
+                    or original.get("cash") != [value.get("after") for value in changes]
+                    or len(selected) != 1
+                    or review["selectionInputs"].get("decision") not in ("CORRECT_CASH", "VOID_CASH")
+                    or review["selectionInputs"].get("expectedCashId") != after["id"]):
+                invalid()
+            before = selected[0].get("before")
+        except (KeyError, TypeError, AttributeError, StopIteration):
+            invalid()
+    else:
+        invalid()
+    if (not isinstance(before, dict) or before.get("id") != after["id"]
+            or before.get("state") != "OBSERVED" or after.get("state") != "VOID"
+            or not isinstance(before.get("version"), int) or before["version"] >= after["version"]
+            or set(before) - set(after)
+            or set(after) - set(before) - {"reviewedBy", "reviewNote"}
+            or any(after.get(key) != value for key, value in before.items()
+                   if key not in ("state", "version", "updatedAt", "reviewedBy", "reviewNote"))):
+        invalid()
+    return deepcopy(before)
+
+
 def context_at(context, events, version, identity=None):
-    """Reopen original immutable cash, its one native void and retained sources."""
+    """Reopen original cash across ordinary and compound native voids."""
     event_map = {event["version"]: event for event in events}
     cash = []
     for current in context["records"]["cash"]:
         row = deepcopy(current)
         if row["state"] == "VOID" and row["version"] > version:
-            event = event_map.get(row["version"])
-            if (not event or event.get("action") != "cash.void" or event.get("after") != row
-                    or not isinstance(event.get("before"), dict)):
-                fail("The saved reconciliation requires the original cash void history.", "RECONCILIATION_HISTORY")
-            row = deepcopy(event["before"])
+            row = _cash_before_void(context, event_map.get(row["version"]), row)
         if row["version"] <= version:
             cash.append(row)
     sources = deepcopy(context["sources"])
@@ -983,6 +1038,16 @@ def render_html(report):
     return "\n".join(content).encode()
 
 
+def statement_member(metadata):
+    marker = metadata.get("statement", {})
+    source_format = marker.get("sourceFormat") if isinstance(marker, dict) else None
+    if source_format == "OFX":
+        extension = "qfx" if metadata.get("filename", "").lower().endswith(".qfx") else "ofx"
+    else:
+        extension = "mt940" if source_format == "MT940" else "csv"
+    return "original-statement." + extension
+
+
 def export_bundle(report, original_case):
     if not isinstance(report, dict) or report.get("schema") != SCHEMA:
         fail("Export the complete original account reconciliation report.")
@@ -1036,7 +1101,10 @@ def export_bundle(report, original_case):
     if current is not None:
         try:
             with zipfile.ZipFile(io.BytesIO(original_case)) as archive:
-                for key, name in (("source", "original-statement.csv"), ("reviewSource", "original-statement-review.json")):
+                original_name = statement_member(current["statement"]["source"])
+                if original_name != "original-statement.csv":
+                    files["README.txt"] = files["README.txt"].replace(b"its original CSV.", b"its original bank statement file.")
+                for key, name in (("source", original_name), ("reviewSource", "original-statement-review.json")):
                     metadata = current["statement"][key]
                     raw = archive.read("sources/" + metadata["id"])
                     if len(raw) != metadata["bytes"] or hashlib.sha256(raw).hexdigest() != metadata["sha256"]:
@@ -1081,9 +1149,10 @@ def unwrap_bundle(raw):
             base = {"operations-case.zip", "reconciliation.json", "selection.json", "reconciliation.html",
                     "reconciliations.csv", "statements.csv", "source-rows.csv", "native-movements.csv",
                     "match-groups.csv", "outstanding.csv", "reconciliation-history.json", "README.txt"}
-            originals = {"original-statement.csv", "original-statement-review.json"}
-            if (len(names) != len(set(names))
-                    or set(names) not in (base | {"MANIFEST.json"}, base | originals | {"MANIFEST.json"})):
+            complete_sets = [base | {"MANIFEST.json"}] + [
+                base | {name, "original-statement-review.json", "MANIFEST.json"}
+                for name in ("original-statement.csv", "original-statement.ofx", "original-statement.qfx", "original-statement.mt940")]
+            if (len(names) != len(set(names)) or set(names) not in complete_sets):
                 fail("Retain the complete original reconciliation file set.", "INVALID_RECONCILIATION_BUNDLE")
             descriptors = manifest.get("files")
             if not isinstance(descriptors, list) or len(descriptors) != len(names) - 1:

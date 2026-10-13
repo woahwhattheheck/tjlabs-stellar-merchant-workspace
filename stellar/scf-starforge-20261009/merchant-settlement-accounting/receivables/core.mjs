@@ -479,14 +479,19 @@ export function renderCustomerTar(files) {
   const names = new Set();
   for (const file of files) {
     need(typeof file.name === 'string' && /^(?:documents\/)?[A-Za-z0-9._-]+$/.test(file.name) &&
-      file.name.length <= 100 && !names.has(file.name), 'INVALID_CUSTOMER_PACKET_PATH', 'The account packet needs unique original filenames.');
+      file.name.length <= 255 && !names.has(file.name), 'INVALID_CUSTOMER_PACKET_PATH', 'The account packet needs unique original filenames.');
+    const split = file.name.lastIndexOf('/');
+    const prefix = file.name.length > 100 && split > 0 ? file.name.slice(0, split) : '';
+    const archiveName = prefix ? file.name.slice(split + 1) : file.name;
+    need(archiveName.length <= 100 && prefix.length <= 155 && archiveName !== '.' && archiveName !== '..',
+      'CUSTOMER_PACKET_PATH_LIMIT', 'Retain an original filename supported by the standard ustar name and prefix fields.');
     names.add(file.name);
     const bytes = Buffer.isBuffer(file.bytes) ? file.bytes : Buffer.from(file.bytes);
     const padding = (512 - bytes.length % 512) % 512;
     total += 512 + bytes.length + padding;
     need(total <= 128_000_000, 'CUSTOMER_PACKET_LIMIT', 'This customer packet exceeds 128 MB. Export an earlier account date or use its individual documents.');
     const header = Buffer.alloc(512);
-    put(header, file.name, 0, 100); octal(header, 0o600, 100, 8);
+    put(header, archiveName, 0, 100); put(header, prefix, 345, 155); octal(header, 0o600, 100, 8);
     octal(header, 0, 108, 8); octal(header, 0, 116, 8); octal(header, bytes.length, 124, 12); octal(header, 0, 136, 12);
     header.fill(32, 148, 156); header[156] = 48; put(header, 'ustar\0', 257, 6); put(header, '00', 263, 2);
     const checksum = header.reduce((sum, byte) => sum + byte, 0);

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import { renderCommissioning, commissioningClick, commissioningSelection, refreshCommissioningFields, commissioningFormPayload } from './commissioning.mjs';
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pretty=value=>JSON.stringify(value,null,2),uid=()=>crypto.randomUUID();
@@ -12,9 +13,10 @@ function openDB(){if(!state.db)state.db=new Promise((resolve,reject)=>{const req
 async function saved(mode,value){const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction('pending',mode==='get'?'readonly':'readwrite'),table=tx.objectStore('pending');let result;const r=mode==='get'?table.get(storageKey):mode==='put'?table.put(value,storageKey):table.delete(storageKey);r.onsuccess=()=>{result=r.result;};tx.oncomplete=()=>resolve(result??null);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??new Error('Local operation journal aborted.'));});}
 async function loadPending(){state.storageReady=false;controls();try{state.pending=await saved('get');state.storageReady=true;controls();}catch(error){notice('The original pending operation could not be read. Retry local storage before making a new change.',true);controls();}}
 function requireMutation(){if(!state.storageReady)throw new Error('Recover the original local operation journal first.');if(state.busy||state.pending)throw new Error('Complete or observe the saved original operation first.');if(state.project?.historical)throw new Error('Return to the current project revision before a new action.');}
-function draftKey(form){return scope+'|'+(state.project?.id??'new')+'|'+form.dataset.action;}
-function rememberDraft(form){try{const fields=Object.fromEntries([...new FormData(form)].filter(([,v])=>typeof v==='string'));localStorage.setItem(draftKey(form),JSON.stringify(fields));}catch{}}
-function restoreDrafts(){for(const form of $$('form[data-action]')){let value;try{value=JSON.parse(localStorage.getItem(draftKey(form))??'null');}catch{}if(value)for(const [name,content]of Object.entries(value)){const input=form.elements.namedItem(name);if(input&&!input.readOnly&&input.type!=='hidden'&&input.type!=='file')input.value=content;}}}
+function draftKey(form){return scope+'|'+(state.project?.id??'new')+'|'+form.dataset.action+(form.dataset.draftScope?'|'+form.dataset.draftScope:'');}
+function draftFields(form){const fields=Object.fromEntries([...new FormData(form)].filter(([,v])=>typeof v==='string'));const checks=Object.fromEntries([...form.querySelectorAll('input[type=checkbox]')].map(input=>[input.name,input.checked]));const multi=Object.fromEntries([...form.querySelectorAll('select[multiple]')].map(input=>[input.name,[...input.selectedOptions].map(option=>option.value)]));if(Object.keys(checks).length)fields.__checks=checks;if(Object.keys(multi).length)fields.__multi=multi;return fields;}
+function rememberDraft(form){try{localStorage.setItem(draftKey(form),JSON.stringify(draftFields(form)));}catch{}}
+function restoreDrafts(){for(const form of $$('form[data-action]')){let value;try{value=JSON.parse(localStorage.getItem(draftKey(form))??'null');}catch{}form.__restoredDraft=value;if(value)for(const [name,content]of Object.entries(value)){const input=form.elements.namedItem(name);if(input&&!input.readOnly&&input.type!=='hidden'&&input.type!=='file'&&input.type!=='checkbox'&&!input.multiple)input.value=content;}if(value?.__checks)for(const input of form.querySelectorAll('input[type=checkbox]'))input.checked=value.__checks[input.name]===true;if(value?.__multi)for(const input of form.querySelectorAll('select[multiple]'))for(const option of input.options)option.selected=(value.__multi[input.name]??[]).includes(option.value);}}
 function clearDraftIfSame(key,fields){try{if(localStorage.getItem(key)===JSON.stringify(fields))localStorage.removeItem(key);}catch{}}
 async function api(path,options={}){const response=await fetch(path,{...options,headers:{Authorization:'Bearer '+token,...options.headers},redirect:'error'});let value;try{value=await response.json();}catch{throw new Error('The original operator did not return a complete JSON response.');}if(!response.ok)throw Object.assign(new Error(value.error?.message??'Operator request failed.'),{value,status:response.status});return value;}
 function readonly(){return !state.storageReady||state.busy||!!state.pending||!!state.project?.historical;}
@@ -67,16 +69,16 @@ async function observePending(manual=true){
     }else if(manual)notice('The original local request remains '+value.state+'. This read did not invoke the remote agent again.');
   }catch(error){if(manual)notice(error.status===404?'No committed request is visible under this ID. Replay only the saved exact request.':error.message,true);}
 }
-async function dispatch(action,fields={},label=action){
-  requireMutation();const project=state.project,requestId=uid(),payload={requestId,...fields};
+async function dispatch(action,fields={},label=action,selectedProject=state.project){
+  requireMutation();if(selectedProject&&(state.project?.id!==selectedProject.id||state.project?.revision!==selectedProject.revision))throw new Error('The selected project or revision changed while reading this input. Review the current view before submitting.');const project=selectedProject,requestId=uid(),payload={requestId,...fields};
   if(action!=='create'){if(!project)throw new Error('Select a project.');payload.id=project.id;payload.expectedRevision=project.revision;}
-  await savePending({path:'/api/dispatch',body:JSON.stringify({action,payload}),id:requestId,label,projectId:project?.id??null});
+  await savePending({path:action==='commission_retain_source'?'/api/commissioning/source':'/api/dispatch',body:JSON.stringify({action,payload}),id:requestId,label,projectId:project?.id??null});
   return runPending();
 }
 async function refreshList(){const generation=++state.listGeneration,value=await api('/api/projects');if(generation!==state.listGeneration)return;state.list=value;$('#connection-status').textContent='Original SDK '+value.sdk.version+' · private workspace';$('#projects').innerHTML=value.projects.map(p=>'<button data-project="'+esc(p.id)+'" class="'+(p.id===state.project?.id?'selected':'')+'">'+esc(p.title)+'<small class="quiet"> · r'+p.revision+'</small></button>').join('')||'<p class="quiet">No retained projects yet.</p>';$('#create-connection').innerHTML=value.connections.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.label)+'</option>').join('');}
 function locationSelection(){const q=new URLSearchParams(location.hash.slice(1));return{id:q.get('id'),pane:q.get('pane')??'agents',revision:q.get('revision')?Number(q.get('revision')):null};}
 async function openProject(projectId,pane='agents',revision=null,{hash:updateHash=true}={}){
-  const generation=++state.generation;state.sourceGeneration++;state.source=null;if($('#source-dialog').open)$('#source-dialog').close();state.pane=['agents','messages','tasks','results','delivery','history'].includes(pane)?pane:'agents';
+  const generation=++state.generation;state.sourceGeneration++;state.source=null;if($('#source-dialog').open)$('#source-dialog').close();state.pane=['agents','messages','tasks','results','delivery','history','commissioning'].includes(pane)?pane:'agents';
   if(!projectId){state.project=null;render();return;}
   try{const project=await api('/api/project?id='+encodeURIComponent(projectId)+(revision?'&revision='+revision:''));if(generation!==state.generation)return;state.project=project;
     if(updateHash){const q=new URLSearchParams({id:projectId,pane:state.pane});if(revision)q.set('revision',String(revision));history.replaceState(null,'','#'+q);}
@@ -96,9 +98,9 @@ function render(){
   const p=state.project;$('#project-title').textContent=p?.title??'Agent result workspace';$('#project-subtitle').textContent=p?'Revision '+p.revision+' · '+(p.historical?'Historical view · current revision '+p.currentRevision:'Current view')+' · '+p.connection.label:'Choose a host connection, retain its Agent Card, and review the original task result.';
   for(const b of $$('nav button'))b.classList.toggle('active',b.dataset.pane===state.pane);
   if(!p){$('#panel').innerHTML=card('Retained agent work',empty('Create a project to review an agent and its native task outputs.'),'The host selects the permitted endpoints and credential references. No remote key is sent to this browser.');controls();return;}
-  const content=({agents:renderAgents,messages:renderMessages,tasks:renderTasks,results:renderResults,delivery:renderDelivery,history:renderHistory})[state.pane](p);
+  const content=({agents:renderAgents,messages:renderMessages,tasks:renderTasks,results:renderResults,delivery:renderDelivery,history:renderHistory,commissioning:renderCommissioning})[state.pane](p);
   $('#panel').innerHTML=(p.historical?'<div class="history-banner">This is the immutable revision '+p.revision+'. <button data-current>Return to current project</button></div>':'')+content;
-  restoreDrafts();refreshCardInterfaces(true);controls();
+  restoreDrafts();refreshCardInterfaces(true);refreshCommissioningFields(p,{restore:true});controls();
 }
 function refreshCardInterfaces(preserve=false){const form=$('form[data-action="select_agent"]');if(!form)return;const card=state.project?.cards.find(x=>x.id===form.elements.cardId.value);if(!card)return;const selected=preserve?form.elements.interfaceIndex.value:'0';form.elements.interfaceIndex.innerHTML=card.card.supportedInterfaces.map((x,i)=>'<option value="'+i+'">'+i+' · '+esc(x.protocolBinding)+' '+esc(x.protocolVersion)+' · '+esc(x.url)+'</option>').join('');if(card.card.supportedInterfaces[Number(selected)])form.elements.interfaceIndex.value=selected;if(!preserve){form.elements.skillIds.value=card.card.skills.map(x=>x.id).join(', ');form.elements.extensions.value='';}}
 function renderAgents(p){
@@ -154,14 +156,14 @@ function renderHistory(p){
 }
 function parseJSON(value,label,{optional=false}={}){if(optional&&!value.trim())return undefined;try{return JSON.parse(value);}catch{throw new Error(label+' must be complete valid JSON.');}}
 async function submitForm(form){
-  const action=form.dataset.action,fields=Object.fromEntries(new FormData(form)),key=draftKey(form),snapshot=JSON.stringify(fields);rememberDraft(form);
-  let payload={...fields};
+  requireMutation();const selectedProject=state.project,action=form.dataset.action,fields=Object.fromEntries(new FormData(form)),key=draftKey(form),snapshot=JSON.stringify(draftFields(form));rememberDraft(form);
+  let payload=action.startsWith('commission_')?await commissioningFormPayload(form):{...fields};
   if(action==='select_agent'){payload.interfaceIndex=Number(fields.interfaceIndex);payload.skillIds=fields.skillIds.split(',').map(x=>x.trim()).filter(Boolean);payload.extensions=fields.extensions.split(',').map(x=>x.trim()).filter(Boolean);}
   if(action==='prepare_message'){payload={message:parseJSON(fields.message,'Message'),configuration:parseJSON(fields.configuration,'Configuration'),metadata:parseJSON(fields.metadata,'Metadata',{optional:true}),note:fields.note};if(payload.metadata===undefined)delete payload.metadata;}
   if(action==='list_tasks'){payload.pageSize=Number(fields.pageSize);if(!payload.contextId)delete payload.contextId;if(!payload.pageToken)delete payload.pageToken;}
   if(action==='review_result'&&!payload.captureId)delete payload.captureId;
   if(action==='prepare_publication')payload={editionId:fields.editionId,title:fields.title,publicOrigin:fields.publicOrigin,routePath:fields.routePath,payment:{scheme:'exact',network:fields.network,asset:fields.asset,payTo:fields.payTo,amount:fields.amount,maxTimeoutSeconds:Number(fields.maxTimeoutSeconds)}};
-  const outcome=await dispatch(action,payload,form.querySelector('button[type=submit]').textContent);
+  const outcome=await dispatch(action,payload,form.querySelector('button[type=submit]').textContent,selectedProject);
   // Clear only the originating unchanged draft after its operation is sealed.
   if(!state.pending&&outcome?.state==='complete'&&!outcome.error){try{if(localStorage.getItem(key)===snapshot)localStorage.removeItem(key);}catch{}}
 }
@@ -186,6 +188,9 @@ document.addEventListener('submit',event=>{
 document.addEventListener('click',async event=>{
   const button=event.target.closest('button');if(!button)return;
   try{
+    if(commissioningClick(button,state.project)){render();return;}
+    if(button.hasAttribute('data-commission-template')){await download('/api/commissioning/template','a2a-customer-commissioning.json');return;}
+    if(button.hasAttribute('data-commission-report')){await download('/api/commissioning'+selectedQuery(),'a2a-commissioning.json');return;}
     if(button.dataset.project){await openProject(button.dataset.project,state.pane);return;}
     if(button.dataset.pane){await openProject(state.project?.id,button.dataset.pane,state.project?.historical?state.project.revision:null);return;}
     if(button.hasAttribute('data-current')){await openProject(state.project.id,state.pane);return;}
@@ -203,7 +208,7 @@ document.addEventListener('click',async event=>{
     if(button.id==='stop-merchant'){await merchantControl('stop');return;}
   }catch(error){notice(error.message,true);}
 });
-document.addEventListener('change',event=>{if(event.target.name==='cardId'&&event.target.form?.dataset.action==='select_agent'){refreshCardInterfaces();rememberDraft(event.target.form);}});
+document.addEventListener('change',event=>{if(commissioningSelection(event,state.project)){render();return;}const form=event.target.form;if(event.target.name==='cardId'&&form?.dataset.action==='select_agent'){refreshCardInterfaces();rememberDraft(form);}if(form?.dataset.action==='commission_prepare_job'&&['catalogueEditionId','procedureId'].includes(event.target.name)){refreshCommissioningFields(state.project,{resetProcedure:event.target.name==='catalogueEditionId',resetMappings:true});rememberDraft(form);}else if(form?.dataset.action?.startsWith('commission_'))rememberDraft(form);});
 document.addEventListener('submit',async event=>{
   if(event.target.id!=='receive-form')return;event.preventDefault();
   try{requireMutation();const file=event.target.elements.packet.files[0];if(!file)throw new Error('Select the complete original packet.');const requestId=uid();await savePending({path:'/api/receive?requestId='+requestId,body:file,id:requestId,label:'Complete workspace receiving',contentType:'application/gzip'});await runPending();}catch(error){notice(error.message,true);}
@@ -220,7 +225,7 @@ $('#download-source').onclick=()=>state.source&&download(state.source.path,'sour
 window.addEventListener('hashchange',()=>{const q=locationSelection();openProject(q.id,q.pane,q.revision,{hash:false});});
 window.a2aOperator={
   inspect:()=>({workspaceId,projectId:state.project?.id??null,revision:state.project?.revision??null,pane:state.pane,storageReady:state.storageReady,pending:state.pending?{...state.pending,body:undefined}:null}),
-  async restorePending(record){if(!state.storageReady)await loadPending();if(!state.storageReady||state.busy)throw new Error('Read the original operation journal before restoring a request.');if(state.pending&&(state.pending.id!==record.id||state.pending.bodySha256!==record.bodySha256))throw new Error('An original operation is already pending.');state.busy=true;controls();try{const selected={...record},bytes=await selected.body.arrayBuffer();if(selected.workspaceId!==workspaceId||await hash(bytes)!==selected.bodySha256||bytes.byteLength!==selected.bodyBytes)throw new Error('Original request custody does not match this workspace.');if(selected.method!=='POST'||!(selected.path==='/api/dispatch'||selected.path==='/api/receive?requestId='+encodeURIComponent(selected.id)))throw new Error('Restore only an original retained operator action.');const value={...selected,scope};await saved('put',value);state.pending=value;}finally{state.busy=false;controls();}},
+  async restorePending(record){if(!state.storageReady)await loadPending();if(!state.storageReady||state.busy)throw new Error('Read the original operation journal before restoring a request.');if(state.pending&&(state.pending.id!==record.id||state.pending.bodySha256!==record.bodySha256))throw new Error('An original operation is already pending.');state.busy=true;controls();try{const selected={...record},bytes=await selected.body.arrayBuffer();if(selected.workspaceId!==workspaceId||await hash(bytes)!==selected.bodySha256||bytes.byteLength!==selected.bodyBytes)throw new Error('Original request custody does not match this workspace.');if(selected.method!=='POST'||!(selected.path==='/api/dispatch'||selected.path==='/api/commissioning/source'||selected.path==='/api/receive?requestId='+encodeURIComponent(selected.id)))throw new Error('Restore only an original retained operator action.');const value={...selected,scope};await saved('put',value);state.pending=value;}finally{state.busy=false;controls();}},
   retry:runPending,observe:observePending
 };
 await loadPending();await refreshList();const initial=locationSelection();await openProject(initial.id??state.list.projects[0]?.id??null,initial.pane,initial.revision);controls();

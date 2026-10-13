@@ -8,6 +8,7 @@ import {FAMILIES,VARIABLES,ATTRIBUTION,need,keys,sha} from './contract.mjs';
 import {cleanResult,safeCode,withoutRaw,verifyWeather} from './workspace.mjs';
 import {chartSvg,seriesCsv,frozenReportBytes} from './exports.mjs';
 import {series} from './analysis.mjs';
+import {MAX_HANDOVER_BYTES} from './portable.mjs';
 const own=fileURLToPath(new URL('.',import.meta.url));
 const equal=(a,b)=>typeof a==='string'&&a.length===b.length&&timingSafeEqual(Buffer.from(a),Buffer.from(b));
 const json=(response,status,value)=>send(response,status,Buffer.from(JSON.stringify(cleanResult(value))+'\n'),'application/json; charset=utf-8');
@@ -15,9 +16,9 @@ function send(response,status,body,type,extra={}){
  response.writeHead(status,{'content-type':type,'content-length':body.length,'cache-control':'no-store','x-content-type-options':'nosniff',
   'referrer-policy':'no-referrer','content-security-policy':"default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",...extra});response.end(body);
 }
-async function requestJson(request){
+async function requestJson(request,limit=65536){
  need(/^application\/json(?:;|$)/i.test(request.headers['content-type']??''),'JSON_BODY_REQUIRED');
- const chunks=[];let bytes=0;for await(const chunk of request){bytes+=chunk.length;need(bytes<=65536,'REQUEST_TOO_LARGE');chunks.push(chunk);}
+ const chunks=[];let bytes=0;for await(const chunk of request){bytes+=chunk.length;need(bytes<=limit,'REQUEST_TOO_LARGE');chunks.push(chunk);}
  return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks)));
 }
 export async function startWeatherServer({workspace,port=0}){
@@ -45,11 +46,26 @@ export async function startWeatherServer({workspace,port=0}){
   if(request.method==='POST')need(request.headers.origin===origin,'LOCAL_ORIGIN_REQUIRED');
   if(request.method==='GET'){
    if(assets.has(url.pathname)){need(!url.search,'UNEXPECTED_QUERY');const a=assets.get(url.pathname);send(response,200,a.body,a.type);return;}
-   if(url.pathname==='/api/meta'){json(response,200,{families:FAMILIES,variables:VARIABLES,attribution:ATTRIBUTION,providerMode:workspace.settings.provider.mode});return;}
+   if(url.pathname==='/api/meta'){json(response,200,{families:FAMILIES,variables:VARIABLES,attribution:ATTRIBUTION,providerMode:workspace.settings.provider.mode,reviewMode:workspace.settings.mode==='review'});return;}
    if(url.pathname==='/api/state'){json(response,200,await workspace.summary());return;}
    if(url.pathname==='/api/job'){json(response,200,workspace.job());return;}
    if(url.pathname==='/api/events'){json(response,200,await workspace.events({after:Number(url.searchParams.get('after')??0),limit:Number(url.searchParams.get('limit')??100)}));return;}
    if(url.pathname==='/api/compare'){json(response,200,await workspace.compare(url.searchParams.get('left'),url.searchParams.get('right'),{variable:url.searchParams.get('variable'),...(url.searchParams.has('unit')?{unit:url.searchParams.get('unit')}:{})}));return;}
+   const history=url.pathname.match(/^\/api\/requests\/(request-[a-f0-9-]{36})\/source-history$/);
+   if(history){
+    need([...url.searchParams.keys()].every(key=>['before','limit'].includes(key)),'UNEXPECTED_QUERY');
+    json(response,200,await workspace.sourceHistory(history[1],{
+     ...(url.searchParams.has('before')?{before:url.searchParams.get('before')}:{}),
+     limit:Number(url.searchParams.get('limit')??25)}));return;
+   }
+   const providerRead=url.pathname.match(/^\/api\/source-reads\/(read-[a-f0-9-]{36})(?:\/(raw))?$/);
+   if(providerRead){
+    need(!url.search,'UNEXPECTED_QUERY');
+    const result=await workspace.providerRead(providerRead[1]);
+    if(providerRead[2])send(response,200,result.raw,'application/octet-stream',{
+     'content-disposition':'attachment; filename="'+result.id+'.body"','x-content-sha256':result.sha256});
+    else json(response,200,withoutRaw(result));return;
+   }
    let matched=url.pathname.match(/^\/api\/captures\/(capture-[a-f0-9-]{36})(?:\/(raw|csv))?$/);
    if(matched){
     const result=await workspace.serial(()=>{
@@ -62,16 +78,36 @@ export async function startWeatherServer({workspace,port=0}){
     if(result.bytes)send(response,200,result.bytes,result.type,{'content-disposition':'attachment; filename="'+result.name+'"','x-content-sha256':sha(result.bytes)});
     else json(response,200,result);return;
    }
+   matched=url.pathname.match(/^\/api\/reports\/(report-[a-f0-9-]{36})\/renewal$/);
+   if(matched){need(!url.search,'UNEXPECTED_QUERY');json(response,200,await workspace.renewalChoices(matched[1]));return;}
    matched=url.pathname.match(/^\/api\/reports\/(report-[a-f0-9-]{36})\/download$/);
    if(matched){
-    const format=url.searchParams.get('format')??'zip';need(['zip','html','json'].includes(format),'REPORT_FORMAT_INVALID');
-    const bytes=await workspace.serial(async()=>{const report=workspace.store.report(matched[1]),captures=report.captures.map(c=>workspace.store.capture(c.id));return frozenReportBytes(report,captures,{format});});
+    const format=url.searchParams.get('format')??'zip';need(['zip','html','json','handover'].includes(format),'REPORT_FORMAT_INVALID');
+    const bytes=await workspace.serial(async()=>{const report=workspace.store.report(matched[1]),captures=report.captures.map(c=>workspace.store.capture(c.id));return frozenReportBytes(report,captures,{format,...(format==='handover'||format==='zip'&&report.renewal?{handover:workspace.store.handover(report.id)}:{})});});
     send(response,200,bytes,format==='zip'?'application/zip':format==='html'?'text/html; charset=utf-8':'application/json',
-     {'content-disposition':'attachment; filename="'+matched[1]+'.'+format+'"','x-content-sha256':sha(bytes)});return;
+     {'content-disposition':'attachment; filename="'+matched[1]+'.'+(format==='handover'?'weather.json':format)+'"','x-content-sha256':sha(bytes)});return;
+   }
+   const received=url.pathname.match(/^\/api\/receiving\/([a-f0-9]{64})\/original$/);
+   if(received){
+    need(!url.search,'UNEXPECTED_QUERY');
+    const bytes=await workspace.serial(()=>workspace.store.receivedPackage(received[1]));
+    send(response,200,bytes,'application/json',{'content-disposition':'attachment; filename="original-'+received[1]+'.weather.json"','x-content-sha256':sha(bytes)});return;
    }
   }
   if(request.method==='POST'){
-   const body=await requestJson(request);
+   const receiving=url.pathname==='/api/handover/review'||url.pathname==='/api/handover/receive';
+   const renewal=url.pathname==='/api/renewal/review'||url.pathname==='/api/renewal/commit';
+   const body=await requestJson(request,receiving?MAX_HANDOVER_BYTES*2+4096:renewal?1048576:65536);
+   if(renewal){
+    if(url.pathname.endsWith('/review')){json(response,200,await workspace.reviewRenewal(body));return;}
+    keys(body,['selection','expectedReviewSha256']);
+    json(response,200,await workspace.commitRenewal(body.selection,{expectedReviewSha256:body.expectedReviewSha256}));return;
+   }
+   if(receiving){
+    keys(body,url.pathname.endsWith('/review')?['content']:['content','expectedSha256']);
+    const result=url.pathname.endsWith('/review')?await workspace.reviewHandover(body.content):await workspace.receiveHandover(body.content,{expectedSha256:body.expectedSha256});
+    json(response,200,result);return;
+   }
    const mutations={'/api/sites':'saveSite','/api/requests':'saveRequest','/api/decisions':'saveDecision','/api/reports':'freezeReport'};
    if(mutations[url.pathname]){json(response,200,await workspace[mutations[url.pathname]](body));return;}
    if(url.pathname==='/api/cancel'){keys(body,['id']);json(response,200,workspace.cancel(body.id));return;}
@@ -79,7 +115,7 @@ export async function startWeatherServer({workspace,port=0}){
     keys(body,['kind','requestId','args']);const args=body.args??{};
     let operation;
     if(body.kind==='source'){keys(args,['expectedRevision']);operation=signal=>workspace.sourceCapture(body.requestId,{...args,signal});}
-    else if(body.kind==='source-reprocess'){keys(args,['expectedRevision']);operation=()=>workspace.reprocessSource(body.requestId,args);}
+    else if(body.kind==='source-reprocess'){keys(args,['expectedRevision','sourceReadId']);operation=()=>workspace.reprocessSource(body.requestId,args);}
     else if(body.kind==='prepare'){keys(args,['expectedRevision','maxAtomic','acceptIndex','directEvaluation']);operation=signal=>workspace.prepare(body.requestId,{...args,signal});}
     else if(body.kind==='execute'){keys(args,[]);operation=signal=>workspace.execute(body.requestId,{signal});}
     else if(body.kind==='recover'){keys(args,[]);operation=()=>workspace.recover(body.requestId);}

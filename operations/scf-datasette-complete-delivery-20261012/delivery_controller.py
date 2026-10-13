@@ -26,7 +26,9 @@ os.umask(0o077);sys.dont_write_bytecode=True
 original_root=os.environ.get("DATASETTE_DELIVERY_ROOT")
 root=P(original_root).resolve(strict=True) if original_root else P(tempfile.mkdtemp(prefix="datasette-publisher-a49aa-",dir="/dev"))
 if original_root and not (root/"delivery-input.json").is_file():raise RuntimeError("Resume requires the complete retained original delivery directory.")
-tmp=root/"private-temp";tmp.mkdir(mode=0o700,exist_ok=True)
+transfer_root=P(os.environ.get("DATASETTE_TRANSFER_DIRECTORY",str(root)))
+transfer_root.mkdir(mode=0o700,parents=True,exist_ok=True)
+tmp=transfer_root/"private-temp";tmp.mkdir(mode=0o700,exist_ok=True)
 os.environ["TMPDIR"]=str(tmp);tempfile.tempdir=str(tmp)
 os.environ.setdefault("AZCOPY_CONCURRENCY_VALUE","4")
 os.environ["GIT_TERMINAL_PROMPT"]="0"
@@ -132,6 +134,30 @@ def persist_complete_phase(original_outcome,phase):
     emit("datasette_host_capacity_at_save",**capacity)
     report=root/("Datasette_Publisher_Complete_Result.json" if phase=="publisher" else "Datasette_Publisher_Installed_Operating_Result.json")
     save_json(report,outcome)
+    # Preserve the complete original outcome before creating its large archive.
+    # The same successful report receipt is reused by the final delivery.
+    def save_files(paths,label):
+        request={"uploads":[{"local_path":str(path),"purpose":"create_library_file","library_artifact_type":"report" if path.suffix==".json" else "other"} for path in paths]}
+        completed=subprocess.run([sys.executable,helpers/"library_private_upload.py",tmp],input=json.dumps(request).encode(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        (tmp/(label+".stdout")).write_bytes(completed.stdout);(tmp/(label+".stderr")).write_bytes(completed.stderr)
+        for line in completed.stderr.decode(errors="replace").splitlines():
+            if line.startswith("__OPENAI_LIBRARY_FILE_WRITE_RECEIPT_V1__"):print(line,flush=True)
+        if completed.returncode:raise RuntimeError("Canonical save helper failed: "+str(completed.returncode))
+        response=json.loads(completed.stdout);rows=response.get("results")
+        if not isinstance(rows,list) or len(rows)!=len(paths):raise RuntimeError("The canonical save returned another artifact selection.")
+        for path,row in zip(paths,rows):
+            if row.get("local_path")!=str(path):raise RuntimeError("The save returned another original local file.")
+            if row.get("status")=="succeeded" and not succeeded(row):raise RuntimeError("The saved file identity is incomplete.")
+        return rows
+    report_saved=None
+    try:
+        report_saved=save_files([report],"complete-report-first")[0]
+        if succeeded(report_saved):
+            emit("datasette_operating_report_saved",checkpoint_phase=phase,state=outcome["state"],saved=public_save(report_saved),bytes=report.stat().st_size,sha256=digest(report))
+        else:
+            emit("datasette_operating_report_retry",checkpoint_phase=phase,error_code=report_saved.get("error_code"),status=report_saved.get("status"))
+    except Exception as error:
+        emit("datasette_operating_report_retry",checkpoint_phase=phase,error_type=type(error).__name__,message=str(error))
     prior_manifest=root/"complete-checkpoint-manifest.json"
     if prior_manifest.is_file():
         previous_digest=digest(prior_manifest)
@@ -140,11 +166,14 @@ def persist_complete_phase(original_outcome,phase):
         if retained_manifest.exists():
             if digest(retained_manifest)!=previous_digest:raise RuntimeError("The preceding checkpoint manifest changed.")
         else:shutil.copy2(prior_manifest,retained_manifest)
-    export=root/"export";export.mkdir(mode=0o700,exist_ok=True)
+    export=transfer_root/"export";export.mkdir(mode=0o700,exist_ok=True)
     archive_path=export/("Datasette_Publisher_Complete_Checkpoint.zip" if phase=="publisher" else "Datasette_Publisher_Installed_Operating_Checkpoint.zip")
     members=[];directories=[];excluded=[]
     with zipfile.ZipFile(archive_path,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=6,allowZip64=True) as z:
         for folder,dirs,files in os.walk(root,followlinks=False):
+            if P(folder)!=root:
+                info=P(folder).stat()
+                directories.append({"path":P(folder).relative_to(root).as_posix(),"mode":stat.S_IMODE(info.st_mode),"mtime_ns":info.st_mtime_ns})
             dirs.sort();files.sort()
             for name in list(dirs):
                 path=P(folder)/name
@@ -167,20 +196,10 @@ def persist_complete_phase(original_outcome,phase):
         z.writestr("complete-checkpoint-manifest.json",json.dumps({"schema":"commons.datasette-complete-checkpoint.v1","operation":OP,"original_root":str(root),"state":outcome["state"],"source":source_identity,"files":members,"directories":directories,"excluded":excluded},indent=2)+"\n")
     archive_identity={"file_name":archive_path.name,"bytes":archive_path.stat().st_size,"sha256":digest(archive_path),"members":len(members)+1}
     emit("datasette_complete_checkpoint",state=outcome["state"],**archive_identity)
-    def save_files(paths,label):
-        request={"uploads":[{"local_path":str(path),"purpose":"create_library_file","library_artifact_type":"report" if path.suffix==".json" else "other"} for path in paths]}
-        completed=subprocess.run([sys.executable,helpers/"library_private_upload.py",tmp],input=json.dumps(request).encode(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        (tmp/(label+".stdout")).write_bytes(completed.stdout);(tmp/(label+".stderr")).write_bytes(completed.stderr)
-        for line in completed.stderr.decode(errors="replace").splitlines():
-            if line.startswith("__OPENAI_LIBRARY_FILE_WRITE_RECEIPT_V1__"):print(line,flush=True)
-        if completed.returncode:raise RuntimeError("Canonical save helper failed: "+str(completed.returncode))
-        response=json.loads(completed.stdout);rows=response.get("results")
-        if not isinstance(rows,list) or len(rows)!=len(paths):raise RuntimeError("The canonical save returned another artifact selection.")
-        for path,row in zip(paths,rows):
-            if row.get("local_path")!=str(path):raise RuntimeError("The save returned another original local file.")
-            if row.get("status")=="succeeded" and not succeeded(row):raise RuntimeError("The saved file identity is incomplete.")
-        return rows
-    saved=save_files([archive_path,report],"complete-save-01")
+    if report_saved is not None and succeeded(report_saved):
+        saved=[save_files([archive_path],"complete-archive-save-01")[0],report_saved]
+    else:
+        saved=save_files([archive_path,report],"complete-save-01")
     for i,row in enumerate(saved):
         if not succeeded(row) and row.get("error_code")=="transfer_failed":
             emit("datasette_save_transfer_retry",artifact=[archive_path,report][i].name)
@@ -372,7 +391,12 @@ except BaseException as error:
     emit("datasette_original_continuation_preserved",error_type=native_error["type"],message=native_error["message"])
 finally:
     done.set()
-persist_complete_phase(outcome,"installed")
+try:
+    persist_complete_phase(outcome,"installed")
+except Exception as error:
+    if not payload.get("retain_receiver"):raise
+    outcome["complete_save_continuation"]={"type":type(error).__name__,"message":str(error),"traceback":traceback.format_exc()}
+    emit("datasette_complete_save_continuation",root=str(root),**outcome["complete_save_continuation"])
 fcntl.flock(lease.fileno(),fcntl.LOCK_UN);lease.close()
 if payload.get("retain_receiver"):
     if sys.stdin.isatty():

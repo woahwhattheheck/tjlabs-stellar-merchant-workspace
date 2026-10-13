@@ -49,7 +49,7 @@ def publish(path, raw):
         os.close(parent)
 
 
-def run(config):
+def run(config, *, completed_only=False):
     required = {"operationId", "sourceRoot", "workspaceDirectory", "receivedDirectory", "outputDirectory"}
     if not isinstance(config, dict) or set(config) != required or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,59}", config["operationId"]):
         raise ValueError("Use the complete original receiving input.")
@@ -60,6 +60,8 @@ def run(config):
         if paths[key].is_relative_to(paths["sourceRoot"]):
             raise ValueError("Keep receiving state outside selected source.")
     output = paths["outputDirectory"]
+    if completed_only and not (output / "result.json").is_file():
+        raise ValueError("The selected original core has no retained COMPLETE result; completed-only receiving cannot start it.")
     output.mkdir(parents=True, exist_ok=True, mode=0o700)
     lock = (output / "receiving.lock").open("a+b")
     fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -108,6 +110,9 @@ def run(config):
             return finish_completed(json.loads((output / "result.json").read_bytes()))
         finally:
             fcntl.flock(lock.fileno(), fcntl.LOCK_UN); lock.close()
+    if completed_only:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_UN); lock.close()
+        raise ValueError("The selected COMPLETE core disappeared; retain the original input and resolve that selection.")
     native = paths["sourceRoot"] / "stellar/scf_2026/sf47_budget_model/workspace"
     sys.path.insert(0, str(native))
     from model import Workspace, Problem, canonical, digest, now
@@ -368,8 +373,9 @@ def run(config):
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input",required=True)
+    parser.add_argument("--completed-only", action="store_true", help="Verify and return only an already completed original core.")
     args=parser.parse_args()
-    result=run(json.loads(Path(args.input).read_bytes()))
+    result=run(json.loads(Path(args.input).read_bytes()), completed_only=args.completed_only)
     print(json.dumps(result,ensure_ascii=False))
 
 

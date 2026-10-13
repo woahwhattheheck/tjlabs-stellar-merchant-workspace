@@ -5,7 +5,7 @@ Open **Source tables** in the original Grant Operations planning application. Th
 A complete workflow is:
 
 1. Select the intended saved plan.
-2. Create source tables from that saved plan, receive CSV/TSV files, or receive an already-reviewed Source Tables document.
+2. Create source tables from that saved plan, receive CSV/TSV files, select worksheets from an original XLSX, or receive an already-reviewed Source Tables document.
 3. Map the source columns and exact member identities. Review every included row and any exclusions.
 4. Calculate the complete native preview. Read the proposed changes, prices, work windows, contributor capacity and conditional payment schedule.
 5. Apply the reviewed changes to the working plan and save a named revision.
@@ -30,6 +30,144 @@ Choose **Work packages**, **Milestones**, **Contributors** or **Assignments**.
 **Receive next source edition** adds a successor to the same table. Previous editions and reviews remain available. Selecting another source edition leaves its existing mapping editable; review that selected combination before calculating the plan.
 
 **Download original source** reproduces the selected source text. The complete portable source project retains the original filename, byte length, acquisition time and source hash for every edition.
+
+## Receive an Excel workbook
+
+Choose **Excel workbook selections → Open Excel workbook** in **Source tables**. Select the complete original `.xlsx` file. The retained source includes every worksheet, shared string, formula, stored result, hidden row, merged range, defined name and workbook date-system setting that the original workbook contains. The workbook is kept once by its byte identity and can supply all four planning tables.
+
+The workbook structure table lists every sheet, its visibility, stored range, formula and error counts, hidden rows and merged ranges. Choose the intended sheet, including a hidden sheet when it is an intentional source. The cell preview is paged over the complete selected range. A cell shows its original value, stored formula, cache availability and display format.
+
+1. Choose the original worksheet.
+2. Enter its rectangular **Original range**, such as `A1:K9`.
+3. Enter the original **Header row**, or leave it empty when the selection has no header. Rows before a selected header are retained as an explicit excluded range.
+4. Choose **Use this range and header**. This rebuilds the projected column list from those source cells.
+5. Review the projected field names and the choices below. Include the columns that belong in this planning table.
+6. Choose **Prepare selected worksheet values**. Read the prepared rows and the retained header, hidden-row and blank-row decisions.
+7. Choose **Use selection for work packages**, **milestones**, **contributors** or **assignments**.
+8. Finish the existing source-column and planning-field mapping, then choose **Review current table mapping**. Continue through **Calculate native preview**, the complete result review, **Apply reviewed changes to working plan**, and **Save revision**.
+
+The chosen sheet and range are explicit. A workbook can contain additional notes, control totals, sheets and source material outside that selection; the complete original XLSX remains downloadable.
+
+### Workbook choices
+
+| Choice | Result retained with the source |
+| --- | --- |
+| Hidden rows: include | Hidden source rows participate in the projected table. |
+| Hidden rows: exclude | Each excluded worksheet row is retained in an exact range with the exclusion reason. |
+| Blank rows: keep | A completely blank source row remains a CSV data record. Existing planning identity and required-field rules still apply. |
+| Blank rows: skip | The original blank worksheet row positions remain in the selection. |
+| Merged cells: require ordinary data | A selected data cell intersecting a merged range must be resolved before projection. |
+| Merged cells: keep original anchor | The original anchor keeps its value. Other positions covered by the merge become empty; values are not filled across the merged region. |
+| Formula: require ordinary values | Formula cells require a different explicit formula policy or a revised source. |
+| Formula: use stored result | The value already stored beside the formula becomes the projected value. The original equation, cache availability and calculation settings stay with the workbook. |
+| Formula: keep original text | The stored equation becomes text beginning with `=`. A shared-formula follower without its own equation requires its stored result or a revised source. |
+| Empty cell: keep empty text | The projected cell is empty. The later planning mapping decides whether that native field is optional. |
+| Empty cell: require a value | The original cell must contain a value under the selected formula and conversion policies. |
+| Workbook error: keep original error text | The source error token remains text. A numeric planning field continues to require a valid numeric value. |
+| Keep original spelling | Numeric coefficients, leading zeros, significant decimal spelling and scientific notation stay as source text. |
+| Expand exact decimal text | A finite token such as `8.0E+1` becomes `80`. The expansion uses decimal arithmetic and retains its exact before/after values. |
+| Date: keep original serial or text | The source serial or ISO date remains unchanged. |
+| Date: calendar date | The workbook's 1900 or 1904 date system determines the date. A time fraction requires another explicit policy. |
+| Date: date and time | The source serial is converted to a date/time at the nearest millisecond, with ties rounded to even. The original numeric token remains in the selected cell. |
+
+Workbook display formatting remains separate from the stored value. A displayed currency symbol, thousands separator, percentage or rounded display is not silently applied to a planning number. For example, a stored `0.1` with a percentage format remains `0.1` unless the operator supplies another explicit source or mapping.
+
+**Use stored result** selects the value saved in the file. If the workbook's equations need recalculation, open it in its originating spreadsheet application, recalculate, save, and receive the resulting complete workbook as another source edition. The preview exposes missing stored results and the original workbook calculation settings. External relationships stay in the original source file; intake uses the values supplied in that file.
+
+Date serial 60 in the 1900 system represents Excel's fictional 1900-02-29. Keep that serial as source text or correct the originating source before calendar conversion. A date-only choice never silently discards the time fraction.
+
+**Exact value replacements** accepts a complete JSON array, for example:
+
+```json
+[
+  {"from": "development", "to": "Implementation"},
+  {"from": "operations", "to": "Delivery operations"}
+]
+```
+
+The replacement applies after the selected formula/date handling and optional whitespace trim. Exact decimal expansion then applies to the resulting text when selected. Empty-value rules are explicit. Planning member maps remain available in the ordinary planning-field editor for source-to-native identifiers.
+
+### Retain and reopen workbook editions
+
+**Use selection** retains the original workbook, complete column policies, original header and selected cell positions, projected CSV, worksheet row map, and exact numeric conversions. The CSV enters the same source-edition and table-review workflow used by CSV/TSV intake.
+
+Receive a revised workbook, prepare the intended worksheet with its explicit choices, and use that selection for the same planning role. The prior workbook and prior CSV editions remain available. **Saved selection for this planning table** reopens a specific retained worksheet and selects its corresponding CSV edition. If two worksheet selections produce identical CSV bytes, select the intended original worksheet explicitly; both retained selections remain available.
+
+The complete row review shows both the projected CSV record/line and its original worksheet row. The native import review includes the workbook identity, selected sheet and range, original row, source cell addresses and selected worksheet identity beside each included or excluded planning row.
+
+**Open source project** restores the workbook materials from `planning-source-tables.json`. The native plan retains that complete project inside its saved revision. Native estimate, save and planning-ZIP receiving replay the saved selection against the original XLSX with the maintained workbook reader before accepting the projected values. A compatible updated reader must reproduce the same selection, original cells, conversions and outputs.
+
+The original project and request limits still apply: the complete retained planning source project must fit 32 MiB, and a projected CSV must fit the existing 16 MiB source-table allowance. Workbook sheets and original sources can be received in separate planning projects when their complete retained material exceeds those limits.
+
+### Workbook handover files
+
+The ordinary complete planning ZIP carries the native plan, revision history and full retained source project, including the original workbooks. Reopening that ZIP restores the editable workbook selections on the same **Source tables** tab.
+
+The headless save also publishes convenient standalone material beside the native ZIP:
+
+- `workbooks/<source-sha256>.xlsx`: each complete original workbook.
+- `worksheet-selections/<selection-id>.json`: the complete selected cells, source metadata and saved result.
+- Matching `.csv`, `.rows.jsonl`, and `.mapping.json` files: projected CSV, original worksheet-row map, and reusable conversion choices.
+- `workbook-handover.json`: the original filenames, source identities, selected sheets/ranges and each portable file's size and checksum.
+
+**Download original workbook**, **Download complete worksheet selection**, **Download projected CSV** and **Download original worksheet row map** provide the same material directly in the browser.
+
+### Headless workbook intake
+
+Use the existing `grant-source-tables` command in the installed selection, or the source entrypoint:
+
+```bash
+node stellar/scf_2026/sf47_budget_model/workspace/source-tables-cli.mjs inspect-workbook \
+  --file current-budget.xlsx --sheet "Work packages" --range A1:K9 --header-row 1 \
+  --offset 0 --limit 25 --output workbook-inspection.json
+
+node stellar/scf_2026/sf47_budget_model/workspace/source-tables-cli.mjs project-workbook \
+  --file current-budget.xlsx --mapping workbook-mapping.json \
+  --output workbook-selection.json
+
+node stellar/scf_2026/sf47_budget_model/workspace/source-tables-cli.mjs receive-workbook \
+  --project source-project.json --role packages --selection workbook-selection.json \
+  --output workbook-source-project.json
+```
+
+Use **Download selection choices** to obtain the complete `workbook-mapping.json` for the actual workbook. The complete example mapping at `examples/source-tables/current-budget.workbook.mapping.json` describes the workbook produced by the operating walkthrough below.
+
+`receive-workbook` also accepts `--file ORIGINAL.xlsx --mapping MAPPING.json` together, allowing native projection and receipt in one command. A portable `--selection` includes the complete original source and selected projection. Receipt replays it against that original workbook.
+
+Continue with the ordinary `configure`, `review`, `preview` and `save` commands. All commands that invoke Python accept `--python PATH`. Reuse the same preview, note, original request ID and output directory when replaying a save.
+
+To export the standalone workbook material from an already retained source project:
+
+```bash
+node stellar/scf_2026/sf47_budget_model/workspace/source-tables-cli.mjs export-workbooks \
+  --project planning-source-tables.json --output-directory workbook-handover
+```
+
+### Complete workbook receiving walkthrough
+
+```bash
+node stellar/scf_2026/sf47_budget_model/workspace/examples/source-tables/receive-current-budget-workbook.mjs NEW_PRIVATE_DIRECTORY
+```
+
+This operating programme constructs a complete XLSX representation of the retained native six-package budget. It includes five sheets: work packages, milestones, contributors, assignments and workbook notes. The example delivery owner and 40-hour weekly capacity are explicit walkthrough inputs. Replace them with accountable contributors for an operational plan.
+
+The package sheet retains the source amount with each package formula, a scientific-notation hours value, a blank source row and a hidden control total. The saved mapping explicitly selects stored formula results, exact decimal expansion, blank-row skipping and hidden-row exclusion. All four source roles feed the unchanged native planner.
+
+The programme saves the original 400-hour/$38,000 plan, receives a separately authored one-hour workbook edition, reviews its single changed work package, and saves the complete 401-hour/$38,095 result. It replays the original save request, exports the complete native planning ZIP, receives that ZIP in a second workspace, reopens both original workbooks and all five retained worksheet selections, and prepares the next editable source import. Sixteen planning source rows retain their worksheet cell references.
+
+The same programme then opens the original authenticated browser listener, projects the selected worksheet through its existing API, and compares the workbook API used by the browser with the headless projection. `WORKBOOK_RECEIVING.json` records the actual native result and the portable materials produced by that invocation.
+
+### Workbook format references
+
+The shared reader is maintained at `stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-refresh/workbook/reader.py`. The native planning adapter supplies string columns to that reader and retains the complete results. The existing planning calculator continues to own prices, rounding, capacity and payment arithmetic.
+
+Primary format references:
+
+- [SpreadsheetML document structure](https://learn.microsoft.com/en-us/office/open-xml/spreadsheet/structure-of-a-spreadsheetml-document)
+- [Shared string tables](https://learn.microsoft.com/en-us/office/open-xml/spreadsheet/working-with-the-shared-string-table)
+- [Formulas and stored calculation results](https://learn.microsoft.com/en-us/office/open-xml/spreadsheet/working-with-formulas)
+- [Workbook date1904 property](https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.spreadsheet.workbookproperties.date1904?view=openxml-3.0.1)
+- [ECMA-376 Office Open XML](https://ecma-international.org/publications-and-standards/standards/ecma-376/)
 
 ## Read source editions and reviews
 
@@ -261,3 +399,11 @@ Reviewed October 12, 2026:
 - [SCF Build submission criteria](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria)
 
 The issuer guidance ties three delivery tranches to measurable development outcomes, with four conditional grant payments. It requires a self-contained application and a priced, feasible development plan. The original planner and application carry the selected financial assumptions, proposed scope and current source material.
+
+## Editable saved-plan workbooks
+
+Source tables also exports an exact saved plan as a complete editable workbook handover. The browser and grant-source-tables CLI retain the original native ZIP, four worksheet mappings, exact decimals, all source cells, and explicit receiving choices. Receive all four edited sheets, review their current mappings, calculate the original native result, then save and reopen the complete case. See [WORKBOOK_HANDOVER.md](WORKBOOK_HANDOVER.md) for the complete browser/CLI workflow and the production export-to-return operating programme.
+
+## Complete agent operation
+
+The same source-table project, original workbook reader, complete column choices, reviewed native preview and named save are available through the existing typed Grant client and Merchant MCP. [SOURCE_TABLES_AGENT.md](SOURCE_TABLES_AGENT.md) gives the full retained-file sequence, exact saved-revision handover, interrupted-request recovery and continuation of the original complete workbook case.

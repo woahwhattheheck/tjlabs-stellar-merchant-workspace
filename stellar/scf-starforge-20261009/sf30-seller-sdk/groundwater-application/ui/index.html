@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="color-scheme" content="light"><title>Groundwater · Complete backup receiving</title>
+ <link rel="stylesheet" href="./style.css"><script src="./bootstrap.js"></script><script src="./app.js" defer></script>
+</head>
+<body>
+ <header class="masthead"><a class="brand" id="original-link" href="/">GW <span>Groundwater workspace</span></a>
+  <div><span class="eyebrow">Complete workspace handover</span><h1>Receive & reopen a backup</h1></div>
+  <button type="button" id="refresh">Refresh original records</button></header>
+ <main>
+  <div id="notice" role="status" aria-live="polite" hidden></div>
+  <section class="card context"><div><h2>Selected original</h2><p id="original-identity">Opening the existing scientific workspace…</p></div>
+   <dl><dt>Receiving directory</dt><dd id="receiving-root"></dd></dl><details><summary>Source and technical details</summary><dl><dt>Installed source</dt><dd><code id="source-sha"></code></dd></dl><p>Each original directory and received copy has its own browser request namespace.</p></details>
+   <p>Use <a id="create-backup-link" href="/">Backup & reopen</a> in the original scientific workspace to create its complete backup.
+    Receive that delivered ZIP below, or inspect a backup already placed on this host.</p></section>
+  <section id="pending-card" class="card pending" hidden>
+   <h2>Original request retained</h2><p id="pending-text"></p>
+   <div class="actions"><button id="recover" type="button" class="primary">Read or continue original receiving</button>
+    <button id="export-request" type="button">Download retained request</button></div>
+   <details><summary>Complete retained request</summary><pre id="pending-request"></pre></details>
+  </section>
+  <div class="columns">
+   <section class="card">
+    <div class="step">1 · Inspect the complete original</div><h2>Select the delivered backup</h2>
+    <form id="inspect-form">
+     <label>Original ZIP path on this host<input id="archive-path" name="archivePath" required placeholder="/private/delivery/Groundwater_Backup.zip" autocomplete="off"></label>
+     <p class="hint">This reads the full file at its current host path, then verifies the manifest and every original member.</p>
+     <button class="primary" type="submit">Inspect complete backup</button>
+    </form>
+    <section id="preview-panel" hidden>
+     <h3>Verified original package</h3><dl id="preview-facts"></dl>
+     <details><summary>Complete publisher and file manifest</summary><pre id="preview-json"></pre></details>
+     <form id="receive-form">
+      <label>Receiving operator<input id="actor" name="actor" maxlength="200" required autocomplete="name"></label>
+      <label>Purpose and receiving note<textarea id="reason" name="reason" maxlength="4000" required placeholder="Name the receiving work and the intended independent working copy."></textarea></label>
+      <p class="hint">The new destination and exact request are retained before the original restore begins. Opening a received copy preserves its source, original operations and later edits.</p>
+      <button class="primary" type="submit">Receive this complete backup</button>
+     </form>
+    </section>
+   </section>
+   <section class="card">
+    <div class="step">2 · Reopen the retained workspace</div><h2>Receiving history</h2>
+    <div id="receiving-list"><p class="empty">Reading original receiving records…</p></div>
+    <p class="hint">The list reports saved state. Open a record to verify the full original package and restore receipts now.</p>
+   </section>
+  </div>
+  <section id="detail-panel" class="card" hidden>
+   <div class="step">Original receiving record</div><h2 id="detail-title"></h2><p id="detail-status"></p>
+   <dl id="detail-facts"></dl><div class="actions" id="detail-actions"></div>
+   <details><summary>Original request, native restore and current workspace</summary><pre id="detail-json"></pre></details>
+  </section>
+  <section class="card"><h2>Opened workspaces</h2><div id="opened"></div>
+   <p class="hint">Stop this application from Applications before closing its native process. It waits for the requests and workspaces it opened.</p></section>
+ </main>
+ <footer><a href="/guide" target="_blank" rel="noopener">Application and receiving guide ↗</a><span>Complete native history · Exact original files · Independent working copies</span></footer>
+</body></html>

@@ -4,5 +4,9 @@
   "description": "Original grant workspaces MCP provider",
   "merchantProviders": {
     "grant-workspaces": "stellar-forge/mcp-merchant-operator/providers/grant-workspaces.mjs"
-  }
+  },
+  "supportFiles": [
+    "stellar-forge/mcp-merchant-operator/grant-planning-sources.mjs",
+    "stellar-forge/mcp-merchant-operator/catalog/grant-planning-sources.mjs"
+  ]
 }

@@ -292,11 +292,17 @@ export class CanadaBuysWorkspace {
   }
   view() {
     return this._snapshot(() => {
-      const metadata = this.metadata(), entries = this.db.prepare("SELECT data FROM entries WHERE kind='tender' ORDER BY rowid").all().map(row => JSON.parse(row.data));
+      const metadata = this.metadata();
+      // Index views use source summaries; complete original rows remain in notice detail and export.
+      const entries = this.db.prepare("SELECT json_remove(data, '$.row') AS data FROM entries WHERE kind='tender' ORDER BY rowid").iterate();
       const sources = this.db.prepare('SELECT metadata FROM sources ORDER BY rowid').all().map(row => JSON.parse(row.metadata));
       const latestOpen = this._latestOpen();
       const groups = new Map();
-      for (const entry of entries) { if (!groups.has(entry.noticeId)) groups.set(entry.noticeId, []); groups.get(entry.noticeId).push(entry); }
+      for (const record of entries) {
+        const entry = JSON.parse(record.data);
+        if (!groups.has(entry.noticeId)) groups.set(entry.noticeId, []);
+        groups.get(entry.noticeId).push(entry);
+      }
       const notices = [...groups].map(([id, history]) => this._notice(id, history, latestOpen));
       const list = table => this.db.prepare('SELECT data FROM ' + table + ' ORDER BY rowid').all().map(row => JSON.parse(row.data));
       return { schema: WORKSPACE_SCHEMA, workspace: metadata, revision: metadata.revision, sources, sourceObservations: this._observations(), latestOpenObservation: latestOpen, notices,

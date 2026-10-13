@@ -88,6 +88,59 @@ source. For a checkout, the original entry is
 `node stellar-forge/developer-site/grant.mjs --port 8787`.
 The retained purchase workbench below keeps its own saved packet and lifecycle.
 
+## Export a saved submission
+
+The installed `grant-export` command prepares the same saved draft through the
+original submission, planning and handover models:
+
+~~~sh
+starforge grant-export \
+  --draft /private/scf/saved-submission.json \
+  --out /private/scf/prepared-submission
+~~~
+
+Select a new private output directory. The complete result contains the native
+checksummed draft for reopening, all nine canonical answers, the original form
+map, prepared values and exact individual field text, an offline copy/print
+page, and the final file manifest. Manual edits, source editions, planning,
+review decisions and version history stay in the same native record.
+
+Use `--select answers` or `--select fields` to select the output explicitly;
+`--format plain` and `--format markdown` use the original model's prepared
+values. Counts and recorded issuer limits apply to those exact values. Exit 2
+retains the complete output and reports recorded limits exceeded. The
+[complete export guide](../../stellar-forge/developer-site/GRANT_EXPORT.md)
+also covers receiving a matching application/source-index pair with its
+original URL and complete budget/companion files. Reopen `draft.json` through
+**Prepare submission** to continue the same draft.
+
+## Prepare the customer's operating procedure
+
+The installed reviewer includes Command finder and Operating plans. A saved
+submission's **Planning → Customer operating procedure** turns its selected
+native SF47 packages into editable ordered work, with each original scope,
+completion measure, price, hours and relative window retained.
+
+~~~sh
+starforge grant-operating-plan \
+  --file /absolute/customer/submission-draft.json \
+  --customer "Receiving merchant" \
+  --out /absolute/customer/operating-plan.json
+
+starforge discover serve --host 127.0.0.1 --port 8846
+~~~
+
+Open `http://127.0.0.1:8846/operating-plan.html` and choose **Import complete
+plan**. Enter actual operating instructions, due dates and command arguments,
+then save revisions as work progresses. Complete JSON transfers all saved
+history; HTML and Markdown carry the readable procedure.
+
+Use `starforge discover plan catalog --out /absolute/customer/toolkit-catalog.json`
+to supply the complete actual toolkit registrations to the saved planning
+review. The [customer operating procedure guide](../../stellar-forge/developer-site/GRANT_OPERATING_PLANS.md)
+describes original native files, explicit package selection, catalog bindings
+and receiving.
+
 ## Open the reviewer
 
 Use the [maintained runtime installation](../../stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md)
@@ -322,3 +375,34 @@ buyer evidence when those records are available. The
 [Operations guide](../grant-operations/OPERATING.md#frozen-groundwater-report-receiving)
 describes the precise case/deployment/purchase selection. Neither this
 architecture addition nor opening its source creates another purchase.
+
+## Receive the issuer programme with the application
+
+Open **Prepare submission → Submission handover → Issuer programme and selected native plan** to receive the complete original issuer case from Grant Operations. Review the original correspondence, saved terms and native commissioning, record the receiving context, and select its exact native plan when ready to review that plan in the application. Prepared editions freeze the context while the complete editable draft retains every original byte and prior edition.
+
+The command-line equivalent is `starforge grant-export --draft saved-submission.json --receive-issuer-case complete-issuer-case.zip --issuer-profile issuer-profile.json --out /private/new-export`. The explicit profile selects whether to receive the case's native plan. See [the complete issuer receiving guide](../../stellar-forge/developer-site/GRANT_ISSUER_CONTEXT.md) for the full browser, CLI, file and handover flow.
+
+## Search a retained catalog and receive its original request
+
+The grant application's **Search the catalog** opening operates the complete
+October 12, 2026 Vellar page: 27 resources, original declarations and payment
+alternatives. Load the source, apply a query and exact filters, inspect a result,
+then prepare and download its complete catalog review JSON.
+
+In the installed **Atlas** application, expand **Receive a catalog review**.
+Choose the full file, inspect the original source and selected terms, and select
+**Receive and open this request**. The original Atlas editor continues explicit
+URL, method, header, body/ticket preparation and its maintained buyer handoff.
+The configured buyer remains responsible for its current service and approval.
+
+The saved request can download its original review; complete Atlas workspace
+export and receiving carry that review with the capture and request revisions.
+This source review uses the catalog's own advertised USDC alternatives. The
+original testnet XLM purchase and result described in the preceding sections
+retain their separate operated history.
+
+The focused `grant-reviewer` package includes Atlas, `atlas-workspace` and the
+typed `catalog/atlas/review` and `catalog/atlas/search` exports. See the installed
+`stellar-forge/developer-site/GRANT_CATALOG.md` and
+`stellar/scf-starforge-20261009/sf61-bazaar-explorer/CATALOG_REVIEW.md` guides for the
+complete browser, CLI, API and cold-receiving workflow.

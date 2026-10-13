@@ -14,6 +14,66 @@ The repository entry point is `stellar/scf-starforge-20261009/partners/open-mete
 
 An explicit `OPEN_METEO_RUNTIME_ROOT` may select another complete maintained `stellar/scf-starforge-20261009` tree. Installed use discovers the original sibling source automatically. All paths are canonical absolute paths; private files use 0600 and directories use 0700. Outputs are create-only and return the actual destination and SHA-256.
 
+## Receive and continue a customer delivery
+
+[Editable receiving](RECEIVING.md) opens a complete weather delivery in an independent review workspace, preserves original source and decision history, supports local revisions, and exports the next complete delivery. Existing frozen ZIPs can be opened through `from-report-zip`; new reports offer an **Editable package** download in the browser and `--format handover` in the CLI.
+
+## Renew the next customer briefing
+
+[Complete report renewal](REPORT_RENEWAL.md) reuses the customer’s current reviewed rules across newly retained source selections and operating windows. Review all changed conditions together, save every decision revision and the next frozen report atomically, then deliver its complete prior and current source history through the existing editable receiving flow. The browser, CLI and workspace API share the same operation.
+
+
+## Inspect provider responses and continue the same request
+
+**Sites & requests → Provider response history** retains the actual body and
+HTTP result from each direct provider read. A failed HTTP response, a response
+with the wrong content type, and a successful source that needs parser recovery
+remain attached to that exact saved request. Successful earlier captures stay
+available when a later read fails.
+
+The history shows the retrieval time, original attempt, HTTP status, content
+type, byte count and the provider's `Retry-After` value when present. Download
+the exact retained body or open its complete metadata and SHA-256. **Load earlier
+responses** follows the request's saved history; every page remains available.
+
+**Read provider source** performs one new read of the same site, model, dates,
+variables and units. Follow the provider's stated retry timing. **Reprocess this
+response** interprets a selected complete HTTP 200 JSON body again, using zero
+new HTTP requests. It can reopen an earlier successful response after a later
+provider failure. Non-200 and incomplete bodies remain diagnostic records.
+A parser failure keeps its complete source available for reprocessing after
+the parser is corrected.
+
+The existing one-MiB response limit still applies. If a stream is interrupted or
+exceeds that limit, the retained body is explicitly identified as an incomplete
+prefix with its observed byte count and failure code. Its digest identifies that
+prefix. A connection that fails before any response still records its original
+failure in the request and event history.
+
+~~~sh
+npx --no-install starforge weather-operations source-history \
+  --settings /private/weather/settings.json --request REQUEST_ID
+
+npx --no-install starforge weather-operations source-export \
+  --settings /private/weather/settings.json --read-id READ_ID \
+  --output /private/weather-downloads/provider-response.body
+
+npx --no-install starforge weather-operations source-reprocess \
+  --settings /private/weather/settings.json --request REQUEST_ID \
+  --input /private/weather-input/reprocess.json
+~~~
+
+The reprocess input is `{"expectedRevision": CURRENT_REQUEST_REVISION,
+"sourceReadId": "read-ORIGINAL_UUID"}`. Use the actual request revision and read
+identifier returned by this workspace. Omitting `sourceReadId` selects its latest
+retained response. A history input can specify `{"limit": 25, "before":
+"read-ORIGINAL_CURSOR_UUID"}` using the preceding page's `nextBefore`.
+
+Response bodies stay in the existing private weather SQLite store and the
+original encrypted whole-workspace backup. Frozen customer reports continue to
+contain their selected weather sources and decisions. Public request metadata
+omits provider credentials; original response bodies are private operator files.
+
 ## Compile and operate the merchant
 
 Copy [examples/product.json](examples/product.json) into a private directory. Replace its public origin, asset, recipient, and prices with reviewed merchant terms. Template strings are configuration placeholders.
@@ -41,7 +101,7 @@ Without `--facilitator`, serving exposes the original challenge-only seller. Sup
 
 Every GET selects one site and model, inclusive dates, declared variables and units, `timeformat=unixtime`, and the canonical ordered query. Unknown or duplicate parameters fail admission. Successful source bytes remain unchanged. Provider API keys are absent from the public query, OpenAPI operation, generated client, and buyer configuration.
 
-## Initialize the receiving workspace
+## Initialize the provider and buyer workspace
 
 Use an existing original SF88 operator under the selected state root:
 
@@ -82,7 +142,7 @@ Create the private descriptor parent first. Open the returned local URL on the s
 
 1. **Sites & requests.** Save a named site and IANA zone. Select the model, dates, variables, and units. A request retains that exact site revision; subsequent site edits do not rewrite it.
 2. **Sources & decisions.** Inspect retrieval, source SHA, requested coordinates, selected grid, UTC/local timestamps, units, and members. Compare identical UTC timestamps. Save a window, threshold, aggregation, coverage requirement, owner, disposition, and notes.
-3. **Frozen reports.** Select exact decision revisions. Download complete ZIP, HTML, or JSON. Later working revisions leave the old report and source bytes intact.
+3. **Frozen reports.** Select exact decision revisions. Download an editable package, complete ZIP, HTML, or JSON. Later working revisions leave the old report and source bytes intact.
 4. **Recovery.** Review, capture, and verify the complete original state. Stop the workspace before same-root restoration through the CLI.
 
 **Read provider source** retains the exact HTTP 200 JSON before interpretation. **Reprocess retained original bytes** uses the same read if interpretation needs to resume; it makes no HTTP request. A later explicit provider read is retained separately.

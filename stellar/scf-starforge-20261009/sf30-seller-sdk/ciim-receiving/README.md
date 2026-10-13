@@ -4,6 +4,21 @@ This application receives a reviewed OAI-PMH capture through the original **Prot
 
 It supports the original `oai_datacite` wrapper with DataCite kernel-4 metadata and `oai_dc` with all fifteen Dublin Core elements. The receiving target carries the institution's selected processing profile, authorities, and environment separately from the original record's identity and state.
 
+## Open the interactive receiving desk
+
+The [receiving desk](desk/DESK_OPERATOR_GUIDE.md) opens the complete delivered native package in an editable operator workspace. It provides source-linked record and profile inspection, named receiving decisions, full edition comparisons, complete reviewed handbacks, and portable restoration of the original history.
+
+Create a fresh desk once, then serve it with the existing Node and Python installation:
+
+~~~sh
+node stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/cli.mjs init --workspace /absolute/receiving-desk
+node stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/cli.mjs serve --workspace /absolute/receiving-desk --port 0
+~~~
+
+Open the local URL returned by the original startup. In **Intake**, select the complete native case ZIP and inspect its original editions. **Receiving context**, **Records**, **Profiles**, **Edition changes**, **Handbacks**, and **History** share the same retained receiving state. The installed Applications entry is **CIIM metadata receiving**; initialize or restore its desk before reviewing that selection.
+
+The desk reads the completed original transformations. Its [operator guide](desk/DESK_OPERATOR_GUIDE.md) covers the full customer receiving and correction cycle, exact CLI and typed operations, request recovery, source downloads, and reopening a complete handback.
+
 ## Run a captured edition
 
 Run from the repository checkout that contains the maintained OAI source reader and its Python XML parser. Use an existing Java 17 or later installation and the exact Proteus artifact manifest supplied with the worked case. The original repository's Node dependency installation is reused.

@@ -279,17 +279,31 @@ export class MerchantAccounting {
     if (!Object.hasOwn(map, source)) throw fail('ACCOUNTING_SOURCE_NOT_CONFIGURED', 'Choose a declared ' + kind + ' alias from merchant_accounting_sources.');
     return map[source];
   }
+  #maintenanceJob(key, job) {
+    if (job?.kind !== 'restore' || job.result?.status !== 'ACCOUNTING_WORKSPACE_RESTORED' ||
+        job.result.relocated !== true || !plain(job.result.relocation)) return job;
+    // Project only receipt metadata. Keep the native job, request identity and
+    // digest-bound buyer/source objects unchanged in the original owner.
+    const relocation = { ...job.result.relocation };
+    const fields = { originDirectory: 'origin-workspace', sourceDirectory: 'source-workspace',
+      sourceStateRoot: 'source-state-root' };
+    for (const [field, name] of Object.entries(fields)) {
+      if (typeof relocation[field] === 'string') relocation[field] = 'accounting://' + key + '/recovery/' + name;
+    }
+    return { ...job, result: { ...job.result, relocation } };
+  }
   #maintenanceState(key, value, args = {}) {
     const { backups = [], jobs = [], review, ...state } = value;
     const roots = review?.roots ?? [], additionalSources = review?.additionalSources ?? [];
+    const visibleJobs = jobs.map(job => this.#maintenanceJob(key, job));
     const result = { ...state, workspaceAlias: key,
       review: review ? { ...review, roots: roots.slice(0, 25), additionalSources: additionalSources.slice(0, 25) } : null,
-      backups: backups.slice(0, 25), jobs: jobs.slice(0, 10),
+      backups: backups.slice(0, 25), jobs: visibleJobs.slice(0, 10),
       counts: { backups: backups.length, retainedJobs: jobs.length, roots: roots.length, additionalSources: additionalSources.length } };
     const view = args.view ?? 'summary';
     if (view !== 'summary') {
       const sources = [...roots.map(item => ({ ...item, sourceType: 'root' })), ...additionalSources.map(item => ({ ...item, sourceType: 'additional' }))];
-      result.page = pageOf({ backups, jobs, sources }[view], args, view);
+      result.page = pageOf({ backups, jobs: visibleJobs, sources }[view], args, view);
       if (view === 'jobs') result.page.scope = 'ORIGINAL_LATEST_50';
     }
     return result;
@@ -307,10 +321,10 @@ export class MerchantAccounting {
     const maintenance = record.maintenance;
     if (operation === 'merchant_accounting_maintenance_status') return this.#maintenanceState(args.workspace, maintenance.view(), args);
     if (!maintenance.enabled) throw fail('ACCOUNTING_MAINTENANCE_NOT_CONFIGURED', 'The host must declare recovery state and backup roots before using operating recovery.');
-    if (operation === 'merchant_accounting_maintenance_job') return { job: await maintenance.readJob(args.jobId), state: this.#maintenanceState(args.workspace, maintenance.view()) };
+    if (operation === 'merchant_accounting_maintenance_job') return { job: this.#maintenanceJob(args.workspace, await maintenance.readJob(args.jobId)), state: this.#maintenanceState(args.workspace, maintenance.view()) };
     const { workspace, jobId, ...value } = args;
     const result = await maintenance.command(operation.slice('merchant_accounting_maintenance_'.length), value, jobId);
-    return { ...result, state: this.#maintenanceState(workspace, result.state) };
+    return { ...result, ...(result.job ? { job: this.#maintenanceJob(workspace, result.job) } : {}), state: this.#maintenanceState(workspace, result.state) };
   }
   async #openRuntime(key, record) {
     const definition = this.#definition(key), { directory, outboxDir, proofDir, termsFile } = definition;
@@ -460,12 +474,18 @@ export class MerchantAccounting {
       pricing: ['reviewId', 'runId', 'file'], period: ['closeId', 'file'], accountant: ['handoffId', 'revisionId', 'file'], adjustment: ['adjustmentId', 'jobId', 'file'], qbo: ['planId', 'responseId', 'nativePost', 'attemptId', 'file'], xero: ['planId', 'file'],
       'qbo-source-change': ['changeId', 'file'], 'xero-source-change': ['changeId', 'file'],
       'customer-statement': ['statementId', 'file'],
+      'receivables-collection': ['collectionCaseId', 'asOf', 'file'],
+      'receivables-collections': ['customerId', 'asOf', 'owner', 'status', 'search', 'file'],
+      'receivables-cash-plan': ['cashPlanId', 'editionId', 'file'],
+      'receivables-cash-plan-comparison': ['leftId', 'rightId', 'leftEditionId', 'rightEditionId', 'file'],
+      'receivables-credit-decision': ['creditDecisionId', 'file'],
       'receivables-document': ['documentId', 'file'],
       'receivables-quote': ['invoiceId', 'file'],
       'receivables-preview': ['invoiceId', 'file'],
       'receivables-payment': ['paymentRequestId', 'returnId', 'file'],
       'receivables-refund': ['refundId', 'file'],
       'receivables-bank': ['bankImportId', 'file'],
+      'receivables-remittance': ['batchId', 'file'],
       'receivables-customer': ['customerId', 'asOf', 'file'],
       cryptoworth: ['profileId', 'planId', 'captureId', 'returnId', 'rollbackId', 'scope', 'file'],
       runbooks: ['cycleId', 'fileId', 'file'],

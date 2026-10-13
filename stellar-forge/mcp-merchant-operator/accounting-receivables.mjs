@@ -1,10 +1,14 @@
+import {FINANCIAL_CONTROL_METHODS, FINANCIAL_CONTROL_FILES, callFinancialControl, financialControlFile} from './accounting-financial-control.mjs';
 // MIT. Original receivables and invoice collection under the existing accounting owner.
 import {ReceivablesWorkspace, RECEIVABLE_REQUEST_BYTES} from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/store.mjs';
-import {json, sha, need, field, identifier, dateValue, today, invoiceSummary, receiptSummary,
+import {json, sha, need, plain, field, identifier, dateValue, today, invoiceSummary, receiptSummary,
   agingReport, renderDocumentHtml, renderLinesCsv, renderCustomerTar}
   from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/core.mjs';
 import {requestRows}
   from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-requests.mjs';
+
+import {REMITTANCE_MAX_BYTES}
+  from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/remittances.mjs';
 
 export {receivablesDefinitions, receivablesFileNames, receivablesFileSelectors}
   from './catalog/accounting-receivables.mjs';
@@ -85,15 +89,18 @@ export class MerchantReceivables {
       const paymentIds = new Set(payments.map(row => row.id));
       const refunds = (data.refunds || []).filter(row => !args.customerId || row.proposal.customer.id === args.customerId);
       const creditDispositions = (data.creditDispositions || []).filter(row => !args.customerId || row.proposal.customer.id === args.customerId);
+      const remittances = (data.remittanceBatches || []).filter(row => !args.customerId ||
+        row.review.groups.some(group => group.customerId === args.customerId || receiptIds.has(group.receiptId)));
+      const remittanceIds = new Set(remittances.map(row => row.id));
       const refundIds = new Set(refunds.map(row => row.id));
       const dispositionIds = new Set(creditDispositions.map(row => row.id));
       const history = data.requests.filter(row => !args.customerId ||
         invoiceIds.has(row.result.invoiceId) || receiptIds.has(row.result.receiptId) ||
         paymentIds.has(row.result.paymentRequestId) || refundIds.has(row.result.refundId) ||
-        dispositionIds.has(row.result.creditDispositionId) ||
+        dispositionIds.has(row.result.creditDispositionId) || remittanceIds.has(row.result.remittanceBatchId) ||
         (row.result.receiptIds || []).some(id => receiptIds.has(id)) ||
         (row.result.invoiceIds || []).some(id => invoiceIds.has(id)));
-      const metadata = {workspace: args.workspace, schema: data.schema, view, asOf,
+      const metadata = {workspace: args.workspace, workspaceId: this.controller.remittancesWorkspace.workspaceId(), schema: data.schema, view, asOf,
         customerId: args.customerId ?? null, revision: this.workspace.state.revision};
       if (view === 'summary') return clone({...metadata, issuer: data.issuer,
         counts: {customers: args.customerId ? 1 : customers.length, invoices: invoices.length,
@@ -102,7 +109,7 @@ export class MerchantReceivables {
           void: invoices.filter(row => row.status === 'VOID').length,
           receipts: receipts.length, credits: credits.length, allocations: allocations.length,
           paymentRequests: payments.length, refunds: refunds.length,
-          creditDispositions: creditDispositions.length, operations: history.length}});
+          creditDispositions: creditDispositions.length, remittances: remittances.length, operations: history.length}});
       if (view === 'aging') {
         const original = agingReport(data, asOf, args.customerId ?? null);
         return paged(original.invoices.filter(row => matches(row, args)), args,
@@ -140,7 +147,8 @@ export class MerchantReceivables {
 
   async invoicePreview(args) {
     const result = await this.controller.preview(args.invoiceId);
-    const metadata = {workspace: args.workspace, invoiceId: args.invoiceId,
+    const {document: originalDocument, ...reviewMetadata} = result;
+    const metadata = {...reviewMetadata, workspace: args.workspace, invoiceId: args.invoiceId,
       previewSha256: result.previewSha256, expectedVersion: result.expectedVersion, revision: result.revision};
     if (args.view === 'lines') return paged(result.document.lines, args,
       {...metadata, view: 'lines', currency: result.document.currency, totals: result.document.totals});
@@ -205,6 +213,55 @@ export class MerchantReceivables {
     return paged(rows, args, metadata);
   }
 
+  async remittanceList(args) {
+    const result = await this.controller.remittances();
+    const search = args.search ? field(args.search, 'remittance search', 300).toLocaleLowerCase('en-US') : null;
+    const rows = search ? result.batches.filter(row => [row.id, row.sourceId, row.filename]
+      .some(value => value.toLocaleLowerCase('en-US').includes(search))) : result.batches;
+    return paged(rows, args, {workspace: args.workspace, workspaceId: result.workspaceId, revision: result.revision});
+  }
+
+  async remittancePreview(args) {
+    const input = payload(args, 'sourceAlias');
+    need(plain(input.source), 'INVALID_REMITTANCE_SOURCE', 'Select the original remittance source.');
+    if (args.sourceAlias !== undefined) {
+      need(input.source.csv === undefined, 'ACCOUNTING_RECEIVABLES_SOURCE_SELECTION',
+        'Choose a configured remittance source or its complete inline CSV.');
+      need(typeof this.readSource === 'function', 'ACCOUNTING_RECEIVABLES_SOURCE_UNAVAILABLE',
+        'Select a remittance source configured on the original accounting owner.');
+      const bytes = await this.readSource(args.sourceAlias, REMITTANCE_MAX_BYTES);
+      need((Buffer.isBuffer(bytes) || bytes instanceof Uint8Array) && bytes.byteLength > 0 &&
+        bytes.byteLength <= REMITTANCE_MAX_BYTES, 'ACCOUNTING_RECEIVABLES_SOURCE_BYTES',
+        'Choose original remittance bytes within the 500,000-byte source limit.');
+      let csv;
+      try { csv = new TextDecoder('utf-8', {fatal: true, ignoreBOM: true}).decode(bytes); }
+      catch { need(false, 'ACCOUNTING_RECEIVABLES_SOURCE_ENCODING', 'The original remittance CSV must use valid UTF-8.'); }
+      input.source = {...input.source, csv};
+    }
+    const result = await this.controller.previewRemittance(input);
+    return {workspace: args.workspace, ...result};
+  }
+
+  async remittanceDetail(args) {
+    const result = await this.controller.remittance(args.batchId), view = args.view ?? 'summary';
+    const metadata = {workspace: args.workspace, workspaceId: result.workspaceId,
+      batchId: args.batchId, batch: result.batch, view, revision: result.revision};
+    if (view === 'groups') return paged(result.review.groups, args, metadata);
+    if (view === 'errors') return paged(result.review.errors, args, metadata);
+    need(view === 'summary', 'ACCOUNTING_RECEIVABLES_VIEW', 'Choose the remittance summary, groups or errors.');
+    const {groups, errors, ...reviewHeader} = result.review;
+    const manifestFile = await this.controller.remittanceFile(args.batchId, 'manifest.json');
+    const manifest = JSON.parse(manifestFile.bytes.toString('utf8'));
+    const files = Object.entries(manifest.files).map(([file, identity]) => ({...identity, name: file,
+      type: file.endsWith('.csv') ? 'text/csv; charset=utf-8' : 'application/json; charset=utf-8',
+      selection: fileSelection('receivables-remittance', {batchId: args.batchId}, file)}));
+    files.push({...fileIdentity(manifestFile), name: 'manifest.json',
+      selection: fileSelection('receivables-remittance', {batchId: args.batchId}, 'manifest.json')});
+    return {...metadata, reviewHeader, counts: {groups: groups.length, errors: errors.length,
+      receipts: result.receiptIds.length, invoices: result.invoiceIds.length,
+      allocations: result.allocationIds.length, newReceipts: result.newReceiptIds.length}, files};
+  }
+
   async bankImportDetail(args) {
     const result = await this.controller.bankImport(args.bankImportId, payload(args, 'bankImportId'));
     return {...result, files: result.files.map(file => ({...file,
@@ -244,6 +301,8 @@ export class MerchantReceivables {
     need(typeof operation === 'string' && operation.startsWith(PREFIX),
       'ACCOUNTING_RECEIVABLES_OPERATION', 'Choose an original receivables operation.');
     const selected = operation.slice(PREFIX.length), input = payload(args);
+    if (Object.values(FINANCIAL_CONTROL_METHODS).includes(selected))
+      return callFinancialControl(this.controller, selected, args);
     // Keep original exceptions, including commit uncertainty and reopen fields, intact.
     switch (selected) {
       case 'status': return this.status(args);
@@ -284,6 +343,10 @@ export class MerchantReceivables {
       case 'refund_receive': return this.controller.receiveRefund(args.refundId, payload(args, 'refundId'));
       case 'credit_disposition_preview': return this.controller.previewCreditDisposition(input);
       case 'credit_disposition_apply': return this.controller.applyCreditDisposition(input);
+      case 'remittance_list': return this.remittanceList(args);
+      case 'remittance_preview': return this.remittancePreview(args);
+      case 'remittance_apply': return this.controller.applyRemittance(input);
+      case 'remittance_detail': return this.remittanceDetail(args);
       case 'bank_accounts': return this.controller.bankAccounts(input);
       case 'bank_account_save': return this.controller.saveBankAccount(input);
       case 'bank_source_inspect': return this.controller.inspectBankSource(input);
@@ -301,6 +364,7 @@ export class MerchantReceivables {
   }
 
   async file(args) {
+    if (Object.hasOwn(FINANCIAL_CONTROL_FILES, args.kind)) return financialControlFile(this.controller, args);
     if (args.kind === 'receivables-document')
       return this.controller.file(args.documentId, args.file);
     if (args.kind === 'receivables-quote')
@@ -320,6 +384,8 @@ export class MerchantReceivables {
         'Select a returned transaction only when reading its native proof.');
       return this.controller.paymentRequestFile(args.paymentRequestId, name);
     }
+    if (args.kind === 'receivables-remittance')
+      return this.controller.remittanceFile(args.batchId, args.file);
     if (args.kind === 'receivables-bank')
       return this.controller.bankImportFile(args.bankImportId, args.file);
     if (args.kind === 'receivables-refund')

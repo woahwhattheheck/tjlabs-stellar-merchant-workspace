@@ -8,6 +8,7 @@ import { normalizeAgentCard, normalizeMessageRequest, selectInterface, captureAg
 import { encodePacket, decodePacket, makePacket, receiveIntoWorkspace, makeResultPacket } from './portable.mjs';
 import { prepareA2APublication } from './merchant.mjs';
 import { IDENTITY_SCHEMA, IDENTITY_FILE } from './managed-launch.mjs';
+import { COMMISSIONING_ACTIONS, commissioningMessageInput, applyCommissioning, assertCommissioningSend, commissioningView } from './commissioning.mjs';
 
 const NETWORK=new Set(['capture_card','send_message','get_task','list_tasks','subscribe_task','cancel_task','adopt_task','capture_artifacts']);
 const parsed=row=>row?JSON.parse(row.body):null;
@@ -59,9 +60,11 @@ export class A2AWorkspace {
     for(const operation of p.operations)if(operation.sourceIds?.some(key=>p.sources.some(s=>s.id===key&&s.private))){operation.private=true;operation.params={private:true};operation.result={private:true};operation.wire=operation.wire.map(w=>({...w,headers:w.headers?{private:'Retained in private source custody'}:null}));}
     return p;
   }
+  commissioningContext() { return { read: hash=>this.objects.get(hash), result:(project,editionId)=>makeResultPacket(this,project,editionId,{includePrivate:true}) }; }
+  commissioningReport(projectId,{revision=null}={}) { const p=this.get(projectId,{revision}); return {schema:'stellar-forge.a2a-commissioning-report.v1',projectId:p.id,revision:p.revision,historical:p.historical,workspaceId:this.workspaceId,commissioning:p.commissioningView}; }
   get(projectId,{revision=null}={}) {
     this.assertOpen();const project=this.raw(projectId,revision),head=this.db.prepare('SELECT revision FROM projects WHERE id=?').get(projectId).revision;
-    return this.publicProject({...project,currentRevision:head,historical:project.revision!==head,localWorkspaceId:this.workspaceId,networkEnabled:project.revision===head&&this.bindingAllowed(project),history:this.db.prepare('SELECT event FROM history WHERE project_id=? AND revision<=? ORDER BY revision').all(projectId,project.revision).map(x=>JSON.parse(x.event))});
+    return this.publicProject({...project,commissioningView:commissioningView(project,this.commissioningContext()),currentRevision:head,historical:project.revision!==head,localWorkspaceId:this.workspaceId,networkEnabled:project.revision===head&&this.bindingAllowed(project),history:this.db.prepare('SELECT event FROM history WHERE project_id=? AND revision<=? ORDER BY revision').all(projectId,project.revision).map(x=>JSON.parse(x.event))});
   }
   request(requestId){this.assertOpen();identifier(requestId,'requestId');const row=this.db.prepare('SELECT * FROM requests WHERE id=?').get(requestId);if(!row)fail('REQUEST_NOT_FOUND','No retained request exists for this ID.',404);return{id:row.project_id,requestId:row.id,action:row.action,state:row.state,createdAt:row.created,revision:row.revision,result:row.result?JSON.parse(row.result):null,error:row.error?JSON.parse(row.error):null,active:this.active.has(requestId)};}
   response(requestId){const record=this.request(requestId);return{...record,project:this.get(record.id)};}
@@ -84,6 +87,7 @@ export class A2AWorkspace {
     if(prior){if(prior.fingerprint!==fingerprint)fail('REQUEST_ID_CONFLICT','This request ID belongs to different exact input.',409);if(this.active.has(payload.requestId))await this.active.get(payload.requestId).promise;return{...this.response(payload.requestId),replay:true};}
     let prepared=clone(payload);
     if(action==='prepare_message')prepared.normalized=await normalizeMessageRequest({message:payload.message,...(payload.configuration?{configuration:payload.configuration}:{}),...(payload.metadata?{metadata:payload.metadata}:{})});
+    if(action==='commission_prepare_job'){const message=commissioningMessageInput(this.raw(payload.id),payload,this.commissioningContext());if(message)prepared.normalized=await normalizeMessageRequest(message);}
     let captured;
     this.transaction(()=>{
       if(this.db.prepare('SELECT id FROM requests WHERE id=?').get(payload.requestId))fail('REQUEST_RACE',undefined,409);
@@ -116,6 +120,7 @@ export class A2AWorkspace {
     await entry.promise;return this.response(payload.requestId);
   }
   local(p,action,v) {
+    if(COMMISSIONING_ACTIONS.has(action))return applyCommissioning(this,p,action,v,this.commissioningContext());
     if(action==='update'){p.title=text(v.title??p.title,'title',300);p.notes=text(v.notes??p.notes,'notes',30000,{empty:true});return{};}
     if(action==='bind_connection'){const c=this.connections.find(x=>x.id===v.connectionId);if(!c)fail('CONNECTION_UNAVAILABLE');text(v.note,'connection review',10000);if(p.selection){const card=chosen(p.cards,p.selection.cardId);selectInterface(card.card,p.selection.interfaceIndex,c,p.selection.extensions);}p.connectionId=c.id;p.connection=connectionView(c);p.executionWorkspaceId=this.workspaceId;this.bindLocal(p,c);return{connectionId:c.id};}
     if(action==='select_agent'){
@@ -167,7 +172,7 @@ export class A2AWorkspace {
     let selection=p.selection,params={},method,target=null,message=null;
     if(action==='send_message'||action==='adopt_task'){
       message=chosen(p.messages,v.messageId,'reviewed message');selection=message.selection;
-      if(action==='send_message'){if(message.sendRequestId||message.adoptedTaskId)fail('MESSAGE_ALREADY_ATTEMPTED','Inspect or adopt the original task; a reviewed message is sent at most once.',409);params=clone(message.native);method=v.stream?'sendMessageStream':'sendMessage';}
+      if(action==='send_message'){assertCommissioningSend(p,message.id);if(message.sendRequestId||message.adoptedTaskId)fail('MESSAGE_ALREADY_ATTEMPTED','Inspect or adopt the original task; a reviewed message is sent at most once.',409);params=clone(message.native);method=v.stream?'sendMessageStream':'sendMessage';}
       else{if(!message.sendRequestId)fail('MESSAGE_NOT_ATTEMPTED');text(v.note,'adoption review',20000);params={id:identifier(v.taskId,'taskId')};method='getTask';target=v.taskId;}
     }else if(action==='list_tasks'){method='listTasks';params={pageSize:integer(v.pageSize??100,'pageSize',1,100),...(v.contextId?{contextId:identifier(v.contextId,'contextId')}:{}),...(v.pageToken?{pageToken:text(v.pageToken,'pageToken',8192)}:{})};}
     else{target=identifier(v.taskId,'taskId');params={id:target};method=action==='get_task'?'getTask':action==='subscribe_task'?'resubscribeTask':'cancelTask';if(action==='cancel_task'){text(v.reason,'cancellation reason',20000);if(!p.observations.some(x=>x.kind==='task'&&x.value.id===target&&x.selection?.id===selection?.id))fail('TASK_NOT_RETAINED','Observe this exact task under the selected agent before cancellation.',409);}}

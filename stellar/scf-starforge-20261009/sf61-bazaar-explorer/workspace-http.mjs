@@ -1,8 +1,11 @@
 // MIT. Retained Atlas actions on the original loopback HTTP host.
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { openAtlasWorkspace } from './workspace.mjs';
+import { CAPTURE_FILTERS } from './capture-search.mjs';
 
 const routes = Object.freeze({
+  '/api/workspace/catalog-review/inspect': ['inspectCatalogReview', ['reviewText']],
+  '/api/workspace/catalog-review/receive': ['receiveCatalogReview', ['reviewText', 'name', 'selectionId']],
   '/api/workspace/capture/receive-page': ['receivePage', ['name', 'pageText']],
   '/api/workspace/capture/begin': ['beginCapture', ['name', 'sessionText', 'manifestText']],
   '/api/workspace/capture/page': ['putCapturePage', ['captureId', 'file', 'text']],
@@ -27,7 +30,7 @@ function integer(value, fallback) {
 async function body(request, fields) {
   if (!/^application\/json(?:\s*;\s*charset=utf-8)?$/i.test(request.headers['content-type'] ?? ''))
     fail('ATLAS_WORKSPACE_JSON_REQUIRED', 415);
-  const maximum = fields.includes('manifestText') ? 17 * 1024 * 1024 : 8 * 1024 * 1024;
+  const maximum = fields.includes('manifestText') || fields.includes('reviewText') ? 17 * 1024 * 1024 : 8 * 1024 * 1024;
   if (request.headers['content-encoding'] || Number(request.headers['content-length']) > maximum)
     fail('ATLAS_WORKSPACE_INPUT_TOO_LARGE', 413);
   const chunks = []; let size = 0;
@@ -65,10 +68,14 @@ export async function createAtlasWorkspaceHttp({ directory } = {}) {
           if (url.pathname === '/api/workspace/summary' && !url.search)
             reply(200, await workspace.summary());
           else if (url.pathname === '/api/workspace/capture') {
-            const value = query(url, ['captureId', 'query', 'page', 'pageSize']);
+            const value = query(url, ['captureId', 'query', 'page', 'pageSize', 'snapshotId', ...CAPTURE_FILTERS]);
             reply(200, await workspace.capture({ captureId: value.captureId, query: value.query ?? '',
-              page: integer(value.page, 0), pageSize: integer(value.pageSize, 50) }));
-          } else if (url.pathname === '/api/workspace/selection')
+              page: integer(value.page, 0), pageSize: integer(value.pageSize, 50),
+              snapshotId: value.snapshotId ?? null,
+              filters: Object.fromEntries(CAPTURE_FILTERS.filter(key => Object.hasOwn(value, key)).map(key => [key, value[key]])) }));
+          } else if (url.pathname === '/api/workspace/catalog-review')
+            reply(200, await workspace.catalogReview(query(url, ['selectionId', 'sha256'])));
+          else if (url.pathname === '/api/workspace/selection')
             reply(200, await workspace.selection(query(url, ['selectionId'])));
           else fail('ATLAS_WORKSPACE_ROUTE_NOT_FOUND', 404);
           return true;

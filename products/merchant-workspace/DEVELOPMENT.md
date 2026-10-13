@@ -72,10 +72,21 @@ timing before approval. A settled upfront request can still need output
 recovery after an interrupted connection. The original payment and result
 records carry those outcomes.
 
-The [MPP product guide][mpp-guide] documents its native Charge implementation and
-runtime selection. Keep its original purchaser, spending control and settlement
-lifecycle when selecting MPP. A future Session or channel integration needs its
-own implemented source and authority model.
+The [MPP product guide][mpp-guide] documents both native Charge purchases and
+the implemented recurring Channel workflow. Charge retains its original
+purchaser, governor approval and per-request settlement lifecycle. Channel work
+uses the selected deployed contract, funded balance and cumulative commitments:
+a useful response is paid by an accepted incremental commitment, while the
+merchant separately collects the amount earned. A channel can remain open
+through multiple purchases and collections.
+
+The Channel application includes initial code selection or upload, opening and
+funding, task authority, useful work, merchant collection, additional funding,
+delayed funder refund and complete operating handover. Its
+[operating chapter][mpp-operating] and [complete protocol guide][mpp-channel]
+define the implemented interfaces and pinned native SDK. Choose the payment
+behavior actually offered by the merchant and retain its own transaction,
+purchase and recovery meanings.
 
 ### Define the complete useful result
 
@@ -196,6 +207,70 @@ The [customer operating guide][api-customer] supplies the complete command;
 the configured browser and MCP client then share that customer's profiles,
 purchase reviews, requests and received results.
 
+### Commission recurring Channel work
+
+Use the same **Applications → Native MPP merchant and customer** product when
+the customer's useful task consists of repeat paid requests to one selected
+channel merchant. The application and native payment runtime are separate
+retained directories. Receive the original `@stellar/mpp 0.7.1`,
+`mppx 0.6.29` and Stellar SDK `15.1.0` selection before operating that
+customer's workspace. The existing [runtime and launch course][mpp-operating]
+covers its private profile files, original terminal and managed process.
+
+Complete the installation around the customer's actual source and task:
+
+| Decision | Saved original selection | Result the receiving engineer can reopen |
+| --- | --- | --- |
+| Channel setup | Network, selected WASM edition, token, G-account funder, merchant recipient, commitment key, deposit and refund period | Original opening ID, retained code, salt-derived contract identity and any signed upload/create stages |
+| Merchant service | Actual authorized source, published origin, route, request/output contract and atomic price | Complete merchant profile and original contract, including its selected source and handler/file inputs |
+| Customer task | Useful task, source edition, priced offer, total and per-purchase cap, purchase count, expiry and accountable operator | Editable task editions and the terminal authorization for the selected edition |
+| Each useful work item | Stable purchase ID and complete original request | Native cumulative commitment, retained paid response and original recovery state |
+| Operating funds | Actual funder/recipient authority, signer environment references and maximum fees | Original top-up, collection, close or refund record with its exact signed transaction and finality |
+| Customer receiving | Complete selected operating handover and actual receiving product/runtime | Original channel, tasks, purchases, financial history and full paid files reopened in that product |
+
+Opening receives the whole selected code before authorization. Optional code
+upload and direct channel creation retain their original signed stages under
+one opening ID. The selected total setup fee also bounds those stages. An
+interruption resumes that opening and its original channel identity.
+
+The task's spending authority is separate from the channel's funded balance.
+An additional deposit does not enlarge the selected task cap or purchase count.
+A corrected task preserves prior editions and committed spending; its new
+edition receives its own authorization. Prepare an actual work list with the
+original `taskId`, a stable `purchaseId` for each item and its complete
+`request`, then run that same list through the maintained product:
+
+~~~sh
+starforge mpp-workspace channel run --dir "$MPP_PRODUCT" \
+  --input "$ACTUAL_CHANNEL_WORK_LIST" --out "$WORK_RESULT"
+starforge mpp-workspace channel response --dir "$MPP_PRODUCT" \
+  --id "$ORIGINAL_PURCHASE_ID" --out "$PAID_RESPONSE"
+~~~
+
+The work-list schema is `stellar-forge.mpp-channel-work.v1`. Its exact full
+fields are in the [Channel guide][mpp-channel]. Browser Channel work, the typed
+JavaScript/TypeScript client, the [Python customer client][mpp-python] and the
+merchant MCP attach to the same original workspace. They retain returned job
+and purchase IDs so another client can continue the accepted work.
+
+Commission the merchant's actual collection route as part of the installation.
+`collection-prepare` and `collection-execute` settle the selected accepted
+cumulative commitment; **COLLECTED** keeps the channel open for later work.
+`close-prepare` and `close-execute` perform the separate merchant close.
+The funder can add funds with `funding-prepare` / `funding-execute` and
+`action:"top_up"`, or start the original refund wait with
+`action:"close_start"` and later return the remaining balance with
+`action:"refund"`. Each financial action has its own retained operation ID
+and fee authority.
+
+Receive the complete operating channel through the
+[original product handover][mpp-receiving], including its code and prepared or
+interrupted stages. Open the original task, paid files and financial history
+in the receiving product; reconnect its actual host signer and access
+references through that host's private configuration. The agreed receiving
+task can continue a pending purchase, operate the next useful work item,
+collect earned funds or recover the selected remaining balance.
+
 ### Commission the second useful period
 
 The existing [Recurring customer work][series] product makes repeat business
@@ -267,6 +342,7 @@ operators' configured hosts.
 | Source authoring and merchant execution | [Seller SDK](../../stellar/scf-starforge-20261009/sf30-seller-sdk/README.md), [seller](../../stellar/scf-starforge-20261009/sf30-seller-sdk/seller.mjs), [resource server](../../stellar/scf-starforge-20261009/sf30-seller-sdk/resource-server.mjs) | The original provider workspace, source edition/query, reviewed routes, complete payment alternatives and compiled merchant package. |
 | Exact request and buyer authority | [Buyer transport](../../stellar/scf-starforge-20261009/sf31-buyer-client/README.md), [spend governor](../../stellar/scf-starforge-20261009/sf36-spend-governor), [native buyer operator](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/README.md) | Endpoint, method or tool, arguments/body, selected native requirement, approval/reservation owner, original attempt and complete response. |
 | Native payment and reconciliation | [Native facilitator](../../stellar/scf-starforge-20261009/native-facilitator), [native buyer signer](../../stellar/scf-starforge-20261009/sf103-native-buyer-signer), [RPC transfer reconciliation](../../stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile) | Scheme/network/asset/recipient/atomic amount, signer reference, facilitator outcome and independently observed transaction identity. |
+| Recurring MPP channel work | [Native MPP product][mpp-guide], [Channel application][mpp-channel] and [complete receiving][mpp-receiving] | Original deployed channel and code, task authority, cumulative paid purchases, retained responses, funding/collection/refund transactions and full native SDK state. |
 | Complete data receiving | [Dataset delivery](../../stellar/scf-starforge-20261009/sf100-buyer-dataset-delivery), [Python buyer and Analysis](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python), [retained collections](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/README.md) | Complete parent result, original pages/files, source meaning, saved queries, reviewed reports, workbooks and received editions. |
 | Merchant fulfillment and books | [Delivery outbox](../../stellar/scf-starforge-20261009/sf98-merchant-delivery/README.md), [settlement accounting](../../stellar/scf-starforge-20261009/merchant-settlement-accounting) | Original delivery event, destination acknowledgment, order/accounting state and subsequent reconciliation. |
 | Runtime and operator lifecycle | [Runtime installation](../../stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md), [Applications](../../stellar/scf-starforge-20261009/distribution/runtime-workspace/README.md), [source providers](../../stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_PROVIDERS.md) | Selected source archive, dependency profile/lock, private workspace, reviewed launch inputs, original child process and operation. |
@@ -662,6 +738,15 @@ accepted handovers. Keep partial, unresolved, canceled and refunded outcomes in
 the same cohort and carry required fulfillment state. Payment, output delivery
 and recovery retain their actual clocks.
 
+For Channel work, keep each accepted useful purchase and its original cumulative
+commitment separate from on-chain opening, funding, collection, close and
+refund transactions. One collection may settle several paid work items. Retain
+the actual purchase-to-commitment and commitment-to-collection lineage, exact
+amounts and complete outputs; do not duplicate a collection transaction once
+per response. Apply the original selected grant cohort definition to its
+qualifying records. A product's additional Channel work history does not
+change the fixed package acceptance or the existing purchase baseline.
+
 A returning buyer completes another distinct useful task on another day. Record
 the later period, fresh source query or order that made the purchase useful. The
 existing [customer series][series] preserves those periods and complete native
@@ -746,3 +831,8 @@ that customer.
 [captured-api]: ../captured-api/OPERATING.md
 [api-customer]: ../api-customer/OPERATING.md
 [series]: ../../stellar-forge/mcp-merchant-operator/console/WORKFLOW_SERIES.md
+
+[mpp-operating]: ../mpp-workspace/OPERATING.md#10-operate-recurring-channel-work
+[mpp-channel]: ../../stellar/scf-starforge-20261009/mpp-channel/README.md
+[mpp-receiving]: ../mpp-workspace/RECEIVING.md#6-receive-a-complete-operating-channel
+[mpp-python]: ../../stellar/scf-starforge-20261009/mpp-channel/python/README.md

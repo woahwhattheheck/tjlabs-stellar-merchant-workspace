@@ -64,6 +64,41 @@
         "../../../sf74-merchant-support-console/commercial/tariff-desk.css",
         "text/css; charset=utf-8"
       ]
+    ],
+    [
+      "/customer-quotes/native/commercial/performance-desk.mjs",
+      [
+        "../../../sf74-merchant-support-console/commercial/performance-desk.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/customer-quotes/programme-session.mjs",
+      [
+        "public/programme-session.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/customer-quote-programmes.html",
+      [
+        "public/programmes/index.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/customer-quote-programmes/browser.mjs",
+      [
+        "public/programmes/browser.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/customer-quote-programmes/style.css",
+      [
+        "public/programmes/style.css",
+        "text/css; charset=utf-8"
+      ]
     ]
   ]
 }

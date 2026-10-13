@@ -147,3 +147,7 @@ the original Collections command remains responsible for its setup and run.
 
 The composer uses the native Linux `flock` command already required by the
 original Collections controller.
+
+## Saved customer-use commissioning
+
+[Customer-use commissioning](CUSTOMER_USE.md) joins exact Grant Installation calendars to these original saved plans and periods. Its complete browser, CLI and typed client retain immutable commissioning revisions, reuse original buyer requests and return verified native evidence through the existing Grant receiving workflow. The same encrypted Collections handover retains the complete authoring history.

@@ -1,0 +1,44 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "publication-workspace",
+  "description": "Complete original publishing installations, managed staff/resident/WordPress services and independent receiving",
+  "components": [
+    "products/publication-workspace"
+  ],
+  "supportFiles": [
+    "products/publication-workspace/native/files.py",
+    "products/publication-workspace/native/source.py",
+    "products/publication-workspace/native/manage.py",
+    "products/publication-workspace/native/operations.py",
+    "products/publication-workspace/native/launch.py",
+    "products/publication-workspace/client.d.mts",
+    "products/publication-workspace/workspace.d.mts",
+    "products/publication-workspace/native/API.md",
+    "products/publication-workspace/SCF.md",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/public-information-publication.json"
+  ],
+  "commands": {
+    "publication-workspace": "products/publication-workspace/cli.mjs",
+    "publication-commission": "products/publication-workspace/commission.mjs"
+  },
+  "commandDescriptions": {
+    "publication-workspace": "Install, operate and independently receive the complete original publishing workspace",
+    "publication-commission": "Join complete original publishing source to the existing Customer Installation"
+  },
+  "exports": {
+    "./merchant/publication": {
+      "types": "./source/products/publication-workspace/client.d.mts",
+      "import": "./source/products/publication-workspace/client.mjs"
+    },
+    "./merchant/mcp/publication": {
+      "types": "./source/products/publication-workspace/workspace.d.mts",
+      "import": "./source/products/publication-workspace/workspace.mjs"
+    }
+  },
+  "applicationProviders": {
+    "publication-workspace": "products/publication-workspace/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "publication-workspaces": "products/publication-workspace/merchant-provider.mjs"
+  }
+}

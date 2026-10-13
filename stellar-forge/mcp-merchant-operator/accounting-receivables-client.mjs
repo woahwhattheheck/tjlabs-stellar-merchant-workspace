@@ -2,6 +2,7 @@
 import {createHash} from 'node:crypto';
 import {openMerchantFileClient} from './retained-download.mjs';
 import {createAccountingMaintenanceClient} from './accounting-maintenance-client.mjs';
+import {FINANCIAL_CONTROL_METHODS, FINANCIAL_CONTROL_ACTIONS, FINANCIAL_CONTROL_SELECTORS} from './accounting-financial-control.mjs';
 
 const PREFIX = 'merchant_accounting_receivables_';
 const UUID = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
@@ -35,6 +36,7 @@ function identity(value) {
   return {actor: operator(value.actor), requestId: identifier(value.requestId, REQUEST_ID, 'stable request ID')};
 }
 export const ACCOUNTING_RECEIVABLES_METHODS = Object.freeze({
+  ...FINANCIAL_CONTROL_METHODS,
   status: 'status', saveSettings: 'settings', saveDraft: 'draft_save', importQuote: 'quote_import',
   invoicePreviewSummary: 'invoice_preview', issueInvoice: 'invoice_issue', invoice: 'invoice_detail',
   voidInvoice: 'invoice_void', issueCredit: 'credit', recordReceipt: 'receipt_record', voidReceipt: 'receipt_void',
@@ -47,6 +49,8 @@ export const ACCOUNTING_RECEIVABLES_METHODS = Object.freeze({
   refunds: 'refund_list', refund: 'refund_detail', cancelRefund: 'refund_cancel', reverseRefund: 'refund_reverse',
   reportRefundReturn: 'refund_return', receiveRefund: 'refund_receive',
   previewCreditDisposition: 'credit_disposition_preview', applyCreditDisposition: 'credit_disposition_apply',
+  remittances: 'remittance_list', previewRemittance: 'remittance_preview',
+  applyRemittance: 'remittance_apply', remittance: 'remittance_detail',
   bankAccounts: 'bank_accounts', saveBankAccount: 'bank_account_save', inspectBankSource: 'bank_source_inspect',
   importBankSource: 'bank_source_import', bankImports: 'bank_import_list', bankImport: 'bank_import_detail',
   previewBankPosting: 'bank_posting_preview', postBankReceipts: 'bank_receipts_post',
@@ -54,6 +58,8 @@ export const ACCOUNTING_RECEIVABLES_METHODS = Object.freeze({
 });
 const OPERATIONS = new Set(Object.values(ACCOUNTING_RECEIVABLES_METHODS));
 const ACTIONS = Object.freeze({
+  ...FINANCIAL_CONTROL_ACTIONS,
+  remittance_apply: 'remittance_applied',
   settings: 'settings_saved', draft_save: 'draft_saved', quote_import: 'quote_imported',
   invoice_issue: 'invoice_issued', invoice_void: 'invoice_voided', credit: 'credit_issued',
   receipt_record: 'payment_recorded', receipt_void: 'payment_voided', settlement_import: 'settlement_recorded',
@@ -67,7 +73,7 @@ const ACTIONS = Object.freeze({
 });
 export const ACCOUNTING_RECEIVABLES_MUTATIONS = Object.freeze(Object.keys(ACTIONS));
 const PAGED = new Set(['status', 'invoice_preview', 'invoice_detail', 'settlement_ledger', 'payment_list', 'payment_detail', 'refund_list',
-  'bank_accounts', 'bank_import_list', 'bank_import_detail']);
+  'bank_accounts', 'bank_import_list', 'bank_import_detail', 'remittance_list', 'remittance_detail']);
 
 /** Validate transport identity while preserving every original JSON field and string. */
 export function accountingReceivablesArguments(kind, value) {
@@ -86,8 +92,12 @@ export function accountingInvoicePreview(preview) {
 }
 export function accountingInvoiceIssueArguments(preview, value) {
   accountingInvoicePreview(preview);
+  const creditDecisionId = value?.creditDecisionId ?? preview.creditDecisionId;
+  if (creditDecisionId !== undefined && creditDecisionId !== null)
+    identifier(creditDecisionId, UUID, 'saved customer credit decision UUID');
   return {invoiceId: preview.invoiceId, ...identity(value), revision: preview.revision,
-    expectedVersion: preview.expectedVersion, previewSha256: preview.previewSha256};
+    expectedVersion: preview.expectedVersion, previewSha256: preview.previewSha256,
+    ...(creditDecisionId ? {creditDecisionId} : {})};
 }
 export function accountingPaymentRequestPreview(preview) {
   need(plain(preview) && plain(preview.proposal) &&
@@ -143,17 +153,91 @@ export function accountingBankPostingArguments(preview, value) {
   return {bankImportId: preview.proposal.bankImportId, ...identity(value), revision: preview.revision,
     proposal: structuredClone(preview.proposal), reviewSha256: preview.reviewSha256};
 }
+/** Keep the complete original CSV and the workspace-bound native review together. */
+export function accountingRemittancePreview(preview) {
+  need(plain(preview) && plain(preview.source) && plain(preview.review) &&
+    typeof preview.source.csv === 'string' && SHA.test(preview.workspaceId ?? '') &&
+    preview.review.schema === 'stellar-forge.merchant-remittance-review.v1' &&
+    preview.review.workspaceId === preview.workspaceId && preview.review.revision === preview.revision &&
+    preview.source.sourceId === preview.review.sourceId && preview.source.filename === preview.review.filename &&
+    Buffer.byteLength(preview.source.csv, 'utf8') === preview.review.sourceBytes &&
+    preview.review.sourceBytes > 0 && preview.review.sourceBytes <= 500_000 &&
+    createHash('sha256').update(preview.source.csv, 'utf8').digest('hex') === preview.review.sourceSha256 &&
+    SHA.test(preview.reviewSha256 ?? '') && digest(preview.review) === preview.reviewSha256,
+    'Keep the complete original remittance CSV, exact workspace identity and native review SHA-256.', 'PREVIEW');
+  version(preview.revision); return preview;
+}
+export function accountingRemittanceArguments(preview, value) {
+  accountingRemittancePreview(preview);
+  need(preview.review.canApply === true && preview.review.conflictCount === 0,
+    'Resolve every remittance conflict in the original source before preparing the complete batch.', 'PREVIEW');
+  return {workspaceId: preview.workspaceId, source: structuredClone(preview.source),
+    ...identity(value), revision: preview.revision, reviewSha256: preview.reviewSha256};
+}
+
+/** Validate the complete original scenario preview, including all separated source rows. */
+export function accountingCashPlanPreview(preview) {
+  need(plain(preview) && SHA.test(preview.workspaceId ?? '') && plain(preview.plan) &&
+    plain(preview.projection) && preview.projection.schema === 'stellar-forge.merchant-cash-forecast.v1' &&
+    Array.isArray(preview.projection.invoices) && Array.isArray(preview.projection.lines) &&
+    Array.isArray(preview.projection.currencies) && SHA.test(preview.reviewSha256 ?? ''),
+    'Keep the complete original cash-plan preview, source rows and workspace identity.', 'PREVIEW');
+  version(preview.revision);
+  need(digest({workspaceId: preview.workspaceId, revision: preview.revision,
+    plan: preview.plan, projection: preview.projection}) === preview.reviewSha256,
+    'The complete cash-plan preview does not match its original review SHA-256.', 'PREVIEW');
+  return preview;
+}
+export function accountingCashPlanArguments(preview, value) {
+  accountingCashPlanPreview(preview);
+  const edit = value?.id === undefined ? {} : {
+    id: identifier(value.id, UUID, 'original cash-plan UUID'),
+    expectedVersion: version(value.expectedVersion, 'cash-plan version')
+  };
+  need(value?.id !== undefined || value?.expectedVersion === undefined,
+    'Select the original plan before supplying its current version.');
+  return {...identity(value), workspaceId: preview.workspaceId, revision: preview.revision,
+    ...edit, plan: structuredClone(preview.plan), reviewSha256: preview.reviewSha256};
+}
+export function accountingCreditAssessmentPreview(preview) {
+  const assessment = preview?.assessment;
+  need(plain(preview) && SHA.test(preview.workspaceId ?? '') && SHA.test(preview.assessmentSha256 ?? '') &&
+    plain(assessment) && assessment.schema === 'stellar-forge.merchant-credit-assessment.v1' &&
+    UUID.test(assessment.invoiceId ?? '') && assessment.document?.id === assessment.invoiceId &&
+    plain(assessment.source) && SHA.test(assessment.source.previewSha256 ?? '') &&
+    digest(assessment.document) === assessment.source.previewSha256 &&
+    preview.invoicePreview?.previewSha256 === assessment.source.previewSha256 &&
+    preview.invoicePreview?.expectedVersion === assessment.source.draftVersion &&
+    Array.isArray(assessment.invoices) && Array.isArray(assessment.receipts) &&
+    Array.isArray(assessment.disputes) && Array.isArray(assessment.triggers),
+    'Keep the complete original customer assessment, draft and its exact source identity.', 'PREVIEW');
+  version(preview.revision); version(preview.invoicePreview.expectedVersion, 'invoice version');
+  const {otherDrafts, ...basis} = assessment;
+  need(digest({workspaceId: preview.workspaceId, assessment: basis}) === preview.assessmentSha256,
+    'The complete customer assessment does not match its original source SHA-256.', 'PREVIEW');
+  return preview;
+}
+export function accountingCreditDecisionArguments(preview, value) {
+  accountingCreditAssessmentPreview(preview);
+  need(['APPROVE', 'DECLINE'].includes(value?.outcome), 'Choose approve or decline for the reviewed original draft.');
+  need(typeof value.reason === 'string' && value.reason.trim().length > 0 && value.reason.trim().length <= 3000,
+    'Record the responsible operator’s reason for this credit decision.');
+  return {invoiceId: preview.assessment.invoiceId, ...identity(value),
+    workspaceId: preview.workspaceId, revision: preview.revision,
+    assessmentSha256: preview.assessmentSha256, outcome: value.outcome, reason: value.reason};
+}
+
 function nativeIntent(kind, input) {
   const value = wire(input);
   delete value.revision;
   if (kind === 'draft_save' && Object.hasOwn(value, 'invoiceId')) {
     const id = value.invoiceId; delete value.invoiceId; value.id = id;
   }
-  const selector = ['invoice_issue', 'invoice_void', 'credit', 'payment_create'].includes(kind) ? 'invoiceId' :
+  const selector = FINANCIAL_CONTROL_SELECTORS[kind] ?? (['invoice_issue', 'invoice_void', 'credit', 'payment_create'].includes(kind) ? 'invoiceId' :
     kind === 'receipt_void' ? 'receiptId' : kind === 'release' ? 'allocationId' :
     ['payment_cancel', 'payment_return', 'payment_receive'].includes(kind) ? 'paymentRequestId' :
     ['refund_cancel', 'refund_reverse', 'refund_return', 'refund_receive'].includes(kind) ? 'refundId' :
-    ['bank_receipts_post', 'bank_rows_ignore', 'bank_rows_restore', 'bank_import_close'].includes(kind) ? 'bankImportId' : null;
+    ['bank_receipts_post', 'bank_rows_ignore', 'bank_rows_restore', 'bank_import_close'].includes(kind) ? 'bankImportId' : null);
   if (selector) { const id = value[selector]; delete value[selector]; value[selector] = id; }
   return digest({action: ACTIONS[kind], value});
 }
@@ -212,6 +296,8 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
         'Choose an original paged read and let this reader advance its offsets.');
       if (kind === 'bank_import_detail') need(['rows', 'history', 'postings'].includes(args.view),
         'Select rows, history or postings for a complete original bank import view.');
+      if (kind === 'remittance_detail') need(['groups', 'errors'].includes(args.view),
+        'Select groups or errors for a complete original remittance review.');
       const rowKey = kind === 'refund_list' ? 'refunds' : kind === 'bank_accounts' ? 'accounts' :
         kind === 'bank_import_list' ? 'imports' : 'items';
       const items = [], ids = new Set(); let offset = 0, total, revision, date, metadata;
@@ -258,6 +344,34 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
       need(metadata && length === metadata.bytes, 'The original complete file ended early.', 'FILE_REPLY');
       return {bytes: Buffer.concat(parts, length), file: metadata};
     },
+
+    collectionFile({collectionCaseId, file, asOf}, options) {
+      identifier(collectionCaseId, UUID, 'original collection case UUID');
+      return client.fileBytes({kind: 'receivables-collection', collectionCaseId, file,
+        ...(asOf === undefined ? {} : {asOf})}, options);
+    },
+    collectionsFile({file, ...query}, options) {
+      return client.fileBytes({...query, kind: 'receivables-collections', file}, options);
+    },
+    cashPlanFile({cashPlanId, editionId, file}, options) {
+      identifier(cashPlanId, UUID, 'original cash-plan UUID');
+      if (editionId !== undefined) identifier(editionId, UUID, 'original cash-plan edition UUID');
+      return client.fileBytes({kind: 'receivables-cash-plan', cashPlanId, file,
+        ...(editionId === undefined ? {} : {editionId})}, options);
+    },
+    cashPlanComparisonFile({file, ...query}, options) {
+      identifier(query.leftId, UUID, 'original left cash-plan UUID');
+      identifier(query.rightId, UUID, 'original right cash-plan UUID');
+      return client.fileBytes({...query, kind: 'receivables-cash-plan-comparison', file}, options);
+    },
+    creditDecisionFile({creditDecisionId, file}, options) {
+      identifier(creditDecisionId, UUID, 'original credit decision UUID');
+      return client.fileBytes({kind: 'receivables-credit-decision', creditDecisionId, file}, options);
+    },
+    remittanceFile({batchId, file}, options) {
+      identifier(batchId, UUID, 'original remittance batch UUID');
+      return client.fileBytes({kind: 'receivables-remittance', batchId, file}, options);
+    },
     bankImportFile({bankImportId, file}, options) {
       identifier(bankImportId, UUID, 'original bank import UUID');
       return client.fileBytes({kind: 'receivables-bank', bankImportId, file}, options);
@@ -282,8 +396,8 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
       let document;
       try { document = JSON.parse(decodeOriginal(complete.bytes)); }
       catch { throw fail('PREVIEW', 'The original invoice preview is not valid UTF-8 JSON.'); }
-      return accountingInvoicePreview({invoiceId: args.invoiceId, document, previewSha256: summary.previewSha256,
-        expectedVersion: summary.expectedVersion, revision: summary.revision});
+      return accountingInvoicePreview({...summary, invoiceId: args.invoiceId, document,
+        previewSha256: summary.previewSha256, expectedVersion: summary.expectedVersion, revision: summary.revision});
     },
     async reconcileOperation(kind, value, options) {
       const args = accountingReceivablesArguments(kind, value);
@@ -350,11 +464,35 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
       return result;
     };
   }
+  const remittancePreview = client.previewRemittance;
+  client.previewRemittance = async (args, options) => {
+    const result = accountingRemittancePreview(await remittancePreview(args, options));
+    need(result.workspaceId === args.workspaceId && result.source.sourceId === args.source?.sourceId?.trim() &&
+      result.source.filename === args.source?.filename?.trim() &&
+      (args.source.csv === undefined || result.source.csv === args.source.csv),
+      'The remittance review belongs to different original source or workspace selections.', 'PREVIEW');
+    return result;
+  };
   const bankPreview = client.previewBankPosting;
   client.previewBankPosting = async (args, options) => {
     const result = accountingBankPostingPreview(await bankPreview(args, options));
     need(result.proposal.bankImportId === args.bankImportId,
       'The reviewed bank posting belongs to another original import.', 'PREVIEW');
+    return result;
+  };
+
+  const cashPreview = client.previewCashPlan;
+  client.previewCashPlan = async (args, options) => {
+    const result = accountingCashPlanPreview(await cashPreview(args, options));
+    need(result.workspaceId === args.workspaceId,
+      'The cash plan belongs to another original workspace.', 'PREVIEW');
+    return result;
+  };
+  const creditPreview = client.previewCreditAssessment;
+  client.previewCreditAssessment = async (args, options) => {
+    const result = accountingCreditAssessmentPreview(await creditPreview(args, options));
+    need(result.workspaceId === args.workspaceId && result.assessment.invoiceId === args.invoiceId,
+      'The assessment belongs to another original workspace or draft.', 'PREVIEW');
     return result;
   };
   return Object.freeze(client);

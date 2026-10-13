@@ -8,13 +8,17 @@
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/README.md",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/client.d.ts",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/AUTHORING.md"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/AUTHORING.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/CUSTOMER_USE.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/customer-use-client.d.ts"
   ],
   "commands": {
-    "buyer-collection-plans": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/cli.mjs"
+    "buyer-collection-plans": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/cli.mjs",
+    "buyer-customer-use": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/customer-use-cli.mjs"
   },
   "commandDescriptions": {
-    "buyer-collection-plans": "Author, share and adopt complete request plans, prepare explicit periods and create original buyer collections"
+    "buyer-collection-plans": "Author, share and adopt complete request plans, prepare explicit periods and create original buyer collections",
+    "buyer-customer-use": "Commission saved customer-use calendars through original request periods and retain their buyer results"
   },
   "exports": {
     "./buyer/collection-plans": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/model.mjs",
@@ -24,6 +28,14 @@
       "default": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/client.mjs"
     },
     "./buyer/collection-plans/cli": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/cli.mjs",
+    "./buyer/customer-use": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/customer-use-model.mjs",
+    "./buyer/customer-use/definition": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/customer-use-definition.mjs",
+    "./buyer/customer-use/client": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/customer-use-client.d.ts",
+      "default": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/customer-use-client.mjs"
+    },
+    "./buyer/customer-use/return": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/customer-use-return.mjs",
+    "./buyer/customer-use/cli": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/customer-use-cli.mjs",
     "./buyer/collection-plans/package-format": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/package-format.mjs"
   }
 }

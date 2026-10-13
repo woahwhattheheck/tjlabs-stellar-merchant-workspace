@@ -12,7 +12,16 @@ const SCHEMA='stellar-forge.merchant-support-incident-sources.v1';
 const sourceNames=new Set(['merchant_support_profiles','merchant_support_configure','merchant_support_watch_status',
   'merchant_support_watch_start','merchant_support_watch_stop','merchant_notifications','merchant_incident_notify',
   'merchant_notification_update','merchant_incidents','merchant_incident_ack','merchant_incident_case']);
-const addedNames=new Set(['merchant_support_incident_sources','merchant_support_destination','merchant_incident_view','merchant_support_service_snapshot','merchant_support_ckan_inspect']);
+const recoveryActions=new Map([
+  ['merchant_support_recovery_snapshot','snapshot'],
+  ['merchant_support_recovery_inspect','inspect-snapshot'],
+  ['merchant_support_recovery_receive','receive'],
+  ['merchant_support_recovery_open','open'],
+  ['merchant_support_recovery_reconcile','reconcile'],
+  ['merchant_support_recovery_abandon','abandon-snapshot'],
+]);
+const addedNames=new Set(['merchant_support_incident_sources','merchant_support_destination','merchant_incident_view',
+  'merchant_support_service_snapshot','merchant_support_ckan_inspect','merchant_support_oauth_inspect','merchant_support_recovery',...recoveryActions.keys()]);
 const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
 const statuses=['OPEN','ACKNOWLEDGED','RECOVERED','RETIRED'];
 const notificationStates=['PENDING','RETRY','IN_FLIGHT','PAUSED','EXHAUSTED','DELIVERED','CANCELLED'];
@@ -23,8 +32,12 @@ const digest=value=>{if(typeof value!=='string'||!/^[a-f0-9]{64}$/.test(value))t
 const projection=value=>({schema:value.schema,sha256:value.sha256,
   sources:value.sources.map(({id,label,directory})=>({id,label,directory}))});
 const publicSource=value=>value?{id:value.id,label:value.label,
+  ...(value.recovery?.enabled?{recovery:{enabled:true,workspaceId:value.recovery.workspaceId,
+    restored:Boolean(value.recovery.restored),baseSourceId:value.recovery.baseSourceId}}:{}),
   ...(value.objectSessions?.length?{objectSessions:value.objectSessions.map(({id,label})=>({id,label}))}:{}),
-  ...(value.ckanWorkspaces?.length?{ckanWorkspaces:value.ckanWorkspaces.map(({id,label})=>({id,label}))}:{})}:null;
+  ...(value.ckanWorkspaces?.length?{ckanWorkspaces:value.ckanWorkspaces.map(({id,label})=>({id,label}))}:{}),
+  ...(value.oauthResources?.length?{oauthResources:value.oauthResources.map(({id,label,resource,configurationSha256})=>
+    ({id,label,resource,configurationSha256}))}:{})}:null;
 function pagination(args){
   const offset=integer(args.offset??0,'page offset'),limit=integer(args.limit??50,'page limit',1);
   if(limit>100)throw fail('INVALID_PARAMS','Use a page limit from 1 to 100.');
@@ -64,6 +77,9 @@ async function originalView(directory,id){
 export class MerchantSupportIncidentSources {
   #config;#callbacks;#environment;#opening;#manager;#closing=false;#close;
   #lifecycle=new Set();#started=new Map();#exits=new Map();
+  // The original SF74 owner verifies and opens received stores. This map only
+  // selects those same live source handles for existing MCP operations.
+  #received=new Map();
   constructor(config,callbacks,{environment=process.env}={}){
     this.#config=config;this.#callbacks=callbacks;this.#environment=environment;
   }
@@ -104,9 +120,10 @@ export class MerchantSupportIncidentSources {
     }
     const entries=this.#config.incidentSources.sources;
     const id=args.incidentSource??this.#config.defaultIncidentSource??(entries.length===1?entries[0].id:undefined);
-    const selected=entries.find(value=>value.id===id);
-    if(!selected)throw fail('SUPPORT_INCIDENT_SOURCE_NOT_FOUND','Choose incidentSource from merchant_support_incident_sources.',404);
-    return selected;
+    const selected=entries.find(value=>value.id===id)??this.#received.get(id);
+    if(!selected)throw fail('SUPPORT_INCIDENT_SOURCE_NOT_FOUND','Choose incidentSource from merchant_support_incident_sources. Reopen a received source with its original receive name and manifest after an operator restart.',404);
+    const current=this.#manager?.profiles().sources.find(value=>value.id===id);
+    return current?{...selected,...current,directory:selected.directory}:selected;
   }
   #directory(source){return source?.directory??this.#config.incidentsDirectory;}
   async #status(source,manager){
@@ -162,6 +179,38 @@ export class MerchantSupportIncidentSources {
       :{accepted:true,reason:'WEBHOOK_CONFIGURATION_RESOLVED',destinationId:selected.binding.id};
     return {configRevision:state.configRevision,configHash:state.configHash,...result};
   }
+  async #recovery(source,manager,name,args){
+    if(name==='merchant_support_recovery'){
+      const {incidentSource,...input}=args;
+      return {...await manager.recoveryOverview(source.id,input),incidentSource:publicSource(source)};
+    }
+    const action=recoveryActions.get(name),{incidentSource,workspaceId,...input}=args;
+    digest(workspaceId);
+    // The original owner validates the complete action input, kernel-bound
+    // workspace, request replay and every selected file. Keep those inputs intact.
+    const value=await manager.recoveryOperation(source.id,action,{workspaceId,input});
+    if(action!=='open')return {...value,incidentSource:publicSource(source),workspaceId};
+    const selected=value.source,manifestSha256=input.expectedManifestSha256;
+    if(!selected?.recovery?.restored||typeof value.directory!=='string'||
+        value.recovery?.id!==input.receiveName||value.recovery?.manifestSha256!==manifestSha256||
+        selected.recovery.baseSourceId!==(source.recovery?.baseSourceId??source.id))
+      throw fail('SUPPORT_INCIDENT_RECOVERY_CHANGED','The original received source identity changed. Read the same recovery selection again.',409);
+    digest(selected.recovery.workspaceId);
+    const prior=this.#received.get(selected.id);
+    if(prior&&(prior.directory!==value.directory||prior.manifestSha256!==manifestSha256||
+        prior.recovery.workspaceId!==selected.recovery.workspaceId))
+      throw fail('SUPPORT_INCIDENT_RECOVERY_CHANGED','The original received source binding changed. Reopen this operator with the retained receive selection.',409);
+    const base=manager.profiles().sources.find(row=>row.id===selected.recovery.baseSourceId);
+    if(!base?.recovery?.enabled)
+      throw fail('SUPPORT_INCIDENT_RECOVERY_CHANGED','The original host recovery source changed. Reopen its retained selection.',409);
+    digest(base.recovery.workspaceId);
+    this.#received.set(selected.id,{...selected,directory:value.directory,manifestSha256});
+    return {...value,parentIncidentSource:publicSource(source),parentWorkspaceId:workspaceId,
+      incidentSource:publicSource(selected),workspaceId:selected.recovery.workspaceId,
+      // Anchor reopening at the configured base even for a nested received store.
+      reopen:{incidentSource:base.id,workspaceId:base.recovery.workspaceId,receiveName:input.receiveName,
+        expectedManifestSha256:manifestSha256}};
+  }
   async serviceSnapshot(args){
     const manager=await this.#open(),source=this.#source(args);
     return manager?manager.serviceSnapshot(source.id,{merchantId:args.merchantId}):
@@ -179,7 +228,13 @@ export class MerchantSupportIncidentSources {
         return {...result,incidentSource:selected};
       }
       if(!manager)throw fail('SUPPORT_INCIDENT_SOURCES_REQUIRED','Select the original incident source file in the host support connection.');
+      if(name==='merchant_support_recovery'||recoveryActions.has(name))
+        return await this.#recovery(source,manager,name,args);
       switch(name){
+        case 'merchant_support_oauth_inspect':{
+          const {incidentSource,...input}=args;
+          return {...await manager.inspectOAuth(source.id,input),incidentSource:selected};
+        }
         case 'merchant_support_ckan_inspect':{
           const {incidentSource,...input}=args;
           return {...await manager.inspectCkan(source.id,input),incidentSource:selected};

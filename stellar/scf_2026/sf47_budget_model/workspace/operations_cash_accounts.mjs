@@ -1,4 +1,5 @@
 // Original cash account, allocations, reviewed corrections and complete case handover.
+import {currentStaffContext,staffDeskStorageKey} from './staff-session.mjs';
 const DESK_SCHEMA='stellar-forge.sf47-cash-desk.v1';
 const REPORT_SCHEMA='stellar-forge.sf47-cash-account.v1';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -21,19 +22,22 @@ function field(text,key,value='',{options,multiple=false,area=false,type='text',
   return '<label'+(wide?' class="cash-account-wide"':'')+'>'+esc(text)+control+(help?'<small>'+esc(help)+'</small>':'')+'</label>';
 }
 const options=values=>values.map(value=>[value,title(value)]);
-let database;
-function db(){
-  if(!database)database=new Promise((resolve,reject)=>{
-    if(!globalThis.indexedDB){reject(new Error('Browser draft storage is unavailable.'));return;}
-    const request=indexedDB.open('sf47-cash-accounts',1);
-    request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains('desks'))request.result.createObjectStore('desks');};
-    request.onerror=()=>{database=null;reject(request.error||new Error('Browser draft storage could not open.'));};
-    request.onsuccess=()=>{request.result.onversionchange=()=>{request.result.close();database=null;};resolve(request.result);};
-  });
-  return database;
+const CASH_DATABASE='sf47-cash-accounts',databases=new Map();
+function db(name=CASH_DATABASE){
+  if(!databases.has(name)){
+    const opening=new Promise((resolve,reject)=>{
+      if(!globalThis.indexedDB){reject(new Error('Browser draft storage is unavailable.'));return;}
+      const request=indexedDB.open(name,1);
+      request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains('desks'))request.result.createObjectStore('desks');};
+      request.onerror=()=>reject(request.error||new Error('Browser draft storage could not open.'));
+      request.onsuccess=()=>{request.result.onversionchange=()=>{request.result.close();databases.delete(name);};resolve(request.result);};
+    }).catch(problem=>{databases.delete(name);throw problem;});
+    databases.set(name,opening);
+  }
+  return databases.get(name);
 }
-async function stored(key,value,expectedRevision){
-  const database=await db();
+async function stored(key,value,expectedRevision,name=CASH_DATABASE){
+  const database=await db(name);
   return new Promise((resolve,reject)=>{
     const tx=database.transaction('desks',value===undefined?'readonly':'readwrite'),store=tx.objectStore('desks'),request=store.get(key);
     let result,conflict;
@@ -50,12 +54,22 @@ async function stored(key,value,expectedRevision){
 }
 const CASH_FIELDS=['date','direction','category','currency','network','asset','amount','usdValue','externalRef','tranche','allocations','sourceIds','sourceNote','valuationSourceIds','valuationNote'];
 const nativeCash=row=>Object.fromEntries(CASH_FIELDS.filter(key=>Object.hasOwn(row,key)).map(key=>[key,clone(row[key])]));
-export function mountCashAccounts({container,current,api,saveApi=api,session,mutationId,recordingActor,onCase,onOpen}){
+export function mountCashAccounts({container,current,api,saveApi=api,session,mutationId,recordingActor,onCase,onOpen,staffContext=currentStaffContext()}){
   const root=document.createElement('section');root.className='cash-account-desk';root.setAttribute('aria-label','Cash movements');container.replaceChildren(root);
   if(!document.querySelector('link[data-cash-account-style]')){
     const style=document.createElement('link');style.rel='stylesheet';style.href='/operations_cash_accounts.css';style.dataset.cashAccountStyle='true';document.head.append(style);
   }
   const caseId=current.program.id,prefix='/api/operations/'+caseId;
+  const deskContext=staffContext?clone(staffContext):null,databaseName=staffDeskStorageKey(CASH_DATABASE,deskContext),boundStaff=databaseName!==CASH_DATABASE;
+  const ownStored=(key,value,expectedRevision)=>stored(key,value,expectedRevision,databaseName);
+  let legacyCopy=null,legacySearched=false;
+  function pendingActorProblem(body) {
+    if(!boundStaff||deskContext.role==='owner'||!body)return null;
+    if(typeof body.actor==='string'&&body.actor.trim()===deskContext.actor)return null;
+    const original=typeof body.actor==='string'&&body.actor.trim()?body.actor.trim():'an unrecorded operator';
+    return Object.assign(new Error('This original request belongs to '+original+'. Sign in as that operator to resume it. The complete original copy remains available to download.'),{code:'STAFF_REQUEST_ACTOR_CHANGED',status:403});
+  }
+
   let active=true,busy=false,hostBusy=false,report=null,error='',notice='',storageNote='',saveTimer,loadSequence=0;
   session.storageWrites||=Promise.resolve();session.panel||='transactions';session.page||=0;session.selection||={startDate:'',endDate:today(),network:null,currency:null,asset:null};
   const available=()=>active&&root.isConnected,$=selector=>root.querySelector(selector);
@@ -73,7 +87,7 @@ export function mountCashAccounts({container,current,api,saveApi=api,session,mut
   }
   async function persist(){
     const value=state(),write=session.storageWrites.catch(()=>{}).then(async()=>{
-      const revision=await stored(caseId,value,session.storageRevision??0);session.storageRevision=revision;session.storageConflict=false;
+      const revision=await ownStored(caseId,value,session.storageRevision??0);session.storageRevision=revision;session.storageConflict=false;
     });
     session.storageWrites=write;
     try{await write;storageNote='';if(available())status();return true;}
@@ -92,11 +106,36 @@ export function mountCashAccounts({container,current,api,saveApi=api,session,mut
   function controls(){
     if(!available())return;root.setAttribute('aria-busy',String(busy||hostBusy));
     for(const node of root.querySelectorAll('button,input,select,textarea'))node.disabled=node.dataset.caFixed==='true'||(node.dataset.caAlways!=='true'&&(busy||hostBusy||!!session.pending));
-    for(const node of root.querySelectorAll('[data-ca-action="retry"],[data-ca-action="reopen-rejected"]'))node.disabled=busy||hostBusy;
+    for(const node of root.querySelectorAll('[data-ca-action="retry"],[data-ca-action="reopen-rejected"]'))node.disabled=busy||hostBusy||!!pendingActorProblem(session.pending?.body);
   }
   function status(){
     const target=$('[data-ca-status]');if(target){target.textContent=error||storageNote||notice;target.setAttribute('role',error||session.storageConflict?'alert':'status');}
     const conflict=$('[data-ca-conflict]');if(conflict)conflict.hidden=!session.storageConflict;
+  }
+  async function inspectLegacy(){
+    const value=await stored(caseId);if(!available())return;
+    if(value)validateDesk(value);
+    legacyCopy=value?clone(value):null;legacySearched=true;render();
+  }
+  async function openLegacy(){
+    if(!legacyCopy)throw new Error('Choose an earlier browser copy first.');
+    if(session.pending)throw new Error('Keep the current original request until its result is available.');
+    const problem=pendingActorProblem(legacyCopy.pending?.body);if(problem)throw problem;
+    clearTimeout(saveTimer);await session.storageWrites.catch(()=>{});if(!available())return;
+    const revision=session.storageRevision??0;
+    download(state(),caseId+'-cash-desk-before-earlier-copy-'+Date.now()+'.json');
+    restore(legacyCopy);session.storageRevision=revision;legacyCopy=null;legacySearched=false;report=null;render();
+    await persist();if(!available())return;await loadReport();
+    notice='Opened the selected earlier copy in this sign-in. Its original browser copy remains available.';render();
+  }
+  function legacyView(){
+    if(!legacySearched)return '';
+    if(!legacyCopy)return '<section class="cash-account-reconciliation"><h4>Earlier browser copies</h4><p>No earlier cash desk is saved for this case.</p>'+button('Close','legacy-close')+'</section>';
+    const pending=legacyCopy.pending,problem=pendingActorProblem(pending?.body);
+    return '<section class="cash-account-reconciliation"><h4>Earlier browser copy</h4>'+
+      pairs([['Original case',legacyCopy.caseId],['Original request',pending?.body?.requestId||'No pending request'],['Original operator',pending?.body?.actor||'No pending request']])+
+      '<p>'+esc(problem?.message||'Open this selected copy in the current sign-in. This desk is retained as a complete download first.')+'</p><div class="cash-account-actions">'+
+      button('Open selected earlier copy','legacy-open',{disabled:!!problem||!!session.pending})+button('Download earlier copy','legacy-download',{always:true})+button('Close','legacy-close')+'</div></section>';
   }
   function sourceButtons(row){return (row.sourceIds||[]).map(id=>button(sourceName(id),'source',{id})).join(' ');}
   function dimensions(key){
@@ -243,7 +282,7 @@ export function mountCashAccounts({container,current,api,saveApi=api,session,mut
   }
   function pendingView(){
     const pending=session.pending;if(!pending)return '';
-    return '<section class="cash-account-pending"><h4>'+esc(pending.rejected?'Original change needs review':'Continue original cash change')+'</h4><p>'+esc(pending.problem?.message||'The complete original request is retained until its result is available.')+'</p>'+
+    return '<section class="cash-account-pending"><h4>'+esc(pending.rejected?'Original change needs review':'Continue original cash change')+'</h4><p>'+esc(pendingActorProblem(pending.body)?.message||pending.problem?.message||'The complete original request is retained until its result is available.')+'</p>'+
       pairs([['Prepared',date(pending.preparedAt)],['Action',pending.kind==='correction'?'Cash correction':title(pending.body.action)],['Request',pending.body.requestId]])+
       '<div class="cash-account-actions">'+button('Resume original request','retry')+(pending.rejected?button('Review against current case','reopen-rejected'):'')+button('Download complete desk','download-desk',{always:true})+'</div><details><summary>Retained original request</summary><pre>'+esc(pretty(pending.body))+'</pre></details></section>';
   }
@@ -253,9 +292,9 @@ export function mountCashAccounts({container,current,api,saveApi=api,session,mut
     root.innerHTML='<div class="cash-account-heading"><div><h3>Cash movements</h3><p>Original cash, invoice allocations, corrections and source documents in one retained account.</p></div><div class="cash-account-actions">'+button('Record cash movement','new',{disabled:!editable()||!!session.draft})+button('Refresh case','refresh')+'</div></div>'+
       '<div class="cash-account-fields cash-account-selection">'+field('From date','select.startDate',selection.startDate,{type:'date'})+field('Through date','select.endDate',selection.endDate,{type:'date',required:true})+
       field('Network','select.network',JSON.stringify(selection.network??null),{options:dimensions('network')})+field('Currency','select.currency',JSON.stringify(selection.currency??null),{options:dimensions('currency')})+field('Asset','select.asset',JSON.stringify(selection.asset??null),{options:dimensions('asset')})+'</div>'+
-      '<div class="cash-account-actions">'+button('Open account','load')+button('Download complete account','export',{disabled:!report})+button('Download account data','download-report',{disabled:!report,always:true})+button('Download desk input','download-desk',{always:true})+button('Open desk input','open-desk')+'</div>'+
+      '<div class="cash-account-actions">'+button('Open account','load')+button('Download complete account','export',{disabled:!report})+button('Download account data','download-report',{disabled:!report,always:true})+button('Download desk input','download-desk',{always:true})+button('Open desk input','open-desk')+(boundStaff?button('Find earlier browser copy','legacy-inspect'):'')+'</div>'+
       '<p data-ca-status role="status" aria-live="polite"></p><div data-ca-conflict hidden class="cash-account-reconciliation">'+button('Open saved desk and retain this input','open-saved',{always:true})+'</div>'+
-      pendingView()+editor()+
+      legacyView()+pendingView()+editor()+
       (report?summary()+'<nav class="cash-account-tabs" aria-label="Cash account sections">'+[['transactions','Transactions'],['accounts','Accounts'],['balances','Balances and allocations'],['corrections','Corrections'],['sources','Sources and history']].map(([id,name])=>'<button type="button" data-ca-action="panel" data-id="'+id+'" aria-pressed="'+(session.panel===id)+'">'+name+'</button>').join('')+'</nav>'+
         ({transactions,accounts,balances,corrections,sources}[session.panel]||transactions)():'<p>Open the selected account to review its original activity and balances.</p>')+
       '<input type="file" data-ca-desk-file hidden accept=".json,application/json"><input type="file" data-ca-source-file hidden>';
@@ -315,11 +354,12 @@ export function mountCashAccounts({container,current,api,saveApi=api,session,mut
   async function prepareRequest(kind,body,after={}){
     body={...clone(body),actor:recordingActor()};
     body.requestId=await mutationId('operations:'+caseId+':'+(kind==='correction'?'cash-correction':'command'),body);
-    session.pending={kind,body,after,preparedAt:new Date().toISOString()};await persist();render();await dispatch();
+    session.pending={kind,body,after,preparedAt:new Date().toISOString()};if(!await persist())download(state(),caseId+'-cash-original-request.json');render();await dispatch();
   }
   async function dispatch(){
     const pending=session.pending;if(!pending)return;busy=true;error='';render();
     try{
+      const problem=pendingActorProblem(pending.body);if(problem)throw problem;
       const result=await saveApi(prefix+(pending.kind==='correction'?'/cash-correction':'/command'),clone(pending.body));
       const expectedAction=pending.kind==='correction'?'cash.correction':pending.body.action;
       if(result.id!==caseId||result.action!==expectedAction)throw new Error('The result differs from the retained original cash request.');
@@ -347,8 +387,10 @@ export function mountCashAccounts({container,current,api,saveApi=api,session,mut
   }
   async function openDesk(file){
     if(file.size>64*1024*1024)throw new Error('Open a complete cash desk up to 64 MiB.');
-    const value=JSON.parse(await file.text());validateDesk(value);download(state(),caseId+'-cash-desk-before-open-'+Date.now()+'.json');
-    const revision=session.storageRevision;restore(value);session.storageRevision=revision;await persist();await loadReport();notice='Opened the complete cash input and its retained request.';
+    const value=JSON.parse(await file.text());validateDesk(value);if(!available())return;
+    const problem=pendingActorProblem(value.pending?.body);if(problem)throw problem;
+    download(state(),caseId+'-cash-desk-before-open-'+Date.now()+'.json');
+    const revision=session.storageRevision;restore(value);session.storageRevision=revision;report=null;render();await persist();if(!available())return;await loadReport();notice='Opened the complete cash input and its retained request.';
   }
   root.addEventListener('input',event=>{
     if(session.pending)return;const node=event.target,key=node.dataset.caField;if(!key||node.tagName==='SELECT')return;
@@ -380,10 +422,14 @@ export function mountCashAccounts({container,current,api,saveApi=api,session,mut
     const node=event.target.closest('[data-ca-action]');if(!node||node.disabled)return;const action=node.dataset.caAction,id=node.dataset.id;
     if(action==='download-desk'){download(state(),caseId+'-cash-desk.json');return;}
     if(action==='download-report'&&report){download(report,caseId+'-cash-account.json');return;}
+    if(action==='legacy-download'&&legacyCopy){download(legacyCopy,caseId+'-earlier-cash-desk.json');return;}
     if(busy||hostBusy)return;
     if(action==='retry'){dispatch();return;}
+    if(action==='legacy-inspect'){run(inspectLegacy);return;}
+    if(action==='legacy-open'){run(openLegacy);return;}
+    if(action==='legacy-close'){legacyCopy=null;legacySearched=false;render();return;}
     if(action==='open-saved'){run(async()=>{
-      clearTimeout(saveTimer);await session.storageWrites.catch(()=>{});const saved=await stored(caseId);validateDesk(saved);
+      clearTimeout(saveTimer);await session.storageWrites.catch(()=>{});const saved=await ownStored(caseId);if(!available())return;validateDesk(saved);
       download(state(),caseId+'-cash-desk-local-'+Date.now()+'.json');restore(saved);await loadReport();notice='Retained this tab’s complete input as a download and opened the saved desk.';
     });return;}
     if(action==='reopen-rejected'&&session.pending?.rejected){run(async()=>{
@@ -445,7 +491,7 @@ export function mountCashAccounts({container,current,api,saveApi=api,session,mut
   async function initialize(){
     if(!session.initialized){
       session.initializing||=(async()=>{
-        try{const previous=await stored(caseId);session.storageRevision=Number.isSafeInteger(previous?._storedRevision)?previous._storedRevision:0;if(previous?.schema===DESK_SCHEMA&&previous.caseId===caseId){validateDesk(previous);restore(previous);}}
+        try{const previous=await ownStored(caseId);session.storageRevision=Number.isSafeInteger(previous?._storedRevision)?previous._storedRevision:0;if(previous?.schema===DESK_SCHEMA&&previous.caseId===caseId){validateDesk(previous);restore(previous);}}
         catch{storageNote='Browser draft storage is unavailable. Download the complete desk to retain original input.';}
         session.initialized=true;
       })();

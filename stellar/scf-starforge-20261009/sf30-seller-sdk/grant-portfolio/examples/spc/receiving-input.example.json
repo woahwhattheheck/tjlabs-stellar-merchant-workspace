@@ -1,0 +1,12 @@
+{
+  "schema": "stellar-forge.spc-programme-receiving-input.v1",
+  "actor": "Internal implementation receiving — select the actual editor",
+  "asOf": "2026-10-13",
+  "issuedRequirements": {
+    "path": "/private/SPC_Issued_Requirements.json",
+    "bytes": 29198,
+    "sha256": "10e118cf448a08ba261af49d28f10bfe7886a71399b0f552808e4d438e7e58a6"
+  },
+  "externalSources": [],
+  "selectedProgramme": null
+}
