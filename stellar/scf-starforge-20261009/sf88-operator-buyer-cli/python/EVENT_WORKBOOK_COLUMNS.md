@@ -139,6 +139,122 @@ attachment, repairs practical defects directly and joins those original output
 locations to the existing receiving record.
 
 
+## Work with an independent reviewer and receive their complete choices
+
+Open **Assignments and returned reviews** in this same worksheet. Enter the assigning author,
+intended reviewer and complete instructions, then issue the assignment. It
+freezes the entire original proposal and every selected worksheet array,
+including additional resolved sheets. Its identity covers those exact source
+bytes and attribution. The assigning copy retains the issued assignment.
+
+Download the complete assignment JSON and its editable HTML. Open the HTML
+before handing it over. The recipient uses the same source and column controls;
+all unfinished fields can travel and reopen. The reviewer browser cache uses
+the active assignment identity, separately from the assigning copy. Opening
+the file does not automatically restore another browser copy.
+
+The recipient enters their author and explanation and prepares the complete
+return. Download its JSON and the complete working HTML. A return includes
+the full baseline, selected arrays, reviewer history, carried originals and
+unfinished review fields. Sources are retained once in a flat, identified
+inventory; earlier complete return files remain reconstructable.
+
+Meanwhile, the assigning engineer can continue their own worksheet. Receive
+the returned JSON through **Assignments and returned reviews**, then inspect the complete
+baseline/current/returned comparison. Each row represents one whole worksheet
+array at its exact original index:
+
+| Classification | Meaning | Receiving behavior |
+| --- | --- | --- |
+| Unchanged | Neither copy changed the array | Preserve current array |
+| Incoming | Only the reviewer changed it | Use returned array unless explicitly kept current |
+| Same | Both copies now contain the same complete array | Retain that array |
+| Local | Only the assigning copy changed it | Preserve current array |
+| Conflict | Both changed it differently | Explicitly keep current or use returned |
+
+The comparison never matches sheets or columns by a similar name. Report
+ordinals, repeated labels, exact source context, complete order and additional
+arrays remain intact. A worksheet is the merge unit. Review its entire column
+array before choosing a conflict resolution; the model does not silently mix
+two independently reordered arrays.
+
+The receiving author supplies their name and reason. All conflicts require
+a choice. If the current workbook or unfinished receiving state changes after
+the displayed comparison, review the refreshed comparison before applying.
+A retained choice that no longer matches a live incoming/conflict row remains
+visible and can be cleared explicitly. The original work and complete
+returned source remain saved.
+
+**Receive reviewed worksheet choices** changes the local editable selection. The
+existing native **Apply reviewed window** remains the separate explicit step.
+A local receipt retains the complete before/result arrays, exact return,
+attribution and explicit resolutions. Repeating that same already adopted
+return preserves the current selection. Reviewer-carried receipts remain
+source history and never count as adoption by this assigning copy.
+
+Assignment custody uses the same distinction. This copy may receive a return
+only for an assignment it actually issued. Reviewer-carried assignments and
+returns stay available as complete original source; carrying them does not
+grant this copy issuing authority. To continue another engineer's assignment,
+open its original assignment file as a distinct reviewer copy.
+
+Download **Complete working review** to retain the complete handover with all
+assignments, returns, receipts, draft resolutions and unfinished text. Its
+JSON and editable HTML have a 128 MiB allowance. Existing complete native
+choice files and CLI JSON inputs keep the 16 MiB allowance. The original
+native action retains at most 512 KiB of canonical column arrays. These
+limits are checked without dropping history, arrays or source fields. Keep a
+complete oversized working download, then deliberately choose a fitting
+native delivery; a download request alone does not confirm that the browser
+saved the file, so the changed-work reminder remains active.
+
+### Retain the complete review in the original native action
+
+When the displayed review is applied in the original Event browser, its full
+handover is included as optional **column_review** beside the exact selected
+**columns** in the existing durable action request. The complete handover is
+limited to 16 MiB for this native action. The request is retained before
+execution.
+
+The installed **event_workbook_review.py** validator checks the original
+workspace/programme/operation/review/proposal, runs the installed original
+column CLI against the complete file, and compares its complete normalized
+columns with the retained request. It also retains the identities of the
+installed validator modules. The native action stores that validation before
+calling the existing programme apply. A resumed unchanged action checks the
+same retained request/validation; an uncertain result continues through that
+original action ID.
+
+In **Saved actions**, open the original action to download its complete
+working-review JSON or editable HTML, including colleague history. The
+original Analysis workspace archive includes the existing action table.
+After independent restoration, open the same saved action and its full
+review. The existing sixteen-file Event delivery, original programme and
+workbook writer remain the delivery path.
+
+The original workbook still performs its full row conversion, Unicode
+heading uniqueness, source identity and current-definition checks. Receiving
+a colleague's choices does not certify those native checks in advance.
+
+### Complete this chapter on the original receiving operation
+
+Use the original customer's real unresolved proposal and source pair. Issue
+one complete assignment, edit the recipient's copy across multiple sheets and
+pages, retain an unfinished field and an extra resolved array, then save and
+reopen both the working file and complete return. Make a genuine different
+change in the original copy before receiving. Inspect all three complete
+arrays, resolve the overlapping worksheet explicitly, and preserve the
+original unfinished native note.
+
+Open every outgoing JSON/HTML, inspect desktop and narrow views, and confirm
+the saved copy independently reopens with full history. Then use the original
+native apply, inspect the actual workbook and whole archive, restore that
+same workspace and reopen the saved action's complete review. The producing
+maintainer personally views the actual screens and all attachments under the
+complete inspection instruction below. Join these outputs to the same
+Mercury/Event receiving operation; preserve its original source and schedule.
+
+
 ## 2. Review the complete worksheet
 
 Select a worksheet, then work through its retained output columns. Twenty rows
@@ -310,8 +426,11 @@ selectedOrdinal, chooseSource, replaceColumns, review, nativeColumns and
 reviewHTML for the same portable source-bound flow. serializeChoices and
 serializeNativeJSON retain complete return files within
 MAX_EVENT_WORKBOOK_CHOICES_BYTES, including the final newline. The browser mount is
-createEventWorkbookColumnReview. The native backend and original workbook
-writer are unchanged.
+createEventWorkbookColumnReview. The shared eventWorkbookReturns API provides
+complete assignment, return preview, explicit reconciliation and source recovery.
+The distribution also exports **./buyer/event-workbook-returns**. The native
+browser action retains and validates the optional whole review; the original
+workbook writer continues to own the actual apply.
 
 ## Complete original receiving and producer inspection
 

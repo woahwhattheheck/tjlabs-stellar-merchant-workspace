@@ -361,6 +361,11 @@ class EventProgrammes:
                 columns = body.get("columns", {})
                 need(isinstance(columns, dict) and len(raw(columns).encode()) <= 512 * 1024, "WORKBOOK_COLUMNS_INVALID")
                 request["columns"] = columns
+                if "column_review" in body:
+                    need(isinstance(body["column_review"], dict) and
+                         0 < len(raw(body["column_review"]).encode()) <= 16 * 1024 * 1024,
+                         "WORKBOOK_REVIEW_INVALID")
+                    request["column_review"] = body["column_review"]
         resume = body.get("resume", False)
         need(type(resume) is bool, "RESUME_INVALID")
         with self._lock:
@@ -442,6 +447,21 @@ class EventProgrammes:
                          result["source"] == comparison["current"]["source"],
                          "NATIVE_MAPPING_REVIEW_BASIS_CHANGED")
             elif request["action"] == "apply":
+                if "column_review" in request:
+                    from .event_workbook_review import validate_review, digest
+                    if "column_review_validation" not in value:
+                        value["column_review_validation"] = validate_review(
+                            self.workspace, value["programme"], core.operation(operation),
+                            request["review_sha256"], request["columns"], request["column_review"])
+                        self._store(value)
+                    evidence = value["column_review_validation"]
+                    need(evidence["working_sha256"] == digest(request["column_review"]) and
+                         evidence["columns_sha256"] == digest(request["columns"]) and
+                         evidence["workspace_id"] == self.workspace.identity and
+                         evidence["programme"] == value["programme"] and
+                         evidence["operation_id"] == operation and
+                         evidence["review_sha256"] == request["review_sha256"],
+                         "ORIGINAL_WORKBOOK_REVIEW_CHANGED")
                 result = core.apply(operation, request["review_sha256"], note=request["note"],
                                     columns=request["columns"], resume=resume)
             elif request["action"] == "refresh-review":

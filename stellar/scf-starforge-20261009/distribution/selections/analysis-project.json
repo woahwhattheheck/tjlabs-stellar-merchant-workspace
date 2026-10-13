@@ -59,7 +59,12 @@
     "stellar/scf-starforge-20261009/distribution/SOURCE_SELECTIONS.md",
     "stellar/scf-starforge-20261009/distribution/BUILDING.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/sqlite/example-service.json",
-    "stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs"
+    "stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-columns-cli.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-columns.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-returns.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-editor.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-editor.js"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
