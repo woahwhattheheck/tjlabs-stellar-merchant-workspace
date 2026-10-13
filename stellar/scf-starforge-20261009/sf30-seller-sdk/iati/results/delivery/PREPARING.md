@@ -22,15 +22,15 @@ No new publisher acquisition is needed for these already selected operations.
 | Text source in the original packet | 201 files; 3,846,277 UTF-8 bytes |
 | Original binary publisher inputs | 2 files; 664,228 bytes |
 | Original packet closure | 203 files; 4,510,505 bytes |
-| Installed closure with receiving corrections | 203 files; 4,513,722 bytes |
+| Installed closure with receiving corrections | 203 files; 4,514,050 bytes |
 | Compressed envelope | 1,539,216 bytes |
 | Envelope SHA256 | `2ee3332f9e254d40076fad1a0f5bd8dc8c5c3f3286383d64296c830183f1b952` |
 | Decoded envelope | 4,952,476 bytes |
 | Decoded SHA256 | `600a4ad86a698d68e0ee3f582dfef1fd0ae008e12a37f2f91d393c4c698ed3be` |
 | Original packet source selection | `3bbeeb3cef95dd159343ec298b5595ffa4e970dd1606469ed03f5152f475d873` |
 | Packet commit | `9bfca6df8ebbd8e6c4583557df1978accd015a23` |
-| Selected receiving commit | `8b7223a2f0c627ff167d133934d7583ae003f803` |
-| Complete installed source selection | `54796845ae06cf30c1a8a143b4174a8a11d83352a888056255ccc448bbe89f0c` |
+| Selected receiving commit | `32c27f5fa8ac6df7240dfac21505ff8cf6daa1f6` |
+| Complete installed source selection | `fb1150da856ddbdb1f68924385f3e13a2e1658dd0ab1fb38e5a77486e460216d` |
 | Native/Applications source binding | The same 167 runtime files |
 
 ## Prepare the exact source
@@ -66,7 +66,7 @@ not mean that the case, browser or customer handover has run.
 
 The original complete packet stays byte-for-byte intact. Preparation selects three
 subsequent original repository files from commit
-`8b7223a2f0c627ff167d133934d7583ae003f803`: the two Python receiving entrypoints
+`32c27f5fa8ac6df7240dfac21505ff8cf6daa1f6`: the two Python receiving entrypoints
 and their browser continuation. They correct direct Python imports and loading
 the installed Playwright module, follow the current “Following edition” tab and saved Programme comparisons, and
 retain a browser failure’s actual page errors and screenshot. The browser uses
@@ -77,7 +77,7 @@ Programme, publishing, refresh, organisation or AMP source is replaced.
 | Original repository file under `iati/` | Selected bytes | Selected SHA256 |
 | --- | ---: | --- |
 | `results/receiving.py` | 24069 | `df718f79bf34b3c1ca50abb0beb2d422ef46c31f1ffc5054666de79fec836530` |
-| `results/receiving_console.py` | 7448 | `4023d2780c3885870e95dc4621b917a25138f1a362f2506b6a62929074e77750` |
+| `results/receiving_console.py` | 7776 | `e9abe778e2b4087423393f293bb7e36e6541c297bb01448447b3c988379f642c` |
 | `results/browser_receiving.mjs` | 18314 | `a49589190608b927323780bc46a7dbb54e727e090b5be76816796238ef0aeaf1` |
 
 For every selected file, the preparer first verifies the original packet member’s
@@ -209,6 +209,11 @@ python3 -B /absolute/private/iati-source-current-receiving/source/stellar/scf-st
 ```
 
 This continues the original receiver, saved browser request and review history.
+The console retains each explicit source/runtime/reviewer selection in its own immutable
+private configuration, named by that selection's digest. A later selected source
+installation does not overwrite the earlier configuration. It continues the same
+workspace and saved browser request; an existing request or completed review is
+reconciled through the original Results journal.
 The browser/server lifecycle stays in that same process context. An incomplete
 browser attempt retains `browser-failure.json` and, when the page remains
 available, `browser-failure.png`; these describe the actual failure and do not
