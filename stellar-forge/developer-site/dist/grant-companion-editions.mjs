@@ -3,6 +3,22 @@ export function createCompanionEditionModel({parseMarkdown}) {
   const SCHEMA='stellar-forge.companion-reading-workspace.v1',MAX_BYTES=64*1024*1024;
   const clone=v=>JSON.parse(JSON.stringify(v)),need=(v,m)=>{if(!v)throw new Error(m);};
   const bytes=s=>new TextEncoder().encode(s);
+  // Immutable source strings are safe cache keys; callers never contribute mutable cached state.
+  // Bound this private renderer cache to two complete source editions and 32 MiB of source.
+  const parsedSources=new Map();let parsedSourceBytes=0;
+  const freeze=value=>{if(value&&typeof value==='object'&&!Object.isFrozen(value)){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
+  function parsed(source){
+    const prior=parsedSources.get(source);
+    if(prior){parsedSources.delete(source);parsedSources.set(source,prior);return prior.model;}
+    const model=freeze(parseMarkdown(source)),size=bytes(source).length;
+    if(size<=32*1024*1024){
+      while(parsedSources.size&&(parsedSources.size>=2||parsedSourceBytes+size>32*1024*1024)){
+        const key=parsedSources.keys().next().value;parsedSourceBytes-=parsedSources.get(key).bytes;parsedSources.delete(key);
+      }
+      parsedSources.set(source,{model,bytes:size});parsedSourceBytes+=size;
+    }
+    return model;
+  }
   const stable=v=>Array.isArray(v)?'['+v.map(stable).join(',')+']':v&&typeof v==='object'?'{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stable(v[k])).join(',')+'}':JSON.stringify(v);
   const digest=async s=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',typeof s==='string'?bytes(s):s)),b=>b.toString(16).padStart(2,'0')).join('');
   const text=(v,label,max=100000)=>{need(typeof v==='string'&&v.length<=max,label+' must be complete text.');return v;};
@@ -10,7 +26,7 @@ export function createCompanionEditionModel({parseMarkdown}) {
   const id=()=>crypto.randomUUID();
   const now=()=>new Date().toISOString();
   const getEdition=(w,key=w.selected_edition)=>{const e=w.editions.find(e=>e.id===key);need(e,'Choose a retained source edition.');return e;};
-  const getChapter=(e,key)=>{const c=parseMarkdown(e.markdown).chapters.find(c=>c.id===key);need(c,'Choose a chapter from its original source edition.');return c;};
+  const getChapter=(e,key)=>{const c=parsed(e.markdown).chapters.find(c=>c.id===key);need(c,'Choose a chapter from its original source edition.');return c;};
   async function capture(source,{origin='',capturedAt=now()}={}) {
     text(source?.markdown,'Companion source',16*1024*1024);text(source?.indexText,'Source index',16*1024*1024);
     const index=JSON.parse(source.indexText.replace(/^\uFEFF/,'')),selected=index.product_and_finance;
@@ -18,7 +34,7 @@ export function createCompanionEditionModel({parseMarkdown}) {
     const body=bytes(source.markdown),sha=await digest(body),indexSha=await digest(source.indexText);
     need(body.length<=16*1024*1024&&bytes(source.indexText).length<=16*1024*1024,'The complete source pair exceeds its per-file allowance.');
     need(selected.bytes===body.length&&selected.sha256===sha,'The source index does not select these complete companion bytes.');
-    const chapters=parseMarkdown(source.markdown).chapters;
+    const chapters=parsed(source.markdown).chapters;
     need(Array.isArray(index.sources)&&index.sources.every(s=>s&&typeof s.id==='string'),'Retain the complete source catalogue.');
     need(new Set(index.sources.map(s=>s.id)).size===index.sources.length,'Source catalogue identities must be unique.');
     need(chapters.length,'Open a companion with complete chapters.');
@@ -30,7 +46,7 @@ export function createCompanionEditionModel({parseMarkdown}) {
     return n;
   }
   async function create(source,{title='SCF companion reading',origin='',workspaceId=id()}={}) {
-    const edition=await capture(source,{origin}),at=now(),chapter=getChapter(edition,parseMarkdown(edition.markdown).chapters[0].id);
+    const edition=await capture(source,{origin}),at=now(),chapter=getChapter(edition,parsed(edition.markdown).chapters[0].id);
     return{schema:SCHEMA,id:workspaceId,title:text(title,'Reading workspace title',200),revision:1,created_at:at,updated_at:at,selected_edition:edition.id,editions:[edition],reading:{chapter_id:chapter.id,query:'',show_all:false},drafts:[],notes:[],history:[{revision:1,at,action:'Original complete source received'}]};
   }
   async function receive(w,source,details={}) {
@@ -40,7 +56,7 @@ export function createCompanionEditionModel({parseMarkdown}) {
   }
   async function compare(w,fromId,toId) {
     const from=getEdition(w,fromId),to=getEdition(w,toId);
-    const chapterRows=e=>parseMarkdown(e.markdown).chapters.map(c=>({id:c.id,title:c.title,ordinal:c.ordinal,markdown:c.markdown,html:c.html}));
+    const chapterRows=e=>parsed(e.markdown).chapters.map(c=>({id:c.id,title:c.title,ordinal:c.ordinal,markdown:c.markdown,html:c.html}));
     const a=chapterRows(from),b=chapterRows(to),seen=new Set(),changes=[];
     // Repeated headings remain distinct; a reordered duplicate is shown as changed for review.
     for(const after of b){const before=a.find(c=>c.id===after.id);seen.add(after.id);const same=before&&before.markdown===after.markdown;changes.push({id:after.id,title:after.title,kind:before?(same?'unchanged':'changed'):'added',moved:!!before&&before.ordinal!==after.ordinal,before:before||null,after});}
@@ -50,7 +66,7 @@ export function createCompanionEditionModel({parseMarkdown}) {
     return{from:from.id,to:to.id,chapters:changes,sources,summary:{added:changes.filter(c=>c.kind==='added').length,changed:changes.filter(c=>c.kind==='changed').length,removed:changes.filter(c=>c.kind==='removed').length,moved:changes.filter(c=>c.moved).length,source_changes:sources.filter(s=>s.kind!=='unchanged').length}};
   }
   function select(w,editionId,{chapterId='',query='',showAll=false}={}) {
-    const e=getEdition(w,editionId),chapters=parseMarkdown(e.markdown).chapters;
+    const e=getEdition(w,editionId),chapters=parsed(e.markdown).chapters;
     const selected=chapters.find(c=>c.id===chapterId)||chapters[0];
     return transaction(w,'Reading edition selected',n=>{n.selected_edition=e.id;n.reading={chapter_id:selected.id,query:text(query,'Search',500),show_all:!!showAll};});
   }
