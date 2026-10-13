@@ -4,6 +4,8 @@ import {createHash,randomUUID} from 'node:crypto';
 import {ADJUSTMENT_COLUMNS,freezeAccountantAdjustments,validateAccountantAdjustmentRow} from './adjustments.mjs';
 import {BUYER_HANDOFF_SCHEMA,BUYER_RETURN_SCHEMA,BUYER_PROTECTED_COLUMNS,isBuyerHandoff,createBuyerHandoff,validateBuyerHandoff,buyerProtectedValues,renderBuyerAccountantHtml} from './buyer-source.mjs';
 export {BUYER_HANDOFF_SCHEMA,BUYER_RETURN_SCHEMA,isBuyerHandoff} from './buyer-source.mjs';
+import {ROZO_HANDOFF_SCHEMA,ROZO_RETURN_SCHEMA,ROZO_PROTECTED_COLUMNS,isRozoHandoff,createRozoHandoff,validateRozoHandoff,rozoProtectedValues,renderRozoAccountantHtml} from './rozo-source.mjs';
+export {ROZO_HANDOFF_SCHEMA,ROZO_RETURN_SCHEMA,isRozoHandoff} from './rozo-source.mjs';
 
 export const HANDOFF_SCHEMA='stellar-forge.merchant-accountant-handoff.v1';
 export const RETURN_SCHEMA='stellar-forge.merchant-accountant-return.v1';
@@ -26,7 +28,7 @@ export const PROTECTED_COLUMNS=Object.freeze([
 ]);
 export const CSV_COLUMNS=Object.freeze([...PROTECTED_COLUMNS,...EDITABLE_COLUMNS]);
 export const accountantColumns=handoff=>[...protectedColumns(handoff),...EDITABLE_COLUMNS];
-const protectedColumns=handoff=>isBuyerHandoff(handoff)?[...BUYER_PROTECTED_COLUMNS]:[...PROTECTED_COLUMNS,...(handoff?.source?.adjustments?ADJUSTMENT_COLUMNS:[])];
+const protectedColumns=handoff=>isRozoHandoff(handoff)?[...ROZO_PROTECTED_COLUMNS]:isBuyerHandoff(handoff)?[...BUYER_PROTECTED_COLUMNS]:[...PROTECTED_COLUMNS,...(handoff?.source?.adjustments?ADJUSTMENT_COLUMNS:[])];
 const identityKey=row=>Object.hasOwn(row,'sourceLineId')?'sourceLineId':'eventId';
 const identity=row=>({[identityKey(row)]:row[identityKey(row)]});
 const MAX_ROWS=22_000,MAX_RETURN_ROWS=50_000,MAX_REPORT_BYTES=128_000_000,MAX_CSV_BYTES=64*1024*1024;
@@ -87,7 +89,8 @@ function validateReport(report){
 }
 
 /** Freeze one original report and operator-supplied labels. No files or network. */
-export function createHandoff({reportBytes,source,name,actor,labels=[],createdAt=new Date().toISOString(),id=randomUUID(),periodCloseBytes,adjustmentsBytes,buyerSourceBytes}={}){
+export function createHandoff({reportBytes,source,name,actor,labels=[],createdAt=new Date().toISOString(),id=randomUUID(),periodCloseBytes,adjustmentsBytes,buyerSourceBytes,rozoSourceBytes}={}){
+  if(rozoSourceBytes!==undefined){check(reportBytes===undefined&&periodCloseBytes===undefined&&adjustmentsBytes===undefined&&buyerSourceBytes===undefined,'ACCOUNTANT_SOURCE_AMBIGUOUS','Choose the exact original ROZO close source.');return createRozoHandoff({rozoSourceBytes,name,actor,labels,createdAt,id});}
   if(buyerSourceBytes!==undefined){check(reportBytes===undefined&&periodCloseBytes===undefined&&adjustmentsBytes===undefined,'ACCOUNTANT_SOURCE_AMBIGUOUS','Choose one original buyer or merchant source.');return createBuyerHandoff({buyerSourceBytes,name,actor,labels,createdAt,id});}
   const raw=bytes(reportBytes,MAX_REPORT_BYTES,'Original report'),report=parseJson(raw,'Original report');validateReport(report);
   identifier(id,'Handoff ID');shortText(name,'Handoff name');shortText(actor,'Operator',1000);timestamp(createdAt);
@@ -153,7 +156,8 @@ export function createHandoff({reportBytes,source,name,actor,labels=[],createdAt
     sourceOptions:copy(report.options),labels:[...labelMap].map(([optionId,label])=>({optionId,...label})),rows,summary});
 }
 
-export function validateHandoff(handoff,{allowBuyer=false}={}){
+export function validateHandoff(handoff,{allowBuyer=false,allowRozo=false}={}){
+  if(isRozoHandoff(handoff)){check(allowRozo,'ROZO_HANDOFF_UNSUPPORTED','Choose the ROZO-aware accountant return operation for this typed source.');return validateRozoHandoff(handoff);}
   if(isBuyerHandoff(handoff)){check(allowBuyer,'BUYER_HANDOFF_UNSUPPORTED','Choose a buyer-aware accountant or Xero operation for this issued buyer source.');return validateBuyerHandoff(handoff);}
   verifySeal(handoff,HANDOFF_SCHEMA);identifier(handoff.id,'Handoff ID');
   check(plain(handoff.source)&&HEX.test(handoff.source.reportSha256)&&Array.isArray(handoff.rows)&&handoff.rows.length<=MAX_ROWS,'INVALID_HANDOFF','The handoff has invalid source or rows.');
@@ -177,7 +181,7 @@ function validateAssignment(assignment,row){
   check(assignment.externalStatus!=='BOOKED'||assignment.externalBookRef.trim().length>0,'BOOK_REFERENCE_REQUIRED','A BOOKED return needs the accountant’s external book reference.');
 }
 export function validateRevision(handoff,revision){
-  validateHandoff(handoff,{allowBuyer:true});verifySeal(revision,isBuyerHandoff(handoff)?BUYER_RETURN_SCHEMA:RETURN_SCHEMA);identifier(revision.id,'Import revision ID');
+  validateHandoff(handoff,{allowBuyer:true,allowRozo:true});verifySeal(revision,isRozoHandoff(handoff)?ROZO_RETURN_SCHEMA:isBuyerHandoff(handoff)?BUYER_RETURN_SCHEMA:RETURN_SCHEMA);identifier(revision.id,'Import revision ID');
   check(revision.handoffId===handoff.id&&revision.handoffSha256===handoff.integrity.sha256&&revision.sourceReportSha256===handoff.source.reportSha256,
     'RETURN_SOURCE_MISMATCH','The accountant return belongs to another handoff.',409);
   check(Array.isArray(revision.assignments)&&revision.assignments.length===handoff.rows.length,'INVALID_ASSIGNMENTS','A retained import must cover every original handoff row.');
@@ -190,6 +194,7 @@ function assignmentsFor(handoff,revision){
   return new Map(handoff.rows.map(row=>[row.rowId,defaultAssignment(row)]));
 }
 function protectedValues(handoff,row){
+  if(isRozoHandoff(handoff)){const values=rozoProtectedValues(handoff,row);return Object.fromEntries(ROZO_PROTECTED_COLUMNS.map(key=>[key,cell(values[key])]))}
   if(isBuyerHandoff(handoff)){const values=buyerProtectedValues(handoff,row);return Object.fromEntries(BUYER_PROTECTED_COLUMNS.map(key=>[key,cell(values[key])]));}
   const values={handoffId:handoff.id,sourceRunId:handoff.source.runId,sourceReportSha256:handoff.source.reportSha256,
     sourcePeriodCloseId:handoff.source.periodClose?.id??null,sourcePeriodCloseSha256:handoff.source.periodClose?.sha256??null,
@@ -208,7 +213,7 @@ const spreadsheetEncode=value=>needsSpreadsheetEscape(value)?"'"+value:value;
 const spreadsheetDecode=value=>value.startsWith("'")&&needsSpreadsheetEscape(value.slice(1))?value.slice(1):value;
 const quoteCsv=value=>'"'+spreadsheetEncode(cell(value)).replace(/"/g,'""')+'"';
 export function renderCsv(handoff,revision){
-  validateHandoff(handoff,{allowBuyer:true});const assignments=assignmentsFor(handoff,revision),columns=accountantColumns(handoff),lines=[columns.map(quoteCsv).join(',')];
+  validateHandoff(handoff,{allowBuyer:true,allowRozo:true});const assignments=assignmentsFor(handoff,revision),columns=accountantColumns(handoff),lines=[columns.map(quoteCsv).join(',')];
   for(const row of handoff.rows){const values={...protectedValues(handoff,row),...assignments.get(row.rowId)};lines.push(columns.map(key=>quoteCsv(values[key])).join(','));}
   return Buffer.from(lines.join('\r\n')+'\r\n','utf8');
 }
@@ -256,10 +261,10 @@ function issue(code,message,record,extra={}){return {code,message,rowNumber:reco
 
 /** Compare a returned template to frozen source; merge valid rows into its parent. */
 export function importReturn({handoff,csvBytes,actor,name,parentRevision=null,createdAt=new Date().toISOString(),id=randomUUID()}={}){
-  validateHandoff(handoff,{allowBuyer:true});identifier(id,'Import revision ID');shortText(actor,'Operator',1000);shortText(name,'Import name');timestamp(createdAt);
+  validateHandoff(handoff,{allowBuyer:true,allowRozo:true});identifier(id,'Import revision ID');shortText(actor,'Operator',1000);shortText(name,'Import name');timestamp(createdAt);
   if(parentRevision){validateRevision(handoff,parentRevision);check(parentRevision.id!==id,'DUPLICATE_REVISION_ID','Use a new immutable import revision ID.');}
   const parsed=parseReturnCsv(csvBytes,{columns:accountantColumns(handoff)}),assignments=assignmentsFor(handoff,parentRevision);
-  const key=isBuyerHandoff(handoff)?'sourceLineId':'eventId';
+  const key=isBuyerHandoff(handoff)||isRozoHandoff(handoff)?'sourceLineId':'eventId';
   const byId=new Map(handoff.rows.map(row=>[row.rowId,row])),byEvent=new Map(handoff.rows.map(row=>[row[key],row]));
   const returned=[],touches=new Map(),touched=new Set();
   for(const record of parsed.records){
@@ -303,14 +308,14 @@ export function importReturn({handoff,csvBytes,actor,name,parentRevision=null,cr
     reviewedRows:merged.filter(row=>row.externalStatus==='REVIEWED').length,bookedRows:merged.filter(row=>row.externalStatus==='BOOKED').length,
     excludedRows:merged.filter(row=>row.externalStatus==='EXCLUDED').length,
     outcome:conflictRows||unknownRows?'CONFLICTS':missingRows.length?'PARTIAL':'COMPLETE'};
-  return seal({schema:isBuyerHandoff(handoff)?BUYER_RETURN_SCHEMA:RETURN_SCHEMA,id,handoffId:handoff.id,handoffSha256:handoff.integrity.sha256,
+  return seal({schema:isRozoHandoff(handoff)?ROZO_RETURN_SCHEMA:isBuyerHandoff(handoff)?BUYER_RETURN_SCHEMA:RETURN_SCHEMA,id,handoffId:handoff.id,handoffSha256:handoff.integrity.sha256,
     sourceReportSha256:handoff.source.reportSha256,parentRevisionId:parentRevision?.id??null,parentRevisionSha256:parentRevision?.integrity.sha256??null,
     createdAt,actor,name,importSha256:parsed.sha256,importBytes:parsed.bytes,assignments:merged,results,issues,missingRows,summary});
 }
 
 /** Complete inspection data; callers may page rows before sending it to a UI. */
 export function inspectHandoff(handoff,revision){
-  validateHandoff(handoff,{allowBuyer:true});const assignments=assignmentsFor(handoff,revision);
+  validateHandoff(handoff,{allowBuyer:true,allowRozo:true});const assignments=assignmentsFor(handoff,revision);
   return {schema:handoff.schema,id:handoff.id,name:handoff.name,actor:handoff.actor,createdAt:handoff.createdAt,
     handoff:{schema:handoff.schema,id:handoff.id,name:handoff.name,actor:handoff.actor,createdAt:handoff.createdAt,integrity:copy(handoff.integrity)},
     source:copy(handoff.source),sourceHashes:copy(handoff.sourceHashes),sourceOptions:copy(handoff.sourceOptions),
@@ -321,6 +326,7 @@ const adjustmentAmounts=row=>row.adjustments?'<br><small>Returned '+html(row.adj
 const html=value=>cell(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 export function renderHtml(handoff,revision){
   const view=inspectHandoff(handoff,revision),source=handoff.source,summary=revision?.summary;
+  if(isRozoHandoff(handoff))return renderRozoAccountantHtml(view,revision);
   if(isBuyerHandoff(handoff))return renderBuyerAccountantHtml(view,revision);
   const rows=view.rows.map(row=>{const original=row.original;return '<tr><td><strong>'+html(original.routeId)+'</strong><br>'+html(original.method)+'<br><small>'+html(row.eventId)+'</small></td><td>'+html(original.network)+'<br>'+html(original.verificationScope)+'<br>'+html(original.transfer)+'<br>'+html(original.delivery)+'</td><td>'+html(original.amountAtomic)+' <small>atomic units</small>'+adjustmentAmounts(row)+'<br>'+html(row.label.assetLabel)+' / '+html(row.label.unitLabel)+'<br><small>Asset '+html(original.assetDigest)+'<br>Option '+html(original.optionId)+'</small></td><td>'+html(original.at)+'<br>'+html(original.timeBasis)+'<br><small>'+html(original.origin)+'</small></td><td>'+html(original.merchantQuoteUsd??'Unknown')+'<br><small>'+html(original.merchantPriceBasis??'Quote basis unavailable')+'</small></td><td>'+html(row.externalStatus)+'<br>'+html(row.externalBookRef)+'<br>'+html(row.externalAccountCode||row.label.accountCode)+'<br><small>'+html(row.label.accountName)+'</small></td><td class="note">'+html(row.externalNote)+'<br><small>'+html(row.updatedBy??'')+' '+html(row.updatedAt??'')+'</small></td></tr>';}).join('');
   const issues=(revision?.issues??[]).map(item=>'<tr><td>'+html(item.rowNumber)+'</td><td>'+html(item.code)+'</td><td>'+html(item.message)+(item.fields?'<br><small>'+item.fields.map(field=>html(field.field)+': '+html(field.received)+' (source '+html(field.expected)+')').join('<br>')+'</small>':'')+'</td></tr>').join('');

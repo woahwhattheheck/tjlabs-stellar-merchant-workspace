@@ -45,6 +45,7 @@ export async function startRozoServer({service,host='127.0.0.1',port=0,sessionTo
         const parts=path.split('/').filter(Boolean).map(decodeURIComponent),q=url.searchParams,w=service.workspace;
         if(method==='GET'){
           if(path==='/api/state'){send(response,200,service.state({profileId:q.get('profileId')||null,offset:number(q.get('offset'),0),limit:number(q.get('limit'),100),query:q.get('query')??'',status:q.get('status')||null,unresolved:q.get('unresolved')==='true'}));return;}
+          if(path==='/api/finance/state'){send(response,200,await service.finance.state());return;}
           if(path==='/api/requests'){send(response,200,w.requests({offset:number(q.get('offset'),0),limit:number(q.get('limit'),100)}));return;}
           if(parts[1]==='requests'&&parts.length===3){send(response,200,service.requestStatus(parts[2]));return;}
           if(parts[1]==='payments'&&parts.length===4){send(response,200,service.payment(parts[2],parts[3]));return;}
@@ -73,7 +74,7 @@ export async function startRozoServer({service,host='127.0.0.1',port=0,sessionTo
         }
         if(method==='POST'){
           assert(/^application\/json(?:;|$)/i.test(request.headers['content-type']??''),'CONTENT_TYPE','Use the complete JSON operation envelope.',415);
-          const raw=await body(request);let value;try{value=JSON.parse(raw);}catch{throw new RozoError('JSON','The full original request is not valid JSON.');}
+          const raw=await body(request,path.startsWith('/api/finance/')||path==='/api/commands'?128*1024*1024:40*1024*1024);let value;try{value=JSON.parse(raw);}catch{throw new RozoError('JSON','The full original request is not valid JSON.');}
           if(path==='/api/download-ticket'){
             assert(value&&Object.keys(value).length===1&&typeof value.path==='string'&&value.path.startsWith('/api/'),'DOWNLOAD_TARGET','Select one original source or delivery file.');
             const target=new URL(value.path,origin),split=target.pathname.split('/').filter(Boolean).map(decodeURIComponent);let descriptor;
@@ -84,6 +85,19 @@ export async function startRozoServer({service,host='127.0.0.1',port=0,sessionTo
             assert(tickets.size<2000,'DOWNLOAD_LIMIT','Finish current downloads before preparing more.',429);
             const ticket=randomBytes(24).toString('hex');tickets.set(ticket,{path:target.pathname+target.search,expires:Date.now()+15*60*1000});
             send(response,200,{...descriptor,url:origin+'/download/'+ticket});return;
+          }
+          if(path.startsWith('/api/finance/')){
+            const finance=service.finance;
+            if(path==='/api/finance/report'){send(response,200,finance.report(value));return;}
+            if(path==='/api/finance/preview'){send(response,200,await finance.preview(value));return;}
+            if(path==='/api/finance/period-preview'){send(response,200,await finance.periodPreview(value));return;}
+            if(path==='/api/finance/accountant-preview'){send(response,200,await finance.accountantPreview(value));return;}
+            if(path==='/api/finance/buyer-return-preview'){send(response,200,await finance.buyerReturnPreview(value));return;}
+            if(path==='/api/finance/read'){send(response,200,await finance.read(value));return;}
+            if(path==='/api/finance/file'){
+              const file=await finance.file(value),descriptor=w.object(Buffer.from(file.bytes),file.type??'application/octet-stream');
+              send(response,200,{...descriptor,name:file.name,path:'/api/objects/'+descriptor.sha256+'?name='+encodeURIComponent(file.name)});return;
+            }
           }
           if(path==='/api/commands'){send(response,200,await service.execute(value));return;}
           if(parts[1]==='requests'&&parts.length===4&&parts[3]==='resume'){
