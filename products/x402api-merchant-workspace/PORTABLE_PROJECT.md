@@ -189,3 +189,5 @@ Project jobs belong to the running merchant application. Closing the HTTP server
 - [INSTALLED_RECEIVING.md](INSTALLED_RECEIVING.md): Original installed application commissioning and browser journey.
 
 The portable receiving programme continues the original saved five-invoice project. It uses the same original SQLite, result files and source inputs when exercising export, complete archive inspection, receiving, browser review, saved downloads, repeated receiving and cold reopen.
+
+[PORTABLE_FOREGROUND.md](PORTABLE_FOREGROUND.md) gives the complete source intake and execution procedure. Select `--portable` on the maintained installed receiving entrypoints to run the full browser export, independent review, activation, repeated receiving and onward handover in its own receiving directory. The completed delivery contains the original customer input, installed source, both received projects and their complete saved files.
