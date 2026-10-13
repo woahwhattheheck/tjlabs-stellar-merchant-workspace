@@ -13,6 +13,8 @@ const hash = async value => Array.from(new Uint8Array(await crypto.subtle.digest
   new TextEncoder().encode(typeof value === 'string' ? value : stable(value))))).map(x => x.toString(16).padStart(2,'0')).join('');
 const uid = () => crypto.randomUUID().replaceAll('-','');
 const now = () => new Date().toISOString();
+const displayTime = value => Number.isFinite(Date.parse(value)) ?
+  new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(new Date(value)) : value;
 function need(value, message) { if (!value) throw new Error(message); }
 let database;
 async function db() {
@@ -106,7 +108,7 @@ function element(tag, text, className) {
   if (className) node.className = className; return node;
 }
 export function mountFredCustomerWork({ root, getProject, capture, adopt, context, send, returned, changed, message }) {
-  let projectId = null, ready = null, opening = false, busy = false, preparing = false, generation = 0, chain = Promise.resolve();
+  let projectId = null, ready = null, opening = false, busy = false, preparing = false, navigating = false, generation = 0, chain = Promise.resolve();
   let lastDraft = null, tabId;
   const unsavedDrafts = new Map(), volatileOperations = new Map(), cachedDrafts = new Map(), cachedOperations = new Map();
   let completeCacheProject = null, paintGeneration = 0, draftLimit = 25, operationLimit = 25;
@@ -120,12 +122,13 @@ export function mountFredCustomerWork({ root, getProject, capture, adopt, contex
     element('p','Retain the complete form and each original request. Open earlier work, continue its original intent, or carry this complete browser companion with the economic project.'));
   const status = element('p'), toolbar = element('div',undefined,'toolbar');
   const exportButton = element('button','Export complete customer work');
+  const currentFormButton = element('button','Download current complete form');
   const importFile = element('input'); importFile.type = 'file'; importFile.accept = '.json,application/json'; importFile.id = 'customer-work-file';
   const importLabel = element('label','Receive customer work'); importLabel.append(importFile);
   const importButton = element('button','Receive retained work');
   const refreshButton = element('button','Refresh retained work');
-  for (const button of [exportButton,importButton,refreshButton]) button.type = 'button';
-  toolbar.append(exportButton,importLabel,importButton,refreshButton);
+  for (const button of [exportButton,currentFormButton,importButton,refreshButton]) button.type = 'button';
+  toolbar.append(currentFormButton,exportButton,importLabel,importButton,refreshButton);
   const drafts = element('div'), operations = element('div');
   section.append(status,toolbar,element('h4','Complete form editions'),drafts,element('h4','Original customer requests'),operations);
   root.append(section);
@@ -140,13 +143,17 @@ export function mountFredCustomerWork({ root, getProject, capture, adopt, contex
   };
   const report = error => message(error.message, true);
   function sync() {
-    status.textContent = opening ? 'Opening this project’s retained customer work…' : busy || preparing ?
+    status.textContent = opening ? 'Opening this project’s retained customer work…' : navigating ?
+      'Opening the selected original form. Its preceding fields remain retained.' : busy || preparing ?
       'The original customer action is running. Later form edits remain in their own draft.' :
       unsavedDrafts.size || volatileOperations.size ?
-        'The complete work remains in this tab. Export it or retry browser storage before continuing.' :
+        'The current form and later work remain in this tab. Download the current complete form, export retained history, or retry browser storage.' :
         'Original form editions and returned results are retained for this economic project.';
-    exportButton.disabled = opening || !active();
-    importButton.disabled = opening || busy || preparing || !active();
+    currentFormButton.disabled = opening || navigating || !active();
+    exportButton.disabled = opening || navigating || !active();
+    importButton.disabled = opening || busy || preparing || navigating || !active();
+    for (const button of section.querySelectorAll('[data-customer-work-navigation]'))
+      button.disabled = opening || busy || preparing || navigating || !active() || button.dataset.customerWorkForeign === 'true';
     refreshButton.disabled = opening || !active();
     changed?.();
   }
@@ -214,20 +221,38 @@ export function mountFredCustomerWork({ root, getProject, capture, adopt, contex
     return { drafts:[...draftMap.values()], operations:[...opMap.values()] };
   }
   async function showDraft(value) {
+    need(active() && !opening && !busy && !preparing && !navigating,
+      'Finish the current customer action before opening another retained form.');
     const selectedProject = projectId, ticket = generation;
     validateDraft(value,selectedProject);
-    await retain('Before reopening a retained form');
-    need(active() && projectId === selectedProject && generation === ticket, 'Reopen this draft in its original project.');
-    await adopt(clone(value.value));
-    need(active() && projectId === selectedProject && generation === ticket, 'Reopen this draft in its original project.');
-    await retain('Reopened retained form ' + value.id);
-    await paint();
+    navigating = true; sync();
+    try {
+      await retain('Before reopening a retained form');
+      need(active() && projectId === selectedProject && generation === ticket, 'Reopen this draft in its original project.');
+      await adopt(clone(value.value));
+      need(active() && projectId === selectedProject && generation === ticket, 'Reopen this draft in its original project.');
+      const selected = clone(context());
+      await retain('Reopened retained form ' + value.id);
+      need(active() && projectId === selectedProject && generation === ticket, 'Reopen this draft in its original project.');
+      return selected;
+    } finally { navigating = false; sync(); await paint().catch(report); }
+  }
+  function downloadCurrentForm() {
+    need(active() && !opening && !navigating, 'Open the original customer form before downloading it.');
+    const value = clone(capture());
+    let draft = lastDraft;
+    if (draft?.projectId !== projectId || stable(draft.value) !== stable(value)) {
+      draft = { schema:DRAFT, id:uid(), projectId, tabId, createdAt:now(), reason:'Current complete form downloaded', value };
+      lastDraft = draft; unsavedDrafts.set(draft.id,draft);
+    }
+    downloadJson(draft,'economic-customer-form-' + draft.id + '.json');
+    sync();
   }
   async function performRecord(value, submittedContext) {
-    need(active() && !opening && !busy, 'Open the original customer work before continuing this action.');
+    need(active() && !opening && !busy && !navigating, 'Open the original customer work before continuing this action.');
     const selectedProject = projectId, selected = clone(submittedContext ?? context());
     const body = await validateOperation(value,selectedProject);
-    need(!busy && !opening, 'The original customer operation is still running.');
+    need(!busy && !opening && !navigating, 'The original customer operation or retained-form opening is still running.');
     need(active() && projectId === selectedProject && sameNativeWorkspace(value),
       'This request belongs to its recorded native customer directory. Open it there to continue; its complete history remains available here.');
     need(selected.projectId === value.projectId && selected.publicationId === body.publicationId &&
@@ -267,7 +292,7 @@ export function mountFredCustomerWork({ root, getProject, capture, adopt, contex
   }
   async function perform(body) {
     const selectedProject = body.projectId, submittedWorkspace = clone(nativeWorkspace()), submittedContext = clone(context());
-    need(active() && selectedProject === projectId && !opening && !busy && !preparing,
+    need(active() && selectedProject === projectId && !opening && !busy && !preparing && !navigating,
       'Open the current customer workspace before starting this action.');
     preparing = true; sync();
     try {
@@ -293,37 +318,42 @@ export function mountFredCustomerWork({ root, getProject, capture, adopt, contex
     if (projectId !== id || paintGeneration !== ticket || !active()) return;
     drafts.replaceChildren(); operations.replaceChildren();
     for (const draft of values.drafts.sort((a,b) => b.createdAt.localeCompare(a.createdAt)).slice(0,draftLimit)) {
-      const detail = element('details'), summary = element('summary',draft.reason + ' · ' + draft.createdAt);
+      const detail = element('details'), summary = element('summary',draft.reason + ' · ' + displayTime(draft.createdAt));
       const buttons = element('div',undefined,'toolbar'), open = element('button','Open complete form'), download = element('button','Download form');
       open.type = download.type = 'button';
-      open.disabled = busy || preparing;
+      open.dataset.customerWorkNavigation = 'draft';
+      open.disabled = opening || busy || preparing || navigating;
       open.addEventListener('click',() => showDraft(draft).catch(report));
       download.addEventListener('click',() => downloadJson(draft,'economic-customer-form-' + draft.id + '.json'));
-      buttons.append(open,download); detail.append(summary,buttons,element('pre',JSON.stringify(draft.value,null,2))); drafts.append(detail);
+      buttons.append(open,download); detail.append(summary,buttons,element('pre',JSON.stringify(draft,null,2))); drafts.append(detail);
     }
     if (values.drafts.length > draftLimit) {
       const more=element('button','Show earlier complete forms');more.type='button';
       more.addEventListener('click',()=>{draftLimit+=25;paint().catch(report);});drafts.append(more);
     }
     for (const record of values.operations.sort((a,b) => b.createdAt.localeCompare(a.createdAt)).slice(0,operationLimit)) {
-      const detail = element('details'), summary = element('summary',record.action + ' · ' + record.intentId + ' · ' + record.phase);
+      const detail = element('details'), summary = element('summary',record.action + ' · ' + record.intentId + ' · ' + record.phase + ' · ' + displayTime(record.createdAt));
       detail.dataset.customerOperation = record.id;
       const buttons = element('div',undefined,'toolbar'), open = element('button','Open original request'), download = element('button','Download complete request');
-      open.type = download.type = 'button'; open.disabled = busy || preparing;
+      open.type = download.type = 'button'; open.dataset.customerWorkNavigation = 'request';
+      open.disabled = opening || busy || preparing || navigating;
       open.addEventListener('click',async() => {
         try {
-          await showDraft(record.draft);
-          if (Object.hasOwn(record,'result')) await returned?.(JSON.parse(record.bodyText),record.result,clone(context()));
+          const selected = await showDraft(record.draft);
+          if (Object.hasOwn(record,'result')) await returned?.(JSON.parse(record.bodyText),record.result,selected);
           message('The complete original request and selected form are open.');
         } catch (error) { report(error); }
       });
       download.addEventListener('click',() => downloadJson(record,'economic-customer-request-' + record.id + '.json'));
       buttons.append(open,download);
       if (!Object.hasOwn(record,'result')) {
-        const resume = element('button','Continue original action'); resume.type = 'button'; resume.disabled = busy || preparing || !sameNativeWorkspace(record);
+        const resume = element('button','Continue original action'); resume.type = 'button';
+        resume.dataset.customerWorkNavigation = 'continue';
+        resume.dataset.customerWorkForeign = String(!sameNativeWorkspace(record));
+        resume.disabled = opening || busy || preparing || navigating || !sameNativeWorkspace(record);
         if (!sameNativeWorkspace(record)) resume.title = 'Continue from the recorded native customer directory: ' + record.nativeWorkspace.directory;
         resume.addEventListener('click',async() => {
-          try { await showDraft(record.draft); await performRecord(record); } catch(error) { report(error); }
+          try { const selected = await showDraft(record.draft); await performRecord(record,selected); } catch(error) { report(error); }
         });
         buttons.append(resume);
       }
@@ -351,10 +381,16 @@ export function mountFredCustomerWork({ root, getProject, capture, adopt, contex
     need(file && file.size > 0 && file.size <= 64*1024*1024,'Select the complete customer-work JSON within 64 MiB.');
     const text = await file.text();
     need(active() && projectId === selected,'Reopen the original project before receiving its customer work.');
-    const packet = JSON.parse(text), {sha256,...payload} = packet;
-    need(packet.schema === SCHEMA && packet.projectId === projectId && hex.test(sha256??'') &&
-      await hash(payload) === sha256 && Array.isArray(packet.drafts) && Array.isArray(packet.operations),
-      'Receive the unchanged customer-work file for this economic project.');
+    let packet = JSON.parse(text);
+    if (packet.schema === DRAFT) {
+      validateDraft(packet,selected);
+      packet = { drafts:[packet], operations:[] };
+    } else {
+      const {sha256,...payload} = packet;
+      need(packet.schema === SCHEMA && packet.projectId === projectId && hex.test(sha256??'') &&
+        await hash(payload) === sha256 && Array.isArray(packet.drafts) && Array.isArray(packet.operations),
+        'Receive the unchanged customer-work file for this economic project.');
+    }
     const seen = new Set();
     for (const value of packet.drafts) {
       validateDraft(value,projectId); need(!seen.has(value.id),'The form edition inventory repeats an identity.');seen.add(value.id);
@@ -380,6 +416,7 @@ export function mountFredCustomerWork({ root, getProject, capture, adopt, contex
     if (importFile.files[0] === file) importFile.value='';
     await paint();message('Complete customer work received. Open its original form or request from the retained history.');
   }
+  currentFormButton.addEventListener('click',()=>{try{downloadCurrentForm();}catch(error){report(error);}});
   exportButton.addEventListener('click',()=>exportWork().catch(report));
   importButton.addEventListener('click',()=>importWork().catch(report));
   refreshButton.addEventListener('click',()=>paint().catch(report));
@@ -401,7 +438,8 @@ export function mountFredCustomerWork({ root, getProject, capture, adopt, contex
     catch(error) {if(generation===ticket){opening=false;ready=null;sync();}throw error;}
   }
   return {open,edit,retain,perform,paint,exportWork,
-    isBusy:()=>opening||busy||preparing, isReady:()=>active()&&!opening&&Boolean(ready),
+    isBusy:()=>opening||busy||preparing||navigating, isNavigating:()=>navigating,
+    isReady:()=>active()&&!opening&&!navigating&&Boolean(ready),
     contextChanged:()=>{paintGeneration++;},
     async flush(){await chain;for(const value of [...unsavedDrafts.values()])await writeDraft(value,false);
       if(lastDraft)await writeDraft(lastDraft,true);
