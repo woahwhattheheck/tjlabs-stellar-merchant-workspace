@@ -70,6 +70,23 @@ function renderReceivingSelection(preferredId){
  receivedSelection=receipt?Object.freeze({receivingId:receipt.id,projectId:receipt.projectId,reportId:receipt.reportId,reportSha256:receipt.reportSha256,packageId:receipt.packageId,packageSha256:receipt.packageSha256}):null;
  $('receive-select').disabled=!receivedSelection;$('received-detail').textContent=receipt?project.value.organisation+' · '+report.title+' · '+report.period.start+' → '+report.period.end:'Receive a complete study to continue its saved project and prior edition.';
 }
+function renderDeliveries(){
+ const pending=(state.pendingDeliveries??[]).map(v=>({...v,pending:true})),completed=state.deliveries??[],items=[...pending,...completed];
+ $('delivery-history').innerHTML=items.length?'<h3>Saved customer destinations</h3><table><thead><tr><th>Report edition</th><th>Customer directory</th><th>Delivery</th><th></th></tr></thead><tbody>'+items.map((v,i)=>{
+  const report=state.reports.find(r=>r.id===v.reportId);
+  return '<tr><td>'+escape(report?.title??v.reportId)+(report?'<br><small>'+escape(report.period.start)+' → '+escape(report.period.end)+'</small>':'')+'</td><td>'+escape(v.directory)+'</td><td>'+(v.pending?'Saved package · ready to resume':v.files.length+' files delivered')+'</td><td><button type="button" class="small" data-delivery="'+i+'">'+(v.pending?'Resume delivery':'Reopen delivery')+'</button></td></tr>';
+ }).join('')+'</tbody></table>':'';
+ for(const button of $('delivery-history').querySelectorAll('button'))button.onclick=action(async()=>{
+  const selected=items[Number(button.dataset.delivery)];$('report').value=selected.reportId;$('destination').value=selected.directory;renderReport();
+  button.disabled=true;try{await deliver(selected.reportId,selected.directory);}finally{button.disabled=false;}
+ });
+}
+async function deliver(reportId,directory){
+ let result;try{result=await request('/api/deliver',{reportId,directory});}
+ catch(error){await refresh().catch(()=>{});throw error;}
+ await refresh();
+ $('delivery-state').textContent=result.files.length+' files delivered to '+result.directory;notice('Complete customer package delivered.');
+}
 async function refresh(force=false){
  state=await request('/api/state');$('workspace-id').textContent=state.workspaceId;
  options('connection',state.connections,v=>v.title+(v.kind==='dashboard'?(v.binding.tokenAvailable?' · host token available':' · host token required'):''));
@@ -78,7 +95,7 @@ async function refresh(force=false){
  options('report',[...state.reports].reverse(),v=>v.title+' · '+v.period.start.slice(0,10)+' → '+v.period.end.slice(0,10));
  options('source-set',state.sourceSets??[],v=>v.operationId+' · '+v.locations.length+' locations','New provider acquisition');
  options('baseline',[...state.reports].reverse(),v=>v.title+' · '+v.period.start.slice(0,10)+' → '+v.period.end.slice(0,10),'First edition');
- renderSource();renderPlan();renderReport();renderReceivingSelection();clearTimeout(poll);if(state.active)poll=setTimeout(()=>refresh().catch(e=>notice(e.message,true)),2000);
+ renderSource();renderPlan();renderReport();renderReceivingSelection();renderDeliveries();clearTimeout(poll);if(state.active)poll=setTimeout(()=>refresh().catch(e=>notice(e.message,true)),2000);
 }
 $('add-location').onclick=()=>{if($('locations').rows.length>=20){notice('This customer project already contains twenty locations.',true);return;}locationRow();};
 $('refresh').onclick=action(()=>refresh());
@@ -104,7 +121,7 @@ $('commit').onclick=action(async()=>{
  await refresh();$('report').value=report.id;renderReport();$('commit').disabled=true;notice('Customer edition committed. The complete report and editable package are ready.');
 });
 $('report').onchange=renderReport;
-$('deliver').onclick=action(async()=>{const result=await request('/api/deliver',{reportId:$('report').value,directory:$('destination').value});$('delivery-state').textContent=result.files.length+' files delivered to '+result.directory;notice('Complete customer package delivered.');});
+$('deliver').onclick=action(async()=>{$('deliver').disabled=true;try{await deliver($('report').value,$('destination').value);}finally{renderReport();}});
 async function catalogue(page){
  const result=await request('/api/catalogue?page='+page+'&sourceType='+$('catalogue-type').value);cataloguePage=result.page;$('catalogue-state').textContent=result.sourceType+' · page '+result.page+' · '+result.returned+' returned locations';$('catalogue-next').disabled=!result.hasNext;
  $('catalogue').innerHTML='<table><thead><tr><th>Location</th><th>Provider / contributor</th><th>Timezone</th><th></th></tr></thead><tbody>'+result.locations.map((v,i)=>'<tr><td>'+escape(v.locationName??('Indoor '+v.locationId))+'<br><small>'+escape(v.locationId)+'</small></td><td>'+escape(v.provider)+'<br>'+escape(v.ownerName)+'</td><td>'+escape(v.timezone??'Customer setting')+'</td><td><button class="small" data-index="'+i+'">Use location</button></td></tr>').join('')+'</tbody></table>';

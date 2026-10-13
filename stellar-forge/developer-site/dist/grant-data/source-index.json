@@ -5,9 +5,9 @@
   "applicant": "Bryce Muhlnickel / TokenJunkieLabs",
   "application": {
     "path": "application.md",
-    "bytes": 51635,
-    "sha256": "28ebd6f43eea2ddd38461e9271ddd06bd5faef41efa4579ee042a84f6ce5ce5a",
-    "git_blob": "f09bd9fd99387f435d21d4204ccf16af8ad9b5ff"
+    "bytes": 53099,
+    "sha256": "21b3ecc370c83815d624f6a57fffa62cc512f1216344412c79556da7e3407c63",
+    "git_blob": "ec19172fa381089be3cdbbf64afa2c5b71a15ed3"
   },
   "request": {
     "basis": "prospective",
@@ -2561,13 +2561,76 @@
         "sha256": "0d77042f04e11176911072b7c47bd2dbf976f100535602cafe110a1b32e77265",
         "bytes": 501
       }
+    },
+    {
+      "id": "iati-document-operating-procedures",
+      "kind": "published-source",
+      "label": "IATI customer operating procedure and complete analyst handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "0110a7fde307112abee5be63a06291855aa72599",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/OPERATING_PROCEDURES.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0110a7fde307112abee5be63a06291855aa72599/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/OPERATING_PROCEDURES.md"
+    },
+    {
+      "id": "iati-document-operating-source",
+      "kind": "published-source",
+      "label": "IATI complete original saved-case source reader",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "0110a7fde307112abee5be63a06291855aa72599",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/operating_source.py",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0110a7fde307112abee5be63a06291855aa72599/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/operating_source.py"
+    },
+    {
+      "id": "iati-document-operating-model",
+      "kind": "published-source",
+      "label": "IATI editable procedure, original plan receiver and renderer",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "0110a7fde307112abee5be63a06291855aa72599",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/operating_procedure.mjs",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0110a7fde307112abee5be63a06291855aa72599/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/operating_procedure.mjs"
+    },
+    {
+      "id": "iati-document-operating-cli",
+      "kind": "published-source",
+      "label": "IATI installed procedure capture, create, show and receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "0110a7fde307112abee5be63a06291855aa72599",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence_operating_cli.mjs",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0110a7fde307112abee5be63a06291855aa72599/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence_operating_cli.mjs"
+    },
+    {
+      "id": "iati-complete-installed-operator",
+      "kind": "published-source",
+      "label": "IATI complete installed applications and operating handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "0110a7fde307112abee5be63a06291855aa72599",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/IATI_OPERATOR.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0110a7fde307112abee5be63a06291855aa72599/stellar/scf-starforge-20261009/distribution/selections/IATI_OPERATOR.md"
+    },
+    {
+      "id": "connected-systems-customer-operator",
+      "kind": "published-source",
+      "label": "Connected Systems source, operator installation and complete customer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "8883afe8b26545340db5d85e230cd1266af3c56e",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/CONNECTED_SYSTEMS.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/8883afe8b26545340db5d85e230cd1266af3c56e/stellar/scf-starforge-20261009/distribution/selections/CONNECTED_SYSTEMS.md"
+    },
+    {
+      "id": "connected-systems-publisher-observation",
+      "kind": "published-source",
+      "label": "Original publisher observation used by the native receiving example",
+      "repository": "opengeospatial/ogcapi-connected-systems",
+      "commit": "fb858be23aa03e2b824ec50b5a97ac2c2a1d3fec",
+      "path": "api/part2/openapi/examples/observations/obs-simple.json",
+      "url": "https://github.com/opengeospatial/ogcapi-connected-systems/blob/fb858be23aa03e2b824ec50b5a97ac2c2a1d3fec/api/part2/openapi/examples/observations/obs-simple.json"
     }
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "694aec6b4edb6f74aca2d8fa13727fef6792d9e8",
-    "bytes": 506341,
-    "sha256": "81097ab21c06527a284089cf7e2d78f97744becc8ce4892edd8a16306aa81b95",
+    "git_blob": "262fba4f71527df8d7b80eef4d0fe857ecca8cc2",
+    "bytes": 513699,
+    "sha256": "2e72947e8e1536feda9c0f4339a055ea3be65cfa86d8b6fbe143ccf9a722e3d1",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
     "prior_git_blob": "29e0ab9723e0eb787041409803158dc3ae94c1e3"
   },
@@ -2761,7 +2824,7 @@
         "native_execution_basis": "The existing development purchase baseline remains the original operated XLM services. The October 12 captured catalog and functional ranking comparison describe the separate published HTTP resource set."
       }
     ],
-    "current_application_sha256": "28ebd6f43eea2ddd38461e9271ddd06bd5faef41efa4579ee042a84f6ce5ce5a",
+    "current_application_sha256": "21b3ecc370c83815d624f6a57fffa62cc512f1216344412c79556da7e3407c63",
     "economic_product_commit": "be44be564e35b63af23246bad531a95374bbb4c0",
     "economic_application_operation": "SCF-FRED-ECONOMIC-CUSTOMER-APPLICATION-20261012",
     "coastal_product_commit": "92eb1c73a3cab9781ef7dbabdc12067344fb6aa2",
@@ -2844,7 +2907,7 @@
         "10. Open the existing work"
       ],
       "previous_cumulative_commit": "1945289c8d39b7850bf3b496c13c7ae5643176bf",
-      "projector_git_blob": "2b9f3d354d4108ebe0149c630acff4db3c2c8b5d",
+      "projector_git_blob": "dab0d27efb493cadcbe41614980b6968a63f65c5",
       "demo_source": {
         "carrier_git_blob": "6f3dd33ab358fee08e2ee3b6131a0cd8946a62c2",
         "path": "operations/scf-submission-improvement-1b40-20261012/current-adoption/DEMO_AND_ACCEPTANCE.md",
@@ -3015,8 +3078,8 @@
     "route": "/grant-submission.html",
     "application_route": "/grant-data/application.md",
     "source_index_route": "/grant-data/source-index.json",
-    "application_sha256": "28ebd6f43eea2ddd38461e9271ddd06bd5faef41efa4579ee042a84f6ce5ce5a",
-    "application_git_blob": "f09bd9fd99387f435d21d4204ccf16af8ad9b5ff",
+    "application_sha256": "21b3ecc370c83815d624f6a57fffa62cc512f1216344412c79556da7e3407c63",
+    "application_git_blob": "ec19172fa381089be3cdbbf64afa2c5b71a15ed3",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "export_schema": "stellar-forge.grant-submission-export.v1",
     "form_map_schema": "stellar-forge.grant-form-map.v1",
@@ -3077,8 +3140,8 @@
     "schema": "stellar-forge.grant-review-round-integration.v1",
     "route": "/grant-review-round.html",
     "submission_route": "/grant-submission.html",
-    "application_sha256": "28ebd6f43eea2ddd38461e9271ddd06bd5faef41efa4579ee042a84f6ce5ce5a",
-    "application_git_blob": "f09bd9fd99387f435d21d4204ccf16af8ad9b5ff",
+    "application_sha256": "21b3ecc370c83815d624f6a57fffa62cc512f1216344412c79556da7e3407c63",
+    "application_git_blob": "ec19172fa381089be3cdbbf64afa2c5b71a15ed3",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "draft_export_schema": "stellar-forge.grant-submission-export.v1",
     "review_schema": "stellar-forge.grant-review-round.v1",
@@ -3091,8 +3154,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "81097ab21c06527a284089cf7e2d78f97744becc8ce4892edd8a16306aa81b95",
-    "source_bytes": 506341,
+    "source_sha256": "2e72947e8e1536feda9c0f4339a055ea3be65cfa86d8b6fbe143ccf9a722e3d1",
+    "source_bytes": 513699,
     "assets": [
       "/grant-companion.html",
       "/grant-companion.css",

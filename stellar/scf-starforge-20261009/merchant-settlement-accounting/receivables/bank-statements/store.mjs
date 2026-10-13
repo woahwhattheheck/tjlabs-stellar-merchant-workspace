@@ -12,11 +12,11 @@ import {normalizeBankAccount,bankAccountSummary,bankSourceMatches} from '../bank
 import {bindStatementIntakeAccount,statementSourceEntry,recordStatementCoverage,releaseStatementCoverage} from '../bank-coverage.mjs';
 import {BANK_SCHEMA,BANK_CLOSE_SCHEMA,BANK_REQUEST_BYTES,BANK_SOURCE_BYTES,BANK_ROW_LIMIT,now,clone,
   emptyBank,bankData,record,activeMatch,activeCloses,assertOpenDate,amountOf,transactionIdentity,financialFingerprint,
-  compactSourceRow,normalizeAccount,sourcePreview,previewIdentity,prepareMatch,matchView,matchSuggestions,
+  compactSourceRow,compactExcludedRow,camtMessageSummary,normalizeAccount,sourcePreview,previewIdentity,prepareMatch,matchView,matchSuggestions,
   accountSummary,importSummary,closePreview,closeDocuments} from './domain.mjs';
 export {BANK_REQUEST_BYTES};
 
-const EXT={OFX:'ofx',QFX:'qfx',CSV:'csv'};
+const EXT={OFX:'ofx',QFX:'qfx',CSV:'csv',CAMT053:'xml'};
 const selectedFilters=query=>({accountId:query.accountId??'',status:query.status??'',search:String(query.search??'').toLowerCase().slice(0,300)});
 async function privateDirectory(path) {
   await mkdir(path,{mode:0o700});
@@ -53,7 +53,7 @@ function sourceInput(value) {
   need(plain(value),'INVALID_BANK_SOURCE','Provide the original source file and its explicit format.');
   const report=readBankStatementSource(value);
   need(report.bytes.length<=BANK_SOURCE_BYTES,'BANK_SOURCE_TOO_LARGE','Choose an original statement up to 16 MB.',413);
-  need(report.statements.reduce((sum,row)=>sum+row.rows.length+row.pendingRows.length,0)<=BANK_ROW_LIMIT,
+  need(report.statements.reduce((sum,row)=>sum+row.rows.length+row.pendingRows.length+(row.excludedRows?.filter(entry=>entry.row?.camt||entry.camt).length??0),0)<=BANK_ROW_LIMIT,
     'BANK_SOURCE_ROW_LIMIT','Choose at most 50,000 original statement rows.',413);
   return report;
 }
@@ -179,8 +179,9 @@ export class BankStatementsWorkspace {
       const imported={id:importId,accountId:account.id,statementId:statement.id,kind:statement.kind,
         file:clone(report.file),format:report.format,reviewSha256:value.reviewSha256,sourceAccount:clone(statement.account),
         interpretation:clone(report.interpretation),period:clone(statement.period),balances:clone(statement.balances),
+        camtMessage:camtMessageSummary(report.camt),camt:clone(statement.camt),
         issues:clone([...report.issues,...statement.issues]),sourceSummary:clone(statement.summary),
-        excludedRows:clone(statement.excludedRows),rowIds,pendingRows:statement.pendingRows.map(compactSourceRow),
+        excludedRows:statement.excludedRows.map(compactExcludedRow),rowIds,pendingRows:statement.pendingRows.map(compactSourceRow),
         createdAt:now(),actor,requestId,supersedesImportId:prior?.id??null,files:{}};
       for(const source of statement.rows) {
         const compact=compactSourceRow(source);
