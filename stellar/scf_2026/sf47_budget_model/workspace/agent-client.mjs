@@ -71,6 +71,23 @@ const commercialPath = (caseId, billingId, milestoneId) => {
   return route;
 };
 
+const CHANGE_FIELDS=['expectedVersion','previousChangeId','actor','sourceIds','mode','resolution','targetAmount','issueDate','dueDate','effectiveDate','authorizedOn','description','reason','authorization','purchaseOrder','note'];
+function commercialChangeSource(body, prepare=false){
+  const fields=prepare?[...CHANGE_FIELDS,'requestId','expectedPreviewSha256']:CHANGE_FIELDS;
+  exact(body,fields,['expectedVersion','actor','sourceIds','mode','targetAmount','effectiveDate','authorizedOn','reason','authorization',...(prepare?['requestId','expectedPreviewSha256']:[])]);
+  integer(body.expectedVersion,'Current case version');text(body.actor,'Recording operator',300);
+  for(const [key,max] of [['reason',3000],['authorization',12000]])text(body[key],key,max);
+  need(['DRAFT_EDIT','CREDIT','VOID','REPLACE'].includes(body.mode),'GRANT_INVALID_INPUT','Choose the native milestone change.');
+  need(Array.isArray(body.sourceIds)&&body.sourceIds.length>0&&new Set(body.sourceIds).size===body.sourceIds.length,'GRANT_INVALID_INPUT','Select distinct original authorization sources.');
+  body.sourceIds.forEach(value=>id(value,'source'));text(body.targetAmount,'Exact revised amount',100);
+  for(const key of ['effectiveDate','authorizedOn','issueDate','dueDate'])if(body[key]!==undefined)completionDate(body[key]);
+  if(body.previousChangeId!==undefined&&body.previousChangeId!==null)commercialIdentifier(body.previousChangeId);
+  if(body.resolution!==undefined)need(['VOID','CREDIT'].includes(body.resolution),'GRANT_INVALID_INPUT','Choose the original invoice treatment.');
+  for(const [key,max] of [['description',3000],['purchaseOrder',300],['note',6000]])if(body[key]!==undefined)text(body[key],key,max,true);
+  if(prepare){requestId(body.requestId);sha(body.expectedPreviewSha256);}
+}
+const commercialChangePath=(caseId,changeId)=>commercialPath(caseId)+'/changes/'+encodeURIComponent(commercialIdentifier(changeId,'Change identifier'));
+
 const COMMERCIAL_SELECTION_FIELDS = [
   'expectedVersion','installationId','installationRevision','expectedInstallationSha256','currencyScale',
 ];
@@ -1411,6 +1428,43 @@ export class GrantWorkspaceClient {
       body:{...original,action:'installation.save',data:{installationId,expectedRevision,document,expectedPreviewSha256,
         ...(returnReview===undefined?{}:{returnReview})}}});
   }
+  commercialChanges(caseId,billingId,milestoneId){
+    return this.#request(commercialPath(caseId,billingId,milestoneId)+'/changes',{});
+  }
+  commercialChange(caseId,changeId){
+    return this.#request(commercialChangePath(caseId,changeId),{});
+  }
+  commercialChangePreview(caseId,billingId,milestoneId,body){
+    commercialChangeSource(body);
+    return this.#request(commercialPath(caseId,billingId,milestoneId)+'/changes/preview',{body,mutation:false});
+  }
+  commercialChangePrepare(caseId,billingId,milestoneId,body){
+    commercialChangeSource(body,true);
+    return this.#request(commercialPath(caseId,billingId,milestoneId)+'/changes/prepare',{body,originalRequestId:body.requestId});
+  }
+  commercialChangeApply(caseId,changeId,body){
+    exact(body,['actor','expectedProposalSha256'],['actor','expectedProposalSha256']);
+    text(body.actor,'Original operator',300);sha(body.expectedProposalSha256);
+    return this.#request(commercialChangePath(caseId,changeId)+'/apply',{body,recovery:'Reopen this original milestone change and resume its same apply request.'});
+  }
+  commercialChangeCancel(caseId,changeId,body){
+    exact(body,['actor','expectedProposalSha256','requestId','reason'],['actor','expectedProposalSha256','requestId','reason']);
+    text(body.actor,'Operator',300);sha(body.expectedProposalSha256);requestId(body.requestId);text(body.reason,'Cancellation reason',6000);
+    return this.#request(commercialChangePath(caseId,changeId)+'/cancel',{body,originalRequestId:body.requestId});
+  }
+  commercialChangePreviewIssue(caseId,changeId){
+    return this.#request(commercialChangePath(caseId,changeId)+'/preview-issue',{body:{},mutation:false});
+  }
+  commercialChangeIssue(caseId,changeId,body){
+    exact(body,['actor','expectedProposalSha256','expectedIssuePreviewSha256','creditDecisionId'],['actor','expectedIssuePreviewSha256']);
+    text(body.actor,'Original operator',300);sha(body.expectedIssuePreviewSha256);
+    if(body.expectedProposalSha256!==undefined)sha(body.expectedProposalSha256);
+    if(body.creditDecisionId!==undefined)commercialIdentifier(body.creditDecisionId);
+    return this.#request(commercialChangePath(caseId,changeId)+'/issue',{body,recovery:'Read the retained original issue review and resume the same correction issue request.'});
+  }
+  commercialChangeRefresh(caseId,changeId){
+    return this.#request(commercialChangePath(caseId,changeId)+'/refresh',{body:{},mutation:false});
+  }
   commercialConnections() {
     return this.#request('/api/operations/commercial-connections', {});
   }
@@ -1717,6 +1771,7 @@ export class GrantWorkspaceClient {
         '/export.zip?revision=' + integer(args.revision,'Selected installation edition',1,500),
       'installation-return':() => '/api/operations/' + id(args.caseId,'operation') + '/installation-returns/' + id(args.reviewId,'review') + '/export.zip',
       commercial:() => commercialPath(args.caseId, args.billingId) + '/export.zip',
+      'commercial-change':() => commercialChangePath(args.caseId,args.changeId)+'/export.zip',
       source:() => '/api/operations/' + id(args.caseId, 'operation') + '/sources/' + id(args.sourceId, 'source'),
       settlement:() => '/api/operations/' + id(args.caseId,'operation') + '/settlements/' + id(args.reviewId,'settlement') + '/export',
       'customer-use-calendar':() => '/api/operations/' + id(args.caseId,'operation') + '/customer-use-calendar/export.' +

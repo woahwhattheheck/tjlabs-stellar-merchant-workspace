@@ -986,6 +986,7 @@ class CommercialReceivables:
         with self.workspace.mutex:
             prepared, milestone, obligation = self._selection(
                 program_id, prepared_id, milestone_id)
+            self.operations.commercial_changes.assert_original(milestone["obligationKey"])
             prior = self._intent(milestone["obligationKey"], "draft")
         if prior:
             return self._command_result(
@@ -1058,6 +1059,7 @@ class CommercialReceivables:
         with self.workspace.mutex:
             prepared, milestone, obligation = self._selection(
                 program_id, prepared_id, milestone_id)
+            self.operations.commercial_changes.assert_original(milestone["obligationKey"])
             issue_intent = self._intent(milestone["obligationKey"], "issue")
             eligibility = self._eligibility(prepared, milestone, program_id)
         if issue_intent:
@@ -1089,6 +1091,7 @@ class CommercialReceivables:
         with self.workspace.mutex:
             prepared, milestone, obligation = self._selection(
                 program_id, prepared_id, milestone_id)
+            self.operations.commercial_changes.assert_original(milestone["obligationKey"])
             prior = self._intent(milestone["obligationKey"], "issue")
         if prior:
             # An interrupted issue may already have frozen the native invoice.

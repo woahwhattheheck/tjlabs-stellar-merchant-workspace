@@ -50,6 +50,7 @@ import operations_amendments as amendments
 import operations_amendment_calendar as amendment_calendar
 import operations_work_intake as work_intake
 import operations_commercial_receivables as commercial_receivables
+import operations_commercial_changes as commercial_changes
 import operations_expenses as expenses
 
 SCHEMA = "stellar-forge.sf47-operations.v1"
@@ -134,6 +135,7 @@ class Operations:
                 domain.fail("This workspace uses a newer operations schema.", "OPERATIONS_SCHEMA", 409)
             workspace.db.execute("INSERT OR IGNORE INTO ops_metadata VALUES('schema',?)", (SCHEMA,))
             self.commercial = commercial_receivables.CommercialReceivables(self)
+            self.commercial_changes = commercial_changes.CommercialChanges(self.commercial)
 
     @property
     def db(self):
@@ -1563,6 +1565,9 @@ class Operations:
             commercial_rows = self.commercial.export_rows(program_id)
             if commercial_rows["prepared"]:
                 document["commercialReceivables"] = commercial_rows
+            change_rows = self.commercial_changes.export_rows(program_id)
+            if change_rows["items"]:
+                document["commercialChanges"] = change_rows
             report = domain.report(**context)
             files = {"planning.zip": original,
                      "operations.json": (canonical(document) + "\n").encode(),
@@ -1837,6 +1842,11 @@ class Operations:
         if commercial_rows is not None:
             commercial_rows = commercial_receivables.validate_import(
                 commercial_rows, reader=lambda ident: files["sources/" + ident])
+        change_rows = document.get("commercialChanges")
+        if change_rows is not None:
+            change_rows = commercial_changes.validate_import(change_rows)
+            if commercial_rows is None:
+                domain.fail("Milestone changes require their original billing source.", "COMMERCIAL_CHANGE_SOURCE", 422)
         dispatch.validate_received(delivery_queue, document)
         performance.validate_received(performance_report, document)
         payables.validate_received(supplier_account, document)
@@ -1968,6 +1978,8 @@ class Operations:
                 work_intake.save_row(self, pid, value)
             if commercial_rows is not None:
                 self.commercial.restore_rows(pid, commercial_rows)
+            if change_rows is not None:
+                self.commercial_changes.restore_rows(pid, change_rows)
             for value in saved_forecasts:
                 self.db.execute("INSERT INTO ops_forecasts VALUES(?,?,?)", (pid, value["id"], canonical(value)))
             for value in saved_portfolios:

@@ -1,3 +1,4 @@
+import {mountCommercialChanges} from './operations_commercial_changes.mjs';
 import {currentStaffContext,staffDeskStorageKey,assertStaffRequestActor} from './staff-session.mjs';
 import {mountEarlierStaffDesk} from './staff-desk-recovery.mjs';
 const DESK_SCHEMA='sf47.commercial-desk.v1';
@@ -36,7 +37,8 @@ export function mountCommercialReceivables({container,current,api,saveApi=api,se
   }
   session.inputs ||= {}; session.previews ||= {};session.pending??=null;session.lastRequest??=null;
   const state = {current, installations: [], endpoints: [], customers: [], billings: [], billing: null, schedule: session.schedule || null, busy: false, message: '', error: false};
-  let active = true, hostBusy = false;
+  let active = true, hostBusy = false, changesDesk = null;
+  const changesHost=document.createElement("div");container.append(changesHost);
   const path = '/api/operations/' + enc(current.program.id) + '/commercial';
   const visible = () => active && root.isConnected;
   const input = (name, fallback = '') => session.inputs[name] ?? fallback;
@@ -275,7 +277,7 @@ export function mountCommercialReceivables({container,current,api,saveApi=api,se
           return '<article class="commercial-saved-milestone"><div class="commercial-heading"><div><h4>' + esc(source.label) + '</h4>' +
             '<p>' + esc(amount(source.amount, billing.schedule?.currency)) + ' · ' + esc(title(invoice.paymentStatus || invoice.status || milestone.state || 'Prepared')) +
             (invoice.number ? ' · ' + esc(invoice.number) : '') + '</p></div>' +
-            '<div class="commercial-actions">' + (milestone.issueIntent?.state === 'PENDING' ? button('Recover invoice issue', 'recover-issue', 'data-milestone="' + esc(milestone.milestoneId) + '"') : '') + (!issued ? button(milestone.draftIntent?.state === 'PENDING' ? 'Recover original draft' : 'Create or reopen draft', 'draft', 'data-milestone="' + esc(milestone.milestoneId) + '"', Boolean(milestone.superseded)) +
+            '<div class="commercial-actions">' + button('Review milestone changes', 'changes', 'data-milestone="' + esc(milestone.milestoneId) + '"', !milestone.invoiceId) + (milestone.issueIntent?.state === 'PENDING' ? button('Recover invoice issue', 'recover-issue', 'data-milestone="' + esc(milestone.milestoneId) + '"') : '') + (!issued ? button(milestone.draftIntent?.state === 'PENDING' ? 'Recover original draft' : 'Create or reopen draft', 'draft', 'data-milestone="' + esc(milestone.milestoneId) + '"', Boolean(milestone.superseded)) +
               button('Review invoice', 'preview', 'data-milestone="' + esc(milestone.milestoneId) + '"', !milestone.invoiceId || milestone.superseded) : '') + '</div></div>' +
             (invoice.amountDue !== undefined ? '<dl class="commercial-summary"><div><dt>Amount due</dt><dd>' + esc(amount(invoice.amountDue, invoice.currency || billing.schedule?.currency)) +
               '</dd></div><div><dt>Paid</dt><dd>' + esc(amount(invoice.paid, invoice.currency || billing.schedule?.currency)) +
@@ -363,6 +365,18 @@ export function mountCommercialReceivables({container,current,api,saveApi=api,se
     if(action==='open-desk'){if(!state.busy&&!hostBusy&&!session.pending)root.querySelector('[data-commercial-desk-file]').click();return;}
     if (action === 'installations') { capture(); onInstallations?.(); return; }
     if (action === 'sources') { capture(); onSources?.(); return; }
+    if (action === 'changes') {
+      capture();
+      const milestone=state.billing?.milestones.find(row=>row.milestoneId===target.dataset.milestone);
+      if(!milestone||session.pending)return;
+      changesDesk?.dispose();root.hidden=true;
+      const closeChanges=()=>{changesDesk?.dispose();changesDesk=null;root.hidden=false;run(()=>refreshLists());};
+      changesDesk=mountCommercialChanges({container:changesHost,current:state.current,billing:state.billing,milestone,
+        api,saveApi,mutationId,recordingActor,staffContext:pinnedContext,onClose:closeChanges,
+        onSources:()=>{changesDesk?.dispose();changesDesk=null;root.hidden=false;onSources?.();}});
+      changesDesk.ready.catch(error=>{state.message=error.message;state.error=true;});
+      return;
+    }
     run(async () => {
       if(action==='resume-original'){await resumeOriginal();return;}
       if (action === 'reload') { await refreshLists(); state.message = 'Loaded the saved commercial records.'; return; }
@@ -426,6 +440,6 @@ export function mountCommercialReceivables({container,current,api,saveApi=api,se
   });
   render();
   const ready = (async () => { state.busy = true; busy(); try { await refreshLists(); } finally { state.busy = false; if (visible()) render(); } })();
-  return {ready, setHostBusy(value) { hostBusy = Boolean(value); if (visible()) busy(); },
-    dispose() { earlier.dispose();capture(); active = false; }};
+  return {ready, setHostBusy(value) { hostBusy = Boolean(value);changesDesk?.setHostBusy(value); if (visible()) busy(); },
+    dispose() { changesDesk?.dispose();changesHost.remove();earlier.dispose();capture(); active = false; }};
 }
