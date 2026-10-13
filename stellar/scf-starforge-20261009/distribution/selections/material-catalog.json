@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "material-catalog",
   "title": "Material catalogues and supplier delivery",
-  "description": "Complete original material intake, exact customer matching, supplier correction and BMEcat delivery, ETIM xChange and 2BA upload packages, private browser/CLI/MCP operation and portable customer receiving and a complete offline browser recipient.",
+  "description": "Complete original material intake, exact customer matching, supplier correction and BMEcat delivery, ETIM xChange and 2BA upload packages, private browser/CLI/MCP operation and portable customer receiving and a complete offline browser recipient. Includes source-bound customer Workshare Installation preparation and complete portable source reopening.",
   "base": {
     "commands": [
       "installation",
@@ -77,7 +77,8 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli",
     "stellar/scf-starforge-20261009/sf103-native-buyer-signer",
     "stellar/scf-starforge-20261009/native-facilitator",
-    "products/material-catalog/recipient"
+    "products/material-catalog/recipient",
+    "products/material-catalog/commissioning"
   ],
   "supportFiles": [
     "LICENSE",
@@ -178,7 +179,10 @@
     "stellar/scf-starforge-20261009/sf82-seller-pilot/release-ui/index.html",
     "stellar/scf-starforge-20261009/sf82-seller-pilot/release-ui/postgres.mjs",
     "stellar/scf-starforge-20261009/sf82-seller-pilot/release-ui/receiving.mjs",
-    "stellar/scf-starforge-20261009/sf82-seller-pilot/release-ui/style.css"
+    "stellar/scf-starforge-20261009/sf82-seller-pilot/release-ui/style.css",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare-core.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/commercial-workshare-core.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/supplier-catalogues.json"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

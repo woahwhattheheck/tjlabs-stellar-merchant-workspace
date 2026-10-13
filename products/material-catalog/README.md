@@ -93,3 +93,15 @@ The reader keeps the original bundle and every contained record. Continue editab
 ## Source and licenses
 
 TokenJunkieLabs maintains this product. Native catalog, OpenSearch and merchant source is retained from its recorded source commit with original relative imports and runtime inputs. The selected product source inventory identifies each original file. The SAP SHINE examples retain their Apache-2.0 license and source index; the WANDS query example retains its original MIT license. Their original publisher records are included beside the files. The ETIM schema, sample data and original license notices remain with the xChange source. The original 2BA parameter XML and ZIP retain their publisher bytes and acquisition record.
+
+## Commission a retained material customer delivery
+
+The [material customer Installation guide](commissioning/README.md) joins an exact complete catalogue bundle, its original sources and selected supplier plan/review to the existing proposed Workshare and Customer Installation. Select a fresh original Operations case and native Workshare seed, review the scoped task and source bindings, then prepare the complete customer directory:
+
+~~~sh
+starforge-materials material-installation template --bundle ORIGINAL.jsonl --sha256 ORIGINAL_SHA256 --seed workshare-installation.json --case case-snapshot.json --commissioning commissioning.json --operation ORIGINAL_OPERATION --out PRIVATE_TEMPLATE
+starforge-materials material-installation prepare --bundle ORIGINAL.jsonl --sha256 ORIGINAL_SHA256 --seed workshare-installation.json --case case-snapshot.json --commissioning commissioning.json --bindings PRIVATE_TEMPLATE/bindings.json --selection PRIVATE_TEMPLATE/selection.json --out PRIVATE_CUSTOMER
+starforge-materials material-installation reopen --directory PRIVATE_CUSTOMER
+~~~
+
+The complete output contains the byte-exact customer bundle, original source feeds, selected Workshare/phase terms, source annex, native preview/input, readable handover, populated original catalogue reader and all source needed to reopen the directory elsewhere. The original **Customer installations → Load input file** control previews `installation-input.json`; its original writer remains responsible for save, complete case export and independent receiving. Commercial status and unresolved native selections stay explicit. See the [complete receiving course](commissioning/RECEIVING.md) for original-source execution and actual desktop/narrow, download, recipient reopening and producing-seat image review.
