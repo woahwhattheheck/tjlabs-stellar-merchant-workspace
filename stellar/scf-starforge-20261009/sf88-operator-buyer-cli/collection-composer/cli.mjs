@@ -1,14 +1,17 @@
 #!/usr/bin/env node
 // MIT — Local authoring commands for the existing private collection store.
-import { createReadStream } from 'node:fs';
-import { realpath } from 'node:fs/promises';
-import { isAbsolute, resolve } from 'node:path';
+import { createReadStream, constants } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { realpath, open } from 'node:fs/promises';
+import { isAbsolute, resolve, basename } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { openCollections } from '../collections/model.mjs';
 import { initializationBytes } from '../initialization.mjs';
 import { openCollectionComposer, inspectCollectionCatalog } from './model.mjs';
 import { fields, need } from './plan.mjs';
 import { parsePlanPackage } from './package-format.mjs';
+import { INPUT_UPLOAD_SCHEMA, INPUT_CHUNK_BYTES, INPUT_LIMITS, inputManifestJson,
+  validateInputManifest, inputChunkLength } from './input-format.mjs';
 
 export const HELP = [
   'Starforge customer request plans',
@@ -33,6 +36,13 @@ export const HELP = [
   '  starforge buyer-collection-plans adopt --directory ABS --package SHA256 --file ABS_BINDINGS_JSON',
   '    --review-sha256 SHA256',
   '',
+  '  starforge buyer-collection-plans input-import --directory ABS --kind catalog|body --file ABS [--name NAME]',
+  '  starforge buyer-collection-plans input-list --directory ABS [--kind catalog|body] [--query TEXT]',
+  '    [--offset N] [--limit N]',
+  '  starforge buyer-collection-plans input-show --directory ABS --input SHA256',
+  '  starforge buyer-collection-plans input-file --directory ABS --input SHA256',
+  '  starforge buyer-collection-plans input-catalog --directory ABS --input SHA256',
+  '',
   'Use an existing Request Collections directory. All output is JSON.',
   'Save keeps immutable plan revisions. Prepare retains one named period and its source inputs.',
   'Repeat the same prepare request to resume its original identity.',
@@ -41,8 +51,14 @@ export const HELP = [
   'Share exports retain catalog/body inputs and produce an actual portable file path.',
   'Receive can resume the same file. Review binds local operators, access and output paths.',
   'Adopt saves a new immutable plan; prepare/create/run remain explicit original commands.',
+  'Input import retains actual catalog/body bytes with resumable chunks; use the returned input.path in a plan.',
 ].join('\n');
 const MODES = {
+  'input-import': ['--directory','--kind','--file'],
+  'input-list': ['--directory'],
+  'input-show': ['--directory','--input'],
+  'input-file': ['--directory','--input'],
+  'input-catalog': ['--directory','--input'],
   list: ['--directory'], show: ['--directory', '--id', '--revision'],
   save: ['--directory', '--file'], catalog: ['--file'],
   editions: ['--directory'], edition: ['--directory', '--collection'],
@@ -56,7 +72,8 @@ const MODES = {
   'adopt-review': ['--directory', '--package', '--file'],
   adopt: ['--directory', '--package', '--file', '--review-sha256'],
 };
-const OPTIONAL = { 'share-export': ['--headers'] };
+const OPTIONAL = { 'share-export': ['--headers'], 'input-import':['--name'],
+  'input-list':['--kind','--query','--offset','--limit'] };
 const ADOPTION_FIELDS = ['planId', 'name', 'description', 'operatorBindings', 'requestBindings',
   'outputDirectory', 'deliveryParameter', 'deliveryValue'];
 export function readCollectionComposerArguments(args) {
@@ -134,6 +151,65 @@ export async function receiveCollectionPlanPackage(sharing, path) {
   }
 }
 
+/** Retain public local source bytes through bounded chunks from one held regular file. */
+export async function importCollectionInput(inputs,{path,kind,name}) {
+  need(typeof path==='string' && isAbsolute(path) && resolve(path)===path && !path.includes('\0')
+    && await realpath(path)===path,'COLLECTION_INPUT_FILE_PATH_REQUIRED');
+  need(Object.hasOwn(INPUT_LIMITS,kind),'COLLECTION_INPUT_KIND_INVALID');
+  const file=await open(path,constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+  try {
+    const before=await file.stat();
+    need(before.isFile() && Number.isSafeInteger(before.size) && before.size<=INPUT_LIMITS[kind]
+      && before.size>=(kind==='catalog'?1:0),'COLLECTION_INPUT_SIZE_INVALID');
+    const digest=value=>createHash('sha256').update(value).digest('hex');
+    const unchanged=async()=>{
+      const after=await file.stat();
+      need(before.dev===after.dev && before.ino===after.ino && before.size===after.size
+        && before.mtimeMs===after.mtimeMs && before.ctimeMs===after.ctimeMs,'COLLECTION_INPUT_FILE_CHANGED');
+    };
+    async function part(index,length) {
+      const bytes=Buffer.alloc(length); let read=0;
+      while(read<length) {
+        const result=await file.read(bytes,read,length-read,index*INPUT_CHUNK_BYTES+read);
+        need(result.bytesRead>0,'COLLECTION_INPUT_FILE_CHANGED'); read+=result.bytesRead;
+      }
+      return bytes;
+    }
+    const chunkSha256=[];
+    for(let offset=0,index=0;offset<before.size;offset+=INPUT_CHUNK_BYTES,index++)
+      chunkSha256.push(digest(await part(index,Math.min(INPUT_CHUNK_BYTES,before.size-offset))));
+    await unchanged();
+    const manifest=validateInputManifest({schema:INPUT_UPLOAD_SCHEMA,kind,name:name??basename(path),
+      bytes:before.size,chunkSha256});
+    const uploadId=digest(inputManifestJson(manifest));
+    const status=await inputs.begin({manifest});
+    need(status.uploadId===uploadId && Array.isArray(status.receivedChunks),'COLLECTION_INPUT_RECEIPT_CHANGED');
+    const received=new Set(status.receivedChunks);
+    need(received.size===status.receivedChunks.length && [...received].every(index=>
+      Number.isSafeInteger(index) && index>=0 && index<manifest.chunkSha256.length),
+      'COLLECTION_INPUT_RECEIPT_CHANGED');
+    for(let index=0;index<manifest.chunkSha256.length;index++) {
+      if(received.has(index)) continue;
+      const bytes=await part(index,inputChunkLength(manifest,index));
+      need(digest(bytes)===manifest.chunkSha256[index],'COLLECTION_INPUT_FILE_CHANGED');
+      const receipt=await inputs.receiveChunk({uploadId,index,source:bytes});
+      need(receipt.uploadId===uploadId && receipt.index===index && receipt.bytes===bytes.length
+        && receipt.sha256===manifest.chunkSha256[index],'COLLECTION_INPUT_RECEIPT_CHANGED');
+    }
+    await unchanged();
+    const completed=await inputs.complete({uploadId});
+    need(completed.uploadId===uploadId && completed.phase==='READY' && completed.input?.id===uploadId,
+      'COLLECTION_INPUT_RECEIPT_CHANGED');
+    return completed;
+  } finally {await file.close();}
+}
+function integerOption(value,fallback) {
+  if(value===undefined)return fallback;
+  need(/^(0|[1-9][0-9]*)$/.test(value) && Number.isSafeInteger(Number(value)),
+    'COLLECTION_INPUT_LIST_INVALID');
+  return Number(value);
+}
+
 export async function runCollectionComposerCommand(args) {
   const { mode, options, values } = readCollectionComposerArguments(args);
   if (mode === 'help') return { help: HELP };
@@ -141,6 +217,13 @@ export async function runCollectionComposerCommand(args) {
   const collections = await openCollections({ directory: options['--directory'], existingOnly: true });
   const composer = openCollectionComposer({ collections });
   try {
+    if (mode === 'input-import') return await importCollectionInput(composer.inputs,
+      {path:options['--file'],kind:options['--kind'],name:options['--name']});
+    if (mode === 'input-list') return await composer.inputs.list({kind:options['--kind'],
+      query:options['--query']??'',offset:integerOption(options['--offset'],0),limit:integerOption(options['--limit'],50)});
+    if (mode === 'input-show') return await composer.inputs.inspect({uploadId:options['--input']});
+    if (mode === 'input-file') return await composer.inputs.file({uploadId:options['--input']});
+    if (mode === 'input-catalog') return await composer.inputs.catalog({uploadId:options['--input']});
     if (mode === 'list') return await composer.listPlans();
     if (mode === 'show') return await composer.inspectPlan(options['--id'], options['--revision']);
     if (mode === 'save') {

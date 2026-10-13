@@ -1,6 +1,7 @@
 // MIT — Retained authoring over the original SF88 builder and collection controller.
 import { createHash } from 'node:crypto';
 import { openPlanExchange } from './exchange.mjs';
+import { openCollectionInputLibrary } from './input-library.mjs';
 import { readdir, lstat, realpath } from 'node:fs/promises';
 import { join, resolve, dirname, isAbsolute } from 'node:path';
 import { isDeepStrictEqual as same } from 'node:util';
@@ -501,7 +502,8 @@ export function openCollectionComposer({ collections } = {}) {
         responseOut: request.responseOut };
     },
   });
-  return Object.freeze({ directory, sharing, savePlan, inspectPlan, listPlans, prepareEdition, createEdition,
+  const inputs = openCollectionInputLibrary({directory,mutate,live,inspectCatalog:inspectCollectionCatalog});
+  return Object.freeze({ directory, inputs, sharing, savePlan, inspectPlan, listPlans, prepareEdition, createEdition,
     inspectEdition, listEditions, inspectRecoverySources, inspectCatalog: inspectCollectionCatalog,
     close() { closed = true; } });
 }

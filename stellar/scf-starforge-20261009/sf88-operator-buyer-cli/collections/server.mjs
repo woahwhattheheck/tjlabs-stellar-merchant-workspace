@@ -224,6 +224,42 @@ export async function serveCollections(collections, {
       if (await routeCustomerUse({request,response,url,controller:customerUseController,mutate,send})) return;
       if (url.pathname.startsWith('/api/composer/')) {
         const authoring = collectionComposer();
+        if (url.pathname === '/api/composer/inputs' || url.pathname.startsWith('/api/composer/inputs/')) {
+          const inputs = authoring.inputs, base = '/api/composer/inputs';
+          if (url.pathname === base) {
+            if (request.method === 'GET') return send(await inputs.list());
+            need(request.method === 'POST','METHOD_NOT_ALLOWED',405);
+            const input = fields(await jsonBody(request),['manifest']);
+            return send(await mutate(()=>inputs.begin(input)),201);
+          }
+          if (url.pathname === base + '/list') {
+            need(request.method === 'POST','METHOD_NOT_ALLOWED',405);
+            return send(await inputs.list(fields(await jsonBody(request),['kind','query','offset','limit'])));
+          }
+          const route = /^\/api\/composer\/inputs\/([a-f0-9]{64})(?:\/(complete|file|catalog|chunks\/(0|[1-9][0-9]*)))?$/.exec(url.pathname);
+          need(route,'ROUTE_NOT_FOUND',404);
+          const uploadId = route[1], action = route[2];
+          if (!action) {
+            need(request.method === 'GET','METHOD_NOT_ALLOWED',405);
+            return send(await inputs.inspect({uploadId}));
+          }
+          if (action === 'file' || action === 'catalog') {
+            need(request.method === 'GET','METHOD_NOT_ALLOWED',405);
+            return action === 'file' ? downloadFile(response,await inputs.file({uploadId}))
+              : send(await inputs.catalog({uploadId}));
+          }
+          need(request.method === 'POST','METHOD_NOT_ALLOWED',405);
+          if (action === 'complete') {
+            fields(await jsonBody(request),[]);
+            return send(await mutate(()=>inputs.complete({uploadId})));
+          }
+          need(request.headers['content-type']?.split(';')[0].trim().toLowerCase() === 'application/octet-stream',
+            'COLLECTION_INPUT_BINARY_REQUIRED');
+          if (request.headers['content-length'] !== undefined)
+            need(/^(0|[1-9][0-9]*)$/.test(request.headers['content-length'])
+              && Number(request.headers['content-length'])<=1048576,'COLLECTION_INPUT_CHUNK_SIZE_INVALID');
+          return send(await mutate(()=>inputs.receiveChunk({uploadId,index:Number(route[3]),source:request})));
+        }
         if (url.pathname.startsWith('/api/composer/sharing/')) {
           const exchange = authoring.sharing, base = '/api/composer/sharing/packages';
           const downloadable = value => ({ ...value, downloadUrl: base + '/' + value.packageSha256 + '/file' });

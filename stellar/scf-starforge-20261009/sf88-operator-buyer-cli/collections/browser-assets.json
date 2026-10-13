@@ -127,6 +127,20 @@
         "../delivery/OPERATOR.md",
         "text/markdown; charset=utf-8"
       ]
+    ],
+    [
+      "/plan-inputs.mjs",
+      [
+        "plan-inputs.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-composer/input-format.mjs",
+      [
+        "../../collection-composer/input-format.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

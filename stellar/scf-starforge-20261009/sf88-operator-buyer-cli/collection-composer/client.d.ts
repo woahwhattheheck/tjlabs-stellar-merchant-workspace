@@ -376,8 +376,76 @@ export interface CollectionPlanSharingClient {
   }>;
 }
 
+export type CollectionInputKind = "catalog" | "body";
+export interface CollectionInputManifest {
+  schema: "stellar-forge.sf88.collection-input-upload.v1";
+  kind: CollectionInputKind;
+  name: string;
+  bytes: number;
+  /** Ordered SHA-256 hashes of 1 MiB chunks, with a shorter final chunk. Empty body: []. */
+  chunkSha256: string[];
+}
+export interface CollectionLocalInput {
+  schema: "stellar-forge.sf88.collection-input.v1";
+  id: string;
+  kind: CollectionInputKind;
+  name: string;
+  bytes: number;
+  sha256: string;
+  /** Original private server path for PlannedRequest.discoveryFile or bodyFile. */
+  path: string;
+  createdAt: string;
+  catalog?: { source: string | null; rowCount: number };
+}
+export interface CollectionInputStatus {
+  schema: "stellar-forge.sf88.collection-input-status.v1";
+  uploadId: string;
+  manifest: CollectionInputManifest;
+  phase: "UPLOADING" | "READY";
+  receivedBytes: number;
+  receivedChunks: number[];
+  chunkBytes: 1048576;
+  input?: CollectionLocalInput;
+}
+export interface CollectionInputChunkReceipt {
+  schema: "stellar-forge.sf88.collection-input-chunk.v1";
+  uploadId: string;
+  index: number;
+  bytes: number;
+  sha256: string;
+}
+export type CollectionInputSummary = {
+  id: string; name: string; kind: CollectionInputKind; bytes: number;
+  phase: "UPLOADING" | "READY"; receivedBytes: number; createdAt: string; sha256?: string;
+} | { id: string; name: string; phase: "UNAVAILABLE"; error: string };
+export interface CollectionInputListOptions {
+  kind?: CollectionInputKind; query?: string; offset?: number; limit?: number;
+}
+export interface CollectionInputList {
+  schema: "stellar-forge.sf88.collection-inputs.v1";
+  inputs: CollectionInputSummary[];
+  total: number;
+  offset: number;
+  limit: number;
+  hasMore: boolean;
+  limits: { catalog: 1048576; body: 16777216 };
+  chunkBytes: 1048576;
+}
+export interface CollectionInputsClient {
+  begin(input: {manifest: CollectionInputManifest}, options?: RequestOptions): Promise<CollectionInputStatus>;
+  list(input?: CollectionInputListOptions, options?: RequestOptions): Promise<CollectionInputList>;
+  inspect(input: {uploadId: string}, options?: RequestOptions): Promise<CollectionInputStatus>;
+  receiveChunk(input: {uploadId: string; index: number; source: Uint8Array | ArrayBuffer | Blob},
+    options?: RequestOptions): Promise<CollectionInputChunkReceipt>;
+  complete(input: {uploadId: string}, options?: RequestOptions): Promise<CollectionInputStatus>;
+  catalog(input: {uploadId: string}, options?: RequestOptions): Promise<CatalogView>;
+  /** Authenticated same-origin response. Stream response.body for the original file bytes. */
+  downloadFile(input: {uploadId: string}, options?: RequestOptions): Promise<Response>;
+}
+
 export interface CollectionComposerClient {
   readonly origin: string;
+  readonly inputs: CollectionInputsClient;
   readonly sharing: CollectionPlanSharingClient;
   listPlans(options?: RequestOptions): Promise<{
     schema: "stellar-forge.sf88.collection-plans.v1";

@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "buyer-collection-composer",
-  "description": "Compose reusable customer request plans, share complete inputs and adopt them into independent buyer workspaces",
+  "description": "Compose reusable customer request plans with private local inputs, share complete sources and adopt them into independent buyer workspaces",
   "components": [
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer"
   ],
@@ -36,6 +36,7 @@
     },
     "./buyer/customer-use/return": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/customer-use-return.mjs",
     "./buyer/customer-use/cli": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/customer-use-cli.mjs",
-    "./buyer/collection-plans/package-format": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/package-format.mjs"
+    "./buyer/collection-plans/package-format": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/package-format.mjs",
+    "./buyer/collection-plans/input-format": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/input-format.mjs"
   }
 }
