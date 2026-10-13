@@ -137,6 +137,46 @@
       <div id="native-search-status"></div>
     </section>
   </div>
+  <section class="panel" id="source-document-acquisition">
+    <h2>Acquire original repository documents</h2>
+    <p>Prepare the exact original document URLs and their source records, roles and access terms. The workspace streams each original file, keeps its HTTP history and resumes saved byte prefixes when the source supports the same strong validator.</p>
+    <form id="source-download-plan-form">
+      <div class="grid two"><label>Acquisition title<input name="title" required maxlength="512"></label><label>Selecting operator<input name="reviewer" required maxlength="256"></label></div>
+      <label>Original selection and acquisition authority<textarea name="note" rows="3" required></textarea></label>
+      <label>Complete original file selection<input name="file" type="file" accept=".json,application/json"></label>
+      <label>Or edit the complete file rows<textarea name="files" rows="11" spellcheck="false" required placeholder='[{"identifier":"exact original OAI identifier","id":"article-original","filename":"article.pdf","url":"https://repository.example/original-file.pdf","role":"article","mediaType":"application/pdf","access":{"metadata":"public","files":"public","releaseDate":"","restriction":"","licenseURI":""}}]'></textarea></label>
+      <p class="muted">Optional row fields: expectedSha256, expectedBytes, maximumBytes and redirectOrigins. Include the actual redirected HTTPS origins when the publisher uses a separate file service. Credentials belong in the selected host environment.</p>
+      <div class="grid two"><label>Seconds between source documents<input name="interval" type="number" min="0" max="3600" step="0.1" value="2.1" required></label><label>Existing source authorization environment variable<input name="authorizationEnvironment" autocomplete="off"></label></div>
+      <button type="submit">Save original document selection</button>
+    </form>
+    <div class="row"><button id="refresh-source-downloads" type="button">Refresh acquisitions</button><span id="source-download-count"></span></div>
+    <div id="source-download-list"></div>
+    <div class="row"><button id="previous-source-downloads" type="button">Previous acquisitions</button><button id="next-source-downloads" type="button">Next acquisitions</button></div>
+    <section id="source-download-detail" hidden>
+      <h3 id="source-download-title"></h3><p id="source-download-description"></p>
+      <div class="actions"><button id="run-source-downloads" type="button">Acquire or resume these original files</button><button id="pause-source-downloads" type="button">Pause after saving current bytes</button><a id="export-source-downloads" class="button">Download complete acquisition</a></div>
+      <p id="source-download-progress" role="status"></p>
+      <div class="table-scroll"><table><caption class="sr-only">Original document acquisition</caption><thead><tr><th scope="col">Receive</th><th scope="col">Document and source record</th><th scope="col">Original source</th><th scope="col">Bytes and status</th><th scope="col">Review</th></tr></thead><tbody id="source-download-rows"></tbody></table></div>
+      <div class="row"><button id="previous-source-download-files" type="button">Previous documents</button><span id="source-download-file-page"></span><button id="next-source-download-files" type="button">Next documents</button></div>
+      <details id="source-download-history"><summary>Original selected file and complete HTTP history</summary><pre id="source-download-history-body"></pre></details>
+      <details><summary>Receive an original file from the existing source browser or authorized export</summary>
+        <form id="source-download-import-form">
+          <label>Original acquisition row ID<input name="id" required></label>
+          <label>Complete original file path on this machine<input name="path" required></label>
+          <label>Actual original HTTP receipt<textarea name="transport" rows="8" spellcheck="false" required placeholder='{"url":"original selected URL","finalUrl":"actual final URL","method":"GET","status":200,"headers":[["Content-Type","application/pdf"]],"observedAt":"actual ISO timestamp"}'></textarea></label>
+          <label>Source receiving operator<input name="reviewer" required></label><label>Original source receiving context<textarea name="note" rows="3" required></textarea></label>
+          <button type="submit">Receive original source file and HTTP result</button>
+        </form>
+      </details>
+      <button id="prepare-source-download-receive" type="button">Prepare selected completed files for receiving</button>
+      <form id="source-download-adopt-form">
+        <label>Complete editable receiving rows<textarea name="files" rows="10" spellcheck="false" required></textarea></label>
+        <p class="muted">Review each filename, role, media type and complete access terms against its original bytes. A replacement also names the current file's replaceSha256. Source bytes and their acquisition remain retained.</p>
+        <label>Receiving operator<input name="reviewer" required maxlength="256"></label><label>Document and access review<textarea name="note" rows="3" required></textarea></label>
+        <button type="submit">Receive reviewed documents into the migration</button>
+      </form>
+    </section>
+  </section>
   <section class="panel">
     <h2>Original file manifest and complete source tree</h2>
     <p>Each file stays tied to its exact source record, original bytes, checksum, role and access terms. Large binaries remain in the selected file tree and stream into the complete handover.</p>

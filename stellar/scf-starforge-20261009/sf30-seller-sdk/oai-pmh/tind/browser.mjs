@@ -156,7 +156,7 @@ function tab(name) {
   $$('[data-panel]').forEach(panel => { panel.hidden = panel.dataset.panel !== name; });
   $$('[data-tab]').forEach(button => { if (button.dataset.tab === name) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current'); });
   if (name === 'records' && data?.project) loadRecords().catch(error => message(error.message,true));
-  if (name === 'receiving' && data?.project) loadFiles().catch(error => message(error.message,true));
+  if (name === 'receiving' && data?.project) Promise.all([loadFiles(),loadAcquisitions()]).catch(error => message(error.message,true));
   if (name === 'source-cases') loadSourceCollections().catch(error => message(error.message,true));
 }
 function recordLink(view) {
@@ -180,7 +180,7 @@ function renderNative() {
     '<p>Request '+esc(short(item.requestBody?.sha256))+' · native result '+esc(short(item.response?.original?.sha256))+'</p></div>').join('');
   for(const job of data?.nativeJobs||[]){
     if(job.status!=='error')continue;
-    const container=job.task==='search'?$('#native-search-status'):$('#native-transfer-status');
+    const container=job.task==='source-download'?$('#source-download-list'):job.task==='search'?$('#native-search-status'):$('#native-transfer-status');
     container.insertAdjacentHTML('afterbegin','<div class="conflict" role="status"><strong>'+esc(job.operationId)+
       '</strong><p>Native operation returned: '+esc(job.error||'Open the retained operation for its result.')+'</p></div>');
   }
@@ -260,7 +260,7 @@ async function reload({preserve=false}={}) {
   history.replaceState(null,'',url.pathname+url.search);
   renderState(preserve); pendingUI();
   if(!allEditions.length || allEditions[0]?.id!==data.original.editions[0]?.id) await receiveEditions();
-  if(!$('[data-panel="receiving"]').hidden) await loadFiles();
+  if(!$('[data-panel="receiving"]').hidden){await loadFiles();await loadAcquisitions();}
   if(sourceContext!==projectId){sourceContext=projectId;sourceCollection=null;sourceCollections=null;sourcePlan=null;sourcePlanDirty=false;sourceCollectionOffset=0;$('#source-case-detail').hidden=true;}
   if(!$('[data-panel="source-cases"]').hidden) await loadSourceCollections();
 }
@@ -631,6 +631,104 @@ $('#batch-list').addEventListener('click',async event=>{
   }catch(error){message(error.message,true);}
 });
 window.addEventListener('beforeunload',event=>{if(pending||recordDirty||mappingDirty||sourcePlanDirty){event.preventDefault();event.returnValue='';}});
+
+let acquisitionList=null, acquisitionOffset=0, acquisitionCurrent=null, acquisitionFileOffset=0, acquisitionContext='';
+const acquisitionChosen=new Map();
+async function loadAcquisitions() {
+  if(!data?.project){$('#source-download-list').textContent='Choose a migration first.';return;}
+  if(acquisitionContext!==projectId){
+    acquisitionContext=projectId;acquisitionCurrent=null;acquisitionFileOffset=0;acquisitionOffset=0;acquisitionChosen.clear();
+    $('#source-download-detail').hidden=true;$('#source-download-adopt-form').reset();
+  }
+  acquisitionList=await api('/api/source-downloads?'+sourceQuery({offset:String(acquisitionOffset),limit:'25'}));
+  $('#source-download-count').textContent=acquisitionList.total+' retained selections';
+  $('#source-download-list').innerHTML=acquisitionList.items.map((item,index)=>'<div class="conflict"><strong>'+esc(item.title)+'</strong><p>'+Number(item.files).toLocaleString()+' files · '+esc(item.createdAt)+' · '+esc(item.reviewer)+'</p><button type="button" data-open-acquisition="'+index+'">Open original acquisition</button></div>').join('')||'<p class="muted">Saved original document selections appear here.</p>';
+  $('#previous-source-downloads').disabled=acquisitionOffset===0;$('#next-source-downloads').disabled=acquisitionList.next==null;
+  if(acquisitionCurrent)await openAcquisition(acquisitionCurrent.id,acquisitionFileOffset,true);
+}
+async function openAcquisition(identity,position=0,preserve=false) {
+  const changed=identity!==acquisitionCurrent?.id;
+  if(changed){acquisitionChosen.clear();$('#source-download-adopt-form').reset();}
+  acquisitionFileOffset=position;
+  acquisitionCurrent=await api('/api/source-downloads?'+sourceQuery({id:identity,offset:String(position),limit:'50'}));
+  const a=acquisitionCurrent;
+  $('#source-download-detail').hidden=false;
+  $('#source-download-title').textContent=a.title;
+  $('#source-download-description').textContent=a.note+' — '+a.reviewer+' · '+a.createdAt;
+  $('#source-download-progress').textContent=Object.entries(a.counts).map(([key,value])=>key+': '+value).join(' · ')+(a.running?' · Acquisition running':'');
+  $('#run-source-downloads').disabled=a.running;$('#pause-source-downloads').disabled=!a.running;
+  $('#export-source-downloads').href='/download/source-acquisition?'+sourceQuery({id:a.id});
+  $('#source-download-rows').innerHTML=a.items.map((item,index)=>'<tr><td><input type="checkbox" aria-label="Receive '+esc(item.filename)+'" data-choose-source-file="'+index+'" '+(item.status==='complete'?'':'disabled ')+(acquisitionChosen.has(item.id)?'checked':'')+'></td><td><strong>'+esc(item.filename)+'</strong><div class="record-id">'+esc(item.identifier)+'</div><div>'+esc(item.role)+' · '+esc(item.access.files)+'</div></td><td><a href="'+esc(item.url)+'" target="_blank" rel="noreferrer">'+esc(item.url)+'</a></td><td>'+esc(item.status)+' · '+Number(item.bytes).toLocaleString()+' bytes'+(item.totalBytes!=null?' / '+Number(item.totalBytes).toLocaleString():'')+'<div>'+esc(item.actualMediaType||'')+'</div><div class="record-id">'+esc(item.sha256||item.prefixSha256)+'</div>'+(item.lastError?'<p>'+esc(item.lastError)+'</p>':'')+'</td><td><button type="button" data-source-file-history="'+index+'">Open original history</button>'+(item.status==='complete'?'<a class="button" href="/download/source-document?'+esc(sourceQuery({id:a.id,file:item.id}))+'">Download original bytes</a>':'')+'</td></tr>').join('');
+  $('#source-download-file-page').textContent=(a.items.length?position+1:0)+'–'+(position+a.items.length)+' of '+a.files;
+  $('#previous-source-download-files').disabled=position===0;$('#next-source-download-files').disabled=a.next==null;
+  if(!preserve)$('#source-download-history-body').textContent='';
+}
+formHandler('#source-download-plan-form',async(form,values)=>{
+  const files=await jsonInput(form,'files');
+  const result=await apply('source-download-plan',{title:String(values.get('title')),reviewer:String(values.get('reviewer')),
+    note:String(values.get('note')),files:Array.isArray(files)?files:files.files,
+    interval:Number(values.get('interval')),authorizationEnvironment:String(values.get('authorizationEnvironment')||'')||null});
+  if(result){await loadAcquisitions();await openAcquisition(result.result.id);}
+});
+$('#source-download-plan-form [name="file"]').addEventListener('change',async event=>{
+  try{if(event.target.files[0])$('#source-download-plan-form [name="files"]').value=await fileText(event.target.files[0]);}
+  catch(error){message(error.message,true);}
+});
+action('#refresh-source-downloads',loadAcquisitions);
+action('#previous-source-downloads',async()=>{acquisitionOffset=Math.max(0,acquisitionOffset-25);await loadAcquisitions();});
+action('#next-source-downloads',async()=>{if(acquisitionList?.next!=null){acquisitionOffset=acquisitionList.next;await loadAcquisitions();}});
+$('#source-download-list').addEventListener('click',async event=>{
+  const button=event.target.closest('[data-open-acquisition]');if(!button)return;
+  try{await openAcquisition(acquisitionList.items[Number(button.dataset.openAcquisition)].id);}catch(error){message(error.message,true);}
+});
+action('#previous-source-download-files',()=>openAcquisition(acquisitionCurrent.id,Math.max(0,acquisitionFileOffset-50),true));
+action('#next-source-download-files',async()=>{if(acquisitionCurrent?.next!=null)await openAcquisition(acquisitionCurrent.id,acquisitionCurrent.next,true);});
+$('#source-download-rows').addEventListener('change',event=>{
+  const box=event.target.closest('[data-choose-source-file]');if(!box)return;
+  const item=acquisitionCurrent.items[Number(box.dataset.chooseSourceFile)];
+  if(box.checked)acquisitionChosen.set(item.id,item);else acquisitionChosen.delete(item.id);
+});
+$('#source-download-rows').addEventListener('click',event=>{
+  const button=event.target.closest('[data-source-file-history]');if(!button)return;
+  const item=acquisitionCurrent.items[Number(button.dataset.sourceFileHistory)];
+  $('#source-download-history-body').textContent=pretty(item);$('#source-download-history').open=true;
+  $('#source-download-import-form [name="id"]').value=item.id;
+});
+action('#run-source-downloads',async()=>{
+  if(!acquisitionCurrent)throw new Error('Open the original source selection.');
+  const digest=await crypto.subtle.digest('SHA-256',encoder.encode(acquisitionCurrent.id));
+  const operationId='source-run-'+[...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('');
+  const prior=(data.nativeJobs||[]).find(job=>job.operationId===operationId);
+  if(prior?.request)await submit('/api/native',prior.request);
+  else await native('source-download',{acquisitionId:acquisitionCurrent.id},operationId);
+});
+action('#pause-source-downloads',async()=>{
+  if(!acquisitionCurrent)return;
+  await api('/api/source-download/stop',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({projectId,acquisitionId:acquisitionCurrent.id})});
+  message('Pause requested. The original stream will save its current byte checkpoint.');
+  await reload({preserve:true});
+});
+action('#prepare-source-download-receive',async()=>{
+  if(!acquisitionChosen.size)throw new Error('Select the completed original documents to receive.');
+  const rows=[...acquisitionChosen.values()].map(item=>({id:item.id,filename:item.filename,role:item.role,mediaType:item.actualMediaType||item.mediaType,access:item.access}));
+  $('#source-download-adopt-form [name="files"]').value=pretty(rows);
+  $('#source-download-adopt-form [name="reviewer"]').value=acquisitionCurrent.reviewer;
+  $('#source-download-adopt-form [name="files"]').focus();
+});
+
+formHandler('#source-download-import-form',async(form,values)=>{
+  if(!acquisitionCurrent)throw new Error('Open the original source acquisition.');
+  await apply('source-download-import',{acquisitionId:acquisitionCurrent.id,id:String(values.get('id')),path:String(values.get('path')),
+    transport:JSON.parse(form.elements.transport.value),reviewer:String(values.get('reviewer')),note:String(values.get('note'))});
+  await loadAcquisitions();
+});
+formHandler('#source-download-adopt-form',async(form,values)=>{
+  if(!acquisitionCurrent)throw new Error('Open the original source acquisition.');
+  await apply('source-download-adopt',{acquisitionId:acquisitionCurrent.id,files:JSON.parse(form.elements.files.value),
+    reviewer:String(values.get('reviewer')),note:String(values.get('note'))});
+  acquisitionChosen.clear();await loadAcquisitions();await loadFiles();
+});
+
 (async()=>{
   try{
     if(!token)throw new Error('Open the complete local launch link to enter the original workspace.');

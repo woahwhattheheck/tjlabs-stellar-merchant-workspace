@@ -67,6 +67,11 @@ def main():
     command = sub.add_parser("native-send")
     command.add_argument("--project", required=True); command.add_argument("--id", required=True)
     command.add_argument("--request", required=True); command.add_argument("--authorization-env")
+    command = sub.add_parser("source-downloads"); command.add_argument("--project", required=True)
+    command.add_argument("--id"); command.add_argument("--offset", type=int, default=0); command.add_argument("--limit", type=int, default=50)
+    command = sub.add_parser("source-download-run"); command.add_argument("--project", required=True); command.add_argument("--id", required=True)
+    command.add_argument("--only", help="JSON array of selected acquisition row IDs")
+    command = sub.add_parser("source-download-export"); command.add_argument("--project", required=True); command.add_argument("--id", required=True)
     args = parser.parse_args()
     if args.command == "profile-template":
         from marc import default_profile
@@ -119,6 +124,17 @@ def main():
                     with workspace.mutex:
                         item, _ = collection(workspace, args.project, args.id)
                         result = storage.load_json(workspace.object_path(item["original"]).read_bytes())
+                elif args.command == "source-downloads":
+                    from source_files import view, list_acquisitions
+                    with workspace.mutex:
+                        result = view(workspace, args.project, args.id, args.offset, args.limit) if args.id else list_acquisitions(workspace, args.project, args.offset, args.limit)
+                elif args.command == "source-download-run":
+                    from source_files import run
+                    result = run(workspace, args.project, args.id, only=document(args.only) if args.only else None)
+                elif args.command == "source-download-export":
+                    from source_files import full_document
+                    with workspace.mutex:
+                        result = full_document(workspace, args.project, args.id)
                 elif args.command == "files":
                     with workspace.mutex:
                         result = workspace.files(args.project, args.offset, args.limit, args.query)

@@ -232,9 +232,13 @@ class Migration:
         """)
 
         case_tables(self)
+        from source_files import tables as source_file_tables
+        source_file_tables(self)
 
     def close(self):
-        self.ws.close()
+        self.source_download_stop.set()
+        with self.source_download_lock, self.mutex:
+            self.ws.close()
 
     def _get(self, table, identity):
         row = self.db.execute("SELECT body FROM " + table + " WHERE id=?", (identity,)).fetchone()
@@ -303,7 +307,9 @@ class Migration:
                 "files": self._files, "file-root": self._file_root, "verify-files": self._verify_files,
                 "prepare": self._prepare, "receipt": self._receipt, "file-receipt": self._file_receipt,
                 "reconcile": self._reconcile, "withdraw-batch": self._withdraw_batch,
-                "source-cases": self._source_cases, "source-case-review": self._source_case_review
+                "source-cases": self._source_cases, "source-case-review": self._source_case_review,
+                "source-download-plan": self._source_download_plan, "source-download-adopt": self._source_download_adopt,
+                "source-download-import": self._source_download_import
             }
             if kind not in methods:
                 raise InputError("Unknown TIND operation")
@@ -501,6 +507,18 @@ class Migration:
         file_digest(path, MAX_OBJECT)
         with path.open("rb") as source:
             return self._receive_destination(project, source, value.get("provenance"), operation)
+
+    def _source_download_plan(self, project, value, operation):
+        from source_files import plan
+        return plan(self, project, value, operation)
+
+    def _source_download_import(self, project, value, operation):
+        from source_files import import_source
+        return import_source(self, project, value, operation)
+
+    def _source_download_adopt(self, project, value, operation):
+        from source_files import adopt
+        return adopt(self, project, value, operation)
 
     def _files(self, project, value, _):
         files = value.get("files")
@@ -1083,6 +1101,8 @@ class Migration:
         output = Path(output).expanduser().absolute()
         source_root = Path(__file__).resolve().parent.parent.parent
         with self.mutex, tempfile.TemporaryDirectory(dir=self.area / "tmp") as directory:
+            if self.source_download_active:
+                raise InputError("Pause the original document acquisition before exporting its complete workspace")
             projects = [decode(r[0]) for r in self.db.execute("SELECT body FROM tind_projects")]
             temp = Path(directory)
             database = temp / "workspace.sqlite"
@@ -1098,6 +1118,8 @@ class Migration:
                 relative = path.relative_to(self.root).as_posix()
                 if path.is_symlink():
                     raise InputError("Resolve symbolic links before a whole workspace handover")
+                if not include_files and relative.startswith("oai/tind/acquisition-bytes/"):
+                    continue
                 if path.is_file() and relative not in {".lock", "workspace.sqlite", "workspace.sqlite-journal"} and not any(
                     relative == prefix or relative.startswith(prefix + "/") for prefix in ("tmp", "oai/tmp", "oai/tind/tmp")):
                     members["workspace/" + relative] = path

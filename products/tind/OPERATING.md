@@ -474,6 +474,102 @@ Create uses `projectId: null` and `expectedRevision: null`. Later operations sel
 
 A retained browser native-task document has `task` in place of `kind`; continue that task through its corresponding `native-search` or `native-send` CLI with the same operation ID and exact saved input. Native read and write histories remain in the workspace database across desk restarts.
 
+
+## Acquire original source documents
+
+The **Native export and files** desk can acquire the original repository documents directly into the existing migration. A saved acquisition contains the exact source record/file pairs, original HTTPS URLs, expected file names, roles and access terms. Its original selection and every returned HTTP status, final URL, validator and byte checkpoint stay in the same database.
+
+### Select and acquire the complete population
+
+In **Acquire original repository documents**, enter the selection title, selecting operator and the original acquisition authority. Import or edit the complete JSON array of document rows. The source identifier must belong to the selected migration:
+
+```json
+[
+  {
+    "identifier": "ACTUAL_ORIGINAL_OAI_IDENTIFIER",
+    "id": "original-article",
+    "filename": "article.pdf",
+    "url": "https://actual-repository.example/original-document.pdf",
+    "role": "article",
+    "mediaType": "application/pdf",
+    "access": {
+      "metadata": "public",
+      "files": "public",
+      "releaseDate": "",
+      "restriction": "",
+      "licenseURI": ""
+    }
+  }
+]
+```
+
+Use the original document's direct URL from its publisher or retained source page. Each row can also name the original `expectedSha256`, `expectedBytes`, `maximumBytes` and an array of actual `redirectOrigins`. The default allowance is the existing 1 TiB file limit. Up to 5,000 complete rows fit in one selection, subject to the original 8 MiB encoded save limit. Prepare additional selections for larger catalogues.
+
+The receiver follows HTTPS redirects within the original source origin and the explicitly selected redirect origins. It never forwards an Authorization header to another origin. A source using private query credentials should be received through its existing authenticated stable endpoint and host authorization environment. Supply the name of that environment variable in the selection; its value stays on the host.
+
+Save the selection, open it, then choose **Acquire or resume these original files**. Each document is streamed in 1 MiB chunks. Durable checkpoints flush and synchronize the original file before saving its byte count and prefix hash in SQLite. Other selected files continue when one original source returns an error.
+
+The desk shows each original HTTP result, exact bytes, checksum, actual returned media type and remaining source error. **Open original history** shows the complete selected row and all attempts. **Download original bytes** opens the completed original for inspection. A publisher login or error page that arrives as HTTP 200 is still the actual returned document: compare its bytes and actual media type with the intended file before receiving it.
+
+### Pause and continue the same acquisition
+
+Choose **Pause after saving current bytes** before exporting the workspace or moving to another original byte operation. The current read records its complete durable prefix. Reopen the same acquisition and continue its original rows after a restart. A browser save whose response was lost retains the exact operation request in the desk's existing IndexedDB queue.
+
+A resumed HTTP range uses `Range` and `If-Range` with the same strong ETag. The receiver verifies the exact starting offset and selected total length, and checks the returned validator when present. An If-Range response may omit unchanged representation headers under RFC 9110. A server that returns a new full response starts that document from byte zero. A source without a strong ETag also restarts from byte zero. Checkpoints are rehashed before reuse, and bytes written after the last durable checkpoint are truncated before continuation. The receiver checks the selected expected length and SHA-256 when supplied.
+
+The original publisher's request spacing is selected per acquisition; the default is 2.1 seconds between documents. Active source workers stop and save their stream before the application closes its database.
+
+### Receive the existing source operator's original file
+
+When the institution's existing browser or export has already acquired a document, open **Receive an original file from the existing source browser or authorized export**. Choose the acquisition row, its actual complete local file and the original HTTP receipt: requested URL, returned URL, GET/200, response header pairs and observed time. The receiver streams the file into this same acquisition, checks its declared or selected identity, and retains the original result with the receiving operator and context. Private authentication headers are omitted. A changed completed document starts a new acquisition and later follows explicit replacement receiving.
+
+The same operation is available through ordinary apply kind `source-download-import`. Its input is `{acquisitionId,id,path,transport,reviewer,note}`. Source browser downloads and authenticated exports therefore join the same file review, native batch and editable handover as direct HTTP acquisition.
+
+### Receive reviewed files into the migration
+
+Select the completed files and choose **Prepare selected completed files for receiving**. The complete receiving rows remain editable. Review the actual original bytes, file name, role, actual media type and every access/release term. Enter the receiving operator and document review note, then receive the selection.
+
+The operation copies the exact original bytes into the migration's existing bound file tree. A migration without a file tree receives them under its own private source directory and binds that directory automatically. Current native observations for the same byte identity stay with the file. Receiving changed bytes for an existing file also requires its exact current `replaceSha256` in the selected row, so the full replacement has a retained before/after source decision.
+
+The resulting files appear in the existing original-file desk and frozen native batch manifests. Their source acquisition IDs, original URLs, actual returned URL, bytes and source observations travel with the existing metadata, file access review and native receiving history. HTTP acquisition completes the original source-file stage; native file attachment and destination access continue through the existing TIND receiving workflow.
+
+### Original command operation
+
+Create the selection with the ordinary `apply` command and a saved request containing kind `source-download-plan`, the current project/revision and this input:
+
+```json
+{
+  "title": "Original institution documents",
+  "reviewer": "Actual source operator",
+  "note": "Original publisher document URLs and source access terms selected",
+  "interval": 2.1,
+  "authorizationEnvironment": null,
+  "files": ["REPLACE_WITH_THE_COMPLETE_ORIGINAL_DOCUMENT_ROWS"]
+}
+```
+
+The save returns its acquisition ID. Use the same ID throughout the original operation:
+
+```sh
+starforge tind-migration --workspace /private/repository source-downloads \
+  --project ACTUAL_PROJECT_ID
+
+starforge tind-migration --workspace /private/repository source-download-run \
+  --project ACTUAL_PROJECT_ID --id ORIGINAL_ACQUISITION_ID
+
+starforge tind-migration --workspace /private/repository source-downloads \
+  --project ACTUAL_PROJECT_ID --id ORIGINAL_ACQUISITION_ID --offset 0 --limit 50
+
+starforge tind-migration --workspace /private/repository source-download-export \
+  --project ACTUAL_PROJECT_ID --id ORIGINAL_ACQUISITION_ID
+```
+
+The run command optionally accepts `--only /private/selected-acquisition-row-ids.json` to continue an exact subset. Its original source selection remains unchanged. Receive completed files with a normal `source-download-adopt` apply operation; input contains `acquisitionId`, `reviewer`, `note` and the complete editable `files` receiving rows from the desk. Each row names its acquisition row `id` and selected file metadata, role and access.
+
+A complete editable handover includes the original acquisition database, returned source bytes and durable partial files, plus all adopted migration files. Receiving relocates this original cache with the workspace; pending acquisitions can continue from their retained byte checkpoints. A metadata-only handover omits the acquisition binary tree and the adopted source tree. Its selection and HTTP history remain available, and the original acquisition can reacquire omitted bytes on the receiving host. Bind the intended receiving file tree before adopting into a project that previously used another host's directory.
+
+HTTP range and validator behavior follows [RFC 9110, sections 13.1.5 and 14](https://www.rfc-editor.org/rfc/rfc9110.html). Original source-document acquisition remains independent from the selected institution's native Batchuploader and object-storage contracts.
+
 ## Source and native references
 
 - [Original OAI operator source](../../stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/): repository transport, reviewed editions and incremental history.
