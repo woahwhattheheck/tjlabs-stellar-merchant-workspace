@@ -936,7 +936,14 @@ export async function openSeaTableAuthoring({ directory, create = false, connect
         }
       });
     }
-    async function withReceivedWorkspace(name,action){await openReceivedWorkspace(name);const child=receivedChildren.get(name);return action(child);}
+    async function withReceivedWorkspace(name,action){
+      await openReceivedWorkspace(name);
+      return transfer('WORKSPACE_USE',name,async()=>{
+        const child=receivedChildren.get(name);
+        if(!child)throw fault('SEATABLE_WORKSPACE_RECEIVED_MISSING',undefined,404);
+        return action(child);
+      });
+    }
 
     // Reopening never repeats a provider call or starts a publication/service.
     db.prepare("UPDATE operations SET status='interrupted',updated=? WHERE status='pending'").run(stamp());
