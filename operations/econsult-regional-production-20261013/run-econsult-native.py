@@ -248,11 +248,16 @@ def main():
     parser.add_argument("--packet", required=True)
     parser.add_argument("--packet-sha256", required=True)
     parser.add_argument("--directory", required=True)
+    parser.add_argument("--source-edition-packet", help="Complete successor source for the same retained operation")
+    parser.add_argument("--source-edition-sha256")
     parser.add_argument("--profile", required=True)
     parser.add_argument("--programme", required=True)
     parser.add_argument("--received-slices")
     parser.add_argument("--research-catalogue", action="store_true",
                         help="Compose the retained research catalogue into this complete original company project")
+    parser.add_argument("--research-agent", action="store_true",
+                        help="Operate and independently receive the complete customer Research agent workflow")
+    parser.add_argument("--mtc-originals", help="Complete original MTC forecast and FAQ directory for this same research project")
     parser.add_argument("--node", default="node")
     parser.add_argument("--chromium", required=True)
     parser.add_argument("--playwright-module", required=True)
@@ -260,6 +265,23 @@ def main():
     parser.add_argument("--archive-directory")
     options = parser.parse_args()
     packet, packet_bytes = read_packet(options.packet, options.packet_sha256)
+    check(bool(options.source_edition_packet) == bool(options.source_edition_sha256),
+          "Select both the complete source edition packet and its published SHA256.")
+    check(not options.research_agent or options.research_catalogue,
+          "The customer agent continues the complete original research catalogue.")
+    check(not options.mtc_originals or options.research_agent,
+          "Continue the complete original Research customer-agent course before MTC source receiving.")
+    active_packet, active_packet_bytes = packet, packet_bytes
+    if options.source_edition_packet:
+        active_packet, active_packet_bytes = read_packet(options.source_edition_packet, options.source_edition_sha256)
+        original_files = {item["path"]: item for item in packet["files"]}
+        active_files = {item["path"]: item for item in active_packet["files"]}
+        check(original_files.keys() <= active_files.keys(),
+              "The complete source edition must retain every original source path.")
+        for name, item in original_files.items():
+            if name.startswith("receiving/") or "/fred/sources/" in name:
+                check(active_files[name]["content"] == item["content"],
+                      "The source edition must preserve the complete original selected input: " + name)
     root = private_directory(options.directory)
     intake = root / "intake"
     inputs = private_directory(root / "inputs")
@@ -299,7 +321,18 @@ def main():
         controllers = private_directory(root / "controllers")
         retain_exact(controllers / ("run-" + sha(controller_bytes) + ".py"), controller_bytes)
         source = materialize(root, packet)
+        source_edition = {"packetSha256": options.packet_sha256, "directory": str(source)}
+        if options.source_edition_packet:
+            edition_root = private_directory(private_directory(root / "source-editions") / options.source_edition_sha256)
+            retain_exact(edition_root / "source-packet.json", active_packet_bytes)
+            source = materialize(edition_root, active_packet)
+            source_edition = {"packetSha256": options.source_edition_sha256, "directory": str(source),
+                              "originalPacketSha256": options.packet_sha256}
         product = source / PREFIX
+        if options.research_catalogue:
+            selected_research = next(item for item in active_packet["files"] if item["path"] == research_relative)
+            check(selected_research["content"] == research_file["content"],
+                  "Keep the exact original catalogue selection in the active source edition.")
         (root / "logs").mkdir(mode=0o700, exist_ok=True)
         node = shutil.which(options.node) or options.node
         versions = json.loads(subprocess.check_output([node, "-p", "JSON.stringify(process.versions)"], text=True))
@@ -316,6 +349,7 @@ def main():
         retain_exact(launcher, launcher_bytes)
         os.chmod(launcher, 0o700)
         environment = dict(os.environ)
+        environment["PYTHONDONTWRITEBYTECODE"] = "1"
         environment["TMPDIR"] = str(private_directory(root.parent / (root.name + "-runtime-tmp")))
         state_path = root / "run.json"
         if state_path.exists():
@@ -325,7 +359,11 @@ def main():
         else:
             state = {"schema": "stellar-forge.qcew-native-controller.v1", "identity": identity,
                      "startedAt": now(), "stages": []}
-        state.update({"lastStartedAt": now(), "status": "running",
+        check(not state.get("researchAgent") or options.research_agent,
+              "Continue the completed customer-agent course with --research-agent.")
+        check(not state.get("mtcSources") or options.mtc_originals,
+              "Continue the completed MTC source course with --mtc-originals and its retained original directory.")
+        state.update({"lastStartedAt": now(), "status": "running", "sourceEdition": source_edition,
                       "runtime": {"node": versions, "python": sys.version, "chromium": str(browser),
                                   "playwright": str(playwright)}})
         state.pop("error", None)
@@ -392,6 +430,86 @@ def main():
                 check(len(research.get("sources", [])) == len(research_selection["sources"]) and
                       sum(len(product["editions"]) for product in research.get("products", [])) == 2,
                       "Retain every selected research source and both original issued research-product editions.")
+            if options.research_agent:
+                agent_directory = root / "research-agent"
+                agent_result_path = agent_directory / "journey.json"
+                agent_command = [node, str(source / "stellar-forge/mcp-merchant-operator/fred-research-journey.mjs"),
+                    "--directory", str(agent_directory),
+                    "--research-directory", str(root / "research"),
+                    "--input", str(source / research_relative),
+                    "--controller-lock-fd", str(lock.fileno())]
+                complete_stage("complete-research-agent-receiving", agent_command,
+                               agent_result_path, root, lock, state, environment)
+                agent_result = json.loads(read_regular(agent_result_path))
+                before_agent = json.loads(read_regular(final_project))
+                check(agent_result.get("schema") == "stellar-forge.fred-research-agent-journey.v1" and
+                      agent_result.get("status") == "COMPLETE" and
+                      agent_result.get("identity", {}).get("operation") == identity["researchCatalogue"]["operation"] and
+                      agent_result.get("identity", {}).get("projectId") == before_agent["state"]["id"] and
+                      agent_result.get("identity", {}).get("inputSha256") == research_file["sha256"],
+                      "Complete the customer agent course on this original catalogue, project and input.")
+                final_project = agent_directory / "complete-economic-project.json"
+                after_agent = json.loads(read_regular(final_project))
+                check(after_agent["state"]["id"] == before_agent["state"]["id"] and
+                      after_agent.get("qcew") == before_agent.get("qcew") and
+                      after_agent["state"].get("qcew") == before_agent["state"].get("qcew") and
+                      after_agent["captures"] == before_agent["captures"],
+                      "Keep both original reports and complete quantitative source through agent receiving.")
+                original_research = before_agent["state"].get("research", {})
+                final_research = after_agent["state"].get("research", {})
+                for family in ("sources", "reviews"):
+                    received = {item["id"]: item for item in final_research.get(family, [])}
+                    check(all(received.get(item["id"]) == item for item in original_research.get(family, [])),
+                          "Retain every original research " + family + " member through customer agent receiving.")
+                state["researchAgent"] = {"result": {"path": str(agent_result_path),
+                    "bytes": len(read_regular(agent_result_path)), "sha256": sha(read_regular(agent_result_path))},
+                    "operation": agent_result["identity"]["operation"], "projectId": after_agent["state"]["id"]}
+            if options.mtc_originals:
+                mtc_directory = root / "mtc-source-receiving"
+                mtc_result_path = mtc_directory / "receiving-result.json"
+                mtc_source = source / "operations/econsult-regional-production-20261013/mtc-source-catalogue"
+                mtc_input = json.loads(read_regular(mtc_source / "catalogue-input.json"))
+                check(mtc_input.get("operation") == "MTC-PBA2050PLUS-SOURCE-IMPORT-20261013",
+                      "Use the retained complete original MTC source selection.")
+                originals = pathlib.Path(options.mtc_originals).absolute()
+                before_mtc = json.loads(read_regular(final_project))
+                mtc_command = [node, str(mtc_source / "import-mtc-sources.mjs"),
+                    "--fred-root", str(product / "fred"), "--project", str(root / "research" / "project"),
+                    "--directory", str(mtc_directory), "--originals", str(originals)]
+                complete_stage("complete-mtc-source-receiving", mtc_command,
+                               mtc_result_path, root, lock, state, environment)
+                mtc_result = json.loads(read_regular(mtc_result_path))
+                check(mtc_result.get("schema") == "commons.mtc-catalogue-receiving.v1" and
+                      mtc_result.get("identity", {}).get("operation") == mtc_input["operation"] and
+                      mtc_result.get("projectId") == before_mtc["state"]["id"] and
+                      mtc_result.get("identity", {}).get("inputSha256") == sha(read_regular(mtc_source / "catalogue-input.json")),
+                      "Receive every original MTC source into this complete economic project.")
+                received_mtc = mtc_result.get("independentReceiving", {})
+                filename = received_mtc.get("filename", "")
+                check(filename and pathlib.PurePath(filename).name == filename and "/" not in filename and "\\" not in filename,
+                      "Select the complete independently received MTC project file.")
+                final_project = mtc_directory / filename
+                final_mtc_bytes = read_regular(final_project)
+                check(len(final_mtc_bytes) == received_mtc.get("bytes") and sha(final_mtc_bytes) == received_mtc.get("sha256"),
+                      "The complete independently received MTC project changed.")
+                after_mtc = json.loads(final_mtc_bytes)
+                check(after_mtc["state"]["id"] == before_mtc["state"]["id"] and
+                      after_mtc.get("qcew") == before_mtc.get("qcew") and
+                      after_mtc["state"].get("qcew") == before_mtc["state"].get("qcew") and
+                      after_mtc["captures"] == before_mtc["captures"],
+                      "Retain the original economic reports and quantitative sources through MTC receiving.")
+                for family in ("sources", "reviews"):
+                    received_family = {item["id"]: item for item in after_mtc["state"].get("research", {}).get(family, [])}
+                    check(all(received_family.get(item["id"]) == item for item in before_mtc["state"].get("research", {}).get(family, [])),
+                          "Keep every earlier Research " + family + " member in the complete MTC project.")
+                source_identities = mtc_result["identity"].get("sources", [])
+                check(len(source_identities) == 3 and
+                      {item["filename"] for item in source_identities} == {item["filename"] for item in mtc_input["sources"]},
+                      "Receive both complete original PDFs and the full published growth table.")
+                state["mtcSources"] = {"result": {"path": str(mtc_result_path),
+                    "bytes": len(read_regular(mtc_result_path)), "sha256": sha(read_regular(mtc_result_path))},
+                    "operation": mtc_input["operation"], "projectId": after_mtc["state"]["id"],
+                    "independentReceiving": received_mtc}
             final_bytes = read_regular(final_project)
             state["completeCustomerProject"] = {"path": str(final_project),
                 "bytes": len(final_bytes), "sha256": sha(final_bytes)}
@@ -404,6 +522,11 @@ def main():
         archive = preserve_archive(root, intake, archive_directory)
         result = {"event": "econsult_native_delivered", "operation": OPERATION, "status": state["status"],
                   "directory": str(root), "archive": archive, "stages": state["stages"]}
+        result["sourceEdition"] = source_edition
+        if state.get("researchAgent"):
+            result["researchAgent"] = state["researchAgent"]
+        if state.get("mtcSources"):
+            result["mtcSources"] = state["mtcSources"]
         if state.get("completeCustomerProject"):
             result["completeCustomerProject"] = state["completeCustomerProject"]
         if failed:

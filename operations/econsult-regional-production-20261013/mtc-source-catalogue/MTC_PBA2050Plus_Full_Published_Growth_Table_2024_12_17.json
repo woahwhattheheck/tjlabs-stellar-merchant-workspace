@@ -1,0 +1,148 @@
+{
+  "schema": "commons.regional-forecast-published-table.v1",
+  "id": "mtc-pba2050plus-final-growth-2024-12-17",
+  "agency": "Metropolitan Transportation Commission / Association of Bay Area Governments",
+  "title": "Plan Bay Area 2050+: Final Regional Growth Forecast",
+  "source": {
+    "url": "https://mtc.ca.gov/sites/default/files/meetings/attachments/6172/6biv_24_1482_Attachment_C_Final_Regional_Growth_Forecast_5.pdf?cb=2b452fe1",
+    "documentDate": "2024-12-17",
+    "page": 2,
+    "table": "Table 1",
+    "retainedOriginalBytes": 152937,
+    "fileUploadId": "3f8dd772-3100-8190-9a01-00b246b4a2e0"
+  },
+  "geography": {
+    "label": "Nine-county San Francisco Bay Area",
+    "counties": [
+      "Alameda",
+      "Contra Costa",
+      "Marin",
+      "Napa",
+      "San Francisco",
+      "San Mateo",
+      "Santa Clara",
+      "Solano",
+      "Sonoma"
+    ]
+  },
+  "sourceMeaning": "Published historical and forecast table from the 2050+ adopted-growth attachment; the source values are retained as labelled and have not been re-estimated.",
+  "years": [
+    2020,
+    2025,
+    2030,
+    2035,
+    2040,
+    2045,
+    2050
+  ],
+  "series": [
+    {
+      "id": "population",
+      "label": "Population",
+      "unit": "persons",
+      "values": [
+        7749000,
+        7723000,
+        8048000,
+        8476000,
+        8903000,
+        9266000,
+        9586000
+      ]
+    },
+    {
+      "id": "households",
+      "label": "Households",
+      "unit": "households",
+      "values": [
+        2798000,
+        2902000,
+        3027000,
+        3312000,
+        3511000,
+        3662000,
+        3796000
+      ]
+    },
+    {
+      "id": "housing_units",
+      "label": "Housing units",
+      "unit": "housing units",
+      "values": [
+        2875000,
+        3018000,
+        3187000,
+        3486000,
+        3696000,
+        3855000,
+        3996000
+      ]
+    },
+    {
+      "id": "jobs",
+      "label": "Jobs",
+      "unit": "jobs",
+      "values": [
+        4025000,
+        4154000,
+        4661000,
+        4855000,
+        5079000,
+        5255000,
+        5436000
+      ]
+    }
+  ],
+  "notes": [
+    "Source identifies 2023 as plan base year and2050 as horizon; table begins2020. Preserve both source statements.",
+    "2050+ is a minor update preserving the adopted methodology, with updated baseline data; this is background to the next2060 methodology procurement.",
+    "Source table is a regional aggregate; county-level allocations cannot be inferred from these values.",
+    "Historical/forecast roles are kept as source labels; do not relabel all2020–2025 entries as observed actuals without their underlying source editions."
+  ],
+  "derivedComparisons": [
+    {
+      "id": "population",
+      "fromYear": 2025,
+      "toYear": 2050,
+      "from": 7723000,
+      "to": 9586000,
+      "absoluteChange": 1863000,
+      "percentageChange": 24.12275022659589,
+      "calculation": "(to/from - 1)*100",
+      "sourceTableId": "mtc-pba2050plus-final-growth-2024-12-17"
+    },
+    {
+      "id": "households",
+      "fromYear": 2025,
+      "toYear": 2050,
+      "from": 2902000,
+      "to": 3796000,
+      "absoluteChange": 894000,
+      "percentageChange": 30.806340454858727,
+      "calculation": "(to/from - 1)*100",
+      "sourceTableId": "mtc-pba2050plus-final-growth-2024-12-17"
+    },
+    {
+      "id": "housing_units",
+      "fromYear": 2025,
+      "toYear": 2050,
+      "from": 3018000,
+      "to": 3996000,
+      "absoluteChange": 978000,
+      "percentageChange": 32.40556660039762,
+      "calculation": "(to/from - 1)*100",
+      "sourceTableId": "mtc-pba2050plus-final-growth-2024-12-17"
+    },
+    {
+      "id": "jobs",
+      "fromYear": 2025,
+      "toYear": 2050,
+      "from": 4154000,
+      "to": 5436000,
+      "absoluteChange": 1282000,
+      "percentageChange": 30.86181993259509,
+      "calculation": "(to/from - 1)*100",
+      "sourceTableId": "mtc-pba2050plus-final-growth-2024-12-17"
+    }
+  ]
+}

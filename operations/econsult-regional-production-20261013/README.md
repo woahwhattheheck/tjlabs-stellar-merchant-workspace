@@ -1,12 +1,12 @@
 # Econsult regional production and complete customer receiving
 
-This operation delivers a complete regional employment and wage reporting workspace for the five-county Philadelphia region, Pennsylvania and the United States. It operates the original 2025 Q1 and 2026 Q1 source selections, produces both full report editions and PDFs, reopens the complete economic project, and can compose its research source catalogue into the same customer project.
+This operation delivers a complete regional employment and wage reporting workspace for the five-county Philadelphia region, Pennsylvania and the United States. It operates the original 2025 Q1 and 2026 Q1 source selections, produces both full report editions and PDFs, reopens the complete economic project, and composes its research source catalogue, complete customer-agent workflow and original MTC regional sources into the same customer project.
 
 Original operation: ECONSULT-REGIONAL-PRODUCTION-9B2C-20261013.
 
 ## Maintained source
 
-- run-econsult-native.py receives an exact complete application source packet and runs the existing QCEW production, browser and optional research programmes.
+- run-econsult-native.py receives an exact complete application source packet and runs the existing QCEW production, browser and Research catalogue, customer-agent and optional MTC source programmes.
 - materialize-econsult-originals.py receives the fourteen complete original CSV attachments using the original provider metadata and stable file identities.
 - econsult-profile.json contains the complete selected report definition.
 - econsult-programme.json contains the original two-period production selection.
@@ -16,7 +16,7 @@ The maintained QCEW programme is under stellar/scf-starforge-20261009/sf30-selle
 The complete source-transfer carrier, original attachment receipts and commercial scope are indexed in the original company coordination:
 https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791871492210889
 
-The complete ten-file kit is maintained alongside this guide at execution-kit.json. Its 3,255,415 bytes have SHA256 2ce03e5e51b409de8e507c0bd38f36c0ca8207315699187693262fde19ec2779. It includes the complete 230-file application donor, original source references, commercial workshare and a receiving README with the rendered-product instruction. Decode every complete files[] member into an owned private kit directory and use the commands below. The original company thread remains the coordination point. Its application member is econsult-complete-source.json: schema commons.complete-source-transfer.v1, the operation above, complete files[] contents/UTF-8 lengths/SHA256/Git blob identities, and complete inventory counts. Use the exact carrier SHA256 published with that same kit. The controller validates the entire received source before creating its private application tree.
+The complete ten-file kit is maintained alongside this guide at execution-kit.json. Its 3979216 bytes have SHA256 9a1935201a47402a74ce549fa04534debf7dd1d53ebb655efcf09d86273dfcaa. It includes the complete 272-file application donor, original source references, complete Research agent workflow, original MTC catalogue integration, commercial workshare and the full receiving guide. Decode every complete files[] member into an owned private kit directory and use the commands below. Its application member is econsult-complete-source.json: 3789463 bytes, SHA256 685433b6fe833faf71475b1c5441e84ea8a0d6bd0b1ffc835e1f42535ef7f82a, Git blob e89107be0d01595c62b6bf523f79db02bfab1b9b. This commons.complete-source-transfer.v1 packet retains every complete UTF-8 body, full-file identity and inventory count. The controller validates the whole source before receiving its application tree.
 
 ## Existing native runtime
 
@@ -57,14 +57,15 @@ The materializer verifies the complete original byte counts, computes full-file 
 From the complete kit directory, select the current carrier SHA256 and actual runtime paths:
 
 ~~~sh
-python3 run-econsult-native.py \
+PYTHONDONTWRITEBYTECODE=1 python3 -B run-econsult-native.py \
   --packet econsult-complete-source.json \
-  --packet-sha256 COMPLETE_SOURCE_PACKET_SHA256 \
+  --packet-sha256 685433b6fe833faf71475b1c5441e84ea8a0d6bd0b1ffc835e1f42535ef7f82a \
   --directory /private/econsult-regional-production \
   --profile econsult-profile.json \
   --programme econsult-programme.json \
   --received-slices /private/econsult-originals/received-slices.json \
   --research-catalogue \
+  --research-agent \
   --node /existing/node \
   --chromium /existing/chromium \
   --playwright-module /existing/playwright/index.mjs \
@@ -73,14 +74,42 @@ python3 run-econsult-native.py \
 
 The selected complete kit contains the research input at receiving/esi-research-catalog-4593/input.json, its complete original BLS methods representation and original CPI table, and the full catalogue source. The --research-catalogue option binds that exact input and its operation to the original company identity.
 
-The programme performs four complete stages:
+The programme performs five complete stages:
 
 1. Admit every original CSV and produce the full retained source manifest.
 2. Operate both regional report editions, PDFs, calculations, source-row exports and independent whole-project receiving.
 3. Open the original production project in the installed browser and operate its report, source and complete-project receiving flow.
 4. Receive that actual complete economic project into the research course; retain the selected source inventory and files, review the sources, issue both research-product editions, download and reimport the full catalogue CSV, capture desktop and phone views, and export, receive and reopen the complete v7 project.
 
+5. Operate the complete Research agent against that same project: browse every revision-bound catalogue/source/review/product page, recover saved native requests, download and reopen original chunked source bytes, then independently receive, reopen and reexport the complete project.
+
 The controller checks that the final catalogue project preserves the original economic project identity, complete QCEW source extension, QCEW state and every FRED capture. It identifies that combined complete project in completeCustomerProject. The original two-edition report programme remains available when --research-catalogue is omitted.
+
+## Continue an already-started original operation
+
+Keep its ROOT/operation.json, ROOT/source-packet.json, ROOT/source, input files, original research directory and all completed journals. Supply the original retained packet and original packet hash as the base selection. Add this complete source edition explicitly:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 -B run-econsult-native.py --packet /private/econsult-regional-production/source-packet.json --packet-sha256 ORIGINAL_PACKET_SHA256 --source-edition-packet econsult-complete-source.json --source-edition-sha256 685433b6fe833faf71475b1c5441e84ea8a0d6bd0b1ffc835e1f42535ef7f82a --directory /private/econsult-regional-production --profile econsult-profile.json --programme econsult-programme.json --received-slices /private/econsult-originals/received-slices.json --research-catalogue --research-agent --node /existing/node --chromium /existing/chromium --playwright-module /existing/playwright/index.mjs --pdfinfo /existing/pdfinfo
+```
+
+Read ORIGINAL_PACKET_SHA256 from that operation's retained operation.json packetSha256 field. The original selected profile, programme and received-slices files must be the same files used for its first run. The controller validates the complete original source, receives this full successor separately at ROOT/source-editions/685433b6fe833faf71475b1c5441e84ea8a0d6bd0b1ffc835e1f42535ef7f82a/source, verifies that every original selected receiving input and FRED source capture is unchanged, and uses the successor application to continue unfinished stages. Completed stage files retain their original byte identities.
+
+The separate source-edition record identifies the actual executable source used. Customer-agent receiving has its own journal under the same company root; the original controller retains orchestration and archive ownership. A completed agent journal is reused unchanged.
+
+## Add the complete original MTC regional sources
+
+The source packet also includes operations/econsult-regional-production-20261013/mtc-source-catalogue. It retains the original two-page forecast PDF selection (152937 bytes), four-page agency FAQ selection (777707 bytes), all28 published regional table values in JSON and CSV, full catalogue definitions, the complete importer and operating guide. Retain the published nine-county regional aggregate, units, years and forecast interpretation when using these sources.
+
+Resolve the two PDF stableReference values in catalogue-input.json through the existing Notion file download action. Save its exact files/unresolved result to private mtc-current-download-map.json. Read ORIGINAL_RECEIVING.md and run:
+
+```sh
+python3 SOURCE/operations/econsult-regional-production-20261013/mtc-source-catalogue/receive-mtc-originals.py --catalogue-input SOURCE/operations/econsult-regional-production-20261013/mtc-source-catalogue/catalogue-input.json --download-map /private/mtc-current-download-map.json --directory /private/econsult-regional-production/mtc-original-files
+```
+
+Use the materialized complete SOURCE directory. When continuing an older company operation, SOURCE is the complete successor under ROOT/source-editions/685433b6fe833faf71475b1c5441e84ea8a0d6bd0b1ffc835e1f42535ef7f82a/source; receive that edition with the existing controller first, or materialize its full source packet into a separate private kit source directory before this acquisition. Retain the existing source selection and complete received files across retries. View all six rendered pages and both exact source PDFs. Add --mtc-originals /private/econsult-regional-production/mtc-original-files to either complete company command above. The controller requires --research-catalogue --research-agent and continues the same ROOT/research/project after the complete customer-agent course. It imports every original source and its complete product definition, opens each saved source through the maintained native project, independently receives the whole project and verifies the reopened originals and full reexport.
+
+ROOT/mtc-source-receiving/receiving-result.json identifies the exact source selection, original native requests, complete project, independent receiving and reexport. The controller selects that whole received project as completeCustomerProject. Existing native source-review and product-issue controls remain available for reviewing these originals and issuing the regional product. View all original PDF pages, source rows, table values, coverage, downloads and reopened complete project in the actual browser before presenting this edition.
 
 ## Inspect the actual delivered application and reports
 
@@ -100,7 +129,7 @@ Owner instruction: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p17918
 
 Each child inherits the original operation lock. Logs stream into the retained private operation directory. A completed stage is reused only while its complete result bytes match the saved identity. An interrupted stage retains its original directories, requests, source and logs for continuation.
 
-The final archive includes the entire materialized application, original inputs and CSV intake, all project directories, complete report and research files, browser output and full logs. archive-result.json names its actual archive, length and hashes. completeCustomerProject names the final portable customer JSON and its complete byte identity.
+The final archive includes the entire materialized application, original inputs and CSV intake, all project directories, complete report and research files, browser output and full logs. archive-result.json names its actual archive, length and hashes. completeCustomerProject names the final portable customer JSON and its complete byte identity. researchAgent identifies its complete customer-agent receiving; mtcSources identifies the original MTC source receiving and independent reexport when selected.
 
 Return archive-result.json and the full archive to the original company thread. Keep the native operation directory available for the same continuation and receiving work.
 
