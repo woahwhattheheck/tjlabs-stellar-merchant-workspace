@@ -21,6 +21,8 @@ from operations_expense_billing_http import handle as expense_billing_http
 from operations_work_billing_http import handle as work_billing_http
 import operations_installation_sources as installation_sources
 import operations_gravitee as gravitee_source
+import operations_airflow as airflow_source
+import operations_airflow_sources as airflow_sources
 from award_terms_http import handle as award_terms_http
 
 
@@ -83,6 +85,7 @@ def register_static(static):
                    "/operations_navigation.css": ("operations_navigation.css", "text/css; charset=utf-8")})
     installation_sources.register_static(static)
     gravitee_source.register_static(static)
+    airflow_source.register_static(static)
     static.update({
         "/operations_agenda.mjs": ("operations_agenda.mjs", "text/javascript; charset=utf-8"),
         "/operations_agenda.css": ("operations_agenda.css", "text/css; charset=utf-8"),
@@ -532,6 +535,13 @@ def write(handler, parsed):
     if installation_sources.handle(handler, parsed, ops, "POST"):
         return True
     if gravitee_source.handle(handler, parsed, ops, "POST"):
+        return True
+    if airflow_source.handle(handler, parsed, ops, "POST"):
+        return True
+    airflow_match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/airflow-source", path)
+    if airflow_match:
+        body = handler.json_body()
+        handler.send(200, ops.command(airflow_match.group(1), {**body, "action": airflow_sources.ACTION}))
         return True
     company_match = re.fullmatch(
         r"/api/operations/(operation-[a-f0-9]{32})/installation-company-return-(inspect|linked)", path)
