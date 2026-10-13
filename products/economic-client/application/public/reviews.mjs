@@ -57,8 +57,15 @@ export function createReviewPanel({$,action,request,task,download,getState,refre
     reason:card.querySelector('[data-reason]').value,confirm_conflict:card.querySelector('[data-conflict]')?.checked===true};
   });
  }
+ function unfinishedChoices(){
+  return [...document.querySelectorAll('.review-decision')].some(card=>card.querySelector('[data-resolution]').value||card.querySelector('[data-reason]').value||card.querySelector('[data-conflict]')?.checked);
+ }
+ function requireCompleteChoices(){
+  if([...document.querySelectorAll('.review-decision')].some(card=>!card.querySelector('[data-resolution]').value&&(card.querySelector('[data-reason]').value||card.querySelector('[data-conflict]')?.checked)))
+   throw new Error('Choose a disposition for each typed note or conflict confirmation, or clear it before saving. Your visible input is retained.');
+ }
  function move(amount){
-  if(choices().length)throw new Error('Save the selected dispositions before changing pages; this page keeps your current choices.');
+  if(unfinishedChoices())throw new Error('Save or clear the unfinished dispositions and notes before changing pages; this page keeps your current choices.');
   visibleOffset+=amount;renderComparison();
  }
  $('review-create').onsubmit=e=>{e.preventDefault();task(async()=>{
@@ -74,14 +81,26 @@ export function createReviewPanel({$,action,request,task,download,getState,refre
   await pendingView();await receiveSaved();
  });
  $('review-resume').onclick=()=>task(receiveSaved);
+ $('review-retain-input').onclick=()=>task(async()=>{
+  const saved=await storage(false);if(!saved)return;
+  const db=await database;
+  await new Promise((resolve,reject)=>{
+   const tx=db.transaction('originals','readwrite'),store=tx.objectStore('originals');
+   const key=location.origin+':'+getState().project_id;
+   store.put(saved,key+':history:'+saved.operation_id);store.delete(key);
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Retained input storage interrupted'));
+  });
+  await pendingView();$('review-receipt').textContent='The complete original input remains in this browser history under '+saved.operation_id+'. Select the corrected complete return for a new receiving operation.';
+ });
  $('review-compare').onclick=()=>task(async()=>{
+  if(unfinishedChoices())throw new Error('Save or clear the unfinished dispositions and notes before replacing this comparison.');
   freshDraft();comparison=await action('review-preview',{return_id:$('review-return').value});visibleOffset=0;renderComparison();
  });
  $('review-prev').onclick=()=>task(async()=>move(-50));
  $('review-next').onclick=()=>task(async()=>move(50));
  $('review-apply').onclick=()=>task(async()=>{
   freshDraft();if(!comparison)throw new Error('Read the current complete customer comparison');
-  const decisions=choices();if(!decisions.length)throw new Error('Choose explicit dispositions on this page');
+  requireCompleteChoices();const decisions=choices();if(!decisions.length)throw new Error('Choose explicit dispositions on this page');
   const result=await action('review-resolve',{return_id:comparison.return_id,expected_revision:comparison.project_revision,
    comparison_sha256:comparison.comparison_sha256,decisions},true);
   await refresh();comparison=await action('review-preview',{return_id:comparison.return_id});renderComparison();

@@ -72,7 +72,7 @@ it is not a digital signature or proof of a person's identity.
 Select the complete Return JSON in Customer reviews. Its original bytes and
 receiving operation are retained locally before upload. Continue original return
 receiving after an interrupted transport; the same file and operation reopen the
-same saved return. Different branches or later review editions receive distinct
+same saved return. A rejected selection remains retained; select the corrected file with a new receiving attempt. Different branches or later review editions receive distinct
 return identities. Nothing replaces an earlier return.
 
 Save any open editorial draft before comparing the return. The comparison shows
@@ -154,7 +154,7 @@ the working HTML, inspect the retained decisions and export the Return JSON to
 the selected path. Repeat the same command.
 
 The course receives that complete original return, confirms same-operation replay
-and writes comparison.json, then returns WAITING_ANALYST_DISPOSITION if the
+and retains each immutable comparison plus current-comparison.json, then returns WAITING_ANALYST_DISPOSITION if the
 actual dispositions are not present. Read the current original comparison and
 save its explicit selected choices to resolution_file. Repeat the same command.
 
@@ -173,16 +173,14 @@ its original input, working directory and output archive.
 
 ## Rendered product inspection — owner instruction, 2026-10-13
 
-This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Bryce's standing rule is: “that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it”.
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. The required inspection standard is: “that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it”.
 
 Before presenting a client/prospect-facing application, website, dashboard, demo, report, presentation, export or any attachment, the producing peer must open/run/render the exact outgoing version, LOOK at it and normally use it as the recipient would. View the actual screenshots you capture. Inspect the actual presentation/screenshare width and relevant narrow/mobile width, important user controls, populated/empty/loading/error states, downloads and reopened exports. Open the usable contents of ZIPs/projects and every applicable report/PDF page. Source review, schemas, HTTP 200, DOM counts, tests, checklists and another worker's approval cannot substitute for observing and using the actual product.
 
 Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and continued delivery; it must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk. Do not run broad test sweeps, repeat accepted checks, build a verification product or create review bureaucracy or an approval queue.
 
-For video and audio, Bryce directs: “also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them”. Use available high-quality generative voice/TTS and useful generative media, with natural professional delivery. Actually watch/listen to the final outgoing export, including pacing, pronunciation, timing and audio alignment. Preserve existing spending, voice and attribution controls.
+For video and audio: “also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them”. Use available high-quality generative voice/TTS and useful generative media, with natural professional delivery. Actually watch/listen to the final outgoing export, including pacing, pronunciation, timing and audio alignment. Preserve existing spending, voice and attribution controls.
 
 Include this complete instruction in delegated assignments and the active owner-controlled provider/project/cloud policy, boot, build and receiving guidance those workers actually read. Reuse already updated copies and return exact updated paths/version in the original policy thread with the next substantive result. Delivery of source does not establish that every runtime loaded it. Preserve all other owner controls and original operation identities; leave historical records and third-party/vendor policies intact. This instruction creates no restarts, watchers, credential gate or new release permission and does not revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
 
-Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
-Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
 

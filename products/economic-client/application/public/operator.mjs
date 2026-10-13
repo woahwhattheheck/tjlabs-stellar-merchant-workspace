@@ -4,12 +4,14 @@ const $=id=>document.getElementById(id);
 const token=location.hash.slice(1)||sessionStorage.getItem('economic-client-token');
 if(token){sessionStorage.setItem('economic-client-token',token);history.replaceState(null,'',location.pathname);}
 let state,capture,rowsNext=null,selected=[],rights={},companions=[],busy=false;
-const pendingKey='economic-client-pending:'+location.origin;
+const pendingPrefix='economic-client-pending:'+location.origin;
+function pendingKey(){return pendingPrefix+':'+(state?.project_id||'unbound');}
+function pendingStorageKey(){return localStorage.getItem(pendingKey())!==null?pendingKey():pendingPrefix;}
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pretty=value=>JSON.stringify(value,null,2);
 function message(value){$('message').textContent=value;}
-function pending(){try{return JSON.parse(localStorage.getItem(pendingKey)||'null');}catch{return null;}}
-function pendingView(){const p=pending();$('pending').hidden=!p;$('pending-label').textContent=p?p.action+' · '+p.operation_id:'';}
+function pending(){try{return JSON.parse(localStorage.getItem(pendingStorageKey())||'null');}catch{return null;}}
+function pendingView(){const p=pending();$('pending').hidden=!p;$('pending-label').textContent=p?p.action+' · '+p.operation_id+' · '+(p.project_id||'unbound original project'):'';}
 async function request(path,{body,method='GET',raw=false}={}){
  const response=await fetch(path,{method,headers:{Authorization:'Bearer '+token,...(body!==undefined?{'Content-Type':body instanceof Blob?'application/gzip':'application/json'}:{})},
  body:body===undefined?undefined:body instanceof Blob?body:JSON.stringify(body)});
@@ -20,12 +22,14 @@ async function action(name,input={},write=false){
  const proposed={action:name,input};
  let p;
  if(write){
+  if(!state?.project_id)throw new Error('Open the original project before saving an operation');
   p=pending();
+  if(p&&p.project_id!==state.project_id)throw new Error('This retained request names another or an unbound original project. Preserve it in history and reopen its original project; it cannot be dispatched here.');
   if(p&&(p.action!==name||JSON.stringify(p.input)!==JSON.stringify(input)))throw new Error('Continue the saved original request, or retain it in history before starting another action.');
-  if(!p){p={...proposed,operation_id:'client-'+crypto.randomUUID()};localStorage.setItem(pendingKey,JSON.stringify(p));pendingView();}
+  if(!p){p={...proposed,project_id:state.project_id,operation_id:'client-'+crypto.randomUUID()};localStorage.setItem(pendingKey(),JSON.stringify(p));pendingView();}
  }
  const result=await request('/api/action',{method:'POST',body:p||proposed});
- if(write){localStorage.removeItem(pendingKey);pendingView();}
+ if(write){localStorage.removeItem(pendingKey());pendingView();}
  return result;
 }
 async function task(fn){
@@ -40,6 +44,7 @@ function loadDraft(draft){
  renderSelections();
 }
 async function refresh({draft=true}={}){
+ if(state&&!draft)readDraft();
  state=await request('/api/state');$('identity').textContent=state.label+' · '+state.project_id+' · revision '+state.revision;
  $('config').value=pretty(state.config);options('capture-list',state.captures,r=>r.id,r=>r.dataset_ref+' · '+r.id);
  options('compare-before',state.briefings,r=>r.id,r=>r.revision+' · '+r.title);options('compare-after',state.briefings,r=>r.id,r=>r.revision+' · '+r.title);
@@ -89,7 +94,7 @@ document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>{
 });
 $('refresh').onclick=()=>task(()=>refresh());
 $('resume').onclick=()=>task(async()=>{const p=pending();if(!p)return;const result=await action(p.action,p.input,true);$('preview-result').textContent=pretty(result);await refresh();});
-$('clear-pending').onclick=()=>{const p=pending();if(p)localStorage.setItem(pendingKey+':'+p.operation_id,JSON.stringify(p));localStorage.removeItem(pendingKey);pendingView();message('The original request remains in project/history storage. A new action may now be started.');};
+$('clear-pending').onclick=()=>{const p=pending(),storedKey=pendingStorageKey();if(p)localStorage.setItem(storedKey+':history:'+p.operation_id,JSON.stringify(p));localStorage.removeItem(storedKey);pendingView();message('The original request remains unchanged in its browser history. Reopen its original project to reconcile it before issuing an equivalent new request.');};
 $('registry-form').onsubmit=e=>{e.preventDefault();task(async()=>{
  readDraft();const input={kind:$('registry-kind').value,detail:'full',relations:'references'};
  for(const[id,key]of [['registry-agency','agencyids'],['registry-ids','ids'],['registry-versions','versions']])if($(id).value)input[key]=$(id).value;
@@ -130,6 +135,6 @@ $('oecd-seed').onclick=()=>task(async()=>{
  await refresh({draft:false});
 });
 $('oecd-save').onclick=()=>task(async()=>{const result=await action('oecd-save',JSON.parse($('oecd-request').value),true);$('oecd-result').textContent=pretty(result);$('oecd-id').value=result.id;await refresh({draft:false});});
-$('oecd-attach').onclick=()=>task(async()=>{const result=await action('oecd-attach',{briefing_id:$('oecd-id').value},true);companions.push(result.id);await refresh({draft:false});});
+$('oecd-attach').onclick=()=>task(async()=>{const result=await action('oecd-attach',{briefing_id:$('oecd-id').value},true);await refresh({draft:false});if(!companions.includes(result.id))companions.push(result.id);renderSelections();});
 $('reopen-oecd').onclick=()=>task(async()=>{const result=await action('oecd-reopen',{companion_id:$('reopen-companion').value},true);$('oecd-result').textContent=pretty(result);await refresh({draft:false});});
 pendingView();document.querySelector('[data-view="sources"]').click();task(()=>refresh());

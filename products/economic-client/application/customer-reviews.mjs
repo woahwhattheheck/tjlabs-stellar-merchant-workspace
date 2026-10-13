@@ -117,10 +117,12 @@ export function createCustomerReviews({directory,getState,perform,readSource}){
       const doc={schema:'tjl.economic-client-review.v1',package:pkg,review_id:operationId,editions:[],
         draft:{reviewer:input.recipient,notes:'',decisions:{}}};
       await model.validateDocument(doc);
+      const documentBytes=encoded(doc);
+      if(documentBytes.length>512*1024*1024)throw new Error('The complete encoded review document exceeds 512 MiB');
       const html=renderCustomerReview(doc);
       const retained={
         'review.html':{...await blob(directory,html),content_type:'text/html; charset=utf-8'},
-        'review.json':{...await blob(directory,encoded(doc)),content_type:'application/json'}
+        'review.json':{...await blob(directory,documentBytes),content_type:'application/json'}
       };
       const row={id:pkg.id,operation_id:operationId,project_id:s.project_id,briefing_id:saved.id,review_id:operationId,
         recipient:input.recipient,label:input.label,created_at:operation.started_at,files:retained};

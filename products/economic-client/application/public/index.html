@@ -46,7 +46,7 @@
 <label>Review label<input id="review-label" required maxlength="1000"></label><button>Create editable offline review</button></form>
 <p>The HTML works offline and retains the complete original package. The customer can save revisions, download a working copy and return the full review JSON.</p></article>
 <article><h2>Receive a saved customer return</h2><label>Complete Return JSON<input id="review-upload" type="file" accept=".json,application/json"></label><button id="review-receive">Receive original customer review</button>
-<div id="review-pending" hidden><p id="review-pending-label"></p><button id="review-resume">Continue original return receiving</button></div>
+<div id="review-pending" hidden><p id="review-pending-label"></p><button id="review-resume">Continue original return receiving</button><button id="review-retain-input">Retain this input and select another</button></div>
 <label>Received review<select id="review-return"></select></label><button id="review-compare">Compare with current saved draft</button><button id="review-return-download">Download complete original return</button>
 <details><summary>Last saved result</summary><pre id="review-receipt"></pre></details></article></div>
 <h2>Complete review packages</h2><div id="review-packages"></div>

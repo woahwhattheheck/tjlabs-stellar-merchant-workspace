@@ -138,9 +138,8 @@ Fix ugly, broken, unstyled, cramped, clipped, overflowing or unreadable output w
 
 This inspection is part of delivery and leads directly to concrete repairs. It must not replace implementation and integration, become endless rechecking, create a peer-approval gate, launch broad suites or become a separate verification product. Continue useful authorized source and product work while the exact native/rendered receiving operation proceeds; preserve the actual execution state and existing operation identity.
 
-Persist this rule in every active owner-controlled instruction surface that the provider and workers actually read: global/project AGENTS, CLAUDE, GEMINI and rules files, provider boot instructions, Commons source mirrors, cloud repository instruction copies, and current build/receiving guides. Include it in child assignments. Preserve other owner controls, historical evidence and third-party/vendor instructions. Do not force restarts, add watchers or restart owner-stopped work. Existing project-specific owner cutoffs remain in force.
+Persist this rule in every active owner-controlled instruction surface that the provider and workers actually read: global/project AGENTS, CLAUDE, GEMINI and rules files, provider boot instructions, maintained source mirrors, cloud repository instruction copies, and current build/receiving guides. Include it in child assignments. Preserve other owner controls, historical evidence and third-party/vendor instructions. Do not force restarts, add watchers or restart owner-stopped work. Existing project-specific owner cutoffs remain in force.
 
-Bryce's placement instruction: “that rule goes in every policy file the agents read not just a slack ping” and “and not just local sessions or ones from this provider”. Original coordination transport: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999 .
 
 
 The requirement covers every outgoing attachment as well as the application. Open each final report/document/archive attachment in its actual useful form; play final audio/video where present. Keep the same source edition, original operation and actual runtime custody through this course.

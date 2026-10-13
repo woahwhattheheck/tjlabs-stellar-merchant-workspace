@@ -1,0 +1,392 @@
+{
+  "schema": "tjl.economic-client.source.v1",
+  "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "product": "economic-client",
+  "version": "1.1.0",
+  "entrypoints": {
+    "application": "products/economic-client/application/cli.mjs",
+    "receiving": "products/economic-client/application/receive-native.mjs",
+    "customer_review_receiving": "products/economic-client/application/receive-review.mjs",
+    "selection": "stellar/scf-starforge-20261009/distribution/selections/economic-client.json"
+  },
+  "source_files": [
+    {
+      "path": "products/economic-client/application/briefing.mjs",
+      "mode": "100644",
+      "bytes": 14973,
+      "sha256": "63460af9b34cae53be729b3c632cc48e9a6f3f4d1f996264376ba4685c772d54",
+      "git_blob": "277a8ae531269a663177ce7b7c899f36492cdfb3"
+    },
+    {
+      "path": "products/economic-client/application/browser-assets.json",
+      "mode": "100644",
+      "bytes": 524,
+      "sha256": "bbcabcad54743404bb2938ce37bbec68832a27d2dd7446bb548286fca88f3a61",
+      "git_blob": "40716d96acb550bf34fc9046cdcaedf92a99ceaa"
+    },
+    {
+      "path": "products/economic-client/application/cli.mjs",
+      "mode": "100644",
+      "bytes": 6113,
+      "sha256": "6a91598611a759a7d7ff521287aa50f2db2ffa2523ae8c7d3faad0a07716b56a",
+      "git_blob": "5209806553183f1b17d87cfebc1b0757d3e74756"
+    },
+    {
+      "path": "products/economic-client/application/client.d.ts",
+      "mode": "100644",
+      "bytes": 4029,
+      "sha256": "baa8c302b944c355143b4e9351a3f608e5966f8c40a7dda7cf796acada9c6f41",
+      "git_blob": "68dae04586d182253a853900dcc73aab51c78a26"
+    },
+    {
+      "path": "products/economic-client/application/client.mjs",
+      "mode": "100644",
+      "bytes": 2859,
+      "sha256": "4ee214fd63937f9f072da894f1f20a32977ba76d35ee6ab0662e43854e2b17b0",
+      "git_blob": "7f90903393b59fade4dda78b5ebe966d149abf57"
+    },
+    {
+      "path": "products/economic-client/application/CUSTOMER_REVIEW.md",
+      "mode": "100644",
+      "bytes": 13031,
+      "sha256": "626b9c3d1187654aab41eacf042cb4509626e7edc4c04f8cb9b1cde96b2fe195",
+      "git_blob": "f2c637367dcf3b52230a7ca60ae6eaf8b77ff069"
+    },
+    {
+      "path": "products/economic-client/application/customer-reviews.mjs",
+      "mode": "100644",
+      "bytes": 14078,
+      "sha256": "18c075947e72e97bc0066302ff8ca86c52977c6ff8e82f265644630a3b599d38",
+      "git_blob": "af4df4203d203ed5d9d906d3c3762a13ec0829a8"
+    },
+    {
+      "path": "products/economic-client/application/dispatch.mjs",
+      "mode": "100644",
+      "bytes": 2491,
+      "sha256": "359e8a7d0cdce6b3e20e0f527c89404596d799beef308787ed34cb5a5d64f9ad",
+      "git_blob": "ee4554c526f430a9723b27e9fa7282afdaa55937"
+    },
+    {
+      "path": "products/economic-client/application/ECONDATA_SOURCE.md",
+      "mode": "100644",
+      "bytes": 13559,
+      "sha256": "a4ec613c24a05f8a19f4aed1a5c55c26fda84ffd88b6724778cf81094fc2df98",
+      "git_blob": "38e508c1b286331fb09d034366875cc3ded0e7fa"
+    },
+    {
+      "path": "products/economic-client/application/econdata-client.mjs",
+      "mode": "100644",
+      "bytes": 47236,
+      "sha256": "d2a1643b8b4afbebd52e03b976b1241e718722127253060f3dd6308f441828e7",
+      "git_blob": "8c0be493600184ab0d40858c6658764709341d18"
+    },
+    {
+      "path": "products/economic-client/application/examples/capture.json",
+      "mode": "100644",
+      "bytes": 238,
+      "sha256": "dad10602b0d85c49761a3f22cdd771d76150df04133041c4809c2d8e40b5bb98",
+      "git_blob": "9c3a59787e0ddcd22c3e1b41a7f12df342bf58ea"
+    },
+    {
+      "path": "products/economic-client/application/examples/config.json",
+      "mode": "100644",
+      "bytes": 431,
+      "sha256": "6e5058e729b9fddd62c6a53fa4c9bd14b905cfa922cb2a5aaa12306ed06600b8",
+      "git_blob": "0d641ad842549e4a74ec79e3c13eb5d2be95ee8e"
+    },
+    {
+      "path": "products/economic-client/application/examples/receiving.json",
+      "mode": "100644",
+      "bytes": 1072,
+      "sha256": "d88485d7dbb122be12d9266b4ab8343ee4d7137aedf36c40bceedcd6d0825a38",
+      "git_blob": "b4c020949a05d08e1cec53d37611b8c23328dde7"
+    },
+    {
+      "path": "products/economic-client/application/examples/review-receiving.json",
+      "mode": "100644",
+      "bytes": 511,
+      "sha256": "67538c3a45a8b89bf8e4631809886e3221ea62a4d14a9876749b4ed1a0d6c4d5",
+      "git_blob": "6273f3a28bb4df3fbc216d33340c6ac5e0669aad"
+    },
+    {
+      "path": "products/economic-client/application/io.mjs",
+      "mode": "100644",
+      "bytes": 7448,
+      "sha256": "2a831364e6fb63c00b23bd419c304e151a1c6e48a5754eebc4000d8581cff3c5",
+      "git_blob": "ae39ac113e8dd2057853c9cd8966322ab99caf05"
+    },
+    {
+      "path": "products/economic-client/application/LICENSE",
+      "mode": "100644",
+      "bytes": 1076,
+      "sha256": "d30836eb89a7b008f2667798624fe43a20f16db60373ca6188a48ea861e4e265",
+      "git_blob": "e4c89ac75e2254c6fdfea58017a369f07732392e"
+    },
+    {
+      "path": "products/economic-client/application/NATIVE_RECEIVING.md",
+      "mode": "100644",
+      "bytes": 13408,
+      "sha256": "7e97faf037123e771b275602672fa4092b5f732edc36edda0d5a7f6a58ac365b",
+      "git_blob": "8a8f7610c4edca06a45fdd2586a531841b3db63f"
+    },
+    {
+      "path": "products/economic-client/application/oecd-bridge.mjs",
+      "mode": "100644",
+      "bytes": 2385,
+      "sha256": "6159c98f5ea5f25a80d07bbfe09c682974e57695bdc2e855ba107be6d2417a14",
+      "git_blob": "c34ab6c48094fe9a8d532ff4576308b34834956c"
+    },
+    {
+      "path": "products/economic-client/application/OPERATING.md",
+      "mode": "100644",
+      "bytes": 11419,
+      "sha256": "d66878c4f230b1c7b2d1445080a8c9c2fb16aba037379e76df6333d6bd3b3ef3",
+      "git_blob": "caf1c35a68dd4a2dcb950155e86ca952c294dbe3"
+    },
+    {
+      "path": "products/economic-client/application/package.json",
+      "mode": "100644",
+      "bytes": 489,
+      "sha256": "4262d0a08634c72ab2da0d8b07fd5b348ed3490445dff967adcb03e9c00dd699",
+      "git_blob": "efab177ca40b62bb4b8bcaf24c603ae87b24f7ab"
+    },
+    {
+      "path": "products/economic-client/application/public/customer-review.css",
+      "mode": "100644",
+      "bytes": 6246,
+      "sha256": "11ca106c26c0dabb911a91ebbb9d68d36236eae98593feca55fa879bd84e2777",
+      "git_blob": "52fc5ea72dc16518534f574c7b7c9d313f772dd4"
+    },
+    {
+      "path": "products/economic-client/application/public/customer-review.mjs",
+      "mode": "100644",
+      "bytes": 37222,
+      "sha256": "a3e3b584ce454ba02882e51738d7bf93a4f0c51419754a34f2dae6c3a39cf0a5",
+      "git_blob": "3f94fd400b417d08bc9200fce9abc2f384fef75a"
+    },
+    {
+      "path": "products/economic-client/application/public/index.html",
+      "mode": "100644",
+      "bytes": 9405,
+      "sha256": "eec5e7a0d24edc1b1308f47b54cd661d5da75727df2af9e308a040a107f9ad5b",
+      "git_blob": "5fa2b34c01ab9f51b2664f92a524420735328da5"
+    },
+    {
+      "path": "products/economic-client/application/public/operator.mjs",
+      "mode": "100644",
+      "bytes": 14943,
+      "sha256": "988a7f2e6a6f7badd57ce44df3b56c47a1672e1a78af6a47f855acfc0eacacf7",
+      "git_blob": "0a3a9232abc3f71ed9147d7e77f3c47e3b344d63"
+    },
+    {
+      "path": "products/economic-client/application/public/reviews.mjs",
+      "mode": "100644",
+      "bytes": 10584,
+      "sha256": "bdbf84c1971cc8b76eb130febd054005174decd10a5ec082d75045efd99f9519",
+      "git_blob": "24cfa2ce1328e4d9d9646393b1699f53b983ebd8"
+    },
+    {
+      "path": "products/economic-client/application/public/style.css",
+      "mode": "100644",
+      "bytes": 2737,
+      "sha256": "a1a13f976b0890de77d82cc1e236e5e69325179ac9314127474ec2447c5c78de",
+      "git_blob": "c9bb860c3e6cbe770a1572c76792f4f211c9990c"
+    },
+    {
+      "path": "products/economic-client/application/README.md",
+      "mode": "100644",
+      "bytes": 10396,
+      "sha256": "3d66261ba8368fd490a65b7bcd97e2c8537215c0ce7d5454e80623e031c1e146",
+      "git_blob": "3373fd3d7155a502fa1b350e599a4c6edf105ec5"
+    },
+    {
+      "path": "products/economic-client/application/receive-native.mjs",
+      "mode": "100644",
+      "bytes": 11165,
+      "sha256": "d8cce4552e2c7ee80156e810b2c7b983bcf41402e4f9e5b0d0aaf538b05c9d21",
+      "git_blob": "1ad9f4f6cd06b196222ad94b940de6481afb572a"
+    },
+    {
+      "path": "products/economic-client/application/receive-review.mjs",
+      "mode": "100644",
+      "bytes": 13162,
+      "sha256": "ff1a6c16b357947525e4d00fd24ffc51f5b73993c892b70e673c9cd821bf793d",
+      "git_blob": "d622ee4033bc43c9996ccf03b5707596d2c8b60b"
+    },
+    {
+      "path": "products/economic-client/application/review-core.mjs",
+      "mode": "100644",
+      "bytes": 14783,
+      "sha256": "f1d27f71dcce71658fcf1625a6429fa7e43f73e8e51730f5653323030ff06e00",
+      "git_blob": "2baf5fc1422e38192fb3376868046f8414ed5bd7"
+    },
+    {
+      "path": "products/economic-client/application/review-editor.mjs",
+      "mode": "100644",
+      "bytes": 2229,
+      "sha256": "7c8d03ee3cb9ee3b6236f7e37e93c081e5811ffb8a3ffbaafacd667d3e9cfaed",
+      "git_blob": "fda0781b0dc6f284582fab9aa1162e2f1d5c5903"
+    },
+    {
+      "path": "products/economic-client/application/server.mjs",
+      "mode": "100644",
+      "bytes": 6353,
+      "sha256": "68a27e7a0ebbb9ca86ecd3984ad0791e78c8dda9e352ca3654cddc4288ae4814",
+      "git_blob": "811a96d0cfbbbdefb2bb96dc8b0b21ad199c73fa"
+    },
+    {
+      "path": "products/economic-client/application/vendor/lossless-json.cjs",
+      "mode": "100644",
+      "bytes": 9626,
+      "sha256": "3eebf0821060a4d9910c55e6c50f11961062cc20944ee745007ea19e3cdec885",
+      "git_blob": "2f4b4e9a89f653bb07ec41c2d41ff1896346a593"
+    },
+    {
+      "path": "products/economic-client/application/vendor/lossless-json.LICENSE.md",
+      "mode": "100644",
+      "bytes": 1083,
+      "sha256": "c5075e9ebeac2efabaddeb7ff8f215ef180f76da7837a79e3107868271693114",
+      "git_blob": "09f319774bb2721cc55816dc8eb3251244e95da0"
+    },
+    {
+      "path": "products/economic-client/application/vendor/lossless-json.package.json",
+      "mode": "100644",
+      "bytes": 3835,
+      "sha256": "53dfeb0a04531df4d753f887bafa8580a9adb55eed7b50e7a626f35ec128346b",
+      "git_blob": "31ae4f72b634d789e770d015125342716ab5f486"
+    },
+    {
+      "path": "products/economic-client/application/workspace.mjs",
+      "mode": "100644",
+      "bytes": 17354,
+      "sha256": "6801c009196ed2a97a8989e509565bf8a4a31531038e75fb84ad57ef29cd5635",
+      "git_blob": "bb60ce07573554c5016ac7b48a595e49176b2976"
+    },
+    {
+      "path": "products/economic-client/README.md",
+      "mode": "100644",
+      "bytes": 941,
+      "sha256": "8fbd551c34d271efce8fd50ae129b951554c5e671e7ba1c3069d42ece9f4a49d",
+      "git_blob": "2924f7997156bbdf5469aa6d555d9dfe353f2b6b"
+    },
+    {
+      "path": "products/economic-client/upstream/ECONDATA_SOURCES.json",
+      "mode": "100644",
+      "bytes": 4720,
+      "sha256": "b11cde8d692d914ddee4fa08d44b244e6dc43c645ab68c7e543b3987f694e3ca",
+      "git_blob": "78f57642aa91c9fad63aca5e8dc10d55ddc34e3a"
+    },
+    {
+      "path": "products/economic-client/upstream/econdata/swagger.json",
+      "mode": "100644",
+      "bytes": 95052,
+      "sha256": "40c9a7c4671b948586bd31ebdd32a38e68c2de8c5701f5af610ec37465a3d0b9",
+      "git_blob": "8e96d808e951bcad4f0f042307e2020dffb77fd3"
+    },
+    {
+      "path": "products/economic-client/upstream/econdatar-4.0.4/DESCRIPTION",
+      "mode": "100644",
+      "bytes": 1027,
+      "sha256": "1048d633d73ef679d72611592f153f92005e9043de0d79d4010744c06fdffb00",
+      "git_blob": "57314935126717cc2cc41fd284a026bc1a66e1dd"
+    },
+    {
+      "path": "products/economic-client/upstream/econdatar-4.0.4/inst/settings.json",
+      "mode": "100644",
+      "bytes": 312,
+      "sha256": "d5c83083c1abf6d59f990277c09798aadc27aedb39809eaaa85990c3aa66bf79",
+      "git_blob": "50bb4b9bc61ab5566a514b9234fabae164776975"
+    },
+    {
+      "path": "products/economic-client/upstream/econdatar-4.0.4/LICENSE",
+      "mode": "100644",
+      "bytes": 1074,
+      "sha256": "3863285fc12e5fed8ffb22eb7805b341fb4a9547b954b7702555ab4510a939f0",
+      "git_blob": "1dbe1996c0a426751653a689dedba527e82d3a2f"
+    },
+    {
+      "path": "products/economic-client/upstream/econdatar-4.0.4/R/econdata_credentials.R",
+      "mode": "100644",
+      "bytes": 1050,
+      "sha256": "a54bcbdb8af867071796859576e42571c40ba2dc3f38852ac5557287dcae2bd4",
+      "git_blob": "adff19f3c6095daf127b38e464037a573d3fc03e"
+    },
+    {
+      "path": "products/economic-client/upstream/econdatar-4.0.4/R/get_metadata.R",
+      "mode": "100644",
+      "bytes": 5433,
+      "sha256": "afbab8ab3196b947d2eb677b309302cd11c604f6ba0c355a02c94ad06044e7c7",
+      "git_blob": "0e4477c98ace9d090420a1b3dbade3e81444deb0"
+    },
+    {
+      "path": "products/economic-client/upstream/econdatar-4.0.4/R/login_helper.R",
+      "mode": "100644",
+      "bytes": 754,
+      "sha256": "985d6c9b74379e0da1d70075dd0deb522805121df676b541cfc699a06731978d",
+      "git_blob": "efaa7bc71683c6fb307a1a6fff3fbdb8865f353c"
+    },
+    {
+      "path": "products/economic-client/upstream/econdatar-4.0.4/R/read_dataset.R",
+      "mode": "100644",
+      "bytes": 13128,
+      "sha256": "976c56313a03e8bc13aa676c1fc346777cd2ad55fd1501645fec8d5db49deca5",
+      "git_blob": "1a125d065be9bccbbfea4937df0c328db5145f68"
+    },
+    {
+      "path": "products/economic-client/upstream/econdatar-4.0.4/R/read_registry.R",
+      "mode": "100644",
+      "bytes": 47407,
+      "sha256": "872c41b80cab8d86553b5b59d53a5e1b12e1dfa62658c6431d24cfce5007828f",
+      "git_blob": "9e4c8ff9214254c5fe42cb751e95b229aaa3fdc9"
+    },
+    {
+      "path": "products/economic-client/upstream/econdatar-4.0.4/R/read_release.R",
+      "mode": "100644",
+      "bytes": 3803,
+      "sha256": "cd2a8351356df932bbbdb1459df49598ba6ae47ed8afac84dfd8300d692439de",
+      "git_blob": "ef000acad460a19305e3db6f5f55722b22aadee1"
+    },
+    {
+      "path": "products/economic-client/upstream/econdatar-4.0.4/R/tidy_data.R",
+      "mode": "100644",
+      "bytes": 9491,
+      "sha256": "9fcdb2977ac6b402f18e3582ad3e591b14cfe58d6a37b6be3e96894ba0c72c9d",
+      "git_blob": "4ed3aa1ec307d3ba7a8a7148299ed55405571ab3"
+    },
+    {
+      "path": "products/economic-client/upstream/econdatar-4.0.4/README.md",
+      "mode": "100644",
+      "bytes": 2075,
+      "sha256": "d74047fc9046e908fe771a399546d8e99fa99b2afc41cc43705566131176056c",
+      "git_blob": "862dc3fe33c4215c9953a6fd7bf6f76bf1ae6f71"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/economic-client.json",
+      "mode": "100644",
+      "bytes": 1755,
+      "sha256": "8a0875663f11c98c12ce93e78b1b074f505d7f14335cd5f52020f1bd4ee7ba24",
+      "git_blob": "559903eb18579b8aab0f0443efd5f9bd64bfe640"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/economic-client.mjs",
+      "mode": "100644",
+      "bytes": 3205,
+      "sha256": "c5fa21f8aa5b808ad981342389d690d9cfc6f8188c087591eab70b394b162624",
+      "git_blob": "28784d494eafaf0882d6d27f6fe4911fac504068"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/selections/economic-client.json",
+      "mode": "100644",
+      "bytes": 5209,
+      "sha256": "0afeff61e9f829b5e1c7dd122da1a8e157d5e0e707c64dbd5fed3297ddbda2ec",
+      "git_blob": "86e5f72d2da0eb26c4a5bc6403a9688f224271e6"
+    }
+  ],
+  "source_bytes": 524929,
+  "native_receiving": {
+    "state": "AWAITING_EXECUTION_AND_RENDERED_INSPECTION",
+    "guide": "products/economic-client/application/NATIVE_RECEIVING.md",
+    "customer_review_guide": "products/economic-client/application/CUSTOMER_REVIEW.md"
+  },
+  "license": "Authored application MIT; original dependency licenses retained with each upstream source."
+}

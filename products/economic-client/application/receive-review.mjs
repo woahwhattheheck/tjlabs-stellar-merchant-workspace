@@ -36,19 +36,41 @@ export async function receiveCustomerReview(input){
    const result={};for(const name of Object.keys(pkg.files))result[name]=await file(name,(await workspace.reviewFile(pkg.id,name)).body);
    return result;
   });
-  let returned;
-  try{returned=await readFile(input.return_file);}catch(error){if(error.code!=='ENOENT')throw error;}
-  if(!returned){
-   state.state='WAITING_CUSTOMER_REVIEW';await save();
-   return {state:state.state,operation_id:operation,receiving:path,package:pkg,downloads,
-    next:'Open the exact review.html offline, inspect its complete report/source files, make the actual selected customer decisions, save and export Return JSON to the configured return_file. Repeat this same operation.'};
+  let returned,accepted=state.steps['receive-customer-return']?.state==='COMPLETE'?state.steps['receive-customer-return'].result:null;
+  if(!accepted&&state.active_return_operation){
+   try{
+    const originalRequest=workspace.request(state.active_return_operation);
+    if(originalRequest.state==='COMPLETE'){
+     accepted=originalRequest.result;
+     state.steps['receive-customer-return']={state:'COMPLETE',result:accepted,recovered_at:now()};await save();
+    }
+   }catch(error){if(error.message!=='Unknown saved operation')throw error;}
   }
+  if(!accepted){
+   try{returned=await readFile(input.return_file);}catch(error){if(error.code!=='ENOENT')throw error;}
+   if(!returned){
+    state.state='WAITING_CUSTOMER_REVIEW';await save();
+    return {state:state.state,operation_id:operation,receiving:path,package:pkg,downloads,
+     next:'Open the exact review.html offline, inspect its complete report/source files, make the actual selected customer decisions, save and export Return JSON to the configured return_file. Repeat this same operation.'};
+   }
+   const returnHash=sha(returned),retainedReturn=await file('return-attempt-'+returnHash+'.json',returned);
+   state.return_attempts||={};state.return_attempts[returnHash]=retainedReturn;
+   state.active_return_operation=operation.slice(0,75)+'-return-'+returnHash;await save();
+   const candidate=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(returned));
+   if(candidate.package?.id!==pkg.id||candidate.review_id!==pkg.review_id)
+    throw new Error('Select the returned review for this original package; the attempted complete file is retained');
+   accepted=await stage('receive-customer-return',()=>workspace.reviewReceive(state.active_return_operation,returned));
+  }
+  if(accepted.package_id!==pkg.id||accepted.review_id!==pkg.review_id)throw new Error('The accepted return names another original review package');
+  // Once accepted, the original native returned bytes remain authoritative even
+  // when the external selection file moves or contains a later customer edition.
+  returned=(await workspace.reviewReturnFile(accepted.id)).body;
   const returnBinding={bytes:returned.length,sha256:sha(returned)};
-  if(state.return_binding&&canonical(state.return_binding)!==canonical(returnBinding))throw new Error('Continue this original customer return; a following return needs a new receiving operation');
-  state.return_binding=returnBinding;await save();
-  const accepted=await stage('receive-customer-return',()=>workspace.reviewReceive(operation+'-return',returned));
+  if(state.return_binding&&state.accepted_return_id&&canonical(state.return_binding)!==canonical(returnBinding))
+   throw new Error('The accepted complete original customer return differs');
+  state.return_binding=returnBinding;state.accepted_return_id=accepted.id;await save();
   await stage('repeat-original-return',async()=>{
-   const again=await workspace.reviewReceive(operation+'-return',returned);
+   const again=await workspace.reviewReceive(state.active_return_operation||operation+'-return',returned);
    if(canonical(again)!==canonical(accepted))throw new Error('The original return did not reopen unchanged');
    return {return_id:again.id,edition_id:again.edition_id};
   });
@@ -89,9 +111,9 @@ export async function receiveCustomerReview(input){
    resolved=await stage('apply-editorial-dispositions',()=>workspace.reviewResolve(state.active_resolution_operation,resolution));
   }
   const following=await stage('save-following-briefing',()=>{
-   let revision;try{revision=workspace.request(operation+'-following').request.input.expected_revision;}
-   catch(error){if(error.message!=='Unknown saved operation')throw error;revision=workspace.state().revision;}
-   return workspace.saveBriefing(operation+'-following',{expected_revision:revision,draft:workspace.state().draft});
+   let originalInput;try{originalInput=workspace.request(operation+'-following').request.input;}
+   catch(error){if(error.message!=='Unknown saved operation')throw error;originalInput={expected_revision:workspace.state().revision,draft:workspace.state().draft};}
+   return workspace.saveBriefing(operation+'-following',originalInput);
   });
   const reportFiles=await stage('following-report-files',async()=>{
    const files={};for(const name of Object.keys(workspace.briefing(following.id).files))
@@ -114,19 +136,25 @@ export async function receiveCustomerReview(input){
   const frozen=decodePacket(frozenBytes),frozenHash=frozen.content_sha256;delete frozen.content_sha256;
   if(identity(frozen)!==frozenHash)throw new Error('The retained complete review packet differs');
   const originalReviewState={packages:Object.values(frozen.project.review_packages||{}),returns:Object.values(frozen.project.review_returns||{}),resolutions:Object.values(frozen.project.review_resolutions||{})};
+  function verifyOriginalReviewState(actual){
+   for(const kind of ['packages','returns','resolutions'])for(const row of originalReviewState[kind]){
+    const retained=actual[kind].find(item=>item.id===row.id);
+    if(!retained||canonical(retained)!==canonical(row))throw new Error('An original complete review record differs after receiving: '+kind+'/'+row.id);
+   }
+  }
   await workspace.close();workspace=null;
   received=await openWorkspace(customer,{create:true,label:'Received customer review project',config:input.receiving_config||{}});
   await stage('independent-project-receive',async()=>{
    const bytes=await readFile(archive.path);if(bytes.length!==archive.bytes||sha(bytes)!==archive.sha256)throw new Error('Original reviewed project archive differs');
    await received.importProject(bytes,{config:input.receiving_config});
    await received.importProject(bytes,{config:input.receiving_config});
-   if(canonical(received.reviews())!==canonical(originalReviewState))throw new Error('Complete customer review history differs after receiving');
+   verifyOriginalReviewState(received.reviews());
    return {project_id:received.state().project_id,review:received.reviews()};
   });
   await received.close();received=null;
   received=await openWorkspace(customer);
   await stage('closed-project-reopen',async()=>{
-   if(canonical(received.reviews())!==canonical(originalReviewState))throw new Error('The saved review history changed on reopening');
+   verifyOriginalReviewState(received.reviews());
    for(const[name,expected]of Object.entries(reportFiles)){
     const actual=await received.file(following.id,name);
     if(actual.body.length!==expected.bytes||sha(actual.body)!==expected.sha256)throw new Error('The following report changed on reopening');
