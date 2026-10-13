@@ -53,6 +53,14 @@ The parser preserves every original JSON numeric lexeme and performs addition, d
 
 Comparing two editions requires the same exact request and source role and a later capture timestamp. It reports observation revisions separately from title, source metadata, series identity/metadata and coverage changes. The two monthly rows in the capacity documentation example are periods inside one response, not two source editions.
 
+## Complete multi-port projects
+
+Use **PROJECT_GUIDE.md** and **maritime-project-cli.mjs** to collect the agreed port/request views into one portable project. Each entry names its current retained edition, optional earlier edition, local observation window and optional monthly comparison. The project overview presents each request's source meaning and coverage, links its complete report and originals, and exports all selected observations with their project, entry, port, flow, operator, measure and source identity. It never adds capacity and container-volume measures together.
+
+The native builder copies the complete current/prior edition directories, original manifests and producing source into the project. A second operator can receive the entire directory, open its offline overview and detailed reports, verify it, and rebuild the same selection in a separate directory. Existing edition capture remains the original authenticated CLI; the project builder uses retained local sources.
+
+The supplied **examples/project.json** references both retained issuer documentation examples. Copy it beside the example **editions/** directory described in PROJECT_GUIDE.md. Their port remains unassigned, and the two capacity months remain periods inside one source edition. Configure actual selected port/request editions for a customer project.
+
 ## Existing merchant and buyer path
 
 **sf30-publication.mjs** reads the original response and descriptor afresh, derives the selected dataset and retains typed decimal strings plus all source identifiers. It uses the original dataset compiler, version store and configuration builder. It preserves original paid request approval, aggregate spending, facilitator, settlement and buyer export semantics.
@@ -68,6 +76,9 @@ The source edition and selection are retained in the Econdb release manifest. A 
 | maritime-analysis.mjs | Exact JSON/decimal interpretation, original request planning, period/revision analysis, CSV and report |
 | maritime-native.mjs | Authorized capture, immutable original receiving/reopen, complete analysis directories |
 | maritime-cli.mjs | Capture, receive, analyze and list commands |
+| maritime-project-analysis.mjs | Complete project analysis, source-specific overview and combined annotated CSV |
+| maritime-project-native.mjs / maritime-project-cli.mjs | Immutable project receiving, verification and independent rebuild |
+| PROJECT_GUIDE.md | Full multi-port project build, rendered inspection and continuation |
 | maritime-workbench.html | Complete offline operator UI with source import and review continuation |
 | build-workbench.mjs | Refresh the embedded analysis module after an authorized source edit |
 | sf30-publication.mjs | Existing native dataset/version/merchant/buyer integration |
