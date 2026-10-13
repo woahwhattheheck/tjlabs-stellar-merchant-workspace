@@ -1,4 +1,5 @@
 // MIT. Industrial launch-group workflow over retained original Application requests.
+import { createApplicationOutputReader } from './application-output.mjs';
 const make = (tag, text, className) => {
   const node = document.createElement(tag);
   if (text !== undefined) node.textContent = text;
@@ -47,7 +48,10 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
   const runPanel = make('section', undefined, 'panel'), historyPanel = make('details'), historyContent = make('div');
   historyPanel.append(make('summary', 'Retained group runs'), historyContent); root.append(runPanel, historyPanel);
   const outputPanel = make('section', undefined, 'panel'), outputTitle = make('h3'), outputStatus = make('p', undefined, 'note'), outputText = make('pre');
-  outputPanel.append(outputTitle, outputStatus, outputText); outputPanel.hidden = true; root.append(outputPanel);
+  const outputReaderRoot = make('div');
+  outputPanel.append(outputTitle, outputStatus, outputReaderRoot); outputPanel.hidden = true; root.append(outputPanel);
+  const outputReader = createApplicationOutputReader({ root: outputReaderRoot, api,
+    getWorkspaceId: () => getState()?.workspaceId, error, output: outputText });
 
   const stamp = () => ({ scope, workspaceId: getState()?.workspaceId, navigation });
   const current = own => scope === own.scope && getState()?.workspaceId === own.workspaceId && navigation === own.navigation;
@@ -327,9 +331,7 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
     outputStatus.textContent = operationLabel(result.phase) + ' · ' + selected.operationId + (unavailable
       ? result.output.state === 'NOT_CREATED' ? ' · worker output has not been created yet' : ' · retained output is currently unavailable'
       : ' · ' + result.output.offset + '–' + result.output.totalBytes + ' bytes');
-    outputText.textContent = (unavailable
-      ? result.output.error.code + ': ' + result.output.error.message : result.output.text) +
-      (result.result ? '\n\nOriginal result\n' + JSON.stringify(result.result, null, 2) : '');
+    await outputReader.update({ applicationId: selected.applicationId, operationId: selected.operationId });
   }
   function render() {
     if (!workspaceId) return;
@@ -366,7 +368,7 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
     reset() {
       scope++; navigation++; workGeneration++; workspaceId = null; selectedId = selectedRunId = null; data = null; review = null;
       cursor = null; cursorTrail = []; applications = []; applicationsReadAt = 0; runSignature = '';
-      outputSelection = null; outputGeneration++; outputPanel.hidden = reviewPanel.hidden = true;
+      outputSelection = null; outputGeneration++; outputReader.reset(); outputPanel.hidden = reviewPanel.hidden = true;
       busy = false; draft = { groupId: null, expectedRevision: null, label: '', applicationIds: [] }; dirty = false; draftRetained = true; choicePage = 0; name.value = '';
     },
   };

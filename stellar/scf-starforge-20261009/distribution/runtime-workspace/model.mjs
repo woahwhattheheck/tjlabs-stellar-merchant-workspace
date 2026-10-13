@@ -28,6 +28,7 @@ import { imageOperationFields, imageWorkspaceState, reviewWorkspaceImage, attach
 import { initializeApplications, applicationsState, applicationsHistory, reviewApplication, saveApplication, applicationBindingOperation,
   reviewApplicationStart, dispatchApplicationStart, cancelApplicationRun, applicationOperation, applicationOutput,
   readApplicationTerminal, sendApplicationTerminal } from './applications-core.mjs';
+import { readApplicationOutputPage, openApplicationOutputDownload } from './application-output.mjs';
 import { initializeApplicationGroups, applicationGroupsState, saveApplicationGroup, reviewApplicationGroup,
   startApplicationGroup, continueApplicationGroup, applyApplicationGroupReview,
   applicationGroupMemberAction, stopApplicationGroup } from './application-groups.mjs';
@@ -618,6 +619,8 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
       return model.recoverManagedOperation(input.operationId);
     },
     async applicationsOutput(input) { return applicationOutput(root, input, await observedOperations([operationId(input.operationId)])); },
+    async applicationsOutputPage(input) { return readApplicationOutputPage(root, input); },
+    async applicationsOutputDownload(input) { return openApplicationOutputDownload(root, input); },
     async applicationsTerminal(input) { return readApplicationTerminal(root, input, await observedOperations([operationId(input.operationId)])); },
     async applicationsInput(input) { return sendApplicationTerminal(root, input); },
     async managedState(options) { return managedState(root, options); },
@@ -636,7 +639,7 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
   };
   // Keep retained inspection available during receiving. All existing lifecycle
   // methods, including reviews that persist records, share the backup gate.
-  const readMethods = new Set(["sourcePlansState","sourcePlanRead","sourcePlanRuntimes","sourcePlanHandoff","sourcePlanBriefing","sourcePlanReceiving","sourceBuildsState","sourceBuildsReadReview","pythonState","pythonDownload","transfersState","transfersDownload","imagesState","imagesDownload","state","operationStatus","catalog","review","compare","handoff","logs","applicationGroupsState","applicationsState","applicationsHistory","applicationsOutput","applicationsTerminal","managedState","close"]);
+  const readMethods = new Set(["sourcePlansState","sourcePlanRead","sourcePlanRuntimes","sourcePlanHandoff","sourcePlanBriefing","sourcePlanReceiving","sourceBuildsState","sourceBuildsReadReview","pythonState","pythonDownload","transfersState","transfersDownload","imagesState","imagesDownload","state","operationStatus","catalog","review","compare","handoff","logs","applicationGroupsState","applicationsState","applicationsHistory","applicationsOutput","applicationsOutputPage","applicationsOutputDownload","applicationsTerminal","managedState","close"]);
   for (const [name, method] of Object.entries(model)) {
     if (typeof method !== 'function' || readMethods.has(name) || name.startsWith('workspaceBackup')) continue;
     model[name] = (...args) => withWorkspaceWrite(root, async () => {
