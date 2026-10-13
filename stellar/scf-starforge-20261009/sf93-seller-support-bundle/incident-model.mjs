@@ -95,6 +95,7 @@ export async function applyObservation(state,merchant,observation,saveCapture,en
   const row=state.merchants[merchant.id];
   const result=signalsFor(state.config,merchant,observation,row.previous,now);
   row.lastAttemptAt=iso(now);row.lastError=result.error ?? null;
+  if(merchant.x402&&observation.fullCaptureAttemptAt)row.lastFullCaptureAttemptAt=observation.fullCaptureAttemptAt;
   if(merchant.object&&result.packet?.object)row.objectObservation={observedAt:result.packet.object.generatedAt,
     ...result.packet.object.summary,poll:{appliedAt:iso(now),fresh:result.fresh===true,
       successful:result.successful===true,reason:result.error??null}};
@@ -106,7 +107,7 @@ export async function applyObservation(state,merchant,observation,saveCapture,en
     ...result.packet.oauth.summary,poll:{appliedAt:iso(now),fresh:result.fresh===true,
       successful:result.successful===true,reason:result.error??null}};
   if(merchant.x402&&result.packet?.x402)row.x402Observation={observedAt:result.packet.x402.generatedAt,
-    ...result.packet.x402.summary,orders:[],orderDetails:'RETAINED_CAPTURE',selection:result.packet.x402.selection,sourceFile:result.packet.x402.source,
+    ...result.packet.x402.summary,fullCaptureError:result.packet.x402.fullCaptureError??null,orders:[],orderDetails:'RETAINED_CAPTURE',selection:result.packet.x402.selection,sourceFile:result.packet.x402.source,
     poll:{appliedAt:iso(now),fresh:result.fresh===true,successful:result.successful===true,reason:result.error??null}};
   let currentCapture;
   const capture=async()=>{
@@ -124,7 +125,7 @@ export async function applyObservation(state,merchant,observation,saveCapture,en
       for(const condition of Object.values(row.conditions)) {condition.badStreak=0;condition.goodStreak=0;}
     }
     row.previous=result.previous;row.lastSuccessAt=iso(now);row.window=result.window;
-    if(!row.lastCapture||changedSession||now-Date.parse(row.lastCapture.generatedAt)>=state.config.captureEveryMs) await capture();
+    if(!row.lastCapture||changedSession||(merchant.x402&&observation.fullCaptureFetched===true)||now-Date.parse(row.lastCapture.generatedAt)>=state.config.captureEveryMs) await capture();
   } else if(result.packet) {
     // Retain incomplete/stale native evidence without replacing the last
     // successful native observation or advancing a healthy recovery poll.

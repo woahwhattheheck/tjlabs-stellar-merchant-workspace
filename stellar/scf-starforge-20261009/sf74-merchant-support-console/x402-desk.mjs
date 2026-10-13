@@ -45,6 +45,11 @@ export function mountX402Registration({
   add(settings,'summary','Observation and condition settings');
   add(settings,'p','These settings apply to the original read-only observation and its existing SF93 conditions. A complete fresh observation is required before the original watcher can review recovery.','hint');
   const settingsGrid=add(settings,'div',undefined,'form-grid'),inputs={};
+  const pollingLabel=add(settingsGrid,'label','Observation polling'),polling=add(pollingLabel,'select');
+  polling.id='incident-x402-polling';
+  const fullPolling=add(polling,'option','Full original history');fullPolling.value='full';
+  add(polling,'option','Complete conditions with bounded detail').value='summary';
+  add(settings,'p','Summary polling keeps complete condition totals and obtains the full original capture when incidents or the source change and at the configured capture interval. A private reviewed-input pin is preserved during inspection and draft adoption.','hint');
   for(const [key,title,value,min]of fields) {
     const field=add(settingsGrid,'label',title),input=add(field,'input');
     input.id='incident-x402-'+key;input.type='number';input.value=String(value);
@@ -71,11 +76,18 @@ export function mountX402Registration({
     if(!source)return;
     fact(identity,'Reviewed merchant store',source.storeId);
     fact(identity,'Reviewed configuration SHA-256',source.configurationSha256);
+    fact(identity,'Configured polling',source.polling??'full');
+    if(source.inputsSha256!==undefined)fact(identity,'Pinned reviewed inputs SHA-256',source.inputsSha256);
     add(identity,'p','The original endpoint and credential reference are selected on the server. This form cannot grant access to another source.','hint');
+  }
+  function selectPolling() {
+    const source=selected();
+    fullPolling.disabled=source?.inputsSha256!==undefined;
+    polling.value=source?.polling??'full';
   }
   function controls() {
     const unavailable=!ready();
-    for(const input of [choice,id,label,...Object.values(inputs)])input.disabled=unavailable;
+    for(const input of [choice,id,label,polling,...Object.values(inputs)])input.disabled=unavailable;
     inspect.disabled=unavailable||!selected();
     adopt.disabled=unavailable||!review;
   }
@@ -85,7 +97,7 @@ export function mountX402Registration({
   function input() {
     const state=current(),limits=Object.fromEntries(Object.entries(inputs).map(([key,node])=>[key,Number(node.value)]));
     if(Object.values(limits).some(value=>!Number.isSafeInteger(value)))throw new Error('Use whole numbers for observation settings.');
-    return {x402SourceId:choice.value,expectedConfigRevision:state.configRevision,...limits};
+    return {x402SourceId:choice.value,expectedConfigRevision:state.configRevision,polling:polling.value,...limits};
   }
   function formKey() {
     return JSON.stringify({source:current()?.source.id,input:input(),id:id.value,label:label.value});
@@ -101,7 +113,7 @@ export function mountX402Registration({
       if(choices.some(row=>row.id===prior))choice.value=prior;
       const chosen=selected();id.value=chosen?.id??'';label.value=chosen?.label??'';
       for(const [name,,value]of fields)inputs[name].value=String(value);
-      drawIdentity();
+      selectPolling();drawIdentity();
     }
     if(review&&review.configRevision!==state?.configRevision)
       invalidate('Watcher settings changed. Inspect this original resource against the current revision.');
@@ -122,6 +134,8 @@ export function mountX402Registration({
           throw new Error('The X402 review returned a different source or watcher revision.');
         if(['storeId','tenantId','resourceVersionId','configurationSha256'].some(k=>result.x402?.[k]!==source[k]))
           throw new Error('The original resource or authority changed. Ask the host operator to review the private source selection before registering this observation.');
+        if((result.x402?.polling??'full')!==body.polling||result.x402?.inputsSha256!==source.inputsSha256)
+          throw new Error('The inspected polling mode or original reviewed-input pin changed. Inspect the selected source again.');
         if(result.sourceObservation?.configurationSha256!==undefined&&
             result.sourceObservation.configurationSha256!==result.x402.configurationSha256)
           throw new Error('The original observation digest differs from its reviewed configuration.');
@@ -129,6 +143,8 @@ export function mountX402Registration({
         facts.replaceChildren();
         fact(facts,'Observed merchant store',result.x402.storeId);
         fact(facts,'Observed configuration SHA-256',result.x402.configurationSha256);
+        fact(facts,'Reviewed polling',result.x402.polling??'full');
+        if(result.x402.inputsSha256!==undefined)fact(facts,'Pinned reviewed inputs SHA-256',result.x402.inputsSha256);
         fact(facts,'Observed at',result.observedAt);
         fact(facts,'Original source bytes',result.sourceObservation?.bytes??null);
         fact(facts,'Original owner runtime',result.sourceObservation?.runtimeId??null);
@@ -170,8 +186,9 @@ export function mountX402Registration({
   form.addEventListener('submit',event=>{event.preventDefault();void inspectSource();},{signal});
   adopt.addEventListener('click',addDraft,{signal});
   choice.addEventListener('change',()=>{
-    invalidate();const chosen=selected();id.value=chosen?.id??'';label.value=chosen?.label??'';drawIdentity();controls();
+    invalidate();const chosen=selected();id.value=chosen?.id??'';label.value=chosen?.label??'';selectPolling();drawIdentity();controls();
   },{signal});
+  polling.addEventListener('change',()=>invalidate(),{signal});
   for(const node of [id,label,...Object.values(inputs)])
     node.addEventListener('input',()=>invalidate(),{signal});
   function clear() {choicesKey='';invalidate();choice.replaceChildren();identity.replaceChildren();panel.hidden=true;}

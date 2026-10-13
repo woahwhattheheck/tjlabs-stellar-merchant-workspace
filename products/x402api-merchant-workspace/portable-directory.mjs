@@ -78,6 +78,7 @@ const SOURCE_FILES = [
   "products/x402api-merchant-workspace/INVOICE_REGISTER.md",
   "stellar/scf-starforge-20261009/sf93-seller-support-bundle/x402-source.mjs",
   "stellar/scf-starforge-20261009/sf93-seller-support-bundle/x402-observation.mjs",
+  "stellar/scf-starforge-20261009/sf93-seller-support-bundle/x402-summary.mjs",
   "stellar/scf-starforge-20261009/sf74-merchant-support-console/x402-desk.mjs",
   "stellar/scf-starforge-20261009/sf74-merchant-support-console/x402-render.mjs",
   "stellar/scf-starforge-20261009/sf74-merchant-support-console/X402_MERCHANT_SUPPORT.md",

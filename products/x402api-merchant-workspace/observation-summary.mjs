@@ -1,6 +1,7 @@
 // MIT. Compact operational projection of the original owned merchant store.
 import {createHash} from 'node:crypto';
 import {canonicalJson} from './protocol.mjs';
+import {merchantObservationHistoryRow,merchantObservationExchangeRow} from './observation.mjs';
 export const MERCHANT_OBSERVATION_SUMMARY_SCHEMA='stellar-forge.x402api-merchant-observation-summary.v1';
 export const MERCHANT_OBSERVATION_SUMMARY_LIMITS=Object.freeze({maxBytes:2*1024*1024,maxOrderDetails:1024});
 const STATES=new Set(['CREATED','CHARGE_UNCERTAIN','CHARGE_REJECTED','AWAITING_PAYMENT','PAYMENT_PENDING','PAYMENT_UNCERTAIN',
@@ -45,6 +46,30 @@ export function merchantSummaryHistorySequence(value) {
     fail('MERCHANT_OBSERVATION_HISTORY_SEQUENCE_INVALID',400);
   return Number(value);
 }
+export function merchantSummaryPrefixRows(value) {
+  if(value===null||value===undefined)return null;
+  if(typeof value!=='string'||!/^(0|[1-9][0-9]*)$/.test(value)||!Number.isSafeInteger(Number(value)))
+    fail('MERCHANT_OBSERVATION_PREFIX_ROWS_INVALID',400);
+  return Number(value);
+}
+function immutablePrefixProjection(statement,project,requested) {
+  const canonical=value=>Array.isArray(value)?value.map(canonical):plain(value)?
+    Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])):value;
+  const whole=createHash('sha256'),prefix=requested===null?null:createHash('sha256');
+  let rows=0,prefixRows=0;
+  whole.update('[');prefix?.update('[');
+  for(const raw of statement.iterate()) {
+    const encoded=JSON.stringify(canonical(project(raw)));
+    if(rows)whole.update(',');whole.update(encoded);
+    if(prefix&&rows<requested) {
+      if(prefixRows)prefix.update(',');prefix.update(encoded);prefixRows++;
+    }
+    rows++;need(Number.isSafeInteger(rows));
+  }
+  whole.update(']');prefix?.update(']');
+  return {current:{rows,sha256:whole.digest('hex')},
+    prefix:prefix?{rows:prefixRows,sha256:prefix.digest('hex')}:null};
+}
 function historicalAnchors(store,id,unresolved) {
   const first=store._get('SELECT kind FROM merchant_history WHERE order_id=? ORDER BY sequence LIMIT 1',id);
   const last=store._get("SELECT json_extract(data_json,'$.set.state') AS state FROM merchant_history WHERE order_id=? AND json_type(data_json,'$.set.state')='text' ORDER BY sequence DESC LIMIT 1",id);
@@ -74,12 +99,15 @@ function sourceBinding(workspace,configurationSha256,storeId) {
   need(value.configFileSha256===null||HASH.test(value.configFileSha256));
   return {...value,bindingSha256:sha(JSON.stringify(value))};
 }
-export function readMerchantObservationSummary(workspace,{historySequence=null}={}) {
+export function readMerchantObservationSummary(workspace,{historySequence=null,historyPrefixRows=null,exchangesPrefixRows=null}={}) {
   const store=workspace.store;
   need(!workspace.readOnly&&!store.readOnly,'MERCHANT_OBSERVATION_LIVE_OWNER_REQUIRED');
   store._assertOpen();
   need(!workspace.closing&&!store._db.isTransaction,'MERCHANT_OBSERVATION_BUSY');
   need(historySequence===null||Number.isSafeInteger(historySequence)&&historySequence>0,'MERCHANT_OBSERVATION_HISTORY_SEQUENCE_INVALID');
+  need((historyPrefixRows===null&&exchangesPrefixRows===null)||
+    Number.isSafeInteger(historyPrefixRows)&&historyPrefixRows>=0&&
+    Number.isSafeInteger(exchangesPrefixRows)&&exchangesPrefixRows>=0,'MERCHANT_OBSERVATION_PREFIX_ROWS_INVALID');
   const startedAt=new Date().toISOString();
   const counts={orders:0,receiptVerified:0,unresolved:0,receiptOutputPending:0,recordedResultComplete:0,resultProjectionPending:0,
     fulfillmentInterrupted:0,contradictions:0,authorityRejected:0,authorityRejectionRecords:0,
@@ -97,6 +125,16 @@ export function readMerchantObservationSummary(workspace,{historySequence=null}=
     const historyBoundary=boundary?{sequence:integer(boundary.sequence),sourceSha256:sha(boundary.data_json)}:null;
     const original=historySequence===null?null:store._get('SELECT data_json FROM merchant_history WHERE sequence=?',historySequence);
     const continuity=historySequence===null?null:{sequence:historySequence,sourceSha256:original?sha(original.data_json):null};
+    // Hash the same original full-observation descriptors without accumulating
+    // either array or selecting any request/response BLOB.
+    const historyProof=immutablePrefixProjection(store._statement(
+      'SELECT sequence,order_id,kind,data_json,created_at FROM merchant_history ORDER BY sequence'),
+      merchantObservationHistoryRow,historyPrefixRows);
+    const exchangesProof=immutablePrefixProjection(store._statement(
+      'SELECT sequence,order_id,kind,status,raw_bytes,raw_sha256,response_complete,error_json,created_at FROM merchant_exchanges ORDER BY sequence'),
+      merchantObservationExchangeRow,exchangesPrefixRows);
+    const immutablePrefixes={history:historyProof.current,exchanges:exchangesProof.current};
+    const prefixContinuity=historyPrefixRows===null?null:{history:historyProof.prefix,exchanges:exchangesProof.prefix};
     const exchanges=store._get('SELECT COUNT(*) AS total,COALESCE(SUM(CASE WHEN response_complete=0 THEN 1 ELSE 0 END),0) AS incomplete FROM merchant_exchanges');
     counts.providerExchanges=integer(exchanges.total);counts.incompleteProviderExchanges=integer(exchanges.incomplete);
     counts.pendingWebhooks=integer(store._get("SELECT COUNT(*) AS total FROM merchant_events WHERE state='PENDING'").total);
@@ -160,7 +198,7 @@ export function readMerchantObservationSummary(workspace,{historySequence=null}=
       resourceVersionId:workspace.config.template.resourceVersionId,startedAt,capturedAt,
       authority:'ORIGINAL_MERCHANT_OWNER_READ_ONLY',coverage:'COMPLETE',
       projection:'COMPLETE_CONDITIONS_WITH_BOUNDED_ORDER_DETAILS',limits:MERCHANT_OBSERVATION_SUMMARY_LIMITS,
-      binding:sourceBinding(workspace,configurationSha256,store.storeId),historyBoundary,continuity,counts,ages,
+      binding:sourceBinding(workspace,configurationSha256,store.storeId),historyBoundary,continuity,immutablePrefixes,prefixContinuity,counts,ages,
       details:{matchingOrders,returnedOrders:orders.length,omittedOrders:matchingOrders-orders.length,limit:MERCHANT_OBSERVATION_SUMMARY_LIMITS.maxOrderDetails},
       orders};
     value.snapshotSha256=sha(JSON.stringify(value));
