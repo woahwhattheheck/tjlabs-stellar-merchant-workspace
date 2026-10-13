@@ -1,6 +1,7 @@
 // MIT. Retained Atlas actions on the original loopback HTTP host.
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { openAtlasWorkspace } from './workspace.mjs';
+import { CAPTURE_FILTERS } from './capture-search.mjs';
 
 const routes = Object.freeze({
   '/api/workspace/capture/receive-page': ['receivePage', ['name', 'pageText']],
@@ -65,9 +66,11 @@ export async function createAtlasWorkspaceHttp({ directory } = {}) {
           if (url.pathname === '/api/workspace/summary' && !url.search)
             reply(200, await workspace.summary());
           else if (url.pathname === '/api/workspace/capture') {
-            const value = query(url, ['captureId', 'query', 'page', 'pageSize']);
+            const value = query(url, ['captureId', 'query', 'page', 'pageSize', 'snapshotId', ...CAPTURE_FILTERS]);
             reply(200, await workspace.capture({ captureId: value.captureId, query: value.query ?? '',
-              page: integer(value.page, 0), pageSize: integer(value.pageSize, 50) }));
+              page: integer(value.page, 0), pageSize: integer(value.pageSize, 50),
+              snapshotId: value.snapshotId ?? null,
+              filters: Object.fromEntries(CAPTURE_FILTERS.filter(key => Object.hasOwn(value, key)).map(key => [key, value[key]])) }));
           } else if (url.pathname === '/api/workspace/selection')
             reply(200, await workspace.selection(query(url, ['selectionId'])));
           else fail('ATLAS_WORKSPACE_ROUTE_NOT_FOUND', 404);
