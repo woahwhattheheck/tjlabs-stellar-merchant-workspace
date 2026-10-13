@@ -24,9 +24,10 @@ def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("--manifest",required=True)
     parser.add_argument("--parts-directory",required=True)
+    parser.add_argument("--buyer-search",required=True)
     args=parser.parse_args()
     manifest=json.loads(Path(args.manifest).read_text(encoding="utf-8"))
-    if manifest["schema"]!="tjlabs.scf-commercial-changes-complete-receiving.v1":raise ValueError("Select the complete source manifest")
+    if manifest["schema"]!="tjlabs.scf-customer-expense-complete-receiving.v1":raise ValueError("Select the complete source manifest")
     files=[];seen=set()
     for expected in manifest["parts"]:
         original=(Path(args.parts_directory)/("part-%02d.json"%expected["part"])).read_bytes()
@@ -56,6 +57,7 @@ def main():
     inventory=[{k:item[k] for k in ("path","bytes","sha256","gitBlob")} for item in files]
     if inventory!=manifest["sourceInventory"] or len(files)!=manifest["sourceFiles"] or sum(item["bytes"] for item in files)!=manifest["sourceBytes"]:raise ValueError("Complete source selection differs")
     payload=dict(manifest["receiver"],files=files)
+    payload["buyerSearch"]=json.loads(Path(args.buyer_search).read_text(encoding="utf-8"))
     raw=json.dumps(payload,ensure_ascii=False)
-    exec(compile(payload["controller"],"<original-commercial-changes-receiver>","exec"),{"raw":raw,"__name__":"__main__"})
+    exec(compile(payload["controller"],"<original-customer-expense-receiver>","exec"),{"raw":raw,"__name__":"__main__"})
 if __name__=="__main__":main()
