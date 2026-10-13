@@ -177,10 +177,14 @@ same action. Reports and native datasets select complete source editions.
 ## Build a useful company shortlist
 
 Select a source edition and open a company row. The detail panel presents the
-legal name, LEI, separate entity and registration statuses, jurisdiction,
-registered identifiers, addresses, next renewal and complete relationship
-references. The full original JSON resource is available beside the details.
-**Download original source page** retrieves the exact retained response bytes.
+legal name, LEI, separate entity and registration statuses, legal jurisdiction,
+postal addresses and next renewal date. Country names accompany their original
+jurisdiction codes; source observation times remain attached to each edition.
+Open **Registration and relationship references** for the registered identifiers
+and original source links to issuer, parent, branch and other related records.
+**Complete original resource** retains every exact source field, including address
+components and date/time values. **Download original source page** retrieves the
+exact retained response bytes.
 
 Record a reviewer, research rationale, intended customer use case and next work.
 Choose **Include in shortlist**, **Research** or **Exclude from shortlist**.
@@ -221,6 +225,19 @@ starforge gleif run \
 
 The review.batch action accepts an input.items array containing these same full
 review bodies. Every selected review is validated before the batch is committed.
+
+The browser retains each draft with its selected source edition and the company
+review version opened for editing. Selecting companies for a batch retains those
+same source and review versions. Refreshing saved work updates the displayed
+project without replacing an editor's original version or draft text.
+
+If another review is saved while you are editing, the company panel displays the
+current saved decision beside your retained edits. **Load the saved review** opens
+that saved text. **Keep my edits with this revision** keeps your text and explicitly
+uses the displayed version for the next save. The same correction is available
+for a selected batch. Earlier requests remain in browser and project history;
+a corrected save uses a new request. An earlier browser draft can be restored
+explicitly in the selected company panel.
 
 ## Refresh the source and compare the complete records
 
@@ -278,6 +295,14 @@ and after capture IDs. The report freezes the selected complete records and
 source-specific review editions before creating customer files. An interrupted
 report or dataset resumes those original selections even if later company review
 has continued. Subsequent work creates a new report or dataset.
+
+The HTML customer report uses the same readable company facts, postal addresses,
+renewal dates and source-reference links as the application. Each source edition
+shows the original response observation time, with its saved-project time and
+exact reference available separately. Research rationale, customer use case and
+next work appear together beside the reviewed company. The report retains the
+complete original resource, while its accompanying CSV, JSON and JSONL carry the
+full source fields for downstream use.
 
 ## Prepare and operate a native merchant dataset
 

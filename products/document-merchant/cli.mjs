@@ -14,11 +14,13 @@ import {
   documentSetupTemplate, prepareDocumentMerchant, inspectDocumentMerchant, readDocumentSetupRequest
 } from './setup.mjs';
 import {readDocumentSupplierUsage} from './renderer.mjs';
+import {runDocumentBatchCommand} from './batch-cli.mjs';
 
 const HELP = [
   'Starforge document merchant', '',
   'Install and run a complete HTML or Markdown document service on the existing paid Jobs engine.', '',
   '  document-merchant providers',
+  '  document-merchant batch --help',
   '  document-merchant template --provider mintpdf|snaplab|pdfmint [--anonymous] [--out NEW_FILE]',
   '  document-merchant prepare --request FILE --directory DIR',
   '  document-merchant inspect --directory DIR',
@@ -84,6 +86,7 @@ function forwarded(argv) {
 export async function runDocumentCommand(argv = process.argv.slice(2), {print = value => console.log(value)} = {}) {
   if (!argv.length || argv.length === 1 && ['--help', '-h', 'help'].includes(argv[0])) return print(HELP);
   const [command, ...tail] = argv;
+  if (command === 'batch') return runDocumentBatchCommand(tail,{print});
   const emit = value => print(JSON.stringify(value, null, 2));
   if (command === 'providers') {
     if (tail.length) throw commandError('providers takes no options.');

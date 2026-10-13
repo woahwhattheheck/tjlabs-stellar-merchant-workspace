@@ -1,14 +1,17 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "buyer-discovery",
-  "description": "Complete catalog browsing, search and schema-aware buyer request preparation",
+  "description": "Complete catalog browsing, search and source-declared path/query request preparation",
   "supportFiles": [
     "stellar-forge/mcp-paid-agent/README.md",
     "stellar-forge/mcp-paid-agent/CONSOLE.md",
     "stellar-forge/mcp-paid-agent/DISCOVERY.md",
     "stellar-forge/mcp-paid-agent/discovery.mjs",
     "stellar-forge/mcp-paid-agent/query-requirements.mjs",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/query-parameters.mjs"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/query-parameters.mjs",
+    "stellar-forge/route-identity/http-path.mjs",
+    "stellar-forge/route-identity/identity.mjs",
+    "stellar-forge/mcp-paid-agent/operator-ui/browser-assets.json"
   ],
   "exports": {
     "./buyer/mcp/discovery": {

@@ -1,7 +1,9 @@
 // Complete customer installations in the original SF47 operating case.
+import {mountCommercialInstallations} from './operations_commercial_installations.mjs';
 import { workflowBoundCheck, workflowReportView, workflowIntakePanel } from './operations_installation_workflows.mjs';
 import { installationEffortFields, captureInstallationEffort, changeInstallationEffort, applyInstallationEffortReviews,
   installationEffortReport, installationEffortPlanningPanel, captureInstallationEffortPlanning, hasUnappliedEffortReviews } from './operations_installation_effort.mjs';
+import {captureUseCalendar,useCalendarFields,useCalendarAction,useCalendarReport} from './operations_use_calendar.mjs';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const copy=value=>structuredClone(value);
 const title=value=>String(value??'').toLowerCase().replaceAll('_',' ').replace(/^./,c=>c.toUpperCase());
@@ -37,26 +39,32 @@ function assign(object,path,value){
 
 export function mountInstallations({container,current,api,saveApi,session,mutationId,recordingActor,onCase,onSources,onForecastInputs}){
   const root=document.createElement('section');root.className='installation-desk';
-  root.setAttribute('aria-label','Customer installations');container.replaceChildren(root);
+  const commercialRoot=document.createElement('section');commercialRoot.hidden=true;
+  root.setAttribute('aria-label','Customer installations');container.replaceChildren(commercialRoot,root);
   if(!document.querySelector('link[data-installation-style]')){
     const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_installations.css';
     link.dataset.installationStyle='true';document.head.append(link);
+  }
+  if(!document.querySelector('link[data-commercial-installation-style]')){
+    const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_commercial_installations.css';
+    link.dataset.commercialInstallationStyle='true';document.head.append(link);
   }
   const caseId=current.program.id,prefix='/api/operations/'+caseId,storageKey='sf47.installations.'+caseId;
   if(!session.initialized){
     let stored;
     try{stored=JSON.parse(sessionStorage.getItem(storageKey)||'null');}catch{}
     if(stored?.schema==='sf47.installation-editor.v1'&&stored.caseId===caseId){
-      for(const key of ['drafts','draftKey','selected','mode','pending','accepted','notice','workshareIntake','workflowIntake','effortPlanning'])if(Object.hasOwn(stored,key))session[key]=stored[key];
+      for(const key of ['drafts','draftKey','selected','mode','pending','accepted','notice','workshareIntake','workflowIntake','commercialOpen','effortPlanning'])if(Object.hasOwn(stored,key))session[key]=stored[key];
     }
+    if(stored?.schema==='sf47.installation-editor.v1'&&stored.caseId===caseId&&stored.commercialIntake)session.commercialIntake=stored.commercialIntake;
     session.initialized=true;
   }
   for(const [key,value] of Object.entries({drafts:{},draftKey:null,selected:null,mode:'saved',pending:null,accepted:null,
     inflight:null,notice:'',error:'',filter:'',workshareIntake:{open:false,sourceId:'',packetSourceId:'',caseId:'',target:'new'},
     workflowIntake:{open:false,sourceId:'',target:'new',cycleIds:[]},
-    effortPlanning:{open:false,forecastId:'',name:'',note:'',taskInstallations:{},forecast:null,installationChoices:[],lastSelection:null}}))if(!Object.hasOwn(session,key))session[key]=value;
+    effortPlanning:{open:false,forecastId:'',name:'',note:'',taskInstallations:{},forecast:null,installationChoices:[],lastSelection:null},commercialOpen:false,commercialIntake:{}}))if(!Object.hasOwn(session,key))session[key]=value;
   let active=true,hostBusy=false,busy=false,generation=0,caseValue=current,selectedRow=null,historyRows=[],nextBefore=null;
-  let preview=null,previewDraft=null,loading=false,workshareInventory=null,workflowInventory=null;
+  let preview=null,previewDraft=null,loading=false,workshareInventory=null,workflowInventory=null,commercialView=null;
   const $=selector=>root.querySelector(selector),available=()=>active&&root.isConnected;
   const draft=()=>session.draftKey?session.drafts[session.draftKey]:null;
   const editable=()=>caseValue.program.state==='OPEN'&&!hostBusy;
@@ -67,7 +75,8 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   const deployments=roles=>caseValue.records.deployments.filter(row=>roles.includes(row.role)).map(row=>[row.id,row.name+' · '+row.operator]);
   function persist(){
     const body={schema:'sf47.installation-editor.v1',caseId};
-    for(const key of ['drafts','draftKey','selected','mode','pending','accepted','notice','workshareIntake','workflowIntake','effortPlanning'])body[key]=session[key];
+    for(const key of ['drafts','draftKey','selected','mode','pending','accepted','notice','workshareIntake','workflowIntake','commercialOpen','effortPlanning'])body[key]=session[key];
+    body.commercialIntake=Object.fromEntries(['sourceId','quoteKey','acceptanceKey','installationId'].filter(key=>Object.hasOwn(session.commercialIntake,key)).map(key=>[key,session.commercialIntake[key]]));
     try{sessionStorage.setItem(storageKey,JSON.stringify(body));}
     catch{session.storageNotice='The browser could not retain another local draft copy. Download the complete draft before closing this browser.';}
   }
@@ -76,7 +85,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     if(!available())return;
     root.setAttribute('aria-busy',String(hostBusy||busy||!!session.inflight));
     for(const el of root.querySelectorAll('button,input,select,textarea')){
-      const isInput=el.matches('[data-installation-field],[data-installation-coordination],[data-installation-note],[data-installation-effort-field]');
+      const isInput=el.matches('[data-installation-field],[data-installation-coordination],[data-installation-note],[data-use-field],[data-use-pattern],[data-installation-effort-field]');
       const save=el.dataset.installationAction==='save';
       el.disabled=el.dataset.installationFixed==='true'||hostBusy||
         (save&&(hasUnappliedEffortReviews(draft())||!preview||!same(previewDraft?.document,draft()?.document)||previewDraft?.expectedRevision!==draft()?.expectedRevision))||
@@ -100,6 +109,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     }
     captureCoordination(value);
     captureInstallationEffort(root,value);
+    captureUseCalendar(root,value.document,value.calendarUI??={});
     value.note=$('[data-installation-note]')?.value??value.note;
     value.dirty=true;
     if(previewDraft&&!same(previewDraft.document,value.document))preview=null;
@@ -184,10 +194,10 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   }
   function draftFields(value){
     const d=value.document;
-    const boundCheck=check=>!!d.workshare?.phaseChecks.some(row=>row.checkId===check.id)||workflowBoundCheck(d,check);
+    const boundCheck=check=>!!d.workshare?.phaseChecks.some(row=>row.checkId===check.id)||!!d.commercial?.taskChecks.some(row=>row.checkId===check.id)||workflowBoundCheck(d,check);
     const f=(label,path,options={})=>{
       const match=/^checks\.(\d+)\.(id|title|criterion|required)$/.exec(path);
-      const locked=(path.startsWith('workorder.')&&!!d.workshare)||(match&&boundCheck(d.checks[Number(match[1])]));
+      const locked=(path.startsWith('workorder.')&&!!(d.workshare||d.commercial))||(match&&boundCheck(d.checks[Number(match[1])]));
       return field(label,path,path.split('.').reduce((v,key)=>v[key],d),{...options,locked:!!locked});
     };
     const sources=(label,path)=>f(label,path,{choices:sourceOptions(),multiple:true,wide:true});
@@ -262,6 +272,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
         f('Original delivery outcomes','checks.'+index+'.outcomeIds',{choices:recordOptions('outcomes'),multiple:true,wide:true})+
         '</div>'+button('Remove acceptance step','remove-check','data-index="'+index+'"',!editable()||boundCheck(check))+'</details>').join('')+
       button('Add acceptance step','add-check','',!editable()||d.checks.length>=100)+'</fieldset>';
+    html+=useCalendarFields(d,caseValue,value.calendarUI??={});
     return html;
   }
   function reportView(value){
@@ -272,7 +283,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       '</strong></div><div><span>Selected source files</span><strong>'+report.sourceFiles+
       '</strong></div><div><span>Entered task amount</span><strong>'+esc(report.pricedTaskAtomic??'Unentered')+'</strong><small>Original atomic units</small></div></div>'+
       (report.findings.length?table(['Field or step','Current decision or observation'],report.findings.map(row=>[esc(row.field),esc(row.message)])):note('All entered configuration decisions and required acceptance steps are complete.'))+
-      workflowReportView(value)+installationEffortReport(report.effort)+
+      workflowReportView(value)+useCalendarReport(report.useCalendar)+installationEffortReport(report.effort)+
       '<h4>Original work and funded packages</h4>'+
       table(['Funding basis','Work package','Recorded hours','Accepted hours'],report.work.map(row=>[esc(row.fundingBasis),esc(row.costId||'Unassigned'),esc(row.recordedHours),esc(row.acceptedHours)]))+
       table(['Package','Tranche','Original planned hours','Original planned USD'],report.packages.map(row=>[esc(row.id),esc(row.tranche),esc(row.estimated_hours),esc(row.amount_usd)]))+
@@ -324,6 +335,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     const draftKeys=Object.keys(session.drafts);
     root.innerHTML=heading('Customer installations','Keep the whole task, source, terms, receiving application and original funded work together.',
       button('New installation','new','',!editable()||!!session.pending||!!session.accepted)+
+      button('Receive accepted quotation','commercial-open','',!editable()||!!session.pending||!!session.accepted)+
       button('Receive commercial Workshare','workshare-open','',!editable()||!!session.pending||!!session.accepted)+
       button('Receive customer periods','workflow-open','',!editable()||!!session.pending||!!session.accepted)+
        button('Remaining work forecast','effort-planning-show'))+
@@ -351,6 +363,8 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
         selectedRow?savedView(selectedRow):empty('Open a saved installation or prepare a new one from this case.'))+
       '</div></div><input type="file" data-installation-file hidden accept=".json,application/json">';
     controls();
+    commercialRoot.hidden=!session.commercialOpen;
+    if(session.commercialOpen){ensureCommercial();commercialView.refresh();}
   }
   async function reloadCase(){
     const next=await saveApi(prefix);
@@ -372,6 +386,74 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       historyRows=history.editions;nextBefore=history.nextBefore;
     }finally{if(own(epoch)){loading=false;render();}}
   }
+
+  function commercialDraft(id){
+    capture();
+    const value=session.mode==='edit'?draft():null;
+    if(!value||value.installationId!==id)return null;
+    return {document:copy(value.document),expectedRevision:value.expectedRevision,
+      draftKey:value.key,token:value.token,note:value.note};
+  }
+  function commercialReadOnly(){
+    if(!editable())return 'Reopen the original operating case to receive accepted scope.';
+    if(session.pending||session.accepted)return 'Recover the original Installation save before receiving another accepted scope.';
+    if(busy||session.inflight)return 'The original Installation operation is in progress.';
+    return '';
+  }
+  function closeCommercial(){
+    session.commercialOpen=false;commercialRoot.hidden=true;persist();
+    root.scrollIntoView({block:'start'});
+  }
+  function ensureCommercial(){
+    if(commercialView)return;
+    commercialView=mountCommercialInstallations(commercialRoot,{
+      context:()=>({workspaceId:caseValue.workspaceId??null,caseId,version:caseValue.program.version,
+        sources:caseValue.sources,installations:list()}),
+      inventory:body=>api(prefix+'/installation-commercial',body),
+      seed:body=>api(prefix+'/installation-commercial-seed',body),
+      getInstallation:id=>api(prefix+'/installations/'+id),
+      currentDraft:commercialDraft,
+      readOnlyReason:commercialReadOnly,
+      persist,close:closeCommercial,
+      openSources:()=>{capture();persist();onSources?.();},
+      downloadSource:async id=>{
+        const selected=caseValue.sources.find(row=>row.id===id),epoch=generation;
+        if(!selected)throw new Error('Reopen the original source selection.');
+        const response=await api(prefix+'/sources/'+id,undefined,{download:true}),blob=await response.blob();
+        if(own(epoch))saveDownload(blob,selected.filename);
+      },
+      receiveDraft:async input=>{
+        const reason=commercialReadOnly();if(reason)return {applied:false,message:reason};
+        if(input.scope.caseId!==caseId||input.scope.version!==caseValue.program.version)
+          return {applied:false,message:'The original case changed. Review its accepted source again.'};
+        const original=input.originalDraft,live=commercialDraft(input.installationId);
+        if(original?.draftKey){
+          if(!live||!same(live,original))
+            return {applied:false,message:'The current Installation draft changed. Review its complete accepted scope again.'};
+        }else if(live){
+          return {applied:false,message:'A later Installation draft is now open. Review it before receiving this source.'};
+        }
+        if(input.installationId&&list().find(row=>row.id===input.installationId)?.revision!==input.expectedRevision)
+          return {applied:false,message:'The selected saved Installation changed edition.'};
+        const selectedKey=original?.draftKey||'commercial-'+crypto.randomUUID();
+        session.drafts[selectedKey]={key:selectedKey,token:crypto.randomUUID(),
+          label:input.document.name+' · accepted quotation',installationId:input.installationId,
+          expectedRevision:input.expectedRevision,document:copy(input.document),
+          note:original?.note||'Receive accepted quotation '+input.review.source.selected.quoteId,
+          dirty:true};
+        session.draftKey=selectedKey;session.mode='edit';session.selected=null;selectedRow=null;
+        preview=null;previewDraft=null;
+        session.notice='Prepared the complete accepted customer scope. Review the Installation and save its next edition.';
+        persist();render();return {applied:true,draftKey:selectedKey};
+      },
+      openInstallation:async id=>{
+        if(session.mode==='edit'&&draft()?.installationId===id){closeCommercial();return;}
+        if(id){await openEdition(id);if(available())closeCommercial();}
+        else {closeCommercial();render();}
+      }
+    },session.commercialIntake);
+  }
+
   const sameWorkshareSource=(a,b)=>['sourceId','expectedSourceSha256','packetSourceId','expectedPacketSha256'].every(key=>a?.[key]===b?.[key]);
   function workshareSelection(value=session.workshareIntake){
     const source=caseValue.sources.find(row=>row.id===value.sourceId);
@@ -800,7 +882,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   root.addEventListener('submit',event=>{if(event.target.matches('[data-installation-editor]')){event.preventDefault();run(previewDraftInput);}});
   root.addEventListener('input',event=>{
     if(event.target.matches('[data-effort-planning-field]')){captureInstallationEffortPlanning(root,session.effortPlanning);persist();controls();}
-    if(event.target.matches('[data-installation-field],[data-installation-coordination],[data-installation-note],[data-installation-effort-field]')){capture();controls();}
+    if(event.target.matches('[data-installation-field],[data-installation-coordination],[data-installation-note],[data-use-field],[data-use-pattern],[data-installation-effort-field]')){capture();controls();}
     if(event.target.matches('[data-installation-filter]')){session.filter=event.target.value;const start=event.target.selectionStart;render();const input=$('[data-installation-filter]');input.focus();try{input.setSelectionRange(start,start);}catch{}}
   });
   root.addEventListener('change',event=>{
@@ -832,7 +914,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       if(key==='sourceId'||key==='packetSourceId'){workshareInventory=null;session.workshareIntake.caseId='';}
       persist();render();return;
     }
-    if(event.target.matches('[data-installation-field],[data-installation-coordination]')){capture();controls();}
+    if(event.target.matches('[data-installation-field],[data-installation-coordination],[data-use-field],[data-use-pattern]')){capture();controls();}
     if(event.target.matches('[data-installation-file]')&&event.target.files[0])run(()=>importDraft(event.target.files[0]));
   });
   root.addEventListener('click',event=>{
@@ -861,6 +943,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       if(action==='workflow-read')return readWorkflows();
       if(action==='workflow-prepare')return prepareWorkflow();
 
+      if(action==='commercial-open'){capture();session.commercialOpen=true;ensureCommercial();persist();commercialView.refresh();commercialRoot.hidden=false;commercialRoot.scrollIntoView({block:'start'});return;}
       if(action==='workshare-open')return openWorkshare();
       if(action==='workshare-close'){capture();session.workshareIntake.open=false;persist();return;}
       if(action==='workshare-sources'){capture();persist();onSources?.();return;}
@@ -889,12 +972,33 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
         if(own(epoch)&&same(session.selected,selected)){historyRows.push(...page.editions);nextBefore=page.nextBefore;}return;
       }
       capture();const value=draft();if(!value||!editable())return;
+      if(action.startsWith('use-calendar-')){
+        const originalDocument=copy(value.document),originalUI=copy(value.calendarUI??{}),workingUI=copy(originalUI);
+        const workingDocument=copy(originalDocument),identity={key:value.key,token:value.token,installationId:value.installationId,expectedRevision:value.expectedRevision};
+        const result=await useCalendarAction(action,target,{document:workingDocument,context:caseValue,ui:workingUI,api,prefix,expectedVersion:caseValue.program.version});
+        const next=result.document||workingDocument;
+        if(value.token!==identity.token||!same(value.document,originalDocument)){
+          if(!same(next,originalDocument)){
+            const key='calendar-'+crypto.randomUUID();
+            session.drafts[key]={key,token:crypto.randomUUID(),installationId:identity.installationId,expectedRevision:identity.expectedRevision,
+              document:copy(next),calendarUI:workingUI,note:'',dirty:true,label:'Customer-use expansion'};
+            session.notice='Kept the complete calendar result as a separate retained draft. Your later form edits remain open.';
+          }
+        }else{
+          value.document=copy(next);value.dirty=true;
+          if(same(value.calendarUI??{},originalUI))value.calendarUI=workingUI;
+          if(result.message)session.notice=result.message;
+        }
+        preview=null;previewDraft=null;persist();return;
+      }
       if(action==='add-facilitator')value.document.payment.facilitators.push({operatorId:'',endpoint:'',sourceIds:[],note:''});
       if(action==='remove-facilitator')value.document.payment.facilitators.splice(Number(target.dataset.index),1);
       if(action==='add-check')value.document.checks.push({id:'step-'+crypto.randomUUID().slice(0,8),title:'New acceptance step',criterion:'',
         tranche:null,required:true,state:'OPEN',operator:'',observedAt:null,note:'',sourceIds:[],workIds:[],purchaseIds:[],outcomeIds:[]});
       if(action==='remove-check'){
         const index=Number(target.dataset.index),check=value.document.checks[index];
+        if(value.document.commercial?.taskChecks.some(row=>row.checkId===check?.id))
+          throw new Error('Receive the accepted later quotation to change its original task checks.');
         if(workflowBoundCheck(value.document,check))
           throw new Error('Receive the complete original customer periods to update their acceptance steps.');
         if(value.document.workshare?.phaseChecks.some(row=>row.checkId===check?.id))
@@ -927,7 +1031,10 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
         'Opened the installation delivery assignment. Review and save the complete edition when ready.';
     }else if(request.edit)session.notice='This operating case is closed. Opened the saved edition for review.';
     delete session.requestOpen;persist();render();
-    if(session.mode==='edit')focusCoordination(request.taskId);
+    if(request.focusUseCalendar){
+      const target=$('[data-use-editor]')||$('[data-installation-editor]')||root;
+      target.scrollIntoView({block:'start'});target.querySelector('[data-use-field],button')?.focus({preventScroll:true});
+    }else if(session.mode==='edit')focusCoordination(request.taskId);
   }
   async function initialize(){
     if(session.inflight)await session.inflight.catch(()=>{});
@@ -944,6 +1051,6 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   }
   render();
   const ready=initialize().catch(error=>{failure(error);});
-  return {ready,setHostBusy(value){hostBusy=!!value;controls();},
-    dispose(){capture();active=false;++generation;persist();}};
+  return {ready,setHostBusy(value){hostBusy=!!value;controls();commercialView?.refresh();},
+    dispose(){capture();active=false;++generation;commercialView?.destroy();persist();}};
 }

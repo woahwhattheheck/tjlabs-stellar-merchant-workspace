@@ -114,6 +114,85 @@ Every portable application file in the original Quality export must match the in
 package's source bytes and manifest Git blob. A later product source edition must be
 received through its matching original programme and complete export.
 
+## Upgrade the completed Quality customer to version 7
+
+The same programme also carries the completed version 5 customer into the complete
+version 7 application. Select the explicit upgrade input below. The original installed
+operation above continues to require its original version 5 source and 76-file export.
+
+The upgrade first validates that original export with both its original version 5 store
+and the selected version 7 store. All 76 original application files must match their
+published source snapshot. Keep either the original published commit or the complete
+published source packet with its Git blob identity. A corrected source file must be
+declared separately with its published Git blob; the programme verifies its complete
+bytes. This supports the original Quality delivery's retained source packet and later
+desk correction without changing the meaning of either source edition.
+
+The original receiver creates a separate `original-customer-workspace/`. The current
+store then exports that same workspace with all 81 selected application files. Its
+receiver opens a new `customer-workspace/`; the original received application stays
+available. The programme compares the entire state and every object byte across that
+transition, including source events, saved editions, rule definitions, evaluations,
+dispositions and their histories, attached results, schema/service records and operation
+IDs. A source upgrade does not create a customer revision or a new Quality decision.
+
+That received customer continues through all the installed command, runtime,
+Applications, browser, merchant, reopening and independent delivery stages described
+below. Each selected application file is checked against the complete product manifest.
+The final export must contain the same original state and objects and the complete
+81-file selected source. The delivery also retains `original-source/`, the exact original
+workspace, native result, source selection, and complete original packet when selected.
+
+Use the maintained distribution builder to select the actual current source commit.
+The `sourceBuild` alternative above also works for this upgrade. For an existing selected
+package and the original packet with a published desk correction, use:
+
+~~~json
+{
+  "schema": "commons.openlineage.installed-quality-upgrade-input.v1",
+  "operationId": "OPENLINEAGE-INSTALLED-QUALITY-UPGRADE-SDK12-20261012",
+  "directory": "/absolute/private/openlineage-quality-upgrade",
+  "selectedPackage": {
+    "directory": "/absolute/private/current-selected-package",
+    "archive": "/absolute/private/current-selected-package.tgz",
+    "sha256": "SHA256_OF_THE_COMPLETE_CURRENT_ARCHIVE",
+    "sourceCommit": "FULL_PUBLISHED_CURRENT_GIT_COMMIT"
+  },
+  "originalQuality": {
+    "resultFile": "/absolute/private/complete-quality-native-result.json",
+    "workspaceFile": "/absolute/private/complete-quality-workspace.json",
+    "sha256": "ORIGINAL_COMPLETE_DELIVERY_EXPORT_ID",
+    "sourceSnapshot": {
+      "directory": "/absolute/private/original-quality-source",
+      "repository": "/absolute/private/original-source.git",
+      "packetFile": "/absolute/private/original-quality-source-packet.json",
+      "packetBlob": "FULL_PUBLISHED_ORIGINAL_SOURCE_PACKET_GIT_BLOB",
+      "overrides": [
+        { "path": "quality-ui.mjs", "gitBlob": "FULL_PUBLISHED_CORRECTED_SOURCE_GIT_BLOB" }
+      ]
+    }
+  },
+  "browser": {
+    "modulePath": "/absolute/path/to/playwright/index.js",
+    "executablePath": "/absolute/path/to/chromium",
+    "args": ["--no-sandbox", "--disable-dev-shm-usage"]
+  },
+  "pythonExecutable": "python3"
+}
+~~~
+
+For an original application that exactly matches one published commit, replace
+`packetFile`, `packetBlob` and `overrides` with `"commit": "FULL_ORIGINAL_GIT_COMMIT"`.
+Keep the original snapshot directory and Git repository. The commit mode compares
+each original application file to that commit's actual source tree; packet mode verifies
+the complete retained packet and each declared correction against their Git objects.
+
+Run the same `INSTALLED_RECEIVING.mjs` command with this explicit upgrade input.
+Continue an interrupted upgrade with its same input and case; its journal binds both
+source editions and the complete original customer export and native result. The
+`upgrade-original-application-source` stage records the old and new source identities,
+state digest, exact object closure and unchanged operation IDs.
+
 ## What the programme operates
 
 | Stage | Maintained interface | Customer result |
@@ -132,6 +211,12 @@ The programme reads and exports the completed Quality state. Product setup recor
 runtime installations and Application lifecycle operations live in its own private
 receiving case. Original source event IDs, rule editions, evaluations, decisions and
 workspace operation history remain unchanged.
+
+The complete OpenLineage source selection includes the maintained merchant console
+and its workflow modules. Its authenticated MCP host can therefore start with the
+console enabled from the installed package, using the same source-verified operator
+runtime. This receiving programme opens that actual host and compares all three
+Quality report formats through its original seven-tool merchant interface.
 
 The selected package explicitly includes `OPENLINEAGE_LICENSE`. That upstream notice
 is part of every original editable application inventory. The maintained distribution

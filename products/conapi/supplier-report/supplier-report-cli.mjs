@@ -8,6 +8,7 @@ import {
   createEdition, reconcile, decideMany, finalize, exportCSV, exportHTML,
   exportSQL, serializeWorkspace, reopenWorkspace
 } from './supplier-report.mjs';
+import {createWorkbookHost,workbookMain,workbookDeliveryMembers} from './review-workbook-host.mjs';
 
 const USAGE = [
   'Supplier feed review',
@@ -21,11 +22,20 @@ const USAGE = [
   '    --reviewer REVIEWER --expected-revision NUMBER --out reviewed.json [--finalize] [--force]',
   '',
   '  node supplier-report-cli.mjs export --workspace reviewed.json --out-dir NEW_DIRECTORY',
-  '    [--table-name supplier_feed_accepted]',
+  '    [--table-name supplier_feed_accepted] [--workbook-delivery REVIEW_DELIVERY_DIRECTORY]',
   '',
   '  node supplier-report-cli.mjs inspect --workspace workspace.json',
   '  node supplier-report-cli.mjs serve [--port 8765]',
   '',
+  '  node supplier-report-cli.mjs workbook-export --workspace WORKSPACE --out REVIEW.xlsx',
+  '  node supplier-report-cli.mjs workbook-review --workspace WORKSPACE --returned REVIEW.xlsx --out-dir REVIEW_DIRECTORY',
+  '    [--resolutions CHOICES.json] [--reviewed-at ISO_TIMESTAMP] [--python PYTHON_EXECUTABLE]',
+  '  node supplier-report-cli.mjs workbook-apply --workspace WORKSPACE --review-dir REVIEW_DIRECTORY',
+  '    --operation ORIGINAL_ID --out RESULT_WORKSPACE --delivery-dir NEW_DELIVERY [--finalize] [--force]',
+  '  node supplier-report-cli.mjs workbook-receive --packet COMPLETE_PACKET.json --out-dir NEW_DIRECTORY',
+  '    (or --delivery-dir ORIGINAL_DELIVERY in place of --packet)',
+  '',
+  'Workbook file conversion uses the installed Analysis Python environment; see WORKBOOK_REVIEW.md.',
   'Source timestamps default to the time the local file is read. File provenance is retained.',
   'All input text must be valid UTF-8. Export requires a new directory.',
   '--force permits replacing a regular output file for compare or decide.',
@@ -43,7 +53,7 @@ const SCHEMAS = {
     required: ['workspace', 'decisions', 'reviewer', 'expected-revision', 'out'],
     optional: [], flags: ['force', 'finalize']
   },
-  export: { required: ['workspace', 'out-dir'], optional: ['table-name'], flags: [] },
+  export: { required: ['workspace', 'out-dir'], optional: ['table-name', 'workbook-delivery'], flags: [] },
   inspect: { required: ['workspace'], optional: [], flags: [] },
   serve: { required: [], optional: ['port'], flags: [] }
 };
@@ -284,7 +294,9 @@ const DELIVERY_SOURCE_FILES = [
   'supplier-report-cli.mjs', 'supplier-report.mjs', 'review.html',
   'review-ui.mjs', 'review-ui.css', 'README.md', 'FIELD_GUIDE.md', 'SOURCE_NOTES.md',
   'catalogue-coverage.mjs', 'CATALOGUE_COVERAGE.md',
-  'supplier_attachments.py', 'NATIVE_ATTACHMENTS.md'
+  'supplier_attachments.py', 'NATIVE_ATTACHMENTS.md',
+  'review-workbook.mjs', 'review_workbook.py', 'review-workbook-ui.mjs',
+  'review-workbook-host.mjs', 'WORKBOOK_REVIEW.md'
 ];
 
 async function deliverySources() {
@@ -344,6 +356,18 @@ async function exportCommand(options) {
   // Generate every requested artifact before opening the destination directory.
   const sources = await deliverySources();
   const files = makeExportFiles(report, options['table-name'] || 'supplier_feed_accepted', sources);
+  if (options['workbook-delivery']) {
+    const additions = await workbookDeliveryMembers(options['workbook-delivery'], report);
+    const manifest = JSON.parse(files.get('manifest.json'));
+    files.delete('manifest.json');
+    for (const {filename, content} of additions) {
+      if (files.has(filename)) throw error('Workbook delivery duplicates an existing export member: ' + filename, 'EXPORT_FORMAT');
+      files.set(filename, content);
+      const body = Buffer.isBuffer(content) ? content : Buffer.from(content, 'utf8');
+      manifest.files.push({filename, bytes: body.length, sha256: digest(body)});
+    }
+    files.set('manifest.json', json(manifest));
+  }
   const directory = path.resolve(options['out-dir']);
   await fs.mkdir(path.dirname(directory), { recursive: true });
   try {
@@ -368,16 +392,20 @@ async function serveCommand(options) {
   const port = Number(rawPort);
   if (!Number.isSafeInteger(port) || port < 1 || port > 65535) throw error('--port must be between 1 and 65535');
   const directory = fileURLToPath(new URL('.', import.meta.url));
+  const workbookHost = createWorkbookHost();
   const allowed = new Map([
     ['/', ['review.html', 'text/html; charset=utf-8']],
     ['/review.html', ['review.html', 'text/html; charset=utf-8']],
     ['/supplier-report.mjs', ['supplier-report.mjs', 'text/javascript; charset=utf-8']],
     ['/review-ui.mjs', ['review-ui.mjs', 'text/javascript; charset=utf-8']],
-    ['/review-ui.css', ['review-ui.css', 'text/css; charset=utf-8']]
+    ['/review-ui.css', ['review-ui.css', 'text/css; charset=utf-8']],
+    ['/review-workbook.mjs', ['review-workbook.mjs', 'text/javascript; charset=utf-8']],
+    ['/review-workbook-ui.mjs', ['review-workbook-ui.mjs', 'text/javascript; charset=utf-8']]
   ]);
   const server = createServer(async (request, response) => {
     response.setHeader('X-Content-Type-Options', 'nosniff');
     response.setHeader('Cache-Control', 'no-store');
+    if (await workbookHost.handle(request, response)) return;
     if (request.method !== 'GET' && request.method !== 'HEAD') {
       response.writeHead(405, { Allow: 'GET, HEAD' });
       response.end('Method not allowed');
@@ -407,11 +435,19 @@ async function serveCommand(options) {
     process.exitCode = 1;
   });
   for (const signal of ['SIGINT', 'SIGTERM']) {
-    process.once(signal, () => server.close(() => { process.exitCode = 0; }));
+    process.once(signal, () => {
+      const stopped = new Promise(resolve => server.close(resolve));
+      Promise.all([stopped, workbookHost.close()]).then(() => { process.exitCode = 0; }, failure => {
+        process.stderr.write(json({error: failure.code || 'SERVER_CLOSE', message: failure.message})); process.exitCode = 1;
+      });
+    });
   }
 }
 
 async function main() {
+  if (['workbook-export', 'workbook-review', 'workbook-apply', 'workbook-receive'].includes(process.argv[2])) {
+    process.stdout.write(json(await workbookMain(process.argv.slice(2)))); return;
+  }
   const { command, options } = parseArguments(process.argv.slice(2));
   if (command === 'help') process.stdout.write(USAGE + '\n');
   else if (command === 'compare') await compareCommand(options);

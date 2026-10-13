@@ -3,10 +3,11 @@
 import {resolve,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {readProductInput,compileWeatherDistribution,launchWeatherMerchant,initializeWeatherWithOperator} from './application.mjs';
-import {initializeWeather,readWeatherSettings,WeatherWorkspace,cleanResult,safeCode,verifyWeather,restoreWeather} from './workspace.mjs';
+import {initializeWeather,initializeWeatherReview,readWeatherSettings,WeatherWorkspace,cleanResult,safeCode,verifyWeather,restoreWeather} from './workspace.mjs';
 import {exportFrozenReport} from './exports.mjs';
-import {publishJson,absolute} from './files.mjs';
+import {publishJson,absolute,readPrivate} from './files.mjs';
 import {need,keys} from './contract.mjs';
+import {MAX_HANDOVER_BYTES,MAX_LEGACY_ARCHIVE_BYTES} from './portable.mjs';
 
 const HELP=[
  'Weather operations — original SF30 merchant and SF88 customer',
@@ -18,6 +19,10 @@ const HELP=[
  'init --state-root NEW_PRIVATE_ROOT --operator ORIGINAL_OPERATOR [--client SELLER_CLIENT.mjs] [--provider PROFILE.json]',
  'init --state-root NEW_PRIVATE_ROOT --review OFFLINE_REVIEW.json --operator-preset PRIVATE_PRESET.json',
  '  --total-atomic N --daily-atomic N [--client SELLER_CLIENT.mjs] [--provider PROFILE.json]',
+ 'review-init --state-root NEW_PRIVATE_ROOT',
+ 'from-report-zip --input ORIGINAL_REPORT.zip --output NEW_REPORT.weather.json [--archive-sha ORIGINAL_ZIP_SHA256]',
+ 'handover-review --settings SETTINGS --input REPORT.weather.json',
+ 'handover-receive --settings SETTINGS --input REPORT.weather.json --expected-sha ORIGINAL_REVIEW_SHA256',
  'serve --settings PRIVATE_ROOT/settings.json [--port 0] [--descriptor PRIVATE_NEW_JSON]',
  '',
  'status | site-save | request-save | decision-save | report-freeze',
@@ -25,7 +30,7 @@ const HELP=[
  'source | source-reprocess | prepare | execute | recover | inspect --settings SETTINGS --request REQUEST_ID [--input JSON]',
  'series --settings SETTINGS --capture CAPTURE_ID --variable VARIABLE',
  'compare --settings SETTINGS --left CAPTURE_ID --right CAPTURE_ID --variable VARIABLE',
- 'report-export --settings SETTINGS --report REPORT_ID --output NEW_FILE [--format zip|html|json]',
+ 'report-export --settings SETTINGS --report REPORT_ID --output NEW_FILE [--format zip|html|json|handover]',
  '',
  'recovery review --settings SETTINGS',
  'recovery snapshot --settings SETTINGS --output NEW_DIRECTORY [--passphrase-env NAME]',
@@ -63,6 +68,22 @@ export async function main(args=process.argv.slice(2)){
   return serveLifetime(session,opt['--descriptor'],{schema:'stellar-forge.weather-merchant-runtime.v1',mode:session.mode,
    docs:session.url+'/_seller/docs',openapi:session.url+'/_seller/openapi.json',providerMode:input.provider.mode});
  }
+ if(command==='from-report-zip'){
+  const opt=options(args,['--input','--output','--archive-sha']),controller=new AbortController(),stop=()=>controller.abort();
+  process.once('SIGINT',stop);process.once('SIGTERM',stop);
+  try{
+   const {weatherHandoverFromZip}=await import('./legacy.mjs');
+   const handover=await weatherHandoverFromZip(await readPrivate(absolute(opt['--input']),MAX_LEGACY_ARCHIVE_BYTES),
+    {expectedArchiveSha256:opt['--archive-sha'],signal:controller.signal});
+   const result={...await publishJson(absolute(opt['--output']),handover),reportId:handover.report.id,reportSha256:handover.report.sha256,
+    originalArchiveSha256:handover.legacyArchive.sha256,selectedDecisionRevisions:handover.decisionHistory.length};
+   print(result);return result;
+  }finally{process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);}
+ }
+ if(command==='review-init'){
+  const opt=options(args,['--state-root']);const result=await initializeWeatherReview({stateRoot:absolute(opt['--state-root'])});
+  print(result);return result;
+ }
  if(command==='init'){
   const opt=options(args,['--state-root','--operator','--review','--operator-preset','--total-atomic','--daily-atomic','--client','--provider']);
   const provider=opt['--provider']?await readProductInput(absolute(opt['--provider'])):{mode:'evaluation'};
@@ -85,7 +106,7 @@ export async function main(args=process.argv.slice(2)){
   try{const result=action==='review'?await workspace.recoveryReview():await workspace.snapshot({output:absolute(opt['--output']),passphraseEnv,signal:controller.signal});print(result);return result;}finally{await workspace.close();}
   }finally{process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);}
  }
- const opt=options(args,['--settings','--input','--request','--capture','--variable','--unit','--left','--right','--report','--output','--format','--port','--descriptor']);
+ const opt=options(args,['--settings','--input','--request','--capture','--variable','--unit','--left','--right','--report','--output','--format','--port','--descriptor','--expected-sha']);
  const workspace=await WeatherWorkspace.open(await readWeatherSettings(absolute(opt['--settings'])));
  if(command==='serve'){
   try{const {startWeatherServer}=await import('./server.mjs');const session=await startWeatherServer({workspace,port:Number(opt['--port']??0)});return serveLifetime(session,opt['--descriptor'],{schema:'stellar-forge.weather-operator-runtime.v1'});}
@@ -94,9 +115,13 @@ export async function main(args=process.argv.slice(2)){
  const controller=new AbortController(),stop=()=>controller.abort(Object.assign(new Error('OPERATOR_CANCELLED'),{code:'OPERATOR_CANCELLED'}));
  process.once('SIGINT',stop);process.once('SIGTERM',stop);
  try{
-  const input=opt['--input']?await readProductInput(absolute(opt['--input'])):{};
+  const isReceiving=command==='handover-review'||command==='handover-receive';
+  const content=isReceiving?new TextDecoder('utf-8',{fatal:true}).decode(await readPrivate(absolute(opt['--input']),MAX_HANDOVER_BYTES)):null;
+  const input=opt['--input']&&!isReceiving?await readProductInput(absolute(opt['--input'])):{};
   let result;
   if(command==='status')result=await workspace.summary();
+  else if(command==='handover-review')result=await workspace.reviewHandover(content);
+  else if(command==='handover-receive')result=await workspace.receiveHandover(content,{expectedSha256:opt['--expected-sha']});
   else if(command==='site-save')result=await workspace.saveSite(input);
   else if(command==='request-save')result=await workspace.saveRequest(input);
   else if(command==='decision-save')result=await workspace.saveDecision(input);
@@ -109,7 +134,7 @@ export async function main(args=process.argv.slice(2)){
   else if(command==='inspect')result=await workspace.inspect(opt['--request']);
   else if(command==='series')result=await workspace.series(opt['--capture'],opt['--variable'],{unit:opt['--unit']});
   else if(command==='compare')result=await workspace.compare(opt['--left'],opt['--right'],{variable:opt['--variable'],unit:opt['--unit']});
-  else if(command==='report-export')result=await workspace.serial(async()=>{const report=workspace.store.report(opt['--report']),captures=report.captures.map(c=>workspace.store.capture(c.id));return exportFrozenReport(report,captures,{output:absolute(opt['--output']),format:opt['--format']??'zip',signal:controller.signal});});
+  else if(command==='report-export')result=await workspace.serial(async()=>{const report=workspace.store.report(opt['--report']),captures=report.captures.map(c=>workspace.store.capture(c.id));return exportFrozenReport(report,captures,{output:absolute(opt['--output']),format:opt['--format']??'zip',...(opt['--format']==='handover'?{handover:workspace.store.handover(report.id)}:{}),signal:controller.signal});});
   else need(false,'CLI_COMMAND_INVALID');
   print(result);return result;
  }finally{process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);await workspace.close();}

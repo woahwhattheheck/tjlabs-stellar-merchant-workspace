@@ -118,14 +118,14 @@ export function buildFredDdpReceiving({packageCapture,crosswalk,plan,captures}){
       const periodKey=normalizeFredDdpPeriod(observation.period,selected.binding.periodRule).key,candidates=targetKeys.get(periodKey)||[];
       const ambiguous=(sourceKeys.get(periodKey)||0)>1||candidates.length>1;
       const after=!ambiguous&&candidates.length===1?candidates[0]:null;
-      const beforeMissing=fredDdpObservationMissing(observation.value);
+      const beforeMissing=fredDdpObservationMissing(observation.value,observation.status);
       let status,rawDifference=null,difference=null;
       if(ambiguous)status='MEANING_REVIEW';
       else if(!after)status='SOURCE_ONLY';
       else{
         matched.add(after);
         const sourceValue=exactFredDdpScaledValue(observation.value,'1'),targetValue=exactFredDdpScaledValue(after.value,'1');
-        if(sourceValue!==null&&targetValue!==null)rawDifference=exactDifference(sourceValue,targetValue);
+        if(!beforeMissing&&!after.missing&&sourceValue!==null&&targetValue!==null)rawDifference=exactDifference(sourceValue,targetValue);
         if(!meaning.compatible)status='MEANING_REVIEW';
         else if(beforeMissing&&after.missing)status='BOTH_MISSING';
         else if(beforeMissing!==after.missing)status='MISSING_CHANGED';

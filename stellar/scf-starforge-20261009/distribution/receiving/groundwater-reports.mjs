@@ -13,7 +13,7 @@ import { createRuntimeWorkspace, openRuntimeWorkspace } from '../runtime-workspa
 import { startRuntimeWorkspace } from '../runtime-workspace/server.mjs';
 import { inspectRuntimeInstall, installRuntime, runtimeCommand } from '../runtime-install.mjs';
 import { exportRuntimeTransfer, inspectRuntimeTransfer, beginRuntimeTransferReceive,
-  receiveRuntimeTransferPart, completeRuntimeTransferReceive, installReceivedRuntime } from '../runtime-transfer.mjs';
+  receiveRuntimeTransferPart, completeRuntimeTransferReceive, openRuntimeTransferDownload, installReceivedRuntime } from '../runtime-transfer.mjs';
 import { MAX_MANIFEST_BYTES } from '../runtime-transfer-lock.mjs';
 import { plain, need, absolute, privateDirectory, makePrivate, regular, readJSON,
   saveJSON, digest, canonical, json, operationLease, operationRunning } from '../runtime-workspace/storage.mjs';
@@ -493,19 +493,27 @@ export async function runGroundwaterDistributionReceiving(value, { signal, progr
     const transferDirectory = join(input.directory, 'transfer');
     await progress({ phase: 'ORIGINAL_TRANSFER', lockSha256: original.inspection.lockSha256 });
     await exportRuntimeTransfer({ runtimeDirectory: originalDirectory, directory: transferDirectory, cache: input.cache,
+      storage: await exists(join(transferDirectory, 'transfer-state.json')) ? undefined : 'files',
       expectedLockSha256: original.inspection.lockSha256, offline: input.offlineInstall, partBytes: 8 * 1024 * 1024,
       signal, onProgress: async event => progress({ phase: 'TRANSFER', original: event }) });
     const transfer = await inspectRuntimeTransfer({ directory: transferDirectory, verify: true });
     need(transfer.complete && transfer.state.phase === 'COMPLETE', 'GROUNDWATER_TRANSFER_INCOMPLETE');
     const receivingDirectory = join(input.directory, 'receiving');
     const manifest = await regular(join(transferDirectory, 'manifest.json'), MAX_MANIFEST_BYTES);
-    await beginRuntimeTransferReceive({ directory: receivingDirectory, manifest, manifestSha256: transfer.manifestSha256 });
-    for (const part of transfer.manifest.parts) {
+    const receiving = await beginRuntimeTransferReceive({ directory: receivingDirectory, manifest,
+      manifestSha256: transfer.manifestSha256,
+      storage: await exists(join(receivingDirectory, 'transfer-state.json')) ? undefined : 'files' });
+    need(receiving.invalidParts.length === 0, 'GROUNDWATER_TRANSFER_PART_CHANGED');
+    for (const index of receiving.missingParts) {
       abort(signal);
-      await receiveRuntimeTransferPart({ directory: receivingDirectory, index: part.index,
-        file: join(transferDirectory, 'parts', part.name), signal });
+      const download = await openRuntimeTransferDownload({ directory: transferDirectory, kind: 'part', index, signal });
+      try {
+        await receiveRuntimeTransferPart({ directory: receivingDirectory, index,
+          body: download.handle.createReadStream({ autoClose: false, start: 0 }), signal });
+      } finally { await download.handle.close(); }
     }
-    await completeRuntimeTransferReceive({ directory: receivingDirectory, signal,
+    // Reconstruct and verify here; the original installation owns the one cache-population pass.
+    await completeRuntimeTransferReceive({ directory: receivingDirectory, populateCache: false, signal,
       onProgress: async event => progress({ phase: 'RECEIVING', original: event }) });
     const receivedInstallationResult = await receivedInstallation(input, transfer, receivingDirectory,
       original.inspection, { signal, progress });
@@ -529,9 +537,15 @@ export async function runGroundwaterDistributionReceiving(value, { signal, progr
     await model.close(); model = null;
     await progress({ phase: 'OPERATOR_REOPEN', workspaceId });
     const operator = await sourceUi(workspace, review, sourceArchive, workspaceId, input, signal);
-    const files = [sourceArchive];
-    for (const path of [join(transferDirectory, 'manifest.json'),
-      ...transfer.manifest.parts.map(part => join(transferDirectory, 'parts', part.name)),
+    const files = [sourceArchive, await fileIdentity(join(transferDirectory, 'manifest.json'), MAX_MANIFEST_BYTES)];
+    const carrierFiles = transfer.storage === 'files' ? transfer.manifest.files :
+      transfer.manifest.parts.map(part => ({ ...part, path: 'parts/' + part.name }));
+    for (const entry of carrierFiles) {
+      const observed = await fileIdentity(join(transferDirectory, entry.path), entry.bytes);
+      need(observed.bytes === entry.bytes && observed.sha256 === entry.sha256, 'GROUNDWATER_TRANSFER_FILE_CHANGED');
+      files.push(observed);
+    }
+    for (const path of [
       ...['request.json', 'executor-source.json', 'source-review.json', 'source-request.json', 'runtime-profile.json',
         'prepare-request.json', 'workspace-identity.json', 'source-archive.json', 'original-scientific-source.json',
         'received-scientific-source.json', 'original-commands.json', 'received-commands.json', 'runtime-comparison.json',
@@ -552,7 +566,7 @@ export async function runGroundwaterDistributionReceiving(value, { signal, progr
       received: { directory: receivedDirectory, runtimeId: receivedEntry.runtimeId, inspection: received.inspection,
         request: receivedInstallationResult.request, native: receivedInstallationResult.native },
       transfer: { directory: transferDirectory, id: transfer.manifest.transferId, manifestSha256: transfer.manifestSha256,
-        parts: transfer.parts.length, payloadBytes: transfer.manifest.payload.bytes },
+        storage: transfer.storage, parts: transfer.parts.length, payloadBytes: transfer.manifest.payload.bytes },
       receiving: { directory: receivingDirectory }, operator, workerDrain, files,
       scientificExecution: 'The existing publisher/model/portal operation is retained by its original owner.',
       modelRunsStarted: 0, sellerStarts: 0, buyerRequests: 0 };
@@ -587,3 +601,4 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   } catch (error) { process.stderr.write((error.code ?? 'GROUNDWATER_DISTRIBUTION_ERROR') + ': ' + error.message + '\n'); process.exitCode = 1; }
   finally { process.removeListener('SIGTERM', term); process.removeListener('SIGINT', interrupt); }
 }
+

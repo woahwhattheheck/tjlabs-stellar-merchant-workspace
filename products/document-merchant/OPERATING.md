@@ -363,3 +363,12 @@ The original setup can be inspected while offline. It does not need a provider r
 A useful first task starts from a report or invoice template the customer already produces. Select the renderer that accepts that source, prepare one actual paid request, and receive the complete PDF plus its editable source into the customer's existing library. Review the entire output with the customer and retain the original task reference for the next reporting cycle.
 
 A merchant can then price repeat use from actual returned supplier usage and its provider account. Whole-task completion and repeat-customer adoption come from the original buyer workflow. The grant's paid-purchase, parent-task and prepaid-consumption records keep their existing counting rules.
+
+## Fulfill and deliver complete document batches
+
+Use [BATCHES.md](BATCHES.md) for a customer's complete order or reporting period. The installed `document-merchant batch` workflow stages whole HTML/Markdown sources, reviews every native document price, continues the original payment and job records, receives all four output files, and exports one portable Resource library Collection with a complete customer table. It includes full invoice and greeting-card source for one shared task, plus commands for interrupted preparation, checkout recovery, partial file receiving and independent Collection receiving.
+
+~~~sh
+starforge document-merchant batch --help
+~~~
+
