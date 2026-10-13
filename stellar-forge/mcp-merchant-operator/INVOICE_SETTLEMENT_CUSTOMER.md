@@ -130,7 +130,7 @@ Here `selected-input.json` contains `{"input":"invoice-register"}`. Prepare an `
     "requestId": "ORIGINAL-REQUEST-UUID",
     "expectedRevision": 2,
     "provider": "document",
-    "kind": "invoice-register",
+    "kind": "horizon-invoice-register",
     "label": "Reviewed original invoice deposit register",
     "contentType": "application/json"
   }
@@ -170,12 +170,24 @@ Use the printed private loopback URL. Keep the original source connections separ
 
 ## Installed JavaScript exports
 
-`@stellar-forge/merchant/merchant/invoice-settlement/client`,
-`@stellar-forge/merchant/merchant/invoice-settlement/operations`, and
-`@stellar-forge/merchant/merchant/invoice-settlement/download` expose the same functions as the CLI with TypeScript declarations. The actual package name is the one printed by the maintained distribution installation; use that installed name if your selected product overrides it.
+`@tokenjunkielabs/starforge-merchant/merchant/invoice-settlement/client`,
+`@tokenjunkielabs/starforge-merchant/merchant/invoice-settlement/operations`, and
+`@tokenjunkielabs/starforge-merchant/merchant/invoice-settlement/download` expose the same functions as the CLI with TypeScript declarations. The actual package name is the one printed by the maintained distribution installation; use that installed name if your selected product overrides it.
 
 A client disconnect drains its in-flight requests and retained reads. It does not stop the saved workspace. Host shutdown owns the operator lifecycle; the explicit `close` tool additionally requires the currently observed instance UUID.
 
 ### Original file modes during offline receiving
 
 Downloads remain private files. The receiver creates a separate private `<destination>.invoice-source-<requestId>/` directory, retains the exact original request and manifests, and copies every verified member there before restoring its declared native mode. The original runtime executable and data modes therefore survive without changing the download checkpoint. Keep this source directory with the received workspace for interrupted receiving and offline reopening; a completed source is fully verified before reuse.
+
+## Complete installed receiving programme
+
+The source includes `examples/run-invoice-settlement-customer-receiving.mjs`. Select one private receiving root with the complete committed repository at `source/` beneath it. Run its original programme with the existing Node and Python installations:
+
+```sh
+node --max-old-space-size=192 /absolute/customer-receiving/source/stellar-forge/mcp-merchant-operator/examples/run-invoice-settlement-customer-receiving.mjs /absolute/customer-receiving
+```
+
+This whole journey builds the selected distribution, installs it through the native runtime installer, opens the authenticated MCP provider, operates an authored loopback Horizon case, retains interrupted original responses, exports and downloads every member, closes the services, then receives and reopens the native workspace offline. Original phase results, request/response records, installed source and complete delivery files stay under that receiving root. Continue with the same root after an interruption; completed native requests retain their original UUIDs and immutable inputs.
+
+The published source has received complete custody and API review. The initial two complete execution admissions (2677 and2694) ended before process creation with `environment_offline409`; neither transmitted source input nor ran a native phase. The eighteen-phase installed result remains pending an available executor. This status is separate from the earlier operated seventeen-phase native Horizon feature.
