@@ -67,7 +67,7 @@ export async function runPortable(request, { python = process.env.CODEX_PRIMARY_
   need(bytes.length <= 4 * 1024 * 1024, 'MERCHANT_PROJECT_REQUEST_TOO_LARGE');
   const child = spawn(python, ['-B', join(ROOT, 'portable_native.py'), '--request', '-'],
     { stdio: ['pipe', 'pipe', 'pipe', ...(lease ? [lease.fd] : [])], windowsHide: true,
-      env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' } });
+      env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', MERCHANT_PORTABLE_NODE: process.execPath } });
   let output = [], length = 0, stderr = '', inputError = null, processError = null, overflow = false;
   child.stdout.on('data', part => {
     length += part.length;
