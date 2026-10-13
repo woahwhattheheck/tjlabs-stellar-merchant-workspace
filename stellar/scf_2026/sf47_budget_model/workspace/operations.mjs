@@ -533,7 +533,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='statements'){
       if(!retainedStatementSessions.has(c.program.id))retainedStatementSessions.set(c.program.id,{});
-      statementView=mountStatements({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-statements]'),current:c,staffContext:pinnedContext,saveApi:transport,
+      statementView=mountStatements({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-statements]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
         session:retainedStatementSessions.get(c.program.id),mutationId,recordingActor,
         onCash:()=>{if(!available())return;view.tab='cash';render();},
         onCase:async(next,result)=>{
