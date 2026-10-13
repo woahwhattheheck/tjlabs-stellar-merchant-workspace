@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "taskerarmy",
+  "description": "Complete Tasker notification installations, original native services and MCP operations",
+  "commands": {
+    "taskerarmy": "products/taskerarmy/cli.mjs"
+  },
+  "commandDescriptions": {
+    "taskerarmy": "Prepare, operate and independently receive complete Tasker notification installations"
+  },
+  "exports": {
+    "./merchant/tasker": {
+      "types": "./source/products/taskerarmy/client.d.mts",
+      "import": "./source/products/taskerarmy/client.mjs"
+    },
+    "./merchant/mcp/tasker": {
+      "types": "./source/products/taskerarmy/workspace.d.mts",
+      "import": "./source/products/taskerarmy/workspace.mjs"
+    }
+  },
+  "applicationProviders": {
+    "taskerarmy": "products/taskerarmy/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "tasker-workspaces": "products/taskerarmy/merchant-provider.mjs"
+  }
+}
