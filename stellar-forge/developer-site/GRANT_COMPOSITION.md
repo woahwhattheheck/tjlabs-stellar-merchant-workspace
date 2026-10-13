@@ -163,6 +163,28 @@ original request, baseline, six funded packages, capacity, cash and submission
 fields. The reader distinguishes the completed organisation receiving and the
 recorded financial stages through the chapter's actual operating results.
 
+The same IATI chapter includes published-document evidence: exact source rows,
+dated capture, named review, publishing-link correction, edition comparison and
+complete receiving. Its full source and candidate views share the original
+organisation source. Receive that chapter through the ordinary manuscript path
+together with its customer task and financial coverage.
+
+The source receiver follows its selected immutable links into five further
+records:
+
+- `iati-document-evidence-workspace`: complete document-review operating guide.
+- `iati-document-evidence-receiving`: native, SDK, Merchant and browser programme.
+- `iati-document-following-observation`: an explicitly selected later publisher capture.
+- `iati-fcdo-document-native-result`: the operated FCDO native case.
+- `iati-fcdo-document-connected-result`: its operated connected and browser result.
+
+The worked case retains its recorded acquisition outcomes and reviewer decisions.
+A later observation continues from the selected saved recipient; its own returned
+result supplies the new capture outcome. Subsequent composition keeps earlier
+source selections until the chapter selects another immutable edition, using
+the existing source-identity refresh. All four reader files and both submission
+bindings continue through the original composer.
+
 ## Receive current delivery finance
 
 The ordinary `--manuscript` path receives the complete canonical **8. Delivery
@@ -199,11 +221,13 @@ The complete developer-site component includes [the native draft exporter](GRANT
 
 The canonical “9A. Current demonstration and operator journey” includes “Product selection, installation and recurring buyer work”. Receive that complete accepted subsection through the ordinary `--manuscript` path. The existing section receiver updates it in place and keeps every other customer chapter.
 
-The chapter carries the selected Source Builds guide and Request Collections authoring guide. The original source registration receives them as `installation-source-builds` and `request-collection-authoring`, retaining each exact repository, source commit and path. A later selected source updates that record and removes an obsolete blob pin through the same existing receiver.
+The chapter carries the selected Source Builds and Request Collections guides as `installation-source-builds` and `request-collection-authoring`. Its complete capability/manifest guide is `installation-product-requirements`; the saved plan, original Runtime handoff and installed briefing guide is `installation-product-plans`. Each source record follows the chapter's actual immutable repository, commit and path. A later source selection updates that original record and removes an obsolete blob pin through the existing receiver.
 
-Keep the installation and planning capabilities together: selecting and comparing an immutable product edition, continuing its retained source build and installation, authoring a reusable plan from the original saved provider catalogue, preparing and reopening a named period, creating or resuming its original collection, and preserving prepared operator state in the existing receiving workflow. Measured native outcomes continue to come from the original operated case.
+Keep the full commissioned-user path together: find the installed command, select a product covering the complete capability basket, inspect committed dependency manifests and lock entries, reopen the saved source review, and continue its original build and exact package installation. The selected ready Runtime supplies the original source/profile-verified handoff and readable installed briefing. The Request Collections plan retains original provider listings, chosen payment alternatives, buyer operators and prepared periods; its original collection and recovery continue the useful paid work.
 
-The product is part of the existing starting foundation. The unchanged six priced packages fund the remaining customer-specific source integration, deployment, independent buyer operation and maintainer handover.
+The existing `grant-delivery-plan.mjs` maps this foundation into the same T1 resource/authority and T3 mainnet/recovery rows and the original maintenance subsection. The six priced packages, hours, prospective allocation and independent-use targets retain their original values. The workorder identifies the commissioning payer, useful resource, complete receiving output, responsible operators and service-cost owner; each remaining change is assigned once.
+
+After composition, open the same product chapter and concise product paragraph in the HTML reader, complete companion and downloaded application. Retain every current source record and emit the original four `sourcePins`. Continue the original saved draft/review/Page/Site receiving. The B41A source-workspace operation supplies the actual reopened plan, native installation, full Runtime handoff and customer briefing from its existing case.
 
 ## Receive the original bank customer workflow
 
@@ -269,3 +293,7 @@ The canonical §9A chapter “Retained services, facilitator choice and complete
 Its two immutable operating sources register as `facilitator-public-response-receiving` and `publisher-facilitator-operations`. The first carries complete public-response capture, the installed SDK interpretation and original review/stage workflow; the second carries the configured provider, retained service, seller release controls and complete receiving. The existing source receiver retains the actual repository, commit and path and clears a preceding blob pin when that source selection changes.
 
 Preserve the original case identities when incorporating its native result. Provider review and staged release outcomes describe those release operations; the purchase and customer-task records retain their own approved intent, settlement and complete useful output. The full original customer package and its independently received edition supply the actual receiving outcome. New runtime or display corrections compose into the same operation and selected source.
+
+## A2A source catalogue in the current composition
+
+The existing customer-source receiver also imports `grant-a2a.mjs` and calls its receiver after selecting the A2A chapter. This completes the chapter's source catalogue and retains original dated file/source observations through public-link projection and repeated composition. The composer records `a2a_projector_git_blob` alongside the current renderer, customer projector and delivery-plan identities. The [complete A2A catalogue guide](./GRANT_A2A_CATALOGUE.md) explains the selected sources, retained file witnesses and original dated receiving. Use the same complete four-file composition and the existing publication operation.

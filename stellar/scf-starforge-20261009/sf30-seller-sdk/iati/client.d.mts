@@ -9,7 +9,7 @@ export type * from './organisation_client.mjs';
 export type Sha256 = string;
 export type ExactDecimalString = string;
 export type CalendarDate = string;
-export type Collection = 'activities' | 'transactions' | 'budgets';
+export type Collection = 'activities' | 'transactions' | 'budgets' | 'locations';
 export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 export interface RequestOptions { signal?: AbortSignal }
 export interface RevisionOptions extends RequestOptions { revision?: number }
@@ -543,6 +543,117 @@ export type ResultsOperation =
  {requestId:string;found:true;kind:'save'|'compare'|'adopt'|'cancel';state:'COMPLETE'|'CANCELLED';inputSha256:Sha256;
  input:ResultsSave|ResultsCompare|ResultsAdopt|ResultsCancel;response:ResultsEdition|ResultsSavedComparison|ResultsHeadSelection|ResultsCancelled};
 
+
+/** Saved geography retains complete location associations and original source-relative identities. */
+export type GeographyCoordinateStatus = 'valid' | 'missing' | 'invalid' | 'not-reported';
+export type GeographyDecision = 'accepted' | 'needs-correction' | 'note';
+export interface GeographyAcquisition {
+  source: Sha256; publisher: string; url: string; retrievedAt: string; license: string; citation: string;
+}
+export interface GeographyFinding {
+  source: Sha256; rowId: Sha256; decision: GeographyDecision; reviewer: string; note: string;
+}
+export interface GeographyDefinition {
+  name: string; notes: string; sources: Sha256[];
+  selection: { activityIds: string[]; language: string };
+  /** This keeps activity finance in its original portfolio; no location allocation is inferred. */
+  portfolio: { id: Sha256; revision: number } | null;
+  acquisition: GeographyAcquisition[]; review: Review; baselineRevision: number | null;
+  findings: GeographyFinding[];
+}
+export type GeographySave = GeographyDefinition & { requestId: string } &
+  ({ id?: never; expectedRevision?: never } | { id: Sha256; expectedRevision: number });
+export interface GeographyCounts {
+  sources: number; rows: number; activities: number; locations: number; mapped: number;
+  unlocated: number; invalid: number; activitiesWithoutLocation: number;
+  activitiesWithCoordinates: number; activitiesWithoutCoordinates: number; recordsWithIssues: number;
+}
+export interface GeographyReport {
+  schema: 'stellar-forge.iati-geography-report.v1';
+  counts: GeographyCounts;
+  bySource: Array<Omit<GeographyCounts,'sources'> & { source: Sha256; reportingOrgRefs: string[] }>;
+  coordinateStatuses: Record<GeographyCoordinateStatus,number>;
+  decisions: Record<GeographyDecision | 'unreviewed',number>;
+  portfolio: null | { id: Sha256; revision: number; definitionSha256: Sha256; financialReview: Review; counts: PortfolioCounts };
+  semantics: Record<string,string>;
+}
+export interface GeographyReview extends GeographyDefinition {
+  schema: 'stellar-forge.iati-geography-review.v1'; id: Sha256; revision: number;
+  editions: Array<{ source: Sha256; locations: NativeBuild }>;
+  report: GeographyReport; definitionSha256: Sha256;
+  created: number; updated: number; previousRevision: number | null;
+}
+export interface GeographyContract {
+  schema: 'stellar-forge.iati-geography-contract.v1'; standard: '2.03'; asOf: CalendarDate; crs: string;
+  sourceAxisOrder: ['latitude','longitude']; geojsonAxisOrder: ['longitude','latitude'];
+  coordinateStatuses: GeographyCoordinateStatus[];
+  exactness: Record<string,string>; locationClass: Record<string,string>; locationReach: Record<string,string>;
+  semantics: Record<string,string>; sources: string[];
+}
+/** The original lookup binds a request to its persistent workspace and exact saved historical revision. */
+export type GeographyRequestRecord =
+  | { schema: 'stellar-forge.iati-geography-request.v1'; status: 'NOT_RECORDED'; requestId: string; workspaceSha256: Sha256 }
+  | { schema: 'stellar-forge.iati-geography-request.v1'; status: 'RECORDED'; requestId: string; workspaceSha256: Sha256; requestSha256: Sha256; request: GeographySave; review: GeographyReview };
+export interface GeographyState {
+  schema: 'stellar-forge.iati-geography-state.v1'; workspaceSha256: Sha256; contract: GeographyContract;
+  reviews: Array<Pick<GeographyReview,'id'|'revision'|'name'|'review'|'sources'|'report'|'updated'>>;
+}
+export interface GeographyPoint {
+  source: Sha256; row_id: Sha256; activity_id: string; title: string; reporting_org_ref: string;
+  location_name: string; location_ref: string; coordinate_status: GeographyCoordinateStatus;
+  location_present: 'true' | 'false'; exactness: string; location_class: string; location_reach: string;
+  /** Original native decimal strings. Only valid reported points appear in geographyPoints. */
+  latitude: string; longitude: string; finding: GeographyFinding | null;
+}
+export interface GeographyRow extends GeographyPoint {
+  location_ordinal: string; location_count: string; identity_basis: string;
+  position_text: string; srs_name: string; feature_designation: string;
+  name_narratives_json: string; descriptions_json: string; activity_descriptions_json: string;
+  location_ids_json: string; administrative_json: string; point_json: string; record_json: string; issues_json: string;
+  /** Other original activity-context columns remain unchanged scalar strings. */
+  [column: string]: unknown;
+}
+export interface GeographyRowsInput {
+  id: Sha256; revision: number; source?: Sha256 | ''; rowId?: Sha256 | '';
+  search?: string; activityId?: string; coordinateStatus?: GeographyCoordinateStatus | '';
+  decision?: GeographyDecision | 'unreviewed' | ''; exactness?: string; locationClass?: string; locationReach?: string;
+  offset?: number; limit?: number;
+}
+export interface GeographyPage<Row extends GeographyPoint = GeographyRow> {
+  id: Sha256; revision: number; offset: number; limit: number; total: number; rows: Row[]; nextOffset: number | null;
+}
+export interface GeographyCompare {
+  id: Sha256; beforeRevision: number; afterRevision: number;
+  /** Explicitly pair replacement publisher editions; common source IDs are paired natively. */
+  pairs?: Array<{before: Sha256; after: Sha256}>;
+}
+export interface GeographyComparison {
+  schema: 'stellar-forge.iati-geography-comparison.v1'; id: Sha256; review: Sha256;
+  beforeRevision: number; afterRevision: number;
+  pairs: Array<{before: Sha256; after: Sha256}>;
+  comparisons: Array<{before: Sha256; after: Sha256; native: NativeComparison}>;
+  sourcesRemoved: Sha256[]; sourcesAdded: Sha256[];
+  counts: {added: number; removed: number; changed: number; unchanged: number};
+  definitionChanges: Record<string,{before:unknown;after:unknown}>;
+  findingChanges: Array<{source:Sha256;rowId:Sha256;before:GeographyFinding|null;after:GeographyFinding|null}>;
+  beforeReport: GeographyReport; afterReport: GeographyReport; semantics: string;
+}
+export type GeographyExportFormat = 'packet' | 'geojson' | 'csv' | 'json' | 'html';
+export interface GeographyExportInput {
+  id: Sha256; revision?: number; format: GeographyExportFormat;
+  /** Optional original local destination, checked by the native exporter. */
+  output?: string;
+}
+export interface GeographyExportDescriptor {
+  /** Native artifact identity; use this for download, not the file content SHA. */
+  id: Sha256; path: string; filename: string; bytes: number; sha256: Sha256; url: string;
+  format: GeographyExportFormat; selectionSha256: Sha256; review: Sha256; revision: number; contentType: string;
+}
+export interface GeographyReceiving {
+  schema: string; review: GeographyReview; history: GeographyReview[]; comparisons: GeographyComparison[];
+  requests: number; sourceCount: number; packet: GeographyExportDescriptor;
+}
+
 export declare class IatiWorkspaceClient {
   readonly organisationReconciliation: OrganisationReconciliationClient;
   readonly documentEvidence: DocumentEvidenceClient;
@@ -679,6 +790,25 @@ export declare class IatiWorkspaceClient {
   ampFile(id:Sha256,kind:AmpFileKind,options?:RevisionOptions):Promise<Response>;
   ampAsset(sha256:Sha256,options?:RequestOptions):Promise<Response>;
   ampReceive(input:Pick<PacketInput,'body'|'bytes'>,options?:RequestOptions):Promise<AmpReceiving>;
+
+
+  geographyState(options?: RequestOptions): Promise<GeographyState>;
+  geographyRequest(requestId: string, options?: RequestOptions): Promise<GeographyRequestRecord>;
+  geographyReview(id: Sha256, options?: RevisionOptions): Promise<GeographyReview>;
+  geographyHistory(id: Sha256, options?: RequestOptions): Promise<GeographyReview[]>;
+  geographyReport(id: Sha256, options?: RevisionOptions): Promise<GeographyReport & Pick<GeographyReview,'id'|'revision'|'name'|'review'|'definitionSha256'>>;
+  /** Retain the complete original request and requestId after uncertain outcomes. No automatic replay. */
+  geographySave(input: GeographySave, options?: RequestOptions): Promise<GeographyReview>;
+  geographyRows(input: GeographyRowsInput, options?: RequestOptions): Promise<GeographyPage<GeographyRow>>;
+  geographyPoints(input: Omit<GeographyRowsInput,'coordinateStatus'> & {coordinateStatus?: 'valid' | ''}, options?: RequestOptions): Promise<GeographyPage<GeographyPoint>>;
+  geographyCompare(input: GeographyCompare, options?: RequestOptions): Promise<GeographyComparison>;
+  geographyComparison(id: Sha256, options?: RequestOptions): Promise<GeographyComparison>;
+  geographyComparisonChanges(id: Sha256, options: RequestOptions & {native: Sha256; offset?: number; limit?: number}): Promise<ChangePage>;
+  geographyExport(input: GeographyExportInput, options?: RequestOptions): Promise<GeographyExportDescriptor>;
+  /** Consume or cancel the complete native file; verify its original descriptor size and SHA-256. */
+  geographyDownload(artifactId: Sha256, options?: RequestOptions): Promise<Response>;
+  geographyReceive(input: {path: string}, options?: RequestOptions): Promise<GeographyReceiving>;
+  geographyReceivePacket(input: Pick<PacketInput,'body'|'bytes'>, options?: RequestOptions): Promise<GeographyReceiving>;
 
   /** Aborts and drains this client's requests only. Applications owns the original console. */
   dispose(): Promise<void>;

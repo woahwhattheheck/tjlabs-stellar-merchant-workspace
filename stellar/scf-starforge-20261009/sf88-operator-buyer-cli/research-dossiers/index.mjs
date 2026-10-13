@@ -57,3 +57,5 @@ export {inspectResearchQuoteLaunch,assertResearchQuoteLaunch,researchQuoteLaunch
 export {normalizeResearchQuoteConfiguration,readResearchQuoteConfiguration} from './customer-quotes/configuration.mjs';
 export {prepareResearchQuotationSetup,readResearchQuotationSetup,saveResearchQuotationSetup,
  exportResearchQuotationSetup,RESEARCH_QUOTATION_SETUP_SCHEMA} from './customer-quotes/setup.mjs';
+
+export {createDossierReturnsClient} from './dossier-returns/client.mjs';

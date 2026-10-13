@@ -1,4 +1,9 @@
 import {grantWorkspaceTools} from './catalog/grant-workspace.mjs';
+import {retainGrantFundingSave} from './grant-funding-recovery.mjs';
+import {seedGrantCohortAdoption,reviewGrantCohortAdoption,editCohortAdoption,rebaseGrantCohortAdoption,
+  scheduleCohortAdoption,compareCohortAdoption,prepareGrantCohortAdoption,validateCohortAdoptionPrepared,
+  inspectGrantCohortAdoptionRequest,saveGrantCohortAdoption,openGrantCohortAdoption,exportCohortAdoption}
+  from '../../stellar/scf_2026/sf47_budget_model/workspace/cohort_planning_agent.mjs';
 import {grantPlanningSourceVerbs,executeGrantPlanningSourceTool} from './grant-planning-sources.mjs';
 import {GRANT_MAX_WORKBOOK_HANDOVER_BYTES} from '../../stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs';
 export {grantWorkspaceTools} from './catalog/grant-workspace.mjs';
@@ -80,6 +85,20 @@ async function directory(filename) {
   need(await realpath(filename) === filename, 'GRANT_PRIVATE_DIRECTORY_REQUIRED', 'Use an original private directory without symlink traversal.');
   return filename;
 }
+
+
+const ADOPTION_REQUEST = 'stellar-forge.sf47-cohort-adoption-agent-request.v1';
+const ADOPTION_RETURNED = 'stellar-forge.sf47-cohort-adoption-agent-returned.v1';
+const adoptionCanonical = value => JSON.stringify((function order(v) {
+  return Array.isArray(v) ? v.map(order) : plain(v)
+    ? Object.fromEntries(Object.keys(v).sort().map(key => [key,order(v[key])])) : v;
+})(value));
+const adoptionRequestKey = (caseId, requestId) => {
+  need(typeof caseId === 'string' && /^operation-[a-f0-9]{32}$/.test(caseId) &&
+    typeof requestId === 'string' && /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(requestId),
+    'GRANT_ADOPTION_INPUT', 'Select the original adoption case and request identities.');
+  return hash(Buffer.from(caseId + '\0' + requestId));
+};
 
 /** Connection aliases are host input; tools never choose paths or executables. */
 export async function readGrantWorkspaceConfiguration(filename) {
@@ -425,6 +444,91 @@ export class MerchantGrantWorkspaces {
       return {transferId:selected, state:'COMPLETE', file, missingOffsets:[], chunkBytes:CHUNK};
     } finally { await unlink(temporary).catch(() => {}); }
   }
+
+  async #adoptionRecords(alias, caseId, requestId) {
+    const id = adoptionRequestKey(caseId, requestId);
+    const root = await directory(join(await this.#root(alias), 'cohort-adoption-requests'));
+    return {prepared:join(root,id + '.prepared.json'),returned:join(root,id + '.returned.json')};
+  }
+  async #adoptionRecord(filename) {
+    try { return decode(await readGrantAgentFile(filename,MAX_JSON)); }
+    catch (error) { if (error.code === 'ENOENT') return null; throw error; }
+  }
+  #adoptionPreparedRecord(record, selected, expectedSha256) {
+    need(record?.schema === ADOPTION_REQUEST, 'GRANT_ADOPTION_RETAINED_CHANGED',
+      'Select the complete retained adoption request.');
+    const prepared = validateCohortAdoptionPrepared(record.prepared, expectedSha256);
+    need(prepared.caseId === selected.caseId && prepared.request.requestId === selected.requestId,
+      'GRANT_ADOPTION_RETAINED_CHANGED', 'The retained adoption request belongs to another original case or request.');
+    return prepared;
+  }
+  #adoptionAccepted(record, prepared) {
+    if (!record) return null;
+    need(record.schema === ADOPTION_RETURNED && record.preparedSha256 === prepared.preparedSha256 &&
+      plain(record.response) && typeof record.response.contentBase64 === 'string',
+      'GRANT_ADOPTION_RESPONSE_CHANGED', 'Keep the complete native response for this original prepared request.');
+    const original = record.response, bytes = Buffer.from(original.contentBase64,'base64');
+    need(bytes.toString('base64') === original.contentBase64 && bytes.length === original.bytes &&
+      hash(bytes) === original.sha256 && original.status >= 200 && original.status < 300 &&
+      adoptionCanonical(decode(bytes)) === adoptionCanonical(original.value),
+      'GRANT_ADOPTION_RESPONSE_CHANGED', 'The original accepted response differs from its complete retained bytes.');
+    const {contentBase64,...response} = original;
+    return {...response,bytes};
+  }
+  async #adoptionPrepare(alias, client, caseId, body) {
+    const files = await this.#adoptionRecords(alias,caseId,body.requestId);
+    const existing = await this.#adoptionRecord(files.prepared);
+    if (existing) {
+      const prepared = this.#adoptionPreparedRecord(existing,{caseId,requestId:body.requestId},
+        existing.prepared?.preparedSha256);
+      need(existing.intent !== null && adoptionCanonical(existing.intent) === adoptionCanonical(body),
+        'GRANT_ADOPTION_REQUEST_CHANGED',
+        'This request already has another complete prepared input. Reopen its original adoption_request.');
+      return prepared;
+    }
+    const prepared = await prepareGrantCohortAdoption(client,caseId,body);
+    const record = json({schema:ADOPTION_REQUEST,intent:body,prepared});
+    need(record.length <= MAX_JSON, 'GRANT_ADOPTION_RETAINED_LIMIT',
+      'Retain the complete adoption request within the original JSON file bound.');
+    await immutable(files.prepared,record);
+    return prepared;
+  }
+  async #adoptionSave(alias, client, prepared, expectedSha256) {
+    validateCohortAdoptionPrepared(prepared,expectedSha256);
+    const selected = {caseId:prepared.caseId,requestId:prepared.request.requestId};
+    const files = await this.#adoptionRecords(alias,selected.caseId,selected.requestId);
+    const existing = await this.#adoptionRecord(files.prepared);
+    if (existing) this.#adoptionPreparedRecord(existing,selected,expectedSha256);
+    else {
+      const record = json({schema:ADOPTION_REQUEST,intent:null,prepared});
+      need(record.length <= MAX_JSON,'GRANT_ADOPTION_RETAINED_LIMIT',
+        'Retain the complete adoption request within the original JSON file bound.');
+      await immutable(files.prepared,record);
+    }
+    const returned = await this.#adoptionRecord(files.returned);
+    const acceptedResponse = this.#adoptionAccepted(returned,prepared);
+    return saveGrantCohortAdoption(client,prepared,expectedSha256,{acceptedResponse,
+      retainResponse:async response => {
+        need(Buffer.isBuffer(response.bytes),'GRANT_ADOPTION_RESPONSE_CHANGED',
+          'The native save must return its complete original response bytes.');
+        const {bytes,...metadata} = response;
+        const record = json({schema:ADOPTION_RETURNED,preparedSha256:expectedSha256,
+          response:{...metadata,bytes:bytes.length,sha256:hash(bytes),contentBase64:bytes.toString('base64')}});
+        await immutable(files.returned,record);
+      }});
+  }
+  async #adoptionRequest(alias, client, caseId, requestId, expectedSha256) {
+    sha(expectedSha256);
+    const files = await this.#adoptionRecords(alias,caseId,requestId);
+    const record = await this.#adoptionRecord(files.prepared);
+    if (!record) return {schema:ADOPTION_REQUEST,found:false,caseId,requestId,expectedPreparedSha256:expectedSha256};
+    const prepared = this.#adoptionPreparedRecord(record,{caseId,requestId},expectedSha256);
+    const returned = await this.#adoptionRecord(files.returned);
+    const accepted = this.#adoptionAccepted(returned,prepared);
+    const status = await inspectGrantCohortAdoptionRequest(client,prepared,expectedSha256,{acceptedResult:accepted});
+    return {schema:ADOPTION_REQUEST,found:true,prepared,returned,status};
+  }
+
   async #execute(name, args) {
     const definition = grantWorkspaceTools.find(tool => tool.name === name);
     need(definition, 'GRANT_TOOL_UNKNOWN', 'Choose an original grant tool.');
@@ -492,6 +596,7 @@ export class MerchantGrantWorkspaces {
       portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
       engagements:'engagements', engagement:'engagement', delivery_calendar:'delivery-calendar',
       work_intakes:'work-intakes',work_intake:'work-intake',task_outcomes:'task-outcomes',task_outcome:'task-outcome',
+      cost_funding:'cost-funding',funding_edition:'funding-edition',funding_request:'funding-request',
       ledger_intake:'ledger-intake',ledger_intake_original:'ledger-intake-original',
       account_reconciliation:'account-reconciliation',account_reconciliation_statement_inputs:'account-reconciliation-statement-inputs',
       cash_account:'cash-account',supplier_account:'supplier-account',performance:'performance',delivery_queue:'delivery-queue',installation_returns:'installation-returns',installations:'installations',installation:'installation',installation_history:'installation-history'};
@@ -565,6 +670,15 @@ export class MerchantGrantWorkspaces {
         body.document=await this.#modelInputs(alias,args,'Work intake',GRANT_MAX_BUNDLE_BYTES);
       const method={work_intake_preview:'workIntakePreview',work_intake_save:'workIntakeSave',work_intake_apply:'workIntakeApply'}[verb];
       original=await client[method](caseId,body);
+    }
+    else if (verb === 'funding_seed') {
+      const {caseId,...body}=rest; original=await client.fundingSeed(caseId,body);
+    }
+    else if (verb === 'funding_preview'||verb === 'funding_save') {
+      const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;
+      const complete=await this.#modelInputs(alias,args,'Complete cost funding allocation');
+      original=verb==='funding_preview'?await client.fundingPreview(caseId,{...body,inputs:complete}):
+        await retainGrantFundingSave({directory:await this.#root(alias),client,caseId,body:{...body,inputs:complete}});
     }
     else if (verb === 'task_outcomes_seed') original=await client.taskOutcomesSeed(args.caseId,args.expectedVersion);
     else if (verb === 'task_outcomes_preview'||verb === 'task_outcomes_save') {
@@ -648,6 +762,48 @@ export class MerchantGrantWorkspaces {
     }
     else if (verb === 'commercial_preview') original=await client.commercialPreview(args.caseId,args.billingId,args.milestoneId);
     else if (verb === 'commercial_refresh') original=await client.commercialRefresh(args.caseId,args.billingId);
+
+    else if (verb.startsWith('adoption_')) {
+      let value;
+      if (verb === 'adoption_seed') {
+        const {caseId,...body}=rest; value=await seedGrantCohortAdoption(client,caseId,body);
+      } else if (verb === 'adoption_request') {
+        value=await this.#adoptionRequest(alias,client,args.caseId,args.requestId,args.expectedPreparedSha256);
+      } else if (verb === 'adoption_open') {
+        value=await openGrantCohortAdoption(client,args.caseId,args.sourceId,args.expectedSourceSha256);
+      } else {
+        const document=await this.#modelInputs(alias,args,'Complete adoption document',GRANT_MAX_BUNDLE_BYTES);
+        if (verb === 'adoption_review') value=await reviewGrantCohortAdoption(client,args.caseId,args.expectedVersion,document);
+        else if (verb === 'adoption_edit') value=editCohortAdoption(document,args.changes,args.options);
+        else if (verb === 'adoption_rebase') value=await rebaseGrantCohortAdoption(client,args.caseId,args.expectedVersion,document);
+        else if (verb === 'adoption_schedule') {
+          let constraints;
+          const chosen=['constraints','constraintsInput','expectedConstraintsSha256','constraintsPointer']
+            .some(key=>args[key]!==undefined);
+          if (chosen) constraints=await this.#modelInputs(alias,{inputs:args.constraints,input:args.constraintsInput,
+            expectedInputSha256:args.expectedConstraintsSha256,inputPointer:args.constraintsPointer},
+            'Complete delivery constraints',GRANT_MAX_BUNDLE_BYTES);
+          value=scheduleCohortAdoption({document,...(constraints===undefined?{}:{constraints}),
+            ...(args.name===undefined?{}:{name:args.name})});
+        } else if (verb === 'adoption_compare') {
+          const candidate=await this.#modelInputs(alias,{inputs:args.candidate,input:args.candidateInput,
+            expectedInputSha256:args.expectedCandidateSha256,inputPointer:args.candidatePointer},
+            'Complete adoption candidate',GRANT_MAX_BUNDLE_BYTES);
+          value=compareCohortAdoption({beforeDocument:document,afterDocument:candidate,options:args.options});
+        } else if (verb === 'adoption_prepare') {
+          const {caseId,inputs,input,expectedInputSha256,inputPointer,...body}=rest;
+          value=await this.#adoptionPrepare(alias,client,caseId,{...body,document});
+        } else if (verb === 'adoption_save') {
+          value=await this.#adoptionSave(alias,client,document,args.expectedPreparedSha256);
+        } else if (verb === 'adoption_export') {
+          original={...exportCohortAdoption(document,args.format),status:200,
+            source:{kind:'GRANT_COHORT_ADOPTION',workspace:alias,selectionSha256:binding.selectionSha256,operation:verb}};
+        } else throw failure('GRANT_TOOL_UNKNOWN','Choose an original adoption operation.');
+      }
+      if (value!==undefined) original={value,bytes:json(value),mediaType:'application/json',status:200,
+        filename:verb.replaceAll('_','-')+'.json',
+        source:{kind:'GRANT_COHORT_ADOPTION',workspace:alias,selectionSha256:binding.selectionSha256,operation:verb}};
+    }
     else if (verb === 'cohort_seed') original=await client.cohortSeed(args.caseId,args.expectedVersion,args.tranche);
     else if (verb === 'cohort_preview') original=await client.cohortPreview(args.caseId,args.expectedVersion,
       await this.#modelInputs(alias,args,'Cohort',GRANT_MAX_BUNDLE_BYTES));
@@ -727,6 +883,7 @@ export class MerchantGrantWorkspaces {
       ['planId','caseId','intakeId','forecastId','portfolioId','alternativeId','sourceId','reviewId','reviewSha256','installationId','revision','after','before','limit','kind','format',
         'requestId','expectedRevision','expectedVersion','input','inputPointer','expectedInputSha256',
         'workshareCaseId','expectedSourceSha256','packetSourceId','expectedPacketSha256','installationRefs','groupId',
+        'expectedPreparedSha256','parentSourceId','expectedParentSha256',
         'filename','expectedPreviewSha256','deploymentId','tranche','asOfDate','asOfAt','receiptId','cohortReviewIds','implementationReviewIds','sha256',
         'startDate','endDate','expectedReportSha256','expectedReviewSha256','confirmedOn','deadlineOn','submittedOn','formReference','outcomeId','state','date'].includes(key)))});
   }

@@ -15,6 +15,7 @@ import json
 import os
 from pathlib import Path
 import re
+import stat
 import subprocess
 import sys
 import tempfile
@@ -51,10 +52,150 @@ def atomic(path, raw):
             os.unlink(temporary)
 
 
+def original_bytes(path, maximum=128 * 1024 * 1024):
+    """Read one complete regular original; parsing and identity use these bytes."""
+    path = Path(path)
+    if not path.is_absolute() or str(path.resolve()) != str(path):
+        raise ValueError("Select an absolute original file without path redirection: " + str(path))
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    with os.fdopen(fd, "rb") as stream:
+        before = os.fstat(stream.fileno())
+        named = path.lstat()
+        if not stat.S_ISREG(before.st_mode) or not stat.S_ISREG(named.st_mode) or (
+                before.st_dev, before.st_ino) != (named.st_dev, named.st_ino) or before.st_size > maximum:
+            raise ValueError("Select a complete bounded regular original file: " + str(path))
+        raw = stream.read(maximum + 1)
+        after = os.fstat(stream.fileno())
+        current = path.lstat()
+    if len(raw) != before.st_size or (before.st_dev, before.st_ino, before.st_size,
+            before.st_mtime_ns, before.st_ctime_ns) != (after.st_dev, after.st_ino,
+            after.st_size, after.st_mtime_ns, after.st_ctime_ns) or (
+            current.st_dev, current.st_ino) != (before.st_dev, before.st_ino):
+        raise ValueError("The selected original file changed while receiving: " + str(path))
+    return raw
+
+
+def selected_original(value):
+    if not isinstance(value, dict) or set(value) != {"path", "bytes", "sha256"} or (
+            not isinstance(value["path"], str) or type(value["bytes"]) is not int or
+            not 0 <= value["bytes"] <= 128 * 1024 * 1024 or not isinstance(value["sha256"], str) or
+            not re.fullmatch(r"[0-9a-f]{64}", value["sha256"])):
+        raise ValueError("Select an original file with its complete path, byte count and SHA-256.")
+    raw = original_bytes(value["path"], value["bytes"])
+    if len(raw) != value["bytes"] or digest(raw) != value["sha256"]:
+        raise ValueError("The selected complete original file differs from its retained identity.")
+    return raw
+
+
+def completed_base(selection, paths):
+    """Resolve the existing complete host result without operating its Page or case."""
+    if not isinstance(selection, dict) or set(selection) != {"input", "result"}:
+        raise ValueError("Select the exact original complete host input and COMPLETE result.")
+    host_raw, result_raw = selected_original(selection["input"]), selected_original(selection["result"])
+    host, result = json.loads(host_raw), json.loads(result_raw)
+    schema = "stellar-forge.sf47-installation-return-complete.v1"
+    required = {"schema", "operationId", "coreOperationId", "pageOperationId", "sourceRoot", "sourceManifestFile",
+                "workspaceDirectory", "receivedDirectory", "outputDirectory", "pythonExecutable",
+                "playwrightModule", "chromiumExecutable", "workspaceAlias"}
+    if not isinstance(host, dict) or not required <= set(host) or set(host) - required - {"historicalResult"} or host["schema"] != schema + ".input":
+        raise ValueError("Use the original complete Installation host input.")
+    if not isinstance(result, dict) or result.get("schema") != schema or result.get("state") != "COMPLETE" or result.get("mode") != "WALKTHROUGH":
+        raise ValueError("The selected original complete host has not finished its internal receiving.")
+    for key in ("sourceRoot", "workspaceDirectory", "receivedDirectory", "outputDirectory"):
+        if not isinstance(host[key], str) or not Path(host[key]).is_absolute() or str(Path(host[key]).resolve()) != host[key]:
+            raise ValueError("Keep the original complete host's actual absolute directory: " + key)
+    root = Path(host["outputDirectory"])
+    if Path(selection["result"]["path"]) != root / "result.json" or (
+            Path(host["workspaceDirectory"]) != paths["workspaceDirectory"] or
+            Path(host["receivedDirectory"]) != paths["coreReceivedDirectory"]):
+        raise ValueError("Continue the exact completed owner workspace, original receiver and result.")
+    protected = [root, Path(host["sourceRoot"]), paths["workspaceDirectory"], paths["coreReceivedDirectory"]]
+    for key in ("outputDirectory", "receivedDirectory", "finalReceivedDirectory"):
+        if any(paths[key] == old or paths[key].is_relative_to(old) or old.is_relative_to(paths[key]) for old in protected):
+            raise ValueError("Keep the new continuation output/receivers separate from the completed source, output and workspaces.")
+    if paths["sourceRoot"] == Path(host["sourceRoot"]):
+        raise ValueError("Retain the completed source edition; select the merged continuation source separately.")
+    native_input_raw = original_bytes(root / "input.json", 4 * 1024 * 1024)
+    if json.loads(native_input_raw) != host or original_bytes(root / "result.json") != result_raw:
+        raise ValueError("The complete result/input is not the original saved host selection.")
+    for key in ("operationId", "coreOperationId", "pageOperationId", "workspaceDirectory", "receivedDirectory"):
+        if result.get(key) != host[key]:
+            raise ValueError("The complete receiving result changed its original " + key + ".")
+    package_pin = result.get("packageInput", {})
+    if package_pin.get("path") != "customer-package-input.json":
+        raise ValueError("The complete original customer package intent is absent.")
+    package_raw = selected_original({"path": str(root / package_pin["path"]),
+                                     "bytes": package_pin.get("bytes"), "sha256": package_pin.get("sha256")})
+    package = json.loads(package_raw)
+    if package.get("schema") != schema + ".package" or package.get("inputSha256") != digest(native_input_raw) or (
+            {**package.get("summary", {}), "state": "COMPLETE", "completeArtifact": result.get("completeArtifact"),
+             "packageInput": package_pin} != result):
+        raise ValueError("The complete original package does not identify this exact input/result.")
+    rows = package.get("files")
+    if not isinstance(rows, list) or not rows or len(rows) > 10000:
+        raise ValueError("Retain the complete original customer file selection.")
+    names = set()
+    for row in rows:
+        if not isinstance(row, dict) or not isinstance(row.get("path"), str):
+            raise ValueError("The complete original package has an invalid file descriptor.")
+        relative = Path(row["path"])
+        if relative.is_absolute() or str(relative) != row["path"] or any(part in ("", ".", "..") for part in relative.parts) or row["path"] in names:
+            raise ValueError("The complete original package has an ambiguous file path.")
+        names.add(row["path"])
+        selected_original({"path": str(root / relative), "bytes": row.get("bytes"), "sha256": row.get("sha256")})
+    if not {"input.json", "source-selection.json", "core-input.json", "core-result.json",
+            "page-result.json", "closed.json", "core/result.json", "core/complete-receiving.zip",
+            "page/result.json", "page/complete-page-receiving.zip"} <= names:
+        raise ValueError("The selected original complete package omitted a required core/Page result.")
+    source_raw = original_bytes(root / "source-selection.json")
+    source = json.loads(source_raw)
+    recorded = result.get("source", {})
+    if source.get("schema") != "commons.sf47.installation-return-source-selection.v1" or (
+            recorded.get("manifestSha256") != digest(source_raw) or
+            package.get("sourceManifestSha256") != digest(source_raw) or recorded.get("commit") != source.get("sourceCommit")):
+        raise ValueError("Keep the completed host's exact original source selection.")
+    source_rows = source.get("files")
+    if not isinstance(source_rows, list) or len(source_rows) != recorded.get("files"):
+        raise ValueError("The complete original source file count changed.")
+    source_names, source_bytes = set(), 0
+    for row in source_rows:
+        relative = Path(row.get("path", ""))
+        if not isinstance(row.get("path"), str) or relative.is_absolute() or str(relative) != row["path"] or (
+                any(part in ("", ".", "..") for part in relative.parts) or row["path"] in source_names):
+            raise ValueError("The original source selection has an ambiguous file path.")
+        source_names.add(row["path"]); source_bytes += row["bytes"]
+        selected_original({"path": str(Path(host["sourceRoot"]) / relative), "bytes": row["bytes"], "sha256": row["sha256"]})
+    if source_bytes != recorded.get("bytes"):
+        raise ValueError("The complete original source byte count changed.")
+    archive = result.get("completeArtifact", {})
+    if archive.get("path") != str(root / "Installation_Return_Complete_Receiving_20261012.zip"):
+        raise ValueError("Select the original full customer archive.")
+    archive_raw = selected_original({key: archive.get(key) for key in ("path", "bytes", "sha256")})
+    core_input_raw = original_bytes(root / "core-input.json", 4 * 1024 * 1024)
+    core_input = {"operationId": host["coreOperationId"], "sourceRoot": host["sourceRoot"],
+                  "workspaceDirectory": host["workspaceDirectory"], "receivedDirectory": host["receivedDirectory"],
+                  "outputDirectory": str(root / "core")}
+    core_raw = original_bytes(root / "core-result.json")
+    core = json.loads(core_raw)
+    if json.loads(core_input_raw) != core_input or core.get("state") != "COMPLETE" or core.get("mode") != "WALKTHROUGH" or (
+            core.get("schema") != "stellar-forge.sf47-installation-return-receiving.v1" or core.get("operationId") != host["coreOperationId"]):
+        raise ValueError("The selected original core input/result changed.")
+    for key in ("ownerCaseId", "receiverCaseId", "returnedCaseId", "independentCaseId", "installationId",
+                "revision", "installationSha256", "receivingReviewId", "ownerReviewId"):
+        if core.get(key) != result.get(key):
+            raise ValueError("The complete core and Page package select different original " + key + ".")
+    if core.get("completeArtifact") != result.get("coreArtifact"):
+        raise ValueError("The original core archive differs from the complete host result.")
+    return {"input": core_input, "core": core, "result": result, "files": {
+        "Original_Complete_Input.json": host_raw, "Original_Complete_Result.json": result_raw,
+        "Original_Complete_Source_Selection.json": source_raw, "Original_Complete_Core_Input.json": core_input_raw,
+        "Original_Complete_Core_Result.json": core_raw, "Original_Complete_Receiving.zip": archive_raw}}
+
+
 def run(config, action="prepare"):
     fields = {"operationId", "sourceRoot", "workspaceDirectory", "coreReceivedDirectory",
               "receivedDirectory", "finalReceivedDirectory", "outputDirectory"}
-    if not isinstance(config, dict) or set(config) != fields or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,79}", config["operationId"]):
+    if not isinstance(config, dict) or not fields <= set(config) or set(config) - fields - {"completedBase"} or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,79}", config["operationId"]):
         raise ValueError("Use one complete original continuation input.")
     paths = {key: Path(config[key]).resolve() for key in fields - {"operationId"}}
     if len(set(paths.values())) != len(paths) or any(paths[key].is_relative_to(paths["sourceRoot"])
@@ -174,13 +315,32 @@ def run(config, action="prepare"):
     def core():
         module_spec = importlib.util.spec_from_file_location("original_installation_return_receiving", native / "installation-return-receiving.py")
         module = importlib.util.module_from_spec(module_spec); module_spec.loader.exec_module(module)
-        result = module.run({"operationId": prefix + "core", "sourceRoot": str(paths["sourceRoot"]),
-                             "workspaceDirectory": str(paths["workspaceDirectory"]),
-                             "receivedDirectory": str(paths["coreReceivedDirectory"]),
-                             "outputDirectory": str(output / "original-core")})
+        selected = completed_base(config["completedBase"], paths) if "completedBase" in config else None
+        if selected:
+            for name, raw in selected["files"].items():
+                if retained(name, lambda raw=raw: raw) != raw:
+                    raise ValueError("The retained completed-base selection changed: " + name)
+            result = module.run(selected["input"], completed_only=True)
+            if result != selected["core"]:
+                raise ValueError("The verified completed original core returned another result.")
+        else:
+            result = module.run({"operationId": prefix + "core", "sourceRoot": str(paths["sourceRoot"]),
+                                 "workspaceDirectory": str(paths["workspaceDirectory"]),
+                                 "receivedDirectory": str(paths["coreReceivedDirectory"]),
+                                 "outputDirectory": str(output / "original-core")})
         if result["state"] != "COMPLETE":
             raise ValueError("The original complete Installation receiving has not finished.")
-        retained("Original_Core_Result.json", lambda: encode(result))
+        if retained("Original_Core_Result.json", lambda: encode(result)) != encode(result):
+            raise ValueError("The retained original core result changed.")
+        if selected:
+            _, ops = opened("workspaceDirectory")
+            current = ops.read(result["ownerCaseId"])
+            original = ops.installation(result["ownerCaseId"], result["installationId"], result["revision"])
+            if current["program"].get("mode") != "WALKTHROUGH" or original["sha256"] != result["installationSha256"]:
+                raise ValueError("The original completed owner case or historical Installation is unavailable or changed.")
+            state["completedBase"] = {"operationId": selected["result"]["operationId"],
+                "coreOperationId": result["operationId"], "selection": deepcopy(config["completedBase"]),
+                "completeArtifact": selected["result"]["completeArtifact"]}
         state["ownerCaseId"] = result["ownerCaseId"]; state["installationId"] = result["installationId"]; persist()
         return {"ownerCaseId": result["ownerCaseId"], "installationId": result["installationId"],
                 "originalReviewId": result["ownerReviewId"], "completeArtifact": result["completeArtifact"]}

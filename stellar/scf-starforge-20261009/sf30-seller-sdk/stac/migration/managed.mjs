@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Installed entry for the original migration engine, operator and merchant connection.
 import { spawn, execFile } from 'node:child_process';
-import { access, stat, realpath, readFile } from 'node:fs/promises';
+import { access, stat, realpath, readFile, open, lstat } from 'node:fs/promises';
 import { constants } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, basename, relative, isAbsolute, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { migrationFailure, migrationIdentifier, migrationPrivateDirectory,
   retainMigrationBytes, validateMigrationWorkspaceConfiguration,
-  parseExactJSON, stringifyExactJSON } from './merchant/client.mjs';
+  parseExactJSON, stringifyExactJSON, migrationSha256 } from './merchant/client.mjs';
 
 export { parseExactJSON };
 
@@ -37,7 +37,8 @@ async function originalEngine(python, workspace, command, payload, environment) 
   const input = Buffer.from(stringifyExactJSON({ command, payload }) + '\n');
   return new Promise((yes, no) => {
     const child = execFile(selected.executable, ['-B', ENGINE, '--workspace', resolve(workspace)],
-      { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, timeout: 30000,
+      { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
+        timeout: ['mapping-register','workbook-propose'].includes(command) ? 0 : 30000,
         windowsHide: true, env: { ...environment, PYTHONDONTWRITEBYTECODE: '1' } },
       (error, stdout, stderr) => {
         try {
@@ -170,11 +171,74 @@ export async function serveMigrationOperator({
   });
 }
 
+
+async function mappingInput(filename) {
+  const path=resolve(filename),limit=16*1024*1024;
+  const handle=await open(path,constants.O_RDONLY|(constants.O_NOFOLLOW||0));
+  try {
+    const before=await handle.stat({bigint:true});
+    requireValue(before.isFile()&&before.size>0n&&before.size<=BigInt(limit),
+      'WORKBOOK_INPUT_SIZE','Select a complete regular mapping input within 16 MiB.');
+    const raw=await handle.readFile();
+    const after=await handle.stat({bigint:true}),selected=await lstat(path,{bigint:true});
+    requireValue(!selected.isSymbolicLink()&&BigInt(raw.length)===before.size&&
+      ['dev','ino','size','mtimeNs','ctimeNs'].every(key=>before[key]===after[key]&&after[key]===selected[key]),
+      'WORKBOOK_INPUT_CHANGED','The selected mapping file changed while it was being read.');
+    return raw;
+  } finally {await handle.close();}
+}
+async function workbookBinding(options) {
+  const binding=await readMigrationOperatorBinding(options);
+  requireValue(typeof options.expectedWorkspaceId==='string'&&options.expectedWorkspaceId===binding.workspaceId,
+    'WORKSPACE_CHANGED','Use --expected-workspace-id from the original selected workspace.');
+  return binding;
+}
+async function mappingOutput(binding,filename,raw) {
+  const path=resolve(filename),inside=relative(binding.directory,path);
+  requireValue(inside==='..'||inside.startsWith('..'+sep)||isAbsolute(inside),
+    'WORKBOOK_OUTPUT_DIRECTORY','Save this portable mapping delivery outside the native workspace directory.');
+  await retainMigrationBytes(path,raw);
+  return {path,bytes:raw.length,sha256:migrationSha256(raw)};
+}
+export async function exportMigrationMappingRegister(options={}) {
+  const binding=await workbookBinding(options);
+  migrationIdentifier(options.planId,'saved plan ID');
+  const result=await originalEngine(binding.python,binding.directory,'mapping-register',
+    {planId:options.planId},options.environment??process.env);
+  requireValue(result.workspaceId===binding.workspaceId&&result.planId===options.planId,
+    'WORKSPACE_CHANGED','The selected original workspace or saved plan changed during export.');
+  const raw=Buffer.from(result.registerBase64,'base64');
+  requireValue(raw.toString('base64')===result.registerBase64&&raw.length===result.file.bytes&&
+    migrationSha256(raw)===result.file.sha256,'WORKBOOK_REGISTER_CHANGED','Keep the complete native mapping register.');
+  const file=await mappingOutput(binding,options.outputFile,raw);
+  return {schema:result.schema,state:'EXPORTED',workspaceId:result.workspaceId,
+    workspaceRevision:result.workspaceRevision,planId:result.planId,captureId:result.captureId,
+    rows:result.rows,review:result.review,file};
+}
+export async function proposeMigrationMappingWorkbook(options={}) {
+  const binding=await workbookBinding(options);
+  const [register,workbook]=await Promise.all([mappingInput(options.registerFile),mappingInput(options.workbookFile)]);
+  requireValue(register.length+workbook.length<=24*1024*1024,
+    'WORKBOOK_INPUT_SIZE','Keep the complete register and XLSX together within 24 MiB.');
+  const source={schema:'starforge.gis-migration-workbook-source.v1',
+    registerBase64:register.toString('base64'),workbookBase64:workbook.toString('base64'),
+    filename:basename(options.workbookFile)};
+  const proposal=await originalEngine(binding.python,binding.directory,'workbook-propose',{source},options.environment??process.env);
+  requireValue(proposal.workspaceId===binding.workspaceId,'WORKSPACE_CHANGED','The selected original workspace changed during review.');
+  const packet={schema:'starforge.gis-migration-workbook-return.v1',source,proposal};
+  const file=await mappingOutput(binding,options.outputFile,Buffer.from(stringifyExactJSON(packet,2)+'\n'));
+  return {schema:packet.schema,state:'PROPOSED',workspaceId:proposal.workspaceId,basePlanId:proposal.basePlanId,
+    captureId:proposal.captureId,changedCells:proposal.review.changedCells,changedChoices:proposal.review.changedChoices,
+    file,next:'Open Mapping and import this complete workbook-return file to review and save the native plan.'};
+}
+
 const HELP = [
   'Original GIS migration operator',
   '',
   'starforge migration-operator create --workspace DIR --python PYTHON [--title TITLE]',
   'starforge migration-operator describe --workspace DIR --python PYTHON',
+  'starforge migration-operator workbook-register --workspace DIR --python PYTHON --expected-workspace-id ID --plan-id PLAN --output Mapping-Register.json',
+  'starforge migration-operator workbook-propose --workspace DIR --python PYTHON --expected-workspace-id ID --register Mapping-Register.json --workbook Edited.xlsx --output Workbook-Return.json',
   'starforge migration-operator serve --workspace DIR --python PYTHON [--vector-python PYTHON] [--qgis-python PYTHON] [--exports DIR] [--port 0]',
   'starforge migration-operator connect --workspace DIR --python PYTHON --runtime DIR --connection FILE [--alias delivery] [--vector-python PYTHON] [--qgis-python PYTHON]',
   '',
@@ -191,7 +255,7 @@ const HELP = [
 function parseArguments(argv) {
   const options = {}, position = [], allowed = new Set(['workspace','python','vector-python',
     'qgis-python','exports','port','expected-workspace-id','title','runtime','connection',
-    'alias','name','python-path','environment']);
+    'alias','name','python-path','environment','plan-id','output','register','workbook']);
   for (let i=0;i<argv.length;i++) {
     const item = argv[i];
     if (item === '--help' || item === '-h') { options.help = true; continue; }
@@ -214,12 +278,16 @@ export async function runMigrationOperatorCli(argv=process.argv.slice(2), { stdo
     requireValue(typeof o[key] === 'string' && o[key], 'CLI_ARGUMENTS', 'Supply --'+key+'.');
     return o[key];
   };
-  requireValue(['create','describe','serve','connect'].includes(command),
-    'CLI_ARGUMENTS', 'Choose create, describe, serve or connect.');
+  requireValue(['create','describe','serve','connect','workbook-register','workbook-propose'].includes(command),
+    'CLI_ARGUMENTS', 'Choose create, describe, serve, connect, workbook-register or workbook-propose.');
   const common={workspaceDirectory:get('workspace'),pythonExecutable:get('python'),environment};
   let result;
   if(command==='create')result=await createMigrationOperatorWorkspace({...common,title:o.title});
   if(command==='describe')result=await readMigrationOperatorBinding(common);
+  if(command==='workbook-register')result=await exportMigrationMappingRegister({...common,
+    expectedWorkspaceId:get('expected-workspace-id'),planId:get('plan-id'),outputFile:get('output')});
+  if(command==='workbook-propose')result=await proposeMigrationMappingWorkbook({...common,
+    expectedWorkspaceId:get('expected-workspace-id'),registerFile:get('register'),workbookFile:get('workbook'),outputFile:get('output')});
   if(command==='serve') {
     requireValue(o.port===undefined||/^(0|[1-9]\d*)$/.test(o.port),
       'PORT_INVALID','Choose a decimal local port.');

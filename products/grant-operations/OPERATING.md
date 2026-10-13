@@ -1,5 +1,9 @@
 # Grant Operations — installed operating and receiving guide
 
+## Issuer correspondence and award terms
+
+Open **Operations → Issuer terms** to receive an original email or text file and selected attachments, retain complete message bytes, record the observed application stage and explicitly selected proposal or issuer track, and review the original source for each term. The same workspace compares issued amount, duration, tranche criteria and any stated metric window with the saved proposal, then saves a reviewed native plan through the existing amendment transaction. Local drafts, exact pending requests, all issuer editions, original attachments and commissioned plan history reopen through the complete case handover. The browser, original Operations CLI and authenticated API share this workflow. See [Issuer correspondence and award terms](../../stellar/scf_2026/sf47_budget_model/workspace/AWARD_TERMS.md) for the full operating procedure, source formats and receiving commands.
+
 ## Recorded work and supplier invoice intake
 
 The original Operations case now receives CSV/TSV timesheets and invoice lines through **Work / invoice intake**. Operators map positions and source formats, match existing contributors and packages, retain corrections and duplicate decisions, and apply the complete reviewed batch atomically. Saved drafts, original bytes, grouped invoice lines and applied native record links survive complete case export/import. The existing CLI, typed GrantWorkspaceClient and six `merchant_grant_work_intake*` tools expose the same workflow. See [the complete operator guide](../../stellar/scf_2026/sf47_budget_model/workspace/WORK_INTAKE.md).

@@ -356,9 +356,48 @@ function cadence(raw, label, globalWeekdays) {
     kind, dates: [...new Set(array(value.dates, label + ".dates").map(x => dateValue(x, label + ".dates")))].sort()
   };
 }
+
+export const COHORT_SCHEDULING_SCHEMA = "stellar-forge.sf47-delivery-scheduling.v1";
+export function normalizeCohortScheduling(raw, schedules) {
+  const value = fields(object(raw, "deliveryScheduling"), ["schema", "strategy", "schedules", "note"], "deliveryScheduling");
+  if (value.schema !== COHORT_SCHEDULING_SCHEMA) fail("INVALID_SCHEDULING_SCHEMA", "Use " + COHORT_SCHEDULING_SCHEMA + ".", "deliveryScheduling.schema");
+  const scheduleIds = new Set(schedules.map(row => row.id)), seen = new Set();
+  const policies = array(value.schedules, "deliveryScheduling.schedules", 1000).map((rawPolicy, index) => {
+    const path = "deliveryScheduling.schedules[" + index + "]";
+    const row = fields(object(rawPolicy, path), ["scheduleId", "flexible", "advanceDays", "delayDays", "releaseDate", "dueDate", "weekdays", "minimumGapDays", "priority", "note"], path);
+    const scheduleId = id(row.scheduleId, path + ".scheduleId");
+    if (!scheduleIds.has(scheduleId) || seen.has(scheduleId)) fail("SCHEDULING_REFERENCE", "Select each original schedule at most once.", path);
+    seen.add(scheduleId);
+    if (typeof row.flexible !== "boolean") fail("SCHEDULING_FLEXIBILITY", "Choose fixed or flexible service dates.", path + ".flexible");
+    const releaseDate = row.releaseDate == null || row.releaseDate === "" ? null : dateValue(row.releaseDate, path + ".releaseDate");
+    const dueDate = row.dueDate == null || row.dueDate === "" ? null : dateValue(row.dueDate, path + ".dueDate");
+    if (releaseDate && dueDate && releaseDate > dueDate) fail("SCHEDULING_WINDOW", "The release date must not follow the completion deadline.", path);
+    return { scheduleId, flexible: row.flexible,
+      advanceDays: integer(row.advanceDays ?? 0, path + ".advanceDays", 0, 366000),
+      delayDays: integer(row.delayDays ?? 0, path + ".delayDays", 0, 366000), releaseDate, dueDate,
+      weekdays: weekdays(row.weekdays, path + ".weekdays", [1, 2, 3, 4, 5, 6, 7]),
+      minimumGapDays: integer(row.minimumGapDays ?? 0, path + ".minimumGapDays", 0, 366000),
+      priority: integer(row.priority ?? 0, path + ".priority", 0, 1000000),
+      note: optionalText(row.note, path + ".note") };
+  });
+  return { schema: COHORT_SCHEDULING_SCHEMA,
+    strategy: enumValue(value.strategy ?? "NEAREST", ["NEAREST", "EARLIEST"], "deliveryScheduling.strategy"),
+    schedules: policies, note: optionalText(value.note, "deliveryScheduling.note") };
+}
+function dateAllocations(raw, label) {
+  const seen = new Set();
+  return array(raw, label, MAX_DAILY_ROWS).map((value, index) => {
+    const path = label + "[" + index + "]", row = fields(object(value, path), ["sourceDate", "date"], path);
+    const sourceDate = dateValue(row.sourceDate, path + ".sourceDate");
+    if (seen.has(sourceDate)) fail("DUPLICATE_DATE_ALLOCATION", "Allocate each original occurrence once.", path);
+    seen.add(sourceDate);
+    return { sourceDate, date: dateValue(row.date, path + ".date") };
+  }).sort((a, b) => a.sourceDate.localeCompare(b.sourceDate));
+}
+
 export function normalizeCohortPlan(raw) {
   const value = fields(object(raw, "plan"), ["schema", "draftId", "name", "source", "rule", "asOfAt", "windowStart", "calendar",
-    "buyers", "merchants", "facilitators", "operations", "schedules", "workshares", "capacityPools", "fundingGroups", "calendarSource", "sensitivity", "note"], "plan");
+    "buyers", "merchants", "facilitators", "operations", "schedules", "workshares", "capacityPools", "fundingGroups", "calendarSource", "deliveryScheduling", "sensitivity", "note"], "plan");
   if (value.schema !== COHORT_PLAN_SCHEMA) fail("INVALID_PLAN_SCHEMA", "Use " + COHORT_PLAN_SCHEMA + ".", "schema");
   const rule = validateRule(value.rule), source = sourceValue(value.source);
   const cal = fields(object(value.calendar ?? {}, "calendar"), ["timezone", "weekdays", "excludedDates"], "calendar");
@@ -394,7 +433,7 @@ export function normalizeCohortPlan(raw) {
   }
   const operationsById = new Map(operations.map(row => [row.id, row]));
   const schedules = distinct(array(value.schedules ?? [], "schedules", 1000).map((rawSchedule, i) => {
-    const label = "schedules[" + i + "]", row = fields(object(rawSchedule, label), ["id", "label", "operationId", "buyerId", "facilitatorId", "cadence", "tasksPerDate", "requestsPerTask", "timeUtc", "deliveryDelayMinutes", "excludedDates", "payment", "economics", "capacityPoolId", "fundingGroupIds", "origin", "note"], label);
+    const label = "schedules[" + i + "]", row = fields(object(rawSchedule, label), ["id", "label", "operationId", "buyerId", "facilitatorId", "cadence", "tasksPerDate", "requestsPerTask", "timeUtc", "deliveryDelayMinutes", "excludedDates", "payment", "economics", "capacityPoolId", "fundingGroupIds", "origin", "dateAllocations", "note"], label);
     const operationId = id(row.operationId, label + ".operationId"), buyerId = id(row.buyerId, label + ".buyerId");
     const facilitatorId = row.facilitatorId ? id(row.facilitatorId, label + ".facilitatorId") : null;
     if (!operationIds.has(operationId) || !buyerIds.has(buyerId) || (facilitatorId && !facilitatorIds.has(facilitatorId)))
@@ -413,6 +452,7 @@ export function normalizeCohortPlan(raw) {
       id: id(row.id, label + ".id"), label: optionalText(row.label, label + ".label", 500), operationId, buyerId, facilitatorId, capacityPoolId,
       fundingGroupIds, origin: fundingOrigin(row.origin, label + ".origin"),
       cadence: cadence(row.cadence, label + ".cadence", calendar.weekdays),
+      ...(row.dateAllocations === undefined ? {} : { dateAllocations: dateAllocations(row.dateAllocations, label + ".dateAllocations") }),
       tasksPerDate: integer(row.tasksPerDate, label + ".tasksPerDate", 0),
       requestsPerTask: integer(row.requestsPerTask, label + ".requestsPerTask", 1),
       timeUtc: timeValue(row.timeUtc, label + ".timeUtc"),
@@ -435,6 +475,7 @@ export function normalizeCohortPlan(raw) {
     schema: COHORT_PLAN_SCHEMA, draftId: id(value.draftId, "draftId"), name: textValue(value.name, "name", true, 500), source, rule,
     asOfAt: stamp(value.asOfAt, "asOfAt"), windowStart: dateValue(value.windowStart, "windowStart"), calendar,
     buyers, merchants, facilitators, operations, schedules, workshares, capacityPools, fundingGroups, calendarSource: calendarSource(value.calendarSource),
+    ...(value.deliveryScheduling === undefined ? {} : { deliveryScheduling: normalizeCohortScheduling(value.deliveryScheduling, schedules) }),
     sensitivity: {
       minimumMarginPct,
       effortIncreasesPct: [...new Set(array(sensitivity.effortIncreasesPct ?? ["0", "20", "25"], "sensitivity.effortIncreasesPct", 30).map(x => decimalText(decimal(x, "Effort increase"))))],
@@ -789,31 +830,44 @@ export function evaluateCohortPlan(raw, options = {}) {
   const dayMap = new Map(days.map(x => [x.date, x])), prepared = [], excluded = [];
   for (const schedule of input.schedules) {
     const ownExclusions = new Map(schedule.excludedDates.map(x => [x.date, x.label]));
+    const allocated = new Map((schedule.dateAllocations || []).map(row => [row.sourceDate, row.date])), usedAllocations = new Set();
     if (!schedule.economics) finding("ECONOMICS_UNSPECIFIED", "Add this schedule's explicit revenue, supplier cost, payment fee and effort assumptions to compare its contribution.", "schedule", schedule.id, "info");
     if (!["UNPAID", "FUNDED"].includes(schedule.payment.kind) && schedule.payment.atomicUnitPrice === "0")
       finding("ZERO_PAYMENT_PRICE", "A zero atomic price contributes tasks and payment requests, with zero paid purchase opportunities.", "schedule", schedule.id);
-    for (const dateRow of days) {
+    for (const sourceDay of days) {
+      let dateRow = sourceDay;
       if (!cadenceMatches(schedule.cadence, dateRow.date, dateRow.weekday)) continue;
       const reasons = [];
       if (!input.calendar.weekdays.includes(dateRow.weekday)) reasons.push("Closed calendar weekday");
       if (globalExclusions.has(dateRow.date)) reasons.push(globalExclusions.get(dateRow.date) || "Calendar exclusion");
       if (ownExclusions.has(dateRow.date)) reasons.push(ownExclusions.get(dateRow.date) || "Schedule exclusion");
       if (reasons.length) { excluded.push({ scheduleId: schedule.id, date: dateRow.date, reasons }); continue; }
+      if (allocated.has(sourceDay.date)) {
+        const selected = allocated.get(sourceDay.date);
+        dateRow = dayMap.get(selected);
+        if (!dateRow) fail("ALLOCATION_OUTSIDE_WINDOW", "Keep allocated work inside its original complete rule window.", "schedules." + schedule.id);
+        if (!dateRow.isWorkingDay || ownExclusions.has(selected))
+          fail("ALLOCATION_CLOSED_DATE", "Allocated date " + selected + " is closed by the plan or service calendar.", "schedules." + schedule.id);
+        usedAllocations.add(sourceDay.date);
+      }
       if (prepared.length >= MAX_DAILY_ROWS) fail("PLAN_TOO_LARGE", "The selected plan exceeds " + MAX_DAILY_ROWS + " schedule-date rows. Keep the complete selected cohort in a smaller set of aggregate schedules.", "schedules");
       const scheduledAt = dateRow.date + "T" + schedule.timeUtc + ":00.000Z";
       const completeEpoch = Date.parse(scheduledAt) + schedule.deliveryDelayMinutes * 60000;
       if (!Number.isFinite(completeEpoch) || new Date(completeEpoch).toISOString().length > 24)
         fail("INVALID_PLAN_CLOCK", "The planned completion exceeds the supported calendar.", "schedules." + schedule.id);
-      prepared.push({ schedule, dateRow, scheduledAt, plannedCompleteAt: new Date(completeEpoch).toISOString(), completeEpoch });
+      prepared.push({ schedule, dateRow, sourceDay, allocated: allocated.has(sourceDay.date),
+        scheduledAt, plannedCompleteAt: new Date(completeEpoch).toISOString(), completeEpoch });
     }
+    if (usedAllocations.size !== allocated.size)
+      fail("ALLOCATION_SOURCE_MISSING", "Every date allocation must name an active occurrence in the retained original cadence and calendar.", "schedules." + schedule.id);
   }
-  prepared.sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt) || a.schedule.id.localeCompare(b.schedule.id));
+  prepared.sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt) || a.schedule.id.localeCompare(b.schedule.id) || a.sourceDay.date.localeCompare(b.sourceDay.date));
   const passGroups = new Map(), occurrences = [], summary = makeMetrics(), assetMap = new Map(), currencyMap = new Map();
   const explicitFundingUses = new Map(input.fundingGroups.map(row => [row.id, []])), fundingGroups = [];
   const buyerGroups = new Map(), merchantGroups = new Map(), operationGroups = new Map(), facilitatorGroups = new Map(), seenSlots = new Map();
   function group(map, key, seed) { if (!map.has(key)) map.set(key, { ...seed, ...makeMetrics() }); return map.get(key); }
   for (const preparedRow of prepared) {
-    const { schedule, dateRow, scheduledAt, plannedCompleteAt, completeEpoch } = preparedRow;
+    const { schedule, dateRow, sourceDay, scheduledAt, plannedCompleteAt, completeEpoch } = preparedRow;
     const operation = operationsById.get(schedule.operationId), buyer = buyersById.get(schedule.buyerId), merchant = merchantsById.get(operation.merchantId);
     const facilitator = facilitatorsById.get(schedule.facilitatorId), terms = schedule.payment;
     const requests = multiplyCount(schedule.tasksPerDate, schedule.requestsPerTask, "Scheduled requests");
@@ -865,7 +919,8 @@ export function evaluateCohortPlan(raw, options = {}) {
       finding("OVERLAPPING_TASK_SLOT", "This buyer and operation also appear at the same planned time in schedule " + seenSlots.get(slot) + ". Review the separate useful task before retaining both schedules.", "schedule", schedule.id);
     if (schedule.tasksPerDate) seenSlots.set(slot, schedule.id);
     const row = {
-      id: schedule.id + ":" + dateRow.date, scheduleId: schedule.id, label: schedule.label || operation.label,
+      id: schedule.id + ":" + sourceDay.date, scheduleId: schedule.id, label: schedule.label || operation.label,
+      ...(preparedRow.allocated ? { sourceDate: sourceDay.date, originalScheduledAt: sourceDay.date + "T" + schedule.timeUtc + ":00.000Z" } : {}),
       operationId: operation.id, buyerId: buyer.id, merchantId: merchant.id, facilitatorId: facilitator?.id ?? null,
       buyerOperatorId: buyer.operatorId, merchantOperatorId: merchant.operatorId, facilitatorOperatorId: facilitator?.operatorId ?? null,
       date: dateRow.date, scheduledAt, plannedCompleteAt, completionDate: plannedCompleteAt.slice(0, 10), withinWindow,
@@ -1117,10 +1172,12 @@ export function exportCohortPlanCsv(report) {
     output.push([type, ref, date, metric, value, currency, network, asset, detail]);
   add("PLAN", report.input.draftId, "", "name", report.input.name, JSON.stringify(report.source));
   add("PLAN", report.input.draftId, "", "sourceComparison", report.sourceComparison.status, JSON.stringify(report.sourceComparison.fields));
+  if (report.input.deliveryScheduling) add("SCHEDULING", report.input.draftId, "", "constraints", report.input.deliveryScheduling.strategy, JSON.stringify(report.input.deliveryScheduling));
   for (const [key, value] of Object.entries(report.summary)) add("SUMMARY", report.source.programId, "", key, value);
   for (const row of report.targets) add("TARGET", row.key, "", "planned", row.planned, JSON.stringify({ expected: row.expected, gap: row.gap, status: row.status, ...(row.unpricedAdditional ? { unpricedAdditional: row.unpricedAdditional } : {}) }));
   for (const row of report.days) for (const key of Object.keys(makeMetrics())) add("DAY", "", row.date, key, row[key], row.asOfPosition);
   for (const row of report.occurrences) {
+    if (row.sourceDate) add("DATE_ALLOCATION", row.id, row.date, "sourceDate", row.sourceDate, row.originalScheduledAt);
     for (const key of Object.keys(makeMetrics())) add("SCHEDULE_DATE", row.scheduleId, row.date, key, row[key], row.operationId);
     add("SCHEDULE_DATE", row.scheduleId, row.date, "plannedCompleteAt", row.plannedCompleteAt, row.qualificationGaps.join("; "));
     add("SCHEDULE_DATE", row.scheduleId, row.date, "atomicAmount", row.atomicAmount, row.paymentKind, "", row.network, row.asset);
@@ -1177,6 +1234,7 @@ function comparisonPlan(document, label) {
   object(document, label);
   if (document.schema === COHORT_PLAN_SCHEMA) return document;
   if (document.schema === COHORT_PLAN_REPORT_SCHEMA && document.kind === "PLAN") return document.input;
+  if (document.schema === "stellar-forge.sf47-delivery-schedule-report.v1") return document.candidate;
   if (document.schema === "stellar-forge.sf47-cohort-plan-edition.v1") return document.plan;
   fail("INVALID_COMPARISON_SOURCE", label + " must be a complete plan, planning report or saved edition.", label);
 }

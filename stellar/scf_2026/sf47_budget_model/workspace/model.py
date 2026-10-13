@@ -576,7 +576,7 @@ class Workspace:
             scenario, planning, computed = report(merge_scenario(current["scenario"], patch), planning)
             return {"scenario": scenario, "planning": planning, "report": computed}
 
-    def save(self, plan_id, expected_revision, patch, planning, note, request_id):
+    def save(self, plan_id, expected_revision, patch, planning, note, request_id, *, _within_transaction=False):
         note = text(note, "Revision note", 4000, True)
         payload = {"action": "save", "id": plan_id, "expectedRevision": expected_revision,
                    "patch": patch, "planning": planning, "note": note}
@@ -588,6 +588,10 @@ class Workspace:
             if digest({"scenario": scenario, "planning": normalized}) == current["contentSha256"]:
                 return {**current, "unchanged": True}
             return self._append(plan_id, current["currentRevision"] + 1, scenario, normalized, computed, note)
+        if _within_transaction:
+            if not self.db.in_transaction:
+                raise RuntimeError("Native planning commissioning requires the original active workspace transaction.")
+            return action()
         return self._transaction(request_id, payload, action)
 
     def restore(self, plan_id, expected_revision, selected_revision, note, request_id):

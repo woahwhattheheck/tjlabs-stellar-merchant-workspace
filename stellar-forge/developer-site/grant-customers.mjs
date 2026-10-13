@@ -1,5 +1,6 @@
 import { currentGrantCompanionLinks } from './grant-companion.mjs';
 // MIT. Carry accepted customer sections into the maintained SCF reviewer edition.
+import { receiveGrantA2ASources } from './grant-a2a.mjs';
 const FEDERAL = '## Federal awards: complete funding research, workshares and receiving';
 const WEBHOOK = '## Webhook customer adoption: complete event tasks and operator handover';
 const OPENFN = '## OpenFn: paid workflow commissioning and complete receiving';
@@ -231,6 +232,8 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/fred\/qcew\/MERCHANT\.md)/, economic);
   receive('economic-county-source-methods', 'Original county source, calculation profiles and complete report production',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/fred\/qcew\/README\.md)/, economic);
+  receive('economic-fred-current-publications', 'Original Federal Reserve publication comparison and complete customer receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/fred\/ddp\/PUBLISHED-WORKSPACE\.md)/, economic);
   const federal = section(companion, FEDERAL)?.text || '';
   receive('federal-awards-readme', 'Federal awards complete product guide',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/federal-awards\/README\.md)/, federal);
@@ -291,6 +294,10 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/distribution\/runtime-workspace\/SOURCE_BUILDS\.md)/, companion);
   receive('request-collection-authoring', 'Reusable buyer request plans and complete prepared periods',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf88-operator-buyer-cli\/collections\/AUTHORING\.md)/, companion);
+  receive('installation-product-requirements', 'Complete capability selection and committed dependency inspection',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/distribution\/discovery\/PRODUCT_REQUIREMENTS\.md)/, companion);
+  receive('installation-product-plans', 'Saved product, original installed Runtime and complete customer handoff',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/distribution\/runtime-workspace\/PRODUCT_PLANS\.md)/, companion);
   receive('grant-operating-case', 'Grant Operations complete delivery, cash and customer receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/grant-operations\/OPERATING\.md)/, companion);
   receive('grant-customer-task-outcomes', 'Complete customer task comparison, reviewed editions and native receiving',
@@ -345,6 +352,7 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/a2a\/receiving\/commission\.mjs)/, analytical);
   receive("a2a-complete-native-programme", "Complete analytical service native commissioning entry",
     /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(operations\/scf-a2a-native-analysis-0c7a-\d{8}\/RUN_NATIVE\.md)/, analytical);
+  receiveGrantA2ASources(index, analytical);
   const workshares = section(companion, CUSTOMER_WORKSHARES)?.text || '';
   receive("medstar-study-workspace", "Study operations original application",
     /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(opportunities\/medstar_shadow_study_2026\/workspace\/README\.md)/, workshares);
@@ -367,6 +375,16 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/reconciliation_receiving\.py)/, iati);
   receive('iati-fcdo-wadi-original-source', 'Original FCDO organisation and WADI activity publication',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/examples\/fcdo-wadi-2026\/SOURCE\.md)/, iati);
+  receive("iati-document-evidence-workspace", "IATI published-document evidence and named source review",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/DOCUMENT_EVIDENCE\.md)/, iati);
+  receive("iati-document-evidence-receiving", "IATI document native, SDK, Merchant and browser receiving",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/document_evidence\/RECEIVING\.md)/, iati);
+  receive("iati-document-following-observation", "IATI following publisher observation and complete customer receiving",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/document_evidence\/FOLLOWING\.md)/, iati);
+  receive("iati-fcdo-document-native-result", "FCDO document evidence original native receiving result",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/examples\/fcdo-organisation-2026\/document-evidence-native-result\.json)/, iati);
+  receive("iati-fcdo-document-connected-result", "FCDO document evidence original SDK, Merchant and browser result",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/examples\/fcdo-organisation-2026\/document-evidence-connected-result\.json)/, iati);
   const institutionalRepository = section(companion, INSTITUTIONAL_REPOSITORY)?.text || '';
   receive('tind-institutional-migration', 'Institutional repository migration and complete customer receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/tind\/OPERATING\.md)/, institutionalRepository);
@@ -376,6 +394,13 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(opportunities\/discoverygarden_msu2026112_\d{8}\/tind-operator\/OPERATOR_CASES\.md)/, institutionalRepository);
   receive('tind-institutional-repository-contribution', 'Repository commissioning, recurring service and funded contribution',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/tind\/GRANT\.md)/, institutionalRepository);
+  const companyResearch = section(companion, '## Company research, recurring reference data and complete receiving')?.text || '';
+  receive('gleif-company-research-operating', 'Company research, source review, customer files and native dataset receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/gleif\/OPERATING\.md)/, companyResearch);
+  receive('gleif-company-source-contract', 'Original legal-entity records, source editions and complete receiving contract',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/gleif\/SOURCE_CONTRACT\.md)/, companyResearch);
+  receive('gleif-company-grant-workflow', 'Company research service, customer commissioning and existing funded packages',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/gleif\/GRANT\.md)/, companyResearch);
   index.narrative_source = { ...index.narrative_source, composition: {
     ...index.narrative_source?.composition,
     retained_product_sections: headings(clean(companion)).filter(item => item.level === 2).map(item => item.text.slice(3)),

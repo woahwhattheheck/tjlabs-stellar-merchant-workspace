@@ -18,6 +18,10 @@ An explicit `OPEN_METEO_RUNTIME_ROOT` may select another complete maintained `st
 
 [Editable receiving](RECEIVING.md) opens a complete weather delivery in an independent review workspace, preserves original source and decision history, supports local revisions, and exports the next complete delivery. Existing frozen ZIPs can be opened through `from-report-zip`; new reports offer an **Editable package** download in the browser and `--format handover` in the CLI.
 
+## Renew the next customer briefing
+
+[Complete report renewal](REPORT_RENEWAL.md) reuses the customer’s current reviewed rules across newly retained source selections and operating windows. Review all changed conditions together, save every decision revision and the next frozen report atomically, then deliver its complete prior and current source history through the existing editable receiving flow. The browser, CLI and workspace API share the same operation.
+
 ## Compile and operate the merchant
 
 Copy [examples/product.json](examples/product.json) into a private directory. Replace its public origin, asset, recipient, and prices with reviewed merchant terms. Template strings are configuration placeholders.
