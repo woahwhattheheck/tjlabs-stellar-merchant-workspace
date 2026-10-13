@@ -276,6 +276,118 @@
           "sha256": "9725ad9de0be5a29c8c690c03338ba554083a5f075972f29fc4fcd426af1d46b"
         }
       ]
+    },
+    {
+      "id": "runtime-input-files-operator",
+      "label": "Complete original application files and continuing customer workflow",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_INPUTS.md",
+      "commit": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
+      "editions": [
+        {
+          "commit": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
+          "git_blob": "32bf60d4f7a624640b5f3f11a8c97242c8f90eb1",
+          "bytes": 8524,
+          "sha256": "19d70b44f53b17b8ac0000059631f56c095361e3be41a2768e2532121c889de8"
+        }
+      ]
+    },
+    {
+      "id": "runtime-input-files-model",
+      "label": "Retained original uploads, editable working copies and interruption recovery",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-inputs.mjs",
+      "commit": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
+      "editions": [
+        {
+          "commit": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
+          "git_blob": "5036a9cce6d77aa1a3b571c812d58f629d41d34d",
+          "bytes": 13458,
+          "sha256": "c8a6742a1a3316428a6bd04fbd05909effc733e979ad445c7f8913a9f7c2f311"
+        }
+      ]
+    },
+    {
+      "id": "runtime-input-files-browser",
+      "label": "Desktop and phone original-file selection in installed Applications",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-inputs.mjs",
+      "commit": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
+      "editions": [
+        {
+          "commit": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
+          "git_blob": "39da85af36b50b43865772a9a30a2daef1b6a5fe",
+          "bytes": 12865,
+          "sha256": "d3658daa1f9a47e852139b0de40e43d6ffa44da02d14bf39ee0172becedf4342"
+        }
+      ]
+    },
+    {
+      "id": "runtime-input-files-cli",
+      "label": "Complete source import, working selection and original export command",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-inputs-cli.mjs",
+      "commit": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
+      "editions": [
+        {
+          "commit": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
+          "git_blob": "41459f2922ed334571b827487eaa61f182fc5482",
+          "bytes": 3117,
+          "sha256": "f03fec6d90bde41477843673a0bed49e3e8f72434dbff1d10617da8c6962613a"
+        }
+      ]
+    },
+    {
+      "id": "runtime-input-files-contract",
+      "label": "Typed original input library and working-selection interface",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-inputs.d.mts",
+      "commit": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
+      "editions": [
+        {
+          "commit": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
+          "git_blob": "2049bc6870013f7c0a3d284ee509ee8fea52589e",
+          "bytes": 2590,
+          "sha256": "c4a0fb1f825d91a89817810c523513d32b39d28ce7b91a204d5e9ecfa1d4d380"
+        }
+      ]
+    },
+    {
+      "id": "runtime-input-files-distribution",
+      "label": "Complete original-file contribution and installed source dependencies",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/runtime-application-inputs.json",
+      "commit": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
+      "editions": [
+        {
+          "commit": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
+          "git_blob": "adcb13f6afd7b22c7b6bdc0fde22a214c5953831",
+          "bytes": 1622,
+          "sha256": "a920b594eccb893c682e802645e806aa1f0d5e2c084106dc7e359407e9e15465"
+        }
+      ]
+    },
+    {
+      "id": "runtime-input-files-receiving",
+      "label": "Original file, browser save, complete workspace backup and cold receiving course",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/APPLICATION_INPUTS_RECEIVE.mjs",
+      "commit": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
+      "editions": [
+        {
+          "commit": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
+          "git_blob": "80a4c196e183817c5a1f3f05a030fc2b93127057",
+          "bytes": 20441,
+          "sha256": "5e69e42489e76ea10b694a28aabbe9a7134662bfa84b3dc23715a92ca3d5cc78"
+        }
+      ]
     }
   ]
 }
