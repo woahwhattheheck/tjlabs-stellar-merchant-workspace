@@ -148,3 +148,71 @@ API tokens remain in the process environment. Retained headers and response bodi
 - The existing public/dcat-json.mjs preserves exact values in browsers, including those without native JSON source-context support.
 
 The original read-only capture workflow remains the source of reviewed editions and field meanings. Target publication consumes those saved selections and does not reinterpret or manufacture source data.
+
+## Operate and inspect the actual delivered product
+
+Bryce's standing instruction applies to every current, future, resumed and
+delegated worker, across providers and local or cloud runtimes. Before presenting
+a client/prospect-facing product or any attachment, open, run or render the exact
+outgoing version, look at it and use it as the recipient would. View the actual
+screenshots you capture. Inspect the normal presentation width and relevant
+narrow/mobile width, important controls and populated, empty, loading and error
+states, downloads and reopened exports. Open the usable contents of ZIPs and
+saved projects and every applicable report or PDF page. Source review, schemas,
+HTTP 200, DOM counts, tests, checklists and another peer's approval do not replace
+seeing and using the product.
+
+Repair broken, unstyled, cramped, clipped, overflowing or unreadable output in
+the original product. Use plain industrial software design: readable tables,
+clear hierarchy, consistent typography and spacing, restrained controls, useful
+labels and responsive layouts. Preserve the real workflows, source data and
+computation. Continue the authorized delivery; do not replace implementation
+with repeated checking, broad test sweeps, a separate verification product or
+a new approval queue.
+
+This applies to **all outgoing attachments**. Open downloaded documents and
+reports in their normal recipient applications, receive the complete project
+archive and use the restored project. If the delivery includes video or audio,
+use available high-quality generative voice/TTS and useful generative media with
+natural professional delivery; watch and listen to the final export for pacing,
+pronunciation, timing and audio alignment. Existing spending, voice and
+attribution controls remain in force.
+
+Carry this complete instruction into delegated assignments and the active
+owner-controlled provider, boot, build and receiving guidance those workers
+actually read. Preserve existing owner controls, original operations, accepted
+work, historical records and third-party source. Reuse already updated copies.
+This does not require restarts, watchers, a credential gate or new release
+permission. When a runtime is unavailable, send the complete exact source and
+opening steps to the existing equipped receiver, inspect its actual returned
+images here, and continue independent implementation while it runs.
+
+Source: [original owner instruction](https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999)
+and [complete all-attachments clarification](https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949?thread_ts=1791881496.221999).
+
+### Use this publication project as its receiving operator
+
+Open the exact populated project in the installed workbench and use
+**Catalogue publication**. Read the selected target and credential-reference
+status, edit the complete mapping, prepare the original plan, and inspect the
+actual before/after values and source bindings. Operate the original review
+decision and publication controls against the explicitly selected authorized
+target. Observe loading, partial/uncertain and conflict states from that same
+operation. Reconciliation reads the original target identities; it must not
+become a new publication or fresh release ID.
+
+Open the returned action receipts and full plan/record downloads in their
+normal readers. Inspect exact target IDs, field values, intended changes and
+actual partial state. Receive the complete project archive independently and
+open its same targets, plans, reviews, responses and original publication
+history. Use the restored controls with its own original host credential
+reference and preserve the existing execution owner.
+
+The existing native receiving programme retains its explicitly isolated
+protocol target for the lost-response/conflict course. Keep that target type
+visible in the result. Return useful actual desktop and narrow screenshots of
+the populated mapping/plan, important state transitions and reopened project,
+together with its complete outputs. The producing peer must look at those
+images and usable attachments, repair visible product defects and continue
+the original operation. A screenshot capture alone is not the completed
+recipient experience.
