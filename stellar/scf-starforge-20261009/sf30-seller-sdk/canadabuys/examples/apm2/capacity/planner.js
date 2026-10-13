@@ -2,7 +2,8 @@
 (function(){
 'use strict';
 const M=globalThis.CapacityModel,$=id=>document.getElementById(id),e=M.escapeHTML;
-const STORAGE='tjlabs.apm2.capacity.v1';let project=M.blankProject(),tab='inputs',storageWarning='';
+const STORAGE='tjlabs.apm2.capacity.v1';let project=M.blankProject(),tab='inputs',storageWarning='',openGeneration=0;
+function invalidateOpening(){return ++openGeneration;}
 try{const raw=localStorage.getItem(STORAGE);if(raw)project=M.parseProject(raw);}catch(error){storageWarning='Existing browser copy could not be opened: '+error.message+'. It has been left unchanged; use Open JSON or export this new project before replacing it.';}
 let autosaveEnabled=!storageWarning;
 function status(message,error=false){$('status').textContent=message;$('status').classList.toggle('error',error);}
@@ -49,8 +50,9 @@ function render(){const s=selected();$('project-title').value=project.title;$('p
  $('remove-scenario').disabled=project.scenarios.length===1;document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===tab)));
  $('view').innerHTML=({inputs,costs,results:capacity,compare,method}[tab])(s);
 }
-function mutate(fn){const prior=M.clone(project);try{fn();const errors=M.validateProject(project);if(errors.length)throw Error(errors[0].path+': '+errors[0].message);persist();render();}catch(error){project=prior;render();status(error.message,true);}}
+function mutate(fn){invalidateOpening();const prior=M.clone(project);try{fn();const errors=M.validateProject(project);if(errors.length)throw Error(errors[0].path+': '+errors[0].message);persist();render();}catch(error){project=prior;render();status(error.message,true);}}
 function download(filename,body,mime){const url=URL.createObjectURL(new Blob([body],{type:mime})),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);}
+document.addEventListener('input',()=>invalidateOpening());
 document.addEventListener('change',event=>{const x=event.target,d=x.dataset,s=selected();if(d.scenario)mutate(()=>{s[d.scenario]=['horizonMonths','daysPerMonth','hoursPerMonth'].includes(d.scenario)?number(x.value):d.scenario==='currency'?x.value.toUpperCase():x.value;});
  else if(d.include)mutate(()=>{s.signals[d.include].included=x.checked;});
  else if(d.policy)mutate(()=>{s.signals[d.policy].policy=x.value;});
@@ -60,8 +62,8 @@ document.addEventListener('change',event=>{const x=event.target,d=x.dataset,s=se
  else if(d.cost!==undefined)mutate(()=>{s.costs[Number(d.cost)][d.costField]=d.costField==='amount'?(x.value.trim()===''?null:x.value.trim()):d.costField==='currency'?x.value.toUpperCase():x.value;});
 });
 document.addEventListener('click',event=>{const b=event.target.closest('button');if(!b)return;const d=b.dataset;
- if(d.select){project.selectedId=d.select;persist('Scenario selected.');render();}
- if(d.tab){tab=d.tab;render();}
+ if(d.select){invalidateOpening();project.selectedId=d.select;persist('Scenario selected.');render();}
+ if(d.tab){invalidateOpening();tab=d.tab;render();}
  if(d.removeCost!==undefined)mutate(()=>selected().costs.splice(Number(d.removeCost),1));
  if(b.id==='add-cost')mutate(()=>selected().costs.push({id:M.id(),category:'platform',label:'',amount:null,currency:selected().currency,period:'month',source:'',notes:''}));
 });
@@ -70,9 +72,9 @@ $('project-reference').addEventListener('change',x=>mutate(()=>{project.noticeRe
 $('add-scenario').onclick=()=>mutate(()=>{const s=M.blankScenario('Scenario '+(project.scenarios.length+1));project.scenarios.push(s);project.selectedId=s.id;tab='inputs';});
 $('duplicate-scenario').onclick=()=>mutate(()=>{const s=M.clone(selected());s.id=M.id();s.name+=' — copy';project.scenarios.push(s);project.selectedId=s.id;});
 $('remove-scenario').onclick=()=>{if(project.scenarios.length>1&&confirm('Remove this scenario from the open project? Save JSON first to retain it.'))mutate(()=>{project.scenarios=project.scenarios.filter(s=>s.id!==project.selectedId);project.selectedId=project.scenarios[0].id;});};
-$('new-project').onclick=()=>{if(confirm('Start a new project? Export the current JSON first to retain it.')){project=M.blankProject();autosaveEnabled=true;tab='inputs';persist('New empty project created.');render();}};
+$('new-project').onclick=()=>{invalidateOpening();if(confirm('Start a new project? Export the current JSON first to retain it.')){project=M.blankProject();autosaveEnabled=true;tab='inputs';persist('New empty project created.');render();}};
 $('save-project').onclick=()=>{try{download('apm2-capacity-project.json',M.serializeProject(project),'application/json');status('Complete editable JSON downloaded.');}catch(error){status(error.message,true);}};
-$('open-project').onchange=async event=>{const file=event.target.files[0];if(!file)return;try{if(file.size>12000000)throw Error('Project exceeds 12 MB');const candidate=M.parseProject(await file.text());if(!confirm('Open '+candidate.scenarios.length+' saved scenarios? Export the current JSON first to retain it.'))return;project=candidate;autosaveEnabled=true;tab='inputs';persist('Complete saved project opened.');render();}catch(error){status('Project was not replaced: '+error.message,true);}finally{event.target.value='';}};
+$('open-project').onchange=async event=>{const opening=invalidateOpening(),file=event.target.files[0];if(!file)return;try{if(file.size>12000000)throw Error('Project exceeds 12 MB');const raw=await file.text();if(opening!==openGeneration)return;const candidate=M.parseProject(raw);if(!confirm('Open '+candidate.scenarios.length+' saved scenarios? Export the current JSON first to retain it.'))return;if(opening!==openGeneration)return;project=candidate;autosaveEnabled=true;tab='inputs';persist('Complete saved project opened.');render();}catch(error){if(opening===openGeneration)status('Project was not replaced: '+error.message,true);}finally{if(opening===openGeneration)event.target.value='';}};
 $('report').onclick=()=>{try{download('apm2-capacity-report.html',M.reportHTML(project),'text/html');status('Readable report exported with all scenarios, inputs, original sources and incomplete values.');}catch(error){status(error.message,true);}};
 $('print').onclick=()=>window.print();
 render();status(storageWarning||'Ready. Enter measured inputs, record their sources and save the complete JSON.',!!storageWarning);
