@@ -167,7 +167,7 @@ Source inputs are limited to the original operator's 64 MiB allowance; upload ch
 
 ## Independent receiving and resumed work
 
-merchant_commissioning_receive_archive selects the captured complete TAR, both expected hashes and a host-declared receiver alias. It invokes the existing receiveOperatorTransfer function. The adapter supplies the expected original job ID, export UUID, selection SHA and whole operator-manifest SHA. These are checked before the received job is published and on completed replay.
+merchant_commissioning_receive_archive selects the captured complete TAR, both expected hashes and a host-declared receiver alias. It invokes the existing receiveOperatorTransfer function. The adapter supplies the expected original job ID, export UUID, selection SHA, whole operator-manifest SHA and exact TAR byte count/SHA256. The actual archive byte identity is checked before staging or destination publication; all selected identities are checked before the received job is published and on completed replay.
 
 The native receiver validates ordinary archive members, original manifests, every full source file, the original export receipt and required receiving metadata. It stages in a private directory and publishes the completed original job atomically. A repeated complete receive verifies its original inventory while preserving later legitimate additive work in that received job.
 

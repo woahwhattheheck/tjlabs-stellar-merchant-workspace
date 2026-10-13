@@ -242,7 +242,7 @@ export class CommissioningCustomerAgent{
     await writeConsoleWorkflowFile(path,{schema:CUSTOMER_SCHEMA,instance:args.instance,jobId:args.jobId,captureId:args.captureId,manifestSha256:args.expectedManifestSha256,archiveSha256:args.expectedSha256,receiver:args.receiver,destination});
     const {receiveOperatorTransfer}=await import('./receive-operator.mjs');
     const outcome=await receiveOperatorTransfer({archive:join(retained.directory,'content'),directory:destination,
-      expected:{jobId:args.jobId,transferId:sourceReceipt.receipt.operationId,selectionSha256:retained.manifest.source.selectionSha256,operatorManifestSha256:digest(encode(sourceReceipt.receipt.result))}});
+      expected:{jobId:args.jobId,transferId:sourceReceipt.receipt.operationId,selectionSha256:retained.manifest.source.selectionSha256,operatorManifestSha256:digest(encode(sourceReceipt.receipt.result)),archiveSha256:retained.manifest.file.sha256,archiveBytes:retained.manifest.file.bytes}});
     need(outcome.jobId===args.jobId&&outcome.transferId===sourceReceipt.receipt.operationId&&outcome.archive.sha256===args.expectedSha256,'The received complete job differs from its original export.','COMMISSIONING_RECEIVE_CHANGED');
     const {directory:privateDirectory,...receipt}=outcome;
     return{state:'RECEIVED',instance:args.instance,receiver:args.receiver,captureId:args.captureId,receipt};

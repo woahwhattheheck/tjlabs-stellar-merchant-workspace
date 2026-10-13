@@ -18,5 +18,6 @@ export default defineMerchantProvider({
     'Native seller ownership, release review, buyer approvals and original SF88 signing remain authoritative. A prepared buyer plan does not make a purchase. '+
     'Follow every history page and capture every required output. Receive captured bytes through EOF with their manifest/hash; complete TAR receiving uses the original receiver and a host-selected destination. '+
     'For customer delivery, open and VIEW the exact populated outgoing product at desktop and narrow widths, operate its important controls/downloads and reopen the received case. Return actual rendered defects to the source owner for repair. '+
+    'Open/view/play/use every final attachment: HTML, PDF, reports, slides, spreadsheets, maps, images, video, audio, archives and projects. Extract archives and open their contained deliverables and working project. Captured screenshots must be viewed. Repair concrete defects before presentation. '+
     'This provider borrows the existing local listener; closing it never stops that listener or its seller.'}]
 });

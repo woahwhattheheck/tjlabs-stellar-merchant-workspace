@@ -104,14 +104,18 @@ async function verifyReceived(directory,receipt){
 /** Source-only receiving. Original providers, listeners, buyers and signers stay untouched. */
 export async function receiveOperatorTransfer({archive,directory,expected}={}){
   if(expected!==undefined)need(expected&&typeof expected==='object'&&!Array.isArray(expected)&&
-    Object.keys(expected).sort().join(',')==='jobId,operatorManifestSha256,selectionSha256,transferId'&&
+    Object.keys(expected).every(key=>['jobId','operatorManifestSha256','selectionSha256','transferId','archiveSha256','archiveBytes'].includes(key))&&
+    ['jobId','operatorManifestSha256','selectionSha256','transferId'].every(key=>Object.hasOwn(expected,key))&&
     /^[a-z0-9][a-z0-9_-]{0,63}$/.test(expected.jobId??'')&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(expected.transferId??'')&&
-    /^[a-f0-9]{64}$/.test(expected.selectionSha256??'')&&/^[a-f0-9]{64}$/.test(expected.operatorManifestSha256??''),
-    'Retain the complete original selected export identity.','OPERATOR_RECEIVE_SELECTION');
+    /^[a-f0-9]{64}$/.test(expected.selectionSha256??'')&&/^[a-f0-9]{64}$/.test(expected.operatorManifestSha256??'')&&
+    (!Object.hasOwn(expected,'archiveSha256')&&!Object.hasOwn(expected,'archiveBytes')||
+      /^[a-f0-9]{64}$/.test(expected.archiveSha256??'')&&Number.isSafeInteger(expected.archiveBytes)&&expected.archiveBytes>=0&&expected.archiveBytes<=MAX_ARCHIVE),
+    'Retain the complete original selected export and optional archive identity.','OPERATOR_RECEIVE_SELECTION');
   const matchExpected=value=>{if(expected)need(['jobId','transferId','selectionSha256','operatorManifestSha256'].every(key=>value[key]===expected[key]),
     'The complete archive belongs to a different selected export.','OPERATOR_RECEIVE_SELECTION');};
   const source=resolve(archive),target=resolve(directory),parent=dirname(target);await privateDir(parent);
   const sourceId=await identity(source,MAX_ARCHIVE);need(sourceId.bytes<=MAX_ARCHIVE,'The complete archive exceeds 8 GiB.');
+  if(expected?.archiveSha256!==undefined)need(sourceId.sha256===expected.archiveSha256&&sourceId.bytes===expected.archiveBytes,'The complete original archive byte identity differs.','OPERATOR_RECEIVE_SELECTION');
   const release=await lockPrivateDirectory({directory:parent,filename:'.commissioning-receive-'+digest(target).slice(0,24)+'.lock',namespace:'facilitator-operator-receive',busyCode:'RECEIVE_ALREADY_OWNED',unavailableCode:'RECEIVE_LOCK_UNAVAILABLE'});
   try{
     let exists=false;try{await lstat(target);exists=true;}catch(e){if(e.code!=='ENOENT')throw e;}
