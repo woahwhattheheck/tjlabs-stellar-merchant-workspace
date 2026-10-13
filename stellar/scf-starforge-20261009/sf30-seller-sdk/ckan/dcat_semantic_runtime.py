@@ -269,6 +269,11 @@ def prepare(args):
     for parent in (root, *root.parents):
         require(not (parent / "workbench.json").exists(), "SEMANTIC_RUNTIME_OUTSIDE_PROJECT_REQUIRED",
                 "Prepare the interpreter outside the portable catalogue project.")
+    if getattr(args, "transfer_directory", None):
+        transferred = Path(args.transfer_directory)
+        require(transferred.is_absolute() and root != transferred and
+                not root.is_relative_to(transferred) and not transferred.is_relative_to(root),
+                "SEMANTIC_RUNTIME_TRANSFER_SEPARATE_DIRECTORIES_REQUIRED")
     existed = root.exists()
     if existed:
         private_directory(root)
@@ -293,14 +298,30 @@ def prepare(args):
         require(base.is_absolute() and os.access(base, os.X_OK), "SEMANTIC_RUNTIME_PYTHON_REQUIRED")
         target = base.resolve()
         base_identity = file_identity(target)
+        transfer = None
+        if getattr(args, "transfer_directory", None):
+            from dcat_semantic_runtime_transfer import inspect_received
+            require(not args.wheelhouse and isinstance(args.transfer_sha256, str) and
+                    re.fullmatch(r"[a-f0-9]{64}", args.transfer_sha256),
+                    "SEMANTIC_RUNTIME_TRANSFER_SELECTION_REQUIRED")
+            received = inspect_received(args.transfer_directory, args.transfer_sha256)
+            require(received["source"] == source, "SEMANTIC_RUNTIME_TRANSFER_ORIGINAL_SOURCE_CHANGED")
+            transfer = {"directory": received["directory"], "receiptSha256": received["receiptSha256"],
+                        "bundleSha256": received["bundle"]["sha256"],
+                        "sourceRuntimeReceiptSha256": received["sourceRuntimeReceiptSha256"],
+                        "lockSha256": received["lockSha256"]}
+        else:
+            require(not getattr(args, "transfer_sha256", None), "SEMANTIC_RUNTIME_TRANSFER_SELECTION_REQUIRED")
         wheelhouse = str(Path(args.wheelhouse).resolve()) if args.wheelhouse else None
         if wheelhouse:
             require(Path(args.wheelhouse).is_absolute() and Path(wheelhouse).is_dir(),
                     "SEMANTIC_RUNTIME_WHEELHOUSE_REQUIRED")
         selection = {"schema": SELECTION, "directory": str(root), "source": source,
                      "basePython": {"executable": str(base), "target": str(target), **base_identity},
-                     "wheelhouse": wheelhouse, "index": None if wheelhouse else "https://pypi.org/simple",
+                     "wheelhouse": wheelhouse, "index": None if wheelhouse or transfer else "https://pypi.org/simple",
                      "onlyBinary": True}
+        if transfer:
+            selection["transfer"] = transfer
         once(root / "selection.json", encoded(selection))
         if (root / "runtime.json").exists():
             return inspect(root)
@@ -351,6 +372,22 @@ def prepare(args):
         python = venv / "bin" / "python"
         require(python.is_file() and python.resolve() == target, "SEMANTIC_RUNTIME_VENV_INTERPRETER_CHANGED")
         lock_path, wheel_path = root / "requirements.lock", root / "wheels"
+        if transfer:
+            # The original receiving operation verified every wheel and the complete exact lock.
+            # Recheck its immutable receipt before copying, then use the original offline installer.
+            from dcat_semantic_runtime_transfer import inspect_received, write_owned, write_bytes, chunks
+            received = inspect_received(transfer["directory"], transfer["receiptSha256"])
+            payload = Path(received["directory"]) / "payload"
+            original_wheels = json.loads(regular(payload / "records/wheel-selection.json", 16777216))
+            private_directory(wheel_path, True)
+            for row in original_wheels["packages"]:
+                handle = os.open(payload / "wheels" / member(row["file"]), os.O_RDONLY | os.O_NOFOLLOW)
+                with os.fdopen(handle, "rb") as source_wheel:
+                    write_owned(root, "wheels/" + row["file"], chunks(source_wheel), row)
+            write_bytes(root, "requirements.lock", regular(payload / "records/requirements.lock", 1048576))
+            write_bytes(root, "wheel-selection.json", regular(payload / "records/wheel-selection.json", 16777216))
+            require(original_wheels["lockSha256"] == transfer["lockSha256"],
+                    "SEMANTIC_RUNTIME_TRANSFER_LOCK_CHANGED")
         if (root / "wheel-selection.json").exists():
             wheel_selection = json.loads(regular(root / "wheel-selection.json", 16777216))
             verify_inventory(wheel_path, wheel_selection["inventory"])
@@ -420,6 +457,8 @@ def prepare(args):
                   "inventories": {name: inventory(root / name) for name in ("source", "wheels", "environment")},
                   "files": [{"path": name, **file_identity(root / name)} for name in sorted(set(selected_records))],
                   "scope": "Selected base executable, original engine source, all resolved wheels and installed environment files; host OS and base standard library remain host prerequisites."}
+        if transfer:
+            record["transfer"] = transfer
         once(root / "runtime.json", encoded(record))
         update("READY", childPid=None, receiptSha256=sha(encoded(record)))
         return inspect(root)
@@ -438,6 +477,8 @@ def main():
     for name in ("directory", "python", "vendor"):
         create.add_argument("--" + name, required=True)
     create.add_argument("--wheelhouse")
+    create.add_argument("--transfer-directory")
+    create.add_argument("--transfer-sha256")
     check = sub.add_parser("inspect")
     check.add_argument("--directory", required=True)
     selected = sub.add_parser("probe")
