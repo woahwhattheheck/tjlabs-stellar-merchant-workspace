@@ -1,0 +1,739 @@
+{
+  "schema": "stellar-forge.grant-current-customer-composition.v1",
+  "operation": "SCF-CUSTOMER-SOURCE-RECONCILIATION-20261013-BC3D",
+  "composed_at": "2026-10-13T09:37:14Z",
+  "source_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "input_commit": "20b5a434933051be6493dfff457f86f7092391dd",
+  "output_commit": "d7df87046c31eca1a02e6e1bd40acae7a1e78a39",
+  "canonical_manuscript": {
+    "url": "https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF",
+    "bytes": 1862331,
+    "sha256": "683b80a6a6f96b4f5ac668fe72c839d07abaf2d5bdbd0fee32a2c72c99272d46",
+    "meaning": "Complete selected canonical manuscript read from the original maintained source. The public outputs retain the original public-source projection."
+  },
+  "inputs": [
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/application.md",
+      "bytes": 51700,
+      "sha256": "38cb6cefc3ce80a41807d5f2fc6368643ea888dea7edb19980f8bf9af0929f56",
+      "git_blob": "da18f44492a618c73242a8eb3e7c12c3d67d10fe"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
+      "bytes": 1225443,
+      "sha256": "e9e47562f97779faf33c4f22819ba1e5fcbf6bc00e6d9e500aed3cf2cf75f88d",
+      "git_blob": "d639756ffaf6863d0f3ea451c142c599e3803ba7"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant.html",
+      "bytes": 102764,
+      "sha256": "c0f51446232ad979f45438fcfd44084e8920d242f619678a60a917318f776357",
+      "git_blob": "4864b82a95a4f3a5cbf0eeff4d7655a7b588d153"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/source-index.json",
+      "bytes": 995293,
+      "sha256": "7d53ebc288ebcaaf4c36c2cbdb5f3874e653fd13f2f330c4740bce0bd609dcd2",
+      "git_blob": "43a2b8e30a85825aac29dbfc673cccb972edc85b"
+    }
+  ],
+  "budget": {
+    "path": "stellar-forge/developer-site/dist/grant-data/budget.csv",
+    "bytes": 597,
+    "sha256": "4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00",
+    "git_blob": "c62afa352e881c2cf81fe937649fe63fea3ceab5"
+  },
+  "composer_modules": [
+    {
+      "path": "stellar-forge/developer-site/grant-compose.mjs",
+      "bytes": 30665,
+      "sha256": "7193728fe246f804b79cc16806bce8dd0ef63dfc592f9db00cb509ba27c3f678",
+      "git_blob": "42d7fb96bd68fbef1b310de64c9e637709818371"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-delivery-plan.mjs",
+      "bytes": 14860,
+      "sha256": "f521cfbd57983a9ea8b7c943ecd5dc57ce19ce5b2511975e2efb94d1f4c39315",
+      "git_blob": "5c3e9bc3444afda6b9753f8643d519fe2e75dd0f"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-entry.mjs",
+      "bytes": 18951,
+      "sha256": "1b0b6e8a3468b61aabe446dad5937ba85765cdc524c1b823d17ecf05796f690a",
+      "git_blob": "b4beccf32d39f0b0205cf83e71f77c8d93a1521f"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-submission.mjs",
+      "bytes": 6257,
+      "sha256": "e1765e07e040f74b535a7959d358346e48862efa522482a8087f13517e53aef7",
+      "git_blob": "88c439b16eb37786b3e8d31d0ec0ba9ee9eba6b8"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-review-round.mjs",
+      "bytes": 3545,
+      "sha256": "5f62aaf2f221715571b978626879ae8ec6125cec7a237f2e77f9eef5e98435b8",
+      "git_blob": "f01851b4ef2f29a063054e03a8e97c2bf4093654"
+    },
+    {
+      "path": "stellar-forge/developer-site/saved-projects.mjs",
+      "bytes": 1655,
+      "sha256": "161d09d17e55af50cb0ab366ec214508bbd783828deae039490e0be52496c478",
+      "git_blob": "2139105ce3e93df99bd12d63995077960e648442"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-companion.mjs",
+      "bytes": 3426,
+      "sha256": "0f0d03b20a17bac4aebc1328eee1e7c1a6d37914e77eb0795bb60a6ae94394b6",
+      "git_blob": "40ce84c80b07b8cfb4c9cc44efe7fd47e8f63708"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-publication-source.mjs",
+      "bytes": 2218,
+      "sha256": "f7106b6af1dc91a021659349654f9722c166a46ae17b29350026a3cbe7090822",
+      "git_blob": "edfa991d7ae45cf56287207f3bdd61f07deae256"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-customer-closing.mjs",
+      "bytes": 18786,
+      "sha256": "e22648fc59cb3c3e837535bc2f9ec12dc72204f0292891597a06246201e7091c",
+      "git_blob": "39b8120b74670c12718747618554c720c0dc0907"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-financial-operations.mjs",
+      "bytes": 13481,
+      "sha256": "2c4443095e71effa9cd858c233a1e96086545a08385f448cfb3bfe84b616f470",
+      "git_blob": "675cfb667dcaaa6892336cbcf38e71ae2872dce0"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-customers.mjs",
+      "bytes": 72626,
+      "sha256": "1e55231454ed6c62fb441c859b6a58f84888b3585429275d91ca5b45efc41b76",
+      "git_blob": "1cc5c1443e6cbd97799afa2d8c0b8d92469bb952"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-datasette.mjs",
+      "bytes": 14595,
+      "sha256": "fd23d081d799aaabce91b3d6fa8f05ea18a2271105e412501bfc922ef43d17c3",
+      "git_blob": "64efa5c84ac46015a61c94ce0018d48c0b09c9fd"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-product-sources.mjs",
+      "bytes": 133,
+      "sha256": "a791241c586da48c9507e03a3d6ce90b25086eb32aa4f3c64e8d69b0b5da6b01",
+      "git_blob": "ff0c7f74e29909ebb4b0e8c26a4974e47624be5b"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-a2a.mjs",
+      "bytes": 20888,
+      "sha256": "11088a306322589c366026b846fbf9fa5f91c0c2703c6805bd5dc668ebbdc5c0",
+      "git_blob": "835eaf91ab8ba65a3b2eed4433e79153c9d0af71"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-catalog.mjs",
+      "bytes": 9655,
+      "sha256": "72c437079b01241068edcf15169d3469b071ac74faafe1d95753fb4944699e49",
+      "git_blob": "f7d60cb61f6fd17df238ea3618e1dbc24bfcb78c"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-handover.mjs",
+      "bytes": 2551,
+      "sha256": "8211b4dcec09541d2b4fd72d7d7f44373efa695a9a2158cb4a47f9bb6b48222f",
+      "git_blob": "6cfe3b63acb8908b8fa69eeeeab1cc66b1a5c078"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-datasette-example.mjs",
+      "bytes": 14318,
+      "sha256": "384ccdc2fab51ec206a477feef1f36212b4e880df50accff1284f567a69a85a7",
+      "git_blob": "509410cd8d52f00b91c7a113647c6353524cfc42"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-product-sources-core.mjs",
+      "bytes": 12530,
+      "sha256": "ea8b11aea5f7aee05a8cdddfe738719f166d4548fc677de1936681b32efade7c",
+      "git_blob": "7c6f23eed846152afdb6e09eba95ef817997407a"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-issuer-context.mjs",
+      "bytes": 4169,
+      "sha256": "04324a2e38a1aebbebb065495ffdb90c49a25fb85ff3e63c38173cbaa5b31bfc",
+      "git_blob": "4d6149b3e71a502164f3dc82decafb2e7e265436"
+    }
+  ],
+  "selected_declarations": [
+    {
+      "path": "stellar-forge/developer-site/grant-products/airgradient-operations.json",
+      "bytes": 1294,
+      "sha256": "ea7319b94b2b7c658bc36221b2d9bc2ba0ca4752bdec1b94b6d661e23a3b3d7f",
+      "git_blob": "ea8e709a18d671d91730aff5730e88e274fd8bfc"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/allium-managed-customer.json",
+      "bytes": 1382,
+      "sha256": "383d1f43be701e55b93dce085099227bb597a4e60d3526230e647194f7015c0b",
+      "git_blob": "068aaa9d42c8ce121270315ad05fafbcffbd20c5"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/analytical-workbooks.json",
+      "bytes": 3434,
+      "sha256": "a8c552099c4e5680b0749d80d9b6dd05670ac6ea0e341500c594de693fe9fe2f",
+      "git_blob": "db4b1556b72418a31b31b3140394b9fa6fdd68bb"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/audit-exchange.json",
+      "bytes": 4529,
+      "sha256": "64aa7920d5fd6f0e32e886ffca5446b90a3d02ff9f9f7748bac9814e9a1fc667",
+      "git_blob": "5889537bdb12e75143a6fdaf1a638617975857fa"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/bls-labor.json",
+      "bytes": 9174,
+      "sha256": "3ae46cfd73486f664e8df42af19314afb23aed762e229782c6f082a5cb61c8ec",
+      "git_blob": "2deb6f9acbcbf21df05b2d2509adf113344c5aad"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/canadabuys-bidder-desk.json",
+      "bytes": 3477,
+      "sha256": "161a30a0a2004e0717777f7a77b499465f5d414223ea30118f73d7ab2f3400e4",
+      "git_blob": "9ce68be6c859b8376b9c0bc06d4121ae15ad8471"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/cfce-givecredit-statements.json",
+      "bytes": 3669,
+      "sha256": "59177990f224f389f059d500c5c65cdeb26aa17e297fb27cee541a1b72f493d0",
+      "git_blob": "0d6e94c89f638c2c1039066152959ef6bc9fd1a0"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/ckan.json",
+      "bytes": 7192,
+      "sha256": "5ae70b37dc60fcebe67f2d1241f1e8c172967b70f785401f53d3b90ecd96edda",
+      "git_blob": "078fd7b6c22a5361d5056ea6a217ca038f3faad0"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/cohort-adoption.json",
+      "bytes": 7878,
+      "sha256": "b8059bb5756804adc18d6d8beec6fed0742f95ee9d30f30864d027f6e008fb61",
+      "git_blob": "df48462b8e6471d8f19c103153b6942138a0bcf7"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/collections-customer-delivery.json",
+      "bytes": 12981,
+      "sha256": "4efd1e042cb43dd4c24dc3c18d3533d945f580d3405f25d0a491848fbe5b3a59",
+      "git_blob": "2206a29b9b349a66d67a0a73b4542333a4717804"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/data-preparation.json",
+      "bytes": 7867,
+      "sha256": "ff1f682d5fb4db311d571d6e07a08819753c6db7e15f5dd25e1e9692caf9a03e",
+      "git_blob": "2fa2f3d548b272b7e05fafe03cce2feadc3f1e6e"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/dcat-catalogs.json",
+      "bytes": 5565,
+      "sha256": "07c4fa05155815fe52245c656ea58376425a655732d2c08d78b425baa82725f9",
+      "git_blob": "8ddcbd03e9e11a5ab6ec26330d9106bec9272a0d"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/directus-content-data.json",
+      "bytes": 924,
+      "sha256": "63309c54b2927cc40f1698c17d5ce20e394521c929524cf30e7b4fea398d0db3",
+      "git_blob": "622b0704940ebfbb93cc6a58761b059ea3664fab"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/document-merchant.json",
+      "bytes": 16239,
+      "sha256": "3293923242d5aac5b0e6e4613a8b80ebe3f07da7aa5bbb62c5ba330ee408ee8a",
+      "git_blob": "0183a501bfb63e2eb37a45cc9ffd45b541f06141"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/economic-county.json",
+      "bytes": 3408,
+      "sha256": "38ab8a8d1e06f40d190d532da50d88de5608b29c9dcf095b80d9f9afaa8ba1b1",
+      "git_blob": "c2cc40aecb997b07d1456d753de2b5f6eb88b114"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/environmental-installations.json",
+      "bytes": 8445,
+      "sha256": "babb42ebf9e3dfab43769813d8df2dc199b92b14cbe49626768763d37a03410f",
+      "git_blob": "3472e5c0a8b5746cf9fc3c257af12815df378bcd"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/financing-basis.json",
+      "bytes": 2009,
+      "sha256": "582a70e6e139b98c4bda328b152553318a6e9bb795021ffb86739d4b6ca5471c",
+      "git_blob": "f2831b8b54ace13ad6c16e8bf47c415851745b0b"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/flowable-operations.json",
+      "bytes": 17871,
+      "sha256": "0a60d4d6c5e94b8e6c932491b3af118b132800746a7406814853f19e5ee58455",
+      "git_blob": "c3992f9ec10cd3653c00b75b832d26e8d7108ce6"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/fred-operating-procedures.json",
+      "bytes": 2307,
+      "sha256": "2376d84c668af2ccc75d71ce91d50007acfeed30d05088d1f6428c6c4fbf40e6",
+      "git_blob": "f7fe59c721797069266dc63a7c9ecd2f7e0e9f66"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/grant-accounts-operating-desk.json",
+      "bytes": 7064,
+      "sha256": "b082a1dfd65b9efe019e31a671caccc8cf294806f200b9314608ed98d0a38c82",
+      "git_blob": "c2b1cfa7b3703c15893eda71cb75952e5dcdc250"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/grant-case-planning.json",
+      "bytes": 6048,
+      "sha256": "610b0ef6bed65505626b210d9f040108a5308c357c550ebe60eb2fa9b1757e85",
+      "git_blob": "9bbad598e0f5d1e996e1a8b4a96659c8ab33d5bb"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/grant-delivery-risks.json",
+      "bytes": 8809,
+      "sha256": "1abb7582aca81fa54affa327ed16737f8f5e5d4e98838086c0ac83ead9024650",
+      "git_blob": "3d6bc782ff63595984e58f5e113e09410a06aef4"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/grant-named-staff.json",
+      "bytes": 5390,
+      "sha256": "8e1e53e987b3a43ae0743626364796672d314094746c50340fe0eaf561cbcf0b",
+      "git_blob": "97eb285b5e48b81409f536f4f5ec36c47399b032"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/grant-reporting.json",
+      "bytes": 4940,
+      "sha256": "23eafed46cc6954657f6c75026632ab0729a67e89e04d37e36cdbe1d98987b54",
+      "git_blob": "596b7137f93142bbd7a1fd9ae80e08f1b500426d"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/grant-reviewer-receiving.json",
+      "bytes": 3874,
+      "sha256": "1c9dfb9ffe4d9d7745f948596d465d556145cc5e5ebefe97faff4812b778f56c",
+      "git_blob": "655c72a9e478da9c93048e12cdb7b074f938f995"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/grant-submission-review.json",
+      "bytes": 3402,
+      "sha256": "d465e5a690cf117da76746357f993291e7df4879c2677d774e0ee74bea9e8bbb",
+      "git_blob": "56ea837434fb738060bdb1e11bca9fc72f401641"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/grant-tracker.json",
+      "bytes": 9290,
+      "sha256": "519c5b3f51d2b9732fdae9c17f0a52d6175a7aca3edf0e6e1d0a0e4fa681c044",
+      "git_blob": "1920a1228834305264bf564d3e515dbf2caa629e"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/gridfabric-procedures.json",
+      "bytes": 6814,
+      "sha256": "e79870452f4094c4db654a5a074994a132a4513fbefeeeddab582bf7de9416d5",
+      "git_blob": "2fb52e68d0026922ef9732c6c8e701e5ce671574"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/groundwater-applications.json",
+      "bytes": 1387,
+      "sha256": "52819537352f3107d6eefe78698eb4cdf8bd110953b158598b9004da6135bb34",
+      "git_blob": "760f68fb9321740460a8d39f684c5425d5e3ee42"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/haystack.json",
+      "bytes": 4049,
+      "sha256": "0f65af55e43fde0e19f8da107681da6f32af0d2a9bc906d0ec6fbdffdf780f92",
+      "git_blob": "349140c7304a9df08062a3896ef489025cfbcba3"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/human-services-directory.json",
+      "bytes": 14063,
+      "sha256": "a225c4f51839d23766f84d3d6f5f26c111b07b41726e4a05ee0e6838da7fdb23",
+      "git_blob": "2e4d6854656203f342fdd4762f64842a4ce54962"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/invoice-settlement.json",
+      "bytes": 4100,
+      "sha256": "8ce3b5530ae738d9dd48ab5a574577532329633001496204bf68b099d6e201ff",
+      "git_blob": "369fb8d064cc0e5ab49bd1c89fd1a919a39af4ba"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/merchant-bank-statements.json",
+      "bytes": 38360,
+      "sha256": "9c459b1e5cd50b257ba4c5b895c4448bdaa4836e9bb1444ba733d1738f44ce2c",
+      "git_blob": "f2a766c4dd18bcd104fd7c616080fa3b55bdf63b"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/merchant-customer-account-responses.json",
+      "bytes": 5487,
+      "sha256": "085c5ef135816fb48d33e1114b54e3d9e561f74db1c87959611c1c0254a65822",
+      "git_blob": "369a29d5d58fb66699f82ff9ed37ce32bd5af511"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/merchant-monitoring.json",
+      "bytes": 3386,
+      "sha256": "e16477003db1addfe87b56b43cb676211d2063223b6f159b164372785885c985",
+      "git_blob": "1a2934e1e3c55c46bf452d338c3e4abc1db5f039"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/merchant-remittances.json",
+      "bytes": 1411,
+      "sha256": "d6b88773e774d8135e539235588fec010eb60e789da65b5482d208dd90a3dc86",
+      "git_blob": "81cb1dc791a5ed6418df8e0f7c42301bc894cec2"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/oauth-support.json",
+      "bytes": 21474,
+      "sha256": "56cdeceeab558a9333dc0cfd01ba1e3cb56aa7b5c45f2578d43ba1ad31109556",
+      "git_blob": "4355fc79c02edbfcfb707b0a790deffa842cd218"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/odata-customer-desk.json",
+      "bytes": 4144,
+      "sha256": "c4ff4d3c5602d26d6f01768fa1b006c0f15f9312605fa0d5a8bfd72ee9df8768",
+      "git_blob": "f0b244cfb1e8d199fa298d5bb8532f6fe2b87d66"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/odr-review-workspace.json",
+      "bytes": 7846,
+      "sha256": "479ed01cf9d0d680b8a07f9dafa6c3a4ed7c012044232a8f55632e04a1d86c76",
+      "git_blob": "0da5798df78b9fa8d032a9d1a8d0a9afe158acd4"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/oecd-economic-editions.json",
+      "bytes": 6914,
+      "sha256": "d11bbfa0ca2beb077f80f4b60f2f125b2746a5ec963a3cbe59d2beaf80ee9218",
+      "git_blob": "6164a07ca6e3c633c1e0991761f76c77163b7ed9"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/operating-plans.json",
+      "bytes": 18958,
+      "sha256": "d7f24b54492662ce021c3c929497e16d6bd001839b44938077dd659d2e59f24f",
+      "git_blob": "5a29b28fad4372b312b14f4e0bf1a07e7ac367fa"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/partner-workbenches.json",
+      "bytes": 6757,
+      "sha256": "be0d3cd9ee8cc5fa64c3bf2f4dd649f2b273b73ed85efa375f22f18f666abf38",
+      "git_blob": "985caca34a8a90ada6039e78b522517741f980de"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/pirate-weather.json",
+      "bytes": 1509,
+      "sha256": "f289444d1670e8c04c46668e0609bea7d00694b668db2e12345beac82df38b91",
+      "git_blob": "300af4125a14d3d86102c05e8e30095a3936012e"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/prepaid-api-customer.json",
+      "bytes": 4967,
+      "sha256": "68913822e826d76b3907e32ae03380c35a9d8c78a23910c41ad96e15943e713d",
+      "git_blob": "82943eff5a09f2baca5070a6970f333c26f60661"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/recovery-commissioning.json",
+      "bytes": 9089,
+      "sha256": "d56749d5c5da990c91e293c06be0ac6738c9d2934adf646337f9fe0bf8db04c5",
+      "git_blob": "6fa6a382e1cc15663ea00cc9b43bcd3284335d01"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/research-commercial-programme.json",
+      "bytes": 4548,
+      "sha256": "a0b5320386c9d10420af5d4d71d6d24899f7a1f71af4b64d0d8ceba7b91a9724",
+      "git_blob": "635b6ee7c034bbbf057daef1375d6dda5fdd7d0b"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/research-dossier-returns.json",
+      "bytes": 5193,
+      "sha256": "ecca4e833535abf29d126c82d4cb902eef5620fbc06e7232c816ef219f8d489a",
+      "git_blob": "1919793c2875e70e04e0ceeed765af3733b15ba5"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/rialto-customer.json",
+      "bytes": 12832,
+      "sha256": "3f8dafac411ed3d7512d8bfbad836eb8c93a9af3802a08daef2df2b107b5403a",
+      "git_blob": "c013ae1ad42461ef7813c7338bba1c478ba31369"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/rozo-payments.json",
+      "bytes": 12710,
+      "sha256": "4190f0d05b617f784939128b6191f029fc78c938cca280eaa45cc92d039238d2",
+      "git_blob": "356d180b935a682897e3d6c97ddf7cd10165191b"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/rumble-customer.json",
+      "bytes": 4221,
+      "sha256": "a207c089e912aae334f74894f647b635845de8900699f079d93877582fbc331f",
+      "git_blob": "c0a77aba1273a5ec7bec1b92539d91e877f95a40"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/runtime-workspace.json",
+      "bytes": 19393,
+      "sha256": "bee4deed978907fbba3dd34c74c313267c0c1ae6a7ba118d045de952b38e2ee3",
+      "git_blob": "51959b5db80b146418e3d6096d64d5fba668c1cd"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/service-buyer-continuation.json",
+      "bytes": 8536,
+      "sha256": "849e6906cb04a95f90184421c009aee7ecc005f17ca2f821f163067b80879d64",
+      "git_blob": "3815daf6e964c9031705ee4759300aa874c1238e"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/source-desk.json",
+      "bytes": 14380,
+      "sha256": "476dd32bdeef770aec76157a94fd24dac331449a9d4816869a8a8960723c9278",
+      "git_blob": "62ab7e8ab124ba234f182669d432ad9cbd7e1100"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/source-tables-document-authoring.json",
+      "bytes": 3978,
+      "sha256": "c343783fe582e7bb5efa11b33ed70e48626625fe3284011a971d11ead868be1d",
+      "git_blob": "6b81489e19e6a09f2785263bc2763eb901e0983a"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/stellarcarbon-statements.json",
+      "bytes": 4681,
+      "sha256": "a0d36933b1e082c4865640774eb474826418d42d66584a8a664980019f1c3430",
+      "git_blob": "d61a0fb2288faf12655b61bbe7284f02560e0597"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/superset-report.json",
+      "bytes": 5666,
+      "sha256": "dc9e6900cc9c8836ee559c82f01d39bb3c57824e46ad506789c11aa0648833e1",
+      "git_blob": "5b04757c11ff9bcc30847982ddc587bfe0bd8224"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/tind.json",
+      "bytes": 6455,
+      "sha256": "ac97b39208f20cea25381ff22f1970f8920d00689da6feec03b0cf897e3ef58b",
+      "git_blob": "47af010ba4f7f82e61a4f8aaba08b6a8c9c9658a"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/weather-report-renewal.json",
+      "bytes": 1399,
+      "sha256": "da3ec82e826cef357c83b99ef784af64106ea2e5784a147402f073d85ba11fdc",
+      "git_blob": "df4f298af6df651fbc086ae9d1902ff472bef87f"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/webhook-customer-analysis.json",
+      "bytes": 6258,
+      "sha256": "e05ea45629b74725e49e129da5f79b6cbb101fdd0f225edeb020d5eb7ce3e612",
+      "git_blob": "1513818d1ddcec6b62cde1467a127e76d6f1beb7"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/worldbank-customer-programmes.json",
+      "bytes": 10999,
+      "sha256": "73e44c0a707f4dddaf91a853ca88035061d3ed0d569382088c9cc19b1213da68",
+      "git_blob": "ec0c05b4c526c6e8d4072f74acd9688872cc1150"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/zarr-scientific-arrays.json",
+      "bytes": 4918,
+      "sha256": "974dc67473768d42d11fcd5d0dca0884c7f60ef706bf627a268a43e37d8ad014",
+      "git_blob": "7bf7ad8731516ec650dd3dd4f030af3ab6bdee83"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "stellar-forge/developer-site/dist/grant.html",
+      "bytes": 103379,
+      "sha256": "9d06ce9dbd4adb157422b5c93f69eca3029f9ce7a8244c515bb70e4861be69d7",
+      "git_blob": "dd8da9788bd29b4c85bf2b8be1014adde5eef270"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/application.md",
+      "bytes": 52315,
+      "sha256": "f37983a419112f5a6044f0eb716e09f0f3e7a0582341492f28c334f87b4679d9",
+      "git_blob": "b436fd03e2de61238cf82975ab456a7f511a38c6"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
+      "bytes": 1257433,
+      "sha256": "2ade406bcc6bb2a2d77f533069068df9a01317d705f83c07d4fa0433e69f44ca",
+      "git_blob": "20004dd3d33c68ebfc69f6c338a2ce44f5a3dcc9"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/source-index.json",
+      "bytes": 1038431,
+      "sha256": "8b727a0192c41a3ddad327b72ed099a5aa87f91d0520b2c2039395de089dba6c",
+      "git_blob": "30ad368988edae2d0c2755ba6a1123a40edadb0d"
+    }
+  ],
+  "receiving_package": {
+    "path": "operations/scf-current-customer-source-20261013/current-source-package.json",
+    "bytes": 3187564,
+    "sha256": "ecc1ba317c661290246b7f36e2de1dd71f81dc496f26f1ba88e6889770675531",
+    "bundle_id": "a3f80ae007f1af2f199028f4b74bb04b27f12e4abd3e9c123147841999a91601",
+    "roles": [
+      {
+        "role": "application",
+        "name": "application.md",
+        "originalName": "application.md",
+        "mediaType": "text/markdown;charset=utf-8",
+        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d7df87046c31eca1a02e6e1bd40acae7a1e78a39/stellar-forge/developer-site/dist/grant-data/application.md",
+        "bytes": 52315,
+        "sha256": "f37983a419112f5a6044f0eb716e09f0f3e7a0582341492f28c334f87b4679d9",
+        "identityBasis": "Verified against original source-index application SHA-256, byte count and Git blob."
+      },
+      {
+        "role": "source-index",
+        "name": "source-index.json",
+        "originalName": "source-index.json",
+        "mediaType": "application/json",
+        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d7df87046c31eca1a02e6e1bd40acae7a1e78a39/stellar-forge/developer-site/dist/grant-data/source-index.json",
+        "bytes": 1038431,
+        "sha256": "8b727a0192c41a3ddad327b72ed099a5aa87f91d0520b2c2039395de089dba6c",
+        "identityBasis": "Complete received source-index bytes; its own digest is a receiving identity."
+      },
+      {
+        "role": "budget",
+        "name": "budget.csv",
+        "originalName": "budget.csv",
+        "mediaType": "text/csv;charset=utf-8",
+        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d7df87046c31eca1a02e6e1bd40acae7a1e78a39/stellar-forge/developer-site/dist/grant-data/budget.csv",
+        "bytes": 597,
+        "sha256": "4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00",
+        "identityBasis": "Complete received budget bytes; this source index declares no independent budget-file digest."
+      },
+      {
+        "role": "product-and-finance",
+        "name": "product-and-finance.md",
+        "originalName": "product-and-finance.md",
+        "mediaType": "text/markdown;charset=utf-8",
+        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d7df87046c31eca1a02e6e1bd40acae7a1e78a39/stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
+        "bytes": 1257433,
+        "sha256": "2ade406bcc6bb2a2d77f533069068df9a01317d705f83c07d4fa0433e69f44ca",
+        "identityBasis": "Verified against original source-index product_and_finance SHA-256, byte count and Git blob."
+      }
+    ]
+  },
+  "preservation": {
+    "previous_source_count": 775,
+    "current_source_count": 806,
+    "previous_ids_retained": true,
+    "complete_companion_chapters": 88,
+    "selected_declarations": 61,
+    "added_source_ids": [
+      "economic-fred-operating-browser",
+      "economic-fred-operating-native",
+      "economic-fred-operating-source",
+      "merchant-bank-complete-account-mcp-course",
+      "merchant-bank-installed-receiver-producer",
+      "runtime-procedures-public-browser",
+      "runtime-procedures-carried-file-guide",
+      "runtime-procedures-return-guide",
+      "installation-desk-agent-operation",
+      "installation-desk-agent-preparation",
+      "installation-desk-agent-types",
+      "installation-desk-node-client",
+      "installation-desk-node-client-types",
+      "installation-desk-agent-catalogue",
+      "installation-desk-agent-provider",
+      "worldbank-customer-programmes",
+      "worldbank-analysis-programmes",
+      "worldbank-programme-model",
+      "worldbank-original-analysis",
+      "worldbank-programme-receiving",
+      "worldbank-programme-course",
+      "worldbank-installed-programme",
+      "worldbank-source-workspace",
+      "worldbank-source-merchant",
+      "worldbank-analytical-delivery",
+      "worldbank-complete-product",
+      "worldbank-recurring-customer",
+      "worldbank-intake-operation",
+      "worldbank-merchant-source-agent",
+      "worldbank-merchant-programme-agent",
+      "worldbank-customer-commissioning"
+    ],
+    "advanced_source_ids": [
+      {
+        "id": "x402api-merchant-invoice-agent",
+        "old": "256258c314503fa2f716fe05b9d33f46b0f9e6cf",
+        "next": "2696e533a793ad9d7ef72bcd8f8a4259333be792"
+      },
+      {
+        "id": "merchant-bank-source-collections",
+        "old": "f912a1ece05abcfeaa83882dfb86db719fd745da",
+        "next": "02175e3f0ee1e6ae4605c0b960790f6dd6e10e77"
+      },
+      {
+        "id": "merchant-bank-source-collection-model",
+        "old": "f912a1ece05abcfeaa83882dfb86db719fd745da",
+        "next": "02175e3f0ee1e6ae4605c0b960790f6dd6e10e77"
+      },
+      {
+        "id": "merchant-bank-source-collection-command",
+        "old": "929ed21c5b8206fa17491ebd7c5da48ed49ca979",
+        "next": "02175e3f0ee1e6ae4605c0b960790f6dd6e10e77"
+      },
+      {
+        "id": "merchant-bank-bundesbank-receiving",
+        "old": "f912a1ece05abcfeaa83882dfb86db719fd745da",
+        "next": "02175e3f0ee1e6ae4605c0b960790f6dd6e10e77"
+      },
+      {
+        "id": "merchant-bank-original-application-course",
+        "old": "1c5a12ecf311ba7d7206905fbdabbe751a08b05e",
+        "next": "6439454c55b3b7aa83f4ff3e920ecc9340e25dfe"
+      },
+      {
+        "id": "merchant-bank-original-delivery-operation",
+        "old": "1c5a12ecf311ba7d7206905fbdabbe751a08b05e",
+        "next": "6439454c55b3b7aa83f4ff3e920ecc9340e25dfe"
+      },
+      {
+        "id": "merchant-bank-source-profile-model",
+        "old": "474f1ef945d636217a85fe970c86b18f2b3e2e1b",
+        "next": "02175e3f0ee1e6ae4605c0b960790f6dd6e10e77"
+      },
+      {
+        "id": "merchant-bank-source-profile-command",
+        "old": "474f1ef945d636217a85fe970c86b18f2b3e2e1b",
+        "next": "02175e3f0ee1e6ae4605c0b960790f6dd6e10e77"
+      },
+      {
+        "id": "merchant-bank-source-profile-operation",
+        "old": "474f1ef945d636217a85fe970c86b18f2b3e2e1b",
+        "next": "02175e3f0ee1e6ae4605c0b960790f6dd6e10e77"
+      },
+      {
+        "id": "merchant-bank-source-profile-receiving",
+        "old": "474f1ef945d636217a85fe970c86b18f2b3e2e1b",
+        "next": "02175e3f0ee1e6ae4605c0b960790f6dd6e10e77"
+      },
+      {
+        "id": "runtime-procedures-browser",
+        "old": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+        "next": "2352dffc46f2860ccf52595d2e486b0294b976e8"
+      },
+      {
+        "id": "installation-desk-operation",
+        "old": "93b7335efeb14665d1dce887c21d31258df04a0e",
+        "next": "c9ceb6435eb3c05a1c24944d7acb91e589388260"
+      },
+      {
+        "id": "installation-desk-python-launch",
+        "old": "93b7335efeb14665d1dce887c21d31258df04a0e",
+        "next": "c9ceb6435eb3c05a1c24944d7acb91e589388260"
+      },
+      {
+        "id": "installation-desk-node-launch",
+        "old": "93b7335efeb14665d1dce887c21d31258df04a0e",
+        "next": "c9ceb6435eb3c05a1c24944d7acb91e589388260"
+      }
+    ],
+    "original_budget_and_request_unchanged": true,
+    "nine_original_answer_ids_retained": true,
+    "full_composer_replay_identical": true,
+    "all_selected_declaration_git_blobs_verified": true,
+    "complete_four_role_package_reopen_equal": true
+  },
+  "execution": {
+    "environment": "V8 execution of the complete original publication path and original source-package path",
+    "publication_modules": 19,
+    "package_modules": 4,
+    "host_adapters": "In-memory original readFile/writeFile/readdir and UTF-8/digest primitives; no network or file operation inside the composer.",
+    "outside_scope": "No issuer receiving mutation, browser DOM, native installation, payment, or external submission was executed. Uncalled issuer/action hooks throw if reached.",
+    "uninvoked_mutation_hooks": []
+  },
+  "ownership": {
+    "canonical_publisher": "DBC61 and original Page/Site/source-package owners",
+    "native_saved_case": "Original22B7 saved-v7/technical-review course",
+    "following_editions": "Later declarations and canonical edits continue through the same composer. This complete selected edition preserves the775-row predecessor and is not a reset to an earlier index."
+  }
+}
