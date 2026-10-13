@@ -3,6 +3,7 @@ import {mountCommercialInstallations} from './operations_commercial_installation
 import {mountInstallationSources} from './operations_installation_sources.mjs';
 import { workflowBoundCheck, workflowReportView, workflowIntakePanel } from './operations_installation_workflows.mjs';
 import {captureUseCalendar,useCalendarFields,useCalendarAction,useCalendarReport} from './operations_use_calendar.mjs';
+import {captureCommissioning,commissioningFields,commissioningAction,commissioningReport} from './operations_commissioning.mjs';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const copy=value=>structuredClone(value);
 const title=value=>String(value??'').toLowerCase().replaceAll('_',' ').replace(/^./,c=>c.toUpperCase());
@@ -85,7 +86,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     if(!available())return;
     root.setAttribute('aria-busy',String(hostBusy||busy||!!session.inflight));
     for(const el of root.querySelectorAll('button,input,select,textarea')){
-      const isInput=el.matches('[data-installation-field],[data-installation-coordination],[data-installation-note],[data-use-field],[data-use-pattern]');
+      const isInput=el.matches('[data-installation-field],[data-installation-coordination],[data-installation-note],[data-use-field],[data-use-pattern],[data-commissioning-field],[data-commissioning-ui],[data-commissioning-decision],[data-commissioning-review-select],[data-commissioning-output],[data-commissioning-call]');
       const save=el.dataset.installationAction==='save';
       el.disabled=el.dataset.installationFixed==='true'||hostBusy||
         (save&&(!preview||!same(previewDraft?.document,draft()?.document)||previewDraft?.expectedRevision!==draft()?.expectedRevision))||
@@ -108,6 +109,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     }
     captureCoordination(value);
     captureUseCalendar(root,value.document,value.calendarUI??={});
+    captureCommissioning(root,value.document,value.commissioningUI??={});
     value.note=$('[data-installation-note]')?.value??value.note;
     value.dirty=true;
     if(previewDraft&&!same(previewDraft.document,value.document))preview=null;
@@ -270,6 +272,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
         '</div>'+button('Remove acceptance step','remove-check','data-index="'+index+'"',!editable()||boundCheck(check))+'</details>').join('')+
       button('Add acceptance step','add-check','',!editable()||d.checks.length>=100)+'</fieldset>';
     html+=useCalendarFields(d,caseValue,value.calendarUI??={});
+    html+=commissioningFields(d,caseValue,value.commissioningUI??={});
     return html;
   }
   function reportView(value){
@@ -280,7 +283,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       '</strong></div><div><span>Selected source files</span><strong>'+report.sourceFiles+
       '</strong></div><div><span>Entered task amount</span><strong>'+esc(report.pricedTaskAtomic??'Unentered')+'</strong><small>Original atomic units</small></div></div>'+
       (report.findings.length?table(['Field or step','Current decision or observation'],report.findings.map(row=>[esc(row.field),esc(row.message)])):note('All entered configuration decisions and required acceptance steps are complete.'))+
-      workflowReportView(value)+useCalendarReport(report.useCalendar)+
+      workflowReportView(value)+useCalendarReport(report.useCalendar)+commissioningReport(report.commissioning)+
       '<h4>Original work and funded packages</h4>'+
       table(['Funding basis','Work package','Recorded hours','Accepted hours'],report.work.map(row=>[esc(row.fundingBasis),esc(row.costId||'Unassigned'),esc(row.recordedHours),esc(row.acceptedHours)]))+
       table(['Package','Tranche','Original planned hours','Original planned USD'],report.packages.map(row=>[esc(row.id),esc(row.tranche),esc(row.estimated_hours),esc(row.amount_usd)]))+
@@ -809,7 +812,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   }
   root.addEventListener('submit',event=>{if(event.target.matches('[data-installation-editor]')){event.preventDefault();run(previewDraftInput);}});
   root.addEventListener('input',event=>{
-    if(event.target.matches('[data-installation-field],[data-installation-coordination],[data-installation-note],[data-use-field],[data-use-pattern]')){capture();controls();}
+    if(event.target.matches('[data-installation-field],[data-installation-coordination],[data-installation-note],[data-use-field],[data-use-pattern],[data-commissioning-field],[data-commissioning-ui],[data-commissioning-decision],[data-commissioning-review-select],[data-commissioning-output],[data-commissioning-call]')){capture();controls();}
     if(event.target.matches('[data-installation-filter]')){session.filter=event.target.value;const start=event.target.selectionStart;render();const input=$('[data-installation-filter]');input.focus();try{input.setSelectionRange(start,start);}catch{}}
   });
   root.addEventListener('change',event=>{
@@ -832,7 +835,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       if(key==='sourceId'||key==='packetSourceId'){workshareInventory=null;session.workshareIntake.caseId='';}
       persist();render();return;
     }
-    if(event.target.matches('[data-installation-field],[data-installation-coordination],[data-use-field],[data-use-pattern]')){
+    if(event.target.matches('[data-installation-field],[data-installation-coordination],[data-use-field],[data-use-pattern],[data-commissioning-field],[data-commissioning-ui],[data-commissioning-decision],[data-commissioning-review-select],[data-commissioning-output],[data-commissioning-call]')){
       capture();
       if(event.target.dataset.usePattern==='buyerDeploymentIds'||event.target.dataset.usePattern==='mode')render();
       else controls();
@@ -885,6 +888,29 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
         if(own(epoch)&&same(session.selected,selected)){historyRows.push(...page.editions);nextBefore=page.nextBefore;}return;
       }
       capture();const value=draft();if(!value||!editable())return;
+      if(action.startsWith('commissioning-')){
+        const originalDocument=copy(value.document),originalUI=copy(value.commissioningUI??{}),workingUI=copy(originalUI);
+        const identity={key:value.key,token:value.token,installationId:value.installationId,expectedRevision:value.expectedRevision};
+        const workingDocument=copy(originalDocument);
+        const result=await commissioningAction(action,target,{document:workingDocument,context:caseValue,ui:workingUI,api,prefix,
+          expectedVersion:caseValue.program.version,installationId:value.installationId,expectedRevision:value.expectedRevision,actor:recordingActor()});
+        const next=result.document||workingDocument;
+        if(value.token!==identity.token||!same(value.document,originalDocument)){
+          if(!same(next,originalDocument)){
+            const key='commissioning-'+crypto.randomUUID();
+            session.drafts[key]={key,token:crypto.randomUUID(),installationId:identity.installationId,expectedRevision:identity.expectedRevision,
+              document:copy(next),commissioningUI:workingUI,note:'',dirty:true,label:'Customer commissioning preparation'};
+            session.notice='Kept the complete commissioning result as a separate retained draft. Your later form edits remain open.';
+          }
+        }else{
+          value.document=copy(next);value.dirty=true;
+          if(same(value.commissioningUI??{},originalUI))value.commissioningUI=workingUI;
+          if(result.message)session.notice=result.message;
+        }
+        preview=null;previewDraft=null;persist();return;
+      }
+      if(action==='use-calendar-disable'&&value.document.commissioning)
+        throw new Error('Remove or retain the commissioning correspondence explicitly before removing its customer-use calendar.');
       if(action.startsWith('use-calendar-')){
         const originalDocument=copy(value.document),originalUI=copy(value.calendarUI??{}),workingUI=copy(originalUI);
         const workingDocument=copy(originalDocument),identity={key:value.key,token:value.token,installationId:value.installationId,expectedRevision:value.expectedRevision};

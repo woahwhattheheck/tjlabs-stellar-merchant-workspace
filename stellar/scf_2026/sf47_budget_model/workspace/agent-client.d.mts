@@ -877,6 +877,169 @@ export interface GrantCustomerUseDownloadSelection extends GrantCustomerUseSelec
   format?: 'json' | 'csv' | 'ics';
 }
 
+
+export type GrantCommissioningReviewState = 'OPEN' | 'APPROVED' | 'CHANGES_REQUIRED';
+export interface GrantCommissioningDecision {
+  state: GrantCommissioningReviewState;
+  actor: string;
+  observedAt: string | null;
+  note: string;
+  basisSha256: string;
+}
+export interface GrantCommissioningDecisionView extends GrantCommissioningDecision {
+  basisCurrent: boolean;
+  status: 'OPEN' | 'CURRENT' | 'STALE';
+  effectiveApproval: boolean;
+}
+export interface GrantCommissioningFile {
+  cycleId: string;
+  deliveryId: string;
+  path: string;
+  bytes: number;
+  sha256: string;
+}
+export interface GrantCommissioningCycle {
+  cycleId: string;
+  profileId: string;
+  seriesId: string;
+  seriesRevision: number;
+  seriesName: string;
+  customer: string;
+  task: string;
+  period: {start: string; end: string};
+  dueDate: string;
+  sourceEdition: string;
+  reason: string;
+  runId: string;
+  state: string;
+  completedAt: string | null;
+  planSha256: string;
+  resultSha256: string;
+  calls: {id: string; sha256: string; state: string}[];
+  steps: {index: number; id: string | null; state: string | null}[];
+  files: Omit<GrantCommissioningFile, 'cycleId'>[];
+}
+export interface GrantCommissioningFunding {
+  fundingId: string;
+  units: number | null;
+  priceAtomic: string | null;
+  budgetAtomic: string | null;
+  sourceIds: string[];
+  note: string;
+  review: GrantCommissioningDecision;
+}
+export interface GrantCommissioningReceiptLink {
+  purchaseId: string;
+  cycleId: string;
+  callId: string;
+  /** Explicit operator correspondence; never a new payment or transfer verification. */
+  note: string;
+}
+export interface GrantCommissioningUse {
+  entryId: string;
+  cycleIds: string[];
+  /** Exact original facts returned by preparation and checked against retained source bytes. */
+  facts: GrantCommissioningCycle[];
+  sourceIds: string[];
+  note: string;
+  outputEvidence: 'UNSELECTED' | 'NATIVE_RESULTS' | 'SELECTED_FILES';
+  outputFiles: GrantCommissioningFile[];
+  receiptLinks: GrantCommissioningReceiptLink[];
+  planReview: GrantCommissioningDecision;
+  receivingReview: GrantCommissioningDecision;
+}
+export interface GrantCommissioningDocument {
+  schema: 'stellar-forge.sf47-customer-commissioning.v1';
+  note: string;
+  aggregateBudgetAtomic: string | null;
+  authority: string;
+  sourceIds: string[];
+  budgetReview: GrantCommissioningDecision;
+  funding: GrantCommissioningFunding[];
+  uses: GrantCommissioningUse[];
+}
+export interface GrantCommissioningFundingView extends GrantCommissioningFunding {
+  basisSha256: string;
+  canApprove: boolean;
+  reviewFindings: string[];
+  review: GrantCommissioningDecisionView;
+  active: boolean;
+  useIds: string[];
+  expectedAtomic: string | null;
+  recordedSettledAtomic: string | null;
+  completeAmountComparison: boolean;
+  receipts: GrantObject[];
+  issues: GrantObject[];
+}
+export interface GrantCommissioningUseView extends GrantCommissioningUse {
+  planBasisSha256: string;
+  receivingBasisSha256: string;
+  canApprovePlan: boolean;
+  canAcceptOutput: boolean;
+  planFindings: string[];
+  receivingFindings: string[];
+  planReview: GrantCommissioningDecisionView;
+  receivingReview: GrantCommissioningDecisionView;
+  fundingReviewed: boolean;
+  outputSelections: (GrantCommissioningFile & {matchesOriginal: boolean})[];
+  receiptCorrespondence: (GrantCommissioningReceiptLink & {matchesOriginalCall: boolean; basis: 'EXPLICIT_OPERATOR_CORRESPONDENCE'})[];
+}
+export interface GrantCommissioningReport {
+  schema: 'stellar-forge.sf47-customer-commissioning.v1.report';
+  payment: GrantObject;
+  budget: {
+    aggregateBudgetAtomic: string | null;
+    expectedAtomic: string | null;
+    selectedGroupBudgetsAtomic: string | null;
+    activeFundingGroups: number;
+    uncoveredFundingIds: string[];
+    basisSha256: string;
+    canApprove: boolean;
+    findings: string[];
+    review: GrantCommissioningDecisionView;
+    recordedSettledAtomic: string | null;
+    completeAmountComparison: boolean;
+    identityGroups: number;
+    issues: GrantObject[];
+  };
+  funding: GrantCommissioningFundingView[];
+  uses: GrantCommissioningUseView[];
+  sharedCycles: {cycleId: string; entryIds: string[]}[];
+  findings: {code: string; id: string; message: string}[];
+  summary: {
+    mappedUses: number; planReviewedUses: number; acceptedOutputs: number;
+    stalePlanReviews: number; staleOutputReviews: number; reviewedFundingGroups: number;
+  };
+  calendar: GrantObject;
+  interpretation: {amounts: string; correspondence: string; qualification: string; operation: string};
+}
+export interface GrantCommissioningReviewInput extends GrantInstallationPreviewInput {
+  actor: string;
+  observedAt: string;
+  reviews: {
+    kind: 'FUNDING' | 'BUDGET' | 'PLAN' | 'OUTPUT';
+    id: string | null;
+    state: 'APPROVED' | 'CHANGES_REQUIRED';
+    expectedBasisSha256: string;
+    note: string;
+  }[];
+}
+export interface GrantCommissioningPreparation {
+  schema: 'stellar-forge.sf47-customer-commissioning.v1.preparation';
+  document: GrantInstallationDocument & {commissioning: GrantCommissioningDocument};
+  inventory: {
+    profileId: string | null;
+    cycles: GrantCommissioningCycle[];
+    entries: GrantObject[];
+    tasks: GrantObject[];
+    funding: GrantObject[];
+  };
+  refreshedEntryIds: string[];
+  report: GrantCommissioningReport;
+  reviewed?: number;
+  save: string;
+}
+
 export interface GrantInstallationDocument {
   name: string;
   stage: GrantInstallationStage;
@@ -894,6 +1057,7 @@ export interface GrantInstallationDocument {
   workflowPeriods?: unknown;
   coordination?: GrantDeliveryCoordinationInput;
   useCalendar?: GrantCustomerUseDocument | null;
+  commissioning?: GrantCommissioningDocument;
 }
 export interface GrantInstallationRef {
   id: string;
@@ -3092,6 +3256,8 @@ export class GrantWorkspaceClient {
   installationWorkshareSeed(caseId: string, body: GrantWorkshareSourceSelection & GrantInstallationSelection & { workshareCaseId: string; document?: GrantInstallationDocument }): Promise<GrantJsonResponse<GrantInstallationSeed>>;
   installationWorkflows<T = GrantObject>(caseId: string, body: GrantWorkflowSourceSelection): Promise<GrantJsonResponse<T>>;
   installationWorkflowSeed(caseId: string, body: GrantWorkflowSourceSelection & GrantInstallationSelection & { cycleIds: string[]; document?: GrantInstallationDocument }): Promise<GrantJsonResponse<GrantInstallationSeed>>;
+  installationCommissioningSeed(caseId: string, body: GrantInstallationPreviewInput): Promise<GrantJsonResponse<GrantCommissioningPreparation>>;
+  installationCommissioningReview(caseId: string, body: GrantCommissioningReviewInput): Promise<GrantJsonResponse<GrantCommissioningPreparation>>;
   installationPreview(caseId: string, body: GrantInstallationPreviewInput): Promise<GrantJsonResponse<GrantInstallationPreview>>;
   installationSave(caseId: string, body: GrantInstallationSaveInput): Promise<GrantJsonResponse<GrantInstallationSaveReceipt>>;
   commercialConnections(): Promise<GrantJsonResponse<GrantCommercialConnections>>;
