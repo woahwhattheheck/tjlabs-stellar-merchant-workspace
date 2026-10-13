@@ -26,6 +26,7 @@ READ_POSTS = {
     "implementation-source", "implementation-preview", "cohort-seed", "cohort-preview",
     "installation-workflows", "installation-workflow-seed", "installation-workshares",
     "installation-workshare-seed", "installation-seed", "installation-preview",
+    "installation-effort-seed", "installation-effort-selection",
     "completion-seed", "completion-preview", "support-preview", "buyer-preview",
     "forecast-preview", "portfolio-preview", "portfolio-seed", "portfolio-selection",
     "engagement-seed", "engagement-preview", "engagement-forecast", "engagement-portfolio",
