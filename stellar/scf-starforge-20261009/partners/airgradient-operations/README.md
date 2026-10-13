@@ -133,6 +133,8 @@ The retained record carries the original reader, content basis and retrieval win
 
 Commit and deliver the first report through the usual customer workflow. Receive its complete ZIP or editable JSON into another workspace, select the same retained collection and the **later** reporting period, use the first report as baseline, and commit the later edition. The whole original collection travels in the editable package and as **original-source-PACKET_SHA256.json** in the customer delivery. It remains available for another contained reporting period after cold reopening.
 
+**Continue a received study** lists the actual saved receiving records in this workspace. Choose the intended customer edition and use its received project to select that report's exact prior edition and original source collection together. The list returns after reopening the application, while a newly inspected file keeps its own separate review. Changing the file invalidates its pending inspection; receiving always binds the complete file that was reviewed.
+
 ### Complete original-source customer operation
 
 The maintained native programme operates the entire saved-source customer journey:
