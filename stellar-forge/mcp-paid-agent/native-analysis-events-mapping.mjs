@@ -569,7 +569,7 @@ export async function downloadNativeAnalysisEventMappingSavedSource(options={}){
  else{
   client??=await nativeEventConnection(options);
   await savedTransport.download({client:savedAdapter(client,manifest,options.signal),exportId:manifest.action_id,directory:folder,
-   expectedManifestSha256:sha(encoded(manifest)),signal:options.signal,onProgress:options.onProgress,timeoutMs:options.timeoutMs});
+   expectedManifestSha256:sha(encoded(manifest)),chunkSize:65536,signal:options.signal,onProgress:options.onProgress,timeoutMs:options.timeoutMs});
  }
  return finishSaved(options,root,raw,manifest);
 }
