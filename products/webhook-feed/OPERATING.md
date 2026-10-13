@@ -2,6 +2,8 @@
 
 Operate one original webhook event store from Applications, its private browser, terminal commands, a local JavaScript client, or the existing Merchant MCP connection. A single managed process owns the original signed receiver, optional paid merchant, browser, and store. Customer transfers use the original complete SQLite snapshot and preserve the received workspace on a later replay.
 
+For complete saved source/feed/merchant drafts, exact native-save recovery and portable editable receiving, use [Publisher working copies](WORKING_COPIES.md).
+
 For the complete customer workorder, page/task spending decisions, useful destination delivery, later-window operation and independent receiving, use [Commission a webhook customer installation](COMMISSIONING.md).
 
 The selected product is maintained at:
