@@ -19,6 +19,7 @@ summary={'operation':OPERATION,'managedSource':'525455c816a49de52e729a15f52d4f9a
 'directSource':'263248f386833637ab1cd8caf479904fb655cff6',
 'applicationsSource':'0c135a41aa966d70ca38b95d8af5e122a2c9754f',
 'applicationsProduct':'8b08a9333af070df0e96b6f09f6612eb07eab1ad',
+ 'installationPhaseSource':'0c1dc9babe6adecc5d834a0a0afaffc92aa1837a',
 'campaignProduct':PRODUCT,'campaignPhaseSource':'f72cbd237aa42d32ec3de6cb9d42b8fd879c0f48','phases':[]}
 def emit(value): print(json.dumps(value,separators=(',',':')),flush=True)
 def sha(value): return hashlib.sha256(value).hexdigest()
@@ -90,33 +91,80 @@ def saved_items(payload):
  return output
 def persist_outputs(code):
  summary['exitCode']=code
- summary['complete']=len(summary['phases'])==4 and all(p.get('exitCode')==0
+ summary['complete']=code==0 and len(summary['phases'])==4 and all(p.get('exitCode')==0
   and p.get('receipt',{}).get('state')=='PASS' for p in summary['phases'])
  report=OUT/'receiving-summary.json';write_json(report,summary)
  archive=OUT.parent/'merchant-delivery-continuation.zip'
  excluded={'tmp','browser-profile','chromium-profile','playwright-profile','node_modules','__pycache__'}
- entries=[]
+ retained_installation=OUT/'installation-receiving'
+ entries=[(OUT,Path('.'),'directory',stat.S_IMODE(OUT.lstat().st_mode))]
+ def retain_entry(path):
+  observed=path.lstat();mode=stat.S_IMODE(observed.st_mode)
+  if stat.S_ISLNK(observed.st_mode):
+   if not path.is_relative_to(retained_installation): return
+   target=os.readlink(path)
+   resolved=(path.parent/target).resolve()
+   if not resolved.is_relative_to(retained_installation.resolve()):
+    raise ValueError('An installation link escapes its retained phase: '+str(path))
+   entries.append((path,path.relative_to(OUT),'symlink',mode));return
+  if stat.S_ISDIR(observed.st_mode):
+   entries.append((path,path.relative_to(OUT),'directory',mode));return
+  if not stat.S_ISREG(observed.st_mode): return
+  if not path.is_relative_to(retained_installation) and path.suffix.lower() in {'.png','.jpg','.jpeg','.webp','.pyc'}: return
+  entries.append((path,path.relative_to(OUT),'file',mode))
  for current,directories,files in os.walk(OUT,topdown=True,followlinks=False):
-  directories[:]=sorted(name for name in directories
-   if name not in excluded and not (Path(current)/name).is_symlink())
-  for name in sorted(files):
-   path=Path(current)/name
-   if path.is_symlink() or not stat.S_ISREG(path.lstat().st_mode): continue
-   if path.suffix.lower() in {'.png','.jpg','.jpeg','.webp','.pyc'}: continue
-   entries.append((path,path.relative_to(OUT)))
+  current=Path(current);kept=[]
+  for name in sorted(directories):
+   path=current/name
+   if not path.is_relative_to(retained_installation) and name in excluded: continue
+   retain_entry(path)
+   if not path.is_symlink(): kept.append(name)
+  directories[:]=kept
+  for name in sorted(files): retain_entry(current/name)
  entries.sort(key=lambda item:str(item[1]))
- continuation={'operation':OPERATION,'originalOutput':str(OUT),'originalSourceRoot':str(ROOT),
+ continuation={'format':'merchant-delivery-continuation/v2','operation':OPERATION,
+  'originalOutput':str(OUT),'originalSourceRoot':str(ROOT),
   'managedSource':summary['managedSource'],'directSource':summary['directSource'],
   'applicationsSource':summary['applicationsSource'],'applicationsProduct':summary['applicationsProduct'],
+  'installationPhaseSource':summary['installationPhaseSource'],
   'campaignProduct':PRODUCT,'campaignPhaseSource':summary['campaignPhaseSource'],
   'originalCampaignSourceRoot':str(OUT.parent/'campaign-source'/'bootstrap'),
   'sourceRetrieval':'Restore exact original Git sources separately before continuing at the same retained absolute paths.',
-  'data':'Original local fixture signing values, stores, requests and customer receiving state. Browser images and temporary profiles are excluded.',
-  'files':[{'path':str(Path('output')/relative),'bytes':path.stat().st_size,'sha256':sha(path.read_bytes())}
-           for path,relative in entries]}
+  'data':'Original local fixture signing values, stores, requests and customer receiving state. The phase-owned installation, dependencies, resources, links and modes are retained; unrelated browser images, profiles and shared dependencies are excluded.',
+  'restoration':'Verify entry bytes and hashes, restore all regular files and directories with their retained modes, then restore the recorded internal symbolic links. Preserve the original absolute output paths and original request identities; inspect the selected runtime before continuing.',
+  'files':[]}
  with zipfile.ZipFile(archive,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=6) as output:
+  for path,relative,kind,mode in entries:
+   name=str(Path('output')/relative)
+   info=zipfile.ZipInfo(name+'/' if kind=='directory' else name)
+   info.create_system=3;info.compress_type=zipfile.ZIP_DEFLATED
+   entry={'path':name,'type':kind,'mode':mode}
+   if kind=='directory':
+    info.external_attr=((stat.S_IFDIR|mode)<<16)|0x10;raw=b''
+    output.writestr(info,raw);entry.update(bytes=0,sha256=sha(raw))
+   elif kind=='symlink':
+    target=os.readlink(path);raw=target.encode('utf-8')
+    if not (path.parent/target).resolve().is_relative_to(retained_installation.resolve()):
+     raise ValueError('An installation link changed its retained scope: '+str(path))
+    info.external_attr=(stat.S_IFLNK|mode)<<16
+    output.writestr(info,raw);entry.update(bytes=len(raw),sha256=sha(raw),target=target)
+   else:
+    info.external_attr=(stat.S_IFREG|mode)<<16
+    descriptor=os.open(path,os.O_RDONLY|os.O_NOFOLLOW)
+    with os.fdopen(descriptor,'rb') as original:
+     before=os.fstat(original.fileno())
+     if not stat.S_ISREG(before.st_mode) or stat.S_IMODE(before.st_mode)!=mode:
+      raise ValueError('An original continuation file changed type or mode: '+str(path))
+     digest=hashlib.sha256();size=0
+     with output.open(info,'w') as member:
+      for chunk in iter(lambda:original.read(1024*1024),b''):
+       member.write(chunk);digest.update(chunk);size+=len(chunk)
+     after=os.fstat(original.fileno())
+     if (before.st_dev,before.st_ino,before.st_size,before.st_mtime_ns)!=(after.st_dev,after.st_ino,after.st_size,after.st_mtime_ns) or size!=before.st_size:
+      raise ValueError('An original continuation file changed while being retained: '+str(path))
+     entry.update(bytes=size,sha256=digest.hexdigest())
+   continuation['files'].append(entry)
   output.writestr('CONTINUATION.json',json.dumps(continuation,indent=2)+'\n')
-  for path,relative in entries: output.write(path,str(Path('output')/relative))
  os.chmod(archive,0o600)
  emit({'phase':'saving-receiving-files','archive':str(archive),'bytes':archive.stat().st_size,'summary':str(report)})
  # Resolve the current locally available skill, then copy its three unchanged
