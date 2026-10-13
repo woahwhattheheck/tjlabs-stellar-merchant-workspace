@@ -1,3 +1,4 @@
+import {bankPdfAsset} from './bank-pdf/server.mjs';
 // SPDX-License-Identifier: MIT
 // Route and asset adapter inside the original receivables HTTP/auth/lifecycle boundary.
 import {readFile} from 'node:fs/promises';
@@ -22,6 +23,7 @@ export async function bankStatementAsset(path,{apiPath='/api/receivables/bank-st
   receivablesApiBase='/api/receivables',receivablesUi='/receivables/',sourcePreparations=null}={}) {
   apiPath=basePath(apiPath,'/api/receivables/bank-statements');uiPath=basePath(uiPath,'/bank-statements');
   if(path!==uiPath&&!path.startsWith(uiPath+'/'))return null;
+  const pdf=await bankPdfAsset(path,{apiPath,uiPath});if(pdf)return pdf;
   const name=path===uiPath?'index.html':path.slice(uiPath.length+1)||'index.html';
   if(name==='config.json')return {bytes:Buffer.from(JSON.stringify({apiBase:apiPath,apiPath,uiPath,
     receivablesApiBase,receivablesUi,requestBytes:BANK_REQUEST_BYTES,

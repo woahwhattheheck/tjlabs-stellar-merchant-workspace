@@ -1,0 +1,83 @@
+{
+  "schema": "stellar-forge.browser-assets.v1",
+  "root": "./",
+  "routes": [
+    [
+      "/bank-statements/pdf/",
+      [
+        "index.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/pdf/index.html",
+      [
+        "index.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/pdf/app.mjs",
+      [
+        "app.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/pdf/model.mjs",
+      [
+        "model.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/pdf/extractor.mjs",
+      [
+        "extractor.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/pdf/styles.css",
+      [
+        "styles.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/pdf/config.json",
+      [
+        "config.json",
+        "application/json; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/pdf/sdk/client.mjs",
+      [
+        "../client.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/pdf/client.mjs",
+      [
+        "../../client.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/pdf/PDF_STATEMENTS.md",
+      [
+        "PDF_STATEMENTS.md",
+        "text/markdown; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/pdf/EXTRACTION.md",
+      [
+        "EXTRACTION.md",
+        "text/markdown; charset=utf-8"
+      ]
+    ]
+  ]
+}
