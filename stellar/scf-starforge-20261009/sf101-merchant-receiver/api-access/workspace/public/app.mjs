@@ -593,3 +593,4 @@ let key=sessionStorage.getItem('sf101-api-pass-key');const fragment=location.has
 if(/^[A-Za-z0-9_-]{43}$/.test(fragment)){key=fragment;history.replaceState(null,'',location.pathname+location.search);}
 if(key)try{await login(key);}catch(error){lock();$('login-error').textContent=errorText(error);}
 
+
