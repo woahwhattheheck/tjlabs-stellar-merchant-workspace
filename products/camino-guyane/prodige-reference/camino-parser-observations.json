@@ -1,0 +1,2201 @@
+{
+  "schema": "commons.camino-original-parser-observations.v1",
+  "source_ref": "c12e248ac955672d9744163aef526d9ea9547692",
+  "parser": {
+    "path": "products/conapi/supplier-report/supplier-report.mjs",
+    "git_blob_sha": "776e81d5f4ae95a57fcabd33efdee8daa2449d09",
+    "execution": "Actual complete maintained pure ESM source evaluated in V8 with export declarations removed; parseCSV called on each exact retained source body."
+  },
+  "sources": {
+    "inventory": {
+      "file_upload_id": "3f8dd772-3100-813b-95f3-00b29ec302ef",
+      "filename": "FEDOMG-Camino-Guyane-inventory-whole-projection-20261013.csv",
+      "bytes": 121688,
+      "sha256": "c696251a5649d527243b81c2f4c0e40e6fa25ed8f5d2af6c32e8317fd6a67237",
+      "columns": [
+        "id",
+        "type",
+        "statut",
+        "substances"
+      ],
+      "rows": 1729
+    },
+    "dates_area": {
+      "file_upload_id": "3f8dd772-3100-819d-8003-00b2d04427f2",
+      "filename": "FEDOMG-Camino-Guyane-dates-area-whole-projection-20261013.csv",
+      "bytes": 83241,
+      "sha256": "517afc933023c94400327ac67dd638461e817311af2e65cebb07f0f3265461b4",
+      "columns": [
+        "id",
+        "date_debut",
+        "date_fin",
+        "surface renseignee km2"
+      ],
+      "rows": 1729
+    },
+    "national_valid_research": {
+      "file_upload_id": "3f8dd772-3100-81f4-8395-00b256254b58",
+      "filename": "Camino-original-valid-research-authorizations-20261013.csv",
+      "bytes": 116079,
+      "sha256": "38a2fde6f24970c126f3ecc400576d4abdfe080d169d493fe577bbac876d25c1",
+      "columns": [
+        "id",
+        "nom",
+        "date_debut",
+        "date_fin",
+        "type",
+        "domaine",
+        "statut",
+        "substances",
+        "surface renseignee km2",
+        "communes (surface calculee km2)",
+        "forets",
+        "facades_maritimes",
+        "departements",
+        "regions",
+        "administrations_noms",
+        "titulaires_noms",
+        "titulaires_adresses",
+        "titulaires_legal",
+        "titulaires_categorie",
+        "amodiataires_noms",
+        "amodiataires_adresses",
+        "amodiataires_legal",
+        "amodiataires_categorie",
+        "geojson",
+        "reference_DEAL",
+        "reference_PTMG",
+        "reference_ONF"
+      ],
+      "rows": 71
+    }
+  },
+  "inventory": {
+    "rows": 1729,
+    "unique_ids": 1729,
+    "status_counts": {
+      "échu": 1171,
+      "demande classée": 324,
+      "valide": 154,
+      "demande initiale": 77,
+      "valide - survie provisoire": 3
+    },
+    "type_counts": {
+      "autorisation de recherches": 963,
+      "autorisation d'exploitation": 659,
+      "permis exclusif de recherches": 60,
+      "concession": 32,
+      "permis d'exploitation": 15
+    }
+  },
+  "dates_area": {
+    "rows": 1729,
+    "unique_ids": 1729,
+    "inventory_only_ids": [],
+    "dates_only_ids": [],
+    "complete_periods": 1328,
+    "missing_periods": 401,
+    "reversed_periods": 69,
+    "reversed_ids": [
+      "m-ar-coulor-2-2013",
+      "m-ax-crique-bon-espoir-6-2006",
+      "m-ar-crique-bois-bande-5-2019",
+      "m-ar-crique-bois-blanc-2-2013",
+      "m-ar-crique-eau-claire-2018",
+      "m-ar-crique-gaan-day-2016",
+      "m-ar-saut-fracas-2019",
+      "m-ar-crique-janvier-1-2-3-2019",
+      "m-ar-crique-kokioko-2019",
+      "m-ar-crique-koumarou-2-2010",
+      "m-ar-crique-mousse-18-2019",
+      "m-ar-crique-mousse-et-garance-2019",
+      "m-ar-crique-saint-jean-2007",
+      "m-ar-crique-serpent-16-2016",
+      "m-ar-crique-pactole-2018",
+      "m-ar-crique-aval-teo2017-2018",
+      "m-ar-scieur-2022",
+      "m-ax-crique-korossibo-2019",
+      "m-ar-crique-bonne-nouvelle-2015",
+      "m-ar-crique-tawen-2019",
+      "m-ar-crique-centrale-2018",
+      "m-ar-riviere-blanc-2016",
+      "m-ar-sainte-barbe-2019",
+      "m-ar-crique-veoux-ricard-2016",
+      "m-ar-crique-vevoni-kaminare-2017",
+      "m-ar-crique-yaoni-2016",
+      "m-ar-dieudonne-2-2014",
+      "m-ar-esperance-1-2007",
+      "m-ar-espoir-bernadin-2007",
+      "m-ar-crique-georgeon-2017",
+      "m-ar-crique-grand-chardy-2018",
+      "m-ar-les-allies-2016",
+      "m-ar-crique-janvier-2020",
+      "m-ar-loka-1-2009",
+      "m-ar-crique-kawa-2017",
+      "m-ar-crique-korossibo-5-2015",
+      "m-ar-crique-korossibo-6-2016",
+      "m-ar-crique-koumarou-2010",
+      "m-ar-sud-changement-2007",
+      "m-ar-taconnet-2021",
+      "m-ar-tetes-de-crique-kounamari-2018",
+      "m-ar-crique-marie-hilaire-2016",
+      "m-ar-crique-mousse-09-2007",
+      "m-ar-crique-mousse-19-2019",
+      "m-ar-crique-nelson-2015",
+      "m-ar-crique-prosper-james-3-2017",
+      "m-ar-crique-rosette-2015",
+      "m-ar-crique-saut-bois-2018",
+      "m-ar-crique-serpent-15-2016",
+      "m-ar-crique-servilise-2020",
+      "m-ar-prosper-james-3-2019",
+      "m-ar-la-greve-2007",
+      "m-ar-amont-tamanoir-2020",
+      "m-ar-bonnot-2021",
+      "m-ar-citron-dieudonne-2014",
+      "m-ar-crique-acajou-2-2015",
+      "m-ar-crique-amadis-10-2018",
+      "m-ar-crique-amadis-11-2018",
+      "m-ar-crique-amadis-12-2019",
+      "m-ar-crique-amadis-nord-2019",
+      "m-ar-crique-bauge-2017",
+      "m-ar-crique-belle-etoile-2016",
+      "m-ar-crique-camopi-2015",
+      "m-ar-crique-claireville-2013",
+      "m-ar-crique-moufflet-2021",
+      "m-ar-crique-servilise-ouest-2020",
+      "m-ar-crique-citron-affluents-2016",
+      "m-ar-crique-nelson-2016",
+      "m-ar-crique-cession-03-2018"
+    ],
+    "area_sum": {
+      "value": "7926.20",
+      "unit": "km2",
+      "scale": 2,
+      "integer_units": "792620",
+      "meaning": "Sum of reported title areas across every status in this retained projection. Areas may overlap; this is not unique land coverage."
+    }
+  },
+  "national_valid_research": {
+    "rows": 71,
+    "matched_guyane_ids": 61,
+    "unmatched_national_ids": [
+      "g-ar-residence-dauphine-orleans-2025",
+      "g-ar-thales-las-france-la-ferte-saint-aubin-2025",
+      "g-ar-lvmh-recherche-2025",
+      "g-ar-lycee-pre-de-cordy-2026",
+      "g-ar-centre-hospitalier-de-ruffec-2022",
+      "g-ar-parc-du-futuroscope-2023",
+      "g-ar-magasins-generaux-de-reims-2025",
+      "g-ar-douai-1-2023",
+      "g-ar-aix-eguilles-2021",
+      "g-ar-douai2-2023"
+    ],
+    "date_disagreements": 27,
+    "comparisons": [
+      {
+        "id": "m-ar-seraphine-2025",
+        "publisher_raw": {
+          "start": "17-03-2026",
+          "end": "17-03-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-03-17",
+          "end": "2028-03-17"
+        },
+        "tabular": {
+          "start": "2026-03-17",
+          "end": "2028-03-17"
+        }
+      },
+      {
+        "id": "m-ar-arm-tres-petit-bagot-2025",
+        "publisher_raw": {
+          "start": "18-11-2025",
+          "end": "18-11-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-11-18",
+          "end": "2027-11-18"
+        },
+        "tabular": {
+          "start": "2025-11-18",
+          "end": "2027-11-18"
+        }
+      },
+      {
+        "id": "m-ar-athanase-2025",
+        "publisher_raw": {
+          "start": "14-11-2025",
+          "end": "14-11-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-11-14",
+          "end": "2027-11-14"
+        },
+        "tabular": {
+          "start": "2025-11-14",
+          "end": "2027-11-14"
+        }
+      },
+      {
+        "id": "m-ar-arm-i-grec-2025",
+        "publisher_raw": {
+          "start": "17-03-2026",
+          "end": "17-03-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-03-17",
+          "end": "2028-03-17"
+        },
+        "tabular": {
+          "start": "2026-03-17",
+          "end": "2028-03-17"
+        }
+      },
+      {
+        "id": "m-ar-arm-crique-passionis-2025",
+        "publisher_raw": {
+          "start": "17-03-2026",
+          "end": "17-03-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-03-17",
+          "end": "2028-03-17"
+        },
+        "tabular": {
+          "start": "2026-03-17",
+          "end": "2028-03-17"
+        }
+      },
+      {
+        "id": "m-ar-samuel-2025",
+        "publisher_raw": {
+          "start": "02-04-2026",
+          "end": "02-04-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-04-02",
+          "end": "2028-04-02"
+        },
+        "tabular": {
+          "start": "2026-02-04",
+          "end": "2028-02-04"
+        }
+      },
+      {
+        "id": "m-ar-aurele-2025",
+        "publisher_raw": {
+          "start": "14-11-2025",
+          "end": "14-11-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-11-14",
+          "end": "2027-11-14"
+        },
+        "tabular": {
+          "start": "2025-11-14",
+          "end": "2027-11-14"
+        }
+      },
+      {
+        "id": "m-ar-syracuse-2025",
+        "publisher_raw": {
+          "start": "14-11-2025",
+          "end": "14-11-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-11-14",
+          "end": "2027-11-14"
+        },
+        "tabular": {
+          "start": "2025-11-14",
+          "end": "2027-11-14"
+        }
+      },
+      {
+        "id": "m-ar-montagne-dieudonne-2025",
+        "publisher_raw": {
+          "start": "18-11-2025",
+          "end": "18-11-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-11-18",
+          "end": "2027-11-18"
+        },
+        "tabular": {
+          "start": "2025-11-18",
+          "end": "2027-11-18"
+        }
+      },
+      {
+        "id": "m-ar-opti-mine-recherche-1-2025",
+        "publisher_raw": {
+          "start": "17-03-2026",
+          "end": "17-03-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-03-17",
+          "end": "2028-03-17"
+        },
+        "tabular": {
+          "start": "2026-03-17",
+          "end": "2028-03-17"
+        }
+      },
+      {
+        "id": "m-ar-arm-berard-2025",
+        "publisher_raw": {
+          "start": "17-03-2026",
+          "end": "17-03-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-03-17",
+          "end": "2028-03-17"
+        },
+        "tabular": {
+          "start": "2026-03-17",
+          "end": "2028-03-17"
+        }
+      },
+      {
+        "id": "m-ar-amont-serpent-1-2025",
+        "publisher_raw": {
+          "start": "18-11-2025",
+          "end": "18-11-2026"
+        },
+        "publisher_day_first": {
+          "start": "2025-11-18",
+          "end": "2026-11-18"
+        },
+        "tabular": {
+          "start": "2025-11-18",
+          "end": "2026-11-18"
+        }
+      },
+      {
+        "id": "m-ar-bagot-mine-o-05-2025-117fa2d7",
+        "publisher_raw": {
+          "start": "02-04-2026",
+          "end": "02-04-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-04-02",
+          "end": "2028-04-02"
+        },
+        "tabular": {
+          "start": "2026-02-04",
+          "end": "2028-02-04"
+        }
+      },
+      {
+        "id": "m-ar-leonce-2025",
+        "publisher_raw": {
+          "start": "17-03-2026",
+          "end": "17-03-2027"
+        },
+        "publisher_day_first": {
+          "start": "2026-03-17",
+          "end": "2027-03-17"
+        },
+        "tabular": {
+          "start": "2026-03-17",
+          "end": "2027-03-17"
+        }
+      },
+      {
+        "id": "m-ar-crique-petit-inini-bellevue-2025",
+        "publisher_raw": {
+          "start": "02-04-2026",
+          "end": "02-04-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-04-02",
+          "end": "2028-04-02"
+        },
+        "tabular": {
+          "start": "2026-02-04",
+          "end": "2028-02-04"
+        }
+      },
+      {
+        "id": "m-ar-bagot-sud-2025",
+        "publisher_raw": {
+          "start": "18-11-2025",
+          "end": "18-11-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-11-18",
+          "end": "2027-11-18"
+        },
+        "tabular": {
+          "start": "2025-11-18",
+          "end": "2027-11-18"
+        }
+      },
+      {
+        "id": "m-ar-amont-grand-bagote-2025",
+        "publisher_raw": {
+          "start": "09-12-2025",
+          "end": "09-12-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-12-09",
+          "end": "2027-12-09"
+        },
+        "tabular": {
+          "start": "2025-09-12",
+          "end": "2027-09-12"
+        }
+      },
+      {
+        "id": "m-ar-degrad-neuf-pti-bagot-2025",
+        "publisher_raw": {
+          "start": "06-06-2025",
+          "end": "06-06-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-06-06",
+          "end": "2027-06-06"
+        },
+        "tabular": {
+          "start": "2025-06-06",
+          "end": "2027-06-06"
+        }
+      },
+      {
+        "id": "m-ar-crique-tumuc-humac-nord-2025",
+        "publisher_raw": {
+          "start": "18-11-2025",
+          "end": "18-11-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-11-18",
+          "end": "2027-11-18"
+        },
+        "tabular": {
+          "start": "2025-11-18",
+          "end": "2027-11-18"
+        }
+      },
+      {
+        "id": "m-ar-arm-timal-2025",
+        "publisher_raw": {
+          "start": "09-06-2026",
+          "end": "09-06-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-06-09",
+          "end": "2028-06-09"
+        },
+        "tabular": {
+          "start": "2026-09-06",
+          "end": "2028-09-06"
+        }
+      },
+      {
+        "id": "m-ar-arm-cafe-nord-2025",
+        "publisher_raw": {
+          "start": "14-11-2025",
+          "end": "14-11-2026"
+        },
+        "publisher_day_first": {
+          "start": "2025-11-14",
+          "end": "2026-11-14"
+        },
+        "tabular": {
+          "start": "2025-11-14",
+          "end": "2026-11-14"
+        }
+      },
+      {
+        "id": "m-ar-bagot-mine-o-06-2025",
+        "publisher_raw": {
+          "start": "02-04-2026",
+          "end": "02-04-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-04-02",
+          "end": "2028-04-02"
+        },
+        "tabular": {
+          "start": "2026-02-04",
+          "end": "2028-02-04"
+        }
+      },
+      {
+        "id": "m-ar-korossibo-rd-2025",
+        "publisher_raw": {
+          "start": "02-04-2026",
+          "end": "02-04-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-04-02",
+          "end": "2028-04-02"
+        },
+        "tabular": {
+          "start": "2026-02-04",
+          "end": "2028-02-04"
+        }
+      },
+      {
+        "id": "m-ar-counamama-ouest-2026",
+        "publisher_raw": {
+          "start": "28-04-2026",
+          "end": "28-04-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-04-28",
+          "end": "2028-04-28"
+        },
+        "tabular": {
+          "start": "2026-04-28",
+          "end": "2028-04-28"
+        }
+      },
+      {
+        "id": "m-ar-maripa-ouest-extension-1-2025",
+        "publisher_raw": {
+          "start": "02-04-2026",
+          "end": "02-04-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-04-02",
+          "end": "2028-04-02"
+        },
+        "tabular": {
+          "start": "2026-02-04",
+          "end": "2028-02-04"
+        }
+      },
+      {
+        "id": "m-ar-cr-mousse-1-2025",
+        "publisher_raw": {
+          "start": "02-04-2026",
+          "end": "02-04-2027"
+        },
+        "publisher_day_first": {
+          "start": "2026-04-02",
+          "end": "2027-04-02"
+        },
+        "tabular": {
+          "start": "2026-02-04",
+          "end": "2027-02-04"
+        }
+      },
+      {
+        "id": "m-ar-arm-moufflet-2026",
+        "publisher_raw": {
+          "start": "02-04-2026",
+          "end": "02-04-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-04-02",
+          "end": "2028-04-02"
+        },
+        "tabular": {
+          "start": "2026-02-04",
+          "end": "2028-02-04"
+        }
+      },
+      {
+        "id": "m-ar-boulanger-pt-yaoni-2025",
+        "publisher_raw": {
+          "start": "09-04-2026",
+          "end": "09-04-2027"
+        },
+        "publisher_day_first": {
+          "start": "2026-04-09",
+          "end": "2027-04-09"
+        },
+        "tabular": {
+          "start": "2026-09-04",
+          "end": "2027-09-04"
+        }
+      },
+      {
+        "id": "m-ar-crique-angele-amont-2026",
+        "publisher_raw": {
+          "start": "09-06-2026",
+          "end": "09-06-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-06-09",
+          "end": "2028-06-09"
+        },
+        "tabular": {
+          "start": "2026-09-06",
+          "end": "2028-09-06"
+        }
+      },
+      {
+        "id": "m-ar-sabakou-2025",
+        "publisher_raw": {
+          "start": "31-12-2025",
+          "end": "31-12-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-12-31",
+          "end": "2027-12-31"
+        },
+        "tabular": {
+          "start": "2025-12-31",
+          "end": "2027-12-31"
+        }
+      },
+      {
+        "id": "m-ar-bon-espoir-amon-2026",
+        "publisher_raw": {
+          "start": "09-06-2026",
+          "end": "09-06-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-06-09",
+          "end": "2028-06-09"
+        },
+        "tabular": {
+          "start": "2026-09-06",
+          "end": "2028-09-06"
+        }
+      },
+      {
+        "id": "m-ar-grand-plat-2025",
+        "publisher_raw": {
+          "start": "17-03-2026",
+          "end": "17-03-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-03-17",
+          "end": "2028-03-17"
+        },
+        "tabular": {
+          "start": "2026-03-17",
+          "end": "2028-03-17"
+        }
+      },
+      {
+        "id": "m-ar-crique-grand-bagot-3-2025",
+        "publisher_raw": {
+          "start": "07-01-2025",
+          "end": "07-01-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-01-07",
+          "end": "2027-01-07"
+        },
+        "tabular": {
+          "start": "2025-07-01",
+          "end": "2027-07-01"
+        }
+      },
+      {
+        "id": "m-ar-crique-grand-kaminare-2025",
+        "publisher_raw": {
+          "start": "14-01-2025",
+          "end": "14-01-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-01-14",
+          "end": "2027-01-14"
+        },
+        "tabular": {
+          "start": "2025-01-14",
+          "end": "2027-01-14"
+        }
+      },
+      {
+        "id": "m-ar-arm-espoir-2025",
+        "publisher_raw": {
+          "start": "11-09-2025",
+          "end": "11-09-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-09-11",
+          "end": "2027-09-11"
+        },
+        "tabular": {
+          "start": "2025-11-09",
+          "end": "2027-11-09"
+        }
+      },
+      {
+        "id": "m-ar-simon-2025",
+        "publisher_raw": {
+          "start": "18-11-2025",
+          "end": "18-11-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-11-18",
+          "end": "2027-11-18"
+        },
+        "tabular": {
+          "start": "2025-11-18",
+          "end": "2027-11-18"
+        }
+      },
+      {
+        "id": "m-ar-venise-2025",
+        "publisher_raw": {
+          "start": "14-11-2025",
+          "end": "14-11-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-11-14",
+          "end": "2027-11-14"
+        },
+        "tabular": {
+          "start": "2025-11-14",
+          "end": "2027-11-14"
+        }
+      },
+      {
+        "id": "m-ar-elson-2025",
+        "publisher_raw": {
+          "start": "28-04-2026",
+          "end": "28-04-2027"
+        },
+        "publisher_day_first": {
+          "start": "2026-04-28",
+          "end": "2027-04-28"
+        },
+        "tabular": {
+          "start": "2026-04-28",
+          "end": "2027-04-28"
+        }
+      },
+      {
+        "id": "m-ar-arm-dubol-2025",
+        "publisher_raw": {
+          "start": "31-12-2025",
+          "end": "31-12-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-12-31",
+          "end": "2027-12-31"
+        },
+        "tabular": {
+          "start": "2025-12-31",
+          "end": "2027-12-31"
+        }
+      },
+      {
+        "id": "m-ar-arm-servilise-2025",
+        "publisher_raw": {
+          "start": "09-06-2026",
+          "end": "09-06-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-06-09",
+          "end": "2028-06-09"
+        },
+        "tabular": {
+          "start": "2026-09-06",
+          "end": "2028-09-06"
+        }
+      },
+      {
+        "id": "m-ar-auguste-2025",
+        "publisher_raw": {
+          "start": "02-10-2025",
+          "end": "02-10-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-10-02",
+          "end": "2027-10-02"
+        },
+        "tabular": {
+          "start": "2025-02-10",
+          "end": "2027-02-10"
+        }
+      },
+      {
+        "id": "m-ar-grand-bagot-toukor-2025",
+        "publisher_raw": {
+          "start": "30-01-2025",
+          "end": "30-01-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-01-30",
+          "end": "2027-01-30"
+        },
+        "tabular": {
+          "start": "2025-01-30",
+          "end": "2027-01-30"
+        }
+      },
+      {
+        "id": "m-ar-grand-bagot-cme-2025",
+        "publisher_raw": {
+          "start": "03-02-2025",
+          "end": "03-02-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-02-03",
+          "end": "2027-02-03"
+        },
+        "tabular": {
+          "start": "2025-03-02",
+          "end": "2027-03-02"
+        }
+      },
+      {
+        "id": "m-ar-grand-bagot-smse-2025",
+        "publisher_raw": {
+          "start": "06-03-2025",
+          "end": "06-03-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-03-06",
+          "end": "2027-03-06"
+        },
+        "tabular": {
+          "start": "2025-06-03",
+          "end": "2027-06-03"
+        }
+      },
+      {
+        "id": "m-ar-domitien-2024",
+        "publisher_raw": {
+          "start": "02-10-2025",
+          "end": "02-10-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-10-02",
+          "end": "2027-10-02"
+        },
+        "tabular": {
+          "start": "2025-02-10",
+          "end": "2027-02-10"
+        }
+      },
+      {
+        "id": "m-ar-arm-annie-2024",
+        "publisher_raw": {
+          "start": "11-09-2025",
+          "end": "11-09-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-09-11",
+          "end": "2027-09-11"
+        },
+        "tabular": {
+          "start": "2025-11-09",
+          "end": "2027-11-09"
+        }
+      },
+      {
+        "id": "m-ar-grand-serpent-2025",
+        "publisher_raw": {
+          "start": "18-11-2025",
+          "end": "18-11-2026"
+        },
+        "publisher_day_first": {
+          "start": "2025-11-18",
+          "end": "2026-11-18"
+        },
+        "tabular": {
+          "start": "2025-11-18",
+          "end": "2026-11-18"
+        }
+      },
+      {
+        "id": "m-ar-bon-espoir-final-2025",
+        "publisher_raw": {
+          "start": "17-03-2026",
+          "end": "17-03-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-03-17",
+          "end": "2028-03-17"
+        },
+        "tabular": {
+          "start": "2026-03-17",
+          "end": "2028-03-17"
+        }
+      },
+      {
+        "id": "m-ar-degrad-neuf-nord-2025",
+        "publisher_raw": {
+          "start": "20-11-2025",
+          "end": "20-11-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-11-20",
+          "end": "2027-11-20"
+        },
+        "tabular": {
+          "start": "2025-11-20",
+          "end": "2027-11-20"
+        }
+      },
+      {
+        "id": "m-ar-sud-yaoni-2025",
+        "publisher_raw": {
+          "start": "09-12-2025",
+          "end": "09-12-2026"
+        },
+        "publisher_day_first": {
+          "start": "2025-12-09",
+          "end": "2026-12-09"
+        },
+        "tabular": {
+          "start": "2025-09-12",
+          "end": "2026-09-12"
+        }
+      },
+      {
+        "id": "m-ar-crique-florida-2025",
+        "publisher_raw": {
+          "start": "02-04-2026",
+          "end": "02-04-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-04-02",
+          "end": "2028-04-02"
+        },
+        "tabular": {
+          "start": "2026-02-04",
+          "end": "2028-02-04"
+        }
+      },
+      {
+        "id": "m-ar-palermo-2025",
+        "publisher_raw": {
+          "start": "14-11-2025",
+          "end": "14-11-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-11-14",
+          "end": "2027-11-14"
+        },
+        "tabular": {
+          "start": "2025-11-14",
+          "end": "2027-11-14"
+        }
+      },
+      {
+        "id": "m-ar-crique-foucoul-est-2025",
+        "publisher_raw": {
+          "start": "18-11-2025",
+          "end": "18-11-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-11-18",
+          "end": "2027-11-18"
+        },
+        "tabular": {
+          "start": "2025-11-18",
+          "end": "2027-11-18"
+        }
+      },
+      {
+        "id": "m-ar-amadis-aval-3-cme-2025",
+        "publisher_raw": {
+          "start": "18-11-2025",
+          "end": "18-11-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-11-18",
+          "end": "2027-11-18"
+        },
+        "tabular": {
+          "start": "2025-11-18",
+          "end": "2027-11-18"
+        }
+      },
+      {
+        "id": "m-ar-deleng-2025",
+        "publisher_raw": {
+          "start": "31-12-2025",
+          "end": "31-12-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-12-31",
+          "end": "2027-12-31"
+        },
+        "tabular": {
+          "start": "2025-12-31",
+          "end": "2027-12-31"
+        }
+      },
+      {
+        "id": "m-ar-arm-saut-sec-2025",
+        "publisher_raw": {
+          "start": "11-09-2025",
+          "end": "11-09-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-09-11",
+          "end": "2027-09-11"
+        },
+        "tabular": {
+          "start": "2025-11-09",
+          "end": "2027-11-09"
+        }
+      },
+      {
+        "id": "m-ar-tibourou-2024",
+        "publisher_raw": {
+          "start": "02-10-2025",
+          "end": "02-10-2027"
+        },
+        "publisher_day_first": {
+          "start": "2025-10-02",
+          "end": "2027-10-02"
+        },
+        "tabular": {
+          "start": "2025-02-10",
+          "end": "2027-02-10"
+        }
+      },
+      {
+        "id": "m-ar-aval-serpent-2025",
+        "publisher_raw": {
+          "start": "18-11-2025",
+          "end": "18-11-2026"
+        },
+        "publisher_day_first": {
+          "start": "2025-11-18",
+          "end": "2026-11-18"
+        },
+        "tabular": {
+          "start": "2025-11-18",
+          "end": "2026-11-18"
+        }
+      },
+      {
+        "id": "m-ar-boeuf-mort-2025-75497acc",
+        "publisher_raw": {
+          "start": "02-04-2026",
+          "end": "02-04-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-04-02",
+          "end": "2028-04-02"
+        },
+        "tabular": {
+          "start": "2026-02-04",
+          "end": "2028-02-04"
+        }
+      },
+      {
+        "id": "m-ar-korossibo-ne-amont-2025",
+        "publisher_raw": {
+          "start": "17-03-2026",
+          "end": "17-03-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-03-17",
+          "end": "2028-03-17"
+        },
+        "tabular": {
+          "start": "2026-03-17",
+          "end": "2028-03-17"
+        }
+      },
+      {
+        "id": "m-ar-amadis-rg-2025",
+        "publisher_raw": {
+          "start": "02-04-2026",
+          "end": "02-04-2028"
+        },
+        "publisher_day_first": {
+          "start": "2026-04-02",
+          "end": "2028-04-02"
+        },
+        "tabular": {
+          "start": "2026-02-04",
+          "end": "2028-02-04"
+        }
+      }
+    ]
+  },
+  "samuel_original_rest": {
+    "file_upload_id": "3f8dd772-3100-811f-9412-00b25a1c1cca",
+    "filename": "Camino-original-Samuel-title-date-contract-20261013.json",
+    "bytes": 16970,
+    "sha256": "1d8d9af275a342846a0b72533631d9f54c2230b78f2ee8b386467090a2d37dd7",
+    "publisher_url": "https://api.camino.developpement-durable.gouv.fr/rest/titres/m-ar-samuel-2025",
+    "record": {
+      "titre_id": "37d46a62572051484e8d234c",
+      "titre_nom": "Samuel",
+      "titre_slug": "m-ar-samuel-2025",
+      "titre_date_debut": "2026-04-02",
+      "titre_date_fin": "2028-04-02",
+      "titre_type_id": "arm",
+      "titre_statut_id": "val",
+      "titre_visibilite": "Publique",
+      "titre_doublon": null,
+      "titre_references": [
+        {
+          "titre_reference_nom": "ARM25-65",
+          "titre_reference_type_id": "dea"
+        },
+        {
+          "titre_reference_nom": "26/2026",
+          "titre_reference_type_id": "dea"
+        }
+      ],
+      "titre_last_modified_date": null,
+      "titre_demarches": [
+        {
+          "demarche_id": "effc7cb4fc305e10b85e6b56",
+          "demarche_slug": "m-ar-samuel-2025-oct01",
+          "demarche_description": "",
+          "demarche_etapes": [
+            {
+              "etape_statut_id": "fai",
+              "etape_is_brouillon": false,
+              "etape_date": "2026-04-02",
+              "etape_id": "0ff9e5aace4368a938f45d62",
+              "etape_ordre": 13,
+              "etape_note": {
+                "valeur": "",
+                "is_avertissement": false
+              },
+              "etape_slug": "m-ar-samuel-2025-oct01-rpu01",
+              "etape_sections_with_values": [
+                {
+                  "id": "praa",
+                  "nom": "Propriétés de la publication",
+                  "elements": [
+                    {
+                      "id": "numeroRAA",
+                      "nom": "Numéro de RAA ",
+                      "optionnel": true,
+                      "heritable": false,
+                      "type": "text",
+                      "value": "R03-2026-088"
+                    }
+                  ]
+                }
+              ],
+              "etape_heritage_contenu": {
+                "praa": {}
+              },
+              "etape_entreprises_documents": [],
+              "etape_documents": [
+                {
+                  "type": "DESCRIPTION_OBLIGATOIRE",
+                  "etape_document_id": "2026-04-03-aut-5ab1a959",
+                  "etape_document_public_lecture": true,
+                  "etape_document_entreprises_lecture": true,
+                  "etape_document_type_id": "aut",
+                  "etape_document_description": "recueil-r03-2026-088-recueil-des-actes-administratifs-nominatifs-1"
+                }
+              ],
+              "etape_avis_documents": [],
+              "etape_fondamentale": {
+                "etape_date_debut": null,
+                "etape_duree": {
+                  "type": "duree",
+                  "value": null
+                },
+                "etape_substances": null,
+                "etape_titulaire_ids": null,
+                "etape_amodiataire_ids": null,
+                "etape_perimetre": null,
+                "etape_heritage_props": {
+                  "etape_duree": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_date_debut": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_substances": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_titulaires": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_amodiataires": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_perimetre": {
+                    "actif": true,
+                    "etapeId": "b9faf024bdc55b8055a2bc83"
+                  }
+                }
+              },
+              "etape_type_id": "rpu"
+            },
+            {
+              "etape_statut_id": "acc",
+              "etape_is_brouillon": false,
+              "etape_date": "2026-03-26",
+              "etape_id": "9bbbf2bcae0b4f943c17a563",
+              "etape_ordre": 12,
+              "etape_note": {
+                "valeur": "",
+                "is_avertissement": false
+              },
+              "etape_slug": "m-ar-samuel-2025-oct01-dex01",
+              "etape_sections_with_values": [],
+              "etape_heritage_contenu": {},
+              "etape_entreprises_documents": [],
+              "etape_documents": [
+                {
+                  "type": "DESCRIPTION_OPTIONNELLE",
+                  "etape_document_id": "2026-04-03-arp-702cb8d9",
+                  "etape_document_public_lecture": true,
+                  "etape_document_entreprises_lecture": true,
+                  "etape_document_type_id": "arp",
+                  "etape_document_description": "AP_R03-2026-03-26-00013_26-2026_ARM25-65_Samuel"
+                }
+              ],
+              "etape_avis_documents": [],
+              "etape_fondamentale": {
+                "etape_date_debut": null,
+                "etape_duree": {
+                  "type": "duree",
+                  "value": null
+                },
+                "etape_substances": null,
+                "etape_titulaire_ids": null,
+                "etape_amodiataire_ids": null,
+                "etape_perimetre": null,
+                "etape_heritage_props": {
+                  "etape_duree": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_date_debut": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_substances": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_titulaires": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_amodiataires": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_perimetre": {
+                    "actif": true,
+                    "etapeId": "b9faf024bdc55b8055a2bc83"
+                  }
+                }
+              },
+              "etape_type_id": "dex"
+            },
+            {
+              "etape_statut_id": "fai",
+              "etape_is_brouillon": false,
+              "etape_date": "2026-01-19",
+              "etape_id": "47fcd79da9b8eb637704fe76",
+              "etape_ordre": 8,
+              "etape_note": {
+                "valeur": "",
+                "is_avertissement": false
+              },
+              "etape_slug": "m-ar-samuel-2025-oct01-adc01",
+              "etape_sections_with_values": [],
+              "etape_heritage_contenu": {},
+              "etape_entreprises_documents": [],
+              "etape_documents": [],
+              "etape_avis_documents": [],
+              "etape_type_id": "adc"
+            },
+            {
+              "etape_statut_id": "acc",
+              "etape_is_brouillon": false,
+              "etape_date": "2026-01-19",
+              "etape_id": "b9faf024bdc55b8055a2bc83",
+              "etape_ordre": 7,
+              "etape_note": {
+                "valeur": "",
+                "is_avertissement": false
+              },
+              "etape_slug": "m-ar-samuel-2025-oct01-rmc01",
+              "etape_sections_with_values": [],
+              "etape_heritage_contenu": {},
+              "etape_entreprises_documents": [],
+              "etape_documents": [],
+              "etape_avis_documents": [],
+              "etape_fondamentale": {
+                "etape_date_debut": null,
+                "etape_duree": {
+                  "type": "duree",
+                  "value": null
+                },
+                "etape_substances": null,
+                "etape_titulaire_ids": null,
+                "etape_amodiataire_ids": null,
+                "etape_perimetre": {
+                  "etape_geojson4326_perimetre": {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                      "type": "MultiPolygon",
+                      "coordinates": [
+                        [
+                          [
+                            [
+                              -53.829435356,
+                              4.861410259
+                            ],
+                            [
+                              -53.825313665,
+                              4.849195132
+                            ],
+                            [
+                              -53.828195932,
+                              4.848922118
+                            ],
+                            [
+                              -53.837682934,
+                              4.861275476
+                            ],
+                            [
+                              -53.85093638,
+                              4.859451193
+                            ],
+                            [
+                              -53.853034772,
+                              4.862945404
+                            ],
+                            [
+                              -53.842733299,
+                              4.868026352
+                            ],
+                            [
+                              -53.829435356,
+                              4.861410259
+                            ]
+                          ]
+                        ]
+                      ]
+                    }
+                  },
+                  "etape_geojson4326_points": {
+                    "type": "FeatureCollection",
+                    "features": [
+                      {
+                        "type": "Feature",
+                        "geometry": {
+                          "type": "Point",
+                          "coordinates": [
+                            -53.829435355787794,
+                            4.861410259312326
+                          ]
+                        },
+                        "properties": {
+                          "nom": "A",
+                          "description": "Polygone 1"
+                        }
+                      },
+                      {
+                        "type": "Feature",
+                        "geometry": {
+                          "type": "Point",
+                          "coordinates": [
+                            -53.82531366517985,
+                            4.849195132077477
+                          ]
+                        },
+                        "properties": {
+                          "nom": "B",
+                          "description": "Polygone 1"
+                        }
+                      },
+                      {
+                        "type": "Feature",
+                        "geometry": {
+                          "type": "Point",
+                          "coordinates": [
+                            -53.82819593167913,
+                            4.848922117729046
+                          ]
+                        },
+                        "properties": {
+                          "nom": "C",
+                          "description": "Polygone 1"
+                        }
+                      },
+                      {
+                        "type": "Feature",
+                        "geometry": {
+                          "type": "Point",
+                          "coordinates": [
+                            -53.83768293357959,
+                            4.861275476204358
+                          ]
+                        },
+                        "properties": {
+                          "nom": "D",
+                          "description": "Polygone 1"
+                        }
+                      },
+                      {
+                        "type": "Feature",
+                        "geometry": {
+                          "type": "Point",
+                          "coordinates": [
+                            -53.85093637987612,
+                            4.859451193073478
+                          ]
+                        },
+                        "properties": {
+                          "nom": "E",
+                          "description": "Polygone 1"
+                        }
+                      },
+                      {
+                        "type": "Feature",
+                        "geometry": {
+                          "type": "Point",
+                          "coordinates": [
+                            -53.85303477230768,
+                            4.8629454035065285
+                          ]
+                        },
+                        "properties": {
+                          "nom": "F",
+                          "description": "Polygone 1"
+                        }
+                      },
+                      {
+                        "type": "Feature",
+                        "geometry": {
+                          "type": "Point",
+                          "coordinates": [
+                            -53.842733299209925,
+                            4.868026351933215
+                          ]
+                        },
+                        "properties": {
+                          "nom": "G",
+                          "description": "Polygone 1"
+                        }
+                      }
+                    ]
+                  },
+                  "etape_geojson_origine_perimetre": {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                      "type": "MultiPolygon",
+                      "coordinates": [
+                        [
+                          [
+                            [
+                              186153.16637238386,
+                              538001.9596384248
+                            ],
+                            [
+                              186605.07418939806,
+                              536648.1782588523
+                            ],
+                            [
+                              186284.97789990224,
+                              536619.2988427845
+                            ],
+                            [
+                              185237.5235423804,
+                              537990.8833138681
+                            ],
+                            [
+                              183765.36607026015,
+                              537795.1775239834
+                            ],
+                            [
+                              183534.04816924612,
+                              538182.8793580774
+                            ],
+                            [
+                              184680.0152063703,
+                              538740.381275524
+                            ],
+                            [
+                              186153.16637238386,
+                              538001.9596384248
+                            ]
+                          ]
+                        ]
+                      ]
+                    }
+                  },
+                  "etape_geojson_origine_points": {
+                    "type": "FeatureCollection",
+                    "features": [
+                      {
+                        "type": "Feature",
+                        "geometry": {
+                          "type": "Point",
+                          "coordinates": [
+                            186153.16637238386,
+                            538001.9596384248
+                          ]
+                        },
+                        "properties": {
+                          "nom": "A",
+                          "description": "Polygone 1"
+                        }
+                      },
+                      {
+                        "type": "Feature",
+                        "geometry": {
+                          "type": "Point",
+                          "coordinates": [
+                            186605.07418939806,
+                            536648.1782588523
+                          ]
+                        },
+                        "properties": {
+                          "nom": "B",
+                          "description": "Polygone 1"
+                        }
+                      },
+                      {
+                        "type": "Feature",
+                        "geometry": {
+                          "type": "Point",
+                          "coordinates": [
+                            186284.97789990224,
+                            536619.2988427845
+                          ]
+                        },
+                        "properties": {
+                          "nom": "C",
+                          "description": "Polygone 1"
+                        }
+                      },
+                      {
+                        "type": "Feature",
+                        "geometry": {
+                          "type": "Point",
+                          "coordinates": [
+                            185237.5235423804,
+                            537990.8833138681
+                          ]
+                        },
+                        "properties": {
+                          "nom": "D",
+                          "description": "Polygone 1"
+                        }
+                      },
+                      {
+                        "type": "Feature",
+                        "geometry": {
+                          "type": "Point",
+                          "coordinates": [
+                            183765.36607026015,
+                            537795.1775239834
+                          ]
+                        },
+                        "properties": {
+                          "nom": "E",
+                          "description": "Polygone 1"
+                        }
+                      },
+                      {
+                        "type": "Feature",
+                        "geometry": {
+                          "type": "Point",
+                          "coordinates": [
+                            183534.04816924612,
+                            538182.8793580774
+                          ]
+                        },
+                        "properties": {
+                          "nom": "F",
+                          "description": "Polygone 1"
+                        }
+                      },
+                      {
+                        "type": "Feature",
+                        "geometry": {
+                          "type": "Point",
+                          "coordinates": [
+                            184680.0152063703,
+                            538740.381275524
+                          ]
+                        },
+                        "properties": {
+                          "nom": "G",
+                          "description": "Polygone 1"
+                        }
+                      }
+                    ]
+                  },
+                  "etape_geojson_origine_geo_systeme_id": "2972",
+                  "etape_geojson4326_forages": null,
+                  "etape_geojson_origine_forages": null,
+                  "etape_surface": 2.09,
+                  "etape_communes": [
+                    {
+                      "commune_id": "97311",
+                      "commune_nom": "Saint-Laurent-du-Maroni"
+                    }
+                  ],
+                  "etape_epci": [
+                    {
+                      "epci_id": "249730037",
+                      "epci_nom": "CC de l'Ouest Guyanais"
+                    }
+                  ],
+                  "etape_departements": [
+                    "973"
+                  ],
+                  "etape_secteurs_maritimes": [],
+                  "etape_sdom_zones": [
+                    "2"
+                  ],
+                  "etape_forets": [
+                    "LDD"
+                  ],
+                  "etape_administrations_locales": [
+                    "aut-mrae-guyane-01",
+                    "dea-guyane-01",
+                    "ope-onf-973-01",
+                    "pre-97302-01"
+                  ]
+                },
+                "etape_heritage_props": {
+                  "etape_duree": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_date_debut": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_substances": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_titulaires": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_amodiataires": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_perimetre": {
+                    "actif": false,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  }
+                }
+              },
+              "etape_type_id": "rmc"
+            },
+            {
+              "etape_statut_id": "ter",
+              "etape_is_brouillon": false,
+              "etape_date": "2025-12-17",
+              "etape_id": "f431eb81fb7e0fa847cab581",
+              "etape_ordre": 6,
+              "etape_note": {
+                "valeur": "",
+                "is_avertissement": false
+              },
+              "etape_slug": "m-ar-samuel-2025-oct01-anf01",
+              "etape_sections_with_values": [
+                {
+                  "id": "publication",
+                  "nom": "Références Légifrance",
+                  "elements": [
+                    {
+                      "id": "jorf",
+                      "nom": "Numéro JORF",
+                      "description": "Le numéro de JORF à rentrer est la dernière partie de l'URL du JORF. <br /> Par exemple dans l'URL https://www.legifrance.gouv.fr/jorf/id/JORFTEXTXXXXXXXXXX le numéro est <b>JORFTEXTXXXXXXXXXX</b>",
+                      "optionnel": false,
+                      "heritable": false,
+                      "type": "text",
+                      "value": "JORFTEXT000053036863"
+                    },
+                    {
+                      "id": "nor",
+                      "nom": "Numéro NOR",
+                      "description": "",
+                      "optionnel": true,
+                      "heritable": false,
+                      "type": "text",
+                      "value": null
+                    }
+                  ]
+                },
+                {
+                  "id": "anf",
+                  "elements": [
+                    {
+                      "id": "duree",
+                      "nom": "Durée en jours de la mise en concurrence",
+                      "optionnel": false,
+                      "heritable": false,
+                      "type": "number",
+                      "value": 31
+                    }
+                  ]
+                }
+              ],
+              "etape_heritage_contenu": {
+                "anf": {},
+                "publication": {}
+              },
+              "etape_entreprises_documents": [],
+              "etape_documents": [
+                {
+                  "type": "DESCRIPTION_OPTIONNELLE",
+                  "etape_document_id": "2026-01-14-avc-25b7bec0",
+                  "etape_document_public_lecture": true,
+                  "etape_document_entreprises_lecture": true,
+                  "etape_document_type_id": "avc",
+                  "etape_document_description": ""
+                }
+              ],
+              "etape_avis_documents": [],
+              "etape_fondamentale": {
+                "etape_date_debut": null,
+                "etape_duree": {
+                  "type": "duree",
+                  "value": null
+                },
+                "etape_substances": null,
+                "etape_titulaire_ids": null,
+                "etape_amodiataire_ids": null,
+                "etape_perimetre": null,
+                "etape_heritage_props": {
+                  "etape_duree": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_date_debut": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_substances": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_titulaires": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_amodiataires": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_perimetre": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  }
+                }
+              },
+              "etape_type_id": "anf"
+            },
+            {
+              "etape_statut_id": "fav",
+              "etape_is_brouillon": false,
+              "etape_date": "2025-12-08",
+              "etape_id": "f8839fb256531b87a1e6261f",
+              "etape_ordre": 5,
+              "etape_note": {
+                "valeur": "",
+                "is_avertissement": false
+              },
+              "etape_slug": "m-ar-samuel-2025-oct01-mcr02",
+              "etape_sections_with_values": [
+                {
+                  "id": "notificationRecevabilite",
+                  "nom": "Notification au demandeur",
+                  "elements": [
+                    {
+                      "id": "dateDeNotification",
+                      "nom": "Date de notification au demandeur",
+                      "optionnel": true,
+                      "heritable": false,
+                      "type": "date",
+                      "value": null
+                    }
+                  ]
+                }
+              ],
+              "etape_heritage_contenu": {},
+              "etape_entreprises_documents": [],
+              "etape_documents": [],
+              "etape_avis_documents": [],
+              "etape_type_id": "mcr"
+            },
+            {
+              "etape_statut_id": "fai",
+              "etape_is_brouillon": false,
+              "etape_date": "2025-11-24",
+              "etape_id": "9539f0b9209058d4a5552abc",
+              "etape_ordre": 4,
+              "etape_note": {
+                "valeur": "",
+                "is_avertissement": false
+              },
+              "etape_slug": "m-ar-samuel-2025-oct01-rco01",
+              "etape_sections_with_values": [],
+              "etape_heritage_contenu": {
+                "arm": {
+                  "mecanise": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "franchissements": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  }
+                }
+              },
+              "etape_entreprises_documents": [],
+              "etape_documents": [],
+              "etape_avis_documents": [],
+              "etape_fondamentale": {
+                "etape_date_debut": null,
+                "etape_duree": {
+                  "type": "duree",
+                  "value": null
+                },
+                "etape_substances": null,
+                "etape_titulaire_ids": null,
+                "etape_amodiataire_ids": null,
+                "etape_perimetre": null,
+                "etape_heritage_props": {
+                  "etape_duree": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_date_debut": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_substances": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_titulaires": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_amodiataires": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  },
+                  "etape_perimetre": {
+                    "actif": true,
+                    "etapeId": "b1d8c4fa0a4180461177098c"
+                  }
+                }
+              },
+              "etape_type_id": "rco"
+            },
+            {
+              "etape_statut_id": "def",
+              "etape_is_brouillon": false,
+              "etape_date": "2025-11-06",
+              "etape_id": "f52387fe37cd18bc5f9b7e32",
+              "etape_ordre": 3,
+              "etape_note": {
+                "valeur": "",
+                "is_avertissement": false
+              },
+              "etape_slug": "m-ar-samuel-2025-oct01-mcr01",
+              "etape_sections_with_values": [
+                {
+                  "id": "mcox",
+                  "nom": "Gestion de la demande de compléments",
+                  "elements": [
+                    {
+                      "id": "delaifixe",
+                      "nom": "Délai fixé (jour)",
+                      "description": "Nombre de jours accordés pour produire les compléments demandés. Le delai au delà duquel une décision implicite se forme est suspendu dès réception de cette demande et jusqu'à la production des compléments. Au delà du délai fixé, la demande est suceptible d'être classée sans suite ou instruite en l'état.",
+                      "optionnel": true,
+                      "heritable": false,
+                      "type": "number",
+                      "value": 31
+                    },
+                    {
+                      "id": "datear",
+                      "nom": "Accusé de réception",
+                      "description": "Date de l'accusé de réception de la demande de compléments à compter de laquelle commence à courir le délai accordé pour produire les compléments.",
+                      "optionnel": true,
+                      "heritable": false,
+                      "type": "date",
+                      "value": "2025-11-24"
+                    }
+                  ]
+                }
+              ],
+              "etape_heritage_contenu": {},
+              "etape_entreprises_documents": [],
+              "etape_documents": [],
+              "etape_avis_documents": [],
+              "etape_type_id": "mcr"
+            },
+            {
+              "etape_statut_id": "fai",
+              "etape_is_brouillon": false,
+              "etape_date": "2025-11-04",
+              "etape_id": "bf4163b7bb261d5d412d33a3",
+              "etape_ordre": 2,
+              "etape_note": {
+                "valeur": "",
+                "is_avertissement": false
+              },
+              "etape_slug": "m-ar-samuel-2025-oct01-men01",
+              "etape_sections_with_values": [],
+              "etape_heritage_contenu": {},
+              "etape_entreprises_documents": [],
+              "etape_documents": [],
+              "etape_avis_documents": [],
+              "etape_type_id": "men"
+            },
+            {
+              "etape_statut_id": "fai",
+              "etape_is_brouillon": false,
+              "etape_date": "2025-11-03",
+              "etape_id": "b1d8c4fa0a4180461177098c",
+              "etape_ordre": 1,
+              "etape_note": {
+                "valeur": "",
+                "is_avertissement": false
+              },
+              "etape_slug": "m-ar-samuel-2025-oct01-mfr01",
+              "etape_sections_with_values": [
+                {
+                  "id": "arm",
+                  "nom": "Caractéristiques ARM",
+                  "elements": [
+                    {
+                      "id": "mecanise",
+                      "nom": "Prospection mécanisée",
+                      "description": "",
+                      "optionnel": false,
+                      "heritable": true,
+                      "type": "radio",
+                      "value": true
+                    },
+                    {
+                      "id": "franchissements",
+                      "nom": "Franchissements de cours d'eau",
+                      "description": "Nombre de franchissements de cours d'eau",
+                      "optionnel": true,
+                      "heritable": true,
+                      "type": "integer",
+                      "value": null
+                    }
+                  ]
+                }
+              ],
+              "etape_heritage_contenu": {
+                "arm": {
+                  "mecanise": {
+                    "actif": false
+                  },
+                  "franchissements": {
+                    "actif": false
+                  }
+                }
+              },
+              "etape_entreprises_documents": [],
+              "etape_documents": [],
+              "etape_avis_documents": [],
+              "etape_demarches_consentement": [],
+              "etape_fondamentale": {
+                "etape_date_debut": null,
+                "etape_duree": {
+                  "type": "duree",
+                  "value": 24
+                },
+                "etape_substances": [
+                  "auru"
+                ],
+                "etape_titulaire_ids": [
+                  "fr-315014035"
+                ],
+                "etape_amodiataire_ids": null,
+                "etape_perimetre": {
+                  "etape_geojson4326_perimetre": {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                      "type": "MultiPolygon",
+                      "coordinates": [
+                        [
+                          [
+                            [
+                              -53.829435355787794,
+                              4.861410259312326
+                            ],
+                            [
+                              -53.825461839659155,
+                              4.849650520943136
+                            ],
+                            [
+                              -53.8274168233163,
+                              4.847907568229804
+                            ],
+                            [
+                              -53.83768293357959,
+                              4.861275476204358
+                            ],
+                            [
+                              -53.85093637987612,
+                              4.859451193073478
+                            ],
+                            [
+                              -53.85303477230768,
+                              4.8629454035065285
+                            ],
+                            [
+                              -53.842733299209925,
+                              4.868026351933215
+                            ],
+                            [
+                              -53.829435355787794,
+                              4.861410259312326
+                            ]
+                          ]
+                        ]
+                      ]
+                    }
+                  },
+                  "etape_geojson4326_points": null,
+                  "etape_geojson_origine_perimetre": {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                      "type": "MultiPolygon",
+                      "coordinates": [
+                        [
+                          [
+                            [
+                              186153.16637238386,
+                              538001.9596384248
+                            ],
+                            [
+                              186588.8351382724,
+                              536698.6454489441
+                            ],
+                            [
+                              186371.00075532807,
+                              536506.6558232983
+                            ],
+                            [
+                              185237.5235423804,
+                              537990.8833138681
+                            ],
+                            [
+                              183765.36607026015,
+                              537795.1775239834
+                            ],
+                            [
+                              183534.04816924612,
+                              538182.8793580774
+                            ],
+                            [
+                              184680.0152063703,
+                              538740.381275524
+                            ],
+                            [
+                              186153.16637238386,
+                              538001.9596384248
+                            ]
+                          ]
+                        ]
+                      ]
+                    }
+                  },
+                  "etape_geojson_origine_points": null,
+                  "etape_geojson_origine_geo_systeme_id": "2972",
+                  "etape_geojson4326_forages": null,
+                  "etape_geojson_origine_forages": null,
+                  "etape_surface": 2.11,
+                  "etape_communes": [
+                    {
+                      "commune_id": "97311",
+                      "commune_nom": "Saint-Laurent-du-Maroni"
+                    }
+                  ],
+                  "etape_epci": [
+                    {
+                      "epci_id": "249730037",
+                      "epci_nom": "CC de l'Ouest Guyanais"
+                    }
+                  ],
+                  "etape_departements": [
+                    "973"
+                  ],
+                  "etape_secteurs_maritimes": [],
+                  "etape_sdom_zones": [
+                    "2"
+                  ],
+                  "etape_forets": [
+                    "LDD"
+                  ],
+                  "etape_administrations_locales": [
+                    "aut-mrae-guyane-01",
+                    "dea-guyane-01",
+                    "ope-onf-973-01",
+                    "pre-97302-01"
+                  ]
+                },
+                "etape_heritage_props": {
+                  "etape_duree": {
+                    "actif": false
+                  },
+                  "etape_date_debut": {
+                    "actif": false
+                  },
+                  "etape_substances": {
+                    "actif": false
+                  },
+                  "etape_titulaires": {
+                    "actif": false
+                  },
+                  "etape_amodiataires": {
+                    "actif": false
+                  },
+                  "etape_perimetre": {
+                    "actif": false
+                  }
+                }
+              },
+              "etape_type_id": "mfr",
+              "etape_demarche_id_en_concurrence": null
+            }
+          ],
+          "demarche_next_main_etapes": {
+            "date": "2026-10-13",
+            "etapes": []
+          },
+          "demarche_type_id": "oct",
+          "demarche_statut_id": "acp",
+          "demarche_date_debut": "2026-04-02",
+          "demarche_date_fin": {
+            "type": "date",
+            "value": "2028-04-02"
+          },
+          "demarche_visibilite": "Publique",
+          "demarche_machine_id": "ProcedureSpecifique",
+          "demarche_ordre": 1
+        }
+      ],
+      "titre_administration_locales": [
+        "aut-mrae-guyane-01",
+        "dea-guyane-01",
+        "ope-onf-973-01",
+        "pre-97302-01"
+      ],
+      "titre_titulaires_et_amodiataire": [
+        "fr-315014035"
+      ],
+      "titre_bureaux_d_etudes": [],
+      "titre_nb_activites_to_do": null
+    }
+  }
+}

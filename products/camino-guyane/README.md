@@ -10,6 +10,15 @@ Start with [connected receiving](CONNECTED_RECEIVING.md) when continuing the
 original equipped-host operation. That caller keeps the full source, original
 input files, report/workbook outputs and saved operator work in one lifetime.
 
+## Publish a reviewed edition through Prodige
+
+[Prodige publication](PRODIGE_PUBLICATION.md) reuses the complete original
+Analysis export and explicit field mapping to prepare CSV/GeoJSON and the actual
+selected instance's append/update requests. It retains the complete documented
+contract, exact source files and all paginated target readback. The original
+catalogue session owns execution and credentials. The full 61-row original
+Camino comparison example is included under prodige-reference.
+
 ## Source selection and interpretation
 
 | Edition | Original selection | Retained bytes |
@@ -92,9 +101,11 @@ The runtime-source.json.gz archive holds that whole source packet:
 The runtime.py helper verifies those complete identities and every original
 member before preparing private paths. Use prepare_runtime(...) and
 activate_runtime(prepared) in the same Python lifetime as the product.
-The receiver uses Linux, Python 3.11 or later and the selected Node 24 or later
-executable. The maintained parser is
-products/conapi/supplier-report/supplier-report.mjs; it needs no npm package.
+The receiver uses Linux, Python 3.11 or later and the selected Node executable.
+The maintained parser is products/conapi/supplier-report/supplier-report.mjs;
+this pure CSV parser needs no npm package or Node 24-specific API. Retain the
+actual Node version/path and use the original browser runtime's supported Node
+binding for rendered inspection.
 
 Workbook creation uses unchanged openpyxl==3.1.5 and et_xmlfile==2.0.0.
 The workbook-runtime.json descriptor retains official package metadata,
