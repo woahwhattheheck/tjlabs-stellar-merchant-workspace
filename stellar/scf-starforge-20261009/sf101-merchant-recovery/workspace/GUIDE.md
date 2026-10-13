@@ -17,6 +17,14 @@ or restore. Local capture and verification retain their original engine results
 and capture attempts in the same workspace. The browser adds profile selection,
 a review of the exact operation, progress, and reopening that retained work.
 
+## Complete original host handoff
+
+Use [HOST_HANDOFF.md](HOST_HANDOFF.md) to retain the complete installed application, original workspace, saved requests and native journals, Object state and restoration history, comparison and Support artifacts, and every required original source/output path. The workflow authenticates an encrypted cold restore, reviews explicit original receiving paths and resumes atomic root publication under the same original lease. Provider configuration and other external private files remain separately supplied custody.
+
+The installed commands `merchant-recovery-host` and `merchant-recovery-remote workspace handoff` use the same complete implementation. The original Applications review binds all configured profile paths, including absent future Object sources and both Support stores, through the helper in the selected installed Runtime. It does not create missing source stores. The original workspace and managed fleet operator workflows below remain unchanged.
+
+Start with `starforge merchant-recovery-host --help`. After an interrupted adoption, read the same `operation` directory and original review hash before continuing. A saved completion is a recorded observation; fresh receiving authentication remains the original review/adopt operation. Linux, Python 3, libc `renameat2` and the original `flock` dependency are required for resumable publication.
+
 ## Prepare the recovery host
 
 Use the release that contains `merchant-recovery-remote workspace`. Prepare
