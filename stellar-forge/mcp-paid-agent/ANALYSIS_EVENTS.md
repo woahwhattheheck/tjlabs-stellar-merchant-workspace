@@ -282,6 +282,20 @@ from the accepted programme with a fresh delivery ID or later actual source
 window. The restored workspace, original report/workbook and prior source
 history remain the same customer application.
 
+## Carry this complete result into the original Customer Installation
+
+The installed `mcp-analysis-event-installation` programme receives the whole
+selected sixteen-file package, exact original SF47 seed and explicit operator
+bindings. It retains a complete independent copy, prepares the existing native
+Installation document and workorder, and reopens every original source and
+output offline. Original commercial phases, funded assignments and acceptance
+checks remain with that same case.
+
+Follow the full [Event customer Installation course](../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/WEBHOOK_EVENT_ANALYSIS.md)
+for the original commercial source, binding template, installed prepare/reopen
+commands, existing preview/save, independent native case receiving and actual
+producer-viewed customer handover.
+
 ## Operate and inspect the outgoing customer result
 
 Before presenting an application, demonstration, report or export as ready,

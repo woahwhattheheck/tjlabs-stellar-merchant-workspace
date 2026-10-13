@@ -1,0 +1,103 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "zotero-library-research",
+  "heading": "## Report and content commissioning and complete receiving",
+  "sources": [
+    {
+      "id": "zotero-library-complete-product",
+      "label": "Complete Zotero library, customer-agent and Research workspace",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/zotero/OPERATING.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7203ee09262a316c35f36ccf97bae7cd0a44cc2d",
+          "bytes": 18809,
+          "sha256": "6a3eb9a603789ab1624780fe033043d1f1c8d90f463a7520e9240b0339470c71",
+          "git_blob": "d93100229299aa17de5eee7d6e2d2848bf6cbef1"
+        }
+      ]
+    },
+    {
+      "id": "zotero-customer-agent-setup",
+      "label": "Original Zotero customer-agent setup",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/MERCHANT_SETUP.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7203ee09262a316c35f36ccf97bae7cd0a44cc2d",
+          "bytes": 10306,
+          "sha256": "5d7159f54e9cfc551ef14521b148425b24dfe2e165945466b0539b276372c6a4",
+          "git_blob": "fcdf0e7eecb7fef5e5a1b06c401a3238467ce0ed"
+        }
+      ]
+    },
+    {
+      "id": "zotero-customer-agent-requests",
+      "label": "Exact native Zotero saved request history",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/agent-requests.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7203ee09262a316c35f36ccf97bae7cd0a44cc2d",
+          "bytes": 6107,
+          "sha256": "8e326dd65cb7bc1480a3c6dd27188c01e06f59002cf293fb2f7c2dd5908dd8ba",
+          "git_blob": "c99952b030e6d27bc9a2951df11d08e4c3578a55"
+        }
+      ]
+    },
+    {
+      "id": "zotero-customer-agent-runtime",
+      "label": "Complete Zotero customer-agent operation and child receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/merchant-agent.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7203ee09262a316c35f36ccf97bae7cd0a44cc2d",
+          "bytes": 13376,
+          "sha256": "890df935078c5fa51204dbf5e699c43c4f9f099f0630758777efcea4135b9847",
+          "git_blob": "09873642abb08d234b352064647310cd11dcf354"
+        }
+      ]
+    },
+    {
+      "id": "zotero-customer-agent-distribution",
+      "label": "Installed Zotero source-owned provider declaration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/zotero.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7203ee09262a316c35f36ccf97bae7cd0a44cc2d",
+          "bytes": 2815,
+          "sha256": "361d18d6678adce41f83fef4176efbddaba7e7ed2d9d67754128688cc3725964",
+          "git_blob": "f3c97c614f38a86979e3a17fa1c0cefd9e685b77"
+        }
+      ]
+    },
+    {
+      "id": "zotero-customer-agent-receiving",
+      "label": "Original OSF customer-agent and full project receiving course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/NATIVE_RECEIVING.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7203ee09262a316c35f36ccf97bae7cd0a44cc2d",
+          "bytes": 14128,
+          "sha256": "3b6b217b5fcbea885da95d4c155b36b7eac685aa8a207c8df90e6af9b8e8b12b",
+          "git_blob": "4714c085806a7e13793e0d9dfb2055048509d760"
+        }
+      ]
+    }
+  ]
+}

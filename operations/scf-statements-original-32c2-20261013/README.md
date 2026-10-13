@@ -102,3 +102,20 @@ node continue-operating-desk.mjs /absolute/private/statements-operation/navigati
 [OPERATING_DESK_CONTINUATION.md](OPERATING_DESK_CONTINUATION.md) describes the full original finder, source downloads, supplier/cash links, saved navigation, phone view and actual finance/reviewer sign-ins. The companion retains each original case fact, uses the existing staff writer for its own case-scoped profiles, and closes those profiles through the original access history. Its journal resumes the same handoff and preserves interrupted results.
 
 The original account receiver, bank files, cash allocations, correction decisions and independent ZIP receiving remain the source of this continuation's case and source identities.
+
+
+## Supplier allocation successor in the same original account operation
+
+When the selected installation includes `operations_statement_allocations.mjs`, the existing CSV phase operates its full new allocation desk before the same original `statement.receive` request. It previews the original classifications, uses supplier/invoice search and empty results, opens and downloads the retained invoice source with exact source SHA comparison, reviews an explicit partial payment, observes live capacity totals and the excess-capacity error, restores the unfinished allocation through the original full recovery copy, then reviews and applies the original 250 USD invoice allocation. The older selected installation keeps its original allocation controls. The same actual invoice/case/source and original four inputs remain unchanged; a previously saved browser CSV request is replayed through the original continuation path.
+
+New retained outputs are `original-allocation-working-recovery.json`, `original-supplier-allocation-review.json`, `allocation-original-invoice-source.txt` and the `00-allocation-*` desktop/phone images. Return these actual private case outputs and rendered images to the producing account engineer for direct viewing and repairs. The existing full case export, independent cold receiving and 390E handoff continue after this same account operation.
+
+## Rendered product inspection — owner instruction, 2026-10-13
+
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Before calling any customer/prospect-facing application, website, dashboard, demo, report, presentation or export ready, open/run/render the exact outgoing version, look at the rendered screen or its actual screenshots, and operate the important user controls. Inspect the actual screenshare width and narrow/mobile width where relevant, populated/empty/loading/error states, downloads/exports and reopening. Capturing screenshots without viewing them is insufficient. Code review, DOM counts, HTTP 200, unit checks and another worker's approval do not replace seeing the actual product.
+
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk; do not run broad suites or build a verification product.
+
+Include this complete instruction in delegated assignments and the active owner-controlled policy, boot, build and receiving guidance those workers actually read. Preserve all other owner controls and original operation identities. Leave historical records and third-party/vendor policies intact. Do not force restarts, create watchers or revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999

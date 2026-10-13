@@ -1,7 +1,7 @@
 import {currentStaffContext,staffDeskStorageKey,assertStaffRequestActor} from './staff-session.mjs';
 import {mountEarlierStaffDesk} from './staff-desk-recovery.mjs';
 import {statementSetupPanel,statementSetupComparison,statementSetupSettings,statementSetupLink,sameSetupValue} from './operations_statement_profiles.mjs';
-import {statementAllocationBasis,sameStatementAllocationBasis,statementAllocationContext,statementAllocationSuggestedAmount,prepareStatementAllocations,applyStatementAllocations,statementAllocationPanel} from './operations_statement_allocations.mjs';
+import {statementAllocationBasis,sameStatementAllocationBasis,statementAllocationContext,statementAllocationSuggestedAmount,prepareStatementAllocations,applyStatementAllocations,statementAllocationPanel,statementAllocationSummary} from './operations_statement_allocations.mjs';
 import {statementMatchingRows,statementSelection,statementBatchPanel,prepareStatementBatch,applyStatementBatch,undoStatementBatch} from './operations_statement_batch.mjs';
 // Statement source mapping and reviewed cash receiving in the existing Operations case.
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -695,6 +695,12 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
     work.allocations=work.allocations.map((row,i)=>({invoiceId:row.invoiceId,amountUsd:data.has('amount.'+i)?String(data.get('amount.'+i)||'').trim():row.amountUsd}));
     if(data.has('allocationReason'))work.reason=String(data.get('allocationReason')||'');
     if(old!==JSON.stringify({allocations:work.allocations,reason:work.reason})){work.proposal=null;$('.statement-allocation-proposal')?.remove();}
+    const row=session.preview?.rows.find(item=>item.rowNumber===session.allocationRow);
+    if(row){
+      const summary=statementAllocationSummary({usdValue:row.usdValue},work.allocations);
+      const total=$('[data-allocation-total]'),remaining=$('[data-allocation-remaining]');
+      if(total)total.textContent=summary.total;if(remaining)remaining.textContent=summary.remaining;
+    }
     schedulePersist();
   }
   async function importDraft(file){

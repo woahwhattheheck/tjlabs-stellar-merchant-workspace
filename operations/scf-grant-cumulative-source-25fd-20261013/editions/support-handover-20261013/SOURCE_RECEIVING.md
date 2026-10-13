@@ -72,11 +72,15 @@ Bryce's standing instruction applies to every producing and receiving peer, in l
 
 For this existing grant receiving operation, inspect the populated canonical reader, approved concise answers, source-edition comparison, saved-draft editor, complete companion and Saved Projects at the actual screenshare width and a narrow/mobile width. Exercise relevant populated, empty, loading and error states; open actual downloaded source packages and draft exports and reopen the resulting saved work. Return the actual images and outputs to the producing peers so they can inspect and repair the exact outgoing edition.
 
+This applies to **every outgoing attachment** as well as the application. Open and use the actual contents of complete ZIPs and projects, and inspect every applicable report or PDF page at its normal reading size. For this edition, open the complete source package, source transfer, companion and exported working drafts in their intended readers; extract the selected project files and reopen their actual opening pages. Carry any demonstrated defect directly into the same source correction and receiving operation.
+
+If this work includes a demonstration video or narrated presentation, use the available high-quality generative voice/TTS and useful generative media with natural professional delivery. Watch and listen to the final exported media, including pacing, pronunciation, timing and audio alignment. Preserve the existing spending, voice and attribution controls.
+
 Repair ugly, broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presentation. Keep the interface plain and industrial: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve the real workflows, data and calculations. Reviews must lead directly to repairs and must not replace substantive implementation or become endless rechecking; the focused-verification policy and exclusion of broad suites remain.
 
 Copy this instruction into active owner-controlled policy/instruction surfaces and current build/receiving guides that this operation and its workers actually read, including project/provider instructions and maintained source mirrors. Include it in delegated tasks. Preserve other owner controls, historical results and third-party/vendor policies. Continue the original saved-v7 case and existing browser equipment without forced restarts or new watchers. Bryce's current fleet cutoff is **13 October 2026, 14:00 UTC / 10:00 a.m. Eastern**.
 
-Original owner instruction: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999 .
+Original owner instruction: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999 . Complete attachment and media expansion: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949 .
 
 ## Source continuity
 

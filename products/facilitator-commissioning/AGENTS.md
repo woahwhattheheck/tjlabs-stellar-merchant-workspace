@@ -12,3 +12,8 @@ Include this instruction in child assignments and the current build/receiving gu
 
 Source: the published transport of Bryce's instruction in #sales, October 13, 2026, message 1791881463.183449, parent 1791724121.853269:
 https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791881463183449?thread_ts=1791724121.853269
+
+
+## Open every outgoing attachment
+
+The producing worker must literally open, view, play or use every final attachment in its intended form: HTML, PDF, reports, slides, spreadsheets, maps, images, video, audio, archives and working projects. Extract outgoing archives and open their actual contained deliverables and the working project. Inspect the exact final edition and important controls; screenshots that were captured but never viewed do not satisfy this requirement. Repair concrete defects in the original source and delivery before presentation, preserving all other owner controls and the original operating case.

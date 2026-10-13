@@ -118,6 +118,10 @@ const button=(title,action,disabled=false,attrs='')=>'<button type="button" data
 const amount=value=>value===null||value===undefined?'Unavailable':esc(value)+' USD';
 function table(headers,rows){return '<div class="statement-table"><table><thead><tr>'+headers.map(v=>'<th scope="col">'+esc(v)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(cell=>'<td>'+cell+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';}
 function invoiceLabel(context,id){const invoice=context.invoices.find(row=>row.id===id);return invoice?invoice.supplier+' · '+invoice.number:id;}
+export function statementAllocationSummary(context,allocations){
+  const total=amountSum(allocations),capacity=cents(context.usdValue);
+  return {total:total===null?'Correct draft amounts':money(total)+' USD',remaining:capacity===null||total===null?'Unavailable':money(capacity-total)+' USD'};
+}
 export function statementAllocationPanel(context,work,{editable=true,stale=false,canDownload=false}={}){
   const candidates=statementAllocationCandidates(context,work.appliedQuery||'',work.filter||'OPEN'),pages=Math.max(1,Math.ceil(candidates.length/25)),page=Math.max(0,Math.min(Number(work.page)||0,pages-1));
   const shown=candidates.slice(page*25,(page+1)*25),selected=new Set(work.allocations.map(row=>row.invoiceId)),locked=!editable||stale;
@@ -132,7 +136,7 @@ export function statementAllocationPanel(context,work,{editable=true,stale=false
   })):'';
   return '<section class="statement-panel statement-allocation-panel" aria-label="Supplier payment allocation review"><h4>Allocate payment — source row '+esc(context.row.rowNumber)+'</h4>'+
     '<p><strong>'+esc(context.row.reference)+'</strong> · '+esc(context.row.date)+' · '+esc(context.row.direction)+' '+esc(context.row.amount)+' '+esc(context.row.currency)+'</p><p>'+esc(context.row.description)+'</p>'+warning+
-    '<div class="statement-summary"><div><span>Recorded USD value</span><strong>'+amount(context.usdValue)+'</strong></div><div><span>Working allocations</span><strong>'+(total===null?'Correct draft amounts':amount(money(total)))+'</strong></div><div><span>Unallocated capacity</span><strong>'+(capacity===null||total===null?'Unavailable':amount(money(capacity-total)))+'</strong></div></div>'+
+    '<div class="statement-summary"><div><span>Recorded USD value</span><strong>'+amount(context.usdValue)+'</strong></div><div><span>Working allocations</span><strong data-allocation-total>'+(total===null?'Correct draft amounts':amount(money(total)))+'</strong></div><div><span>Unallocated capacity</span><strong data-allocation-remaining>'+(capacity===null||total===null?'Unavailable':amount(money(capacity-total)))+'</strong></div></div>'+
     '<p>Invoice positions are from current case version '+esc(context.caseVersion)+', including retained cash. Other included draft rows are shown separately as net invoice payments: outgoing payments are positive and incoming refunds are negative. These are current positions, not a historical balance at the movement date.</p>'+
     '<p>'+context.referenceMatches.length+' invoice-number matches in the original reference or description. '+(context.referenceMatches.length>1?'Several invoices match; inspect the supplier and original source before selecting.':'Matches are suggestions for your selection.')+'</p>'+
     '<form data-statement-allocations><div class="statement-fields"><label>Find supplier or invoice<input name="allocationQuery" value="'+esc(work.query||'')+'"></label><label>Show invoices<select name="allocationFilter">'+[['OPEN','Current open invoices'],['MATCHES','Original reference matches'],['ALL','All retained invoices']].map(([value,text])=>'<option value="'+value+'"'+((work.filter||'OPEN')===value?' selected':'')+'>'+text+'</option>').join('')+'</select></label></div>'+
