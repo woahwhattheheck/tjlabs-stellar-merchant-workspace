@@ -1,3 +1,7 @@
+import {currentStaffContext,staffDeskStorageKey,assertStaffRequestActor} from './staff-session.mjs';
+import {mountEarlierStaffDesk} from './staff-desk-recovery.mjs';
+const DESK_SCHEMA='sf47.commercial-desk.v1';
+const copy=value=>structuredClone(value);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const label = value => typeof value === 'string' ? value : value?.name || value?.displayName || value?.legalName || '';
 const title = value => String(value || '').toLowerCase().replaceAll('_', ' ').replace(/^./, char => char.toUpperCase());
@@ -19,16 +23,18 @@ function style() {
   link.href = '/operations_commercial.css'; link.dataset.commercialStyle = 'true';
   document.head.append(link);
 }
-export function mountCommercialReceivables({container, current, api, saveApi = api, session = {}, mutationId, recordingActor, onInstallations, onSources}) {
+export function mountCommercialReceivables({container,current,api,saveApi=api,session={},mutationId,recordingActor,onInstallations,onSources,staffContext=currentStaffContext()}) {
+  const pinnedContext=staffContext?{...staffContext}:null;
   style();
   const root = document.createElement('section'); root.className = 'commercial-desk';
   root.setAttribute('aria-label', 'Customer milestone billing'); container.replaceChildren(root);
-  const key = 'sf47.commercial.' + current.program.id;
+  const earlierKey='sf47.commercial.'+current.program.id;
+  const key=staffDeskStorageKey(earlierKey,pinnedContext);
   if (!session.loaded) {
     try { Object.assign(session, JSON.parse(sessionStorage.getItem(key) || '{}')); } catch {}
     session.loaded = true;
   }
-  session.inputs ||= {}; session.previews ||= {};
+  session.inputs ||= {}; session.previews ||= {};session.pending??=null;session.lastRequest??=null;
   const state = {current, installations: [], endpoints: [], customers: [], billings: [], billing: null, schedule: session.schedule || null, busy: false, message: '', error: false};
   let active = true, hostBusy = false;
   const path = '/api/operations/' + enc(current.program.id) + '/commercial';
@@ -47,8 +53,9 @@ export function mountCommercialReceivables({container, current, api, saveApi = a
   };
   const button = (caption, action, extra = '', fixed = false) => '<button type="button" data-commercial-action="' + action + '" ' + extra + (fixed ? ' data-fixed="true" disabled' : '') + '>' + esc(caption) + '</button>';
   const empty = message => '<p class="commercial-empty">' + esc(message) + '</p>';
-  function persist() {
-    try { sessionStorage.setItem(key, JSON.stringify(session)); } catch {}
+  function persist(critical=false) {
+    try {const raw=JSON.stringify(session);sessionStorage.setItem(key,raw);if(sessionStorage.getItem(key)!==raw)throw new Error('The complete desk was not retained.');}
+    catch(error){if(critical)throw new Error('Download the complete billing desk before closing it. Browser storage could not retain the original action: '+error.message);}
   }
   function capture() {
     root.querySelectorAll('[name]').forEach(element => {
@@ -60,7 +67,8 @@ export function mountCommercialReceivables({container, current, api, saveApi = a
   function busy() {
     root.setAttribute('aria-busy', String(state.busy || hostBusy));
     root.querySelectorAll('button,input,select,textarea').forEach(element => {
-      element.disabled = state.busy || hostBusy || element.dataset.fixed === 'true';
+      const recovery=['resume-original','download-desk','download-original'].includes(element.dataset.commercialAction);
+      element.disabled = state.busy || hostBusy || element.dataset.fixed === 'true' || Boolean(session.pending&&!recovery);
     });
   }
   async function run(work) {
@@ -69,6 +77,77 @@ export function mountCommercialReceivables({container, current, api, saveApi = a
     try { await work(); }
     catch (error) { state.message = error.message || 'The operation could not finish. Reopen the saved billing item and retry.'; state.error = true; }
     finally { state.busy = false; persist(); if (visible()) render(); }
+  }
+  function deskSnapshot(){return {schema:DESK_SCHEMA,caseId:current.program.id,session:copy(session)};}
+  function downloadDesk(){capture();download(new Blob([JSON.stringify(deskSnapshot(),null,2)+'\n'],{type:'application/json'}),current.program.id+'-customer-billing-desk.json');}
+  function validOperation(value){
+    if(!value||typeof value!=='object'||!value.body||typeof value.body!=='object'||typeof value.body.actor!=='string')
+      throw new Error('Retain the complete original customer billing action.');
+    const expected=value.kind==='connect'?'/api/operations/commercial-connections':
+      value.kind==='prepare'?path+'/prepare':value.kind==='milestone'&&typeof value.billingId==='string'
+      &&typeof value.milestoneId==='string'&&['draft','issue'].includes(value.action)?
+      path+'/'+enc(value.billingId)+'/milestones/'+enc(value.milestoneId)+'/'+value.action:null;
+    if(!expected||value.endpoint!==expected)throw new Error('The retained action must use this case’s original customer billing path.');
+    assertStaffRequestActor(value.body,pinnedContext);return value;
+  }
+  async function sendOriginal(operation=null){
+    if(operation){
+      if(session.pending)throw new Error('Resume the retained original action before preparing another.');
+      validOperation(operation);
+      session.pending={...copy(operation),preparedAt:new Date().toISOString(),error:null};
+    }
+    const original=session.pending;if(!original)throw new Error('There is no retained customer billing action to resume.');
+    validOperation(original);persist(true);
+    try{
+      const result=await saveApi(original.endpoint,copy(original.body));
+      session.lastRequest={...copy(original),result:copy(result),receivedAt:new Date().toISOString()};
+      session.pending=null;persist();return result;
+    }catch(error){
+      original.error={message:error.message||String(error),status:error.status||null,code:error.code||null};
+      if([400,409,413,415,422].includes(error.status)&&error.code!=='REQUEST_CONFLICT'){
+        session.lastRequest=copy(original);session.pending=null;
+      }
+      persist();throw error;
+    }
+  }
+  async function resumeOriginal(){
+    const original=copy(session.pending);const result=await sendOriginal();
+    if(original.kind==='connect'){
+      session.inputs['prepare.endpointId']=result.id;session.inputs['prepare.customerId']='';
+      await refreshLists();await readCustomers(result.id);
+    }else{
+      const id=original.kind==='prepare'?result.id:original.billingId;
+      session.billingId=id;session.inputs['billing.selected']=id;session.previews={};
+      await refreshLists();await loadBilling(id);
+    }
+    state.message='Received the retained original customer billing action and reopened its saved records.';
+  }
+  async function openDesk(value){
+    if(!visible())return;
+    const object=item=>item!==null&&typeof item==='object'&&!Array.isArray(item);
+    if(!object(value)||value.schema!==DESK_SCHEMA||value.caseId!==current.program.id
+      ||!object(value.session)||!object(value.session.inputs)||!object(value.session.previews))
+      throw new Error('Open this original case’s complete customer billing desk.');
+    const received=copy(value.session);
+    if(received.pending)validOperation(received.pending);
+    if(session.pending)throw new Error('Resume the current original action before opening another billing desk. Its complete download remains available.');
+    downloadDesk();
+    for(const name of Object.keys(session))delete session[name];Object.assign(session,received);
+    session.loaded=true;session.pending??=null;session.lastRequest??=null;
+    state.schedule=session.schedule||null;state.billing=null;render();persist(true);
+    await refreshLists();if(session.billingId)await loadBilling(session.billingId);
+    state.message='Opened the complete original customer billing editor and its retained action.';render();
+  }
+  async function openDeskFile(file){
+    if(!file)return;if(file.size>32*1024*1024)throw new Error('Open a complete customer billing desk within 32 MiB.');
+    const raw=await file.text();if(!visible())return;await openDesk(JSON.parse(raw));
+  }
+  function recoveryPanel(){
+    return '<section class="commercial-card"><h3>Complete billing desk</h3><p>Keep the original selections, entered milestone fields and prepared customer action together.</p>'+
+      '<div class="commercial-actions">'+button('Download complete billing desk','download-desk')+button('Open complete billing desk','open-desk')+
+      (session.pending||session.lastRequest?button('Download original action','download-original'):'')+'</div><input type="file" data-commercial-desk-file accept=".json,application/json" hidden>'+
+      (session.pending?'<h4>Original action retained</h4><p>'+esc(session.pending.error?.message||'Resume the same original customer action to receive its saved result.')+'</p>'+
+      button('Resume original action','resume-original'):'')+'</section>';
   }
   async function retainedRequest(scope, body) {
     body.requestId = await mutationId('commercial:' + current.program.id + ':' + scope, body);
@@ -212,11 +291,12 @@ export function mountCommercialReceivables({container, current, api, saveApi = a
     root.innerHTML = '<header class="commercial-heading"><div><h2>Customer milestone billing</h2>' +
       '<p>Carry the original commercial milestones into customer invoices and follow their payment status.</p></div>' +
       button('Reload saved records', 'reload') + '</header><p class="commercial-message" role="' + (state.error ? 'alert' : 'status') +
-      '" aria-live="polite">' + esc(state.message) + '</p>' + retainedBilling() + sourceForm() + prepareForm() + connectionForm();
+      '" aria-live="polite">' + esc(state.message) + '</p>' + recoveryPanel() + retainedBilling() + sourceForm() + prepareForm() + connectionForm();
     busy();
   }
   root.addEventListener('input', capture);
   root.addEventListener('change', event => {
+    if(event.target.matches('[data-commercial-desk-file]')){const file=event.target.files?.[0];event.target.value='';run(()=>openDeskFile(file));return;}
     capture();
     if (event.target.name === 'prepare.endpointId') run(async () => {
       session.inputs['prepare.customerId'] = ''; await readCustomers(input('prepare.endpointId'));
@@ -236,7 +316,7 @@ export function mountCommercialReceivables({container, current, api, saveApi = a
       if (kind === 'connect') {
         const body = await retainedRequest('connect', {id: input('connect.id'), label: input('connect.label'),
           baseUrl: input('connect.baseUrl'), actor: recordingActor()});
-        const result = await saveApi('/api/operations/commercial-connections', body);
+        const result = await sendOriginal({endpoint:'/api/operations/commercial-connections',body,kind:'connect'});
         session.inputs['prepare.endpointId'] = result.id; session.inputs['prepare.customerId'] = '';
         state.endpoints = (await api('/api/operations/commercial-connections')).endpoints;
         await readCustomers(result.id); state.message = 'Connected to the original customer accounting workspace.';
@@ -267,7 +347,7 @@ export function mountCommercialReceivables({container, current, api, saveApi = a
           endpointId: input('prepare.endpointId'), customerId: input('prepare.customerId'),
           milestones, purchaseOrder: input('prepare.purchaseOrder'), note: input('prepare.note'), actor: recordingActor(),
         });
-        const result = await saveApi(path + '/prepare', body);
+        const result = await sendOriginal({endpoint:path+'/prepare',body,kind:'prepare'});
         session.billingId = result.id; session.inputs['billing.selected'] = result.id; session.previews = {};
         state.billings = (await api(path)).items; await loadBilling(result.id);
         state.message = 'Saved the reviewed commercial schedule. Its milestones are ready for invoice preparation.';
@@ -276,11 +356,15 @@ export function mountCommercialReceivables({container, current, api, saveApi = a
   });
   root.addEventListener('click', event => {
     const target = event.target.closest('[data-commercial-action]');
-    if (!target) return;
+    if (!target||target.disabled) return;
     const action = target.dataset.commercialAction;
+    if(action==='download-desk'){downloadDesk();return;}
+    if(action==='download-original'){download(new Blob([JSON.stringify(session.pending||session.lastRequest,null,2)+'\n'],{type:'application/json'}),'customer-billing-original-action.json');return;}
+    if(action==='open-desk'){if(!state.busy&&!hostBusy&&!session.pending)root.querySelector('[data-commercial-desk-file]').click();return;}
     if (action === 'installations') { capture(); onInstallations?.(); return; }
     if (action === 'sources') { capture(); onSources?.(); return; }
     run(async () => {
+      if(action==='resume-original'){await resumeOriginal();return;}
       if (action === 'reload') { await refreshLists(); state.message = 'Loaded the saved commercial records.'; return; }
       if (!state.billing) throw new Error('Open a saved billing schedule.');
       const selected = path + '/' + enc(state.billing.id), milestoneId = target.dataset.milestone;
@@ -324,7 +408,8 @@ export function mountCommercialReceivables({container, current, api, saveApi = a
         body.expectedIssuePreviewSha256 = preview.issuePreviewSha256;
       }
       const nativeAction = action === 'recover-issue' ? 'issue' : action;
-      const result = await saveApi(selected + '/milestones/' + enc(milestoneId) + '/' + nativeAction, body);
+      const endpoint=selected+'/milestones/'+enc(milestoneId)+'/'+nativeAction;
+      const result = nativeAction==='preview'?await saveApi(endpoint,body):await sendOriginal({endpoint,body,kind:'milestone',billingId:state.billing.id,milestoneId,action:nativeAction});
       if (action === 'preview') {
         session.previews[milestoneId] = result; state.message = 'Review the customer, dates, line amount and original authorization, then confirm issue.';
       } else {
@@ -333,8 +418,14 @@ export function mountCommercialReceivables({container, current, api, saveApi = a
       }
     });
   });
+  const earlier=mountEarlierStaffDesk({root,staffContext:pinnedContext,title:'Customer billing',
+    readCopy:()=>{const raw=sessionStorage.getItem(earlierKey);return raw?{schema:DESK_SCHEMA,caseId:current.program.id,session:JSON.parse(raw)}:null;},
+    isBusy:()=>state.busy||hostBusy,setDeskBusy:value=>{state.busy=value;if(value)busy();else render();},
+    describeCopy:value=>Object.keys(value.session.inputs||{}).length+' retained billing fields'+(value.session.pending?' · original customer action pending':''),
+    filename:current.program.id+'-earlier-customer-billing-desk.json',openCopy:openDesk
+  });
   render();
   const ready = (async () => { state.busy = true; busy(); try { await refreshLists(); } finally { state.busy = false; if (visible()) render(); } })();
   return {ready, setHostBusy(value) { hostBusy = Boolean(value); if (visible()) busy(); },
-    dispose() { capture(); active = false; }};
+    dispose() { earlier.dispose();capture(); active = false; }};
 }

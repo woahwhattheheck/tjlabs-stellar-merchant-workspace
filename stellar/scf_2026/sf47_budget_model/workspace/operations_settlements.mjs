@@ -1,4 +1,5 @@
 // MIT. Original merchant settlement receiving in the existing SF47 Operations case.
+import {currentStaffContext,staffDeskStorageKey} from './staff-session.mjs';
 const MAX_SOURCE = 8 * 1024 * 1024;
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const human = value => String(value ?? '').toLowerCase().replaceAll('_',' ').replace(/^./, c => c.toUpperCase());
@@ -42,25 +43,28 @@ function exactQuantity(atomic, decimals) {
 
 const DESK_SCHEMA = 'sf47.settlement-desk.v2';
 const DESK_LIMIT = 64 * 1024 * 1024;
-let settlementDatabase;
-function deskDatabase() {
-  if(!settlementDatabase)settlementDatabase=new Promise((resolve,reject)=>{
-    const request=indexedDB.open('sf47-merchant-settlement-desks',1);
-    request.onupgradeneeded=()=>{
-      const db=request.result;
-      db.createObjectStore('desks',{keyPath:'id'});
-      const index=db.createObjectStore('desk-index',{keyPath:'id'});
-      index.createIndex('caseId','caseId',{unique:false});
-      db.createObjectStore('archives',{keyPath:'id'});
-    };
-    request.onsuccess=()=>{const db=request.result;db.onversionchange=()=>{db.close();settlementDatabase=null;};resolve(db);};
-    request.onerror=()=>reject(request.error||new Error('Browser draft storage is unavailable.'));
-    request.onblocked=()=>reject(new Error('Close the older settlement storage view, then reopen this desk.'));
-  }).catch(error=>{settlementDatabase=null;throw error;});
-  return settlementDatabase;
+const SETTLEMENT_DATABASE='sf47-merchant-settlement-desks',settlementDatabases=new Map();
+function deskDatabase(name=SETTLEMENT_DATABASE) {
+  if(!settlementDatabases.has(name)){
+    const opening=new Promise((resolve,reject)=>{
+      const request=indexedDB.open(name,1);
+      request.onupgradeneeded=()=>{
+        const db=request.result;
+        db.createObjectStore('desks',{keyPath:'id'});
+        const index=db.createObjectStore('desk-index',{keyPath:'id'});
+        index.createIndex('caseId','caseId',{unique:false});
+        db.createObjectStore('archives',{keyPath:'id'});
+      };
+      request.onsuccess=()=>{const db=request.result;db.onversionchange=()=>{db.close();settlementDatabases.delete(name);};resolve(db);};
+      request.onerror=()=>reject(request.error||new Error('Browser draft storage is unavailable.'));
+      request.onblocked=()=>reject(new Error('Close the older settlement storage view, then reopen this desk.'));
+    }).catch(error=>{settlementDatabases.delete(name);throw error;});
+    settlementDatabases.set(name,opening);
+  }
+  return settlementDatabases.get(name);
 }
-async function readDeskValue(store,key,indexName=null) {
-  const db=await deskDatabase();
+async function readDeskValue(store,key,indexName=null,name=SETTLEMENT_DATABASE) {
+  const db=await deskDatabase(name);
   return new Promise((resolve,reject)=>{
     const tx=db.transaction(store,'readonly'),table=tx.objectStore(store);
     const request=indexName?table.index(indexName).getAll(key):table.get(key);
@@ -71,8 +75,8 @@ async function readDeskValue(store,key,indexName=null) {
     tx.onerror=()=>{};
   });
 }
-async function writeDeskValue(desk,archive) {
-  const db=await deskDatabase();
+async function writeDeskValue(desk,archive,name=SETTLEMENT_DATABASE) {
+  const db=await deskDatabase(name);
   return new Promise((resolve,reject)=>{
     const stores=archive?['desks','desk-index','archives']:['desks','desk-index'];
     const tx=db.transaction(stores,'readwrite');
@@ -157,9 +161,21 @@ const cashUnits = cash => Object.fromEntries(['currency','decimals','unitSourceI
 const decisionLabels = {UNSELECTED:'Keep in original source',RECORD_CASH:'Record received cash',LINK_CASH:'Link existing cash',OBSERVE:'Receive observation',OMIT:'Exclude with reason',
   CORRECT_CASH:'Void and replace cash',VOID_CASH:'Void cash',RELINK:'Update work and deployment links'};
 
-export function mountSettlementReceiving({container,current,api,saveApi=api,mutationId,recordingActor,onSaved,onReload,session={}}) {
+export function mountSettlementReceiving({container,current,api,saveApi=api,mutationId,recordingActor,onSaved,onReload,session={},staffContext=currentStaffContext()}) {
   const root=document.createElement('section');root.className='settlement-desk';root.setAttribute('aria-label','Merchant settlements');container.replaceChildren(root);
-  const base='/api/operations/'+current.program.id,storageKey='sf47.settlement-receiving.'+current.program.id;
+  const base='/api/operations/'+current.program.id,legacyStorageKey='sf47.settlement-receiving.'+current.program.id;
+  const deskContext=staffContext?clone(staffContext):null,databaseName=staffDeskStorageKey(SETTLEMENT_DATABASE,deskContext),boundStaff=databaseName!==SETTLEMENT_DATABASE;
+  const storageKey=staffDeskStorageKey(legacyStorageKey,deskContext);
+  const readOwned=(store,key,indexName=null)=>readDeskValue(store,key,indexName,databaseName);
+  const writeOwned=(desk,archive)=>writeDeskValue(desk,archive,databaseName);
+  let legacyDesks=null,legacyLocal=null,legacyCopy=null,legacyMessage='';
+  function pendingActorProblem(body) {
+    if(!boundStaff||deskContext.role==='owner'||!body)return null;
+    if(typeof body.actor==='string'&&body.actor.trim()===deskContext.actor)return null;
+    const original=typeof body.actor==='string'&&body.actor.trim()?body.actor.trim():'an unrecorded operator';
+    return Object.assign(new Error('This original request belongs to '+original+'. Sign in as that operator to resume it. The complete original copy remains available to download.'),{code:'STAFF_REQUEST_ACTOR_CHANGED',status:403});
+  }
+
   const $=selector=>root.querySelector(selector),available=()=>active&&root.isConnected;
   let active=true,busy=false,hostBusy=false;
   function activeCheck(){if(!available())throw new Error('Reopen this original case to continue settlement receiving.');}
@@ -185,7 +201,7 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
     }
     const saved=snapshot(),archive=archiveFor(saved);
     const pending=(session.persistence??Promise.resolve()).catch(()=>{}).then(async()=>{
-      await writeDeskValue(saved,archive&&session.storedArchiveId!==archive.id?archive:null);
+      await writeOwned(saved,archive&&session.storedArchiveId!==archive.id?archive:null);
       if(archive)session.storedArchiveId=archive.id;
       try {sessionStorage.setItem(storageKey+'.active-desk',saved.id);session.pointerWarning=null;}
       catch {
@@ -202,13 +218,13 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
     return pending;
   }
   async function listDesks() {
-    session.savedDrafts=(await readDeskValue('desk-index',current.program.id,'caseId')||[])
+    session.savedDrafts=(await readOwned('desk-index',current.program.id,'caseId')||[])
       .filter(item=>item.caseId===current.program.id).sort((a,b)=>String(b.savedAt).localeCompare(String(a.savedAt)));
     return session.savedDrafts;
   }
-  async function loadDesk(saved) {
+  async function loadDesk(saved,sourceDatabase=databaseName) {
     validDeskShape(saved,current.program.id);
-    const stored=saved.archiveId?await readDeskValue('archives',saved.archiveId):null;
+    const stored=saved.archiveId?await readDeskValue('archives',saved.archiveId,null,sourceDatabase):null;
     return {saved,archive:await validateDeskArchive(saved,stored)};
   }
   function applyDesk(saved,archive) {
@@ -227,17 +243,17 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
     if(session.loaded){await listDesks();return;}
     if(!session.initialization) {
       session.initialization=(async()=>{
-        const items=(await readDeskValue('desk-index',current.program.id,'caseId')||[])
+        const items=(await readOwned('desk-index',current.program.id,'caseId')||[])
           .filter(item=>item.caseId===current.program.id).sort((a,b)=>String(b.savedAt).localeCompare(String(a.savedAt)));
         let pointer;
         try {pointer=sessionStorage.getItem(storageKey+'.active-desk');}catch{}
         const selected=items.find(item=>item.id===pointer)||items[0];
         if(selected) {
-          const saved=await readDeskValue('desks',selected.id);
+          const saved=await readOwned('desks',selected.id);
           return {items,complete:await loadDesk(saved)};
         }
         let legacy;
-        try{legacy=JSON.parse(localStorage.getItem(storageKey)||'null');}catch{}
+        if(!boundStaff)try{legacy=JSON.parse(localStorage.getItem(legacyStorageKey)||'null');}catch{}
         if(legacy?.schema==='sf47.settlement-draft.v1'&&legacy.caseId===current.program.id) {
           const saved={...legacy,schema:DESK_SCHEMA,archiveId:null};
           validDeskShape(saved,current.program.id);
@@ -255,6 +271,60 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
     if(result.complete)applyDesk(result.complete.saved,result.complete.archive);
     session.loaded=true;session.initialization=null;
   }
+  async function listLegacyDesks() {
+    const items=[],problems=[];let local=null;
+    try {
+      const retained=await readDeskValue('desk-index',current.program.id,'caseId');
+      for(const item of retained||[])if(item.caseId===current.program.id)items.push({...item,kind:'database'});
+    }catch(error){problems.push(error.message||'Earlier saved desks could not be read.');}
+    try {
+      const value=JSON.parse(localStorage.getItem(legacyStorageKey)||'null');
+      if(value?.schema==='sf47.settlement-draft.v1'&&value.caseId===current.program.id) {
+        local=validDeskShape({...value,schema:DESK_SCHEMA,archiveId:null},current.program.id);
+        items.push({id:'earlier-local-copy',kind:'local',name:local.draft?.name||local.fileMeta?.filename||'Earlier settlement draft',
+          savedAt:local.savedAt||'',requestId:local.pending?.requestId||null});
+      }
+    }catch(error){problems.push(error.message||'The earlier local copy could not be read.');}
+    activeCheck();legacyDesks=items.sort((a,b)=>String(b.savedAt).localeCompare(String(a.savedAt)));
+    legacyLocal=local;legacyCopy=null;legacyMessage=problems.join(' ');render();
+  }
+  async function inspectLegacyDesk(id,kind) {
+    const item=legacyDesks?.find(row=>row.id===id&&row.kind===kind);
+    if(!item)throw new Error('Select one of the earlier browser copies.');
+    const saved=kind==='local'?clone(legacyLocal):await readDeskValue('desks',id);
+    const complete=kind==='local'?{saved,archive:await validateDeskArchive(saved,null)}:await loadDesk(saved,SETTLEMENT_DATABASE);
+    activeCheck();legacyCopy=complete;render();
+  }
+  async function openLegacyDesk() {
+    if(!legacyCopy)throw new Error('Review an earlier browser copy first.');
+    if(session.pending||session.sending||session.accepted)throw new Error('Recover the current original request before opening another draft.');
+    const problem=pendingActorProblem(legacyCopy.saved.pending);if(problem)throw problem;
+    const complete=legacyCopy;readDraft();await persist();activeCheck();
+    session.deskId=crypto.randomUUID();applyDesk(complete.saved,complete.archive);
+    session.storedArchiveId=null;session.loaded=true;session.initialization=null;legacyCopy=null;render();
+    await persist();activeCheck();await loadReviews();
+    if(session.selected&&!session.pending)await openSource();else render();
+  }
+  function downloadLegacyDesk() {
+    if(!legacyCopy)throw new Error('Review an earlier browser copy first.');
+    download({...legacyCopy.saved,originalArchive:legacyCopy.archive?{contentBase64:legacyCopy.archive.contentBase64}:null},
+      current.program.id+'-earlier-settlement-desk.json');
+  }
+  function legacyView() {
+    if(legacyDesks===null)return '';
+    const saved=legacyCopy?.saved,problem=pendingActorProblem(saved?.pending);
+    return '<section class="settlement-section"><h4>Earlier browser copies</h4>'+
+      '<p>Review an earlier copy before opening it in this sign-in. The current desk and each original earlier copy remain separately retained.</p>'+
+      (legacyMessage?'<p>'+esc(legacyMessage)+'</p>':'')+
+      (legacyDesks.length?'<ul>'+legacyDesks.map(item=>'<li>'+esc(item.name)+' · '+esc(item.savedAt?readableTime(item.savedAt):'Earlier local draft')+
+        (item.requestId?' · original request '+esc(item.requestId):'')+' '+button('Review earlier copy','legacy-inspect','data-desk="'+esc(item.id)+'" data-kind="'+esc(item.kind)+'"')+'</li>').join('')+'</ul>':'<p>No earlier settlement copies are saved for this case.</p>')+
+      (saved?'<div class="settlement-section"><h5>Selected earlier copy</h5>'+
+        facts([['Original case',saved.caseId],['Original source',saved.fileMeta?.filename||'Correction draft'],['Original request',saved.pending?.requestId||'No pending request'],['Original operator',saved.pending?.actor||'No pending request'],
+          ['Archive',legacyCopy.archive?'Complete original bytes retained':saved.fileMeta?'Original archive can be reopened from this case or reselected':'No archive selected']])+
+        (problem?'<p>'+esc(problem.message)+'</p>':'')+'<div class="settlement-actions">'+button('Open selected earlier copy','legacy-open',problem?'disabled data-settlement-fixed="true"':'')+
+        button('Download earlier copy','legacy-download')+'</div></div>':'')+
+      button('Close earlier copies','legacy-close')+'</section>';
+  }
   async function retainDeskCopy() {
     readDraft();await persist();activeCheck();
     session.deskId=crypto.randomUUID();
@@ -262,7 +332,8 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
   async function openDesk(id) {
     if(session.pending||session.sending||session.accepted)throw new Error('Recover the original retained request before opening another draft.');
     readDraft();await persist();
-    const saved=await readDeskValue('desks',id),complete=await loadDesk(saved);activeCheck();
+    const saved=await readOwned('desks',id),complete=await loadDesk(saved);activeCheck();
+    const problem=pendingActorProblem(complete.saved.pending);if(problem)throw problem;
     session.deskId=crypto.randomUUID();applyDesk(complete.saved,complete.archive);render();
     await persist();activeCheck();await loadReviews();
     if(session.selected&&!session.pending)await openSource();else render();
@@ -271,7 +342,7 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
     readDraft();
     const saved=snapshot();
     let archive=archiveFor(saved);
-    if(!archive&&saved.archiveId)archive=await readDeskValue('archives',saved.archiveId).catch(()=>null);
+    if(!archive&&saved.archiveId)archive=await readOwned('archives',saved.archiveId).catch(()=>null);
     if(!archive&&saved.fileMeta) {
       const original=current.sources.find(row=>row.sha256===saved.fileMeta.sha256&&row.bytes===saved.fileMeta.bytes);
       if(original)archive={contentBase64:base64(await originalBytes(original))};
@@ -285,6 +356,7 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
     if(file.size>DESK_LIMIT)throw new Error('Choose a complete settlement desk JSON up to 64 MiB.');
     const saved=validDeskShape(JSON.parse(await file.text()),current.program.id);
     const archive=await validateDeskArchive(saved,saved.originalArchive);activeCheck();
+    const problem=pendingActorProblem(saved.pending);if(problem)throw problem;
     readDraft();await persist();activeCheck();
     session.deskId=crypto.randomUUID();applyDesk(saved,archive);
     session.storedArchiveId=null;render();await persist();activeCheck();await loadReviews();
@@ -374,7 +446,8 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
       if(el.closest('[data-settlement-link-fields]'))el.disabled=el.disabled||selectedDraft(el.closest('[data-settlement-link-fields]').dataset.settlementLinkFields)?.decision!=='LINK_CASH';
       if(el.matches('[data-settlement-save]'))el.disabled=el.disabled||!editable()||!session.preview?.proposed?.canApply;
       if(el.matches('[data-settlement-correction-save]'))el.disabled=el.disabled||!editable()||!session.correctionPreview?.proposed?.canApply;
-      if(['preview','open-source','open-review','correct-row','preview-correction','allocation-add','allocation-remove','open-desk'].includes(action))el.disabled=el.disabled||pending;
+      if(['preview','open-source','open-review','correct-row','preview-correction','allocation-add','allocation-remove','open-desk','legacy-open'].includes(action))el.disabled=el.disabled||pending;
+      if(action==='recover')el.disabled=el.disabled||!!pendingActorProblem(session.pending);
       if(el.matches('[data-settlement-desk-file]'))el.disabled=el.disabled||pending;
       if(el.matches('[data-settlement-file]'))el.disabled=el.disabled||Boolean(session.pending&&session.pending.action!=='settlement.receive')||Boolean(session.accepted);
     }
@@ -530,13 +603,13 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
       '<div class="settlement-actions">'+button('Download complete desk','download-desk')+button('Refresh case','reload')+'</div></header><p class="settlement-message" data-settlement-message role="'+(session.error?'alert':'status')+'" aria-live="polite">'+esc(session.message??'')+'</p>'+
       '<section class="settlement-section"><details><summary>Saved editing desks ('+session.savedDrafts.length+')</summary>'+
       '<p>Each open window retains its own complete draft. Opening a saved copy creates a separate desk with its original source and request.</p>'+
-      '<div class="settlement-actions">'+button('Refresh saved desks','list-desks')+'</div>'+
+      '<div class="settlement-actions">'+button('Refresh saved desks','list-desks')+(boundStaff?button('Find earlier browser copies','legacy-list'):'')+'</div>'+
       (session.savedDrafts.length?'<ul>'+session.savedDrafts.map(item=>'<li>'+esc(item.name)+' · '+esc(readableTime(item.savedAt))+
         (item.requestId?' · original request retained':'')+' '+button('Open saved copy','open-desk','data-desk="'+esc(item.id)+'"')+'</li>').join('')+'</ul>':'')+
       field('Open complete desk JSON','<input type="file" accept=".json,application/json" data-settlement-desk-file>',
-        'Use a complete desk exported from this original case. The current draft is retained separately.')+'</details></section>'+
+        'Use a complete desk exported from this original case. The current draft is retained separately.')+'</details></section>'+legacyView()+
       (pending?'<section class="settlement-pending"><h4>Original request retained</h4><p>'+esc(human(pending.action.replace('.',' ')))+
-        ' was prepared at case version '+pending.expectedVersion+'. Recover this same request to obtain its saved result or finish the original action.</p><div class="settlement-actions">'+
+        ' was prepared at case version '+pending.expectedVersion+'.</p><p>'+esc(pendingActorProblem(pending)?.message||'Recover this same request to obtain its saved result or finish the original action.')+'</p><div class="settlement-actions">'+
         button('Recover original request','recover')+button('Download retained request','download-request')+'</div></section>':'')+
       '<section class="settlement-section"><h4>1 / Original accounting archive</h4>'+field(pending?.action==='settlement.receive'?'Reselect the exact original archive':'Choose the original period-close or accountant TAR',
         '<input type="file" accept=".tar,application/x-tar,application/octet-stream" data-settlement-file>','Use the complete archive exported by the existing merchant accounting workspace.')+
@@ -641,6 +714,7 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
   }
   async function sendPending() {
     if(!session.pending)throw new Error('No original request is retained.');
+    const problem=pendingActorProblem(session.pending);if(problem)throw problem;
     if(session.pending.action==='settlement.receive'&&!session.pending.data.contentBase64) {
       const source=current.sources.find(row=>session.fileMeta&&row.sha256===session.fileMeta.sha256&&row.bytes===session.fileMeta.bytes);
       if(!source)throw new Error('Reselect the exact original archive to recover the receiving request.');
@@ -713,6 +787,11 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
       if(action==='reload'){readDraft();await onReload();return;}
       if(action==='download-desk')return downloadDesk();
       if(action==='list-desks'){await listDesks();render();return;}
+      if(action==='legacy-list')return listLegacyDesks();
+      if(action==='legacy-inspect')return inspectLegacyDesk(target.dataset.desk,target.dataset.kind);
+      if(action==='legacy-open')return openLegacyDesk();
+      if(action==='legacy-download')return downloadLegacyDesk();
+      if(action==='legacy-close'){legacyDesks=null;legacyLocal=null;legacyCopy=null;render();return;}
       if(action==='open-desk')return openDesk(target.dataset.desk);
       if(action==='open-source')return openSource();
       if(action==='preview')return previewSelection();

@@ -1,4 +1,5 @@
-import {readStaffSession,staffRequest,signInStaff,signInOwner,signOutStaff} from './staff-session.mjs';
+import {readStaffSession,staffRequest as requestStaff,signInStaff,signInOwner,signOutStaff,currentStaffContext,staffDeskStorageKey} from './staff-session.mjs';
+import {mountStaffRecovery} from './staff-recovery.mjs';
 
 const $ = selector => document.querySelector(selector);
 const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -15,6 +16,8 @@ const descriptions = {
   contributor:'Record your completed work and invoices, attach original source files and submit work for review.',
   owner:'Administer the installation and operate its complete planning and delivery workspace.'
 };
+let staffContext=null;
+const staffRequest=(path,body,options={})=>requestStaff(path,body,{...options,staffContext:options.staffContext===undefined?staffContext:options.staffContext});
 let identity=null, members=[], catalog=[], board=null, selectedCase=null, credential=null, eventsAfter=0, busy=false, draft=null;
 const requests = new Map();
 function inform(message,error=false) {$('#message').textContent=message;$('#message').dataset.error=String(error);}
@@ -34,15 +37,16 @@ async function run(action) {
   }
 }
 document.addEventListener('click',event=>{if(busy&&event.target.closest('button,a.button')){event.preventDefault();event.stopImmediatePropagation();}},true);
-async function requestId(path,body) {
-  const staffId=identity.id;
+async function requestId(path,body,context=staffContext) {
+  const staffId=staffDeskStorageKey('sf47.team.requests',context);
   const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(body)));
   const key=staffId+'\0'+path+'\0'+Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
   if(!requests.has(key))requests.set(key,crypto.randomUUID());
   return requests.get(key);
 }
 async function mutate(path,body) {
-  return staffRequest(path,{...body,requestId:await requestId(path,body)});
+  const context=staffContext?{...staffContext}:null,original=structuredClone(body);
+  return staffRequest(path,{...original,requestId:await requestId(path,original,context)},{staffContext:context});
 }
 function download(blob,name) {
   const url=URL.createObjectURL(blob),a=document.createElement('a');
@@ -51,11 +55,11 @@ function download(blob,name) {
 }
 function downloadJson(value,name) {download(new Blob([JSON.stringify(value,null,2)+'\n'],{type:'application/json'}),name);}
 async function openSession(session) {
-  if(draft&&session.principal.id!==draft.staffId) {
+  if(draft&&(session.principal.id!==draft.staffId||(draft.staffContext?.installationId&&session.installationId!==draft.staffContext.installationId))) {
     await signOutStaff();
     throw new Error('Sign in as the person who opened this draft to continue it.');
   }
-  identity=session.principal;
+  identity=session.principal;staffContext=currentStaffContext();
   $('#sign-in').hidden=true;$('#signed-in').hidden=false;$('#sign-out').hidden=false;
   $('#person-name').textContent=identity.displayName;
   $('#person-role').textContent=(identity.role==='owner'?'Installation owner':identity.role[0].toUpperCase()+identity.role.slice(1))+' · '+identity.actor;
@@ -152,7 +156,7 @@ function leaveDraft() {
 }
 function beginDraft(kind,c,id=null) {
   const row=id?(kind==='work'?c.work:c.invoices).find(value=>value.id===id):null;
-  draft={kind,id,caseId:c.program.id,staffId:identity.id,contributorId:c.contributor.id,
+  draft={kind,id,caseId:c.program.id,staffId:identity.id,staffContext:staffContext?{...staffContext}:null,contributorId:c.contributor.id,
     version:c.program.version,baseline:JSON.stringify(row||null),dirty:false,pending:null,
     conflict:null,blocked:'',notice:''};
 }
@@ -218,20 +222,13 @@ async function saveDraft(action,data,note) {
     if(editing.blocked||editing.conflict)throw new Error('Review the current saved record before saving this draft.');
     const path='/api/operations/'+editing.caseId+'/command';
     const body={expectedVersion:editing.version,actor:identity.actor,action,data,note};
-    editing.pending={path,body:{...body,requestId:await requestId(path,body)},uncertain:false};
-  } else {
-    const session=await readStaffSession();
-    if(!session.authenticated||session.principal.id!==editing.staffId) {
-      $('#sign-in').hidden=false;
-      throw new Error('Sign in as the original contributor, then receive the original save.');
-    }
-    identity=session.principal;
+    editing.pending={path,body:{...body,requestId:await requestId(path,body,editing.staffContext)},uncertain:false};
   }
   renderDraftState();
-  try {await staffRequest(editing.pending.path,editing.pending.body);}
+  try {await staffRequest(editing.pending.path,editing.pending.body,{staffContext:editing.staffContext});}
   catch(error) {
     const definite=error.code==='OPERATIONS_CONFLICT'
-      ||(!editing.pending.uncertain&&error.status>=400&&error.status<500);
+      ||(!editing.pending.uncertain&&[400,409,413,415,422].includes(error.status));
     if(definite)editing.pending=null;
     else editing.pending.uncertain=true;
     if(error.status===401)$('#sign-in').hidden=false;
@@ -423,6 +420,12 @@ $('#load-events').addEventListener('click',()=>run(async()=>{
   if(eventsAfter)$('#events').insertAdjacentHTML('beforeend',html);else $('#events').innerHTML=html;
   eventsAfter=result.nextAfter||0;$('#load-events').textContent=result.nextAfter?'Load next events':'Refresh events';
 }));
+mountStaffRecovery({getContext:()=>draft?.staffContext||staffContext,inform,onRestored:session=>{
+  identity=session.principal;staffContext=currentStaffContext();
+  $('#person-name').textContent=identity.displayName;
+  $('#person-role').textContent=(identity.role==='owner'?'Installation owner':identity.role[0].toUpperCase()+identity.role.slice(1))+' · '+identity.actor;
+  $('#sign-in').hidden=true;renderDraftState();
+}});
 const fragment=new URLSearchParams(location.hash.slice(1)),owner=fragment.get('access');
 if(owner)history.replaceState(null,'',location.pathname+location.search);
 run(async()=>{
