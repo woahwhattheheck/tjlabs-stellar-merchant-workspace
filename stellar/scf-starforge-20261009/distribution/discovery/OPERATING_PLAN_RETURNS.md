@@ -282,3 +282,16 @@ Each source plan keeps its original 32 MiB limit. The full review keeps its 128 
 The offline document embeds complete application sources and portable data using escaped JSON. Its original modules load from local Blob URLs. The document's content policy disables network connections, forms and external resource loading. Imported procedure text and file bytes remain data interpreted by the original models. The included guide and review text are rendered as text.
 
 The complete file can contain customer material and attachments from both branches, including work that is not selected for the final procedure. Send it through the same authorized customer handover as the original complete review.
+
+
+## Review and receive complete attached files
+
+Returned procedures and its editable offline workbook show complete attached files beside each shared, current, returned and selected review value. The page displays file identity, name, original byte count, media type and receiving note. **Download file** decodes the exact complete bytes through the original OperatingFile reader. It uses a download rather than opening file content as executable page material.
+
+The returned-file comparison names added and removed files and distinguishes changed bytes from metadata-only changes. File order and membership are also visible. Compare each source's own files before selecting the complete intended value. Both original histories remain in the review even when a source file is not selected.
+
+The same controls support historical separate-file rows and the current grouped progress/result/file values. A contextual whole-step conflict exposes its complete files alongside the changed instructions and recorded outcome. The proposed procedure also lists every selected file under its step, including unchanged attachments that do not produce a comparison row.
+
+Raw base64 content is retained in the complete review, working JSON and workbook. The ordinary comparison display shows file metadata and download actions so the operator can read the surrounding work. An explicit custom JSON choice still exposes its complete original value, preserving the full existing custom-editing contract.
+
+Completing a review retains its selected file collection in the original operating-plan result. Keep the full completed review when returning work through Grant Operations or the procedure receiver so the receiving operator has both original file-bearing branches and the recorded decisions. Downloaded individual files are useful customer outputs; the complete review and plan preserve their operating context and saved history.

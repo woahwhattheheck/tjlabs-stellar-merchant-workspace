@@ -1,5 +1,5 @@
 // MIT. Review original saved procedure returns and receive the selected result in the same plans store.
-import { inspectOperatingPlan } from '/operating-return-core/operating-plan.mjs';
+import { inspectOperatingPlan, inspectOperatingFile, operatingFileBytes, compareOperatingFiles } from '/operating-return-core/operating-plan.mjs';
 import { createOperatingPlanReturn, inspectOperatingPlanReturn, compareOperatingPlanReturn,
   reviseOperatingPlanReturn, decideOperatingPlanReturn, applyOperatingPlanReturn,
   renderOperatingPlanReturnHTML, OPERATING_RETURN_MAX_BYTES, OPERATING_RETURN_PLAN_MAX_BYTES } from '/operating-return-core/operating-plan-return.mjs';
@@ -273,6 +273,67 @@ function parseCustom(row, raw) {
   if (typeof row.current === 'string' && typeof row.base === 'string' && typeof row.incoming === 'string') return raw;
   return JSON.parse(raw);
 }
+// Keep complete file bytes in the original review; decode only a requested download.
+function attachedValue(value, directFiles = false) {
+  const direct = Array.isArray(value);
+  if (direct && !directFiles && !value.length) return null;
+  const supplied = direct ? value : value && typeof value === 'object' && Object.hasOwn(value, 'files') ? value.files : undefined;
+  if (supplied === undefined || supplied !== null && !Array.isArray(supplied)) return null;
+  let files;
+  try { files = (supplied ?? []).map(inspectOperatingFile); } catch { return null; }
+  const summaries = files.map(({ content, ...file }) => file);
+  return { files, visible: direct ? summaries : { ...value, files: supplied === null ? null : summaries } };
+}
+function downloadAttachedFile(value) {
+  const file = inspectOperatingFile(value), bytes = operatingFileBytes(file);
+  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
+  const link = node('a'); link.href = url; link.download = file.name;
+  document.body.append(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  message('Downloaded complete original file ' + file.name + ' · ' + file.bytes + ' bytes.');
+}
+function renderAttachedFiles(parent, files) {
+  const section = node('section', undefined, 'returned-files');
+  section.append(node('h4', files.length + (files.length === 1 ? ' complete attached file' : ' complete attached files')));
+  if (!files.length) section.append(node('p', 'This value contains no attached files.', 'hint'));
+  for (const file of files) {
+    const item = node('details', undefined, 'returned-file');
+    item.append(node('summary', file.name + ' · ' + file.bytes + ' bytes'));
+    const meta = node('dl', undefined, 'file-meta');
+    for (const [label, value] of [['File identity', file.id], ['Media type', file.mediaType], ['Receiving note', file.note || '—']])
+      meta.append(node('dt', label), node('dd', value));
+    const button = node('button', 'Download file: ' + file.name);
+    button.type = 'button'; button.dataset.fileDownload = file.id;
+    button.addEventListener('click', () => run(() => downloadAttachedFile(file)));
+    item.append(meta, button); section.append(item);
+  }
+  parent.append(section);
+}
+function renderReviewValue(parent, value, directFiles = false) {
+  const attached = attachedValue(value, directFiles);
+  parent.append(node('pre', display(attached ? attached.visible : value)));
+  if (attached) renderAttachedFiles(parent, attached.files);
+}
+function renderFileComparison(parent, row) {
+  const direct = row.key.endsWith('/files');
+  const current = attachedValue(row.current, direct), incoming = attachedValue(row.incoming, direct);
+  if (!current && !incoming) return;
+  const compared = compareOperatingFiles(current?.files ?? [], incoming?.files ?? []);
+  const panel = node('details', undefined, 'file-comparison');
+  panel.append(node('summary', 'Returned file changes · ' + compared.added.length + ' added · ' +
+    compared.removed.length + ' removed · ' + compared.changed.length + ' changed'));
+  const list = node('ul');
+  for (const file of compared.added) list.append(node('li', 'Added: ' + file.name + ' · ' + file.bytes + ' bytes.'));
+  for (const file of compared.removed) list.append(node('li', 'Removed: ' + file.name + ' · ' + file.bytes + ' bytes.'));
+  for (const file of compared.changed) list.append(node('li',
+    file.previous.name + ' → ' + file.returned.name + ' · ' +
+    (file.contentChanged ? 'complete file bytes changed' : 'file metadata changed') + '.'));
+  if (!list.childNodes.length) list.append(node('li', 'The retained files have matching contents and metadata.'));
+  if (compared.orderChanged) list.append(node('li', 'The attached-file sequence or membership changed.'));
+  panel.append(list, node('p', 'Each source retains its own complete file bytes. Choose the intended full value through the original review controls.', 'hint'));
+  parent.append(panel);
+}
+
 function renderRows() {
   const openKeys = new Set([...document.querySelectorAll('.change[open]')].map(element => element.dataset.key));
   const matching = filteredRows(), pages = Math.max(1, Math.ceil(matching.length / PAGE_SIZE));
@@ -289,9 +350,10 @@ function renderRows() {
     if (row.reason) item.append(node('p', row.reason, 'text'));
     const values = node('div', undefined, 'values');
     for (const [key, title] of [['base', 'Shared saved revision'], ['current', 'Current work'], ['incoming', 'Returned work']]) {
-      const section = node('section'); section.append(node('h3', title), node('pre', display(row[key]))); values.append(section);
+      const section = node('section'); section.append(node('h3', title));
+      renderReviewValue(section, row[key], row.key.endsWith('/files')); values.append(section);
     }
-    item.append(values);
+    item.append(values); renderFileComparison(item, row);
     if (row.kind === 'step-order') {
       item.append(node('p', 'A source order keeps its listed positions, then places other included steps at the end. The complete proposed sequence below must include every selected step.', 'hint'));
       for (const [key, title] of [['current', 'Current order with all included work'], ['incoming', 'Returned order with all included work'], ['base', 'Shared order with all included work']]) {
@@ -335,8 +397,8 @@ function renderRows() {
       delete state.buffers[row.key]; await saveNow(); renderReview(); message('Pending edits for this choice were discarded.');
     }));
     const result = node('div', undefined, 'recorded');
-    result.append(node('h3', row.reviewed ? 'Recorded choice: ' + row.take : 'Proposed choice: ' + row.take),
-      node('pre', display(row.value)));
+    result.append(node('h3', row.reviewed ? 'Recorded choice: ' + row.take : 'Proposed choice: ' + row.take));
+    renderReviewValue(result, row.value, row.key.endsWith('/files'));
     if (row.note) result.append(node('p', row.note, 'text'));
     const rowIssues = report.issues.filter(issue => issue.key === row.key);
     for (const issue of rowIssues) result.append(node('p', issue.message, 'text'));
@@ -359,7 +421,13 @@ function renderProcedure() {
     for (const [key, label] of [['owner', 'Owner'], ['due', 'Due'], ['instruction', 'Work'], ['inputs', 'Inputs'],
       ['expectedResult', 'Expected result'], ['recordedResult', 'Recorded result']])
       data.append(node('dt', label), node('dd', display(step[key])));
-    item.append(data, node('h3', 'Selected arguments'), node('pre', display(step.argv)));
+    item.append(data);
+    if (step.files !== undefined) {
+      const attached = Array.isArray(step.files) ? attachedValue(step.files, true) : null;
+      if (attached) renderAttachedFiles(item, attached.files);
+      else item.append(node('h3', 'Selected files'), node('pre', display(step.files)));
+    }
+    item.append(node('h3', 'Selected arguments'), node('pre', display(step.argv)));
     if (step.selection) item.append(node('h3', 'Complete original registration'), node('pre', display(step.selection)));
     fragment.append(item);
   });
