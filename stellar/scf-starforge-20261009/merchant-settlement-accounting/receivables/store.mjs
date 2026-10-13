@@ -11,6 +11,7 @@ import {RefundsWorkspace} from './refunds-workspace.mjs';
 import {CollectionsWorkspace} from './collections-workspace.mjs';
 import {CustomerAccountResponseWorkspace} from './customer-account-response-workspace.mjs';
 import {CashPlanningWorkspace} from './cash-planning-workspace.mjs';
+import {CashRealizationWorkspace} from './cash-realization-workspace.mjs';
 import {CreditControlWorkspace} from './credit-control-workspace.mjs';
 import {RemittancesWorkspace} from './remittances-workspace.mjs';
 import {BankReceiptsWorkspace} from './bank-receipts-workspace.mjs';
@@ -92,6 +93,7 @@ export class ReceivablesWorkspace {
     this.collectionsWorkspace = new CollectionsWorkspace(this);
     this.customerAccountResponseWorkspace = new CustomerAccountResponseWorkspace(this);
     this.cashPlanningWorkspace = new CashPlanningWorkspace(this);
+    this.cashRealizationWorkspace = new CashRealizationWorkspace(this);
     this.creditControlWorkspace = new CreditControlWorkspace(this);
     this.remittancesWorkspace = new RemittancesWorkspace(this);
     this.bankReceiptsWorkspace = new BankReceiptsWorkspace(this);
@@ -139,6 +141,7 @@ export class ReceivablesWorkspace {
     if (record.allocationId) result.allocation = structuredClone(this._allocation(record.allocationId));
     if (record.settings) result.issuer = structuredClone(data.issuer);
     if (record.cashPlanId) Object.assign(result,this.cashPlanningWorkspace.result(record));
+    if (record.cashRealizationId) Object.assign(result,this.cashRealizationWorkspace.result(record));
     if (record.customerAccountId || record.customerResponseId) Object.assign(result,this.customerAccountResponseWorkspace.result(record));
     if (record.remittanceBatchId) Object.assign(result, this.remittancesWorkspace.result(record));
     if (record.creditPolicyId || record.creditDecisionId || record.creditRelease)
@@ -236,6 +239,12 @@ export class ReceivablesWorkspace {
   async withdrawCreditDecision(id, value) { return this.creditControlWorkspace.withdraw(id, value); }
   async creditDecisionFile(id, name) { return this.creditControlWorkspace.file(id, name); }
   async creditControlOperation(requestId) { return this.creditControlWorkspace.operation(requestId); }
+  async cashRealizations(query = {}) { return this.cashRealizationWorkspace.list(query); }
+  async previewCashRealization(value) { return this.cashRealizationWorkspace.preview(value); }
+  async saveCashRealization(value) { return this.cashRealizationWorkspace.save(value); }
+  async cashRealization(id) { return this.cashRealizationWorkspace.detail(id); }
+  async cashRealizationFile(id, name) { return this.cashRealizationWorkspace.file(id, name); }
+  async cashRealizationOperation(requestId) { return this.cashRealizationWorkspace.operation(requestId); }
   async cashPlans(query = {}) { return this.cashPlanningWorkspace.list(query); }
   async previewCashPlan(value) { return this.cashPlanningWorkspace.preview(value); }
   async cashPlan(id, query = {}) { return this.cashPlanningWorkspace.detail(id, query); }

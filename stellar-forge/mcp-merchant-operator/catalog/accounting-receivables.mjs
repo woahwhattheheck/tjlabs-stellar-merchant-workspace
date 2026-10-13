@@ -153,7 +153,7 @@ export const receivablesFileNames = Object.freeze([
 ]);
 export const receivablesFileSelectors = Object.freeze([
   'publicationId', 'customerResponseId',
-  'collectionCaseId', 'cashPlanId', 'editionId', 'leftId', 'rightId', 'leftEditionId', 'rightEditionId', 'creditDecisionId', 'owner', 'status', 'search',
+  'cashRealizationId', 'collectionCaseId', 'cashPlanId', 'editionId', 'leftId', 'rightId', 'leftEditionId', 'rightEditionId', 'creditDecisionId', 'owner', 'status', 'search',
   'documentId', 'invoiceId', 'paymentRequestId', 'refundId', 'bankImportId', 'batchId', 'returnId', 'customerId', 'asOf',
 ]);
 export const receivablesDefinitions = [

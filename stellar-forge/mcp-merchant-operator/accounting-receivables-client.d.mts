@@ -1,10 +1,10 @@
 import type {Account,CustomerAccountArgumentsMap,CustomerAccountResultsMap,CustomerAccountMutation,CustomerAccountMethods,CustomerAccountClient,CustomerAccountFileSelection} from './accounting-customer-responses.mjs';
 export type {Account,CustomerAccountArgumentsMap,CustomerAccountResultsMap,CustomerAccountMutation,CustomerAccountMethods,CustomerAccountClient,CustomerAccountFileSelection,CustomerAccountIntakePreview,CustomerAccountIntakeSelection} from './accounting-customer-responses.mjs';
 export {accountingCustomerPublicationPreview,accountingCustomerPublicationArguments,accountingCustomerResponsePreview,accountingCustomerResponseArguments,accountingCustomerResponseReviewPreview,accountingCustomerResponseReviewArguments} from './accounting-customer-response-client.mjs';
-import type {Collections, Cash, Credit, FinancialControlArgumentsMap, FinancialControlResultsMap,
+import type {Collections, Cash, Credit, Realization, FinancialControlArgumentsMap, FinancialControlResultsMap,
   FinancialControlMutation, FinancialControlMethods, FinancialControlClient, FinancialControlFileSelection}
   from './accounting-financial-control.mjs';
-export type {Collections, Cash, Credit, FinancialControlArgumentsMap, FinancialControlResultsMap,
+export type {Collections, Cash, Credit, Realization, FinancialControlArgumentsMap, FinancialControlResultsMap,
   FinancialControlMutation, FinancialControlMethods, FinancialControlClient, FinancialControlFileSelection}
   from './accounting-financial-control.mjs';
 import type {
@@ -732,3 +732,6 @@ export function accountingCashPlanPreview(preview:Cash.CashPlanPreview):Cash.Cas
 export function accountingCashPlanArguments(preview:Cash.CashPlanPreview,value:{actor:string;requestId:string;id?:string;expectedVersion?:number}):Cash.SaveCashPlanInput;
 export function accountingCreditAssessmentPreview(preview:Credit.CreditAssessmentPreview):Credit.CreditAssessmentPreview;
 export function accountingCreditDecisionArguments(preview:Credit.CreditAssessmentPreview,value:{actor:string;requestId:string;outcome:Credit.CreditDecisionOutcome;reason:string}):Credit.SaveCreditDecisionInput & {invoiceId:string};
+
+export function accountingCashRealizationPreview(preview:Realization.CashRealizationPreview):Realization.CashRealizationPreview;
+export function accountingCashRealizationArguments(preview:Realization.CashRealizationPreview,value:{actor:string;requestId:string}):Realization.SaveCashRealizationInput;

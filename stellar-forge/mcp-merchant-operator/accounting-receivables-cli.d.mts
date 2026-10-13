@@ -1,5 +1,5 @@
 import type {Account,CustomerAccountIntakePreview} from './accounting-customer-responses.mjs';
-import type {Cash, Credit} from './accounting-financial-control.mjs';
+import type {Cash, Credit, Realization} from './accounting-financial-control.mjs';
 // MIT. Declarations for original receivables command line operations and file delivery.
 import type {
   AccountingReceivablesClient, CompleteInvoicePreview, NativeRecord, PaymentRequestPreview, RefundPreview, CreditDispositionPreview, BankPostingPreview, RemittancePreview,
@@ -26,6 +26,7 @@ export type ReceivablesPreparePreview =
     {kind: 'bank_receipts_post'; preview: BankPostingPreview} |
     {kind: 'remittance_apply'; preview: RemittancePreview} |
     {kind:'cash_plan_save';preview:Cash.CashPlanPreview;reviewOptions?:{id?:string;expectedVersion?:number}} |
+    {kind:'cash_realization_save';preview:Realization.CashRealizationPreview} |
     {kind:'credit_decision_save';preview:Credit.CreditAssessmentPreview;reviewOptions:{outcome:Credit.CreditDecisionOutcome;reason:string}});
 export type ReceivablesPrepareOptions = ReceivablesPrepareArguments | ReceivablesPreparePreview;
 export interface PreparedReceivablesOperation<K extends ReceivablesMutation = ReceivablesMutation> {
@@ -62,6 +63,9 @@ export function prepareAccountingReceivablesOperation(
 export function prepareAccountingReceivablesOperation(
   options: ReceivablesPrepareOptions,
 ): Promise<PreparedReceivablesOperation>;
+export function prepareAccountingReceivablesOperation(
+  options: ReceivablesPreparePreview & {kind:'cash_realization_save'},
+): Promise<PreparedReceivablesOperation<'cash_realization_save'>>;
 export type ReceivablesOperationObservation = RequestLookupResult;
 export type ReceivablesOperationResult =
   {directory: string; kind: ReceivablesMutation; found: false; previouslyAttempted: boolean;
