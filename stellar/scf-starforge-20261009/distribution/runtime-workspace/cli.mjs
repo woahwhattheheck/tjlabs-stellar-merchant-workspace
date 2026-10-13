@@ -12,6 +12,7 @@ import { applicationInputEditionCommands, applicationInputEditionHelp, runApplic
 import { writeApplicationOutputDownload } from './application-output.mjs';
 import { readJSON } from './storage.mjs';
 import { fail, json, saveJSON } from './storage.mjs';
+import { dcatReceivingCommands, dcatReceivingHelp, runDcatReceivingCommand } from './application-dcat-receiving-cli.mjs';
 import { inspectApplicationSetup, exportApplicationSetup, prepareApplicationSetup,
   applicationSetupStatus, saveApplicationSetup } from './application-setup-operations.mjs';
 
@@ -99,6 +100,7 @@ ${runtimeProcedureHelp}
 ${applicationInputHelp}
 ${applicationInputSetHelp}
 ${applicationInputEditionHelp}
+${dcatReceivingHelp}
 
 The private browser receives an original archive or reuses an existing runtime,
 reviews exact dependency profiles, prepares and resumes original installations,
@@ -108,6 +110,7 @@ Install workers retain progress and continue across browser/server restarts.
 Linux, Node22.16+, Python3.11+, npm and flock are the original installer requirements.
 `;
 const allowed = {
+  ...dcatReceivingCommands,
   ...workspaceBackupCommands,
   ...runtimeProcedureCommands,
   ...applicationInputCommands,
@@ -216,7 +219,8 @@ export async function main(argv = process.argv.slice(2)) {
   }
   const model = await openRuntimeWorkspace({ directory });
   let result;
-  if (Object.hasOwn(workspaceBackupCommands, command)) result = await runWorkspaceBackupCommand(model, command, options);
+  if (Object.hasOwn(dcatReceivingCommands, command)) result = await runDcatReceivingCommand(model, command, options);
+  else if (Object.hasOwn(workspaceBackupCommands, command)) result = await runWorkspaceBackupCommand(model, command, options);
   else if (Object.hasOwn(runtimeProcedureCommands, command)) result = await runRuntimeProcedureCommand(model, command, options);
   else if (Object.hasOwn(applicationInputEditionCommands, command)) result = await runApplicationInputEditionCommand(model, command, options);
   else if (Object.hasOwn(applicationInputSetCommands, command)) result = await runApplicationInputSetCommand(model, command, options);

@@ -1,4 +1,5 @@
 // MIT. Static FRED tool metadata; imports no source, merchant or buyer runtime.
+import { fredResearchTools, fredResearchFileSelection } from './fred-research.mjs';
 import { fredOperatingTools } from './fred-operating.mjs';
 import { MAX_RETAINED_CHUNK_BYTES } from '../retained-file-contracts.mjs';
 const alias = { type: 'string', pattern: '^[a-z0-9][a-z0-9_-]{0,63}$' };
@@ -105,7 +106,8 @@ export const fredDdpMigrationSelection = {
 const ddpPage = { ...releasePage, offset: { type: 'integer', minimum: 0, maximum: Number.MAX_SAFE_INTEGER } };
 
 export const fredFileSelection = {
-  kind: { type: 'string', enum: ['source', 'comparison', 'project', 'customer', 'briefing', 'briefing-successor', 'release-source', 'release-plan', 'ddp-crosswalk', 'ddp-package', 'ddp-migration', 'ddp-receiving'] },
+  kind: { type: 'string', enum: ['source', 'comparison', 'project', 'customer', 'briefing', 'briefing-successor', 'release-source', 'release-plan', 'ddp-crosswalk', 'ddp-package', 'ddp-migration', 'ddp-receiving', 'research-source', 'research-catalogue', 'research-entry', 'research-product'] },
+  ...fredResearchFileSelection,
   captureId: digest, before: digest, after: digest, publicationId: digest, intentId: operation, reviewId: digest, successorId,
   releaseCaptureId: digest, planId: releasePlanId,
   crosswalkId: ddpCrosswalkId, packageId: ddpPackageId, migrationId: ddpMigrationId, receivingId: ddpReceivingId,
@@ -114,6 +116,7 @@ export const fredFileSelection = {
 export function fredWorkspaceTools(tool) {
   return [
     ...fredOperatingTools(tool),
+    ...fredResearchTools(tool),
     tool('merchant_fred_handovers','Page the original portable handover inventory. Keep the operation ID and follow nextOffset.',{
       ...workspace,offset:{type:'integer',minimum:0},limit
     },['workspace'],read),
@@ -321,9 +324,9 @@ export function fredWorkspaceTools(tool) {
       ...workspace, id: operation, name: { type: 'string', minLength: 1, maxLength: 240 }, expectedSha256: digest,
       offset: { type: 'integer', minimum: 0 }, limit: { type: 'integer', minimum: 1, maximum: 196608 }
     }, ['workspace', 'id', 'name', 'expectedSha256'], read),
-    tool('merchant_fred_file_read', 'Read complete original source, release source or saved plan, comparison, analyst briefing, recurring successor, project export or saved customer-delivery bytes in retained chunks. Continue the returned readId/offset; verify the complete file SHA256.', {
+    tool('merchant_fred_file_read', 'Read complete original source, release source or saved plan, comparison, analyst briefing, recurring successor, Research source/catalogue/entry/product record, project export or saved customer-delivery bytes in retained chunks. Continue the returned readId/offset; verify the complete file SHA256.', {
       ...workspace, ...fredFileSelection, expectedSha256: digest,
-      readId: { type: 'string', minLength: 1, maxLength: 96 }, offset: { type: 'integer', minimum: 0, maximum: 268435456 },
+      readId: { type: 'string', minLength: 1, maxLength: 96 }, offset: { type: 'integer', minimum: 0, maximum: 503316480 },
       limit: { type: 'integer', minimum: 1, maximum: MAX_RETAINED_CHUNK_BYTES }
     }, ['workspace', 'kind'], read),
     tool('merchant_fred_file_release', 'Release this client’s retained download descriptor when the original file is no longer needed.', {
