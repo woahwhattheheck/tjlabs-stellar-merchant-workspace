@@ -1,7 +1,7 @@
 // MIT. Complete recorded cohort delivery using the original Grant client and comparison engine.
 import {createHash} from 'node:crypto';
 import {COHORT_DELIVERY_INPUT_SCHEMA,COHORT_DELIVERY_COMPARISON_SCHEMA,
-  seedCohortDeliveryComparison,compareCohortDelivery,reopenCohortDeliveryComparison} from './cohort_delivery_comparison.mjs';
+  seedCohortDeliveryComparison,compareCohortDelivery,reopenCohortDeliveryComparison,seedCohortCommercialChoices} from './cohort_delivery_comparison.mjs';
 import {COHORT_ADOPTION_REVIEW_SCHEMA,COHORT_ADOPTION_PREPARED_SCHEMA,COHORT_ADOPTION_SAVED_SCHEMA,
   reviewGrantCohortAdoption,prepareGrantCohortAdoption,saveGrantCohortAdoption,
   inspectGrantCohortAdoptionRequest,openGrantCohortAdoption,exportCohortAdoption} from './cohort_planning_agent.mjs';
@@ -47,10 +47,11 @@ function result(input,extra={},allowEditable=false){
   try {
     const document=compareCohortDelivery(input);
     return {schema:COHORT_DELIVERY_AGENT_SCHEMA,state:'CALCULATED',document,
-      summary:copy(document.summary),source:copy(document.source),issues:copy(document.issues),...extra};
+      summary:copy(document.summary),source:copy(document.source),issues:copy([...document.issues,...(document.commercial?.issues||[])]),...extra};
   }catch(error){
     const codes=['DUPLICATE_IDENTITY_LINK','IDENTITY_LINK_NOTE_REQUIRED','UNKNOWN_IDENTITY_LINK',
-      'DUPLICATE_INTENT_ASSIGNMENT','UNKNOWN_INTENT_ASSIGNMENT','INTENT_ASSIGNMENT_NOTE_REQUIRED','INTENT_IDENTITY_CONFLICT'];
+      'DUPLICATE_INTENT_ASSIGNMENT','UNKNOWN_INTENT_ASSIGNMENT','INTENT_ASSIGNMENT_NOTE_REQUIRED','INTENT_IDENTITY_CONFLICT',
+      'COMMERCIAL_ALLOCATION_CONFLICT','COMMERCIAL_COST_SOURCE_CHANGED','COMMERCIAL_REFUND_SOURCE_CHANGED','COMMERCIAL_CLOCK_CONFLICT'];
     if(!allowEditable||!codes.includes(error.code))throw error;
     return {schema:COHORT_DELIVERY_AGENT_SCHEMA,state:'EDITABLE_INPUT',document:copy(input),
       summary:null,source:null,issues:[{code:error.code,message:error.message,path:error.path??''}],...extra};
@@ -99,7 +100,15 @@ export function editCohortDelivery(document,changes){
   const input=inputOf(document,{editable:true});
   need(Array.isArray(changes)&&changes.length>0&&changes.length<=2000,'GRANT_DELIVERY_INPUT','Supply explicit identity and placement edits.');
   for(const change of changes){
-    exact(change,['action','kind','plannedId','observedId','intentId','targetId','note','title'],['action']);
+    exact(change,['action','kind','plannedId','observedId','intentId','targetId','note','title','commercial'],['action']);
+    if(['START_COMMERCIAL','SET_COMMERCIAL','REMOVE_COMMERCIAL'].includes(change.action)){
+      exact(change,change.action==='SET_COMMERCIAL'?['action','commercial']:['action'],change.action==='SET_COMMERCIAL'?['action','commercial']:['action']);
+      if(change.action==='REMOVE_COMMERCIAL')delete input.commercial;
+      else if(change.action==='START_COMMERCIAL'){need(input.commercial===undefined,'GRANT_DELIVERY_INPUT','This comparison already retains its commercial choices.');input.commercial=seedCohortCommercialChoices(input);}
+      else input.commercial=copy(change.commercial);
+      continue;
+    }
+    need(change.commercial===undefined,'GRANT_DELIVERY_INPUT','Commercial choices use the explicit SET_COMMERCIAL operation.');
     if(change.action==='TITLE_NOTE'){
       need(change.kind===undefined&&change.plannedId===undefined&&change.observedId===undefined&&
         change.intentId===undefined&&change.targetId===undefined&&(change.title!==undefined||change.note!==undefined),
@@ -141,7 +150,7 @@ export function editCohortDelivery(document,changes){
 export async function refreshGrantCohortDelivery(client,caseId,document,selection){
   const previous=inputOf(document,{editable:true}),original=await nativeSources(client,caseId,selection);
   const input={...original.input,links:copy(previous.links),assignments:copy(previous.assignments),
-    title:previous.title,note:previous.note};
+    title:previous.title,note:previous.note,...(previous.commercial===undefined?{}:{commercial:copy(previous.commercial)})};
   return result(input,{case:original.case,nativeSources:original.nativeSources,
     previousDocument:copy(documentOf(document))},true);
 }
