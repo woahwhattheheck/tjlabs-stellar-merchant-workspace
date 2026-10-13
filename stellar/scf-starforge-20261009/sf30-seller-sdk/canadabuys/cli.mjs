@@ -7,6 +7,8 @@ import { pathToFileURL } from 'node:url';
 import { CanadaBuysWorkspace, failure, sha256 } from './workspace.mjs';
 import { captureCanadaBuys, OFFICIAL_FEEDS } from './capture.mjs';
 import { startCanadaBuysServer } from './server.mjs';
+import { responseStatus, getResponseReview, prepareResponseReview, exportResponseReview, compareResponseReturn, applyResponseReturn, responseMarkdown } from './response-review/workspace.mjs';
+import { responseEditorHTML } from './response-review/routes.mjs';
 import { decodeCsv } from './csv.mjs';
 
 const HELP = [
@@ -44,6 +46,14 @@ const HELP = [
   'bidder-compare --record-id ID       Compare a saved decision to current context',
   'bidder-report --record-id ID --format html|json|csv [--revision N]',
   'bidder-evidence --record-id ID --out FILE [--revision N]   Recover original document bytes',
+  'response-review-status             List original response records and workshares',
+  'response-review-prepare --file JSON   Save complete source-bound master and workshare',
+  'response-review-record --record-id ID [--revision N]   Read the complete saved edition',
+  'response-review-export --record-id ID [--revision N]   Export complete working JSON',
+  'response-review-editor --record-id ID --out HTML [--revision N]   Export standalone editor',
+  'response-review-markdown --record-id ID --out MD [--revision N]   Export readable response',
+  'response-review-compare --file JSON   Compare complete original/current/returned fields',
+  'response-review-apply --file JSON   Atomically retain original return and selected changes',
   'merchant-prepare                    Prepare a complete SF30 dataset/merchant',
   'merchant-preview --merchant DIR     Query the original immutable dataset',
   'merchant-serve --merchant DIR       Start its configured native merchant',
@@ -51,6 +61,7 @@ const HELP = [
   '',
   'Mutations: --expected-revision N (workspace; review/workshare/bidder update use own revision)',
   'Bidder kind: profile|evidence|requirement|decision; --command-id ID makes a save repeatable',
+  'Response mutations retain commandId/workspaceId/expectedRevision from complete --file JSON.',
   'Evidence intake: --attachment FILE retains the actual bytes with your JSON description',
   'Bidder list: --notice-id ID --offset N --limit N; all record editions remain retrievable',
   'Common: --operator NAME --title TITLE --out FILE',
@@ -203,6 +214,18 @@ export async function main(args=process.argv.slice(2)) {
         return output(workspace.bidderDesk.evidenceFile(required(value['record-id'],'--record-id'),{
           revision:integer(value.revision,'--revision')}).body,value.out,true);
       }
+      case 'response-review-status':result=responseStatus(workspace);break;
+      case 'response-review-prepare':result=prepareResponseReview(workspace,(await jsonInput(value.file)).document);break;
+      case 'response-review-record':result=getResponseReview(workspace,required(value['record-id'],'--record-id'),{revision:integer(value.revision,'--revision')});break;
+      case 'response-review-export':result=await exportResponseReview(workspace,required(value['record-id'],'--record-id'),{revision:integer(value.revision,'--revision')});break;
+      case 'response-review-editor':{
+        required(value.out,'--out');
+        const transfer=await exportResponseReview(workspace,required(value['record-id'],'--record-id'),{revision:integer(value.revision,'--revision')});
+        return output(await responseEditorHTML(transfer),value.out,true);
+      }
+      case 'response-review-markdown':return output(responseMarkdown(workspace,required(value['record-id'],'--record-id'),{revision:integer(value.revision,'--revision')}).body,value.out,true);
+      case 'response-review-compare':result=await compareResponseReturn(workspace,(await jsonInput(value.file)).document);break;
+      case 'response-review-apply':result=await applyResponseReturn(workspace,(await jsonInput(value.file)).document);break;
       case 'merchant-prepare': {
         const merchant=await import('./merchant.mjs');
         result=await merchant.prepareMerchant(workspace,{...selection,scope:value.scope||'shortlist',expectedRevision,
