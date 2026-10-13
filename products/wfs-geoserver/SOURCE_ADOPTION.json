@@ -120,24 +120,10 @@
       "mode": "100644"
     },
     {
-      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wfs/mcp-tools.mjs",
-      "gitBlob": "f41f4fe52eb78d4e1c2d1576caeca6a2b8655c6c",
-      "bytes": 9231,
-      "sha256": "984eb889b8857e6b2d93d1f3fdd4e10622df5db327f5cad926a9c7ec400a9ec4",
-      "mode": "100644"
-    },
-    {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wfs/mcp.mjs",
       "gitBlob": "6440a14ddb326d2fc8126b8a8119e85f2deced24",
       "bytes": 11957,
       "sha256": "507ae1641c1a54038dda65a13b5a506e01ff44afd023e6abd1bfe861acb1aa96",
-      "mode": "100644"
-    },
-    {
-      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wfs/merchant-provider.mjs",
-      "gitBlob": "f72fdf7f024c5e1699aa81ce8d260cbe07e9049b",
-      "bytes": 1779,
-      "sha256": "ca49e451a95b3839316b01d246a8bb3b1a2f6e68fa0155f9b5c23fea60af760d",
       "mode": "100644"
     },
     {
@@ -440,9 +426,9 @@
     },
     {
       "path": "products/wfs-geoserver/OPERATING.md",
-      "gitBlob": "f87dc1dbf3cff1c7512657ec44201747c0ca89e8",
-      "bytes": 19404,
-      "sha256": "6e9920c26ab243f7e42872fe988fdfb0fbfdbf676a821b46264ad233b98224d2",
+      "gitBlob": "1c96c0f960f56ed7bd83403521202f2c24b67947",
+      "bytes": 19645,
+      "sha256": "c50b5ede3ec4065abd3eb883fd0ba47adea3ad16e04f83acb104ac22b90c9259",
       "mode": "100644"
     },
     {
@@ -521,5 +507,59 @@
     "channel": "C0BTB4SUCP9",
     "parent": "1791730288.879869",
     "adoption": "1791850006.132479"
-  }
+  },
+  "sourceCorrections": [
+    {
+      "reason": "Allow complete advertised native-vector profile JSON through the original MCP HTTP and console request limit.",
+      "maximumProfileCharacters": 4194304,
+      "maximumRequestBytes": 25296896,
+      "encodingAllowance": "Six JSON wire bytes per UTF-16 code unit plus 131072 bytes for the surrounding request.",
+      "originals": [
+        {
+          "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wfs/mcp-tools.mjs",
+          "gitBlob": "f41f4fe52eb78d4e1c2d1576caeca6a2b8655c6c",
+          "bytes": 9231,
+          "sha256": "984eb889b8857e6b2d93d1f3fdd4e10622df5db327f5cad926a9c7ec400a9ec4",
+          "mode": "100644"
+        },
+        {
+          "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wfs/merchant-provider.mjs",
+          "gitBlob": "f72fdf7f024c5e1699aa81ce8d260cbe07e9049b",
+          "bytes": 1779,
+          "sha256": "ca49e451a95b3839316b01d246a8bb3b1a2f6e68fa0155f9b5c23fea60af760d",
+          "mode": "100644"
+        }
+      ],
+      "files": [
+        {
+          "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wfs/mcp-tools.mjs",
+          "gitBlob": "dc67806658fc54c56e180e9dcb03b314dcd6ef17",
+          "bytes": 9538,
+          "sha256": "fd05fad5fd92bb76078ef02c4c7f726ef7d62cb26bde694a8b59e3846c11d68c",
+          "mode": "100644"
+        },
+        {
+          "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wfs/merchant-provider.mjs",
+          "gitBlob": "bc39a64e68da28dd97c0caaaf122e46c8eaae72f",
+          "bytes": 1824,
+          "sha256": "e4a3c22c60068983ab8450033139011b3a5116eb0df3e48908b64a83b3eb9088",
+          "mode": "100644"
+        }
+      ],
+      "hostSources": [
+        {
+          "path": "stellar-forge/mcp-paid-agent/http-tools.mjs",
+          "gitBlob": "1b0b2417a4f60671094b09b000faef8af47c410e"
+        },
+        {
+          "path": "stellar-forge/mcp-merchant-operator/console/service.mjs",
+          "gitBlob": "4fd7f6a6e28cf04ecc8ef664ce4ed949eb0f6197"
+        },
+        {
+          "path": "stellar-forge/mcp-merchant-operator/providers.mjs",
+          "gitBlob": "d0d1984bca7de72769cb35822339551bc42ea423"
+        }
+      ]
+    }
+  ]
 }
