@@ -2407,6 +2407,652 @@
           "sha256": "6e8439b5680999a20a9f713119499b0df27a7acfa17c5c2b72e683663680f49a"
         }
       ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-application-source-closure-py",
+      "label": "Complete mixed Python and JavaScript source collection",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/application_source_closure.py",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "cb90318aa2310a0c893c57c8fe9f6f8a0c3a99e7",
+          "bytes": 22496,
+          "sha256": "aab91fa42aa34c94d2b052e01901f9d3d0c84f754a084d98dbb9177d1a038a88"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-application-source-bridge-cjs",
+      "label": "Original JavaScript collector bridge",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/application_source_bridge.cjs",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "a2a24798f9523a2c74decd90c3f15486e49ba3a7",
+          "bytes": 2365,
+          "sha256": "2d2fe7994c4ce4487e19139b76ed2f49b781b174a642ea0965b656bde81d29fc"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-application-source-closure-md",
+      "label": "Mixed-language source selection and complete receiving guide",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/APPLICATION_SOURCE_CLOSURE.md",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "857f6ab4833c71d69ffcc61c686535637c74629e",
+          "bytes": 10858,
+          "sha256": "3b780bb9e748ffa0fba866e4e8178ed04ae14da9da29199f94173f2a0a613798"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-examples-application-source-self-json",
+      "label": "Complete mixed-source selection example",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/examples/application-source-self.json",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "b54cd618327f3f657c69b3694c637a66546cacd5",
+          "bytes": 1067,
+          "sha256": "fd7119ebf0ddace362b5b61783eb5bd9986dba269f77b52078fff13ff7464b68"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-connected-javascript-source-closure-cjs",
+      "label": "Original JavaScript dependency and resource reader",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/connected_javascript_source_closure.cjs",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "e227e13acc33de1cf1ee45a90b0f705be0e8afb4",
+          "bytes": 19076,
+          "sha256": "ca8e6bd64069a563898615003b73f229223f73b010278c2aa65656d1ccdc5b8e"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-source-closure-cli-cjs",
+      "label": "Complete JavaScript source command",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/source_closure_cli.cjs",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "32720f28c30ec12b92c756a35f9488274f0e290e",
+          "bytes": 17340,
+          "sha256": "40fe2fdcbc6fb9dadced8721fee3bb3523dbdc3fe65abb5b66e87844c007e14e"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-javascript-source-closure-md",
+      "label": "JavaScript imports, routes and retained resources",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/JAVASCRIPT_SOURCE_CLOSURE.md",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "0e39f28b3e34f2f17853bb2ad38e9d8bc44b5031",
+          "bytes": 9614,
+          "sha256": "b5db3ec89ca17e2a6460ec24c8f5628150b4798ac3b73de895e8aa231cdfb92a"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-examples-source-closure-self-json",
+      "label": "Original JavaScript source selection example",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/examples/source-closure-self.json",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "ae1a3fcd4d88c8456cc3eee2666110c16fbe6559",
+          "bytes": 506,
+          "sha256": "131a1595f4474455a417fe373110ef89f42e5389496839c3f530c2de6a7476d8"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-vendor-acorn-source-closure-acorn-cjs",
+      "label": "Complete pinned Acorn parser source",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/vendor/acorn-source-closure/acorn.cjs",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "f2e9c2288173973efc6d39a11b5f8cf0e25f8b22",
+          "bytes": 246643,
+          "sha256": "b95392d79457d0357555c5ed3e56302d074b92dff119bcf3b44179500b10e9df"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-vendor-acorn-source-closure-source-json",
+      "label": "Pinned Acorn source provenance",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/vendor/acorn-source-closure/SOURCE.json",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "9fc617f3e226c6d9afee30a7b98aa90c4e155c45",
+          "bytes": 508,
+          "sha256": "47ead5275a0a4c87b1c00167cedd72cd915b78f7a0339aeffd4d38362be3b71e"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-vendor-acorn-source-closure-license",
+      "label": "Original Acorn MIT license",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/vendor/acorn-source-closure/LICENSE",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "9d71cc63a35e7d878787e5159b5b163739486220",
+          "bytes": 1099,
+          "sha256": "76a876cf886ff9be2a8b5e2e86514fed06223c8c9f0c1e9ee9606e93841e00b7"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-python-source-closure-py",
+      "label": "Original Python dependency and resource collector",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/python_source_closure.py",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "012728ef0da48faf36cd42513eec4cc043d26228",
+          "bytes": 45288,
+          "sha256": "7612cf849c9da1eedd0e4f661f1a5ac31489fe878490320df2f82534d4408f43"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-python-source-closure-md",
+      "label": "Python source, external modules and complete receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/PYTHON_SOURCE_CLOSURE.md",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "5838ccb4c0f53b7b4db436ccdea5ac27fa808363",
+          "bytes": 17501,
+          "sha256": "15bdbfc40e26c6451aac619aa168db5632b4e8439dca8c774a8aa6c1bb407264"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-examples-python-source-closure-self-json",
+      "label": "Original Python source selection example",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/examples/python-source-closure-self.json",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "dc339e08e9cca88b4bd584e5b4a315fed8a1b485",
+          "bytes": 398,
+          "sha256": "068ccd673c4c040429777ed208402d6f6e49aac21cd44b82b8e3e0702c1dce91"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-connected-zip-cjs",
+      "label": "Original complete ZIP codec",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/connected_zip.cjs",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "af6f5f7f1333051641ceb28b1d037d7eaee0890c",
+          "bytes": 12228,
+          "sha256": "911abc6b486103a1d10a7a744de453e6c7547e1a5c3f8736662f9fff7a4d7e46"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-connected-zip-archive-cjs",
+      "label": "Full original ZIP inventory and identity",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/connected_zip_archive.cjs",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "38ef84fbdecacdc1e62f97a888da1a77d6904a33",
+          "bytes": 13818,
+          "sha256": "92d681feffa5df20f289fec1826a01bf11bd67a1e94ad9a1e0d7477ef0632a4a"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-connected-zip-receive-cjs",
+      "label": "Immutable archive/member receiving and publication recovery",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/connected_zip_receive.cjs",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "39f2593eec29a4c4b33fded70a4b669251bcc292",
+          "bytes": 16262,
+          "sha256": "cdbdb3398e95fac1b436d45378a93b3e8a7ccc3f391da89db454dadf8f6e0c6f"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-connected-gzip-cjs",
+      "label": "Original complete gzip codec",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/connected_gzip.cjs",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "d8b1a6e03a8e5e6fa603e4ac8a24eb4ca49bc453",
+          "bytes": 47127,
+          "sha256": "1fc9f3b218c60d029c96bf9f1c1e4de5fcb86918ed5a0570586dc81488440119"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-connected-zip-archive-md",
+      "label": "Whole ZIP preservation and independent reopening",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/CONNECTED_ZIP_ARCHIVE.md",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "6f7c14ca51887d21f66c8aaca08fc70acd49108e",
+          "bytes": 17757,
+          "sha256": "7bf51fee9fc7e20d79960a5f8245353f8131954bef3b1ccc0d72a40fb478de25"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-connected-application-archive-cjs",
+      "label": "Exact archive-to-selected-source binding",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/connected_application_archive.cjs",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "99313757bc6236b8793aef1bdac7174e3b6e1b5e",
+          "bytes": 4091,
+          "sha256": "b76a2a42621b2bbe54b23415433ad415d50c4e6003c1d4f2049126bfc6f4a540"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-application-archive-source-cjs",
+      "label": "Pinned ZIP/TAR source collection, inspection and receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/application_archive_source.cjs",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "6066d474df1dd2989ef8ae1ff7a1dc9fb54d07ec",
+          "bytes": 22931,
+          "sha256": "a48af0eec597c1fcda7f6e8692c4dd021792916d456c185ce7863417534757a5"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-application-archive-source-md",
+      "label": "Archive source operation, complete selection and parser recovery",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/APPLICATION_ARCHIVE_SOURCE.md",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "7ae8eff226145ac6262b7385762397472ab74358",
+          "bytes": 19303,
+          "sha256": "a3f6a63dfdcd8aa4ad418d917de88f8f6c10c9fb9ce320524db143d87b68878c"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-examples-application-archive-self-json",
+      "label": "Original archive and mixed-source selection example",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/examples/application-archive-self.json",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "3e74fb78d49da36a87e5ed2c963c39c7c53e9bcb",
+          "bytes": 1512,
+          "sha256": "21ef424c106b7b822ad787bb653a50ea195dcd1a802554aa8294b251a3b3bd85"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-application-archive-parser-py",
+      "label": "Original parser owner, children and terminal drain receipt",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/application_archive_parser.py",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "2dd10e911487dd099f98f4df960d9f94bd7ac19c",
+          "bytes": 3623,
+          "sha256": "c927d11a53fd028eb8a9c283948ed1c032e0fac9182dbd6bd93e4209f741213e"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-agents-md",
+      "label": "Complete original toolkit owner instructions",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/AGENTS.md",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "96d3752dc5277b2015178a03d9c124fdf9568d5a",
+          "bytes": 7844,
+          "sha256": "e728a4f43551cf369548497d8891cfa114f0b9f54354f204e7aab8bfce08ccc8"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-runtime-companion-archive-cjs",
+      "label": "Existing Runtime Files and Companion source receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/runtime_companion_archive.cjs",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "d10008182f4aad0ef0f95b1b761e863e0a52b67b",
+          "bytes": 25512,
+          "sha256": "42a97f644c07ec1b9152ac1f8d37402a3b3711ad371e97212e59bdb7dcb1499c"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-runtime-companion-archive-md",
+      "label": "Complete Companion import, preparation and independent export",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/RUNTIME_COMPANION_ARCHIVE.md",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "e0a29189eaed262c417e15ba62a933db33872448",
+          "bytes": 22339,
+          "sha256": "6e0327584d4209d63b37c2ae826a667b7f6d19e44d7a3d14c60c6f93e7fa8e48"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-readme-md",
+      "label": "Complete original archive toolkit opening guide",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/README.md",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "7db8b97a5a8f8c05c5f2f4787272efe2b7b78298",
+          "bytes": 2162,
+          "sha256": "6421c2923cb8b613dbddfd6be206f97385f5f209e79477067d0e9b0027d8d16b"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-application-tar-source-py",
+      "label": "Standard-library TAR inventory, paths and whole-member validation",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/application_tar_source.py",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "b653251db94f90cbb6edb66c15b48c7cad9f0566",
+          "bytes": 8886,
+          "sha256": "784f0534256eb1663e201c356bf9ba5163ee1ea1a3e824ee6588010c3d32a450"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-connected-tar-archive-cjs",
+      "label": "Original TAR parser result and byte-bound archive adapter",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/connected_tar_archive.cjs",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "d96d0d1b4ea9f004d6074299e04b13e14afe84d6",
+          "bytes": 2520,
+          "sha256": "8523d6bb991d5d9ab58f23aff5bb2ee3d05326a3a365e4707bcc390b2593c66f"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-toolkit-host-tar-application-source-md",
+      "label": "Complete TAR and tar.gz receiving and opening guide",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/TAR_APPLICATION_SOURCE.md",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "510e48dccdada046b180005474cb8778e13ba771",
+          "bytes": 12964,
+          "sha256": "e19b251af4be6c350dd0b636289040fadcd1b5d10a4befedbce9a529b425c219"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-cli-mjs",
+      "label": "Installed Runtime Companion receive, review, prepare and export command",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/cli.mjs",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "2f2766c559a4a80bd915b368bf4432d5fb19b336",
+          "bytes": 3455,
+          "sha256": "0623aac541e350a657c33a2bf805054994ec6ea2c7859e53843a807775621efc"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-source-cli-mjs",
+      "label": "Installed archive source collect, inspect and receive command",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/source-cli.mjs",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "dafb0038e1955476241465e4d3f8c7268cdf63a2",
+          "bytes": 957,
+          "sha256": "ef45e79df58bf7e7151d9e51b2b33fea95abf280c66807484ac75c3b7f7068ba"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-contribution",
+      "label": "Complete installed archive source contribution",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/runtime-companion-archive.json",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "457b907d99db3df6b2a39e8fe405e9ef9cefa04b",
+          "bytes": 5069,
+          "sha256": "ee33c8094e9ddbaf8f96bf5f8b99aff7f955ca539f62d87bd3c7a5fe218add88"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-selection",
+      "label": "Pinned complete archive-source product recipe",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/runtime-companion-archive.json",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "cc75e7dbc47f99814246d2a6ee9358c615415c39",
+          "bytes": 1462,
+          "sha256": "fdfadcc9fb14fbb75bfe62d576eb263f3f41b63490afbc48fe01c5c34f14de14"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-readme-md",
+      "label": "Installed complete archive-to-Runtime operator workflow",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/README.md",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "0b0b53fb7093d74c57158342bf4fc861e820dbae",
+          "bytes": 18687,
+          "sha256": "1d8b846540c8d1a2f58cb177074cf07477b2ac3abf59ae09e14078cf24e70bde"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-source-edition-json",
+      "label": "Complete current 31-member toolkit identity and historical predecessor",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/SOURCE_EDITION.json",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "5c18564825be5a717003f943bab2e45e3118f683",
+          "bytes": 8351,
+          "sha256": "1759290d307f5b69a4178b2c416b5108d16b7b45847104cff53758539adf75ec"
+        }
+      ]
+    },
+    {
+      "id": "runtime-archive-source-receiving-guide",
+      "label": "Original TAR equipped receiving operation and full toolkit",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "receiving/tar-application-source-20261013/README.md",
+      "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b021a7c8500cb5d6a73d46973315f62258dc169d",
+          "git_blob": "fa51da36fdf698e5e28233ea2ed50a271353f85c",
+          "bytes": 3820,
+          "sha256": "cf52dd22d935ca9897e6b65e83a002d2b24ec47cef67cef0c90ae4d92ac02a9f"
+        }
+      ]
     }
   ]
 }
