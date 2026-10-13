@@ -24,7 +24,7 @@ import tempfile
 import traceback
 
 OPERATION = "WORLDBANK-STANDALONE-PRODUCT-FE85-20261012"
-MODULE_SHA256 = "923fa1b5ad8476cc9294e78d33d8a891b0ea5a13ec79f61dc350c8e438c9721f"
+MODULE_SHA256 = "a9e2adab0a13da0c040c5c25874d3df4156c199493dde3780f5e9da5da66b643"
 PRODUCER_ID = "13c281c36fca40fe8377af367911bb4d"
 SOURCE_REF = None
 _active_child = None
@@ -150,6 +150,8 @@ def selected_source(root, supplied):
         "stellar-forge/mcp-merchant-operator/examples/worldbank-reference-capture.json",
         "stellar/scf-starforge-20261009/sf30-seller-sdk/worldbank/core.py",
         "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/worldbank_analysis.py",
+        "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/worldbank_recurring.py",
+        "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/worldbank_recurring_receive.py",
     ]
     if any(path not in seen for path in needed):
         raise ValueError("The selected package lacks the complete World Bank product closure.")
