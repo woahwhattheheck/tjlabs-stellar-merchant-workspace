@@ -141,6 +141,7 @@ def register_static(static):
                    "/operations_statement_allocations.mjs": ("operations_statement_allocations.mjs", "text/javascript; charset=utf-8"),
                    "/operations_statement_allocations.css": ("operations_statement_allocations.css", "text/css; charset=utf-8"),
                    "/operations_statement_copies.mjs": ("operations_statement_copies.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_statement_drafts.mjs": ("operations_statement_drafts.mjs", "text/javascript; charset=utf-8"),
                    "/operations_statement_review.mjs": ("operations_statement_review.mjs", "text/javascript; charset=utf-8"),
                    "/operations_statement_review_worklist.mjs": ("operations_statement_review_worklist.mjs", "text/javascript; charset=utf-8"),
                    "/operations_statement_rules.mjs": ("operations_statement_rules.mjs", "text/javascript; charset=utf-8"),
