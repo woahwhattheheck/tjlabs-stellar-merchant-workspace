@@ -19,7 +19,7 @@
  * @typedef {AuditEditionSummary & {reviews:AuditReview[],links:AuditLink[],analysisRuns:AuditAnalysis[]}} AuditEdition
  * @typedef {{id:string,sourceId:string,revisionId:string,entityKey?:string,status:'open'|'investigating'|'resolved'|'accepted',title:string,note:string,assignee:string,dueDate:string,evidence:{label:string,url:string}[],actor:string,createdAt?:string}} AuditReview
  * @typedef {{id:string,sourceId:string,revisionId:string,entityKey:string,targetKind:'haystack'|'lda'|'turnover',targetWorkspaceId:string,targetRecordId:string,note:string,actor:string}} AuditLink
- * @typedef {{id:string,kind:'xml'|'review'|'workspace'|'application'|'turnover-projection'|'analysis-output'|'colleague-return',name:string,bytes:number,sha256:string,downloadUrl:string,createdAt:string,mime?:string,sourceId?:string,revisionId?:string}} AuditExport
+ * @typedef {{id:string,kind:'xml'|'review'|'workspace'|'application'|'turnover-projection'|'analysis-output'|'colleague-return'|'recipient-editor'|'recipient-return'|'recipient-custody'|'recipient-queue'|'recipient-queue-package'|'review-transition',name:string,bytes:number,sha256:string,downloadUrl:string,createdAt:string,mime?:string,sourceId?:string,revisionId?:string}} AuditExport
  * @typedef {{name:string,downloadUrl:string,bytes?:number,sha256?:string}} AuditOutput
  * @typedef {'Mean'|'SLR'|'3PC'|'3PH'|'4P'|'5P'|'HDD'|'CDD'|'HDD-CDD'|'TOW'|'TOWT'} AuditNativeModel
  * @typedef {{models?:AuditNativeModel[],sourceTimezone?:string,weatherTimezone?:string,weatherColumns?:{time:string,temp:string,end?:string,station?:string},weatherUnits?:'F'|'C'|'degF'|'degC'|'°F'|'°C',weatherInterval?:'15-min'|'Hourly'|'Daily',endPolicy?:'required'|'next-reading'|'frequency',lastEnd?:string,interval?:'15-min'|'Hourly'|'Daily'|'Monthly',baseline?:{start:string,end:string},reporting?:{start:string,end:string},normalization?:{start:string,end:string},modelArguments?:Record<string,unknown>,balancePoint?:number,confidenceLevel?:number,allowNegativePredictions?:boolean,seed?:number,timeoutSeconds?:number,weatherMissingValues?:string[]}} AuditModelOptions
@@ -36,7 +36,34 @@
  * @typedef {{selection:AuditNativeAnalysisSelection,readings:AuditSeries[],diagnostics:AuditDiagnostic[],nativeProfile:{processor:string,requiresWeather:boolean,selectionSha256:string}}} AuditAnalysisPreview
  * @typedef {{tables:Record<string,Record<string,unknown>[]>,diagnostics:AuditDiagnostic[],sourceId:string,revisionId:string,selectionSha256:string}} AuditProjectionPreview
  * @typedef {{sourceId:string,fromRevisionId:string,toRevisionId:string,added:AuditField[],removed:AuditField[],changed:{key:string,before:AuditField,after:AuditField}[],referenceChanges:{kind:'added'|'removed',reference:AuditReference}[],counts:{added:number,removed:number,changed:number,referenceChanges:number}}} AuditComparison
+ * @typedef {{archiveSha256:string,archiveBytes:number,workspaceId:string,workspaceVersion:number,selectedEditionId:string|null}} AuditRecipientSource
+ * @typedef {{localId:string,accepted:boolean,request:{requestId:string,expectedVersion:number,action:'review.save',inputs:AuditInputMap['review.save']},result:{reviewId:string}|null}} AuditRecipientPreviewReview
+ * @typedef {{schema:'commons.audit-recipient-preview.v1',workspaceId:string,expectedVersion:number,operator:string,returnSha256:string,returnBytes:number,manuscriptId:string,editionSha256:string,draftSha256:string,originalSource:AuditRecipientSource,reviews:AuditRecipientPreviewReview[],sha256:string}} AuditRecipientPreview
+ * @typedef {{returnId:string,returnSha256:string,note:string,disposition:'review'|'deferred',previewSha256:string|null}} AuditRecipientQueueEntryInput
+ * @typedef {{returnId:string,returnSha256:string,manuscriptId:string,editionSha256:string,note:string,disposition:'review'|'deferred',preview:AuditRecipientPreview|null}} AuditRecipientQueueEntry
+ * @typedef {{schema:'commons.audit-recipient-queue.v1',workspaceId:string,queueId:string,edition:number,previousSha256:string|null,title:string,actor:string,note:string,createdAt:string,entries:AuditRecipientQueueEntry[],selectedReturnSha256:string|null}} AuditRecipientQueue
+ * @typedef {{export:AuditExport,queue:AuditRecipientQueue}} AuditRecipientQueueHistoryEntry
+ * @typedef {{export:AuditExport,queue:AuditRecipientQueue,entries:(AuditRecipientQueueEntry & {retainedReturnId:string})[],history:AuditRecipientQueueHistoryEntry[],readOnly:boolean}} AuditRecipientQueueDetail
+ * @typedef {{localId:string,title:string,sourceId:string,revisionId:string,requestId:string|null,result:{reviewId:string}|null,status:'received-history'|'accepted'|'current-review-changed'|'pending'}} AuditRecipientReviewProgress
+ * @typedef {{return:AuditExport,manuscriptId:string,editionSha256:string,authoredEditions:number,reviews:AuditRecipientReviewProgress[],accepted:number,total:number,custody:AuditExport[],inherited:boolean,status:'received-history'|'accepted'|'custody-pending'|'current-review-changed'|'partial'|'pending'}} AuditRecipientProgress
+ * @typedef {{sourceId:string,toRevisionId:string,reviewIds:string[]}} AuditReviewTransitionSelection
+ * @typedef {{entityKey:string,status:'open'|'investigating'|'resolved'|'accepted',title:string,note:string,assignee:string,dueDate:string,evidence:{label:string,url:string}[]}} AuditReviewTransitionFields
+ * @typedef {{reviewId:string,mode:'retain',reason:string}|{reviewId:string,mode:'update',reason:string,review:AuditReviewTransitionFields}} AuditReviewTransitionDecision
+ * @typedef {{added:AuditField[],removed:AuditField[],changed:{key:string,before:AuditField,after:AuditField}[],referenceChanges:{kind:'added'|'removed',reference:AuditReference}[],counts:{added:number,removed:number,changed:number,referenceChanges:number}}} AuditNativeComparison
+ * @typedef {{review:AuditReview,reviewSha256:string,fromRevisionId:string,beforeEntity:AuditEntity|null,samePathEntity:AuditEntity|null,identityChanged:boolean,impact:AuditNativeComparison}} AuditReviewTransitionReview
+ * @typedef {{format:'commons.audit-review-transition.v1',workspaceId:string,version:number,sourceId:string,sourceName:string,toRevision:AuditRevision,targetValidation:AuditValidation,targetEntities:AuditEntity[],fromRevisions:Record<string,{revision:AuditRevision,validation:AuditValidation,comparison:AuditNativeComparison}>,reviews:AuditReviewTransitionReview[],selection:AuditReviewTransitionSelection,previewSha256:string}} AuditReviewTransitionPreview
  * @typedef {{
+ * 'recipient.queue.get':{exportId:string},
+ * 'recipient.queue.inspect':{returnId:string},
+ * 'recipient.queue.save':{queueId:string,expectedQueueSha256:string|null,title:string,entries:AuditRecipientQueueEntryInput[],selectedReturnSha256:string|null,actor:string,note:string},
+ * 'recipient.queue.export':{exportId:string,actor:string,note:string},
+ * 'review.transition.preview':AuditReviewTransitionSelection,
+ * 'review.transition.history':{},
+ * 'review.transition.apply':AuditReviewTransitionSelection & {previewSha256:string,decisions:AuditReviewTransitionDecision[],actor:string,note:string},
+ * 'recipient.prepare':{exportId:string,expectedSha256:string,actor:string,note:string},
+ * 'recipient.stage':{name:string,contentBase64:string,expectedSha256:string,actor:string,note:string},
+ * 'recipient.preview':{returnId:string,operator:string},
+ * 'recipient.apply':{returnId:string,previewSha256:string,preview:Record<string,unknown>,actor:string,note:string},
  * 'return.preview':{contentBase64:string,name:string,baselines?:{sourceId:string,returnedSourceId:string,baselineRevisionId:string}[]},
  * 'return.plan':AuditReturnInput,
  * 'return.apply':AuditReturnInput & {expectedPlanSha256:string,acceptDiagnostics:boolean,actor:string,note?:string,editionName?:string},
@@ -65,6 +92,13 @@
  * 'workspace.receive':{contentBase64:string,name:string,actor:string,note:string}
  * }} AuditInputMap
  * @typedef {{
+ * 'recipient.queue.get':AuditRecipientQueueDetail,
+ * 'recipient.queue.inspect':AuditRecipientProgress,
+ * 'recipient.queue.save':{archive:AuditExport,queue:AuditRecipientQueue},
+ * 'recipient.queue.export':{archive:AuditExport,queueSha256:string,queueId:string},
+ * 'review.transition.preview':AuditReviewTransitionPreview,
+ * 'review.transition.history':{workspaceId:string,archives:AuditExport[]},
+ * 'review.transition.apply':{archive:AuditExport,updated:string[],retained:string[],previewSha256:string,sourceId:string,revisionId:string},
  * 'return.preview':Record<string,unknown>,
  * 'return.plan':Record<string,unknown> & {planSha256:string},
  * 'return.apply':{archive:AuditExport,sources:{sourceId:string,sourceName:string,revisionId:string,changed:boolean,reviewIds:string[]}[],planSha256:string,edition:{editionId:string}},
@@ -91,23 +125,27 @@
  * 'analysis.resume':AuditAnalysis,
  * 'export.create':AuditExport,
  * 'workspace.receive':{receivedSources:number,receivedEditions:number,receivedReviews:number,receivedLinks:number,sourceIdMap:Record<string,string>,packageSha256:string}
+ * ,'recipient.prepare':{archive:AuditExport,source:Record<string,unknown>,delivery:Record<string,unknown>}
+ * ,'recipient.stage':{archive:AuditExport,source:Record<string,unknown>,manuscriptId:string,editionSha256:string,editions:number,reviews:number}
+ * ,'recipient.preview':{returnId:string,preview:Record<string,unknown>}
+ * ,'recipient.apply':{accepted:Record<string,unknown>,archive:AuditExport,returnId:string,previewSha256:string}
  * }} AuditResultMap
  * @typedef {{fieldId:string,choice:'current'|'returned'|'custom',value?:string}} AuditReturnDecision
  * @typedef {{sourceId:string,returnedSourceId:string,baselineRevisionId:string,expectedCurrentRevisionId:string,expectedCurrentSha256:string,mode:'fields'|'current'|'returned-document',decisions:AuditReturnDecision[],reviewIds:string[],note:string}} AuditReturnSelection
  * @typedef {{contentBase64:string,name:string,expectedPreviewSha256:string,baselines?:{sourceId:string,returnedSourceId:string,baselineRevisionId:string}[],selections:AuditReturnSelection[]}} AuditReturnInput
- * @typedef {'return.preview'|'return.plan'|'workspace.get'|'source.get'|'source.page'|'source.bytes'|'edition.get'|'source.compare'|'export.get'|'export.read'|'operation.get'|'analysis.preview'|'projection.preview'} AuditReadAction
- * @typedef {'return.apply'|'source.import'|'source.replace'|'source.patch'|'source.validate'|'edition.save'|'review.save'|'link.save'|'projection.save'|'analysis.run'|'analysis.resume'|'export.create'|'workspace.receive'} AuditMutationAction
+ * @typedef {'recipient.queue.get'|'recipient.queue.inspect'|'review.transition.preview'|'review.transition.history'|'recipient.preview'|'return.preview'|'return.plan'|'workspace.get'|'source.get'|'source.page'|'source.bytes'|'edition.get'|'source.compare'|'export.get'|'export.read'|'operation.get'|'analysis.preview'|'projection.preview'} AuditReadAction
+ * @typedef {'recipient.queue.save'|'recipient.queue.export'|'review.transition.apply'|'recipient.prepare'|'recipient.stage'|'recipient.apply'|'return.apply'|'source.import'|'source.replace'|'source.patch'|'source.validate'|'edition.save'|'review.save'|'link.save'|'projection.save'|'analysis.run'|'analysis.resume'|'export.create'|'workspace.receive'} AuditMutationAction
  * @typedef {{action:AuditMutationAction,inputs:Record<string,unknown>,requestId:string,expectedVersion:number}} AuditMutationEnvelope
  * @typedef {{schema:'commons.audit-exchange.startup.v1',url:string,workspaceId:string,workspaceCreatedAt:string,instanceId:string,directory:string}} AuditServerIdentity
  */
 
 export const AUDIT_MUTATIONS = new Set([
   "source.import","source.replace","source.patch","source.validate","edition.save",
-  "review.save","link.save","projection.save","analysis.run","analysis.resume","export.create","workspace.receive","return.apply"
+  "review.save","link.save","projection.save","analysis.run","analysis.resume","export.create","workspace.receive","return.apply","recipient.prepare","recipient.stage","recipient.apply","recipient.queue.save","recipient.queue.export","review.transition.apply"
 ]);
 export const AUDIT_READS = new Set([
   "workspace.get","source.get","source.page","source.bytes","edition.get","source.compare","export.get","export.read","operation.get",
-  "analysis.preview","projection.preview","return.preview","return.plan"
+  "analysis.preview","projection.preview","return.preview","return.plan","recipient.preview","recipient.queue.get","recipient.queue.inspect","review.transition.preview","review.transition.history"
 ]);
 
 export class AuditExchangeError extends Error {

@@ -217,3 +217,52 @@ The course preserves the original nine business stages, then performs the full c
 The existing `AUDIT_BROWSER_EXECUTABLE` and `AUDIT_BROWSER_MODULE` select the actual equipped browser. `AUDIT_PDF_RENDERER` defaults to `pdftoppm`; `AUDIT_RSCRIPT` selects the original R launcher. The Node driver's `--return` and `--render` modes are internal continuations under the inherited original controller, not separate customer commands.
 
 Open the actual `OPEN.html` indexes and every intended outgoing attachment, inspect their rendered content and operate the complete downloads/reopen controls. The saved capture status remains `captured-awaiting-producer-view` until the producing worker has directly viewed the selected images/files and repaired concrete defects. A completed capture programme is the input to that human or model inspection. Keep the resulting observations with the original Installation's acceptance phases and the exact delivered files.
+
+
+## Commission complete recipient work, queues and changed-source review
+
+The installed Audit source now includes all 82 application members. Keep the original customer Installation, Workshare price/phases and named engineering/receiving owners. Select the following review work only where it serves that original agreed task. The complete source and four specific operating guides travel through the same maintained Runtime selection and application export.
+
+| Customer step | Complete operation and accepted result |
+| --- | --- |
+| Prepare a recipient's original source | In the installed author, select its complete retained workspace/application export and prepare the complete recipient editor. Deliver the whole ZIP and original source with its HTML/assets. |
+| Review offline and return | The recipient inspects actual source/revision/entity records, retains unfinished proposals, saves complete manuscript editions and returns the unchanged original project plus all manuscript editions. |
+| Accept through the original author | Retain the complete returned ZIP, inspect every proposal and original acceptance record, then deliberately apply the current preview. Keep original review UUIDs, accepted prefixes and complete custody when recovering interruptions. |
+| Coordinate several returns | Save an ordered queue with whole-queue/per-return notes, Review/Defer choices and original return hashes. Work each selected return through its existing preview/apply flow. Queue order is staff selection; acceptance remains a separate native outcome. |
+| Reassess after a source correction | Select actual earlier findings and current XML. Read both complete native records, scalar/reference changes and validation. Explicitly retain the earlier finding or author a complete current review with reason, entity scope, status, owner, date and evidence. |
+| Deliver the whole decision history | Download/open the queue and revision decision archives, their complete source/custody bodies, then export the full editable application. Independently receive and reopen original revisions, reviewed records, analytical outputs and every retained archive. |
+
+The complete profiles remain in [offline recipient review](../../../scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_RECIPIENT_REVIEW.md), [installed recipient acceptance](../../../scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_RECIPIENT_INSTALLED.md), [ordered queues](../../../scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_RECIPIENT_QUEUE.md), and [revision review](../../../scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_REVISION_REVIEW.md). The maintained [product guide](../../../../products/audit-exchange/OPERATING.md) joins these to actual build/install and Applications use.
+
+The browser retains unfinished queue/revision fields and separate competing-tab work. Carry the complete working copy before changing origin. A stale preview needs an explicit new review; do not silently move earlier decisions onto changed native material. For an unavailable mutation response, recover the full original UUID/envelope. Resolve a definitive refusal through the existing original-request controls before deliberately preparing another request.
+
+The recipient manuscript does not alter XML or establish physical inspection. Current engineering conclusions, source mapping, review acceptance and any added service allowance remain with their named original decision owners. Received queue history retains its original author and remains historical source. A full application handover preserves it together with the editable local project.
+
+Use the existing original receiving owner. The offline, installed, queue and revision programmes run in their actual dependency order against the same original author. Preserve earlier source generations, request bodies, case identifiers and complete predecessor archives. The installed runtime integration uses the maintained source selection and existing Applications/provider lifecycle; never replace an active launch or begin a duplicate original model operation.
+
+Observe and use the exact installed author and independent receiver at desktop and relevant narrow width. Open every outgoing recipient/editor, native source, decision/custody/queue archive, XML, report, model output and application attachment in its normal viewer. Captured images still require the producing operator's direct viewing. Record useful actual acceptance outcomes in the same customer Installation. The complete owner instruction above applies to all these files.
+
+Bryce's local Codex in-app browser is reserved from 16:00 UTC on 13 October 2026 until explicit release. This original receiving uses only a separately authorized isolated cloud browser while that reservation applies.
+
+
+<!-- bryce-rendered-product-inspection:begin -->
+## Standing lab rule: inspect the rendered product before presenting it
+
+Bryce's direct owner instruction, October 13, 2026. This applies to every current and future lab peer, provider, model, harness, local session, cloud session, and delegated or child worker.
+
+Before calling a client/prospect-facing app, site, dashboard, demo, report, presentation, or export ready, or putting it before a client/prospect, the responsible producing peer MUST open/run/render the exact outgoing version and visually LOOK at the actual result. Inspect at the actual screenshare/presentation width and at narrow/mobile widths where relevant. Operate critical controls; inspect applicable loaded, empty, loading, and error states; exercise downloads/exports and reopen the delivered files. Capture real screenshots or rendered page images and actually VIEW them. Capturing without viewing does not satisfy this rule.
+
+This includes ALL attachments. Literally observe the actual thing the way a user or recipient would see and use it: open and view downloaded HTML, every relevant PDF/report page, slides, spreadsheets, maps, images, video/audio, archives and project attachments in their normal recipient-facing viewer or application; play audiovisual media and inspect the usable contents of archives/projects. Metadata, schemas, source text, and a browser link do not substitute for opening the attachment and using the delivered result normally.
+
+Fix ugly, cramped, broken, unstyled, clipped, overflowing, or unreadable results within the authorized task before presenting them. Favor simple industrial/plain presentation, consistent spacing and typography, readable tables, and working controls. Do not add decorative template slop. Source review, unit tests, HTTP 200, DOM counts, a reviewer/model approval, or an evidence form do not substitute for looking at and operating the real outgoing product.
+
+This is focused internal product validation, never permission to build or submit a proof, test, or verification product, run broad suites, or repeatedly recheck an unchanged accepted version. Building and integrating the actual deliverable remains the main work; do not substitute endless reviews for delivery. Retain an exact-version visual receipt in the handoff: source/head or artifact hash, URL/file, viewport sizes, screenshots actually viewed, controls/states/export files exercised, fixes, and any precise unresolved gap. A changed outgoing version needs inspection of the affected result.
+
+Bryce explicitly clarified: "that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it". A checklist, screenshot folder, receipt, passing test, or parallel review bureaucracy is not the requirement or a substitute for actual observation and normal use. Perform focused fixes and keep shipping the main work; create no review or approval gate.
+
+Bryce also instructed: "also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them". For video/media narration, use available high-quality generative voice/TTS and applicable generative visual/media capabilities when helpful, with natural professional delivery instead of robotic default voices. Actually play/listen/watch the final exported attachment and inspect clarity, pronunciation, pacing, timing, and audio alignment. Reviewing a text script does not substitute for experiencing the final video/audio. This adds no paid-service purchase or real-person voice-cloning authorization; preserve lab attribution and third-party copyright/license controls.
+
+Pass this rule to child/delegated workers and persist it in owner-controlled provider/project/cloud instruction copies. Record delivery and readback coverage; never claim every running session loaded it without evidence. This rule creates no hooks, watchers, restarts, approval queue, credential restrictions, or new publication authority. Preserve all existing owner rules, including no llama.cpp, no private GitHub repositories or Actions, focused validation, attribution, incident communication, personal meeting approval, contact holds, demo pauses, bounty restrictions, and owner cutoffs.
+
+Canonical local policy: `C:/Users/lucys/.commons/rendered-product-inspection-policy.md` and `.json`. Portable repository copy: `docs/policies/rendered-product-inspection-policy.md` and `.json` when present. Only Bryce can change this standing rule.
+<!-- bryce-rendered-product-inspection:end -->

@@ -346,3 +346,68 @@ Use the same application, operation directory and complete input JSON after an i
 A native analysis whose retained metadata permits runtime recovery can continue after the actual reported condition is repaired. Add `--resume-analysis REPAIR_LABEL` to record that continuation against the same analysis ID and immutable original inputs. A deliberate application correction uses `--adopt-source`; the driver retains both complete source generations in the same case.
 
 The final case contains the original input files, source cohorts, all three native workspaces, full request and response files, browser recovery records, source models, projection, consumer result, observed weather, native outputs and complete exported application/workspaces. Each captured archive includes a complete member manifest and is reopened to verify every member's bytes and SHA256. The original operation's `-latest-archive.json` pointer identifies the complete retained archive beside the case directory. Preserve that archive with the operating deliverables.
+
+
+## Complete offline recipient review and native acceptance
+
+Use [AUDIT_RECIPIENT_REVIEW.md](AUDIT_RECIPIENT_REVIEW.md) for the following
+recipient course on this original Audit workspace. The complete application
+includes the standalone recipient editor, source-bound manuscript, all authored
+editions and the original-byte return packer. A recipient can inspect retained
+source revisions, save and reopen unfinished review fields, then return the
+whole original archive and complete manuscript.
+
+The author prepares that standalone delivery from an existing native
+workspace/application export:
+
+    python3 audit_recipient_review.py prepare --archive /absolute/original-application.zip --out /absolute/recipient
+
+The recipient opens Audit_Recipient_Review.html and retains every accompanying
+file. Native acceptance is explicit: run the helper's preview command against
+the same existing author workspace, inspect the full review proposals, then
+apply using that saved preview and the same original acceptance journal. The
+unchanged native review.save operation remains authoritative. Existing review
+head conflicts remain visible; complete accepted requests replay without a
+second review.
+
+AUDIT_RECIPIENT_RECEIVING.py operates the complete following course with an
+explicit review plan, actual original workspace/export and installed browser.
+It retains the source, complete recipient files and exact native requests,
+exports the full application, independently receives/reopens it through the
+original engine, and saves the resulting project. Current commissioning and
+native analysis stay with their original owner. Follow the full outgoing
+product/all-attachment rule above and in the recipient guide: producing peers
+must personally LOOK at actual renders and use the delivered attachments.
+Source publication is distinct from native and rendered completion.
+
+
+## Installed recipient acceptance
+
+The original author can now prepare the complete recipient editor, retain a whole returned manuscript, preview every native review request and accept the exact preview from Export and receive. See [AUDIT_RECIPIENT_INSTALLED.md](AUDIT_RECIPIENT_INSTALLED.md) for the original request recovery, complete custody export, native/CLI/MCP interfaces and same-case installed receiving command. The existing standalone recipient and colleague-correction workflows remain available. Complete rendered and attachment review is required before recipient-ready; source publication does not establish it.
+
+
+## Current local browser reservation
+
+From 16:00 UTC on 13 October 2026, Bryce's local Codex in-app browser is reserved until his explicit release. Do not navigate, reload, click, type, inspect, capture, resize or change tabs there. Separately authorized isolated cloud browsers, native shells and source work continue under their original owners.
+
+<!-- bryce-rendered-product-inspection:begin -->
+## Standing lab rule: inspect the rendered product before presenting it
+
+Bryce's direct owner instruction, October 13, 2026. This applies to every current and future lab peer, provider, model, harness, local session, cloud session, and delegated or child worker.
+
+Before calling a client/prospect-facing app, site, dashboard, demo, report, presentation, or export ready, or putting it before a client/prospect, the responsible producing peer MUST open/run/render the exact outgoing version and visually LOOK at the actual result. Inspect at the actual screenshare/presentation width and at narrow/mobile widths where relevant. Operate critical controls; inspect applicable loaded, empty, loading, and error states; exercise downloads/exports and reopen the delivered files. Capture real screenshots or rendered page images and actually VIEW them. Capturing without viewing does not satisfy this rule.
+
+This includes ALL attachments. Literally observe the actual thing the way a user or recipient would see and use it: open and view downloaded HTML, every relevant PDF/report page, slides, spreadsheets, maps, images, video/audio, archives and project attachments in their normal recipient-facing viewer or application; play audiovisual media and inspect the usable contents of archives/projects. Metadata, schemas, source text, and a browser link do not substitute for opening the attachment and using the delivered result normally.
+
+Fix ugly, cramped, broken, unstyled, clipped, overflowing, or unreadable results within the authorized task before presenting them. Favor simple industrial/plain presentation, consistent spacing and typography, readable tables, and working controls. Do not add decorative template slop. Source review, unit tests, HTTP 200, DOM counts, a reviewer/model approval, or an evidence form do not substitute for looking at and operating the real outgoing product.
+
+This is focused internal product validation, never permission to build or submit a proof, test, or verification product, run broad suites, or repeatedly recheck an unchanged accepted version. Building and integrating the actual deliverable remains the main work; do not substitute endless reviews for delivery. Retain an exact-version visual receipt in the handoff: source/head or artifact hash, URL/file, viewport sizes, screenshots actually viewed, controls/states/export files exercised, fixes, and any precise unresolved gap. A changed outgoing version needs inspection of the affected result.
+
+Bryce explicitly clarified: "that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it". A checklist, screenshot folder, receipt, passing test, or parallel review bureaucracy is not the requirement or a substitute for actual observation and normal use. Perform focused fixes and keep shipping the main work; create no review or approval gate.
+
+Bryce also instructed: "also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them". For video/media narration, use available high-quality generative voice/TTS and applicable generative visual/media capabilities when helpful, with natural professional delivery instead of robotic default voices. Actually play/listen/watch the final exported attachment and inspect clarity, pronunciation, pacing, timing, and audio alignment. Reviewing a text script does not substitute for experiencing the final video/audio. This adds no paid-service purchase or real-person voice-cloning authorization; preserve lab attribution and third-party copyright/license controls.
+
+Pass this rule to child/delegated workers and persist it in owner-controlled provider/project/cloud instruction copies. Record delivery and readback coverage; never claim every running session loaded it without evidence. This rule creates no hooks, watchers, restarts, approval queue, credential restrictions, or new publication authority. Preserve all existing owner rules, including no llama.cpp, no private GitHub repositories or Actions, focused validation, attribution, incident communication, personal meeting approval, contact holds, demo pauses, bounty restrictions, and owner cutoffs.
+
+Canonical local policy: `C:/Users/lucys/.commons/rendered-product-inspection-policy.md` and `.json`. Portable repository copy: `docs/policies/rendered-product-inspection-policy.md` and `.json` when present. Only Bryce can change this standing rule.
+<!-- bryce-rendered-product-inspection:end -->
