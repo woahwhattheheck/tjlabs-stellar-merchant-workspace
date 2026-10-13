@@ -44,8 +44,9 @@
 <label>Connection name<input name="name" required placeholder="Field operations"></label>
 <label>Central server URL<input name="url" type="url" required placeholder="https://central.example.org"></label>
 <label>Authorization environment variable<input name="authEnv" required pattern="[A-Z_][A-Z0-9_]*" placeholder="CENTRAL_AUTHORIZATION"></label>
+<label>Codespaces proxy token environment variable (optional)<input name="codespacesTokenEnv" pattern="[A-Z_][A-Z0-9_]*" placeholder="CODESPACES_PROXY_TOKEN" autocomplete="off"></label>
 <label class="check"><input name="allowLoopback" type="checkbox">Allow HTTP for a local Central server</label>
-<p class="help wide">The named host variable contains the complete Central Authorization header. This workspace uses the existing user and project access.</p>
+<p class="help wide">The authorization variable contains the complete Central Authorization header. For a private Codespaces URL, optionally name a separate host variable containing its proxy token. Enter variable names only. This workspace uses the existing user and project access.</p>
 <button>Verify and add connection</button>
 </form></details>
 <div id="connection-list"></div>
