@@ -28,7 +28,7 @@ export function nativeProfile(result,tableDescriptors,installation) {
   const main=result.kind==="retail-payout-reconciliation"?"transactions":"mapping";
   const source=(t)=>({kind:"csv",path:directory+"/"+t.path,parser,key:[],analysisPrefix:t.name,
     metadata:{path:directory+"/original-metadata.json"},
-    source:{publisher:result.source.publisher,url:result.source.url,
+    source:{provenance_kind:"operator-file",publisher:result.source.publisher,url:result.source.url,
       title:result.source.title+" — prepared "+t.name,
       publisherEdition:result.preparationSha256,
       capture_time_basis:"retained-original-input-transformation"}});

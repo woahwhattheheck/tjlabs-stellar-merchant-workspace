@@ -48,7 +48,7 @@ node stellar-forge/developer-site/grant-compose.mjs \
 
 Use the actual merged source revision for `FULL_MERGED_MERCHANT_COMMIT`. The walkthrough renderer writes the complete reader and its matching source/page identities in `source-index.financial_operations.reviewer_walkthrough`. The application composer then receives the financial chapter and product registrations with the existing customer sections and source records. Preserve the current saved application answers, original review and publication history when receiving that complete output into the maintained reviewer workspace.
 
-The refreshed walkthrough source and reader travel together. Before this join, the retained source index described a 35,469-byte walkthrough while current maintained Markdown contained 41,957 bytes; the complete rendered successor includes those existing customer-account instructions as well as the accountant course.
+The refreshed walkthrough source and reader travel together. Before this join, the retained source index described a 35,469-byte walkthrough while current maintained Markdown contained 41,955 bytes; the complete rendered successor includes those existing customer-account instructions as well as the accountant course.
 
 ## Funding and measured work
 

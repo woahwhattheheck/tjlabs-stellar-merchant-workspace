@@ -12,25 +12,25 @@ The selected edition contains 486 original source records and 78 detailed compan
 
 | Reader file | UTF-8 bytes | Git blob |
 | --- | ---: | --- |
-| `grant.html` | 96,422 | `6b65ce94eab0e3513e50cdc0a2c5366dc760ab65` |
-| `grant-data/application.md` | 47,321 | `f6ed178f10ac6d936914d3cc973804088d7af5e1` |
-| `grant-data/product-and-finance.md` | 925,292 | `f6643a51522d724df620c07c2b9312237f77e349` |
-| `grant-data/source-index.json` | 595,601 | `9cfb110f9ffc141be9a2fbdbeb4e2e572af048ec` |
+| `grant.html` | 96,472 | `6efbf15efd035c9efc7b8a3a0b028b15a784242f` |
+| `grant-data/application.md` | 47,371 | `ce39ca42245839be7d2b841703e92b714a5dd241` |
+| `grant-data/product-and-finance.md` | 925,504 | `fc78b8426722f83f63ef37c96f2c137abec0b377` |
+| `grant-data/source-index.json` | 595,601 | `e3faf1e75714047d4ceb9f985b6a01954e741523` |
 
-The selected complete edition starts from repository `7a0b7c389f7fcb4b64c05a4da4e371c677a30de7`. It preserves every one of that edition's 318 source records and 67 chapters, then receives the current canonical manuscript through all 43 maintained declarations. The result contains 486 source records and 78 chapters; each prior source identity and chapter remains available. Forty-one chapter registrations are selected in the current source index; declarations without a matching selected chapter do not invent a product intake.
+The selected complete edition starts from repository `b7e180022deff675a492e41e076009c428145cbc`. It preserves every one of that edition's 486 source records and 78 chapters, and applies only the two source-verified attribution corrections through the same 43 maintained declarations. The result contains 486 source records and 78 chapters; each prior source identity and chapter remains available. Forty-one chapter registrations are selected in the current source index; declarations without a matching selected chapter do not invent a product intake.
 
-The full canonical snapshot is 1,524,300 UTF-8 bytes, SHA-256 `0bf3ca54f347f2edc4a809fb6f39557a71fa7b7776c01875499b13a8c4b4b1d5`. It includes the complete OAuth/Support and generic Operating Plans chapters, the original Accounts and Document successors, Collections customer delivery, current bank/accountant and Rialto customer receiving, and the source-to-next-service planning loop. The canonical repair preserved all prior chapter bodies and peer content while the two reviewed front paragraphs now point to readable operating/finance material. The finance companion carries the existing USD200 source/compute reserve, its original basis and all four recalculated scenarios; its source and customer terms remain distinct from the unchanged grant allocation.
+The selected complete canonical source snapshot is 1,524,562 UTF-8 bytes, SHA-256 `3b7d9911ba8d34727bf927fb82bbaaf07b5aa128d6a5be088a6a87e4fcbf13be`. It retains the PR1268 edition with the two source-verified Lutra attribution corrections, also saved and independently read back in the canonical Canvas. Later peer additions remain there for their following selected edition. It includes the complete OAuth/Support and generic Operating Plans chapters, the original Accounts and Document successors, Collections customer delivery, current bank/accountant and Rialto customer receiving, and the source-to-next-service planning loop. The canonical repair preserved all prior chapter bodies and peer content while the two reviewed front paragraphs now point to readable operating/finance material. The finance companion attributes the existing USD200 source/compute reserve to the original October 12 internal estimate (60 hours at USD95/hour plus the reserve = USD5,900 cost), while the sent plan supplies the commercial scope and milestones. It retains all four existing adjusted scenarios; its source and customer terms remain distinct from the unchanged grant allocation.
 
-The carrier supplies **247 full files / 7,280,107 decoded bytes**, including every one of the original 201 selected paths. It contains all 127 current browser routes (126 unique assets), all 43 current declaration files, the original composer and its complete imports, and 18 original receiving/source/helper files. Browser import resolution checks all 103 selected module references. The receiver's complete current ten-file runtime includes `reviewer_source_paths.py` and `receive-source-browser.cjs`; the original Library helper and its two sibling modules are also retained. This closes the concrete source-preparation and browser-child omissions in the earlier carrier. The complete original FRED example ZIP remains byte-identical in canonical Base64.
+The carrier supplies **247 full files / 7,280,419 decoded bytes**, including every one of the original 201 selected paths. It contains all 127 current browser routes (126 unique assets), all 43 current declaration files, the original composer and its complete imports, and 18 original receiving/source/helper files. Browser import resolution checks all 103 selected module references. The receiver's complete current ten-file runtime includes `reviewer_source_paths.py` and `receive-source-browser.cjs`; the original Library helper and its two sibling modules are also retained. This closes the concrete source-preparation and browser-child omissions in the earlier carrier. The complete original FRED example ZIP remains byte-identical in canonical Base64.
 
-Every carried text/binary body was checked against its exact decoded length, SHA-256 and Git object. Current source files are selected from the retained repository edition; the four composed reader outputs and the confined bank author-guide update are declared as exact preimage/postimage overlays. The bank author-guide change retains the complete original text and adds its current receiving sources. The independently advanced Cohort author chapter already includes the immutable calculator link and is preserved unchanged. `previousDelivery` retains the earlier carrier and source-package identities.
+Every carried text/binary body was checked against its exact decoded length, SHA-256 and Git object. Current source files are selected from the retained repository edition; the four composed reader outputs are declared as exact preimage/postimage overlays. The bank and independently advanced Cohort author chapters retain their exact PR1268 bodies. `previousDelivery` retains the earlier carrier and source-package identities.
 
 The original source-bundle create/export/open functions created and independently reopened the complete four-file package in the connected JavaScript runtime. The checks retain all nine answer identities and the original 597-byte budget. These are completed source composition and package-receiving results; the original saved-case browser/native operation retains its own execution result.
 
 | Complete delivery | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `source-package.json` | 2,142,434 | `22d582e6759cbf20e17f7b6c9fcf3fc9a818fc38f9f49d0fd5d3421d1f1cc959` |
-| `source-files.json` | 7,746,666 | `ceeb4f3927b3c1164f16861a4bea49a2e15fe529799feb0e4437a68ca44c6f0c` |
+| `source-package.json` | 2,142,836 | `0e7990991ad82345cac67623ac5a67dda8f83357a573b07ca33a055fda422563` |
+| `source-files.json` | 7,745,042 | `0e48e055193477b60beafce53e1ccde82678df5c796bd509227b687baebc515e` |
 
 ## Receive into the existing saved submission
 
@@ -56,7 +56,7 @@ python -B operations/scf-current-application-receiving-81cf-20261012/prepare-sou
   --source-packet /absolute/received/source-files.json \
   --source-packet-sha256 ACTUAL_FULL_SOURCE_CARRIER_SHA256 \
   --source-package /absolute/received/source-package.json \
-  --source-package-sha256 22d582e6759cbf20e17f7b6c9fcf3fc9a818fc38f9f49d0fd5d3421d1f1cc959 \
+  --source-package-sha256 0e7990991ad82345cac67623ac5a67dda8f83357a573b07ca33a055fda422563 \
   --original-source-commit ACTUAL_ORIGINAL_CASE_SOURCE_COMMIT \
   --runtime-source-commit ACTUAL_SELECTED_RECEIVING_RUNTIME_COMMIT \
   --application-source-commit ACTUAL_MERGED_SOURCE_COMMIT \

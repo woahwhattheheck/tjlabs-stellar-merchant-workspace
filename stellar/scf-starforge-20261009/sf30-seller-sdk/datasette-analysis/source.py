@@ -197,6 +197,10 @@ def reviewed_columns(columns, requested=None):
 def normalize_source(source, fallback_url=None):
     require(isinstance(source, dict), "DATASETTE_SOURCE_DESCRIPTION_REQUIRED")
     result = dict(source)
+    if "provenance_kind" in result:
+        require(isinstance(result["provenance_kind"], str)
+                and result["provenance_kind"] in {"public-source", "operator-file"},
+                "DATASETTE_SOURCE_PROVENANCE_INVALID")
     result["url"] = result.get("url") or result.get("sourceUrl") or fallback_url
     source_url(result["url"])
     result["title"] = str(result.get("title") or result.get("table") or "Datasette edition")[:200]
@@ -475,12 +479,17 @@ def read_csv_source(value, *, node):
                   handover_sha256=selected["sha256"],
                   publisher_metadata=metadata,
                   csv_row_locator="Retained parser rowNumber and lineNumber; original row order.")
+    source_identity = {key: source.get(key) for key in
+                       ("url", "title", "publisher", "publisherEdition", "license")}
+    # Preserve every existing CSV identity when no origin was explicitly selected.
+    # An operator-file selection is part of the new source edition, not a label
+    # applied after a previously received public-source version has been reused.
+    if "provenance_kind" in source:
+        source_identity["provenance_kind"] = source["provenance_kind"]
     identity = sha(encoded({"format": "original-csv-strings-v1",
         "csv_sha256": sha(original), "parser_sha256": sha(parser_raw),
         "metadata_sha256": sha(metadata_raw) if metadata_raw is not None else None,
-        "mapping": mapping, "review": review,
-        "source": {key: source.get(key) for key in
-                   ("url", "title", "publisher", "publisherEdition", "license")}}))
+        "mapping": mapping, "review": review, "source": source_identity}))
     originals = [
         {"name": Path(delivery["csv"]).name, "raw": original,
          "content_type": "text/csv; charset=utf-8", "role": "complete-original-csv"},
@@ -563,7 +572,8 @@ def source_document(directory, *, collections, edition):
                 "title": source["title"], "format": "json", "complete": True,
                 "document": content(projection, "json", "application/json"),
                 "originals": records,
-                "provenance": {"kind": "public-source", "publisher": source["publisher"],
+                "provenance": {"kind": source.get("provenance_kind", "public-source"),
+                    "publisher": source["publisher"],
                     "sourceUrl": source["url"], "capturedAt": source["captured_at"],
                     "scope": scope[:500], "description": description[:12000],
                     "transform": {"name": transform_name,

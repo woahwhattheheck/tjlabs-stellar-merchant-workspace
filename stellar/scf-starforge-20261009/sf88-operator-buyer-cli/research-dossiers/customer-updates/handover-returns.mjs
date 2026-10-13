@@ -561,3 +561,7 @@ export async function readCustomerHandoverReturns({directory}={}){
   }
   return {schema:HANDOVER_RETURNS_SCHEMA+'.status',operationId:selected.operation_id,selectionSha256:sha256,rounds,directory:root};
 }
+
+// Reuse the original intake, engine and inherited-receipt authority.
+export {validateSelection as validateCustomerHandoverReturnSelection,
+  engineSelection as readCustomerHandoverReturnEngine,nativeReceipts as readCustomerHandoverReturnHistory};

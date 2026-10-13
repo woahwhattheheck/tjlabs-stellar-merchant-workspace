@@ -46,7 +46,7 @@ async function validate(directory) {
   if(canonical(Object.keys(saved.tables).sort())!==canonical(expectedTables.sort()))fail("BUNDLE_TABLE_SET_INVALID");
   if(saved.preparationSha256!==manifest.preparationSha256||saved.originalSha256!==manifest.originalSha256||
     saved.kind!==manifest.kind)fail("BUNDLE_PREPARATION_CHANGED");
-  const original=JSON.parse(contents.get("original-input.json"));
+  const original=JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(contents.get("original-input.json")));
   if(sha(canonical(original))!==saved.originalSha256||canonical(original)!==canonical(saved.original))fail("BUNDLE_ORIGINAL_CHANGED");
   const {original:excluded,preparationSha256,...body}=saved;
   if(sha(canonical(body))!==preparationSha256)fail("PREPARATION_HASH_CHANGED");

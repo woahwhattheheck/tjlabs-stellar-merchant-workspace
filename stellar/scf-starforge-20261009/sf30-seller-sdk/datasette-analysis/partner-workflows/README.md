@@ -44,7 +44,7 @@ First inspect Review.html and the exact exception records. Configuration is a so
 
     python3 -I ../workflow_cli.py configure --template /private/customer/prepared-20261013/profile-template.json --output /private/customer/workflow-profile.json
 
-configure retains actual CSV, parser, publisher metadata and source archive lengths and SHA-256 values. Every source table is already selected in the template, including empty exception tables. The main table is transactions for retail, or mapping for contacts; additional native source aliases retain all companion tables.
+configure retains actual CSV, parser, publisher metadata and source archive lengths and SHA-256 values. Every source table is already selected in the template, including empty exception tables. These local CSV inputs explicitly retain operator-file provenance. A complete header-only CSV imports its zero-row table with the original column schema; key=[] records that no business key has been approved. The main table is transactions for retail, or mapping for contacts; additional native source aliases retain all companion tables.
 
 Save one actual business request:
 
@@ -117,7 +117,7 @@ After an actual native workflow, export the complete editable project:
     python3 -I ../workflow_cli.py export --workspace /private/customer/workflow --request-id ORIGINAL_BUSINESS_REQUEST_ID --destination /private/customer/Source_Workflow_Project.zip
     python3 -I ../workflow_cli.py receive --workspace /private/customer/received-workflow --archive /private/customer/Source_Workflow_Project.zip --sha256 ACTUAL_ARCHIVE_SHA256 --analysis-workspace /private/customer/received-analysis
 
-The original receiver restores full source, original metadata, table versions, saved queries, report, request history and output files. Open that project with the maintained operator, inspect the original source and report, make one agreed mapping or source correction, run the successor and export the updated complete project. That full working journey is the commissioned acceptance.
+The original receiver restores full source, original metadata, table versions, saved queries, report, request history and output files. For a clean empty exception table or pre-import reconciliation table, inspect the actual zero-row source edition, retained columns, query exportRows=0, header-only CSV, empty JSONL and zero-row SQLite schema. Receiving and reopening must preserve that same source version and column order. A nonempty source with key=[] retains explicitly_reviewed.fields=[] and business_key_eligible=false. Open that project with the maintained operator, inspect the original source and report, make one agreed mapping or source correction, run the successor and export the updated complete project. That full working journey is the commissioned acceptance.
 
 ## Source references
 
