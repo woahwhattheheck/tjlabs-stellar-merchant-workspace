@@ -11,9 +11,9 @@ import { need, canonical } from './model.mjs';
 import { getQcewEdition, selectQcewPublication } from './project.mjs';
 import { qcewMemberBytes } from './files.mjs';
 import { normalizeQcewMerchantTerms, qcewPublicationId, QCEW_REPORT_PACKAGE,
-  QCEW_PUBLICATION_MAX_BYTES } from './publication-model.mjs';
+  QCEW_PUBLICATION_MAX_BYTES, QCEW_CUSTOMER_EXTENSION } from './publication-model.mjs';
 import { readQcewMerchant } from './merchant.mjs';
-import { listQcewPurchases, readQcewPurchaseReceiving } from './purchase.mjs';
+import { listQcewPurchases, readQcewPurchaseReceiving, exportQcewCustomerState } from './purchase.mjs';
 import { receiveQcewReportDelivery, readQcewReportReceiving } from './delivery.mjs';
 import { readFredProject, exportFredProject } from '../project.mjs';
 import { readFredWorkspaceLaunch } from '../launch.mjs';
@@ -530,6 +530,7 @@ export async function runQcewMerchantJourney({ directory, chromium, playwrightMo
       }
       const packagePurchase = journal.purchases.find(item => item.file === QCEW_REPORT_PACKAGE);
       const packageBytes = await originalBytes(packagePurchase.download, QCEW_PUBLICATION_MAX_BYTES);
+      const sourcePublicationDirectory = publicationDirectory;
       await step('receive_original_purchased_ancestry', async () => {
         await openCustomer(packagePurchase);
         const retainedReceiving = await optionalJson(join(publicationDirectory, 'customer-requests',
@@ -587,6 +588,45 @@ export async function runQcewMerchantJourney({ directory, chromium, playwrightMo
         return { directory: independent, receipt: reopened.receipt,
           editions: compareReceiving(reopened, originals, packageBytes) };
       });
+      await step('retain_prepared_customer_request_for_handover', async () => {
+        const selected = { intentId: packagePurchase.intentId + '-prepared-handover',
+          file: packagePurchase.file, expected: copy(packagePurchase.expected) };
+        need(!journal.preparedForHandover || canonical(journal.preparedForHandover) === canonical(selected),
+          'Continue the same original prepared customer intent through the complete project handover.');
+        journal.preparedForHandover = selected; await save();
+        await openCustomer(selected);
+        let prepared = await checkedPrepared(selected);
+        if (!prepared) {
+          try {
+            await invoke('prepare-for-project-handover', { action: 'prepare', publicationId,
+              intentId: selected.intentId, file: selected.file, acceptIndex },
+              () => page.locator('#prepare').click());
+          } catch (error) {
+            if (!await checkedPrepared(selected)) throw error;
+          }
+          prepared = await checkedPrepared(selected);
+        }
+        need(prepared, 'Retain the original complete prepared request before transferring its project.');
+        const metadata = await optionalJson(join(buyer.operation(selected.intentId).directory,
+          'operation.json'), 65536);
+        need(metadata === null, 'The selected handover request must remain prepared without starting its native payment.');
+        const customers = await exportQcewCustomerState(sourcePublicationDirectory, merchant);
+        const saved = customers.requests.find(item => item.purchase.intentId === selected.intentId);
+        need(saved && canonical(saved.purchase) === canonical(prepared) && saved.receiving === null,
+          'The complete customer inventory must retain the original unstarted preparation.');
+        const bytes = jsonBytes(customers), path = join(root, 'original-customer-inventory.json');
+        await retainBytes(path, bytes);
+        const handover = { path, bytes: bytes.length, sha256: sha256(bytes),
+          requests: customers.requests.length,
+          receiving: customers.requests.filter(item => item.receiving !== null).length,
+          preparedIntentId: selected.intentId, purchaseSha256: prepared.purchaseSha256,
+          configSha256: prepared.configSha256,
+          originalResponseDestination: prepared.config.responseFile.destination };
+        need(!journal.customerHandover || canonical(journal.customerHandover) === canonical(handover),
+          'Continue the complete original customer inventory and prepared response destination.');
+        journal.customerHandover = handover; await save();
+        return { ...handover, state: 'PREPARED_NOT_STARTED' };
+      });
       const bundleFile = join(root, 'complete-paid-project.json');
       await step('download_complete_outer_v6_project', async () => {
         await page.locator('[data-tab="county"]').click();
@@ -602,11 +642,21 @@ export async function runQcewMerchantJourney({ directory, chromium, playwrightMo
         need(published && canonical(published.plan) === canonical(merchant.plan) &&
           Buffer.from(published.delivery.body, 'base64').equals(packageBytes),
           'The complete project export changed its retained publication plan or original gzip.');
+        const customerBytes = await originalBytes(journal.customerHandover.path, 16 * 1048576);
+        need(customerBytes.length === journal.customerHandover.bytes &&
+          sha256(customerBytes) === journal.customerHandover.sha256,
+          'Read the complete original customer inventory selected before project export.');
+        const customers = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(customerBytes));
+        need(bundle.qcew.schema === QCEW_CUSTOMER_EXTENSION &&
+          canonical(published.customers) === canonical(customers),
+          'The outer-v6 handover must retain every original prepared purchase and customer receiving selection.');
         const transfer = { bundleSha256: bundle.bundleSha256, directory: projectReceiver,
           projectId: state.id, publicationId, file: { bytes: downloaded.bytes, sha256: downloaded.sha256 } };
         need(!prior || canonical(prior) === canonical(transfer), 'Continue the original complete project transfer.');
         journal.projectTransfer = transfer; await save();
         return { schema: bundle.schema, bundleSha256: bundle.bundleSha256,
+          customerSchema: bundle.qcew.schema, customerInventorySha256: journal.customerHandover.sha256,
+          customerRequests: customers.requests.length,
           publications: bundle.state.qcew.publications.length, downloaded };
       });
       await step('receive_and_reopen_complete_paid_project', async () => {
@@ -653,12 +703,105 @@ export async function runQcewMerchantJourney({ directory, chromium, playwrightMo
           'The independently received project must export the same complete outer-v6 handover.');
         await context.close(); context = null;
         await workspace.close(); workspace = null;
-        workspace = await startFredWorkspace({ directory: projectReceiver, environment });
+        const receivedLaunchOptions = { ...launchOptions, directory: projectReceiver };
+        const receivedLaunch = await readFredWorkspaceLaunch(receivedLaunchOptions);
+        need(receivedLaunch.binding.projectId === state.id &&
+          receivedLaunch.binding.buyerConfig?.settingsSha256 === identity.buyerSettingsSha256,
+          'Reopen the relocated original project with the same configured Buyer settings.');
+        workspace = await startFredWorkspace({ ...receivedLaunchOptions,
+          expectedBindingSha256: receivedLaunch.binding.sha256, environment });
+        need(workspace.startup.buyerConfigured &&
+          workspace.startup.binding.sha256 === receivedLaunch.binding.sha256,
+          'The relocated customer workspace must use its exact original Buyer configuration.');
+        publicationDirectory = await selectQcewPublication(projectReceiver, publicationId);
+        merchant = await readQcewMerchant(publicationDirectory);
         await openPage(workspace); await openMerchant();
         return { originalRequestId: complete.id, projectId: state.id, directory: projectReceiver,
           bundleSha256: exported.bundleSha256, publicationId, planSha256: receivedMerchant.plan.planSha256,
           originalPackageSha256: sha256(receivedMerchant.deliveryBytes),
+          receivingBindingSha256: workspace.startup.binding.sha256,
+          buyerSettingsSha256: workspace.startup.binding.buyerConfig.settingsSha256,
           screenshot: await screenshot('independent-received-project.png') };
+      });
+      await step('reopen_original_customer_requests_after_project_relocation', async () => {
+        const customerBytes = await originalBytes(journal.customerHandover.path, 16 * 1048576);
+        need(customerBytes.length === journal.customerHandover.bytes &&
+          sha256(customerBytes) === journal.customerHandover.sha256,
+          'Reopen the complete original customer inventory saved before its transfer.');
+        const customers = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(customerBytes));
+        const transferred = await exportQcewCustomerState(publicationDirectory, merchant);
+        need(canonical(transferred) === canonical(customers),
+          'The relocated project changed an original customer request or receiving selection.');
+        const recoveries = [];
+        for (const selected of [journal.preparedForHandover, packagePurchase]) {
+          await openCustomer(selected);
+          const originalPrepared = await originalBytes(join(sourcePublicationDirectory, 'customer-requests',
+            selected.intentId, 'prepared.json'), 131072);
+          const preparedPath = join(publicationDirectory, 'customer-requests', selected.intentId, 'prepared.json');
+          let relocatedPrepared = await originalBytes(preparedPath, 131072);
+          need(relocatedPrepared.equals(originalPrepared),
+            'The moved project must retain the complete original prepared request bytes.');
+          const prepared = await checkedPrepared(selected);
+          const unstarted = selected.intentId === journal.preparedForHandover.intentId;
+          if (unstarted) {
+            const reopened = await invoke('prepare-relocated-original', { action: 'prepare', publicationId,
+              intentId: selected.intentId, file: selected.file, acceptIndex },
+              () => page.locator('#prepare').click());
+            need(canonical(reopened.value) === canonical(prepared),
+              'Preparing the transferred original intent must reuse its original response destination and config.');
+            relocatedPrepared = await originalBytes(preparedPath, 131072);
+            need(relocatedPrepared.equals(originalPrepared),
+              'Reopening the original preparation changed its retained bytes.');
+          }
+          const recovered = await invoke(unstarted ? 'recover-relocated-prepared' : 'recover-relocated-package',
+            { action: 'recover', publicationId, intentId: selected.intentId },
+            () => page.locator('#recover').click());
+          need(recovered.value.intentId === selected.intentId && recovered.value.publicationId === publicationId &&
+            recovered.value.state === (unstarted ? 'PREPARED_NOT_STARTED' : 'DELIVERED'),
+            'Recover the relocated original customer intent from the same native Buyer store.');
+          if (unstarted) {
+            need(await optionalJson(join(buyer.operation(selected.intentId).directory, 'operation.json'), 65536) === null,
+              'Recovering the prepared handover must not start a new native payment.');
+          } else {
+            need(recovered.value.bytes === selected.expected.bytes &&
+              recovered.value.sha256 === selected.expected.sha256,
+              'The relocated customer recovered different original paid report bytes.');
+          }
+          recoveries.push({ intentId: selected.intentId, state: recovered.value.state,
+            preparedSha256: sha256(originalPrepared), purchaseSha256: prepared.purchaseSha256,
+            configSha256: prepared.configSha256,
+            originalResponseDestination: prepared.config.responseFile.destination,
+            ...(unstarted ? {} : { bytes: recovered.value.bytes, sha256: recovered.value.sha256 }) });
+        }
+        await openCustomer(packagePurchase);
+        need(await page.locator('#county-purchase-directory').inputValue() === receiver,
+          'The moved customer request must reopen its original receiving directory.');
+        await page.locator('#county-open-receiving').click();
+        await page.waitForFunction(directory =>
+          document.getElementById('county-customer-status')?.textContent.includes(directory), receiver);
+        const received = await readQcewPurchaseReceiving({ directory: publicationDirectory,
+          intentId: packagePurchase.intentId });
+        const editions = compareReceiving(received, originals, packageBytes);
+        const downloadedRoot = await privateDirectory(join(root, 'relocated-customer-downloads')), downloads = [];
+        for (const edition of originals) {
+          await page.locator('#county-received-edition').selectOption(edition.manifest.editionId);
+          const target = await privateDirectory(join(downloadedRoot, edition.manifest.editionId));
+          for (const file of edition.manifest.files) downloads.push({
+            editionId: edition.manifest.editionId, file: file.name,
+            ...await download(page.locator('#county-customer-downloads').getByRole('button',
+              { name: file.name, exact: true }), join(target, file.name), file)
+          });
+        }
+        const complete = await download(page.locator('#county-customer-downloads').getByRole('button',
+          { name: 'Complete received report package', exact: true }),
+          join(downloadedRoot, QCEW_REPORT_PACKAGE), packagePurchase.expected);
+        need(canonical(await exportQcewCustomerState(publicationDirectory, merchant)) === canonical(customers),
+          'Reopening the relocated requests must preserve the complete original customer inventory.');
+        return { sourcePublicationDirectory, publicationDirectory, projectId: state.id,
+          customerInventorySha256: journal.customerHandover.sha256,
+          customerRequests: customers.requests.length, recoveries,
+          directory: receiver, receipt: received.receipt, editions, complete, downloads,
+          screenshot: await screenshot('relocated-customer-receiving.png') };
       });
       need(browserErrors.length === 0, 'The native paid browser encountered JavaScript errors: ' + browserErrors.join('; '));
       journal.status = 'completed'; journal.completedAt = stamp();
@@ -671,6 +814,7 @@ export async function runQcewMerchantJourney({ directory, chromium, playwrightMo
         customerReceivingDirectory: receiver, independentReceivingDirectory: independent,
         projectTransfer: journal.projectTransfer, purchaseRestart: journal.purchaseRestart ?? null,
         receivingRestart: journal.receivingRestart ?? null,
+        preparedForHandover: journal.preparedForHandover, customerHandover: journal.customerHandover,
         startedAt: journal.startedAt, completedAt: journal.completedAt,
         runtime: { node: process.version, platform: process.platform, chromium: resolve(chromium),
           playwrightModule: resolve(playwrightModule) }, steps: journal.steps };
