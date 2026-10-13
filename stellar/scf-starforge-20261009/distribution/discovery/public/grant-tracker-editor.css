@@ -1,0 +1,19 @@
+/* MIT. Source-backed grant tracker alongside the original Operating plan editor. */
+.grant-tracker{border:1px solid #b8bec4;background:#fff;color:#202326;padding:1.1rem;margin:1rem 0}
+.gt-heading,.gt-actions,.gt-create,.gt-counts{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap}
+.gt-heading{justify-content:space-between}.gt-heading h2{margin:0}.gt-create{margin:.8rem 0}
+.gt-status{white-space:pre-wrap}.gt-error{background:#f3f3f3;border-left:4px solid #222;padding:.8rem;white-space:pre-wrap}
+.gt-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.9rem;margin:1rem 0}
+.gt-field{display:flex;flex-direction:column;gap:.3rem;min-width:0}.gt-field span{font-weight:600}
+.grant-tracker input:not([type=checkbox]),.grant-tracker textarea,.grant-tracker select{max-width:100%;box-sizing:border-box;font:inherit;color:inherit;background:#fff;border:1px solid #92989e;border-radius:.2rem;padding:.5rem}
+.grant-tracker textarea{resize:vertical;min-height:5rem}.grant-tracker button,.grant-tracker .button{font:inherit;background:#f3f4f5;color:#202326;border:1px solid #72787d;padding:.5rem .7rem;border-radius:.2rem;text-decoration:none;cursor:pointer}
+.grant-tracker button:disabled{color:#6f7479;background:#eee;cursor:default}.grant-tracker :focus-visible{outline:2px solid #202326;outline-offset:3px}
+.grant-tracker section{margin-top:1.4rem;padding-top:1rem;border-top:1px solid #ccd0d3}.grant-tracker details{margin:.8rem 0;border:1px solid #d0d3d6;padding:.7rem}
+.grant-tracker summary{cursor:pointer;font-weight:600}.grant-tracker pre{font:12px/1.5 monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:32rem;overflow:auto}
+.gt-table-wrap{overflow:auto}.grant-tracker table{border-collapse:collapse;width:100%;margin:.8rem 0;font-size:.92rem}
+.grant-tracker th,.grant-tracker td{border:1px solid #c5c9cc;padding:.5rem;vertical-align:top;text-align:left;overflow-wrap:anywhere;white-space:pre-wrap}
+.grant-tracker th{background:#f1f2f3}.gt-row-editor{border:1px solid #b8bec4;padding:1rem;margin:1rem 0}
+.gt-value,.gt-obligation{border:1px solid #ccd0d3;padding:.8rem;min-width:0}.gt-value>p{white-space:pre-wrap;overflow-wrap:anywhere}.gt-value .gt-field{margin-top:.6rem}
+.gt-obligation{margin:1rem 0}.gt-actions{margin:.8rem 0}.gt-source-list{overflow-wrap:anywhere}
+@media(max-width:720px){.gt-grid{grid-template-columns:1fr}.grant-tracker,.gt-row-editor{padding:.7rem}.gt-heading{align-items:flex-start}.gt-create input{width:100%}}
+@media print{.grant-tracker button,.grant-tracker input[type=file]{display:none}.grant-tracker details>pre{max-height:none}.gt-grid{grid-template-columns:1fr}}

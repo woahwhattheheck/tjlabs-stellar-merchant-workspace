@@ -20,6 +20,7 @@ import operations_support as support
 import operations_buyer as buyer
 import operations_settlement as settlement_sources
 import operations_completion as completion
+import operations_completion_corrections as completion_corrections
 import operations_calendar as calendar_model
 import operations_agenda as agenda_model
 import operations_use_calendar as use_calendar
@@ -201,6 +202,7 @@ class Operations:
                               "purpose": row.get("purpose"),
                               **({"completionTranche": row["completion"]["clock"]["tranche"],
                                   "receiptId": row["completion"]["receipt"]["id"]} if row.get("purpose") == "TRANCHE_COMPLETION" else {}),
+                              **(completion_corrections.summary(row) if row.get("purpose") == completion_corrections.PURPOSE else {}),
                               **(cohort.summary(row, context, cohort_history) if row.get("purpose") == "COHORT_EVALUATION" else {}),
                               **(implementation.summary(row, context) if row.get("purpose") == implementation.PURPOSE else {}),
                               **(engagements.summary(row) if row.get("purpose") == engagements.PURPOSE else {}),
@@ -1044,13 +1046,40 @@ class Operations:
         with self.workspace.mutex:
             return completion.seed(self._completion_context(program_id, body, ("tranche",)), body.get("tranche"))
 
+    def _completion_correction_review(self, program_id, review_id):
+        selected = self.review(program_id, review_id)
+        if selected.get("purpose") != completion_corrections.PURPOSE:
+            domain.fail("Select the original correction review.", "COMPLETION_CORRECTIONS", 409)
+        latest = completion_corrections.head(completion_corrections.reviews(self, program_id),
+                                              selected["corrections"]["inputs"]["roundId"])
+        if not latest or latest["id"] != selected["id"]:
+            domain.fail("This correction round has a newer edition. Review the complete latest findings before re-preparation.",
+                        "COMPLETION_CORRECTIONS_HEAD_CHANGED", 409)
+        return selected
+
+    def seed_completion_corrections(self, program_id, body):
+        with self.workspace.mutex:
+            context = self._completion_context(program_id, body, ("outcomeId", "reviewId"))
+            return completion_corrections.seed(self, context, body.get("outcomeId"), body.get("reviewId"))
+
+    def preview_completion_corrections(self, program_id, body):
+        with self.workspace.mutex:
+            context = self._completion_context(program_id, body, ("inputs", "asOfDate"))
+            return completion_corrections.preview(self, context, body.get("inputs"), body.get("asOfDate"))
+
+    def export_completion_corrections(self, program_id, review_id):
+        with self.workspace.mutex:
+            return completion_corrections.export(self.review(program_id, review_id),
+                lambda source_id: self.source(program_id, source_id))
+
     def preview_completion(self, program_id, body):
         with self.workspace.mutex:
-            context = self._completion_context(program_id, body, ("receiptId", "asOfDate", "summary", "cohortReviewIds", "implementationReviewIds"))
+            context = self._completion_context(program_id, body, ("receiptId", "asOfDate", "summary", "cohortReviewIds", "implementationReviewIds", "correctionReviewId"))
             reviews = self._cohort_reviews(program_id, body["cohortReviewIds"]) if "cohortReviewIds" in body else None
             evidence = self._implementation_reviews(program_id, body["implementationReviewIds"]) if "implementationReviewIds" in body else None
             return completion.preview(context, {key: value for key, value in body.items() if key != "expectedVersion"},
-                                      reviews, self._cohort_history(program_id) if reviews is not None else None, evidence)
+                                      reviews, self._cohort_history(program_id) if reviews is not None else None, evidence,
+                                      correction_review=self._completion_correction_review(program_id, body["correctionReviewId"]) if "correctionReviewId" in body else None)
 
     def export_completion(self, program_id, review_id):
         with self.workspace.mutex:

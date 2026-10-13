@@ -1,0 +1,17 @@
+{
+  "method": "bridge.capture.create",
+  "args": {
+    "requestId": "REPLACE_ORIGINAL_REQUEST_UUID",
+    "expectedRevision": 0,
+    "name": "Original Bridge transfer intake",
+    "actor": "REPLACE_ORIGINAL_OPERATOR",
+    "note": "Select the original developer and customer binding; retain every original response.",
+    "read": {
+      "kind": "transfers",
+      "limit": 100,
+      "starting_after": null,
+      "filters": {}
+    },
+    "maxPages": 10000
+  }
+}

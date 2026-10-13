@@ -7,13 +7,14 @@ import {absolute,plain,need} from '../../distribution/runtime-workspace/storage.
 const SOURCE='stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement';
 const UUID=/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
 export const INVOICE_SETTLEMENT_READY_SCHEMA='stellar-forge.invoice-settlement-workspace-startup.v1';
-const privateSettings=[['connectionsFile','--connections-file'],['profileFile','--profile-file']];
+const privateSettings=[['connectionsFile','--connections-file'],['profileFile','--profile-file'],['sdpConfigFile','--sdp-config']];
 const field=(name,label,type='path',required=false,description='')=>({name,label,type,required,description});
 const originalFiles=[
   'cli.mjs','server.mjs','operator.mjs','workspace.mjs','common.mjs','receiving.mjs',
   'native.mjs','events.mjs','lossless-json.mjs','reconciliation.mjs','archive.mjs','runtime.mjs',
   'browser-assets.json','source-files.json','source/elementpay-listener.json','source/elementpay-contracts.json','source/elementflow-contracts.json',
-  'web/index.html','web/app.mjs','web/styles.css'
+  'web/index.html','web/app.mjs','web/styles.css',
+  'sdp/sdp-operator.mjs','sdp/sdp-desk.mjs','sdp/sdp-desk.css','sdp/sdp-contract.mjs','sdp/sdp-native.mjs','sdp/sdp-workspace.mjs'
 ];
 
 function loopback(value='127.0.0.1'){
@@ -36,6 +37,8 @@ export function invoiceSettlementApplication(common=[]){
         'An alias-to-connection JSON file outside the workspace. It selects original source endpoints, host-private credentials and retained ethers runtime directories.'),
       field('profileFile','Programme profile','path',false,
         'Optional JSON describing the operator and programme. Existing saved profile revisions remain in the workspace.'),
+      field('sdpConfigFile','Private SDP desk scopes','path',false,
+        'Optional JSON selecting original invoice programme versions, tenant/wallet/asset scopes and private transaction adapters for the SDP batch desk.'),
       field('host','Local listen address','text',false,
         'Use 127.0.0.1 (default) or ::1. The application publishes its actual local port when it starts.'),
       ...common
@@ -71,6 +74,11 @@ export async function prepareInvoiceSettlementApplication(settings,{inputPath,ru
   // The CLI owns connection aliases, profile semantics and private credential placement.
   // Only the original input descriptors and argument paths enter Applications state.
   await operator.loadInvoiceSettlementConfiguration(configuration);
+  if(configuration.sdpConfigFile){
+    const sdp=await import(pathToFileURL(join(sourceDirectory,'sdp/sdp-operator.mjs')).href);
+    const desks=await sdp.readSDPDeskConfiguration({file:configuration.sdpConfigFile,workspaceDirectory:directory});
+    for(const selected of Object.values(desks.desks))if(selected.adapterModule)inputs.push(await inputPath(absolute(selected.adapterModule),'file',false,true));
+  }
   return {args,inputs,createDirectories:[...new Set(createDirectories)]};
 }
 

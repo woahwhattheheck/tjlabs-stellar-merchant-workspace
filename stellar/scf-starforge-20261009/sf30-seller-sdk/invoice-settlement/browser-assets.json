@@ -22,6 +22,27 @@
         "web/styles.css",
         "text/css; charset=utf-8"
       ]
+    ],
+    [
+      "/sdp/desk.mjs",
+      [
+        "sdp/sdp-desk.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/sdp/desk.css",
+      [
+        "sdp/sdp-desk.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/sdp/sdp-contract.mjs",
+      [
+        "sdp/sdp-contract.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

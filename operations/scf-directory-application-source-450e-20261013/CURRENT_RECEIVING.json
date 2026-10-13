@@ -3,33 +3,33 @@
   "operation": "SCF-DIRECTORY-ASSEMBLY-450E-20261013",
   "basis": {
     "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-    "commit": "f810457375913742f97c5d3c365372a3aa640984",
-    "lastMainGuard": "6cca3bf0d102d347581aba3a2fb510a2bc631254",
-    "sources": 501,
+    "commit": "9632fc45da7e438eade401bf268c062c9a9c05a7",
+    "lastMainGuard": "9632fc45da7e438eade401bf268c062c9a9c05a7",
+    "sources": 503,
     "application": {
-      "bytes": 47371,
-      "sha256": "b9d27b29bb9c2d603b2bd013f07a1b8eb397cb8bca17ac57cae4da28a2b1abc1",
-      "git_blob": "ce39ca42245839be7d2b841703e92b714a5dd241"
+      "bytes": 47684,
+      "sha256": "5bddff9b185890bd0021ac25642975115095b435108d1c19fa2a7291cd03cb37",
+      "git_blob": "15c2a09c49fc72e63179e17211ff7395c756955d"
     },
     "html": {
-      "bytes": 96472,
-      "sha256": "ce91d58ca77daa914f1f7c72defa0de438bfa2f37550e30c109792b1f7d0c806",
-      "git_blob": "6efbf15efd035c9efc7b8a3a0b028b15a784242f"
+      "bytes": 96785,
+      "sha256": "c34c14204ab3f888dc5614ee62939ee2930e620d4f4d54507984a0e61dd37af0",
+      "git_blob": "bd8173a28dde135abf22b1ffd1d193025fbd5715"
     },
     "manuscript": {
-      "bytes": 976758,
-      "sha256": "6d536501143188ab62619350917ea5154d4f8c9fae7266e91acf194fd7462680",
-      "git_blob": "d5f7dac639a1363dd67f884da8f9f3ad8910c26b"
+      "bytes": 986634,
+      "sha256": "d330672945a4685fdbc2709b4d95c692a8ca6d5c408e24699a03f067be3ee91b",
+      "git_blob": "b697b2d765ee7e4d9347e11c2f0b0da1e6b607a1"
     },
     "index": {
-      "bytes": 614256,
-      "sha256": "dcb660c6aa860c770fef83ee24270c0c8976b11d6a80bc820d5b14eedd48d33b",
-      "git_blob": "85ad2d3d21a2f05efb0266de1953632010709fa9"
+      "bytes": 617433,
+      "sha256": "f31c9ca572150da2814565ee67160b1b100a6d59406ba65177052927292c118a",
+      "git_blob": "7e598109e671470fcae3806a569c3bd87eaad19a"
     }
   },
   "result": {
-    "sourceRecords": 521,
-    "preservedSourceRecords": 501,
+    "sourceRecords": 523,
+    "preservedSourceRecords": 503,
     "newSourceRecords": 20,
     "completeChapters": 78,
     "otherCompleteChaptersUnchanged": 77,
@@ -43,34 +43,34 @@
     "completeComposerReplay": true,
     "originalPackageReopened": true,
     "sourcePackage": {
-      "bytes": 2293291,
-      "sha256": "43d688ff54f048d15967b0af52ab0c914f4df0bf430ffdff86c74b2ff5d1e71b",
-      "git_blob": "81f43f71a5ceabcdb47288f0e2c7980584993fa9"
+      "bytes": 2311028,
+      "sha256": "79696a697a0b4056bb6d3783f3d7210c671fe443944739d64a7169ec17dc5e6e",
+      "git_blob": "57c30d657a37afba35342c0ff2d0d31a3e9296c7"
     },
     "outputs": [
       {
         "path": "grant.html",
-        "bytes": 96472,
-        "sha256": "ce91d58ca77daa914f1f7c72defa0de438bfa2f37550e30c109792b1f7d0c806",
-        "git_blob": "6efbf15efd035c9efc7b8a3a0b028b15a784242f"
+        "bytes": 96785,
+        "sha256": "c34c14204ab3f888dc5614ee62939ee2930e620d4f4d54507984a0e61dd37af0",
+        "git_blob": "bd8173a28dde135abf22b1ffd1d193025fbd5715"
       },
       {
         "path": "grant-data/application.md",
-        "bytes": 47371,
-        "sha256": "b9d27b29bb9c2d603b2bd013f07a1b8eb397cb8bca17ac57cae4da28a2b1abc1",
-        "git_blob": "ce39ca42245839be7d2b841703e92b714a5dd241"
+        "bytes": 47684,
+        "sha256": "5bddff9b185890bd0021ac25642975115095b435108d1c19fa2a7291cd03cb37",
+        "git_blob": "15c2a09c49fc72e63179e17211ff7395c756955d"
       },
       {
         "path": "grant-data/product-and-finance.md",
-        "bytes": 987058,
-        "sha256": "4ce36582db4d28cd8cde26e895666f92895f5e3f0a740d7de65a5aa0168e579c",
-        "git_blob": "2a4ff445a2d9ec209f4622a9ec3dca19eb6055b8"
+        "bytes": 996934,
+        "sha256": "7d1ace4a6f403b3c1a497d7606b3ba171732b48a576853e686d85941a1092c25",
+        "git_blob": "56d7bc20b2beafac0e06e3220b6aa3614f0ba3e1"
       },
       {
         "path": "grant-data/source-index.json",
-        "bytes": 647150,
-        "sha256": "034b8ef3fc339415cac66c4b6468b2f50e90f406162e6f00a73d1e6676441831",
-        "git_blob": "f2e36d07bef6f0a35e3083083da3bcaa56a345ab"
+        "bytes": 650031,
+        "sha256": "35a2e431341a95d3471e2b980bf0e5fed7b4ee4db2718e8b0385a18e1167484a",
+        "git_blob": "f45167b68d7855c83a74809ad07c681eefb657aa"
       }
     ]
   },
@@ -87,7 +87,7 @@
       "sha256": "50245fa5863919c56fdaa4670b8b0dc09d0abf9b8e97b15e9c368e8d9ee1a5a5"
     },
     "prefixSha256": "bf54a0c655df689b8ca2dfbe53a42abef4137a7d33107efdb50475954058b860",
-    "suffixSha256": "aa7878beeb0ce8fc1d3b3c8767e462f7430d7aa466eea1033f12c068ae970a0c",
+    "suffixSha256": "e71a589bc387d8b26c58eb51c9cf751f0a556012449304732e76f3691ddb3af0",
     "reused": false
   },
   "unaffectedGrantDataFiles": [
@@ -98,8 +98,9 @@
     },
     {
       "path": "stellar-forge/developer-site/dist/grant-data/application.md",
-      "git_blob": "ce39ca42245839be7d2b841703e92b714a5dd241",
-      "bytes": 47371
+      "bytes": 47684,
+      "sha256": "5bddff9b185890bd0021ac25642975115095b435108d1c19fa2a7291cd03cb37",
+      "git_blob": "15c2a09c49fc72e63179e17211ff7395c756955d"
     },
     {
       "path": "stellar-forge/developer-site/dist/grant-data/budget.csv",
@@ -133,5 +134,10 @@
     }
   ],
   "execution": "Complete maintained source functions in connected JavaScript. No product/browser/Site/saved-case process was opened.",
-  "publication": "Only the two maintained Directory-containing outputs and this operation's full source package/selection/receipts change. Existing source/current-customer owners remain authoritative."
+  "publication": "Only the two maintained Directory-containing outputs and this operation's full source package/selection/receipts change. Existing source/current-customer owners remain authoritative.",
+  "concurrentAdoption": {
+    "pullRequest": 1356,
+    "merge": "bc6a7fbdd76e5f1f3bb7751b47dac21600c6780c",
+    "meaning": "The originally reviewed 501-source proposal was not merged after this current Collections intake advanced the maintained assembly. This successor preserves all 503 complete current source records and all actual current application bytes."
+  }
 }

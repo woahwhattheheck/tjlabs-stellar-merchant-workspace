@@ -266,3 +266,17 @@ The maintained source contracts are:
 The installed Bank navigation includes **Statement collections**. The source-owned asset registry includes its original-file model and industrial collection desk. Open several complete original files, preserve a separate interpretation for each, and use the existing financial source editor for their account/statement intake. The full collection can be downloaded and reopened independently.
 
 The native entry point is `starforge bank-statements collection help`. Its `prepare`, `inspect` and `extract` commands receive a complete explicit file manifest, run the original source parser across included files, and recover each exact original in a private create-only directory. See the [complete guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_COLLECTIONS.md) for manifest fields and operating commands. The selected bank package already includes the original source parser, domain and complete source-owned asset tree used by this workflow.
+
+## Authenticated agent operation of the same Bank desk
+
+The committed bank selection also includes the existing accounting Merchant MCP provider, its MCP host commands and the typed Bank reconciliation client. Prepare the runtime with its declared mcp feature when using this interface, alongside the original native/schema/openapi/operator selections:
+
+~~~sh
+node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs prepare \
+  --dir /private/bank-agent-runtime --archive /absolute/returned-bank-package.tgz \
+  --sha256 RETURNED_ARCHIVE_SHA256 --native --feature schema --feature openapi --feature mcp --operator
+~~~
+
+Use the original merchant-mcp, merchant-mcp-stdio and merchant-mcp-client-config commands to configure the existing accounting workspace alias and its authentication. The installed merchant-accounting-bank-statements command adds complete source inspection, retained original requests, CAMT page assembly, bank transaction decisions, balanced closes and full original file downloads.
+
+The [complete agent guide](../../stellar-forge/mcp-merchant-operator/ACCOUNTING_BANK_STATEMENTS.md) gives exact preparation, recovery and receiving commands. Original Applications and MCP must share the same accounting identity serially: stop its current writer before opening the other interface. This adds no separate account, ledger, parser or payment engine.

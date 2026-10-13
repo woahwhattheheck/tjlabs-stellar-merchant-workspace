@@ -318,6 +318,13 @@
       ]
     ],
     [
+      "/grant-companion-returns.mjs",
+      [
+        "grant-companion-returns.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/grant-companion-workspace.mjs",
       [
         "grant-companion-workspace.mjs",

@@ -43,6 +43,8 @@ from .analysis_synthesis import AnalysisSynthesis
 from . import synthesis_http
 from .analysis_lineage import AnalysisLineage
 from . import lineage_http
+from .event_programmes import EventProgrammes
+from . import event_programmes_http
 from .errors import BuyerError, StateError
 from .sqlite_dataset import DatasetDatabase
 from .query_stream import reviewed_view_selection
@@ -131,7 +133,7 @@ class AnalysisWorkspace:
     their imports and activations. Source registration is an operator action.
     """
 
-    def __init__(self, directory, *, checkout=None, node="node", research_connections=None, lineage_connections=None):
+    def __init__(self, directory, *, checkout=None, node="node", research_connections=None, lineage_connections=None, event_source_cli=None):
         self.database = DatasetDatabase(directory)
         self.checkout = str(Path(checkout).expanduser().resolve()) if checkout else None
         self.node = node
@@ -178,6 +180,7 @@ class AnalysisWorkspace:
             self.archives.recover_completed()
             self.lineage = AnalysisLineage(self, connections=lineage_connections)
             self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="dataset-analysis")
+            self.event_programmes = EventProgrammes(self, source_cli=event_source_cli)
         except BaseException:
             os.close(self._owner)
             raise
@@ -187,6 +190,7 @@ class AnalysisWorkspace:
             if self._closed:
                 return
             self._closed = True
+        self.event_programmes.close()
         self.lineage.close()
         self.synthesis.close()
         self.research.close()
@@ -670,6 +674,7 @@ def serve(workspace, *, port=0):
             assets = {"/": (_analysis_ui.HTML, "text/html;charset=utf-8"), "/app.js": (_analysis_ui.JS, "text/javascript;charset=utf-8"), "/style.css": (_analysis_ui.CSS, "text/css;charset=utf-8")}
             assets.update(synthesis_http.assets())
             assets.update(lineage_http.assets())
+            assets.update(event_programmes_http.assets())
             assets.update({"/profiles": (_analysis_profiles_ui.HTML, "text/html;charset=utf-8"),
                            "/profiles.js": (_analysis_profiles_ui.JS, "text/javascript;charset=utf-8"),
                            "/profiles.css": (_analysis_profiles_ui.CSS, "text/css;charset=utf-8")})
@@ -686,6 +691,8 @@ def serve(workspace, *, port=0):
             if synthesis_http.get(self, workspace, url, query, parts):
                 return
             if lineage_http.get(self, workspace, url, query, parts):
+                return
+            if event_programmes_http.get(self, workspace, url, query, parts):
                 return
             if (self.command in {"GET", "HEAD"} and len(parts) == 4
                     and parts[:2] == ["api", "workbook-runs"] and parts[3] == "file"):
@@ -851,6 +858,8 @@ def serve(workspace, *, port=0):
                     return
                 if lineage_http.post(self, workspace, url, parts, body):
                     return
+                if event_programmes_http.post(self, workspace, url, parts, body):
+                    return
                 if url.path in {"/api/research-dossiers", "/api/research-sources", "/api/research-review", "/api/research-elements"}:
                     return self._reply(200, workspace.research.read(url.path.removeprefix("/api/research-"), body))
                 if len(parts) == 4 and parts[:2] == ["api", "research-captures"] and parts[3] == "cancel":
@@ -937,6 +946,7 @@ def main():
     parser.add_argument("--database", required=True, help="Original private DatasetDatabase directory")
     parser.add_argument("--checkout", help="Matching full native Stellar Forge checkout/runtime, required for imports")
     parser.add_argument("--node", default="node")
+    parser.add_argument("--event-source-cli", help="Trusted local original SF88 event-feed analysis-source-cli.mjs; browser inputs are data only")
     parser.add_argument("--research-connections", help="Private named original Research connections; browser requests select aliases only")
     parser.add_argument("--lineage-connections", help="Named original OpenLineage startup/token files; browser requests select aliases only")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -986,7 +996,8 @@ def main():
         return
     workspace = AnalysisWorkspace(args.database, checkout=args.checkout, node=args.node,
                                   research_connections=args.research_connections,
-                                  lineage_connections=args.lineage_connections)
+                                  lineage_connections=args.lineage_connections,
+                                  event_source_cli=args.event_source_cli)
     try:
         if args.command == "research-read":
             request = parse(read(Path(args.request).expanduser().absolute(), _MAX_BODY)) if args.request else {}

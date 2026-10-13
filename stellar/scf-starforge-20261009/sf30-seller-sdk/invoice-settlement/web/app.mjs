@@ -1,4 +1,5 @@
 // MIT. Source-owned operator interface. Exact values remain strings through forms.
+import {mountSDPDesk} from '/sdp/desk.mjs';
 const $=id=>document.getElementById(id),all=selector=>[...document.querySelectorAll(selector)];
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pretty=value=>JSON.stringify(value,null,2),values=value=>Object.values(value??{});
@@ -330,6 +331,7 @@ function tab(name){
   selectedTab=name;all('[data-section]').forEach(section=>section.hidden=section.id!==name);
   all('nav [data-tab]').forEach(button=>button.classList.toggle('selected',button.dataset.tab===name));
   if(name==='history')loadHistory().catch(showError);
+  if(name==='sdp-desk')void sdpDesk.refresh();
 }
 function field(form,name){return form.elements.namedItem(name);}
 function text(form,name){return String(field(form,name)?.value??'').trim();}
@@ -1172,6 +1174,8 @@ $('operation-method').addEventListener('change',operationContract);
 onSubmit('operation-form',runOperation);
 window.addEventListener('beforeunload',event=>{if(active>0||pendingRequests.size){event.preventDefault();event.returnValue='';}});
 window.addEventListener('pagehide',()=>{if(reportObjectURL)URL.revokeObjectURL(reportObjectURL);});
+const sdpDesk=mountSDPDesk($('sdp-desk'),{read,mutate,download,workspace:()=>state,openTab:tab});
+window.addEventListener('pagehide',()=>{void sdpDesk.dispose();},{once:true});
 async function bootstrap(){
   if(!token)throw error('Open the complete local workspace URL printed by the operator or opened by Applications. The link contains its private access token.','OPERATOR_LINK_REQUIRED');
   busy('Opening invoice and settlement operator',1);

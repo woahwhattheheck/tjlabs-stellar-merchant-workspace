@@ -3,6 +3,8 @@ export async function mountCompanionReadingWorkspace(root,{api,reader,initialSou
   const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let workspace=initialWorkspace?await api.reopen(JSON.stringify(initialWorkspace)):await api.create(initialSource,{origin});
   let serial=0,busy=false,destroyed=false,readingMount=null,comparison=null,noteChapter=workspace.reading.chapter_id,noteId='',status='';
+  let returnReview=null,returnIncoming=null,returnSerial=-1,returnChoices={},returnActor='',returnFilename='';
+  const returnsEnabled=typeof api.reviewReturn==='function'&&typeof api.applyReturn==='function'&&typeof api.returnCopies==='function'&&typeof api.openReturnCopy==='function';
   if(initialSource){const received=await api.receive(workspace,initialSource,{origin});workspace=received.workspace;if(!received.already_received)status='The current published edition is retained. Compare it with your selected edition before switching.';}
   const edition=()=>api.getEdition(workspace),chapters=()=>reader.parseCompanionMarkdown(edition().markdown).chapters;
   if(honorInitialHash&&typeof location!=='undefined'&&location.hash){let anchor='';try{anchor=decodeURIComponent(location.hash.slice(1));}catch{}const target=chapters().find(c=>c.id===anchor||c.headings.some(h=>h.id===anchor));if(target){workspace=api.reading(workspace,{chapter_id:target.id,query:'',show_all:false});noteChapter=target.id;}}
@@ -16,10 +18,10 @@ export async function mountCompanionReadingWorkspace(root,{api,reader,initialSou
     workspace=next;serial++;
     try{persist?.(workspace);}catch(error){status='Reading work is retained in this open page. Download the complete workspace; browser storage could not save this edition.';}
     if(message)status=status.startsWith('Reading work is retained in this open page.')?message+' '+status:message;
-    if(draw){try{history.replaceState(null,'','#'+workspace.reading.chapter_id);}catch{}render();}else if(status)report(status);
+    if(draw){try{history.replaceState(null,'','#'+workspace.reading.chapter_id);}catch{}render();}else{if(status)report(status);updateReturnApply();}
   }
   async function operation(fn){if(busy||destroyed)return;busy=true;toggleBusy();try{await fn();}catch(error){report(error.message||String(error));}finally{busy=false;toggleBusy();}}
-  function toggleBusy(){root.setAttribute('aria-busy',String(busy));root.querySelectorAll('[data-reading-operation]').forEach(b=>b.disabled=busy);}
+  function toggleBusy(){root.setAttribute('aria-busy',String(busy));root.inert=busy;root.querySelectorAll('[data-reading-operation]').forEach(b=>b.disabled=busy);updateReturnApply();}
   function options(items,current){return items.map(([value,label])=>'<option value="'+esc(value)+'"'+(value===current?' selected':'')+'>'+esc(label)+'</option>').join('');}
   function editionLabel(e){return e.captured_at+' · '+e.sha256.slice(0,12)+' · '+Number(e.bytes).toLocaleString()+' bytes';}
   function formData(){return{edition_id:workspace.selected_edition,chapter_id:noteChapter,note_id:noteId,author:one('[name=note-author]').value,title:one('[name=note-title]').value,body:one('[name=note-body]').value,bookmark:one('[name=note-bookmark]').checked,status:one('[name=note-status]').value};}
@@ -48,28 +50,112 @@ export async function mountCompanionReadingWorkspace(root,{api,reader,initialSou
       '<h4>Original source records</h4>'+sources.map(s=>'<details><summary>'+esc(s.id)+' · '+esc(s.kind)+'</summary><div class="reading-compare-grid"><pre>'+esc(JSON.stringify(s.before,null,2))+'</pre><pre>'+esc(JSON.stringify(s.after,null,2))+'</pre></div></details>').join('')+
       (!sources.length?'<p>The complete source catalogue entries are unchanged.</p>':'');
   }
+
+  function returnConflicts(){return returnReview?[...returnReview.notes,...returnReview.drafts].filter(row=>row.conflict_key):[];}
+  function updateReturnApply(){
+    const button=one('[data-return-apply]');if(!button)return;
+    const stale=returnReview&&returnSerial!==serial;
+    const missing=returnConflicts().filter(row=>!returnChoices[row.conflict_key]).length;
+    button.disabled=busy||!returnReview||stale||!returnActor.trim()||missing>0;
+    const message=one('[data-return-readiness]');
+    if(message)message.textContent=!returnReview?'Choose a complete returned reading workspace.':stale?
+      'Your reading workspace changed after this review. Review the retained incoming copy against your current work before applying.':
+      missing?missing+' conflict decisions still need an explicit choice.':
+      !returnActor.trim()?'Name the operator responsible for these reviewed decisions.':
+      'All required choices are recorded. Apply keeps both complete original branches.';
+  }
+  function returnedNote(note){
+    if(!note)return '<p>No note on this branch.</p>';
+    return '<p><strong>'+esc(note.chapter_title||note.chapter_id)+'</strong></p><p class="reading-small">Source edition '+esc(note.edition_id)+' · original note '+esc(note.id)+(note.parent_id?' · carried from '+esc(note.parent_id):'')+'</p>'+
+      note.versions.map(v=>'<section><h5>Version '+esc(v.version)+' · '+esc(v.at)+'</h5><p>'+esc(v.author)+' · '+esc(v.status)+(v.bookmark?' · bookmarked':'')+'</p><h5>'+esc(v.title||'Untitled reading note')+'</h5><pre>'+esc(v.body)+'</pre></section>').join('');
+  }
+  function returnedDraft(draft){
+    if(!draft)return '<p>No unfinished draft on this branch.</p>';
+    return '<p class="reading-small">Source edition '+esc(draft.edition_id)+' · chapter '+esc(draft.chapter_id)+' · '+(draft.note_id?'note '+esc(draft.note_id):'new note')+'</p>'+
+      '<p>'+esc(draft.author||'Author not entered')+' · '+esc(draft.status)+(draft.bookmark?' · bookmarked':'')+'</p><h5>'+esc(draft.title||'Untitled working draft')+'</h5><pre>'+esc(draft.body)+'</pre>';
+  }
+  function conflictChoice(row,isNote){
+    if(!row.conflict_key)return '';
+    const optionsList=[['','Choose the working result'],['local','Continue with your current branch'],['incoming','Continue with the returned branch']];
+    if(isNote)optionsList.push(['both','Keep both as separate editable notes']);
+    return '<label>Reviewed working choice<select data-return-choice="'+esc(row.conflict_key)+'">'+options(optionsList,returnChoices[row.conflict_key]||'')+'</select></label><p class="reading-small">Both complete original branches remain in the return archive, whichever working choice you select.</p>'+(isNote?'<p class="reading-small">Keeping both creates a separate branch for this note. Unchanged carried child notes stay with the current parent; incoming added or changed children follow the returned parent. The complete incoming family remains in its downloadable original branch.</p>':'');
+  }
+  function renderReturn(){
+    if(!returnsEnabled)return;
+    const box=one('[data-reading-return-review]');if(!box)return;
+    const labels={'added':'New on the returned branch','same':'Same complete history','local-ahead':'Your branch has later versions','incoming-ahead':'Returned branch has later versions','diverged':'Branches have different later versions','local-only':'Only in your current working copy','conflict':'Different unfinished drafts'};
+    if(!returnReview)box.innerHTML='<p>Choose a complete collaborator workspace to inspect its retained source editions, all note versions and unfinished drafts. Your current reading work stays open until you apply reviewed decisions.</p>';
+    else{
+      const r=returnReview;
+      const changedNotes=r.notes.filter(n=>n.kind!=='same').length;
+      const conflicts=returnConflicts().length;
+      box.innerHTML='<h3>Review returned reading work</h3><p>'+esc(returnFilename||'Selected complete workspace')+' · '+r.editions.filter(e=>e.kind==='added').length+' additional source editions · '+changedNotes+' notes with different history · '+conflicts+' conflict decisions</p>'+
+        '<p class="reading-small">Current copy '+esc(r.local_sha256.slice(0,12))+' · returned copy '+esc(r.incoming_sha256.slice(0,12))+'</p>'+
+        '<details><summary>Complete retained source editions</summary>'+r.editions.map(e=>{const value=e.incoming||e.local;return '<section><h4>'+esc(editionLabel(value))+'</h4><p>'+esc(e.kind==='added'?'Additional complete source pair':'Complete source pair already retained')+'</p><p class="reading-small">'+esc(e.id)+'</p></section>';}).join('')+'</details>'+
+        '<h4>Saved notes and their complete histories</h4>'+
+        (r.notes.length?r.notes.map(n=>'<details class="reading-change"'+(n.conflict_key?' open':'')+'><summary>'+esc((n.local||n.incoming).chapter_title||'Reading note')+' · '+esc(labels[n.kind]||n.kind)+'</summary><p>'+n.common_versions+' shared original versions</p><div class="reading-compare-grid"><section><h4>Your current note</h4>'+returnedNote(n.local)+'</section><section><h4>Returned note</h4>'+returnedNote(n.incoming)+'</section></div>'+conflictChoice(n,true)+'</details>').join(''):'<p>Neither branch contains saved notes.</p>')+
+        '<h4>Unfinished working drafts</h4>'+
+        (r.drafts.length?r.drafts.map(d=>'<details class="reading-change"'+(d.conflict_key?' open':'')+'><summary>'+esc((d.local||d.incoming).title||'Unfinished note')+' · '+esc(labels[d.kind]||d.kind)+'</summary><div class="reading-compare-grid"><section><h4>Your current draft</h4>'+returnedDraft(d.local)+'</section><section><h4>Returned draft</h4>'+returnedDraft(d.incoming)+'</section></div>'+conflictChoice(d,false)+'</details>').join(''):'<p>Neither branch contains unfinished drafts.</p>')+
+        '<label>Reviewing operator<input data-return-actor maxlength="200" value="'+esc(returnActor)+'"></label><p data-return-readiness role="status"></p>'+
+        '<div class="reading-actions"><button data-return-refresh data-reading-operation>Review against current reading work</button><button data-return-apply>Apply reviewed return</button><button data-return-download data-reading-operation>Download original returned copy</button><button data-return-dismiss data-reading-operation>Close this review</button></div>';
+    }
+    const copies=api.returnCopies(workspace),archive=one('[data-reading-return-copies]');
+    archive.innerHTML='<h3>Retained return branches</h3>'+
+      (copies.length?copies.map(copy=>'<section><h4>'+esc(copy.label)+'</h4><p>'+esc(copy.updated_at)+' · '+copy.editions+' source editions · '+copy.notes+' notes · '+copy.drafts+' working drafts</p><p class="reading-small">Complete branch '+esc(copy.sha256.slice(0,12))+'</p><button data-return-copy="'+esc(copy.sha256)+'" data-reading-operation>Download this complete branch</button></section>').join(''):'<p>After applying a return, its complete before, incoming and applied snapshots are available here. The complete workspace and offline HTML retain this archive.</p>');
+    box.querySelectorAll('[data-return-choice]').forEach(select=>select.onchange=()=>{if(busy)return;returnChoices[select.dataset.returnChoice]=select.value;updateReturnApply();});
+    const actor=one('[data-return-actor]');if(actor)actor.oninput=()=>{if(busy)return;returnActor=actor.value;updateReturnApply();};
+    const refresh=one('[data-return-refresh]');if(refresh)refresh.onclick=()=>operation(async()=>{const before=serial,local=workspace,incoming=returnIncoming;const reviewed=await api.reviewReturn(local,incoming);if(before!==serial||destroyed)throw Error('Reading work changed during review. Review the same incoming copy again.');returnReview=reviewed;returnIncoming=reviewed.incoming;returnSerial=serial;returnChoices={};renderReturn();report('The original returned copy is reviewed against your current reading work. Confirm the displayed choices.');});
+    const apply=one('[data-return-apply]');if(apply)apply.onclick=()=>operation(async()=>{
+      if(!returnReview||returnSerial!==serial)throw Error('Review the original returned copy against the current reading work first.');
+      const before=serial,review=returnReview,actor=returnActor.trim(),choices={...returnChoices};
+      if(!actor||returnConflicts().some(row=>!choices[row.conflict_key]))throw Error('Name the reviewing operator and choose every conflict result.');
+      const result=await api.applyReturn(workspace,review,{actor,choices});
+      if(before!==serial||destroyed)throw Error('Reading work changed before the reviewed result was adopted. The original branches remain selected for review.');
+      returnReview=null;returnIncoming=null;returnSerial=-1;returnChoices={};returnFilename='';
+      retain(result.workspace,{draw:true,message:result.already_applied?'This exact return was already applied; later reading work is retained.':'Reviewed collaborator return applied. Both original branches and the complete review receipt remain in this workspace.'});
+      if(result.already_applied){renderReturn();report('This exact return was already applied; later reading work is retained.');}
+    });
+    const incomingDownload=one('[data-return-download]');if(incomingDownload)incomingDownload.onclick=()=>operation(async()=>download(JSON.stringify(returnIncoming,null,2)+'\n','scf-companion-original-return.json','application/json'));
+    const dismiss=one('[data-return-dismiss]');if(dismiss)dismiss.onclick=()=>operation(async()=>{returnReview=null;returnIncoming=null;returnSerial=-1;returnChoices={};returnFilename='';renderReturn();report('Return review closed. Current reading work is unchanged.');});
+    archive.querySelectorAll('[data-return-copy]').forEach(button=>button.onclick=()=>operation(async()=>{const before=serial,branch=await api.openReturnCopy(workspace,button.dataset.returnCopy);if(before!==serial||destroyed)throw Error('Reading work changed during branch validation. Download the retained branch again.');download(JSON.stringify(branch,null,2)+'\n','scf-companion-return-'+button.dataset.returnCopy.slice(0,12)+'.json','application/json');report('Downloaded the complete retained branch. The current reading selection is unchanged.');}));
+    updateReturnApply();
+  }
+
   function render(){
     readingMount?.destroy();readingMount=null;
     const e=edition(),model=reader.parseCompanionMarkdown(e.markdown);if(!model.chapters.some(c=>c.id===noteChapter)){noteChapter=workspace.reading.chapter_id;noteId='';}
     root.innerHTML='<section class="reading-workspace"><h2>Retained reading workspace</h2><p>Keep source editions, reading notes and bookmarks together while reviewing the complete application companion.</p><p data-reading-status role="status" aria-live="polite">'+esc(status)+'</p>'+
-      '<div class="reading-actions"><button data-reading-action="export" data-reading-operation>Download complete workspace</button><button data-reading-action="notes" data-reading-operation>Download complete notes</button><button data-reading-action="offline" data-reading-operation>Save offline reading workspace</button><label>Reopen complete workspace<input data-reading-import type="file" accept=".json,application/json"></label></div>'+
+      '<div class="reading-actions"><button data-reading-action="export" data-reading-operation>Download complete workspace</button><button data-reading-action="notes" data-reading-operation>Download working notes</button><button data-reading-action="offline" data-reading-operation>Save offline reading workspace</button><label>Reopen complete workspace<input data-reading-import type="file" accept=".json,application/json"></label></div>'+
+      (returnsEnabled?'<details class="reading-returns"><summary>Review a collaborator\'s returned workspace</summary><p>Receive reading notes and unfinished drafts without replacing your current copy. Review every conflict before applying; both complete branches remain available afterward.</p><label>Returned complete reading workspace<input data-reading-return type="file" accept=".json,application/json"></label><div data-reading-return-review></div><div data-reading-return-copies></div></details>':'')+
       '<div class="reading-grid"><label>Selected source edition<select name="selected-edition">'+options(workspace.editions.map(e=>[e.id,editionLabel(e)]),workspace.selected_edition)+'</select></label><label>Compare from<select name="compare-from">'+options(workspace.editions.map(e=>[e.id,editionLabel(e)]),workspace.editions.length>1?workspace.editions.at(-2).id:workspace.selected_edition)+'</select></label><label>Compare to<select name="compare-to">'+options(workspace.editions.map(e=>[e.id,editionLabel(e)]),workspace.editions.at(-1).id)+'</select></label></div>'+
       '<div class="reading-actions"><button data-reading-action="select" data-reading-operation>Read selected edition</button><button data-reading-action="compare" data-reading-operation>Compare complete editions</button></div>'+
       '<details><summary>Receive another complete source edition</summary><p>Select the original companion Markdown and its matching source index. The complete pair is retained before you select it for reading.</p><div class="reading-grid"><label>Companion Markdown<input data-companion-file type="file" accept=".md,.txt,text/markdown,text/plain"></label><label>Original source index<input data-companion-index type="file" accept=".json,application/json"></label><label>Original source URL or context<input name="edition-origin" type="text"></label></div><button data-reading-action="receive" data-reading-operation>Receive source pair</button></details>'+
       '<details class="reading-notebook" open><summary>Chapter notes and bookmarks</summary><p data-note-binding></p><div class="reading-grid"><label>Original chapter<select name="note-chapter"></select></label><label>Note<select name="note-existing"></select></label><label>Named author<input name="note-author" maxlength="200"></label><label>Note title<input name="note-title" maxlength="500"></label></div><label>Reading note<textarea name="note-body" maxlength="50000" rows="5"></textarea></label><div class="reading-actions"><label class="reading-checkbox"><input name="note-bookmark" type="checkbox">Bookmark this chapter</label><label>Review state<select name="note-status"><option value="open">Open</option><option value="resolved">Resolved</option></select></label><button data-reading-action="save-note" data-reading-operation>Save note revision</button></div><p data-draft-count class="reading-small"></p><div data-reading-notes></div></details>'+
       '<details class="reading-comparisons"><summary>Full edition and source comparison</summary><div data-reading-comparison></div></details></section><div data-retained-reader></div>';
     const host=one('[data-retained-reader]');host.innerHTML=reader.companionReaderMarkup(model,e);
-    readingMount=reader.activateCompanionReader(host,e,null,{reading:workspace.reading,honorHash:false,onReading:value=>{const next=api.reading(workspace,value);if(next!==workspace)retain(next);}});
-    loadNoteForm();renderNotes();renderComparison();wire();toggleBusy();
+    readingMount=reader.activateCompanionReader(host,e,null,{reading:workspace.reading,honorHash:false,onReading:value=>{if(busy||destroyed)return;const next=api.reading(workspace,value);if(next!==workspace)retain(next);}});
+    loadNoteForm();renderNotes();renderComparison();renderReturn();wire();toggleBusy();
   }
   function changeEdition(key,chapterId='') {
     comparison=null;noteId='';noteChapter=chapterId||workspace.reading.chapter_id;
     retain(api.select(workspace,key,{chapterId:noteChapter}),{draw:true,message:'Reading the retained selected edition. Earlier source and notes remain available.'});
   }
   function wire(){
-    one('[name=note-chapter]').onchange=event=>{noteChapter=event.target.value;noteId='';loadNoteForm();readingMount.select('#'+noteChapter,true);};
-    one('[name=note-existing]').onchange=event=>{noteId=event.target.value;loadNoteForm();};
-    for(const key of ['author','title','body','bookmark','status'])one('[name=note-'+key+']').addEventListener('input',()=>{retain(api.draft(workspace,formData()));one('[data-draft-count]').textContent=workspace.drafts.length+' retained working drafts';});
+    const returnFile=one('[data-reading-return]');
+    if(returnFile)returnFile.onchange=event=>operation(async()=>{
+      const file=event.target.files?.[0];if(!file)return;
+      const before=serial,local=workspace;
+      try{
+        if(file.size>api.maxBytes)throw Error('Open a complete returned workspace under 64 MiB.');
+        const reviewed=await api.reviewReturn(local,await file.text());
+        if(before!==serial||destroyed)throw Error('Reading work changed while the returned file was being read. Select the same file again.');
+        returnReview=reviewed;returnIncoming=reviewed.incoming;returnSerial=serial;returnChoices={};returnFilename=file.name;
+        renderReturn();report('Returned reading work is ready for review. No note, draft or selected chapter has been replaced.');
+      }finally{event.target.value='';}
+    });
+    one('[name=note-chapter]').onchange=event=>{if(busy||destroyed)return;noteChapter=event.target.value;noteId='';loadNoteForm();readingMount.select('#'+noteChapter,true);};
+    one('[name=note-existing]').onchange=event=>{if(busy||destroyed)return;noteId=event.target.value;loadNoteForm();};
+    for(const key of ['author','title','body','bookmark','status'])one('[name=note-'+key+']').addEventListener('input',()=>{if(busy||destroyed)return;retain(api.draft(workspace,formData()));one('[data-draft-count]').textContent=workspace.drafts.length+' retained working drafts';});
     one('[data-reading-notes]').onclick=event=>operation(async()=>{
       const button=event.target.closest('button');if(!button)return;
       const key=button.dataset.noteOpen||button.dataset.noteEdit||button.dataset.noteCarry,n=workspace.notes.find(n=>n.id===key);if(!n)return;
@@ -130,14 +216,14 @@ export async function resolveCompanionOfflineCopies(api,embedded,browserRaw='',r
   return{initial:copies.length===1?copies[0].workspace:null,copies,rejected};
 }
 
-export function offlineCompanionReadingWorkspace(workspace,{css,coreSource,editionSource,viewSource,applicationUrl='',submissionUrl='',recoveryCopies=[]}={}) {
-  for(const value of [css,coreSource,editionSource,viewSource])if(typeof value!=='string'||!value.trim())throw new Error('Retain all complete reader sources for the offline workspace.');
-  const payload={workspace,runtime:{css,coreSource,editionSource,viewSource,applicationUrl,submissionUrl,recoveryCopies}};
+export function offlineCompanionReadingWorkspace(workspace,{css,coreSource,editionSource,viewSource,returnsSource,applicationUrl='',submissionUrl='',recoveryCopies=[]}={}) {
+  for(const value of [css,coreSource,editionSource,viewSource,returnsSource])if(typeof value!=='string'||!value.trim())throw new Error('Retain all complete reader sources for the offline workspace.');
+  const payload={workspace,runtime:{css,coreSource,editionSource,viewSource,returnsSource,applicationUrl,submissionUrl,recoveryCopies}};
   const json=JSON.stringify(payload).replaceAll('<','\\u003c').replaceAll('\u2028','\\u2028').replaceAll('\u2029','\\u2029');
   const clean=source=>source.replace(/^export /gm,'');
   const boot=String.raw`(async()=>{
     const payload=JSON.parse(document.getElementById('reading-source').textContent),root=document.getElementById('companion-reader');
-    const api=createCompanionEditionModel({parseMarkdown:parseCompanionMarkdown});
+    const api=createCompanionReturnModel({editions:createCompanionEditionModel({parseMarkdown:parseCompanionMarkdown})});
     const key='scf-companion-reading:'+payload.workspace.id,copiesKey=key+':retained-copies';
     let browserRaw='',warning='',storedCopies=[];
     try{browserRaw=localStorage.getItem(key)||'';const raw=localStorage.getItem(copiesKey);if(raw){if(raw.length>api.maxBytes)throw new Error('The retained browser copies exceed 64 MiB.');storedCopies=JSON.parse(raw);if(!Array.isArray(storedCopies))throw new Error('Retained browser copies must remain a complete list.');}}
@@ -200,6 +286,6 @@ export function offlineCompanionReadingWorkspace(workspace,{css,coreSource,editi
     if(resolved.initial)await openCopy(0);
     else root.replaceChildren();
   })().catch(error=>{const p=document.createElement('p');p.setAttribute('role','alert');p.textContent=error.message;document.getElementById('companion-reader').append(p);});`;
-  const code=[clean(coreSource),clean(editionSource),clean(viewSource),boot].join('\n').replace(/<\/script/gi,'<\\/script');
+  const code=[clean(coreSource),clean(editionSource),clean(returnsSource),clean(viewSource),boot].join('\n').replace(/<\/script/gi,'<\\/script');
   return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SCF companion reading workspace</title><style>'+css.replace(/<\/style/gi,'<\\/style')+'</style></head><body><a class="skip-link" href="#companion-content">Skip to companion</a><div id="companion-reader"><p class="loading" role="status">Opening complete retained reading workspace…</p></div><script id="reading-source" type="application/json">'+json+'</script><script>'+code+'</script></body></html>\n';
 }
