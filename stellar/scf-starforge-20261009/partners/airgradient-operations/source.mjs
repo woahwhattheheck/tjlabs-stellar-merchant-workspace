@@ -110,7 +110,8 @@ export function privateRequest(task,connection,environment=process.env){
  if(connection.kind==='dashboard'){const token=environment[connection.binding.tokenEnv];need(typeof token==='string'&&token.length&&token.length<=4096&&!/[\r\n]/.test(token),'AIRGRADIENT_TOKEN_REQUIRED');url.searchParams.set('token',token);}return url.href;
 }
 export function normalizeCapture(raw,task,connection,window){
- const data=decodeJson(raw);
+ let data=decodeJson(raw);
+ if(task.metadataSelector){need(task.kind==='metadata'&&task.metadataSelector.kind==='catalogue-location'&&task.metadataSelector.locationId===task.locationId&&task.metadataSelector.sourceType===task.sourceType&&plain(data)&&Array.isArray(data.data),'RETAINED_METADATA_SELECTION_CHANGED');const matches=data.data.filter(v=>String(v.locationId)===task.locationId);need(matches.length===1,'RETAINED_LOCATION_ROW_REQUIRED');data=matches[0];}
  if(task.kind==='metadata'){need(plain(data)&&String(data.locationId)===task.locationId,'LOCATION_RESPONSE_CHANGED');return {metadata:{...data,sourceType:task.sourceType},series:[]};}
  let records,measurements;if(connection.kind==='map-public'){
   need(plain(data)&&Array.isArray(data.data),'MAP_HISTORY_ARRAY_REQUIRED');records=data.data;

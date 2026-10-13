@@ -19,6 +19,10 @@
     "./partners/airgradient/source": {
       "types": "./source/stellar/scf-starforge-20261009/partners/airgradient-operations/source.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/partners/airgradient-operations/source.mjs"
+    },
+    "./partners/airgradient/source-intake": {
+      "types": "./source/stellar/scf-starforge-20261009/partners/airgradient-operations/source-intake.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/partners/airgradient-operations/source-intake.mjs"
     }
   },
   "browserAssets": [
