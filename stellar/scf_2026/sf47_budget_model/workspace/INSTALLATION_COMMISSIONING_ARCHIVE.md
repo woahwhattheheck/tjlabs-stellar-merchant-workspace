@@ -61,7 +61,7 @@ starforge grant-installation-source-desk \
   --note "Original saved commissioning capture, first selected edition."
 ```
 
-Use the real original source reference and observation timestamp. The archive filename is its receiving name; it must be unique in the current selected draft. For a later edition, retain its archive under a distinct receiving name so both complete original archives survive. The original filename remains part of the upload evidence.
+Use the real original source reference and observation timestamp. The archive filename is its receiving name; it must be unique in the current selected draft. For a later edition, retain its archive under a distinct receiving name so both complete original archives survive. The selected receiving filename remains part of the immutable upload identity.
 
 Execute the saved operation exactly once:
 
