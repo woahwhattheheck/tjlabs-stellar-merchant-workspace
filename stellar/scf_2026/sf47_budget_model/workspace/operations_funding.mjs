@@ -1,3 +1,5 @@
+import {currentStaffContext,staffDeskStorageKey,assertStaffRequestActor} from './staff-session.mjs';
+import {mountEarlierStaffDesk} from './staff-desk-recovery.mjs';
 import {createFundingRequests,fundingCanonical,fundingEqual,fundingHash} from './operations_funding_requests.mjs';
 const SCHEMA='stellar-forge.sf47-cost-funding.editor.v1';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -49,10 +51,12 @@ const button=(label,action,extra='')=>'<button type="button" data-funding-action
 const pretty=v=>'<pre>'+esc(JSON.stringify(v,null,2))+'</pre>';
 const table=(headers,rows)=>'<div class="funding-scroll"><table><thead><tr>'+headers.map(v=>'<th>'+esc(v)+'</th>').join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
 
-export function mountFunding({container,current,api,saveApi=api,session={},mutationId,recordingActor,onCase,onSources}){
+export function mountFunding({container,current,api,saveApi=api,session={},mutationId,recordingActor,onCase,onSources,staffContext=currentStaffContext()}){
+  const pinnedContext=staffContext?{...staffContext}:null;
   const root=document.createElement('section');root.className='cost-funding-desk';root.setAttribute('aria-label','Cost funding');container.replaceChildren(root);
   const caseId=current.program.id,caseCreatedAt=current.program.createdAt;
-  const storageKey=SCHEMA+':'+caseId+':'+encodeURIComponent(caseCreatedAt);
+  const earlierStorageKey=SCHEMA+':'+caseId+':'+encodeURIComponent(caseCreatedAt);
+  const storageKey=staffDeskStorageKey(earlierStorageKey,pinnedContext);
   let active=true,busy=false,hostBusy=false,initialized=false,storageError='',selected=null,catalog=null,history=[],pending=[],currentCase=current,generation=0;
   const available=()=>active&&root.isConnected;
   const $=q=>root.querySelector(q);
@@ -70,6 +74,8 @@ export function mountFunding({container,current,api,saveApi=api,session={},mutat
   session.drafts ||= {};session.mode ||= 'empty';session.query ||= '';session.page ||=0;session.reportPage ||=0;
   session.requestMemory ||= {};
   const requests=createFundingRequests({caseId,caseCreatedAt,call:saveApi,memory:session.requestMemory,
+    storageNamespace:pinnedContext?.installationId?staffDeskStorageKey('sf47.funding-requests',pinnedContext):'',
+    validateActor:body=>assertStaffRequestActor(body,pinnedContext),
     available:()=>available()&&currentCase.program.id===caseId&&currentCase.program.createdAt===caseCreatedAt});
   const draft=()=>session.mode==='draft'?session.drafts[session.draftId]:null;
   const editable=()=>currentCase.program.state==='OPEN';
@@ -349,6 +355,7 @@ export function mountFunding({container,current,api,saveApi=api,session={},mutat
       check(new Set([...Object.keys(session.drafts),...Object.keys(value.drafts)]).size<=50,
         'This receiving selection would exceed 50 retained drafts. Keep the complete recovery files and select the intended original editor.');
       pending=await requests.importRecovery(value.requests);
+      if(!available())return;
       for(const [id,d]of Object.entries(value.drafts)){
         const fresh=copy(d);delete fresh.preview;delete fresh.previewSignature;session.drafts[id]??=fresh;
       }
@@ -462,6 +469,21 @@ export function mountFunding({container,current,api,saveApi=api,session={},mutat
       invalidate();render();
     });
   });
+  const earlier=mountEarlierStaffDesk({root,staffContext:pinnedContext,title:'Cost funding',
+    isBusy:()=>busy||hostBusy||!initialized,setDeskBusy:value=>{busy=value;if(value)controls();else render();},
+    readCopy:async()=>{
+      const editor=JSON.parse(localStorage.getItem(earlierStorageKey)||'null');
+      const original=createFundingRequests({caseId,caseCreatedAt,call:saveApi,available:()=>false});
+      const retained=await original.exportRecovery();
+      if(!editor&&!retained.records.length)return null;
+      if(editor)check(editor.schema===SCHEMA&&editor.caseId===caseId&&editor.caseCreatedAt===caseCreatedAt,'Choose the complete earlier funding editor for this original case.');
+      return {schema:SCHEMA+'.recovery',caseId,caseCreatedAt,drafts:copy(editor?.drafts||{}),
+        selection:{mode:editor?.mode||'empty',draftId:editor?.draftId??null,revision:editor?.revision??null},requests:retained};
+    },
+    describeCopy:value=>Object.keys(value.drafts||{}).length+' editable funding drafts · '+value.requests.records.length+' original request records',
+    filename:caseId+'-earlier-cost-funding-editor.json',
+    openCopy:async value=>{await recoveryExport();await importFile(new File([JSON.stringify(value)],'earlier-cost-funding-editor.json',{type:'application/json'}),'recovery');}
+  });
   const pagehide=()=>persist();window.addEventListener('pagehide',pagehide);
   render();
   const ready=(async()=>{
@@ -472,5 +494,5 @@ export function mountFunding({container,current,api,saveApi=api,session={},mutat
     else render();
   })().catch(error=>{if(available()){session.notice=error.message;render();}throw error;});
   return {ready,setHostBusy(value){hostBusy=Boolean(value);controls();},
-    dispose(){persist();active=false;generation++;window.removeEventListener('pagehide',pagehide);}};
+    dispose(){earlier.dispose();persist();active=false;generation++;window.removeEventListener('pagehide',pagehide);}};
 }

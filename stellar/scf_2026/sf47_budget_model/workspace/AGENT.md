@@ -488,3 +488,7 @@ The full operating receiving entrypoint is `python3 STAFF_WORKFLOW_RECEIVING.py 
 ## Recorded cohort delivery agent
 
 The nine `merchant_grant_cohort_delivery_*` tools take the original saved adoption source and frozen review through explicit identity/intent editing, complete comparison, source refresh, reviewed preparation, native save/recovery and JSON/CSV/HTML receiving. They share the existing source request owner with the adoption tools. Source refresh retains invalidated choices in complete editable input with the exact finding, so the same edit operation repairs the association. The public typed module is `@tokenjunkielabs/starforge-merchant/grant/cohort-delivery-agent`. See [the complete source selection, tool, native request and receiving workflow](COHORT-DELIVERY.md#merchant-agent-workflow).
+
+## Named financial desk continuity
+
+[FINANCIAL_DESK_RECOVERY.md](FINANCIAL_DESK_RECOVERY.md) documents the complete ten-desk workflow, in-page same-operator sign-in, original pending-action recovery, earlier browser copies, and complete Issuer Terms / Customer Billing editor receiving. The public staff session returns its native `installationId`. Context-bound clients send `X-Grant-Staff` and `X-Grant-Installation` alongside the current cookie/CSRF credentials; the original role, assigned-case and financial command rules remain authoritative. Capture these identifiers before preparing or awaiting a write, and retain the original request body and actor through renewal or response recovery.

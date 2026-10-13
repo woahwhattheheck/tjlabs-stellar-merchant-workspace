@@ -6,7 +6,7 @@ The Team workspace gives each person a sign-in identity and a defined set of ope
 
 Start the existing workspace with its normal launcher. The installation owner opens the private `open-workspace.html` link and chooses **Team workspace** in the header. The owner link opens an owner session; it does not enroll a staff profile.
 
-Before creating a contributor sign-in, open **Delivery operations**, select the case, and add that person to its existing **Contributors** records. Their staff profile refers to that original person ID. Give each staff member a separate browser profile so their private draft storage and signed-in tabs stay with that person. A person working on several cases can have a different original contributor ID in each case.
+Before creating a contributor sign-in, open **Delivery operations**, select the case, and add that person to its existing **Contributors** records. Their staff profile refers to that original person ID. Separate browser profiles keep private credentials and signed-in tabs with each person. Financial desks also retain their working copies by the original installation and staff identity; [Financial desk recovery](FINANCIAL_DESK_RECOVERY.md) explains same-operator sign-in renewal, earlier local copies and complete editor receiving. A person working on several cases can have a different original contributor ID in each case.
 
 In **Team workspace → Add staff**:
 
@@ -97,7 +97,7 @@ Existing trusted local agents can continue using the original owner bearer API. 
 
 | Request | Result |
 | --- | --- |
-| `GET /api/staff/session` | Current public principal, CSRF token and expiry; otherwise `authenticated:false`. |
+| `GET /api/staff/session` | Current public principal, installation identity, CSRF token and expiry; otherwise `authenticated:false`. |
 | `POST /api/staff/login` | Body `{staffId, accessCode}`; opens an individual cookie session. |
 | `POST /api/staff/owner-session` | Original owner bearer header and JSON object; opens an owner cookie session. |
 | `POST /api/staff/logout` | Ends the current cookie session. |
@@ -106,7 +106,7 @@ Existing trusted local agents can continue using the original owner bearer API. 
 | `POST /api/staff/members/create`, `/update`, `/rotate`, `/revoke`, `/sign-out` | Administrator profile changes with request identity and, after creation, expected profile revision. |
 | `GET /api/staff/installation/export.zip` | Complete original installation backup for the owner or administrator. |
 
-Cookie-authenticated writes require the server's exact Origin and the session's `X-CSRF-Token`. Named case commands use the enrolled actor even when the caller supplies a different actor string. Raw case receiving likewise binds the new receiving event to the enrolled operator while preserving imported historical actors.
+Cookie-authenticated writes require the server's exact Origin and the session's `X-CSRF-Token`. Context-bound named browser commands retain the enrolled actor and reject a prepared body belonging to a different actor. Existing callers without the optional context headers retain the original enrolled-actor binding. Raw case receiving likewise binds the new receiving event to the enrolled operator while preserving imported historical actors.
 
 The original work, invoice, cash, plan and delivery request formats remain documented in [AGENT.md](AGENT.md). The browser transport is in `staff-session.mjs`; access and session state are in `staff_access.py`; HTTP authorization is in `staff_http.py`. All access tables live alongside the original business tables in `planning.sqlite3`.
 
@@ -124,3 +124,7 @@ python3 STAFF_WORKFLOW_RECEIVING.py --output /absolute/private/staff-receiving -
 Set `SF47_PLAYWRIGHT_MODULE` to the installed Playwright module and `SF47_CHROMIUM` to the existing Chromium executable when their paths differ from the supplied cloud runtime. The browser driver is `staff_workflow_browser.mjs`. No runtime is downloaded by this command.
 
 A completed HTTP phase saves its private continuation context. If the browser is interrupted, continue that same case with `--resume-browser` and the same output directory; the browser reopens already-saved original work and payment references. `--skip-browser` operates the HTTP-only route when receiving that integration separately. The receiving directory contains its original operated installation, case and contributor records, browser views and the independently restored copy.
+
+## Keep a financial desk through sign-in renewal
+
+The in-page **Resume this working desk** dialog reopens the same installation and operator while the entered fields, original files and retained request stay in place. A different sign-in in another tab cannot rebind the open desk. Use each section's original resume control after signing in. The full workflow, ten financial editor formats, earlier-copy pickup, Customer Billing actions and Issuer Terms receiving are documented in [FINANCIAL_DESK_RECOVERY.md](FINANCIAL_DESK_RECOVERY.md).

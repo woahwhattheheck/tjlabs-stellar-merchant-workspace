@@ -1,5 +1,6 @@
 import { mountOperations } from './operations.mjs';
-import {readStaffSession, staffRequest, signInOwner, signOutStaff} from './staff-session.mjs';
+import {readStaffSession,staffRequest,signInOwner,signOutStaff,currentStaffContext,staffDeskStorageKey} from './staff-session.mjs';
+import {mountStaffRecovery} from './staff-recovery.mjs';
 import { mountPlanComparison } from './plan_comparison.mjs';
 import { mountPlanningSourceTables } from './source-tables.mjs';
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -14,7 +15,7 @@ const money = value => value === null || value === undefined || value === '' ? '
 const amount = value => new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(Number(value || 0));
 const label = value => String(value).replace(/_/g,' ').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/^./, character => character.toUpperCase());
 const tabs = [['overview','Overview'],['source-tables','Source tables'],['work','Work packages'],['milestones','Milestones'],['staffing','Staffing'],['payments','Payment timing'],['delivery','Delivery plan'],['history','Saved versions'],['comparison','Compare saved plans'],['operations','Delivery operations']];
-const state = {principal:null,plans:[],current:null,draft:null,tab:'overview',dirty:false,stale:false,busy:false,history:[],selectedHistory:null};
+const state = {principal:null,staffContext:null,plans:[],current:null,draft:null,tab:'overview',dirty:false,stale:false,busy:false,history:[],selectedHistory:null};
 const planReadActions=new Set(['reload','export','daily','scenario','history-view']);
 const canEditPlan=()=>state.principal?.role==='owner'||state.principal?.role==='lead';
 const canCreatePlan=()=>canEditPlan()&&state.principal.caseIds.includes('*');
@@ -25,8 +26,15 @@ const comparisonSelections = new Map();
 let sourceTablesView = null;
 function closeSourceTables() {sourceTablesView?.dispose();sourceTablesView=null;}
 function closeOperations() {operationsView?.dispose();operationsView=null;comparisonView?.dispose();comparisonView=null;}
-let requestIds = {};
-try { requestIds = JSON.parse(sessionStorage.getItem('sf47.requests') || '{}'); } catch {}
+const requestBanks=new Map();
+function requestBank(context){
+  const key=staffDeskStorageKey('sf47.requests',context);
+  if(!requestBanks.has(key)){
+    let value={};try{const saved=JSON.parse(sessionStorage.getItem(key)||'{}');if(saved&&typeof saved==='object'&&!Array.isArray(saved))value=saved;}catch{}
+    requestBanks.set(key,value);
+  }
+  return {key,ids:requestBanks.get(key)};
+}
 function inform(message, error = false) {
   const node = $('#message'); node.textContent = message; node.dataset.error = String(error); node.setAttribute('role',error?'alert':'status');
 }
@@ -44,18 +52,19 @@ function busy(value) {
   sourceTablesView?.setHostBusy(value);
 }
 async function api(path, body, options = {}) {
-  try {return await staffRequest(path,body,options);}
+  try {return await staffRequest(path,body,{...options,staffContext:options.staffContext===undefined?state.staffContext:options.staffContext});}
   catch(error) {
-    if(error.status===401) inform('Your session has ended. Sign in through Team workspace to continue.',true);
+    if(error.status===401) inform('Sign in as the original operator in the recovery dialog to continue this open desk.',true);
     throw error;
   }
 }
-async function mutationId(action, payload) {
+async function mutationId(action,payload,context=state.staffContext) {
+  const {key,ids:requestIds}=requestBank(context);
   const bytes = new TextEncoder().encode(JSON.stringify({action,payload}));
   const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)), value=>value.toString(16).padStart(2,'0')).join('');
   requestIds[hash] ||= crypto.randomUUID();
   const keys = Object.keys(requestIds); while(keys.length > 100) delete requestIds[keys.shift()];
-  try {sessionStorage.setItem('sf47.requests',JSON.stringify(requestIds));} catch {}
+  try {sessionStorage.setItem(key,JSON.stringify(requestIds));} catch {}
   return requestIds[hash];
 }
 function field(title, path, value, options = {}) {
@@ -240,7 +249,7 @@ function render(focus = false) {
   $('#sections').innerHTML=tabs.filter(([id])=>canEditPlan()||id!=='source-tables').map(([id,title])=>'<button type="button" data-tab="'+id+'"'+(state.tab===id?' aria-current="page"':'')+'>'+title+'</button>').join('');
   $('.savebar').hidden=!canEditPlan()||state.tab==='operations'||state.tab==='comparison';
   if(state.tab==='operations') {
-    const mounted=mountOperations({container:$('#main-panel'),api,plan:state.current,inform,mutationId,principal:state.principal});
+    const mounted=mountOperations({container:$('#main-panel'),api,plan:state.current,inform,mutationId,principal:state.principal,staffContext:state.staffContext});
     operationsView=mounted;mounted.setHostBusy(state.busy);
     mounted.ready.catch(error=>{if(operationsView===mounted&&mounted.root.isConnected)inform(error.message,true);});
   } else if(state.tab==='source-tables') {
@@ -397,7 +406,7 @@ $('#import-file').addEventListener('change',event=>{
 async function openSession() {
   const session=await readStaffSession();
   if(!session.authenticated){showSignIn();return;}
-  state.principal=session.principal;
+  state.principal=session.principal;state.staffContext=currentStaffContext();
   if(state.principal.role==='contributor'){location.replace('/team');return;}
   state.plans=(await api('/api/plans')).plans;
   $('#staff-identity').textContent=state.principal.displayName+' · '+label(state.principal.role);
@@ -412,7 +421,7 @@ async function openSession() {
 }
 function showSignIn() {
   closeOperations();closeSourceTables();
-  state.principal=null;state.current=null;state.draft=null;state.plans=[];state.history=[];
+  state.principal=null;state.staffContext=null;state.current=null;state.draft=null;state.plans=[];state.history=[];
   state.selectedHistory=null;state.dirty=false;state.stale=false;
   $('#main-panel').replaceChildren();$('#plan-select').replaceChildren();$('#sections').replaceChildren();
   $('#workbench').hidden=true;$('#sign-out').hidden=true;$('#access-panel').hidden=false;
@@ -427,10 +436,14 @@ $('#access-form').addEventListener('submit',event=>{
   run(()=>openAccess(token));
 });
 $('#sign-out').addEventListener('click',()=>run(async()=>{
-  if(state.dirty&&!confirm('Sign out and discard this unsaved draft?'))return;
+  if((state.dirty||operationsView?.hasOpenForm())&&!confirm('Sign out and close this unsaved form? Keep the desk open to finish it first.'))return;
   await signOutStaff();showSignIn();inform('Signed out. Saved work is available when you sign in again.');
 }));
-window.addEventListener('beforeunload',event=>{if(state.dirty){event.preventDefault();event.returnValue='';}});
+window.addEventListener('beforeunload',event=>{if(state.dirty||operationsView?.hasOpenForm()){event.preventDefault();event.returnValue='';}});
+mountStaffRecovery({getContext:()=>state.staffContext,inform,onRestored:session=>{
+  state.principal=session.principal;state.staffContext=currentStaffContext();
+  $('#staff-identity').textContent=state.principal.displayName+' · '+label(state.principal.role);
+}});
 const fragment=new URLSearchParams(location.hash.slice(1));
 let supplied=fragment.get('access');
 if(supplied)window.history.replaceState(null,'',location.pathname+location.search);
