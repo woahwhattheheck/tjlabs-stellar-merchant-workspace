@@ -1,5 +1,7 @@
 import { GRANT_AGENT_SCHEMA, GRANT_MAX_BUNDLE_BYTES, GRANT_MAX_SOURCE_BYTES, GRANT_CASE_ACTIONS } from './agent-contracts.mjs';
-export { GRANT_AGENT_SCHEMA, GRANT_MAX_BUNDLE_BYTES, GRANT_MAX_SOURCE_BYTES, GRANT_CASE_ACTIONS } from './agent-contracts.mjs';
+import {performGrantPlanningSourceOperation} from './source-tables-agent.mjs';
+export {grantPlanningSourceProfiles,GRANT_PLANNING_SOURCE_SCHEMA,GRANT_PLANNING_SOURCE_ACTIONS} from './source-tables-agent.mjs';
+export { GRANT_AGENT_SCHEMA, GRANT_MAX_BUNDLE_BYTES, GRANT_MAX_SOURCE_BYTES, GRANT_MAX_WORKBOOK_HANDOVER_BYTES, GRANT_CASE_ACTIONS } from './agent-contracts.mjs';
 // MIT. Typed agent access to the original SF47 planning and delivery service.
 // This client owns no planning database, business records or financial model.
 import { constants } from 'node:fs';
@@ -680,6 +682,18 @@ export class GrantWorkspaceClient {
     need(Object.hasOwn(routes, view), 'GRANT_INVALID_VIEW', 'Choose a declared native grant view.');
     return this.#request(routes[view](), {});
   }
+  workbook(action, body) {
+    need(['inspect','project'].includes(action),'GRANT_WORKBOOK_ACTION','Choose original workbook inspection or projection.');
+    exact(body, action === 'inspect' ? ['source','preview','headerRow'] : ['source','mapping'],
+      action === 'inspect' ? ['source'] : ['source','mapping']);
+    object(body.source,'Original workbook source');
+    if (body.preview !== undefined) object(body.preview,'Original worksheet selection');
+    if (body.mapping !== undefined) object(body.mapping,'Original workbook mapping');
+    return this.#request('/api/source-tables/workbook/' + action,{body,mutation:false});
+  }
+  planningSources(action, body) {
+    return this.#admit(() => performGrantPlanningSourceOperation(this,action,body));
+  }
   plan(action, planId, body) {
     id(planId, 'plan');
     const common = ['expectedRevision', 'scenarioPatch', 'planning'];
@@ -1303,7 +1317,8 @@ export class GrantWorkspaceClient {
   download(kind, args) {
     object(args);
     const routes = {
-      plan:() => '/api/plans/' + id(args.planId, 'plan') + '/export.zip',
+      plan:() => '/api/plans/' + id(args.planId, 'plan') + '/export.zip' +
+        (args.revision === undefined ? '' : '?revision=' + integer(args.revision,'Selected plan revision',1,1000000)),
       'plan-comparison':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/export.zip' + planComparisonQuery(args,true),
       'plan-comparison-report':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/report.html' + planComparisonQuery(args,true),
       'plan-comparison-changes':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/changes.csv' + planComparisonQuery(args,true),
