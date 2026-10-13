@@ -7,6 +7,7 @@ their operations and retains the exact inputs and resumable request identities.
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import base64
 import csv
 import hashlib
@@ -258,11 +259,12 @@ ORDER BY g.source_id,g.country_iso3,g.period"""
 
 
 class WorldBankAnalysis:
-    def __init__(self, workspace, *, operation_id, progress=None):
+    def __init__(self, workspace, *, operation_id, progress=None, active_workspace=None):
         require(re.fullmatch(r"[a-f0-9]{32}", operation_id) is not None,
                 "Use a stable 32-character lowercase hexadecimal operation ID.")
         self.workspace = private_directory(Path(workspace).expanduser().absolute(), create=True)
         self.operation_id = operation_id
+        self.active_workspace = active_workspace
         self.directory = private_directory(
             self.workspace / "worldbank-analysis" / operation_id, create=True)
         self.progress = progress or (lambda value: None)
@@ -273,6 +275,20 @@ class WorldBankAnalysis:
         require(self.record.get("schema") == SCHEMA and
                 self.record.get("operation_id") == operation_id,
                 "Continue the original World Bank Analysis operation.")
+
+    @contextmanager
+    def _workspace_session(self):
+        if self.active_workspace is not None:
+            workspace = self.active_workspace
+            require(workspace.database.directory == self.workspace and not workspace._closed,
+                    "Continue the same live Analysis workspace owner.")
+            yield workspace
+        else:
+            workspace = AnalysisWorkspace(self.workspace)
+            try:
+                yield workspace
+            finally:
+                workspace.close()
 
     def save(self):
         write(self.directory / "operation.json", encoded(self.record))
@@ -358,6 +374,8 @@ class WorldBankAnalysis:
             "transform_sha256": sha(inspect.getsource(typed_rows).encode()),
         }
         write(self.directory / "intent.json", encoded(intent), exact=True)
+        self._source_file = core.parent / "source.py"
+        self._source_sha256 = intent["source_engine"]["source_sha256"]
         ready = self.completed()
         if ready:
             self.emit("COMPLETE", rows=ready["source"]["observations"], reused=True)
@@ -452,12 +470,9 @@ class WorldBankAnalysis:
             "dataset_csv_sha256": sha(regenerated), "typed_source_sha256": sha(projection),
         }
         self.save()
-        workspace = AnalysisWorkspace(self.workspace)
-        try:
+        with self._workspace_session() as workspace:
             return self._prepare_analysis(workspace, document, name, source, review,
                 rows, columns, selected_recipes, max_rows, resume=resume)
-        finally:
-            workspace.close()
 
 
     def _prepare_analysis(self, workspace, document, name, source, review,

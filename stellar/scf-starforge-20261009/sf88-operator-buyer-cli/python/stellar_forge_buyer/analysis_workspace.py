@@ -43,6 +43,8 @@ from .analysis_synthesis import AnalysisSynthesis
 from . import synthesis_http
 from .analysis_lineage import AnalysisLineage
 from . import lineage_http
+from . import worldbank_programmes_http
+from . import worldbank_intake_http
 from .errors import BuyerError, StateError
 from .sqlite_dataset import DatasetDatabase
 from .query_stream import reviewed_view_selection
@@ -131,7 +133,7 @@ class AnalysisWorkspace:
     their imports and activations. Source registration is an operator action.
     """
 
-    def __init__(self, directory, *, checkout=None, node="node", research_connections=None, lineage_connections=None):
+    def __init__(self, directory, *, checkout=None, node="node", research_connections=None, lineage_connections=None, worldbank_core=None):
         self.database = DatasetDatabase(directory)
         self.checkout = str(Path(checkout).expanduser().resolve()) if checkout else None
         self.node = node
@@ -178,11 +180,28 @@ class AnalysisWorkspace:
             self.archives.recover_completed()
             self.lineage = AnalysisLineage(self, connections=lineage_connections)
             self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="dataset-analysis")
+            # Lazy import preserves the original WorldBankAnalysis -> workspace join.
+            from .worldbank_programmes import WorldBankProgrammes
+            self.worldbank_programmes = WorldBankProgrammes(self, core=worldbank_core)
+            from .worldbank_intake import WorldBankIntake
+            self.worldbank_intake = WorldBankIntake(self, core=self.worldbank_programmes.core)
         except BaseException:
-            os.close(self._owner)
+            try:
+                if hasattr(self, "worldbank_intake"):
+                    self.worldbank_intake.close()
+                if hasattr(self, "worldbank_programmes"):
+                    self.worldbank_programmes.close()
+                if hasattr(self, "_executor"):
+                    self._executor.shutdown(wait=True)
+            finally:
+                os.close(self._owner)
             raise
 
     def close(self):
+        # The original recurring coordinator may still sequence Analysis jobs.
+        # Drain it before marking this workspace closed, without its job mutex.
+        self.worldbank_intake.close()
+        self.worldbank_programmes.close()
         with self._mutex:
             if self._closed:
                 return
@@ -668,6 +687,7 @@ def serve(workspace, *, port=0):
             if url.scheme or url.netloc or url.fragment:
                 return self._reply(400, {"error": "ANALYSIS_ROUTE_INVALID"})
             assets = {"/": (_analysis_ui.HTML, "text/html;charset=utf-8"), "/app.js": (_analysis_ui.JS, "text/javascript;charset=utf-8"), "/style.css": (_analysis_ui.CSS, "text/css;charset=utf-8")}
+            assets.update(worldbank_intake_http.assets())
             assets.update(synthesis_http.assets())
             assets.update(lineage_http.assets())
             assets.update({"/profiles": (_analysis_profiles_ui.HTML, "text/html;charset=utf-8"),
@@ -686,6 +706,10 @@ def serve(workspace, *, port=0):
             if synthesis_http.get(self, workspace, url, query, parts):
                 return
             if lineage_http.get(self, workspace, url, query, parts):
+                return
+            if worldbank_intake_http.get(self, workspace, url, query, parts):
+                return
+            if worldbank_programmes_http.get(self, workspace, url, query, parts):
                 return
             if (self.command in {"GET", "HEAD"} and len(parts) == 4
                     and parts[:2] == ["api", "workbook-runs"] and parts[3] == "file"):
@@ -851,6 +875,10 @@ def serve(workspace, *, port=0):
                     return
                 if lineage_http.post(self, workspace, url, parts, body):
                     return
+                if worldbank_intake_http.post(self, workspace, url, parts, body):
+                    return
+                if worldbank_programmes_http.post(self, workspace, url, parts, body):
+                    return
                 if url.path in {"/api/research-dossiers", "/api/research-sources", "/api/research-review", "/api/research-elements"}:
                     return self._reply(200, workspace.research.read(url.path.removeprefix("/api/research-"), body))
                 if len(parts) == 4 and parts[:2] == ["api", "research-captures"] and parts[3] == "cancel":
@@ -937,6 +965,7 @@ def main():
     parser.add_argument("--database", required=True, help="Original private DatasetDatabase directory")
     parser.add_argument("--checkout", help="Matching full native Stellar Forge checkout/runtime, required for imports")
     parser.add_argument("--node", default="node")
+    parser.add_argument("--worldbank-core", help="Original installed World Bank core.py; browser requests select retained sources only")
     parser.add_argument("--research-connections", help="Private named original Research connections; browser requests select aliases only")
     parser.add_argument("--lineage-connections", help="Named original OpenLineage startup/token files; browser requests select aliases only")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -986,7 +1015,7 @@ def main():
         return
     workspace = AnalysisWorkspace(args.database, checkout=args.checkout, node=args.node,
                                   research_connections=args.research_connections,
-                                  lineage_connections=args.lineage_connections)
+                                  lineage_connections=args.lineage_connections, worldbank_core=args.worldbank_core)
     try:
         if args.command == "research-read":
             request = parse(read(Path(args.request).expanduser().absolute(), _MAX_BODY)) if args.request else {}
