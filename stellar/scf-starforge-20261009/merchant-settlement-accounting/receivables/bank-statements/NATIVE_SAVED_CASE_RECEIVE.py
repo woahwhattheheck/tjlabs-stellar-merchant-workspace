@@ -360,6 +360,36 @@ def evidence_time():
   try:parsed.append(datetime.fromisoformat(value.replace("Z","+00:00")))
   except (ValueError,AttributeError):pass
  return max(parsed,default=datetime.min.replace(tzinfo=timezone.utc))
+def reconcile_selected_completeness(pointer,manifest):
+ # Retain every selected original byte before a later observation can supersede its intent.
+ recover_checkpoint_objects(manifest)
+ before=(CASE/"accounting/workspace.json").read_bytes();check_state(json.loads(before))
+ changed=[];filled=[];retained=CHECKPOINTS/"receiving-predecessors"
+ for name in sorted(set(manifest["directories"]),key=lambda value:(value.count("/"),value)):
+  path=CASE/safe_name(name)
+  if path.exists() and (path.is_symlink() or not path.is_dir()):raise RuntimeError("Selected original directory differs: "+name)
+  path.mkdir(parents=True,exist_ok=True,mode=0o700)
+ for file in manifest["files"]:
+  path=CASE/safe_name(file["path"])
+  for parent in [path,*path.parents]:
+   if parent.exists() and parent.is_symlink():raise RuntimeError("Selected original file must use real parents")
+  if not path.exists():
+   with (CHECKPOINTS/"objects"/file["sha256"]).open("rb") as stream:receive_stream(path,stream,file["bytes"],file["sha256"])
+   filled.append(file)
+  else:
+   metadata=regular(path);observed=digest(path)
+   if metadata.st_size!=file["bytes"] or observed!=file["sha256"]:
+    # Keep the later actual file in place and retain its exact bytes independently.
+    with path.open("rb") as stream:receive_stream(retained/observed,stream,metadata.st_size,observed)
+    changed.append({"path":file["path"],"selectedSha256":file["sha256"],"actualBytes":metadata.st_size,"actualSha256":observed})
+ for file in manifest["files"]:
+  path=CASE/file["path"]
+  if not path.is_file() or path.is_symlink():raise RuntimeError("Selected original file is still absent: "+file["path"])
+  if file in filled and (regular(path).st_size!=file["bytes"] or digest(path)!=file["sha256"]):raise RuntimeError("Original missing-file receiving differs")
+ if (CASE/"accounting/workspace.json").read_bytes()!=before:raise RuntimeError("Original workspace changed during completeness reconciliation")
+ result={"operation":OPERATION,"selectedManifestSha256":pointer["sha256"],"selectedRevision":manifest["revision"],"filledOriginalFiles":filled,"retainedLaterFiles":changed,"receivedAt":stamp()}
+ json_write(RECEIVING/"selected-checkpoint-completeness.json",result)
+ return result
 def reconcile_actual_checkpoint(actual):
  choices=[row for row in (read_pointer("CURRENT.json"),read_pointer("CANDIDATE.json")) if row]
  if not choices:return actual
@@ -377,9 +407,10 @@ def reconcile_actual_checkpoint(actual):
   if evidence_time()<=retained_at:
    selected=select_checkpoint();restore_checkpoint(*selected)
    return check_state(json.loads((CASE/"accounting/workspace.json").read_bytes()))
- # The surviving actual writer/evidence is later; retain its complete state before replacing an older candidate.
+ # A later timestamp does not prove completeness. Preserve the selected full set first.
+ completeness=reconcile_selected_completeness(pointer,manifest)
  completed=retain_stopped_case()
- json_write(RECEIVING/"checkpoint-reconciliation.json",{"operation":OPERATION,"selectedManifestSha256":pointer["sha256"],"selectedRevision":manifest["revision"],"selectedInventorySha256":planned_sha,"actualRevision":actual["revision"],"actualInventorySha256":observed_sha,"receivedActualManifestSha256":completed["sha256"],"selection":"LATER_SURVIVING_ORIGINAL_CASE"})
+ json_write(RECEIVING/"checkpoint-reconciliation.json",{"operation":OPERATION,"selectedManifestSha256":pointer["sha256"],"selectedRevision":manifest["revision"],"selectedInventorySha256":planned_sha,"actualRevision":actual["revision"],"actualInventorySha256":observed_sha,"receivedActualManifestSha256":completed["sha256"],"selection":"LATER_SURVIVING_ORIGINAL_CASE","selectedCompleteness":completeness})
  return actual
 def verify_delivery_archive(path,expected=None):
  regular(path);names=set();manifest=None;observed={}
@@ -420,14 +451,11 @@ def existing_complete_delivery(manifest):
  verify_delivery_archive(directory/"SCF_Bank_Complete_Operating_Case.tgz",identity)
  return {"attempt":previous,"identity":identity,"saveResult":result}
 def active_original_group(process):
- active=[]
- for path in pathlib.Path("/proc").glob("[0-9]*/stat"):
-  try:
-   value=path.read_text();tail=value[value.rfind(")")+2:].split()
-   if int(tail[2])==process.pid and int(tail[3])==process.pid and tail[0]!="Z":
-    active.append({"pid":int(path.parent.name),"state":tail[0],"startTime":tail[19]})
-  except (OSError,ValueError,IndexError):continue
- return active
+ # Popen.pid and killpg both use this process's PID namespace. /proc may use a different one.
+ try:os.killpg(process.pid,0)
+ except ProcessLookupError:return False
+ except PermissionError as error:raise RuntimeError("The original process group remains present but its ownership cannot be verified") from error
+ return True
 def quiesce_original_writer(process,attempt):
  if process is None:return
  if process.poll() is None:
@@ -438,23 +466,23 @@ def quiesce_original_writer(process,attempt):
    emit({"phase":"original_writer_stop_continuing",**attempt["stopFailure"]})
    try:json_write(RECEIVING/"native-attempt.json",attempt)
    except OSError as error:emit({"phase":"stop_observation_record_error","errno":error.errno})
- remaining=active_original_group(process)
- if remaining:
-  # This process group was created for this one original financial writer and its CLI.
+ if active_original_group(process):
+  # start_new_session=True created this group in the same namespace as Popen.pid.
   try:os.killpg(process.pid,signal.SIGTERM)
   except ProcessLookupError:pass
   until=time.monotonic()+10
-  while remaining and time.monotonic()<until:
-   time.sleep(0.25);remaining=active_original_group(process)
-  if remaining:
-   emit({"phase":"stopping_original_writer_group","group":process.pid,"processes":remaining})
+  while active_original_group(process) and time.monotonic()<until:
+   process.poll();time.sleep(0.25)
+  if active_original_group(process):
+   emit({"phase":"stopping_original_writer_group","namespaceGroup":process.pid})
    try:os.killpg(process.pid,signal.SIGKILL)
    except ProcessLookupError:pass
   while active_original_group(process):
-   # Keep the same guard and producer alive; a live writer is never snapshotted as stopped.
-   time.sleep(0.5)
+   # Reap the original child and retain the guard until the kernel reports ESRCH for its group.
+   process.poll();time.sleep(0.5)
  process.wait()
  attempt["writerStoppedAt"]=stamp()
+ attempt["writerStopProof"]={"namespaceGroup":process.pid,"proof":"killpg-ESRCH","parentReaped":True}
 def gallery(browser):
  rows=[]
  for screen in browser.get("screenshots",[]):
