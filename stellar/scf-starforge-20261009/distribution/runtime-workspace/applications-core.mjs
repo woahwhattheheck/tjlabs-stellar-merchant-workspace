@@ -132,16 +132,33 @@ async function application(root, id) {
 async function runCancellation(root, appId, id) {
   return readJSON(join(directoryFor(root, appId), 'runs', operationId(id) + '.cancel.json'), true);
 }
-async function operationView(root, id) {
+async function operationView(root, id, observations = null) {
   const directory = operationPath(root, id);
   const request = await readJSON(join(directory, 'request.json'), true);
   const state = await readJSON(join(directory, 'state.json'), true);
-  const active = Boolean(state) && await operationRunning(join(directory, 'worker.lock'));
+  let active, observation = null;
+  if (observations) {
+    const observed = observations.get(id);
+    if (state?.phase !== 'RUNNING') {
+      active = false;
+      observation = { status: 'CURRENT', source: 'RETAINED', checkedAt: now() };
+    } else if (observed?.phase === state.phase && observed.updatedAt === state.updatedAt) {
+      active = observed.workerActive === true || observed.commandActive === true ? true :
+        observed.workerActive === null || observed.commandActive === null ? null : false;
+      observation = observed.observation;
+    } else {
+      active = null;
+      observation = { status: 'UNAVAILABLE', source: 'RECORD', checkedAt: now(),
+        error: { code: 'RUNTIME_WORKSPACE_OBSERVATION_CHANGED',
+          message: 'The original operation changed during this refresh. Refresh its current status.' } };
+    }
+  } else active = Boolean(state) && await operationRunning(join(directory, 'worker.lock'));
   const result = await readJSON(join(directory, 'command-result.json'), true);
   const stop = await readJSON(join(directory, 'stop.json'), true);
   const url = await readJSON(join(directory, 'application-url.json'), true);
-  return { id, request, state, result, active, stop,
-    phase: !request ? 'PENDING' : !state ? 'QUEUED' : state.phase === 'RUNNING' && !active ? 'INTERRUPTED' : state.phase,
+  return { id, request, state, result, active, stop, ...(observation ? { observation } : {}),
+    phase: !request ? 'PENDING' : !state ? 'QUEUED' : state.phase === 'RUNNING' && active !== true
+      ? active === null ? 'OBSERVATION_UNAVAILABLE' : 'INTERRUPTED' : state.phase,
     url: url?.operationId === id ? url : null };
 }
 async function runs(root, id) {
@@ -161,12 +178,12 @@ async function busyApplication(root, id) {
   }
   return null;
 }
-async function selectedRelease(root, saved, homes = null) {
+async function selectedRelease(root, saved, homes = null, observations = null) {
   // This map belongs to one overview request, never to a lifecycle action.
   if (homes && !homes.has(saved.homeId)) homes.set(saved.homeId, managedHome(root, saved.homeId));
   const [home, adoption] = await Promise.all([
     homes ? homes.get(saved.homeId) : managedHome(root, saved.homeId),
-    saved.adoption ? operationView(root, saved.adoption.requestId) : null,
+    saved.adoption ? operationView(root, saved.adoption.requestId, observations) : null,
   ]);
   // The installer publishes release metadata before attaching the original
   // runtime. Keep the original connection recoverable until that operation
@@ -176,23 +193,23 @@ async function selectedRelease(root, saved, homes = null) {
       bindingKeys.every(key => item.runtime[key] === saved.runtime[key])) : null;
   return { home, release, adoption };
 }
-async function runViews(root, applicationId, history) {
+async function runViews(root, applicationId, history, observations = null) {
   return Promise.all(history.map(async run => {
     const cancelled = await runCancellation(root, applicationId, run.id);
-    const observed = cancelled ? { id: run.id, phase: 'CANCELLED', active: false, result: cancelled } : await operationView(root, run.id);
+    const observed = cancelled ? { id: run.id, phase: 'CANCELLED', active: false, result: cancelled } : await operationView(root, run.id, observations);
     return { id: run.id, createdAt: run.createdAt, revision: run.revision, command: run.request.command,
       args: run.request.args, terminal: run.request.terminal === true,
       applicationProvider: run.request.applicationProvider ?? null, ...observed,
-      request: undefined, privateUrl: observed.active && !observed.stop ? observed.url?.url ?? null : null,
-      privateLinks: observed.active && !observed.stop && Array.isArray(observed.url?.links) ? observed.url.links : [] };
+      request: undefined, privateUrl: observed.active !== false && !observed.stop ? observed.url?.url ?? null : null,
+      privateLinks: observed.active !== false && !observed.stop && Array.isArray(observed.url?.links) ? observed.url.links : [] };
   }));
 }
-async function view(root, saved, { homes = null, historyLimit = 30 } = {}) {
+async function view(root, saved, { homes = null, historyLimit = 30, observations = null } = {}) {
   const [{ home, release, adoption: connection }, page] = await Promise.all([
-    selectedRelease(root, saved, homes),
+    selectedRelease(root, saved, homes, observations),
     applicationRunPage(root, { applicationId: saved.id, limit: historyLimit }),
   ]);
-  const rows = await runViews(root, saved.id, page.runs);
+  const rows = await runViews(root, saved.id, page.runs, observations);
   const current = rows[0] ?? null;
   const adoption = release ? null : connection;
   const phase = !release ? 'CONNECTING' : !current ? 'READY' :
@@ -204,13 +221,13 @@ async function view(root, saved, { homes = null, historyLimit = 30 } = {}) {
     adoption, current, runs: rows, totalRuns: page.totalRuns,
     history: { limit: page.limit, nextCursor: page.nextCursor } };
 }
-export async function applicationsState(root, { historyLimit = 30 } = {}) {
+export async function applicationsState(root, { historyLimit = 30 } = {}, observations = null) {
   historyLimit = applicationHistoryLimit(historyLimit);
   await initializeApplications(root);
   const names = (await readdir(join(root, 'applications'))).filter(name => /^[a-f0-9]{24}$/.test(name));
   const homes = new Map();
   const items = await Promise.all(names.map(async id => {
-    try { return await view(root, await application(root, id), { homes, historyLimit }); }
+    try { return await view(root, await application(root, id), { homes, historyLimit, observations }); }
     catch (error) { return { id, label: id, phase: 'UNAVAILABLE', error: errorView(error) }; }
   }));
   items.sort((a, b) => String(a.label).localeCompare(String(b.label)) || a.id.localeCompare(b.id));
@@ -222,11 +239,11 @@ export async function applicationsState(root, { historyLimit = 30 } = {}) {
     providers: providers?.sources ?? [], unavailableProviders: providers?.unavailable ?? [],
     catalogError, applications: items };
 }
-export async function applicationsHistory(root, input = {}) {
+export async function applicationsHistory(root, input = {}, observations = null) {
   await application(root, recordId(input.applicationId));
   const page = await applicationRunPage(root, input);
   return { schema: 'stellar-forge.application-history.v1', ...page,
-    runs: await runViews(root, input.applicationId, page.runs) };
+    runs: await runViews(root, input.applicationId, page.runs, observations) };
 }
 export async function reviewApplication(root, { runtimeId, runtimeDirectory, kind, settings: input,
   label, applicationId = null, expectedRevision = null, homeId = null, providerId = null } = {}) {
@@ -440,18 +457,22 @@ export async function applicationOperation(root, { applicationId, operationId: i
   need(saved.applicationId === applicationId && saved.id === id, 'APPLICATION_OPERATION_CHANGED');
   return saved.request;
 }
-export async function applicationRunState(root, { applicationId, operationId: id } = {}) {
+export async function applicationRunState(root, { applicationId, operationId: id } = {}, observations = null) {
   const saved = await readJSON(join(directoryFor(root, applicationId), 'runs', operationId(id) + '.json'), true);
   if (!saved) return null;
   need(saved.schema === 'stellar-forge.application-run.v1' && saved.applicationId === applicationId && saved.id === id,
     'APPLICATION_OPERATION_CHANGED');
-  return (await runViews(root, applicationId, [saved]))[0];
+  return (await runViews(root, applicationId, [saved], observations))[0];
 }
-export async function applicationOutput(root, { applicationId, operationId: id } = {}) {
+export async function applicationOutput(root, { applicationId, operationId: id } = {}, observations = null) {
   await applicationOperation(root, { applicationId, operationId: id });
-  const value = await operationView(root, id);
-  let output = { text: '', totalBytes: 0, offset: 0 };
-  try { output = await tailFile(join(operationPath(root, id), 'worker.log')); } catch (error) { if (error.code !== 'ENOENT') throw error; }
-  return { operationId: id, phase: value.phase, active: value.active, result: value.result, output };
+  const value = await operationView(root, id, observations);
+  let output;
+  try { output = { available: true, ...await tailFile(join(operationPath(root, id), 'worker.log')) }; }
+  catch (error) {
+    output = { available: false, state: error.code === 'ENOENT' ? 'NOT_CREATED' : 'UNAVAILABLE',
+      text: '', totalBytes: 0, offset: 0, error: errorView(error) };
+  }
+  return { operationId: id, phase: value.phase, active: value.active, observation: value.observation, result: value.result, output };
 }
 export { readApplicationTerminal, sendApplicationTerminal };
