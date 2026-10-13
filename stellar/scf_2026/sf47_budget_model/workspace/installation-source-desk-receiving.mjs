@@ -9,6 +9,7 @@ import {dirname,basename,resolve,isAbsolute,relative,sep} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {bindingTemplate,prepareInstallation,renderWorkorder} from '../../sf49_data_commissioning/installation-workorders/prepare-core.mjs';
 import {composeCustomerProgramme,programmeFiles} from '../../sf49_data_commissioning/installation-workorders/customer-programme-core.mjs';
+import {receiveCustomerEditions,verifyCustomerEditions} from './installation-source-editions-receiving.mjs';
 
 const SCHEMA='stellar-forge.installation-source-desk-receiving.v1';
 const DESK_SCHEMA='stellar-forge.installation-source-desk.v1';
@@ -206,9 +207,10 @@ class BrowserReceiving{
       record.responses??=[];if(!record.responses.some(x=>x.path===responsePath))record.responses.push({path:responsePath,status:response.status(),sha256:sha(raw),bytes:raw.length});
       if(response.ok()){record.state='RECORDED';record.result=value;record.resultSha256=sha(Buffer.from(stable(value)));}
       else{record.state='REJECTED';record.error=value;}
-      const withhold=body.action==='selection.save'&&this.report.fault?.state==='ARMED';
-      if(withhold){need(response.ok(),'The original selection must commit before its response is deliberately interrupted.');
-        this.report.fault={...this.report.fault,state:'RESPONSE_WITHHELD',requestId:body.requestId,responsePath};}
+      const faultKey=body.action==='selection.save'?'fault':body.action==='edition.apply'?'editionFault':null;
+      const withhold=faultKey&&this.report[faultKey]?.state==='ARMED';
+      if(withhold){need(response.ok(),'The original selected request must commit before its response is deliberately interrupted.');
+        this.report[faultKey]={...this.report[faultKey],state:'RESPONSE_WITHHELD',requestId:body.requestId,responsePath};}
       await this.save();
       if(withhold)await route.abort('failed');else await route.fulfill({response,body:raw});
     }finally{await response.dispose();}
@@ -297,15 +299,161 @@ class BrowserReceiving{
   async tab(name){await this.click('tab','[data-tab="'+name+'"]');}
   async field(name,value){const node=this.page.locator('[data-source-field="'+name+'"]');
     if(await node.evaluate(el=>el.tagName)==='SELECT')await node.selectOption(String(value??''));else await node.fill(String(value??''));}
+  async adoptPendingSourceRequest(active,{legacy=false}={}){
+    if(active.pendingId&&this.report.requests[active.pendingId])return;
+    const planPin=this.report.customerEditions?.plan;
+    if(!active.pendingId&&(legacy||!planPin||!this.report.phases['11-explicit-successor-and-unfinished-working-reopen']))return;
+    const wanted=!this.report.phases['12-original-edition-apply-and-request-recovery']?
+      {action:'edition.apply',revision:planPin?.target.revision}:
+      !this.report.phases['13-successor-native-preparation-and-complete-downloads']?
+        {action:'prepare',revision:this.report.customerEditions?.transition?.draftRevision}:null;
+    if(!active.pendingId&&!wanted)return;
+    need(active.draftId===this.report.browserDraftId&&active.scope?.caseId===this.input.caseId&&
+      active.scope.planId===this.input.planId,'Keep an unobserved request in this original source draft and case.');
+    const original=await this.page.evaluate(async selected=>{
+      const staff=await import('/staff-session.mjs'),context=staff.currentStaffContext();
+      const base=selected.scope.caseId+':'+selected.scope.planId+':'+selected.scope.createdAt;
+      const key=selected.legacy?base:staff.staffDeskStorageKey(base,context);
+      return new Promise((resolveResult,reject)=>{
+        let failed=false;const fail=error=>{failed=true;reject(error);};
+        const opening=indexedDB.open('sf47.installation-source-desk',1);
+        opening.onupgradeneeded=()=>{opening.transaction.abort();fail(new Error('Keep the original private source journal.'));};
+        opening.onerror=()=>fail(opening.error||new Error('The original source journal could not reopen.'));
+        opening.onblocked=()=>fail(new Error('The original source journal is busy.'));
+        opening.onsuccess=()=>{
+          const db=opening.result;if(failed){db.close();return;}let copy=null,request=null,problem=null;const candidates=[];
+          const tx=db.transaction('records','readonly'),store=tx.objectStore('records');
+          const a=store.get(key+':'+(selected.legacy?'working':'copy:'+selected.copyId));
+          const prefix=key+':request:';
+          const b=selected.pendingId?store.get(prefix+selected.pendingId):
+            store.openCursor(IDBKeyRange.bound(prefix,prefix+'\uffff'));
+          a.onsuccess=()=>{copy=a.result;};
+          b.onsuccess=()=>{if(selected.pendingId)request=b.result;else{
+            const cursor=b.result;if(cursor){candidates.push(cursor.value);cursor.continue();}
+          }};
+          for(const read of [a,b])read.onerror=()=>{problem=read.error;tx.abort();};
+          tx.oncomplete=()=>{db.close();resolveResult({journalKey:key,staffContext:context,copy,request,candidates});};
+          tx.onabort=()=>{db.close();reject(problem||tx.error||new Error('The complete original request read failed.'));};
+          tx.onerror=()=>{};
+        };
+      });
+    },{...active,legacy});
+    const copy=original.copy,state=legacy?copy:copy?.state,orphan=!active.pendingId;
+    if(orphan){
+      const candidates=original.candidates.filter(value=>value?.schema===DESK_SCHEMA&&
+        value.caseId===this.input.caseId&&value.draftId===active.draftId&&value.body?.actor===this.input.actor&&
+        value.body.action===wanted.action&&value.body.expectedRevision===wanted.revision&&value.state!=='REJECTED'&&
+        !(copy?.requests||[]).some(saved=>saved.body?.requestId===value.body.requestId&&
+          same(saved.body,value.body)&&saved.requestSha256===value.requestSha256&&saved.receipt));
+      need(candidates.length<=1,'Preserve the ambiguous original journal requests without selecting a replacement UUID.');
+      if(!candidates.length)return;
+      original.request=candidates[0];
+    }
+    const request=original.request,body=request?.body,pendingId=orphan?body?.requestId:active.pendingId;
+    need(copy?.schema===DESK_SCHEMA&&same(copy.scope,active.scope)&&
+      state?.draftId===active.draftId&&(orphan?!state.pendingId:state.pendingId===active.pendingId)&&
+      (legacy||copy.workingCopySchema==='stellar-forge.installation-source-working-copy.v1'&&
+        copy.copyId===active.copyId&&copy.sourceDraftId===active.draftId),
+      'The private retained copy differs from the actual original pending editor.');
+    need(request?.schema===DESK_SCHEMA&&request.caseId===this.input.caseId&&request.draftId===active.draftId&&
+      body?.requestId===pendingId&&/^source-[a-f0-9-]{36}$/.test(body.requestId)&&
+      same(Object.keys(body).sort(),['action','actor','data','expectedRevision','note','requestId'])&&
+      body.actor===this.input.actor&&typeof body.note==='string'&&body.note===state.note&&
+      Number.isSafeInteger(body.expectedRevision)&&body.expectedRevision>0&&
+      request.requestSha256===sha(Buffer.from(stable({schema:DESK_SCHEMA,caseId:request.caseId,
+        draftId:request.draftId,body}))),
+      'Preserve the exact original request UUID, case, draft, operator, note, revision and full body hash.');
+    if(original.staffContext?.staffId&&original.staffContext.staffId!=='owner')
+      need(original.staffContext.actor===body.actor,'Recover with the original staff actor.');
+    if(!legacy){
+      need(same(copy.staffContext,original.staffContext)&&Array.isArray(copy.requests)&&
+        (orphan||copy.pendingRequest?.body?.requestId===body.requestId&&same(copy.pendingRequest.body,body)&&
+          copy.pendingRequest.requestSha256===request.requestSha256&&copy.requests.some(x=>x.body?.requestId===body.requestId&&
+            same(x.body,body)&&x.requestSha256===request.requestSha256)),
+        'Keep the same private staff copy and its complete original pending request.');
+    }
+    const pins=this.report.customerEditions,plan=pins?.plan;
+    need(plan?.caseId===this.input.caseId&&plan.target?.draftId===active.draftId&&
+      this.report.phases['11-explicit-successor-and-unfinished-working-reopen']?.planSha256===plan.sha256&&
+      same(state.editionWork?.plan,plan)&&same(plan.selection,this.input.sourceSelection),
+      'Only this course’s frozen complete customer-edition plan can adopt an unobserved request.');
+    need(!(await this.requests(body.action)).some(x=>x.requestId!==body.requestId&&
+        (body.action!=='prepare'||x.entry.body.expectedRevision===body.expectedRevision)),
+      'Keep the already observed original request instead of adopting another UUID.');
+    if(body.action==='edition.apply'){
+      need(same(body.data,{plan})&&body.expectedRevision===plan.target.revision&&
+        this.report.editionFault?.state==='ARMED'&&!this.report.editionFault.requestId&&
+        !this.report.phases['12-original-edition-apply-and-request-recovery'],
+        'Keep the exact original armed successor request and its frozen target revision.');
+    }else if(body.action==='prepare'){
+      const transition=pins.transition,accepted=this.report.phases['12-original-edition-apply-and-request-recovery'];
+      need(transition&&same(accepted?.transition,transition)&&accepted.requestId===pins.requestId&&
+        same(state.editionWork?.applied,transition)&&body.expectedRevision===transition.draftRevision&&
+        !this.report.phases['13-successor-native-preparation-and-complete-downloads'],
+        'Prepare only the original accepted successor and its exact native revision.');
+      const historical=await this.api(this.deskPrefix+'/'+active.draftId+'?revision='+transition.draftRevision);
+      need(historical.id===active.draftId&&historical.caseId===this.input.caseId&&
+        historical.revision===transition.draftRevision&&same(historical.selection,plan.selection)&&
+        same(historical.files,plan.resultFiles)&&historical.editionTransitions.some(x=>same(x,transition)),
+        'The complete accepted successor changed before its original native preparation.');
+      const catalogue=await this.api('/api/operations/installation-source-profiles'),profiles={};
+      for(const selected of plan.selection.cases){
+        const profile=catalogue.profiles.find(x=>x.id===selected.profile);
+        need(profile?.sha256,'Keep every original installed customer profile.');profiles[profile.id]=profile.sha256;
+      }
+      const engine=catalogue.sourceFormats?.find(x=>x.schema===plan.selection.schema)?.engine??
+        (plan.selection.schema==='stellar-forge.installation-source-selection.v1'?catalogue.engine:null);
+      need(engine?.sha256&&same(body.data,{expectedEngineSha256:engine.sha256,
+        expectedSelectionSha256:sha(Buffer.from(stable(plan.selection))),expectedProfiles:profiles}),
+        'The original preparation must retain the current installed engine, complete selection and every profile pin.');
+    }else throw new Error('Keep other unobserved source actions with their original receiving owner.');
+    const value={schema:'stellar-forge.installation-source-journal-adoption.v1',operationId:this.input.operationId,
+      scope:active.scope,copyId:legacy?null:active.copyId,legacy,...original};
+    const evidenceRaw=pretty(value),evidencePath=resolve(this.networkRoot,'journal-before-post-'+sha(evidenceRaw)+'.json');
+    await retain(evidencePath,evidenceRaw);const evidence=await this.remember(evidencePath);
+    const entry={method:'POST',path:this.deskPrefix+'/'+active.draftId,body:structuredClone(body)};
+    const raw=pretty(entry),requestPath=resolve(this.networkRoot,sha(Buffer.from(body.requestId))+'.request.json');
+    await retain(requestPath,raw);await this.remember(requestPath);
+    const prior=this.report.requests[body.requestId];
+    need(!prior||prior.requestSha256===sha(raw),'Keep the complete original request if transport observed it meanwhile.');
+    this.report.requests[body.requestId]={...prior,requestSha256:sha(raw),requestPath,
+      state:prior?.state||'PENDING',journalAdoption:evidence};
+    await this.rememberSession();await this.save();
+    if(orphan){
+      // The original request can precede the pending-copy commit. Restore it
+      // through the existing complete-file UI; never write the journal directly.
+      const visible=await this.working('before-unobserved-request-adoption',{fresh:true});
+      need(visible.copyId===active.copyId&&!visible.state?.pendingId&&visible.state?.note===body.note&&
+        same(visible.state.editionWork?.plan,plan)&&visible.sourceDraftId===active.draftId,
+        'Preserve any editor change made after the original journal read.');
+      const incoming=structuredClone(visible),prior=incoming.requests.find(x=>x.body?.requestId===body.requestId);
+      need(!prior||same(prior.body,body)&&prior.requestSha256===request.requestSha256,
+        'Keep both conflicting original request copies.');
+      incoming.requests=incoming.requests.filter(x=>x.body?.requestId!==body.requestId);
+      incoming.requests.push(structuredClone(request));incoming.pendingRequest=structuredClone(request);
+      incoming.state.pendingId=body.requestId;
+      const bytes=pretty(incoming),path=resolve(this.networkRoot,'working-original-request-'+sha(bytes)+'.json');
+      await retain(path,bytes);await this.remember(path);await this.save();
+      await this.downloads(async()=>{
+        await this.page.locator('[data-source-working-file]').setInputFiles(path);await this.idle();
+      },[null],'before-original-request-'+basename(this.attempt)+'-'+randomUUID());
+      const selected=await this.page.locator('[data-source-copy-id][data-source-scope]').evaluate(el=>({
+        draftId:el.dataset.sourceDraftId,pendingId:el.dataset.sourcePendingId,scope:JSON.parse(el.dataset.sourceScope)}));
+      need(selected.draftId===active.draftId&&selected.pendingId===body.requestId&&same(selected.scope,active.scope),
+        'The original complete-file reader did not restore the retained pending request.');
+      await this.rememberSession();await this.save();
+    }
+  }
   async recoverWorkingCopy(){
     const copy=this.page.locator('[data-source-copy-id][data-source-scope]');
     if(!await copy.count())return;
     need(await copy.count()===1,'Select the one original Source Desk working copy.');
-    const active=await copy.evaluate(el=>({draftId:el.dataset.sourceDraftId,pendingId:el.dataset.sourcePendingId,
+    const active=await copy.evaluate(el=>({copyId:el.dataset.sourceCopyId,draftId:el.dataset.sourceDraftId,pendingId:el.dataset.sourcePendingId,
       scope:JSON.parse(el.dataset.sourceScope)}));
     need(active.scope?.caseId===this.input.caseId&&active.scope.planId===this.input.planId,
       'Keep the complete working copy in its original operating case and plan.');
     if(active.draftId===this.report.browserDraftId){
+      await this.adoptPendingSourceRequest(active);
       need(!active.pendingId||this.report.requests[active.pendingId],
         'Keep another operator’s pending source request with its original receiving owner.');
       return;
@@ -337,6 +485,7 @@ class BrowserReceiving{
       prior.value.draftId===this.report.browserDraftId,
       'Keep the original complete source working copy and its case identity.');
     if(prior.value.pendingId){
+      await this.adoptPendingSourceRequest({draftId:prior.value.draftId,pendingId:prior.value.pendingId,scope:active.scope},{legacy:true});
       const record=this.report.requests[prior.value.pendingId],request=prior.request;
       need(record&&request?.schema===DESK_SCHEMA&&request.caseId===this.input.caseId&&
         request.draftId===this.report.browserDraftId&&request.body?.requestId===prior.value.pendingId&&
@@ -364,6 +513,7 @@ class BrowserReceiving{
       draftId:this.report.browserDraftId,at:new Date().toISOString()});await this.save();
   }
   async recoverPending(){
+    await this.recoverWorkingCopy();
     const status=this.page.locator('[data-source-action="request-status"]');
     if(!await status.count()){await this.reconcileSourceReceipts();return;}
     const unresolved=Object.values(this.report.requests).filter(x=>x.state!=='RECORDED');
@@ -393,9 +543,10 @@ class BrowserReceiving{
       await retain(path,pretty(status));await this.remember(path);
       record.state='RECORDED';record.result=value;record.resultSha256=sha(Buffer.from(stable(value)));
       record.reconciliation={path,sha256:sha(pretty(status)),bytes:pretty(status).length};
-      if(entry.body.action==='selection.save'&&this.report.fault?.state==='ARMED'){
+      const faultKey=entry.body.action==='selection.save'?'fault':entry.body.action==='edition.apply'?'editionFault':null;
+      if(faultKey&&this.report[faultKey]?.state==='ARMED'){
         need(!record.responses?.length,'Preserve the actually observed earlier response.');
-        this.report.fault={...this.report.fault,state:'ORIGINAL_RESPONSE_LOST',requestId,reconciliationPath:path};
+        this.report[faultKey]={...this.report[faultKey],state:'ORIGINAL_RESPONSE_LOST',requestId,reconciliationPath:path};
       }
     }
     await this.save();
@@ -792,6 +943,7 @@ class BrowserReceiving{
       const current=await this.api(this.prefix+'/installations/'+original.id+'?revision='+original.revision);
       need(current.sha256===original.sha256,'An earlier complete Installation edition changed during receiving.');
     }
+    await verifyCustomerEditions(this,{need,same,sha,stable,object,verifyReceipt});
     for(const file of Object.values(this.report.artifacts))await verifyReceipt(file);
     this.report.sourceDraftSha256=sha(Buffer.from(stable(current)));
     this.report.sourceDraftRevision=current.revision;
@@ -811,7 +963,7 @@ class BrowserReceiving{
     let failure=null;
     try{
       await this.initialize();
-      if(this.report.state==='COMPLETE'){
+      if(this.report.state==='COMPLETE'&&this.report.phases['14-edition-history-and-final-working-reopen']){
         need(this.report.lifetimes==='CLOSED','Keep the original completed browser close receipt.');
         await this.verify();
       }else{
@@ -825,6 +977,7 @@ class BrowserReceiving{
       await this.stage('07-complete-native-profile',()=>this.profile());
       await this.stage('08-original-installation-edit-and-save',()=>this.receiveInstallation());
       await this.stage('09-earlier-source-history-and-working-download',()=>this.history());
+      await receiveCustomerEditions(this,{need,same,sha,stable,object,pretty});
       await this.verify();
       }
     }catch(error){
