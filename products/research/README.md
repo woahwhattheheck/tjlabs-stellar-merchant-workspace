@@ -56,3 +56,7 @@ Open **Comparisons** in the original Research dossier to define source-bound cri
 ## Comparison staff-review handover
 
 Create a [complete frozen comparison handover](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/HANDOVER.md) from an explicit dossier revision and case/protocol version. The package includes the original editable dossier, exact reports, complete raw runs/artifacts and the fixed inspection source. The maintained LDA Research handover can receive it for separately attributed subject review, Search, ordered Brief and explicit colleague-return; producer measurements and decisions remain in the original Research dossier.
+
+## Original producer-output receiving
+
+Use the [complete original-output preparation and receiving guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/OPERATING.md) to bring explicitly mapped CSV/TSV output and its original workbooks, reports and logs into the same comparison. The readable full-row mapping review preserves exact decimal strings, missing reasons and reviewed exclusions. One original dossier course retains every file, saves original requests, exports complete reports and reopens the editable project independently. Scientific calculations and final judgments remain with their original producer and investigator.
