@@ -38366,9 +38366,9 @@
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "9bff679351a403f63adce988b220f7c8639f7de0",
-    "bytes": 2208992,
-    "sha256": "7af10059aeaee77e20c6b50310f434574d3103058a4790b61bc2f1dd04a202b6",
+    "git_blob": "89c0422660e7341463bb695f21376c78d81e730c",
+    "bytes": 2269783,
+    "sha256": "064f6c1f3e7d132cbef888c11304113f19295b4399b2f0e8a861bf7b21b92294",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
     "prior_git_blob": "76a397cf938bc859a040babcb2900e378054efc2"
   },
@@ -42031,8 +42031,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "7af10059aeaee77e20c6b50310f434574d3103058a4790b61bc2f1dd04a202b6",
-    "source_bytes": 2208992,
+    "source_sha256": "064f6c1f3e7d132cbef888c11304113f19295b4399b2f0e8a861bf7b21b92294",
+    "source_bytes": 2269783,
     "assets": [
       "/grant-companion-editions.mjs",
       "/grant-companion-reading.mjs",
