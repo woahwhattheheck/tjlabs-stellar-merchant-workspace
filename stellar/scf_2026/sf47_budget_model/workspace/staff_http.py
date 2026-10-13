@@ -244,6 +244,18 @@ def authorize(handler):
                 fail("A delivery lead or reviewer prepares the original Flowable source.")
             handler.json_body()
             return
+        if action == "econdb-sources/import":
+            # Authorize the same case/CSRF context before streaming its original
+            # binary; generic json_body would consume/reject a full archive.
+            if role != "lead":
+                fail("A delivery lead retains complete Econdb commissioning sources.")
+            return
+        if action in ("econdb-sources/catalogue", "econdb-sources/inspect",
+                      "econdb-sources/template", "econdb-sources/prepare"):
+            if role not in ("lead", "reviewer"):
+                fail("A delivery lead or reviewer prepares the original Econdb source.")
+            handler.json_body()
+            return
         body = handler.json_body()
         if action == "command":
             if role == "contributor":

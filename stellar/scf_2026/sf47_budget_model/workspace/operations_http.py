@@ -22,6 +22,7 @@ from operations_work_billing_http import handle as work_billing_http
 from operations_billing_evidence_http import handle as billing_evidence_http
 import operations_installation_sources as installation_sources
 import operations_flowable_sources as flowable_sources
+import operations_econdb_sources as econdb_sources
 import operations_gravitee as gravitee_source
 import operations_airflow as airflow_source
 import operations_material_catalogue as material_catalogue
@@ -97,6 +98,7 @@ def register_static(static):
                    "/operations_navigation.css": ("operations_navigation.css", "text/css; charset=utf-8")})
     installation_sources.register_static(static)
     flowable_sources.register_static(static)
+    econdb_sources.register_static(static)
     gravitee_source.register_static(static)
     airflow_source.register_static(static)
     material_catalogue.register_static(static)
@@ -244,6 +246,8 @@ def read(handler, parsed):
     if commercial_http(handler, parsed, ops, "GET"):
         return True
     if flowable_sources.handle(handler, parsed, ops, "GET"):
+        return True
+    if econdb_sources.handle(handler, parsed, ops, "GET"):
         return True
     if installation_sources.handle(handler, parsed, ops, "GET"):
         return True
@@ -553,6 +557,8 @@ def write(handler, parsed):
     if commercial_http(handler, parsed, ops, "POST"):
         return True
     if flowable_sources.handle(handler, parsed, ops, "POST"):
+        return True
+    if econdb_sources.handle(handler, parsed, ops, "POST"):
         return True
     if installation_sources.handle(handler, parsed, ops, "POST"):
         return True

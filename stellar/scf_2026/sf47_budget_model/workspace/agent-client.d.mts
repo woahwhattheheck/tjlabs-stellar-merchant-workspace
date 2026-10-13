@@ -1,5 +1,7 @@
 import type {FlowableSourceInputs,FlowableSourceResponses} from './flowable-source-desk-agent.mjs';
 export * from './flowable-source-desk-agent.mjs';
+import type {EcondbSourceInputs,EcondbSourceResponses} from './econdb-source-desk-agent.mjs';
+export * from './econdb-source-desk-agent.mjs';
 import type {InstallationSourceInputs,InstallationSourceResponses} from './installation-source-desk-agent.mjs';
 export * from './installation-source-desk-agent.mjs';
 // MIT. TypeScript declarations for the original SF47 client and its saved delivery workflow.
@@ -4454,6 +4456,8 @@ export function readGrantAgentFile(filename: string, maximum?: number, privateOn
 export class GrantWorkspaceClient {
   /** Complete Flowable sidecar custody on this original authenticated case service. */
   flowableSources<K extends keyof FlowableSourceInputs>(action:K,input:FlowableSourceInputs[K]):Promise<FlowableSourceResponses[K]>;
+  /** Complete retained Econdb source; use the original Python CLI for streamed large files. */
+  econdbSources<K extends keyof EcondbSourceInputs>(action:K,input:EcondbSourceInputs[K]):Promise<EcondbSourceResponses[K]>;
   /** Complete original Source Desk lifecycle using this client's existing owner and drain. */
   installationSources<K extends keyof InstallationSourceInputs>(action:K,input:InstallationSourceInputs[K]):Promise<InstallationSourceResponses[K]>;
   constructor(binding: GrantBinding);
