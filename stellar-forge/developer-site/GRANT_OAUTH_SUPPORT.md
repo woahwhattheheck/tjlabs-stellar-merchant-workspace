@@ -6,8 +6,8 @@ This contribution joins the merged OAuth resource operations product to the main
 
 | File | Use |
 | --- | --- |
-| [grant-chapters/oauth-support.md](grant-chapters/oauth-support.md) | Complete H2 customer chapter, including all sixteen immutable source links and the actual source/native distinction. |
-| [grant-products/oauth-support.json](grant-products/oauth-support.json) | Original `stellar-forge.grant-product-registration.v1` declaration with sixteen exact source paths, commit, Git blob, UTF-8 bytes and SHA-256 values. |
+| [grant-chapters/oauth-support.md](grant-chapters/oauth-support.md) | Complete H2 customer chapter, including all thirty selected immutable source links and the actual source/native distinction. |
+| [grant-products/oauth-support.json](grant-products/oauth-support.json) | Original `stellar-forge.grant-product-registration.v1` declaration with thirty exact source paths, commit, Git blob, UTF-8 bytes and SHA-256 values. |
 | This guide | Original publisher intake, customer demonstration, completion evidence and later-edition instructions. |
 
 The chapter's exact heading is `## OAuth resource operations and complete customer support`. The declaration ID is `oauth-support`. Its original OAuth source edition is the merged Merchant Support installation at `d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d`. Six additional source records select the complete Support Operating Plans integration merged in [PR1106](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/1106) at `4927939b0776218d13e911d0472ca320af459f28`; the original ten records remain unchanged. The feature itself is [PR893](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/893), merge `39d1b70146e92a779dc024842a075f951b4e5943`; the source recipe and typed operator supplement is [PR1022](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/1022).
@@ -52,7 +52,7 @@ The composer produces the same four outputs:
 
 The chapter does not directly change the nine application answers. Its customer narrative belongs in the accepted complete companion; the canonical owner decides any corresponding answer edit. Existing source records, source-package metadata, financial plan, capacity, cash, submission and review history stay selected by the original publisher.
 
-Inspect the resulting complete source index and source pins through the existing application tools. Check that all sixteen `oauth-support` source IDs carry the selected original edition, the complete definition file is recorded by the original composer, and all previously selected unrelated source records remain present. The source registry intentionally does nothing when the chapter is absent. An installed declaration alone therefore does not prove that the application received the chapter.
+Inspect the resulting complete source index and source pins through the existing application tools. Check that all thirty `oauth-support` source IDs carry the selected original edition, the complete definition file is recorded by the original composer, and all previously selected unrelated source records remain present. The source registry intentionally does nothing when the chapter is absent. An installed declaration alone therefore does not prove that the application received the chapter.
 
 Receive the complete updated source package through the original saved draft's normal workflow:
 
@@ -82,6 +82,28 @@ Use the existing installed Merchant Support application and an original reviewed
 This sequence is a receiving plan for the implemented product. At this contribution's source boundary the whole original native programme has no returned completion, so the chapter does not present these steps as an executed result.
 
 The single original execution request remains [the SCF native handoff](https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791856405804999). It selects the complete final source and the existing execution owner. Do not start a second verifier, watcher or customer programme merely to obtain a new demonstration ID.
+
+## Receive the returned-work and complete-handover edition
+
+This edition adds the complete customer return from [PR1331](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/1331), merge `0afdf8b940c77e52c9609479c2573ba6e333ca21`, and the complete portable handover from [PR1382](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/1382), merge `375c3bb267fc23369fe86a825867f6098f0195ec`. The registration preserves all sixteen prior IDs and every prior measured edition, adds fourteen complete sources, and selects the handover edition of the existing CLI and Support browser. The chapter retains its original OAuth observations, incident response and case receiving course.
+
+After the original capture/create/record steps above, use the actual retained source package to record complete result files with `record-source-work`. Prepare the full customer return with `return-create`; inspect its base/current/incoming changes, record explicit choices, and complete with `return-apply` against the actual destination. Keep both complete output files. The original engine groups a result and its attached files, validates the selected case ancestry, and preserves a later compatible destination.
+
+Use `handover-pack` with the actual full resulting plan, selected returned reviews and every original companion directory. Deliver the returned TAR and its exact identity. The recipient opens the same archive in the existing Support workspace, retains it before receiving the editable plan, and uses `handover-receive` for the original native companions. Retain the actual archive, `HANDOVER.json`, `RECEIVED-PLAN.json`, all companion receipts and `RECEIVED.json`. The complete [handover guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/375c3bb267fc23369fe86a825867f6098f0195ec/stellar/scf-starforge-20261009/distribution/discovery/OAUTH_SUPPORT_HANDOVER.md) gives the exact requests, installed commands, streaming limits and same-operation recovery rules.
+
+For publisher intake, compare the thirty registered source identities with the complete accepted OAuth chapter. Preserve the current generic Operating Plans chapter and declaration, economic/FRED sources, bank and financial chapters, all later registered products, the nine application answers and the original six-package financial plan. Use the current maintained composer and declarations selected by their existing owners; this edition does not replace their projection code.
+
+Check that the complete companion contains the review, handover and recipient journey exactly once. Retain every unrelated source record and its selected edition. Publish the same four complete reviewer outputs and pass their actual selected package to the existing saved-draft, Page and Site owners. A source merge or archive-model check does not stand in for their actual receiving result.
+
+| Returned claim | Original evidence to retain |
+| --- | --- |
+| Complete work files recorded | Selected source descriptor, actual evidence IDs, full carried bytes and resulting saved plan revision. |
+| Customer return accepted | Full current and incoming histories, source selections, explicit decisions, completed review and actual resulting plan. |
+| Portable package created | Original immutable request, full TAR byte/hash identity, verified member inventory and PACKED.json. |
+| Browser plan received | Retained archive identity, original plan-store result and completed receiving state. |
+| Native sources reopened | Original archive, each verified source companion, full case history and exact RECEIVED.json/RECEIVED-PLAN.json. |
+
+The implemented returned-work and handover checks are source/model results. Full native acceptance follows the existing original execution owner and its returned artifacts. The requested USD38,000 / 400 hours / 150 days / six-package allocation remains unchanged.
 
 ## Evidence required to update the chapter
 
