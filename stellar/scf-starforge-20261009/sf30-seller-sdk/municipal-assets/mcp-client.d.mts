@@ -6,7 +6,7 @@ export interface FileContinuation {readId?:string;expectedSha256?:string;offset?
 export interface FileChunk {readId:string;file:FileMetadata;offset:number;bytesRead:number;nextOffset:number|null;encoding:'base64';data:string;}
 export interface PageInput {offset?:number;limit?:number;query?:string;}
 export interface HostInputSelection {input:string;expectedSha256:string;}
-export type ProjectSection = 'findings'|'inputs'|'mappings'|'decisions'|'repairs'|'changes'|'exclusions'|'work_order_overrides'|'history'|'releases'|'native_runs'|'settings';
+export type ProjectSection = 'findings'|'inputs'|'mappings'|'decisions'|'repairs'|'changes'|'exclusions'|'work_order_overrides'|'service_links'|'history'|'releases'|'native_runs'|'settings';
 export interface ProjectSelection {projectId:string;expectedRevision:number;}
 export class MunicipalAssetMerchantClient {
   constructor(callTool:CallTool,workspace:string);
@@ -15,6 +15,8 @@ export class MunicipalAssetMerchantClient {
   status():Promise<Identity & {projects:Project[]}>;
   project(input:ProjectSelection):Promise<Record<string,Json>>;
   projectSection(input:ProjectSelection & PageInput & {section:ProjectSection}):Promise<{projectId:string;revision:number;section:ProjectSection;total:number;offset:number;limit:number;items:Json[];nextOffset:number|null}>;
+  serviceAssets(input:{projectId:string;expectedRevision:number;query?:string;page?:number;pageSize?:number;rowNumber?:number}):Promise<Record<string,Json>>;
+  reviewServiceAsset(input:Mutation & Actions['service_asset_review']):Promise<MutationResult>;
   records(input:RecordSelection):Promise<RecordPage>;
   input(input:{input:string}):Promise<{input:string;label:string;name:string;kind:string;format:string;bytes:number;sha256:string}>;
   createProject(input:{requestId:string;title:string;mode:'development'|'public-reference'|'vendor-authorized'}):Promise<{id:string;revision:number}>;

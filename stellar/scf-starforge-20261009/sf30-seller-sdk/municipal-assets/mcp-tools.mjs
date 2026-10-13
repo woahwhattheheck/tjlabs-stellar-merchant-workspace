@@ -15,6 +15,7 @@ export const municipalFileSelection={
   name:en(['capture','source_archive','report','handoff','workspace','geometry','result']),requestId:id
 };
 export const actionSchemas={
+  service_asset_review:obj({request_row:{type:'integer',minimum:1},binding_sha256:hash,decision:en(['linked','unlinked','deferred']),note:str(),asset_id:{type:['string','null'],maxLength:10000},work_order_ids:{type:'array',maxItems:1000,uniqueItems:true,items:str(10000)}},['request_row','binding_sha256','decision','note']),
   mapping:obj({kind:en(KINDS),mapping:obj({fields:map,status_aliases:map,trim_ids:bool},['fields'])},['kind','mapping']),
   select_input:obj({kind:en(INPUT_KINDS),input_id:{...id,type:['string','null']},reason:str()},['kind','input_id','reason']),
   settings:obj({settings:obj({
@@ -37,6 +38,7 @@ export const actionSchemas={
 export function municipalAssetTools(tool) {
   const make=(name,description,properties,required=[],annotations=read)=>tool(PREFIX+name,description,properties,required,annotations);
   const actions=Object.entries(actionSchemas).map(([name,schema])=>make(name,{
+    service_asset_review:'Record a named original source/inventory/mapping-bound service-request association without changing native source status.',
     mapping:'Confirm explicit original dataset fields, status aliases and identifier trimming.',
     select_input:'Select an existing original dataset edition and retain the stated reason.',
     settings:'Save complete comparison fields, allowed work-order transitions, engagement references and expected counts.',
@@ -54,8 +56,9 @@ export function municipalAssetTools(tool) {
     make('workspaces','List configured original managed workspace aliases and complete host input identities.',{},[]),
     make('status','Read the authenticated instance, stable workspace and selected source identity plus original project summaries.',workspace,['workspace']),
     make('project','Read original project metadata, counts, selected input IDs and collection sizes at one observed revision.',observed,['workspace','projectId','expectedRevision']),
-    make('project_section','Page original findings, input editions, mappings, decisions, proposals, changes, exclusions, settings, release history or recent native checks.',{...observed,section:en(['findings','inputs','mappings','decisions','repairs','changes','exclusions','work_order_overrides','history','releases','native_runs','settings']),query:str(2000,0),...paging},['workspace','projectId','expectedRevision','section']),
+    make('project_section','Page original findings, input editions, mappings, decisions, proposals, changes, exclusions, settings, release history or recent native checks.',{...observed,section:en(['findings','inputs','mappings','decisions','repairs','changes','exclusions','work_order_overrides','service_links','history','releases','native_runs','settings']),query:str(2000,0),...paging},['workspace','projectId','expectedRevision','section']),
     make('records','Search and page original mapped records in one selected dataset and exact project revision.',{...observed,kind:en(KINDS),query:str(2000,0),page:rev,pageSize:{type:'integer',minimum:1,maximum:200},recordId:str(10000)},['workspace','projectId','expectedRevision','kind']),
+    make('service_assets','Read original source coverage and page named service-request associations; select an original row for complete source versions/history.',{...observed,query:str(2000,0),page:rev,pageSize:{type:'integer',minimum:1,maximum:200},rowNumber:{type:'integer',minimum:1}},['workspace','projectId','expectedRevision']),
     make('input','Inspect the complete configured host input identity and actual file SHA-256.',{...workspace,input:alias},['workspace','input']),
     make('create_project','Create an original project with its named mode and durable request identity.',{...workspace,requestId:id,title:str(150),mode:en(['development','vendor-authorized','public-reference'])},['workspace','requestId','title','mode'],write),
     make('import_input','Import one complete original host-selected dataset; preserve its exact bytes, native operation and expected project revision.',{...change,...input},['workspace','projectId','expectedRevision','requestId','input','expectedSha256'],write),

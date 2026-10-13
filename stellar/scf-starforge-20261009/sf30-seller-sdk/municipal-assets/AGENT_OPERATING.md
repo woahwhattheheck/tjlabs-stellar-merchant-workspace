@@ -126,3 +126,8 @@ Use the existing native product receiving operation. In its actual installed run
 - Keep the actual customer workspace and source operation distinct from the labelled development course; use its already selected actual source for target/source continuation.
 
 The native/browser receiving owner carries this alongside the complete application and stopped-workspace handover course. Source review and parsing prepare that actual installed operation.
+
+
+## Open311 collection receiving and named asset associations
+
+Configure the exact full original collection JSON as kind `requests`, format `open311-collection`, then import with the existing durable transport. Confirm the original id/asset_id/status columns without aliases/trimming. `serviceAssets({projectId, expectedRevision, rowNumber})` returns complete source versions and the original `binding_sha256`; `reviewServiceAsset` records the named `linked`, `unlinked` or `deferred` decision, its reason, exact asset and optional existing `work_order_ids`. Native order asset/status/revision are preserved; local request association is explicit. A source, inventory, work-order input or mapping change makes an earlier review stale. Page `service_links` for complete saved decisions and use the normal report/export/backup/stopped handover for all original editions and independent reopening. See `native/workspace/SERVICE_ASSETS.md` for full original receiving and exact rendered/attachment inspection.

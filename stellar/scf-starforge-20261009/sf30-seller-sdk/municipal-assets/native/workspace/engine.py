@@ -190,6 +190,8 @@ class Workspace:
         digest = SHA(body)
         if file_format == "belleville-capture" and kind != "source_assets":
             raise InvalidData("Import the public capture as source assets; select the actual vendor export for target assets")
+        if file_format == "open311-collection" and kind != "requests":
+            raise InvalidData("Import the complete Open311 collection as service requests")
         if file_format == "maximo-target" and kind != "target_assets":
             raise InvalidData("Import the complete Maximo carrier as target assets")
         def mutate(db, state, project):
@@ -213,6 +215,8 @@ class Workspace:
                 raise InvalidData("Import this dataset first")
             columns = self.parsed(input_id)["columns"]
             value = validate_mapping(kind, mapping, columns)
+            if self.parsed(input_id)["metadata"].get("format") == "open311-collection":
+                mapped_rows(kind, self.parsed(input_id), value)
             state["mappings"][kind] = {"value": value, "confirmed": True, "columns": columns, "actor": actor, "at": time.time()}
             return {"kind": kind, "mapping_sha256": SHA(canonical(value).encode())}
         return self._change(project_id, expected_revision, actor, operation, "mapping_saved", {"kind": kind, "mapping": mapping}, mutate)
@@ -255,6 +259,8 @@ class Workspace:
             except InvalidData as error:
                 datasets[kind] = []
                 issues.append({"kind": kind, "row": 0, "field": "mapping", "message": str(error)})
+        from .service_assets import apply
+        apply(self, state, datasets, issues)
         return datasets, issues
 
     @staticmethod
@@ -385,6 +391,16 @@ class Workspace:
             rows = [row for row in rows if query.casefold() in canonical(row).casefold()]
         return {"kind": kind, "page": page, "total": len(rows), "page_size": page_size,
                 "rows": rows[page * page_size:(page + 1) * page_size], "revision": project["revision"]}
+
+    def service_assets(self, project_id, query="", page=0, page_size=50, row_number=None):
+        from .service_assets import view
+        return view(self, project_id, query, page, page_size, row_number)
+
+    def review_service_asset(self, project_id, expected_revision, actor, operation, request_row,
+                             binding_sha256, decision, note, asset_id=None, work_order_ids=None):
+        from .service_assets import review
+        return review(self, project_id, expected_revision, actor, operation, request_row,
+                      binding_sha256, decision, note, asset_id, work_order_ids)
 
     def save_settings(self, project_id, expected_revision, actor, operation, settings):
         def mutate(db, state, project):
@@ -682,6 +698,8 @@ class Workspace:
         from .maximo_load import export as export_maximo_loads
         contents.update(export_jobs(self, project_id))
         contents.update(export_maximo_loads(self, project_id))
+        from .service_assets import export as service_export
+        contents.update(service_export(self, project))
         packet = self._zip(contents)
         if release_id:
             with self.connection(write=True) as db:

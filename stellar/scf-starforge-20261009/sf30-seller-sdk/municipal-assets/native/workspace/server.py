@@ -204,6 +204,10 @@ class Handler(BaseHTTPRequestHandler):
         if len(parts) == 3 and not write:
             return self.reply(200, workspace.view(project_id))
         endpoint = parts[3] if len(parts) == 4 else ""
+        if endpoint == "service-assets" and not write:
+            return self.reply(200, workspace.service_assets(project_id, query.get("query", ""),
+                int(query.get("page", "0")), int(query.get("page_size", "50")),
+                int(query["row"]) if "row" in query else None))
         if endpoint == "maximo":
             workspace.project(project_id)
             if not write:
@@ -310,7 +314,7 @@ class Handler(BaseHTTPRequestHandler):
             payload = value.get("payload", {})
             if not isinstance(payload, dict):
                 raise InvalidData("Action fields must be a JSON object")
-            actions = {"mapping": workspace.save_mapping, "select_input": workspace.select_input,
+            actions = {"service_asset_review": workspace.review_service_asset, "mapping": workspace.save_mapping, "select_input": workspace.select_input,
                 "settings": workspace.save_settings, "review": workspace.review, "exclude": workspace.exclude,
                 "repair": workspace.propose_repair, "request_status": workspace.request_status,
                 "apply_returns": workspace.apply_returns, "withdraw_change": workspace.withdraw_change,
