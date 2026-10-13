@@ -5,7 +5,7 @@ import { get } from 'node:http';
 import { inspectMerchantRuntime } from '../../sf46-release/runtime-package.mjs';
 import { SCHEMA, ensure } from './core.mjs';
 const ROOT = 'stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/';
-const nativeFiles = ['cli.mjs', 'client.mjs', 'core.mjs', 'projection.mjs', 'csv.mjs', 'schema.sql', 'portable.mjs', 'packet-reader.mjs', 'server.mjs', 'ui/index.html', 'ui/app.js', 'ui/style.css'];
+const nativeFiles = ['cli.mjs', 'client.mjs', 'core.mjs', 'projection.mjs', 'csv.mjs', 'schema.sql', 'portable.mjs', 'packet-reader.mjs', 'server.mjs', 'browser-assets.json', 'ui/index.html', 'ui/app.js', 'ui/style.css'];
 export function masteringApplication(common = []) {
     return { id: 'record-mastering', command: 'record-mastering', title: 'Record mastering', terminal: false, requiredSource: ROOT + 'cli.mjs',
         description: 'Consolidate original source lists, review matching groups, resolve field values and deliver a reusable master dataset.',

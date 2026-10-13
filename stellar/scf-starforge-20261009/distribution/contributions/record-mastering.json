@@ -18,5 +18,10 @@
   "merchantProviders": {
     "record-mastering": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/merchant-provider.mjs"
   },
-  "browserAssets": []
+  "browserAssets": [
+    {
+      "server": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/browser-assets.json"
+    }
+  ]
 }
