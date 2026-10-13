@@ -103,3 +103,8 @@ The installed workflow guides describe the complete maintained distribution at [
 The same maintained installation also supplies [Project handover](PORTABLE_PROJECT.md) in the invoice browser. It exports the complete original source archive and a committed database to a request-bound ZIP, receives an independent runtime, and opens the original merchant in read-only review before operational activation. The `x402api-merchant-project` command uses that ZIP format; the `x402api-merchant export`, `inspect`, `restore` and `serve-archive` commands retain the complete directory handover documented above. Each command keeps its original archive schema, source selection and receiving identity.
 
 Both original engines are included. `portable.mjs` supplies the project interface and preserves the directory handover's named API exports from `portable-directory.mjs`. `receive-portable-native.py` invokes the complete directory receiving programme; the installed foreground's `--portable` option continues the original project programme. Continue an existing receiving intent with its frozen source and arguments. Select this cumulative edition for a new original operation only before that input has been frozen.
+
+The browser project ZIP now uses the same original reservation inspector and
+relocator as this directory format, including empty locks, retained partial
+prefixes and final hardlinks. Its durable private receiving preparation preserves
+later runtime recovery on replay. See [Portable project](PORTABLE_PROJECT.md#interrupted-paid-file-recovery-in-either-handover).

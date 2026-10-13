@@ -195,3 +195,32 @@ The portable receiving programme continues the original saved five-invoice proje
 ## Complete directory handover
 
 The same installation retains the [complete offline directory handover](PORTABLE.md), including original fulfillment reservations, direct offline inspection, source/configuration receiving and independently reopened merchant operation. Use `x402api-merchant export`, `inspect`, `restore` and `serve-archive` for that format; use `x402api-merchant-project export`, `inspect` and `receive` for the source-archive-bound project ZIP documented here. Both routes preserve their original formats and business identities. The complete directory receiver is `portable-directory-receiving.mjs`; this guide's installed `--portable` programme remains `portable-receiving.mjs`.
+
+## Interrupted paid-file recovery in either handover
+
+The browser project ZIP and the directory handover carry the same original SF31
+reservation semantics. While the original merchant lease is held, the project
+export inspects the selected SQLite snapshot and retains each recognized empty
+reservation lock, complete reservation record, partial returned-byte prefix and
+published final file. A final file with a still-retained partial hardlink is
+copied as independent original bytes. Unrecognized locks or changed returned
+bytes are rejected by the original reservation engine.
+
+Receiving keeps the exported files and database unchanged in `original/`.
+It prepares a private copy using the same reservation engine and changes only
+the copied destination and partial paths to the independent runtime workspace.
+The preparation retains the original and relocated mappings and all file
+identities. The native driver publishes its reservation receipt before the
+runtime database becomes available. If receiving is interrupted, the same
+request resumes that preparation; after publication it preserves later merchant
+recovery, including consumed locks and partial files. Repeating a completed
+receive never puts an old reservation back into a working merchant.
+
+The original returned bytes, payment and invoice IDs, history and result
+metadata retain their original authority. The existing operational recovery
+continues the received payment; this handover performs no new provider request.
+The read-only project review stays read-only. Earlier complete project ZIPs
+remain readable with their original selected source. Run the command through the
+existing Node entrypoint, which passes its actual executable to the native
+reservation bridge; a direct Python invocation can select that same executable
+with `MERCHANT_PORTABLE_NODE`.

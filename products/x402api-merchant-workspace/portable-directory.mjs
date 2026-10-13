@@ -45,6 +45,7 @@ const SOURCE_FILES = [
   "products/x402api-merchant-workspace/portable-receiving.mjs",
   "products/x402api-merchant-workspace/receive-portable-native.py",
   "products/x402api-merchant-workspace/portable-reservations.mjs",
+  "products/x402api-merchant-workspace/portable-project-reservations.mjs",
   "products/x402api-merchant-workspace/portable-directory.mjs",
   "products/x402api-merchant-workspace/portable-directory-receiving.mjs",
   "products/x402api-merchant-workspace/portable_native.py",

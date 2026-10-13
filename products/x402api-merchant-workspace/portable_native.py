@@ -4,7 +4,8 @@
 The maintained source_bundle_archive module owns ZIP serialization, validation
 and extraction. The maintained runtime-unpack module validates source.tgz.
 This module selects original files, uses SQLite online backup, and relocates
-only the two current result-storage JSON paths in an independent runtime copy.
+the two current result-storage JSON paths and the original SF31 reservation
+paths in an independent runtime copy.
 """
 from __future__ import annotations
 
@@ -21,6 +22,8 @@ from pathlib import Path, PurePosixPath
 import re
 import sqlite3
 import stat
+import subprocess
+import shutil
 import sys
 import time
 from urllib.parse import quote
@@ -44,7 +47,7 @@ ARCHIVE_SHA = "934f29399f12349e2836e1c4fd890b67eb023e3735fc5707a50c98ce5cb3b7a8"
 UNPACK_SHA = "683c241e74d2ef4c6bbf1502a8aa58af40195bb53e70fb0b7731191c53795d5f"
 REQUIRED_PRODUCT = (
     "portable_native.py", "portable.mjs", "portable-directory.mjs",
-    "portable-reservations.mjs", "server.mjs", "workspace.mjs",
+    "portable-reservations.mjs", "portable-project-reservations.mjs", "server.mjs", "workspace.mjs",
     "store.mjs", "protocol.mjs", "provider.mjs", "application-inputs.mjs",
     "fulfillment/file-delivery.mjs", "web/index.html", "web/app.mjs", "web/style.css",
 )
@@ -593,12 +596,15 @@ def validate_request(value):
     return normalized
 
 
-def selected_source(path, expected_sha, *, match_current):
+def selected_source(path, expected_sha, *, match_current, required_paths=None):
     actual = file_hash(path, maximum=64 * CHUNK)
     need(actual["sha256"] == expected_sha, "SOURCE_ARCHIVE_CHANGED", "Keep the exact original distribution source.tgz.")
     manifest, expected, contents, manifest_sha = source_unpacker.inspect(path, expected_sha)
     needed = [PRODUCT + name for name in REQUIRED_PRODUCT]
     needed.extend([str(ARCHIVE_PATH.relative_to(SOURCE_ROOT)), str(UNPACK_PATH.relative_to(SOURCE_ROOT))])
+    if required_paths is not None:
+        need(not match_current, "SOURCE_SELECTION_INVALID", "Use the current complete edition when exporting.")
+        needed = list(required_paths)
     proof = []
     for relative_path in needed:
         key = "source/" + relative_path
@@ -975,6 +981,184 @@ def snapshot_results(database, directory, configuration, origins=None):
     return [results[key] for key in sorted(results)]
 
 
+
+def reservation_engine(action, **values):
+    """Call the original SF31 reservation inspector/relocator with the same Node runtime."""
+    node = os.environ.get("MERCHANT_PORTABLE_NODE") or os.environ.get("CODEX_PRIMARY_RUNTIME_NODE") or shutil.which("node")
+    need(isinstance(node, str) and node and "\0" not in node,
+         "RESERVATION_NODE_REQUIRED", "Use the existing Merchant Node runtime to receive original paid-file reservations.")
+    request = json.dumps({"action": action, **values}, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    need(len(request) <= 32 * CHUNK, "RESERVATION_REQUEST_TOO_LARGE", "Keep the complete original reservation selection within capacity.")
+    response = subprocess.run([node, str(HERE / "portable-project-reservations.mjs")],
+                              input=request, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    need(response.returncode == 0, "RESERVATION_OPERATION_FAILED",
+         "The original paid-file reservation operation failed.",
+         {"returnCode": response.returncode, "originalError": response.stderr[-65536:].decode("utf-8", "replace")})
+    value = parse_json(response.stdout, "original paid-file reservation return")
+    need(isinstance(value, dict) and value.get("schema") == "stellar-forge.merchant-project-reservations.v1"
+         and isinstance(value.get("result"), list), "RESERVATION_RETURN_INVALID",
+         "Receive the complete original reservation result.")
+    return value["result"]
+
+
+def reservation_files(mappings, directory):
+    """Select only files owned by the exact original returned-payment mappings."""
+    need(isinstance(mappings, list), "PROJECT_RESERVATIONS_INVALID", "Retain the complete reservation mappings.")
+    selected = {}
+    seen = set()
+    def add(name, value):
+        if value is None:
+            return
+        need(isinstance(value, dict) and type(value.get("bytes")) is int and value["bytes"] >= 0,
+             "PROJECT_RESERVATIONS_INVALID", "Keep the original reservation file identity.")
+        item = {"path": relative(name), "bytes": str(value["bytes"]), "sha256": value.get("sha256")}
+        pin(item)
+        need(name not in selected or selected[name] == item, "PROJECT_RESERVATIONS_INVALID",
+             "A retained reservation path must name one original file.")
+        selected[name] = item
+    for row in mappings:
+        need(isinstance(row, dict) and row.get("schema") == "stellar-forge.x402api-merchant-file-reservation.v1"
+             and row.get("state") in ("RETURNED", "COMPLETE") and row.get("recordedDirectory") == str(directory),
+             "PROJECT_RESERVATIONS_INVALID", "Keep the original merchant reservation identity.")
+        for key in ("paymentId", "orderId"):
+            need(isinstance(row.get(key), str) and re.fullmatch(
+                r"[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}", row[key], re.IGNORECASE),
+                "PROJECT_RESERVATIONS_INVALID", "Keep the original payment and invoice identifiers.")
+        name = row.get("fileName")
+        need(isinstance(name, str) and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,119}", name),
+             "PROJECT_RESERVATIONS_INVALID", "Keep the original returned filename.")
+        folder = "workspace/results/" + row["paymentId"]
+        lock = folder + "/." + name + ".x402-download.lock"
+        final = folder + "/" + name
+        need(row.get("relativePath") == lock and row.get("destinationRelativePath") == final
+             and lock not in seen and type(row.get("empty")) is bool,
+             "PROJECT_RESERVATIONS_INVALID", "Keep one original reservation per retained payment.")
+        seen.add(lock)
+        add(lock, row.get("lock"))
+        need(lock in selected and int(selected[lock]["bytes"]) <= 8192
+             and row["empty"] == (selected[lock]["bytes"] == "0"),
+             "PROJECT_RESERVATIONS_INVALID", "Keep the original complete or empty reservation lock.")
+        returned = row.get("returned")
+        need(isinstance(returned, dict) and type(returned.get("bytes")) is int,
+             "PROJECT_RESERVATIONS_INVALID", "Keep the returned payment's original byte identity.")
+        returned_pin = pin({"bytes": str(returned["bytes"]), "sha256": returned.get("sha256")})
+        final_pin = row.get("final")
+        if final_pin is not None:
+            add(final, final_pin)
+            need(pin(selected[final]) == returned_pin, "PROJECT_RESERVATIONS_INVALID",
+                 "The reserved final file must match the original returned payment.")
+        need(row["state"] != "COMPLETE" or final_pin is not None,
+             "PROJECT_RESERVATIONS_INVALID", "Keep the completed payment's final file.")
+        partial_path = row.get("partialRelativePath")
+        if row["empty"]:
+            need(row.get("reservation") is None and partial_path is None and row.get("partial") is None,
+                 "PROJECT_RESERVATIONS_INVALID", "An empty original lock has no recorded partial path.")
+        else:
+            record = row.get("reservation")
+            need(isinstance(record, dict) and set(record) == {"destination", "partialPath", "pid", "reservationTag"}
+                 and record["destination"] == str(directory / "results" / row["paymentId"] / name)
+                 and record["reservationTag"] == row["paymentId"] and type(record["pid"]) is int and record["pid"] > 0,
+                 "PROJECT_RESERVATIONS_INVALID", "Keep the exact SF31 reservation record.")
+            partial = absolute(record["partialPath"])
+            need(partial.parent == directory / "results" / row["paymentId"]
+                 and re.fullmatch(r"\.x402-response-[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\.partial", partial.name)
+                 and partial_path == folder + "/" + partial.name,
+                 "PROJECT_RESERVATIONS_INVALID", "Keep the original owned partial path.")
+            add(partial_path, row.get("partial"))
+            if row.get("partial") is not None:
+                need(int(selected[partial_path]["bytes"]) <= int(returned_pin["bytes"]),
+                     "PROJECT_RESERVATIONS_INVALID", "Retain only the original returned-byte prefix.")
+    return [selected[name] for name in sorted(selected)]
+
+
+def inspect_project_reservations(database, directory, recorded_directory, mappings):
+    observed = reservation_engine("inspect", database=str(database), directory=str(directory),
+                                  recordedDirectory=str(recorded_directory))
+    need(observed == mappings, "PROJECT_RESERVATIONS_CHANGED",
+         "Keep every original returned payment, reservation, partial prefix and final file.")
+    return observed
+
+
+def receive_project_reservations(control, original, runtime, request_sha, manifest):
+    """Prepare once, publish once, and preserve later live reservation progress on replay."""
+    workspace = runtime / "workspace"
+    original_directory = absolute(manifest["original"]["directory"])
+    mappings = manifest.get("reservationMappings", [])
+    if "reservationMappings" not in manifest:
+        return None
+    frozen = {"schema": "stellar-forge.merchant-project-reservation-receiving.v1",
+              "requestSha256": request_sha, "snapshot": pin(manifest["snapshot"]),
+              "workspace": str(workspace), "originalMappings": mappings}
+    stage = control / "reservation-prepared"
+    published_path = control / "reservations-published.json"
+    if not stage.exists():
+        pending = private_directory(control / (".reservation-preparing-" + uuid.uuid4().hex))
+        private_directory(pending / "workspace")
+        members = {row["path"]: {"path": row["path"], **pin(row)} for row in manifest["results"]}
+        for row in reservation_files(mappings, original_directory):
+            need(row["path"] not in members or members[row["path"]] == row,
+                 "PROJECT_RESERVATIONS_CHANGED", "Keep a single original file edition.")
+            members[row["path"]] = row
+        for row in members.values():
+            copy_file(original / row["path"], pending / row["path"], row)
+        relocations = reservation_engine("restore", stage=str(pending), directory=str(runtime), reservations=mappings)
+        relocated = reservation_engine("inspect", database=str(original / "workspace/merchant.sqlite3"),
+                                       directory=str(pending / "workspace"), recordedDirectory=str(workspace))
+        need(len(relocated) == len(mappings), "PROJECT_RESERVATIONS_CHANGED",
+             "Retain every original reservation in the received workspace.")
+        received_files = {row["path"]: {"path": row["path"], **pin(row)} for row in manifest["results"]}
+        for row in reservation_files(relocated, workspace):
+            received_files[row["path"]] = row
+        record = {**frozen, "relocations": relocations, "relocatedMappings": relocated,
+                  "files": [received_files[name] for name in sorted(received_files)]}
+        write_json(pending / "PREPARED.json", record)
+        sync_directory(pending)
+        os.rename(pending, stage)
+        sync_directory(control)
+    private_directory(stage)
+    prepared = read_json(stage / "PREPARED.json")
+    need(isinstance(prepared, dict) and all(prepared.get(key) == value for key, value in frozen.items())
+         and isinstance(prepared.get("relocations"), list) and len(prepared["relocations"]) == len(mappings)
+         and isinstance(prepared.get("relocatedMappings"), list),
+         "PROJECT_RESERVATIONS_CHANGED", "Reopen the same complete private reservation preparation.")
+    expected_mappings = deepcopy(mappings)
+    for row in expected_mappings:
+        row["recordedDirectory"] = str(workspace)
+        if not row["empty"]:
+            raw = read_bytes(original / row["relativePath"], maximum=8192, private=True)
+            record = parse_json(raw, "original SF31 reservation")
+            record["destination"] = str(runtime / row["destinationRelativePath"])
+            record["partialPath"] = str(runtime / row["partialRelativePath"])
+            relocated_raw = (json.dumps(record, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
+            row["reservation"] = record
+            row["lock"] = {"bytes": len(relocated_raw), "sha256": sha_bytes(relocated_raw)}
+    need(prepared["relocatedMappings"] == expected_mappings, "PROJECT_RESERVATIONS_CHANGED",
+         "Relocate only the original reservation's destination and partial path.")
+    inspect_project_reservations(original / "workspace/merchant.sqlite3", stage / "workspace", workspace,
+                                 expected_mappings)
+    expected = {row["path"]: {"path": row["path"], **pin(row)} for row in manifest["results"]}
+    for row in reservation_files(prepared["relocatedMappings"], workspace):
+        expected[row["path"]] = row
+    need(prepared.get("files") == [expected[name] for name in sorted(expected)],
+         "PROJECT_RESERVATIONS_CHANGED", "Keep the complete prepared received file inventory.")
+    for row in prepared["files"]:
+        durable_file(stage / row["path"], row)
+    receipt = {"schema": "stellar-forge.merchant-project-reservations-published.v1",
+               "requestSha256": request_sha, "workspace": str(workspace),
+               "preparedSha256": sha_bytes(encoded(prepared)), "reservationCount": str(len(mappings))}
+    published = read_json(published_path, optional=True)
+    if published is not None:
+        need(published == receipt, "PROJECT_RESERVATIONS_CHANGED",
+             "Keep the original paid-file receiving receipt and later runtime progress.")
+        return published
+    need(not (workspace / "merchant.sqlite3").exists(), "PROJECT_RESERVATIONS_RECEIPT_REQUIRED",
+         "Recover the original reservation publication receipt before touching an already-published runtime.")
+    for row in prepared["files"]:
+        copy_file(stage / row["path"], runtime / row["path"], row)
+    write_json(published_path, receipt)
+    return receipt
+
+
 def export_project(request, normalized):
     engines()
     operation_root = private_directory(absolute(request["outputDirectory"]) / request["operation"])
@@ -1034,10 +1218,21 @@ def export_project(request, normalized):
                     results = snapshot_results(database, directory, configuration, origins)
                 finally:
                     database.close()
+                reservations = reservation_engine("inspect", database=str(payload / "workspace/merchant.sqlite3"),
+                                                  directory=str(directory), recordedDirectory=str(directory))
                 for row in results:
                     copy_file(absolute(row["originalPath"]), payload / row["path"], row)
                     inventory[row["path"]] = {"path": row["path"], **pin(row), "role": "original-result",
                                               "originalPath": row["originalPath"]}
+                for row in reservation_files(reservations, directory):
+                    source_path = directory / str(PurePosixPath(row["path"]).relative_to("workspace"))
+                    copy_file(source_path, payload / row["path"], row)
+                    if row["path"] in inventory:
+                        need(pin(inventory[row["path"]]) == pin(row), "PROJECT_RESERVATIONS_CHANGED",
+                             "Keep the original returned final file shared by result and reservation.")
+                    else:
+                        inventory[row["path"]] = {**row, "role": "original-reservation", "originalPath": str(source_path)}
+                inspect_project_reservations(payload / "workspace/merchant.sqlite3", payload / "workspace", directory, reservations)
                 inventory["workspace/merchant.sqlite3"] = {
                     "path": "workspace/merchant.sqlite3", **snapshot["file"], "role": "sqlite-snapshot",
                     "originalPath": str(directory / "merchant.sqlite3")}
@@ -1052,7 +1247,7 @@ def export_project(request, normalized):
                     "snapshot": {"path": "workspace/merchant.sqlite3", **snapshot["file"],
                                  "selectedAt": snapshot["selectedAt"], **snapshot["summary"]},
                     "configuration": configuration, "source": source, "results": results,
-                    "resultOrigins": origins_member,
+                    "resultOrigins": origins_member, "reservationMappings": reservations,
                     "inputFiles": sorted(inputs, key=lambda row: row["originalPath"]),
                     "files": [inventory[key] for key in sorted(inventory)],
                     "engines": {"archive": {"path": str(ARCHIVE_PATH.relative_to(SOURCE_ROOT)), "sha256": ARCHIVE_SHA},
@@ -1134,8 +1329,14 @@ def validate_manifest(manifest):
     needed = {PRODUCT + name for name in REQUIRED_PRODUCT}
     needed |= {str(ARCHIVE_PATH.relative_to(SOURCE_ROOT)), str(UNPACK_PATH.relative_to(SOURCE_ROOT))}
     proof = source.get("requiredSource")
-    need(isinstance(proof, list) and len(proof) == len(needed)
-         and {row.get("path") for row in proof if isinstance(row, dict)} == needed,
+    proof_paths = {row.get("path") for row in proof if isinstance(row, dict)} if isinstance(proof, list) else set()
+    # Earlier complete v1 projects predate the additive directory/reservation bridge.
+    # Their selected source still opens exactly as received, without inventing files.
+    legacy_needed = needed - {PRODUCT + name for name in
+                              ("portable-directory.mjs", "portable-reservations.mjs", "portable-project-reservations.mjs")}
+    required = needed if "reservationMappings" in manifest else legacy_needed
+    need(isinstance(proof, list) and len(proof) == len(proof_paths)
+         and required <= proof_paths <= needed,
          "PORTABLE_SOURCE_INCOMPLETE", "Keep the complete portable-capable source edition.")
     for row in proof:
         relative(row["path"])
@@ -1218,6 +1419,10 @@ def validate_manifest(manifest):
         "configuration/merchant.json", "provenance/export-request.json"}
     if origins is not None:
         expected_names.add(origins["path"])
+    if "reservationMappings" in manifest:
+        for row in reservation_files(manifest["reservationMappings"], directory):
+            member(row)
+            expected_names.add(row["path"])
     need(set(inventory) == expected_names,
          "PROJECT_INVENTORY_INVALID", "Keep only the complete explicitly selected project members.")
     need(manifest.get("receiving") == {
@@ -1777,6 +1982,17 @@ def reopen_received_complete(destination, complete, request, request_sha, manife
     origins_raw = encoded(received_result_origins(manifest, workspace, request, manifest_sha))
     durable_file(workspace / "portable-result-origins.json",
                  {"bytes": str(len(origins_raw)), "sha256": sha_bytes(origins_raw)})
+    if "reservationMappings" in manifest:
+        inspect_project_reservations(original / "workspace/merchant.sqlite3", original / "workspace",
+                                     absolute(manifest["original"]["directory"]), manifest["reservationMappings"])
+        reservation_publication = read_json(control / "reservations-published.json")
+        need(received.get("reservationPublication") == reservation_publication,
+             "PROJECT_RESERVATIONS_CHANGED", "Keep the original reservation receiving receipt.")
+        # Verify the immutable preparation; its already-published return prevents
+        # copying old locks or partial files over subsequent merchant recovery.
+        observed = receive_project_reservations(control, original, runtime, request_sha, manifest)
+        need(observed == reservation_publication, "PROJECT_RESERVATIONS_CHANGED",
+             "Preserve the original received reservation operation.")
     plan_raw = read_bytes(control / "relocation-plan.json", private=True, maximum=32 * CHUNK)
     plan = parse_json(plan_raw, "original runtime relocation plan")
     need(isinstance(plan, dict) and plan.get("operation") == manifest["operation"]
@@ -1834,7 +2050,8 @@ def receive_project(request, normalized):
              and sha_bytes(encoded(export_request)) == manifest["requestSha256"],
              "PROJECT_REQUEST_CHANGED", "Keep the complete original export input selection.")
         source, source_parts = selected_source(original / manifest["source"]["path"],
-                                               manifest["source"]["sha256"], match_current=False)
+                                               manifest["source"]["sha256"], match_current=False,
+                                               required_paths=[row["path"] for row in manifest["source"]["requiredSource"]])
         need({**source, "path": manifest["source"]["path"]} == manifest["source"],
              "SOURCE_ARCHIVE_CHANGED", "Keep the full originally selected portable source edition.")
         _source_manifest, expected, contents = source_parts
@@ -1856,6 +2073,9 @@ def receive_project(request, normalized):
             actual_results = snapshot_results(original_db, original_workspace, manifest["configuration"], origins)
             need(actual_results == manifest["results"],
                  "PROJECT_RESULTS_CHANGED", "Verify every original snapshot result and historical reference.")
+            if "reservationMappings" in manifest:
+                inspect_project_reservations(original / "workspace/merchant.sqlite3", original / "workspace",
+                                             original_workspace, manifest["reservationMappings"])
             changes = relocation_plan(original_db, manifest, workspace)
         finally:
             original_db.close()
@@ -1871,6 +2091,7 @@ def receive_project(request, normalized):
                 copy_file(original / row["path"], workspace / row["relativePath"], row)
             write_json(workspace / "portable-result-origins.json",
                        received_result_origins(manifest, workspace, request, inspected["manifestSha256"]))
+            reservation_publication = receive_project_reservations(control, original, runtime, request_sha, manifest)
             publication = prepare_runtime_database(control, original, workspace, request_sha, manifest, changes)
         source_installation = {"requestSha256": request_sha, "source": manifest["source"],
                                "sourceArchive": {"path": "source.tgz", **pin(manifest["source"])},
@@ -1887,7 +2108,8 @@ def receive_project(request, normalized):
             "receiptPath": str(result_path), "originalDirectory": str(original),
             "mode": "review", "activation": activation, "storeId": manifest["original"]["storeId"],
             "originalRowsSha256": manifest["snapshot"]["allRowsSha256"],
-            "runtimePublication": publication, "sourceFiles": str(len(source_inventory))}
+            "runtimePublication": publication, "sourceFiles": str(len(source_inventory)),
+            **({"reservationPublication": reservation_publication} if reservation_publication is not None else {})}
         complete = {"schema": RESULT_SCHEMA, "action": "receive", "operation": request["operation"],
                     "state": "COMPLETE", "requestSha256": request_sha, "reused": False,
                     "archive": inspected["archive"], "manifest": manifest,
