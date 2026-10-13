@@ -9,14 +9,14 @@
   "files": [
     {
       "path": "stellar/scf-starforge-20261009/distribution/contributions/invoice-settlement.json",
-      "bytes": 7254,
-      "sha256": "27d8ab440e762d8f865046ff3193522402b756df21747a795b93e2b089680e8d",
+      "bytes": 7592,
+      "sha256": "2dd78db9276a66972d1cbdadedfb54fa89414c0143553399a436ed90abb88871",
       "contentType": "application/json"
     },
     {
       "path": "stellar/scf-starforge-20261009/distribution/distribution.json",
-      "bytes": 78499,
-      "sha256": "498c6b2dd337e2e2c43ac4936be11f8ba53bcfdfc49964b5d47dd05456f0c970",
+      "bytes": 79163,
+      "sha256": "69f7057ed977f4aab56d0467cbe6718746eccce11d4e05c073d52ccca80f553a",
       "contentType": "application/json"
     },
     {
@@ -27,14 +27,14 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/distribution/runtime-install.mjs",
-      "bytes": 36763,
-      "sha256": "ee5c46c75b4cc58a6e949228f9128ba51be4d067f7b453e3de4faa66f06df591",
+      "bytes": 46615,
+      "sha256": "a97e2c0e687b20f2f77dd9806b4cf753ba7933250ce07f80e4b76c95460ea806",
       "contentType": "text/javascript"
     },
     {
       "path": "stellar/scf-starforge-20261009/distribution/runtime-profile.mjs",
-      "bytes": 25916,
-      "sha256": "56e0100812ffb62d05ff71fd9354fe529299ccad62fd9b6309982a197318dfdc",
+      "bytes": 26577,
+      "sha256": "033fb05d4d46abd30fbd21299917fb692cd72c751b03f8a6c7b1f6f68207dad4",
       "contentType": "text/javascript"
     },
     {
@@ -45,32 +45,32 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-provider.mjs",
-      "bytes": 7132,
-      "sha256": "584c5db3d682e203b1d8da8637148fdc3dd14bed81adb54afeaf0ce095687ebd",
+      "bytes": 9005,
+      "sha256": "610c48baed772ea062815a587199221bed17d0fb59cc9933076e4efc069e7b98",
       "contentType": "text/javascript"
     },
     {
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs",
-      "bytes": 7357,
-      "sha256": "bee7d94573457532cbda3125a717ace8f9efc640c3ede656d7aac7aa8286a825",
+      "bytes": 16897,
+      "sha256": "e43ff6917a3d2cb7d59c3ac8052eb27bae7bd0765904e8afb19c8770327fee6d",
       "contentType": "text/javascript"
     },
     {
       "path": "stellar/scf-starforge-20261009/distribution/selections/stellar-invoice-settlement.json",
-      "bytes": 6535,
-      "sha256": "a2d6a572d4b3397973ec64b9da44458aaa1dbec54e1d01bb48fcb974ee855501",
+      "bytes": 6722,
+      "sha256": "e4cf4d72a2f5c25632ba5a992a9d6f5dfe5df7951ef79e43fe00d5a5b7f54b43",
       "contentType": "application/json"
     },
     {
       "path": "stellar/scf-starforge-20261009/distribution/source-selection.mjs",
-      "bytes": 9798,
-      "sha256": "cbedb50a90a1fd9bd7194c9f2a7b4182cf23db9b9e89bec67c9085c377cb673a",
+      "bytes": 14381,
+      "sha256": "6f0637f360d8e21725736bdb15581a09f2e70503f4880dbae5549b7e0a023a5b",
       "contentType": "text/javascript"
     },
     {
       "path": "stellar/scf-starforge-20261009/distribution/specification.mjs",
-      "bytes": 20399,
-      "sha256": "3b23946a123428f236384dd6777b32f87f92e57a482b84411b7f25f05b468359",
+      "bytes": 23136,
+      "sha256": "0694ba6b8cd57adda81e4a9a83a1b478e5b60ef0e77c450772df0afbfe41d86c",
       "contentType": "text/javascript"
     },
     {
@@ -80,9 +80,15 @@
       "contentType": "text/markdown"
     },
     {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/HORIZON_INVOICES.md",
+      "bytes": 11639,
+      "sha256": "b67e5f38b6bebcd9a4275d81056c4518a57fa003ca238e3804a8c02bb4a5f8eb",
+      "contentType": "text/markdown"
+    },
+    {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/README.md",
-      "bytes": 21722,
-      "sha256": "93b94fdfe24058994543322486b2bf35500d186327a2e735ce1bf19ba9732f0d",
+      "bytes": 22240,
+      "sha256": "f3456846f651517743ee760476445ee87fa69d4e4226427c9b5cfaaac0fa8696",
       "contentType": "text/markdown"
     },
     {
@@ -111,8 +117,8 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/cli.mjs",
-      "bytes": 18657,
-      "sha256": "5ad19a9733852f6adc9e961ee6fb4d245b2480ecb872f70ff4d6238b7d0575c0",
+      "bytes": 19046,
+      "sha256": "fa9240eb61066d5bbf1c46174f805a883eb928535d04550c9d93b98db1148680",
       "contentType": "text/javascript"
     },
     {
@@ -152,6 +158,12 @@
       "contentType": "application/json"
     },
     {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/horizon-invoices.mjs",
+      "bytes": 10685,
+      "sha256": "a45281125612fc60d22514c84dcfde186215dc8b47858c02b6fc243917a26c9c",
+      "contentType": "text/javascript"
+    },
+    {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/lossless-json.mjs",
       "bytes": 7734,
       "sha256": "afe8d34a1e79e56534a4621ddbaf69242ae851f1b4b486149328d7d9f6667cec",
@@ -165,8 +177,8 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/operator.mjs",
-      "bytes": 12986,
-      "sha256": "eca51f684d932025039f8d2d92764be25df4b271ddfb7d539e421e455f794300",
+      "bytes": 13494,
+      "sha256": "e1f61f51799ac24026598bfc21280439d21443f1448903b7ed569180c5be2d06",
       "contentType": "text/javascript"
     },
     {
@@ -213,14 +225,14 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/web/app.mjs",
-      "bytes": 88856,
-      "sha256": "9dca228914501140249a461a671cd354b44cae44d1eabefce1937371144d84dc",
+      "bytes": 97479,
+      "sha256": "d747547e2d90930b5d88f1b2edbf654550eb32c2b8acd9834f075a567acbde31",
       "contentType": "text/javascript"
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/web/index.html",
-      "bytes": 21374,
-      "sha256": "a062d769db3a2a30dd3fabe804387e664e1f2b4834869fe03f6580f284f256c6",
+      "bytes": 24132,
+      "sha256": "f22d67c8b587047943cb1725693c2b15e2e915544473114a467f817abbc3a1ff",
       "contentType": "text/html"
     },
     {
@@ -231,8 +243,8 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/workspace.mjs",
-      "bytes": 74097,
-      "sha256": "949e6587551d136373f245edd187378f7658f3877c2a20790eb88f1d6937e8b1",
+      "bytes": 79498,
+      "sha256": "adf32064b6bd1e9eaf837804bbf778bde1e32b577a9f244b894a694be1071cb2",
       "contentType": "text/javascript"
     },
     {
@@ -249,8 +261,8 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/settlement-audit/reconciliation.mjs",
-      "bytes": 67383,
-      "sha256": "36d121b5d0d7ba3b62406115692eb9cc0ce92718bf9c630473d61c492a61f631",
+      "bytes": 67534,
+      "sha256": "59800dae52dbb159b7d0919c4e53c3ff6938332c7444d812a0fd603aef36b967",
       "contentType": "text/javascript"
     },
     {

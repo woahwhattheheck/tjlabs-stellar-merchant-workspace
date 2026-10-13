@@ -812,3 +812,6 @@ export function buildPartnerReport({plan, reconciliation, partnerId = null, form
     contentType: format === 'json' ? 'application/json; charset=utf-8' : 'text/csv; charset=utf-8',
     content, bytes: content.length, sha256: sourceHash(content), data};
 }
+
+// The invoice deposit register uses the same native StrKey validation as its source projector.
+export {decodeAccount as normalizeSettlementAccount};

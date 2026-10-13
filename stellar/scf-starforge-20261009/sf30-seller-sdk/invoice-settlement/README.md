@@ -274,3 +274,7 @@ The implementation modules in this directory are provided under their MIT notice
 | ethers | 6.13.5, selected through the retained original listener lock | Original installed decoder and complete dependency graph, with all included package notices. |
 
 The operator executes its own source reader and the original ethers decoder. The retained contract source supplies the deployment, ABI and transfer semantics used to interpret actual chain observations.
+
+## Review native Horizon deposits
+
+The [Horizon invoice review](HORIZON_INVOICES.md) joins retained original payment observations to explicit invoice account/memo instructions. Open **Horizon deposits**, retain the original register, inspect complete captured movements and save individual approved links through the existing decision writer. The workflow carries full original sources and review choices through complete workspace receiving. It leaves external company ledgers with their original application owner.

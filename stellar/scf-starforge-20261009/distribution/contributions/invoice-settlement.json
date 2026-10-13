@@ -18,7 +18,8 @@
     "./seller/invoice-settlement/native": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/native.mjs",
     "./seller/invoice-settlement/events": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/events.mjs",
     "./seller/invoice-settlement/runtime": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/runtime.mjs",
-    "./applications/invoice-settlement": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/application.mjs"
+    "./applications/invoice-settlement": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/application.mjs",
+    "./seller/invoice-settlement/horizon-invoices": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/horizon-invoices.mjs"
   },
   "featurePeers": {
     "invoice-ethers": {
@@ -53,6 +54,7 @@
     "stellar/scf-starforge-20261009/distribution/source-selection.mjs",
     "stellar/scf-starforge-20261009/distribution/specification.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/APPLICATIONS.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/HORIZON_INVOICES.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/README.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/application-provider.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/application.mjs",
@@ -65,6 +67,7 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/examples/connections.example.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/examples/invoices.csv",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/examples/programme.template.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/horizon-invoices.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/lossless-json.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/native.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/operator.mjs",
