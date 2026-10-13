@@ -29,7 +29,7 @@ Download links are private, temporary bearer links. They expire after two minute
 | `README.txt` | Receiving instructions and original invoice/reference/state/revision. |
 | `MANIFEST.json` | Original owner, invoice and revision plus byte length, SHA-256 and content type of every other member. |
 
-All HTML text is escaped. Its local links point to the complete files in the same extracted folder. The document uses an industrial grayscale layout, narrow-screen wrapping and horizontally scrollable detail tables. Expand the original request, receipt and activity when reviewing their full content. Use the browser's normal Print command for a printed invoice.
+All HTML text is escaped. Its local links point to the complete files in the same extracted folder. The document uses an industrial grayscale layout, narrow-screen wrapping and horizontally scrollable detail tables. Expand the original request, receipt and activity when reviewing their full content. Use the browser's normal Print command for a complete printed invoice. The included local, hash-authorized print handler opens the full frozen request, receipt verification and activity before printing, then restores their prior on-screen expanded/collapsed state. It makes no network request.
 
 The archive retains the existing public invoice/history projection. Private operator credentials, buyer authorization bytes, other invoices and the merchant database remain in their existing private operating records.
 

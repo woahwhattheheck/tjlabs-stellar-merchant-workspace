@@ -50,6 +50,12 @@ export async function receiveInvoiceDeliveries({browser,page,opening,scenario,re
    assert.equal(await offline.locator('details').last().locator('tbody tr').count(),record.history.length);
    assert(await offline.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
    await capture(offline,id+'-customer-desktop.png');
+   const printState=await offline.locator('details').evaluateAll(items=>items.map(e=>e.open));
+   await offline.evaluate(()=>dispatchEvent(new Event('beforeprint')));
+   assert(await offline.locator('details').evaluateAll(items=>items.every(e=>e.open)));
+   await offline.emulateMedia({media:'print'});await capture(offline,id+'-customer-print.png');
+   await offline.emulateMedia({media:'screen'});await offline.evaluate(()=>dispatchEvent(new Event('afterprint')));
+   assert.deepEqual(await offline.locator('details').evaluateAll(items=>items.map(e=>e.open)),printState);
    for(const name of ['invoice.json','MANIFEST.json','payment-request.json',preview.result.member]){
     const expectation=name==='MANIFEST.json'?files.find(v=>v.path===join(opened,name)):manifest.members.find(m=>m.name===name);
     assert(expectation);const event=offline.waitForEvent('download');

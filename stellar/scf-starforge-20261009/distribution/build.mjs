@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { resolve, posix } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { openGitSource, MAX_SOURCE_FILE_BYTES, MAX_SOURCE_BYTES } from './git-source.mjs';
-import { createBrowserAssetIndex } from './browser-assets.mjs';
+import { browserAssetDeclarations, createBrowserAssetIndex } from './browser-assets.mjs';
 import { runtimeNodeRequirement } from './runtime-profile.mjs';
 import { productPackageMetadata } from './product-package.mjs';
 import {validateManagedSourceManifest, MAX_MANAGED_SOURCE_BYTES} from './managed-source.mjs';
@@ -60,8 +60,12 @@ const { SourceTextModule, createContext } = require('node:vm');
 const sources = JSON.parse(readFileSync(0, 'utf8'));
 const context = createContext();
 const result = sources.map(([path, source]) => {
-  const module = new SourceTextModule(source, { identifier: path, context });
-  return [path, [...module.dependencySpecifiers]];
+  try {
+    const module = new SourceTextModule(source, { identifier: path, context });
+    return [path, [...module.dependencySpecifiers], null];
+  } catch (error) {
+    return [path, [], String(error?.message ?? error)];
+  }
 });
 process.stdout.write(JSON.stringify(result));
 `;
@@ -167,9 +171,10 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   // it; it does not add unrelated support files to the selected archive.
   const declaredRuntime = new Set(base.supportFiles ?? []);
   const originalInputs = new Set([...specificationPaths, product.readme]);
+  const browserInputs = new Set();
   const selectionIncludes = path => !recipe || !(
     path.startsWith(contributionDirectory + '/') || path.startsWith(sourceSelectionDirectory + '/')) ||
-    originalInputs.has(path);
+    originalInputs.has(path) || browserInputs.has(path);
   // A selected archive carries only its original declarations, even when its
   // complete distribution component contains other product contribution files.
   // Exact support/data files may retain original hidden/test/fixture paths and
@@ -210,55 +215,143 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
     ...(recipe ? { sourceSelection: recipe.id } : {}) });
   loadSources(selected);
   for (const [path, format] of Object.entries(sourceFormats)) parseOriginalSourceData(path, format, readSource(path));
-  // The same manifests drive the actual servers. Retain every mapped source
-  // and resolve browser imports in its served URL context, not by inventing a
-  // missing file beside the importer. Ordinary Node imports keep filesystem
-  // resolution, and physical files never lose precedence or exclusion checks.
-  const browserAssets = createBrowserAssetIndex(spec.browserAssets ?? [], path => {
-    if (!names.has(path)) throw new TypeError('Missing packaged browser entry: ' + path);
-    return readSource(path);
-  });
-  const missingModules = [];
-  const enqueue = (target, importer, discovered, executable = true) => {
-    if (moduleTemplates.has(target))
-      throw new TypeError('Executable source cannot import a module template: ' + importer + ' -> ' + target);
-    if (executable && dataSources.has(target))
-      throw new TypeError('Executable source cannot import JSON data: ' + importer + ' -> ' + target);
-    if (names.has(target)) return;
-    const item = byPath.get(target);
-    if (!item || excluded.has(target) || !selectionIncludes(target) || !isRuntimeFile(target, explicitRuntime.has(target) || declaredRuntime.has(target), sourceFormats[target], explicitSources.has(target))) {
-      missingModules.push(importer + ' -> ' + target);
-      return;
+  // Keep a dependency-only index of source-owned browser declarations. An
+  // unselected contribution does not enable commands, providers, components or
+  // dependencies merely because one of its servers is included elsewhere.
+  const browserDonors = [];
+  const selectedContributionSet = new Set(selectedPaths);
+  for (const [path, bytes] of source.readEntries(allContributionPaths.map(path => byPath.get(path)))) {
+    let data;
+    try { data = JSON.parse(bytes); }
+    catch (error) {
+      // Selected contributions were already validated above. An unrelated
+      // malformed document cannot become a borrowed dependency declaration.
+      if (selectedContributionSet.has(path)) throw error;
+      continue;
     }
-    discovered.push(item);
-    names.add(target);
-    selected.push(item);
-  };
-  const mapped = [];
-  for (const target of browserAssets.files) enqueue(target, 'browser asset manifest', mapped, false);
-  if (mapped.length) loadSources(mapped);
-  // Parse actual static ESM only, without executing application source. Shared
-  // helpers discovered here travel with their importer. Dynamic application
-  // inputs remain outside this maintained component/support inventory.
-  let frontier = sources;
-  while (frontier.size) {
-    const discovered = [];
-    const executableSources = [...frontier.keys()]
-      .filter(path => !dataSources.has(path) && /\.(?:mjs|js)$/.test(path)).map(path => byPath.get(path));
-    for (const [path, requests] of staticModuleRequests(source.readEntries(executableSources))) {
-      if (moduleTemplates.has(path)) continue;
-      for (const request of requests) {
-        const served = browserAssets.resolve(path, request);
-        if (request.startsWith('.')) {
-          const target = posix.normalize(posix.join(posix.dirname(path), request));
-          if (byPath.has(target) || served === null) enqueue(target, path, discovered);
-        }
-        for (const target of served ?? []) enqueue(target, path + ' -> ' + request, discovered);
-      }
-    }
-    frontier = discovered.length ? loadSources(discovered) : new Map();
+    if (data?.browserAssets !== undefined) browserDonors.push({ path, data });
   }
-  if (missingModules.length) throw new TypeError('Unpackaged relative modules:\n' + missingModules.join('\n'));
+  const declarations = browserAssetDeclarations({ base, contributions: browserDonors });
+  const initialSelected = [...selected], initialNames = new Set(names);
+  const initialModules = selected.filter(item => /\.(?:mjs|js)$/.test(item.path)).map(item => item.path);
+  const originalExplicitRuntime = new Set(explicitRuntime);
+  const requestsByPath = new Map(), parseErrors = new Map(), borrowedDeclarations = new Map();
+  let browserAssets, problems = [], previousNames = new Set(names);
+  const seenSelections = new Set([JSON.stringify([...names].sort())]);
+  const enqueue = (target, importer, executable = true) => {
+    if (moduleTemplates.has(target) && executable) {
+      problems.push('Executable source cannot import a module template: ' + importer + ' -> ' + target);
+      return false;
+    }
+    if (executable && dataSources.has(target)) {
+      problems.push('Executable source cannot import JSON data: ' + importer + ' -> ' + target);
+      return false;
+    }
+    if (names.has(target)) return true;
+    const item = byPath.get(target);
+    if (!item || excluded.has(target) || !selectionIncludes(target) ||
+        !isRuntimeFile(target, explicitRuntime.has(target) || declaredRuntime.has(target),
+          sourceFormats[target], explicitSources.has(target))) {
+      problems.push('Unpackaged source: ' + importer + ' -> ' + target);
+      return false;
+    }
+    names.add(target);
+    return true;
+  };
+  const selectedBrowser = new Map((spec.browserAssets ?? []).map(entry => [entry.server, entry]));
+  const browserServers = [...new Set([...selectedBrowser.keys(), ...declarations.servers])];
+  while (true) {
+    // A newly reached server can give an initial module a browser-only context.
+    // Recompute discoveries from the immutable selection instead of preserving
+    // earlier provisional Node edges, their servers or their donor declarations.
+    names.clear(); for (const path of initialNames) names.add(path);
+    browserInputs.clear(); borrowedDeclarations.clear(); problems = [];
+    explicitRuntime.clear(); for (const path of originalExplicitRuntime) explicitRuntime.add(path);
+    browserAssets = createBrowserAssetIndex([], readSource);
+    for (const server of browserServers) {
+      if (!previousNames.has(server)) continue;
+      try {
+        const rows = declarations.forServer(server);
+        const selectedRegistration = selectedBrowser.get(server);
+        if (selectedRegistration && rows.some(row => row.manifest !== selectedRegistration.manifest))
+          throw new TypeError('Conflicting browser asset declarations for ' + server);
+        const registration = selectedRegistration ?? rows[0];
+        if (!registration) continue;
+        let ready = true;
+        for (const row of rows) {
+          browserInputs.add(row.source); explicitRuntime.add(row.source);
+          if (!enqueue(row.source, server + ' browser declaration', false)) ready = false;
+        }
+        explicitRuntime.add(registration.manifest);
+        if (!enqueue(registration.manifest, server + ' browser manifest', false)) ready = false;
+        if (!ready) continue;
+        browserAssets.register(registration);
+        for (const row of rows) {
+          const uses = borrowedDeclarations.get(row.source) ?? [];
+          uses.push({ server: row.server, manifest: row.manifest });
+          borrowedDeclarations.set(row.source, uses);
+        }
+      } catch (error) { problems.push(error.message); }
+    }
+    for (const target of browserAssets.files) enqueue(target, 'browser asset manifest', false);
+    while (true) {
+      const beforeFiles = names.size;
+      const unparsed = [...names].filter(path => !requestsByPath.has(path) &&
+        !moduleTemplates.has(path) && !dataSources.has(path) && /\.(?:mjs|js)$/.test(path));
+      for (const [path, requests, error] of staticModuleRequests(
+        source.readEntries(unparsed.map(path => byPath.get(path))))) {
+        requestsByPath.set(path, requests);
+        if (error) parseErrors.set(path, error);
+      }
+      // Revisit every original request in every currently active serving
+      // context, including modules parsed before this server was discovered.
+      for (const path of names) {
+        if (!browserAssets.hasContext(path)) continue;
+        for (const request of requestsByPath.get(path) ?? []) {
+          try {
+            for (const target of browserAssets.resolve(path, request) ?? [])
+              enqueue(target, path + ' -> ' + request);
+          } catch (error) { problems.push(error.message); }
+        }
+      }
+      // Native entrypoints and unmapped initial modules retain filesystem
+      // semantics. A module genuinely reached through native imports keeps
+      // those edges even if the same physical bytes are also browser assets.
+      const nativeQueue = [...new Set([...required,
+        ...initialModules.filter(path => !browserAssets.hasContext(path))])];
+      const nativeSeen = new Set();
+      for (let index = 0; index < nativeQueue.length; index++) {
+        const path = nativeQueue[index];
+        if (nativeSeen.has(path)) continue;
+        nativeSeen.add(path);
+        if (moduleTemplates.has(path) || dataSources.has(path)) continue;
+        for (const request of requestsByPath.get(path) ?? []) {
+          if (!request.startsWith('.')) continue;
+          const target = posix.normalize(posix.join(posix.dirname(path), request));
+          if (enqueue(target, path)) nativeQueue.push(target);
+        }
+      }
+      if (names.size === beforeFiles) break;
+    }
+    const selectionKey = JSON.stringify([...names].sort());
+    if (names.size === previousNames.size && [...names].every(path => previousNames.has(path))) break;
+    if (seenSelections.has(selectionKey)) throw Object.assign(
+      new TypeError('Browser and native source reachability does not converge; give the conflicting entrypoint an explicit source/browser declaration.'),
+      { code: 'DISTRIBUTION_SOURCE_CONTEXT_CYCLE' });
+    seenSelections.add(selectionKey); previousNames = new Set(names);
+  }
+  // Syntax errors from a provisional filesystem interpretation must not poison
+  // a later browser-only selection. Report only the converged original files.
+  for (const path of names) if (parseErrors.has(path))
+    problems.push('Invalid packaged module: ' + path + ': ' + parseErrors.get(path));
+  if (problems.length) {
+    const error = new TypeError('Incomplete original source/browser closure:\n' + [...new Set(problems)].join('\n'));
+    error.code = 'DISTRIBUTION_SOURCE_CLOSURE_INCOMPLETE';
+    throw error;
+  }
+  const discovered = [...names].filter(path => !initialNames.has(path)).map(path => byPath.get(path));
+  selected.splice(0, selected.length, ...initialSelected, ...discovered);
+  loadSources(discovered);
   // Runtime drivers follow the exact source commit, including new production
   // dependencies such as the PostgreSQL cursor. Development fixtures stay out.
   const runtimeDependencies = Object.create(null), runtimePackageSources = {}, runtimeEngines = {};
@@ -318,6 +411,9 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
     distributionInputs: specificationPaths.map(path => ({ path, gitBlob: byPath.get(path).blob,
       sha256: sources.get(path).sha256, bytes: sources.get(path).bytes })),
     distributionContributions: distribution.contributions.map(({ id, path }) => ({ id, path })),
+    browserAssetDeclarations: [...borrowedDeclarations].map(([path, registrations]) => ({ path,
+      gitBlob: byPath.get(path).blob, sha256: sources.get(path).sha256,
+      bytes: sources.get(path).bytes, registrations })),
     files: selected.map(item => ({ path: item.path, packagePath: 'source/' + item.path,
       gitBlob: item.blob, sha256: sources.get(item.path).sha256, bytes: sources.get(item.path).bytes, mode: item.mode })),
     packageFiles: { 'package.json': digest(metadataBytes), 'README.md': digest(readme), 'LICENSE': digest(license) },

@@ -1,6 +1,7 @@
 import {currentStaffContext,staffDeskStorageKey,assertStaffRequestActor} from './staff-session.mjs';
 import {mountEarlierStaffDesk} from './staff-desk-recovery.mjs';
 import {statementSetupPanel,statementSetupComparison,statementSetupSettings,statementSetupLink,sameSetupValue} from './operations_statement_profiles.mjs';
+import {statementAllocationBasis,sameStatementAllocationBasis,statementAllocationContext,statementAllocationSuggestedAmount,prepareStatementAllocations,applyStatementAllocations,statementAllocationPanel,statementAllocationSummary} from './operations_statement_allocations.mjs';
 import {statementMatchingRows,statementSelection,statementBatchPanel,prepareStatementBatch,applyStatementBatch,undoStatementBatch} from './operations_statement_batch.mjs';
 // Statement source mapping and reviewed cash receiving in the existing Operations case.
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -72,8 +73,8 @@ function checkedHeaders(fields){
 function base64(buffer){let raw='';const bytes=new Uint8Array(buffer);for(let i=0;i<bytes.length;i+=8192)raw+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(raw);}
 function sourceText(value){const raw=atob(value),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);return new TextDecoder('utf-8',{fatal:true}).decode(bytes);}
 function download(value,filename,type='application/json'){
-  const raw=typeof value==='string'?value:json(value)+'\n';
-  const url=URL.createObjectURL(new Blob([raw],{type})),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);
+  const raw=value instanceof Blob?value:typeof value==='string'?value:json(value)+'\n';
+  const url=URL.createObjectURL(raw instanceof Blob?raw:new Blob([raw],{type})),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);
 }
 function field(title,name,value='',config={}){
   const attrs=' name="'+esc(name)+'"'+(config.required?' required':'')+(config.attrs?' '+config.attrs:'');
@@ -117,7 +118,7 @@ function draftStore(name='sf47-statement-drafts'){
 const statementStores=new Map();
 function statementStore(context){const name=staffDeskStorageKey('sf47-statement-drafts',context);if(!statementStores.has(name))statementStores.set(name,draftStore(name));return statementStores.get(name);}
 
-export function mountStatements({container,current,saveApi,session,mutationId,recordingActor,onCase,onCash,staffContext=currentStaffContext()}){
+export function mountStatements({container,current,api,saveApi,session,mutationId,recordingActor,onCase,onCash,staffContext=currentStaffContext()}){
   const pinnedContext=staffContext?{...staffContext}:null,storeDraft=statementStore(pinnedContext);
   const root=document.createElement('section');root.className='statement-desk';root.setAttribute('aria-label','Statement receiving');container.replaceChildren(root);
   if(!document.querySelector('link[data-statement-style]')){
@@ -125,12 +126,13 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
   }
   if(!document.querySelector('link[data-statement-setup-style]')){const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_statement_profiles.css';link.dataset.statementSetupStyle='true';document.head.append(link);}
   if(!document.querySelector('link[data-statement-batch-style]')){const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_statement_batch.css';link.dataset.statementBatchStyle='true';document.head.append(link);}
+  if(!document.querySelector('link[data-statement-allocation-style]')){const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_statement_allocations.css';link.dataset.statementAllocationStyle='true';document.head.append(link);}
   let active=true,busy=false,hostBusy=false,loading=true,caseValue=current,persistQueue=Promise.resolve(),persistTimer=null;
   const prefix='/api/operations/'+encodeURIComponent(current.program.id);
   const available=()=>active&&root.isConnected;
   const $=selector=>root.querySelector(selector);
   const defaults=()=>({source:null,accountId:'',accountLabel:'',currency:'USD',format:{delimiter:',',decimalMark:'.',groupMark:'',dateFormat:'YYYY-MM-DD',amountMode:'SIGNED',positiveDirection:'IN'},columns:{date:'',reference:'',description:'',amount:'',debit:'',credit:''},defaultCategory:'OTHER',decisions:[]});
-  const values={inputs:defaults(),headers:[],inspection:null,nativeScalesText:'USD: 2',optionsError:'',editRevision:0,preview:null,dirty:true,confirmed:false,page:0,status:'ALL',query:'',appliedQuery:'',pending:null,accepted:null,setupPending:null,setupChoice:'',setupName:'',setupNote:'',inflight:null,error:'',notice:'',allocationRow:null,allocationDraft:[],batchSelection:[],batchChange:{mode:'CLASSIFY',category:'',tranche:'KEEP',reason:''},batchProposal:null,batchUndo:null,batchReviewPage:0};
+  const values={inputs:defaults(),headers:[],inspection:null,nativeScalesText:'USD: 2',optionsError:'',editRevision:0,preview:null,dirty:true,confirmed:false,page:0,status:'ALL',query:'',appliedQuery:'',pending:null,accepted:null,setupPending:null,setupChoice:'',setupName:'',setupNote:'',inflight:null,error:'',notice:'',allocationRow:null,allocationWorks:{},batchSelection:[],batchChange:{mode:'CLASSIFY',category:'',tranche:'KEEP',reason:''},batchProposal:null,batchUndo:null,batchReviewPage:0};
   if(!Object.hasOwn(session,'appliedQuery'))session.appliedQuery=session.query||'';
   for(const [key,value] of Object.entries(values))if(!Object.hasOwn(session,key))session[key]=value;
   session.currentCaseVersion=current.program.version;
@@ -139,7 +141,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
   const locked=()=>loading||busy||hostBusy||!!session.inflight||!!session.pending||!!session.accepted||!!session.setupPending;
   const editable=()=>!locked()&&caseValue.program.state==='OPEN';
   const rowDecision=number=>session.inputs.decisions.find(row=>row.rowNumber===number);
-  function snapshot(){return {schema:'sf47.statement-draft.v1',caseId:current.program.id,inputs:clone(session.inputs),headers:clone(session.headers),inspection:clone(session.inspection),nativeScalesText:session.nativeScalesText,preview:clone(session.preview),dirty:session.dirty,pending:clone(session.pending),accepted:clone(session.accepted),setupPending:clone(session.setupPending),setupChoice:session.setupChoice,setupName:session.setupName,setupNote:session.setupNote,originalInputHandoff:clone(session.originalInputHandoff||null),batchSelection:clone(session.batchSelection),batchChange:clone(session.batchChange),batchUndo:clone(session.batchUndo)};}
+  function snapshot(){return {schema:'sf47.statement-draft.v1',caseId:current.program.id,inputs:clone(session.inputs),headers:clone(session.headers),inspection:clone(session.inspection),nativeScalesText:session.nativeScalesText,preview:clone(session.preview),dirty:session.dirty,pending:clone(session.pending),accepted:clone(session.accepted),setupPending:clone(session.setupPending),setupChoice:session.setupChoice,setupName:session.setupName,setupNote:session.setupNote,originalInputHandoff:clone(session.originalInputHandoff||null),batchSelection:clone(session.batchSelection),batchChange:clone(session.batchChange),batchUndo:clone(session.batchUndo),allocationRow:session.allocationRow,allocationWorks:clone(session.allocationWorks)};}
   async function persist(critical=false){
     const value=snapshot();
     persistQueue=persistQueue.catch(()=>{}).then(()=>storeDraft(current.program.id,value));
@@ -168,7 +170,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if(!row||!sameSetupValue(statementSetupSettings(session.inputs),row.settings)){delete session.inputs.statementSetup;session.notice='The account or interpretation changed. Save this mapping as a new setup edition to retain its reusable choice.';}
   }
   function clearBatch(){session.batchSelection=[];session.batchProposal=null;session.batchUndo=null;session.batchReviewPage=0;}
-  function changed(keepBatch=false){if(!keepBatch)clearBatch();session.editRevision++;session.dirty=true;session.confirmed=false;session.error='';schedulePersist();if(!keepBatch)redrawBatch();controls();}
+  function changed(keepBatch=false){clearAllocationProposals();if(!keepBatch)clearBatch();session.editRevision++;session.dirty=true;session.confirmed=false;session.error='';schedulePersist();if(!keepBatch)redrawBatch();redrawAllocations();controls();}
   function setDecision(number,patch){
     let decision=rowDecision(number);
     if(!decision){decision={rowNumber:number,action:'IMPORT'};session.inputs.decisions.push(decision);}
@@ -192,7 +194,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
   }
   function resetInterpretation(){
     session.inputs.decisions=[];session.preview=null;session.inspection=null;session.page=0;
-    session.allocationRow=null;session.allocationDraft=[];delete session.inputs.statementId;
+    clearAllocations();delete session.inputs.statementId;
     delete session.inputs.openingBalance;delete session.inputs.closingBalance;changed();
   }
   function chooseFormat(format){
@@ -292,7 +294,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     const result=await saveApi(prefix+'/statement-preview',{expectedVersion,inputs});
     if(result.caseId!==current.program.id||result.expectedVersion!==expectedVersion||result.schema!=='stellar-forge.sf47-statements.v1'||!Array.isArray(result.rows))throw new Error('The preview belongs to another case or version. Refresh the case and preview again.');
     if(session.editRevision!==revision||session.currentCaseVersion!==expectedVersion)return;
-    clearBatch();session.preview=result;session.dirty=false;session.confirmed=false;session.page=0;session.allocationRow=null;session.allocationDraft=[];
+    clearBatch();clearAllocationProposals();session.preview=result;session.dirty=false;session.confirmed=false;session.page=0;
     session.notice='Reviewed '+result.rows.length+' source rows against the current cash records.';
     await persist();
   }
@@ -300,7 +302,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     const next=await saveApi(prefix);
     if(next.program.id!==current.program.id)throw new Error('The refreshed case has another identity.');
     caseValue=next;session.currentCaseVersion=next.program.version;
-    if(session.preview?.expectedVersion!==next.program.version){clearBatch();session.dirty=true;session.confirmed=false;}
+    if(session.preview?.expectedVersion!==next.program.version){clearBatch();clearAllocationProposals();session.dirty=true;session.confirmed=false;}
     return next;
   }
   async function finishAccepted(){
@@ -313,7 +315,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if((result.sourceIds||[]).some(id=>!sourceIds.has(id)))throw new Error('A retained statement source is missing from the case readback.');
     const original=next.sources.find(row=>row.id===result.recordId);
     if(!original||original.sha256!==result.statementSha256)throw new Error('The saved statement source differs from the import receipt.');
-    clearBatch();session.lastReceipt=clone(result);session.accepted=null;session.pending=null;session.preview=null;session.dirty=true;session.confirmed=false;
+    clearBatch();clearAllocations();session.lastReceipt=clone(result);session.accepted=null;session.pending=null;session.preview=null;session.dirty=true;session.confirmed=false;
     session.notice='Imported '+(result.cashIds?.length||0)+' cash movements; '+(result.existingCashIds?.length||0)+' existing records reconciled. Case version '+result.version+'.';
     await persist();
     if(available())await onCase(next,result);
@@ -539,19 +541,93 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
         ];
       })):'<p class="statement-empty">No statement rows match this filter.</p>');
   }
+  function allocationWork(){return session.allocationWorks[String(session.allocationRow)]||null;}
+  function clearAllocationProposals(){for(const work of Object.values(session.allocationWorks))work.proposal=null;}
+  function clearAllocations(){session.allocationRow=null;session.allocationWorks={};}
+  function allocationReady(){
+    if(caseValue.program.state!=='OPEN'||session.pending||session.accepted||session.setupPending||session.dirty||!session.preview||session.preview.expectedVersion!==caseValue.program.version)
+      throw new Error('Preview this current open case and finish its retained request before reviewing allocations.');
+    const work=allocationWork();
+    if(!work||!sameStatementAllocationBasis(work.basis,statementAllocationBasis(session.preview,session.allocationRow)))
+      throw new Error('The saved working copy belongs to an earlier row interpretation. Download it or start from the current preview.');
+    return work;
+  }
+  function newAllocationWork(number){
+    const row=session.preview?.rows.find(item=>item.rowNumber===number);
+    if(!row||row.status==='EXISTING')throw new Error('Choose a current source row that has not already been recorded.');
+    return {rowNumber:number,basis:statementAllocationBasis(session.preview,number),
+      allocations:clone(rowDecision(number)?.allocations||row.allocations||[]),reason:'',query:'',appliedQuery:'',filter:'OPEN',page:0,inspectId:'',proposal:null};
+  }
   function allocationPage(){
     if(session.allocationRow===null)return '';
-    const row=session.preview?.rows.find(row=>row.rowNumber===session.allocationRow);if(!row)return '';
-    const invoices=(caseValue.records.invoices||[]).filter(invoice=>invoice.state!=='VOID').map(invoice=>{
-      const supplier=(caseValue.records.contributors||[]).find(person=>person.id===invoice.contributorId);
-      return [invoice.id,(supplier?.name||'Supplier')+' · '+invoice.number+' · '+invoice.totalUsd+' USD'];
-    });
-    return '<section class="statement-panel" aria-label="Invoice allocations"><h4>Invoice allocations — source row '+esc(row.rowNumber)+'</h4><p>'+esc(row.reference)+' · '+amount(row.usdValue,'USD')+'</p>'+
-      '<form data-statement-allocations>'+session.allocationDraft.map((allocation,i)=>'<div class="statement-fields">'+
-        field('Retained supplier invoice','invoice.'+i,allocation.invoiceId||'',{options:[['','Choose an invoice'],...invoices],required:true})+
-        field('Allocated USD amount','amount.'+i,allocation.amountUsd||'',{required:true,attrs:'inputmode="decimal"'})+
-        '<div class="statement-actions">'+button('Remove allocation','remove-allocation',false,'data-index="'+i+'"')+'</div></div>').join('')+
-      '<div class="statement-actions">'+button('Add allocation','add-allocation',session.allocationDraft.length>=200)+'<button type="submit">Apply allocations to review</button>'+button('Cancel','close-allocations')+'</div></form></section>';
+    const work=allocationWork();if(!work)return '';
+    const row=session.preview?.rows.find(item=>item.rowNumber===session.allocationRow);
+    if(!row)return '<section class="statement-panel statement-allocation-panel"><h4>Retained allocation working copy</h4><p>This source row is absent from the current preview. Its working copy is retained.</p>'+button('Download allocation working copy','allocation-export',false,'data-statement-recovery="true"')+button('Close allocation editor','close-allocations')+'</section>';
+    const basisMatches=sameStatementAllocationBasis(work.basis,statementAllocationBasis(session.preview,session.allocationRow));
+    const context=statementAllocationContext(caseValue,session.preview,session.inputs,session.allocationRow);
+    const stale=session.dirty||session.preview.expectedVersion!==caseValue.program.version||!basisMatches||row.status==='EXISTING';
+    const prefix=!basisMatches?'<p class="statement-notice">This working copy retains an earlier original row interpretation. Download it before replacing its allocations.</p>'+button('Start from current preview','allocation-restart',!editable()||session.dirty):'';
+    return statementAllocationPanel(context,work,{editable:editable(),stale,canDownload:typeof api==='function'}).replace('<h4>',()=>prefix+'<h4>');
+  }
+  function redrawAllocations(){
+    const panel=$('.statement-allocation-panel');
+    if(panel){panel.outerHTML=allocationPage();controls();}
+  }
+  function restoreAllocationWorks(saved){
+    const result={};
+    if(saved?.allocationWorks&&typeof saved.allocationWorks==='object'&&!Array.isArray(saved.allocationWorks)){
+      for(const [key,value] of Object.entries(saved.allocationWorks).slice(0,5000)){
+        if(!value||!Number.isInteger(value.rowNumber)||String(value.rowNumber)!==key||!value.basis||!Array.isArray(value.allocations)||value.allocations.length>200)continue;
+        if(value.allocations.some(row=>!row||typeof row.invoiceId!=='string'||row.invoiceId.length>300||typeof row.amountUsd!=='string'||row.amountUsd.length>100))continue;
+        result[key]={rowNumber:value.rowNumber,basis:clone(value.basis),allocations:clone(value.allocations),reason:String(value.reason||'').slice(0,4000),
+          query:String(value.query||'').slice(0,1000),appliedQuery:String(value.appliedQuery||'').slice(0,1000),filter:['OPEN','MATCHES','ALL'].includes(value.filter)?value.filter:'OPEN',
+          page:Number.isInteger(value.page)&&value.page>=0?value.page:0,inspectId:String(value.inspectId||''),proposal:null};
+      }
+    }
+    session.allocationWorks=result;session.allocationRow=Object.hasOwn(result,String(saved?.allocationRow))?saved.allocationRow:null;
+  }
+  async function allocationAction(action,target){
+    const work=allocationWork();
+    if(action==='allocation-export'){download({schema:'sf47.statement-allocation-working-copy.v1',caseId:current.program.id,work:clone(work)},'statement-allocation-working-copy.json');return;}
+    if(action==='allocation-review-export'){download(work?.proposal,'statement-allocation-review.json');return;}
+    if(action==='allocation-source'){
+      const id=target.dataset.source,source=caseValue.sources.find(item=>item.id===id);
+      if(!source||typeof api!=='function')throw new Error('The original invoice source is unavailable in this case.');
+      const response=await api(prefix+'/sources/'+encodeURIComponent(id),undefined,{download:true});
+      download(await response.blob(),source.filename||id);return;
+    }
+    if(!work)throw new Error('Open an original statement row before allocating.');
+    if(action==='allocation-inspect'){work.inspectId=target.dataset.invoice;return;}
+    if(action==='allocation-filter'){work.appliedQuery=work.query;work.page=0;return;}
+    if(action==='allocation-previous'){work.page=Math.max(0,work.page-1);return;}
+    if(action==='allocation-next'){work.page++;return;}
+    if(action==='allocation-restart'){
+      if(session.dirty||caseValue.program.state!=='OPEN'||session.pending||session.accepted||session.setupPending)throw new Error('Preview the current open case before starting its allocations.');
+      download({schema:'sf47.statement-allocation-working-copy.v1',caseId:current.program.id,work:clone(work)},'statement-previous-allocation-working-copy.json');
+      session.allocationWorks[String(session.allocationRow)]=newAllocationWork(session.allocationRow);return;
+    }
+    allocationReady();
+    const context=statementAllocationContext(caseValue,session.preview,session.inputs,session.allocationRow);
+    if(action==='allocation-add'){
+      const id=target.dataset.invoice;
+      if(!context.invoices.some(item=>item.id===id)||work.allocations.some(item=>item.invoiceId===id)||work.allocations.length>=200)throw new Error('Choose a retained invoice once, up to 200 allocations.');
+      work.allocations.push({invoiceId:id,amountUsd:''});work.proposal=null;
+    }else if(action==='allocation-remove'){
+      const index=Number(target.dataset.index);
+      if(!Number.isInteger(index)||index<0||index>=work.allocations.length)throw new Error('Choose an existing allocation.');
+      work.allocations.splice(index,1);work.proposal=null;
+    }else if(action==='allocation-remaining'){
+      const item=work.allocations.find(row=>row.invoiceId===target.dataset.invoice);if(!item)throw new Error('Select this invoice first.');
+      item.amountUsd=statementAllocationSuggestedAmount(context,work.allocations,item.invoiceId);work.proposal=null;
+    }else if(action==='allocation-review'){
+      work.proposal=prepareStatementAllocations(caseValue,session.preview,session.inputs,session.allocationRow,work.allocations,work.reason);
+    }else if(action==='allocation-apply'){
+      const proposal=work.proposal;
+      session.inputs.decisions=applyStatementAllocations(caseValue,session.preview,session.inputs,proposal);
+      delete session.allocationWorks[String(session.allocationRow)];session.allocationRow=null;changed();
+      session.notice='Applied the reviewed invoice allocations and reason to this draft. Preview updated decisions before importing the original cash movement.';
+      await persist();
+    }
   }
   function reviewPage(){
     const preview=session.preview;if(!preview)return '';
@@ -581,7 +657,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if(source()&&JSON.stringify(session.inputs)!==JSON.stringify(incoming))download(snapshot(),'statement-before-original-source.json');
     session.inputs=incoming;session.headers=headers;session.inspection=null;session.nativeScalesText=scaleText(incoming.statementOptions?.currencyScales);
     clearBatch();session.batchChange={mode:'CLASSIFY',category:'',tranche:'KEEP',reason:''};session.optionsError='';session.preview=null;session.dirty=true;session.confirmed=false;session.editRevision++;
-    session.page=0;session.status='ALL';session.query='';session.appliedQuery='';session.allocationRow=null;session.allocationDraft=[];
+    session.page=0;session.status='ALL';session.query='';session.appliedQuery='';clearAllocations();
     session.originalInputHandoff=null;
     await persist();
     if(native())await inspect();
@@ -612,8 +688,20 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     controls();
   }
   function captureAllocations(form){
-    const data=new FormData(form);
-    session.allocationDraft=session.allocationDraft.map((row,i)=>({invoiceId:String(data.get('invoice.'+i)||''),amountUsd:String(data.get('amount.'+i)||'').trim()}));
+    const work=allocationWork();if(!work)return;
+    const data=new FormData(form),old=JSON.stringify({allocations:work.allocations,reason:work.reason});
+    work.query=String(data.get('allocationQuery')??work.query);work.filter=String(data.get('allocationFilter')??work.filter);
+    // Disabled stale controls are absent from FormData; retain those exact working values.
+    work.allocations=work.allocations.map((row,i)=>({invoiceId:row.invoiceId,amountUsd:data.has('amount.'+i)?String(data.get('amount.'+i)||'').trim():row.amountUsd}));
+    if(data.has('allocationReason'))work.reason=String(data.get('allocationReason')||'');
+    if(old!==JSON.stringify({allocations:work.allocations,reason:work.reason})){work.proposal=null;$('.statement-allocation-proposal')?.remove();}
+    const row=session.preview?.rows.find(item=>item.rowNumber===session.allocationRow);
+    if(row){
+      const summary=statementAllocationSummary({usdValue:row.usdValue},work.allocations);
+      const total=$('[data-allocation-total]'),remaining=$('[data-allocation-remaining]');
+      if(total)total.textContent=summary.total;if(remaining)remaining.textContent=summary.remaining;
+    }
+    schedulePersist();
   }
   async function importDraft(file){
     if(!file)return;
@@ -636,7 +724,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     session.inputs=editingInput(original?.data.inputs||saved.inputs);session.pending=clone(saved.pending||null);session.accepted=clone(saved.accepted||null);
     session.inspection=usableInspection(saved.inspection,session.inputs,current.program.id)?clone(saved.inspection):null;
     session.nativeScalesText=original?scaleText(session.inputs.statementOptions?.currencyScales):saved.nativeScalesText??scaleText(session.inputs.statementOptions?.currencyScales);
-    clearBatch();session.batchChange={mode:'CLASSIFY',category:'',tranche:'KEEP',reason:''};session.optionsError='';session.preview=null;session.dirty=true;session.confirmed=false;session.page=0;session.editRevision++;session.allocationRow=null;session.allocationDraft=[];headersFromSource();
+    clearBatch();session.batchChange={mode:'CLASSIFY',category:'',tranche:'KEEP',reason:''};session.optionsError='';session.preview=null;session.dirty=true;session.confirmed=false;session.page=0;session.editRevision++;restoreAllocationWorks(saved);headersFromSource();
     session.notice='Opened the original source and interpretation. Resume a retained request or inspect and preview against the current case.';
     await persist(true);
   }
@@ -683,21 +771,22 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if(event.target.dataset.rowAction){setDecision(Number(event.target.dataset.rowAction),{action:event.target.value});return;}
     if(event.target.dataset.rowCategory){setDecision(Number(event.target.dataset.rowCategory),{category:event.target.value});return;}
     if(event.target.dataset.rowTranche){setDecision(Number(event.target.dataset.rowTranche),{tranche:event.target.value===''?null:Number(event.target.value)});return;}
-    if(event.target.closest('[data-statement-allocations]'))captureAllocations(event.target.closest('form'));
+    if(event.target.closest('[data-statement-allocations]')){captureAllocations(event.target.closest('form'));if(event.target.name==='allocationFilter'){allocationWork().page=0;render();}}
   });
   root.addEventListener('submit',event=>{
     if(event.target.matches('[data-statement-mapping]')){event.preventDefault();captureMapping(event.target);void run(native()&&!session.inspection?inspect:preview);}
     if(event.target.matches('[data-statement-allocations]')){
-      event.preventDefault();captureAllocations(event.target);setDecision(session.allocationRow,{allocations:clone(session.allocationDraft)});session.allocationRow=null;render();
+      event.preventDefault();captureAllocations(event.target);void run(()=>allocationAction('allocation-review',event.target));
     }
   });
   root.addEventListener('click',event=>{
     const target=event.target.closest('[data-statement-action]');if(!target||target.disabled)return;
     const action=target.dataset.statementAction;
     if(action==='preview'||action==='inspect'){const form=$('[data-statement-mapping]');if(form)captureMapping(form);}
-    if(['add-allocation','remove-allocation'].includes(action)){const form=$('[data-statement-allocations]');if(form)captureAllocations(form);}
+    if(action.startsWith('allocation-')||action==='allocations'||action==='close-allocations'){const form=$('[data-statement-allocations]');if(form)captureAllocations(form);}
     void run(async()=>{
-      if(action.startsWith('batch-'))await batchAction(action);
+      if(action.startsWith('allocation-'))await allocationAction(action,target);
+      else if(action.startsWith('batch-'))await batchAction(action);
       else if(action==='setup-apply')await applySetup();
       else if(action==='setup-new')await saveSetup('new');
       else if(action==='setup-revise')await saveSetup('revise');
@@ -725,11 +814,10 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       else if(action==='allocations'){
         const row=session.preview.rows.find(row=>row.rowNumber===Number(target.dataset.row));
         if(!row)throw new Error('The source row is unavailable. Preview the statement again.');
-        session.allocationRow=row.rowNumber;session.allocationDraft=clone(rowDecision(row.rowNumber)?.allocations||row.allocations||[]);
+        session.allocationRow=row.rowNumber;
+        if(!session.allocationWorks[String(row.rowNumber)])session.allocationWorks[String(row.rowNumber)]=newAllocationWork(row.rowNumber);
       }
       else if(action==='close-allocations')session.allocationRow=null;
-      else if(action==='add-allocation')session.allocationDraft.push({invoiceId:'',amountUsd:''});
-      else if(action==='remove-allocation')session.allocationDraft.splice(Number(target.dataset.index),1);
     });
   });
   const earlier=mountEarlierStaffDesk({root,staffContext:pinnedContext,title:'Statement',
@@ -744,7 +832,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       if(!session.loadingDraft)session.loadingDraft=(async()=>{
         try{
           const saved=await storeDraft(current.program.id);
-          if(saved?.schema==='sf47.statement-draft.v1'&&saved.caseId===current.program.id&&draftInput(saved.inputs)){session.inputs=editingInput(saved.inputs);session.headers=saved.headers||[];session.inspection=usableInspection(saved.inspection,saved.inputs,current.program.id)?saved.inspection:null;session.nativeScalesText=saved.nativeScalesText??scaleText(saved.inputs.statementOptions?.currencyScales);session.preview=saved.preview||null;session.dirty=saved.dirty!==false;session.pending=saved.pending||null;session.accepted=saved.accepted||null;session.setupPending=saved.setupPending||null;session.setupChoice=saved.setupChoice||'';session.setupName=saved.setupName||'';session.setupNote=saved.setupNote||'';session.originalInputHandoff=saved.originalInputHandoff||null;session.batchSelection=statementSelection(session.preview,saved.batchSelection).map(row=>row.rowNumber);if(saved.batchChange&&typeof saved.batchChange==='object')session.batchChange={...session.batchChange,...saved.batchChange};session.batchUndo=saved.batchUndo||null;}
+          if(saved?.schema==='sf47.statement-draft.v1'&&saved.caseId===current.program.id&&draftInput(saved.inputs)){session.inputs=editingInput(saved.inputs);session.headers=saved.headers||[];session.inspection=usableInspection(saved.inspection,saved.inputs,current.program.id)?saved.inspection:null;session.nativeScalesText=saved.nativeScalesText??scaleText(saved.inputs.statementOptions?.currencyScales);session.preview=saved.preview||null;session.dirty=saved.dirty!==false;session.pending=saved.pending||null;session.accepted=saved.accepted||null;session.setupPending=saved.setupPending||null;session.setupChoice=saved.setupChoice||'';session.setupName=saved.setupName||'';session.setupNote=saved.setupNote||'';session.originalInputHandoff=saved.originalInputHandoff||null;session.batchSelection=statementSelection(session.preview,saved.batchSelection).map(row=>row.rowNumber);if(saved.batchChange&&typeof saved.batchChange==='object')session.batchChange={...session.batchChange,...saved.batchChange};session.batchUndo=saved.batchUndo||null;restoreAllocationWorks(saved);}
         }catch{session.storageWarning='This browser could not open its saved draft. A downloaded recovery copy can be opened here.';}
         session.loaded=true;
       })();
@@ -757,7 +845,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       if(!session.pending&&!session.accepted&&!session.setupPending&&!session.inflight){try{await openOriginalInputs();}catch(error){session.error=error.message||String(error);}}
     }
     loading=false;
-    if(session.preview?.expectedVersion!==current.program.version){clearBatch();session.dirty=true;session.confirmed=false;}
+    if(session.preview?.expectedVersion!==current.program.version){clearBatch();clearAllocationProposals();session.dirty=true;session.confirmed=false;}
     if(available())render();
     if(session.inflight){try{await session.inflight;}catch{}if(available())render();}
     if(available()&&session.accepted)await run(finishAccepted);
