@@ -1,0 +1,29 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "municipal-installation",
+  "description": "Complete original municipal project selection, commercial Workshare preparation and independent two-workspace receiving",
+  "components": [
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders"
+  ],
+  "commands": {
+    "municipal-installation": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/municipal-installation.mjs",
+    "municipal-installation-receive": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/municipal-installation-receiving.mjs"
+  },
+  "commandDescriptions": {
+    "municipal-installation": "Bind complete original municipal projects, source editions and histories to the existing customer Installation",
+    "municipal-installation-receive": "Independently receive the original complete municipal and saved Installation workspaces and reopen their original editions"
+  },
+  "exports": {
+    "./grant/municipal-installation": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/municipal-installation-core.mjs"
+  },
+  "supportFiles": [
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/municipal-installation-native.py",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/municipal-installation-core.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/municipal-installation-io.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/municipal-installation.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/municipal-installation-receiving.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/municipal-assets.json",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/MUNICIPAL_INSTALLATION.md",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/municipal-installation-operations.py"
+  ]
+}
