@@ -13,6 +13,18 @@ export const GRANT_MAX_LAUNCH_BYTES = 256 * 1024;
 const SOURCE = dirname(fileURLToPath(import.meta.url));
 // The reviewed release includes every original operating module and its mounted UI.
 const BOOT_FILES = [
+  "operations_company_returns.py",
+  "operations_company_returns_cli.py",
+  "operations_company_returns.mjs",
+  "operations_company_returns.css",
+  "COMPANY_RETURN_INTAKE.md",
+  "company_returns/customer_reporting.py",
+  "company_returns/OPERATING.md",
+  "company_returns/customer_return.py",
+  "company_returns/customer-return-ui.js",
+  "company_returns/customer_return_native.py",
+  "company_returns/RETURNING.md",
+  "company_returns/__init__.py",
   "grant_procedures.mjs",
   "grant_procedures.d.mts",
   "grant_procedures_native.mjs",

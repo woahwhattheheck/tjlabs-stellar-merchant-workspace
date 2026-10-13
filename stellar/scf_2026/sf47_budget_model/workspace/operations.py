@@ -26,6 +26,7 @@ import operations_use_calendar as use_calendar
 import operations_cohort as cohort
 import operations_installations as installations
 import operations_installation_returns as installation_returns
+import operations_company_returns as company_returns
 import operations_dispatch as dispatch
 import operations_statements as statements
 import operations_performance as performance
@@ -1283,6 +1284,14 @@ class Operations:
         with self._snapshot():
             context = self._context(identifier(program_id, "operation"))
             return installations.preview(self, context, body)
+
+    def inspect_company_return(self, program_id, body):
+        with self._snapshot():
+            return company_returns.inspect_package(self, self._context(identifier(program_id, "operation")), body)
+
+    def linked_company_return(self, program_id, body):
+        with self._snapshot():
+            return company_returns.linked_package(self, self._context(identifier(program_id, "operation")), body)
 
     def installation_returns(self, program_id):
         with self._snapshot():

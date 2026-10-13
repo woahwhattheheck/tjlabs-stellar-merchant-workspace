@@ -16,6 +16,9 @@ from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static.update({"/operations_company_returns.mjs": ("operations_company_returns.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_company_returns.css": ("operations_company_returns.css", "text/css; charset=utf-8"),
+                   "/COMPANY_RETURN_INTAKE.md": ("COMPANY_RETURN_INTAKE.md", "text/markdown; charset=utf-8")})
     static.update({"/operations_risks.mjs": ("operations_risks.mjs", "text/javascript; charset=utf-8"),
                    "/operations_risks.css": ("operations_risks.css", "text/css; charset=utf-8"),
                    "/RISK_REGISTER_OPERATOR.md": ("RISK_REGISTER_OPERATOR.md", "text/markdown; charset=utf-8")})
@@ -412,6 +415,12 @@ def write(handler, parsed):
     if commercial_http(handler, parsed, ops, "POST"):
         return True
     if installation_sources.handle(handler, parsed, ops, "POST"):
+        return True
+    company_match = re.fullmatch(
+        r"/api/operations/(operation-[a-f0-9]{32})/installation-company-return-(inspect|linked)", path)
+    if company_match:
+        method = ops.inspect_company_return if company_match.group(2) == "inspect" else ops.linked_company_return
+        handler.send(200, method(company_match.group(1), handler.json_body()))
         return True
     risk_match = re.fullmatch(
         r"/api/operations/(operation-[a-f0-9]{32})/(risk-register-seed|risk-register-preview|risk-register-request)", path)
