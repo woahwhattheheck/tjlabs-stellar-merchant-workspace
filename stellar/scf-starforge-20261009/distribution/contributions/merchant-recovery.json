@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-recovery",
-  "description": "Original merchant recovery Applications, connected workspace CLI and complete managed-fleet operator receiving; complete original host custody and resumable cold adoption; trusted standalone host-handoff agent tools over the original offline engine; source-bound setup inspection and same-operation continuation",
+  "description": "Original merchant recovery Applications, connected workspace CLI and complete managed-fleet operator receiving; complete original host custody and resumable cold adoption; trusted standalone host-handoff agent tools over the original offline engine; source-bound setup inspection and same-operation continuation; interrupted cold restore resumes its same private stage and no-replace publication",
   "applicationProviders": {
     "merchant-recovery": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/merchant-recovery.mjs"
   },
@@ -14,7 +14,7 @@
   "commandDescriptions": {
     "merchant-recovery-workspace": "Open or attach to the original recovery workspace; review, start, read and resume the same retained request.",
     "merchant-fleet-operator-receive": "Adopt a completed original fleet recovery case through its browser, CLI and merchant provider, then reopen the same saved operator.",
-    "merchant-recovery-host": "Capture the complete original recovery host, authenticate its cold restore, review receiving paths and resume the same adoption operation.",
+    "merchant-recovery-host": "Capture the complete original recovery host, resume its authenticated cold restore, review receiving paths and resume the same adoption operation.",
     "merchant-recovery-host-setup-receive": "Inspect and continue the original source-bound setup, reopen its actual Merchant provider, and retain complete invocation history."
   },
   "exports": {
@@ -60,7 +60,9 @@
     "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-setup-state.mjs",
     "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-setup-root.py",
     "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant-setup.d.mts",
-    "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/receiving/HOST_SETUP_RECEIVE.mjs"
+    "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/receiving/HOST_SETUP_RECEIVE.mjs",
+    "stellar/scf-starforge-20261009/sf101-merchant-recovery/restore-operation.mjs",
+    "stellar/scf-starforge-20261009/sf101-merchant-recovery/restore-publish.py"
   ],
   "merchantProviders": {
     "recovery-host-handoffs": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant-provider.mjs"

@@ -1,5 +1,5 @@
 /** MIT. Host-only trusted configuration for the original offline handoff provider. */
-import type { HostHandoffResult } from './host-handoff.mjs';
+import type { HostHandoffResult, HostHandoffRecordedRestore } from './host-handoff.mjs';
 
 export declare const HOST_HANDOFF_CONNECTION_SCHEMA: 'stellar-forge.recovery-host-handoff-connection.v1';
 export interface HostHandoffAliasBase {
@@ -17,6 +17,8 @@ export interface HostHandoffReceivingGroup {
   restoreDirectory: string;
   targetFile: string;
   adoptionOperationDirectory: string;
+  /** Optional fixed original cold-restore control, outside all source and receiving roots. */
+  restoreOperationDirectory?: string;
   /** Absolute trusted host executable; never a tool argument. */
   python?: string;
 }
@@ -54,6 +56,7 @@ export interface HostHandoffToolArguments {
   merchant_host_handoff_export: { host: string; expectedPlanSha256: string; quiesced: true };
   merchant_host_handoff_capture: { host: string; expectedPlanSha256: string };
   merchant_host_handoff_restore: { host: string; expectedManifestSha256: string };
+  merchant_host_handoff_restore_operation: { host: string; expectedManifestSha256: string };
   merchant_host_handoff_review: { host: string; expectedManifestSha256: string };
   merchant_host_handoff_adopt: {
     host: string; expectedManifestSha256: string; expectedReviewSha256: string; quiesced: true;
@@ -65,9 +68,9 @@ export interface HostHandoffProviderSummary {
   closing: boolean;
   active: null | {
     host: string; operation: string; startedAt: string;
-    cancellation: 'ORIGINAL_ADOPTION_ABORT_AND_DRAIN' | 'DRAIN_ONLY';
+    cancellation: 'ORIGINAL_ADOPTION_ABORT_AND_DRAIN' | 'ORIGINAL_RESTORE_ABORT_AND_DRAIN' | 'DRAIN_ONLY';
   };
-  hosts: Array<{ host: string; label: string; source: boolean; receiving: boolean }>;
+  hosts: Array<{ host: string; label: string; source: boolean; receiving: boolean; resumableRestore: boolean }>;
 }
 export interface RecordedHostHandoff {
   schema: 'stellar-forge.recovery-host-handoff-recorded.v1';
@@ -102,6 +105,7 @@ export interface HostHandoffToolResults {
   merchant_host_handoff_export: HostHandoffResult;
   merchant_host_handoff_capture: RecordedHostHandoff | AbsentHostHandoff;
   merchant_host_handoff_restore: HostHandoffResult;
+  merchant_host_handoff_restore_operation: HostHandoffRecordedRestore;
   merchant_host_handoff_review: HostHandoffResult;
   merchant_host_handoff_adopt: HostHandoffResult;
   merchant_host_handoff_operation: HostHandoffRecordedOperation;
@@ -116,6 +120,6 @@ export declare class MerchantHostHandoffs {
   call<K extends keyof HostHandoffToolArguments>(
     name: K, args: HostHandoffToolArguments[K]
   ): Promise<HostHandoffToolResults[K]>;
-  /** Stops admission; aborts only native adoption, then drains all accepted calls. */
+  /** Stops admission; aborts native adoption or operation-backed restore, then drains every accepted call. */
   close(): Promise<void>;
 }

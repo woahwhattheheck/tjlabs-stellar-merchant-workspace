@@ -4,15 +4,21 @@ import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { absolute, readJson } from '../../sf30-seller-sdk/postgres/publisher/files.mjs';
 import { prepareHostHandoffPlan, exportHostHandoff, restoreHostHandoff,
-  inspectRestoredHostHandoff, adoptRestoredHostHandoff, inspectHostHandoffAdoption } from './host-handoff.mjs';
+  inspectRestoredHostHandoff, adoptRestoredHostHandoff, inspectHostHandoffAdoption,
+  inspectHostHandoffRestore } from './host-handoff.mjs';
 
 export const HELP = 'Recovery workspace host handoff\n\n' +
   'starforge merchant-recovery-remote workspace handoff plan --selection ABS_JSON --plan ABS_NEW_PLAN --quiesced\n' +
   'starforge merchant-recovery-remote workspace handoff export --plan ABS_PLAN --bundle ABS_BUNDLE --operation ABS_CAPTURE_STATE --pass-env NAME --expected-plan-sha256 HASH --quiesced\n' +
-  'starforge merchant-recovery-remote workspace handoff restore --bundle ABS_BUNDLE --restore ABS_NEW_DIRECTORY --pass-env NAME --expected-manifest-sha256 HASH\n' +
-  'starforge merchant-recovery-remote workspace handoff review --bundle ABS_BUNDLE --restore ABS_RESTORED_DIRECTORY --pass-env NAME --expected-manifest-sha256 HASH --target ABS_PRIVATE_TARGET [--operation ABS_ADOPTION_STATE] [--python ABS_PYTHON]\n' +
-  'starforge merchant-recovery-remote workspace handoff adopt --bundle ABS_BUNDLE --restore ABS_RESTORED_DIRECTORY --pass-env NAME --expected-manifest-sha256 HASH --target ABS_PRIVATE_TARGET --expected-review-sha256 HASH --quiesced [--operation ABS_ADOPTION_STATE] [--python ABS_PYTHON]\n\n' +
+  'starforge merchant-recovery-remote workspace handoff restore --bundle ABS_BUNDLE --restore ABS_NEW_DIRECTORY --pass-env NAME --expected-manifest-sha256 HASH [--restore-operation ABS_RESTORE_STATE] [--python ABS_PYTHON]\n' +
+  'starforge merchant-recovery-remote workspace handoff review --bundle ABS_BUNDLE --restore ABS_RESTORED_DIRECTORY --pass-env NAME --expected-manifest-sha256 HASH --target ABS_PRIVATE_TARGET [--restore-operation ABS_RESTORE_STATE] [--operation ABS_ADOPTION_STATE] [--python ABS_PYTHON]\n' +
+  'starforge merchant-recovery-remote workspace handoff adopt --bundle ABS_BUNDLE --restore ABS_RESTORED_DIRECTORY --pass-env NAME --expected-manifest-sha256 HASH --target ABS_PRIVATE_TARGET --expected-review-sha256 HASH --quiesced [--restore-operation ABS_RESTORE_STATE] [--operation ABS_ADOPTION_STATE] [--python ABS_PYTHON]\n\n' +
   'starforge merchant-recovery-remote workspace handoff operation --operation ABS_ADOPTION_STATE --expected-review-sha256 HASH [--python ABS_PYTHON]\n\n' +
+  'starforge merchant-recovery-remote workspace handoff restore-operation --restore-operation ABS_RESTORE_STATE --expected-manifest-sha256 HASH\n\n' +
+  'With --restore-operation, cold restore resumes its original private staged tree\n' +
+  'and publishes the complete directory without replacing an existing destination.\n' +
+  'restore-operation reads recorded progress only; restore authenticates and rechecks\n' +
+  'the complete current tree before returning HOST_HANDOFF_RESTORED.\n' +
   'With --operation, adoption resumes its original private staged files and publishes\n' +
   'complete roots without replacing existing state. Reuse the same review and directory.\n' +
   'The operation command reads its saved receipt without native authentication or dispatch.\n' +
@@ -29,15 +35,16 @@ export const HELP = 'Recovery workspace host handoff\n\n' +
 const options = {
   plan: ['selectionFile', 'planFile', 'quiesced'],
   export: ['planFile', 'bundleDirectory', 'operationDirectory', 'passphraseEnv', 'expectedPlanSha256', 'quiesced'],
-  restore: ['bundleDirectory', 'restoreDirectory', 'passphraseEnv', 'expectedManifestSha256'],
+  restore: ['bundleDirectory', 'restoreDirectory', 'passphraseEnv', 'expectedManifestSha256', 'restoreOperationDirectory', 'python'],
+  'restore-operation': ['restoreOperationDirectory', 'expectedManifestSha256'],
   review: ['bundleDirectory', 'restoreDirectory', 'passphraseEnv', 'expectedManifestSha256', 'targetFile',
-    'operationDirectory', 'python'],
+    'operationDirectory', 'python', 'restoreOperationDirectory'],
   adopt: ['bundleDirectory', 'restoreDirectory', 'passphraseEnv', 'expectedManifestSha256',
-    'targetFile', 'expectedReviewSha256', 'quiesced', 'operationDirectory', 'python'],
+    'targetFile', 'expectedReviewSha256', 'quiesced', 'operationDirectory', 'python', 'restoreOperationDirectory'],
   operation: ['operationDirectory', 'expectedReviewSha256', 'python']
 };
 const flags = { '--selection': 'selectionFile', '--plan': 'planFile', '--bundle': 'bundleDirectory',
-  '--operation': 'operationDirectory', '--python': 'python', '--restore': 'restoreDirectory', '--pass-env': 'passphraseEnv',
+  '--operation': 'operationDirectory', '--restore-operation': 'restoreOperationDirectory', '--python': 'python', '--restore': 'restoreDirectory', '--pass-env': 'passphraseEnv',
   '--expected-plan-sha256': 'expectedPlanSha256', '--expected-manifest-sha256': 'expectedManifestSha256',
   '--target': 'targetFile', '--expected-review-sha256': 'expectedReviewSha256', '--quiesced': 'quiesced' };
 const error = message => Object.assign(new Error(message), { code: 'HOST_HANDOFF_ARGUMENTS_INVALID' });
@@ -46,7 +53,7 @@ export function parseHostHandoffArguments(argv) {
     throw error('Handoff arguments must be strings.');
   if (!argv.length || argv.length === 1 && ['--help', '-h'].includes(argv[0])) return { help: true };
   const [command, ...rest] = argv;
-  if (!Object.hasOwn(options, command)) throw error('Choose plan, export, restore, review, adopt or operation.');
+  if (!Object.hasOwn(options, command)) throw error('Choose plan, export, restore, restore-operation, review, adopt or operation.');
   if (rest.length === 1 && ['--help', '-h'].includes(rest[0])) return { help: true };
   const result = { command };
   for (let index = 0; index < rest.length; index++) {
@@ -60,13 +67,16 @@ export function parseHostHandoffArguments(argv) {
   }
   for (const key of options[command])
     if (result[key] === undefined && !(command === 'export' && key === 'quiesced') &&
-        !((['review', 'adopt'].includes(command) && ['operationDirectory', 'python'].includes(key)) ||
+        !((['review', 'adopt'].includes(command) && ['operationDirectory', 'python', 'restoreOperationDirectory'].includes(key)) ||
+          (command === 'restore' && ['restoreOperationDirectory', 'python'].includes(key)) ||
           (command === 'operation' && key === 'python')))
       throw error('A value is required for ' + key);
-  for (const key of ['selectionFile', 'planFile', 'bundleDirectory', 'operationDirectory', 'restoreDirectory', 'targetFile', 'python'])
+  for (const key of ['selectionFile', 'planFile', 'bundleDirectory', 'operationDirectory', 'restoreOperationDirectory', 'restoreDirectory', 'targetFile', 'python'])
     if (result[key] !== undefined) absolute(result[key], key);
-  if (result.python !== undefined && result.operationDirectory === undefined)
-    throw error('--python requires the same reviewed --operation directory.');
+  if (result.python !== undefined &&
+      (command === 'restore' ? result.restoreOperationDirectory === undefined : result.operationDirectory === undefined))
+    throw error(command === 'restore' ? '--python requires the original --restore-operation directory.' :
+      '--python requires the same reviewed --operation directory.');
   for (const key of ['expectedPlanSha256', 'expectedManifestSha256', 'expectedReviewSha256'])
     if (result[key] !== undefined && !/^[a-f0-9]{64}$/.test(result[key]))
       throw error('Use the complete original SHA-256 for ' + key);
@@ -80,11 +90,13 @@ export async function main(argv = process.argv.slice(2), { output = process.stdo
   const { command, selectionFile, ...input } = parsed;
   // Own cancellation at the shared command entry, including workspace delegation.
   // A supplied signal keeps its original caller; older commands keep their behavior.
-  const controller = command === 'adopt' && input.operationDirectory && signal === undefined
-    ? new AbortController() : null;
+  const cancellable = command === 'adopt' && input.operationDirectory ||
+    command === 'restore' && input.restoreOperationDirectory;
+  const controller = cancellable && signal === undefined ? new AbortController() : null;
   const selectedSignal = signal ?? controller?.signal;
-  const stop = () => controller.abort(Object.assign(new Error('The original adoption was interrupted; read its saved operation before continuing.'),
-    { code: 'HOST_HANDOFF_ADOPTION_INTERRUPTED' }));
+  const stop = () => controller.abort(Object.assign(new Error(
+    'The original ' + command + ' was interrupted; read its saved operation before continuing.'),
+    { code: command === 'restore' ? 'HOST_HANDOFF_RESTORE_INTERRUPTED' : 'HOST_HANDOFF_ADOPTION_INTERRUPTED' }));
   if (controller) { process.on('SIGINT', stop); process.on('SIGTERM', stop); }
   try {
     let result;
@@ -92,7 +104,9 @@ export async function main(argv = process.argv.slice(2), { output = process.stdo
       ...input, selection: await readJson(selectionFile, 256 * 1024)
     });
     else if (command === 'export') result = await exportHostHandoff(input);
-    else if (command === 'restore') result = await restoreHostHandoff(input);
+    else if (command === 'restore') result = await restoreHostHandoff({ ...input,
+      ...(input.restoreOperationDirectory && selectedSignal ? { signal: selectedSignal } : {}) });
+    else if (command === 'restore-operation') result = await inspectHostHandoffRestore(input);
     else if (command === 'review') result = await inspectRestoredHostHandoff(input);
     else if (command === 'operation') result = await inspectHostHandoffAdoption(input);
     else result = await adoptRestoredHostHandoff({ ...input,
@@ -106,7 +120,7 @@ export async function main(argv = process.argv.slice(2), { output = process.stdo
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch(issue => {
     process.stderr.write(JSON.stringify({ error: { code: issue.code ?? 'HOST_HANDOFF_FAILED',
-      message: issue.message } }) + '\n');
+      message: issue.message, ...(issue.details === undefined ? {} : { details: issue.details }) } }) + '\n');
     process.exitCode = 1;
   });
 }

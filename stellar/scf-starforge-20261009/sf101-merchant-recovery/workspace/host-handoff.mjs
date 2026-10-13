@@ -3,7 +3,8 @@ import { constants } from 'node:fs';
 import { lstat, open, readdir, realpath, mkdir, copyFile, chmod } from 'node:fs/promises';
 import { dirname, join, relative, sep } from 'node:path';
 import { createHash } from 'node:crypto';
-import { inspectSnapshotPlan, run as recover } from '../recover.mjs';
+import { inspectSnapshotPlan, restoreSnapshotWithOperation, inspectSnapshotRestoreOperation,
+  readAuthenticatedSnapshotEntry, run as recover } from '../recover.mjs';
 import { runLocalCapture, readCapturedBundle } from './local.mjs';
 import { readRecoveryConfiguration, readRecoveryWorkspaceIdentity, openRecoveryWorkspace } from './model.mjs';
 import { recoveryHostPaths, observeRecoveryPath } from './host-profile-paths.mjs';
@@ -817,13 +818,25 @@ export async function exportHostHandoff({ planFile, bundleDirectory, operationDi
         passphraseEnvironments: clone(profile.passphraseEnvironments) } };
   } finally { await lease.release(); }
 }
-async function authenticated(input) {
+async function authenticated(input, { readPlan = false } = {}) {
   absolute(input.bundleDirectory, 'original encrypted handoff bundle');
   passphraseName(input.passphraseEnv);
   need(HASH.test(input.expectedManifestSha256 ?? ''), 'HOST_HANDOFF_MANIFEST_REVIEW_REQUIRED');
   await privateDirectory(input.bundleDirectory);
   const raw = await readPrivate(join(input.bundleDirectory, 'manifest.json'), MAX_MANIFEST);
   need(digest(raw) === input.expectedManifestSha256, 'HOST_HANDOFF_BUNDLE_CHANGED');
+  if (readPlan) {
+    // Authenticate and read only the bounded original plan before any operation
+    // directory exists. The original native verifier owns all cryptography.
+    const selected = await readAuthenticatedSnapshotEntry({
+      bundleDirectory: input.bundleDirectory, passphraseEnv: input.passphraseEnv,
+      expectedManifestSha256: input.expectedManifestSha256, entryPath: PLAN_ROOT, maximum: MAX_PLAN
+    });
+    need(selected.manifestSha256 === input.expectedManifestSha256 &&
+      digest(await readPrivate(join(input.bundleDirectory, 'manifest.json'), MAX_MANIFEST)) === input.expectedManifestSha256,
+    'HOST_HANDOFF_BUNDLE_CHANGED');
+    return { manifest: selected.manifest, manifestSha256: selected.manifestSha256, planBytes: selected.bytes };
+  }
   const verification = await recover(['verify', '--bundle', input.bundleDirectory, '--pass-env', input.passphraseEnv]);
   need(verification.status === 'SNAPSHOT_VERIFIED' &&
     digest(await readPrivate(join(input.bundleDirectory, 'manifest.json'), MAX_MANIFEST)) === input.expectedManifestSha256,
@@ -858,12 +871,40 @@ async function matchTree(path, entries, sourceModes = new Map()) {
     }
   }
 }
+function restoreControlCustody(profile, input) {
+  if (input.restoreOperationDirectory === undefined) return;
+  for (const selected of [...profile.roots.map(row => row.path),
+    ...profile.externalFiles.map(row => row.path), ...profile.absentOriginalInputs.map(row => row.path),
+    ...(profile.pathInventory?.paths ?? []).filter(row => !row.exists).map(row => row.path),
+    profile.planFile].filter(Boolean))
+    need(!overlap(input.restoreOperationDirectory, selected), 'HOST_HANDOFF_RESTORE_CONTROL_OVERLAP',
+      'Keep the cold restore operation outside every original root, plan, private input and original absent path.');
+}
 async function restoredContext(input, { restore = false } = {}) {
   absolute(input.restoreDirectory, 'original cold restore directory');
   need(!overlap(input.bundleDirectory, input.restoreDirectory), 'HOST_HANDOFF_RESTORE_OVERLAP');
-  const auth = await authenticated(input);
+  const resumableRestore = restore && input.restoreOperationDirectory !== undefined;
   let originalRestore = null;
-  if (!await exists(input.restoreDirectory)) {
+  if (input.restoreOperationDirectory !== undefined) {
+    absolute(input.restoreOperationDirectory, 'original cold restore operation');
+    for (const selected of [input.bundleDirectory, input.restoreDirectory, input.targetFile, input.operationDirectory, input.python].filter(Boolean))
+      need(!overlap(input.restoreOperationDirectory, selected), 'HOST_HANDOFF_RESTORE_CONTROL_OVERLAP',
+        'Keep the original cold restore operation outside the bundle, restored tree and receiving controls.');
+  }
+  const auth = await authenticated(input, { readPlan: resumableRestore });
+  if (resumableRestore) {
+    const captured = inspectCaptured(auth.planBytes, auth.manifest);
+    restoreControlCustody(captured.profile, input);
+    // Always reconcile the original operation, including publication before a lost receipt.
+    originalRestore = await restoreSnapshotWithOperation({
+      bundleDirectory: input.bundleDirectory, outputDirectory: input.restoreDirectory,
+      operationDirectory: input.restoreOperationDirectory, passphraseEnv: input.passphraseEnv,
+      expectedManifestSha256: input.expectedManifestSha256,
+      ...(input.python !== undefined ? { python: input.python } : {}),
+      ...(input.signal ? { signal: input.signal } : {})
+    });
+    need(originalRestore.status === 'RESTORED_TO_NEW_DIR', 'HOST_HANDOFF_COLD_RESTORE_INCOMPLETE');
+  } else if (!await exists(input.restoreDirectory)) {
     need(restore, 'HOST_HANDOFF_COLD_RESTORE_REQUIRED', 'Restore the original handoff before receiving review.');
     await realSource(dirname(input.restoreDirectory), 'directory');
     originalRestore = await recover(['restore', '--bundle', input.bundleDirectory,
@@ -876,6 +917,8 @@ async function restoredContext(input, { restore = false } = {}) {
   for (const root of auth.manifest.roots) await matchTree(join(input.restoreDirectory, root.name), rootEntries(auth.manifest, root.name));
   const raw = await readPrivate(join(input.restoreDirectory, PLAN_ROOT), MAX_PLAN);
   const { profile, planSha256 } = inspectCaptured(raw, auth.manifest);
+  restoreControlCustody(profile, input);
+  if (auth.planBytes) need(planSha256 === digest(auth.planBytes), 'HOST_HANDOFF_CAPTURE_BINDING_CHANGED');
   const sourcePath = point => join(input.restoreDirectory, point.root, ...(point.relative ? point.relative.split('/') : []));
   const configuration = await readRecoveryConfiguration(sourcePath(profile.workspace.configuration));
   const state = await readJson(sourcePath(profile.workspace.state), 2 * 1024 * 1024);
@@ -944,13 +987,25 @@ async function restoredContext(input, { restore = false } = {}) {
 
 }
 export async function restoreHostHandoff(input = {}) {
+  need(input.python === undefined || input.restoreOperationDirectory !== undefined,
+    'HOST_HANDOFF_RESTORE_OPERATION_REQUIRED', 'Select the original cold restore operation when choosing its Python executable.');
   const ctx = await restoredContext(input, { restore: true });
   return { schema: HOST_HANDOFF_RESULT_SCHEMA, status: 'HOST_HANDOFF_RESTORED',
     operationId: ctx.profile.operationId, workspaceId: ctx.profile.workspace.workspaceId,
     bundleDirectory: input.bundleDirectory, restoreDirectory: input.restoreDirectory,
     manifestSha256: ctx.manifestSha256, planSha256: ctx.planSha256,
-    originalRestore: ctx.originalRestore, verifiedExistingRestore: ctx.originalRestore === null,
+    originalRestore: ctx.originalRestore,
+    verifiedExistingRestore: ctx.originalRestore === null || ctx.originalRestore.reopened === true,
     application: clone(ctx.profile.application), roots: clone(ctx.profile.roots) };
+}
+
+/** Read only the original cold restore record; no bundle authentication or current-tree verification. */
+export async function inspectHostHandoffRestore({ restoreOperationDirectory, expectedManifestSha256 } = {}) {
+  absolute(restoreOperationDirectory, 'original cold restore operation');
+  need(HASH.test(expectedManifestSha256 ?? ''), 'HOST_HANDOFF_MANIFEST_REVIEW_REQUIRED');
+  return inspectSnapshotRestoreOperation({
+    operationDirectory: restoreOperationDirectory, expectedManifestSha256
+  });
 }
 
 function adoptionControls(profile, input) {
@@ -964,6 +1019,7 @@ function adoptionControls(profile, input) {
   absolute(python, 'adoption publication Python');
   const reservedPaths = [...new Set([
     input.bundleDirectory, input.restoreDirectory, input.targetFile,
+    ...(input.restoreOperationDirectory ? [input.restoreOperationDirectory] : []),
     ...profile.roots.map(row => row.path),
     ...profile.externalFiles.map(row => row.path),
     ...profile.absentOriginalInputs.map(row => row.path),
