@@ -405,7 +405,7 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/contributions/runtime-application-inputs.json",
-      "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+      "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
       "editions": [
         {
           "commit": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
@@ -418,6 +418,12 @@
           "git_blob": "caae0227928ccf47742d1acfdd397438973a6994",
           "bytes": 3809,
           "sha256": "2f05def173c22e1318f4ca9af8a29906db7e4948b4c5b224f3c9bb4f6d8b31b5"
+        },
+        {
+          "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
+          "bytes": 5451,
+          "sha256": "3a81aed7016af249ef433cda6e2a02bbbfd8d9c37ad92eec91696511690af55a",
+          "git_blob": "cded038fed229c520068bd9d7c5ccc562653f955"
         }
       ]
     },
@@ -507,7 +513,7 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-input-sets-cli.mjs",
-      "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+      "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
       "editions": [
         {
           "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
@@ -520,6 +526,12 @@
           "git_blob": "a14da9479c641bedbdd72b0449ff452aafb4622c",
           "bytes": 2670,
           "sha256": "16aa43f11d8e04e0a0020a58c62f2262a2125798fbe45198ff712e69500daad2"
+        },
+        {
+          "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
+          "bytes": 3777,
+          "sha256": "d43c3d94f08d81dec1f7a8011a2cd4fc253fd897993c2ece1d2098e5afb1825e",
+          "git_blob": "7a00844345627b149e59db887233004b5d4bdce2"
         }
       ]
     },
@@ -529,7 +541,7 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-input-sets.mjs",
-      "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+      "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
       "editions": [
         {
           "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
@@ -542,6 +554,12 @@
           "git_blob": "d5161954c80140fd8c1546f4420131aa88b7a371",
           "bytes": 15601,
           "sha256": "7a65bdc5822658d6ac66f1f3b1395bbe87b0598d294372c29bb4525e182b33f8"
+        },
+        {
+          "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
+          "bytes": 18974,
+          "sha256": "33329f46dba3e2402762b740f64cebfaa382bcb71ecfb7ef3fc415315047e916",
+          "git_blob": "16b31e4624925e300b516a1eff01c9f36eca129e"
         }
       ]
     },
@@ -589,13 +607,19 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_INPUT_SETS.md",
-      "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+      "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
       "editions": [
         {
           "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
           "git_blob": "7b1edece18d8940c44b9af72e1c12853426a6cdb",
           "bytes": 6911,
           "sha256": "2d081e23998404d5a10a14a51f8b4d20df03f2f1ce2cdcbbac4c5689f4031ed2"
+        },
+        {
+          "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
+          "bytes": 16180,
+          "sha256": "04188c7182ab7f3f637c7f31f5089c84050b5864d3fcf9223b6ad5fe1c81249c",
+          "git_blob": "15a2b60320c466b3e3a1cfffed0abe99781d23e8"
         }
       ]
     },
@@ -605,7 +629,7 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/APPLICATION_INPUT_SETS_RECEIVE.mjs",
-      "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+      "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
       "editions": [
         {
           "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
@@ -618,6 +642,12 @@
           "bytes": 23900,
           "sha256": "1a3a6cce4ca9710966423c2ecd41ceb529a6c31a891db70de660a36eae3b9f01",
           "git_blob": "d85dbbcc481b1f7ccf3b4f32ed825c9851b444d5"
+        },
+        {
+          "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
+          "bytes": 25291,
+          "sha256": "58bb958d82c2794fba9eeae46f59145adbf6e2b0e379004decf4d0c9c6cfa7b3",
+          "git_blob": "263075ffcb05919d3da1c00547627e9267a9f9b1"
         }
       ]
     },
@@ -777,7 +807,7 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs",
-      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
       "editions": [
         {
           "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
@@ -802,6 +832,12 @@
           "bytes": 55593,
           "sha256": "3f6f5f1f29e204472c107f497ee39a6e707ef64a04758c5b489872ecb7db3914",
           "git_blob": "468baa51e23673549af822df60565e3ba1fecea3"
+        },
+        {
+          "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
+          "bytes": 56702,
+          "sha256": "f78ef445197df5af81ab919ac015239dd8003d2bb5ec1c0ecadd338a26775261",
+          "git_blob": "d177369a8219b1992f3e2ad8503a402060e896de"
         }
       ]
     },
@@ -811,7 +847,7 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/server.mjs",
-      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
       "editions": [
         {
           "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
@@ -830,6 +866,12 @@
           "bytes": 51930,
           "sha256": "32327b9a8d793104830e48b3c75c66b75a55e4c4535f9fbd36527b62e950c8e6",
           "git_blob": "b078f3609e2f0b9ab33caf33ed622d1b3967365c"
+        },
+        {
+          "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
+          "bytes": 57958,
+          "sha256": "6559d76bdd3c278e70253a5437b828f34caa9693ca73c5c71da91e81d00df17c",
+          "git_blob": "6ac56b539cd6cb3b4d4088051b067f2b9f68cf47"
         }
       ]
     },
@@ -921,7 +963,7 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/browser-assets.json",
-      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
       "editions": [
         {
           "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
@@ -940,6 +982,12 @@
           "bytes": 6223,
           "sha256": "5ec4b40dd1e0898e6335e6f7df8783abdc52af5abf70dd24cbb59a87fdedb676",
           "git_blob": "cb3a106da8e41cc604b50dc92fa3c0fc98fec41c"
+        },
+        {
+          "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
+          "bytes": 6790,
+          "sha256": "2329c3e048675185a91af8884860b518240441a7c65df89ac02e0f786c7936f4",
+          "git_blob": "f0961afa06c4183e21f96397b25921cebfdf5bfd"
         }
       ]
     },
@@ -1588,6 +1636,70 @@
           "bytes": 40735,
           "sha256": "85aa71a2a9c9c212f72a1c6dbce328823f7c910a3dece43807967caf9d1021e2",
           "git_blob": "b81740c5d23051bd781748870da036c531ff9d04"
+        }
+      ]
+    },
+    {
+      "id": "runtime-companion-archive-format",
+      "label": "Complete Companion archive inventory, identity and original-byte admission",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-input-set-archive-format.mjs",
+      "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
+      "editions": [
+        {
+          "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
+          "bytes": 9596,
+          "sha256": "d3d75aa1a2a327307e56c8bf721a21db1bc87f055877b95933ba8fb306180318",
+          "git_blob": "19a22a49e1c5e8c2d951288706c81f575ae928c2"
+        }
+      ]
+    },
+    {
+      "id": "runtime-companion-archives",
+      "label": "Streamed complete source-set archive and original upload receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-input-set-archives.mjs",
+      "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
+      "editions": [
+        {
+          "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
+          "bytes": 7423,
+          "sha256": "14885bf961d702edaf6f3f6254543047e414a1bb4f094e049c1ec4fac08c3592",
+          "git_blob": "08b9ef4c0e7817557a38dc1ca92f2db0c259d2fc"
+        }
+      ]
+    },
+    {
+      "id": "runtime-companion-archive-types",
+      "label": "Typed complete source-set archive interface",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-input-set-archives.d.mts",
+      "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
+      "editions": [
+        {
+          "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
+          "bytes": 1551,
+          "sha256": "5c525c8d5473c76ff2c126dc3d75d476924c50e1119b8ddf941e21ec92f3e02d",
+          "git_blob": "d1dab4a37f103c85f1d6c8933cb00109aed005e1"
+        }
+      ]
+    },
+    {
+      "id": "runtime-companion-archive-receiving",
+      "label": "Original browser-to-browser source-set handover and cold receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/APPLICATION_INPUT_SET_ARCHIVE_RECEIVE.mjs",
+      "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
+      "editions": [
+        {
+          "commit": "191956ba7ffdb3210e3dcd2e6d4ad2dc2bcf4484",
+          "bytes": 11633,
+          "sha256": "d1ae5b368be7608e651440b828fd45f2accc91c6b64794d917019e7d7b668dcf",
+          "git_blob": "e78923ad7dbfba9ecd34805d3c45801ab455ff43"
         }
       ]
     }
