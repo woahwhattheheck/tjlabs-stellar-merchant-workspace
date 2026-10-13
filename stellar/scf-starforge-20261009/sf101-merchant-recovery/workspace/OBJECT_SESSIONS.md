@@ -205,3 +205,7 @@ A later host move must use the original engine's supported canonical restore
 requirements. Do not fabricate old device/inode identities, session metadata or
 payment history. The operator shows the actual current native state and the
 original saved request outcome as separate records.
+
+## Compare authenticated backup editions
+
+Use [Object backup comparison](./OBJECT_COMPARISON.md) to authenticate two exact records from this original session, retain their complete inventories and review every change before selecting the separate restore action. It uses the same host declarations and saved request queue; comparison never restores or acquires state.

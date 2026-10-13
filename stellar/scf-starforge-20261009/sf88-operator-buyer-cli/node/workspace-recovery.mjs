@@ -83,16 +83,19 @@ export class WorkspaceRecoveryError extends BuyerError {
 }
 
 async function runRecoveryCommand(runtime, operation, args, parent, signal,
-  {ResultType=WorkspaceRecoveryResult,ErrorType=WorkspaceRecoveryError,entryFile}={}) {
+  {ResultType=WorkspaceRecoveryResult,ErrorType=WorkspaceRecoveryError,entryFile,fullResult=false}={}) {
     let directory, run, problem = null, cleanupErrorCode = null, started = false;
     try {
       // Capture logs remain outside the quiesced source. Archive operations use
       // OS temporary storage, so a read-only mounted bundle stays usable.
       const canonicalParent = await realpath(parent);
-      need(operation === 'verify' || operation === 'restore' || canonicalParent === parent,
+      need(operation === 'verify' || operation === 'restore' || operation === 'compare' || canonicalParent === parent,
         'WORKSPACE_RECOVERY_OPERATION_PARENT_INVALID');
       directory = await mkdtemp(join(canonicalParent, '.sf88-sdk-recovery-'));
-      run = await runtime.run(args, { directory, signal, entryFile, started: () => { started = true; } });
+      const resultFile = fullResult ? join(directory, 'comparison.json') : undefined;
+      run = await runtime.run(fullResult ? [...args,'--result-file',resultFile] : args,
+        { directory, signal, entryFile, ...(fullResult ? {resultFile,resultLimit:267386880} : {}),
+          started: () => { started = true; } });
     } catch (error) {
       problem = safeCode(error?.code, 'WORKSPACE_RECOVERY_NATIVE_COMMAND_FAILED');
     } finally {
@@ -190,6 +193,26 @@ export class ObjectSessionRecoveryError extends BuyerError {
   constructor(code,result){super(code,{result});this.name='ObjectSessionRecoveryError';}
 }
 
+const COMPARISON_SCHEMA='stellar-forge.sf88.object-session-comparison.v1';
+/** Full native comparison (or completed partial sides) and the process outcome are retained separately. */
+export class ObjectSessionComparisonResult {
+  constructor(operation,run,{started=false,errorCode=null,cleanupErrorCode=null}={}) {
+    this.operation=operation;
+    this.native=object(run?.output)&&run.output.schema===COMPARISON_SCHEMA?frozen(run.output):null;
+    this.partialComparison=this.native?.partialComparison??null;
+    this.process=Object.freeze({exitCode:run?.exitCode??null,exitSignal:run?.exitSignal??null,
+      errorCode:run?.errorCode??errorCode,started,cleanupErrorCode});
+    this.completionReported=this.native?.status==='OBJECT_SESSION_BACKUPS_COMPARED'&&
+      this.native.authenticated===true&&/^[a-f0-9]{64}$/.test(this.native.comparisonSha256??'');
+    this.ok=this.completionReported&&this.process.exitCode===0&&!this.process.exitSignal&&
+      !this.process.errorCode&&!cleanupErrorCode;
+    Object.freeze(this);
+  }
+}
+export class ObjectSessionComparisonError extends BuyerError {
+  constructor(code,result){super(code,{result});this.name='ObjectSessionComparisonError';}
+}
+
 /** The same SF88/SF101 engine, with a native standalone zero-cap session selection. */
 export class ObjectSessionRecovery {
   constructor(options) {
@@ -229,6 +252,20 @@ export class ObjectSessionRecovery {
   verify({signal,...options}={}) {
     return this._command('verify',['session-backup-verify',...this._archive(options)],tmpdir(),signal);
   }
+  compare({before,after,signal}={}) {
+    const args=['session-backup-compare'];
+    for(const [side,value] of [['before',before],['after',after]]) {
+      need(object(value),'OBJECT_COMPARISON_SELECTION_REQUIRED');
+      need(typeof value.expectedRecordSha256==='string'&&/^[a-f0-9]{64}$/.test(value.expectedRecordSha256),
+        'OBJECT_COMPARISON_EXACT_RECORD_REQUIRED');
+      args.push('--'+side+'-bundle',canonical(value.bundle),'--'+side+'-expect',value.expectedRecordSha256,
+        '--'+side+'-pass-env',passphraseName(value.passphraseEnv??'SF88_BACKUP_PASSPHRASE'));
+    }
+    return runRecoveryCommand(this.runtime,'compare',args,tmpdir(),signal,{
+      ResultType:ObjectSessionComparisonResult,ErrorType:ObjectSessionComparisonError,
+      entryFile:join(this.runtime.directory,'object-cli.mjs'),fullResult:true});
+  }
+
   restore({signal,...options}={}) {
     return this._command('restore',['session-backup-restore',...this._archive(options)],tmpdir(),signal);
   }

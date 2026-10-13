@@ -1387,6 +1387,39 @@ export class ObjectSessionRecovery {
   snapshot(options:ObjectSessionRecoverySnapshotOptions): Promise<ObjectSessionRecoverySuccess<ObjectSessionRecoverySnapshot>>;
   verify(options:ObjectSessionRecoveryArchiveOptions): Promise<ObjectSessionRecoverySuccess<ObjectSessionRecoveryVerification>>;
   restore(options:ObjectSessionRecoveryArchiveOptions): Promise<ObjectSessionRecoverySuccess<ObjectSessionRecoveryRestore>>;
+  compare(options:ObjectSessionComparisonOptions): Promise<ObjectSessionComparisonResult & {readonly ok:true; readonly completionReported:true; readonly native:Readonly<ObjectSessionComparison>}>;
+}
+
+
+/** Two exact authenticated editions. Neither comparison nor report dispatches restore. */
+export interface ObjectSessionComparisonOptions {
+  before: Omit<ObjectSessionRecoveryArchiveOptions,'signal'> & {expectedRecordSha256:string};
+  after: Omit<ObjectSessionRecoveryArchiveOptions,'signal'> & {expectedRecordSha256:string};
+  signal?: AbortSignal;
+}
+export interface ObjectSessionComparison extends JsonObject {
+  schema:'stellar-forge.sf88.object-session-comparison.v1';
+  status:'OBJECT_SESSION_BACKUPS_COMPARED';
+  authenticated:true;
+  sessionId:string; directory:string; stateRoot:string;
+  before:{bundle:string;recordSha256:string;verification:ObjectSessionRecoveryVerification;record:JsonObject};
+  after:{bundle:string;recordSha256:string;verification:ObjectSessionRecoveryVerification;record:JsonObject};
+  /** Indexed member unions refer to full records, avoiding repeated inventories. */
+  comparison:JsonObject;
+  comparisonSha256:string;
+}
+export class ObjectSessionComparisonResult {
+  private constructor();
+  readonly operation:'compare';
+  readonly native:Readonly<ObjectSessionComparison | JsonObject> | null;
+  readonly partialComparison:Readonly<JsonObject> | null;
+  readonly process:WorkspaceRecoveryProcess;
+  readonly completionReported:boolean;
+  readonly ok:boolean;
+}
+export class ObjectSessionComparisonError extends BuyerError {
+  readonly result:ObjectSessionComparisonResult;
+  constructor(code:string,result:ObjectSessionComparisonResult);
 }
 
 /** Complete original buyer-runbook workspaces, independent of single-operator recovery. */
