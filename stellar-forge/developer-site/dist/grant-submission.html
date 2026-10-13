@@ -17,6 +17,11 @@
 <p id="status" class="status" role="status" aria-live="polite">Opening the current application…</p>
 <p id="error" class="error" role="alert" hidden></p>
 <div id="workspace-root">
+<section class="working-recovery" aria-label="Complete unfinished preparation">
+<p id="working-status" class="muted" role="status" aria-live="polite">This window has an independent working copy.</p>
+<div class="toolbar-row"><button id="export-working">Download complete working file</button><button id="import-working">Open complete working file</button><button id="save-working-copy">Save separate working copy</button><button id="show-working">Open saved preparation</button></div>
+<p class="muted">Working recovery includes unfinished limits, the selected incoming source and unapplied worksheets. Save version records the original validated application; receiving a source or applying a returned worksheet stays explicit.</p>
+</section>
 <section class="toolbar" aria-label="Draft and output controls">
 <label class="title-label">Draft name<input id="draft-title" autocomplete="off" value="SCF #46 submission"></label>
 <div class="toolbar-row"><button id="save">Save version</button><button id="save-copy">Save as separate draft</button><button id="export-draft">Download full draft</button><button id="export-offline">Download offline editor</button><button id="import-draft">Open draft file</button><button id="refresh-source">Read current source</button></div>

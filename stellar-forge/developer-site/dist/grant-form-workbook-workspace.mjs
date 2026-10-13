@@ -9,7 +9,7 @@ export function createFormWorkbookPanel(host){
   function current(){return host.getDraft();}
   function reset(){workbook=null;profile='';fields='';separator=',';review=null;decisions=Object.create(null);epoch++;}
   function active(token,basis){return token===epoch&&key(current())===basis;}
-  function changed(){review=null;decisions=Object.create(null);root?.querySelector('[data-form-workbook-review]')?.remove();}
+  function changed(){host.onWorkingChange?.();review=null;decisions=Object.create(null);root?.querySelector('[data-form-workbook-review]')?.remove();}
   function button(label,action){const el=node('button',label);el.type='button';el.addEventListener('click',()=>host.work(action));return el;}
   function select(label,value,options,action){const wrap=node('label',undefined,'field'),el=node('select');for(const [id,title]of options){const option=node('option',title);option.value=id;el.append(option);}el.value=value;el.addEventListener('change',()=>action(el.value));wrap.append(node('span',label),el);return wrap;}
   async function read(file,maximum){if(!file||file.size>maximum)throw new Error('Choose a complete UTF-8 file within '+maximum+' bytes.');const bytes=new Uint8Array(await file.arrayBuffer());if(bytes.length!==file.size||bytes.length>maximum)throw new Error('The selected file changed during reading.');return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);}
@@ -55,7 +55,7 @@ export function createFormWorkbookPanel(host){
       for(const [label,value]of [['Original workbook',change.before],['Current draft',change.current],['Returned worksheet',change.incoming]])details.append(node('h5',label),node('pre',valueText(value),'source-text'));
       const options=change.status==='conflict'?[['','Choose a value'],['current','Keep current draft'],['incoming','Use returned worksheet']]:[['current','Keep current draft'],['incoming','Use returned worksheet']];
       const selected=Object.prototype.hasOwnProperty.call(decisions,change.key)?decisions[change.key]:change.status==='conflict'?'':review.decisions[change.key];
-      details.append(select('Selected value',selected,options,value=>{if(value)decisions[change.key]=value;else delete decisions[change.key];}));
+      details.append(select('Selected value',selected,options,value=>{if(value)decisions[change.key]=value;else delete decisions[change.key];host.onWorkingChange?.();}));
       section.append(details);
     }
     if(review.fields.length){
@@ -68,7 +68,7 @@ export function createFormWorkbookPanel(host){
   }
   function render(){
     if(!root)return;root.replaceChildren();
-    const details=node('details');details.open=expanded;details.addEventListener('toggle',()=>{expanded=details.open;});details.dataset.formWorkbook='';
+    const details=node('details');details.open=expanded;details.addEventListener('toggle',()=>{expanded=details.open;host.onWorkingChange?.();});details.dataset.formWorkbook='';
     details.append(node('summary','Issuer-form workbook'),node('p','Prepare the actual form in a spreadsheet, then compare its returned wording with this current draft. Prompts, answer mappings, source dates and recorded limits stay explicit.','muted'));
     const row=node('div',undefined,'row');row.append(button(workbook?'Prepare new baseline from current form':'Prepare workbook from current form',prepare),choose('Open workbook JSON','.json,application/json',MAX_FORM_WORKBOOK_BYTES,open));details.append(row);
     if(workbook){
@@ -96,5 +96,7 @@ export function createFormWorkbookPanel(host){
     }
     root.append(details);
   }
-  return{render(target){const next=key(current());if(next!==identity){reset();identity=next;expanded=false;}root=target;render();},dispose(){reset();root=null;identity='';}};
+  return{snapshot(){return workbook?clone({workbook,profile,fields,separator,decisions,expanded}):null;},
+    restore(value){epoch++;identity=key(current());root=null;review=null;if(!value){reset();return;}workbook=clone(value.workbook);profile=value.profile;fields=value.fields;separator=value.separator;decisions=clone(value.decisions);expanded=value.expanded;},
+    render(target){const next=key(current());if(next!==identity){reset();identity=next;expanded=false;}root=target;render();},dispose(){reset();root=null;identity='';}};
 }
