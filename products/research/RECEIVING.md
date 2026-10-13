@@ -1096,6 +1096,31 @@ The source wire and decoded limits are 256 MiB, with the original 8 MiB envelope
 
 For a large plain JSON return, select an existing original gzip portable from the producing Research workspace when available and retain that file’s actual source identity. The receiver preserves the selected upload exactly; it never silently recompresses the source. Compressed wire size does not waive the decoded or complete-portable limits.
 
+## 22. Receive a customer handover and accepted returns
+
+The complete [customer handover return course](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/HANDOVER_RETURNS.md) accepts the original published customer-updates handover and preserves it beside the accepted later dossier. The installed research-customer-handover-returns command prepares/replays the reviewed native requests and packages full source, evidence and original history.
+
+The complete archive has a distinct sf88.research-customer-handover-returns-package.v1 manifest. Baseline handover.json retains sf88-research-customer-handover/v1 and its original delivery revision. COURSE.json identifies the accepted later native portable, historical metadata, complete history and cumulative inherited/new return receipts. Its selected maximum_total_items and maximum_total_returns apply to the entire counted native return history.
+
+Verify and receive the archive using the complete included receiving source or the same installed release:
+
+~~~sh
+python3 /absolute/source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/receive-handover-returns.py receive \
+  --archive /absolute/customer/Customer_Reviewed_Research_Handover.zip \
+  --sha256 ACTUAL_ARCHIVE_SHA256 \
+  --directory /absolute/customer-receiving \
+  --node /absolute/node --python /absolute/python3
+
+node /absolute/customer-receiving/package/OPEN.mjs \
+  --directory /absolute/customer-receiving/editable
+~~~
+
+The receiver verifies every ordered member, original byte count/SHA and executable mode. It receives the original customer delivery through receiveCustomerHandover, then reopens the accepted later portable through the native dossier reader. Full accepted metadata/history and exact request receipts are checked. Original source workspace restoration follows the baseline's original selection and actor.
+
+OPEN.mjs prints the authenticated local application address only to its owning terminal. The public package contains the complete editable source and data; connection tokens stay with the private runtime. Use --verify-only to perform the same receiving verification and close the owned listener. The editable directory stays outside the immutable extracted package.
+
+Repeat the same archive/SHA/directory after an interrupted receive. Python retains its actual lock through the native Node child, and each full attempt has exclusive stdout/stderr and result files. Ordinary later opens verify the package's selected accepted revision while allowing subsequent same-prefix edits in the native workspace.
+
 ## Continue an interrupted handover
 
 | Interrupted step | Continue the original work |
