@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Actual retained Delaware public file selection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "operation",
+    "files"
+  ],
+  "properties": {
+    "schema": {
+      "const": "stellar-forge.delaware-retained-file-selection.v1"
+    },
+    "operation": {
+      "const": "CSE-DELAWARE-PUBLIC-REFERENCE-814B-20261013"
+    },
+    "files": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "csv",
+        "metadata",
+        "count",
+        "header",
+        "acceptance"
+      ],
+      "properties": {
+        "csv": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "bytes",
+            "sha256",
+            "origin"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "pattern": "^/"
+            },
+            "bytes": {
+              "const": 927011
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "origin": {
+              "const": "notion:file-upload:3f8dd772-3100-810b-9580-00b2b0725ed6"
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "bytes",
+            "sha256",
+            "origin"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "pattern": "^/"
+            },
+            "bytes": {
+              "const": 19720
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "origin": {
+              "const": "notion:file-upload:3f8dd772-3100-81ef-914b-00b2b0779699"
+            }
+          }
+        },
+        "count": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "bytes",
+            "sha256",
+            "origin"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "pattern": "^/"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "origin": {
+              "const": "notion:file-upload:3f8dd772-3100-8185-87a0-00b2e7a80378"
+            }
+          }
+        },
+        "header": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "bytes",
+            "sha256",
+            "origin"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "pattern": "^/"
+            },
+            "bytes": {
+              "const": 117
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "origin": {
+              "const": "notion:file-upload:3f8dd772-3100-8122-b486-00b29f1a652b"
+            }
+          }
+        },
+        "acceptance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "bytes",
+            "sha256",
+            "origin"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "pattern": "^/"
+            },
+            "bytes": {
+              "const": 107441
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "origin": {
+              "const": "notion:file-upload:3f8dd772-3100-8108-a2a9-00b2dfbffefb"
+            }
+          }
+        }
+      }
+    }
+  }
+}
