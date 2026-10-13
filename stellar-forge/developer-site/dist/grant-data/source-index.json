@@ -27362,7 +27362,7 @@
             "municipal-assets-service-cli"
           ],
           "definition": {
-            "path": "stellar-forge/developer-site/grant-products/municipal-assets.json",
+            "path": "grant-products/municipal-assets.json",
             "bytes": 9587,
             "sha256": "175c606f2434879aec88a2007cb72f669a2f33c3a50cfc5446960d9442211d19",
             "git_blob": "73df97834990ebdb9770001c0b6200d7cc455f3a"
