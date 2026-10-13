@@ -4843,24 +4843,24 @@
     },
     {
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "ca93854e582d954bb66077da596b0e5cbee59f3d",
+      "commit": "b783bdd51f491253d6335e51817532359e8ba784",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/OPERATOR.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/ca93854e582d954bb66077da596b0e5cbee59f3d/stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/OPERATOR.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b783bdd51f491253d6335e51817532359e8ba784/stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/OPERATOR.md",
       "source_kind": "source-file",
       "id": "audit-exchange-operator",
       "kind": "published-source",
       "label": "Complete audit import, correction, review, energy selection and turnover operation",
       "source_registration": "audit-exchange",
-      "git_blob": "435793e980a182105a7b73bdfde03dce5e0f6e8d",
-      "sha256": "881efcd36211836b7258d36171ebba7085949dc97ea5c364f6df3b9132d7b7e6",
-      "bytes": 30119,
+      "git_blob": "9365928b5e893c3a67b58e469705e694865052a9",
+      "sha256": "896602f44113f7ac0a72ccd15b73f1d3c5785d0ce71fdedb3763bce0c93f4a7b",
+      "bytes": 30796,
       "product_byte_identity": {
         "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-        "commit": "ca93854e582d954bb66077da596b0e5cbee59f3d",
+        "commit": "b783bdd51f491253d6335e51817532359e8ba784",
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/OPERATOR.md",
-        "git_blob": "435793e980a182105a7b73bdfde03dce5e0f6e8d",
-        "sha256": "881efcd36211836b7258d36171ebba7085949dc97ea5c364f6df3b9132d7b7e6",
-        "bytes": 30119
+        "git_blob": "9365928b5e893c3a67b58e469705e694865052a9",
+        "sha256": "896602f44113f7ac0a72ccd15b73f1d3c5785d0ce71fdedb3763bce0c93f4a7b",
+        "bytes": 30796
       }
     },
     {
@@ -4887,24 +4887,24 @@
     },
     {
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "ca93854e582d954bb66077da596b0e5cbee59f3d",
+      "commit": "b783bdd51f491253d6335e51817532359e8ba784",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/ANALYSIS.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/ca93854e582d954bb66077da596b0e5cbee59f3d/stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/ANALYSIS.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b783bdd51f491253d6335e51817532359e8ba784/stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/ANALYSIS.md",
       "source_kind": "source-file",
       "id": "audit-exchange-energy-analysis",
       "kind": "published-source",
       "label": "Pinned nmecr installation, original weather inputs and native energy analysis",
       "source_registration": "audit-exchange",
-      "git_blob": "6203705a338d70de6a4fc9583138b721643c0515",
-      "sha256": "a1eb55f8ca241ef1881d6b5bcf5aab3d04736350fe2ba24808daabca48075003",
-      "bytes": 8901,
+      "git_blob": "a7f89e13d221a795b3413a229c64641e0818bdec",
+      "sha256": "d4e1079a55870009ed833145b2148859f0aed3972482e160160f31ce15ccec5f",
+      "bytes": 11532,
       "product_byte_identity": {
         "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-        "commit": "ca93854e582d954bb66077da596b0e5cbee59f3d",
+        "commit": "b783bdd51f491253d6335e51817532359e8ba784",
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/ANALYSIS.md",
-        "git_blob": "6203705a338d70de6a4fc9583138b721643c0515",
-        "sha256": "a1eb55f8ca241ef1881d6b5bcf5aab3d04736350fe2ba24808daabca48075003",
-        "bytes": 8901
+        "git_blob": "a7f89e13d221a795b3413a229c64641e0818bdec",
+        "sha256": "d4e1079a55870009ed833145b2148859f0aed3972482e160160f31ce15ccec5f",
+        "bytes": 11532
       }
     },
     {
@@ -9383,9 +9383,9 @@
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "b697b2d765ee7e4d9347e11c2f0b0da1e6b607a1",
-    "bytes": 986634,
-    "sha256": "d330672945a4685fdbc2709b4d95c692a8ca6d5c408e24699a03f067be3ee91b",
+    "git_blob": "f34c4eaf4f6f7ad1f0eee12a3eeeee871c5642b7",
+    "bytes": 987482,
+    "sha256": "ec0fad9764c44b27a61a1fe49efee119d58a266dc88959dc909ce5fcd19d5952",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
     "prior_git_blob": "9ff11768d30ce0a77f620ed0e50cde965b3e0c4a"
   },
@@ -9788,9 +9788,9 @@
           ],
           "definition": {
             "path": "grant-products/audit-exchange.json",
-            "bytes": 4001,
-            "sha256": "57fbcb385f4dfd586954b201ce181257ed6b44093720422fb39324580b89cbd8",
-            "git_blob": "166cb8bebe4b52d32098d3e00098889b96a965e6"
+            "bytes": 4529,
+            "sha256": "64aa7920d5fd6f0e32e886ffca5446b90a3d02ff9f9f7748bac9814e9a1fc667",
+            "git_blob": "5889537bdb12e75143a6fdaf1a638617975857fa"
           }
         },
         {
@@ -10764,8 +10764,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "d330672945a4685fdbc2709b4d95c692a8ca6d5c408e24699a03f067be3ee91b",
-    "source_bytes": 986634,
+    "source_sha256": "ec0fad9764c44b27a61a1fe49efee119d58a266dc88959dc909ce5fcd19d5952",
+    "source_bytes": 987482,
     "assets": [
       "/grant-companion.html",
       "/grant-companion.css",
