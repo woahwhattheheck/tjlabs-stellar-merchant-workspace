@@ -78,6 +78,7 @@ def register_static(static):
                    "/cohort_planning.mjs": ("cohort_planning.mjs", "text/javascript; charset=utf-8"),
                    "/cohort_planning_calendar.mjs": ("cohort_planning_calendar.mjs", "text/javascript; charset=utf-8"),
                    "/cohort_planning_scheduling.mjs": ("cohort_planning_scheduling.mjs", "text/javascript; charset=utf-8"),
+                   "/cohort_planning_session.mjs": ("cohort_planning_session.mjs", "text/javascript; charset=utf-8"),
                    "/operations_cohort_planning.mjs": ("operations_cohort_planning.mjs", "text/javascript; charset=utf-8"),
                    "/operations_cohort_planning.css": ("operations_cohort_planning.css", "text/css; charset=utf-8"),
                    "/operations_cohort.mjs": ("operations_cohort.mjs", "text/javascript; charset=utf-8"),
