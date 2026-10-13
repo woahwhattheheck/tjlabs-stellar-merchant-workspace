@@ -35,7 +35,7 @@ function requestFor(token){return {url:'/mcp',method:'POST',headers:{authorizati
  * receive(context) continues in the original SF74 console while the same source
  * host is still available. Credentials stay inside this one native process.
  */
-export async function runOAuthNativeProgramme({directory,receive,signal}={}) {
+export async function runOAuthNativeProgramme({directory,receive,signal,browser}={}) {
   signal?.throwIfAborted();
   if(typeof directory!=='string'||!directory)throw new TypeError('An explicit fresh native output directory is required');
   if(receive!==undefined&&typeof receive!=='function')throw new TypeError('The receiving continuation must be a function');
@@ -46,7 +46,7 @@ export async function runOAuthNativeProgramme({directory,receive,signal}={}) {
     startedAt:iso(),status:'RUNNING',runtime:{node:process.version},phases:[]};
   const resultPath=join(root,'oauth-native-result.json');
   async function retain(){const temporary=resultPath+'.tmp';await writeFile(temporary,JSON.stringify(result,null,2)+'\n',{mode:0o600});await rename(temporary,resultPath);}
-  async function phase(name,details={}){result.phases.push({name,at:iso(),...details});await retain();process.stdout.write(JSON.stringify({phase:name,...details})+'\n');}
+  async function phase(name,details={}){owner.signal.throwIfAborted();result.phases.push({name,at:iso(),...details});await retain();process.stdout.write(JSON.stringify({phase:name,...details})+'\n');}
   const owner=new AbortController(),stop=new AbortController();let keyServer,hookServer,mcpServer,host,callbackResource,watcher,watchError;
   const abortFromCaller=()=>owner.abort(signal.reason);
   owner.signal.addEventListener('abort',()=>stop.abort(owner.signal.reason),{once:true});
@@ -240,7 +240,7 @@ export async function runOAuthNativeProgramme({directory,receive,signal}={}) {
     await writeFile(join(root,'oauth-final-source.json'),finalSource.packet.files['oauth-source.json'],{mode:0o600});
     if(receive) {
       const received=await receive({root,incidentDirectory,incidentIds,incidentConfig,merchant,selection,environment,
-        sourceOrigin:origin,sourceFiles:finalSource.packet.files,report:result,signal:owner.signal});
+        sourceOrigin:origin,sourceFiles:finalSource.packet.files,report:result,signal:owner.signal,browser});
       await phase('original-support-receiving',received);
     }
     result.status='COMPLETED';result.completedAt=iso();result.providerCalls=providerCalls;
@@ -258,7 +258,18 @@ export async function runOAuthNativeProgramme({directory,receive,signal}={}) {
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
   const args=process.argv.slice(2),value=name=>{const i=args.indexOf(name);return i<0?undefined:args[i+1];};
   const directory=value('--directory'),receiver=value('--receiving');
-  let receive;if(receiver){const module=await import(pathToFileURL(resolve(receiver)).href);receive=module.receiveOAuthSupport;}
-  const {resultPath,result}=await runOAuthNativeProgramme({directory,receive});
-  process.stdout.write(JSON.stringify({status:result.status,resultPath,incidents:result.incidents.map(x=>({id:x.id,kind:x.kind,status:x.status}))})+'\n');
+  const playwrightModule=value('--playwright-module'),executablePath=value('--browser-executable');
+  if(Boolean(playwrightModule)!==Boolean(executablePath))
+    throw new TypeError('Select both --playwright-module and --browser-executable, or neither.');
+  const browser=playwrightModule?{playwrightModule:resolve(playwrightModule),executablePath:resolve(executablePath)}:undefined;
+  const controller=new AbortController();
+  const onStop=()=>controller.abort(new Error('The original native programme was stopped.'));
+  process.once('SIGINT',onStop);process.once('SIGTERM',onStop);
+  try {
+    controller.signal.throwIfAborted();
+    let receive;if(receiver){const module=await import(pathToFileURL(resolve(receiver)).href);
+      controller.signal.throwIfAborted();receive=module.receiveOAuthSupport;}
+    const {resultPath,result}=await runOAuthNativeProgramme({directory,receive,signal:controller.signal,browser});
+    process.stdout.write(JSON.stringify({status:result.status,resultPath,incidents:result.incidents.map(x=>({id:x.id,kind:x.kind,status:x.status}))})+'\n');
+  } finally {process.removeListener('SIGINT',onStop);process.removeListener('SIGTERM',onStop);}
 }
