@@ -46,6 +46,38 @@ The carrier reuses saved request UUIDs and checks accepted browser edits/receipt
 
 ## Retained outcome
 
+### Full collection handoffs within the original Research limits
+
+The real OSF catalogue continuation retains all 5,503 items and 18 collections
+from 58 original official Web API responses, consistently at library version
+11212. A complete four-root collection view contains 1,254 items, including
+their linked attachment/note metadata. Its original full-metadata manifest is
+8,894,508 bytes, exceeding the existing 1 MiB Research manifest bound.
+
+The maintained bridge therefore references full item originals from a compact
+manifest when necessary. It keeps source definitions, authored decisions and
+findings while each citation names its unchanged `item-KEY.json` file. Original
+source-page indexes are resolved through `metadata.originKey` in the complete
+`zotero-project-lineage.json`. The custody source declares the representation.
+Only abstract previews are sized; all full upstream metadata and abstracts
+remain in the exact item originals, and all response bodies remain in the
+original document set. Source-count, file-byte, manifest and bundle bounds stay
+strict. The native receiver verifies every file and its full manifest.
+
+Blank upstream item titles use their original type/key as a display fallback.
+The upstream file keeps its original blank field. Existing small handoffs keep
+their full manifest representation.
+
+New workspace export validates the native snapshot before creating its exact
+UUID-bound file. This closes a real failure where damaged derived indexes
+returned duplicate immutable revisions to the manifest while physical rows
+were intact. Preserve full database/journal preimages before native storage
+repair; validate original physical history and source bytes, then continue the
+same capture/project through full export, close, cold reopen, independent
+receiving and re-export. Inspect the final packet through the original strict
+receiver, and keep a completed portable checkpoint before moving an operation
+between execution environments.
+
 ### Continue original live API captures
 
 The installed product's ordinary capture path uses the official Web API v3 and
