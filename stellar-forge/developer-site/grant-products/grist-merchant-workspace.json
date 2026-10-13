@@ -1,0 +1,147 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "grist-merchant-workspace",
+  "heading": "## Report and content commissioning and complete receiving",
+  "sources": [
+    {
+      "id": "grist-customer-commissioning",
+      "label": "Complete Grist customer commissioning and independent workspace receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/grist/COMMISSIONING.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "bf2bbfc459626b827a21435e60af4f992a744441",
+          "bytes": 46981,
+          "sha256": "eb8e232af4a162c38e9421b01ea15a29a6c36aa8036526bbe9cb3ed90603b576",
+          "git_blob": "4682c50c9051bda981a1334bb4cd0627c092d4e2"
+        }
+      ]
+    },
+    {
+      "id": "grist-complete-workspace",
+      "label": "Complete Grist typed-source authoring and original publication workspace",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/WORKSPACE.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "bf2bbfc459626b827a21435e60af4f992a744441",
+          "bytes": 32606,
+          "sha256": "e4d21ae6d670fa3d12dfce27c69a6a9a28486ca9da3b4cbe81d43166450162af",
+          "git_blob": "edae4c2f03b9ee104adb36e30d219e23dc5e603a"
+        }
+      ]
+    },
+    {
+      "id": "grist-workspace-handover",
+      "label": "Complete independent Grist receiving and saved Operating Plans course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/HANDOVER.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "bf2bbfc459626b827a21435e60af4f992a744441",
+          "bytes": 16371,
+          "sha256": "96426387eeaa3c67e47e1fc6c21adcf479336751a06313ed16cc4e62cd55f8f3",
+          "git_blob": "02715c536ae22e127b887d2dfbd9d1e5699b3cba"
+        },
+        {
+          "commit": "310d8a84bd01639acc9d5dbcefcfa1ce1c783ad0",
+          "bytes": 20456,
+          "sha256": "5f98d77443644153d4f73daa2ccaeb5875eb878a1bc8a011025725680a42ac6d",
+          "git_blob": "5434c1be8347ac6af08449ac8386052d72a09a08"
+        }
+      ]
+    },
+    {
+      "id": "grist-authoring-engine",
+      "label": "Original Grist source history, Operating Plans and complete receiving model",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/model.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "bf2bbfc459626b827a21435e60af4f992a744441",
+          "bytes": 83774,
+          "sha256": "7520486304d2caf413b2dffbf1fa06cb52e017233095a0d75c85088cea99931a",
+          "git_blob": "e2bf83789345dfaa307a680d23c577a4161cefb5"
+        }
+      ]
+    },
+    {
+      "id": "grist-native-receiving",
+      "label": "Original Grist source, publication and customer receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/RECEIVING.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "bf2bbfc459626b827a21435e60af4f992a744441",
+          "bytes": 29298,
+          "sha256": "43027e069669c871c99505e69d955cb02039db229b5b0458d1f7cebcbe9abcec",
+          "git_blob": "e0b65233af64b6a2d0b66423bd62863927d1ebf0"
+        }
+      ]
+    },
+    {
+      "id": "grist-customer-distribution",
+      "label": "Installed Grist source workspace, Applications and merchant-agent distribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/grist-authoring.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "bf2bbfc459626b827a21435e60af4f992a744441",
+          "bytes": 2342,
+          "sha256": "e8cf46d3cb2fbba4916e68ab1ddb5b86075e19662f50dda406c14f44779df2a9",
+          "git_blob": "f07d9270815fd716f68bd1b10065a8e68ec2024c"
+        }
+      ]
+    },
+    {
+      "id": "grist-private-workspace-transfer-engine",
+      "label": "Complete streamed Grist workspace archive and independent receiving engine",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/handover.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "bf2bbfc459626b827a21435e60af4f992a744441",
+          "bytes": 28760,
+          "sha256": "561f951778daa5133b4b2a27bce70aa64a390a1dc4cbd1d82d8e890f20b77a47",
+          "git_blob": "1d514798a4d5ae4af1f23e2083a01eecdf328478"
+        },
+        {
+          "commit": "310d8a84bd01639acc9d5dbcefcfa1ce1c783ad0",
+          "bytes": 32463,
+          "sha256": "ad3413634ff5a3c7e827b181303aad80ec9f351fde6cfaa9228432bc4655fc6c",
+          "git_blob": "ca863e0bea6b7222e0a17c8afe47811e54e14c53"
+        }
+      ]
+    },
+    {
+      "id": "grist-original-identity-placement",
+      "label": "Original Grist settings and procedure identity with receiving-host placement",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/placement.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "bf2bbfc459626b827a21435e60af4f992a744441",
+          "bytes": 3631,
+          "sha256": "2068cb1918b2186822bbd14b1e561c6b670bbe93d3e41091ac3b474ec8fb1f7d",
+          "git_blob": "1e5eda6632907a002cdcf05ad7e860e62dd968e6"
+        }
+      ]
+    }
+  ]
+}

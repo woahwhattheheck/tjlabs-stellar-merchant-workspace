@@ -1,3 +1,4 @@
+import {nativeJSONCanonical, parseExactMappingJSON} from './operations_installation_mapping_reconciliation.mjs';
 // Complete original-source preparation and native Workshare/Installation handover.
 import {Sha256, sha256File} from './operations_installation_source_hash.mjs';
 import {bindingTemplate, prepareInstallation, renderWorkorder} from '/installation-prepare-core.mjs';
@@ -20,7 +21,7 @@ const clone=value=>structuredClone(value);
 const record=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const sorted=value=>Array.isArray(value)?value.map(sorted):record(value)?
   Object.fromEntries(Object.keys(value).sort().map(key=>[key,sorted(value[key])])):value;
-const stable=value=>JSON.stringify(sorted(value));
+const stable=nativeJSONCanonical;
 const equal=(a,b)=>stable(a)===stable(b);
 const utf8=value=>new TextEncoder().encode(value);
 const hash=value=>new Sha256().update(typeof value==='string'?utf8(value):value).hex();
@@ -177,7 +178,7 @@ export function mountInstallationSources(root,bridge){
   activeCopies.set(pointerKey,copyId);
   const initial={schema:SCHEMA,scope,open:false,tab:'files',draftId:null,revision:null,work:null,note:'',newTitle:'',
     upload:{filename:'',mediaType:'application/json',sourceUrl:'',observedAt:''},
-    caseForm:null,pendingId:null,preparationId:null,profileWork:null,commissioningWork:null,collectionWork:null,editionWork:null,
+    caseForm:null,pendingId:null,preparationId:null,profileWork:null,commissioningWork:null,collectionWork:null,editionWork:null,nativeDraftJSON:null,
     inspectionFileId:null,notice:'',error:'',rejected:[],copyName:'Source working copy',rawFields:{},fieldErrors:{},historyRevisionText:null};
   let state=clone(initial),alive=true,busy=false,hostBusy=false,initialized=false;
   let saved=null,edition=null,heads=[],catalogue=null,prepared=null,inspection=null,request=null,chosenFile=null;
@@ -207,7 +208,7 @@ export function mountInstallationSources(root,bridge){
     state:()=>state,draft:()=>selectedDraft(),currentDraft:()=>saved,heads:()=>heads,caseId,
     editing,historic,readonly,pending,requireEdit,changed,render,parkWorking,issue,
     mappingDirty:()=>workingDirty()||Object.keys(state.rawFields||{}).some(editionMappingField),
-    esc,pretty,stable,table,empty,hint,btn,download:downloadBlob,
+    esc,pretty,stable,hash,table,empty,hint,btn,download:downloadBlob,
     downloadOriginal:(ref,file)=>download(prefix+'/'+encodeURIComponent(ref.draftId)+'/files/'+encodeURIComponent(file.id)+'?revision='+ref.revision+'&expectedSha256='+file.sha256,file),
     downloadOutput:(ref,id,file)=>download(prefix+'/'+encodeURIComponent(ref.draftId)+'/preparations/'+encodeURIComponent(id)+'/outputs/'+encodeURIComponent(file.filename)+'?expectedSha256='+file.sha256,file),
     api:(draftId,suffix,value)=>bridge.api(prefix+'/'+draftId+suffix,value)
@@ -323,6 +324,11 @@ export function mountInstallationSources(root,bridge){
     const merged=mergeRequests(requests),pending=next.pendingId?merged.get(next.pendingId):null;
     if(next.pendingId&&(!pending||pending.draftId!==next.draftId))throw new Error('The complete pending original request is missing from this copy.');
     checkedFile(value.selectedFile);
+    if(next.nativeDraftJSON!==null&&next.nativeDraftJSON!==undefined){
+      const original=parseExactMappingJSON(next.nativeDraftJSON).value;
+      if(original.schema!==SCHEMA||original.caseId!==caseId||original.id!==next.draftId||!Number.isSafeInteger(original.revision))
+        throw new Error('Keep the exact native draft JSON in its original source working copy.');
+    }
     validateSourceEditionWork(next.editionWork,{caseId,draftId:next.draftId});
     if(next.collectionWork!==null&&next.collectionWork!==undefined)
       validateCollection(next.collectionWork,{hash,checkedFile,draftId:next.draftId,requests:[...merged.values()]});
@@ -379,6 +385,7 @@ export function mountInstallationSources(root,bridge){
     // The full editor stays based on its original source, including unfinished raw text.
     if(!state.work)state.work={draftId:state.draftId,baseRevision:edition.revision,selectionText:edition.selection?pretty(edition.selection):'',dirty:false};
     else if(state.work.baseRevision!==head.revision&&retained.revision===null)state.work.dirty=true;
+    await editions.exactDraft(edition);
     if(state.preparationId&&!prepared)await readPreparation(state.preparationId);
   }
   async function receiveCopy(input,{savedId=null}={}){
@@ -461,6 +468,8 @@ export function mountInstallationSources(root,bridge){
       const liveDisabled={
         'edition-preview':!editions.canPreview(),
         'edition-apply':!editions.canApply(),
+        'edition-mapping-preview':!editions.canMappingPreview(),
+        'edition-mapping-apply':!editions.canMappingApply(),
         'working-open-saved':!selectedLocalCopy,
         'save-selection':!saved||historic()||!state.work?.dirty,
         'prepare':!saved?.selection||saved.selection.schema===NATIVE_SELECTION||!!state.work?.dirty||!!state.caseForm?.dirty||historic(),
@@ -508,7 +517,7 @@ export function mountInstallationSources(root,bridge){
   function acceptState(value,{replace=false}={}){
     if(value.schema!==SCHEMA||value.caseId!==caseId||value.id!==state.draftId||!Number.isSafeInteger(value.revision))
       throw new Error('The source draft changed original case or edition.');
-    saved=value;edition=value;
+    saved=value;edition=value;state.nativeDraftJSON=null;
     if(replace||!state.work||state.work.draftId!==value.id){
       state.work={draftId:value.id,baseRevision:value.revision,selectionText:value.selection?pretty(value.selection):'',dirty:false};
       state.caseForm=null;state.profileWork=null;
@@ -532,6 +541,7 @@ export function mountInstallationSources(root,bridge){
       state.work={draftId:id,baseRevision:value.revision,selectionText:value.selection?pretty(value.selection):'',dirty:false};
     }
     edition=value;state.preparationId=value.preparations.at(-1)?.id??null;
+    await editions.exactDraft(value);
     state.tab='files';inspection=null;prepared=null;inspectors.clear();chosenFile=null;selectedFile=null;state.inspectionFileId=null;
     state.notice=revision===null?'Opened complete source preparation revision '+latest.revision+'.':'Opened retained revision '+value.revision+'.';
     await persistNow();
@@ -566,8 +576,8 @@ export function mountInstallationSources(root,bridge){
     state.pendingId=null;request=null;state.notice='Saved complete source preparation revision '+value.draft.revision+'.';
     if(state.draftId===value.draft.id){
       const newer=beforeWork?.dirty&&original.editorText!==beforeWork.selectionText;
-      if(original.body.action==='edition.apply'&&!newer)clearRawFields(EDITION_MAPPING_FIELDS);
-      acceptState(value.draft,{replace:!newer&&['selection.save','native.receive','edition.apply'].includes(original.body.action)});
+      if(['edition.apply','mapping.apply'].includes(original.body.action)&&!newer)clearRawFields(EDITION_MAPPING_FIELDS);
+      acceptState(value.draft,{replace:!newer&&['selection.save','native.receive','edition.apply','mapping.apply'].includes(original.body.action)});
       if(newer){state.work=beforeWork;state.work.baseRevision=value.draft.revision;}
       else if(state.work)state.work.baseRevision=value.draft.revision;
     }
@@ -580,6 +590,7 @@ export function mountInstallationSources(root,bridge){
     }
     commissioning.adoptReceipt(value.result);
     editions.adoptReceipt(value,original);
+    editions.adoptNativeDraft(value);
     changed();
     try{await persistNow();}catch(error){state.pendingId=original.body.requestId;request=original;throw error;}
     // Once both the receipt and working selection are durable, a failed read is
@@ -603,7 +614,7 @@ export function mountInstallationSources(root,bridge){
     const body={requestId:'source-'+crypto.randomUUID(),expectedRevision:expected,
       actor:bridge.recordingActor(),note:state.note,action,data:clone(data)};
     assertStaffRequestActor(body,staffContext);
-    if(Object.keys(state.fieldErrors||{}).some(key=>action!=='edition.apply'||!editionMappingField(key)))
+    if(Object.keys(state.fieldErrors||{}).some(key=>!['edition.apply','mapping.apply'].includes(action)||!editionMappingField(key)))
       throw new Error('Correct the retained unfinished fields before recording the native request.');
     if(!body.actor?.trim())throw new Error('Enter the recording operator in the original workspace.');
     const original={schema:SCHEMA,caseId,draftId:state.draftId,body,createdAt:new Date().toISOString(),
@@ -677,9 +688,10 @@ export function mountInstallationSources(root,bridge){
   }
   async function saveSelection(){
     requireEdit();if(state.caseForm?.dirty)throw new Error('Apply the edited customer mapping to the complete selection first.');
-    const selection=parseObject(state.work?.selectionText||'','Complete source selection');
-    if(![SELECTION,HANDOVER_SELECTION].includes(selection.schema))throw new Error('Use the complete original packet or saved handover source selection.');
-    return issue('selection.save',{selection});
+    const selection=parseExactMappingJSON(state.work?.selectionText||'').value;
+    if(!record(selection)||![SELECTION,HANDOVER_SELECTION].includes(selection.schema))throw new Error('Use the complete original packet or saved handover source selection.');
+    // The native writer parses the complete original editor text without a JS number round trip.
+    return issue('selection.save',{selectionJSON:state.work.selectionText});
   }
   async function receiveNative(fileId){
     requireEdit();
@@ -698,7 +710,7 @@ export function mountInstallationSources(root,bridge){
     if(state.work?.dirty||state.caseForm?.dirty)throw new Error('Save the complete edited source selection before native preparation.');
     if(!saved.selection)throw new Error('Save the complete native source mapping first.');
     if(saved.selection.schema===NATIVE_SELECTION)throw new Error('Receive the complete source ZIP for this native mapping. Revise its original Workshare and explicit mapping through the installed CanadaBuys command.');
-    const selected=clone(saved.selection),profiles={};
+    const original=await editions.exactDraft(saved),selected=original.value.selection,profiles={};
     await readCatalogue();
     for(const row of selected.cases||[]){
       const profile=catalogue.profiles.find(p=>p.id===row.profile);
@@ -707,7 +719,7 @@ export function mountInstallationSources(root,bridge){
     }
     const engine=catalogue.sourceFormats?.find(x=>x.schema===selected.schema)?.engine??(selected.schema===SELECTION?catalogue.engine:null);
     if(!engine?.sha256)throw new Error('Open the installed source reader for this complete original format.');
-    return issue('prepare',{expectedEngineSha256:engine.sha256,expectedSelectionSha256:hash(stable(selected)),expectedProfiles:profiles});
+    return issue('prepare',{expectedEngineSha256:engine.sha256,expectedSelectionSha256:original.selectionSha256,expectedProfiles:profiles});
   }
   async function readPreparation(id){
     const value=await bridge.api(prefix+'/'+state.draftId+'/preparations/'+id);

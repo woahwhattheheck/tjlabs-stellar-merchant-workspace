@@ -4,11 +4,11 @@ import { readdir } from 'node:fs/promises';
 import { withPrivateLock } from '../../routescan/quota.mjs';
 import { canonicalJSONDigest, canonicalJSONInfo } from '../canonical-stream.mjs';
 import { inspectFredOperatingPlanSource } from '../../../distribution/discovery/fred-operating-plan.mjs';
-import { captureFredOperatingSource, inspectFredOperatingSourcePackage, receiveFredOperatingSource } from './source.mjs';
+import { captureFredOperatingSource, inspectFredOperatingSourcePackage, inspectFredOperatingSourceDocuments, receiveFredOperatingSource } from './source.mjs';
 import { FRED_OPERATING_SOURCE_FILE, FRED_OPERATING_MANIFEST_FILE, MAX_FRED_OPERATING_DESCRIPTOR_BYTES,
-  MAX_FRED_OPERATING_PACKAGE_BYTES, need, same, stop, ref, absolute, directory, describe,
+  MAX_FRED_OPERATING_PACKAGE_BYTES, MAX_FRED_OPERATING_BUNDLE_BYTES, need, same, stop, ref, absolute, directory, describe,
   readJson, optional, writeJson, utf8 } from './files.mjs';
-import { MAX_FRED_OPERATING_ARCHIVE_BYTES, writeFredOperatingTar, extractFredOperatingTar } from './archive-io.mjs';
+import { MAX_FRED_OPERATING_ARCHIVE_BYTES, writeFredOperatingTar, extractFredOperatingTar, readFredOperatingTar } from './archive-io.mjs';
 
 export { MAX_FRED_OPERATING_ARCHIVE_BYTES };
 export const FRED_OPERATING_ARCHIVE_SCHEMA = 'stellar-forge.fred-operating-archive.v1';
@@ -154,4 +154,68 @@ export async function receiveFredOperatingArchive({ archivePath, destination, ex
       sourceDirectory:inspected.sourceDirectory, directory:destination, archive:inspected.archive, archivePath,
       projectDirectory:received.projectDirectory };
   }, signal);
+}
+
+/**
+ * Inspect an original complete handover without extracting or changing any file.
+ * This entry is suitable for a fixed installed consumer on Linux, macOS or Windows.
+ * It uses the original stream parser and source/plan validators, and never executes
+ * source supplied inside the inspected archive.
+ */
+export async function inspectFredOperatingArchiveReadOnly({archivePath,expectedArchive,signal} = {}) {
+  archiveRef(expectedArchive);
+  let handover = null;
+  const prefix = PACKAGE + '/', canonicalProjectName = prefix + 'project/project-bundle.json';
+  const value = await readFredOperatingTar({archivePath,expectedArchive,signal,
+    maximumPayload:MAX_FRED_OPERATING_ARCHIVE_BYTES,
+    firstManifest:{name:FRED_OPERATING_HANDOVER_FILE,read:async body => {
+      handover = manifest(JSON.parse(utf8.decode(body))); return handover;
+    }},
+    select:entry => {
+      if(entry.path === FRED_OPERATING_HANDOVER_FILE || entry.path === PLAN ||
+         entry.path === prefix + FRED_OPERATING_SOURCE_FILE || entry.path === prefix + FRED_OPERATING_MANIFEST_FILE)
+        return MAX_FRED_OPERATING_DESCRIPTOR_BYTES;
+      return entry.path === canonicalProjectName ? MAX_FRED_OPERATING_BUNDLE_BYTES : 0;
+    }});
+  const actual = new Map(value.members.map(entry => [entry.path,entry]));
+  function json(name,expected) {
+    const body = value.retained.get(name); need(body,'The original archive lost a required source document: ' + name);
+    if(expected) same(actual.get(name),{...expected,path:name},'Original source document');
+    value.retained.delete(name); return JSON.parse(utf8.decode(body));
+  }
+  const source = json(prefix + handover.sourceFile.path,handover.sourceFile);
+  ref(source.artifact,MAX_FRED_OPERATING_BUNDLE_BYTES);
+  const projectName = prefix + source.artifact.path;
+  const packageManifest = json(prefix + handover.manifestFile.path,handover.manifestFile);
+  // The original writer's canonical project is retained in the first pass.
+  // Preserve existing package-inspector compatibility with other valid relative
+  // artifact paths: reread the same immutable archive only when that is needed.
+  if(!value.retained.has(projectName)) {
+    value.retained.delete(canonicalProjectName);
+    const replay = await readFredOperatingTar({archivePath,expectedArchive,signal,
+      maximumPayload:MAX_FRED_OPERATING_ARCHIVE_BYTES,
+      firstManifest:{name:FRED_OPERATING_HANDOVER_FILE,read:async body => {
+        const selected=manifest(JSON.parse(utf8.decode(body)));
+        same(selected,handover,'Original handover on project read'); return selected;
+      }},
+      select:entry => entry.path === projectName ? MAX_FRED_OPERATING_BUNDLE_BYTES : 0});
+    same(replay.members,value.members,'Complete original archive on project read');
+    const body=replay.retained.get(projectName);
+    need(body,'The original archive lost its declared complete project.');
+    value.retained.set(projectName,body);
+  }
+  const bundle = json(projectName,source.artifact);
+  const checked = inspectFredOperatingSourceDocuments({source,manifest:packageManifest,bundle,expectedSource:handover.sourceFile});
+  need(checked.source.id === handover.sourceId && checked.source.project.id === handover.projectId,
+    'The portable handover belongs to another source or project.');
+  const expected = [...packageManifest.files.map(prefixed),prefixed(handover.manifestFile),...(handover.plan ? [handover.plan] : [])]
+    .sort((a,b)=>a.path.localeCompare(b.path));
+  same([...handover.files].sort((a,b)=>a.path.localeCompare(b.path)),expected,'Complete portable member inventory');
+  const plan = handover.plan ? json(PLAN,handover.plan) : null;
+  if(plan !== null) inspectFredOperatingPlanSource(plan,checked.source);
+  // HANDOVER's bytes were verified by the same original USTAR consumer; its
+  // complete hash joins every member descriptor retained for the LDA review.
+  return {schema:'stellar-forge.fred-operating-archive-readonly.v1',archive:value.archive,
+    source:checked.source,sourceFile:handover.sourceFile,manifestFile:handover.manifestFile,
+    manifest:handover,packageManifest,plan,files:value.members};
 }

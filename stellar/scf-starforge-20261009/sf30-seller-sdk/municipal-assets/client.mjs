@@ -197,6 +197,15 @@ export class MunicipalAssetClient {
     const value=await this.#get(this.#project(projectId)+'/records?'+params,16*1024*1024);
     need(value.revision===expectedRevision,'The original record page belongs to a different revision.','MUNICIPAL_ASSET_REVISION_CONFLICT');return value;
   }
+  async serviceAssets({projectId,expectedRevision,query='',page=0,pageSize=50,rowNumber}) {
+    revision(expectedRevision);revision(page);
+    need(Number.isSafeInteger(pageSize)&&pageSize>=1&&pageSize<=200,'Use 1–200 service rows.');
+    const params=new URLSearchParams({query:text(query,'source search',2000,0),page:String(page),page_size:String(pageSize)});
+    if(rowNumber!==undefined){need(Number.isSafeInteger(rowNumber)&&rowNumber>=1,'Select an original source row.');params.set('row',String(rowNumber));}
+    const value=await this.#get(this.#project(projectId)+'/service-assets?'+params,32*1024*1024);
+    need(value.revision===expectedRevision,'The service source belongs to a changed project revision.','MUNICIPAL_ASSET_REVISION_CONFLICT');return value;
+  }
+  reviewServiceAsset(input){return this.action('service_asset_review',input);}
   createProject({requestId,title,mode}) {
     text(title,'project title',150);need(['development','vendor-authorized','public-reference'].includes(mode),'Choose the original project mode.');
     return this.#mutate(requestId,'/api/projects',{operation:requestId,title,mode});

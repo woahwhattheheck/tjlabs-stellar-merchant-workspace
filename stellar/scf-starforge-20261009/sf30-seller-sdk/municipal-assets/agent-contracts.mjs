@@ -7,7 +7,7 @@ export const HASH = /^[a-f0-9]{64}$/;
 export const MAX_FILE = 256 * 1024 * 1024;
 export const KINDS = ['source_assets','target_assets','locations','requests','work_orders','returns'];
 export const INPUT_KINDS = [...KINDS,'roundtrips'];
-export const FORMATS = ['csv','json','jsonl','geojson','esri-json','belleville-capture','maximo-target'];
+export const FORMATS = ['csv','json','jsonl','geojson','esri-json','belleville-capture','maximo-target','open311-collection'];
 export const fail = (code, message) => Object.assign(new Error(message), {code});
 export function need(value, message, code='MUNICIPAL_ASSET_INVALID') { if (!value) throw fail(code,message); }
 export const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);

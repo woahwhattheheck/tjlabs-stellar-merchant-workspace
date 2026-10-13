@@ -307,7 +307,7 @@ $('resource-id').addEventListener('change', () => {
 });
 for (const field of ['delimiter', 'has-header', 'skip-empty']) $(field).addEventListener('change', () => {
   const doc = currentDocument(); doc.mapping.delimiter = $('delimiter').value; doc.mapping.header = $('has-header').checked; doc.mapping.skipEmptyRecords = $('skip-empty').checked;
-  touch(); renderSourcePreview(doc);
+  touch(); renderSourcePreview(doc); renderCorrections(doc);
 });
 $('source-edition').addEventListener('change', () => { currentDocument().selectedEditionId = $('source-edition').value; touch(); render(); });
 $('baseline-selection').addEventListener('change', () => { currentDocument().baselineReviewId = $('baseline-selection').value || null; touch(); renderComparison(currentDocument()); });
@@ -678,8 +678,11 @@ $('document-download-intake').addEventListener('click',()=>perform(async()=>{
 
 
 let correctionOffset=0, correctionColumnOffset=0, correctionSelection=null, correctionDocument=null;
+function correctionContextKey(doc) {
+  return doc.id+':'+doc.selectedEditionId+':'+JSON.stringify([doc.mapping.delimiter,doc.mapping.header,doc.mapping.skipEmptyRecords]);
+}
 function renderCorrections(doc) {
-  const context=doc.id+':'+doc.selectedEditionId+':'+JSON.stringify([doc.mapping.delimiter,doc.mapping.header,doc.mapping.skipEmptyRecords]);
+  const context=correctionContextKey(doc);
   if(correctionDocument!==context){correctionDocument=context;correctionOffset=0;correctionColumnOffset=0;correctionSelection=null;}
   try {
     const data=sourceRecords(doc,{offset:correctionOffset,limit:20});
@@ -698,7 +701,7 @@ function renderCorrections(doc) {
         const column=start+relative,decision=row.decisions[column],td=element('td'),button=element('button',previewValue(decision?decision.value:original));
         button.type='button';button.className='source-cell-choice';button.title='Inspect complete original record '+row.record+', column '+(column+1);button.disabled=busy;
         if(decision)td.append(element('small','Reviewed replacement'));
-        button.addEventListener('click',()=>{correctionSelection={record:row.record,column};showCorrection(doc,row,column);});
+        button.addEventListener('click',()=>{correctionSelection={record:row.record,column,context};showCorrection(doc,row,column);});
         td.append(button);tr.append(td);
       });body.append(tr);
     }
@@ -727,6 +730,10 @@ function showCorrection(doc,row,column,reset=true) {
 }
 async function commitCorrection(action) {
   const doc=currentDocument();if(!doc||!correctionSelection)throw new Error('Choose an original source cell.');
+  if(correctionSelection.context!==correctionContextKey(doc)||correctionDocument!==correctionSelection.context){
+    renderCorrections(doc);
+    throw new Error('The source or parsing choice changed. Choose the cell again before recording a correction.');
+  }
   const input={id:'correction-'+crypto.randomUUID(),actor:$('correction-actor').value,reason:$('correction-reason').value,
     action,record:correctionSelection.record,...(action.endsWith('cell')?{column:correctionSelection.column}:{}),
     ...(action==='set-cell'?{value:$('correction-value').value}:{}),at:new Date().toISOString()};

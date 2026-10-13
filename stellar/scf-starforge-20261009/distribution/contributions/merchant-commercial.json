@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-commercial",
-  "description": "Complete merchant quotation, recorded usage revisions, accepted implementation, selected tariff pricing and customer workspace handover, private quote economics and care-capacity review",
+  "description": "Complete merchant quotation, recorded usage revisions, accepted implementation, selected tariff pricing and customer workspace handover, private quote economics and care-capacity review, original accepted-task delivery effort and source-bound planned/observed economics",
   "components": [
     "stellar/scf-starforge-20261009/sf74-merchant-support-console",
     "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops"
@@ -18,7 +18,13 @@
     "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/ECONOMICS.md",
     "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/ECONOMICS_RECEIVING.md",
     "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-receiving-journey.mjs",
-    "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-example.mjs"
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-example.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_commercial_effort.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/commercial_effort_handoff.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_EFFORT.md",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/effort-economics.mjs",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/EFFORT_ECONOMICS.md",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/effort-economics-receiving.mjs"
   ],
   "commands": {
     "merchant-commercial": "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial-cli.mjs"
@@ -51,6 +57,10 @@
     "./merchant/commercial-performance-desk": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/performance-desk.mjs",
     "./merchant/commercial-economics": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics.mjs",
     "./merchant/commercial-economics-receiving": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-receiving.mjs",
-    "./merchant/commercial-economics-example": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-example.mjs"
-  }
+    "./merchant/commercial-economics-example": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-example.mjs",
+    "./merchant/commercial-effort-economics": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/effort-economics.mjs"
+  },
+  "managedSourceManifests": [
+    "stellar/scf_2026/sf47_budget_model/workspace/managed-source.json"
+  ]
 }

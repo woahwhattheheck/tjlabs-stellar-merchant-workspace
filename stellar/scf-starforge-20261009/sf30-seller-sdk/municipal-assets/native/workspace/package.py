@@ -35,6 +35,7 @@ def main():
     required = ("workspace/__main__.py", "workspace/engine.py", "workspace/adapters.py",
                 "workspace/maximo_target.py", "workspace/maximo_load.py", "workspace/maximo_cli.py",
                 "workspace/captures.py", "workspace/geometry_capture.py", "workspace/capture_intake.py", "workspace/public_refresh.py", "workspace/report.py",
+                "workspace/open311_source.py", "workspace/service_assets.py", "workspace/service_cli.py", "workspace/SERVICE_ASSETS.md",
                 "workspace/server.py", "workspace/ui/app.js", "workspace/ui/index.html",
                 "workspace/ui/app.css", "acceptance/verify.py", "workspace/BELLEVILLE.md")
     for name in required:

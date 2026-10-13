@@ -1,5 +1,8 @@
 // MIT. Original regular-file USTAR/gzip mechanics shared by source editions and portable handovers.
 import { createHash } from 'node:crypto';
+import { constants } from 'node:fs';
+import { open, lstat } from 'node:fs/promises';
+import { isAbsolute, resolve } from 'node:path';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { createGzip, createGunzip } from 'node:zlib';
@@ -59,12 +62,10 @@ export async function writeFredOperatingTar({ root, files, output, name, signal 
  * original inventory, or validate a small first manifest and return its inventory.
  * Every member is streamed, hashed and committed independently; retries reuse exact files.
  */
-export async function extractFredOperatingTar({ root, archive, output, files = null,
-  firstManifest = null, maximumPayload = MAX_FRED_OPERATING_PACKAGE_BYTES, signal }) {
-  ref(archive, MAX_FRED_OPERATING_ARCHIVE_BYTES); await directory(output, true);
+async function consumeFredOperatingTar({ input, archive, files, firstManifest, maximumPayload, signal, consume, finish }) {
+  ref(archive, MAX_FRED_OPERATING_ARCHIVE_BYTES);
   need((files !== null) !== (firstManifest !== null), 'Supply one original member inventory.');
   let expected = files === null ? null : inventory(files), manifestResult = null;
-  const input = await opened(root, archive.path, MAX_FRED_OPERATING_ARCHIVE_BYTES);
   const gunzip = createGunzip(), stream = input.file.createReadStream({ autoClose:false });
   const digest = createHash('sha256'); let compressed = 0;
   stream.on('data', chunk => { compressed += chunk.length; digest.update(chunk); });
@@ -119,20 +120,79 @@ export async function extractFredOperatingTar({ root, archive, output, files = n
         manifestResult = await firstManifest.read(body, entry);
         expected = inventory(manifestResult.files);
         need(!expected.has(name), 'The first manifest cannot repeat itself.');
-        await writeStream(output, name, [body], entry, signal);
+        await consume(entry, [body]);
       } else {
         const entry = expected.get(name);
         need(entry && size === entry.bytes, 'The archive member differs from its complete original inventory.');
         async function* content() { let left = size; while (left) { const part = await take(Math.min(left,65536)); left -= part.length; yield part; } }
-        await writeStream(output, name, content(), entry, signal); expected.delete(name);
+        await consume(entry, content()); expected.delete(name);
       }
       if (size % 512) { const padding = await take(512 - size % 512); need(padding.every(byte => byte === 0), 'The original archive padding changed.'); }
     }
-    await pumped; await unchanged(input);
+    await pumped; await finish(input);
     need(expected !== null && expected.size === 0, 'The complete archive omitted an original file.');
     same({ path:archive.path, bytes:compressed, sha256:digest.digest('hex') }, archive, 'Complete compressed archive');
     return manifestResult;
   } finally {
     gunzip.destroy(); stream.destroy(); await pumped.catch(() => {}); await input.file.close();
   }
+}
+
+/** Retain the original durable extraction path and its private-file semantics. */
+export async function extractFredOperatingTar({ root, archive, output, files = null,
+  firstManifest = null, maximumPayload = MAX_FRED_OPERATING_PACKAGE_BYTES, signal }) {
+  ref(archive, MAX_FRED_OPERATING_ARCHIVE_BYTES); await directory(output, true);
+  const input = await opened(root, archive.path, MAX_FRED_OPERATING_ARCHIVE_BYTES);
+  try {
+    return await consumeFredOperatingTar({ input, archive, files, firstManifest, maximumPayload, signal,
+      consume:(entry,chunks) => writeStream(output,entry.path,chunks,entry,signal),
+      finish:unchanged });
+  } finally { await input.file.close().catch(() => {}); }
+}
+
+/**
+ * Read every original member without extracting, locking or changing any file.
+ * The fixed installed consumer selects small JSON members; all others are streamed
+ * and hashed, including every complete original publication archive.
+ */
+export async function readFredOperatingTar({ archivePath, expectedArchive, firstManifest,
+  select = () => 0, maximumPayload = MAX_FRED_OPERATING_PACKAGE_BYTES, signal }) {
+  ref(expectedArchive,MAX_FRED_OPERATING_ARCHIVE_BYTES);
+  need(typeof archivePath === 'string' && isAbsolute(archivePath) && resolve(archivePath) === archivePath,
+    'Select one absolute original archive file.');
+  const beforeName = await lstat(archivePath);
+  need(beforeName.isFile() && !beforeName.isSymbolicLink(),'Select an original regular archive file.');
+  const file = await open(archivePath,constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0));
+  const stamp = info => [info.dev,info.ino,info.size,info.mtimeMs,info.ctimeMs].join(':');
+  let before;
+  try {
+    before = await file.stat();
+    need(before.isFile() && before.size === expectedArchive.bytes && stamp(before) === stamp(beforeName),
+      'The selected original archive changed before reading.');
+  } catch(error) { await file.close(); throw error; }
+  const retained = new Map(), members = [];
+  try {
+  const manifest = await consumeFredOperatingTar({ input:{file}, archive:expectedArchive,files:null,
+    firstManifest, maximumPayload,signal,
+    consume:async (entry,chunks) => {
+      const maximum = select(entry);
+      need(Number.isSafeInteger(maximum) && maximum >= 0 && maximum <= MAX_FRED_OPERATING_PACKAGE_BYTES,
+        'Use a bounded installed source selection.');
+      if(maximum) need(entry.bytes <= maximum,'The selected original JSON member exceeds capacity.');
+      const pieces = [], digest = createHash('sha256'); let bytes = 0;
+      for await(const part of chunks) {
+        stop(signal); bytes += part.length; need(bytes <= entry.bytes,'The original member exceeds its declared size.');
+        digest.update(part); if(maximum) pieces.push(part);
+      }
+      const actual = {path:entry.path,bytes,sha256:digest.digest('hex')};
+      same(actual,entry,'Complete original archive member');
+      members.push(actual); if(maximum) retained.set(entry.path,Buffer.concat(pieces,bytes));
+    },
+    finish:async () => {
+      const after = await file.stat(), named = await lstat(archivePath);
+      need(named.isFile() && !named.isSymbolicLink() && stamp(before) === stamp(after) && stamp(after) === stamp(named),
+        'The original archive changed during complete inspection.');
+    } });
+  return { archive:expectedArchive,manifest,members,retained };
+  } finally { await file.close().catch(() => {}); }
 }

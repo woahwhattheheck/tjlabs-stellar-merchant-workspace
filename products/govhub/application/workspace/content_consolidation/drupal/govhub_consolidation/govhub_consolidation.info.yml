@@ -1,0 +1,8 @@
+name: GovHub Content Consolidation
+type: module
+description: Retained source editions, native Migrate maps, and content receiving.
+package: Migration
+core_version_requirement: ^10.6 || ^11
+dependencies:
+  - drupal:migrate
+  - drupal:jsonapi

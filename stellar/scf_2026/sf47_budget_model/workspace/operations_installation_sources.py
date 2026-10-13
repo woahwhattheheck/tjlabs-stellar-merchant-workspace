@@ -27,6 +27,7 @@ import operations_workshare_installations as workshares
 import operations_installation_commissioning as merchant_commissioning
 import operations_installation_commissioning_archive as commissioning_archive
 import operations_installation_source_editions as source_editions
+import operations_installation_mapping_reconciliation as mapping_reconciliation
 
 SCHEMA = "stellar-forge.installation-source-desk.v1"
 PREPARATION = "stellar-forge.installation-source-desk-preparation.v1"
@@ -696,6 +697,12 @@ class SourceDesk:
     def edition_preview(self, case_id, draft_id, body):
         return source_editions.preview(self, case_id, draft_id, body)
 
+    def mapping_compare(self, case_id, draft_id, body):
+        return mapping_reconciliation.compare(self, case_id, draft_id, body)
+
+    def mapping_preview(self, case_id, draft_id, body):
+        return mapping_reconciliation.preview(self, case_id, draft_id, body)
+
     def command(self, case_id, draft_id, body):
         identifier(draft_id, DRAFT_ID, "source draft")
         exact(body, ("requestId", "expectedRevision", "actor", "note", "action", "data"),
@@ -703,7 +710,7 @@ class SourceDesk:
         request_id = short_id(body["requestId"], "Original source-desk request ID")
         actor, note = text(body["actor"], "Recording operator", 300, True), text(body.get("note", ""), "Preparation note", 12000)
         action = body["action"]
-        need(action in ("create", "file.add", "file.remove", "selection.save", "prepare", "native.receive", "attach", "commissioning.attach", "commissioning.archive.receive", "edition.apply"),
+        need(action in ("create", "file.add", "file.remove", "selection.save", "prepare", "native.receive", "attach", "commissioning.attach", "commissioning.archive.receive", "edition.apply", "mapping.apply"),
              "Choose a supported original source preparation action.")
         need(isinstance(body["data"], dict), "Use the complete source action data.")
         expected = integer(body["expectedRevision"], "source draft revision")
@@ -772,10 +779,16 @@ class SourceDesk:
                     need(any(f["id"] == data["fileId"] for f in state["files"]), "Select a file in the current draft.")
                     state["files"] = [f for f in state["files"] if f["id"] != data["fileId"]]
                 elif action == "selection.save":
-                    exact(data, ("selection",), ("selection",), "complete native source selection")
-                    need(isinstance(data["selection"], dict) and len(json_bytes(data["selection"])) <= MAX_FILE,
+                    if set(data) == {"selectionJSON"}:
+                        selected = mapping_reconciliation.read_selection_json(data["selectionJSON"])
+                    else:
+                        exact(data, ("selection",), ("selection",), "complete native source selection")
+                        selected = data["selection"]
+                    need(isinstance(selected, dict) and len(json_bytes(selected)) <= MAX_FILE,
                          "Keep the complete editable native selection within 8 MiB.", status=413)
-                    state["selection"] = deepcopy(data["selection"])
+                    state["selection"] = deepcopy(selected)
+                elif action == "mapping.apply":
+                    result = mapping_reconciliation.apply(self, state, data, context)
                 elif action == "edition.apply":
                     result = source_editions.apply(self, state, data, context)
                 elif action == "prepare":
@@ -812,6 +825,8 @@ class SourceDesk:
             if isinstance(returned, dict) and returned.get("state") == "PREPARED_SOURCE":
                 need(self._preparation(draft["caseId"], draft["id"], returned["id"]) == returned,
                      "The complete original preparation receipt differs.", "INSTALLATION_SOURCE_CHANGED", 409)
+            elif isinstance(returned, dict) and returned.get("state") == "RECONCILED_SOURCE_MAPPING":
+                mapping_reconciliation.verify_receipt(self, draft, returned)
             elif isinstance(returned, dict) and returned.get("state") == "EDITABLE_SOURCE_EDITION":
                 source_editions.verify_receipt(self, draft, returned)
             elif isinstance(returned, dict) and returned.get("state") == "RECEIVED_COMMISSIONING_ARCHIVE":
@@ -846,6 +861,7 @@ def register_static(static):
     static.update({
         "/operations_installation_sources.mjs": ("operations_installation_sources.mjs", "text/javascript; charset=utf-8"),
         "/operations_installation_source_editions.mjs": ("operations_installation_source_editions.mjs", "text/javascript; charset=utf-8"),
+        "/operations_installation_mapping_reconciliation.mjs": ("operations_installation_mapping_reconciliation.mjs", "text/javascript; charset=utf-8"),
         "/operations_installation_source_collection.mjs": ("operations_installation_source_collection.mjs", "text/javascript; charset=utf-8"),
         "/operations_installation_commissioning.mjs": ("operations_installation_commissioning.mjs", "text/javascript; charset=utf-8"),
         "/operations_installation_sources.css": ("operations_installation_sources.css", "text/css; charset=utf-8"),
@@ -857,9 +873,39 @@ def register_static(static):
     })
 
 
+def mapping_http_result(result):
+    """Transport exact mapping receipt bytes; never alter the stored request result."""
+    returned = result.get("result")
+    draft = result.get("draft", {})
+    history = draft.get("history", [])
+    selected_text = bool(history and history[-1].get("action") == "selection.save")
+    if (isinstance(returned, dict) and returned.get("state") == "RECONCILED_SOURCE_MAPPING") or draft.get("mappingReconciliations") or selected_text:
+        return {**result, "nativeMapping": mapping_reconciliation.wire(result, include_value=False)}
+    return result
+
+
 def handle(handler, parsed, operations, method):
     """Join the existing authenticated handler after its original guard."""
     from urllib.parse import parse_qs, unquote
+    mapping_path = re.fullmatch(
+        r"/api/operations/(operation-[a-f0-9]{32})/installation-sources/"
+        r"(source-desk-[a-f0-9]{32})/mappings/(compare|preview|compare-wire|preview-wire|draft-wire)", parsed.path)
+    if mapping_path:
+        need(method == "POST" and not parsed.query, "Read one complete original mapping comparison or preview.", status=405)
+        case_id, draft_id, action = mapping_path.groups()
+        desk = SourceDesk(operations)
+        body = handler.json_body()
+        if action == "draft-wire":
+            exact(body, ("revision",), ("revision",), "exact native source draft")
+            revision = body["revision"]
+            need(revision is None or type(revision) is int and 1 <= revision <= 10000,
+                 "Select the complete current or historical original draft.")
+            value = desk.get(case_id, draft_id, revision)
+        else:
+            selected = desk.mapping_compare if action.startswith("compare") else desk.mapping_preview
+            value = selected(case_id, draft_id, body)
+        handler.send(200, mapping_reconciliation.wire(value) if action.endswith("-wire") else value)
+        return True
     edition_path = re.fullmatch(
         r"/api/operations/(operation-[a-f0-9]{32})/installation-sources/"
         r"(source-desk-[a-f0-9]{32})/editions/(compare|preview)", parsed.path)
@@ -904,7 +950,7 @@ def handle(handler, parsed, operations, method):
         return True
     if method == "POST":
         need(draft_id is not None and tail is None and not query, "Post one original source-desk request.", status=405)
-        handler.send(200, desk.command(case_id, draft_id, handler.json_body()))
+        handler.send(200, mapping_http_result(desk.command(case_id, draft_id, handler.json_body())))
         return True
     need(method == "GET", "Use a supported source-desk read or command.", status=405)
     revision = query.get("revision", [None])[0]
@@ -930,7 +976,10 @@ def handle(handler, parsed, operations, method):
             handler.send(200, raw, metadata["mediaType"], metadata["filename"])
     elif request_id:
         need(not query, "Read the original source-desk request receipt.")
-        handler.send(200, desk.request(case_id, draft_id, request_id))
+        value = desk.request(case_id, draft_id, request_id)
+        if value.get("state") == "RECORDED":
+            value = {**value, "result": mapping_http_result(value["result"])}
+        handler.send(200, value)
     elif preparation_id and action is None:
         need(not query, "Read the complete original preparation.")
         handler.send(200, desk.preparation(case_id, draft_id, preparation_id))

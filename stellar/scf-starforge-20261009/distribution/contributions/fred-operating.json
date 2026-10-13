@@ -7,10 +7,12 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating"
   ],
   "commands": {
-    "fred-operating-plan": "stellar/scf-starforge-20261009/distribution/discovery/fred-operating-cli.mjs"
+    "fred-operating-plan": "stellar/scf-starforge-20261009/distribution/discovery/fred-operating-cli.mjs",
+    "fred-operating-inspect": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/inspect-fred-operating.mjs"
   },
   "commandDescriptions": {
-    "fred-operating-plan": "Retain complete original economic projects, prepare customer procedures, record returned evidence and receive full source and plan histories"
+    "fred-operating-plan": "Retain complete original economic projects, prepare customer procedures, record returned evidence and receive full source and plan histories",
+    "fred-operating-inspect": "Read a complete original economic handover with fixed installed source, preserving original source, plan and member identities"
   },
   "exports": {
     "./operator/fred/operating-plan": {
@@ -32,6 +34,10 @@
     "./operator/fred/operating-archive": {
       "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/archive.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/archive.mjs"
+    },
+    "./operator/fred/operating-inspector": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/inspect-fred-operating.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/inspect-fred-operating.mjs"
     }
   },
   "supportFiles": [
@@ -40,6 +46,9 @@
     "stellar-forge/mcp-merchant-operator/catalog/fred-operating.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/SOURCE.md",
     "stellar-forge/mcp-merchant-operator/FRED_PORTABLE_HANDOVERS.md",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/ARCHIVE.md"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/ARCHIVE.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/READ_ONLY.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/inspect-fred-operating.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/inspect-fred-operating.d.mts"
   ]
 }

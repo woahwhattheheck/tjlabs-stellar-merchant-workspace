@@ -102,3 +102,8 @@ The same managed application is available through the complete [agent operating 
 Each mutating request is retained before dispatch with its original body and expected revision. A lost reply resumes that same request; independent intended edits use distinct request IDs. Complete reports, releases, source captures, target returns and request history use the maintained retained-file reader. Configure the private connection and original operation directory as described in that guide, then discover the source-owned municipal provider through the existing merchant installation.
 
 The agent request directory belongs to its configured physical host. Preserve it and the actual connection during host continuation. A received native workspace has its own physical identity and current Applications startup; its next agent setup must select that receiving instance explicitly.
+
+
+## Service requests linked to original assets
+
+The complete Open311 collection receiver and named association workflow are installed in the same application. Open **Service assets** after importing a complete collection in Inputs & mapping. Read the full [source, review, CLI and handover guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/SERVICE_ASSETS.md). Source request status stays separate from an explicit current asset/work-order association; changed selections require a new review. The complete selected source, coverage, versions and named history follow the existing export/backup/receiving path.

@@ -21,6 +21,7 @@ Commands:
   refresh DIRECTORY ...          Refresh the existing project and mappings
   refresh-resume DIRECTORY ...   Continue its saved original source operation
   refresh-status DIRECTORY ...   Read that project's actual saved operations
+  service-assets [arguments]     Receive Open311 sources and review exact asset associations
   maximo [original arguments]     Collect target, prepare load, receive results
   package --output FILE.zip      Save the complete original application source
   demo DIRECTORY                 Explicitly load labelled development records

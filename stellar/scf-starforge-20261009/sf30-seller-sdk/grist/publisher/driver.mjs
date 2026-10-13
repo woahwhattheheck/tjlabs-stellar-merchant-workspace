@@ -9,10 +9,10 @@ import { only, integer, HASH, readGristSourceFile } from '../declaration.mjs';
 import { readGristCapture, bindGristCapture, copyGristCapture } from '../capture.mjs';
 import { inspectGristSource, openGristSourceFile, checkGristColumnTypes, encodeGristRow } from '../source.mjs';
 
-export async function captureGristPublicationPlan(sourceFile, directory, input) {
+export async function captureGristPublicationPlan(sourceFile, directory, input, options = {}) {
   only(input, ['title', 'query', 'input', 'dataset', 'extraction', 'sourceHash'], 'INVALID_PUBLICATION_PLAN');
   if (typeof input.title !== 'string' || !input.title.trim() || input.title.length > 128) throw fault('PLAN_TITLE_REQUIRED');
-  const selected = await readGristSourceFile(sourceFile);
+  const selected = await readGristSourceFile(sourceFile, options);
   if (selected.hash !== input.sourceHash) throw fault('SOURCE_REVIEW_CHANGED', 'Reload the source before saving this plan.', 409);
   const query = selected.queries[input.query];
   if (!query) throw fault('QUERY_NOT_FOUND');

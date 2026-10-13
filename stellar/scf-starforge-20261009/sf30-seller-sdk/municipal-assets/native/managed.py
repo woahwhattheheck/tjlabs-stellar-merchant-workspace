@@ -208,8 +208,9 @@ def main():
     if command in originals:
         sys.argv = ["workspace", command, *rest]
         runpy.run_module("workspace", run_name="__main__")
-    elif command in ("maximo", "package"):
-        module = "workspace.maximo_cli" if command == "maximo" else "workspace.package"
+    elif command in ("maximo", "package", "service-assets"):
+        module = {"maximo": "workspace.maximo_cli", "package": "workspace.package",
+                  "service-assets": "workspace.service_cli"}[command]
         sys.argv = [module, *rest]
         runpy.run_module(module, run_name="__main__")
     else:

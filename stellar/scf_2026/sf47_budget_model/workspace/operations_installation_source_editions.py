@@ -354,7 +354,7 @@ def apply(desk, state, data, context):
     return receipt
 
 
-def verify_receipt(desk, draft, receipt):
+def verify_receipt(desk, draft, receipt, *, expected_action="edition.apply"):
     value = unseal(receipt, TRANSITION)
     need(value.get("state") == "EDITABLE_SOURCE_EDITION" and value.get("caseId") == draft["caseId"]
          and value.get("draftId") == draft["id"] and value.get("draftRevision") == draft["revision"],
@@ -366,7 +366,7 @@ def verify_receipt(desk, draft, receipt):
          and value["selectionSha256"] == digest(draft["selection"])
          and draft.get("editionTransitions") and same(draft["editionTransitions"][-1], receipt)
          and draft["history"][-1]["requestId"] == value["requestId"]
-         and draft["history"][-1]["action"] == "edition.apply",
+         and draft["history"][-1]["action"] == expected_action,
          "The accepted transition differs from its original complete source and target history.",
          "INSTALLATION_EDITION_CHANGED", 409)
     # The complete original source and prior target bytes remain independently

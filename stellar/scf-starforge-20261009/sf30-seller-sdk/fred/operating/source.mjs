@@ -192,13 +192,11 @@ export async function captureFredOperatingSource({ directory:originalDirectory, 
     return { ...(await inspectFredOperatingSourcePackage({ directory:outputDirectory, expectedSource:sourceFile, signal })), reused:false };
   }, signal);
 }
-async function inspectPackage(root, expectedSource, signal) {
-  absolute(root, 'Package directory'); await directory(root);
+export function inspectFredOperatingSourceDocuments({source:rawSource,manifest,bundle:rawBundle,expectedSource}) {
   ref(expectedSource); need(expectedSource.path === FRED_OPERATING_SOURCE_FILE && expectedSource.bytes <= MAX_FRED_OPERATING_DESCRIPTOR_BYTES,
     'Select the complete original source.json descriptor.');
-  const source = inspectFredOperatingSource(await readJson(root, expectedSource.path, MAX_FRED_OPERATING_DESCRIPTOR_BYTES, expectedSource, signal));
-  const manifest = await readJson(root, FRED_OPERATING_MANIFEST_FILE, MAX_FRED_OPERATING_DESCRIPTOR_BYTES, null, signal);
-  need(manifest.schema === FRED_OPERATING_PACKAGE_SCHEMA && Array.isArray(manifest.files), 'Read the complete original package manifest.');
+  const source = inspectFredOperatingSource(rawSource);
+  need(manifest?.schema === FRED_OPERATING_PACKAGE_SCHEMA && Array.isArray(manifest.files), 'Read the complete original package manifest.');
   same(manifest.source, expectedSource, 'Manifest source'); need(manifest.projectId === source.project.id &&
     manifest.bundleSha256 === source.project.bundleSha256, 'The package manifest changed its original project.');
   const expected = new Map();
@@ -209,11 +207,10 @@ async function inspectPackage(root, expectedSource, signal) {
   let total = 0;
   for (const value of manifest.files) {
     ref(value); same(expected.get(value.path), value, 'Manifest member');
-    same(await describe(root, value.path, signal), value, 'Complete original artifact');
     total += value.bytes; expected.delete(value.path);
   }
   need(expected.size === 0 && total === manifest.bytes && total <= MAX_FRED_OPERATING_PACKAGE_BYTES, 'The complete package total differs.');
-  const bundle = bundleIdentity(await readJson(root, source.artifact.path, MAX_FRED_OPERATING_BUNDLE_BYTES, source.artifact, signal));
+  const bundle = bundleIdentity(rawBundle);
   const recomputed = descriptorFor(bundle, source.artifact, source.capturedAt, source.published);
   same(recomputed, source, 'Original source inventories, evidence and complete history');
   for (const item of source.published) {
@@ -224,8 +221,19 @@ async function inspectPackage(root, expectedSource, signal) {
       need(entry && entry.bytes === item.artifact.bytes && entry.sha256 === item.artifact.sha256, 'The publication archive differs from its original view.');
     } else need(item.view.state !== 'COMPLETE', 'The complete original publication lost its archive.');
   }
-  const manifestFile = await describe(root, FRED_OPERATING_MANIFEST_FILE, signal);
-  return { source, manifest, bundle, sourceFile:expectedSource, manifestFile };
+  return {source,manifest,bundle,sourceFile:expectedSource};
+}
+async function inspectPackage(root, expectedSource, signal) {
+  absolute(root, 'Package directory'); await directory(root);
+  ref(expectedSource); need(expectedSource.path === FRED_OPERATING_SOURCE_FILE && expectedSource.bytes <= MAX_FRED_OPERATING_DESCRIPTOR_BYTES,
+    'Select the complete original source.json descriptor.');
+  const source = inspectFredOperatingSource(await readJson(root, expectedSource.path, MAX_FRED_OPERATING_DESCRIPTOR_BYTES, expectedSource, signal));
+  const manifest = await readJson(root, FRED_OPERATING_MANIFEST_FILE, MAX_FRED_OPERATING_DESCRIPTOR_BYTES, null, signal);
+  const bundle = await readJson(root,source.artifact.path,MAX_FRED_OPERATING_BUNDLE_BYTES,source.artifact,signal);
+  const checked = inspectFredOperatingSourceDocuments({source,manifest,bundle,expectedSource});
+  for(const value of manifest.files) same(await describe(root,value.path,signal),value,'Complete original artifact');
+  const manifestFile = await describe(root,FRED_OPERATING_MANIFEST_FILE,signal);
+  return {...checked,manifestFile};
 }
 /** Read every selected original byte and recompute the source descriptor from the full project. */
 export async function inspectFredOperatingSourcePackage({ directory:root, expectedSource, signal } = {}) {

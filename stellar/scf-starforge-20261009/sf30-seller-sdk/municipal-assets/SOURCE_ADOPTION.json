@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.municipal-asset-source.v1",
   "operation": "SCF-MUNICIPAL-ASSET-ADOPTION-90ED-20261013",
-  "description": "Complete maintained original application and source-owned managed launch; private data is operator-loaded.",
+  "description": "Complete maintained original application and source-owned managed launch; private data is operator-loaded. Complete original Open311 collection receiving, source-bound asset/work-order association review, source history and independent handover.",
   "donors": {
     "commons": {
       "repository": "woahwhattheheck/commons",
@@ -253,18 +253,119 @@
       "path": "native/workspace/package.py",
       "prior_sha256": "a33ad7c986f5b9dd1ca73e5958e696f153d24f6d546ec609bd35701af3ef87fd",
       "reason": "The original source package omitted its real development GeoJSON and the complete Maximo profile template; preserve both in the actual downloadable native application."
+    },
+    {
+      "path": "native/workspace/adapters.py",
+      "prior_sha256": "2a30ade96084589449262c752dc1c6f59deb4b3adf67800be4dc5b4b52290a60",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "native/workspace/engine.py",
+      "prior_sha256": "a1a262e6d4fc9baed8b986e91c4d2170527d480d47f4766fcb772fcc8485f81f",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "native/workspace/package.py",
+      "prior_sha256": "38dcf4b55d5e85039c9ce9e81858f0d04dcdd7caeaccd0359e4a27657e20f3a8",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "native/workspace/report.py",
+      "prior_sha256": "ab68fc03f311496cec74acfbc7a8487d769d9a7c794d46805994d4c17c5dbd37",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "native/workspace/server.py",
+      "prior_sha256": "b63776d75e857d7a3683334b9ca38f8f37d8f5c8e3dcc29c4e9cf0f8f3f7e3fc",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "native/workspace/ui/app.js",
+      "prior_sha256": "ec541427072f3d9556cbb33e5807533dd7259ff63fefa86c7f191fc2912f3226",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "native/managed.py",
+      "prior_sha256": "62d2c51eef101bf56d53b64389d82201257005e4240f8526b44be073eef8551b",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "cli.mjs",
+      "prior_sha256": "ac32af416c7ff6fa8ee3f862a8eb25de84aae3e352dbc1f4da34f549c62dd45e",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "agent-contracts.mjs",
+      "prior_sha256": "8ecb4d065148c00ce45c8663f841d2cbf3d60e115dcc527e3660a898dc57c33d",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "client.mjs",
+      "prior_sha256": "620e5a4dbb9dab6f0e2fe1ab295234f489bcfcdd0306e0aed79f7deea37bc0f0",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "client.d.mts",
+      "prior_sha256": "a722ea51b2281aede984a1a8cb5e29ed8332450257cd74684f5b5e7ee70145a5",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "mcp-tools.mjs",
+      "prior_sha256": "5b29a0175f3a84249be2d31334a7f96e33073f3d54d1916385df50f21aaa369f",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "mcp.mjs",
+      "prior_sha256": "47adfbf7b87d4d404e0993f4ec408fd7b7530e0e087027b33aa1a2d6e1796ed0",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "mcp-client.mjs",
+      "prior_sha256": "45a9c67090281602947698be499e88618e44bb4fe12e7cd81f715b8291f31f06",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "mcp-client.d.mts",
+      "prior_sha256": "c538955ff79614ee5066eff78be82469c4e79a39d9a074f9c0e8f685d530c28c",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "AGENT_OPERATING.md",
+      "prior_sha256": "1ce535400e86d45340a93b44c4f3843854b052bdceac2169efab36dc168775fe",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "native/workspace/open311_source.py",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "native/workspace/service_assets.py",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "native/workspace/service_cli.py",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
+    },
+    {
+      "path": "native/workspace/SERVICE_ASSETS.md",
+      "reason": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013: whole original collection/source-bound relationship workflow in the same native application."
     }
   ],
   "files": [
     {
       "path": "AGENT_OPERATING.md",
-      "bytes": 11534,
-      "sha256": "1ce535400e86d45340a93b44c4f3843854b052bdceac2169efab36dc168775fe"
+      "bytes": 12541,
+      "sha256": "191f2f8aff221364e3d337d6c6a93a1cfd6afca7de51e1afe09294d8c1fa351a"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1091,
+      "sha256": "2c961cd561150af9a4f94f3f48f0bad7bf271acd0f9cdaa1d354c511b94e84d8"
     },
     {
       "path": "agent-contracts.mjs",
-      "bytes": 5245,
-      "sha256": "8ecb4d065148c00ce45c8663f841d2cbf3d60e115dcc527e3660a898dc57c33d"
+      "bytes": 5266,
+      "sha256": "bb0fb51b4dff999a266d93a808dcffd6e2aa542924bfe3ccaf90d5407eec66a4"
     },
     {
       "path": "application-provider.mjs",
@@ -278,23 +379,18 @@
     },
     {
       "path": "cli.mjs",
-      "bytes": 2489,
-      "sha256": "ac32af416c7ff6fa8ee3f862a8eb25de84aae3e352dbc1f4da34f549c62dd45e"
+      "bytes": 2582,
+      "sha256": "017ee71c685dce3137886fab289ba2604a6662caeb6f7c456bd0f593647e4c11"
     },
     {
       "path": "client.d.mts",
-      "bytes": 8282,
-      "sha256": "a722ea51b2281aede984a1a8cb5e29ed8332450257cd74684f5b5e7ee70145a5"
+      "bytes": 8723,
+      "sha256": "88bc3f832c8d59902a4c1cf0351804b26c7e0f098fd388a053a49c9f71d3306b"
     },
     {
       "path": "client.mjs",
-      "bytes": 25214,
-      "sha256": "620e5a4dbb9dab6f0e2fe1ab295234f489bcfcdd0306e0aed79f7deea37bc0f0"
-    },
-    {
-      "path": "LICENSE",
-      "bytes": 1091,
-      "sha256": "2c961cd561150af9a4f94f3f48f0bad7bf271acd0f9cdaa1d354c511b94e84d8"
+      "bytes": 26066,
+      "sha256": "af3e08101998e814b8f6f397971ccab3d34b9beecb42d66e7df4731204b35ad0"
     },
     {
       "path": "managed.d.mts",
@@ -308,13 +404,13 @@
     },
     {
       "path": "mcp-client.d.mts",
-      "bytes": 4730,
-      "sha256": "c538955ff79614ee5066eff78be82469c4e79a39d9a074f9c0e8f685d530c28c"
+      "bytes": 5000,
+      "sha256": "0e78bdaacaccfe437dd61bb945d6efe9a4e52616809f9fa34443b32c5a5eb339"
     },
     {
       "path": "mcp-client.mjs",
-      "bytes": 7483,
-      "sha256": "45a9c67090281602947698be499e88618e44bb4fe12e7cd81f715b8291f31f06"
+      "bytes": 7684,
+      "sha256": "187c3dcd7805e86c4696f5d5588840e3d21445fdc67c04a4ace5331d018cf076"
     },
     {
       "path": "mcp-setup.mjs",
@@ -323,13 +419,13 @@
     },
     {
       "path": "mcp-tools.mjs",
-      "bytes": 10056,
-      "sha256": "5b29a0175f3a84249be2d31334a7f96e33073f3d54d1916385df50f21aaa369f"
+      "bytes": 10885,
+      "sha256": "e18d1fd97a5ee4d0b32dce5ae6d0857cb20631b1403b91c5b42a640c9803c8df"
     },
     {
       "path": "mcp.mjs",
-      "bytes": 8798,
-      "sha256": "47adfbf7b87d4d404e0993f4ec408fd7b7530e0e087027b33aa1a2d6e1796ed0"
+      "bytes": 8921,
+      "sha256": "0b249754c61315269cd9f843ee861c98a6ee7d2f171c328ae85c0742ea0b6900"
     },
     {
       "path": "merchant-provider.mjs",
@@ -348,8 +444,8 @@
     },
     {
       "path": "native/managed.py",
-      "bytes": 11388,
-      "sha256": "62d2c51eef101bf56d53b64389d82201257005e4240f8526b44be073eef8551b"
+      "bytes": 11472,
+      "sha256": "bfbe97a786a2d6c780a9856fb1b3b871226516063aec0d064629c98945f396fe"
     },
     {
       "path": "native/maximo-profile.example.json",
@@ -360,6 +456,31 @@
       "path": "native/portable.py",
       "bytes": 10926,
       "sha256": "af88ea8e5199b3f92965a3dae28d888fe70b61b5dcf785355fc7a6c26f1e4e25"
+    },
+    {
+      "path": "native/workspace/BELLEVILLE.md",
+      "bytes": 22409,
+      "sha256": "e998a3bb99060067d6b4e47b380af2cea97cf9662b4fb9dfe0deeaa36c075fe9"
+    },
+    {
+      "path": "native/workspace/MAXIMO.md",
+      "bytes": 13823,
+      "sha256": "5c9430aa6bf717dfb2ff91a73ef2d06fda2e6aedf641c0d2634990b6c2090567"
+    },
+    {
+      "path": "native/workspace/MAXIMO_CONTRACT.md",
+      "bytes": 12862,
+      "sha256": "6eaecab157dbea4d9ff9388b7811a61fd0c2b62e88bf4f1607d1e357d1d7abd3"
+    },
+    {
+      "path": "native/workspace/README.md",
+      "bytes": 12113,
+      "sha256": "3c40c09e8cc6febcb0d3bfe889a96e682e0a898678ceca46c319fc0cd578c847"
+    },
+    {
+      "path": "native/workspace/SERVICE_ASSETS.md",
+      "bytes": 11533,
+      "sha256": "8f5bd9cb8e8ae4439c0427db375a0b7dfd6a4d4313bfdbf64f168d68d0a51700"
     },
     {
       "path": "native/workspace/__init__.py",
@@ -373,13 +494,8 @@
     },
     {
       "path": "native/workspace/adapters.py",
-      "bytes": 13600,
-      "sha256": "2a30ade96084589449262c752dc1c6f59deb4b3adf67800be4dc5b4b52290a60"
-    },
-    {
-      "path": "native/workspace/BELLEVILLE.md",
-      "bytes": 22409,
-      "sha256": "e998a3bb99060067d6b4e47b380af2cea97cf9662b4fb9dfe0deeaa36c075fe9"
+      "bytes": 14157,
+      "sha256": "3bd5dd0116aa88de6c5b4a92d0fefbd49dc6b68a013ce064597db62ef93288e3"
     },
     {
       "path": "native/workspace/capture_intake.py",
@@ -397,6 +513,11 @@
       "sha256": "437c25f640cadc1137cd72744808f84f8a350a6fc2f17d3fcdb442d77e421cc7"
     },
     {
+      "path": "native/workspace/development/README.md",
+      "bytes": 1385,
+      "sha256": "4f0a50b1baccfad347339e17a271a7f791ba34795520cd76c82834afbaa95c45"
+    },
+    {
       "path": "native/workspace/development/development-roundtrips.jsonl",
       "bytes": 361,
       "sha256": "251143dbac3a0f24ba0d575d16967147d731e609c7831190655c4a568da2022c"
@@ -410,11 +531,6 @@
       "path": "native/workspace/development/mappings.json",
       "bytes": 1271,
       "sha256": "f58d6685c835696215fcf35c6a677b02fb2f745a6b5b86e2792e378b6268d078"
-    },
-    {
-      "path": "native/workspace/development/README.md",
-      "bytes": 1385,
-      "sha256": "4f0a50b1baccfad347339e17a271a7f791ba34795520cd76c82834afbaa95c45"
     },
     {
       "path": "native/workspace/development/service-requests.csv",
@@ -443,8 +559,8 @@
     },
     {
       "path": "native/workspace/engine.py",
-      "bytes": 52069,
-      "sha256": "a1a262e6d4fc9baed8b986e91c4d2170527d480d47f4766fcb772fcc8485f81f"
+      "bytes": 53203,
+      "sha256": "794ae536c0c898b1ffdc92a80e6d9b3a2e2c1ae6f32d0b07f9ac5f491e869c88"
     },
     {
       "path": "native/workspace/geometry_capture.py",
@@ -457,11 +573,6 @@
       "sha256": "5f8bcd063d29d63452c3c7042715eb56b52a8bc8d967a72aa46252668dbf880e"
     },
     {
-      "path": "native/workspace/MAXIMO_CONTRACT.md",
-      "bytes": 12862,
-      "sha256": "6eaecab157dbea4d9ff9388b7811a61fd0c2b62e88bf4f1607d1e357d1d7abd3"
-    },
-    {
       "path": "native/workspace/maximo_load.py",
       "bytes": 21723,
       "sha256": "9309c2db46e50a91ad46683ad96c7dcd13fbc6ddee69e7c0814e625bcdb91af4"
@@ -472,14 +583,14 @@
       "sha256": "faebb1844b93cb89bc74dde642d794593439c6988074d91139d57c20f8c6c393"
     },
     {
-      "path": "native/workspace/MAXIMO.md",
-      "bytes": 13823,
-      "sha256": "5c9430aa6bf717dfb2ff91a73ef2d06fda2e6aedf641c0d2634990b6c2090567"
+      "path": "native/workspace/open311_source.py",
+      "bytes": 23724,
+      "sha256": "c7065d2615cd0ba6525a03ba9b5ed8a5656620c1a391b95192c4f3664739aa83"
     },
     {
       "path": "native/workspace/package.py",
-      "bytes": 3855,
-      "sha256": "38dcf4b55d5e85039c9ce9e81858f0d04dcdd7caeaccd0359e4a27657e20f3a8"
+      "bytes": 3992,
+      "sha256": "40b4543f2993068eefb3479b27646c8103321b59942b1ccc4b47c0a69e7d324f"
     },
     {
       "path": "native/workspace/public_refresh.py",
@@ -487,19 +598,24 @@
       "sha256": "52bdeafb968fe8458513804369546002e300798fd5789accd30ad5e64b0f1aad"
     },
     {
-      "path": "native/workspace/README.md",
-      "bytes": 12113,
-      "sha256": "3c40c09e8cc6febcb0d3bfe889a96e682e0a898678ceca46c319fc0cd578c847"
-    },
-    {
       "path": "native/workspace/report.py",
-      "bytes": 9631,
-      "sha256": "ab68fc03f311496cec74acfbc7a8487d769d9a7c794d46805994d4c17c5dbd37"
+      "bytes": 11288,
+      "sha256": "98206cd3986ce3b15ed8777dc126296329f52235430282a8eab30f28f6db31ad"
     },
     {
       "path": "native/workspace/server.py",
-      "bytes": 18609,
-      "sha256": "b63776d75e857d7a3683334b9ca38f8f37d8f5c8e3dcc29c4e9cf0f8f3f7e3fc"
+      "bytes": 18960,
+      "sha256": "e40d216ab962f3f0554762a4e75372b77bd0c73358a113d681f8e89c633def3e"
+    },
+    {
+      "path": "native/workspace/service_assets.py",
+      "bytes": 12900,
+      "sha256": "b6ba66607c9c56f81e9852b1aa2436952644515195ba681e4e3f6f8b5268f412"
+    },
+    {
+      "path": "native/workspace/service_cli.py",
+      "bytes": 5382,
+      "sha256": "2fcd9b0da29227d50fffa04109cd0c43ec3698c182902aff8751fad898a23159"
     },
     {
       "path": "native/workspace/ui/app.css",
@@ -508,8 +624,8 @@
     },
     {
       "path": "native/workspace/ui/app.js",
-      "bytes": 56425,
-      "sha256": "ec541427072f3d9556cbb33e5807533dd7259ff63fefa86c7f191fc2912f3226"
+      "bytes": 69524,
+      "sha256": "56d7d9fd1161d95db1fa875c1d2b22eaeff8b1926f4c64d995111033abb34db2"
     },
     {
       "path": "native/workspace/ui/index.html",

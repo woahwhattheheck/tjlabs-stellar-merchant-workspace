@@ -52,6 +52,10 @@ def register_static(static):
                    "/forecast-workbook-host.mjs": ("forecast-workbook-host.mjs", "text/javascript; charset=utf-8"),
                    "/forecast-workbook.css": ("forecast-workbook.css", "text/css; charset=utf-8"),
                    "/FORECAST_WORKBOOK.md": ("FORECAST_WORKBOOK.md", "text/markdown; charset=utf-8")})
+    static.update({"/forecast-cash-reconciliation.mjs": ("forecast-cash-reconciliation.mjs", "text/javascript; charset=utf-8"),
+                   "/forecast-cash-reconciliation-desk.mjs": ("forecast-cash-reconciliation-desk.mjs", "text/javascript; charset=utf-8"),
+                   "/forecast-cash-reconciliation.css": ("forecast-cash-reconciliation.css", "text/css; charset=utf-8"),
+                   "/FORECAST_CASH_RECONCILIATION.md": ("FORECAST_CASH_RECONCILIATION.md", "text/markdown; charset=utf-8")})
     static["/forecast-comparison.mjs"] = ("forecast-comparison.mjs", "text/javascript; charset=utf-8")
     static["/FORECAST_COMPARISON.md"] = ("FORECAST_COMPARISON.md", "text/markdown; charset=utf-8")
     static["/operations_lazy.mjs"] = ("operations_lazy.mjs", "text/javascript; charset=utf-8")
@@ -128,7 +132,8 @@ def register_static(static):
                    "/operations_statement_allocations.mjs": ("operations_statement_allocations.mjs", "text/javascript; charset=utf-8"),
                    "/operations_statement_allocations.css": ("operations_statement_allocations.css", "text/css; charset=utf-8"),
                    "/operations_statement_copies.mjs": ("operations_statement_copies.mjs", "text/javascript; charset=utf-8"),
-                   "/operations_statement_review.mjs": ("operations_statement_review.mjs", "text/javascript; charset=utf-8")})
+                   "/operations_statement_review.mjs": ("operations_statement_review.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_statement_review_worklist.mjs": ("operations_statement_review_worklist.mjs", "text/javascript; charset=utf-8")})
     static.update({"/operations_payables.mjs": ("operations_payables.mjs", "text/javascript; charset=utf-8"),
                    "/operations_payables.css": ("operations_payables.css", "text/css; charset=utf-8"),
                    "/operations_ledger_intake.mjs": ("operations_ledger_intake.mjs", "text/javascript; charset=utf-8"),

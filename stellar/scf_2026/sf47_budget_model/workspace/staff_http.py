@@ -241,7 +241,8 @@ def authorize(handler):
             fail("Use the contributor desk's original work and invoice commands.")
         if (action in READ_POSTS or re.fullmatch(
                 r"installation-sources/source-desk-[a-f0-9]{32}/files/input-[a-f0-9]{64}/inspect", action) or re.fullmatch(
-                r"installation-sources/source-desk-[a-f0-9]{32}/editions/(compare|preview)", action)):
+                r"installation-sources/source-desk-[a-f0-9]{32}/editions/(compare|preview)", action) or re.fullmatch(
+                r"installation-sources/source-desk-[a-f0-9]{32}/mappings/(compare|preview|compare-wire|preview-wire|draft-wire)", action)):
             if action == "installation-commissioning-review":
                 bind_actor(handler, body)
             return

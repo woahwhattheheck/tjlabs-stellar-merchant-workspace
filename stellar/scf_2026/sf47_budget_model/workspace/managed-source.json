@@ -609,6 +609,23 @@
     "portfolio-sequence.mjs",
     "portfolio-sequence-desk.mjs",
     "portfolio-sequence.css",
-    "PORTFOLIO_SEQUENCE.md"
+    "PORTFOLIO_SEQUENCE.md",
+    "operations_commercial_effort.py",
+    "commercial_effort_handoff.py",
+    "INSTALLATION_EFFORT.md",
+    "../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/effort-economics.mjs",
+    "../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/EFFORT_ECONOMICS.md",
+    "../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/effort-economics-receiving.mjs",
+    "../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-cli.mjs",
+    "operations_installation_mapping_reconciliation.py",
+    "operations_installation_mapping_cli.py",
+    "operations_installation_mapping_reconciliation.mjs",
+    "INSTALLATION_MAPPING_RECONCILIATION.md",
+    "forecast-cash-reconciliation.mjs",
+    "forecast-cash-reconciliation-desk.mjs",
+    "forecast-cash-reconciliation.css",
+    "FORECAST_CASH_RECONCILIATION.md",
+    "operations_statement_review_worklist.mjs",
+    "STATEMENT_REVIEW_WORKLIST.md"
   ]
 }

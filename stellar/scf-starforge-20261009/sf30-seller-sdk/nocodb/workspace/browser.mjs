@@ -603,9 +603,9 @@ async function restoreSourceRequest() {
   const text=localStorage.getItem(markerPrefix(state.directory)+active);
   recoveryNeed(text!==null,'The selected original source request is missing from browser storage.');
   const original=JSON.parse(text);
-  const paths=['/api/discover','/api/capture','/api/import-package','/api/draft','/api/preview','/api/version','/api/select',
+  const paths=['/api/return/capture','/api/return/review','/api/return/apply','/api/discover','/api/capture','/api/import-package','/api/draft','/api/preview','/api/version','/api/select',
     '/api/publisher/start','/api/publisher/stop','/api/deployment/review','/api/deployment/prepare','/api/deployment/stage',
-    '/api/deployment/console/open','/api/deployment/console/close','/api/return/capture','/api/return/review','/api/return/apply'];
+    '/api/deployment/console/open','/api/deployment/console/close'];
   recoveryNeed(handoverObject(original)&&original.directory===state.directory&&original.requestId===active&&
     paths.includes(original.path)&&/^[a-f0-9]{64}$/.test(original.bodySha256)&&handoverObject(original.small),
     'Keep the complete original source request and workspace selection.');
@@ -895,6 +895,7 @@ $('handover-retry').addEventListener('click',()=>runHandover(async()=>{
 $('handover-pause').addEventListener('click',()=>handoverAbort?.abort());
 
 
+
 // Source-bound review of a complete, already received independent workspace.
 // Only exact review identities, field choices and notes enter local storage.
 let returnedSelection=null, returnedPreview=null, returnedRecord=null;
@@ -1134,7 +1135,6 @@ finally{initializing=false;lock();renderHandoverRecovery();renderHandoverUpload(
 if(!initializationError){
   if(pending)await checkReceipt();
   else if(state.draft)await loadDraft(state.draft,state.draftRevision).catch(issue=>notice(errorMessage(issue),true));
-  await refreshHandovers().catch(issue=>notice('Saved handovers could not be read. Original recovery records remain available. '+errorMessage(issue),true));
   await refreshReturnedInventory().catch(issue=>notice('Saved returned reviews could not be read. Original recovery records remain available. '+errorMessage(issue),true));
+  await refreshHandovers().catch(issue=>notice('Saved handovers could not be read. Original recovery records remain available. '+errorMessage(issue),true));
 }
-

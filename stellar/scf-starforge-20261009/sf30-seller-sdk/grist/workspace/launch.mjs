@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { absolute, privateDirectory, readPrivate, object, digest, identity, fault } from '../../postgres/publisher/files.mjs';
 import { normalizeConnections } from './provider.mjs';
+import {readGristPlacement,gristRuntimeSettings} from './placement.mjs';
 
 export const GRIST_STARTUP_SCHEMA = 'stellar-forge.grist-authoring-startup.v1';
 const WORKSPACE = 'stellar-forge.grist-authoring.v1';
@@ -55,8 +56,8 @@ export async function inspectGristAuthoring(directory, { expectedIdentity } = {}
   if (!sameInode(before, after) || !sameInode(directoryBefore, directoryAfter)) throw changed();
   if (!row || typeof row.data !== 'string' || row.bytes > 65536 || Buffer.byteLength(row.data) !== row.bytes)
     throw fault('GRIST_AUTHORING_BINDING_CHANGED');
-  let settings;
-  try { settings = JSON.parse(row.data); } catch { throw fault('GRIST_AUTHORING_BINDING_CHANGED'); }
+  const placement=await readGristPlacement(directory);
+  const settings=gristRuntimeSettings(row.data,directory,placement);
   if (!object(settings) || settings.schema !== WORKSPACE || typeof settings.createdAt !== 'string' ||
       settings.sourceFile !== join(directory, 'current-source.json') ||
       settings.publisherDirectory !== join(directory, 'publisher'))
@@ -65,7 +66,7 @@ export async function inspectGristAuthoring(directory, { expectedIdentity } = {}
   const value = {
     schema: 'stellar-forge.grist-authoring-identity.v1', directory,
     directoryIdentity: inode(directoryAfter), database: { path: database, ...inode(after) },
-    settingsSha256: digest(row.data), settings: {
+    settingsSha256: digest(row.data), ...(placement?{placementSha256:placement.sha256}:{}), settings: {
       schema: settings.schema, createdAt: settings.createdAt, sourceFile: settings.sourceFile,
       publisherDirectory: settings.publisherDirectory, targetDirectory: settings.targetDirectory,
     },

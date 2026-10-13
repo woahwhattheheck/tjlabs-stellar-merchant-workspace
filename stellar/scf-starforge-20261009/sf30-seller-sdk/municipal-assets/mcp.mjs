@@ -7,11 +7,11 @@ export { municipalAssetTools };
 export { readMunicipalAssetConfiguration } from './client.mjs';
 const definitions=new Map(municipalAssetTools((name,description,properties,required)=>({name,properties,required})).map(item=>[item.name,item]));
 const pick=(value,keys)=>Object.fromEntries(keys.filter(key=>value[key]!==undefined).map(key=>[key,value[key]]));
-const collections=['findings','inputs','mappings','decisions','repairs','changes','exclusions','work_order_overrides','history','releases','native_runs','settings'];
+const collections=['findings','inputs','mappings','decisions','repairs','changes','exclusions','work_order_overrides','service_links','history','releases','native_runs','settings'];
 function section(view,name){
   const state=view.project.state;
   if(name==='settings')return [pick(state,['comparison_fields','transitions','attestation','expected_source_rows','expected_target_rows','expected_correlation_ids','native_run','current_release'])];
-  const found=Object.hasOwn(view,name)?view[name]:state[name];
+  const found=Object.hasOwn(view,name)?view[name]:name==='service_links'?(state[name]??[]):state[name];
   if(Array.isArray(found))return found;
   need(plain(found),'The original project section is unavailable.');
   return Object.entries(found).map(([id,value])=>({id,value}));
@@ -86,6 +86,7 @@ export class MerchantMunicipalAssets {
       return {projectId:args.projectId,revision:args.expectedRevision,section:args.section,...page(selected,args)};
     }
     if(name==='records')return client.records(args);
+    if(name==='service_assets')return client.serviceAssets(args);
     if(name==='create_project')return client.createProject(args);
     if(name==='import_input'){
       const selected=await readMunicipalAssetInput(entry,args.input,args.expectedSha256);

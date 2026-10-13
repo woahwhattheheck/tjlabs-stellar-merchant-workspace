@@ -43,6 +43,12 @@ The dedicated source entry `node products/material-catalog/cli.mjs` forwards the
 
 Read the [customer operating instructions](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/material-catalog/OPERATING.md) for complete edition review, customer decisions, exports, receiving and batch operations. The [native catalog guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/catalog/GUIDE.md) documents every mapping form and API.
 
+## Original BMEcat XML intake
+
+Retain a supplier's original ETIM BMEcat XML directly with the **BMEcat XML** source format. The original product identifiers, full/delta transaction semantics and complete source fields stay attached to the reviewed edition. Source-derived supplier bindings and header fields join the existing BMEcat delivery desk through explicit operator actions.
+
+The [BMEcat operating guide](./BMECAT.md) follows upload, mapping, complete source validation, supplier review, portable handover and the original native delivery course. Partial price/product-data transactions remain retained source inputs until an explicit reviewed merge is supplied.
+
 ## Supplier delivery
 
 Choose **Supplier delivery** for a selected material catalog and edition. The source profile determines the recipient workflow:

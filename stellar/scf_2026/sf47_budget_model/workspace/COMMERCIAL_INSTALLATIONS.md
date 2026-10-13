@@ -73,6 +73,88 @@ original source fields. Record actual receiving through the normal check state,
 operator, observation time, result and source-record links. Receive an accepted
 later source to change the agreed task definition.
 
+## Review delivery effort on an accepted quotation
+
+Open the saved accepted-quotation Installation and choose **Use this edition as
+a draft**. Its **Delivery task effort** section reads the original Operations
+Work records against the exact accepted task definitions.
+
+1. Select **Review work through** and choose **Read current work and accepted
+   tasks**. Inspect the retained Merchant case, quotation family, sealed quote,
+   recorded acceptance, accepted scope and complete source-file identities.
+   Every task shows its native definition, dependencies and original
+   Installation acceptance check.
+2. Under **Original work allocations**, select the original Work record and
+   accepted delivery task, enter the hours belonging to that task and explain
+   the allocation. A Work record can be split across tasks. The original engine
+   checks all current Installations for quantities assigned more than once.
+3. Review the current recorded and internally accepted Work separately. When a
+   Work record has a correction, inspect the changed source and explicitly
+   choose **Use corrected work record** for the affected allocation. The older
+   source stays in the previous saved Installation edition.
+4. Enter a remaining-hours estimate for each task being reviewed, a reason,
+   supporting original files, the reviewer and an observation time with its
+   timezone. **Apply reviewed remaining hours** binds the estimate to the exact
+   current Work and task definition. An explicit zero records an estimate that
+   no effort remains. A blank input preserves the existing review.
+5. Choose **Review complete installation**, inspect the task totals and findings,
+   then **Save reviewed edition**. Open the resulting saved edition and export
+   its complete handover through the existing controls.
+
+The accepted quote specifies fees and native task definitions. It does not
+establish task effort. Quoted hours, quote-balance hours and effort-overrun hours
+therefore remain unknown. The task report presents recorded hours, internally
+accepted hours, reviewed remaining hours and projected total hours. Projected
+total is the original recorded quantity plus a current reviewed remainder.
+An outdated or missing remaining-work review leaves the projection unknown.
+
+The overall review also shows unassigned selected Work, overallocated Work and
+the number of current tasks with current reviews. Work spanning the review date,
+later Work, voided records and changed source records remain visible under the
+original reporting rules. Task receiving acceptance and internal acceptance of
+a Work record keep their distinct original meanings.
+
+### Accepted scope changes and retained effort
+
+Receive a later accepted quote through the same change-order workflow. The
+Installation retains the complete earlier task definitions, check observations,
+source identities and saved effort editions. If a removed task still has an
+allocation or remaining-work review, the report shows that earlier task with
+its original accepted source. Reassign or remove its current allocations after
+reviewing the new scope; its historical edition remains available.
+
+A changed task definition or Work record changes the basis of a remaining-hours
+review. Read the current inventory, inspect the correction, and apply an explicit
+new review. Draft controls and the original save request retain the existing
+editor's interruption and lost-response recovery behavior.
+
+The **Original support allowances** controls continue to belong to the
+Workshare workflow whose original terms specify included hours and calendar
+anchors. Accepted-quotation task effort uses the original implementation scope.
+Recurring care fees stay with their service workflow.
+
+### Complete source and independent receiving
+
+Effort is part of the original saved Installation document and frozen source
+snapshot. Its readable report, historical editions, original Work, accepted quote
+and complete attachments travel in the existing Installation ZIP and whole-case
+receiving flow. Reopen the exact selected edition after receiving to inspect the
+same task definitions, allocations, reviewer basis and quantities.
+
+The original `installation-effort-seed`, `installation-preview` and
+`installation-save` API and CLI operations now accept both original Workshare
+Installations and accepted-quotation Installations. A commercial effort source
+is explicitly identified by `sourceKind: "COMMERCIAL"`; its stable
+`phaseId` field retains the native task ID used by the existing allocation and
+remaining-review schema. The operator interface presents these entries as
+delivery tasks.
+
+The adapter is `operations_commercial_effort.py`. It reads the original
+accepted source through the maintained commercial Installation binding and
+supplies its native tasks to the original decimal effort engine. Both managed
+source selections must carry this module with the original Installation engine,
+browser and source-reader dependencies.
+
 ## What a change order preserves
 
 | Original subject | Receiving behavior |

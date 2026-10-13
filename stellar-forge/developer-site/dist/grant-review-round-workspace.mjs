@@ -2,7 +2,8 @@
 import { SCHEMA as DRAFT_SCHEMA } from './grant-submission-core.mjs';
 import { listDrafts, loadDraft, saveDraft } from './drafts.mjs';
 import { REVIEW_SCHEMA, REVIEW_MAX_BYTES, createReviewRound, readSubmissionExport, captureSubmissionDraft,
-  applyReviewAction, reviewRoundView, compareReviewDraft, exportReviewRound, importReviewRound, reviewReport } from './grant-review-round-core.mjs';
+  applyReviewAction, reviewRoundView, compareReviewDraft, exportReviewRound, importReviewRound, reviewReport,
+  readReviewReturn, compareReviewReturn, reviewReturnDetails, applyReturnedRound } from './grant-review-round-core.mjs';
 
 import { WORKING_SCHEMA, WORKING_MAX_BYTES, newWorkingCopy, saveWorkingCopy, loadWorkingCopy,
   listWorkingCopies, forkWorkingCopy, exportWorkingCopy, importWorkingCopy } from './grant-review-working-copy.mjs';
@@ -13,6 +14,7 @@ const keyOf = target => target.kind+':'+target.id;
 let round=null, view=null, savedId=null, savedRevision=0, dirty=false, busy=false;
 let screen='targets', selectedTarget='application:application', viewedEdition=null, actorId=null, filePurpose='start';
 let incoming=null, comparison=null, initialCapture=null;
+let returnedReview=null, returnPreview=null;
 const formDrafts=new Map(), carryChoices=new Map(), formContexts=new Map();
 let workingBase=newWorkingCopy(), workingRevision=0, workingGeneration=0, storedGeneration=0;
 let workingTimer=null, workingTail=Promise.resolve(), workingWrite=null, workingError=null, workingReady=false;
@@ -25,13 +27,14 @@ function readStartFields(){
 function workingMetadata(value){
   // The live fields below have their own owners. Preserve any other original
   // envelope members without pinning a superseded round or unfinished form graph.
-  const {round,incoming,initialCapture,ui,forms,contexts,carryChoices,native,...metadata}=value;
+  const {round,incoming,initialCapture,returnedReview,ui,forms,contexts,carryChoices,native,...metadata}=value;
   return metadata;
 }
 function workingSnapshot(){
   readStartFields();
   const label=(round?.title||newFields.newTitle||'Prepared submission review').slice(0,1000);
   return structuredClone({...workingBase,label,folder:'SCF review working — '+label,round,incoming,initialCapture,
+    ...(returnedReview?{returnedReview}:{}),
     ui:{screen,selectedTarget,viewedEdition,actorId,...newFields},
     forms:[...formDrafts],contexts:[...formDrafts.keys()].map(key=>[key,formContexts.get(key)]),
     carryChoices:[...carryChoices],native:{id:savedId,revision:savedRevision,dirty}});
@@ -77,6 +80,7 @@ async function flushWorking(){
 }
 function beginSelection(){
   clearTimeout(workingTimer);workingBase=newWorkingCopy();workingRevision=0;workingGeneration=0;storedGeneration=0;workingError=null;
+  returnedReview=null;returnPreview=null;
   formDrafts.clear();formContexts.clear();carryChoices.clear();newFields={newTitle:'',newPerson:'',newFormat:'plain',newParticipant:''};
   $('review-new-participant').value='';
 }
@@ -84,6 +88,7 @@ async function installWorking(value,{persist=true}={}){
   clearTimeout(workingTimer);await workingTail.catch(()=>{});
   workingReady=true;workingBase=workingMetadata(value);workingRevision=0;workingGeneration=1;storedGeneration=0;workingError=null;
   round=value.round;incoming=value.incoming;initialCapture=value.initialCapture;comparison=null;
+  returnedReview=value.returnedReview||null;returnPreview=null;
   ({screen,selectedTarget,viewedEdition,actorId}=value.ui);
   newFields={newTitle:value.ui.newTitle,newPerson:value.ui.newPerson,newFormat:value.ui.newFormat,newParticipant:value.ui.newParticipant};
   savedId=value.native.id;savedRevision=value.native.revision;dirty=value.native.dirty;
@@ -212,6 +217,7 @@ async function commit(next,message){
 }
 async function act(kind,input,{capture=null,key=null,after=null}={}){
   if(!round||!view)throw new Error('Open a complete review round first.');
+  if(returnedReview?.pending)throw new Error('Continue or explicitly resolve the original pending return before recording another action.');
   if(!actorId)throw new Error('Select the named person recording this action.');
   const next=await applyReviewAction(round,{requestId:uid(),expectedRevision:view.revision,actorId,kind,input},capture);
   if(key)clearForm(key);if(after)after();
@@ -225,6 +231,7 @@ async function readFile(file){
 }
 async function openFile(file){
   const purpose=filePurpose,text=await readFile(file);
+  if(purpose==='return')return openReturnedReview(text,file.name);
   if(purpose==='working'){
     const selected=await importWorkingCopy(text);await flushWorking();
     await installWorking(await forkWorkingCopy(selected));
@@ -329,7 +336,8 @@ function renderTarget(root){
   for(const row of decisions){
     const card=node('article',undefined,'review-card');
     card.append(node('h4',personName(row.actorId)+' · '+row.decision.replaceAll('-',' ')),node('p',row.note||'No additional note.'),
-      node('p',row.carriedBy?'Original review carried forward for unchanged content by '+personName(row.carriedBy)+'.':'Recorded '+row.at,'review-muted'),referenceList(row.references));root.append(card);
+      node('p',row.carriedBy?'Original review carried forward for unchanged content by '+personName(row.carriedBy)+'.':'Recorded '+row.at,'review-muted'),referenceList(row.references));
+    const provenance=returnProvenance(row);if(provenance)card.append(provenance);root.append(card);
   }
   if(!view.isCurrent||view.status!=='OPEN')return;
   const key=formKey('decision',selected.key),prior=formDrafts.get(key)||{decision:'accepted',note:'',references:[]};
@@ -362,11 +370,12 @@ function renderChanges(root){
     const targetRow=view.targets.find(x=>x.key===keyOf(row.target));
     card.append(node('h3',row.title),node('p',row.priority+' · '+row.status+' · '+personName(row.actorId),'review-counts'),node('p',row.note),
       node('p','Original target: '+(targetRow?.title||row.target.kind+' '+row.target.id),'review-muted'));
+    const provenance=returnProvenance(row);if(provenance)card.append(provenance);
     if(row.quote)card.append(details('Exact original quote',sourceText('Retained quoted text',row.quote)));
     card.append(referenceList(row.references),button('Open the original reviewed content',async()=>{viewedEdition=row.editionId;selectedTarget=keyOf(row.target);screen='targets';await refreshView();await render();}));
-    for(const reply of row.responses)card.append(details('Author reply · '+personName(reply.actorId)+' · '+reply.response,
-      node('p',reply.note),node('p',reply.at,'review-muted'),referenceList(reply.references)));
-    for(const decision of row.resolutions)card.append(details('Reviewer resolution · '+personName(decision.actorId)+' · '+decision.status,node('p',decision.note),node('p',decision.at,'review-muted')));
+    for(const reply of row.responses){const item=details('Author reply · '+personName(reply.actorId)+' · '+reply.response,
+      node('p',reply.note),node('p',reply.at,'review-muted'),referenceList(reply.references));const provenance=returnProvenance(reply);if(provenance)item.append(provenance);card.append(item);}
+    for(const decision of row.resolutions){const item=details('Reviewer resolution · '+personName(decision.actorId)+' · '+decision.status,node('p',decision.note),node('p',decision.at,'review-muted'));const provenance=returnProvenance(decision);if(provenance)item.append(provenance);card.append(item);}
     if(view.status==='OPEN'){
       const replyKey=formKey('reply',row.id),replyDraft=formDrafts.get(replyKey)||{response:'addressed',note:'',references:[]};
       const form=node('form');form.dataset.replyFor=row.id;
@@ -427,6 +436,210 @@ async function renderCompare(root){
     const capture=incoming;await act('receive',input,{capture,key:receiveKey,after:()=>{incoming=comparison=null;carryChoices.clear();screen='targets';}});
   });});root.append(form);
 }
+
+function rotateReturnedWorkingRecord(){
+  // The prior complete copy is already durable; preserve unknown envelope metadata.
+  workingBase={...workingBase,id:uid(),createdAt:new Date().toISOString()};
+  workingRevision=0;workingGeneration=0;storedGeneration=0;workingError=null;
+}
+function emptyReturnedReview(capture){
+  return {capture,choices:[],note:'',pending:null,attempts:[],page:0,query:'',filter:'all',lastError:null};
+}
+function invalidateReturnPreview(){returnPreview=null;}
+async function currentReturnPreview(){
+  if(!round||!returnedReview)return null;
+  const key=round.id+'\0'+(round.events.at(-1)?.sha256||'')+'\0'+returnedReview.capture.id;
+  if(returnPreview?.key===key)return returnPreview.value;
+  const value=await compareReviewReturn(round,returnedReview.capture);
+  returnPreview={key,value};return value;
+}
+async function clearSelectedReturn(){
+  if(returnedReview?.pending)throw new Error('Continue or explicitly resolve the original pending return first.');
+  await flushWorking();rotateReturnedWorkingRecord();
+  returnedReview=null;invalidateReturnPreview();await render();scheduleWorking();await flushWorking();
+  status('Preserved the preceding complete working copy and cleared this selected return. Recorded review history and unfinished forms remain.');
+}
+function returnChoice(id){return returnedReview.choices.find(row=>row.eventId===id)||{eventId:id,choice:'',note:''};}
+function setReturnChoice(id,patch){
+  const i=returnedReview.choices.findIndex(row=>row.eventId===id),next={...returnChoice(id),...patch};
+  if(i<0)returnedReview.choices.push(next);else returnedReview.choices[i]=next;
+  scheduleWorking();
+}
+async function openReturnedReview(text,fileName){
+  if(!round)throw new Error('Open the original author review before comparing a returned review.');
+  if(returnedReview?.pending)throw new Error('Continue or explicitly resolve the original pending return before choosing another file.');
+  const capture=await readReviewReturn(text,{fileName});
+  await compareReviewReturn(round,capture);
+  // Preserve the preceding complete work independently before selecting a new return.
+  await flushWorking();
+  rotateReturnedWorkingRecord();
+  returnedReview=emptyReturnedReview(capture);invalidateReturnPreview();screen='returns';
+  await render();scheduleWorking();await flushWorking();
+  status('Read and preserved the exact returned review. No returned action has been adopted.');
+}
+async function continueReturnedReview(){
+  const pending=returnedReview?.pending;
+  if(!pending)throw new Error('Prepare the original return choices first.');
+  if(pending.stage==='validation-rejected')throw new Error('Read the retained rejection and explicitly return these choices to draft before changing them.');
+  // Persist the immutable original request before computing or saving its result.
+  scheduleWorking();await flushWorking();
+  let next;
+  try{next=await applyReturnedRound(round,returnedReview.capture,pending.request);}
+  catch(error){
+    pending.stage='validation-rejected';pending.error=error.message;returnedReview.lastError=error.message;
+    scheduleWorking();await flushWorking();throw error;
+  }
+  pending.stage='ready-to-save';pending.error=null;
+  // Keep both the exact request and full result in the complete working copy first.
+  round=next;dirty=true;viewedEdition=null;invalidateReturnPreview();
+  await refreshView();scheduleWorking();await flushWorking();
+  try{
+    const saved=await saveDraft({id:savedId,revision:savedRevision,input:round});
+    savedId=saved.id;savedRevision=saved.revision;dirty=false;
+  }catch(error){
+    pending.error=error.message;returnedReview.lastError=error.message;
+    await render();scheduleWorking();await flushWorking();throw error;
+  }
+  returnedReview.pending=null;returnedReview.lastError=null;returnedReview.choices=[];
+  await refreshView();await render();scheduleWorking();await flushWorking();
+  status('Saved the original returned-review request at browser revision '+savedRevision+'. Both complete histories and every explicit choice remain in the review.');
+}
+async function admitReturnedReview(){
+  if(!round||!returnedReview)throw new Error('Open the original review and a complete returned review.');
+  if(returnedReview.pending)return continueReturnedReview();
+  if(!actorId)throw new Error('Choose the named person recording this return.');
+  if(dirty)throw new Error('Save the current review or a separate browser copy before admitting its returned-review choices.');
+  const preview=await currentReturnPreview();
+  const chosen=new Map(returnedReview.choices.map(row=>[row.eventId,row]));
+  const choices=preview.rows.map(row=>({...chosen.get(row.eventId)||{eventId:row.eventId,choice:'',note:''}}));
+  for(const row of choices){
+    if(!['adopt','retain'].includes(row.choice))throw new Error('Explicitly choose Adopt or Retain as history for every returned action.');
+    if(row.choice==='retain'&&!row.note.trim())throw new Error('Explain each action retained as history.');
+  }
+  for(let i=0;i<preview.rows.length;i++){
+    const row=preview.rows[i],choice=choices[i];
+    if(choice.choice==='adopt'&&!row.eligible)throw new Error('This returned action must be retained: '+row.reason);
+    if(row.conflict&&!choice.note.trim())throw new Error('Explain the explicit choice for every current conflict.');
+  }
+  if(!returnedReview.note.trim())throw new Error('Record why this complete returned review is being received.');
+  returnedReview.pending={stage:'admitted',error:null,request:{requestId:uid(),expectedRevision:view.revision,
+    actorId,choices,at:new Date().toISOString(),note:returnedReview.note,comparisonSha256:preview.comparisonSha256}};
+  await continueReturnedReview();
+}
+async function reopenReturnChoices(){
+  const pending=returnedReview?.pending;
+  if(!pending||pending.stage!=='validation-rejected')throw new Error('Only a known original validation rejection can return to unfinished choices.');
+  if(round.events.some(event=>event.id===pending.request.requestId))throw new Error('This original return is already recorded. Continue its original save.');
+  returnedReview.attempts.push({captureId:returnedReview.capture.id,...structuredClone(pending)});
+  returnedReview.pending=null;returnedReview.lastError=null;invalidateReturnPreview();
+  await render();scheduleWorking();await flushWorking();
+  status('Retained the rejected original request and reopened its unfinished choices. No recorded action was removed.');
+}
+function lazyReturnJson(label,value){
+  const box=node('details'),summary=node('summary',label);box.append(summary);
+  box.addEventListener('toggle',()=>{if(box.open&&box.children.length===1)box.append(node('pre',JSON.stringify(value,null,2),'review-source'));});
+  return box;
+}
+function returnProvenance(row){
+  const p=row?.returnedFrom;if(!p)return null;
+  const text=node('p','Returned original action '+p.eventId+' · '+personName(p.actorId)+' · '+p.at,'review-muted');
+  text.append(node('span',' · adopted by return '+p.returnId));
+  if(p.editionId)text.append(node('span',' · original edition '+p.editionId+' · effective edition '+(row.editionId||view.selectedEdition)));
+  if(p.bindingSha256)text.append(node('span',' · original target binding '+p.bindingSha256));
+  return text;
+}
+async function renderReturnedReviews(root){
+  root.append(node('h2','Receive a colleague’s review'),node('p','Compare a complete returned review with the current author’s recorded work. Retain the exact returned file and deliberately adopt eligible actions. Existing decisions, original sources and later author work are not silently replaced.'));
+  root.append(button('Open returned review JSON',()=>pickFile('return')));
+  const receipts=view.returnedReviews||[];
+  if(receipts.length){
+    const history=node('section');history.append(node('h3','Previously received reviews'));
+    for(const receipt of receipts){
+      const card=node('details');card.dataset.returnId=receipt.id;
+      card.append(node('summary',receipt.capture.fileName+' · '+receipt.at+' · '+receipt.choices.filter(x=>x.appliedId).length+' adopted actions'));
+      card.addEventListener('toggle',()=>{if(!card.open||card.children.length>1)return;
+        const event=round.events.find(x=>x.id===receipt.id&&x.kind==='return');
+        card.append(node('p',receipt.note),node('p','Received by '+personName(receipt.actorId)+'; common original revision '+receipt.common.revision+'.','review-muted'));
+        if(event)card.append(button('Download exact returned review',()=>download(event.input.capture.exportText,safeName(event.input.capture.fileName,'returned-review.json'))));
+        card.append(lazyReturnJson('All recorded choices and original identities',receipt));
+      });history.append(card);
+    }root.append(history);
+  }
+  if(!returnedReview){root.append(node('p','Select the colleague’s complete recorded-review JSON. Their separate unfinished working package remains a separate opening path.','review-empty'));return;}
+  const state=returnedReview,capture=state.capture,pending=state.pending;
+  root.append(node('h3',capture.fileName),node('p',capture.bytes.toLocaleString()+' exact returned bytes · '+capture.roundSha256,'review-code'),
+    button('Download selected original return',()=>download(capture.exportText,safeName(capture.fileName,'returned-review.json'))));
+  if(!pending)root.append(button('Keep as saved copy and clear selection',clearSelectedReturn));
+  if(pending){
+    const box=node('section',undefined,'review-card');box.append(node('h3','Original return waiting for continuation'),node('p','Request '+pending.request.requestId+' · '+pending.stage,'review-code'),
+      node('p',pending.error||'The original request and all its choices are retained. Continue it without creating another request.','review-notice'),
+      lazyReturnJson('Exact original request',pending.request));
+    if(pending.stage==='validation-rejected')box.append(button('Return rejected choices to draft',reopenReturnChoices));
+    else box.append(button('Continue original return',continueReturnedReview,'review-primary'));
+    box.append(node('p','If another tab advanced the native record, retain this complete result with Save separate browser copy, then continue this same request. Download complete working copy also preserves the whole pending state.','review-muted'));
+    root.append(box);return;
+  }
+  let preview;try{preview=await currentReturnPreview();}catch(error){state.lastError=error.message;root.append(node('p',error.message,'review-error'));return;}
+  state.lastError=null;
+  root.append(node('p','Common original revision '+preview.common.revision+' · current author revision '+preview.revision+' · returned revision '+preview.incoming.revision+'. The current source selection and completion controls remain explicit.','review-counts'));
+  const metrics=node('div',undefined,'review-metrics');
+  for(const [label,value]of [['Returned actions',preview.rows.length],['Eligible for adoption',preview.rows.filter(x=>x.eligible).length],['Current conflicts',preview.rows.filter(x=>x.conflict).length],['Already retained',preview.rows.filter(x=>x.alreadyRetained).length]]){
+    const cell=node('div');cell.append(node('strong',value),node('span',label));metrics.append(cell);
+  }root.append(metrics);
+  const search=textInput('Find returned actions',state.query,{type:'search',id:'review-return-search'}),
+    filter=choice('Show actions',state.filter,[['all','All returned actions'],['eligible','Eligible actions'],['conflict','Current conflicts'],['retained','Already retained']],'review-return-filter');
+  const controls=node('div',undefined,'review-pair');controls.append(search.wrap,filter.wrap);root.append(controls);
+  const rowsBox=node('section');rowsBox.id='review-return-actions';root.append(rowsBox);
+  function drawRows(){
+    rowsBox.replaceChildren();const q=state.query.toLocaleLowerCase();
+    const rows=preview.rows.filter(row=>(state.filter==='all'||state.filter==='eligible'&&row.eligible||state.filter==='conflict'&&row.conflict||state.filter==='retained'&&row.alreadyRetained)&&
+      (!q||[row.eventId,row.kind,row.actorLabel,row.actorId,row.target?.kind,row.target?.id,row.input?.title,row.input?.note].filter(x=>typeof x==='string').join(' ').toLocaleLowerCase().includes(q)));
+    state.page=Math.max(0,Math.min(state.page,Math.max(0,Math.ceil(rows.length/25)-1)));
+    const start=state.page*25,nav=node('div',undefined,'review-row');
+    const previous=button('Previous actions',async()=>{state.page--;drawRows();scheduleWorking();}),next=button('Next actions',async()=>{state.page++;drawRows();scheduleWorking();});
+    previous.disabled=state.page===0;next.disabled=start+25>=rows.length;
+    nav.append(previous,node('span',rows.length?'Actions '+(start+1)+'–'+Math.min(start+25,rows.length)+' of '+rows.length:'No matching returned actions','review-counts'),next);rowsBox.append(nav);
+    for(const row of rows.slice(start,start+25)){
+      const card=node('article',undefined,'review-card');card.dataset.returnEventId=row.eventId;
+      card.append(node('h3',row.kind+' · '+row.actorLabel),node('p',row.at+' · '+row.eventId,'review-code'),
+        node('p',row.reason||(row.eligible?'This action is eligible for explicit adoption.':'Retain this original action as history.'),row.conflict?'review-notice':'review-muted'));
+      if(row.target)card.append(node('p','Original target: '+row.target.kind+' / '+row.target.id,'review-muted'));
+      if(row.dependencies.length)card.append(node('p','Required returned actions: '+row.dependencies.join(', '),'review-code'));
+      if(row.input?.note)card.append(node('p',row.input.note));
+      if(row.current)card.append(lazyReturnJson('Current author work summary',row.current));
+      const full=node('section');
+      card.append(button('Read full current and returned records',async()=>{
+        const detail=await reviewReturnDetails(round,capture,{eventId:row.eventId});
+        full.replaceChildren(node('h4','Original context'),node('pre',JSON.stringify(detail.before,null,2),'review-source'));
+        const pair=node('div',undefined,'review-pair'),left=node('section'),right=node('section');
+        left.append(node('h4','Current author record'),node('pre',detail.current?JSON.stringify(detail.current,null,2):'No corresponding current record.','review-source'));
+        right.append(node('h4','Complete returned original action'),node('pre',JSON.stringify(detail.returned,null,2),'review-source'));
+        pair.append(left,right);full.append(pair);
+      }),full);
+      const current=returnChoice(row.eventId),options=[['','Choose explicitly'],['retain','Retain as history']];
+      if(row.eligible)options.push(['adopt',row.conflict?'Adopt after reviewing this current conflict':'Adopt this original action']);
+      const selected=choice('What should the author receive?',current.choice,options),note=textInput('Reason for this choice',current.note,{area:true});
+      selected.field.addEventListener('change',()=>setReturnChoice(row.eventId,{choice:selected.field.value}));
+      note.field.addEventListener('input',()=>setReturnChoice(row.eventId,{note:note.field.value}));
+      card.append(selected.wrap,note.wrap);rowsBox.append(card);
+    }
+  }
+  search.field.addEventListener('input',()=>{state.query=search.field.value;state.page=0;drawRows();scheduleWorking();});
+  filter.field.addEventListener('change',()=>{state.filter=filter.field.value;state.page=0;drawRows();scheduleWorking();});
+  drawRows();
+  const keep=button('Retain every unchosen action as history',async()=>{
+    const selected=new Map(state.choices.map(row=>[row.eventId,row]));
+    for(const row of preview.rows)if(!selected.get(row.eventId)?.choice)selected.set(row.eventId,{eventId:row.eventId,choice:'retain',note:'Retain the original returned action as history without adopting it into current author work.'});
+    state.choices=[...selected.values()];scheduleWorking();
+    drawRows();status('Unchosen actions are explicitly marked for retention. Read all choices before recording this return.');
+  });root.append(keep);
+  const note=textInput('Why receive this complete returned review?',state.note,{area:true,id:'review-return-note'});
+  note.field.addEventListener('input',()=>{state.note=note.field.value;scheduleWorking();});root.append(note.wrap);
+  root.append(button('Record these return choices',admitReturnedReview,'review-primary'),
+    node('p','All returned actions require a choice. A retained action needs a reason. Adoption preserves original attribution and may replace a current decision only through this explicit, revision-bound request. Unfinished choices are saved in the complete working copy.','review-muted'));
+  if(state.attempts.length)root.append(lazyReturnJson('Retained rejected original requests',state.attempts));
+}
+
 function renderSources(root){
   root.append(node('h2','Complete received drafts'),node('p','Each file is the exact full export received from the submission workspace. Open an earlier draft to inspect its retained original answer and field identities.'));
   for(const edition of view.editions){
@@ -441,13 +654,13 @@ function renderHistory(root){
   root.append(node('h2','Complete review history'),node('p','Every action retains its original participant, selected draft, exact input and preceding review revision.'));
   if(!round.events.length)root.append(node('p','The original draft is retained. Record a decision or requested change to begin its review history.','review-empty'));
   for(const event of [...round.events].reverse()){
-    const label={review:'Reviewer decision',change:'Requested change',respond:'Author response',resolve:'Reviewer resolution',receive:'Revised draft received',participant:'Named participant added',finish:'Review completed',reopen:'Review reopened'}[event.kind]||event.kind;
+    const label={review:'Reviewer decision',change:'Requested change',respond:'Author response',resolve:'Reviewer resolution',receive:'Revised draft received',return:'Returned review received',participant:'Named participant added',finish:'Review completed',reopen:'Review reopened'}[event.kind]||event.kind;
     const card=node('article',undefined,'review-card');card.append(node('h3',label+' · '+personName(event.actorId)),node('p','Review revision '+event.sequence+' · '+event.at,'review-muted'));
     if(event.input.note)card.append(node('p',event.input.note));
     if(event.kind==='receive'){
       const kept=event.input.decisions.filter(x=>x.choice==='carry').length;card.append(node('p',kept+' original decisions carried forward; '+(event.input.decisions.length-kept)+' reopened.'));
     }
-    card.append(details('Complete recorded action',node('pre',JSON.stringify(event,null,2),'review-source')));root.append(card);
+    card.append(lazyReturnJson('Complete recorded action',event));root.append(card);
   }
 }
 function renderReadiness(root){
@@ -490,6 +703,7 @@ async function render(){
   const root=$('review-editor');root.replaceChildren();renderUnfinished(root);
   if(screen==='saved')await renderSaved(root);
   else if(screen==='compare')await renderCompare(root);
+  else if(screen==='returns')await renderReturnedReviews(root);
   else if(screen==='changes')renderChanges(root);
   else if(screen==='sources')renderSources(root);
   else if(screen==='history')renderHistory(root);

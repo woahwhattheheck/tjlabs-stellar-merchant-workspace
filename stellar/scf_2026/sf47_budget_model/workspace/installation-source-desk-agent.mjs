@@ -7,13 +7,15 @@ export const INSTALLATION_SOURCE_MAX_FILE_BYTES = 8 * 1024 * 1024;
 // Native preparation members total at most 192 MiB; the complete ZIP also carries
 // its original manifest and compression framing. Admission uses the exact descriptor.
 export const INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES = 256 * 1024 * 1024;
+// Complete exact-text receipts include original state plus its canonical JSON.
+export const INSTALLATION_SOURCE_MAX_JSON_BYTES = 256 * 1024 * 1024;
 export const INSTALLATION_SOURCE_ACTIONS = Object.freeze([
   'create','file.add','file.remove','selection.save','prepare','native.receive','attach',
-  'commissioning.attach','commissioning.archive.receive','edition.apply',
+  'commissioning.attach','commissioning.archive.receive','edition.apply','mapping.apply',
 ]);
 export const INSTALLATION_SOURCE_READS = Object.freeze([
   'profiles','list','detail','request','file-inspect','file','preparation','archive-describe',
-  'archive','output','commissioning-inspect','commissioning-preview','archive-inspect','edition-compare','edition-preview',
+  'archive','output','commissioning-inspect','commissioning-preview','archive-inspect','edition-compare','edition-preview','mapping-compare','mapping-preview','mapping-compare-wire','mapping-preview-wire','mapping-draft-wire',
 ]);
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&
   (Object.getPrototypeOf(value)===Object.prototype||Object.getPrototypeOf(value)===null);
@@ -217,9 +219,10 @@ export function planInstallationSourceOperation(action,input={}){
     if(action==='detail'){exact(input,[...selection,'revision'],selection);route=query(route,input,['revision']);}
     else if(action==='request'){
       exact(input,[...selection,'requestId']);route+='/requests/'+identity(input.requestId,'requestId');
+      options.maxResponseBytes=INSTALLATION_SOURCE_MAX_JSON_BYTES;
     }else if(action==='command'){
       exact(input,[...selection,'body']);envelope(input.body);
-      options={body:input.body,originalRequestId:input.body.requestId,mutation:true};
+      options={body:input.body,originalRequestId:input.body.requestId,mutation:true,maxResponseBytes:INSTALLATION_SOURCE_MAX_JSON_BYTES};
     }else if(action==='file-inspect'){
       exact(input,[...selection,'fileId','revision','phaseIdAmendment'],[...selection,'fileId']);
       route+='/files/'+identity(input.fileId,'fileId')+'/inspect';
@@ -242,6 +245,10 @@ export function planInstallationSourceOperation(action,input={}){
         options.maxResponseBytes=INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES;
       }
       if(action==='output')route=query(route+'/outputs/'+identity(input.filename,'filename'),input,['expectedSha256']);
+    }else if(['mapping-compare','mapping-preview','mapping-compare-wire','mapping-preview-wire','mapping-draft-wire'].includes(action)){
+      exact(input,[...selection,'body']);need(plain(input.body),'Keep the complete selected mapping request.');
+      route+='/mappings/'+action.slice('mapping-'.length);options.body=input.body;
+      if(action.endsWith('-wire'))options.maxResponseBytes=INSTALLATION_SOURCE_MAX_JSON_BYTES;
     }else if(['edition-compare','edition-preview'].includes(action)){
       exact(input,[...selection,'body']);need(plain(input.body),'Keep the complete selected edition request.');
       route+='/editions/'+(action==='edition-compare'?'compare':'preview');options.body=input.body;
@@ -281,7 +288,7 @@ export async function performInstallationSourceOperation(plan,send){
     return response;
   }
   const operation=plan.operation,base=ids(operation),lookup=await send(
-    base+'/requests/'+operation.request.requestId,{mutation:false});
+    base+'/requests/'+operation.request.requestId,{mutation:false,maxResponseBytes:INSTALLATION_SOURCE_MAX_JSON_BYTES});
   need(lookup.value?.schema===INSTALLATION_SOURCE_SCHEMA&&lookup.value.requestId===operation.request.requestId&&
     ['RECORDED','NOT_RECORDED'].includes(lookup.value.state),'Read the complete original Source Desk request result.');
   if(lookup.value.state==='RECORDED'){
@@ -289,7 +296,7 @@ export async function performInstallationSourceOperation(plan,send){
     return {state:'RECORDED',operation,response:lookup,receipt:lookup.value.result,replayed:true};
   }
   if(plan.action==='reconcile')return {state:'NOT_RECORDED',operation,response:lookup,receipt:null,replayed:false};
-  const response=await send(base,{body:operation.request,originalRequestId:operation.request.requestId,mutation:true});
+  const response=await send(base,{body:operation.request,originalRequestId:operation.request.requestId,mutation:true,maxResponseBytes:INSTALLATION_SOURCE_MAX_JSON_BYTES});
   return {state:'RECORDED',operation,response,receipt:checkReceipt(response.value,operation),replayed:false};
 }
 
@@ -303,4 +310,34 @@ export function prepareInstallationSourceEdition(plan,context){
   return prepareInstallationSourceCommand(plan.caseId,plan.target.draftId,{
     ...context,expectedRevision:whole(plan.target.revision,'selected target revision',1),
     action:'edition.apply',data:{plan}});
+}
+
+/** Freeze the complete native reconciliation; original command replay owns apply. */
+export function prepareInstallationSourceMapping(plan,context){
+  plan=copy(plan);exact(context,['requestId','actor','note'],['requestId','actor']);
+  need(plan.schema==='stellar-forge.installation-mapping-plan.v1'&&plain(plan.target),
+    'Keep the complete native mapping reconciliation preview.');
+  const original={...plan},seal=identity(plan.sha256,'sha256');delete original.sha256;
+  need(digest(original)===seal,'The complete mapping plan changed.','GRANT_INSTALLATION_SOURCE_CHANGED');
+  return prepareInstallationSourceCommand(plan.caseId,plan.target.draftId,{
+    ...context,expectedRevision:whole(plan.target.revision,'selected target revision',1),
+    action:'mapping.apply',data:{plan}});
+}
+
+/** The native wire text preserves original large integers and float lexemes. */
+export function prepareInstallationSourceMappingWire(wire,context){
+  need(plain(wire)&&wire.schema==='stellar-forge.installation-mapping-wire.v1'&&
+    typeof wire.canonicalJSON==='string','Keep the complete native mapping wire response.');
+  const planJSON=wire.canonicalJSON;
+  need(utf8(planJSON).length<=12*1024*1024&&hash(utf8(planJSON))===identity(wire.sha256,'sha256'),
+    'The complete native mapping text changed.','GRANT_INSTALLATION_SOURCE_CHANGED');
+  const plan=JSON.parse(planJSON);
+  need(plain(plan)&&plan.schema==='stellar-forge.installation-mapping-plan.v1'&&plain(plan.target),
+    'Select the exact native mapping preview text.');
+  exact(context,['requestId','actor','note'],['requestId','actor']);
+  // Only safe identity fields are projected. Native verify_plan reproduces every
+  // original number, field, file and seal from the unchanged planJSON at apply.
+  return prepareInstallationSourceCommand(plan.caseId,plan.target.draftId,{
+    ...context,expectedRevision:whole(plan.target.revision,'selected target revision',1),
+    action:'mapping.apply',data:{planJSON}});
 }

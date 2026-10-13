@@ -16,7 +16,7 @@ export function gristApplication(common) {
   return {
     id: 'grist-authoring', command: 'grist-workspace', title: 'Grist source authoring', terminal: false,
     requiredSource: SOURCE + '/launch.mjs',
-    description: 'Review original records and field observations, retain complete captures and public projections, publish through the saved dataset publisher, prepare complete customer operating plans with explicit source observations and return reviews, and reopen the same private workspace.',
+    description: 'Review original records and field observations, retain complete captures and public projections, publish through the saved dataset publisher, prepare complete customer operating plans with explicit source observations and return reviews, and prepare complete editable handovers or reopen independently received workspaces while preserving original operating-plan identity.',
     fields: [
       field('workspaceDirectory', 'Initialized private Grist workspace', 'path', true,
         'Select the original workspace. Initialize a new one with grist-workspace init before reviewing this application.'),

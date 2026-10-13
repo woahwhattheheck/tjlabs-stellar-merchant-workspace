@@ -229,6 +229,21 @@ class InstallationSourceDeskClient:
                 "action": "edition.apply", "data": {"plan": deepcopy(plan)}}
         return self.prepare_command(body)
 
+    def mapping_compare(self, selection: dict) -> dict:
+        return self.desk.mapping_compare(self.case_id, self.draft_id, deepcopy(selection))
+
+    def mapping_preview(self, selection: dict) -> dict:
+        return self.desk.mapping_preview(self.case_id, self.draft_id, deepcopy(selection))
+
+    def prepare_mapping(self, plan: dict, *, actor: str, request_id: str,
+                        note: str = "") -> dict:
+        from operations_installation_mapping_reconciliation import verify_plan
+        value = verify_plan(self.desk, self.case_id, self.draft_id, plan)
+        context = _context(actor, request_id, note)
+        body = {**context, "expectedRevision": _revision(value["target"]["revision"]),
+                "action": "mapping.apply", "data": {"plan": deepcopy(plan)}}
+        return self.prepare_command(body)
+
     def archive_inspect(self, archive_file_id: str, expected_revision: int,
                         replace_file_ids: list[str] | None = None) -> dict:
         return self.desk.commissioning_archive_inspect(self.case_id, self.draft_id, {

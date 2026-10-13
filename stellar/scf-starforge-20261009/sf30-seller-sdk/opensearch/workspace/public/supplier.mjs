@@ -29,7 +29,7 @@ export function createSupplierController({container,api,perform,host,notice,elem
     '<details><summary>Catalog and trading parties</summary><div class="two-column"><label>Supplier name<input id="sup-supplier-name"></label><label>Buyer name<input id="sup-buyer-name"></label><label>Delivery catalog ID<input id="sup-catalog-id"></label><label>Delivery catalog version<input id="sup-catalog-version"></label><label>Generation date<input id="sup-date" placeholder="YYYY-MM-DD"></label><label>Currency<input id="sup-currency" maxlength="3" placeholder="CAD"></label></div></details></section>',
     '<label>Previous supplier review for product changes<select id="sup-previous-review"></select><span class="help">Choose the prior delivered review for product changes and xChange recipient state. CHANGE references that catalogue version.</span></label>',
     '<details open><summary>Map supplier fields</summary><p class="help">Map each delivery field to an original material field. Use JSON pointers such as /brand and /attributes/brand. A fixed value includes its reason: {"constant":"Actual value","reason":"Supplier declaration"}.</p>',
-    '<div id="sup-bindings" class="table-wrap"></div><button id="sup-add-binding" type="button">Add field mapping</button>',
+    '<div id="sup-bindings" class="table-wrap"></div><button id="sup-add-binding" type="button">Add field mapping</button><button id="sup-bmecat-bindings" type="button">Use original BMEcat supplier fields</button><button id="sup-bmecat-header" type="button">Use original BMEcat header</button>',
     '<details><summary>Bulk mapping as JSON</summary><label>Field mappings<textarea id="sup-binding-json" class="code" rows="8" spellcheck="false"></textarea></label><button id="sup-use-binding-json" type="button">Apply mappings to table</button></details></details>',
     '<details><summary>Complete profile and local requirements</summary><p class="help">Set applicable documents, packaging conversions, classification definitions and any sourced local requirements. The complete saved values remain editable here.</p><label>Profile JSON<textarea id="sup-profile-json" class="code" rows="16" spellcheck="false"></textarea></label><button id="sup-use-profile-json" type="button">Apply profile to fields</button><p id="sup-profile-edit-state" class="help"></p><details><summary>Available product fields</summary><pre id="sup-template"></pre></details><p id="sup-source" class="help"></p></details>',
     '<div class="actions"><button id="sup-save" type="button" class="primary">Save and review products</button><button id="sup-review" type="button">Review saved submission</button></div></article>',
@@ -326,6 +326,25 @@ export function createSupplierController({container,api,perform,host,notice,elem
     review=null;current=null;patches=[];patchDirty=false;$('product').hidden=true;xchange.setProduct(null);
     $('previous-review').value='';setDirty();renderSelections();renderReview();
     notice('The '+(target==='legacy'?'Sonepar / BMEcat':target)+' profile is in the submission editor. Review its settings and save the submission.');
+  })));
+  $('bmecat-bindings').addEventListener('click',()=>attempt(()=>read(async()=>{
+    if(isXChangeProfile(profileValues()))throw Error('Choose the BMEcat receiving profile to use these original supplier bindings. Native xChange profiles use their own product mapping.');
+    const selected=editions.find(item=>item.id===$('edition').value);
+    if(!selected?.source?.id)throw Error('Select the material edition built from the retained BMEcat XML first.');
+    if(bindingJsonDirty&&!window.confirm('Replace the unsaved field mapping with the retained BMEcat supplier fields?'))return;
+    const original=await api('/api/catalog/bmecat/profile?'+new URLSearchParams({sourceId:selected.source.id}));
+    renderBindings(original.supplierBindings);setDirty();
+    notice('Original BMEcat supplier fields are in the submission editor. Review the recipient profile and trading-party declarations before saving.');
+  })));
+  $('bmecat-header').addEventListener('click',()=>attempt(()=>read(async()=>{
+    if(isXChangeProfile(profileValues()))throw Error('Choose the BMEcat receiving profile before applying the original BMEcat header.');
+    const selected=editions.find(item=>item.id===$('edition').value);
+    if(!selected?.source?.id)throw Error('Select the material edition built from the retained BMEcat XML first.');
+    if((planDirty||profileJsonDirty)&&!window.confirm('Replace the edited receiving profile with the original BMEcat document header?'))return;
+    const original=await api('/api/catalog/bmecat/profile?'+new URLSearchParams({sourceId:selected.source.id}));
+    if(!original.supplierProfile)throw Error('This retained source has no complete original BMEcat header profile.');
+    fillProfile(original.supplierProfile);setDirty();
+    notice('The original document languages, trading parties, catalog and currency are in the profile editor. Review the actual receiving requirements before saving.');
   })));
   $('add-binding').addEventListener('click',()=>{addBinding();bindingJsonDirty=false;setDirty();});
   $('use-binding-json').addEventListener('click',()=>attempt(async()=>{renderBindings(parseEditor($('binding-json').value,'Mappings'));setDirty();}));

@@ -55,6 +55,9 @@ def parse(body, file_format):
     if file_format == "belleville-capture":
         from .captures import capture_bytes, parse_capture
         return parse_capture(_json(capture_bytes(body)))
+    if file_format == "open311-collection":
+        from .open311_source import parse_collection
+        return parse_collection(_json(body))
     if file_format == "maximo-target":
         from .maximo_target import parse_capture
         return parse_capture(_json(body))
@@ -223,6 +226,9 @@ def validate_mapping(kind, mapping, columns):
 
 def mapped_rows(kind, parsed, mapping):
     mapping = validate_mapping(kind, mapping, parsed["columns"])
+    if parsed["metadata"].get("format") == "open311-collection":
+        if kind != "requests" or any(mapping["fields"].get(field) != field for field in ("id", "asset_id", "status")) or mapping["status_aliases"] or mapping["trim_ids"]:
+            raise InvalidData("Retain the original Open311 id, empty asset_id and native status columns without aliases or trimming; record asset associations in Service assets")
     result, errors = [], []
     for index, raw in enumerate(parsed["rows"], 1):
         row = {field: text(raw.get(mapping["fields"].get(field))) for field in KINDS[kind]}

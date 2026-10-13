@@ -983,10 +983,25 @@ export type GrantInstallationSupportStatus =
 export type GrantInstallationSupportWorkClassification =
   | 'VOID' | 'AWAITING_ANCHOR' | 'BEFORE_WINDOW' | 'AFTER_WINDOW'
   | 'WITHIN_WINDOW' | 'SPANS_WINDOW_BOUNDARY';
+export interface GrantInstallationEffortCommercialIdentity {
+  caseId: string;
+  caseKey: string;
+  quoteId: string;
+  quoteSha256: string;
+  acceptanceId: string;
+  acceptanceSha256: string;
+  scopeSha256: string;
+  sourceId: string;
+  sourceSha256: string;
+}
 export interface GrantInstallationEffortOriginalPhase {
+  /** Original Workshare phase ID or accepted SF74 task ID. */
   phaseId: string;
+  taskId?: string;
+  definitionSha256?: string;
   title: string;
-  quotedHours: string;
+  /** Null when an accepted quotation does not bind task effort. */
+  quotedHours: string | null;
   owner: unknown;
   dependsOn: string[];
   businessDays: number | null;
@@ -996,7 +1011,9 @@ export interface GrantInstallationEffortOriginalPhase {
   checkOperator: string;
   checkObservedAt: string | null;
 }
-export interface GrantInstallationEffortPhaseSource {
+export interface GrantInstallationEffortWorkshareSource {
+  sourceKind?: undefined;
+  commercial?: undefined;
   caseId: string;
   planSha256: string;
   title: string;
@@ -1007,6 +1024,20 @@ export interface GrantInstallationEffortPhaseSource {
   plan: GrantObject;
   phases: GrantInstallationEffortOriginalPhase[];
 }
+export interface GrantInstallationEffortCommercialSource {
+  sourceKind: 'COMMERCIAL';
+  commercial: GrantInstallationEffortCommercialIdentity;
+  caseId: string;
+  title: string;
+  customer: string;
+  quotedHours: null;
+  sourceId: string;
+  sourceSha256: string;
+  scope: GrantObject;
+  effortBasis: string;
+  phases: GrantInstallationEffortOriginalPhase[];
+}
+export type GrantInstallationEffortPhaseSource = GrantInstallationEffortWorkshareSource | GrantInstallationEffortCommercialSource;
 export interface GrantInstallationEffortWork extends GrantObject {
   id: string;
   contributorId: string;
@@ -1058,6 +1089,8 @@ export interface GrantInstallationEffortPhaseResult extends GrantInstallationEff
   /** Present for a retained phase from an earlier original plan. */
   retired?: true;
   originalPlanSha256?: string;
+  originalScopeSha256?: string;
+  originalCommercial?: GrantInstallationEffortCommercialIdentity;
   allocatedHours: string;
   recordedHours: string;
   acceptedHours: string;
@@ -1065,8 +1098,8 @@ export interface GrantInstallationEffortPhaseResult extends GrantInstallationEff
   sourceChangedHours: string;
   afterAsOfHours: string;
   spansAsOfHours: string;
-  quoteBalanceHours: string;
-  recordedOverrunHours: string;
+  quoteBalanceHours: string | null;
+  recordedOverrunHours: string | null;
   remainingHours: string | null;
   remainingReviewCurrent: boolean;
   reviewBasisSha256: string;
@@ -1116,7 +1149,7 @@ export interface GrantInstallationSupportResult extends GrantInstallationSupport
   attributions: GrantInstallationSupportAttribution[];
 }
 export interface GrantInstallationEffortSummary {
-  quotedHours: string;
+  quotedHours: string | null;
   allocatedHours: string;
   recordedHours: string;
   acceptedHours: string;
@@ -1141,6 +1174,9 @@ export interface GrantInstallationEffortFinding {
 }
 export interface GrantInstallationEffortReport {
   schema: 'stellar-forge.sf47-installation-effort.v1';
+  sourceKind?: 'COMMERCIAL';
+  commercial?: GrantInstallationEffortCommercialIdentity;
+  effortBasis?: string;
   asOfDate: GrantCivilDate;
   status: GrantInstallationEffortStatus;
   readyForPlanning: boolean;

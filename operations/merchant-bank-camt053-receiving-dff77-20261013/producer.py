@@ -47,6 +47,7 @@ try:
   assert hashlib.sha1(b"blob "+str(len(data)).encode()+b"\0"+data).hexdigest()==item["git_blob_sha1"]
   (root/pathlib.PurePosixPath(item["path"]).name).write_bytes(data)
  (root/"receive-originals.mjs").write_text(cfg["nodeProgram"],encoding="utf-8")
+ if cfg.get("pdfProgram"):(root/"receive-pdf.mjs").write_text(cfg["pdfProgram"],encoding="utf-8")
  inputs=[]
  for item in cfg["examples"]:
   data=item["content"].encode("utf-8");path="originals/"+item["name"];(root/path).write_bytes(data)
@@ -218,11 +219,11 @@ try:
    if attempt.returncode:raise RuntimeError("Original runtime operation failed: "+label)
    return json.loads(attempt.stdout)
   release=runtime_command("PRODUCT_RELEASE",[distribution/"build.mjs","--repo",app_root,"--ref",application["source_commit"],
-    "--selection","merchant-bank-statements","--out",root/"product-release","--python",sys.executable],1200)
+    "--selection",application.get("selection","merchant-bank-statements"),"--out",root/"product-release","--python",sys.executable],1200)
   if release["sourceCommit"]!=application["source_commit"]:raise ValueError("Original release changed its selected commit")
   runtime_directory=root/"installed-runtime"
   prepared=runtime_command("RUNTIME_PREPARED",[distribution/"runtime-install-cli.mjs","prepare","--dir",runtime_directory,
-    "--archive",release["archive"],"--sha256",release["sha256"],"--native","--feature","schema","--feature","openapi","--feature","mcp","--operator"],300)
+    "--archive",release["archive"],"--sha256",release["sha256"],"--native",*sum((["--feature",feature]for feature in application.get("features",["schema","openapi","mcp"])),[]),"--operator"],300)
   installed=runtime_command("RUNTIME_INSTALLED",[distribution/"runtime-install-cli.mjs","install","--dir",runtime_directory],1800)
   inspected=runtime_command("RUNTIME_INSPECTED",[distribution/"runtime-install-cli.mjs","inspect","--dir",runtime_directory,"--load","--source"],600)
   if installed["status"]!="READY"or inspected.get("ready")is not True or inspected.get("sourceVerified")is not True:
@@ -256,6 +257,38 @@ try:
   (root/"application-stdout.log").write_text(app_run.stdout,encoding="utf-8");(root/"application-stderr.log").write_text(app_run.stderr,encoding="utf-8")
   if(root/"application-result/APPLICATION_RESULT.json").exists():out["application"]["result"]=json.loads((root/"application-result/APPLICATION_RESULT.json").read_text())
   if app_run.returncode:out["exitCode"]=app_run.returncode
+  if app_run.returncode==0 and cfg.get("pdfInput"):
+   pdf=cfg["pdfInput"];pdf_original=pathlib.Path(pdf["path"])
+   if pdf_original.is_symlink()or not pdf_original.is_file():raise ValueError("Receive an ordinary complete issuer PDF")
+   if not 0<pdf_original.stat().st_size<=16000000:raise ValueError("Original PDF exceeds its product size limit")
+   retained_pdf=root/"originals"/"pdf";retained_pdf.mkdir(mode=0o700)
+   original_target=retained_pdf/pdf_original.name;shutil.copyfile(pdf_original,original_target)
+   original_bytes=original_target.read_bytes()
+   pdf_program=root/"receive-pdf.mjs";pdf_program.write_text(cfg["pdfProgram"],encoding="utf-8")
+   program_bytes=pdf_program.read_bytes()
+   source_manifest["pdfReceivingProgram"]={"path":str(pdf_program),"bytes":len(program_bytes),"sha256":sha(program_bytes),
+    "git_blob_sha1":hashlib.sha1(b"blob "+str(len(program_bytes)).encode()+b"\0"+program_bytes).hexdigest()}
+   (root/"APPLICATION_SOURCE_MANIFEST.json").write_text(json.dumps(source_manifest,indent=2)+"\n")
+   app_result=out["application"]["result"];binding=app_result["workspace"]
+   pdf_arguments=[node,str(pdf_program),"--installed-source",str(installed_source),"--accounting",str(root/"application-result/accounting"),
+    "--workspace-id",binding["workspaceId"],"--sources-sha256",binding["sourcesSha256"],
+    "--out",str(root/"pdf-result"),"--pdf",str(original_target),"--scale",str(pdf.get("scale",1.5))]
+   if pdf.get("workingCopy"):
+    reviewed=pathlib.Path(pdf["workingCopy"])
+    if reviewed.is_symlink()or not reviewed.is_file()or not 0<reviewed.stat().st_size<=192*1024*1024:raise ValueError("Receive a complete ordinary PDF working copy")
+    review_directory=retained_pdf/"reviewed";review_directory.mkdir(mode=0o700)
+    retained_review=review_directory/"working-copy.json";shutil.copyfile(reviewed,retained_review)
+    pdf_arguments+=["--working-copy",str(retained_review)]
+   for key,argument in (("browserModule","--browser-module"),("browserExecutable","--browser-executable"),("passwordEnv","--password-env")):
+    if pdf.get(key):pdf_arguments+=[argument,pdf[key]]
+   for key,argument in (("prepareOnly","--prepare-only"),("receive","--receive"),("acknowledgeBalanceDifference","--acknowledge-balance-difference")):
+    if pdf.get(key):pdf_arguments.append(argument)
+   pdf_run=subprocess.run(pdf_arguments,cwd=installed_source,text=True,capture_output=True,timeout=3600)
+   (root/"pdf-stdout.log").write_text(pdf_run.stdout,encoding="utf-8");(root/"pdf-stderr.log").write_text(pdf_run.stderr,encoding="utf-8")
+   out["pdf"]={"exitCode":pdf_run.returncode,"arguments":pdf_arguments,"original":{"name":pdf_original.name,"bytes":len(original_bytes),"sha256":sha(original_bytes)}}
+   pdf_report=root/"pdf-result/PDF_RECEIVING_RESULT.json"
+   if pdf_report.exists():out["pdf"]["result"]=json.loads(pdf_report.read_text(encoding="utf-8"))
+   if pdf_run.returncode:out["exitCode"]=pdf_run.returncode
 
 except Exception as error:
  out["exitCode"]=out.get("exitCode") or 1
@@ -268,7 +301,10 @@ finally:
   "sourceCommit":cfg.get("application",{}).get("source_commit"),"sourceInterpretations":str(root/"application-result/source-interpretations"),
   "configuredSourceInputs":str(root/"application-result/account-mcp/source-agent-inputs"),
   "configuredSourcePreparations":str(root/"application-result/account-mcp/source-agent"),
-  "configuredSourceCold":str(root/"application-result/account-mcp/cold/source-agent")}
+  "configuredSourceCold":str(root/"application-result/account-mcp/cold/source-agent"),
+  "pdfSource":str(root/"originals/pdf"),"pdfResult":str(root/"pdf-result"),"pdfReceivingProgram":str(root/"receive-pdf.mjs"),
+  "pdfCompleted":out.get("pdf",{}).get("result",{}).get("completed",False),
+  "pdfPrepared":out.get("pdf",{}).get("result",{}).get("prepared",False)}
  if keep_runtime and native_ready:
   browser_continuation["openingCommand"]=["node",str(root/"application/stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs"),
    "run","--dir",str(root/"installed-runtime"),"--","bank-statements","serve","--directory",str(root/"application-result/accounting"),"--port","8448"]
@@ -291,7 +327,7 @@ finally:
   with path.open("rb")as stream:
    for block in iter(lambda:stream.read(1024*1024),b""):digest.update(block)
   return {"path":str(path),"bytes":path.stat().st_size,"sha256":digest.hexdigest()}
- short={"schema":out["schema"],"operation":out["operation"],"root":str(root),"exitCode":out.get("exitCode"),"error":out.get("error"),"stderr":out.get("stderr"),"runtime":out.get("result",{}).get("runtime"),"files":[{k:v for k,v in item.items()if k!="statements"}for item in out.get("result",{}).get("files",[])],"archive":file_identity(archive_path),"sourceFiles":files,"bundesbankOriginals":out.get("bundesbankOriginals"),"application":out.get("application"),"browserContinuation":browser_continuation}
+ short={"schema":out["schema"],"operation":out["operation"],"root":str(root),"exitCode":out.get("exitCode"),"error":out.get("error"),"stderr":out.get("stderr"),"runtime":out.get("result",{}).get("runtime"),"files":[{k:v for k,v in item.items()if k!="statements"}for item in out.get("result",{}).get("files",[])],"archive":file_identity(archive_path),"sourceFiles":files,"bundesbankOriginals":out.get("bundesbankOriginals"),"application":out.get("application"),"installedRuntime":out.get("installedRuntime"),"pdf":out.get("pdf"),"browserContinuation":browser_continuation}
  summary_path=artifact_directory/(root.name+"-result.json")
  summary_path.write_text(json.dumps(short,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
  uploads=[];reservations=cfg.get("uploads",[])

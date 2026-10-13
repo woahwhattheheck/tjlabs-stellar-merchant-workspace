@@ -2,6 +2,7 @@ import {HANDOVER_ROUTES,attachGrantHandover} from './grant-handover.mjs';
 // MIT. Connect the complete submission workspace to the existing grant composer.
 export const SUBMISSION_OPERATION = 'SCF-SUBMISSION-WORKSPACE-22B705-20261012';
 export const SUBMISSION_ROUTES = [
+  ['/grant-submission-working-copy.mjs',['grant-submission-working-copy.mjs','text/javascript; charset=utf-8']],
   ["/grant-form-workbook.mjs",["grant-form-workbook.mjs","text/javascript; charset=utf-8"]],
   ["/grant-form-workbook-workspace.mjs",["grant-form-workbook-workspace.mjs","text/javascript; charset=utf-8"]],
   ["/source-delimited.mjs",["source-delimited.mjs","text/javascript; charset=utf-8"]],
@@ -44,6 +45,7 @@ export function attachGrantSubmission({templateHtml,sourceIndex}){
     route:'/grant-submission.html',application_route:'/grant-data/application.md',source_index_route:'/grant-data/source-index.json',
     application_sha256:index.application.sha256,application_git_blob:index.application.git_blob,
     draft_schema:'stellar-forge.grant-submission-draft.v1',export_schema:'stellar-forge.grant-submission-export.v1',
+    working_copy:{schema:'stellar-forge.grant-submission-working-copy.v1',export_schema:'stellar-forge.grant-submission-working-export.v1',route:'/grant-submission.html',query:'working',guide:'https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/developer-site/GRANT_SUBMISSION_WORKING.md'},
     form_map_schema:'stellar-forge.grant-form-map.v1',operation:SUBMISSION_OPERATION,
     form_workbook:{schema:'stellar-forge.grant-form-workbook.v1',review_schema:'stellar-forge.grant-form-workbook-review.v1',view:'fields',native_option:'--form-workbook',guide:'https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/developer-site/GRANT_FORM_WORKBOOK.md'},
     offline_editor:{schema:'stellar-forge.grant-offline-editor.v1',runtime_schema:'stellar-forge.grant-offline-runtime.v1',route:'/grant-submission.html',format:'self-contained-html',native_option:'--offline-editor',guide:'https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/developer-site/GRANT_OFFLINE.md'},

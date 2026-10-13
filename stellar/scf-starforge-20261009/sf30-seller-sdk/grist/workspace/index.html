@@ -11,7 +11,10 @@
 <h2 id="op-recovery-title">Retained operating-plan request</h2><p><code id="op-request-id"></code></p><p id="op-request-state"></p>
 <div class="actions"><button id="op-check" type="button">Read original plan receipt</button><button id="op-retry" type="button">Retry exact retained request</button><button id="op-resume" type="button">Resume original interrupted request</button><button id="op-ack" type="button">Acknowledge recorded rejection</button><button id="op-request-download" type="button">Download exact request</button></div><div id="op-request-detail"></div>
 </section>
-<nav aria-label="Workspace"><button data-view="overview" aria-current="page">Overview</button><button data-view="acquire">Capture source</button><button data-view="review">Review columns</button><button data-view="versions">Saved versions</button><button data-view="deploy">Publish &amp; operate</button><button data-view="operating">Operating plans</button></nav>
+<section id="handover-recovery" class="recovery" hidden aria-labelledby="handover-recovery-title"><h2 id="handover-recovery-title">Original whole-workspace request</h2><p><code id="handover-request"></code></p><p id="handover-recovery-message"></p>
+<label id="handover-reselect-label" hidden>Reselect the same complete workspace file<input id="handover-reselect" type="file" accept=".grwh,application/octet-stream"></label>
+<div class="actions"><button id="handover-check" type="button">Check original handover receipt</button><button id="handover-retry" type="button">Retry original request</button><button id="handover-pause" type="button" hidden>Pause local upload</button></div></section>
+<nav aria-label="Workspace"><button data-view="overview" aria-current="page">Overview</button><button data-view="acquire">Capture source</button><button data-view="review">Review columns</button><button data-view="versions">Saved versions</button><button data-view="deploy">Publish &amp; operate</button><button data-view="operating">Operating plans</button><button data-view="handover">Workspace handover</button></nav>
 <main id="main">
 <details id="op-complete-editor">
 <summary>Complete operating editor recovery</summary>
@@ -115,6 +118,26 @@
 <div id="op-return-comparison"></div>
 <button id="op-apply-return" type="button">Apply this complete reviewed return</button>
 </section>
+</section>
+<section data-panel="handover" hidden>
+<div class="section-title"><h2>Whole workspace handover</h2><button id="handover-refresh" type="button">Refresh saved handovers</button></div>
+<p>Keep the complete editable source workspace, its original observations and reviews, source versions, saved OperatingPlan procedures and reviews, publication history and release records together. Receiving creates an independent named workspace. Its later edits do not change this original.</p>
+<div class="note"><strong>Private working material.</strong> A whole workspace includes original source data and private merchant records. Give it only to its intended operator. Customer datasets and buyer files remain available through the original publisher and release controls.</div>
+<form id="handover-export-form"><h3>Create complete workspace file</h3>
+<p>Save current source draft and OperatingPlan edits first. Unsaved browser editor copies remain available through their original complete-editor download. Export closes this workspace’s owned publisher and release consoles, then freezes the saved workspace. It does not start a seller, send a payment or publish a new dataset.</p>
+<label class="handover-check"><input id="handover-export-confirm" type="checkbox">I will close the owned publisher and release consoles to take this complete saved snapshot.</label>
+<button type="submit">Close consoles and create workspace file</button></form>
+<div id="handover-exports" class="table-wrap"></div><p id="handover-download-note" class="path" role="status"></p>
+<hr><h3>Receive a complete workspace</h3>
+<p>The complete <code>.grwh</code> file streams to this original private host in 1 MiB chunks. Upload can resume by comparing every retained range. Files containing up to 32 GiB of working material, plus their manifest and header, do not need to fit in browser memory.</p>
+<form id="handover-upload-form"><label>Whole workspace archive<input id="handover-file" type="file" accept=".grwh,application/octet-stream" required></label><p id="handover-file-info" class="help"></p><button type="submit">Upload complete workspace file</button></form>
+<p id="handover-progress" role="status" aria-live="polite"></p>
+<div id="handover-upload-summary" class="note"></div>
+<form id="handover-receive-form"><label>Independent workspace name<input id="handover-name" required pattern="[a-z][a-z0-9_-]{0,47}" maxlength="48" autocomplete="off" placeholder="customer-received"></label>
+<p class="help">Use a letter first, then lowercase letters, digits, hyphens or underscores. This name selects an independent destination beneath this workspace’s original receiving area. Existing unrelated work is never overwritten.</p>
+<label class="handover-check"><input id="handover-receive-confirm" type="checkbox">I have reviewed the complete archive identity above and will receive this private working material into the named independent workspace.</label>
+<button id="handover-receive" type="submit" disabled>Receive independent workspace</button></form>
+<h3>Saved independent receiving</h3><div id="handover-received" class="table-wrap"></div><div id="handover-opened" class="note" hidden></div>
 </section>
 </fieldset>
 </main><footer>Private local operator · Node 24 · Original Grist REST source and Stellar Forge publication engines</footer>
