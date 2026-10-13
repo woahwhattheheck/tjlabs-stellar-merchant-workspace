@@ -16,7 +16,7 @@ The maintained QCEW programme is under stellar/scf-starforge-20261009/sf30-selle
 The complete source-transfer carrier, original attachment receipts and commercial scope are indexed in the original company coordination:
 https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791871492210889
 
-Receive the whole current execution kit from that thread. Its application member is econsult-complete-source.json: schema commons.complete-source-transfer.v1, the operation above, complete files[] contents/UTF-8 lengths/SHA256/Git blob identities, and complete inventory counts. Use the exact carrier SHA256 published with that same kit. The controller validates the entire received source before creating its private application tree.
+The complete ten-file kit is maintained alongside this guide at execution-kit.json. Its 3,255,415 bytes have SHA256 2ce03e5e51b409de8e507c0bd38f36c0ca8207315699187693262fde19ec2779. It includes the complete 230-file application donor, original source references, commercial workshare and a receiving README with the rendered-product instruction. Decode every complete files[] member into an owned private kit directory and use the commands below. The original company thread remains the coordination point. Its application member is econsult-complete-source.json: schema commons.complete-source-transfer.v1, the operation above, complete files[] contents/UTF-8 lengths/SHA256/Git blob identities, and complete inventory counts. Use the exact carrier SHA256 published with that same kit. The controller validates the entire received source before creating its private application tree.
 
 ## Existing native runtime
 
