@@ -14,7 +14,8 @@ const TABLES = new Set(['entities','financial','links','decisions','candidates',
   ...['nodes','partners','grants','milestones','indicators','observations','risks','issues','documents',
       'reports','closures','bindings','positions','results'].map(name => 'programme_' + name),
   ...['rounds','applications','checks','assignments','assessments','decisions','agreements','claims','monitoring',
-      'positions','calculations'].map(name => 'awards_' + name)]);
+      'positions','calculations'].map(name => 'awards_' + name),
+  ...['committees','meetings','decisions','evaluations','findings','responses','followups','follow_through'].map(name=>'governance_'+name)]);
 const DATAVERSE_ACTIONS = new Set(["dataverse.spec.save","dataverse.profile.save","dataverse.preflight","dataverse.plan","dataverse.apply","dataverse.export","dataverse.import","dataverse.configure","dataverse.delivery.prepare","dataverse.delivery.receive","dataverse.staff.capture","dataverse.staff.programme"]);
 const SUPPORT_ACTIONS = ["support.contract.save","support.contract.acceptance","support.issue.open","support.issue.triage","support.issue.acknowledge","support.issue.plan","support.issue.workaround","support.issue.correction","support.issue.validate","support.issue.close","support.issue.reopen","support.issue.note","support.issue.clock-review","support.delivery.prepare","support.delivery.receive"];
 const ACTIONS = new Set(['source.receive','portfolio.save','review.save','portfolio.export','portfolio.receive', ...DATAVERSE_ACTIONS, ...SUPPORT_ACTIONS]);
@@ -188,6 +189,26 @@ export class GrantPortfolioClient {
     return this.#json('/api/detail?' + query({...selection({portfolioId:input.portfolioId, revision:input.revision}),
       sourceId:checked(input.sourceId, HASH, 'source SHA-256'), entityKey:checked(input.entityKey, HASH, 'entity key')}), undefined, options);
   }
+  governanceSchema(options) { return this.#json('/api/governance/schema', undefined, options); }
+  governanceRecord(input, options) { return this.#governance('record', input, options); }
+  governanceHistory(input, options) { return this.#governance('history', input, options); }
+  governanceReview(input, options) { return this.#governance('review', input, options); }
+  governancePosition(input, options) { return this.#governance('position', input, options); }
+  async #governance(route, input, options) {
+    need(plain(input), 'INPUT', 'Select the complete original governance read.');
+    const detail=route!=='position';
+    exact(input, detail?['portfolioId','revision','collection','id']:['portfolioId','revision','nodeId','grantId']);
+    checked(input.portfolioId, UUID, 'portfolio ID'); revision(input.revision);
+    checked(input[detail?'id':'nodeId'], UUID, 'governance record ID');
+    if(detail) need(['committees','meetings','decisions','evaluations','findings','responses','followups'].includes(input.collection),
+      'REGISTER','Select a governance register.');
+    else if(input.grantId!==undefined&&input.grantId!==null) checked(input.grantId,UUID,'grant ID');
+    const result=await this.#json('/api/governance/'+route+'?'+query(Object.fromEntries(Object.entries(input).filter(([,v])=>v!==null))),undefined,options);
+    need(plain(result)&&result.schema==='stellar-forge.grant-governance.v1'&&result.portfolioId===input.portfolioId&&
+      result.revision===input.revision&&HASH.test(result.snapshot)&&Number.isSafeInteger(result.governanceRevision)&&result.governanceRevision>0,
+      'RESPONSE','The complete governance selection differs.');
+    return result;
+  }
   awardsSchema(options) { return this.#json('/api/awards/schema', undefined, options); }
   awardsRecord(input, options) { return this.#awards('record', input, options); }
   awardsHistory(input, options) { return this.#awards('history', input, options); }
@@ -222,6 +243,12 @@ export class GrantPortfolioClient {
         item.reference.rowKey === item.record.rowKey),
       'AWARDS_FINANCIAL', 'The complete original financial row page changed.');
     return result;
+  }
+  programmeDonorReport(input,options) {
+    exact(input,['portfolioId','revision','id'],['portfolioId','revision','id']);
+    selection({portfolioId:input.portfolioId,revision:input.revision});
+    checked(input.id,UUID,'donor report ID');
+    return this.#json('/api/programme/donor-report?'+query(input),undefined,options);
   }
   planningSchema(options) { return this.#json('/api/planning/schema', undefined, options); }
   planningRecord(input, options) { return this.#planning('record', input, options); }

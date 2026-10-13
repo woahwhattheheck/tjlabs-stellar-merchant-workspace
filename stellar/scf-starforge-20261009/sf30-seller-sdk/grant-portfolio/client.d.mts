@@ -1,3 +1,5 @@
+import type {DonorReportRead} from "./donor-reporting-client.mjs";
+import type {GovernanceTable,GovernanceChangeSet,GovernanceRecordSelection,GovernancePositionSelection,GovernanceRead} from './governance-client.mjs';
 /** Original grant-portfolio console and retained action contracts. */
 import type { ProgrammeTable, ProgrammeChangeSet, ProgrammeRecordSelection, ProgrammeScopeSelection,
   ProgrammeDocumentSelection, ProgrammeRecordRead, ProgrammeHistoryRead, ProgrammePositionRead,
@@ -14,7 +16,7 @@ export type PortfolioId = string;
 export type OperationId = string;
 export type JsonValue = null | boolean | number | string | JsonValue[] | {[key:string]:JsonValue};
 export type JsonObject = {[key:string]:JsonValue};
-export type PortfolioTable = 'entities'|'financial'|'links'|'decisions'|'candidates'|'changes'|'sources'|ProgrammeTable|AwardTable|'planning_scenarios'|'planning_lines';
+export type PortfolioTable = 'entities'|'financial'|'links'|'decisions'|'candidates'|'changes'|'sources'|ProgrammeTable|AwardTable|GovernanceTable|'planning_scenarios'|'planning_lines';
 export type SourceStandard = 'iati'|'360giving';
 export type RequestState = 'RUNNING'|'COMPLETED'|'FAILED';
 export type CorePortfolioAction = 'source.receive'|'portfolio.save'|'review.save'|'portfolio.export'|'portfolio.receive';
@@ -36,6 +38,7 @@ export interface PortfolioSaveInput {
   sources:Sha256[]; sourceReplacements?:{before:Sha256; after:Sha256}[]; review:PortfolioReview;
   programme?:ProgrammeChangeSet;
   awards?:AwardChangeSet;
+  governance?:GovernanceChangeSet;
   planning?:PlanningChangeSet;
 }
 export interface ReviewReference { sourceId:Sha256; entityKey:Sha256; sha256:Sha256; }
@@ -112,12 +115,18 @@ export declare class GrantPortfolioClient {
     onPage?:(page:RowPage<Row>)=>void|Promise<void>;
   }):AsyncGenerator<RowPage<Row>,void,void>;
   detail(input:DetailInput, options?:RequestOptions):Promise<JsonObject>;
+  governanceSchema(options?:RequestOptions):Promise<JsonObject>;
+  governanceRecord(input:GovernanceRecordSelection,options?:RequestOptions):Promise<GovernanceRead>;
+  governanceHistory(input:GovernanceRecordSelection,options?:RequestOptions):Promise<GovernanceRead>;
+  governanceReview(input:GovernanceRecordSelection,options?:RequestOptions):Promise<GovernanceRead>;
+  governancePosition(input:GovernancePositionSelection,options?:RequestOptions):Promise<GovernanceRead>;
   awardsSchema(options?:RequestOptions):Promise<JsonObject>;
   awardsRecord<C extends AwardCollection>(input:AwardRecordSelection<C>, options?:RequestOptions):Promise<AwardRecordRead<C>>;
   awardsHistory<C extends AwardCollection>(input:AwardRecordSelection<C>, options?:RequestOptions):Promise<AwardHistoryRead<C>>;
   awardsRound(input:AwardRoundSelection, options?:RequestOptions):Promise<AwardRoundRead>;
   awardsPosition(input:AwardPositionSelection, options?:RequestOptions):Promise<AwardPositionRead>;
   awardsFinancial(input:AwardFinancialSelection, options?:RequestOptions):Promise<AwardFinancialRead>;
+  programmeDonorReport(input:ProgrammeDocumentSelection,options?:RequestOptions):Promise<DonorReportRead>;
   planningSchema(options?:RequestOptions):Promise<JsonObject>;
   planningRecord<C extends PlanningCollection>(input:PlanningRecordSelection<C>, options?:RequestOptions):Promise<PlanningRecordRead<C>>;
   planningHistory<C extends PlanningCollection>(input:PlanningRecordSelection<C>, options?:RequestOptions):Promise<PlanningHistoryRead<C>>;

@@ -20,6 +20,8 @@ from programme import PROGRAMME_TABLES, programme_schema
 from programme_service import read_programme, programme_document
 from awards import AWARDS_TABLES, awards_schema
 from awards_service import read_awards
+from governance import GOVERNANCE_TABLES, governance_schema
+from governance_service import read_governance
 from budget_planning import PLANNING_TABLES, planning_schema
 from budget_planning_service import read_planning, planning_report
 from workspace_extensions import read_http as extension_read_http, static_routes as extension_static_routes
@@ -118,6 +120,10 @@ class Console:
                     path, query = self.select()
                     static = {"/": ("index.html", "text/html; charset=utf-8"),
                               "/app.js": ("app.js", "text/javascript; charset=utf-8"),
+                              "/donor-reporting.js": ("donor-reporting.js", "text/javascript; charset=utf-8"),
+                              "/governance.js": ("governance.js", "text/javascript; charset=utf-8"),
+                              "/governance-exchange.js": ("governance-exchange.js", "text/javascript; charset=utf-8"),
+                              "/governance.css": ("governance.css", "text/css; charset=utf-8"),
                               "/programme.js": ("programme.js", "text/javascript; charset=utf-8"),
                               "/recipient-project.js": ("recipient-project.js", "text/javascript; charset=utf-8"),
                               "/recipient-project.css": ("recipient-project.css", "text/css; charset=utf-8"),
@@ -130,6 +136,8 @@ class Console:
                               "/style.css": ("style.css", "text/css; charset=utf-8")}
                     extra_static = extension_static_routes()
                     extra_static["/awards-exchange-core.mjs"] = ("awards-exchange-core.mjs", "text/javascript; charset=utf-8")
+                    extra_static["/governance-exchange-core.mjs"] = ("governance-exchange-core.mjs", "text/javascript; charset=utf-8")
+                    extra_static["/stellar-expert/exact-json.mjs"] = (HERE.parent / "stellar-expert" / "exact-json.mjs", "text/javascript; charset=utf-8")
                     extra_static["/recipient-project-core.mjs"] = ("recipient-project-core.mjs", "text/javascript; charset=utf-8")
                     if path in static or path in extra_static:
                         if path in static:
@@ -159,8 +167,8 @@ class Console:
                         return
                     if path == "/api/schema":
                         self.send_json({"schema": SCHEMA, "workspaceId": ws.marker["workspaceId"],
-                            "actions": list(ACTIONS), "tables": [*TABLES, *PROGRAMME_TABLES, *AWARDS_TABLES, *PLANNING_TABLES], "maxPacketBytes": MAX_PACKET,
-                            "programme": programme_schema(), "awards": awards_schema(), "planning": planning_schema(),
+                            "actions": list(ACTIONS), "tables": [*TABLES, *PROGRAMME_TABLES, *AWARDS_TABLES, *GOVERNANCE_TABLES, *PLANNING_TABLES], "maxPacketBytes": MAX_PACKET,
+                            "programme": programme_schema(), "awards": awards_schema(), "governance": governance_schema(), "planning": planning_schema(),
                             "maxActionBytes": MAX_JSON, "maxSources": MAX_SOURCES, "maxPageRows": 250,
                             "financialValues": "original decimal strings; independent source, currency and meaning",
                             "references": ["sourceId", "entityKey", "sha256"]})
@@ -181,6 +189,8 @@ class Console:
                     elif path == "/api/detail":
                         self.send_json(ws.detail(query.get("portfolioId"), self.integer(query, "revision"),
                                                  query.get("sourceId"), query.get("entityKey")))
+                    elif path.startswith("/api/governance/"):
+                        self.send_json(read_governance(ws, path.rsplit("/", 1)[-1], query))
                     elif path == "/api/planning/report":
                         data, media_type, filename = planning_report(ws, query)
                         self.send_response(200)

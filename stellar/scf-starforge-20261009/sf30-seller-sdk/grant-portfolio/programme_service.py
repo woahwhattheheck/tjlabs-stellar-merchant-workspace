@@ -27,6 +27,9 @@ def selection(workspace, query, extra=()):
 
 
 def read_programme(workspace, route, query):
+    if route == "donor-report":
+        from donor_reporting import read_statement
+        return read_statement(workspace, query)
     if route == "schema":
         shape(query, ())
         return programme_schema()

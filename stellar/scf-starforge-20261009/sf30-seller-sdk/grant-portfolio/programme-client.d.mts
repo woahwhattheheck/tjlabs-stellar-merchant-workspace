@@ -1,3 +1,4 @@
+import type {DonorSelection} from "./donor-reporting-client.mjs";
 /** Programme domain on the original portfolio/source/revision contract. */
 import type {
   GrantPortfolioClient, OperationId, PortfolioSelection, RequestOptions, ActionOptions,
@@ -76,7 +77,7 @@ export interface ProgrammeDocumentFields extends ProgrammeCommon, ProgrammeScope
 export interface ProgrammeReportFields extends ProgrammeCommon, ProgrammeScope {
   title:string; owner:string; periodStart:string; periodEnd:string; dueDate:string;
   status:'draft'|'submitted'|'acknowledged'; submittedDate?:string|null; recipient?:string|null;
-  documentIds?:ProgrammeId[]; narrative?:string;
+  documentIds?:ProgrammeId[]; narrative?:string; donorSelection?:DonorSelection|null;
 }
 export interface ProgrammeClosureFields extends ProgrammeCommon, ProgrammeScope {
   title:string; owner:string; closedDate:string; documentIds?:ProgrammeId[]; lessonDocumentIds?:ProgrammeId[];

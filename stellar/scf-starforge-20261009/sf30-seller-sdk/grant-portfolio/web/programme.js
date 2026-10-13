@@ -231,6 +231,7 @@ function GrantProgrammeConsole(H) {
         key === "documentIds" || key === "amendmentIds" || key === "corporateRegistrationEvidence") return "documents";
     throw new Error("Unsupported record relationship: " + name + "." + key);
   }
+  const donor = GrantDonorReporting({...H, rows, selected, current, dimensionsControl, referenceControl, title, portfolio:p});
   function control(name, key, spec, value, selection, record) {
     const required = U.schema.required[name].includes(key), bare = typeof spec === "string" ? spec.replace(/\?$/, "") : null;
     const wrapper = node("fieldset", null, "field programme-field"), label = node("legend", human(key));
@@ -245,7 +246,8 @@ function GrantProgrammeConsole(H) {
       result = referenceControl(target, value, {multiple:bare === "ids", required,
         exclude:["parentId","parentGrantId","parentIndicatorId","replacesId","dependencyIds"].includes(key) ? record?.id : null,
         filter:key === "projectId" ? row => row.kind === "project" : key === "agreementId" ? row => row.category === "agreement" : null});
-    } else if (bare === "sources") result = sourceControl(value, selection);
+    } else if (bare === "donor-selection") result = donor.control(value, selection, record);
+    else if (bare === "sources") result = sourceControl(value, selection);
     else if (bare === "dimensions") result = dimensionsControl(value || {});
     else if (bare === "points") result = pointsControl(value || []);
     else if (bare === "file") result = documentControl(value);
@@ -282,7 +284,7 @@ function GrantProgrammeConsole(H) {
       }};
     }
     wrapper.append(result.wrapper);
-    if (["sources","points","file","dimensions"].includes(bare)) wrapper.classList.add("full");
+    if (["sources","points","file","dimensions","donor-selection"].includes(bare)) wrapper.classList.add("full");
     return {wrapper, read:result.read};
   }
   async function save(selection, programme) {
@@ -402,6 +404,8 @@ function GrantProgrammeConsole(H) {
       wrapper.append(table(["Date", "Original value", "Dimensions", "Evidence"], value.map(point =>
         [point.date, point.value, Object.entries(point.dimensions).map(([key, value]) => key + ": " + value).join("; "),
           point.documentIds.map(id => title(lookup("documents", id))).join("; ")])));
+    } else if (bare === "donor-selection") {
+      wrapper.append(node("span", value.lines.length + " financial lines · " + value.indicatorIds.length + " selected indicators · " + value.resultMode));
     } else if (bare === "sources") {
       wrapper.append(table(["Source edition", "Original record"], value.map(ref => [sourceName(ref.sourceId),
         button("Open original", async () => {
@@ -437,6 +441,7 @@ function GrantProgrammeConsole(H) {
         actions.append(button(record.publication ? "Acknowledge report" : "Edit record", () => editor(name, record)));
       actions.append(button("Archive", () => archive(name, record)));
     }
+    if (name === "reports" && record.donorSelection) actions.append(button("Open donor statement", () => donor.open(record, selection)));
     if (name === "documents" && record.object) actions.append(button("Download document", () => downloadDocument(record, selection)));
     if (name === "nodes" && record.kind === "project") actions.append(button("Open project QA pack", () => quality(record.id, selection)));
     if (!historical) actions.append(button("Record history", async () => {
