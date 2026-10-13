@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import traceback
 import urllib.request
 
 REPOSITORY = "woahwhattheheck/tjlabs-stellar-merchant-workspace"
@@ -197,7 +198,7 @@ def main():
         code = receive(root)
     except Exception as error:
         save_json(root / "hosted-customer-error.json", {"operation": OPERATION,
-            "code": type(error).__name__, "message": str(error), "completedAt": now()})
+            "code": type(error).__name__, "message": str(error), "traceback": traceback.format_exc(), "completedAt": now()})
     finally:
         try:
             retain_complete_customer(root)

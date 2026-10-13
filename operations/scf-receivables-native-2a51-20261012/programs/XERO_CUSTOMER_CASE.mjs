@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // MIT. Retain the original two-cycle customer and independently receive its full installed workspace.
 import {constants} from 'node:fs';
-import {open,mkdir,readFile,lstat,realpath,readdir,rename,unlink} from 'node:fs/promises';
+import {open,mkdir,readFile,lstat,realpath,readdir,rename,unlink,link} from 'node:fs/promises';
 import {resolve,join,dirname,relative,isAbsolute} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
@@ -16,9 +16,28 @@ const SCHEMA='stellar-forge.xero-independent-customer-programme.v1';
 function need(ok,message){if(!ok)throw Object.assign(new Error(message),{code:'XERO_CUSTOMER_RECEIVING'});}
 async function exists(path){try{return await lstat(path);}catch(error){if(error.code==='ENOENT')return null;throw error;}}
 async function dir(path){await privateSupportDirectory(path);const stat=await lstat(path);need(stat.isDirectory()&&!stat.isSymbolicLink()&&!(stat.mode&0o077)&&await realpath(path)===path,'Use original owner-private real directories.');return path;}
-async function retain(path,value){const bytes=Buffer.isBuffer(value)?value:Buffer.from(typeof value==='string'?value:json(value));await dir(dirname(path));if(await exists(path)){need((await readFile(path)).equals(bytes),'Keep the original complete programme input or result.');return;}const handle=await open(path,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|(constants.O_NOFOLLOW??0),0o600);try{await handle.writeFile(bytes);await handle.sync();}finally{await handle.close();}}
-async function replace(path,value){const temp=path+'.'+randomUUID()+'.next';await retain(temp,value);try{await rename(temp,path);}finally{await unlink(temp).catch(error=>{if(error.code!=='ENOENT')throw error;});}}
-async function read(path,maximum=128*1024*1024){const stat=await lstat(path);need(stat.isFile()&&!stat.isSymbolicLink()&&stat.nlink===1&&stat.size<=maximum,'Select one complete original regular file.');const bytes=await readFile(path);need(bytes.length===stat.size&&bytes.length<=maximum,'The original file changed during reading.');return{bytes,value:JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes))};}
+async function sync(path){const fd=await open(path,constants.O_RDONLY|(constants.O_DIRECTORY??0));try{await fd.sync();}finally{await fd.close();}}
+async function finishRetainedLink(path){
+const temp=path+'.retain-next',target=await exists(path),pending=await exists(temp);
+if(target&&pending&&target.isFile()&&pending.isFile()&&!target.isSymbolicLink()&&!pending.isSymbolicLink()&&target.dev===pending.dev&&target.ino===pending.ino&&target.nlink===2){
+need(!(pending.mode&0o077)&&(!process.getuid||pending.uid===process.getuid()),'Recover the original private immutable publication.');
+await unlink(temp);await sync(dirname(path));
+}
+}
+async function retain(path,value){
+const bytes=Buffer.isBuffer(value)?value:Buffer.from(typeof value==='string'?value:json(value));
+await dir(dirname(path));await finishRetainedLink(path);
+if(await exists(path)){need((await readFile(path)).equals(bytes),'Keep the original complete retained input or result.');return;}
+const temp=path+'.retain-next',pending=await exists(temp);
+if(pending){need(pending.isFile()&&!pending.isSymbolicLink()&&pending.nlink===1&&!(pending.mode&0o077)&&(!process.getuid||pending.uid===process.getuid()),'Recover only the original private unpublished temporary file.');await unlink(temp);}
+const handle=await open(temp,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|(constants.O_NOFOLLOW??0),0o600);
+try{
+try{await handle.writeFile(bytes);await handle.sync();}finally{await handle.close();}
+try{await link(temp,path);}catch(error){if(error.code!=='EEXIST')throw error;need((await readFile(path)).equals(bytes),'Keep the original complete retained input or result.');}
+}finally{await unlink(temp).catch(error=>{if(error.code!=='ENOENT')throw error;});await sync(dirname(path));}
+}
+async function replace(path,value){const temp=path+'.'+randomUUID()+'.next';await retain(temp,value);try{await rename(temp,path);await sync(dirname(path));}finally{await unlink(temp).catch(error=>{if(error.code!=='ENOENT')throw error;});}}
+async function read(path,maximum=128*1024*1024){await finishRetainedLink(path);const stat=await lstat(path);need(stat.isFile()&&!stat.isSymbolicLink()&&stat.nlink===1&&stat.size<=maximum,'Select one complete original regular file.');const bytes=await readFile(path);need(bytes.length===stat.size&&bytes.length<=maximum,'The original file changed during reading.');return{bytes,value:JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes))};}
 const inside=(root,path)=>{const part=relative(root,path);return part!==''&&!part.startsWith('../')&&part!=='..'&&!isAbsolute(part);};
 function errorView(error){return{code:error?.code??'ERROR',message:String(error?.message??error),stack:String(error?.stack??''),...(error?.details?{details:error.details}:{}),...(error?.outcomeUnknown===true?{outcomeUnknown:true}:{}),...(error?.reopenRequired===true?{reopenRequired:true}:{}),...(error?.commitUncertainty?{commitUncertainty:error.commitUncertainty}:{})};}
 async function child(entry,args,{cwd,environment,stdout,stderr}){
@@ -46,7 +65,15 @@ schema:SCHEMA,operationId:randomUUID(),createdAt:new Date().toISOString(),phase:
 need(flow.releaseSha256===sha(release.bytes)&&flow.sourceRoot===sourceRoot,'Continue this operation with the same installed release.');
 if(!await exists(flowPath))await retain(flowPath,flow);
 const finalPath=join(out,'XERO_CUSTOMER_CASE_RESULT.json');
-if(await exists(finalPath)){result=(await read(finalPath)).value;need(result.status==='PASS','Retain the failed original receiving result and review its saved operation.');process.stdout.write(json(result));return result;}
+if(await exists(finalPath)){
+result=(await read(finalPath)).value;
+need(result.status==='PASS'&&result.operationId===flow.operationId&&result.release?.sha256===sha(release.bytes),'Retain the successful original receiving result for this same operation and release.');
+flow.phase='COMPLETE';flow.results.receiving=result.receiving;await replace(flowPath,flow);
+await replace(join(out,'RETENTION.json'),{schema:SCHEMA,operationId:flow.operationId,status:'COMPLETE',sourceRoot,
+result:finalPath,originalDirectory:result.original.accountingDirectory,receivedDirectory:result.receiving.accountingDirectory,
+handover:join(out,'handover'),receiver:join(out,'independent-operator'),release:join(out,'installed-release.json')});
+process.stdout.write(json(result));return result;
+}
 const predecessorResult=join(out,'XERO_CASH_CHECK_RESULT.json'),sourceParent=await dir(join(out,'original-customer'));
 await replace(join(out,'RETENTION.json'),{schema:SCHEMA,operationId:flow.operationId,status:'STARTED',sourceRoot,
 release:join(out,'installed-release.json'),predecessorResult,sourceParent,handover:join(out,'handover'),

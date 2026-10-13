@@ -33,7 +33,9 @@
     "./merchant/x402api/intake": "./source/products/x402api-merchant-workspace/project-intake.mjs",
     "./merchant/x402api/operator": "./source/products/x402api-merchant-workspace/operator-client.mjs",
     "./merchant/x402api/intake-client": "./source/products/x402api-merchant-workspace/project-intake-client.mjs",
-    "./merchant/x402api/invoice-intake": "./source/products/x402api-merchant-workspace/invoice-intake.mjs"
+    "./merchant/x402api/invoice-intake": "./source/products/x402api-merchant-workspace/invoice-intake.mjs",
+    "./merchant/x402api/invoice-agent": "./source/stellar-forge/mcp-merchant-operator/merchant-invoices.mjs",
+    "./merchant/x402api/invoice-agent-connection": "./source/stellar-forge/mcp-merchant-operator/merchant-invoice-connection.mjs"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf31-buyer-client/response-file.mjs",
@@ -61,7 +63,12 @@
     "stellar-forge/mcp-merchant-operator/providers/merchant-projects.mjs",
     "stellar-forge/mcp-merchant-operator/provider-contract.mjs",
     "stellar-forge/mcp-merchant-operator/retained-file-contracts.mjs",
-    "stellar-forge/mcp-merchant-operator/retained-file-reads.mjs"
+    "stellar-forge/mcp-merchant-operator/retained-file-reads.mjs",
+    "stellar-forge/mcp-merchant-operator/merchant-invoice-connection.mjs",
+    "stellar-forge/mcp-merchant-operator/merchant-invoice-files.mjs",
+    "stellar-forge/mcp-merchant-operator/merchant-invoice-protocol.mjs",
+    "stellar-forge/mcp-merchant-operator/merchant-invoices.mjs",
+    "stellar-forge/mcp-merchant-operator/providers/merchant-invoices.mjs"
   ],
   "excludeFiles": [
     "products/x402api-merchant-workspace/installed-receiving.mjs"
@@ -73,6 +80,7 @@
     "x402api-merchant": "products/x402api-merchant-workspace/package.json"
   },
   "merchantProviders": {
-    "merchant-projects": "stellar-forge/mcp-merchant-operator/providers/merchant-projects.mjs"
+    "merchant-projects": "stellar-forge/mcp-merchant-operator/providers/merchant-projects.mjs",
+    "merchant-invoices": "stellar-forge/mcp-merchant-operator/providers/merchant-invoices.mjs"
   }
 }

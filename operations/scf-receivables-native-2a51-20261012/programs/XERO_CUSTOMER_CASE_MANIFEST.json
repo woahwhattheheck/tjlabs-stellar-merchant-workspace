@@ -6,15 +6,15 @@
   "nativeSource": [
     {
       "path": "operations/scf-receivables-native-2a51-20261012/xero-customer-handover.mjs",
-      "sourceBytes": 28325,
-      "gitBlob": "8412f511f997fb67738b2925e06a35e56f79d5b9",
-      "sha256": "3ddb4cc8fd57a001abebfb2056517dfef9351ffbd55f99ef53fb23b7874279d2"
+      "sourceBytes": 29947,
+      "gitBlob": "8ed045605a863d7dab8c086e0276bbb56e395cf2",
+      "sha256": "ea303a05c70aecdd386e994d4137f4f1624f1f645a1bbbbc99799e0a1d2eedc8"
     },
     {
       "path": "operations/scf-receivables-native-2a51-20261012/programs/XERO_CUSTOMER_CASE.mjs",
-      "sourceBytes": 14320,
-      "gitBlob": "817bd2225c49ec011defaf862704343a7d723980",
-      "sha256": "bb7e5ab00ef472cf4aeb6f66619c231a93e913d3a4554bc349ec59bcc644b9bf"
+      "sourceBytes": 16194,
+      "gitBlob": "d0ec7014b1af10e23b3cb656e554d42af9c25073",
+      "sha256": "a3db7c8d23c88a03b4c2e80c21ce69a8c93c04aeff3b6a96ff9ecd579e38f22d"
     },
     {
       "path": "operations/scf-receivables-native-2a51-20261012/XERO_CUSTOMER_HANDOVER.md",
@@ -91,5 +91,10 @@
     "independent-operator/receiving.json"
   ],
   "receivingStatus": "SOURCE_PREPARED",
-  "sourceSyntax": "Both authored JavaScript modules parsed before source staging."
+  "sourceSyntax": "Both authored JavaScript modules parsed before source staging.",
+  "recoveryCorrections": [
+    "Immutable files are published from fsynced owner-private temporary bytes using a create-only link; interrupted publication is reconciled through the exact same inode before reading.",
+    "Source and receiver evidence already retained before an interrupted flow checkpoint is reused after complete comparison of all source-derived fields; its original timestamp remains unchanged.",
+    "An already retained successful programme result finishes its original flow and retention checkpoints on resume without executing the predecessor or financial continuation again."
+  ]
 }

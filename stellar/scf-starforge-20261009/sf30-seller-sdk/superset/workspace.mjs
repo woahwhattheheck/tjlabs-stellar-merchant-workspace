@@ -309,6 +309,8 @@ export class SupersetWorkspace{
       if(native.describe().snapshot!==edition.snapshot)throw fault('SUPERSET_REPLAY_CHANGED','The original native dataset snapshot differs.',409);
       return{extra:{editionId:edition.id,snapshot:edition.snapshot,rows:edition.rows,sourceReplayed:true}};
     }
+    const additional=await (await import('./agent-operations.mjs')).executeSupersetAgentOperation(this,action,input,{signal,update});
+    if(additional)return additional;
     throw fault('SUPERSET_ACTION','Unknown workspace action.');
   }
   async materialize(editionId,csvSha256,configSha256){
@@ -391,8 +393,9 @@ export class SupersetWorkspace{
       return result;
     });
   }
-  exportFile(kind,recordId){
+  exportFile(kind,recordId,{expectedRevision}={}){
     return this.serial(async()=>{
+      if(expectedRevision!==undefined&&expectedRevision!==this.revision())throw fault('SUPERSET_EXPORT_REVISION_CHANGED','Select the current original project revision before export.',409);
       const root=join(this.directory,'downloads');await privateDirectory(root,true);
       if(kind==='workspace'){
         this.setMeta('version_custody',await captureSupersetVersionStores(this));
@@ -423,11 +426,13 @@ export class SupersetWorkspace{
       return{file,name,contentType:type,bytes:content.length,sha256:digest(content)};
     });
   }
+  requestClose(){this.closing=true;this.active?.controller.abort();}
   close(){
     if(this.closePromise)return this.closePromise;
-    this.closing=true;this.active?.controller.abort();
-    this.closePromise=(async()=>{await this.tail;try{this.db.close();}finally{this.closed=true;await this.unlock();}})();
-    return this.closePromise;
+    this.requestClose();
+    const attempt=(async()=>{await this.tail;if(!this.closed){this.db.close();this.closed=true;}if(!this.leaseReleased){await this.unlock();this.leaseReleased=true;}})();
+    this.closePromise=attempt;void attempt.catch(()=>{if(this.closePromise===attempt)this.closePromise=null;});
+    return attempt;
   }
 }
 export async function openSupersetWorkspace({directory,env=process.env,fetchImpl=globalThis.fetch}={}){

@@ -30,7 +30,7 @@ concurrency:
 
 jobs:
   original-native-receiving:
-    if: ${{ github.repository == 'woahwhattheheck/tjlabs-stellar-merchant-workspace' && github.event.repository.private == false && github.ref == 'refs/heads/main' && inputs.operation == 'SCF-RECEIVABLES-NATIVE-2A51-20261012' }}
+    if: ${{ github.repository == 'woahwhattheheck/tjlabs-stellar-merchant-workspace' && github.event.repository.private == false && github.ref == 'refs/heads/main' && inputs.operation == 'SCF-RECEIVABLES-NATIVE-2A51-20261012' && (inputs.receiving_mode == 'original-mcp' || inputs.receiving_mode == 'installed-customer-fixture') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -38,7 +38,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          EXPECTED_RECEIVER_BLOB: ${{ inputs.receiving_mode == 'installed-customer-fixture' && '986ace83aeccaf6ffbcc982df17e2faa63bca6e2' || '1d13d8b14c451ca8ef78f987b6ee9382e000dfce' }}
+          EXPECTED_RECEIVER_BLOB: ${{ inputs.receiving_mode == 'installed-customer-fixture' && '16330bb3a2073db2a0d4fca97f9181db54fd7b7e' || '1d13d8b14c451ca8ef78f987b6ee9382e000dfce' }}
         run: |
           set -euo pipefail
           python3 - <<'PY'

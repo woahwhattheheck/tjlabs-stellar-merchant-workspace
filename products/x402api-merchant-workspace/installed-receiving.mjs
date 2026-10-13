@@ -548,6 +548,11 @@ async function receive() {
     finally { await lease.close(); }
     for (const file of [...previous.browser.images, ...previous.browser.downloads]) await originalFile(file.path, file);
     if (values.portable) await verifyPortableReceiving(previous.portable, { originalFile });
+    if (previous.invoiceAgent) {
+      const agent=await import(pathToFileURL(join(previous.runtime.sourceRoot,'products/x402api-merchant-workspace/invoice-agent-receiving.mjs')));
+      await agent.verifyMerchantInvoiceAgent(previous.invoiceAgent,{expectedInvoices:previous.invoices.map(order=>order.merchantOrderId),
+        operation:identity('invoice-agent-intake'),projectOperation:identity('portable-browser-export')});
+    }
     return { ...previous, reopened: true };
   }
   const scenario = await readJSON(join(RECEIVED, 'scenario.json')), completed = await readJSON(join(RECEIVED, 'complete.json'));
@@ -650,11 +655,23 @@ async function receive() {
     if (opening.completed) first = { ...opening.completed.result, operationId: opening.operationId, originalProcess: opening.completed.native };
     else {
       const reads = await receiveReads(opening, scenario, completed, 'first');
-      const visual = await receiveBrowser(opening, scenario, reads, { exportProject: values.portable });
-      const ended = await finishOpening(opening, { reads, browser: visual });
-      first = { reads, browser: visual, operationId: opening.operationId, originalProcess: ended.result };
+      const agent = values.portable ? await import(pathToFileURL(join(sourceRoot, 'products/x402api-merchant-workspace/invoice-agent-receiving.mjs'))) : null;
+      const joined = agent ? await agent.receiveMerchantInvoiceAgent({url:opening.url,operatorToken:scenario.operatorToken,
+        tokenEnvironment:'MERCHANT_LOCAL_OPERATOR',directory:join(ROOT,'invoice-agent'),
+        expectedInvoices:completed.orders.map(order=>order.merchantOrderId),operation:identity('invoice-agent-intake'),
+        projectOperation:identity('portable-browser-export'),
+        exportProject:()=>receiveBrowser(opening,scenario,reads,{exportProject:true})}) : null;
+      const visual = joined ? joined.browser : await receiveBrowser(opening, scenario, reads, { exportProject: values.portable });
+      const result = {reads,browser:visual,...(joined?{invoiceAgent:joined.receiving}:{})};
+      const ended = await finishOpening(opening, result);
+      first = { ...result, operationId: opening.operationId, originalProcess: ended.result };
     }
     await retainCompleted('original-browser-completion', () => save(firstPath, first, { original: true }));
+  }
+  if (first.invoiceAgent) {
+    const agent = await import(pathToFileURL(join(sourceRoot,'products/x402api-merchant-workspace/invoice-agent-receiving.mjs')));
+    await agent.verifyMerchantInvoiceAgent(first.invoiceAgent,{expectedInvoices:completed.orders.map(order=>order.merchantOrderId),
+      operation:identity('invoice-agent-intake'),projectOperation:identity('portable-browser-export')});
   }
   assert.equal(sentinel.requests.length, 0);
   const afterFirst = await originalSnapshot('after-first');
@@ -694,7 +711,7 @@ async function receive() {
     businessTables: after.business.tables.map(table => ({ name: table.name, rows: table.rows.length })),
     runtimeHistory: after.runtimes, invoices: second.reads.invoices, browser: first.browser,
     providerCalls: sentinel.requests, createdInvoices: 0, submittedPayments: 0, completedAt: new Date().toISOString(),
-    ...(portable ? { portable } : {}) };
+    ...(portable ? { portable } : {}), ...(first.invoiceAgent ? {invoiceAgent:first.invoiceAgent} : {}) };
   await retainCompleted('original-installed-completion', () => save(join(ROOT, 'complete.json'), result, { original: true }));
   return result;
 }

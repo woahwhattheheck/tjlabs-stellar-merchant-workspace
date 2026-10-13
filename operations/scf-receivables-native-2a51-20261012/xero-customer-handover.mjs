@@ -1,6 +1,6 @@
 // MIT. Original durable customer case, Xero sources and encrypted accounting relocation.
 import {constants} from 'node:fs';
-import {open,mkdir,lstat,realpath,rename,unlink} from 'node:fs/promises';
+import {open,mkdir,lstat,realpath,rename,unlink,link} from 'node:fs/promises';
 import {resolve,join,dirname,relative,isAbsolute} from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
@@ -26,11 +26,28 @@ function beneath(root,path){const part=relative(root,path);return part!==''&&!pa
 function safePath(path){need(typeof path==='string'&&isAbsolute(path)&&resolve(path)===path&&path!=='/'&&!/[\x00-\x1f\x7f]/.test(path),'Use an exact absolute private path.');return path;}
 async function exists(path){try{return await lstat(path);}catch(error){if(error.code==='ENOENT')return null;throw error;}}
 async function privateDirectory(path){safePath(path);await privateSupportDirectory(path);const s=await lstat(path);need(s.isDirectory()&&!s.isSymbolicLink()&&!(s.mode&0o077)&&(!process.getuid||s.uid===process.getuid())&&await realpath(path)===path,'Use an owner-private real directory.','PRIVATE_DIRECTORY');return path;}
-async function readBytes(path,maximum=128*1024*1024){const fd=await open(path,constants.O_RDONLY|(constants.O_NOFOLLOW??0)|(constants.O_NONBLOCK??0));try{const s=await fd.stat();need(s.isFile()&&s.nlink===1&&s.size<=maximum&&!(s.mode&0o077)&&(!process.getuid||s.uid===process.getuid()),'Read a complete owner-private regular source.','PRIVATE_FILE');const body=await fd.readFile();need(body.length===s.size&&body.length<=maximum,'The original file changed during reading.','FILE_CHANGED');return body;}finally{await fd.close();}}
+async function readBytes(path,maximum=128*1024*1024){await finishRetainedLink(path);const fd=await open(path,constants.O_RDONLY|(constants.O_NOFOLLOW??0)|(constants.O_NONBLOCK??0));try{const s=await fd.stat();need(s.isFile()&&s.nlink===1&&s.size<=maximum&&!(s.mode&0o077)&&(!process.getuid||s.uid===process.getuid()),'Read a complete owner-private regular source.','PRIVATE_FILE');const body=await fd.readFile();need(body.length===s.size&&body.length<=maximum,'The original file changed during reading.','FILE_CHANGED');return body;}finally{await fd.close();}}
 const read=async(path,maximum)=>JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await readBytes(path,maximum)));
 async function sync(path){const fd=await open(path,constants.O_RDONLY|(constants.O_DIRECTORY??0));try{await fd.sync();}finally{await fd.close();}}
-async function retain(path,value){const bytes=Buffer.isBuffer(value)?value:Buffer.from(typeof value==='string'?value:json(value));await privateDirectory(dirname(path));if(await exists(path)){need((await readBytes(path)).equals(bytes),'Keep the original retained handover input or result.','RETAINED_CHANGED');return;}
-const fd=await open(path,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|(constants.O_NOFOLLOW??0),0o600);try{await fd.writeFile(bytes);await fd.sync();}finally{await fd.close();}await sync(dirname(path));}
+async function finishRetainedLink(path){
+const temp=path+'.retain-next',target=await exists(path),pending=await exists(temp);
+if(target&&pending&&target.isFile()&&pending.isFile()&&!target.isSymbolicLink()&&!pending.isSymbolicLink()&&target.dev===pending.dev&&target.ino===pending.ino&&target.nlink===2){
+need(!(pending.mode&0o077)&&(!process.getuid||pending.uid===process.getuid()),'Recover the original private immutable publication.');
+await unlink(temp);await sync(dirname(path));
+}
+}
+async function retain(path,value){
+const bytes=Buffer.isBuffer(value)?value:Buffer.from(typeof value==='string'?value:json(value));
+await privateDirectory(dirname(path));await finishRetainedLink(path);
+if(await exists(path)){need((await readBytes(path)).equals(bytes),'Keep the original complete retained input or result.','RETAINED_CHANGED');return;}
+const temp=path+'.retain-next',pending=await exists(temp);
+if(pending){need(pending.isFile()&&!pending.isSymbolicLink()&&pending.nlink===1&&!(pending.mode&0o077)&&(!process.getuid||pending.uid===process.getuid()),'Recover only the original private unpublished temporary file.');await unlink(temp);}
+const handle=await open(temp,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|(constants.O_NOFOLLOW??0),0o600);
+try{
+try{await handle.writeFile(bytes);await handle.sync();}finally{await handle.close();}
+try{await link(temp,path);}catch(error){if(error.code!=='EEXIST')throw error;need((await readBytes(path)).equals(bytes),'Keep the original complete retained input or result.','RETAINED_CHANGED');}
+}finally{await unlink(temp).catch(error=>{if(error.code!=='ENOENT')throw error;});await sync(dirname(path));}
+}
 async function replace(path,value){const temp=path+'.'+randomUUID()+'.next';await retain(temp,value);try{await rename(temp,path);await sync(dirname(path));}finally{await unlink(temp).catch(error=>{if(error.code!=='ENOENT')throw error;});}}
 function errorView(error){return{code:error?.code??'ERROR',message:String(error?.message??error),...(error?.details?{details:error.details}:{}),...(error?.outcomeUnknown===true?{outcomeUnknown:true}:{}),...(error?.reopenRequired===true?{reopenRequired:true}:{}),...(error?.commitUncertainty?{commitUncertainty:clone(error.commitUncertainty)}:{})};}
 function dated(value){need(typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value,'Use a real account date.');return value;}
@@ -110,6 +127,14 @@ receivablesSha256:sha(json(data)),economicSha256:fingerprint(data,economicKeys),
 requestIds:(data.requests??[]).map(row=>row.id),createdAt:now()};
 });
 }
+async function retainedEvidence(path,current){
+if(await exists(path)){
+const original=await read(path);
+need(typeof original.createdAt==='string'&&Number.isFinite(Date.parse(original.createdAt))&&json({...original,createdAt:null})===json({...current,createdAt:null}),'Reconcile the exact original saved evidence before continuing.','EVIDENCE_CHANGED');
+return original;
+}
+await retain(path,current);return current;
+}
 async function caseCapture({directory,selection,host,client,caseId,editionId,configuration}){
 const caseSelection={id:caseId,title:selection.title,originalOperation:selection.originalOperation,url:'http://127.0.0.1:8453/mcp',
 workspace:'handover',tokenEnv:'MCP_ACCESS_TOKEN',workspaceId:selection.expectedWorkspaceId,customerId:selection.customerId,
@@ -152,7 +177,7 @@ const prepared=await withOwner(selection.accountingDirectory,async({host,client,
 const captured=await caseCapture({directory:caseDirectory,selection,host,client,configuration,caseId:flow.ids.case,editionId:flow.ids.edition});
 return{case:captured,evidence:await evidence(host,selection)};
 });
-await retain(join(directory,'source-evidence.json'),prepared.evidence);flow.results.case=prepared.case;
+prepared.evidence=await retainedEvidence(join(directory,'source-evidence.json'),prepared.evidence);flow.results.case=prepared.case;
 flow.results.evidence={sha256:sha(json(prepared.evidence)),revision:prepared.evidence.revision};flow.phase='ORIGINAL_CASE_CAPTURED';
 await replace(join(directory,'flow.json'),flow);
 }
@@ -210,10 +235,10 @@ flow.phase='ORIGINAL_WORKSPACE_RESTORED';await replace(join(directory,'flow.json
 }
 const continuation=await withOwner(accountingDirectory,async({host,client,configuration})=>{
 if(!flow.results.before){
-const before=await evidence(host,selection);
+let before=await evidence(host,selection);
 need(before.receivablesSha256===original.receivablesSha256&&before.economicSha256===original.economicSha256,'The independently restored original ledger differs from the handed-over ledger.','LEDGER');
 need(json(before.files)===json(original.files),'One or more complete original source, template or report files changed during receiving.','ORIGINAL_FILES');
-await retain(join(directory,'receiver-before.json'),before);flow.results.before={revision:before.revision,files:before.files.length,economicSha256:before.economicSha256};
+before=await retainedEvidence(join(directory,'receiver-before.json'),before);flow.results.before={revision:before.revision,files:before.files.length,economicSha256:before.economicSha256};
 await replace(join(directory,'flow.json'),flow);
 }
 const preparedPath=join(directory,'continuation-request.json');

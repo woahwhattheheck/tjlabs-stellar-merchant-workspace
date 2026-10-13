@@ -10,8 +10,11 @@ import {recordSupportOperatingWork,createSupportOperatingReturn,inspectSupportOp
   applySupportOperatingReturn,renderSupportOperatingReturnHTML}
   from '../../stellar/scf-starforge-20261009/distribution/discovery/support-operating-return.mjs';
 
+import {createSupportOperatingHandover,inspectSupportOperatingHandover,receiveSupportOperatingHandover,
+  renderSupportOperatingHandoverHTML}
+  from '../../stellar/scf-starforge-20261009/distribution/discovery/support-operating-handover.mjs';
 const PREFIX='merchant_support_operating_';
-const ACTIONS=new Set(['inspect','create','record','compare','receive','render','record_work','return_create','return_inspect','return_compare','return_details','return_decide','return_apply','return_render']);
+const ACTIONS=new Set(['inspect','create','record','compare','receive','render','record_work','return_create','return_inspect','return_compare','return_details','return_decide','return_apply','return_render','handover_create','handover_inspect','handover_receive','handover_render']);
 const LIMIT=32*1024*1024;
 export function handlesSupportOperating(name) {
   return typeof name==='string' && name.startsWith(PREFIX) && ACTIONS.has(name.slice(PREFIX.length));
@@ -39,10 +42,25 @@ function selection(args) {
 /** No network, files, case mutation or native action is performed by this handler. */
 export async function callSupportOperating(name,args) {
   if(!handlesSupportOperating(name))fail('TOOL_NOT_FOUND','Unknown Support operating procedure action.');
-  const maximum=name.slice(PREFIX.length).startsWith('return_')?128*1024*1024:LIMIT;
+  const maximum=name.slice(PREFIX.length).startsWith('handover_')?256*1024*1024:name.slice(PREFIX.length).startsWith('return_')?128*1024*1024:LIMIT;
   bounded(args,maximum);
   let result;
   switch(name.slice(PREFIX.length)){
+    case 'handover_create':
+      keys(args,['input'],['input']);result=await createSupportOperatingHandover(args.input);break;
+    case 'handover_inspect':
+      keys(args,['value'],['value']);result=await inspectSupportOperatingHandover(args.value);break;
+    case 'handover_receive':{
+      keys(args,['value','existing'],['value']);
+      const {handover,...received}=await receiveSupportOperatingHandover(args.value,args.existing??null);
+      result=received;break;
+    }
+    case 'handover_render':
+      keys(args,['value','format'],['value','format']);
+      if(args.format==='json')result={format:'json',value:await inspectSupportOperatingHandover(args.value)};
+      else if(args.format==='html')result={format:'html',text:await renderSupportOperatingHandoverHTML(args.value)};
+      else fail('SUPPORT_OPERATING_FORMAT','Use json or html for a complete handover document.');
+      break;
     case 'record_work':
       keys(args,['plan','input'],['plan','input']);originalTime(args.input?.savedAt);
       result=await recordSupportOperatingWork(args.plan,args.input);break;

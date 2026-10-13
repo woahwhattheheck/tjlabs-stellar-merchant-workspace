@@ -233,3 +233,9 @@ Its retained native result identifies the actual case files and outcomes. A deli
 ## Hand over the complete source preparation
 
 Before or during financial intake, download the complete **Statement collection**. It includes every original file, exact byte identity, separate working interpretation and inclusion/exclusion note. Another operator opens it as a separate collection and prepares its current account/statement reviews against the receiving bank workspace. Existing financial imports and superseding interpretations determine intake progress. Retain this preparation alongside the issued account close and accountant archive when those later steps are complete. The [complete collection guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_COLLECTIONS.md) documents native preparation, full source inspection and exact-original extraction.
+
+## Carry recurring bank interpretations to the receiving operator
+
+In the original source editor, save a named interpretation with its operator and reason. Every revision remains available. Before using a saved version on another original, review the current/proposed fields and complete original file identity, apply the reviewed mapping and prepare a fresh source preview. Select the new file's own balance rows and excluded rows.
+
+Download the complete profile library alongside the complete original statement collection. The receiving desk opens it as independent profiles carrying every original version and receiving lineage. The [saved source guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_PROFILES.md) includes the corresponding create/revise/inspect/receive and explicit collection review/apply commands.

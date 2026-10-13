@@ -118,6 +118,29 @@ def source_url(value):
     return url
 
 
+
+def document_reference(source):
+    """Select the native document's reusable HTTPS endpoint, keeping full originals."""
+    selected = source_url(source["url"])
+    reference = selected._replace(query="", fragment="").geturl()
+    try:
+        valid = (selected.scheme == "https" and bool(selected.hostname)
+                 and not selected.username and not selected.password
+                 and (selected.port is None or 1 <= selected.port <= 65535)
+                 and len(reference) <= 3000
+                 and not any(ord(char) <= 32 for char in reference))
+    except ValueError:
+        valid = False
+    if source.get("provenance_kind", "public-source") == "operator-file" and not valid:
+        # Native operator-file provenance permits omission of a public reference.
+        # The exact HTTP URL and query remain in the original handover, retained
+        # source-meaning document, publisher metadata and customer report.
+        return None
+    require(valid, "DATASETTE_DOCUMENT_PUBLIC_REFERENCE_INVALID",
+            "Public-source documents require the original HTTPS endpoint.")
+    return reference
+
+
 def request_identity(value):
     url = source_url(value)
     port = url.port
@@ -549,6 +572,7 @@ def source_document(directory, *, collections, edition):
         extension = "json" if item["content_type"] == "application/json" else "bin"
         records.append({**content(item["raw"], extension, item["content_type"]), "role": item["role"]})
     source = edition["source"]
+    public_reference = document_reference(source)
     license_record = source.get("license")
     license_text = json.dumps(license_record, ensure_ascii=False) if license_record else "See retained publisher metadata."
     scope = f"Complete {source.get('database', '')}/{source.get('table', '')} selection; {len(edition['rows'])} rows."
@@ -574,13 +598,16 @@ def source_document(directory, *, collections, edition):
                 "originals": records,
                 "provenance": {"kind": source.get("provenance_kind", "public-source"),
                     "publisher": source["publisher"],
-                    "sourceUrl": source["url"], "capturedAt": source["captured_at"],
+                    **({"sourceUrl": public_reference} if public_reference is not None else {}),
+                    "capturedAt": source["captured_at"],
                     "scope": scope[:500], "description": description[:12000],
                     "transform": {"name": transform_name,
                         "sourceUrl": "https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/source.py",
                         "sha256": sha(regular(Path(__file__)))}}}
-    target = directory / "source.json"
     raw = encoded(manifest)
+    # Retain a failed prior descriptor while a corrected adapter resumes the
+    # same original edition through the maintained document registry.
+    target = directory / ("source-" + sha(raw) + ".json")
     if target.exists():
         require(regular(target) == raw, "DATASETTE_DOCUMENT_SELECTION_CHANGED")
     else:

@@ -119,8 +119,16 @@ decision through service restart and concurrent editing.
 
 ## Reconcile the merchant's native settlements
 
-Use the saved pricing version's **Report JSON** to carry its complete payment
-selection and unit costs into the original accounting format:
+In an existing accounting workspace, open **Pricing decisions** and select the
+saved pricing review's original **Report JSON**. Choose **Review and retain
+pricing**, inspect and compare its exact alternatives, then **Use these accounting
+terms** and **Reconcile with these terms**. The [direct review guide](merchant-settlement-accounting/workspace/PRICING.md)
+covers the retained report, terms and complete accounting source handover. Earlier
+pricing reviews remain available through **Complete commercial history** in the
+merchant pricing workspace.
+
+For a new accounting workspace or a CLI handover, convert the same original
+report into the accounting format:
 
 ```sh
 node stellar/scf-starforge-20261009/merchant-settlement-accounting/pricing-cli.mjs \
@@ -143,7 +151,7 @@ node stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/ser
   --terms /absolute/private/merchant/new-pricing-import/accounting-terms.json
 ```
 
-In an existing workspace, import and select the generated terms through
+A separately generated CLI terms import can also be selected through
 **Sources & imports**. Each reconciliation retains the native journal, selected
 terms and original network-verification files. Review its route and payment
 option totals, investigate exceptions, keep named review notes, compare saved

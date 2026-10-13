@@ -5,6 +5,7 @@ import {
 import { inspectOperatingPlan, shellArgument, createOperatingFile } from '/operating-plan-core.mjs';
 import { recordSupportOperatingWork } from '/support-operating-core/support-operating-return.mjs';
 import { mountSupportOperatingReturn } from '/support-operating-return.mjs';
+import { mountSupportOperatingHandover } from '/support-operating-handover.mjs';
 
 const LIMIT = 32 * 1024 * 1024;
 const PHASE_LABELS = new Map([
@@ -381,16 +382,21 @@ export function mountSupportOperatingPlan({
 
   const transfer = text('section', undefined, 'support-section');
   transfer.append(text('h3', '5. Reopen and hand over'),
-    text('p', 'Use Complete editable JSON in the plan editor to retain every saved revision. Receive customer changes through the returned-work review above. It retains both complete histories and source descriptors, carries original evidence files, and preserves later saved work. The complete native Support companion remains with the original case.'));
+    text('p', 'Use Complete editable JSON in the plan editor to retain every saved revision. Receive customer changes through the returned-work review above. It retains both complete histories and source descriptors, carries original evidence files, and preserves later saved work. Create a complete portable handover below to carry every original native companion with the editable histories.'));
   transfer.append(button('Download current saved plan', () => invoke(() => {
     const plan = getPlan(); requireValue(plan, 'Open a saved plan first.');
     download(inspectOperatingPlan(plan), 'operating-plan-' + plan.id + '.json');
   })));
   disclosure.append(transfer);
+  const completeHandover = mountSupportOperatingHandover({host: disclosure, getPlan, run, receivePlan, retainWorkingDraft,
+    getSources: () => sourceInput.value.trim()
+      ? [inspectSupportOperatingSource(parseJSON(sourceInput.value, 'Source descriptor'))] : [],
+    getReturns: () => { const review = returnedWork.getReview(); return review ? [review] : []; }});
 
   function update() {
     refreshEvidence();
     returnedWork.update();
+    completeHandover.update();
     const catalog = getCatalog(), nextCatalogKey = serial(catalog ?? null);
     if (nextCatalogKey !== catalogKey) {
       catalogKey = nextCatalogKey; invalidateCreate();
