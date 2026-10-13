@@ -8,28 +8,56 @@ import { startServer } from "./server.mjs";
 import { LineageWorkspace, verifyBundle, receiveBundle } from "./store.mjs";
 import { QualityFollowupClient } from "./quality-followup-client.mjs";
 import { sha256, canonical } from "./model.mjs";
+import { randomUUID } from "node:crypto";
 
 const SOURCE = dirname(fileURLToPath(import.meta.url));
 const read = async path => JSON.parse(await fs.readFile(path, "utf8"));
 const exists = async path => fs.access(path).then(() => true, () => false);
-async function save(path, value) {
-  const text = JSON.stringify(value, null, 2) + "\n", temporary = path + ".writing";
-  await fs.writeFile(temporary, text, {mode: 0o600}); await fs.rename(temporary, path);
+async function publish(path, value, immutable) {
+  const bytes = Buffer.from(JSON.stringify(value, null, 2) + "\n", "utf8");
+  const retained = async () => assert.ok((await fs.readFile(path)).equals(bytes), "Retain original " + path);
+  if (immutable && await exists(path)) { await retained(); return; }
+  const temporary = path + ".pending-" + randomUUID();
+  let handle = null, owned = false, primary = null;
+  try {
+    handle = await fs.open(temporary, "wx", 0o600); owned = true;
+    await handle.writeFile(bytes); await handle.sync(); await handle.close(); handle = null;
+    if (immutable) {
+      try { await fs.link(temporary, path); }
+      catch (error) { if (error.code !== "EEXIST") throw error; await retained(); }
+    } else { await fs.rename(temporary, path); owned = false; }
+  } catch (error) { primary = error; throw error; }
+  finally {
+    const errors = [];
+    if (handle) try { await handle.close(); } catch (error) { errors.push(error); }
+    if (owned) try { await fs.unlink(temporary); } catch (error) { if (error.code !== "ENOENT") errors.push(error); }
+    if (errors.length) {
+      const error = new AggregateError(errors, "Could not close the original browser receiving output.");
+      if (primary) primary.outputCleanupError = error; else throw error;
+    }
+  }
 }
-async function fixed(path, value) {
-  const text = JSON.stringify(value, null, 2) + "\n";
-  if (await exists(path)) assert.equal(await fs.readFile(path, "utf8"), text);
-  else await fs.writeFile(path, text, {flag: "wx", mode: 0o600});
-}
+const save = (path, value) => publish(path, value, false);
+const fixed = (path, value) => publish(path, value, true);
 export async function receiveQualityBrowser(directory, configuration) {
   const root = resolve(directory), output = join(root, "browser");
   await fs.mkdir(output, {recursive: true, mode: 0o700});
   const lockPath = join(root, "receiving.lock"), lock = await fs.open(lockPath, "wx", 0o600);
-  await lock.writeFile(JSON.stringify({pid: process.pid, phase: "browser", at: new Date().toISOString()}));
-  let host, context;
+  let host, context, lockOpen = true, lockRetained = true, primaryError = null;
   const reportPath = join(output, "BROWSER_RESULT.json");
   let report;
+  async function closeResources() {
+    const errors = [];
+    if (context) try { await context.close(); context = null; } catch (error) { errors.push(error); }
+    if (host) try { await host.close(); host = null; } catch (error) { errors.push(error); }
+    if (lockOpen) try { await lock.close(); lockOpen = false; } catch (error) { errors.push(error); }
+    if (!context && !host && !lockOpen && lockRetained)
+      try { await fs.unlink(lockPath); lockRetained = false; }
+      catch (error) { if (error.code === "ENOENT") lockRetained = false; else errors.push(error); }
+    if (errors.length) throw new AggregateError(errors, "Could not close the original Quality browser resources.");
+  }
   try {
+    await lock.writeFile(JSON.stringify({pid: process.pid, phase: "browser", at: new Date().toISOString()}));
     const native = await read(join(root, "NATIVE_RESULT.json"));
     assert.equal(native.nativeStatus, "COMPLETE");
     const workspace = new LineageWorkspace(join(root, "workspace"));
@@ -51,10 +79,34 @@ export async function receiveQualityBrowser(directory, configuration) {
     report = await exists(reportPath) ? await read(reportPath) : {schema: "commons.openlineage.quality-followup.browser.v1",
       workspaceId: native.workspaceId, sourceSha256: native.sourceSha256, steps: {}, captures: [], downloads: [], pageErrors: [], status: "RUNNING"};
     assert.equal(report.workspaceId, native.workspaceId); assert.equal(report.sourceSha256, native.sourceSha256);
+    async function checkReceived(bytes, receiving, expectedRevision) {
+      const verified = verifyBundle(bytes);
+      assert.equal(verified.state.workspaceId, native.workspaceId);
+      assert.equal(verified.state.revision, expectedRevision);
+      const receipt = await read(join(receiving, "received.json"));
+      assert.equal(receipt.packageSha256, verified.packageSha256);
+      assert.equal(receipt.payloadSha256, verified.payloadSha256);
+      assert.equal(typeof receipt.installationId, "string"); assert.ok(receipt.installationId);
+      assert.deepEqual(await new LineageWorkspace(receiving).read(), verified.state);
+      for (const [id, original] of verified.objects) {
+        const bytes = await fs.readFile(join(receiving, "objects", id));
+        assert.equal(bytes.length, original.length); assert.equal(sha256(bytes), id);
+      }
+      for (const [name, original] of verified.application) {
+        const bytes = await fs.readFile(join(receiving, "application", name));
+        assert.equal(bytes.length, original.length); assert.equal(sha256(bytes), sha256(original));
+      }
+      return verified;
+    }
     if (report.status === "COMPLETE") {
       for (const item of [...report.captures, ...report.downloads]) assert.equal(sha256(await fs.readFile(join(output, item.path))), item.sha256);
+      const whole = report.downloads.find(item => item.name === "complete-workspace");
+      assert.ok(whole, "Retain the complete original browser workspace download");
+      const verified = await checkReceived(await fs.readFile(join(output, whole.path)),
+        join(output, "received-browser-workspace"), report.revision);
+      assert.equal(verified.packageSha256, report.completeWorkspace.packageSha256);
       assert.ok((await workspace.read()).revision >= report.revision);
-      return report;
+      await closeResources(); return report;
     }
     context = await chromium.launchPersistentContext(join(output, "profile"), {headless: true,
       executablePath: resolve(config.executablePath), args: config.args ?? ["--no-sandbox", "--disable-dev-shm-usage"],
@@ -98,14 +150,110 @@ export async function receiveQualityBrowser(directory, configuration) {
       await page.getByRole("button", {name: "Quality follow-up", exact: true}).click();
       await ready();
     }
-    async function recoverPending() {
+    async function readPendingJournal() {
+      return page.evaluate(() => new Promise((resolve, reject) => {
+        const request = indexedDB.open("openlineage-operator", 1);
+        request.onerror = () => reject(request.error);
+        request.onblocked = () => reject(new Error("The original browser request journal is blocked"));
+        request.onsuccess = () => {
+          const db = request.result;
+          if (!db.objectStoreNames.contains("pending")) { db.close(); resolve(null); return; }
+          const transaction = db.transaction("pending", "readonly");
+          const value = transaction.objectStore("pending").get(location.origin + location.pathname);
+          let found;
+          value.onsuccess = () => { found = value.result ?? null; };
+          transaction.oncomplete = () => { db.close(); resolve(found); };
+          transaction.onabort = transaction.onerror = () => { db.close(); reject(transaction.error); };
+        };
+      }));
+    }
+    async function retainPreparedIntent() {
+      const pending = await readPendingJournal();
+      if (!pending) return;
+      assert.equal(pending.workspaceId, native.workspaceId);
+      const labels = {"quality.followup.comparison.save": "browser-comparison", "quality.followup.save": "browser-followup"};
+      const label = labels[pending.action];
+      assert.ok(label, "Keep an unrelated original pending request with its existing operator");
+      assert.equal(typeof pending.args?.operationId, "string"); assert.ok(pending.args.operationId);
+      assert.ok(Number.isSafeInteger(pending.args.expectedRevision) && pending.args.expectedRevision >= 0);
+      const path = join(output, "intent-" + label + ".json");
+      if (await exists(path)) {
+        const intent = await read(path);
+        assert.equal(canonical({workspaceId: pending.workspaceId, action: pending.action, args: pending.args}),
+          canonical({workspaceId: intent.workspaceId, action: intent.action, args: intent.args}));
+        return;
+      }
+      if (label === "browser-comparison") {
+        assert.equal(pending.args.beforeEvaluationId, native.beforeEvaluationId);
+        assert.equal(pending.args.afterEvaluationId, native.afterEvaluationId);
+        assert.equal(pending.args.title, "Browser-reviewed fixture comparison");
+        const selected = await read(join(root, "selection.json"));
+        assert.equal(canonical(pending.args.runPairs), canonical(selected.runPairs));
+        assert.equal(canonical(pending.args.findingPairs), canonical(selected.findingPairs));
+      } else {
+        const comparisonIntent = await read(join(output, "intent-browser-comparison.json"));
+        const state = await workspace.read();
+        const comparison = state.operations.find(item => item.id === comparisonIntent.args.operationId)?.result?.comparison;
+        assert.ok(comparison, "Retain the original browser comparison before its follow-up");
+        assert.equal(pending.args.comparisonId, comparison.id);
+        assert.ok(comparison.rows.some(row => row.id === pending.args.rowId && row.after[0]?.title === "Fixture output rows"));
+        assert.equal(pending.args.owner, "Browser receiving operator");
+        assert.equal(pending.args.reason, "Reviewed original fixture output, source scope and retained rule changes.");
+        assert.equal(pending.args.dueDate, "2026-11-02");
+      }
+      const bodyUtf8 = JSON.stringify({action: pending.action, args: pending.args}), bytes = Buffer.from(bodyUtf8);
+      const journalPath = join(output, "journal-intent-" + label + ".json");
+      if (await exists(journalPath)) {
+        const retained = (await read(journalPath)).pending;
+        assert.equal(canonical({workspaceId: retained.workspaceId, action: retained.action, args: retained.args}),
+          canonical({workspaceId: pending.workspaceId, action: pending.action, args: pending.args}));
+      } else await fixed(journalPath, {source: "Original same-workspace browser request journal", pending});
+      await fixed(path, {workspaceId: pending.workspaceId, action: pending.action, args: pending.args,
+        bodyUtf8, bytes: bytes.length, sha256: sha256(bytes)});
+    }
+    async function recoverPending(resultRevision) {
       const button = page.getByRole("button", {name: "Recover saved request", exact: true});
       if (await button.count() && await button.isVisible()) {
-        const retained = active;
-        const requestDetails = await page.locator("#pending-panel").textContent();
         assert.ok(active, "Retain the original receiving intent before recovering its UI request");
-        assert.ok(requestDetails.includes((await read(join(output, "intent-" + active.label + ".json"))).args.operationId));
-        await button.click(); active = retained; await ready();
+        const pending = await readPendingJournal();
+        assert.ok(pending, "Read the original pending browser request");
+        assert.equal(pending.workspaceId, native.workspaceId);
+        const intent = await read(join(output, "intent-" + active.label + ".json"));
+        if (pending.args.operationId !== intent.args.operationId) {
+          // Earlier completed steps leave an original later step for its own recovery.
+          await retainPreparedIntent(); return;
+        }
+        assert.equal(canonical({action: pending.action, args: pending.args}), canonical({action: intent.action, args: intent.args}));
+        assert.ok(Number.isSafeInteger(resultRevision) && resultRevision >= 0);
+        await button.click();
+        await page.waitForFunction(async ({operationId, revision}) => {
+          const pending = await new Promise((resolve, reject) => {
+            const request = indexedDB.open("openlineage-operator", 1);
+            request.onerror = () => reject(request.error);
+            request.onblocked = () => reject(new Error("The original browser request journal is blocked"));
+            request.onsuccess = () => {
+              const db = request.result;
+              if (!db.objectStoreNames.contains("pending")) { db.close(); resolve(null); return; }
+              const transaction = db.transaction("pending", "readonly");
+              const value = transaction.objectStore("pending").get(location.origin + location.pathname);
+              let found;
+              value.onsuccess = () => { found = value.result ?? null; };
+              transaction.oncomplete = () => { db.close(); resolve(found); };
+              transaction.onabort = transaction.onerror = () => { db.close(); reject(transaction.error); };
+            };
+          });
+          if (pending) {
+            if (pending.args?.operationId !== operationId)
+              throw new Error("The original recovery request changed before it completed");
+            return false;
+          }
+          const panel = document.querySelector("#pending-panel");
+          const match = document.querySelector("#revision-label")?.textContent.match(/^Revision\s+(\d+)$/);
+          return Boolean(panel?.hidden && match && Number(match[1]) >= revision &&
+            document.querySelector("#catalog")?.getAttribute("aria-busy") !== "true");
+        }, {operationId: intent.args.operationId, revision: resultRevision}, {timeout: 30000});
+        assert.equal(await readPendingJournal(), null, "The exact recovered browser request must be cleared");
+        await ready();
       }
     }
     async function mutation(label, action, click) {
@@ -123,7 +271,7 @@ export async function receiveQualityBrowser(directory, configuration) {
             const prior = await read(resultPath), normalize = value => {const copy = structuredClone(value); delete copy.replayed; return copy;};
             assert.deepEqual(normalize(result), normalize(prior));
           } else await fixed(resultPath, result);
-          await recoverPending(); report.steps[label] = {status: "COMPLETE", operationId: intent.args.operationId, revision: result.revision};
+          await recoverPending(result.revision); report.steps[label] = {status: "COMPLETE", operationId: intent.args.operationId, revision: result.revision};
           await save(reportPath, report); return result;
         }
         await click();
@@ -164,6 +312,7 @@ export async function receiveQualityBrowser(directory, configuration) {
       await save(reportPath, report); return join(output, file);
     }
     await open();
+    await retainPreparedIntent();
     const selections = await read(join(root, "selection.json"));
     if (!await exists(join(output, "intent-browser-comparison.json"))) {
       await capture("desktop-empty-comparison");
@@ -204,7 +353,21 @@ export async function receiveQualityBrowser(directory, configuration) {
       await capture("desktop-working-copy-error");
       assert.equal(await page.getByLabel("Follow-up reason", {exact: true}).inputValue(),
         "Reviewed original fixture output, source scope and retained rule changes.");
+      // Opening the valid complete copy also emits its actual preceding entered copy.
+      // Always perform the original reopen, including after an interrupted earlier attempt.
+      const beforeOpening = page.waitForEvent("download");
       await page.getByLabel("Open quality working copy", {exact: true}).setInputFiles(draftFile);
+      const retainedBeforeOpening = await beforeOpening;
+      const beforeOpeningName = "working-copy-before-opening-" + randomUUID() + ".json";
+      const beforeOpeningPath = join(output, beforeOpeningName);
+      await retainedBeforeOpening.saveAs(beforeOpeningPath);
+      const beforeOpeningBytes = await fs.readFile(beforeOpeningPath);
+      const beforeOpeningValue = JSON.parse(beforeOpeningBytes.toString("utf8"));
+      assert.equal(beforeOpeningValue.workspaceId, native.workspaceId);
+      assert.equal(beforeOpeningValue.schema, "commons.openlineage.quality-working-copy.v1");
+      report.downloads.push({name: beforeOpeningName, path: beforeOpeningName,
+        bytes: beforeOpeningBytes.length, sha256: sha256(beforeOpeningBytes)});
+      await save(reportPath, report);
       await ready(); assert.equal(await page.getByLabel("Follow-up owner", {exact: true}).inputValue(), "Browser receiving operator");
       await page.reload({waitUntil: "domcontentloaded"});
       await page.getByRole("button", {name: "Quality follow-up", exact: true}).click(); await ready();
@@ -245,15 +408,29 @@ export async function receiveQualityBrowser(directory, configuration) {
     assert.equal(verified.state.qualityFollowup.followups.length, 2);
     const receiving = join(output, "received-browser-workspace");
     if (!await exists(receiving)) await receiveBundle(await fs.readFile(whole), receiving);
-    assert.equal((await read(join(receiving, "workspace.json"))).revision, final.revision);
+    await checkReceived(await fs.readFile(whole), receiving, final.revision);
     assert.deepEqual(report.pageErrors, []);
-    report.status = "COMPLETE"; report.revision = final.revision;
+    report.revision = final.revision;
     report.completeWorkspace = {path: whole, packageSha256: verified.packageSha256, receivedDirectory: receiving};
+    await closeResources();
+    report.status = "COMPLETE";
     await save(reportPath, report); return report;
   } catch (error) {
-    if (report) {report.status = "INTERRUPTED"; report.interruption = {message: error.message, stack: error.stack, at: new Date().toISOString()}; await save(reportPath, report);}
+    primaryError = error;
+    if (report) {
+      report.status = "INTERRUPTED"; report.interruption = {message: error.message, stack: error.stack, at: new Date().toISOString()};
+      try { await save(reportPath, report); } catch (retentionError) { error.retentionError = retentionError.message; }
+    }
     throw error;
-  } finally {if (context) await context.close(); if (host) await host.close(); await lock.close(); await fs.unlink(lockPath);}
+  } finally {
+    try { await closeResources(); }
+    catch (cleanupError) {
+      try { await save(join(output, "CLEANUP_INTERRUPTION.json"), {at: new Date().toISOString(),
+        message: cleanupError.message, primaryError: primaryError?.message ?? null}); }
+      catch (retentionError) { cleanupError.retentionError = retentionError.message; }
+      if (primaryError) primaryError.cleanupError = cleanupError.message; else throw cleanupError;
+    }
+  }
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url))
   receiveQualityBrowser(process.argv[2], process.argv[3]).then(value => console.log(JSON.stringify(value, null, 2))).catch(error => {

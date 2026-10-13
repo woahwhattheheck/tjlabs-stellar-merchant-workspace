@@ -43,6 +43,24 @@ async function exact(path, value) {
     }
   }
 }
+async function inspectReceived(receivePath, verified) {
+  const receiveInfo = await read(join(receivePath, "received.json"));
+  assert.equal(receiveInfo.packageSha256, verified.packageSha256, "Retain the exact original received package");
+  assert.equal(receiveInfo.payloadSha256, verified.payloadSha256, "Retain the original received payload");
+  assert.equal(typeof receiveInfo.installationId, "string"); assert.ok(receiveInfo.installationId);
+  const reopened = await new LineageWorkspace(receivePath).read();
+  assert.deepEqual(reopened, verified.state, "The independently received original workspace must remain complete");
+  validateQualityFollowup(reopened, {deep: true});
+  for (const [id, originalBytes] of verified.objects) {
+    const receivedBytes = await fs.readFile(join(receivePath, "objects", id));
+    assert.equal(receivedBytes.length, originalBytes.length); assert.equal(sha256(receivedBytes), id);
+  }
+  for (const [name, originalBytes] of verified.application) {
+    const receivedBytes = await fs.readFile(join(receivePath, "application", name));
+    assert.equal(receivedBytes.length, originalBytes.length); assert.equal(sha256(receivedBytes), sha256(originalBytes));
+  }
+  return receiveInfo;
+}
 export async function receiveQualityFollowup(directory) {
   const root = resolve(directory); await fs.mkdir(root, {recursive: true, mode: 0o700});
   const lockPath = join(root, "receiving.lock");
@@ -67,7 +85,6 @@ export async function receiveQualityFollowup(directory) {
     const workspace = new LineageWorkspace(join(root, "workspace"));
     await workspace.initialize("Quality follow-up — original OpenLineage fixture course");
     const initial = await workspace.read();
-    await exact(join(root, "receiving-identity.json"), {workspaceId: initial.workspaceId, sourceSha256: digest(manifest)});
     if (await exists(join(root, "NATIVE_RESULT.json"))) {
       const completed = await read(join(root, "NATIVE_RESULT.json"));
       assert.equal(completed.workspaceId, initial.workspaceId); assert.equal(completed.sourceSha256, digest(manifest));
@@ -76,6 +93,8 @@ export async function receiveQualityFollowup(directory) {
       const reopened = verifyBundle(originalExport);
       assert.equal(reopened.state.workspaceId, completed.workspaceId); assert.equal(reopened.state.revision, completed.revision);
       validateQualityFollowup(initial, {deep: true});
+      const originalReceiving = await inspectReceived(join(root, "received"), reopened);
+      assert.deepEqual(originalReceiving, completed.receiving, "Retain the original completed receiving identity");
       await closeResources();
       return completed;
     }
@@ -197,21 +216,7 @@ export async function receiveQualityFollowup(directory) {
     await exact(join(root, "quality-followup-workspace.json"), bytes.toString("utf8"));
     const receivePath = join(root, "received");
     if (!await exists(join(receivePath, "received.json"))) await receiveBundle(bytes, receivePath);
-    const receiveInfo = await read(join(receivePath, "received.json"));
-    assert.equal(receiveInfo.packageSha256, verified.packageSha256, "Retain the exact original received package");
-    assert.equal(receiveInfo.payloadSha256, verified.payloadSha256, "Retain the original received payload");
-    assert.equal(typeof receiveInfo.installationId, "string"); assert.ok(receiveInfo.installationId);
-    const reopened = await new LineageWorkspace(receivePath).read();
-    assert.deepEqual(reopened, verified.state, "The independently received original workspace must remain complete");
-    validateQualityFollowup(reopened, {deep: true});
-    for (const [id, originalBytes] of verified.objects) {
-      const receivedBytes = await fs.readFile(join(receivePath, "objects", id));
-      assert.equal(receivedBytes.length, originalBytes.length); assert.equal(sha256(receivedBytes), id);
-    }
-    for (const [name, originalBytes] of verified.application) {
-      const receivedBytes = await fs.readFile(join(receivePath, "application", name));
-      assert.equal(receivedBytes.length, originalBytes.length); assert.equal(sha256(receivedBytes), sha256(originalBytes));
-    }
+    const receiveInfo = await inspectReceived(receivePath, verified);
     const result = {schema: "commons.openlineage.quality-followup.receiving.v1", workspaceId: final.workspaceId,
       revision: final.revision, sourceSha256: digest(manifest), nativeStatus: "COMPLETE", browserStatus: "PENDING",
       fixture: {originalSha256: sha256(fixtureBytes), gitBlob: original.gitBlob, laterSha256: sha256(Buffer.from(laterText))},
