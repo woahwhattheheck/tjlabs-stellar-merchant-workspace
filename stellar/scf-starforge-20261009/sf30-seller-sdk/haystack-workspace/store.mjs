@@ -33,6 +33,29 @@ function range(raw, metadata, { offset = 0, length = 262144 } = {}) {
     complete: offset + bytes.length === raw.length, base64: bytes.toString("base64"), chunkSha256: sha256(bytes) };
 }
 function fileSignature(stat) { return [stat.dev, stat.ino, stat.size, stat.mtimeNs, stat.ctimeNs].join(":"); }
+async function verifiedPublishedStateSignature(path, expectedBytes) {
+  const file = await fs.open(path, FS.O_RDONLY | (FS.O_NOFOLLOW || 0));
+  try {
+    const before = await file.stat({ bigint: true }), signature = fileSignature(before);
+    need(before.isFile() && before.size === BigInt(expectedBytes.length),
+      "The published workspace differs from the complete validated bytes.", "HAYSTACK_WORKSPACE_CHANGED", 409);
+    const digestor = createHash("sha256"), chunk = Buffer.alloc(262144);
+    let position = 0;
+    while (position < expectedBytes.length) {
+      const { bytesRead } = await file.read(chunk, 0, Math.min(chunk.length, expectedBytes.length - position), position);
+      need(bytesRead > 0, "The published workspace ended before its complete validated bytes.",
+        "HAYSTACK_WORKSPACE_CHANGED", 409);
+      digestor.update(chunk.subarray(0, bytesRead)); position += bytesRead;
+    }
+    const after = await file.stat({ bigint: true }), current = await fs.lstat(path, { bigint: true });
+    need(digestor.digest("hex") === sha256(expectedBytes) &&
+      fileSignature(after) === signature && current.isFile() && !current.isSymbolicLink() &&
+      fileSignature(current) === signature,
+      "The original workspace changed while its published bytes were verified.", "HAYSTACK_WORKSPACE_CHANGED", 409);
+    return signature;
+  } finally { await file.close(); }
+}
+
 
 // Recovery journals and claims are immutable. A successor links a new claim
 // after a released or dead predecessor; it never removes a predecessor claim.
@@ -419,7 +442,13 @@ export class HaystackWorkspace {
       const saved = seal(state), bytes = Buffer.from(stringifyJson(saved) + "\n");
       need(bytes.length <= STATE_MAX_BYTES, "This complete workspace exceeds 128 MiB. Export the retained history and continue the next project in a new workspace.", "HAYSTACK_SIZE", 413);
       validateState(saved);
+      this.stateCache = null;
       await atomicWrite(this.statePath, bytes);
+      // The cache binds the already validated state to the exact published
+      // bytes and held-file/path identity. A later external change still takes
+      // the complete normal read/validation path.
+      const signature = await verifiedPublishedStateSignature(this.statePath, bytes);
+      this.stateCache = { signature, state: saved };
       return { ...outcome, replayed: false };
     });
   }
@@ -522,21 +551,30 @@ export class HaystackWorkspace {
       const state = await this.read(); assertRevision(state, args.expectedRevision);
       need(!state.operations.some(item => item.id === operationId), "This identity belongs to an original saved mutation.", "HAYSTACK_OPERATION", 409);
       const result = volttronKind ? volttronDelivery(state, args) :
-        projectionKind ? makeProjectionDelivery(state, args) : args.kind === "workspace" ? await buildBundle(state) :
+        projectionKind ? makeProjectionDelivery(state, args, { stream: true }) : args.kind === "workspace" ? await buildBundle(state) :
         args.kind === "work-register" ? makeWorkReport(state, args) :
         ["semantic-report", "semantic-dictionary"].includes(args.kind) ? makeSemanticReport(state, args) :
         args.kind === "semantic-output" ? semanticNativeDelivery(state, args) :
         args.kind === "native-grid" ? nativeGrid(state, args) : makeReport(state, args);
-      const bytes = Buffer.from(result.bytes);
-      need(bytes.length <= PACKAGE_MAX_BYTES, "This complete delivery exceeds 192 MiB.", "HAYSTACK_SIZE", 413);
-      const manifest = { format: "commons.haystack.delivery.v1", operationId, arguments: clone(args), argumentsSha256,
-        workspaceId: state.workspaceId, revision: state.revision, name: result.name, mediaType: result.mediaType,
-        sha256: sha256(bytes), bytes: bytes.length, kind: args.kind, createdAt: now() };
-      manifest.manifestSha256 = digest(manifest);
       const temporary = target + ".pending-" + newId();
       await fs.mkdir(temporary, { mode: 0o700 });
+      let manifest;
       try {
-        await createOnlyFile(join(temporary, "payload"), bytes);
+        const chunks = result.chunks || [Buffer.isBuffer(result.bytes) ? result.bytes : Buffer.from(result.bytes)];
+        const digestor = createHash("sha256"); let byteLength = 0;
+        const payload = await fs.open(join(temporary, "payload"), "wx", 0o600);
+        try {
+          for await (const value of chunks) {
+            const chunk = Buffer.isBuffer(value) ? value : Buffer.from(value);
+            need(byteLength + chunk.length <= PACKAGE_MAX_BYTES, "This complete delivery exceeds 192 MiB.", "HAYSTACK_SIZE", 413);
+            await payload.writeFile(chunk); digestor.update(chunk); byteLength += chunk.length;
+          }
+          await payload.sync();
+        } finally { await payload.close(); }
+        manifest = { format: "commons.haystack.delivery.v1", operationId, arguments: clone(args), argumentsSha256,
+          workspaceId: state.workspaceId, revision: state.revision, name: result.name, mediaType: result.mediaType,
+          sha256: digestor.digest("hex"), bytes: byteLength, kind: args.kind, createdAt: now() };
+        manifest.manifestSha256 = digest(manifest);
         await createOnlyFile(join(temporary, "manifest.json"), Buffer.from(stringifyJson(manifest) + "\n"));
         await syncDirectory(temporary); await fs.rename(temporary, target); await syncDirectory(join(this.directory, "deliveries"));
       } finally { await fs.rm(temporary, { recursive: true, force: true }); }

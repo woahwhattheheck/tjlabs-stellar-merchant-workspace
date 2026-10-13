@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // MIT. Complete retained-source projection, correction and two-receiver operator journey.
-import {promises as fs} from "node:fs";
+import {promises as fs,constants as FS} from "node:fs";
 import {join,resolve,dirname} from "node:path";
 import {pathToFileURL,fileURLToPath} from "node:url";
 import {createHash} from "node:crypto";
@@ -8,7 +8,8 @@ import {HaystackWorkspace} from "./store.mjs";
 import {receiveBundle,verifyBundle,PACKAGE_FORMAT} from "./portable.mjs";
 import {parseGrid,encodeGrid} from "./haystack-types.mjs";
 import {stringifyJson,canonicalJson} from "./json-codec.mjs";
-import {plainRead,createOnlyFile,exists} from "./files.mjs";
+import {plainRead,exists,syncDirectory} from "./files.mjs";
+import {newId} from "./util.mjs";
 import {PROJECTION_BROWSER_SCHEMA} from "./PROJECTION_BROWSER.mjs";
 
 export const PROJECTION_RECEIVING_SCHEMA="commons.haystack.projection-receiving.v1";
@@ -23,8 +24,31 @@ function need(value,message){if(!value)throw Error(message);}
 function uuid(seed){const h=sha(Buffer.from(seed));return h.slice(0,8)+"-"+h.slice(8,12)+"-4"+h.slice(13,16)+"-a"+h.slice(17,20)+"-"+h.slice(20,32);}
 async function read(path){return JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(await plainRead(path)));}
 async function optional(path){return await exists(path)?read(path):null;}
-async function retain(path,value){await createOnlyFile(path,bytes(value));return value;}
-async function retainBytes(path,value){await createOnlyFile(path,value);const actual=await plainRead(path);need(actual.length===value.length&&sha(actual)===sha(value),"A retained original artifact changed.");return{path,bytes:actual.length,sha256:sha(actual)};}
+async function fileIdentity(path){
+ const file=await fs.open(path,FS.O_RDONLY|(FS.O_NOFOLLOW||0));
+ try{
+  const before=await file.stat({bigint:true});need(before.isFile(),"The retained artifact must be an ordinary file.");
+  const digest=createHash("sha256"),buffer=Buffer.alloc(262144);let count=0;
+  for(;;){const {bytesRead}=await file.read(buffer,0,buffer.length,null);if(!bytesRead)break;digest.update(buffer.subarray(0,bytesRead));count+=bytesRead;}
+  const after=await file.stat({bigint:true}),current=await fs.lstat(path,{bigint:true});
+  const signature=s=>[s.dev,s.ino,s.size,s.mtimeNs,s.ctimeNs].join(":");
+  need(current.isFile()&&!current.isSymbolicLink()&&signature(before)===signature(after)&&signature(before)===signature(current)&&BigInt(count)===before.size,"The original artifact changed while it was read.");
+  return{path,bytes:count,sha256:digest.digest("hex")};
+ }finally{await file.close();}
+}
+async function publishTemporary(temporary,path,expected){
+ try{await fs.link(temporary,path);}catch(error){if(error.code!=="EEXIST")throw error;}
+ const actual=await fileIdentity(path);need(actual.bytes===expected.bytes&&actual.sha256===expected.sha256,"A retained original artifact changed.");
+ await syncDirectory(dirname(path));return actual;
+}
+async function retainBytes(path,value){
+ const expected={bytes:value.length,sha256:sha(value)};
+ if(await exists(path)){const actual=await fileIdentity(path);need(actual.bytes===expected.bytes&&actual.sha256===expected.sha256,"A retained original artifact changed.");return actual;}
+ const temporary=path+".pending-"+newId();let file;
+ try{file=await fs.open(temporary,"wx",0o600);await file.writeFile(value);await file.sync();await file.close();file=null;return await publishTemporary(temporary,path,expected);}
+ finally{if(file)await file.close();await fs.unlink(temporary).catch(error=>{if(error.code!=="ENOENT")throw error;});}
+}
+async function retain(path,value){await retainBytes(path,bytes(value));return value;}
 function sameSource(source,expected){need(source.bytes.length===expected.bytes&&sha(source.bytes)===expected.sha256,"The original native source bytes changed.");}
 
 /**
@@ -42,11 +66,29 @@ export async function runProjectionReceiving(input){
  await retain(join(root,"input.json"),input);
  const phases=join(root,"phases"),outputs=join(root,"outputs");await fs.mkdir(phases,{recursive:true});await fs.mkdir(outputs,{recursive:true});
  const artifacts=[],actions=[];
+ async function progress(phase,state,details={}){
+  const value={schema:"commons.haystack.projection-programme-progress.v1",operationId:input.operationId,
+   phase,state,observedAt:new Date().toISOString(),pid:process.pid,memory:process.memoryUsage(),...details};
+  const line=stringifyJson(value)+"\n",file=await fs.open(join(root,"progress.ndjson"),"a",0o600);
+  try{await file.writeFile(line);await file.sync();}finally{await file.close();}
+  process.stderr.write("HAYSTACK_PROJECTION_PROGRESS "+line);
+ }
+ await progress("programme","entered");
+
  async function artifact(name,value){const result=await retainBytes(join(outputs,name),value);artifacts.push({name,...result});return result;}
- async function saved(name,producer){const path=join(phases,name+".json"),old=await optional(path);if(old)return old;return retain(path,await producer());}
+ async function saved(name,producer){
+  await progress(name,"started");
+  const path=join(phases,name+".json"),old=await optional(path);
+  if(old){await progress(name,"completed",{reused:true});return old;}
+  const value=await retain(path,await producer());
+  await progress(name,"completed",{reused:false});return value;
+ }
  async function action(workspace,name,kind,fields){
+  await progress(name,"started",{action:kind});
   const intentPath=join(phases,name+".request.json"),resultPath=join(phases,name+".result.json");
   let intent=await optional(intentPath),result=await optional(resultPath);
+  const originalWriter=await workspace.writer();
+  if(originalWriter){await progress(name,"recovering-original-writer",{writerId:originalWriter.id});await workspace.recoverWriter(originalWriter.id);}
   const current=await workspace.read();
   if(intent){
    const selected={...intent.args};delete selected.expectedRevision;delete selected.operationId;
@@ -63,24 +105,49 @@ export async function runProjectionReceiving(input){
   if(result)need(equal(clean(result),clean(actual)),"The saved native operation result changed: "+name);
   else result=await retain(resultPath,actual);
   actions.push({name,workspaceId:intent.workspaceId,action:kind,operationId:intent.args.operationId,revision:result.revision});
+  await progress(name,"completed",{action:kind,revision:result.revision});
   return result;
  }
  async function query(workspace,kind,args){const s=await workspace.read();return workspace.dispatch(kind,{...args,expectedRevision:s.revision});}
  async function projection(workspace,projectionId,versionId){return query(workspace,"projection.read",{projectionId,...(versionId?{versionId}:{})});}
  async function deliver(workspace,name,fields){
+  globalThis.gc?.();
   const result=await action(workspace,name,"delivery.prepare",fields),received=await workspace.deliveryBytes(result.operationId);
   need(received.bytes.length===result.bytes&&sha(received.bytes)===result.sha256,"A native delivery differs from its actual original return.");
   const file=await artifact(name+"-"+result.name.replace(/[^A-Za-z0-9._-]/g,"_"),received.bytes);
-  return{result,file,bytes:received.bytes};
+  globalThis.gc?.();return{result,file};
  }
  async function completeComparison(workspace,name,id,before,after){
-  return saved(name,async()=>{let offset=0,total=null,rows=[];const state=await workspace.read();
-   for(;;){const result=await workspace.dispatch("projection.compare",{expectedRevision:state.revision,projectionId:id,beforeVersionId:before,afterVersionId:after,offset,limit:250});
-    if(total===null)total=result.total;need(result.total===total&&result.offset===offset,"Projection comparison pagination changed.");
-    rows.push(...result.items);if(!result.hasMore)break;need(result.nextOffset>offset,"Projection comparison did not advance.");offset=result.nextOffset;
-   }
-   need(rows.length===total,"Projection comparison omitted original rows.");return{workspaceId:state.workspaceId,projectionId:id,beforeVersionId:before,afterVersionId:after,rows};
-  });
+  await progress(name,"started");
+  const path=join(phases,name+".json");
+  if(!(await exists(path))){
+   const state=await workspace.read(),header={workspaceId:state.workspaceId,projectionId:id,beforeVersionId:before,afterVersionId:after};
+   const temporary=path+".pending-"+newId();let file;
+   try{
+    file=await fs.open(temporary,"wx",0o600);
+    await file.writeFile(stringifyJson(header,2).slice(0,-2)+',\n  "rows": [');
+    let offset=0,total=null,count=0;
+    for(;;){
+     const result=await workspace.dispatch("projection.compare",{expectedRevision:state.revision,projectionId:id,beforeVersionId:before,afterVersionId:after,offset,limit:50});
+     if(total===null)total=result.total;need(result.total===total&&result.offset===offset,"Projection comparison pagination changed.");
+     for(const row of result.items){
+      await file.writeFile((count?",\n":"\n")+stringifyJson(row,2).split("\n").map(line=>"    "+line).join("\n"));count++;
+     }
+     if(!result.hasMore)break;need(result.nextOffset>offset,"Projection comparison did not advance.");offset=result.nextOffset;
+    }
+    need(count===total,"Projection comparison omitted original rows.");
+    await file.writeFile((count?"\n  ":"")+"]\n}\n");await file.sync();await file.close();file=null;
+    await publishTemporary(temporary,path,await fileIdentity(temporary));
+   }finally{if(file)await file.close();await fs.unlink(temporary).catch(error=>{if(error.code!=="ENOENT")throw error;});}
+  }
+  const original=await fileIdentity(path),target=join(outputs,"return-comparison.json");
+  if(!(await exists(target))){
+   const temporary=target+".pending-"+newId();
+   try{await fs.copyFile(path,temporary,FS.COPYFILE_EXCL);const file=await fs.open(temporary,"r");try{await file.sync();}finally{await file.close();}await publishTemporary(temporary,target,original);}
+   finally{await fs.unlink(temporary).catch(error=>{if(error.code!=="ENOENT")throw error;});}
+  }
+  const actual=await fileIdentity(target);need(actual.bytes===original.bytes&&actual.sha256===original.sha256,"The retained complete comparison changed.");
+  artifacts.push({name:"return-comparison.json",...actual});await progress(name,"completed");return actual;
  }
  async function reports(workspace,name,id,versionId){
   const result=[];
@@ -141,10 +208,10 @@ export async function runProjectionReceiving(input){
  const imported=await action(workspace,"01-source-import","source.import",{name:sourceIdentity.name,base64:sourceRaw.toString("base64"),format:"json-v4",sourceUrl:sourceIdentity.sourceUrl,select:true});
  need(imported.source.id===expectedSha,"The original importer did not retain the complete input identity.");
  const selection={nativeSourceIds:[imported.source.id],intakeIds:[]};
- const modelPreview=await saved("02-model-preview",()=>query(workspace,"semantic.model.preview",{
+ let modelPreview=await saved("02-model-preview",()=>query(workspace,"semantic.model.preview",{
   title:input.model?.title||"Retained original source model",namespace:input.model?.namespace||"urn:commons:projection:"+input.operationId+":",
   selection,mappings:[],naming:input.model?.naming||{template:"{nativeId}",case:"preserve",separator:"_",description:"Original native identity, with no inferred station observation."}}));
- const content=input.model?.content?copy(input.model.content):copy(modelPreview.content);
+ let content=input.model?.content?copy(input.model.content):copy(modelPreview.content);
  content.notes=(content.notes||"")+"\nOperator programme "+input.operationId+". Original observation status is preserved; no site visit, live station or customer acceptance is inferred.";
  const model=await action(workspace,"03-model-save","semantic.model.create",{contextId:modelPreview.contextId,selection,content,author:input.author,note:"Complete retained-source model for explicit typed projection."});
  const profile=input.profile?copy(input.profile):{
@@ -152,9 +219,12 @@ export async function runProjectionReceiving(input){
   entityIds:modelPreview.content.entities.map(e=>e.id),columns:originalGrid.cols.map(c=>({tag:c.name,source:{kind:"native",sourceId:expectedSha,tag:c.name},conversion:{kind:"preserve",blank:"keep",trim:false},...(c.meta?{meta:copy(c.meta)}:{})})),
   overrides:[],meta:copy(originalGrid.meta)
  };
- const firstPreview=await saved("04-projection-preview",()=>query(workspace,"projection.preview",{modelId:model.model.id,versionId:model.version.id,profile}));
+ modelPreview=null;content=null;
+ let firstPreview=await saved("04-projection-preview",()=>query(workspace,"projection.preview",{modelId:model.model.id,versionId:model.version.id,profile}));
  need(firstPreview.canPublish,"The full projection contains unresolved structural or semantic errors; retain its diagnostics and correct the reviewed profile.");
  if(!input.profile)need(equal(firstPreview.grid,originalGrid),"The complete native-preserve projection changed an original typed cell, absence, order or metadata.");
+ firstPreview={counts:firstPreview.counts,gridSha256:firstPreview.gridSha256};
+ globalThis.gc?.();
  const created=await action(workspace,"05-projection-save","projection.create",{modelId:model.model.id,versionId:model.version.id,profile,author:input.author,note:"Explicit complete native-preserve profile."});
  const projectionId=created.projection.id;
  await action(workspace,"06-projection-review","projection.review",{projectionId,expectedHeadId:created.version.id,decision:"ready",author:input.author,note:"Operator reviewed complete source-bound grid and lineage; this is not station or customer acceptance."});
@@ -184,40 +254,47 @@ export async function runProjectionReceiving(input){
  });
  await artifact("incoming-return.json",Buffer.from(incoming.base64,"base64"));
  const returnFields={projectionId,name:incoming.name,base64:incoming.base64,bindings:incoming.bindings,consumerReference:incoming.consumerReference};
- const returnPreview=await saved("10-return-preview",()=>query(workspace,"projection.return.preview",{...returnFields,versionId:created.version.id}));
+ let returnPreview=await saved("10-return-preview",()=>query(workspace,"projection.return.preview",{...returnFields,versionId:created.version.id}));
+ returnPreview={returnSha256:returnPreview.returnSha256,source:returnPreview.source,changedRows:returnPreview.changedRows};globalThis.gc?.();
  const applied=await action(workspace,"11-return-apply","projection.return.apply",{...returnFields,expectedHeadId:created.version.id,expectedReturnSha256:returnPreview.returnSha256,decisions:incoming.decisions,author:input.author,note:"Explicit original-grid keep/adopt decisions from the retained programme input."});
- const corrected=await projection(workspace,projectionId,applied.version.id);
+ let corrected=await projection(workspace,projectionId,applied.version.id);
  need(corrected.returns.some(r=>r.id===applied.return.id&&r.source.sha256===returnPreview.source.sha256),"The complete original returned file and decisions are not retained.");
  if(input.mode==="public-charlie"&&!input.returned){
   const selected=parseGrid(actualNative.bytes,{format:"json-v4"}).grid,returned=parseGrid(Buffer.from(incoming.base64,"base64"),{format:"json-v4"}).grid;
   need(equal(corrected.grid.rows[incoming.keptRowIndex],selected.rows[incoming.keptRowIndex])&&equal(corrected.grid.rows[incoming.adoptedRowIndex],returned.rows[incoming.adoptedRowIndex]),"The original explicit keep/adopt decisions were not applied to complete rows.");
  }
- await artifact("return-comparison.json",bytes(await completeComparison(workspace,"12-compare",projectionId,created.version.id,applied.version.id)));
+ corrected=null;globalThis.gc?.();
+ await completeComparison(workspace,"12-compare",projectionId,created.version.id,applied.version.id);
  await action(workspace,"13-corrected-review","projection.review",{projectionId,expectedHeadId:applied.version.id,decision:"ready",author:input.author,note:"Review the source-bound corrected projection, including kept original cells."});
  await reports(workspace,"14-after",projectionId,applied.version.id);
  const first=await deliver(workspace,"15-first-complete-workspace",{kind:"workspace"});
- const receiverOneDirectory=join(root,"receiver-one"),receiverOne=await received(first.bytes,receiverOneDirectory,"16-receiver-one");
+ const receiverOneDirectory=join(root,"receiver-one"),receiverOne=await received(await plainRead(first.file.path),receiverOneDirectory,"16-receiver-one");
  sameSource(await receiverOne.originalSource(expectedSha),sourceIdentity);
- const receiverOneBase=await projection(receiverOne,projectionId,applied.version.id);
+ let receiverOneBase=await projection(receiverOne,projectionId,applied.version.id);
  const recipientProfile=copy(receiverOneBase.profile);recipientProfile.description+="\nIndependent receiver one operator edit "+input.operationId+".";
  const recipient=await action(receiverOne,"17-recipient-edit","projection.save",{projectionId,expectedHeadId:applied.version.id,modelId:receiverOneBase.modelId,versionId:receiverOneBase.modelVersionId,profile:recipientProfile,author:input.author,note:"Independent editable receiving; complete earlier source and return history retained."});
  await action(receiverOne,"18-recipient-review","projection.review",{projectionId,expectedHeadId:recipient.version.id,decision:"ready",author:input.author,note:"Review the independent recipient's explicit local edit."});
+ receiverOneBase=null;workspace.stateCache=null;globalThis.gc?.();
  let browser=null,firstRecipientVersion=recipient.version.id;
  if(input.browser){
+  await progress("browser","started");receiverOne.stateCache=null;globalThis.gc?.();
   const module=await import(pathToFileURL(join(receiverOneDirectory,"application","PROJECTION_BROWSER.mjs")).href);
   browser=await module.runProjectionBrowser({schema:PROJECTION_BROWSER_SCHEMA,operationId:uuid(input.operationId+"/browser"),directory:receiverOneDirectory,outputDirectory:join(root,"browser"),
    workspaceId:originalWorkspace.workspaceId,modelId:model.model.id,projectionId,versionId:recipient.version.id,author:input.author,
    playwrightModule:input.browser.module,chromiumExecutable:input.browser.executable});
+  await progress("browser","completed");globalThis.gc?.();
   firstRecipientVersion=browser.versionId;
   for(const item of browser.artifacts)artifacts.push({name:"browser/"+item.path.split("/").at(-1),...item});
  }
  await reports(receiverOne,"19-recipient",projectionId,firstRecipientVersion);
  const second=await deliver(receiverOne,"20-second-complete-workspace",{kind:"workspace"});
- const receiverTwoDirectory=join(root,"receiver-two"),receiverTwo=await received(second.bytes,receiverTwoDirectory,"21-receiver-two");
- const receiverTwoBase=await projection(receiverTwo,projectionId,firstRecipientVersion),secondProfile=copy(receiverTwoBase.profile);
+ const receiverTwoDirectory=join(root,"receiver-two"),receiverTwo=await received(await plainRead(second.file.path),receiverTwoDirectory,"21-receiver-two");
+ let receiverTwoBase=await projection(receiverTwo,projectionId,firstRecipientVersion);
+ const secondProfile=copy(receiverTwoBase.profile);
  secondProfile.description+="\nIndependent receiver two operator edit "+input.operationId+".";
  const secondEdit=await action(receiverTwo,"22-second-recipient-edit","projection.save",{projectionId,expectedHeadId:firstRecipientVersion,modelId:receiverTwoBase.modelId,versionId:receiverTwoBase.modelVersionId,profile:secondProfile,author:input.author,note:"Second independently restored application edit with original source history."});
  await action(receiverTwo,"23-second-recipient-review","projection.review",{projectionId,expectedHeadId:secondEdit.version.id,decision:"ready",author:input.author,note:"Review the second recipient's explicit local edit."});
+ receiverTwoBase=null;receiverOne.stateCache=null;globalThis.gc?.();
  await reports(receiverTwo,"24-second-recipient",projectionId,secondEdit.version.id);
  const third=await deliver(receiverTwo,"25-final-complete-workspace",{kind:"workspace"});
  const reopenOne=await cold(receiverOne,"26-first-cold-reopen",sourceIdentity,projectionId,firstRecipientVersion);
@@ -228,7 +305,7 @@ export async function runProjectionReceiving(input){
   counts:firstPreview.counts,returnChangedRows:returnPreview.changedRows,actions,artifacts,
   archives:[first.file,second.file,third.file],receivers:[{directory:receiverOneDirectory,...reopenOne},{directory:receiverTwoDirectory,...reopenTwo}],browser,
   meaning:"Actual local source, model, typed projection, original-store publication, explicit correction, complete v4 export and two independent editable receiving journeys. No remote station write or customer acceptance is inferred."};
- await retain(join(root,"COMPLETE.json"),result);return result;
+ await retain(join(root,"COMPLETE.json"),result);await progress("programme","completed");return result;
 }
 export async function main(argv=process.argv.slice(2)){
  need(argv.length===2&&argv[0]==="--input","Use --input COMPLETE_PROGRAMME_JSON.");
