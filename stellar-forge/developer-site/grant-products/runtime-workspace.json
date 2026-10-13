@@ -497,13 +497,19 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-input-set-format.mjs",
-      "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+      "commit": "b5e3f793a71578a41e40dcbab9086557e38d56cf",
       "editions": [
         {
           "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
           "git_blob": "7ac35b97aef5b8a79a2c2e25e2ffc55c2058e4bd",
           "bytes": 4266,
           "sha256": "37df4314c1d8a2793a0fa4aa33ee3d1bbc5d9ced889099aa8786da4207f796c6"
+        },
+        {
+          "commit": "b5e3f793a71578a41e40dcbab9086557e38d56cf",
+          "git_blob": "7a81b094b566912d0852f97c5e1af3195e903b01",
+          "bytes": 4427,
+          "sha256": "6687dbf0549734c037c7973428e845694d4f66e2b9e10d389006e99e2ccfe441"
         }
       ]
     },
