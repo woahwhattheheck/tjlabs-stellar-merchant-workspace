@@ -288,8 +288,8 @@
     },
     {
       "path": "client.mjs",
-      "bytes": 25143,
-      "sha256": "f96ca311b41f7e69696a1f2380cc0b7b80b48aa23a42c85c2254ca715f86ba35"
+      "bytes": 25214,
+      "sha256": "620e5a4dbb9dab6f0e2fe1ab295234f489bcfcdd0306e0aed79f7deea37bc0f0"
     },
     {
       "path": "LICENSE",

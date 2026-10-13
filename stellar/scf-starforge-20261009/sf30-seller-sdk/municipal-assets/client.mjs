@@ -72,7 +72,8 @@ export class MunicipalAssetClient {
     await privateDirectory(frozen.operationDirectory);
     const connection=await readConnection(frozen.request,frozen.startup);
     const client=new MunicipalAssetClient(frozen,connection);
-    await client.#signIn();await client.#assertInstance();return client;
+    try{await client.#signIn();await client.#assertInstance();return client;}
+    catch(error){await client.close().catch(()=>{});throw error;}
   }
   get identity() {
     const c=this.#connection;return clone({url:c.url,binding:c.binding,bindingSha256:c.bindingSha256,
