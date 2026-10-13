@@ -8,7 +8,7 @@ const script=value=>value.replace(/<\/script/gi,'<\\/script');
 const json=value=>JSON.stringify(value).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
 export function renderEditableWorkbookColumns(value,{coreSource,controllerSource,view}={}){
   const choices=reopen(value);
-  need(size(JSON.stringify(choices))<=16*1024*1024,'Keep the complete original choices within the existing 16 MiB file allowance.');
+  // Complete HTML retains oversized unfinished work; serializeChoices alone guards the native return file.
   need(typeof coreSource==='string'&&coreSource.includes('export function createEventWorkbookColumnReview')&&
     coreSource.length<1024*1024,'Include the complete installed Event workbook-column core.');
   need(typeof controllerSource==='string'&&controllerSource.includes("schema:'stellar-forge.event-workbook-editor.v1'")&&
