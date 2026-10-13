@@ -2,11 +2,14 @@
 const $=id=>document.getElementById(id);
 const state={token:location.hash.slice(1),host:null,payload:null,selected:null,selectedId:null,
   selectedOffset:0,listOffset:0,listEpoch:0,selectionEpoch:0,operation:null,operationTimer:null,
-  followId:null,sourceBusy:false,restoreSource:null,pendingReads:0,datasetRead:0,restoreRead:0,exampleRead:0};
+  followId:null,sourceBusy:false,restoreSource:null,pendingReads:0,datasetRead:0,restoreRead:0,exampleRead:0,assembly:null,assemblyEpoch:0,assemblySelected:null,assemblyComposition:null,assemblyStaging:false};
 const MiB=1048576,HASH=/^[a-f0-9]{64}$/;
 const titles={stage:'Preparing complete source documents',restore:'Receiving the original source plan',
   prepare:'Preparing the original merchant price',run:'Rendering the saved document set',
-  receive:'Receiving existing paid jobs',export:'Exporting the complete received Collection'};
+  receive:'Receiving existing paid jobs',export:'Exporting the complete received Collection',
+  'assembly-stage':'Preparing the complete ordered PDF bundle','assembly-prepare':'Preparing the original assembly price',
+  'assembly-run':'Assembling at the saved price','assembly-receive':'Receiving original assembly jobs',
+  'assembly-export':'Exporting the complete PDF bundle'};
 function node(tag,text,className){
   const value=document.createElement(tag);if(text!==undefined)value.textContent=text;
   if(className)value.className=className;return value;
@@ -248,6 +251,148 @@ function drawExports(selected){
     card.append(links);$('exports').append(card);
   }
 }
+
+function assemblySelection(kind,extra={}){
+  const selected=state.selected,value=state.assembly;
+  if(!selected||!value||state.assemblyComposition!==selected.id)
+    throw Error('Open the saved PDF bundle first.');
+  return {id:selected.id,sourceSha256:selected.sourceSha256,assemblyId:value.id,
+    assemblySha256:value.sourceSha256,kind,...extra};
+}
+function drawAssemblyList(selected){
+  clear($('assembly-list'));
+  const changed=state.assemblyComposition!==selected.id;
+  if(changed){
+    state.assembly=null;state.assemblySelected=null;state.assemblyComposition=selected.id;
+    state.assemblyEpoch++;$('assembly-detail').hidden=true;
+    $('assembly-id').value='bundle-'+stamp();$('assembly-name').value=selected.name+' — PDF bundle';
+    $('assembly-title').value='Invoice and report bundle';$('assembly-task').value=selected.id;
+    $('assembly-origin').value=selected.provider==='pdfmint'?selected.merchantOrigin:'';
+    $('assembly-order').value='';
+  }
+  const chosen=$('assembly-template').value;clear($('assembly-template'));
+  const all=node('option','All document templates');all.value='';$('assembly-template').append(all);
+  for(const template of selected.request.templates??[]){
+    const option=node('option',template.id);option.value=template.id;$('assembly-template').append(option);
+  }
+  if([...$('assembly-template').options].some(option=>option.value===chosen))$('assembly-template').value=chosen;
+  for(const item of selected.assemblies??[]){
+    const button=node('button',item.name??item.id);button.type='button';
+    button.addEventListener('click',()=>guard(()=>loadAssembly(item.id,item.sourceSha256)));
+    $('assembly-list').append(button);
+  }
+  $('assembly-stage').disabled=state.assemblyStaging||!selected.native||Boolean(selected.active);
+}
+function drawAssembly(value){
+  state.assembly=value;$('assembly-detail').hidden=false;
+  $('assembly-current-name').textContent=value.request.name;
+  $('assembly-counts').textContent=value.counts.originalFiles+' complete source PDFs · '+value.counts.volumes+
+    ' ordered volumes · '+value.counts.paidMerges+' paid assemblies · '+value.counts.unchangedVolumes+' unchanged PDF volumes';
+  $('assembly-source-sha').textContent='Full source SHA256 '+value.sourceSha256;
+  clear($('assembly-price'));
+  for(const total of value.native?.totals??[]){
+    const box=node('div',undefined,'price-total');
+    box.append(node('strong',total.maximumAtomic+' atomic units maximum · '+total.documents+' assembly requests'));
+    const details=node('dl');detailsRow(details,'Network',total.network);detailsRow(details,'Asset',total.asset);
+    detailsRow(details,'Recipient',total.payTo);detailsRow(details,'Payment flow',total.paymentFlow);
+    box.append(details);$('assembly-price').append(box);
+  }
+  if(!value.counts.paidMerges)$('assembly-price').append(node('p',
+    'These volumes retain their original PDFs. No supplier merge or new native purchase is needed.'));
+  else if(!value.native)$('assembly-price').append(node('p','Prepare the actual assembly merchant quote before purchasing.'));
+  $('assembly-price-sha').textContent=value.native?'Exact native plan SHA256 '+value.native.planSha256:'';
+  const busy=state.operation?.state==='RUNNING'&&state.operation.compositionId===state.selectedId;
+  $('assembly-prepare').disabled=busy||value.counts.paidMerges===0;
+  $('assembly-run').disabled=busy||!value.native||value.complete;
+  $('assembly-receive').disabled=busy||!value.native;
+  $('assembly-export').disabled=busy||!value.complete;
+  clear($('assembly-volumes'));
+  for(const volume of value.volumes){
+    const row=node('tr'),pdf=node('td');
+    if(volume.received)pdf.append(linkDownload('Download volume',assemblySelection('assembly-pdf',{volumeId:volume.id})));
+    else pdf.textContent='Awaiting original receiving';
+    row.append(node('td',volume.index),node('td',volume.fileIds.join(', ')),
+      node('td',volume.kind==='original'?'Original PDF':'Paid assembly'),node('td',human(volume.state)),pdf);
+    $('assembly-volumes').append(row);
+  }
+  clear($('assembly-exports'));
+  for(const saved of value.exports??[]){
+    const card=node('div',undefined,'export-card');card.append(node('strong',
+      saved.complete?'Complete customer PDF bundle':'Continue the original bundle export'));
+    if(!saved.complete){
+      const button=node('button','Continue this export');button.type='button';
+      button.addEventListener('click',()=>guard(()=>assemblyAction('assembly-export',{exportId:saved.id})));
+      card.append(node('p',saved.error?.message??saved.id),button);
+    }else{
+      const links=node('div',undefined,'download-list');
+      const files=[['Download complete PDF bundle','complete-pdf-bundle.tar'],['Readable bundle','index.html'],['All original source PDFs','assembly-plan.json'],
+        ['Complete delivery JSON','assembly-delivery.json'],['Volume CSV','assembly-results.csv']];
+      if(saved.native)files.push(['Original paid Collection','native/documents.tar']);
+      for(const [label,file]of files)links.append(linkDownload(label,assemblySelection('assembly-export',{exportId:saved.id,file})));
+      for(const file of saved.files.filter(file=>file.path.startsWith('pdfs/')))
+        links.append(linkDownload(file.path.split('/').at(-1),assemblySelection('assembly-export',{exportId:saved.id,file:file.path})));
+      card.append(links);
+    }
+    $('assembly-exports').append(card);
+  }
+}
+async function loadAssembly(id,sha256){
+  const selected=state.selected;if(!selected)throw Error('Select the saved document set.');
+  const row=selected.assemblies?.find(item=>item.id===id);
+  sha256=sha256??row?.sourceSha256;if(!HASH.test(sha256??''))throw Error('Receive the complete saved bundle source first.');
+  const epoch=++state.assemblyEpoch;state.assemblySelected=id;state.assemblyComposition=selected.id;
+  const query=new URLSearchParams({id:selected.id,sourceSha256:selected.sourceSha256,assemblyId:id,assemblySha256:sha256});
+  const result=await api('assembly?'+query.toString());
+  if(epoch!==state.assemblyEpoch||state.selected?.id!==selected.id||
+    state.selected.sourceSha256!==selected.sourceSha256||state.assemblySelected!==id)return;
+  drawAssembly(result);
+}
+async function assemblyAction(kind,extra={}){
+  const input=assemblySelection(undefined,extra);delete input.kind;
+  if(kind==='assembly-run'){
+    if(!HASH.test(state.assembly.native?.planSha256??''))throw Error('Review the original saved assembly price first.');
+    input.planSha256=state.assembly.native.planSha256;
+  }
+  await startOperation(kind,input);
+}
+async function stageAssembly(){
+  if(state.assemblyStaging)throw Error('The original bundle source selection is being read.');
+  const request={schema:'stellar-forge.document-assembly.v1',id:$('assembly-id').value.trim(),
+    name:$('assembly-name').value.trim(),title:$('assembly-title').value.trim(),
+    taskReference:$('assembly-task').value.trim(),merchantOrigin:$('assembly-origin').value.trim(),
+    maxVolumeBytes:10000000,settings:{strict:true}};
+  const selected=state.selected,epoch=state.selectionEpoch;
+  if(!selected?.native)throw Error('Receive the original document PDFs first.');
+  const template=$('assembly-template').value;
+  const explicit=$('assembly-order').value.trim().split(/\s+/).filter(Boolean);
+  state.assemblyStaging=true;$('assembly-stage').disabled=true;
+  try{
+  const items=[];
+  for(let offset=0;offset<selected.page.total;offset+=100){
+    const page=await api('composition?'+new URLSearchParams({id:selected.id,sourceSha256:selected.sourceSha256,
+      offset:String(offset),limit:'100'}).toString());
+    if(epoch!==state.selectionEpoch||state.selected?.id!==selected.id||
+      state.selected.sourceSha256!==selected.sourceSha256)throw Error('The selected document set changed. Reopen its bundle.');
+    if(page.sourceSha256!==selected.sourceSha256||page.page.total!==selected.page.total)
+      throw Error('The original source selection changed.');
+    items.push(...page.documents);
+  }
+  const byId=new Map(items.map(item=>[item.id,item]));
+  const ids=explicit.length?explicit:items.filter(item=>!template||item.templateId===template).map(item=>item.id);
+  if(!ids.length||new Set(ids).size!==ids.length)throw Error('Select each original PDF once in the required order.');
+  for(const id of ids){
+    const item=byId.get(id);if(!item||template&&item.templateId!==template)
+      throw Error('The selected document is outside this template: '+id);
+    if(!item.native?.received)throw Error('Receive the original PDF before assembly: '+item.label);
+  }
+
+  state.assemblySelected=request.id;state.assemblyComposition=selected.id;
+  await startOperation('assembly-stage',{id:selected.id,sourceSha256:selected.sourceSha256,
+    assemblyId:request.id,request,documentIds:ids});
+  }finally{state.assemblyStaging=false;
+    $('assembly-stage').disabled=!state.selected?.native||Boolean(state.selected?.active);}
+}
+
 function drawSelection(selected){
   $('new-panel').hidden=true;$('saved-panel').hidden=false;
   $('saved-title').textContent=selected.name;$('saved-id').textContent=selected.id+' · '+selected.provider+' · '+selected.merchantOrigin;
@@ -260,7 +405,7 @@ function drawSelection(selected){
   clear($('input-downloads'));
   for(const file of selected.sourceFiles.filter(file=>['dataset','configuration','template'].includes(file.role)))
     $('input-downloads').append(linkDownload('Download '+file.path.split('/').at(-1),selection('source',{file:file.path})));
-  drawPrice(selected);drawCounts(selected);drawDocuments(selected);drawExports(selected);markSelected();
+  drawPrice(selected);drawCounts(selected);drawDocuments(selected);drawExports(selected);drawAssemblyList(selected);markSelected();
 }
 async function loadComposition(id,offset=0){
   const epoch=++state.selectionEpoch;state.selectedId=id;state.selectedOffset=offset;state.followId=id;
@@ -269,6 +414,8 @@ async function loadComposition(id,offset=0){
   state.selected=selected;drawSelection(selected);
   history.replaceState(null,'','/documents/?id='+encodeURIComponent(id)+'#'+state.token);
   if(selected.active)watch(selected.active);
+  if(state.assemblySelected&&selected.assemblies?.some(item=>item.id===state.assemblySelected))
+    await loadAssembly(state.assemblySelected);
 }
 function drawOperation(operation){
   $('operation-panel').hidden=false;$('operation-title').textContent=titles[operation.kind]||human(operation.kind);
@@ -298,6 +445,7 @@ function drawOperation(operation){
     $('stage-button').disabled=busy||state.pendingReads>0;
   }
   if(state.selected)drawPrice(state.selected);
+  if(state.assembly&&state.assemblyComposition===state.selectedId)drawAssembly(state.assembly);
 }
 function watch(operation){
   if(state.operationTimer){clearTimeout(state.operationTimer);state.operationTimer=null;}
@@ -312,6 +460,7 @@ async function pollOperation(id){
     watch(result);
     if(result.state!=='RUNNING'){
       await refreshList();
+      if(result.result?.assemblyId&&state.followId===result.compositionId)state.assemblySelected=result.result.assemblyId;
       if(state.followId===result.compositionId)await loadComposition(result.compositionId,state.selectedOffset);
     }
   }catch(error){
@@ -339,6 +488,15 @@ async function selectedAction(kind){
   }
   await startOperation(kind,input);
 }
+
+
+$('assembly-form').addEventListener('submit',event=>{event.preventDefault();guard(stageAssembly);});
+$('assembly-refresh').addEventListener('click',()=>guard(()=>loadAssembly(state.assemblySelected)));
+$('assembly-prepare').addEventListener('click',()=>guard(()=>assemblyAction('assembly-prepare')));
+$('assembly-run').addEventListener('click',()=>guard(()=>assemblyAction('assembly-run')));
+$('assembly-receive').addEventListener('click',()=>guard(()=>assemblyAction('assembly-receive')));
+$('assembly-export').addEventListener('click',()=>guard(()=>assemblyAction('assembly-export')));
+$('assembly-source').addEventListener('click',()=>guard(()=>download(assemblySelection('assembly-source'))));
 
 $('source-form').addEventListener('submit',event=>{event.preventDefault();guard(async()=>{
   if(state.pendingReads)throw Error('Wait for the complete selected files to finish loading.');

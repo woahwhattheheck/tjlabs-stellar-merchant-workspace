@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "document-merchant",
-  "description": "Install a complete document merchant and customer browser: CSV/JSON datasets, document templates, original native prices, MintPDF/snaplab/PDFMint rendering, complete PDF/source receiving and portable Collections.",
+  "description": "Install a complete document merchant and customer browser: CSV/JSON datasets, document templates, original native prices, MintPDF/snaplab/PDFMint rendering, complete PDF/source receiving and portable Collections. Ordered PDF assembly preserves complete sources and delivers all received volumes in one customer archive.",
   "components": [
     "products/document-merchant"
   ],
@@ -35,7 +35,10 @@
     "products/document-merchant/composition-workspace.d.mts",
     "products/document-merchant/composition-server.d.mts",
     "products/document-merchant/composition-service.d.mts",
-    "products/document-merchant/GRANT.md"
+    "products/document-merchant/GRANT.md",
+    "products/document-merchant/ASSEMBLY.md",
+    "products/document-merchant/assembly.d.mts",
+    "products/document-merchant/examples/ordered-pdfs.json"
   ],
   "commands": {
     "document-merchant": "products/document-merchant/cli.mjs"
@@ -69,7 +72,12 @@
     "./document-merchant/composition/service": {
       "types": "./source/products/document-merchant/composition-service.d.mts",
       "import": "./source/products/document-merchant/composition-service.mjs"
-    }
+    },
+    "./document-merchant/assembly": {
+      "types": "./source/products/document-merchant/assembly.d.mts",
+      "import": "./source/products/document-merchant/assembly.mjs"
+    },
+    "./document-merchant/assembly/cli": "./source/products/document-merchant/assembly-cli.mjs"
   },
   "applicationProviders": {
     "document-merchant": "products/document-merchant/application-provider.mjs",
