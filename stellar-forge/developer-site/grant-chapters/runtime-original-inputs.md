@@ -61,6 +61,50 @@ A complete CLI handoff contains both full parent and current source trees, their
 
 The installed desktop and phone view exposes the same review, capture, continuation and saved-source selection. Its complete native receiving programme follows one real original working set through browser capture/reload/download, CLI export, independent receipt and workspace backup/restoration; the original equipped operator retains the rendered control and reopened-file results in the same saved course.
 
+#### Find and continue the original installation or operating request
+
+As a customer uses an installation, its Runtime retains earlier preparation,
+installation, inspection, application and managed-command operations. The
+**Operations** desk makes that history usable as the same workspace grows.
+Search by the actual request, work type, runtime, Application or source build;
+filter active work, completed work or operations needing attention; and page
+through the retained records without opening every historical result.
+
+Selecting **Open complete operation** reads that exact original request's full
+current record, result and error details. The operator can download the complete
+JSON for handover, open the original worker output, or follow the existing row
+control back to its Runtime, managed home, Application, transfer or source build.
+Interrupted work continues through its original recovery request and owner.
+The current process and lease observations determine activity throughout.
+
+The desk retains its filters, page boundaries and selected request for that
+workspace in the browser. Reopening reads the selected original again. If a
+refresh fails, the prior full result remains readable with the current read
+error. A late response from another workspace or an earlier selection cannot
+replace the operator's current work. New operation results can be opened
+directly even when an older history page remains selected.
+
+This is also an operating-efficiency improvement. Ordinary workspace refresh
+returns compact status descriptors; complete historical result bodies are read
+when selected or when an existing detailed workflow needs them. Unchanged
+original JSON can be reused within fixed memory and source-byte limits after
+checking the same opened file's identity. Current native process and lease
+checks remain in their original reader.
+
+The installed `operations` command and authenticated history API use the same
+search, grouping and page-boundary model as the browser. The default full
+workspace API remains available to existing integrations. Customer handover
+therefore combines a manageable history view with the original complete records
+and the existing command and recovery interfaces.
+
+The current companion-input receiving programme includes this continuation
+after restoring its complete actual workspace and Application. It traverses
+that original history, reopens and downloads a selected record, retains the
+same selection across reload, and operates desktop and phone layouts. The
+equipped producer opens and views the actual screens and downloaded file as part
+of the existing customer receiving operation.
+
+
 #### Complete maintained source
 
 - [Complete original application files and continuing customer workflow](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/18434e93edd99b5bd0ed7bdf19628112c17e483d/stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_INPUTS.md)
@@ -87,3 +131,18 @@ The installed desktop and phone view exposes the same review, capture, continuat
 - [Typed exact edited-source and original receiving contract](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0/stellar/scf-starforge-20261009/distribution/runtime-workspace/application-input-set-editions.d.mts)
 - [Customer edited-source editions, complete handoff and independent reopening](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0/stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_INPUT_EDITIONS.md)
 - [Whole original browser capture, CLI handoff, independent receive and backup/restore](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0/stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/APPLICATION_INPUT_EDITIONS_RECEIVE.mjs)
+
+
+- [Bounded unchanged original operation records with fresh opened-file admission](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/operation-records.mjs)
+- [Original Runtime model, complete status and compact history API](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs)
+- [Authenticated original history/status and installed browser routes](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/server.mjs)
+- [Shared original operation grouping, search and cursor selection](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/public/operation-history-model.mjs)
+- [Desktop and phone history, complete selected record and same-workspace reopening](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/public/operation-history.mjs)
+- [Complete original Runtime host and recovery-control integration](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/public/app.mjs)
+- [Installed operation history, complete status and original Runtime commands](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/cli.mjs)
+- [Complete installed Runtime browser source registration](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/browser-assets.json)
+- [Readable original Runtime history and full details at desktop and narrow widths](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/public/style.css)
+- [Same native workspace history, complete operation download and desktop/phone receiving](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/OPERATION_HISTORY_RECEIVE.mjs)
+- [Original companion folder through native Applications, browser, CLI and backup/restore](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/APPLICATION_INPUT_SETS_RECEIVE.mjs)
+- [Whole original operation search, read, download, recovery and receiving workflow](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/OPERATION_HISTORY.md)
+- [Complete original Runtime product selection, installation and operating workflow](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/README.md)
