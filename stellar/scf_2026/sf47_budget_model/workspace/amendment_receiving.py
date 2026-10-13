@@ -962,7 +962,6 @@ def continue_packages(root, route):
         step("complete_case_export", complete_export)
         step("full_original_case_receiving", receive_full_case)
         step("receiving_replay_reopen_handover", replay_and_complete_handover)
-        state["status"] = "PASS"
         state.pop("activePhase", None)
         state.pop("error", None)
         result = {"schema": state["schema"] + ".result", "status": "PASS", "operationId": OPERATION,
@@ -970,6 +969,7 @@ def continue_packages(root, route):
                   "phases": state["phases"], "artifacts": state["artifacts"],
                   "scope": "Complete original WALKTHROUGH continuation: explicit package attribution, source-bound Completion, historical selections and complete native receiving."}
         atomic(output / "package-receiving-result.json", (canonical(result) + "\n").encode())
+        state["status"] = "PASS"
         persist()
         print(json.dumps({"status": "PASS", "continuation": True, "phases": len(state["phases"]),
                           "result": str(output / "package-receiving-result.json")}), flush=True)
