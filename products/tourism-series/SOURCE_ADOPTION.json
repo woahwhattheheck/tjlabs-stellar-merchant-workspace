@@ -1,0 +1,107 @@
+{
+  "schema": "stellar-forge.tourism-source-adoption.v1",
+  "source": {
+    "repository": "woahwhattheheck/public-commons-sprint-2026",
+    "commit": "96e4a1b7d561578ce7966c2418a72d784216692a",
+    "pullRequest": 4623
+  },
+  "contract": "Complete original offline application and source preserved byte-for-byte. The source-owned Installation join adds customer scope and two-workspace receiving through the original writer.",
+  "files": [
+    {
+      "path": "services/tourism-series-workspace/engine.mjs",
+      "bytes": 53796,
+      "sha256": "a5f8bc82fb053ec8ecae51692ed1179f445af672452fbf8b93b75a9c9caff227",
+      "blob": "68b838e7d35b91830e674b6734c3787191727f55"
+    },
+    {
+      "path": "services/tourism-series-workspace/sha256.mjs",
+      "bytes": 18024,
+      "sha256": "c09f19a6d03f39a4f46d4023ea5d7a90b1d472ee89975f189ebd53bf21d135a5",
+      "blob": "89e70f039fcb472c12540243cc9550f23b59b645"
+    },
+    {
+      "path": "services/tourism-series-workspace/cli.mjs",
+      "bytes": 10910,
+      "sha256": "9c801c2cc48af2f93bf9e525fa115c0e4aefd76cd543f804650a5e6d82675189",
+      "blob": "6a2f1dee9d1e9fece8bf19f2a7c29730842d4182"
+    },
+    {
+      "path": "services/tourism-series-workspace/API.md",
+      "bytes": 4916,
+      "sha256": "df34599c2deac2fa8072cef4e3649ac384b0c8503cd7f31f85014cc6baa294f3",
+      "blob": "816a9821452322f332987aafeb5c87396f1754d2"
+    },
+    {
+      "path": "services/tourism-series-workspace/CORE_OPERATING.md",
+      "bytes": 10555,
+      "sha256": "e459967b93c9b9fc0bfff2a7c98278eab0268c84f44e75eb7b4eb297cbbcad5d",
+      "blob": "8998618e4e55e553f6640de16b71cb1234ee2ad3"
+    },
+    {
+      "path": "services/tourism-series-workspace/templates/observations.csv",
+      "bytes": 172,
+      "sha256": "cb9c191a1fc4fc8e3361ea0a4669482c284c74dd99eca4a13d09a6252b78f1ad",
+      "blob": "4f9b1fe0948fef5aea3f6e730f75b96d5b083e25"
+    },
+    {
+      "path": "services/tourism-series-workspace/template.html",
+      "bytes": 997,
+      "sha256": "6a2eb043895b0fd9d4cb4d39016b75cca2b71cc265a2ebcf491e2b3ada99372a",
+      "blob": "d71c89f6c7709f4a4cb7721e79c0afcfdb7abe5b"
+    },
+    {
+      "path": "services/tourism-series-workspace/style.css",
+      "bytes": 5420,
+      "sha256": "e6a687caaa53fdd8fedb80daece451662e875c25e97720742dc8b0e9551df7e6",
+      "blob": "44acbbcecd79847faa612e49dd29f01970f0efae"
+    },
+    {
+      "path": "services/tourism-series-workspace/portable.mjs",
+      "bytes": 9809,
+      "sha256": "78aed8fed2c3ed94e3025dbe5a63bc2b35af96bc6cc1bc7dec7f1c7de250817d",
+      "blob": "45870547995d85f247b5f1314496849ff4cc98ea"
+    },
+    {
+      "path": "services/tourism-series-workspace/build.mjs",
+      "bytes": 5869,
+      "sha256": "2000bdfece4bed1b2ae3f9880fc32fd0b245f3d1ef0ce70dab349683a2c9718b",
+      "blob": "6681d7e02a89dad389ce9165847f89bae9ab62ba"
+    },
+    {
+      "path": "services/tourism-series-workspace/app.mjs",
+      "bytes": 51060,
+      "sha256": "93eb43d7d1c5354ba496231182c3cae75d32a37fcd9875b9fa9cab8984d3d7a3",
+      "blob": "4c04b450497cb8652429d1e6bd1e1b675de77004"
+    },
+    {
+      "path": "services/tourism-series-workspace/README.md",
+      "bytes": 10693,
+      "sha256": "1c0a13df978e631eb576aeaac4e640488fc20d7e834f2123f13ee5dc1033611b",
+      "blob": "7f889a42d06b6fb461763331190da243c710c984"
+    },
+    {
+      "path": "services/tourism-series-workspace/BROWSER_OPERATING.md",
+      "bytes": 6821,
+      "sha256": "99afed481e4a54dad8ba92c8d13ff63f3d9b15621b7c35face1fddaa4971d4ac",
+      "blob": "e0d2331428e52c879ea5f47d76663dba72ea8b64"
+    },
+    {
+      "path": "services/tourism-series-workspace/run_browser_receiving.mjs",
+      "bytes": 35115,
+      "sha256": "46a3384f92ee97137f5b74f5c268c31201985142d0982273dbfcee22ea54ab2d",
+      "blob": "c041902743152b840bdfd1ca1806d7b641c79eae"
+    },
+    {
+      "path": "services/tourism-series-workspace/Tourism_Series_Workspace.html",
+      "bytes": 383106,
+      "sha256": "41e9e4ab543af4b6c55175da051fc642000343e79536831797baf8ef76a4f3e0",
+      "blob": "a1b0410e97d99ab36f5a02082353cc92fb952de1"
+    },
+    {
+      "path": "services/migration-receiving/continuation.mjs",
+      "bytes": 15167,
+      "sha256": "afdc8cca5af49f6de50f6195e1827c6ad5f4dd355053780455b3fef53e753142",
+      "blob": "37533d2bbcbecb1a8238d87c237e6f0af5434ef6"
+    }
+  ]
+}
