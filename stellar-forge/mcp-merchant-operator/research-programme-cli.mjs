@@ -135,7 +135,7 @@ async function outputFile(file,value,owners){
   try{await source.close();owners.delete(source);}catch(error){primary??=error;}
   if(primary)throw primary;return {path,bytes:body.length,sha256,reused:true};
  }
- return writePortableFile(path,{body,filename:'research-programme-result.json',contentType:'application/json'});
+ return writePortableFile(path,{body:[body],filename:'research-programme-result.json',contentType:'application/json'});
 }
 /** Complete process lifetime, including output and retryable original cleanup.
  * Injected streams/factory support embedding without taking a host listener.

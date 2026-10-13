@@ -295,6 +295,11 @@ export async function receiveQcewCustomerState(directory, value, merchant = null
           jsonBytes(retained.receiving).equals(jsonBytes(selected.receiving))),
         'This receiving project retains another original customer request.', 'QCEW_PURCHASE_CONFLICT', 409);
     }
+    // Bind this complete inventory before its first request write, including an empty inventory.
+    await exactJson(resolve(directory), 'county-customer-receiving.json', {
+      schema: 'stellar-forge.qcew-customer-receiving.v1',
+      publicationId: value.publicationId, customerStateSha256: digest(value)
+    });
     for (const record of value.requests) {
       const root = await privateDirectory(join(resolve(directory), 'customer-requests', record.purchase.intentId));
       await exactJson(root, 'prepared.json', record.purchase);

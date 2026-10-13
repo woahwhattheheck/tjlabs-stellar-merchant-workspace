@@ -2,11 +2,12 @@
 import {resolve,dirname,join,sep,isAbsolute} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
+import {lstat,readdir,unlink} from 'node:fs/promises';
 import {ResearchProgrammeOperator,readResearchProgrammeOperatorConfiguration,RESEARCH_PROGRAMME_OPERATOR_COMMANDS}
  from '../../../../stellar-forge/mcp-merchant-operator/research-programme-operator.mjs';
 import {readResearchHostFile,openResearchSource} from '../research-dossiers/workspace-files.mjs';
 import {writePortableFile} from '../research-dossiers/portable.mjs';
-import {exists} from '../node/store.mjs';
+import {exists,syncDirectory} from '../node/store.mjs';
 import {need,fingerprint} from '../research-dossiers/customer-quotes/contracts.mjs';
 
 const SCHEMA='stellar-forge.research-remote-python.v1',MODE='RESEARCH_PROGRAMME_REMOTE_BRIDGE';
@@ -39,15 +40,37 @@ function streamText(stream,text){
   });}catch(error){cleanup();reject(error);}
  });
 }
+async function finishPublication(path,owners){
+ const info=await lstat(path,{bigint:true});
+ need(info.isFile(),'RESEARCH_REMOTE_RETAINED_FILE_CHANGED');
+ if(info.nlink>1n){
+  for(const name of await readdir(dirname(path))){
+   if(!name.startsWith('.portable-write-'))continue;
+   const stage=join(dirname(path),name);let candidate;
+   try{candidate=await lstat(stage,{bigint:true});}catch(error){if(error.code==='ENOENT')continue;throw error;}
+   if(candidate.isFile()&&candidate.dev===info.dev&&candidate.ino===info.ino)await unlink(stage);
+  }
+  need((await lstat(path,{bigint:true})).nlink===1n,'RESEARCH_REMOTE_RETAINED_FILE_LINK_CHANGED');
+ }
+ await syncDirectory(dirname(path));
+}
+async function retainedJSON(path,maximum,owners){
+ const bytes=await readResearchHostFile(path,maximum);
+ // This retained complete JSON is inspected by the existing request/hash
+ // checks before any engine call. Only its original same-inode stage retires.
+ await finishPublication(path,owners);
+ return json(bytes);
+}
 async function exactFile(path,body,owners){
  if(await exists(path)){
   const source=await openResearchSource(path,body.length,{sha256:sha(body)});owners.add(source);
   let primary;try{need(source.bytes===body.length,'RESEARCH_REMOTE_RETAINED_FILE_CHANGED');}catch(error){primary=error;}
   try{await source.close();owners.delete(source);}catch(error){primary??=error;}
   if(primary)throw primary;
+  await finishPublication(path,owners);
   return {path,bytes:body.length,sha256:sha(body)};
  }
- const result=await writePortableFile(path,{body,filename:'research-remote-result.json',contentType:'application/json'});
+ const result=await writePortableFile(path,{body:[body],filename:'research-remote-result.json',contentType:'application/json'});
  return {path,bytes:result.bytes,sha256:result.sha256};
 }
 async function verifyFile(file,owners){
@@ -75,7 +98,7 @@ async function work(input,owners,stopped,{operatorFactory}){
  need(same(retainedRequest,request),'RESEARCH_REMOTE_REQUEST_CHANGED');
 
  async function completed(){
-  const value=json(await readResearchHostFile(receipt,1024*1024,{privateFile:true}));
+  const value=await retainedJSON(receipt,1024*1024,owners);
   need(value.schema===SCHEMA&&value.requestSha256===input.requestSha256&&
    value.workspaceId===request.workspaceId&&value.file?.path===reply&&
    (request.command==='export')===(value.exportedFile!==null)&&
@@ -92,7 +115,9 @@ async function work(input,owners,stopped,{operatorFactory}){
   const body=Buffer.from(JSON.stringify(envelope.result)+'\n');
   need(body.length<=REPLY_LIMIT,'RESEARCH_REMOTE_REPLY_LIMIT');
   const file=await exactFile(reply,body,owners);
-  const exportedFile=request.command==='export'?envelope.result?.file:null;
+  const selectedFile=request.command==='export'?envelope.result?.file:null;
+  const exportedFile=selectedFile?{path:selectedFile.path??selectedFile.file,
+   bytes:selectedFile.bytes,sha256:selectedFile.sha256}:null;
   if(exportedFile){need(exportedFile.path===request.file,'RESEARCH_REMOTE_FILE_CHANGED');await verifyFile(exportedFile,owners);}
   need(request.command!=='export'||exportedFile,'RESEARCH_REMOTE_FILE_CHANGED');
   const result={schema:SCHEMA,requestSha256:input.requestSha256,workspaceId:request.workspaceId,
@@ -101,7 +126,7 @@ async function work(input,owners,stopped,{operatorFactory}){
  }
  // A first full response is retained independently of output-file publication.
  // Finish that exact response after a lost stdout reply or stopped publisher.
- if(await exists(captured))return publish(json(await readResearchHostFile(captured,REPLY_LIMIT+65536,{privateFile:true})));
+ if(await exists(captured))return publish(await retainedJSON(captured,REPLY_LIMIT+65536,owners));
  need(!stopped(),'RESEARCH_REMOTE_STOPPED');
  const selected=await readResearchProgrammeOperatorConfiguration(input.configuration.file);
  need(selected.sha256===input.configuration.sha256&&selected.bytes===input.configuration.bytes,

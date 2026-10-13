@@ -50,9 +50,14 @@ BOOTSTRAP_PATHS = {
     **{"support/official/" + name: None for name in SDK_PINS},
 }
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument("--root", type=Path, default=EXPECTED_ROOT)
+parser.add_argument("--root", type=Path)
+parser.add_argument("--portable", action="store_true")
 args = parser.parse_args()
-ROOT = args.root
+PORTABLE = args.portable
+if PORTABLE:
+    OPERATION = "SCF-X402API-MERCHANT-PORTABLE-PROJECT-7DE2-20261012"
+    EXPECTED_ROOT = Path("/dev/x402api-merchant-portable-7de2-20261012")
+ROOT = args.root if args.root is not None else EXPECTED_ROOT
 if ROOT != EXPECTED_ROOT or ROOT.resolve() != ROOT:
     raise RuntimeError("Use the original installed merchant directory.")
 CONTROL = ROOT / "control"
@@ -63,7 +68,8 @@ RECEIVING = ROOT / "receiving"
 SUPPORT = ROOT / "support"
 DRIVER = SOURCE / (PRODUCT + "installed-receiving.mjs")
 ORIGINAL_ZIP = ROOT / "delivery/inputs/SCF_X402API_Merchant_Complete_Native_Receiving_20261012.zip"
-ARCHIVE = ROOT / "delivery/SCF_X402API_Merchant_Installed_Application_20261012.zip"
+ARCHIVE = ROOT / ("delivery/SCF_X402API_Merchant_Portable_Project_20261012.zip" if PORTABLE else
+                  "delivery/SCF_X402API_Merchant_Installed_Application_20261012.zip")
 ORIGINAL_WORKSPACE = ORIGINAL / "receiving/workspace"
 os.umask(0o077)
 sys.dont_write_bytecode = True
@@ -131,7 +137,7 @@ def raw(path, maximum=16 * 1024 * 1024):
 
 def load(path):
     try:
-        return json.loads(raw(path))
+        return json.loads(raw(path, 64 * 1024 * 1024 if PORTABLE else 16 * 1024 * 1024))
     except FileNotFoundError:
         return None
 
@@ -314,7 +320,8 @@ def validate_input():
     selected = json.loads(body)
     need(selected.get("schema") == "stellar-forge.merchant-installed-foreground-input.v1"
          and selected.get("operation") == OPERATION and selected.get("root") == str(ROOT)
-         and selected.get("originalRoot") == str(ORIGINAL), "Keep the original installed receiving input.")
+         and selected.get("originalRoot") == str(ORIGINAL)
+         and selected.get("portable", False) is PORTABLE, "Keep the original selected receiving mode and input.")
     need(selected.get("originalArchive") == ORIGINAL_IDENTITY, "Keep the exact saved original workspace.")
     source = selected["source"]
     need(source.get("metadataPath") == "control/git-metadata.json",
@@ -354,8 +361,16 @@ def validate_input():
             "runtime-install.mjs", "runtime-profile.mjs", "runtime-unpack.py",
             "runtime-workspace/storage.mjs")),
     }
+    if PRODUCT + "portable-receiving.mjs" in entries:
+        required_bootstrap.add(PRODUCT + "portable-receiving.mjs")
+    if PORTABLE:
+        required_bootstrap.update(PRODUCT + name for name in (
+            "portable_native.py", "portable.mjs", "portable-receiving.mjs", "server.mjs", "workspace.mjs",
+            "store.mjs", "protocol.mjs", "provider.mjs", "application-inputs.mjs",
+            "fulfillment/file-delivery.mjs", "web/index.html", "web/app.mjs", "web/style.css"))
+        required_bootstrap.add("stellar/scf-starforge-20261009/sf30-seller-sdk/source_bundle_archive.py")
     need(required_bootstrap <= required_paths,
-         "Select the complete original installed programme's bootstrap import closure.")
+         "Select the complete original programme's bootstrap and portable source closure.")
     for relative, row in by_path.items():
         source_path = row["sourcePath"]
         if source_path is None:
@@ -844,7 +859,8 @@ def native_arguments():
     return [runtime["node"], "--max-old-space-size=256", str(DRIVER),
             "--repo", str(CACHE / "repository.git"), "--source-commit", selected["source"]["commit"],
             "--original", str(ORIGINAL), "--root", str(RECEIVING),
-            "--playwright", runtime["playwright"], "--chromium", runtime["chromium"]]
+            "--playwright", runtime["playwright"], "--chromium", runtime["chromium"],
+            *(["--portable"] if PORTABLE else [])]
 
 def sqlite_value(value):
     if isinstance(value, int):
@@ -906,6 +922,112 @@ def verify_original_business(complete):
     finally:
         connection.close()
 
+def portable_receiving_files(complete):
+    result = complete.get("portable")
+    need(isinstance(result, dict)
+         and result.get("schema") == "stellar-forge.merchant-portable-receiving-journey.v1"
+         and result.get("state") == "COMPLETE", "Retain the complete original portable receiving journey.")
+    exported, onward = result["export"], result["onward"]
+    store_id = result["storeId"]
+    need(isinstance(store_id, str) and store_id and exported.get("storeId") == store_id
+         and exported.get("operation") == result.get("originalExportOperation")
+         and complete["browser"].get("project") == exported,
+         "Keep the same original browser-selected project and store.")
+    manifests = ((result["inspection"], "inspect", exported["manifest"]),
+                 (result["receiving"], "receive", exported["manifest"]),
+                 (onward["export"], "export", onward["export"]["manifest"]),
+                 (onward["inspection"], "inspect", onward["export"]["manifest"]),
+                 (onward["receiving"], "receive", onward["export"]["manifest"]))
+    for native, action, manifest in manifests:
+        operation = native.get("operation")
+        need(isinstance(operation, str) and str(uuid.UUID(operation)) == operation
+             and native.get("schema") == "stellar-forge.merchant-portable-result.v1"
+             and native.get("action") == action and native.get("state") == "COMPLETE"
+             and native.get("manifest") == manifest
+             and manifest.get("schema") == "stellar-forge.merchant-portable-project.v1"
+             and manifest.get("original", {}).get("storeId") == store_id,
+             "Keep each complete native project operation and its original manifest.")
+        manifest_raw = (json.dumps(manifest, ensure_ascii=False, sort_keys=True,
+                                   separators=(",", ":"), allow_nan=False) + "\n").encode("utf-8")
+        need(native.get("manifestSha256") == hashlib.sha256(manifest_raw).hexdigest(),
+             "Keep the exact full native manifest behind each portable result.")
+    activation, repeated = result["activation"], result["repeatedReceive"]
+    need(activation.get("beforeBusinessSha256") == activation.get("afterBusinessSha256")
+         and isinstance(activation.get("originalRowsSha256"), str)
+         and activation.get("originalRowsSha256") == result["review"].get("allUserRowsSha256")
+         and activation.get("originalRowsSha256") == result["reopened"].get("allUserRowsSha256")
+         and activation.get("activatedRowsSha256") == repeated.get("retainedRowsSha256")
+         and activation.get("activatedRowsSha256") != activation.get("originalRowsSha256")
+         and repeated.get("reused") is True and repeated.get("operation") == result["receiving"].get("operation"),
+         "Preserve the actual read-only review and later used runtime through the same receiving replay.")
+    expected = {row["merchantOrderId"]: row for row in complete["invoices"]}
+    files = [exported["archive"], exported["manifestFile"], onward["archive"]]
+    review_browser = result["review"]["browser"]
+    need(isinstance(review_browser.get("browser"), str) and review_browser["browser"]
+         and len(review_browser.get("images", [])) >= 3 and len(review_browser.get("downloads", [])) == 10
+         and review_browser.get("pageErrors") == [] and review_browser.get("consoleErrors") == [],
+         "Keep the original received-project browser and all ten result/envelope downloads.")
+    files.extend(review_browser["images"])
+    files.extend(review_browser["downloads"])
+    readings = ((result["review"]["reads"], "review"), (result["reopened"]["reads"], "review"),
+                (activation["reads"], "live"), (onward["reads"], "review"))
+    for reads, mode in readings:
+        invoices = reads.get("invoices")
+        need(reads.get("mode") == mode and isinstance(invoices, list) and len(invoices) == 5
+             and {row.get("merchantOrderId") for row in invoices} == set(expected),
+             "Open only the same five invoices in the recorded receiving mode.")
+        for row in invoices:
+            original = expected[row["merchantOrderId"]]
+            need(all(row.get(key) == original.get(key) for key in
+                     ("paymentId", "reference", "title", "bytes", "sha256", "historySha256"))
+                 and row.get("envelope", {}).get("sha256") == original.get("envelope", {}).get("sha256"),
+                 "Keep original payment, fulfillment, history and envelope identities in every independent opening.")
+            files.extend((row["download"], row["envelope"]))
+    for native in (result["receiving"], onward["receiving"]):
+        received, manifest = native["received"], native["manifest"]
+        need(received.get("storeId") == store_id and received.get("mode") == "review"
+             and received.get("originalRowsSha256") == manifest["snapshot"]["allRowsSha256"]
+             and received.get("sourceSha256") == manifest["source"]["sha256"],
+             "Keep the received original store, snapshot and complete portable source.")
+        files.append({"path": received["sourceArchive"], **{
+            key: manifest["source"][key] for key in ("bytes", "sha256")}})
+        files.append(received["sourceInstallation"])
+    selected = {}
+    for row in files:
+        need(isinstance(row, dict) and isinstance(row.get("path"), str), "Retain each complete portable file reference.")
+        path = Path(row["path"])
+        need(path.is_absolute() and str(path) == row["path"] and ".." not in path.parts and RECEIVING in path.parents,
+             "Keep original portable outputs inside this selected receiving directory.")
+        count = row.get("bytes")
+        need(type(count) is int or isinstance(count, str) and count.isdecimal(),
+             "Retain each original portable file size.")
+        count = int(count)
+        need(0 <= count <= 32 * 1024 * 1024 * 1024 + 16 * 1024 * 1024
+             and isinstance(row.get("sha256"), str) and len(row["sha256"]) == 64
+             and all(character in "0123456789abcdef" for character in row["sha256"]),
+             "Retain the exact original portable file identity.")
+        pin = {"path": str(path), "bytes": count, "sha256": row["sha256"]}
+        if str(path) in selected:
+            need(selected[str(path)] == pin, "One portable result path has conflicting original editions.")
+        selected[str(path)] = pin
+    return [selected[name] for name in sorted(selected)]
+
+
+def verify_portable_inventory(complete, files):
+    selected = {row["path"]: row for row in files}
+    for row in portable_receiving_files(complete):
+        member = "receiving/" + str(Path(row["path"]).relative_to(RECEIVING))
+        archived = selected.get(member)
+        need(isinstance(archived, dict) and archived.get("kind") == "file"
+             and archived.get("bytes") == row["bytes"] and archived.get("sha256") == row["sha256"],
+             "The complete portable artifact is missing a selected original output: " + member)
+    for name in ("portable/complete.json", "portable/received/control/result.json",
+                 "portable/onward-received/control/result.json"):
+        row = selected.get("receiving/" + name)
+        need(isinstance(row, dict) and row.get("kind") == "file" and row.get("bytes", 0) > 0,
+             "Retain the completed independent project receiving records in the whole artifact.")
+
+
 def verify_native_complete(*, lock_held=False):
     complete = load(RECEIVING / "complete.json")
     if complete is None:
@@ -926,11 +1048,14 @@ def verify_native_complete(*, lock_held=False):
          and complete.get("submittedPayments") == 0, "Keep the unchanged original customer outcome.")
     browser = complete["browser"]
     need(isinstance(browser.get("browser"), str) and browser["browser"]
-         and len(browser.get("images", [])) >= 3 and len(browser.get("downloads", [])) == 5
+         and len(browser.get("images", [])) >= 3 and len(browser.get("downloads", [])) == (10 if PORTABLE else 5)
          and browser.get("pageErrors") == [] and browser.get("consoleErrors") == [],
          "Retain the actual complete browser and download result.")
     files = [*browser["images"], *browser["downloads"]]
     files.extend(row["download"] for row in complete["invoices"])
+    if PORTABLE:
+        files.extend(row["envelope"] for row in complete["invoices"])
+        files.extend(portable_receiving_files(complete))
     for row in files:
         path = Path(row["path"])
         need(path.is_absolute() and RECEIVING in path.parents and path.parent.resolve() == path.parent,
@@ -1053,9 +1178,12 @@ def artifact_manifest(complete):
                       "mode": stat.S_IMODE(path.stat().st_mode), **digest(path)})
     names = [row["path"] for row in files]
     need(len(names) == len(set(names)), "Keep one exact selected member for every original path.")
+    if PORTABLE:
+        verify_portable_inventory(complete, files)
     frozen = {"schema": "stellar-forge.merchant-installed-package-selection.v1",
               "operation": OPERATION, "input_sha256": input_sha256,
-              "sourceCommit": selected["source"]["commit"], "nativeResult": complete, "files": files}
+              "sourceCommit": selected["source"]["commit"], "nativeResult": complete, "files": files,
+              **({"portable": True} if PORTABLE else {})}
     write(frozen_path, frozen, original=True)
     return frozen
 
@@ -1068,6 +1196,7 @@ def public_manifest(frozen):
             "input_sha256": input_sha256, "sourceCommit": selected["source"]["commit"],
             "sourceTree": metadata["source"]["tree"], "originalArchive": ORIGINAL_IDENTITY,
             "nativeResult": frozen["nativeResult"],
+            **({"portable": True} if PORTABLE else {}),
             "restoreRoots": {"installed": str(ROOT), "original-workspace": str(ORIGINAL)},
             "files": [{key: value for key, value in row.items() if key != "source"} for row in frozen["files"]]}
 
@@ -1076,7 +1205,7 @@ def verify_artifact(path, expected=None):
         names = archive.namelist()
         need(len(names) == len(set(names)), "The complete installed archive has duplicate members.")
         info = archive.getinfo("DELIVERY_MANIFEST.json")
-        need(info.file_size <= 16 * 1024 * 1024, "Keep the complete bounded delivery inventory.")
+        need(info.file_size <= (64 if PORTABLE else 16) * 1024 * 1024, "Keep the complete bounded delivery inventory.")
         manifest = json.loads(archive.read(info))
         need(manifest.get("operation") == OPERATION and manifest.get("input_sha256") == input_sha256
              and manifest.get("sourceCommit") == selected["source"]["commit"]
@@ -1109,6 +1238,9 @@ def verify_artifact(path, expected=None):
             if kind == "symlink":
                 need(archive.read(info) == os.fsencode(row["target"]), "Keep the exact original link target.")
         complete = json.loads(archive.read("receiving/complete.json"))
+        if PORTABLE:
+            need(manifest.get("portable") is True, "Keep the selected portable project artifact mode.")
+            verify_portable_inventory(complete, rows)
         need(complete == manifest["nativeResult"] and complete.get("state") == "COMPLETE"
              and complete.get("providerCalls") == [] and len(complete.get("invoices", [])) == 5,
              "The whole original installed result is absent from its artifact.")

@@ -1,3 +1,4 @@
+import { ALFRED_CAPTURE, inspectFredAlfredCapture } from './alfred/model.mjs';
 // MIT. FRED v1 source semantics; original numeric and vintage values remain intact.
 export const SELECTION = 'stellar-forge.fred-selection.v1';
 export const CAPTURE = 'stellar-forge.fred-capture.v1';
@@ -139,6 +140,7 @@ export function readObservationPage(receipt, selectionInput, id, offset = 0, exp
     complete: offset + observations.length === body.count, observations };
 }
 export function inspectCapture(capture) {
+  if (capture?.schema === ALFRED_CAPTURE) return inspectFredAlfredCapture(capture);
   if ([PUBLIC_CAPTURE, PUBLIC_SET_CAPTURE].includes(capture?.schema)) return inspectPublicTableCapture(capture);
   need(plain(capture) && capture.schema === CAPTURE, 'Select an original FRED capture bundle.');
   const selection = normalizeSelection(capture.selection);

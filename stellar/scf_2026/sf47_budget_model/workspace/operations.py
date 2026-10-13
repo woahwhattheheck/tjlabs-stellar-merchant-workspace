@@ -37,8 +37,10 @@ import award_terms
 import issuer_receiving
 import operations_cash_accounts as cash_accounts
 import operations_account_reconciliation as account_reconciliation
+import operations_workflows as operating_workflows
 import operations_implementation as implementation
 import operations_engagements as engagements
+import operations_risks as risks
 import engagement_handover
 import operations_amendments as amendments
 import operations_amendment_calendar as amendment_calendar
@@ -356,6 +358,10 @@ class Operations:
                 source_change = result.get("sourceChange")
                 extra_receipt = {key: value for key, value in result.items()
                                  if key not in ("before", "after", "kind", "recordId", "sourceChange")}
+            elif command == risks.ACTION:
+                result = risks.save(self, context, data, actor, next_version, note)
+                before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
+                extra_receipt = {"reviewSha256": result["reviewSha256"], "riskRegister": result["riskRegister"]}
             elif command == "task-outcomes.save":
                 result = task_outcomes.save(self, context, data, actor, next_version, note)
                 before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
@@ -563,7 +569,7 @@ class Operations:
             self.db.execute("UPDATE ops_programs SET version=?,updated_at=? WHERE id=?", (next_version, now(), program_id))
             self._event(program_id, next_version, {**body, "actor": actor, "note": note}, command, before, after, kind, record_id,
                         source_change=source_change)
-            if command in amendments.ACTIONS or command in award_terms.ACTIONS or command == "funding.save":
+            if command in amendments.ACTIONS or command in award_terms.ACTIONS or command in ("funding.save", risks.ACTION):
                 # Reject atomically if these complete decisions would make the
                 # original case impossible to hand over through its native limit.
                 self.export(program_id)
@@ -575,6 +581,11 @@ class Operations:
             return action()
         return self.workspace._transaction(body.get("requestId"), payload, action)
 
+
+    def operating_workflows(self, program_id, expected_version, allowed_sections=None):
+        with self._snapshot():
+            return operating_workflows.read_index(
+                self, identifier(program_id, "operation"), expected_version, allowed_sections)
 
     def funding_catalog(self, program_id):
         with self._snapshot():
@@ -728,6 +739,72 @@ class Operations:
     def _engagement_context(self, program_id, body, fields):
         engagements.obj(body, {"expectedVersion", *fields}, "Contributor engagement request")
         return self._portfolio_context(program_id, body.get("expectedVersion"))
+
+    def _risk_context(self, program_id, body, fields):
+        risks.obj(body, {"expectedVersion", *fields}, "Risk register request")
+        context = self._context(identifier(program_id, "operation"))
+        if domain.integer(body.get("expectedVersion"), "Reviewed case version", 1, 10000000) != context["program"]["version"]:
+            domain.fail("The case changed. Reopen its current source before reviewing risks.", "OPERATIONS_CONFLICT", 409)
+        return context
+
+    def list_risks(self, program_id):
+        with self._snapshot():
+            return risks.listing(self, self._context(identifier(program_id, "operation")))
+
+    def seed_risks(self, program_id, body):
+        with self._snapshot():
+            return risks.seed(self, self._risk_context(program_id, body, ("reviewId",)), body.get("reviewId"))
+
+    def preview_risks(self, program_id, body):
+        with self._snapshot():
+            return risks.preview(self, self._risk_context(program_id, body, ("document",)), body.get("document"))
+
+    def risk_register(self, program_id, review_id):
+        with self._snapshot():
+            return risks.show(self, self._context(identifier(program_id, "operation")), identifier(review_id, "review"))
+
+    def risk_history(self, program_id, risk_id):
+        with self._snapshot():
+            return risks.history(self, self._context(identifier(program_id, "operation")), identifier(risk_id))
+
+    def risk_request(self, program_id, body):
+        """Reconcile one exact original command without admitting another write."""
+        risks.obj(body, {"command"}, "Risk request lookup")
+        command = risks.obj(body.get("command"), {"expectedVersion", "actor", "action", "data", "note", "requestId"},
+                            "Original retained risk command")
+        if command.get("action") != risks.ACTION:
+            risks.fail("Select the original retained risk-register.save command.")
+        domain.integer(command.get("expectedVersion"), "Original case version", 1, 10000000)
+        actor = text(command.get("actor"), "Original recording operator", 300, True)
+        text(command.get("note"), "Original review note", 12000, True)
+        risks.obj(command.get("data"), {"document", "expectedPreviewSha256"}, "Original risk save data")
+        request_id = short_id(command.get("requestId"), "Original request ID")
+        with self._snapshot():
+            self._program(identifier(program_id, "operation"))
+            fingerprint = digest({"domain": SCHEMA, "programId": program_id, "body": command})
+            row = self.db.execute("SELECT fingerprint,result_json FROM requests WHERE request_id=?", (request_id,)).fetchone()
+            if row is None:
+                return {"found": False, "requestId": request_id}
+            if row[0] != fingerprint:
+                raise Problem("This request ID already belongs to a different action.", 409, "REQUEST_CONFLICT")
+            result = json.loads(row[1])
+            event_row = self.db.execute("SELECT body_json FROM ops_events WHERE program_id=? AND version=?",
+                                        (program_id, result.get("version"))).fetchone()
+            if event_row is None:
+                risks.fail("The accepted risk request has no matching case event.", "RISK_REQUEST_CHANGED", 409)
+            event = json.loads(event_row[0])
+            review = risks.raw_review(self, program_id, result.get("recordId"))
+            if (result.get("id") != program_id or result.get("action") != risks.ACTION or result.get("kind") != "review"
+                    or result.get("reviewSha256") != review["sha256"] or result.get("riskRegister") != risks.summary(review)
+                    or event.get("action") != risks.ACTION or event.get("requestId") != request_id
+                    or event.get("recordId") != review["id"] or event.get("after") != risks.summary(review)
+                    or event.get("actor") != actor or event.get("version") != command["expectedVersion"] + 1
+                    or digest({k: v for k, v in event.items() if k != "sha256"}) != event.get("sha256")):
+                risks.fail("The accepted original risk request differs from its case history.", "RISK_REQUEST_CHANGED", 409)
+            return {"found": True, "requestId": request_id, "fingerprint": row[0], "result": result}
+
+    def export_risks(self, program_id, review_id):
+        return self.export(identifier(program_id, "operation"), risk_register_id=identifier(review_id, "review"))
 
     def seed_engagement(self, program_id, body):
         with self._snapshot():
@@ -1404,7 +1481,7 @@ class Operations:
                 if own:
                     self.db.execute("ROLLBACK")
 
-    def export(self, program_id, installation_id=None, installation_revision=None, installation_return_review_id=None, engagement_id=None, task_outcome_id=None, task_outcome_revision=None, award_terms_id=None, award_terms_revision=None):
+    def export(self, program_id, installation_id=None, installation_revision=None, installation_return_review_id=None, engagement_id=None, task_outcome_id=None, task_outcome_revision=None, award_terms_id=None, award_terms_revision=None, risk_register_id=None):
         with self._snapshot():
             context = self._context(program_id)
             program = context["program"]
@@ -1459,6 +1536,8 @@ class Operations:
                 files.update(installation_returns.selected_files(context, reviews, installation_return_review_id))
             if installation_id is not None or installation_revision is not None:
                 files.update(installations.selected_files(context, saved_installations, installation_id, installation_revision, files))
+            if risk_register_id is not None:
+                files.update(risks.selected_files(context, reviews, risk_register_id))
             if engagement_id is not None:
                 files.update(engagements.selected_files(context, reviews, engagement_id))
             if task_outcome_id is not None or task_outcome_revision is not None:
@@ -1535,6 +1614,8 @@ class Operations:
             expected.update(task_outcomes.SELECTION_FILES)
         if award_terms.SELECTION_FILES.intersection(files):
             expected.update(award_terms.SELECTION_FILES)
+        if risks.SELECTION_FILES.intersection(files):
+            expected.update(risks.SELECTION_FILES)
         engagement_names = {"engagement-selection.json", "engagement.html"}
         if engagement_names.intersection(files):
             expected.update(engagement_names)
@@ -1757,6 +1838,7 @@ class Operations:
                 domain.fail("The portfolio does not join its original forecast and save event.", "PORTFOLIO_SOURCE_CONFLICT", 409)
         if {row.get("recordId") for row in events if row.get("action") == "portfolio.save"} != portfolio_ids:
             domain.fail("The complete operations history is missing a saved portfolio.", "INVALID_PORTFOLIO")
+        selected_risks = risks.validate_import(context, reviews, events, files, selected_plan_at)
         selected_engagement = engagements.validate_import(
             context, reviews, events, saved_forecasts, saved_portfolios, files)
         payload = {"domain": SCHEMA, "action": "import", "sha256": hashlib.sha256(raw).hexdigest(),
@@ -1835,6 +1917,7 @@ class Operations:
                     **({"selectedTaskOutcomes": selected_task_outcomes} if selected_task_outcomes else {}),
                     **({"selectedFunding": selected_funding} if selected_funding else {}),
                     **({"selectedAwardTerms": selected_award_terms} if selected_award_terms else {}),
+                    **({"selectedRisks": selected_risks} if selected_risks else {}),
                     **({"selectedEngagement": selected_engagement} if selected_engagement else {}),
                     **({"selectedInstallationReturn": selected_installation_return} if selected_installation_return else {}),
                     **({"deliveryQueue": {"asOfDate": delivery_queue["asOfDate"], "sha256": delivery_queue["sha256"]}} if delivery_queue else {}),

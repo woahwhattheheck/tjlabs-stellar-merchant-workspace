@@ -1,4 +1,5 @@
 // MIT — TokenJunkieLabs. Rialto catalogue and original-buyer receiving contracts.
+import {describeHttpPath, bindHttpPath, prepareHttpPath} from '../../../../stellar-forge/route-identity/http-path.mjs';
 export const SCHEMA = 'stellar-forge.rialto-customer.v1';
 export const UPSTREAM = {repository:'0d1026/Rialto',commit:'267155c08475ecba40a5b28d7e32a6d005bd956a'};
 export const DEFAULTS = {discovery:'https://rialto-production-97c9.up.railway.app',facilitator:'https://facilitator-production-0beb.up.railway.app',network:'stellar:testnet',scheme:'exact',limit:100};
@@ -55,6 +56,24 @@ export function compare(before,after){
  }
  return{schema:SCHEMA,kind:'catalogue-comparison',beforePlan:before.plan,afterPlan:after.plan,sameScope:canonical(before.plan)===canonical(after.plan),beforeComplete:before.enumerationComplete,afterComplete:after.enumerationComplete,counts:Object.fromEntries(['added','removed','changed','unchanged'].map(k=>[k,rows.filter(r=>r.state===k).length])),rows};
 }
+function pathRecord(row,method){
+ need(object(row),'Original resource required');
+ const input=row.extensions?.bazaar?.info?.input;
+ need(input===undefined||object(input),'Original Bazaar HTTP input must be an object');
+ const published=row.extensions?.bazaar;
+ need(published===undefined||object(published),'Original Bazaar declaration must be an object');
+ const top=row.routeTemplate,nested=published?.routeTemplate;
+ need(top===undefined||nested===undefined||top===nested,'Original route-template declarations disagree');
+ return{resource:row.resource,input:{...input,method:input?.method??method??'GET'},bazaar:{...published,...(top!==undefined?{routeTemplate:top}:{})}};
+}
+export function describeRequestPath(row,method){https(typeof row.resource==='string'?row.resource:row.resource?.url);return describeHttpPath(pathRecord(row,method));}
+export function bindRequestPath(row,url,method,pathValues){
+ const requested=https(url);need(!/[{}]|%7[bd]/i.test(requested.pathname),'Supply a concrete request path');
+ return bindHttpPath(pathRecord(row,method),url,pathValues);
+}
+export function prepareRequestPath(row,pathValues,method){
+ const prepared=prepareHttpPath(pathRecord(row,method),pathValues);https(prepared.href);return prepared.href;
+}
 export function selection(c,input,catalogueSha256){
  const index=integer(input.rowIndex,'rowIndex',0,c.rows.length-1),entry=c.rows[index],row=entry.original;
  need(c.enumerationComplete,'Finish receiving the original catalogue before selecting');
@@ -63,23 +82,22 @@ export function selection(c,input,catalogueSha256){
  need(object(offer)&&offer.scheme==='exact'&&offer.network===c.plan.network,'Select the original exact offer on the reviewed network');
  need(typeof offer.amount==='string'&&/^[1-9][0-9]*$/.test(offer.amount),'Positive original atomic amount required');
  need(typeof offer.asset==='string'&&typeof offer.payTo==='string','Original asset and recipient required');
- const advertised=https(row.resource),requested=https(input.url);
- need(advertised.origin===requested.origin&&advertised.pathname===requested.pathname&&!/[{}]|%7[bd]/i.test(requested.pathname),'Concrete request must match the selected resource origin/path');
+ const requested=https(input.url),pathBinding=bindRequestPath(row,input.url,input.method,input.pathValues);
  need(['GET','HEAD','POST','PUT','PATCH','DELETE'].includes(input.method),'Explicit HTTP method required');
  const method=row.extensions?.bazaar?.info?.input?.method;
  need(method===undefined||method===input.method,'Method conflicts with original Bazaar input');
  need(typeof input.intentId==='string'&&/^[A-Za-z0-9._:-]{1,128}$/.test(input.intentId),'Stable original intent ID required');
  const cap=input.maxAtomic??offer.amount;need(typeof cap==='string'&&/^[1-9][0-9]*$/.test(cap)&&BigInt(cap)>=BigInt(offer.amount),'Explicit cap must cover the selected original offer');
  need(/^[a-f0-9]{64}$/.test(catalogueSha256),'Original catalogue SHA-256 required');
- return{schema:SCHEMA,kind:'selected-customer-request',catalogueSha256,rowIndex:index,page:entry.page,pageRow:entry.pageRow,resourceKey:entry.key,originalListing:row,acceptIndex:ai,selectedTerms:offer,intentId:input.intentId,url:requested.href,method:input.method,maxAtomic:cap,task:typeof input.task==='string'?input.task:'',usefulOutput:typeof input.usefulOutput==='string'?input.usefulOutput:'',facilitator:c.plan.facilitator,network:c.plan.network};
+ return{schema:SCHEMA,kind:'selected-customer-request',catalogueSha256,rowIndex:index,page:entry.page,pageRow:entry.pageRow,resourceKey:entry.key,originalListing:row,acceptIndex:ai,selectedTerms:offer,pathBinding,intentId:input.intentId,url:requested.href,method:input.method,maxAtomic:cap,task:typeof input.task==='string'?input.task:'',usefulOutput:typeof input.usefulOutput==='string'?input.usefulOutput:'',facilitator:c.plan.facilitator,network:c.plan.network};
 }
 export function challenge(selection,value,index){
  need(value.x402Version===2&&object(value.resource)&&Array.isArray(value.accepts),'Actual v2 resource challenge required');
- const advertised=https(value.resource.url),requested=https(selection.url);need(advertised.origin===requested.origin&&advertised.pathname===requested.pathname&&!/[{}]|%7[bd]/i.test(advertised.pathname),'Actual challenge must match the selected resource origin/path');
+ const pathBinding=bindRequestPath({resource:value.resource,extensions:value.extensions},selection.url,selection.method);
  integer(index,'challenge accept index',0,value.accepts.length-1);const offer=value.accepts[index],old=selection.selectedTerms;
  need(object(offer),'Original challenge option required');
  for(const key of ['scheme','network','asset','payTo'])need(offer[key]===old[key],'Actual challenge changed '+key+'; receive and select the new source explicitly');
  need(typeof offer.amount==='string'&&/^[1-9][0-9]*$/.test(offer.amount)&&BigInt(offer.amount)<=BigInt(selection.maxAtomic),'Actual challenge exceeds the selected atomic cap');
  integer(offer.maxTimeoutSeconds,'actual authorization timeout',1,86400);
- return{actualTerms:offer,changedAmount:offer.amount!==old.amount,acceptIndex:index,envelope:{mode:'ORIGINAL_UNSIGNED_CATALOG',source:selection.url,sourceEnvelope:'resources',originalListings:[value]}};
+ return{actualTerms:offer,pathBinding,changedAmount:offer.amount!==old.amount,acceptIndex:index,envelope:{mode:'ORIGINAL_UNSIGNED_CATALOG',source:selection.url,sourceEnvelope:'resources',originalListings:[value]}};
 }

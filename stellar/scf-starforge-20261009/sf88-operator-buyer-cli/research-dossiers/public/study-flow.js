@@ -10,6 +10,8 @@ const NAV=[['diagram','Diagram'],['sources','Source selection'],['records','Reco
 const array=v=>Array.isArray(v)?v:[],copy=v=>structuredClone(v),json=v=>JSON.stringify(v,null,2);
 const text=v=>v===null||v===undefined?'':typeof v==='string'?v:json(v);
 const number=v=>v===null||v===undefined?'Not established':new Intl.NumberFormat().format(v);
+const when=value=>{const date=new Date(value);return Number.isNaN(date.getTime())?text(value):
+ new Intl.DateTimeFormat(undefined,{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',timeZoneName:'short'}).format(date);};
 const emptyBasis=()=>({editionIds:[],occurrenceIds:[],reference:'',locator:'',note:''});
 const unique=v=>[...new Set(v)];
 const inputIds=value=>unique(value.split(/\r?\n/).map(v=>v.trim()).filter(Boolean));
@@ -128,9 +130,10 @@ export function createStudyFlowPanel({root,tab,api,task,notify,getDossier,getWor
  if(!st.definition.questionId&&st.source?.questions.length===1&&!st.dirty&&!st.editorDirty){
  st.definition.questionId=st.source.questions[0].id;await loadSource();
  }
- if(st.flowId&&!st.dirty&&!st.editorDirty&&!st.readOnly){
+ if(st.flowId&&!st.dirty&&!st.editorDirty){
  const current=st.overview.flows.find(v=>v.id===st.flowId);
- if(current)await loadEdition(current.currentEditionId,{keepActor:true,keepReviewDraft:true,persist:false});
+ const selected=st.editionId??current?.currentEditionId;
+ if(current&&selected)await loadEdition(selected,{keepActor:true,keepReviewDraft:true,persist:false});
  }
  st.pending=(await storage.list(context,'study-flow/request/')).map(v=>v.value).sort((a,b)=>a.preparedAt.localeCompare(b.preparedAt));
  st.draftRecord=await storage.get(context,'study-flow/draft');draw();
@@ -462,7 +465,7 @@ export function createStudyFlowPanel({root,tab,api,task,notify,getDossier,getWor
  button('Use the native derived count',()=>{st.definition.reportedCounts=st.definition.reportedCounts.filter(v=>v.metric!==metric.id);
  clearBuffer('count/'+metric.id);changed({render:true});},{disabled:readOnly()})),detail('Original member IDs and derivation',metric));
  }
- append(box,el('h4','Import a complete original data,n CSV'));
+ append(box,el('h4','Import a Study Flow metric CSV (data,n)'));
  const csvForm=buffer('csv-import',()=>({reason:'',reference:''})),file=el('input');file.type='file';file.accept='.csv,text/csv';file.disabled=readOnly();file.dataset.sf='counts-file';
  file.addEventListener('change',()=>run(async()=>{
  const picked=file.files?.[0];if(!picked)return;if(picked.size>1024*1024)throw Error('The original count file exceeds 1 MiB.');
@@ -581,7 +584,7 @@ export function createStudyFlowPanel({root,tab,api,task,notify,getDossier,getWor
  a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  })));
  append(box,el('h4','Original reporting requests'),button('Load saved operation history',()=>run(()=>loadHistory(0))),
- table(['Action','Revision','Author','Time','Request'],st.history,row=>[row.action,row.revision,row.actor.name,row.createdAt,
+ table(['Action','Revision','Author','Time','Request'],st.history,row=>[row.action,row.revision,row.actor.name,when(row.createdAt),
  append(el('div'),button('Download exact request',()=>downloadLocal(row.requestId+'.json',row.request)),detail('Complete saved operation',row))]),
  append(el('div',null,'sf-actions'),button('Earlier',()=>run(()=>loadHistory(Math.max(0,st.historyOffset-100))),{disabled:st.historyOffset===0}),
  button('Next',()=>run(()=>loadHistory(st.historyOffset+100)),{disabled:st.historyOffset+100>=st.historyTotal})));
@@ -636,7 +639,7 @@ export function createStudyFlowPanel({root,tab,api,task,notify,getDossier,getWor
  st.draftHistory=(await storage.list(scope(),'study-flow/draft-history/')).map(v=>v.value).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));draw();
  })));
  for(const draft of array(st.draftHistory))append(box,append(el('div',null,'sf-card'),
- el('p',(draft.definition?.name??'Draft')+' · '+draft.updatedAt+' · original r'+draft.baseRevision),
+ el('p',(draft.definition?.name??'Draft')+' · '+when(draft.updatedAt)+' · original r'+draft.baseRevision),
  button('Restore this local draft',()=>run(async()=>{await preserveWorkingDraft();applySnapshot(draft);await loadSource();await persist();draw();})),
  button('Download this full draft',()=>downloadLocal('study-flow-draft-'+draft.updatedAt.replaceAll(':','-')+'.json',draft))));
  if(st.storageError)append(box,el('p',st.storageError,'sf-notice'));

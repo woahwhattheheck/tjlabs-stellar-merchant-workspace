@@ -39,6 +39,39 @@ SOURCE_BYTES = 3846277
 BINARY_COUNT = 2
 BINARY_BYTES = 664228
 
+# The complete packet remains the original source authority. These three exact
+# repository files are the subsequent receiving corrections, pinned separately.
+RECEIVING_SOURCE_COMMIT = "32c27f5fa8ac6df7240dfac21505ff8cf6daa1f6"
+RECEIVING_SOURCE_BASE_URL = (
+    "https://raw.githubusercontent.com/woahwhattheheck/"
+    "tjlabs-stellar-merchant-workspace/" + RECEIVING_SOURCE_COMMIT + "/")
+RECEIVING_SOURCES = [
+    {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/results/receiving.py",
+        "baseBytes": 23807,
+        "baseSha256": "cbac8499564aa82d85fbc2f8c9f881014a22a61be4944748245aae0f1fedd791",
+        "bytes": 24069,
+        "sha256": "df718f79bf34b3c1ca50abb0beb2d422ef46c31f1ffc5054666de79fec836530",
+        "gitBlob": "c4d6d3e7bb94d3009aef8f39e0fc4320d5912a9a"
+    },
+    {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/results/receiving_console.py",
+        "baseBytes": 7186,
+        "baseSha256": "c3792086e398c83938400f079974018ba3b83ee0a152a71dcaf50e1ca2c194b5",
+        "bytes": 7776,
+        "sha256": "e9abe778e2b4087423393f293bb7e36e6541c297bb01448447b3c988379f642c",
+        "gitBlob": "990d20c818f8c2a4c9313bbb9748b05fa1f55800"
+    },
+    {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/results/browser_receiving.mjs",
+        "baseBytes": 15621,
+        "baseSha256": "313551b0751329ba25796412d250c416248a9997890b48e322a4848be46cd6e1",
+        "bytes": 18314,
+        "sha256": "a49589190608b927323780bc46a7dbb54e727e090b5be76816796238ef0aeaf1",
+        "gitBlob": "08169d45df9b4c34587e14e093cc9bfdd1a0a280"
+    }
+]
+
 def digest(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -170,9 +203,63 @@ def read_packet(packet_file=None):
             "The complete original binary source inventory differs")
     return compressed, decoded, files
 
-def prepare(root, *, packet_file=None, node=None):
+
+def receiving_sources(files, source_root=None):
+    """Read the selected original repository files before writing any source.
+
+    An explicit local root or a checkout containing this preparer is authoritative:
+    a different local file is rejected, rather than silently replaced by a download.
+    A standalone preparer reads only the exact pinned public commit.
+    """
+    if source_root is None:
+        relative = Path(RELATIVE) / "results" / "delivery" / "prepare_source.py"
+        here = Path(__file__).absolute()
+        if here.parts[-len(relative.parts):] == relative.parts:
+            source_root = here.parents[len(relative.parts) - 1]
+    if source_root is not None:
+        source_root = Path(source_root)
+        require(source_root.is_absolute() and source_root.resolve(strict=True) == source_root,
+                "Select an absolute receiving-source root without aliases")
+        require(source_root.is_dir() and not source_root.is_symlink(),
+                "Receiving-source root must be a regular directory")
+    result = dict(files)
+    for record in RECEIVING_SOURCES:
+        name = record["path"]
+        base = files.get(name)
+        require(base is not None and len(base) == record["baseBytes"] and
+                digest(base) == record["baseSha256"],
+                "The original packet receiving source differs: " + name)
+        if source_root is not None:
+            path = source_root / name
+            require(path.resolve(strict=True) == path,
+                    "Selected receiving source must not traverse aliases: " + name)
+            data = regular_bytes(path, record["bytes"])
+        else:
+            request = urllib.request.Request(RECEIVING_SOURCE_BASE_URL + name, headers={
+                "User-Agent": "IATI-results-source-receiving/1.0",
+                "Accept": "application/octet-stream"})
+            with urllib.request.urlopen(request, timeout=45) as response:
+                data = response.read(record["bytes"] + 1)
+        require(len(data) == record["bytes"] and digest(data) == record["sha256"],
+                "Selected receiving source differs from its pinned SHA256/size: " + name)
+        require(hashlib.sha1(b"blob " + str(len(data)).encode("ascii") + b"\0" + data).hexdigest()
+                == record["gitBlob"], "Selected receiving source Git identity differs: " + name)
+        result[name] = data
+    return result
+
+def installed_selection(files):
+    """Identity of every installed member, independent of the local destination."""
+    inventory = [{"path": name, "bytes": len(files[name]), "sha256": digest(files[name])}
+                 for name in sorted(files)]
+    encoded = (json.dumps(inventory, sort_keys=True, ensure_ascii=False,
+                          separators=(",", ":"), allow_nan=False) + "\n").encode("utf-8")
+    return digest(encoded)
+
+def prepare(root, *, packet_file=None, node=None, receiving_source_root=None):
     root = private_directory(Path(root))
-    compressed, decoded, files = read_packet(packet_file)
+    compressed, decoded, original_files = read_packet(packet_file)
+    files = receiving_sources(original_files, receiving_source_root)
+    installed_bytes = sum(map(len, files.values()))
     source = private_directory(root / "source")
     retain(root / "complete-source.json.gz", compressed)
     retain(root / "complete-source.json", decoded)
@@ -198,10 +285,13 @@ def prepare(root, *, packet_file=None, node=None):
         "schema": "stellar-forge.iati-results-source-preparation.v1",
         "sourceCommit": SOURCE_COMMIT, "packetCommit": PACKET_COMMIT,
         "sourceSelectionSha256": SOURCE_SELECTION_SHA256,
+        "installedSourceSelectionSha256": installed_selection(files),
+        "receivingSourceCommit": RECEIVING_SOURCE_COMMIT,
+        "receivingSources": RECEIVING_SOURCES,
         "packetSha256": PACKET_SHA256, "source": str(source),
         "files": len(files), "sourceFiles": FILE_COUNT,
-        "sourceBytes": SOURCE_BYTES, "binaryFiles": BINARY_COUNT,
-        "binaryBytes": BINARY_BYTES, "bytes": SOURCE_BYTES + BINARY_BYTES,
+        "baseSourceBytes": SOURCE_BYTES, "sourceBytes": installed_bytes - BINARY_BYTES,
+        "binaryFiles": BINARY_COUNT, "binaryBytes": BINARY_BYTES, "bytes": installed_bytes,
         "pythonParsed": python_files, "javascriptParsed": javascript_files,
         "node": selected_node,
         "receivingExecuted": False,
@@ -217,13 +307,15 @@ def main(argv=None):
     parser.add_argument("--root", required=True, help="Absolute owned private source/receiving destination")
     parser.add_argument("--packet-file", help="Exact locally retained complete source gzip, if already available")
     parser.add_argument("--node", help="Existing Node executable; no installation is performed")
+    parser.add_argument("--receiving-source-root", help="Absolute local repository root containing the three exact pinned receiving files; a standalone preparer otherwise reads their pinned public commit")
     parser.add_argument("--receiving-config", help="Run the original programme with this exact private selection")
     parser.add_argument("--playwright", help="Existing Playwright module directory for the same-case console continuation")
     parser.add_argument("--chromium", help="Existing Chromium executable for the same-case console continuation")
     parser.add_argument("--reviewer", help="Named reviewer of the exact selected source")
     parser.add_argument("--review-note", help="Explicit basis of the same-case browser review")
     args = parser.parse_args(argv)
-    receipt = prepare(args.root, packet_file=args.packet_file, node=args.node)
+    receipt = prepare(args.root, packet_file=args.packet_file, node=args.node,
+                      receiving_source_root=args.receiving_source_root)
     print(json.dumps(receipt, ensure_ascii=False, sort_keys=True), flush=True)
     if args.receiving_config:
         configuration = Path(args.receiving_config)

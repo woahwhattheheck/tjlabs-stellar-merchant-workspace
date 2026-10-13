@@ -16,6 +16,7 @@ import operations_ledger_intake as ledger_intake
 import operations_funding_cli as funding_cli
 import award_terms_cli
 import operations_agenda_cli as agenda_cli
+import operations_risks_cli as risks_cli
 
 
 def register(subparsers, common):
@@ -43,6 +44,7 @@ def register(subparsers, common):
         target.add_argument("--calendar-start", help="Explicit operational YYYY-MM-DD anchor; does not record an award")
 
     funding_cli.register(command, mutation)
+    risks_cli.register(command, mutation)
     agenda_cli.register(command)
     target = command("list", "List delivery operations cases", output=True)
     target.add_argument("--plan")
@@ -51,6 +53,9 @@ def register(subparsers, common):
     target.add_argument("--mode", choices=("OPERATIONS", "WALKTHROUGH"), required=True)
     for name in ("show", "report"):
         command(name, "Read the complete retained " + name, case=True, output=True)
+    target = command("operating-workflows", "Read all six saved operating workflow families from one original case version", output=True)
+    target.add_argument("case", help="Original operations case ID")
+    target.add_argument("--version", type=int, required=True, help="Expected original case version")
     command("task-outcomes", "List saved customer task comparisons and their current editions", case=True, output=True)
     target = command("task-outcomes-seed", "Prepare a new complete customer task comparison input", case=True, output=True)
     target.add_argument("--expected-version", type=int, required=True)
@@ -689,6 +694,8 @@ def publish(filename, raw):
 
 def operate(workspace, args):
     ops, action = Operations(workspace), args.operation
+    if risks_cli.operates(action):
+        return risks_cli.operate(ops, args, read_bytes, publish)
     if agenda_cli.operates(action):
         return agenda_cli.operate(ops, args, publish)
     if action == "cost-funding" or action.startswith("funding-"):
@@ -703,6 +710,8 @@ def operate(workspace, args):
         result = {"cases": ops.list(args.plan)}
     elif action in ("show", "report"):
         result = ops.read(args.case) if action == "show" else ops.report(args.case)
+    elif action == "operating-workflows":
+        result = ops.operating_workflows(args.case, args.version)
     elif action == "task-outcomes":
         result = {"comparisons": ops.list_task_outcomes(args.case)}
     elif action == "task-outcomes-seed":

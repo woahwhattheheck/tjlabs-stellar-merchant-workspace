@@ -15,6 +15,12 @@
           "bytes": 13664,
           "sha256": "fd05791f26cfc7edcd5276ec327cc52c1df4bf09ae3569fd5882d10907ba3ee7",
           "git_blob": "91cf506dc1e080229c4903bbde3dd7d0e0e4caf0"
+        },
+        {
+          "commit": "854d46385cbee6ef21286ae9460b6da5db6156ab",
+          "bytes": 17538,
+          "sha256": "52f910d47c34ec34edfaeeac3eee9ace6ce21c2794e7896d26c5d97f95d0bfe2",
+          "git_blob": "dafb7b6422517b1d748f0ad846430ce84ca71fc1"
         }
       ]
     },
@@ -31,6 +37,12 @@
           "bytes": 36226,
           "sha256": "05eb0d7d6caab0a66fe78be66bb53c1113e27672dbbadc29dcbdf4cba326b90b",
           "git_blob": "1dce80aa2de5eb8c41521eab769fbbe284bb56a2"
+        },
+        {
+          "commit": "508ba6880e9a25ebf0ec39da436acfd48c67ad30",
+          "bytes": 37497,
+          "sha256": "51100d4d343e651eaa32a6a8b6674b3aa935a1080c244be4ebca2f466685d611",
+          "git_blob": "0a98c0b89e2071b305accb6340f6fcb931794918"
         }
       ]
     },
@@ -79,6 +91,12 @@
           "bytes": 24076,
           "sha256": "391467448c726dc580d44adee6218aeae58ae3e8b676be7f69464606d166d864",
           "git_blob": "00f852267aee02b51c8bf433b06974c8959dd0fa"
+        },
+        {
+          "commit": "508ba6880e9a25ebf0ec39da436acfd48c67ad30",
+          "bytes": 34194,
+          "sha256": "4e23542b1f074df4213f2effb0a09290d58bf46df8f8b2f94208eefa95aeaa2e",
+          "git_blob": "651f13ce26c9efe26c9a13bd8d51afacab653d8f"
         }
       ]
     },
@@ -111,6 +129,12 @@
           "bytes": 17748,
           "sha256": "718a99bf1ed02edbc8721d0fcfb1df01f1d220e7fe18bc656134e2dcfaacf2db",
           "git_blob": "41f1acc238e50a8436e9807c4663f3be082be311"
+        },
+        {
+          "commit": "508ba6880e9a25ebf0ec39da436acfd48c67ad30",
+          "bytes": 25979,
+          "sha256": "c432159ea6f91b07cc6d42fd67744ac9ec83c45828619c5a233427286441d4a7",
+          "git_blob": "c1b1a522a15aaf7e2b8aa496e073aab0301945f5"
         }
       ]
     },
@@ -143,6 +167,18 @@
           "bytes": 15333,
           "sha256": "8e30312a45a6a76caed476152cd40d09d7b7e76047661445ea37ae1854fe0fa4",
           "git_blob": "c9c7e5e7c56c1ebe5f34c104b85c2afaf9049691"
+        },
+        {
+          "commit": "1e7b0576c2ee6ccc719402feaa2cc661b56f0d5a",
+          "bytes": 20283,
+          "sha256": "42db1fb2a9710311d2daf87fc501947128f1605473232fb3e0dc4d0593dce0e5",
+          "git_blob": "8f5323f988816d284850173540e4c706adfa52eb"
+        },
+        {
+          "commit": "854d46385cbee6ef21286ae9460b6da5db6156ab",
+          "bytes": 20925,
+          "sha256": "4a9076a02cba3891233b6929169287cdc29e2e0473c045a3061803f8d7d26337",
+          "git_blob": "169b1f631d9e7cf9b1eae1cbe04811a0a1189a22"
         }
       ]
     },
@@ -159,6 +195,50 @@
           "bytes": 16795,
           "sha256": "f7157fe2c0763b4c015ac1c0d541b658e652adfc0f0bbabe10285172f091d361",
           "git_blob": "94b8cfe01865fd8c2c7dace4a048d8b09559e294"
+        },
+        {
+          "commit": "1e7b0576c2ee6ccc719402feaa2cc661b56f0d5a",
+          "bytes": 20314,
+          "sha256": "d6912f78eb007d73dc632e30473bd45c2fff3f505fd5a147fd6ce723f497908d",
+          "git_blob": "21f69c9dd4f0d8fe6ef9041a7a154324c4840a7b"
+        },
+        {
+          "commit": "854d46385cbee6ef21286ae9460b6da5db6156ab",
+          "bytes": 20390,
+          "sha256": "95241d197b47582a0c05758f1508bf39f5e1603fa21f0854f4a88e070dd081b8",
+          "git_blob": "16080fb22f5952fc20e680dd38b3988e27fca398"
+        }
+      ]
+    },
+    {
+      "id": "document-merchant-commissioning-application",
+      "label": "Original-account commissioning through the existing Document merchant Applications lifetime",
+      "path": "products/document-merchant/commissioning-application.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "required": false,
+      "editions": [
+        {
+          "commit": "854d46385cbee6ef21286ae9460b6da5db6156ab",
+          "bytes": 5944,
+          "sha256": "5b12adfb4b8a8624833d4231d77858457a95215425c0f6120f17823c492a5dfa",
+          "git_blob": "2253dcabae728f7c9909be7590e1d0458cd2d4eb"
+        }
+      ]
+    },
+    {
+      "id": "document-merchant-existing-pdf-workspace",
+      "label": "Complete existing PDF intake, native assembly and customer source receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/document-merchant/assembly-workspace.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "508ba6880e9a25ebf0ec39da436acfd48c67ad30",
+          "bytes": 17691,
+          "sha256": "c94a670e76c9d8fe8036a02e48468c96a985f4ca495be17b08e5e154f0c151de",
+          "git_blob": "4b3931312eb9a5f9203696e89a44032692361cf4"
         }
       ]
     }

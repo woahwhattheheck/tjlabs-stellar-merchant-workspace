@@ -1429,3 +1429,14 @@ On the receiving workspace, import that completed upload, prepare its actual cas
 The installed `starforge research-quotes-remote` command uses the same original Research programme owner as Merchant. Declare the existing source and destination connection files and actual workspace identities, submit or resume the original native jobs, review the saved results, and stream the complete archive into the receiving workspace. The full case and customer dossier continue through their original receiving writers.
 
 The [complete remote terminal guide](../../stellar-forge/mcp-merchant-operator/RESEARCH_PROGRAMME_TERMINAL.md) covers private configuration, exact source-file inputs, two-workspace archive transfer, native receiving, retained operation recovery, complete file copies and the typed SDK. Completed local results/files reopen from their original bytes; the existing Research application owns its native listener and jobs.
+
+
+## Remote Python customer programmes
+
+The installed Python package also operates the same configured source and receiving hosts through `ResearchRemoteProgrammes`. Use it when a Python application needs the complete original job, archive transfer and customer receiving workflow. The local Python programme interface remains available for direct native directory operations.
+
+The complete [remote Python operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH-REMOTE-PROGRAMMES.md) and [two-host receiving example](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_remote_programme_receiving.py) use the original terminal's private configuration and expected workspace identities. The Node `ResearchProgrammeOperator` remains the source/destination client and streaming transfer owner. Python retains each exact configuration, argument file, call attempt and full reply; a lost reply resumes those original IDs.
+
+Every Python call has its own stable `call_id`. Saved results expose a verified complete JSON file and, for an export, the original full archive or member through `FileDelivery`. They reopen before Node, either host or an original moved donor is needed. Recover continues the same interrupted call; explicit replay uses a distinct local call ID while retaining the underlying native request. Fresh read snapshots use fresh call IDs.
+
+Run `python -m stellar_forge_buyer.research_cli --directory PRIVATE_PYTHON_JOURNAL quotes-remote-configuration --configuration PRIVATE_OPERATOR_JSON` to inspect the retained declarations. The same installed command family covers programme jobs and source selection, exact reviews, full file/archive exports, streamed source-to-receiver transfer and original case/dossier receiving. Its complete example keeps source preparation, destination review and accepted receiving as separate explicit phases.

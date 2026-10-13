@@ -61,6 +61,12 @@ node inspect-capture.mjs blockrun /absolute/path/to/blockrun-capture.json
 
 The example is an authored two-page account capture with six rows, three provider-reported calls, one media-job group and a signed correction. Its known cost is exactly USD 0.028100000000000001. The same runnable example also presents partial and pending states and rejects a changed cursor. These are documentation inputs; this source has made no BlockRun API call or charge.
 
+### Complete operator application
+
+The [BlockRun Capture Desk](BlockRun_Capture_Desk.html) now provides the complete local capture review and handover workflow. An operator can import the original wrapper, inspect exact usage rows and original responses, compare retained editions for the same selection, record reviews without modifying provider accounting, and deliver a complete offline HTML or JSON desk. The recipient reopens the entire capture and review history independently. [Operating, building and receiving instructions](CAPTURE_DESK.md).
+
+The application uses the unchanged original projection and includes its complete source. Its opening data is the authored example described above. It makes no provider request and does not imply that the customer-specific pilot has been commissioned.
+
 ### Capture through the existing account client
 
 **planBlockrunUsageCapture(selection, cursor)** returns the exact first or continuation GET. The selected **from** and exclusive **to** are UTC instants; this pilot uses one agreed window of at most seven days. The reusable planner admits the provider's documented maximum of 400 days and 1–500 rows per page.

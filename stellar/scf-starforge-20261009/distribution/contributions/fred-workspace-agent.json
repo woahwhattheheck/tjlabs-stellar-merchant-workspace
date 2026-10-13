@@ -126,7 +126,14 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-workspace.d.mts",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-cli.d.mts",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-comparison.d.mts",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-source.d.mts"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-source.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/model.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/source.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/cli.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/model.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/source.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/cli.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/README.md"
   ],
   "merchantProviders": {
     "fred-workspaces": "stellar-forge/mcp-merchant-operator/providers/fred-workspaces.mjs"

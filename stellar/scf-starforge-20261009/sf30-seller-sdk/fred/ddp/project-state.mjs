@@ -1,3 +1,5 @@
+import { captureFredAlfred } from '../alfred/source.mjs';
+import { readFredAlfredMetadata } from '../alfred/model.mjs';
 // MIT. DDP project persistence uses the existing economic-project transaction.
 import { join, resolve } from 'node:path';
 import { open, link, unlink } from 'node:fs/promises';
@@ -339,19 +341,48 @@ export function createFredDdpProjectExtension({ readProject, transact, readCaptu
       bytes: body.length, sha256: hash(body), body };
   }
   async function acquireFredDdpMigration({
-    directory, id, expectedRevision, migrationId: selectedId, signal, environment, fetchImpl
+    directory, id, expectedRevision, migrationId: selectedId, sourceMode, metadata, metadataSha256,
+    signal, environment, fetchImpl
   } = {}) {
-    migrationId(selectedId);
-    return transact(directory, { id, expectedRevision, kind: 'ddp-migration-acquire', payload: { migrationId: selectedId } },
+    migrationId(selectedId); operationId(id);
+    const original = await readProject(directory), pending = original.pending?.id === id ? original.pending : null;
+    const completedOperation = original.operations.find(item => item.id === id && item.kind === 'ddp-migration-acquire');
+    sourceMode ??= pending?.payload.sourceMode ?? completedOperation?.result?.sourceMode ?? 'API_VINTAGE';
+    need(['API_VINTAGE', 'ALFRED_VINTAGE'].includes(sourceMode), 'Choose the original API or ALFRED historical source mode.');
+    let editions = [], metadataDigest = null;
+    if (sourceMode === 'ALFRED_VINTAGE') {
+      const plan = await retainedMigration(directory, original, selectedId);
+      const ids = new Set(plan.acquisitions.flatMap(item => item.series));
+      const operationRoot = await privateDirectory(join(resolve(directory), 'ddp-migration-acquisitions', id));
+      const staged = await optionalJson(join(operationRoot, 'alfred-metadata.json'), MAX_CAPTURE_BYTES * 2);
+      editions = metadata ?? staged ?? [];
+      need(Array.isArray(editions) && new Set(editions.map(item => item?.series?.value)).size === editions.length,
+        'Retain one original historical metadata edition for each selected series.');
+      for (const edition of editions) {
+        const series = edition?.series?.value; need(ids.has(series), 'Historical metadata names an unplanned target.');
+        readFredAlfredMetadata(edition, { series, vintage: plan.input.asOf });
+        need(hash(Buffer.from(edition.source.body, 'utf8')) === edition.source.sha256, 'Historical metadata source bytes changed.');
+      }
+      editions = clone(editions).sort((a,b) => a.series.value < b.series.value ? -1 : a.series.value > b.series.value ? 1 : 0);
+      metadataDigest = digest(editions);
+      need(metadataSha256 === undefined || metadataSha256 === metadataDigest, 'Resume the exact retained historical metadata edition.');
+      if (staged) need(digest(staged) === metadataDigest, 'This original acquisition retains another metadata edition.');
+      else await atomicJson(operationRoot, 'alfred-metadata.json', editions, { exclusive: true });
+    } else need(metadata === undefined && metadataSha256 === undefined, 'API metadata comes from the original API series response.');
+    const context = sourceMode === 'ALFRED_VINTAGE' ? { sourceMode, metadataSha256: metadataDigest } : {};
+    return transact(directory, { id, expectedRevision, kind: 'ddp-migration-acquire', payload: { migrationId: selectedId, ...context } },
       async (state, root) => {
         const plan = await retainedMigration(root, state, selectedId);
         need(plan.summary.ready && plan.acquisitions.length > 0,
           'Review all original mappings and selected periods before acquiring the complete migration.');
-        const existing = (state.ddpReceivings ?? []).find(item => item.planId === plan.id);
+        const matching = state.operations.find(operation => operation.kind === 'ddp-migration-acquire' &&
+          operation.result?.migrationId === plan.id && (operation.result.sourceMode ?? 'API_VINTAGE') === sourceMode &&
+          (sourceMode === 'API_VINTAGE' || operation.result.metadataSha256 === metadataDigest));
+        const existing = (state.ddpReceivings ?? []).find(item => item.planId === plan.id && item.id === matching?.result.receivingId);
         if (existing) {
           const retained = await retainedReceiving(root, state, existing.id, { verifyFiles: true });
           return { migrationId: plan.id, receivingId: existing.id, receiving: retained.summary,
-            captureIds: [...existing.captureIds], acquisitionId: id, reusedReceiving: true };
+            captureIds: [...existing.captureIds], acquisitionId: id, reusedReceiving: true, ...context };
         }
         const source = await originalPlanInputs(root, state, { packageId: plan.packageId, crosswalkId: plan.crosswalkId });
         validateFredDdpMigrationPlan(plan, { ...source, copy: false });
@@ -359,20 +390,24 @@ export function createFredDdpProjectExtension({ readProject, transact, readCaptu
         let progress = await optionalJson(join(operationRoot, 'progress.json'), PROGRESS_LIMIT);
         if (progress) {
           need(progress.schema === 'stellar-forge.fred-ddp-migration-acquisition.v1' &&
-            progress.migrationId === plan.id && Array.isArray(progress.completed) &&
+            progress.migrationId === plan.id && (progress.sourceMode ?? 'API_VINTAGE') === sourceMode &&
+            (sourceMode === 'API_VINTAGE' || progress.metadataSha256 === metadataDigest) && Array.isArray(progress.completed) &&
             progress.completed.length <= plan.acquisitions.length &&
             progress.completed.every((item, index) => item.id === plan.acquisitions[index].id &&
               /^[a-f0-9]{64}$/.test(item.captureId) &&
               canonical(item.selection) === canonical(plan.acquisitions[index].selection)),
             'The retained whole-package acquisition belongs to another migration.');
         } else progress = { schema: 'stellar-forge.fred-ddp-migration-acquisition.v1', migrationId: plan.id,
-          startedAt: new Date().toISOString(), completed: [], activeBatchId: null };
+          startedAt: new Date().toISOString(), completed: [], activeBatchId: null, ...context };
         const captures = [];
         for (const [index, acquisition] of plan.acquisitions.entries()) {
           progress.activeBatchId = acquisition.id;
           await atomicJson(operationRoot, 'progress.json', progress);
-          const acquired = await captureFred({ directory: batchDirectory(root, id, acquisition.id),
-            selection: acquisition.selection, apiKeyEnv: state.apiKeyEnv, signal, environment, fetchImpl });
+          const acquired = sourceMode === 'ALFRED_VINTAGE'
+            ? await captureFredAlfred({ directory: batchDirectory(root, id, acquisition.id), selection: acquisition.selection,
+                metadata: editions.filter(item => acquisition.series.includes(item.series.value)), signal, fetchImpl })
+            : await captureFred({ directory: batchDirectory(root, id, acquisition.id),
+                selection: acquisition.selection, apiKeyEnv: state.apiKeyEnv, signal, environment, fetchImpl });
           const model = validateCapture(acquired.capture);
           need(canonical(model.selection) === canonical(normalizeSelection(acquisition.selection)),
             'A native batch differs from the reviewed whole-package migration selection.');
@@ -396,7 +431,7 @@ export function createFredDdpProjectExtension({ readProject, transact, readCaptu
         state.ddpReceivings ??= [];
         state.ddpReceivings.push(summary);
         return { migrationId: plan.id, receivingId: receiving.id, receiving: clone(summary),
-          captureIds, acquisitionId: id, reusedReceiving: false };
+          captureIds, acquisitionId: id, reusedReceiving: false, ...context };
       });
   }
   async function getFredDdpReceiving({
@@ -448,10 +483,10 @@ export function createFredDdpProjectExtension({ readProject, transact, readCaptu
       need(batch, 'The active acquisition is outside the retained migration plan.');
       const value = await optionalJson(join(batchDirectory(directory, pending.id, batch.id), 'progress.json'), MAX_CAPTURE_BYTES * 2);
       active = { id: batch.id, series: [...batch.series], selection: clone(batch.selection),
-        ...(value ? { state: value.state, responses: value.records?.length ?? 0,
+        ...(value ? { state: value.state ?? value.status, responses: value.records?.length ?? 0,
           lastError: value.lastError ?? null, startedAt: value.startedAt } : {}) };
     }
-    return { kind: pending.kind, migrationId: plan.id, plannedBatches: plan.acquisitions.length,
+    return { kind: pending.kind, migrationId: plan.id, sourceMode: pending.payload.sourceMode ?? 'API_VINTAGE', plannedBatches: plan.acquisitions.length,
       completedBatches: progress?.completed?.length ?? 0, startedAt: progress?.startedAt ?? pending.startedAt, active };
   }
   return { listFredDdpSources, getFredDdpCrosswalk, importFredDdpCrosswalk, acquireFredDdpCrosswalk,

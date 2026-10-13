@@ -7,9 +7,10 @@ import { pipeline } from 'node:stream/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join, resolve, isAbsolute } from 'node:path';
 import { parseArgs } from 'node:util';
-import { openMerchantWorkspace, validateConfig, MerchantError } from './workspace.mjs';
+import { openMerchantWorkspace, openMerchantReview, validateConfig, MerchantError } from './workspace.mjs';
 import { ProtocolError } from './protocol.mjs';
-import { merchantInputFiles, reviewMerchantInputs, verifyMerchantInputFingerprint } from './application-inputs.mjs';
+import { merchantInputFiles, reviewMerchantInputs, verifyMerchantInputFingerprint, readMerchantInput } from './application-inputs.mjs';
+import { createMerchantProject, resolveMerchantProjectSource } from './portable.mjs';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const ASSETS = new Map([
@@ -66,7 +67,7 @@ async function serveResult(response, result, headers = {}) {
       { signal: controller.signal });
   } finally { response.off('close', onClose); }
 }
-export async function startMerchantServer({ workspace, operatorToken, host = '127.0.0.1', port = 8764, intervalMs = 10000 }) {
+export async function startMerchantServer({ workspace, operatorToken, host = '127.0.0.1', port = 8764, intervalMs = 10000, project = null }) {
   if (typeof operatorToken !== 'string' || operatorToken.length < 32 || /[\u0000-\u0020\u007f]/.test(operatorToken)) fail('OPERATOR_TOKEN_REQUIRED');
   if (!Number.isInteger(port) || port < 0 || port > 65535) fail('PORT_INVALID');
   if (!Number.isInteger(intervalMs) || intervalMs < 100 || intervalMs > 2147483647) fail('WORKER_INTERVAL_INVALID');
@@ -74,7 +75,7 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
   const inFlight = new Set(), assets = new Map();
   for (const [url, [name, type]] of ASSETS) assets.set(url, { bytes: await readFile(join(ROOT, 'web', name)), type });
   function runTick() {
-    if (!stopping && !tick) {
+    if (!workspace.readOnly && !stopping && !tick) {
       tick = workspace.tick().catch(error => { process.stderr.write(JSON.stringify({ event: 'merchant_worker_error', ...safeError(error) }) + '\n'); }).finally(() => { tick = null; });
     }
     return tick;
@@ -93,6 +94,12 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
       return response.end(asset.bytes);
     }
     if (request.method === 'GET' && path === '/health' && !parsed.search) return respond(response, 200, { status: 'ready', application: 'x402api-merchant-workspace' });
+    const download = /^\/downloads\/project\/([0-9a-f-]{36})$/.exec(path);
+    if (request.method === 'GET' && download && !parsed.search) {
+      if (!project) fail('NOT_FOUND', 404);
+      return serveResult(response, project.consumeDownload(download[1]));
+    }
+    if (workspace.readOnly && request.method !== 'GET') fail('MERCHANT_PROJECT_REVIEW_ONLY', 403);
     if (request.method === 'POST' && path === '/webhooks/x402api' && !parsed.search) {
       for (const name of ['x-x402api-webhook-id', 'x-x402api-webhook-timestamp', 'x-x402api-webhook-key-version', 'x-x402api-webhook-signature', 'x-x402api-webhook-verification-id']) header(request, name);
       const raw = await rawBody(request, 1048576);
@@ -123,7 +130,31 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
     const origin = header(request, 'origin'), localOrigin = 'http://' + header(request, 'host');
     if (origin && origin !== workspace.config.publicOrigin && origin !== localOrigin) fail('ORIGIN_NOT_ALLOWED', 403);
     if (parsed.search) fail('QUERY_NOT_SUPPORTED');
-    if (path === '/api/state' && request.method === 'GET') return respond(response, 200, { config: workspace.publicConfig(), orders: workspace.listOrders() });
+    if (path === '/api/state' && request.method === 'GET') return respond(response, 200, {
+      config: workspace.publicConfig(), orders: workspace.listOrders(), mode: workspace.readOnly ? 'review' : 'live' });
+    if (path === '/api/project' && request.method === 'GET') return respond(response, 200, project ?
+      await project.describe() : { available: false, mode: workspace.readOnly ? 'review' : 'live',
+        storeId: workspace.store.storeId, exports: [] });
+    if (path === '/api/project/exports' && request.method === 'POST') {
+      if (!project) fail('MERCHANT_PROJECT_EXPORT_UNCONFIGURED', 409);
+      const selected = await jsonBody(request, 1024);
+      if (Object.keys(selected).length !== 1 || typeof selected.operation !== 'string') fail('MERCHANT_PROJECT_OPERATION_REQUIRED');
+      const outcome = await project.begin(selected.operation);
+      return respond(response, outcome.state === 'COMPLETE' ? 200 : 202, outcome);
+    }
+    const exported = /^\/api\/project\/exports\/([0-9a-f-]{36})(?:\/(archive|manifest|download))?$/.exec(path);
+    if (exported && request.method === 'POST' && exported[2] === 'download') {
+      if (!project) fail('MERCHANT_PROJECT_EXPORT_UNCONFIGURED', 409);
+      await rawBody(request, 0);
+      return respond(response, 200, await project.downloadTicket(exported[1]));
+    }
+    if (exported && request.method === 'GET') {
+      if (!project) fail('MERCHANT_PROJECT_EXPORT_UNCONFIGURED', 409);
+      if (exported[2] === 'archive') return serveResult(response, await project.archive(exported[1]));
+      if (exported[2] === 'manifest') return respond(response, 200, await project.manifest(exported[1]));
+      if (exported[2] === 'download') fail('METHOD_NOT_ALLOWED', 405);
+      return respond(response, 200, await project.status(exported[1]));
+    }
     if (path === '/api/orders' && request.method === 'POST') {
       const selection = await jsonBody(request);
       return respond(response, 201, { order: await workspace.createOrder(selection) });
@@ -157,8 +188,8 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
     server.once('error', reject);
     server.listen(port, host, () => { server.off('error', reject); resolveListen(); });
   });
-  const timer = setInterval(runTick, intervalMs);
-  timer.unref();
+  const timer = workspace.readOnly ? null : setInterval(runTick, intervalMs);
+  if (timer) timer.unref();
   void runTick();
   const address = server.address(), actualHost = address.address.includes(':') ? '[' + address.address + ']' : address.address;
   const url = 'http://' + actualHost + ':' + address.port;
@@ -170,11 +201,12 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
       server.closeIdleConnections();
       await Promise.allSettled([...inFlight, ...(tick ? [tick] : [])]);
       await closed;
+      if (project) await project.close();
       await workspace.close();
     })();
     try { return await closePromise; } catch (error) { closePromise = null; throw error; }
   }
-  return { server, workspace, url, close, runTick };
+  return { server, workspace, project, url, close, runTick };
 }
 export async function loadMerchantConfiguration(configPath, { env = process.env, allowLoopback = false,
   expectedInputsSha256 = null, inputFiles = [] } = {}) {
@@ -211,17 +243,48 @@ export async function loadMerchantConfiguration(configPath, { env = process.env,
     configuration: config.fulfillmentOptions ?? {}, baseDirectory: dirname(configPath), expectedManifestSha256,
   }) : module;
   if (typeof fulfillment.fulfill !== 'function' || typeof fulfillment.reconcile !== 'function') fail('FULFILLMENT_MODULE_CONTRACT_REQUIRED');
-  return { config, credential, operatorToken, webhookSecretsByVersion, fulfillment };
+  return { config, credential, operatorToken, webhookSecretsByVersion, fulfillment,
+    configurationFile: configPath, reviewedInputs: reviewed };
+}
+export async function loadMerchantReviewConfiguration(configPath, {
+  env = process.env, allowLoopback = false, operatorTokenEnv,
+} = {}) {
+  if (!isAbsolute(configPath)) fail('ABSOLUTE_CONFIG_PATH_REQUIRED');
+  const selected = await readMerchantInput(configPath, { maximum: 1048576, collect: true, privateOnly: true });
+  let input;
+  try { input = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(selected.raw)); }
+  catch { fail('CONFIG_JSON_INVALID'); }
+  const config = validateConfig(input, { allowLoopback });
+  const name = operatorTokenEnv ?? config.operatorTokenEnv;
+  if (typeof name !== 'string' || !/^[A-Z][A-Z0-9_]{0,127}$/.test(name)) fail('OPERATOR_TOKEN_ENVIRONMENT_REQUIRED');
+  const operatorToken = env[name];
+  if (typeof operatorToken !== 'string' || operatorToken.length < 32 || /[\r\n\u0000]/.test(operatorToken))
+    fail('CONFIGURED_ENVIRONMENT_VALUE_REQUIRED');
+  return { config, operatorToken, configurationFile: configPath };
 }
 export async function main(argv = process.argv.slice(2)) {
   const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, strict: true,
     options: { config: { type: 'string' }, directory: { type: 'string' }, host: { type: 'string', default: '127.0.0.1' },
-      port: { type: 'string', default: '8764' }, 'allow-loopback': { type: 'boolean', default: false },
-      'expect-inputs-sha256': { type: 'string' }, 'input-files': { type: 'string' } } });
+      port: { type: 'string', default: '8764' }, output: { type: 'string' }, bundle: { type: 'string' },
+      'expected-sha256': { type: 'string' }, 'original-root': { type: 'string' }, 'retained-root': { type: 'string' },
+      'allow-loopback': { type: 'boolean', default: false },
+      'expect-inputs-sha256': { type: 'string' }, 'input-files': { type: 'string' },
+      'operator-token-env': { type: 'string' }, 'source-archive': { type: 'string' },
+      'source-sha256': { type: 'string' }, 'exports-directory': { type: 'string' },
+      python: { type: 'string' } } });
   const command = positionals[0] ?? 'serve';
-  if (!['serve', 'doctor'].includes(command) || positionals.length > 1 || !values.config) fail('USE_SERVE_OR_DOCTOR_WITH_CONFIG');
-  const selected = await loadMerchantConfiguration(resolve(values.config), { allowLoopback: values['allow-loopback'],
-    expectedInputsSha256: values['expect-inputs-sha256'] ?? null, inputFiles: merchantInputFiles(values['input-files']) });
+  if (['export', 'inspect', 'restore', 'serve-archive'].includes(command)) {
+    if (positionals.length !== 1) fail('ONE_MERCHANT_COMMAND_REQUIRED');
+    const { portableCommand } = await import('./portable.mjs');
+    process.stdout.write(JSON.stringify(await portableCommand(command, values)) + '\n');
+    return;
+  }
+  if (!['serve', 'doctor', 'review'].includes(command) || positionals.length > 1 || !values.config) fail('USE_SERVE_DOCTOR_OR_REVIEW_WITH_CONFIG');
+  const selected = command === 'review' ?
+    await loadMerchantReviewConfiguration(resolve(values.config), { allowLoopback: values['allow-loopback'],
+      operatorTokenEnv: values['operator-token-env'] }) :
+    await loadMerchantConfiguration(resolve(values.config), { allowLoopback: values['allow-loopback'],
+      expectedInputsSha256: values['expect-inputs-sha256'] ?? null, inputFiles: merchantInputFiles(values['input-files']) });
   if (command === 'doctor') {
     if (typeof selected.fulfillment.doctor === 'function') await selected.fulfillment.doctor({ binding: selected.config.fulfillmentBinding });
     process.stdout.write(JSON.stringify({ application: 'x402api-merchant-workspace', configured: true,
@@ -231,11 +294,26 @@ export async function main(argv = process.argv.slice(2)) {
     return;
   }
   if (!values.directory || !/^(0|[1-9][0-9]{0,4})$/.test(values.port)) fail('PRIVATE_DIRECTORY_AND_PORT_REQUIRED');
-  const workspace = await openMerchantWorkspace({ ...selected, directory: resolve(values.directory), allowLoopback: values['allow-loopback'] });
-  let host;
-  try { host = await startMerchantServer({ workspace, operatorToken: selected.operatorToken, host: values.host, port: Number(values.port) }); }
-  catch (error) { await workspace.close(); throw error; }
-  process.stdout.write(JSON.stringify({ schema: 'stellar-forge.x402api-merchant-workspace.v1', url: host.url, directory: workspace.store.directory }) + '\n');
+  const workspace = await (command === 'review' ? openMerchantReview : openMerchantWorkspace)({
+    ...selected, directory: resolve(values.directory), allowLoopback: values['allow-loopback'] });
+  let host, project = null;
+  try {
+    if (command !== 'review') {
+      const source = await resolveMerchantProjectSource({ sourceArchive: values['source-archive'],
+        sourceSha256: values['source-sha256'] });
+      if (source) project = await createMerchantProject({ workspace, ...source,
+        configurationFile: selected.configurationFile, reviewedInputs: selected.reviewedInputs,
+        inputFiles: merchantInputFiles(values['input-files']), python: values.python,
+        allowLoopback: values['allow-loopback'],
+        outputDirectory: resolve(values['exports-directory'] ?? (workspace.store.directory + '-exports')) });
+      else if (values['exports-directory']) fail('MERCHANT_PROJECT_SOURCE_PAIR_REQUIRED');
+    }
+    host = await startMerchantServer({ workspace, operatorToken: selected.operatorToken, host: values.host,
+      port: Number(values.port), project });
+  } catch (error) { if (project) await project.close(); await workspace.close(); throw error; }
+  process.stdout.write(JSON.stringify({ schema: 'stellar-forge.x402api-merchant-workspace.v1', url: host.url,
+    directory: workspace.store.directory, mode: workspace.readOnly ? 'review' : 'live',
+    projectExport: Boolean(project) }) + '\n');
   let ending = null;
   const stop = () => {
     if (ending) return;

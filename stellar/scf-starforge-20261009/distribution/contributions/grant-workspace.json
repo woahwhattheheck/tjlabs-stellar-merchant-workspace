@@ -38,6 +38,11 @@
     "stellar/scf_2026/sf47_budget_model/workspace/operations_agenda_cli.py",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_agenda.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_agenda.css",
-    "stellar/scf_2026/sf47_budget_model/workspace/DELIVERY_AGENDA.md"
+    "stellar/scf_2026/sf47_budget_model/workspace/DELIVERY_AGENDA.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_risks.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_risks_cli.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_risks.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_risks.css",
+    "stellar/scf_2026/sf47_budget_model/workspace/RISK_REGISTER_OPERATOR.md"
   ]
 }

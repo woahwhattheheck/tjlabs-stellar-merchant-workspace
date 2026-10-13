@@ -159,7 +159,9 @@ const PUBLIC_DATA = new Set([
  * getOrder(id) / getFulfillment(paymentId) for their public projection.
  */
 export class MerchantStore {
-  static async open(directory) {
+  static async open(directory, { readOnly = false } = {}) {
+    need(typeof readOnly === 'boolean', 'MERCHANT_OPEN_MODE_INVALID', 'Choose an explicit store opening mode.', 400);
+    if (readOnly) await lstat(directory);
     await privateDirectory(directory);
     const leasePath = join(directory, 'merchant-owner.lock');
     const lease = await operationLease(leasePath);
@@ -170,12 +172,15 @@ export class MerchantStore {
       need(sameInode(leaseInfo, lstatSync(leasePath)), 'MERCHANT_OWNER_CHANGED', 'Keep the held original merchant lease.');
       const path = join(directory, 'merchant.sqlite3');
       let created = false;
-      try {
-        descriptor = openSync(path, constants.O_RDWR | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
-        created = true;
-      } catch (error) {
-        if (error.code !== 'EEXIST') throw error;
-        descriptor = openSync(path, constants.O_RDWR | constants.O_NOFOLLOW);
+      if (readOnly) descriptor = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+      else {
+        try {
+          descriptor = openSync(path, constants.O_RDWR | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
+          created = true;
+        } catch (error) {
+          if (error.code !== 'EEXIST') throw error;
+          descriptor = openSync(path, constants.O_RDWR | constants.O_NOFOLLOW);
+        }
       }
       const before = fstatSync(descriptor);
       checkFile(before, 'merchant database');
@@ -184,22 +189,25 @@ export class MerchantStore {
         catch (error) { if (error.code !== 'ENOENT') throw error; }
       }
       if (created) { fsyncSync(descriptor); syncDirectory(directory); }
-      database = new DatabaseSync(path, { enableForeignKeyConstraints: true, enableDoubleQuotedStringLiterals: false });
+      database = new DatabaseSync(path, { readOnly, enableForeignKeyConstraints: true, enableDoubleQuotedStringLiterals: false });
       need(sameInode(before, lstatSync(path)) && sameInode(before, fstatSync(descriptor)),
         'MERCHANT_DATABASE_CHANGED', 'Keep the original selected database inode.');
       closeSync(descriptor); descriptor = null;
       database.exec('PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000; PRAGMA synchronous=FULL; PRAGMA temp_store=MEMORY; PRAGMA cache_size=-2048; PRAGMA mmap_size=0;');
-      const mode = database.prepare('PRAGMA journal_mode=WAL').get();
-      need(String(mode.journal_mode).toLowerCase() === 'wal',
-        'MERCHANT_WAL_REQUIRED', 'Use storage that supports the original SQLite WAL.');
-      database.exec('PRAGMA wal_autocheckpoint=256;');
+      if (readOnly) database.exec('PRAGMA query_only=ON;');
+      else {
+        const mode = database.prepare('PRAGMA journal_mode=WAL').get();
+        need(String(mode.journal_mode).toLowerCase() === 'wal',
+          'MERCHANT_WAL_REQUIRED', 'Use storage that supports the original SQLite WAL.');
+        database.exec('PRAGMA wal_autocheckpoint=256;');
+      }
       need(database.prepare('PRAGMA synchronous').get().synchronous === 2 &&
         database.prepare('PRAGMA foreign_keys').get().foreign_keys === 1,
         'MERCHANT_DURABILITY_REQUIRED', 'Keep SQLite FULL synchronization and foreign-key checks enabled.');
       const version = database.prepare('PRAGMA user_version').get().user_version;
       const application = database.prepare('PRAGMA application_id').get().application_id;
       const objects = database.prepare("SELECT name FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%'").all();
-      if (version === 0 && application === 0 && objects.length === 0) {
+      if (!readOnly && version === 0 && application === 0 && objects.length === 0) {
         database.exec('BEGIN IMMEDIATE');
         try {
           database.exec(SQL);
@@ -215,7 +223,11 @@ export class MerchantStore {
       }
       const metadata = database.prepare('SELECT * FROM merchant_meta WHERE singleton=1').get();
       need(metadata && metadata.schema_version === VERSION, 'MERCHANT_SCHEMA_CHANGED', 'Keep the original complete merchant schema.');
-      const store = new MerchantStore(OPEN_TOKEN, directory, database, lease, leasePath, metadata.store_id);
+      const store = new MerchantStore(OPEN_TOKEN, directory, database, lease, leasePath, metadata.store_id, readOnly);
+      // Review uses the original complete projections and kernel ownership
+      // contract, with SQLite itself refusing writes. No runtime, payment,
+      // handler or history record is reclassified by opening a saved project.
+      if (readOnly) return store;
       // The kernel lease was acquired first. No other live store writer can
       // have its RUNNING fulfillment reclassified by this opener.
       store._transaction(() => {
@@ -243,11 +255,12 @@ export class MerchantStore {
     }
   }
 
-  constructor(token, directory, database, lease, leasePath, storeId) {
+  constructor(token, directory, database, lease, leasePath, storeId, readOnly = false) {
     need(token === OPEN_TOKEN, 'MERCHANT_OPEN_REQUIRED', 'Use await MerchantStore.open(directory).', 400);
     this.directory = directory;
     this.storeId = storeId;
-    this.runtimeId = randomUUID();
+    this.runtimeId = readOnly ? null : randomUUID();
+    this.readOnly = readOnly;
     this._db = database;
     this._lease = lease;
     this._leasePath = leasePath;
@@ -269,9 +282,13 @@ export class MerchantStore {
   }
   _get(sql, ...args) { return this._statement(sql).get(...args); }
   _all(sql, ...args) { return this._statement(sql).all(...args); }
-  _run(sql, ...args) { return this._statement(sql).run(...args); }
+  _run(sql, ...args) {
+    need(!this.readOnly, 'MERCHANT_PROJECT_REVIEW_ONLY', 'Open the activated original application to change business records.', 403);
+    return this._statement(sql).run(...args);
+  }
   _transaction(work, allowClosing = false) {
     this._assertOpen(allowClosing);
+    need(!this.readOnly, 'MERCHANT_PROJECT_REVIEW_ONLY', 'Open the activated original application to change business records.', 403);
     need(!this._db.isTransaction, 'MERCHANT_NESTED_TRANSACTION', 'Finish the original business transaction.');
     this._db.exec('BEGIN IMMEDIATE');
     let result;
@@ -729,7 +746,7 @@ export class MerchantStore {
       let failure = null;
       if (this._db !== null) {
         try {
-          this._transaction(() => this._run("UPDATE merchant_runtimes SET state='CLOSED',closed_at=? WHERE id=?",
+          if (!this.readOnly) this._transaction(() => this._run("UPDATE merchant_runtimes SET state='CLOSED',closed_at=? WHERE id=?",
             now(), this.runtimeId), true);
         } catch (error) { failure = error; }
         try { this._db.close(); this._db = null; }

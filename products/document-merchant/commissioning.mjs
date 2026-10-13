@@ -2,6 +2,8 @@
 import {join,dirname,relative,isAbsolute,sep} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {inspectCommerceSetup} from '../../stellar/scf-starforge-20261009/sf66-demo-launcher/commerce-setup.mjs';
+import {validateProfile} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/checkout/contract.mjs';
+import {operator as validateOperator} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/config.mjs';
 import {validateConfig as validateFacilitator} from '../../stellar/scf-starforge-20261009/native-facilitator/config.mjs';
 import {readServiceFile} from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/jobs/managed/selection.mjs';
 import {acquireStateLease} from '../../stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs';
@@ -11,78 +13,117 @@ import {documentSetupTemplate,normalizeDocumentSetup,prepareDocumentMerchant,ins
 import {openDocumentService,readDocumentServiceSelection} from './launch.mjs';
 
 export const DOCUMENT_COMMISSIONING_SCHEMA='stellar-forge.document-commerce-commissioning.v1';
+export const DOCUMENT_ACCOUNT_SOURCE_SCHEMA='stellar-forge.document-account-source.v1';
 export const DOCUMENT_COMMISSIONING_REVIEW_SCHEMA='stellar-forge.document-commerce-review.v1';
 const ROOT=dirname(fileURLToPath(import.meta.url));
 const FRAMEWORK=join(ROOT,'../../stellar/scf-starforge-20261009');
 const BUYER_RUNTIME=join(FRAMEWORK,'sf88-operator-buyer-cli');
 const HASH=/^[a-f0-9]{64}$/;
 const same=(a,b)=>canonical(a)===canonical(b);
-const fields=new Set(['commerceDirectory','directory','intentId','provider','anonymous','customerOptionsFile',
+const fields=new Set(['accountSourceFile','commerceDirectory','directory','intentId','provider','anonymous','customerOptionsFile',
   'customerDirectory','sellerPort','customerPort','operatorPort','operationsPort']);
 const pin=async(path,maximum=1048576,privateFile=true)=>(await readServiceFile(path,maximum,{privateFile})).pin;
 function separate(a,b){const p=relative(a,b);return p!==''&&p!=='..'&&!p.startsWith('..'+sep)&&!isAbsolute(p);}
 function port(value){value??=0;need(Number.isInteger(value)&&value>=0&&value<=65535,'DOCUMENT_COMMISSION_PORT_INVALID');return value;}
 function input(raw){
   need(plain(raw)&&Object.keys(raw).every(key=>fields.has(key)),'DOCUMENT_COMMISSION_INPUT_REQUIRED');
-  need(typeof raw.intentId==='string'&&raw.intentId.length>0&&raw.intentId.length<=128&&
+  const account=raw.accountSourceFile!==undefined&&raw.accountSourceFile!==null;
+  need(account?raw.commerceDirectory===undefined&&raw.intentId===undefined:raw.commerceDirectory!==undefined,
+    'DOCUMENT_COMMISSION_ONE_ORIGINAL_SOURCE_REQUIRED');
+  if(!account)need(typeof raw.intentId==='string'&&raw.intentId.length>0&&raw.intentId.length<=128&&
     !/[\x00-\x1f\x7f]/.test(raw.intentId),'DOCUMENT_COMMISSION_INTENT_REQUIRED');
   need(raw.anonymous===undefined||typeof raw.anonymous==='boolean','DOCUMENT_COMMISSION_ANONYMOUS_INVALID');
-  const value={commerceDirectory:absolute(raw.commerceDirectory),directory:absolute(raw.directory),
-    intentId:raw.intentId,provider:raw.provider??'mintpdf',anonymous:raw.anonymous??false,
+  const value={...(account?{accountSourceFile:absolute(raw.accountSourceFile)}:
+      {commerceDirectory:absolute(raw.commerceDirectory),intentId:raw.intentId}),directory:absolute(raw.directory),provider:raw.provider??'mintpdf',anonymous:raw.anonymous??false,
     customerOptionsFile:raw.customerOptionsFile===undefined||raw.customerOptionsFile===null?null:absolute(raw.customerOptionsFile),
     customerDirectory:raw.customerDirectory===undefined||raw.customerDirectory===null?null:absolute(raw.customerDirectory),
     sellerPort:port(raw.sellerPort),customerPort:port(raw.customerPort),
     operatorPort:port(raw.operatorPort),operationsPort:port(raw.operationsPort)};
   need(Boolean(value.customerOptionsFile)!==Boolean(value.customerDirectory),'DOCUMENT_COMMISSION_CUSTOMER_REQUIRED');
-  need(value.directory!==value.commerceDirectory&&!separate(value.directory,value.commerceDirectory)&&
-    !separate(value.commerceDirectory,value.directory)&&value.directory!==ROOT&&!separate(value.directory,ROOT),
+  need((account||value.directory!==value.commerceDirectory&&!separate(value.directory,value.commerceDirectory)&&
+    !separate(value.commerceDirectory,value.directory))&&value.directory!==ROOT&&!separate(value.directory,ROOT),
     'DOCUMENT_COMMISSION_DIRECTORIES_MUST_DIFFER');
   const ports=[value.sellerPort,value.customerPort,value.operatorPort,value.operationsPort].filter(Boolean);
   need(new Set(ports).size===ports.length,'DOCUMENT_COMMISSION_PORTS_MUST_DIFFER');
   return value;
 }
 async function selectedSource(raw){
-  const options=input(raw),original=await inspectCommerceSetup(options.commerceDirectory);
-  const selected=original.selections?.filter(value=>value.intentId===options.intentId)??[];
-  need(selected.length===1,'DOCUMENT_COMMISSION_INTENT_NOT_FOUND');
-  const offer=selected[0],payment=structuredClone(offer.originalTerms);
+  const options=input(raw),account=Boolean(options.accountSourceFile);
+  let original,offer,payment,originalPolicy,operator,profile,profileFile,configurationFiles;
+  if(account){
+    const source=await readServiceFile(options.accountSourceFile,65536,{privateFile:true}),value=parse(source.bytes);
+    need(plain(value)&&value.schema===DOCUMENT_ACCOUNT_SOURCE_SCHEMA&&
+      Object.keys(value).every(key=>['schema','operatorProfileFile','facilitatorConfigFile','publicOrigin','payment'].includes(key)),
+      'DOCUMENT_COMMISSION_ACCOUNT_SOURCE_INVALID');
+    profileFile=await readServiceFile(absolute(value.operatorProfileFile),65536,{privateFile:true});
+    profile=validateProfile(profileFile.bytes);validateOperator(profile.operator);
+    need(typeof profile.trustedPayer==='string'&&/^[GC][A-Z2-7]{55}$/.test(profile.trustedPayer),
+      'DOCUMENT_COMMISSION_ORIGINAL_PAYER_REQUIRED');
+    absolute(profile.signerModule);
+    originalPolicy=await readServiceFile(absolute(value.facilitatorConfigFile),1048576,{privateFile:true});
+    payment=structuredClone(value.payment);
+    need(plain(payment),'DOCUMENT_COMMISSION_ORIGINAL_TERMS_REQUIRED');
+    operator=null;
+    configurationFiles=[source.pin,profileFile.pin,originalPolicy.pin,
+      await pin(profile.operator.policy,4194304,false),await pin(profile.signerModule,4194304,false)];
+    // The retained mutable spending ledger is selected by its original path, never copied or reset.
+    original={sourceKind:'OPERATOR_PROFILE',accountSource:source.pin,operatorProfile:profileFile.pin,
+      operatorOwner:structuredClone(profile.operator),publicOrigin:value.publicOrigin,payer:profile.trustedPayer,
+      asset:payment.asset,recipient:payment.payTo,sharedBudget:{
+        policyFile:profile.operator.policy,ledger:profile.operator.ledger,
+        actor:profile.operator.actor,service:profile.operator.service}};
+    offer={intentId:null,routeId:null,acceptIndex:null};
+  }else{
+    original=await inspectCommerceSetup(options.commerceDirectory);
+    const selected=original.selections?.filter(value=>value.intentId===options.intentId)??[];
+    need(selected.length===1,'DOCUMENT_COMMISSION_INTENT_NOT_FOUND');
+    offer=selected[0];payment=structuredClone(offer.originalTerms);
+    const prepared=await readServiceFile(join(options.commerceDirectory,'prepared.json'),1048576,{privateFile:true});
+    const preparedValue=parse(prepared.bytes),facilitatorPath=join(options.commerceDirectory,'facilitator.json');
+    originalPolicy=await readServiceFile(facilitatorPath,1048576,{privateFile:true});
+    const recorded=preparedValue.files.find(value=>value.path===facilitatorPath);
+    need(recorded&&recorded.bytes===originalPolicy.pin.bytes&&recorded.sha256===originalPolicy.pin.sha256,
+      'DOCUMENT_COMMISSION_ORIGINAL_FACILITATOR_CHANGED');
+    operator=absolute(original.workspace);
+    configurationFiles=[prepared.pin,originalPolicy.pin,
+      await pin(join(operator,'workspace.json'),1048576,false),await pin(join(operator,'operator.json'),1048576,false)];
+  }
   need(payment.scheme==='exact'&&payment.network==='stellar:testnet'&&
     payment.asset===original.asset&&payment.payTo===original.recipient&&
-    payment.extra?.areFeesSponsored===true,'DOCUMENT_COMMISSION_ORIGINAL_TERMS_REQUIRED');
+    payment.extra?.areFeesSponsored===true&&typeof payment.amount==='string'&&/^[1-9][0-9]*$/.test(payment.amount),
+    'DOCUMENT_COMMISSION_ORIGINAL_TERMS_REQUIRED');
   const publicOrigin=new URL(original.publicOrigin);
-  need(publicOrigin.protocol==='https:'&&publicOrigin.origin===original.publicOrigin,
-    'DOCUMENT_COMMISSION_HTTPS_ORIGIN_REQUIRED');
-  const prepared=await readServiceFile(join(options.commerceDirectory,'prepared.json'),1048576,{privateFile:true});
-  const preparedValue=parse(prepared.bytes),facilitatorPath=join(options.commerceDirectory,'facilitator.json');
-  const originalPolicy=await readServiceFile(facilitatorPath,1048576,{privateFile:true});
-  const recorded=preparedValue.files.find(value=>value.path===facilitatorPath);
-  need(recorded&&recorded.bytes===originalPolicy.pin.bytes&&recorded.sha256===originalPolicy.pin.sha256,
-    'DOCUMENT_COMMISSION_ORIGINAL_FACILITATOR_CHANGED');
+  need(publicOrigin.protocol==='https:'&&publicOrigin.origin===original.publicOrigin&&
+    !publicOrigin.username&&!publicOrigin.password,'DOCUMENT_COMMISSION_HTTPS_ORIGIN_REQUIRED');
+  if(account&&profile.buyerTransport!==undefined)
+    need(profile.buyerTransport.origin===original.publicOrigin,'DOCUMENT_COMMISSION_BUYER_TRANSPORT_ORIGIN_CHANGED');
   const policy=validateFacilitator(parse(originalPolicy.bytes));
   need(policy.network===payment.network&&policy.payments.assets.includes(payment.asset)&&
     policy.payments.recipients.includes(payment.payTo)&&BigInt(payment.amount)<=BigInt(policy.payments.maxAtomic)&&
     policy.payments.paymentFlows.includes(payment.extra.paymentFlow??'authorization'),
     'DOCUMENT_COMMISSION_TERMS_OUTSIDE_ORIGINAL_POLICY');
-  const operator=absolute(original.workspace);
-  const configurationFiles=[prepared.pin,originalPolicy.pin,
-    await pin(join(operator,'workspace.json'),1048576,false),await pin(join(operator,'operator.json'),1048576,false)];
   let customer;
   if(options.customerOptionsFile){
     const source=await readServiceFile(options.customerOptionsFile,65536,{privateFile:true});
     configurationFiles.push(source.pin);customer=parse(source.bytes);
-    need(plain(customer)&&plain(customer.checkout)&&customer.checkout.operatorWorkspace===operator&&
-      !customer.checkout.operatorProfile,'DOCUMENT_COMMISSION_CUSTOMER_OPERATOR_CHANGED');
+    need(plain(customer)&&plain(customer.checkout)&&(account?
+      customer.checkout.operatorProfile===profileFile.pin.path&&!customer.checkout.operatorWorkspace:
+      customer.checkout.operatorWorkspace===operator&&!customer.checkout.operatorProfile),
+      'DOCUMENT_COMMISSION_CUSTOMER_OPERATOR_CHANGED');
     absolute(customer.directory);
     need((customer.checkout.runtimeDirectory??BUYER_RUNTIME)===BUYER_RUNTIME,
       'DOCUMENT_COMMISSION_CUSTOMER_RUNTIME_CHANGED');
   }else{
-    customer={directory:options.customerDirectory,checkout:{operatorWorkspace:operator,runtimeDirectory:BUYER_RUNTIME}};
-    // Reopen the catalog in this same directory if already materialized; its original roots stay authoritative.
+    customer={directory:options.customerDirectory,checkout:{...(account?
+      {operatorProfile:profileFile.pin.path}:{operatorWorkspace:operator}),runtimeDirectory:BUYER_RUNTIME}};
   }
-  need(customer.directory!==options.commerceDirectory&&customer.directory!==operator&&
-    !separate(customer.directory,options.commerceDirectory)&&!separate(options.commerceDirectory,customer.directory)&&
+  const protectedDirectories=account?[]:[options.commerceDirectory,operator];
+  need(protectedDirectories.every(path=>customer.directory!==path&&
+      !separate(customer.directory,path)&&!separate(path,customer.directory))&&
     customer.directory!==options.directory&&!separate(customer.directory,options.directory),
     'DOCUMENT_COMMISSION_CUSTOMER_DIRECTORY_CONFLICT');
+  if(account)need(protectedDirectories.every(path=>options.directory!==path&&!separate(options.directory,path)&&
+    !separate(path,options.directory)),'DOCUMENT_COMMISSION_DIRECTORIES_MUST_DIFFER');
   const request=documentSetupTemplate(options.provider,{anonymous:options.anonymous});
   request.publicOrigin=original.publicOrigin;request.payment=payment;
   request.serviceName='Document merchant — '+request.provider.provider;
@@ -90,9 +131,13 @@ async function selectedSource(raw){
   const sourceFiles=[];
   for(const path of [join(ROOT,'commissioning.mjs'),join(ROOT,'commissioning-facilitator.mjs'),
     join(FRAMEWORK,'native-facilitator/runtime.mjs'),join(FRAMEWORK,'native-facilitator/config.mjs'),
-    join(FRAMEWORK,'sf30-seller-sdk/native-factory.mjs')])sourceFiles.push(await pin(path,4194304,false));
+    join(FRAMEWORK,'sf30-seller-sdk/native-factory.mjs'),
+    join(FRAMEWORK,'sf88-operator-buyer-cli/config.mjs'),
+    join(FRAMEWORK,'sf88-operator-buyer-cli/job-workspace/checkout/contract.mjs')])sourceFiles.push(await pin(path,4194304,false));
   const value={schema:DOCUMENT_COMMISSIONING_REVIEW_SCHEMA,options,
-    original:{commerceDirectory:options.commerceDirectory,operatorWorkspace:operator,
+    original:{...(account?{sourceKind:original.sourceKind,accountSource:original.accountSource,
+        operatorProfile:original.operatorProfile,operatorOwner:original.operatorOwner}:
+        {commerceDirectory:options.commerceDirectory}),operatorWorkspace:operator,
       intentId:offer.intentId,routeId:offer.routeId,acceptIndex:offer.acceptIndex,
       originalTerms:payment,publicOrigin:original.publicOrigin,payer:original.payer,
       sharedBudget:structuredClone(original.sharedBudget),facilitator:originalPolicy.pin},
@@ -190,7 +235,7 @@ export async function inspectDocumentCommissioning(directory){
 }
 /** One original Jobs service with its original native facilitator; release signer ownership last. */
 export async function openCommissionedDocumentService({directory,expectedSelection}={},{
-  environment=process.env,signal
+  environment=process.env,signal,launchFile=null,launchSourceDirectory=ROOT
 }={}){
   signal?.throwIfAborted();
   const current=await inspectDocumentCommissioning(directory);
@@ -219,7 +264,7 @@ export async function openCommissionedDocumentService({directory,expectedSelecti
   try{
     await factory.begin({environment});begun=true;signal?.throwIfAborted();
     service=await openDocumentService(current.serviceOptions,{env:environment,signal,
-      expectedSelection:serviceSelection.selectionSha256});
+      expectedSelection:serviceSelection.selectionSha256,launchFile,launchSourceDirectory});
     signal?.throwIfAborted();
     service.closed.then(()=>close().catch(()=>{}),error=>{failure=error;close().catch(()=>{});});
     signal?.addEventListener('abort',onAbort,{once:true});

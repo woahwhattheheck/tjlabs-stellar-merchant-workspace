@@ -246,6 +246,11 @@ export class MerchantGristWorkspaces {
   }
   async #execute(entry, name, args) {
     const original = entry.model, { workspace, ...input } = args;
+    if(name.startsWith('merchant_grist_operating_')) {
+      // Procedures contain operator-authored keys/prose. The original native observations
+      // were already projected by their source-owned store; do not strip the plan itself.
+      return {workspace,native:await original.operating(name.slice('merchant_grist_operating_'.length),input)};
+    }
     if (name.startsWith('merchant_grist_publisher_') &&
         !['merchant_grist_publisher_open', 'merchant_grist_publisher_close'].includes(name)) {
       if (!this.#publishers || typeof this.#publishers.callBorrowed !== 'function')

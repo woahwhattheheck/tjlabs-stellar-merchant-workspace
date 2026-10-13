@@ -1,3 +1,6 @@
+import type {Account,CustomerAccountArgumentsMap,CustomerAccountResultsMap,CustomerAccountMutation,CustomerAccountMethods,CustomerAccountClient,CustomerAccountFileSelection} from './accounting-customer-responses.mjs';
+export type {Account,CustomerAccountArgumentsMap,CustomerAccountResultsMap,CustomerAccountMutation,CustomerAccountMethods,CustomerAccountClient,CustomerAccountFileSelection,CustomerAccountIntakePreview,CustomerAccountIntakeSelection} from './accounting-customer-responses.mjs';
+export {accountingCustomerPublicationPreview,accountingCustomerPublicationArguments,accountingCustomerResponsePreview,accountingCustomerResponseArguments,accountingCustomerResponseReviewPreview,accountingCustomerResponseReviewArguments} from './accounting-customer-response-client.mjs';
 import type {Collections, Cash, Credit, FinancialControlArgumentsMap, FinancialControlResultsMap,
   FinancialControlMutation, FinancialControlMethods, FinancialControlClient, FinancialControlFileSelection}
   from './accounting-financial-control.mjs';
@@ -439,7 +442,7 @@ export type NativeRemittanceDetail<V extends NativeRemittanceView = NativeRemitt
   V extends 'summary' ? NativeRemittanceSummary :
     V extends keyof NativeRemittanceRows ? NativeRemittanceDetailPage<V> : never;
 
-export type ReceivablesFileSelection = FinancialControlFileSelection | DocumentFileSelection | QuoteFileSelection | PreviewFileSelection |
+export type ReceivablesFileSelection = CustomerAccountFileSelection | FinancialControlFileSelection | DocumentFileSelection | QuoteFileSelection | PreviewFileSelection |
   PaymentFileSelection | CustomerFileSelection | RefundFileSelection | BankFileSelection | RemittanceFileSelection;
 export interface ReceivablesFileMetadata extends FileMetadata {name: string; type?: string}
 export interface ReceivablesFileIdentity<S extends ReceivablesFileSelection = ReceivablesFileSelection>
@@ -471,7 +474,7 @@ export type RequestLookupResult =
   {workspace: string; found: false; requestId: string; revision: Revision} |
   ({workspace: string; found: true; requestId: string} & ReceivablesMutationResult);
 export interface RequestLookupArguments {requestId: string; asOf?: DateOnly}
-export interface ReceivablesArgumentsMap extends FinancialControlArgumentsMap {
+export interface ReceivablesArgumentsMap extends FinancialControlArgumentsMap,CustomerAccountArgumentsMap {
   status: StatusArguments; settings: Issuer & MutationContext; draft_save: DraftSaveArguments;
   quote_import: QuoteImportArguments; invoice_preview: InvoicePreviewArguments; invoice_issue: InvoiceIssueArguments;
   invoice_detail: InvoiceDetailArguments; invoice_void: InvoiceVoidArguments; credit: CreditArguments;
@@ -492,7 +495,7 @@ export interface ReceivablesArgumentsMap extends FinancialControlArgumentsMap {
   bank_posting_preview: BankPostingPreviewArguments; bank_receipts_post: BankReceiptsPostArguments;
   bank_rows_ignore: BankRowsIgnoreArguments; bank_rows_restore: BankRowsRestoreArguments; bank_import_close: BankImportCloseArguments;
 }
-export interface ReceivablesResultsMap extends FinancialControlResultsMap {
+export interface ReceivablesResultsMap extends FinancialControlResultsMap,CustomerAccountResultsMap {
   status: StatusResult; settings: ReceivablesMutationResult & {issuer: Issuer};
   draft_save: ReceivablesMutationResult & {invoice: InvoiceSummary}; quote_import: ReceivablesMutationResult & {invoice: InvoiceSummary};
   invoice_preview: InvoicePreviewSummary | InvoicePreviewPage; invoice_issue: ReceivablesMutationResult & {invoice: InvoiceSummary};
@@ -519,7 +522,7 @@ export interface ReceivablesResultsMap extends FinancialControlResultsMap {
   bank_rows_ignore: BankImportMutationResult; bank_rows_restore: BankImportMutationResult; bank_import_close: BankImportMutationResult;
 }
 export type ReceivablesOperation = keyof ReceivablesArgumentsMap;
-export type ReceivablesMutation = FinancialControlMutation | 'settings' | 'draft_save' | 'quote_import' | 'invoice_issue' | 'invoice_void' | 'credit' |
+export type ReceivablesMutation = CustomerAccountMutation | FinancialControlMutation | 'settings' | 'draft_save' | 'quote_import' | 'invoice_issue' | 'invoice_void' | 'credit' |
   'receipt_record' | 'receipt_void' | 'settlement_import' | 'allocate' | 'release' |
   'payment_create' | 'payment_cancel' | 'payment_return' | 'payment_receive' |
   'refund_commit' | 'refund_cancel' | 'refund_reverse' | 'refund_return' | 'refund_receive' | 'credit_disposition_apply' |
@@ -537,7 +540,7 @@ export type ReceivablesAllResult<K extends ReceivablesPagedOperation> =
     K extends 'bank_import_list' ? BankImportsInventory : K extends 'bank_import_detail' ? BankImportInventory :
     K extends 'remittance_list' ? NativeRemittanceInventory :
     ReceivablesInventory<ReceivablesAllRows<K>>) & NativeRecord;
-export const ACCOUNTING_RECEIVABLES_METHODS: Readonly<FinancialControlMethods & {
+export const ACCOUNTING_RECEIVABLES_METHODS: Readonly<FinancialControlMethods & CustomerAccountMethods & {
   status: 'status'; saveSettings: 'settings'; saveDraft: 'draft_save'; importQuote: 'quote_import';
   invoicePreviewSummary: 'invoice_preview'; issueInvoice: 'invoice_issue'; invoice: 'invoice_detail';
   voidInvoice: 'invoice_void'; issueCredit: 'credit'; recordReceipt: 'receipt_record'; voidReceipt: 'receipt_void';
@@ -592,7 +595,7 @@ export function accountingRemittanceArguments(
 ): RemittanceApplyInput;
 
 /** One caller connection; disconnect drains its reads, closeWorkspace explicitly closes the original owner. */
-export interface AccountingReceivablesClient extends FinancialControlClient {
+export interface AccountingReceivablesClient extends FinancialControlClient,CustomerAccountClient {
   readonly workspace: string; readonly endpoint?: string;
   open(options?: ReceivablesCallOptions): Promise<NativeRecord>;
   sources(options?: ReceivablesCallOptions): Promise<NativeRecord>;

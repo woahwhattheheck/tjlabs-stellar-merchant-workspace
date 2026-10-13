@@ -622,3 +622,67 @@ python3 /absolute/commons/opportunities/discoverygarden_msu2026112_20261012/tind
 This reuses the original received response identities, selects all eleven exact GetRecord sources, reviews and builds the actual collection, applies all eleven original staff cases, and writes the complete editable records, mapped MARCXML, native source export, operator page and whole-workspace handover. The result includes its actual collection operation, edition, build, project, review and archive identities.
 
 The existing complete Endeavors edition remains available in the same workspace. Each output directory retains its own exact receiving context, source selection and saved TIND/case requests. Continue an interrupted run with the same selected mode and output directory.
+
+
+## Operate complete production waves
+
+Production waves retain the exact original record membership selected from the repository's OAI sets. A plan captures its source edition, profile, working revision, responsible operator and scope. Each selected record appears once, including records omitted from new delivery because they were already received or deliberately excluded. A record belonging to several selected sets is assigned to the first sorted matching set, and the original complete set list stays with that record.
+
+Open **Production waves**, choose all records or the actual source collections, choose the maximum records per wave, and save the plan. The default of 500 is an application planning choice. Each wave can contain up to 10,000 records; the existing native batch still uses its selected MARCXML record/byte partitioning. The complete census and its waves are stored in the original SQLite workspace.
+
+### Review and continue the same records
+
+Open a wave to see current ready, received, excluded, changed, unresolved, deferred, prepared or receiving records. Its selected membership is stable even when the source edition advances. **Open record** uses the original metadata/access/identifier decision desk. Save corrections there, then use **Accept current source and mapping for this wave** with the responsible operator and a scope note. This records each prior/current content identity and retains the original review history.
+
+Use **Defer selected records** for exceptions that must continue separately; the record stays in the original wave with the operator's reason. **Include selected records again** restores its participation. A deferred record prevents a wave from being described as completely received. An explicit staff exclusion remains its ordinary source decision.
+
+A record is already received only when the original confirmed native batch matches its current intended fields, native identity, record access and exact file roles/bytes/access, with the original file receiving results complete. Later source, mapping, staff or file changes re-enter the work. Source timestamps alone do not force another native write when the intended received result is unchanged.
+
+### Prepare and receive the original native batch
+
+Choose **Prepare original native batch**. The wave checks its reviewed source/mapping identity and passes the exact ready identifiers to the existing frozen batch engine. A changed record requires the explicit wave review above. When selected, **Prepare the reviewed ready records now** preserves unresolved records as exceptions in the same wave while preparing the ready portion.
+
+The returned batch retains its production plan and wave identity, original MARCXML parts, full record/file intentions, source edition and destination export. Continue it through **Open native delivery**, using the existing native request, result and file/access receiving controls. A new wave preparation does not replace an unfinished original batch: complete that batch or use its existing explicit withdrawal operation first.
+
+After receiving the actual native result, complete current destination export and original file observations, choose **Reconcile this original batch** in the wave. This invokes the unchanged record/file reconciliation engine and keeps its complete report and counts. Remaining records stay in the wave; a later ready portion creates its own linked batch. Completed and withdrawn batches remain visible in history.
+
+### Source continuation, full exports and receiving
+
+A newer OAI edition can add records outside a saved plan. Create a following production plan from the current complete collections to select those records and changed work. Earlier plans, exact membership, completed native outcomes and staff decisions remain in the same project. The full plan export includes every selected member, omission, wave decision and original native batch reference as streaming JSON Lines.
+
+All production tables travel in the original complete workspace handover. The same installed application opens the saved plans after receiving the whole archive; native credentials remain in the selected runtime configuration. The full source acquisition from PR1059 continues to preserve original document bytes, HTTP history and access decisions in this same project.
+
+### Original command interface
+
+Inspect the real collections and saved waves:
+
+~~~sh
+python3 /absolute/installed/oai-pmh/tind/cli.py --workspace /private/original-workspace production-collections --project ORIGINAL_PROJECT_ID
+python3 /absolute/installed/oai-pmh/tind/cli.py --workspace /private/original-workspace production-plans --project ORIGINAL_PROJECT_ID
+python3 /absolute/installed/oai-pmh/tind/cli.py --workspace /private/original-workspace production-plans --project ORIGINAL_PROJECT_ID --id SAVED_PLAN_ID
+python3 /absolute/installed/oai-pmh/tind/cli.py --workspace /private/original-workspace production-wave --project ORIGINAL_PROJECT_ID --id SAVED_WAVE_ID
+python3 /absolute/installed/oai-pmh/tind/cli.py --workspace /private/original-workspace production-export --project ORIGINAL_PROJECT_ID --id SAVED_PLAN_ID --out /private/complete-production-plan.jsonl
+~~~
+
+All list operations expose offset, limit and next. Continue until next is null. The full production-export streams all records and refuses to overwrite an existing output.
+
+Save one complete original apply request before running it. It uses the existing operationId, kind, projectId, expectedRevision and input envelope. The source state command provides the current project revision. A production-plan input has title, reviewer, note, recordsPerWave and selection:
+
+~~~json
+{"title":"Original Scholars Junction staff receiving","reviewer":"ACTUAL_OPERATOR","note":"Reviewed original collections, access cases and exact selected population","recordsPerWave":500,"selection":{"all":true,"sets":[],"unassigned":false,"includeReceived":false}}
+~~~
+
+The other operation kinds use these exact inputs:
+
+| Kind | Complete operation input |
+| --- | --- |
+| production-review | waveId, reviewer, note |
+| production-disposition | waveId, identifiers, disposition (include or defer), reviewer, note |
+| production-prepare | waveId, readyOnly, reviewer, note |
+| production-reconcile | waveId, batchId, reviewer, note |
+
+Replay an interrupted saved request unchanged. The original operation ledger returns its retained result; future changes use a new operation and current revision.
+
+### Join the existing MSU workshare
+
+The existing commissioning workorder retains its agreed work packages, effort, commercial terms and responsible delivery participants. This capability supplies its collection-wave, exception, changed-source, cutover and handover operations. The original eleven-record staff cohort and complete fifteen-record Endeavors edition remain separate selectable projects in the same Scholars Junction workspace; the seven public original-document selections retain their original receiving driver and source rights. The distinct CIIM169 case retains its own original source.

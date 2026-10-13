@@ -1,0 +1,167 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "environmental-installations",
+  "heading": "## Environmental data installations",
+  "sources": [
+    {
+      "id": "environment-installation-laboratory-profile",
+      "label": "Complete laboratory EDD reissue Installation profile",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/laboratory-edd-reissue.json",
+      "commit": "6d18ad532aef87aad8982da1ff3c3426655ae014",
+      "editions": [
+        {
+          "commit": "6d18ad532aef87aad8982da1ff3c3426655ae014",
+          "bytes": 9749,
+          "sha256": "daa0702f733da33c3ea9c6f562599f39223f59ac088bffa610ac8098990a78a1",
+          "git_blob": "c2bad3cea1ec82a1b5de73ec1ad535314e5af216"
+        }
+      ]
+    },
+    {
+      "id": "environment-installation-geotech-profile",
+      "label": "Complete DTS8D and legacy workbook Installation profile",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/geotech-dts8d.json",
+      "commit": "6d18ad532aef87aad8982da1ff3c3426655ae014",
+      "editions": [
+        {
+          "commit": "6d18ad532aef87aad8982da1ff3c3426655ae014",
+          "bytes": 8958,
+          "sha256": "85ea6b4a2a41ea24107195e4d87a859aca7a6ff659ea7095db60f13c7649da44",
+          "git_blob": "aefe57a5cade043f9d1f3e69ee0b1d6915587bd3"
+        }
+      ]
+    },
+    {
+      "id": "environment-installation-water-quality-profile",
+      "label": "Complete paired scientific water-quality Installation profile",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/water-quality-analysis.json",
+      "commit": "6d18ad532aef87aad8982da1ff3c3426655ae014",
+      "editions": [
+        {
+          "commit": "6d18ad532aef87aad8982da1ff3c3426655ae014",
+          "bytes": 9374,
+          "sha256": "f3cfc0cf0811c4e13b1fc94d2ee2097dd538fa882525b1c90c4586b2507638d6",
+          "git_blob": "61ec5dd0c23c7c009c93c3cd79f45295753eb5ca"
+        }
+      ]
+    },
+    {
+      "id": "environment-installation-kiwis-profile",
+      "label": "Complete KiWIS commissioning Installation profile",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/kiwis-water-quality.json",
+      "commit": "6d18ad532aef87aad8982da1ff3c3426655ae014",
+      "editions": [
+        {
+          "commit": "6d18ad532aef87aad8982da1ff3c3426655ae014",
+          "bytes": 9827,
+          "sha256": "d6f65c3d854a9777dd0e09fa26319b861ae2a7b25004a0e5b441e39ddaebda1e",
+          "git_blob": "03b473ed558a91740ab3d49d3722c6517fcbec15"
+        }
+      ]
+    },
+    {
+      "id": "environment-installation-operating-guide",
+      "label": "Whole environmental source-to-Installation operating guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/ENVIRONMENTAL_INSTALLATIONS.md",
+      "commit": "6d18ad532aef87aad8982da1ff3c3426655ae014",
+      "editions": [
+        {
+          "commit": "6d18ad532aef87aad8982da1ff3c3426655ae014",
+          "bytes": 17701,
+          "sha256": "b8bc6e303f7484fa441818c483ad1b2deeb60d7bd2cef4cbe29a7b28fd575f0c",
+          "git_blob": "7ccd532c45fb6f91909cb00ff43e2ad75a49c0a2"
+        }
+      ]
+    },
+    {
+      "id": "environment-installation-launcher",
+      "label": "Original Grant Operations JavaScript source selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/launch.mjs",
+      "commit": "6d18ad532aef87aad8982da1ff3c3426655ae014",
+      "editions": [
+        {
+          "commit": "6d18ad532aef87aad8982da1ff3c3426655ae014",
+          "bytes": 22234,
+          "sha256": "8e3085cf58f8cab47ef19e5f449c16da59b9201cdda13f121be625a1cb069367",
+          "git_blob": "c14282991d1963660e7df24a480f1c468fbe5702"
+        }
+      ]
+    },
+    {
+      "id": "environment-installation-managed-launcher",
+      "label": "Original Grant Operations managed Python source selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/managed_launch.py",
+      "commit": "6d18ad532aef87aad8982da1ff3c3426655ae014",
+      "editions": [
+        {
+          "commit": "6d18ad532aef87aad8982da1ff3c3426655ae014",
+          "bytes": 19404,
+          "sha256": "6e97b4640752fec908fe4d396d0e0176633c6748f541260f3896c4f6ceffb7d6",
+          "git_blob": "60deab018d33179ded954160a4f14778477f0c21"
+        }
+      ]
+    },
+    {
+      "id": "environment-installation-original-selection",
+      "label": "Original five-case environmental source selection",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "operations/scf-environmental-installation-programme-9f77-20261013/SOURCE_SELECTION.json",
+      "commit": "11614dc6f978bdc3b9a31b03280b44c93b096f09",
+      "editions": [
+        {
+          "commit": "11614dc6f978bdc3b9a31b03280b44c93b096f09",
+          "bytes": 17308,
+          "sha256": "03ac9387bdf601edd446c2fe9553e876c190e2277fb0d86284edb10c038d0c93",
+          "git_blob": "5402dafb82573a355b9373668b715f61e9c34c07"
+        }
+      ]
+    },
+    {
+      "id": "environment-installation-private-quickstart",
+      "label": "Complete private grant engineer operator quickstart",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "operations/scf-environmental-installation-programme-9f77-20261013/OPERATOR_QUICKSTART.md",
+      "commit": "11614dc6f978bdc3b9a31b03280b44c93b096f09",
+      "editions": [
+        {
+          "commit": "11614dc6f978bdc3b9a31b03280b44c93b096f09",
+          "bytes": 6760,
+          "sha256": "386641727831d135df67d549b903a160be0079c62c93da3e7c8557e24f9c1c8c",
+          "git_blob": "09ce3da596293895b94ed6640ef24a02daf91b26"
+        }
+      ]
+    },
+    {
+      "id": "environment-installation-complete-private-source",
+      "label": "Complete original environmental plans and executable source",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "operations/scf-environmental-installation-programme-9f77-20261013/COMPLETE_SOURCE.json",
+      "commit": "11614dc6f978bdc3b9a31b03280b44c93b096f09",
+      "editions": [
+        {
+          "commit": "11614dc6f978bdc3b9a31b03280b44c93b096f09",
+          "bytes": 3087244,
+          "sha256": "0659216a69958e8c469dbaaaf20550cbcfdcac55f9b0ab360d50e3d605c2b356",
+          "git_blob": "12a8b6fcfa0e9343e2163a0194bcee06f2d15277"
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 // MIT. Original tool metadata; provider runtimes load only when selected.
 import { sourceChangeDefinitions } from './accounting-source-changes.mjs';
+import { qboWorksheetDefinitions } from './accounting-qbo-worksheets.mjs';
 
 
 const alias = { type: 'string', pattern: '^[a-z0-9][a-z0-9_-]{0,63}$' };
@@ -47,6 +48,7 @@ const platformFileNames = ['plan.json', 'journal-entry.json', 'handoff.json', 'a
 
 const platformDefinitions = [
   ...sourceChangeDefinitions,
+  ...qboWorksheetDefinitions,
   ['merchant_accounting_qbo_connection', 'Read the original configured QuickBooks company/environment and native credential availability. Returns environment-variable names without credential values; no provider request is sent.', { ...base }, ['workspace'], readOnly],
   ['merchant_accounting_qbo_company_fetch', 'Fetch the original connected QuickBooks CompanyInfo, Preferences and complete paged native chart, including inactive accounts. Each invocation performs native reads; pin expectedCompanySha256 when comparing pages. Default output is compact; snapshot view returns the full original validated company and source documents for the operator to retain in the host-declared journal input.', { ...base, realmId, environment: view(['sandbox', 'production']), expectedCompanySha256: sha256, view: view(['summary', 'accounts', 'snapshot']), ...page }, ['workspace', 'realmId', 'environment'], readOnly],
   ['merchant_accounting_qbo_post_preview', 'Preview native posting of the exact original reviewed journal to its configured QuickBooks company. Keep the original posting UUID/time, current accountant parent and revision. Returns the native request/plan digests and exact post command; no provider request is sent.', { ...selectedPlan, revision, id: uuid, actor, createdAt: timestamp, expectedParentId: nullableId }, ['workspace', 'planId', 'revision', 'id', 'actor', 'createdAt', 'expectedParentId'], readOnly],

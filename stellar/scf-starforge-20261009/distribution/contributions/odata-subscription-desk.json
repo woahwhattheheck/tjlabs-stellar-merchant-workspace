@@ -1,0 +1,28 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "odata-subscription-desk",
+  "description": "Installed recurring OData customer browser with reviewed remote editions, complete native receiving, original backups/Analysis and independent full-source handoff.",
+  "commands": {
+    "odata-subscription-desk": "stellar-forge/mcp-merchant-operator/odata-subscription-desk/cli.mjs"
+  },
+  "commandDescriptions": {
+    "odata-subscription-desk": "Review and receive remote OData customer editions, preserve native history and independently restore complete outputs."
+  },
+  "exports": {
+    "./operator/odata-subscription-desk": "./source/stellar-forge/mcp-merchant-operator/odata-subscription-desk/workspace.mjs",
+    "./operator/odata-subscription-desk/server": "./source/stellar-forge/mcp-merchant-operator/odata-subscription-desk/server.mjs",
+    "./operator/odata-subscription-desk/portable": "./source/stellar-forge/mcp-merchant-operator/odata-subscription-desk/portable.mjs",
+    "./operator/odata-subscription-desk/receiving": "./source/stellar-forge/mcp-merchant-operator/odata-subscription-desk/receiving/receive.mjs"
+  },
+  "browserAssets": [
+    {
+      "server": "stellar-forge/mcp-merchant-operator/odata-subscription-desk/server.mjs",
+      "manifest": "stellar-forge/mcp-merchant-operator/odata-subscription-desk/browser-assets.json"
+    }
+  ],
+  "supportFiles": [
+    "stellar-forge/mcp-merchant-operator/odata-subscription-desk/OPERATOR.md",
+    "stellar-forge/mcp-merchant-operator/odata-subscription-desk/connection.example.json",
+    "stellar-forge/mcp-merchant-operator/odata-subscription-desk/browser-assets.json"
+  ]
+}

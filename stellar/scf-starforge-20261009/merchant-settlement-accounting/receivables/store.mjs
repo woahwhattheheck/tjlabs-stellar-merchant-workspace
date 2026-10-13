@@ -8,6 +8,7 @@ import {compileQuoteInvoice} from './quote-import.mjs';
 import {PaymentRequestsWorkspace} from './payment-requests-workspace.mjs';
 import {RefundsWorkspace} from './refunds-workspace.mjs';
 import {CollectionsWorkspace} from './collections-workspace.mjs';
+import {CustomerAccountResponseWorkspace} from './customer-account-response-workspace.mjs';
 import {CashPlanningWorkspace} from './cash-planning-workspace.mjs';
 import {CreditControlWorkspace} from './credit-control-workspace.mjs';
 import {RemittancesWorkspace} from './remittances-workspace.mjs';
@@ -88,6 +89,7 @@ export class ReceivablesWorkspace {
     });
     this.refundsWorkspace = new RefundsWorkspace(this);
     this.collectionsWorkspace = new CollectionsWorkspace(this);
+    this.customerAccountResponseWorkspace = new CustomerAccountResponseWorkspace(this);
     this.cashPlanningWorkspace = new CashPlanningWorkspace(this);
     this.creditControlWorkspace = new CreditControlWorkspace(this);
     this.remittancesWorkspace = new RemittancesWorkspace(this);
@@ -136,6 +138,7 @@ export class ReceivablesWorkspace {
     if (record.allocationId) result.allocation = structuredClone(this._allocation(record.allocationId));
     if (record.settings) result.issuer = structuredClone(data.issuer);
     if (record.cashPlanId) Object.assign(result,this.cashPlanningWorkspace.result(record));
+    if (record.customerAccountId || record.customerResponseId) Object.assign(result,this.customerAccountResponseWorkspace.result(record));
     if (record.remittanceBatchId) Object.assign(result, this.remittancesWorkspace.result(record));
     if (record.creditPolicyId || record.creditDecisionId || record.creditRelease)
       Object.assign(result, this.creditControlWorkspace.result(record));
@@ -240,6 +243,17 @@ export class ReceivablesWorkspace {
   async compareCashPlans(query) { return this.cashPlanningWorkspace.compare(query); }
   async cashPlanComparisonFile(name, query) { return this.cashPlanningWorkspace.comparisonFile(name, query); }
   async cashPlanOperation(requestId) { return this.cashPlanningWorkspace.operation(requestId); }
+  async customerAccountResponses(query = {}) { return this.customerAccountResponseWorkspace.list(query); }
+  async previewCustomerAccount(value) { return this.customerAccountResponseWorkspace.previewPublication(value); }
+  async publishCustomerAccount(value) { return this.customerAccountResponseWorkspace.publish(value); }
+  async previewCustomerResponse(value) { return this.customerAccountResponseWorkspace.previewReceive(value); }
+  async receiveCustomerResponse(value) { return this.customerAccountResponseWorkspace.receive(value); }
+  async customerResponse(id) { return this.customerAccountResponseWorkspace.detail(id); }
+  async previewCustomerResponseReview(id, value) { return this.customerAccountResponseWorkspace.previewDecision(id, value); }
+  async reviewCustomerResponse(id, value) { return this.customerAccountResponseWorkspace.decide(id, value); }
+  async customerAccountFile(id, name) { return this.customerAccountResponseWorkspace.publicationFile(id, name); }
+  async customerResponseFile(id, name) { return this.customerAccountResponseWorkspace.responseFile(id, name); }
+  async customerAccountOperation(requestId) { return this.customerAccountResponseWorkspace.operation(requestId); }
   async collectionCases(query = {}) { return this.collectionsWorkspace.list(query); }
   async collectionCase(id, query = {}) { return this.collectionsWorkspace.detail(id, query); }
   async saveCollectionCase(value) { return this.collectionsWorkspace.save(value); }

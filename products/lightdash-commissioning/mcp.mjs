@@ -1,5 +1,6 @@
 // MIT. One original browser/SQLite/native lifetime behind the Merchant provider.
 import path from 'node:path';
+import {callOperatingProcedure} from './operating-store.mjs';
 import {lstat,realpath,readFile} from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
 import {RetainedFileReads} from '../../stellar-forge/mcp-merchant-operator/retained-file-reads.mjs';
@@ -200,6 +201,7 @@ export class MerchantLightdashWorkspaces{
  }
  async #dispatch(e,name,args){
   const model=e.model,workspace=e.alias,d=e.definition;
+  if(name.startsWith('merchant_lightdash_operating_'))return callOperatingProcedure(e,name,args);
   switch(name){
    case 'merchant_lightdash_status':return this.#state(e);
    case 'merchant_lightdash_inputs':

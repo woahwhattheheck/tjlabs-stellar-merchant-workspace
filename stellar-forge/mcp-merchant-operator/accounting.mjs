@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto';
 import { dirname, resolve } from 'node:path';
 import { merchantQuickBooksRecoverySources } from './accounting-quickbooks-oauth.mjs';
 import { RetainedFileReads } from './retained-file-reads.mjs';
+import { qboWorksheetFileSelectors } from './catalog/accounting-qbo-worksheets.mjs';
 import { MerchantCryptoworth, cryptoworthFileSelectors } from './accounting-cryptoworth.mjs';
 import { MerchantRunbooks, runbookFileSelectors } from './accounting-runbooks.mjs';
 import { MerchantPortfolio, portfolioFileSelectors } from './accounting-portfolio.mjs';
@@ -53,7 +54,7 @@ const sourceKinds = ['recoveredSources', 'recoveryRequests', 'proofFiles', 'term
 
 
 
-const fileSelections = [...new Set(['rozoCaptureId', 'rozoCloseId', 'changeId', 'runId', 'recoveryId', 'exportId', 'collectionId', 'sourceId', 'reviewId', 'closeId', 'handoffId', 'revisionId', 'adjustmentId', 'jobId', 'planId', 'responseId', 'nativePost', 'attemptId', 'file', ...statementFileSelectors, ...receivablesFileSelectors, ...cryptoworthFileSelectors, ...runbookFileSelectors, ...portfolioFileSelectors])];
+const fileSelections = [...new Set(['rozoCaptureId', 'rozoCloseId', 'changeId', 'runId', 'recoveryId', 'exportId', 'collectionId', 'sourceId', 'reviewId', 'closeId', 'handoffId', 'revisionId', 'adjustmentId', 'jobId', 'planId', 'responseId', 'nativePost', 'attemptId', 'file', ...qboWorksheetFileSelectors, ...statementFileSelectors, ...receivablesFileSelectors, ...cryptoworthFileSelectors, ...runbookFileSelectors, ...portfolioFileSelectors])];
 
 
 
@@ -475,7 +476,10 @@ export class MerchantAccounting {
     const selectors = { 'rozo-capture': ['rozoCaptureId'], 'rozo-close': ['rozoCloseId'], 'buyer-source': [], response: ['recoveryId', 'runId'], report: ['runId', 'file'], export: ['exportId'], collection: ['collectionId', 'sourceId'],
       pricing: ['reviewId', 'runId', 'file'], period: ['closeId', 'file'], accountant: ['handoffId', 'revisionId', 'file'], adjustment: ['adjustmentId', 'jobId', 'file'], qbo: ['planId', 'responseId', 'nativePost', 'attemptId', 'file'], xero: ['planId', 'file'],
       'qbo-source-change': ['changeId', 'file'], 'xero-source-change': ['changeId', 'file'],
+      'qbo-worksheet': [...qboWorksheetFileSelectors, 'file'],
       'customer-statement': ['statementId', 'file'],
+      'receivables-customer-account': ['publicationId','file'],
+      'receivables-customer-response': ['customerResponseId','file'],
       'receivables-collection': ['collectionCaseId', 'asOf', 'file'],
       'receivables-collections': ['customerId', 'asOf', 'owner', 'status', 'search', 'file'],
       'receivables-cash-plan': ['cashPlanId', 'editionId', 'file'],
@@ -502,7 +506,7 @@ export class MerchantAccounting {
     if (kind === 'cryptoworth') return session.cryptoworth.file(args);
     if (kind === 'runbooks') return session.runbooks.file(args);
     if (kind === 'portfolio') return session.portfolio.file(args);
-    if (['qbo', 'xero', 'qbo-source-change', 'xero-source-change'].includes(kind)) return session.platforms.file(args);
+    if (['qbo', 'xero', 'qbo-source-change', 'xero-source-change', 'qbo-worksheet'].includes(kind)) return session.platforms.file(args);
     if (['customer-statement', 'customer-statement-preview', 'customer-usage-period-preview'].includes(kind)) return session.statements.file(args);
     if (kind.startsWith('receivables-')) {
       if (!session.receivables) throw fail('ACCOUNTING_MERCHANT_SOURCE_REQUIRED', 'Open the original merchant accounting workspace for receivables files.');

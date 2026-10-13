@@ -9,6 +9,7 @@ import sys
 from .errors import BuyerError
 from .storage import parse, read
 from .research_workspace import ResearchError, ResearchWorkspace, _file_delivery
+from .research_remote_programmes import ResearchRemoteError
 from .research_documents import ResearchDocumentSource
 from .research_citation_cli import add_citation_commands, run_citation_command
 from .research_extraction_cli import add_extraction_commands, run_extraction_command
@@ -151,6 +152,11 @@ def main(argv=None):
                             request_id=arguments.request_id, replay_safe=arguments.action in _SAFE)
         print(json.dumps(result, ensure_ascii=False, allow_nan=False, indent=2))
         return 0
+    except ResearchRemoteError as error:
+        print(json.dumps({"error": error.code, "callId": error.call_id,
+                          "outcomeUnknown": error.outcome_unknown, "record": error.record},
+                         ensure_ascii=False), file=sys.stderr)
+        return 2
     except ResearchError as error:
         print(json.dumps({"error": error.code, "requestId": error.request_id,
                           "record": error.record}, ensure_ascii=False), file=sys.stderr)

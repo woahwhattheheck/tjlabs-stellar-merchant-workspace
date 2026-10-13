@@ -404,7 +404,8 @@
     "exports_directory": "Existing private merchant-exports directory",
     "restored_inventory": "Preserve the original full native inventory; compare every source file by its complete identity across restores and retain current native modification times separately.",
     "complete_report": "Save the complete current operating report before the large checkpoint archive; retain and reuse its actual successful file receipt.",
-    "verified_transfer_release": "Release only this invocation's own complete received archive after full original-member restore and unchanged size/hash/stat verification; retain the original saved parts."
+    "verified_transfer_release": "Release only this invocation's own complete received archive after full original-member restore and unchanged size/hash/stat verification; retain the original saved parts.",
+    "working_copy_capacity": "Use maintained Git sparse-checkout only on the clean original private repository; retain complete build-tool directories, every Git object and the selected source commit, and record actual released allocation."
   },
   "preceding_checkpoints": [
     {

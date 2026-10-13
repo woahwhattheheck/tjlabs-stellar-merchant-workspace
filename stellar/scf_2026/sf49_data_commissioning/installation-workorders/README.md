@@ -268,3 +268,9 @@ Keep these complete additions with this directory: `property-inspections.json`, 
 ### Native CanadaBuys source in the browser desk
 
 `canadabuys package --source PRIVATE_PREPARATION --out PRIVATE_DIRECTORY/CanadaBuys_Source.zip` exports the complete verified five-file native preparation. In the existing Grant Operations case, retain that ZIP in **Prepare original source workshares**, receive its native source, review every selected Workshare edition and phase, and attach the complete set before opening the editable Installation. See [the native Workshare guide](CANADABUYS_NATIVE_WORKSHARES.md#open-the-prepared-source-in-the-existing-browser-desk) for the exact installed command and original-case flow.
+
+## Rialto customer receiving and Installation
+
+Select **rialto-customer** to connect one original paid HTTP service and useful customer request to its native commercial Workshare and Customer installation. The [complete Rialto programme](RIALTO_CUSTOMER.md) covers the actual service/request, original SF88 buyer, full private source receiving, native preview/save and independent case handover.
+
+The installed `starforge rialto-customer installation` command snapshots the complete original request and calls this directory’s maintained preparation core. It retains the exact native seed, bindings and profile, preserves all original commercial phases, funded assignments and acceptance checks, and produces the complete Installation document, preview envelope and workorder. The proposed USD 1,500 / five-working-day scope keeps its original USD 450 service, USD 650 buyer/receiving and USD 400 handover allocation; actual effort, milestones, account authority and observed acceptance remain in their original records.

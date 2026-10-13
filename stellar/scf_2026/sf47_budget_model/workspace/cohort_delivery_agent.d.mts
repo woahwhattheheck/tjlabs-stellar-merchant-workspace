@@ -4,7 +4,7 @@ import type {CohortAdoptionClient,CohortAdoptionCase,CohortAdoptionCaseSource,
   CohortAdoptionPrepared,CohortAdoptionSaved,CohortAdoptionReceipt,CohortAdoptionRequestStatus,CohortAdoptionExport}
   from './cohort_planning_agent.mjs';
 import type {CohortDeliveryInput,CohortDeliveryComparison,DeliveryIdentityLink,DeliveryIntentAssignment,
-  DeliveryFinding} from './cohort_delivery_comparison.mjs';
+  DeliveryFinding,CohortCommercialChoices} from './cohort_delivery_comparison.mjs';
 export const COHORT_DELIVERY_AGENT_SCHEMA:'stellar-forge.sf47-cohort-delivery-agent.v1';
 export interface CohortDeliverySourceSelection {
   expectedVersion:number;planSourceId:string;expectedPlanSha256:string;reviewId:string;
@@ -31,7 +31,8 @@ export type CohortDeliveryAgentEdit =
   {action:'UNLINK_IDENTITY';kind:DeliveryIdentityLink['kind'];plannedId:string}|
   ({action:'PLACE_INTENT'} & DeliveryIntentAssignment)|
   {action:'CLEAR_PLACEMENT';intentId:string}|
-  {action:'TITLE_NOTE';title?:string;note?:string};
+  {action:'TITLE_NOTE';title?:string;note?:string}|
+  {action:'START_COMMERCIAL'}|{action:'REMOVE_COMMERCIAL'}|{action:'SET_COMMERCIAL';commercial:CohortCommercialChoices};
 export type CohortDeliveryAgentDocument=CohortDeliveryComparison|CohortDeliveryInput|
   CohortDeliveryAgentResult|CohortAdoptionPrepared|CohortAdoptionSaved;
 export interface CohortDeliveryAgentPrepare {

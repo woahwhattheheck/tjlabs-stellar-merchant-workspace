@@ -2,6 +2,7 @@
 "use strict";
 function GrantAwardsConsole(H) {
   const {state,node,button,field,panel,heading,metric,table,api,action,render,failure,showDialog,currentEdit,rawDetails,sourceName}=H;
+  const exchange=GrantAwardsExchange(H);
   const U={register:"queue",roundId:"",applicationId:"",search:"",archived:false,offset:0,actor:"",schema:null,selection:null};
   const names={rounds:"Funding rounds",applications:"Applications",checks:"Eligibility and due diligence",
     assignments:"Assessor assignments",assessments:"Assessments",decisions:"Panel decisions",
@@ -484,6 +485,10 @@ function GrantAwardsConsole(H) {
     if(editable()){
       const target=["queue","position"].includes(U.register)?U.roundId?"applications":"rounds":U.register;
       bar.append(button(target==="rounds"?"Add funding round":target==="applications"?"Add application":"Add record",()=>editor(target),"primary"));
+    }
+    if(model()){
+      if(editable())bar.append(button("Import application CSV",()=>exchange.open({roundId:U.roundId})));
+      bar.append(button("Export applications",()=>exchange.openExports({roundId:U.roundId})));
     }
     container.append(bar);scope(container);
     if(!model()){container.append(node("p","Add a funding round with the actual programme rules and assessment criteria.","empty"));return;}

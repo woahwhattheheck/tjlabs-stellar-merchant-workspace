@@ -23,6 +23,7 @@ if _TYPE_CHECKING:
     from .research_commerce import ResearchCommerce, ResearchCommerceArchive
     from .research_quotes import ResearchQuotes, ResearchQuoteExport, ResearchQuoteBundle
     from .research_quote_programmes import ResearchQuoteProgrammes, ResearchQuoteProgrammeHandover
+    from .research_remote_programmes import ResearchRemoteProgrammes, ResearchRemoteResult, ResearchRemoteError
     from .research_extraction import ResearchExtraction
     from .research_customer_updates import ResearchCustomerUpdates, ResearchCustomerDelivery
     from .research_customer_receiving import ResearchCustomerCancelled, run_research_customer_delivery

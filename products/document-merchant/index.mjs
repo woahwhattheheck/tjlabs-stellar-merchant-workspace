@@ -50,6 +50,9 @@ export {
   documentAssemblyInputSchema,normalizeDocumentPdfSource,buildDocumentAssemblyRequest
 } from './contracts.mjs';
 
-export {DOCUMENT_COMMISSIONING_SCHEMA,DOCUMENT_COMMISSIONING_REVIEW_SCHEMA,
+export {DOCUMENT_ACCOUNT_SOURCE_SCHEMA,DOCUMENT_COMMISSIONING_SCHEMA,DOCUMENT_COMMISSIONING_REVIEW_SCHEMA,
   reviewDocumentCommissioning,prepareDocumentCommissioning,inspectDocumentCommissioning,
   openCommissionedDocumentService} from './commissioning.mjs';
+
+export * from './commissioning-application.mjs';
+export * from './assembly-workspace.mjs';

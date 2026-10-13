@@ -1,7 +1,7 @@
 import {
   COHORT_DELIVERY_COMPARISON_SCHEMA, COHORT_DELIVERY_INPUT_SCHEMA,
   seedCohortDeliveryComparison, compareCohortDelivery, reopenCohortDeliveryComparison,
-  exportCohortDeliveryCsv, exportCohortDeliveryHtml
+  exportCohortDeliveryCsv, exportCohortDeliveryHtml, seedCohortCommercialChoices
 } from './cohort_delivery_comparison.mjs';
 
 const SESSION='stellar-forge.sf47-cohort-delivery-session.v1', sessions=new Map(), MAX=8*1024*1024;
@@ -33,6 +33,7 @@ export function mountCohortDelivery({container,current,saveApi,getActor,mutation
     sessions.set(caseId,initial);
   }
   const state=sessions.get(caseId),available=()=>active&&root.isConnected,$=selector=>root.querySelector(selector);
+  if(!Array.isArray(state.parkedComparisons))state.parkedComparisons=[];
   const pending=()=>!!(state.pending||state.accepted),locked=()=>hostBusy||!!state.inflight;
   function persist(required=false){
     const {report,inflight,...retained}=state;
@@ -108,13 +109,40 @@ export function mountCohortDelivery({container,current,saveApi,getActor,mutation
     payload.requestId=await mutationId('operations:'+caseId,payload);
     state.input=next;state.report=report;state.pending={payload};persist(true);await sendPending();
   }
-  function openDocument(document){
+  function parkComparison(incoming){
+    const commercialDrafts=state.commercialDrafts||{},hasForms=Object.keys(commercialDrafts).length>0;
+    if(!state.input||state.savedSourceId&&!hasForms||JSON.stringify(state.input)===JSON.stringify(incoming)&&!hasForms)return;
+    const raw=JSON.stringify({input:state.input,commercialDrafts});
+    if(state.parkedComparisons.some(row=>JSON.stringify({input:row.input,commercialDrafts:row.commercialDrafts||{}})===raw))return;
+    state.parkedComparisons.push({id:'navigation-'+crypto.randomUUID(),input:copy(state.input),
+      commercialDrafts:copy(commercialDrafts),editIntent:state.editIntent,tab:state.tab,
+      savedSourceId:state.savedSourceId,selectedPlan:state.selectedPlan,selectedReview:state.selectedReview,
+      retainedAt:new Date().toISOString()});
+  }
+  function parkedComparisons(){
+    if(!state.parkedComparisons.length)return '';
+    return '<section class="cd-panel"><h3>Retained comparison drafts</h3><p>Opening an original saved edition keeps the comparison and commercial fields you were editing here.</p>'+
+      table(['Comparison','Retained','Continue'],state.parkedComparisons.map(row=>[
+        esc(row.input.title),esc(stamp(row.retainedAt)),
+        btn('Resume draft','resume-parked','data-id="'+esc(row.id)+'"',pending())+
+        btn('Download draft JSON','download-parked','data-id="'+esc(row.id)+'"')
+      ]))+'</section>';
+  }
+  function openDocument(document,preserveDraft=false){
     requireEditable();
+    const retained=document.schema===SESSION?document:null;
+    if(retained){
+      if(retained.caseId!==caseId||!retained.input)throw new Error('Open this complete comparison draft in its original case.');
+      document=retained.input;
+    }
     const report=document.schema===COHORT_DELIVERY_COMPARISON_SCHEMA?reopenCohortDeliveryComparison(document):
       document.schema===COHORT_DELIVERY_INPUT_SCHEMA?compareCohortDelivery(document):null;
     if(!report)throw new Error('Open complete delivery comparison JSON or its editable source input.');
     if(report.source.programId!==caseId)throw new Error('Open the original Operations case '+report.source.programId+' for this comparison.');
+    if(preserveDraft||retained)parkComparison(report.input);
     state.input=report.input;state.report=report;state.selectedReview=report.source.reviewId;state.savedSourceId=null;state.page=0;
+    if(preserveDraft||retained){state.commercialDrafts=copy(retained?.commercialDrafts||{});state.editIntent=retained?.editIntent||null;}
+    if(retained){state.selectedPlan=retained.selectedPlan||'';state.selectedReview=retained.selectedReview||report.source.reviewId;}
   }
   function pager(rows){
     const pages=Math.max(1,Math.ceil(rows.length/40));state.page=Math.max(0,Math.min(state.page,pages-1));
@@ -168,6 +196,61 @@ export function mountCohortDelivery({container,current,saveApi,getActor,mutation
         btn('Place','edit-intent','data-id="'+esc(row.id)+'"',pending())+(row.placement==='OPERATOR_ASSIGNMENT'?btn('Use automatic match','remove-assignment','data-id="'+esc(row.id)+'"',pending()):'')
       ]))+page.html;
   }
+
+  function commercialView(){
+    const r=state.report;if(!r)return '<p class="cd-empty">Open a comparison first.</p>';
+    if(!r.commercial)return '<h3>Commercial reconciliation</h3><p>Compare original settled payments and fees with the saved adoption plan. Add dated asset valuations, original service costs and refund values, then save the complete comparison in this same case.</p>'+btn('Start commercial reconciliation','commercial-start','',pending());
+    const c=r.commercial,o=state.input.commercial;
+    const options=(rows,value)=>rows.map(([id,name])=>'<option value="'+esc(id)+'"'+(id===value?' selected':'')+'>'+esc(name)+'</option>').join('');
+    const assetRows=[...new Map([...r.planReport.assets,...c.transactions,...c.transactions.map(row=>({network:row.network,asset:'native:XLM'}))].map(row=>[JSON.stringify([row.network,row.asset]),row])).entries()];
+    const utc=value=>new Date(value).toISOString().slice(0,19),disabled=pending()?' disabled data-cd-fixed="true"':'';
+    const sourceField='<label class="cd-wide">Original source reference and value basis<textarea name="sourceReference" required rows="2"></textarea></label>';
+    const atField='<label>Occurred at (UTC)<input type="datetime-local" name="occurredAt" step="1" required value="'+esc(utc(c.window.asOfAt))+'"></label>';
+    const submit=title=>'<button type="submit"'+disabled+'>'+esc(title)+'</button>';
+    const known=[['Gross settlement value',c.actual.grossSettlementValue],['Refund value',c.actual.refunds],['Other revenue',c.actual.otherRevenue],['Adjusted revenue',c.actual.adjustedRevenue],['Recorded service cost',c.actual.recordedCost],['Network fee value',c.actual.networkFeeValue],['Complete total cost',c.actual.totalCost],['Contribution',c.actual.contribution]];
+    const txPage=pager(c.transactions);
+    return '<h3>Commercial reconciliation · '+esc(c.currency)+'</h3><p>Original transaction amounts and network fees remain exact. Currency values use your selected dated valuations. The full prospective plan stays beside the actual review window '+esc(c.window.start)+'–'+esc(c.window.end)+' and cutoff '+esc(stamp(c.window.asOfAt))+'.</p>'+
+      table(['Measure','Saved plan','Recorded / valued','Difference'],[['Revenue',c.planned?.revenue,c.actual.adjustedRevenue,c.differences.revenue],['Total cost',c.planned?.totalCost,c.actual.totalCost,c.differences.totalCost],['Contribution',c.planned?.contribution,c.actual.contribution,c.differences.contribution]].map(row=>row.map(x=>esc(fixed(x)))))+
+      table(['Recorded measure','Value'],known.map(row=>row.map(x=>esc(fixed(x)))))+
+      '<form data-cd-form="commercial-settings" class="cd-form"><label>Reporting currency<input name="currency" required maxlength="16" value="'+esc(o.currency)+'"></label>'+
+      '<label>Original transaction population<select name="transactionScope">'+options([['SETTLED_IN_WINDOW','Settled inside the original review window'],['FIRST_ATTEMPT_IN_WINDOW','Original intent first attempted inside the window']],o.transactionScope)+'</select></label>'+
+      '<label>Native network fees<select name="feeTreatment">'+options([['SEPARATE','Show separately from service costs'],['INCLUDE_AS_COST','Include as an additional operator-borne cost']],o.feeTreatment)+'</select></label>'+
+      '<label>Recorded service-cost coverage<select name="costCoverage">'+options([['PARTIAL','Costs still being recorded'],['COMPLETE','Complete selected-window cost coverage']],o.costCoverage)+'</select></label>'+
+      '<label class="cd-wide">Complete-coverage source basis<textarea name="coverageNote" rows="2">'+esc(o.coverageNote)+'</textarea></label>'+
+      '<label class="cd-wide">Commercial review note<textarea name="note" rows="2">'+esc(o.note)+'</textarea></label>'+submit('Save reporting choices')+'</form>'+
+      '<h3>Payment amounts and original opportunities</h3>'+table(['Network','Exact asset','Planned atomic','Recorded atomic','Difference','Unknown transactions'],c.assets.map(row=>[row.network,row.asset,row.plannedAtomic,row.observedAtomic,row.differenceAtomic,row.unresolvedTransactions].map(x=>esc(fixed(x)))))+
+      '<p>Shared transaction proof is counted once. Allocate its whole amount explicitly when it funds multiple placed opportunities. Each allocation must sum to the exact original amount; its candidate opportunities retain the same original intents, network and asset.</p>'+
+      table(['Original transaction','Atomic amount / fee stroops','Selected value','Scope / placement'],txPage.rows.map(row=>[
+        esc(row.network)+'<small>'+esc(row.transactionHash)+'</small>',esc(fixed(row.amountAtomic))+' / '+esc(fixed(row.feesAtomic)),esc(fixed(row.valuedAmount)),
+        esc(row.included?'Included':'Outside selected population')+'<small>'+esc(row.allocationBasis)+'</small>'+detail('Original proof, candidates and complete allocation',row)
+      ]))+txPage.html+
+      '<details><summary>Allocate one original transaction across its opportunities</summary><form data-cd-form="commercial-allocation" class="cd-form"><label class="cd-wide">Original transaction<select name="transactionKey" required>'+choices(c.transactions.filter(row=>row.candidateTargetIds.length&&row.amountAtomic!==null).map(row=>[row.id,row.network+' / '+row.transactionHash+' · '+row.amountAtomic]),'')+'</select></label>'+
+      '<label class="cd-wide">Complete allocation parts JSON<textarea name="parts" rows="5" required placeholder=\'[{"targetId":"funding:original-id","amountAtomic":"1000"}]\'></textarea></label><label class="cd-wide">Original allocation basis<textarea name="note" required rows="2"></textarea></label>'+submit('Save complete transaction allocation')+'</form>'+
+      table(['Transaction','Parts','Source basis',''],o.transactionAllocations.map(row=>[esc(row.network+' / '+row.transactionHash),esc(JSON.stringify(row.parts)),esc(row.note),btn('Use original intent placement','commercial-remove-allocation','data-key="'+esc(JSON.stringify([row.network,row.transactionHash.toLowerCase()]))+'"',pending())]))+'</details>'+
+      '<h3>Dated asset valuations</h3><p>Enter the original asset decimal places and its value per whole unit in '+esc(o.currency)+'. Native XLM fees use seven decimal places. Keep the actual valuation time and source; different networks and assets retain separate rows.</p>'+
+      '<form data-cd-form="commercial-valuation" class="cd-form"><label class="cd-wide">Exact original network / asset<select name="assetKey" required>'+choices(assetRows.map(([key,row])=>[key,row.network+' / '+row.asset]),'')+'</select></label>'+
+      '<label>Original decimal places<input type="number" min="0" max="30" step="1" name="atomicDecimals" required></label><label>'+esc(o.currency)+' per whole unit<input name="unitValue" inputmode="decimal" required></label>'+
+      '<label>Valuation as of (UTC)<input type="datetime-local" step="1" name="asOfAt" required value="'+esc(utc(c.window.asOfAt))+'"></label>'+sourceField+submit('Save selected valuation')+'</form>'+
+      table(['Network / asset','Whole-unit value','Decimal places','As of / source',''],o.valuations.map(row=>[esc(row.network+' / '+row.asset),esc(row.unitValue),row.atomicDecimals,esc(stamp(row.asOfAt))+'<small>'+esc(row.sourceReference)+'</small>',btn('Remove valuation','commercial-remove-valuation','data-key="'+esc(JSON.stringify([row.network,row.asset]))+'"',pending())]))+
+      '<h3>Actual service costs</h3><p>Each row enters the total once. A complete service component retains all linked funding groups and shared useful results. Labor uses active hours × hourly cost. Blank amounts stay unknown; enter 0 for a known zero. Keep network fees separate here when the reporting choice includes them automatically.</p>'+
+      '<form data-cd-form="commercial-cost" class="cd-form"><label>Original cost ID (blank creates one)<input name="id" maxlength="200"></label><label>Description<input name="label" required maxlength="500"></label>'+
+      '<label>Complete service component<select name="serviceId">'+choices((r.planReport.servicePricing||[]).map(row=>[row.id,row.label+' · '+row.id]),'','Whole comparison / shared overhead')+'</select></label>'+
+      '<label>Kind<select name="costType">'+options([['SUPPLIER','Supplier'],['LABOR','Active labor'],['PAYMENT_FEE','Other payment fee'],['OTHER','Other service cost']],'SUPPLIER')+'</select></label>'+
+      '<label>Non-labor amount ('+esc(o.currency)+')<input name="amount" inputmode="decimal"></label><label>Labor active hours<input name="activeHours" inputmode="decimal"></label><label>Labor hourly cost ('+esc(o.currency)+')<input name="hourlyCost" inputmode="decimal"></label>'+
+      atField+sourceField+submit('Save original cost')+'</form>'+
+      table(['Original cost','Component / kind','Amount','Active hours / rate','Source',''],c.costs.map(row=>[esc(row.label)+'<small>'+esc(row.id)+'</small>',esc(row.serviceId||'Whole comparison')+'<small>'+esc(row.costType)+'</small>',esc(fixed(row.calculatedAmount)),esc(fixed(row.activeHours))+' / '+esc(fixed(row.hourlyCost)),esc(stamp(row.occurredAt))+'<small>'+esc(row.sourceReference)+'</small>',btn('Remove cost','commercial-remove-cost','data-id="'+esc(row.id)+'"',pending())]))+
+      '<h3>Refunds and other revenue adjustments</h3><p>Retain each original refund cash row and refunded intent once. Enter its selected-currency value and source basis. These adjustments affect the comparison; the original cash record and accounting books remain their maintained sources.</p>'+
+      '<form data-cd-form="commercial-adjustment" class="cd-form"><label>Original adjustment ID (blank creates one)<input name="id" maxlength="200"></label><label>Description<input name="label" required maxlength="500"></label>'+
+      '<label>Kind<select name="kind">'+options([['REFUND','Customer refund (deduct)'],['OTHER_REVENUE','Other revenue (add)']],'REFUND')+'</select></label><label>Amount ('+esc(o.currency)+')<input name="amount" inputmode="decimal" required></label>'+
+      '<label>Original refund cash record<select name="refundCashId">'+choices(c.originalRefundCash.filter(row=>row.inWindow&&row.atCutoff).map(row=>[row.id,row.id+' · '+row.currency+' '+row.amount]),'','Separate source reference')+'</select></label>'+
+      '<label>Original refunded intents (select all covered)<select name="intentIds" multiple size="4">'+r.records.filter(row=>row.refundedAfterSettlement).map(row=>'<option value="'+esc(row.id)+'">'+esc(row.intentId||row.id)+'</option>').join('')+'</select></label>'+
+      atField+sourceField+submit('Save adjustment')+'</form>'+
+      table(['Adjustment','Kind / amount','Original refund / intents','Source',''],c.adjustments.map(row=>[esc(row.label)+'<small>'+esc(row.id)+'</small>',esc(row.kind)+' / '+esc(row.amount),esc(row.refundCashId)+'<small>'+esc(row.intentIds.join(', '))+'</small>',esc(row.sourceReference),btn('Remove adjustment','commercial-remove-adjustment','data-id="'+esc(row.id)+'"',pending())]))+
+      '<h3>Coverage and source findings</h3>'+table(['Finding','Original source','Action'],c.issues.map(row=>[esc(row.code),esc(row.id),esc(row.message)]))+
+      '<details><summary>Complete commercial choices and original shared services</summary>'+detail('Editable commercial input',o)+detail('Shared service comparison',c.services)+detail('Original refund cash',c.originalRefundCash)+'</details>'+
+      '<p>Save the comparison edition above to retain the complete commercial choices, original source documents and report. JSON, CSV and readable HTML include the complete reconciliation.</p>';
+  }
+
   function sourceView(){
     const r=state.report,files=(caseValue.sources||[]).filter(row=>row.filename?.startsWith('sf47-cohort-delivery-'));
     return '<h3>Saved comparison editions</h3><div class="cd-tools"><label>Original case source<select data-cd-field="selectedSource">'+choices(files.map(row=>[row.id,row.filename+' · '+stamp(row.observedAt||row.createdAt)]),state.selectedSource)+'</select></label>'+btn('Open saved comparison','open-source','',!state.selectedSource||pending())+btn('Download complete case','case-export')+'</div>'+
@@ -191,10 +274,25 @@ export function mountCohortDelivery({container,current,saveApi,getActor,mutation
       btn('Compare selected sources','load','',!state.selectedPlan||!state.selectedReview||pending())+'</div></section>'+
       (r?'<section class="cd-panel"><div class="cd-heading"><div><h3>'+esc(r.title)+'</h3><p>Tranche '+r.source.plannedWindow.tranche+' · '+esc(r.source.nativeMode)+' · observed through '+esc(stamp(r.source.observedWindow.asOfAt))+'</p></div><div class="cd-actions">'+btn('Save comparison edition','save')+btn('JSON','json')+btn('CSV','csv')+btn('Readable HTML','html')+'</div></div>'+
       '<form data-cd-form="details" class="cd-form"><label>Comparison title<input name="title" value="'+esc(state.input.title)+'" required maxlength="500"></label><label>Operator note<input name="note" value="'+esc(state.input.note)+'"></label><button type="submit"'+(pending()?' disabled data-cd-fixed="true"':'')+'>Update title and note</button></form></section>':'')+
-      '<nav class="cd-tabs" aria-label="Cohort delivery sections">'+[['report','Delivery report'],['identity','Identity associations'],['placement','Original intent placement'],['sources','Saved editions and sources']].map(([id,name])=>btn(name,'tab','data-tab="'+id+'"'+(state.tab===id?' aria-current="page"':''))).join('')+'</nav>'+
-      '<div class="cd-content">'+({report:overview,identity,placement,sources:sourceView}[state.tab]||overview)()+'</div>';
+      parkedComparisons()+'<nav class="cd-tabs" aria-label="Cohort delivery sections">'+[['report','Delivery report'],['identity','Identity associations'],['placement','Original intent placement'],['commercial','Commercial reconciliation'],['sources','Saved editions and sources']].map(([id,name])=>btn(name,'tab','data-tab="'+id+'"'+(state.tab===id?' aria-current="page"':''))).join('')+'</nav>'+
+      '<div class="cd-content">'+({report:overview,identity,placement,commercial:commercialView,sources:sourceView}[state.tab]||overview)()+'</div>';
+    for(const [kind,values]of Object.entries(state.commercialDrafts||{})){
+      const form=root.querySelector('form[data-cd-form="'+kind+'"]');if(!form)continue;
+      for(const [name,value]of Object.entries(values)){
+        const field=form.elements.namedItem(name);if(!field)continue;
+        if(field.multiple)for(const option of field.options)option.selected=(Array.isArray(value)?value:[value]).includes(option.value);
+        else field.value=value;
+      }
+    }
     controls();
   }
+  function retainCommercialDraft(event){
+    const form=event.target.closest('form[data-cd-form]');if(!form?.dataset.cdForm?.startsWith('commercial-'))return;
+    const values=Object.fromEntries(new FormData(form));if(form.dataset.cdForm==='commercial-adjustment')values.intentIds=new FormData(form).getAll('intentIds');
+    state.commercialDrafts??={};state.commercialDrafts[form.dataset.cdForm]=values;persist();
+  }
+  root.addEventListener('input',retainCommercialDraft);
+  root.addEventListener('change',retainCommercialDraft);
   root.addEventListener('change',event=>{
     const field=event.target.dataset.cdField;
     if(!field)return;
@@ -208,12 +306,31 @@ export function mountCohortDelivery({container,current,saveApi,getActor,mutation
     run(async()=>{
       requireEditable();if(!state.input)throw new Error('Open a comparison first.');
       const values=Object.fromEntries(new FormData(form)),next=copy(state.input);
-      if(form.dataset.cdForm==='identity'){
+      if(form.dataset.cdForm.startsWith('commercial-')){
+        if(!next.commercial)throw new Error('Start the commercial reconciliation first.');
+        const c=next.commercial,type=form.dataset.cdForm;
+        const iso=value=>new Date(value+'Z').toISOString();
+        const upsert=(rows,row)=>{const i=rows.findIndex(x=>x.id===row.id);if(i<0)rows.push(row);else rows[i]=row;};
+        if(type==='commercial-settings'){
+          if(values.currency!==c.currency&&(c.valuations.length||c.costs.length||c.adjustments.length))throw new Error('Keep the currency of retained values. Remove their selected valuation, cost and adjustment rows before choosing a different currency.');
+          Object.assign(c,values);
+        }else if(type==='commercial-valuation'){
+          const [network,asset]=JSON.parse(values.assetKey),row={network,asset,atomicDecimals:Number(values.atomicDecimals),unitValue:values.unitValue,asOfAt:iso(values.asOfAt),sourceReference:values.sourceReference};
+          c.valuations=c.valuations.filter(x=>x.network!==network||x.asset!==asset);c.valuations.push(row);
+        }else if(type==='commercial-cost'){
+          upsert(c.costs,{...values,id:values.id.trim()||'cost-'+crypto.randomUUID(),occurredAt:iso(values.occurredAt),amount:values.amount||null,activeHours:values.activeHours||null,hourlyCost:values.hourlyCost||null});
+        }else if(type==='commercial-adjustment'){
+          upsert(c.adjustments,{...values,id:values.id.trim()||'adjustment-'+crypto.randomUUID(),occurredAt:iso(values.occurredAt),intentIds:new FormData(form).getAll('intentIds')});
+        }else if(type==='commercial-allocation'){
+          const [network,transactionHash]=JSON.parse(values.transactionKey),row={network,transactionHash,parts:JSON.parse(values.parts),note:values.note};
+          c.transactionAllocations=c.transactionAllocations.filter(x=>x.network!==network||x.transactionHash.toLowerCase()!==transactionHash.toLowerCase());c.transactionAllocations.push(row);
+        }
+      }else if(form.dataset.cdForm==='identity'){
         next.links=next.links.filter(row=>!(row.kind===values.kind&&row.plannedId===values.plannedId));next.links.push(values);
       }else if(form.dataset.cdForm==='placement'){
         next.assignments=next.assignments.filter(row=>row.intentId!==state.editIntent);next.assignments.push({intentId:state.editIntent,...values});
       }else{next.title=values.title;next.note=values.note;}
-      recalculate(next);state.notice='Updated this comparison with its original source documents retained.';
+      recalculate(next);if(form.dataset.cdForm.startsWith('commercial-')&&state.commercialDrafts)delete state.commercialDrafts[form.dataset.cdForm];state.notice='Updated this comparison with its original source documents retained.';
     });
   });
   root.addEventListener('click',event=>{
@@ -224,6 +341,13 @@ export function mountCohortDelivery({container,current,saveApi,getActor,mutation
       if(action==='tab'){state.tab=target.dataset.tab;state.page=0;return;}
       if(action==='previous'){state.page--;return;}if(action==='next'){state.page++;return;}
       if(action==='refresh'){await refresh();state.notice='Refreshed the current case source list.';return;}
+      if(action==='download-parked'||action==='resume-parked'){
+        const retained=state.parkedComparisons.find(row=>row.id===target.dataset.id);
+        if(!retained)throw new Error('The retained comparison is absent from this original desk.');
+        if(action==='download-parked')return download(JSON.stringify({schema:SESSION,caseId,...retained},null,2)+'\n',clean(retained.input.title)+'-comparison-draft.json');
+        openDocument({schema:SESSION,caseId,...retained},true);state.savedSourceId=retained.savedSourceId;
+        state.tab=retained.tab||'report';state.notice='Resumed the complete retained comparison draft and commercial fields.';return;
+      }
       if(action==='load'){
         requireEditable();
         const meta=caseValue.sources.find(row=>row.id===state.selectedPlan);
@@ -233,10 +357,19 @@ export function mountCohortDelivery({container,current,saveApi,getActor,mutation
         if(next.review.cohort.source.programId!==caseId)throw new Error('The original cohort belongs to another case.');
         recalculate(next);state.tab='report';state.notice='Opened the original saved adoption plan and frozen cohort review.';return;
       }
+      if(action==='commercial-start'){requireEditable();const next=copy(state.input);next.commercial=seedCohortCommercialChoices(next);recalculate(next);return;}
+      if(action.startsWith('commercial-remove-')){
+        requireEditable();const next=copy(state.input),c=next.commercial;
+        if(action==='commercial-remove-cost')c.costs=c.costs.filter(row=>row.id!==target.dataset.id);
+        if(action==='commercial-remove-adjustment')c.adjustments=c.adjustments.filter(row=>row.id!==target.dataset.id);
+        if(action==='commercial-remove-valuation'){const [network,asset]=JSON.parse(target.dataset.key);c.valuations=c.valuations.filter(row=>row.network!==network||row.asset!==asset);}
+        if(action==='commercial-remove-allocation'){const [network,hash]=JSON.parse(target.dataset.key);c.transactionAllocations=c.transactionAllocations.filter(row=>row.network!==network||row.transactionHash.toLowerCase()!==hash);}
+        recalculate(next);return;
+      }
       if(action==='save'||action==='resume')return save();
       if(action==='open-source'){
         const meta=caseValue.sources.find(row=>row.id===state.selectedSource);if(!meta)throw new Error('Select a saved comparison.');
-        openDocument(JSON.parse(await readSource(meta)));state.savedSourceId=meta.id;state.tab='report';state.notice='Reopened '+meta.filename+' from the original case.';return;
+        openDocument(JSON.parse(await readSource(meta)),true);state.savedSourceId=meta.id;state.tab='report';state.notice='Reopened '+meta.filename+' from the original case.';return;
       }
       if(action==='import'){$('[data-cd-import]').click();return;}
       if(action==='json')return download(JSON.stringify(state.report,null,2)+'\n',clean(state.input.title)+'.json');
@@ -266,11 +399,34 @@ export function mountCohortDelivery({container,current,saveApi,getActor,mutation
     run(async()=>{requireEditable();if(file.size>MAX)throw new Error('Open a complete comparison within 8 MiB.');openDocument(JSON.parse(await file.text()));state.tab='report';state.notice='Opened the complete comparison and original documents from '+file.name+'.';});
   });
   render();
+  async function openSavedWorkflow(selection){
+    await ready;
+    if(!available())throw new Error('Open this original comparison desk before selecting a source.');
+    if(state.inflight||pending())throw new Error('Finish the retained comparison request before opening another source.');
+    if(selection?.kind!=='cohort-delivery'||typeof selection.sourceId!=='string')
+      throw new Error('Select an original saved cohort comparison.');
+    if(selection.caseId!==undefined&&selection.caseId!==caseId||selection.expectedVersion!==undefined&&selection.expectedVersion!==caseValue.program.version)
+      throw new Error('Refresh this original case before opening its saved comparison.');
+    const meta=caseValue.sources.find(row=>row.id===selection.sourceId&&row.mediaType==='application/json'&&row.filename?.startsWith('sf47-cohort-delivery-'));
+    if(!meta)throw new Error('The selected comparison source is absent from this original case.');
+    state.error='';
+    const work=(async()=>{
+      const document=JSON.parse(await readSource(meta));
+      if(!available())throw new Error('The comparison desk changed while its original source was opening.');
+      openDocument(document,true);state.savedSourceId=meta.id;state.selectedSource=meta.id;
+      state.tab='report';state.notice='Reopened '+meta.filename+'; earlier comparison drafts remain available.';
+      return {outcome:'opened',caseId,kind:'cohort-delivery',sourceId:meta.id};
+    })();
+    state.inflight=work;controls();
+    try{return await work;}
+    catch(problem){state.error=problem.message||String(problem);throw problem;}
+    finally{if(state.inflight===work)state.inflight=null;persist();if(available())render();}
+  }
   const ready=(async()=>{
     if(state.inflight)await state.inflight;
     if(state.input&&!state.report){try{state.report=compareCohortDelivery(state.input);}catch(error){state.error=error.message;}}
     if(state.accepted){try{await finishAccepted();}catch(error){state.error=error.message;}}
     if(available())render();
   })();
-  return {root,ready,setHostBusy(value){hostBusy=!!value;controls();},updateCurrent(next){if(next?.program?.id!==caseId)throw new Error('Retain the original comparison case.');caseValue=next;if(available())render();},dispose(){persist();active=false;}};
+  return {root,ready,openSavedWorkflow,setHostBusy(value){hostBusy=!!value;controls();},updateCurrent(next){if(next?.program?.id!==caseId)throw new Error('Retain the original comparison case.');caseValue=next;if(available())render();},dispose(){persist();active=false;}};
 }

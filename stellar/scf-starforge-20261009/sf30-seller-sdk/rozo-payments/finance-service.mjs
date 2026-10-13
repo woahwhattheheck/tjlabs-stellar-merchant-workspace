@@ -1,6 +1,7 @@
 // MIT. Saved ROZO reports joined to the original configured Accounting/Buyer owners.
 import { assert, fields, id, text, integer, sha, clone, canonical, jsonDigest, digest } from './model.mjs';
 import { captureRozoFinanceSource, rozoFinanceSourceBytes } from './finance-source.mjs';
+import { previewRozoFinanceAmendment } from './finance-amendment.mjs';
 import { validateRozoBuyerSelection, rozoFinanceMovements } from './finance-projection.mjs';
 
 export const ROZO_FINANCE_COMMANDS=Object.freeze([
@@ -125,6 +126,7 @@ export class RozoFinanceService{
         sha256:capture.descriptor.sha256,sourceId:capture.source.sourceId,sourceSha256:capture.source.sha256},preview};
     });
   }
+  async amendmentPreview(value){return previewRozoFinanceAmendment(this,value);}
   async periodPreview({binding,...value}){return this.withAccounting(binding,cap=>cap.finance.periodPreview(value));}
   async accountantPreview(value){
     fields(value,['binding','handoffId','csvBase64','name','actor','expectedParentId','id','createdAt'],'accountant preview');

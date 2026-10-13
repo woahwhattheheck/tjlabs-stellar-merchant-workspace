@@ -81,6 +81,11 @@ BOOT_FILES = (
     "managed_launch.py",
     "workshare_intake.py",
     "operations.py",
+    "operations_risks.py",
+    "operations_risks_cli.py",
+    "operations_risks.mjs",
+    "operations_risks.css",
+    "RISK_REGISTER_OPERATOR.md",
     "operations_funding.py",
     "operations_funding_cli.py",
     "operations_funding_requests.mjs",
@@ -229,6 +234,8 @@ BOOT_FILES = (
     "style.css",
     "operations.mjs",
     "operations.css",
+    "operations_workflows.py",
+    "SAVED_WORKFLOWS.md",
     "operations_navigation.mjs",
     "operations_navigation_ui.mjs",
     "operations_navigation.css",
@@ -303,6 +310,8 @@ BOOT_FILES = (
     "../../sf49_data_commissioning/installation-workorders/source-inputs.py",
     "../../sf49_data_commissioning/installation-workorders/prepare-core.mjs",
     "../../sf49_data_commissioning/installation-workorders/profiles.mjs",
+    "../../sf49_data_commissioning/installation-workorders/rialto-customer.json",
+    "../../sf49_data_commissioning/installation-workorders/RIALTO_CUSTOMER.md",
     "../../sf49_data_commissioning/installation-workorders/amp-iati.json",
     "../../sf49_data_commissioning/installation-workorders/ars-air-quality.json",
     "../../sf49_data_commissioning/installation-workorders/blockscout.json",
@@ -317,7 +326,12 @@ BOOT_FILES = (
     "../../sf49_data_commissioning/installation-workorders/stellarcarbon.json",
     "../../sf49_data_commissioning/installation-workorders/supplier-catalogues.json",
     "../../sf49_data_commissioning/installation-workorders/supplier-orders.json",
-    "../../sf49_data_commissioning/installation-workorders/taskerarmy-notifications.json"
+    "../../sf49_data_commissioning/installation-workorders/taskerarmy-notifications.json",
+    "../../sf49_data_commissioning/installation-workorders/laboratory-edd-reissue.json",
+    "../../sf49_data_commissioning/installation-workorders/geotech-dts8d.json",
+    "../../sf49_data_commissioning/installation-workorders/water-quality-analysis.json",
+    "../../sf49_data_commissioning/installation-workorders/kiwis-water-quality.json",
+    "../../sf49_data_commissioning/installation-workorders/ENVIRONMENTAL_INSTALLATIONS.md"
 )
 PRIVATE_NAME = "managed-launch.json"
 

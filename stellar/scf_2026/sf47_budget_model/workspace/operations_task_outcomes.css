@@ -36,3 +36,5 @@
 .task-reconciliation{border:2px solid #666;padding:16px;margin:24px 0}
 @media(max-width:720px){.task-fields{grid-template-columns:minmax(0,1fr)}.task-heading,.task-selected{display:block}.task-actions{margin-top:12px}.task-actions button{flex:1 1 160px}.task-work-row,.task-cost-row,.task-review{padding:10px}.task-outcomes-desk{font-size:14px}}
 @media print{.task-actions,.task-heading button,.task-outcomes-desk [data-task-action]{display:none}.task-outcomes-table{overflow:visible}.task-outcomes-desk pre{max-height:none;overflow:visible}.task-outcomes-table tr{break-inside:avoid}.task-method h4{break-after:avoid}}
+
+.task-recurring,.task-recurring-report{border-top:1px solid #aaa;margin-top:28px;padding-top:4px}.task-followup{scroll-margin-top:24px}.task-recurring a{color:inherit;text-decoration:underline;text-underline-offset:2px}.task-recurring-report>details{background:#fafafa}.task-followup>.task-method{margin-top:12px}

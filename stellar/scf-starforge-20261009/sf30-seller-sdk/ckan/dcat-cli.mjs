@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // MIT. DCAT catalog operations through the original retained workspace and loopback service.
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, basename } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { verifyDcatManagedSelection } from '../../distribution/runtime-workspace/application-dcat.mjs';
@@ -8,13 +8,19 @@ import { openCkanWorkbench } from './model.mjs';
 import { parseCkanJson } from './capture.mjs';
 import { startCkanServer } from './server.mjs';
 import { inspectCkanWorkspaceArchive, receiveCkanWorkspaceArchive } from './archive.mjs';
-import { readPrivate, createFile, privateDirectory, digest, fault } from '../postgres/publisher/files.mjs';
+import { readPrivate, createFile, atomicJson, privateDirectory, digest, fault } from '../postgres/publisher/files.mjs';
 
 const usage = [
   'DCAT catalog migration workspace',
   '  dcat init --workspace DIR --origin https://publisher.example',
-  '  dcat serve --workspace DIR [--port 0]',
+  '  dcat serve --workspace DIR [--port 0] [--startup-file PRIVATE.json]',
   '  dcat status --workspace DIR',
+  '  dcat source --workspace DIR --source ID',
+  '  dcat save-source --workspace DIR --label TEXT --url URL [--source ID --expected-source HASH] [--profile auto|1.1|3.0] [--token-env NAME|none] [--interval-minutes 60] [--timeout-ms 30000] [--max-bytes 134217728] [--enabled true|false]',
+  '  dcat acquire --workspace DIR --source ID --expected-source HASH --expected-latest none|ID [--unconditional true] [--retry-of ID]',
+  '  dcat acquire-due --workspace DIR [--startup-file PRIVATE.json]',
+  '  dcat review-source --workspace DIR --source ID --expected-source HASH --expected-latest ID [--baseline-release ID --baseline-sha256 HASH --baseline-review-sha256 HASH] [--reuse-mappings 0,2] [--candidate ID] [--mappings FILE.json] [--normalize-v3 true] [--label TEXT]',
+  '  dcat export --workspace DIR --kind receipt|response --acquisition ID --out FILE',
   '  dcat import --workspace DIR --file FILE.json [--profile auto|1.1|3.0] [--label TEXT] [--origin URL] [--sha256 HASH]',
   '  dcat review --workspace DIR --source ID [--comparison ID] [--candidate ID] [--mappings FILE.json] [--label TEXT] [--normalize-v3 true]',
   '  dcat inspect --workspace DIR --review ID',
@@ -32,14 +38,102 @@ const usage = [
 ].join('\n');
 const output = value => process.stdout.write(JSON.stringify(value, null, 2) + '\n');
 const optionsByCommand = {
-  init: ['workspace', 'origin'], serve: ['workspace', 'port', 'managed-selection'],
-  status: ['workspace'], import: ['workspace', 'file', 'profile', 'label', 'origin', 'sha256'],
+  init: ['workspace', 'origin'], serve: ['workspace', 'port', 'managed-selection', 'startup-file'],
+  status: ['workspace'], source: ['workspace', 'source'],
+  'save-source': ['workspace', 'source', 'expected-source', 'label', 'url', 'profile', 'token-env', 'interval-minutes', 'timeout-ms', 'max-bytes', 'enabled'],
+  acquire: ['workspace', 'source', 'expected-source', 'expected-latest', 'unconditional', 'retry-of'],
+  'acquire-due': ['workspace', 'startup-file'],
+  'review-source': ['workspace', 'source', 'expected-source', 'expected-latest', 'baseline-release', 'baseline-sha256', 'baseline-review-sha256', 'reuse-mappings', 'candidate', 'mappings', 'normalize-v3', 'label'],
+  import: ['workspace', 'file', 'profile', 'label', 'origin', 'sha256'],
   review: ['workspace', 'source', 'comparison', 'candidate', 'mappings', 'label', 'normalize-v3'],
   inspect: ['workspace', 'review'], cutover: ['workspace', 'review', 'expected-active', 'note', 'review-sha256', 'candidate-sha256'],
   rollback: ['workspace', 'release', 'expected-active', 'note', 'review-sha256', 'candidate-sha256'],
-  export: ['workspace', 'kind', 'review', 'catalog', 'out'], archive: ['workspace', 'out'],
+  export: ['workspace', 'kind', 'review', 'catalog', 'acquisition', 'out'], archive: ['workspace', 'out'],
   'inspect-archive': ['file', 'sha256'], receive: ['file', 'sha256', 'workspace'],
 };
+
+// Operate the current authenticated owner without opening a second project lease.
+async function acquireDueThroughListener(startupFile, directory) {
+  const raw = await readPrivate(startupFile, 65536);
+  let startup;
+  try { startup = JSON.parse(raw.toString('utf8')); } catch { throw fault('DCAT_STARTUP_FILE_INVALID'); }
+  if (startup?.schema !== 'stellar-forge.dcat-workbench-startup.v1' ||
+      startup.directory !== directory || typeof startup.instanceId !== 'string' ||
+      !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(startup.instanceId))
+    throw fault('DCAT_STARTUP_FILE_INVALID', 'Select the private startup record from this project’s current owner.');
+  let url;
+  try { url = new URL(startup.url); } catch { throw fault('DCAT_STARTUP_FILE_INVALID'); }
+  if (url.protocol !== 'http:' || !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname) ||
+      url.pathname !== '/' || url.search || url.username || url.password || startup.origin !== url.origin ||
+      !/^[A-Za-z0-9_-]{32,128}$/.test(url.hash.slice(1)))
+    throw fault('DCAT_STARTUP_FILE_INVALID', 'Use the original private loopback startup record.');
+  const authorization = 'Bearer ' + url.hash.slice(1);
+  async function api(path, value) {
+    let response;
+    try { response = await fetch(url.origin + '/api/' + path, {
+      method: value === undefined ? 'GET' : 'POST', headers: { authorization,
+        ...(value === undefined ? {} : { 'content-type': 'application/json' }) },
+      ...(value === undefined ? {} : { body: JSON.stringify(value) }),
+      redirect: 'error', signal: AbortSignal.timeout(15000),
+    }); } catch { throw fault('DCAT_LISTENER_UNAVAILABLE', 'The selected project owner did not answer. Read its original lifecycle status.'); }
+    let count = 0; const parts = [];
+    for await (const part of response.body ?? []) {
+      count += part.length;
+      if (count > 33554432) throw fault('DCAT_LISTENER_RESPONSE_TOO_LARGE');
+      parts.push(Buffer.from(part));
+    }
+    let result;
+    try { result = parseCkanJson(Buffer.concat(parts)); }
+    catch { throw fault('DCAT_LISTENER_RESPONSE_INVALID'); }
+    if (!response.ok) throw fault(result.error ?? 'DCAT_LISTENER_REQUEST_FAILED',
+      result.message ?? 'The original project owner rejected the request.', response.status);
+    return result;
+  }
+  const listener = await api('launch');
+  if (listener.schema !== 'stellar-forge.ckan-workbench-listener.v1' ||
+      listener.instanceId !== startup.instanceId || listener.pid !== startup.pid ||
+      listener.directory !== directory || listener.project?.createdAt !== startup.projectCreatedAt ||
+      listener.project?.catalogOrigin !== startup.catalogOrigin || listener.project?.sourceKind !== startup.sourceKind)
+    throw fault('DCAT_LISTENER_IDENTITY_CHANGED', 'Select the current original startup record before dispatching due acquisitions.');
+  const state = await api('status'), outcomes = [];
+  const result = { listener: { instanceId: listener.instanceId, pid: listener.pid, directory },
+    startupSha256: digest(raw), checkedAt: new Date().toISOString(), sources: outcomes };
+  if (state.active) return { ...result, deferred: true, reason: 'PROJECT_BUSY' };
+  for (const selected of state.dcat?.sources ?? []) {
+    let current;
+    try {
+      current = (await api('dcat/sources/' + selected.id)).source;
+      const now = Date.now();
+      if (current.enabled === false || current.nextCheckAt && Date.parse(current.nextCheckAt) > now ||
+          current.retryNotBefore && Date.parse(current.retryNotBefore) > now) continue;
+      const started = await api('dcat/sources/acquire', { sourceId: current.id,
+        expectedSourceSha256: current.sourceSha256, expectedLatestCatalogId: current.latestCatalogId ?? null,
+        onlyIfDue: true });
+      if (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(started.acquisitionId ?? ''))
+        throw fault('DCAT_LISTENER_ACQUISITION_INVALID');
+      const deadline = Date.now() + (current.timeoutMs ?? 30000) + 60000;
+      let attempt;
+      while (Date.now() < deadline) {
+        const record = await api('dcat/sources/' + current.id);
+        attempt = record.acquisitions.find(item => item.id === started.acquisitionId);
+        if (attempt && attempt.status !== 'FETCHING') break;
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      if (!attempt || attempt.status === 'FETCHING')
+        throw fault('DCAT_ACQUISITION_STILL_RUNNING', 'Inspect the retained original acquisition before the next due dispatch.');
+      outcomes.push({ sourceId: current.id, operationId: started.operationId, acquisition: attempt });
+      if (!['ACQUIRED', 'UNCHANGED', 'NOT_MODIFIED'].includes(attempt.status)) process.exitCode = 1;
+    } catch (error) {
+      if (error.code === 'CKAN_PROJECT_BUSY') {
+        outcomes.push({ sourceId: selected.id, deferred: true, reason: 'PROJECT_BUSY' }); break;
+      }
+      outcomes.push({ sourceId: selected.id, error: { code: error.code ?? 'DCAT_ACQUIRE_FAILED', message: error.message } });
+      process.exitCode = 1;
+    }
+  }
+  return result;
+}
+
 export async function main(supplied = process.argv.slice(2)) {
   const argv = [...supplied], command = argv.shift(), options = {};
   if (!command || ['help', '--help'].includes(command)) { process.stdout.write(usage + '\n'); return; }
@@ -63,6 +157,9 @@ export async function main(supplied = process.argv.slice(2)) {
     output(await receiveCkanWorkspaceArchive({ file: resolve(required('file')), directory: resolve(required('workspace')),
       expectedSha256: required('sha256') })); return;
   }
+  if (command === 'acquire-due' && options['startup-file'] !== undefined) {
+    output(await acquireDueThroughListener(resolve(required('startup-file')), resolve(required('workspace')))); return;
+  }
   const project = await openCkanWorkbench({ directory: resolve(required('workspace')), create: command === 'init',
     ...(command === 'init' ? { sourceKind: 'dcat-us', origin: required('origin') } : {}) });
   let served = false;
@@ -77,10 +174,26 @@ export async function main(supplied = process.argv.slice(2)) {
       }
       const web = await startCkanServer({ workbench: project, port: Number(options.port ?? 0) });
       const state = project.status();
-      process.stdout.write(JSON.stringify({ schema: 'stellar-forge.dcat-workbench-startup.v1', pid: process.pid, directory: project.directory,
+      const startup = { schema: 'stellar-forge.dcat-workbench-startup.v1', pid: process.pid, directory: project.directory,
         projectCreatedAt: state.createdAt, catalogOrigin: state.catalogOrigin, sourceKind: state.sourceKind,
         instanceId: web.instanceId, origin: web.origin, url: web.url,
-        dcatRuntime: project.dcatRuntime() }) + '\n');
+        dcatRuntime: project.dcatRuntime() };
+      if (options['startup-file'] !== undefined) {
+        try {
+          const path = resolve(required('startup-file'));
+          if (path === project.directory || path.startsWith(project.directory + '/'))
+            throw fault('DCAT_STARTUP_FILE_LOCATION', 'Keep the private listener record outside the portable catalog project.');
+          await privateDirectory(dirname(path));
+          let previous;
+          try { previous = JSON.parse((await readPrivate(path, 65536)).toString('utf8')); }
+          catch (error) { if (error.code !== 'ENOENT') throw error; }
+          if (previous && (previous.schema !== startup.schema || previous.directory !== startup.directory ||
+              previous.projectCreatedAt !== startup.projectCreatedAt))
+            throw fault('DCAT_STARTUP_FILE_CHANGED', 'This startup record belongs to another saved project.');
+          await atomicJson(dirname(path), basename(path), startup);
+        } catch (error) { await web.close(); throw error; }
+      }
+      process.stdout.write(JSON.stringify(startup) + '\n');
       served = true; let ending = false;
       const shutdown = async () => {
         if (ending) return; ending = true;
@@ -91,7 +204,87 @@ export async function main(supplied = process.argv.slice(2)) {
     }
     let result;
     if (command === 'init' || command === 'status') result = project.status();
-    else if (command === 'import') result = project.importDcatCatalog({ file: resolve(required('file')),
+    else if (command === 'source') result = await project.dcatSource(required('source'));
+    else if (command === 'save-source') {
+      if ((options.source === undefined) !== (options['expected-source'] === undefined))
+        throw fault('DCAT_COMMAND_ARGUMENTS', 'Update a source with both --source and --expected-source.');
+      const value = { label: required('label'), url: required('url') };
+      if (options.profile !== undefined) value.profile = options.profile;
+      else if (options.source === undefined) value.profile = 'auto';
+      if (options['token-env'] !== undefined)
+        value.authTokenEnv = options['token-env'] === 'none' ? null : options['token-env'];
+      if (options.source !== undefined) Object.assign(value, { id: required('source'), expectedSourceSha256: required('expected-source') });
+      for (const [flag, field] of [['interval-minutes', 'intervalMinutes'], ['timeout-ms', 'timeoutMs'], ['max-bytes', 'maxResponseBytes']])
+        if (options[flag] !== undefined) {
+          const number = Number(options[flag]);
+          if (!Number.isSafeInteger(number)) throw fault('DCAT_COMMAND_ARGUMENTS', 'Use an integer for --' + flag + '.');
+          value[field] = number;
+        }
+      if (options.enabled !== undefined) {
+        if (!['true', 'false'].includes(options.enabled)) throw fault('DCAT_COMMAND_ARGUMENTS', 'Use --enabled true or false.');
+        value.enabled = options.enabled === 'true';
+      }
+      result = project.saveDcatSource(value);
+    } else if (command === 'acquire') {
+      const expected = required('expected-latest');
+      if (options.unconditional !== undefined && !['true', 'false'].includes(options.unconditional))
+        throw fault('DCAT_COMMAND_ARGUMENTS', 'Use --unconditional true or false.');
+      result = project.acquireDcatSource({ sourceId: required('source'), expectedSourceSha256: required('expected-source'),
+        expectedLatestCatalogId: expected === 'none' ? null : expected,
+        ...(options.unconditional === undefined ? {} : { unconditional: options.unconditional === 'true' }),
+        ...(options['retry-of'] ? { retryOf: options['retry-of'] } : {}) });
+    } else if (command === 'acquire-due') {
+      const sources = project.status().dcat?.sources ?? [], outcomes = [];
+      const now = Date.now();
+      for (const source of sources) {
+        if (source.enabled === false || source.nextCheckAt && Date.parse(source.nextCheckAt) > now ||
+            source.retryNotBefore && Date.parse(source.retryNotBefore) > now) continue;
+        try {
+          const operation = project.acquireDcatSource({ sourceId: source.id,
+            expectedSourceSha256: source.sourceSha256,
+            expectedLatestCatalogId: source.latestCatalogId ?? null, onlyIfDue: true });
+          const completed = await operation.completion;
+          outcomes.push({ sourceId: source.id, operation: completed });
+          if (completed.state !== 'COMPLETE') process.exitCode = 1;
+        } catch (error) {
+          outcomes.push({ sourceId: source.id, error: { code: error.code ?? 'DCAT_ACQUIRE_FAILED', message: error.message } });
+          process.exitCode = 1;
+        }
+      }
+      result = { checkedAt: new Date(now).toISOString(), sources: outcomes };
+    } else if (command === 'review-source') {
+      let identityMappings;
+      if (options.mappings) {
+        identityMappings = parseCkanJson(await readFile(resolve(options.mappings)));
+        if (!Array.isArray(identityMappings)) throw fault('DCAT_MAPPINGS_INVALID', 'The mappings file must contain a JSON array.');
+      }
+      if (options['normalize-v3'] !== undefined && !['true', 'false'].includes(options['normalize-v3']))
+        throw fault('DCAT_COMMAND_ARGUMENTS', 'Use --normalize-v3 true or false.');
+      let reuseMappingIndexes;
+      if (options['reuse-mappings'] !== undefined) {
+        reuseMappingIndexes = options['reuse-mappings'].split(',').map(value => {
+          if (!/^(0|[1-9][0-9]*)$/.test(value) || !Number.isSafeInteger(Number(value)))
+            throw fault('DCAT_COMMAND_ARGUMENTS', 'Use comma-separated zero-based mapping indexes from the accepted baseline review.');
+          return Number(value);
+        });
+        if (new Set(reuseMappingIndexes).size !== reuseMappingIndexes.length)
+          throw fault('DCAT_COMMAND_ARGUMENTS', 'Select each baseline mapping index once.');
+      }
+      result = project.prepareDcatSourceReview({
+        sourceId: required('source'), expectedSourceSha256: required('expected-source'),
+        expectedLatestCatalogId: required('expected-latest'),
+        baselineReleaseId: options['baseline-release'] ?? null,
+        ...(options['baseline-release'] ? {
+          expectedBaselineSha256: required('baseline-sha256'),
+          expectedBaselineReviewSha256: required('baseline-review-sha256'),
+        } : {}),
+        ...(reuseMappingIndexes === undefined ? {} : { reuseMappingIndexes }),
+        ...(options.candidate ? { candidateId: options.candidate } : {}),
+        ...(identityMappings === undefined ? {} : { identityMappings }),
+        ...(options.label ? { label: options.label } : {}),
+        normalizeV3: options['normalize-v3'] === 'true',
+      });
+    } else if (command === 'import') result = project.importDcatCatalog({ file: resolve(required('file')),
       profile: options.profile ?? 'auto', label: options.label ?? 'Catalog edition', origin: options.origin,
       expectedSha256: options.sha256 });
     else if (command === 'review') {
@@ -116,10 +309,11 @@ export async function main(supplied = process.argv.slice(2)) {
     } else if (command === 'export') {
       const kind = required('kind');
       let selected;
-      if (kind === 'current') selected = await project.dcatCurrentDownload();
+      if (['receipt', 'response'].includes(kind)) selected = await project.dcatAcquisitionDownload(required('acquisition'), kind);
+      else if (kind === 'current') selected = await project.dcatCurrentDownload();
       else if (kind === 'original') selected = await project.dcatCatalogDownload(required('catalog'));
       else if (['candidate', 'report'].includes(kind)) selected = await project.dcatReviewDownload(required('review'), kind);
-      else throw fault('DCAT_DOWNLOAD_KIND', 'Choose original, candidate, report or current.');
+      else throw fault('DCAT_DOWNLOAD_KIND', 'Choose original, candidate, report, current, receipt or response.');
       const raw = await readPrivate(selected.file, selected.bytes);
       if (raw.length !== selected.bytes || digest(raw) !== selected.sha256) throw fault('DCAT_RETAINED_EDITION_CHANGED');
       const out = resolve(required('out')); await privateDirectory(dirname(out)); await createFile(out, raw);

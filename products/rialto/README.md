@@ -2,6 +2,24 @@
 
 Receive a complete original Rialto catalogue, choose a useful HTTP request, prepare its actual merchant challenge through the original Stellar Forge buyer, and hand the whole operation to another operator.
 
+## Original published path inputs
+
+The installed request editor reads each HTTP resource's published path declaration through the same maintained route helper used by the original buyer. For a route with parameters, open **Review source**, fill its required path values and choose **Apply path values**. The complete request URL updates while retaining its query parameters. Concrete segments already present in the original advertised resource stay fixed. Published examples remain source context; the editor asks for the customer's actual values.
+
+The downloaded request retains those explicit path values with the complete catalogue identity, original row and payment option. The native `select` operation binds the concrete URL against the original template, validates fixed values and retains its full `pathBinding`. The actual merchant challenge is independently bound to the same concrete request. The original SF88 preparation, payment approval and receiving then continue unchanged.
+
+A CLI selection may supply `pathValues` alongside its complete concrete `url`. Omit it when entering an already concrete URL directly; the maintained helper still validates and derives the original binding. The pure SDK exports `describeRequestPath`, `prepareRequestPath` and `bindRequestPath` for applications using these same source declarations. Conflicting top-level and Bazaar route templates are reported explicitly.
+
+Saved browser drafts retain unfinished path fields, body, headers, task, useful output and current URL. Previously saved native requests continue reopening after upgrade; their original request is validated again, and their retained selection remains intact. Existing captured catalogue reports also remain intact. To generate the updated editor from an existing catalogue, choose a new report path:
+
+```sh
+starforge rialto-customer report \
+  --directory /absolute/private/catalogue-001 \
+  --out /absolute/private/catalogue-001-path-editor.html
+```
+
+Continue the original selected customer directory for challenge recovery and native receiving. A distinct customer request starts its own request directory and explicit intent.
+
 ## Installation
 
 Use Node.js 22 or later and Linux `flock`. The receiving modules use Node built-ins. The original buyer retains its own native dependencies, account configuration and authorization.
@@ -68,3 +86,18 @@ The selected source recipe explicitly carries the original native buyer’s dyna
 MCP resources remain fully visible in the catalogue; their original Rialto tools retain execution. This customer path operates concrete HTTP resources. The original buyer and original authorization flow remain attached throughout.
 
 In the received package, the complete local operating guide is `source/stellar/scf-starforge-20261009/partners/rialto/OPERATING.md`; source and product guides remain in the same source inventory.
+
+## Original customer Installation
+
+The installed Rialto command joins the complete retained request to the existing Customer installations programme. Use the [complete operating guide](../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/RIALTO_CUSTOMER.md) to select the original commercial Workshare seed, actual payment/source/receiving bindings and native preview/save.
+
+```sh
+starforge rialto-customer installation --directory "$ORIGINAL_REQUEST" \
+  --seed "$ORIGINAL_NATIVE_SEED" --bindings "$SELECTED_BINDINGS" \
+  --out "$NEW_PRIVATE_PREPARATION"
+starforge rialto-customer installation-open --directory "$NEW_PRIVATE_PREPARATION"
+starforge rialto-customer installation-pack --directory "$NEW_PRIVATE_PREPARATION" \
+  --out "$OUTSIDE_COMPLETE_PACKET"
+```
+
+The whole prepared edition retains the original request, every catalogue page, native history, exact source seed/bindings/profile, complete Installation input, workorder and relative request annex. Independent receiving uses the existing `receive` command followed by `installation-open`; the original SF88 import reconstructs its native machine-local paths. Case creation, payment execution and Installation preview/save continue through their existing applications.

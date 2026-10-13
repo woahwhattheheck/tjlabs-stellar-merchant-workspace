@@ -87,7 +87,9 @@ export const FRED_WORKSPACE_HELP = [
   "  ddp-migration-save --args-file EXACT_REVIEWED_SELECTION.json --id ID --revision N --preview-id SHA",
   "  ddp-migration --migration MIGRATION_ID [--section series|acquisitions|mappings --offset 0 --limit 100]",
   "  ddp-migration-acquire --id ID --revision N --migration MIGRATION_ID",
-  "      One original operation owns every native FRED batch and its completed receiving.",
+  "      [--source-mode API_VINTAGE|ALFRED_VINTAGE --metadata-input HOST_ALIAS]",
+  "      [--metadata-file-sha256 RAW_FILE_SHA --metadata-sha256 SORTED_EDITION_SHA]",
+  "      One original operation owns every source batch and its completed receiving.",
   "  ddp-receiving --receiving RECEIVING_ID [--package-series ORIGINAL_SERIES_ID]",
   "      [--changes-only true|false --offset 0 --limit 100]",
   "",
@@ -155,7 +157,7 @@ const allowed = new Set(['connection','workspace','args-file','out','console-url
   'release-capture','watch','plan','before-release','after-release','section','as-of','watch-series',
   'observation-start','observation-end','baseline-as-of','catch-up','page-size','max-rows',
   'crosswalk','package','migration','receiving','package-series','release','frequency','bookmark','url','decisions-file','bindings-file',
-  'comparison','result-status','series-id']);
+  'comparison','result-status','series-id','source-mode','metadata-input','metadata-file-sha256','metadata-sha256']);
 function parse(values) {
   const argv = [...values], command = argv[0] && !argv[0].startsWith('--') ? argv.shift() : 'help', flags = {};
   while (argv.length) {
@@ -246,7 +248,8 @@ async function toolArgs(flags, workspace) {
     'observation-end':'observationEnd', 'baseline-as-of':'baselineAsOf', 'catch-up':'catchUp',
     crosswalk:'crosswalkId', package:'packageId', migration:'migrationId', receiving:'receivingId',
     'package-series':'seriesId', release:'release', frequency:'frequency', bookmark:'bookmark', url:'url',
-    comparison:'comparisonId', 'result-status':'status', 'series-id':'seriesId' };
+    comparison:'comparisonId', 'result-status':'status', 'series-id':'seriesId',
+    'source-mode':'sourceMode', 'metadata-input':'metadataInput', 'metadata-file-sha256':'metadataFileSha256', 'metadata-sha256':'metadataSha256' };
   for (const [flag, key] of Object.entries(strings)) if (flags[flag] !== undefined) put(key, flags[flag]);
   for (const [flag, key] of Object.entries({ offset:'offset', limit:'limit', revision:'expectedRevision', accept:'acceptIndex', 'page-size':'pageSize', 'max-rows':'maxRows' }))
     if (flags[flag] !== undefined) put(key, number(flags[flag], flag));

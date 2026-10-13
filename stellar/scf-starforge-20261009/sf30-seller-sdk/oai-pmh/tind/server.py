@@ -179,6 +179,25 @@ class Handler(BaseHTTPRequestHandler):
                 with owner.mutex:
                     result = owner.records(query["project"], int(query.get("offset", "0")), int(query.get("limit", "50")), query.get("query", ""))
                 self.respond(200, result)
+            elif path == "/api/production-collections":
+                from production_waves import collection_inventory
+                with owner.mutex:
+                    result = collection_inventory(owner, query["project"])
+                self.respond(200, result)
+            elif path == "/api/production-plans":
+                from production_waves import list_plans, plan_view
+                with owner.mutex:
+                    result = plan_view(owner, query["project"], query["id"], int(query.get("offset", "0")), int(query.get("limit", "50"))) if query.get("id") else list_plans(owner, query["project"], int(query.get("offset", "0")), int(query.get("limit", "50")))
+                self.respond(200, result)
+            elif path == "/api/production-wave":
+                from production_waves import wave_view
+                with owner.mutex:
+                    result = wave_view(owner, query["project"], query["id"], int(query.get("offset", "0")), int(query.get("limit", "50")))
+                self.respond(200, result)
+            elif path == "/download/production-plan":
+                from production_waves import write_export
+                self.download(lambda file: write_export(owner, query["project"], query["id"], file),
+                              "tind-production-plan.jsonl", "application/x-ndjson; charset=utf-8")
             elif path == "/api/source-downloads":
                 with owner.mutex:
                     result = acquisition_view(owner, query["project"], query["id"], int(query.get("offset", "0")), int(query.get("limit", "50"))) if query.get("id") else list_acquisitions(owner, query["project"], int(query.get("offset", "0")), int(query.get("limit", "50")))
@@ -272,13 +291,13 @@ class Handler(BaseHTTPRequestHandler):
         except (InputError, OSError, ValueError, KeyError) as error:
             self.respond(400, {"error": str(error)})
 
-    def download(self, create, filename):
+    def download(self, create, filename, content_type="application/zip"):
         owner = self.server.workspace
         with tempfile.TemporaryDirectory(dir=owner.area / "tmp") as directory:
             path = Path(directory) / "download.zip"
             result = create(path)
             self.send_response(200)
-            self.send_header("Content-Type", "application/zip")
+            self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(result["bytes"]))
             self.send_header("Content-Disposition", 'attachment; filename="' + filename + '"')
             self.common_headers()

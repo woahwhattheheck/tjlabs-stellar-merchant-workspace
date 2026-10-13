@@ -6,7 +6,7 @@ import { retainVersion, validateDraft, MAX_BYTES } from './grant-submission-core
 import { planSummary } from './grant-plan-core.mjs';
 import { CATALOG_SCHEMA, searchCommandCatalog } from
   '../../../stellar/scf-starforge-20261009/distribution/discovery/catalog.mjs';
-import { snapshotRegistration, renderOperatingPlanHTML, renderOperatingPlanMarkdown } from
+import { snapshotRegistration, renderOperatingPlanHTML, renderOperatingPlanMarkdown, operatingFileBytes, operatingFileSummary } from
   '../../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs';
 
 const catalogs = new Map();
@@ -173,6 +173,25 @@ export function renderGrantOperatingPlan(root, context, { source, plan, review }
 }
 
 
+
+function appendOperatingFileDownloads(root, context, label, files = []) {
+  const { node, button } = context;
+  if (!files.length) return;
+  root.append(node('h5', label));
+  for (const file of files) {
+    const row = node('div', undefined, 'card');
+    row.append(node('p', file.name + ' · ' + file.bytes.toLocaleString() + ' bytes · ' + file.mediaType),
+      ...(file.note ? [node('p', file.note)] : []),
+      button('Download ' + file.name, () => {
+        const url = URL.createObjectURL(new Blob([operatingFileBytes(file)], { type: 'application/octet-stream' }));
+        const link = node('a'); link.href = url; link.download = file.name;
+        document.body.append(link); link.click(); link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      }));
+    root.append(row);
+  }
+}
+
 function renderReturnDetails(root, context, comparison) {
   const { node } = context;
   root.append(node('p', comparison.packageIds.length + ' original work packages · ' +
@@ -215,7 +234,7 @@ function renderReturnDetails(root, context, comparison) {
         node('h5', 'Returned result'), node('pre', current.recordedResult || 'No result entered.', 'source-text'));
       if (item.changedFromPrepared.length) {
         const changes = node('details'); changes.append(node('summary', 'Compare with the original package procedure'));
-        for (const field of item.changedFromPrepared) {
+        for (const field of item.changedFromPrepared.filter(field => field !== 'files')) {
           const format = value => typeof value === 'string' ? value : JSON.stringify(value, null, 2);
           changes.append(node('h5', field), node('p', 'Originally prepared', 'muted'),
             node('pre', format(item.original[field]), 'source-text'), node('p', 'Returned', 'muted'),
@@ -224,14 +243,29 @@ function renderReturnDetails(root, context, comparison) {
         card.append(changes);
       }
     }
+    const fileChanges = item.filesFromPrevious;
+    if (item.original.files?.length || item.previous?.files?.length || current?.files?.length) {
+      const files = node('details');
+      files.open = Boolean(fileChanges.added.length || fileChanges.removed.length || fileChanges.changed.length);
+      files.append(node('summary', 'Complete customer result files'),
+        node('p', fileChanges.added.length + ' added · ' + fileChanges.removed.length + ' removed · ' +
+          fileChanges.changed.length + ' changed' + (fileChanges.orderChanged ? ' · file order changed' : ''), 'muted'));
+      appendOperatingFileDownloads(files, context, 'Originally prepared files', item.original.files);
+      appendOperatingFileDownloads(files, context, 'Previously selected files', item.previous?.files);
+      appendOperatingFileDownloads(files, context, 'Returned files', current?.files);
+      card.append(files);
+    }
     root.append(card);
   }
   if (comparison.additionalSteps.length) {
     const additional = node('details');
     additional.append(node('summary', 'Additional customer operating steps (' + comparison.additionalSteps.length + ')'),
       node('p', 'These are retained customer procedure steps alongside the original funded package mapping.'));
-    for (const step of comparison.additionalSteps) additional.append(node('h4', step.title),
-      node('pre', JSON.stringify(step, null, 2), 'source-text'));
+    for (const step of comparison.additionalSteps) {
+      additional.append(node('h4', step.title),
+        node('pre', JSON.stringify({ ...step, ...(step.files ? { files: step.files.map(operatingFileSummary) } : {}) }, null, 2), 'source-text'));
+      appendOperatingFileDownloads(additional, context, 'Complete customer result files', step.files);
+    }
     root.append(additional);
   }
 }

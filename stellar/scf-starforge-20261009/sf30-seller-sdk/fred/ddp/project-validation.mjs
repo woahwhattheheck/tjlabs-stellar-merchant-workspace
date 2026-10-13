@@ -99,11 +99,11 @@ export function validateFredDdpProjectState(state) {
     receivingId(receiving.id); planId(receiving.planId);
     validateFredDdpReceivingFileManifest(receiving);
     const plan = plans.get(receiving.planId);
-    need(plan && !completedPlans.has(receiving.planId) &&
+    need(plan && !completedPlans.has(receiving.id) &&
       receiving.packageId === plan.packageId && receiving.packageSha256 === plan.packageSha256 &&
       receiving.crosswalkId === plan.crosswalkId && receiving.crosswalkSha256 === plan.crosswalkSha256,
-      'The DDP receiving lost its unique original migration plan or source.');
-    completedPlans.add(receiving.planId);
+      'The DDP receiving lost its unique original result, migration plan or source.');
+    completedPlans.add(receiving.id);
     need(Array.isArray(receiving.captureIds) && receiving.captureIds.length === plan.acquisitionCount &&
       new Set(receiving.captureIds).size === receiving.captureIds.length &&
       receiving.captureIds.every(value => sourceIds.has(hashId(value))) && plain(receiving.summary),
@@ -211,12 +211,20 @@ export function validateFredDdpProjectBundle({
     const manifest = verifyFredDdpReceivingManifest(receiving, summary);
     need(canonical(fredDdpReceivingSummary(receiving, manifest)) === canonical(summary),
       'The retained migration receiving index changed.');
+    const targetModes = new Set(selected.map(capture => captureModels.get(capture.captureSha256).sourceMode));
+    need(targetModes.size === 1, 'One receiving retains one original historical source mode.');
+    const targetMode = [...targetModes][0];
+    const historicalMetadata = selected.flatMap(capture => targetMode === 'ALFRED_VINTAGE'
+      ? capture.source.series.map(record => record.metadata).filter(Boolean) : []).sort((a,b) => a.series.value < b.series.value ? -1 : a.series.value > b.series.value ? 1 : 0);
+    const sourceContext = targetMode === 'ALFRED_VINTAGE' ? { sourceMode: targetMode, metadataSha256: digest(historicalMetadata) } : {};
     const index = operationBefore(state, 'ddp-migration-acquire', operation =>
       operation.result?.migrationId === plan.id && operation.result?.receivingId === receiving.id &&
       canonical(operation.result.receiving) === canonical(summary) &&
       canonical(operation.result.captureIds) === canonical(summary.captureIds) &&
       operation.result.acquisitionId === operation.id && typeof operation.result.reusedReceiving === 'boolean' &&
-      matchingFingerprint(operation, operation.kind, { migrationId: plan.id }));
+      (operation.result.sourceMode ?? 'API_VINTAGE') === targetMode &&
+      (targetMode !== 'ALFRED_VINTAGE' || operation.result.metadataSha256 === sourceContext.metadataSha256) &&
+      matchingFingerprint(operation, operation.kind, { migrationId: plan.id, ...sourceContext }));
     need(index > planOperations.get(plan.id), 'The complete receiving lost its original acquisition chronology.');
   }
   return true;
