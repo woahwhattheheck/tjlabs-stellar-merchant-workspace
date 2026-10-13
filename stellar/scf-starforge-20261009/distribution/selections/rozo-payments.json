@@ -685,7 +685,11 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/finance-browser.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/finance-receiving.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/finance-archive.py",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/FINANCE.md"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/FINANCE.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/finance-amendment.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/finance-amendment-native.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/public/finance-amendment.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/FINANCE_AMENDMENTS.md"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",

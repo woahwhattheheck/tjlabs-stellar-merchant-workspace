@@ -38,9 +38,13 @@ const help=String.raw`ROZO merchant payments and original Checkout workspace (No
   finance-plan --workspace DIR --merchant-config FILE --accounting ALIAS [--buyer ALIAS]
          --directory DRAFT-DIR --report-id ID --report-sha256 SHA --actor ACTOR
          --source-details SOURCE-METADATA.json [--operation-id ID]
+  finance-amendment-plan --workspace DIR --merchant-config FILE --accounting ALIAS [--buyer ALIAS]
+         --previous-finance-directory ORIGINAL-COMPLETED-DIR --directory DRAFT-DIR
+         --report-id ID --report-sha256 SHA --actor ACTOR --source-details FILE
+         [--purchase-selection FILE --operation-id ID]
   native-finance --workspace DIR --config FILE --merchant-config FILE --accounting ALIAS
          [--buyer ALIAS] --plan REVIEWED-PLAN.json --directory ORIGINAL-FINANCE-DIR
-         --chromium FILE --playwright-module FILE [--python FILE --maintenance-continuation FILE]
+         --chromium FILE --playwright-module FILE [--python FILE --maintenance-continuation FILE --previous-finance-directory DIR]
   receive-finance --archive ZIP --sha256 SHA --directory PACKAGE-DIR --receiver NEW-DIR
          [--merchant-config FILE --accounting ALIAS --python FILE]
   native --directory DIR [--chromium FILE --playwright-module FILE]
@@ -109,7 +113,7 @@ export async function main(args=process.argv.slice(2)){
   if(command==='native-applications'){const {runRozoApplications}=await import('./native-applications.mjs');result(await runRozoApplications({directory:resolve(need(flags,'--directory')),repository:resolve(need(flags,'--repository')),ref:need(flags,'--ref'),chromium:flags['--chromium'],playwrightModule:flags['--playwright-module'],python:flags['--python'],npm:flags['--npm']}));return;}
   const directory=resolve(need(flags,'--workspace'));
   if(command==='inspect'){result(inspectRozoWorkspace(directory));return;}
-  const reading=['state','request','history','report','object','finance-plan'].includes(command),w=new RozoWorkspace(directory,{create:command==='init',readOnly:reading});let service,owner,server;
+  const reading=['state','request','history','report','object','finance-plan','finance-amendment-plan'].includes(command),w=new RozoWorkspace(directory,{create:command==='init',readOnly:reading});let service,owner,server;
   try{
     if(command==='init'){result(inspectRozoWorkspace(directory));return;}
     if(command==='request'){result({workspaceId:w.meta().workspaceId,request:w.request(need(flags,'--request-id'))});return;}
@@ -119,7 +123,7 @@ export async function main(args=process.argv.slice(2)){
     const operate=async(finance={})=>{
     service=serviceFor(w,flags,finance);
     if(command==='state'){result(service.state({profileId:flags['--profile']??null,offset:Number(flags['--offset']??0),limit:Number(flags['--limit']??100)}));return;}
-    if(command==='finance-plan'){const {financeCommand}=await import('./finance-cli.mjs');result(await financeCommand(command,service,flags));return;}
+    if(command==='finance-plan'||command==='finance-amendment-plan'){const {financeCommand}=await import('./finance-cli.mjs');result(await financeCommand(command,service,flags));return;}
     need(flags,'--config');owner=acquireLease(w,'operator');
     if(command==='native-finance'){const {financeCommand}=await import('./finance-cli.mjs');result(await financeCommand(command,service,flags));return;}
     if(command==='serve'){

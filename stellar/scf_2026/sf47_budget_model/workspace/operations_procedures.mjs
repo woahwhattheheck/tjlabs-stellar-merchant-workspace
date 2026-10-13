@@ -437,6 +437,25 @@ export function mountGrantProcedures({container,current,api,saveApi=api,mutation
    });
  });
  render();
+ async function openSavedWorkflow(selection){
+   await ready;
+   if(!available())throw new Error('Open this original procedure desk before selecting its source.');
+   if(busy||pending())throw new Error('Finish the retained procedure request before opening another source.');
+   if(selection?.kind!=='grant-procedure'||typeof selection.sourceId!=='string')
+     throw new Error('Select a complete original procedure source.');
+   if(selection.caseId!==undefined&&selection.caseId!==caseId||selection.expectedVersion!==undefined&&selection.expectedVersion!==caseValue.program.version)
+     throw new Error('Refresh this original case before opening its saved procedure.');
+   const meta=procedureCandidates(caseValue).find(row=>row.id===selection.sourceId);
+   if(!meta)throw new Error('The selected procedure source is absent from this original case.');
+   busy=true;state.error='';controls();
+   try{
+     await openSource(meta.id);
+     if(!available())throw new Error('The original procedure desk changed while its source was opening.');
+     persist();render();
+     return {outcome:'opened',caseId,kind:'grant-procedure',sourceId:meta.id};
+   }catch(problem){state.error=problem.message||String(problem);throw problem;}
+   finally{busy=false;if(available())controls();}
+ }
  const ready=(async()=>{
    taskComparisons=(await saveApi(prefix+'/task-outcomes')).comparisons||[];
    if(state.inflight)await state.inflight;
@@ -444,5 +463,5 @@ export function mountGrantProcedures({container,current,api,saveApi=api,mutation
    if(state.savedRefresh){const next=await refreshCase();state.savedRefresh=false;persist();if(available())await onCase(next,{id:caseId,action:'source.readback',version:next.program.version});}
    if(available())render();
  })().catch(error=>{state.error=error.message;persist();if(available())render();throw error;});
- return {ready,dispose(){active=false;persist();},setHostBusy(value){hostBusy=Boolean(value);if(available())controls();}};
+ return {ready,openSavedWorkflow,dispose(){active=false;persist();},setHostBusy(value){hostBusy=Boolean(value);if(available())controls();}};
 }

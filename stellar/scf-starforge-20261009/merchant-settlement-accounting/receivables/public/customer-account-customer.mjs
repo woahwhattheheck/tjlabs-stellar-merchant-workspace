@@ -40,6 +40,11 @@ function validateItem(item){
   if(item.kind==='PAYMENT_NOTICE'&&(!checkedDate(item.paymentDate)||item.paymentDate>S.draft.responseDate||!checkedText(item.paymentReference,1000)))throw Error('Retain the payment date and reference.');
 }
 function values(){const value=JSON.parse(JSON.stringify(S.draft));delete value._exported;return value;}
+function responseText(){
+  const text=JSON.stringify(values(),null,2)+'\n';
+  if(new Blob([text]).size>1500000)throw Error('The complete response exceeds 1.5 MB. Your entries remain saved; shorten the messages before downloading.');
+  return text;
+}
 function validateResponse(){
   if(!validId(S.draft.id)||(S.draft.previousResponseId&&!validId(S.draft.previousResponseId)))throw Error('Retain the original complete response identifiers.');
   if(!checkedText(S.draft.author?.name,300))throw Error('Enter the name of the person preparing this response.');
@@ -170,8 +175,8 @@ document.addEventListener('click',event=>{
   else if(action==='close-editor'){S.tab='invoices';render();notice('Your open response entry is retained. Return to Respond to continue it.');}
   else if(action==='export-response'){
    if(S.editor)throw Error('Save the open response entry before downloading the complete response.');
-   validateResponse();download('customer-response-'+S.draft.id+'.json',JSON.stringify(values(),null,2)+'\n');S.exported=true;persist();notice('Complete response downloaded. Return this JSON through your usual merchant contact channel.');}
-  else if(action==='export-draft'){if(S.editor)throw Error('Save the open entry before downloading.');validateResponse();download('customer-response-'+S.draft.id+'.json',JSON.stringify(values(),null,2)+'\n');S.exported=true;persist();}
+   validateResponse();download('customer-response-'+S.draft.id+'.json',responseText());S.exported=true;persist();notice('Complete response downloaded. Return this JSON through your usual merchant contact channel.');}
+  else if(action==='export-draft'){if(S.editor)throw Error('Save the open entry before downloading.');validateResponse();download('customer-response-'+S.draft.id+'.json',responseText());S.exported=true;persist();}
  }catch(error){notice(error.message,true);}
 });
 try{const parked=localStorage.getItem(key+':editor');if(parked){const entry=JSON.parse(parked);if(invoice(entry.invoiceId))S.editor=entry;}}catch{}

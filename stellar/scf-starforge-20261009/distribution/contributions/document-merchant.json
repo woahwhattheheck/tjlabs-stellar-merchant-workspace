@@ -41,7 +41,8 @@
     "products/document-merchant/examples/ordered-pdfs.json",
     "products/document-merchant/COMMISSIONING.md",
     "products/document-merchant/commissioning.d.mts",
-    "products/document-merchant/commissioning-application.d.mts"
+    "products/document-merchant/commissioning-application.d.mts",
+    "products/document-merchant/assembly-workspace.d.mts"
   ],
   "commands": {
     "document-merchant": "products/document-merchant/cli.mjs"
@@ -89,6 +90,10 @@
     "./document-merchant/commissioning/application": {
       "types": "./source/products/document-merchant/commissioning-application.d.mts",
       "import": "./source/products/document-merchant/commissioning-application.mjs"
+    },
+    "./document-merchant/assembly/workspace": {
+      "types": "./source/products/document-merchant/assembly-workspace.d.mts",
+      "import": "./source/products/document-merchant/assembly-workspace.mjs"
     }
   },
   "applicationProviders": {

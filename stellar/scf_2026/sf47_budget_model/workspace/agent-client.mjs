@@ -725,6 +725,8 @@ export class GrantWorkspaceClient {
       cases:() => '/api/operations' + (args.planId === undefined ? '' : '?planId=' + pid()),
       case:() => '/api/operations/' + cid(),
       'case-report':() => '/api/operations/' + cid() + '/report',
+      'operating-workflows':() => '/api/operations/' + cid() + '/operating-workflows?expectedVersion=' +
+        integer(args.expectedVersion, 'Original case version'),
       'cost-funding':() => '/api/operations/' + cid() + '/cost-funding',
       'funding-edition':() => '/api/operations/' + cid() + '/cost-funding/edition' +
         (args.revision===undefined?'':'?revision='+integer(args.revision,'Funding edition',1,1000000)),
@@ -820,6 +822,9 @@ export class GrantWorkspaceClient {
     need(GRANT_CASE_ACTIONS.includes(body.action), 'GRANT_INVALID_ACTION', 'Choose the original case action.');
     object(body.data, 'Original action data');
     return this.#request('/api/operations/' + caseId + '/command', {body, originalRequestId:body.requestId});
+  }
+  operatingWorkflows(caseId, expectedVersion) {
+    return this.read('operating-workflows', {caseId, expectedVersion});
   }
   accountReconciliationPreview(caseId, body) {
     id(caseId,'operation'); accountReconciliationInput(body);

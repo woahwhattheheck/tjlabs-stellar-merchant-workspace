@@ -643,6 +643,12 @@ export function mountAccountReconciliation({container,current,api,saveApi=api,se
     if(session.incomingSelection){session.selection=clone(session.incomingSelection);session.editing=false;delete session.incomingSelection;}
     render();await loadReport();render();
   }
+  function currentSavedWorkflow(){
+    const record=report?.selected?.record;
+    if(!available()||!record)return null;
+    return {caseId:report.case.id,expectedVersion:report.case.version,kind:'account-reconciliation',
+      reconciliationId:record.id,revision:record.revision};
+  }
   const ready=initialize().catch(problem=>{if(available()){error=problem?.message||String(problem);render();}});
-  return {ready,setHostBusy(value){hostBusy=!!value;controls();},dispose(){active=false;loadSequence++;clearTimeout(saveTimer);if(session.initialized)persist();}};
+  return {ready,currentSavedWorkflow,setHostBusy(value){hostBusy=!!value;controls();},dispose(){active=false;loadSequence++;clearTimeout(saveTimer);if(session.initialized)persist();}};
 }

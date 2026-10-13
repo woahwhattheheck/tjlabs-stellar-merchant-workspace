@@ -220,7 +220,7 @@
   "optionalMCP": {
     "flag": "--commissioning-mcp",
     "command": "SCF_CASH_KEEP=1 SCF_CASH_RESULT=/absolute/private/result.json node XERO_CASH_CHECK.mjs --commissioning-mcp",
-    "baseCommit": "cbdbb3629b7da4d004cfb91799e7766bfab2b65c",
+    "baseCommit": "9ab79130b1cb049d63dbf9875a4edc386707664c",
     "sourceCapsule": "3e425f5a1b6ecdfa7fa5f79806e2555ab355e8bb",
     "files": [
       {
@@ -235,27 +235,27 @@
       },
       {
         "path": "stellar-forge/mcp-merchant-operator/accounting.mjs",
-        "bytes": 65805,
-        "gitBlob": "88112ee77c4a2dbb6f4e8476fae58d9629bc983c",
-        "baseBlob": "59b64271d28bf2f2c9f56f27b3d0a8cbc2f5a0c8"
+        "bytes": 66000,
+        "gitBlob": "a8dbaabc1a71d78a4d3a963047ba17364d8dd984",
+        "baseBlob": "695f08ca001489ca86e05dcaab6827b5a4dd1904"
       },
       {
         "path": "stellar-forge/mcp-merchant-operator/catalog/accounting.mjs",
-        "bytes": 27663,
-        "gitBlob": "ca491c8ed99beda83f87b45607c24997dcd10cb7",
-        "baseBlob": "37b23aa4508bb6e4f711e1528df08161e836a756"
+        "bytes": 27838,
+        "gitBlob": "f0890e55a2d98742bdb34ca2af11879aaf6459c8",
+        "baseBlob": "8ebce7a7d4f020c51d3778559de8c9976f5fcabf"
       },
       {
         "path": "stellar-forge/mcp-merchant-operator/accounting-maintenance-client.mjs",
-        "bytes": 13507,
-        "gitBlob": "00d8554b28402c14c6a82f16365809198493cc4a",
-        "baseBlob": "5424bd0ccd90a8c203f13604415bef6eb2a57875"
+        "bytes": 13639,
+        "gitBlob": "c10c4946194959daa7e2cb73406df13d6f1dff90",
+        "baseBlob": "43062398ae4fe77f1c8ae591dade674b1cf7be39"
       },
       {
         "path": "stellar-forge/mcp-merchant-operator/providers/accounting.mjs",
-        "bytes": 12428,
-        "gitBlob": "f072a531439b0a455e68d9862543be37fb38a250",
-        "baseBlob": "89d939f1a46e6bd4ab85e7f26c27891723937850"
+        "bytes": 13493,
+        "gitBlob": "a06aafc62e162d51db659aa5f4da4b76f108dfcf",
+        "baseBlob": "79b663c70c02dff097b076789e6c2ec5e6ff16f5"
       }
     ],
     "clientPath": "stellar-forge/mcp-merchant-operator/accounting-commissioning-client.mjs",
@@ -298,8 +298,8 @@
     "dependencyClosure": "Use the same complete maintained repository revision as the joined MCP commissioning product or its original selected recipe. The ordinary programme mode retains the standalone commissioning dependency closure; --commissioning-mcp dynamically loads the original MerchantAccounting host, HTTP transport, native file reader and typed SDK/CLI.",
     "originalSourceCapsule": "3e425f5a1b6ecdfa7fa5f79806e2555ab355e8bb",
     "sourceJoin": {
-      "baseCommit": "cbdbb3629b7da4d004cfb91799e7766bfab2b65c",
-      "note": "The shared host, parent catalog and provider retain the original financial-control, customer-account response and ROZO source, selection, lifecycle and recovery joins while adding the commissioning family."
+      "baseCommit": "9ab79130b1cb049d63dbf9875a4edc386707664c",
+      "note": "The shared host, catalog, provider and retained-file client preserve current financial-control, customer-account response, ROZO and QuickBooks worksheet source/lifecycle/file joins while adding the commissioning family."
     },
     "distributionFiles": [
       {

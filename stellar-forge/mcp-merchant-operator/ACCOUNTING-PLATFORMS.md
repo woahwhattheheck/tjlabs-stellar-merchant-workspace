@@ -1,5 +1,10 @@
 # QuickBooks and Xero through the existing merchant MCP
 
+## Buyer worksheet preparation
+
+Use [ACCOUNTING-QBO-WORKSHEETS.md](ACCOUNTING-QBO-WORKSHEETS.md) to prepare a complete buyer period from its original worksheet base, exact returned CSV and retained company chart. The seven worksheet tools share this existing QuickBooks workspace, native compiler, accounting file reader and client operation recovery. Every allocation retains an explicit decision and exact source units; conflicting edits need per-field choices before native plan creation.
+
+
 The merchant MCP operates the original QuickBooks and Xero workspaces through the
 same accountant instance and exclusive accounting lease. A customer can select
 the existing handoff, review its actual payment and refund context, retain a
