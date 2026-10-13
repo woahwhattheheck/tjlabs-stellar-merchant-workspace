@@ -2,6 +2,45 @@
 
 The grant page provides one opening and receiving journey for the maintained product. **Explore the working product** reaches the original purchase film, complete economic report, installed purchase reviewer and current application companion. The original nine answers and six funded packages remain in the same application.
 
+## Read and prepare the same application
+
+Choose **Open concise working edition** in the grant cover. The existing
+submission workspace opens the dated nine-answer application with its complete
+original manuscript, source index, budget and financing companion. Each answer
+is editable in that same workspace. The current complete manuscript remains
+readable below the grant opening and downloadable beside it.
+
+The concise edition is a selected source with its own date. **Source editions →
+Read current source** reads the current full manuscript for comparison.
+**Read concise working edition** reads the retained concise source. Review the
+nine answers and choose **Receive source and keep edited answers** when the
+selected edition should enter the current draft. Complete source packages can
+also be downloaded from the grant entry and received with **Open source package**.
+Previously edited answers retain their original baselines and can be reviewed
+against the new source.
+
+Use **Save version** and **Download full draft** to retain the complete draft,
+all source editions, manual answers, actual issuer fields and limits, planning,
+review decisions and history. **Download offline editor** retains the same draft
+and original editor in one HTML file. Open that downloaded HTML, continue the
+answers and download its updated edition; **Download full draft** returns the
+work through the original importer. The [offline operating guide](GRANT_OFFLINE.md)
+covers the actual local-file continuation.
+
+The nine answers contain the customer case, demonstrated Stellar behavior,
+architecture, six priced packages, threat/monitoring commitment, adoption
+measures, delivery financing and applicant disclosures. Map them to the
+issuer's actual invitation and fields when received. The official
+[submission criteria](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria)
+require the application itself to contain the funding argument. The film,
+source and product operation let reviewers inspect that same work.
+
+The selected source route is **/grant-submission.html?source=concise**. It uses
+the existing complete source-package reader and creates an unsaved working
+draft. A **draft** query opening still selects its original saved project;
+a downloaded offline editor opens its retained draft. The existing explicit
+source-receiving controls handle changes to either record.
+
 ## Inspect the complete economic report
 
 Select **Open the economic report** to read the retained briefing in another tab. **Download the complete report package** reads the same selected edition, verifies its complete source files and downloads a ZIP with the report, CSV and JSON, original observations, saved review and opening instructions. The displayed progress counts complete files. **Cancel download** stops that read; selecting Download again starts the same edition.
@@ -165,3 +204,22 @@ The application API is
 `@tokenjunkielabs/starforge-merchant/grant/static-reader`:
 `exportGrantStaticReader({ directory: absoluteNewDirectory })` returns the entry,
 complete route/file counts and exact static-manifest identity.
+
+## Inspect the exact outgoing edition
+
+Continue the existing 22B7/7108 application and B3909 customer-receiving
+operations. Before presenting a changed edition as ready, open the exact
+outgoing application and view its rendered desktop and narrow layouts. Follow
+**Open concise working edition**, read all nine answers, open the source files,
+compare a complete source edition and save the original draft. Exercise the
+relevant populated, empty and failed-read states; a failed source read must
+leave the working answer available.
+
+Download the complete source, full draft and offline editor. Open the actual
+downloads, operate their important controls, download an updated offline
+edition and reopen its full draft in the original workspace. Inspect the
+selected film, report and receiving guide through the same existing product
+operation. View the resulting screens or screenshots, correct any observed
+layout or interaction issue, and retain the exact outgoing source with that
+operation. The original source identities and saved records continue through
+this review.

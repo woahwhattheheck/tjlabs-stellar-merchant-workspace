@@ -442,6 +442,140 @@
           "sha256": "17a2af5ba5493980242fc27c0c181074880b443b6f66c25129c11ad96a6cd8d9"
         }
       ]
+    },
+    {
+      "id": "runtime-companion-sets-core",
+      "label": "Complete original companion sets, working-tree selection and interruption recovery",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-input-sets.mjs",
+      "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+      "editions": [
+        {
+          "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+          "git_blob": "decb7df09450cf1f9a0486da1d1baec1b998e18f",
+          "bytes": 16030,
+          "sha256": "dd960e315d2b95033cbc2003a0f3534ff530b96797f8c54c74568ea297f03315"
+        }
+      ]
+    },
+    {
+      "id": "runtime-companion-sets-cli",
+      "label": "Complete directory intake, original companion export and retained CLI selection",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-input-sets-cli.mjs",
+      "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+      "editions": [
+        {
+          "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+          "git_blob": "a2c5646e688d6bb7b85e429745e86d5f63fc4304",
+          "bytes": 7436,
+          "sha256": "3a29a6a3aeb229bbebb6e98aac43dd920d654fddc882b4115d539548c467fd09"
+        }
+      ]
+    },
+    {
+      "id": "runtime-companion-sets-browser",
+      "label": "Installed desktop and phone companion-folder intake and saved selection",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-input-sets.mjs",
+      "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+      "editions": [
+        {
+          "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+          "git_blob": "964b434a730d7792cf699a78ed91d0b944bb8213",
+          "bytes": 14992,
+          "sha256": "7f9846f6398ddcf6deb176cf06ddbbb08377d768b735a19e9aca888b816064f0"
+        }
+      ]
+    },
+    {
+      "id": "runtime-companion-sets-manifest",
+      "label": "Whole-set original manifest, relative path identity and portable collision validation",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-input-set-format.mjs",
+      "commit": "b5e3f793a71578a41e40dcbab9086557e38d56cf",
+      "editions": [
+        {
+          "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+          "git_blob": "7ac35b97aef5b8a79a2c2e25e2ffc55c2058e4bd",
+          "bytes": 4266,
+          "sha256": "37df4314c1d8a2793a0fa4aa33ee3d1bbc5d9ced889099aa8786da4207f796c6"
+        },
+        {
+          "commit": "b5e3f793a71578a41e40dcbab9086557e38d56cf",
+          "git_blob": "7a81b094b566912d0852f97c5e1af3195e903b01",
+          "bytes": 4427,
+          "sha256": "6687dbf0549734c037c7973428e845694d4f66e2b9e10d389006e99e2ccfe441"
+        }
+      ]
+    },
+    {
+      "id": "runtime-companion-sets-types",
+      "label": "Typed complete companion source and editable working-set interface",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-input-sets.d.mts",
+      "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+      "editions": [
+        {
+          "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+          "git_blob": "c2db7bbcf0fcd3d3347a1abd078a107f5a2bdd50",
+          "bytes": 2905,
+          "sha256": "b33a54db60d5319bb9744402b2effd92b7462640769251782bc6c7d6f120159d"
+        }
+      ]
+    },
+    {
+      "id": "runtime-companion-sets-guide",
+      "label": "Customer companion files, working-tree reuse and whole workspace receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_INPUT_SETS.md",
+      "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+      "editions": [
+        {
+          "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+          "git_blob": "7b1edece18d8940c44b9af72e1c12853426a6cdb",
+          "bytes": 6911,
+          "sha256": "2d081e23998404d5a10a14a51f8b4d20df03f2f1ce2cdcbbac4c5689f4031ed2"
+        }
+      ]
+    },
+    {
+      "id": "runtime-companion-sets-receiving",
+      "label": "Original companion folder through native Applications, browser, CLI and backup/restore",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/APPLICATION_INPUT_SETS_RECEIVE.mjs",
+      "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+      "editions": [
+        {
+          "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+          "git_blob": "532e3f10478a207bb9fc39850c5f5d6db5125848",
+          "bytes": 22855,
+          "sha256": "d7d69a76fbacd096e77ada1b023ea97fae374d8e0635f308d93d984260c688d2"
+        }
+      ]
+    },
+    {
+      "id": "runtime-companion-sets-layout",
+      "label": "Industrial companion source controls with complete paths on narrow screens",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-input-sets.css",
+      "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+      "editions": [
+        {
+          "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+          "git_blob": "39ae55246000698071dde0fc86c144c90fcc8656",
+          "bytes": 589,
+          "sha256": "0d8b12d8c607c6a0e09800507c717aed676c7c04cf98c0ca6222932ffd56edf8"
+        }
+      ]
     }
   ]
 }

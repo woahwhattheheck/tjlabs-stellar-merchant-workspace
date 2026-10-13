@@ -203,3 +203,34 @@ export function grantProductChapters(markdown) {
       heading, markdown: text, occurrence, occurrences: sections.length,
     })) : []);
 }
+
+/**
+ * Select each complete author-owned registered H2 once, wherever it lives in
+ * the manuscript. Several product declarations may contribute to one chapter;
+ * their source ownership stays distinct in the coverage and source receiver.
+ */
+export function selectGrantProductChapters(markdown, registrations = []) {
+  need(typeof markdown === 'string', 'Pass the complete selected manuscript or companion.');
+  const products = validateGrantProductRegistrations(registrations);
+  const owners = new Map();
+  for (const product of products) {
+    const ids = owners.get(product.heading) || [];
+    ids.push(product.id);
+    owners.set(product.heading, ids);
+  }
+  const outline = productSections(markdown), chapters = [], present = new Set();
+  // Iterate the actual outline so independently placed chapters keep source order.
+  for (const [heading, sections] of outline) {
+    const productIds = owners.get(heading);
+    if (!productIds) continue;
+    need(sections.length === 1, 'Keep one complete registered product chapter: ' + heading);
+    present.add(heading);
+    chapters.push({ heading, productIds: [...productIds], markdown: sections[0] });
+  }
+  return {
+    chapters,
+    coverage: products.map(product => ({
+      id: product.id, heading: product.heading, present: present.has(product.heading),
+    })),
+  };
+}

@@ -10,7 +10,7 @@ The default declaration directory is part of the existing `stellar-forge/develop
 
 ## Author the declaration
 
-Create `stellar-forge/developer-site/grant-products/<product-id>.json` beside the other original product declarations. Use the same exact H2 that the accepted canonical manuscript carries within its current demonstration and operator journey.
+Create `stellar-forge/developer-site/grant-products/<product-id>.json` beside the other original product declarations. Use the same exact H2 that the accepted canonical manuscript carries. The complete registered chapter can remain in its author's existing location; it does not need to move inside the current demonstration and operator journey.
 
 ```json
 {
@@ -87,9 +87,19 @@ The command records each complete selected declaration's filename, byte length, 
 
 The exported pure API accepts the same documents through `composeGrantApplication({ ..., productRegistrations })`. Its existing callers remain valid when this optional array is omitted. `receiveGrantProductSources(index, manuscriptOrCompanion, registrations)` is also available for source intake before the existing public projection.
 
+The command passes that same complete registration set into the manuscript chapter receiver. A direct caller can use `receiveGrantCustomerSections(companion, manuscript, { productRegistrations })` before composition; existing two-argument calls retain their previous behavior. `selectGrantProductChapters(markdown, registrations)` exposes the same fence-aware complete chapter selection and per-product coverage for authoring or receiving interfaces. It returns each selected heading's complete Markdown and all declaration IDs that share it.
+
+Composition returns `productChapterCoverage`: one row per selected declaration with its `id`, `heading` and `present` value for the actual composed companion. An absent chapter remains a visible author selection to resolve in its original manuscript or declaration. This report carries headings and presence; the complete chapter stays in the ordinary companion file.
+
+The composition metadata records both the public registry entry point and its shared core source Git identities. The existing four output paths, source pins and downstream saved-draft, review, Page and Site receiving remain the same.
+
 ## Source selection and later editions
 
 A real H2 owns all its H3 and deeper content up to the next real H1 or H2. Fenced source examples do not become product headings. The registry builds the manuscript outline once for the complete declaration set.
+
+Each registered H2 must occur once in the selected manuscript. Several distinct product declarations can share that same whole chapter; their source IDs retain separate ownership and the chapter is received once. Chapters outside the demonstration section are received in their original manuscript order. A preceding companion edition is replaced at its existing heading; a newly received chapter joins the existing companion before its opening-work section.
+
+The existing demonstration introduction, dedicated economic/coastal/Datasette receivers, paired OpenFn paragraphs, threat and finance chapter mappings, IATI operating content and public-link projections retain their established behavior. Chapter receiving does not relocate or rewrite the canonical manuscript.
 
 A declaration whose chapter is absent leaves the current index unchanged. Once its chapter is present, each required source must select its immutable original Git URL. If a chapter cites more than one edition of the same path, its declaration can select one full `commit`; a separately identified historical source retains its own ID.
 

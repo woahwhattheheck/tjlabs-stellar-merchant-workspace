@@ -9,6 +9,33 @@ identities, seller outcomes and source documents remain part of that packet.
 Opening, reading, exporting and receiving it do not dispatch another payment
 or refresh the source data.
 
+## Start with the concise working edition
+
+Open **/grant.html** through the same installed source server and choose
+**Open concise working edition**. The existing submission workspace opens all
+nine concise answers with their dated complete source package. Use its answer
+navigation to review the customer problem, Stellar architecture and operated
+results, priced milestones, threat response, commercial and financing case,
+and applicant disclosures.
+
+**Source editions** compares that selection with the current complete
+manuscript. Select **Read current source** or **Read concise working edition**,
+inspect the complete files and answers, then explicitly receive the selected
+edition while keeping edited answers. The cover also downloads the concise
+text and its complete working source for **Open source package**.
+
+Save a version before handover. **Download full draft** carries all source
+editions, edited answers, issuer field mappings, planning, reviews and history.
+**Download offline editor** opens that same work in a complete editable HTML;
+download its updated edition after editing, or return its full draft through
+the existing importer. The [offline editor guide](../../stellar-forge/developer-site/GRANT_OFFLINE.md)
+covers the complete continuation.
+
+The direct **/grant-submission.html?source=concise** route opens a new unsaved
+working draft from that dated source. Opening an existing saved draft continues
+its own selected source. The existing receiving controls apply a later source
+edition to that same record.
+
 ## Read the complete application and financing
 
 The selected package includes the manuscript author's reviewed application,
@@ -30,7 +57,9 @@ published presentation links. The direct local downloads are:
 
 | Download | Local path |
 | --- | --- |
-| Primary application | `/grant-data/application.md` |
+| Concise working answers | `/grant-data/application-reviewer.md` |
+| Complete concise source package | `/grant-data/reviewer-working-source.json` |
+| Current complete application | `/grant-data/application.md` |
 | Product and financing companion | `/grant-data/product-and-finance.md` |
 | Six-package budget | `/grant-data/budget.csv` |
 | Source and measure index | `/grant-data/source-index.json` |
@@ -426,3 +455,19 @@ typed `catalog/atlas/review` and `catalog/atlas/search` exports. See the install
 `stellar-forge/developer-site/GRANT_CATALOG.md` and
 `stellar/scf-starforge-20261009/sf61-bazaar-explorer/CATALOG_REVIEW.md` guides for the
 complete browser, CLI, API and cold-receiving workflow.
+
+## Inspect the outgoing application and its downloads
+
+Use the original application and customer-receiving operation for the exact
+outgoing version. View its rendered desktop and narrow layouts, operate the
+important controls with populated, empty and failed-read states, and inspect
+the actual downloads. Open the concise answer from the grant cover, compare
+its source, save the same draft, download and open its offline editor, then
+return an updated full draft through the original importer. Follow the same
+selected product film, complete report and native customer workflow.
+
+View the resulting screens or screenshots and fix any concrete visual or
+interaction problem before presenting that edition as ready. Keep the exact
+source, original working directories, saved draft and receiving history with
+the existing operation. The complete [entry guide](../../stellar-forge/developer-site/GRANT_ENTRY.md)
+identifies these same opening and continuation steps.

@@ -1,0 +1,1510 @@
+openapi: 3.0.3
+info:
+  title: Econdb API documentation
+  version: ''
+  description: |2
+
+    Released on July 29, 2025, the [Econdb](https://www.econdb.com) API provides access to a wide range of shipping-related indicators and macroeconomic data.
+
+    For any questions or support, please contact us at [contact@econdb.com](mailto:contact@econdb.com).
+
+    This user guide is available in two style formats:
+    - [Documentation style Redoc](https://developers.econdb.com/docs/)
+    - [Documentation style Swagger](https://developers.econdb.com/swagger/)
+paths:
+  /v1/point2point/container-volume/:
+    get:
+      operationId: point2point_container_volume_retrieve
+      description: Returns the monthly time series of trade between two partners
+      summary: Trade between two partners
+      parameters:
+      - in: query
+        name: is_export
+        schema:
+          type: integer
+          default: '1'
+        description: 1 to display exports, 0 for imports
+      - in: query
+        name: partner
+        schema:
+          type: string
+        description: Country of partner
+      - in: query
+        name: port_partner
+        schema:
+          type: string
+        description: Port of partner (locode)
+      - in: query
+        name: port_reference
+        schema:
+          type: string
+        description: Port of reference (locode)
+      - in: query
+        name: reference
+        schema:
+          type: string
+        description: Country of reference
+      - in: query
+        name: region_partner
+        schema:
+          type: string
+        description: Region of partner
+      - in: query
+        name: region_reference
+        schema:
+          type: string
+        description: Region of reference
+      tags:
+      - ➡️ Point to point
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+              examples:
+                SampleContainerVolume:
+                  value:
+                    type: timeseries
+                    title: Container trade - ES BCN < CN SHA (TEU)
+                    series:
+                    - code: ES BCN < CN SHA
+                      name: ES BCN < CN SHA (TEU)
+                      axis: 0
+                      display: bar
+                    data:
+                    - Date: '2022-02-21'
+                      ES BCN < CN SHA: 3320.8
+                    - Date: '2022-02-28'
+                      ES BCN < CN SHA: 1810.5
+                    - Date: '2022-03-07'
+                      ES BCN < CN SHA: 5762.0
+                  summary: Sample timeseries response
+          description: A timeseries showing container volumes between partners.
+      x-codeSamples:
+      - lang: python
+        label: Python Requests
+        source: |
+          import requests
+
+          url = "https://api.econdb.com/v1/point2point/container-volume/?port_reference=ES BCN&port_partner=CN SHA&is_export=0"
+          headers = {"Authorization": "Token YOUR_API_KEY"}
+
+          response = requests.get(url, headers=headers)
+          items = response.json()
+          print(items)
+
+          import pandas as pd
+          df = pd.DataFrame(items['data']).set_index('Date')
+          df.plot()
+      - lang: bash
+        label: cURL
+        source: |
+          curl -H "Authorization: Token YOUR_API_KEY" \
+               https://api.econdb.com/v1/point2point/container-volume/?port_reference=ES%20BCN&port_partner=CN%20SHA&is_export=0
+  /v1/point2point/transit-time/:
+    get:
+      operationId: point2point_transit_time_retrieve
+      description: Returns the monthly time series of average transit time  between
+        two partners
+      summary: Bilateral transit time
+      parameters:
+      - in: query
+        name: is_export
+        schema:
+          type: integer
+          default: '1'
+        description: 1 to display exports, 0 for imports
+      - in: query
+        name: partner
+        schema:
+          type: string
+        description: Country of partner
+      - in: query
+        name: port_partner
+        schema:
+          type: string
+        description: Port of partner (locode)
+      - in: query
+        name: port_reference
+        schema:
+          type: string
+        description: Port of reference (locode)
+      - in: query
+        name: reference
+        schema:
+          type: string
+        description: Country of reference
+      - in: query
+        name: region_partner
+        schema:
+          type: string
+        description: Region of partner
+      - in: query
+        name: region_reference
+        schema:
+          type: string
+        description: Region of reference
+      tags:
+      - ➡️ Point to point
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+              examples:
+                SampleTransitTime:
+                  value:
+                    type: timeseries
+                    title: Voyage duration - ES BCN < CN SHA (days)
+                    series:
+                    - code: ES BCN < CN SHA
+                      name: ES BCN < CN SHA (days)
+                      display: line
+                      axis: 0
+                    - code: range
+                      name: Range
+                      display: area
+                      axis: 0
+                    data:
+                    - Date: '2022-02-21'
+                      ES BCN < CN SHA: 29.74
+                      range:
+                      - 26.0
+                      - 31.61
+                    - Date: '2022-02-28'
+                      ES BCN < CN SHA: 33.545
+                      range:
+                      - 32.23
+                      - 34.76
+                    - Date: '2022-03-07'
+                      ES BCN < CN SHA: 38.0
+                      range:
+                      - 38.0
+                      - 38.0
+                  summary: Sample timeseries response
+          description: A timeseries showing transit time between partners.
+      x-codeSamples:
+      - lang: python
+        label: Python Requests
+        source: |
+          import requests
+
+          url = "https://api.econdb.com/v1/point2point/transit-time/?port_reference=ES BCN&port_partner=CN SHA&is_export=0"
+          headers = {"Authorization": "Token YOUR_API_KEY"}
+
+          response = requests.get(url, headers=headers)
+          items = response.json()
+          print(items)
+
+          import pandas as pd
+          df = pd.DataFrame(items['data']).set_index('Date')
+          df.plot()
+      - lang: bash
+        label: cURL
+        source: |
+          curl -H "Authorization: Token YOUR_API_KEY" \
+               https://api.econdb.com/v1/point2point/transit-time/?port_reference=ES%20BCN&port_partner=CN%20SHA&is_export=0
+  /v1/ports/:
+    get:
+      operationId: ports_list
+      description: Returns a list of the top 400 ports by traffic.
+      summary: List of ports
+      tags:
+      - ⚓ Ports
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Port'
+              examples:
+                PortExample:
+                  value:
+                  - name: Barcelona
+                    locode: ES BCN
+                    iso2: ES
+                    lat: 41.35
+                    lon: 2.16667
+                    timezone: Europe/Madrid
+                    region: West Mediterranean
+                  summary: Example of a single port
+          description: ''
+      x-codeSamples:
+      - lang: python
+        label: Python Requests
+        source: |
+          import requests
+
+          url = "https://api.econdb.com/v1/ports/"
+          headers = {"Authorization": "Token YOUR_API_KEY"}
+
+          response = requests.get(url, headers=headers)
+          items = response.json()
+          print(items)
+      - lang: bash
+        label: cURL
+        source: |
+          curl -H "Authorization: Token YOUR_API_KEY" \
+               https://api.econdb.com/v1/ports/
+  /v1/ports/{locode}/capacity-by-operator/:
+    get:
+      operationId: ports_capacity_by_operator_retrieve
+      description: Returns the monthly time series of capacity by operator, aggregating
+        over the TEU of all calling vessels in the period. The default keeps the eight
+        largest operators and sums the rest as Others. Pass top=0 to return every
+        operator. flow=import, flow=export, flow=transshipment, or flow=cargo switches
+        from vessel capacity to container volume (TEU). Imports and exports are the
+        gross volume series split by operator. Transshipment is the same port total
+        as the container-volume endpoint, split by operator. operator=CMA CGM limits
+        the volume series to that carrier; with flow=cargo it returns Imports, Exports,
+        and Transshipment.
+      summary: Port capacity by operator
+      parameters:
+      - in: query
+        name: flow
+        schema:
+          type: string
+        description: throughput (default, vessel TEU), import, export, transshipment,
+          or cargo (import, export, and transshipment together).
+      - in: path
+        name: locode
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: operator
+        schema:
+          type: string
+        description: Carrier name as it appears on the series, for example CMA CGM.
+          Returns that carrier only.
+      - in: query
+        name: top
+        schema:
+          type: string
+        description: Operators kept as their own series. The rest are summed as Others.
+          0 or all returns every operator. Default 8. Ignored when operator is set.
+      tags:
+      - ⚓ Ports
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+              examples:
+                CapacityByOperator:
+                  value:
+                    type: timeseries
+                    title: Throughput by operator
+                    series:
+                    - code: Mediterranean Shipping
+                      name: Mediterranean Shipping
+                      display: stacked
+                    - code: Hapag-Lloyd
+                      name: Hapag-Lloyd
+                      display: stacked
+                    - code: CMA CGM
+                      name: CMA CGM
+                      display: stacked
+                    - code: Maersk
+                      name: Maersk
+                      display: stacked
+                    - code: Ocean Network Express
+                      name: Ocean Network Express
+                      display: stacked
+                    - code: Others
+                      name: Others
+                      display: stacked
+                    data:
+                    - Date: '2022-02-01'
+                      Mediterranean Shipping: 84622.0
+                      Hapag-Lloyd: 61658.0
+                      CMA CGM: 54621.0
+                      Maersk: 18385.0
+                      Ocean Network Express: 13918.0
+                      Others: 38394.0
+                    - Date: '2022-03-01'
+                      Mediterranean Shipping: 156663.0
+                      Hapag-Lloyd: 95629.0
+                      CMA CGM: 74605.0
+                      Maersk: 29990.0
+                      Ocean Network Express: 235.0
+                      Others: 26042.0
+                  summary: Sample timeseries response
+                  description: One sample response of capacity by operator and date.
+          description: Capacity by operator
+      x-codeSamples:
+      - lang: python
+        label: Python Requests
+        source: |
+          import requests
+
+          url = "https://api.econdb.com/v1/ports/<locode>/capacity-by-operator/"
+          headers = {"Authorization": "Token YOUR_API_KEY"}
+
+          response = requests.get(url, headers=headers)
+          items = response.json()
+          print(items)
+
+          import pandas as pd
+          df = pd.DataFrame(items['data']).set_index('Date')
+          df.plot()
+      - lang: bash
+        label: cURL
+        source: |
+          curl -H "Authorization: Token YOUR_API_KEY" \
+               https://api.econdb.com/v1/ports/<locode>/capacity-by-operator/
+  /v1/ports/{locode}/container-traffic/:
+    get:
+      operationId: ports_container_traffic_retrieve
+      description: Returns a structured timeseries of container volumes by operation
+        type.
+      summary: Container volumes
+      parameters:
+      - in: path
+        name: locode
+        schema:
+          type: string
+        required: true
+      tags:
+      - ⚓ Ports
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerTraffic'
+              examples:
+                SampleContainerVolume:
+                  value:
+                    type: timeseries
+                    title: Container volume (TEU, full)
+                    series:
+                    - code: Imports
+                      name: Gross imports
+                      axis: 0
+                    - code: Exports
+                      name: Gross exports
+                      axis: 0
+                    - code: Transshipment
+                      name: Transshipment
+                      axis: 0
+                    data:
+                    - Date: '2022-02-21'
+                      Exports: 26635.0
+                      Imports: 34850.0
+                      Transshipment: null
+                  summary: Sample timeseries response
+                  description: One sample response of container volume by port and
+                    date.
+          description: A timeseries with import/export/transshipment container volumes.
+      x-codeSamples:
+      - lang: python
+        label: Python Requests
+        source: |
+          import requests
+
+          url = "https://api.econdb.com/v1/ports/<locode>/container-traffic/"
+          headers = {"Authorization": "Token YOUR_API_KEY"}
+
+          response = requests.get(url, headers=headers)
+          items = response.json()
+          print(items)
+
+          import pandas as pd
+          df = pd.DataFrame(items['data']).set_index('Date')
+          df.plot()
+      - lang: bash
+        label: cURL
+        source: |
+          curl -H "Authorization: Token YOUR_API_KEY" \
+               https://api.econdb.com/v1/ports/<locode>/container-traffic/
+  /v1/ports/{locode}/dwell-times/:
+    get:
+      operationId: ports_dwell_times_retrieve
+      description: Returns a structured timeseries of dwell times by operation type.
+      summary: Dwell times
+      parameters:
+      - in: path
+        name: locode
+        schema:
+          type: string
+        required: true
+      tags:
+      - ⚓ Ports
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DwellTime'
+              examples:
+                SampleDwellTime:
+                  value:
+                    type: timeseries
+                    title: Container yard dwell (days)
+                    tooltip: Average period needed to process cargo
+                    series:
+                    - code: Imports
+                      name: Imports
+                      axis: 0
+                      lbreak: true
+                    - code: Exports
+                      name: Exports
+                      axis: 0
+                      lbreak: true
+                    - code: Transshipments
+                      name: Transshipments
+                      axis: 0
+                      lbreak: true
+                    - code: Rail imports
+                      name: Rail imports
+                      axis: 0
+                      dashed: true
+                      lbreak: true
+                    data:
+                    - Date: '2022-03-01'
+                      Imports: 7.238361111111112
+                      Exports: 12.079057054263567
+                      Transshipments: 8.403610210526317
+                      Rail imports: null
+                  summary: Sample timeseries response
+                  description: One sample response of container dwell times by port
+                    and date.
+          description: A timeseries with import/export/transshipment/rail import dwell
+            times.
+      x-codeSamples:
+      - lang: python
+        label: Python Requests
+        source: |
+          import requests
+
+          url = "https://api.econdb.com/v1/ports/<locode>/dwell-times/"
+          headers = {"Authorization": "Token YOUR_API_KEY"}
+
+          response = requests.get(url, headers=headers)
+          items = response.json()
+          print(items)
+      - lang: bash
+        label: cURL
+        source: |
+          curl -H "Authorization: Token YOUR_API_KEY" \
+               https://api.econdb.com/v1/ports/<locode>/dwell-times/
+  /v1/ports/{locode}/trade-by-partner/:
+    get:
+      operationId: ports_trade_by_partner_retrieve
+      description: Returns the monthly time series of trade by partner region
+      summary: Trade by partner
+      parameters:
+      - in: query
+        name: is_export
+        schema:
+          type: integer
+          default: '1'
+        description: 1 to display exports, 0 for imports
+      - in: path
+        name: locode
+        schema:
+          type: string
+        required: true
+      tags:
+      - ⚓ Ports
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+      x-codeSamples:
+      - lang: python
+        label: Python Requests
+        source: |
+          import requests
+
+          url = "https://api.econdb.com/v1/ports/<locode>/trade-by-partner/"
+          headers = {"Authorization": "Token YOUR_API_KEY"}
+
+          response = requests.get(url, headers=headers)
+          items = response.json()
+          print(items)
+
+          import pandas as pd
+          df = pd.DataFrame(items['data']).set_index('Date')
+          df.plot()
+      - lang: bash
+        label: cURL
+        source: |
+          curl -H "Authorization: Token YOUR_API_KEY" \
+               https://api.econdb.com/v1/ports/<locode>/trade-by-partner/
+  /v1/ports/{locode}/vessel-calls/:
+    get:
+      operationId: ports_vessel_calls_list
+      description: Returns the historic container vessel calls of a port
+      summary: Vessel calls
+      parameters:
+      - in: path
+        name: locode
+        schema:
+          type: string
+        required: true
+      tags:
+      - ⚓ Ports
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Portcalls'
+              examples:
+                VesselCall:
+                  value:
+                  - start: '2021-01-11 10:09:12+00:00'
+                    end: '2021-01-12 16:01:12+00:00'
+                    ship_name: EMMA MAERSK
+                    ship_imo: 9321483
+                    locode: NL RTM
+                    port_name: Rotterdam
+                    import_count: 2102.0
+                    export_count: 3615.0
+                  summary: Example of a vessel call
+          description: ''
+      x-codeSamples:
+      - lang: python
+        label: Python Requests
+        source: |
+          import requests
+
+          url = "https://api.econdb.com/v1/ports/<locode>/vessel-calls/"
+          headers = {"Authorization": "Token YOUR_API_KEY"}
+
+          response = requests.get(url, headers=headers)
+          items = response.json()
+          print(items)
+      - lang: bash
+        label: cURL
+        source: |
+          curl -H "Authorization: Token YOUR_API_KEY" \
+               https://api.econdb.com/v1/ports/<locode>/vessel-calls/
+  /v1/ports/{locode}/vessel-schedule/:
+    get:
+      operationId: ports_vessel_schedule_list
+      description: Returns the container vessel schedule for a given port
+      summary: Vessel schedule
+      parameters:
+      - in: path
+        name: locode
+        schema:
+          type: string
+        required: true
+      tags:
+      - ⚓ Ports
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+              examples:
+                VesselSchedules:
+                  value:
+                  - start_date: '2025-12-18T09:00:00Z'
+                    end_date: '2025-12-19T16:01:00Z'
+                    voyage_code: ''
+                    ship_name: MSC IRINA
+                    ship_imo: 9929429
+                    ship_teu: 24346
+                    locode: SG SIN
+                    port_name: Singapore
+                  summary: Example of a schedule instance
+          description: ''
+      x-codeSamples:
+      - lang: python
+        label: Python Requests
+        source: |
+          import requests
+
+          url = "https://api.econdb.com/v1/ports/<locode>/vessel-schedule/"
+          headers = {"Authorization": "Token YOUR_API_KEY"}
+
+          response = requests.get(url, headers=headers)
+          items = response.json()
+          print(items)
+      - lang: bash
+        label: cURL
+        source: |
+          curl -H "Authorization: Token YOUR_API_KEY" \
+               https://api.econdb.com/v1/ports/<locode>/vessel-schedule/
+  /v1/series/{id}/:
+    get:
+      operationId: series_retrieve
+      description: Returns metadata and time series of an indicator
+      summary: Indicator time series
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - 🌐 Time series
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MacroIndicatorExample'
+              examples:
+                ExampleIndicator:
+                  value:
+                    ticker: CPIUS
+                    description: United States - Consumer price index
+                    geography: United States
+                    frequency: M
+                    dataset: BLS_CU
+                    units: null
+                    additional_metadata: {}
+                    data:
+                      values:
+                      - 21.48
+                      - 21.62
+                      dates:
+                      - '1947-01-01'
+                      - '1947-04-01'
+                  summary: Macro indicator time series
+                  description: Get time series and metadata for a particular indicator
+                    (identified by its ticker)
+          description: ''
+      x-codeSamples:
+      - lang: python
+        label: Python Requests
+        source: |
+          import requests
+
+          url = "https://api.econdb.com/v1/series/<ticker>/"
+          headers = {"Authorization": "Token YOUR_API_KEY"}
+
+          response = requests.get(url, headers=headers)
+          items = response.json()
+          print(items)
+      - lang: bash
+        label: cURL
+        source: |
+          curl -H "Authorization: Token YOUR_API_KEY" \
+               https://api.econdb.com/v1/series/<ticker>/
+  /v1/shipping-indicators/container-trade/:
+    get:
+      operationId: shipping_indicators_container_trade_retrieve
+      description: Returns the time series global container trade split by region
+      summary: Global container trade
+      tags:
+      - 🌊 Global
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+              examples:
+                SampleResponse:
+                  value:
+                    type: timeseries
+                    title: Global imports (TEU by week)
+                    series:
+                    - code: Total
+                      name: Total
+                    - code: Africa
+                      name: Africa
+                      display: stacked
+                    - code: East Asia
+                      name: East Asia
+                      display: stacked
+                    - code: Europe
+                      name: Europe
+                      display: stacked
+                    - code: Latin America
+                      name: Latin America
+                      display: stacked
+                    - code: Middle East
+                      name: Middle East
+                      display: stacked
+                    - code: North America
+                      name: North America
+                      display: stacked
+                    - code: Others
+                      name: Others
+                      display: stacked
+                    - code: South Asia
+                      name: South Asia
+                      display: stacked
+                    - code: Southeast Asia
+                      name: Southeast Asia
+                      display: stacked
+                    data:
+                    - Date: '2022-01-17'
+                      Total: 3985133.5
+                      Africa: 212110.5
+                      East Asia: 837476.0
+                      Europe: 974743.0
+                      Latin America: 194755.5
+                      Middle East: 189822.5
+                      North America: 637272.5
+                      Others: 204453.5
+                      South Asia: 119003.5
+                      Southeast Asia: 615496.5
+                  summary: Sample response
+          description: Time series of deployed capacity by trade lane
+      x-codeSamples:
+      - lang: python
+        label: Python Requests
+        source: |
+          import requests
+
+          url = "https://api.econdb.com/v1/shipping-indicators/container-trade/"
+          headers = {"Authorization": "Token YOUR_API_KEY"}
+
+          response = requests.get(url, headers=headers)
+          items = response.json()
+          print(items)
+
+          import pandas as pd
+          df = pd.DataFrame(items['data']).set_index('Date')
+          df.plot()
+      - lang: bash
+        label: cURL
+        source: |
+          curl -H "Authorization: Token YOUR_API_KEY" \
+               https://api.econdb.com/v1/shipping-indicators/container-trade/
+  /v1/shipping-indicators/lane-capacity/:
+    get:
+      operationId: shipping_indicators_lane_capacity_retrieve
+      description: Returns the time series of container vessel capacity deployed in
+        each trade lane
+      summary: Lane capacity
+      tags:
+      - 🌊 Global
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+              examples:
+                SampleResponse:
+                  value:
+                    type: timeseries
+                    title: Capacity by lane
+                    series:
+                    - code: FEA/EUR
+                      name: FEA/EUR
+                      display: stacked
+                    - code: FEA/NAM
+                      name: FEA/NAM
+                      display: stacked
+                    - code: FEA/WSA
+                      name: FEA/WSA
+                      display: stacked
+                    - code: FEA/FEA
+                      name: FEA/FEA
+                      display: stacked
+                    - code: EUR/NAM
+                      name: EUR/NAM
+                      display: stacked
+                    - code: MEA/EUR
+                      name: MEA/EUR
+                      display: stacked
+                    - code: FEA/MEA
+                      name: FEA/MEA
+                      display: stacked
+                    - code: FEA/ESA
+                      name: FEA/ESA
+                      display: stacked
+                    - code: FEA/WAF
+                      name: FEA/WAF
+                      display: stacked
+                    - code: Others
+                      name: Others
+                      display: stacked
+                    data:
+                    - Date: '2022-04-25'
+                      FEA/EUR: 5214045.0
+                      FEA/NAM: 4524231.0
+                      FEA/WSA: 919602.0
+                      FEA/FEA: 999732.0
+                      EUR/NAM: 1013017.0
+                      MEA/EUR: 840719.0
+                      FEA/MEA: 730891.0
+                      FEA/ESA: 510815.0
+                      FEA/WAF: 538992.0
+                      Others: 4329644.0
+                  summary: Sample response
+          description: Time series of deployed capacity by trade lane
+      x-codeSamples:
+      - lang: python
+        label: Python Requests
+        source: |
+          import requests
+
+          url = "https://api.econdb.com/v1/shipping-indicators/lane-capacity/"
+          headers = {"Authorization": "Token YOUR_API_KEY"}
+
+          response = requests.get(url, headers=headers)
+          items = response.json()
+          print(items)
+
+          import pandas as pd
+          df = pd.DataFrame(items['data']).set_index('Date')
+          df.plot()
+      - lang: bash
+        label: cURL
+        source: |
+          curl -H "Authorization: Token YOUR_API_KEY" \
+               https://api.econdb.com/v1/shipping-indicators/lane-capacity/
+  /v1/vessels/:
+    get:
+      operationId: vessels_list
+      description: Returns a list of 7661 container vessels with their most recent
+        location and AIS signal.
+      summary: List of container vessels and AIS position
+      tags:
+      - 🚢 Vessels
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vessels'
+          description: ''
+      x-codeSamples:
+      - lang: python
+        label: Python Requests
+        source: |
+          import requests
+
+          url = "https://api.econdb.com/v1/vessels/"
+          headers = {"Authorization": "Token YOUR_API_KEY"}
+
+          response = requests.get(url, headers=headers)
+          items = response.json()
+          print(items)
+      - lang: bash
+        label: cURL
+        source: |
+          curl -H "Authorization: Token YOUR_API_KEY" \
+               https://api.econdb.com/v1/vessels/
+  /v1/vessels/{mmsi}/portcalls/:
+    get:
+      operationId: vessels_portcalls_list
+      description: Returns historical port calls for a given vessel (MMSI). Defaults
+        to the last 120 days when no date range is provided.
+      summary: Historical port calls
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+        description: 'Include calls with start on or after this date (YYYY-MM-DD).
+          Default: today - 120 days.'
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+        description: Include calls with start on or before this date (YYYY-MM-DD).
+      - in: path
+        name: mmsi
+        schema:
+          type: integer
+        required: true
+      tags:
+      - 🚢 Vessels
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Portcalls'
+              examples:
+                VesselCall:
+                  value:
+                  - start: '2021-01-11 10:09:12+00:00'
+                    end: '2021-01-12 16:01:12+00:00'
+                    ship_name: EMMA MAERSK
+                    ship_imo: 9321483
+                    locode: NL RTM
+                    port_name: Rotterdam
+                    import_count: 2102.0
+                    export_count: 3615.0
+                  summary: Example of a vessel call
+          description: ''
+      x-codeSamples:
+      - lang: python
+        label: Python Requests
+        source: |
+          import requests
+
+          url = "https://api.econdb.com/v1/vessels/<mmsi>/portcalls/?date_from=2026-05-01&date_to=2026-07-31"
+          headers = {"Authorization": "Token YOUR_API_KEY"}
+
+          response = requests.get(url, headers=headers)
+          items = response.json()
+          print(items)
+      - lang: bash
+        label: cURL
+        source: |
+          curl -H "Authorization: Token YOUR_API_KEY" \
+               https://api.econdb.com/v1/vessels/<mmsi>/portcalls/?date_from=2026-05-01&date_to=2026-07-31
+  /v1/vessels/{mmsi}/positions/:
+    get:
+      operationId: vessels_positions_retrieve
+      description: Returns a list of historical positions of a given vessel, identified
+        by the MMSI number
+      summary: AIS history
+      parameters:
+      - in: path
+        name: mmsi
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: 'Pagination offset (default: 0)'
+      tags:
+      - 🚢 Vessels
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VesselsPositions'
+          description: ''
+      x-codeSamples:
+      - lang: python
+        label: Python Requests
+        source: |
+          import requests
+
+          url = "https://api.econdb.com/v1/vessels/<mmsi>/positions"
+          headers = {"Authorization": "Token YOUR_API_KEY"}
+
+          response = requests.get(url, headers=headers)
+          items = response.json()
+          print(items)
+      - lang: bash
+        label: cURL
+        source: |
+          curl -H "Authorization: Token YOUR_API_KEY" \
+               https://api.econdb.com/v1/vessels/<mmsi>/positions
+  /v1/vessels/{mmsi}/schedule/:
+    get:
+      operationId: vessels_schedule_list
+      description: Returns the port schedule for a given vessel
+      summary: Port call schedule
+      parameters:
+      - in: path
+        name: mmsi
+        schema:
+          type: integer
+        required: true
+      tags:
+      - 🚢 Vessels
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+              examples:
+                VesselSchedules:
+                  value:
+                  - start_date: '2025-12-18T09:00:00Z'
+                    end_date: '2025-12-19T16:01:00Z'
+                    voyage_code: ''
+                    ship_name: MSC IRINA
+                    ship_imo: 9929429
+                    ship_teu: 24346
+                    locode: SG SIN
+                    port_name: Singapore
+                  summary: Example of a schedule instance
+          description: ''
+      x-codeSamples:
+      - lang: python
+        label: Python Requests
+        source: |
+          import requests
+
+          url = "https://api.econdb.com/v1/vessels/<mmsi>/schedule/"
+          headers = {"Authorization": "Token YOUR_API_KEY"}
+
+          response = requests.get(url, headers=headers)
+          items = response.json()
+          print(items)
+      - lang: bash
+        label: cURL
+        source: |
+          curl -H "Authorization: Token YOUR_API_KEY" \
+               https://api.econdb.com/v1/vessels/<mmsi>/schedule/
+components:
+  schemas:
+    ContainerTraffic:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        series:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeriesItem'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContainerTrafficDataPoint'
+      required:
+      - data
+      - series
+      - title
+      - type
+    ContainerTrafficDataPoint:
+      type: object
+      properties:
+        Date:
+          type: string
+          format: date
+        Exports:
+          type: number
+          format: double
+          nullable: true
+        Imports:
+          type: number
+          format: double
+          nullable: true
+        Transshipment:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - Date
+      - Exports
+      - Imports
+      - Transshipment
+    DwellTime:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        series:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeriesItem'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/DwellTimeDataPoint'
+      required:
+      - data
+      - series
+      - title
+      - type
+    DwellTimeDataPoint:
+      type: object
+      properties:
+        Date:
+          type: string
+          format: date
+        Exports:
+          type: number
+          format: double
+          nullable: true
+        Imports:
+          type: number
+          format: double
+          nullable: true
+        Transshipment:
+          type: number
+          format: double
+          nullable: true
+        RailImports:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - Date
+      - Exports
+      - Imports
+      - RailImports
+      - Transshipment
+    MacroIndicatorExample:
+      type: object
+      properties:
+        ticker:
+          type: string
+        description:
+          type: string
+        geography:
+          type: string
+        frequency:
+          type: string
+        dataset:
+          type: string
+        units:
+          type: string
+          nullable: true
+        additional_metadata:
+          type: object
+          additionalProperties: {}
+        data:
+          type: object
+          additionalProperties: {}
+      required:
+      - additional_metadata
+      - data
+      - dataset
+      - description
+      - frequency
+      - geography
+      - ticker
+      - units
+    Port:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+          maxLength: 70
+        locode:
+          type: string
+          nullable: true
+          maxLength: 6
+        iso2:
+          type: string
+          nullable: true
+          maxLength: 2
+        lat:
+          type: number
+          format: double
+          nullable: true
+        lon:
+          type: number
+          format: double
+          nullable: true
+        timezone:
+          type: string
+          nullable: true
+          maxLength: 45
+        region:
+          type: string
+          nullable: true
+          maxLength: 45
+    Portcalls:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+          nullable: true
+        end:
+          type: string
+          format: date-time
+          nullable: true
+        ship_name:
+          type: string
+          readOnly: true
+        ship_imo:
+          type: integer
+          readOnly: true
+        locode:
+          type: string
+          readOnly: true
+        port_name:
+          type: string
+          readOnly: true
+        import_count:
+          type: number
+          format: double
+          nullable: true
+        export_count:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - locode
+      - port_name
+      - ship_imo
+      - ship_name
+    Schedule:
+      type: object
+      properties:
+        start_date:
+          type: string
+          format: date-time
+          readOnly: true
+        end_date:
+          type: string
+          format: date-time
+          readOnly: true
+        voyage_code:
+          type: string
+          readOnly: true
+        terminal_code:
+          type: string
+          readOnly: true
+        ship_name:
+          type: string
+          readOnly: true
+        ship_imo:
+          type: integer
+          readOnly: true
+        ship_teu:
+          type: integer
+          readOnly: true
+        locode:
+          type: string
+          readOnly: true
+        port_name:
+          type: string
+          readOnly: true
+      required:
+      - end_date
+      - locode
+      - port_name
+      - ship_imo
+      - ship_name
+      - ship_teu
+      - start_date
+      - terminal_code
+      - voyage_code
+    SeriesItem:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        axis:
+          type: integer
+      required:
+      - axis
+      - code
+      - name
+    Vessels:
+      type: object
+      properties:
+        imo:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        mmsi:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        name:
+          type: string
+          nullable: true
+          maxLength: 70
+        country_code:
+          type: string
+          nullable: true
+          maxLength: 2
+        ship_type:
+          type: string
+          readOnly: true
+        callsign:
+          type: string
+          nullable: true
+          maxLength: 12
+        owner:
+          type: string
+          nullable: true
+          maxLength: 45
+        operator_name:
+          type: string
+          readOnly: true
+        last_lat:
+          type: number
+          format: double
+          nullable: true
+        last_signal:
+          type: string
+          readOnly: true
+        last_lon:
+          type: number
+          format: double
+          nullable: true
+        last_navstat:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        last_heading:
+          type: number
+          format: double
+          nullable: true
+        last_speed:
+          type: number
+          format: double
+          nullable: true
+        last_draught:
+          type: number
+          format: double
+          nullable: true
+        last_eta:
+          type: string
+          format: date-time
+          nullable: true
+        destination:
+          type: string
+          readOnly: true
+        previous_port:
+          type: string
+          readOnly: true
+        gross_tonnage:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        deadweight:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+      required:
+      - destination
+      - last_signal
+      - mmsi
+      - operator_name
+      - previous_port
+      - ship_type
+    VesselsPositions:
+      type: object
+      properties:
+        ref_period:
+          type: string
+          format: date-time
+          nullable: true
+        destination:
+          type: string
+          readOnly: true
+        guessed_port:
+          type: string
+          readOnly: true
+        eta:
+          type: string
+          format: date-time
+          nullable: true
+        lat:
+          type: number
+          format: double
+          nullable: true
+        lon:
+          type: number
+          format: double
+          nullable: true
+        draught:
+          type: number
+          format: double
+          nullable: true
+        sog:
+          type: number
+          format: double
+          nullable: true
+        cog:
+          type: number
+          format: double
+          nullable: true
+        heading:
+          type: number
+          format: double
+          nullable: true
+        navstat:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+      required:
+      - destination
+      - guessed_port
+  securitySchemes:
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Token-based authentication with required prefix "Token"
+servers:
+- url: https://api.econdb.com
+  description: Production API
+tags:
+- name: ⚓ Ports
+  description: Port indicators such as container traffic as well as vessel call history.
+- name: 🚢 Vessels
+  description: Vessel indicators and ship tracking.
+- name: 🌊 Global
+  description: Global shipping indicators
+- name: ➡️ Point to point
+  description: Origin <> destination indicators
+- name: 🌐 Time series
+  description: Macroeconomic indicators time series data.
+x-tagGroups:
+- name: Shipping
+  tags:
+  - ⚓ Ports
+  - 🚢 Vessels
+  - 🌊 Global
+  - ➡️ Point to point
+- name: Macro
+  tags:
+  - 🌐 Time series

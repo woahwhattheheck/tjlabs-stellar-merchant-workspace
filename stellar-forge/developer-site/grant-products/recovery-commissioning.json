@@ -41,13 +41,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/workspace-recovery.mjs",
-      "commit": "29d6f97c8411360afd66d8ba8a55a35896fa9bcb",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
       "editions": [
         {
           "commit": "29d6f97c8411360afd66d8ba8a55a35896fa9bcb",
           "bytes": 11744,
           "sha256": "0e1729fa785a01b7ea138148be32ddf65dff07d6f86201961448c2c388e5044c",
           "git_blob": "325a360193415a506a94d5dcf4ea0d67f7f44692"
+        },
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 14023,
+          "sha256": "f06111ec6a817b250a37b44e72db592378c295331788e57a362c0955206ac74a",
+          "git_blob": "494b668accb446b3089aa75de6236487a4175d62"
         }
       ]
     },
@@ -57,13 +63,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/OBJECT_SESSIONS.md",
-      "commit": "29d6f97c8411360afd66d8ba8a55a35896fa9bcb",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
       "editions": [
         {
           "commit": "29d6f97c8411360afd66d8ba8a55a35896fa9bcb",
           "bytes": 9864,
           "sha256": "1e1066cd1d83e3aaebc448f284b5a964f3009f71b056302781024a9a2982875c",
           "git_blob": "16547aaf99d182ea33dd97467d024d01dc3ddefc"
+        },
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 10233,
+          "sha256": "d75990ac7ac9c1edcdedc32f5abbb1730db980a7b6d2a89646c00ddfa26681f1",
+          "git_blob": "919dedbebcc947154457c08fd94001fb6fd38fda"
         }
       ]
     },
@@ -214,6 +226,278 @@
           "bytes": 10156,
           "sha256": "87cd25be80b94067fc2ee924feb12e915b3e29b75cc050a3de0371a5bf995ba9",
           "git_blob": "b11d9e983d3fbcf99969cc632dc40c17309837a3"
+        }
+      ]
+    },
+    {
+      "id": "recovery-comparison-guide",
+      "label": "Two-backup comparison operator guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/OBJECT_COMPARISON.md",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+      "editions": [
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 7790,
+          "sha256": "2e15e4e92e165cce947686deac111a8e5f4403b40b153271c1b258df4529a9be",
+          "git_blob": "5279eeb50aac79f5c82c598fffdffd7d9c01f9c0"
+        }
+      ]
+    },
+    {
+      "id": "recovery-comparison-app",
+      "label": "Original recovery application integration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/app.mjs",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+      "editions": [
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 69625,
+          "sha256": "bc442c5d6d04b8ff2ccf650b698b74a1e6faa42f0b43b0da536935b94de4d7df",
+          "git_blob": "8ed62d2615f502076bec327269ea5c707d9671f9"
+        }
+      ]
+    },
+    {
+      "id": "recovery-comparison-browser-assets",
+      "label": "Complete comparison browser asset registration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/browser-assets.json",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+      "editions": [
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 962,
+          "sha256": "b86dd97a4b8b327ca3921e70ae4e6458fa8aabdf1562a524e5493e3e2fc7edb0",
+          "git_blob": "c3b0542c1b4f7e869cd986f4bf55c1d2944e1454"
+        }
+      ]
+    },
+    {
+      "id": "recovery-comparison-workspace-cli",
+      "label": "Original queued comparison CLI",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/cli.mjs",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+      "editions": [
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 17794,
+          "sha256": "386e62921100663c91993c907f5887229ec3fb9cc04433f789ae1769365ff5ed",
+          "git_blob": "a510f3d8a2e44a651b5c260700de79c74e5b8571"
+        }
+      ]
+    },
+    {
+      "id": "recovery-comparison-workspace-html",
+      "label": "Original recovery workspace and comparison pane",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/index.html",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+      "editions": [
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 14938,
+          "sha256": "14bb61faed757e74dc3ae83290ae607e5cdc14294bbbb56cefcb4befdfaaf9c1",
+          "git_blob": "a72ff18f0234141f30c9d5875a0068b993894101"
+        }
+      ]
+    },
+    {
+      "id": "recovery-comparison-agent-catalog",
+      "label": "Original merchant comparison tool declarations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/merchant-catalog.mjs",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+      "editions": [
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 13679,
+          "sha256": "292d0004823c411289dc1cb487ab368692e69bda01a846a5e3f82472e0d02435",
+          "git_blob": "eead46dffd2b18faa2bb40656ff0c61da6fab114"
+        }
+      ]
+    },
+    {
+      "id": "recovery-comparison-agent-types",
+      "label": "Typed merchant comparison client",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/merchant-client.d.mts",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+      "editions": [
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 6983,
+          "sha256": "5596f64b76a3d192f27a6e527e8fa363a59de2fbc5769df11820179870594ea2",
+          "git_blob": "1d0cc57b64630c4ffebc8e5da5448a58db54884e"
+        }
+      ]
+    },
+    {
+      "id": "recovery-comparison-agent-client",
+      "label": "Original merchant comparison client",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/merchant-client.mjs",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+      "editions": [
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 25313,
+          "sha256": "389fe9a74b915615beec083f624180027d7483f534a6ed008e8aceb8268ec37c",
+          "git_blob": "514cefc7127c3ec7df00d1adb5faa635d135d56f"
+        }
+      ]
+    },
+    {
+      "id": "recovery-comparison-workspace-model",
+      "label": "Original request queue and comparison continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/model.mjs",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+      "editions": [
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 79440,
+          "sha256": "2195b8593163f81770758b98ee832e38ce4fb7abba62fe3fa6e646a569678a29",
+          "git_blob": "51692e838855ae1426181aa76bfe4cabfeacd838"
+        }
+      ]
+    },
+    {
+      "id": "recovery-comparison-browser",
+      "label": "Complete reviewed comparison browser workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/object-comparisons-desk.mjs",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+      "editions": [
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 12796,
+          "sha256": "6d3fe044e34474ca923f8fe345dc38c9730e2ac42bafba946329a5de3649db29",
+          "git_blob": "1ee14449552722616f479092a6d5c3f1f421381c"
+        }
+      ]
+    },
+    {
+      "id": "recovery-comparison-adapter",
+      "label": "Complete comparison evidence and report adapter",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/object-comparisons.mjs",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+      "editions": [
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 26616,
+          "sha256": "b74154ed85ddbcd9581e904d8c572950a201447fbba7048cfd1f0ee978d61c7b",
+          "git_blob": "e9671a0b03e557be947146d6301d64523106ef7c"
+        }
+      ]
+    },
+    {
+      "id": "recovery-comparison-session-browser",
+      "label": "Original session browser and comparison join",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/object-sessions-desk.mjs",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+      "editions": [
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 16102,
+          "sha256": "6c502abe20e3b324579eca28719567f78470ed7098e1d44e3bc1acab138bdf6c",
+          "git_blob": "4f9dc99c1b3ae89577e4c4fd6f04766cbbaf1764"
+        }
+      ]
+    },
+    {
+      "id": "recovery-comparison-server",
+      "label": "Original comparison HTTP and artifact routes",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/server.mjs",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+      "editions": [
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 16532,
+          "sha256": "9d7925e9e07cd7939d721bfa41ce88a794b863c294bf0dd4bf6685a6665df462",
+          "git_blob": "ad4e1da28afb1b3d35c6f66f061267562c35a7c5"
+        }
+      ]
+    },
+    {
+      "id": "recovery-comparison-native-types",
+      "label": "Complete native SDK comparison types",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/index.d.mts",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+      "editions": [
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 88678,
+          "sha256": "dd591e2668b54bb00b4340e8f066c971dff7ab3cca79c7c4575e55c446878218",
+          "git_blob": "59b4d9577bf05045e823e8d86e80e914491afe78"
+        }
+      ]
+    },
+    {
+      "id": "recovery-comparison-native-exports",
+      "label": "Original native SDK exports",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/index.mjs",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+      "editions": [
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 1024,
+          "sha256": "a1c55934c6c434a682c39b496e878cfdd148f97044e8b6469acc68b2bd95ad7b",
+          "git_blob": "dba14ba856ff508731e655ce54c6980cb7c7b084"
+        }
+      ]
+    },
+    {
+      "id": "recovery-comparison-native-cli",
+      "label": "Original native Object comparison command",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/object-cli.mjs",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+      "editions": [
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 28340,
+          "sha256": "8c9053bdb0b0dacd033644ad0e8c45ed94d5233ed3fad01a690261d3c52afd3b",
+          "git_blob": "f94e0975a1811d365b6fd10ca6e58a4a0558b710"
+        }
+      ]
+    },
+    {
+      "id": "recovery-comparison-core",
+      "label": "Complete authenticated comparison and readable reports",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/object-comparison-core.mjs",
+      "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+      "editions": [
+        {
+          "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+          "bytes": 24418,
+          "sha256": "87b495ea5c41f36dab8eca099cd41231f69672619686d95149e38f44de7b1b87",
+          "git_blob": "d6603910361929dc7be83d61aa9e9bd63341f779"
         }
       ]
     }

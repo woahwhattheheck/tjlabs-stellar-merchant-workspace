@@ -1,0 +1,29 @@
+{
+  "type": "timeseries",
+  "title": "Container volume (TEU, full)",
+  "series": [
+    {
+      "code": "Imports",
+      "name": "Gross imports",
+      "axis": 0
+    },
+    {
+      "code": "Exports",
+      "name": "Gross exports",
+      "axis": 0
+    },
+    {
+      "code": "Transshipment",
+      "name": "Transshipment",
+      "axis": 0
+    }
+  ],
+  "data": [
+    {
+      "Date": "2022-02-21",
+      "Exports": 26635,
+      "Imports": 34850,
+      "Transshipment": null
+    }
+  ]
+}

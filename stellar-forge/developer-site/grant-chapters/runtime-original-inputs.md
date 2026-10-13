@@ -39,6 +39,18 @@ The complete native receiving programme follows one selected original grant scen
 
 This capability supports customer commissioning and continuing operation within the existing funded work packages. It supplies the original-file handling needed to use an installed application from an ordinary customer device and to hand the same complete working state to the next operator.
 
+#### Keep an entry file and its complete companion tree together
+
+An application descriptor may refer to data, patterns, scripts or configuration beside it or in a neighbouring directory. **Companion file sets** retains that complete source folder as one manifest while reusing the original file upload engine for every member. The manifest keeps each accepted relative path, exact file length and SHA-256. It preserves case and directory relationships, including empty directories when imported through the CLI.
+
+The operator saves a complete source set, opens the intended application path setting, and explicitly selects either its actual entry file or the whole working folder. Preparation creates one separately editable tree in the same Runtime workspace. A path such as `model/network.inp` continues to resolve `patterns.csv` beside it and `../telemetry/readings.csv` through the actual retained parent directory. The existing provider performs its normal native input review.
+
+A matching interrupted upload or working-copy preparation resumes its original source and request. Reusing a completed working set preserves all application edits. Each independent preparation gets its own working tree. The CLI can export every complete original member together with the manifest; the normal Runtime backup carries originals, current working members, application outputs and saved selections through the existing restore flow.
+
+The browser accepts a source folder or a complete selection of files from one folder. It displays full member names on desktop and narrow screens, downloads originals, and reopens retained working selections. CLI intake preserves hidden files and empty directories. The supported set holds up to 1,024 files and 64 MiB total, with the existing 16 MiB whole-file limit; established host paths continue to handle larger sources. Portable path and case collisions are rejected before working-tree materialization.
+
+The complete native companion receiving course follows an existing Grant scenario and its real companion folder through partial upload, cold reopen, browser/CLI completion, an edited working member, ordinary application save/connect, full original export and complete workspace backup/restore. The final manifest implementation has also received complete original Jisc institutional and Fulton EPANET source packages while retaining their original relative paths and identities.
+
 #### Complete maintained source
 
 - [Complete original application files and continuing customer workflow](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/18434e93edd99b5bd0ed7bdf19628112c17e483d/stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_INPUTS.md)
@@ -48,3 +60,12 @@ This capability supports customer commissioning and continuing operation within 
 - [Typed original input library and working-selection interface](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/18434e93edd99b5bd0ed7bdf19628112c17e483d/stellar/scf-starforge-20261009/distribution/runtime-workspace/application-inputs.d.mts)
 - [Complete original-file contribution and installed source dependencies](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/18434e93edd99b5bd0ed7bdf19628112c17e483d/stellar/scf-starforge-20261009/distribution/contributions/runtime-application-inputs.json)
 - [Original file, browser save, complete workspace backup and cold receiving course](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/18434e93edd99b5bd0ed7bdf19628112c17e483d/stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/APPLICATION_INPUTS_RECEIVE.mjs)
+
+- [Complete original companion sets, working-tree selection and interruption recovery](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/a613bbcaad272fad9c097bb33f5b2240d23a2218/stellar/scf-starforge-20261009/distribution/runtime-workspace/application-input-sets.mjs)
+- [Complete directory intake, original companion export and retained CLI selection](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/a613bbcaad272fad9c097bb33f5b2240d23a2218/stellar/scf-starforge-20261009/distribution/runtime-workspace/application-input-sets-cli.mjs)
+- [Installed desktop and phone companion-folder intake and saved selection](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/a613bbcaad272fad9c097bb33f5b2240d23a2218/stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-input-sets.mjs)
+- [Whole-set original manifest, relative path identity and portable collision validation](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/b5e3f793a71578a41e40dcbab9086557e38d56cf/stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-input-set-format.mjs)
+- [Typed complete companion source and editable working-set interface](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/a613bbcaad272fad9c097bb33f5b2240d23a2218/stellar/scf-starforge-20261009/distribution/runtime-workspace/application-input-sets.d.mts)
+- [Customer companion files, working-tree reuse and whole workspace receiving](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/a613bbcaad272fad9c097bb33f5b2240d23a2218/stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_INPUT_SETS.md)
+- [Original companion folder through native Applications, browser, CLI and backup/restore](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/a613bbcaad272fad9c097bb33f5b2240d23a2218/stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/APPLICATION_INPUT_SETS_RECEIVE.mjs)
+- [Industrial companion source controls with complete paths on narrow screens](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/a613bbcaad272fad9c097bb33f5b2240d23a2218/stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-input-sets.css)
