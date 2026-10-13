@@ -10,7 +10,7 @@ const download=(value,name,type='application/json')=>{
 const options=(rows,selected,label,empty='Choose…')=>'<option value="">'+esc(empty)+'</option>'+rows.map(r=>'<option value="'+esc(r.id)+'"'+(r.id===selected?' selected':'')+'>'+esc(label(r))+'</option>').join('');
 export function createServiceSchedulesUi({getState,api,notice,showError,clearError,openReview,openCycle,showPlanner}){
   const state={catalogue:null,calendar:null,definitionId:null,selected:[],plan:null,requestId:crypto.randomUUID(),pending:null,pendingDraft:null,
-    busy:false,offset:0,historyOffset:0,history:null,scope:null,formId:crypto.randomUUID(),savePending:null,saveDraft:null};
+    busy:false,offset:0,historyOffset:0,history:null,scope:null,formId:crypto.randomUUID(),savePending:null,saveDraft:null,savedEdition:null};
   $('service-schedules-view').innerHTML=
     '<div class="page-heading"><div><h1 id="service-schedules-title">Service calendars</h1><p>Save recurring customer periods, choose their actual source captures and continue through the original closing cycle.</p></div><button id="schedule-refresh" type="button">Refresh calendars and service history</button></div>'+
     '<section class="panel"><div class="section-heading"><h2>Saved calendars</h2><button id="schedule-new" type="button">New calendar</button></div><div id="schedule-definitions" class="table-wrap"></div>'+
@@ -42,11 +42,11 @@ export function createServiceSchedulesUi({getState,api,notice,showError,clearErr
   const draftKey=()=> 'customer-service-calendars:'+getState().context.draftScope;
   const formFields=['name','pass','anchor','cadence','interval','due','end','notes','active'];
   function formDraft(){return Object.fromEntries(formFields.map(name=>[name,name==='active'?$('schedule-'+name).checked:$('schedule-'+name).value]));}
-  function persist({required=false}={}){
+  function persist({required=false,afterSave=false}={}){
     if(!state.scope){if(required)throw Error('Open the original calendar workspace before retaining a request.');return;}
     try{localStorage.setItem(draftKey(),JSON.stringify({definitionId:state.definitionId,form:formDraft(),selected:state.selected,
-      requestId:state.requestId,pending:state.pending,pendingDraft:state.pendingDraft,formId:state.formId,savePending:state.savePending,saveDraft:state.saveDraft,label:$('schedule-cycle-label').value,from:$('schedule-from').value,until:$('schedule-until').value}));}
-    catch{notice('Browser draft storage is full or unavailable. Download the original request or reviewed plan before leaving; saved calendars and preparation history remain in the work directory.');if(required)throw Error('The exact original request could not be saved in this browser. Download it before leaving; no request was sent. Restore browser storage to continue the same request.');}
+      requestId:state.requestId,pending:state.pending,pendingDraft:state.pendingDraft,formId:state.formId,savePending:state.savePending,saveDraft:state.saveDraft,savedEdition:state.savedEdition,label:$('schedule-cycle-label').value,from:$('schedule-from').value,until:$('schedule-until').value}));}
+    catch{notice('Browser draft storage is full or unavailable. Download the original request or reviewed plan before leaving; saved calendars and preparation history remain in the work directory.');if(required)throw Error(afterSave?'The original calendar save is confirmed, but its browser receipt could not be stored. Download the original settings request before leaving; reusing it recovers the same saved edition.':'The exact original request could not be saved in this browser. Download it before leaving; no request was sent. Restore browser storage to continue the same request.');}
   }
   function restore(){
     const scope=getState().context.draftScope;if(state.scope===scope)return;
@@ -61,7 +61,7 @@ export function createServiceSchedulesUi({getState,api,notice,showError,clearErr
       if(/^[a-f0-9-]{36}$/.test(saved.requestId??''))state.requestId=saved.requestId;
       state.pending=saved.pending??null;state.pendingDraft=typeof saved.pendingDraft==='string'?saved.pendingDraft:null;
       if(/^[a-f0-9-]{36}$/.test(saved.formId??''))state.formId=saved.formId;
-      state.savePending=saved.savePending??null;state.saveDraft=saved.saveDraft??null;
+      state.savePending=saved.savePending??null;state.saveDraft=saved.saveDraft??null;state.savedEdition=saved.savedEdition??null;
       for(const name of formFields)if(saved.form&&typeof saved.form[name]===(name==='active'?'boolean':'string')){
         if(name==='active')$('schedule-active').checked=saved.form[name];else $('schedule-'+name).value=saved.form[name];
       }
@@ -130,8 +130,10 @@ export function createServiceSchedulesUi({getState,api,notice,showError,clearErr
     renderSavePending();await recoverSave();
   }
   function renderSavePending(){
-    $('schedule-save-pending').hidden=!state.savePending;
+    $('schedule-save-pending').hidden=!state.savePending&&!state.savedEdition;
+    $('schedule-save-recover').hidden=!state.savePending;
     if(state.savePending)$('schedule-save-pending-text').textContent=state.savePending.definition.name+' · original request '+state.savePending.requestId;
+    else if(state.savedEdition){const saved=state.savedEdition;$('schedule-save-pending-text').textContent='Confirmed saved edition '+saved.definition.version+' · '+saved.definition.name+' · original request '+saved.request.requestId;}
     buttons();
   }
   async function recoverSave(){
@@ -149,14 +151,17 @@ export function createServiceSchedulesUi({getState,api,notice,showError,clearErr
     const request=result.definition?.saveRequest;
     if(request?.requestId!==pending.requestId||request.expectedRevision!==pending.expectedRevision||request.id!==pending.id)
       throw Error('The returned calendar edition does not identify this original settings request. Keep the request and inspect its saved history.');
-    await refresh();
     if(state.savePending?.requestId===pending.requestId){
-      // New edits in this same form stay editable as the returned calendar's next edition.
-      // Choosing another saved calendar or New calendar creates another form identity.
-      if(draft?.formId===state.formId&&state.definitionId===draft.definitionId){state.definitionId=result.definition.id;renderDefinitions();}
-      state.savePending=null;state.saveDraft=null;persist();renderSavePending();
+      // A confirmed original result is independent of later inventory/history refreshes.
+      // New edits in this form adopt its ID; another selected/new form keeps its identity.
+      if(draft?.formId===state.formId&&state.definitionId===draft.definitionId)state.definitionId=result.definition.id;
+      state.savedEdition={request:pending,definition:result.definition};
+      state.savePending=null;state.saveDraft=null;renderSavePending();persist({required:true,afterSave:true});
     }
-    notice('Original calendar edition '+result.definition.version+' is saved. Later form edits were kept.');
+    const confirmed='Original calendar edition '+result.definition.version+' is saved. Later form edits were kept.';
+    notice(confirmed);
+    try{await refresh();notice(confirmed);}
+    catch(error){throw Error(confirmed+' Current calendar refresh did not complete: '+error.message);}
   }
   async function compile(){
     state.plan=await api('/api/service-schedules/compile',{selections:state.selected.map(s=>({scheduleId:s.period.scheduleId,version:s.period.version,index:s.period.index,
@@ -215,7 +220,7 @@ export function createServiceSchedulesUi({getState,api,notice,showError,clearErr
   $('schedule-form').onsubmit=event=>{event.preventDefault();run(save);};
   $('schedule-form').oninput=persist;
   $('schedule-save-recover').onclick=()=>run(recoverSave);
-  $('schedule-save-download').onclick=()=>download(state.savePending,'calendar-settings-request-'+state.savePending.requestId+'.json');
+  $('schedule-save-download').onclick=()=>{const request=state.savePending??state.savedEdition?.request;if(request)download(request,'calendar-settings-request-'+request.requestId+'.json');};
   $('schedule-new').onclick=()=>{resetForm();$('schedule-edit').open=true;$('schedule-name').focus();};
   $('schedule-cancel').onclick=resetForm;
   $('schedule-window').onsubmit=event=>{event.preventDefault();state.offset=0;run(refresh);};
