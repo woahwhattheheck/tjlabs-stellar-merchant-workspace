@@ -103,6 +103,8 @@ export interface MerchantOperatorClient {
   compareCustomerReview(id:string,returnSha256:string,settings?:RequestSettings):Promise<CustomerReviewComparison>;
   decideCustomerReview(input:CustomerReviewRequest&{invoiceRevision:string;comparisonSha256:string;returnSha256:string;editionSha256:string;actor:string;disposition:'accepted'|'follow_up'|'declined';note:string;supportCaseId?:string|null},settings?:RequestSettings):Promise<CustomerReviewSave>;
   downloadCustomerReview(id:string,issueId:string,destination:string,settings?:RequestSettings):Promise<SavedDownload>;
+  downloadCustomerResponse(id:string,decisionId:string,destination:string,settings?:RequestSettings):Promise<SavedDownload>;
+  downloadCustomerResponseDocument(id:string,decisionId:string,destination:string,settings?:RequestSettings):Promise<SavedDownload>;
   downloadCustomerReturn(id:string,returnSha256:string,destination:string,settings?:RequestSettings):Promise<SavedDownload>;
   downloadCustomerReviewSupport(id:string,destination:string,settings?:RequestSettings):Promise<SavedDownload>;
   intakeContext(settings?:RequestSettings):Promise<IntakeContext>;

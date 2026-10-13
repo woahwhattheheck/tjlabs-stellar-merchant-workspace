@@ -42,6 +42,69 @@ Choose the retained return, select an exact recorded edition, enter the merchant
 
 Choose **Record this exact disposition** after that comparison. The server binds the decision to the exact returned file, selected edition, current invoice revision and current review history. The supported dispositions are **follow up**, **accepted** and **declined**. An optional existing Support case UUID records the intended original case join.
 
+## Merchant response and following customer review
+
+A recorded merchant disposition can be downloaded as **Download customer response JSON** or **Download complete customer response desk**. Both select the actual saved decision, its exact original customer return and the recorded customer edition. Choosing a historical edition keeps that edition's identity. The response also identifies the issued and reviewed invoice revisions, so it does not relabel older customer feedback as a review of newer invoice content.
+
+**The disposition reason and merchant reviewer are customer-visible in these downloads.** Examine the actual text before sharing it through the agreed relationship owner. The response omits private native request IDs and the optional Support case UUID. Downloading a response is a read operation; the application does not contact the recipient.
+
+The JSON carries the exact response as a small original file. The complete HTML opens the original customer review with that response already retained, including every prior recorded edition, original attachment and the unfinished customer draft that accompanied the selected return. It remains independently editable without a live connection.
+
+In the original customer desk, use **Open original merchant response** under **Merchant responses to recorded reviews** to select the JSON. Import validates the same original merchant, invoice, issued source, customer review and selected earlier edition before adoption. Complete currently entered work stays intact. A different issue or altered response is rejected while the entered work remains available. Importing the same response again retains its original identity.
+
+Read the full merchant reason and its exact edition reference. Continue the actual reviewer fields and findings, then use **Record this exact review edition**. The following edition names the complete retained response file hash. Earlier editions remain unchanged; any edits after recording stay as a separate unfinished draft. Download the complete customer return through the original controls.
+
+Receive that following return into the same Merchant invoice. The native owner checks each returned response against its actual retained merchant decision, original return and issued invoice. A customer cannot replace a merchant decision by changing and rehashing its downloadable JSON. The normal comparison, explicit disposition and original-request recovery workflow then applies to the selected following return.
+
+Customer and merchant names remain attribution in the saved documents. Hashes establish the selected bytes and relationships; the offline file does not establish an authenticated identity. The response changes no invoice, payment authorization, settlement or fulfillment record.
+
+All response originals remain available through **Download original merchant response**. Complete working JSON, editable HTML, customer returns, local copies and the full printed review retain the response history and each edition's exact response references. The printed projection includes full reasons, reviewers, selected customer editions and original return references as wrapped text. Support workspace and case exports retain the same complete response-bearing returned files.
+
+### Response client and agent operations
+
+The existing typed client exposes `downloadCustomerResponse(invoiceId, decisionId, newPath)` and `downloadCustomerResponseDocument(invoiceId, decisionId, newPath)`. These use the existing owner, whole-byte SHA check and private create-only destination.
+
+~~~sh
+starforge x402api-merchant-operator customer-review-response --connection /private/connection.json --id ORIGINAL_INVOICE_UUID --operation ORIGINAL_DECISION_UUID --out /private/Merchant_Response.json
+starforge x402api-merchant-operator customer-review-response-document --connection /private/connection.json --id ORIGINAL_INVOICE_UUID --operation ORIGINAL_DECISION_UUID --out /private/Customer_Response.html
+~~~
+
+The existing invoice provider adds the read-only `merchant_invoice_review_response` tool. Select the same merchant, invoice, `decisionId` and `format` of `json` or `html`. Receive the complete artifact with the original file tools. The provider now has 38 operations: its 27 original invoice/payment/project tools and eleven customer-review tools. A following return uses the existing reviewed host-file selection and `merchant_invoice_review_receive`; no alternate native writer is introduced.
+
+### Operate and inspect this response course
+
+`customer-response-receiving.mjs` continues the original customer-review course immediately after its saved disposition and before Support and complete-project export. It selects the original returned file and actual recorded decision, receives byte-identical JSON/HTML through the typed client and CLI, and operates the actual offline response desk. It preserves the existing draft during rejected and accepted response intake, deduplicates the response, records one following edition, retains a further unfinished note, and independently reopens full JSON and HTML.
+
+The existing merchant browser downloads the same response bytes. The provider course receives both formats through its read-only tool and reopens their complete artifacts after the original owner stops. The full case course receives/replays the following return and verifies that it survives the original Support case, independent case-source receiving and complete project archive. All five existing invoices and the provider-zero requirement remain unchanged.
+
+Each fresh browser attempt has its own files. A completed recipient phase validates every retained output before reuse. The response selection, original request, native outcome and separate completion remain private original records. Previously completed customer-review or agent courses remain their recorded editions; reusing one does not claim that this later response course was executed. Keep the selected source and actual completion identity together.
+
+The producer must open and LOOK at the actual desktop and 390-pixel screens, every page of the response review PDF, the full downloadable response JSON and HTML, original attachments, complete Support case and usable project ZIP contents. Confirm the full historical and following feedback, reasons and unfinished text are readable, and operate the actual rejection/reopen/download controls. Capturing an image or passing source checks does not complete this inspection. Screenshots are internal receiving outputs unless requested as customer attachments.
+
+### Continue an already completed original case
+
+For an installation whose original `complete.json` already exists, select `--customer-response-continuation` and an exact `--response-source-commit`. Keep all original command selections, especially `--source-commit`, `--root`, `--original` and `--portable`, unchanged. Run the current receiving script from the exact response source checkout:
+
+~~~sh
+node products/x402api-merchant-workspace/installed-receiving.mjs \
+  --repo /private/merchant-source \
+  --source-commit ORIGINAL_COMPLETED_SOURCE_COMMIT \
+  --original /private/original-merchant-case \
+  --root /private/original-installed-receiving \
+  --playwright /existing/playwright \
+  --chromium /existing/chromium \
+  --portable --customer-response-continuation \
+  --response-source-commit EXACT_CURRENT_RESPONSE_SOURCE_COMMIT
+~~~
+
+Use the actual original paths and source IDs. The current script and complete current selected source must agree byte-for-byte. The new runtime is built and installed through the existing distribution installer in `customer-response-continuation/`. The original Applications writer reviews and saves a new source/runtime revision of the **same application ID and workspace**, guarding its current revision and retaining the original application revisions and save requests. It does not replace the original runtime directory or the original completion/source-selection records.
+
+The continuation pins the old completion, course, six exact request/result files, recipient checkpoint, original review-table rows and complete current consumer source. The initial issue, return and decision are their original journal replays; the completed recipient phase reuses its verified files. The response and following-review chapter then runs against that actual retained decision. The original Support case receives the later capsule through its normal revision-checked merge. Separate Support export, whole-project receiving, agent course and stopped-process receipts retain this continuation.
+
+Recovery accepts only the original review rows plus the exact following return and its one native request transaction. An unrelated changed review or invoice record is rejected. The new response and agent completion files are separate from the old course and agent completions. Repeating this command verifies the original stopped process results, all files and complete received/onward project tables; it does not issue another customer review or record a new decision.
+
+Keep using this explicit continuation to inspect its later live review state. The old completed record remains the exact earlier edition. The original provider-zero, complete source/file validation and actual producer LOOK requirements apply to both editions.
+
 ## Continue after a lost response
 
 Every mutation has an original UUID and complete retained body. The browser saves that exact request before dispatch. An uncertain response leaves **Receive original pending save** available. This replays the same body and UUID; the original transaction journal returns the prior committed result when it already exists.
@@ -100,6 +163,6 @@ Source validation and the authored programme remain distinct from an actual nati
 
 ## Operate through the existing invoice agent
 
-The same original issue, receive, compare, disposition and Support export are available through the ten `merchant_invoice_review_*` tools in [INVOICE_AGENT.md](INVOICE_AGENT.md#customer-review-merchant-disposition-and-support). The provider retains complete private requests before dispatch and replays the original UUID and body after an uncertain response. Host-selected `reviewReturns` keep large original customer files intact. Review artifacts remain readable after the server stops. These tools use the same native customer-review writer and leave the original financial and fulfillment operations unchanged.
+The same original issue, receive, compare, disposition and Support export are available through the eleven `merchant_invoice_review_*` tools in [INVOICE_AGENT.md](INVOICE_AGENT.md#customer-review-merchant-disposition-and-support). The provider retains complete private requests before dispatch and replays the original UUID and body after an uncertain response. Host-selected `reviewReturns` keep large original customer files intact. Review artifacts remain readable after the server stops. These tools use the same native customer-review writer and leave the original financial and fulfillment operations unchanged.
 
 The complete original receiving programme adds `customer-review-agent-receiving.mjs` after the customer-review course. A separately selected `--review-agent-continuation` can operate an already completed installation without replacing its original source selection or completion records; its exact source, request, native stop and offline file results are retained separately.

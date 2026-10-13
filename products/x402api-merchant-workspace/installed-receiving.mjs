@@ -23,12 +23,16 @@ const { values } = parseArgs({ strict: true, options: {
   root: { type: 'string' }, playwright: { type: 'string' }, chromium: { type: 'string' },
   portable: { type: 'boolean', default: false },
   'review-agent-continuation': { type: 'boolean', default: false },
+  'customer-response-continuation': { type: 'boolean', default: false },
+  'response-source-commit': { type: 'string' },
 } });
 const OPERATION = values.portable ? 'SCF-X402API-MERCHANT-PORTABLE-PROJECT-7DE2-20261012' :
   'SCF-X402API-MERCHANT-INSTALLED-7DE2-20261012';
 for (const name of ['repo', 'original', 'root', 'playwright', 'chromium'])
   assert(typeof values[name] === 'string' && isAbsolute(values[name]) && resolve(values[name]) === values[name], 'Use each original absolute ' + name + ' selection.');
 assert(/^[0-9a-f]{40}$/.test(values['source-commit']), 'Select one immutable accepted source commit.');
+assert(!(values['review-agent-continuation']&&values['customer-response-continuation']),'Select one original continuation.');
+assert(values['customer-response-continuation']? /^[a-f0-9]{40}$/.test(values['response-source-commit']??''):values['response-source-commit']===undefined,'Select the response runtime commit only for its explicit continuation.');
 assert.equal(process.platform, 'linux'); assert(Number(process.versions.node.split('.')[0]) >= 24);
 process.umask(0o077);
 const ROOT = values.root, ORIGINAL = values.original, RECEIVED = join(ORIGINAL, 'receiving');
@@ -186,7 +190,7 @@ function databaseSnapshot(databasePath = DATABASE) {
     assert.equal(db.prepare("SELECT COUNT(*) AS count FROM merchant_events WHERE state='PENDING'").get().count, 0);
     assert.equal(db.prepare("SELECT COUNT(*) AS count FROM merchant_fulfillments WHERE state!='COMPLETE'").get().count, 0);
     db.exec('ROLLBACK');
-    return { customerReviewSha256:sha(encoding(tables.filter(table=>['merchant_customer_reviews','merchant_customer_review_requests'].includes(table.name)))),businessSha256: sha(encoding(business)),
+    return { reviewTables:tables.filter(table=>['merchant_customer_reviews','merchant_customer_review_requests'].includes(table.name)),customerReviewSha256:sha(encoding(tables.filter(table=>['merchant_customer_reviews','merchant_customer_review_requests'].includes(table.name)))),businessSha256: sha(encoding(business)),
       allUserRowsSha256: sha(encoding({ ...business, tables })), business, runtimes, orders };
   } finally { db.close(); }
 }
@@ -600,9 +604,10 @@ async function receiveBrowser(opening, scenario, reads, { label = 'installed', r
     if(closing.length)throw new AggregateError(closing,'The original Merchant browser did not close completely.');
   }
 }
-async function selectedRuntime(built) {
-  const path = join(ROOT, 'runtime-selection.json');
-  const frozen = { sourceCommit: values['source-commit'], archive: built.archive, archiveSha256: built.sha256,
+async function selectedRuntime(built,{root=ROOT,sourceCommit=values['source-commit'],runtimeDirectory=RUNTIME}={}) {
+  RUNTIME=runtimeDirectory;
+  const path = join(root, 'runtime-selection.json');
+  const frozen = { sourceCommit, archive: built.archive, archiveSha256: built.sha256,
     selection: { native: false, features: ['x402api-merchant'], operator: true, pins: {} } };
   let record = await readJSON(path);
   if (!record) {
@@ -615,12 +620,12 @@ async function selectedRuntime(built) {
   if (await exists(RUNTIME)) {
     // Preparation is the maintained installer's operation. Its complete intent
     // recovers into one named successor; the previous directory stays retained.
-    assert(!await exists(join(ROOT, 'application-review.json')), 'Recover the already-reviewed application through its original runtime selection.');
+    assert(!await exists(join(root, 'application-review.json')), 'Recover the already-reviewed application through its original runtime selection.');
     const preparation = await readJSON(join(RUNTIME, 'preparation.json'));
     if (preparation) {
       assert.equal(preparation.archiveSha256, built.sha256); assert.deepEqual(preparation.selection, frozen.selection);
     }
-    selected = { directory: join(ROOT, 'runtime-recovery-' + (record.attempts.length + 1)),
+    selected = { directory: join(root, 'runtime-recovery-' + (record.attempts.length + 1)),
       previousDirectory: RUNTIME, originalPreparation: Boolean(preparation), createdAt: new Date().toISOString() };
     record.attempts.push(selected); await save(path, record); RUNTIME = selected.directory;
   }
@@ -629,7 +634,7 @@ async function selectedRuntime(built) {
     await recoverRuntime({ from: selected.previousDirectory, directory: RUNTIME, offline: true, install: false }) :
     await prepareRuntimeInstall({ directory: RUNTIME, archive: built.archive, sha256: built.sha256, ...frozen.selection,
       ...(selected.previousDirectory ? { from: selected.previousDirectory } : {}) });
-  await save(join(ROOT, 'prepared-runtime.json'), prepared);
+  await save(join(root, 'prepared-runtime.json'), prepared);
 }
 async function selectedApplications(runtimeModel) {
   const path = join(ROOT, 'applications-selection.json');
@@ -698,6 +703,164 @@ async function continueCompletedReviewAgent(previous) {
   await save(receiptPath,receipt,{original:true});
   return {...previous,customerReviewAgentContinuation:receipt,reopened:true};
 }
+
+async function continueCompletedCustomerResponse(previous) {
+  assert(previous.customerReview?.course,'Use the completed original customer-review case.');
+  assert(values.portable,'The response continuation carries its complete onward project.');
+  const folder=join(ROOT,'customer-response-continuation'),oldCourse=previous.customerReview.course;
+  emit({state:'CONTINUING_ORIGINAL_CUSTOMER_RESPONSE',applicationId:previous.applications.applicationId,originalSourceCommit:previous.sourceCommit,responseSourceCommit:values['response-source-commit']});
+  await directory(folder);
+  const consumerRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
+  const selector=await readFile(join(consumerRoot,'products/x402api-merchant-workspace/portable-directory.mjs'),'utf8');
+  const names=JSON.parse(selector.match(/const SOURCE_FILES = (\[[\s\S]*?\]);/)[1]);
+  names.push('products/x402api-merchant-workspace/installed-receiving.mjs');assert.equal(new Set(names).size,names.length);
+  const sources=[];for(const path of names.sort()){
+    assert(!path.startsWith('/')&&!path.split('/').includes('..'));
+    const info=await lstat(join(consumerRoot,path));assert(info.isFile()&&!info.isSymbolicLink());
+    const raw=await readFile(join(consumerRoot,path));sources.push({path,bytes:raw.length,sha256:sha(raw)});
+  }
+  const originals=[];
+  for(const relative of ['complete.json','selection.json','customer-review-course/complete.json','customer-review-course/recipient-complete.json','browser-complete.json',
+    ...['issue','return','decision'].flatMap(name=>['request','result'].map(kind=>'customer-review-course/'+name+'-'+kind+'.json'))]){
+    const path=join(ROOT,relative),raw=await readFile(path);originals.push({path,bytes:raw.length,sha256:sha(raw)});
+  }
+  const selectionPath=join(folder,'selection.json'),retainedSelection=await readJSON(selectionPath);
+  const lease=await operationLease(join(WORKSPACE,'merchant-owner.lock'));let before;
+  try{before=databaseSnapshot();assert.equal(before.businessSha256,previous.afterBusinessSha256);
+    if(!retainedSelection)assert.equal(before.customerReviewSha256,previous.customerReviewSha256);}
+  finally{await lease.close();}
+  const selected={schema:'stellar-forge.merchant-customer-response-continuation.v1',
+    originals,owner:oldCourse.owner,invoiceId:oldCourse.invoiceId,originalSourceCommit:previous.sourceCommit,
+    responseSourceCommit:values['response-source-commit'],consumerRoot,sources,sourceSha256:sha(JSON.stringify(sources)),
+    applicationId:previous.applications.applicationId,workspace:WORKSPACE,
+    beforeReviewTables:retainedSelection?.beforeReviewTables??before.reviewTables};
+  await save(selectionPath,selected,{original:true});
+  async function verifyOriginals(){for(const file of originals)await originalFile(file.path,file);for(const file of sources)await originalFile(join(consumerRoot,file.path),file);}
+  async function verifyAppend(snapshot){
+    assert.equal(snapshot.businessSha256,previous.afterBusinessSha256);
+    const request=await readJSON(join(folder,'customer-response-course/following-return-request.json'));
+    assert.equal(snapshot.reviewTables.length,selected.beforeReviewTables.length);
+    let extraReturn=null,extraRequest=null;
+    for(const table of selected.beforeReviewTables){
+      const current=snapshot.reviewTables.find(t=>t.name===table.name);assert(current);assert.equal(current.sql,table.sql);
+      for(const row of table.rows)assert(current.rows.includes(row),'Preserve every original review/request row.');
+      const additions=current.rows.filter(row=>!table.rows.includes(row));assert(additions.length<=1);
+      if(additions.length){assert(request,'Retain the original following request before accepting its committed rows.');const row=JSON.parse(additions[0]);
+        assert.equal(row.order_id,oldCourse.invoiceId);
+        if(table.name==='merchant_customer_reviews'){
+          assert.equal(row.kind,'RETURN');assert.equal(row.id,sha(request.text));const body=JSON.parse(row.body_json);
+          assert.equal(body.text,request.text);assert.equal(body.sha256,sha(request.text));assert.equal(row.sha256,sha(row.body_json));extraReturn=row;
+        }else{assert.equal(table.name,'merchant_customer_review_requests');assert.equal(row.request_id,request.requestId);
+          assert.equal(row.operation,'receive');
+          const {canonical}=await import('./customer-review-core.mjs');assert.equal(row.request_sha256,sha(canonical({operation:'receive',input:request})));
+          const response=JSON.parse(row.response_json);assert.equal(response.invoiceId,oldCourse.invoiceId);assert.equal(response.returnSha256,sha(request.text));extraRequest=row;}
+      }
+    }
+    assert.equal(Boolean(extraReturn),Boolean(extraRequest),'The following return and request are one committed transaction.');
+  }
+  await verifyAppend(before);await verifyOriginals();
+  const receiptPath=join(folder,'complete.json'),prior=await readJSON(receiptPath);
+  APPLICATIONS=previous.applications.directory;
+  if(prior){
+    RUNTIME=prior.runtimeDirectory;
+    assert.equal(prior.sourceSha256,selected.sourceSha256);assert.equal(prior.parentSha256,originals[0].sha256);
+    const rm=await import(pathToFileURL(join(prior.sourceRoot,'stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs')));
+    model=await rm.openRuntimeWorkspace({directory:APPLICATIONS});
+    for(const opening of [prior.customerReview,prior.agent]){
+      const run=await originalRun(opening.operationId,selected.applicationId);assert(!run.held);assert.deepEqual(run.result,opening.originalProcess);assert.equal(run.result.state,'STOPPED');
+    }
+    for(const file of [...prior.customerReview.course.files,...prior.customerReview.course.images])await originalFile(file.path,file);
+    const agent=await import('./customer-review-agent-receiving.mjs');await agent.verifyMerchantReviewAgent(prior.agent.course,{root:folder,expectedInvoices:previous.invoices.map(x=>x.merchantOrderId)});
+    await verifyPortableReceiving(prior.portable,{originalFile});assert.equal(before.customerReviewSha256,prior.customerReviewSha256);
+    for(const item of [prior.portable.receiving.received,prior.portable.onward.receiving.received])assert.equal(databaseSnapshot(join(item.workspaceDirectory,'merchant.sqlite3')).customerReviewSha256,prior.customerReviewSha256);
+    return {...previous,customerResponseContinuation:prior,reopened:true};
+  }
+  const built=await buildDistribution({repository:values.repo,ref:selected.responseSourceCommit,selection:'x402api-merchant',
+    output:join(folder,'build'),offline:true,resume:await exists(join(folder,'build')),
+    onProgress:event=>emit({state:'CUSTOMER_RESPONSE_SOURCE_PROGRESS',...event})});
+  assert.equal(built.sourceCommit,selected.responseSourceCommit);
+  await save(join(folder,'package-result.json'),built,{original:true});
+  await selectedRuntime(built,{root:folder,sourceCommit:selected.responseSourceCommit,runtimeDirectory:join(folder,'runtime')});
+  await installRuntime({directory:RUNTIME,offline:true});
+  const inspection=await inspectRuntimeInstall({directory:RUNTIME,load:true,source:true});assert.equal(inspection.ready,true);assert.equal(inspection.sourceCommit,selected.responseSourceCommit);
+  const sourceRoot=inspection.sourceRoot;
+  for(const file of sources.filter(f=>!f.path.endsWith('/installed-receiving.mjs')))await originalFile(join(sourceRoot,file.path),file);
+  const rm=await import(pathToFileURL(join(sourceRoot,'stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs')));
+  model=await rm.openRuntimeWorkspace({directory:APPLICATIONS});
+  const applicationId=selected.applicationId,current=await readJSON(join(APPLICATIONS,'applications',applicationId,'application.json'));assert.equal(current.id,applicationId);assert.equal(current.settings.directory,WORKSPACE);
+  const originalApp=join(folder,'original-application.json');
+  if(!await exists(originalApp))await save(originalApp,current,{original:true});
+  const originalApplication=await readJSON(originalApp);
+  const scenario=await readJSON(join(RECEIVED,'scenario.json')),completed=await readJSON(join(RECEIVED,'complete.json')),first=await readJSON(join(ROOT,'browser-complete.json'));
+  assert.equal(scenario.operation,ORIGINAL_OPERATION);assert.equal(completed.orders.length,5);
+  sentinel=await providerSentinel();assert.equal(sentinel.requests.length,0);
+  const configuration=await readJSON(originalApplication.settings.configurationFile);
+  assert.equal(configuration.fulfillmentBinding,scenario.config.fulfillmentBinding);
+  configuration.fulfillmentModule=join(sourceRoot,'products/x402api-merchant-workspace/fulfillment/file-delivery.mjs');
+  configuration.providerOrigin=sentinel.selected.origin;
+  const configPath=join(folder,'inputs/merchant.json');await save(configPath,configuration,{original:true});
+  const attached=await model.attach({directory:RUNTIME,label:'Original Merchant response continuation'});
+  const reviewPath=join(folder,'application-review.json');let review=await readJSON(reviewPath);
+  if(!review){assert.equal(current.revision,originalApplication.revision);review=await model.applicationsReview({
+    runtimeId:attached.runtimeId,kind:originalApplication.kind,providerId:originalApplication.providerId??'x402api-merchant',
+    applicationId,expectedRevision:originalApplication.revision,label:originalApplication.label,
+    settings:{...originalApplication.settings,configurationFile:configPath}});
+    await save(reviewPath,review,{original:true});}
+  const requestPath=join(folder,'application-save-request.json'),request={requestId:identity('customer-response-application-save'),applicationId,reviewId:review.id};
+  await save(requestPath,request,{original:true});const saved=await model.applicationsSave(request);assert.equal(saved.applicationId,applicationId);assert(!saved.superseded);
+  await save(join(folder,'application-saved.json'),{applicationId:saved.applicationId,revision:saved.revision},{original:true});
+  await model.applicationsConnect({applicationId});const started=Date.now();
+  for(;;){stopped();const observed=await applicationView(applicationId);
+    if(observed.release){assert.equal(observed.revision,saved.revision);assert.equal(observed.release.sourceCommit,selected.responseSourceCommit);break;}
+    assert(!['FAILED','INTERRUPTED'].includes(observed.adoption?.phase),'Reconcile the original current-runtime adoption.');
+    assert(Date.now()-started<120000,'Retain the original current-runtime adoption before continuing.');await pause(200);}
+  // Copy exact original replay inputs; keep original paths inside the verified recipient checkpoint.
+  const courseFolder=join(folder,'customer-review-course');await directory(courseFolder);
+  for(const name of ['recipient-complete.json',...['issue','return','decision'].flatMap(x=>['request','result'].map(k=>x+'-'+k+'.json'))]){
+    const raw=await readFile(join(ROOT,'customer-review-course',name));await save(join(courseFolder,name),raw,{original:true});
+  }
+  let customerReview=await readJSON(join(folder,'customer-review-opening.json'));
+  if(!customerReview){
+    const opening=await beginOpening('customer-response-continuation',applicationId);
+    if(opening.completed)customerReview={...opening.completed.result,operationId:opening.operationId,originalProcess:opening.completed.native};
+    else{
+      const require=createRequire(import.meta.url),loaded=require(values.playwright),chromium=loaded.chromium??loaded.default?.chromium;
+      browser=await chromium.launch({executablePath:values.chromium,headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
+      let course;try{const m=await import('./customer-review-receiving.mjs');
+        course=await m.receiveCustomerReviewCourse({browser,opening,scenario,reads:first.reads,delivery:first.browser.customerDelivery,
+          root:folder,repository:sourceRoot,identity,directory,save,originalFile,stopped,originalCaseFolder:join(ROOT,'customer-review-course/support-cases'),
+          exportProject:({page,capture})=>exportProjectFromBrowser({page,opening,scenario,
+            root:join(folder,'customer-review-whole-project'),identity:label=>identity('customer-response-'+label),
+            get,save,directory,originalFile,capture,stopped,retainCompleted})});
+      }finally{await browser.close();browser=null;}
+      const ended=await finishOpening(opening,{course});customerReview={course,operationId:opening.operationId,originalProcess:ended.result};
+    }await save(join(folder,'customer-review-opening.json'),customerReview,{original:true});
+  }
+  assert(customerReview.course.customerResponse);for(const file of [...customerReview.course.files,...customerReview.course.images])await originalFile(file.path,file);
+  const agentModule=await import('./customer-review-agent-receiving.mjs');let agent=await readJSON(join(folder,'agent-opening.json'));
+  if(!agent){const opening=await beginOpening('customer-response-agent-continuation',applicationId);
+    if(opening.completed)agent={...opening.completed.result,operationId:opening.operationId,originalProcess:opening.completed.native};
+    else{const course=await agentModule.receiveMerchantReviewAgent({opening,scenario,root:folder,expectedInvoices:previous.invoices.map(x=>x.merchantOrderId)});
+      const ended=await finishOpening(opening,{course});agent={course,operationId:opening.operationId,originalProcess:ended.result};}
+    await save(join(folder,'agent-opening.json'),agent,{original:true});}
+  await agentModule.verifyMerchantReviewAgent(agent.course,{root:folder,expectedInvoices:previous.invoices.map(x=>x.merchantOrderId)});
+  const lock=await operationLease(join(WORKSPACE,'merchant-owner.lock'));let after;
+  try{after=databaseSnapshot();await verifyAppend(after);}finally{await lock.close();}
+  const portable=await receivePortableProject({root:join(folder,'customer-review-whole-project'),sourceRoot,scenario,completed,
+    exported:customerReview.course.project,firstReads:first.reads,identity:label=>identity('customer-response-'+label),
+    get,save,directory,originalFile,databaseSnapshot,
+    receiveReads:(opening,a,b,label)=>receiveReads(opening,a,b,'customer-response-'+label),
+    receiveBrowser:(opening,a,b,options)=>receiveBrowser(opening,a,b,{...options,label:'customer-response-'+options.label}),
+    runCommand:(label,command)=>runCommand('customer-response-'+label,command),stopped,retainCompleted});
+  for(const received of [portable.receiving.received,portable.onward.receiving.received])
+    assert.equal(databaseSnapshot(join(received.workspaceDirectory,'merchant.sqlite3')).customerReviewSha256,after.customerReviewSha256);
+  assert.equal(sentinel.requests.length,0);await verifyOriginals();
+  const receipt={schema:selected.schema,parentSha256:originals[0].sha256,sourceSha256:selected.sourceSha256,
+    responseSourceCommit:selected.responseSourceCommit,sourceRoot,runtimeDirectory:RUNTIME,applicationId,applicationRevision:saved.revision,
+    customerReview,agent,portable,customerReviewSha256:after.customerReviewSha256,businessSha256:after.businessSha256,providerCalls:sentinel.requests};
+  await save(receiptPath,receipt,{original:true});return {...previous,customerResponseContinuation:receipt,reopened:true};
+}
+
 async function receive() {
   await directory(ROOT);
   const selection = { schema: 'stellar-forge.merchant-installed-receiving-selection.v1', operation: OPERATION,
@@ -710,7 +873,7 @@ async function receive() {
     assert.equal(previous.state, 'COMPLETE'); assert.equal(previous.operation, OPERATION);
     assert.equal(previous.sourceCommit, selection.sourceCommit); assert.equal(previous.originalArchiveSha256, ORIGINAL_SHA);
     const lease = await operationLease(join(WORKSPACE, 'merchant-owner.lock'));
-    try { const current = databaseSnapshot(); assert.equal(current.businessSha256, previous.afterBusinessSha256);if(previous.customerReviewSha256)assert.equal(current.customerReviewSha256,previous.customerReviewSha256); }
+    try { const current = databaseSnapshot(); assert.equal(current.businessSha256, previous.afterBusinessSha256);if(previous.customerReviewSha256&&!values['customer-response-continuation'])assert.equal(current.customerReviewSha256,previous.customerReviewSha256,'Use the explicit response continuation to reopen its later review history.'); }
     finally { await lease.close(); }
     for(const file of [...(previous.customerReview?.course.files??[]),...(previous.customerReview?.course.images??[])])await originalFile(file.path,file);
     for (const file of [...previous.browser.images, ...previous.browser.downloads]) await originalFile(file.path, file);
@@ -726,10 +889,11 @@ async function receive() {
       await agent.verifyMerchantReviewAgent(previous.customerReviewAgent.course,{root:ROOT,
         expectedInvoices:previous.invoices.map(order=>order.merchantOrderId)});
     }
+    if(values['customer-response-continuation'])return continueCompletedCustomerResponse(previous);
     if(values['review-agent-continuation'])return continueCompletedReviewAgent(previous);
     return { ...previous, reopened: true };
   }
-  assert(!values['review-agent-continuation'],'Use review-agent-continuation only with the complete original installed case.');
+  assert(!values['review-agent-continuation']&&!values['customer-response-continuation'],'Use an explicit continuation only with the complete original installed case.');
   const scenario = await readJSON(join(RECEIVED, 'scenario.json')), completed = await readJSON(join(RECEIVED, 'complete.json'));
   assert.equal(scenario.operation, ORIGINAL_OPERATION); assert.equal(completed.operation, ORIGINAL_OPERATION);
   assert.equal(completed.state, 'COMPLETE'); assert.equal(completed.orders.length, 5);
@@ -970,4 +1134,4 @@ if (failure) { process.exitCode = 1; }
 else emit({ state: values.portable ? 'PORTABLE_MERCHANT_COMPLETE' : 'INSTALLED_MERCHANT_COMPLETE', operation: OPERATION, sourceCommit: result.sourceCommit,
   invoices: result.invoices.length, browser: result.browser.browser, screenshots: result.browser.images,
   beforeBusinessSha256: result.beforeBusinessSha256, afterBusinessSha256: result.afterBusinessSha256,
-  providerCalls: result.providerCalls.length });
+  providerCalls: result.providerCalls.length,...(result.customerResponseContinuation?{customerResponseContinuation:{sourceCommit:result.customerResponseContinuation.responseSourceCommit,applicationId:result.customerResponseContinuation.applicationId,receipt:join(ROOT,'customer-response-continuation/complete.json')}}:{}) });

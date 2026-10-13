@@ -59,7 +59,7 @@ function brief(action,value) {
    returnSha256:value.decision.returnSha256,editionSha256:value.decision.editionSha256,disposition:value.decision.disposition}:{} )};
 }
 export async function executeMerchantReview({kind,args:a,definition:d,files,client}) {
- if(['review_document','review_return','review_support'].includes(kind))return {artifact:await files.reviewDownload(kind,client,a)};
+ if(['review_document','review_return','review_support','review_response'].includes(kind))return {artifact:await files.reviewDownload(kind,client,a)};
  if(kind==='review_status') {
   const value=await client.customerReviews(a.invoiceId);sameOwner(value,d,a.invoiceId);
   need(SHA.test(value.reviewVersion??'')&&Array.isArray(value.issues)&&Array.isArray(value.returns)&&Array.isArray(value.decisions),

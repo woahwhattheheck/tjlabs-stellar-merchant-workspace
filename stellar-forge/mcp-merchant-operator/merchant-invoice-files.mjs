@@ -88,6 +88,7 @@ export class MerchantInvoiceFiles {
   try {
    const path=join(stage,'complete');let saved,name,type;
    if(kind==='review_document') {saved=await client.downloadCustomerReview(input.invoiceId,input.issueId,path);name='Customer_Review_'+input.issueId+'.html';type='text/html';}
+   else if(kind==='review_response') {need(['json','html'].includes(input.format),'MERCHANT_REVIEW_RESPONSE_FORMAT');saved=await client[input.format==='html'?'downloadCustomerResponseDocument':'downloadCustomerResponse'](input.invoiceId,input.decisionId,path);name=(input.format==='html'?'Customer_Response_':'Merchant_Response_')+input.decisionId+(input.format==='html'?'.html':'.json');type=input.format==='html'?'text/html':'application/json';}
    else if(kind==='review_return') {saved=await client.downloadCustomerReturn(input.invoiceId,input.returnSha256,path);name='Customer_Return_'+input.returnSha256+'.json';type='application/json';}
    else {need(kind==='review_support','MERCHANT_REVIEW_FILE_ACTION');saved=await client.downloadCustomerReviewSupport(input.invoiceId,path);name='Merchant_Review_Support_'+input.invoiceId+'.json';type='application/json';}
    need(Number.isSafeInteger(saved.bytes)&&saved.bytes>=0&&saved.bytes<=192*1024*1024&&SHA.test(saved.sha256??''),'MERCHANT_REVIEW_DOWNLOAD_IDENTITY');
@@ -100,7 +101,7 @@ export class MerchantInvoiceFiles {
     need(prior.descriptor.bytes===saved.bytes&&prior.descriptor.sha256===saved.sha256,'MERCHANT_REVIEW_RETAINED_FILE_CHANGED');}
    await syncMerchantArtifactDirectory(root);
    return this.#record(kind,{bytes:saved.bytes,sha256:saved.sha256,name,contentType:type},
-    {invoiceId:input.invoiceId,...(input.issueId?{issueId:input.issueId}:{}),...(input.returnSha256?{returnSha256:input.returnSha256}:{})});
+    {invoiceId:input.invoiceId,...(input.decisionId?{decisionId:input.decisionId,format:input.format}:{}),...(input.issueId?{issueId:input.issueId}:{}),...(input.returnSha256?{returnSha256:input.returnSha256}:{})});
   } finally {await rm(stage,{recursive:true,force:true});}
  }
  async inspect(artifactId) {
