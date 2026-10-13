@@ -66,12 +66,18 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/WORKSPACE_BACKUP.md",
-      "commit": "74a378219267702ac1c4702a48ee87278781a360",
+      "commit": "5e66af6743d06411397b43094c05b8d72b855801",
       "editions": [
         {
           "commit": "74a378219267702ac1c4702a48ee87278781a360",
           "bytes": 15262,
           "sha256": "cecd0436cc01bb6d8bb19e3ed2bf905e9d58df58634723230757b99be3105dce"
+        },
+        {
+          "commit": "5e66af6743d06411397b43094c05b8d72b855801",
+          "bytes": 31883,
+          "sha256": "388eccdd0dcc42fbb2b241273edf74ae6fc75cfc6ec3c8f165cb59b1555ae94d",
+          "git_blob": "36c8c03e36b57666b2d5860deb8b5886af55550b"
         }
       ]
     },
@@ -81,12 +87,18 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/workspace-backup.d.mts",
-      "commit": "74a378219267702ac1c4702a48ee87278781a360",
+      "commit": "5e66af6743d06411397b43094c05b8d72b855801",
       "editions": [
         {
           "commit": "74a378219267702ac1c4702a48ee87278781a360",
           "bytes": 4571,
           "sha256": "191ca637b03c53507b3111597ef9188d627e91660679b3343ee7447bdadbf122"
+        },
+        {
+          "commit": "5e66af6743d06411397b43094c05b8d72b855801",
+          "bytes": 5975,
+          "sha256": "2ba6e70b2e0a6f958be1426aad21e707f624e69541f75ea004d71a83044dcf05",
+          "git_blob": "b7946533a7731efff6f7dbb8c6345bce921db243"
         }
       ]
     },
@@ -111,12 +123,18 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/WORKSPACE_BACKUP_RECEIVE.mjs",
-      "commit": "9e561f5a9e09eb3ac72655e502de58cce4416c3d",
+      "commit": "ec5268c76634bd11c205530af6929efb03320039",
       "editions": [
         {
           "commit": "9e561f5a9e09eb3ac72655e502de58cce4416c3d",
           "bytes": 32188,
           "sha256": "839967709e0f66d74fb97f1c05eaedf7cd4013ecf2cdde56192f457fafab6f4b"
+        },
+        {
+          "commit": "ec5268c76634bd11c205530af6929efb03320039",
+          "bytes": 39374,
+          "sha256": "e41e675e48a94c4efbd652311f9b9f154ce07814f27e1d819fc387acca9032f5",
+          "git_blob": "c73f57b641e2851d5532f05a48a2addc57c16d6e"
         }
       ]
     },
@@ -1538,6 +1556,38 @@
           "bytes": 1711,
           "sha256": "01095dd1320b1f9f6483192427acfe21833ba5f88c9776531038c840ecceb879",
           "git_blob": "c2639bcef1475fb4304eda7cc377ec267f1f6cd0"
+        }
+      ]
+    },
+    {
+      "id": "runtime-workspace-backup-stream",
+      "label": "Complete workspace inventory, copied-byte archive and final inspection writer",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/workspace-backup.py",
+      "commit": "ec5268c76634bd11c205530af6929efb03320039",
+      "editions": [
+        {
+          "commit": "ec5268c76634bd11c205530af6929efb03320039",
+          "bytes": 72341,
+          "sha256": "2cb3c30bcb67a45e82c14b7bab50e367ef5b5f43d2b2dfc239ee015f42657fe5",
+          "git_blob": "9adc37702abc013765377120296163a446f98b58"
+        }
+      ]
+    },
+    {
+      "id": "runtime-workspace-receiving-browser",
+      "label": "Complete backup, archive download and current-host receiving browser",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/workspace-receiving.mjs",
+      "commit": "ec5268c76634bd11c205530af6929efb03320039",
+      "editions": [
+        {
+          "commit": "ec5268c76634bd11c205530af6929efb03320039",
+          "bytes": 40735,
+          "sha256": "85aa71a2a9c9c212f72a1c6dbce328823f7c910a3dece43807967caf9d1021e2",
+          "git_blob": "b81740c5d23051bd781748870da036c531ff9d04"
         }
       ]
     }

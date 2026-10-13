@@ -147,6 +147,14 @@ Preparation retains the whole ZIP, setup and host bindings before native receivi
 
 The public distribution includes this full workflow with its native command, typed API, authenticated browser adapter and a dedicated source selection. The handoff loads the Grant client from the selected installed runtime and continues that runtime’s own export/import and service ownership. The original native receiving programme remains the place to operate and inspect the exact desktop/narrow views and every complete exported and reopened attachment.
 
+#### Complete workspace backup with fewer repeated reads
+
+Whole-workspace backup preserves the complete included records, saved Application settings, original requests, operating history and retained files. Review and export each keep a temporary digest cache under the original writer and resource leases. Every inventory still checks the complete paths, ownership, file types, permissions and links, and opens each regular file to match its device, inode, size, nanosecond modification and change times, and mode. A digest from an earlier review is never carried into a later export.
+
+The archive writer hashes the actual copied bytes against each reviewed file and repeats the complete source inventory. It verifies the compressed archive and every member, then hashes the complete final destination after publication before retaining its inspection. Restore continues to validate the full selected archive before receiving original members, with the same workspace identity and current-host binding review. This reduces repeated content reads while preserving the complete original archive format and recovery operation.
+
+The existing operator view and CLI expose actual per-invocation source, copy, archive and member read totals. For an unchanged new export, the source path performs one content-hash read plus one archive-copy read, three metadata inventories, two complete archive hashes and one member decompression. The original native receiving course records its actual workload, operates the desktop and narrow view, downloads and reopens the full archive and recovers the same request after interruption. Native timings belong to that original running workspace and its retained output.
+
 #### Complete maintained source
 
 - [Complete original application files and continuing customer workflow](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/18434e93edd99b5bd0ed7bdf19628112c17e483d/stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_INPUTS.md)
@@ -223,3 +231,8 @@ The public distribution includes this full workflow with its native command, typ
 - [Complete public Grant handoff product source selection](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/15beac722291f408d8a2fe869b7f20d5f160b936/stellar/scf-starforge-20261009/distribution/selections/grant-application-handoff.json)
 - [Complete Grant handoff, original receiving and rendered operation guide](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/15beac722291f408d8a2fe869b7f20d5f160b936/products/grant-operations/HANDOFF.md)
 - [Original native Grant launcher and explicit Buyer/Support Node host bindings](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/15beac722291f408d8a2fe869b7f20d5f160b936/stellar/scf_2026/sf47_budget_model/workspace/launcher.mjs)
+- [Complete workspace inventory, copied-byte archive and final inspection writer](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/ec5268c76634bd11c205530af6929efb03320039/stellar/scf-starforge-20261009/distribution/runtime-workspace/workspace-backup.py)
+- [Typed whole-workspace archive, receiving and reopening contract](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5e66af6743d06411397b43094c05b8d72b855801/stellar/scf-starforge-20261009/distribution/runtime-workspace/workspace-backup.d.mts)
+- [Complete backup, archive download and current-host receiving browser](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/ec5268c76634bd11c205530af6929efb03320039/stellar/scf-starforge-20261009/distribution/runtime-workspace/public/workspace-receiving.mjs)
+- [Complete workspace backup, original-location receiving and external binding review](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5e66af6743d06411397b43094c05b8d72b855801/stellar/scf-starforge-20261009/distribution/runtime-workspace/WORKSPACE_BACKUP.md)
+- [Complete original model, CLI, archive and browser receiving course](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/ec5268c76634bd11c205530af6929efb03320039/stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/WORKSPACE_BACKUP_RECEIVE.mjs)
