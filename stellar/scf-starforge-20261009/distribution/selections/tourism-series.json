@@ -310,7 +310,17 @@
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-series.json",
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/TOURISM_INSTALLATION.md",
     "products/tourism-series/SOURCE_ADOPTION.json",
-    "products/tourism-series/OPERATING.md"
+    "products/tourism-series/OPERATING.md",
+    "services/tourism-series-workspace/agent-io.mjs",
+    "services/tourism-series-workspace/agent-client.mjs",
+    "services/tourism-series-workspace/agent-tools.mjs",
+    "services/tourism-series-workspace/merchant-provider.mjs",
+    "services/tourism-series-workspace/agent-merchant.mjs",
+    "services/tourism-series-workspace/agent-setup.mjs",
+    "services/tourism-series-workspace/agent-client.d.mts",
+    "services/tourism-series-workspace/agent-receiving.mjs",
+    "services/tourism-series-workspace/AGENT_OPERATING.md",
+    "services/tourism-series-workspace/AGENT_RECEIVING.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

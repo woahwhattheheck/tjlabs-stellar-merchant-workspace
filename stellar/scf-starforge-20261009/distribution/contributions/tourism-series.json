@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "tourism-series",
-  "description": "Complete tourism source, qualified reports and target returns joined to original commercial Installation and independent receiving",
+  "description": "Complete tourism source, qualified reports and target returns joined to original commercial Installation and independent receiving with complete original agent/Tools operations",
   "components": [
     "services/tourism-series-workspace",
     "services/migration-receiving",
@@ -12,18 +12,26 @@
     "tourism-series": "services/tourism-series-workspace/cli.mjs",
     "tourism-series-build": "services/tourism-series-workspace/build.mjs",
     "tourism-installation": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-installation.mjs",
-    "tourism-installation-receive": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-installation-receiving.mjs"
+    "tourism-installation-receive": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-installation-receiving.mjs",
+    "tourism-agent-receive": "services/tourism-series-workspace/agent-receiving.mjs"
   },
   "commandDescriptions": {
     "tourism-series": "Operate complete tourism source editions, qualified analyses, reports and actual target CSV returns",
     "tourism-series-build": "Build complete working HTML, original files, reports, source and ZIP from the original saved workspace",
     "tourism-installation": "Bind full original tourism editions and explicit customer scope to the existing commercial Installation",
-    "tourism-installation-receive": "Independently receive complete tourism work and its original saved Installation, retaining later recipient edits"
+    "tourism-installation-receive": "Independently receive complete tourism work and its original saved Installation, retaining later recipient edits",
+    "tourism-agent-receive": "Continue the same original Tourism workspace through typed agent operations, exact request replay, merchant files and complete independent receiving"
   },
   "exports": {
     "./tourism-series": "./source/services/tourism-series-workspace/engine.mjs",
     "./tourism-series/portable": "./source/services/tourism-series-workspace/portable.mjs",
-    "./grant/tourism-installation": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-installation-core.mjs"
+    "./grant/tourism-installation": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-installation-core.mjs",
+    "./tourism-series/client": {
+      "types": "./source/services/tourism-series-workspace/agent-client.d.mts",
+      "import": "./source/services/tourism-series-workspace/agent-client.mjs"
+    },
+    "./merchant/tourism-series": "./source/services/tourism-series-workspace/agent-merchant.mjs",
+    "./merchant/tourism-series/setup": "./source/services/tourism-series-workspace/agent-setup.mjs"
   },
   "supportFiles": [
     "services/tourism-series-workspace/engine.mjs",
@@ -50,6 +58,19 @@
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-series.json",
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/TOURISM_INSTALLATION.md",
     "products/tourism-series/SOURCE_ADOPTION.json",
-    "products/tourism-series/OPERATING.md"
-  ]
+    "products/tourism-series/OPERATING.md",
+    "services/tourism-series-workspace/agent-io.mjs",
+    "services/tourism-series-workspace/agent-client.mjs",
+    "services/tourism-series-workspace/agent-tools.mjs",
+    "services/tourism-series-workspace/merchant-provider.mjs",
+    "services/tourism-series-workspace/agent-merchant.mjs",
+    "services/tourism-series-workspace/agent-setup.mjs",
+    "services/tourism-series-workspace/agent-client.d.mts",
+    "services/tourism-series-workspace/agent-receiving.mjs",
+    "services/tourism-series-workspace/AGENT_OPERATING.md",
+    "services/tourism-series-workspace/AGENT_RECEIVING.md"
+  ],
+  "merchantProviders": {
+    "tourism-series": "services/tourism-series-workspace/merchant-provider.mjs"
+  }
 }

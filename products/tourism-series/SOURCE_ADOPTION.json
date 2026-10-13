@@ -5,7 +5,7 @@
     "commit": "96e4a1b7d561578ce7966c2418a72d784216692a",
     "pullRequest": 4623
   },
-  "contract": "Complete original offline application and source preserved byte-for-byte. The source-owned Installation join adds customer scope and two-workspace receiving through the original writer.",
+  "contract": "Original source history is retained below. The installed maintained edition composes the original Installation join, the public PR4740 one-pass HTML renderer repair and complete typed agent/Tools continuation over the same authoritative engine and CLI writer.",
   "files": [
     {
       "path": "services/tourism-series-workspace/engine.mjs",
@@ -103,5 +103,91 @@
       "sha256": "afdc8cca5af49f6de50f6195e1827c6ad5f4dd355053780455b3fef53e753142",
       "blob": "37533d2bbcbecb1a8238d87c237e6f0af5434ef6"
     }
-  ]
+  ],
+  "maintainedEdition": {
+    "operationId": "TOURISM-AGENT-OPERATIONS-90ED-20261013",
+    "originalInstalledCommit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+    "rendererRepair": {
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "commit": "aa954971e7f3ece0e66fb797510db66bd1513f2e",
+      "pullRequest": 4740
+    },
+    "files": [
+      {
+        "path": "services/tourism-series-workspace/cli.mjs",
+        "bytes": 12654,
+        "sha256": "29b43d7398af3e092f87b22dfc132403bf8011ff922c7e6bf3a2301fe1fbc44a"
+      },
+      {
+        "path": "services/tourism-series-workspace/agent-io.mjs",
+        "bytes": 3552,
+        "sha256": "a852dbee54c87658ff49d23fffee74485cd20683f32641eff2ae772e83f3b358"
+      },
+      {
+        "path": "services/tourism-series-workspace/agent-client.mjs",
+        "bytes": 14906,
+        "sha256": "fc99a072f188695a61ba90a19f3d9ff0200d64cf25729f53f8e9fe5cac3c98e5"
+      },
+      {
+        "path": "services/tourism-series-workspace/agent-tools.mjs",
+        "bytes": 9235,
+        "sha256": "259298f6ee680d09093601d073cb38f230a27a598cb15170e5ee4a5fe1abebcd"
+      },
+      {
+        "path": "services/tourism-series-workspace/merchant-provider.mjs",
+        "bytes": 1923,
+        "sha256": "dda5a8751835406525b372ef882907b9641757d8eb769c1237bf2acfdabf3723"
+      },
+      {
+        "path": "services/tourism-series-workspace/agent-merchant.mjs",
+        "bytes": 4440,
+        "sha256": "bdc7f8af2736886d88b7f5b4ad374548f0c4143affd78b9234ca72df676fe7bf"
+      },
+      {
+        "path": "services/tourism-series-workspace/agent-setup.mjs",
+        "bytes": 5576,
+        "sha256": "d68dcc9d149fce43dadd7ca963187c51df9ffa7e01886687a8a3032603f028d8"
+      },
+      {
+        "path": "services/tourism-series-workspace/agent-client.d.mts",
+        "bytes": 5521,
+        "sha256": "06f611a325a076623839229f557f06c18e871f0b92690219d51bf3aa46840755"
+      },
+      {
+        "path": "services/tourism-series-workspace/agent-receiving.mjs",
+        "bytes": 15511,
+        "sha256": "370f318fdac8542b567c81074fcab40666ccc22245b477f67eb315433e553097"
+      },
+      {
+        "path": "services/tourism-series-workspace/AGENT_OPERATING.md",
+        "bytes": 9905,
+        "sha256": "a3501ef7234f0abb2b03c133e303436660822cd38f8b64007a4d98e2df16609c"
+      },
+      {
+        "path": "services/tourism-series-workspace/AGENT_RECEIVING.md",
+        "bytes": 8955,
+        "sha256": "6bc59d032d2dc8146e1a8a5ef833ff40cbbba53abab853fac824b6834a83f47a"
+      },
+      {
+        "path": "services/tourism-series-workspace/build.mjs",
+        "bytes": 6069,
+        "sha256": "51e494bf9172bd0b06d26b0e03cd5f3f80f243efc699e2fe2ae44af50167a589"
+      },
+      {
+        "path": "services/tourism-series-workspace/README.md",
+        "bytes": 11457,
+        "sha256": "0b0017cdd7faa626a68100081b272ea84e1a01faeb229da238729906d4598152"
+      },
+      {
+        "path": "services/tourism-series-workspace/Tourism_Series_Workspace.html",
+        "bytes": 466957,
+        "sha256": "f4492a28a52ea7fc97bf0e813b192fcdeab623dd175a7d8c30dfdf3d7fbee419"
+      },
+      {
+        "path": "services/tourism-series-workspace/portable.mjs",
+        "bytes": 10006,
+        "sha256": "9f2163ce863e5470c16bbd272fd69b61c2b4ecc0d95958da8fa97b296171f618"
+      }
+    ]
+  }
 }

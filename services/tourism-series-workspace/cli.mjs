@@ -5,10 +5,19 @@ import net from 'node:net';
 import {randomUUID,createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import * as engine from './engine.mjs';
+import {parseRecovery,recovery,json,RECOVERY_SCHEMA,head} from './portable.mjs';
 const need=(ok,message)=>{if(!ok)throw Error(message);};
 const sha=b=>createHash('sha256').update(b).digest('hex');
 function regularBytes(file){const s=fs.lstatSync(file);need(s.isFile()&&!s.isSymbolicLink(),'Use a complete regular file: '+file);return fs.readFileSync(file);}
 function regular(file){const b=regularBytes(file),text=b.toString('utf8');need(Buffer.from(text,'utf8').equals(b),'Use complete original UTF-8 text: '+file);return text;}
+export function workingGenesis(workspace){return sha(Buffer.from(JSON.stringify([workspace.id,workspace.title,workspace.createdAt]),'utf8'));}
+export function readWorking(file,{expectedGenesis,expectedHead}={}){
+ const text=regular(file),record=parseRecovery(text),format=JSON.parse(text).schema===RECOVERY_SCHEMA?'recovery':'workspace';
+ need(!expectedGenesis||workingGenesis(record.workspace)===expectedGenesis,'The selected file belongs to another original workspace genesis.');
+ need(!expectedHead||head(record.workspace)===expectedHead,'The original workspace changed after selection.');
+ return {text,record,format,genesisSha256:workingGenesis(record.workspace),headSha256:head(record.workspace)};
+}
+export function workingText(selected,workspace){return selected.format==='recovery'?json(recovery(workspace,selected.record.drafts,selected.record.selection,selected.record.copyId)):engine.exportWorkspace(workspace);}
 function exists(file){try{return regular(file);}catch(e){if(e.code==='ENOENT')return null;throw e;}}
 function absolute(value,label){need(typeof value==='string'&&path.isAbsolute(value),'Use an absolute '+label+'.');return path.resolve(value);}
 function durableDirectory(directory){let fd;try{fd=fs.openSync(directory,'r');fs.fsyncSync(fd);}catch(e){if(!['EINVAL','EPERM','EISDIR','ENOTSUP'].includes(e.code))throw e;}finally{if(fd!==undefined)fs.closeSync(fd);}}
@@ -36,7 +45,7 @@ async function kernelLease(root){
 async function locked(workspace,fn){fs.mkdirSync(path.dirname(workspace),{recursive:true,mode:0o700});const identity=path.join(fs.realpathSync(path.dirname(workspace)),path.basename(workspace));const close=await kernelLease(process.platform==='win32'?identity.toLowerCase():identity);try{return fn();}finally{await close();}}
 function args(argv){
  const command=argv.shift(),options={};need(command,'Choose init, apply, inspect, project, analyze, report, handover, receive or template.');need(argv.length%2===0,'Supply every flag with exactly one value.');
- const allowed=new Set(['--workspace','--input','--request','--out','--file','--id','--title','--at','--report']);
+ const allowed=new Set(['--workspace','--input','--request','--out','--file','--id','--title','--at','--report','--expected-genesis','--expected-head']);
  for(let i=0;i<argv.length;i+=2){need(allowed.has(argv[i])&&!Object.hasOwn(options,argv[i]),'Supply each documented option once.');options[argv[i]]=argv[i+1];}return{command,options};
 }
 function output(file,value){publish(absolute(file,'output'),JSON.stringify(value,null,2)+'\n');}
@@ -46,19 +55,21 @@ export async function main(argv=process.argv.slice(2)){
  const workspace=absolute(o['--workspace'],'workspace');
  if(command==='init')return locked(workspace,()=>{
   const value=engine.createWorkspace({id:o['--id'],title:o['--title'],createdAt:o['--at']}),old=exists(workspace);
-  if(old!==null){const current=engine.importWorkspace(old);need(current.id===value.id&&current.title===value.title&&current.createdAt===value.createdAt,'The original destination belongs to another workspace.');return{state:'RETAINED',workspace,id:current.id,revision:current.revision};}
+  if(old!==null){const current=readWorking(workspace).record.workspace;need(current.id===value.id&&current.title===value.title&&current.createdAt===value.createdAt,'The original destination belongs to another workspace.');return{state:'RETAINED',workspace,id:current.id,revision:current.revision};}
   publish(workspace,engine.exportWorkspace(value));return{state:'CREATED',workspace,id:value.id,revision:0};
  });
  if(command==='receive')return locked(workspace,()=>{
-  const incoming=engine.importWorkspace(regular(absolute(o['--input'],'complete portable workspace'))),old=exists(workspace);
-  if(old!==null){const current=engine.importWorkspace(old);need(current.id===incoming.id&&current.title===incoming.title&&current.createdAt===incoming.createdAt&&current.revision>=incoming.revision&&JSON.stringify(current.operations.slice(0,incoming.revision))===JSON.stringify(incoming.operations),'The destination contains another history. Use a separate destination for an independent branch.');return{state:'RETAINED',workspace,id:current.id,revision:current.revision,incomingRevision:incoming.revision};}
-  publish(workspace,engine.exportWorkspace(incoming));return{state:'RECEIVED',workspace,id:incoming.id,revision:incoming.revision};
+  const selected=readWorking(absolute(o['--input'],'complete portable workspace'),{expectedGenesis:o['--expected-genesis'],expectedHead:o['--expected-head']}),incoming=selected.record.workspace,old=exists(workspace);
+  if(old!==null){const current=readWorking(workspace,{expectedGenesis:o['--expected-genesis']}).record.workspace;need(current.id===incoming.id&&current.title===incoming.title&&current.createdAt===incoming.createdAt&&current.revision>=incoming.revision&&JSON.stringify(current.operations.slice(0,incoming.revision))===JSON.stringify(incoming.operations),'The destination contains another history. Use a separate destination for an independent branch.');return{state:'RETAINED',workspace,id:current.id,revision:current.revision,incomingRevision:incoming.revision};}
+  publish(workspace,workingText(selected,incoming));return{state:'RECEIVED',workspace,id:incoming.id,revision:incoming.revision};
  });
  if(command==='apply')return locked(workspace,()=>{
-  const before=regular(workspace),ws=engine.importWorkspace(before),request=JSON.parse(regular(absolute(o['--request'],'saved operation JSON')));
+  const selected=readWorking(workspace,{expectedGenesis:o['--expected-genesis']}),before=selected.text,ws=selected.record.workspace,request=JSON.parse(regular(absolute(o['--request'],'saved operation JSON')));
   const methods={importFile:engine.importFile,importCsv:engine.importCsv,saveRegistry:engine.saveRegistry,saveMapping:engine.saveMapping,saveCorrection:engine.saveCorrection,saveAnalysis:engine.saveAnalysis,saveReport:engine.saveReport,prepareTarget:engine.prepareTarget,recordTargetReturn:engine.recordTargetReturn};
   need(Object.hasOwn(methods,request.action)&&request.input&&typeof request.input==='object','Use a documented action and its complete saved input.');
   const input={...request.input},old=ws.operations.find(x=>x.id===input.operationId);
+  // Exact completed request replay remains valid after later source operations.
+  need(old||!o['--expected-head']||selected.headSha256===o['--expected-head'],'The original workspace changed after selection.');
   if(request.action==='importFile'||request.action==='importCsv'){
    const field=request.action==='importFile'?'content_base64':'text';
    if(o['--file']){
@@ -74,11 +85,11 @@ export async function main(argv=process.argv.slice(2)){
     need(typeof input.filename==='string','Retain the original filename explicitly in the saved request.');
    }
   }else need(!o['--file'],'This action reads its complete saved request.');
-  const result=methods[request.action](ws,input);if(!result.replayed)replace(workspace,before,engine.exportWorkspace(result.workspace));
+  const result=methods[request.action](ws,input);if(!result.replayed)replace(workspace,before,workingText(selected,result.workspace));
   return{state:result.replayed?'REPLAYED':'SAVED',workspace,id:result.workspace.id,revision:result.workspace.revision,receipt:result.receipt};
  });
- const ws=engine.importWorkspace(regular(workspace));
- if(command==='inspect')return{...engine.metadata(),id:ws.id,title:ws.title,revision:ws.revision,files:ws.files.map(({content_base64,...f})=>f),sources:ws.sources.map(({text,rows,...s})=>({...s,rows:rows.length})),registries:ws.registries,mappings:ws.mappings,corrections:ws.corrections,analyses:ws.analyses.map(a=>({id:a.id,title:a.title,ready:a.result.ready,qualified:a.result.qualified})),reports:ws.reports.map(r=>({id:r.id,title:r.title,revision:r.revision})),targetPlans:ws.targetPlans.map(p=>({id:p.id,rows:p.rows.length,sha256:p.sha256})),targetReturns:ws.targetReturns.map(r=>({id:r.id,planId:r.planId,ready:r.ready})),operations:ws.operations};
+ const selected=readWorking(workspace,{expectedGenesis:o['--expected-genesis'],expectedHead:o['--expected-head']}),ws=selected.record.workspace;
+ if(command==='inspect')return{...engine.metadata(),format:selected.format,copyId:selected.record.copyId??null,draftCount:Object.keys(selected.record.drafts).length,genesisSha256:selected.genesisSha256,headSha256:selected.headSha256,id:ws.id,title:ws.title,revision:ws.revision,files:ws.files.map(({content_base64,...f})=>f),sources:ws.sources.map(({text,rows,...s})=>({...s,rows:rows.length})),registries:ws.registries,mappings:ws.mappings,corrections:ws.corrections,analyses:ws.analyses.map(a=>({id:a.id,title:a.title,ready:a.result.ready,qualified:a.result.qualified})),reports:ws.reports.map(r=>({id:r.id,title:r.title,revision:r.revision})),targetPlans:ws.targetPlans.map(p=>({id:p.id,rows:p.rows.length,sha256:p.sha256})),targetReturns:ws.targetReturns.map(r=>({id:r.id,planId:r.planId,ready:r.ready})),operations:ws.operations};
  if(command==='project'||command==='analyze'){const selection=JSON.parse(regular(absolute(o['--input'],'complete selection JSON'))),result=command==='project'?engine.project(ws,selection):engine.runAnalysis(ws,selection);output(o['--out'],result);return{state:'COMPLETE',revision:ws.revision,ready:result.ready,qualified:result.qualified??null,path:o['--out']};}
  if(command==='report'){publish(absolute(o['--out'],'readable report'),engine.renderReport(ws,o['--report']));return{state:'COMPLETE',revision:ws.revision,path:o['--out']};}
  if(command==='handover'){
