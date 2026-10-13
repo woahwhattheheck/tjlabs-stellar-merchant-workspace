@@ -8,6 +8,7 @@ import {AGREEMENTS_SCHEMA, AGREEMENT_EXPORT_SCHEMA, clone, integer, normalizeTer
   monthDate, monthIndex, shiftDays, effectiveEnd, schedule, linkedInvoice, billingOccupied,
   assertUnbilledFrom, agreementStatus, periodLabel, previewIdentity, scheduleCsv, agreementHtml} from './core.mjs';
 import {validateSourceBodies, retainSource, readSourceFile, sourceBodies, SOURCE_NAMES} from './files.mjs';
+import {collectionsSelection, agreementCollections, collectionsFiles} from './collections.mjs';
 import {acceptedServiceRenewal, assertRenewalAssignment} from './renewal.mjs';
 const at = () => new Date().toISOString();
 function requestIdentifier(value) {
@@ -262,6 +263,22 @@ export class ServiceAgreementWorkspace {
       error.details = {...error.details, agreementBillingPrepared: true, billingId: record.id, requestId: record.requestId};
       throw error;
     }
+  }
+  _collections(options = {}) {
+    const context = {workspaceId: this._workspaceId(), revision: this.workspace.state.revision,
+      asOf: options.asOf ?? today()};
+    const selected = collectionsSelection(this.data().agreements, options, context);
+    return agreementCollections(selected.map(row => this._view(row, context.asOf)), this.receivables.data(), context);
+  }
+  async collections(options = {}) {
+    return this.workspace.serial(async () => this._collections(options));
+  }
+  async exportCollections(options = {}) {
+    return this.workspace.serial(async () => {
+      const report = this._collections(options);
+      return {workspaceId: report.workspaceId, revision: report.revision, asOf: report.asOf,
+        report, files: collectionsFiles(report)};
+    });
   }
   async sourceFile(id, sourceId, name) {
     return this.workspace.serial(() => readSourceFile(this.workspace, this._source(this._agreement(id), sourceId), name));

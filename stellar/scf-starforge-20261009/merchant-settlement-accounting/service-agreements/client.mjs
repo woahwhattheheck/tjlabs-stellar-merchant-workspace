@@ -127,11 +127,26 @@ export function createServiceAgreementClient({baseUrl, fetch: fetcher = globalTh
       status: response.status, code: 'INVALID_RESPONSE', uncertain: mutation, response: payload});
     return payload;
   }
+  function collectionsQuery({asOf, workspaceId, expectedRevision, agreementIds, format} = {}) {
+    if (expectedRevision !== undefined && (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1))
+      throw new TypeError('Use the reviewed accounting revision.');
+    if (agreementIds !== undefined && (!Array.isArray(agreementIds) || agreementIds.some(id => typeof id !== 'string')))
+      throw new TypeError('Use the complete selected agreement ID array.');
+    return query({asOf, workspaceId, expectedRevision: expectedRevision === undefined ? undefined : String(expectedRevision),
+      agreementIds: agreementIds === undefined ? undefined : JSON.stringify(agreementIds), format});
+  }
   const agreementPath = id => '/agreements/' + segment(id, 'agreement identifier');
   const action = (name, id, body, options = {}) => request(agreementPath(id) + '/' + name,
     {method: 'POST', body, signal: options.signal});
   return Object.freeze({
     baseUrl: base,
+    collections: (options = {}) => request('/collections' + collectionsQuery(options), {signal: options.signal}),
+    exportCollections: (options = {}) => {
+      const format = options.format ?? 'tar';
+      if (!['tar','json','html','invoices','periods','activity'].includes(format)) throw new TypeError('Choose a collections export format.');
+      return request('/collections/export' + collectionsQuery({...options, format}),
+        {download: true, filename: 'collections.' + format, signal: options.signal});
+    },
     state: ({asOf, signal} = {}) => request(query({asOf}), {signal}),
     detail: (id, {asOf, signal} = {}) => request(agreementPath(id) + query({asOf}), {signal}),
     preview: (id, {periodId, asOf, signal} = {}) => {

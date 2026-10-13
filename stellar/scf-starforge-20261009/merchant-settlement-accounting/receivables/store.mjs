@@ -3,6 +3,7 @@ import {randomUUID} from 'node:crypto';
 import {constants} from 'node:fs';
 import {open, mkdir, lstat} from 'node:fs/promises';
 import {join} from 'node:path';
+import {accountingWorkspaceBinding} from '../workspace/binding.mjs';
 import {CustomerStatementWorkspace} from '../customer-statements/store.mjs';
 import {compileQuoteInvoice} from './quote-import.mjs';
 import {PaymentRequestsWorkspace} from './payment-requests-workspace.mjs';
@@ -192,7 +193,8 @@ export class ReceivablesWorkspace {
   }
   _view(asOf = today()) {
     dateValue(asOf, 'report date'); const data = this.data();
-    return structuredClone({schema: RECEIVABLES_SCHEMA, revision: this.workspace.state.revision, asOf,
+    return structuredClone({schema: RECEIVABLES_SCHEMA,
+      workspaceId: accountingWorkspaceBinding(this.workspace.directory, this.workspace.state).workspaceId, revision: this.workspace.state.revision, asOf,
       issuer: data.issuer, customers: this.workspace.state.customerStatements.customers,
       runs: this.workspace.state.runs.filter(row => row.status === 'complete').map(row => ({
         id: row.id, name: row.name, createdAt: row.createdAt, completedAt: row.completedAt, reportSha256: row.reportSha256})),
