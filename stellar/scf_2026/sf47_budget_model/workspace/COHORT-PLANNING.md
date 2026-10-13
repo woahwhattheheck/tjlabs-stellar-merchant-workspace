@@ -1120,3 +1120,59 @@ JSON preserves the full selected original wrapper and its source, plan, allocati
 For another operator's editable case, use the existing merchant_grant_export with kind case and the original case_import operation. The saved adoption source travels with the native case package. A receiving case keeps its own identity while adoption_open preserves the source edition's original identities.
 
 Applications using the module directly pass their existing GrantWorkspaceClient to the exported functions. saveGrantCohortAdoption also takes a retainResponse callback that durably stores the complete native response before resolving; the Merchant owner supplies this using its existing immutable file writer.
+
+
+## Continue the complete working session
+
+Open **Cohort planning → Saved editions → Complete working session**. Choose
+**Download working session** to carry the complete editor to another browser
+that opens the same original Operations case. The file contains the current
+plan and report, every unfinished row and its literal input text, earlier
+drafts, both selected comparison sources, comparison history, incoming source
+documents, allocation choices and full decisions, opened source bytes, and
+the original pending or accepted source-attachment request.
+
+Choose **Open working-session JSON** in that case. The complete file enters
+**Incoming working sessions** while the current editor stays selected. Review
+its case/source version, unfinished-row and history counts, allocation method,
+original request identity and complete snapshot identity. **Open as working
+session** opens that exact state and retains the predecessor under **Earlier
+working sessions**. Each retained state has a complete-session download, and
+the main download includes the full earlier/incoming history. Reopening the
+same file reuses its original entry identities.
+
+A source file that finishes reading after another edit or a panel remount
+still enters the incoming list. Its arrival does not replace the current
+editor. Partial numeric/date text stays editable; the original row editor
+validates it when the operator applies the row. Changed calculated reports,
+allocation decisions, source snapshot identities, unsupported schemas and
+another case's working file are rejected before selection changes. Existing
+foreign-case comparison documents remain attached to their original sources.
+
+An original save travels with its exact actor, case version, request ID,
+source filename, original JSON and encoded request body. When the opened
+state contains a pending request, use **Continue original save**. When it
+contains an accepted result, use **Read back saved source**. These controls
+use the original `source.add` writer and verify the saved source bytes. The
+working-file reader accepts only that attachment action for restored native
+requests. Finish a currently selected request before opening a different
+working editor; a file can still be retained in the incoming list meanwhile.
+
+The browser retains immutable earlier/incoming snapshots in its larger
+IndexedDB archive and keeps their exact identities in the compact session
+cache. Complete snapshot writes finish before a successor is selected.
+A cache/archive failure preserves the currently selected editor and reports
+the failure. Keep the downloaded working-session JSON when moving browsers
+or clearing site data. A complete working file may contain up to 64 MiB; a
+native source attachment keeps the original 8 MiB limit.
+
+The portable schema is `stellar-forge.sf47-cohort-working-session.v1`.
+It contains one current entry, flat earlier/incoming entries and complete
+SHA-256-identified snapshots. Identical snapshots share one body. Each snapshot
+retains the original editor state, including the full documents behind its
+comparison and native request. Export/import validates all retained snapshots
+and exact request bytes; each full calculated report and saved allocation is
+checked with the original calculator. The session helper is
+`cohort_planning_session.mjs`, with its adjacent declaration. The original
+controller imports it directly, so the installed source closure carries this
+complete workflow.
