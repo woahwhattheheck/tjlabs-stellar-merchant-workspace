@@ -24,7 +24,99 @@ export type GrantCaseAction =
   | 'engagement.prepare' | 'engagement.receiving'
   | 'review' | 'close' | 'reopen' | 'cohort.prepare' | 'installation.save' | 'installation.return' | 'installation.return-stage' | 'implementation.prepare'
   | 'amendment.save' | 'amendment.review' | 'amendment.apply'
-  | 'completion.save' | 'completion.prepare' | 'completion.extension' | 'completion.submit' | 'completion.decision';
+  | 'completion.save' | 'completion.prepare' | 'completion.extension' | 'completion.submit' | 'completion.decision'
+  | GrantExpenseAction;
+
+/** Original quantities are atomic integer strings. Native asset scale is always explicit. */
+export type GrantExpenseAction = 'expense.receive' | 'expense.save' | 'expense.review' | 'expense.reopen' | 'expense.void';
+export type GrantExpenseTransition = 'review' | 'reopen' | 'void';
+export type GrantExpenseState = 'DRAFT' | 'REVIEWED' | 'VOID';
+export interface GrantExpenseSplit extends GrantObject {
+  costId: string;
+  fundingBasis: 'GRANT' | 'CUSTOMER' | 'INTERNAL' | 'PREAWARD';
+  nativeAmount: string;
+  usdValue?: string | null;
+  memo?: string;
+}
+export interface GrantExpenseValuation extends GrantObject {
+  mode: 'ENTERED_USD' | 'RETAINED_RATE';
+  date: GrantCivilDate;
+  sourceIds: string[];
+  note: string;
+  nativeUnit?: { currency: string; decimals: number } | null;
+  /** The original forecast currency rate object, including its retained source and basis. */
+  rate?: GrantObject | null;
+}
+export interface GrantExpenseAllocationInput extends GrantObject {
+  id?: string;
+  intakeId: string;
+  sourceLineId: string;
+  expectedSourceRowSha256: string;
+  allocations: GrantExpenseSplit[];
+  valuation?: GrantExpenseValuation | null;
+  unattributedReason?: string;
+  linkedInvoiceIds?: string[];
+  linkedPurchaseIds?: string[];
+  linkedWorkIds?: string[];
+}
+export interface GrantExpenseLine extends GrantObject {
+  intakeId: string;
+  sourceLineId: string;
+  sourceRowSha256: string;
+  workspaceId: string;
+  closeId: string;
+  kind: 'EXPENSE' | 'CREDIT';
+  original: { network: string; asset: string; amount: string };
+  attributionId: string | null;
+  attributionState: GrantExpenseState | null;
+}
+export interface GrantExpenseAttribution extends GrantObject {
+  id: string;
+  state: GrantExpenseState;
+  version: number;
+  contentSha256: string;
+  source: GrantObject;
+  allocations: GrantExpenseSplit[];
+  valuation: (GrantExpenseValuation & { originalMoney?: GrantObject; calculation?: GrantObject }) | null;
+  bookkeepingChanged: boolean;
+  currentSource: GrantObject | null;
+  allowedActions: GrantExpenseAction[];
+}
+export interface GrantExpenseDashboard extends GrantObject {
+  schema: 'scf.operations.expense-attribution.v1';
+  caseId: string;
+  version: number;
+  sources: GrantObject[];
+  lines: GrantExpenseLine[];
+  attributions: GrantExpenseAttribution[];
+  costs: { id: string; tranche: number; plannedUsd: string }[];
+  canReceive: boolean;
+  summary: GrantObject;
+  reviewItems: GrantObject[];
+}
+export interface GrantExpensePreview extends GrantObject {
+  schema: 'scf.operations.expense-attribution.v1';
+  caseId: string;
+  version: number;
+  filename: string;
+  inspection: GrantObject;
+  rows: GrantObject[];
+  receiving: 'ALREADY_RETAINED' | 'HISTORICAL_EDITION' | 'CURRENT_ORIGINAL';
+  retainedIntakeId: string | null;
+  previousIntakeId: string | null;
+  previewSha256: string;
+}
+export interface GrantExpenseReceipt extends GrantObject {
+  id: string;
+  version: number;
+  action: GrantExpenseAction;
+  kind: string;
+  recordId: string;
+}
+export type GrantExpenseRequest = GrantOperationRequest & { action: GrantExpenseAction; data: GrantObject };
+export type GrantExpenseRequestState =
+  | { status: 'COMMITTED'; requestId: string; caseId: string; currentVersion: number; receipt: GrantExpenseReceipt }
+  | { status: 'NOT_RECORDED'; requestId: string; caseId: string; currentVersion: number };
 
 
 export type GrantStatementCategory = 'GRANT' | 'INVOICE' | 'CUSTOMER' | 'CAPITAL' | 'REFUND' | 'OTHER';
@@ -2958,7 +3050,7 @@ export interface GrantReadSelection {
   asOfDate?: GrantCivilDate;
 }
 export type GrantOtherReadView =
-  | 'plans' | 'plan' | 'plan-history' | 'cases' | 'case-report' | 'case-history'
+  | 'plans' | 'plan' | 'plan-history' | 'cases' | 'case-report' | 'case-history' | 'expenses'
   | 'forecasts' | 'forecast' | 'portfolios' | 'portfolio' | 'review' | 'completion';
 export interface GrantDownloadSelections {
   plan: { planId: string; revision?: number };
@@ -2971,6 +3063,9 @@ export interface GrantDownloadSelections {
   'daily-csv': { planId: string };
   'costs-csv': { planId: string };
   case: { caseId: string };
+  'expense-attributions': { caseId: string };
+  'expense-sources': { caseId: string };
+  'expense-html': { caseId: string };
   'task-outcomes': {caseId: string; comparisonId: string; revision: number; expectedVersion: number};
   'cost-funding': {caseId: string; revision: number; expectedVersion: number; expectedReportSha256: string};
   forecast: { caseId: string; forecastId: string };
@@ -3027,6 +3122,7 @@ export class GrantWorkspaceClient {
   read(view: 'case', selection: { caseId: string }): Promise<GrantJsonResponse<GrantCaseView>>;
   read(view: 'settlements', selection: { caseId: string }): Promise<GrantJsonResponse<GrantSettlementList>>;
   read(view: 'settlement', selection: { caseId: string; reviewId: string }): Promise<GrantJsonResponse<GrantSettlementSaved>>;
+  read(view: 'expenses', selection: { caseId: string }): Promise<GrantJsonResponse<GrantExpenseDashboard>>;
   read(view: 'installations', selection: { caseId: string }): Promise<GrantJsonResponse<{ installations: GrantObject[] }>>;
   read(view: 'installation', selection: { caseId: string; installationId: string; revision?: number }): Promise<GrantJsonResponse<GrantInstallationEdition>>;
   read(view: 'installation-history', selection: { caseId: string; installationId: string; before?: number; limit?: number }): Promise<GrantJsonResponse<{ editions: GrantObject[]; nextBefore: number | null }>>;
@@ -3126,6 +3222,11 @@ export class GrantWorkspaceClient {
   settlementCorrect(caseId: string, body: GrantSettlementCorrectInput): Promise<GrantJsonResponse<GrantSettlementSaveReceipt>>;
   supportPreview<T = GrantObject>(caseId: string, expectedVersion: number, bytes: Buffer, filename: string): Promise<GrantJsonResponse<T>>;
   supportReceive<T = GrantObject>(caseId: string, bytes: Buffer, body: GrantOperationRequest & GrantObject): Promise<GrantJsonResponse<T>>;
+  expensePreview(caseId: string, expectedVersion: number, bytes: Buffer, filename: string): Promise<GrantJsonResponse<GrantExpensePreview>>;
+  expenseReceive(caseId: string, bytes: Buffer, body: GrantOperationRequest & { filename: string; expectedPreviewSha256: string }): Promise<GrantJsonResponse<GrantExpenseReceipt>>;
+  expenseSave(caseId: string, body: GrantOperationRequest & { data: GrantExpenseAllocationInput }): Promise<GrantJsonResponse<GrantExpenseReceipt>>;
+  expenseTransition(caseId: string, action: GrantExpenseTransition, body: GrantOperationRequest & { note: string; id: string; expectedContentSha256: string }): Promise<GrantJsonResponse<GrantExpenseReceipt>>;
+  expenseRequest(caseId: string, body: GrantExpenseRequest): Promise<GrantJsonResponse<GrantExpenseRequestState>>;
   buyerPreview<T = GrantObject>(caseId: string, expectedVersion: number, bytes: Buffer, filename: string): Promise<GrantJsonResponse<T>>;
   buyerReceive<T = GrantObject>(caseId: string, bytes: Buffer, body: GrantOperationRequest & GrantObject): Promise<GrantJsonResponse<T>>;
   download<K extends keyof GrantDownloadSelections>(kind: K, selection: GrantDownloadSelections[K]): Promise<GrantNativeResponse>;
