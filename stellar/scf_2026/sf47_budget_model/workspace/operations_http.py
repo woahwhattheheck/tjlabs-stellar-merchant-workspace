@@ -22,6 +22,10 @@ from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static.update({"/portfolio-effort.mjs": ("portfolio-effort.mjs", "text/javascript; charset=utf-8"),
+                   "/portfolio-effort-desk.mjs": ("portfolio-effort-desk.mjs", "text/javascript; charset=utf-8"),
+                   "/portfolio-effort.css": ("portfolio-effort.css", "text/css; charset=utf-8"),
+                   "/PORTFOLIO_EFFORT.md": ("PORTFOLIO_EFFORT.md", "text/markdown; charset=utf-8")})
     static.update({"/operations_expense_billing.mjs": ("operations_expense_billing.mjs", "text/javascript; charset=utf-8"),
                    "/operations_expense_billing.css": ("operations_expense_billing.css", "text/css; charset=utf-8"),
                    "/EXPENSE_BILLING.md": ("EXPENSE_BILLING.md", "text/markdown; charset=utf-8")})

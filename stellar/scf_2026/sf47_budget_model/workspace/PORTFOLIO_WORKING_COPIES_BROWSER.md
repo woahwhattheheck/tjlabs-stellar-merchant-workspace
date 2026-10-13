@@ -116,3 +116,14 @@ This owner instruction applies to current and future peers, every provider, and 
 
 This applies to the exact Portfolio editor, complete working-copy files, original attachments, saved allocation reports and native case exports described here. Complete the actual rendered course through the existing equipped operator and inspect its images before presenting the outgoing product as ready.
 
+
+
+## Optional complete work assignment continuation
+
+Set portfolioEffort: true in the existing context to operate **Work allocation** before its original native preview/save phase. Preserve the same original case, plan, saved Portfolio, operator and source selection. Include SHA-256 for portfolio-effort.mjs, portfolio-effort-desk.mjs, portfolio-effort.css and portfolio-availability.mjs in portfolioSourceSha256, alongside the original four served files. If availability is also selected, retain its complete source pins.
+
+The course selects an actual balanced original task or Installation phase and stores its complete source/assignment basis in portfolio-effort-original-selection.json before any assignment mutation. It operates unfinished text, complete reload, original checkbox/resource selection, full reviewed transfer, desktop and narrow images, complete CSV/JSON and working-file downloads, same-source reopening, then the original native preview/save/export/cold course.
+
+An existing completed transfer is skipped only when the current exact selected row equals its retained after-assignment. An interrupted course with changed original assignments requires explicit reconciliation; it never transfers the same hours again merely because a reply was lost. The partly typed individual row remains separate from its reviewed batch transfer.
+
+Open and LOOK at the first portfolio-effort-02-review-desktop.png and portfolio-effort-02-review-phone.png images when reported. Inspect actual row state labels, complete table navigation, resource selectors, conflict choices, zero/unknown quantities and downloads. Keep the owner rendered-output requirement above in effect for every outgoing artifact. Source review or this executable course’s presence does not establish a completed browser result.

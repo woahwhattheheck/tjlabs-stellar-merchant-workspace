@@ -593,6 +593,10 @@
     "operations_expense_billing.css",
     "operations_expense_billing_http.py",
     "operations_expense_billing_cli.py",
-    "EXPENSE_BILLING.md"
+    "EXPENSE_BILLING.md",
+    "portfolio-effort.mjs",
+    "portfolio-effort-desk.mjs",
+    "portfolio-effort.css",
+    "PORTFOLIO_EFFORT.md"
   ]
 }

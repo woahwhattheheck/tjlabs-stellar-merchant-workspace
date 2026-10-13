@@ -12,6 +12,7 @@ export async function operatePortfolioWorkingCopies(host){
  assert.match(input.portfolioId||'',/^portfolio-[a-f0-9]{32}$/,'Select the original saved allocation explicitly.');
  const sourcePaths=['portfolio-working-copies.mjs','portfolio-working-copy-store.mjs','portfolio.mjs','portfolio.css'];
  if(input.portfolioAvailability)sourcePaths.push('portfolio-availability.mjs','portfolio-availability-desk.mjs','portfolio-availability.css');
+ if(input.portfolioEffort){for(const name of ['portfolio-availability.mjs','portfolio-effort.mjs','portfolio-effort-desk.mjs','portfolio-effort.css'])if(!sourcePaths.includes(name))sourcePaths.push(name);}
  assert.ok(input.portfolioSourceSha256&&sourcePaths.every(name=>/^[a-f0-9]{64}$/.test(input.portfolioSourceSha256[name]||'')),'Pin every served Portfolio source in the original context.');
  const original=await native('/api/operations/'+input.caseId+'/portfolios/'+input.portfolioId);
  assert.equal(original.id,input.portfolioId);
@@ -243,6 +244,61 @@ export async function operatePortfolioWorkingCopies(host){
   await page.locator('[data-portfolio-action=tab][data-id=inputs]').click();
   return {copyId:current.id,resourceId:resource.id,from:start,to:last,dates:3,explicitHours:'0',repeatingReviewDates:weekly.rows.length,completeAppliedReviews:appliedHistory.length,weeklyUnknownReviewedOnly:true,sourceForecastId:current.head.state.draft.forecastId};
  });
+ if(input.portfolioEffort){
+  const course=await phase('portfolio-effort-original-basis',async()=>{
+   await editSelected(page);const copy=await selected(page);
+   const chosen=await page.evaluate(async state=>{
+    const E=await import('/portfolio-effort.mjs'),view=E.effortView(state.draft,state.sourceTasks),from=view.resources[0]?.id,to=view.resources[1]?.id;
+    if(!from||!to)throw Error('Select an original populated allocation with two resources.');
+    const available=view.rows.filter(r=>!r.inherited&&r.totals.state==='BALANCED'&&r.assignments[from]!==undefined&&r.assignments[from]!==null&&Number(r.assignments[from])>0&&(!Object.hasOwn(r.assignments,to)||r.assignments[to]!==null));
+    const row=available.find(r=>r.kind==='PHASE')||available[0];if(!row)throw Error('Retain an original balanced task or phase with entered source effort.');
+    return {rowKey:row.key,taskId:row.taskId,phaseId:row.phaseId,from,to,beforeAssignments:row.assignments,forecastId:view.forecastId,forecastSha256:view.forecastSha256,sourceHours:row.expectedHours};
+   },copy.head.state);
+   const expected=await page.evaluate(async ({state,chosen,note})=>{
+    const E=await import('/portfolio-effort.mjs'),command={kind:'TRANSFER',rowKeys:[chosen.rowKey],fromResourceId:chosen.from,toResourceId:chosen.to,hours:'all',initializeDestination:true,note};
+    const p=E.prepareEffort(state.draft,state.sourceTasks,command),r=E.reviewEffort(state.draft,state.sourceTasks,p);
+    return {proposal:p,afterAssignments:r.rows[0].after};
+   },{state:copy.head.state,chosen,note:requestedNote('original complete work reassignment review')});
+   const record={copyId:copy.id,...chosen,...expected};const path=join(out,'portfolio-effort-original-selection.json');await atomic(path,record);progress.files['portfolio-effort-original-selection.json']=await fileIdentity(path);await saveProgress();return record;
+  });
+  await phase('portfolio-effort-complete-assignment-review',async()=>{
+   await chooseCopy(page,course.copyId);await editSelected(page);
+   const tab=()=>page.locator('[data-portfolio-action=tab][data-id=effort]').click(),ea=async name=>{const el=page.locator('[data-effort-action="'+name+'"]');await wait(page,()=>el.isEnabled(),'Work allocation action '+name);await el.click();await idle(page);};
+   await tab();
+   await page.locator('[data-effort-field=query]').fill(course.taskId);await ea('search');
+   const rowButton=page.locator('[data-effort-action=open-row]').filter({hasText:'Edit assignments'});let clicked=false;
+   for(const button of await rowButton.all())if(await button.getAttribute('data-key')===course.rowKey){await button.click();clicked=true;break;}assert.ok(clicked,'Open the original selected work row.');
+   const originalField=page.locator('[data-effort-row-value="'+course.from+'"]');await originalField.fill('0.');
+   await retained(page,c=>Object.values(c.head.state.effortDesk.drafts).some(d=>d.rowDrafts[course.rowKey]?.[course.from]?.value==='0.'),'Retain the incomplete original assignment field');
+   await open(page);await tab();assert.equal(await page.locator('[data-effort-row-value="'+course.from+'"]').inputValue(),'0.');
+   await capture('portfolio-effort-01-unfinished-desktop.png');
+   let selectedRow=false;for(const box of await page.locator('[data-effort-select]').all())if(await box.getAttribute('data-effort-select')===course.rowKey){await box.check();selectedRow=true;break;}assert.ok(selectedRow,'Select the original work row.');
+   await page.locator('[data-effort-field=fromResourceId]').selectOption(course.from);
+   await page.locator('[data-effort-field=toResourceId]').selectOption(course.to);
+   await page.locator('[data-effort-field=hours]').fill('all');
+   await page.locator('[data-effort-field=initializeDestination]').check();
+   await page.locator('[data-effort-field=note]').fill(requestedNote('original complete work reassignment review'));
+   const current=await selected(page),hist=current.head.state.effortDesk.history.find(h=>h.proposal.command.note===requestedNote('original complete work reassignment review'));
+   const currentMap=await page.evaluate(async ({state,key})=>{const E=await import('/portfolio-effort.mjs');return E.effortView(state.draft,state.sourceTasks).rows.find(r=>r.key===key).assignments;},{state:current.head.state,key:course.rowKey});
+   if(hist)assert.deepEqual(currentMap,course.afterAssignments,'The previously applied course row changed; retain its original review and resolve it explicitly.');
+   else assert.deepEqual(currentMap,course.beforeAssignments,'The original course row changed before its retained review; preserve both editions.');
+   await ea('prepare-transfer');
+   await capture('portfolio-effort-02-review-desktop.png');await capture('portfolio-effort-02-review-phone.png',{width:390,height:844});await page.setViewportSize({width:1440,height:1000});
+   process.stdout.write(json({phase:'portfolio-effort-first-images',images:['portfolio-effort-02-review-desktop.png','portfolio-effort-02-review-phone.png'],instruction:'Open and LOOK at the complete assignment screens and important controls before presenting this product.'}));
+   await saveDownload(page,()=>ea('review-json'),'portfolio-effort-complete-review.json');
+   if(hist)await ea('clear-review');else await ea('apply');
+   const applied=await retained(page,c=>c.head.state.effortDesk.history.some(h=>h.proposal.command.note===requestedNote('original complete work reassignment review')),'Retain the complete applied assignment history');
+   const actual=await page.evaluate(async ({state,key})=>{const E=await import('/portfolio-effort.mjs');return E.effortView(state.draft,state.sourceTasks).rows.find(r=>r.key===key);},{state:applied.head.state,key:course.rowKey});
+   assert.deepEqual(actual.assignments,course.afterAssignments);assert.equal(actual.totals.state,'BALANCED');assert.equal(actual.expectedHours,course.sourceHours);
+   assert.equal(Object.values(applied.head.state.effortDesk.drafts).find(d=>d.profile==='base'&&d.forecastId===course.forecastId).rowDrafts[course.rowKey][course.from].value,'0.','Unrelated unfinished assignment survives the explicit transfer.');
+   await saveDownload(page,()=>ea('csv'),'portfolio-effort-complete-assignments.csv');await saveDownload(page,()=>ea('json'),'portfolio-effort-complete-data.json');
+   const file=await saveDownload(page,()=>action(page,'working-export'),'portfolio-effort-complete-working-copy.json'),received=await verifyFile(file.path);
+   assert.deepEqual(received.value.copy.head.state.effortDesk,applied.head.state.effortDesk);
+   await open(page);assert.deepEqual((await selected(page)).head.state.effortDesk,applied.head.state.effortDesk);
+   await page.locator('[data-portfolio-action=tab][data-id=inputs]').click();
+   return {copyId:course.copyId,forecastId:course.forecastId,taskId:course.taskId,phaseId:course.phaseId,sourceHours:course.sourceHours,beforeAssignments:course.beforeAssignments,afterAssignments:actual.assignments,fullSources:received.attachments,unfinishedFieldRetained:true};
+  });
+ }
  await phase('portfolio-native-preview',async()=>{
   const pattern='**/api/operations/'+input.caseId+'/portfolio-preview';
   await page.route(pattern,async route=>{
