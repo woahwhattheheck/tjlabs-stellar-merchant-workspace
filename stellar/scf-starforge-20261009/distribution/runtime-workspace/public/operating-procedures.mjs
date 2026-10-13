@@ -49,7 +49,7 @@ async function readSelectedFile(file) {
 export function createOperatingProceduresView({ root, api, getState, getToken, getView, message, error,
   openLog, chooseRuntime, switchView, openApplication }) {
   let state = null, selectedId = null, loaded = null, draft = null, dirty = false, busy = null, loading = false;
-  let epoch = 0, selectedStep = null, request = null, incoming = null, pendingDraft = null, draftQueue = Promise.resolve();
+  let epoch = 0, selectedStep = null, request = null, requestVersion = 0, incoming = null, pendingDraft = null, draftQueue = Promise.resolve();
   let editorVersion = 0, renderedEditor = null, renderedRecord = null, sourceSignature = null, selection = emptySelection();
   const temporarilyDisabled = new WeakMap();
   const draftSession = (() => { const key = 'starforge-runtime-procedure-editor-session';
@@ -110,16 +110,32 @@ export function createOperatingProceduresView({ root, api, getState, getToken, g
     if (storage) result.storageDirectory = storage;
     return result;
   }
-  async function retainRequest(value) {
-    await savedValue(key('request:' + value.input.requestId), value, true);
-    await savedValue(key('pending'), { requestId: value.input.requestId }, true);
+  function selectRequest(value) { request = value; requestVersion++; }
+  function clearRequest(value) {
+    if (request?.workspaceId === value.workspaceId && request?.input.requestId === value.input.requestId) selectRequest(null);
   }
-  async function pendingRequest() {
-    const pointer = await savedValue(key('pending'));
-    return pointer?.requestId ? await savedValue(key('request:' + pointer.requestId)) : null;
+  async function retainRequest(value) {
+    const recordKey = key('request:' + value.input.requestId, value.workspaceId), pointerKey = key('pending', value.workspaceId);
+    const db = await openStorage();
+    try {
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction('entries', 'readwrite'), store = tx.objectStore('entries');
+        store.put(value, recordKey); store.put({ requestId: value.input.requestId }, pointerKey);
+        tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
+      });
+    } finally { db.close(); }
+  }
+  async function pendingRequest(workspaceId = identity()) {
+    const pointer = await savedValue(key('pending', workspaceId));
+    if (!pointer?.requestId) return null;
+    const value = await savedValue(key('request:' + pointer.requestId, workspaceId));
+    if (!value || value.workspaceId !== workspaceId || value.input?.requestId !== pointer.requestId)
+      throw new Error('The retained pending request does not match its original workspace and request identity.');
+    return value;
   }
   async function acknowledgeRequest(value, result = null) {
-    const db = await openStorage(), pointerKey = key('pending'), recordKey = key('request:' + value.input.requestId);
+    const pointerKey = key('pending', value.workspaceId), recordKey = key('request:' + value.input.requestId, value.workspaceId);
+    const db = await openStorage();
     try {
       await new Promise((resolve, reject) => {
         const tx = db.transaction('entries', 'readwrite'), store = tx.objectStore('entries');
@@ -132,7 +148,7 @@ export function createOperatingProceduresView({ root, api, getState, getToken, g
     } finally { db.close(); }
   }
   async function requestHistory() {
-    const db = await openStorage(), prefix = key('request:');
+    const prefix = key('request:'), db = await openStorage();
     try {
       return await new Promise((resolve, reject) => {
         const tx = db.transaction('entries', 'readonly'), store = tx.objectStore('entries'), values = [];
@@ -143,19 +159,26 @@ export function createOperatingProceduresView({ root, api, getState, getToken, g
     } finally { db.close(); }
   }
   async function commit(action, input, current, { preserveDraft = false } = {}) {
+    if (!current()) return null;
     if (request) throw new Error('Reconcile or explicitly retain the original pending request before starting another.');
     const exact = { requestId: crypto.randomUUID(), ...clone(input) };
     if (new TextEncoder().encode(JSON.stringify(exact)).length > BODY_LIMIT) throw new Error('This complete request exceeds 257 MiB. Retain the full originals and use a smaller complete source selection.');
-    request = { action, input: exact, workspaceId: identity(), at: new Date().toISOString() };
-    await retainRequest(request);
+    const retained = { action, input: exact, workspaceId: identity(), at: new Date().toISOString() };
+    const savedDraftKey = action === 'save' ? draftKey(input.procedureId) : null;
+    selectRequest(retained);
+    await retainRequest(retained);
+    if (!current()) return null;
     renderRequest();
     const result = await api(BASE + '/' + action, exact);
     if (!current()) return null;
     if (!result?.record || typeof result.recordSha256 !== 'string') throw new Error('The procedure returned an incomplete saved record.');
     inspectOperatingPlan(result.record.plan);
     if (!/^[a-f0-9]{64}$/.test(result.recordSha256) || (input.procedureId && result.record.id !== input.procedureId)) throw new Error('The saved procedure identity differs from the selected request.');
-    await acknowledgeRequest(request, result); request = null;
-    if (action === 'save') await savedValue(draftKey(selectedId), null, true);
+    await acknowledgeRequest(retained, result);
+    if (!current()) return result;
+    clearRequest(retained);
+    if (savedDraftKey) await savedValue(savedDraftKey, null, true);
+    if (!current()) return result;
     await acceptResult(result, current, preserveDraft); return result;
   }
   async function acceptResult(value, current, preserveDraft = false) {
@@ -163,15 +186,18 @@ export function createOperatingProceduresView({ root, api, getState, getToken, g
     if (!current()) return;
     selectedId = value.record.id; loaded = value; pendingDraft = null;
     if (!preserveDraft) { draft = operatingPlanDraft(value.record.plan); dirty = false; editorVersion++; }
-    await refresh({ keepSelection: true }); message('Original procedure and request retained.');
+    await refresh({ keepSelection: true }); if (current()) message('Original procedure and request retained.');
   }
   async function choose(id) {
     if (busy) return;
     await run(async current => {
+      const storageKey = draftKey(id);
       if (dirty) await draftQueue;
+      if (!current()) return;
       const value = await api(BASE + '/read', { procedureId: id });
+      if (!current()) return;
       inspectOperatingPlan(value.record.plan);
-      const local = await savedValue(draftKey(id));
+      const local = await savedValue(storageKey);
       if (!current()) return;
       selectedId = id; loaded = value; draft = operatingPlanDraft(value.record.plan);
       dirty = false; pendingDraft = local ?? null; selectedStep = null; editorVersion++;
@@ -183,20 +209,23 @@ export function createOperatingProceduresView({ root, api, getState, getToken, g
     target.append(el('h3', 'Retained original request'), el('p', request.action + ' · ' + request.input.requestId),
       detail('Exact retained input', request.input),
       button('Continue retained request', () => run(async current => {
-        const retained = clone(request); await retainRequest(retained);
+        const retained = clone(request); selectRequest(retained); await retainRequest(retained);
+        if (!current()) return;
         const response = await api(BASE + '/' + retained.action, retained.input);
         if (!current()) return;
         if (!response?.record || typeof response.recordSha256 !== 'string') throw new Error('The retained request returned an incomplete record.');
         inspectOperatingPlan(response.record.plan);
         if (!/^[a-f0-9]{64}$/.test(response.recordSha256) || (retained.input.procedureId && response.record.id !== retained.input.procedureId)) throw new Error('The retained response identifies a different procedure.');
-        await acknowledgeRequest(retained, response); request = null;
+        await acknowledgeRequest(retained, response);
+        if (!current()) return;
+        clearRequest(retained);
         await acceptResult(response, current);
       }), false),
       button('Download retained request', () => saveDownload(json(request), 'runtime-procedure-pending-' + request.input.requestId + '.json'), false),
       button('Retain this request and allow another', () => run(async current => {
-        await acknowledgeRequest(request);
+        const retained = clone(request); selectRequest(retained); await acknowledgeRequest(retained);
         if (!current()) return;
-        request = null;
+        clearRequest(retained);
         message('The original request is retained in browser storage. Its server record is unchanged; inspect it before dispatching different work.');
       }), false));
   }
@@ -327,18 +356,18 @@ export function createOperatingProceduresView({ root, api, getState, getToken, g
     controls();
   }
   async function refresh({ keepSelection = false } = {}) {
-    if (loading || (busy && !keepSelection)) return;
-    loading = true; const current = scope();
+    if ((loading && !keepSelection) || (busy && !keepSelection)) return;
+    const ticket = {}, version = requestVersion, current = scope(); loading = ticket;
     try {
       const storageDirectory = $('storage').value.trim();
       const result = await api(BASE + (storageDirectory ? '?storageDirectory=' + encodeURIComponent(storageDirectory) : ''));
-      if (!current() || $('storage').value.trim() !== storageDirectory) return;
+      if (loading !== ticket || !current() || requestVersion !== version || $('storage').value.trim() !== storageDirectory) return;
       if (state && result.workspaceId !== state.workspaceId) { reset(); throw new Error('The Runtime workspace changed; reopen its procedure selection.'); }
-      state = result;
-      request = await pendingRequest() ?? null;
-      if (!current()) return;
+      const retained = await pendingRequest(result.workspaceId);
+      if (loading !== ticket || !current() || requestVersion !== version || $('storage').value.trim() !== storageDirectory) return;
+      state = result; selectRequest(retained ?? null);
       render();
-    } finally { loading = false; }
+    } finally { if (loading === ticket) loading = false; }
   }
   $('full-details').addEventListener('toggle', () => { $('full').textContent = $('full-details').open && loaded ? json(loaded.record) : ''; });
   $('request-history').addEventListener('click', () => run(async current => {
@@ -349,7 +378,9 @@ export function createOperatingProceduresView({ root, api, getState, getToken, g
       button('Download exact request', () => saveDownload(json(value), 'runtime-procedure-request-' + value.input.requestId + '.json')),
       button('Select original request for reconciliation', () => run(async active => {
         if (request && request.input.requestId !== value.input.requestId) throw new Error('Retain the current pending request before selecting another.');
-        await retainRequest(value); if (!active()) return; request = value; renderRequest();
+        if (value.workspaceId !== identity()) throw new Error('Select a retained request from this exact Runtime workspace.');
+        const retained = clone(value); selectRequest(retained);
+        await retainRequest(retained); if (!active()) return; renderRequest();
       })));
     if (!values.length) target.append(el('p', 'No retained requests in this browser for this workspace.'));
   }));
@@ -395,7 +426,7 @@ export function createOperatingProceduresView({ root, api, getState, getToken, g
       incoming = document; const target = $('incoming'); target.hidden = false; target.replaceChildren(
         el('p', document.id + ' · source workspace ' + document.workspaceId + ' · record ' + document.revision),
         detail('Complete received procedure', document),
-        button('Receive this complete original record', () => run(current => commit('receive', { document: clone(incoming) }, current)), false));
+        button('Receive this complete original record', () => run(current => commit('receive', { document: clone(document) }, current)), false));
     });
   });
   for (const [id, format] of [['json', 'json'], ['html', 'html'], ['plan', 'plan-json'], ['plan-html', 'plan-html']])
@@ -425,7 +456,7 @@ export function createOperatingProceduresView({ root, api, getState, getToken, g
   });
   function reset() {
     epoch++; state = null; selectedId = null; loaded = null; draft = null; dirty = false; busy = null;
-    loading = false; request = null; pendingDraft = null; incoming = null; selectedStep = null; renderedRecord = null;
+    loading = false; selectRequest(null); pendingDraft = null; incoming = null; selectedStep = null; renderedRecord = null;
     selection = emptySelection(); sourceSignature = null; editorVersion++; renderedEditor = null;
     $('incoming').replaceChildren(); $('incoming').hidden = true; $('storage').value = '';
     $('request-history-list').replaceChildren(); $('request-history-list').hidden = true;
