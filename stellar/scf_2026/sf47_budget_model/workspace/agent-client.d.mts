@@ -2611,6 +2611,41 @@ export interface GrantPortfolioSelection extends GrantObject {
 }
 
 /** Two explicit retained revisions; omit toPlanId to compare within the same plan. */
+export interface GrantForecastComparisonSelection {
+  caseId: string;
+  beforeId: string;
+  afterId: string;
+  expectedComparisonSha256?: string;
+}
+export interface GrantForecastComparisonExportSelection extends GrantForecastComparisonSelection {
+  expectedComparisonSha256: string;
+}
+export interface GrantForecastComparisonIdentity {
+  id: string; name: string; createdAt: string; actor: string; note: string;
+  sha256: string; previewSha256: string; reportSha256: string; engineVersion: number;
+  asOfDate: GrantCivilDate; calendarStart: GrantCivilDate; source: GrantForecastSource;
+}
+export interface GrantForecastComparison {
+  schema: 'stellar-forge.sf47.forecast-comparison.v1';
+  comparisonSha256: string;
+  case: {id: string; createdAt: string};
+  before: GrantForecastComparisonIdentity; after: GrantForecastComparisonIdentity;
+  basis: {delta: 'after - before'; reportBasis: string; dailyBasis: string; cashBasis: string; scopeBasis: string;
+    sameAsOfDate: boolean; sameCalendarStart: boolean; sameOpeningCash: boolean; sameSelectedCustomers: boolean;
+    sameOriginalCase: boolean; samePlanContent: boolean; samePlanSource: boolean; sameSourceFacts: boolean; sameEngine: boolean};
+  notices: {code: string; message: string}[];
+  summary: {assumptionChanges: number; sourceChanges: number; daysBefore: number; daysAfter: number;
+    overlapDays: number; groupChanges: Record<string, number>};
+  metrics: GrantPlanComparisonMetric[];
+  groups: Record<string, GrantPlanComparisonRow[]>;
+  sourceGroups: Record<string, GrantPlanComparisonRow[]>;
+  changes: (GrantPlanComparisonChange & {area: 'assumptions' | 'source'})[];
+  days: {date: GrantCivilDate; before: GrantObject | null; after: GrantObject | null; delta: Record<string, string | null>}[];
+  work: {date: GrantCivilDate; projectId: string; before: GrantObject | null; after: GrantObject | null; deltaHours: string | null}[];
+  coverage: {before: GrantObject; after: GrantObject};
+  snapshots: {before: GrantSavedForecast; after: GrantSavedForecast};
+}
+
 export interface GrantPlanComparisonSelection {
   planId: string;
   fromRevision: number;
@@ -3784,6 +3819,96 @@ export interface GrantReadSelection {
 export type GrantOtherReadView =
   | 'plans' | 'plan' | 'plan-history' | 'cases' | 'case-report' | 'case-history' | 'expenses'
   | 'forecasts' | 'forecast' | 'portfolios' | 'portfolio' | 'review' | 'completion';
+/** One exact saved native check attributed to an original tranche work package. */
+export interface CompletionInstallationSelection {
+  costId: string;
+  installationId: string;
+  revision: number;
+  sha256: string;
+  checkId: string;
+  requirePaidPurchase: boolean;
+}
+export type GrantCompletionInstallationSelection = CompletionInstallationSelection;
+export interface GrantCompletionAssignment {
+  costId: string;
+  ownerIds: string[];
+  startDate: GrantCivilDate | null;
+  endDate: GrantCivilDate | null;
+  state: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETE';
+  completedOn: GrantCivilDate | null;
+  workIds: string[];
+  deploymentIds: string[];
+  sourceIds: string[];
+  note: string;
+  completionNote: string;
+}
+/** Complete original assignments; selected evidence does not mark a package complete. */
+export interface GrantCompletionInputs extends GrantObject {
+  tranche: 1 | 2 | 3;
+  items: GrantCompletionAssignment[];
+  note: string;
+  installationSelections?: CompletionInstallationSelection[];
+}
+export type CompletionInputs = GrantCompletionInputs;
+export interface GrantCompletionInstallationEvidence {
+  schema: 'stellar-forge.sf47-completion-installations.v1';
+  selections: CompletionInstallationSelection[];
+  /** Full immutable native editions, excluding their current display metadata. */
+  installations: Array<Omit<GrantInstallationEdition, 'current'>>;
+  sha256: string;
+}
+export interface GrantCompletionInstallationReport {
+  schema: 'stellar-forge.sf47-completion-installations.v1';
+  evidence: GrantCompletionInstallationEvidence;
+  asOfDate: GrantCivilDate;
+  rows: Array<{
+    selection: CompletionInstallationSelection;
+    installationName: string;
+    check: GrantInstallationCheck;
+    sourceIds: string[];
+    /** Complete original native purchase observations, retaining decimal strings. */
+    purchases: GrantObject[];
+    usefulPaidPurchaseIds: string[];
+    currentEdition: GrantInstallationRef | null;
+  }>;
+  summary: {
+    selectedChecks: number;
+    acceptedChecks: number;
+    notApplicableChecks: number;
+    distinctUsefulPaidPurchases: number;
+    purchaseObservations: GrantObject[];
+    /** Observations do not imply independent adoption or issuer acceptance. */
+    meaning: string;
+  };
+  issues: Array<{code: string; costId: string; installationId: string; checkId: string; message: string}>;
+  ready: boolean;
+}
+export interface GrantCompletionInstallationCatalogue {
+  schema: 'stellar-forge.sf47-completion-installations.v1';
+  caseId: string;
+  version: number;
+  tranche: 1 | 2 | 3;
+  installations: Array<GrantInstallationRef & {
+    name: string; stage: GrantInstallationStage; costIds: string[]; checks: GrantInstallationCheck[];
+  }>;
+}
+export interface GrantCompletionInstallationTransfer {
+  schema: 'stellar-forge.sf47-completion-installations.v1';
+  source: {caseId: string; version: number; planContentSha256: string};
+  originalInputs: GrantCompletionInputs;
+  proposedInputs: GrantCompletionInputs;
+  suggestions: Array<{
+    costId: string;
+    completedOn: GrantCivilDate | null;
+    completionNote: string;
+    acceptanceRecorded: boolean;
+    excludedLinks: Array<{kind: 'work' | 'deployment'; id: string; reason: string}>;
+    meaning: string;
+  }>;
+  report: GrantCompletionInstallationReport;
+  previewSha256: string;
+}
+
 /** A saved correction assessment is not an issuer acceptance or a deadline extension. */
 export type GrantCompletionCorrectionState = 'OPEN' | 'IN_PROGRESS' | 'ADDRESSED' | 'NOT_APPLICABLE';
 export interface GrantCompletionCorrectionFinding {
@@ -3879,6 +4004,13 @@ export interface GrantCompletionPreviewInput extends GrantObject {
 }
 
 export interface GrantDownloadSelections {
+  'forecast-comparison': GrantForecastComparisonExportSelection;
+  'forecast-comparison-report': GrantForecastComparisonExportSelection;
+  'forecast-comparison-json': GrantForecastComparisonExportSelection;
+  'forecast-comparison-changes': GrantForecastComparisonExportSelection;
+  'forecast-comparison-impact': GrantForecastComparisonExportSelection;
+  'forecast-comparison-daily': GrantForecastComparisonExportSelection;
+  'forecast-comparison-work': GrantForecastComparisonExportSelection;
   plan: { planId: string; revision?: number };
   'plan-comparison': GrantPlanComparisonExportSelection;
   'plan-comparison-report': GrantPlanComparisonExportSelection;
@@ -3934,6 +4066,7 @@ export class GrantWorkspaceClient {
   browser(): Promise<{ schema: typeof GRANT_AGENT_SCHEMA; url: string; original: GrantObject }>;
   read(view: 'task-outcomes', selection: {caseId: string}): Promise<GrantJsonResponse<{comparisons: GrantTaskOutcomeSummary[]}>>;
   read(view: 'task-outcome', selection: {caseId: string; comparisonId: string; revision?: number}): Promise<GrantJsonResponse<GrantTaskOutcomeView>>;
+  read(view: 'forecast-comparison', selection: GrantForecastComparisonSelection): Promise<GrantJsonResponse<GrantForecastComparison>>;
   read(view: 'plan-comparison', selection: GrantPlanComparisonSelection): Promise<GrantJsonResponse<GrantPlanComparison>>;
   read(view: 'amendments', selection: { caseId: string }): Promise<GrantJsonResponse<GrantObject>>;
   read(view: 'amendment', selection: { caseId: string; amendmentId: string; revision?: number }): Promise<GrantJsonResponse<{ amendment: GrantAmendmentEdition; current: GrantObject; history: GrantObject[]; calendarImpact: GrantAmendmentCalendar }>>;
@@ -4056,6 +4189,9 @@ export class GrantWorkspaceClient {
   completionCorrectionsSeed<T = GrantCompletionCorrectionsSeed>(caseId: string, expectedVersion: number, outcomeId: string, reviewId?: string): Promise<GrantJsonResponse<T>>;
   completionCorrectionsPreview<T = GrantCompletionCorrectionsPreview>(caseId: string, expectedVersion: number, inputs: GrantCompletionCorrectionInputs, asOfDate?: GrantCivilDate): Promise<GrantJsonResponse<T>>;
   completionCorrectionsSave<T = GrantCompletionCorrectionsReceipt>(caseId: string, body: GrantCompletionCorrectionsSaveInput): Promise<GrantJsonResponse<T>>;
+  completionInstallations<T = GrantCompletionInstallationCatalogue>(caseId: string, body: {expectedVersion: number; tranche: 1 | 2 | 3}): Promise<GrantJsonResponse<T>>;
+  completionInstallationsPreview<T = GrantCompletionInstallationTransfer>(caseId: string, body: {expectedVersion: number; inputs: GrantCompletionInputs; asOfDate?: GrantCivilDate}): Promise<GrantJsonResponse<T>>;
+  completionSave<T = GrantObject>(caseId: string, body: GrantOperationRequest & {inputs: GrantCompletionInputs}): Promise<GrantJsonResponse<T>>;
   completionSeed<T = GrantObject>(caseId: string, expectedVersion: number, tranche: 1 | 2 | 3): Promise<GrantJsonResponse<T>>;
   completionPreview<T = GrantObject>(caseId: string, expectedVersion: number, inputs: GrantObject & {correctionReviewId?: string}): Promise<GrantJsonResponse<T>>;
   completionSave<T = GrantObject>(caseId: string, body: GrantOperationRequest & { inputs: GrantObject }): Promise<GrantJsonResponse<T>>;

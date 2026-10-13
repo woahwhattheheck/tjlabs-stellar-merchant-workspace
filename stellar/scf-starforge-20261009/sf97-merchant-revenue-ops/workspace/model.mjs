@@ -164,6 +164,42 @@ export async function readCommercialHistory({directory,input={}}={}) {
   return report;
 }
 
+async function savedPricingFile(directory,entry,name) {
+  const expected = entry.value.files[name];
+  if (!expected || name.split('/').some(part => !part || part === '.' || part === '..'))
+    throw fault('FILE_NOT_FOUND', 'This file is not part of the saved review.', 404);
+  const path = join(directory,'versions',entry.value.version,...name.split('/'));
+  if (await realpath(path) !== path) throw fault('SAVED_FILE_CHANGED', 'Saved file path has changed.');
+  const bytes = await privateBytes(path);
+  if (bytes.length !== expected.bytes || digest(bytes) !== expected.sha256)
+    throw fault('SAVED_FILE_CHANGED', 'Saved review bytes differ from the committed version.');
+  return bytes;
+}
+
+
+export async function readSavedPlanningSource({directory,version}={}) {
+  if(!isAbsolute(directory??'')||resolve(directory)!==directory||directory==='/')
+    throw fault('ABSOLUTE_WORKSPACE_REQUIRED','Use the original private merchant workspace.');
+  await privateDirectory(directory);await requireCompletedRestore(directory);
+  await privateDirectory(join(directory,'successors'));await privateDirectory(join(directory,'versions'));
+  if(!VERSION.test(version??''))throw fault('VERSION_NOT_FOUND','Choose a saved pricing review.',404);
+  const entry=(await pricingHistory(directory)).find(item=>item.value.version===version);
+  if(!entry)throw fault('VERSION_NOT_FOUND','The original saved pricing review is unavailable.',404);
+  const sourceFile=entry.value.sourceFile??'snapshot.json';
+  const [sellerBytes,termsBytes,observationBytes,reportBytes]=await Promise.all(
+    ['seller.json','terms.json',sourceFile,'report/report.json'].map(name=>savedPricingFile(directory,entry,name)));
+  const seller=JSON.parse(sellerBytes.toString('utf8')),terms=JSON.parse(termsBytes.toString('utf8'));
+  const observation=JSON.parse(observationBytes.toString('utf8')),report=JSON.parse(reportBytes.toString('utf8'));
+  const selectedRoutes=new Set(report.routes.map(route=>route.routeId));
+  const routes=merchantRoutes(validateSellerServiceConfig(seller)).filter(route=>selectedRoutes.has(route.routeId));
+  return {version,label:entry.value.label,savedAt:entry.value.savedAt,seller,terms,observation,routes,
+    commercial:commercialInputs(terms,routes),
+    observationSummary:entry.value.observation??{kind:entry.value.observationKind??SESSION,
+      sessionId:observation.sessionId??null,range:observation.range??null},
+    provenance:{seller:digest(sellerBytes),terms:digest(termsBytes),snapshot:digest(observationBytes),
+      ...(sourceFile==='history.json'?{history:digest(observationBytes)}:{})}};
+}
+
 export async function openWorkspace({config, directory, snapshot, history:historyFile, opsUrl, nativeOutbox,
   sourcePackage, releaseStore, releaseRuntime = {}, supplierUsage, accountingReport, expectedConfigSha256} = {}) {
   if (!isAbsolute(directory ?? '') || resolve(directory) !== directory || directory === '/')
@@ -264,17 +300,7 @@ export async function openWorkspace({config, directory, snapshot, history:histor
   // link is an atomic compare-and-swap, so processes/tabs cannot overwrite a save.
   // No PID lock survives a crash, and incomplete reports never become the head.
   const history = () => pricingHistory(directory);
-  async function savedFile(entry, name) {
-    const expected = entry.value.files[name];
-    if (!expected || name.split('/').some(part => !part || part === '.' || part === '..'))
-      throw fault('FILE_NOT_FOUND', 'This file is not part of the saved review.', 404);
-    const path = join(directory,'versions',entry.value.version,...name.split('/'));
-    if (await realpath(path) !== path) throw fault('SAVED_FILE_CHANGED', 'Saved file path has changed.');
-    const bytes = await privateBytes(path);
-    if (bytes.length !== expected.bytes || digest(bytes) !== expected.sha256)
-      throw fault('SAVED_FILE_CHANGED', 'Saved review bytes differ from the committed version.');
-    return bytes;
-  }
+  const savedFile = (entry,name) => savedPricingFile(directory,entry,name);
   async function state(input) {
     const selection = select(input);
     const [source, entries] = await Promise.all([seller(), history()]);
@@ -444,22 +470,8 @@ export async function openWorkspace({config, directory, snapshot, history:histor
       termsValue:JSON.parse(termsBytes.toString('utf8'))};
   }
   async function planningSource(version) {
-    const [original,current] = await Promise.all([originalPricing(version),seller()]);
-    const sourceFile = original.entry.value.sourceFile ?? 'snapshot.json';
-    const observationBytes = await savedFile(original.entry,sourceFile);
-    const observation = JSON.parse(observationBytes.toString('utf8'));
-    const savedReport = JSON.parse((await savedFile(original.entry,'report/report.json')).toString('utf8'));
-    const selectedRoutes = new Set(savedReport.routes.map(route => route.routeId));
-    const routes = merchantRoutes(validateSellerServiceConfig(original.sellerValue)).filter(route => selectedRoutes.has(route.routeId));
-    return {version,label:original.entry.value.label,savedAt:original.entry.value.savedAt,
-      seller:original.sellerValue,terms:original.termsValue,observation,routes,
-      commercial:commercialInputs(original.termsValue,routes),
-      sellerChanged:current.hash !== digest(original.sellerBytes),
-      observationSummary:original.entry.value.observation ?? {
-        kind:original.entry.value.observationKind ?? SESSION,sessionId:observation.sessionId ?? null,
-        range:observation.range ?? null},
-      provenance:{seller:digest(original.sellerBytes),terms:digest(original.termsBytes),
-        snapshot:digest(observationBytes),...(sourceFile === 'history.json' ? {history:digest(observationBytes)} : {})}};
+    const [original,current]=await Promise.all([readSavedPlanningSource({directory,version}),seller()]);
+    return {...original,sellerChanged:current.hash!==original.provenance.seller};
   }
   async function repricingSource(version) {
     const [original,current,decisions] = await Promise.all([originalPricing(version),seller(),decisionHistory()]);
@@ -656,8 +668,12 @@ export async function openWorkspace({config, directory, snapshot, history:histor
     // so every selected original source can be included in the same backup.
     const {capturePerformanceBackup}=await import('../performance/workspace.mjs');
     const performance=await capturePerformanceBackup({directory});
-    const scenario=await scenarioBackup(),files=[...scenario.files,...performance.files],decisions=await decisionHistory(),pricingEntries=await history();
+    const {captureScenarioWorkingBackup}=await import('../planning/working-copies.mjs');
+    const working=await captureScenarioWorkingBackup({directory});
+    const scenario=await scenarioBackup(),files=[...scenario.files,...working.files,...performance.files],decisions=await decisionHistory(),pricingEntries=await history();
     const versions=new Set(pricingEntries.map(entry=>entry.value.version));
+    if(working.pricingVersions.some(version=>!versions.has(version)))
+      throw fault('WORKING_BACKUP_SOURCE_MISSING','A saved working copy has no matching original pricing review.');
     if(performance.pricingVersions.some(version=>!versions.has(version)))
       throw fault('PERFORMANCE_BACKUP_SOURCE_MISSING','A recorded performance or native proposal has no matching original Pricing review.');
     if(scenario.plans.some(plan=>!versions.has(plan.version)))
@@ -678,7 +694,7 @@ export async function openWorkspace({config, directory, snapshot, history:histor
       if(await stageReceipt(decision))files.push({name:'staged-releases/'+decision+'.json',
         read:()=>privateBytes(join(directory,'staged-releases',decision+'.json'))});
     }
-    return {files,scenarioPlans:scenario.plans,pricingVersions:pricingEntries.map(entry=>entry.value.version),
+    return {files,scenarioPlans:scenario.plans,scenarioWorkingCopies:working.copies,pricingVersions:pricingEntries.map(entry=>entry.value.version),
       requiredCostEditions:[...new Set([...pricingEntries.map(entry=>entry.value.costOrigin?.edition).filter(Boolean),...performance.requiredCostEditions])],
       performance:performance.summary,
       pricingRevision:pricingEntries.at(-1)?.revision??null,decisionRevision:decisions.at(-1)?.revision??null};

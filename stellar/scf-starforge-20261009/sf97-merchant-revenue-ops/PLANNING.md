@@ -4,6 +4,16 @@ Open **Scenario planning** from the existing merchant pricing workspace. The
 comparison starts with a saved review: the original seller configuration,
 operations capture and commercial terms stay attached to every alternative.
 
+## Retain unfinished decision work
+
+Use **Unfinished decision work** to save raw alternatives before their costs,
+volumes or targets are ready to calculate. Reopen a named copy, retain earlier
+revisions, keep a conflicting edit as a separate copy, or download/receive the
+unfinished form against its exact original review. Full workspace backup
+carries the complete working histories with their original pricing sources.
+The [working-copy and handover guide](WORKING_COPIES.md) covers the complete
+browser, native API/CLI, pending-save recovery and portable receiving flow.
+
 ## Complete the workflow
 
 1. Save a review in Merchant pricing, including the costs and paid-volume targets
@@ -23,7 +33,9 @@ operations capture and commercial terms stay attached to every alternative.
 6. Name the comparison and choose **Save comparison**. It retains one immutable
    plan with the source review, all explicit inputs, normalized merchant terms,
    comparison results and the selected scenario.
-7. Export the plan JSON, comparison CSV or selected merchant terms. To use the
+7. Open the **Complete decision review** for the original observed scope,
+   every alternative, assumptions, service results and target suggestions.
+   Export the plan JSON, comparison CSV or selected merchant terms. To use the
    plan, choose a scenario and **Use selected scenario in pricing review**.
    The existing pricing form opens with that scenario's commercial assumptions.
    Calculate and save the new review with its current operations capture.
@@ -158,6 +170,7 @@ reader used by the rest of the workspace.
 | Save a reviewed comparison | `POST /api/planning/save` with `{version,scenarios,requestId,label,selectedScenarioId,reviewSha256}` |
 | Reopen a saved comparison | `POST /api/planning/load` with `{planId}` |
 | Prepare selected commercial draft | `POST /api/planning/apply` with `{planId,scenarioId}` |
+| Open complete readable decision | `GET /planning-files/PLAN_ID/review.html` |
 | Download retained plan | `GET /planning-files/PLAN_ID/plan.json` |
 | Download comparison table | `GET /planning-files/PLAN_ID/comparison.csv` |
 | Download original merchant terms | `GET /planning-files/PLAN_ID/terms-SCENARIO_ID.json` |

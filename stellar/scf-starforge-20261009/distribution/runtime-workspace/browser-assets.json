@@ -38,6 +38,13 @@
       ]
     ],
     [
+      "/runtime-output.mjs",
+      [
+        "runtime-output.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/application-library.mjs",
       [
         "application-library.mjs",

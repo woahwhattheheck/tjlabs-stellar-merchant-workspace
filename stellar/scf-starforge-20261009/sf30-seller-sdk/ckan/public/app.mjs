@@ -1,5 +1,6 @@
 // MIT. Plain local operator interface; all content is inserted as text.
 import { renderDcatMigration } from './migration.mjs';
+import { renderDcatSemantic } from './dcat-semantic.mjs';
 import { renderRemotePublication } from './remote-publication.mjs';
 import { parseDcatJsonText } from './dcat-json.mjs';
 const $ = selector => document.querySelector(selector);
@@ -178,6 +179,13 @@ async function renderView() {
   if (tab === 'remote') await renderRemotePublication({
     view, state, token, api, protect, download,
     current: () => generation === renderGeneration && tab === 'remote',
+    acceptOperation: result => { lastOperation = result.operationId; },
+    refresh: () => refresh(), render: () => renderView(),
+    openWorkspace: async () => { tab = 'workspace'; await renderView(); },
+  });
+  if (tab === 'semantic') await renderDcatSemantic({
+    view, state, token, api, protect, download,
+    current: () => generation === renderGeneration && tab === 'semantic',
     acceptOperation: result => { lastOperation = result.operationId; },
     refresh: () => refresh(), render: () => renderView(),
     openWorkspace: async () => { tab = 'workspace'; await renderView(); },

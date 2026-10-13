@@ -8,6 +8,7 @@ import json
 from model import Problem
 from operations import Operations, decoded
 import operations_calendar as calendar_model
+import forecast_comparison
 import operations_agenda_http as agenda_http
 import operations_use_calendar as use_calendar
 import operations_workflows as operating_workflows
@@ -17,6 +18,8 @@ from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static["/forecast-comparison.mjs"] = ("forecast-comparison.mjs", "text/javascript; charset=utf-8")
+    static["/FORECAST_COMPARISON.md"] = ("FORECAST_COMPARISON.md", "text/markdown; charset=utf-8")
     static["/operations_lazy.mjs"] = ("operations_lazy.mjs", "text/javascript; charset=utf-8")
     static["/DESK_LOADING.md"] = ("DESK_LOADING.md", "text/markdown; charset=utf-8")
     static.update({"/task-outcomes-workbook.mjs": ("task-outcomes-workbook.mjs", "text/javascript; charset=utf-8"),
@@ -112,6 +115,7 @@ def register_static(static):
                    "/operations_calendar.mjs": ("operations_calendar.mjs", "text/javascript; charset=utf-8"),
                    "/operations_calendar.css": ("operations_calendar.css", "text/css; charset=utf-8"),
                    "/operations_completion_corrections.mjs": ("operations_completion_corrections.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_completion_installations.mjs": ("operations_completion_installations.mjs", "text/javascript; charset=utf-8"),
                    "/operations_completion.mjs": ("operations_completion.mjs", "text/javascript; charset=utf-8"),
                    "/operations_completion.css": ("operations_completion.css", "text/css; charset=utf-8"),
                    "/operations_support.mjs": ("operations_support.mjs", "text/javascript; charset=utf-8"),
@@ -138,6 +142,8 @@ def read(handler, parsed):
     if not parsed.path.startswith("/api/operations"):
         return False
     ops, query = store(handler), parse_qs(parsed.query)
+    if forecast_comparison.read_http(handler, parsed, ops):
+        return True
     if agenda_http.read(handler, parsed.path, parse_qs(parsed.query, keep_blank_values=True), ops):
         return True
     if award_terms_http(handler, parsed, ops, "GET"):
@@ -468,7 +474,7 @@ def write(handler, parsed):
     elif path == "/api/operations":
         result = ops.create(handler.json_body())
     else:
-        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|settlement/preview|settlement/correction-preview|funding-seed|funding-preview|task-outcomes-seed|task-outcomes-preview|customer-use-calendar|customer-use-calendar-expand|customer-use-calendar-cohort|account-reconciliation-preview|account-reconciliation|engagement-seed|engagement-preview|engagement-forecast|engagement-portfolio|cash-correction-preview|cash-correction|amendment-calendar-export|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-seed|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-inspect|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-commissioning-seed|installation-commissioning-review|installation-commercial|installation-commercial-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-effort-seed|installation-effort-selection|installation-preview|completion-seed|completion-preview|completion-corrections-seed|completion-corrections-preview|support-preview|buyer-preview|expense-preview|expense-request|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
+        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|settlement/preview|settlement/correction-preview|funding-seed|funding-preview|task-outcomes-seed|task-outcomes-preview|customer-use-calendar|customer-use-calendar-expand|customer-use-calendar-cohort|account-reconciliation-preview|account-reconciliation|engagement-seed|engagement-preview|engagement-forecast|engagement-portfolio|cash-correction-preview|cash-correction|amendment-calendar-export|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-seed|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-inspect|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-commissioning-seed|installation-commissioning-review|installation-commercial|installation-commercial-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-effort-seed|installation-effort-selection|installation-preview|completion-installations|completion-installations-preview|completion-seed|completion-preview|completion-corrections-seed|completion-corrections-preview|support-preview|buyer-preview|expense-preview|expense-request|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
         if not match:
             raise Problem("Operations command not found.", 404, "NOT_FOUND")
         body = handler.json_body()
@@ -506,6 +512,7 @@ def write(handler, parsed):
                    "installation-workshare-seed": ops.seed_workshare_installation,
                    "installation-preview": ops.preview_installation, "completion-corrections-seed": ops.seed_completion_corrections,
                    "completion-corrections-preview": ops.preview_completion_corrections,
+                   "completion-installations": ops.completion_installations, "completion-installations-preview": ops.preview_completion_installations,
                    "completion-seed": ops.seed_completion, "completion-preview": ops.preview_completion,
                    "support-preview": ops.preview_support, "buyer-preview": ops.preview_buyer,
                    "expense-preview": ops.preview_expense, "expense-request": ops.expense_request,

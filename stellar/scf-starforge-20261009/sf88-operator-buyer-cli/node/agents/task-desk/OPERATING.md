@@ -4,6 +4,10 @@ The InboxTask desk brings prepared Inbox jobs into one operator workflow: choose
 
 A task records the caller's purpose and each selected role alongside its original intent and request fingerprints. Its received packet keeps the complete response files, source and request lineage, native outcomes, and a readable report.
 
+## Complete selected installation
+
+Select the maintained **buyer-task-desk** product to install this original desk together with its InboxTask CLI, complete customer-delivery receiver, Applications and Merchant tools. [Install and reopen the complete product](INSTALLATION.md) describes the original source/runtime workflow, private root selection, saved task SHA, explicit original launcher, live Merchant connection and existing SF49 customer workorder. Preparation reads the original roots and records the installation; task execution and customer receiving remain explicit original operations.
+
 ## Start the desk
 
 Run the command from the original SF88 runtime root, supplying the existing runtime and the directories assigned to this inbox:

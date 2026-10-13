@@ -16,7 +16,38 @@ const SOURCE_HELPERS = [
   'stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs',
   'stellar/scf-starforge-20261009/sf46-release/runtime-package.mjs',
 ];
+const SEMANTIC_SOURCE = [
+  "dcat-semantic.mjs",
+  "dcat-semantic-native.mjs",
+  "dcat-semantic-cli.mjs",
+  "dcat_semantic_prepare.py",
+  "public/dcat-semantic.mjs",
+  "SEMANTIC_CATALOGS.md",
+  "vendor/semantic-operator/semantic_operator/__init__.py",
+  "vendor/semantic-operator/semantic_operator/worker.py",
+  "vendor/semantic-operator/semantic_operator/rdf_engine.py",
+  "vendor/semantic-operator/semantic_operator/dataset_engine.py",
+  "vendor/semantic-operator/semantic_operator/security.py",
+  "vendor/semantic-operator/semantic_operator/store.py",
+  "vendor/semantic-operator/requirements.txt",
+  "vendor/semantic-operator/LICENSE",
+  "vendor/semantic-operator/NOTICE",
+  "vendor/semantic-operator/NATIVE_CONTRACT.json",
+  "vendor/semantic-operator/source-manifest.json",
+  "vendor/semantic-operator/selected-runtime.json",
+  "vendor/dcat-us-binding/build/dcat-us-3.0.context.jsonld",
+  "vendor/dcat-us-binding/build/dcat-us-3.0.observed.context.jsonld",
+  "vendor/dcat-us-binding/build/dcat-us-3.0-shapes.ttl",
+  "vendor/dcat-us-binding/build/audit.json",
+  "vendor/dcat-us-binding/README.md",
+  "vendor/dcat-us-binding/LICENSE",
+  "vendor/dcat-us-binding/source-manifest.json",
+  "semantic-profiles/dcat-us-faithful-current.json",
+  "semantic-profiles/dcat-us-observed-current.json",
+  "semantic-profiles/dcat-us-faithful-legacy.json"
+].map(path => ROOT + path);
 const REQUIRED = [
+  ...SEMANTIC_SOURCE,
   ROOT + 'dcat-cli.mjs', ROOT + 'dcat-workspace.mjs', ROOT + 'dcat_migration.py',
   ROOT + 'application-provider.mjs', ROOT + 'public/migration.mjs',
   ROOT + 'dcat-acquisition.mjs', ROOT + 'public/dcat-sources.mjs', ROOT + 'RECURRING_CATALOGS.md',
@@ -33,14 +64,14 @@ const field = (name, label, type = 'path', required = false, description = '') =
 
 export function dcatApplication(common) {
   return {
-    id: 'dcat-migration', command: 'dcat', title: 'DCAT catalog migration', terminal: false,
+    id: 'dcat-migration', command: 'dcat', title: 'DCAT catalog workspace', terminal: false,
     requiredSource: ROOT + 'dcat-cli.mjs',
-    description: 'Open an existing catalogue migration workspace to receive original DCAT-US documents, review conversion and publisher changes, select catalogue releases and hand over the complete project.',
+    description: 'Open an existing catalogue migration workspace to receive original DCAT-US documents, review conversion, publisher changes and native semantic findings, select catalogue releases and hand over the complete project.',
     fields: [
       field('workspaceDirectory', 'Catalogue workspace', 'path', true,
         'Select the original private DCAT-US project directory. Source editions, reviews, release selection and rollback history remain in that project.'),
       ...common.map(item => item.name === 'environmentFile' ? { ...item,
-        description: 'Use the existing private environment JSON for SCF_DCAT_PYTHON and an explicit SCF_DCAT_RUNTIME_PROFILE. Choose original for Python 3.13 or portable-python312 for Python 3.12. Values stay on this host.' } : item),
+        description: 'Use the existing private environment JSON for SCF_DCAT_PYTHON and an explicit SCF_DCAT_RUNTIME_PROFILE. Choose original for Python 3.13 or portable-python312 for Python 3.12. Set SCF_DCAT_SEMANTIC_PYTHON to an absolute Python executable with the retained semantic requirements installed. Values stay on this host.' } : item),
     ],
   };
 }

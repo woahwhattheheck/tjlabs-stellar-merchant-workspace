@@ -1,7 +1,7 @@
 # Collections customer delivery and MCP: canonical grant integration
 
 Operation: SCF-COLLECTION-CUSTOMER-DELIVERY-GRANT-0C7A-20261013.
-Current source edition: SCF-COLLECTION-TASK-MCP-GRANT-BC3D-20261013.
+Current source editions: SCF-COLLECTION-TASK-MCP-GRANT-BC3D-20261013 and SCF-TASK-DESK-CUSTOMER-INSTALLATION-7AD4-20261013.
 
 ## Original chapter and current source owners
 
@@ -9,7 +9,7 @@ Receive the following complete insertion into the existing H2:
 
 `## Product selection, installation and recurring buyer work`
 
-Keep every existing product selection, runtime, Request Collections authoring, shared-plan adoption, Calendar, Installation-return, commissioning and six-package paragraph. Append these three H3 sections within that same H2, before the next H2. Do not create a second Collections chapter.
+Keep every existing product selection, runtime, Request Collections authoring, shared-plan adoption, Calendar, Installation-return, commissioning and six-package paragraph. Append these H3 sections within that same H2, before the next H2. Do not create a second Collections chapter.
 
 The original current companion at 7f4b79b4b1cf5c316d27bff84037e9ab239df87b still selects the preceding 68a2ded6 authoring edition. The current canonical manuscript already has 2D73's961824b908305d3b0ab8dc2d46182609d5b27c7e authoring selection and the complete “Adopt the shared work under the receiving buyer’s own authority” paragraph, delivered in the original site thread1791867746.800609. Preserve that actual canonical successor; receiving this insertion must not restore the preceding authoring paragraph.
 
@@ -50,13 +50,27 @@ The combined source execution exercised trusted task registration through an exi
 
 For funded delivery, the customer names the useful question or recurring report, its authorized source period, the required complete files, the application or agent that receives them, and the accountable receiving engineer. The existing resource-integration package adapts those source and output contracts. The authority/handover package binds the local host registrations and receiving roles. The production-recovery package commissions interruption recovery, full customer restoration and the next maintainer's return to the same work. The other funded packages retain their existing responsibilities. Completed reusable package, interface and recovery source is pre-award work; remaining customer adaptation is assigned once within the six funded packages or a separately commissioned workorder. The grant remains USD 38,000 for 400 prospective hours over 150 days, with its original independent-use and useful-purchase criteria. Package exports, retries, downloads and customer receiving are never counted as additional purchases.
 
+### Install and reopen the original task desk for customer delivery
+
+The maintained [Inbox tasks and customer-delivery selection](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7087c5f90159c750b58e3d348347800df7f49e93/stellar/scf-starforge-20261009/distribution/selections/buyer-task-desk.json) joins the complete existing buyer runtime, task and customer package commands, Applications provider, browser assets and Merchant tools in one source-owned product. Its original build, runtime profile, dependency lock, installation and transfer workflow remain authoritative. The complete native task CLI is selected explicitly, so saved packet inspection and full original response reading are available after installation.
+
+The [original-root installation helper](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7087c5f90159c750b58e3d348347800df7f49e93/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/agents/task-desk/installation.mjs) reads the actual READY runtime and uses its original Applications validator. It keeps the original SF88 runtime, Node buyer state, Inbox, saved task/output roots, optional operator workspace and RPC commerce session, and separate customer store. An existing task pair retains its exact native SHA and original receiving mode. A moved complete packet stays available for review and customer packaging without creating another receiving.
+
+Preparation publishes the complete private settings, original-root command, runtime/source binding and Merchant connection input. The operator then explicitly chooses the original managed Applications lifecycle or foreground launcher. The original listener announcement and live status must agree on instance and every selected root before Merchant connects. Restart uses the same installed source and original task locations; the buyer still owns execution and recovery. The [complete installation and receiving guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7087c5f90159c750b58e3d348347800df7f49e93/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/agents/task-desk/INSTALLATION.md) carries the actual setup, launch, maintenance, source census and independent customer handover.
+
+The [existing Merchant tools and typed CLI](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/78e8e5407c37ae426de5d3dec0bb1c6efa5b7059/stellar-forge/mcp-merchant-operator/TASK_DESK.md) operate the same saved task and named customer request. Preparation and reconciliation compare the complete original request plus preview hash. A complete streamed archive binds the package, member manifest, filename, byte count and digest; retained ranges and atomic CLI publication preserve that selection through interruption. These tools add no substitute payment, task or receiving model.
+
+The [maintained customer workorder](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7087c5f90159c750b58e3d348347800df7f49e93/stellar/scf_2026/sf49_data_commissioning/installation-workorders/buyer-task-desk.json) carries the whole useful task, original source meaning, implementation steps, complete inputs and receiving responsibilities into the existing SF49 preparation. Its [commissioning guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7087c5f90159c750b58e3d348347800df7f49e93/stellar/scf_2026/sf49_data_commissioning/installation-workorders/TASK_DESK.md) uses the original Workshare seed, native Installation preview/save and complete case receiving. Commercial phases, funded assignments, original checks and customer prices remain in those native records.
+
+This is maintained deployment composition and source delivery. Actual desktop and narrow-screen use, useful customer output, complete export and independent reopen are observed in the original accountable native course and recorded separately. F8C1 retains the current task/customer receiving operation, original selected request and291-file source course. A source review, selected package or installation preparation is not a completed customer acceptance result. The original six funded packages,400hours and150-day schedule remain unchanged; preparing, downloading or restoring an already retained output is not another purchase.
+
 <!-- COLLECTION_CUSTOMER_DELIVERY_CHAPTER_END -->
 
 ## Source registration and original composition
 
 The adjacent `grant-products/collections-customer-delivery.json` uses the existing `stellar-forge.grant-product-registration.v1` schema. It preserves all eight original source IDs and measured editions, advances the five customer product/distribution selections to merged PR1238, and adds two sources for the complete InboxTask producer and browser history. Each measured edition binds its actual merged commit, complete original path, Git blob, UTF-8 length and SHA256. The original three MCP source IDs now also retain their measured prior editions and select the complete mutually composed task and recipient successor at merged PR1304.
 
-The entries remain optional so earlier accepted chapters stay receivable. With this complete insertion present, the original registry selects all ten current sources. Keep every other product declaration and complete existing source-index record. The current source population is an observed edition, not a permanent limit.
+The entries remain optional so earlier accepted chapters stay receivable. The original customer/MCP insertion retains its ten measured source selections. The additive Task Desk deployment insertion selects the complete original-root installer, selected recipe, installation guide, native workorder and commissioning guide, together with the already-merged Merchant guide. Keep every other product declaration and complete existing source-index record. The current source population is an observed edition, not a permanent limit.
 
 Continue the normal current composer, with all current selections and declarations:
 
