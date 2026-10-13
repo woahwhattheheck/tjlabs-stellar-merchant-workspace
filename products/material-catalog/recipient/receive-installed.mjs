@@ -6,8 +6,8 @@ import {fileURLToPath} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {openText,canonical} from './core.mjs';
-import {openRecipientReview} from './review.mjs';
-import {openAuthorWorklist} from './author-worklist.mjs';
+import {openRecipientReview,openRecipientWorking,compareRecipientReview,recipientView} from './review.mjs';
+import {openAuthorWorklist,createAuthorWorklist,retainAuthorReturn,retainAuthorDraft,retainAuthorRequest,retainAuthorOutcome,exportAuthorWorklist} from './author-worklist.mjs';
 const HERE=dirname(fileURLToPath(import.meta.url)),sha=value=>createHash('sha256').update(value).digest('hex');
 const pretty=value=>JSON.stringify(value,null,2)+'\n';
 const sourcePaths=['receive-installed.mjs','review.mjs','core.mjs','sha256.mjs','author-worklist.mjs',
@@ -19,7 +19,8 @@ const sourcePaths=['receive-installed.mjs','review.mjs','core.mjs','sha256.mjs',
  '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/workspace/public/style.css',
  '../../../stellar-forge/mcp-merchant-operator/opensearch-materials.mjs',
  '../../../stellar-forge/mcp-merchant-operator/catalog/opensearch-materials.mjs',
- '../../../stellar-forge/mcp-merchant-operator/opensearch-material-client.mjs'];
+ '../../../stellar-forge/mcp-merchant-operator/opensearch-material-client.mjs',
+ '../../../stellar-forge/mcp-merchant-operator/opensearch-material-cli.mjs'];
 async function syncDirectory(path){const fd=await open(path,'r');try{await fd.sync();}finally{await fd.close();}}
 async function retain(path,value,{replace=false}={}){
  const raw=Buffer.isBuffer(value)?value:Buffer.from(value),pending=path+'.'+randomUUID()+'.part',fd=await open(pending,'wx',0o600);
@@ -158,8 +159,35 @@ export async function receiveInstalledRecipientReturn({page,serverUrl,directory:
  }catch(error){if(record){record.status='ERROR';record.error={code:error.code??error.name,message:error.message};await retain(path,pretty(record),{replace:true});}throw error;}
  finally{page.off('pageerror',observe);await guard.close();}
 }
+// Prepare an alias input from the SAME already-completed course, without another adoption.
+export async function prepareInstalledAuthorWorklist({directory:inputDirectory,operationId,workspaceId}){
+ const directory=resolve(inputDirectory),input=await courseInputs(directory,operationId);
+ const guard=await open(join(directory,'.installed-return.lock'),'a',0o600);
+ const held=spawnSync('flock',['--exclusive','--nonblock','--conflict-exit-code','75','3'],{stdio:['ignore','pipe','pipe',guard.fd],timeout:10000});
+ if(held.status!==0){await guard.close();throw Error('ORIGINAL_INSTALLED_RETURN_GUARD_UNAVAILABLE');}
+ try{
+  const workingBytes=await retainedFile(input.original.reviewReturn.retained.authorWorking);
+  const working=openRecipientWorking(workingBytes.toString('utf8'));
+  const comparison=compareRecipientReview(recipientView(working.bundle),input.review);
+  assert.equal(comparison.sha256,input.request.expectedComparisonSha256);
+  const retained=retainAuthorReturn(createAuthorWorklist(workspaceId),input.returned.toString('utf8'));
+  let worklist=retainAuthorDraft(retained.worklist,retained.id,{comparison,
+   choices:Object.fromEntries(input.request.choices.map(choice=>[choice.id,choice.choice])),
+   actor:input.request.actor,reason:input.request.reason});
+  worklist=retainAuthorRequest(worklist,retained.id,input.request,input.requestBytes.toString('utf8'));
+  const outcome=input.original.reviewReturn.received;
+  assert.equal(outcome.state,'COMPLETE');assert.equal(canonical(outcome.request),canonical(input.request));
+  worklist=retainAuthorOutcome(worklist,retained.id,outcome);
+  const file=await retain(join(directory,'installed-author-worklist.json'),exportAuthorWorklist(worklist));
+  const result={schema:'stellar-forge.material-installed-author-worklist-input.v1',operation:operationId,workspaceId,
+   file,returnId:retained.id,requestId:input.request.requestId,requestSha256:sha(input.requestBytes),source:input.source};
+  await retain(join(directory,'INSTALLED_AUTHOR_WORKLIST_INPUT.json'),pretty(result));
+  return result;
+ }finally{await guard.close();}
+}
+
 // Invoke only after the original browser/server has released its model; client stays caller-owned.
-export async function receiveInstalledRecipientMcp({client,directory:inputDirectory,operationId,returnInputId,requestInputId}){
+export async function receiveInstalledRecipientMcp({client,directory:inputDirectory,operationId,returnInputId,requestInputId,worklistInputId}){
  const directory=resolve(inputDirectory),input=await courseInputs(directory,operationId);
  const guard=await open(join(directory,'.installed-return.lock'),'a',0o600);
  const held=spawnSync('flock',['--exclusive','--nonblock','--conflict-exit-code','75','3'],{stdio:['ignore','pipe','pipe',guard.fd],timeout:10000});
@@ -173,10 +201,34 @@ export async function receiveInstalledRecipientMcp({client,directory:inputDirect
   const result=await client.materialRecipientReceive({requestId:input.request.requestId,inputId:requestInputId,expectedInputSha256:sha(input.requestBytes)});
   assert.equal(canonical(result),canonical(original),'Original MCP replay changed its complete bounded operation result.');
   assert.equal(canonical(await client.operation({requestId:input.request.requestId})),canonical(original));
+  let worklistCourse=null;
+  if(worklistInputId!==undefined){
+   const retained=JSON.parse(await readFile(join(directory,'INSTALLED_AUTHOR_WORKLIST_INPUT.json'),'utf8'));
+   assert.equal(retained.operation,operationId);assert.equal(canonical(retained.source),canonical(input.source));
+   const raw=await retainedFile(retained.file),worklist=openAuthorWorklist(raw.toString('utf8'));
+   assert.equal(worklist.workspaceId,retained.workspaceId);assert.equal(retained.requestSha256,sha(input.requestBytes));
+   const selected={inputId:worklistInputId,expectedInputSha256:sha(raw)},listed=[];
+   for await(const page of client.pages('materialWorklistList',{...selected,limit:50}))listed.push(page);
+   const rows=listed.flatMap(page=>page.items),item=rows.find(row=>row.returnId===retained.returnId);
+   assert.ok(item);assert.equal(item.requests,1);assert.equal(item.outcomes,1);
+   assert.equal(listed[0].workspaceId,retained.workspaceId);
+   const request=await client.readWorklistRecord({...selected,returnId:item.returnId,section:'request',index:0,limit:1024});
+   assert.equal(request.text,input.requestBytes.toString('utf8'));assert.equal(request.recordSha256,sha(input.requestBytes));
+   const previews=[];for await(const page of client.pages('materialWorklistPreview',{...selected,returnId:item.returnId,limit:50}))previews.push(page);
+   assert.equal(canonical(previews.flatMap(page=>page.rows)),canonical(pages.flatMap(page=>page.rows)));
+   const receive={...selected,returnId:item.returnId,requestId:input.request.requestId,expectedRequestSha256:sha(input.requestBytes)};
+   const replay=await client.materialWorklistReceive(receive);
+   assert.equal(canonical(replay),canonical(original));
+   // Exact admitted request recovery does not depend on a still-declared file alias.
+   const retired=await client.materialWorklistReceive({...receive,inputId:'worklist-retired-source'});
+   assert.equal(canonical(retired),canonical(original));
+   assert.equal(canonical(await client.operation({requestId:input.request.requestId})),canonical(original));
+   worklistCourse={file:retained.file,returnId:item.returnId,listed,request:{...request,text:undefined},previews,replay,retired};
+  }
   const output=join(directory,'installed-return-mcp-'+randomUUID());await mkdir(output,{mode:0o700});await syncDirectory(directory);
   const report={schema:'stellar-forge.material-installed-return-mcp-course.v1',operation:operationId,status:'COMPLETE',
    workspace:client.workspace,endpoint:client.endpoint,requestId:input.request.requestId,requestSha256:sha(input.requestBytes),returnSha256:sha(input.returned),
-   source:input.source,pages,original,result,completedAt:new Date().toISOString()};
+   source:input.source,pages,original,result,worklistCourse,completedAt:new Date().toISOString()};
   await retain(join(output,'RESULT.json'),pretty(report));return report;
  }finally{await guard.close();}
 }

@@ -1,4 +1,6 @@
 // MIT. Complete typed-client runtime for the original OpenSearch material and supplier tools.
+import { createHash } from 'node:crypto';
+import { MAX_AUTHOR_WORKLIST_BYTES } from '../../products/material-catalog/recipient/author-worklist.mjs';
 import { openSearchMaterialTools } from './catalog/opensearch-materials.mjs';
 import { createRetainedDownload, openMerchantFileClient } from './retained-download.mjs';
 import { OPENSEARCH_MATERIAL_EXPORT_MANIFEST, MAX_OPENSEARCH_MATERIAL_EXPORT_FILE_BYTES,
@@ -17,6 +19,7 @@ for(const [name,properties,required]of [
 ])specs.set('merchant_opensearch_'+name,{name:'merchant_opensearch_'+name,
   properties:{workspace:{type:'string',pattern:aliasPattern.source},...properties},required:['workspace',...required]});
 const pageMethods=Object.freeze({
+  materialWorklistList:['offset','nextOffset'],materialWorklistRecord:['offset','nextOffset'],materialWorklistPreview:['offset','nextOffset'],
   materialRecipientPreview:['offset','nextOffset'],
   materialList:['cursor','nextCursor'],materialHistory:['beforeRevision','nextRevision'],
   materialRows:['offset','nextOffset'],materialChanges:['offset','nextOffset'],
@@ -31,6 +34,8 @@ export const OPENSEARCH_MATERIAL_CLIENT_METHODS=Object.freeze({
   materialBMEcatProfile:'material_bmecat_profile',
   materialEdition:'material_edition',materialRows:'material_rows',materialChanges:'material_changes',
   materialGet:'material_get',materialFacets:'material_facets',materialSuggest:'material_suggest',
+  materialWorklistList:'material_worklist_list',materialWorklistRecord:'material_worklist_record',
+  materialWorklistPreview:'material_worklist_preview',materialWorklistReceive:'material_worklist_receive',
   materialRecipientPreview:'material_recipient_preview',materialRecipientReceive:'material_recipient_receive',
   materialQuantity:'material_quantity',materialSave:'material_save',materialUpload:'material_upload',
   materialPreview:'material_preview',materialSelect:'material_select',materialDecision:'material_decision',
@@ -143,8 +148,14 @@ export class OpenSearchMaterialClient {
     if(selected[input]!==undefined)seen.add(selected[input]);
     while(true){
       const page=await this[method](selected,options);
+      if(method==='materialWorklistRecord'){
+        if(typeof page.recordSha256!=='string'||!/^[a-f0-9]{64}$/.test(page.recordSha256)||
+            selected.expectedRecordSha256!==undefined&&selected.expectedRecordSha256!==page.recordSha256)
+          fail('OPENSEARCH_CLIENT_PAGINATION','The original complete worklist record changed between byte pages.');
+        selected.expectedRecordSha256=page.recordSha256;
+      }
       if(!Object.hasOwn(page,output))fail('OPENSEARCH_CLIENT_PAGINATION','The original page omitted its continuation field.');
-      if(method==='materialRecipientPreview'){
+      if(method==='materialRecipientPreview'||method==='materialWorklistPreview'){
         if(typeof page.comparisonSha256!=='string'||!/^[a-f0-9]{64}$/.test(page.comparisonSha256)||
             selected.expectedComparisonSha256!==undefined&&selected.expectedComparisonSha256!==page.comparisonSha256)
           fail('OPENSEARCH_CLIENT_PAGINATION','The original reviewed comparison changed between pages.');
@@ -162,6 +173,39 @@ export class OpenSearchMaterialClient {
       if(seen.has(next))fail('OPENSEARCH_CLIENT_PAGINATION','The original page repeated a continuation token.');
       seen.add(next);selected[input]=next;
     }
+  }
+  /** Read a complete selected original record; no partial body is returned as complete. */
+  async readWorklistRecord(args,options){
+    if(args?.offset!==undefined&&args.offset!==0)
+      fail('OPENSEARCH_CLIENT_ARGUMENTS','A complete retained record starts at byte zero.');
+    const chunks=[];let length=0,identity=null,metadata=null;const sum=createHash('sha256');
+    for await(const part of this.pages('materialWorklistRecord',{...args,offset:0},options)){
+      const current={workspaceId:part.workspaceId,inputId:part.inputId,inputSha256:part.inputSha256,
+        returnId:part.returnId,section:part.section,index:part.index??null,recordSha256:part.recordSha256,recordBytes:part.recordBytes};
+      if(current.inputId!==args.inputId||current.inputSha256!==args.expectedInputSha256||current.returnId!==args.returnId||
+          current.section!==args.section||current.index!==(args.index??null)||typeof current.workspaceId!=='string'||
+          !current.workspaceId||!Number.isSafeInteger(current.recordBytes)||current.recordBytes<1||current.recordBytes>MAX_AUTHOR_WORKLIST_BYTES)
+        fail('OPENSEARCH_CLIENT_REPLY_INVALID','The complete retained record binding is invalid.');
+      const key=JSON.stringify(current);if(identity!==null&&identity!==key)
+        fail('OPENSEARCH_CLIENT_REPLY_INVALID','The complete retained record identity changed during reading.');
+      identity=key;metadata=current;
+      if(part.offset!==length||!Number.isSafeInteger(part.bytes)||part.bytes<1||part.bytes>262144||
+          typeof part.dataBase64!=='string'||part.dataBase64.length>349528)
+        fail('OPENSEARCH_CLIENT_REPLY_INVALID','The retained record byte page is invalid.');
+      const bytes=Buffer.from(part.dataBase64,'base64');
+      if(bytes.length!==part.bytes||bytes.toString('base64')!==part.dataBase64||length+bytes.length>current.recordBytes)
+        fail('OPENSEARCH_CLIENT_REPLY_INVALID','The original retained byte page changed.');
+      length+=bytes.length;
+      if(part.nextOffset!==(length===current.recordBytes?null:length))
+        fail('OPENSEARCH_CLIENT_REPLY_INVALID','The original retained byte page has an invalid continuation.');
+      chunks.push(bytes);sum.update(bytes);
+    }
+    if(!metadata||length!==metadata.recordBytes||sum.digest('hex')!==metadata.recordSha256)
+      fail('OPENSEARCH_CLIENT_REPLY_INVALID','The complete retained record differs from its full byte count or SHA-256.');
+    const bytes=Buffer.concat(chunks,length);let text;
+    try{text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);}
+    catch{fail('OPENSEARCH_CLIENT_REPLY_INVALID','The complete retained record is not original UTF-8 JSON.');}
+    return {...metadata,text};
   }
   inspectExport(exportId){
     return downloads.inspect({client:this.#scoped,exportId});

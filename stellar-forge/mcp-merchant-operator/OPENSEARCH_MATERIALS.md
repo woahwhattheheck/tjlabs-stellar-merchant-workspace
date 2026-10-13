@@ -242,3 +242,25 @@ The [xChange receiving operation](../../stellar/scf-starforge-20261009/sf30-sell
 Use `material_recipient_preview` with a host-declared complete return file, its exact SHA-256 and paged full rows; keep `expectedComparisonSha256` on subsequent pages. The typed client provides `materialRecipientPreview` and pins that identity in `pages()`. Use `material_recipient_receive` / `materialRecipientReceive` with the original downloaded request ID, file alias and SHA-256. Completed requests reopen from their original Journal even after a transient copy is retired.
 
 The full [installed return guide](../../products/material-catalog/recipient/INSTALLED_RETURN.md) documents every field, file boundary, recovery step, decision and same-case receiving continuation. Ordinary MCP JSON and reply limits are unchanged. Full requests use existing host input files; full results remain in the original Journal.
+
+
+## Complete author worklist agent continuation
+
+The original installed author worklist is available through
+`merchant_opensearch_material_worklist_list`, `_record`, `_preview` and
+`_receive`, plus the corresponding typed client and CLI methods.
+Use the original128MiB worklist as a host-declared `materialInputs` alias;
+the two-MiB control envelope remains unchanged. Reads validate every complete
+retained row and the original workspace ID, preserve exact record bytes across
+bounded pages and close all owned handles. Current preview remains the original
+catalogue snapshot. Receive accepts only an exact already-approved retained
+request; original transaction/current-comparison guards still apply.
+Exact admitted requests recover from the original Journal before reopening
+retired input files. No worklist draft is silently adopted.
+
+The full operator sequence, record sections, complete-text CLI, stale-request
+handling and same completed-case source/native continuation are in
+[AUTHOR_WORKLIST.md](../../products/material-catalog/recipient/AUTHOR_WORKLIST.md#installed-agents-and-complete-worklists).
+The unchanged selected distribution already carries the complete recipient
+component and statically follows the new original worklist import; no separate
+service, workspace or product installer is introduced.

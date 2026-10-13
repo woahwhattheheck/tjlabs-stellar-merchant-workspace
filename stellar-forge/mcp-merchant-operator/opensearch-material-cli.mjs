@@ -20,6 +20,10 @@ const HELP=[
   '  opensearch-materials-client tools',
   '  opensearch-materials-client open --url MCP_URL --workspace ALIAS',
   '  opensearch-materials-client material-list --url MCP_URL --workspace ALIAS --input request.json --all-pages',
+  '  opensearch-materials-client material-worklist-list --url MCP_URL --workspace ALIAS --input worklist-alias.json --all-pages',
+  '  opensearch-materials-client material-worklist-preview --url MCP_URL --workspace ALIAS --input selected-return.json --all-pages',
+  '  opensearch-materials-client read-worklist-record --url MCP_URL --workspace ALIAS --input retained-record.json',
+  '  opensearch-materials-client material-worklist-receive --url MCP_URL --workspace ALIAS --input exact-approved-request.json',
   '  opensearch-materials-client material-recipient-preview --url MCP_URL --workspace ALIAS --input return-alias.json --all-pages',
   '  opensearch-materials-client material-recipient-receive --url MCP_URL --workspace ALIAS --input original-request-alias.json',
   '  opensearch-materials-client supplier-review --url MCP_URL --workspace ALIAS --input original-request.json',
@@ -44,6 +48,8 @@ const HELP=[
   '',
   'STARFORGE_MCP_URL supplies the endpoint when --url is omitted.',
   'Single results are JSON on stdout. Download progress is JSON on stderr.',
+  'read-worklist-record emits only the exact complete UTF-8 record after its size/hash verification.',
+  'Worklist input is a small host-alias selection, not the complete128MiB worklist inside tool JSON.',
   'Keep the same download directory to resume its original manifest, file hashes and saved byte offsets.',
   ''
 ].join('\n');
@@ -112,11 +118,11 @@ export async function runOpenSearchMaterialCLI(argv,{environment=process.env,std
   const options=parse(argv);
   if(options.help){await write(stdout,HELP);return {help:true};}
   if(options.command==='tools'){
-    const result={tools:toolCatalog(),commands,receiving:['inspect-export','download-export']};
+    const result={tools:toolCatalog(),commands,receiving:['inspect-export','download-export','read-worklist-record']};
     await write(stdout,JSON.stringify(result,null,2)+'\n');return result;
   }
   const method=commands[options.command];
-  if(!method&&!['call','inspect-export','download-export'].includes(options.command))
+  if(!method&&!['call','inspect-export','download-export','read-worklist-record'].includes(options.command))
     throw failure('OPENSEARCH_CLI_ARGUMENTS','Choose an original material/supplier tool or complete export receiver.');
   const input=await originalInput(options.input,stdin);
   const callOptions={timeoutMs:options['timeout-ms']===undefined?120000:Number(options['timeout-ms'])};
@@ -130,6 +136,10 @@ export async function runOpenSearchMaterialCLI(argv,{environment=process.env,std
     let pages=0;
     for await(const page of client.pages(method,input,callOptions)){await write(stdout,JSON.stringify(page)+'\n');pages++;}
     return {pages};
+  }
+  if(options.command==='read-worklist-record'){
+    const result=await client.readWorklistRecord(input,callOptions);
+    await write(stdout,result.text);return {...result,text:undefined,emittedBytes:result.recordBytes};
   }
   let result;
   if(options.command==='inspect-export')
