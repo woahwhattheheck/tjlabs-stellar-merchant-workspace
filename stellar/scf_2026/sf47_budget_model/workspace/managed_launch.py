@@ -234,6 +234,8 @@ BOOT_FILES = (
     "style.css",
     "operations.mjs",
     "operations.css",
+    "operations_workflows.py",
+    "SAVED_WORKFLOWS.md",
     "operations_navigation.mjs",
     "operations_navigation_ui.mjs",
     "operations_navigation.css",

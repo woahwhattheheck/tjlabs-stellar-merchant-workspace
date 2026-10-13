@@ -33,6 +33,7 @@ export function mountCohortDelivery({container,current,saveApi,getActor,mutation
     sessions.set(caseId,initial);
   }
   const state=sessions.get(caseId),available=()=>active&&root.isConnected,$=selector=>root.querySelector(selector);
+  if(!Array.isArray(state.parkedComparisons))state.parkedComparisons=[];
   const pending=()=>!!(state.pending||state.accepted),locked=()=>hostBusy||!!state.inflight;
   function persist(required=false){
     const {report,inflight,...retained}=state;
@@ -108,12 +109,30 @@ export function mountCohortDelivery({container,current,saveApi,getActor,mutation
     payload.requestId=await mutationId('operations:'+caseId,payload);
     state.input=next;state.report=report;state.pending={payload};persist(true);await sendPending();
   }
-  function openDocument(document){
+  function parkComparison(incoming){
+    if(!state.input||state.savedSourceId||JSON.stringify(state.input)===JSON.stringify(incoming))return;
+    const raw=JSON.stringify(state.input);
+    if(state.parkedComparisons.some(row=>JSON.stringify(row.input)===raw))return;
+    state.parkedComparisons.push({id:'navigation-'+crypto.randomUUID(),input:copy(state.input),
+      savedSourceId:state.savedSourceId,selectedPlan:state.selectedPlan,selectedReview:state.selectedReview,
+      retainedAt:new Date().toISOString()});
+  }
+  function parkedComparisons(){
+    if(!state.parkedComparisons.length)return '';
+    return '<section class="cd-panel"><h3>Retained comparison drafts</h3><p>Opening an original saved edition keeps the comparison you were editing here.</p>'+
+      table(['Comparison','Retained','Continue'],state.parkedComparisons.map(row=>[
+        esc(row.input.title),esc(stamp(row.retainedAt)),
+        btn('Resume draft','resume-parked','data-id="'+esc(row.id)+'"',pending())+
+        btn('Download original input','download-parked','data-id="'+esc(row.id)+'"')
+      ]))+'</section>';
+  }
+  function openDocument(document,preserveDraft=false){
     requireEditable();
     const report=document.schema===COHORT_DELIVERY_COMPARISON_SCHEMA?reopenCohortDeliveryComparison(document):
       document.schema===COHORT_DELIVERY_INPUT_SCHEMA?compareCohortDelivery(document):null;
     if(!report)throw new Error('Open complete delivery comparison JSON or its editable source input.');
     if(report.source.programId!==caseId)throw new Error('Open the original Operations case '+report.source.programId+' for this comparison.');
+    if(preserveDraft)parkComparison(report.input);
     state.input=report.input;state.report=report;state.selectedReview=report.source.reviewId;state.savedSourceId=null;state.page=0;
   }
   function pager(rows){
@@ -191,7 +210,7 @@ export function mountCohortDelivery({container,current,saveApi,getActor,mutation
       btn('Compare selected sources','load','',!state.selectedPlan||!state.selectedReview||pending())+'</div></section>'+
       (r?'<section class="cd-panel"><div class="cd-heading"><div><h3>'+esc(r.title)+'</h3><p>Tranche '+r.source.plannedWindow.tranche+' · '+esc(r.source.nativeMode)+' · observed through '+esc(stamp(r.source.observedWindow.asOfAt))+'</p></div><div class="cd-actions">'+btn('Save comparison edition','save')+btn('JSON','json')+btn('CSV','csv')+btn('Readable HTML','html')+'</div></div>'+
       '<form data-cd-form="details" class="cd-form"><label>Comparison title<input name="title" value="'+esc(state.input.title)+'" required maxlength="500"></label><label>Operator note<input name="note" value="'+esc(state.input.note)+'"></label><button type="submit"'+(pending()?' disabled data-cd-fixed="true"':'')+'>Update title and note</button></form></section>':'')+
-      '<nav class="cd-tabs" aria-label="Cohort delivery sections">'+[['report','Delivery report'],['identity','Identity associations'],['placement','Original intent placement'],['sources','Saved editions and sources']].map(([id,name])=>btn(name,'tab','data-tab="'+id+'"'+(state.tab===id?' aria-current="page"':''))).join('')+'</nav>'+
+      parkedComparisons()+'<nav class="cd-tabs" aria-label="Cohort delivery sections">'+[['report','Delivery report'],['identity','Identity associations'],['placement','Original intent placement'],['sources','Saved editions and sources']].map(([id,name])=>btn(name,'tab','data-tab="'+id+'"'+(state.tab===id?' aria-current="page"':''))).join('')+'</nav>'+
       '<div class="cd-content">'+({report:overview,identity,placement,sources:sourceView}[state.tab]||overview)()+'</div>';
     controls();
   }
@@ -224,6 +243,13 @@ export function mountCohortDelivery({container,current,saveApi,getActor,mutation
       if(action==='tab'){state.tab=target.dataset.tab;state.page=0;return;}
       if(action==='previous'){state.page--;return;}if(action==='next'){state.page++;return;}
       if(action==='refresh'){await refresh();state.notice='Refreshed the current case source list.';return;}
+      if(action==='download-parked'||action==='resume-parked'){
+        const retained=state.parkedComparisons.find(row=>row.id===target.dataset.id);
+        if(!retained)throw new Error('The retained comparison is absent from this original desk.');
+        if(action==='download-parked')return download(JSON.stringify(retained.input,null,2)+'\n',clean(retained.input.title)+'-original-input.json');
+        openDocument(retained.input,true);state.savedSourceId=retained.savedSourceId;state.selectedPlan=retained.selectedPlan;
+        state.selectedReview=retained.selectedReview;state.tab='report';state.notice='Resumed the complete retained comparison draft.';return;
+      }
       if(action==='load'){
         requireEditable();
         const meta=caseValue.sources.find(row=>row.id===state.selectedPlan);
@@ -236,7 +262,7 @@ export function mountCohortDelivery({container,current,saveApi,getActor,mutation
       if(action==='save'||action==='resume')return save();
       if(action==='open-source'){
         const meta=caseValue.sources.find(row=>row.id===state.selectedSource);if(!meta)throw new Error('Select a saved comparison.');
-        openDocument(JSON.parse(await readSource(meta)));state.savedSourceId=meta.id;state.tab='report';state.notice='Reopened '+meta.filename+' from the original case.';return;
+        openDocument(JSON.parse(await readSource(meta)),true);state.savedSourceId=meta.id;state.tab='report';state.notice='Reopened '+meta.filename+' from the original case.';return;
       }
       if(action==='import'){$('[data-cd-import]').click();return;}
       if(action==='json')return download(JSON.stringify(state.report,null,2)+'\n',clean(state.input.title)+'.json');
@@ -266,11 +292,34 @@ export function mountCohortDelivery({container,current,saveApi,getActor,mutation
     run(async()=>{requireEditable();if(file.size>MAX)throw new Error('Open a complete comparison within 8 MiB.');openDocument(JSON.parse(await file.text()));state.tab='report';state.notice='Opened the complete comparison and original documents from '+file.name+'.';});
   });
   render();
+  async function openSavedWorkflow(selection){
+    await ready;
+    if(!available())throw new Error('Open this original comparison desk before selecting a source.');
+    if(state.inflight||pending())throw new Error('Finish the retained comparison request before opening another source.');
+    if(selection?.kind!=='cohort-delivery'||typeof selection.sourceId!=='string')
+      throw new Error('Select an original saved cohort comparison.');
+    if(selection.caseId!==undefined&&selection.caseId!==caseId||selection.expectedVersion!==undefined&&selection.expectedVersion!==caseValue.program.version)
+      throw new Error('Refresh this original case before opening its saved comparison.');
+    const meta=caseValue.sources.find(row=>row.id===selection.sourceId&&row.mediaType==='application/json'&&row.filename?.startsWith('sf47-cohort-delivery-'));
+    if(!meta)throw new Error('The selected comparison source is absent from this original case.');
+    state.error='';
+    const work=(async()=>{
+      const document=JSON.parse(await readSource(meta));
+      if(!available())throw new Error('The comparison desk changed while its original source was opening.');
+      openDocument(document,true);state.savedSourceId=meta.id;state.selectedSource=meta.id;
+      state.tab='report';state.notice='Reopened '+meta.filename+'; earlier comparison drafts remain available.';
+      return {outcome:'opened',caseId,kind:'cohort-delivery',sourceId:meta.id};
+    })();
+    state.inflight=work;controls();
+    try{return await work;}
+    catch(problem){state.error=problem.message||String(problem);throw problem;}
+    finally{if(state.inflight===work)state.inflight=null;persist();if(available())render();}
+  }
   const ready=(async()=>{
     if(state.inflight)await state.inflight;
     if(state.input&&!state.report){try{state.report=compareCohortDelivery(state.input);}catch(error){state.error=error.message;}}
     if(state.accepted){try{await finishAccepted();}catch(error){state.error=error.message;}}
     if(available())render();
   })();
-  return {root,ready,setHostBusy(value){hostBusy=!!value;controls();},updateCurrent(next){if(next?.program?.id!==caseId)throw new Error('Retain the original comparison case.');caseValue=next;if(available())render();},dispose(){persist();active=false;}};
+  return {root,ready,openSavedWorkflow,setHostBusy(value){hostBusy=!!value;controls();},updateCurrent(next){if(next?.program?.id!==caseId)throw new Error('Retain the original comparison case.');caseValue=next;if(available())render();},dispose(){persist();active=false;}};
 }

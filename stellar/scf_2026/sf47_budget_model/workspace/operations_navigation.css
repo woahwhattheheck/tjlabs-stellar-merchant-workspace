@@ -100,3 +100,8 @@
 }
 
 .ops-find-array{border:1px solid #d0d3d5;padding:.65rem;min-width:0}.ops-find-array-count{margin:0 0 .6rem;font-size:.78rem;color:#555c63}.ops-find-array-pages{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.45rem;margin-top:.65rem}.ops-find-array-pages>button{font-size:.75rem;padding:.35rem .5rem}.ops-find-array:focus-visible{outline:2px solid #30343a;outline-offset:2px}
+
+.operating-navigation .ops-find-workflows{border:1px solid var(--line,#d4d4d4);padding:.6rem .75rem;margin:0 0 .75rem;background:var(--panel,#fff)}
+.operating-navigation .ops-find-workflows[hidden]{display:none}
+.operating-navigation .ops-find-workflows p{margin:0;color:inherit;font-size:.875rem;line-height:1.45}
+.operating-navigation .ops-find-workflows button{margin-top:.5rem}
