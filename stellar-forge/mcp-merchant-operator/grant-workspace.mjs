@@ -1,3 +1,5 @@
+import {grantSourceCollectionVerbs,executeGrantSourceCollectionTool} from './grant-source-collection.mjs';
+import {SOURCE_COLLECTION_MAX_COPY_BYTES} from '../../stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-store.mjs';
 import {grantWorkspaceTools} from './catalog/grant-workspace.mjs';
 import {retainGrantFundingSave} from './grant-funding-recovery.mjs';
 import {seedGrantCohortDelivery,editCohortDelivery,refreshGrantCohortDelivery,
@@ -28,7 +30,7 @@ import { GrantWorkspaceClient, inspectGrantAgentBinding, readGrantAgentFile,
 export const GRANT_WORKSPACE_CONNECTION_SCHEMA = 'stellar-forge.sf47-workspace-connection.v1';
 const SNAPSHOT = 'stellar-forge.sf47-agent-snapshot.v1', TRANSFER = 'stellar-forge.sf47-agent-input.v1';
 const MAX_JSON = 64 * 1024 * 1024, PAGE_BYTES = 48000;
-const MAX_RETAINED = Math.max(MAX_JSON,GRANT_MAX_WORKBOOK_HANDOVER_BYTES,INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES);
+const MAX_RETAINED = Math.max(MAX_JSON,GRANT_MAX_WORKBOOK_HANDOVER_BYTES,INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES,SOURCE_COLLECTION_MAX_COPY_BYTES);
 const canonicalSourceRequest = value => value === null || typeof value !== 'object' ? JSON.stringify(value)
   : Array.isArray(value) ? '['+value.map(canonicalSourceRequest).join(',')+']'
   : '{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+canonicalSourceRequest(value[key])).join(',')+'}';
@@ -132,8 +134,9 @@ export async function readGrantWorkspaceConfiguration(filename) {
       identifier(inputAlias, 'Grant input alias');
       exact(file, ['file', 'sha256', 'kind', 'label', 'mediaType'], ['file']);
       const filename = hpath(file.file, base), stat = await lstat(filename);
-      need(stat.isFile() && !stat.isSymbolicLink() && stat.size <= GRANT_MAX_BUNDLE_BYTES &&
-        await realpath(filename) === filename, 'GRANT_CONFIGURATION_ERROR', 'Declare a complete regular input file up to 32 MiB.');
+      const inputMaximum=file.kind==='source-working-copy'?SOURCE_COLLECTION_MAX_COPY_BYTES:GRANT_MAX_BUNDLE_BYTES;
+      need(stat.isFile() && !stat.isSymbolicLink() && stat.size <= inputMaximum &&
+        await realpath(filename) === filename, 'GRANT_CONFIGURATION_ERROR', 'Declare a complete regular input file: ordinary inputs32 MiB, explicit source-working-copy inputs512 MiB.');
       if (file.sha256 !== undefined) sha(file.sha256);
       inputs[inputAlias] = {file:filename, label:line(file.label ?? inputAlias),
         kind:boundedText(file.kind ?? 'original', 'Input kind', 80),
@@ -192,6 +195,7 @@ function presentation(value, base = '') {
 export class MerchantGrantWorkspaces {
   #config; #clients = new Map(); #readers = new RetainedFileReads({errorPrefix:'GRANT'});
   #planningHandovers = new Map();
+  #sourceCollections = new Map();
   #reportingCaptures = new Map();
   #procedureOperations = new Map();
   #closing = false; #close; #pending = new Set();
@@ -320,7 +324,8 @@ export class MerchantGrantWorkspaces {
     this.#planningHandovers.set(key,{requestSha256,promise:operation});
     try {return await operation;}finally{this.#planningHandovers.delete(key);}
   }
-  async #input(alias, selection, expected) {
+  async #input(alias, selection, expected, maximum) {
+    if(maximum!==undefined)uint(maximum,'Original input maximum',SOURCE_COLLECTION_MAX_COPY_BYTES,1);
     exact(selection, ['hostInput', 'snapshotId', 'transferId', 'sourceWorkspace']);
     need(['hostInput','snapshotId','transferId'].filter(key => selection[key] !== undefined).length === 1,
       'GRANT_INPUT_SELECTION_INVALID', 'Choose one host input, retained snapshot or completed transfer.');
@@ -330,7 +335,8 @@ export class MerchantGrantWorkspaces {
       identifier(selection.hostInput, 'Grant input alias');
       const input = binding.inputs[selection.hostInput];
       need(input, 'GRANT_INPUT_NOT_CONFIGURED', 'Choose a declared original input alias.');
-      bytes = await readGrantAgentFile(input.file, GRANT_MAX_BUNDLE_BYTES);
+      const bound=input.kind==='source-working-copy'?(maximum??GRANT_MAX_BUNDLE_BYTES):Math.min(maximum??GRANT_MAX_BUNDLE_BYTES,GRANT_MAX_BUNDLE_BYTES);
+      bytes = await readGrantAgentFile(input.file, bound);
       if (input.sha256) need(hash(bytes) === input.sha256, 'GRANT_INPUT_CHANGED', 'The declared original input hash changed.');
       metadata = {name:input.file.split(/[\\/]/).at(-1), sha256:hash(bytes), bytes:bytes.length, contentType:input.mediaType};
     } else if (selection.snapshotId !== undefined) {
@@ -345,6 +351,7 @@ export class MerchantGrantWorkspaces {
     }
     need(hash(bytes) === sha(expected) && bytes.length === metadata.bytes, 'GRANT_INPUT_CHANGED',
       'The selected input differs from the exact reviewed SHA256 or byte count.');
+    if(maximum!==undefined)need(bytes.length<=maximum,'GRANT_INPUT_TOO_LARGE','Receive the complete input within its declared original bound.');
     return {bytes, metadata, sourceWorkspace:source};
   }
   async #modelInputs(alias, args, label, maximum = GRANT_MAX_SOURCE_BYTES) {
@@ -603,6 +610,11 @@ export class MerchantGrantWorkspaces {
           pointer:args.pointer + '/' + next, recovery:'Use merchant_grant_snapshot for selected nested values or merchant_grant_file_read for the complete original response.'}} : {})};
     }
     const client = this.#client(alias);
+    if(grantSourceCollectionVerbs.has(verb))return executeGrantSourceCollectionTool(verb,args,{
+      alias,binding,client,directory,root:()=>this.#root(alias),pending:this.#sourceCollections,
+      load:(input,expected,maximum)=>this.#input(alias,input,expected,maximum),
+      retain:(original,selection)=>this.#snapshot(alias,original,selection),
+    });
     if (grantInstallationSourceVerbs.has(verb)) return executeGrantInstallationSourceTool(verb,args,{
       alias,binding,client,load:(input,expected)=>this.#input(alias,input,expected),
       retain:(original,selection)=>this.#snapshot(alias,original,selection),

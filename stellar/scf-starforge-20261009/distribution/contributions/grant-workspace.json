@@ -8,12 +8,14 @@
   "commands": {
     "grant-installation-workorder": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare.mjs",
     "grant-installation-receive": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/receive.mjs",
-    "grant-installation-source-desk": "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk.mjs"
+    "grant-installation-source-desk": "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk.mjs",
+    "grant-source-collection": "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-cli.mjs"
   },
   "commandDescriptions": {
     "grant-installation-workorder": "Receive complete original Workshare sources and prepare a selected customer Installation workorder",
     "grant-installation-receive": "Receive original customer Workshares into the current Installation case and reopen the complete case on the receiving host",
-    "grant-installation-source-desk": "Review retained original files and merchant commissioning archives, prepare source Workshares and attach complete outputs to the selected private Installation case"
+    "grant-installation-source-desk": "Review retained original files and merchant commissioning archives, prepare source Workshares and attach complete outputs to the selected private Installation case",
+    "grant-source-collection": "Receive a complete original source collection with durable browser working copies, exact review, native request recovery and full export"
   },
   "exports": {
     "./grant/installation-workorders": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare-core.mjs"
@@ -63,7 +65,17 @@
     "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_COMMISSIONING_ARCHIVE.md",
     "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.d.mts",
-    "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_SOURCE_DESK_AGENT.md"
+    "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_SOURCE_DESK_AGENT.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-agent.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-agent.d.mts",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-store.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-store.d.mts",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-session.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-session.d.mts",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-cli.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-cli.d.mts",
+    "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_SOURCE_COLLECTION_AGENT.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_source_collection.mjs"
   ],
   "managedSourceManifests": [
     "stellar/scf_2026/sf47_budget_model/workspace/managed-source.json"
