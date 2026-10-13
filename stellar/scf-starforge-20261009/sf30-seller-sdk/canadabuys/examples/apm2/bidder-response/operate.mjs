@@ -283,6 +283,11 @@ export async function operateApm2BidderResponse({
       await write('response-workspace.json',pkg);
     }
     result.packageId = pkg.packageId; await save();
+    const exportComparison=await client.bidderComparison(decision.id);
+    await write('export-context-comparison.json',exportComparison);
+    if (exportComparison.changes?.changed!==false) throw failure('APM2_REVIEW_REQUIRED',
+      'The current source or supplier context changed during export; review the retained complete packet against the original decision.',409,
+      {packageId:pkg.packageId,comparison:exportComparison});
     const exportReview=validateResponseExport(pkg,{records:result.records,master,decision,workshare:boundWorkshare,workspaceId:original.workspaceId});
     await write('export-review.json',exportReview);
     if (exportReview.status!=='MATCHED') throw failure('APM2_REVIEW_REQUIRED',
