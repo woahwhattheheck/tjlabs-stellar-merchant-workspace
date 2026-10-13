@@ -57,13 +57,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/public/customer-account-customer.mjs",
-      "commit": "03b310b8998f420dfa4cc71647c054f123073954",
+      "commit": "72c45c66bfcbf6112e56a4e9aced0be9be138c02",
       "editions": [
         {
           "commit": "03b310b8998f420dfa4cc71647c054f123073954",
           "git_blob": "6de3a05d8eb9161709ed0676e4771f6586d5159e",
           "sha256": "c51050fb9bae9bd9df0b43e193a887dfad445eb2474fd4a7d752c3d806defc79",
           "bytes": 20073
+        },
+        {
+          "commit": "72c45c66bfcbf6112e56a4e9aced0be9be138c02",
+          "git_blob": "6fef06de0b78b18ef946487eb6b25b0095947f3f",
+          "sha256": "dda78b0ac3cea2d31f7ab35a2b354a8314bf4b377fa5f620c8cacc9423508bce",
+          "bytes": 20279
         }
       ]
     },
