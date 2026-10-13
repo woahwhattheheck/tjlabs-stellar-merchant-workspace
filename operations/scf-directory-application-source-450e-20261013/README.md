@@ -6,8 +6,8 @@ Receive this entire dated source contribution into the original cumulative appli
 
 | File | Complete content |
 | --- | --- |
-| source-package.json | The original four-object reviewer package; 2200232 bytes; SHA-256 `e1d7aa14f240634ac57f594ad3d8a2d6572e91d7e6d36ccfbb10b0a54d3cf78a`. |
-| source-files.json | All 271 selected full source files; 8288828 bytes; SHA-256 `00843291a0ab339bbbe20611be4e378817f4affb5c7e437a77107b3832e60c2e`. Every original247 member remains, including the byte-identical original binary ZIP. |
+| source-package.json | The original four-object reviewer package; 2200232 bytes; SHA-256 `fe0eba32084bb488cbde374611e4125cea42c58bc1bed8a4413c979b012186cc`. |
+| source-files.json | All 271 selected full source files; 8289431 bytes; SHA-256 `e4b0ffbae0cd9b6e57e26e20a340391f0ce4a204fd2bd014d713ef563f0dbe28`. Every original247 member remains, including the byte-identical original binary ZIP. |
 | grant.html, application.md, product-and-finance.md, source-index.json, budget.csv | The complete composed reader and its original downloads. |
 | source-pins.json | Original composer output file identities. |
 | RECEIVING.json | Actual source composition, preservation and original package export/reopen results. |
@@ -27,3 +27,7 @@ The original `prepare-source-selection.py` in the carrier can materialize the co
 The original Directory76867/133 operation completed with exit0 and its28,828,941-byte c00ad7 workspace packet. Later corrections/worksheet/reconciliation capabilities and the whole354-source programme are published source; the latest transported continuations have no observed completed native/browser/customer output. Unknown process handles do not establish termination, and original process/root/lock custody must be reconciled before continuation. The evidence file keeps these states separate.
 
 Funding remains USD38,000 /400prospectivehours /150days in the same six packages, with the original two-merchant/two-independent-buyer outcomes. Source composition creates no award, submission, customer acceptance, paid purchase or mainnet claim.
+
+## Immutable source correspondence
+
+The installed-distribution registration uses the exact product file at e963db6a: 10,583 bytes, Git445ab5ac6dd5184600b02ac9f78d894d1e789e6f. Its shorter product description differs from the retained 354-source operating programme; that programme and its execution history are preserved separately. Complete evidence, source index, source package and carrier were recomposed after this source-selection correction.
