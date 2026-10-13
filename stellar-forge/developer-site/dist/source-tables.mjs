@@ -502,7 +502,9 @@ function invalidateDocumentProjection() {
   $('document-intake-status').textContent = 'Selection is editable. Prepare the CSV preview to review its exact output.';
 }
 async function loadDocumentSource(source, projection = null, {restoring=false}={}) {
-  const verified = await validateDocumentTableSource(source), inspection = await inspectDocumentTables(verified);
+  const incoming = await validateDocumentTableSource(source);
+  const verified = project.documentTableSources?.find(row=>row.id===incoming.id) || incoming;
+  const inspection = await inspectDocumentTables(verified);
   if (!inspection.tables.length) throw new Error('This extraction contains no HTML tables. Choose extracted HTML or Markdown with table elements.');
   if (projection) await validateDocumentTableProjection({source:verified,projection});
   if(!restoring)retainDocumentPreparation();
@@ -513,6 +515,7 @@ async function loadDocumentSource(source, projection = null, {restoring=false}={
   $('document-source-url').value = verified.sourceUrl || verified.document?.url || '';
   $('document-original-name').value = verified.document?.filename || '';
   $('document-provider').value = verified.extraction?.provider || verified.extraction?.method || '';
+  if(!restoring){project.documentIntake ||= createDocumentIntake();project.documentIntake.sourceDetails={url:$('document-source-url').value,filename:$('document-original-name').value,provider:$('document-provider').value};}
   resetDocumentSelection();
   if(saved)applyDocumentPreparation(saved);
   if(projection) { writeDocumentSelection(projection.selection);documentIntake.projection=projection; }
