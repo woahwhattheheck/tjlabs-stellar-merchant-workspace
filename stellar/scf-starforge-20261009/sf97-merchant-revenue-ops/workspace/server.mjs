@@ -27,6 +27,7 @@ export async function startWorkspace({port = 8457, ...options} = {}) {
     ['/economics/receiving-browser.mjs','../economics/receiving-browser.mjs','text/javascript; charset=utf-8'],
     ['/economics/style.css','../economics/style.css','text/css; charset=utf-8'],
     ['/browser.mjs','browser.mjs','text/javascript; charset=utf-8'],
+    ['/history-browser.mjs','history-browser.mjs','text/javascript; charset=utf-8'],
     ['/style.css','style.css','text/css; charset=utf-8'],
     ['/planning','../planning/index.html','text/html; charset=utf-8'],
     ['/planning/browser.mjs','../planning/browser.mjs','text/javascript; charset=utf-8'],
@@ -154,6 +155,7 @@ export async function startWorkspace({port = 8457, ...options} = {}) {
         return json(200,await model.economics.upload({requestId:upload[1],metadata,body:req}));
       }
       const input = await body(url.pathname.startsWith('/api/economics/') ? 32*1024*1024 : 2*1024*1024);
+      if (url.pathname === '/api/commercial-history') return json(200,await model.commercialHistory(input));
       const costActions = {
         '/api/economics/list':()=>model.economics.list(input),
         '/api/economics/pricing':()=>model.economics.pricing(input.version),
