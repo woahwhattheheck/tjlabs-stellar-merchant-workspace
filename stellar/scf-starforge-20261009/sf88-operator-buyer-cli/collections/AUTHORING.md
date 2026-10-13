@@ -23,6 +23,81 @@ Open the complete private URL printed by the command. An existing collection sto
 
 Choose **Request plans** in the sidebar. The plan library lists saved revisions with their request counts and save times. **Open plan** opens the selected revision. **Refresh plans** updates the library and saved period list.
 
+## Add catalog and body files from this device
+
+**Saved inputs** in the request-plan library retains actual files in this Collections workspace. Use it when a saved provider catalog or request body is on your phone or desktop rather than at an existing server path. Existing absolute file paths continue to work.
+
+Choose the input kind, select the actual local file, and review its name before uploading. A catalog may contain up to 1 MiB; a request body may contain up to 16 MiB. These are the same limits used by the original catalog and request-body readers. Body files preserve all original bytes, including a zero-byte body. Catalogs must contain an original supported discovery envelope and pass the existing catalog inspector before they become ready.
+
+Uploads use 1 MiB binary chunks, with a shorter final chunk. The workspace retains a manifest with the file kind, name, byte length and ordered chunk hashes. A repeated upload of the same file and name resumes that manifest and skips chunks already present. If the connection ends, reopen **Saved inputs**, inspect its progress, and select the same local file to resume. Selecting different bytes or a different name creates a separate input identity. An interrupted upload cannot be chosen as a request source.
+
+Search and page through the saved input library to inspect retained inputs, original catalog rows and upload progress. A ready input can be downloaded as its original file. The browser checks the download against the retained chunk hashes before exposing the saved file. The server checks the complete retained file through a held descriptor before streaming it.
+
+In a request editor, use **Choose catalog** to select a ready catalog or **Upload from this device** to add one. Choosing it writes the retained server path into the existing request field and clears the old offer and payment selection. Choose the actual row and advertised terms again from that catalog. The original operator, request headers and body selection remain explicit. The equivalent body controls write the ready body's path into the original request-body field. A file choice edits the current plan; save a revision when the complete request definition is ready.
+
+The library stores immutable inputs under the collection directory's private `authoring/local-inputs` subtree. An upload becomes ready only after all its chunk hashes, assembled file and, for catalogs, original discovery structure have been checked. The ready file remains stable when the original file on your device is moved or removed. Completed chunks are removed after the full ready source and its metadata are durable, so they do not double the size of a completed backup.
+
+Saved input files and partial uploads travel with the original full-root encrypted Collections recovery. The existing recovery process still needs its original operator configuration and state-root containment; uploading a file alone does not provision an operator or create a collection. A saved period retains its own source capture through the original authoring flow, so ready-input selection, plan revision, period preparation, collection creation and execution retain their existing identities.
+
+A retained input represents exact bytes. To change a reporting period's request body or catalog, upload the actual new file, select it in the plan, and save another revision before preparing that period. Editing a URL parameter does not rewrite a retained body.
+
+### Local input commands
+
+Import directly from an existing file on the Linux host:
+
+```sh
+starforge buyer-collection-plans input-import \
+  --directory /srv/operator/request-collections \
+  --kind catalog \
+  --file /srv/operator/downloads/provider-catalog.json
+
+starforge buyer-collection-plans input-import \
+  --directory /srv/operator/request-collections \
+  --kind body \
+  --file /srv/operator/downloads/monthly-request.json \
+  --name monthly-request.json
+
+starforge buyer-collection-plans input-list \
+  --directory /srv/operator/request-collections \
+  --kind body --query monthly --offset 0 --limit 25
+```
+
+The complete import result has `phase: "READY"` and an `input` object. Use its `path` as the request's `discoveryFile` or `bodyFile`. Its `id` is the upload identity; its `sha256` is the digest of the actual whole source file. Repeating `input-import` uses the existing manifest and retained chunks. The command reads one held regular file in bounded chunks, rechecks its identity before completion, and returns metadata without printing file contents.
+
+Inspect a retained input, ask for its original file descriptor, or inspect a catalog by the exact returned identity:
+
+```sh
+starforge buyer-collection-plans input-show \
+  --directory /srv/operator/request-collections --input INPUT_SHA256
+
+starforge buyer-collection-plans input-file \
+  --directory /srv/operator/request-collections --input INPUT_SHA256
+
+starforge buyer-collection-plans input-catalog \
+  --directory /srv/operator/request-collections --input INPUT_SHA256
+```
+
+Replace `INPUT_SHA256` with the 64-character input ID returned by import or list. `input-file` returns the retained original file's path, download name, byte length and digest; it does not copy or print its body. `input-catalog` returns the same actual rows and accepted terms as the original catalog inspector.
+
+### Input API and client
+
+The existing authenticated listener exposes these fixed routes:
+
+| Method and route | Request | Result |
+| --- | --- | --- |
+| `GET /api/composer/inputs` | none | First page of saved inputs |
+| `POST /api/composer/inputs/list` | Optional `kind, query, offset, limit` | Filtered page with total and limits |
+| `POST /api/composer/inputs` | `{manifest}` | Start or resume the exact input |
+| `GET /api/composer/inputs/:id` | none | Manifest, complete chunk indexes and ready metadata |
+| `POST /api/composer/inputs/:id/chunks/:index` | Raw `application/octet-stream` | Compact chunk receipt |
+| `POST /api/composer/inputs/:id/complete` | `{}` | Verified ready status |
+| `GET /api/composer/inputs/:id/catalog` | none | Original saved catalog view |
+| `GET /api/composer/inputs/:id/file` | none | Original file bytes |
+
+The HTTP client's `inputs` methods are `begin, list, inspect, receiveChunk, complete, catalog, downloadFile`. Each accepts the existing optional `{signal}`; the download returns a streaming fetch response. `receiveChunk` takes `{uploadId,index,source}`, where source is a bounded `Uint8Array`, `ArrayBuffer` or `Blob`. It sends binary data directly through the same private origin and session.
+
+For custom uploaders, use the exported `input-format.mjs` constants and `validateInputManifest`. Hash the UTF-8 bytes of `inputManifestJson(manifest)` to obtain the upload ID. Hash each original source chunk separately and validate every returned chunk receipt against the expected input, index, length and hash. Reopen status to resume, then call `complete`. A returned ready input is usable by the original plan model and editor.
+
 ## Build a reusable request plan
 
 Choose **New request plan** and enter a name. The workspace suggests a plan reference from the name; retain that reference when saving another revision of the same plan. Add a short description that explains the business task or expected delivery.
@@ -30,7 +105,7 @@ Choose **New request plan** and enter a name. The workspace suggests a plan refe
 For each request:
 
 1. Enter a useful request name, such as the report or source it will deliver.
-2. Enter the absolute path of an existing saved catalog file and choose **Read saved catalog**.
+2. Choose a ready catalog from **Saved inputs**, upload it from this device, or enter the absolute path of an existing saved catalog file and choose **Read saved catalog**.
 3. Search the returned offers and select the actual resource. The selected offer supplies its saved row, URL and method.
 4. Select the advertised payment terms. Open **Selected payment terms** to inspect the original network, asset, recipient and advertised maximum.
 5. Review the concrete request URL and method.

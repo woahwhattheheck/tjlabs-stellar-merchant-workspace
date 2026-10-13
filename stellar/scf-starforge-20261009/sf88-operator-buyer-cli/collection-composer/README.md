@@ -87,6 +87,28 @@ The read and write methods return complete JSON. Open a created period's
 `collection.id` in the original Collections screen for queueing, browser or
 terminal approval, original attempt recovery and received-output export.
 
+## Private local catalog and body inputs
+
+`composer.inputs` retains real device or host files under the same authoring subtree and recovery lease. The browser's Saved inputs library and request editor, the original CLI, and the nested HTTP client share one private upload identity. Uploaded catalogs pass the original inspector; arbitrary request body bytes remain unchanged. Ready files are selected through the original `discoveryFile` and `bodyFile` fields.
+
+| Local method | Input | Result |
+| --- | --- | --- |
+| `begin` | `{manifest}` | Start/resume status |
+| `list` | `{kind?,query?,offset?,limit?}` | Paginated metadata |
+| `inspect` | `{uploadId}` | Verified manifest, chunks and ready input |
+| `receiveChunk` | `{uploadId,index,source}` | Compact chunk receipt |
+| `complete` | `{uploadId}` | Durable ready original source |
+| `file` | `{uploadId}` | Original pinned download descriptor |
+| `catalog` | `{uploadId}` | Original catalog inspector view |
+
+The local model accepts a Buffer, Uint8Array or async byte iterable for one chunk. The HTTP client's equivalent `receiveChunk` accepts Uint8Array, ArrayBuffer or Blob, and `downloadFile` returns the authenticated original stream. Every call uses the existing listener and optional cancellation signal.
+
+`input-format.mjs` is the shared browser/Node contract. A manifest records kind, display name, total length and ordered 1 MiB chunk hashes. Its upload ID is SHA-256 over UTF-8 `inputManifestJson(manifest)`. Native limits remain 1 MiB for a catalog and 16 MiB for a body. Empty bodies have no chunks and retain an actual zero-byte file.
+
+Completion streams the exact verified chunks to a private durable source, validates the original catalog when selected, publishes immutable ready metadata, then removes duplicate chunks. Interrupted uploads resume the same manifest; interrupted completion reuses its exact source. Ready input inspection and download verify the retained actual bytes. The original recovery includes this subtree, while its existing operator prerequisites remain unchanged.
+
+Use `input-import`, `input-list`, `input-show`, `input-file` and `input-catalog` in `buyer-collection-plans`. The [complete guide](../collections/AUTHORING.md#add-catalog-and-body-files-from-this-device) covers upload/resume, device selection, local CLI examples and the eight fixed API routes.
+
 ## Portable plans and independent buyer adoption
 
 `composer.sharing` joins data transfer to the same authoring facade and recovery lease. It exports an exact prepared period's selected catalog and body objects, then lets a recipient bind existing local operators and save a new immutable plan.
