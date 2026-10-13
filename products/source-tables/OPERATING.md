@@ -1,6 +1,6 @@
 # Source Tables workbench
 
-Use Source Tables to turn complete CSV or TSV files into reviewed native merchant resources. One editable project retains the original files, field decisions, earlier source editions, complete comparisons and the merchant's existing route and payment settings.
+Use Source Tables to turn complete delimited files or explicitly selected document tables into reviewed native merchant resources. One editable project retains the original files, field decisions, earlier source editions, complete comparisons and the merchant's existing route and payment settings.
 
 The selected installation includes the browser workbench, native CLI, typed interface, original merchant and buyer commands, managed Applications and runtime transfer. The [field and source guide](../../stellar-forge/developer-site/SOURCE_TABLES.md) gives the exact parsing, mapping, comparison and archive contracts.
 
@@ -74,6 +74,16 @@ The [runtime installation guide](../../stellar/scf-starforge-20261009/distributi
 Use **Integer text** for zero-padded identifiers and large integers, and **Decimal text** for exact amounts or measurements whose digits and scale must survive unchanged. An empty string, JSON null and an omitted field are separate choices. The workbench retains quoted newlines, source line endings, Unicode and a UTF-8 BOM. Its full review processes every row.
 
 The exported resource includes `fields`, `keyFields`, `source` and all mapped `rows`. A table can retain a 16 MiB original source and up to 100,000 records; its complete selected native resource must fit the original generator's 1 MiB limit. Use the existing dataset/database workflow for larger publications.
+
+## Prepare tables from a document
+
+Open a table-preserving HTML or Markdown extraction, or reopen its retained document-source JSON. Keep the original document URL, filename and supplied page locations with that source. Select the original table, header rows, data rows and columns, then choose how merged cells and whitespace contribute to the output.
+
+Inspect the projected values and their original cell locations. Receive the selection as a new resource or as the next source edition of an existing table, then continue through the ordinary field mapping and retained review. The complete extraction remains in the editable project; omitted rows remain available for a later selection. Projected editions retain their complete selection and cell origins even when two different selections produce the same CSV text.
+
+The native commands are `document-inspect`, `document-init`, `document-add` and `document-edition`. The [document intake guide](../../stellar-forge/developer-site/SOURCE_TABLES.md#receive-tables-extracted-from-a-document) includes exact command arguments, the typed `source-document-tables` interface, all six original WAGO supplier tables and the complete native receiving programme.
+
+Native workspace exports include the original extraction and source metadata under `source-tables/documents/`, plus explicit selections, projections and row origins under `source-tables/projections/`. Reopening checks those records against the original source before restoring its reviewed resources.
 
 ## Update and explain changes
 

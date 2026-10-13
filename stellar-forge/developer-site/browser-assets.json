@@ -855,6 +855,13 @@
         "grant-financial-walkthrough.html",
         "text/html; charset=utf-8"
       ]
+    ],
+    [
+      "/source-document-tables.mjs",
+      [
+        "source-document-tables.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }
