@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "worldbank",
   "title": "World Bank economic workspace",
-  "description": "World Bank source editions, reviewed dataset publication, managed browser and MCP operation, exact analytical workbooks and complete customer receiving",
+  "description": "World Bank source editions, reviewed native programmes, complete customer workbooks and workspace files, Merchant agents and recurring Console handover",
   "base": {
     "commands": [
       "installation",
@@ -65,7 +65,9 @@
     "merchant-provider-facilitators",
     "merchant-provider-publishers",
     "merchant-provider-receiving",
-    "merchant-provider-tools"
+    "merchant-provider-tools",
+    "merchant-console",
+    "worldbank-programmes"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
@@ -87,7 +89,8 @@
     "stellar/scf-starforge-20261009/sf54-buyer-governor-intent",
     "stellar/scf-starforge-20261009/sf59-operator-reservation-gate",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/socrata",
-    "products/worldbank"
+    "products/worldbank",
+    "stellar/scf_2026/sf47_budget_model"
   ],
   "supportFiles": [
     "stellar-forge/payment-auto-catalog/schema-validation.mjs",
@@ -119,7 +122,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "World Bank source editions, reviewed dataset publication, managed browser and MCP operation, exact analytical workbooks and complete customer receiving",
+    "description": "World Bank source editions, reviewed native programmes, complete customer workbooks and workspace files, Merchant agents and recurring Console handover",
     "readme": "products/worldbank/README.md",
     "bin": {
       "starforge": "stellar/scf-starforge-20261009/distribution/cli.mjs"
