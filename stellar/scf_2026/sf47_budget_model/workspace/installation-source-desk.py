@@ -17,7 +17,7 @@ import uuid
 from model import Workspace, Problem
 from operations import Operations
 from operations_installation_sources import SourceDesk, MAX_FILE, MAX_ZIP, json_bytes
-from installation_source_desk_client import InstallationSourceDeskClient, FlowableSourceDeskClient, prepare_upload, receiving_selection
+from installation_source_desk_client import InstallationSourceDeskClient, FlowableSourceDeskClient, EcondbSourceDeskClient, prepare_upload, receiving_selection
 
 MAX_REQUEST = 32 * 1024 * 1024
 
@@ -136,6 +136,23 @@ def execute(desk, args):
         if action in ("catalogue", "inspect", "template", "prepare"):
             return client.perform(action, object_file(args.request)), None
         raise ValueError("Choose a declared complete Flowable source operation.")
+    if args.command.startswith("econdb-"):
+        client = EcondbSourceDeskClient(desk, case)
+        action = args.command[len("econdb-"):]
+        if action == "import":
+            return client.import_file(str(args.file), request_id=args.request_id, kind=args.kind,
+                                      expected_sha256=args.expected_sha256, name=args.filename), None
+        if action == "archive-describe":
+            return client.archive(args.request_id), None
+        if action == "request":
+            return client.request(args.request_id), None
+        if action == "list":
+            return client.list(args.offset, args.limit), None
+        if action == "file-describe":
+            return client.file(args.file_id), None
+        if action in ("catalogue", "inspect", "template", "prepare"):
+            return client.perform(action, object_file(args.request)), None
+        raise ValueError("Choose a declared complete Econdb source operation.")
     if args.command in ("prepare-command", "prepare-upload", "archive-inspect",
                          "archive-receive-prepare", "commissioning-inspect",
                          "commissioning-preview", "commissioning-attach-prepare",
@@ -309,6 +326,36 @@ def main(argv=None):
         else:
             command.add_argument("--inspection-id", required=True)
             command.add_argument("--path", required=True)
+    for action in ("catalogue", "inspect", "template", "prepare"):
+        command = sub.add_parser("econdb-" + action)
+        command.add_argument("--request", required=True, type=Path,
+                             help="Complete original source-service request with retained UUID and case version")
+    command = sub.add_parser("econdb-import")
+    command.add_argument("--file", required=True, type=Path)
+    command.add_argument("--kind", required=True, choices=("archive", "seed", "bindings", "commissioning", "attachment"))
+    command.add_argument("--request-id", required=True)
+    command.add_argument("--expected-sha256", required=True)
+    command.add_argument("--filename")
+    command = sub.add_parser("econdb-request")
+    command.add_argument("--request-id", required=True)
+    command = sub.add_parser("econdb-archive-describe")
+    command.add_argument("--request-id", required=True)
+    command = sub.add_parser("econdb-archive")
+    command.add_argument("--request-id", required=True)
+    command.add_argument("--expected-sha256", required=True)
+    command = sub.add_parser("econdb-list")
+    command.add_argument("--offset", type=int, default=0)
+    command.add_argument("--limit", type=int, default=100)
+    command = sub.add_parser("econdb-file-describe")
+    command.add_argument("--file-id", required=True)
+    for action in ("file", "source-file"):
+        command = sub.add_parser("econdb-" + action)
+        command.add_argument("--expected-sha256", required=True)
+        if action == "file":
+            command.add_argument("--file-id", required=True)
+        else:
+            command.add_argument("--inspection-id", required=True)
+            command.add_argument("--path", required=True)
     args = parser.parse_args(argv)
     if args.command != "profiles" and not args.case:
         parser.error("--case must select the original existing Operations case")
@@ -325,6 +372,15 @@ def main(argv=None):
             receipt = client.export_archive(args.request_id, str(args.out), args.expected_sha256)
         elif args.command in ("flowable-file", "flowable-source-file"):
             client = FlowableSourceDeskClient(desk, args.case)
+            receipt = client.export_file(str(args.out), args.expected_sha256,
+                file_id=getattr(args, "file_id", None), inspection_id=getattr(args, "inspection_id", None),
+                path=getattr(args, "path", None))
+
+        elif args.command == "econdb-archive":
+            client = EcondbSourceDeskClient(desk, args.case)
+            receipt = client.export_archive(args.request_id, str(args.out), args.expected_sha256)
+        elif args.command in ("econdb-file", "econdb-source-file"):
+            client = EcondbSourceDeskClient(desk, args.case)
             receipt = client.export_file(str(args.out), args.expected_sha256,
                 file_id=getattr(args, "file_id", None), inspection_id=getattr(args, "inspection_id", None),
                 path=getattr(args, "path", None))
