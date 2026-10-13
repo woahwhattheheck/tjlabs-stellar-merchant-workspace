@@ -30,7 +30,7 @@ concurrency:
 
 jobs:
   original-native-receiving:
-    if: ${{ github.repository == 'woahwhattheheck/tjlabs-stellar-merchant-workspace' && github.event.repository.private == false && github.ref == 'refs/heads/main' && inputs.operation == 'SCF-RECEIVABLES-NATIVE-2A51-20261012' && (inputs.receiving_mode == 'original-mcp' || inputs.receiving_mode == 'installed-customer-fixture') }}
+    if: ${{ (false) && (github.repository == 'woahwhattheheck/tjlabs-stellar-merchant-workspace' && github.event.repository.private == false && github.ref == 'refs/heads/main' && inputs.operation == 'SCF-RECEIVABLES-NATIVE-2A51-20261012' && (inputs.receiving_mode == 'original-mcp' || inputs.receiving_mode == 'installed-customer-fixture')) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
