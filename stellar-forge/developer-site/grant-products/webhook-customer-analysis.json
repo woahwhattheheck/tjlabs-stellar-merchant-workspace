@@ -290,7 +290,7 @@
     {
       "id": "webhook-event-browser-http",
       "label": "Existing private Analysis HTTP integration for event programmes",
-      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/event_programmes_http.py",
       "required": false,
@@ -336,13 +336,20 @@
           "git_blob": "09dad6b1f8b27fb83025071989321f0e98c07712",
           "bytes": 3414,
           "sha256": "071fd67b5b9979a736e4cc96077c39f9ef210f146a8091f0dd6efc93671e06bc"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "601b35a99304e31dbdd1c272a2256caf0e52b455",
+          "git_blob": "da7d04cf9b493211716db88aa823aee8f58dc5dd",
+          "bytes": 3778,
+          "sha256": "8c8a906de1bfae8e79af50f65ce2de16549176445a8e230972ebdb7dbe4135db"
         }
       ]
     },
     {
       "id": "webhook-event-browser",
       "label": "Complete original Event programmes browser interface",
-      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/_analysis_event_programmes_ui.py",
       "required": false,
@@ -388,6 +395,13 @@
           "git_blob": "b3675075d54c34e694aab0e02e0b93b4852d76e7",
           "bytes": 56850,
           "sha256": "0b94dc88b2a5df28d72cc8e785c6a65441009420fd47c0daadeac9ecafa34d31"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "601b35a99304e31dbdd1c272a2256caf0e52b455",
+          "git_blob": "c1516659a5ea8915b9b26f3cb762530298af15cf",
+          "bytes": 58206,
+          "sha256": "04bbb236f52f5dfb4f7e1746909f1f0dd4bb78ca3538a1b58b2fd19824142ce4"
         }
       ]
     },
@@ -726,7 +740,7 @@
     {
       "id": "webhook-event-agent-installation",
       "label": "Existing product installation and agent receiving command contribution",
-      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/contributions/analysis-events.json",
       "required": false,
@@ -765,6 +779,13 @@
           "git_blob": "c04682ace77413a943399fbea667660679cc6b19",
           "bytes": 2793,
           "sha256": "6d4b0a396cdceeb4b709b1b219e48bce468cc86af4b14ce95d854d1c06ff21e8"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "601b35a99304e31dbdd1c272a2256caf0e52b455",
+          "git_blob": "76b23edaf56effc26b9aebc681ccc872e4a9ca07",
+          "bytes": 3020,
+          "sha256": "3acd366f42354c6ec085f31beb8c0d35e69ed50bd899dd85f66e03dbf2278d0f"
         }
       ]
     },
@@ -1150,7 +1171,7 @@
     {
       "id": "webhook-event-workbook-columns",
       "label": "Complete source-bound customer worksheet column continuation",
-      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-columns.mjs",
       "required": false,
@@ -1168,13 +1189,20 @@
           "git_blob": "3af4f10a75b0ed4c53ada678579b617746e58dac",
           "bytes": 23387,
           "sha256": "9cee0b18e2fcc95802416e03eff4d5e672eecef04c947f6795cb02a4fa026848"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "601b35a99304e31dbdd1c272a2256caf0e52b455",
+          "git_blob": "4db429b8b9b815493a86e68d89b79d5539217b09",
+          "bytes": 24182,
+          "sha256": "11c76e0b6c3003e8b28185f34fa5d3b4bd1f31cdcb666a6472b28417f20c98b4"
         }
       ]
     },
     {
       "id": "webhook-event-workbook-columns-cli",
       "label": "Installed complete customer worksheet handover and file receiving command",
-      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-columns-cli.mjs",
       "required": false,
@@ -1192,13 +1220,20 @@
           "git_blob": "ea690fada260fd01d3f2bad9e5e5f303152cb58e",
           "bytes": 4807,
           "sha256": "72abd69c2532e05ee798a1a326859efcd4d5bd16eee2b39025211e849737ab04"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "601b35a99304e31dbdd1c272a2256caf0e52b455",
+          "git_blob": "8d4dc13092ce2f4f27ed0392d4b167f2c04b3155",
+          "bytes": 5240,
+          "sha256": "34946d7fd0e387b53b871270852b375444a83131c2a2158698b450fbc57aa6ec"
         }
       ]
     },
     {
       "id": "webhook-event-workbook-columns-operating",
       "label": "Complete worksheet operating and independent receiving course",
-      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_WORKBOOK_COLUMNS.md",
       "required": false,
@@ -1216,6 +1251,47 @@
           "git_blob": "58979eb9bc0c324628a663745e62de68740803cb",
           "bytes": 13387,
           "sha256": "002745244c9656af21ee1e6d56a11cc36c76f29ee45ec3a502d7ab96466c7d76"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "601b35a99304e31dbdd1c272a2256caf0e52b455",
+          "git_blob": "14bec9aa5482fb4c46bd141567d1e1bcd74ee31a",
+          "bytes": 18417,
+          "sha256": "3e62bed2a9996df1e8bf4889604e45624e170bcc60a22e63c6ad8f8ce616cd38"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-workbook-editor",
+      "label": "Complete editable customer worksheet HTML and original source composer",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-editor.mjs",
+      "required": false,
+      "editions": [
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "601b35a99304e31dbdd1c272a2256caf0e52b455",
+          "git_blob": "2c33fc6d5c0848a66cf27c42e2636d92f0171b0a",
+          "bytes": 5656,
+          "sha256": "38ecc8127273979218fc745c26898058bc321a8f9817023158e9117561be25b1"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-workbook-editor-controls",
+      "label": "Complete offline customer worksheet controls, save and independent reopen",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-editor.js",
+      "required": false,
+      "editions": [
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "601b35a99304e31dbdd1c272a2256caf0e52b455",
+          "git_blob": "e33a0aa5e65e0653a4a61158f643d45a0a3a77ec",
+          "bytes": 4243,
+          "sha256": "925028a816866301ab0a6815aa28a1bcffd34f337807d2131e1a166b327e4c71"
         }
       ]
     }
