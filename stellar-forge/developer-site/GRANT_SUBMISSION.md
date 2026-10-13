@@ -75,6 +75,47 @@ Move fields into the issuer's order. Removing a field retains its preceding vers
 
 **Download form map** retains the exact form profile, field prompts, limits, selected answer IDs and field text. Opening that map in another working draft retains the prior mapping before importing the selected one.
 
+## Receive answer changes into the actual form
+
+An issuer field retains the complete source answers used when its wording was
+copied or explicitly reviewed. In **Compare the selected source answers**, read
+the previous and current answer text. A changed source, a different answer
+selection or a changed answer order remains visible beside the full field.
+
+**Use the current answer wording** replaces the field with the selected complete
+answers. **Keep field wording and record this review** preserves the edited text
+and records the exact answers considered. Each choice retains the preceding
+full submission version. A working wording-decision note is part of the draft,
+including Save, full export, reopening and version restore.
+
+The **Answer coverage** panel links all nine manuscript areas to their mapped
+fields. An unmapped area stays visible so the operator can incorporate its useful
+facts where the actual form asks for them. This records editorial associations;
+the field's actual wording still needs to answer the issuer's prompt.
+
+**Refresh unchanged copied fields** updates all changed fields whose text still
+matches its last copied wording. It preserves edited fields and wording that an
+operator deliberately kept. Old form maps without retained baselines open with
+their complete original text and an initial comparison to make explicitly.
+
+Source receiving, plan application and direct answer editing can all change an
+answer used by a field. Those actions preserve the field until this comparison
+is resolved. Native plan receiving continues to use its existing exact package,
+price, tranche and target revision workflow.
+
+The same baselines and pending notes travel in **Download form map** and the
+complete editable draft. Preparing issuer-field output freezes the answer
+mapping, source-change state, wording decisions and exact output together.
+Later source updates leave that prepared edition unchanged. The printable
+handover includes the mapping at preparation and the existing later-output
+comparison. Earlier prepared editions reopen with their original contents.
+
+The SCF [submission criteria](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria)
+were read on October 13, 2026. They require the submission to carry the facts
+needed for review. Keep the six-package budget, complete outcomes and team facts
+in the actual answers, and record labels, limits and attachment instructions
+from the invited issuer form.
+
 ## Use the original SF47 budget and delivery plan
 
 Open **Planning edition** in the submission editor. **Receive native plan or planning ZIP** accepts either:
