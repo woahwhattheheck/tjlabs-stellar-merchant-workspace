@@ -115,6 +115,65 @@ For the actual current native operation:
 
 Source-level execution and contract review do not constitute this native product course. Until the producing peer has viewed and used the exact rendered version, describe it as integrated source awaiting its existing equipped receiving operation.
 
+
+## Assess explicit planning limits and choose a finite option
+
+Open **Financing options → Planning limits** after calculating the active options. The original batch calculator has already produced complete cash, currency, source, work and capacity reports against one case version. Assessment reads those saved reports. It does not adjust a receipt, value an unknown amount, create an invoice or recalculate a financial curve.
+
+Choose the cash scenario and measure deliberately:
+
+| Selection | Meaning |
+| --- | --- |
+| Conditional grant only | The original grant scenario, retaining its conditional award and tranche assumptions. |
+| Combined pooled cash | Original grant and selected commercial flows pooled together; customer delivery obligations retain the original Forecast treatment. |
+| Combined with customer funds protected | The original customer-funding projection. Each option must actually enable that projection and supply the necessary attribution and valuation. This is a planning reservation, not a bank or legal restriction. |
+| Required starting cash | The original maximum required initial funding over the modeled curve, before using entered opening cash to find a further gap. |
+| Extra funding after known opening cash | The original additional gap after the entered opening amount. Unknown opening cash remains unresolved even if required starting cash is known. |
+
+Enter only limits you intend to assess. A blank limit is not selected; `0` is an explicit zero tolerance. Cash accepts exact plain nonnegative decimal values with at most two fractional digits. Peak weekly-equivalent hours accepts up to eight fractional digits. Overloaded days accepts a nonnegative integer. Unfinished text such as `0.` remains in the portable working study and can be corrected later, but cannot be assessed as a finished number.
+
+The peak-hours measure is the native seven-day-equivalent workload derived from calendar-day planning, not an actual staffing roster. The overloaded-day count uses the original weekly capacity of **each option**. Entering a new peak-hours limit does not recalculate that count. If native capacity is unknown, a displayed zero count cannot establish capacity. Selected undated work keeps capacity checks unresolved unless the dated portion already exceeds the entered limit; the dated known value stays visible. Unknown native capacity remains unresolved. Undated delivery costs and unknown currency values cannot support a combined cash pass. Conditional grant-only cash uses its original narrower financial scenario; this does not remove commercial work from the capacity check.
+
+Give the assessment a name and a decision note. Select **Assess selected comparison**. Every original option remains visible:
+
+- **Meets entered limits** means all selected checks are known and no greater than the entered limits.
+- **Exceeds entered limits** means at least one selected check exceeds its limit. Other unresolved checks remain visible.
+- **Unresolved** means a selected check is unknown and none of the known checks already exceeds its limit.
+
+These labels address only the stated limits under the native conditional assumptions. They do not establish an award, customer payment, accepted work, available staff, completed observation cohort or legal permission. Inspect the original issues and assumptions even when an option meets the entered limits.
+
+### A shortlist with an explicit comparison boundary
+
+An option is shortlisted when it meets the entered limits and another option in the same comparable scope does not have values at least as good on every selected measure and strictly better on one. Lower values are preferred only for the measures you selected; ties remain on the shortlist.
+
+The scope boundary preserves the same as-of date, first and last forecast dates, original package identities/scopes/planned and remaining hours, selected customer identities/scopes/remaining hours/source selections, invoice identities, actual total/open amounts, included/excluded liability coverage, commercial allocation and original native weekly capacity. A changed work population, capacity or date horizon has a separate group. Missing scope cannot enter the shortlist. Unknown or exceeding options are never promoted over a fully known option. A single eligible option can be shortlisted without proving it is globally optimal. This is a finite comparison of the retained options, not a search over every possible financing arrangement.
+
+The comparison still may contain different prices, cost assumptions, cash attribution, payment dates or conditional commitments. Read the original input differences before choosing. Reducing work or extending the horizon does not silently win a shared comparison.
+
+### Retain, inspect, reuse and adopt
+
+Each assessment retains its exact criteria, all original option results, native comparison digest, case version and creation time. Editing the current limits or changing the case leaves the prior assessment intact. Choose a retained assessment to inspect its historical results. **Reuse retained criteria** preserves the displaced unfinished criteria in history before copying the earlier values.
+
+Assessment CSV contains one row per original option and selected check, including the actual value, limit, result, uncertainty reason, scope group and shortlist basis. Assessment JSON retains the complete result. **Inspect assessment detail** includes the exact native option, original batch request and assessment. Spreadsheet-safe CSV text preserves formula-like source names as text; the JSON retains the original names exactly.
+
+**Review original option adoption** opens the same complete before/after review used by Financing options. The original case version and active option inputs must still match that native comparison. Historical or changed options require a new original native batch calculation before adoption. An operator may deliberately review an option that exceeds a limit; its result is visible in the review and the exact assessment identity stays in the adoption history. Adoption is explicit and continues through the normal original Forecast preview and save.
+
+All criteria, unfinished values, assessments, displaced drafts and adoption links travel in the complete study, the original Forecast working file, and the existing saved case source. Export/reopen validates the retained assessment by deriving it again from its exact original native comparison; altered result cells reject before adoption. An adoption linked to an assessment must also retain that exact option’s calculated inputs, source version and empty calculated raw-field map. Old studies without planning-limit state remain unchanged. The same pending-request, full-source, actual case-ancestry and storage-independent recovery rules described above continue to apply.
+
+### Continue the original equipped receiving course
+
+Use the existing F47A/native operation and its actual case. After the earlier complete option course:
+
+1. Select the actual current native comparison, open Planning limits at desktop and narrow width, and look at the real controls and result table. Inspect the empty state before assessment.
+2. Retain a partially typed cash limit, reload the full working file and confirm that exact text survives. Complete it with an operator-selected amount. Assess all original options and inspect each result, original issue, source scope and capacity basis.
+3. Use an actual retained option's cash requirement as a boundary, then a one-cent-lower limit in another named assessment. Keep both editions. Switch to extra funding with unknown opening cash and confirm unresolved handling; use the actual enabled/disabled customer-protection option as appropriate.
+4. Reuse an earlier criterion after typing a different unfinished draft and reopen the complete study. Confirm the displaced draft, original sources and every assessment survive. Open the actual CSV/JSON and detail downloads.
+5. Review adoption from a retained assessment. Change the original source or editor at the existing operating boundary and verify stale review protection. Recalculate using the unchanged native batch endpoint, explicitly review the current result, and continue the original normal preview/save.
+6. Save the complete study through the original source writer and cold-reopen the original case and complete study. Retain the actual native request identities and inspect the real rendered reports and every outgoing attachment.
+
+The retained V8 source exercise uses the genuine original v32 saved preview: required combined starting cash USD 7,680.00, peak 58.3338 seven-day-equivalent hours, 42 overloaded days, unknown opening cash and disabled customer protection. Exact limits pass those chosen checks; USD 7,679.99 exceeds the cash check; extra-after-opening and protected-fund choices remain unresolved. This exercises the actual new module with original data; it is not a newly calculated multi-option batch, Python execution or rendered browser result. Do not present differing historical case versions as one new same-version batch.
+
+
 ## Owner's complete rendered-product instruction
 
 This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Bryce's standing rule is: “that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it”.

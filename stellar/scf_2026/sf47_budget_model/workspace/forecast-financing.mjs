@@ -1,5 +1,6 @@
 // MIT. Complete financing options over the original native Forecast calculator.
 import {signature} from './forecast-workbook.mjs';
+import {validateFinancingDecision} from './forecast-financing-decision.mjs';
 import {validateForecastDraftInputs} from './forecast-workbook-host.mjs';
 import {encodeWorkbookBytes,decodeWorkbookBytes} from './source-workbooks.mjs';
 
@@ -51,7 +52,7 @@ export function newFinancingState(current){
   return {schema:FINANCING_SCHEMA,...binding(current),id:uuid('financing'),title:'Financing options',note:'',revision:1,selectedId:null,baselineId:null,options:[],comparisons:[],selectedComparisonId:null,adoptions:[],sourceReceipts:[],pendingSource:null,nameDraft:'',noteDraft:'',message:''};
 }
 export function validateFinancingState(value,current){
-  const s=clone(value);keys(s,['schema','caseId','originCaseId','planContentSha256','id','title','note','revision','selectedId','baselineId','options','comparisons','selectedComparisonId','adoptions','sourceReceipts','pendingSource','nameDraft','noteDraft','message','origins'],'financing state');
+  const s=clone(value);keys(s,['schema','caseId','originCaseId','planContentSha256','id','title','note','revision','selectedId','baselineId','options','comparisons','selectedComparisonId','adoptions','sourceReceipts','pendingSource','nameDraft','noteDraft','message','origins','decision'],'financing state');
   need(s.schema===FINANCING_SCHEMA&&ident.test(s.id||'')&&Number.isSafeInteger(s.revision)&&s.revision>0,'Retain the complete original financing study.');checkBinding(s,current);
   if(s.origins!==undefined){need(Array.isArray(s.origins)&&s.origins.length<=100,'Retain the original case receiving lineage.');for(const o of s.origins){keys(o,['caseId','originCaseId','planContentSha256','receivedAt','studySha256'],'received study lineage');need(/^operation-[a-f0-9]{32}$/.test(o.caseId||'')&&(o.originCaseId===null||/^operation-[a-f0-9]{32}$/.test(o.originCaseId||''))&&o.planContentSha256===s.planContentSha256&&date(o.receivedAt)&&hash.test(o.studySha256||''),'Retain exact original study receiving lineage.');}}
   for(const n of ['title','note','nameDraft','noteDraft','message'])text(s[n],n,n==='title'||n==='nameDraft'?200:12000,false);
@@ -62,8 +63,10 @@ export function validateFinancingState(value,current){
   const comparisons=new Set();for(const c of s.comparisons){keys(c,['id','createdAt','request','result','context','attachments'],'comparison');need(ident.test(c.id||'')&&!comparisons.has(c.id)&&date(c.createdAt),'Retain unique complete comparison editions.');comparisons.add(c.id);request(c.request);context(c.context,s);need(c.context.program.version===c.request.expectedVersion&&c.context.program.id===c.result.source.programId,'The comparison case identity or version differs.');previewShape(c.result,c.request,s);need(Array.isArray(c.attachments),'Retain the original source attachments.');
     const seen=new Set();for(const a of c.attachments){keys(a,['id','sha256','bytes','dataBase64'],'source attachment');sourceMeta({...a,filename:'',mediaType:''});need(!seen.has(a.id)&&typeof a.dataBase64==='string','Repeated or missing source bytes.');seen.add(a.id);const m=c.context.sources.find(x=>x.id===a.id);need(m&&m.sha256===a.sha256&&m.bytes===a.bytes,'The source attachment is outside its original comparison.');}}
   need(s.selectedComparisonId===null||comparisons.has(s.selectedComparisonId),'The selected comparison is absent.');
-  for(const a of s.adoptions){keys(a,['at','optionId','comparisonId','before','after'],'adoption');need(date(a.at)&&ids.has(a.optionId)&&(a.comparisonId===null||comparisons.has(a.comparisonId)),'Retain the original adopted option.');capture(a.before);capture(a.after);}
+  for(const a of s.adoptions){keys(a,['at','optionId','comparisonId','before','after','decisionId'],'adoption');need(date(a.at)&&ids.has(a.optionId)&&(a.comparisonId===null||comparisons.has(a.comparisonId)),'Retain the original adopted option.');capture(a.before);capture(a.after);}
   for(const r of s.sourceReceipts){need(object(r)&&typeof r.filename==='string'&&hash.test(r.sha256||'')&&date(r.at),'Retain the source receipt.');if(r.status==='SAVED')need(/^source-[a-f0-9]{32}$/.test(r.id||'')&&Number.isSafeInteger(r.version),'The original saved study identity is absent.');else need(r.status==='REJECTED'&&object(r.request)&&object(r.error),'Retain the rejected original source request.');}
+  if(Object.hasOwn(s,'decision'))validateFinancingDecision(s.decision,s.comparisons);
+  for(const a of s.adoptions)if(Object.hasOwn(a,'decisionId')){const decision=s.decision?.assessments.find(x=>x.id===a.decisionId),comparison=s.comparisons.find(x=>x.id===a.comparisonId),row=comparison?.result.options.find(x=>x.id===a.optionId);need(decision&&decision.comparisonId===a.comparisonId&&decision.report.rows.some(x=>x.optionId===a.optionId)&&row&&same(a.after.inputs,row.preview.inputs)&&same(a.after.rawFields,{})&&a.after.caseVersion===comparison.result.source.version,'Retain the exact original calculated inputs, source version and planning-limit assessment used for adoption.');}
   if(s.pendingSource)validateFinancingJournal(s.pendingSource,s,current);
   need(new TextEncoder().encode(JSON.stringify(s)).length<=256*1024*1024,'The complete study exceeds the original working-file allowance. Download its current edition before continuing.');
   return s;
