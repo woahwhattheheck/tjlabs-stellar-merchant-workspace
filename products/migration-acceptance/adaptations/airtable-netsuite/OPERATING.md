@@ -31,7 +31,7 @@ Serve `products/migration-acceptance/` over localhost and open `adaptations/airt
 5. Download the complete project. **Save unfinished working copy** also preserves invalid or incomplete mapping text, reviewer fields and the last complete source project. Reopen it through the same project file control.
 6. Download the complete prepared source package when the saved edition is selected. It contains every original/projection file and the complete editable project.
 
-The app deliberately requires a saved attributed mapping before exporting the selected prepared package. A failed preview keeps current work. Opening an invalid file keeps the previous project. Complete project/working files have an explicit 512 MiB capacity; the original native intake uploads complete files in retained chunks.
+Export uses the selected saved mapping; native compilation additionally requires an attributed approval of that exact capture and mapping. A failed preview keeps current work. Opening an invalid file keeps the previous project. Complete project/working files have an explicit 512 MiB capacity; the original native intake uploads complete files in retained chunks.
 
 ## Business acceptance selection
 
