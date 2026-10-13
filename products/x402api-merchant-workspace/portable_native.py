@@ -5,6 +5,8 @@ The maintained source_bundle_archive module owns ZIP serialization, validation
 and extraction. The maintained runtime-unpack module validates source.tgz.
 This module selects original files, uses SQLite online backup, and relocates
 only the two current result-storage JSON paths in an independent runtime copy.
+The complete result tree and native SF31 reservation states are received before
+that runtime is published, preserving later native progress on receiving replay.
 """
 from __future__ import annotations
 
@@ -21,6 +23,7 @@ from pathlib import Path, PurePosixPath
 import re
 import sqlite3
 import stat
+import subprocess
 import sys
 import time
 from urllib.parse import quote
@@ -593,11 +596,13 @@ def validate_request(value):
     return normalized
 
 
-def selected_source(path, expected_sha, *, match_current):
+def selected_source(path, expected_sha, *, match_current, reservation_state=False):
     actual = file_hash(path, maximum=64 * CHUNK)
     need(actual["sha256"] == expected_sha, "SOURCE_ARCHIVE_CHANGED", "Keep the exact original distribution source.tgz.")
     manifest, expected, contents, manifest_sha = source_unpacker.inspect(path, expected_sha)
     needed = [PRODUCT + name for name in REQUIRED_PRODUCT]
+    if reservation_state:
+        needed.append(PRODUCT + "portable-reservation-bridge.mjs")
     needed.extend([str(ARCHIVE_PATH.relative_to(SOURCE_ROOT)), str(UNPACK_PATH.relative_to(SOURCE_ROOT))])
     proof = []
     for relative_path in needed:
@@ -907,6 +912,198 @@ def received_result_origins(manifest, workspace, request, manifest_sha):
     return value
 
 
+def reservation_bridge(action, **values):
+    """Use the same native SF31 reader/restorer as the directory handover."""
+    schema = "stellar-forge.merchant-portable-reservation-bridge.v1"
+    request = {"schema": schema, "action": action, **values}
+    node = os.environ.get("MERCHANT_PORTABLE_NODE") or os.environ.get("CODEX_PRIMARY_RUNTIME_NODE") or "node"
+    try:
+        result = subprocess.run(
+            [node, str(HERE / "portable-reservation-bridge.mjs")], input=encoded(request),
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    except OSError as error:
+        raise PortableError("RESERVATION_RUNTIME_REQUIRED",
+                            "Use the installed Node runtime for the original file reservation recovery.") from error
+    need(result.returncode == 0, "RESERVATION_STATE_INVALID",
+         "Keep the complete original SF31 reservation state.",
+         {"nativeError": result.stderr[-8192:].decode("utf-8", errors="replace")})
+    need(len(result.stdout) <= 32 * CHUNK, "RESERVATION_STATE_TOO_LARGE",
+         "Keep the complete reservation inventory within the original project limit.")
+    response = parse_json(result.stdout, "native reservation response")
+    need(isinstance(response, dict) and response.get("schema") == schema and response.get("action") == action
+         and isinstance(response.get("result"), list),
+         "RESERVATION_RESPONSE_INVALID", "Read the complete original native reservation response.")
+    return response["result"]
+
+
+def result_state_files(workspace):
+    """Retain every result file, including empty-lock and unlinked-prefix states."""
+    root = workspace / "results"
+    if not root.exists():
+        return []
+    files = []
+    def walk(directory):
+        private_directory(directory)
+        for path in sorted(directory.iterdir()):
+            info = path.lstat()
+            if stat.S_ISDIR(info.st_mode):
+                walk(path)
+            else:
+                with opened_regular(path) as (_fd, selected):
+                    # A native final/partial pair may still share its original inode.
+                    need(selected.st_uid == os.getuid() and not selected.st_mode & 0o077
+                         and selected.st_nlink >= 1,
+                         "PRIVATE_FILE_REQUIRED", "Retain the original private result or reservation file.")
+                    identity = file_hash(path)
+                files.append({"path": "workspace/" + str(path.relative_to(workspace)), **identity})
+                need(len(files) <= 100000, "PROJECT_RESULTS_TOO_LARGE",
+                     "Keep the complete original result inventory within the project member limit.")
+    walk(root)
+    return sorted(files, key=lambda row: row["path"])
+
+
+def snapshot_result_state(database_path, directory, payload, control, request_sha, snapshot):
+    selected_path = control / "result-state-selection.json"
+    selected = read_json(selected_path, optional=True)
+    if selected is None:
+        files = result_state_files(directory)
+        mappings = reservation_bridge("inspect", database=str(database_path),
+                                      directory=str(directory), recordedDirectory=str(directory))
+        # Every byte identity is fixed before copying or publishing any member.
+        need(result_state_files(directory) == files, "RESULT_STATE_CHANGED",
+             "Retain one complete original result and reservation selection.")
+        selected = {"schema": "stellar-forge.merchant-portable-result-state-selection.v1",
+                    "requestSha256": request_sha, "snapshot": pin(snapshot),
+                    "directory": str(directory),
+                    "state": {"schema": "stellar-forge.merchant-portable-result-state.v1",
+                              "files": files, "reservationMappings": mappings}}
+        write_json(selected_path, selected)
+    need(selected.get("schema") == "stellar-forge.merchant-portable-result-state-selection.v1"
+         and selected.get("requestSha256") == request_sha and selected.get("snapshot") == pin(snapshot)
+         and selected.get("directory") == str(directory),
+         "RESULT_STATE_SELECTION_CHANGED", "Keep this snapshot's original complete result selection.")
+    state = selected["state"]
+    for row in state["files"]:
+        copy_file(directory / row["path"][len("workspace/"):], payload / row["path"], row)
+    need(result_state_files(payload / "workspace") == state["files"],
+         "RESULT_STATE_CHANGED", "Keep the complete selected result state without extra or missing files.")
+    actual = reservation_bridge("inspect", database=str(database_path),
+                                directory=str(payload / "workspace"), recordedDirectory=str(directory))
+    need(actual == state["reservationMappings"], "RESERVATION_STATE_CHANGED",
+         "Keep every original reservation, partial prefix and finalized response.")
+    return state
+
+
+def validate_result_state(manifest, inventory, member):
+    state = manifest.get("reservationState")
+    if state is None:
+        return set()
+    need(isinstance(state, dict) and set(state) == {"schema", "files", "reservationMappings"}
+         and state.get("schema") == "stellar-forge.merchant-portable-result-state.v1"
+         and isinstance(state.get("files"), list) and isinstance(state.get("reservationMappings"), list),
+         "RESULT_STATE_INVALID", "Use the complete original result and reservation inventory.")
+    names = []
+    for row in state["files"]:
+        name = member(row)
+        need(set(row) == {"path", "bytes", "sha256"} and name.startswith("workspace/results/"),
+             "RESULT_STATE_INVALID", "Retain exact files beneath the original results directory.")
+        names.append(name)
+    selected_names = set(names)
+    need(names == sorted(selected_names) and all(row["path"] in selected_names for row in manifest["results"]),
+         "RESULT_STATE_INVALID", "Keep every original result in the complete unique state inventory.")
+    for row in state["reservationMappings"]:
+        need(isinstance(row, dict) and row.get("schema") ==
+             "stellar-forge.x402api-merchant-file-reservation.v1"
+             and row.get("relativePath") in selected_names
+             and row.get("recordedDirectory") == manifest["original"]["directory"],
+             "RESULT_STATE_INVALID", "Keep each native reservation in its original workspace.")
+    return set(names)
+
+
+def verify_original_result_state(original, manifest):
+    state = manifest.get("reservationState")
+    if state is None:
+        return
+    need(result_state_files(original / "workspace") == state["files"],
+         "RESULT_STATE_CHANGED", "Verify the complete original result inventory.")
+    actual = reservation_bridge("inspect", database=str(original / "workspace/merchant.sqlite3"),
+                                directory=str(original / "workspace"),
+                                recordedDirectory=manifest["original"]["directory"])
+    need(actual == state["reservationMappings"], "RESERVATION_STATE_CHANGED",
+         "Verify the original reservation records against the unchanged snapshot and returned bytes.")
+
+
+def materialize_result_state(original, runtime, control, manifest, request_sha):
+    """Publish once before the runtime database; later native progress stays live."""
+    state = manifest.get("reservationState")
+    if state is None:
+        return None
+    workspace = runtime / "workspace"
+    receipt_path = control / "result-state-published.json"
+    identity = {"schema": "stellar-forge.merchant-portable-result-state-publication.v1",
+                "requestSha256": request_sha, "stateSha256": sha_bytes(encoded(state)),
+                "workspace": str(workspace)}
+    published = read_json(receipt_path, optional=True)
+    if published is not None:
+        need(all(published.get(key) == value for key, value in identity.items())
+             and isinstance(published.get("files"), list)
+             and isinstance(published.get("reservationRelocations"), list),
+             "RESULT_STATE_PUBLICATION_CHANGED", "Keep the original result-state publication.")
+        # The received merchant can consume its original locks or advance partials.
+        # This receipt owns the initial publication; a replay never recreates them.
+        return published
+    need(not (workspace / "merchant.sqlite3").exists(), "RESULT_STATE_PUBLICATION_MISSING",
+         "Reconcile the original result-state publication before opening an existing runtime.")
+    relocated_path = control / "result-state-relocated.json"
+    relocated = read_json(relocated_path, optional=True)
+    if relocated is None:
+        # A killed native relocation may leave a private temporary file. Retain
+        # that unfinished stage and prepare a fresh private copy; no live
+        # merchant file is replaced and no partial stage becomes authoritative.
+        stage = private_directory(control / ("result-state-stage." + str(uuid.uuid4())))
+        staged_workspace = private_directory(stage / "workspace")
+        for row in state["files"]:
+            copy_file(original / row["path"], stage / row["path"], row)
+        need(result_state_files(staged_workspace) == state["files"], "RESULT_STATE_STAGE_CHANGED",
+             "Keep the exact complete original result stage.")
+        relocations = reservation_bridge("restore", stage=str(stage), directory=str(runtime),
+                                         reservations=state["reservationMappings"])
+        relocated = {**identity, "stage": str(stage), "files": result_state_files(staged_workspace),
+                     "reservationRelocations": relocations}
+        write_json(relocated_path, relocated)
+    stage = absolute(relocated.get("stage"))
+    need(stage.parent == control and stage.name.startswith("result-state-stage.")
+         and str(uuid.UUID(stage.name[len("result-state-stage."):])) == stage.name[len("result-state-stage."):],
+         "RESULT_STATE_STAGE_CHANGED", "Keep the original private selected relocation stage.")
+    staged_workspace = stage / "workspace"
+    need(all(relocated.get(key) == value for key, value in identity.items())
+         and result_state_files(staged_workspace) == relocated.get("files")
+         and isinstance(relocated.get("reservationRelocations"), list),
+         "RESULT_STATE_STAGE_CHANGED", "Keep the original complete relocated result stage.")
+    for row in relocated["files"]:
+        copy_file(stage / row["path"], runtime / row["path"], row)
+    need(result_state_files(workspace) == relocated["files"], "RESULT_STATE_PUBLICATION_CHANGED",
+         "Publish the complete original result state before its native database.")
+    write_json(receipt_path, relocated)
+    return relocated
+
+
+def reopen_result_state(control, workspace, manifest, request_sha, received):
+    state = manifest.get("reservationState")
+    if state is None:
+        return
+    published = read_json(control / "result-state-published.json")
+    need(isinstance(published, dict) and published.get("schema") ==
+         "stellar-forge.merchant-portable-result-state-publication.v1"
+         and published.get("requestSha256") == request_sha
+         and published.get("stateSha256") == sha_bytes(encoded(state))
+         and published.get("workspace") == str(workspace)
+         and received.get("resultStatePublication") == published,
+         "RESULT_STATE_PUBLICATION_CHANGED", "Keep the original complete result-state publication.")
+    # Original archive members are checked separately. Live reservation files
+    # remain exactly as the native merchant has progressed them since receiving.
+
+
 def snapshot_results(database, directory, configuration, origins=None):
     origins = origins or {}
     results = {}
@@ -1009,7 +1206,8 @@ def export_project(request, normalized):
             directory = private_directory(absolute(request["directory"]))
             with lock_file(directory / "merchant-owner.lock", inherited=request.get("leaseFd")):
                 source_info, source_parts = selected_source(absolute(request["sourceArchive"]),
-                                                            request["sourceSha256"], match_current=True)
+                                                            request["sourceSha256"], match_current=True,
+                                                            reservation_state=True)
                 source_db = connect_readonly(directory / "merchant.sqlite3")
                 try:
                     original_identity = store_identity(source_db, request.get("expectedStoreId"))
@@ -1034,8 +1232,14 @@ def export_project(request, normalized):
                     results = snapshot_results(database, directory, configuration, origins)
                 finally:
                     database.close()
+                result_state = snapshot_result_state(payload / "workspace/merchant.sqlite3", directory,
+                                                     payload, control, request_sha, snapshot["file"])
+                selected_results = {row["path"]: row for row in result_state["files"]}
+                for row in result_state["files"]:
+                    inventory[row["path"]] = {**row, "role": "retained-result-state"}
                 for row in results:
-                    copy_file(absolute(row["originalPath"]), payload / row["path"], row)
+                    need(row["path"] in selected_results and pin(selected_results[row["path"]]) == pin(row),
+                         "RESULT_STATE_CHANGED", "Keep the original result in the selected complete state.")
                     inventory[row["path"]] = {"path": row["path"], **pin(row), "role": "original-result",
                                               "originalPath": row["originalPath"]}
                 inventory["workspace/merchant.sqlite3"] = {
@@ -1052,7 +1256,7 @@ def export_project(request, normalized):
                     "snapshot": {"path": "workspace/merchant.sqlite3", **snapshot["file"],
                                  "selectedAt": snapshot["selectedAt"], **snapshot["summary"]},
                     "configuration": configuration, "source": source, "results": results,
-                    "resultOrigins": origins_member,
+                    "resultOrigins": origins_member, "reservationState": result_state,
                     "inputFiles": sorted(inputs, key=lambda row: row["originalPath"]),
                     "files": [inventory[key] for key in sorted(inventory)],
                     "engines": {"archive": {"path": str(ARCHIVE_PATH.relative_to(SOURCE_ROOT)), "sha256": ARCHIVE_SHA},
@@ -1132,6 +1336,8 @@ def validate_manifest(manifest):
     source = manifest.get("source")
     member(source, "source/source.tgz")
     needed = {PRODUCT + name for name in REQUIRED_PRODUCT}
+    if manifest.get("reservationState") is not None:
+        needed.add(PRODUCT + "portable-reservation-bridge.mjs")
     needed |= {str(ARCHIVE_PATH.relative_to(SOURCE_ROOT)), str(UNPACK_PATH.relative_to(SOURCE_ROOT))}
     proof = source.get("requiredSource")
     need(isinstance(proof, list) and len(proof) == len(needed)
@@ -1218,6 +1424,7 @@ def validate_manifest(manifest):
         "configuration/merchant.json", "provenance/export-request.json"}
     if origins is not None:
         expected_names.add(origins["path"])
+    expected_names |= validate_result_state(manifest, inventory, member)
     need(set(inventory) == expected_names,
          "PROJECT_INVENTORY_INVALID", "Keep only the complete explicitly selected project members.")
     need(manifest.get("receiving") == {
@@ -1730,6 +1937,8 @@ def reopen_received_complete(destination, complete, request, request_sha, manife
         need(path.exists(), "RECEIVED_PROJECT_MISSING", "Keep the complete received project: " + str(path))
         private_directory(path)
     settle_received(original, manifest)
+    verify_original_result_state(original, manifest)
+    reopen_result_state(control, workspace, manifest, request_sha, received)
     durable_file(runtime / "source.tgz", manifest["source"], maximum=64 * CHUNK)
     source_record = received.get("sourceInstallation")
     need(isinstance(source_record, dict) and source_record.get("path") == str(control / "source-installation.json"),
@@ -1825,6 +2034,7 @@ def receive_project(request, normalized):
         need(extraction["archive"] == archive_pin(inspected["archive"]) and extraction["manifest"] == manifest,
              "PROJECT_EXTRACTION_CHANGED", "Retain the exact inspected original project.")
         settle_received(original, manifest)
+        verify_original_result_state(original, manifest)
         export_request = parse_json(read_bytes(original / "provenance/export-request.json"), "original export request")
         validate_request(export_request)
         need(export_request.get("action") == "export" and export_request["operation"] == manifest["operation"]
@@ -1834,7 +2044,8 @@ def receive_project(request, normalized):
              and sha_bytes(encoded(export_request)) == manifest["requestSha256"],
              "PROJECT_REQUEST_CHANGED", "Keep the complete original export input selection.")
         source, source_parts = selected_source(original / manifest["source"]["path"],
-                                               manifest["source"]["sha256"], match_current=False)
+                                               manifest["source"]["sha256"], match_current=False,
+                                               reservation_state=manifest.get("reservationState") is not None)
         need({**source, "path": manifest["source"]["path"]} == manifest["source"],
              "SOURCE_ARCHIVE_CHANGED", "Keep the full originally selected portable source edition.")
         _source_manifest, expected, contents = source_parts
@@ -1867,8 +2078,10 @@ def receive_project(request, normalized):
             input_paths = materialize_inputs(original, runtime, manifest)
             review_path, activation_path, activation = materialize_configurations(
                 runtime, source_root, config, manifest, input_paths)
-            for row in manifest["results"]:
-                copy_file(original / row["path"], workspace / row["relativePath"], row)
+            result_state_publication = materialize_result_state(original, runtime, control, manifest, request_sha)
+            if result_state_publication is None:
+                for row in manifest["results"]:
+                    copy_file(original / row["path"], workspace / row["relativePath"], row)
             write_json(workspace / "portable-result-origins.json",
                        received_result_origins(manifest, workspace, request, inspected["manifestSha256"]))
             publication = prepare_runtime_database(control, original, workspace, request_sha, manifest, changes)
@@ -1887,7 +2100,8 @@ def receive_project(request, normalized):
             "receiptPath": str(result_path), "originalDirectory": str(original),
             "mode": "review", "activation": activation, "storeId": manifest["original"]["storeId"],
             "originalRowsSha256": manifest["snapshot"]["allRowsSha256"],
-            "runtimePublication": publication, "sourceFiles": str(len(source_inventory))}
+            "runtimePublication": publication, "sourceFiles": str(len(source_inventory)),
+            **({"resultStatePublication": result_state_publication} if result_state_publication is not None else {})}
         complete = {"schema": RESULT_SCHEMA, "action": "receive", "operation": request["operation"],
                     "state": "COMPLETE", "requestSha256": request_sha, "reused": False,
                     "archive": inspected["archive"], "manifest": manifest,
