@@ -19,12 +19,27 @@ try{
   const context=await browser.newContext({viewport:{width:1360,height:1000},acceptDownloads:true});
   const page=await context.newPage();
   page.on('pageerror',error=>errors.push(error.message));
-  page.on('request',request=>{const url=new URL(request.url());if(request.method()!=='GET'&&request.method()!=='HEAD'&&url.pathname!=='/api/downloads')mutations.push({method:request.method(),path:url.pathname});});
+  page.on('request',request=>{const url=new URL(request.url());if(request.method()!=='GET'&&request.method()!=='HEAD'&&!['/api/downloads','/api/actions/edition','/api/actions/quality'].includes(url.pathname))mutations.push({method:request.method(),path:url.pathname});});
   const response=await context.request.get(new URL('/api/commissioning/state',base).href,{headers:{Authorization:'Bearer '+token}});
   if(!response.ok())throw new Error('Original commissioning read returned HTTP '+response.status()+'.');
   const state=await response.json(),commission=state.commissions?.find(value=>value.id===options.commission);
   if(!commission)throw new Error('The selected original commission is absent from this listener.');
   if(commission.definition.periods.length!==2)throw new Error('Select the original two-period programme.');
+  const incoming=state.receivedArchive;
+  const completedDelivery=(commission.deliveries??[]).find(delivery=>{
+    const received=delivery.status==='READY_FOR_ARCHIVE'&&incoming?.workspaceId===state.workspaceId&&
+      Number.isSafeInteger(delivery.preparedWorkspaceRevision)&&Number.isSafeInteger(incoming.workspaceRevision)&&
+      delivery.preparedWorkspaceRevision<=incoming.workspaceRevision;
+    if(!['COMPLETE','RECEIVED_PORTABLE'].includes(delivery.status)&&!received)return false;
+    const selections=delivery.request?.captures??delivery.selection?.captures??[];
+    return delivery.documents?.some(file=>file.sha256&&file.name)&&[0,1].every(period=>{
+      const selection=selections.find(value=>value.period===period);
+      const capture=commission.captures?.find(value=>value.id===selection?.captureId);
+      return selection?.reviewId&&capture?.status==='COMPLETE'&&capture.planId===commission.definition.plans[period].id;
+    });
+  });
+  if(!completedDelivery)throw new Error('Complete the original two-period capture, review and customer handover before this finished-programme browser review. Its original delivery must retain both period selections and customer documents.');
+  const selectedCaptures=completedDelivery.request?.captures??completedDelivery.selection.captures;
   await page.goto(new URL('/#token='+encodeURIComponent(token),base).href,{waitUntil:'domcontentloaded'});
   await page.locator('#identity').filter({hasText:state.workspaceId}).waitFor({state:'visible'});
   await page.locator('nav [data-pane="programme"]').click();
@@ -39,9 +54,10 @@ try{
   if(overflow)throw new Error('The customer programme overflows its mobile viewport.');
   await page.screenshot({path:join(output,'customer-programme-mobile.png'),fullPage:true});
   const artifacts=[];
-  const originalDocument=(commission.deliveries??[]).flatMap(d=>d.documents??[]).find(d=>d.sha256&&d.name);
-  if(originalDocument){
-    const downloadButton=page.locator('#programme-deliveries button').filter({hasText:originalDocument.name}).first();
+  const originalDocument=completedDelivery.documents.find(d=>d.sha256&&d.name);
+  {
+    const deliveryCard=page.locator('.programme-delivery').filter({has:page.getByRole('heading',{name:'Handover '+completedDelivery.id,exact:true})});
+    const downloadButton=deliveryCard.getByRole('button',{name:originalDocument.name,exact:true});
     const [download]=await Promise.all([page.waitForEvent('download'),downloadButton.click()]);
     const path=join(output,'original-customer-document-'+originalDocument.name.replace(/[^A-Za-z0-9._-]/g,'_'));await download.saveAs(path);
     const body=await readFile(path),sha256=createHash('sha256').update(body).digest('hex');
@@ -54,8 +70,8 @@ try{
   await page.locator('nav [data-pane="programme"]').click();
   await page.waitForFunction(()=>document.getElementById('programme-status').textContent.startsWith('Programme revision '));
   if(await page.locator('#programme-select').inputValue()!==commission.id)throw new Error('The original programme selection was lost when reopening.');
-  const capture=(commission.captures??[])[0];
-  if(capture){
+  const capture=commission.captures.find(value=>value.id===selectedCaptures.find(value=>value.period===0).captureId);
+  {
     const row=page.locator('.programme-period tbody tr').filter({hasText:capture.id}).first();
     await row.getByRole('button',{name:'Open edition',exact:true}).click();
     await page.waitForFunction(id=>document.getElementById('edition-select')?.value===id, capture.id);
@@ -65,8 +81,8 @@ try{
   if(mutations.length)throw new Error('The read-only customer review attempted an unexpected operation: '+JSON.stringify(mutations));
   const receipt={schema:'stellar-forge.odk-customer-programme-review.v1',observedAt:new Date().toISOString(),workspaceId:state.workspaceId,commissionId:commission.id,revision:state.revision,
     forms:commission.definition.forms,periods,deliveries:(commission.deliveries??[]).map(d=>({id:d.id,status:d.status})),
-    originalFiles:artifacts,desktop:{width:1360,height:1000},mobile:{width:390,height:844,overflow:false},
-    actions:['open existing programme','read both original period labels','download and verify retained customer document when present','open exact commissioning version','return and retain programme selection','open original edition when present'],pageErrors:errors,unexpectedMutations:mutations};
+    reviewedDeliveryId:completedDelivery.id,reviewedPeriodCaptures:selectedCaptures,originalFiles:artifacts,desktop:{width:1360,height:1000},mobile:{width:390,height:844,overflow:false},
+    actions:['open existing programme','read both original period labels','download and verify exact completed-handover customer document','open exact commissioning version','return and retain programme selection','open original completed period edition'],pageErrors:errors,unexpectedMutations:mutations};
   await writeFile(join(output,'customer-programme-review.json'),JSON.stringify(receipt,null,2)+'\n');
   process.stdout.write(JSON.stringify({ok:true,workspaceId:state.workspaceId,commissionId:commission.id,receipt:join(output,'customer-programme-review.json'),downloadedFiles:artifacts.length})+'\n');
 }finally{await browser?.close();}
