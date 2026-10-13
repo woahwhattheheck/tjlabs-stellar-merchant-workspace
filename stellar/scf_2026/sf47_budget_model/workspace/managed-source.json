@@ -684,6 +684,13 @@
     "FORECAST_CUSTOMER_FUNDING.md",
     "operations_dcat_sources.py",
     "operations_statement_drafts.mjs",
-    "STATEMENT_DRAFT_RECOVERY.md"
+    "STATEMENT_DRAFT_RECOVERY.md",
+    "operations_billing_evidence.py",
+    "operations_billing_evidence.mjs",
+    "operations_billing_evidence.css",
+    "operations_billing_evidence_http.py",
+    "operations_billing_evidence_cli.py",
+    "BILLING_EVIDENCE.md",
+    "billing_evidence_course.py"
   ]
 }

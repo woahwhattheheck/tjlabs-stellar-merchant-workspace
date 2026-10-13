@@ -808,6 +808,17 @@ export class MerchantGrantWorkspaces {
       original=verb==='installation_preview'?await client.installationPreview(caseId,{...body,document}):
         await client.installationSave(caseId,{...body,document});
     }
+    else if (verb === 'billing_evidence_catalog') original=await client.billingEvidenceCatalog(args.caseId);
+    else if (verb === 'billing_evidence') original=await client.billingEvidence(args.caseId,args.reviewId,args.revision);
+    else if (verb === 'billing_evidence_compare') original=await client.billingEvidenceCompare(args.caseId,args.reviewId,args.revision);
+    else if (verb === 'billing_evidence_preview'||verb === 'billing_evidence_save') {
+      const {caseId,...body}=rest;
+      original=verb==='billing_evidence_preview'?await client.billingEvidencePreview(caseId,body):await client.billingEvidenceSave(caseId,body);
+    }
+    else if (verb === 'billing_evidence_inspect') {
+      const selected=await this.#input(alias,args.input,args.expectedInputSha256,GRANT_MAX_BUNDLE_BYTES);
+      original=await client.billingEvidenceInspect(args.caseId,selected.bytes);
+    }
     else if (verb === 'work_billing_catalog') original=await client.workBillingCatalog(args.caseId);
     else if (verb === 'work_billing_authority') original=await client.workBillingAuthority(args.caseId,args.authorityId);
     else if (verb === 'work_billing_authority_save') {

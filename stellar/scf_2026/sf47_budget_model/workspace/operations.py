@@ -58,6 +58,7 @@ import operations_commercial_changes as commercial_changes
 import operations_expenses as expenses
 import operations_expense_billing as expense_billing
 import operations_work_billing as work_billing
+import operations_billing_evidence as billing_evidence
 import operations_dcat_sources as dcat_sources
 
 SCHEMA = "stellar-forge.sf47-operations.v1"
@@ -145,6 +146,7 @@ class Operations:
             self.commercial_changes = commercial_changes.CommercialChanges(self.commercial)
             self.expense_billing = expense_billing.ExpenseBilling(self)
             self.work_billing = work_billing.WorkBilling(self)
+            self.billing_evidence = billing_evidence.BillingEvidence(self)
 
     @property
     def db(self):
@@ -1888,14 +1890,15 @@ class Operations:
                 if existing[0] != digest(original_payload):
                     raise Problem("This request identity already describes a different operation.", 409, "REQUEST_CONFLICT")
                 return json.loads(existing[1])
-        if dcat_sources.native_bundle(raw):
+        billing_native_raw, billing_evidence_selection = billing_evidence.unwrap_bundle(raw)
+        if dcat_sources.native_bundle(billing_native_raw):
             # A native case is not a report wrapper. Its own complete importer
             # validates the selected capacity, every source and original history.
-            native_raw = raw
+            native_raw = billing_native_raw
             supplier_selection = funding_report = reconciliation_account = None
             cash_account = supplier_account = performance_report = delivery_queue = None
         else:
-            native_raw, supplier_selection = supplier_statements.unwrap_bundle(raw)
+            native_raw, supplier_selection = supplier_statements.unwrap_bundle(billing_native_raw)
             native_raw, funding_report = funding.unwrap_bundle(native_raw)
             native_raw, reconciliation_account = account_reconciliation.unwrap_bundle(native_raw)
             native_raw, cash_account = cash_accounts.unwrap_bundle(native_raw)
@@ -2017,6 +2020,7 @@ class Operations:
             change_rows = commercial_changes.validate_import(change_rows)
             if commercial_rows is None:
                 domain.fail("Milestone changes require their original billing source.", "COMMERCIAL_CHANGE_SOURCE", 422)
+        billing_evidence.validate_import(document, files)
         dispatch.validate_received(delivery_queue, document)
         performance.validate_received(performance_report, document)
         payables.validate_received(supplier_account, document)
@@ -2129,6 +2133,8 @@ class Operations:
                 origin["cashAccount"] = cash_accounts.received_selection(cash_account)
             if reconciliation_account:
                 origin["accountReconciliation"] = account_reconciliation.received_selection(reconciliation_account)
+            if billing_evidence_selection:
+                origin["billingEvidence"] = billing_evidence_selection
             self.db.execute("INSERT INTO ops_programs VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
                 (pid, imported["id"], plan["revision"], source_program["version"], source_program["state"],
                  name, source_program["mode"], source_program.get("calendarStart"), canonical(pinned),
@@ -2163,6 +2169,7 @@ class Operations:
             for value in saved_portfolios:
                 self.db.execute("INSERT INTO ops_portfolios VALUES(?,?,?)", (pid, value["id"], canonical(value)))
             return {"id": pid, "version": source_program["version"], "action": "import", "planId": imported["id"], "mode": source_program["mode"],
+                    **({"billingEvidence": billing_evidence_selection} if billing_evidence_selection else {}),
                     **({"selectedSupplierStatement": {"id": supplier_selection["review"]["id"],
                         "sha256": supplier_selection["review"]["sha256"],
                         "statementId": supplier_selection["review"]["supplierStatement"]["document"]["statementId"]}} if supplier_selection else {}),

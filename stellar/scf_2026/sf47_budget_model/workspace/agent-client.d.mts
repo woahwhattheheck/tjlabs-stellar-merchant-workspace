@@ -4312,7 +4312,69 @@ export interface GrantRiskComparisonView {
   current: { programId: string; version: number };
 }
 
+
+/** An explanation only: source terms do not replace native customer balances. */
+export interface GrantBillingEvidenceSelectionItem {
+  key:string; expectedChainSha256:string; basis:'SOURCE_DATES'|'REVIEWED_INCLUSION'; reason:string;
+  customerExplanation:string; shareDescriptions:boolean; shareQuantities:boolean;
+}
+export interface GrantBillingEvidenceSelection {
+  title:string; accountKey:string; endpointId:string; customerId:string;
+  periodStart:GrantCivilDate; periodEnd:GrantCivilDate; asOf:GrantCivilDate; explanation:string;
+  items:GrantBillingEvidenceSelectionItem[];
+}
+export interface GrantBillingEvidenceInput {
+  expectedVersion:number; reviewId?:string|null; expectedRevision:number; selection:GrantBillingEvidenceSelection;
+}
+export interface GrantBillingEvidenceSaveInput extends GrantBillingEvidenceInput {
+  requestId:string; actor:string; expectedPreviewSha256:string;
+}
+export interface GrantBillingEvidenceAccount {
+  accountKey:string; endpointId:string; accountingIdentity:{workspaceId:string;sourcesSha256:string};
+  customerId:string; customerName:string;
+}
+export interface GrantBillingEvidenceItem extends GrantBillingEvidenceAccount {
+  key:string; domain:'MILESTONE'|'EXPENSE'|'WORK'; chainId:string; title:string;
+  currency:{code:string;scale:number}; preparedAmount:string; currentAmount:string; invoiceIds:string[];
+  pending:boolean; sourcePeriods:{startDate:GrantCivilDate;endDate:GrantCivilDate;label:string}[];
+  chainSha256:string; historyCount:number;
+}
+export interface GrantBillingEvidenceRevision {
+  id:string; revision:number; sourceId:string; sourceSha256:string; title:string; customerName:string;
+  periodStart:GrantCivilDate; periodEnd:GrantCivilDate; asOf:GrantCivilDate;
+  recordedAt:string; recordedBy:string; version:number;
+}
+export interface GrantBillingEvidenceCatalog {
+  schema:string; programId:string; version:number; mode:string;
+  accounts:GrantBillingEvidenceAccount[]; items:GrantBillingEvidenceItem[]; reviews:GrantBillingEvidenceRevision[];
+}
+export interface GrantBillingEvidencePreview extends GrantBillingEvidenceInput {
+  schema:string; previewSha256:string; customer:GrantObject;
+  accountingIdentity:GrantBillingEvidenceAccount['accountingIdentity']; nativeRevision:number;
+  items:(GrantBillingEvidenceItem & GrantBillingEvidenceSelectionItem & {
+    periodStatus:'WITHIN'|'OUTSIDE'|'OVERLAP'|'UNKNOWN'; history:GrantObject[];
+    original:GrantObject; sourceLines:GrantObject[]; native:GrantObject[];
+  })[]; unselected:GrantBillingEvidenceItem[]; nativeInvoiceIdsOutsideSelection:string[]; accountAsOf:GrantCivilDate;
+}
+export interface GrantBillingEvidenceSaveReceipt {
+  reviewId:string; revision:number; sourceId:string; sourceSha256:string; version:number; requestId:string;
+}
+export interface GrantBillingEvidenceSaved {
+  schema:string; source:GrantObject;
+  record:{id:string;revision:number;recordedAt:string;recordedBy:string;version:number;preview:GrantBillingEvidencePreview};
+  /** Customer-safe supplemental explanation; native invoices remain unchanged. */
+  report:GrantObject;
+}
+export interface GrantBillingEvidenceComparison {
+  saved:{id:string;revision:number}; currentPreview:GrantBillingEvidencePreview|null; changed:boolean;
+  reason?:string; currentItems?:GrantBillingEvidenceItem[];
+}
+export interface GrantBillingEvidenceInspection {
+  audience:'internal'|'customer'; report:GrantObject; reviewId:string; revision:number; canReceive:boolean;
+}
+
 export interface GrantDownloadSelections {
+  'billing-evidence':{caseId:string;reviewId:string;revision?:number;audience:'internal'|'customer'};
   'work-billing': {caseId:string;chargeId:string};
   'expense-billing': {caseId:string;chargeId:string};
   'risk-comparison': GrantRiskComparisonZipSelection;
@@ -4487,6 +4549,12 @@ export class GrantWorkspaceClient {
   installationPreview(caseId: string, body: GrantInstallationPreviewInput): Promise<GrantJsonResponse<GrantInstallationPreview>>;
   installationSave(caseId: string, body: GrantInstallationSaveInput): Promise<GrantJsonResponse<GrantInstallationSaveReceipt>>;
 
+  billingEvidenceCatalog(caseId:string):Promise<GrantJsonResponse<GrantBillingEvidenceCatalog>>;
+  billingEvidencePreview(caseId:string,body:GrantBillingEvidenceInput):Promise<GrantJsonResponse<GrantBillingEvidencePreview>>;
+  billingEvidenceSave(caseId:string,body:GrantBillingEvidenceSaveInput):Promise<GrantJsonResponse<GrantBillingEvidenceSaveReceipt>>;
+  billingEvidence(caseId:string,reviewId:string,revision?:number|null):Promise<GrantJsonResponse<GrantBillingEvidenceSaved>>;
+  billingEvidenceCompare(caseId:string,reviewId:string,revision?:number|null):Promise<GrantJsonResponse<GrantBillingEvidenceComparison>>;
+  billingEvidenceInspect(caseId:string,bytes:Buffer):Promise<GrantJsonResponse<GrantBillingEvidenceInspection>>;
   workBillingCatalog(caseId:string):Promise<GrantJsonResponse<GrantWorkBillingCatalog>>;
   workBillingAuthority(caseId:string,authorityId:string):Promise<GrantJsonResponse<GrantHourlyAuthority>>;
   /** Save/replay the same original customer authorization, complete sources and request body. */

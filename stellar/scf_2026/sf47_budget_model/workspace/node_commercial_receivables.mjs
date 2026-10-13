@@ -73,7 +73,7 @@ export async function commercialReceivablesRequest({operation, endpoint, payload
   if (operation === 'export') {
     // The original archive includes its own customer JSON and invoice documents.
     // One archive snapshot avoids stitching JSON from a different ledger revision.
-    const response = await client.customerFile(customerId, 'account.tar');
+    const response = await client.customerFile(customerId, 'account.tar', body.asOf === undefined ? undefined : {asOf: body.asOf});
     const bytes = await archiveBytes(response);
     return {filename: 'customer-account.tar', mediaType: 'application/x-tar',
       contentBase64: bytes.toString('base64')};
