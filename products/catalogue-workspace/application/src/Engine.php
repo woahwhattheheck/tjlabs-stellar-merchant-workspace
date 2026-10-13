@@ -20,8 +20,14 @@ final class Engine
             throw new \RuntimeException('This native integration is pinned to the reviewed Webgriffe 3.1.0 contract; review an installed version change before adoption.');
         }
         $files = [];
-        foreach ([ItemImport::class, Importer::class, ItemImportResultPersisterMiddleware::class,
-            \Webgriffe\SyliusAkeneoPlugin\Event\ProductVariantPreValidateEvent::class] as $class) {
+        $classes = [ItemImport::class, Importer::class, ItemImportResultPersisterMiddleware::class,
+            \Webgriffe\SyliusAkeneoPlugin\Event\ProductVariantPreValidateEvent::class];
+        foreach ($this->mapping as $definition) {
+            if (is_string($definition['class'] ?? null) && $definition['class'] !== '') { $classes[] = $definition['class']; }
+        }
+        $classes = array_values(array_unique($classes));
+        sort($classes, SORT_STRING);
+        foreach ($classes as $class) {
             $path = (new \ReflectionClass($class))->getFileName();
             if ($path === false || !is_file($path)) { throw new \RuntimeException('Cannot retain the original native class source identity.'); }
             $files[] = ['class' => $class, 'bytes' => filesize($path), 'sha256' => hash_file('sha256', $path)];

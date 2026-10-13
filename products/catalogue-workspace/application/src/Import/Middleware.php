@@ -52,10 +52,13 @@ final class Middleware implements MiddlewareInterface
             if ($operation['approval_id'] !== $stamp->approvalId || $operation['identifier'] !== $message->getAkeneoIdentifier()) {
                 throw new UnrecoverableMessageHandlingException('Original catalogue message and operation binding differ.');
             }
+            if ($operation['state'] === 'RETAINED_UNAPPLIED') {
+                throw new UnrecoverableMessageHandlingException('This exact original operation was explicitly retained unapplied; preserve its native message and follow the new review.');
+            }
             $approval = $this->store->require('approval', $stamp->approvalId, $stamp->projectId);
             $snapshot = $this->source->inspect($approval['capture_id']);
             $attemptId = bin2hex(random_bytes(16));
-            $start = ['operation_id' => $stamp->operationId, 'approval_id' => $stamp->approvalId,
+            $start = ['project_id' => $stamp->projectId, 'operation_id' => $stamp->operationId, 'approval_id' => $stamp->approvalId,
                 'identifier' => $message->getAkeneoIdentifier(), 'started_at' => Support::now(),
                 'native_commit_already_present' => $operation['state'] === 'APPLIED'];
             $this->store->journal('import-' . $attemptId . '-start', $start);
@@ -73,7 +76,7 @@ final class Middleware implements MiddlewareInterface
                 $this->store->journal('import-' . $attemptId . '-error', $start + ['error' => Support::error($error)]);
                 try {
                     $current = $this->store->require('import', $stamp->operationId, $stamp->projectId);
-                    if (!in_array($current['state'], ['APPLIED', 'COMPLETE'], true)) {
+                    if (!in_array($current['state'], ['APPLIED', 'COMPLETE', 'RETAINED_UNAPPLIED'], true)) {
                         $current['state'] = 'ATTENTION';
                         $current['last_error'] = Support::error($error);
                         $current['last_attempt_id'] = $attemptId;

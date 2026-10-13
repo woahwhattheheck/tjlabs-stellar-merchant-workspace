@@ -139,6 +139,16 @@ final class Store
         return array_map($this->decode(...), $query->executeQuery()->fetchAllAssociative());
     }
 
+    public function projects(int $offset = 0, int $limit = 100): array
+    {
+        if ($offset < 0 || $limit < 1 || $limit > 500) { throw new \InvalidArgumentException('Select a bounded project page.'); }
+        $query = $this->connection->createQueryBuilder();
+        $query->select('kind', 'id', 'project_id', 'revision', 'payload')->from('tjl_catalogue_record')
+            ->where('kind = :kind')->setParameter('kind', 'project')->orderBy('id', 'ASC')
+            ->setMaxResults($limit)->setFirstResult($offset);
+        return array_map($this->decode(...), $query->executeQuery()->fetchAllAssociative());
+    }
+
     public function allProject(string $projectId): \Generator
     {
         $result = $this->connection->executeQuery(
@@ -148,6 +158,23 @@ final class Store
         while (($row = $result->fetchAssociative()) !== false) {
             yield $this->decode($row);
         }
+    }
+
+    /** The archive was fully authenticated before entering this native transaction. */
+    public function receiveOriginal(array $record): void
+    {
+        $binding = $record['_record'] ?? throw new \InvalidArgumentException('Missing original record identity.');
+        $kind = Support::id($binding['kind']); $id = Support::id($binding['id']); $project = Support::id($binding['project_id']);
+        if (!is_int($binding['revision']) || $binding['revision'] < 1) { throw new \InvalidArgumentException('Invalid original revision.'); }
+        $existing = $this->object($kind, $id);
+        if ($existing !== null) {
+            if (Support::hash($existing) !== Support::hash($record)) { throw new \RuntimeException('An existing native record differs from the received original; preserve its current project.'); }
+            return;
+        }
+        $this->connection->insert('tjl_catalogue_record', [
+            'kind' => $kind, 'id' => $id, 'project_id' => $project, 'revision' => $binding['revision'],
+            'payload' => Support::json(Support::withoutRecord($record)), 'updated_at' => Support::now(),
+        ]);
     }
 
     public function atomic(callable $callback): mixed
@@ -268,17 +295,42 @@ final class Store
         if ($existing !== false && $existing !== $encoded) {
             throw new \RuntimeException('Retain the original journal edition; use a distinct attempt identity.');
         }
+        if (is_link($path)) { throw new \RuntimeException('The original journal pointer is linked.'); }
         if ($existing === false) {
-            $handle = @fopen($path, 'x+b');
-            if ($handle === false) { throw new \RuntimeException('The original journal was created concurrently.'); }
+            $temporary = $this->temporaryPath('.journal');
             try {
-                chmod($path, 0600);
-                if (fwrite($handle, $encoded) !== strlen($encoded) || !fflush($handle) || !fsync($handle)) {
-                    throw new \RuntimeException('Original journal publication is incomplete.');
+                $handle = fopen($temporary, 'w+b');
+                if ($handle === false) { throw new \RuntimeException('Cannot allocate the original journal pointer.'); }
+                try {
+                    if (fwrite($handle, $encoded) !== strlen($encoded) || !fflush($handle) || !fsync($handle)) {
+                        throw new \RuntimeException('Original journal publication is incomplete.');
+                    }
+                } finally { fclose($handle); }
+                if (!@link($temporary, $path) && (!is_file($path) || file_get_contents($path) !== $encoded)) {
+                    throw new \RuntimeException('The original journal was created with different bytes.');
                 }
-            } finally { fclose($handle); }
+                $directory = fopen(dirname($path), 'r');
+                if ($directory !== false) { try { fsync($directory); } finally { fclose($directory); } }
+            } finally { @unlink($temporary); }
         }
         return $blob;
+    }
+
+    /** Original import attempts live outside SQL rollback and travel with the selected project. */
+    public function importJournals(string $projectId): array
+    {
+        $result = [];
+        foreach (glob($this->directory . '/journals/import-*.json') ?: [] as $path) {
+            if (is_link($path) || !is_file($path)) { throw new \RuntimeException('Invalid original import journal.'); }
+            $pointer = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+            $value = json_decode($this->readBlob($pointer), true, 512, JSON_THROW_ON_ERROR);
+            $owner = $value['project_id'] ?? null;
+            if ($owner === null && isset($value['operation_id'])) {
+                $owner = ($this->object('import', $value['operation_id']))['_record']['project_id'] ?? null;
+            }
+            if ($owner === $projectId) { $result[] = ['name' => basename($path, '.json'), 'blob' => $pointer]; }
+        }
+        return $result;
     }
 
     private function decode(array $row): array

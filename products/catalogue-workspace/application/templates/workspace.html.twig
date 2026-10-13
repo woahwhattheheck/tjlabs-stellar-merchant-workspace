@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catalogue review workspace</title>
+<link rel="stylesheet" href="{{ path('tjl_catalogue_workspace_asset', {name:'workspace.css'}) }}">
+<script src="{{ path('tjl_catalogue_workspace_asset', {name:'workspace.js'}) }}" defer></script>
+</head>
+<body>
+<main id="workspace" data-api="{{ path('tjl_catalogue_workspace_action') }}" data-upload="{{ path('tjl_catalogue_workspace_upload') }}"
+ data-download="{{ path('tjl_catalogue_workspace_download', {project:'PROJECT',sha:'HASH'}) }}"
+ data-csrf="{{ csrf }}" data-actor="{{ actor }}">
+<header class="masthead"><div><p class="eyebrow">Sylius · original Akeneo import</p><h1>Catalogue review workspace</h1>
+<p>Retain a selected source edition, review local ownership, and follow the original native import result.</p></div>
+<a href="{{ path('sylius_admin_dashboard') }}">Return to administration</a></header>
+<div id="status" role="status" aria-live="polite"></div>
+<section class="panel">
+<div class="row"><label class="grow">Original project ID<input id="project-id" list="projects" autocomplete="off" placeholder="Select or enter a retained project ID"></label>
+<datalist id="projects"></datalist><button id="open-project">Open project</button><button id="list-projects">Refresh projects</button></div>
+<p id="project-summary" class="muted">Choose an existing project or create an explicitly selected cohort below.</p>
+<div id="pending" hidden><h2>Original action awaiting reconciliation</h2><p id="pending-label"></p>
+<div class="row"><button id="resume-pending">Continue same action</button><button id="download-pending">Download original action</button>
+<button id="retain-pending">Retain action and permit a new action</button></div></div>
+</section>
+<nav aria-label="Workspace sections" class="tabs">
+<button data-tab="project">Project</button><button data-tab="cohort">Source cohort</button><button data-tab="review">Field review</button>
+<button data-tab="operations">Native operations</button><button data-tab="files">Files &amp; transfer</button><button data-tab="original">Original records</button>
+</nav>
+
+<section class="panel tab" id="tab-project">
+<h2>Selected catalogue project</h2>
+<p>A project claims only the identifiers you select. Their ordinary background imports enter review while the claim is active. Existing imports outside this selection continue through the original connector.</p>
+<div class="two"><label>New project label<input id="new-label" maxlength="1000"></label><label>New project ID<input id="new-id" autocomplete="off"></label></div>
+<label>Akeneo product identifiers, one per line<textarea id="new-identifiers" rows="5"></textarea></label>
+<div class="two"><label>Existing Sylius locale codes, one per line<textarea id="new-locales" rows="3"></textarea></label>
+<label>Existing Sylius channel codes, one per line<textarea id="new-channels" rows="3"></textarea></label></div>
+<label class="check"><input type="checkbox" id="claim-confirm">Claim these exact identifiers for explicit workspace review.</label>
+<button id="create-project" class="primary">Create selected project</button>
+<details><summary>Installed native engine and mapping</summary><button id="read-engine">Read current engine</button><pre id="engine"></pre></details>
+<hr>
+<h3>Return a selected identifier to ordinary live importing</h3>
+<label>Original identifier<input id="release-identifier"></label>
+<label class="check"><input type="checkbox" id="release-confirm">Resume the original live import behavior for this identifier.</label>
+<button id="release-claim">Release this claim</button>
+<p class="muted">Previously suspended messages remain in the existing native failure transport. Review their original contents before any operator-selected retry.</p>
+</section>
+
+<section class="panel tab" id="tab-cohort" hidden>
+<h2>Complete selected source cohort</h2>
+<p>Capture uses the installed authenticated Akeneo client. It retains the selected products and their actual dependency responses and media. A following capture creates a separate source edition.</p>
+<div class="row"><button id="capture" class="primary">Capture selected source</button><label class="grow">Retained capture<select id="capture-select"></select></label><button id="open-capture">Open capture</button></div>
+<details><summary>Additional documented native dependencies</summary><p>Supply explicit API descriptors only when a configured original handler needs another reviewed GET.</p><textarea id="additional-requests" rows="5">[]</textarea></details>
+<p id="cohort-page" class="muted"></p><div class="table-wrap"><table><thead><tr><th>Identifier</th><th>Source observation</th><th>Claim</th><th>Review</th></tr></thead><tbody id="cohort-rows"></tbody></table></div>
+<div class="row"><button id="cohort-previous">Previous page</button><button id="cohort-next">Next page</button></div>
+<details><summary>Original source identities and complete response descriptors</summary><pre id="source-summary"></pre></details>
+</section>
+
+<section class="panel tab" id="tab-review" hidden>
+<h2 id="review-title">Review one original catalogue item</h2>
+<p id="review-binding">Open an item from the retained source cohort.</p>
+<div id="review-content" hidden>
+<p id="review-notice"></p>
+<div class="two"><details><summary>Frozen original source product</summary><pre id="source-product"></pre></details>
+<details><summary>Complete reviewed native product and mapping</summary><pre id="native-product"></pre></details></div>
+<div id="import-review">
+<label>Find a reviewed native field<input id="field-search" type="search" placeholder="Locale, attribute, channel or property"></label>
+<p class="muted">Source ownership uses the complete installed connector mapping. Local ownership preserves the reviewed value, or your explicit replacement. Existing fields outside selected locales/channel prices and native stock remain local automatically.</p>
+<div id="field-rows"></div><div class="row"><button id="field-previous">Previous fields</button><span id="field-page"></span><button id="field-next">Next fields</button></div>
+<label class="check"><input type="checkbox" id="approve-confirm">Approve this frozen source, native comparison, installed mapping and the ownership decisions shown here.</label>
+<div class="row"><button id="approve" class="primary">Save exact approval</button><button id="dispatch" disabled>Dispatch approved native import</button><button id="download-review">Download current review and choices</button></div>
+<p id="approval-status" class="muted"></p>
+</div>
+<div id="missing-review" hidden>
+<p class="notice">A missing source response records the account's observed access boundary. It does not establish that the upstream item was deleted. This action affects only the explicitly selected existing native variant.</p>
+<label class="check"><input type="checkbox" id="missing-access">I reviewed this source-access limitation.</label>
+<label class="check"><input type="checkbox" id="missing-confirm">Disable only this selected native variant if it is still missing and its reviewed native values still match.</label>
+<label class="check"><input type="checkbox" id="missing-parent">Also disable its parent only if no enabled variants remain.</label>
+<button id="apply-missing" class="primary">Apply selected missing-record decision</button>
+</div></div>
+</section>
+
+<section class="panel tab" id="tab-operations" hidden>
+<div class="row"><h2 class="grow">Original native operations</h2><button id="refresh-operations">Refresh current results</button></div>
+<p>Queue admission is separate from import completion. The actual worker handles the original stamped message, checks the current source and native comparison, and records the original connector result. Refreshing does not dispatch.</p>
+<div class="table-wrap"><table><thead><tr><th>Identifier / operation</th><th>Current state</th><th>Native result IDs</th><th>Continue</th></tr></thead><tbody id="operation-rows"></tbody></table></div>
+<details><summary>Complete selected operation, original attempts and media reconciliation</summary><pre id="operation-detail"></pre></details>
+<h3>Ordinary imports held for selected-item review</h3><pre id="live-pending"></pre>
+</section>
+
+<section class="panel tab" id="tab-files" hidden>
+<h2>Complete original files and project transfer</h2>
+<p>Catalogue export contains this project's native references, reviews, decisions, operations and complete captured source/media bytes. Further native mutation on another host requires the separately received original Sylius database, Composer configuration and file graph.</p>
+<div class="row"><button id="export-project" class="primary">Export frozen catalogue project</button><button id="refresh-files">Refresh original files</button></div>
+<p id="export-result"></p>
+<div class="table-wrap"><table><thead><tr><th>Original SHA-256</th><th>Bytes</th><th>Download</th></tr></thead><tbody id="file-rows"></tbody></table></div>
+<hr><h3>Receive a complete project archive</h3>
+<p>Choose a target with no catalogue record for that original project. Reopening the same accepted archive preserves later local work. Use the original project ID in the selector above.</p>
+<label>Original catalogue ZIP<input id="receive-file" type="file" accept=".zip,application/zip"></label>
+<label class="check"><input id="receive-confirm" type="checkbox">I selected the original receiving site and project identity; its native Sylius graph is managed by the reviewed full-project receiving course.</label>
+<button id="receive-project">Receive selected archive</button>
+</section>
+
+<section class="panel tab" id="tab-original" hidden>
+<h2>Retained original action and records</h2>
+<div class="two"><label>Record kind<select id="record-kind"><option>review</option><option>approval</option><option>command</option><option>missing-effect</option><option>export</option><option>received</option><option>live-pending</option><option>result</option></select></label>
+<label>Original record ID<input id="record-id"></label></div>
+<div class="row"><button id="read-record">Read original record</button><button id="download-result">Download displayed original JSON</button></div>
+<pre id="result"></pre>
+</section>
+<footer>Original source and native result bytes remain attached to the same project. This operator screen uses the existing Sylius administrator session.</footer>
+</main>
+</body></html>

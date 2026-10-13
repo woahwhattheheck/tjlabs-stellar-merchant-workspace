@@ -373,7 +373,9 @@ final class NativeCatalogue
                 }
                 break;
             case 'pricing':
-                if (!is_array($value) || array_keys($value) !== ['price', 'originalPrice', 'minimumPrice']) {
+                $keys = is_array($value) ? array_keys($value) : [];
+                sort($keys, SORT_STRING);
+                if (!is_array($value) || $keys !== ['minimumPrice', 'originalPrice', 'price']) {
                     throw new \InvalidArgumentException('Retain all three native channel pricing fields in their original minor units.');
                 }
                 foreach ($value as $amount) {

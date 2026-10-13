@@ -27,12 +27,16 @@ final class Workspace
             return $this->envelope($action, $operationId, null, $this->store->install());
         }
         if ($action === 'engine') { return $this->envelope($action, $operationId, null, $this->engine->describe()); }
+        if ($action === 'projects') {
+            return $this->envelope($action, $operationId, null, ['projects' => $this->store->projects((int) ($input['offset'] ?? 0), (int) ($input['limit'] ?? 100))]);
+        }
         $projectId = Support::id(Support::requiredString($input, 'project_id', 128));
         $read = match ($action) {
             'project' => fn () => $this->project($projectId),
             'cohort' => fn () => $this->cohort($projectId, Support::id(Support::requiredString($input, 'capture_id', 128)), (int) ($input['offset'] ?? 0), (int) ($input['limit'] ?? 50)),
             'operation' => fn () => $this->operation($projectId, Support::id(Support::requiredString($input, 'import_operation_id', 128))),
             'files' => fn () => $this->archive->files($projectId),
+            'record' => fn () => $this->readRecord($projectId, $input),
             default => null,
         };
         if ($read !== null) { return $this->envelope($action, $operationId, $projectId, $read()); }
@@ -60,13 +64,14 @@ final class Workspace
                     'retry' => $this->dispatch($projectId, $input, $request, true),
                     'missing-apply' => $this->disableMissing($projectId, $input, $request),
                     'release-claim' => $this->releaseClaim($projectId, $input),
+                    'retain-unapplied' => $this->retainUnapplied($projectId, $input, $request),
                     'export' => $this->archive->export($projectId, $operationId, $actor),
                     'receive' => $this->archive->receive($projectId, Support::requiredString($input, 'archive_path'), $operationId, $actor),
                     default => throw new \InvalidArgumentException('Unknown catalogue workspace action.'),
                 };
                 $envelope = $this->envelope($action, $operationId, $projectId, $result);
                 $request = $this->store->require('command', $operationId, $projectId);
-                $request['state'] = 'COMPLETE';
+                $request['state'] = ($action === 'capture' && $envelope['state'] !== 'COMPLETE') ? ($envelope['state'] === 'ATTENTION' ? 'ATTENTION' : 'RUNNING') : 'COMPLETE';
                 $request['result'] = $envelope;
                 $request['completed_at'] = Support::now();
                 $this->store->save($request);
@@ -81,6 +86,15 @@ final class Workspace
         });
     }
 
+    private function readRecord(string $projectId, array $input): array
+    {
+        $kind = Support::requiredString($input, 'kind', 64);
+        if (!in_array($kind, ['review', 'approval', 'command', 'missing-effect', 'export', 'received', 'live-pending', 'result'], true)) {
+            throw new \InvalidArgumentException('Select a documented original record kind.');
+        }
+        return $this->store->require($kind, Support::id(Support::requiredString($input, 'id', 128)), $projectId);
+    }
+
     public function project(string $projectId): array
     {
         $project = $this->store->require('project', $projectId, $projectId);
@@ -91,7 +105,13 @@ final class Workspace
                 $page = $this->store->records($kind, $projectId, 500, $offset);
                 foreach ($page as $row) {
                     if ($kind === 'import') {
-                        $row = $this->operation($projectId, $row['_record']['id']);
+                        $observed = $this->operation($projectId, $row['_record']['id']);
+                        $row = array_intersect_key($observed, array_flip(['id', 'identifier', 'approval_id', 'state', 'display_state', 'created_at', 'created_by', 'native_applied_at', 'native_result_ids', 'last_native_result', 'last_error', 'source_operation']));
+                    }
+                    if ($kind === 'import' && isset($row['source_operation'])) {
+                        $source = $row['source_operation'];
+                        $row['source_operation'] = ['state' => $source['state'] ?? null,
+                            'media_state' => $source['media']['state'] ?? null, 'updated_at' => $source['updated_at'] ?? null];
                     }
                     $result[$key][] = $row;
                 }
@@ -105,8 +125,11 @@ final class Workspace
     {
         $operation = $this->store->require('import', $operationId, $projectId);
         $operation['source_operation'] = $this->source->operation($operationId);
-        if (($operation['source_operation']['state'] ?? null) === 'MEDIA_PENDING') {
-            $operation['display_state'] = 'MEDIA_PENDING';
+        $sourceState = $operation['source_operation']['state'] ?? null;
+        if (in_array($sourceState, ['MEDIA_PENDING', 'COMMIT_UNCERTAIN', 'NATIVE_RECEIPT_PENDING'], true)) {
+            $operation['display_state'] = $sourceState;
+        } elseif ($operation['state'] === 'COMPLETE' && $sourceState !== 'COMPLETE') {
+            $operation['display_state'] = 'WAITING_NATIVE';
         } else { $operation['display_state'] = $operation['state']; }
         return $operation;
     }
@@ -267,6 +290,7 @@ final class Workspace
             $id = Support::id((string) ($input['import_operation_id'] ?? $request['_record']['id']));
             $operation = $this->store->object('import', $id);
         }
+        if (($operation['state'] ?? null) === 'RETAINED_UNAPPLIED') { throw new \RuntimeException('This original operation was explicitly retained unapplied. Create a following review and approval; do not reactivate it.'); }
         $approval = $this->store->require('approval', $approvalId, $projectId);
         if ($operation === null) {
             $operation = $this->store->put('import', $id, $projectId, [
@@ -342,6 +366,33 @@ final class Workspace
         });
     }
 
+    private function retainUnapplied(string $projectId, array $input, array $request): array
+    {
+        if (($input['confirm_no_native_commit'] ?? false) !== true) { throw new \InvalidArgumentException('Explicitly retain this unapplied original operation.'); }
+        $id = Support::id(Support::requiredString($input, 'import_operation_id', 128));
+        $reason = Support::requiredString($input, 'reason', 10000);
+        $operation = $this->store->require('import', $id, $projectId);
+        if ($operation['state'] === 'RETAINED_UNAPPLIED') {
+            if (($operation['disposition']['operation_id'] ?? null) !== $request['_record']['id']) {
+                throw new \RuntimeException('This original operation already has its retained disposition.');
+            }
+            return $operation;
+        }
+        if (!in_array($operation['state'], ['PREPARED', 'DISPATCHING', 'QUEUED', 'ATTENTION'], true) ||
+            isset($operation['native_applied_at']) || ($operation['last_native_result']['successful'] ?? false) === true) {
+            throw new \RuntimeException('The original native commit cannot be abandoned. Reconcile its media/result instead.');
+        }
+        $source = $this->source->operation($id);
+        if (in_array($source['state'] ?? null, ['COMMIT_UNCERTAIN', 'MEDIA_PENDING', 'NATIVE_RECEIPT_PENDING', 'COMPLETE'], true)) {
+            throw new \RuntimeException('The retained source/native publication state requires reconciliation before an unapplied disposition.');
+        }
+        $operation['state'] = 'RETAINED_UNAPPLIED';
+        $operation['disposition'] = ['operation_id' => $request['_record']['id'], 'reason' => $reason,
+            'actor' => $request['binding']['actor'], 'at' => $request['created_at'], 'applied' => false,
+            'native_queue' => 'Original transport messages/results remain retained; this stamp can no longer mutate the catalogue.'];
+        return $this->store->save($operation);
+    }
+
     private function releaseClaim(string $projectId, array $input): array
     {
         if (($input['resume_original_live_imports'] ?? false) !== true) {
@@ -357,7 +408,7 @@ final class Workspace
     private function envelope(string $action, string $operationId, ?string $projectId, array $result): array
     {
         $state = $result['display_state'] ?? $result['state'] ?? 'COMPLETE';
-        $waiting = in_array($state, ['PREPARED', 'DISPATCHING', 'QUEUED', 'APPLIED', 'MEDIA_PENDING', 'WAITING_NATIVE'], true);
+        $waiting = in_array($state, ['PREPARED', 'DISPATCHING', 'QUEUED', 'APPLIED', 'MEDIA_PENDING', 'COMMIT_UNCERTAIN', 'NATIVE_RECEIPT_PENDING', 'WAITING_NATIVE'], true);
         return ['schema' => 'tjl.catalogue.workspace-result.v1',
             'state' => $waiting ? 'WAITING_NATIVE' : ($state === 'ATTENTION' ? 'ATTENTION' : 'COMPLETE'),
             'action' => $action, 'operation_id' => $operationId, 'project_id' => $projectId, 'result' => $result];
