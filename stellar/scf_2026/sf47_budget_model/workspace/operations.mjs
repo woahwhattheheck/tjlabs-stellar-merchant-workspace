@@ -86,7 +86,7 @@ const empty = text => '<p class="ops-empty">'+esc(text)+'</p>';
 function b64(buffer) {let out='';const bytes=new Uint8Array(buffer);for(let n=0;n<bytes.length;n+=8192)out+=String.fromCharCode(...bytes.subarray(n,n+8192));return btoa(out);}
 function downloadFile(raw,filename,type='application/json') {const url=URL.createObjectURL(raw instanceof Blob?raw:new Blob([raw],{type}));const link=document.createElement('a');link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}
 
-export function mountOperations({container,api:transport,plan,inform:notify,mutationId,principal=null,initialNavigation=null}) {
+export function mountOperations({container,api:transport,plan,inform:notify,mutationId,principal=null,initialNavigation=null,route=null,onOpenPlanning,onPlanningReturn,onObservedCase}) {
   const fixedActor=principal&&principal.role!=='owner';
   const lead=!principal||['owner','lead'].includes(principal.role);
   const createCase=lead&&(!principal||principal.caseIds.includes('*'));
@@ -120,7 +120,7 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
   const button=(label,action,data='',disabled=false)=>baseButton(label,action,data,disabled||!actionAllowed(action,data));
 
   const root=document.createElement('section');root.className='operations';root.setAttribute('aria-label','Delivery and cash operations');container.replaceChildren(root);
-  const view={cases:[],current:null,tab:'overview',busy:false,events:[],nextAfter:null,form:null};
+  const view={cases:[],current:null,tab:route?.tab==='amendments'&&lead?'amendments':'overview',busy:false,events:[],nextAfter:null,form:null};
   let active=true,statementView=null,forecastView=null,forecastViewCase=null,portfolioView=null,supportView=null,completionView=null,calendarView=null,customerUseView=null,buyerView=null,cohortView=null,cohortPlanningView=null,cohortDeliveryView=null,installationView=null,installationReturnView=null,dispatchView=null,implementationView=null,engagementView=null,performanceView=null,ledgerIntakeView=null,payablesView=null,cashAccountView=null,accountReconciliationView=null,commercialView=null,workIntakeView=null,amendmentView=null;
   let taskOutcomeView=null,awardTermsView=null,fundingView=null,procedureView=null;
   let settlementView=null;
@@ -250,16 +250,38 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
   function alertError(error) {if(!available())return;inform(error.message,true);const target=$('[data-ops-message]');if(target){target.textContent=error.message;target.setAttribute('role','alert');}}
   async function run(action) {if(view.busy||!available())return;setBusy(true);try{await action();}catch(error){alertError(error);}finally{if(available())setBusy(false);}}
   function recordingActor() {requireActive();if(fixedActor)return principal.actor;const value=($('[name=recordingActor]')?.value||actor).trim();if(!value)throw new Error('Enter the recording operator before saving.');actor=value;try{sessionStorage.setItem('sf47.operations.actor',value);}catch{}return value;}
+
+  function planningDate(programId){
+    const retained=retainedCalendarSessions.get(programId);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(retained?.asOfDate??''))return retained.asOfDate;
+    try{
+      const saved=JSON.parse(sessionStorage.getItem('sf47.delivery-calendar.'+programId)||'null');
+      if(saved?.caseId===programId&&/^\d{4}-\d{2}-\d{2}$/.test(saved.asOfDate??''))return saved.asOfDate;
+    }catch{}
+    return date();
+  }
+  async function observePlanningCase(value){
+    try{await onObservedCase?.(value);}catch(error){inform(error.message,true);}
+  }
+  async function editCasePlanning(selection={}){
+    requireActive();
+    if(!lead||!onOpenPlanning)throw new Error('A lead opens the original case planning workspace.');
+    const current=view.current;
+    if(!current)throw new Error('Select the original operating case first.');
+    return onOpenPlanning(current,{asOfDate:selection.asOfDate||planningDate(current.program.id),...selection});
+  }
+
   async function loadCases(prefer) {
     view.cases=(await api('/api/operations')).cases;
     let retained;try{retained=sessionStorage.getItem('sf47.operations.case.'+plan.id);}catch{}
     const target=prefer||view.cases.find(row=>row.id===retained)?.id||view.cases[0]?.id;
-    if(view.current?.program.id!==target){view.forecastId=null;view.forecastDraft=null;view.portfolioId=null;view.tab=target?navigationSession(target).activeSection:'overview';}
+    if(view.current?.program.id!==target){view.forecastId=null;view.forecastDraft=null;view.portfolioId=null;view.tab=!initialNavigation&&prefer===route?.caseId&&route?.tab==='amendments'&&lead
+      ?'amendments':target?navigationSession(target).activeSection:'overview';}
     view.current=target?await api('/api/operations/'+target):null;
     if(target)try{sessionStorage.setItem('sf47.operations.case.'+plan.id,target);}catch{}
-    view.events=[];view.nextAfter=null;render();
+    view.events=[];view.nextAfter=null;render();if(view.current)await observePlanningCase(view.current);
   }
-  async function refresh() {const current=view.current.program.id;view.current=await api('/api/operations/'+current);view.cases=(await api('/api/operations')).cases;view.events=[];view.nextAfter=null;render();}
+  async function refresh() {const current=view.current.program.id;view.current=await api('/api/operations/'+current);view.cases=(await api('/api/operations')).cases;view.events=[];view.nextAfter=null;render();await observePlanningCase(view.current);}
   async function command(action,data={},note='') {
     requireActive();
     if(!permits(action))throw new Error('Choose an operating action available to your staff role.');
@@ -359,7 +381,7 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
     root.innerHTML='<div class="ops-heading"><div><h2>Delivery and cash operations</h2><p>New cases use saved plan '+esc(plan.name)+' · revision '+plan.revision+'</p></div><div class="ops-actions">'+button('Open case from saved plan','new-case')+button('Import complete case','import')+button('Import original source packet','intake')+'</div></div>'
       +'<div class="ops-toolbar">'+field('Recording operator','recordingActor',actor,{readonly:Boolean(fixedActor),help:fixedActor?'Your enrolled staff identity is retained with every saved operation.':'Retained with every saved operation.'})+(view.cases.length?field('Retained case','caseSelect',c?.program.id,{options:view.cases.map(row=>[row.id,row.name+' · '+row.mode+' · v'+row.version])}):'')+'</div>'
       +'<p data-ops-message role="status" aria-live="polite"></p>'
-      +(c?'<div class="ops-case-heading"><div><strong>'+esc(c.program.name)+'</strong> '+flag(c.program.state)+' <span>Version '+c.program.version+' · '+esc(c.plan.name)+' · pinned revision '+c.program.planRevision+'</span></div><div class="ops-actions">'+button('Refresh case','refresh')+button('Export complete case','export')+(c.program.state==='CLOSED'?button('Reopen review','reopen'):'')+'</div></div>'
+      +(c?'<div class="ops-case-heading"><div><strong>'+esc(c.program.name)+'</strong> '+flag(c.program.state)+' <span>Version '+c.program.version+' · '+esc(c.plan.name)+' · pinned revision '+c.program.planRevision+'</span></div><div class="ops-actions">'+button('Refresh case','refresh')+(lead&&onOpenPlanning?button('Edit plan and workbook for this case','case-planning'):'')+button('Export complete case','export')+(c.program.state==='CLOSED'?button('Reopen review','reopen'):'')+'</div></div>'
        +(c.program.mode==='WALKTHROUGH'?'<p class="ops-note"><strong>Internal walkthrough.</strong> These fictional workflow records are separate from operating cash, awards and customer outcomes.</p>':'')
        +(c.program.currentPlanRevision!==c.program.planRevision?'<p class="ops-note">The planner has a newer saved revision. This case retains its selected baseline revision '+c.program.planRevision+'.</p>':'')
        +'<div class="ops-layout"><div class="ops-nav-host" data-ops-navigation></div><div class="ops-panel" data-ops-current-panel tabindex="-1" role="region" aria-label="'+esc(navigationSections.find(section=>section.id===view.tab)?.label||'Operations section')+'">'+({overview,contributors,work,invoices,cash,delivery,sources,reviews,settlements:()=>'<div data-ops-settlements></div>','award-terms':()=>'<div data-ops-award-terms></div>',amendments:()=>'<div data-ops-amendments></div>','work-intake':()=>'<div data-ops-work-intake></div>',statements:()=>'<div data-ops-statements></div>','account-reconciliation':()=>'<div data-ops-account-reconciliation></div>',support:()=>'<div data-ops-support></div>',buyer:()=>'<div data-ops-buyer></div>',completion:()=>'<div data-ops-completion></div>',engagements:()=>'<div data-ops-engagements></div>',calendar:()=>'<div data-ops-calendar></div>','customer-use':()=>'<div data-ops-customer-use></div>','cohort-planning':()=>'<div data-ops-cohort-planning></div>',cohort:()=>'<div data-ops-cohort></div>','cohort-delivery':()=>'<div data-ops-cohort-delivery></div>',installations:()=>'<div data-ops-installations></div>','task-outcomes':()=>'<div data-ops-task-outcomes></div>',procedures:()=>'<div data-ops-procedures></div>',funding:()=>'<div data-ops-funding></div>','installation-returns':()=>'<div data-ops-installation-returns></div>',commercial:()=>'<div data-ops-commercial></div>',dispatch:()=>'<div data-ops-dispatch></div>',performance:()=>'<div data-ops-performance></div>','ledger-intake':()=>'<div data-ops-ledger-intake></div>','supplier-account':()=>'<div data-ops-payables></div>',implementation:()=>'<div data-ops-implementation></div>',forecast:()=>'<div data-ops-forecast></div>',portfolio:()=>'<div data-ops-portfolio></div>'}[view.tab])()+'</div></div>'
@@ -421,6 +443,8 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
       if(!retainedAmendmentSessions.has(c.program.id))retainedAmendmentSessions.set(c.program.id,{});
       amendmentView=mountAmendments({container:$('[data-ops-amendments]'),current:c,api,saveApi:transport,
         session:retainedAmendmentSessions.get(c.program.id),mutationId,recordingActor,
+        planningReturn:route?.caseId===c.program.id?route.planningReturn:null,
+        onPlanningReturn,onOpenPlanning:lead&&onOpenPlanning?editCasePlanning:null,
         onCalendarOpen:(tab,tranche,selection)=>openCalendarSource(c.program.id,tab,tranche,selection),
         onSources:()=>{if(!available())return;view.tab='sources';render();},
         onCase:async(next,result)=>{
@@ -428,7 +452,7 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
           view.current=next;view.events=[];view.nextAfter=null;
           const listed=view.cases.find(row=>row.id===next.program.id);
           if(listed)Object.assign(listed,{version:next.program.version,state:next.program.state,updatedAt:next.program.updatedAt});
-          render();inform('Retained '+result.action+' · case version '+result.version+'.');
+          render();await observePlanningCase(next);inform('Retained '+result.action+' · case version '+result.version+'.');
         }});
       amendmentView.setHostBusy(view.busy);amendmentView.ready.catch(alertError);
     }
@@ -833,6 +857,7 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
     run(async()=>{
       if(action==='cancel'){$('dialog.ops-dialog').close();return;}
       if(action==='new-case')return showForm('new-case',{}, {title:'Open operations from saved plan'});
+      if(action==='case-planning')return editCasePlanning();
       if(action==='refresh')return refresh();
       if(action==='record'){const kind=target.dataset.kind;return showForm(kind,view.current.records[kind].find(row=>row.id===target.dataset.id)||{});}
       if(action==='attach')return showForm('attach',{}, {title:'Attach original source'});
@@ -953,7 +978,7 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
   });
   root.innerHTML='<p>Opening retained delivery operations…</p>';
   const ready=(async()=>{
-    await loadCases(initialNavigation?.caseId);
+    await loadCases(initialNavigation?.caseId||route?.caseId);
     if(!initialNavigation||!available())return;
     const selected=initialNavigation,caseId=view.current?.program.id;
     if(caseId!==selected.caseId)throw new Error('Open the selected original agenda case.');
