@@ -1,12 +1,12 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "fred",
-  "description": "FRED and ALFRED economic editions, recurring briefings, release planning, complete DDP package migration and QCEW county reports",
+  "description": "FRED and ALFRED economic editions, recurring briefings, release planning, complete DDP migration, current publications and paid county reports",
   "commands": {
     "fred": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/cli.mjs"
   },
   "commandDescriptions": {
-    "fred": "Acquire original economic sources, migrate DDP packages, review recurring briefings and produce county reports"
+    "fred": "Acquire original economic sources, migrate DDP packages, produce and sell county reports, and receive original customer deliveries"
   },
   "exports": {
     "./seller/fred": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/merchant.mjs",
@@ -178,6 +178,12 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/publication-cli.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/PUBLISHED-WORKSPACE.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/ddp-published.js",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/json-response.mjs"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/json-response.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/publication-model.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/delivery.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/merchant.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/purchase.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/MERCHANT.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/merchant-journey.mjs"
   ]
 }
