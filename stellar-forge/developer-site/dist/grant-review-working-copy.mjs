@@ -1,5 +1,5 @@
 // MIT. Complete unfinished review work beside the original recorded review journal.
-import { reviewRoundView, readSubmissionExport, compareReviewDraft, reviewSha256, REVIEW_MAX_BYTES } from './grant-review-round-core.mjs';
+import { reviewRoundView, readSubmissionExport, compareReviewDraft, reviewSha256, REVIEW_MAX_BYTES, readReviewReturn, compareReviewReturn } from './grant-review-round-core.mjs';
 import { saveDraft, loadDraft, listDrafts } from './drafts.mjs';
 
 export const WORKING_SCHEMA='stellar-forge.grant-review-working-copy.v1';
@@ -124,13 +124,47 @@ function pairs(value,label,max=20000){
   const seen=new Set();
   for(const row of value){need(Array.isArray(row)&&row.length===2,label+' must retain complete key/value pairs.');string(row[0],label+' key',2000);need(!seen.has(row[0]),label+' repeats a key.');seen.add(row[0]);object(row[1],label+' value');}
 }
+
+function returnedChoices(rows,label,recorded=false){
+  need(Array.isArray(rows)&&rows.length<=100000,label+' must retain every bounded action choice.');
+  const seen=new Set();
+  for(const row of rows){
+    object(row,label+' row');string(row.eventId,label+' action identity',200);need(row.eventId.length&&!seen.has(row.eventId),label+' repeats an action.');seen.add(row.eventId);
+    string(row.choice,label+' choice',1000);string(row.note,label+' note');
+    if(recorded)need(['adopt','retain'].includes(row.choice),'Keep the admitted original return choice.');
+  }
+}
+function returnPending(value){
+  object(value,'Original return attempt');need(['admitted','ready-to-save','validation-rejected'].includes(value.stage),'Retain the original return stage.');
+  need(value.error===null||typeof value.error==='string','Retain the actual return error.');
+  const q=value.request;object(q,'Original return request');
+  for(const key of ['requestId','actorId','comparisonSha256','note'])string(q[key],'Original return '+key);
+  need(q.requestId.length>0&&q.actorId.length>0&&/^[a-f0-9]{64}$/.test(q.comparisonSha256),'Retain the original return request identity and comparison.');
+  need(Number.isSafeInteger(q.expectedRevision)&&q.expectedRevision>=0,'Retain the original return revision.');
+  iso(q.at);returnedChoices(q.choices,'Admitted return choices',true);
+}
+function checkReturnedWorking(value){
+  if(value===undefined)return;
+  object(value,'Returned-review preparation');object(value.capture,'Complete returned-review capture');
+  for(const key of ['id','fileName','receivedAt','roundSha256','exportText'])string(value.capture[key],'Returned-review '+key);
+  need(Number.isSafeInteger(value.capture.bytes)&&value.capture.bytes>=0,'Keep the complete returned-review byte count.');
+  returnedChoices(value.choices,'Unfinished return choices');string(value.note,'Unfinished return note');
+  need(value.pending===null||typeof value.pending==='object','Retain the original pending return separately.');
+  if(value.pending)returnPending(value.pending);
+  need(Array.isArray(value.attempts)&&value.attempts.length<=20000,'Keep the bounded original rejected return attempts.');
+  for(const attempt of value.attempts){string(attempt.captureId,'Rejected return capture identity',200);returnPending(attempt);}
+  need(Number.isSafeInteger(value.page)&&value.page>=0,'Keep the selected return page.');
+  string(value.query,'Returned action search');need(['all','eligible','conflict','retained'].includes(value.filter),'Keep the returned action filter.');
+  need(value.lastError===null||typeof value.lastError==='string','Retain the original return error.');
+}
+
 export function checkWorkingShape(value){
   object(value,'Working copy');need(value.schema===WORKING_SCHEMA,'Open a complete Submission review working copy.');
   string(value.id,'Working identity',200);need(value.id.length>0,'Keep the working identity.');iso(value.createdAt);
   string(value.label,'Working copy name',1000);need(value.folder==='SCF review working — '+value.label,'Retain the working-copy browser label.');
   need(value.round===null||value.round?.schema==='stellar-forge.grant-review-round.v1','Retain the original recorded review separately.');
   object(value.ui,'Working selections');
-  need(['targets','saved','compare','changes','sources','history','finish'].includes(value.ui.screen),'Select an original review view.');
+  need(['targets','saved','compare','returns','changes','sources','history','finish'].includes(value.ui.screen),'Select an original review view.');
   for(const field of ['selectedTarget','newTitle','newPerson','newFormat','newParticipant'])string(value.ui[field],'Working '+field);
   need(['plain','markdown'].includes(value.ui.newFormat),'Keep the selected copy format.');
   for(const field of ['actorId','viewedEdition'])need(value.ui[field]===null||typeof value.ui[field]==='string','Keep the selected '+field+'.');
@@ -149,6 +183,8 @@ export function checkWorkingShape(value){
     }
   }
   for(const [,choice]of value.carryChoices){string(choice.choice,'Unfinished carry choice',1000);string(choice.note,'Unfinished carry note');}
+  checkReturnedWorking(value.returnedReview);
+  need(value.returnedReview===undefined||value.round,'A returned-review preparation requires its original review.');
   object(value.native,'Native saved review selection');
   need(value.native.id===null||typeof value.native.id==='string','Keep the original browser review identity.');
   need(Number.isSafeInteger(value.native.revision)&&value.native.revision>=0&&typeof value.native.dirty==='boolean','Keep the native browser revision and save state.');
@@ -167,6 +203,13 @@ export async function validateWorkingCopy(value){
     need(sameStable(actual,old),'The complete '+key+' descriptor differs from its original bytes.');
   }
   if(value.incoming){need(value.round,'An incoming revision requires its original review.');await compareReviewDraft(value.round,value.incoming);}
+  if(value.returnedReview){
+    const old=value.returnedReview.capture,actual=await readReviewReturn(old.exportText,{fileName:old.fileName,receivedAt:old.receivedAt});
+    need(sameStable(actual,old),'The complete returned-review capture differs from its original bytes.');
+    await compareReviewReturn(value.round,actual);
+    // Raw choices and the original admitted comparison survive later author edits.
+    // Only the original return action may validate/adopt them against current work.
+  }
   if(view){
     need(value.ui.actorId===null||view.participants.some(p=>p.id===value.ui.actorId),'The selected participant is absent from this review.');
     need(value.ui.viewedEdition===null||value.round.editions.some(e=>e.id===value.ui.viewedEdition),'The viewed original edition is absent.');
