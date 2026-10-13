@@ -1,0 +1,186 @@
+{
+  "agencies": {
+    "count": 473,
+    "file": {
+      "bytes": 695071,
+      "final_url": "https://www.federalregister.gov/api/v1/agencies.json",
+      "headers": {
+        "Content-Length": "695071",
+        "Content-Type": "application/json; charset=utf-8",
+        "Date": "Mon, 12 Oct 2026 04:54:37 GMT"
+      },
+      "kind": "json",
+      "name": "agency_roster",
+      "observed_at": "2026-10-12T04:54:37.749275Z",
+      "path": "federal-register/refresh/objects/7a806d209d75ee543e6e91506e485ec6a8f42687056e14a1484c8bc9e79f5443.json",
+      "request_url": "https://www.federalregister.gov/api/v1/agencies.json",
+      "sha256": "7a806d209d75ee543e6e91506e485ec6a8f42687056e14a1484c8bc9e79f5443",
+      "started_at": "2026-10-12T04:54:33.391731Z",
+      "status": 200
+    }
+  },
+  "completed_at": "2026-10-12T04:55:05.591850Z",
+  "documents": {
+    "count": 103,
+    "discovery": null,
+    "pages": [
+      {
+        "bytes": 152176,
+        "final_url": "https://www.federalregister.gov/api/v1/documents.json?conditions%5Bpublication_date%5D%5Bis%5D=2026-10-13&per_page=1000&order=oldest",
+        "headers": {
+          "Content-Length": "152176",
+          "Content-Type": "application/json; charset=utf-8",
+          "Date": "Mon, 12 Oct 2026 04:54:42 GMT"
+        },
+        "kind": "json",
+        "name": "document_page_0001",
+        "observed_at": "2026-10-12T04:54:42.955444Z",
+        "path": "federal-register/refresh/objects/dd8458b30e28aea2fe7ada61e1dc6bf891673ffe2ba20ca5bb647d9686a6efc7.json",
+        "request_url": "https://www.federalregister.gov/api/v1/documents.json?conditions%5Bpublication_date%5D%5Bis%5D=2026-10-13&per_page=1000&order=oldest",
+        "sha256": "dd8458b30e28aea2fe7ada61e1dc6bf891673ffe2ba20ca5bb647d9686a6efc7",
+        "started_at": "2026-10-12T04:54:37.755057Z",
+        "status": 200
+      }
+    ],
+    "terminal_next_page_url": null,
+    "total_pages": 1
+  },
+  "id": "fr-refresh-5b83-20261012",
+  "media": [
+    {
+      "bytes": 186945,
+      "document_number": "2026-20785",
+      "final_url": "https://www.govinfo.gov/content/pkg/FR-2026-10-13/pdf/2026-20785.pdf",
+      "headers": {
+        "Content-Length": "186945",
+        "Content-Type": "application/pdf",
+        "Date": "Mon, 12 Oct 2026 04:54:46 GMT",
+        "Last-Modified": "Sat, 10 Oct 2026 07:43:44 GMT"
+      },
+      "kind": "pdf",
+      "name": "official_pdf_2026-20785",
+      "observed_at": "2026-10-12T04:54:46.869443Z",
+      "path": "federal-register/refresh/objects/2c6d21153e24baeee5416eea8b892e794cac663daf46cb6c3509d6482ce82f1a.pdf",
+      "request_url": "https://www.govinfo.gov/content/pkg/FR-2026-10-13/pdf/2026-20785.pdf",
+      "sha256": "2c6d21153e24baeee5416eea8b892e794cac663daf46cb6c3509d6482ce82f1a",
+      "source_title": "Notice of Intent To Grant Exclusive Patent License to Zyltech Engineering, LLC; Houston, TX",
+      "started_at": "2026-10-12T04:54:42.957490Z",
+      "status": 200
+    },
+    {
+      "bytes": 186205,
+      "document_number": "2026-20787",
+      "final_url": "https://www.govinfo.gov/content/pkg/FR-2026-10-13/pdf/2026-20787.pdf",
+      "headers": {
+        "Content-Length": "186205",
+        "Content-Type": "application/pdf",
+        "Date": "Mon, 12 Oct 2026 04:54:54 GMT",
+        "Last-Modified": "Sat, 10 Oct 2026 07:43:44 GMT"
+      },
+      "kind": "pdf",
+      "name": "official_pdf_2026-20787",
+      "observed_at": "2026-10-12T04:54:54.956424Z",
+      "path": "federal-register/refresh/objects/718f7deb0e96afed327abc7c8824114456d59d2be5db0a2b04c543668e333eb9.pdf",
+      "request_url": "https://www.govinfo.gov/content/pkg/FR-2026-10-13/pdf/2026-20787.pdf",
+      "sha256": "718f7deb0e96afed327abc7c8824114456d59d2be5db0a2b04c543668e333eb9",
+      "source_title": "Notice of Final Federal Agency Actions on Proposed Highway: Topsham, Maine",
+      "started_at": "2026-10-12T04:54:46.869761Z",
+      "status": 200
+    },
+    {
+      "bytes": 627262,
+      "document_number": "2026-20789",
+      "final_url": "https://www.govinfo.gov/content/pkg/FR-2026-10-13/pdf/2026-20789.pdf",
+      "headers": {
+        "Content-Length": "627262",
+        "Content-Type": "application/pdf",
+        "Date": "Mon, 12 Oct 2026 04:54:58 GMT",
+        "Last-Modified": "Sat, 10 Oct 2026 07:43:44 GMT"
+      },
+      "kind": "pdf",
+      "name": "official_pdf_2026-20789",
+      "observed_at": "2026-10-12T04:54:58.607687Z",
+      "path": "federal-register/refresh/objects/ed438a9021f75a66ac7fec2069afd146e3d96d2c61c0421014db8898fe28c85c.pdf",
+      "request_url": "https://www.govinfo.gov/content/pkg/FR-2026-10-13/pdf/2026-20789.pdf",
+      "sha256": "ed438a9021f75a66ac7fec2069afd146e3d96d2c61c0421014db8898fe28c85c",
+      "source_title": "Takes of Marine Mammals Incidental to Specified Activities; Taking Marine Mammals Incidental to the City and Borough of Juneau's Seawalk Extension Project, Juneau, Alaska",
+      "started_at": "2026-10-12T04:54:54.956851Z",
+      "status": 200
+    },
+    {
+      "bytes": 260847,
+      "document_number": "2026-20793",
+      "final_url": "https://www.govinfo.gov/content/pkg/FR-2026-10-13/pdf/2026-20793.pdf",
+      "headers": {
+        "Content-Length": "260847",
+        "Content-Type": "application/pdf",
+        "Date": "Mon, 12 Oct 2026 04:55:01 GMT",
+        "Last-Modified": "Sat, 10 Oct 2026 07:43:44 GMT"
+      },
+      "kind": "pdf",
+      "name": "official_pdf_2026-20793",
+      "observed_at": "2026-10-12T04:55:02.040184Z",
+      "path": "federal-register/refresh/objects/ea27c1e9f9ad522ea971fcb9a6b1d6f005bd308fbc9a62c5bca1eb6eaaaf68fe.pdf",
+      "request_url": "https://www.govinfo.gov/content/pkg/FR-2026-10-13/pdf/2026-20793.pdf",
+      "sha256": "ea27c1e9f9ad522ea971fcb9a6b1d6f005bd308fbc9a62c5bca1eb6eaaaf68fe",
+      "source_title": "Self-Regulatory Organizations; Cboe EDGA Exchange, Inc.; Notice of Filing and Immediate Effectiveness of a Proposed Rule Change To Introduce a Data Vendor Program",
+      "started_at": "2026-10-12T04:54:58.608000Z",
+      "status": 200
+    },
+    {
+      "bytes": 211985,
+      "document_number": "2026-20794",
+      "final_url": "https://www.govinfo.gov/content/pkg/FR-2026-10-13/pdf/2026-20794.pdf",
+      "headers": {
+        "Content-Length": "211985",
+        "Content-Type": "application/pdf",
+        "Date": "Mon, 12 Oct 2026 04:55:05 GMT",
+        "Last-Modified": "Sat, 10 Oct 2026 07:43:44 GMT"
+      },
+      "kind": "pdf",
+      "name": "official_pdf_2026-20794",
+      "observed_at": "2026-10-12T04:55:05.588632Z",
+      "path": "federal-register/refresh/objects/4d40aa027d2200664158d844ce7741f686ebb6a4620d4d13728386c14ddda0db.pdf",
+      "request_url": "https://www.govinfo.gov/content/pkg/FR-2026-10-13/pdf/2026-20794.pdf",
+      "sha256": "4d40aa027d2200664158d844ce7741f686ebb6a4620d4d13728386c14ddda0db",
+      "source_title": "Self-Regulatory Organizations; CME Securities Clearing Inc.; Notice of Designation of Longer Period for Commission Action on Proposed Rule Change To Adopt Standards for Establishing Cross-Margin Arrangements and Adopt a Cross-Margin Arrangement With Chicago Mercantile Exchange Inc.",
+      "started_at": "2026-10-12T04:55:02.041022Z",
+      "status": 200
+    }
+  ],
+  "publication_date": "2026-10-13",
+  "schema": "govhub.federal-register.capture.v1",
+  "selection": {
+    "agency_roster": "complete",
+    "documents": "complete publication day",
+    "pdf_available": 103,
+    "pdf_requested": 5,
+    "pdf_selected": 5,
+    "pdf_selection": "first available original PDF links in the retained document order"
+  },
+  "source_notes": [
+    "JSON retains the publisher's informational rendition.",
+    "Selected PDFs are the original files linked by those exact published records.",
+    "Agency IDs use explicit decimal encoding; document numbers remain exact strings.",
+    "No NARA or OFR logos or seals are reproduced by the receiving interface."
+  ],
+  "started_at": "2026-10-12T04:54:28.725738Z",
+  "status": "COMPLETE",
+  "unresolved_agency_references": [],
+  "usage": {
+    "bytes": 37646,
+    "final_url": "https://www.federalregister.gov/reader-aids/developer-resources/rest-api",
+    "headers": {
+      "Content-Type": "text/html; charset=utf-8",
+      "Date": "Mon, 12 Oct 2026 04:54:33 GMT"
+    },
+    "kind": "html",
+    "name": "publisher_usage",
+    "observed_at": "2026-10-12T04:54:33.391229Z",
+    "path": "federal-register/refresh/objects/40697e22856b9256a03f77c4841976500316ddd127f920e9d9a9c0e3dfed80e6.html",
+    "request_url": "https://www.federalregister.gov/reader-aids/developer-resources/rest-api",
+    "sha256": "40697e22856b9256a03f77c4841976500316ddd127f920e9d9a9c0e3dfed80e6",
+    "started_at": "2026-10-12T04:54:28.730723Z",
+    "status": 200
+  }
+}

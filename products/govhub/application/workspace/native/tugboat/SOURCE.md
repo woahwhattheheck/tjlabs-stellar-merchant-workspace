@@ -1,0 +1,7 @@
+# Original Tugboat API source
+
+The unchanged openapi.yaml is the full original file src/utils/openapi.yaml from TugboatQA/tugboat-mcp at commit 56e79dd90a8186238738f34ad5a39f5a7e2a66df, Git blob b87bf3ce52c8735a99dd2cef2f5927c31b33c27b (322,261 UTF-8 bytes). Original source: https://github.com/TugboatQA/tugboat-mcp/blob/56e79dd90a8186238738f34ad5a39f5a7e2a66df/src/utils/openapi.yaml . The original package.json is included unchanged and declares MIT; this selected upstream tree contains no separate LICENSE file. No upstream copyright holder or additional license text has been invented.
+
+The API specification identifies its own terms at https://www.tugboatqa.com/terms and provider support at support@tugboatqa.com. Current online API: https://api.tugboatqa.com/v3/openapi.yaml . The current online original was also acquired on October 13, 2026 (335,241 bytes). The native GET /v3/version returned API 3.4.0 and server 2.26.42. The shipped original Git source declares API3.4.0 and documents major-version backward compatibility plus explicit Accept compatibility flags. The live provider version is read during native capability/capture.
+
+Public prose references are cited rather than copied into this application: https://www.tugboatqa.com/blog/tugboat-is-agency-infrastructure and https://docs.tugboatqa.com/ . The docs repository separately distinguishes documentation CC BY-NC-SA from code MIT. This product adds independently authored Python integration to GovHub under its existing Apache-2.0 license; the original upstream API/package remain unchanged.
