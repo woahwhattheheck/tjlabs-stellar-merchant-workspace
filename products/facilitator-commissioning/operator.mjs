@@ -9,6 +9,7 @@ import {createCommissioningJob, openCommissioningJob, inspectCommissioningTransf
 import {renderCommissioningReport} from './report.mjs';
 import {normalizeFacilitatorProfiles} from '../../stellar/scf-starforge-20261009/sf82-seller-pilot/release-facilitator.mjs';
 import {inspectRelease, releaseStatus} from '../../stellar/scf-starforge-20261009/sf82-seller-pilot/releases.mjs';
+import {config as readBuyerConfiguration,execution as validateBuyerExecution} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/config.mjs';
 import {lockPrivateDirectory} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/private-directory-lock.mjs';
 
 export const OPERATOR_SCHEMA='stellar-forge.facilitator-commissioning-operator.v1';
@@ -261,13 +262,20 @@ export async function openCommissioningOperator({directory:where,store,setupFile
           need(file,'ORIGINAL_BUYER_PLAN_REQUIRED','Select the complete original buyer plan.',404);
           const raw=await ordinary(join(root,'buyers',id));need(digest(raw)===file.configSha256,'BUYER_SOURCE_CHANGED','The original buyer configuration differs.',409);
           const config=JSON.parse(raw.toString('utf8')),destination=join(ui,'plans',operationId);await directory(destination,true);
+          const originalRequest=await json(join(ui,'requests',operationId+'.json'),true),alias=originalRequest?.payload?.template;
+          if(setup&&alias&&setup.buyerTemplates[alias]){
+            const host=await readBuyerConfiguration(setup.buyerTemplates[alias].file);validateBuyerExecution(host);
+            need(host.operator.actor===config.operator.actor&&host.operator.service===config.operator.service&&(host.trustedPayer??null)===(config.trustedPayer??null),'BUYER_OWNER_CHANGED','The current host template must retain the original buyer actor, service and trusted payer.',409);
+            config.operator={...config.operator,python:host.operator.python,policy:host.operator.policy,ledger:host.operator.ledger};
+            config.signerModule=host.signerModule;config.evidenceDir=host.evidenceDir;
+          }
           if(config.operation.bodyFile){
             const bodyPath=join(root,'buyers',operationId+'-'+requestId+'.body'),actual=await hashFile(bodyPath);
             need(actual.bytes===config.operation.bodyBytes&&actual.sha256===config.operation.bodySha256,'BUYER_SOURCE_CHANGED','The original request body differs.',409);
             config.operation.bodyFile=bodyPath;
           }
           config.responseFile.destination=join(destination,operationId+'-'+requestId+'.response');
-          const content=encode(config);return{body:content,bytes:content.length,sha256:digest(content),filename:id.replace('.json','-execution.json'),contentType:'application/json'};
+          validateBuyerExecution(config);const content=encode(config);return{body:content,bytes:content.length,sha256:digest(content),filename:id.replace('.json','-execution.json'),contentType:'application/json'};
         }
         else if(kind==='command'){operation(id);path=join(ui,'requests',id+'.json');filename='original-command-'+id+'.json';type='application/json';}
         else if(kind==='report'){const content=Buffer.from(renderCommissioningReport(await jobRequired().report(),await job.inspect()));return{body:content,bytes:content.length,sha256:digest(content),filename:'commissioning-report.html',contentType:'text/html; charset=utf-8'};}
