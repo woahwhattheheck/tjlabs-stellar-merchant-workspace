@@ -310,3 +310,158 @@ The operation records `recipientHistoryDiscovered`, `receivedPackageDownloaded`,
 only after those actions succeed. Its original request, package and sender/upload
 steps remain unchanged. An already completed prior operation returns its original
 observations; these new steps are not claimed retroactively.
+
+## Original InboxTask packages through the same registered customer host
+
+A completed InboxTask packet can supply a customer delivery without creating a
+Collection or repeating a paid request. This path uses the maintained
+`delivery/inbox-task.mjs` reader/producer and the same named package store,
+original response files, package validator, upload, independent receiving and
+offline saved-file readers. A Task result retains its Task and plan digests,
+original system/ID/revision, selected intent IDs, complete response hashes and
+the complete selected application source.
+
+The original payment outcome and a later settled RPC recovery read remain
+separate records. The customer package does not replace an earlier unknown
+outcome with a new success label. Where the native reader selected a later
+response, the retained row carries its original read/completion binding and
+separate observation times. Task preparation requires every selected response
+to be VERIFIED by that original reader.
+
+### Host selection
+
+Use the original Collections listener or its receiving listener. The current
+original customer routes advertise `canPrepareTask: true`; a receiving
+listener does not need a Collection queue. The registered MCP layer borrows
+this listener and never starts it or owns its original Task producer.
+
+The host operator creates the existing private launch document using
+`collectionsWorkspaceLaunch` or `collectionsRecoveryWorkspaceLaunch`, as
+appropriate for the listener actually running. Keep its bearer token private.
+Use the existing `collection-delivery-register` command with these additional
+trusted-host fields:
+
+| Field | Meaning |
+| --- | --- |
+| `name` | Stable existing-host alias for this one selected Task sender. |
+| `connectionFile` | Absolute path of the original listener's current private launch document. |
+| `taskPacketDirectory` | Absolute ordinary directory of the complete retained original InboxTask packet. |
+| `expectedTaskSha256` | Exact original native Task digest selected by the operator. |
+| `sourceRoot` | Complete actual source root executing this integration. |
+| `sourceManifest` | Its exact full source manifest, including the original Task reader and this caller. |
+
+The registration reopens the original Task through
+`inspectInboxTaskDelivery`, verifies its selected Task identity, binds its
+native intent/response selection, and retains the original listener selection
+and complete source identity. It has public mode `INBOX_TASK`. Its local
+packet path remains in private host state; tools receive only the registered
+alias and original Task identity. Register the recipient separately in the
+existing receiving mode. It needs no source root or Task binding.
+
+Registration remains an explicit host operation, for example:
+
+```sh
+node stellar-forge/mcp-paid-agent/native-collections-receiver-cli.mjs \
+  collection-delivery-register --dir /absolute/private/mcp-host \
+  --description /absolute/private/task-sender-registration.json
+```
+
+The existing `native-workspace-cli.mjs collection-delivery-register` command
+accepts the same description. Do not edit a registered alias to select another
+Task. An exact repeated registration reuses its original state. A different
+source or Task receives an explicitly different alias after operator review.
+
+### Review and prepare
+
+`task-inspect` takes `expectedTaskSha256` and optional `offset`/`limit`.
+It returns the original host-selected Task identity and pages the original
+intent metadata retained at registration. This metadata identifies the
+selection; the subsequent native preview verifies the complete selected
+responses and source. Its response contains no local packet path.
+
+`task-preview` takes this complete request:
+
+- `id`: a stable customer-delivery ID, preserved after an uncertain reply.
+- `expectedTaskSha256`: the exact Task digest bound to the selected alias.
+- `title`: nonempty, at most 160 characters.
+- `note`: at most 10,000 characters.
+- `intentIds`: the distinct original intents to deliver, in the chosen order.
+
+No remote field selects a file path, source root, Task producer or payment.
+The original native `taskDeliveryRequest` validates the constructed request.
+The saved preview binds the original Task, complete response selection,
+source and exact request. Review its separate original/recovery observations,
+then add its exact `expectedPreviewSha256` for `task-prepare`. The original
+native producer performs preparation under its existing mutation and package
+locks. It returns the same complete original customer package format with
+`collection: null` and the original `task` identity.
+
+The client exposes `inspectTask`, `previewTask` and `prepareTask`, and the
+existing generic `call` method exposes all three operations. For durable
+effects, use the original `retainNativeCustomerRequest` with
+`task-preview` or `task-prepare`. It retains the exact endpoint, alias,
+operation and body before dispatch. Reuse that state directory and original
+body after a lost response. A new ID is a different customer package, not a
+recovery of the existing request.
+
+```sh
+node stellar-forge/mcp-paid-agent/native-collection-delivery-cli.mjs \
+  read --url http://127.0.0.1:PORT/mcp --workspace task-sender \
+  --operation task-inspect --input /absolute/private/task-selection.json
+
+node stellar-forge/mcp-paid-agent/native-collection-delivery-cli.mjs \
+  task-preview --url http://127.0.0.1:PORT/mcp --workspace task-sender \
+  --input /absolute/private/task-request.json --state /absolute/private/task-preview
+
+node stellar-forge/mcp-paid-agent/native-collection-delivery-cli.mjs \
+  task-prepare --url http://127.0.0.1:PORT/mcp --workspace task-sender \
+  --input /absolute/private/task-reviewed.json --state /absolute/private/task-prepare
+```
+
+The existing private token environment selection applies. `PORT` and the
+private paths above are operator-selected examples. The inspection input
+contains the exact expected Task SHA; the reviewed preparation input is the
+original request plus the returned preview SHA.
+
+### Complete delivery and reopening
+
+After preparation, use the existing `inspect`, verified full `download`,
+`upload`, explicit `receive`, `received` and `received-file` paths.
+The same original filename, package digest, manifest, every response and all
+source members remain selected. Download completion, recipient acceptance
+and original payment are separate observations. Retry transfer against its
+retained offset and full-file identity. Retrying package preparation preserves
+its original request and preview.
+
+The normal cached result, package and received-member readers still work
+after both original HTTP listeners close. `task-inspect` can read the fixed
+Task selection retained by registration without reopening a listener.
+A new Task preview/preparation requires its original listener and selected
+packet/source. The receiving host does not acquire the source host's bearer
+token or authority to start a new purchase.
+
+### The same full receiving course
+
+`receiveInboxTaskCustomerProgramme(options)` delegates to the existing
+`receiveCollectionsCustomerProgramme` with `collections: null` and these
+additional original inputs:
+
+- `taskPacket`: the original complete InboxTask packet directory;
+- `expectedTaskSha256`: its exact native Task digest;
+- the existing `intentIds`, complete `sourceRoot`/`sourceManifest`,
+  installed `playwright`/`chromium`, `directory` and progress callback.
+
+The source owner supplies the existing actual packet. The course first uses
+the original browser sender/receiver, then the registered MCP sender and
+recipient. It retains the selected request before effects, inspects every
+registered Task intent, verifies complete Task response/source selection,
+continues the original download and upload after retained prefixes, receives
+the whole package independently, closes the original listeners, and reopens
+MCP-only retained result/package/member reads. Final publication follows
+confirmed closure of the same owned listeners and MCP owner.
+
+Use this entry within the existing actual-case receiving operation. Preserve
+its original operation directory on resume. It does not rerun the original
+Task, create a Collection, perform a payment, or claim that authored receiving
+source has executed. The actual selected input, terminal result, complete
+output files and original owner closure establish completion.

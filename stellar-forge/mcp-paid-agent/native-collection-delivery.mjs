@@ -16,6 +16,7 @@ import {SCHEMA as PACKAGE,MAX_PACKAGE,inspectPackage,measure,identity}
  from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/delivery/format.mjs';
 import {createSavedFileReader} from './native-file.mjs';
 import {nativeCollectionDeliveryOperations,nativeCollectionDeliveryUploadBatchChunks} from './native-collection-delivery-schema.mjs';
+import {selectNativeInboxTask,nativeInboxTaskRequest,publicNativeTaskRequest,verifyNativeTaskPreview} from './native-inbox-task-delivery.mjs';
 export {nativeCollectionDeliveryActions,nativeCollectionDeliverySchema} from './native-collection-delivery-schema.mjs';
 
 export const DELIVERY_NATIVE_SCHEMA='stellar-forge.mcp-native-collection-delivery.v1';
@@ -66,7 +67,8 @@ async function bodyBytes(response,maximum){
  need(declared===null||size===Number(declared),'MCP_DELIVERY_RESPONSE_INCOMPLETE');return Buffer.concat(chunks,size);
 }
 function publicRegistration(record){return{schema:SCHEMA,name:record.name,mode:record.mode,
- source:record.source?{sha256:record.source.sha256,files:record.source.files,bytes:record.source.bytes}:null};}
+ source:record.source?{sha256:record.source.sha256,files:record.source.files,bytes:record.source.bytes}:null,
+ ...(record.task?{task:record.task.inspection.task}: {})};}
 function originalRequest(body,record){
  const keys=['id','collectionId','expectedManifestSha256','title','note','intentIds','maxVerifyBytes','allowIncomplete'];
  fields(body,[...keys,'expectedPreviewSha256']);need(record.source,'MCP_DELIVERY_SENDER_REQUIRED');id(body.id);
@@ -129,23 +131,26 @@ export function createNativeCollectionDelivery({manifest,isClosed=()=>false,maxU
   const connection=launch(await json(record.connectionFile));
   need(identity(connection.selection)===identity(record.selection),'MCP_DELIVERY_ORIGINAL_LAUNCH_CHANGED');
   const status=await request(connection,'status',undefined,signal);
-  need([STATUS,PACKAGE+'.list'].includes(status.schema)&&status.scope===record.scope&&status.canPrepare===(record.mode==='COLLECTIONS')&&Array.isArray(status.deliveries),
+  need([STATUS,PACKAGE+'.list'].includes(status.schema)&&status.scope===record.scope&&status.canPrepare===(record.selection.mode==='COLLECTIONS')&&Array.isArray(status.deliveries)&&
+   (record.mode!=='INBOX_TASK'||status.canPrepareTask===true),
    'MCP_DELIVERY_ORIGINAL_LISTENER_CHANGED');
   return{...connection,status};
  }
  async function register(description){
-  available();fields(description,['name','connectionFile','sourceRoot','sourceManifest']);
+  available();fields(description,['name','connectionFile','sourceRoot','sourceManifest','taskPacketDirectory','expectedTaskSha256']);
   const name=named(description.name),connectionFile=absolute(description.connectionFile),connection=launch(await json(connectionFile));
   const selection=connection.selection,scope=join(selection.mode==='COLLECTIONS'?selection.directory:selection.receivingDirectory,'customer-delivery');
+  const hasTask=description.taskPacketDirectory!==undefined||description.expectedTaskSha256!==undefined;
+  const task=hasTask?await selectNativeInboxTask({taskPacketDirectory:absolute(description.taskPacketDirectory),expectedTaskSha256:hash(description.expectedTaskSha256)}):null;
   let source=null;
-  if(selection.mode==='COLLECTIONS'){
+  if(selection.mode==='COLLECTIONS'||task){
    const root=absolute(description.sourceRoot),file=absolute(description.sourceManifest);
-   const selected=await selectSource({sourceRoot:root,sourceManifest:file,exclude:[scope,nativeRoot,selection.directory,selection.queueRoot]});
+   const selected=await selectSource({sourceRoot:root,sourceManifest:file,exclude:[scope,nativeRoot,selection.directory,selection.queueRoot,task?.directory].filter(Boolean)});
    const executing=relative(root,fileURLToPath(import.meta.url));
    need(['stellar-forge/mcp-paid-agent/native-collection-delivery.mjs','source/stellar-forge/mcp-paid-agent/native-collection-delivery.mjs'].includes(executing)&&selected.files.some(row=>row.path===executing),'MCP_DELIVERY_EXECUTING_SOURCE_CHANGED');
    source={root,manifest:file,sha256:selected.sha256,files:selected.files.length,bytes:selected.bytes};
   }else need(description.sourceRoot===undefined&&description.sourceManifest===undefined,'MCP_DELIVERY_RECIPIENT_SOURCE_NOT_REQUIRED');
-  const record={schema:SCHEMA,name,nativeWorkspace:nativeRoot,connectionFile,selection,scope,mode:selection.mode,source};
+  const record={schema:SCHEMA,name,nativeWorkspace:nativeRoot,connectionFile,selection,scope,mode:task?'INBOX_TASK':selection.mode,source,...(task?{task}: {})};
   await connect(record);await roots(true);await retainRecord(join(aliases,name+'.json'),record,{resume:true});return publicRegistration(record);
  }
  async function registered(name){
@@ -161,7 +166,7 @@ export function createNativeCollectionDelivery({manifest,isClosed=()=>false,maxU
  }
  async function retainComplete(record,value){
   need(value?.schema===PACKAGE+'.result'&&value.state==='COMPLETE'&&value.manifest?.schema===PACKAGE&&
-   value.request?.id===value.id&&value.request.sourceRoot===undefined&&value.request.sourceManifest===undefined,'MCP_DELIVERY_RESULT_CHANGED');
+   value.request?.id===value.id&&value.request.sourceRoot===undefined&&value.request.sourceManifest===undefined&&value.request.packetDirectory===undefined,'MCP_DELIVERY_RESULT_CHANGED');
   id(value.id);hash(value.previewSha256);const p=value.package;
   need(object(p)&&hash(p.sha256)&&hash(p.manifestSha256)&&Number.isSafeInteger(p.bytes)&&p.bytes>0&&p.bytes<=MAX_PACKAGE&&
    p.filename===value.id+'.ndjson'&&p.mediaType==='application/x-ndjson'&&
@@ -293,10 +298,33 @@ export function createNativeCollectionDelivery({manifest,isClosed=()=>false,maxU
    hash(body.sha256);const prior=await savedReceived(record,body.sha256);
    if(prior)return result(operation==='received-file'?await receivedFile(record,prior,body):receivedView(prior,body));
   }
+  if(operation==='task-inspect'){
+   need(record.mode==='INBOX_TASK'&&record.task,'MCP_DELIVERY_TASK_SENDER_REQUIRED');
+   need(body.expectedTaskSha256===record.task.sha256,'MCP_DELIVERY_TASK_SELECTION_CHANGED');
+   return result({schema:PACKAGE+'.task-inspection',task:record.task.inspection.task,...page(record.task.inspection.intents,body)});
+  }
   const connection=await connect(record,context.signal),get=route=>request(connection,route,undefined,context.signal),post=(route,v)=>request(connection,route,v,context.signal);
   const uploadBatchChunks=uploadBatchLimit(connection.status,maxUploadBatchChunks);
   if(operation==='status')return result({mode:record.mode,source:publicRegistration(record).source,uploadBatchChunks,...page(connection.status.deliveries,body)});
+  if(operation==='task-preview'||operation==='task-prepare'){
+   const selected=nativeInboxTaskRequest(body,record),directory=await savedDirectory(record,selected.id),previewFile=join(directory,'preview.json');
+   if(operation==='task-preview'){
+    const prior=await optionalBytes(previewFile,MAX_JSON);
+    if(prior)return result(verifyNativeTaskPreview(parse(prior),selected,record));
+    const value=verifyNativeTaskPreview(await post('task-preview',selected),selected,record);
+    await retainRecord(previewFile,value,{resume:true});return result(value);
+   }
+   hash(body.expectedPreviewSha256);
+   const preview=verifyNativeTaskPreview(await json(previewFile,MAX_JSON),selected,record);
+   need(preview.previewSha256===body.expectedPreviewSha256,'MCP_DELIVERY_TASK_PREVIEW_CHANGED');
+   const value=await post('task-prepare',{...selected,expectedPreviewSha256:body.expectedPreviewSha256});
+   need(identity(value.request)===identity(publicNativeTaskRequest(selected))&&
+    identity(value.manifest?.task)===identity(record.task.inspection.task)&&value.manifest?.collection===null&&
+    value.manifest?.outputsComplete===true,'MCP_DELIVERY_TASK_RESULT_CHANGED');
+   return result(await retainComplete(record,value));
+  }
   if(operation==='preview'||operation==='prepare'){
+   need(record.mode==='COLLECTIONS','MCP_DELIVERY_COLLECTION_SENDER_REQUIRED');
    const selected=originalRequest(body,record),directory=await savedDirectory(record,selected.id);
    const previewFile=join(directory,'preview.json');
    if(operation==='preview'){
