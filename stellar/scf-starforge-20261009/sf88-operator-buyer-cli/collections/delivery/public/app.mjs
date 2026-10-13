@@ -1,6 +1,6 @@
 // MIT. Original workspace token remains in memory; pending bodies remain exact.
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const state={token:'',scope:null,storageReady:false,storageError:null,record:null,pending:null,last:null,busy:false,preview:null,request:null,collection:null,canPrepare:false,uploadBatchChunks:1,tab:'prepare',receivedHistory:[],selectedReceivedSha256:null};
+const state={token:'',scope:null,storageReady:false,storageError:null,record:null,pending:null,last:null,busy:false,preview:null,request:null,collection:null,canPrepare:false,canPrepareCollections:false,canPrepareTask:false,task:null,uploadBatchChunks:1,tab:'prepare',receivedHistory:[],selectedReceivedSha256:null};
 let dbPromise=null,generation=0,historyGeneration=0;
 const message=t=>{$('#status').textContent=t;};
 function db(){if(!dbPromise)dbPromise=new Promise((resolve,reject)=>{const request=indexedDB.open('sf88-customer-delivery',1);request.onupgradeneeded=()=>request.result.createObjectStore('states');request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);}).catch(error=>{dbPromise=null;throw error;});return dbPromise;}
@@ -31,6 +31,13 @@ function controls(){
  $('#pending-description').textContent=state.storageError?'The retained request has not been read. Retry that read before making a new delivery.':state.pending?.kind==='receive'?'The original package upload/receiving operation is retained. Reselect the same file if its bytes are still needed.':state.pending?'The exact reviewed delivery request is retained. Continue it to observe or finish the original package.':'';
  $('#resume-file-label').hidden=state.pending?.kind!=='receive';
  $('#prepare-tab').disabled=!state.canPrepare;
+ const taskMode=$('#origin-kind').value==='inbox-task';
+ $('#task-origin').hidden=!taskMode;$('#collection-origin').hidden=taskMode;
+ $('#collection').required=!taskMode;$('#collection').disabled=!ready||Boolean(state.pending)||taskMode||!state.canPrepareCollections;
+ for(const selector of ['#task-packet','#task-sha']){$(selector).required=taskMode;$(selector).disabled=!ready||Boolean(state.pending)||!taskMode;}
+ $('#origin-kind option[value="collection"]').disabled=!state.canPrepareCollections;
+ $('#origin-kind option[value="inbox-task"]').disabled=!state.canPrepareTask;
+ $('#verify-limit').disabled=!ready||Boolean(state.pending)||taskMode;$('#allow-incomplete').disabled=!ready||Boolean(state.pending)||taskMode;
  for(const e of $$('#open-received input,#open-received button,#refresh-received,[data-received-open]'))e.disabled=!ready;
  for(const e of $$('#received-view button'))e.disabled=!ready;
 }
@@ -69,24 +76,39 @@ async function selectCollection(){
  for(const row of view.items){const label=document.createElement('label');label.className='check';const input=document.createElement('input');input.type='checkbox';input.value=row.intentId;input.checked=Boolean(row.job&&!row.error);input.dataset.intent='true';label.append(input,document.createTextNode(row.intentId+' — '+row.state+' — '+(row.job?.outcome?.responseFile?.status??'no saved response')));$('#intents').append(label);}
  controls();
 }
+async function selectTask(){
+ const packetDirectory=$('#task-packet').value,expectedTaskSha256=$('#task-sha').value;
+ state.task=null;state.preview=null;state.request=null;$('#preview').hidden=true;
+ const result=await request('/api/customer-delivery/task-inspect',{method:'POST',body:{packetDirectory,expectedTaskSha256}});
+ if(packetDirectory!==$('#task-packet').value||expectedTaskSha256!==$('#task-sha').value)throw new Error('Task selection changed while reading.');
+ state.task={packetDirectory,expectedTaskSha256,result};$('#intents').replaceChildren();
+ $('#task-description').textContent=result.task.system+' / '+result.task.id+' / '+result.task.revision+' · '+result.intents.length+' complete original responses';
+ for(const row of result.intents){const label=document.createElement('label');label.className='check';const input=document.createElement('input');input.type='checkbox';input.value=row.intentId;input.checked=true;input.dataset.intent='true';label.append(input,document.createTextNode(row.intentId+' — '+row.nativeState+' — '+row.bytes+' bytes'+(row.recoveredReadId?' — recovered read '+row.recoveredReadId:'')));$('#intents').append(label);}
+ controls();
+}
 async function login(){
  state.token=$('#token').value.trim();if(!state.token)throw new Error('Enter the workspace token.');
  state.storageReady=false;state.scope=null;state.record=null;state.pending=null;state.preview=null;state.last=null;state.selectedReceivedSha256=null;state.receivedHistory=[];$('#received-view').replaceChildren();delete $('#received-view').dataset.sha256;$('#received-list').replaceChildren();$('#received-sha').value='';controls();
- const status=await request('/api/customer-delivery/status');state.scope=location.origin+'|'+status.scope;state.canPrepare=status.canPrepare;state.uploadBatchChunks=Number.isSafeInteger(status.uploadBatchChunks)&&status.uploadBatchChunks>0?Math.min(16,status.uploadBatchChunks):1;
+ const status=await request('/api/customer-delivery/status');state.scope=location.origin+'|'+status.scope;state.canPrepareCollections=status.canPrepare;state.canPrepareTask=status.canPrepareTask===true;state.canPrepare=state.canPrepareCollections||state.canPrepareTask;
+ $('#origin-kind').value=state.canPrepareCollections?'collection':'inbox-task';state.uploadBatchChunks=Number.isSafeInteger(status.uploadBatchChunks)&&status.uploadBatchChunks>0?Math.min(16,status.uploadBatchChunks):1;
  await readState();$('#login-panel').hidden=true;$('#workspace').hidden=false;
  $('#collections-link').href='/#'+encodeURIComponent(state.token);
- if(state.canPrepare){const listed=await request('/api/collections');$('#collection').replaceChildren();for(const row of listed.collections){const option=new Option(row.name+' · '+row.id,row.id);$('#collection').append(option);}await selectCollection();}else tab('receive');
+ if(state.canPrepareCollections){const listed=await request('/api/collections');$('#collection').replaceChildren();for(const row of listed.collections){const option=new Option(row.name+' · '+row.id,row.id);$('#collection').append(option);}await selectCollection();}else{state.task=null;$('#intents').replaceChildren();tab('receive');}
  $('#delivery-id').value='delivery-'+crypto.randomUUID();await renderDeliveries(status.deliveries);
  await refreshReceived({restore:true});
  if(state.storageError)message('Retained-request storage needs recovery.');else if(!state.selectedReceivedSha256)message('Workspace opened.');controls();
 }
 function currentRequest(){
+ if($('#origin-kind').value==='inbox-task'){
+  if(!state.task||state.task.packetDirectory!==$('#task-packet').value||state.task.expectedTaskSha256!==$('#task-sha').value)throw new Error('Open and verify the selected original task first.');
+  return{kind:'inbox-task',id:$('#delivery-id').value.trim(),packetDirectory:state.task.packetDirectory,expectedTaskSha256:state.task.expectedTaskSha256,title:$('#title').value,note:$('#note').value,intentIds:$$('[data-intent]:checked').map(e=>e.value),sourceRoot:$('#source-root').value,sourceManifest:$('#source-manifest').value};
+ }
  if(!state.collection)throw new Error('Select a collection.');
  return{id:$('#delivery-id').value.trim(),collectionId:state.collection.id,expectedManifestSha256:state.collection.manifestSha256,title:$('#title').value,note:$('#note').value,intentIds:$$('[data-intent]:checked').map(e=>e.value),sourceRoot:$('#source-root').value,sourceManifest:$('#source-manifest').value,maxVerifyBytes:Number($('#verify-limit').value),allowIncomplete:$('#allow-incomplete').checked};
 }
 async function preview(){
  if(!state.storageReady||state.pending)throw new Error('Recover the retained request first.');
- const input=currentRequest(),result=await request('/api/customer-delivery/preview',{method:'POST',body:input});
+ const input=currentRequest(),result=await request('/api/customer-delivery/'+(input.kind==='inbox-task'?'task-preview':'preview'),{method:'POST',body:input});
  state.request=input;state.preview=result;$('#preview-summary').replaceChildren();
  text($('#preview-summary'),'p',result.jobs.length+' original requests; '+result.source.files+' source files, '+result.source.bytes+' source bytes.');
  text($('#preview-summary'),'code','Review SHA-256: '+result.previewSha256);
@@ -96,7 +118,7 @@ async function preview(){
 async function prepare(){
  if(!state.storageReady||state.pending||!state.preview)throw new Error('Review a new selection first.');
  if(JSON.stringify(currentRequest())!==JSON.stringify(state.request))throw new Error('The form changed; review it again.');
- const pending={kind:'prepare',path:'/api/customer-delivery/prepare',body:{...state.request,expectedPreviewSha256:state.preview.previewSha256}};
+ const pending={kind:'prepare',path:'/api/customer-delivery/'+(state.request.kind==='inbox-task'?'task-prepare':'prepare'),body:{...state.request,expectedPreviewSha256:state.preview.previewSha256}};
  await save({pending,last:state.last});return continuePending();
 }
 const hex=b=>[...new Uint8Array(b)].map(v=>v.toString(16).padStart(2,'0')).join('');
@@ -163,6 +185,7 @@ function renderReceivedHistory(rows){
   const card=document.createElement('article');card.className='card';
   text(card,'h3',row.title??'Unfinished or unavailable package');text(card,'code',row.sha256);
   if(row.state==='COMPLETE'){
+   text(card,'p',row.task?'InboxTask '+row.task.system+' / '+row.task.id+' / '+row.task.revision:'Collection '+row.collectionId);
    text(card,'p',row.requestCount+' original requests · '+row.files+' files · '+row.bytes+' package bytes');
    text(card,'p','Source captured '+row.capturedAt+' · '+(row.outputsComplete?'all selected responses included':'incomplete outputs declared'));
    text(card,'p','Saved receipt. Opening verifies the retained package and every member again.','muted');
@@ -187,8 +210,9 @@ async function openReceived(sha256,{remember=true}={}){
 }
 function renderReceived(result){
  const root=$('#received-view');root.replaceChildren();root.dataset.sha256=result.sha256;text(root,'h3',result.manifest.title);text(root,'p',result.outputsComplete?'All selected responses were verified.':'This package explicitly contains unavailable or incomplete selected outputs.');text(root,'code',result.sha256);text(root,'p',result.files+' complete files · '+result.contentBytes+' content bytes');
+ if(result.manifest.task)text(root,'p','InboxTask '+result.manifest.task.system+' / '+result.manifest.task.id+' / '+result.manifest.task.revision+' · '+result.manifest.task.taskSha256);
  const wrap=document.createElement('div');wrap.className='table-wrap';const table=document.createElement('table');const tr=document.createElement('tr');for(const label of ['Original request','Observation','Response'])text(tr,'th',label);table.append(tr);
- for(const row of result.manifest.rows){const tr=document.createElement('tr');text(tr,'td',row.intentId);text(tr,'td',row.nativeState+' / '+row.observation.settlementStatus);const td=text(tr,'td',row.output.state);if(row.output.path){text(td,'small',row.output.bytes+' bytes · '+row.output.sha256);const b=text(td,'button','Download response');b.onclick=()=>busy(()=>download('/api/customer-delivery/received/'+result.sha256+'/member',{method:'POST',body:{path:row.output.path},filename:row.output.path.split('/').at(-1)})).catch(()=>{});}table.append(tr);}wrap.append(table);root.append(wrap);
+ for(const row of result.manifest.rows){const tr=document.createElement('tr');text(tr,'td',row.intentId);text(tr,'td',row.nativeState+' / '+row.observation.settlementStatus+(row.originalOutcome?.errorCode?' / '+row.originalOutcome.errorCode:'')+(row.recovery?'\nRecovered HTTP '+row.recovery.httpStatus+' · '+row.recovery.responseObservedAt+'\nRead '+row.recovery.readId:''));const td=text(tr,'td',row.output.state);if(row.output.path){text(td,'small',row.output.bytes+' bytes · '+row.output.sha256);const b=text(td,'button','Download response');b.onclick=()=>busy(()=>download('/api/customer-delivery/received/'+result.sha256+'/member',{method:'POST',body:{path:row.output.path},filename:row.output.path.split('/').at(-1)})).catch(()=>{});}table.append(tr);}wrap.append(table);root.append(wrap);
  for(const path of ['review.json','review.html']){const b=text(root,'button','Download '+path);b.onclick=()=>busy(()=>download('/api/customer-delivery/received/'+result.sha256+'/member',{method:'POST',body:{path},filename:path})).catch(()=>{});}
  const whole=text(root,'button','Download original complete package');whole.dataset.receivedDownload=result.sha256;
  whole.onclick=()=>busy(()=>download('/api/customer-delivery/received/'+result.sha256+'/file',{filename:'received-'+result.sha256+'.ndjson'})).catch(()=>{});
@@ -198,7 +222,9 @@ function wireForm(selector,fn){$(selector).addEventListener('submit',event=>{eve
 wireForm('#login-form',login);wireForm('#prepare-form',preview);wireForm('#receive-form',startReceive);wireForm('#open-received',()=>openReceived($('#received-sha').value));
 $('#prepare-package').onclick=()=>busy(prepare).catch(()=>{});$('#retry').onclick=()=>busy(continuePending).catch(()=>{});$('#read-storage').onclick=()=>busy(async()=>{await readState();await refreshReceived({restore:true});}).catch(()=>{});$('#refresh').onclick=()=>busy(refresh).catch(()=>{});$('#collection').onchange=()=>busy(selectCollection).catch(()=>{});
 $('#refresh-received').onclick=()=>busy(()=>refreshReceived()).catch(()=>{});
-for(const e of $$('[data-tab]'))e.onclick=()=>tab(e.dataset.tab);
+$('#load-task').onclick=()=>busy(selectTask).catch(()=>{});
+ $('#origin-kind').onchange=()=>busy(async()=>{state.preview=null;state.request=null;state.task=null;$('#preview').hidden=true;$('#intents').replaceChildren();if($('#origin-kind').value==='collection')await selectCollection();controls();}).catch(()=>{});
+ for(const e of $$('[data-tab]'))e.onclick=()=>tab(e.dataset.tab);
 $('#archive-request').onclick=()=>busy(async()=>{
  if(!state.storageReady||!state.pending)throw new Error('Read the original request first.');
  if(!confirm('Archive this browser request? The original named delivery or upload remains on the server, including any uncertain completed result. A different selection requires a new explicit delivery ID.'))return;
