@@ -139,3 +139,7 @@ See [Closing cycles](ACCOUNTING_STATEMENT_CYCLES.md) for customer dossier export
 The typed client provides `usageCaptures({offset, limit}, options)` and `allUsageCaptures(options)` over the read-only `merchant_accounting_customer_usage_captures` tool. Each record preserves original import metadata and either the immutable native identity and captured balance or its source classification. Complete original call data remains in the snapshots and full preview/file consumers.
 
 Customer profile, assignment, import, retention, correction and withdrawal operations retain their original writers. The original service-period compiler owns actual comparison and arithmetic. Invoice, collection, pricing, receivables and grant packaging retain their existing interfaces.
+
+## Recurring customer service calendars
+
+The same workbench now includes **Service calendars**: saved weekly/monthly customer periods, full settings history, complete date-window exports and explicit actual-capture selection. Its reviewed plan prepares this same original closing cycle and retains each calendar-to-cycle link. See [Recurring customer service close](ACCOUNTING_STATEMENT_SERVICE_CALENDARS.md) for operation, recovery, full export/receiving and the installed command.

@@ -1,12 +1,14 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "customer-closing",
-  "description": "Complete customer setup, original service captures, explicit service-close planning, period and cumulative statements, durable closing cycles, corrections, withdrawal and grouped customer handovers through the existing accounting MCP connection.",
+  "description": "Complete customer setup, original service captures, saved recurring service calendars, explicit service-close planning, period and cumulative statements, durable closing cycles, corrections, withdrawal and grouped customer handovers through the existing accounting MCP connection.",
   "commands": {
-    "customer-closing": "stellar-forge/mcp-merchant-operator/accounting-statement-cycle-server.mjs"
+    "customer-closing": "stellar-forge/mcp-merchant-operator/accounting-statement-cycle-server.mjs",
+    "customer-service-calendar": "stellar-forge/mcp-merchant-operator/accounting-statement-service-schedules-cli.mjs"
   },
   "commandDescriptions": {
-    "customer-closing": "Maintain customer records and service captures, issue customer statements and resume original closing cycles"
+    "customer-closing": "Maintain customer records and service captures, issue customer statements and resume original closing cycles",
+    "customer-service-calendar": "Save recurring customer periods, review actual source captures and continue original closing cycles"
   },
   "exports": {
     "./merchant/customer-closing": {
@@ -32,6 +34,10 @@
     "./merchant/customer-closing/service-planner": {
       "types": "./source/stellar-forge/mcp-merchant-operator/accounting-statement-service-planner.d.mts",
       "default": "./source/stellar-forge/mcp-merchant-operator/accounting-statement-service-planner.mjs"
+    },
+    "./merchant/customer-closing/service-schedules": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/accounting-statement-service-schedules.d.mts",
+      "default": "./source/stellar-forge/mcp-merchant-operator/accounting-statement-service-schedules.mjs"
     }
   },
   "supportFiles": [
@@ -43,7 +49,9 @@
     "stellar-forge/mcp-merchant-operator/accounting-statement-client.d.mts",
     "stellar-forge/mcp-merchant-operator/accounting-statement-customer-dossier.d.mts",
     "stellar-forge/mcp-merchant-operator/accounting-statement-service-planner.d.mts",
-    "stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENT_SERVICE_PLANNER.md"
+    "stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENT_SERVICE_PLANNER.md",
+    "stellar-forge/mcp-merchant-operator/accounting-statement-service-schedules.d.mts",
+    "stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENT_SERVICE_CALENDARS.md"
   ],
   "browserAssets": [
     {
