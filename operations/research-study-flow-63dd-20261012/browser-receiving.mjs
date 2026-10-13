@@ -147,9 +147,10 @@ export async function runStudyFlowBrowserReceiving({sourceRoot,operationDirector
   need(journal.browserErrors.length===0,'Browser errors retained in receiving journal');
   need(journal.httpErrors.length===0,'HTTP errors retained in receiving journal');
   cancelled();await closeResources();cancelled();
-  journal.finalRevision=after.dossier.revision;journal.complete=true;journal.completedAt=new Date().toISOString();
-  journal.actualScope='Original same-dossier browser inspection of all eight views for both current saved flows, exact native download comparison, saved request history, and workspace-scoped local review draft/reload/refresh. No source acquisition, screen/review mutation, new flow, native replay or payment.';
-  await checkpoint();await durable(join(out,'result.json'),journal);
+  const completed={...journal,finalRevision:after.dossier.revision,complete:true,completedAt:new Date().toISOString()};
+  completed.actualScope='Original same-dossier browser inspection of all eight views for both current saved flows, exact native download comparison, saved request history, and workspace-scoped local review draft/reload/refresh. No source acquisition, screen/review mutation, new flow, native replay or payment.';
+  await durable(join(out,'result.json'),completed);
+  Object.assign(journal,completed);await checkpoint();
   console.log(JSON.stringify({operationId:OP,phase:'browser-receiving-complete',revision:journal.finalRevision,downloads:journal.downloads.length,screenshots:journal.screenshots.length}));
   return journal;
  }catch(error){primaryError=error;journal.error={at:new Date().toISOString(),message:error.message,phase:journal.phase};await checkpoint().catch(()=>{});throw error;}
