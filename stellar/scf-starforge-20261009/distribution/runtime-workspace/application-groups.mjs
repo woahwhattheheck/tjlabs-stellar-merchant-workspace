@@ -2,7 +2,7 @@
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { applicationRunState, reviewApplicationStart } from './applications-core.mjs';
-import { makePrivate, privateDirectory, readJSON, saveJSON, recordId, operationId,
+import { makePrivate, privateDirectory, optionalPrivateEntries, readJSON, saveJSON, recordId, operationId,
   operationLease, plain, need, digest, json, canonical, now } from './storage.mjs';
 
 const GROUP = 'stellar-forge.application-group.v1';
@@ -132,10 +132,11 @@ async function runView(root, run, observations = null) {
   return { ...run, ...progress(run, members), members };
 }
 export async function applicationGroupsState(root, { groupId = null, runId = null, limit = 20, cursor = null } = {}, observations = null) {
-  await initializeApplicationGroups(root);
+  if (!observations) await initializeApplicationGroups(root);
   need(Number.isInteger(limit) && limit >= 1 && limit <= 50, 'APPLICATION_GROUP_PAGE_INVALID');
   if (cursor) operationId(cursor);
-  const ids = (await readdir(join(root, 'application-groups'))).filter(name => /^[a-f0-9]{24}$/.test(name));
+  const ids = (await (observations ? optionalPrivateEntries(join(root, 'application-groups')) :
+    readdir(join(root, 'application-groups')))).filter(name => /^[a-f0-9]{24}$/.test(name));
   const groups = [];
   for (const id of ids) {
     const value = await readJSON(join(groupPath(root, id), 'group.json'), true);
