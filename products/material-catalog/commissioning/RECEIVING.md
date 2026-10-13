@@ -43,7 +43,7 @@ MATERIAL_INSTALLATION_RECEIVING.json reports the source-native result. Browser i
 
 ## Actual desktop and narrow recipient journey
 
-Use the same existing assigned browser/Page and operation. Open the actual generated START_HERE.html and Material_Catalog_Reader.html from the received output. If a current equipped browser uses supplied HTML instead of file navigation, provide the unchanged exact bytes through its already-supported route; preserve the original attachment identity.
+Use the same existing assigned browser/Page and operation. Open the actual generated START_HERE.html and Material_Catalog_Reader.html from the received output. START_HERE.html links to sibling files and requires the complete directory through an actually supported file/resource-capable route; verify those original links and downloads there. Supplied HTML at about:blank is suitable for the standalone embedded catalogue reader only, and does not receive the linked handover or its sibling files. Preserve the unchanged bytes, original attachment identity and existing browser policy when selecting the established route.
 
 Operate:
 
