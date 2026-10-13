@@ -15,6 +15,12 @@
           "bytes": 36516,
           "sha256": "0a89b4716d2e8ee91eff350b34274226a0275a2e8e55b17f9d5018807b1b2561",
           "git_blob": "140d6996afd603a296969cc40210e6e554e72340"
+        },
+        {
+          "commit": "600e8a0ff4b7b985783e501a238c22fb9abf28c4",
+          "bytes": 40938,
+          "sha256": "875489ed665f4a7780cf832a36c9ed315823b277d973db214d1fabcc94ba0bf5",
+          "git_blob": "753032a5a57e8b82e0333156b84d4e35a38164ca"
         }
       ]
     },
