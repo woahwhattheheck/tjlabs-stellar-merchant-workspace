@@ -7,11 +7,10 @@ import {createHash} from 'node:crypto';
 
 export async function openReceivedCustomer({handover,instance,paused=true,port=0}){
   handover=path.resolve(handover);instance=path.resolve(instance);
-  const source=JSON.parse(await fs.readFile(path.join(handover,'SOURCE.json'),'utf8'));
   const binding=JSON.parse(await fs.readFile(path.join(instance,'INSTANCE.json'),'utf8'));
-  if(binding.applicationCommit!==source.applicationCommit||binding.sourceSelectionSha256!==source.sourceSelectionSha256)
-    throw new Error('This private instance belongs to another delivered application.');
   const passEnv='STARFORGE_ACCOUNTING_CUSTOMER_'+createHash('sha256').update(instance).digest('hex').slice(0,24).toUpperCase();
+  const previousEnv=Object.hasOwn(process.env,passEnv)?process.env[passEnv]:undefined;
+  const restoreEnv=()=>{if(previousEnv===undefined)delete process.env[passEnv];else process.env[passEnv]=previousEnv;};
   process.env[passEnv]=(await fs.readFile(path.join(instance,'private/restore-key.txt'),'utf8')).replace(/\r?\n$/,'');
   let app;
   try{
@@ -22,9 +21,9 @@ export async function openReceivedCustomer({handover,instance,paused=true,port=0
       recoveryPassEnv:passEnv,recoveryStartPaused:paused,host:'127.0.0.1',port,
       expectedWorkspaceId:binding.workspaceId,expectedSourcesSha256:binding.sourcesSha256});
     const close=app.close.bind(app);
-    app.close=async()=>{try{return await close();}finally{delete process.env[passEnv];}};
+    app.close=async()=>{try{return await close();}finally{restoreEnv();}};
     return app;
-  }catch(error){delete process.env[passEnv];throw error;}
+  }catch(error){restoreEnv();throw error;}
 }
 
 async function main(){
