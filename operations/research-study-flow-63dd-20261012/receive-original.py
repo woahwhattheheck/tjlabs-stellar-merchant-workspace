@@ -96,6 +96,10 @@ def main():
     packet = json.loads(source_body)
     if packet.get("schema") != "commons.study-flow-receiving-source/v2" or len(packet.get("files", [])) != 380:
         raise ValueError("Wrong original receiving source selection")
+    asset_body = exact_bytes(HERE / "RUNTIME_ASSETS.json", 34100, "f9d35454aaf09f8eac53fae90f26b4a9d29b5e668d275eb5ae2626e8ae1bb92b")
+    assets = json.loads(asset_body)
+    if assets.get("schema") != "commons.study-flow-runtime-assets/v1" or len(assets.get("files", [])) != 4:
+        raise ValueError("Wrong original runtime asset selection")
     root, out = directory(args.source_root), directory(args.out)
     lock_path = out / ".receiving-continuation.lock"
     lock_fd = os.open(lock_path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
@@ -114,8 +118,23 @@ def main():
                 raise ValueError("Invalid complete source leaf: " + str(path))
             keep(root / path, body)
             files.append({k: v for k, v in record.items() if k != "content"})
-        # The two complete receiving helpers are part of this reviewed source kit.
-        for name in ("receive-original.py", "restore-portable.mjs"):
+        runtime_assets = []
+        for record in assets["files"]:
+            path = relative(record["path"])
+            if str(path) in seen:
+                raise ValueError("Runtime asset collides with selected source")
+            seen.add(str(path))
+            body = record["content"].encode("utf-8")
+            blob = hashlib.sha1(b"blob " + str(len(body)).encode() + b"\0" + body).hexdigest()
+            if len(body) != record["bytes"] or digest(body) != record["sha256"] or blob != record["gitBlob"]:
+                raise ValueError("Original runtime asset changed: " + str(path))
+            keep(root / path, body)
+            runtime_assets.append({k: v for k, v in record.items() if k != "content"})
+        keep(out / "receiving-runtime-assets.json", json_bytes({
+            "schema": assets["schema"], "source": assets["source"], "files": runtime_assets}))
+        # The bootstrap stays in this kit; the unchanged restore entry is also
+        # retained with source. Existing original placement remains resumable.
+        for name in ("restore-portable.mjs",):
             body = (HERE / name).read_bytes()
             keep(root / PREFIX / name, body)
         archive_files = []
