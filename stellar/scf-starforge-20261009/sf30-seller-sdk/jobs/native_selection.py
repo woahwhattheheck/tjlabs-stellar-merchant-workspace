@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -25,6 +26,23 @@ TOOLKIT = (
 )
 RUNTIME_SELECTION = {"native": True, "features": ["schema"], "operator": True,
                      "pins": {"@stellar/stellar-sdk": "16.3.1"}}
+OBJECT_RECEIVER = {"bytes": 49135, "gitBlob": "3d402bc7e20e0da26193d099ad9429d0b47feef2",
+                   "sha256": "dfc4b853a0c44d1a2971caba1254ef0635dc3f268e82d45fa88b4eee2bdcd83d"}
+BUILD_CALL = r"""
+import { pathToFileURL } from 'node:url';
+const input = JSON.parse(process.argv[1]);
+const { buildDistribution } = await import(pathToFileURL(input.module).href);
+try {
+  const value = await buildDistribution({ ...input.options,
+    onProgress: event => process.stderr.write('[starforge build] ' + JSON.stringify(event) + '\n') });
+  console.log(JSON.stringify(value));
+} catch (error) {
+  console.log(JSON.stringify({ schema: 'stellar-forge.distribution-source-needed.v1',
+    name: error.name, code: error.code, message: error.message,
+    sourceCommit: error.sourceCommit, missingObjects: error.missingObjects }));
+  process.exitCode = 1;
+}
+"""
 TOOLKIT_READER = r"""
 import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -87,7 +105,8 @@ def _footprint(directory):
 
 
 class _Receiver:
-    def __init__(self, *, workspace, commit, logs, repository, selection, node, npm, python, offline, operations):
+    def __init__(self, *, workspace, commit, logs, repository, selection, node, npm, python, offline, operations,
+                 received_source=None):
         for name in ("require", "private_directory", "read_json", "regular", "immutable",
                      "encoded", "save", "execute", "output_json", "digest", "emit"):
             setattr(self, name, operations[name])
@@ -111,9 +130,16 @@ class _Receiver:
         self.cache = self.workspace / "source-repository.git"
         self.toolkit = self.workspace / "source-toolkit"
         self.release_directory = self.workspace / "merchant-release"
+        self.source_offline = self.offline
+        self.received_observation = None
+        if received_source is not None:
+            identity, self.received_observation = self.inspect_received_source(received_source)
+            self.intent["receivedSource"] = identity
+            self.cache = Path(identity["repository"])
+            self.source_offline = True
         if not self.intent_path.exists():
             self.require(not any(path.exists() or path.is_symlink() for path in
-                         (self.cache, self.toolkit, self.release_directory, self.workspace / "applications-runtime",
+                         (self.workspace / "source-repository.git", self.toolkit, self.release_directory, self.workspace / "applications-runtime",
                           self.state_path)), "PRESERVE_UNBOUND_SOURCE_SELECTION_PATHS")
         self.immutable(self.intent_path, self.encoded(self.intent))
         if self.state_path.exists():
@@ -136,6 +162,89 @@ class _Receiver:
         self.require(self.state.get("runtimeDirectory") == str(original) and
                      self.state.get("sourceRoot") in (None, str(original / "package/source")),
                      "ORIGINAL_SELECTED_RUNTIME_DIRECTORY_CHANGED")
+        if self.received_observation is not None:
+            previous = self.state.get("receivedSourceObservation")
+            self.require(previous is None or
+                         set(previous["additionalPaths"]).issubset(self.received_observation["additionalPaths"]),
+                         "PRESERVE_ORIGINAL_RECEIVED_SOURCE_CLOSURE")
+            self.state["receivedSourceObservation"] = self.received_observation
+            self.checkpoint()
+
+    def inspect_received_source(self, value):
+        """Reopen the unchanged receiver's original cache and successful proof."""
+        directory = Path(value)
+        self.require(directory.is_absolute() and directory.resolve(strict=True) == directory and
+                     directory.is_dir() and not directory.is_relative_to(self.workspace) and
+                     not self.workspace.is_relative_to(directory),
+                     "SELECT_DISJOINT_ORIGINAL_RECEIVED_SOURCE_DIRECTORY")
+        self.private_directory(directory)
+        repository = directory / "repository.git"
+        self.require(repository.resolve(strict=True) == repository and repository.is_dir(),
+                     "ORIGINAL_RECEIVED_GIT_REPOSITORY_REQUIRED")
+        self.private_directory(repository)
+        verification = self.read_json(directory / "source-verification.json")
+        self.require(isinstance(verification, dict) and
+                     verification.get("schema") == "stellar-forge.git-object-receiving-verification.v1",
+                     "ORIGINAL_OBJECT_RECEIVING_VERIFICATION_REQUIRED")
+        receiver = verification.get("receiver", {})
+        path = Path(receiver.get("path", ""))
+        self.require(path.is_absolute() and path.resolve(strict=True) == path,
+                     "ORIGINAL_OBJECT_RECEIVER_SOURCE_REQUIRED")
+        data = self.regular(path, 2 * 1024 * 1024)
+        self.require(len(data) == OBJECT_RECEIVER["bytes"] and
+                     self.digest(data) == OBJECT_RECEIVER["sha256"] and _git_blob(data) == OBJECT_RECEIVER["gitBlob"] and
+                     {key: receiver.get(key) for key in OBJECT_RECEIVER} == OBJECT_RECEIVER,
+                     "ORIGINAL_OBJECT_RECEIVER_SOURCE_CHANGED")
+        spec = importlib.util.spec_from_file_location("scf_original_git_object_receiver", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        metadata_path = Path(verification.get("metadataPath", ""))
+        self.require(metadata_path.is_absolute() and metadata_path.resolve(strict=True) == metadata_path,
+                     "ORIGINAL_OBJECT_METADATA_PATH_REQUIRED")
+        metadata = json.loads(self.regular(metadata_path, 8 * 1024 * 1024))
+        source, entries, required, _ = module.validate_metadata(metadata)
+        metadata_hash = self.digest(module.canonical(metadata))
+        expected_repository = self.intent["sourceRepository"].removeprefix("https://github.com/").removesuffix(".git")
+        self.require(source.get("repository") == expected_repository and
+                     source["commit"] == self.intent["sourceCommit"], "ORIGINAL_RECEIVED_SOURCE_IDENTITY_CHANGED")
+        state_bytes = self.regular(directory / "source-receiving.json", 4 * 1024 * 1024)
+        state = json.loads(state_bytes)
+        command = verification.get("command", {})
+        self.require(command.get("exitCode") == 0 and
+                     verification.get("metadataSha256") == metadata_hash and
+                     verification.get("stateSha256") == self.digest(state_bytes) and
+                     verification.get("stateBytes") == len(state_bytes) and
+                     verification.get("result") == state and self.output_json(command) == state,
+                     "ORIGINAL_OBJECT_RECEIVING_EXIT_ZERO_REQUIRED")
+        argv = command.get("argv", [])
+        self.require(isinstance(argv, list) and len(argv) >= 8 and argv[:2] == [self.python, str(path)] and
+                     all(argv.count(flag) == 1 and argv[argv.index(flag) + 1] == expected
+                         for flag, expected in (("--metadata", str(metadata_path)),
+                                                ("--commit", source["commit"]), ("--directory", str(directory)))),
+                     "ORIGINAL_OBJECT_RECEIVING_COMMAND_CHANGED")
+        additional = state.get("additionalPaths", [])
+        self.require(isinstance(additional, list) and all(isinstance(item, str) for item in additional) and
+                     len(additional) == len(set(additional)), "ORIGINAL_ADDITIONAL_SOURCE_PATHS_REQUIRED")
+        selected = set(metadata["requiredPaths"]) | set(additional)
+        self.require(all(path in entries and entries[path]["type"] == "blob" and
+                         entries[path]["mode"] in ("100644", "100755") for path in selected),
+                     "ORIGINAL_RECEIVED_CLOSURE_PATH_CHANGED")
+        self.require(state.get("schema") == "stellar-forge.git-object-cache.v1" and
+                     state.get("directory") == str(directory) and state.get("repository") == str(repository) and
+                     state.get("source") == source and state.get("metadataSha256") == metadata_hash and
+                     state.get("phase") == "OBJECTS_AVAILABLE" and state.get("missingObjects") == 0 and
+                     state.get("missingBytes") == 0 and state.get("requiredPaths") == len(selected) and
+                     state.get("requiredBytes") == sum(entries[path]["size"] for path in selected),
+                     "ORIGINAL_REQUESTED_GIT_OBJECTS_REQUIRED")
+        self.received_entries = entries
+        identity = {"directory": str(directory), "repository": str(repository), "source": source,
+                    "metadataPath": str(metadata_path), "metadataSha256": metadata_hash,
+                    "requiredPaths": metadata["requiredPaths"]}
+        observation = {"stateBytes": len(state_bytes), "stateSha256": self.digest(state_bytes),
+                       "verificationSha256": self.digest(self.regular(directory / "source-verification.json", 8 * 1024 * 1024)),
+                       "additionalPaths": additional, "requiredPaths": state["requiredPaths"],
+                       "requiredBytes": state["requiredBytes"], "command": command}
+        return identity, observation
 
     def checkpoint(self):
         self.save(self.state_path, self.state)
@@ -159,31 +268,34 @@ class _Receiver:
         return result
 
     def git(self, name, args, *, allow_failure=False):
-        return self.command(name, ["git", "--no-replace-objects", "-C", self.cache, *args],
+        return self.command(name, ["git", "--no-replace-objects", *(["--no-lazy-fetch"] if self.source_offline else []),
+                                   "-C", self.cache, *args],
                             allow_failure=allow_failure)
 
     def text_result(self, result):
         return self.regular(result["stdout"], 2 * 1024 * 1024).decode("utf-8").strip()
 
     def git_source(self):
-        self.private_directory(self.cache)
-        self.command("repository-init", ["git", "init", "--quiet", "--bare", self.cache])
+        if self.received_observation is None:
+            self.private_directory(self.cache)
+            self.command("repository-init", ["git", "init", "--quiet", "--bare", self.cache])
         self.require(self.text_result(self.git("repository-kind", ["rev-parse", "--is-bare-repository"])) == "true",
                      "SELECTED_SOURCE_REPOSITORY_MUST_BE_BARE")
-        for key, expected in (("remote.origin.url", self.intent["sourceRepository"]),
-                              ("remote.origin.promisor", "true"),
-                              ("remote.origin.partialclonefilter", "blob:none")):
-            observed = self.git("repository-config-read", ["config", "--get", key], allow_failure=True)
-            if observed["exitCode"] == 1:
-                self.git("repository-config", ["config", key, expected])
-            else:
-                self.require(observed["exitCode"] == 0 and self.text_result(observed) == expected,
-                             "SELECTED_SOURCE_REPOSITORY_CONFIGURATION_CHANGED:" + key)
+        if self.received_observation is None:
+            for key, expected in (("remote.origin.url", self.intent["sourceRepository"]),
+                                  ("remote.origin.promisor", "true"),
+                                  ("remote.origin.partialclonefilter", "blob:none")):
+                observed = self.git("repository-config-read", ["config", "--get", key], allow_failure=True)
+                if observed["exitCode"] == 1:
+                    self.git("repository-config", ["config", key, expected])
+                else:
+                    self.require(observed["exitCode"] == 0 and self.text_result(observed) == expected,
+                                 "SELECTED_SOURCE_REPOSITORY_CONFIGURATION_CHANGED:" + key)
         commit = self.intent["sourceCommit"]
         observed = self.git("commit-read", ["rev-parse", "--verify", "--end-of-options", commit + "^{commit}"],
                             allow_failure=True)
         if observed["exitCode"]:
-            self.require(not self.offline, "SELECTED_COMMIT_REQUIRED_IN_ORIGINAL_OFFLINE_CACHE")
+            self.require(not self.source_offline, "SELECTED_COMMIT_REQUIRED_IN_ORIGINAL_OFFLINE_CACHE")
             self.git("commit-fetch", ["fetch", "--depth=1", "--no-tags", "--no-write-fetch-head",
                                      "--no-auto-maintenance", "--recurse-submodules=no",
                                      "--filter=blob:none", "origin", commit])
@@ -200,14 +312,14 @@ class _Receiver:
         mode, kind, oid = fields.split(" ")
         self.require(path == reader and mode in ("100644", "100755") and kind == "blob" and
                      re.fullmatch(r"[a-f0-9]{40}", oid), "ORIGINAL_GIT_READER_IDENTITY_REQUIRED")
-        args = ["--no-lazy-fetch"] if self.offline else []
+        args = ["--no-lazy-fetch"] if self.source_offline else []
         result = self.git("reader-content", [*args, "cat-file", "blob", oid])
         data = self.regular(result["stdout"], 2 * 1024 * 1024)
         self.require(_git_blob(data) == oid, "ORIGINAL_GIT_READER_BYTES_CHANGED")
         self.private_directory(self.toolkit / BASE)
         self.immutable(self.toolkit / reader, data)
         input_value = {"reader": str(self.toolkit / reader), "repository": str(self.cache),
-                       "commit": commit, "offline": self.offline,
+                       "commit": commit, "offline": self.source_offline,
                        "paths": [(BASE / name).as_posix() for name in TOOLKIT]}
         result = self.output_json(self.command("toolkit", [self.node, "--input-type=module", "--eval",
                                                          TOOLKIT_READER, json.dumps(input_value)]))
@@ -289,9 +401,38 @@ class _Receiver:
                 "--out", self.release_directory, "--python", self.python]
         if self.release_directory.exists():
             argv.append("--resume")
-        if self.offline:
+        if self.source_offline:
             argv.append("--offline")
-        release = self.output_json(self.command("distribution", argv))
+        if self.received_observation is None:
+            release = self.output_json(self.command("distribution", argv))
+        else:
+            request = {"module": str(self.toolkit / BASE / "build.mjs"), "options": {
+                "repository": str(self.cache), "ref": self.intent["sourceCommit"],
+                "selection": self.intent["sourceSelection"], "output": str(self.release_directory),
+                "offline": True, "resume": self.release_directory.exists(), "python": self.python}}
+            command = self.command("distribution", [self.node, "--input-type=module", "--eval", BUILD_CALL,
+                                                     json.dumps(request)], allow_failure=True)
+            try:
+                release = self.output_json(command)
+                if command["exitCode"]:
+                    failure = RuntimeError("ORIGINAL_SELECTED_DISTRIBUTION_FAILED")
+                    if (release.get("schema") == "stellar-forge.distribution-source-needed.v1" and
+                            release.get("code") == "MISSING_SOURCE_OBJECTS" and
+                            release.get("sourceCommit") == self.intent["sourceCommit"]):
+                        missing = release.get("missingObjects")
+                        known = {row["sha"] for row in self.received_entries.values()
+                                 if row["type"] == "blob" and row["mode"] in ("100644", "100755")}
+                        self.require(isinstance(missing, list) and missing and
+                                     all(isinstance(oid, str) and oid in known for oid in missing) and
+                                     len(missing) == len(set(missing)), "ORIGINAL_MISSING_SOURCE_OBJECTS_REQUIRED")
+                        failure.code = "MISSING_SOURCE_OBJECTS"
+                        failure.missingObjects = missing
+                        failure.sourceCommit = self.intent["sourceCommit"]
+                        failure.receivedSource = self.intent["receivedSource"]
+                    raise failure
+            except BaseException as error:
+                error.command = command
+                raise
         self.require(release.get("status") == "PACKAGED" and
                      release.get("sourceCommit") == self.intent["sourceCommit"] and
                      release.get("sourceSelection", {}).get("id") == self.intent["sourceSelection"],

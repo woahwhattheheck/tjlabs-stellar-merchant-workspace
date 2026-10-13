@@ -1,0 +1,319 @@
+{
+  "schema": "airgradient.selected-source-delivery.v1",
+  "report_version": "airgradient.selected-source-report.v1",
+  "source_packet": {
+    "bytes": 1939630,
+    "sha256": "5465e53d831cedae734f9f4225b97fc683ea49eed038190c80271ff01fa1d99f",
+    "path": "input/source-packet.json",
+    "operation_id": "AIRGRADIENT-API-SOURCE-6A62-20261013",
+    "created_at": "2026-10-13T00:31:11Z"
+  },
+  "source_members": [
+    {
+      "path": "source/schemas/dashboard-swagger.json",
+      "bytes": 18361,
+      "sha256": "8b5372a504a936ed041fad6740dc8787a04143a041f373d1e7864addc4ae274c"
+    },
+    {
+      "path": "source/schemas/map-openapi.json",
+      "bytes": 79954,
+      "sha256": "f25b2cf80b1148c3fe5a80abc926da0b31009dd27e21b6c9fa19aab4bcb70922"
+    },
+    {
+      "path": "source/source-ui/map-rendered.html",
+      "bytes": 1855,
+      "sha256": "8798ff641a6f13f1a3dea94a905cd5d98fadfe6202428db51ae09dfc85f43197"
+    },
+    {
+      "path": "source/source-ui/dashboard-rendered.html",
+      "bytes": 2123,
+      "sha256": "df200562c5eebbab39cd7850449589efcf17ad11f0f2bb01fcd7fdd29a61a549"
+    },
+    {
+      "path": "source/source-ui/map-swagger-initializer.js",
+      "bytes": 151208,
+      "sha256": "0efac5c2e7b56108f738087e552286d183321b4ab87a184becb4a1cab21ccc7f"
+    },
+    {
+      "path": "source/source-ui/definition-binding.json",
+      "bytes": 321,
+      "sha256": "7ba09f7b66225f36a81e095687d95f44d4cd80804ddee36a12aee8d7a0b32cf6"
+    },
+    {
+      "path": "source/catalogs/datasources.json",
+      "bytes": 3000,
+      "sha256": "48f94d5a1b7e941c50876df6f3ffbbc14cf1bbd06c279bfae734259ca57bad53"
+    },
+    {
+      "path": "source/catalogs/licenses.json",
+      "bytes": 744,
+      "sha256": "60f24cba1687d33459733943da4c10e897685a0a8f4102416de3983d3b4c2c52"
+    },
+    {
+      "path": "source/catalogs/measurements.json",
+      "bytes": 2670,
+      "sha256": "ad887836992467507030ebd38b4a53b863e214316fe89b2ff2d302a221624147"
+    },
+    {
+      "path": "source/catalogs/coordinate-system.json",
+      "bytes": 559,
+      "sha256": "5c0d642daaaf7787e399109de8ce31d5ce31e1c9e5e5fe4620c318a2c15dfe17"
+    },
+    {
+      "path": "source/public/outdoor/locations-page-1.json",
+      "bytes": 47418,
+      "sha256": "6e6a0bb6432d04b32fde2cc360bbd304304bf98e69a208fdf13132685a71eb8b"
+    },
+    {
+      "path": "source/public/outdoor/current-page-1.json",
+      "bytes": 27687,
+      "sha256": "42ed022cd0192bb28a6aae1c1d5e46c39cf4965766abe9d5c786c91fa8c5ed9b"
+    },
+    {
+      "path": "source/public/indoor/locations-page-1.json",
+      "bytes": 39176,
+      "sha256": "4b99263c8e4fa2847a4900fd504443db2ae11310ed366401a5f49d74bf4a77ee"
+    },
+    {
+      "path": "source/public/indoor/current-page-1.json",
+      "bytes": 20703,
+      "sha256": "2946fce3f8e33bb7b238ab722c1a9d7d6566bc9718f561e07fb80f388d2ff2ae"
+    },
+    {
+      "path": "source/public/outdoor/history-1.json",
+      "bytes": 39202,
+      "sha256": "595184e82dda11f9bede1c61e42b092a8c953183d3efb915831ab938e88398a5"
+    },
+    {
+      "path": "source/public/outdoor/history-2.json",
+      "bytes": 38401,
+      "sha256": "3cc94b1f22bc8c65f4bee4e622ef7c1da446811e9cbd992e75f971714412b1aa"
+    },
+    {
+      "path": "source/public/outdoor/history-3.json",
+      "bytes": 40002,
+      "sha256": "8716989fe89e99e39b307d850da696ffe2e4dc196a6b6dd19561e3536f5bb0e8"
+    },
+    {
+      "path": "source/public/outdoor/history-8.json",
+      "bytes": 37114,
+      "sha256": "7f18c5794a397d90dde306cb494d04e99832b4a09a0127a73ebb6bd416ad29b4"
+    },
+    {
+      "path": "source/public/outdoor/history-9.json",
+      "bytes": 36206,
+      "sha256": "6aa2529d33c01c1ac27a7da66b3aadc631a20cdf9d964d6d3703c13ef4d3dce7"
+    },
+    {
+      "path": "source/public/outdoor/history-10.json",
+      "bytes": 40089,
+      "sha256": "04cc1c2262f45da6fdfcf7269732cf49e59d8344c65626033a90c61a29da4f8d"
+    },
+    {
+      "path": "source/public/outdoor/history-13.json",
+      "bytes": 40293,
+      "sha256": "a9deb43c54555902cbe040c4a6996ba09d7f7e2d2108e7f2bb54bb25d5c1e158"
+    },
+    {
+      "path": "source/public/outdoor/history-14.json",
+      "bytes": 40228,
+      "sha256": "a562a9d3bff312f63e8487897fad9b7d2d312fe4636e10adf79f15ec5ace4cee"
+    },
+    {
+      "path": "source/public/outdoor/history-15.json",
+      "bytes": 39975,
+      "sha256": "4717497d21cbb21782b2c27e76ac6032253735babce2ed5e4da7d6f6b798e2a6"
+    },
+    {
+      "path": "source/public/outdoor/history-18.json",
+      "bytes": 39745,
+      "sha256": "a3791154e6d296e351bd7e89d4e779d9d12e552fbe09d8f783b2401a0454b93a"
+    },
+    {
+      "path": "source/public/indoor/history-102112442.json",
+      "bytes": 82268,
+      "sha256": "897058db945b3436b31c8bdb13d8c82d52b4bf86f916a094db86032efe046c42"
+    },
+    {
+      "path": "source/public/indoor/history-102112443.json",
+      "bytes": 51512,
+      "sha256": "82ce6b6dc14d9a32286ac17b23d6ffa386774f86e20f22b85acb81392e7692e5"
+    },
+    {
+      "path": "source/public/indoor/history-102112444.json",
+      "bytes": 75679,
+      "sha256": "0694192e9c3f3a363255a5779b87dedb42b5c2a15fc03995945e2348e1057f91"
+    },
+    {
+      "path": "source/public/indoor/history-102112445.json",
+      "bytes": 82605,
+      "sha256": "bef6ee48acd58e521c7375084eb18cd5896b74cbf4be57eacc03eae0010b7f7b"
+    },
+    {
+      "path": "source/public/indoor/history-102112447.json",
+      "bytes": 80476,
+      "sha256": "1d7521f56b5f64664f0715b6fc124aa2c4e6df8281d8fa01a6acfc3d6df6edb8"
+    },
+    {
+      "path": "source/public/indoor/history-102112448.json",
+      "bytes": 81139,
+      "sha256": "8b01eb780dc78b49ad0c06a6b6109a5bdc5088ccb44186862f50a1ad14a22aeb"
+    },
+    {
+      "path": "source/public/indoor/history-102112449.json",
+      "bytes": 84629,
+      "sha256": "e1ed8a5eddc3d09b2603426f178a7aa63e51863c6e031b3cd792057e8fdf11f3"
+    },
+    {
+      "path": "source/public/indoor/history-102112451.json",
+      "bytes": 83964,
+      "sha256": "846658e1849464e65195937d2fa00683290b63804481a3d28beb891a4df6ea64"
+    },
+    {
+      "path": "source/public/indoor/history-102112452.json",
+      "bytes": 82551,
+      "sha256": "422ef98b97e485c0ef39ca88fccee517815648e43f6a72ad6fb9c074cfff68be"
+    },
+    {
+      "path": "source/public/indoor/history-102112453.json",
+      "bytes": 83922,
+      "sha256": "3a5b3fb2f84ed323bbf108a6a9f0af03f8d6a17715489fe9ed1e83d6b27f28db"
+    },
+    {
+      "path": "source/source-scope.json",
+      "bytes": 40839,
+      "sha256": "9fb51a9e2d077b7ab018dfe8025bcac3978c333dace8119ff2c28ceefc14a6ea"
+    },
+    {
+      "path": "source/report-window-coverage.json",
+      "bytes": 19381,
+      "sha256": "a7f42dcc612dcb52b3e2ffa476e485d776aecf00eeba67fd4c40613a5f2e925d"
+    },
+    {
+      "path": "source/report-window-coverage.csv",
+      "bytes": 8653,
+      "sha256": "8bde612d770c9b0d6718cf25c54cda75958f48d1175590881b46c761192872cf"
+    },
+    {
+      "path": "source/public/outdoor/pagination-page-2-size-1.json",
+      "bytes": 506,
+      "sha256": "fe947d1fe357c988c2256eea2fbcd5e8d0babe8634391a2ddcf87f673c467e36"
+    },
+    {
+      "path": "source/public/indoor/pagination-page-2-size-1.json",
+      "bytes": 429,
+      "sha256": "8da090c49dee504a814b1173ab9e871366ff2d13e1ebf472b8c3e4ce10798529"
+    },
+    {
+      "path": "source/source-manifest.json",
+      "bytes": 32837,
+      "sha256": "1774d4b328817e9d4ea8a99e7242e5b478a1219f0bf190a2e9d1506053d05c0a"
+    },
+    {
+      "path": "source/README.md",
+      "bytes": 10551,
+      "sha256": "e8b40031212409739ee6b556ae2da4cdcca19d1a486c8894a0137c48a06c67ad"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "reports/initial/report.json",
+      "bytes": 1622425,
+      "sha256": "14c0504bd344dcd8dcb2532e722ea39561ea3dbbdb6373e61331ff0ead29f872"
+    },
+    {
+      "path": "reports/initial/readings.csv",
+      "bytes": 2590920,
+      "sha256": "8868e2dce3820d282cb9ea5524b6432e5a639a8a2ff2e835ad49923393ac73af"
+    },
+    {
+      "path": "reports/initial/summary.csv",
+      "bytes": 15595,
+      "sha256": "2a3d0cd4c5efe5e4fb222e4f1b096ce276448ab6ee0c81dbf51d1b999c3bc177"
+    },
+    {
+      "path": "reports/initial/gaps.csv",
+      "bytes": 20183,
+      "sha256": "7f20143bb0af5ba95f485b32e081b9878f1e9a4a5aa710e6e364da416341c3e1"
+    },
+    {
+      "path": "reports/later/report.json",
+      "bytes": 1628176,
+      "sha256": "a7dbfcb64df94e552c4e3065eb86260d5b939c1f8bcb4cf03f790e4171da76fe"
+    },
+    {
+      "path": "reports/later/readings.csv",
+      "bytes": 2571927,
+      "sha256": "5542ee2a45910b48aa1408584b3c109fc3907a5eb80c3d7bd5bd23fd4057d5a2"
+    },
+    {
+      "path": "reports/later/summary.csv",
+      "bytes": 15473,
+      "sha256": "9d23aa1aea22dff1ca5e77d107d62dcea5fbabb2f1f71b5a513e08cffd9aadf2"
+    },
+    {
+      "path": "reports/later/gaps.csv",
+      "bytes": 20119,
+      "sha256": "9106c7493f64e280de13f24f74184e3bc6b105bb52257be80c7293f86517895e"
+    },
+    {
+      "path": "reports/window-comparison.json",
+      "bytes": 6516,
+      "sha256": "d51f75d317923e9837f9fa9c5f4bc182d2f79233414351d54e667b19db92f5a2"
+    },
+    {
+      "path": "reports/window-comparison.csv",
+      "bytes": 1477,
+      "sha256": "7a0d7b3d021a1d5180539d7c52bb9d0a7c66e0ea1d5fb5d452a8c15790f4ea9f"
+    },
+    {
+      "path": "reports/operator-report.html",
+      "bytes": 32634,
+      "sha256": "1c0ed70c251a4eb6ecb7ec9d830e92b2da0c3919f8ee16048a72475c77d00550"
+    },
+    {
+      "path": "reports/ATTRIBUTION.md",
+      "bytes": 15430,
+      "sha256": "4e0aeed80633e3d212d7610b6bb188bda13409956b0987df4c178d9c9f5796c7"
+    }
+  ],
+  "periods": [
+    {
+      "id": "initial",
+      "start": "2026-09-12T00:00:00Z",
+      "end": "2026-10-12T00:00:00Z",
+      "hours": 720,
+      "interval": "Half-open [start, end), one-hour UTC buckets",
+      "locations": 20,
+      "expected_location_hours": 14400,
+      "returned_location_hours": 13833,
+      "missing_location_hours": 567,
+      "outdoor_rows": 7007,
+      "indoor_rows": 6826,
+      "valid_measurements": 37015,
+      "null_fields": 4122,
+      "absent_fields": 0,
+      "invalid_fields": 0,
+      "zero_values": 1435
+    },
+    {
+      "id": "later",
+      "start": "2026-09-13T00:00:00Z",
+      "end": "2026-10-13T00:00:00Z",
+      "hours": 720,
+      "interval": "Half-open [start, end), one-hour UTC buckets",
+      "locations": 20,
+      "expected_location_hours": 14400,
+      "returned_location_hours": 13876,
+      "missing_location_hours": 524,
+      "outdoor_rows": 7022,
+      "indoor_rows": 6854,
+      "valid_measurements": 37144,
+      "null_fields": 4148,
+      "absent_fields": 0,
+      "invalid_fields": 0,
+      "zero_values": 1450
+    }
+  ],
+  "receiving": "Regenerate from input/source-packet.json with report-cli.mjs; the command retains every original member, all complete exports and this deterministic manifest."
+}
