@@ -93,7 +93,8 @@ export async function readRecoveryWorkspaceConfiguration(path) {
 const definitions = new Map(recoveryWorkspaceTools((name, description, properties, required, options) =>
   ({ name, properties, required, options })).map(value => [value.name, value]));
 const paged = new Set(['merchant_recovery_inventory', 'merchant_recovery_requests', 'merchant_recovery_operations']);
-const writes = new Set(['merchant_recovery_start', 'merchant_recovery_resume', 'merchant_recovery_cancel']);
+const writes = new Set(['merchant_recovery_start', 'merchant_recovery_resume', 'merchant_recovery_cancel',
+  'merchant_recovery_support_review','merchant_recovery_support_save','merchant_recovery_support_export']);
 function validateSelection(value) {
   exact(value, ['profileId', 'action', 'id', 'bundleId', 'snapshotId', 'destinationName',
     'capturePlanId', 'quiesced', 'restoreId', 'publisherRestoreId', 'fleetRestoreId', 'fleetTargetId',
@@ -138,7 +139,25 @@ function validateSelection(value) {
 function validate(name, input) {
   if (input.profileId !== undefined) checked(input.profileId, ID, 'profile ID');
   if (input.id !== undefined) checked(input.id, ID, 'operation ID');
-  if (input.selection !== undefined) validateSelection(input.selection);
+  if(input.selection!==undefined) {
+    if(name==='merchant_recovery_support_review'){
+      const s=input.selection;exact(s,['profileId','id','transferId','caseId','expectedRevision','slot','expectedReviewHash','afterAttempt'],
+        ['profileId','id','transferId','caseId','expectedRevision','slot','expectedReviewHash','afterAttempt']);
+      checked(s.profileId,ID,'profile');checked(s.id,ID,'original request');
+      checked(s.transferId,/^[a-z0-9][a-z0-9_-]{0,63}$/,'Support transfer');
+      checked(s.caseId,/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/,'case');
+      checked(s.expectedRevision,SHA,'case revision');checked(s.expectedReviewHash,SHA,'original request review');
+      if(!['before','after'].includes(s.slot)||!Number.isSafeInteger(s.afterAttempt)||s.afterAttempt<0)
+        throw failure('INVALID_PARAMS','Select the original observed attempt and a before/after slot.');
+    }else validateSelection(input.selection);
+  }
+  if(input.transferId!==undefined)checked(input.transferId,/^[a-z0-9][a-z0-9_-]{0,63}$/,'Support transfer');
+  if(input.expectedReviewSha256!==undefined)checked(input.expectedReviewSha256,SHA,'Support review');
+  if(name==='merchant_recovery_support_cases'){
+    if(input.q!==undefined&&(typeof input.q!=='string'||input.q.length>1000))throw failure('INVALID_PARAMS','Use a bounded case search.');
+    if(input.offset!==undefined&&(!Number.isSafeInteger(input.offset)||input.offset<0))throw failure('INVALID_PARAMS','Use the returned case offset.');
+    if(input.limit!==undefined&&(!Number.isInteger(input.limit)||input.limit<1||input.limit>200))throw failure('INVALID_PARAMS','Use a case page size from1 through200.');
+  }
   if (input.objectSessionId !== undefined) checked(input.objectSessionId, ID, 'host-declared Object session ID');
   if (input.sha256 !== undefined) checked(input.sha256, SHA, 'retained native evidence SHA256');
   if (input.afterAttempt !== undefined && (!Number.isSafeInteger(input.afterAttempt) || input.afterAttempt < 0))
@@ -178,7 +197,10 @@ function nativeFailure(native, { workspace, input, status, uncertain = false, mu
   const selected = scope(workspace, input ?? {});
   const details = { outcome: uncertain ? 'OUTCOME_UNKNOWN' : Number.isInteger(status) && status >= 400 ? 'REJECTED' : 'READ_FAILED', ...selected,
     ...(Number.isInteger(status) ? { httpStatus: status } : {}), mutationRequestAttempted, error: safe };
-  if (selected.profileId && selected.operationId) details.readback = {
+  const transfer=input?.transferId??input?.selection?.transferId;
+  if(transfer)details.readback={tool:'merchant_recovery_support_transfer',
+    arguments:{workspace,profileId:input?.profileId??input?.selection?.profileId,transferId:transfer}};
+  else if (selected.profileId && selected.operationId) details.readback = {
     tool: 'merchant_recovery_request', arguments: { workspace, profileId: selected.profileId, id: selected.operationId } };
   if (uncertain) details.mayHaveCommitted = true;
   // The original MCP HTTP/stdio transport retains code and reason. Keep the
@@ -210,7 +232,11 @@ export class MerchantRecoveryWorkspaces {
     const launch = await this.#launch(workspace);
     const action = name.slice('merchant_recovery_'.length);
     let method = 'GET', route, body;
-    if (action === 'status') route = '/api/state';
+    if(action==='support_cases')route=urlQuery('/api/support-cases',{profile:input.profileId,q:input.q,offset:input.offset,limit:input.limit});
+    else if(action==='support_transfers')route=urlQuery('/api/support-transfers',{profile:input.profileId});
+    else if(['support_transfer','support_handoff','support_package'].includes(action))
+      route=urlQuery('/api/'+action.replaceAll('_','-'),{profile:input.profileId,id:input.transferId});
+    else if (action === 'status') route = '/api/state';
     else if (action === 'object_session') route = urlQuery('/api/object-session', { profile: input.profileId, session: input.objectSessionId });
     else if (action === 'object_evidence') route = urlQuery('/api/object-evidence', { sha256: input.sha256 });
     else if (action === 'requests') route = urlQuery('/api/requests', { cursor: input.cursor, limit: input.limit });
@@ -218,8 +244,8 @@ export class MerchantRecoveryWorkspaces {
     else if (['bundles', 'inventory', 'operations'].includes(action))
       route = urlQuery('/api/' + action, { profile: input.profileId, cursor: input.cursor, limit: input.limit });
     else {
-      method = 'POST'; route = '/api/' + action;
-      body = JSON.stringify(action === 'review' ? input.selection : input);
+      method = 'POST'; route = '/api/' + action.replaceAll('_','-');
+      body = JSON.stringify(['review','support_review'].includes(action) ? input.selection : input);
       if (Buffer.byteLength(body) > MAX_REQUEST_BYTES)
         throw failure('INVALID_PARAMS', 'The original native recovery request exceeds 64 KiB.');
     }
@@ -238,8 +264,8 @@ export class MerchantRecoveryWorkspaces {
     try {
       for await (const chunk of response.body ?? []) {
         size += chunk.byteLength;
-        if (size > MAX_REPLY_BYTES) throw failure('RECOVERY_WORKSPACE_REPLY_LIMIT',
-          'Read the exact retained request or a smaller original page; this response exceeds 32 MiB.');
+        if (size > (action==='support_handoff'?512*1024*1024:MAX_REPLY_BYTES)) throw failure('RECOVERY_WORKSPACE_REPLY_LIMIT',
+          'Read the exact retained request, whole saved case export or a smaller original page; this response exceeds its complete-response limit.');
         chunks.push(Buffer.from(chunk));
       }
     } catch (error) {

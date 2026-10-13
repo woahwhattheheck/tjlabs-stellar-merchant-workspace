@@ -1,7 +1,7 @@
 // MIT. Private retained records for the original runtime operator workspace.
 import { constants } from 'node:fs';
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { open, mkdir, lstat, realpath, rename, readFile, link, unlink } from 'node:fs/promises';
+import { open, mkdir, readdir, lstat, realpath, rename, readFile, link, unlink } from 'node:fs/promises';
 import { dirname, resolve, join, sep } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
@@ -37,11 +37,26 @@ export async function privateDirectory(value) {
   'RUNTIME_WORKSPACE_PRIVATE_DIRECTORY_REQUIRED', 'Use a private real directory owned by the current operator');
   return path;
 }
+export async function optionalPrivateEntries(path) {
+  try {
+    await privateDirectory(path);
+    return await readdir(path);
+  } catch (error) { if (error.code === 'ENOENT') return []; throw error; }
+}
 export async function makePrivate(value) {
   const path = absolute(value);
   need(await realpath(dirname(path)) === dirname(path), 'RUNTIME_WORKSPACE_REAL_PARENT_REQUIRED');
-  await mkdir(path, { mode: 0o700 });
-  return privateDirectory(path);
+  // Preserve exclusive-create semantics without acquiring a lease for the
+  // common ensure-existing-directory read path.
+  try {
+    await lstat(path);
+    throw Object.assign(new Error('Directory already exists: ' + path),
+      { code: 'EEXIST', syscall: 'mkdir', path });
+  } catch (error) { if (error.code !== 'ENOENT') throw error; }
+  return withRecordWrite(path, async () => {
+    await mkdir(path, { mode: 0o700 });
+    return privateDirectory(path);
+  });
 }
 export async function regular(path, maximum = 4 * 1024 * 1024) {
   const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
@@ -302,8 +317,8 @@ async function recordWorkspaceRoots(path) {
   let directory = dirname(absolutePath);
   while (true) {
     const config = await readJSON(join(directory, 'workspace.json'), true);
-    if (config?.schema === 'stellar-forge.runtime-workspace.v1' && config.directory === directory)
-      roots.add(directory);
+    if (config?.schema === 'stellar-forge.runtime-workspace.v1' && config.directory === directory ||
+      await workspaceReceivingState(directory)) roots.add(directory);
     const parent = dirname(directory);
     if (parent === directory) break;
     directory = parent;

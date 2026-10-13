@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "merchant-commissioning-collections",
   "title": "Commissioning scopes and customer collections",
-  "description": "Complete original workshare sources, milestone invoices, customer receipts, credits and refunds, with successive commissioning captures and retained Xero cash cycles.",
+  "description": "Complete original workshare sources and customer cash commissioning through the operator, prepared native CLI and existing merchant agent owner.",
   "base": {
     "commands": [
       "installation",
@@ -16,7 +16,10 @@
       "merchant-accounting-recovery",
       "support-console",
       "revenue-workspace",
-      "revenue-report"
+      "revenue-report",
+      "merchant-mcp",
+      "merchant-mcp-stdio",
+      "merchant-mcp-client-config"
     ],
     "exports": [
       "./installation",
@@ -37,11 +40,15 @@
       "./merchant/revenue-model",
       "./merchant/revenue-report",
       "./package.json",
-      "./manifest.json"
+      "./manifest.json",
+      "./merchant/mcp/server",
+      "./merchant/mcp/stdio",
+      "./merchant/mcp/client-config"
     ],
     "features": [
       "schema",
-      "openapi"
+      "openapi",
+      "mcp"
     ],
     "applicationProviders": [],
     "merchantProviders": [],
@@ -55,7 +62,8 @@
     "merchant-implementation",
     "merchant-service-operations",
     "merchant-receivables-xero",
-    "merchant-commissioning-collections"
+    "merchant-commissioning-collections",
+    "commissioning-agent"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
@@ -66,7 +74,8 @@
     "stellar/scf-starforge-20261009/sf93-seller-support-bundle",
     "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops",
     "stellar/scf-starforge-20261009/sf77-merchant-workorder",
-    "stellar/scf-starforge-20261009/sf70-merchant-intake"
+    "stellar/scf-starforge-20261009/sf70-merchant-intake",
+    "stellar-forge/mcp-merchant-operator"
   ],
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/source_bundle_archive.py",
@@ -78,14 +87,15 @@
     "products/merchant-workspace/FINANCIAL_OPERATIONS.md",
     "products/merchant-receivables/README.md",
     "products/merchant-payment-plans/README.md",
-    "products/merchant-service-agreements/README.md"
+    "products/merchant-service-agreements/README.md",
+    "stellar-forge/mcp-paid-agent/package.json"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Complete original workshare sources, milestone invoices, customer receipts, credits and refunds, with successive commissioning captures and retained Xero cash cycles.",
+    "description": "Complete original workshare sources and customer cash commissioning through the operator, prepared native CLI and existing merchant agent owner.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

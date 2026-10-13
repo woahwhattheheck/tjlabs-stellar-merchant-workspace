@@ -11,6 +11,7 @@ import {DOCUMENT_COMMANDS,main as documentMain} from './document-workspace-cli.m
 import {ELIGIBILITY_COMMANDS,main as eligibilityMain} from './eligibility-cli.mjs';
 import {RISK_OF_BIAS_COMMANDS,main as riskOfBiasMain} from './risk-of-bias/cli.mjs';
 import {CUSTOMER_UPDATE_COMMANDS,main as customerUpdateMain} from './customer-updates/cli.mjs';
+import {CUSTOMER_HANDOVER_RETURN_COMMAND,runCustomerHandoverReturnsCli} from './customer-updates/handover-returns-cli.mjs';
 import {RESEARCH_COMMERCE_COMMANDS,main as researchCommerceMain} from './customer-commerce/cli.mjs';
 import {RESEARCH_QUOTES_COMMANDS,main as researchQuotesMain} from './customer-quotes/cli.mjs';
 import {RESEARCH_QUOTE_PROGRAMME_COMMANDS,main as quotationProgrammeMain} from './customer-quotes/programme-cli.mjs';
@@ -97,6 +98,10 @@ Commission and deliver complete recurring customer work in the same dossier:
   customer-updates|customer-updates-record|customer-updates-preview|customer-updates-save
   customer-updates-work|customer-updates-export|customer-updates-source-plan
   customer-updates-handover|customer-updates-inspect|customer-updates-receive|customer-updates-operation
+  customer-handover-returns help
+
+Continue a real customer-updates handover through sequential reviewed returns,
+cumulative native item/round limits, complete source/archive and editable receiving.
 
 Quote and deliver a complete customer evidence programme:
   quotes-help
@@ -212,6 +217,7 @@ const commandOptions=Object.freeze({
 const compact=value=>value?.dossier?{...value,dossier:researchSummary(value.dossier)}:value;
 const selected=value=>Object.fromEntries(Object.entries(value).filter(([,item])=>item!==undefined));
 export async function main(argv=process.argv.slice(2),{output=process.stdout}={}){
+  if(argv[0]===CUSTOMER_HANDOVER_RETURN_COMMAND)return runCustomerHandoverReturnsCli(argv,{stdout:output});
   if(DOSSIER_RETURN_COMMANDS.includes(argv[0]))return dossierReturnMain(argv,{output});
   if(RIS_COMMANDS.includes(argv[0]))return risMain(argv,{output});
   if(RESEARCH_QUOTATION_SETUP_COMMANDS.includes(argv[0])){

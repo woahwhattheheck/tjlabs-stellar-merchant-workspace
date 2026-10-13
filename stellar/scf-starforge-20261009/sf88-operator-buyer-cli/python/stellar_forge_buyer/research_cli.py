@@ -13,6 +13,7 @@ from .research_remote_programmes import ResearchRemoteError
 from .research_documents import ResearchDocumentSource
 from .research_citation_cli import add_citation_commands, run_citation_command
 from .research_extraction_cli import add_extraction_commands, run_extraction_command
+from .research_study_flow_cli import add_study_flow_commands, run_study_flow_command
 from .research_eligibility_cli import add_eligibility_commands, run_eligibility_command
 from .research_customer_cli import add_customer_commands, run_customer_command
 from .research_commerce_cli import add_commerce_commands, run_commerce_command
@@ -43,6 +44,7 @@ def parser():
     commands = value.add_subparsers(dest="command", required=True)
     add_citation_commands(commands)
     add_extraction_commands(commands)
+    add_study_flow_commands(commands)
     add_eligibility_commands(commands)
     add_customer_commands(commands)
     add_commerce_commands(commands)
@@ -92,6 +94,8 @@ def main(argv=None):
             result = run_customer_command(arguments)
         elif arguments.command.startswith("eligibility-"):
             result = run_eligibility_command(arguments)
+        elif arguments.command.startswith("flow-"):
+            result = run_study_flow_command(arguments)
         elif arguments.command.startswith("extraction-"):
             result = run_extraction_command(arguments)
         elif arguments.command.startswith("citation-"):

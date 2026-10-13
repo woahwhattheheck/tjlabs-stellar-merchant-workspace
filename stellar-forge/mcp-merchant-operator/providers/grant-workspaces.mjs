@@ -13,7 +13,7 @@ export default defineMerchantProvider({
   instructions: [
     {
       "prefix": "merchant_grant_",
-      "text": "For SF47 planning and delivery, select the declared grant workspace and read its original schema, plans and case versions. Use the exact original request ID, revision, actor, reviewed plan content and forecast input hashes for changes. Inspect a retained request after a lost reply. Reuse the original planner, cash model, evidence files, outcome register and grant Application writer. Page snapshots with the returned pointers and offsets; retain the complete immutable files and SHA-pinned input transfers. The explicit open tool may start only a host-authorized original workspace; a borrowed running Application stays with its owner when this merchant closes.",
+      "text": "For SF47 planning and delivery, select the declared grant workspace and read its original schema, plans and case versions. Use the exact original request ID, revision, actor, reviewed plan content and forecast input hashes for changes. Inspect a retained request after a lost reply. Reuse the original planner, cash model, evidence files, outcome register and grant Application writer. Page snapshots with the returned pointers and offsets; retain the complete immutable files and SHA-pinned input transfers. The open and reporting_capture tools may start only a host-authorized original workspace; a borrowed running Application stays with its owner. Reporting capture retains the original reviewed case, complete source inputs and portable preparation under one request ID. Use reporting_capture_inspect after a lost reply and the returned file_read references to receive every complete output.",
       "order": 60
     }
   ],

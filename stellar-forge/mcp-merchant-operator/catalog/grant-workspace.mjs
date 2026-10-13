@@ -2,6 +2,7 @@
 import {grantCohortAdoptionTools} from './grant-cohort-adoption.mjs';
 import {grantCohortDeliveryTools} from './grant-cohort-delivery.mjs';
 import {grantPlanningSourceTools} from './grant-planning-sources.mjs';
+import {grantReportingCaptureTools} from './grant-reporting-capture.mjs';
 import {GRANT_CASE_ACTIONS,GRANT_MAX_BUNDLE_BYTES,GRANT_TRANSFER_CHUNK_BYTES as CHUNK} from '../../../stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs';
 
 const str = (maximum = 12000) => ({type:'string', maxLength:maximum});
@@ -428,6 +429,7 @@ export const grantWorkspaceTools = [
       note:str(12000), planning:object, filename:nonempty(240)},
     ['workspace','input','expectedInputSha256','kind','name','requestId']),
   ...grantPlanningSourceTools,
+  ...grantReportingCaptureTools,
   tool('cases', 'Read original operating case summaries, optionally for a selected saved plan.',
     {...ws, planId:id('plan')}, ['workspace'], true),
   tool('case', 'Read the entire original operating case, pinned plan, eight record collections, source metadata, reviews, forecasts and portfolios.',

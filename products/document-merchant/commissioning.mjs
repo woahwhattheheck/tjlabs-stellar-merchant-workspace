@@ -21,7 +21,7 @@ const BUYER_RUNTIME=join(FRAMEWORK,'sf88-operator-buyer-cli');
 const HASH=/^[a-f0-9]{64}$/;
 const same=(a,b)=>canonical(a)===canonical(b);
 const fields=new Set(['accountSourceFile','commerceDirectory','directory','intentId','provider','anonymous','customerOptionsFile',
-  'customerDirectory','sellerPort','customerPort','operatorPort','operationsPort']);
+  'customerDirectory','assemblyPaymentFile','sellerPort','customerPort','operatorPort','operationsPort']);
 const pin=async(path,maximum=1048576,privateFile=true)=>(await readServiceFile(path,maximum,{privateFile})).pin;
 function separate(a,b){const p=relative(a,b);return p!==''&&p!=='..'&&!p.startsWith('..'+sep)&&!isAbsolute(p);}
 function port(value){value??=0;need(Number.isInteger(value)&&value>=0&&value<=65535,'DOCUMENT_COMMISSION_PORT_INVALID');return value;}
@@ -37,6 +37,7 @@ function input(raw){
       {commerceDirectory:absolute(raw.commerceDirectory),intentId:raw.intentId}),directory:absolute(raw.directory),provider:raw.provider??'mintpdf',anonymous:raw.anonymous??false,
     customerOptionsFile:raw.customerOptionsFile===undefined||raw.customerOptionsFile===null?null:absolute(raw.customerOptionsFile),
     customerDirectory:raw.customerDirectory===undefined||raw.customerDirectory===null?null:absolute(raw.customerDirectory),
+    ...(raw.assemblyPaymentFile===undefined?{}:{assemblyPaymentFile:absolute(raw.assemblyPaymentFile)}),
     sellerPort:port(raw.sellerPort),customerPort:port(raw.customerPort),
     operatorPort:port(raw.operatorPort),operationsPort:port(raw.operationsPort)};
   need(Boolean(value.customerOptionsFile)!==Boolean(value.customerDirectory),'DOCUMENT_COMMISSION_CUSTOMER_REQUIRED');
@@ -102,6 +103,21 @@ async function selectedSource(raw){
     policy.payments.recipients.includes(payment.payTo)&&BigInt(payment.amount)<=BigInt(policy.payments.maxAtomic)&&
     policy.payments.paymentFlows.includes(payment.extra.paymentFlow??'authorization'),
     'DOCUMENT_COMMISSION_TERMS_OUTSIDE_ORIGINAL_POLICY');
+  let assemblyPayment=null;
+  if(options.assemblyPaymentFile){
+    need(options.provider==='pdfmint','DOCUMENT_COMMISSION_ASSEMBLY_PROVIDER_REQUIRED');
+    const assembly=await readServiceFile(options.assemblyPaymentFile,65536,{privateFile:true});
+    assemblyPayment=parse(assembly.bytes);
+    need(plain(assemblyPayment)&&assemblyPayment.scheme===payment.scheme&&assemblyPayment.network===payment.network&&
+      assemblyPayment.asset===payment.asset&&assemblyPayment.payTo===payment.payTo&&
+      assemblyPayment.extra?.areFeesSponsored===true&&typeof assemblyPayment.amount==='string'&&
+      /^[1-9][0-9]*$/.test(assemblyPayment.amount),'DOCUMENT_COMMISSION_ASSEMBLY_TERMS_REQUIRED');
+    need(policy.payments.assets.includes(assemblyPayment.asset)&&policy.payments.recipients.includes(assemblyPayment.payTo)&&
+      BigInt(assemblyPayment.amount)<=BigInt(policy.payments.maxAtomic)&&
+      policy.payments.paymentFlows.includes(assemblyPayment.extra.paymentFlow??'authorization'),
+      'DOCUMENT_COMMISSION_ASSEMBLY_TERMS_OUTSIDE_ORIGINAL_POLICY');
+    configurationFiles.push(assembly.pin);
+  }
   let customer;
   if(options.customerOptionsFile){
     const source=await readServiceFile(options.customerOptionsFile,65536,{privateFile:true});
@@ -124,8 +140,9 @@ async function selectedSource(raw){
     'DOCUMENT_COMMISSION_CUSTOMER_DIRECTORY_CONFLICT');
   if(account)need(protectedDirectories.every(path=>options.directory!==path&&!separate(options.directory,path)&&
     !separate(path,options.directory)),'DOCUMENT_COMMISSION_DIRECTORIES_MUST_DIFFER');
-  const request=documentSetupTemplate(options.provider,{anonymous:options.anonymous});
+  const request=documentSetupTemplate(options.provider,{anonymous:options.anonymous,assembly:assemblyPayment!==null});
   request.publicOrigin=original.publicOrigin;request.payment=payment;
+  if(assemblyPayment!==null)request.assembly={payment:structuredClone(assemblyPayment)};
   request.serviceName='Document merchant — '+request.provider.provider;
   const normalized=normalizeDocumentSetup(request);
   const sourceFiles=[];
@@ -161,7 +178,8 @@ function assertReview(value){
   need(digest(canonical(body))===selectionSha256,'DOCUMENT_COMMISSION_REVIEW_CHANGED');return value;
 }
 function generated(review){
-  const selection={facilitator:review.original.facilitator,payment:review.original.originalTerms};
+  const selection={facilitator:review.original.facilitator,payment:review.original.originalTerms,
+    ...(review.request.assembly?{assemblyPayment:review.request.assembly.payment}:{})};
   const helper=pathToFileURL(join(ROOT,'commissioning-facilitator.mjs')).href;
   const factory='// Generated from the complete original commerce facilitator and selected native terms.\n'+
     'import {createDocumentCommissioningFactory} from '+JSON.stringify(helper)+';\n'+
@@ -182,7 +200,8 @@ function generated(review){
 function result(review,installation){
   return {schema:DOCUMENT_COMMISSIONING_SCHEMA,directory:review.options.directory,
     selectionSha256:review.selectionSha256,original:review.original,
-    installation,customerOptions:review.paths.customerOptions,consumerOptions:review.paths.consumerOptions,
+    installation,...(review.request.assembly?{assemblyPayment:structuredClone(review.request.assembly.payment)}:{}),
+    customerOptions:review.paths.customerOptions,consumerOptions:review.paths.consumerOptions,
     compositionOptions:review.paths.compositionOptions,sourceRoot:review.paths.sourceRoot,
     nativeFactory:review.paths.factory,nativeFactoryFile:{path:review.paths.factory,
       ...Object.fromEntries(Object.entries(generated(review)[0]).filter(([key])=>['bytes','sha256'].includes(key)))},
@@ -191,7 +210,8 @@ function result(review,installation){
       sellerPort:review.options.sellerPort,customerPort:review.options.customerPort,
       operatorPort:review.options.operatorPort,operationsPort:review.options.operationsPort,startWorker:true},
     routes:{origin:review.original.publicOrigin,
-      seller:review.request.formats.map(format=>review.request.pathPrefix+'/'+format),
+      seller:[...review.request.formats.map(format=>review.request.pathPrefix+'/'+format),
+        ...(review.request.assembly?[review.request.pathPrefix+'/pdf-set']:[])],
       customerPrefix:'/jobs/',privateListeners:['operator','operations']},
     budgetMeaning:'The existing operator ledger, payer, single-purchase cap, daily and total allowance remain authoritative.'};
 }
@@ -229,7 +249,8 @@ export async function inspectDocumentCommissioning(directory){
     need(bytes.length===file.bytes&&digest(bytes)===file.sha256,'DOCUMENT_COMMISSION_FILE_CHANGED');
   }
   const installation=await inspectDocumentMerchant(review.paths.merchant);
-  need(same(installation.payment,review.request.payment)&&installation.provider.provider===review.options.provider,
+  need(installation.inputSha256===digest(canonical(review.request))&&
+    same(installation.payment,review.request.payment)&&installation.provider.provider===review.options.provider,
     'DOCUMENT_COMMISSION_INSTALLATION_CHANGED');
   return result(review,installation);
 }

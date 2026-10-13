@@ -57,7 +57,7 @@
       "path": "stellar/scf_2026/sf47_budget_model/workspace/COHORT-DELIVERY.md",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
-      "commit": "80e82c047a5ba69955d96fa5e7bd9ad9a6bb45e3",
+      "commit": "193ddbdcf4ef69f220014751d7e872c2dede4c14",
       "editions": [
         {
           "commit": "b923b22687b0726b86000e685c60a07cfbad5b72",
@@ -70,6 +70,12 @@
           "git_blob": "51c217d1db2883a0dac0f58d6920aab1dd30dffd",
           "bytes": 29136,
           "sha256": "b6ab2e06dcfb3969ed82895a22cc3d10112da6b0a6b72fcaa1893c1ba10d12c1"
+        },
+        {
+          "commit": "193ddbdcf4ef69f220014751d7e872c2dede4c14",
+          "git_blob": "a1df781a4ac07c1d64c4a74d81bbc8167ec06798",
+          "bytes": 37408,
+          "sha256": "060cb6e5c0738b70ac45aff568f22ba11d613df16713f4b956dde424ca1f1e34"
         }
       ]
     },
@@ -111,13 +117,19 @@
       "path": "stellar/scf_2026/sf47_budget_model/workspace/cohort_delivery_comparison.mjs",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
-      "commit": "80e82c047a5ba69955d96fa5e7bd9ad9a6bb45e3",
+      "commit": "193ddbdcf4ef69f220014751d7e872c2dede4c14",
       "editions": [
         {
           "commit": "80e82c047a5ba69955d96fa5e7bd9ad9a6bb45e3",
           "git_blob": "a51c3c150d1270d64fc8e5965b322447ae314b4d",
           "bytes": 68162,
           "sha256": "fe2f990b65d2b1a97ac08481e8c5a793ff8ab1cff55ccd16ec12f09053ab3741"
+        },
+        {
+          "commit": "193ddbdcf4ef69f220014751d7e872c2dede4c14",
+          "git_blob": "1ac9bd9a7a5e608c5d61e5ff7ebc185cd3a8d223",
+          "bytes": 85345,
+          "sha256": "443748c0046705d27603c067cfbb338cb0495bf9b238237da4982cbc8b9a17bd"
         }
       ]
     }

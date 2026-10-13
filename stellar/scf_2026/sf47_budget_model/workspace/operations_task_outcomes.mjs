@@ -1,4 +1,5 @@
 // Complete customer task comparison editor over the original Grant Operations case.
+import {createOutcomeWorkbookDesk} from './task-outcomes-workbook-desk.mjs';
 const SCHEMA = 'stellar-forge.sf47-customer-task-outcomes.v1';
 const STORAGE = 'sf47.customer-task-outcomes.';
 const CATEGORIES = ['ACQUISITION','PROCESSING','CORRECTION','RECEIVING','OTHER'];
@@ -26,10 +27,14 @@ function same(a,b) {return JSON.stringify(a)===JSON.stringify(b);}
 function receiveDraftRows(current, incoming) {
   for(const [id,row] of incoming){
     const retained=current[id];
-    if(retained&&(!same(retained.inputs,row.inputs)||String(retained.note||'')!==row.note))
+    if(retained&&(!same(retained.inputs,row.inputs)||String(retained.note||'')!==row.note||
+       retained.workbook&&row.workbook&&!same(retained.workbook,row.workbook)))
       throw Error('The retained draft or save note differs. Download the current editor recovery before reconciling the complete writing.');
   }
-  for(const [id,row] of incoming)if(!Object.hasOwn(current,id))current[id]=row;
+  for(const [id,row] of incoming){
+    if(!Object.hasOwn(current,id))current[id]=row;
+    else if(!current[id].workbook&&row.workbook)current[id].workbook=clone(row.workbook);
+  }
 }
 function terminalRejection(error) {
   const status=Number(error.status ?? error.details?.status ?? error.statusCode);
@@ -45,7 +50,7 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
   if(!session.initialized){
     let saved;try{saved=JSON.parse(sessionStorage.getItem(storageKey)||'null');}catch{}
     if(saved?.schema===SCHEMA+'.editor'&&saved.caseId===caseId){
-      for(const key of ['drafts','selection','pending','receipt','notice'])
+      for(const key of ['drafts','selection','pending','pendingWorkbook','receipt','notice'])
         if(!Object.hasOwn(session,key)&&Object.hasOwn(saved,key))session[key]=saved[key];
     }
     session.initialized=true;
@@ -54,11 +59,14 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
   const $=selector=>root.querySelector(selector);
   const draft=()=>session.selection?.mode==='draft'?session.drafts[session.selection.id]:null;
   const editable=()=>currentCase.program.state==='OPEN';
+  const workbookDesk=createOutcomeWorkbookDesk({root,session,getDraft:draft,getCurrent:()=>currentCase,
+    getInputs:()=>draft()?.inputs||(selected?{id:selected.edition.id,expectedRevision:selected.edition.revision,document:selected.edition.document}:null),
+    editable,available,persist,render,controls,run,notify,api,saveApi,mutationId,recordingActor,reload,onCase,validateInput,terminalRejection});
   function persist(){
     try{
       sessionStorage.setItem(storageKey,JSON.stringify({schema:SCHEMA+'.editor',caseId,
         planContentSha256:currentCase.plan.contentSha256,drafts:session.drafts,selection:session.selection,
-        pending:session.pending??null,receipt:session.receipt??null,notice:session.notice??''}));
+        pending:session.pending??null,pendingWorkbook:session.pendingWorkbook??null,receipt:session.receipt??null,notice:session.notice??''}));
       storageError='';
     }catch{storageError='Browser storage is full. Download the complete editor recovery or save a case edition to retain this work.';}
   }
@@ -68,10 +76,13 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
     const locked=busy||hostBusy||!ready;
     root.setAttribute('aria-busy',String(locked));
     root.querySelectorAll('button,input,select,textarea').forEach(el=>{
-      el.disabled=locked||el.dataset.fixed==='true'||(el.dataset.editor==='true'&&(!draft()||!editable()));
+      const pendingEdit=Boolean(session.pendingWorkbook)&&(el.dataset.editor==='true'||
+        ['new','sources','import-input','preview','save','reconcile','use-current','edit','clone','add-row','remove-row','add-followup','remove-followup'].includes(el.dataset.taskAction)||
+        ['choose','apply','refresh-review'].includes(el.dataset.taskWb));
+      el.disabled=locked||pendingEdit||el.dataset.fixed==='true'||(el.dataset.editor==='true'&&(!draft()||!editable()));
     });
     const save=$('[data-task-action="save"]');
-    if(save)save.disabled=locked||!editable()||!draft()?.preview||Boolean(session.pending);
+    if(save)save.disabled=locked||!editable()||!draft()?.preview||Boolean(session.pending||session.pendingWorkbook);
     const recover=$('[data-task-action="recover-save"]');
     if(recover)recover.disabled=locked||!session.pending;
     const warning=$('[data-task-storage]');if(warning)warning.textContent=storageError;
@@ -237,9 +248,10 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
         +field('Customer outcome and next work','document.conclusion',value.conclusion,{area:true,wide:true})+'</div>';
       if(editing)body+='<label>Save note<textarea data-task-note data-editor="true" rows="3">'+esc(editing.note||'')+'</textarea></label>';
       const calculation=editing?.preview?.report||(!editing?edition.report:null);
-      body+='</fieldset>'+recurringEditor(value)+reportView(calculation)+recurringReport(calculation);
+      body+='</fieldset>'+recurringEditor(value)+workbookDesk.render()+reportView(calculation)+recurringReport(calculation);
       if(!editing)body+='<details><summary>Complete original case, source and installation selection</summary><pre>'+esc(JSON.stringify(edition.source,null,2))+'</pre></details>';
     }
+    if(!value&&session.pendingWorkbook)body+=workbookDesk.render();
     root.innerHTML=heading+body+'<input hidden type="file" data-task-file accept=".json,application/json">';
     root.querySelectorAll('.task-followup').forEach(node=>{if(expanded.includes(node.id))node.open=true;});
     controls();
@@ -273,6 +285,7 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
     session.selection={id,mode:'draft'};persist();render();
   }
   async function preview(){
+    if(session.pendingWorkbook)throw Error('Recover the original workbook source request before reviewing or saving.');
     const d=draft();if(!d)throw Error('Open a retained draft first.');
     const original=clone(d.inputs),signature=JSON.stringify(original);
     const value=await api('/api/operations/'+caseId+'/task-outcomes-preview',{expectedVersion:currentCase.program.version,inputs:original});
@@ -304,7 +317,7 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
   }
   async function save(){
     const d=draft();if(!d?.preview)throw Error('Review the complete input before saving.');
-    if(session.pending)throw Error('Recover the retained original save before issuing another save.');
+    if(session.pending||session.pendingWorkbook)throw Error('Recover the retained original request before issuing another save.');
     if(d.previewSignature!==JSON.stringify(d.inputs)||d.preview.source.case.version!==currentCase.program.version)throw Error('Review the current draft and case before saving.');
     const payload={expectedVersion:currentCase.program.version,actor:recordingActor(),note:d.note||'',
       action:'task-outcomes.save',data:{inputs:clone(d.preview.inputs),expectedPreviewSha256:d.preview.previewSha256}};
@@ -329,7 +342,7 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
     }else{delete d.preview;delete d.previewSignature;persist();render();notify('Current case and comparison revision loaded; your entire draft is retained.');}
   }
   root.addEventListener('input',event=>{
-    const d=draft();if(!d||busy||hostBusy||!ready||!editable())return;
+    const d=draft();if(!d||busy||hostBusy||!ready||!editable()||session.pendingWorkbook)return;
     if(event.target.matches('[data-task-note]')){d.note=event.target.value;persist();return;}
     const path=event.target.dataset.taskPath;if(!path)return;
     let value=event.target.multiple?[...event.target.selectedOptions].map(row=>row.value):event.target.value;
@@ -347,13 +360,15 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
     if(event.target.matches('[data-task-file]')){
       const file=event.target.files?.[0];if(!file)return;
       void run(async()=>{
+        if(session.pending||session.pendingWorkbook)throw Error('Recover the original pending request before importing another editor.');
         if(file.size>32*1024*1024)throw Error('Use a complete JSON input or editor recovery up to 32 MiB.');
         let value;try{value=JSON.parse(await file.text());}catch{throw Error('The complete JSON input cannot be read.');}
         if(value.schema===SCHEMA+'.editor'){
           if(value.caseId!==caseId&&value.caseId!==currentCase.program.origin?.programId)throw Error('This recovery belongs to another case.');
           if(value.planContentSha256!==currentCase.plan.contentSha256)throw Error('This recovery belongs to another pinned plan.');
           if(value.pending)throw Error('Recover the original pending save in its original case before transferring this editor recovery.');
-          const incoming=Object.entries(value.drafts||{}).map(([id,row])=>{
+          if(value.pendingWorkbook&&value.caseId!==caseId)throw Error('Recover the workbook source request in its original case before transferring this editor.');
+          const incoming=await Promise.all(Object.entries(value.drafts||{}).map(async([id,row])=>{
             if(!row||typeof row!=='object'||Array.isArray(row))throw Error('Use the complete retained draft and save note.');
             validateInput(row.inputs);if(id!==row.inputs.id)throw Error('The recovery draft identity differs.');
             if(row.note!==undefined&&typeof row.note!=='string')throw Error('Keep the complete original save note as text.');
@@ -372,9 +387,12 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
                 throw Error('Keep the original saved revision used to begin this draft.');
               received.basedOn=row.basedOn;
             }
+            if(row.workbook)received.workbook=await workbookDesk.recoverDraftWorkbook(row.workbook,row.inputs);
             return [id,received];
-          });
-          receiveDraftRows(session.drafts,incoming);
+          }));
+          const nextDrafts=clone(session.drafts);receiveDraftRows(nextDrafts,incoming);
+          const pendingWorkbook=workbookDesk.recoverPending(value.pendingWorkbook,nextDrafts);
+          session.drafts=nextDrafts;session.pendingWorkbook=pendingWorkbook;
           const id=value.selection?.mode==='draft'&&Object.hasOwn(session.drafts,value.selection.id)
             ?value.selection.id:incoming[0]?.[0];
           if(id){
@@ -447,12 +465,14 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
       if(actionName==='reconcile'){await reconcile();return;}
       if(actionName==='use-current'){
         const d=session.drafts[target.dataset.id];if(!d||!d.reconciliation||d.reconciliation.currentRevision!==Number(target.dataset.revision))throw Error('Reopen the current saved edition first.');
+        const savedObservations=new Set((d.reconciliation.currentDocument.followups||[]).map(row=>row.id));
+        d.unsavedFollowupIds=(d.unsavedFollowupIds||[]).filter(id=>!savedObservations.has(id));
         d.inputs.expectedRevision=d.reconciliation.currentRevision;delete d.reconciliation;delete d.preview;delete d.previewSignature;
         persist();render();notify('Your complete draft now follows the reviewed current revision. Review the comparison again before saving.');return;
       }
       if(actionName==='recovery'){
         download(JSON.stringify({schema:SCHEMA+'.editor',caseId,planContentSha256:currentCase.plan.contentSha256,drafts:session.drafts,
-          selection:session.selection,pending:session.pending??null,receipt:session.receipt??null,notice:session.notice??''},null,2)+'\n',caseId+'-task-outcomes-editor.json');return;
+          selection:session.selection,pending:session.pending??null,pendingWorkbook:session.pendingWorkbook??null,receipt:session.receipt??null,notice:session.notice??''},null,2)+'\n',caseId+'-task-outcomes-editor.json');return;
       }
       if(actionName==='draft-download'){
         const d=session.drafts[target.dataset.id];if(!d)throw Error('The complete draft is unavailable.');
@@ -519,5 +539,5 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
     }catch(error){notify(error.message||String(error),true);}
     finally{ready=true;if(available())controls();}
   })();
-  return {ready:initial,setHostBusy,dispose(){persist();active=false;window.removeEventListener('pagehide',pagehide);}};
+  return {ready:initial,setHostBusy,dispose(){persist();workbookDesk.dispose();active=false;window.removeEventListener('pagehide',pagehide);}};
 }

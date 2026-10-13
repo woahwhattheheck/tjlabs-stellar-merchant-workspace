@@ -556,21 +556,38 @@ async function exportJob(root,job,out) {
   await privateDir(out,true);
   const rows=[];
   for(const folder of ['blobs','commands','results','reviews','runs','buyers']) {
-    await privateDir(join(out,folder),true);
     for(const name of (await readdir(join(root,folder))).sort()) {
       if(name.startsWith('.'))continue;
-      const raw=await readBytes(join(root,folder,name));await publish(join(out,folder,name),raw);
+      const raw=await readBytes(join(root,folder,name));
       rows.push({path:folder+'/'+name,bytes:raw.length,sha256:digest(raw)});
     }
   }
   for(const name of ['job.json','selection.json']) {
-    const raw=await readBytes(join(root,name));await publish(join(out,name),raw);
+    const raw=await readBytes(join(root,name));
     rows.push({path:name,bytes:raw.length,sha256:digest(raw)});
   }
   const manifest={schema:'stellar-forge.facilitator-commissioning-transfer.v1',jobId:job.id,
-    selectionSha256:job.selectionSha256,files:rows};
-  await publish(join(out,'TRANSFER.json'),encode(manifest));
-  return {directory:out,manifestSha256:digest(encode(manifest)),files:rows.length,
+    selectionSha256:job.selectionSha256,files:rows}, manifestRaw=encode(manifest);
+  const completed=await json(join(out,'TRANSFER.json'),true);
+  if(completed) {
+    need((await readBytes(join(out,'TRANSFER.json'))).equals(manifestRaw),'EXPORT_SOURCE_CHANGED',
+      'This destination retains an earlier complete transfer. Select a new directory for the current job state.');
+    await inspectCommissioningTransfer(out);
+    return {directory:out,manifestSha256:digest(manifestRaw),files:rows.length,
+      receiving:'Verify TRANSFER.json and reopen with the original received SF82 store selected explicitly.'};
+  }
+  // Bind the entire cut before copying. A later result cannot be mixed into an
+  // interrupted transfer, and a completed transfer is checked before any write.
+  await publish(join(out,'.export-intent.json'),manifestRaw);
+  for(const folder of ['blobs','commands','results','reviews','runs','buyers']) await privateDir(join(out,folder),true);
+  for(const row of rows) {
+    const raw=await readBytes(join(root,row.path));
+    need(raw.length===row.bytes&&digest(raw)===row.sha256,'EXPORT_SOURCE_CHANGED',
+      'The original source changed while receiving this transfer.');
+    await publish(join(out,row.path),raw);
+  }
+  await publish(join(out,'TRANSFER.json'),manifestRaw);
+  return {directory:out,manifestSha256:digest(manifestRaw),files:rows.length,
     receiving:'Verify TRANSFER.json and reopen with the original received SF82 store selected explicitly.'};
 }
 export async function inspectCommissioningTransfer(directory) {

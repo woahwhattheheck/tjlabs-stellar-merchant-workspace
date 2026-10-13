@@ -346,16 +346,35 @@ export function createFredDdpProjectExtension({ readProject, transact, readCaptu
   } = {}) {
     migrationId(selectedId); operationId(id);
     const original = await readProject(directory), pending = original.pending?.id === id ? original.pending : null;
-    const completedOperation = original.operations.find(item => item.id === id && item.kind === 'ddp-migration-acquire');
-    sourceMode ??= pending?.payload.sourceMode ?? completedOperation?.result?.sourceMode ?? 'API_VINTAGE';
+    const completedOperation = original.operations.find(item => item.id === id);
+    const retainedOperation = pending ?? completedOperation;
+    if (retainedOperation) need(retainedOperation.kind === 'ddp-migration-acquire',
+      'Continue the original project operation kind.', 'FRED_OPERATION_CONFLICT', 409);
+    const retainedContext = pending?.payload ?? completedOperation?.result;
+    sourceMode ??= retainedContext?.sourceMode ?? 'API_VINTAGE';
     need(['API_VINTAGE', 'ALFRED_VINTAGE'].includes(sourceMode), 'Choose the original API or ALFRED historical source mode.');
+    if (retainedContext) need(retainedContext.migrationId === selectedId &&
+      (retainedContext.sourceMode ?? 'API_VINTAGE') === sourceMode,
+      'Continue the original migration and source mode.', 'FRED_OPERATION_CONFLICT', 409);
     let editions = [], metadataDigest = null;
     if (sourceMode === 'ALFRED_VINTAGE') {
       const plan = await retainedMigration(directory, original, selectedId);
       const ids = new Set(plan.acquisitions.flatMap(item => item.series));
       const operationRoot = await privateDirectory(join(resolve(directory), 'ddp-migration-acquisitions', id));
       const staged = await optionalJson(join(operationRoot, 'alfred-metadata.json'), MAX_CAPTURE_BYTES * 2);
-      editions = metadata ?? staged ?? [];
+      let receivedEditions;
+      if (metadata === undefined && !staged && completedOperation) {
+        need(Array.isArray(completedOperation.result.captureIds) && completedOperation.result.captureIds.length > 0,
+          'The completed historical acquisition must retain its original source captures.');
+        receivedEditions = [];
+        for (const captureId of completedOperation.result.captureIds) {
+          const capture = await readCapture(directory, captureId);
+          need(capture.schema === 'stellar-forge.alfred-vintage-capture.v1',
+            'The completed historical acquisition must retain the same ALFRED source mode.');
+          for (const record of capture.source.series) if (record.metadata) receivedEditions.push(record.metadata);
+        }
+      }
+      editions = metadata ?? staged ?? receivedEditions ?? [];
       need(Array.isArray(editions) && new Set(editions.map(item => item?.series?.value)).size === editions.length,
         'Retain one original historical metadata edition for each selected series.');
       for (const edition of editions) {
@@ -366,6 +385,8 @@ export function createFredDdpProjectExtension({ readProject, transact, readCaptu
       editions = clone(editions).sort((a,b) => a.series.value < b.series.value ? -1 : a.series.value > b.series.value ? 1 : 0);
       metadataDigest = digest(editions);
       need(metadataSha256 === undefined || metadataSha256 === metadataDigest, 'Resume the exact retained historical metadata edition.');
+      if (retainedContext) need(retainedContext.metadataSha256 === metadataDigest,
+        'Continue the original retained historical metadata identity.', 'FRED_OPERATION_CONFLICT', 409);
       if (staged) need(digest(staged) === metadataDigest, 'This original acquisition retains another metadata edition.');
       else await atomicJson(operationRoot, 'alfred-metadata.json', editions, { exclusive: true });
     } else need(metadata === undefined && metadataSha256 === undefined, 'API metadata comes from the original API series response.');

@@ -154,6 +154,7 @@ export class MerchantProject {
   async describe() {
     return { available: true, mode: this.workspace.readOnly ? 'review' : 'live',
       storeId: this.workspace.store.storeId, sourceSha256: this.sourceSha256,
+      capturing: Boolean(this.workspace.projectSnapshot),
       exports: await this.list() };
   }
   async status(id) {
@@ -207,8 +208,8 @@ export class MerchantProject {
       try {
         lease = await operationLease(this._path(id, '.owner.lock'));
         this.workspace.store._assertOpen();
-        await this.workspace.flushRetainedReturns();
-        const result = await runPortable(request, { python: this.python, lease: this.workspace.store._lease });
+        const result = await this.workspace.captureProjectSnapshot(() =>
+          runPortable(request, { python: this.python, lease: this.workspace.store._lease }));
         const count = Number(result.archive?.bytes);
         need(typeof result.archive?.path === 'string' && childPath(absolute(result.archive.path), this.directory) &&
           Number.isSafeInteger(count) && count > 0 && SHA.test(result.archive.sha256),
