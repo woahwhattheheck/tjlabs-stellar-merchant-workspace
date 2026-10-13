@@ -32,7 +32,7 @@ p{margin-top:8px}
 .topbar{height:60px;background:#fff;border-bottom:1px solid var(--line);padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
 .brand{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:650;letter-spacing:-.2px}
 .brand-mark{display:grid;place-items:center;border:1px solid #939aa2;width:27px;height:27px;font:700 15px ui-monospace,SFMono-Regular,monospace}
-.topbar-right{display:flex;align-items:center;gap:20px}
+.topbar-right{display:flex;align-items:center;gap:20px;flex-wrap:wrap;min-width:0;max-width:100%}
 #connection{color:var(--muted);font-size:12px}
 .notice{padding:10px 24px;border-bottom:1px solid #b8bec4;background:#eceff1;font-size:13px;overflow-wrap:anywhere}
 .notice[data-kind=error]{border-left:4px solid #565c62}
