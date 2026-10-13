@@ -7,7 +7,7 @@ import {need,now,newId,digest,sha,envelope,verifyEnvelope,normalizeProject,perio
 import {MAP_CONNECTION,DEFAULT_DASHBOARD_CONNECTION,verifyConnection,dashboardConnection,acquisitionTasks,privateRequest,normalizeCapture,decodeJson,inspectDashboardDefinition} from './source.mjs';
 import {reviewReport,freezeReport} from './analysis.mjs';
 import {createHandover,inspectHandover,receiveHandover} from './portable.mjs';
-import {deliveryFiles,publishDelivery,reopenDelivery} from './exports.mjs';
+import {deliveryFiles,publishDelivery,reopenDelivery,readPublishedDelivery} from './exports.mjs';
 import {inspectSourcePacket,inspectSourceSet,sourceProject,retainedTasks,retainedCapture,verifyRetainedCapture} from './source-intake.mjs';
 
 async function bodyBytes(response){
@@ -98,6 +98,7 @@ export async function openWorkspace(directory,{create=false,network={}}={}){
    sourceSets:store.objects('source-set').map(v=>sourceSet(v.id).summary),
    projects:store.objects('project-revision'),plans:store.objects('plan').map(p=>({...p,tasks:store.tasks(p.id)})),
    reports:store.objects('report').map(summarizeReport),receiving:store.objects('receiving'),deliveries:store.objects('delivery'),
+   pendingDeliveries:store.objects('delivery-request').filter(request=>!store.object('delivery',request.id)),
    active:active?{runId:active.id,planId:active.planId,startedAt:active.startedAt,results:active.results}:null};},
   saveProject(input,{expectedCurrent=null}={}){
    const selected=connection(input.connectionId??MAP_CONNECTION.id),value=normalizeProject({...input,...(selected.kind==='dashboard'&&Array.isArray(input.locations)?{locations:input.locations.map(v=>({...v,sourceType:'dashboard'}))}:{})});if(selected.kind==='dashboard')need(value.measures.every(m=>selected.binding.measures[m]),'MEASURES_NOT_IN_CONNECTION');
@@ -135,8 +136,21 @@ export async function openWorkspace(directory,{create=false,network={}}={}){
   async deliver(id,destination){
    const report=object('report',id),deliveryId='delivery_'+digest({reportId:id,directory:destination}),previous=store.object('delivery',deliveryId);
    if(previous){await reopenDelivery(previous,report);return previous;}
-   const delivered=await publishDelivery(await api.files(id),destination,report);
-   return store.put('delivery',envelope('delivery',{id:deliveryId,completedAt:now(),...delivered}));
+   let selected=store.object('delivery-request',deliveryId);
+   if(!selected){
+    const retained=await readPublishedDelivery(destination,report);let files;
+    if(retained){
+     const inspected=inspectHandover(retained.handoverBytes);need(inspected.root.id===report.id&&inspected.root.sha256===report.sha256,'DESTINATION_CONTAINS_DIFFERENT_EDITION');
+     files=retained.files??deliveryFiles(report,inspected.value);
+    }else files=await api.files(id);
+    const manifest=JSON.parse(files.find(file=>file.name==='manifest.json').bytes.toString('utf8'));
+    selected=store.retainDeliveryFiles(envelope('delivery-request',{id:deliveryId,workspaceId:store.workspaceId,createdAt:now(),directory:destination,
+     reportId:report.id,reportSha256:report.sha256,packageId:manifest.packageId,packageSha256:manifest.packageSha256,
+     files:files.map(file=>({name:file.name,bytes:file.bytes.length,sha256:sha(file.bytes)}))}),files);
+   }
+   verifyEnvelope(selected,'delivery-request');need(selected.workspaceId===store.workspaceId&&selected.directory===destination&&selected.reportId===report.id&&selected.reportSha256===report.sha256,'DELIVERY_SELECTION_CHANGED');
+   const delivered=await publishDelivery(store.retainedDeliveryFiles(deliveryId),destination,report);
+   return store.transaction(()=>store.object('delivery',deliveryId)??store.put('delivery',envelope('delivery',{id:deliveryId,completedAt:now(),...delivered})));
   },
   reprocess(planId){
    const plan=object('plan',planId),selected=connection(plan.connectionId),results=[];
