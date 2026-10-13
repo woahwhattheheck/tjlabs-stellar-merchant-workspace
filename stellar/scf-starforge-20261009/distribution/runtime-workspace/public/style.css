@@ -21,3 +21,11 @@
 .application-setup-library td pre{margin:0;padding:0;background:transparent;white-space:pre-wrap;overflow-wrap:anywhere}
 .application-setup-library td select{width:100%;min-width:0}
 .application-setup-library .application-setup-comparison{margin:16px 0}
+
+/* Retained operation history and full original fields stay readable on narrow screens. */
+#operations .columns{grid-template-columns:repeat(3,minmax(0,1fr))}
+#operations .columns>*{min-width:0}
+#operations .operation[aria-current=true]{border-color:var(--ink);box-shadow:inset 3px 0 var(--ink)}
+#operations p,#operations h3{overflow-wrap:anywhere}
+#operations .section-title{flex-wrap:wrap}
+@media(max-width:950px){#operations .columns{grid-template-columns:minmax(0,1fr);gap:0}}
