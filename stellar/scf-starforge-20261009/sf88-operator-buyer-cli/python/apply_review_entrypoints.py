@@ -10,7 +10,7 @@ from pathlib import Path, PurePosixPath
 import stat
 import tempfile
 
-PACKET_SHA256 = "0c66dda5dd2dd517e7e6dee38086a5b01637ee5215566f0353b4cd430e8e3d58"
+PACKET_SHA256 = "9e05aa4e7c78d3c473ef91c92589ebf066c6870fd279290c1917057acfafb323"
 PREFIX = "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/"
 OPERATION = "SCF-CUSTOMER-RECEIVE-ENTRYPOINTS-90ED-20261012"
 

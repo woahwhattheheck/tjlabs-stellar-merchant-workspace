@@ -71,9 +71,9 @@ SCF-SOURCE-WORKSPACE-7737-20261012 receiving programme.
 ## Source identity
 
 Complete packet: native-patches/customer-review-entrypoints.json  
-SHA256: 0c66dda5dd2dd517e7e6dee38086a5b01637ee5215566f0353b4cd430e8e3d58  
-Bytes: 174844  
-Current source head: 1ee72d83a7c76aec5db7a15877ed0b6ba0da5b29.
+SHA256: 9e05aa4e7c78d3c473ef91c92589ebf066c6870fd279290c1917057acfafb323  
+Bytes: 176329  
+Current source head: 3cf66434cd5af0ace9b2b35e1b9cec642dfef97c.
 
 The independently reviewed receipt transition selects the operation's comparison
 before saving its browser location. A later comparison selected in the native
