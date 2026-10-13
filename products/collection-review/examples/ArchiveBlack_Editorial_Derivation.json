@@ -1,0 +1,45 @@
+{
+  "schema": "stellar-forge.collection-editorial-publication-derivation.v1",
+  "createdAt": "2026-10-13T08:40:39.000Z",
+  "originalRequest": {
+    "id": "a2197f07-ae64-4d8d-851a-a7d05eaeb332",
+    "createdAt": "2026-10-13T08:21:54.000Z",
+    "gitBlob": "0f37d0bd4bcfb289b0ddf7dbf7b2cfbd14d01499",
+    "expectedRevision": "revision-b2de4cbcc3d9b53b6c6da1a35d6f6d5795ff8db784f00f9c92ae74bea05b9e78"
+  },
+  "publicationRequest": {
+    "id": "61b1cd91-6cdb-4a45-b4d4-97777be39c25",
+    "expectedRevision": "revision-ff5d5c2087cd1153f3063f4eb2f4421c4c7613ab1449bd5a940318d01c9084b5",
+    "revision": "revision-63c330e37c70b5f12a4df6b414a2b6688376789ed4a92a4ee94b5aca7d264a5f"
+  },
+  "redactionOperation": "COLLECTION-REVIEW-PUBLIC-MAPS-KEY-REDACTION-20261013-2D58",
+  "sourceMappings": [
+    {
+      "original": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282",
+      "derived": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b",
+      "occurrences": 19,
+      "allSourceOccurrenceFieldsEqual": true
+    },
+    {
+      "original": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168",
+      "derived": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed",
+      "occurrences": 25,
+      "allSourceOccurrenceFieldsEqual": true
+    }
+  ],
+  "editorialContentUnchanged": true,
+  "changes": [
+    "New request UUID, basis and creation time for the distinct derivative workspace",
+    "Original source and occurrence IDs mapped to verified derivative IDs",
+    "Attribution note includes original request and declared derivation"
+  ],
+  "verification": {
+    "all44OccurrenceFieldsEqual": true,
+    "initialDerivativeSourcesUnchanged": true,
+    "allInitialDerivativeRevisionsUnchanged": true,
+    "reopened": true,
+    "replayed": true,
+    "receivingPreservesHead": true,
+    "noRemovedKeyInOutputs": true
+  }
+}
