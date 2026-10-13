@@ -20,6 +20,7 @@ export interface FinancialControlArgumentsMap {
   cash_plan_archive: Cash.CashPlanStatusInput & {cashPlanId:string};
   cash_plan_reopen: Cash.CashPlanStatusInput & {cashPlanId:string};
   cash_plan_compare: Cash.CashPlanCompareQuery;
+  cash_realization_compare: Realization.CashRealizationCompareQuery;
   cash_realization_list: Realization.CashRealizationListQuery;
   cash_realization_preview: Realization.CashRealizationPreviewInput;
   cash_realization_detail: {cashRealizationId:string};
@@ -31,6 +32,15 @@ export interface FinancialControlArgumentsMap {
   credit_decision_save: Credit.SaveCreditDecisionInput & {invoiceId:string};
   credit_decision_detail: {creditDecisionId:string};
   credit_decision_withdraw: Credit.WithdrawCreditDecisionInput & {creditDecisionId:string};
+}
+export interface CashRealizationComparisonReference {
+  schema:'stellar-forge.cash-comparison-file-reference.v1';
+  reportSchema:'stellar-forge.merchant-cash-realization-comparison.v1';
+  workspaceId:string;
+  selection:{leftId:string;rightId:string;planId:string;editionId:string};
+  comparisonSha256:string;
+  counts:{currencies:number;invoices:number;dates:number;receipts:number;sourceGroups:number};
+  file:{kind:'receivables-cash-realization-comparison';file:'comparison.json';leftId:string;rightId:string};
 }
 export interface FinancialControlResultsMap {
   collection_list: Collections.CollectionsReport;
@@ -47,6 +57,7 @@ export interface FinancialControlResultsMap {
   cash_plan_archive: Cash.CashPlanMutationResult;
   cash_plan_reopen: Cash.CashPlanMutationResult;
   cash_plan_compare: Cash.CashPlanComparison;
+  cash_realization_compare: CashRealizationComparisonReference;
   cash_realization_list: Realization.CashRealizationList;
   cash_realization_preview: Realization.CashRealizationPreview;
   cash_realization_detail: Realization.CashRealizationDetail;
@@ -76,6 +87,7 @@ export interface FinancialControlMethods {
   archiveCashPlan: 'cash_plan_archive';
   reopenCashPlan: 'cash_plan_reopen';
   compareCashPlans: 'cash_plan_compare';
+  compareCashRealizations: 'cash_realization_compare';
   cashRealizations: 'cash_realization_list';
   previewCashRealization: 'cash_realization_preview';
   cashRealization: 'cash_realization_detail';
@@ -96,6 +108,7 @@ export type FinancialControlFileSelection =
   (Collections.CollectionsQuery & {kind:'receivables-collections';file:'collections.json'|'collections.csv'}) |
   {kind:'receivables-cash-plan';cashPlanId:string;editionId?:string;file:Cash.CashPlanFileName} |
   (Cash.CashPlanCompareQuery & {kind:'receivables-cash-plan-comparison';file:'comparison.json'|'comparison.csv'}) |
+  (Realization.CashRealizationCompareQuery & {kind:'receivables-cash-realization-comparison';file:Realization.CashRealizationComparisonFileName}) |
   {kind:'receivables-cash-realization';cashRealizationId:string;file:Realization.CashRealizationFileName} |
   {kind:'receivables-credit-decision';creditDecisionId:string;file:Credit.CreditDecisionFileName};
 export const FINANCIAL_CONTROL_FILES: Readonly<Record<FinancialControlFileSelection['kind'], readonly string[]>>;
@@ -114,6 +127,8 @@ export interface FinancialControlClient {
   archiveCashPlan(args: FinancialControlArgumentsMap['cash_plan_archive'], options?: ReceivablesCallOptions): Promise<FinancialControlResultsMap['cash_plan_archive']>;
   reopenCashPlan(args: FinancialControlArgumentsMap['cash_plan_reopen'], options?: ReceivablesCallOptions): Promise<FinancialControlResultsMap['cash_plan_reopen']>;
   compareCashPlans(args: FinancialControlArgumentsMap['cash_plan_compare'], options?: ReceivablesCallOptions): Promise<FinancialControlResultsMap['cash_plan_compare']>;
+  compareCashRealizations(args:Realization.CashRealizationCompareQuery,options?:ReceivablesCallOptions):Promise<Realization.CashRealizationComparison>;
+  cashRealizationComparisonFile(args:Realization.CashRealizationCompareQuery & {file:Realization.CashRealizationComparisonFileName},options?:ReceivablesFileOptions & {maximumBytes?:number}):Promise<{bytes:Uint8Array;file:ReceivablesFileMetadata}>;
   cashRealizations(args?:FinancialControlArgumentsMap['cash_realization_list'],options?:ReceivablesCallOptions):Promise<FinancialControlResultsMap['cash_realization_list']>;
   previewCashRealization(args:FinancialControlArgumentsMap['cash_realization_preview'],options?:ReceivablesCallOptions):Promise<FinancialControlResultsMap['cash_realization_preview']>;
   cashRealization(args:FinancialControlArgumentsMap['cash_realization_detail'],options?:ReceivablesCallOptions):Promise<FinancialControlResultsMap['cash_realization_detail']>;

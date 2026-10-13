@@ -16,6 +16,7 @@ export const FINANCIAL_CONTROL_METHODS = Object.freeze({
   archiveCashPlan: 'cash_plan_archive',
   reopenCashPlan: 'cash_plan_reopen',
   compareCashPlans: 'cash_plan_compare',
+  compareCashRealizations: 'cash_realization_compare',
   cashRealizations: 'cash_realization_list',
   previewCashRealization: 'cash_realization_preview',
   cashRealization: 'cash_realization_detail',
@@ -62,6 +63,7 @@ export const FINANCIAL_CONTROL_FILES = Object.freeze({
   'receivables-collections': Object.freeze(['collections.json', 'collections.csv']),
   'receivables-cash-plan': Object.freeze(['plan.json', 'plan.csv', 'plan.html', 'manifest.json']),
   'receivables-cash-plan-comparison': Object.freeze(['comparison.json', 'comparison.csv']),
+  'receivables-cash-realization-comparison': Object.freeze(['comparison.json','comparison.html','currencies.csv','invoices.csv','dates.csv','receipts.csv','source-changes.csv','manifest.json']),
   'receivables-cash-realization': Object.freeze(['realization.json', 'realization.html', 'invoices.csv', 'dates.csv', 'events.csv', 'receipts.csv', 'manifest.json']),
   'receivables-credit-decision': Object.freeze(['decision.json', 'decision.html', 'manifest.json'])
 });
@@ -92,7 +94,19 @@ export async function callFinancialControl(receivables, operation, input = {}) {
   if (typeof receivables?.[invocation.method] !== 'function')
     throw Object.assign(new Error('This selected accounting edition does not include the original financial control operation.'),
       {code: 'ACCOUNTING_FINANCIAL_CONTROL_UNAVAILABLE', status: 409});
-  return await receivables[invocation.method](...invocation.arguments);
+  const result = await receivables[invocation.method](...invocation.arguments);
+  if (operation === 'cash_realization_compare') {
+    // Keep the complete two-review source in the original retained-file transport.
+    // Tool wrappers may serialize structured results in more than one representation.
+    return {schema:'stellar-forge.cash-comparison-file-reference.v1',
+      reportSchema:result.schema,workspaceId:result.workspaceId,
+      selection:{...result.selection},comparisonSha256:result.comparisonSha256,
+      counts:{currencies:result.currencies.length,invoices:result.invoices.length,
+        dates:result.dates.length,receipts:result.receipts.length,sourceGroups:result.sourceChanges.length},
+      file:{kind:'receivables-cash-realization-comparison',file:'comparison.json',
+        leftId:result.selection.leftId,rightId:result.selection.rightId}};
+  }
+  return result;
 }
 
 /** Resolve only original generated members through their existing controllers. */
@@ -109,6 +123,7 @@ export async function financialControlFile(receivables, input) {
   if (kind === 'receivables-collections') return receivables.collectionsFile(file, query);
   if (kind === 'receivables-cash-plan') return receivables.cashPlanFile(selected('cashPlanId'), file, query);
   if (kind === 'receivables-cash-plan-comparison') return receivables.cashPlanComparisonFile(file, query);
+  if (kind === 'receivables-cash-realization-comparison') return receivables.cashRealizationComparisonFile(file, query);
   if (kind === 'receivables-cash-realization') return receivables.cashRealizationFile(selected('cashRealizationId'), file);
   return receivables.creditDecisionFile(selected('creditDecisionId'), file);
 }

@@ -95,6 +95,8 @@ export class ReceivablesClient {
   creditControlOperation(requestId, {signal} = {}) {
     return this.request('/credit-control/operations/' + segment(requestId), {signal});
   }
+  compareCashRealizations(query, {signal} = {}) { return this.request('/cash-realizations/compare' + queryString(query), {signal}); }
+  cashRealizationComparisonFile(name, query, {signal} = {}) { return this.request('/cash-realizations/compare/files/' + segment(name) + queryString(query), {binary:true,signal}); }
   cashRealizations(query, {signal} = {}) { return this.request('/cash-realizations' + queryString(query), {signal}); }
   previewCashRealization(value, {signal} = {}) { return this.request('/cash-realizations/preview', {method:'POST',body:value,signal}); }
   saveCashRealization(value, {signal} = {}) { return this.request('/cash-realizations', {method:'POST',body:value,signal}); }
