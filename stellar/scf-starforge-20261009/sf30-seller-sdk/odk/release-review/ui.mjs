@@ -67,7 +67,7 @@ function notice(message, error = false) {
   $('notice').dataset.kind = error ? 'error' : 'status';
 }
 function applyNavigation() {
-  for (const [id, path] of [['field-link', '/'], ['commissioning-link', '/commissioning/'], ['warehouse-link', '/warehouse/']]) {
+  for (const [id, path] of [['field-link', '/'], ['commissioning-link', '/commissioning/'], ['warehouse-link', '/warehouse/'], ['software-link', '/release-operations/']]) {
     $(id).href = path + (token ? '#token=' + encodeURIComponent(token) : '');
     $(id).rel = 'noreferrer';
   }

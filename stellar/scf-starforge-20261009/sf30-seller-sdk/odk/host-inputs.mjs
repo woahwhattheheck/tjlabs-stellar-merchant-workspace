@@ -42,3 +42,16 @@ export async function readCentralWarehouseProfiles({profiles,profilesFile}={}) {
   return {profiles:normalizeWarehouseProfiles(selected),
     source:source?{path:source.path,sha256:source.sha256}:null};
 }
+
+/** Select configured read-only GitLab sources; credential values stay in the host environment. */
+export async function readCentralReleaseConnections({connections,connectionsFile}={}){
+  odkNeed(!(connections!==undefined&&connectionsFile),'ODK_RELEASE_CONNECTIONS',
+    'Choose the original release connections or their private host file.');
+  const source=connectionsFile?await odkReadPrivateJson(connectionsFile,1024*1024):null;
+  const value=source?source.value:connections??[];
+  const selected=Array.isArray(value)?value:
+    value?.schema==='stellar-forge.central-release-connections.v1'?value.connections:null;
+  odkNeed(Array.isArray(selected),'ODK_RELEASE_CONNECTIONS','Select the complete configured release connections.');
+  // The release source adapter validates every connection and allowed project before use.
+  return {connections:selected,source:source?{path:source.path,sha256:source.sha256}:null};
+}
