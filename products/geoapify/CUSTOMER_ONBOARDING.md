@@ -1,0 +1,86 @@
+# Geoapify customer onboarding and proposed installation workshare
+
+## The customer problem this delivery addresses
+
+A geocoding API response is only one step in a customer address workflow. A data operator also needs to retain original business identities, distinguish repeated records from repeated lookups, recover a submitted batch without paying for it again, review competing results and conflicting coordinates, and deliver a dataset that the recipient can reopen with its source and decisions intact.
+
+This product completes that workflow around Geoapify's existing API. Geoapify already publishes an MCP server and documented geocoding tools; the offer here is the original-source review, retained async operations, controlled customer delivery and installation work.
+
+The technical operator is documented in OPERATING.md and the complete domain README. It uses the generic /v1/batch API, original caller IDs and full FeatureCollections. A customer uses its own authorized Geoapify account and intended data rights. Original source/provider attribution remains in the dataset, GeoJSON, full review and complete workspace.
+
+## Source-qualified customer fit
+
+Geoapify's official product and documentation provide the factual basis for approaching the company about an installation/workshare or referring an appropriate customer:
+
+| Published source | Relevant fact | Consequence for this offer |
+| --- | --- | --- |
+| https://apidocs.geoapify.com/docs/batch | Generic batch keeps input IDs/order and full per-input results; jobs accept up to1000 inputs | Keep the actual full original source and explicit jobs; preserve identity across all outputs |
+| https://apidocs.geoapify.com/assets/openapi/specs/batch/batch-api-openapi-specs.json | Batch API1.1.1 supports x-api-key, priority0.5–1, immediate200 or pending202 | Retain exact header-authenticated operation and selected priority; handle both response paths |
+| https://apidocs.geoapify.com/docs/geocoding/ | Result level, confidence, match type, coordinates and datasource metadata are separate | Make customer acceptance an explicit source-bound review |
+| https://apidocs.geoapify.com/mcp/ | Geoapify already offers an MCP server and native tools | Position the work as retained customer operations and handover |
+| https://www.geoapify.com/terms-and-conditions/ | API access and underlying-source attribution have their own terms | Install on the customer's authorized account; retain source attribution and verify intended distribution |
+| https://www.geoapify.com/open-geospatial-program/ | Current AI×Geospatial programme invites applications by20October2026,23:59UTC | Optional introduction/participation channel; separate from the proposed commercial installation fee |
+
+The provider normally retains completed batch results for24hours and recommends waiting at least60000ms between large-job polls. Submission and polling consume API calls. The operator therefore retains each original request/result and performs only explicit individual polls.
+
+Current relationship preparation is internal. Company/domain lookup in both existing business mailboxes and the coordination search showed no prior Geoapify relationship before this operation was claimed. Use the existing outbound account/company/recipient controls for any first contact, refresh both mailbox histories at dispatch and preserve the original company case. Any favorable human reply moves further correspondence to Bryce, with exact-message approval for each warm send.
+
+## Proposed paid workshare
+
+**Proposed fee: US$4800 for one complete customer installation,40engineering hours across10business days.** This is a proposed scope and price, not a statement about the provider's available budget.
+
+| Workstream | Hours | Fee | Concrete delivery |
+| --- | ---: | ---: | --- |
+| Original source and mapping | 8 | $960 | One authorized source, explicit identity/address/coordinate mapping, source rights and output contract |
+| Provider operation and review | 12 | $1440 | Actual account batch operation, retained interruption/poll/import path, complete candidate/coordinate review and source-qualified decision policy |
+| Merchant/customer handover | 12 | $1440 | One selected dataset edition, original publisher/merchant route, one independent buyer/operator continuation, complete reports/data/package |
+| Installation and independent reopening | 8 | $960 | Customer-host setup, exact desktop/narrow product receiving, original workspace export/reopen, operating and recovery handover |
+| **Total** | **40** | **$4800** | **One original customer workflow end to end** |
+
+The workshare covers one CSV or JSON source format, one original source edition up to100000 records within the published file/workspace limits, one Geoapify account, one declared merchant destination and one independent customer receiving workspace. Provider API usage and customer infrastructure remain with the customer's selected account and limits. The commercial source/distribution permissions are recorded before publication.
+
+Geocoding every row is separate from approving every row. The complete dataset can retain all rows with explicit review status, or the operator can deliver the explicitly reviewed subset. The scope includes defining and operating the review workflow; it does not promise that every address is correct, manually approved or has a usable provider match.
+
+Payment can be split50% at scheduled installation start and50% after the selected customer receiving course is completed. Additional source formats, recurring managed operations, extra independent deployments or materially larger data editions are priced from the actual selected scope.
+
+The installed source product is already the reusable engineering basis. The paid workshare commissions the customer's source/account/installation and independent delivery, avoiding a second charge for grant-funded hours. Any grant allocation uses the original accounting/capacity rules and records each hour once.
+
+## Customer selection to settle internally before scheduling
+
+Record actual values in the original company case. These are operating decisions, not requests for documents that an agent can retrieve:
+
+| Selection | Required actual owner/context |
+| --- | --- |
+| Source owner | Who controls the original complete address source and permits this intended use |
+| Original source edition | Exact CSV/JSON, edition date, business ID/address/coordinate fields and byte identity |
+| Geoapify account | Actual authorized host account, selected global/EU endpoint, plan and explicit batch/poll limits |
+| Review operator | Named reviewer, acceptable result levels and reasons to retain original coordinates |
+| Merchant | Operator who controls the seller host, actual public route and original payment terms |
+| Independent customer | Recipient who can inspect the delivered review/data and reopen its own workspace |
+| Payer | Party commissioning the installation and approving the proposed fee |
+| Distribution rights | Source and provider terms for the actual output recipients; required attribution |
+| Receiving selection | Exact whole source/output version, intended browser widths, original job and export/reopen course |
+
+The reusable product accepts structured or text addresses. Repeated records and disputed source coordinates remain visible; do not erase them to make a demonstration look complete.
+
+## Complete receiving course
+
+1. Install the selected Geoapify product and native provider on the existing customer host. Open the original private workspace through its actual browser.
+2. Import the complete selected source and inspect original IDs, repeated records and invalid addresses. Confirm that the actual mapping matches the intended source.
+3. Prepare one explicit generic batch with original query IDs, priority, candidate limit and geographic options. Inspect and retain both the prepared envelope and actual POST body.
+4. Send once through the authorized account, or import the actual original acknowledgment/result. Continue the same returned job with its original poll clock. Inspect actual quota/error returns without discarding them.
+5. Review complete competing candidates and original/provider coordinate differences. Save an unfinished source-bound decision, reopen it, make the selected explicit decision and retain reviewer/reason.
+6. Freeze the chosen full/subset dataset. Inspect the actual typed query, all outgoing rows, complete candidate JSON, GeoJSON and the readable report at desktop and narrow widths.
+7. Configure the original merchant terms and publish the retained export through the existing release path. Have the independent customer inspect the actual offer and continue its original buyer request within its declared limits.
+8. Open every outgoing attachment and the usable contents of the complete package. Reopen the address workspace independently; verify source/job/edition selection and continue the same pending/completed work. Retain the original seller/buyer workspaces separately when transferring a commercial deployment.
+
+The producing peer must personally view returned actual screenshots and use the exact outgoing customer interface and files. The complete owner instruction in the domain README and repository AGENTS.md applies to source/native receiving and every attachment. Existing original equipped receivers carry physical browser/account steps when the current connector seat cannot run them. Source publication and customer receiving remain one continuing operation.
+
+## SCF adoption contribution
+
+This customer arm fits the existing application’s merchant integration, authority/handover, provider/ledger, threat/monitoring and production recovery work. It provides an additional actual provider/account/customer route for the established independent merchant/buyer adoption plan.
+
+Use the application's existing six work packages, proposed$38000/400h/150-day schedule and original milestones. A configured source installation contributes only when its real source owner, payer, merchant and independent customer are selected and its actual receiving course is completed. Existing company relationship owners and the source-qualified pilot plan in products/merchant-workspace/CUSTOMER_LAUNCH.md remain authoritative.
+
+Current source operation: GEOAPIFY-CUSTOMER-ONBOARDING-9125-20261013, original SCF application thread:
+https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791898352323789?thread_ts=1791730668.369819
