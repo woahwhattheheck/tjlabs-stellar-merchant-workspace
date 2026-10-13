@@ -5,9 +5,9 @@
   "applicant": "Bryce Muhlnickel / TokenJunkieLabs",
   "application": {
     "path": "application.md",
-    "bytes": 47093,
-    "sha256": "b9ab401d0d16f9a3697634bf0a1d127882f64c9c889836b218b1de79f53df8e6",
-    "git_blob": "0394189fe4b6ef118f5b944e73286e0d2f576fc7"
+    "bytes": 47405,
+    "sha256": "19f8cfcf05480e669d05d7d55c42017d48f7d56448cae4925f5f2a2cad93ea27",
+    "git_blob": "5dd260cb34be15d921fd72ed5ead8d0dcd092aa8"
   },
   "request": {
     "basis": "prospective",
@@ -1089,8 +1089,8 @@
       "financial_record": "Original network, asset, transaction and exact atomic amount, with separately supplied commercial valuation and cost basis.",
       "kind": "maintained-product",
       "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
-      "source_commit": "179da2f13f9ef91ad1867142ec0556ed94f40133",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/179da2f13f9ef91ad1867142ec0556ed94f40133/stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/README.md",
+      "source_commit": "eaa169825c48c5ec3cef260672dc8fa52deb5e12",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/eaa169825c48c5ec3cef260672dc8fa52deb5e12/stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/README.md",
       "application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012"
     },
     {
@@ -1101,8 +1101,8 @@
       "financial_record": "Original issued obligation and customer receipt with effective allocation and credit history.",
       "kind": "maintained-product",
       "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
-      "source_commit": "179da2f13f9ef91ad1867142ec0556ed94f40133",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/179da2f13f9ef91ad1867142ec0556ed94f40133/products/merchant-receivables/README.md",
+      "source_commit": "eaa169825c48c5ec3cef260672dc8fa52deb5e12",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/eaa169825c48c5ec3cef260672dc8fa52deb5e12/products/merchant-receivables/README.md",
       "application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012"
     },
     {
@@ -1113,8 +1113,8 @@
       "financial_record": "Original invoice currency and explicit native/issued-asset valuation, with network, memo, ledger transaction and original receipt identity.",
       "kind": "maintained-product",
       "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
-      "source_commit": "179da2f13f9ef91ad1867142ec0556ed94f40133",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/179da2f13f9ef91ad1867142ec0556ed94f40133/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/PAYMENT_REQUESTS.md",
+      "source_commit": "eaa169825c48c5ec3cef260672dc8fa52deb5e12",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/eaa169825c48c5ec3cef260672dc8fa52deb5e12/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/PAYMENT_REQUESTS.md",
       "application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012"
     },
     {
@@ -1125,8 +1125,8 @@
       "financial_record": "Schedule and unscheduled portions of the original invoice balance, separated by currency and precision.",
       "kind": "maintained-product",
       "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
-      "source_commit": "179da2f13f9ef91ad1867142ec0556ed94f40133",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/179da2f13f9ef91ad1867142ec0556ed94f40133/products/merchant-payment-plans/README.md",
+      "source_commit": "eaa169825c48c5ec3cef260672dc8fa52deb5e12",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/eaa169825c48c5ec3cef260672dc8fa52deb5e12/products/merchant-payment-plans/README.md",
       "application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012"
     },
     {
@@ -1137,8 +1137,8 @@
       "financial_record": "Original invoice/credit correspondence and external document status; native receipts and allocations retain their ledger identities.",
       "kind": "maintained-product",
       "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
-      "source_commit": "179da2f13f9ef91ad1867142ec0556ed94f40133",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/179da2f13f9ef91ad1867142ec0556ed94f40133/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/README.md",
+      "source_commit": "eaa169825c48c5ec3cef260672dc8fa52deb5e12",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/eaa169825c48c5ec3cef260672dc8fa52deb5e12/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/README.md",
       "application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012"
     },
     {
@@ -2163,13 +2163,121 @@
       "commit": "4424e79ea489f3bcec147aed08171f5c27959f98",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/aiddata-nigeria-2016/iati_2.03_NigeriaAIMS_GeocodedResearchRelease.xml",
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/4424e79ea489f3bcec147aed08171f5c27959f98/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/aiddata-nigeria-2016/iati_2.03_NigeriaAIMS_GeocodedResearchRelease.xml"
+    },
+    {
+      "id": "merchant-customer-refunds",
+      "label": "Original customer refunds and paid-credit movements",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/REFUNDS_AND_CREDITS.md",
+      "operator_workflow": "Review the original receipt, paid invoice credit, effective allocation releases and replacement, retained refund request or completed payout, and complete customer documents.",
+      "financial_record": "Original customer funds with dated allocation, reservation, refund and credit-disposition history.",
+      "kind": "maintained-product",
+      "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
+      "source_commit": "eaa169825c48c5ec3cef260672dc8fa52deb5e12",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/eaa169825c48c5ec3cef260672dc8fa52deb5e12/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/REFUNDS_AND_CREDITS.md",
+      "application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012"
+    },
+    {
+      "id": "merchant-bank-receipts",
+      "label": "Bank source intake, customer splits and receipt correction",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/BANK_STATEMENTS.md",
+      "operator_workflow": "Receive complete CSV, OFX/QFX or selected MT940 originals, inspect parsing, match or split customer receipts, review dated corrections and deliver original receipt advice.",
+      "financial_record": "Exact original signed source movement, covered receipt portions, accounting dates and invoice allocation lineage.",
+      "kind": "maintained-product",
+      "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
+      "source_commit": "eaa169825c48c5ec3cef260672dc8fa52deb5e12",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/eaa169825c48c5ec3cef260672dc8fa52deb5e12/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/BANK_STATEMENTS.md",
+      "application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012"
+    },
+    {
+      "id": "merchant-customer-credit-control",
+      "label": "Customer credit policy and reviewed invoice release",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/CREDIT_CONTROL.md",
+      "operator_workflow": "Save the merchant's selected policy, review the actual draft and dated customer account, retain the original release decision and issue the same reviewed invoice.",
+      "financial_record": "Original issued and proposed obligations, available customer funds and source-bound approval; policy decisions retain their selected basis.",
+      "kind": "maintained-product",
+      "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
+      "source_commit": "eaa169825c48c5ec3cef260672dc8fa52deb5e12",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/eaa169825c48c5ec3cef260672dc8fa52deb5e12/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/CREDIT_CONTROL.md",
+      "application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012"
+    },
+    {
+      "id": "merchant-collections",
+      "label": "Invoice collection ownership, promises and disputes",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/COLLECTIONS.md",
+      "operator_workflow": "Assign the original invoice, retain actual customer contact, promise or dispute, prepare its reminder and continue the dated case history.",
+      "financial_record": "Original invoice balance and dated follow-up; actual money remains in its receipt, credit and refund records.",
+      "kind": "maintained-product",
+      "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
+      "source_commit": "eaa169825c48c5ec3cef260672dc8fa52deb5e12",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/eaa169825c48c5ec3cef260672dc8fa52deb5e12/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/COLLECTIONS.md",
+      "application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012"
+    },
+    {
+      "id": "merchant-cash-planning",
+      "label": "Original invoice and promise cash planning",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/CASH_PLANNING.md",
+      "operator_workflow": "Review invoice balances, effective schedules, customer promises, selected timing and source changes; retain and compare complete dated scenario editions.",
+      "financial_record": "Each original remaining amount appears within the horizon, after it or separated, with currency and precision retained.",
+      "kind": "maintained-product",
+      "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
+      "source_commit": "eaa169825c48c5ec3cef260672dc8fa52deb5e12",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/eaa169825c48c5ec3cef260672dc8fa52deb5e12/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/CASH_PLANNING.md",
+      "application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012"
+    },
+    {
+      "id": "merchant-service-agreement-calendar",
+      "label": "Accepted service agreements and original period invoices",
+      "path": "products/merchant-service-agreements/README.md",
+      "operator_workflow": "Receive the original accepted service and renewal source, review its active calendar, and create each eligible period invoice through the same original writer.",
+      "financial_record": "Original accepted scope, selected period and invoice identity; service-calendar editions retain their commercial source.",
+      "kind": "maintained-product",
+      "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
+      "source_commit": "eaa169825c48c5ec3cef260672dc8fa52deb5e12",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/eaa169825c48c5ec3cef260672dc8fa52deb5e12/products/merchant-service-agreements/README.md",
+      "application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012"
+    },
+    {
+      "id": "merchant-customer-closing",
+      "label": "Customer service statements and complete closing cycles",
+      "path": "stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENT_WORKBENCH.md",
+      "operator_workflow": "Review original customer/order assignments and service captures, prepare and resume saved statement cycles, correct or withdraw with history, and receive complete customer files.",
+      "financial_record": "Original acquired service, measured allowance activity, selected capture period and separate dated customer financial account.",
+      "kind": "maintained-product",
+      "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
+      "source_commit": "eaa169825c48c5ec3cef260672dc8fa52deb5e12",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/eaa169825c48c5ec3cef260672dc8fa52deb5e12/stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENT_WORKBENCH.md",
+      "application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012"
+    },
+    {
+      "id": "merchant-receivables-mcp",
+      "label": "Original merchant agent receivables operation",
+      "path": "stellar-forge/mcp-merchant-operator/ACCOUNTING_RECEIVABLES.md",
+      "operator_workflow": "Use the existing merchant accounting owner for source intake, complete native previews, invoice/payment/refund/bank operations, stable-request recovery and full retained downloads.",
+      "financial_record": "The same original customer, source, invoice, receipt, refund and account identities used by the operator interfaces.",
+      "kind": "maintained-product",
+      "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
+      "source_commit": "eaa169825c48c5ec3cef260672dc8fa52deb5e12",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/eaa169825c48c5ec3cef260672dc8fa52deb5e12/stellar-forge/mcp-merchant-operator/ACCOUNTING_RECEIVABLES.md",
+      "application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012"
+    },
+    {
+      "id": "merchant-customer-billing-handover",
+      "label": "Completed customer billing account and portable operating handover",
+      "path": "stellar/scf_2026/commercial_milestone_handover_20261012/PORTABLE.md",
+      "operator_workflow": "Open the delivered original accounting workspace and both saved planning cases, inspect the paid and open milestone invoices, continue edits and repack the complete account for independent receiving.",
+      "financial_record": "Original operated example's issued invoices, retained receipt allocation, paid/open balances and full accounting history.",
+      "kind": "maintained-product",
+      "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
+      "source_commit": "eaa169825c48c5ec3cef260672dc8fa52deb5e12",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/eaa169825c48c5ec3cef260672dc8fa52deb5e12/stellar/scf_2026/commercial_milestone_handover_20261012/PORTABLE.md",
+      "application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012"
     }
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "c8ff8c3f004af7003e1c6b58ec842ecc70e63cfb",
-    "bytes": 406567,
-    "sha256": "58bfea3c7b131cee6aaf9381e8cba7afdd392cf6cfa3fc06fefda179285a0c65",
+    "git_blob": "1e40dadcb5b77017f9b9ebd111429003da5c50eb",
+    "bytes": 410955,
+    "sha256": "6677fdf1c6f6f514363c8d19e47f4f2c82c0cb6390fa755b91d4455b6cd20926",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
     "prior_git_blob": "29e0ab9723e0eb787041409803158dc3ae94c1e3"
   },
@@ -2361,9 +2469,23 @@
         "funded_work_mapping": "The delivered buyer workflow is the completed foundation. The existing six packages fund the remaining selected-customer source and receiving adaptation, provider deployment, threat response, mainnet installation and handover.",
         "common_budget_unchanged": true,
         "native_execution_basis": "The existing development purchase baseline remains the original operated XLM services. The October 12 captured catalog and functional ranking comparison describe the separate published HTTP resource set."
+      },
+      {
+        "id": "merchant-financial-reviewer-walkthrough",
+        "application_operation": "SCF-FINANCIAL-REVIEWER-WALKTHROUGH-3FC8-20261013",
+        "basis": "Complete original financial reviewer workflow and operating example joined into the current nine-answer application and complete companion.",
+        "source_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "source_commit": "eaa169825c48c5ec3cef260672dc8fa52deb5e12",
+        "previous_application_git_blob": "0394189fe4b6ef118f5b944e73286e0d2f576fc7",
+        "previous_companion_git_blob": "c8ff8c3f004af7003e1c6b58ec842ecc70e63cfb",
+        "source_path": "stellar-forge/developer-site/dist/grant-data/financial-walkthrough.md",
+        "front_sha256": "19f8cfcf05480e669d05d7d55c42017d48f7d56448cae4925f5f2a2cad93ea27",
+        "complete_financial_section_sha256": "60d9102c8fd2f6bbb5769accfef104405f871355c4398ee2d34260bdaa31eabf",
+        "common_budget_unchanged": true,
+        "original_purchase_baseline_unchanged": true
       }
     ],
-    "current_application_sha256": "b9ab401d0d16f9a3697634bf0a1d127882f64c9c889836b218b1de79f53df8e6",
+    "current_application_sha256": "19f8cfcf05480e669d05d7d55c42017d48f7d56448cae4925f5f2a2cad93ea27",
     "economic_product_commit": "be44be564e35b63af23246bad531a95374bbb4c0",
     "economic_application_operation": "SCF-FRED-ECONOMIC-CUSTOMER-APPLICATION-20261012",
     "coastal_product_commit": "92eb1c73a3cab9781ef7dbabdc12067344fb6aa2",
@@ -2373,7 +2495,7 @@
       "source_join": "SCF-GRANT-CUMULATIVE-COMPOSITION-81CF-20261012",
       "canonical_front_sha256": "87391341c01283fdd6beb9494ca1d2c0aef175e5be29e5062f469ffc70459932",
       "canonical_front_bytes": 39453,
-      "renderer_git_blob": "c3c4c9a58e036b7ba281848ab854a66cb6d1ebfa",
+      "renderer_git_blob": "dc80b2c6d9f5f3a0e0f97282273535a0772926b1",
       "source_editions": [
         {
           "repository": "woahwhattheheck/public-commons-sprint-2026",
@@ -2496,12 +2618,14 @@
         ],
         "scope": "Selected source identities and individually dated source-transfer evidence. Execution and settlement remain with their original result sources."
       },
-      "companion_projector_git_blob": "a8add1aa955bc52b8bdbe861bd2c4ff959bd86ba"
+      "companion_projector_git_blob": "a8add1aa955bc52b8bdbe861bd2c4ff959bd86ba",
+      "financial_projector_git_blob": "675cfb667dcaaa6892336cbcf38e71ae2872dce0",
+      "financial_walkthrough_renderer_git_blob": "1fc9682a6db743924b5f4a37ebfc4be1db04ac39"
     },
     "datasette_customer_commit": "b1a6ad827c02cdf95c613b23ef07ce1996400fd6",
     "datasette_publisher_commit": "ab876f6dc2ad24b7938f6b928202d78fbdeef777",
     "datasette_application_operation": "SCF-DATASETTE-SOURCE-EDITIONS-07476-20261012",
-    "financial_product_commit": "179da2f13f9ef91ad1867142ec0556ed94f40133",
+    "financial_product_commit": "eaa169825c48c5ec3cef260672dc8fa52deb5e12",
     "financial_application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012",
     "reviewer_front": {
       "operation": "SCF-REVIEWER-FRONT-B669-20261012",
@@ -2533,8 +2657,8 @@
     "route": "/grant-submission.html",
     "application_route": "/grant-data/application.md",
     "source_index_route": "/grant-data/source-index.json",
-    "application_sha256": "b9ab401d0d16f9a3697634bf0a1d127882f64c9c889836b218b1de79f53df8e6",
-    "application_git_blob": "0394189fe4b6ef118f5b944e73286e0d2f576fc7",
+    "application_sha256": "19f8cfcf05480e669d05d7d55c42017d48f7d56448cae4925f5f2a2cad93ea27",
+    "application_git_blob": "5dd260cb34be15d921fd72ed5ead8d0dcd092aa8",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "export_schema": "stellar-forge.grant-submission-export.v1",
     "form_map_schema": "stellar-forge.grant-form-map.v1",
@@ -2575,28 +2699,138 @@
     "schema": "stellar-forge.grant-financial-operations.v1",
     "heading": "Merchant settlement, customer billing and accountant receiving",
     "companion_route": "/grant-data/product-and-finance.md",
-    "reader_section": "#defined-architecture-and-operating-behavior",
-    "source_commit": "179da2f13f9ef91ad1867142ec0556ed94f40133",
+    "reader_section": "#working-product-and-demonstrated-results",
+    "source_commit": "eaa169825c48c5ec3cef260672dc8fa52deb5e12",
     "source_ids": [
       "merchant-settlement-accounting",
       "merchant-customer-receivables",
       "merchant-invoice-stellar-collection",
       "merchant-payment-plans",
-      "merchant-xero-customer-handover"
+      "merchant-xero-customer-handover",
+      "merchant-customer-refunds",
+      "merchant-bank-receipts",
+      "merchant-customer-credit-control",
+      "merchant-collections",
+      "merchant-cash-planning",
+      "merchant-service-agreement-calendar",
+      "merchant-customer-closing",
+      "merchant-receivables-mcp",
+      "merchant-customer-billing-handover",
+      "merchant-bank-statements-operation",
+      "merchant-bank-statements-installation",
+      "merchant-bank-statements-handover",
+      "merchant-bank-statements-example",
+      "merchant-bank-statements-selection"
     ],
     "installed_selection": "merchant-receivables-xero",
     "installed_command": "receivables-xero",
     "operating_guide": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/FINANCIAL_OPERATIONS.md",
     "manuscript_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012",
     "funded_work": "Selected future customer Stellar integration and technical receiving within the original six priced packages.",
-    "measurement": "Retain distinct original purchases and exact network/asset amounts; account, collection and receiving records continue their original economic identities."
+    "measurement": "Retain distinct original purchases and exact network/asset amounts; account, collection and receiving records continue their original economic identities.",
+    "installed_selections": [
+      "merchant-receivables",
+      "merchant-receivables-xero",
+      "merchant-bank-statements",
+      "grant-reviewer"
+    ],
+    "reviewer_walkthrough_route": "/grant-financial-walkthrough.html",
+    "reviewer_walkthrough_source": "/grant-data/financial-walkthrough.md",
+    "reviewer_walkthrough": {
+      "schema": "stellar-forge.grant-financial-walkthrough.v1",
+      "operation": "SCF-FINANCIAL-REVIEWER-WALKTHROUGH-3FC8-20261013",
+      "source": {
+        "path": "/grant-data/financial-walkthrough.md",
+        "bytes": 35469,
+        "sha256": "c9ec552cf979be5b905b7a578568372d923408709f3359806d3a0b4cc0d7ecd4",
+        "git_blob": "3e88068da599846bc2ca0c699f49934ad0308040"
+      },
+      "page": {
+        "path": "/grant-financial-walkthrough.html",
+        "bytes": 43093,
+        "sha256": "f829e939f5c4c3825b4b29cfece154077547a887585b90275e90652fbe116b21",
+        "git_blob": "8df4c636842f97e21675602befeb85f2b358ceb5"
+      },
+      "renderer": "stellar-forge/developer-site/grant-financial-walkthrough.mjs"
+    },
+    "public_financial_release": {
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "commit": "8aed042e255201c352564753caa3af69b46e82db",
+      "pull_request": 2583,
+      "changed_paths": 139,
+      "receivables_mcp_operations": 46,
+      "original_operation": "SCF-RECEIVABLES-PUBLIC-INTEGRATION-3FC8-20261012"
+    },
+    "original_receiving_source": {
+      "operation": "SCF-MCP-RECEIVABLES-COLLECTION-2A51-20261012",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "source_commit": "8aed042e255201c352564753caa3af69b46e82db",
+      "git_blob": "18a23dfbf4031713d0e68918fe6687ff82d638fc",
+      "files": 275,
+      "bytes": 5105857,
+      "sha256": "f8ae4e2075a123dc220d7fe5d8f0b40c536c85165deab5ba58cc48daf9a18cfb",
+      "programmes": [
+        {
+          "name": "PAYMENT_CHECK.mjs",
+          "bytes": 15841,
+          "git_blob": "9020c4e40784b676fbc57d0fc1c7c58580be6474",
+          "sha256": "922de34033424456e5a5585ec1fcabe74cbfa67032a239d6c62fd8c0fbe2e6ec"
+        },
+        {
+          "name": "MCP_RECEIVABLES_CHECK.mjs",
+          "bytes": 26247,
+          "git_blob": "568669a6e3de268aa34c4aa17427582585c4fcf9",
+          "sha256": "9029314a300abb5f93dbddf8783b6cb8773d520d35cc4ac0c5803d5cf668f7d0"
+        }
+      ],
+      "meaning": "Complete current source and unchanged original programmes selected by the existing financial receiving operation; returned runtime outcomes remain attached to that original operation."
+    },
+    "completed_customer_billing": {
+      "operation": "SCF-COMMERCIAL-MILESTONE-BILLING-F8C1-20261012",
+      "guide_source_commit": "eaa169825c48c5ec3cef260672dc8fa52deb5e12",
+      "guide_path": "stellar/scf_2026/commercial_milestone_handover_20261012/PORTABLE.md",
+      "opener_pull_request": 800,
+      "source_files": 243,
+      "retained_planning_cases": 2,
+      "archive": {
+        "version": 1,
+        "bytes": 11158060,
+        "sha256": "a1579acfd1a1ac9f6c3597fb7ed341d37257a9bcea8a5427a51875d59f6eb834"
+      },
+      "operated_invoice_records": [
+        {
+          "milestone": "first",
+          "currency": "USD",
+          "total": "4400.00",
+          "state": "PAID",
+          "receipt_allocated": "4400.00",
+          "amount_due": "0.00"
+        },
+        {
+          "milestone": "later handover",
+          "currency": "USD",
+          "total": "4400.00",
+          "state": "OPEN",
+          "amount_due": "4400.00"
+        }
+      ],
+      "receiving": {
+        "native_session": 78958,
+        "desktop_and_390px": true,
+        "repack": true,
+        "independent_receive": true,
+        "reopen": true,
+        "original_report": "https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791851290418619?thread_ts=1791730220.899469"
+      },
+      "measurement": "Saved invoice and account outcomes of the original operated customer example; independent-adoption and paid-Stellar measures retain their original registers."
+    }
   },
   "submission_review_round": {
     "schema": "stellar-forge.grant-review-round-integration.v1",
     "route": "/grant-review-round.html",
     "submission_route": "/grant-submission.html",
-    "application_sha256": "b9ab401d0d16f9a3697634bf0a1d127882f64c9c889836b218b1de79f53df8e6",
-    "application_git_blob": "0394189fe4b6ef118f5b944e73286e0d2f576fc7",
+    "application_sha256": "19f8cfcf05480e669d05d7d55c42017d48f7d56448cae4925f5f2a2cad93ea27",
+    "application_git_blob": "5dd260cb34be15d921fd72ed5ead8d0dcd092aa8",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "draft_export_schema": "stellar-forge.grant-submission-export.v1",
     "review_schema": "stellar-forge.grant-review-round.v1",
@@ -2609,8 +2843,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "58bfea3c7b131cee6aaf9381e8cba7afdd392cf6cfa3fc06fefda179285a0c65",
-    "source_bytes": 406567,
+    "source_sha256": "6677fdf1c6f6f514363c8d19e47f4f2c82c0cb6390fa755b91d4455b6cd20926",
+    "source_bytes": 410955,
     "assets": [
       "/grant-companion.html",
       "/grant-companion.css",

@@ -73,7 +73,10 @@
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/client.d.ts",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/source.d.ts",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/remittances-client.d.ts",
-    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/REMITTANCES.md"
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/REMITTANCES.md",
+    "stellar-forge/developer-site/dist/grant-data/financial-walkthrough.md",
+    "products/merchant-workspace/REVIEWER_WALKTHROUGH.md",
+    "products/merchant-workspace/FINANCIAL_OPERATIONS.md"
   ],
   "browserAssets": [
     {
