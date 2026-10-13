@@ -2606,6 +2606,24 @@
       "commit": "0110a7fde307112abee5be63a06291855aa72599",
       "path": "stellar/scf-starforge-20261009/distribution/selections/IATI_OPERATOR.md",
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0110a7fde307112abee5be63a06291855aa72599/stellar/scf-starforge-20261009/distribution/selections/IATI_OPERATOR.md"
+    },
+    {
+      "id": "connected-systems-customer-operator",
+      "kind": "published-source",
+      "label": "Connected Systems source, operator installation and complete customer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "8883afe8b26545340db5d85e230cd1266af3c56e",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/CONNECTED_SYSTEMS.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/8883afe8b26545340db5d85e230cd1266af3c56e/stellar/scf-starforge-20261009/distribution/selections/CONNECTED_SYSTEMS.md"
+    },
+    {
+      "id": "connected-systems-publisher-observation",
+      "kind": "published-source",
+      "label": "Original publisher observation used by the native receiving example",
+      "repository": "opengeospatial/ogcapi-connected-systems",
+      "commit": "fb858be23aa03e2b824ec50b5a97ac2c2a1d3fec",
+      "path": "api/part2/openapi/examples/observations/obs-simple.json",
+      "url": "https://github.com/opengeospatial/ogcapi-connected-systems/blob/fb858be23aa03e2b824ec50b5a97ac2c2a1d3fec/api/part2/openapi/examples/observations/obs-simple.json"
     }
   ],
   "product_and_finance": {
@@ -2889,7 +2907,7 @@
         "10. Open the existing work"
       ],
       "previous_cumulative_commit": "1945289c8d39b7850bf3b496c13c7ae5643176bf",
-      "projector_git_blob": "f5efac5c07997b8b21285b055ac1d6734b9c8381",
+      "projector_git_blob": "dab0d27efb493cadcbe41614980b6968a63f65c5",
       "demo_source": {
         "carrier_git_blob": "6f3dd33ab358fee08e2ee3b6131a0cd8946a62c2",
         "path": "operations/scf-submission-improvement-1b40-20261012/current-adoption/DEMO_AND_ACCEPTANCE.md",

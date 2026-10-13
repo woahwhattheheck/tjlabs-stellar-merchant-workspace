@@ -473,6 +473,11 @@ export function receiveGrantCustomerSources(index, companion) {
   receive("preparation-workspace-native-receiving", "Native original-case continuation, shutdown and complete preservation",
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/data-preparation\/receiving\.py)/, preparation);
 
+  const connectedSystems = section(companion, '## Connected Systems observations: customer commissioning and repeat use')?.text || '';
+  receive('connected-systems-customer-operator', 'Connected Systems source, operator installation and complete customer receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/distribution\/selections\/CONNECTED_SYSTEMS\.md)/, connectedSystems);
+  receive('connected-systems-publisher-observation', 'Original publisher observation used by the native receiving example',
+    /https:\/\/github\.com\/opengeospatial\/ogcapi-connected-systems\/blob\/([a-f0-9]{40})\/(api\/part2\/openapi\/examples\/observations\/obs-simple\.json)/, connectedSystems);
   index.narrative_source = { ...index.narrative_source, composition: {
     ...index.narrative_source?.composition,
     retained_product_sections: headings(clean(companion)).filter(item => item.level === 2).map(item => item.text.slice(3)),
