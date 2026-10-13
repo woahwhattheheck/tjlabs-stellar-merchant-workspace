@@ -27,6 +27,7 @@ import pantheon_adapter
 import skpr_adapter
 import tugboat_adapter
 import upsun_adapter
+import castor_adapter
 
 
 def _tome_native(required=True):
@@ -45,6 +46,8 @@ def pantheon_resume_fields(operation, payload, reason):
 
 
 def native_resume_fields(operation, payload, reason):
+    if str(operation.get("native_action", "")).startswith("castor-"):
+        return castor_adapter.resume_fields(operation, payload, reason)
     if str(operation.get("native_action", "")).startswith("upsun-"):
         return upsun_adapter.resume_fields(operation, payload, reason)
     if str(operation.get("native_action", "")).startswith("tugboat-"):
@@ -191,11 +194,14 @@ def configuration_schema():
         skpr_adapter.provider_schema(),
         tugboat_adapter.provider_schema(),
         upsun_adapter.provider_schema(),
+        castor_adapter.provider_schema(),
     ]}
 
 
 def operation_actions(config, operation_type):
     kind = config.get("source_kind")
+    if kind == "castor":
+        return castor_adapter.actions_for(operation_type)
     if kind == "upsun":
         return upsun_adapter.actions_for(operation_type)
     if kind == "tugboat":
@@ -218,7 +224,7 @@ def operation_actions(config, operation_type):
 
 
 def can_poll(resume):
-    return bool(resume.get("phase") == "accepted" and resume.get("notification_url")) or lagoon_adapter.pollable(resume) or pantheon_adapter.pollable(resume) or skpr_adapter.pollable(resume) or tugboat_adapter.pollable(resume) or upsun_adapter.pollable(resume)
+    return bool(resume.get("phase") == "accepted" and resume.get("notification_url")) or lagoon_adapter.pollable(resume) or pantheon_adapter.pollable(resume) or skpr_adapter.pollable(resume) or tugboat_adapter.pollable(resume) or upsun_adapter.pollable(resume) or castor_adapter.pollable(resume)
 
 
 def _now():
@@ -255,6 +261,8 @@ def _file(path, role, **extra):
 
 
 def _profile(config):
+    if isinstance(config, dict) and config.get("source_kind") == "castor":
+        return castor_adapter.profile(config)
     if isinstance(config, dict) and config.get("source_kind") == "upsun":
         return upsun_adapter.profile(config)
     if config.get("source_kind") == "tugboat":
@@ -341,6 +349,8 @@ def _prefix(p, *, alias=True):
 
 
 def _context(p):
+    if p["source_kind"] == "castor":
+        return castor_adapter.provider_context(p)
     if p["source_kind"] == "upsun":
         return upsun_adapter.provider_context(p)
     if p["source_kind"] == "tugboat":
@@ -877,6 +887,8 @@ def _restore_drupal_sqlite(s, native, sql):
 
 
 def discover_capabilities(config, runtime_bindings=None):
+    if isinstance(config, dict) and config.get("source_kind") == "castor":
+        return {"configuration_schema": configuration_schema(), **castor_adapter.discover_capabilities(config, runtime_bindings)}
     if isinstance(config, dict) and config.get("source_kind") == "upsun":
         return {"configuration_schema": configuration_schema(), **upsun_adapter.discover_capabilities(config, runtime_bindings)}
     if isinstance(config, dict) and config.get("source_kind") == "tugboat":
@@ -926,6 +938,8 @@ def discover_capabilities(config, runtime_bindings=None):
 
 
 def capture(config, context, checkpoint=None, cancelled=None):
+    if config.get("source_kind") == "castor":
+        return castor_adapter.capture(config, context, checkpoint, cancelled)
     if config.get("source_kind") == "upsun":
         return upsun_adapter.capture(config, context, checkpoint, cancelled)
     if config.get("source_kind") == "tugboat":
@@ -1306,6 +1320,8 @@ def _restore_drush_files(s, files, files_target):
 
 
 def execute(operation, config, source_paths, checkpoint=None, cancelled=None):
+    if config.get("source_kind") == "castor":
+        return castor_adapter.execute(operation, config, source_paths, checkpoint, cancelled)
     if config.get("source_kind") == "upsun":
         return upsun_adapter.execute(operation, config, source_paths, checkpoint, cancelled)
     if config.get("source_kind") == "tugboat":

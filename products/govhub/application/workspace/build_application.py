@@ -35,6 +35,13 @@ TERMINUS = {
     "license": "MIT", "runtime": "PHP >=8.2 with the original release dependencies",
 }
 REQUIRED = {
+    "workspace/castor_adapter.py", "workspace/castor_source.py",
+    "workspace/castor_receive.py", "workspace/CASTOR_NATIVE.md",
+    "workspace/CASTOR_SOURCE.md", "workspace/CASTOR_RECEIVING.md",
+    "workspace/web/castor.js", "workspace/web/castor.css",
+    "workspace/native/castor/browser_receive.cjs",
+    "workspace/native/castor/browser.example.json",
+    "workspace/native/castor/receiving.example.json",
     "workspace/native/upsun/sdk/LICENSE",
     "workspace/native/upsun/sdk/TaskBase.php",
     "workspace/native/upsun/sdk/ActivitiesTask.php",

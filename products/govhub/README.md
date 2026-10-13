@@ -23,6 +23,7 @@ Use an existing POSIX host with Python 3.11 or later and SQLite support. The man
 | Skpr | application/workspace/SKPR.md |
 | Tugboat | application/workspace/TUGBOAT.md and TUGBOAT_RECEIVING.md |
 | Upsun | application/workspace/UPSUN.md, UPSUN_SOURCE.md and UPSUN_RECEIVING.md |
+| Castor / selected Symfony and Docker release tasks | application/workspace/CASTOR_NATIVE.md, CASTOR_SOURCE.md and CASTOR_RECEIVING.md |
 | POTS / CircleCI deployment observations | application/workspace/pots/README.md and CAPTURE.md |
 | Content consolidation and native Drupal receiving | application/workspace/content_consolidation/README.md and NATIVE_SITE.md |
 | Content Packages | application/workspace/content_packages/README.md and native_receiving/OPERATE.md |
