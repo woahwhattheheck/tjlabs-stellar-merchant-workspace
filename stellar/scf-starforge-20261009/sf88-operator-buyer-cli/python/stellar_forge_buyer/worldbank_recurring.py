@@ -19,10 +19,11 @@ import zipfile
 from .analysis_workspace import AnalysisWorkspace
 from .errors import BuyerError
 from .storage import private_directory
+from .worldbank_metadata import compare_metadata
 from .worldbank_analysis import WorldBankAnalysis, encoded, sha, regular, write, describe, require, MAX_DOCUMENT
 
 SCHEMA = "stellar-forge.worldbank-recurring-review.v1"
-DEFAULT_KEYS = ["source_id", "country_iso3", "indicator_id", "period", "aggregate"]
+DEFAULT_KEYS = ["source_id", "country_id", "country_iso3", "indicator_id", "period"]
 
 
 def review_digest(value):
@@ -34,7 +35,18 @@ class WorldBankRecurring(WorldBankAnalysis):
         for name in (view, report, workbook):
             require(isinstance(name, str) and re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{0,63}", name),
                     "Select the actual saved customer view, report and workbook names.")
-        keys = DEFAULT_KEYS if keys is None else keys
+        if keys is None:
+            original_intent = self.directory / "recurring-intent.json"
+            if original_intent.exists():
+                retained_intent = json.loads(regular(original_intent, MAX_DOCUMENT))
+                require(retained_intent.get("schema") == SCHEMA and
+                        retained_intent.get("operation_id") == self.operation_id and
+                        all(retained_intent.get(field) == value for field, value in (
+                            ("view", view), ("report", report), ("workbook", workbook))),
+                        "Continue the original recurring customer and comparison keys.")
+                keys = retained_intent["keys"]
+            else:
+                keys = DEFAULT_KEYS
         require(isinstance(keys, list) and 1 <= len(keys) <= 16 and
                 all(isinstance(key, str) for key in keys) and len(keys) == len(set(keys)),
                 "Supply one to sixteen distinct original comparison key columns.")
@@ -110,6 +122,8 @@ class WorldBankRecurring(WorldBankAnalysis):
             "schema": SCHEMA, "operation_id": self.operation_id, "workspace_id": workspace.identity,
             "target": self.target, "source": deepcopy(self.record["source"]),
             "source_metadata": source, "original_review": review,
+            "metadata_review": compare_metadata(workspace, baseline["version"]["version_id"],
+                version["version_id"], source_file=self._source_file, source_sha256=self._source_sha256),
             "candidate_version_id": version["version_id"],
             "baseline_view": {"name": baseline["name"], "revision": baseline["revision"],
                               "version_id": baseline["version"]["version_id"]},
@@ -155,12 +169,9 @@ class WorldBankRecurring(WorldBankAnalysis):
                                 for index, value in columns.items()),
                             "Continue the completed workbook's original accepted column choices.")
                 return ready
-            workspace = AnalysisWorkspace(self.workspace)
-            try:
+            with self._workspace_session() as workspace:
                 require(workspace.identity == review["workspace_id"], "Continue the original customer workspace.")
                 return self._refresh(workspace, review, note, columns, resume=resume)
-            finally:
-                workspace.close()
         finally:
             os.close(lease)
 
