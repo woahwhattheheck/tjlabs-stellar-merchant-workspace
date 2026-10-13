@@ -13,6 +13,7 @@ from web import OperatorServer
 import matching
 import updates
 import review_cycles
+import gleif_portfolio
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
@@ -39,6 +40,14 @@ def main():
     report = sub.add_parser("cycle-report"); report.add_argument("--id", required=True)
     report.add_argument("--version", required=True, type=int); report.add_argument("--output", required=True)
     report.add_argument("--html", action="store_true")
+    gleif_preview = sub.add_parser("gleif-preview", help="Inspect a complete GLEIF research handover; no matching")
+    gleif_preview.add_argument("--input", required=True)
+    gleif_preview.add_argument("--offset", type=int, default=0)
+    gleif_preview.add_argument("--limit", type=int, default=50)
+    gleif_receive = sub.add_parser("gleif-receive", help="Receive an explicitly reviewed original handover request")
+    gleif_receive.add_argument("--request", required=True)
+    gleif_status = sub.add_parser("gleif-intake", help="Reconcile the original intake request")
+    gleif_status.add_argument("--request-id", required=True)
     args = p.parse_args()
     if args.action == "binding":
         from application_binding import inspect_binding
@@ -82,7 +91,16 @@ def main():
                     signal.signal(sig, handler)
             return
         matching.recover_interrupted(d)
-        if args.action == "cycles":
+        if args.action == "gleif-preview":
+            with Path(args.input).open("rb") as stream:
+                original = d.put_object(stream, Path(args.input).name, "application/json")
+            result = gleif_portfolio.preview(d, original["id"], offset=args.offset, limit=args.limit)
+        elif args.action == "gleif-receive":
+            from model import load_json
+            result = gleif_portfolio.receive(d, load_json(Path(args.request).read_bytes()))
+        elif args.action == "gleif-intake":
+            result = gleif_portfolio.operation(d, args.request_id)
+        elif args.action == "cycles":
             result = review_cycles.view(d)
         elif args.action == "cycle":
             result = review_cycles.view(d, args.id)

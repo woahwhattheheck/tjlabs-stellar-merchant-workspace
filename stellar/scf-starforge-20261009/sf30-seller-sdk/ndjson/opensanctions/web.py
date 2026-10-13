@@ -11,6 +11,7 @@ from model import (Domain, Workspace, InputError, MAX_SOURCE, json_bytes, load_j
 import matching
 import updates
 import review_cycles
+import gleif_portfolio
 
 HERE = Path(__file__).resolve().parent
 
@@ -31,6 +32,7 @@ class Handler(ndjson_application.Handler):
         assets = {"/monitor": ("index.html", "text/html; charset=utf-8"),
                   "/monitor/": ("index.html", "text/html; charset=utf-8"),
                   "/monitor/app.js": ("app.js", "text/javascript; charset=utf-8"),
+                  "/monitor/gleif-intake.js": ("gleif-intake.js", "text/javascript; charset=utf-8"),
                   "/monitor/review-cycles.js": ("review-cycles.js", "text/javascript; charset=utf-8"),
                   "/monitor/style.css": ("style.css", "text/css; charset=utf-8")}
         if target.path in assets:
@@ -62,6 +64,9 @@ class Handler(ndjson_application.Handler):
         if path == "cycle-report-html":
             raw = review_cycles.report_html(d, q["id"], int(q["version"])).encode("utf-8")
             self._headers(200, "text/html; charset=utf-8", len(raw)); self.wfile.write(raw); return
+        if path == "gleif-intake":
+            self._cycle_branch()
+            return self._json(gleif_portfolio.operation(d, q["requestId"]))
         if path == "state":
             return self._json(d.state())
         if path == "contract":
@@ -153,6 +158,22 @@ class Handler(ndjson_application.Handler):
             with d.object_path(body["metadata"]).open("rb") as meta, d.object_path(body["entities"]).open("rb") as entities:
                 return self._json(d.accept_edition(meta, entities, metadata_url=body["metadataUrl"],
                                     label=body.get("label"), entitlement=body.get("entitlement")), 201)
+        if path == "gleif-preview":
+            self._cycle_branch()
+            return self._json(gleif_portfolio.preview(d, body["original"],
+                offset=body.get("offset", 0), limit=body.get("limit", 50)))
+        if path == "gleif-receive":
+            self._cycle_branch()
+            try:
+                return self._json(gleif_portfolio.receive(d, body), 201)
+            except InputError as error:
+                not_committed = False
+                try:
+                    not_committed = not gleif_portfolio.operation(d, body.get("requestId"))["committed"]
+                except InputError:
+                    pass
+                return self._json({"error": str(error), "requestId": body.get("requestId"),
+                                   "notCommitted": not_committed}, 400)
         if path == "portfolio":
             with d.object_path(body["original"]).open("rb") as original:
                 return self._json(d.accept_portfolio(original, key=body["key"], label=body["label"]), 201)

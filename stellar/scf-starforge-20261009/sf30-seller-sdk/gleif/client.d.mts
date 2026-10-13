@@ -4,7 +4,7 @@ export interface GleifCapture { schema:string; id:string; plan:GleifPlan; create
 export interface ResearchReview { id:string; title:string; captureId:string; lei:string; decision:'include'|'exclude'|'research'; reviewer:string; rationale:string; useCase:string; nextWork:string; version:number; resourceSha256:string; originalResource:Record<string,unknown>; }
 export interface RetainedFile { name:string; sha256:string; bytes:number; }
 export interface Operation { id:string; action:string; state:'PENDING'|'RUNNING'|'INTERRUPTED'|'COMPLETE'; createdAt:string; updatedAt:string; error?:{code:string;message:string;status?:number}|null; input?:Record<string,unknown>; result?:unknown; }
-export interface ProjectRequest { id:string; action:'capture'|'capture.resume'|'source.import'|'review.save'|'review.batch'|'report.prepare'|'dataset.prepare'; input:Record<string,unknown>; expectedRevision?:number; }
+export interface ProjectRequest { id:string; action:'capture'|'capture.resume'|'source.import'|'review.save'|'review.batch'|'report.prepare'|'dataset.prepare'|'monitoring.prepare'; input:Record<string,unknown>; expectedRevision?:number; }
 export interface Connection { schema:string; origin:string; token:string; workspaceId:string; workspaceIdentity:string; instanceId:string; sourceIdentity:{sha256:string;files:Array<{path:string;sha256:string;bytes:number}>}; }
 export interface EntityRecord { row:Record<string,string>; resource:Record<string,unknown>; page:number; review?:ResearchReview|null; needsReview?:boolean; }
 export interface EntityPage { capture:GleifCapture; offset:number; total:number; nextOffset:number|null; items:EntityRecord[]; }
@@ -20,6 +20,7 @@ export declare class GleifClient {
   rows(id:string,options?:{offset?:number;limit?:number;search?:string}):Promise<EntityPage>;
   capture(id:string):Promise<{capture:GleifCapture;records:EntityRecord[];complete:boolean;next:string|null}>;
   compare(before:string,after:string):Promise<Record<string,unknown>>;
+  monitoringPreview(input:{title:string;portfolioKey:string;captureIds:[string];selection:'all'|'included';fields:Array<'aliases'|'registrationNumber'|'entityStatus'|'addresses'>}):Promise<Record<string,unknown>>;
   operation(id:string):Promise<Operation>;
   start(request:ProjectRequest):Promise<Operation>;
   pause(id:string):Promise<Operation>;

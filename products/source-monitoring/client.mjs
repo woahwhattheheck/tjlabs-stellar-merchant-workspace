@@ -12,12 +12,12 @@ export const STARTUP_SCHEMA = 'stellar-forge.opensanctions-workspace-launch.v1';
 export const GET_OPERATIONS = Object.freeze([
   'state', 'contract', 'entity', 'entities', 'aliases', 'changes', 'impacts',
   'case', 'statements', 'response', 'request', 'update-plan',
-  'cycles', 'cycle', 'cycle-request', 'cycle-report',
+  'cycles', 'cycle', 'cycle-request', 'cycle-report', 'gleif-intake',
 ]);
 export const POST_OPERATIONS = Object.freeze([
   'published-edition', 'edition', 'portfolio', 'statement-set', 'compare', 'update',
   'fetch-update', 'select-update', 'review', 'case', 'profile', 'prepare',
-  'dispatch', 'receive-response', 'query', 'cycle-command',
+  'dispatch', 'receive-response', 'query', 'cycle-command', 'gleif-preview', 'gleif-receive',
 ]);
 const SHA = /^[a-f0-9]{64}$/;
 const MAX_OBJECT = 256 * 1024 * 1024;
