@@ -92,7 +92,17 @@ async function prepareProfile(input){
   const source=await regular(input.profile.path,2*1024*1024);
   need(source.length===input.profile.bytes&&sha(source)===input.profile.sha256&&
     same(JSON.parse(source),input.profile.profile),'The original installed profile changed before preparation.');
-  const bindings=input.bindings??bindingTemplate(input.seed,input.profile.profile);
+  const bindings=bindingTemplate(input.seed,input.profile.profile);
+  if(input.bindings!==undefined&&input.bindings!==null){
+    need(input.bindings&&typeof input.bindings==='object'&&!Array.isArray(input.bindings),
+      'Keep the original optional profile bindings as a complete object.');
+    for(const [key,original]of Object.entries(input.bindings)){
+      need(Object.hasOwn(bindings,key),'The original selection contains an unsupported Installation binding: '+key+'.');
+      if(['schema','profile','selection','workshareCaseId'].includes(key))
+        need(same(bindings[key],original),'The original selection differs from this fresh Installation seed identity: '+key+'.');
+      else bindings[key]=structuredClone(original);
+    }
+  }
   const value=prepareInstallation(input.seed,input.profile.profile,bindings);
   if(input.programmeInputs){
     const programme=composeCustomerProgramme({seed:input.seed,document:value.document,profile:input.profile.profile,...input.programmeInputs});
@@ -597,10 +607,13 @@ class BrowserReceiving{
     const before=await this.working('profile-before',{fresh:true});
     if(!before.profileWork?.seed)await this.click('profile-seed');
     if(selected.bindings){
-      await this.details('Complete editable profile bindings');
-      await this.field('profileWork.bindingsText',JSON.stringify(selected.bindings,null,2)+'\n');
+      const applied=await this.working('profile-selected-bindings',{fresh:true});
+      const complete=JSON.parse(applied.profileWork.bindingsText);
+      for(const [key,value]of Object.entries(selected.bindings))
+        need(Object.hasOwn(complete,key)&&same(complete[key],value),
+          'The complete UI binding changed an explicitly selected original field: '+key+'.');
     }
-    if(!before.profileWork?.preview||selected.bindings)await this.click('profile-preview');
+    if(!before.profileWork?.preview)await this.click('profile-preview');
     const working=await this.working('complete-profile-preview'),work=working.profileWork;
     need(work?.prepared&&work.preview&&work.seed.source.caseId===this.input.caseId&&
       work.workshareCaseId===selected.caseId&&work.profileId===selected.profile&&
