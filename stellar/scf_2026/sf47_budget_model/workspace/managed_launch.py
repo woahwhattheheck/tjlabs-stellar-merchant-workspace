@@ -239,6 +239,8 @@ BOOT_FILES = (
     "COHORT-DELIVERY.md",
     "cohort_planning_calendar.mjs",
     "cohort_planning_scheduling.mjs",
+    "cohort_planning_session.mjs",
+    "cohort_planning_session.d.mts",
     "cohort_planning_cli.mjs",
     "operations_cohort_planning.mjs",
     "operations_cohort_planning.css",

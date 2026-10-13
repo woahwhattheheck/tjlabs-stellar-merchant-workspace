@@ -20,8 +20,18 @@ export async function receiveCurrentSourceBrowser(page,{
   const input={...selectedInput};
   need(input.schema==='stellar-forge.source-package-browser-receiving-input.v1'&&
     input.operationId===OPERATION,'Continue the original current-source browser input.');
-  const selectedCase=resolve(dirname(input.currentDraftPath),'../..');
-  const currentCase=resolve(dirname(actualInputPath),'../..');
+  const inputRelative=input.caseRelativeInput||'receiving/source-package-continuation/browser-receiving-input.json';
+  need(typeof inputRelative==='string'&&!isAbsolute(inputRelative)&&
+    !inputRelative.includes('\\')&&inputRelative.split('/').every(part=>part&&part!=='.'&&part!=='..')&&
+    inputRelative.endsWith('/browser-receiving-input.json'),
+    'Retain the exact source phase input location inside this same case.');
+  const inputParts=inputRelative.split('/');
+  const caseUp=Array(inputParts.length-1).fill('..');
+  const selectedCase=resolve(dirname(input.currentDraftPath),...caseUp);
+  const currentCase=resolve(dirname(actualInputPath),...caseUp);
+  need(relative(currentCase,actualInputPath)===inputRelative&&
+    relative(selectedCase,input.currentDraftPath)===inputParts.slice(0,-1).join('/')+'/draft.json',
+    'Open the actual retained source-phase input and complete draft location.');
   // Archive reopening changes locations while retaining the same source and case.
   for(const key of ['sourceRoot','currentDraftPath','currentReviewPath','sourcePackagePath',
     'originalRecordPath','originalDraftPath','originalReviewPath']){

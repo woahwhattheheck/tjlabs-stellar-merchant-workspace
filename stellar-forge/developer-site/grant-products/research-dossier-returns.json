@@ -1,0 +1,71 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "research-dossier-returns",
+  "heading": "## Collaborative Research delivery and reviewed dossier returns",
+  "sources": [
+    {
+      "id": "dossier-return-operating",
+      "label": "Complete reviewed dossier-return operating and editable receiving guide",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/OPERATING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "89bcf7629b0133df094c34df871c0124697adb6b",
+          "bytes": 19171,
+          "sha256": "82eed559331c6ed363ba56e6f61919a597d01ccaa23771eafc89d094141e4860",
+          "git_blob": "1d93d811e07a98d4486b076e0b2de1ae002ad410"
+        }
+      ],
+      "commit": "89bcf7629b0133df094c34df871c0124697adb6b"
+    },
+    {
+      "id": "dossier-return-engine",
+      "label": "Original source-bound dossier-return engine",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/engine.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "89bcf7629b0133df094c34df871c0124697adb6b",
+          "bytes": 33084,
+          "sha256": "be6b7a9f900397cfc148c67355c83be6b6696287f847bade43d6acf710407e40",
+          "git_blob": "7ed70284163a2e88f9851334e672ffd86eb7e362"
+        }
+      ],
+      "commit": "89bcf7629b0133df094c34df871c0124697adb6b"
+    },
+    {
+      "id": "dossier-return-native-receiving",
+      "label": "Complete original dossier-return native and browser receiving programme",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/source-native-acceptance.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "6af7dfe3845f339cdd7e03619c348fc94dff6e29",
+          "bytes": 82454,
+          "sha256": "4fb77e678e2e991cfed6745a61023200df264db9b60458ab3fe3bf4c53bd009b",
+          "git_blob": "773dd635687321ac8c5919ad9b195fe973e4d6e8"
+        }
+      ],
+      "commit": "6af7dfe3845f339cdd7e03619c348fc94dff6e29"
+    },
+    {
+      "id": "research-customer-programme",
+      "label": "Complete Research customer programme and original source delivery",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/README.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "0287e051ef121e9842072f93ad839378cdc06af4",
+          "bytes": 20933,
+          "sha256": "8a9de7a1b9de6a2419f5a867ab73ee01f37a65c4bd5e314cee2ed1115086f282",
+          "git_blob": "b2f7b5d99f3441cc36df0ee3a26d5c6fa955824a"
+        }
+      ],
+      "commit": "0287e051ef121e9842072f93ad839378cdc06af4"
+    }
+  ]
+}

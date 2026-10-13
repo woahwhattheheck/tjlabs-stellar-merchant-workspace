@@ -126,6 +126,12 @@ export async function renderDocumentBytes(configuration, format, input, sourceBy
   catch {throw documentError('DOCUMENT_SOURCE_UTF8_REQUIRED', 'The complete source must be valid UTF-8.');}
   const request = buildDocumentRequest(config, format, input, sourceText);
   const provider = documentProvider(config.provider);
+  if(format==='pdf-set')for(const file of request.source.files){
+    const bytes=Buffer.from(file.base64,'base64');
+    requireDocument(bytes.toString('base64')===file.base64&&bytes.length===file.bytes&&
+      digest(bytes)===file.sha256&&bytes.subarray(0,5).toString('ascii')==='%PDF-',
+      'DOCUMENT_ASSEMBLY_FILE_CHANGED','The complete original PDF differs from its saved source.');
+  }
   const headers = {Accept: 'application/pdf', 'Content-Type': 'application/json',
     ...authorization(config, environment)};
   requireDocument(typeof fetchImplementation === 'function', 'DOCUMENT_FETCH_REQUIRED');
@@ -170,18 +176,19 @@ export async function renderDocumentBytes(configuration, format, input, sourceBy
   const receivedAt = new Date().toISOString();
   const record = {
     schema: DOCUMENT_RENDER_SCHEMA, provider: provider.id, providerName: provider.name,
-    providerEndpoint: request.url, httpStatus: response.status, sourceCheckedOn: SOURCE_CHECKED_ON,
+    providerEndpoint: request.url, httpStatus: response.status, sourceCheckedOn: request.sourceCheckedOn??SOURCE_CHECKED_ON,
     taskReference: request.input.taskReference, title: request.input.title,
     nativeJob: {jobId, attemptId}, requestedAt: startedAt, receivedAt,
     request: {method: request.method, contentType: request.contentType,
       bytes: Buffer.byteLength(request.bodyText), sha256: digest(request.bodyText)},
     source: {format, bytes: sourceBytes.byteLength, sha256: digest(sourceBytes),
-      descriptor: sourceDescriptor},
+      descriptor: sourceDescriptor,
+      ...(format==='pdf-set'?{files:request.source.files.map(({base64,...file})=>file)}:{})},
     pdf: {filename: 'document.pdf', contentType: 'application/pdf', bytes: pdf.length, sha256: digest(pdf)},
     supplier: {selectedPlan: config.plan, authentication: config.authentication,
       headers: responseHeaders, usage: usageFromHeaders(provider, responseHeaders),
       sources: provider.sources},
-    completion: {documents: 1, sourceFiles: 1,
+    completion: {documents: 1, sourceFiles: format==='pdf-set'?request.source.files.length:1,
       meaning: 'Complete supplier PDF and original editable source received for this customer task. The original paid-job and buyer records retain settlement and customer acceptance.'}
   };
   const requestFile = {
@@ -226,6 +233,8 @@ function paidDocumentFailure(error) {
     DOCUMENT_SETTINGS_INVALID: 'JOB_INPUT_DOCUMENT_SETTINGS',
     DOCUMENT_PAGE_DIMENSIONS_REQUIRED: 'JOB_INPUT_DOCUMENT_PAGE_DIMENSIONS'
   };
+  if(sourceCode.startsWith('DOCUMENT_ASSEMBLY_'))return Object.assign(
+    new Error('JOB_INPUT_DOCUMENT_ASSEMBLY',{cause:error}),{code:'JOB_INPUT_DOCUMENT_ASSEMBLY'});
   const code = http ? http[1] === 'INPUT' ? 'JOB_INPUT_DOCUMENT_PROVIDER_REJECTED' :
     'JOB_NATIVE_DOCUMENT_' + (http[1] === 'HTTP' ? 'HTTP_FAILURE' : http[1]) :
     categories[sourceCode] ?? 'JOB_NATIVE_DOCUMENT_CONFIGURATION';
@@ -240,7 +249,7 @@ export async function renderPaidDocument(configuration, format, input, context) 
       typeof context.files.metadata === 'function', 'DOCUMENT_ORIGINAL_FILE_HANDLE_REQUIRED');
     context.signal?.throwIfAborted();
     const descriptor = context.files.metadata('source');
-    const expectedType = format === 'html' ? 'text/html' : 'text/markdown';
+    const expectedType = format==='pdf-set'?'application/json':format === 'html' ? 'text/html' : 'text/markdown';
     requireDocument(descriptor?.contentType === expectedType, 'DOCUMENT_SOURCE_MEDIA_MISMATCH',
       'Select the complete ' + expectedType + ' source file for this function.');
     const source = await context.files.read('source', {maxBytes: config.maxSourceBytes});

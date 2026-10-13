@@ -106,6 +106,40 @@
     <div class="action-row"><button id="export-documents" type="button" disabled>Export received documents</button><span class="muted">The complete Collection includes the received PDFs and their original source files.</span></div>
     <div id="exports" class="exports"></div>
   </section>
+
+  <section class="documents-section" aria-labelledby="assembly-heading">
+    <p class="eyebrow">4 · ORDERED PDF BUNDLE</p><h3 id="assembly-heading">Assemble invoices or reports</h3>
+    <p>Choose complete received PDFs from this document set. The saved bundle preserves their order and every original file. PDFMint assembly uses its own commissioned merchant price.</p>
+    <form id="assembly-form">
+      <div class="form-grid">
+        <label>Bundle ID<input id="assembly-id" required maxlength="64" autocomplete="off"></label>
+        <label>Bundle name<input id="assembly-name" required maxlength="200"></label>
+        <label>PDF title<input id="assembly-title" required maxlength="170"></label>
+        <label>Original customer task<input id="assembly-task" required maxlength="200"></label>
+        <label>Commissioned PDFMint merchant origin<input id="assembly-origin" type="url" required autocomplete="off" placeholder="https://your-pdfmint-merchant.example"></label>
+        <label>Document template<select id="assembly-template"><option value="">All document templates</option></select></label>
+      </div>
+      <label>Optional document IDs in the required order, one per line<textarea id="assembly-order" rows="4" spellcheck="false" placeholder="Leave empty to retain the full source order for the selected template."></textarea></label>
+      <p class="muted">Every selected PDF must already be received. Complete volumes follow the provider's 50-file and request-size limits. A single-file volume keeps the original PDF without a new purchase.</p>
+      <button id="assembly-stage" type="submit">Prepare ordered PDF bundle</button>
+    </form>
+    <div id="assembly-list" class="download-list"></div>
+    <div id="assembly-detail" class="source-section" hidden>
+      <div class="section-heading"><h4 id="assembly-current-name"></h4><button id="assembly-refresh" type="button">Refresh bundle</button></div>
+      <p id="assembly-counts"></p><p id="assembly-source-sha" class="mono"></p>
+      <div id="assembly-price"></div><p id="assembly-price-sha" class="mono"></p>
+      <div class="action-row">
+        <button id="assembly-prepare" type="button">Prepare assembly price</button>
+        <button id="assembly-run" class="primary" type="button">Assemble at this saved price</button>
+        <button id="assembly-receive" type="button">Receive existing assemblies</button>
+        <button id="assembly-source" type="button">Download all original PDF sources</button>
+      </div>
+      <div class="table-scroll"><table><thead><tr><th>Volume</th><th>Original PDFs, in order</th><th>Operation</th><th>Receiving</th><th>PDF</th></tr></thead><tbody id="assembly-volumes"></tbody></table></div>
+      <div class="action-row"><button id="assembly-export" type="button">Export complete PDF bundle</button></div>
+      <div id="assembly-exports" class="exports"></div>
+    </div>
+  </section>
+
 </section>
 </div>
 </div>

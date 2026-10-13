@@ -39,17 +39,29 @@ const review=await import(pathToFileURL(path.join(dist,'grant-review-round-core.
 const exporter=await import(pathToFileURL(path.join(site,'grant-export.mjs')));
 
 async function inputs(){
-  const [draftText,reviewText,recordText,sourcePackageText]=await Promise.all([
+  const [draftText,reviewText,recordText,sourcePackageText,browserRecordText]=await Promise.all([
     fs.readFile(cfg.originalDraftPath,'utf8'),fs.readFile(cfg.originalReviewPath,'utf8'),
-    fs.readFile(cfg.originalRecordPath,'utf8'),fs.readFile(cfg.sourcePackagePath,'utf8')
+    fs.readFile(cfg.originalRecordPath,'utf8'),fs.readFile(cfg.sourcePackagePath,'utf8'),
+    fs.readFile(cfg.originalBrowserRecordPath||cfg.originalRecordPath,'utf8')
   ]);
   need(sha(sourcePackageText)===cfg.sourcePackageSha256,'Receive the exact selected complete source package.');
   const savedRecord=JSON.parse(recordText);
   const originalDraft=await handover.openDraftEnvelope(draftText);
-  need(savedRecord.id&&Number.isSafeInteger(savedRecord.revision)&&same(savedRecord.input,originalDraft),
-    'Retain the actual original saved submission and browser binding.');
+  const originalBrowserRecord=JSON.parse(browserRecordText);
+  need(originalBrowserRecord.id&&Number.isSafeInteger(originalBrowserRecord.revision)&&
+    originalBrowserRecord.input?.id===originalDraft.id,
+    'Retain the actual original browser binding separately from the native edition.');
+  const {input,...originalBrowserBinding}=originalBrowserRecord;
+  if(savedRecord.schema==='stellar-forge.source-package-native-submission-record.v1'){
+    need(savedRecord.operationId===cfg.operationId&&same(savedRecord.input,originalDraft)&&
+      same(savedRecord.originalBrowserBinding,originalBrowserBinding),
+      'Continue the preceding full native draft and its original browser lineage.');
+  }else{
+    need(same(savedRecord,originalBrowserRecord)&&same(savedRecord.input,originalDraft),
+      'Retain the actual original saved submission and browser binding.');
+  }
   need(originalDraft.id===cfg.draftId,'Continue the original saved draft.');
-  return {draftText,reviewText,savedRecord,originalDraft,sourcePackageText};
+  return {draftText,reviewText,savedRecord,originalDraft,sourcePackageText,originalBrowserRecord,originalBrowserBinding};
 }
 
 async function receive(){
@@ -81,7 +93,7 @@ async function receive(){
   complete.originalRound=null;complete.files.clear();if(global.gc)global.gc();
   const joined=await receiveCurrentReview({
     operationId:cfg.operationId,originalReviewText:selected.reviewText,
-    originalDraft:selected.originalDraft,currentReviewText:await optional('Current_Review_Checkpoint.json'),
+    originalDraft:selected.originalDraft,originalDraftText:selected.draftText,currentReviewText:await optional('Current_Review_Checkpoint.json'),
     draftText,sourcePackageSha256:cfg.sourcePackageSha256,
     previousReviewEvents:cfg.previousReviewEvents,at:cfg.at,actorId:cfg.actorId,
     review,sha256:sha,onCheckpoint:body=>write('Current_Review_Checkpoint.json',body)
@@ -114,7 +126,7 @@ async function receive(){
     sourcePackageSha256:cfg.sourcePackageSha256,sourceRecords:cfg.sourceRecords,
     ...joined.receiving,targets:joined.comparison.rows};
   deliveries.push(await write('source-review-comparison.json',json(reviewComparison)));
-  const {input,...originalBinding}=selected.savedRecord;
+  const originalBinding=selected.originalBrowserBinding;
   const record={schema:'stellar-forge.source-package-native-submission-record.v1',
     operationId:cfg.operationId,phaseId:cfg.phaseId,at:cfg.at,originalBrowserBinding:originalBinding,
     originalDraftSha256:sha(selected.draftText),input:complete.draft,
@@ -122,7 +134,8 @@ async function receive(){
   deliveries.push(await write('native-submission-record.json',json(record)));
   const browserInput={schema:'stellar-forge.source-package-browser-receiving-input.v1',
     operationId:cfg.operationId,phaseId:cfg.phaseId,sourceRoot,
-    originalRecordPath:cfg.originalRecordPath,originalDraftPath:cfg.originalDraftPath,
+    caseRelativeInput:(cfg.receivingDirectory||'receiving/source-package-continuation')+'/browser-receiving-input.json',
+    originalRecordPath:cfg.originalBrowserRecordPath||cfg.originalRecordPath,originalDraftPath:cfg.originalDraftPath,
     originalReviewPath:cfg.originalReviewPath,currentDraftPath:path.join(output,'draft.json'),
     currentReviewPath:path.join(output,'downloads/Current_Complete_Review.json'),
     sourcePackagePath:cfg.sourcePackagePath,sourcePackageSha256:cfg.sourcePackageSha256,
@@ -140,6 +153,8 @@ async function receive(){
     schema:'stellar-forge.current-source-package-receiving.v1',state:'SOURCE_RECEIVED',
     operationId:cfg.operationId,phaseId:cfg.phaseId,sourcePackageSha256:cfg.sourcePackageSha256,
     sourceRecords:cfg.sourceRecords,sourceSelection:cfg.sourceSelection,
+    receivingDirectory:cfg.receivingDirectory||'receiving/source-package-continuation',
+    precedingSourceDirectory:cfg.precedingSourceDirectory||null,
     originalDraftId:cfg.draftId,originalReviewId:cfg.reviewId,
     originalBrowserBinding:originalBinding,retainedOriginalActions:cfg.previousReviewEvents,
     reviewActions:joined.round.events.length,reviewStatus:joined.view.status,
@@ -173,7 +188,7 @@ async function verify(){
     currentDraftText:reopened.exported,previousReviewEvents:cfg.previousReviewEvents,review,handover
   });
   const record=JSON.parse(await read('native-submission-record.json'));
-  const {input,...originalBinding}=selected.savedRecord;
+  const originalBinding=selected.originalBrowserBinding;
   need(same(record.originalBrowserBinding,originalBinding)&&same(record.input,joined.draft),
     'Retain the original browser binding and the exact independently reopened current draft.');
   need(joined.round.events.length===prepared.reviewActions&&joined.view.status===prepared.reviewStatus,

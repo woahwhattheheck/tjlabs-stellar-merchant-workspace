@@ -611,3 +611,8 @@ The Research contribution carries the quotation browser, contracts, native contr
 The quotation server and distribution builder read the same [browser asset manifest](browser-assets.json). Its nine routes map the embedded commercial editor, receiving desk and tariff desk to their complete original source files. The maintained browser asset reader travels with this source selection.
 
 The original Research launcher, Customer updates, Paid delivery, Buyer Runbook, SF101 checkout and saved customer receiving remain the operating path. A full native continuation can therefore proceed from the existing customer case and observed pricing version through quotation, revised evidence work, frozen paid delivery, actual Buyer receiving and a complete realized report.
+
+
+## Complete customer programmes in the browser
+
+Open **Customer programmes** from this quotation workspace. Select the actual Research project and original commercial case, then use these same native forms to prepare the quotation, customer response, frozen paid delivery and realized report as saved programme steps. The full programme desk carries those original inputs and files into a portable archive, resumes an interrupted upload, shows the actual destination receiving review and saves through the original case and dossier writers. Its [complete operating guide](PROGRAMME_BROWSER.md) includes browser, typed-client and authenticated HTTP selections, restart behavior and whole-package receiving. The installed Python and terminal programme workflows operate the same native records.

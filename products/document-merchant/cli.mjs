@@ -16,6 +16,7 @@ import {
   reviewDocumentMerchant
 } from './setup.mjs';
 import {readDocumentSupplierUsage} from './renderer.mjs';
+import {runDocumentAssemblyCommand} from './assembly-cli.mjs';
 import {runDocumentBatchCommand} from './batch-cli.mjs';
 import {runDocumentCompositionCommand} from './composition-cli.mjs';
 import {readDocumentServiceSelection, runDocumentServiceCommand} from './launch.mjs';
@@ -26,9 +27,10 @@ const HELP = [
   'Install and run a complete HTML or Markdown document service on the existing paid Jobs engine.', '',
   '  document-merchant providers',
   '  document-merchant batch --help',
+  '  document-merchant assemble --help',
   '  document-merchant compose --help',
   '  document-merchant compose serve --workspace-options FILE [--provider ID] [--merchant-origin URL]',
-  '  document-merchant template --provider mintpdf|snaplab|pdfmint [--anonymous] [--out NEW_FILE]',
+  '  document-merchant template --provider mintpdf|snaplab|pdfmint [--anonymous] [--assembly] [--out NEW_FILE]',
   '  document-merchant review --request FILE --directory DIR',
   '  document-merchant prepare --request FILE --directory DIR',
   '  document-merchant inspect --directory DIR',
@@ -124,6 +126,7 @@ function serviceOptions(out) {
 export async function runDocumentCommand(argv = process.argv.slice(2), {print = value => console.log(value)} = {}) {
   if (!argv.length || argv.length === 1 && ['--help', '-h', 'help'].includes(argv[0])) return print(HELP);
   const [command, ...tail] = argv;
+  if (command === 'assemble') return runDocumentAssemblyCommand(tail,{print});
   if (command === 'batch') return runDocumentBatchCommand(tail,{print});
   if (command === 'compose') return runDocumentCompositionCommand(tail,{print});
   const emit = value => print(JSON.stringify(value, null, 2));
@@ -132,8 +135,8 @@ export async function runDocumentCommand(argv = process.argv.slice(2), {print = 
     return emit(documentProviders());
   }
   if (command === 'template') {
-    const out = options(tail, ['--provider', '--anonymous', '--out'], ['--anonymous']);
-    const value = documentSetupTemplate(required(out, '--provider'), {anonymous: out.has('--anonymous')});
+    const out = options(tail, ['--provider', '--anonymous', '--assembly', '--out'], ['--anonymous', '--assembly']);
+    const value = documentSetupTemplate(required(out, '--provider'), {anonymous: out.has('--anonymous'), assembly: out.has('--assembly')});
     return emit(out.has('--out') ? await save(out.get('--out'), value) : value);
   }
   if (command === 'prepare' || command === 'review') {

@@ -15,6 +15,11 @@ import {
 import {
   inspectDocumentBatch,runDocumentBatch,receiveDocumentBatch,saveDocumentBatchReport
 } from './batch.mjs';
+import {
+  documentAssemblyTemplate,stageDocumentPdfAssemblyFromBatch,prepareDocumentPdfAssemblyBatch,
+  readDocumentPdfAssembly,inspectDocumentPdfAssembly,runDocumentPdfAssembly,
+  exportDocumentPdfAssembly,documentPdfAssemblyOutput
+} from './assembly.mjs';
 
 export const DOCUMENT_COMPOSITION_WORKSPACE_SCHEMA='stellar-forge.document-composition-workspace.v1';
 const ID=/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/,HASH=/^[a-f0-9]{64}$/;
@@ -150,6 +155,49 @@ export async function openDocumentCompositionWorkspace({workspace,sourceRoot,pro
     }
     return results;
   }
+  function assemblyDirectory(composition,assemblyId){
+    return join(composition.directory,'assemblies',identifier(assemblyId));
+  }
+  async function assembliesFor(composition,signal){
+    let entries;try{entries=await readdir(join(composition.directory,'assemblies'),{withFileTypes:true});}
+    catch(error){if(error.code==='ENOENT')return [];throw error;}
+    const result=[];
+    for(const entry of entries.filter(item=>item.isDirectory()&&!item.isSymbolicLink()&&ID.test(item.name))
+      .sort((a,b)=>a.name.localeCompare(b.name))){
+      signal?.throwIfAborted();
+      try{
+        const saved=await readDocumentPdfAssembly(assemblyDirectory(composition,entry.name),{requireFiles:false,signal});
+        need(saved.plan.origin?.compositionId===composition.id&&
+          saved.plan.origin.compositionSha256===composition.sha256,'DOCUMENT_ASSEMBLY_COMPOSITION_CHANGED');
+        result.push({id:entry.name,name:saved.plan.request.name,sourceSha256:saved.sha256,
+          sourceBytes:saved.bytes,counts:copy(saved.plan.counts)});
+      }catch(error){result.push({id:entry.name,state:'SOURCE_REQUIRED',error:errorView(error)});}
+    }
+    return result;
+  }
+  async function assembly({id,sourceSha256,assemblyId,assemblySha256,signal}={}){
+    const composition=await source(id,sourceSha256,signal);
+    const view=await inspectDocumentPdfAssembly({workspace,directory:assemblyDirectory(composition,assemblyId),
+      expectedSha256:assemblySha256,signal});
+    need(view.origin?.compositionId===composition.id&&view.origin.compositionSha256===composition.sha256,
+      'DOCUMENT_ASSEMBLY_COMPOSITION_CHANGED');
+    const root=join(view.directory,'exports');let entries=[];
+    try{entries=await readdir(root,{withFileTypes:true});}catch(error){if(error.code!=='ENOENT')throw error;}
+    const exports=[];
+    for(const entry of entries.filter(item=>item.isDirectory()&&!item.isSymbolicLink()&&/^[a-f0-9]{32}$/.test(item.name))){
+      try{
+        const saved=parse(await ownedBytes(join(root,entry.name,'assembly-delivery.json'),4*MiB));
+        need(saved.id===assemblyId&&saved.source.sha256===view.sourceSha256&&saved.directory===join(root,entry.name),
+          'DOCUMENT_ASSEMBLY_EXPORT_CHANGED');
+        const receipt=parse(await ownedBytes(join(root,entry.name,'assembly-archive.json'),65536));
+        need(receipt.sourceSha256===view.sourceSha256&&receipt.archive?.path===join(root,entry.name,'complete-pdf-bundle.tar'),
+          'DOCUMENT_ASSEMBLY_EXPORT_CHANGED');
+        exports.push({id:entry.name,complete:true,counts:saved.counts,files:saved.files,native:saved.native,archive:receipt.archive});
+      }catch(error){exports.push({id:entry.name,complete:false,error:errorView(error)});}
+    }
+    return {...view,exports};
+  }
+
   async function get({id,offset=0,limit=100,sourceSha256,signal}={}){
     identifier(id);integer(offset,0,2000,'DOCUMENT_COMPOSITION_OFFSET_INVALID');
     integer(limit,1,200,'DOCUMENT_COMPOSITION_LIMIT_INVALID');
@@ -171,7 +219,7 @@ export async function openDocumentCompositionWorkspace({workspace,sourceRoot,pro
       documents:composition.plan.documents.slice(offset,offset+limit).map(item=>{
         const {settings,...details}=item;
         return {...copy(details),native:rows.has(item.id)?copy(rows.get(item.id)):null};
-      }),native,exports:await exportsFor(composition.directory,signal),
+      }),native,exports:await exportsFor(composition.directory,signal),assemblies:await assembliesFor(composition,signal),
       active:active.has(id)?operationView(active.get(id)):null};
   }
   function operation({operationId}={}){
@@ -249,6 +297,52 @@ export async function openDocumentCompositionWorkspace({workspace,sourceRoot,pro
       return {...sourceSummary(original),planSha256:result.batch.sha256,
         totals:copy(result.batch.plan.totals),units:copy(result.batch.plan.unitMeaning)};
     }
+    if(kind==='assembly-stage'){
+      const selected=await selectedBatch(input,signal);
+      need(Array.isArray(input.documentIds)&&input.documentIds.length>0&&
+        new Set(input.documentIds).size===input.documentIds.length,'DOCUMENT_ASSEMBLY_SELECTION_REQUIRED');
+      const known=new Set(selected.composition.plan.documents.map(item=>item.id));
+      need(input.documentIds.every(id=>known.has(id)),'DOCUMENT_ASSEMBLY_SELECTION_CHANGED');
+      need(plain(input.request)&&input.request.id===input.assemblyId,'DOCUMENT_ASSEMBLY_ID_CHANGED');
+      await ownedDirectory(join(selected.composition.directory,'assemblies'),{create:true});
+      const saved=await stageDocumentPdfAssemblyFromBatch({workspace,
+        directory:assemblyDirectory(selected.composition,input.assemblyId),request:input.request,
+        batchDirectory:selected.batch.plan.directory,batchPlanSha256:selected.batch.sha256,
+        itemIds:input.documentIds,composition:{id:input.id,sha256:selected.composition.sha256},signal});
+      await onProgress({stage:'ORDERED_PDF_VOLUMES_SAVED',...saved.plan.counts});
+      return {assemblyId:input.assemblyId,assemblySha256:saved.sha256,counts:copy(saved.plan.counts)};
+    }
+    if(kind.startsWith('assembly-')){
+      const composition=await source(input.id,input.sourceSha256,signal);
+      const directory=assemblyDirectory(composition,input.assemblyId);
+      const saved=await readDocumentPdfAssembly(directory,{expectedSha256:hash(input.assemblySha256),signal});
+      need(saved.plan.origin?.compositionId===input.id&&saved.plan.origin.compositionSha256===composition.sha256,
+        'DOCUMENT_ASSEMBLY_COMPOSITION_CHANGED');
+      if(kind==='assembly-prepare'){
+        const result=await prepareDocumentPdfAssemblyBatch({workspace,directory,expectedSha256:saved.sha256,
+          intakeAccessToken,signal,onProgress});
+        return {assemblyId:input.assemblyId,assemblySha256:saved.sha256,
+          planSha256:result.batch?.sha256??null,totals:copy(result.totals),counts:copy(saved.plan.counts)};
+      }
+      if(kind==='assembly-run'||kind==='assembly-receive'){
+        const result=await runDocumentPdfAssembly({workspace,directory,expectedSha256:saved.sha256,
+          approvedPlanSha256:input.planSha256,receiveOnly:kind==='assembly-receive',intakeAccessToken,
+          signal,deadlineMs,pollMs,onProgress});
+        return {assemblyId:input.assemblyId,assemblySha256:saved.sha256,complete:result.complete,
+          counts:result.counts,volumes:result.volumes.map(row=>({id:row.id,state:row.state,received:row.received}))};
+      }
+      if(kind==='assembly-export'){
+        const exportId=input.exportId??randomUUID().replaceAll('-','');
+        need(/^[a-f0-9]{32}$/.test(exportId),'DOCUMENT_ASSEMBLY_EXPORT_REQUIRED');
+        const destination=join(directory,'exports',exportId);
+        await ownedDirectory(destination,{create:input.exportId===undefined});
+        await onProgress({stage:'COMPLETE_PDF_BUNDLE_EXPORT',exportId});
+        const result=await exportDocumentPdfAssembly({workspace,directory,expectedSha256:saved.sha256,destination,signal});
+        return {assemblyId:input.assemblyId,assemblySha256:saved.sha256,exportId,counts:result.counts,complete:true};
+      }
+      need(false,'DOCUMENT_COMPOSITION_ACTION_INVALID');
+    }
+
     const selected=await selectedBatch(input,signal);
     if(kind==='run'||kind==='receive'){
       let snapshot;
@@ -287,11 +381,14 @@ export async function openDocumentCompositionWorkspace({workspace,sourceRoot,pro
   }
   function start(kind,input={}){
     need(!closing,'DOCUMENT_COMPOSITION_WORKSPACE_CLOSING','The customer workspace is closing.',409);
-    need(['stage','restore','prepare','run','receive','export'].includes(kind)&&plain(input),
+    need(['stage','restore','prepare','run','receive','export','assembly-stage','assembly-prepare',
+      'assembly-run','assembly-receive','assembly-export'].includes(kind)&&plain(input),
       'DOCUMENT_COMPOSITION_ACTION_INVALID');
     const id=identifier(input.id);
     if(kind!=='stage')hash(input.sourceSha256);
-    if(kind==='run')hash(input.planSha256);
+    if(kind==='run'||kind==='assembly-run')hash(input.planSha256);
+    if(kind.startsWith('assembly-'))identifier(input.assemblyId);
+    if(kind.startsWith('assembly-')&&kind!=='assembly-stage')hash(input.assemblySha256);
     if(kind==='export'&&input.exportId!==undefined)need(/^[a-f0-9]{32}$/.test(input.exportId),'DOCUMENT_COMPOSITION_EXPORT_REQUIRED');
     need(!active.has(id),'DOCUMENT_COMPOSITION_OPERATION_ACTIVE',
       'Continue the active operation for this composition.',409);
@@ -305,8 +402,8 @@ export async function openDocumentCompositionWorkspace({workspace,sourceRoot,pro
     entry.promise=new Promise(resolve=>setImmediate(resolve)).then(()=>
       execute(kind,input,entry.controller.signal,async progress=>{entry.progress=copy(progress);})).then(result=>{
         entry.result=result;
-        entry.state=(kind==='run'||kind==='receive')&&result.receivedDocuments<result.documents?
-          'CONTINUATION_REQUIRED':'COMPLETE';
+        entry.state=((kind==='run'||kind==='receive')&&result.receivedDocuments<result.documents||
+          (kind==='assembly-run'||kind==='assembly-receive')&&!result.complete)?'CONTINUATION_REQUIRED':'COMPLETE';
       },error=>{
         entry.error=errorView(error);
         entry.state=entry.controller.signal.aborted?'STOPPED':'FAILED';
@@ -365,6 +462,50 @@ export async function openDocumentCompositionWorkspace({workspace,sourceRoot,pro
   }
   async function download(input,{signal}={}){
     need(plain(input),'DOCUMENT_COMPOSITION_DOWNLOAD_REQUIRED');
+    if(typeof input.kind==='string'&&input.kind.startsWith('assembly-')){
+      const composition=await source(input.id,input.sourceSha256,signal);
+      const directory=assemblyDirectory(composition,input.assemblyId);
+      const selected=await readDocumentPdfAssembly(directory,{expectedSha256:hash(input.assemblySha256),signal});
+      need(selected.plan.origin?.compositionId===input.id&&selected.plan.origin.compositionSha256===composition.sha256,
+        'DOCUMENT_ASSEMBLY_COMPOSITION_CHANGED');
+      let file;
+      if(input.kind==='assembly-pdf'){
+        const output=await documentPdfAssemblyOutput({workspace,directory,
+          expectedSha256:selected.sha256,volumeId:input.volumeId,signal});
+        if(output.resourceId)return workspace.library.download(output.resourceId,{signal});
+        file={path:output.path,bytes:output.bytes,sha256:output.sha256,name:output.filename};
+      }else if(input.kind==='assembly-source'){
+        file={path:join(directory,'assembly-plan.json'),bytes:selected.bytes,sha256:selected.sha256,name:'assembly-plan.json'};
+      }else if(input.kind==='assembly-export'){
+        need(/^[a-f0-9]{32}$/.test(input.exportId??''),'DOCUMENT_ASSEMBLY_EXPORT_REQUIRED');
+        const root=join(directory,'exports',input.exportId);
+        const saved=parse(await ownedBytes(join(root,'assembly-delivery.json'),4*MiB));
+        need(saved.id===input.assemblyId&&saved.directory===root&&saved.source.sha256===selected.sha256,
+          'DOCUMENT_ASSEMBLY_EXPORT_CHANGED');
+        if(input.file==='native/documents.tar'){
+          need(saved.native?.archive.path===join(root,'native','documents.tar'),'DOCUMENT_ASSEMBLY_NATIVE_EXPORT_REQUIRED');
+          file={...saved.native.archive,name:'documents.tar'};
+        }else if(input.file==='complete-pdf-bundle.tar'){
+          const receipt=parse(await ownedBytes(join(root,'assembly-archive.json'),65536));
+          need(receipt.sourceSha256===saved.source.sha256&&receipt.archive?.path===join(root,input.file),
+            'DOCUMENT_ASSEMBLY_EXPORT_CHANGED');
+          file={...receipt.archive,name:input.file};
+        }else if(input.file==='assembly-delivery.json'){
+          const raw=await ownedBytes(join(root,input.file),4*MiB);
+          file={path:join(root,input.file),bytes:raw.length,sha256:digest(raw),name:input.file};
+        }else{
+          const row=saved.files.find(value=>value.path===input.file);
+          need(row,'DOCUMENT_ASSEMBLY_EXPORT_FILE_NOT_FOUND');
+          file={...row,path:join(root,row.path),name:basename(row.path)};
+        }
+      }else need(false,'DOCUMENT_ASSEMBLY_DOWNLOAD_REQUIRED');
+      need(inside(absolute(file.path),directory),'DOCUMENT_ASSEMBLY_FILE_OUTSIDE_SOURCE');
+      const resource={id:digest(canonical([input.id,selected.sha256,file.path,file.sha256])),
+        name:file.name,path:file.path,bytes:file.bytes,sha256:file.sha256,deliveryStatus:'SAVED'};
+      const opened=await verifyFile(resource,{roots:[sourceRoot],maxFileBytes:file.bytes,indexBytes:0,
+        tempRoot:sourceRoot,signal,spool:true});
+      return {resource,...opened};
+    }
     if(input.kind==='pdf'){
       const selected=await selectedBatch(input,signal);
       const snapshot=await inspectDocumentBatch({workspace,plan:selected.batch.plan,signal});
@@ -393,5 +534,5 @@ export async function openDocumentCompositionWorkspace({workspace,sourceRoot,pro
     closePromise=Promise.allSettled(pending.map(entry=>entry.promise)).then(()=>undefined);
     return closePromise;
   }
-  return Object.freeze({workspace,sourceRoot,status,list,get,operation,start,cancel,download,close});
+  return Object.freeze({workspace,sourceRoot,status,list,get,assembly,operation,start,cancel,download,close});
 }

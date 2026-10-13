@@ -16,6 +16,8 @@ import {openResearchCustomerCommerce} from './customer-commerce/controller.mjs';
 import {handleResearchCommerceRoute,readResearchCommerceAsset} from './customer-commerce/routes.mjs';
 import {readCommerceConfiguration,selectedMerchant} from './customer-commerce/configuration.mjs';
 import {openResearchCustomerQuotes} from './customer-quotes/workspace.mjs';
+import {openResearchQuoteProgrammeDesk} from './customer-quotes/programme-desk.mjs';
+import {handleResearchQuoteProgrammeRoute} from './customer-quotes/programme-routes.mjs';
 import {handleResearchQuoteRoute,readResearchQuoteAsset} from './customer-quotes/routes.mjs';
 import {QUOTE_REQUEST_LIMIT} from './customer-quotes/contracts.mjs';
 import {handleRiskOfBiasRoute,readRiskOfBiasAsset,RISK_OF_BIAS_REQUEST_LIMIT} from './risk-of-bias/routes.mjs';
@@ -262,6 +264,7 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
     customerUpdates:true,customerUpdateRequestLimit:16*1024*1024,
     dossierReturns:true,dossierReturnSourceLimit:DOSSIER_RETURN_SOURCE_LIMIT,dossierReturnRequestLimit:DOSSIER_RETURN_REQUEST_LIMIT,
     customerCommerce:true,customerCommerceConfigured:customerCommerceConfiguration!==null,customerCommerceRequestLimit:2*1024*1024,
+    customerQuoteProgrammes:true,
     customerQuotes:true,customerQuotesConfigured:customerQuotesConfiguration!==null,customerQuoteRequestLimit:QUOTE_REQUEST_LIMIT,
     templateExchange:true,templateExchangeRequestLimit:MAX_TEMPLATE_REVIEW_BODY,templateWorkbookBytesLimit:MAX_WORKBOOK_BYTES,
     europePmcWorkspaces:true,citationUpdateReview:true,citationReviewRequestLimit:MAX_CITATION_REVIEW_BODY,
@@ -307,6 +310,11 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
   // Quotation publication can use Commerce's accepted loopback receiving while it drains.
   owners.add('customer-quotes',()=>customerQuotes.close(),-10);
   api.customerQuotesBindingSha256=customerQuotes.launch?.bindingSha256??null;
+  const customerQuoteProgrammes=await openResearchQuoteProgrammeDesk({
+    directory:join(store.directory,'customer-quote-programmes'),workspaceId,
+    client:()=>new ResearchWorkspaceClient({url:origin+'/#token='+token,directory:store.directory,expectedWorkspaceId:workspaceId})});
+  // Programme jobs drain through the same live quote, commerce and dossier listener.
+  owners.add('customer-quote-programmes',()=>customerQuoteProgrammes.close(),-20);
   const server = createServer(async (req, res) => {
     const headers = {
       'Cache-Control': 'no-store',
@@ -396,6 +404,7 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
         }else send(200,result.body);
         return;
       }
+      if (await handleResearchQuoteProgrammeRoute({req,res,url,send,readJson,controller:customerQuoteProgrammes,headers})) return;
       if (await handleResearchQuoteRoute({req,res,url,send,readJson,controller:customerQuotes,headers})) return;
       if (await handleResearchCommerceRoute({req,res,url,send,readJson,controller:customerCommerce,headers})) return;
       if (await handleCustomerUpdateRoute({req,res,url,send,readJson,store,europePmc})) return;
