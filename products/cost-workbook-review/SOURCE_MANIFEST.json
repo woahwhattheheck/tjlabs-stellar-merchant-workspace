@@ -1,0 +1,50 @@
+{
+  "schema": "cost-workbook-review.public-source/v1",
+  "sourceEdition": "2026-10-13-cb2a",
+  "runtime": {
+    "python": ">=3.11",
+    "platforms": [
+      "Linux",
+      "macOS"
+    ],
+    "dependencies": "Python standard library; ordinary browser"
+  },
+  "entrypoint": "python3 serve.py serve --workspace /absolute/private/workbook-review --port 8865",
+  "files": [
+    {
+      "path": "workbook_review.py",
+      "bytes": 30218,
+      "sha256": "6aab25d4ce3970b02114d2673d45eb8eb2ca2777de97bffdff43b95a2154a5a2"
+    },
+    {
+      "path": "serve.py",
+      "bytes": 10141,
+      "sha256": "9fef035fd309078bde6fa3eaccf90d05df4ee44efe296276f90b4b9e76648443"
+    },
+    {
+      "path": "ui.js",
+      "bytes": 21974,
+      "sha256": "4cc5528cbfdc7fba595f15b4c0e8b5d6aa62fbdc96c4b8e2154eed22c71640d7"
+    },
+    {
+      "path": "style.css",
+      "bytes": 3608,
+      "sha256": "ce910f0c6cff31c0ec93f644575bc52fc998cad13326ab432622468a5773e646"
+    },
+    {
+      "path": "README.md",
+      "bytes": 9649,
+      "sha256": "aaf8615a488d9dbd3e8ff29d12e3ef55d03a0a7ab53efceff4aaf53d70755889"
+    },
+    {
+      "path": "SOURCE_NOTES.md",
+      "bytes": 3748,
+      "sha256": "bb1df9f53d0ed20ac200d8da7b614787fd5b62b6979d2f0ebd36de3e07fdb0ba"
+    },
+    {
+      "path": "OPERATING.md",
+      "bytes": 13577,
+      "sha256": "20030f7af8b7c0c761f3470418525cd23428a4e690c6fe682e6a26bc6d62a8f0"
+    }
+  ]
+}
