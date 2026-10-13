@@ -10,7 +10,7 @@ Open **Grant Operations → Cohort delivery** in the original operating case. Th
 2. Select the original completed or in-progress review in **Cohort acceptance** and freeze that review using its existing workflow.
 3. Open **Cohort delivery**, choose the saved adoption plan and frozen cohort review, and select **Compare selected sources**.
 
-A complete comparison JSON file can also be opened with **Open JSON**. The selected documents must retain the same original case and tranche. A different source plan revision or UTC window remains visible in the comparison's source differences.
+A complete comparison JSON file can also be opened with **Open JSON**. The CLI also accepts the complete saved delivery schedule report and selects its retained candidate plan. The selected documents must retain the same original case and tranche. A different source plan revision or UTC window remains visible in the comparison's source differences.
 
 The comparison receives the whole saved plan edition and whole native `COHORT_EVALUATION` review, including its snapshot, original purchase history, selected participants, source metadata, and rule. Download either original document from **Saved editions and sources**.
 
@@ -124,7 +124,7 @@ To add explicit choices, edit the complete input's `links` and `assignments` arr
 }
 ```
 
-The example describes the field shape. Select actual identifiers from the complete comparison's `joins`, `records`, and `rows`; each record supplies its valid `candidateTargetIds`.
+The example describes the field shape. Select actual identifiers from the complete comparison's `joins`, `records`, and `rows`; each record's `candidateGroupId` selects a complete `candidateGroups` entry with its valid `targetIds`. Candidate lists are shared across matching original intents so a large cohort retains one full list per source identity group.
 
 ## Native integration and receiving
 

@@ -80,7 +80,7 @@ function seconds(ticks) {
 function dayOf(value) { return value ? timestamp(value, 'Original observation time').day : null; }
 function checkedPlan(document) {
   const source = object(document, 'planDocument');
-  const plan = source.schema === EDITION_SCHEMA ? source.plan :
+  const plan = source.schema === EDITION_SCHEMA ? source.plan : source.schema === 'stellar-forge.sf47-delivery-schedule-report.v1' ? source.candidate :
     source.schema === COHORT_PLAN_REPORT_SCHEMA && source.kind === 'PLAN' ? source.input : source;
   if (!plan || plan.schema !== COHORT_PLAN_SCHEMA) fail('PLAN_DOCUMENT_REQUIRED', 'Select the full adoption plan, saved edition, or original plan report.', 'planDocument');
   return evaluateCohortPlan(plan);
@@ -251,7 +251,7 @@ export function compareCohortDelivery(raw) {
     if(!row.note.trim())fail('INTENT_ASSIGNMENT_NOTE_REQUIRED','Describe the source basis for the selected placement.','assignments');
     assignments.set(row.intentId,row);
   }
-  const records=[];
+  const records=[],candidateGroups=new Map();
   for(const intent of c.intents) {
     const bindings=intent.purchaseIds.map(id=>bindingMap.get(id)).filter(Boolean);
     const one=key=>{const values=[...new Set(bindings.map(row=>row[key]).filter(Boolean))];return values.length===1?values[0]:null;};
@@ -259,13 +259,18 @@ export function compareCohortDelivery(raw) {
     const merchantDeploymentId=observedOperations.get(operationId)?.merchantDeploymentId||null;
     const assets=[...new Set(intent.purchaseIds.map(id=>observationMap.get(id)?.original?.asset).filter(Boolean))];
     const asset=assets.length===1?assets[0]:null,firstDay=dayOf(intent.firstAttemptAt);
-    const candidates=operationId&&buyerDeploymentId&&merchantDeploymentId
-      ?(index.get(canonical([operationId,buyerDeploymentId,merchantDeploymentId,intent.network]))||[])
-        .filter(row=>row.asset===asset && (!row.facilitatorId || row.observedFacilitatorId===facilitatorId)):[];
-    const dated=candidates.filter(row=>row.date===firstDay),selected=assignments.get(intent.id);
+    const candidateGroupId=operationId&&buyerDeploymentId&&merchantDeploymentId
+      ?canonical([operationId,buyerDeploymentId,merchantDeploymentId,intent.network,asset,facilitatorId]):null;
+    if(candidateGroupId&&!candidateGroups.has(candidateGroupId)){
+      const candidates=(index.get(canonical([operationId,buyerDeploymentId,merchantDeploymentId,intent.network]))||[])
+        .filter(row=>row.asset===asset && (!row.facilitatorId || row.observedFacilitatorId===facilitatorId));
+      const byDate=new Map();for(const row of candidates){if(!byDate.has(row.date))byDate.set(row.date,[]);byDate.get(row.date).push(row);}
+      candidateGroups.set(candidateGroupId,{id:candidateGroupId,targetIds:candidates.map(row=>row.id),targetSet:new Set(candidates.map(row=>row.id)),byDate});
+    }
+    const candidateGroup=candidateGroups.get(candidateGroupId),dated=candidateGroup?.byDate.get(firstDay)||[],selected=assignments.get(intent.id);
     // Explicit placement can retain a changed date, but cannot silently assign
     // another customer, operation, network or asset to the opportunity.
-    if(selected&&!candidates.some(row=>row.id===selected.targetId))
+    if(selected&&!candidateGroup?.targetSet.has(selected.targetId))
       fail('INTENT_IDENTITY_CONFLICT','The selected opportunity has different participant, operation, facilitator, network or asset identities. Correct its identity associations before placing this intent.','assignments.'+intent.id);
     const target=selected?targetMap.get(selected.targetId):dated.length===1?dated[0]:null;
     const completed=currentCompletion(intent,cutoff);
@@ -275,8 +280,8 @@ export function compareCohortDelivery(raw) {
       buyerDeploymentId,operationId,merchantDeploymentId,facilitatorId,network:intent.network,asset,
       firstAttemptAt:intent.firstAttemptAt,firstAttemptDate:firstDay,
       currentCompletedAt:completed?.completedAt||null,completionDate:completed?dayOf(completed.completedAt):null,
-      targetId:target?.id||null,placement:selected?'OPERATOR_ASSIGNMENT':target?'ORIGINAL_IDENTITIES_AND_UTC_DATE':dated.length>1?'AMBIGUOUS_DATE':candidates.length?'DATE_UNMATCHED':'IDENTITY_UNMATCHED',
-      candidateTargetIds:candidates.map(value=>value.id),assignmentNote:selected?.note||'',
+      targetId:target?.id||null,placement:selected?'OPERATOR_ASSIGNMENT':target?'ORIGINAL_IDENTITIES_AND_UTC_DATE':dated.length>1?'AMBIGUOUS_DATE':candidateGroup?.targetIds.length?'DATE_UNMATCHED':'IDENTITY_UNMATCHED',
+      candidateGroupId,assignmentNote:selected?.note||'',
       attempted:intent.attempted,settled:intent.settled,inWindow:intent.inWindow,unplaced:intent.unplaced,
       completeInWindow:intent.completeInWindow,independentCompleteInWindow:intent.independentCompleteInWindow,
       grossCompleteInWindow:intent.grossCompleteInWindow,laterCompletion:intent.laterCompletion,
@@ -349,7 +354,7 @@ export function compareCohortDelivery(raw) {
     source:{programId:plan.source.programId,plan:copy(plan.source),reviewId:input.review.id,reviewVersion:input.review.version,
       measurementSha256:c.source.measurementSha256,previewSha256:c.previewSha256,observed:copy(c.source),
       plannedWindow:copy(plan.window),observedWindow:copy(c.window),nativeMode:input.review.snapshot.program.mode},
-    planReport:plan,joins,rows,records,unmatched,days:[...dayMap.values()].sort((a,b)=>a.date.localeCompare(b.date)),
+    planReport:plan,joins,rows,records,unmatched,candidateGroups:[...candidateGroups.values()].map(({id,targetIds})=>({id,targetIds})),days:[...dayMap.values()].sort((a,b)=>a.date.localeCompare(b.date)),
     operators:[...operatorMap.values()].sort((a,b)=>(a.operatorId||'').localeCompare(b.operatorId||'')),targets,issues,
     nativeMetrics:copy(c.metrics),nativeIssues:copy(c.issues),amounts:copy(c.amounts),outcomes:copy(c.outcomes),products:copy(c.products)
   };

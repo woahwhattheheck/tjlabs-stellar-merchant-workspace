@@ -19,7 +19,7 @@ export interface DeliveryRecord {
   network:string;asset:string|null;firstAttemptAt:string|null;firstAttemptDate:string|null;
   currentCompletedAt:string|null;completionDate:string|null;targetId:string|null;
   placement:'OPERATOR_ASSIGNMENT'|'ORIGINAL_IDENTITIES_AND_UTC_DATE'|'AMBIGUOUS_DATE'|'DATE_UNMATCHED'|'IDENTITY_UNMATCHED';
-  candidateTargetIds:string[];assignmentNote:string;attempted:boolean;settled:boolean;inWindow:boolean;unplaced:boolean;
+  candidateGroupId:string|null;assignmentNote:string;attempted:boolean;settled:boolean;inWindow:boolean;unplaced:boolean;
   completeInWindow:boolean;independentCompleteInWindow:boolean;grossCompleteInWindow:boolean;laterCompletion:boolean;
   refundedAfterSettlement:boolean;cancelledAfterSettlement:boolean;teamOperated:boolean;lateAfterPlan:boolean;
   latenessSeconds:string|null;sourceIssues:string[];sourceIds:string[];
@@ -45,14 +45,14 @@ export interface DeliverySource {programId:string;plan:JsonObject;reviewId:strin
 export interface CohortDeliveryComparison {
   schema:'stellar-forge.sf47-cohort-delivery-comparison.v1';engineVersion:1;title:string;input:CohortDeliveryInput;
   summary:{[key:string]:number|boolean};source:DeliverySource;planReport:JsonObject;joins:DeliveryJoin[];rows:DeliveryOpportunity[];
-  records:DeliveryRecord[];unmatched:DeliveryRecord[];days:DeliveryDay[];operators:DeliveryOperator[];targets:DeliveryTarget[];
+  records:DeliveryRecord[];unmatched:DeliveryRecord[];candidateGroups:Array<{id:string;targetIds:string[]}>;days:DeliveryDay[];operators:DeliveryOperator[];targets:DeliveryTarget[];
   issues:DeliveryFinding[];nativeMetrics:JsonObject;nativeIssues:DeliveryFinding[];amounts:JsonObject[];outcomes:JsonObject[];products:JsonObject[];
 }
 export const COHORT_DELIVERY_INPUT_SCHEMA:'stellar-forge.sf47-cohort-delivery-input.v1';
 export const COHORT_DELIVERY_COMPARISON_SCHEMA:'stellar-forge.sf47-cohort-delivery-comparison.v1';
 export class CohortDeliveryError extends Error {code:string;path:string;constructor(code:string,message:string,path?:string)}
-export function seedCohortDeliveryComparison(planDocument:JsonObject,review:JsonObject,options?:Partial<DeliveryRecording>&{title?:string;note?:string}):CohortDeliveryInput;
+export function seedCohortDeliveryComparison(planDocument:unknown,review:unknown,options?:Partial<DeliveryRecording>&{title?:string;note?:string}):CohortDeliveryInput;
 export function compareCohortDelivery(input:CohortDeliveryInput):CohortDeliveryComparison;
-export function reopenCohortDeliveryComparison(document:CohortDeliveryComparison):CohortDeliveryComparison;
+export function reopenCohortDeliveryComparison(document:unknown):CohortDeliveryComparison;
 export function exportCohortDeliveryCsv(document:CohortDeliveryComparison):string;
 export function exportCohortDeliveryHtml(document:CohortDeliveryComparison):string;
