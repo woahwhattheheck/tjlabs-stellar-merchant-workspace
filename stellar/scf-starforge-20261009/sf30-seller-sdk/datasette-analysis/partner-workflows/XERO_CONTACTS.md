@@ -32,7 +32,7 @@ Replace SELECTED_TENANT_UUID with the actual UUID. Default page size is 1,000, w
 
 Requests run serially with a 1.1-second interval. The customer's other workers can consume the same native limits. A 429 saves the original response and its Retry-After deadline in the capture, then exits. Run the same command after that actual deadline; it refuses an early retry. If the response omitted Retry-After, the state explicitly records the 60-second fallback. The current Xero page distinguishes Starter daily limits from higher tiers; use the selected connection's actual headers and account allocation.
 
-HTTP errors retain the full returned response in attempts. Network errors retain the page and phase. A refreshed token for the same authorised tenant can continue the same original capture. The state path is protected by a process lock; after an interrupted process, inspect the saved lock owner PID and confirm it has exited before removing that lock directory.
+HTTP errors and invalid successful-response contracts retain the full returned response in attempts. Network errors retain the page and phase. A refreshed token for the same authorised tenant can continue the same original capture. The state path is protected by a process lock; after an interrupted process, inspect the saved lock owner PID and confirm it has exited before removing that lock directory.
 
 On continuation, every retained successful page is re-read before acquiring more pages. If its contacts or pagination changed, the command preserves the attempt and returns SOURCE_CHANGED_RESTART_CAPTURE. Capture a successor to a new state path, retain the predecessor and compare them once both are complete. A completed capture replay returns that original edition without fetching new pages. A fresh observation always uses a new state path.
 
@@ -44,7 +44,7 @@ The adapter makes only GET requests to the fixed Xero Contacts endpoint. It has 
 
 The complete review contains contact rows, primary/additional person candidates, returned group memberships and a decisionsTemplate. Save that whole template as a separate decisions JSON and complete its actual selections:
 
-- namespace: the retained migration namespace used for every later import.
+- namespace: the retained migration namespace used for every later import, matching ^[a-z][a-z0-9_]{0,39}$ (lowercase initial letter, then lowercase letters, digits or underscores).
 - targetScope: the selected Odoo database/export scope.
 - targetBaselineComplete: true only after retaining the complete selected target baseline.
 - targetExisting: actual selected Odoo export records in the original preparation schema.

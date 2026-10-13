@@ -22,7 +22,7 @@ async function unchangedWrite(path,content){
   try{await writeFile(path,content,{flag:"wx",mode:0o600});}
   catch(e){if(e.code!=="EEXIST")throw e;need((await read(path)).equals(Buffer.from(content)),"EXISTING_FILE_DIFFERS",path);}
 }
-async function atomic(path,value){const tmp=path+".writing-"+randomUUID();try{await writeFile(tmp,json(value),{flag:"wx",mode:0o600});await rename(tmp,path);}finally{await rm(tmp,{force:true});}}
+async function atomic(path,value){const serialized=json(value);need(Buffer.byteLength(serialized)<=128*1024*1024,"STATE_SIZE_LIMIT",path);const tmp=path+".writing-"+randomUUID();try{await writeFile(tmp,serialized,{flag:"wx",mode:0o600});await rename(tmp,path);}finally{await rm(tmp,{force:true});}}
 function argumentsOf(argv){
   const [command,...rest]=argv,allowed={
     capture:["state","tenant","token-env","page-size","max-records"],
@@ -76,17 +76,19 @@ async function capture(a){
     // A changed native record/page restarts into a new capture path rather than mixing editions.
     for(let i=0;i<state.pages.length;i++){
       const entry=await get(i+1,"resume-revalidation");
+      state.resumeValidation.push(entry);await atomic(a.state,state);
       const old=pageValue(state.pages[i],i+1,pageSize,sha),fresh=pageValue(entry,i+1,pageSize,sha);
-      state.resumeValidation.push(entry);
       if(canonical(old.Contacts)!==canonical(fresh.Contacts)||canonical(old.pagination)!==canonical(fresh.pagination)){
         state.lastError={at:now(),code:"SOURCE_CHANGED_RESTART_CAPTURE",page:i+1};await atomic(a.state,state);fail("SOURCE_CHANGED_RESTART_CAPTURE",a.state);
       }
       await atomic(a.state,state);
     }
     for(let page=state.pages.length+1;;page++){
-      const entry=await get(page,"capture"),body=pageValue(entry,page,pageSize,sha);
+      const entry=await get(page,"capture");let body;
+      try{body=pageValue(entry,page,pageSize,sha);}catch(e){state.attempts.push({...entry,phase:"response-contract"});state.lastError={at:now(),code:e.code||e.message,page};await atomic(a.state,state);throw e;}
       if(body.pagination.itemCount>maxRecords){state.attempts.push({...entry,phase:"record-limit"});await atomic(a.state,state);fail("SELECTED_SOURCE_EXCEEDS_RECORD_LIMIT",{actual:body.pagination.itemCount,maxRecords});}
-      const candidate={...state,pages:[...state.pages,entry]};validateCapture(candidate,sha,{complete:false});
+      const candidate={...state,pages:[...state.pages,entry]};
+      try{validateCapture(candidate,sha,{complete:false});}catch(e){state.attempts.push({...entry,phase:"capture-continuity"});state.lastError={at:now(),code:e.code||e.message,page};await atomic(a.state,state);throw e;}
       need(Buffer.byteLength(json(candidate))<=96*1024*1024,"CAPTURE_SIZE_LIMIT");
       state=candidate;delete state.retryAt;delete state.retrySource;delete state.lastError;
       if(page>=Math.max(1,body.pagination.pageCount)){state.complete=true;state.completedAt=now();}
