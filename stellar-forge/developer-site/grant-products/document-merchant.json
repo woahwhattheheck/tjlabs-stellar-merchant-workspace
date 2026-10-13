@@ -37,6 +37,12 @@
           "bytes": 36226,
           "sha256": "05eb0d7d6caab0a66fe78be66bb53c1113e27672dbbadc29dcbdf4cba326b90b",
           "git_blob": "1dce80aa2de5eb8c41521eab769fbbe284bb56a2"
+        },
+        {
+          "commit": "508ba6880e9a25ebf0ec39da436acfd48c67ad30",
+          "bytes": 37497,
+          "sha256": "51100d4d343e651eaa32a6a8b6674b3aa935a1080c244be4ebca2f466685d611",
+          "git_blob": "0a98c0b89e2071b305accb6340f6fcb931794918"
         }
       ]
     },
@@ -85,6 +91,12 @@
           "bytes": 24076,
           "sha256": "391467448c726dc580d44adee6218aeae58ae3e8b676be7f69464606d166d864",
           "git_blob": "00f852267aee02b51c8bf433b06974c8959dd0fa"
+        },
+        {
+          "commit": "508ba6880e9a25ebf0ec39da436acfd48c67ad30",
+          "bytes": 34194,
+          "sha256": "4e23542b1f074df4213f2effb0a09290d58bf46df8f8b2f94208eefa95aeaa2e",
+          "git_blob": "651f13ce26c9efe26c9a13bd8d51afacab653d8f"
         }
       ]
     },
@@ -117,6 +129,12 @@
           "bytes": 17748,
           "sha256": "718a99bf1ed02edbc8721d0fcfb1df01f1d220e7fe18bc656134e2dcfaacf2db",
           "git_blob": "41f1acc238e50a8436e9807c4663f3be082be311"
+        },
+        {
+          "commit": "508ba6880e9a25ebf0ec39da436acfd48c67ad30",
+          "bytes": 25979,
+          "sha256": "c432159ea6f91b07cc6d42fd67744ac9ec83c45828619c5a233427286441d4a7",
+          "git_blob": "c1b1a522a15aaf7e2b8aa496e073aab0301945f5"
         }
       ]
     },
@@ -205,6 +223,22 @@
           "bytes": 5944,
           "sha256": "5b12adfb4b8a8624833d4231d77858457a95215425c0f6120f17823c492a5dfa",
           "git_blob": "2253dcabae728f7c9909be7590e1d0458cd2d4eb"
+        }
+      ]
+    },
+    {
+      "id": "document-merchant-existing-pdf-workspace",
+      "label": "Complete existing PDF intake, native assembly and customer source receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/document-merchant/assembly-workspace.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "508ba6880e9a25ebf0ec39da436acfd48c67ad30",
+          "bytes": 17691,
+          "sha256": "c94a670e76c9d8fe8036a02e48468c96a985f4ca495be17b08e5e154f0c151de",
+          "git_blob": "4b3931312eb9a5f9203696e89a44032692361cf4"
         }
       ]
     }
