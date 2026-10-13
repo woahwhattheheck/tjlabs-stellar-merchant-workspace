@@ -67,6 +67,12 @@ constructor. Multiple supplied configurations must agree; startup reports a
 configuration error when they differ. Catalog membership is fixed for the lifetime
 of the running broker.
 
+Desktop MCP clients use the same configuration through the existing
+`client-config.mjs --catalogs /absolute/private/catalogs.json` generator. A
+registry operator can supply its saved list through `--operator` with the original
+state directory and permitted origins. [STDIO.md](STDIO.md) gives the complete
+registration commands and merged-client configuration.
+
 Authentication and per-tool OAuth scopes use the existing host configuration.
 `bazaar_catalogs` is a read-only tool and uses the same configured resource scope
 unless the operator gives it an explicit entry in the existing tool-scope map.

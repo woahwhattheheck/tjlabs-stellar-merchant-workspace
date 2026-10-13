@@ -9,7 +9,7 @@ import { loadOAuthResourceHost } from './oauth-host.mjs';
 import { normalizeCatalogConfiguration } from './catalogs.mjs';
 
 async function catalogFile(path) {
-  if (path === undefined) return undefined;
+  if (path === undefined || path === '') return undefined;
   if (typeof path !== 'string' || !isAbsolute(path))
     throw new TypeError('BAZAAR_CATALOGS_FILE must be an absolute trusted configuration path.');
   if ((await stat(path)).size > 65536) throw new TypeError('Catalog configuration exceeds 64 KiB.');
@@ -20,7 +20,7 @@ async function catalogFile(path) {
 }
 
 export async function startMcpWorkspace({ environment = process.env, oauthFetchImpl, operatorAdapter, discoveryCatalogs } = {}) {
-  const discoveryUrl = environment.BAZAAR_DISCOVERY_URL;
+  const discoveryUrl = environment.BAZAAR_DISCOVERY_URL || undefined;
   const bearerToken = environment.MCP_ACCESS_TOKEN;
   const oauthConfigPath = environment.MCP_OAUTH_CONFIG;
   if (!bearerToken && !oauthConfigPath)

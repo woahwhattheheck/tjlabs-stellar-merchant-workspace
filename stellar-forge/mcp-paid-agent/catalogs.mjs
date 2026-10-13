@@ -21,6 +21,8 @@ export function normalizeCatalogUrl(value) {
   try { url = new URL(value); } catch { invalid('Invalid configured catalog URL.'); }
   if (!['https:','http:'].includes(url.protocol) || url.username || url.password || url.search || url.hash)
     invalid('Catalog base URLs cannot contain credentials, query parameters or a fragment.');
+  if (url.href.length > 4096)
+    invalid('The canonical catalog base URL must fit within 4096 characters.');
   return url.href;
 }
 export function normalizeCatalogDescription(value) {
