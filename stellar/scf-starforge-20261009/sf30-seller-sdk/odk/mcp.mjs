@@ -180,16 +180,16 @@ export class MerchantCentralWorkspaces{
       case 'merchant_odk_warehouse_browser':
         await inspectCentralWarehouse(connection);
         return {workspace:scope.alias,instanceId:connection.value.instanceId,
-          url:connection.value.origin+'/warehouse/'+new URL(connection.value.url).hash};
+          url:(connection.value.browserOrigin??connection.value.origin)+'/warehouse/'+new URL(connection.value.url).hash};
       case 'merchant_odk_commissioning_state':
         return page(await inspectCentralCommissioning(connection),args.offset??0,args.limit??50);
       case 'merchant_odk_commissioning_browser':
         await inspectCentralCommissioning(connection);
         return {workspace:scope.alias,instanceId:connection.value.instanceId,
-          url:connection.value.origin+'/commissioning/'+new URL(connection.value.url).hash};
+          url:(connection.value.browserOrigin??connection.value.origin)+'/commissioning/'+new URL(connection.value.url).hash};
       case 'merchant_odk_browser':
         await inspectCentralListener(connection);
-        return {workspace:scope.alias,instanceId:connection.value.instanceId,url:connection.value.url};
+        return {workspace:scope.alias,instanceId:connection.value.instanceId,url:connection.value.browserUrl??connection.value.url};
       case 'merchant_odk_source_connect':{
         const profile=scope.connections[alias(args.profile)];
         odkNeed(profile,'ODK_SOURCE_NOT_CONFIGURED','Choose a host-declared original Central connection.');
