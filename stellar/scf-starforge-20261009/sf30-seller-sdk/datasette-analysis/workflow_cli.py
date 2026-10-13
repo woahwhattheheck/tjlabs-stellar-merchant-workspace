@@ -66,6 +66,7 @@ def parser():
     result.add_argument("--correlation-mode", choices=["business-properties", "native-header"])
     serve = command("serve", "Open the original request, result and delivery operator")
     serve.add_argument("--configuration", help="Installed profile JSON for native execution")
+    serve.add_argument("--providers", help="Private installed provider connections and existing credential references")
     serve.add_argument("--port", type=int, default=0)
     serve.add_argument("--open", action="store_true")
     configure = commands.add_parser("configure", help="Bind an installed profile to its actual original source files")
@@ -240,7 +241,8 @@ def main(argv=None):
             value = configure(args)
         elif args.command == "serve":
             from workflow_server import serve
-            serve(args.workspace, configuration_path=args.configuration, port=args.port, open_browser=args.open)
+            serve(args.workspace, configuration_path=args.configuration, providers_path=args.providers,
+                  port=args.port, open_browser=args.open)
             return 0
         elif args.command == "receive":
             value = Workflow.receive(args.archive, args.workspace, expected_sha256=args.sha256,

@@ -24,6 +24,8 @@ export function datasetteWorkflowApplication(common = []) {
         'Use the existing workflow or received project directory, or an absent directory inside a private parent.'),
       field('configurationFile', 'Installed source and report configuration', 'path', false,
         'Select the complete configured profile for new requests. Leave empty to inspect and re-export an existing received project.'),
+      field('providersFile', 'Installed source-provider connections', 'path', false,
+        'Select the private provider configuration with existing host credential references and original acquisition inputs.'),
       ...common,
     ],
   };
@@ -47,6 +49,17 @@ async function selectedConfiguration(path) {
   return { value, descriptor: { path: absolute(path), bytes: bytes.length, sha256: digest(bytes) } };
 }
 
+async function selectedProviders(path) {
+  const bytes = await regular(absolute(path), 32 * 1024 * 1024);
+  const value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+  need(plain(value) && value.schema === 'stellar-forge.provider-workflows.v1' &&
+    typeof value.node === 'string',
+    'DATASETTE_WORKFLOW_PROVIDERS_REQUIRED',
+    'Select the original installed provider configuration and its Node executable.');
+  absolute(value.node);
+  return { value, descriptor: { path: absolute(path), bytes: bytes.length, sha256: digest(bytes) } };
+}
+
 export async function prepareDatasetteWorkflowApplication(settings, {
   root, runtimeId, runtimeDirectory, inputPath, selectedExecutable,
 } = {}) {
@@ -65,6 +78,16 @@ export async function prepareDatasetteWorkflowApplication(settings, {
       'DATASETTE_WORKFLOW_CONFIGURATION_CHANGED');
     inputs.push(input);
     command.push('--configuration', input.path);
+  }
+  if (settings.providersFile) {
+    const input = await inputPath(settings.providersFile, 'file', false, true);
+    const providers = await selectedProviders(input.path);
+    need(input.bytes === providers.descriptor.bytes &&
+      (input.sha256 === undefined || input.sha256 === providers.descriptor.sha256),
+      'DATASETTE_WORKFLOW_PROVIDERS_CHANGED');
+    const node = await selectedExecutable(providers.value.node);
+    inputs.push(input, ...node.inputs);
+    command.push('--providers', input.path);
   }
   for (const member of selected.selection.sourceFiles) {
     const input = await inputPath(join(selected.binding.sourceRoot, member.path), 'file');
@@ -127,6 +150,7 @@ export async function datasetteWorkflowStartup(request, text, { pid } = {}) {
     'DATASETTE_WORKFLOW_STARTUP_CHANGED');
   const directory = absolute(datasetteAnalysisOption(originalArgs, '--workspace'));
   const configurationPath = datasetteAnalysisOption(originalArgs, '--configuration');
+  const providersPath = datasetteAnalysisOption(originalArgs, '--providers');
   const selectedPort = datasetteAnalysisOption(originalArgs, '--port') ?? '0';
   const controlFile = join(directory, 'source-workflow-launch.json');
   need(ready.privateLaunch === controlFile && ready.workspace === directory &&
@@ -154,14 +178,21 @@ export async function datasetteWorkflowStartup(request, text, { pid } = {}) {
   need(matchesConfiguration(control.configuration) && matchesConfiguration(ready.configuration) &&
     control.profile === (configured?.value.profile ?? null),
     'DATASETTE_WORKFLOW_CONFIGURATION_CHANGED');
+  const providerSelection = providersPath ? await selectedProviders(providersPath) : null;
+  const expectedProviders = providerSelection?.descriptor ?? null;
+  const matchesProviders = value => expectedProviders === null ? value == null :
+    plain(value) && ['path', 'bytes', 'sha256'].every(key => value[key] === expectedProviders[key]);
+  need(matchesProviders(control.providerConfiguration) && matchesProviders(ready.providerConfiguration),
+    'DATASETTE_WORKFLOW_PROVIDERS_CHANGED');
   const live = await liveWorkflow(url);
   need(live?.schema === SCHEMA && live.ready === true && live.status === 'READY' &&
     live.pid === pid && live.workspace === directory && live.workspaceId === control.workspaceId &&
-    live.profile === control.profile && matchesConfiguration(live.configuration),
+    live.profile === control.profile && matchesConfiguration(live.configuration) &&
+    matchesProviders(live.providerConfiguration),
     'DATASETTE_WORKFLOW_WORKSPACE_CHANGED', 'Reopen the selected original workflow project.');
   return { url: url.href, workspaceId: control.workspaceId, connectionFile: controlFile,
     original: { schema: SCHEMA, directory, workspaceId: control.workspaceId,
       privateLaunch: controlFile, originalPid: pid, profile: control.profile,
-      configuration: expected, analysis: live.analysis,
+      configuration: expected, providerConfiguration: expectedProviders, analysis: live.analysis,
       pythonInstallation: selection.installationId, bindingSha256: selection.expectedBindingSha256 } };
 }
