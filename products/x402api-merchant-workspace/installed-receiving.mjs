@@ -410,7 +410,7 @@ async function receiveBrowser(opening, scenario, reads, { label = 'installed', r
   browserContext = await browser.newContext({ viewport: { width: 1440, height: 1080 }, acceptDownloads: true, deviceScaleFactor: 1 });
   const page = await browserContext.newPage(), origin = new URL(opening.url).origin;
   const failures = [], consoleErrors = [], requests = [], images = [], downloads = [];
-  let interruptOriginalReconcile = false;
+  let interruptOriginalReconcile = false, interruptInvoiceCreate = false, allowedInvoiceRequest = null;
   const paymentWork = [];
   let loadingRelease = null, loadingStarted = null;
   page.on('pageerror', error => failures.push({ kind: 'pageerror', message: String(error.message) }));
@@ -421,7 +421,10 @@ async function receiveBrowser(opening, scenario, reads, { label = 'installed', r
       (url.pathname === '/api/project/exports' || /^\/api\/project\/exports\/[0-9a-f-]{36}\/download$/.test(url.pathname));
     const paymentWrite = !review && request.method() === 'POST' && reads.invoices.some(invoice =>
       url.pathname === '/api/orders/' + invoice.merchantOrderId + '/reconcile');
-    if (url.origin !== origin || request.method() !== 'GET' && !projectWrite && !paymentWrite) {
+    const draftWrite = !review && request.method() === 'POST' && url.pathname === '/api/orders' &&
+      allowedInvoiceRequest && reads.invoices.some(invoice=>invoice.merchantOrderId===allowedInvoiceRequest.id) &&
+      request.postData()===JSON.stringify(allowedInvoiceRequest);
+    if (url.origin !== origin || request.method() !== 'GET' && !projectWrite && !paymentWrite && !draftWrite) {
       failures.push({ kind: 'unexpected-browser-request', method: request.method(), origin: url.origin, path: url.pathname });
       return route.abort();
     }
@@ -431,7 +434,7 @@ async function receiveBrowser(opening, scenario, reads, { label = 'installed', r
       for (const [name, value] of Object.entries(await request.allHeaders()))
         if (!['host','connection','accept-encoding','content-length'].includes(name)) headers[name] = value;
       const response = await fetch(request.url(), { method: request.method(), headers,
-        ...((projectWrite || paymentWrite) ? { body: request.postDataBuffer() } : {}), redirect: 'error', signal: AbortSignal.timeout(15000) });
+        ...((projectWrite || paymentWrite || draftWrite) ? { body: request.postDataBuffer() } : {}), redirect: 'error', signal: AbortSignal.timeout(15000) });
       const body = Buffer.from(await response.arrayBuffer()); assert(body.length <= 64 * 1024 * 1024);
       const selected = {};
       for (const name of ['content-type','cache-control','content-security-policy','x-content-type-options','content-disposition','referrer-policy','x-merchant-store-id','x-merchant-tenant-id'])
@@ -439,6 +442,11 @@ async function receiveBrowser(opening, scenario, reads, { label = 'installed', r
       if (loadingStarted && request.method() === 'GET' && /^\/api\/orders\/[0-9a-f-]+$/.test(url.pathname)) {
         const started=loadingStarted;loadingStarted=null;started();
         await new Promise(resolve=>{loadingRelease=resolve;});
+      }
+      if (draftWrite && interruptInvoiceCreate) {
+        interruptInvoiceCreate=false;assert.equal(response.status,201);
+        const actual=JSON.parse(body);assert.equal(actual.order.id,allowedInvoiceRequest.id);assert.equal(actual.order.state,'COMPLETE');
+        return route.fulfill({status:201,headers:selected,body:JSON.stringify({interruptedOriginalInvoiceResponse:true})});
       }
       if (paymentWrite && interruptOriginalReconcile) {
         interruptOriginalReconcile=false;
@@ -496,6 +504,13 @@ async function receiveBrowser(opening, scenario, reads, { label = 'installed', r
         await envelopeDownload.saveAs(envelopePath); assert.equal(await envelopeDownload.failure(), null);
         downloads.push(await originalFile(envelopePath, { bytes: invoice.envelope.bytes, sha256: invoice.envelope.sha256 }));
       }
+    }
+    let invoiceWorking=null;
+    if(!review){
+      const {receiveInvoiceWorkingCopies}=await import('./invoice-working-receiving.mjs');
+      invoiceWorking=await receiveInvoiceWorkingCopies({page,opening,scenario,reads,label,root:ROOT,directory,save,originalFile,
+        control:{retainRequest:value=>{allowedInvoiceRequest=value;},interruptOnce:()=>{interruptInvoiceCreate=true;}}});
+      downloads.push(...invoiceWorking.files);images.push(...invoiceWorking.images);
     }
     const {receiveInvoiceDeliveries}=await import('./invoice-delivery-receiving.mjs');
     const customerDelivery=await receiveInvoiceDeliveries({browser,page,opening,scenario,reads,label,root:ROOT,directory,save,originalFile,runCommand,stopped});
@@ -572,7 +587,7 @@ async function receiveBrowser(opening, scenario, reads, { label = 'installed', r
     assert.deepEqual(failures, []); assert.deepEqual(consoleErrors, []);
     return { browser: await browser.version(), chromium: values.chromium,
       mode: exportProject ? 'ORIGINAL_INSTALLED_PORTABLE_HTTP_BRIDGE' : 'ORIGINAL_INSTALLED_HTTP_GET_BRIDGE',
-      dimensions: { phone }, images, downloads, requests, paymentWork, customerDelivery,
+      dimensions: { phone }, images, downloads, requests, paymentWork, customerDelivery, invoiceWorking,
       renderedInspection: { state:'AWAITING_PRODUCER_SCREEN_REVIEW',guide:'PAYMENTS.md#required-inspection-before-customer-readiness' },
       pageErrors: failures, consoleErrors,
       ...(project ? { project } : {}) };

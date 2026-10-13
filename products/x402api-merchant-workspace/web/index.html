@@ -28,12 +28,23 @@
       </section>
       <div class="toolbar"><div><h2>Invoices</h2><p id="template-line" class="muted"></p></div><div class="inline"><button id="refresh" class="secondary">Refresh</button><button id="show-intake" class="secondary">Import invoices</button><button id="show-create">New invoice</button></div></div>
       <section id="create-panel" class="panel" hidden aria-labelledby="create-title">
-        <div class="section-heading"><h3 id="create-title">Create invoice</h3><button id="hide-create" class="quiet">Close</button></div>
-        <form id="create-form">
-          <div class="form-grid"><label>Reference<input name="reference" required maxlength="120" autocomplete="off" placeholder="INV-1042"></label><label>Description<input name="title" required maxlength="180" autocomplete="off" placeholder="Monthly reporting package"></label></div>
-          <fieldset><legend>Payment options</legend><p class="muted">Select the accepted assets and enter the exact price for each.</p><div id="rail-fields" class="rail-fields"></div></fieldset>
-          <div class="form-actions"><span id="creation-note" class="muted"></span><button type="submit" id="create-submit">Save invoice</button></div>
-        </form>
+        <div class="section-heading"><div><h3 id="create-title">Invoice working copies</h3><p class="muted">Prepare several invoices, retain unfinished terms and return to the original invoice after interruption.</p></div><button id="hide-create" class="quiet">Close</button></div>
+        <div class="form-grid"><label>Saved working copy<select id="draft-list"><option value="">Choose saved working copy</option></select></label><div class="actions"><button id="draft-new" class="secondary">New working copy</button><button id="draft-open" class="secondary">Open working copy</button><input id="draft-file" type="file" accept=".json,application/json" hidden></div></div>
+        <p id="draft-storage-state" role="status" aria-live="polite" class="muted"></p>
+        <section id="draft-legacy" class="subsection" hidden><h4>Earlier tab request</h4><p class="muted">An earlier tab retained an invoice request without its merchant store identity. Read its saved invoice in this merchant to recover the original working copy. Keep the downloaded request when reconnecting to its original merchant.</p><div class="actions"><button id="draft-legacy-read" class="secondary">Read earlier invoice</button><button id="draft-legacy-download" class="secondary">Download earlier request</button></div></section>
+        <div id="draft-editor" hidden>
+          <label>Working-copy name<input id="draft-label" maxlength="180" autocomplete="off"></label>
+          <p id="draft-identity" class="mono muted"></p>
+          <form id="create-form">
+            <div class="form-grid"><label>Reference<input name="reference" required maxlength="120" autocomplete="off" placeholder="INV-1042"></label><label>Description<input name="title" required maxlength="180" autocomplete="off" placeholder="Monthly reporting package"></label></div>
+            <fieldset><legend>Payment options</legend><p class="muted">Select the accepted assets and enter the exact price for each.</p><div id="rail-fields" class="rail-fields"></div></fieldset>
+            <details><summary>Retained invoice terms</summary><pre id="draft-terms-content"></pre></details>
+            <details><summary>Original invoice request</summary><pre id="draft-request-content"></pre></details>
+            <div class="form-actions"><span id="creation-note" class="muted"></span><button type="submit" id="create-submit">Review and save invoice</button></div>
+          </form>
+          <div class="actions"><button id="draft-save" class="secondary">Save working copy</button><button id="draft-download" class="secondary">Download working copy</button><button id="draft-reload" class="secondary">Reopen saved revision</button><button id="draft-adopt" class="secondary" hidden>Review current terms</button><button id="draft-read" class="secondary" hidden>Read original invoice</button><button id="draft-open-invoice" hidden>Open saved invoice</button><button id="draft-remove" class="quiet">Remove browser copy</button></div>
+        </div>
+        <p class="muted">Working copies are private to this browser and its current origin. Download the complete working-copy JSON before moving browsers or changing the server address. The merchant project contains saved invoices; keep unfinished working copies with it separately.</p>
       </section>
       <section id="intake-panel" class="panel" hidden aria-labelledby="intake-title">
         <div class="section-heading"><div><h3 id="intake-title">Import invoices</h3><p class="muted">Retain a CSV or JSON accounting export, map its columns and review every invoice. Each source row offers one configured payment option.</p></div><button id="hide-intake" class="quiet">Close</button></div>
