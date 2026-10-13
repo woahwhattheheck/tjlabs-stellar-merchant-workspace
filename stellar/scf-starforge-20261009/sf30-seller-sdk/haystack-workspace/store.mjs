@@ -509,7 +509,7 @@ export class HaystackWorkspace {
     if (args.kind === "workspace") need(args.format === undefined && args.editionId === undefined && args.sourceId === undefined && args.role === undefined,
       "The complete workspace delivery includes every source, edition and application file; omit report-only fields.");
     else if (args.kind === "work-register") need(args.editionId === undefined && args.sourceId === undefined && args.role === undefined, "The complete corrective-work register retains every finding and review; omit asset-report scope fields.");
-    else if (args.kind === "native-grid") need(args.sourceId && args.role === undefined && (args.format === undefined || args.format === "json"), "Native grid delivery needs one selected source and JSON format.");
+    else if (args.kind === "native-grid") need(args.sourceId && args.role === undefined && (args.format === undefined || ["json", "zinc"].includes(args.format)), "Native grid delivery needs one selected source and JSON or Zinc format.");
     else need(args.sourceId === undefined, "Register and diagnostic reports use their complete selected source set.");
     return this.withWriter(async () => {
       const target = this.deliveryDirectory(operationId);
@@ -551,7 +551,7 @@ export class HaystackWorkspace {
     if (action === "semantic.catalog") return semanticCatalog();
     if (action === "source.read") {
       const original = await this.originalSource(args.sourceId);
-      return range(original.bytes, { sourceId: original.source.id, sha256: original.source.id, name: original.source.name, mediaType: "application/json" }, args);
+      return range(original.bytes, { sourceId: original.source.id, sha256: original.source.id, name: original.source.name, mediaType: original.source.format === "zinc" ? "text/zinc; charset=utf-8" : "application/json" }, args);
     }
     const state = await this.read();
     if (action === "workspace.status") return summary(state);

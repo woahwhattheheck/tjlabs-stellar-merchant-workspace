@@ -31,7 +31,7 @@ export function sourceGrid(source) {
 }
 export function sourceRecord(raw, { name, sourceUrl = "", format = "json-v4" }) {
   text(name, "the original source name", 240, true); text(sourceUrl, "the original source URL", 4000);
-  need(format === "json-v4", "Import a complete Haystack JSON v4 grid.", "HAYSTACK_FORMAT");
+  need(["json-v4", "zinc"].includes(format), "Import a complete Haystack JSON v4 or Zinc 3.0 grid.", "HAYSTACK_FORMAT");
   const bytes = Buffer.from(raw); need(bytes.length > 0 && bytes.length <= SOURCE_MAX_BYTES, "Import a complete grid of at most 32 MiB.", "HAYSTACK_SIZE", 413);
   const decoded = parseGrid(bytes, { format });
   return { id: sha256(bytes), name, sourceUrl, format, bytes: bytes.length, importedAt: now(),

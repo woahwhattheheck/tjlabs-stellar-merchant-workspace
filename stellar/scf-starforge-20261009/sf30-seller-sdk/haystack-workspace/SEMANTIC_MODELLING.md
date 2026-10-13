@@ -150,3 +150,7 @@ SEMANTIC_RECEIVING.mjs accepts one complete private input JSON path as its posit
 The original Charlie fixture is an anonymized donated Haystack example, not a customer deployment. The source-derived point-list input retains its original record keys, and any demonstration edits or physical-observation notes are explicitly labelled as programme evidence. The programme preserves every original source file, request UUID, complete result and interrupted-stage journal. Continue the same root/input after interruption; do not replace it with a new project or silently advance an existing request's revision.
 
 The complete operating result and saved artifact manifest identify which source/runtime/browser stages actually ran. Prepared source, successful native validation and observed browser completion are separate recorded facts.
+
+## Zinc native grids
+
+The same native source workflow accepts explicit `zinc` imports and exports Zinc 3.0 from a selected source or saved edition. JSON-v4 remains the default, tag edits retain their typed JSON representation, and the complete original file is always downloadable. See [Zinc contract](ZINC_CONTRACT.md) for commands, normalization, unsupported representations and complete source references. New complete workspace exports use package v6 and carry the Zinc codec, typed-projection application and VOLTTRON registry desk together. Receiving preserves the published v1, v2, v3, v4 and v5 inventories.
