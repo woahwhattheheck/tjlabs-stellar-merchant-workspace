@@ -1,4 +1,5 @@
 // Complete original statement, account-period comparison and immutable reconciliation editions.
+import {currentStaffContext,staffDeskStorageKey} from './staff-session.mjs';
 const DESK_SCHEMA='stellar-forge.sf47-account-reconciliation-desk.v1';
 const REPORT_SCHEMA='stellar-forge.sf47-account-reconciliation.v1';
 const PAGE_SIZE=50,MAX_DESK_BYTES=64*1024*1024;
@@ -25,19 +26,22 @@ function download(value,name,type='application/json'){
   const blob=value instanceof Blob?value:new Blob([typeof value==='string'?value:pretty(value)+'\n'],{type});
   const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),10000);
 }
-let opening;
-function database(){
-  if(!opening)opening=new Promise((resolve,reject)=>{
-    if(!globalThis.indexedDB){reject(new Error('Browser draft storage is unavailable.'));return;}
-    const request=indexedDB.open('sf47-account-reconciliation',1);
-    request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains('desks'))request.result.createObjectStore('desks');};
-    request.onerror=()=>{opening=null;reject(request.error||new Error('The reconciliation desk could not be opened.'));};
-    request.onsuccess=()=>{request.result.onversionchange=()=>{request.result.close();opening=null;};resolve(request.result);};
-  });
-  return opening;
+const RECONCILIATION_DATABASE='sf47-account-reconciliation',databases=new Map();
+function database(name=RECONCILIATION_DATABASE){
+  if(!databases.has(name)){
+    const opening=new Promise((resolve,reject)=>{
+      if(!globalThis.indexedDB){reject(new Error('Browser draft storage is unavailable.'));return;}
+      const request=indexedDB.open(name,1);
+      request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains('desks'))request.result.createObjectStore('desks');};
+      request.onerror=()=>reject(request.error||new Error('The reconciliation desk could not be opened.'));
+      request.onsuccess=()=>{request.result.onversionchange=()=>{request.result.close();databases.delete(name);};resolve(request.result);};
+    }).catch(problem=>{databases.delete(name);throw problem;});
+    databases.set(name,opening);
+  }
+  return databases.get(name);
 }
-async function stored(key,value,expectedRevision){
-  const db=await database();
+async function stored(key,value,expectedRevision,name=RECONCILIATION_DATABASE){
+  const db=await database(name);
   return new Promise((resolve,reject)=>{
     const tx=db.transaction('desks',value===undefined?'readonly':'readwrite'),store=tx.objectStore('desks'),request=store.get(key);
     let result,conflict;
@@ -52,12 +56,22 @@ async function stored(key,value,expectedRevision){
     tx.onerror=tx.onabort=()=>reject(conflict||tx.error||request.error||new Error('The reconciliation desk could not be saved.'));
   });
 }
-export function mountAccountReconciliation({container,current,api,saveApi=api,session,mutationId,recordingActor,onCase,onOpen}){
+export function mountAccountReconciliation({container,current,api,saveApi=api,session,mutationId,recordingActor,onCase,onOpen,staffContext=currentStaffContext()}){
   const root=document.createElement('section');root.className='account-reconciliation-desk';root.setAttribute('aria-label','Account reconciliation');container.replaceChildren(root);
   if(!document.querySelector('link[data-account-reconciliation-style]')){
     const style=document.createElement('link');style.rel='stylesheet';style.href='/operations_account_reconciliation.css';style.dataset.accountReconciliationStyle='true';document.head.append(style);
   }
   const caseId=current.program.id,prefix='/api/operations/'+caseId;
+  const deskContext=staffContext?clone(staffContext):null,databaseName=staffDeskStorageKey(RECONCILIATION_DATABASE,deskContext),boundStaff=databaseName!==RECONCILIATION_DATABASE;
+  const ownStored=(key,value,expectedRevision)=>stored(key,value,expectedRevision,databaseName);
+  let legacyCopy=null,legacySearched=false;
+  function pendingActorProblem(body) {
+    if(!boundStaff||deskContext.role==='owner'||!body)return null;
+    if(typeof body.actor==='string'&&body.actor.trim()===deskContext.actor)return null;
+    const original=typeof body.actor==='string'&&body.actor.trim()?body.actor.trim():'an unrecorded operator';
+    return Object.assign(new Error('This original request belongs to '+original+'. Sign in as that operator to resume it. The complete original copy remains available to download.'),{code:'STAFF_REQUEST_ACTOR_CHANGED',status:403});
+  }
+
   let active=true,busy=false,hostBusy=false,report=null,error='',notice='',storageNote='',saveTimer,loadSequence=0;
   session.storageWrites||=Promise.resolve();session.selection||={reconciliationId:null,revision:null};
   session.tab||='compare';session.view||='current';session.page||=0;session.filter||={query:'',status:''};
@@ -95,7 +109,7 @@ export function mountAccountReconciliation({container,current,api,saveApi=api,se
   }
   async function persist(){
     const snapshot=state(),write=session.storageWrites.catch(()=>{}).then(async()=>{
-      session.storageRevision=await stored(caseId,snapshot,session.storageRevision??0);session.storageConflict=false;
+      session.storageRevision=await ownStored(caseId,snapshot,session.storageRevision??0);session.storageConflict=false;
     });
     session.storageWrites=write;
     try{await write;storageNote='';if(available())status();return true;}
@@ -114,7 +128,7 @@ export function mountAccountReconciliation({container,current,api,saveApi=api,se
     if(!available())return;
     root.setAttribute('aria-busy',String(busy||hostBusy));
     for(const node of root.querySelectorAll('button,input,select,textarea'))node.disabled=node.dataset.arFixed==='true'||(node.dataset.arAlways!=='true'&&(busy||hostBusy||!!session.pending));
-    for(const node of root.querySelectorAll('[data-ar-action="retry"],[data-ar-action="reopen-request"]'))node.disabled=busy||hostBusy||node.dataset.arFixed==='true';
+    for(const node of root.querySelectorAll('[data-ar-action="retry"],[data-ar-action="reopen-request"]'))node.disabled=busy||hostBusy||node.dataset.arFixed==='true'||!!pendingActorProblem(session.pending?.body);
     const save=$('[data-ar-action="save"]');if(save)save.disabled=busy||hostBusy||!!session.pending||!editable()||!session.confirmed||!session.reviewed?.preview?.canApply;
   }
   async function run(action){
@@ -154,6 +168,31 @@ export function mountAccountReconciliation({container,current,api,saveApi=api,se
     notice=preview.canApply?'The complete statement, account and retained resolution plan are ready for review.':'The review shows the remaining source or account differences.';
     render();
   }
+  async function inspectLegacy(){
+    const value=await stored(caseId);if(!available())return;
+    if(value)validateDesk(value);
+    legacyCopy=value?clone(value):null;legacySearched=true;render();
+  }
+  async function openLegacy(){
+    if(!legacyCopy)throw new Error('Choose an earlier browser copy first.');
+    if(session.pending)throw new Error('Keep the current original request until its result is available.');
+    const problem=pendingActorProblem(legacyCopy.pending?.body);if(problem)throw problem;
+    clearTimeout(saveTimer);await session.storageWrites.catch(()=>{});if(!available())return;
+    const revision=session.storageRevision??0;
+    download(state(),caseId+'-reconciliation-before-earlier-copy-'+Date.now()+'.json');
+    restore(legacyCopy);session.storageRevision=revision;legacyCopy=null;legacySearched=false;report=null;render();
+    await persist();if(!available())return;await loadReport();
+    notice='Opened the selected earlier copy in this sign-in. Its original browser copy remains available.';render();
+  }
+  function legacyView(){
+    if(!legacySearched)return '';
+    if(!legacyCopy)return '<section class="ar-block"><h4>Earlier browser copies</h4><p>No earlier reconciliation desk is saved for this case.</p>'+button('Close','legacy-close')+'</section>';
+    const pending=legacyCopy.pending,problem=pendingActorProblem(pending?.body);
+    return '<section class="ar-block"><h4>Earlier browser copy</h4>'+
+      pairs([['Original case',legacyCopy.caseId],['Original request',pending?.body?.requestId||'No pending request'],['Original operator',pending?.body?.actor||'No pending request']])+
+      '<p>'+esc(problem?.message||'Open this selected copy in the current sign-in. This desk is retained as a complete download first.')+'</p><div class="ar-actions">'+
+      button('Open selected earlier copy','legacy-open','',!!problem||!!session.pending)+button('Download earlier copy','legacy-download','',false,'data-ar-always="true"')+button('Close','legacy-close')+'</div></section>';
+  }
   function preserveDraft(){
     if(session.draft)download(state(),caseId+'-reconciliation-draft-before-opening.json');
   }
@@ -178,7 +217,10 @@ export function mountAccountReconciliation({container,current,api,saveApi=api,se
   async function dispatch(){
     const pending=session.pending;if(!pending)return;
     let receipt;
-    try{receipt=await saveApi(prefix+'/account-reconciliation',clone(pending.body));}
+    try{
+      const problem=pendingActorProblem(pending.body);if(problem)throw problem;
+      receipt=await saveApi(prefix+'/account-reconciliation',clone(pending.body));
+    }
     catch(problem){
       pending.rejected=[400,409,413,415,422].includes(problem?.status)&&typeof problem?.code==='string';
       pending.error={message:problem?.message||String(problem),code:problem?.code||null,status:problem?.status||null};await persist();throw problem;
@@ -213,7 +255,8 @@ export function mountAccountReconciliation({container,current,api,saveApi=api,se
   async function openDesk(file){
     if(!file)return;
     if(file.size>MAX_DESK_BYTES)throw new Error('Choose a complete reconciliation desk up to 64 MiB.');
-    const value=JSON.parse(await file.text());validateDesk(value);
+    const value=JSON.parse(await file.text());validateDesk(value);if(!available())return;
+    const problem=pendingActorProblem(value.pending?.body);if(problem)throw problem;
     if(session.pending)throw new Error('Resume or reconcile this desk’s original request before opening another recovery copy.');
     const revision=session.storageRevision??0;download(state(),caseId+'-reconciliation-before-recovery.json');restore(value);session.storageRevision=revision;report=null;render();
     await persist();await loadReport();notice='Opened the complete original desk. Resume its retained request or preview the editable input against the current case.';render();
@@ -238,7 +281,7 @@ export function mountAccountReconciliation({container,current,api,saveApi=api,se
     if(!session.pending)return '';
     const pending=session.pending;
     return '<section class="ar-block ar-soft"><h4>Retained original request</h4>'+pairs([['Prepared',date(pending.createdAt)],['Operator',pending.body.actor],['Expected case version',pending.body.expectedVersion],['Requested state',title(pending.body.state)],['Request',pending.body.requestId]])+
-      '<p>'+esc(pending.rejected?'The server rejected this request. Its complete original input remains available for correction.':'Resume this exact request to receive its original result, including a result saved before a connection interruption.')+'</p>'+
+      '<p>'+esc(pendingActorProblem(pending.body)?.message||(pending.rejected?'The server rejected this request. Its complete original input remains available for correction.':'Resume this exact request to receive its original result, including a result saved before a connection interruption.'))+'</p>'+
       (pending.error?'<p>'+esc(pending.error.message)+'</p>':'')+'<div class="ar-actions">'+button('Resume original request','retry')+
       button('Return rejected input to draft','reopen-request','',!pending.rejected)+button('Download complete desk','desk-export','',false,'data-ar-always="true"')+'</div></section>';
   }
@@ -416,9 +459,9 @@ export function mountAccountReconciliation({container,current,api,saveApi=api,se
     if(!available())return;
     root.innerHTML='<header class="ar-heading"><div><h3>Account reconciliation</h3><p>Compare a complete original statement with its native account, retain explicit resolutions and reopen every saved period.</p><small>'+esc(current.program.name)+' · case version '+esc(current.program.version)+' · '+esc(title(current.program.state))+'</small></div><div class="ar-actions">'+
       button('Refresh case','refresh')+button('Download complete desk','desk-export','',false,'data-ar-always="true"')+button('Open recovery copy','desk-import','',!!session.pending)+
-      (session.storageConflict?button('Open saved browser desk','load-stored','',!!session.pending):'')+'</div></header>'+
+      (session.storageConflict?button('Open saved browser desk','load-stored','',!!session.pending):'')+(boundStaff?button('Find earlier browser copy','legacy-inspect','',!!session.pending):'')+'</div></header>'+
       '<p class="ar-error" data-ar-error role="alert"></p><p class="ar-notice" data-ar-status role="status" aria-live="polite"></p><p class="ar-storage" data-ar-storage></p>'+
-      requestPanel()+chooser()+draftForm()+editionHeading()+'<div class="ar-preview">'+previewArea()+'</div>'+
+      legacyView()+requestPanel()+chooser()+draftForm()+editionHeading()+'<div class="ar-preview">'+previewArea()+'</div>'+
       (session.result?'<section class="ar-block"><h4>Last recorded reconciliation</h4>'+pairs([['Recorded',title(session.result.state)],['Edition',session.result.revision],['Case version',session.result.version],['Original request',session.result.requestId]])+
         '<div class="ar-actions">'+button('Download original result','result-export','',false,'data-ar-always="true"')+'</div></section>':'')+
       '<input type="file" data-ar-file accept=".json,application/json" hidden>';
@@ -523,10 +566,14 @@ export function mountAccountReconciliation({container,current,api,saveApi=api,se
     const action=target.dataset.arAction,id=target.dataset.id||'';
     if(action==='desk-export'){download(state(),caseId+'-account-reconciliation-desk.json');return;}
     if(action==='result-export'){download(session.result,caseId+'-account-reconciliation-result.json');return;}
+    if(action==='legacy-download'&&legacyCopy){download(legacyCopy,caseId+'-earlier-reconciliation-desk.json');return;}
     if(busy||hostBusy)return;
     if(session.pending&&!['retry','reopen-request'].includes(action))return;
     if(action==='retry'){run(dispatch);return;}
     if(action==='reopen-request'){run(reopenRejected);return;}
+    if(action==='legacy-inspect'){run(inspectLegacy);return;}
+    if(action==='legacy-open'){run(openLegacy);return;}
+    if(action==='legacy-close'){legacyCopy=null;legacySearched=false;render();return;}
     if(action==='new'){run(async()=>{startDraft(report?.statements?.find(row=>row.sourceId===session.newStatementId));await persist();});return;}
     if(action==='edit-edition'){run(async()=>{editEdition();await persist();});return;}
     if(action==='return-draft'){session.editing=true;session.tab='compare';session.detail=null;render();schedule();return;}
@@ -538,7 +585,7 @@ export function mountAccountReconciliation({container,current,api,saveApi=api,se
     if(action==='desk-import'){$('[data-ar-file]').click();return;}
     if(action==='load-stored'){
       run(async()=>{
-        await session.storageWrites.catch(()=>{});const value=await stored(caseId);if(!value)throw new Error('No saved reconciliation desk is available in this browser.');
+        await session.storageWrites.catch(()=>{});const value=await ownStored(caseId);if(!available())return;if(!value)throw new Error('No saved reconciliation desk is available in this browser.');
         validateDesk(value);download(state(),caseId+'-reconciliation-before-saved-browser-copy.json');restore(value);report=null;render();await loadReport();render();
       });return;
     }
@@ -580,7 +627,7 @@ export function mountAccountReconciliation({container,current,api,saveApi=api,se
     if(!session.initialized){
       session.initializing||=(async()=>{
         try{
-          const previous=await stored(caseId);session.storageRevision=Number.isSafeInteger(previous?._storedRevision)?previous._storedRevision:0;
+          const previous=await ownStored(caseId);session.storageRevision=Number.isSafeInteger(previous?._storedRevision)?previous._storedRevision:0;
           if(previous?.schema===DESK_SCHEMA&&previous.caseId===caseId)restore(previous);
           else{
             const origin=current.origin?.accountReconciliation||current.program.origin?.accountReconciliation;

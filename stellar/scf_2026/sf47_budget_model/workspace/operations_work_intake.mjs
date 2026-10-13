@@ -1,3 +1,5 @@
+import {currentStaffContext,staffDeskStorageKey,assertStaffRequestActor} from './staff-session.mjs';
+import {mountEarlierStaffDesk} from './staff-desk-recovery.mjs';
 // MIT. Complete work and invoice source intake in the original Operations case.
 const FIELDS = {
   WORK:['externalId','contributor','costId','description','startDate','endDate','hours','fundingBasis'],
@@ -42,10 +44,13 @@ function download(raw,filename,type='application/json') {
   const anchor=document.createElement('a');anchor.href=url;anchor.download=filename;anchor.click();
   setTimeout(()=>URL.revokeObjectURL(url),10000);
 }
+const intakeStores=new Map();
+function intakeStore(name){
+  if(intakeStores.has(name))return intakeStores.get(name);
 let cacheDatabase;
 function database() {
   if(!cacheDatabase)cacheDatabase=new Promise((resolve,reject)=>{
-    const request=indexedDB.open('sf47-work-intake-drafts',1);
+    const request=indexedDB.open(name,1);
     request.onupgradeneeded=()=>request.result.createObjectStore('cases');
     request.onsuccess=()=>resolve(request.result);
     request.onerror=()=>reject(request.error||new Error('Browser draft storage could not be opened.'));
@@ -85,8 +90,12 @@ async function cacheWrite(caseId,value,expectedRevision) {
     tx.onerror=tx.onabort=()=>reject(failure||tx.error||new Error('Browser draft storage could not save this change.'));
   });
 }
+  const access={cacheRead,cacheWrite,cacheRevision};intakeStores.set(name,access);return access;
+}
 
-export function mountWorkIntake({container,current,saveApi,session={},mutationId,recordingActor,onCase,onOpen}) {
+export function mountWorkIntake({container,current,saveApi,session={},mutationId,recordingActor,onCase,onOpen,staffContext=currentStaffContext()}) {
+  const pinnedContext=staffContext?{...staffContext}:null;
+  const {cacheRead,cacheWrite,cacheRevision}=intakeStore(staffDeskStorageKey('sf47-work-intake-drafts',pinnedContext));
   const root=document.createElement('section');root.className='work-intake-desk';
   root.setAttribute('aria-label','Work and invoice source intake');container.replaceChildren(root);
   if(!document.querySelector('link[data-work-intake-style]')) {
@@ -142,7 +151,7 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
     });
   }
   function setHostBusy(value){hostBusy=Boolean(value);controls();}
-  function dispose(){active=false;if(retainTimer!==null)persist().catch(()=>{});const dialog=$('dialog');if(dialog?.open)dialog.close();}
+  function dispose(){earlier.dispose();active=false;if(retainTimer!==null)persist().catch(()=>{});const dialog=$('dialog');if(dialog?.open)dialog.close();}
   async function run(fn) {
     if(busy||hostBusy||!alive())return;busy=true;controls();
     try{await fn();}catch(error){if(alive()){if(s.storageConflict)render();setMessage(error.message,true);}}
@@ -181,8 +190,8 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
     if(!state)return;const node=[...root.querySelectorAll('[data-focus]')].find(x=>x.dataset.focus===state.key);
     if(node&&!node.disabled){node.focus();if(state.start!==null&&state.start!==undefined&&node.setSelectionRange)try{node.setSelectionRange(state.start,state.end);}catch{}}
   }
-  function browserTransfer() {
-    const desk=persistenceValue();
+  function browserTransfer(value=persistenceValue()) {
+    const desk=copy(value);
     if(desk.uploadFile){
       const file=desk.uploadFile;
       desk.uploadFile={name:file.name,type:file.type,bytes:file.bytes.byteLength,contentBase64:base64(file.bytes)};
@@ -246,6 +255,7 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
     }
     require(desk.lastReceipt===null||object(desk.lastReceipt),'The retained response must be a complete object.');
     if(desk.pending){
+      assertStaffRequestActor(desk.pending.body,pinnedContext);
       // Reconcile an imported response through the same native request identity.
       desk.pending.receipt=null;desk.pending.state='PREPARED';
     }
@@ -253,8 +263,9 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
   }
   async function openBrowserTransfer(file) {
     if(!file)return;if(file.size>64*1024*1024)throw new Error('Choose a complete browser draft within 64 MiB.');
-    const desk=readBrowserTransfer(JSON.parse(await file.text()));
-    await persist();downloadBrowserDraft();
+    const raw=await file.text();if(!alive())return;
+    const desk=readBrowserTransfer(JSON.parse(raw));
+    await persist();if(!alive())return;downloadBrowserDraft();
     await persist(desk,()=>{restoreDesk(desk);cacheError=null;render();});
     await refreshCase();render();setMessage(s.pending?'Opened the complete draft. Resume its original request to read the native outcome.':'Opened the complete draft and retained every mapping and original selected file.');
   }
@@ -497,10 +508,11 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
     const pending=s.pending;if(!pending)throw new Error('There is no retained request to resume.');
     if(pending.receipt)return finish(pending.receipt);
     try{
+      assertStaffRequestActor(pending.body,pinnedContext);
       const receipt=await saveApi(base+'/command',copy(pending.body));
       return await finish(receipt);
     }catch(error){
-      if(!pending.receipt&&Number.isInteger(error.status)&&error.status>=400&&error.status<500){
+      if(!pending.receipt&&[400,409,413,415,422].includes(error.status)){
         pending.state='REJECTED';pending.error=error.message;pending.status=error.status;pending.code=error.code||null;
       }else if(!pending.receipt){pending.state='UNCERTAIN';pending.error=error.message;}
       await persist().catch(()=>{});
@@ -693,6 +705,13 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
         if(alive())download(await response.blob(),caseId+'.zip','application/zip');return;
       }
     });
+  });
+  const earlier=mountEarlierStaffDesk({root,staffContext:pinnedContext,title:'Work and invoice intake',
+    readCopy:async()=>{const value=await intakeStore('sf47-work-intake-drafts').cacheRead(caseId);return value?browserTransfer(value):null;},
+    isBusy:()=>busy||hostBusy||!s.loaded||!!s.inFlight,setDeskBusy:value=>{busy=value;if(value)controls();else render();},
+    describeCopy:value=>(value.desk.uploadFile?.name||value.desk.newSource?.name||'Original work and invoice input')+' · '+Object.keys(value.desk.drafts||{}).length+' editable mappings'+(value.desk.pending?' · original save pending':''),
+    filename:caseId+'-earlier-intake-draft.json',
+    openCopy:value=>openBrowserTransfer(new File([JSON.stringify(value)],'earlier-intake-draft.json',{type:'application/json'}))
   });
   const ready=(async()=>{
     if(!s.loaded){

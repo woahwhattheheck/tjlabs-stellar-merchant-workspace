@@ -64,6 +64,20 @@
         "composer.css",
         "text/css; charset=utf-8"
       ]
+    ],
+    [
+      "/customer-use.mjs",
+      [
+        "customer-use.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/customer-use.css",
+      [
+        "customer-use.css",
+        "text/css; charset=utf-8"
+      ]
     ]
   ]
 }

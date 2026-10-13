@@ -130,7 +130,10 @@ def following_baseline(archive, directory):
     selected_root = PurePosixPath(*selected_draft.parts[:-len(expected_suffix)])
     browser_record = PurePosixPath(browser_input["originalRecordPath"]).relative_to(selected_root)
     baseline["browserRecordPath"] = str(safe_path(str(browser_record)))
-    if directory + "/browser/RESULT.json" in archive.namelist():
+    browser_prefix = directory + "/browser/"
+    browser_members = set(archive.namelist())
+    browser_complete = False
+    if directory + "/browser/RESULT.json" in browser_members:
         browser = json.loads(archive.read(directory + "/browser/RESULT.json"))
         if browser.get("state") == "COMPLETE":
             if (browser.get("operationId") != OPERATION or
@@ -147,6 +150,14 @@ def following_baseline(archive, directory):
             if (browser.get("localBrowserBinding") !=
                     {"id": saved["id"], "revision": saved["revision"]}):
                 raise ValueError("Retain the actual completed browser record and revision.")
+            browser_complete = True
+    # A retained partial browser phase may contain a committed working save,
+    # including legacy runs from before the explicit save journal existed.
+    # Finish that same phase before selecting a following native-only edition.
+    partial_browser = any(name.startswith(browser_prefix) and not name.endswith("/")
+                          for name in browser_members)
+    if partial_browser and not browser_complete:
+        raise ValueError("Reconcile and complete the preceding browser receiving phase before selecting another source edition; retain its original save intent and accepted record.")
     for value in baseline.values():
         safe_path(value)
         archive.getinfo(value)

@@ -46,6 +46,10 @@
     "./merchant/receivables/remittances-client": {
       "types": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/remittances-client.d.ts",
       "default": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/remittances-client.mjs"
+    },
+    "./merchant/accounting-receivables/financial-control": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/accounting-financial-control.d.mts",
+      "default": "./source/stellar-forge/mcp-merchant-operator/accounting-financial-control.mjs"
     }
   },
   "supportFiles": [
@@ -73,7 +77,12 @@
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/client.d.ts",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/source.d.ts",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/remittances-client.d.ts",
-    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/REMITTANCES.md"
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/REMITTANCES.md",
+    "stellar-forge/mcp-merchant-operator/accounting-financial-control.d.mts",
+    "stellar-forge/mcp-merchant-operator/ACCOUNTING_FINANCIAL_CONTROL.md",
+    "stellar-forge/developer-site/dist/grant-data/financial-walkthrough.md",
+    "products/merchant-workspace/REVIEWER_WALKTHROUGH.md",
+    "products/merchant-workspace/FINANCIAL_OPERATIONS.md"
   ],
   "browserAssets": [
     {

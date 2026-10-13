@@ -11,7 +11,9 @@ import {ACCOUNTING_RECEIVABLES_METHODS, ACCOUNTING_RECEIVABLES_MUTATIONS,
   accountingReceivablesArguments, accountingInvoicePreview, accountingInvoiceIssueArguments,
   accountingPaymentRequestPreview, accountingPaymentRequestArguments, accountingRefundPreview, accountingRefundArguments,
   accountingCreditDispositionPreview, accountingCreditDispositionArguments, accountingBankPostingPreview,
-  accountingBankPostingArguments, accountingRemittancePreview, accountingRemittanceArguments, connectAccountingReceivablesClient}
+  accountingBankPostingArguments, accountingRemittancePreview, accountingRemittanceArguments,
+  accountingCashPlanPreview, accountingCashPlanArguments, accountingCreditAssessmentPreview,
+  accountingCreditDecisionArguments, connectAccountingReceivablesClient}
   from './accounting-receivables-client.mjs';
 
 const REQUEST = 'stellar-forge.accounting-receivables-client-request.v1';
@@ -108,7 +110,9 @@ function fromPreview(kind, preview, identity) {
   if (kind === 'credit_disposition_apply') return accountingCreditDispositionArguments(preview, identity);
   if (kind === 'bank_receipts_post') return accountingBankPostingArguments(preview, identity);
   if (kind === 'remittance_apply') return accountingRemittanceArguments(preview, identity);
-  throw fail('ARGUMENTS', 'A reviewed preview prepares invoice-issue, payment-create, refund-commit, credit-disposition-apply, bank-receipts-post or remittance-apply.');
+  if (kind === 'cash_plan_save') return accountingCashPlanArguments(preview, identity);
+  if (kind === 'credit_decision_save') return accountingCreditDecisionArguments(preview, identity);
+  throw fail('ARGUMENTS', 'A reviewed preview prepares invoice-issue, payment-create, refund-commit, credit-disposition-apply, bank-receipts-post, remittance-apply, cash-plan-save or credit-decision-save.');
 }
 function validateRequest(request) {
   exact(request, ['schema', 'preparedAt', 'url', 'workspace', 'tokenEnv', 'kind', 'arguments', 'preview', 'sha256']);
@@ -125,13 +129,20 @@ function validateRequest(request) {
 
 /** Retain the complete reviewed request once, including its existing optimistic revision. */
 export async function prepareAccountingReceivablesOperation({
-  directory, url, workspace, tokenEnv = 'MCP_ACCESS_TOKEN', kind, arguments: value, preview, actor, requestId
+  directory, url, workspace, tokenEnv = 'MCP_ACCESS_TOKEN', kind, arguments: value, preview, actor, requestId, reviewOptions
 } = {}) {
   need(MUTATIONS.has(kind), 'Choose an original receivables mutation.');
+  if (reviewOptions !== undefined) {
+    need(preview !== undefined && plain(reviewOptions), 'Use reviewOptions only with one complete original preview.');
+    const allowed = kind === 'cash_plan_save' ? ['id', 'expectedVersion'] :
+      kind === 'credit_decision_save' ? ['outcome', 'reason'] :
+      kind === 'invoice_issue' ? ['creditDecisionId'] : [];
+    exact(reviewOptions, allowed);
+  }
   need(preview === undefined ? value !== undefined && actor === undefined && requestId === undefined : value === undefined,
-    'Use original arguments, or a complete invoice, payment, refund, disposition, bank posting or remittance preview and operator identity.');
+    'Use original arguments, or a complete original invoice, payment, refund, disposition, bank, remittance, cash-plan or credit preview and operator identity.');
   const args = preview === undefined ? accountingReceivablesArguments(kind, value) :
-    fromPreview(kind, preview, {actor, requestId: requestId ?? randomUUID()});
+    fromPreview(kind, preview, {...reviewOptions, actor, requestId: requestId ?? randomUUID()});
   const content = {schema: REQUEST, preparedAt: now(), url: endpoint(url), workspace, tokenEnv,
     kind, arguments: args, ...(preview === undefined ? {} : {preview: structuredClone(preview)})};
   const request = validateRequest({...content, sha256: sha(content)}), text = JSON.stringify(request) + '\n';
@@ -268,8 +279,8 @@ const HELP = `Starforge merchant receivables and invoice collection
   starforge merchant-accounting-receivables prepare --dir NEW_PRIVATE_OPERATION
       --url MCP_URL --workspace ALIAS --action MUTATION --request PRIVATE_ARGUMENTS_JSON
   starforge merchant-accounting-receivables prepare --dir NEW_PRIVATE_OPERATION ...
-      --action invoice-issue|payment-create|refund-commit|credit-disposition-apply|bank-receipts-post|remittance-apply --preview PRIVATE_PREVIEW_JSON
-      --actor NAME [--request-id STABLE_ID]
+      --action invoice-issue|payment-create|refund-commit|credit-disposition-apply|bank-receipts-post|remittance-apply|cash-plan-save|credit-decision-save --preview PRIVATE_PREVIEW_JSON
+      --actor NAME [--request-id STABLE_ID] [--review-options PRIVATE_REVIEW_OPTIONS_JSON]
   starforge merchant-accounting-receivables remittance-preview ...
       --request PRIVATE_SOURCE_OPTIONS_JSON [--source PRIVATE_REMITTANCE_CSV] [--out NEW_PRIVATE_PREVIEW_JSON]
   starforge merchant-accounting-receivables bank-source-inspect|bank-source-import ...
@@ -293,7 +304,14 @@ Commands:
   credit-disposition-apply, bank-accounts, bank-account-save, bank-source-inspect,
   bank-source-import, bank-import-list, bank-import-detail, bank-posting-preview,
   bank-receipts-post, bank-rows-ignore, bank-rows-restore, bank-import-close,
-  remittance-list, remittance-preview, remittance-apply, remittance-detail.
+  remittance-list, remittance-preview, remittance-apply, remittance-detail,
+  collection-list, collection-detail, collection-save, collection-activity,
+  collection-close, collection-reopen, collection-reminder,
+  cash-plan-list, cash-plan-preview, cash-plan-detail, cash-plan-save,
+  cash-plan-archive, cash-plan-reopen, cash-plan-compare,
+  credit-control, credit-policy-detail, credit-policy-save,
+  credit-assessment-preview, credit-decision-save, credit-decision-detail,
+  credit-decision-withdraw.
 
 All connection commands accept --url, --workspace and --token-env. The access
 token remains in that process environment variable. Inputs are private JSON
@@ -381,6 +399,24 @@ reader pins live reports on their first read and retains exact source bytes.
 customer-export --out saves the original native account.tar and returns its
 observed file identity. Other customer-export calls return the account inventory.
 
+Collection, cash-plan and credit read commands accept --out for the complete
+original JSON. Cash-plan preview retains every source row, separation and review
+seal. Credit assessment retains the complete current account and original draft.
+Prepare cash-plan-save with --review-options {id,expectedVersion} for an existing
+plan, or omit it for a new plan. Prepare credit-decision-save with
+--review-options {outcome:"APPROVE"|"DECLINE",reason:"..."}.
+Invoice preview preserves credit review metadata; invoice-issue preparation
+carries its current creditDecisionId into the original issue writer. An explicitly
+selected creditDecisionId may be supplied in --review-options.
+These options are private JSON files; their values are retained in request.json.
+
+Financial downloads use receivables-collection {collectionCaseId,asOf,file},
+receivables-collections {asOf,customerId,owner,status,search,file},
+receivables-cash-plan {cashPlanId,editionId,file},
+receivables-cash-plan-comparison {leftId,rightId,leftEditionId,rightEditionId,file},
+or receivables-credit-decision {creditDecisionId,file}. Use the complete original
+case/plan/decision JSON, HTML, CSV, reminder and manifest names from the guide.
+
 Ordinary commands release this caller's file reads. close explicitly closes
 the original accounting owner. Exit 0: completed, prepared or read.
 Exit 3: the original prepared operation is not found. Exit 2: error.
@@ -393,15 +429,16 @@ export async function main(args = process.argv.slice(2)) {
   }
   const [command, ...rest] = args, connectionFields = ['--url', '--workspace', '--token-env']; let result;
   if (command === 'prepare') {
-    const values = options(rest, ['--dir', ...connectionFields, '--action', '--request', '--preview', '--actor', '--request-id', '--source']);
+    const values = options(rest, ['--dir', ...connectionFields, '--action', '--request', '--preview', '--actor', '--request-id', '--source', '--review-options']);
     const kind = required(values, '--action').replaceAll('-', '_'), previewMode = values.has('--preview');
-    need(previewMode ? !values.has('--request') && !values.has('--source') : values.has('--request') && !values.has('--actor') && !values.has('--request-id'),
+    need(previewMode ? !values.has('--request') && !values.has('--source') : values.has('--request') && !values.has('--actor') && !values.has('--request-id') && !values.has('--review-options'),
       'Use --request, or use --preview with --actor and an optional --request-id.');
     result = await prepareAccountingReceivablesOperation({
       directory: required(values, '--dir'), url: required(values, '--url'), workspace: required(values, '--workspace'),
       tokenEnv: values.get('--token-env') ?? 'MCP_ACCESS_TOKEN', kind,
       ...(previewMode ? {preview: await readJson(resolve(required(values, '--preview')), 4_000_000),
-        actor: required(values, '--actor'), requestId: values.get('--request-id')} :
+        actor: required(values, '--actor'), requestId: values.get('--request-id'),
+        ...(values.has('--review-options') ? {reviewOptions: await readJson(resolve(values.get('--review-options')), 65536)} : {})} :
         {arguments: await sourceArguments(kind, await readJson(resolve(required(values, '--request')), 4_000_000), values.get('--source'))})
     });
   } else if (command === 'execute' || command === 'reconcile') {
@@ -413,7 +450,7 @@ export async function main(args = process.argv.slice(2)) {
     const extra = command === 'download' ? ['--selection', '--sha256', '--out'] : native ?
       ['--request', ...(PAGED.has(kind) ? ['--all'] : []),
         ...(['bank_source_inspect', 'bank_source_import', 'remittance_preview'].includes(kind) ? ['--source'] : []),
-        ...(['invoice_preview', 'payment_preview', 'refund_preview', 'credit_disposition_preview', 'bank_posting_preview', 'bank_source_inspect', 'bank_source_import', 'remittance_preview', 'customer_export'].includes(kind) ? ['--out'] : [])] : [];
+        ...(['invoice_preview', 'payment_preview', 'refund_preview', 'credit_disposition_preview', 'bank_posting_preview', 'bank_source_inspect', 'bank_source_import', 'remittance_preview', 'customer_export', 'collection_list', 'collection_detail', 'collection_reminder', 'cash_plan_list', 'cash_plan_preview', 'cash_plan_detail', 'cash_plan_compare', 'credit_control', 'credit_policy_detail', 'credit_assessment_preview', 'credit_decision_detail'].includes(kind) ? ['--out'] : [])] : [];
     const values = options(rest, [...connectionFields, ...extra]);
     const all = values.has('--all');
     if (all) need(values.get('--all') === 'true' && !values.has('--out'),
@@ -427,7 +464,7 @@ export async function main(args = process.argv.slice(2)) {
       else {
         result = await client.open();
         if (native) {
-          if (!['status', 'payment_list', 'customer_funds', 'refund_list', 'bank_accounts', 'bank_import_list', 'remittance_list'].includes(kind)) required(values, '--request');
+          if (!['status', 'payment_list', 'customer_funds', 'refund_list', 'bank_accounts', 'bank_import_list', 'remittance_list', 'collection_list', 'cash_plan_list', 'credit_control'].includes(kind)) required(values, '--request');
           const input = await sourceArguments(kind, values.has('--request') ? await readJson(resolve(values.get('--request')), 4_000_000) : {}, values.get('--source'));
           if (all && kind === 'bank_import_detail') need(['rows', 'history', 'postings'].includes(input.view),
             'Select rows, history or postings for a complete original bank import view.');
@@ -463,6 +500,14 @@ export async function main(args = process.argv.slice(2)) {
               workspaceId: preview.workspaceId, sourceId: preview.source.sourceId, filename: preview.source.filename,
               reviewSha256: preview.reviewSha256, revision: preview.revision,
               canApply: preview.review.canApply, conflictCount: preview.review.conflictCount} : preview;
+          } else if (kind === 'cash_plan_preview' || kind === 'credit_assessment_preview') {
+            const review = kind === 'cash_plan_preview' ? accountingCashPlanPreview : accountingCreditAssessmentPreview;
+            const method = kind === 'cash_plan_preview' ? 'previewCashPlan' : 'previewCreditAssessment';
+            const preview = review(await client[method](input));
+            result = values.has('--out') ? {output: await savePreview(values.get('--out'), preview),
+              workspaceId: preview.workspaceId, revision: preview.revision,
+              ...(kind === 'cash_plan_preview' ? {reviewSha256: preview.reviewSha256} :
+                {invoiceId: preview.assessment.invoiceId, assessmentSha256: preview.assessmentSha256})} : preview;
           } else if (kind === 'bank_source_inspect') {
             const inspection = await client.inspectBankSource(input);
             result = values.has('--out') ? {output: await savePreview(values.get('--out'), inspection),
@@ -486,7 +531,7 @@ export async function main(args = process.argv.slice(2)) {
                 }
               } else throw error;
             }
-            if (kind === 'bank_source_import' && values.has('--out')) {
+            if (values.has('--out')) {
               const output = await savePreview(values.get('--out'), result); result = {...result, output};
             }
           }

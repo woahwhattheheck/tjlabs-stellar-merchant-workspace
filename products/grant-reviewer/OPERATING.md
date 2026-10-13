@@ -26,7 +26,7 @@ read `/grant.html` at its existing origin.
 
 The application page provides the complete original Markdown downloads,
 `budget.csv`, `source-index.json`, the preserved economic briefing and the
-published presentation links. The four direct local downloads are:
+published presentation links. The direct local downloads are:
 
 | Download | Local path |
 | --- | --- |
@@ -34,6 +34,7 @@ published presentation links. The four direct local downloads are:
 | Product and financing companion | `/grant-data/product-and-finance.md` |
 | Six-package budget | `/grant-data/budget.csv` |
 | Source and measure index | `/grant-data/source-index.json` |
+| Complete merchant financial walkthrough | `/grant-data/financial-walkthrough.md` |
 
 The source manifest identifies the complete selected application edition.
 The source index retains the underlying manuscript and financial identities;
@@ -87,6 +88,23 @@ Ctrl+C closes this reader. Reopen the same command to read the same installed
 source. For a checkout, the original entry is
 `node stellar-forge/developer-site/grant.mjs --port 8787`.
 The retained purchase workbench below keeps its own saved packet and lifecycle.
+
+## Follow the merchant financial workflow
+
+Choose **Financial walkthrough** at **/grant-financial-walkthrough.html**. The complete [source guide](../../stellar-forge/developer-site/dist/grant-data/financial-walkthrough.md) follows the original installed merchant from setup and a useful paid result through invoice issue, Stellar or bank receiving, dated allocations, refunds/credit, bank reconciliation, customer close, Xero handover and continued operation.
+
+The guide includes the source-owned portable opener for the completed customer billing case. Open its retained **Freeform Solutions** schedule, the paid first USD 4,400 invoice and the later USD 4,400 invoice still open. Both saved planning databases and the original accounting state completed repack, independent receiving and reopening. The chosen example's invoice, receipt and allocation identities remain attached to that operated account.
+
+Use the guide's contents rail to move between the actual product tasks. Download its complete Markdown or print the readable page through the browser. Its installed product table identifies which attached Runtime supplies each command and Application. The original accounting state, dates, source files and single writer continue through those views.
+
+For an accepted guide revision, edit **grant-data/financial-walkthrough.md**, then regenerate its page and file identities:
+
+~~~sh
+starforge grant-financial-walkthrough \
+  --directory /absolute/current/developer-site/dist
+~~~
+
+Run the existing **grant-compose** command after that regeneration to receive the current full application and companion and emit their final four source pins. The guide generator updates only its own page and source-index descriptor; the original request, budget, customer sections and saved-draft models retain their identities.
 
 ## Export a saved submission
 

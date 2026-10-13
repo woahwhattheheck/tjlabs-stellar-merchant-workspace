@@ -26,19 +26,22 @@
     "./grant/issuer-context": "./source/stellar-forge/developer-site/grant-issuer-context.mjs",
     "./grant/issuer-context/source": "./source/stellar-forge/developer-site/dist/grant-issuer-source.mjs",
     "./grant/issuer-context/core": "./source/stellar-forge/developer-site/dist/grant-issuer-core.mjs",
-    "./grant/static-reader": "./source/stellar-forge/developer-site/grant-static-export.mjs"
+    "./grant/static-reader": "./source/stellar-forge/developer-site/grant-static-export.mjs",
+    "./grant/financial-walkthrough": "./source/stellar-forge/developer-site/grant-financial-walkthrough.mjs"
   },
   "commands": {
     "grant-application": "stellar-forge/developer-site/grant.mjs",
     "grant-compose": "stellar-forge/developer-site/grant-compose.mjs",
     "grant-export": "stellar-forge/developer-site/grant-export.mjs",
-    "grant-operating-plan": "stellar-forge/developer-site/grant-operating-plan.mjs"
+    "grant-operating-plan": "stellar-forge/developer-site/grant-operating-plan.mjs",
+    "grant-financial-walkthrough": "stellar-forge/developer-site/grant-financial-walkthrough.mjs"
   },
   "commandDescriptions": {
     "grant-application": "Read or export the complete source-selected SCF application, inspect its retained catalog and continue original buyer workflows",
     "grant-compose": "Compose the complete selected SCF manuscript and maintained product sections into the existing reviewer and source downloads",
     "grant-export": "Prepare a complete saved SCF draft as exact field text, native handover files and an offline copy and print page",
-    "grant-operating-plan": "Prepare an editable customer operating procedure from selected original SF47 work packages or a complete saved submission"
+    "grant-operating-plan": "Prepare an editable customer operating procedure from selected original SF47 work packages or a complete saved submission",
+    "grant-financial-walkthrough": "Render the complete merchant financial walkthrough and retain its exact source and page identities in the existing grant reader"
   },
   "browserAssets": [
     {

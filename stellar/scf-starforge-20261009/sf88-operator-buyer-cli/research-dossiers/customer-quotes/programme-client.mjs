@@ -38,8 +38,8 @@ function selectedFile(value={}){
  return {file:value.file,expectedSha256:value.expectedSha256,expectedBytes:value.expectedBytes,signal:value.signal};
 }
 /** run admits the entire metadata/download or upload operation once. This factory never closes its host. */
-export function createResearchQuoteProgrammesClient({request,download,upload,run}={}){
- need([request,download,upload,run].every(value=>typeof value==='function'),'RESEARCH_QUOTE_ORIGINAL_CLIENT_REQUIRED');
+export function createResearchQuoteProgrammesClient({request,download,upload,range,run:originalRun}={}){
+ need([request,download,upload,originalRun].every(value=>typeof value==='function'),'RESEARCH_QUOTE_ORIGINAL_CLIENT_REQUIRED');
  let workspaceId;
  const bound=value=>{
   need(/^research_[a-f0-9]{64}$/.test(value?.workspaceId??'')&&
@@ -116,6 +116,7 @@ export function createResearchQuoteProgrammesClient({request,download,upload,run
    throw error;
   }
  };
+ const make=run=>{
  const fileInfo=(key,name,callOptions,jobFile)=>{
   id(key);researchQuoteHandoverPath(name);const o=options(callOptions),route=PREFIX+'/'+(jobFile?'jobs':'bundles')+'/'+key+'/files';
   return run(async()=>metadata(await request(route+query({name,metadata:true}),undefined,o),key,name));
@@ -129,6 +130,25 @@ export function createResearchQuoteProgrammesClient({request,download,upload,run
   });
  };
  return Object.freeze({
+  /** Trusted SDK continuation. The admitted view expires when its callback returns. */
+  withWork(callback){
+   need(typeof callback==='function','RESEARCH_QUOTE_PROGRAMME_WORK_REQUIRED');
+   return run(async()=>{
+    let accepting=true,result,failure;const pending=new Set();
+    const admitted=work=>{
+     need(accepting,'RESEARCH_QUOTE_PROGRAMME_WORK_CLOSED');
+     const task=Promise.resolve().then(work);pending.add(task);
+     task.then(()=>pending.delete(task),()=>pending.delete(task));
+     return task;
+    };
+    try{result=await callback(make(admitted));}catch(error){failure=error;}
+    accepting=false;
+    while(pending.size)await Promise.allSettled([...pending]);
+    if(failure)throw failure;
+    // The callback owns its handled errors; every accepted inner call still drains.
+    return result;
+   });
+  },
   info(callOptions={}){
    const o=options(callOptions);return run(async()=>desk(await request(PREFIX+'/info',undefined,o)));
   },
@@ -198,6 +218,21 @@ export function createResearchQuoteProgrammesClient({request,download,upload,run
    id(key);const o=options(callOptions);return run(async()=>archive(
     await request(PREFIX+'/archives/'+key+'?metadata=true',undefined,o),key));
   },
+  readArchiveRange(key,value={}){
+   need(typeof range==='function','RESEARCH_QUOTE_PROGRAMME_RANGE_TRANSPORT_REQUIRED');
+   id(key);
+   const selected={offset:value.offset,limit:value.limit,bytes:value.bytes,sha256:value.sha256,signal:value.signal};
+   hash(selected.sha256);
+   need(Number.isSafeInteger(selected.bytes)&&selected.bytes>0&&selected.bytes<=RESEARCH_QUOTE_PROGRAMME_ARCHIVE_LIMIT&&
+    Number.isSafeInteger(selected.offset)&&selected.offset>=0&&Number.isSafeInteger(selected.limit)&&
+    selected.limit>0&&selected.limit<=RESEARCH_QUOTE_PROGRAMME_UPLOAD_CHUNK&&
+    selected.offset+selected.limit<=selected.bytes,'RESEARCH_QUOTE_PROGRAMME_RANGE_INVALID');
+   return run(async()=>{
+    const body=await range(PREFIX+'/archives/'+key,selected);
+    need(body instanceof Uint8Array&&body.length===selected.limit,'RESEARCH_QUOTE_PROGRAMME_ARCHIVE_CHANGED');
+    return Buffer.from(body);
+   });
+  },
   downloadArchive(key,callOptions={}){
    id(key);const o=selectedFile(callOptions),route=PREFIX+'/archives/'+key;
    return run(async()=>{
@@ -222,4 +257,6 @@ export function createResearchQuoteProgrammesClient({request,download,upload,run
    id(key);const o=options(callOptions);return run(async()=>uploaded(await request(PREFIX+'/uploads/'+key+'/finish',{},o),key));
   },
  });
+ };
+ return make(originalRun);
 }

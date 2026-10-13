@@ -1,5 +1,13 @@
 // MIT. Complete original buyer-source receiving in the existing SF47 Operations shell.
-const MAX_FILE=8*1024*1024;
+const MAX_FILE=16*1024*1024,MAX_NATIVE_FILE=8*1024*1024;
+const CUSTOMER_USE_SCHEMA='stellar-forge.sf88.customer-use-return.v1';
+function sourceSize(buffer){
+  if(!buffer.byteLength||buffer.byteLength>MAX_FILE)throw new Error('Select an original handoff up to 8 MiB, or a customer-use return up to 16 MiB.');
+  if(buffer.byteLength>MAX_NATIVE_FILE){
+    let selected;try{selected=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(buffer));}catch{}
+    if(selected?.schema!==CUSTOMER_USE_SCHEMA)throw new Error('The original Inbox and Node source limit is 8 MiB. The 16 MiB allowance is only for a customer-use return.');
+  }
+}
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const human=v=>String(v??'').toLowerCase().replaceAll('_',' ').replace(/^./,c=>c.toUpperCase());
 const btn=(label,action,extra='')=>'<button type="button" data-buyer-action="'+action+'" '+extra+'>'+esc(label)+'</button>';
@@ -82,6 +90,11 @@ export function mountBuyerReceiving({container,current,api,saveApi=api,mutationI
   function configure(){
     const choice=$('[name=deploymentId]')?.value,newFields=$('[data-buyer-new]');
     if(newFields)newFields.hidden=choice!=='__new__';
+    const bindings=session.review?.customerUseBinding?.deployments;
+    if(bindings&&choice&&choice!=='__select__'){
+      for(const box of root.querySelectorAll('[data-buyer-job]'))
+        if(bindings[box.dataset.buyerJob]!==choice)box.checked=false;
+    }
     const handed=$('[name=state]')?.value==='HANDED_OVER';
     for(const el of root.querySelectorAll('[name=acceptedBy],[name=acceptedAt]'))el.required=choice==='__new__'&&handed;
     const selected=[...root.querySelectorAll('[data-buyer-job]')].filter(x=>x.checked).length;
@@ -95,8 +108,11 @@ export function mountBuyerReceiving({container,current,api,saveApi=api,mutationI
       const field=el.closest('[data-buyer-draft]'),newField=el.closest('[data-buyer-new]');
       const pendingBlock=Boolean(field&&(session.pending||session.accepted));
       const selected=el.dataset.buyerPurchase?root.querySelector('[data-buyer-job="'+el.dataset.buyerPurchase+'"]')?.checked:true;
+      const originalBuyer=session.review?.customerUseBinding?.deployments?.[el.dataset.buyerJob],
+        selectedBuyer=$('[name=deploymentId]')?.value;
+      const otherBuyer=originalBuyer&&selectedBuyer&&selectedBuyer!=='__select__'&&originalBuyer!==selectedBuyer;
       el.disabled=busy||hostBusy||Boolean(session.sending)||el.dataset.buyerFixed==='true'||pendingBlock||
-        Boolean(newField?.hidden)||!selected;
+        Boolean(newField?.hidden)||!selected||Boolean(otherBuyer);
       if(el.matches('[data-buyer-send]'))el.disabled=el.disabled||!editable()||!session.review||
         !$('[name=deploymentId]')?.value||$('[name=deploymentId]')?.value==='__select__'||
         ![...root.querySelectorAll('[data-buyer-job]')].some(x=>x.checked);
@@ -110,15 +126,17 @@ export function mountBuyerReceiving({container,current,api,saveApi=api,mutationI
     finally{busy=false;if(available())sync();}
   }
   function deploymentForm(review){
-    const matched=review.rows.map(x=>x.suggestedDeploymentId||x.matches?.[0]?.deploymentId).filter(Boolean),unique=[...new Set(matched)];
+    const bound=review.customerUseBinding?.deployments;
+    const matched=bound?Object.values(bound):review.rows.map(x=>x.suggestedDeploymentId||x.matches?.[0]?.deploymentId).filter(Boolean),unique=[...new Set(matched)];
     const selected=unique.length===1?unique[0]:'__select__';
-    const kinds=[['__select__','Choose an existing deployment or create one'],['__new__','New original buyer deployment'],
-      ...review.deployments.filter(x=>['BUYER','BOTH'].includes(x.role)).map(x=>[x.id,x.name+' · '+x.operator+' · '+human(x.participantClass)])];
+    const kinds=[['__select__',bound?'Choose the retained Calendar buyer':'Choose an existing deployment or create one'],
+      ...(bound?[]:[['__new__','New original buyer deployment']]),
+      ...review.deployments.filter(x=>['BUYER','BOTH'].includes(x.role)&&(!bound||unique.includes(x.id))).map(x=>[x.id,x.name+' · '+x.operator+' · '+human(x.participantClass)])];
     const networks=[...new Set(review.rows.filter(x=>x.purchase).map(x=>x.purchase.network))],environment=networks.length===1?
       networks[0]==='stellar:testnet'?'TESTNET':networks[0]==='stellar:pubnet'?'MAINNET':'OTHER':'OTHER';
     const costs=current.plan.scenario.future_costs.map(row=>[row.id,row.id]);
     return '<fieldset><legend>2 / Accountable deployment</legend>'+label('Existing deployment',selectField('deploymentId',kinds,selected),
-      'Later observations retain the original deployment. Unpaid Node observations have no purchase; participant attribution remains an explicit operator decision.')+
+      bound?'Each selected job keeps the buyer from its exact saved Calendar entry. Jobs for another buyer remain in the complete source and can be received separately.':'Later observations retain the original deployment. Unpaid Node observations have no purchase; participant attribution remains an explicit operator decision.')+
       '<div class="buyer-fields" data-buyer-new hidden>'+
       label('Deployment name',input('name','','text',500))+
       label('Accountable operator',input('operator','','text',500))+
@@ -137,6 +155,20 @@ export function mountBuyerReceiving({container,current,api,saveApi=api,mutationI
       label('Actual handover date',input('acceptedAt','','date'))+
       label('Operator attribution / deployment source','<textarea name="sourceNote" rows="3" maxlength="12000"></textarea>')+
       '</div></fieldset>';
+  }
+  function customerUseContext(value){
+    const use=value?.customerUse;if(!use)return '';
+    return '<section class="buyer-source"><h4>Saved customer-use commissioning</h4>'+
+      '<p>Commission '+esc(use.commission.id)+' · revision '+esc(use.commission.revision)+
+      '<br>Original Calendar case '+esc(use.source.caseId)+' · observed version '+esc(use.source.caseVersion)+
+      '<br><code>'+esc(use.commission.revisionSha256)+'</code></p>'+
+      '<p class="buyer-note">These dates and modes describe the original saved plan. The native job rows below establish actual outcomes. Prepaid allowance use and reopening a retained result do not establish another settlement.</p>'+
+      '<div class="buyer-jobs">'+use.bindings.map(binding=>'<article class="buyer-job"><strong>'+esc(binding.use.date)+
+        ' · '+esc(binding.use.taskId)+'</strong><p>'+esc(human(binding.use.mode))+' · '+esc(human(binding.use.state))+
+        ' · original buyer '+esc(binding.use.buyerDeploymentId)+'<br>Installation '+esc(binding.entry.installationId)+
+        ' revision '+esc(binding.entry.revision)+' · entry '+esc(binding.entry.entryId)+
+        '<br>'+esc(binding.requests.map(row=>row.intentId).join(' · '))+'</p>'+
+        '<details><summary>Complete original use and request bindings</summary><pre>'+esc(JSON.stringify(binding,null,2))+'</pre></details></article>').join('')+'</div></section>';
   }
   function jobRows(review){
     return review.rows.map(row=>{
@@ -159,6 +191,9 @@ export function mountBuyerReceiving({container,current,api,saveApi=api,mutationI
         '<p class="buyer-note">Receive this original operational observation against the selected deployment. It contributes no purchase, approved intent, cash, funding receipt or independent-customer count.</p>':
         '<div class="buyer-row-controls">'+label('Original purchase association','<select data-buyer-purchase="'+row.jobId+'">'+options(purchaseOptions,selection)+'</select>',
           row.receiving==='OBSERVE_ORIGINAL'?'Receive this recovery or source observation against the existing original.':'A new record retains this exact source intent; no payment is made.')+'</div>';
+      const planned=review.customerUse?.bindings.filter(binding=>binding.requests.some(request=>request.jobId===row.jobId))??[];
+      const useNote=planned.length?'<p class="buyer-note">Saved useful task: '+esc(planned.map(binding=>binding.use.date+' · '+binding.use.taskId+' · '+human(binding.use.mode)).join('; '))+
+        '<br>Original Calendar buyer: '+esc(review.customerUseBinding.deployments[row.jobId])+'</p>':'';
       const linked=row.operationMatches?.length?
         '<p class="buyer-note">This original Node operation already has '+row.operationMatches.length+' retained source association'+
           (row.operationMatches.length===1?'':'s')+'. Its deployment and any established purchase identity remain bound.</p>':'';
@@ -169,7 +204,7 @@ export function mountBuyerReceiving({container,current,api,saveApi=api,mutationI
         (row.identityConflicts?.length?'<p class="buyer-issue">Original identity differs: '+esc(row.identityConflicts.join(', '))+'. Review the retained deployment or purchase association before receiving.</p>':'')+
         (row.matches.length>1?'<p class="buyer-issue">This intent / transaction matches more than one active case record. Reconcile those original records first.</p>':'')+
         (row.issues.length?'<p class="buyer-issue">'+esc(row.issues.map(human).join(' · '))+'</p>':'')+
-        '<details><summary>Original source, outcome and timing details</summary><pre>'+esc(JSON.stringify(row,null,2))+'</pre></details></article>';
+        useNote+'<details><summary>Original source, outcome and timing details</summary><pre>'+esc(JSON.stringify(row,null,2))+'</pre></details></article>';
     }).join('');
   }
   function received(){
@@ -194,21 +229,22 @@ export function mountBuyerReceiving({container,current,api,saveApi=api,mutationI
     if(!available())return;
     const review=session.review;
     root.innerHTML='<header class="buyer-heading"><div><p class="buyer-eyebrow">DELIVERY OPERATIONS / ORIGINAL BUYER</p><h3>Receive native buyer work</h3>'+
-      '<p>Receive original Inbox handoffs or Node accounting exports in this delivery case. Keep unpaid operations separate from purchases, review the accountable deployment, and retain original source and request identities.</p></div>'+
+      '<p>Receive original Inbox handoffs, saved customer-use returns or Node accounting exports in this delivery case. Keep unpaid operations separate from purchases, review the accountable deployment, and retain original source and request identities.</p></div>'+
       btn('Refresh original case','reload')+'</header><p data-buyer-message role="'+(session.error?'alert':'status')+'">'+esc(session.message||'')+'</p>'+
       '<section class="buyer-source"><h4>1 / Original source handoff</h4>'+
-      '<label class="buyer-file">'+(session.pending?'Reselect the exact file for the retained request':'Select the original SF88 Inbox handoff or Node accounting export')+
+      '<label class="buyer-file">'+(session.pending?'Reselect the exact file for the retained request':'Select the original Inbox handoff, customer-use return or Node accounting export')+
       '<input type="file" accept=".json,application/json" data-buyer-file></label>'+
       (session.fileMeta?'<p>'+esc(session.fileMeta.filename)+' · '+session.fileMeta.bytes+' bytes<br><code>'+esc(session.fileMeta.sha256)+'</code></p>':'')+
       '<details><summary>Export from the existing native Inbox</summary><p>Use the installed original buyer component with the existing Inbox and explicit intent IDs. Choose a new private output filename.</p>'+
       '<pre>node sf88-operator-buyer-cli/operations-handoff/cli.mjs export \\\n  --inbox /private/original-inbox \\\n  --intent ORIGINAL_INTENT \\\n  --output /private/receiving/buyer-operations.json</pre>'+
       '<p>The export opens original records and verifies retained response files. It does not approve, sign, execute, recover, finalize or retry a purchase. The complete private source stays with this operating case.</p></details>'+
       '<details><summary>Use an existing Node accounting export</summary><p>Select the original <code>Operation_Accounting.json</code> produced by the native Node operation. The reader checks its embedded original attempt, evidence and saved accounting result. An unsigned response requiring no payment is received as a deployment observation with no purchase. This carrier embeds no response body.</p></details>'+
+      '<details><summary>Receive saved customer-use results</summary><p>Select the complete return downloaded from Customer-use commissioning. The original Calendar Installations must already be retained in this case or its independently received history. Review the exact commissioning revision, dated useful tasks, original buyer and unchanged native job results together. This return does not execute a request or create a settlement.</p><p>Original Inbox and Node files remain bounded at 8 MiB. Customer-use returns allow 16 MiB; the existing whole-case 24 MiB source and 32 MiB export limits still apply.</p></details>'+
       (session.selected&&!session.pending?btn('Review retained source','preview'):'')+
       (session.pending?'<div class="buyer-pending"><h4>Original request retained</h4><p>Request '+esc(session.pending.requestId)+
       ' was prepared at case version '+session.pending.expectedVersion+'. Continue that exact request to read its committed result or complete its original save.</p>'+
       btn('Recover original request','recover')+'</div>':'')+'</section>'+
-      (review?'<section class="buyer-summary"><div><strong>'+review.counts.jobs+'</strong><span>Original jobs</span></div><div><strong>'+review.counts.knownSignedAttempts+
+      (review?customerUseContext(review)+'<section class="buyer-summary"><div><strong>'+review.counts.jobs+'</strong><span>Original jobs</span></div><div><strong>'+review.counts.knownSignedAttempts+
       '</strong><span>Established signed attempts</span></div><div><strong>'+review.counts.settled+'</strong><span>Retained settled observations</span></div><div><strong>'+
       review.counts.verifiedRetainedOutputs+'</strong><span>Verified retained outputs</span></div>'+
       (review.counts.unpaidOperationalObservations?'<div><strong>'+review.counts.unpaidOperationalObservations+'</strong><span>Unpaid operational observations</span></div>':'')+'</section>'+
@@ -236,7 +272,7 @@ export function mountBuyerReceiving({container,current,api,saveApi=api,mutationI
     render();
   }
   async function selectFile(name,buffer){
-    if(buffer.byteLength===0||buffer.byteLength>MAX_FILE)throw new Error('Select an original buyer handoff up to 8 MiB.');
+    sourceSize(buffer);
     const file={filename:name,bytes:buffer.byteLength,sha256:await digest(buffer)};
     activeCheck();
     if(session.pending&&session.fileMeta&&(file.sha256!==session.fileMeta.sha256||file.bytes!==session.fileMeta.bytes))
@@ -302,11 +338,11 @@ export function mountBuyerReceiving({container,current,api,saveApi=api,mutationI
   root.addEventListener('change',event=>{
     if(event.target.matches('[data-buyer-file]')){
       const file=event.target.files?.[0];if(file)run(async()=>{
-        if(file.size>MAX_FILE)throw new Error('Select an original buyer handoff up to 8 MiB.');
+        if(file.size>MAX_FILE)throw new Error('Select an original handoff up to 8 MiB, or a customer-use return up to 16 MiB.');
         await selectFile(file.name,await file.arrayBuffer());
       });
     }
-    if(event.target.closest('[data-buyer-form]')){draft();configure();}
+    if(event.target.closest('[data-buyer-form]')){draft();configure();draft();}
   });
   root.addEventListener('click',event=>{
     const target=event.target.closest('[data-buyer-action]');if(!target)return;
@@ -335,6 +371,8 @@ export function mountBuyerReceiving({container,current,api,saveApi=api,mutationI
       if(choice==='__select__')throw new Error('Choose the accountable original deployment.');
       const selections=session.draft.selections;
       if(!selections?.length)throw new Error('Select one or more original jobs.');
+      const bound=session.review.customerUseBinding?.deployments;
+      if(bound&&selections.some(row=>bound[row.jobId]!==choice))throw new Error('Each selected job must retain the buyer from its exact original Calendar entry.');
       const body={...session.selected,expectedPreviewSha256:session.review.previewSha256,
         deploymentId:choice==='__new__'?null:choice,selections};
       if(choice==='__new__'){
