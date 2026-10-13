@@ -28,7 +28,7 @@ export function haystackWorkspaceTools(tool) {
       { ...workspace, ...native.inputSchema.properties }, ["workspace", ...native.inputSchema.required],
       { readOnly: native.annotations.readOnlyHint, idempotent: native.annotations.idempotentHint })),
     tool("merchant_haystack_input", "Read source-file alias metadata after checking its full original SHA-256.", { ...workspace, input: alias, expectedSha256: hash }, ["workspace", "input"], read),
-    tool("merchant_haystack_import_file", "Import one complete host-selected original Haystack JSON v4 grid with exact-request recovery.", {
+    tool("merchant_haystack_import_file", "Import one complete host-selected original Haystack JSON v4 or Zinc 3.0 grid with exact-request recovery.", {
       ...workspace, operationId: { type: "string" }, expectedRevision: { type: "integer", minimum: 0 },
       input: alias, expectedSha256: hash, sourceUrl: { type: "string" }, select: { type: "boolean" }
     }, ["workspace", "operationId", "expectedRevision", "input", "expectedSha256"], write),

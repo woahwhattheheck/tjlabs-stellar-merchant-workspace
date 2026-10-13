@@ -21,7 +21,7 @@ Each original import retains its complete bytes as well as its original name, su
 
 The current view selects an ordered list of original sources. A record key is its complete source SHA-256, a colon and the original zero-based row index. Native ref IDs resolve inside that source. Every candidate remains visible for duplicate IDs; unresolved references retain their original target value and any separate cross-source candidates.
 
-Haystack JSON v4 is the import and export format. Native markers, refs, units, dates, times, zones, coordinates, typed strings, nested lists/dictionaries and grids retain their complete values. Signed zero remains signed through JSON transport, operation history and delivery. Original source bytes remain available through `source.read` and the full package.
+Haystack JSON v4 and Zinc 3.0 are supported native grid formats; JSON v4 remains the default. See [Zinc formats and source contract](ZINC_CONTRACT.md) for explicit format selection, standard normalization and representation limits. Native markers, refs, units, dates, times, zones, coordinates, typed strings, nested lists/dictionaries and grids retain their complete values. Signed zero remains signed through JSON transport, operation history and delivery. Original source bytes remain available through `source.read` and the full package.
 
 JSON dictionary members that the native contract ignores remain in the original input. Original import findings stay on their source metadata. Effective diagnostics describe the currently materialized selected grid, including accepted edits.
 
@@ -100,7 +100,7 @@ A deliberate new client can reconnect to the same workspace after a server resta
 | `workspace` | All original source bytes, workspace history, proposals/reviews, saved editions and every portable application file |
 | `register` | JSON, CSV or HTML containing complete selected site/equipment/point records, native tags, source locations and relationships |
 | `diagnostics` | JSON, CSV or HTML containing every effective finding with exact source/row/tag context |
-| `native-grid` | One selected source's complete materialized native JSON v4 grid, including accepted edits |
+| `native-grid` | One selected source's complete materialized native JSON v4 or Zinc 3.0 grid, including accepted edits |
 
 CSV exports retain native tag JSON and source identities and protect spreadsheet cells from formula interpretation. HTML reports are complete printable documents. JSON reports retain native typed structures.
 

@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "haystack-workspace",
-  "description": "Native building grids, assigned corrective work, complete evidence, explicit review, source editions and recipient returns; original point-list mapping, reviewed semantic models and native Brick validation",
+  "description": "Native JSON-v4 and Zinc 3.0 building grids, assigned corrective work, complete evidence, explicit review, source editions and recipient returns; original point-list mapping, reviewed semantic models and native Brick validation",
   "commands": {
     "haystack": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/cli.mjs",
     "haystack-mcp": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/mcp.mjs"

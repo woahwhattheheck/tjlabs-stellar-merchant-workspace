@@ -15,7 +15,7 @@ export interface Diagnostic {
   rowIndex?: number; recordKey?: string; tag?: string; details?: Json;
 }
 export interface Source {
-  id: string; name: string; sourceUrl: string; format: "json-v4"; bytes: number; importedAt: string;
+  id: string; name: string; sourceUrl: string; format: "json-v4" | "zinc"; bytes: number; importedAt: string;
   gridSha256: string; rows: number; columns: number; diagnostics: Diagnostic[]; selected?: boolean;
 }
 export interface NativeRecord {
@@ -75,7 +75,7 @@ export type DeliveryArguments = SemanticDeliveryArguments | Mutation & (
   { kind: "workspace" } |
   { kind: "work-register"; format?: "json" | "csv" | "html" } |
   { kind: "register" | "diagnostics"; format?: "json" | "csv" | "html"; editionId?: string; role?: Role } |
-  { kind: "native-grid"; sourceId: string; editionId?: string; format?: "json" }
+  { kind: "native-grid"; sourceId: string; editionId?: string; format?: "json" | "zinc" }
 );
 export interface Operation {
   id: string; action: string; argumentsSha256: string; revision: number; at: string;
@@ -173,7 +173,7 @@ export interface ActionMap extends SemanticActionMap {
   "workspace.rename": { args: Mutation & { title: string }; result: Outcome & { title: string } };
   "sources.list": { args: Revision & Paging; result: Page<Source> };
   "source.read": { args: { sourceId: string; offset?: number; length?: number }; result: ByteRange };
-  "source.import": { args: Mutation & { name: string; base64: string; sourceUrl?: string; format?: "json-v4"; select?: boolean }; result: Outcome & { source: Source; alreadyRetained?: boolean; selected?: boolean } };
+  "source.import": { args: Mutation & { name: string; base64: string; sourceUrl?: string; format?: "json-v4" | "zinc"; select?: boolean }; result: Outcome & { source: Source; alreadyRetained?: boolean; selected?: boolean } };
   "source.select": { args: Mutation & { sourceIds: string[] }; result: Outcome & { sourceIds: string[] } };
   "records.list": { args: EditionSelection & Paging & { role?: Role; sourceId?: string; query?: string }; result: Page<NativeRecord> };
   "record.read": { args: EditionSelection & { recordKey: string }; result: Envelope & { record: NativeRecord; relations: Relation[]; diagnostics: Diagnostic[] } };

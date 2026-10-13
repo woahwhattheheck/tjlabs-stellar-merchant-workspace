@@ -249,7 +249,8 @@ Read original and working material
 
 Prepare and review work
   rename           --title TEXT
-  import           --file GRID.json [--name TEXT] [--source-url TEXT] [--no-select]
+  import           --file GRID [--format json-v4|zinc] [--name TEXT]
+                   [--source-url TEXT] [--no-select]
   select           --source-id SHA [--source-id SHA ...]
                    OR --sources-file ARRAY.json
   preview          --edits ARRAY.json
@@ -262,7 +263,7 @@ Prepare and review work
 Complete delivery
   report           --kind register|diagnostics [--format json|csv|html]
                    [--edition SHA] [--role site|equip|point|all] [--out FILE]
-  native-grid      --source-id SHA [--edition SHA] [--out FILE]
+  native-grid      --source-id SHA [--edition SHA] [--format json|zinc] [--out FILE]
   export-workspace [--out FILE]
   replay           --request-file ORIGINAL.request.json [--out FILE]
 
@@ -386,14 +387,14 @@ export async function main(argv=process.argv.slice(2)){
     record:["record-key","edition"],diagnostics:[...pageFlags,"edition","source-id","severity","record-key"],
     proposals:[...pageFlags,"state"],proposal:["proposal-id"],editions:pageFlags,edition:["edition"],
     operations:pageFlags,operation:["operation-id"],"source-download":["source-id"],"delivery-download":["operation-id"],
-    rename:[...mutationFlags,"title"],import:[...mutationFlags,"file","name","source-url","no-select"],
+    rename:[...mutationFlags,"title"],import:[...mutationFlags,"file","format","name","source-url","no-select"],
     select:[...mutationFlags,"source-id","sources-file"],preview:["edits"],
     propose:[...mutationFlags,"title","edits","note","note-file"],
     review:[...mutationFlags,"proposal-id","decision","note","note-file"],
     save:[...mutationFlags,"title","note","note-file"],
     compare:[...pageFlags,"before","after","source-pairs","state"],
     report:[...mutationFlags,"kind","format","edition","role"],
-    "native-grid":[...mutationFlags,"source-id","edition"],
+    "native-grid":[...mutationFlags,"source-id","edition","format"],
     "export-workspace":mutationFlags,replay:["request-file"],
     request:[...mutationFlags,"args"]
   };
@@ -471,7 +472,7 @@ export async function main(argv=process.argv.slice(2)){
   else if(command==="rename"){action="workspace.rename";fields={title:required(flags,"title")};}
   else if(command==="import"){
     action="source.import";const file=resolve(required(flags,"file")),bytes=await plainRead(file,SOURCE_LIMIT);
-    fields={name:one(flags,"name",basename(file)),base64:bytes.toString("base64"),sourceUrl:one(flags,"source-url",""),format:"json-v4",select:!flags["no-select"]};
+    fields={name:one(flags,"name",basename(file)),base64:bytes.toString("base64"),sourceUrl:one(flags,"source-url",""),format:one(flags,"format","json-v4"),select:!flags["no-select"]};
   }else if(command==="select"){
     action="source.select";
     if(flags["sources-file"]&&flags["source-id"])throw new Error("Choose a complete source array file or repeated --source-id options.");
@@ -486,7 +487,7 @@ export async function main(argv=process.argv.slice(2)){
     if(!["register","diagnostics"].includes(kind))throw new Error("Use report --kind register|diagnostics, native-grid, or export-workspace.");
     if(kind==="diagnostics"&&flags.role!==undefined)throw new Error("The diagnostic delivery retains the complete selected finding set; omit --role.");
     fields=clean({kind,format:one(flags,"format","json"),editionId:one(flags,"edition"),role:kind==="register"?one(flags,"role","all"):undefined});
-  }else if(command==="native-grid"){action="delivery.prepare";fields=clean({kind:"native-grid",format:"json",sourceId:required(flags,"source-id"),editionId:one(flags,"edition")});}
+  }else if(command==="native-grid"){action="delivery.prepare";fields=clean({kind:"native-grid",format:one(flags,"format","json"),sourceId:required(flags,"source-id"),editionId:one(flags,"edition")});}
   else if(command==="export-workspace"){action="delivery.prepare";fields={kind:"workspace"};}
   const result=await performMutation(target,action,fields,flags);
   return action==="delivery.prepare"?deliveryToFile(target,result,flags):output(result,flags);

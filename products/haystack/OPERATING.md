@@ -2,7 +2,7 @@
 
 The `haystack-turnover` selection delivers the complete native building-data application through the maintained source builder, installer, Applications lifecycle and Merchant host.
 
-The operator imports original Haystack JSON v4, inspects source-local site/equipment/point records, reviews complete typed tag edits, saves editions, compares revisions, assigns corrective work and reviews the receiving team's completed work with its full evidence.
+The operator imports original Haystack JSON v4 or Zinc 3.0, inspects source-local site/equipment/point records, reviews complete typed tag edits, saves editions, compares revisions, assigns corrective work and reviews the receiving team's completed work with its full evidence.
 
 | Surface | Entry |
 | --- | --- |
@@ -190,3 +190,7 @@ node stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/SEMANTIC_
 ~~~
 
 Retain the original operation directory, request files, browser profile and selected inputs. The programme's full result records actual completed steps and complete output identities. Managed Applications Start/Stop receiving remains a separate actual READY-runtime input; source inclusion alone is not a successful installed launch.
+
+## Zinc native formats
+
+The installed source includes the complete Zinc 3.0 codec and [Zinc contract](../../stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/ZINC_CONTRACT.md). Choose `--format zinc` for original grid intake or native-grid export; JSON-v4 remains the default. Host-pinned source aliases accept `format: "zinc"`. New workspace packages include every codec/reference file under v4, while the original v1/v2/v3 packages remain receivable with their exact inventories. Customer consumer selection and commissioning remain explicit.
