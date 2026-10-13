@@ -418,3 +418,7 @@ application file setting. The native CLI, current review/save flow and complete
 workspace backup use the same saved source and request. See
 [Original application input files](APPLICATION_INPUTS.md) for the full operating
 and recovery workflow.
+
+## Search and reopen complete operation history
+
+The **Operations** desk now filters and pages retained work while preserving its original recovery controls. Open a selected operation for its full result, download the complete record, or continue through its existing workflow. Ordinary activity polling carries compact descriptors; views requiring historical result bodies retain them. See [Original operation history](OPERATION_HISTORY.md) for the browser journey, native/API paging, current observation semantics and the existing receiving continuation.

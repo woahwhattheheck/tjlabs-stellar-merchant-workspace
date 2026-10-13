@@ -95,11 +95,11 @@ const definitions = new Map(recoveryWorkspaceTools((name, description, propertie
 const paged = new Set(['merchant_recovery_inventory', 'merchant_recovery_requests', 'merchant_recovery_operations']);
 const writes = new Set(['merchant_recovery_start', 'merchant_recovery_resume', 'merchant_recovery_cancel',
   'merchant_recovery_support_review','merchant_recovery_support_save','merchant_recovery_support_export',
-  'merchant_recovery_bundle_inspection','merchant_recovery_bundle_attach','merchant_recovery_bundle_case_export']);
+  'merchant_recovery_bundle_inspection','merchant_recovery_bundle_attach','merchant_recovery_bundle_pair_attach','merchant_recovery_bundle_case_export']);
 function validateSelection(value) {
   exact(value, ['profileId', 'action', 'id', 'bundleId', 'snapshotId', 'destinationName',
     'capturePlanId', 'quiesced', 'restoreId', 'publisherRestoreId', 'fleetRestoreId', 'fleetTargetId',
-    'objectSessionId', 'expectedRecordSha256','archiveId','sourceRequestId','sourceReviewHash','sourceAttempt',
+    'objectSessionId', 'expectedRecordSha256','archiveId','sourceRequestId','sourceReviewHash','sourceAttempt','sourceSide',
     'beforeObjectSessionId','afterObjectSessionId','beforeExpectedRecordSha256','afterExpectedRecordSha256'],
     ['profileId', 'action', 'id']);
   checked(value.profileId, ID, 'profile ID'); checked(value.id, ID, 'operation ID');
@@ -123,8 +123,9 @@ function validateSelection(value) {
   }
   if(comparisonFields.some(key=>Object.hasOwn(value,key)))throw failure('INVALID_PARAMS','Comparison selectors belong to object-compare.');
   if(value.action==='object-bundle-export'){
-    exact(value,['profileId','action','id','sourceRequestId','sourceReviewHash','sourceAttempt'],
+    exact(value,['profileId','action','id','sourceRequestId','sourceReviewHash','sourceAttempt','sourceSide'],
       ['profileId','action','id','sourceRequestId','sourceReviewHash','sourceAttempt']);
+    if(value.sourceSide!==undefined&&!['before','after'].includes(value.sourceSide))throw failure('INVALID_PARAMS','Select before or after from the original comparison.');
     checked(value.sourceRequestId,ID,'original recovery request');checked(value.sourceReviewHash,SHA,'original recovery review');
     if(!Number.isSafeInteger(value.sourceAttempt)||value.sourceAttempt<0)throw failure('INVALID_PARAMS','Select the exact observed original attempt.');
   }else if(value.action==='object-bundle-receive'){
@@ -170,6 +171,10 @@ function validate(name, input) {
     }else validateSelection(input.selection);
   }
   if(input.transferId!==undefined)checked(input.transferId,/^[a-z0-9][a-z0-9_-]{0,63}$/,'Support transfer');
+  for(const key of ['beforeId','afterId'])if(input[key]!==undefined)checked(input[key],ID,'original bundle request');
+  for(const key of ['pairSha256','expectedPairSha256'])if(input[key]!==undefined)checked(input[key],SHA,'comparison pair');
+  if(['merchant_recovery_bundle_attachment','merchant_recovery_bundle_case_export'].includes(name)&&
+    (input.archiveSha256!==undefined)===(input.pairSha256!==undefined))throw failure('INVALID_PARAMS','Select exactly one original archive or pair SHA.');
   if(input.archiveId!==undefined)checked(input.archiveId,ID,'host-declared archive');
   if(input.archiveSha256!==undefined)checked(input.archiveSha256,SHA,'original archive');
   if(input.expectedRevision!==undefined)checked(input.expectedRevision,SHA,'original saved case revision');
@@ -258,7 +263,8 @@ export class MerchantRecoveryWorkspaces {
     let method = 'GET', route, body;
     if(action==='comparison_artifact')route=urlQuery('/api/object-comparison-artifact',{profile:input.profileId,id:input.id,kind:input.kind,sha256:input.sha256});
     else if(action==='bundle_inspection')route=urlQuery('/api/bundle-inspection',{profile:input.profileId,archive:input.archiveId});
-    else if(action==='bundle_attachment')route=urlQuery('/api/bundle-attachment',{profile:input.profileId,id:input.transferId,sha256:input.archiveSha256});
+    else if(action==='bundle_pair')route=urlQuery('/api/bundle-pair',{profile:input.profileId,before:input.beforeId,after:input.afterId});
+    else if(action==='bundle_attachment')route=urlQuery('/api/bundle-attachment',{profile:input.profileId,id:input.transferId,sha256:input.archiveSha256,pair:input.pairSha256});
     else if(action==='bundle_report')route=urlQuery('/api/bundle-report',{profile:input.profileId,id:input.id,kind:input.kind});
     else if(action==='bundle_artifact')route=urlQuery('/api/bundle-artifact',{profile:input.profileId,id:input.id});
     else if(action==='support_cases')route=urlQuery('/api/support-cases',{profile:input.profileId,q:input.q,offset:input.offset,limit:input.limit});

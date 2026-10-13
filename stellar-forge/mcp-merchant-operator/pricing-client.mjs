@@ -5,7 +5,7 @@ import { tariffClientOperations } from './catalog/pricing-tariffs.mjs';
 import { performanceClientOperations,PERFORMANCE_MCP_OPERATIONS } from './catalog/pricing-performance.mjs';
 export { MerchantTariffClient,createMerchantTariffClient,downloadMerchantTariffPlan,inspectMerchantTariffPlan,
   downloadMerchantTariffPortfolio,inspectMerchantTariffPortfolio,downloadMerchantTariffPricingReview,
-  inspectMerchantTariffPricingReview } from './pricing-tariffs-client.mjs';
+  inspectMerchantTariffPricingReview,downloadMerchantTariffReport,inspectMerchantTariffReport } from './pricing-tariffs-client.mjs';
 export { downloadMerchantCosts, inspectMerchantCosts } from './pricing-cost-client.mjs';
 
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;

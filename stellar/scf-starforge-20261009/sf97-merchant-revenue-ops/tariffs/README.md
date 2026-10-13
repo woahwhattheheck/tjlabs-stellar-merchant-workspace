@@ -406,3 +406,10 @@ Reopen current state, the original saved plan or the original pricing operation 
 | `../workspace/model.mjs` | Original seller, pricing, ledger and request workflow |
 
 The tariff operator retains those original owners from first source selection through review, saved comparison, native pricing continuation and receiving.
+
+
+## Complete saved-plan review and report
+
+The tariff reader now provides route, tariff and quantity filters with complete exact outcome details: charged bands, the authoritative rational average and both native decimal bounds, saved baseline/costs, separate uniform-quote projection and every band boundary. The displayed plan remains bound to its original pricing source, including when another source read fails.
+
+Saved plans export `report.html`, `band-charges.csv` and `thresholds.csv` alongside the original unchanged three files. The offline HTML includes every comparison, source identity and cost basis; browser filters affect only the screen. The existing HTTP/CLI downloads and typed client support all files. The additive Merchant MCP report artifact receives all six through the original retained file owner; the old three-file plan artifact and checkpoints stay compatible. See [REVIEW.md](REVIEW.md) for the complete operator, offline report, API, CLI and same-case receiving flow.

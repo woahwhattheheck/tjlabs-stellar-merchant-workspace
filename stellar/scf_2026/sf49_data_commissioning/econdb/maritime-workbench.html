@@ -2,6 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'"><title>Maritime period workbench</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f4f4f4;color:#1d1d1d;font:15px/1.5 system-ui,sans-serif}main{max-width:1360px;margin:0 auto;padding:28px}header{border-bottom:2px solid #333;margin-bottom:22px}h1{font-size:28px;line-height:1.2;margin:0 0 10px}h2{font-size:21px;margin:0 0 14px}h3{font-size:18px;margin:24px 0 10px}p{margin:10px 0}.muted{color:#555;font-size:14px}.panel{background:#fff;border:1px solid #c5c5c5;padding:20px;margin-bottom:18px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.fields{display:flex;flex-wrap:wrap;align-items:end;gap:14px}.field{display:flex;flex-direction:column;gap:5px;min-width:180px;flex:1}label{font-weight:600}input,button{font:inherit}input[type=file]{max-width:100%;width:100%;border:1px solid #aaa;padding:7px;background:#fafafa}input[type=date]{padding:8px;border:1px solid #888;background:#fff}button{padding:9px 14px;border:1px solid #777;background:#eee;color:#161616;cursor:pointer;border-radius:2px}button.primary{background:#262626;color:#fff;border-color:#262626}button:disabled{opacity:.45;cursor:default}button:focus-visible,input:focus-visible{outline:3px solid #444;outline-offset:3px}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px}.notice{background:#fff;border-left:4px solid #777;padding:14px 18px;margin:18px 0;overflow-wrap:anywhere}.notice.error{border:2px solid #333;font-weight:600}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.metrics div{border:1px solid #ccc;padding:12px}.metrics strong{display:block;font-size:25px;font-variant-numeric:tabular-nums}.metrics span{font-size:13px}.table{overflow-x:auto}table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}th,td{text-align:left;border-bottom:1px solid #ccc;padding:9px 12px;vertical-align:top;max-width:440px;overflow-wrap:anywhere}th{background:#eee}dl{display:grid;grid-template-columns:170px minmax(0,1fr);gap:7px 16px}dt{font-weight:600}dd{margin:0;overflow-wrap:anywhere}details{margin-top:16px}summary{cursor:pointer;font-weight:600}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}.check{display:block;margin:15px 0 10px}.pager{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:16px 0}.pager span{flex:1;font-size:13px}footer{font-size:13px;color:#555;padding:5px 0 20px}@media(max-width:760px){main{padding:14px}.grid{grid-template-columns:1fr}.panel{padding:15px}.metrics{grid-template-columns:1fr 1fr}dl{grid-template-columns:1fr;gap:1px}dd{margin-bottom:10px}h1{font-size:25px}.fields{align-items:stretch}.field{min-width:140px}.actions button{flex:1}th,td{padding:8px}}
+input[type=text]{width:100%;padding:8px;border:1px solid #888;background:#fff;color:#161616}.selected-entry td{background:#ededed}.field{min-width:0}button:disabled{opacity:1;color:#626262;background:#f1f1f1;border-color:#b9b9b9}button.primary:disabled{background:#e7e7e7;color:#626262;border-color:#b9b9b9}.table:focus-visible{outline:3px solid #444;outline-offset:3px}@media(max-width:760px){.fields>.field{flex-basis:100%}.actions button{min-width:0;overflow-wrap:anywhere}}
 </style></head><body><main>
 <header><h1>Maritime period workbench</h1><p>Review complete original port observations, compare periods and source editions, and export a reproducible result.</p><p class="muted">Local files stay in this browser. Authorized source acquisition runs in the companion native CLI. The two examples below reproduce published Econdb documentation and have no assigned port identity.</p></header>
 <section class="panel"><h2>1. Select a source edition</h2><div class="grid"><div><div class="field"><label for="raw-file">Original response JSON</label><input id="raw-file" type="file" accept=".json,application/json"></div><div class="field"><label for="descriptor-file">Retained descriptor JSON</label><input id="descriptor-file" type="file" accept=".json,application/json"></div><div class="actions"><button id="load-current" class="primary">Open source edition</button></div></div><div><p>Explore the issuer’s documented data shape:</p><div class="actions"><button id="capacity-example">Capacity example</button><button id="traffic-example">Container-traffic example</button></div><p class="muted">Capacity examples cover February and March 2022 in one response. Container traffic preserves its single original date and its unknown transshipment value.</p></div></div><div id="source-summary"><p class="muted">No source edition selected.</p></div></section>
@@ -10,6 +11,19 @@
 <div id="message" class="notice" role="status" aria-live="polite">Open a retained edition or choose an issuer example.</div>
 <section class="panel"><h2>3. Review coverage and changes</h2><div id="summary"></div><div id="comparison"></div><div id="revisions"></div><h3>Selected original observations</h3><div id="observations"></div><div class="pager"><button id="previous-page">Previous</button><span id="page-label"></span><button id="next-page">Next</button></div><details><summary>Source structure exceptions</summary><pre id="exceptions">[]</pre></details></section>
 <section class="panel"><h2>4. Export and continue</h2><p>Downloads use the applied selection. A saved workspace includes both complete original responses, descriptors and review choices.</p><div class="actions"><button id="source-download" disabled>Original response</button><button id="csv-download" disabled>Observation CSV</button><button id="json-download" disabled>Review JSON</button><button id="report-download" disabled>Complete HTML report</button><button id="workspace-download" disabled>Save workspace</button></div><h3>Reopen a saved workspace</h3><div class="fields"><div class="field"><label for="workspace-file">Review workspace JSON</label><input id="workspace-file" type="file" accept=".json,application/json"></div><button id="restore">Reopen workspace</button></div></section>
+<section class="panel" id="project-panel"><h2>5. Assemble a multi-port project</h2>
+<p>Collect independent source reviews into one project. Each entry preserves its own port, measure, reporting window and optional prior edition. Original responses travel with the saved project.</p>
+<div class="fields"><div class="field"><label for="project-id">Project identifier</label><input id="project-id" type="text" maxlength="80" value="maritime-project" autocomplete="off" spellcheck="false"><span class="muted">Lowercase letters, numbers, hyphens or underscores; start with a letter or number.</span></div><div class="field"><label for="project-title">Project title</label><input id="project-title" type="text" maxlength="300" value="Maritime reporting project"></div><button id="project-apply-meta" disabled>Apply project name</button></div>
+<h3>Add the applied source review</h3><div class="field"><label for="project-entry-title">Entry title</label><input id="project-entry-title" type="text" maxlength="300" placeholder="Port, measure and reporting period"></div>
+<div class="actions"><button id="project-add" class="primary" disabled>Add reviewed entry</button><button id="project-replace" disabled>Replace selected entry from review</button><button id="project-rename" disabled>Update selected title</button><button id="project-clear-selection">Clear entry selection</button></div>
+<p id="project-selected" class="muted"></p><div id="project-message" class="notice" role="status" aria-live="polite">Apply a source review above, then add it to your project.</div>
+<div id="project-summary"></div><div id="project-entries"></div>
+<div class="actions"><button id="project-up" disabled>Move selected up</button><button id="project-down" disabled>Move selected down</button><button id="project-remove" disabled>Remove selected entry</button><button id="project-undo" disabled>Undo last project change</button></div>
+<h3>Download the complete project</h3><p>Save workspace retains complete current/prior originals and every entry’s selection. The standalone report includes all selected observations and comparison details. CSV retains source and measure columns for every cell.</p>
+<div class="actions"><button id="project-save" class="primary" disabled>Save project workspace</button><button id="project-report" disabled>Complete project report</button><button id="project-csv" disabled>Project observation CSV</button><button id="project-json" disabled>Project analysis JSON</button></div>
+<h3>Reopen a saved project</h3><p class="muted">Reopening replaces this in-memory project after the whole file is checked. Save any current work first. Projects are retained by downloading them; closing the page alone does not save them.</p>
+<div class="fields"><div class="field"><label for="project-workspace-file">Project workspace JSON</label><input id="project-workspace-file" type="file" accept=".json,application/json"></div><button id="project-open">Reopen project</button></div>
+</section>
 <footer>Calling-vessel TEU capacity and estimated container TEU retain separate measures. Empty source cells remain explicit. Source: Econdb OpenAPI, retained October 13, 2026.</footer>
 </main><script>// BEGIN MARITIME ENGINE
 // Econdb maritime analysis over retained original JSON. No network or payment side effects.
@@ -218,6 +232,232 @@ function reportHTML({edition,period,comparison=null,editionComparison=null,engin
 
 // END MARITIME ENGINE
 const ENGINE_ID='778a2f23096fe93bdad8ed5a11850c7e1c559fad2f290996c8ff853f5996d9d6';
+// BEGIN PROJECT ENGINE
+const PROJECT_ANALYSIS=(()=>{
+const PROJECT_VERSION='1.0.0';
+const MAX_PROJECT_ENTRIES=48;
+const MAX_PROJECT_CELLS=500000;
+const need=(ok,message)=>{if(!ok)throw new Error(message)};
+const object=(value,label)=>{need(value&&typeof value==='object'&&!Array.isArray(value),label+' must be an object');return value};
+const allowed=(value,names,label)=>{for(const key of Object.keys(value))need(names.includes(key),label+': unsupported field '+key)};
+const text=(value,label,max=300)=>{need(typeof value==='string'&&value.trim()&&value.length<=max,label+' must be nonempty text within '+max+' characters');return value};
+const slug=(value,label)=>{need(typeof value==='string'&&/^[a-z0-9][a-z0-9_-]{0,79}$/.test(value),label+' must be a lowercase file-safe identifier of at most 80 characters');return value};
+function periodRange(value,label){
+ object(value,label);allowed(value,['from','until'],label);
+ const from=dateOnly(value.from),until=dateOnly(value.until);need(from<until,label+' must have from < until');
+ return {from,until};
+}
+function validateProject(config){
+ object(config,'Project');allowed(config,['schema','id','title','entries'],'Project');
+ need(config.schema==='econdb.maritime-project.v1','Unsupported project schema');
+ const id=slug(config.id,'Project ID'),title=text(config.title,'Project title');
+ need(Array.isArray(config.entries)&&config.entries.length>0&&config.entries.length<=MAX_PROJECT_ENTRIES,'Choose between 1 and '+MAX_PROJECT_ENTRIES+' project entries');
+ const ids=new Set();
+ const entries=config.entries.map((entry,index)=>{
+  const label='Entry '+(index+1);object(entry,label);allowed(entry,['id','title','current','previous','selection','before','after'],label);
+  const id=slug(entry.id,label+' ID');need(!ids.has(id),'Repeated project entry ID '+id);ids.add(id);
+  const current=text(entry.current,label+' current edition directory',4096);
+  const previous=entry.previous==null?null:text(entry.previous,label+' previous edition directory',4096);
+  need(!current.includes('\0')&&!(previous??'').includes('\0'),'Edition paths cannot contain NUL');
+  const before=entry.before==null?null:periodRange(entry.before,label+' earlier period');
+  const after=entry.after==null?null:periodRange(entry.after,label+' later period');
+  need(Boolean(before)===Boolean(after),label+' must supply both comparison periods together');
+  return {id,title:text(entry.title,label+' title'),current,previous,selection:periodRange(entry.selection,label+' selection'),before,after};
+ });
+ return {schema:config.schema,id,title,entries};
+}
+function editionIdentity(edition){
+ return {id:edition.id,title:edition.title,source:edition.source,request:edition.request};
+}
+function analyzeProject(config,editions){
+ const project=validateProject(config);need(editions instanceof Map,'Supply received editions in a Map keyed by project entry ID');
+ let retainedCells=0;
+ for(const entry of project.entries){
+  const received=editions.get(entry.id);need(received?.current?.schema==='econdb.maritime-edition.v1','Missing received current edition for '+entry.id);
+  need(Boolean(entry.previous)===Boolean(received.previous),'Previous edition selection does not match received source for '+entry.id);
+  if(received.previous)need(received.previous.schema==='econdb.maritime-edition.v1','Invalid received previous edition for '+entry.id);
+  retainedCells+=received.current.rows.length+(received.previous?.rows.length??0);
+  need(retainedCells<=MAX_PROJECT_CELLS,'Project exceeds '+MAX_PROJECT_CELLS+' current and previous source cells; divide it into complete source-consistent projects');
+ }
+ const entries=project.entries.map(entry=>{
+  const received=editions.get(entry.id),edition=received.current,period=selectPeriod(edition,entry.selection);
+  const comparison=entry.before?comparePeriods(edition,entry.before,entry.after):null;
+  const revisions=received.previous?compareEditions(received.previous,edition,entry.selection):null;
+  const cellStates=Object.fromEntries(['known','null','absent','unsupported_value'].map(status=>[status,period.rows.filter(row=>row.status===status).length]));
+  const incompleteSeries=comparison?comparison.comparisons.filter(row=>row.before.reasons.length||row.after.reasons.length).length:0;
+  const changedCells=revisions?Object.entries(revisions.counts).filter(([kind])=>kind!=='unchanged').reduce((sum,[,count])=>sum+count,0):0;
+  const summary={selected_cells:period.rows.length,cell_states:cellStates,observed_dates:period.dates.length,expected_monthly_dates:period.expected_dates?.length??null,missing_monthly_dates:period.missing_dates?.length??null,source_issues:period.issues.length,incomplete_comparison_series:incompleteSeries,changed_cells:changedCells,metadata_changes:revisions?.metadata_changes.length??0,has_previous:Boolean(received.previous),has_period_comparison:Boolean(comparison),empty:period.rows.length===0};
+  return {id:entry.id,title:entry.title,current:editionIdentity(edition),previous:received.previous?editionIdentity(received.previous):null,period,comparison,revisions,summary};
+ });
+ const sourceIdentities=new Set(),ports=new Set(),sourceRoles=new Set();
+ for(const entry of entries){
+  for(const edition of [entry.current,entry.previous].filter(Boolean))sourceIdentities.add(JSON.stringify([edition.id,edition.source.source_sha256,edition.source.captured_at,edition.source.source_role,edition.request]));
+  if(entry.current.request.locode!==null)ports.add(entry.current.request.locode);
+  sourceRoles.add(entry.current.source.source_role);
+ }
+ const sum=field=>entries.reduce((total,entry)=>total+entry.summary[field],0);
+ return {schema:'econdb.maritime-project-analysis.v1',version:PROJECT_VERSION,project:{id:project.id,title:project.title},entries,summary:{entries:entries.length,identified_ports:[...ports].sort(),unassigned_port_entries:entries.filter(entry=>entry.current.request.locode===null).length,distinct_source_editions:sourceIdentities.size,source_roles:[...sourceRoles].sort(),retained_cells:retainedCells,selected_cells:sum('selected_cells'),unknown_cells:entries.reduce((total,entry)=>total+entry.summary.cell_states.null+entry.summary.cell_states.absent+entry.summary.cell_states.unsupported_value,0),empty_entries:entries.filter(entry=>entry.summary.empty).length,missing_monthly_labels:sum('missing_monthly_dates'),expected_monthly_coverage_not_inferred_entries:entries.filter(entry=>entry.summary.expected_monthly_dates===null).length,frequency_undeclared_entries:entries.filter(entry=>entry.current.request.frequency===null).length,partial_month_selection_entries:entries.filter(entry=>entry.current.request.frequency==='monthly'&&entry.period.expected_dates===null).length,source_issues:sum('source_issues'),incomplete_comparison_series:sum('incomplete_comparison_series'),changed_cells:sum('changed_cells'),metadata_changes:sum('metadata_changes'),cell_count_basis:'Entry-level counts; repeated views of the same source are counted in each view.',cross_measure_total:null}};
+}
+function requireAnalysis(analysis){need(analysis?.schema==='econdb.maritime-project-analysis.v1'&&Array.isArray(analysis.entries),'Use a produced maritime project analysis')}
+function csvCell(value){
+ let s=value==null?'':String(value);
+ if(/^[\s]*[=+@]/.test(s)||/^[\t\r\n]/.test(s)||(/^[\s]*-/.test(s)&&!/^\-\d+(?:\.\d+)?(?:e[+-]?\d+)?$/i.test(s)))s="'"+s;
+ return '"'+s.replace(/"/g,'""')+'"';
+}
+function projectRowsCSV(analysis){
+ requireAnalysis(analysis);
+ const fields=['project_id','entry_id','entry_title','edition_id','source_role','captured_at','locode','endpoint','flow','operator','top','measure','population','frequency','selection_from','selection_until_exclusive','date','series','series_name','status','exact_value','source_lexeme','source_row','source_sha256'];
+ const rows=[fields];
+ for(const entry of analysis.entries){
+  const period=entry.period,request=period.request,names=new Map(period.series.map(series=>[series.code,series.name]));
+  for(const row of period.rows)rows.push([analysis.project.id,entry.id,entry.title,period.edition_id,period.source.source_role,period.source.captured_at,request.locode,request.kind,request.query?.flow,request.query?.operator,request.query?.top,request.measure,request.population,period.frequency,period.selection.from,period.selection.until,row.date,row.series,names.get(row.series),row.status,row.exact,row.source_lexeme,row.source_row,period.source.source_sha256]);
+ }
+ return rows.map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n';
+}
+const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+function table(headers,rows){return '<div class="table" tabindex="0"><table><thead><tr>'+headers.map(value=>'<th scope="col">'+esc(value)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(value=>'<td>'+esc(value)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>'}
+function sourceDescription(entry){
+ const r=entry.current.request;
+ return [r.kind,r.query?.flow??'flow undeclared',r.query?.operator?'operator '+r.query.operator:'operator selection '+r.population,r.query?.top===undefined?'':'top '+r.query.top].filter(Boolean).join(' · ');
+}
+function projectHTML(analysis,{engine_sha256=null,project_engine_sha256=null}={}){
+ requireAnalysis(analysis);
+ for(const digest of [engine_sha256,project_engine_sha256])need(digest===null||/^[a-f0-9]{64}$/.test(digest),'Use exact producing source SHA-256 values');
+ const summary=analysis.summary;
+ const links='<nav aria-label="Project files"><a href="observations.csv" download>All selected observations · CSV</a><a href="project-analysis.json" download>Complete analysis · JSON</a><a href="project.json" download>Native project configuration · JSON</a><a href="browser-workspace.json" download>Editable browser workspace · JSON</a><a href="REOPEN.md">Reopening instructions</a></nav>';
+ const overview=table(['Entry','Port','Measure / selection','Selected cells','Unknown cells','Missing monthly labels','Cell revisions','Metadata changes'],analysis.entries.map(entry=>[entry.title,entry.current.request.locode??'Unassigned in issuer example',sourceDescription(entry),entry.summary.selected_cells,entry.summary.cell_states.null+entry.summary.cell_states.absent+entry.summary.cell_states.unsupported_value,entry.summary.missing_monthly_dates??'Not inferred',entry.revisions?entry.summary.changed_cells:'No prior edition selected',entry.revisions?entry.summary.metadata_changes:'No prior edition selected']));
+ const details=analysis.entries.map(entry=>{
+  const base='entries/'+entry.id+'/',original='originals/'+entry.id+'/',period=entry.period,r=entry.current.request,s=entry.summary;
+  let controls='<nav aria-label="'+esc(entry.title)+' files"><a href="'+base+'report.html">Open detailed report</a><a href="'+base+'observations.csv" download>Selected observations · CSV</a><a href="'+base+'selected-period.json" download>Selected observations · JSON</a><a href="'+original+'current/response.json" download>Current original response</a><a href="'+original+'current/descriptor.json" download>Current source descriptor</a>';
+  if(entry.comparison)controls+='<a href="'+base+'period-comparison.json" download>Period comparison · JSON</a>';
+  if(entry.revisions)controls+='<a href="'+base+'edition-comparison.json" download>Source revisions · JSON</a><a href="'+original+'previous/response.json" download>Previous original response</a><a href="'+original+'previous/descriptor.json" download>Previous source descriptor</a>';
+  controls+='</nav>';
+  const dl=[['Port',r.locode??'Unassigned in issuer example'],['Measure',r.measure],['Endpoint / request',sourceDescription(entry)],['Population',r.population],['Source role',entry.current.source.source_role],['Current edition',entry.current.id+' · '+entry.current.source.captured_at],['Previous edition',entry.previous?entry.previous.id+' · '+entry.previous.source.captured_at:'None selected'],['Local selection',period.selection.from+' ≤ original Date < '+period.selection.until],['Source frequency',r.frequency??'Undeclared; source dates retained'],['Selected observed dates',period.dates.length?period.dates.join(', '):'No source dates in this selection'],['Expected monthly dates',period.expected_dates===null?'Not inferred for this frequency or partial-month selection':String(period.expected_dates.length)],['Missing monthly labels',period.missing_dates===null?'Not inferred':period.missing_dates.length?period.missing_dates.join(', '):'None'],['Original source',entry.current.source.original_url??'No observed request URL'],['Current source SHA-256',entry.current.source.source_sha256]];
+  const notes=[];
+  if(s.empty)notes.push('This local selection contains no observed source cells.');
+  if(s.cell_states.null)notes.push(s.cell_states.null+' null source cells remain unknown.');
+  if(s.cell_states.absent)notes.push(s.cell_states.absent+' absent source cells remain absent.');
+  if(s.cell_states.unsupported_value)notes.push(s.cell_states.unsupported_value+' unsupported source values require source review.');
+  if(s.source_issues)notes.push(s.source_issues+' source structure or coverage exceptions appear in the detailed report.');
+  if(s.incomplete_comparison_series)notes.push(s.incomplete_comparison_series+' series have incomplete monthly comparison inputs.');
+  if(entry.revisions)notes.push(s.changed_cells+' changed selected cells and '+s.metadata_changes+' metadata or coverage changes between the selected source editions.');
+  return '<section id="'+entry.id+'"><h2>'+esc(entry.title)+'</h2>'+controls+'<dl>'+dl.map(([label,value])=>'<dt>'+esc(label)+'</dt><dd>'+esc(value)+'</dd>').join('')+'</dl>'+table(['Known cells','Null cells','Absent cells','Unsupported cells'],[['known','null','absent','unsupported_value'].map(state=>s.cell_states[state])])+(notes.length?'<ul>'+notes.map(note=>'<li>'+esc(note)+'</li>').join('')+'</ul>':'')+'</section>';
+ }).join('');
+ return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; base-uri \'none\'; form-action \'none\'"><title>'+esc(analysis.project.title)+' — maritime project</title><style>body{font:15px/1.5 system-ui,sans-serif;color:#202020;background:white;max-width:1200px;margin:30px auto;padding:0 22px}h1{font-size:28px;line-height:1.2}h2{font-size:21px}h1,h2,dd,li,p{overflow-wrap:anywhere}a{color:#222;text-underline-offset:3px}a:focus-visible,.table:focus-visible{outline:3px solid #333;outline-offset:3px}nav{display:flex;flex-wrap:wrap;gap:10px 20px;margin:16px 0}section{border-top:1px solid #aaa;margin-top:30px;padding-top:16px}dl{display:grid;grid-template-columns:180px minmax(0,1fr);gap:8px 18px}dt{font-weight:600}dd{margin:0}.table{max-width:100%;overflow:auto;margin:16px 0}table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid #ccc}th{background:#eee}.small{font-size:13px;color:#555}.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin:20px 0}.metric{border:1px solid #bbb;padding:12px}.metric strong{display:block;font-size:24px}@media(max-width:600px){body{padding:0 12px;margin:18px auto}h1{font-size:25px}dl{grid-template-columns:1fr;gap:3px}dd{margin-bottom:10px}nav{display:grid;gap:12px}th,td{padding:7px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}@media print{body{max-width:none;margin:0;padding:0;font-size:10pt}nav{display:none}.table{overflow:visible}table{table-layout:fixed}th,td{overflow-wrap:anywhere;padding:5px}thead{display:table-header-group}tr{break-inside:avoid}section{break-before:auto}h2{break-after:avoid}}</style></head><body><h1>'+esc(analysis.project.title)+'</h1><p>Maritime project · '+esc(analysis.project.id)+'</p><p>Each entry retains its own source, port, request, measure and date selection. The overview counts source cells and review findings. Numeric capacity and container-volume observations remain in their individual reports and exports.</p>'+links+'<div class="metrics">'+[['Project entries',summary.entries],['Identified ports',summary.identified_ports.length],['Selected cells',summary.selected_cells],['Unknown cells',summary.unknown_cells]].map(([label,value])=>'<div class="metric"><strong>'+esc(value)+'</strong>'+esc(label)+'</div>').join('')+'</div><p class="small">'+esc(summary.cell_count_basis)+' Unassigned-port entries: '+esc(summary.unassigned_port_entries)+'. Source roles: '+esc(summary.source_roles.join(', '))+'. CSV is a human spreadsheet export; JSON retains exact decimal strings.</p><h2>Project overview</h2>'+overview+'<nav aria-label="Project entries">'+analysis.entries.map(entry=>'<a href="#'+entry.id+'">'+esc(entry.title)+'</a>').join('')+'</nav>'+details+'<section><h2>Analysis source</h2><dl><dt>Period engine SHA-256</dt><dd>'+esc(engine_sha256??'See accompanying source manifest')+'</dd><dt>Project engine SHA-256</dt><dd>'+esc(project_engine_sha256??'See accompanying source manifest')+'</dd></dl><p>Use the accompanying retained original responses and descriptors to continue the project. Date windows are applied locally to the original Date values. The original API request and data license remain controlling.</p></section></body></html>';
+}
+
+return {validateProject,analyzeProject,projectRowsCSV,projectHTML};
+})();
+// END PROJECT ENGINE
+const PROJECT_ENGINE_ID='ab090369dd51fb5ddb9bfbdbab131eca70a365c8e2f39d41c13d86f87c0c3c35';
+// BEGIN PROJECT WORKSPACE
+const PROJECT_WORKSPACE=(()=>{
+const {validateProject,analyzeProject,projectRowsCSV,projectHTML}=PROJECT_ANALYSIS;
+
+const WORKSPACE_SCHEMA='econdb.project-workspace.v1';
+const need=(condition,message)=>{if(!condition)throw new Error(message)};
+const own=(value,key)=>Object.prototype.hasOwnProperty.call(value,key);
+const object=(value,label)=>{need(value&&typeof value==='object'&&!Array.isArray(value),label+' must be an object');return value};
+const allowed=(value,fields,label)=>{for(const key of Object.keys(value))need(fields.includes(key),label+': unsupported field '+key)};
+const clone=value=>JSON.parse(JSON.stringify(value));
+function checkBinding(binding){
+ object(binding,'Analysis binding');allowed(binding,['analysis_sha256','project_sha256'],'Analysis binding');
+ for(const key of ['analysis_sha256','project_sha256'])need(typeof binding[key]==='string'&&/^[a-f0-9]{64}$/.test(binding[key]),'Use the complete actual '+key);
+ return {analysis_sha256:binding.analysis_sha256,project_sha256:binding.project_sha256};
+}
+function sourcePair(value,label){
+ object(value,label);allowed(value,['raw','descriptor'],''+label);
+ need(typeof value.raw==='string',label+' requires its complete original response text');
+ object(value.descriptor,label+' source descriptor');
+ return {raw:value.raw,descriptor:clone(value.descriptor),edition:readSnapshot(value.raw,value.descriptor)};
+}
+function analyzeWorkspaceEntries(project,entries,binding){
+ checkBinding(binding);object(project,'Project');allowed(project,['id','title'],'Project');
+ need(Array.isArray(entries)&&entries.length>0&&entries.length<=48,'Choose between 1 and 48 complete project entries');
+ const records=entries.map((entry,index)=>{
+  object(entry,'Entry '+(index+1));
+  allowed(entry,['id','title','current','previous','selection','before','after'],'Entry '+(index+1));
+  return {id:entry.id,title:entry.title,current:entry.id+'/current',previous:entry.previous==null?null:entry.id+'/previous',selection:clone(entry.selection),before:entry.before==null?null:clone(entry.before),after:entry.after==null?null:clone(entry.after)};
+ });
+ const config=validateProject({schema:'econdb.maritime-project.v1',id:project.id,title:project.title,entries:records});
+ const pairs=new Map();let retainedCells=0;
+ for(let i=0;i<entries.length;i++){
+  const entry=entries[i],current=sourcePair(entry.current,'Current source for entry '+(i+1));
+  retainedCells+=current.edition.rows.length;
+  need(retainedCells<=500000,'Project exceeds 500,000 current and previous source cells; receive smaller complete projects');
+  const previous=entry.previous==null?null:sourcePair(entry.previous,'Previous source for entry '+(i+1));
+  retainedCells+=previous?.edition.rows.length??0;
+  need(retainedCells<=500000,'Project exceeds 500,000 current and previous source cells; receive smaller complete projects');
+  pairs.set(entry.id,{current,previous});
+ }
+ const editions=new Map([...pairs].map(([id,pair])=>[id,{current:pair.current.edition,previous:pair.previous?.edition??null}]));
+ return {config,pairs,editions,analysis:analyzeProject(config,editions)};
+}
+function saveProjectWorkspace(project,entries,binding){
+ const checked=analyzeWorkspaceEntries(project,entries,binding),sources=[],sourceIds=new Map();
+ function retain(pair){
+  if(!pair)return null;
+  const descriptor=clone(pair.descriptor),key=JSON.stringify([descriptor,pair.raw]);
+  if(sourceIds.has(key))return sourceIds.get(key);
+  const id='source-'+(sources.length+1);sourceIds.set(key,id);sources.push({id,raw:pair.raw,descriptor});return id;
+ }
+ const records=checked.config.entries.map(entry=>{
+  const pair=checked.pairs.get(entry.id);
+  return {id:entry.id,title:entry.title,current:retain(pair.current),previous:retain(pair.previous),selection:entry.selection,before:entry.before,after:entry.after};
+ });
+ return {schema:WORKSPACE_SCHEMA,engine:checkBinding(binding),project:{id:checked.config.id,title:checked.config.title},sources,entries:records};
+}
+function receiveProjectWorkspace(saved,binding){
+ object(saved,'Saved project');allowed(saved,['schema','engine','project','sources','entries'],'Saved project');
+ need(saved.schema===WORKSPACE_SCHEMA,'Unsupported project workspace schema');
+ const expected=checkBinding(binding),actual=checkBinding(saved.engine);
+ need(actual.analysis_sha256===expected.analysis_sha256&&actual.project_sha256===expected.project_sha256,'This project belongs to another analysis version. Reopen its accompanying workbench or receive its original source pairs for an explicit new project.');
+ need(Array.isArray(saved.sources)&&saved.sources.length>0&&saved.sources.length<=96,'Saved project must contain 1 to 96 complete source pairs');
+ need(Array.isArray(saved.entries)&&saved.entries.length>0&&saved.entries.length<=48,'Saved project must contain 1 to 48 entries');
+ const sources=new Map(),used=new Set();
+ for(const source of saved.sources){
+  object(source,'Saved source');allowed(source,['id','raw','descriptor'],'Saved source');
+  need(typeof source.id==='string'&&/^source-[1-9][0-9]{0,2}$/.test(source.id)&&!sources.has(source.id),'Invalid or repeated saved source ID');
+  need(typeof source.raw==='string','Saved source must include its complete original text');object(source.descriptor,'Saved source descriptor');
+  sources.set(source.id,{raw:source.raw,descriptor:source.descriptor});
+ }
+ function resolve(id,optional=false){
+  if(optional&&id===null)return null;
+  need(typeof id==='string'&&sources.has(id),'Missing complete source pair '+String(id));
+  used.add(id);return sources.get(id);
+ }
+ const entries=saved.entries.map((entry,index)=>{
+  object(entry,'Saved entry '+(index+1));allowed(entry,['id','title','current','previous','selection','before','after'],'Saved entry '+(index+1));
+  need(own(entry,'previous'),'Saved entry must explicitly identify its previous source or null');
+  return {id:entry.id,title:entry.title,current:resolve(entry.current),previous:resolve(entry.previous,true),selection:clone(entry.selection),before:entry.before==null?null:clone(entry.before),after:entry.after==null?null:clone(entry.after)};
+ });
+ need(used.size===sources.size,'Saved project contains unreferenced source pairs; receive only its complete declared project');
+ const checked=analyzeWorkspaceEntries(saved.project,entries,expected);
+ return {project:clone(saved.project),entries,...checked};
+}
+function browserProjectReport(checked,binding){
+ checkBinding(binding);
+ need(checked?.analysis?.schema==='econdb.maritime-project-analysis.v1'&&checked.pairs instanceof Map,'Use the current complete project analysis');
+ let html=projectHTML(checked.analysis,{engine_sha256:binding.analysis_sha256,project_engine_sha256:binding.project_sha256});
+ // Directory-relative downloads belong to the native report. This browser export is a complete standalone report.
+ html=html.replace(/<nav aria-label="Project files">[\s\S]*?<\/nav>/,'<p>Standalone report. Save the complete project workspace from the workbench to retain every original response and reopen the calculation. The separate CSV includes every selected source cell.</p>');
+ html=html.replace(/<nav aria-label="[^"]* files">[\s\S]*?<\/nav>/g,'');
+ const detail=checked.analysis.entries.map(entry=>{
+  const edition=checked.pairs.get(entry.id)?.current.edition;
+  need(edition,'Missing current source for detailed report '+entry.id);
+  const individual=reportHTML({edition,period:entry.period,comparison:entry.comparison,editionComparison:entry.revisions,engine_sha256:binding.analysis_sha256});
+  const match=individual.match(/<body>([\s\S]*)<\/body>/);need(match,'Detailed report has no body');
+  const body=match[1].replace('<h1>Maritime period review</h1>','');
+  const title=String(entry.title).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return '<section id="detail:'+entry.id+'"><h2>'+title+' · complete detail</h2>'+body+'</section>';
+ }).join('');
+ return html.replace('</style>','pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f5f5;padding:12px}.meta{display:grid;grid-template-columns:180px minmax(0,1fr);gap:6px 16px}.meta dd{margin:0;overflow-wrap:anywhere}@media(max-width:600px){.meta{grid-template-columns:1fr}.meta dd{margin-bottom:8px}}@media print{table{table-layout:fixed}th,td{overflow-wrap:anywhere}}</style>').replace('</body>',detail+'</body>');
+}
+
+return {analyzeWorkspaceEntries,saveProjectWorkspace,receiveProjectWorkspace,browserProjectReport,projectRowsCSV};
+})();
+// END PROJECT WORKSPACE
+let projectRefresh=()=>{};
 const EXAMPLES={"capacity-by-operator":{"raw":"{\n  \"type\": \"timeseries\",\n  \"title\": \"Throughput by operator\",\n  \"series\": [\n    {\n      \"code\": \"Mediterranean Shipping\",\n      \"name\": \"Mediterranean Shipping\",\n      \"display\": \"stacked\"\n    },\n    {\n      \"code\": \"Hapag-Lloyd\",\n      \"name\": \"Hapag-Lloyd\",\n      \"display\": \"stacked\"\n    },\n    {\n      \"code\": \"CMA CGM\",\n      \"name\": \"CMA CGM\",\n      \"display\": \"stacked\"\n    },\n    {\n      \"code\": \"Maersk\",\n      \"name\": \"Maersk\",\n      \"display\": \"stacked\"\n    },\n    {\n      \"code\": \"Ocean Network Express\",\n      \"name\": \"Ocean Network Express\",\n      \"display\": \"stacked\"\n    },\n    {\n      \"code\": \"Others\",\n      \"name\": \"Others\",\n      \"display\": \"stacked\"\n    }\n  ],\n  \"data\": [\n    {\n      \"Date\": \"2022-02-01\",\n      \"Mediterranean Shipping\": 84622,\n      \"Hapag-Lloyd\": 61658,\n      \"CMA CGM\": 54621,\n      \"Maersk\": 18385,\n      \"Ocean Network Express\": 13918,\n      \"Others\": 38394\n    },\n    {\n      \"Date\": \"2022-03-01\",\n      \"Mediterranean Shipping\": 156663,\n      \"Hapag-Lloyd\": 95629,\n      \"CMA CGM\": 74605,\n      \"Maersk\": 29990,\n      \"Ocean Network Express\": 235,\n      \"Others\": 26042\n    }\n  ]\n}\n","descriptor":{"id":"issuer-doc-capacity-by-operator","kind":"capacity-by-operator","locode":null,"source_role":"issuer_documentation_example","captured_at":"2026-10-13T09:20Z","source_sha256":"5c9eba876ecf179a1c65aeddf5ce0159cb63c6a3c62c6a48705e2d307ca57d11","original_url":"https://api.econdb.com/v1/schema/","basis":{"original_openapi_sha256":"c271e5e1799a7a47b3f598cdf286d25c7bb68108cd9f3e466231f4f95a82c915","example":"CapacityByOperator","representation":"Exact JSON value transcribed from original YAML; numeric lexemes belong to this JSON transcription."}}},"container-traffic":{"raw":"{\n  \"type\": \"timeseries\",\n  \"title\": \"Container volume (TEU, full)\",\n  \"series\": [\n    {\n      \"code\": \"Imports\",\n      \"name\": \"Gross imports\",\n      \"axis\": 0\n    },\n    {\n      \"code\": \"Exports\",\n      \"name\": \"Gross exports\",\n      \"axis\": 0\n    },\n    {\n      \"code\": \"Transshipment\",\n      \"name\": \"Transshipment\",\n      \"axis\": 0\n    }\n  ],\n  \"data\": [\n    {\n      \"Date\": \"2022-02-21\",\n      \"Exports\": 26635,\n      \"Imports\": 34850,\n      \"Transshipment\": null\n    }\n  ]\n}\n","descriptor":{"id":"issuer-doc-container-traffic","kind":"container-traffic","locode":null,"source_role":"issuer_documentation_example","captured_at":"2026-10-13T09:20Z","source_sha256":"673c8bcc57cb15f550366c97dd27dc0ed6c372a08c7c96400476a4f20f9b3e6d","original_url":"https://api.econdb.com/v1/schema/","basis":{"original_openapi_sha256":"c271e5e1799a7a47b3f598cdf286d25c7bb68108cd9f3e466231f4f95a82c915","example":"SampleContainerVolume","representation":"Exact JSON value transcribed from original YAML; numeric lexemes belong to this JSON transcription."}}}};
 
 const $=id=>document.getElementById(id);
@@ -245,7 +485,7 @@ function setCurrent(value,reset=true,review=true){
 }
 function ranges(){return {selection:{from:$('from').value,until:$('until').value},before:{from:$('before-from').value,until:$('before-until').value},after:{from:$('after-from').value,until:$('after-until').value}}}
 function clearDerived(){
- state.period=null;state.comparison=null;state.revisions=null;state.report=null;state.applied=null;
+ state.period=null;state.comparison=null;state.revisions=null;state.report=null;state.applied=null;projectRefresh();
  for(const id of ['csv-download','json-download','report-download','workspace-download'])$(id).disabled=true;
  $('summary').textContent='Apply a valid local selection to produce a review.';$('observations').innerHTML='';$('comparison').innerHTML='';$('revisions').innerHTML='';$('page-label').textContent='';$('previous-page').disabled=true;$('next-page').disabled=true;
 }
@@ -262,7 +502,7 @@ function runReview(){
   $('revisions').innerHTML=revisions?'<h3>Edition revisions</h3><p>'+esc(revisions.before_id)+' → '+esc(revisions.after_id)+'</p>'+table(['Date','Series','Change','Before','After','Delta'],revisions.changes.filter(x=>x.kind!=='unchanged').map(x=>[x.date,x.series,x.kind,x.before?.exact??x.before?.status??'Absent',x.after?.exact??x.after?.status??'Absent',x.delta??'']))+'<h3>Metadata / coverage changes</h3>'+table(['Field','Series','Before','After'],revisions.metadata_changes.map(x=>[x.field,x.code??'',JSON.stringify(x.before),JSON.stringify(x.after)])):'';
   $('exceptions').textContent=JSON.stringify(period.issues,null,2);
   for(const id of ['csv-download','json-download','report-download','workspace-download'])$(id).disabled=false;
-  renderPage();showMessage(period.rows.length?'Review updated from the retained original response.':'The selected window contains no source observations. Choose another period or retain this explicit empty result.');
+  renderPage();projectRefresh();showMessage(period.rows.length?'Review updated from the retained original response.':'The selected window contains no source observations. Choose another period or retain this explicit empty result.');
  }catch(error){showMessage(error.message,true)}
 }
 function renderPage(){
@@ -303,4 +543,97 @@ $('restore').onclick=()=>guarded(async(generation)=>{
 });
 clearDerived();
 
+// BEGIN PROJECT UI
+
+(()=>{
+ const api=PROJECT_WORKSPACE;
+ const binding={analysis_sha256:ENGINE_ID,project_sha256:PROJECT_ENGINE_ID};
+ const projectState={project:{id:'maritime-project',title:'Maritime reporting project'},entries:[],selected:null,checked:null,generation:0,busy:false,undo:null};
+ const message=(value,error=false)=>{$('project-message').textContent=value;$('project-message').className=error?'notice error':'notice'};
+ const clone=value=>JSON.parse(JSON.stringify(value));
+ function hasDraftMeta(){return $('project-id').value!==projectState.project.id||$('project-title').value!==projectState.project.title}
+ function meta(){return {id:$('project-id').value.trim(),title:$('project-title').value.trim()}}
+ function currentEntry(id){
+  if(!state.current||!state.period||!state.applied)throw new Error('Apply a valid source review above before adding or replacing a project entry.');
+  const title=$('project-entry-title').value.trim();
+  if(!title||title.length>300)throw new Error('Give this entry a descriptive title of at most 300 characters.');
+  return {id,title,current:{raw:state.current.raw,descriptor:clone(state.current.descriptor)},previous:state.revisions?{raw:state.previous.raw,descriptor:clone(state.previous.descriptor)}:null,selection:clone(state.applied.selection),before:state.comparison?clone(state.applied.before):null,after:state.comparison?clone(state.applied.after):null};
+ }
+ function snapshot(){return {project:projectState.project,entries:projectState.entries,selected:projectState.selected,checked:projectState.checked};}
+ function commit(project,entries,selected=null){
+  const checked=api.analyzeWorkspaceEntries(project,entries,binding);
+  projectState.undo=snapshot();projectState.project=clone(project);projectState.entries=clone(entries);projectState.selected=selected;projectState.checked=checked;
+  $('project-id').value=project.id;$('project-title').value=project.title;
+  render();
+ }
+ function attempt(action){try{action()}catch(error){message(error.message,true)}}
+ function cancelPending(){projectState.generation++;projectState.busy=false}
+ function nextId(){let n=1;while(projectState.entries.some(entry=>entry.id==='entry-'+n))n++;return 'entry-'+n}
+ function refresh(){
+  const ready=Boolean(state.current&&state.period&&state.applied);
+  $('project-add').disabled=projectState.busy||!ready||projectState.entries.length>=48;
+  $('project-replace').disabled=projectState.busy||!ready||!projectState.selected;
+  $('project-rename').disabled=projectState.busy||!projectState.selected;
+  $('project-remove').disabled=projectState.busy||!projectState.selected;
+  $('project-up').disabled=projectState.busy||projectState.entries.findIndex(x=>x.id===projectState.selected)<=0;
+  const index=projectState.entries.findIndex(x=>x.id===projectState.selected);
+  $('project-down').disabled=projectState.busy||index<0||index>=projectState.entries.length-1;
+  const exportable=Boolean(projectState.checked)&&!projectState.busy&&!hasDraftMeta();
+  for(const id of ['project-save','project-csv','project-json','project-report'])$(id).disabled=!exportable;
+  $('project-apply-meta').disabled=projectState.busy||!projectState.entries.length||!hasDraftMeta();
+  $('project-open').disabled=projectState.busy;
+  $('project-undo').disabled=projectState.busy||!projectState.undo;
+ }
+ function render(){
+  const analysis=projectState.checked?.analysis;
+  $('project-summary').innerHTML=analysis?'<div class="metrics"><div><strong>'+analysis.summary.entries+'</strong><span>project entries</span></div><div><strong>'+analysis.summary.identified_ports.length+'</strong><span>identified ports</span></div><div><strong>'+analysis.summary.selected_cells+'</strong><span>selected cells</span></div><div><strong>'+analysis.summary.unknown_cells+'</strong><span>null / absent / unsupported</span></div></div><p class="muted">Each entry keeps its own measure, source and period. '+esc(analysis.summary.cell_count_basis)+' Unassigned-port entries: '+analysis.summary.unassigned_port_entries+'.</p>':'<p class="muted">Your project is empty. Apply a source review above and add it here. Add other port/measure selections in the same way.</p>';
+  $('project-entries').innerHTML=analysis?'<div class="table" tabindex="0" aria-label="Project entry table"><table><thead><tr><th scope="col">Entry</th><th scope="col">Port / measure</th><th scope="col">Applied period</th><th scope="col">Review</th><th scope="col">Edit</th></tr></thead><tbody>'+analysis.entries.map(entry=>'<tr'+(entry.id===projectState.selected?' class="selected-entry"':'')+'><td>'+esc(entry.title)+'<div class="muted">'+esc(entry.id)+'</div></td><td>'+esc(entry.current.request.locode??'Unassigned in issuer example')+'<div class="muted">'+esc(entry.current.request.measure)+'</div></td><td>'+esc(entry.period.selection.from)+' ≤ Date &lt; '+esc(entry.period.selection.until)+'</td><td>'+entry.summary.selected_cells+' cells · '+(entry.summary.cell_states.null+entry.summary.cell_states.absent+entry.summary.cell_states.unsupported_value)+' unknown<div class="muted">'+(entry.comparison?'Period comparison':'No period comparison')+' · '+(entry.revisions?'Prior edition selected':'One source edition')+'</div></td><td><button type="button" data-project-edit="'+esc(entry.id)+'" aria-label="Edit '+esc(entry.title)+'">'+(entry.id===projectState.selected?'Editing entry':'Edit entry')+'</button></td></tr>').join('')+'</tbody></table></div>':'';
+  $('project-selected').textContent=projectState.selected?'Selected entry: '+projectState.selected+'. Change its title or adjust its source review above, then use the relevant update button.':'No project entry selected. Adding a review creates another independent entry.';
+  refresh();
+ }
+ function openEntry(id){
+  const entry=projectState.entries.find(value=>value.id===id);if(!entry)throw new Error('That project entry is no longer present.');
+  const current=descriptorPair(entry.current.raw,entry.current.descriptor),previous=entry.previous?descriptorPair(entry.previous.raw,entry.previous.descriptor):null;
+  cancelLoading();setCurrent(current,false,false);state.previous=previous;
+  $('previous-label').textContent=previous?previous.edition.id+' · '+previous.descriptor.captured_at:'No previous edition selected.';
+  $('from').value=entry.selection.from;$('until').value=entry.selection.until;
+  for(const prefix of ['before','after'])for(const key of ['from','until'])$(prefix+'-'+key).value=entry[prefix]?.[key]??entry.selection[key];
+  $('compare-toggle').checked=Boolean(entry.before);$('revision-toggle').checked=Boolean(previous);runReview();
+  projectState.selected=id;$('project-entry-title').value=entry.title;render();
+  message('Opened '+entry.title+' in the source review above. Project values change only when you replace this selected entry.');
+ }
+ $('project-add').onclick=()=>attempt(()=>{cancelPending();const entry=currentEntry(nextId());commit(meta(),[...projectState.entries,entry],entry.id);message('Added '+entry.title+'. Save the project workspace to retain this whole project.');});
+ $('project-replace').onclick=()=>attempt(()=>{cancelPending();if(!projectState.selected)throw new Error('Choose an existing project entry first.');const entry=currentEntry(projectState.selected);commit(meta(),projectState.entries.map(value=>value.id===entry.id?entry:value),entry.id);message('Replaced '+entry.title+' with the applied source review.');});
+ $('project-rename').onclick=()=>attempt(()=>{cancelPending();const title=$('project-entry-title').value.trim();if(!title||title.length>300)throw new Error('Use an entry title of 1 to 300 characters.');commit(meta(),projectState.entries.map(value=>value.id===projectState.selected?{...value,title}:value),projectState.selected);message('Updated the selected entry title. Its source and periods are unchanged.');});
+ $('project-remove').onclick=()=>attempt(()=>{cancelPending();const entries=projectState.entries.filter(entry=>entry.id!==projectState.selected);if(!entries.length){projectState.undo=snapshot();projectState.entries=[];projectState.selected=null;projectState.checked=null;render();}else commit(meta(),entries);message('Removed the selected entry from this working project. Previously downloaded workspaces are unchanged.');});
+ $('project-undo').onclick=()=>{cancelPending();if(!projectState.undo)return;const previous=projectState.undo;projectState.undo=null;Object.assign(projectState,previous);$('project-id').value=projectState.project.id;$('project-title').value=projectState.project.title;render();message('Restored the previous complete project.');};
+ function move(direction){attempt(()=>{cancelPending();const entries=[...projectState.entries],index=entries.findIndex(entry=>entry.id===projectState.selected),target=index+direction;if(index<0||target<0||target>=entries.length)return;[entries[index],entries[target]]=[entries[target],entries[index]];commit(meta(),entries,projectState.selected);message('Project entry order updated.');});}
+ $('project-up').onclick=()=>move(-1);$('project-down').onclick=()=>move(1);
+ $('project-clear-selection').onclick=()=>{cancelPending();projectState.selected=null;render();message('Entry selection cleared. The next added review becomes another project entry.');};
+ $('project-entries').onclick=event=>{const button=event.target.closest('[data-project-edit]');if(button)attempt(()=>{cancelPending();openEntry(button.dataset.projectEdit);});};
+ $('project-apply-meta').onclick=()=>attempt(()=>{cancelPending();commit(meta(),projectState.entries,projectState.selected);message('Project name and identifier updated.');});
+ for(const id of ['project-id','project-title'])$(id).oninput=()=>{cancelPending();refresh();if(hasDraftMeta())message('Apply the project name and identifier before downloading.');};
+ $('project-save').onclick=()=>attempt(()=>download(projectState.project.id+'-workspace.json',plain(api.saveProjectWorkspace(projectState.project,projectState.entries,binding))));
+ $('project-csv').onclick=()=>attempt(()=>download(projectState.project.id+'-observations.csv',api.projectRowsCSV(projectState.checked.analysis),'text/csv;charset=utf-8'));
+ $('project-json').onclick=()=>attempt(()=>download(projectState.project.id+'-analysis.json',plain(projectState.checked.analysis)));
+ $('project-report').onclick=()=>attempt(()=>download(projectState.project.id+'-report.html',api.browserProjectReport(projectState.checked,binding),'text/html;charset=utf-8'));
+ $('project-workspace-file').onchange=()=>{cancelPending();refresh();message('Project file selected. Reopen it to replace this in-memory project; save the current project first if needed.');};
+ $('project-open').onclick=async()=>{
+  const generation=++projectState.generation;projectState.busy=true;refresh();message('Reading complete project source and checking its original responses…');
+  try{
+   const file=$('project-workspace-file').files[0];if(!file)throw new Error('Choose a saved project workspace.');
+   if(file.size>256*1024*1024)throw new Error('Project workspace exceeds the 256 MiB browser receiving limit.');
+   const text=await file.text();if(generation!==projectState.generation)return;
+   const received=api.receiveProjectWorkspace(JSON.parse(text),binding);
+   if(generation!==projectState.generation)return;
+   projectState.undo=snapshot();projectState.project=received.project;projectState.entries=received.entries;projectState.selected=null;projectState.checked=received;
+   $('project-id').value=received.project.id;$('project-title').value=received.project.title;render();
+   message('Reopened all '+received.entries.length+' entries from their retained original source. Choose Edit entry to continue an individual review.');
+  }catch(error){if(generation===projectState.generation)message(error.message+' The existing in-memory project is preserved.',true);}
+  finally{if(generation===projectState.generation){projectState.busy=false;refresh();}}
+ };
+ projectRefresh=refresh;render();
+})();
+
+// END PROJECT UI
 </script></body></html>

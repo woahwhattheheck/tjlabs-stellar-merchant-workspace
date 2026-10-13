@@ -100,7 +100,8 @@ function sourcePath(root, path) {
 async function projectIdentity(directory) {
   const path = absolute(directory);
   need(await realpath(path) === path, 'APPLICATION_DCAT_PROJECT_LOCATION_CHANGED');
-  const project = await readJSON(join(path, 'workbench.json'));
+  const project = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(
+    await regular(join(path, 'workbench.json'), 16 * 1024 * 1024)));
   need(plain(project) && project.schema === 'stellar-forge.ckan-workbench.v1' &&
     project.sourceKind === 'dcat-us' && plain(project.dcat) &&
     project.dcat.schema === 'stellar-forge.dcat-workspace.v1' &&

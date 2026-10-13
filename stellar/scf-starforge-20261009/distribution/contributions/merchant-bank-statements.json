@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-bank-statements",
-  "description": "Original bank collections, versioned source interpretations, complete CAMT page assembly, cash reconciliation and accountant receiving",
+  "description": "Original bank collections, versioned interpretations, configured-source operator preparation, complete parser receiving, cash reconciliation and accountant handover",
   "commands": {
     "bank-statements": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/cli.mjs",
     "merchant-accounting-bank-statements": "stellar-forge/mcp-merchant-operator/accounting-bank-statements-cli.mjs",
@@ -31,7 +31,10 @@
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_PROFILES.md",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_PROFILES_RECEIVE.mjs",
     "stellar-forge/mcp-merchant-operator/accounting-bank-sources-client.d.mts",
-    "stellar-forge/mcp-merchant-operator/ACCOUNTING_BANK_SOURCES.md"
+    "stellar-forge/mcp-merchant-operator/ACCOUNTING_BANK_SOURCES.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_PREPARATION_DESK.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_PREPARATIONS_DESK.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/source-preparation-capsule.py"
   ],
   "exports": {
     "./merchant/bank-statements": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/store.mjs",

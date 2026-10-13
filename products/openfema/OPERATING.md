@@ -102,6 +102,14 @@ Add --inbox and --release-runtime only when those original inputs belong to the 
 
 The running browser and connected merchant tools share that service. A separate openfema CLI process opens the workspace as its writer; stop the service before using those standalone CLI commands, then reopen the same saved application. The [managed guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/MANAGED.md) documents the exact startup and stop/drain contract.
 
+## Private operator working copies
+
+The browser's **Working copy** panel preserves named unfinished preparations, complete original source/schema/customer files and the original request history across refresh and browser close. Select, duplicate, rename or export a copy without changing the native portfolio. A full import creates a separate copy against the same native workspace UUID.
+
+Use **Export complete copy** for unfinished browser preparation and the existing **Handover → Complete workspace ZIP** for the native project. Both belong in an operator handover. Storage conflicts retain the visible copy for full export; original requests continue through the native journal with their first complete payload.
+
+The complete [working-copy operating and receiving guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/WORKING_COPIES.md) covers exact-file limits, cold reopen, native response recovery, concurrent windows and the whole original 195-project course.
+
 ## 3. Receive source and establish the portfolio
 
 Use an already acquired complete source bundle for the selected cohort. In **Sources**, receive its full JSON or gzip JSON. The native importer validates the original dataset versions, metadata, source URLs, complete page sequence, byte hashes and refresh boundaries.

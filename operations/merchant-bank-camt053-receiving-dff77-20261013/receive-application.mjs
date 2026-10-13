@@ -40,7 +40,7 @@ const inputRoot=resolve(process.argv[2]),out=resolve(process.argv[3]);
 await mkdir(out,{recursive:true,mode:0o700});
 const inputs=JSON.parse(await readFile(join(inputRoot,'inputs.json'),'utf8')).filter(row=>row.sourceKind.endsWith('BANK_ISSUED_EXAMPLE')||row.sourceKind==='GS_ISSUER_PUBLISHED_EXAMPLE');
 const result={schema:'stellar-forge.camt053.application-receiving.v1',operation:'SCF-BANK-CAMT053-SOURCE-DFF77-20261013',
- sourceCommit:'02175e3f0ee1e6ae4605c0b960790f6dd6e10e77',startedAt:new Date().toISOString(),completed:false,node:process.version,files:[],assets:[],coldReopen:[]};
+ sourceCommit:'80f8a3380a99af55b591d8e254904e4f3cb3ebf3',startedAt:new Date().toISOString(),completed:false,node:process.version,files:[],assets:[],coldReopen:[]};
 const save=async(name,value)=>{const target=join(out,name);await mkdir(resolve(target,'..'),{recursive:true,mode:0o700});await writeFile(target,Buffer.isBuffer(value)?value:typeof value==='string'?value:json(value),{mode:0o600});};
 const actor='Original issued CAMT application receiving';
 const serial=value=>JSON.parse(JSON.stringify(value));
@@ -53,7 +53,7 @@ await writeFile(termsFile,json({schema:'stellar-forge.merchant-accounting-terms.
 let workspace,running,client;
 const received=[],closePlans=[],retainedCloses=[];
 const operatorReview=JSON.parse(await readFile(join(inputRoot,'SAMPLE_OPERATOR_REVIEW.json'),'utf8'));
-result.edition='NORDEA_GS_BUNDESBANK_PROFILES_ACCOUNT_MCP_20261013';result.closes=[];result.coldCloses=[];
+result.edition='NORDEA_GS_BUNDESBANK_PROFILES_CONFIGURED_SOURCES_ACCOUNT_MCP_20261013';result.closes=[];result.coldCloses=[];
 try{
  workspace=await openAccountingWorkspace({directory,outboxDir,proofDir,termsFile});
  const r=await new ReceivablesWorkspace(workspace).init();
@@ -261,7 +261,7 @@ try{
  }
  await save('COLD_STATE.json',await cold.state());result.workspace.revision=finalRevision;
  await workspace.close();workspace=null;
- result.accountMcp=await receiveBankMcp({directory,inputRoot,out:join(out,'account-mcp'),received,retainedCloses,closePlans,workspaceId:initial.workspaceId});
+ result.accountMcp=await receiveBankMcp({directory,inputRoot,out:join(out,'account-mcp'),received,retainedCloses,closePlans,workspaceId:initial.workspaceId,profileOutput});
  assert.equal(result.accountMcp.completed,true);assert.equal(result.accountMcp.final.workspaceId,initial.workspaceId);
  workspace=await openAccountingWorkspace({directory});
  const completeCold=await new BankStatementsWorkspace(new ReceivablesWorkspace(workspace)).init();

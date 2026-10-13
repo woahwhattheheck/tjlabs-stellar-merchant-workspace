@@ -252,3 +252,8 @@ Open, view, play or use every final attachment in its actual format: HTML, PDF, 
 Repair broken, unstyled, cramped, clipped, overflowing or unreadable output in the same source before presentation. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls and useful labels. Keep inspection tied to actual operating defects.
 
 Carry these instructions, exact source and original operation IDs into the existing equipped receiver. Review its actual rendered result and repair concrete findings. Preserve current owner controls, original customer relationships and the shared receiving lifetime.
+
+
+## Use the complete authenticated desk
+
+The same preparer is available through **Customer Installation**, the ninth screen of the original paired-service operator. It binds an original complete transfer to uploaded current Operations case and Workshare seed, presents all source matching and a complete typed editor, and retains every output inside the existing operator handover. Follow [INSTALLATION_DESK.md](INSTALLATION_DESK.md) for the complete browser and Merchant customer course. The CLI interfaces above remain available; native Installation preview/save is unchanged.

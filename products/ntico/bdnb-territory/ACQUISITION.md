@@ -34,6 +34,8 @@ CSV observations include every actual header, record count, empty-cell count, li
 
 ## Continue in the existing application
 
+Use [INPUT_JOIN.md](INPUT_JOIN.md) and the maintained `prepare_receiving.py` entry to receive this complete acquisition into the original importer. It binds both edition-specific dictionaries to their whole original workbooks, checks original table/profile/inventory identities and full CSV cell preservation, and emits complete `bdnb.import` actions or the full original ten-stage receiving input with its retained IDs and decisions.
+
 complete.json records both exact release selections, all original file receipts, member inventories, whole CSV identities and saved file references. edition-received.json binds each release's complete archive, metadata and dictionary. acquisition-state.json preserves attempts and all retained write results.
 
 Use those exact CSV paths/lengths/hashes in the existing bdnb.import descriptor. Select the delimiter, null spellings and geometry interpretation from the original publisher dictionary and retained observations. The current bundled v0.7.11 dictionary must not be relabelled as the predecessor's v0.7.10 dictionary. The source owner supplies that complete matching dictionary from the actual predecessor workbook.
@@ -141,12 +143,53 @@ This source also accepts the exact PR1515 acquisition predecessor: 48,606 bytes 
 SHA-256 `613fc130f655a24fe4c73d750595afccff6f4fc0f9b217d305b680a33235e95b`,
 through the same historical-source and persisted PREPARED migration.
 
-## Rendered product inspection — owner instruction, 2026-10-13
+## Complete original source inputs already retained
 
-This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Before calling any customer/prospect-facing application, website, dashboard, demo, report, presentation or export ready, open/run/render the exact outgoing version, look at the rendered screen or its actual screenshots, and operate the important user controls. Inspect the actual screenshare width and narrow/mobile width where relevant, populated/empty/loading/error states, downloads/exports and reopening. Capturing screenshots without viewing them is insufficient. Code review, DOM counts, HTTP 200, unit checks and another worker's approval do not replace seeing the actual product.
+The existing source page now holds both original XLSX dictionaries, both complete
+publisher catalogue HTML pages and both original Nord metadata files:
+https://app.notion.com/p/3f8dd772310081068f0ce0edc01f2eb7 .
+Its stable file references resolve through the original Notion download route.
 
-Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk; do not run broad suites or build a verification product.
+The complete four-text-file source carrier is canonical Git
+`89faaca6bf933b37b9ba2ba18ab8dad305fbf11b` (372,382 UTF-8 bytes,
+SHA-256 `b3bce74e95509aa32c83cae541b9cb39ff99aae563024e757f1e9b72d2f6c906`).
+It includes all literal catalogue/metadata bodies, their exact public URLs and
+whole identities, plus the original stable binary references. Materialize and
+verify those four original text files, receive the two complete workbook files,
+and populate the six exact absolute input paths in the existing retained-input
+manifest. Supply this manifest to the original acquisition with `--retained-inputs`.
 
-Include this complete instruction in delegated assignments and the active owner-controlled policy, boot, build and receiving guidance those workers actually read. Preserve all other owner controls and original operation identities. Leave historical records and third-party/vendor policies intact. Do not force restarts, create watchers or revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+| Original input | Whole bytes | SHA-256 or original binary reference |
+| --- | ---: | --- |
+| 2025-07-a-catalogue | 181,030 | `e275ce565b00fc35fd962d49179b817643c007de6ce71c8163af4c1724548ac7` |
+| 2026-02-a-catalogue | 185,072 | `914359f13b1cba7a0a8387184d9dea400a619b0f11821e7fb297db3d0fe433c7` |
+| 2025-07-a-metadata | 412 | `c1880c3fc992d418368fe6587fcfa214bbeeaaad4bdcfe0a97ba5b676a26a8a0` |
+| 2026-02-a-metadata | 412 | `0e255b390315810ce22d678ea5d84a2e83a0e972215847d7f0f30f05d94da897` |
+| 2025-07-a-dictionary | 176,304 | Original FileUpload `3f8dd772-3100-8180-8fc4-00b20e6c30ad`; calculate the whole binary hash on receiving |
+| 2026-02-a-dictionary | 202,737 | Original FileUpload `3f8dd772-3100-81c0-a12d-00b223d550bd`; match publisher assertion `c4ef2411cd5f9848430786ba6ee2eca24204ffd99063ed00395a0fe6121bdbec` |
 
-Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+The complete original ZIP bodies remain the large native acquisition inputs.
+The metadata assertions above bind the received archives before extraction.
+Preserve the same Nord59 source operation and its existing accepting owner.
+
+# Rendered product inspection policy
+
+## Standing lab rule: inspect the rendered product before presenting it
+
+Bryce's direct owner instruction, October 13, 2026. This applies to every current and future lab peer, provider, model, harness, local session, cloud session, and delegated or child worker.
+
+Before calling a client/prospect-facing app, site, dashboard, demo, report, presentation, or export ready, or putting it before a client/prospect, the responsible producing peer MUST open/run/render the exact outgoing version and visually LOOK at the actual result. Inspect at the actual screenshare/presentation width and at narrow/mobile widths where relevant. Operate critical controls; inspect applicable loaded, empty, loading, and error states; exercise downloads/exports and reopen the delivered files. Capture real screenshots or rendered page images and actually VIEW them. Capturing without viewing does not satisfy this rule.
+
+This includes ALL attachments. Literally observe the actual thing the way a user or recipient would see and use it: open and view downloaded HTML, every relevant PDF/report page, slides, spreadsheets, maps, images, video/audio, archives and project attachments in their normal recipient-facing viewer or application; play audiovisual media and inspect the usable contents of archives/projects. Metadata, schemas, source text, and a browser link do not substitute for opening the attachment and using the delivered result normally.
+
+Fix ugly, cramped, broken, unstyled, clipped, overflowing, or unreadable results within the authorized task before presenting them. Favor simple industrial/plain presentation, consistent spacing and typography, readable tables, and working controls. Do not add decorative template slop. Source review, unit tests, HTTP 200, DOM counts, a reviewer/model approval, or an evidence form do not substitute for looking at and operating the real outgoing product.
+
+This is focused internal product validation, never permission to build or submit a proof, test, or verification product, run broad suites, or repeatedly recheck an unchanged accepted version. Building and integrating the actual deliverable remains the main work; do not substitute endless reviews for delivery. Retain an exact-version visual receipt in the handoff: source/head or artifact hash, URL/file, viewport sizes, screenshots actually viewed, controls/states/export files exercised, fixes, and any precise unresolved gap. A changed outgoing version needs inspection of the affected result.
+
+Bryce explicitly clarified: "that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it". A checklist, screenshot folder, receipt, passing test, or parallel review bureaucracy is not the requirement or a substitute for actual observation and normal use. Perform focused fixes and keep shipping the main work; create no review or approval gate.
+
+Bryce also instructed: "also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them". For video/media narration, use available high-quality generative voice/TTS and applicable generative visual/media capabilities when helpful, with natural professional delivery instead of robotic default voices. Actually play/listen/watch the final exported attachment and inspect clarity, pronunciation, pacing, timing, and audio alignment. Reviewing a text script does not substitute for experiencing the final video/audio. This adds no paid-service purchase or real-person voice-cloning authorization; preserve lab attribution and third-party copyright/license controls.
+
+Pass this rule to child/delegated workers and persist it in owner-controlled provider/project/cloud instruction copies. Record delivery and readback coverage; never claim every running session loaded it without evidence. This rule creates no hooks, watchers, restarts, approval queue, credential restrictions, or new publication authority. Preserve all existing owner rules, including no llama.cpp, no private GitHub repositories or Actions, focused validation, attribution, incident communication, personal meeting approval, contact holds, demo pauses, bounty restrictions, and owner cutoffs.
+
+Canonical local policy: `C:/Users/lucys/.commons/rendered-product-inspection-policy.md` and `.json`. Portable repository copy: `docs/policies/rendered-product-inspection-policy.md` and `.json` when present. Only Bryce can change this standing rule.

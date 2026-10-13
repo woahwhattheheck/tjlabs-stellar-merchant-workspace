@@ -133,8 +133,8 @@ Saved report and workbook definition files contain their immutable definition
 and content hash. A previously delivered full definition wrapper keeps its
 original bytes when that definition and hash match.
 
-The three-sheet workbook contains source observations, the full resource
-comparison and daily totals. Its editable XLSX travels with its original
+The workbook has three data sheets—source observations, the full resource
+comparison and daily totals—plus its Readme and Sources sheets. Its editable XLSX travels with its original
 definition, sources and complete workbook handover. Spreadsheet text safety and
 type handling remain owned by the original workbook engine.
 
@@ -170,3 +170,58 @@ Use the saved query and report revision controls for subsequent edits. For a
 new source period, capture the actual selected source once and use the existing
 reviewed CKAN refresh and customer version controls. Keep this programme's two
 original captured periods and completed outputs intact.
+
+## Continue the original readable workbook delivery
+
+The maintained generator wraps body text and sizes data columns from a bounded
+prefix of the actual projected values. It keeps literal strings, original numeric
+precision, explicit null handling, filters and frozen headings. The Readme opens
+first, and printed data pages repeat their headings. Complete source values and
+all original rows remain in the XLSX and its portable handoff.
+
+For the completed original Zürich customer workspace, use the explicit successor
+course. It selects the exact original 98958 archive, retains workbook revision 1,
+and saves revision 2 with the same original data projections in reading order:
+daily requests, full resource comparison, then all 8,210 observations.
+
+    PYTHONPATH=stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python \
+    TMPDIR=/srv/liip/private-tmp \
+    python stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/zurich_portal_workbook_presentation.py \
+      --archive /srv/liip/customer-delivery/Zurich_Customer_Workspace.zip \
+      --out /srv/liip/workbook-readable-delivery
+
+The input is the complete 5,166,994-byte original customer ZIP, SHA-256
+8023daaa5f2d8f9fb40a55bf222dadcff20da9d3ed4aa944fa7677b259e4243f.
+Keep the same private output directory to continue. A terminal build can use
+--retry-workbook after its actual failure has been corrected; the failed parent
+and selected child remain saved in the original operation.
+
+The course compares every original cell in all three data sheets, receives the
+complete new workbook handoff, exports the whole workspace with both workbook
+revisions, and cold-reopens the original report plus both deliveries. Outputs are
+Zurich_Portal_Use_Workbook.xlsx, Zurich_Workbook_Complete_Handoff.zip,
+Zurich_Customer_Workspace.zip and workbook-presentation-programme.json.
+The complete archive retains the editable query and report application.
+
+Open the finished XLSX as a customer would: start on Readme, use the daily table,
+filter the full resource comparison, inspect long resource names and UUIDs,
+scroll the complete observations, and reopen the received workbook. View the
+actual rendered pages and worksheet content. The operation records
+awaiting-producing-peer-view until the producer has done that inspection;
+successful generation and source review do not change that state.
+
+## Rendered product inspection — owner instruction, 2026-10-13
+
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Bryce's standing rule is: “that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it”.
+
+Before presenting a client/prospect-facing application, website, dashboard, demo, report, presentation, export or any attachment, the producing peer must open/run/render the exact outgoing version, LOOK at it and normally use it as the recipient would. View the actual screenshots you capture. Inspect the actual presentation/screenshare width and relevant narrow/mobile width, important user controls, populated/empty/loading/error states, downloads and reopened exports. Open the usable contents of ZIPs/projects and every applicable report/PDF page. Source review, schemas, HTTP 200, DOM counts, tests, checklists and another worker's approval cannot substitute for observing and using the actual product.
+
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and continued delivery; it must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk. Do not run broad test sweeps, repeat accepted checks, build a verification product or create review bureaucracy or an approval queue.
+
+For video and audio, Bryce directs: “also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them”. Use available high-quality generative voice/TTS and useful generative media, with natural professional delivery. Actually watch/listen to the final outgoing export, including pacing, pronunciation, timing and audio alignment. Preserve existing spending, voice and attribution controls.
+
+Include this complete instruction in delegated assignments and the active owner-controlled provider/project/cloud policy, boot, build and receiving guidance those workers actually read. Reuse already updated copies and return exact updated paths/version in the original policy thread with the next substantive result. Delivery of source does not establish that every runtime loaded it. Preserve all other owner controls and original operation identities; leave historical records and third-party/vendor policies intact. This instruction creates no restarts, watchers, credential gate or new release permission and does not revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
+

@@ -12,6 +12,7 @@ import { applicationInputEditionCommands, applicationInputEditionHelp, runApplic
 import { writeApplicationOutputDownload } from './application-output.mjs';
 import { readJSON } from './storage.mjs';
 import { fail, json, saveJSON } from './storage.mjs';
+import { dcatReceivingCommands, dcatReceivingHelp, runDcatReceivingCommand } from './application-dcat-receiving-cli.mjs';
 import { inspectApplicationSetup, exportApplicationSetup, prepareApplicationSetup,
   applicationSetupStatus, saveApplicationSetup } from './application-setup-operations.mjs';
 
@@ -24,6 +25,7 @@ const HELP = `Starforge customer runtime workspace
   runtime-workspace attach --workspace DIRECTORY --runtime EXISTING_RUNTIME [--label NAME]
   runtime-workspace serve --workspace DIRECTORY [--port 8465]
   runtime-workspace status --workspace DIRECTORY [--runtime-id ID]
+  runtime-workspace operations --workspace DIRECTORY [--query TEXT --filter all|active|attention|completed --runtime-id ID --limit 20 --cursor TOKEN]
   runtime-workspace operation-status --workspace DIRECTORY --operation-id UUID
   runtime-workspace operation-log --workspace DIRECTORY --operation-id UUID
   runtime-workspace source-plans --workspace DIRECTORY [--query TEXT --limit 30 --cursor ID] [--receiving-query TEXT --receiving-status all --receiving-limit 30 --receiving-cursor ID]
@@ -99,6 +101,7 @@ ${runtimeProcedureHelp}
 ${applicationInputHelp}
 ${applicationInputSetHelp}
 ${applicationInputEditionHelp}
+${dcatReceivingHelp}
 
 The private browser receives an original archive or reuses an existing runtime,
 reviews exact dependency profiles, prepares and resumes original installations,
@@ -108,6 +111,7 @@ Install workers retain progress and continue across browser/server restarts.
 Linux, Node22.16+, Python3.11+, npm and flock are the original installer requirements.
 `;
 const allowed = {
+  ...dcatReceivingCommands,
   ...workspaceBackupCommands,
   ...runtimeProcedureCommands,
   ...applicationInputCommands,
@@ -169,6 +173,7 @@ const allowed = {
   'managed-config': ['--workspace', '--home-id', '--path'],
   init: ['--workspace', '--runtime-home'], attach: ['--workspace', '--runtime', '--label'],
   serve: ['--workspace', '--port'], status: ['--workspace', '--runtime-id'], handoff: ['--workspace', '--runtime-id'],
+  operations: ['--workspace', '--query', '--filter', '--runtime-id', '--limit', '--cursor'],
   'operation-status': ['--workspace', '--operation-id'], 'operation-log': ['--workspace', '--operation-id'],
 };
 export async function main(argv = process.argv.slice(2)) {
@@ -216,7 +221,8 @@ export async function main(argv = process.argv.slice(2)) {
   }
   const model = await openRuntimeWorkspace({ directory });
   let result;
-  if (Object.hasOwn(workspaceBackupCommands, command)) result = await runWorkspaceBackupCommand(model, command, options);
+  if (Object.hasOwn(dcatReceivingCommands, command)) result = await runDcatReceivingCommand(model, command, options);
+  else if (Object.hasOwn(workspaceBackupCommands, command)) result = await runWorkspaceBackupCommand(model, command, options);
   else if (Object.hasOwn(runtimeProcedureCommands, command)) result = await runRuntimeProcedureCommand(model, command, options);
   else if (Object.hasOwn(applicationInputEditionCommands, command)) result = await runApplicationInputEditionCommand(model, command, options);
   else if (Object.hasOwn(applicationInputSetCommands, command)) result = await runApplicationInputSetCommand(model, command, options);
@@ -232,6 +238,16 @@ export async function main(argv = process.argv.slice(2)) {
   } else if (command === 'application-setup-save') {
     if (!options['--operation']) fail('APPLICATION_SETUP_OPERATION_REQUIRED');
     result = await saveApplicationSetup(model, { operation: options['--operation'] });
+  } else if (command === 'operations') {
+    if (options['--limit'] !== undefined && !/^(?:[1-9][0-9]?|100)$/.test(options['--limit']))
+      fail('RUNTIME_OPERATION_HISTORY_LIMIT_INVALID');
+    result = await model.operationHistory({
+      ...(options['--query'] !== undefined ? { query: options['--query'] } : {}),
+      ...(options['--filter'] !== undefined ? { filter: options['--filter'] } : {}),
+      ...(options['--runtime-id'] !== undefined ? { runtimeId: options['--runtime-id'] } : {}),
+      ...(options['--limit'] !== undefined ? { limit: Number(options['--limit']) } : {}),
+      ...(options['--cursor'] !== undefined ? { cursor: options['--cursor'] } : {}),
+    });
   } else if (command === 'source-plans') result = await model.sourcePlansState({
     ...(options['--query'] !== undefined ? { query: options['--query'] } : {}),
     ...(options['--limit'] !== undefined ? { limit: Number(options['--limit']) } : {}),

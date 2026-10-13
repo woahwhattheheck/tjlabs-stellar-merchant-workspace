@@ -51,6 +51,12 @@
           "git_blob": "876a360dff6f73e2526ebdcf8234ac6a176d02dd",
           "bytes": 8928,
           "sha256": "1302e5093c69c808cafed794b203f90901afc5bb45ad2ed1cdf5868d38564a55"
+        },
+        {
+          "commit": "3aaae9928df6047ac86a32b5dae7302b7937cfcb",
+          "git_blob": "364c97e34c89c21f01b81be4a0487aa44dc1a3a3",
+          "bytes": 13173,
+          "sha256": "b573473b297ebeee7f0652ed47665a9f00e96dce15fe8e01edd0e0370f53bd06"
         }
       ]
     },
@@ -67,6 +73,12 @@
           "git_blob": "a96ebcdf97164d6d0273c3877ad6b327995a319e",
           "bytes": 15335,
           "sha256": "73f85460a793e63a3ab7deb280d4084963ea3a6e2f96fd88c6eace626c446353"
+        },
+        {
+          "commit": "3aaae9928df6047ac86a32b5dae7302b7937cfcb",
+          "git_blob": "a7d9d3d1af683bd0d84ffdaf575fd75ad87c4b79",
+          "bytes": 20786,
+          "sha256": "ddf8c0f782ddbccd17c297a797f12ed9d56d04306c6c952cabbc00660f2a94a8"
         }
       ]
     },
@@ -99,6 +111,12 @@
           "git_blob": "2ed0a28643554d46bda2145b13d5571824190171",
           "bytes": 10574,
           "sha256": "be8256b9d29bcc2e08650882337faa002ec4dfde9f15228c99716130877e054e"
+        },
+        {
+          "commit": "3aaae9928df6047ac86a32b5dae7302b7937cfcb",
+          "git_blob": "24ddd3d965df7f2dc8bc9e5f6d93da5a88c4d63b",
+          "bytes": 16025,
+          "sha256": "651bb95197c0cdc8f08c663275e86ab54558e5a421e1dd0d1d2c4022157cd91c"
         }
       ]
     },
@@ -115,6 +133,12 @@
           "git_blob": "5cc7c5ffad0acdc5be3803866a9f588e9be00d1f",
           "bytes": 18294,
           "sha256": "95d6e88515dd35bc88610fe097190b297aac44422a1e93f96ff42970d439f1af"
+        },
+        {
+          "commit": "3aaae9928df6047ac86a32b5dae7302b7937cfcb",
+          "git_blob": "f5dcc7abad1996579ece6da6a81221b2b8945bee",
+          "bytes": 21363,
+          "sha256": "4b7aee956a7f873c885431731df14bd20e661fb3a6bd3db90759244d5b603118"
         }
       ]
     },
@@ -131,6 +155,12 @@
           "git_blob": "d69e3598f9c37c150c8fb53f8d6b0eee4610b9c1",
           "bytes": 2327,
           "sha256": "c79d089198d0de4e439338f2e2873f29feeca1dbb9648a6119f72bbad019e827"
+        },
+        {
+          "commit": "3aaae9928df6047ac86a32b5dae7302b7937cfcb",
+          "git_blob": "48d98766294c7139fd66c9531aabef708902d546",
+          "bytes": 2880,
+          "sha256": "ecc0a6e0d52248472105511efe1d56dc40025b1a221a95858ef3e660b5ac7c57"
         }
       ]
     },
@@ -147,6 +177,12 @@
           "git_blob": "d5cd61a51a4100f99df6a54f0430b2475373e9be",
           "bytes": 25658,
           "sha256": "b5aa36ef7c32e9763086491e655c5ed478887120d8e1202b746694c3c8edaf51"
+        },
+        {
+          "commit": "3aaae9928df6047ac86a32b5dae7302b7937cfcb",
+          "git_blob": "3b1f6fd0edc2ade166c7bf6fca1c8de2f5bb59e3",
+          "bytes": 38627,
+          "sha256": "37b0395557191e97d5ad0cef8fad3b687f3dfec82385a3137512d32ce76ee180"
         }
       ]
     },
@@ -179,6 +215,12 @@
           "git_blob": "aee02bde949399ca71821b24ea4ea29462b3288e",
           "bytes": 4991,
           "sha256": "18a467a6d6904c6ac8e2333a1323cfbe9fea45b6760b8c78c14772eead23ebd0"
+        },
+        {
+          "commit": "3aaae9928df6047ac86a32b5dae7302b7937cfcb",
+          "git_blob": "ed00cf4fced8fb8f46818669673fa62868f08703",
+          "bytes": 5626,
+          "sha256": "1b0dcbf8a3fd9c56c1b38bf5210618cd16f4a1f71e140966a8b750dc909074da"
         }
       ]
     },
@@ -195,6 +237,12 @@
           "git_blob": "5d6f01f75e703513edb567010b3e3c4b9cd34b28",
           "bytes": 15529,
           "sha256": "2ee965ad80e2c7e7ab20d84fd9faf992f7deb32290c5d33317fc2fc31adb098f"
+        },
+        {
+          "commit": "3aaae9928df6047ac86a32b5dae7302b7937cfcb",
+          "git_blob": "8f5beb95c2aaeaaa85546ffd7615f9ae223266a9",
+          "bytes": 18953,
+          "sha256": "0b20a31ccfd31a3a8598b01cdf0dd04ba4ea637a5aeff570b15ed5b6f783f27d"
         }
       ]
     },
@@ -211,6 +259,12 @@
           "git_blob": "185d6e15e628158c9ef5cd02e0a7758b2a891b99",
           "bytes": 8772,
           "sha256": "c947cc82563a87fafa63f08cc11b1cba2386caec160adaafa4564161a8f4f624"
+        },
+        {
+          "commit": "3aaae9928df6047ac86a32b5dae7302b7937cfcb",
+          "git_blob": "8bd1dfcfa6568d5eead11a3eb71b627ef438849b",
+          "bytes": 10820,
+          "sha256": "7b3498d9deeb960ac17a85f02aa54e71de646cf23c763b53250c159a19e412c6"
         }
       ]
     },
@@ -227,6 +281,12 @@
           "git_blob": "100d1f0d3957e89f4f43d40ab105d3fea79473c8",
           "bytes": 1963,
           "sha256": "bd7bb73d4d140da69a435f25428fc9cf21b38fff4ec7b8af510bb6c3f6852735"
+        },
+        {
+          "commit": "3aaae9928df6047ac86a32b5dae7302b7937cfcb",
+          "git_blob": "4fcfdae9672346d5185a836225c67fbb42201d7f",
+          "bytes": 3127,
+          "sha256": "017e278282c74e2b714418c174791a5e13a12693fb0bb98ede19c63df462b150"
         }
       ]
     },
@@ -281,6 +341,12 @@
           "git_blob": "29d37c23a5873428d8aab0f99adb80e7484b901c",
           "bytes": 16968,
           "sha256": "40de4438f21d6d6605c9ca62655eb5d6c4247796e3e3bd677a07723703fa33de"
+        },
+        {
+          "commit": "3aaae9928df6047ac86a32b5dae7302b7937cfcb",
+          "git_blob": "00e92460b0883d9e19fc69717bf67e73487e986c",
+          "bytes": 21391,
+          "sha256": "38f91b1425d2d2e9fc140890d501db91cc680de76503c889f29fe1e7f2479788"
         }
       ]
     },
@@ -383,6 +449,118 @@
           "git_blob": "d8d75c733e8542be31a0589bd56f435ccbfb118b",
           "bytes": 17416,
           "sha256": "da5c6813fc060282ce6d913327476fa3079ca57f70ffcb16781d5a468bafb52d"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-analysis-source-cli",
+      "label": "Complete original event file inspection and source-field projection CLI",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/analysis-source-cli.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "3aaae9928df6047ac86a32b5dae7302b7937cfcb",
+          "git_blob": "dbccf8381d25b80b0682ae10cfef88d357ff9a5f",
+          "bytes": 3662,
+          "sha256": "bd458e99d99dab13f6f8af52bf1d0ccdc6a0002f8c51328bf935b7b29eeaaa07"
+        }
+      ]
+    },
+    {
+      "id": "webhook-publisher-working-browser",
+      "label": "Complete publisher source/feed/merchant drafts and native save recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/webhook-feed/public/app.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "0d33ab17665a4fca9f51d36838abee62ca149513",
+          "git_blob": "c29e21b87cf42da52546763bda9598f640351446",
+          "bytes": 37437,
+          "sha256": "9a8ac7c53ffe169eb1c70741571890de8f74def2ffce922fe35e0813244726fc"
+        }
+      ]
+    },
+    {
+      "id": "webhook-publisher-working-document",
+      "label": "Original publisher working-copy browser document and controls",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/webhook-feed/public/index.html",
+      "required": false,
+      "editions": [
+        {
+          "commit": "0d33ab17665a4fca9f51d36838abee62ca149513",
+          "git_blob": "59aa1295b51d343cd7361989ae3619ae92142154",
+          "bytes": 11878,
+          "sha256": "38b7ecc62255a24a52451dcb890dbeeb330ac70efd7fc676722348d914cbcd69"
+        }
+      ]
+    },
+    {
+      "id": "webhook-publisher-working-style",
+      "label": "Responsive original publisher operating presentation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/webhook-feed/public/style.css",
+      "required": false,
+      "editions": [
+        {
+          "commit": "0d33ab17665a4fca9f51d36838abee62ca149513",
+          "git_blob": "32363ef88dbf39a63abe64a24b0359415c9a4171",
+          "bytes": 5089,
+          "sha256": "2475b0c595bcff69be88da2c94b8994221eb40f4ba009676949d48390c3c49c5"
+        }
+      ]
+    },
+    {
+      "id": "webhook-publisher-working-operating",
+      "label": "Complete publisher working-copy and independent editable receiving course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/webhook-feed/WORKING_COPIES.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "0d33ab17665a4fca9f51d36838abee62ca149513",
+          "git_blob": "87d547d74cb7f81228c0b75c518d755c09dfbce4",
+          "bytes": 11212,
+          "sha256": "570362aabf2b65490e04e6142f77df588ade93ec07cd5ef3955b15a008ba2c03"
+        }
+      ]
+    },
+    {
+      "id": "webhook-publisher-operator-operating",
+      "label": "Original publisher managed operation, private snapshot and customer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/webhook-feed/OPERATING.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "0d33ab17665a4fca9f51d36838abee62ca149513",
+          "git_blob": "2be45f830332c0bfec95897138da0900b9001baf",
+          "bytes": 16789,
+          "sha256": "7e408dcbee48760bd775f20f7e0af15d2f36307459610ac583515bd3f8bb9598"
+        }
+      ]
+    },
+    {
+      "id": "webhook-publisher-working-receiving",
+      "label": "Same-customer publisher working-copy native browser receiving continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/webhook-feed/receiving/working-copies.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "0d33ab17665a4fca9f51d36838abee62ca149513",
+          "git_blob": "e788461343cff78756584cd6f26f148cb002d2d7",
+          "bytes": 10035,
+          "sha256": "6f37f7c2576086eb60485bafff0495f0b57ca5675bf4cdd7023910ab7428f934"
         }
       ]
     }

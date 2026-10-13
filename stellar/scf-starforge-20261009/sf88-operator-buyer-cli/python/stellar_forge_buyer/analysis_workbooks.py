@@ -773,6 +773,8 @@ class AnalysisWorkbooks:
         workbook.properties.description = "Customer workbook with original typed results and source bindings in its handoff."
         header_fill = PatternFill("solid", fgColor="E7E7E7")
         header_font = Font(name="Calibri", size=11, bold=True, color="202020")
+        body_font = Font(name="Calibri", size=11, color="202020")
+        body_alignment = Alignment(vertical="top", wrap_text=True)
         outputs, total_rows = [], 0
 
         def stopped():
@@ -785,18 +787,46 @@ class AnalysisWorkbooks:
                 item.data_type = "s"  # '=' remains original text, never a formula.
             if number_format:
                 item.number_format = number_format
+            item.font = body_font
+            item.alignment = body_alignment
             if heading:
                 item.fill, item.font = header_fill, header_font
-                item.alignment = Alignment(vertical="top", wrap_text=True)
             return item
 
-        def new_sheet(name, columns, row_count):
+        def source_widths(source, columns, keys):
+            # Inspect a bounded prefix without retaining rows or materializing the
+            # full export. The actual write still streams every original row.
+            widths = [min(48, max(14, len(column["header"]) + 3)) for column in columns]
+            with self._rows(source) as rows:
+                for ordinal, values in enumerate(rows):
+                    stopped()
+                    for index, (column, key) in enumerate(zip(columns, keys)):
+                        value, _, _ = project_cell(values[key], column)
+                        if value is not None:
+                            text = value.isoformat() if isinstance(value, (date, datetime)) else _display(value)
+                            longest = max((len(line) for line in text.splitlines()), default=0)
+                            widths[index] = min(48, max(widths[index], longest + 2))
+                    if ordinal >= 63:
+                        break
+            return widths
+
+        def new_sheet(name, columns, row_count, widths=None):
             sheet = workbook.create_sheet(name)
             sheet.freeze_panes = "A2"
             sheet.sheet_view.showGridLines = True
             sheet.auto_filter.ref = f"A1:{get_column_letter(len(columns))}{row_count + 1}"
+            # Wide values remain complete original cells. Type-aware widths and
+            # wrapping make identifiers and prose readable in Excel and printed
+            # pages without changing their projection, precision or null meaning.
+            compact = {"integer": 18, "number": 18, "boolean": 16, "date": 16,
+                       "datetime-utc": 28, "datetime-local": 26}
             for index, column in enumerate(columns, 1):
-                sheet.column_dimensions[get_column_letter(index)].width = min(48, max(14, len(column["header"]) + 3))
+                width = widths[index - 1] if widths is not None else compact.get(column.get("type"), 32)
+                sheet.column_dimensions[get_column_letter(index)].width = min(48, max(width, len(column["header"]) + 3))
+            sheet.print_title_rows = "1:1"
+            sheet.sheet_properties.pageSetUpPr.fitToPage = False
+            sheet.page_setup.orientation = "landscape" if len(columns) > 5 else "portrait"
+            sheet.print_options.gridLines = True
             sheet.append([cell(sheet, _literal(column["header"]), heading=True) for column in columns])
             return sheet
 
@@ -811,14 +841,15 @@ class AnalysisWorkbooks:
                     _error("SOURCE_CHANGED")
                 self._retain_source(source, target)
                 expected = source["row_count"]
+                widths = source_widths(source, logical["columns"], keys)
                 counts, row_count, physical_index = {}, 0, 0
-                sheet = new_sheet(layout[ordinal][0], logical["columns"], min(expected, _ROWS_PER_SHEET))
+                sheet = new_sheet(layout[ordinal][0], logical["columns"], min(expected, _ROWS_PER_SHEET), widths)
                 with self._rows(source) as stream:
                     for values in stream:
                         stopped()
                         if row_count and row_count % _ROWS_PER_SHEET == 0:
                             physical_index += 1
-                            sheet = new_sheet(layout[ordinal][physical_index], logical["columns"], min(expected - row_count, _ROWS_PER_SHEET))
+                            sheet = new_sheet(layout[ordinal][physical_index], logical["columns"], min(expected - row_count, _ROWS_PER_SHEET), widths)
                         cells = []
                         for index, (column, key) in enumerate(zip(logical["columns"], keys)):
                             value, format, conversion = project_cell(values[key], column)
@@ -836,9 +867,18 @@ class AnalysisWorkbooks:
                 outputs.append({"name": logical["name"], "worksheets": layout[ordinal], "row_count": row_count,
                                 "source": source, "columns": logical["columns"], "conversions": counts})
                 progress({"sheet": logical["name"], "sheet_rows": row_count, "total_rows": total_rows})
-            readme = workbook.create_sheet("Readme")
+            # Open on the delivery's context, with the complete data tabs in
+            # their original logical order immediately afterward.
+            readme = workbook.create_sheet("Readme", 0)
+            workbook.active = 0
+            readme.freeze_panes = "B2"
+            readme.sheet_view.showGridLines = False
             readme.column_dimensions["A"].width = 28
-            readme.column_dimensions["B"].width = 110
+            readme.column_dimensions["B"].width = 100
+            readme.page_setup.orientation = "landscape"
+            readme.sheet_properties.pageSetUpPr.fitToPage = True
+            readme.page_setup.fitToWidth = 1
+            readme.page_setup.fitToHeight = 0
             for key, value in [("Workbook", definition["title"]), ("Notes", definition["notes"]),
                                ("Saved definition", definition["name"] + " / revision " + str(definition["revision"])),
                                ("Definition SHA-256", definition_sha), ("Delivery", job_id),
@@ -874,7 +914,9 @@ class AnalysisWorkbooks:
             manifest = {"schema": _SCHEMA, "complete": True, "id": job_id, "workspace_id": self.identity,
                         "name": definition["name"], "revision": definition["revision"], "title": definition["title"],
                         "definition_sha256": definition_sha, "created_at": _now(), "row_count": total_rows,
-                        "sheets": outputs, "files": files, "definition_history": definition_history, "excel": {"date_system": "1900", "date_encoding": "ISO8601", "strings": "literal", "data_rows_per_sheet": _ROWS_PER_SHEET}}
+                        "sheets": outputs, "files": files, "definition_history": definition_history, "excel": {"date_system": "1900", "date_encoding": "ISO8601", "strings": "literal", "data_rows_per_sheet": _ROWS_PER_SHEET,
+                        "presentation": {"version": 1, "opening_sheet": "Readme", "body_text": "wrapped",
+                                         "column_widths": "typed-and-first-64-rows", "print_heading_rows": "1:1"}}}
             manifest_raw = _json(manifest).encode()
             if len(manifest_raw) > _MAX_MANIFEST:
                 _error("MANIFEST_TOO_LARGE")

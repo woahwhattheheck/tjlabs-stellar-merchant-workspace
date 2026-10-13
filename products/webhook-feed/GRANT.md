@@ -63,6 +63,53 @@ A source window can be complete and empty. A later window can contain no new
 events. Preserve both actual outcomes and the customer's source meaning. Select
 the customer's next useful task from its real operation.
 
+## Keep the merchant's unfinished work with its operating state
+
+Before the buyer acquires the selected event window, configure the original
+publisher using [Publisher working copies](WORKING_COPIES.md) and the complete
+[operating guide](OPERATING.md). Retain the actual provider source, feed
+projection, native revisions and full merchant-plan JSON. Several source/feed
+drafts can remain incomplete while the operator reviews their meaning and terms.
+Refreshing native status or switching drafts preserves their text, selected
+source IDs and complete ordered fields.
+
+Keep heterogeneous payment options in the full original merchant plan. The
+common-terms preparation control creates working text and a preceding full
+checkpoint; the existing compiler and explicit native save own validation.
+The original selected release and application restart bind the operating service.
+The buyer's actual approval and acquisition continue through its original journal.
+
+| Original asset | Complete retained content | Receiving decision |
+| --- | --- | --- |
+| Publisher working-copy JSON | Source/feed/merchant drafts, selected identities, preceding checkpoints, exact save bodies and saved or uncertain outcomes | Inspect the full received document and open a separate editable copy for the same native store; inspect current revisions before saving |
+| Original publisher snapshot | Complete SQLite source store, definitions, retained events, original delivery identities and cursor state | Restore into the authorized private receiving directory under the existing snapshot contract; keep later customer edits on the same receiving operation |
+| Acquired subscriber pair | Complete reviewed customer NDJSON and original manifest, native page and event identities | Receive the original buyer-approved window into the existing Event programmes workflow |
+| Customer Analysis and Installation handover | Complete typed output, report/workbook, analytical archive, original Workshare and selected native Installation | Review, explicitly accept, independently reopen and continue the same useful customer work |
+
+When a save response is interrupted, inspect the original native definition
+before another write. The same requested content can be reconciled against its
+current native revision. An unchanged original revision permits explicit retry
+of the saved body. A different native definition requires full review and a
+deliberate revision adoption that retains the unfinished draft and preceding
+attempt. Adopting the revision itself saves no new native definition.
+
+Move both the complete authorized publisher snapshot and its separately
+editable working-copy document through the original private receiving course.
+The working copy excludes listener tokens, environment secret values, raw event
+bodies and the database; those original assets keep their own authorized
+operating and backup paths. Browser storage is bound to its actual origin, so
+moving to a new port or host uses the full exported JSON. Ordinary import has
+the documented complete-file allowance; oversized rescue downloads retain all
+work for source-assisted recovery.
+
+The maintained publisher receiving continuation uses the original completed
+62-source commissioning customer and lease, then operates the new complete
+working-copy controls. Keep that actual source/host selection when continuing.
+Open and inspect its desktop/narrow screens, uncertain-save outcome, full
+merchant plan and both complete downloaded copies before presenting the
+installed result. Continue buyer acquisition and the selected Analysis workflow
+from that same configured merchant resource.
+
 ## Reuse the shipped implementation
 
 The original subscriber exports complete NDJSON with its selected source/store/
@@ -119,6 +166,38 @@ These steps consume the same acquired subscriber operation. Their native result
 is retained by the original commissioning owner with its exact source inputs and
 outputs. Product/source completion and the actual deployed customer result each
 retain their own recorded state.
+
+## Explore and retain the customer's actual payload mapping
+
+Receive the same complete original NDJSON and manifest, then open the field
+explorer in Event programmes. It examines every actual payload path across the
+whole acquired window and reports present, missing, JSON-null and value-kind
+counts. Search and page the catalogue, open complete values by original event,
+and choose the fields whose actual meaning supports the customer's task.
+Short examples are labelled previews; the complete value pages and catalogue
+remain downloadable.
+
+Name the selected output columns and download the complete mapping handover.
+It retains the original workspace, input, source edition and both full file
+identities. Reopen that handover against the same received input before
+continuing the original review/apply operation. The customer determines the
+business meaning of the fields. Empty windows, mixed kinds and missing values
+retain their real states, while the original source and individual event
+identities remain attached to the accepted table.
+
+The existing file-only CLI and installed agent use that same source projector.
+The agent retains the entire native field/value record and receives all ranges;
+the browser maps the same actual paths. Original array indexes, escaped object
+names and complete string values remain coherent across those interfaces.
+Whole-catalogue limits fail explicitly and retain the existing manual mapping
+route. See the consumed Event programmes and Analysis Event receiving guides
+for exact commands, source limits and actual operator controls.
+
+The receiving course includes catalogue search and paging, empty/mixed source
+states, complete values, naming, mapping download/reopen, full review, explicit
+apply and the ordinary customer delivery. The producer opens those exact
+normal/narrow rendered views and every downloaded attachment, uses the important
+controls, and inspects the returned screenshots before presenting the result.
 
 ## Receive the Analysis result into its original Customer Installation
 
@@ -254,8 +333,18 @@ installed contribution and complete operating guide select merged commit
 3cc516d47cb5ca2a692ee1bc750905cfaab4e2e9. Complete Customer Installation
 receiving, its typed interface, selected profile and whole operator course select
 cdaafeb22d7ffdd080a11362822c28ad01ac96ab. The existing agent guide and installed
-contribution keep both original and current editions. All eighteen preceding
+contribution keep both original and current editions. All twenty-three preceding
 source IDs and their accepted source editions remain in this same contribution.
+The complete source exploration, browser/API coordination, agent operations and
+three operating guides now select merged commit
+3aaae9928df6047ac86a32b5dae7302b7937cfcb. Eleven original source IDs keep both
+preceding and current measured editions. The original file-only source CLI is
+registered as one additional optional source with its full measured identity.
+The complete publisher working-copy browser, document, presentation, two
+operating guides and original receiving continuation select
+0d33ab17665a4fca9f51d36838abee62ca149513. These six optional full-file sources join the
+same contribution, preserving all twenty-four preceding source IDs and their
+edition histories.
 
 The independent registration is
 stellar-forge/developer-site/grant-products/webhook-customer-analysis.json.

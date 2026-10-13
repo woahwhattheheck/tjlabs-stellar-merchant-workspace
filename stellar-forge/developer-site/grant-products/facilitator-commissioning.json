@@ -9,7 +9,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/facilitator-commissioning/OPERATING.md",
-      "commit": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+      "commit": "7a1c11b9496ae6f63b8bddff6a4b95ecb09891d4",
       "required": true,
       "editions": [
         {
@@ -23,6 +23,12 @@
           "git_blob": "b43df78a538999581b1f6652bae65576b51072a9",
           "bytes": 40089,
           "sha256": "f0b41254eac82da48667d73fdb5070c3ff868dc01a17cb6462068b1d81cf6b3a"
+        },
+        {
+          "commit": "7a1c11b9496ae6f63b8bddff6a4b95ecb09891d4",
+          "git_blob": "70c4b05f51b81f3db7bc9ad2f050dade31ed852b",
+          "bytes": 40630,
+          "sha256": "6a72bf59b0e8cc7d07f7248ca94219e4bb27ef624d5cb38220af834d8242757b"
         }
       ]
     },
@@ -174,7 +180,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/facilitator-commissioning/CUSTOMER_AGENT.md",
-      "commit": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+      "commit": "7a1c11b9496ae6f63b8bddff6a4b95ecb09891d4",
       "required": true,
       "editions": [
         {
@@ -182,6 +188,12 @@
           "git_blob": "5f7ce30843b56976245ac9e286dd446513a85c7b",
           "bytes": 22094,
           "sha256": "c0a00fae93b8ff76a655348758b6180040c4cb983633fd3502bc2a5afd501812"
+        },
+        {
+          "commit": "7a1c11b9496ae6f63b8bddff6a4b95ecb09891d4",
+          "git_blob": "2131a0cfb5a0ffa1f499546d442dcc9bb89e3201",
+          "bytes": 22635,
+          "sha256": "eeb6a0448b388101f36aa6eae01d20c9a89a10e3c013968299c7345abb97d27f"
         }
       ]
     },
@@ -267,6 +279,91 @@
           "git_blob": "8a4d8f44ef6b759d4e022e24b90cfa21e59a55b9",
           "bytes": 6911,
           "sha256": "51158da065b559e9cbf53faf2284e418f4c34525e7cd05a31fb0c76e8cf1a7a2"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-installation-guide",
+      "label": "Complete original-case Customer Installation preparation and receiving course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/INSTALLATION.md",
+      "commit": "7a1c11b9496ae6f63b8bddff6a4b95ecb09891d4",
+      "required": true,
+      "editions": [
+        {
+          "commit": "7a1c11b9496ae6f63b8bddff6a4b95ecb09891d4",
+          "git_blob": "e248ec41c160b3fbbc241e7fbecacca741c37154",
+          "bytes": 19451,
+          "sha256": "7c3b193b60c3b2185f951d87559a212c05577731b8600ff23ffbbffd89afabe8"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-installation-binding",
+      "label": "Complete original source, two-provider and funded work binding",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/installation-core.mjs",
+      "commit": "7a1c11b9496ae6f63b8bddff6a4b95ecb09891d4",
+      "required": true,
+      "editions": [
+        {
+          "commit": "7a1c11b9496ae6f63b8bddff6a4b95ecb09891d4",
+          "git_blob": "cd4b87337a5b5aa24f99793e0478bdb724888044",
+          "bytes": 9303,
+          "sha256": "c9a0e63bd74f469ea192eafaf2c283abd57776b6c0f4a19dcef252e5e2edd1bd"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-installation-preparation",
+      "label": "Private whole-source preparation and independently verified original receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/installation.mjs",
+      "commit": "7a1c11b9496ae6f63b8bddff6a4b95ecb09891d4",
+      "required": true,
+      "editions": [
+        {
+          "commit": "7a1c11b9496ae6f63b8bddff6a4b95ecb09891d4",
+          "git_blob": "d5a8d100a2bff6556165ff254afb36c521a8599e",
+          "bytes": 11991,
+          "sha256": "4db06411b1d67788794083c7c984d0c68cee8980dd17935f8dc12a3f9060d31c"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-installation-command",
+      "label": "Installed original-service Installation preparation and inspection command",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/installation-cli.mjs",
+      "commit": "7a1c11b9496ae6f63b8bddff6a4b95ecb09891d4",
+      "required": true,
+      "editions": [
+        {
+          "commit": "7a1c11b9496ae6f63b8bddff6a4b95ecb09891d4",
+          "git_blob": "6aa129c0919b6b0ed4160e072784583d90a3dc7a",
+          "bytes": 2126,
+          "sha256": "c24d8ab1aac5f3d8b50e98905867d8adfbd44d72faa2f2b159043ab5a3587504"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-installation-profile",
+      "label": "Maintained original Workshare and Customer Installation implementation profile",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/facilitator-commissioning.json",
+      "commit": "7a1c11b9496ae6f63b8bddff6a4b95ecb09891d4",
+      "required": true,
+      "editions": [
+        {
+          "commit": "7a1c11b9496ae6f63b8bddff6a4b95ecb09891d4",
+          "git_blob": "1091a527452f39b2497e1e0139a17165945ef007",
+          "bytes": 10625,
+          "sha256": "3351514a85cbff7878444c664c04abdf577e995cf77b87434e898a2a8553e1f5"
         }
       ]
     }

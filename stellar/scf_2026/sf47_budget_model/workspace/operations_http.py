@@ -19,6 +19,10 @@ from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static.update({"/portfolio-availability.mjs": ("portfolio-availability.mjs", "text/javascript; charset=utf-8"),
+                   "/portfolio-availability-desk.mjs": ("portfolio-availability-desk.mjs", "text/javascript; charset=utf-8"),
+                   "/portfolio-availability.css": ("portfolio-availability.css", "text/css; charset=utf-8"),
+                   "/PORTFOLIO_AVAILABILITY.md": ("PORTFOLIO_AVAILABILITY.md", "text/markdown; charset=utf-8")})
     static.update({"/operations_risk_comparison.mjs": ("operations_risk_comparison.mjs", "text/javascript; charset=utf-8"),
                    "/operations_risk_comparison.css": ("operations_risk_comparison.css", "text/css; charset=utf-8"),
                    "/RISK_COMPARISON.md": ("RISK_COMPARISON.md", "text/markdown; charset=utf-8")})
@@ -104,7 +108,8 @@ def register_static(static):
                    "/operations_statement_batch.mjs": ("operations_statement_batch.mjs", "text/javascript; charset=utf-8"),
                    "/operations_statement_batch.css": ("operations_statement_batch.css", "text/css; charset=utf-8"),
                    "/operations_statement_allocations.mjs": ("operations_statement_allocations.mjs", "text/javascript; charset=utf-8"),
-                   "/operations_statement_allocations.css": ("operations_statement_allocations.css", "text/css; charset=utf-8")})
+                   "/operations_statement_allocations.css": ("operations_statement_allocations.css", "text/css; charset=utf-8"),
+                   "/operations_statement_copies.mjs": ("operations_statement_copies.mjs", "text/javascript; charset=utf-8")})
     static.update({"/operations_payables.mjs": ("operations_payables.mjs", "text/javascript; charset=utf-8"),
                    "/operations_payables.css": ("operations_payables.css", "text/css; charset=utf-8"),
                    "/operations_ledger_intake.mjs": ("operations_ledger_intake.mjs", "text/javascript; charset=utf-8"),

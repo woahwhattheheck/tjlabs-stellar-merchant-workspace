@@ -45,7 +45,8 @@ export const HELP = [
   '  select --plan ID --comparison ID',
   '  commit --input FILE   Commit a complete selection plus two original request UUIDs',
   '  download --plan ID --name FILE --output PATH',
-  '                        FILE is plan.json, tariffs.json or comparison.csv',
+  '                        FILE is report.html, band-charges.csv, thresholds.csv,',
+  '                        plan.json, tariffs.json or comparison.csv',
   '  export [--selection-request-id UUID]',
   '                        Export the full portfolio or one original selection and its plan',
   '  inspect --input FILE  Validate the complete portfolio against original saved sources',
@@ -109,7 +110,7 @@ const INPUT_COMMANDS = new Set([
   'preview', 'save', 'commit', 'inspect', 'receive',
   'repricing-preview', 'repricing-save', 'repricing-stage'
 ]);
-const DOWNLOAD_NAMES = new Set(['plan.json', 'tariffs.json', 'comparison.csv']);
+const DOWNLOAD_NAMES = new Set(['plan.json', 'tariffs.json', 'comparison.csv', 'report.html', 'band-charges.csv', 'thresholds.csv']);
 
 function parseArguments(argv) {
   if (!Array.isArray(argv)) throw new UsageError('Arguments must be an array');
@@ -165,7 +166,7 @@ function parseArguments(argv) {
   }
   if (command === 'download') {
     if (!DOWNLOAD_NAMES.has(flags.name)) {
-      throw new UsageError('--name must be plan.json, tariffs.json or comparison.csv');
+      throw new UsageError('--name must be report.html, band-charges.csv, thresholds.csv, plan.json, tariffs.json or comparison.csv');
     }
     if (!flags.output) throw new UsageError('--output is required for download');
   }

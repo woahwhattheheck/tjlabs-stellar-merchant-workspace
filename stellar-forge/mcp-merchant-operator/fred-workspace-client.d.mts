@@ -99,7 +99,7 @@ export interface FredQcewProjectState {
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 export type JsonObject = { [key: string]: Json };
 export type NativeRecord = JsonObject & { id: string };
-export interface FredSourceInput { path: string; kind: 'public-table' | 'capture' | 'release-capture' | 'ddp-crosswalk' | 'ddp-package' | 'alfred-metadata' | 'operating-archive' | 'operating-plan'; label?: string; sha256?: string }
+export interface FredSourceInput { path: string; kind: 'public-table' | 'capture' | 'release-capture' | 'ddp-crosswalk' | 'ddp-package' | 'alfred-metadata' | 'operating-archive' | 'operating-plan' | 'research-source' | 'research-catalogue'; label?: string; sha256?: string }
 export interface FredMerchantProfile { label?: string; origin: string; path?: string; payment: JsonObject }
 export interface FredWorkspaceOptions {
   label?: string; projectId?: string; expectedBindingSha256?: string;
@@ -132,6 +132,7 @@ export interface FredProject extends FredReleaseProjectState {
   pending: JsonObject | null; acquisition?: JsonObject | null;
   briefingTemplates?: FredBriefingTemplate[]; briefingSuccessors?: FredBriefingSuccessorRecord[];
   qcew?: FredQcewProjectState;
+  research?: FredResearchCatalogue;
   ddpCrosswalks?: FredDdpCrosswalkSummary[]; ddpPackages?: FredDdpPackageSummary[];
   ddpMigrations?: FredDdpMigrationSummary[]; ddpReceivings?: FredDdpReceivingSummary[];
 }
@@ -308,6 +309,10 @@ export interface FredDdpReceivingInput extends FredDdpPageInput {
 export interface FredRequestOptions { signal?: AbortSignal }
 export interface FredFileOptions extends FredRequestOptions { expectedSha256?: string }
 export type FredFileSelection =
+  { kind: 'research-source'; snapshotId: string; expectedRevision?: number } |
+  { kind: 'research-catalogue'; expectedRevision?: number } |
+  { kind: 'research-entry'; entryId: string; expectedRevision?: number } |
+  { kind: 'research-product'; productId: string; editionId?: string; expectedRevision?: number } |
   { kind: 'source'; captureId: string } |
   { kind: 'release-source'; releaseCaptureId: string } |
   { kind: 'release-plan'; planId: string } |
@@ -321,11 +326,12 @@ export type FredFileSelection =
   { kind: 'briefing-successor'; successorId: string; format: 'html' | 'csv' | 'json' } |
   { kind: 'customer'; publicationId: string; intentId: string };
 export interface FredBundleIdentity {
-  schema: 'stellar-forge.fred-project-bundle.v1' | 'stellar-forge.fred-project-bundle.v2' | 'stellar-forge.fred-project-bundle.v3' | 'stellar-forge.fred-project-bundle.v4' | 'stellar-forge.fred-project-bundle.v5' | 'stellar-forge.fred-project-bundle.v6'; projectId: string; revision: number;
+  schema: 'stellar-forge.fred-project-bundle.v1' | 'stellar-forge.fred-project-bundle.v2' | 'stellar-forge.fred-project-bundle.v3' | 'stellar-forge.fred-project-bundle.v4' | 'stellar-forge.fred-project-bundle.v5' | 'stellar-forge.fred-project-bundle.v6' | 'stellar-forge.fred-project-bundle.v7'; projectId: string; revision: number;
   bundleSha256: string; captures: number; publications: number; briefings?: number; templates?: number; successors?: number;
   releaseCaptures?: number; releaseWatches?: number; releasePlans?: number; releaseCatchUps?: number;
   ddpCrosswalks?: number; ddpPackages?: number; ddpMigrations?: number; ddpReceivings?: number;
   qcew?: { captures: number; profiles: number; editions: number };
+  research?: { entries: number; sources: number; reviews: number; products: number };
 }
 export interface FredDownloadedFile {
   name: string; type: string; bytes: Buffer; sha256: string; status: number; projectId: string; bundle?: FredBundleIdentity;
@@ -385,10 +391,114 @@ export declare const FRED_OPERATING_ARCHIVE_MAX_BYTES:number;
 export declare function inspectFredOperatingArchiveFile(path:string,options?:{expectedSha256?:string;signal?:AbortSignal}):
   Promise<{archivePath:string;bytes:number;sha256:string}>;
 
+
+/** The original Research catalogue stays inside the existing economic project. */
+export interface FredResearchDefinition {
+  entryId: string; title: string; publisher: string; url: string;
+  kind: 'DATASET' | 'RESEARCH' | 'REPORT' | 'METHOD' | 'OTHER';
+  topics?: string[]; geographies?: string[]; cadenceDays?: number | null; expectedRelease?: string | null;
+  licence?: string; notes?: string; retired?: boolean;
+}
+export interface FredResearchRequirement {
+  id: string; title: string; entryIds: string[]; topics?: string[]; geographies?: string[]; note?: string;
+}
+export interface FredResearchProductDefinition {
+  productId: string; title: string; audience?: string; purpose?: string; format?: string; notes?: string;
+  retired?: boolean; requirements: FredResearchRequirement[];
+}
+export interface FredResearchVersion<T> { id: string; definition: T; savedAt: string }
+export interface FredResearchSource {
+  schema: 'stellar-forge.research-source.v1'; id: string; entryId: string; definitionId: string;
+  requestedUrl: string; finalUrl: string; retrievedAt: string; status: number;
+  contentType: string; filename: string; bytes: number; sha256: string; mode: 'HTTP' | 'UPLOAD';
+}
+export interface FredResearchReview {
+  id: string; entryId: string; definitionId: string; snapshotId: string; decision: 'ACCEPT' | 'NEEDS_WORK' | 'REJECT';
+  reviewer: string; note: string; reviewedAt: string;
+}
+export interface FredResearchEdition {
+  id: string; productId: string; definitionId: string; issuedAt: string; issuedBy: string; note: string;
+  sources: Array<{ requirementId: string; entryId: string; definitionId: string; snapshotId: string; reviewId: string }>;
+}
+export interface FredResearchCatalogue {
+  schema: 'stellar-forge.research-catalog.v1';
+  entries: Array<{ id: string; currentId: string; versions: Array<FredResearchVersion<FredResearchDefinition>> }>;
+  sources: FredResearchSource[]; reviews: FredResearchReview[];
+  products: Array<{ id: string; currentId: string; versions: Array<FredResearchVersion<FredResearchProductDefinition>>; editions: FredResearchEdition[] }>;
+}
+export interface FredResearchSourceStatus {
+  entryId: string; definitionId: string; title: string; publisher: string; url: string; kind: FredResearchDefinition['kind'];
+  topics: string[]; geographies: string[]; retired: boolean; cadenceDays: number | null; expectedRelease: string | null;
+  sourceId: string | null; retrievedAt: string | null; sourceBytes: number | null; httpStatus: number | null;
+  reviewId: string | null; reviewer: string | null; reviewNote: string | null;
+  status: 'RETIRED' | 'SOURCE_NEEDED' | 'SOURCE_UNAVAILABLE' | 'APPROVED' | 'REJECTED' | 'NEEDS_WORK' | 'REVIEW_NEEDED';
+  due: boolean; dueAt: string | null;
+}
+export interface FredResearchCoverage extends FredResearchRequirement {
+  selected: Array<(FredResearchSourceStatus & { topicMatch: boolean; geographyMatch: boolean; approved: boolean }) |
+    { entryId: string; status: 'SOURCE_NOT_FOUND'; approved: false }>;
+  state: 'COVERED' | 'GAP';
+}
+export interface FredResearchPageInput { offset?: number; limit?: number; expectedRevision?: number }
+export interface FredResearchTimedPageInput extends FredResearchPageInput { asOf?: string }
+export interface FredResearchPage<T> {
+  projectId: string; revision: number; total: number; offset: number; limit: number; returned: number;
+  nextOffset: number | null; items: T[];
+}
+export interface FredResearchCatalogueInput extends FredResearchTimedPageInput {
+  query?: string; topic?: string; geography?: string; status?: FredResearchSourceStatus['status'] | ''; due?: boolean;
+}
+export interface FredResearchCataloguePage extends Omit<FredResearchPage<FredResearchSourceStatus>, 'items'> {
+  asOf: string; rows: FredResearchSourceStatus[];
+  counts: { entries: number; sources: number; reviews: number; products: number; bytes: number };
+  products: 'merchant_fred_research_products'; taxonomy: 'merchant_fred_research_taxonomy';
+}
+export interface FredResearchProductSummary {
+  productId: string; currentId: string; title: string; audience: string; format: string; retired: boolean;
+  versions: number; editions: number; requirements: number;
+}
+export interface FredResearchEntryPage extends FredResearchPage<FredResearchVersion<FredResearchDefinition> | FredResearchSource | FredResearchReview> {
+  entryId: string; currentId: string; asOf: string; current: FredResearchSourceStatus; section: 'versions' | 'sources' | 'reviews';
+}
+export interface FredResearchProductPage extends FredResearchPage<FredResearchVersion<FredResearchProductDefinition> | FredResearchEdition | FredResearchRequirement | FredResearchCoverage> {
+  productId: string; currentId: string; asOf: string;
+  definition: Omit<FredResearchProductDefinition, 'requirements'>;
+  section: 'versions' | 'editions' | 'requirements' | 'coverage';
+}
+export type FredResearchAction = 'research-entry-save' | 'research-import' | 'research-source-acquire' |
+  'research-source-upload' | 'research-review' | 'research-product-save' | 'research-product-issue';
+export interface FredResearchSourceSelection { entryId: string; definitionId: string }
+export interface FredResearchUpload extends FredJournalInput, FredResearchSourceSelection {
+  filename: string; contentType?: string; bodyBase64: string; retrievedAt?: string;
+}
+
 export declare class FredWorkspaceClient {
   constructor(definition: FredWorkspaceDefinition, runtime?: FredClientRuntime);
   readonly metadata: FredClientMetadata;
   timeoutMs: number; maxResponseBytes: number; maxDdpResponseBytes: number;
+  researchCatalogue(input?: FredResearchCatalogueInput, options?: FredRequestOptions): Promise<FredResearchCataloguePage>;
+  researchTaxonomy(input: FredResearchPageInput & { section: 'topics' | 'geographies' }, options?: FredRequestOptions):
+    Promise<FredResearchPage<string> & { section: 'topics' | 'geographies' }>;
+  researchEntry(input: FredResearchTimedPageInput & { entryId: string; section: 'versions' | 'sources' | 'reviews' },
+    options?: FredRequestOptions): Promise<FredResearchEntryPage>;
+  researchProducts(input?: FredResearchPageInput & { query?: string }, options?: FredRequestOptions): Promise<FredResearchPage<FredResearchProductSummary>>;
+  researchProduct(input: FredResearchTimedPageInput & { productId: string; section: 'versions' | 'editions' | 'requirements' | 'coverage' },
+    options?: FredRequestOptions): Promise<FredResearchProductPage>;
+  saveResearchEntry(input: FredJournalInput & { definition: FredResearchDefinition }, options?: FredRequestOptions):
+    Promise<FredRevisionResult & { entryId: string; definitionId: string }>;
+  importResearchCatalogue(input: FredJournalInput & ({ csv: string; definitions?: never } | { definitions: FredResearchDefinition[]; csv?: never }),
+    options?: FredRequestOptions): Promise<FredRevisionResult & { entries: Array<{ entryId: string; definitionId: string }> }>;
+  acquireResearchSource(input: FredJournalInput & FredResearchSourceSelection, options?: FredRequestOptions):
+    Promise<FredRevisionResult & { source: FredResearchSource; status: 'REVIEW_NEEDED' | 'SOURCE_UNAVAILABLE' }>;
+  uploadResearchSource(input: FredResearchUpload, options?: FredRequestOptions):
+    Promise<FredRevisionResult & { source: FredResearchSource; status: 'REVIEW_NEEDED' | 'SOURCE_UNAVAILABLE' }>;
+  reviewResearchSource(input: FredJournalInput & { snapshotId: string; decision: 'ACCEPT' | 'NEEDS_WORK' | 'REJECT'; reviewer: string; note: string },
+    options?: FredRequestOptions): Promise<FredRevisionResult & { review: FredResearchReview }>;
+  saveResearchProduct(input: FredJournalInput & { definition: FredResearchProductDefinition }, options?: FredRequestOptions):
+    Promise<FredRevisionResult & { productId: string; definitionId: string; coverage: FredResearchCoverage[] }>;
+  issueResearchProduct(input: FredJournalInput & { productId: string; issuedBy: string; note?: string }, options?: FredRequestOptions):
+    Promise<FredRevisionResult & { edition: FredResearchEdition }>;
+  resumeResearch(input: FredJournalInput & { action: FredResearchAction }, options?: FredRequestOptions): Promise<FredRevisionResult & JsonObject>;
   launch(options?: FredRequestOptions): Promise<FredStartup>;
   state(options?: FredRequestOptions): Promise<FredState>;
   operation(id: string, options?: FredRequestOptions): Promise<FredOperation>;

@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 import json
 from pathlib import Path
 import re
+import subprocess
 import tempfile
 import threading
 from .errors import StateError
@@ -162,6 +163,51 @@ class EventProgrammes:
                 need(len(content) == item["bytes"] and sha(content) == item["sha256"], "COMPLETE_ORIGINAL_FILE_REQUIRED")
                 result[kind] = content
         return result
+
+    def inspect_input(self, input_id, *, pointer=None, offset=0, limit=25):
+        """Read complete original payloads through the trusted installed receiver."""
+        input_id = identifier(input_id)
+        need(pointer is None or isinstance(pointer, str) and len(pointer) <= 2000,
+             "PAYLOAD_POINTER_REQUIRED")
+        need(type(offset) is int and offset >= 0 and type(limit) is int and 1 <= limit <= 100,
+             "FIELD_PAGE_INVALID")
+        with self._lock:
+            need(not self._closed, "CLOSED")
+            future = self._executor.submit(self._inspect_input, input_id, pointer, offset, limit)
+        return future.result()
+
+    def _inspect_input(self, input_id, pointer, offset, limit):
+        from .event_feed_analysis import exact_file, regular, sha
+        originals = self._originals(input_id)
+        source_cli = self.source_cli.resolve(strict=True)
+        source_core = source_cli.with_name("analysis-source.mjs")
+        need(source_cli.name == "analysis-source-cli.mjs" and source_core.is_file(),
+             "ORIGINAL_SOURCE_RECEIVER_REQUIRED")
+        cli_raw, core_raw = regular(source_cli), regular(source_core)
+        with tempfile.TemporaryDirectory(prefix="event-payload-inspection-") as temporary:
+            root = Path(temporary)
+            for name_, content in (("analysis-source-cli.mjs", cli_raw), ("analysis-source.mjs", core_raw),
+                                   ("events.ndjson", originals["ndjson"]), ("manifest.json", originals["manifest"])):
+                exact_file(root / name_, content)
+            args = [self.workspace.node, str(root / "analysis-source-cli.mjs"),
+                    "--ndjson", str(root / "events.ndjson"), "--manifest", str(root / "manifest.json")]
+            args += (["--inspect-fields", "true"] if pointer is None else
+                     ["--field-values", pointer, "--offset", str(offset), "--limit", str(limit)])
+            completed = subprocess.run(args, capture_output=True, check=False, timeout=120)
+        need(completed.returncode == 0,
+             completed.stderr.decode("utf-8", "replace")[:8000] or "SOURCE_INSPECTION_FAILED")
+        need(0 < len(completed.stdout) <= 49 * 1024 * 1024, "SOURCE_INSPECTION_TOO_LARGE")
+        result = json.loads(completed.stdout)
+        expected = "stellar-forge.event-feed-payload-" + ("fields" if pointer is None else "values") + ".v1"
+        need(result.get("schema") == expected and
+             result.get("original_files") == {kind: {"bytes": len(value), "sha256": sha(value)}
+                                               for kind, value in originals.items()},
+             "SOURCE_INSPECTION_CHANGED")
+        if pointer is not None:
+            need(result.get("pointer") == pointer and result.get("offset") == offset and result.get("limit") == limit,
+                 "SOURCE_INSPECTION_SELECTION_CHANGED")
+        return {**result, "workspace_id": self.workspace.identity, "input_id": input_id,
+                "receiver": {"cli_sha256": sha(cli_raw), "core_sha256": sha(core_raw)}}
 
     def overview(self, *, actions_before=None, inputs_before=None, limit=25):
         need(type(limit) is int and 1 <= limit <= 100 and

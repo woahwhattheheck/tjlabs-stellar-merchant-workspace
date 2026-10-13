@@ -179,7 +179,7 @@ export class MerchantWorkspace {
     });
     return { order, history };
   }
-  async createOrder({ id = randomUUID(), reference, title, prices }) {
+  async createOrder({ id = randomUUID(), reference, title, prices, expectedTerms }) {
     need(UUID.test(id), 'ORDER_ID_INVALID');
     exactText(reference, 'ORDER_REFERENCE_INVALID', 120); exactText(title, 'ORDER_TITLE_INVALID', 180);
     need(Array.isArray(prices) && prices.length >= 1 && prices.length <= 16, 'ORDER_PRICES_REQUIRED');
@@ -197,8 +197,14 @@ export class MerchantWorkspace {
         const originalPrices = existing.frozen.rails.map(rail => ({ assetId: rail.assetId, amountAtomic: rail.amountAtomic }));
         need(existing.reference === reference && existing.title === title && JSON.stringify(selectedPrices) === JSON.stringify(originalPrices),
           'ORIGINAL_INVOICE_DETAILS_CHANGED', 409);
+        if (expectedTerms !== undefined) need(object(expectedTerms) &&
+          canonicalJson(expectedTerms).equals(canonicalJson({publicOrigin: new URL(existing.frozen.request.url).origin,
+            template: existing.frozen.template})), 'ORIGINAL_INVOICE_TERMS_CHANGED', 409);
         return this._view(id);
       }
+      if (expectedTerms !== undefined) need(object(expectedTerms) &&
+        canonicalJson(expectedTerms).equals(canonicalJson({publicOrigin: this.config.publicOrigin,
+          template: this.config.template})), 'ORDER_REVIEWED_TERMS_CHANGED', 409);
       const rails = selectedPrices.map(price => {
         const rail = this.config.template.rails.find(item => item.assetId === price.assetId);
         need(rail, 'ORDER_PRICE_INVALID');

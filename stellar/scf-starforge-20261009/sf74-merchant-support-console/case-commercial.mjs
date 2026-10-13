@@ -1,3 +1,4 @@
+import {reviewCommercialEconomics,sealCommercialEconomics,readCommercialEconomics,renderCommercialEconomics} from './commercial/economics.mjs';
 // MIT. Commercial documents through the original SF74 case and commissioning writer.
 import {createHash} from 'node:crypto';
 import {commercialImplementationView,readCommercialImplementationTransfers,
@@ -79,7 +80,7 @@ export function openCaseCommercial({store,workspaceId}={}) {
       revision(args,record);
       const createdAt=new Date().toISOString(),payload=await payloadBuilder(context,createdAt);
       document=makeCommercialDocument({kind,requestId:args.requestId,caseId:args.id,createdAt,request,payload});
-      editionId=payload.draft?.implementationSourceId||payload.implementationSourceId||context.state.activeEditionId||null;
+      editionId=payload.draft?.implementationSourceId||payload.implementationSourceId||payload.review?.quote?.sourceBindings?.implementation?.id||context.state.activeEditionId||null;
     }
     // The original engine verifies exact replay before its current revision check.
     const original=await operateCaseCommissioning(store,{id:args.id,expectedRevision:args.expectedRevision,
@@ -89,11 +90,12 @@ export function openCaseCommercial({store,workspaceId}={}) {
       document:{id:document.id,kind,sha256:sha256(jsonBytes(document))},case:recordRef(next.record),
       view:view(next.context),...(kind==='QUOTE'?{quote:quoteById(next.context,document.id)}:{}),
       ...(kind==='PRICING'?{pricingSourceId:document.payload.id}:{}),
-      ...(kind==='PERFORMANCE'?{performanceSourceId:document.payload.id}:{})};
+      ...(kind==='PERFORMANCE'?{performanceSourceId:document.payload.id}:{}),
+      ...(kind==='ECONOMICS'?{assessmentId:document.payload.id}:{})};
   }
   function view(context) {
     const original= commercialView(context),transfers=readCommercialImplementationTransfers(context);
-    return {...original,implementation:commercialImplementationView(context),requests:[
+    return {...original,economics:readCommercialEconomics(context),implementation:commercialImplementationView(context),requests:[
       ...original.requests,...transfers.history.map(row=>({requestId:row.id,action:'adoptImplementation',
         state:'COMPLETE',documentSha256:row.material.sha256}))]};
   }
@@ -228,6 +230,40 @@ export function openCaseCommercial({store,workspaceId}={}) {
     return {scope:context.scope,case:recordRef(record),quoteId:quote.id,quoteSha256:quote.sha256,
       descriptor:{filename,bytes:body.length,sha256:sha256(body),mediaType},body};
   }
-  return {read,preview,saveDraft,publish,receive,receivePricing,compare,download,previewImplementation,adoptImplementation,
+
+  async function previewEconomics(args) {
+    fields(args,['id','scope','expectedRevision','input']);scope(args);
+    const {record,context}=await readContext(args.id);revision(args,record);
+    return {scope:context.scope,revision:record.revision,review:reviewCommercialEconomics(context,args.input)};
+  }
+  async function saveEconomics(args) {
+    fields(args,['id','scope','expectedRevision','requestId','actor','input','reviewSha256']);
+    if(!HASH.test(args.reviewSha256??''))
+      throw commercialError('COMMERCIAL_ECONOMICS_REVIEW_REQUIRED','Review this exact quote assessment before saving.');
+    return apply('saveEconomics','ECONOMICS',args,(context,createdAt)=>{
+      const review=reviewCommercialEconomics(context,args.input);
+      if(review.reviewSha256!==args.reviewSha256)
+        throw commercialError('COMMERCIAL_ECONOMICS_REVIEW_CHANGED','The assessment inputs or original quote changed. Review again.',409);
+      return sealCommercialEconomics({id:args.requestId,createdAt,review});
+    });
+  }
+  async function downloadEconomics(args) {
+    fields(args,['id','scope','revision','expectedRevision','assessmentId','kind']);scope(args);
+    const {record,context}=await readContext(args.id,args.revision??null);
+    if(args.expectedRevision!==undefined)revision(args,record);
+    const assessment=readCommercialEconomics(context).assessments.find(row=>row.id===args.assessmentId);
+    if(!assessment)throw commercialError('COMMERCIAL_ECONOMICS_NOT_FOUND','Choose a retained original assessment.',404);
+    let body,filename,mediaType;
+    if(args.kind==='JSON') {
+      const {material,originCaseId,...original}=assessment;
+      body=jsonBytes(original);filename='private-quote-economics-'+assessment.id+'.json';mediaType='application/json';
+    } else if(args.kind==='REPORT') {
+      body=Buffer.from(renderCommercialEconomics(assessment));filename='private-quote-economics-'+assessment.id+'.md';mediaType='text/markdown; charset=utf-8';
+    } else throw commercialError('COMMERCIAL_ECONOMICS_DOWNLOAD','Choose the complete private assessment JSON or report.');
+    return {scope:context.scope,case:recordRef(record),assessmentId:assessment.id,quoteId:assessment.quoteId,
+      quoteSha256:assessment.quoteSha256,descriptor:{filename,bytes:body.length,sha256:sha256(body),mediaType},body};
+  }
+
+  return {previewEconomics,saveEconomics,downloadEconomics,read,preview,saveDraft,publish,receive,receivePricing,compare,download,previewImplementation,adoptImplementation,
     previewPerformance,receivePerformance,preparePerformanceRevision,downloadPerformance};
 }

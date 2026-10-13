@@ -4,6 +4,7 @@ import {bindingTemplate, prepareInstallation, renderWorkorder} from '/installati
 import {composeCustomerProgramme, programmeFiles} from '/installation-workorders/customer-programme-core.mjs';
 import {createCommissioningReceivingDesk} from './operations_installation_commissioning.mjs';
 import {createSourceCollectionDesk, validateCollection} from './operations_installation_source_collection.mjs';
+import {createSourceEditionDesk, validateSourceEditionWork} from './operations_installation_source_editions.mjs';
 import {currentStaffContext, staffDeskStorageKey, assertStaffRequestActor} from './staff-session.mjs';
 
 const SCHEMA='stellar-forge.installation-source-desk.v1';
@@ -12,6 +13,8 @@ const NATIVE_SELECTION='stellar-forge.canadabuys-workshare-selection.v1';
 const HANDOVER_SELECTION='stellar-forge.installation-handover-selection.v1';
 const MAX_FILE=8*1024*1024, MAX_ARCHIVE=192*1024*1024, MAX_WORKING=512*1024*1024;
 const WORKING_COPY='stellar-forge.installation-source-working-copy.v1';
+const EDITION_MAPPING_FIELDS=['binding:','field:work.','field:selection.','field:caseForm.','field:profileWork.'];
+const editionMappingField=key=>EDITION_MAPPING_FIELDS.some(prefix=>key.startsWith(prefix));
 const activeCopies=new Map();
 const clone=value=>structuredClone(value);
 const record=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
@@ -174,7 +177,7 @@ export function mountInstallationSources(root,bridge){
   activeCopies.set(pointerKey,copyId);
   const initial={schema:SCHEMA,scope,open:false,tab:'files',draftId:null,revision:null,work:null,note:'',newTitle:'',
     upload:{filename:'',mediaType:'application/json',sourceUrl:'',observedAt:''},
-    caseForm:null,pendingId:null,preparationId:null,profileWork:null,commissioningWork:null,collectionWork:null,
+    caseForm:null,pendingId:null,preparationId:null,profileWork:null,commissioningWork:null,collectionWork:null,editionWork:null,
     inspectionFileId:null,notice:'',error:'',rejected:[],copyName:'Source working copy',rawFields:{},fieldErrors:{},historyRevisionText:null};
   let state=clone(initial),alive=true,busy=false,hostBusy=false,initialized=false;
   let saved=null,edition=null,heads=[],catalogue=null,prepared=null,inspection=null,request=null,chosenFile=null;
@@ -199,6 +202,15 @@ export function mountInstallationSources(root,bridge){
     request:id=>requestRecords.get(id),allRequests:()=>[...requestRecords.values()],pending:()=>state.pendingId,
     requireEdit,changed,persistNow,parkWorking,render,snapshot,available,hash,base64,checkedFile,clone,esc,pretty,header,table,empty,hint,btn,
     issue,recoverRequest,refreshCurrent:refreshSelectedCopy,readonly:()=>readonly()||historic(),editing:()=>editing(),download:downloadBlob
+  });
+  const editions=createSourceEditionDesk({
+    state:()=>state,draft:()=>selectedDraft(),currentDraft:()=>saved,heads:()=>heads,caseId,
+    editing,historic,readonly,pending,requireEdit,changed,render,parkWorking,issue,
+    mappingDirty:()=>workingDirty()||Object.keys(state.rawFields||{}).some(editionMappingField),
+    esc,pretty,stable,table,empty,hint,btn,download:downloadBlob,
+    downloadOriginal:(ref,file)=>download(prefix+'/'+encodeURIComponent(ref.draftId)+'/files/'+encodeURIComponent(file.id)+'?revision='+ref.revision+'&expectedSha256='+file.sha256,file),
+    downloadOutput:(ref,id,file)=>download(prefix+'/'+encodeURIComponent(ref.draftId)+'/preparations/'+encodeURIComponent(id)+'/outputs/'+encodeURIComponent(file.filename)+'?expectedSha256='+file.sha256,file),
+    api:(draftId,suffix,value)=>bridge.api(prefix+'/'+draftId+suffix,value)
   });
   function snapshot(){return {
     schema:SCHEMA,workingCopySchema:WORKING_COPY,scope:clone(scope),staffContext:clone(staffContext),
@@ -278,7 +290,7 @@ export function mountInstallationSources(root,bridge){
     if(legacy&&!next.upload)next={...clone(initial),draftId:value.sourceDraftId??null,revision:value.selectedRevision??null,
       work:value.working??null,caseForm:value.caseForm??null,profileWork:value.profileWork??null,
       pendingId:value.pendingRequest?.body?.requestId??null};
-    if(!record(next)||!record(next.upload)||!['files','mapping','outputs','installation','commissioning','history'].includes(next.tab)||
+    if(!record(next)||!record(next.upload)||!['files','mapping','outputs','installation','commissioning','editions','history'].includes(next.tab)||
       !['note','newTitle'].every(key=>typeof next[key]==='string')||!['filename','mediaType','sourceUrl','observedAt'].every(key=>typeof next.upload[key]==='string')||
       !(next.draftId===null||typeof next.draftId==='string')||!(next.pendingId===null||typeof next.pendingId==='string')||
       !(next.revision===null||Number.isSafeInteger(next.revision)&&next.revision>0))
@@ -311,6 +323,7 @@ export function mountInstallationSources(root,bridge){
     const merged=mergeRequests(requests),pending=next.pendingId?merged.get(next.pendingId):null;
     if(next.pendingId&&(!pending||pending.draftId!==next.draftId))throw new Error('The complete pending original request is missing from this copy.');
     checkedFile(value.selectedFile);
+    validateSourceEditionWork(next.editionWork,{caseId,draftId:next.draftId});
     if(next.collectionWork!==null&&next.collectionWork!==undefined)
       validateCollection(next.collectionWork,{hash,checkedFile,draftId:next.draftId,requests:[...merged.values()]});
     return {...value,state:{...clone(initial),...next,rawFields:next.rawFields||{},fieldErrors:next.fieldErrors||{}},
@@ -443,9 +456,11 @@ export function mountInstallationSources(root,bridge){
     root.setAttribute('aria-busy',String(busy||hostBusy||copyLoading));
     for(const node of root.querySelectorAll('button,input,textarea,select')){
       const action=node.dataset.sourceAction;
-      if(action==='working-download'||action==='collection-download'){node.disabled=false;continue;}
+      if(action==='working-download'||action==='collection-download'||action?.startsWith('edition-download-')){node.disabled=false;continue;}
       if(action==='collection-pause'){node.disabled=!collection.running();continue;}
       const liveDisabled={
+        'edition-preview':!editions.canPreview(),
+        'edition-apply':!editions.canApply(),
         'working-open-saved':!selectedLocalCopy,
         'save-selection':!saved||historic()||!state.work?.dirty,
         'prepare':!saved?.selection||saved.selection.schema===NATIVE_SELECTION||!!state.work?.dirty||!!state.caseForm?.dirty||historic(),
@@ -505,13 +520,13 @@ export function mountInstallationSources(root,bridge){
   }
   async function openDraft(id,revision=null,force=false){
     if(pending())throw new Error('Recover the original request before replacing its source draft or selected revision.');
-    if(!force&&workingDirty()&&!confirm('Keep the saved history and replace the current unsaved preparation fields?'))return;
+    if(!force&&(workingDirty()||editions.isDirty())&&!confirm('Keep the saved history and replace the current unsaved preparation fields?'))return;
     await parkWorking('Before opening another source edition');if(!available())return;
     const epoch=++generation;
     const latest=await bridge.api(prefix+'/'+id);
     const value=revision===null||revision===latest.revision?latest:await bridge.api(prefix+'/'+id+'?revision='+revision);
     if(!available()||epoch!==generation)return;
-    state.draftId=id;state.commissioningWork=null;state.collectionWork=null;state.rawFields={};state.fieldErrors={};state.historyRevisionText=null;acceptState(latest,{replace:true});
+    state.draftId=id;state.commissioningWork=null;state.collectionWork=null;state.editionWork=null;state.rawFields={};state.fieldErrors={};state.historyRevisionText=null;acceptState(latest,{replace:true});
     if(value.revision!==latest.revision){
       state.revision=value.revision;
       state.work={draftId:id,baseRevision:value.revision,selectionText:value.selection?pretty(value.selection):'',dirty:false};
@@ -526,19 +541,20 @@ export function mountInstallationSources(root,bridge){
   async function viewEdition(){return selectedDraft();}
   async function createDraft(){
     if(pending())throw new Error('Recover the original source request first.');
-    if(workingDirty()&&!confirm('Keep the saved history and replace the current unsaved preparation fields?'))return;
+    if((workingDirty()||editions.isDirty())&&!confirm('Keep the saved history and replace the current unsaved preparation fields?'))return;
     const title=state.newTitle.trim();
     if(!title)throw new Error('Name this complete source preparation.');
     await parkWorking('Before creating another source preparation');if(!available())return;
     const id='source-desk-'+crypto.randomUUID().replaceAll('-','');
     state.rawFields={};state.fieldErrors={};state.historyRevisionText=null;edition=null;prepared=null;inspection=null;
-    state.draftId=id;state.work=null;state.caseForm=null;state.profileWork=null;state.commissioningWork=null;state.collectionWork=null;state.revision=null;saved=null;
+    state.draftId=id;state.work=null;state.caseForm=null;state.profileWork=null;state.commissioningWork=null;state.collectionWork=null;state.editionWork=null;state.revision=null;saved=null;
     return issue('create',{title},0);
   }
   function verifyReceipt(value,original){
     if(value.schema!==SCHEMA||value.requestId!==original.body.requestId||
        value.requestSha256!==original.requestSha256||value.draft?.caseId!==caseId||value.draft.id!==original.draftId)
       throw new Error('The returned preparation receipt differs from the complete original request.');
+    editions.verifyReceipt(value,original);
     return value;
   }
   async function adoptReceipt(value,original){
@@ -550,7 +566,8 @@ export function mountInstallationSources(root,bridge){
     state.pendingId=null;request=null;state.notice='Saved complete source preparation revision '+value.draft.revision+'.';
     if(state.draftId===value.draft.id){
       const newer=beforeWork?.dirty&&original.editorText!==beforeWork.selectionText;
-      acceptState(value.draft,{replace:!newer&&['selection.save','native.receive'].includes(original.body.action)});
+      if(original.body.action==='edition.apply'&&!newer)clearRawFields(EDITION_MAPPING_FIELDS);
+      acceptState(value.draft,{replace:!newer&&['selection.save','native.receive','edition.apply'].includes(original.body.action)});
       if(newer){state.work=beforeWork;state.work.baseRevision=value.draft.revision;}
       else if(state.work)state.work.baseRevision=value.draft.revision;
     }
@@ -562,6 +579,7 @@ export function mountInstallationSources(root,bridge){
       state.tab='installation';state.notice='Attached the complete prepared cohort to the original case in one transaction.';
     }
     commissioning.adoptReceipt(value.result);
+    editions.adoptReceipt(value,original);
     changed();
     try{await persistNow();}catch(error){state.pendingId=original.body.requestId;request=original;throw error;}
     // Once both the receipt and working selection are durable, a failed read is
@@ -585,7 +603,8 @@ export function mountInstallationSources(root,bridge){
     const body={requestId:'source-'+crypto.randomUUID(),expectedRevision:expected,
       actor:bridge.recordingActor(),note:state.note,action,data:clone(data)};
     assertStaffRequestActor(body,staffContext);
-    if(Object.keys(state.fieldErrors||{}).length)throw new Error('Correct the retained unfinished fields before recording the native request.');
+    if(Object.keys(state.fieldErrors||{}).some(key=>action!=='edition.apply'||!editionMappingField(key)))
+      throw new Error('Correct the retained unfinished fields before recording the native request.');
     if(!body.actor?.trim())throw new Error('Enter the recording operator in the original workspace.');
     const original={schema:SCHEMA,caseId,draftId:state.draftId,body,createdAt:new Date().toISOString(),
       requestSha256:hash(stable({schema:SCHEMA,caseId,draftId:state.draftId,body})),
@@ -1295,10 +1314,10 @@ export function mountInstallationSources(root,bridge){
     root.dataset.sourceCopyId=copyId;root.dataset.sourceDraftId=state.draftId||'';root.dataset.sourcePendingId=state.pendingId||'';
     root.dataset.sourceScope=JSON.stringify(scope);
     root.hidden=!state.open;
-    const tabs=[['files','1 · Original files'],['mapping','2 · Source mapping'],['outputs','3 · Complete package'],['installation','4 · Installation'],['commissioning','5 · Receive commissioning'],['history','Saved history']];
+    const tabs=[['files','1 · Original files'],['mapping','2 · Source mapping'],['outputs','3 · Complete package'],['installation','4 · Installation'],['commissioning','5 · Receive commissioning'],['editions','Customer editions'],['history','Saved history']];
     let content;
     try{content=state.tab==='mapping'?mappingView():state.tab==='outputs'?outputsView():state.tab==='installation'?installationView():
-      state.tab==='commissioning'?commissioning.render():state.tab==='history'?historyView():filesView();}
+      state.tab==='commissioning'?commissioning.render():state.tab==='editions'?editions.render():state.tab==='history'?historyView():filesView();}
     catch(error){
       content=hint('Your complete fields remain retained. Correct their original JSON before opening the guided view: '+error.message)+
         (state.work?field('Full native selection JSON','work.selectionText',state.work.selectionText,{area:true,rows:18,wide:true}):'')+
@@ -1317,7 +1336,7 @@ export function mountInstallationSources(root,bridge){
       (heads.length?'':empty('No retained source preparation in this case yet.'))+'</aside><div class="source-desk-main">'+
       (saved?'<div class="source-desk-edition"><strong>'+esc(saved.title)+'</strong><span>'+
         (historic()?'Historical revision '+state.revision:'Current saved revision '+saved.revision)+
-        (workingDirty()?' · edited fields retained in this browser':'')+'</span></div>':'')+
+        ((workingDirty()||editions.isDirty())?' · edited fields retained in this browser':'')+'</span></div>':'')+
       (historic()?hint('This is an immutable earlier source edition. Open the current head to edit. Complete earlier files and packages remain available.'):'')+
       workingCopiesView()+recoveryView()+conflictView()+'<nav aria-label="Source preparation steps">'+tabs.map(([id,label])=>'<button type="button" data-source-action="tab" data-tab="'+id+'"'+
         (state.tab===id?' aria-current="page"':'')+'>'+esc(label)+'</button>').join('')+'</nav>'+
@@ -1394,6 +1413,7 @@ export function mountInstallationSources(root,bridge){
       if(target.matches('[data-source-copy-name]')){state.copyName=target.value;changed();return;}
       if(target.matches('[data-source-revision]')){state.historyRevisionText=target.value;changed();return;}
       if(target.matches('[data-source-new-title]')){state.newTitle=target.value;changed();return;}
+      if(editions.edit(target))return;
       if(collection.edit(target))return;
       if(target.matches('[data-source-binding]')){bindingEdit(target);return;}
       if(target.matches('[data-source-field]')&&target.tagName!=='SELECT')dispatchField(target);
@@ -1406,6 +1426,7 @@ export function mountInstallationSources(root,bridge){
       if(target.matches('[data-source-working-copy]')){selectedLocalCopy=target.value;controls();return;}
       if(target.matches('[data-source-working-file]')){const file=target.files?.[0];run(()=>openWorkingFile(file));return;}
       if(target.matches('[data-source-collection-files]')){const selected=Array.from(target.files||[]);run(()=>collection.readFiles(selected));return;}
+      if(editions.edit(target)){render();return;}
       if(collection.edit(target)){render();return;}
       if(commissioning.edit(target))return;
       if(target.matches('[data-source-upload]')){
@@ -1443,9 +1464,11 @@ export function mountInstallationSources(root,bridge){
     event.preventDefault();const action=target.dataset.sourceAction;
     if(action==='working-download'){snapshotDownload();status();return;}
     if(action==='collection-download'){own(Promise.resolve().then(()=>collection.action(action,target))).catch(error=>{state.error=error.message||String(error);status();});return;}
+    if(action?.startsWith('edition-download-')){own(Promise.resolve().then(()=>editions.action(action,target))).catch(error=>{state.error=error.message||String(error);status();});return;}
     if(action==='collection-pause'){collection.pause();controls();status();return;}
     if(action==='close'){own(closeView()).catch(error=>{state.error=error.message;status();});return;}
     run(async()=>{
+      if(action.startsWith('edition-'))return editions.action(action,target);
       if(action.startsWith('collection-'))return collection.action(action,target);
       if(action==='working-refresh')return refreshCopies();
       if(action==='working-fork')return forkWorking();
@@ -1526,7 +1549,7 @@ export function mountInstallationSources(root,bridge){
     });
   });
   const beforeUnload=event=>{
-    if(workingDirty()||collection.collectionDirty()||pending()||storageError||persistedGeneration<generation){
+    if(workingDirty()||editions.isDirty()||collection.collectionDirty()||pending()||storageError||persistedGeneration<generation){
       event.preventDefault();event.returnValue='';
     }
   };

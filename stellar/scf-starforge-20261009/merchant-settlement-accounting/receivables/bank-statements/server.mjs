@@ -19,12 +19,16 @@ function part(value) {
 }
 const problem=(code,message,status=400)=>Object.assign(new Error(message),{code,status});
 export async function bankStatementAsset(path,{apiPath='/api/receivables/bank-statements',uiPath='/bank-statements',
-  receivablesApiBase='/api/receivables',receivablesUi='/receivables/'}={}) {
+  receivablesApiBase='/api/receivables',receivablesUi='/receivables/',sourcePreparations=null}={}) {
   apiPath=basePath(apiPath,'/api/receivables/bank-statements');uiPath=basePath(uiPath,'/bank-statements');
   if(path!==uiPath&&!path.startsWith(uiPath+'/'))return null;
   const name=path===uiPath?'index.html':path.slice(uiPath.length+1)||'index.html';
   if(name==='config.json')return {bytes:Buffer.from(JSON.stringify({apiBase:apiPath,apiPath,uiPath,
-    receivablesApiBase,receivablesUi,requestBytes:BANK_REQUEST_BYTES})),type:'application/json; charset=utf-8'};
+    receivablesApiBase,receivablesUi,requestBytes:BANK_REQUEST_BYTES,
+    sourcePreparationsApiBase:sourcePreparations?apiPath+'/source-preparations':null,
+    sourcePreparationsWorkspace:sourcePreparations?.workspace??null,
+    sourcePreparationsWorkspaceId:sourcePreparations?.workspaceId??null,
+    sourcePreparationsSourcesSha256:sourcePreparations?.sourcesSha256??null})),type:'application/json; charset=utf-8'};
   const entry=STATIC.get('/bank-statements/'+name);
   return entry?{bytes:await readFile(entry.url),type:entry.type}:null;
 }

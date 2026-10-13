@@ -17,6 +17,12 @@ import { inspectSeaTableAuthoring } from './launch.mjs';
 import { normalizeConnections, selectConnection, connectionViews, discoveryConfig } from './provider.mjs';
 import { MAX_PACKET_BYTES, makeSeaTableSourcePacket, validatePacket, retainPacket, packetFromCapture, createOrVerify } from './packet.mjs';
 
+import {readSeaTablePlacement,seaTablePlacedPath} from './placement.mjs';
+import {createSeaTableWorkspaceHandover,seaTableWorkspaceHandoverFile,receiveSeaTableWorkspaceFile,receivedSeaTableWorkspaces,
+  workspaceTransferStatus,workspaceTransferList,workspaceName,installSeaTableReceivedRelease} from './handover.mjs';
+import {startWorkspaceUpload,appendWorkspaceUpload,finishWorkspaceUpload,workspaceUploadStatus,completedWorkspaceUpload} from './uploads.mjs';
+import {acquireDatasetLease} from '../../dataset-refresh/writer-lease.mjs';
+import {withStoppedReleaseCopy} from '../../../sf82-seller-pilot/releases.mjs';
 const SCHEMA = 'stellar-forge.seatable-authoring.v1';
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 const decode = value => { try { return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(value)); }
@@ -67,6 +73,7 @@ export async function openSeaTableAuthoring({ directory, create = false, connect
   await privateDirectory(directory, create);
   const release = await acquireWorkspace(directory);
   let db, publisherService = null, deploymentService = null, pending = null, closed = false, closing;
+  const receivedChildren=new Map(),cleanupOwners=new Set();let dbClosed=false,leaseClosed=false;
   const deploymentDirectory = join(directory, 'deployments'), releaseDirectory = join(deploymentDirectory, 'releases');
   const lifetime = new AbortController();
   let publisherAccess = Promise.resolve();
@@ -121,6 +128,7 @@ export async function openSeaTableAuthoring({ directory, create = false, connect
         settings.publisherDirectory !== join(directory, 'publisher') || targetDirectory && targetDirectory !== settings.targetDirectory)
       throw fault('SEATABLE_AUTHORING_BINDING_CHANGED');
     for (const name of ['inputs', 'captures', 'previews', 'versions', 'interrupted']) await privateDirectory(join(directory, name), true);
+    const placement=await readSeaTablePlacement(directory),resolveCaptureFile=path=>seaTablePlacedPath(placement,path);
     const current = () => JSON.parse(db.prepare('SELECT data FROM state WHERE id=1').get().data);
     const setState = value => db.prepare('UPDATE state SET data=? WHERE id=1').run(JSON.stringify(value));
     const event = (kind, request, data = {}) => db.prepare('INSERT INTO events(created,kind,operation,data) VALUES(?,?,?,?)')
@@ -432,7 +440,7 @@ export async function openSeaTableAuthoring({ directory, create = false, connect
       const original = await capture(state.draft.captureId), config = sourceConfig(original, state.draft);
       const folder = join(directory, 'previews', request); await privateDirectory(folder, true);
       const file = join(folder, 'source.json'); await createOrVerify(file, bytes(config));
-      const reader = await openSeaTableSourceFile(file), reports = {};
+      const reader = await openSeaTableSourceFile(file,{resolveCaptureFile}), reports = {};
       try {
         for (const [name, query] of Object.entries(config.queries)) {
           const sample = [];
@@ -478,7 +486,7 @@ export async function openSeaTableAuthoring({ directory, create = false, connect
       const original = await capture(state.draft.captureId), config = sourceConfig(original, state.draft);
       const folder = join(directory, 'versions', request); await privateDirectory(folder, true);
       const file = join(folder, 'source.json'), content = bytes(config); await createOrVerify(file, content);
-      await inspectSeaTableSource(file); await syncDirectory(folder);
+      await inspectSeaTableSource(file,{resolveCaptureFile}); await syncDirectory(folder);
       const record = { title: state.draft.title, createdAt: stamp(), reviewer: input.reviewer, note: input.note,
         draft: state.draft, draftRevision: input.draftRevision, previewId: input.previewId,
         sourceSha256: digest(content), sourceBytes: content.length, sourceFile: file,
@@ -549,7 +557,7 @@ export async function openSeaTableAuthoring({ directory, create = false, connect
         if (!publisherService) {
           const publisher = await openSeaTablePublisher({ directory: settings.publisherDirectory,
             create: await absent(settings.publisherDirectory), sourceFile: settings.sourceFile,
-            targetDirectory: settings.targetDirectory, environment, seller, resource });
+            targetDirectory: settings.targetDirectory, environment, seller, resource, resolveCaptureFile });
           try { publisherService = await startPostgresPublisherServer({ publisher, port: 0 }); }
           catch (issue) { await publisher.close(); throw issue; }
         }
@@ -571,13 +579,13 @@ export async function openSeaTableAuthoring({ directory, create = false, connect
       return result;
     }
     async function withPublisher(action) {
-      assertOpen();
+      assertOpen();if(pending?.kind?.startsWith('WORKSPACE_'))throw fault('SEATABLE_AUTHORING_BUSY',undefined,409);
       return serializePublisherAccess(async () => {
         assertOpen();
         if (publisherService) return action(publisherService.publisher);
         if (await absent(settings.publisherDirectory))
           throw fault('SEATABLE_DEPLOYMENT_PUBLISHER_MISSING', 'Publish the reviewed source through its original publisher first.', 409);
-        const original = await openSeaTablePublisher({ directory: settings.publisherDirectory, environment, seller, resource });
+        const original = await openSeaTablePublisher({ directory: settings.publisherDirectory, environment, seller, resource, resolveCaptureFile });
         try { return await action(original); } finally { await original.close(); }
       });
     }
@@ -585,7 +593,7 @@ export async function openSeaTableAuthoring({ directory, create = false, connect
      * The caller supplies code, never an agent-selected module or native handle.
      * This serialized lifetime drains before closePublisher/deployment/close. */
     async function withOpenPublisher(action) {
-      assertOpen();
+      assertOpen();if(pending?.kind?.startsWith('WORKSPACE_'))throw fault('SEATABLE_AUTHORING_BUSY',undefined,409);
       if (typeof action !== 'function') throw fault('SEATABLE_PUBLISHER_CALLBACK_REQUIRED');
       return serializePublisherAccess(async () => {
         assertOpen();
@@ -718,18 +726,20 @@ export async function openSeaTableAuthoring({ directory, create = false, connect
         throw fault('SEATABLE_DEPLOYMENT_PACKAGE_CHANGED');
       return { ...inspected, packageRequestId };
     }
-    async function performDeploymentStage(input) {
+    async function performDeploymentStage(input,requestId) {
       const prepared = await inspectDeploymentPackage(input.packageRequestId);
       if (prepared.sourceSha256 !== input.expectedSourceSha256) throw fault('SEATABLE_DEPLOYMENT_PACKAGE_CHANGED');
-      return { ...await stageSeaTableDeployment({ packageDirectory: deploymentPackagePath(input.packageRequestId),
+      const staged=await stageSeaTableDeployment({ packageDirectory: deploymentPackagePath(input.packageRequestId),
         releaseDirectory, id: input.id, label: input.label, runtime: input.runtime,
-        expectedSourceSha256: input.expectedSourceSha256 }), packageRequestId: input.packageRequestId };
+        expectedSourceSha256: input.expectedSourceSha256 });
+      const installation=await installSeaTableReceivedRelease(directory,input.id,requestId);
+      return{...staged,packageRequestId:input.packageRequestId,...(installation?{installation}: {})};
     }
     async function stageDeployment({ packageRequestId, expectedSourceSha256, id: releaseId, label, runtime = { port: 0 }, requestId, ...extra }) {
       if (Object.keys(extra).length) throw fault('SEATABLE_DEPLOYMENT_INPUT_INVALID');
       const input = { packageRequestId: id(packageRequestId), expectedSourceSha256: hashValue(expectedSourceSha256),
         id: releaseId, label: label ?? releaseId, runtime };
-      return run('DEPLOYMENT_STAGE', input, requestId, () => performDeploymentStage(input));
+      return run('DEPLOYMENT_STAGE', input, requestId, () => performDeploymentStage(input,requestId));
     }
     async function openDeploymentConsole({ requestId, ...extra }) {
       if (Object.keys(extra).length) throw fault('SEATABLE_DEPLOYMENT_INPUT_INVALID');
@@ -835,7 +845,7 @@ export async function openSeaTableAuthoring({ directory, create = false, connect
         if (row.kind === 'PREVIEW') return performPreview(input, request);
         if (row.kind === 'DEPLOYMENT_REVIEW') return performDeploymentReview(input, request);
         if (row.kind === 'DEPLOYMENT_PREPARE') return performDeploymentPrepare(input, request);
-        if (row.kind === 'DEPLOYMENT_STAGE') return performDeploymentStage(input);
+        if (row.kind === 'DEPLOYMENT_STAGE') return performDeploymentStage(input,request);
         if (row.kind === 'DEPLOYMENT_COMMAND') return recoverDeploymentCommand(row, input);
         if (row.kind === 'DEPLOYMENT_CONSOLE_OPEN') return { ...deploymentOwnership(), observedOwnership: true };
         if (row.kind === 'DEPLOYMENT_CONSOLE_CLOSE') {
@@ -856,12 +866,101 @@ export async function openSeaTableAuthoring({ directory, create = false, connect
       }, true);
     }
 
+
+    function ownCleanup(issue){if(issue?.seaTableCleanup)cleanupOwners.add(issue.seaTableCleanup);return issue;}
+    async function drainCleanup(){for(const owner of [...cleanupOwners]){await owner.close();cleanupOwners.delete(owner);}}
+    function transfer(kind,requestId,action){
+      assertOpen();if(pending)throw fault('SEATABLE_AUTHORING_BUSY','The current original workspace operation is still running.',409);
+      const active={id:requestId,kind,completion:null};pending=active;
+      active.completion=Promise.resolve().then(drainCleanup).then(action).catch(e=>{throw ownCleanup(e);}).finally(()=>{if(pending===active)pending=null;});
+      return active.completion;
+    }
+    async function frozen(action){
+      return serializePublisherAccess(async()=>{
+        // This explicit handover action stops only services owned by this workspace.
+        if(publisherService){const service=publisherService;await service.close();if(publisherService===service)publisherService=null;}
+        if(deploymentService){const service=deploymentService;await service.native.close();if(deploymentService===service)deploymentService=null;}
+        let publisherLease,datasetLease;let primary;
+        try{
+          if(!await absent(settings.publisherDirectory))publisherLease=await acquireWorkspace(settings.publisherDirectory);
+          if(!await absent(settings.targetDirectory))datasetLease=acquireDatasetLease(settings.targetDirectory);
+          return !await absent(releaseDirectory)?await withStoppedReleaseCopy(releaseDirectory,action):await action();
+        }catch(e){primary=e;throw e;}
+        finally{
+          const retained={async close(){if(datasetLease){await datasetLease.close();datasetLease=null;}if(publisherLease){await publisherLease();publisherLease=null;}}};
+          try{await retained.close();}catch(e){cleanupOwners.add(retained);if(primary){Object.defineProperty(primary,'seaTableCleanup',{value:retained,configurable:true});}else throw e;}
+        }
+      });
+    }
+    function handoverSource(){const state=current();return {directory,draftRevision:state.draftRevision,selectedVersion:state.selectedVersion,
+      selectionRevision:state.selectionRevision,historyRevision:Number(db.prepare('SELECT COALESCE(MAX(id),0) AS n FROM events').get().n),createdAt:settings.createdAt};}
+    function handoverCounts(){return Object.fromEntries(['captures','discoveries','previews','versions','operations','events'].map(name=>[name,
+      Number(db.prepare('SELECT count(*) AS n FROM '+name).get().n)]));}
+    function exportWorkspace(input){input=structuredClone(input);if(!object(input)||Object.keys(input).some(k=>!['requestId','expectedDraftRevision','expectedSelectedVersion'].includes(k)))throw fault('SEATABLE_WORKSPACE_EXPORT_INPUT');return transfer('WORKSPACE_EXPORT',input.requestId,async()=>{
+      const invoke=()=>createSeaTableWorkspaceHandover({directory,settings:structuredClone(settings),source:handoverSource(),counts:handoverCounts(),...input});
+      const original=await workspaceTransferStatus(directory,'exports',input.requestId);
+      if(!original){const selected=handoverSource();if(selected.draftRevision!==input.expectedDraftRevision||selected.selectedVersion!==input.expectedSelectedVersion)
+        throw fault('SEATABLE_WORKSPACE_REVIEW_CHANGED','Review the current draft and selected version.',409);}
+      // Exact accepted replay verifies and returns its immutable file before any service stop.
+      return original?.status==='complete'?invoke():frozen(invoke);
+    });}
+    function receiveWorkspaceFile(input){input=structuredClone(input);if(!object(input)||Object.keys(input).some(k=>!['requestId','archiveFile','expectedSha256','name'].includes(k)))throw fault('SEATABLE_WORKSPACE_RECEIVE_INPUT');return transfer('WORKSPACE_RECEIVE',input.requestId,()=>receiveSeaTableWorkspaceFile({directory,...input}));}
+    async function receiveWorkspace(input){input=structuredClone(input);const {requestId,uploadId,expectedSha256,name,...extra}=input;
+      if(Object.keys(extra).length)throw fault('SEATABLE_WORKSPACE_RECEIVE_INPUT');
+      return transfer('WORKSPACE_RECEIVE',requestId,async()=>{const selected=await completedWorkspaceUpload(directory,uploadId,expectedSha256);
+        return receiveSeaTableWorkspaceFile({directory,requestId,name,archiveFile:selected.path,expectedSha256});});}
+    async function closeReceivedWorkspace(name){workspaceName(name);const child=receivedChildren.get(name);if(!child)return{closed:true,name};
+      await child.service.close();if(receivedChildren.get(name)===child)receivedChildren.delete(name);return{closed:true,name};}
+    function openReceivedWorkspace(name){
+      workspaceName(name);assertOpen();
+      const existing=receivedChildren.get(name);
+      if(existing)return Promise.resolve({name,url:existing.service.url,workspaceIdentity:existing.record.workspaceIdentity,directory:existing.record.directory});
+      return transfer('WORKSPACE_OPEN',name,async()=>{
+        let model,service;
+        try{
+          const record=(await receivedSeaTableWorkspaces(directory)).find(r=>r.name===name);
+          if(!record)throw fault('SEATABLE_WORKSPACE_RECEIVED_MISSING',undefined,404);
+          const receipt=await workspaceTransferStatus(directory,'receives',record.requestId);
+          if(receipt?.status!=='complete')throw fault('SEATABLE_WORKSPACE_RECEIVE_NOT_COMPLETE',undefined,409);
+          model=await openSeaTableAuthoring({directory:record.directory,connections,environment,seller,resource});
+          if(lifetime.signal.aborted||closing)throw fault('SEATABLE_AUTHORING_CLOSED');
+          const {serveSeaTableAuthoring}=await import('./server.mjs');
+          service=await serveSeaTableAuthoring({workspace:model,port:0});
+          if(lifetime.signal.aborted||closing)throw fault('SEATABLE_AUTHORING_CLOSED');
+          receivedChildren.set(name,{model,service,record});
+          return{name,url:service.url,workspaceIdentity:record.workspaceIdentity,directory:record.directory};
+        }catch(e){
+          const owner=service??model??e.seaTableCleanup;
+          if(owner){const retained={close:()=>owner.close()};cleanupOwners.add(retained);try{await retained.close();cleanupOwners.delete(retained);}catch(cleanup){e.cleanupCode=cleanup.code??'SEATABLE_CLOSE_FAILED';}}
+          throw e;
+        }
+      });
+    }
+    async function withReceivedWorkspace(name,action){
+      await openReceivedWorkspace(name);
+      return transfer('WORKSPACE_USE',name,async()=>{
+        const child=receivedChildren.get(name);
+        if(!child)throw fault('SEATABLE_WORKSPACE_RECEIVED_MISSING',undefined,404);
+        return action(child);
+      });
+    }
+
     // Reopening never repeats a provider call or starts a publication/service.
     db.prepare("UPDATE operations SET status='interrupted',updated=? WHERE status='pending'").run(stamp());
     for (const row of db.prepare("SELECT id FROM operations WHERE status='interrupted' AND kind IN ('VERSION','SELECT')").all())
       await resume(row.id).catch(() => {});
     return {
-      directory, settings, discover, discovery: discoveryRecord, importSource, importPacket, readLive,
+      directory, settings, exportWorkspace,receiveWorkspace,receiveWorkspaceFile,openReceivedWorkspace,closeReceivedWorkspace,withReceivedWorkspace,
+      workspaceExports:async()=> (await workspaceTransferList(directory,'exports')).filter(r=>r.status==='complete').map(r=>r.result),
+      exportWorkspaceFile:id=>seaTableWorkspaceHandoverFile(directory,id),
+      workspaceExportStatus:id=>workspaceTransferStatus(directory,'exports',id),
+      workspaceReceiveStatus:id=>workspaceTransferStatus(directory,'receives',id),
+      receivedWorkspaces:()=>receivedSeaTableWorkspaces(directory),
+      workspaceUploadStatus:id=>workspaceUploadStatus(directory,id),
+      startWorkspaceUpload:input=>{input=structuredClone(input);return transfer('WORKSPACE_UPLOAD',input.requestId,()=>startWorkspaceUpload(directory,input));},
+      appendWorkspaceUpload:(id,offset,chunk)=>{chunk=Buffer.from(chunk);return transfer('WORKSPACE_UPLOAD',id,()=>appendWorkspaceUpload(directory,id,offset,chunk));},
+      finishWorkspaceUpload:id=>transfer('WORKSPACE_UPLOAD',id,()=>finishWorkspaceUpload(directory,id)),
+      discover, discovery: discoveryRecord, importSource, importPacket, readLive,
       inspectCapture, saveDraft, preview, saveVersion, selectVersion, exportVersion, exportCapture, captureAttempt, compareVersions,
       openPublisher, withOpenPublisher, resume, operation, version, deploymentStatus, reviewDeployment, prepareDeployment,
       inspectDeploymentPackage, stageDeployment, openDeploymentConsole, closeDeploymentConsole,
@@ -895,18 +994,27 @@ export async function openSeaTableAuthoring({ directory, create = false, connect
         return { running: false };
       })); },
       close() {
-        closing ??= (async () => {
+        if(closed)return Promise.resolve();
+        if(closing)return closing;
+        const attempt=(async()=>{
           lifetime.abort();
-          try {
-            if (pending) await pending.completion.catch(() => {});
-            await publisherAccess;
-            try { if (publisherService) await publisherService.close(); }
-            finally { if (deploymentService) await deploymentService.native.close(); }
-          } finally { closed = true; db.close(); await release(); }
+          if(pending)await pending.completion.catch(()=>{});
+          await publisherAccess;
+          for(const name of [...receivedChildren.keys()])await closeReceivedWorkspace(name);
+          await drainCleanup();
+          if(publisherService){await publisherService.close();publisherService=null;}
+          if(deploymentService){await deploymentService.native.close();deploymentService=null;}
+          if(!dbClosed){db.close();dbClosed=true;}
+          if(!leaseClosed){await release();leaseClosed=true;}
+          closed=true;
         })();
-        return closing;
+        closing=attempt;attempt.catch(()=>{if(closing===attempt)closing=null;});return attempt;
       },
     };
-  } catch (issue) { try { db?.close(); } finally { await release(); } throw issue; }
+   } catch (issue) {
+    const retained={async close(){if(db&&!dbClosed){db.close();dbClosed=true;}if(!leaseClosed){await release();leaseClosed=true;}}};
+    try{await retained.close();}catch(cleanup){Object.defineProperty(issue,'seaTableCleanup',{value:retained,enumerable:false,configurable:true});issue.cleanupCode=cleanup.code??'SEATABLE_CLOSE_FAILED';}
+    throw issue;
+  }
 }
 
