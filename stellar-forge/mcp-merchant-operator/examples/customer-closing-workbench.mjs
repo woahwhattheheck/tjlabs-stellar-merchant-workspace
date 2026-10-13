@@ -121,19 +121,48 @@ async function verifyCustomer(directory,row){
  * Supply an existing Playwright Browser, or choose an installed browser module in
  * the CLI. The operation directory is retained on completion and failure.
  */
-export async function receiveCustomerClosingWorkbench({directory,browser}={}){
+export async function receiveCustomerClosingWorkbench({directory,browser,closeBrowser=false}={}){
   assert.ok(browser&&typeof browser.newContext==='function','Supply the existing Playwright browser.');
+  assert.equal(typeof closeBrowser,'boolean','Keep explicit ownership of the supplied browser.');
   process.umask(0o077);directory=await privateDirectory(resolve(directory));
   const lease=await acquireStateLease(directory),calls=new Map(),contexts=[];
   let host,mcpServer,workbench,statementClient,rawConnection,baseUrl,csrfToken;
   const emit=(phase,details={})=>process.stdout.write(json({operationDirectory:directory,phase,...details}));
-  const downloadRoot=await privateDirectory(join(directory,'downloads'));
-  const screenshots=await privateDirectory(join(directory,'screenshots'));
-  const cyclesRoot=await privateDirectory(join(directory,'cycles'));
+  let downloadRoot,screenshots,cyclesRoot,finalResult,primaryError,reopenedComplete=false,ownedBrowserClosed=false,leaseClosed=false;
   const output=async(name,value)=>synced(join(directory,name),json(value),{replace:true});
+  async function closeOwnedResources(){
+    const failures=[];
+    async function close(label,action){try{await action();}catch(error){failures.push({resource:label,error});}}
+    for(const context of [...contexts].reverse())await close('browser context',async()=>{
+      await context.close();contexts.splice(contexts.indexOf(context),1);
+    });
+    if(workbench)await close('customer workbench',async()=>{await workbench.close();workbench=null;});
+    if(statementClient)await close('statement client',async()=>{await statementClient.disconnect();statementClient=null;});
+    if(mcpServer)await close('original MCP listener',async()=>{
+      mcpServer.closeAllConnections?.();
+      await new Promise((done,reject)=>mcpServer.close(error=>error?reject(error):done()));mcpServer=null;
+    });
+    if(host)await close('original accounting owner',async()=>{await host.close();host=null;});
+    if(closeBrowser&&!ownedBrowserClosed)await close('owned browser',async()=>{await browser.close();ownedBrowserClosed=true;});
+    if(failures.length){
+      const error=new AggregateError(failures.map(row=>row.error),'The original customer operation has unconfirmed resource closure.');
+      error.code='CUSTOMER_RECEIVING_CLOSE_FAILED';error.cleanup=failures.map(row=>({resource:row.resource,...problem(row.error)}));
+      error.close=closeOwnedResources;throw error;
+    }
+  }
+  async function closeOriginalOwnership(){
+    await closeOwnedResources();
+    if(!leaseClosed){await lease.close();leaseClosed=true;}
+  }
   try{
+    finalResult=await (async()=>{
+    downloadRoot=await privateDirectory(join(directory,'downloads'));
+    screenshots=await privateDirectory(join(directory,'screenshots'));
+    cyclesRoot=await privateDirectory(join(directory,'cycles'));
     const complete=await readOptional(join(directory,'flow-result.json'));
-    if(complete?.state==='COMPLETE'&&complete.customerDossier?.complete&&complete.customerDossier.reopenedAfterWorkbenchRestart&&complete.servicePlanner?.complete&&complete.serviceCalendars?.complete){emit('REOPENED_COMPLETE_RESULT',{cycleId:complete.cycle.id});return complete;}
+    if(complete?.state==='COMPLETE'&&complete.customerDossier?.complete&&complete.customerDossier.reopenedAfterWorkbenchRestart&&complete.servicePlanner?.complete&&complete.serviceCalendars?.complete){
+      reopenedComplete=true;return complete;
+    }
     const operation=await retained(join(directory,'operation.json'),async()=>({
       schema:SCHEMA,operationId:randomUUID(),createdAt:new Date().toISOString(),input:inputLabel,
       customerReference:'SCF-PERIOD-EXAMPLE',workspace:ALIAS,actor:ACTOR
@@ -420,6 +449,23 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
       const report=await waitCycle(key);await showCycle(key);return report;
     }
     async function customerHandover(key,report,label){
+      const retainedHandover=await readOptional(join(directory,'customer-handover-'+label+'.json'));
+      if(retainedHandover){
+        assert.equal(retainedHandover.cycleKey,key);assert.equal(retainedHandover.cycleId,report.cycleId);
+        assert.equal(retainedHandover.customerId,customer.id);assert.match(retainedHandover.snapshotSha256,/^[a-f0-9]{64}$/);
+        const archive=join(downloadRoot,'customer-handover-'+label+'.tar.gz');
+        const receivedRoot=join(directory,'customer-handovers',label+'-'+retainedHandover.snapshotSha256,'renamed-customer-folder');
+        assert.equal(retainedHandover.archive.path,archive);assert.equal(retainedHandover.directory,receivedRoot);
+        const archiveIdentity=await fileIdentity(archive);
+        assert.equal(archiveIdentity.bytes,retainedHandover.archive.bytes);assert.equal(archiveIdentity.sha256,retainedHandover.archive.sha256);
+        await privateDirectory(receivedRoot);
+        const original=await readAccountingStatementCustomerDossier({directory:receivedRoot,verifyFiles:true});
+        assert.equal(original.snapshotSha256,retainedHandover.snapshotSha256);
+        assert.equal(original.customer.customerId,customer.id);assert.equal(original.cycle.cycleId,report.cycleId);
+        assert.deepEqual(original.files,retainedHandover.files);
+        // A later native correction cannot relabel or overwrite the original issued snapshot.
+        return retainedHandover;
+      }
       const customerRows=report.rows.filter(row=>row.customer.id===customer.id);
       assert.ok(customerRows.length>=2,'Receive the same customer across its original statement rows.');
       await showCycle(key);
@@ -943,20 +989,36 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
         recovery:calendarRecovery,receiving:calendarReceiving,phone:true,reopenedAfterWorkbenchRestart:true,files:calendarFiles},
       downloads,screenshots:images,browserErrors:pageErrors,
       nativeRetainedStatements:nativeStatements.items.length,toolCalls:Object.fromEntries(calls)};
-    await synced(join(directory,'flow-result.json'),json(result),{replace:Boolean(complete)});
-    emit('COMPLETE',{result:join(directory,'flow-result.json'),customerPackets:customerPackets.length,screenshots:images.length});
     return result;
-  }catch(error){
-    await output('receiving-error.json',{schema:SCHEMA,at:new Date().toISOString(),error:problem(error)}).catch(()=>{});
-    emit('SOURCE_OR_RUNTIME_ERROR',{error:problem(error)});throw error;
-  }finally{
-    for(const context of contexts)await context.close().catch(()=>{});
-    await workbench?.close().catch(()=>{});
-    await statementClient?.disconnect().catch(()=>{});
-    if(mcpServer){mcpServer.closeAllConnections?.();await new Promise(done=>mcpServer.close(()=>done()));}
-    await host?.close().catch(()=>{});
-    await lease.close();
+    })();
+  }catch(error){primaryError=error;}
+  const closureFailures=[];
+  try{await closeOwnedResources();}catch(error){closureFailures.push(error);}
+  if(closureFailures.length){
+    if(!primaryError)primaryError=closureFailures[0];
+    else primaryError.cleanup=(primaryError.cleanup??[]).concat(closureFailures.flatMap(error=>error.cleanup??[problem(error)]));
   }
+  if(!primaryError&&!reopenedComplete){
+    try{
+      lease.assertHeld();
+      await synced(join(directory,'flow-result.json'),json(finalResult),{replace:Boolean(await readOptional(join(directory,'flow-result.json')))});
+    }catch(error){primaryError=error;}
+  }
+  // An unclosed resource retains its original writer lease. The same owner can
+  // retry only its retained handles through closeOriginalOwnership().
+  if(!closureFailures.length)try{await closeOriginalOwnership();}catch(error){
+    if(primaryError)primaryError.cleanup=(primaryError.cleanup??[]).concat({resource:'original operation lease',...problem(error)});
+    else primaryError=error;
+  }
+  if(primaryError){
+    primaryError.close=closeOriginalOwnership;
+    await synced(join(directory,'receiving-error-'+randomUUID()+'.json'),json({schema:SCHEMA,at:new Date().toISOString(),error:problem(primaryError),
+      cleanup:primaryError.cleanup??[]})).catch(recordError=>{primaryError.recordError=problem(recordError);});
+    emit('SOURCE_OR_RUNTIME_ERROR',{error:problem(primaryError),cleanup:primaryError.cleanup??[]});throw primaryError;
+  }
+  if(reopenedComplete)emit('REOPENED_COMPLETE_RESULT',{cycleId:finalResult.cycle.id});
+  else emit('COMPLETE',{result:join(directory,'flow-result.json'),customerPackets:finalResult.customerPackets.length,screenshots:finalResult.screenshots.length});
+  return finalResult;
 }
 
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
@@ -971,7 +1033,9 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
     assert.ok(chromium,'Choose the existing Playwright module with its Chromium browser.');
     const executablePath=values['browser-executable']??process.env.SCF_BROWSER_EXECUTABLE;
     browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(executablePath?{executablePath}:{})});
-    await receiveCustomerClosingWorkbench({directory:values.directory,browser});
+    await receiveCustomerClosingWorkbench({directory:values.directory,browser,closeBrowser:true});
   }catch(error){process.stderr.write(json(problem(error)));process.exitCode=1;}
-  finally{await browser?.close().catch(()=>{});}
+  finally{
+    if(browser?.isConnected())try{await browser.close();}catch(error){process.stderr.write(json({code:'CUSTOMER_BROWSER_CLOSE_FAILED',error:problem(error)}));process.exitCode=1;}
+  }
 }

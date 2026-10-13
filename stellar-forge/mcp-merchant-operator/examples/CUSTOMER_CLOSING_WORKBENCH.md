@@ -104,3 +104,86 @@ Additional deliverables in the same operation directory:
 - flow-result.json includes the complete servicePlanner result alongside the original customer operation.
 
 A completed earlier customer-only result is continued from the same operation directory until this planner phase is recorded. The programme keeps the original operation, customer, capture, cycle and statement request identities.
+
+
+## Calendar and exact customer continuation
+
+The selected recurring-calendar source is Merchant merge `222660db233f81028126d6b9a0129b6ead84d27a`. Join its complete twelve-file overlay to the original 152-file source before running this same course. The resulting application has 157 complete source files. Retain the actual source manifest and runtime identities before invoking the programme.
+
+The caller saves the monthly schedule for the original customer and purchased pass, reviews its actual opening/closing capture boundaries, and adopts the original period-only planner cycle. It records the full preparation request before dispatch, drops one actually successful browser reply, recovers that same request and preserves a newer edited draft. Calendar HTML/CSV and the complete editable calendar travel with the original planned-cycle archive and reopen independently. The separate period-plus-cumulative cycle continues issuance, correction, withdrawal and customer handover; neither cycle is relabeled as the other.
+
+The current grant input is the complete 806-source reviewer edition at Merchant merge `e97be84709da36d7c76469cdaf567ae167fe7172`. Its customer and calendar selections both retain `222660db233f81028126d6b9a0129b6ead84d27a`. Keep the complete application, companion, budget, source index and dated concise working-source package together. These are source inputs for the same grant/customer receiving programme. The original 22B7/7108 saved grant application retains its own draft, review and browser operation; do not create a replacement saved application to inspect the new opening.
+
+Read `products/grant-reviewer/OPERATING.md` and `stellar-forge/developer-site/GRANT_ENTRY.md` from that exact reviewer edition. In its already-installed source server, open /grant.html, use Open concise working edition, inspect the nine answers and complete source downloads, compare the current source, save the same draft and operate its full-draft/offline-editor return. Record the actual origin and existing draft/source selection. Continue the customer cycle operation described in this guide through the original private directory.
+
+## Preserve issued handovers and confirmed resource closure
+
+A saved partial, issued or lifecycle customer handover is an immutable receiving result. Reopening the same programme verifies that exact archive, extracted dossier, complete file inventory, customer and cycle binding before reusing the original receipt. A later correction or withdrawal must not overwrite the earlier issued archive or change its recorded lifecycle. Changed or missing original bytes remain a custody error for the same operation; they are not replaced with a new snapshot under the earlier label.
+
+The operating caller closes every context it created, the workbench listener, statement client, MCP listener and original accounting owner before publishing a new complete flow-result.json. The original writer lease stays held through that result commit and is released before the completion event is emitted. A resource-close or commit failure returns an error with the primary and cleanup details; the complete native receiver must retain that outcome and the original directory for continuation. If any original resource is still unconfirmed, the original writer lease remains held. The returned error's retryable close() retries only those retained resource handles and then releases that same lease. A failed lease release keeps this same combined closer available; no second invocation may take over a live owner. Each failure writes a new immutable receiving-error-UUID.json so an error reported after lease release cannot overwrite another invocation's diagnostics.
+
+The exported JavaScript function borrows its supplied browser by default and closes only its own contexts. The CLI supplies `closeBrowser:true`, so its browser is also confirmed closed before result publication. An embedding owner can select that same explicit ownership when it transfers browser closure to the operation. Do not close another worker's shared browser.
+
+This source correction has been parsed and independently source-reviewed when its review receipt is attached. Actual filesystem, browser controls, rendered attachments and complete native receiving remain observations returned by the original execution. A COMPLETE native result does not itself establish that a person or model has viewed its screenshots and all outgoing attachments.
+
+## TJLabs owner rule: actual rendered-product inspection
+
+Revision: `rendered-product-inspection-20261013-all-attachments-v1`.
+Applies to all current and future peers and providers, in local and cloud sessions.
+
+Before calling a client/prospect-facing app, website, dashboard, demo, report,
+presentation or export ready, the producing peer must actually open, run or
+render the exact outgoing version, LOOK at the rendered screen or its real
+screenshots, and operate the important user controls. Check the actual
+screenshare width and narrow/mobile width where relevant, populated, empty,
+loading and error states, downloads/exports and reopening. Capturing screenshots
+without viewing them is insufficient. Fix ugly, broken, unstyled, cramped,
+clipped, overflowing or unreadable output within the authorized work before
+presenting it. Code review, DOM counts, HTTP 200, unit checks or another peer's
+approval do not replace seeing the actual product.
+
+ALL ATTACHMENTS count. Literally open, view, play and use the final delivered
+HTML, PDF, report, slides, spreadsheet, map, image, video, audio, archive and
+project as its recipient would. For archives, extract and open the actual
+contained deliverables and working project. Tests, checklists and screenshots
+merely captured are not substitutes. Use available high-quality generative media
+models and natural voice generation/TTS for videos; avoid robotic default
+voices. Watch and listen to the final export for pronunciation, pacing, timing
+and audio alignment. Keep building and fixing; inspection is not review/test
+performance theatre.
+
+For the Ecosystem product use plain industrial design: readable tables, clear
+hierarchy, consistent typography and spacing, restrained controls, useful labels
+and responsive layouts. No decorative template slop. Keep the real workflows,
+data and computation. Reviews must lead directly to repairs and must not replace
+hard implementation/integration or become endless rechecking. The existing
+focused-validation policy remains; do not run broad suites or build a separate
+verification product. Prior empty-Workspace screenshots are not acceptance of a
+completed scientific Workspace.
+
+PERSISTENT PROPAGATION REQUIRED: copy this rule into every active owner-controlled
+policy/instruction surface the provider and workers actually read: global and
+project AGENTS, CLAUDE, GEMINI and rules files, provider-specific boot instructions,
+Commons source mirrors, cloud repository instruction copies, and current build
+and receiving guides. Every delegating peer includes this complete rule in child
+assignments, including its all-attachments and final-media clarification. Return
+exact changed paths, source/version and readback. A Slack ACK alone is not
+propagation. Preserve all existing owner controls and do not alter historical
+evidence or third-party/vendor policies. No forced restarts, new watchers or
+revival of owner-stopped work.
+
+Continue the same Ecosystem Sprint Integration assembled product and its original
+scientific, run, browser and receiver owners. Continue native source, runtime and
+archive joins rather than diverting everyone to cosmetic review. Preserve the
+October 13, 2026 fleet cutoff at 10:00 a.m. Eastern (EDT), 14:00 UTC. This project
+cutoff does not expire the standing inspection rule or change other projects'
+owner-directed schedules.
+
+The machine canonical policy is maintained by Root at
+`C:/Users/lucys/.commons/rendered-product-inspection-policy.md` and `.json`.
+This portable copy carries Bryce's instruction to the actual provider hooks and
+receiving guides; it does not claim to update another host merely by being
+published. Bryce's placement instruction is: "that rule goes in every policy
+file the agents read not just a slack ping" and "and not just local sessions or
+ones from this provider".
+
