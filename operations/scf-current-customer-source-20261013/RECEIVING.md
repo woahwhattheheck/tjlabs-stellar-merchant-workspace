@@ -1,6 +1,68 @@
 # Receive the complete current SCF application
 
-## Current selected edition: ten complete products and reviewed financing
+## Current selected edition: complete product union and reviewed nine-answer application
+
+This edition delivers the complete current application, its shorter reviewed nine-answer choice, and the complete product and finance companion together. The full answer explains the actual Stellar payment execution from the approved HTTP402 request through Soroban authorization, independent settlement confirmation and original delivery recovery. The concise choice makes the customer need, paid unit, funded work and acceptance outcomes easier to assess while keeping that same execution sequence.
+
+The selected union contains **1,840 source records, 92 complete product declarations and 111 companion chapters**. All **1,488 previously published source IDs**, all **103 prior chapters**, and every prior H3 operating section remain present. **1,429 prior source rows and81 complete prior chapters remain exact**. The following current author editions advance59 existing rows and add352 sources. Bank's complete116 selected records remain exact.
+
+The funding request remains **USD38,000 /400 prospective hours /150 days /six funded packages**. The original597-byte budget is unchanged. The complete current seven-workshare financing answer, conditional cash assumptions and its previously published companion subsection are preserved. The reviewed concise answer is20,167 bytes and2,616 words, received from the independently reviewed and merged PR1893 source. Both choices retain the original full manuscript, complete finance detail and original source index in their respective source packages.
+
+## Open the complete edition
+
+Use the existing reviewer page, its complete product/finance companion, and **Prepare submission** in the original application. The exact four-output source commit is **b22181bf9b9c1d82db2d7f6a5a603454823c9c64**.
+
+| File | Complete bytes | SHA-256 |
+| --- | ---: | --- |
+| [grant.html](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b22181bf9b9c1d82db2d7f6a5a603454823c9c64/stellar-forge/developer-site/dist/grant.html) | 120006 | 7531bd602fafeacec3d3bbbc3fb9f13fc9a0da9c97accd9e3097e65f5c5e0248 |
+| [application.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b22181bf9b9c1d82db2d7f6a5a603454823c9c64/stellar-forge/developer-site/dist/grant-data/application.md) | 66962 | d426ab4fcdf77bc0802e1d65d845ba373e9e41ac1ea637e21cc0d5174c11ca55 |
+| [product-and-finance.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b22181bf9b9c1d82db2d7f6a5a603454823c9c64/stellar-forge/developer-site/dist/grant-data/product-and-finance.md) | 2269783 | 064f6c1f3e7d132cbef888c11304113f19295b4399b2f0e8a861bf7b21b92294 |
+| [source-index.json](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b22181bf9b9c1d82db2d7f6a5a603454823c9c64/stellar-forge/developer-site/dist/grant-data/source-index.json) | 2439452 | e0163d808aef955e3956302570bd2c404d811f8c661da6ad44f01462fc8413b1 |
+| budget.csv, unchanged | 597 | 4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00 |
+
+[Full four-role source package](./current-source-package.json) contains **6439636 bytes**, SHA-256 **e0ed91f4db985427227e279b1de4e5839b058593908f68a16b6b74035d35ab6d**, bundle **8fdafb43cc10f64b1e24b2e3f7e5600fd9202fd4e74226aa04fb12572dc0df38**. It retains the complete application, source index, unchanged budget and complete companion. The original makeSource/createSourceBundle/createReviewerSourcePackage functions produced this package; the original openReviewerSourcePackage reopened it and verified all four complete roles.
+
+Open **grant-submission.html?source=concise** through the existing explicit source choice to work with the reviewed concise answers. The complete full manuscript remains separately selectable. The original composeReviewerWorkingEdition produced all three following files against the same actual four-output commit; the original complete package reader reopened its output.
+
+| Concise file | Complete bytes | SHA-256 |
+| --- | ---: | --- |
+| application-reviewer.md | 20167 | 773c26c2f3b221f43fce2a730dcbae6e2a9416fe28ecea41234dbcdbdac663b6 |
+| reviewer-working-index.json | 2515217 | b2a11fb2c950f3ee4aa5fa82ed9cfdb77c641d72a1b8601a072723332139d2b9 |
+| reviewer-working-source.json | 6431242 | 64a06306b3afe2cb23f4d3752a357007880c1197e15e54d92eadd6b230281527 |
+
+Concise bundle **fb23dc429cec542c8314d9a5ba6a7cf23a0bfbd847ff0fd50f8c09ecdbc066ee**. Its complete source package keeps the full original application inside the source index and uses the same complete budget and companion. Main URLs in the existing package format are navigation; the retained file bytes, immutable source commit, SHA and bundle establish the actual selected edition.
+
+## Continue the same saved application and receiving operation
+
+Continue **SCF-CURRENT-CUSTOMER-SOURCE-05C7-20261013** in the original saved application, Page/profile and source-comparison interface. This is the single cumulative composition claimed at1791907368.164269. The original **22B7/81CF saved-v7/Page/profile course** retains its already selected1,259-source phase until its actual completed/save boundary. At that boundary, deliberately choose this following complete package with **--expected-source-sha256 e0ed91f4db985427227e279b1de4e5839b058593908f68a16b6b74035d35ab6d**, preserving its original case hash, saved version, directory, request journal and controller.
+
+Compare the complete incoming edition with the actual saved draft before receiving it. Retain all manually edited answers, issuer fields, requirements, planning selections, decisions, source histories, review rounds, original attachments and correspondence. Full and concise are explicit author choices in that same application. A newer source package does not replace an already dispatched native input or create another case. The exact issuer's invitation and field limits enter the existing form workflow when that original source arrives.
+
+The existing source-composition functions ran against complete pinned originals in the connected JavaScript runtime. Their complete source-package exports and cold reopen have succeeded. The next actual rendered/customer result belongs to the existing equipped receiving operation and must record its selected package and actual saved version.
+
+## Preserve complete author contributions when refreshing source
+
+The freshly retrieved canonical manuscript contained some older subsections than the already published author contributions. The selected source therefore composes the complete maintained DCAT, Delivery risks, Migration Acceptance, Geoapify and recovery chapters. It also receives the complete current Runtime original-input subsection while preserving its entire42,892-character parent prefix. The complete ClickHouse, Pipeline and Staff Portal author chapters join their current declarations.
+
+The same source retains the current canonical front and all other accepted author updates. Original declaration links supplement the source sections where the prose did not yet expose every selected immutable file. The original public projection retains authenticated source identities while keeping their established access boundary. Audit Exchange's complete revision-review application inventory now has the explicit current8f9de99a selection already stated in its original chapter; all three measured historical inventory editions remain intact.
+
+[source-selection.json](./source-selection.json) records the complete selected92-declaration inputs, measured author chapters, exact added original-source links, forty-member original module closure, the24 modules actually loaded by this composition/package workflow, all seven output source pins, exact source and package identities, preservation results and the entire preceding publication record.
+
+The complete selected input commit is **3e939f430aeaf031de4d0c96ea1b9b5605e815ae**. Later author declarations remain on current main for the next complete paired selection. Normal merge preserves those independently owned contributions. Reuse this complete output and its original source-selection record when carrying their following editions; do not start from an older canonical subsection that would remove already published work.
+
+## Operate and inspect the exact outgoing edition
+
+Before presenting this application, page, report, export or demonstration as ready, the producing/equipped receiver opens, runs, renders and operates its exact selected version, personally views the actual screens and screenshots, and uses its important controls. Inspect the real screenshare layout and relevant narrow/mobile widths; populated and meaningful empty, loading and error states; source choices; downloads; source comparison; edited answers; and reopening the complete saved application.
+
+Open every outgoing attachment in its intended application. Read the actual full and concise answers and finance tables, use the downloaded source packages, and reopen the delivered application with its original histories. Screenshots that were captured but not viewed, code/DOM/HTTP checks or peer approval do not substitute for that inspection. Any accompanying video or audio is watched and listened to completely. Fix concrete cramped, clipped, overflowing, unstyled or unreadable output in this same product.
+
+Keep the ordinary industrial presentation: readable tables, clear hierarchy, consistent type and spacing, restrained controls, useful labels and responsive layout, preserving the original workflows, data and computations. If this seat's runtime is unavailable, the existing equipped receiver receives the complete exact package and opening steps; the producer views its returned actual images while independent source work continues. Preserve the current human-controlled local-browser reservation.
+
+## Retained prior publication and operating history
+
+The following complete earlier instructions remain part of the same operation. Their dated source/package identities describe those earlier selections; the current selection is the complete edition above.
+
+## Prior selected edition: ten complete products and reviewed financing
 
 Continue the original cumulative publisher from **PR1820 / daea858da7b04d2abbff673a8826fdb2e7261ec5**. This following edition contains **1,488 source records, 81 selected product registrations and 103 complete companion chapters**.
 
