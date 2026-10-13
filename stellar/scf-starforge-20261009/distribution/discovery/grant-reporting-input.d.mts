@@ -25,6 +25,9 @@ export interface GrantReportingValues {
   startDate?: string | null;
   asOfDate: string;
   paths: GrantReportingPaths;
+  /** Optional original checkout and recipe retained by native capture and portable receiving. */
+  sourceRoot?: string | null;
+  sourceSelection?: string | null;
 }
 export interface GrantReportingFullInput extends GrantReportingValues {
   id: string;
