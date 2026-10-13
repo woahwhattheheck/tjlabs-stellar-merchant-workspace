@@ -626,31 +626,100 @@ except Exception as error:
     emit("datasette_complete_save_continuation",root=str(root),**outcome["complete_save_continuation"])
 fcntl.flock(lease.fileno(),fcntl.LOCK_UN);lease.close()
 after_installed_source=payload.get("after_installed_source")
-if after_installed_source is not None and outcome.get("state")=="COMPLETE" and final_delivery:
+following_completed=after_installed_source is None
+
+def run_original_following(source,source_sha):
+    global following_completed
+    following_completed=False
+    if not isinstance(source,str) or hashlib.sha256(source.encode("utf-8")).hexdigest()!=source_sha:
+        raise RuntimeError("The complete following source identity differs.")
+    folder=root/"continuation-source";folder.mkdir(mode=0o700,exist_ok=True)
+    path=folder/(source_sha+".py")
+    if path.exists():
+        if path.read_text(encoding="utf-8")!=source:raise RuntimeError("The retained following source differs.")
+    else:
+        source_fd,temporary_name=tempfile.mkstemp(prefix=path.name+".pending-",dir=folder)
+        temporary_source=P(temporary_name)
+        with os.fdopen(source_fd,"w",encoding="utf-8") as saved_source:
+            saved_source.write(source);saved_source.flush();os.fsync(saved_source.fileno())
+        if digest(temporary_source)!=source_sha:raise RuntimeError("The retained following source bytes differ.")
+        os.replace(temporary_source,path)
+        directory=os.open(folder,os.O_RDONLY)
+        try:os.fsync(directory)
+        finally:os.close(directory)
+    attempts=root/"run-history"/"following-attempts";attempts.mkdir(mode=0o700,parents=True,exist_ok=True)
+    receipt=attempts/(str(time.time_ns())+"-"+str(os.getpid())+".json")
+    record={"schema":"commons.datasette-complete-following.v1","operation":OP,"root":str(root),
+            "source_sha256":source_sha,"source":str(path),"started_at":stamp(),"state":"RUNNING"}
+    save_json(receipt,record)
+    emitted_error=None
     try:
-        if not isinstance(after_installed_source,dict):raise RuntimeError("Supply the complete pinned following source.")
-        source=after_installed_source.get("content");source_sha=after_installed_source.get("sha256")
-        if not isinstance(source,str) or hashlib.sha256(source.encode("utf-8")).hexdigest()!=source_sha:
-            raise RuntimeError("The complete following source identity differs.")
-        folder=root/"continuation-source";folder.mkdir(mode=0o700,exist_ok=True)
-        path=folder/(source_sha+".py")
-        if path.exists():
-            if path.read_text(encoding="utf-8")!=source:raise RuntimeError("The retained following source differs.")
-        else:
-            source_fd,temporary_name=tempfile.mkstemp(prefix=path.name+".pending-",dir=folder)
-            temporary_source=P(temporary_name)
-            with os.fdopen(source_fd,"w",encoding="utf-8") as saved_source:
-                saved_source.write(source);saved_source.flush();os.fsync(saved_source.fileno())
-            if digest(temporary_source)!=source_sha:raise RuntimeError("The retained following source bytes differ.")
-            os.replace(temporary_source,path)
-            directory=os.open(folder,os.O_RDONLY)
-            try:os.fsync(directory)
-            finally:os.close(directory)
-        emit("datasette_after_installed_source_started",sha256=source_sha,path=str(path))
+        emit("datasette_after_installed_source_started",sha256=source_sha,path=str(path),receipt=str(receipt))
         try:exec(compile(source,str(path),"exec"),{"delivery_payload":payload,"delivery_root":root,"__name__":"__main__"})
         except SystemExit as stopped:
             if stopped.code not in (None,0):raise
-        emit("datasette_after_installed_source_returned",sha256=source_sha)
+        report=root/"Conapi_Complete_Operating_Result.json"
+        report_value=read_json(report) or {}
+        saved_file=root/"Conapi_Complete_Delivery_Saved.json"
+        saved=read_json(saved_file) or {}
+        workbook=report_value.get("workbook",{})
+        if (report_value.get("schema")!="commons.conapi-complete-delivery.v1"
+            or report_value.get("originalOperation")!=OP
+            or report_value.get("operation")!="CONAPI-WORKFLOW-RECEIVING-DSCEB3-20261012"
+            or report_value.get("sourceRef")!="e5520a2a962ccebc461d478edf6aebb4b6c7fb20"
+            or report_value.get("state") not in ("COMPLETE","SUPPLIER_RECEIVING_COMPLETE")
+            or report_value.get("native",{}).get("returncode")!=0
+            or report_value.get("programme",{}).get("phase")!=report_value.get("state")
+            or report_value.get("error") or report_value.get("interruption")
+            or workbook.get("state")!="COMPLETE"
+            or workbook.get("operation")!="CONAPI-SUPPLIER-WORKBOOK-RECEIVING-7A2F-20261012"
+            or workbook.get("native",{}).get("returncode")!=0
+            or workbook.get("result",{}).get("schema")!="conapi.supplier-workbook-receiving.v1"
+            or workbook.get("result",{}).get("status")!="COMPLETE"):
+            raise RuntimeError("The original complete Conapi and workbook result requires continuation.")
+        if (saved.get("state")!=report_value["state"]
+            or saved.get("mode") not in ("complete_archive","complete_archive_parts")
+            or len(saved.get("saved",[]))!=2 or not all(succeeded(row) for row in saved["saved"])):
+            raise RuntimeError("The original complete Conapi archive and report have not both been saved.")
+        archive=saved.get("archive",{})
+        if not isinstance(archive.get("bytes"),int) or archive["bytes"]<=0 or not isinstance(archive.get("sha256"),str) or len(archive["sha256"])!=64:
+            raise RuntimeError("The original complete Conapi archive identity differs.")
+        if saved["mode"]=="complete_archive_parts":
+            parts=saved.get("parts",[])
+            if (not parts or [part.get("order") for part in parts]!=list(range(1,len(parts)+1))
+                or any(not isinstance(part.get("bytes"),int) or part["bytes"]<=0 or not succeeded(part.get("saved",{})) for part in parts)
+                or sum(part["bytes"] for part in parts)!=archive["bytes"]):
+                raise RuntimeError("The original complete Conapi archive parts require continuation.")
+        record.update({"state":"COMPLETE","conapi_state":report_value["state"],
+            "report":{"path":str(report),"bytes":report.stat().st_size,"sha256":digest(report)},
+            "delivery_receipt":{"path":str(saved_file),"bytes":saved_file.stat().st_size,"sha256":digest(saved_file)},
+            "delivery":saved,"workbook_operation":workbook["operation"]})
+    except BaseException as error:
+        emitted_error=error
+        record.update({"state":"PRESERVED_FOR_CONTINUATION","error":{"type":type(error).__name__,
+                       "message":str(error),"traceback":traceback.format_exc()}})
+    finally:
+        record["finished_at"]=stamp()
+        save_json(receipt,record)
+        report=root/"Datasette_Complete_Following_Result.json";save_json(report,record)
+        try:
+            saved_receipt=save_files([report],"complete-following-result-"+receipt.stem)[0]
+            if not succeeded(saved_receipt):raise RuntimeError("The complete following outcome save requires continuation.")
+            delivery={"path":str(report),"bytes":report.stat().st_size,"sha256":digest(report),"saved":public_save(saved_receipt)}
+            save_json(receipt.with_name(receipt.stem+".saved.json"),delivery)
+            emit("datasette_complete_following_result_saved",state=record["state"],**delivery)
+        except Exception as save_error:
+            save_json(receipt.with_name(receipt.stem+".save-error.json"),{"type":type(save_error).__name__,"message":str(save_error)})
+            emit("datasette_complete_following_result_save_continuation",error_type=type(save_error).__name__,message=str(save_error))
+            if emitted_error is None:emitted_error=save_error
+    if emitted_error is not None:raise emitted_error
+    following_completed=True
+    emit("datasette_after_installed_source_returned",sha256=source_sha,receipt=str(receipt),state=record["state"])
+
+if after_installed_source is not None and outcome.get("state")=="COMPLETE" and final_delivery:
+    try:
+        if not isinstance(after_installed_source,dict):raise RuntimeError("Supply the complete pinned following source.")
+        run_original_following(after_installed_source.get("content"),after_installed_source.get("sha256"))
     except BaseException as error:
         if isinstance(error,KeyboardInterrupt):raise
         emit("datasette_after_installed_source_error",error_type=type(error).__name__,message=str(error),traceback=traceback.format_exc())
@@ -677,12 +746,15 @@ if payload.get("retain_receiver"):
             if path.exists() and path.read_text()!=source:raise RuntimeError("Saved continuation source differs.")
             path.write_text(source,encoding="utf-8")
             emit("datasette_continuation_source_started",sha256=request["sha256"],path=str(path))
-            exec(compile(source,str(path),"exec"),{"delivery_payload":payload,"delivery_root":root,"__name__":"__main__"})
+            if after_installed_source is not None and request["sha256"]==after_installed_source.get("sha256"):
+                run_original_following(source,request["sha256"])
+            else:
+                exec(compile(source,str(path),"exec"),{"delivery_payload":payload,"delivery_root":root,"__name__":"__main__"})
             emit("datasette_continuation_source_returned",sha256=request["sha256"])
         except BaseException as error:
             if isinstance(error,KeyboardInterrupt):raise
             emit("datasette_continuation_source_error",error_type=type(error).__name__,message=str(error),traceback=traceback.format_exc())
     last_result=read_json(root/"Datasette_Publisher_Installed_Operating_Result.json")
-    if not last_result or last_result.get("state")!="COMPLETE":raise SystemExit(1)
+    if not last_result or last_result.get("state")!="COMPLETE" or not following_completed:raise SystemExit(1)
 else:
-    if native_error:raise SystemExit(1)
+    if native_error or not following_completed:raise SystemExit(1)
