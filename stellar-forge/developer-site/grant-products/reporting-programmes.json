@@ -60,7 +60,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/source-tables/reporting/REPORTING_PROGRAMMES.md",
-      "commit": "66c76dd49b71f68be8c7b08b16ae03d7f45ffbc1",
+      "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
       "required": false,
       "editions": [
         {
@@ -68,6 +68,12 @@
           "git_blob": "5813eeeeb86cf8f4ae9c2352b85b18b0e52262e3",
           "bytes": 26958,
           "sha256": "86881c800ff40889d10cde6f86a78934597a2e4e1b915b2f257fa7084086f667"
+        },
+        {
+          "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+          "git_blob": "0e3d98f0fdcefc2781714deef414be12b0da01fc",
+          "bytes": 28047,
+          "sha256": "d2c2ed45e0c4cf77ac9438477ab1c6f26c64eefd93138cc55cbdb927d3a5926b"
         }
       ]
     },
@@ -94,7 +100,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/contributions/reporting-programmes.json",
-      "commit": "66c76dd49b71f68be8c7b08b16ae03d7f45ffbc1",
+      "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
       "required": false,
       "editions": [
         {
@@ -102,6 +108,12 @@
           "git_blob": "19116691928be023fe31df475d0d3fc4bcf1e064",
           "bytes": 2040,
           "sha256": "f1352022d412ef1b2906ed826f8e7f284e2111c0108caf7cca4e6b0451aa1174"
+        },
+        {
+          "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+          "git_blob": "b8d16a042d888e7e0225cb9a42edb1e84317a21d",
+          "bytes": 3365,
+          "sha256": "e2cb923f61f7a296a10c3c41995216156ab7b2c7362a1dcd930eb923fd264d75"
         }
       ]
     },
@@ -111,7 +123,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/selections/reporting-programmes.json",
-      "commit": "66c76dd49b71f68be8c7b08b16ae03d7f45ffbc1",
+      "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
       "required": false,
       "editions": [
         {
@@ -119,6 +131,12 @@
           "git_blob": "a826de2ea4453cd9be35387b23deae3b5ec5b87c",
           "bytes": 5206,
           "sha256": "52165aad2a2125881d72c4b4655d49c487d124d3e9a96a3438a3a6df4b479774"
+        },
+        {
+          "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+          "git_blob": "4c40e65c0ea2f8a709597edb744e989018ab2878",
+          "bytes": 5422,
+          "sha256": "9cff0aa57a33e144bd876c65fbfdb8160c19722ebced0145299993603bc45fe9"
         }
       ]
     },
@@ -451,7 +469,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/source-tables/reporting/WORKBENCH.md",
-      "commit": "66c76dd49b71f68be8c7b08b16ae03d7f45ffbc1",
+      "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
       "required": false,
       "editions": [
         {
@@ -459,6 +477,12 @@
           "git_blob": "37597739dd54b35010c92e8e0977e2cdb1581bb1",
           "bytes": 13846,
           "sha256": "8e057353f929aeec9899a27116d650e30d5dd4dd141c40aaba36b26cab0c20b9"
+        },
+        {
+          "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+          "git_blob": "8e8f6235ad15d138023a8dc4033875715f8a5f7c",
+          "bytes": 14935,
+          "sha256": "32d5026f2307b5102414c78111952c77d3158db3dba6b7e87330bd2add0a39db"
         }
       ]
     },
@@ -493,6 +517,193 @@
           "git_blob": "a1ca4b0d60feca43cbb49a81f9a2c28930ed4b2e",
           "bytes": 9005,
           "sha256": "610c48baed772ea062815a587199221bed17d0fb59cc9933076e4efc069e7b98"
+        }
+      ]
+    },
+    {
+      "id": "reporting-programmes-agent-tool-catalogue",
+      "label": "Reporting Programmes — agent tool catalogue",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/catalog/reporting-programmes.mjs",
+      "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+      "required": false,
+      "editions": [
+        {
+          "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+          "git_blob": "626be510abc46528733ec34cf7cf2e972dc0dd78",
+          "bytes": 10265,
+          "sha256": "45e84ca2b0c73475d5eacce03ec15630b77843844c06b3fdf00b88a93f58ef96"
+        }
+      ]
+    },
+    {
+      "id": "reporting-programmes-agent-operations",
+      "label": "Reporting Programmes — agent domain operations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/source-tables/reporting/agent-operations.mjs",
+      "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+      "required": false,
+      "editions": [
+        {
+          "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+          "git_blob": "ab3803e72e4243930c10369790209da39544efbe",
+          "bytes": 5000,
+          "sha256": "0a665b6ddec6354116c67e2fbd49d514cac0b8949076487d76bf5ad40ed529a5"
+        }
+      ]
+    },
+    {
+      "id": "reporting-programmes-agent-store",
+      "label": "Reporting Programmes — immutable agent project store",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/source-tables/reporting/agent-store.mjs",
+      "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+      "required": false,
+      "editions": [
+        {
+          "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+          "git_blob": "97df5f83866d8ee1886c11362c27af8d1c74b477",
+          "bytes": 6924,
+          "sha256": "3571ceaa524e07247f8cc8db906d3715b17175d78a7d15c7a46294b9c5c23f28"
+        }
+      ]
+    },
+    {
+      "id": "reporting-programmes-agent-workspace",
+      "label": "Reporting Programmes — agent workspace and retained outputs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/source-tables/reporting/agent-workspace.mjs",
+      "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+      "required": false,
+      "editions": [
+        {
+          "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+          "git_blob": "2672da94e65bb580c133f9e34c9849dfe47cde58",
+          "bytes": 19294,
+          "sha256": "8bdf079fd0492986f28f554c149310130d45513e05bcd0da14b2a1a304a56b28"
+        }
+      ]
+    },
+    {
+      "id": "reporting-programmes-agent-config",
+      "label": "Reporting Programmes — source-owned agent setup",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/source-tables/reporting/agent-config.mjs",
+      "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+      "required": false,
+      "editions": [
+        {
+          "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+          "git_blob": "06bd3893ee92ba8f4c8d5e73213ee5f62f022afa",
+          "bytes": 5254,
+          "sha256": "7554d1b1383f269ea24a9eb2e89f13265ff922f7cd85cd6264b3bdf0f8983b6d"
+        }
+      ]
+    },
+    {
+      "id": "reporting-programmes-agent-provider",
+      "label": "Reporting Programmes — agent provider",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/providers/reporting-programmes.mjs",
+      "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+      "required": false,
+      "editions": [
+        {
+          "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+          "git_blob": "e2dc593165b1190f4a2635da72dfcc6740ddb82d",
+          "bytes": 2726,
+          "sha256": "dd46ccc2e72af2184718f7bc5ee57d218657eb4b3a9f7427e9f3dda8e1b687f8"
+        }
+      ]
+    },
+    {
+      "id": "reporting-programmes-agent-client-core",
+      "label": "Reporting Programmes — portable agent client core",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/source-tables/reporting/agent-client-core.mjs",
+      "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+      "required": false,
+      "editions": [
+        {
+          "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+          "git_blob": "db78e4f40fad9f34aba93aa6d815f3a02fbaa033",
+          "bytes": 15449,
+          "sha256": "bd73b19040c34072ce1fc43752c2da7dc2ade45596444f1a18538e85b3ddfe6b"
+        }
+      ]
+    },
+    {
+      "id": "reporting-programmes-agent-client",
+      "label": "Reporting Programmes — installed agent client",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/source-tables/reporting/agent-client.mjs",
+      "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+      "required": false,
+      "editions": [
+        {
+          "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+          "git_blob": "72a9a10716a91e0b8aa8e57da0bfc49d17cd2637",
+          "bytes": 20860,
+          "sha256": "bda3e2f8458d66e706c4ddcdf34fc8c5314582db7cdd6395968392b29d76b54c"
+        }
+      ]
+    },
+    {
+      "id": "reporting-programmes-agent-client-types",
+      "label": "Reporting Programmes — typed agent client",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/source-tables/reporting/agent-client.d.mts",
+      "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+      "required": false,
+      "editions": [
+        {
+          "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+          "git_blob": "9c36c9313d524659bea96a1693e3aecf710d6903",
+          "bytes": 5697,
+          "sha256": "be671f04c31afb06b24e9b96a3f96d87b46ca21f89a11646d95ee1b2a312ad13"
+        }
+      ]
+    },
+    {
+      "id": "reporting-programmes-agent-guide",
+      "label": "Reporting Programmes — agent and recipient guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/source-tables/reporting/AGENT.md",
+      "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+      "required": false,
+      "editions": [
+        {
+          "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+          "git_blob": "3b9233731299c8dbdd2ca6db9e6e36ce4d20858b",
+          "bytes": 17480,
+          "sha256": "95ca8f449b30689bcf19edaeb0a27d6d2025cd97366f428b56536bb97fc9e56a"
+        }
+      ]
+    },
+    {
+      "id": "reporting-programmes-agent-course",
+      "label": "Reporting Programmes — complete agent recipient course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/source-tables/reporting/examples/agent-course.mjs",
+      "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+      "required": false,
+      "editions": [
+        {
+          "commit": "a048bedf00f6dd351846f402ddccb6b043b68b18",
+          "git_blob": "ed411d45acb9e515052afcc73041cec30c865c71",
+          "bytes": 13098,
+          "sha256": "f5ba388f1e5494acf36ccb4344a64025ee79fc8bedf79287df33ad4132e6bc83"
         }
       ]
     }
