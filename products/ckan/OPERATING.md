@@ -164,6 +164,21 @@ reviews and complete release history. Follow the
 for the complete receiving, correction, edition comparison, deployment and
 rollback journey and exact **starforge dcat** commands.
 
+## Acquire and review recurring DCAT publications
+
+In **Catalogue migration**, configure a **Recurring catalogue source** using the
+publisher's actual document URL. The same saved project keeps source versions,
+conditional request history, exact acquired bytes and the latest document
+identity. Select a preceding accepted release, explicitly choose any identity
+decisions to carry forward, and prepare the complete following-edition review.
+The original candidate inspection, correction, cutover and rollback controls
+remain the receiving path.
+
+Use the full [Recurring catalogue operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/RECURRING_CATALOGS.md)
+for browser operation, `dcat acquire-due` through the existing host scheduler,
+private environment selection, complete HTTP files and the reopened customer
+workspace. Mixed CKAN/DCAT projects retain these inventories in the same archive.
+
 ## Review fields and publish
 
 In Editions, inspect the full captured fields and retained provider definitions.
