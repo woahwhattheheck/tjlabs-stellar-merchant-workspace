@@ -180,7 +180,7 @@ The second operator:
 5. Reopens that new workspace and report; preserves the earlier accepted outputs.
 6. If native receiving is commissioned, runs the delivered CLI on the agreed runtime with those original files, opens its complete outputs and records the actual source/runtime/destination identity.
 
-For multiple ports, keep every port/request/edition explicit. A collection of per-port results must preserve the same agreed cross-port selection and disclose missing members. This workbench does not silently combine different requests into one total.
+For multiple ports, use **PROJECT_GUIDE.md** and **maritime-project-cli.mjs** to build one complete received project. Each configured entry retains its port/request/edition, local selection, comparison choices and original source files. Read the project overview, open each detailed report and its complete downloads, and use the supplied reopen instructions to rebuild in a second directory. Keep every selected port and any missing member explicit; a missing source must be resolved before the complete configured project is published. Where the scope intentionally selects different date windows, the overview discloses each entry's window. Capacity, flow populations and container traffic retain distinct numeric meanings. The combined CSV annotates every source cell; it creates no cross-request numeric total.
 
 A new directory, restored workspace or second analyst is not a second customer or purchase. Record actual receiving observations on the original Installation/workshare case.
 

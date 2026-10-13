@@ -9,7 +9,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/discovery/OPERATING_PLANS.md",
-      "commit": "710507fb46d1a401026254bad259a6f4deb88f88",
+      "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
       "required": false,
       "editions": [
         {
@@ -23,6 +23,12 @@
           "git_blob": "6fa931933884b15a4ef629c53ac008ad002b627a",
           "bytes": 17146,
           "sha256": "307b9997c846cb79ac6f921f56154c77a3c3ed12c67368e0ee3fdf78ebbb5e3a"
+        },
+        {
+          "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
+          "bytes": 28413,
+          "sha256": "d7e0407a8128fa75754b324004a28626e0ce04f2a16e8b55ab0899df109f2269",
+          "git_blob": "ade72f7cf0def173abab99d2545d0202088a7915"
         }
       ]
     },
@@ -32,7 +38,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs",
-      "commit": "710507fb46d1a401026254bad259a6f4deb88f88",
+      "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
       "required": false,
       "editions": [
         {
@@ -46,6 +52,12 @@
           "git_blob": "be138d4a1670058290e7410905c52b1955a40da4",
           "bytes": 28464,
           "sha256": "72b7057b643bbc65b54244916a7d8d6d7421844d3e4ae9d6e556cc127ab34a64"
+        },
+        {
+          "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
+          "bytes": 33149,
+          "sha256": "e70525db82f90255559259c81cc05ef998e37a6e38b77994fe01377d1a0de6eb",
+          "git_blob": "1b98f187cec9ead2292a0ec395bf03cca07b9e44"
         }
       ]
     },
@@ -194,7 +206,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan-cli.mjs",
-      "commit": "255f85043ba5d01eff07436b11db5e82dab8af9b",
+      "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
       "required": false,
       "editions": [
         {
@@ -208,6 +220,12 @@
           "git_blob": "9a006498311553f02402fb2ccdc03fd3880109ef",
           "bytes": 12681,
           "sha256": "735c3b828445f41e730d2c2425467e11c2873a0efb38932d89e7fc4ee5cf13f6"
+        },
+        {
+          "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
+          "bytes": 14419,
+          "sha256": "21da062e7af69c4b1964ac73bc45fd3a7b40319074c5d39dc39d2bfb354fb8a7",
+          "git_blob": "4f54704fc7f3de50989236b8386237d23754d61e"
         }
       ]
     },
@@ -217,7 +235,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/discovery/public/operating-plan.mjs",
-      "commit": "710507fb46d1a401026254bad259a6f4deb88f88",
+      "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
       "required": false,
       "editions": [
         {
@@ -225,6 +243,12 @@
           "git_blob": "825ecf15c3f88bf968cc7fa373b63a9e7740ff67",
           "bytes": 41697,
           "sha256": "7dde3bef624d409b206fbd4cbbfd944b266617b73ceeb40bb176e141009c896b"
+        },
+        {
+          "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
+          "bytes": 58134,
+          "sha256": "dacc3ce467eed12ee6a48d0654a07bf2b041de3d97006e9d361c72e13fa36df7",
+          "git_blob": "d84f4a54bd41d6cd20cc6fd5c6c3d9c2889379b3"
         }
       ]
     },
@@ -234,7 +258,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan.d.mts",
-      "commit": "710507fb46d1a401026254bad259a6f4deb88f88",
+      "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
       "required": false,
       "editions": [
         {
@@ -242,6 +266,12 @@
           "git_blob": "a05653253a9e11ebc8a9a7fce039c6c962ad6bba",
           "bytes": 6285,
           "sha256": "4c283cab9722bd8e01dad4566b0aaf50520a99c7955112a303e00ab52e3c66ff"
+        },
+        {
+          "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
+          "bytes": 7632,
+          "sha256": "12f992a54340179e3841ea38dfc95b8fbae1f55c7a14e68e8d4704b153d1d2b0",
+          "git_blob": "8779610b2bf8c840d931f0da26192c5522dfea55"
         }
       ]
     },
@@ -446,6 +476,40 @@
           "git_blob": "d2e7ba2f9129ed348b7956cb8dffcbd54fe503ab",
           "bytes": 25608,
           "sha256": "42041e78d05540b25743f002d2663bdeb85f74b4acc2190e035d89eed47a5904"
+        }
+      ]
+    },
+    {
+      "id": "customer-operating-plan-page",
+      "label": "Complete saved procedure and next-cycle preparation controls",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/public/operating-plan.html",
+      "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
+      "required": false,
+      "editions": [
+        {
+          "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
+          "bytes": 22243,
+          "sha256": "b82ebe47289193d29d11cbd1acba21bf8c3ecc4363b5dd51b26add0de4a3d3bc",
+          "git_blob": "dc1d0b85d8d568e790c0a597918d1435555add91"
+        }
+      ]
+    },
+    {
+      "id": "customer-operating-plan-style",
+      "label": "Readable complete customer procedure and next-cycle preview layout",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/public/operating-plan.css",
+      "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
+      "required": false,
+      "editions": [
+        {
+          "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
+          "bytes": 5946,
+          "sha256": "7dc13f94b0a96100c484e51c9ec1d82f8e9bd9bbb08da5a2e6cdda9c62c5ab1e",
+          "git_blob": "62fc46f6156ef0302e434fc38fb0667a9d45fbf7"
         }
       ]
     }
