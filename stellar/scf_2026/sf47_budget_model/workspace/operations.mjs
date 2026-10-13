@@ -113,7 +113,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
   const roleCommands={
     finance:new Set(['source.add','contributor.save','work.save','work.submit','invoice.save',
       'invoice.review','invoice.dispute','invoice.reopen','invoice.void','cash.record','cash.void',
-      'statement.receive','forecast.save','portfolio.save','work-intake.upload','work-intake.save',
+      'statement.receive','statement-setup.save','forecast.save','portfolio.save','work-intake.upload','work-intake.save',
       'work-intake.apply','engagement.prepare','engagement.receiving',
       'expense.receive','expense.save','expense.review','expense.reopen','expense.void']),
     reviewer:new Set(['review','work.accept','work.reopen','implementation.prepare','cohort.prepare','completion.prepare'])

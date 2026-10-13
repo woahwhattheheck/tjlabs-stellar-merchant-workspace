@@ -45,7 +45,7 @@ export type GrantCaseAction =
   | 'work-intake.upload' | 'work-intake.save' | 'work-intake.apply' | 'task-outcomes.save' | 'funding.save'
   | 'contributor.save' | 'work.save' | 'work.submit' | 'work.accept' | 'work.reopen' | 'work.void'
   | 'invoice.save' | 'invoice.review' | 'invoice.dispute' | 'invoice.reopen' | 'invoice.void'
-  | 'cash.record' | 'cash.void' | 'settlement.receive' | 'settlement.correct' | 'statement.receive' | 'award.save' | 'deployment.save'
+  | 'cash.record' | 'cash.void' | 'settlement.receive' | 'settlement.correct' | 'statement.receive' | 'statement-setup.save' | 'award.save' | 'deployment.save'
   | 'purchase.record' | 'purchase.observe' | 'purchase.void' | 'outcome.save'
   | 'engagement.prepare' | 'engagement.receiving' | 'risk-register.save'
   | 'review' | 'close' | 'reopen' | 'cohort.prepare' | 'installation.save' | 'installation.return' | 'installation.return-stage' | 'implementation.prepare'
@@ -168,6 +168,7 @@ export interface GrantStatementSource {
   sourceUrl?: string;
 }
 export interface GrantStatementCommonInput {
+  statementSetup?: GrantStatementSetupRef;
   source: GrantStatementSource;
   /** Stable nonsecret source account identity; case-sensitive and independent of the filename. */
   accountId: string;
@@ -312,6 +313,7 @@ export interface GrantStatementRow {
   record?: GrantObject;
 }
 export interface GrantStatementPreview {
+  statementSetup?: GrantStatementSetupRef;
   schema: 'stellar-forge.sf47-statements.v1';
   caseId: string;
   expectedVersion: number;
@@ -352,6 +354,38 @@ export interface GrantStatementReceipt {
   unchanged: boolean;
   statementSha256: string;
   previewSha256: string;
+}
+
+export interface GrantStatementSetupRef {
+  id: string; name: string; revision: number; sourceId: string; sourceSha256: string; editionSha256: string;
+}
+export interface GrantStatementSetupAccount {
+  accountId: string; accountLabel: string; currency: string; defaultCategory: GrantStatementCategory;
+}
+export type GrantStatementSetupSettings = GrantStatementSetupAccount & (
+  | {sourceFormat: 'CSV'; format: GrantCsvStatementInput['format']; columns: GrantCsvStatementInput['columns']}
+  | {sourceFormat: 'OFX'}
+  | {sourceFormat: 'MT940'; statementOptions: GrantMt940StatementOptions}
+);
+export interface GrantStatementSetupBasis {
+  sourceSha256: string; filename: string; headers: string[];
+  bank: null | {
+    sourceFormat: 'OFX' | 'MT940'; accountReference: string; bankId: string | null;
+    kind: 'BANK' | 'CREDITCARD'; nativeAccountSha256: string | null; dateBasis: string;
+  };
+}
+export interface GrantStatementSetupSummary extends GrantStatementSetupRef {
+  status: 'ACTIVE' | 'ARCHIVED'; caseVersion: number; savedAt: string; actor: string; note: string;
+  settings: GrantStatementSetupSettings; basis: GrantStatementSetupBasis;
+}
+export type GrantStatementSetupWrite = GrantOperationRequest & {note: string; name: string;} & (
+  | {id?: never; expectedRevision: 0; status?: 'ACTIVE'; inputs: GrantStatementInput}
+  | {id: string; expectedRevision: number; status?: 'ACTIVE'; inputs: GrantStatementInput}
+  | {id: string; expectedRevision: number; status: 'ARCHIVED'; inputs?: never}
+);
+export interface GrantStatementSetupReceipt extends GrantObject {
+  id: string; version: number; action: 'statement-setup.save'; kind: 'source'; recordId: string;
+  statementSetup: GrantStatementSetupSummary;
 }
 
 export type GrantWorkIntakeKind = 'WORK' | 'INVOICES';
@@ -2161,6 +2195,7 @@ export interface GrantInstallationReturnStageReceipt extends Omit<GrantInstallat
 export type GrantInstallationReturnSave<T> = GrantOperationRequest & {note:string; inputs:T; expectedPreviewSha256:string};
 
 export interface GrantCaseView extends GrantObject {
+  statementSetups: GrantStatementSetupSummary[];
   workIntakes: GrantWorkIntakeSummary[];
   workIntakeRefs?: {id: string; revision: number; sha256: string; state: 'DRAFT' | 'APPLIED'}[];
   program: { id: string; name: string; version: number; state: string; [key: string]: unknown };
@@ -3936,6 +3971,7 @@ export class GrantWorkspaceClient {
   statementInspect(caseId: string, expectedVersion: number, inputs: GrantStatementInspectionInput): Promise<GrantJsonResponse<GrantStatementInspection>>;
   statementPreview(caseId: string, expectedVersion: number, inputs: GrantStatementInput): Promise<GrantJsonResponse<GrantStatementPreview>>;
   statementReceive(caseId: string, body: GrantOperationRequest & { inputs: GrantStatementInput; expectedPreviewSha256: string }): Promise<GrantJsonResponse<GrantStatementReceipt>>;
+  statementSetupSave(caseId: string, body: GrantStatementSetupWrite): Promise<GrantJsonResponse<GrantStatementSetupReceipt>>;
   operatingWorkflows(caseId: string, expectedVersion: number): Promise<GrantJsonResponse<GrantOperatingWorkflows>>;
   accountReconciliationPreview(caseId: string, body: GrantAccountReconciliationInput): Promise<GrantJsonResponse<GrantAccountReconciliationPreview>>;
   accountReconciliationApply(caseId: string, body: GrantAccountReconciliationApplyInput): Promise<GrantJsonResponse<GrantAccountReconciliationReceipt>>;
