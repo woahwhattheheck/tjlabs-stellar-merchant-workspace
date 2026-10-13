@@ -1,0 +1,44 @@
+{
+  "schema": "tjl.catalogue.native-receiving.v1",
+  "operation_id": "SELECT_ORIGINAL_NATIVE_RECEIVING_ID",
+  "source": {
+    "project_root": "/ABS/ORIGINAL_SYLIUS_PROJECT",
+    "php": "/ABS/ORIGINAL_PHP_WRAPPER",
+    "console": "bin/console",
+    "environment": "prod",
+    "actor": "EXISTING_NATIVE_ADMIN_USERNAME"
+  },
+  "project": {
+    "project_id": "SELECT_ORIGINAL_CATALOGUE_PROJECT_ID",
+    "label": "Selected catalogue receiving",
+    "identifiers": [
+      "SELECT_ACTUAL_ORIGINAL_IDENTIFIER"
+    ],
+    "locales": [
+      "SELECT_ACTUAL_LOCALE"
+    ],
+    "channels": [
+      "SELECT_ACTUAL_CHANNEL"
+    ]
+  },
+  "editions": [
+    {
+      "edition_id": "original-edition",
+      "capture_id": "SELECT_ORIGINAL_CAPTURE_ID"
+    },
+    {
+      "edition_id": "following-edition",
+      "capture_id": "SELECT_FOLLOWING_CAPTURE_ID"
+    }
+  ],
+  "installations": {
+    "source": {
+      "request": "/PRIVATE/source-installation.json",
+      "work_directory": "/PRIVATE/source-installation-work"
+    },
+    "target": {
+      "request": "/PRIVATE/target-installation.json",
+      "work_directory": "/PRIVATE/target-installation-work"
+    }
+  }
+}

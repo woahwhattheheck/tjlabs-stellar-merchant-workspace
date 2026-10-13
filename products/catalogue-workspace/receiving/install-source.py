@@ -168,7 +168,7 @@ class Installation:
     def save(self):
         atomic(self.work / "state.json", raw(self.state))
 
-    def command(self, label, argv, environment=None, retry_failed=False):
+    def command(self, label, argv, environment=None, retry_failed=False, accepted_returncodes=(0,)):
         require(re.fullmatch(r"[a-z0-9._-]+", label), "Invalid retained command label.")
         directory = self.work / "commands" / label
         directory.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -207,7 +207,7 @@ class Installation:
                     "An original native stream differs.")
         self.state["commands"][label] = {"result": str(result_path), "sha256": digest(raw(result)), "returncode": result["returncode"]}
         self.save()
-        require(type(result.get("returncode")) is int and result["returncode"] == 0,
+        require(type(result.get("returncode")) is int and result["returncode"] in accepted_returncodes,
                 "Original native command failed; inspect its complete streams: " + label)
         return result
 

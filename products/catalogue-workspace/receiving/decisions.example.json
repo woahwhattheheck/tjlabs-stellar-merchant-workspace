@@ -1,0 +1,32 @@
+{
+  "schema": "tjl.catalogue.receiving-decisions.v1",
+  "operation_id": "SAME_ORIGINAL_NATIVE_RECEIVING_ID",
+  "installations": {
+    "source": {
+      "review_sha256": "EXACT_RETURNED_SOURCE_REVIEW_SHA256"
+    },
+    "target": {
+      "review_sha256": "EXACT_RETURNED_TARGET_REVIEW_SHA256"
+    }
+  },
+  "editions": {
+    "original-edition": {
+      "items": {
+        "SELECT_ACTUAL_ORIGINAL_IDENTIFIER": {
+          "review_id": "ACTUAL_RETURNED_REVIEW_ID",
+          "review_sha256": "ACTUAL_RETURNED_REVIEW_SHA256",
+          "choice": "import",
+          "approve_native_mapping": true,
+          "rules": []
+        }
+      }
+    },
+    "following-edition": {
+      "begin": {
+        "capture_id": "SAME_SELECTED_FOLLOWING_CAPTURE_ID",
+        "receive_current_source": true
+      },
+      "items": {}
+    }
+  }
+}
