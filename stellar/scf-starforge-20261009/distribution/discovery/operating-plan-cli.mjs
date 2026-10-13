@@ -1,12 +1,13 @@
 // MIT. Operating-plan files use the same model as the Command finder browser.
 import { randomUUID } from 'node:crypto';
-import { readFile, stat, realpath } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { readFile, stat, realpath, open, unlink } from 'node:fs/promises';
+import { resolve, basename } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { loadCommandCatalog } from './load.mjs';
 import { saveExport, saveTextExport } from './write-json.mjs';
 import { inspectOperatingPlan, createOperatingPlan, createOperatingStep, snapshotRegistration,
-  operatingPlanDraft, saveOperatingPlanRevision, addOperatingStep, compareOperatingPlan,
+  operatingPlanDraft, operatingPlanRevision, saveOperatingPlanRevision,
+  createOperatingFile, addOperatingFile, removeOperatingFile, operatingFileBytes, operatingFileSummary, OPERATING_FILE_MAX_BYTES, addOperatingStep, compareOperatingPlan,
   summarizeOperatingPlan, receiveOperatingPlan, forkOperatingPlan,
   renderOperatingPlanMarkdown, renderOperatingPlanHTML } from './operating-plan.mjs';
 
@@ -22,14 +23,18 @@ export const OPERATING_PLAN_HELP = [
   'starforge discover plan compare --file PLAN.json [--revision N] [--out NEW.json]',
   'starforge discover plan receive --file INCOMING.json [--existing CURRENT.json] --out NEW.json',
   'starforge discover plan copy --file PLAN.json [--title TITLE] [--id ID] --out NEW.json',
+  'starforge discover plan attach --file PLAN.json --step-id STEP --attachment OUTPUT [--attachment OUTPUT ...] [--note TEXT] --out NEW.json',
+  'starforge discover plan files --file PLAN.json [--revision N] [--step-id STEP] [--out NEW.json]',
+  'starforge discover plan extract --file PLAN.json --step-id STEP --attachment-id ID [--revision N] --out NEW',
+  'starforge discover plan remove-file --file PLAN.json --step-id STEP --attachment-id ID --out NEW.json',
   '',
   'Create fields: --id, --title, --customer, --purpose, --period, --owner, --receiving, --notes.',
   'Catalog reads: --source-root DIRECTORY, --selection PRODUCT.',
   'A --step value is an exact Command finder registration ID. Repeated selections are separate task steps.',
-  'Create, edit, add, receive and copy require a new output filename. Existing files are preserved.',
+  'Create, edit, add, receive, copy, attach, extract and remove-file require a new output filename. Existing files are preserved.',
   'The browser is available at /operating-plan.html when starforge discover serve is running.',
 ].join('\n');
-const ACTIONS = ['catalog', 'create', 'show', 'draft', 'edit', 'add', 'compare', 'receive', 'copy'];
+const ACTIONS = ['catalog', 'create', 'show', 'draft', 'edit', 'add', 'compare', 'receive', 'copy', 'attach', 'files', 'extract', 'remove-file'];
 const COMMON = ['file', 'out'];
 const FLAGS = {
   catalog: ['source-root', 'selection', 'out'],
@@ -41,13 +46,17 @@ const FLAGS = {
   compare: [...COMMON, 'revision', 'source-root', 'selection'],
   receive: [...COMMON, 'existing'],
   copy: [...COMMON, 'title', 'id'],
+  attach: [...COMMON, 'step-id', 'attachment', 'note', 'media-type'],
+  files: [...COMMON, 'step-id', 'revision'],
+  extract: [...COMMON, 'step-id', 'attachment-id', 'revision'],
+  'remove-file': [...COMMON, 'step-id', 'attachment-id'],
 };
 export function parseOperatingPlanArguments(args) {
   const words = [...args];
   if (!words.length || words.includes('--help') || words.includes('-h')) return { action: 'help', options: {} };
   const action = words.shift();
   if (!ACTIONS.includes(action)) throw new TypeError('Unknown operating-plan action: ' + action);
-  const options = {}, steps = [];
+  const options = {}, steps = [], attachments = [];
   while (words.length) {
     const flag = words.shift();
     if (!flag.startsWith('--') || !FLAGS[action].includes(flag.slice(2)))
@@ -56,18 +65,25 @@ export function parseOperatingPlanArguments(args) {
     if (!words.length || words[0].startsWith('--')) throw new TypeError('A value is required for ' + flag);
     const value = words.shift();
     if (key === 'step') steps.push(value);
+    else if (key === 'attachment') attachments.push(value);
     else {
       if (Object.hasOwn(options, key)) throw new TypeError('Repeated option: ' + flag);
       options[key] = value;
     }
   }
   if (steps.length) options.steps = steps;
+  if (attachments.length) options.attachments = attachments;
   if (!['create', 'catalog'].includes(action) && !options.file) throw new TypeError('--file is required.');
-  if (['create', 'edit', 'add', 'receive', 'copy'].includes(action) && !options.out)
+  if (['create', 'edit', 'add', 'receive', 'copy', 'attach', 'extract', 'remove-file'].includes(action) && !options.out)
     throw new TypeError('--out must name a new output file.');
   if (action === 'create' && !options.title) throw new TypeError('--title is required.');
   if (action === 'edit' && !options.draft) throw new TypeError('--draft is required.');
   if (action === 'add' && !steps.length) throw new TypeError('Select at least one --step registration.');
+  if (['attach', 'extract', 'remove-file'].includes(action) && !options['step-id'])
+    throw new TypeError('--step-id must name an existing operating step.');
+  if (['extract', 'remove-file'].includes(action) && !options['attachment-id'])
+    throw new TypeError('--attachment-id must name an existing step file.');
+  if (action === 'attach' && !attachments.length) throw new TypeError('Select at least one --attachment file.');
   if (options.revision !== undefined) {
     options.revision = Number(options.revision);
     if (!Number.isSafeInteger(options.revision) || options.revision < 1)
@@ -120,6 +136,42 @@ export async function mainOperatingPlan(args = process.argv.slice(2), { log = co
     const existing = options.existing ? inspectOperatingPlan(await readJSON(options.existing)) : null;
     const received = receiveOperatingPlan(original, existing); value = received.plan;
   } else if (action === 'copy') value = forkOperatingPlan(original, { id: options.id ?? randomUUID(), title: options.title });
+  if (action === 'attach') {
+    let draft = operatingPlanDraft(original);
+    for (const filename of options.attachments) {
+      const target = resolve(filename), info = await stat(target);
+      if (!info.isFile() || info.size > OPERATING_FILE_MAX_BYTES)
+        throw new TypeError('Choose a complete regular output file within 24 MiB.');
+      const content = await readFile(target);
+      draft = addOperatingFile(draft, options['step-id'], createOperatingFile({
+        id: randomUUID(), name: basename(filename), bytes: content,
+        mediaType: options['media-type'], note: options.note,
+      }));
+    }
+    value = saveOperatingPlanRevision(original, draft);
+  } else if (action === 'remove-file') {
+    value = saveOperatingPlanRevision(original, removeOperatingFile(operatingPlanDraft(original),
+      options['step-id'], options['attachment-id']));
+  } else if (action === 'files' || action === 'extract') {
+    const selected = operatingPlanRevision(original, options.revision);
+    const selectedSteps = options['step-id'] ? selected.steps.filter(step => step.id === options['step-id']) : selected.steps;
+    if (options['step-id'] && !selectedSteps.length) throw new TypeError('The selected operating step is unavailable.');
+    value = { planId: original.id, revision: selected.revision,
+      steps: selectedSteps.map(step => ({ id: step.id, title: step.title, files: (step.files ?? []).map(operatingFileSummary) })) };
+    if (action === 'extract') {
+      const file = selectedSteps[0].files?.find(item => item.id === options['attachment-id']);
+      if (!file) throw new TypeError('The selected output file is unavailable in this saved revision.');
+      const target = resolve(options.out), content = operatingFileBytes(file);
+      const output = await open(target, 'wx', 0o600);
+      try { await output.writeFile(content); await output.close(); }
+      catch (error) { await output.close().catch(() => {}); await unlink(target).catch(() => {}); throw error; }
+      const result = { file: target, action, planId: original.id, revision: selected.revision, attachment: operatingFileSummary(file) };
+      log(JSON.stringify(result)); return result;
+    }
+  }
+  if (value?.schema === 'stellar-forge.operating-plan.v1' &&
+    Buffer.byteLength(JSON.stringify(value, null, 2) + '\n', 'utf8') > 32 * 1024 * 1024)
+    throw new TypeError('The complete saved plan and file history exceed the 32 MiB receiving limit. Retain the current plan and choose a smaller complete output.');
   if (options.out) {
     if (plainText !== null) await saveTextExport(options.out, plainText);
     else await saveExport(options.out, value);
