@@ -224,6 +224,166 @@
           "git_blob": "219870537039e3763f1a6446eda73bc6af57c3d1"
         }
       ]
+    },
+    {
+      "id": "municipal-installation-native-source",
+      "label": "Complete original municipal archive and historic project reader",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/municipal-installation-native.py",
+      "required": false,
+      "editions": [
+        {
+          "commit": "83185d4ac5c63f06a59779350347dc880b2a9a4b",
+          "bytes": 8674,
+          "sha256": "527c6277386718925293261ff0ebd223a3639d7609c816e2052ce472934cdab9",
+          "git_blob": "23433dda31f082b0a6ba0cd1264755af328a6632"
+        }
+      ]
+    },
+    {
+      "id": "municipal-installation-source-composition",
+      "label": "Original municipal project selection, Workshare composition and readable source report",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/municipal-installation-core.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "83185d4ac5c63f06a59779350347dc880b2a9a4b",
+          "bytes": 11133,
+          "sha256": "0c4594df9253e8488ae85b875de04484eac786e4c8176aa6c32118cca5b0c81b",
+          "git_blob": "d61a470e07b97ec63afa9efd5f426023926371af"
+        }
+      ]
+    },
+    {
+      "id": "municipal-installation-custody",
+      "label": "Full source custody, immutable publication and original native invocation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/municipal-installation-io.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "83185d4ac5c63f06a59779350347dc880b2a9a4b",
+          "bytes": 4585,
+          "sha256": "f60e758b7ee0d03af1dcb970d427d78872a1c782bb0d41195210de747dbde2b2",
+          "git_blob": "d99d0ef614beeabd594be370e4660d032a43fa12"
+        }
+      ]
+    },
+    {
+      "id": "municipal-installation-prepare",
+      "label": "Installed complete source inspection, scope template and Installation preparation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/municipal-installation.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "83185d4ac5c63f06a59779350347dc880b2a9a4b",
+          "bytes": 5908,
+          "sha256": "5256845f713b3b5681c6124c96cffcd66a31813d291ac4d041977de96f80b127",
+          "git_blob": "a993492926ab7574a28d30a1d34d8f36545bb960"
+        }
+      ]
+    },
+    {
+      "id": "municipal-installation-receiving",
+      "label": "Complete independent municipal and Operations receiving continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/municipal-installation-receiving.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "83185d4ac5c63f06a59779350347dc880b2a9a4b",
+          "bytes": 11396,
+          "sha256": "f2420b1f116c81d50b72b9c054ce59f809358738d36bd5f964f356070f3899d5",
+          "git_blob": "0be5120348743593071c5001d5004636bfcc4139"
+        }
+      ]
+    },
+    {
+      "id": "municipal-installation-profile",
+      "label": "Whole municipal customer task and original Installation operating phases",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/municipal-assets.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "83185d4ac5c63f06a59779350347dc880b2a9a4b",
+          "bytes": 12495,
+          "sha256": "6885b88efa854d3a238e85e57bf1052be91d4c27da03ec56d9c1cddbea017300",
+          "git_blob": "59c435ebc24b90c91b13313a444b8d3fada6bc36"
+        }
+      ]
+    },
+    {
+      "id": "municipal-installation-guide",
+      "label": "Complete installed municipal Installation and Workshare receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/MUNICIPAL_INSTALLATION.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "83185d4ac5c63f06a59779350347dc880b2a9a4b",
+          "bytes": 18256,
+          "sha256": "b578ef164893440a5b78a650968ce95062d22d8a582e3327d99b0275e39d3d2d",
+          "git_blob": "c057c7b06f1b15451d3f1af75f08154fd7164964"
+        }
+      ]
+    },
+    {
+      "id": "municipal-installation-archive-selection",
+      "label": "Original Operations archive selection before independent receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/municipal-installation-operations.py",
+      "required": false,
+      "editions": [
+        {
+          "commit": "83185d4ac5c63f06a59779350347dc880b2a9a4b",
+          "bytes": 3273,
+          "sha256": "0dd087cd350fc5c20f0a6a162a1ec73235994eedfb97f5a7c3a5a4a6ceedfe88",
+          "git_blob": "26c688668719173cbc95e4047a82ed02139a9236"
+        }
+      ]
+    },
+    {
+      "id": "municipal-installation-commands",
+      "label": "Installed original municipal Installation command registration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/municipal-installation.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "83185d4ac5c63f06a59779350347dc880b2a9a4b",
+          "bytes": 1975,
+          "sha256": "f845806f83ee459e5ce134eb9696ae156db4d002ef9d047d0df37eb5be7c3934",
+          "git_blob": "7b47d0b38b22e806f914e1ec31ad59f2886edcd9"
+        }
+      ]
+    },
+    {
+      "id": "municipal-installation-distribution",
+      "label": "Complete municipal and Grant Operations source selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/municipal-installation.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "83185d4ac5c63f06a59779350347dc880b2a9a4b",
+          "bytes": 10994,
+          "sha256": "af69dbf8b9f1d4f1ee334b281572501b90d69b44925d31da57030e429427e090",
+          "git_blob": "235d53dcb5d3231023fa632b9fce1e3d31d41648"
+        }
+      ]
     }
   ]
 }
