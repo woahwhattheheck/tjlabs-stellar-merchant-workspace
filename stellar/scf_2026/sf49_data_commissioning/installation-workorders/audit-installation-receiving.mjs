@@ -3,16 +3,28 @@
 /** Continue the original saved Installation and independently open its full Audit edition. */
 import {resolve,join,basename} from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {publishDirectory} from '../../../../services/audit-migration-workspace/build.mjs';
-import {completeFiles,compare,json,memberBytes} from '../../../../services/audit-migration-workspace/portable.mjs';
-import {inspectAudit,reopenAudit,validateSelection,same,sha,MAX_SOURCE} from './audit-installation-core.mjs';
+import {json} from '../../../../services/audit-migration-workspace/portable.mjs';
+import {inspectAudit,validateSelection,same,sha,MAX_SOURCE} from './audit-installation-core.mjs';
 import {need,encoded,parse,identity,privateDirectory,retain,originalInput,originalUnchanged,regular,operationLease,nativeOperations,inspectInstallationArchive} from './audit-installation-io.mjs';
 const safe=path=>typeof path==='string'&&!path.startsWith('/')&&!path.includes('\\')&&!path.split('/').some(x=>!x||x==='.'||x==='..')&&!/[\u0000-\u001f]/.test(path);
-async function receiveWorking({raw,programSource,destination,operation}){
- const source=inspectAudit(raw),copyId='audit-received-'+sha(encoded({original:source.input,operation,destination}));
- const record={...source.record,copyId},files=completeFiles(programSource,record);
+async function originalProgram(programSource,root){
+ need(programSource&&typeof programSource==='object'&&!Array.isArray(programSource),'Retain the complete original executable program.');
+ for(const name of ['engine.mjs','sha256.mjs','portable.mjs','build.mjs'])need(typeof programSource[name]==='string','Retain original executable '+name+'.');
+ for(const [name,text]of Object.entries(programSource)){
+  need(safe(name)&&typeof text==='string','Retain each safe complete original program member.');
+  const file=name.startsWith('migration-receiving/')?join(root,name):join(root,'audit-migration-workspace',name);
+  await retain(file,Buffer.from(text,'utf8'));
+ }
+ const portable=await import(pathToFileURL(join(root,'audit-migration-workspace','portable.mjs')).href);
+ const builder=await import(pathToFileURL(join(root,'audit-migration-workspace','build.mjs')).href);
+ return{portable,builder};
+}
+async function receiveWorking({raw,programSource,program,destination,operation}){
+ const {portable,builder}=program,original=portable.parseRecovery(new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(raw)),ws=original.workspace;
+ const source={input:identity(raw),record:original,workspace:{id:ws.id,title:ws.title,createdAt:ws.createdAt,revision:ws.revision,sha256:portable.head(ws)},originalBrowserCopyId:original.copyId??null},copyId='audit-received-'+sha(encoded({original:source.input,operation,destination}));
+ const record={...source.record,copyId},files=portable.completeFiles(programSource,record);
  const originalRecord=encoded(record),manifest=files.map(file=>{
-  const bytes=Buffer.from(memberBytes(file));
+  const bytes=Buffer.from(portable.memberBytes(file));
   return{path:file.path,...identity(bytes)};
  });
  const receipt={schema:'stellar-forge.audit-working-receiving.v1',original:source.input,workspace:source.workspace,copyId,
@@ -20,7 +32,7 @@ async function receiveWorking({raw,programSource,destination,operation}){
  files.push({path:'Original_Working_Recovery.json',text:originalRecord.toString('utf8')},{path:'Current_Working_Recovery.json',text:originalRecord.toString('utf8')},{path:'RECEIVING.json',text:json(receipt)});
  let prior;
  try{prior=parse(await regular(join(destination,'RECEIVING.json'),MAX_SOURCE));}catch(error){if(error.code!=='ENOENT')throw error;}
- if(!prior)await publishDirectory(destination,files);
+ if(!prior)await builder.publishDirectory(destination,files);
  const actual=parse(await regular(join(destination,'RECEIVING.json'),MAX_SOURCE));
  need(same(actual,receipt),'Keep the independently received original working copy and its original operation.');
  need((await regular(join(destination,'Original_Working_Recovery.json'),128*1024*1024)).equals(originalRecord),'The received original recovery changed.');
@@ -29,7 +41,10 @@ async function receiveWorking({raw,programSource,destination,operation}){
   const body=await regular(join(destination,member.path),256*1024*1024);
   need(same(identity(body),{bytes:member.bytes,sha256:member.sha256}),'A complete received member changed: '+member.path);
  }
- const current=await regular(join(destination,'Current_Working_Recovery.json'),128*1024*1024),reopened=reopenAudit(raw,current);
+ const current=await regular(join(destination,'Current_Working_Recovery.json'),128*1024*1024),currentRecord=portable.parseRecovery(new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(current));
+ const relationship=portable.compare(currentRecord.workspace,original.workspace);
+ need(['identical','incoming_ancestor'].includes(relationship),'Retain the exact original history or its current independent descendant.');
+ const reopened={original:source.workspace,current:{id:currentRecord.workspace.id,revision:currentRecord.workspace.revision,sha256:portable.head(currentRecord.workspace)},relationship,laterOperations:currentRecord.workspace.revision-ws.revision,unfinishedForms:Object.keys(currentRecord.drafts).length,copyId:currentRecord.copyId??null};
  need(reopened.copyId===copyId,'Keep this independent browser copy identity when saving later work.');
  return{receipt,reopened,directory:destination,application:join(destination,'Audit_Source_Workspace.html'),working:join(destination,'Current_Working_Recovery.json')};
 }
@@ -73,10 +88,11 @@ export async function main(argv=process.argv.slice(2)){
   });
   const programSource=parse(selected.get('Original_Program_Source.json'));
   need(same(identity(encoded(programSource)),receipt.workingSource),'Preserve the complete original program source selection.');
+  const program=await originalProgram(programSource,join(output,'original-program'));
   const operation='audit-installation-'+sha(encoded({original:source.input,scope:snapshot.selectedEditionsSource,caseId:options.case,installation:{id:options.installation,revision:Number(options.revision),sha256:saved.sha256},workspace:options['receiving-workspace'],destination:options['audit-destination'],actor:options.actor})).slice(0,32);
-  const working=await receiveWorking({raw:originalRaw,programSource,destination:options['audit-destination'],operation});
+  const working=await receiveWorking({raw:originalRaw,programSource,program,destination:options['audit-destination'],operation});
   await phase('Audit_Original_Receiving',async()=>working);
-  const reopened=await receiveWorking({raw:originalRaw,programSource,destination:options['audit-destination'],operation});
+  const reopened=await receiveWorking({raw:originalRaw,programSource,program,destination:options['audit-destination'],operation});
   need(same(working.reopened,reopened.reopened),'The received working copy changed during independent reopening.');
   await phase('Audit_Cold_Reopen',async()=>reopened);
   const archivePath=join(output,'Complete_Original_Installation.zip');

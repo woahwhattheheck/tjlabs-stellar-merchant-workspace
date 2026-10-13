@@ -196,3 +196,6 @@ AGENT_OPERATING.md and AGENT_RECEIVING.md under services/audit-migration-workspa
 ### Resume the original selected programme
 
 The first template or preparation freezes the complete program source and Installation profile with per-file and whole-source identities. Later retries read those original selections and execute the retained original packaging module, even if the installed application has since advanced. Keep `Original_Program_Source.json`, `Original_Program_Selection.json`, `Original_Installation_Profile.json` and `Original_Profile_Selection.json` together with the original arguments and outputs. A changed retained byte is a source conflict; a missing original must be restored from its complete retained copy.
+
+
+Independent receiving uses that same retained original program: it materializes the complete source under its original operation, then imports the original portable parser/comparison, full-file packager and atomic directory publisher. A later installed update cannot regenerate an earlier working receipt or immutable file selection with different bytes. The editable Current_Working_Recovery.json remains separate and may hold valid later operations and unfinished writing under the independent copy identity.
