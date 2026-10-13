@@ -55,8 +55,25 @@ def keep(path, raw):
     return {"path": str(path), "bytes": len(raw), "sha256": sha256(raw).hexdigest()}
 
 
+def keep_definition(path, value, hash_key):
+    """Retain immutable saved source while preserving an older full wrapper."""
+    immutable = {"definition": value["definition"], hash_key: value[hash_key]}
+    path = Path(path)
+    if path.exists():
+        raw = read(path, 4 * 1024 * 1024)
+        original = parse(raw)
+        require(original.get("definition") == immutable["definition"] and
+                original.get(hash_key) == immutable[hash_key],
+                "Original saved definition changed: " + path.name)
+        return {"path": str(path), "bytes": len(raw), "sha256": sha256(raw).hexdigest()}
+    return keep(path, compact(immutable))
+
+
 def complete(workspace, kind, request):
-    job = workspace.start(kind, request)
+    return settle(workspace, kind, workspace.start(kind, request))
+
+
+def settle(workspace, kind, job):
     deadline = time.monotonic() + 600
     while job["status"] == "RUNNING" and time.monotonic() < deadline:
         time.sleep(0.05)
@@ -126,6 +143,8 @@ def main():
     parser.add_argument("--programme", required=True, help="Completed original publisher-programme.json")
     parser.add_argument("--database", required=True, help="Private editable Analysis workspace")
     parser.add_argument("--out", required=True, help="Private complete customer delivery")
+    parser.add_argument("--retry-workbook", action="store_true",
+                        help="Build a new original child attempt after a terminal workbook failure; preserve the failed job.")
     args = parser.parse_args()
     os.umask(0o077)
     programme = parse(read(Path(args.programme), 32 * 1024 * 1024))
@@ -272,8 +291,21 @@ def main():
         workbook = workspace.workbooks.save("ZurichPortalUseWorkbook", {
             "id": identifier("workbook-definition"), "expected_revision": 0, "title": TITLE,
             "notes": methodology, "sheets": sheets})
-        built = complete(workspace, "workbook", {"id": identifier("workbook"), "name": workbook["name"],
-            "revision": workbook["revision"], "definition_sha256": workbook["definition_sha256"]})
+        build_request = {"id": result.get("workbookRequestId", identifier("workbook")), "name": workbook["name"],
+                         "revision": workbook["revision"], "definition_sha256": workbook["definition_sha256"]}
+        result["workbookRequestId"] = build_request["id"]
+        dump(record_path, result)
+        build_job = workspace.start("workbook", build_request)
+        if build_job["status"] in {"FAILED", "CANCELLED", "INTERRUPTED"} and args.retry_workbook:
+            attempts = result.setdefault("workbookAttempts", [])
+            if not any(item["id"] == build_job["id"] for item in attempts):
+                attempts.append({"id": build_job["id"], "status": build_job["status"],
+                                 "error": build_job.get("error"), "definitionSha256": workbook["definition_sha256"]})
+            build_request["id"] = identifier("workbook-retry:" + build_job["id"])
+            result["workbookRequestId"] = build_request["id"]
+            dump(record_path, result)
+            build_job = workspace.start("workbook", build_request)
+        built = settle(workspace, "workbook", build_job)
         original_workbook = WorkbookDelivery(Path(built["result"]["directory"]))
         original_workbook.inspect()
         destination = out / "workbook"
@@ -294,8 +326,9 @@ def main():
              "PortalResources, PortalResourceMovements and PortalRequestShape queries remain editable. "
              "The report and workbook retain their source revisions. Create a new reviewed report or workbook "
              "edition when changing its saved selection.\n").encode())
-        keep(out / "report-definition.json", compact(pinned))
-        keep(out / "workbook-definition.json", compact(workspace.workbooks.definition(workbook["name"], revision=workbook["revision"])))
+        keep_definition(out / "report-definition.json", pinned, "sha256")
+        keep_definition(out / "workbook-definition.json",
+                        workspace.workbooks.definition(workbook["name"], revision=workbook["revision"]), "definition_sha256")
         server, control, launch = serve(workspace)
         worker = threading.Thread(target=server.serve_forever, daemon=False)
         worker.start()
@@ -319,6 +352,11 @@ def main():
         inspection = inspect_archive(archive_file, expected_sha256=result["workspaceArchive"]["sha256"])
         result["workspaceArchive"].update(payloadFiles=len(inspection["manifest"]["files"]), workspaceId=workspace.identity)
         dump(record_path, result)
+    except Exception as error:
+        result["state"] = "INCOMPLETE"
+        result["error"] = {"type": type(error).__name__, "message": str(error)}
+        dump(record_path, result)
+        raise
     finally:
         if server is not None:
             if worker is not None and worker.is_alive():
@@ -351,6 +389,7 @@ def main():
     finally:
         reopened.close()
     result["state"] = "COMPLETE"
+    result.pop("error", None)
     dump(record_path, result)
     print(json.dumps({"operation": OPERATION, "state": "COMPLETE", "rows": 8210,
                       "daily": result["daily"], "workspaceArchive": result["workspaceArchive"]}), flush=True)

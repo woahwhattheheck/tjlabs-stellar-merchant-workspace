@@ -121,6 +121,18 @@ Its introduction records the counting and grouping decisions. The complete
 observation export contains all 8,210 records. The separate resource export
 contains all comparison groups. Both carry JSONL, CSV, SQLite and source lineage.
 
+The original workbook engine uses the runtime's temporary directory while
+streaming worksheet XML. Set TMPDIR to a private writable location with enough
+space for the full worksheet data when operating on a constrained host. After
+correcting a terminal workbook failure, add --retry-workbook to this customer
+command. It retains the failed original job and builds one new child attempt
+against the same saved workbook definition. Later invocations reuse that
+selected attempt and all completed import, query and report jobs.
+
+Saved report and workbook definition files contain their immutable definition
+and content hash. A previously delivered full definition wrapper keeps its
+original bytes when that definition and hash match.
+
 The three-sheet workbook contains source observations, the full resource
 comparison and daily totals. Its editable XLSX travels with its original
 definition, sources and complete workbook handover. Spreadsheet text safety and
