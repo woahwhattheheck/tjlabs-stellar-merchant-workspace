@@ -12,6 +12,14 @@ The added phase follows the original stale-window recovery and precedes its nati
 
 See `PORTFOLIO_AVAILABILITY.md` for the complete staff workflow and zero/unknown/closed-date semantics. These are recorded course planning assumptions, not statements of actual personnel availability. Preserve the original operation and exact installed-source binding when receiving the new source.
 
+## Retained output custody on restart
+
+Every resumed Portfolio invocation verifies the complete retained download and screenshot identities before using cached phases. The finished result repeats that verification. Cold mode also reads the original completed result and verifies every original download and rendered image before accepting its saved case/copy selection.
+
+A missing or changed original file reports its exact path and retains the previous phase and expected bytes/hash. Recover that original file from the same selected saved case or retained download; do not silently clear completion or overwrite the original evidence. This includes complete working-copy JSON, original saved Portfolio/case ZIPs, calendar/review exports and the actual images the producer must view.
+
+For an interrupted availability phase, an already-applied review is reused only when all three current dated overrides still equal zero. If a later edit changed any selected date, the freshly prepared current-value proposal is applied explicitly before the course proceeds.
+
 ## Exact source and context
 
 Install the complete current managed application and the four exact Portfolio product files selected for this operation. Preserve later unrelated application/source-owner additions. This continuation adds `portfolio-working-copies-browser.mjs` beside the original runner; the module is a Node receiving helper, not a new web route.
