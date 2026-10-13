@@ -479,16 +479,23 @@ try {
     const readOperation = await step('start_backup_read_work', () => readWorkModel.workspaceBackupCreate({
       requestId: id('readWorkExport'), reviewId: readReview.reviewId,
       reviewSha256: readReview.reviewSha256, storageDirectory: files.backups }));
-    const readExport = await step('complete_backup_read_work',
-      () => waitOperation(readWorkModel, files.backups, readOperation.operationId));
+    const readExport = await step('complete_backup_read_work', async () => {
+      const retained = (await readWorkModel.workspaceBackupState({ storageDirectory: files.backups }))
+        .operations.find(item => item.operationId === readOperation.operationId);
+      if (retained?.workerActive === false && ['FAILED', 'INTERRUPTED'].includes(retained.phase))
+        await readWorkModel.workspaceBackupContinue({ storageDirectory: files.backups, operationId: readOperation.operationId });
+      return waitOperation(readWorkModel, files.backups, readOperation.operationId);
+    });
     const readArchive = readExport.result;
     await step('receive_backup_read_work', async () => {
       const work = readArchive.readWork;
       check(work && Object.values(work).every(value => Number.isSafeInteger(value) && value >= 0),
         'Selected native export did not return its actual read totals.');
-      check(work.inventoryPasses === 3 && work.copiedFiles === readReview.files &&
-        work.copiedBytes === readReview.bytes && work.sourceHashBytes >= readReview.bytes &&
-        work.archiveHashFiles >= 2 && work.archiveHashBytes >= 2 * readArchive.bytes &&
+      const copiedCurrentSource = work.inventoryPasses === 3 && work.copiedFiles === readReview.files &&
+        work.copiedBytes === readReview.bytes && work.sourceHashBytes >= readReview.bytes;
+      const resumedWrittenArchive = work.inventoryPasses === 0 && work.copiedFiles === 0 && work.copiedBytes === 0 &&
+        work.sourceHashFiles === 0 && work.sourceHashBytes === 0 && work.sourceDigestReuses === 0;
+      check((copiedCurrentSource || resumedWrittenArchive) && work.archiveHashFiles >= 2 && work.archiveHashBytes >= 2 * readArchive.bytes &&
         work.archiveMemberPasses === 1 && work.archiveMemberBytes === readReview.bytes,
         'Native export read totals do not cover its complete original source and archive.');
       const destination = await stat(readArchive.archivePath, { bigint: true });
@@ -517,6 +524,13 @@ try {
       check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
         'Backup read totals overflow the narrow operator viewport.');
       const output = join(files.output, 'received-workspace-backup-read-work.tgz');
+      if (await exists(output)) {
+        const prior = await hashFile(output);
+        if (prior.sha256 !== readArchive.sha256 || prior.bytes !== readArchive.bytes) {
+          const retained = output + '.interrupted-' + prior.sha256 + '-' + randomUUID();
+          await rename(output, retained);
+        }
+      }
       if (!await exists(output)) {
         const incoming = page.waitForEvent('download');
         await selected.getByRole('button', { name: 'Download complete backup', exact: true }).click();
