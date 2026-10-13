@@ -200,8 +200,7 @@ export function createCustomerUsePanel({host,api,onOpen=async()=>{},onPlans=()=>
       sessionStorage.setItem(key()+'.rejected.'+pending.input.requestId,JSON.stringify(rejection));
       clearPending();state.view=current;state.source=source;state.draft=draft;state.dirty=Boolean(draft);
       if(current)for(const saved of Object.values(current.plans))state.planCache.set(JSON.stringify([saved.id,saved.planSha256]),saved);
-      state.rejected=rejection;
-      await readLibrary(epoch);if(!alive(epoch))return;render();
+      state.rejected=rejection;render();
       say('Your complete draft and rejected request are preserved. Review the current saved edition before saving; the next save uses a new request ID and this displayed head.');
     });
   }
