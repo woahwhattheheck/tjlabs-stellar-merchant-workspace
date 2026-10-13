@@ -321,40 +321,31 @@ the installed commands used by that receiving engineer.
 
 ## Original source editions and application receiving
 
-The product contribution adopts the existing source ID
-webhook-customer-commissioning, keeping its original repository and path. Its
-current edition selects merged commit 490c84f1b933c5a9733bb1e204c97cabefca6fbb.
-The same declaration adds the original subscriber, projector and installed
-Analysis guide at that merge, then the native programme, browser, coordinator,
-private HTTP integration and browser guide at
-cf0a48c99dd896a9dc315b6f9883db850d9f232c.
-The agent provider, operation/index contracts, typed input and delivery clients,
-installed contribution and complete operating guide select merged commit
-3cc516d47cb5ca2a692ee1bc750905cfaab4e2e9. Complete Customer Installation
-receiving, its typed interface, selected profile and whole operator course select
-cdaafeb22d7ffdd080a11362822c28ad01ac96ab. The existing agent guide and installed
-contribution keep both original and current editions. All twenty-three preceding
-source IDs and their accepted source editions remain in this same contribution.
-The complete source exploration, browser/API coordination, agent operations and
-three operating guides now select merged commit
-3aaae9928df6047ac86a32b5dae7302b7937cfcb. Eleven original source IDs keep both
-preceding and current measured editions. The original file-only source CLI is
-registered as one additional optional source with its full measured identity.
-The complete publisher working-copy browser, document, presentation, two
-operating guides and original receiving continuation select
-0d33ab17665a4fca9f51d36838abee62ca149513. These six optional full-file sources join the
-same contribution, preserving all twenty-four preceding source IDs and their
-edition histories.
+The complete public product is selected at commit 131fce461f90a29bf3fd1bd430aa89efc0bef164 in
+woahwhattheheck/public-commons-sprint-2026. The independent registration at
+stellar-forge/developer-site/grant-products/webhook-customer-analysis.json keeps
+all thirty existing source IDs and every preceding measured edition. Each
+historical edition names its original repository explicitly; the current edition
+names the public repository, exact commit, full Git blob, UTF-8 byte count and
+SHA-256. Historical source identities remain distinct from the current public
+source selection.
 
-The independent registration is
-stellar-forge/developer-site/grant-products/webhook-customer-analysis.json.
-Each original file has a measured full Git blob, UTF-8 byte count and SHA-256 at
-its exact commit. Its heading is the existing canonical H2, so the current
-maintained composer receives this chapter and its complete sources without a
-new application reader.
+The same public edition includes the complete commercial Workshare intake into
+Customer installations: native source selection, browser authoring, CLI and agent
+methods, saved editions, and full-source export and independent restore. It
+preserves the existing customer-period workflow and the complete merchant and
+buyer application source selection. The original customer workorder remains in
+its private operating case.
 
-The serial application owner composes against the current complete canonical
-manuscript and current source index. Preserve all other product records, nine
-answers, original budget, saved review/submission versions and subsequent
+The publisher receiving continuation retains its source-bound dispatch and
+accepted completion. A completed course can finish publishing its original result
+from the saved acceptance after interruption. Reopening verifies every original
+output and retains the original completion time. An unresolved dispatched course
+keeps its outputs for continuation of that same operation.
+
+The complete reviewer chapter is GRANT_CHAPTER.md, using the existing canonical
+H2. The maintained composer receives that chapter and the complete source
+registration into the original reviewer page. Preserve the other product records,
+nine answers, six-package budget, saved review/submission versions and subsequent
 chapters. The existing source-package and Source editions receiving carry the
 complete four reviewer outputs into the same saved application, Page and Site.
