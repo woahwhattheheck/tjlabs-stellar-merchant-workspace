@@ -17,6 +17,7 @@ import { inspectCkanMerchantPackage } from './publisher/release.mjs';
 import { CKAN_SOURCE_LOCATIONS_SCHEMA, ckanWorkspaceMember } from './source-locations.mjs';
 import { validateDcatState, validateDcatWorkspaceFiles } from './dcat-workspace.mjs';
 
+import { validateCkanCapturePlans, validateCkanCapturePlanFiles } from './capture-plans.mjs';
 import { validateCkanRemoteState, validateCkanRemoteFiles, ckanRemoteSummary } from './remote-workspace.mjs';
 
 export const CKAN_WORKSPACE_ARCHIVE_SCHEMA = 'stellar-forge.ckan-workspace-archive.v1';
@@ -26,7 +27,7 @@ const HASH = /^[a-f0-9]{64}$/;
 const UUID = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
 const RELEASE_ID = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 const ROOTS = new Set(['editions', 'sources', 'publications', 'datasets', 'merchant-packages',
-  'buyer-requests', 'seller-releases', 'transfers', 'refreshes', 'dcat', 'remote']);
+  'buyer-requests', 'seller-releases', 'transfers', 'refreshes', 'dcat', 'remote', 'capture-plans']);
 const INTERNAL = new Set(['publisher.lock', '.ckan-receive.json', 'workspace-archives', 'workspace-incoming']);
 const PATH_KEYS = new Set(['directory', 'file', 'out', 'path', 'sourceFile', 'targetDirectory', 'root', 'packageDirectory']);
 const exists = async path => { try { return await lstat(path); } catch (error) { if (error.code === 'ENOENT') return null; throw error; } };
@@ -53,6 +54,7 @@ function projectState(value) {
   }
   validateDcatState(value.dcat);
   validateCkanRemoteState(value.remote);
+  validateCkanCapturePlans(value.capturePlans, value);
   if (value.operation?.state === 'RUNNING') throw fault('CKAN_PROJECT_BUSY', 'Finish the current project operation before exporting its snapshot.', 409);
   return value;
 }
@@ -157,6 +159,7 @@ async function quiesce(directory, state) {
 function summary(state) {
   return { catalogOrigin: state.catalogOrigin, projectCreatedAt: state.createdAt, sourceKind: state.sourceKind ?? 'ckan',
     ...(state.remote ? { remote: ckanRemoteSummary(state.remote) } : {}),
+    ...(state.capturePlans ? { capturePlans: structuredClone(state.capturePlans) } : {}),
     ...(state.dcat ? { dcat: { schema: state.dcat.schema, activeReleaseId: state.dcat.activeReleaseId,
       catalogs: state.dcat.catalogs.map(({ id, sha256, bytes, profile }) => ({ id, sha256, bytes, profile })),
       reviews: state.dcat.reviews.map(({ id, sourceId, comparisonId, candidateId, status, reportSha256, candidateSha256, reviewSha256 }) =>
@@ -200,6 +203,7 @@ export async function createCkanWorkspaceArchive({ directory, out, workbenchByte
     const state = projectState(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(rawState)));
     await validateDcatWorkspaceFiles(directory, state.dcat);
     await validateCkanRemoteFiles(directory, state.remote);
+    await validateCkanCapturePlanFiles(directory, state.capturePlans, state);
     stores = await quiesce(directory, state);
     const items = await inventory(directory, rawState, budget, signal);
     const manifest = { schema: CKAN_WORKSPACE_ARCHIVE_SCHEMA, createdAt: stamp(),
@@ -414,6 +418,7 @@ async function relocate(root, archive, history, signal) {
   const state = rebase(initial, archive.manifest.source.directory, root), rewritten = [];
   await validateDcatWorkspaceFiles(root, state.dcat);
   await validateCkanRemoteFiles(root, state.remote);
+  await validateCkanCapturePlanFiles(root, state.capturePlans, state);
   const locations = { schema: CKAN_SOURCE_LOCATIONS_SCHEMA, projectCreatedAt: initial.createdAt,
     catalogOrigin: initial.catalogOrigin, sources: [] };
   const originals = new Map(archive.manifest.files.map(file => [file.path, file])), sourceConfigs = new Map();

@@ -12,6 +12,7 @@ import { bindCkanCapture, projectCkanValue } from './source.mjs';
 import { describeCkanSemantics, projectCkanSemantics, checkCkanSemanticReview, compareCkanSemantics } from './semantics.mjs';
 import { createCkanReviewedRefreshes } from './reviewed-refresh.mjs';
 import { createDcatWorkspace, validateDcatState } from './dcat-workspace.mjs';
+import { createCkanCapturePlans } from './capture-plans.mjs';
 import { createCkanRemoteWorkspace } from './remote-workspace.mjs';
 import { interruptDcatAcquisitions } from './dcat-acquisition.mjs';
 import { openCkanPublisher } from './publisher/model.mjs';
@@ -208,12 +209,15 @@ export async function openCkanWorkbench({ directory, create = false, origin, sou
     }
     const reviewedRefreshes = createCkanReviewedRefreshes({ directory, state, find, selectedCapture,
       launch, persist, createSource: createSourceSelection });
+    const capturePlans = await createCkanCapturePlans({ directory, state, launch, persist, capture,
+      prepareRefresh: reviewedRefreshes.prepareRefresh });
     const dcat = createDcatWorkspace({ directory, state, launch, persist, environment });
     const remote = await createCkanRemoteWorkspace({ directory, state, launch, persist, environment,
       assertSource: source => reviewedRefreshes.assertRefreshPublicationSource(source) });
     if (create) await persist();
     const api = {
       ...reviewedRefreshes,
+      ...capturePlans,
       ...dcat,
       ...remote,
       directory,
