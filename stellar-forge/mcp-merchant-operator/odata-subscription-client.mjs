@@ -132,7 +132,7 @@ function adapter(client,record){
 }
 function page(value,offset,limit){
   need(value.offset===offset&&Number.isSafeInteger(value.total)&&value.total>=0&&Array.isArray(value.items)&&value.items.length<=limit&&
-    (value.nextOffset===null||value.nextOffset===offset+value.items.length&&value.nextOffset>offset&&value.nextOffset<value.total),
+    value.nextOffset===(offset+value.items.length<value.total?offset+value.items.length:null),
     'PAGE','The native page has an inconsistent offset, total or continuation.');
   need(value.items.length===Math.min(limit,Math.max(0,value.total-offset)),'PAGE','The native page omitted part of its selected range.');
   return value;
