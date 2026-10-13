@@ -38,10 +38,11 @@ def selected(root):
     names = []
     for name in ("FINANCE_PLAN.json", "FINANCE_PROGRESS.json", "FINANCE_RECEIVING.json", "FINANCE_RESULT.json",
                  "ORIGINAL_FINANCE_STATE.json", "FINAL_FINANCE_STATE.json", "MERCHANT_REVIEW.json",
-                 "ROZO_INVENTORY.json", "COLD_RECEIVING_PROCESS.json", "CONFIGURED_BUYER_PREVIEW.json"):
+                 "ROZO_INVENTORY.json", "COLD_RECEIVING_PROCESS.json", "CONFIGURED_BUYER_PREVIEW.json",
+                 "AMENDMENT_SOURCE_IMPACT.json", "AMENDMENT_PREDECESSOR.json"):
         if (root / name).exists():
             names.append(name)
-    for folder in ("files", "accounting-backup", "maintenance", "native-results", "process-attempts"):
+    for folder in ("files", "accounting-backup", "maintenance", "native-results", "process-attempts", "previous-finance"):
         directory = root / folder
         if directory.exists():
             for path in directory.rglob("*"):

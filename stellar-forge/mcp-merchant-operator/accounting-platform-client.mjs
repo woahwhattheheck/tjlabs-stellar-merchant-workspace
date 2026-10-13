@@ -2,6 +2,8 @@
 // Original QuickBooks/Xero wire schema plus the shared native source-change catalog.
 import { createHash } from 'node:crypto';
 import { sourceChangeDefinitions } from './catalog/accounting-source-changes.mjs';
+import { qboWorksheetDefinitions } from './catalog/accounting-qbo-worksheets.mjs';
+import { qboWorksheetPages, qboWorksheetFileSelection } from './accounting-qbo-worksheets-client.mjs';
 import { setTimeout as delay } from 'node:timers/promises';
 import { openMerchantFileClient } from './retained-download.mjs';
 import { createAccountingMaintenanceClient } from './accounting-maintenance-client.mjs';
@@ -16,8 +18,8 @@ WIRE_TOOLS.buyer = Object.fromEntries(Object.entries(buyerAccountingClientSpec).
     const index = WIRE_RULES.length; WIRE_RULES.push(rule); return [field, index];
   })), required: schema.required, readOnly: schema.readOnly }]));
 
-// The additive chart workflow shares its actual server schemas rather than another wire copy.
-for (const [name, , properties, required, annotations] of sourceChangeDefinitions) {
+// Additive native workflows share their actual server schemas with this client.
+for (const [name, , properties, required, annotations] of [...sourceChangeDefinitions, ...qboWorksheetDefinitions]) {
   const match = name.match(/^merchant_accounting_(qbo|xero)_(.+)$/), fields = {};
   for (const [field, schema] of Object.entries(properties)) {
     const text = JSON.stringify(schema);
@@ -47,12 +49,14 @@ const trimXero = value => { need(typeof value === 'string', 'Use the original Xe
 const nativeTool = (platform, action) => PREFIX + platform + '_' + action.replaceAll('-', '_');
 const PREVIEWS = {
   buyer: {},
-  qbo: { create: 'preview', 'response-save': 'response-preview', post: 'post-preview' },
+  qbo: { create: 'preview', 'response-save': 'response-preview', post: 'post-preview', 'worksheet-create': 'worksheet-plan-preview' },
   xero: { 'context-import': 'context-preview', create: 'preview', 'response-import': 'response-preview', 'return-apply': 'return-preview' },
 };
 const INLINE = { buyer: ['initialize', 'handoff'], qbo: ['review', 'cancel', 'response-resume', 'post-resume'], xero: ['context-capture', 'cancel', 'operate', 'return-resume'] };
 const BINDINGS = {
-  qbo: { create: ['planId', 'actor', 'createdAt', 'previewSha256'], review: ['planId', 'reviewId', 'requestSha256'],
+  qbo: { 'worksheet-create': ['workspaceId', 'sourcesSha256', 'planId', 'inputSha256', 'returnedSha256',
+      'worksheetSha256', 'worksheetPreviewSha256', 'worksheetResultSha256', 'requestSha256', 'previewSha256'],
+    create: ['planId', 'actor', 'createdAt', 'previewSha256'], review: ['planId', 'reviewId', 'requestSha256'],
     cancel: ['planId', 'cancellationId', 'requestSha256'], 'response-save': ['planId', 'responseId', 'responseSha256', 'previewSha256'],
     'response-resume': ['planId', 'responseId', 'responseSha256', 'previewSha256'],
     post: ['planId', 'postId', 'planSha256', 'requestSha256', 'previewSha256'],
@@ -134,6 +138,11 @@ export function accountingPlatformOperation(value) {
       equal(binding.applicationId, args.id); equal(binding.requestSha256, args.requestSha256);
       if (action === 'source-change-apply') equal(binding.requestSha256, operationHash(platform, action, args));
     }
+  }
+  if (action === 'worksheet-create') {
+    for (const field of ['workspaceId', 'sourcesSha256', 'worksheetSha256', 'worksheetPreviewSha256',
+      'worksheetResultSha256', 'requestSha256']) equal(binding[field], args[field]);
+    equal(binding.inputSha256, args.sourceSha256); equal(binding.returnedSha256, args.returnedSourceSha256);
   }
   if (args.planId !== undefined) equal(binding.planId, args.planId);
   if (args.captureId !== undefined) equal(binding.captureId, args.captureId);
@@ -301,6 +310,20 @@ export function createAccountingPlatformClient({ workspace, platform, call } = {
     const missing = () => ({ found: false, platform, action, binding: b, pending: false });
     const found = value => ({ found: true, platform, action, binding: b, pending: false, ...value });
     const same = (condition, message) => need(condition, message, 'NATIVE_BINDING');
+    if (platform === 'qbo' && action === 'worksheet-create') {
+      const result = await read('worksheet-request', { planId: b.planId }, options);
+      same(result.schema === 'stellar-forge.accounting-qbo-worksheet-client.v1' &&
+        result.binding?.workspaceId === b.workspaceId && result.binding?.sourcesSha256 === b.sourcesSha256 &&
+        result.planId === b.planId && result.reopenRequired === false,
+        'The original worksheet lookup belongs to another workspace or requires reopening.');
+      same(['NOT_FOUND', 'FOUND'].includes(result.status), 'The original worksheet request returned an unknown status.');
+      if (result.status === 'NOT_FOUND') return missing();
+      same(result.record?.id === b.planId && result.requestSha256 === b.requestSha256 &&
+        result.record.requestSha256 === b.requestSha256 && result.record.integrity?.sha256 === b.previewSha256,
+        'The original journal UUID belongs to another complete native worksheet request.');
+      const { binding: nativeBinding, ...observed } = result;
+      return found({ ...observed, nativeBinding });
+    }
     if (action.startsWith('source-change-')) {
       let result;
       try { result = await read('source-change-detail', { changeId: b.changeId }, options); }
@@ -447,6 +470,19 @@ export function createAccountingPlatformClient({ workspace, platform, call } = {
     plan: (args, options) => read('plan', args, options),
     handoff: (args, options) => read('handoff', args, options),
     companyPreview: (args, options) => read('company-preview', args, options),
+    worksheetStatus: options => read('worksheet-status', {}, options),
+    worksheetExport: (args, options) => read('worksheet-export', args, options),
+    worksheetOpen: (args, options) => read('worksheet-open', args, options),
+    worksheetInspect: (args, options) => read('worksheet-inspect', args, options),
+    worksheetPlanPreview: (args, options) => read('worksheet-plan-preview', args, options),
+    worksheetRequest: (args, options) => read('worksheet-request', args, options),
+    worksheetPages: (action, args, options) => qboWorksheetPages(client, action, args, options),
+    worksheetFile(inventory, name, options) {
+      accepting(); need(platform === 'qbo' && inventory?.workspace === workspace,
+        'Choose a worksheet inventory from this original QuickBooks workspace.');
+      const file = qboWorksheetFileSelection(inventory, name);
+      return client.fileChunks(file.selection, { ...options, expectedSha256: file.expectedSha256 });
+    },
     connection: options => read('connection', {}, options),
     companyFetch: (args, options) => read('company-fetch', args, options),
     context: (args, options) => read('context', args, options),
@@ -491,8 +527,8 @@ export function createAccountingPlatformClient({ workspace, platform, call } = {
     async *fileChunks(selection, options) {
       accepting(); need(plain(selection), 'Choose an original file selection.');
       const kind = selection.kind ?? (platform === 'buyer' ? 'buyer-source' : platform);
-      need((platform === 'buyer' ? ['buyer-source', 'accountant'] : [platform, platform + '-source-change']).includes(kind),
-        'Choose the original source/accountant file for buyer mode or this platform’s retained journal or chart-change file.');
+      need((platform === 'buyer' ? ['buyer-source', 'accountant'] : [platform, platform + '-source-change', ...(platform === 'qbo' ? ['qbo-worksheet'] : [])]).includes(kind),
+        'Choose this platform’s original source/accountant, worksheet, retained journal or chart-change file.');
       const iterator = maintenance.fileChunks({ ...selection, kind }, options);
       try { for (;;) { accepting(); const item = await iterator.next(); if (item.done) return; yield item.value; } }
       finally { await iterator.return?.(); }

@@ -38,6 +38,7 @@ import award_terms
 import issuer_receiving
 import operations_cash_accounts as cash_accounts
 import operations_account_reconciliation as account_reconciliation
+import operations_workflows as operating_workflows
 import operations_implementation as implementation
 import operations_engagements as engagements
 import operations_risks as risks
@@ -581,6 +582,11 @@ class Operations:
             return action()
         return self.workspace._transaction(body.get("requestId"), payload, action)
 
+
+    def operating_workflows(self, program_id, expected_version, allowed_sections=None):
+        with self._snapshot():
+            return operating_workflows.read_index(
+                self, identifier(program_id, "operation"), expected_version, allowed_sections)
 
     def funding_catalog(self, program_id):
         with self._snapshot():

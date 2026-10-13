@@ -22,7 +22,7 @@ async function capture(o){
   const supported=await captureGet(root,p.facilitator+'/supported'),peers=await captureGet(root,p.discovery+'/federation/peers');
   const rows=[],sources=[];let offset=0;
   for(;;){
-   const got=await captureGet(root,pageUrl(p,offset));sources.push(got.name);
+   const got=await captureGet(root,pageUrl(p,offset),{acceptSaved:record=>{try{page(record,p,offset);return true;}catch{return false;}}});sources.push(got.name);
    const value=page(got.value,p,offset);rows.push(got.value);
    if(value.terminal)break;offset=value.nextOffset;
   }
@@ -144,8 +144,14 @@ async function prepare(o){
 }
 async function main(){
  const [command,...rest]=process.argv.slice(2),o=flags(rest);
- const allowed={capture:['plan','discovery','facilitator','network','limit','directory'],inspect:['directory'],select:['source','selection','directory','body-file','headers-file','content-type'],challenge:['directory','capture-id'],prepare:['directory','checkout','accept','capture-id','node'],pack:['directory','out'],receive:['file','directory'],compare:['before','after','out'],report:['directory','out']};
+ const allowed={capture:['plan','discovery','facilitator','network','limit','directory'],inspect:['directory'],select:['source','selection','directory','body-file','headers-file','content-type'],challenge:['directory','capture-id'],prepare:['directory','checkout','accept','capture-id','node'],pack:['directory','out'],receive:['file','directory'],compare:['before','after','out'],report:['directory','out'],installation:['directory','seed','bindings','out'],'installation-open':['directory'],'installation-pack':['directory','out']};
  if(command!==undefined&&command!=='help'){need(Object.hasOwn(allowed,command),'Unknown command: '+command);for(const key of Object.keys(o))need(allowed[command].includes(key),'Unknown --'+key+' for '+command);}
+ if(['installation','installation-open','installation-pack'].includes(command)){
+  const bridge=await import('./installation.mjs'),context={verifyRequest:selected};
+  if(command==='installation')return bridge.prepareFromRequest(o,context);
+  if(command==='installation-open')return bridge.inspectInstallation(required(o,'directory'),context);
+  return bridge.packInstallation(required(o,'directory'),required(o,'out'),context);
+ }
  if(command==='capture')return capture(o);
  if(command==='inspect')return inspect(o);
  if(command==='select')return select(o);
@@ -167,7 +173,10 @@ async function main(){
  'prepare --directory ORIGINAL_REQUEST --accept EXACT_CHALLENGE_INDEX [--checkout ORIGINAL_INSTALLATION] [--capture-id ORIGINAL_ATTEMPT] [--node PATH]',
  'pack --directory ORIGINAL --out OUTSIDE_PACKET.json',
  'receive --file PACKET.json --directory NEW_RECEIVING',
- 'report --directory CATALOGUE --out NEW_REPORT.html'
+ 'report --directory CATALOGUE --out NEW_REPORT.html',
+ 'installation --directory ORIGINAL_REQUEST --seed ORIGINAL_NATIVE_SEED.json --bindings SELECTED_BINDINGS.json --out NEW_PREPARATION',
+ 'installation-open --directory ORIGINAL_OR_RECEIVED_PREPARATION',
+ 'installation-pack --directory ORIGINAL_PREPARATION --out OUTSIDE_PACKET.json'
  ]};
 }
 main().then(value=>process.stdout.write(JSON.stringify(value,null,2)+'\n')).catch(error=>{process.stderr.write(JSON.stringify({error:String(error.message)})+'\n');process.exitCode=1;});

@@ -1,0 +1,30 @@
+{
+  "schema": "commons.original-receivables-programmes.v1",
+  "operation": "SCF-RECEIVABLES-NATIVE-2A51-20261012",
+  "predecessor": {
+    "sourceCommit": "94ad1dd33fd1616303d52faa8b1cd98745c6cfc5",
+    "sourceCapsule": "7fcaec7a66deb03c5d9fed00f193138218d8c323",
+    "dependencyCapsule": "0907e1444c7418266e128db60b3e94a02496d34f",
+    "runId": "38343867655",
+    "jobId": "115120706940",
+    "paymentExitCode": 0,
+    "mcpExitCode": 1,
+    "error": "Invalid original source path for grist-workspace"
+  },
+  "preservedRegistrationCorrection": "3d3876cb960f24ae2d796103c8003416b3008b51",
+  "programmesScope": "Original source-native invoice payment and authenticated MCP accounting programmes. Controlled SDK/RPC observations, not an actual chain purchase.",
+  "programs": [
+    {
+      "path": "PAYMENT_CHECK.mjs",
+      "bytes": 15841,
+      "sha256": "922de34033424456e5a5585ec1fcabe74cbfa67032a239d6c62fd8c0fbe2e6ec",
+      "gitBlob": "9020c4e40784b676fbc57d0fc1c7c58580be6474"
+    },
+    {
+      "path": "MCP_RECEIVABLES_CHECK.mjs",
+      "bytes": 26247,
+      "sha256": "9029314a300abb5f93dbddf8783b6cb8773d520d35cc4ac0c5803d5cf668f7d0",
+      "gitBlob": "568669a6e3de268aa34c4aa17427582585c4fcf9"
+    }
+  ]
+}

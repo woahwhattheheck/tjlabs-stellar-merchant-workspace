@@ -86,3 +86,18 @@ The selected source recipe explicitly carries the original native buyer’s dyna
 MCP resources remain fully visible in the catalogue; their original Rialto tools retain execution. This customer path operates concrete HTTP resources. The original buyer and original authorization flow remain attached throughout.
 
 In the received package, the complete local operating guide is `source/stellar/scf-starforge-20261009/partners/rialto/OPERATING.md`; source and product guides remain in the same source inventory.
+
+## Original customer Installation
+
+The installed Rialto command joins the complete retained request to the existing Customer installations programme. Use the [complete operating guide](../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/RIALTO_CUSTOMER.md) to select the original commercial Workshare seed, actual payment/source/receiving bindings and native preview/save.
+
+```sh
+starforge rialto-customer installation --directory "$ORIGINAL_REQUEST" \
+  --seed "$ORIGINAL_NATIVE_SEED" --bindings "$SELECTED_BINDINGS" \
+  --out "$NEW_PRIVATE_PREPARATION"
+starforge rialto-customer installation-open --directory "$NEW_PRIVATE_PREPARATION"
+starforge rialto-customer installation-pack --directory "$NEW_PRIVATE_PREPARATION" \
+  --out "$OUTSIDE_COMPLETE_PACKET"
+```
+
+The whole prepared edition retains the original request, every catalogue page, native history, exact source seed/bindings/profile, complete Installation input, workorder and relative request annex. Independent receiving uses the existing `receive` command followed by `installation-open`; the original SF88 import reconstructs its native machine-local paths. Case creation, payment execution and Installation preview/save continue through their existing applications.

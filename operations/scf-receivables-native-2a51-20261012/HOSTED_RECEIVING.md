@@ -65,3 +65,9 @@ Join all segments for the exact path in index order, decode Base64, and verify b
 The existing decoded log tool is `github_fetch_workflow_job_logs({repo_full_name,job_id})`. The original REST job log endpoint is `GET /repos/{owner}/{repo}/actions/jobs/{job_id}/logs`; follow GitHub's redirect through the established client.
 
 Native failure results are actionable source findings. Continue the original programme against an explicitly corrected source after addressing the concrete failure; keep the same operation and existing receiving owner.
+
+## Completed original run and installed-source continuation
+
+The original run 38343867655 completed with payment PASS and MCP provider-admission failure against its frozen 94ad source. Preserve that run and its twelve complete output files. The current-source registration correction is already maintained; the frozen capsules above remain historical input.
+
+Use [INSTALLED_RECEIVING.md](./INSTALLED_RECEIVING.md) for the same operation's corrected source continuation. It uses the complete maintained merchant-receivables selected archive and authoritative installed manifest, checks actual provider admission, then runs both original programmes with their unchanged source hashes. Its existing Linux receiver reuses the retained SDK/MCP dependencies and full output/recovery path. This continuation does not dispatch or rerun Actions and leaves original policy restoration with its owner.

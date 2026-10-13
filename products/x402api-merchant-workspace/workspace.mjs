@@ -109,6 +109,21 @@ export async function openMerchantWorkspace({ directory, config: input, provider
     return new MerchantWorkspace({ store, config, upstream, webhookSecretsByVersion, fulfillment, clock });
   } catch (error) { await store.close(); throw error; }
 }
+/** Open saved invoices with the same complete projection and file reader.
+ * The facade has no payment or handler entry points; SQLite also enforces
+ * read-only mode beneath every retained business record.
+ */
+export async function openMerchantReview({ directory, config: input, allowLoopback = false }) {
+  need(typeof directory === 'string' && isAbsolute(directory), 'ABSOLUTE_PRIVATE_DIRECTORY_REQUIRED');
+  const config = validateConfig(input, { allowLoopback });
+  const store = await MerchantStore.open(resolve(directory), { readOnly: true });
+  const view = new MerchantWorkspace({ store, config, upstream: null,
+    webhookSecretsByVersion: {}, fulfillment: null, clock: () => Date.now() });
+  return Object.freeze({ store, config: view.config, readOnly: true,
+    publicConfig: view.publicConfig.bind(view), listOrders: view.listOrders.bind(view),
+    inspect: view.inspect.bind(view), envelope: view.envelope.bind(view),
+    result: view.result.bind(view), tick: async () => undefined, close: view.close.bind(view) });
+}
 export class MerchantWorkspace {
   constructor({ store, config, upstream, webhookSecretsByVersion, fulfillment, clock }) {
     this.store = store; this.config = config; this.upstream = upstream;
@@ -739,12 +754,11 @@ export class MerchantWorkspace {
     const order = this._order(id); need(order.state === 'COMPLETE' && order.result, 'RESULT_NOT_READY', 409);
     return new MerchantResult(order.result);
   }
-  async close() {
-    this.closing = true;
-    await Promise.allSettled([...this.locks.values()]);
+  async flushRetainedReturns() {
     // Keep the exclusive workspace lease while any actual provider return
     // still needs its original durable exchange record.
     for (const pending of [...this.providerReturns.values()]) {
+      if (this.providerReturns.get(pending.id + '\n' + pending.kind) !== pending) continue;
       await this._exchange(pending.id, pending.kind, async () => {
         throw new MerchantError('ORIGINAL_PROVIDER_RETURN_REQUIRED', 503);
       });
@@ -755,6 +769,11 @@ export class MerchantWorkspace {
       need(['RETURNED', 'COMPLETE'].includes(saved.state) && saved.sha256 === sha(returned.bytes), 'RETURN_STORAGE_PENDING', 503);
       this.returned.delete(paymentId);
     }
+  }
+  async close() {
+    this.closing = true;
+    await Promise.allSettled([...this.locks.values()]);
+    await this.flushRetainedReturns();
     await this.store.close();
   }
 }

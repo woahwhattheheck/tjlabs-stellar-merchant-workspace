@@ -1,6 +1,6 @@
 // MIT. Prepare and receive customer procedures in the original native SF47 review.
 import { planSummary, selectedPlan, validatePlanningState, validatePlanSources, usd } from './grant-plan-core.mjs';
-import { createOperatingPlan, createOperatingStep, inspectOperatingPlan, receiveOperatingPlan } from
+import { createOperatingPlan, createOperatingStep, inspectOperatingPlan, receiveOperatingPlan, compareOperatingFiles } from
   '../../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs';
 
 export const GRANT_OPERATING_SELECTION_SCHEMA = 'stellar-forge.grant-operating-selection.v1';
@@ -134,7 +134,7 @@ export function grantOperatingSelectionOf(review, source) {
 const canonicalValue = value => Array.isArray(value) ? value.map(canonicalValue) : plain(value)
   ? Object.fromEntries(Object.keys(value).sort().map(key => [key, canonicalValue(value[key])])) : value;
 const sameValue = (left, right) => JSON.stringify(canonicalValue(left)) === JSON.stringify(canonicalValue(right));
-const STEP_COMPARISON_FIELDS = ['title', 'instruction', 'inputs', 'expectedResult', 'owner', 'due', 'status', 'recordedResult', 'argv', 'selection'];
+const STEP_COMPARISON_FIELDS = ['title', 'instruction', 'inputs', 'expectedResult', 'owner', 'due', 'status', 'recordedResult', 'argv', 'selection', 'files'];
 const PLAN_COMPARISON_FIELDS = ['title', 'customer', 'purpose', 'period', 'owner', 'receiving', 'notes'];
 function receivingTime(value) {
   need(typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(value) &&
@@ -204,6 +204,8 @@ export function compareGrantOperatingReturn(source, review, incoming) {
     const before = previous.steps.find(step => step.id === item.stepId) ?? null;
     const returned = next.steps.find(step => step.id === item.stepId) ?? null;
     return { ...item, previous: copy(before), returned: copy(returned), status: returned?.status ?? 'missing',
+      filesFromPrepared: compareOperatingFiles(item.original.files ?? [], returned?.files ?? []),
+      filesFromPrevious: compareOperatingFiles(before?.files ?? [], returned?.files ?? []),
       changedFromPrepared: STEP_COMPARISON_FIELDS.filter(field => !sameValue(item.original[field], returned?.[field])),
       changedFromPrevious: STEP_COMPARISON_FIELDS.filter(field => !sameValue(before?.[field], returned?.[field])) };
   });

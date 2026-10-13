@@ -7,24 +7,28 @@ import { acquireLease } from './lease.mjs';
 import { startRozoServer } from './server.mjs';
 import { putOriginal, hashOriginalFile, receiveDelivery } from './delivery.mjs';
 import { nativeInventory } from './native-inventory.mjs';
+import { startFinanceAmendment } from './finance-amendment-native.mjs';
 import { accountantColumns, parseReturnCsv } from '../../merchant-settlement-accounting/accountant/engine.mjs';
 import { FINANCE_OPERATION, PRODUCT, jsonBytes, originalJSON, retainFinance, copyFinanceTree,
   financeFiles, financeChild, recordFinanceProcess, originalFinanceHostSources, financeUUID, openFinanceJournal } from './finance-native-support.mjs';
 
 function planInput(plan,service){
-  fields(plan,['schema','operationId','workspaceId','originId','actor','report','source','accounting','buyer','accountant','browser','handover','maintenance'],'finance receiving plan');
+  fields(plan,['schema','operationId','workspaceId','originId','actor','report','source','accounting','buyer','accountant','browser','handover','maintenance','amendment'],'finance receiving plan');
   assert(plan.schema==='stellar-forge.rozo-finance-plan.v1','FINANCE_PLAN','Use the retained complete finance plan.');
   id(plan.operationId,'finance operation');text(plan.actor,'operator',160);
   const m=service.workspace.meta();assert(plan.workspaceId===m.workspaceId&&plan.originId===m.originId,'FINANCE_PLAN_CASE','Use the original selected ROZO case.');
   assert(typeof plan.handover==='boolean','FINANCE_PLAN_HANDOVER','Choose working export or explicit permanent custody handover.');
   assert(plan.accounting&&Array.isArray(plan.accounting.codings)&&Array.isArray(plan.accounting.dispositions),'FINANCE_PLAN_ACCOUNTING','Review every selected movement and its intended coding or disposition.');
   assert(plan.maintenance?.externalWritersStopped===true,'FINANCE_PLAN_WRITERS','Confirm the original Accounting input writers are stopped for its complete native backup.');
-  assert(plan.browser?.movementId&&plan.accounting.codings.some(c=>c.movementId===plan.browser.movementId),'FINANCE_PLAN_BROWSER','Choose one planned merchant coding operation for the actual staff form.');
+  assert(plan.browser&&(plan.accounting.codings.length?plan.accounting.codings.some(c=>c.movementId===plan.browser.movementId):
+    Boolean(plan.amendment)&&plan.browser.movementId===null),'FINANCE_PLAN_BROWSER','Choose one planned merchant coding for the staff form, or retain null when a following edition has no planned coding.');
   assert(plan.accountant?.status==='REVIEWED'&&typeof plan.accountant.note==='string','FINANCE_PLAN_ACCOUNTANT','The receiving programme marks reviewed evidence only; select the explicit review note.');
+  if(plan.amendment)for(const coding of plan.accounting.codings)
+    assert(Number.isSafeInteger(coding.expectedVersion)&&coding.expectedVersion>=0,'FINANCE_PLAN_CODING_VERSION','Retain every reviewed original coding version, including zero for a new movement.');
   const facts=service.finance.report(plan.report),unique=new Set();
   for(const c of [...plan.accounting.codings,...plan.accounting.dispositions]){
     id(c.movementId);sha(c.basisSha256);assert(!unique.has(c.movementId),'FINANCE_PLAN_DUPLICATE','One original movement has two planned decisions.');unique.add(c.movementId);
-    const row=facts.movements.find(m=>m.id===c.movementId);assert(row?.basisSha256===c.basisSha256,'FINANCE_PLAN_SOURCE','A planned movement is absent or changed.');
+    const row=facts.movements.find(m=>m.id===c.movementId)??(plan.amendment&&plan.accounting.dispositions.includes(c)?service.finance.report(plan.amendment.predecessor.report).movements.find(m=>m.id===c.movementId):null);assert(row?.basisSha256===c.basisSha256,'FINANCE_PLAN_SOURCE','A planned movement is absent or changed.');
   }
   return facts;
 }
@@ -54,7 +58,7 @@ function reviewedCsv(bytes,handoff,{status,note}){
   return Buffer.from([parsed.headers,...parsed.records.map(r=>r.values)].map(row=>row.map(quote).join(',')).join('\r\n')+'\r\n');
 }
 export async function runRozoFinance({service,directory,plan,backupRoot,passEnv='STARFORGE_ACCOUNTING_BACKUP_PASSPHRASE',
-  python='python3',chromium,playwrightModule,onProgress,maintenanceContinuation=null,merchantConfig,accountingAlias}){
+  python='python3',chromium,playwrightModule,onProgress,maintenanceContinuation=null,merchantConfig,accountingAlias,previousFinanceDirectory}){
   if(maintenanceContinuation){
     fields(maintenanceContinuation,['schema','operationId','jobs'],'maintenance continuation');
     assert(maintenanceContinuation.schema==='stellar-forge.rozo-finance-maintenance-continuation.v1'&&maintenanceContinuation.operationId===plan.operationId&&maintenanceContinuation.jobs&&typeof maintenanceContinuation.jobs==='object','FINANCE_MAINTENANCE_CONTINUATION','Choose explicit following requests for this original finance programme.');
@@ -111,6 +115,7 @@ export async function runRozoFinance({service,directory,plan,backupRoot,passEnv=
       assert(previous.operationId===plan.operationId&&previous.planSha256===journal.planHash,'FINANCE_COMPLETION','The completed native result belongs to another exact plan.');
       return await packageCompleted(previous);
     }
+    const amendment=plan.amendment?await startFinanceAmendment(service,directory,plan,{previousDirectory:previousFinanceDirectory,journal}):null;
     await step('originals',async()=>{
       const current=await state();
       assert(canonical(current.accounting?.binding)===canonical(a)&&current.accounting.sourceMode==='merchant','FINANCE_OWNER','Use the configured original merchant accounting owner.');
@@ -119,7 +124,19 @@ export async function runRozoFinance({service,directory,plan,backupRoot,passEnv=
       retainFinance(join(directory,'ORIGINAL_FINANCE_STATE.json'),current);return {sourceId:captured.source.sourceId,sourceSha256:digest(captured.raw),movementCount:facts.movements.length};
     });
     const sourceId=progress.steps.originals.sourceId;
+    if(amendment&&!progress.steps['staff.amendment']){
+      server=await startRozoServer({service,host:'127.0.0.1',port:0});
+      const {runFinanceBrowser}=await import('./finance-browser.mjs');
+      await step('staff.amendment',()=>runFinanceBrowser({service,startup:server.startup,directory:join(directory,'browser'),
+        plan,chromium,playwrightModule,phase:'amendment'}));
+    }
+    if(amendment)await step('amendment.reopen.merchant',()=>invoke('amendment.reopen.merchant','finance.accounting.mutate',{
+      binding:a,nativeRevision:plan.amendment.preview.accounting.revision,command:'period.reopen',
+      payload:{closeId:amendment.selected.merchant.id,reason:plan.amendment.review.merchant.reason}}));
     const capture=await step('merchant.capture',async()=>{
+      if(progress.requests['merchant.capture'])return invoke('merchant.capture','finance.accounting.capture',progress.requests['merchant.capture'].payload);
+      if(amendment){const current=await aState();assert(current.sources.find(s=>s.id===facts.sourceId)?.acceptedCaptureId===plan.amendment.preview.accounting.parentCapture.id,
+        'FINANCE_AMENDMENT_PARENT','The accepted original source changed before its following capture.');}
       const input=clone(plan.source),preview=await finance.preview({kind:'accounting',binding:a,report:plan.report,input,actor:plan.actor});
       return invoke('merchant.capture','finance.accounting.capture',{binding:a,report:plan.report,
         input:{...input,previewSha256:preview.preview.previewSha256},nativeRevision:preview.preview.revision});
@@ -128,8 +145,8 @@ export async function runRozoFinance({service,directory,plan,backupRoot,passEnv=
     const period=await step('merchant.period',()=>invoke('merchant.period','finance.accounting.period',async()=>({
       binding:a,nativeRevision:(await aState()).revision,period:{...plan.accounting.period,select:true}})));
     const periodSelection={id:period.result.definition.id,version:period.result.version.version};
-    if(!progress.steps['staff.coding']){
-      server=await startRozoServer({service,host:'127.0.0.1',port:0});
+    if(plan.accounting.codings.length&&!progress.steps['staff.coding']){
+      if(!server)server=await startRozoServer({service,host:'127.0.0.1',port:0});
       const {runFinanceBrowser}=await import('./finance-browser.mjs');
       const coding=plan.accounting.codings.find(c=>c.movementId===plan.browser.movementId);
       await step('staff.coding',()=>runFinanceBrowser({service,startup:server.startup,directory:join(directory,'browser'),plan,coding,chromium,playwrightModule,phase:'coding'}));
@@ -137,8 +154,11 @@ export async function runRozoFinance({service,directory,plan,backupRoot,passEnv=
     for(const coding of plan.accounting.codings){
       if(coding.movementId===plan.browser.movementId)continue;
       const label='merchant.coding.'+coding.movementId;
-      await step(label,async()=>{const row=(await aState()).rows.find(r=>r.movement.id===coding.movementId);assert(row,'FINANCE_CODING','The selected original movement is absent.');
-        return aMutate(label,'coding.save',{...coding,expectedVersion:row.coding?.version??0});});
+      await step(label,async()=>{
+        if(progress.requests[label])return invoke(label,'finance.accounting.mutate',progress.requests[label].payload);
+        const row=(await aState()).rows.find(r=>r.movement.id===coding.movementId);assert(row,'FINANCE_CODING','The selected original movement is absent.');
+        if(plan.amendment)assert((row.coding?.version??0)===coding.expectedVersion,'FINANCE_CODING_CHANGED','The original coding changed after its reviewed correction plan.');
+        return aMutate(label,'coding.save',{...coding,expectedVersion:plan.amendment?coding.expectedVersion:row.coding?.version??0});});
     }
     for(const decision of plan.accounting.dispositions){
       const label='merchant.disposition.'+decision.movementId;
@@ -158,7 +178,13 @@ export async function runRozoFinance({service,directory,plan,backupRoot,passEnv=
     const merchantAccountant=await accountant('merchant.accountant','accounting',closed.result.close);
     let buyerAccountant=null;
     if(plan.buyer){
+      if(amendment)await step('amendment.reopen.buyer',()=>invoke('amendment.reopen.buyer','finance.buyer.mutate',{
+        binding:b,nativeRevision:plan.amendment.preview.buyer.revision,path:'/api/periods/'+amendment.selected.buyer.periodId+'/reopen',
+        payload:{operator:plan.actor,reason:plan.amendment.review.buyer.reason}}));
       const captured=await step('buyer.capture',async()=>{
+        if(progress.requests['buyer.capture'])return invoke('buyer.capture','finance.buyer.capture',progress.requests['buyer.capture'].payload);
+        if(amendment){const current=await bState();assert(current.sources.find(s=>s.id===plan.amendment.preview.buyer.sourceId)?.current_capture===plan.amendment.preview.buyer.currentCapture,
+          'FINANCE_AMENDMENT_PARENT','The original Buyer source changed before its following capture.');}
         const input={...plan.source,selection:plan.buyer.purchaseSelection};
         const preview=await finance.preview({kind:'buyer',binding:b,report:plan.report,input,actor:plan.actor});
         if(plan.buyer.rozoSource){
@@ -173,17 +199,36 @@ export async function runRozoFinance({service,directory,plan,backupRoot,passEnv=
       await step('buyer.accept',()=>captured.result.result.capture.status==='ACCEPTED'?{reused:true,captureId}:bMutate('buyer.accept','/api/captures/'+captureId+'/decision',{decision:'ACCEPT',reason:plan.buyer.reviewReason??plan.source.provenance,operator:plan.actor}));
       for(const center of plan.buyer.centers??[])await step('buyer.center.'+center.code,()=>bMutate('buyer.center.'+center.code,'/api/centers',center));
       if(plan.buyer.labels)await step('buyer.labels',()=>bMutate('buyer.labels','/api/labels',{assets:plan.buyer.labels}));
-      const bp=await step('buyer.period',()=>bMutate('buyer.period','/api/periods',plan.buyer.period)),periodId=bp.result.result.id;
+      const bp=await step('buyer.period',async()=>{
+        const label='buyer.period';
+        if(progress.requests[label])return invoke(label,'finance.buyer.mutate',progress.requests[label].payload);
+        const current=await bState();
+        if(amendment){
+          const original=progress.steps['amendment.reopen.buyer'].result.result;
+          const period=current.periods.find(p=>p.id===plan.buyer.period.id);
+          assert(canonical(period)===canonical(original),'FINANCE_BUYER_PERIOD_CHANGED','The original reopened Buyer period changed before its reviewed definition save.');
+        }
+        return invoke(label,'finance.buyer.mutate',{binding:b,nativeRevision:current.revision,path:'/api/periods',payload:plan.buyer.period});
+      }),periodId=bp.result.result.id;
       for(const coding of plan.buyer.codings){
         const label='buyer.coding.'+coding.movementId;
         await step(label,async()=>{
+          if(progress.requests[label])return invoke(label,'finance.buyer.mutate',progress.requests[label].payload);
+          const before=await bState();
           const items=await ownerPage(finance,b,'/api/expenses?source='+encodeURIComponent(buyerSource)),item=items.find(i=>i.row.native_detail?.rozo_movement_id===coding.movementId||i.row.request_id===coding.movementId);
           assert(item,'FINANCE_BUYER_PURCHASE','The explicitly selected original buyer movement is absent.');
-          const current=await bState(),allocations=coding.allocations.map(line=>{
+          const current=await bState();
+          assert(current.revision===before.revision,'FINANCE_BUYER_CHANGED','The original Buyer state changed during the full coding read.');
+          if(amendment){
+            const original=plan.amendment.preview.buyer.items.find(i=>i.row.native_detail?.rozo_movement_id===coding.movementId||i.row.request_id===coding.movementId);
+            assert(canonical(item.coding??null)===canonical(original?.coding??null),'FINANCE_BUYER_CODING_CHANGED','The Buyer coding changed after its reviewed correction plan.');
+          }
+          const allocations=coding.allocations.map(line=>{
             const c=current.centers.find(x=>x.id===line.center_id||x.code===line.center_code);assert(c?.active,'FINANCE_CENTER','Choose an existing active original cost center.');
             const {center_code,...rest}=line;return {...rest,center_id:c.id};
           });
-          return bMutate(label,'/api/items/'+item.id+'/coding',{basis:item.basis,recognition_date:coding.recognition_date,memo:coding.memo??'',operator:plan.actor,allocations});
+          return invoke(label,'finance.buyer.mutate',{binding:b,nativeRevision:current.revision,path:'/api/items/'+item.id+'/coding',
+            payload:{basis:item.basis,recognition_date:coding.recognition_date,memo:coding.memo??'',operator:plan.actor,allocations}});
         });
       }
       for(const decision of plan.buyer.dispositions??[]){
@@ -255,6 +300,8 @@ export async function runRozoFinance({service,directory,plan,backupRoot,passEnv=
       rozo:{archive:'files/Rozo_Workspace.zip',sha256:digest(archiveRaw),bytes:archiveRaw.length,inventory:'ROZO_INVENTORY.json',handover:plan.handover},
       accounting:{binding:a,backup:'accounting-backup',manifestSha256:backup.result.manifestSha256,passEnv,revision:final.accountingRevision,hostConfiguration:hostRecovery.identity},
       buyer:b?{binding:b,delivery:progress.steps['buyer.complete-project'].result,revision:final.buyerRevision}:null,
+      ...(amendment?{amendment:{predecessor:amendment.previous,impactSha256:plan.amendment.preview.previewSha256,review:clone(plan.amendment.review),
+        otherMerchantCloses:amendment.selected.otherMerchantCloses,otherBuyerCloses:amendment.selected.otherBuyerCloses}}:{}),
       accountant:{merchant:merchantAccountant,buyer:buyerAccountant},finalState:'FINAL_FINANCE_STATE.json'};
     retainFinance(join(directory,'FINANCE_RECEIVING.json'),descriptor);
     await step('cold.receiving',async()=>{
@@ -268,7 +315,7 @@ export async function runRozoFinance({service,directory,plan,backupRoot,passEnv=
     progress.state='complete';progress.phase='complete';save();
     const result={schema:'stellar-forge.rozo-finance-native-result.v1',operationId:plan.operationId,workspaceId:w.meta().workspaceId,
       planSha256:journal.planHash,steps:Object.keys(progress.steps),accounting:descriptor.accounting,buyer:descriptor.buyer,
-      accountant:descriptor.accountant,receiving:progress.steps['cold.receiving'],browser:progress.steps['staff.delivery'],
+      ...(descriptor.amendment?{amendment:descriptor.amendment}:{}),accountant:descriptor.accountant,receiving:progress.steps['cold.receiving'],browser:progress.steps['staff.delivery'],
       directory,completedAt:new Date().toISOString()};
     retainFinance(join(directory,'FINANCE_RESULT.json'),result);const delivered=await packageCompleted(result);onProgress?.(delivered);return delivered;
   }catch(error){if(!existsSync(join(directory,'FINANCE_RESULT.json'))){progress.state='awaiting-original-continuation';progress.error={code:error.code??'FINANCE_NATIVE',message:String(error.message)};save();}throw error;}

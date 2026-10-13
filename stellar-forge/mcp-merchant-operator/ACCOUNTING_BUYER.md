@@ -1,5 +1,10 @@
 # Buyer-only accounting through the configured MCP host
 
+## Allocation worksheet return
+
+For periods with many allocations, [ACCOUNTING-QBO-WORKSHEETS.md](ACCOUNTING-QBO-WORKSHEETS.md) provides the complete agent/client/CLI worksheet workflow. It preserves every original buyer allocation, Pending-only exclusions, explicit home-currency values, original company accounts and later local edits. Inspection and draft adoption precede the existing native plan, independent review and accountant-return operations.
+
+
 A host can now declare the original accountant as a buyer-only workspace. The
 same accounting provider retains an issued buyer period, its expense and credit
 allocations, the first accountant handoff, returned bookkeeping references and
