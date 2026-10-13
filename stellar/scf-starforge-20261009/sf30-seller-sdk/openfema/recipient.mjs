@@ -83,7 +83,7 @@ function recipientBrowserMain(createRecipientCore) {
   }
   async function flush({allowFailure=false}={}){
     clearTimeout(timer);timer=null;
-    try{await queue;await persistCurrent();}catch(e){storageFailure=e;if(!allowFailure)throw e;}
+    try{await queue.catch(()=>{});await persistCurrent();}catch(e){storageFailure=e;if(!allowFailure)throw e;}
   }
   async function adopt(candidate,{separate=false}={}){
     const next={...candidate,preparation:normalizePreparation(candidate.preparation,candidate.project)};

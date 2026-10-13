@@ -1,12 +1,15 @@
 /* Same original Event column editor, complete independent file receiving. */
 (()=>{
   const $=id=>document.getElementById(id);
-  let editor,ready=false,dirty=false;
+  let editor,ready=false,dirty=false,storageUnavailable=false;
   const LIMIT=128*1024*1024;
-  function message(text,error=false){$('editor-status').textContent=text;$('editor-status').dataset.error=String(error);}
+  function message(text,error=false){
+    if(storageUnavailable&&!text.includes(CHOICE_STORAGE_WARNING))text+=' '+CHOICE_STORAGE_WARNING;
+    $('editor-status').textContent=text;$('editor-status').dataset.error=String(error||storageUnavailable);
+  }
   function safeJSON(value){return JSON.stringify(value).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');}
   function file(raw,name,type){
-    if(new TextEncoder().encode(raw).byteLength>LIMIT)throw Error('This complete editable file exceeds 128 MiB. Download the original JSON choices and keep this window open.');
+    if(new TextEncoder().encode(raw).byteLength>LIMIT)throw Error('This complete editable file exceeds 128 MiB. Keep this window open; no work has been removed. Complete choices can be returned only within their separate 16 MiB allowance.');
     const url=URL.createObjectURL(new Blob([raw],{type})),a=document.createElement('a');
     a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
   }
@@ -44,7 +47,7 @@
     }
     $('editor-original').textContent=JSON.stringify(context,null,2);
     editor=createEventWorkbookColumnReview($('editor-root'),{
-      onChange:()=>{if(ready){dirty=true;message('Unfinished choices changed. Save editable worksheet to retain this complete edition.');}},
+      onChange:(_columns,retention)=>{if(typeof retention?.retained==='boolean')storageUnavailable=!retention.retained;if(ready){dirty=true;message('Unfinished choices changed. Save editable worksheet to retain this complete edition.');}},
       onMessage:message,onEditableDownload:save
     });
     editor.open(context,{columns:choices.columns});

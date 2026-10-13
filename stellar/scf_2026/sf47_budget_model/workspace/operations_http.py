@@ -53,6 +53,10 @@ def register_static(static):
                    "/forecast-workbook-host.mjs": ("forecast-workbook-host.mjs", "text/javascript; charset=utf-8"),
                    "/forecast-workbook.css": ("forecast-workbook.css", "text/css; charset=utf-8"),
                    "/FORECAST_WORKBOOK.md": ("FORECAST_WORKBOOK.md", "text/markdown; charset=utf-8")})
+    static.update({"/forecast-cash-reconciliation.mjs": ("forecast-cash-reconciliation.mjs", "text/javascript; charset=utf-8"),
+                   "/forecast-cash-reconciliation-desk.mjs": ("forecast-cash-reconciliation-desk.mjs", "text/javascript; charset=utf-8"),
+                   "/forecast-cash-reconciliation.css": ("forecast-cash-reconciliation.css", "text/css; charset=utf-8"),
+                   "/FORECAST_CASH_RECONCILIATION.md": ("FORECAST_CASH_RECONCILIATION.md", "text/markdown; charset=utf-8")})
     static["/forecast-comparison.mjs"] = ("forecast-comparison.mjs", "text/javascript; charset=utf-8")
     static["/FORECAST_COMPARISON.md"] = ("FORECAST_COMPARISON.md", "text/markdown; charset=utf-8")
     static["/operations_lazy.mjs"] = ("operations_lazy.mjs", "text/javascript; charset=utf-8")
