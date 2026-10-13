@@ -145,6 +145,38 @@
           "bytes": 8795
         }
       ]
+    },
+    {
+      "id": "canadabuys-partner-response-collaboration",
+      "label": "Complete native partner response, explicit review and original-workspace receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/response-review/README.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "ffc49811e6c275c94f969fbcd04ae6d6e40dd2a0",
+          "git_blob": "f0de46b4ede7dfc8e5be644ae05b319933deb26e",
+          "sha256": "e02a7951a5b989cb849dd334907db784512e1ef91ffc3d8d41ee7a1a5b5de509",
+          "bytes": 12729
+        }
+      ]
+    },
+    {
+      "id": "canadabuys-partner-response-offline-editor",
+      "label": "Complete hosted and offline response editor, original attachments and saved-customer course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/response-review/UI_GUIDE.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "ffc49811e6c275c94f969fbcd04ae6d6e40dd2a0",
+          "git_blob": "919ea92da411ef4412cf8ec66d1a93271ad5177d",
+          "sha256": "1d651ea3b19c41dc3dc502912ec11164608e22c411a1c54c6b401bcc16d68b7c",
+          "bytes": 12829
+        }
+      ]
     }
   ]
 }
