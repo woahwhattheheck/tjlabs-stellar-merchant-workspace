@@ -419,6 +419,44 @@ Every row selects the complete file at the merged commit above. The earlier 105 
 | [Original Merchant operator with awaited dedicated admission](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a/stellar-forge/mcp-merchant-operator/operator.mjs) | 22,474 | `a4c1855471495fe8174c1ccebe5185d8df98e9f82e8c029c07847f80bc18a5c1` | `ea70a1a2613a6256938fc052b8f69316f5ba2665` |
 | [Current complete fleet selection including runtime output procedures](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a/stellar/scf-starforge-20261009/distribution/selections/merchant-fleet.json) | 6,496 | `1caa058f3bc898a2161743b019fe7504f4bc0d481149a6b843f16da77183fbff` | `a0205f3ca990811daa8966c1d6f8ecc626d984b4` |
 
+### Resume the original dedicated host setup
+
+A machine interruption during first setup can leave a valid private root before the final Merchant configuration exists. [Merged PR1961](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/1961) makes that installation resumable through the same `recovery-host-handoffs` initializer introduced above. The operator keeps the original directory, complete trusted connection and name, reads their retained setup, and explicitly continues that same installation.
+
+Use `operation: "inspect"` in the existing private setup options to read recorded status without starting a host or writing state. Use `operation: "resume"` to continue an incomplete recorded setup. A completed resume rechecks the exact original connection bytes, saved configuration and dedicated empty release store, then returns the original result. The [complete source guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/126f96adc2f2ccf956e660662eb8a4ebaac6dc38/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/HOST_HANDOFF_MCP.md) gives the original `init-provider` command, full options and status-specific continuation.
+
+Before publishing the operator root, setup retains the complete source/configuration intent and the identity of its own private staging directory. Final publication uses the existing delivery lease and native no-replace helper. An unrelated directory, including an empty directory at the intended path, is refused. After an interrupted write, complete retained files and stages remain available; a retry neither replaces a foreign root nor resets populated release history.
+
+The private sibling `.merchant-host-setup-<directory digest>` belongs with the original operator root. Preserve both at their original paths. Its complete retained source permits inspection when the current connection has moved or changed, but explicit resume requires the original bytes. Preserve both source editions and restore the intended source only as a deliberate operator decision. The original provider also keeps these setup controls outside selected capture, restore and adoption roots.
+
+**Installed receiving.** The existing `merchant-recovery` contribution now selects the complete setup helper, native publisher, initializer, typed API and receiving command. The canonical `merchant-fleet` selection continues to include both that recovery contribution and the Runtime output-to-procedure capability. On the original equipped Linux host, use its normal private permissions and run:
+
+~~~sh
+merchant-recovery-host-setup-receive \
+  --options /ACTUAL/private/setup.json \
+  --output /ACTUAL/private/setup-observations
+~~~
+
+The complete receiving course inspects the retained setup, initializes or resumes it, opens the actual dedicated Merchant provider, reads its host inventory, closes the owner and cold-opens it again. It retains every invocation and checks that original configuration and release bytes survive completed resume. Continue this within the existing host receiving operation. The course does not create another host capture or adoption.
+
+**Evidence boundary.** All nine complete implementation files were merged and independently read back at `126f96adc2f2ccf956e660662eb8a4ebaac6dc38`. Actual JavaScript initializer and original release-store functions were exercised with explicit filesystem/native-interface adapters through eight interrupted publication stages, changed-source and changed-root refusal, unrelated-root refusal, read-only inspection and populated-release refusal. Those are source-level observations. Actual Linux leases, Python publication, installed provider execution and any rendered customer journey remain to be recorded by the original equipped receiving owner. This addition keeps the existing grant packages, budgets and acceptance clocks.
+
+#### Complete setup continuation source edition
+
+The preceding 113 source IDs and every earlier measured edition remain. Five existing sources gain the complete merged setup edition, and four new optional sources preserve reopening of older chapter editions. This current chapter selects all 117 recovery source IDs.
+
+| Complete source | Bytes | SHA-256 | Git blob |
+| --- | ---: | --- | --- |
+| [host-handoff-setup-state.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/126f96adc2f2ccf956e660662eb8a4ebaac6dc38/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-setup-state.mjs) | 18,409 | `bf753e223b08b82bb35ce7c4d76eea6d3fb9e019b19651b1432a75a07791eaef` | `8bdb906abc374c2494fd004700f02d04aa434b32` |
+| [host-handoff-setup-root.py](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/126f96adc2f2ccf956e660662eb8a4ebaac6dc38/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-setup-root.py) | 6,434 | `898b8d69d39c1cfddbcaebe1ce29ce498ba599bde2615001fea71ec1880fd8a5` | `e34496d25874a716dcb4e6652314fdff6e02f38b` |
+| [host-handoff-merchant-setup.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/126f96adc2f2ccf956e660662eb8a4ebaac6dc38/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant-setup.mjs) | 5,108 | `8582459abcde90725d1c0cc3d44e0bc940be9257a96b2fbee41e82e35719eed0` | `423fb232ea8ffd0fc47bcc01480ca278dc0968a9` |
+| [host-handoff-merchant.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/126f96adc2f2ccf956e660662eb8a4ebaac6dc38/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant.mjs) | 27,152 | `93c76f7f82d07ee2eb3577c3dc4b4c3900e559095329250707950f353a11e737` | `0249f09bf3a1dd66e8647850f44e0a5e64f953c8` |
+| [host-handoff-merchant-setup.d.mts](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/126f96adc2f2ccf956e660662eb8a4ebaac6dc38/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant-setup.d.mts) | 1,570 | `30b13d651aa554e11f7e175cb82b620c4c43a1b883696d5395a80ef71062c338` | `25ce71c2a2452762a6429218614b50a659fcc0a4` |
+| [host-handoff-merchant.d.mts](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/126f96adc2f2ccf956e660662eb8a4ebaac6dc38/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant.d.mts) | 5,500 | `614f62eb8e4cd7fc474806c13eafe6fcdcb9607e70830c056b920f40b42dcb60` | `bde8b7ddc75324a86ddef1fb91c0e5de28715fa6` |
+| [HOST_HANDOFF_MCP.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/126f96adc2f2ccf956e660662eb8a4ebaac6dc38/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/HOST_HANDOFF_MCP.md) | 19,281 | `1bbc521a38459f4a0772cb8813761c8ccf0301dde6e6d19f17b31c47ec05df0a` | `0958e744741b4751d96be757faf649ae60317ed3` |
+| [HOST_SETUP_RECEIVE.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/126f96adc2f2ccf956e660662eb8a4ebaac6dc38/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/receiving/HOST_SETUP_RECEIVE.mjs) | 7,776 | `81ba97331ef8594afd473a42167927541ebd36dac2859dba8f78ba238a43be0c` | `f06b99d839bd2fddbe6e16896183066202581520` |
+| [merchant-recovery.json](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/126f96adc2f2ccf956e660662eb8a4ebaac6dc38/stellar/scf-starforge-20261009/distribution/contributions/merchant-recovery.json) | 6,000 | `507f301a516ea82ceb1603aa8627194042011691c28cb4e7d09bc17e6a2bcb58` | `c44202aba6dbbcf31427383364f57eeb71c9c6e2` |
+
 ### Receive incidents without replaying notifications
 
 A source incident store can remain live while its complete snapshot is copied. Under the original short transaction lease, snapshot pins the reviewed raw state and all native capture references. Ordinary capture collection honors those pins while the watcher advances. An interrupted copy resumes that frozen selection. An unwanted incomplete snapshot is released only through its explicit abandonment operation with the original pin and operator reason.
