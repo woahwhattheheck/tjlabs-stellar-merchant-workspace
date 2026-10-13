@@ -213,9 +213,9 @@
         "path": "stellar/scf-starforge-20261009/distribution/contributions/human-services-directory-connected.json",
         "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
         "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
-        "bytes": 10845,
-        "sha256": "15b18413d3d6edcc68c54560338ef3ab93d881a792fe4def030098d6eb3a2671",
-        "git_blob": "a15d3eb184f6bf618323f4321c78af1b3c94d943"
+        "bytes": 10583,
+        "sha256": "8542e457a97b0f7a70bcc494fa9daebaee1774698896765f94aba967c185a129",
+        "git_blob": "445ab5ac6dd5184600b02ac9f78d894d1e789e6f"
       },
       {
         "id": "directory-reconciliation-native-course",
