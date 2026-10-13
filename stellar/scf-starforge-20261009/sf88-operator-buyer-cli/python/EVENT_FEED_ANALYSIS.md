@@ -267,3 +267,99 @@ for the original authority, page economics, customer handover and SCF allocation
 The source-document parser checks original file identity and full event/page
 history. The application uses native view revisions, report publication IDs,
 workbook refresh reviews and the existing archive receiver for continuity.
+
+## Explore the complete original payload before mapping
+
+In **Event programmes**, choose the retained complete source pair and open
+**Explore the original payload fields → Inspect complete source**. This reads
+the same original NDJSON/manifest through the installed source receiver. It
+validates the whole source pair before reporting actual payload paths.
+
+The catalogue covers every event in the selected window. Each JSON Pointer has
+present and missing counts and separate null/string/number/boolean/object/array
+counts. A path that is absent in an event remains missing; a present JSON null
+has its own count. Arrays retain actual index paths. Escaped slash and tilde
+keys retain their original JSON Pointer meaning. An empty complete window has
+zero paths and zero events; it can still use the accepted customer mapping.
+
+Search paths or kinds, page through the complete catalogue and choose **Use
+field**. The suggested output name is editable in the existing mapping table.
+Select only fields useful to the agreed customer task. Existing native limits
+remain: 100 selected fields, 48-character output names, 2,000-character payload
+pointers and distinct names outside the original metadata columns. A longer
+discovered path remains visible in the full catalogue; select a useful parent
+within the native mapping allowance.
+
+Catalogue examples are short previews, not the field's complete value.
+Container examples describe their member count. **Open original values** reads
+a page from the exact original event order, showing each event identity,
+sequence, type, payload digest and complete selected value. The original native
+JSON semantics match the existing projector; exact strings remain exact strings.
+Missing and null remain separate. Earlier/later event controls retain the same
+source and pointer. Download the complete selected value page or the whole
+catalogue, including every source/file identity.
+
+**Download complete mapping** saves the whole selected field list with its
+original workspace, input, source edition and both file identities. **Open
+selected mapping** accepts that exact original source selection and replaces the
+editable field list only after the complete import is read and matched. For a
+later useful source window, **Use accepted field mapping** reuses the actual
+accepted programme choices. A different input never silently rebinds an imported
+mapping. Unsaved browser field work retains the existing draft behavior.
+
+Continue **Review complete source window** and inspect the actual native
+review. Inspection and mapping preparation leave acceptance with the existing
+explicit review/apply operation. The original source files, programme,
+customer report/workbook and payment history retain their identities.
+
+### Original CLI and private API
+
+The same installed source CLI supplies the complete catalogue:
+
+~~~sh
+node event-feed/analysis-source-cli.mjs --ndjson ORIGINAL.ndjson --manifest ORIGINAL.manifest.json --inspect-fields true
+~~~
+
+Read complete values from original event offset 0:
+
+~~~sh
+node event-feed/analysis-source-cli.mjs --ndjson ORIGINAL.ndjson --manifest ORIGINAL.manifest.json --field-values '/amount' --offset 0 --limit 25
+~~~
+
+An empty pointer selects the whole payload. Offsets count original events,
+including events where the selected path is missing. Select the returned
+next_offset to continue; a terminal page has next_offset:null. These source-only
+commands return complete JSON to stdout and preserve their original files.
+
+The existing private capability protects GET
+/api/event-programmes/inputs/INPUT_ID/fields and POST
+/api/event-programmes/inputs/INPUT_ID/inspect. The latter body is
+{"pointer":"/amount","offset":0,"limit":25}. Source inspection uses the same
+coordinator executor, which is joined on workspace close, and the exact local
+receiver code. Browser or agent data cannot choose an executable path.
+
+Whole inspections reject excess capacity instead of omitting paths or events.
+The catalogue supports 10,000 distinct paths and a complete 16 MiB response.
+Value pages support one to 100 original events and the full existing response
+allowance; choose a smaller page when necessary. The original manual mapping
+and source files remain available when a source is too broad for discovery.
+
+
+### Operate the actual explorer and complete returned mapping
+
+In the same original receiving course, open the exact outgoing browser, inspect
+its complete source, search a real path, read present/missing/null/mixed-kind
+coverage, select and rename useful fields, and open complete original values.
+Download the full catalogue, value page and mapping. Reopen each JSON file,
+import the same mapping, continue native review/apply, and confirm the actual
+customer report/workbook still receives every selected event. Open a complete
+empty window and the actual invalid-selection/error state without replacing
+the original customer source.
+
+The producer must LOOK at the actual desktop/screenshare and relevant narrow
+screens, operate the important controls, and open every outgoing attachment
+as its recipient. View captured screenshots and repair concrete layout or
+behavior defects in the same source. Source-only execution is separate from
+this actual native/rendered course. Return the exact source edition, original
+workspace/input/programme IDs, complete downloads and real screens to the
+existing receiving owner; preserve the same original operation and deadline.

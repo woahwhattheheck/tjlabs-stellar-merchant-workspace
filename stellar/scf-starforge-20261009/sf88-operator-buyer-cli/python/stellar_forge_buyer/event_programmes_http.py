@@ -22,6 +22,8 @@ def get(handler, workspace, url, query, parts):
                               limit=int(value("limit")) if value("limit") else 25)
     elif len(parts) == 4 and parts[2] == "inputs" and not query:
         result = api.input_status(parts[3])
+    elif len(parts) == 5 and parts[2] == "inputs" and parts[4] == "fields" and not query:
+        result = api.inspect_input(parts[3])
     elif len(parts) == 4 and parts[2] == "actions" and not query:
         result = api.action(parts[3])
     elif len(parts) == 4 and parts[2] == "named" and not query:
@@ -42,6 +44,11 @@ def post(handler, workspace, url, parts, body):
     api = workspace.event_programmes
     if len(parts) == 3 and parts[2] == "inputs":
         result = api.create_input(body)
+    elif len(parts) == 5 and parts[2] == "inputs" and parts[4] == "inspect":
+        if not isinstance(body, dict) or set(body) - {"pointer", "offset", "limit"} or "pointer" not in body:
+            raise StateError("EVENT_PROGRAMME_FIELD_PAGE_INVALID")
+        result = api.inspect_input(parts[3], pointer=body["pointer"],
+                                   offset=body.get("offset", 0), limit=body.get("limit", 25))
     elif len(parts) == 5 and parts[2] == "inputs":
         result = api.chunk(parts[3], parts[4], body)
     elif len(parts) == 5 and parts[2] == "named" and parts[4] == "actions":

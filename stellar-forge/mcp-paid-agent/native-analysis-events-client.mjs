@@ -124,3 +124,30 @@ export async function readNativeAnalysisEventRecord(options={}){
  // Original JSON tokens remain intact. The caller chooses its lossless parser.
  return {record:{...selected},bytes:raw,text:new TextDecoder('utf-8',{fatal:true}).decode(raw)};
 }
+
+
+async function completeInspection(options,operation,selection,schema){
+ need(EVENT_ID.test(options.inputId??'')&&EVENT_ID.test(options.expectedWorkspaceId??''),'INPUT_IDENTITY_REQUIRED');
+ const client=await nativeEventConnection(options),result=await client.call(operation,{id:options.inputId,...selection},{signal:options.signal});
+ need(result?.workspace_id===options.expectedWorkspaceId&&result.input_id===options.inputId&&result.schema===schema&&
+ result.complete_record?.record_id===options.inputId&&result.complete_record.workspace_id===options.expectedWorkspaceId&&
+ result.complete_record.kind===(operation==='event-input-fields'?'fields':'values'),'INPUT_INSPECTION_CHANGED');
+ const full=await readNativeAnalysisEventRecord({...options,url:undefined,client,record:result.complete_record});
+ const value=JSON.parse(full.text);
+ need(value.schema===schema&&value.workspace_id===options.expectedWorkspaceId&&value.input_id===options.inputId&&
+ value.edition_id===result.edition_id&&eventCanonical(value.original_files)===eventCanonical(result.original_files),
+ 'INPUT_INSPECTION_CHANGED');
+ if(operation==='event-input-fields')need(Array.isArray(value.fields)&&value.field_count===value.fields.length,'COMPLETE_FIELDS_REQUIRED');
+ else need(value.pointer===selection.pointer&&value.offset===selection.offset&&value.limit===selection.limit&&
+ Array.isArray(value.rows),'FIELD_VALUES_CHANGED');
+ return {...full,value};
+}
+/** Receive the complete source catalogue, including every exact path and preview descriptor. */
+export function inspectNativeAnalysisEventFields(options={}){
+ return completeInspection(options,'event-input-fields',{},'stellar-forge.event-feed-payload-fields.v1');
+}
+/** Receive one full original event page with complete native text values. */
+export function inspectNativeAnalysisEventFieldValues(options={}){
+ const selected={pointer:options.pointer,offset:options.offset??0,limit:options.limit??25};
+ return completeInspection(options,'event-input-values',selected,'stellar-forge.event-feed-payload-values.v1');
+}
