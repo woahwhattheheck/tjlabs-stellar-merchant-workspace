@@ -265,6 +265,14 @@ Follow the original transaction from approved request or customer quotation thro
 
 The reusable operating foundation is already supplied by the maintained products. A commissioned installation adapts its actual source formats, identity and accounting mappings, native payment configuration, supervision and receiving application. Technical receiving finishes when another accountable engineer opens the full operating state and completes the agreed continuation.
 
+## Completed original financial receiving
+
+The [complete reviewer walkthrough](../../stellar-forge/developer-site/dist/grant-data/financial-walkthrough.md#review-the-completed-invoice-and-merchant-interface-operation) now includes the returned original invoice-wallet and authenticated MerchantAccounting HTTP/MCP operation. The [installed result JSON](../../stellar-forge/developer-site/dist/grant-data/financial-native-result.json) retains both original summaries, exact source/correction, run references and all nine customer-file identities.
+
+On the frozen 94ad1dd3 source, PAYMENT_CHECK completed seven workflows with original SDK-generated transaction/result XDR through the native RPC transport. The corrected MCP continuation completed eight workflows, including archived quotation recovery after aliases changed, exact invoice issue, retained wallet observation and cancellation, receipt/credit correction, interrupted full-file receiving and cold reopening. Its USD 100.00 invoice finished with USD 25.00 credit, USD 75.00 paid and zero due.
+
+Use the walkthrough's ordered account review when presenting these results. The first run's payment PASS and MCP registration failure remain in their original packet; the successful MCP continuation records the three exact startup repairs. The current public 8aed042e release and selected installed customer packages retain their own source and receiving history. Network-purchase counts and independent-customer measures continue to use their original registers.
+
 ## Original product sources
 
 | Original component | Complete source and operating procedure |

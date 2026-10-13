@@ -1,0 +1,199 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "odr-review-workspace",
+  "heading": "## Source-bound service review and Alpha workspaces",
+  "sources": [
+    {
+      "id": "odr-workspace-operating",
+      "label": "Complete original-source operating guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/odr-workspace/SCF.md",
+      "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+      "editions": [
+        {
+          "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+          "git_blob": "abdcee7ce0b8d9d37776deb4abfeeaca42133125",
+          "sha256": "f79387307b3c7fa05b8c731db0c8c3f155b3a8894a6c47d8e863ac1ed71b93db",
+          "bytes": 5853
+        }
+      ]
+    },
+    {
+      "id": "odr-workspace-native-contract",
+      "label": "Exact source, lifecycle and managed-save contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/odr-workspace/native/API.md",
+      "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+      "editions": [
+        {
+          "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+          "git_blob": "f21f96d72945fca4ce168c81b7b8462cfa334088",
+          "sha256": "446f07e0c0e62183e5e7a0ed018e1834677104245fd6b624d3521b2cc9518b41",
+          "bytes": 6351
+        }
+      ]
+    },
+    {
+      "id": "odr-workspace-installation",
+      "label": "Complete ODR review Customer Installation profile",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/odr-source-review.json",
+      "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+      "editions": [
+        {
+          "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+          "git_blob": "7032e67d7c176b2f48a59c603efb978d8f40afc0",
+          "sha256": "c69328252289c7d666515ea36d0c51e8049d32a175caca7969bc317c9ef863fc",
+          "bytes": 6538
+        }
+      ]
+    },
+    {
+      "id": "odr-workspace-commissioning",
+      "label": "Original Workshare and Installation commissioning",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/odr-workspace/commission.mjs",
+      "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+      "editions": [
+        {
+          "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+          "git_blob": "017fcbd5821e2d84d496b5faabe3305a432535d3",
+          "sha256": "7092ad77109e65dcf962746a1ba2ac038a84e8e80168361d4388191d21ca1af4",
+          "bytes": 9001
+        }
+      ]
+    },
+    {
+      "id": "odr-workspace-domain-host",
+      "label": "Original selected kernel and committed handover engine",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/odr-workspace/native/engine.mjs",
+      "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+      "editions": [
+        {
+          "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+          "git_blob": "e23cbc52378935320ed5b811ee461d2a862011ac",
+          "sha256": "4903ffc362a8f9cf9d12ccbdae42b18eac4e662999714c23b51b6bcab1bccb01",
+          "bytes": 12219
+        }
+      ]
+    },
+    {
+      "id": "odr-workspace-managed-host",
+      "label": "Source-bound managed original UI and concurrent saves",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/odr-workspace/native/host.mjs",
+      "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+      "editions": [
+        {
+          "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+          "git_blob": "50fd32f758a5533af80abd1a08bf062ea7e92c91",
+          "sha256": "5db1a874702a86f283b7ba840f2dae4db5a690eb45c5593f20f7c0f1a82139f5",
+          "bytes": 7387
+        }
+      ]
+    },
+    {
+      "id": "odr-workspace-lifecycle",
+      "label": "Complete source preparation, adoption, snapshot and receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/odr-workspace/native/manage.py",
+      "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+      "editions": [
+        {
+          "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+          "git_blob": "b3baee78fdd6bb37aba7c879437c82aa54142aed",
+          "sha256": "62bbe129e15754a7398e35b05815e2a2665e87a53605bc0709704dab6c69b47d",
+          "bytes": 19516
+        }
+      ]
+    },
+    {
+      "id": "odr-workspace-applications",
+      "label": "Original direct-child application and source readiness",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/odr-workspace/application.mjs",
+      "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+      "editions": [
+        {
+          "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+          "git_blob": "5455650056ce6d3353831892f9839846a1fc07cf",
+          "sha256": "ab67d84cc35d8820d821a1805587c2a57ee9eecddb28b3b611589befa22638b0",
+          "bytes": 9628
+        }
+      ]
+    },
+    {
+      "id": "odr-workspace-merchant",
+      "label": "Configured Merchant workspace and original operation binding",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/odr-workspace/workspace.mjs",
+      "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+      "editions": [
+        {
+          "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+          "git_blob": "5b901ae0402dfa327b5d58047b939d486d3b7194",
+          "sha256": "d26f902e8ab92f62e9cf3d6a2e78e50a41db290a4d64c8167d4fd736dfd7b66b",
+          "bytes": 9284
+        }
+      ]
+    },
+    {
+      "id": "odr-workspace-contribution",
+      "label": "Complete distribution, commands, Applications and MCP declaration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/odr-workspace.json",
+      "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+      "editions": [
+        {
+          "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+          "git_blob": "93199427cb22e2d9e59066674d12be5d957911a9",
+          "sha256": "9ea1c1b4acdb3f93a6986295efabc22407339a6c50737781527529868f987549",
+          "bytes": 1814
+        }
+      ]
+    },
+    {
+      "id": "odr-workspace-receiving-guide",
+      "label": "Complete installed receiving and onward operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/odr-workspace/receiving/README.md",
+      "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+      "editions": [
+        {
+          "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+          "git_blob": "b673201e7fc0a829153cf695f5ffd1c0615fd581",
+          "sha256": "de3debef4b4ac6dac5aadd87157856a0338e46adee61a652f7dbb367d8cfe981",
+          "bytes": 3360
+        }
+      ]
+    },
+    {
+      "id": "odr-workspace-complete-receiver",
+      "label": "Complete selected product and framework source capsule",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": ".swarm-delivery/odr-original-installation-64b7-20261013/ODR_Installed_Source.json",
+      "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+      "editions": [
+        {
+          "commit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+          "git_blob": "f39e6cce7586814b4fc6f7c154d3844317a5e4e1",
+          "sha256": "bbe23e8762de18decbc8755eccdf2f727c2e7c25542a8dd2ea11ca03d7a2718e",
+          "bytes": 244934
+        }
+      ]
+    }
+  ]
+}

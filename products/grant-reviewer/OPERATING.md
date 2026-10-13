@@ -95,6 +95,8 @@ Choose **Financial walkthrough** at **/grant-financial-walkthrough.html**. The c
 
 The guide includes the source-owned portable opener for the completed customer billing case. Open its retained **Freeform Solutions** schedule, the paid first USD 4,400 invoice and the later USD 4,400 invoice still open. Both saved planning databases and the original accounting state completed repack, independent receiving and reopening. The chosen example's invoice, receipt and allocation identities remain attached to that operated account.
 
+The same guide now carries **Review the completed invoice and merchant-interface operation**, with seven original payment workflows and eight authenticated HTTP/MCP workflows at their pinned 94ad source. Follow the exact customer invoice, USD 25 credit, corrected USD 75 receipt, zero amount due, original quote recovery and complete retained files through reopening. Download [financial-native-result.json](../../stellar-forge/developer-site/dist/grant-data/financial-native-result.json) for the complete original summaries and source identities. These development programmes retain their explicit SDK-generated and controlled RPC inputs; the retained purchase workbench below continues its original observed network purchase.
+
 Use the guide's contents rail to move between the actual product tasks. Download its complete Markdown or print the readable page through the browser. Its installed product table identifies which attached Runtime supplies each command and Application. The original accounting state, dates, source files and single writer continue through those views.
 
 For an accepted guide revision, edit **grant-data/financial-walkthrough.md**, then regenerate its page and file identities:
