@@ -242,7 +242,14 @@ class BrowserReceiving{
     need(await cases.inputValue()===this.input.caseId,'The browser opened a different original operating case.');
     await this.page.locator('input[name="recordingActor"]').fill(this.input.actor);
     await this.page.waitForFunction(()=>document.querySelector('.operations')?.getAttribute('aria-busy')!=='true');
-    await this.page.locator('[data-ops-tab="installations"]').click();
+    const navigation=this.page.locator('[data-ops-navigation]');
+    await navigation.waitFor({state:'visible'});
+    const toggle=navigation.locator('[data-nav-toggle]');
+    if(await toggle.isVisible()&&await toggle.getAttribute('aria-expanded')==='false')await toggle.click();
+    const group=navigation.locator('details[data-nav-group]:has([data-nav-section="installations"])');
+    need(await group.count()===1,'Keep the original Installation section in its current navigation group.');
+    if(await group.getAttribute('open')===null)await group.locator(':scope > summary').click();
+    await group.locator('[data-nav-section="installations"]').click();
     const recovery=this.page.locator('[data-installation-action="recover"]');
     if(await recovery.count()){
       const retained=await this.installationSession();

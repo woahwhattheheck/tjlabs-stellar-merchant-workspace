@@ -15,6 +15,9 @@ from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static.update({"/operations_navigation.mjs": ("operations_navigation.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_navigation_ui.mjs": ("operations_navigation_ui.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_navigation.css": ("operations_navigation.css", "text/css; charset=utf-8")})
     installation_sources.register_static(static)
     static.update({
         "/operations_procedures.mjs": ("operations_procedures.mjs", "text/javascript; charset=utf-8"),

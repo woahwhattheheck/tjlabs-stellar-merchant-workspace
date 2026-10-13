@@ -1,16 +1,18 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "ckan",
-  "description": "CKAN capture, reviewed refresh and complete merchant workspace receiving",
+  "description": "CKAN and DCAT catalog workspaces with complete migration review, release selection and customer receiving",
   "commands": {
     "ckan": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/cli.mjs",
     "ckan-publisher": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/publisher/cli.mjs",
-    "ckan-agent": "stellar-forge/mcp-merchant-operator/ckan-workspace-launcher.mjs"
+    "ckan-agent": "stellar-forge/mcp-merchant-operator/ckan-workspace-launcher.mjs",
+    "dcat": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-cli.mjs"
   },
   "commandDescriptions": {
     "ckan": "Capture complete sources, review editions and refresh decisions, publish and receive CKAN workspaces",
     "ckan-publisher": "Review and publish complete DataStore editions and buyer handoffs",
-    "ckan-agent": "Operate one saved CKAN project through its browser and authenticated merchant tools"
+    "ckan-agent": "Operate one saved CKAN project through its browser and authenticated merchant tools",
+    "dcat": "Preserve original DCAT catalogs, review complete migrations and corrections, select releases, roll back and receive whole workspaces"
   },
   "exports": {
     "./seller/ckan": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/source.mjs",
@@ -25,9 +27,15 @@
     "./seller/ckan/capture/received": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/retained-public-source.mjs",
     "./seller/ckan/workspace/archive": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/archive.mjs",
     "./seller/ckan/workspace/refresh": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/reviewed-refresh.mjs",
-    "./seller/ckan/refresh": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/refresh.mjs"
+    "./seller/ckan/refresh": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/refresh.mjs",
+    "./seller/dcat/workspace": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-workspace.mjs"
   },
   "applicationProviders": {
     "ckan": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/application-provider.mjs"
-  }
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/vendor/gsa-dcat-us/jsonschema/poetry.lock",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/portable-runtime-requirements.txt",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/PORTABLE_RUNTIME.md"
+  ]
 }
