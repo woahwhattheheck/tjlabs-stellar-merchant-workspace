@@ -246,13 +246,13 @@ def prepare(config):
         for key in ("python", "node"):
             need(Path(config[key]["path"]).resolve(strict=True) == Path(config[key]["path"]),
                  "Select the canonical executable file, not a symlink alias.")
-            _raw, runtime_info = owner.checked(config[key])
+            _identity, runtime_info = owner.checked_fingerprint(config[key])
             need(stat.S_IMODE(runtime_info.st_mode) & 0o111, "Select executable native runtimes.")
         need(Path(sys.executable).resolve(strict=True) == Path(config["python"]["path"]).resolve(strict=True),
              "Run preparation with the exact selected Python.")
         for name, digest in (("playwrightModule", "playwrightSha256"), ("executablePath", "executableSha256")):
-            raw, info = owner.read(config["browser"][name], 512 * 1024 * 1024)
-            need(owner.sha(raw) == config["browser"][digest], "The selected browser runtime changed.")
+            identity, info = owner.fingerprint(config["browser"][name])
+            need(identity["sha256"] == config["browser"][digest], "The selected browser runtime changed.")
             if name == "executablePath":
                 need(stat.S_IMODE(info.st_mode) & 0o111, "Select executable Chromium.")
         if config.get("library") is not None:

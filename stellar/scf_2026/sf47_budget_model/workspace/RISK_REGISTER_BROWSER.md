@@ -246,3 +246,20 @@ its actual host cold reopen. The browser module itself starts or stops no host.
 
 Source is prepared until Engineer's original integrated execution returns the
 actual outputs. Parsing and source review are not browser execution receipts.
+
+
+## Retained execution correction after native memory exhaustion
+
+Runtime and installed-source identity reads now hash the entire file in 128 KiB chunks. They still verify exact original byte length, SHA-256, permissions, device/inode and nanosecond modification/change metadata against the reopened path. JSON and other actual content consumers retain their complete bounded bytes. The Node and Chromium executables are never retained as raw buffers merely to check their identities.
+
+The ordinary selected-source path and stable browser SELECTION.json are unchanged. A same-case correction can instead be supplied through optional input.executionContinuation={path,bytes,sha256}. Its document schema is stellar-forge.sf47-risk-execution-continuation.v1 and binds operationId, original sourceManifest/executionInput/executionSelection/executionJournal/browserSelection/browserJournal descriptors, both original/current Python and Node module descriptors plus repositoryPath, a reason, and sourcePublication provenance.
+
+The original parent first validates and retains the exact sidecar and prior journals below the parent of outputDirectory at execution-continuations/<sidecar SHA>/. It publishes execution-continuation.json, prior-browser-journal.json, prior-execution-journal.json and finally ADOPTED.json. The adoption value is {schema:'stellar-forge.sf47-risk-execution-continuation-adopted.v1',executionContinuation:{reference,document}}. No child starts before that publication closes.
+
+The browser validates every unchanged original repository member, the exact two corrected modules, both prior journal snapshots and the parent adoption. Only corrections.node.current may substitute for its own executing module; the original module remains byte-exact in the selected repository. The entire stable browser selection remains identical. The explicit executionContinuation record is added separately to the journal, candidate, result and each closure. A later reopen must name the same record. No host, command, request or source history is replaced, and the original inherited guard stays owned through the existing process/reader/download drain.
+
+The original interrupted browser journal may be adopted only when it still matches the full original journal descriptor retained by the parent. Subsequent resumed journals carry the same continuation. A completed result or closure from a different continuation cannot be reused. Keep the original installed source and complete corrected source publication with the saved case's provenance; do not rewrite its original source manifest to disguise this execution correction.
+
+### Parent execution operation and native request prefix
+
+The explicit continuation operationId belongs to the original RISK_EXECUTION_INPUT.json. EXECUTION_SELECTION.json must remain exactly {schema:'stellar-forge.sf47-risk-execution.v1', config:<that full original input>}. The native course generates its own request prefix and uses it as its browser handover operationId; that separate original value remains bound by the unchanged native descriptor and complete browser SELECTION.json. No identity is substituted or renamed.
