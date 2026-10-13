@@ -8,18 +8,25 @@ const sha=value=>createHash('sha256').update(value).digest('hex');
 const need=(ok,message)=>{if(!ok)throw new Error(message);};
 async function exactFile(file){const bytes=await fs.readFile(file);return{file,bytes:bytes.length,sha256:sha(bytes)};}
 export async function receiveBankPdfBrowser({browser,baseUrl,originalPdfPath,reviewedWorkingCopyPath=null,outDirectory,
- actor='PDF receiving operator',reviewNote='Receive the complete original source and retained operator interpretation',receive=false}){
+ actor='PDF receiving operator',reviewNote='Receive the complete original source and retained operator interpretation',receive=false,acknowledgeBalanceDifference=false,password=undefined}){
  const target=new URL('/bank-statements/pdf/',baseUrl);
  need(target.protocol==='http:'&&['127.0.0.1','localhost','[::1]'].includes(target.hostname),'Use the actual local Bank service.');
  await fs.mkdir(outDirectory,{mode:0o700});const report={schema:'stellar-forge.bank-pdf-browser-receiving.v1',startedAt:new Date().toISOString(),url:target.href,
   original:await exactFile(originalPdfPath),phases:[],screenshots:[],downloads:[],consoleErrors:[],completed:false};
  const reportFile=path.join(outDirectory,'browser-receiving.json');let context,second;
+ const attachDialogs=page=>page.on('dialog',async dialog=>{
+  if(dialog.type()==='prompt'){
+   const message=dialog.message(),pdfPassword=/original.*password|PDF password/i.test(message);
+   if(pdfPassword&&typeof password==='string'&&password&&!/not accepted/i.test(message))await dialog.accept(password);
+   else await dialog.dismiss();
+  }else await dialog.accept();
+ });
  const save=()=>fs.writeFile(reportFile,JSON.stringify(report,null,2)+'\n',{mode:0o600});
  const phase=async(name,work)=>{const value=await work();report.phases.push({name,at:new Date().toISOString(),...value});await save();return value;};
  try{
   context=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true});
   let page=await context.newPage();page.on('pageerror',error=>report.consoleErrors.push(String(error)));
-  page.on('dialog',dialog=>dialog.accept());
+  attachDialogs(page);
   const idle=async()=>{await page.waitForFunction(()=>!document.querySelector('#export')?.disabled,{timeout:180000});};
   const clean=async()=>{const error=await page.locator('#message.error').count();need(!error,await page.locator('#message').innerText());};
   const screenshot=async name=>{const file=path.join(outDirectory,name+'.png');await page.screenshot({path:file,fullPage:true});report.screenshots.push(await exactFile(file));};
@@ -71,6 +78,7 @@ export async function receiveBankPdfBrowser({browser,baseUrl,originalPdfPath,rev
      }
      const review=accountReview(work,account.id);
      if(review.receivable){
+      need(!review.problems.length||acknowledgeBalanceDifference,'Inspect and explicitly acknowledge the original balance difference before automated Bank receiving.');
       await download('#download-csv','account-'+account.id.replace(/[^A-Za-z0-9_-]/g,'_')+'.csv');
       await page.locator('#preview-bank').click();await page.locator('#bank-preview').waitFor({state:'visible',timeout:180000});await idle();await clean();
       await download('#preview-json','account-'+account.id.replace(/[^A-Za-z0-9_-]/g,'_')+'-source-input.json');
@@ -102,7 +110,7 @@ export async function receiveBankPdfBrowser({browser,baseUrl,originalPdfPath,rev
   });
   await phase('cold-browser-receive-and-edit-reexport',async()=>{
    const previous=await openWorkingCopy(await fs.readFile(finalWorking,'utf8'));
-   second=await browser.newContext({viewport:{width:390,height:844},acceptDownloads:true});page=await second.newPage();page.on('pageerror',error=>report.consoleErrors.push(String(error)));
+   second=await browser.newContext({viewport:{width:390,height:844},acceptDownloads:true});page=await second.newPage();page.on('pageerror',error=>report.consoleErrors.push(String(error)));attachDialogs(page);
    await page.goto(target.href,{waitUntil:'networkidle'});await page.locator('#working-file').setInputFiles(finalWorking);
    await page.locator('#workspace').waitFor({state:'visible'});await idle();await clean();
    const restoredFile=await download('#export','cold-restored-working-copy.json'),restored=await openWorkingCopy(await fs.readFile(restoredFile,'utf8'));
