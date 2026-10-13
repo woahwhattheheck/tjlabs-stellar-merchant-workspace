@@ -168,13 +168,13 @@ All existing GIS product, original four collection/report files, Node 24, Chrome
 
 The driver retains the complete plan in inputs/analyst-plan.json and matches every recommendation to its original source record. It edits only assigned_team, priority, action and analyst_note in a new copy of the original GeoPackage. Existing asset, work-order and due-date references remain unchanged. The original city status and source content remain attached throughout.
 
-After the actual104-row return is received, the programme closes its browsers/desks, releases its operation lease and returns state awaiting-supervisor. This is a completed analyst handoff. It retains:
+After the actual 104-row return is received, the programme closes its browsers/desks, releases its operation lease and returns state awaiting-supervisor. This is a completed analyst handoff. It retains:
 
 - inputs/supervisor-input.json: all 104 actual proposal IDs, original case records, authored recommendations, native proposals and exact return/workspace selection.
 - downloads/boston-analyst-supervisor-workspace.json: the complete editable native workspace at that review point.
 - The original analyst GeoPackage, returned GeoPackage, source files, saved browser requests and native return result.
 
-OPEN311_GIS_SUPERVISOR_READY prints the actual paths, return/handoff IDs, workspace ID/revision, complete input SHA256 and48/16/40 totals. The independent supervisor reads the full handoff and writes the selected private supervisor file. Copy the binding fields from that actual handoff and use its exact file SHA256:
+OPEN311_GIS_SUPERVISOR_READY prints the actual paths, return/handoff IDs, workspace ID/revision, complete input SHA256 and 48/16/40 totals. The independent supervisor reads the full handoff and writes the selected private supervisor file. Copy the binding fields from that actual handoff and use its exact file SHA256:
 
 ~~~json
 {
