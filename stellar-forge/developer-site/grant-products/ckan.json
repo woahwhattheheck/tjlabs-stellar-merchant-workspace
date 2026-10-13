@@ -9,7 +9,6 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/ckan/OPERATING.md",
-      "commit": "9763693a2e0ba2cebf3ee9145be304ec1a0a552d",
       "editions": [
         {
           "commit": "9763693a2e0ba2cebf3ee9145be304ec1a0a552d",
@@ -24,7 +23,6 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/ckan/RECEIVING.md",
-      "commit": "9763693a2e0ba2cebf3ee9145be304ec1a0a552d",
       "editions": [
         {
           "commit": "9763693a2e0ba2cebf3ee9145be304ec1a0a552d",
@@ -78,7 +76,8 @@
           "bytes": 27577,
           "git_blob": "36210a170b66d43ec90b3557a8adb19a0b53a6a1"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "ckan-zurich-publisher-programme",
@@ -93,7 +92,8 @@
           "bytes": 20291,
           "git_blob": "14db64cfce00e702f536a3672a6554ecd3dfc453"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "ckan-zurich-customer-programme",
@@ -108,7 +108,8 @@
           "bytes": 25968,
           "git_blob": "95f76eac16ebbc6e230fb2bd9e68c459becaaf46"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "ckan-zurich-portal-use-operating",
@@ -123,7 +124,8 @@
           "bytes": 8943,
           "git_blob": "d73faf454d7af308a29a4809f27e54acc34bc61d"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "ckan-zurich-complete-source",
@@ -139,7 +141,8 @@
           "git_blob": "ca880fc02cfb72a7bcf5cd796ab659fabae322d0",
           "sha256": "d357ea970c52c9e80b4d2cee0f2ef71e649740fef35f75d8b9be93a9f46db11d"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "ckan-zurich-saved-customer-continuation",
@@ -155,7 +158,8 @@
           "git_blob": "3761e49639b304a53a334874fb59d8b076f01d86",
           "sha256": "301e1b6c38f01beb97b4a6c403e4fbc3a23cfb9c667c9dfd3d6f9f3f52d3dba3"
         }
-      ]
+      ],
+      "required": false
     }
   ]
 }
