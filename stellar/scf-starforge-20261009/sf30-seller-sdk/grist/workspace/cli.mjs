@@ -1,9 +1,12 @@
 // MIT. The same retained Grist source workflow for operators and managed launch.
-import { randomUUID } from 'node:crypto';
-import { resolve, dirname } from 'node:path';
+import { randomUUID, createHash } from 'node:crypto';
+import { constants } from 'node:fs';
+import { open, link, unlink } from 'node:fs/promises';
+import { resolve, dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { readJson, bytes, createFile, privateDirectory, fault } from '../../postgres/publisher/files.mjs';
+import { readJson, bytes, createFile, privateDirectory, hashPrivate, syncDirectory, fault } from '../../postgres/publisher/files.mjs';
 import { openGristAuthoring } from './model.mjs';
+import { MAX_WORKSPACE_BYTES } from './handover.mjs';
 import { serveGristAuthoring } from './server.mjs';
 import { makeGristSourcePacket, MAX_PACKET_BYTES } from './packet.mjs';
 import { readGristLaunchConnections, inspectGristAuthoring, inspectGristLaunchSource,
@@ -36,6 +39,11 @@ const HELP = [
   '  operating --directory PRIVATE_DIR --input PRIVATE_METHOD_AND_ARGS.json [--out NEW_RESULT_FILE]',
   '    Input: {"method":"list|source|read|create|adopt|save|capture|receive|return_preview|return_apply|export|request","args":{...}}.',
   '    Mutation args retain requestId and expectedVersion. No provider action is dispatched.',
+  '  workspace-export --directory PRIVATE_DIR --expected-revision N --expected-selected-version N|null --request UUID --out WHOLE_WORKSPACE.grwh',
+  '  workspace-exports --directory PRIVATE_DIR',
+  '  workspace-download --directory PRIVATE_DIR --request EXPORT_UUID --out WHOLE_WORKSPACE.grwh',
+  '  workspace-receive --directory PRIVATE_DIR --archive WHOLE_WORKSPACE.grwh --sha256 SHA --name CHILD_NAME --request UUID',
+  '  workspace-received --directory PRIVATE_DIR',
   '  operation --directory PRIVATE_DIR --request UUID',
   '  resume --directory PRIVATE_DIR --request UUID',
   '  publisher --directory PRIVATE_DIR --version N',
@@ -64,12 +72,13 @@ const FLAGS = new Set(['--create','--startup-json']);
 const VALUES = new Set(['--directory','--target','--connections','--port','--connection','--document','--table','--filter',
   '--selection','--title','--expected-revision','--source','--packet','--capture','--draft','--draft-revision','--preview',
   '--reviewer','--note','--expected-selected-version','--version','--left','--right','--out','--request','--input',
-  '--catalog','--expected-catalog-sha256','--offset','--limit','--search','--from','--to','--file','--source-directory','--source-sha256','--workspace-identity','--connections-sha256','--filter-file','--seller','--resource']);
+  '--catalog','--expected-catalog-sha256','--offset','--limit','--search','--from','--to','--file','--source-directory','--source-sha256','--workspace-identity','--connections-sha256','--filter-file','--seller','--resource','--archive','--sha256','--name']);
 const COMMANDS = new Set(['operating','init','serve','status','document','document-tables','document-export','discover','capture','import-source','import','inspect-capture','attempt',
   'draft','preview','save','select','compare','export','export-capture','packet','operation','resume','publisher',
   'deployment-status','deployment-review','deployment-prepare','deployment-stage','deployment-package',
-  'deployment-console','deployment-compare','deployment-file','identity','source-identity']);
-const PATHS = new Set(['--directory','--target','--connections','--selection','--source','--packet','--draft','--out','--input','--source-directory','--filter-file']);
+  'deployment-console','deployment-compare','deployment-file','identity','source-identity',
+  'workspace-export','workspace-exports','workspace-download','workspace-receive','workspace-received']);
+const PATHS = new Set(['--directory','--target','--connections','--selection','--source','--packet','--draft','--out','--input','--source-directory','--filter-file','--archive']);
 function parse(argv) {
   const [command, ...args] = argv, options = {};
   if (!COMMANDS.has(command)) throw fault('COMMAND_REQUIRED', HELP);
@@ -96,6 +105,61 @@ async function saveFile(file, content) {
   await privateDirectory(dirname(file)); await createFile(file, content);
   return { file, bytes: content.length };
 }
+// Stream the exact retained archive into a private output. Publication never overwrites
+// another writer's file; identical completed output is an exact replay.
+async function saveWorkspaceArchive(file, descriptor) {
+  await privateDirectory(dirname(file));
+  if (!descriptor || !Number.isSafeInteger(descriptor.bytes) || descriptor.bytes < 1 ||
+      descriptor.bytes > MAX_WORKSPACE_BYTES + 32 * 1024 * 1024 + 13 || !/^[a-f0-9]{64}$/.test(descriptor.sha256))
+    throw fault('GRIST_WORKSPACE_ARCHIVE_IDENTITY_REQUIRED');
+  const result = { file, bytes:descriptor.bytes, sha256:descriptor.sha256 };
+  async function exactOutput() {
+    let saved; try { saved = await hashPrivate(file, descriptor.bytes); }
+    catch (issue) { if(issue.code==='ENOENT')return false;throw issue; }
+    if(saved.bytes!==descriptor.bytes || saved.hash!==descriptor.sha256)
+      throw fault('GRIST_WORKSPACE_OUTPUT_CHANGED','This output already holds different bytes. Select another new private output.');
+    return true;
+  }
+  if(await exactOutput())return result;
+  const temporary=join(dirname(file),'.grist-workspace-'+randomUUID()+'.partial');
+  let source, outputHandle, primary;
+  try {
+    source=await open(descriptor.path,constants.O_RDONLY | constants.O_NOFOLLOW);
+    const before=await source.stat();
+    if(!before.isFile()||before.nlink!==1||before.mode & 0o077||before.size!==descriptor.bytes)
+      throw fault('GRIST_WORKSPACE_ARCHIVE_CHANGED');
+    outputHandle=await open(temporary,'wx',0o600);
+    const hash=createHash('sha256'),buffer=Buffer.alloc(1024*1024);
+    let position=0;
+    while(position<descriptor.bytes){
+      const count=await source.read(buffer,0,Math.min(buffer.length,descriptor.bytes-position),position);
+      if(!count.bytesRead)throw fault('GRIST_WORKSPACE_ARCHIVE_CHANGED');
+      const block=buffer.subarray(0,count.bytesRead);hash.update(block);
+      let written=0;while(written<block.length){
+        const part=await outputHandle.write(block,written,block.length-written,position+written);
+        if(!part.bytesWritten)throw fault('GRIST_WORKSPACE_OUTPUT_WRITE_FAILED');
+        written+=part.bytesWritten;
+      }
+      position+=block.length;
+    }
+    const after=await source.stat();
+    if(after.size!==before.size||after.mtimeMs!==before.mtimeMs||after.ctimeMs!==before.ctimeMs||
+        after.dev!==before.dev||after.ino!==before.ino||hash.digest('hex')!==descriptor.sha256)
+      throw fault('GRIST_WORKSPACE_ARCHIVE_CHANGED');
+    await outputHandle.sync();await outputHandle.close();outputHandle=null;
+    try{await link(temporary,file);}
+    catch(issue){if(issue.code!=='EEXIST')throw issue;if(!await exactOutput())throw issue;}
+    await unlink(temporary);await syncDirectory(dirname(file));
+    return result;
+  } catch(issue) { primary=issue;throw issue; } finally {
+    const issues=[];
+    try{await outputHandle?.close();}catch(issue){issues.push(issue);}
+    try{await source?.close();}catch(issue){issues.push(issue);}
+    try{await unlink(temporary);}catch(issue){if(issue.code!=='ENOENT')issues.push(issue);}
+    if(issues.length && !primary)throw issues[0];
+  }
+}
+
 async function lifetime(service, ready, { compact = false } = {}) {
   let stopping = null, stop;
   const close = () => stopping ??= service.close();
@@ -175,6 +239,21 @@ export async function main(argv = process.argv.slice(2)) {
         const file=await saveFile(o['--out'],content);output({...file,method:envelope.method});return result;
       }
     }
+    else if (command === 'workspace-export') {
+      const request = required(o,'--request'), destination=required(o,'--out');
+      const receipt=await workspace.exportWorkspace({requestId:request,
+        expectedDraftRevision:number(required(o,'--expected-revision'),'--expected-revision'),
+        expectedSelectedVersion:selected(o)});
+      const file=await saveWorkspaceArchive(destination,await workspace.exportWorkspaceFile(receipt.id));
+      result={...receipt,...file};
+    } else if (command === 'workspace-exports') result={exports:await workspace.workspaceExports()};
+    else if (command === 'workspace-download') {
+      const request=required(o,'--request');
+      result={id:request,...await saveWorkspaceArchive(required(o,'--out'),await workspace.exportWorkspaceFile(request))};
+    } else if (command === 'workspace-receive') result=await workspace.receiveWorkspaceFile({
+      archiveFile:required(o,'--archive'),expectedSha256:required(o,'--sha256'),name:required(o,'--name'),requestId:required(o,'--request')
+    });
+    else if (command === 'workspace-received') result={received:await workspace.receivedWorkspaces()};
     else if (command === 'init' || command === 'status') result = await workspace.status();
     else if (command === 'document') result = await workspace.listDocument({ connectionAlias: required(o, '--connection'),
       docId: required(o, '--document'), requestId: requestId() });

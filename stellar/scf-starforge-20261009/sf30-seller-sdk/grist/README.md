@@ -136,3 +136,18 @@ HTTP 402 and generated buyer configuration establish payment-required terms and 
 ## Implemented source and execution status
 
 The source contains the real Grist REST reader, exact typed-value projection, complete capture/packet recovery, original publisher/SF82 driver, full browser/CLI/MCP/Application operator and selected install recipe. Source publication does not establish successful access to a particular Grist document or a completed installed receiving run. Report those only from the actual native capture and receiving receipts, preserving the original operation and private workspace.
+
+## Complete editable project delivery
+
+Use the existing [whole-workspace handover](HANDOVER.md) to prepare a streamed private
+`.grwh` archive and independently receive a named child. Its complete source database
+includes saved operating procedures and exact original request identities. Original
+settings bytes remain unchanged; verified placement records bind the receiving host.
+
+The [customer commissioning course](../../../../products/grist/COMMISSIONING.md)
+joins captured records, reviewed public versions, publisher/buyer deployment, saved
+procedures, independent customer work and cold reopening. The browser, `grist-workspace`
+CLI, Applications entry and authenticated customer-agent tools use the same owner.
+Replaying a completed transfer retains its original archive or progressed child.
+Save desired operating-plan edits before handover: the complete unsaved browser-editor
+backup remains recovery for its original directory and origin.

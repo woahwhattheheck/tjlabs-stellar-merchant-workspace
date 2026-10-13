@@ -12,3 +12,12 @@
 .op-error{border-left:4px solid #333;padding:.7rem;background:#f0f0ec}
 #op-request-detail pre,#op-bindings pre{overflow-wrap:anywhere}
 @media(max-width:850px){.op-return-values{grid-template-columns:1fr}}
+
+/* Complete private workspace transfer uses the same industrial operator. */
+.handover-check{display:flex;gap:.7rem;align-items:flex-start;max-width:90ch}
+.handover-check input[type=checkbox]{flex:0 0 1.15rem;width:1.15rem;height:1.15rem;margin:.2rem 0 0}
+#handover-progress,#handover-download-note{overflow-wrap:anywhere}
+#handover-upload-summary code{display:block;word-break:break-all}
+#handover-opened a{display:inline-block;border:1px solid #676763;padding:.6rem .8rem;background:#fff;color:#171717;font-weight:bold}
+button:disabled,input:disabled,select:disabled,textarea:disabled{opacity:1;background:#e4e4df;color:#5b5b56;border-color:#b6b6af}
+@media(max-width:600px){section[data-panel=handover] .actions>button{width:100%}#handover-recovery .actions>button{width:100%}.handover-check{font-size:.9rem}}

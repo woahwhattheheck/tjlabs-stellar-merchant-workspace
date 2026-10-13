@@ -2,6 +2,10 @@
 export const SOURCE_FILES=Object.freeze([
   "launch.mjs",
   "model.mjs",
+  "placement.mjs",
+  "handover.mjs",
+  "uploads.mjs",
+  "../HANDOVER.md",
   "cli.mjs",
   "server.mjs",
   "provider.mjs",
