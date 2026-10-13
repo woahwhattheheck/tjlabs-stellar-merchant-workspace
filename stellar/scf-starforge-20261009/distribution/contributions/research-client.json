@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "research-client",
-  "description": "Operate the authenticated Research workspace, Europe PMC literature searches, registered protocol review, eligibility and study extraction, evidence tables, independent appraisal, complete customer programmes, source-linked quotations and recurring delivery, paid publication/receiving, original pricing and supplier-cost reports, Documents/Pipelines, full Python analyst receiving, and Applications commissioning through client, CLI and Merchant tools.",
+  "description": "Operate the authenticated Research workspace, Europe PMC literature searches, registered protocol review, eligibility, Study Flow reporting and study extraction, evidence tables, independent appraisal, complete customer programmes, source-linked quotations and recurring delivery, paid publication/receiving, original pricing and supplier-cost reports, Documents/Pipelines, full Python analyst receiving, and Applications commissioning through client, CLI and Merchant tools.",
   "commands": {
     "research-client": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/workspace-cli.mjs",
     "research-crossref-documents": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/crossref-document-cli.mjs",
@@ -437,6 +437,10 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme-transfer.d.mts",
     "stellar-forge/mcp-merchant-operator/research-programme-operator.d.mts",
     "stellar-forge/mcp-merchant-operator/RESEARCH_PROGRAMME_TERMINAL.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/research_study_flow.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/research_study_flow_cli.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH_STUDY_FLOW.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_study_flow_receiving.py",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-returns.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-returns-cli.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/receive-handover-returns.py",

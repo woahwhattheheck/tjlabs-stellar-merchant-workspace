@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import type {BankStatementSourceInput,BankStatementSourceReport,BankStatementRow,BankSourceAccount,SourceLocation,SourceClosing} from './source.mjs';
+import type {BankStatementSourceInput,BankStatementSourceReport,BankStatementRow,BankSourceAccount,SourceLocation,SourceClosing,SourceBalance,CamtPagination,CamtStatementMetadata,BankSourceIssue} from './source.mjs';
 import type {BankAccount as ReceiptIntakeAccount,BankReceiptSourceBinding} from '../bank-client-types.d.ts';
 export type Currency={code:string;scale:number};
 export type RequestIdentity={revision:number;actor:string;requestId:string;workspaceId?:string};
@@ -42,7 +42,7 @@ export interface BankImport {id:string;accountId:string;statementId:string;kind:
 export interface BankClose {id:string;schema:string;accountId:string;name:string;note:string;from:string;until:string;
   openingBalance:string;closingBalance:string;currency:Currency;createdAt:string;actor:string;requestId:string;reviewSha256:string;
   transactionIds:string[];matchIds:string[];files:Record<string,FileDescriptor>;
-  sourceClosing:{importId:string;id:string}|null;periodClose:Record<string,unknown>|null;previousCloseId:string|null}
+  sourceClosing:BankClosingSelection|null;periodClose:Record<string,unknown>|null;previousCloseId:string|null}
 export interface Reopening {id:string;closeId:string;accountId:string;reason:string;actor:string;at:string;requestId:string}
 export interface BankOperation {id:string;action:string;actor:string;at:string;intentSha256:string;
   result:Record<string,unknown>;replayed:boolean}
@@ -70,12 +70,37 @@ export interface MatchSuggestions {
 }
 export interface TransactionDetail {transaction:BankTransaction;account:BankAccount;suggestions:MatchSuggestions;
   invoices:Array<Record<string,unknown>>;revision:number;workspaceId:string}
+export interface CamtAssemblyInput {accountId:string;importIds:string[];groupingNote?:string;summaryScope?:'STATEMENT'|'PAGE'}
+export interface CamtAssemblySelection {kind:'CAMT_PAGE_ASSEMBLY';id:string;importIds:string[];groupingNote:string;summaryScope:'STATEMENT'|'PAGE'}
+export type BankClosingSelection={importId:string;id:string}|CamtAssemblySelection;
+export type CamtAssemblyIssue=BankSourceIssue&{importId?:string;[key:string]:unknown};
+export interface CamtAssemblyPage {importId:string;file:BankStatementSourceReport['file'];statementId:string;originalStatementId:string;
+  messageId:string;messageVersion:string;reviewSha256:string;pagination:CamtPagination|null;
+  sequences:CamtStatementMetadata['sequences'];copyDuplicate:string|null;period:BankImport['period'];
+  entryCount:number;bookedCount:number;pendingCount:number;bookedNet:string|null;opening:SourceBalance|null;closing:SourceBalance|null;
+  balanceCheck:'MATCH'|'REVIEW';source:{importId:string;fileSha256:string;statementId:string;source:SourceLocation};sourceIssues:BankSourceIssue[]}
+export type AssembledSourceClosing=Omit<SourceClosing,'kind'|'source'|'camt'>&{kind:'CAMT_ASSEMBLED_BOOKED_BALANCES';
+  source:{pointerSyntax:'CAMT_RETAINED_PAGE_ASSEMBLY';assemblyId:string;imports:string[]};
+  camt:{completeSinglePage:false;completePageAssembly:boolean;reportingPeriodBasis:'ORIGINAL_FR_TO_DT';
+    dateBoundary:'INCLUSIVE_SOURCE_CALENDAR';pageCount:number;balanceCheck:{status:'MATCH'|'REVIEW';difference:string|null;scope:'COMPLETE_STATEMENT'}}};
+export interface CamtAssembly {schema:'stellar-forge.merchant-camt-page-assembly.v1';id:string;accountId:string;currency:Currency;
+  selection:Required<CamtAssemblyInput>;grouping:{basis:'ORIGINAL_SEQUENCE'|'ORIGINAL_STATEMENT_ID'|'REVIEWED_ACCOUNT_AND_PERIOD';
+    sequence:Record<string,unknown>;commonStatementId:string|null;originalStatementIds:string[];note:string};
+  namespace:string;messageVersion:string;paginationLevel:'STATEMENT'|'MESSAGE';period:BankImport['period'];
+  pages:CamtAssemblyPage[];transitions:Array<{fromImportId:string;toImportId:string;closing:SourceBalance;opening:SourceBalance;matches:true}>;
+  summaryChecks:Array<Omit<CamtStatementMetadata['summaryChecks'][number],'expected'|'matches'>&{importId:string;scope:'STATEMENT'|'PAGE';expected:string|null;matches:boolean}>;
+  entries:Array<{importId:string;sourceRowId:string;providerKey:string|null;status:BankStatementRow['status'];amount:string|null;currency:string|null;postedDate:string|null;source:SourceLocation}>;
+  entryCount:number;bookedCount:number;bookedNet:string|null;difference:string|null;missingPages:number[];issues:CamtAssemblyIssue[];eligible:boolean;
+  closing:AssembledSourceClosing;sourceClosing:CamtAssemblySelection}
+export interface CamtAssemblyPreview extends CamtAssembly {revision:number;workspaceId:string}
+export type RetainedClosingSource={importId:string;fileSha256:string;closing:SourceClosing}|
+  {kind:'CAMT_PAGE_ASSEMBLY';importId:string;fileSha256:string;importIds:string[];closing:AssembledSourceClosing;assembly:CamtAssembly};
 export interface CloseInput {accountId:string;from:string;until:string;openingBalance:string;closingBalance:string;balanceNote:string;
-  sourceClosing?:{importId:string;id:string};periodCloseId?:string}
+  sourceClosing?:BankClosingSelection;periodCloseId?:string}
 export interface ClosePreview {schema:string;revision:number;workspaceId:string;account:BankAccount;from:string;until:string;
   currency:Currency;openingBalance:string;incoming:string;outgoing:string;calculatedClosing:string;closingBalance:string;difference:string;
-  balanceBasis:'ORIGINAL_SOURCE_CLOSING'|'OPERATOR_ENTERED_STATEMENT_BALANCES';balanceNote:string;
-  sourceClosing:{importId:string;fileSha256:string;closing:SourceClosing}|null;periodClose:Record<string,unknown>|null;
+  balanceBasis:'ORIGINAL_SOURCE_CLOSING'|'ORIGINAL_SOURCE_PAGE_ASSEMBLY'|'OPERATOR_ENTERED_STATEMENT_BALANCES';balanceNote:string;
+  sourceClosing:RetainedClosingSource|null;periodClose:Record<string,unknown>|null;
   transactions:BankTransaction[];matches:BankMatch[];pending:BankStatementRow[];imports:BankImport[];priorCloseId:string|null;
   problems:Array<{code:string;message:string;transactionId?:string;amount?:string;[key:string]:unknown}>;ready:boolean;reviewSha256:string}
 export interface CloseDetail {close:BankClose;report:Omit<ClosePreview,'revision'|'workspaceId'>&{id:string;name:string;note:string;createdAt:string;actor:string;requestId:string};
@@ -99,6 +124,7 @@ export declare class BankStatementsClient {
   receiveReceipt(id:string,value:ReceiptInput,options?:RequestOptions):Promise<BankResult>;
   undo(id:string,value:RequestIdentity&{reason:string},options?:RequestOptions):Promise<BankResult>;
   resolve(id:string,value:ResolveInput,options?:RequestOptions):Promise<BankResult>;
+  previewAssembly(value:CamtAssemblyInput,options?:RequestOptions):Promise<CamtAssemblyPreview>;
   previewClose(value:CloseInput,options?:RequestOptions):Promise<ClosePreview>;
   retainClose(value:RequestIdentity&CloseInput&{reviewSha256:string;name:string;note?:string},options?:RequestOptions):Promise<BankResult>;
   closeDetail(id:string,options?:RequestOptions):Promise<CloseDetail>;
