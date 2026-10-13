@@ -19,7 +19,7 @@ export async function startCoopsWorkspace({directory,inboxDirectory,port=0,relea
   if(expectedWorkspaceId!==undefined&&app.schema().workspaceId!==expectedWorkspaceId){
     await app.close();throw fault('COOPS_WORKSPACE_IDENTITY_CHANGED','Reopen the originally selected workspace.',409);
   }
-  let files;try{files=await Promise.all(['index.html','app.js','style.css','study.js','inspection.js'].map(p=>readFile(new URL('./web/'+p,import.meta.url))));}
+  let files;try{files=await Promise.all(['index.html','app.js','style.css','study.js'].map(p=>readFile(new URL('./web/'+p,import.meta.url))));}
   catch(e){await app.close();throw e;}
   const token=randomBytes(32).toString('base64url'),authorization=Buffer.from('Bearer '+token);
   let origin,closing=false;const downloads=new Map();
@@ -37,7 +37,6 @@ export async function startCoopsWorkspace({directory,inboxDirectory,port=0,relea
       if(req.method==='GET'&&req.url==='/workspace.js')return reply(200,files[1],'text/javascript; charset=utf-8');
       if(req.method==='GET'&&req.url==='/workspace.css')return reply(200,files[2],'text/css; charset=utf-8');
       if(req.method==='GET'&&req.url==='/study.js')return reply(200,files[3],'text/javascript; charset=utf-8');
-      if(req.method==='GET'&&req.url==='/inspection.js')return reply(200,files[4],'text/javascript; charset=utf-8');
       const downloadMatch=/^\/api\/download\/([a-f0-9]{48})$/.exec(req.url??'');
       if(req.method==='GET'&&downloadMatch){
         const ticket=downloads.get(downloadMatch[1]);downloads.delete(downloadMatch[1]);
