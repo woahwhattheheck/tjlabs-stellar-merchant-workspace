@@ -62,7 +62,7 @@ export async function installedSource(runtimeDirectory) {
   const manifestFile = join(runtimeDirectory, 'package', 'manifest.json'), content = await publicFile(manifestFile);
   const manifest = decode(content), files = new Map((manifest.files ?? []).map(row => [row.path, row]));
   const required = [
-    ...['model.mjs','server.mjs','cli.mjs','launch.mjs','packet.mjs','provider.mjs','handover.mjs','uploads.mjs','placement.mjs','browser.mjs','index.html','style.css']
+    ...['model.mjs','server.mjs','cli.mjs','launch.mjs','packet.mjs','provider.mjs','handover.mjs','uploads.mjs','placement.mjs','returns.mjs','browser.mjs','index.html','style.css']
       .map(name => AUTHORING_PATH + '/' + name),
     ...['config.mjs','operator.mjs','serve.mjs','nocodb-workspace.mjs','catalog/nocodb-workspace.mjs',
       'providers/nocodb-workspaces.mjs','providers/publishers.mjs','retained-download.mjs'].map(name => MCP_PATH + '/' + name),

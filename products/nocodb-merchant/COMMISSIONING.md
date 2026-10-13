@@ -189,6 +189,154 @@ Re-export the complete progressed workspace and receive it independently for ano
 
 The receiver's private live credentials and runtime declarations remain explicit host inputs. Reopening an archive does not prove that a retained token reference is ready on the new host or that the original provider endpoint is reachable. The complete captured history remains usable for its reviewed source/publication work while future authorized observations use the actual destination connection.
 
+## Review a customer's returned draft in the original workspace
+
+A customer may finish a review round while the implementation team continues editing the original workspace. Use the maintained returned-draft review to bring the customer's saved source-output choices back into that original authoring history. Keep the original workspace, the independently received customer branch and the frozen return together in the same customer case.
+
+The return course operates on the existing complete workspace format and the customer's actual named received workspace. It reconciles saved draft choices against a common original draft record. It does not infer ancestry from equal revision numbers, a matching title or similar-looking rows. Applying the review updates the working draft; the existing full-row preview, immutable source version and publication stages still produce the customer edition.
+
+### Establish the real review round
+
+Agree which part of the source-output contract the customer is reviewing: the actual query, public aliases, scalar types, numeric encoding, nullability and empty-value treatment. Keep the approved source observation and native source-field identities visible. The review note should explain the useful customer decision and its downstream effect.
+
+Save the author's useful work before intake so the comparison includes the current saved draft. Separately retain any unsaved browser edits until the operator has deliberately saved or replaced them. The customer saves its own edits and returns its complete progressed workspace through the existing private handover route.
+
+Receive that complete file as a named independent child of the original author's workspace. Select the actual returned child and freeze its saved draft, source identity and relevant original history through the maintained return-intake control. Retain the return record and exact receiving name. Later edits in the child do not silently change the already frozen review.
+
+The customer and author can both continue working. A later return is a new explicit intake of its saved state; an uncertain response continues the original intake request. Preserve the earlier return and its decision history so the next review round can be explained.
+
+### Compare the actual author, base and returned choices
+
+Open the complete comparison against the current original saved draft. Inspect the source binding and the actual common original record first, then read every returned change and conflict. Follow the comparison's paging through the last result rather than treating the first screen as the complete review.
+
+| Comparison | Practical review |
+| --- | --- |
+| Only the customer changed a field | Review the returned value and its effect on the agreed output. The preview identifies how that one-sided change is applied. |
+| Only the author changed a field | Retain the author's useful work unless the actual reviewed decision says otherwise. |
+| Both chose the same resulting value | Preserve the common result and its history. |
+| Both changed the same value differently | Select the explicit local, returned or base choice for the actual comparison row. Explain the customer decision in the saved review note. |
+| A query or column was added, removed or renamed | Review the exact structural change, its source binding and dependent fields together. Use the engine's actual row identities and available choices. |
+| Numeric, null or empty policy changed | Inspect the full retained source values that this policy affects. Preserve exact numeric tokens and the distinction between missing, null and an empty string. |
+
+Preserve NocoDB's actual native source contract throughout the comparison. The source identity binds the server/API version, base, table, selected view/filter, metadata and complete observed field/type union. Native record identity uses `$recordId` and the provider's complete `id_fields`, including external or compound primary keys. Field display names and similar-looking values do not establish a compatible source.
+
+Retain number text when the original JSON numeric token cannot be represented exactly as a native number. A returned preference for a numeric type does not permit rounding a decimal, truncating a large identifier or converting a numeric-looking string without the actual source contract. Missing fields, null and empty strings remain distinct. Formula, Lookup and Rollup values still require explicit supported scalar typing and full-row validation.
+
+A change to a query or column must remain valid under the original selected field union; a structural preview row is not permission to discard a required captured field. The publisher's approved public subset and extraction order remain their own reviewed plan. Keep a source refresh, new view/filter or new metadata union in the original acquisition/source-review course before reconciling a compatible return.
+
+An alias affects the client's visible schema. Renaming it may require a corresponding client mapping or a deliberately new output contract. Changing a type or non-null rule may reject existing rows. A narrower output does not authorize adding a source field that was never in the original capture. Record those effects in the same source/output agreement and original quote scope.
+
+Keep explicit choices tied to the exact preview and current saved author state. If another operator saves a draft while review is open, refresh the comparison and inspect the changed rows before applying. Preserve the useful review notes and choices through that refresh; do not replace the whole current draft with a stale customer snapshot.
+
+A different source edition follows the original source-review course. Retain the complete incoming branch and its original observation, then inspect the actual capture and approved source selection before selecting a compatible return. A matching row count or revision is insufficient to identify the original source.
+
+### Save and apply the reviewed draft
+
+Save the chosen resolutions and explanatory note against the exact return revision and preview identity supplied by the maintained interface. That preview binds the current saved author draft. The review can be prepared before its application; inspect the saved result and current comparison when reopening it.
+
+After saving review choices, use the fresh comparison and its actual current identities for apply. The existing original request UUID and compare-and-save controls protect the accepted operation from replay and competing edits. If the response is uncertain, read the saved return/request before sending the same operation again.
+
+A successful apply creates a new saved author draft containing the reviewed result and retains the full return decision. Reopen the original draft and confirm the intended aliases, field definitions, query structure and value policies. The customer branch remains its own retained project, and the original returned source remains available for explanation or a later review.
+
+Run **Validate every row** over the actual captured observations. Resolve any actual row failure through the saved draft and agreed output contract. Then use **Freeze and select source version** with the current reviewed preview and version selection. Open the original publisher to prepare the useful new client edition under its own plan and review. Earlier source versions, publisher outputs and merchant releases stay identifiable.
+
+Applying a returned draft is separate from issuing a client edition. The original publisher and release controls remain the means of selecting and operating that edition. This preserves a clear relationship between the customer's reviewed choices, the exact validated source version and the bytes delivered to the client.
+
+### Complete the original consolidated correction
+
+The original proposal includes one consolidated correction. Use that allowance for one useful combined set of customer source/output changes; the implementation does not turn each changed field or conflict into a separate paid review round. Keep the customer's original response, saved returned workspaces and the final decisions in the same case.
+
+The proposal covers one base and up to three separately selected tables/views. Preserve each selected source's actual capture, draft, return and published contract. A return from one source workspace does not authorize substituting another table's fields or merging unrelated observations. Assemble the consolidated customer decision list across the actual scoped sources, then operate the corresponding return within each original workspace.
+
+| Correction stage | Complete customer outcome |
+| --- | --- |
+| Collect the consolidated changes | The customer identifies the intended aliases, exact scalar representation, null/empty handling and client-visible shape using its actual received workspace. Retain one coherent response tied to the scoped source/output agreement. |
+| Reconcile concurrent author work | The author compares the actual common original draft, current local work and frozen returned state. Resolve each real conflict and preserve independent useful changes. Explain the effect on client mappings and full-source validation. |
+| Deliver the corrected edition | Validate every selected row, freeze the reviewed source version and deliberately prepare/review/publish the actual client edition. Carry the complete editable project and saved return history into the original operator handover. |
+
+The original case controls the single included consolidated correction, active implementation days, fee, milestones, defect-correction period and operator session. A new source base, unsupported field type or additional public data contract is handled as a concrete change to that same scope.
+
+During the operator handover, have the maintainer open the real returned review, explain one actual resolved choice, follow the new draft into its validated source version, locate the corresponding client edition and cold-reopen the complete workspace. Use the real commissioned data and useful agreed changes. Keep the final source/output map, original and returned workspaces, saved review, exact client files and recovery instructions together.
+
+### Exact returned-review model controls
+
+Use these methods on the existing open NocoDB authoring model. Keep the original author's current draft revision distinct from the received child's revision.
+
+| Method | Actual saved operation |
+| --- | --- |
+| `captureReturnedReview({name, expectedDraftRevision, requestId})` | Freeze the named child's incoming draft, source and relevant history. `expectedDraftRevision` is the current **author** draft revision. The saved return ID is this original request UUID. |
+| `returnedReviews()` | List saved customer returns in the original workspace. |
+| `returnedReview(id)` | Open the saved return and its current review revision, status, `choices` and `note`. |
+| `previewReturnedReview({reviewId, offset, limit})` | Compare the exact base, current local and frozen returned states. Limit is 1–100; follow `nextOffset` until it is `null`, retaining all changed rows and issues. |
+| `saveReturnedReview({reviewId, expectedReviewRevision, previewSha256, choices, note, requestId})` | Save the complete resolution map and note against that current comparison. |
+| `applyReturnedReview({reviewId, expectedReviewRevision, previewSha256, requestId})` | Atomically apply the reviewed result as a new author draft against the saved review and current local basis. |
+| `exportReturnedReview({reviewId, revision})` | Export the requested immutable review revision with the full frozen intake/ancestry, original source and saved review revisions through that point. Omit `revision` to select the interface's current saved result. |
+
+The `choices` object maps the **actual JSON Pointer values returned by the comparison** to `local`, `returned` or `base`. Save replaces the whole map. Collect and retain choices across every page; omitting a prior explicit key removes that choice. Use the returned path values exactly, including their escaping, rather than constructing them from a displayed field label.
+
+Refresh the comparison after saving choices, because its review revision and digest may change. Apply uses that fresh `expectedReviewRevision` and `previewSha256` together with its own retained original operation UUID. A replay returns the accepted operation's saved result.
+
+The complete `.ncwh` workspace contains the revised records and review history. The individual return JSON is the immutable reviewed-return document; the existing whole-workspace file remains the complete editable project handover.
+
+### Customer-agent returned review
+
+Use the original provider's configured author `workspace` alias. Receive the customer's whole file through the existing private workspace tools, then select its actual named child for intake. A returned draft is reviewed against the original author; the independent child's alias remains available for its own ordinary work.
+
+| Tool | Required operating input and result |
+| --- | --- |
+| `merchant_nocodb_return_capture` | `workspace`, received `name`, current author `expectedDraftRevision` and original `requestId`; freezes the saved incoming draft and full ancestry. |
+| `merchant_nocodb_returns` | `workspace`; lists retained return summaries. |
+| `merchant_nocodb_return` | `workspace` and `reviewId`; reads the saved decision record, complete choices and note. |
+| `merchant_nocodb_return_preview` | `workspace`, `reviewId` and optional `offset`/`limit` of 1–100; read every page through terminal `nextOffset`. |
+| `merchant_nocodb_return_review` | `workspace`, `reviewId`, `expectedReviewRevision`, `previewSha256`, full `choices`, useful `note` and original `requestId`; saves the reviewed map and returns its new revision. |
+| `merchant_nocodb_return_apply` | `workspace`, `reviewId`, fresh `expectedReviewRevision`/`previewSha256` and original `requestId`; applies the saved result as a draft. |
+| `merchant_nocodb_return_read` | `workspace`, `reviewId` and explicit saved `revision`; retains and reads the complete immutable review in chunks. |
+
+These operations preserve the same native revisions, full-map replacement, source binding and request recovery as the model and browser. Save the complete choices after reading every page, then obtain the new preview identity before applying. Continue ordinary full-row validation and source-version/publication controls after the draft is applied.
+
+For the frozen review download, retain the returned `readId`, complete-file `expectedSha256`, offset and chunk result. Continue the same saved revision through the final chunk and release the retained descriptor with `merchant_nocodb_packet_release`. The review contains private original source history and operator decisions; keep it with the complete customer workspace and approved receiving operator.
+
+### Exact browser and command-line review controls
+
+Open **Returned review** in the original author's application after saving useful edits in **Review columns**. Its receiving selector uses the saved independent children from the existing whole-workspace handover.
+
+| Control | Actual customer-review operation |
+| --- | --- |
+| **Capture returned draft** | Freeze the selected received child's saved source, draft and ancestry under its original request UUID. |
+| **Open returned review** | Select an already saved return and its current decision record. |
+| **Refresh comparison** | Read the current common, author and frozen returned states. Save/apply remains tied to that exact result. |
+| **Previous changes** / **Next changes** | Read the complete field comparison, at most 100 rows per page. Choices on other pages stay in the same complete map. |
+| **Save review decisions** | Save the complete explicit choice map and useful note, then read the new saved review revision and comparison. |
+| **Apply reviewed draft** | Apply the saved, applicable review to the original draft. Save unsaved author column edits before this operation. |
+| **Download frozen review** | Export the exact displayed saved review revision with its complete frozen intake and review history. |
+| **Download local choices** | Retain the complete browser choices envelope when recovering unsaved or stale decisions. |
+
+Conflict selectors are **Keep current author value**, **Use returned value** and **Use common original value**. An empty selection removes an explicit choice. Order rows select an entire saved order; inspect the resulting query and column order as part of the public contract.
+
+When local choices were made against an older comparison, the browser displays **Local decisions need reconciliation**. **Use saved review** deliberately replaces the local editor with the current saved decisions. **Carry local choices to current comparison** reads every current comparison page, retains choices for remaining paths, reports excluded choices and keeps the prior full map in local history. Review and save the carried choices before applying. A local storage error leaves the decision unsaved; preserve the local download and the existing request instead of clearing browser storage.
+
+The installed CLI uses the same source model:
+
+~~~text
+return-capture --directory PRIVATE_DIR --name RECEIVED_NAME --expected-revision N --request UUID
+returns --directory PRIVATE_DIR
+return --directory PRIVATE_DIR --review UUID
+return-preview --directory PRIVATE_DIR --review UUID [--offset N] [--limit 1..100]
+return-review --directory PRIVATE_DIR --review UUID --expected-review-revision N --preview-sha256 SHA --choices CHOICES.json --note TEXT --request UUID
+return-apply --directory PRIVATE_DIR --review UUID --expected-review-revision N --preview-sha256 SHA --request UUID
+return-export --directory PRIVATE_DIR --review UUID [--revision N] --out FROZEN_REVIEW.json
+~~~
+
+Invoke these subcommands through the same installed `nocodb-workspace` entry or original `workspace/cli.mjs`. `--expected-revision` on capture names the current author draft. The review and apply commands take the saved review revision and the actual fresh comparison digest. Choose each write UUID once and keep its exact command input with the same customer case.
+
+The CLI choices file is the **full JSON-pointer-to-choice object**. A browser download is an envelope containing a `choices` property; extract that property for `--choices`. Use the actual paths in the comparison, including escaping and any order row. An empty map is `{}`. Omitting a previously explicit entry removes it. Collect all pages before saving, then refresh the preview to obtain the new review revision and digest for apply.
+
+The original `operation` and `resume` subcommands use `--directory PRIVATE_DIR --request UUID`. In the browser, **Check original receipt**, **Resume retained request** and **Retry identical request** preserve the saved action after an uncertain response. Reconcile its actual receipt before treating a stale comparison as a new action. A failed receipt read leaves that same request pending; a host-confirmed pre-accept conflict allows a deliberate fresh review action after the current comparison is read.
+
+The return export writes a complete private JSON file. It accepts an existing identical file and rejects an existing file with different bytes. Pin `--revision` for the reviewed edition and choose a different output path for another saved revision. Keep this readable decision handover alongside the full editable `.ncwh` archive.
+
+
+
 ## Exact complete-workspace controls
 
 ### Browser
@@ -280,8 +428,9 @@ Use the authorized original customer source and its current native owner. Useful
 5. Complete the customer's selected release and receiving workflow through the original native merchant/buyer controls where included.
 6. Apply one agreed source update, produce the second approved edition and reopen the first edition and its saved client output.
 7. Prepare the complete private `.ncwh` file at the original service boundary, receive it independently, reopen its earlier history and continue one useful local change.
-8. Retain the progressed receiving workspace, export it for the named maintainer and cold-reopen the same complete project. Recover an actual interrupted request through its original UUID when one occurs.
-9. Open and LOOK at the exact current desktop/screenshare and narrow application, all relevant rendered customer outputs and every applicable attachment. Use the important controls, downloads, receiving/error states and reopened working contents. Repair the source where the outgoing product is unreadable or fails its real operation.
+8. Collect the original single consolidated correction in the customer's actual received project. Return that complete progressed workspace, freeze its saved draft in the original author and compare it with the actual common original state and current author work. Review every change, resolve real conflicts and save the decisions.
+9. Apply that reviewed result to the author draft, validate every selected row and deliberately freeze/publish the corrected edition. Retain the customer's branch, frozen return, saved review and earlier output. Export the progressed complete project for the named maintainer and cold-reopen the same working history. Recover an actual interrupted request through its original UUID when one occurs.
+10. Open and LOOK at the exact current desktop/screenshare and narrow application, all relevant rendered customer outputs and every applicable attachment. Use the important controls, downloads, receiving/error states and reopened working contents. Repair the source where the outgoing product is unreadable or fails its real operation.
 
 Acceptance identifies the original source and observation, reviewed source version, actual public/client edition, private archive/child identity, receiving operator, complete files and useful outcome. The screenshot and native results belong to that original operation. Source prose or an HTTP response alone does not replace operating and viewing the exact product.
 
@@ -294,9 +443,9 @@ Keep the original proposed schedule tied to real access and scoped inputs:
 | Days 1–2 | Source rights and identifiers, public field contract, limits, actual licensed view access and receiving operator/host. |
 | Days 3–5 | Original complete observation, scalar review, publisher candidate, approved immutable edition and customer release configuration. |
 | Days 6–8 | Actual endpoint and complete receiving client, agreed source update, second edition and earlier-output reopen. |
-| Days 9–10 | Installed startup/shutdown, private access and rotation, refresh/recovery, independent whole-workspace handover and receiving acceptance. |
+| Days 9–10 | Installed startup/shutdown, private access and rotation, refresh/recovery, the consolidated customer correction in its actual returned workspace, independent whole-workspace handover and receiving acceptance. |
 
-Use the 60-minute operator session to complete a useful operation with the actual commissioned project. A practical allocation is ten minutes for original source/private-vs-public custody, fifteen for draft and complete-row review, fifteen for edition/client operation, and twenty for independent handover/reopen and original-request recovery. Adjust the teaching sequence to the maintainer's current knowledge while preserving the agreed session scope.
+Use the 60-minute operator session to complete a useful operation with the actual commissioned project. A practical allocation is ten minutes for original source/private-vs-public custody, fifteen for the saved customer correction, draft and complete-row review, fifteen for edition/client operation, and twenty for independent handover/reopen and original-request recovery. Adjust the teaching sequence to the maintainer's current knowledge while preserving the agreed session scope.
 
 Collect the customer's correction against the agreed acceptance criteria in one consolidated record. Preserve its exact source/version/output context, implement the agreed correction through the same product and return the useful completed project. Additional sources, unsupported value families or different infrastructure responsibilities stay visible as concrete scope changes.
 
@@ -312,7 +461,11 @@ Collect the customer's correction against the agreed acceptance criteria in one 
 | The receiving child already contains later work | Reopen its original completed receive and progressed state; identical replay must not reset it. |
 | A publication or release result is uncertain | Read the original native request and current selection/process ownership before continuing that same action. |
 | The receiver lacks a live connection | Configure its actual private host reference through the original mechanism while retaining the existing captured source history. |
-| A customer branch differs from the original author | Preserve both complete branches and explain the intended continuation; whole-workspace receiving does not choose a merge for the user. |
+| A customer branch differs from the original author | Freeze its actual saved draft through Returned review, compare the common original state and reconcile the real changes with current author work. Preserve both complete branches. |
+| No actual common original draft or compatible source is found | Retain the frozen incoming branch and inspect its original capture/history. Review a changed source edition through the existing source course; matching numeric revisions or row counts do not establish ancestry. |
+| Author work or a saved review changes during comparison | Keep the local decision map, refresh every comparison page and review the current rows. Save against the actual new review revision and digest before applying. |
+| A returned policy fails complete-row validation | Keep the applied draft and actual failure, correct the supported representation within the same consolidated customer decision, then rerun complete-row validation before freezing a source version. |
+| Apply or review response is uncertain | Read the same saved review and original operation receipt. Replay the original UUID/input where accepted; do not create a second correction merely to recover transport. |
 | A rendered control or attachment is unusable | Repair the exact maintained outgoing source and repeat the affected practical operating/receiving course. |
 
 ## Fit to the existing funded service programme
