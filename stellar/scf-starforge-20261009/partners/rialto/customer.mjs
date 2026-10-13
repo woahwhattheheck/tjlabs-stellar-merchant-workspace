@@ -22,7 +22,7 @@ async function capture(o){
   const supported=await captureGet(root,p.facilitator+'/supported'),peers=await captureGet(root,p.discovery+'/federation/peers');
   const rows=[],sources=[];let offset=0;
   for(;;){
-   const got=await captureGet(root,pageUrl(p,offset));sources.push(got.name);
+   const got=await captureGet(root,pageUrl(p,offset),{acceptSaved:record=>{try{page(record,p,offset);return true;}catch{return false;}}});sources.push(got.name);
    const value=page(got.value,p,offset);rows.push(got.value);
    if(value.terminal)break;offset=value.nextOffset;
   }
