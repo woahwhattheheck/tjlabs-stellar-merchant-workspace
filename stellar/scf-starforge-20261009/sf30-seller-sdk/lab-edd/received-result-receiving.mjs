@@ -20,6 +20,8 @@ const SOURCE_FILES=[
   "../wqx-water-quality/jobs/archive.mjs",
   "application.mjs",
   "cli.mjs",
+  "customer-review.mjs",
+  "customer-review-page.mjs",
   "decisions.mjs",
   "local.mjs",
   "model.mjs",

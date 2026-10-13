@@ -393,3 +393,19 @@ The Operations and Managed releases views expose **Refresh operation status** fo
 The pane and `procedure-state`, `procedure-open`, `procedure-create`, `procedure-save`, `procedure-record`, `procedure-return`, `procedure-decide`, `procedure-apply`, `procedure-receive` and `procedure-export` commands use the existing Runtime workspace. They retain exact requests and compare the current record before changes. Runtime installation, application starts and archive restore remain explicit actions in their original controls.
 
 Read [Runtime operating procedures](RUNTIME_PROCEDURES.md) for complete source selection, browser request recovery, revision and returned-work review, carried files, full JSON/HTML delivery and original CLI request formats.
+
+
+### Complete operation output and prior installation attempts
+
+The Operations screen now reads the entire original worker output for every
+Runtime workflow. **Read installation attempts** opens actual retained npm
+attempts in the registered runtime, including earlier attempts after a later
+installation. Both use the same reader as Applications and Launch Groups:
+fixed-end paging, UTF-8 byte navigation, exact page search, per-source restoration,
+live tail and complete original-byte download. The original worker, current
+installer state, managed outcome and recovery operation remain authoritative.
+
+See [OUTPUT.md](OUTPUT.md#runtime-operations-and-installation-attempt-handover)
+for the full operator journey, source-bound API, native `output-sources`,
+`output-page` and exclusive `output-export` commands, and the existing native
+customer/backup receiving course.

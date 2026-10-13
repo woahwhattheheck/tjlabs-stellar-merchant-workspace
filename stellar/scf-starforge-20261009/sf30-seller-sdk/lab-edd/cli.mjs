@@ -11,7 +11,7 @@ import { reconcileDeliveries, normalizeReconciliation, previewReconciliation } f
 import { reconciliationTable } from './reconciliation-table.mjs';
 import { readReconciliationDecisions } from './reconciliation-application.mjs';
 import { readLabResult } from './result.mjs';
-import { receiveLabResult, openReceivedLabResult } from './received-result.mjs';
+import { receiveLabResult, openReceivedLabResult, receiveLabCustomerReview } from './received-result.mjs';
 import { writeBytes } from '../../sf88-operator-buyer-cli/node/store.mjs';
 import { openLocalInputs } from './local.mjs';
 const json=value=>JSON.stringify(value,null,2)+'\n';
@@ -26,15 +26,16 @@ export const HELP='Laboratory EDD receiving\n\n'+
 'lab-edd reconciliation-table --source CURRENT --profile ID --baseline ORIGINAL --baseline-profile OTHER_ID [--reconciliation FILE] --format csv|tsv --out TABLE\n'+
 'lab-edd result --file COMPLETE_ZIP [--out MANIFEST_JSON]\n'+
 'lab-edd open-result --file COMPLETE_ZIP --directory PRIVATE_FOLDER [--expected-result-sha256 SHA] [--expected-job-id ID] [--out RECEIPT_JSON]\n'+
-'lab-edd reopen-result --directory PRIVATE_FOLDER [--expected-result-sha256 SHA] [--expected-job-id ID] [--out RECEIPT_JSON]\n\n'+
+'lab-edd reopen-result --directory PRIVATE_FOLDER [--expected-result-sha256 SHA] [--expected-job-id ID] [--out RECEIPT_JSON]\n'+
+'lab-edd receive-findings --directory ORIGINAL_FOLDER --file CUSTOMER_FINDINGS_JSON --output-directory NEW_FOLDER [--expected-result-sha256 SHA] [--out RECEIPT_JSON]\n\n'+
 'Cross-profile receive adds --baseline-profile, --baseline-decisions and --reconciliation to the same full receive command.\n'+
 'Select the installed source profile. XLSX and XLS are passed to its native decoder; CSV table families arrive in their original ZIP.\n'+
 'Receive produces the complete original inputs, native receiving files, editable decisions, field history and offline operator report.\n';
 function args(argv){
   if(!argv.length||argv.includes('--help')||argv.includes('-h'))return {command:'help'};
   const [command,...rest]=argv,options={command};
-  const allowed=new Set(['source','baseline','decisions','profile','encoding','review','out','format','scope','fields','file','expected-source-sha256','baseline-profile','baseline-encoding','expected-baseline-sha256','baseline-decisions','baseline-decision-format','reconciliation','reconciliation-format','origin','network','asset','pay-to','amount','service-name','memory-limit-mb','directory','expected-result-sha256','expected-job-id','expected-document-sha256','expected-review-sha256','expected-baseline-document-sha256','expected-baseline-review-sha256','expected-correspondence-review-sha256']);
-  if(!['profiles','inspect','table','preview','receive','result','reconcile','reconciliation-table','merchant-config','open-result','reopen-result'].includes(command))throw Error('Unknown lab-edd command.');
+  const allowed=new Set(['source','baseline','decisions','profile','encoding','review','out','format','scope','fields','file','expected-source-sha256','baseline-profile','baseline-encoding','expected-baseline-sha256','baseline-decisions','baseline-decision-format','reconciliation','reconciliation-format','origin','network','asset','pay-to','amount','service-name','memory-limit-mb','directory','output-directory','expected-result-sha256','expected-job-id','expected-document-sha256','expected-review-sha256','expected-baseline-document-sha256','expected-baseline-review-sha256','expected-correspondence-review-sha256']);
+  if(!['profiles','inspect','table','preview','receive','result','reconcile','reconciliation-table','merchant-config','open-result','reopen-result','receive-findings'].includes(command))throw Error('Unknown lab-edd command.');
   for(let i=0;i<rest.length;i+=2){
     const key=rest[i]?.replace(/^--/,'');
     if(!rest[i]?.startsWith('--')||!allowed.has(key)||options[key]!==undefined||rest[i+1]===undefined||rest[i+1].startsWith('--'))
@@ -68,8 +69,9 @@ export async function main(argv=process.argv.slice(2)){
     const profiles=labProfiles.map(({id,version,label,references})=>({id,version,label,references}));
     process.stdout.write(json(profiles));return profiles;
   }
-  if(['open-result','reopen-result'].includes(options.command)){
+  if(['open-result','reopen-result','receive-findings'].includes(options.command)){
     if(!options.directory||options.command==='open-result'&&!options.file)throw Error('Select the private result --directory and the complete --file when opening it.');
+    if(options.command==='receive-findings'&&(!options.file||!options['output-directory']))throw Error('Select the downloaded findings --file and a separate --output-directory.');
     const names={'expected-result-sha256':'archiveSha256','expected-job-id':'jobId','expected-source-sha256':'sourceSha256',
       'expected-document-sha256':'documentSha256','expected-review-sha256':'reviewSha256','expected-baseline-sha256':'baselineSourceSha256',
       'expected-baseline-document-sha256':'baselineDocumentSha256','expected-baseline-review-sha256':'baselineReviewSha256',
@@ -80,9 +82,12 @@ export async function main(argv=process.argv.slice(2)){
     try{
       const result=options.command==='open-result'?
         await receiveLabResult({file:options.file,directory:options.directory,expected,signal:controller.signal}):
+        options.command==='receive-findings'?await receiveLabCustomerReview({directory:options.directory,file:options.file,outputDirectory:options['output-directory'],expected,signal:controller.signal}):
         await openReceivedLabResult({directory:options.directory,expected,signal:controller.signal});
       const summary={status:result.status,directory:result.directory,entryPage:result.entryPage,archivePath:result.archivePath,receiptPath:result.receiptPath,
-        identity:result.receipt.identity,originalResultMembers:result.receipt.originalResultMembers,managedFiles:result.receipt.files.length,
+        identity:result.receipt.identity,layoutVersion:result.receipt.layoutVersion,
+        ...(result.inspectionPage?{inspectionPage:result.inspectionPage,customerReviewPath:result.customerReviewPath,customerReview:result.receipt.customerReview}:{}),
+        originalResultMembers:result.receipt.originalResultMembers,managedFiles:result.receipt.files.length,
         managedFileBytes:result.receipt.managedFileBytes,nativeFamilies:result.receipt.nativeFamilies.map(f=>({label:f.label,files:f.files.length,
           nativePreparation:f.preparation.status,profileDisposition:f.report.disposition,profileCounts:f.report.counts})),
         ...(result.readOnly?{readOnly:true}:{reused:result.reused,writtenFiles:result.writtenFiles,retainedFiles:result.retainedFiles})};

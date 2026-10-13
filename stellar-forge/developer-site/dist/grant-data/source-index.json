@@ -9041,6 +9041,105 @@
     },
     {
       "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "commit": "15a108b2f4964f86fcdb1a67ef75692ff9b40057",
+      "path": "stellar/scf_2026/SCF46_THREAT_MODEL_AND_MONITORING_20261012.md",
+      "url": "https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/15a108b2f4964f86fcdb1a67ef75692ff9b40057/stellar/scf_2026/SCF46_THREAT_MODEL_AND_MONITORING_20261012.md",
+      "source_kind": "source-file",
+      "id": "merchant-monitoring-threat-chapter",
+      "kind": "published-source",
+      "label": "Complete merchant threat model, monitoring workflow and funded receiving",
+      "source_registration": "merchant-monitoring",
+      "git_blob": "4b1736dd604768ed8963115e72716b7b46a98aa5",
+      "sha256": "72eb08125e1fd61c94d05281beadb1199a47b47ec7dd6cbd73c111d191014470",
+      "bytes": 52635,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/public-commons-sprint-2026",
+        "commit": "15a108b2f4964f86fcdb1a67ef75692ff9b40057",
+        "path": "stellar/scf_2026/SCF46_THREAT_MODEL_AND_MONITORING_20261012.md",
+        "git_blob": "4b1736dd604768ed8963115e72716b7b46a98aa5",
+        "sha256": "72eb08125e1fd61c94d05281beadb1199a47b47ec7dd6cbd73c111d191014470",
+        "bytes": 52635
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "0bca95aa3126849a47ef775c8af965747a01dc2d",
+      "path": "products/x402api-merchant-workspace",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/0bca95aa3126849a47ef775c8af965747a01dc2d/products/x402api-merchant-workspace",
+      "source_kind": "source-tree",
+      "id": "merchant-monitoring-application-source",
+      "kind": "published-source",
+      "label": "Original live merchant owner, store, full observation and summary implementation",
+      "source_registration": "merchant-monitoring"
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "0bca95aa3126849a47ef775c8af965747a01dc2d",
+      "path": "stellar/scf-starforge-20261009/sf93-seller-support-bundle",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/0bca95aa3126849a47ef775c8af965747a01dc2d/stellar/scf-starforge-20261009/sf93-seller-support-bundle",
+      "source_kind": "source-tree",
+      "id": "merchant-monitoring-watcher-source",
+      "kind": "published-source",
+      "label": "Original continuous collector, condition evaluator, incidents and complete capture",
+      "source_registration": "merchant-monitoring"
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "0bca95aa3126849a47ef775c8af965747a01dc2d",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/0bca95aa3126849a47ef775c8af965747a01dc2d/stellar/scf-starforge-20261009/sf74-merchant-support-console",
+      "source_kind": "source-tree",
+      "id": "merchant-monitoring-support-source",
+      "kind": "published-source",
+      "label": "Customer Support source selection, editable cases and full receiving",
+      "source_registration": "merchant-monitoring"
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "0bca95aa3126849a47ef775c8af965747a01dc2d",
+      "path": "products/x402api-merchant-workspace/OBSERVATIONS.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0bca95aa3126849a47ef775c8af965747a01dc2d/products/x402api-merchant-workspace/OBSERVATIONS.md",
+      "source_kind": "source-file",
+      "id": "merchant-monitoring-owner-guide",
+      "kind": "published-source",
+      "label": "Full and summary observation operation, original identity and history continuity",
+      "source_registration": "merchant-monitoring",
+      "git_blob": "e131ee5f06a082a6c91bb86c11194de51c2d9925",
+      "sha256": "b05926428b9d3e56698548cd8c405b2aa2311bfeaedaaa9e9011e794a2077827",
+      "bytes": 10756,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "0bca95aa3126849a47ef775c8af965747a01dc2d",
+        "path": "products/x402api-merchant-workspace/OBSERVATIONS.md",
+        "git_blob": "e131ee5f06a082a6c91bb86c11194de51c2d9925",
+        "sha256": "b05926428b9d3e56698548cd8c405b2aa2311bfeaedaaa9e9011e794a2077827",
+        "bytes": 10756
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "0bca95aa3126849a47ef775c8af965747a01dc2d",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/X402_MERCHANT_SUPPORT.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0bca95aa3126849a47ef775c8af965747a01dc2d/stellar/scf-starforge-20261009/sf74-merchant-support-console/X402_MERCHANT_SUPPORT.md",
+      "source_kind": "source-file",
+      "id": "merchant-monitoring-support-guide",
+      "kind": "published-source",
+      "label": "Complete merchant monitoring configuration, response cases and customer handover",
+      "source_registration": "merchant-monitoring",
+      "git_blob": "f7a2b941188c423ac9d0fde4b4f48e12745fe263",
+      "sha256": "4ab399195d51307fdb6780f426dfd6598dec7e66a85859e2d284ed32648d5f22",
+      "bytes": 19793,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "0bca95aa3126849a47ef775c8af965747a01dc2d",
+        "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/X402_MERCHANT_SUPPORT.md",
+        "git_blob": "f7a2b941188c423ac9d0fde4b4f48e12745fe263",
+        "sha256": "4ab399195d51307fdb6780f426dfd6598dec7e66a85859e2d284ed32648d5f22",
+        "bytes": 19793
+      }
+    },
+    {
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
       "commit": "888cb09c514ac2f21f76b8b4eb5950eb50003a24",
       "path": "products/flowable-merchant/PROGRAMMES.md",
       "url": "https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/888cb09c514ac2f21f76b8b4eb5950eb50003a24/products/flowable-merchant/PROGRAMMES.md",
@@ -9240,9 +9339,9 @@
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "f0ea47948eca230c1b9d92d227014e4f325ce329",
-    "bytes": 931706,
-    "sha256": "1007a0c2455c0c82e96f41ba328596ee55136f9bbe800ab9cf7349b70f12fa26",
+    "git_blob": "d5f7dac639a1363dd67f884da8f9f3ad8910c26b",
+    "bytes": 976758,
+    "sha256": "6d536501143188ab62619350917ea5154d4f8c9fae7266e91acf194fd7462680",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
     "prior_git_blob": "9ff11768d30ce0a77f620ed0e50cde965b3e0c4a"
   },
@@ -9460,7 +9559,7 @@
       "source_join": "SCF-GRANT-CUMULATIVE-COMPOSITION-81CF-20261012",
       "canonical_front_sha256": "e1c44eb14d5642a34bf744c7674e7d1c694a8398cefb51d510eab55fb9c10844",
       "canonical_front_bytes": 38033,
-      "renderer_git_blob": "8b01e9a74c9bbd2cf415459e05cea94bd4954f45",
+      "renderer_git_blob": "d6e60c8514a64dc9575faccb9d6d3e060e98f41d",
       "source_editions": [
         {
           "repository": "woahwhattheheck/public-commons-sprint-2026",
@@ -9557,7 +9656,7 @@
         "10. Open the existing work"
       ],
       "previous_cumulative_commit": "1945289c8d39b7850bf3b496c13c7ae5643176bf",
-      "projector_git_blob": "ba6d7fda7d89f83979cd0fefed6d7abd54fc02bc",
+      "projector_git_blob": "d6b5e6b0c22685443d3a8bf2bd427091756a7a4e",
       "demo_source": {
         "carrier_git_blob": "6f3dd33ab358fee08e2ee3b6131a0cd8946a62c2",
         "path": "operations/scf-submission-improvement-1b40-20261012/current-adoption/DEMO_AND_ACCEPTANCE.md",
@@ -10053,6 +10152,24 @@
             "merchant-customer-account-agent-guide",
             "merchant-customer-account-agent-cli"
           ]
+        },
+        {
+          "id": "merchant-monitoring",
+          "heading": "## 7. Threat response and useful-outcome measurement",
+          "source_ids": [
+            "merchant-monitoring-threat-chapter",
+            "merchant-monitoring-application-source",
+            "merchant-monitoring-watcher-source",
+            "merchant-monitoring-support-source",
+            "merchant-monitoring-owner-guide",
+            "merchant-monitoring-support-guide"
+          ],
+          "definition": {
+            "path": "grant-products/merchant-monitoring.json",
+            "bytes": 3386,
+            "sha256": "e16477003db1addfe87b56b43cb676211d2063223b6f159b164372785885c985",
+            "git_blob": "1a2934e1e3c55c46bf452d338c3e4abc1db5f039"
+          }
         },
         {
           "id": "merchant-remittances",
@@ -10595,8 +10712,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "1007a0c2455c0c82e96f41ba328596ee55136f9bbe800ab9cf7349b70f12fa26",
-    "source_bytes": 931706,
+    "source_sha256": "6d536501143188ab62619350917ea5154d4f8c9fae7266e91acf194fd7462680",
+    "source_bytes": 976758,
     "assets": [
       "/grant-companion.html",
       "/grant-companion.css",

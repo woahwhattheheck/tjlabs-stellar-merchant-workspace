@@ -48,6 +48,7 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
     ['/managed.mjs', 'managed.mjs', 'text/javascript; charset=utf-8'],
     ['/applications.mjs', 'applications.mjs', 'text/javascript; charset=utf-8'],
     ['/application-output.mjs', 'application-output.mjs', 'text/javascript; charset=utf-8'],
+    ['/runtime-output.mjs', 'runtime-output.mjs', 'text/javascript; charset=utf-8'],
     ['/application-library.mjs', 'application-library.mjs', 'text/javascript; charset=utf-8'],
     ['/application-groups.mjs', 'application-groups.mjs', 'text/javascript; charset=utf-8'],
     ['/application-groups.css', 'application-groups.css', 'text/css; charset=utf-8'],
@@ -89,7 +90,7 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
     assets.set('/'+name,{bytes:await readFile(new URL('../discovery/'+name,import.meta.url)),type:'text/javascript; charset=utf-8'});
   assets.set('/runtime-procedures-guide',{bytes:await readFile(new URL('./RUNTIME_PROCEDURES.md',import.meta.url)),type:'text/markdown; charset=utf-8'});
   let origin, host, closing = false;
-  const workspaceBackupDownloads = new Map(), applicationOutputDownloads = new Map();
+  const workspaceBackupDownloads = new Map(), applicationOutputDownloads = new Map(), runtimeOutputDownloads = new Map();
   const sockets = new Set(), imageDownloads = new Map(), transferDownloads = new Map(), pythonDownloads = new Map(), sourceBuildDownloads = new Map();
   const server = createServer(async (req, res) => {
     const reply = (status, type, bytes, headers = {}) => {
@@ -170,6 +171,19 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
         } finally { file.stream.destroy(); }
         return;
       }
+      if (req.method === 'GET' && /^\/runtime-output-download\/[a-f0-9]{64}$/.test(url.pathname) && !url.search) {
+        const key = url.pathname.split('/').at(-1), selected = runtimeOutputDownloads.get(key);
+        runtimeOutputDownloads.delete(key);
+        need(selected && selected.expires > Date.now(), 'RUNTIME_OUTPUT_DOWNLOAD_EXPIRED',
+          'Request the same selected output from the open workspace.', 410);
+        const file = await model.runtimeOutputDownload(selected.input);
+        try {
+          res.writeHead(200, { ...security, 'content-type': file.type, 'content-length': file.bytes,
+            'content-disposition': 'attachment; filename="' + file.filename + '"' });
+          await pipeline(file.stream, res);
+        } finally { file.stream.destroy(); await file.close(); }
+        return;
+      }
       if (req.method === 'GET' && /^\/application-output-download\/[a-f0-9]{64}$/.test(url.pathname) && !url.search) {
         const key = url.pathname.split('/').at(-1), selected = applicationOutputDownloads.get(key);
         applicationOutputDownloads.delete(key);
@@ -248,6 +262,17 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
       }
       if (req.method === 'GET' && url.pathname === '/api/operation-status')
         return send(200, await model.operationStatus(params(url, ['operationId'])));
+      if (req.method === 'GET' && ['/api/runtime-output/sources', '/api/runtime-output/page'].includes(url.pathname)) {
+        const inventory = url.pathname.endsWith('/sources');
+        const value = params(url, inventory ? ['operationId', 'runtimeId', 'cursor', 'limit']
+          : ['operationId', 'runtimeId', 'logFile', 'selection', 'offset', 'limit']);
+        for (const name of ['offset', 'limit']) if (value[name] !== undefined) {
+          need(/^(?:0|[1-9][0-9]*)$/.test(value[name]) && Number.isSafeInteger(Number(value[name])),
+            'RUNTIME_OUTPUT_PAGE_INVALID');
+          value[name] = Number(value[name]);
+        }
+        return send(200, await model[inventory ? 'runtimeOutputSources' : 'runtimeOutputPage'](value));
+      }
       if (req.method === 'GET' && url.pathname === '/api/log')
         return send(200, await model.logs(params(url, ['runtimeId', 'operationId'])));
       if (req.method === 'GET' && url.pathname === '/api/handoff') {
@@ -295,6 +320,18 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
       if (req.method === 'GET' && url.pathname === '/api/managed/config')
         return send(200, await model.managedConfig(params(url, ['homeId', 'path'])));
       need(req.method === 'POST' && req.headers.origin === origin, 'RUNTIME_WORKSPACE_ORIGIN_REQUIRED', undefined, 403);
+      if (url.pathname === '/api/runtime-output/download') {
+        const input = await body(req, ['operationId', 'runtimeId', 'logFile', 'selection'], 4096);
+        const file = await model.runtimeOutputDownload(input);
+        file.stream.destroy(); await file.close();
+        for (const [key, item] of runtimeOutputDownloads) if (item.expires <= Date.now()) runtimeOutputDownloads.delete(key);
+        need(runtimeOutputDownloads.size < 256, 'RUNTIME_OUTPUT_DOWNLOAD_LIMIT',
+          'Finish or reopen a recent output download.', 429);
+        const key = randomBytes(32).toString('hex');
+        runtimeOutputDownloads.set(key, { input: { ...input, selection: file.selection }, expires: Date.now() + 60000 });
+        return send(200, { url: origin + '/runtime-output-download/' + key,
+          filename: file.filename, bytes: file.bytes, sourceId: file.sourceId, selection: file.selection });
+      }
       if (url.pathname === '/api/applications/output-download') {
         const input = await body(req, ['applicationId', 'operationId', 'selection'], 4096);
         const file = await model.applicationsOutputDownload(input);
