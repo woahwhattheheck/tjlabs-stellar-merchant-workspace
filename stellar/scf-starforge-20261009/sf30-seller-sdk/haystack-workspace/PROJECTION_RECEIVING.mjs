@@ -256,7 +256,7 @@ export async function runProjectionReceiving(input){
  let content=input.model?.content?copy(input.model.content):copy(modelPreview.content);
  content.notes=(content.notes||"")+"\nOperator programme "+input.operationId+". Original observation status is preserved; no site visit, live station or customer acceptance is inferred.";
  const model=await action(workspace,"03-model-save","semantic.model.create",{contextId:modelPreview.contextId,selection,content,author:input.author,note:"Complete retained-source model for explicit typed projection."});
- const profile=input.profile?copy(input.profile):{
+ let profile=input.profile?copy(input.profile):{
   title:"Native-preserve complete original grid",description:"Explicit original-column selection. Preserve typed values, null and empty values; absent cells remain absent.",
   entityIds:modelPreview.content.entities.map(e=>e.id),columns:originalGrid.cols.map(c=>({tag:c.name,source:{kind:"native",sourceId:expectedSha,tag:c.name},conversion:{kind:"preserve",blank:"keep",trim:false},...(c.meta?{meta:copy(c.meta)}:{})})),
   overrides:[],meta:copy(originalGrid.meta)
@@ -268,6 +268,7 @@ export async function runProjectionReceiving(input){
  firstPreview={counts:firstPreview.counts,gridSha256:firstPreview.gridSha256};
  globalThis.gc?.();
  const created=await action(workspace,"05-projection-save","projection.create",{modelId:model.model.id,versionId:model.version.id,profile,author:input.author,note:"Explicit complete native-preserve profile."});
+ profile=null;globalThis.gc?.();
  const projectionId=created.projection.id;
  await action(workspace,"06-projection-review","projection.review",{projectionId,expectedHeadId:created.version.id,decision:"ready",author:input.author,note:"Operator reviewed complete source-bound grid and lineage; this is not station or customer acceptance."});
  const published=await action(workspace,"07-native-publish","projection.publish",{projectionId,expectedHeadId:created.version.id,author:input.author,note:"Publish only into this original local native source store.",select:true});
@@ -314,10 +315,13 @@ export async function runProjectionReceiving(input){
  const receiverOneDirectory=join(root,"receiver-one"),receiverOne=await received(await plainRead(first.file.path),receiverOneDirectory,"16-receiver-one");
  sameSource(await receiverOne.originalSource(expectedSha),sourceIdentity);
  let receiverOneBase=await projection(receiverOne,projectionId,applied.version.id);
- const recipientProfile=copy(receiverOneBase.profile);recipientProfile.description+="\nIndependent receiver one operator edit "+input.operationId+".";
- const recipient=await action(receiverOne,"17-recipient-edit","projection.save",{projectionId,expectedHeadId:applied.version.id,modelId:receiverOneBase.modelId,versionId:receiverOneBase.modelVersionId,profile:recipientProfile,author:input.author,note:"Independent editable receiving; complete earlier source and return history retained."});
+ const recipientModel={modelId:receiverOneBase.modelId,versionId:receiverOneBase.modelVersionId};
+ let recipientProfile=copy(receiverOneBase.profile);recipientProfile.description+="\nIndependent receiver one operator edit "+input.operationId+".";
+ receiverOneBase=null;globalThis.gc?.();
+ const recipient=await action(receiverOne,"17-recipient-edit","projection.save",{projectionId,expectedHeadId:applied.version.id,...recipientModel,profile:recipientProfile,author:input.author,note:"Independent editable receiving; complete earlier source and return history retained."});
+ recipientProfile=null;globalThis.gc?.();
  await action(receiverOne,"18-recipient-review","projection.review",{projectionId,expectedHeadId:recipient.version.id,decision:"ready",author:input.author,note:"Review the independent recipient's explicit local edit."});
- receiverOneBase=null;workspace.stateCache=null;globalThis.gc?.();
+ workspace.stateCache=null;globalThis.gc?.();
  let browser=null,firstRecipientVersion=recipient.version.id;
  if(input.browser){
   await progress("browser","started");receiverOne.stateCache=null;globalThis.gc?.();
@@ -334,11 +338,14 @@ export async function runProjectionReceiving(input){
  receiverOne.stateCache=null;globalThis.gc?.();
  const receiverTwoDirectory=join(root,"receiver-two"),receiverTwo=await received(await plainRead(second.file.path),receiverTwoDirectory,"21-receiver-two");
  let receiverTwoBase=await projection(receiverTwo,projectionId,firstRecipientVersion);
- const secondProfile=copy(receiverTwoBase.profile);
+ const secondModel={modelId:receiverTwoBase.modelId,versionId:receiverTwoBase.modelVersionId};
+ let secondProfile=copy(receiverTwoBase.profile);
  secondProfile.description+="\nIndependent receiver two operator edit "+input.operationId+".";
- const secondEdit=await action(receiverTwo,"22-second-recipient-edit","projection.save",{projectionId,expectedHeadId:firstRecipientVersion,modelId:receiverTwoBase.modelId,versionId:receiverTwoBase.modelVersionId,profile:secondProfile,author:input.author,note:"Second independently restored application edit with original source history."});
+ receiverTwoBase=null;globalThis.gc?.();
+ const secondEdit=await action(receiverTwo,"22-second-recipient-edit","projection.save",{projectionId,expectedHeadId:firstRecipientVersion,...secondModel,profile:secondProfile,author:input.author,note:"Second independently restored application edit with original source history."});
+ secondProfile=null;globalThis.gc?.();
  await action(receiverTwo,"23-second-recipient-review","projection.review",{projectionId,expectedHeadId:secondEdit.version.id,decision:"ready",author:input.author,note:"Review the second recipient's explicit local edit."});
- receiverTwoBase=null;receiverOne.stateCache=null;globalThis.gc?.();
+ receiverOne.stateCache=null;globalThis.gc?.();
  await reports(receiverTwo,"24-second-recipient",projectionId,secondEdit.version.id);
  const third=await deliver(receiverTwo,"25-final-complete-workspace",{kind:"workspace"});
  const reopenOne=await cold(receiverOne,"26-first-cold-reopen",sourceIdentity,projectionId,firstRecipientVersion);
