@@ -103,3 +103,8 @@ starforge document-merchant batch --help
 ## Saved Applications operation
 
 [APPLICATIONS.md](APPLICATIONS.md) covers the complete saved Document merchant: review and prepare the provider configuration, start the original native Jobs service, open its authenticated operator, fulfill whole-file customer requests, then stop and reopen that same merchant. The installed CLI exposes `review`, `inspect-service` and `launch`; JS/TS uses the same original service lifetime.
+
+
+## Ordered invoice and report bundles
+
+After receiving the original PDFs, use the same Document production browser's Ordered PDF bundle step or `document-merchant assemble` to prepare exact customer order, review the original assembly price, fulfill and receive every volume, and export one complete customer archive. The PDFMint-backed `assemblePdfs` function is enabled explicitly with its own native payment terms. Single-PDF volumes retain their original bytes without a merge purchase. See [ASSEMBLY.md](./ASSEMBLY.md) for complete merchant setup, local/batch source intake, CLI commands, continuation, output units and independent customer receiving.

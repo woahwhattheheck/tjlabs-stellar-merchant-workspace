@@ -1,4 +1,4 @@
-import type {DocumentProviderId, DocumentFormat, DocumentInput, OriginalDocumentFile, JsonValue} from './index.mjs';
+import type {DocumentProviderId, DocumentJobFormat, DocumentInput, OriginalDocumentFile, JsonValue} from './index.mjs';
 import type {JobWorkspace, NativeSettlement, JobWorkspaceOutputs} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/index.mjs';
 import type {IntakeCatalog, IntakePayment} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/index.mjs';
 
@@ -8,11 +8,11 @@ export const DOCUMENT_BATCH_SNAPSHOT_SCHEMA: 'stellar-forge.document-batch-snaps
 export interface DocumentBatchInput {
   schema: 'stellar-forge.document-batch.v1';
   id: string; name: string; provider: DocumentProviderId; merchantOrigin: string | null;
-  documents: Array<{id: string; label?: string; source: string; format: DocumentFormat; input: DocumentInput}>;
+  documents: Array<{id: string; label?: string; source: string; format: DocumentJobFormat; input: DocumentInput}>;
 }
 export interface NormalizedDocumentBatchItem {
-  id: string; label: string; source: string; sourcePath: string; format: DocumentFormat;
-  functionId: 'renderHtml' | 'renderMarkdown'; reference: string;
+  id: string; label: string; source: string; sourcePath: string; format: DocumentJobFormat;
+  functionId: 'renderHtml' | 'renderMarkdown' | 'assemblePdfs'; reference: string;
   input: {title: string; taskReference: string; settings: {[key: string]: JsonValue}};
 }
 export interface NormalizedDocumentBatch {
@@ -42,7 +42,7 @@ export interface DocumentBatchOutput {
     sha256: string; path: string | null; resourceId: string | null}>;
 }
 export interface DocumentBatchRow {
-  id: string; label: string; format: DocumentFormat; taskReference: string; reference: string;
+  id: string; label: string; format: DocumentJobFormat; taskReference: string; reference: string;
   requestId: string; requestRevision: number; requestPhase: string; source: OriginalDocumentFile; payment: IntakePayment;
   checkoutId: string | null; checkoutPhase: string | null; checkoutIntent: string | null; checkoutAttempted: boolean;
   jobEntryId: string | null; jobId: string | null; nativeSettlement: NativeSettlement | null; jobState: string | null;
