@@ -1,7 +1,7 @@
 // MIT. Complete recorded cohort delivery using the original Grant client and comparison engine.
 import {createHash} from 'node:crypto';
 import {COHORT_DELIVERY_INPUT_SCHEMA,COHORT_DELIVERY_COMPARISON_SCHEMA,
-  seedCohortDeliveryComparison,compareCohortDelivery,reopenCohortDeliveryComparison,seedCohortCommercialChoices} from './cohort_delivery_comparison.mjs';
+  seedCohortDeliveryComparison,compareCohortDelivery,reopenCohortDeliveryComparison,seedCohortCommercialChoices,selectCohortOriginalCosts} from './cohort_delivery_comparison.mjs';
 import {COHORT_ADOPTION_REVIEW_SCHEMA,COHORT_ADOPTION_PREPARED_SCHEMA,COHORT_ADOPTION_SAVED_SCHEMA,
   reviewGrantCohortAdoption,prepareGrantCohortAdoption,saveGrantCohortAdoption,
   inspectGrantCohortAdoptionRequest,openGrantCohortAdoption,exportCohortAdoption} from './cohort_planning_agent.mjs';
@@ -51,7 +51,7 @@ function result(input,extra={},allowEditable=false){
   }catch(error){
     const codes=['DUPLICATE_IDENTITY_LINK','IDENTITY_LINK_NOTE_REQUIRED','UNKNOWN_IDENTITY_LINK',
       'DUPLICATE_INTENT_ASSIGNMENT','UNKNOWN_INTENT_ASSIGNMENT','INTENT_ASSIGNMENT_NOTE_REQUIRED','INTENT_IDENTITY_CONFLICT',
-      'COMMERCIAL_ALLOCATION_CONFLICT','COMMERCIAL_COST_SOURCE_CHANGED','COMMERCIAL_REFUND_SOURCE_CHANGED','COMMERCIAL_CLOCK_CONFLICT'];
+      'COMMERCIAL_ALLOCATION_CONFLICT','COMMERCIAL_COST_SOURCE_CHANGED','COMMERCIAL_REFUND_SOURCE_CHANGED','COMMERCIAL_CLOCK_CONFLICT','COMMERCIAL_ORIGINAL_SOURCE_CHANGED','COMMERCIAL_ORIGINAL_PERIOD','COMMERCIAL_ORIGINAL_QUANTITY','COMMERCIAL_ORIGINAL_VALUATION'];
     if(!allowEditable||!codes.includes(error.code))throw error;
     return {schema:COHORT_DELIVERY_AGENT_SCHEMA,state:'EDITABLE_INPUT',document:copy(input),
       summary:null,source:null,issues:[{code:error.code,message:error.message,path:error.path??''}],...extra};
@@ -100,7 +100,15 @@ export function editCohortDelivery(document,changes){
   const input=inputOf(document,{editable:true});
   need(Array.isArray(changes)&&changes.length>0&&changes.length<=2000,'GRANT_DELIVERY_INPUT','Supply explicit identity and placement edits.');
   for(const change of changes){
-    exact(change,['action','kind','plannedId','observedId','intentId','targetId','note','title','commercial'],['action']);
+    exact(change,['action','kind','plannedId','observedId','intentId','targetId','note','title','commercial','originalCosts'],['action']);
+    if(['RECEIVE_ORIGINAL_COSTS','REMOVE_ORIGINAL_COSTS'].includes(change.action)){
+      exact(change,change.action==='RECEIVE_ORIGINAL_COSTS'?['action','originalCosts']:['action'],
+        change.action==='RECEIVE_ORIGINAL_COSTS'?['action','originalCosts']:['action']);
+      if(change.action==='REMOVE_ORIGINAL_COSTS'){if(input.commercial)delete input.commercial.originalCosts;}
+      else Object.assign(input,selectCohortOriginalCosts(input,change.originalCosts));
+      continue;
+    }
+    need(change.originalCosts===undefined,'GRANT_DELIVERY_INPUT','Original cost selections use RECEIVE_ORIGINAL_COSTS.');
     if(['START_COMMERCIAL','SET_COMMERCIAL','REMOVE_COMMERCIAL'].includes(change.action)){
       exact(change,change.action==='SET_COMMERCIAL'?['action','commercial']:['action'],change.action==='SET_COMMERCIAL'?['action','commercial']:['action']);
       if(change.action==='REMOVE_COMMERCIAL')delete input.commercial;
