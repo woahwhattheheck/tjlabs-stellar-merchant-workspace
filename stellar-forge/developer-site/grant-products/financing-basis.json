@@ -11,10 +11,10 @@
       "path": "stellar-forge/developer-site/GRANT_FINANCING_BASIS.md",
       "editions": [
         {
-          "commit": "9a87f99a90b10d9fde7d76c7c141b9c4a5fa6808",
-          "bytes": 18791,
-          "sha256": "30937de22e99d48e726f46bf5fcf614c186258a9b6c1d064f4136245a1a9c0cf",
-          "git_blob": "5c99125578107d5e5102a851fe733e2a18a39036"
+          "commit": "d0a53c8faf9893f8864b78be0665bec15ee91ec5",
+          "bytes": 19005,
+          "sha256": "1b52ae544ac150247567ce8bb6124a43d55dbf6b37c8018aede19c13bebee526",
+          "git_blob": "13c534906ece9c0f395801d13952a2ba2ff95d89"
         }
       ]
     },
@@ -26,10 +26,10 @@
       "path": "stellar-forge/developer-site/grant-sources/financing-basis.json",
       "editions": [
         {
-          "commit": "9a87f99a90b10d9fde7d76c7c141b9c4a5fa6808",
-          "bytes": 266451,
-          "sha256": "7cd72899cc5514c42fddd2e94a96d7ea836717f9afdab38821a74e763fa8412a",
-          "git_blob": "da019ad7f134572d0d63d7e26c858a12ecb4eb76"
+          "commit": "d0a53c8faf9893f8864b78be0665bec15ee91ec5",
+          "bytes": 266696,
+          "sha256": "de23e426156127894a79066d468c1ed83680d2a9fefa36046acab7c3815a03c0",
+          "git_blob": "7f19c8602a5224580b87fa22ceff7693ba6b7301"
         }
       ]
     },
@@ -41,7 +41,7 @@
       "path": "stellar-forge/developer-site/grant-sources/financing-basis.mjs",
       "editions": [
         {
-          "commit": "9a87f99a90b10d9fde7d76c7c141b9c4a5fa6808",
+          "commit": "d0a53c8faf9893f8864b78be0665bec15ee91ec5",
           "bytes": 5136,
           "sha256": "50d0f399fe23850496ce5df9a088ea749c952d09468b2abc5d3ec79cdc5bfa53",
           "git_blob": "b56046f9fcff5def6b3c29a5d6e2616e0a159f3d"
