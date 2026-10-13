@@ -9,12 +9,18 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/merchant-economics/OPERATING.md",
-      "commit": "0c52fb12870b25cd057006f44ac93c0b10736a20",
+      "commit": "16e05b54f3582bfae1d0ce79bd07bb5b649c26eb",
       "editions": [
         {
           "commit": "0c52fb12870b25cd057006f44ac93c0b10736a20",
           "bytes": 54764,
           "sha256": "a6fccd1a1be426a73e9c49b00cb66ee7cf7b929d9a317e3b2650d45d2814cd37"
+        },
+        {
+          "commit": "16e05b54f3582bfae1d0ce79bd07bb5b649c26eb",
+          "bytes": 56991,
+          "sha256": "e4d97147ff02fb1edbb5a2893963db7b492465d31474204b9f382249d152c685",
+          "git_blob": "fe8125f3da15cda5428a1774a001f75596adcd4c"
         }
       ]
     },
@@ -99,12 +105,34 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/README.md",
-      "commit": "0c52fb12870b25cd057006f44ac93c0b10736a20",
+      "commit": "d2270313c56c7bd4ca7fc81187829c842f0028e4",
       "editions": [
         {
           "commit": "0c52fb12870b25cd057006f44ac93c0b10736a20",
           "bytes": 21288,
           "sha256": "042c0ac0ec9bc784b96ec0d7c55f71559b0c7b773b3c2f8209e7b831ca8e5ab1"
+        },
+        {
+          "commit": "d2270313c56c7bd4ca7fc81187829c842f0028e4",
+          "bytes": 21759,
+          "sha256": "a464cfee6a7660a31f1cffc1c3dafb0b996ebdc96fc9c76f06e636db50e7b378",
+          "git_blob": "9fe0820a6714003545d48dd06001a57ff5bb6ee5"
+        }
+      ]
+    },
+    {
+      "id": "merchant-economics-tariff-studies",
+      "label": "Named raw tariff and payment studies with original request recovery and complete receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/STUDIES.md",
+      "commit": "d2270313c56c7bd4ca7fc81187829c842f0028e4",
+      "editions": [
+        {
+          "commit": "d2270313c56c7bd4ca7fc81187829c842f0028e4",
+          "bytes": 8613,
+          "sha256": "f8b585b6e939a9c80b48a0bcfe98b6d734f8e6a113d2d132e73fef013374527b",
+          "git_blob": "2f7e4a5d0c871e7e2d74c78016af9726a9186dd5"
         }
       ]
     },
@@ -219,7 +247,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "tree",
       "path": "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops",
-      "commit": "0c52fb12870b25cd057006f44ac93c0b10736a20"
+      "commit": "d2270313c56c7bd4ca7fc81187829c842f0028e4"
     }
   ]
 }
