@@ -344,8 +344,33 @@ try {
 } catch(error) {
   record.state='FAIL';record.error={code:error.code,message:error.message,stack:error.stack};
 } finally {
-  if(browser)await browser.close();if(listener)await listener.close();if(workbench)await workbench.close();
-  globalThis.fetch=originalFetch;record.completedAt=new Date().toISOString();await save();
+  // Attempt every original resource close independently in its original order.
+  // A rejected browser
+  // close must not skip the owner/workbench, fetch restoration or saved result.
+  const cleanupActions=[
+    ['browser',async()=>{const owned=browser;if(owned){await owned.close();if(browser===owned)browser=null;}}],
+    ['listener',async()=>{const owned=listener;if(owned){await owned.close();if(listener===owned)listener=null;}}],
+    ['workbench',async()=>{const owned=workbench;if(owned){await owned.close();if(workbench===owned)workbench=null;}}]
+  ];
+  const cleanupErrors=[];
+  for(const [resource,close] of cleanupActions){
+    try { await close(); }
+    catch(error){
+      cleanupErrors.push({
+        resource,message:String(error?.message??error),
+        ...(error?.code?{code:error.code}:{}),
+        ...(error?.stack?{stack:error.stack}:{})
+      });
+    }
+  }
+  globalThis.fetch=originalFetch;
+  delete record.cleanupErrors;
+  if(cleanupErrors.length){
+    record.cleanupErrors=cleanupErrors;
+    record.state='FAIL';
+    record.error??={message:'Original receiving resources did not all close; see cleanupErrors.'};
+  }
+  record.completedAt=new Date().toISOString();await save();
 }
 await writeFile(join(root,'acquisition-result.json'),JSON.stringify(record,null,2)+'\n',{mode:0o600});
 console.log(JSON.stringify(record));

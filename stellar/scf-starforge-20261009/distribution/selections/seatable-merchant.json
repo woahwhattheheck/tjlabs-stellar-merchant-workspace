@@ -97,7 +97,8 @@
     "stellar-forge/payment-auto-catalog/schema-pattern.mjs",
     "stellar-forge/payment-auto-catalog/package.json",
     "stellar-forge/payment-auto-catalog/package-lock.json",
-    "stellar/scf-starforge-20261009/sf96-seller-acceptance/audit.mjs"
+    "stellar/scf-starforge-20261009/sf96-seller-acceptance/audit.mjs",
+    "products/seatable/COMMISSIONING.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

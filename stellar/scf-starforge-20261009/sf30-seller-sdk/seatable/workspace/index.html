@@ -6,7 +6,11 @@
 <header><div><strong>STELLAR FORGE</strong><h1>SeaTable source workspace</h1><p>Capture · review · retain · publish</p></div><div id="summary" class="summary">Opening private workspace…</div></header>
 <div id="notice" role="status" aria-live="polite" hidden></div>
 <section id="recovery" class="recovery" hidden aria-labelledby="recovery-title"><h2 id="recovery-title">Retained request</h2><p><code id="recovery-id"></code></p><p id="recovery-message"></p><div class="actions"><button id="check-operation" type="button">Check original receipt</button><button id="resume-operation" type="button">Resume retained request</button><button id="retry-operation" type="button">Retry identical request</button><button id="dismiss-operation" type="button">Acknowledge recorded failure</button></div><label id="retry-file-label" hidden>Reselect the same source packet<input id="retry-file" type="file" accept=".json,application/json"></label></section>
-<nav aria-label="Workspace"><button data-view="overview" aria-current="page">Overview</button><button data-view="acquire">Capture source</button><button data-view="review">Review columns</button><button data-view="versions">Saved versions</button><button data-view="deploy">Publish &amp; operate</button></nav>
+
+<section id="handover-recovery" class="recovery" hidden aria-labelledby="handover-recovery-title"><h2 id="handover-recovery-title">Original whole-workspace request</h2><p><code id="handover-request"></code></p><p id="handover-recovery-message"></p>
+<label id="handover-reselect-label" hidden>Reselect the same complete workspace file<input id="handover-reselect" type="file" accept=".stwh,application/octet-stream"></label>
+<div class="actions"><button id="handover-check" type="button">Check original handover receipt</button><button id="handover-retry" type="button">Retry original request</button><button id="handover-pause" type="button" hidden>Pause local upload</button></div></section>
+<nav aria-label="Workspace"><button data-view="overview" aria-current="page">Overview</button><button data-view="acquire">Capture source</button><button data-view="review">Review columns</button><button data-view="versions">Saved versions</button><button data-view="deploy">Publish &amp; operate</button><button data-view="handover">Workspace handover</button></nav>
 <main id="main">
 <fieldset id="workspace-controls" disabled><legend class="visually-hidden">Source workspace controls</legend>
 <section data-panel="overview">
@@ -45,6 +49,27 @@
 <h3>Prepared packages and release operations</h3><div id="deployment-packages" class="table-wrap"></div><div class="pager"><button id="deploy-prev" type="button">Previous</button><span id="deploy-page"></span><button id="deploy-next" type="button">Next</button></div>
 <form id="stage-form"><div class="grid"><label>Prepared package request ID<input id="stage-package" required></label><label>Package source SHA256<input id="stage-sha" required pattern="[a-f0-9]{64}"></label><label>New release ID<input id="stage-id" required></label><label>Release label<input id="stage-label" required maxlength="240"></label></div><button type="submit">Stage in original release store</button></form>
 <div class="actions"><button id="open-release-console" type="button">Open original release controls</button><button id="close-release-console" type="button">Close release console</button><a id="release-link" target="_blank" rel="noreferrer" hidden>Open release window</a></div><p class="help">The original release console compares and activates the exact staged release, runs or restarts the existing merchant, and retains rollback and customer receiving. Selection and the actually running release remain visible there.</p><div id="release-state"></div>
+</section>
+
+<section data-panel="handover" hidden>
+<div class="section-title"><h2>Whole workspace handover</h2><button id="handover-refresh" type="button">Refresh saved handovers</button></div>
+<p>Keep the complete editable source workspace, its original observations and reviews, source versions, publication history and release records together. Receiving creates an independent named workspace. Its later edits do not change this original.</p>
+<div class="note"><strong>Private working material.</strong> A whole workspace includes original source data and private merchant records. Give it only to its intended operator. Customer datasets and buyer files remain available through the original publisher and release controls.</div>
+<form id="handover-export-form"><h3>Create complete workspace file</h3>
+<p>Save current draft edits first. Export closes this workspace’s owned publisher and release consoles, then freezes the saved workspace. It does not start a seller, send a payment or publish a new dataset.</p>
+<label class="handover-check"><input id="handover-export-confirm" type="checkbox">I will close the owned publisher and release consoles to take this complete saved snapshot.</label>
+<button type="submit">Close consoles and create workspace file</button></form>
+<div id="handover-exports" class="table-wrap"></div><p id="handover-download-note" class="path" role="status"></p>
+<hr><h3>Receive a complete workspace</h3>
+<p>The complete <code>.stwh</code> file streams to this original private host in 1 MiB chunks. Upload can resume by comparing every retained range. Files containing up to 32 GiB of working material, plus their manifest and header, do not need to fit in browser memory.</p>
+<form id="handover-upload-form"><label>Whole workspace archive<input id="handover-file" type="file" accept=".stwh,application/octet-stream" required></label><p id="handover-file-info" class="help"></p><button type="submit">Upload complete workspace file</button></form>
+<p id="handover-progress" role="status" aria-live="polite"></p>
+<div id="handover-upload-summary" class="note"></div>
+<form id="handover-receive-form"><label>Independent workspace name<input id="handover-name" required pattern="[a-z][a-z0-9_-]{0,47}" maxlength="48" autocomplete="off" placeholder="customer-received"></label>
+<p class="help">Use a letter first, then lowercase letters, digits, hyphens or underscores. This name selects an independent destination beneath this workspace’s original receiving area. Existing unrelated work is never overwritten.</p>
+<label class="handover-check"><input id="handover-receive-confirm" type="checkbox">I have reviewed the complete archive identity above and will receive this private working material into the named independent workspace.</label>
+<button id="handover-receive" type="submit" disabled>Receive independent workspace</button></form>
+<h3>Saved independent receiving</h3><div id="handover-received" class="table-wrap"></div><div id="handover-opened" class="note" hidden></div>
 </section>
 </fieldset>
 </main><footer>Private local operator · Node 24 · Original SeaTable v2 source and Stellar Forge publication engines</footer>

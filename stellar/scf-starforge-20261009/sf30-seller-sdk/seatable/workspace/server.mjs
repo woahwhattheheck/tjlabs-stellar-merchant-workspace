@@ -1,7 +1,10 @@
 // MIT. Private loopback source editor; the original publisher keeps its own UI.
 import { createServer } from 'node:http';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { readFile, open } from 'node:fs/promises';
+import { constants } from 'node:fs';
+import { pipeline } from 'node:stream/promises';
+import { WORKSPACE_CHUNK_BYTES } from './handover.mjs';
 import { fault, digest } from '../../postgres/publisher/files.mjs';
 import { MAX_PACKET_BYTES } from './packet.mjs';
 
@@ -25,7 +28,7 @@ export async function serveSeaTableAuthoring({ workspace, port = 8481 } = {}) {
     ['/', 'index.html', 'text/html; charset=utf-8'], ['/browser.mjs', 'browser.mjs', 'text/javascript; charset=utf-8'],
     ['/style.css', 'style.css', 'text/css; charset=utf-8'],
   ].map(async ([path, file, mime]) => [path, { content: await readFile(new URL('./' + file, import.meta.url)), mime }])));
-  let origin, closing;
+  let origin, closing, stopped=false;const requests=new Set(),tickets=new Map();
   const server = createServer((req, res) => {
     const send = (status, value, mime = 'application/json; charset=utf-8', filename) => {
       const output = Buffer.isBuffer(value) ? value : Buffer.from(JSON.stringify(value));
@@ -34,6 +37,14 @@ export async function serveSeaTableAuthoring({ workspace, port = 8481 } = {}) {
         'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
         ...(filename ? { 'content-disposition': 'attachment; filename="' + filename + '"' } : {}),
       }); res.end(output);
+    };
+    const stream = async file => {
+      const handle=await open(file.path,constants.O_RDONLY|constants.O_NOFOLLOW);
+      try{const stat=await handle.stat();if(!stat.isFile()||stat.nlink!==1||stat.mode&0o077||stat.size!==file.bytes)throw fault('SEATABLE_WORKSPACE_FILE_CHANGED');
+        res.writeHead(200,{'content-type':file.mime,'content-length':file.bytes,'cache-control':'no-store','x-content-type-options':'nosniff',
+          'content-disposition':'attachment; filename="'+file.filename+'"','referrer-policy':'no-referrer','x-content-sha256':file.sha256});
+        await pipeline(handle.createReadStream({autoClose:false}),res);
+      }finally{await handle.close();}
     };
     const handle = async () => {
       if (req.headers.host !== new URL(origin).host || req.headers.origin && req.headers.origin !== origin ||
@@ -44,11 +55,29 @@ export async function serveSeaTableAuthoring({ workspace, port = 8481 } = {}) {
         const asset = assets.get(path); return send(200, asset.content, asset.mime);
       }
       if (req.method === 'GET' && path === '/api/health') return send(200, { ready: !closing, service: 'seatable-source-authoring' });
+      if(req.method==='GET'&&path==='/api/workspace/export'&&url.searchParams.has('ticket')){
+        const key=url.searchParams.get('ticket'),ticket=tickets.get(key);tickets.delete(key);
+        if(closing||!ticket||ticket.expires<Date.now())throw fault('SEATABLE_WORKSPACE_DOWNLOAD_EXPIRED','Request a new download for the same saved archive.',403);
+        const file=await workspace.exportWorkspaceFile(ticket.id);if(file.sha256!==ticket.sha256)throw fault('SEATABLE_WORKSPACE_FILE_CHANGED');
+        return stream(file);
+      }
       const supplied = Buffer.from(typeof req.headers['x-seatable-workspace-token'] === 'string' ? req.headers['x-seatable-workspace-token'] : '');
       if (supplied.length !== expectedToken.length || !timingSafeEqual(supplied, expectedToken))
         throw fault('SEATABLE_WORKSPACE_SESSION_REQUIRED', 'Open the complete private URL printed by the current workspace process.', 403);
       if (closing) throw fault('SEATABLE_WORKSPACE_CLOSING', 'The workspace is stopping.', 409);
+      if(req.method==='PUT'&&path==='/api/workspace/upload'){
+        if(!/^application\/octet-stream(?:\s*;|$)/i.test(req.headers['content-type']??''))throw fault('SEATABLE_WORKSPACE_BINARY_REQUIRED',undefined,415);
+        const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>WORKSPACE_CHUNK_BYTES)throw fault('SEATABLE_WORKSPACE_UPLOAD_RANGE',undefined,413);chunks.push(chunk);}
+        if(closing)throw fault('SEATABLE_WORKSPACE_CLOSING',undefined,409);
+        return send(200,await workspace.appendWorkspaceUpload(url.searchParams.get('id'),Number(url.searchParams.get('offset')),Buffer.concat(chunks,size)));
+      }
       if (req.method === 'GET') {
+        if(path==='/api/workspace/exports')return send(200,{exports:await workspace.workspaceExports()});
+        if(path==='/api/workspace/export-status')return send(200,await workspace.workspaceExportStatus(url.searchParams.get('id')));
+        if(path==='/api/workspace/receive-status')return send(200,await workspace.workspaceReceiveStatus(url.searchParams.get('id')));
+        if(path==='/api/workspace/received')return send(200,{received:await workspace.receivedWorkspaces()});
+        if(path==='/api/workspace/upload')return send(200,await workspace.workspaceUploadStatus(url.searchParams.get('id')));
+        if(path==='/api/workspace/export')return stream(await workspace.exportWorkspaceFile(url.searchParams.get('id')));
         if (path === '/api/status') {
           const options = {};
           for (const key of ['limit', 'capturesOffset', 'versionsOffset', 'discoveriesOffset']) if (url.searchParams.has(key)) options[key] = Number(url.searchParams.get(key));
@@ -84,6 +113,20 @@ export async function serveSeaTableAuthoring({ workspace, port = 8481 } = {}) {
       }
       if (req.method !== 'POST') throw fault('NOT_FOUND', 'Action not found.', 404);
       const input = await body(req);
+      if(closing)throw fault('SEATABLE_WORKSPACE_CLOSING',undefined,409);
+      if(path==='/api/workspace/export')return send(201,await workspace.exportWorkspace(input));
+      if(path==='/api/workspace/receive')return send(201,await workspace.receiveWorkspace(input));
+      if(path==='/api/workspace/open')return send(200,await workspace.openReceivedWorkspace(input.name));
+      if(path==='/api/workspace/close')return send(200,await workspace.closeReceivedWorkspace(input.name));
+      if(path==='/api/workspace/upload/start')return send(201,await workspace.startWorkspaceUpload(input));
+      if(path==='/api/workspace/upload/finish')return send(200,await workspace.finishWorkspaceUpload(input.requestId));
+      if(path==='/api/workspace/download'){
+        for(const [key,item] of tickets)if(item.expires<Date.now())tickets.delete(key);
+        if(tickets.size>=64)throw fault('SEATABLE_WORKSPACE_DOWNLOAD_LIMIT',undefined,429);
+        const file=await workspace.exportWorkspaceFile(input.id),ticket=randomBytes(32).toString('hex'),expires=Date.now()+300000;
+        tickets.set(ticket,{id:input.id,sha256:file.sha256,expires});return send(200,{url:origin+'/api/workspace/export?ticket='+ticket,
+          expiresAt:new Date(expires).toISOString(),filename:file.filename,bytes:file.bytes,sha256:file.sha256});
+      }
       if (path === '/api/discover') return send(201, await workspace.discover(input));
       if (path === '/api/import-package') return send(201, await workspace.importPacket(input));
       if (path === '/api/capture') return send(201, await workspace.readLive(input));
@@ -102,22 +145,26 @@ export async function serveSeaTableAuthoring({ workspace, port = 8481 } = {}) {
       if (path === '/api/resume') return send(200, await workspace.resume(input.requestId));
       throw fault('NOT_FOUND', 'Action not found.', 404);
     };
-    handle().catch(issue => {
+    const pending=handle().catch(issue => {
       if (!res.headersSent && !res.destroyed) send([400, 403, 404, 409, 413, 415, 422, 502].includes(issue.status) ? issue.status : 422,
         { error: issue.code ?? 'SEATABLE_AUTHORING_FAILED', message: issue.code ? issue.message : 'Inspect the selected input and retained operation.' });
       else if (!res.writableEnded) res.end();
     });
+    requests.add(pending);pending.finally(()=>requests.delete(pending));
   });
-  server.requestTimeout = 180000; server.headersTimeout = 15000; server.keepAliveTimeout = 1000;
+  server.setTimeout(60000); server.requestTimeout = 180000; server.headersTimeout = 15000; server.keepAliveTimeout = 1000;
   await new Promise((done, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', done); });
   origin = new URL(`http://127.0.0.1:${server.address().port}`).origin;
   return { server, workspace, origin, token, url: origin + '/#token=' + token,
     close() {
-      closing ??= (async () => {
-        const stopped = new Promise((done, reject) => server.close(issue => issue ? reject(issue) : done()));
-        server.closeIdleConnections?.();
-        try { await workspace.close(); } finally { server.closeAllConnections?.(); await stopped; }
-      })(); return closing;
+      if(stopped)return Promise.resolve();if(closing)return closing;
+      const attempt=(async()=>{
+        const drained=new Promise((done,reject)=>server.close(issue=>issue&&issue.code!=='ERR_SERVER_NOT_RUNNING'?reject(issue):done()));
+        server.closeIdleConnections?.();server.closeAllConnections?.();tickets.clear();
+        await Promise.allSettled([...requests]);await drained;
+        await workspace.close();stopped=true;
+      })();
+      closing=attempt;attempt.catch(()=>{if(closing===attempt)closing=null;});return attempt;
     } };
 }
 

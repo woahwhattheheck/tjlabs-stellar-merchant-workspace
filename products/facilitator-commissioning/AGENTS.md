@@ -17,3 +17,7 @@ https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791881463183449?thread_
 ## Open every outgoing attachment
 
 The producing worker must literally open, view, play or use every final attachment in its intended form: HTML, PDF, reports, slides, spreadsheets, maps, images, video, audio, archives and working projects. Extract outgoing archives and open their actual contained deliverables and the working project. Inspect the exact final edition and important controls; screenshots that were captured but never viewed do not satisfy this requirement. Repair concrete defects in the original source and delivery before presentation, preserving all other owner controls and the original operating case.
+
+## Complete Customer Installation desk
+
+Use the ninth screen and its original case, complete Workshare seed and source transfer. Preserve exact original file identities, case version, two provider authorities and all funding/work assignments. Follow INSTALLATION_DESK.md through source matching, complete editing, original UUID receiving, all-file download and whole-job cold reopening. The original SF47 preview/save remains the writer. The Merchant customer exposes the same Installation catalog, complete pages and original prepared-file capture; it owns no second seller. Open and VIEW all final populated screens and every delivered attachment as specified above.

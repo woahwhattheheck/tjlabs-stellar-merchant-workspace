@@ -385,3 +385,27 @@ For the four manifest/file tools, view defaults to manifest. File reads use view
 [pricing-tariffs.mjs](pricing-tariffs.mjs) borrows the existing MerchantPricing model, retained-file reader and release renderer. [catalog/pricing-tariffs.mjs](catalog/pricing-tariffs.mjs) contains the complete 18-tool metadata and command map. [pricing-tariffs-client.mjs](pricing-tariffs-client.mjs) uses the original authenticated transport and resumable downloader; its [declarations](pricing-tariffs-client.d.mts) reuse the original native tariff types.
 
 The original Pricing runtime, catalogue, provider declaration, client and CLI each contain a narrow source join. They keep the original configuration key, source-owned registry, model ownership, request drainage and private file-read lifetime. The native [tariff workspace](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/workspace.mjs) remains the authority for saves, native selection recovery and portfolio receiving.
+
+
+## Complete saved-plan report
+
+The original tariff plan artifact remains exactly plan.json, tariffs.json and comparison.csv. A complete readable report is available as a separate artifact from the same plan and exact review.
+
+Call merchant_pricing_tariff_report with the existing workspace alias and planId. Default view:manifest returns stellar-forge.merchant-tariff-report-files.v1, source version, tariffReviewSha256 and all six file identities. view:file uses the same file, expectedManifestSha256, expectedSha256, readId, offset and limit contract as the original file reader. The existing owner drains/releases those reads.
+
+The report includes report.html, band-charges.csv, thresholds.csv and the original three plan files. Its HTML contains every proposed quantity, graduated charged band or selected volume band, exact rational average and decimal bounds, separate rounded uniform quote, source baseline/cost meanings and complete original identities. There is no new pricing calculator.
+
+    merchant-mcp pricing tariff-report-manifest \
+      --url MCP_ENDPOINT --workspace ALIAS --plan-id PLAN_ID
+
+    merchant-mcp pricing tariff-report-download \
+      --url MCP_ENDPOINT --workspace ALIAS --plan-id PLAN_ID \
+      --manifest-sha256 REVIEWED_SHA256 --out PRIVATE_REPORT_DIRECTORY
+
+Use a separate private directory from a three-file plan download. The original retained downloader resumes interrupted transfers with exact manifest/file hashes. It rejects changed report bytes after a source-renderer edition change; keep the original installed source to resume that edition. Completed received files stay complete in their own directory.
+
+The module pricing-tariffs-client.mjs exports downloadMerchantTariffReport and inspectMerchantTariffReport; MerchantTariffClient.report(planId, name) reads any original report file. The original pricing-client.mjs re-exports these operations.
+
+Open report.html offline to read or print all outcomes. The source browser filters affect only the screen. The detailed CSVs retain exact strings, explicit zero-quantity rows and canonical signed decimal changes; import these columns as text to preserve long quantities and decimal digits. The original JSON retains authoritative types and null values.
+
+Continue the existing SF97 saved-case native course with actual desktop/narrow browser frames, full report export/reopen, same-directory interrupted MCP download recovery and source identity comparison. The original scenario, pricing and native quote writers remain the selection authorities. Full operator instructions are in ../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/REVIEW.md.

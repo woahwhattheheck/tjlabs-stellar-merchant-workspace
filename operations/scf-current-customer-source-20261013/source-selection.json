@@ -5,7 +5,7 @@
   "composed_at": "2026-10-13T11:37:36.000Z",
   "source_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
   "input_commit": "27a2714d1f6c2ac0a324c696064ec3fc105b9144",
-  "publication_base_commit": "bd1682ad87575d936c95771f3133a1695b2a98e9",
+  "publication_base_commit": "b1b703de5a682e7b2fd186ef754fa386828f200d",
   "output_commit": "fb762f4b9e5407bf1156e0a5fbb4f4a62f2ead23",
   "canonical_manuscript": {
     "url": "https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF",
@@ -1277,14 +1277,15 @@
       },
       {
         "path": "products/facilitator-commissioning/GRANT.md",
-        "bytes": 26756,
-        "sha256": "eb52cc1007d6787f6a807cb2cc398276fe1245ca765577864c32fd51af92ba5e",
-        "preimage_blob": "52d102bf8470a0b1c516e80ba829ce1e83b1d480",
-        "git_blob": "b682e66c2792cff6ba1a005071f027b359ce9897"
+        "bytes": 27970,
+        "sha256": "81a1c7bc8ab54cbfa4050fe468b0c73a425c63e0e0a98bda564e909e291a2cd9",
+        "preimage_blob": "f84d55781167fb86ff6a03c125f8f7c2adccbbc1",
+        "git_blob": "74cddac9803e37525d72a9adaa0d7d77662059b0"
       }
     ],
     "historical_replication_selection": "The four original d074376c server, operator, workspace and receiving definitions remain present and optional because the complete authored chapter explicitly selects the maintained 6d969651 successors. Their prior editions and all byte witnesses are unchanged.",
-    "concurrent_audit": "Fresh-main 995-source successor cc93191a/e39b193b is the actual initial published source. Its complete Audit chapter is byte-equal to this edition, including the current original 0fd9bfc5 customer Installation guide and authored final-course paragraph."
+    "concurrent_audit": "Fresh-main 995-source successor cc93191a/e39b193b is the actual initial published source. Its complete Audit chapter is byte-equal to this edition, including the current original 0fd9bfc5 customer Installation guide and authored final-course paragraph.",
+    "concurrent_facilitator_guide": "The original source author published f84d5578 while the output package was being prepared. Its full new current/historical source paragraph is preserved in the merged guide; only the same two canonical guide links advance. The coherent frozen reviewer/package edition remains unchanged."
   },
   "execution": {
     "environment": "Connected V8 execution of complete unchanged original publication and reviewer-source receiving modules",
@@ -1303,5 +1304,6 @@
     "canonical_publisher": "Following original composer publication 05C7; original DBC61/BC3D, source authors, Page/Site and saved-application owners retain continuing operation.",
     "native_saved_case": "Original 22B7 saved-application and current original native receiving programme.",
     "following_editions": "Property Continuity has its full declaration but no complete authored H2 in this selected manuscript. Exact source request is with original9B23. Later source/declaration changes remain in main and canonical for the following original composer edition."
-  }
+  },
+  "composition_published_base_commit": "bd1682ad87575d936c95771f3133a1695b2a98e9"
 }

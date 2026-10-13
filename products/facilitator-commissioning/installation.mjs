@@ -94,15 +94,27 @@ export async function prepareCommissioningInstallationFiles(options){
   // The inspector retains the original file inventory; this also verifies its full original selection hash.
   const ordered=x=>Array.isArray(x)?x.map(ordered):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,ordered(x[k])])):x;
   need(hash(Buffer.from(JSON.stringify(ordered(selection.value))))===job.value.selectionSha256,'The full original selection hash differs.');
-  const profile=readProfile('facilitator-commissioning');
-  const profileHandle=await open(profile.source.path,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
-  let profileRaw;
-  try{
-    const stat=await profileHandle.stat();
-    need(stat.isFile()&&stat.size<=2*1024*1024,'Select the complete maintained installed profile.');
-    profileRaw=await profileHandle.readFile();
-    need(profileRaw.length===profile.source.bytes&&hash(profileRaw)===profile.source.sha256,'The installed profile changed during preparation.');
-  }finally{await profileHandle.close();}
+  let profile,profileRaw;
+  if(options.profileFile){
+    need(typeof options.expectedProfileSha256==='string'&&/^[a-f0-9]{64}$/.test(options.expectedProfileSha256),
+      'Bind the exact retained original profile before continuing a preparation.');
+    profileRaw=await readWorkflowSeriesPrivateFile(resolve(options.profileFile),2*1024*1024);
+    need(hash(profileRaw)===options.expectedProfileSha256,'The retained original profile changed.');
+    const value=parse(profileRaw);
+    need(value?.schema==='stellar-forge.installation-workorder-profile.v1'&&value.id==='facilitator-commissioning'&&
+      value.task&&value.source&&value.receiving&&Array.isArray(value.steps)&&Array.isArray(value.inputs)&&Array.isArray(value.sourceFiles),
+      'Receive the complete original same-service profile.');
+    profile={value,source:{bytes:profileRaw.length,sha256:hash(profileRaw)}};
+  }else{
+    profile=readProfile('facilitator-commissioning');
+    const profileHandle=await open(profile.source.path,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
+    try{
+      const stat=await profileHandle.stat();
+      need(stat.isFile()&&stat.size<=2*1024*1024,'Select the complete maintained installed profile.');
+      profileRaw=await profileHandle.readFile();
+      need(profileRaw.length===profile.source.bytes&&hash(profileRaw)===profile.source.sha256,'The installed profile changed during preparation.');
+    }finally{await profileHandle.close();}
+  }
   let seed=null,caseSnapshot=null,bindings=null,result=null;
   if(options.mode!=='inputs'){
     need(options.seed&&options.caseSnapshot,'Select the original native seed and complete current case JSON.');

@@ -35,18 +35,35 @@
         <div class="section-heading"><span class="step">2</span><h2 id="comparison-title">Compare and retain</h2></div>
         <p class="intro">Each row describes one tariff and one monthly quantity. Costs come from the selected original pricing review.</p>
         <div id="comparison-empty" class="empty">Choose a saved pricing review, enter a tariff, then calculate.</div>
-        <div id="boundary-notices"></div>
+        <div id="review-basis" class="tariff-review"></div>
+        <div id="comparison-filters" hidden>
+          <div class="field-grid">
+            <label>Route<select id="review-route"></select></label>
+            <label>Tariff<select id="review-tariff"></select></label>
+            <label>Monthly quantity<select id="review-quantity"></select></label>
+          </div>
+          <div class="toolbar"><button id="review-reset" type="button">Show all comparisons</button></div>
+          <p id="comparison-count" role="status" class="muted"></p>
+        </div>
         <div class="table-scroll"><table id="comparison-table" hidden>
-          <thead><tr><th>Tariff / route</th><th>Monthly requests</th><th>Tariff total USD</th><th>Change from fixed price</th><th>Contribution USD</th><th>Uniform quote USD</th><th>Rounding USD</th><th>Choose</th></tr></thead>
+          <thead><tr><th>Tariff / route</th><th>Monthly requests</th><th>Tariff total USD</th><th>Change from fixed price</th><th>Contribution USD</th><th>Uniform quote USD</th><th>Rounding USD</th><th>Details</th></tr></thead>
           <tbody></tbody>
         </table></div>
+        <div id="comparison-detail" class="tariff-review"></div>
+        <div id="comparison-action" class="toolbar"></div>
+        <details id="review-schedules" hidden><summary>All saved tariff bands and boundaries</summary><div id="review-schedules-body" class="tariff-review"></div></details>
+        <details id="review-source" hidden><summary>Original saved source</summary><div id="review-source-body" class="tariff-review"></div></details>
         <div class="toolbar">
           <button id="save-plan" type="button" disabled>Save this plan</button>
           <button id="resume-save" type="button" hidden>Resume retained save</button>
           <button id="download-plan" type="button" disabled>Download plan</button>
           <button id="download-csv" type="button" disabled>Download comparison CSV</button>
-          <button id="print-plan" type="button" disabled>Print comparison</button>
+          <button id="download-report" type="button" disabled>Download full HTML report</button>
+          <button id="download-bands" type="button" disabled>Download charged bands CSV</button>
+          <button id="download-thresholds" type="button" disabled>Download thresholds CSV</button>
+          <button id="print-plan" type="button" disabled>Print displayed review</button>
         </div>
+        <p class="muted">The HTML download contains every comparison and can be opened offline or printed in full. Browser filters affect this screen only.</p>
         <p id="saved-plan-status" class="muted"></p>
       </section>
       <section id="selection-section" aria-labelledby="selection-title" hidden>

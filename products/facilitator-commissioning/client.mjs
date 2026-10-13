@@ -11,6 +11,9 @@ export class CommissioningClient{
   state(){return this.request('/api/state');}
   release(id){return this.request('/api/release?id='+encodeURIComponent(id));}
   history({kind='results',offset=0,limit=50,revision}={}){const p=new URLSearchParams({kind,offset:String(offset),limit:String(limit)});if(revision!==undefined)p.set('revision',String(revision));return this.request('/api/history?'+p);}
+  installations(){return this.request('/api/installations');}
+  installation({id,kind='summary',offset=0,limit=50}){return this.request('/api/installation?'+new URLSearchParams({id,kind,offset:String(offset),limit:String(limit)}));}
+  installationArchiveURL(operationId){return this.origin+'/api/installation/archive?operationId='+encodeURIComponent(operationId);}
   prepare(command){return this.request('/api/requests',{method:'POST',body:command});}
   apply(command){return this.request('/api/action',{method:'POST',body:command});}
   receive(operationId){return this.request('/api/receive?operationId='+encodeURIComponent(operationId));}

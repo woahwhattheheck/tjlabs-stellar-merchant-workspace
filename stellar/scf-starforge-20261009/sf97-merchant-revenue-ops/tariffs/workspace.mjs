@@ -4,6 +4,7 @@ import { mkdir, open, lstat, realpath, readdir, link, unlink } from 'node:fs/pro
 import { resolve, join, isAbsolute } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { createTariffReview } from './model.mjs';
+import { renderTariffReport, tariffBandCsv, tariffThresholdCsv } from './public/review.mjs';
 import { createScenarioReview } from '../planning/scenarios.mjs';
 import { openTariffWorkingCopies } from './working-copies.mjs';
 import { openPlanningWorkspace } from '../planning/workspace.mjs';
@@ -427,7 +428,11 @@ export async function openTariffWorkspace({model, directory} = {}) {
     const record = await load(planId);
     if (name === 'plan.json') return encode(record);
     if (name === 'tariffs.json') return encode({version:record.version,...record.inputs});
-    if (name !== 'comparison.csv') throw fault('TARIFF_FILE_NOT_FOUND','Choose plan.json, tariffs.json or comparison.csv.',404);
+    if (name === 'report.html') return Buffer.from(renderTariffReport(record));
+    if (name === 'band-charges.csv') return Buffer.from(tariffBandCsv(record));
+    if (name === 'thresholds.csv') return Buffer.from(tariffThresholdCsv(record));
+    if (name !== 'comparison.csv') throw fault('TARIFF_FILE_NOT_FOUND',
+      'Choose report.html, band-charges.csv, thresholds.csv, plan.json, tariffs.json or comparison.csv.',404);
     const cell = value => {
       let text = String(value ?? '');
       if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
