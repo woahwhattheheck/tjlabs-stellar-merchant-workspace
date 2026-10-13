@@ -414,3 +414,8 @@ Open **Team workspace** at `/team` from the original private owner link. Enroll 
 [STAFF_ACCESS.md](STAFF_ACCESS.md) contains the operating workflow and role matrix. [STAFF_INSTALLATION.md](STAFF_INSTALLATION.md) covers whole-database backup, source and attachment transfer, individual SSH access and independent recovery. Both Applications launchers include the same named-staff source inventory.
 
 The full operating receiving entrypoint is `python3 STAFF_WORKFLOW_RECEIVING.py --output /absolute/private/receiving --node /absolute/path/to/node`. It operates the original local server through named staff HTTP and browser sessions, then opens the same complete installation in a separate recovered destination. Existing trusted integrations retain the original owner bearer API.
+
+
+## Recorded cohort delivery agent
+
+The nine `merchant_grant_cohort_delivery_*` tools take the original saved adoption source and frozen review through explicit identity/intent editing, complete comparison, source refresh, reviewed preparation, native save/recovery and JSON/CSV/HTML receiving. They share the existing source request owner with the adoption tools. Source refresh retains invalidated choices in complete editable input with the exact finding, so the same edit operation repairs the association. The public typed module is `@tokenjunkielabs/starforge-merchant/grant/cohort-delivery-agent`. See [the complete source selection, tool, native request and receiving workflow](COHORT-DELIVERY.md#merchant-agent-workflow).

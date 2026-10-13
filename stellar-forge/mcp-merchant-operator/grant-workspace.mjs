@@ -1,5 +1,8 @@
 import {grantWorkspaceTools} from './catalog/grant-workspace.mjs';
 import {retainGrantFundingSave} from './grant-funding-recovery.mjs';
+import {seedGrantCohortDelivery,editCohortDelivery,refreshGrantCohortDelivery,
+  reviewGrantCohortDelivery,calculateCohortDelivery,openGrantCohortDelivery,exportGrantCohortDelivery}
+  from '../../stellar/scf_2026/sf47_budget_model/workspace/cohort_delivery_agent.mjs';
 import {seedGrantCohortAdoption,reviewGrantCohortAdoption,editCohortAdoption,rebaseGrantCohortAdoption,
   scheduleCohortAdoption,compareCohortAdoption,prepareGrantCohortAdoption,validateCohortAdoptionPrepared,
   inspectGrantCohortAdoptionRequest,saveGrantCohortAdoption,openGrantCohortAdoption,exportCohortAdoption}
@@ -764,6 +767,41 @@ export class MerchantGrantWorkspaces {
     else if (verb === 'commercial_preview') original=await client.commercialPreview(args.caseId,args.billingId,args.milestoneId);
     else if (verb === 'commercial_refresh') original=await client.commercialRefresh(args.caseId,args.billingId);
 
+
+    else if (verb.startsWith('cohort_delivery_')) {
+      let value;
+      if (verb==='cohort_delivery_seed') {
+        const {caseId,...body}=rest;value=await seedGrantCohortDelivery(client,caseId,body);
+      } else if (verb==='cohort_delivery_request') {
+        value=await this.#adoptionRequest(alias,client,args.caseId,args.requestId,args.expectedPreparedSha256);
+        if(value.found)need(value.prepared.document.schema==='stellar-forge.sf47-cohort-delivery-comparison.v1',
+          'GRANT_DELIVERY_INPUT','Select the original recorded delivery request.');
+      } else if (verb==='cohort_delivery_open') {
+        value=await openGrantCohortDelivery(client,args.caseId,args.sourceId,args.expectedSourceSha256);
+      } else {
+        const document=await this.#modelInputs(alias,args,'Complete recorded cohort delivery',GRANT_MAX_BUNDLE_BYTES);
+        if (verb==='cohort_delivery_edit') value=editCohortDelivery(document,args.changes);
+        else if (verb==='cohort_delivery_review') value=await reviewGrantCohortDelivery(client,args.caseId,args.expectedVersion,document);
+        else if (verb==='cohort_delivery_refresh') {
+          const {caseId,inputs,input,inputPointer,expectedInputSha256,...selection}=rest;
+          value=await refreshGrantCohortDelivery(client,caseId,document,selection);
+        } else if (verb==='cohort_delivery_prepare') {
+          const comparison=calculateCohortDelivery(document);
+          const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;
+          value=await this.#adoptionPrepare(alias,client,caseId,{...body,document:comparison});
+        } else if (verb==='cohort_delivery_save') {
+          need(document.document?.schema==='stellar-forge.sf47-cohort-delivery-comparison.v1',
+            'GRANT_DELIVERY_INPUT','Select the complete original prepared recorded delivery.');
+          value=await this.#adoptionSave(alias,client,document,args.expectedPreparedSha256);
+        } else if (verb==='cohort_delivery_export') {
+          original={...exportGrantCohortDelivery(document,args.format),status:200,
+            source:{kind:'GRANT_COHORT_DELIVERY',workspace:alias,selectionSha256:binding.selectionSha256,operation:verb}};
+        } else throw failure('GRANT_TOOL_UNKNOWN','Choose an original cohort delivery operation.');
+      }
+      if(value!==undefined)original={value,bytes:json(value),mediaType:'application/json',status:200,
+        filename:verb.replaceAll('_','-')+'.json',
+        source:{kind:'GRANT_COHORT_DELIVERY',workspace:alias,selectionSha256:binding.selectionSha256,operation:verb}};
+    }
     else if (verb.startsWith('adoption_')) {
       let value;
       if (verb === 'adoption_seed') {
@@ -895,7 +933,7 @@ export class MerchantGrantWorkspaces {
       ['planId','caseId','intakeId','forecastId','portfolioId','alternativeId','sourceId','reviewId','reviewSha256','installationId','revision','after','before','limit','kind','format',
         'requestId','expectedRevision','expectedVersion','input','inputPointer','expectedInputSha256',
         'workshareCaseId','expectedSourceSha256','packetSourceId','expectedPacketSha256','installationRefs','groupId',
-        'expectedPreparedSha256','parentSourceId','expectedParentSha256',
+        'expectedPreparedSha256','parentSourceId','expectedParentSha256','planSourceId','expectedPlanSha256','expectedReviewBusinessSha256',
         'filename','expectedPreviewSha256','deploymentId','tranche','asOfDate','asOfAt','receiptId','cohortReviewIds','implementationReviewIds','sha256',
         'startDate','endDate','expectedReportSha256','rowId','expectedCashId','decision','expectedReviewSha256','confirmedOn','deadlineOn','submittedOn','formReference','outcomeId','state','date'].includes(key)))});
   }
