@@ -58,7 +58,7 @@ export async function readBuyerExpenseConfiguration(path) {
   if(!Object.keys(raw.workspaces).length)throw fail('CONFIGURATION','Declare at least one original expense workspace.');
   const workspaces={};
   for(const [name,value] of Object.entries(raw.workspaces)) {
-    identifier(name);exact(value,['directory','python','ledgers','quoteSources','governedQuoteSources','refundSources','adjustmentSources','accountantSources','nodeSources'],['directory']);
+    identifier(name);exact(value,['directory','python','ledgers','quoteSources','governedQuoteSources','refundSources','adjustmentSources','accountantSources','nodeSources','rozoSources'],['directory']);
     const directory=hostPath(value.directory,dirname(path));
     const python=value.python ?? 'python3';
     if(typeof python!=='string'||python.includes('\0')||(python!=='python3'&&!isAbsolute(python)))throw fail('CONFIGURATION','Select python3 or a host-declared absolute Python interpreter path.');
@@ -120,6 +120,17 @@ export async function readBuyerExpenseConfiguration(path) {
         throw fail('CONFIGURATION','Declare the exact original Node accounting export, source name and provenance.');
       bindings.nodeSources[key]={...source,sourceFile:hostPath(source.sourceFile,dirname(path))};
     }
+    const rozoSources=value.rozoSources??{};exact(rozoSources,Object.keys(rozoSources));bindings.rozoSources={};
+    for(const [key,source] of Object.entries(rozoSources)){
+      identifier(key);exact(source,['sourceFile','sourceSha256','name','provenance','dataContext'],['sourceFile','sourceSha256','name','provenance','dataContext']);
+      if(typeof source.name!=='string'||!source.name.trim()||source.name.length>160||
+        typeof source.provenance!=='string'||!source.provenance.trim()||source.provenance.length>6000||
+        typeof source.sourceSha256!=='string'||!new RegExp(sha.pattern).test(source.sourceSha256)||
+        !['development','operational'].includes(source.dataContext))throw fail('ROZO_SOURCE_DECLARATION','Declare the complete original ROZO source identity and explicit data context.');
+      const sourceFile=hostPath(source.sourceFile,dirname(path));
+      originalRozoFilename(basename(sourceFile));
+      bindings.rozoSources[key]={...source,sourceFile};
+    }
     workspaces[name]={directory,python,...bindings};
   }
   if(new Set(Object.values(workspaces).map(v=>v.directory)).size!==Object.keys(workspaces).length)throw fail('CONFIGURATION','Use one alias for each original expense directory.');
@@ -144,13 +155,24 @@ function compactReport(value,view='summary',offset=0,limit=50) {
 export function parseBuyerExpenseExport(bytes,exportId) {
   const v=parse(bytes);
   if(v.schema!==BUYER_EXPENSE_EXPORT_SCHEMA||v.exportId!==exportId||!Array.isArray(v.files)||v.files.length!==1||
-     typeof v.workspaceId!=='string'||!Number.isSafeInteger(v.revision)||!['project','accountant','capture','issued-json','issued-html','refund-packet','buyer-accountant-source','bookkeeping','accountant-return','node-operation'].includes(v.kind))
+     typeof v.workspaceId!=='string'||!Number.isSafeInteger(v.revision)||!['project','accountant','capture','issued-json','issued-html','refund-packet','buyer-accountant-source','bookkeeping','accountant-return','node-operation','rozo-report'].includes(v.kind))
     throw fail('MANIFEST','Use a complete original buyer expense export manifest.');
   const f=v.files[0];
-  if(!['buyer-expense-project.zip','accountant-edition.zip','original-capture.json','issued-edition.json','issued-edition.html','original-refund-packet.zip','issued-buyer-accountant-source.json','buyer-bookkeeping-period.zip','original-accountant-return.json','original-node-accounting-export.json'].includes(f.name)||
+  if(!['buyer-expense-project.zip','accountant-edition.zip','original-capture.json','issued-edition.json','issued-edition.html','original-refund-packet.zip','issued-buyer-accountant-source.json','buyer-bookkeeping-period.zip','original-accountant-return.json','original-node-accounting-export.json','original-rozo-finance-source.json'].includes(f.name)||
      !Number.isSafeInteger(f.bytes)||f.bytes<1||f.bytes>MAX_BYTES||!new RegExp(sha.pattern).test(f.sha256))
     throw fail('MANIFEST','The retained export file identity is invalid.');
+  if(v.kind==='rozo-report'){
+    originalRozoFilename(v.originalFilename);
+    if(f.name!=='original-rozo-finance-source.json'||f.contentType!=='application/json'||f.bytes>64*1024*1024)
+      throw fail('MANIFEST','Use the complete original ROZO source file and its retained filename.');
+  }
   return v;
+}
+function originalRozoFilename(value){
+  if(typeof value!=='string'||!value.trim()||value!==value.trim()||Array.from(value).length>240||
+    /[\/\\\u0000-\u0008\u000b-\u001f]/.test(value)||['.','..'].includes(value))
+    throw fail('ROZO_SOURCE_FILENAME','Retain the original ROZO filename without a directory or control character.');
+  return value;
 }
 async function syncDirectory(path){const h=await open(path,'r');try{await h.sync();}finally{await h.close();}}
 async function publish(path,bytes) {
@@ -243,6 +265,21 @@ export class MerchantBuyerExpenses {
       filename:basename(source.sourceFile),name:source.name,provenance:source.provenance,
       data_context:source.dataContext,operator};
   }
+  async #rozoSource(selection,alias,operator,purchaseSelection){
+    const source=selection.rozoSources?.[identifier(alias)];
+    if(!source)throw fail('ROZO_SOURCE_NOT_DECLARED','Select an original ROZO finance source declared by this host.');
+    const bytes=await privateBytes(source.sourceFile,64*1024*1024);
+    if(!bytes.length||hash(bytes)!==source.sourceSha256)throw fail('ROZO_SOURCE_CHANGED','The complete original ROZO source differs from its host-declared SHA-256.');
+    const payload={content_base64:bytes.toString('base64'),source_sha256:source.sourceSha256,
+      filename:originalRozoFilename(basename(source.sourceFile)),name:source.name,provenance:source.provenance,
+      data_context:source.dataContext,operator,selection:purchaseSelection};
+    // Preview admits the complete possible capture envelope too.
+    const maximumCapture={request_id:'x'.repeat(128),expected_revision:Number.MAX_SAFE_INTEGER,
+      payload:{...payload,preview_sha256:'0'.repeat(64)}};
+    if(Buffer.byteLength(JSON.stringify(maximumCapture))>96_000_000)
+      throw fail('ROZO_INPUT_LIMIT','The complete original source and explicit purchase selection exceed the native request limit.');
+    return payload;
+  }
   async #accountantSource(selection,alias){
     const source=selection.accountantSources?.[identifier(alias)];
     if(!source)throw fail('ACCOUNTANT_SOURCE_NOT_DECLARED','Select an original accountant-return alias declared by this host.');
@@ -287,6 +324,7 @@ export class MerchantBuyerExpenses {
           accountant:['/api/closes/'+recordPath+'/packet','accountant-edition.zip','application/zip'],
           capture:['/api/captures/'+recordPath+'/original','original-capture.json','application/json'],
           'node-operation':['/api/captures/'+recordPath+'/node-original','original-node-accounting-export.json','application/json'],
+          'rozo-report':['/api/captures/'+recordPath+'/rozo-original','original-rozo-finance-source.json','application/json'],
           'refund-packet':['/api/refund-packets/'+recordPath+'/original','original-refund-packet.zip','application/zip'],
           'buyer-accountant-source':['/api/closes/'+recordPath+'/accountant-source','issued-buyer-accountant-source.json','application/json'],
           bookkeeping:['/api/closes/'+recordPath+'/bookkeeping-packet?expected_revision='+args.expectedRevision,'buyer-bookkeeping-period.zip','application/zip'],
@@ -294,12 +332,21 @@ export class MerchantBuyerExpenses {
           'issued-json':['/api/closes/'+recordPath,'issued-edition.json','application/json'],
           'issued-html':['/api/closes/'+recordPath+'/html','issued-edition.html','text/html']};
         const chosen=routes[args.kind];if(!chosen)throw fail('EXPORT_KIND','Select one of the original export forms.');
-        const bytes=await this.#bytes(s,chosen[0]);descriptor={name:chosen[1],contentType:chosen[2],bytes:bytes.length,sha256:hash(bytes),revision:['project','bookkeeping'].includes(args.kind)?args.expectedRevision:state.revision,createdAt:new Date().toISOString()};
+        const original=args.kind==='rozo-report'?await this.#get(s,'/api/captures/'+recordPath):null;
+        if(original&&(original.id!==args.recordId||original.source?.kind!=='rozo_report'))
+          throw fail('ROZO_CAPTURE_REQUIRED','Select the original ROZO report capture.');
+        const originalFilename=original?originalRozoFilename(original.rozo_intake?.filename):undefined;
+        const bytes=await this.#bytes(s,chosen[0]);
+        if(original&&(bytes.length!==original.source.source_bytes||hash(bytes)!==original.source.source_sha256))
+          throw fail('ROZO_SOURCE_CHANGED','The downloaded source differs from the complete retained original capture.');
+        descriptor={name:chosen[1],contentType:chosen[2],bytes:bytes.length,sha256:hash(bytes),revision:['project','bookkeeping'].includes(args.kind)?args.expectedRevision:state.revision,createdAt:new Date().toISOString()};
+        if(original)descriptor.originalFilename=originalFilename;
         const stage=join(directory,'payload-'+randomUUID()+'.pending');await mkdir(stage,{mode:0o700});
         try{await writePrivate(join(stage,descriptor.name),bytes);await writePrivate(join(stage,'file.json'),descriptor);await syncDirectory(stage);lease.assertHeld();await rename(stage,payloadDirectory);await syncDirectory(directory);}
         catch(error){await rm(stage,{recursive:true,force:true});throw error;}
       }
       const manifest={schema:BUYER_EXPENSE_EXPORT_SCHEMA,exportId:id,workspace:args.workspace,workspaceId:state.id,kind:args.kind,recordId:req.recordId,revision:descriptor.revision,createdAt:descriptor.createdAt,files:[{name:descriptor.name,bytes:descriptor.bytes,sha256:descriptor.sha256,contentType:descriptor.contentType}]};
+      if(args.kind==='rozo-report')manifest.originalFilename=descriptor.originalFilename;
       const bytes=json(manifest);parseBuyerExpenseExport(bytes,id);lease.assertHeld();await publish(join(directory,BUYER_EXPENSE_MANIFEST),bytes);
       return this.#exportStatus(id);
     }finally{await lease.close();}
@@ -318,7 +365,7 @@ export class MerchantBuyerExpenses {
   }
   async #execute(name,args) {
     const action=name.slice(PREFIX.length);
-    if(action==='workspaces')return {...this.summary,workspaces:Object.entries(this.#config?.workspaces ?? {}).map(([workspace,s])=>({workspace,ledgers:Object.entries(s.ledgers ?? {}).map(([alias,v])=>({alias,name:v.name,provenance:v.provenance})),quoteSources:Object.entries(s.quoteSources ?? {}).map(([alias,v])=>({alias,name:v.name,provenance:v.provenance})),governedQuoteSources:Object.entries(s.governedQuoteSources??{}).map(([alias,v])=>({alias,name:v.name,provenance:v.provenance,dataContext:v.dataContext})),refundSources:Object.entries(s.refundSources??{}).map(([alias,v])=>({alias,name:v.name,provenance:v.provenance,dataContext:v.dataContext,siteUrl:v.siteUrl,manifestSha256:v.manifestSha256})),adjustmentSources:Object.entries(s.adjustmentSources??{}).map(([alias,v])=>({alias,name:v.name,provenance:v.provenance,dataContext:v.dataContext,sourceSha256:v.sourceSha256,eventId:v.eventId,expectedJob:v.expectedJob??null})),nodeSources:Object.entries(s.nodeSources??{}).map(([alias,v])=>({alias,name:v.name,provenance:v.provenance,dataContext:v.dataContext,sourceSha256:v.sourceSha256})),accountantSources:Object.entries(s.accountantSources??{}).map(([alias,v])=>({alias,name:v.name,provenance:v.provenance,sourceSha256:v.sourceSha256})),open:this.#sessions.has(workspace)}))};
+    if(action==='workspaces')return {...this.summary,workspaces:Object.entries(this.#config?.workspaces ?? {}).map(([workspace,s])=>({workspace,ledgers:Object.entries(s.ledgers ?? {}).map(([alias,v])=>({alias,name:v.name,provenance:v.provenance})),quoteSources:Object.entries(s.quoteSources ?? {}).map(([alias,v])=>({alias,name:v.name,provenance:v.provenance})),governedQuoteSources:Object.entries(s.governedQuoteSources??{}).map(([alias,v])=>({alias,name:v.name,provenance:v.provenance,dataContext:v.dataContext})),refundSources:Object.entries(s.refundSources??{}).map(([alias,v])=>({alias,name:v.name,provenance:v.provenance,dataContext:v.dataContext,siteUrl:v.siteUrl,manifestSha256:v.manifestSha256})),adjustmentSources:Object.entries(s.adjustmentSources??{}).map(([alias,v])=>({alias,name:v.name,provenance:v.provenance,dataContext:v.dataContext,sourceSha256:v.sourceSha256,eventId:v.eventId,expectedJob:v.expectedJob??null})),nodeSources:Object.entries(s.nodeSources??{}).map(([alias,v])=>({alias,name:v.name,provenance:v.provenance,dataContext:v.dataContext,sourceSha256:v.sourceSha256})),rozoSources:Object.entries(s.rozoSources??{}).map(([alias,v])=>({alias,name:v.name,provenance:v.provenance,dataContext:v.dataContext,sourceSha256:v.sourceSha256,filename:basename(v.sourceFile)})),accountantSources:Object.entries(s.accountantSources??{}).map(([alias,v])=>({alias,name:v.name,provenance:v.provenance,sourceSha256:v.sourceSha256})),open:this.#sessions.has(workspace)}))};
     if(action==='exports'){const root=await this.#rootReady(),names=(await readdir(root)).filter(v=>/^[a-z0-9][a-z0-9_-]{0,63}$/.test(v)).sort();const selected=page(names,args.offset,args.limit);return {...selected,items:await Promise.all(selected.items.map(id=>this.#exportStatus(id)))};}
     if(action==='export_status')return this.#exportStatus(args.exportId);
     if(action==='manifest'){const s=await this.#exportStatus(args.exportId);if(s.state!=='COMPLETE')throw fail('EXPORT_PENDING','Resume the retained original export request.');return {exportId:args.exportId,state:'MANIFEST_RETAINED',manifestFile:s.manifestFile};}
@@ -347,6 +394,10 @@ export class MerchantBuyerExpenses {
         {payload:await this.#nodeSource(selection,args.nodeSource,args.operator)}));
       case 'node_capture':return this.#mutate(s,args,'/api/node-operations',
         {...await this.#nodeSource(selection,args.nodeSource,args.operator),preview_sha256:args.previewSha256});
+      case 'rozo_preview':return parse(await this.#bytes(s,'/api/rozo-reports/preview',
+        {payload:await this.#rozoSource(selection,args.rozoSource,args.operator,args.purchaseSelection)}));
+      case 'rozo_capture':return this.#mutate(s,args,'/api/rozo-reports',
+        {...await this.#rozoSource(selection,args.rozoSource,args.operator,args.purchaseSelection),preview_sha256:args.previewSha256});
       case 'adjustment_capture':{const source=selection.adjustmentSources?.[identifier(args.adjustmentSource)];
         if(!source)throw fail('ADJUSTMENT_SOURCE_NOT_DECLARED','Select the exact host-declared original merchant adjustment export.');
         return this.#mutate(s,args,'/api/adjustment-packets',{name:source.name,provenance:source.provenance,data_context:source.dataContext,
@@ -401,14 +452,23 @@ export class MerchantBuyerExpenses {
    * reads and exact HTTP request receipts. No directory, token or startup is
    * exposed to callers. Closing drains this accepted operation normally. */
   async withServiceBuyerWorkspace(workspace, callback) {
+    return this.#withFinanceWorkspace(workspace, callback, 'service');
+  }
+  /** ROZO finance borrows the same open server and complete original alias lane. */
+  async withRozoFinanceWorkspace(workspace, callback) {
+    return this.#withFinanceWorkspace(workspace, callback, 'rozo');
+  }
+  async #withFinanceWorkspace(workspace, callback, scope) {
+    const label=scope==='rozo'?'ROZO finance':'Service';
+    const errorPrefix=scope==='rozo'?'ROZO':'SERVICE';
     if(this.#closing)throw fail('CLOSING','The buyer expense provider is closing.');
     this.#selection(workspace);
-    if(typeof callback!=='function')throw fail('SERVICE_CALLBACK','Use the original Service buyer callback.');
+    if(typeof callback!=='function')throw fail(errorPrefix+'_CALLBACK','Use the original '+label+' buyer callback.');
     const run=async()=>{
       const s=this.#session(workspace),pending=new Set();let admitted=true;
       const route=(path,write)=>{
         if(typeof path!=='string'||path.length>2048||!path.startsWith('/api/')||path.includes('#')||path.includes('%'))
-          throw fail('SERVICE_ROUTE','Use an exact original buyer Service route.');
+          throw fail(errorPrefix+'_ROUTE','Use an exact original buyer '+label+' route.');
         const ident='[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}';
         const query='(?:\\?(?:offset=[0-9]+&limit=[0-9]+|expected_revision=[0-9]+))?';
         const read=new RegExp('^/api/(?:state|refund-packets'+query+'|credits'+query+'|(?:refund-packets|items|credits|reviews|requests|accountant-returns)/'+ident+
@@ -416,11 +476,21 @@ export class MerchantBuyerExpenses {
           '|closes/'+ident+'(?:/(?:accountant-source|accountant-returns|bookkeeping-packet|html|packet))?'+query+'|complete-project'+query+')$');
         const post=new RegExp('^/api/(?:adjustment-packets|centers|labels|periods|refund-packets/'+ident+'/decision|(?:items|credits)/'+ident+
           '/coding|periods/'+ident+'/(?:disposition|review|close|reopen)|closes/'+ident+'/(?:accountant-preview|accountant-return))$');
-        if(!(write?post:read).test(path))throw fail('SERVICE_ROUTE','This route is outside the original Service buyer operation.');
+        const financeRead=new RegExp('^/api/(?:state|(?:expenses|requests)'+query+
+          '|(?:items|reviews|requests|accountant-returns)/'+ident+
+          '|sources/'+ident+'/captures'+query+'|captures/'+ident+'(?:/(?:original|rozo-original))?'+query+
+          '|accountant-returns/'+ident+'/original|periods/'+ident+'/(?:report|history)'+query+
+          '|closes/'+ident+'(?:/(?:accountant-source|accountant-returns|bookkeeping-packet|html|packet))?'+query+
+          '|complete-project'+query+')$');
+        const financePost=new RegExp('^/api/(?:rozo-reports(?:/preview)?|centers|labels|periods|captures/'+ident+
+          '/decision|items/'+ident+'/coding|periods/'+ident+'/(?:disposition|review|close|reopen)'+
+          '|closes/'+ident+'/(?:accountant-preview|accountant-return))$');
+        const selected=scope==='rozo'?(write?financePost:financeRead):(write?post:read);
+        if(!selected.test(path))throw fail(errorPrefix+'_ROUTE','This route is outside the original '+label+' buyer operation.');
         return path;
       };
       const track=fn=>{
-        if(!admitted)throw fail('SERVICE_ADMISSION_CLOSED','The original buyer callback has completed.');
+        if(!admitted)throw fail(errorPrefix+'_ADMISSION_CLOSED','The original buyer callback has completed.');
         const p=Promise.resolve().then(fn);pending.add(p);
         p.then(()=>pending.delete(p),()=>pending.delete(p));return p;
       };
@@ -434,10 +504,11 @@ export class MerchantBuyerExpenses {
           if(!envelope||typeof envelope!=='object'||Array.isArray(envelope)||
              Object.keys(envelope).some(key=>!['request_id','expected_revision','payload'].includes(key))||
              !envelope.payload||typeof envelope.payload!=='object'||Array.isArray(envelope.payload))
-            throw fail('SERVICE_REQUEST','Use the exact original buyer request envelope.');
-          if(!path.endsWith('/accountant-preview')&&(typeof envelope.request_id!=='string'||!new RegExp(request.pattern).test(envelope.request_id)||
-             !Number.isSafeInteger(envelope.expected_revision)||envelope.expected_revision<0))
-            throw fail('SERVICE_REQUEST','Retain the original buyer request ID and reviewed revision.');
+            throw fail(errorPrefix+'_REQUEST','Use the exact original buyer request envelope.');
+          const preview=path.endsWith('/accountant-preview')||scope==='rozo'&&path==='/api/rozo-reports/preview';
+          if((!preview||envelope.request_id!==undefined)&&(typeof envelope.request_id!=='string'||!new RegExp(request.pattern).test(envelope.request_id))||
+             (!preview||envelope.expected_revision!==undefined)&&(!Number.isSafeInteger(envelope.expected_revision)||envelope.expected_revision<0))
+            throw fail(errorPrefix+'_REQUEST','Retain the original buyer request ID and reviewed revision.');
           return this.#bytes(s,path,envelope).then(parse);
         });
         }

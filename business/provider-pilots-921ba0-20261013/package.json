@@ -1,6 +1,6 @@
 {
   "name": "@tjlabs/provider-pilot-contracts",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -15,10 +15,15 @@
     "./blockrun": {
       "types": "./blockrun-projections.d.mts",
       "import": "./blockrun-projections.mjs"
+    },
+    "./blockrun-desk": {
+      "types": "./capture-desk-core.d.mts",
+      "import": "./capture-desk-core.mjs"
     }
   },
   "scripts": {
     "demo": "node demo.mjs",
-    "demo:blockrun": "node blockrun-demo.mjs"
+    "demo:blockrun": "node blockrun-demo.mjs",
+    "build:blockrun-desk": "node capture-desk-build.mjs"
   }
 }

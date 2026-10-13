@@ -1,6 +1,7 @@
+import {buyerWorkflowActions,createBuyerWorkbench} from './service-buyer-workbench.mjs';
 // MIT. Complete saved-case Service adjustments and original buyer/accountant operation.
 const $=id=>document.getElementById(id),uuid=()=>crypto.randomUUID(),copy=value=>structuredClone(value);
-const state={caseId:null,view:null,buyerView:null,buyer:null,prepared:null,pending:null,busy:false,cases:[],caseOffset:null,runs:[],runOffset:null,events:[],eventOffset:null,buyerInstance:null,labelBasis:null,centerBasis:null,periodBasis:null,accountantReturn:null};
+const state={caseId:null,view:null,buyerView:null,buyer:null,prepared:null,pending:null,busy:false,cases:[],caseOffset:null,runs:[],runOffset:null,events:[],eventOffset:null,buyerInstance:null,labelBasis:null,centerBasis:null,periodBasis:null,accountantReturn:null,buyerScope:null,buyerDraftDirty:false};
 const text=(id,value)=>{$(id).textContent=String(value??'');};
 const message=(value,error=false)=>{text('message',value);$('message').dataset.error=String(error);};
 const value=id=>$(id).value.trim();
@@ -63,10 +64,11 @@ async function http(path,body){
 }
 async function work(operation){
   if(state.busy)return;
-  state.busy=true;document.querySelectorAll('button').forEach(button=>button.disabled=true);
+  state.busy=true;const controls=[...document.querySelectorAll('button,input,select,textarea')].map(node=>[node,node.disabled]);
+  for(const [node] of controls)node.disabled=true;
   try{await operation();}
   catch(error){message(error.message,true);}
-  finally{state.busy=false;document.querySelectorAll('button').forEach(button=>button.disabled=false);renderPending();}
+  finally{state.busy=false;for(const [node,disabled] of controls)if(node.isConnected)node.disabled=disabled;renderPending();}
 }
 function options(id,items,getValue,getLabel,{empty='Choose…',append=false}={}){
   const node=$(id),selected=node.value;
@@ -147,12 +149,22 @@ async function findCases(append=false){
   $('more-cases').hidden=state.caseOffset===null;
 }
 async function openCase(){
-  const selected=required('case-picker');
+  const selected=required('case-picker'),previousCase=state.caseId;
+  await preserveBuyerDraft();resetBuyerFields();
   state.caseId=selected;state.buyer=null;state.labelBasis=null;state.centerBasis=null;state.periodBasis=null;state.accountantReturn=null;
   $('return-review').replaceChildren();$('return-supersedes').replaceChildren();$('asset-labels').replaceChildren();
   state.prepared=await storage('get',key('prepared'))??null;state.pending=await storage('get',key('pending'))??null;
-  const url=new URL(location.href);url.searchParams.set('case',selected);history.replaceState(null,'',url);
-  await refresh();renderPrepared();renderPending();message('Opened the original saved case.');
+  const url=new URL(location.href);url.searchParams.set('case',selected);
+  if(previousCase&&previousCase!==selected)for(const key of ['buyer','capture','buyerWorkspaceId'])url.searchParams.delete(key);
+  history.replaceState(null,'',url);
+  await refresh();renderPrepared();renderPending();
+  const remembered=new URL(location.href).searchParams,capture=remembered.get('capture'),buyer=remembered.get('buyer'),workspaceId=remembered.get('buyerWorkspaceId');
+  const groups=(state.buyerView.workflow?.groups??[]).filter(row=>row.capture.id===capture&&row.buyer.alias===buyer&&(!workspaceId||row.buyer.workspaceId===workspaceId));
+  if(groups.length===1)await selectBuyerWorkflow(groups[0]);
+  else if(buyer&&capture){
+    for(const [id,selected] of [['buyer-capture',capture],['buyer-workspace',buyer]])if([...$(id).options].some(option=>option.value===selected))$(id).value=selected;
+    renderBuyerWork();renderDownloads();message('Choose the original buyer workflow; this link does not identify one saved workspace.');
+  }else message('Opened the original saved case.');
 }
 async function refresh(){
   if(!state.caseId)return;
@@ -175,7 +187,7 @@ async function refresh(){
   options('accountant-delivery',(buyerView.outcomes??[]).filter(row=>row.action==='delivery'),row=>row.id,row=>'Buyer delivery · '+row.createdAt);
   table('native-history',['Observed','Operation','Adjustment','Verification','Reference'],view.outcomes.map(row=>[row.createdAt,row.action,row.native.status,row.native.jobStatus??'',row.native.transaction??row.native.adjustmentId]));
   table('buyer-history',['Observed','Operation','Buyer workspace','Result'],(buyerView.outcomes??[]).map(row=>[row.createdAt,row.action,row.buyer.alias,row.recordId??row.id]));
-  renderProposal();renderDownloads();await readReport();
+  renderProposal();renderBuyerWork();renderDownloads();await readReport();
 }
 async function sources(){
   const result=await http('/api/adjustments/sources'),accounting=result.accounting.workspaces??[],buyer=result.buyer.workspaces??[];
@@ -285,7 +297,7 @@ function renderDownloads(){
         $('native-downloads').append(fileButton(label+' · '+outcome.createdAt,()=>remoteFile(route('download'),{...base,kind,outcomeId:outcome.id})));
     }
   }
-  for(const outcome of state.buyerView?.outcomes??[]){
+  for(const outcome of (state.buyerView?.outcomes??[]).filter(inBuyerSelection)){
     const files=[...(outcome.files??outcome.result?.files??[]),{name:'original-buyer-result.json'}];
     for(const file of files)$('buyer-downloads').append(fileButton(file.name,()=>remoteFile(route('buyer-download'),{revision:state.buyerView.case.revision,outcomeId:outcome.id,name:file.name})));
   }
@@ -294,7 +306,7 @@ async function inspectBuyer(extra={}){
   if(!state.view)throw new Error('Open the saved case first.');
   const input={captureOutcomeId:required('buyer-capture'),buyerWorkspace:required('buyer-workspace'),...extra};
   const result=await http(route('buyer-inspect'),{revision:state.view.case.revision,input});
-  state.buyer=result;
+  state.buyer=result;state.buyerScope={caseId:state.caseId,captureOutcomeId:input.captureOutcomeId,buyerWorkspace:input.buyerWorkspace,workspaceId:result.buyer.workspaceId};
   text('buyer-summary','Buyer '+result.buyer.alias+' · revision '+result.buyer.revision+' · '+result.buyer.dataContext);
   const list=value=>Array.isArray(value)?value:value?.items??value?.packets??value?.credits??[];
   options('buyer-packet',list(result.packets),row=>row.id,row=>(row.name??row.id)+' · '+(row.status??row.decision??'Received'));
@@ -315,8 +327,147 @@ async function inspectBuyer(extra={}){
     renderIssue();
   }
   for(const select of document.querySelectorAll('.allocation-center'))options(select.id,list(result.centers),row=>row.id,row=>row.name??row.id);
+  renderBuyerWork();renderDownloads();
   return result;
 }
+
+function buyerSelection(){
+  const selected={captureOutcomeId:value('buyer-capture'),buyerWorkspace:value('buyer-workspace')};
+  if(state.buyerScope?.caseId===state.caseId&&state.buyerScope.captureOutcomeId===selected.captureOutcomeId&&
+      state.buyerScope.buyerWorkspace===selected.buyerWorkspace)selected.workspaceId=state.buyerScope.workspaceId;
+  return selected;
+}
+function buyerRows(){return buyerWorkflowActions(state.buyerView,buyerSelection());}
+function inBuyerSelection(row){
+  const selected=buyerSelection();
+  return row.capture?.id===selected.captureOutcomeId&&row.buyer?.alias===selected.buyerWorkspace&&
+    (!selected.workspaceId||row.buyer.workspaceId===selected.workspaceId);
+}
+function renderBuyerWork(){
+  const rows=buyerRows(),selected=buyerSelection();
+  const intents=(state.buyerView?.intents??[]).filter(inBuyerSelection),
+    outcomes=(state.buyerView?.outcomes??[]).filter(inBuyerSelection);
+  options('buyer-intent-picker',intents,row=>row.id,row=>row.action+' · '+row.actor+' · '+row.createdAt);
+  options('accountant-delivery',outcomes.filter(row=>row.action==='delivery'),row=>row.id,row=>'Buyer delivery · '+row.createdAt);
+  const reviews=rows.filter(row=>row.action==='period_review'&&row.outcome&&row.reference.reviewId&&
+    (!value('buyer-period')||row.reference.periodId===value('buyer-period')));
+  const closes=rows.filter(row=>row.action==='period_close'&&row.outcome&&row.reference.closeId);
+  options('saved-period-review',reviews,row=>row.id,row=>row.reference.reviewId+' · '+row.outcome.createdAt);
+  options('saved-delivery-close',closes,row=>row.id,row=>row.reference.closeId+' · '+row.outcome.createdAt);
+  options('saved-return-close',closes,row=>row.id,row=>row.reference.closeId+' · '+row.outcome.createdAt);
+  table('buyer-history',['Observed','Operation','Buyer workspace','Result'],outcomes.map(row=>[row.createdAt,row.action,row.buyer.alias,row.recordId??row.id]));
+  buyerWorkbench.render(state.buyerView,selected);
+}
+function currentDraftScope(){
+  const s=state.buyerScope,selected=buyerSelection();
+  if(!s||s.caseId!==state.caseId||s.captureOutcomeId!==selected.captureOutcomeId||s.buyerWorkspace!==selected.buyerWorkspace)
+    throw new Error('Read the selected buyer workspace before saving or restoring its draft.');
+  return copy(s);
+}
+const draftKey=s=>'service-buyer-draft:'+location.origin+':'+JSON.stringify([s.caseId,s.captureOutcomeId,s.buyerWorkspace,s.workspaceId]);
+function draftFields(){
+  const fields={};
+  for(const node of $('buyer-form').querySelectorAll('input[id],select[id],textarea[id]')){
+    if(node.type==='file'||node.id.startsWith('allocation-'))continue;
+    fields[node.id]=node.type==='checkbox'?node.checked:node.value;
+  }
+  const allocations=[...$('allocations').querySelectorAll('tr')].map(row=>({
+    center:row.querySelector('.allocation-center').value,amount:row.querySelector('.allocation-amount').value,
+    project:row.querySelector('.allocation-project').value,account:row.querySelector('.allocation-account').value}));
+  const labels=[...$('asset-labels').querySelectorAll('tr')].map(row=>
+    Object.fromEntries([...row.querySelectorAll('[data-label-field]')].map(node=>[node.dataset.labelField,node.value])));
+  return {fields,allocations,labels,labelBasis:copy(state.labelBasis),centerBasis:copy(state.centerBasis),periodBasis:copy(state.periodBasis)};
+}
+async function saveBuyerDraft(scope=currentDraftScope()){
+  const draft={schema:'stellar-forge.service-buyer-browser-draft.v1',scope,savedAt:new Date().toISOString(),
+    caseRevision:state.view?.case.revision??null,...draftFields()};
+  await storage('set',draftKey(scope),draft);state.buyerDraftDirty=false;
+  text('buyer-draft-status','Draft saved '+draft.savedAt+' for '+scope.buyerWorkspace+'.');
+  return draft;
+}
+async function readBuyerDraft(){
+  const scope=currentDraftScope(),draft=await storage('get',draftKey(scope));
+  if(!draft)throw new Error('No saved draft for this exact capture and buyer workspace.');
+  if(draft.schema!=='stellar-forge.service-buyer-browser-draft.v1'||JSON.stringify(draft.scope)!==JSON.stringify(scope))
+    throw new Error('The saved draft belongs to another buyer selection.');
+  return draft;
+}
+async function restoreBuyerDraft(){
+  const draft=await readBuyerDraft(),fields=draft.fields,action=fields['buyer-action'],selection={};
+  if(fields['buyer-packet'])selection.packetId=fields['buyer-packet'];
+  if(fields['buyer-period']&&['disposition','period_review','period_close','period_reopen'].includes(action))selection.periodId=fields['buyer-period'];
+  if(action==='coding_save'&&fields['buyer-item-id'])selection.itemId=fields['buyer-item-id'];
+  if(action==='credit_coding_save'&&fields['buyer-credit'])selection.creditId=fields['buyer-credit'];
+  const inspected=await inspectBuyer(selection);
+  if(inspected.buyer.workspaceId!==draft.scope.workspaceId)throw new Error('This alias now opens a different buyer workspace. Keep the original draft and select its original configured owner.');
+  for(const [id,stored] of Object.entries(draft.fields)){
+    const node=$(id);
+    if(!node||!$('buyer-form').contains(node)||node.type==='file')continue;
+    if(node.type==='checkbox')node.checked=stored===true;
+    else if(node.tagName==='SELECT')node.value=[...node.options].some(option=>option.value===stored)?String(stored):'';
+    else node.value=String(stored);
+    if(id==='period-issue')renderIssue();
+  }
+  $('allocations').replaceChildren();for(const row of draft.allocations){addAllocation();const element=$('allocations').lastElementChild;
+    element.querySelector('.allocation-center').value=row.center;element.querySelector('.allocation-amount').value=row.amount;
+    element.querySelector('.allocation-project').value=row.project;element.querySelector('.allocation-account').value=row.account;}
+  $('asset-labels').replaceChildren();for(const row of draft.labels)addLabel(row);
+  state.labelBasis=copy(draft.labelBasis);state.centerBasis=copy(draft.centerBasis);state.periodBasis=copy(draft.periodBasis);
+  $('return-file').value='';clearReturnPreview();buyerFields();renderBuyerWork();state.buyerDraftDirty=false;
+  text('buyer-draft-status','Restored draft saved '+draft.savedAt+'. Review the current source and rechoose any accountant return file.');
+}
+function resetBuyerFields(){
+  $('buyer-form').reset();$('allocations').replaceChildren();$('asset-labels').replaceChildren();
+  for(const id of ['buyer-packet','buyer-credit','buyer-period','center-picker','period-edit','period-issue','issue-kind'])options(id,[],row=>row.id,row=>row.id);
+  state.buyer=null;state.buyerScope=null;state.buyerDraftDirty=false;state.labelBasis=null;state.centerBasis=null;state.periodBasis=null;
+  $('buyer-item-id').value='';$('period-review-id').value='';$('delivery-close-id').value='';$('return-close-id').value='';
+  for(const id of ['buyer-packet-summary','coding-basis','buyer-summary'])text(id,'');
+  $('period-summary').replaceChildren();addAllocation();clearReturnPreview();buyerFields();buyerWorkbench.clearRecord();
+}
+async function preserveBuyerDraft(){if(state.buyerDraftDirty&&state.buyerScope?.caseId===state.caseId)await saveBuyerDraft(copy(state.buyerScope));}
+async function selectBuyerWorkflow(group){
+  await preserveBuyerDraft();
+  for(const [id,selection] of [['buyer-capture',group.capture.id],['buyer-workspace',group.buyer.alias]]){
+    if(![...$(id).options].some(option=>option.value===selection))throw new Error('The saved workflow source is absent from this original case or host configuration.');
+    $(id).value=selection;
+  }
+  resetBuyerFields();
+  await http('/api/adjustments/buyer/open',{buyerWorkspace:group.buyer.alias});
+  const inspected=await inspectBuyer();
+  if(inspected.buyer.workspaceId!==group.buyer.workspaceId)
+    throw new Error('This alias now opens a different buyer workspace. Select the original configured owner before continuing saved work.');
+  const draft=await storage('get',draftKey(currentDraftScope()));
+  text('buyer-draft-status',draft?'A draft saved '+draft.savedAt+' is available. Choose Restore saved draft to review it.':'No saved draft for this workflow.');
+  const url=new URL(location.href);url.searchParams.set('buyer',group.buyer.alias);url.searchParams.set('capture',group.capture.id);url.searchParams.set('buyerWorkspaceId',group.buyer.workspaceId);history.replaceState(null,'',url);
+  message('Opened the original capture and buyer workflow.');
+}
+async function useBuyerReferences(row){
+  const selected=buyerSelection();
+  if(selected.captureOutcomeId!==row.capture.id||selected.buyerWorkspace!==row.buyer.alias||selected.workspaceId!==row.buyer.workspaceId){
+    const group=state.buyerView.workflow.groups.find(value=>value.id===row.groupId);
+    await selectBuyerWorkflow(group);
+  }
+  const r=row.reference,extra={};
+  if(r.packetId)extra.packetId=r.packetId;if(r.periodId)extra.periodId=r.periodId;
+  await inspectBuyer(extra);
+  const fill=(id,v)=>{if(v!==null&&v!==undefined)$(id).value=v;};
+  fill('buyer-item-id',r.purchaseItemId);fill('buyer-credit',r.creditId);
+  fill('buyer-period',r.periodId);fill('period-review-id',r.reviewId);
+  fill('delivery-close-id',r.closeId);fill('return-close-id',r.closeId);
+  fill('accountant-delivery',r.deliveryOutcomeId);fill('accountant-workspace',r.accountantWorkspace);
+  fill('buyer-intent-picker',row.id);clearReturnPreview();renderBuyerWork();state.buyerDraftDirty=true;
+  message('Loaded the exact saved references. Select and review the intended operation, or recover this original saved action.');
+}
+const buyerWorkbench=createBuyerWorkbench($('buyer-workbench'),{
+  run:work,selectGroup:selectBuyerWorkflow,useReferences:useBuyerReferences,
+  readRecord:async(section,recordId)=>{
+    const result=await http(route('buyer')+'?'+new URLSearchParams({revision:state.buyerView.case.revision,section,recordId}));
+    return result.records[0];
+  },
+  downloadRecord:(section,id,record)=>saveJson('service-buyer-'+section+'-'+id+'.json',record),
+  downloadFile:(outcomeId,name)=>remoteFile(route('buyer-download'),{revision:state.buyerView.case.revision,outcomeId,name})
+});
+
 function selectedIssue(){
   return state.buyer?.report?.issues?.find(row=>[row.item_id??'',row.code,row.basis].join('|')===value('period-issue'));
 }
@@ -485,10 +636,16 @@ click('add-allocation',async()=>addAllocation());$('buyer-action').addEventListe
 change('center-picker',async()=>loadCenter());change('period-edit',async()=>loadPeriod());change('period-issue',async()=>renderIssue());
 click('read-labels',readLabels);click('add-label',async()=>addLabel());click('preview-return',previewReturn);
 $('return-file').addEventListener('change',clearReturnPreview);$('return-close-id').addEventListener('input',clearReturnPreview);
-$('buyer-workspace').addEventListener('change',()=>{state.buyer=null;state.labelBasis=null;state.centerBasis=null;state.periodBasis=null;clearReturnPreview();});
-$('buyer-capture').addEventListener('change',clearReturnPreview);
+for(const id of ['buyer-workspace','buyer-capture'])change(id,async()=>{await preserveBuyerDraft();resetBuyerFields();renderBuyerWork();renderDownloads();text('buyer-draft-status','Read this buyer selection to open its draft.');});
+const markBuyerDraftChanged=()=>{if(state.buyerScope)state.buyerDraftDirty=true;};
+for(const event of ['input','change'])$('buyer-form').addEventListener(event,markBuyerDraftChanged);
+$('buyer-form').addEventListener('click',event=>{if(event.target.closest('button'))markBuyerDraftChanged();});
 $('buyer-form').addEventListener('submit',event=>{event.preventDefault();void work(prepareBuyer);});
-click('execute-buyer-intent',()=>effect('buyer-execute',{intentId:required('buyer-intent-picker'),requestId:uuid()},'Execute saved buyer action'));
+click('execute-buyer-intent',()=>{const intentId=required('buyer-intent-picker');if(!buyerRows().some(row=>row.id===intentId))throw new Error('Select a saved action from this exact capture and buyer workflow.');return effect('buyer-execute',{intentId,requestId:uuid()},'Execute saved buyer action');});
+click('buyer-draft-save',()=>saveBuyerDraft());click('buyer-draft-restore',restoreBuyerDraft);
+click('buyer-draft-download',async()=>saveJson('service-buyer-draft.json',await readBuyerDraft()));
+click('buyer-draft-clear',async()=>{await storage('delete',draftKey(currentDraftScope()));text('buyer-draft-status','Discarded this workflow’s saved draft. Current form fields remain available.');});
+for(const [id,target,key] of [['saved-period-review','period-review-id','reviewId'],['saved-delivery-close','delivery-close-id','closeId'],['saved-return-close','return-close-id','closeId']])change(id,async()=>{const row=buyerRows().find(row=>row.id===value(id));if(row){$(target).value=row.reference[key];if(target==='return-close-id')clearReturnPreview();}});
 click('open-accountant',async()=>{await http('/api/adjustments/accounting/open',{accountingId:required('accountant-workspace')});message('Opened the original accountant workspace.');});
 $('adjustment-effective').value=new Date().toISOString().slice(0,19);$('coding-date').value=new Date().toISOString().slice(0,10);
 buyerFields();addAllocation();

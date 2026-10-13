@@ -57,13 +57,17 @@ def main(argv=None):
     output = private_directory(root / "console-receiving")
     private = private_directory(root / "console-private")
     connection = private / "console-url.txt"
-    configuration = private / "browser-selection.json"
     selection = {"schema": "stellar-forge.iati-results-browser-selection.v1",
         "root": str(root), "output": str(output), "sourceRoot": str(HERE.parent.parent),
         "operationId": outcome["operationId"], "connectionFile": str(connection),
         "node": str(Path(args.node).absolute()), "playwright": str(Path(args.playwright).absolute()),
         "chromium": str(Path(args.chromium).absolute()), "merchantRoot": str(Path(args.merchant_root).absolute()),
         "reviewer": args.reviewer, "reviewNote": args.review_note}
+    # Keep each explicitly selected installation/runtime as an immutable input.
+    # A later source correction may continue this same case without overwriting
+    # the earlier selection or the original browser request/review history.
+    selection_id = hashlib.sha256(json_bytes(selection)).hexdigest()
+    configuration = private / ("browser-selection-" + selection_id + ".json")
     write_json(configuration, selection, immutable=True)
     status = {"schema": "stellar-forge.iati-results-console-receiving.v1",
               "operationId": outcome["operationId"], "project": outcome["project"],

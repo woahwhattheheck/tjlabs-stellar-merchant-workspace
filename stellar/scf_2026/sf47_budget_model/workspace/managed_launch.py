@@ -81,6 +81,11 @@ BOOT_FILES = (
     "managed_launch.py",
     "workshare_intake.py",
     "operations.py",
+    "operations_risks.py",
+    "operations_risks_cli.py",
+    "operations_risks.mjs",
+    "operations_risks.css",
+    "RISK_REGISTER_OPERATOR.md",
     "operations_funding.py",
     "operations_funding_cli.py",
     "operations_funding_requests.mjs",
@@ -288,6 +293,9 @@ BOOT_FILES = (
     "../../../scf-starforge-20261009/merchant-settlement-accounting/accountant/buyer-source.mjs",
     "agent-client.mjs",
     "agent-contracts.mjs",
+    "canadabuys_workshare_intake.py",
+    "canadabuys_source_package.py",
+    "../../sf49_data_commissioning/installation-workorders/canadabuys-bidder-desk.json",
     "operations_installation_sources.py",
     "operations_installation_sources.mjs",
     "operations_installation_sources.css",
@@ -314,7 +322,12 @@ BOOT_FILES = (
     "../../sf49_data_commissioning/installation-workorders/stellarcarbon.json",
     "../../sf49_data_commissioning/installation-workorders/supplier-catalogues.json",
     "../../sf49_data_commissioning/installation-workorders/supplier-orders.json",
-    "../../sf49_data_commissioning/installation-workorders/taskerarmy-notifications.json"
+    "../../sf49_data_commissioning/installation-workorders/taskerarmy-notifications.json",
+    "../../sf49_data_commissioning/installation-workorders/laboratory-edd-reissue.json",
+    "../../sf49_data_commissioning/installation-workorders/geotech-dts8d.json",
+    "../../sf49_data_commissioning/installation-workorders/water-quality-analysis.json",
+    "../../sf49_data_commissioning/installation-workorders/kiwis-water-quality.json",
+    "../../sf49_data_commissioning/installation-workorders/ENVIRONMENTAL_INSTALLATIONS.md"
 )
 PRIVATE_NAME = "managed-launch.json"
 

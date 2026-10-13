@@ -109,6 +109,41 @@ def native():
     return _MODULE
 
 
+_NATIVE_PACKAGE = None
+
+
+def native_package():
+    """Pin the complete installed native package reader and its original intake."""
+    global _NATIVE_PACKAGE
+    paths = [Path(__file__).with_name("canadabuys_workshare_intake.py"),
+             Path(__file__).with_name("canadabuys_source_package.py")]
+    helper, _ = native()
+    selected = [(path, helper.stable_file(path)) for path in paths]
+    files = [{"path": str(path), "bytes": len(raw), "sha256": raw_hash(raw)}
+             for path, raw in selected]
+    receipt = {"kind": "canadabuys-native-workshare", "files": files,
+               "bytes": sum(row["bytes"] for row in files), "sha256": digest(files)}
+    if _NATIVE_PACKAGE is not None:
+        need(_NATIVE_PACKAGE[1] == receipt,
+             "The installed native source reader changed. Reopen its complete application source.",
+             "INSTALLATION_SOURCE_ENGINE_CHANGED", 409)
+        return _NATIVE_PACKAGE
+    modules = []
+    for index, (path, raw) in enumerate(selected):
+        spec = importlib.util.spec_from_file_location("sf47_native_source_" + str(index), path)
+        need(spec is not None and spec.loader is not None, "Keep the complete installed native source reader.")
+        module = importlib.util.module_from_spec(spec)
+        exec(compile(raw, str(path), "exec"), module.__dict__)
+        modules.append(module)
+        need(helper.stable_file(path) == raw, "The installed native source reader changed while loading.",
+             "INSTALLATION_SOURCE_ENGINE_CHANGED", 409)
+    # The package reader uses the exact intake bytes selected in this same source
+    # receipt, including when the server previously imported another module name.
+    modules[1].intake = modules[0]
+    _NATIVE_PACKAGE = (modules[1], receipt)
+    return _NATIVE_PACKAGE
+
+
 def initialize(operations):
     """Extend the original connection; it keeps the existing workspace lease."""
     with operations.workspace.mutex:
@@ -255,7 +290,10 @@ class SourceDesk:
                  "The selected installed profile changed.", "INSTALLATION_SOURCE_ENGINE_CHANGED", 409)
             result.append({**selected, "profile": module.json_object(raw, path.name)})
         need(result, "Retain the complete installed profile catalogue.")
+        package, package_receipt = native_package()
         return {"schema": SCHEMA, "engine": receipt, "profiles": result,
+                "nativePackages": [{"schema": package.SCHEMA, "kind": "canadabuys-native-workshare",
+                                    "profile": "canadabuys-bidder-desk", "engine": package_receipt}],
                 "limits": {"fileBytes": MAX_FILE, "selectedInputBytes": MAX_INPUTS,
                            "caseSourceBytes": 24 * 1024 * 1024, "caseSourceFiles": 200}}
 
@@ -451,6 +489,77 @@ class SourceDesk:
                                       ("id", "draftRevision", "selectionSha256", "preparedAt", "state")})
         return result
 
+    def _receive_native(self, state, context, data):
+        package, engine = native_package()
+        need(data["expectedEngineSha256"] == engine["sha256"],
+             "Review the current complete native source reader before receiving.",
+             "INSTALLATION_SOURCE_ENGINE_CHANGED", 409)
+        identifier(data["fileId"], FILE_ID, "original package file")
+        selected = next((row for row in state["files"] if row["id"] == data["fileId"]), None)
+        need(selected is not None and selected["sha256"] == data["expectedSha256"],
+             "Select the complete original retained native source ZIP.",
+             "INSTALLATION_SOURCE_SELECTION_CHANGED", 409)
+        need(selected["filename"].lower().endswith(".zip"),
+             "Select the original complete native source-package ZIP.")
+        need(len(state["preparations"]) < MAX_PREPARATIONS,
+             "Keep this complete preparation history and begin another named draft.")
+        module, _ = native()
+        profile = module.installed_profile("canadabuys-bidder-desk")
+        need(profile["sha256"] == data["expectedProfileSha256"],
+             "Review the complete current installed CanadaBuys profile.",
+             "INSTALLATION_SOURCE_ENGINE_CHANGED", 409)
+        raw = self._blob(state["caseId"], state["id"], selected["sha256"])
+        try:
+            verified = package.receive_archive(raw)
+            review = package.review(verified)
+        except (ValueError, KeyError, TypeError, OSError, zipfile.BadZipFile) as error:
+            raise Problem("The complete native source package is unreadable: " + str(error),
+                          422, "INSTALLATION_SOURCE_INVALID") from error
+        need(selected["filename"] not in verified["files"] and
+             selected["filename"] != package.MANIFEST,
+             "Keep the original archive filename distinct from its complete native members.")
+        need(native_package()[1] == engine and module.installed_profile(profile["id"]) == profile,
+             "The installed source/profile selection changed during receiving.",
+             "INSTALLATION_SOURCE_ENGINE_CHANGED", 409)
+        preparation_id = "preparation-" + digest({
+            "draft": state["id"], "requestId": context["requestId"],
+            "kind": "canadabuys-native-workshare", "archiveSha256": selected["sha256"]})
+        source = verified["source"]
+        provenance = {row["filename"]: row for row in verified["preparation"]["originalSources"]}
+        outputs = []
+        for name, content in verified["files"].items():
+            self._keep_blob(state["caseId"], state["id"], content)
+            original = provenance.get(name)
+            outputs.append({"filename": name, "bytes": len(content), "sha256": raw_hash(content),
+                            "mediaType": "application/json",
+                            "sourceUrl": original["sourceUrl"] if original else source["sourceUrl"],
+                            "observedAt": original["observedAt"] if original else source["observedAt"]})
+        # The original ZIP also travels with the complete desk export and case,
+        # preserving the actual incoming archive and its original file receipt.
+        outputs.append({key: selected[key] for key in
+                        ("filename", "bytes", "sha256", "mediaType", "sourceUrl", "observedAt")})
+        report = {**deepcopy(verified["preparation"]), "nativeReview": review,
+                  "profiles": [deepcopy(profile)],
+                  "cases": [{"caseId": row["caseId"], "planSha256": row["planSha256"],
+                             "completeEffort": {"hours": row["hours"]},
+                             "profile": "canadabuys-bidder-desk"}
+                            for row in verified["workshares"]]}
+        state["selection"] = deepcopy(verified["selection"])
+        result = {"schema": PREPARATION, "id": preparation_id, "caseId": state["caseId"],
+                  "draftId": state["id"], "draftRevision": state["revision"],
+                  "selectionSha256": raw_hash(verified["files"]["SOURCE_SELECTION.json"]),
+                  "engine": engine, "actor": context["actor"], "preparedAt": context["at"],
+                  "state": "PREPARED_SOURCE", "kind": "canadabuys-native-workshare",
+                  "report": report, "files": outputs,
+                  "originalArchive": deepcopy(selected),
+                  "sourceRoles": {"commissioning": "CANADABUYS_NATIVE_WORKSHARES.json",
+                                  "packet": source["originalPackage"]["filename"]}}
+        self.db.execute("INSERT INTO ops_installation_source_preparations VALUES(?,?,?,?)",
+                        (state["caseId"], state["id"], preparation_id, canonical(result)))
+        state["preparations"].append({key: deepcopy(result[key]) for key in
+                                      ("id", "draftRevision", "selectionSha256", "preparedAt", "state", "kind")})
+        return result
+
     def _attach(self, state, context, data):
         prepared = self._preparation(state["caseId"], state["id"], data.get("preparationId"))
         need(data.get("expectedSelectionSha256") == prepared["selectionSha256"],
@@ -489,7 +598,9 @@ class SourceDesk:
                  "The original source writer returned another file.", "SOURCE_CHANGED", 409)
             selected.append({**deepcopy(file), "sourceId": metadata["id"], "reused": False})
         by_name = {row["filename"]: row for row in selected}
-        commissioning, packets = by_name["Supplier_Workshare_Commissioning.json"], by_name["Supplier_Complete_Receiving_Packets.json"]
+        roles = prepared.get("sourceRoles", {"commissioning": "Supplier_Workshare_Commissioning.json",
+                                            "packet": "Supplier_Complete_Receiving_Packets.json"})
+        commissioning, packets = by_name[roles["commissioning"]], by_name[roles["packet"]]
         source_selection = {"expectedVersion": expected, "sourceId": commissioning["sourceId"],
                             "expectedSourceSha256": commissioning["sha256"], "packetSourceId": packets["sourceId"],
                             "expectedPacketSha256": packets["sha256"]}
@@ -507,7 +618,7 @@ class SourceDesk:
         request_id = short_id(body["requestId"], "Original source-desk request ID")
         actor, note = text(body["actor"], "Recording operator", 300, True), text(body.get("note", ""), "Preparation note", 12000)
         action = body["action"]
-        need(action in ("create", "file.add", "file.remove", "selection.save", "prepare", "attach"),
+        need(action in ("create", "file.add", "file.remove", "selection.save", "prepare", "native.receive", "attach"),
              "Choose a supported original source preparation action.")
         need(isinstance(body["data"], dict), "Use the complete source action data.")
         expected = integer(body["expectedRevision"], "source draft revision")
@@ -584,6 +695,11 @@ class SourceDesk:
                     exact(data, ("expectedEngineSha256", "expectedSelectionSha256", "expectedProfiles"),
                           ("expectedEngineSha256", "expectedSelectionSha256", "expectedProfiles"), "reviewed preparation")
                     result = self._prepare(state, context, data)
+                elif action == "native.receive":
+                    exact(data, ("fileId", "expectedSha256", "expectedEngineSha256", "expectedProfileSha256"),
+                          ("fileId", "expectedSha256", "expectedEngineSha256", "expectedProfileSha256"),
+                          "complete native source-package receiving")
+                    result = self._receive_native(state, context, data)
                 elif action == "attach":
                     exact(data, ("preparationId", "expectedSelectionSha256", "expectedVersion"),
                           ("preparationId", "expectedSelectionSha256", "expectedVersion"), "reviewed case attachment")

@@ -18,7 +18,7 @@ async function capture(o){
  const root=path.resolve(required(o,'directory'));if(!await exists(root))await privateDir(root,{create:true});else await privateDir(root);
  return lock(root,async()=>{
   await retain(path.join(root,'plan.json'),json(p));
-  if(await exists(path.join(root,'catalogue.json'))){const c=await originalCatalogue(root);await retain(path.join(root,'report.html'),Buffer.from(reportHtml(c.value,c.sha256)));return inspect({directory:root});}
+  if(await exists(path.join(root,'catalogue.json'))){const c=await originalCatalogue(root);if(!await exists(path.join(root,'report.html')))await writeNew(path.join(root,'report.html'),Buffer.from(reportHtml(c.value,c.sha256)));return inspect({directory:root});}
   const supported=await captureGet(root,p.facilitator+'/supported'),peers=await captureGet(root,p.discovery+'/federation/peers');
   const rows=[],sources=[];let offset=0;
   for(;;){
@@ -64,7 +64,7 @@ async function select(o){
 async function selected(root){
  root=await privateDir(root);const saved=await readJson(path.join(root,'selection.json')),c=await originalCatalogue(path.join(root,'source'));
  const rebuilt=selection(c.value,saved,c.sha256);
- for(const key of Object.keys(rebuilt))need(canonical(rebuilt[key])===canonical(saved[key]),'Selected original request changed: '+key);
+ for(const key of Object.keys(rebuilt)){if(key==='pathBinding'&&!Object.hasOwn(saved,key))continue;need(canonical(rebuilt[key])===canonical(saved[key]),'Selected original request changed: '+key);}
  const headers=ordinaryHeaders(await readJson(path.join(root,'request.headers.json')));need(canonical(headers)===canonical(saved.headers),'Selected request headers changed');
  let body;if(saved.body){need(saved.body.path==='request.body','Body path changed');body=await read(path.join(root,'request.body'));need(body.length===saved.body.bytes&&sha(body)===saved.body.sha256,'Original request body changed');}
  return{root,value:saved,body,headers};

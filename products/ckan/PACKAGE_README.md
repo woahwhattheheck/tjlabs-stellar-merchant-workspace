@@ -66,6 +66,14 @@ environment file, then use **Review → Save → Start → Open**. The saved sel
 binds the original project, installed source and Python executable. Use **Stop**
 before running a separate writer against the same project.
 
+The migration workspace also receives **Recurring catalogue sources** from
+their original publication URLs. It retains each source configuration, complete
+HTTP attempt and acquired edition, then reviews a following document against
+an explicitly selected accepted release. See
+[Recurring catalogues](source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/RECURRING_CATALOGS.md)
+for the browser, scheduled due-check command, exact identity decisions and
+whole-workspace receiving procedure.
+
 ## Open a CKAN data project
 
 The original CKAN workflow uses the actual CKAN catalogue origin:
@@ -123,6 +131,7 @@ The complete checkout-oriented guides also remain in that source tree:
 | Product operation | [source/products/ckan/OPERATING.md](source/products/ckan/OPERATING.md) |
 | CKAN receiving | [source/products/ckan/RECEIVING.md](source/products/ckan/RECEIVING.md) |
 | Migration operation | [MIGRATION_OPERATING.md](source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/MIGRATION_OPERATING.md) |
+| Recurring catalogue acquisition | [RECURRING_CATALOGS.md](source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/RECURRING_CATALOGS.md) |
 | Original converter setup | [DCAT_ENGINE.md](source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/DCAT_ENGINE.md) |
 | Original CKAN application | [ckan/README.md](source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/README.md) |
 | Original converter source manifest | [source-manifest.json](source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/vendor/gsa-dcat-us/source-manifest.json) |

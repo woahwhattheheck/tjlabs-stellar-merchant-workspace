@@ -45,7 +45,8 @@
     "stellar/scf-starforge-20261009/sf101-merchant-recovery",
     "stellar/scf-starforge-20261009/sf103-native-buyer-signer",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/runtime"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/runtime",
+    "stellar-forge/route-identity"
   ],
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/ATTEMPT_RECOVERY.md",

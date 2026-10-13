@@ -1,0 +1,202 @@
+{
+  "schema": "stellar-forge.lightdash-operating-source.v1",
+  "baseCommit": "f83238a6e73ae4a11bf9e5b2b7240f2a6072062c",
+  "originalApplication": {
+    "path": "business/lightdash-commissioning-workspace-20261012",
+    "changed": false,
+    "sourceLineage": "products/lightdash-commissioning/SOURCE_LINEAGE.json"
+  },
+  "modelSources": [
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/catalog.mjs",
+      "gitBlob": "6e768c2c90c4881366e147884c3debb45558f0fa"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs",
+      "gitBlob": "4b533a926214e78811d02d94c7d8adf07a078be8"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.mjs",
+      "gitBlob": "bd3e83ff93dba623647f9dbb046f5a573748d2d8"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/load.mjs",
+      "gitBlob": "cb4076d7bacc819c0a93b041bf3b26c92566ef83"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/specification.mjs",
+      "gitBlob": "4f8ba3f45ee2cde88fe2e5854feca42f3f43ef4c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/source-selection.mjs",
+      "gitBlob": "24e174db5de7337cb83d67f4261bdccee3fdeee6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/product-package.mjs",
+      "gitBlob": null
+    }
+  ],
+  "validation": {
+    "originalModelMemoryCheck": {
+      "memoryOnly": true,
+      "originalModel": true,
+      "capturePreservesAllOperatorFields": true,
+      "completeJsonRoundTrip": true,
+      "returnedPlanRevisions": 3,
+      "returnReady": true,
+      "completedReturns": 1
+    },
+    "nativeParser": "not executed",
+    "browserReceiving": "not executed",
+    "lifecycleSourceReview": "Startup cancellation, acquired-client failure cleanup and retryable HTTP/client/receipt drain reviewed against original foreground ownership."
+  },
+  "files": [
+    {
+      "path": "products/lightdash-commissioning/operating-plan.mjs",
+      "bytes": 15340,
+      "sha256": "36088003f652ebd90a5ee48fec131844814dc85aed86d8cd9983fa3da9224f64",
+      "gitBlob": "dca5c3df8029037019f91eaf008d71c12e67f7c1",
+      "preimageGitBlob": null
+    },
+    {
+      "path": "products/lightdash-commissioning/operating-plan.d.mts",
+      "bytes": 2779,
+      "sha256": "a31759b30828e8013dbd6e1ed8f939ed45198df7a9376af991f16c3e37cde43a",
+      "gitBlob": "37917ff45ebd7dcd57a13afa58ac94925db998ae",
+      "preimageGitBlob": null
+    },
+    {
+      "path": "products/lightdash-commissioning/operating-store.mjs",
+      "bytes": 9404,
+      "sha256": "8e97b9c70e619815ef6c249431e03558ccde5eb720c473af2913e67b2da37579",
+      "gitBlob": "8ca17aa02336feb50f25779975a382534ae5becf",
+      "preimageGitBlob": null
+    },
+    {
+      "path": "products/lightdash-commissioning/operating-catalog.mjs",
+      "bytes": 4921,
+      "sha256": "fc41af65da38294e8469b30850bdd626c80c2afcecb0c8a2f02fcb0dd8393aaf",
+      "gitBlob": "e5faefa41166682db08792dd01de68d3110876c2",
+      "preimageGitBlob": null
+    },
+    {
+      "path": "products/lightdash-commissioning/operating-server.mjs",
+      "bytes": 8002,
+      "sha256": "1dc97842940a67df1b000498b3e09655c5483e7039a3cbed125d0955c5be9491",
+      "gitBlob": "6e69775b2ff090544ec43ca709799507dd85ecc1",
+      "preimageGitBlob": null
+    },
+    {
+      "path": "products/lightdash-commissioning/operating-cli.mjs",
+      "bytes": 5968,
+      "sha256": "a3377f74bf911e8f555b57859677cb4e80185dcfe752ec3448304106a5d9b78c",
+      "gitBlob": "92f121ce52c5f208646958464c33cbfe667afa68",
+      "preimageGitBlob": null
+    },
+    {
+      "path": "products/lightdash-commissioning/operating-web/index.html",
+      "bytes": 4840,
+      "sha256": "7b0eda6183a10f7e9df9ce07e226a33c96b92408008c2eccf678d40a11e174e1",
+      "gitBlob": "e865eb0fe17d423471adcf54d643f1eca4bd208d",
+      "preimageGitBlob": null
+    },
+    {
+      "path": "products/lightdash-commissioning/operating-web/app.js",
+      "bytes": 15013,
+      "sha256": "dd09da6b84f2072adb3751b896ee4fcfe9a7fa586aae5bec32fc667fecf10dfb",
+      "gitBlob": "f91001fca3f76996107a78c099adc424a32ca1bc",
+      "preimageGitBlob": null
+    },
+    {
+      "path": "products/lightdash-commissioning/operating-web/style.css",
+      "bytes": 2215,
+      "sha256": "367a942958738a9e09258f4d8ca4d228ad8531d1045de8d808eee525bde3caea",
+      "gitBlob": "a2c9eefb672fe2a5ec2ae84783c8567e99117270",
+      "preimageGitBlob": null
+    },
+    {
+      "path": "products/lightdash-commissioning/operating-browser-assets.json",
+      "bytes": 402,
+      "sha256": "9790a4ff2a9032b26006d87987755e14d59cc287c1c3277010f1bd43abb4b65c",
+      "gitBlob": "78ba9663e244ca2fa8184676859501dfb7794f2f",
+      "preimageGitBlob": null
+    },
+    {
+      "path": "products/lightdash-commissioning/OPERATING_PLANS.md",
+      "bytes": 11092,
+      "sha256": "f2851e8b8c48e92a4f18c3ca517840b7b5b62a374f1b4498f0396f29cc7f5938",
+      "gitBlob": "0ad4ca3338f820a550f3718221f5b34806ea4590",
+      "preimageGitBlob": null
+    },
+    {
+      "path": "products/lightdash-commissioning/OPERATING_APPLICATION.md",
+      "bytes": 10372,
+      "sha256": "c16746f9d5ede34ad504c82d43f2026908ba4e1882318ab2c57322cd624c4d52",
+      "gitBlob": "2712b102c678aeb92a52199b7b7b78ebce96463d",
+      "preimageGitBlob": null
+    },
+    {
+      "path": "products/lightdash-commissioning/mcp.mjs",
+      "bytes": 24497,
+      "sha256": "f936145c393b0b2870ca0c02294dedf5017897ee65c9c5f80c1ab7702d7f2786",
+      "gitBlob": "4516164dd6b6f0b973954a16bea2ac11b253a1c6",
+      "preimageGitBlob": "ccda6d00d93a1c60d4f6c06bb1d0ef523fe63206"
+    },
+    {
+      "path": "products/lightdash-commissioning/catalog.mjs",
+      "bytes": 10476,
+      "sha256": "92725e2931cef75903f68f155d7e4422a8bac8888b42119013fd42019e6a5901",
+      "gitBlob": "2480ea5c967579ef403499a9fb62b8b32ba51d68",
+      "preimageGitBlob": "46108359a6387f424f6404a707c271363a7f634a"
+    },
+    {
+      "path": "products/lightdash-commissioning/client.mjs",
+      "bytes": 15869,
+      "sha256": "18efb56fcb0719f557f6aa713c820e729d64fd931a3e23afdf37806ce883c842",
+      "gitBlob": "a67bbcf068cdf7f87a404165cb3b493a5c51fa45",
+      "preimageGitBlob": "fc480bcb0c46b055a930f84d419132404fcb018f"
+    },
+    {
+      "path": "products/lightdash-commissioning/client.d.mts",
+      "bytes": 10276,
+      "sha256": "5305c91b43bb0d006c94ab3918f8f39fb17c48caf4444d883507a98150d11e65",
+      "gitBlob": "21ee007cd4efdf0b99aedfc6b90a0f1ebd343a13",
+      "preimageGitBlob": "dfc968e27d1e415ff2ebf8171b260d652f2413b7"
+    },
+    {
+      "path": "products/lightdash-commissioning/common.mjs",
+      "bytes": 12068,
+      "sha256": "94b3db6b1b0ee99c6ce0aeb69654b445fa13318bde184a9abb2f248c312c3940",
+      "gitBlob": "edfc42d0f0639fba471dbd1d988ff3f3587367c3",
+      "preimageGitBlob": "1f52abc704fe5fdd8c9afca5900c587dae8c0835"
+    },
+    {
+      "path": "products/lightdash-commissioning/merchant-provider.mjs",
+      "bytes": 2181,
+      "sha256": "54fd4a0150a829dcb87a2f3caffd3aa678b4a9f2b9220d28604a0b43571ecea9",
+      "gitBlob": "aaf675db3b55fe4790524f9af074ac9a7c80f344",
+      "preimageGitBlob": "213bfea1f31015216f7357a88e53a23122fbfa99"
+    },
+    {
+      "path": "products/lightdash-commissioning/application.mjs",
+      "bytes": 15128,
+      "sha256": "fb11834fa5a6f609cecf3f11a064aefa38a3b285e5cc95312096bf0ca397c8b6",
+      "gitBlob": "2cd25a08003dc3836a92d2322457c61ccaf79d59",
+      "preimageGitBlob": "11a6ef8202d6517371123b4d1cac89baaacf2377"
+    },
+    {
+      "path": "products/lightdash-commissioning/application-provider.mjs",
+      "bytes": 1503,
+      "sha256": "93ee1fdd978cd63a1b01e802f8ff5928c70924445bdcf25a0aa8f9f2d3cf7038",
+      "gitBlob": "98dc4abaf0e69fabfe979fae97144ea7a9a661e3",
+      "preimageGitBlob": "4b8fe82e314171a6c64609a5507683156b9c0117"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/lightdash-commissioning.json",
+      "bytes": 3022,
+      "sha256": "aa47d8454d6381a47f4f6e5308a3bae4800df4fab151d723e035a48672b14e45",
+      "gitBlob": "8a22f4e8800bf7e04cfe65a7e0c4fe9d1f1db90e",
+      "preimageGitBlob": "cd0ab7433706a60f252f29aa2a83248544f17b67"
+    }
+  ]
+}

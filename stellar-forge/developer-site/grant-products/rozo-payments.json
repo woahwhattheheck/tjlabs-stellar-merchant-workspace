@@ -1,0 +1,199 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "rozo-payments",
+  "heading": "## ROZO payment operations, financial closing and complete receiving",
+  "sources": [
+    {
+      "id": "rozo-installed-selection",
+      "label": "Complete ROZO installation and original Applications lifecycle",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/ROZO_PAYMENTS.md",
+      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "editions": [
+        {
+          "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+          "git_blob": "104a909d76c6d397a2ca4602f71484ef222040f3",
+          "sha256": "ba25e2469914cfe68a42f00ab0e55c137f04414d6893bc5647cf516307449c61",
+          "bytes": 8361
+        }
+      ]
+    },
+    {
+      "id": "rozo-selected-runtime",
+      "label": "Original selected runtime and dependency closure",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/rozo-payments.json",
+      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "editions": [
+        {
+          "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+          "git_blob": "b9e56bd0f30292a6f075333f2730fdce2f9390d2",
+          "sha256": "1c27369dd5bc68ee09e89d44a1415e6a63b63a89a1f5d7fc453ab593d45824c6",
+          "bytes": 51534
+        }
+      ]
+    },
+    {
+      "id": "rozo-finance-workflow",
+      "label": "Complete report-to-finance operating and receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/FINANCE.md",
+      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "editions": [
+        {
+          "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+          "git_blob": "de94fa5e7fd9e967ab8e1972003f0df9fcc6a1d6",
+          "sha256": "10641982ac76baba66f661a2f80ad79783b725ea523407aa145212a1295d00e2",
+          "bytes": 15639
+        }
+      ]
+    },
+    {
+      "id": "rozo-finance-source",
+      "label": "Original report and native payment movement source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/finance-source.mjs",
+      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "editions": [
+        {
+          "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+          "git_blob": "0991d29217248890cb13c433a9323c0d6ea1b18c",
+          "sha256": "01bf54faf11bfa948843a9e4759aa42a9c50b57b4ce1449acdafa307e12c5c76",
+          "bytes": 19102
+        }
+      ]
+    },
+    {
+      "id": "rozo-finance-service",
+      "label": "Configured Accounting and Buyer orchestration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/finance-service.mjs",
+      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "editions": [
+        {
+          "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+          "git_blob": "1cfa2371c0f850b797bdd00583c39466443323d3",
+          "sha256": "224c55f0a8da9a2a8f5bb30d9af04a65f55973aad79bf47c5f8b889b6bbf4979",
+          "bytes": 27258
+        }
+      ]
+    },
+    {
+      "id": "rozo-merchant-tools",
+      "label": "Merchant recognition, close and accountant source operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/ACCOUNTING_ROZO.md",
+      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "editions": [
+        {
+          "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+          "git_blob": "b318c2a9ce604f4cfc4968bc1fac32547aac956d",
+          "sha256": "201cb596da6e0c50998bfa29121906d54fe5904d016d3ff275ef5df1ff9f94a6",
+          "bytes": 6911
+        }
+      ]
+    },
+    {
+      "id": "rozo-buyer-tools",
+      "label": "Explicit Buyer purchase selection and original expense receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/BUYER_ROZO.md",
+      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "editions": [
+        {
+          "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+          "git_blob": "b4c45d4216aa1ee029089143c5eccc59e95281df",
+          "sha256": "c171236d0af199b8117bc5a040fcb0f7f3002e794dd282b9d34c569d3059b5df",
+          "bytes": 9011
+        }
+      ]
+    },
+    {
+      "id": "rozo-native-finance",
+      "label": "Complete original native financial programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/native-finance.mjs",
+      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "editions": [
+        {
+          "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+          "git_blob": "3ab955f350a1f4f3edf3a24117e7e3cb050a16c8",
+          "sha256": "8b673d3360cb8b80f2b60d354f9fb57184b7ec14e41cf952b5147d07d0874d53",
+          "bytes": 27544
+        }
+      ]
+    },
+    {
+      "id": "rozo-finance-receiving",
+      "label": "Independent received-source financial restoration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/finance-receiving.mjs",
+      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "editions": [
+        {
+          "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+          "git_blob": "c15b9cde99bbd46d5b0cadca19e2342d87495cc4",
+          "sha256": "2f85b1c7d6d0fa6483bfb94bb69138f7e80762fddb5432cf3de3c6771f169615",
+          "bytes": 11222
+        }
+      ]
+    },
+    {
+      "id": "rozo-finance-archive",
+      "label": "Complete financial archive and exact member receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/finance-archive.py",
+      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "editions": [
+        {
+          "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+          "git_blob": "817c67bce8e50a4fc9fc134156b0d63f37339bc1",
+          "sha256": "bb77b87ecd211eac4d0aa136decf953f37450400437e4060a012f833c34b2e34",
+          "bytes": 10136
+        }
+      ]
+    },
+    {
+      "id": "rozo-applications-provider",
+      "label": "Original staff Applications provider and configuration binding",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/application-provider.mjs",
+      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "editions": [
+        {
+          "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+          "git_blob": "800af6ff83116c90b42a8f857c2a25231d787ff2",
+          "sha256": "4eec42184a714e457d2fb60303511c6e3aff042f6462d7d23764f39a96c451c3",
+          "bytes": 16251
+        }
+      ]
+    },
+    {
+      "id": "rozo-staff-finance",
+      "label": "Complete original Finance operator interface",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/public/finance.mjs",
+      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "editions": [
+        {
+          "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+          "git_blob": "7cd05259a35c7c6bbf5413d43a07f17a66a3bb3f",
+          "sha256": "a005cde9b438886263ff57f7f31b30d9f7b303b824f077ccc390a1fcc962c3ed",
+          "bytes": 38892
+        }
+      ]
+    }
+  ]
+}

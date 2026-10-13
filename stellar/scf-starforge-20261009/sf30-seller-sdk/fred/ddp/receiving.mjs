@@ -16,6 +16,8 @@ function describeMeaning(series,target,binding){
     currency:clone(series.currency),seasonalAdjustment:clone(series.seasonalAdjustment),annotations:clone(series.annotations),original:clone(series.original)};
   const issues=[],add=(field,before,after,message)=>issues.push({field,source:before??null,target:after??null,message});
   if(target){
+    if(target.timeBasis==='ALFRED_VINTAGE_DATE'&&target.metadataCoverage!=='ALFRED_HISTORICAL_EDITION')
+      add('historicalMetadata',null,target.metadataCoverage,'Retain the original metadata edition covering this selected historical vintage before asserting comparable meanings.');
     const sourceUnit=sourceText(series.unit),sourceMultiplier=series.multiplier?.code??null;
     if(binding.expectedFredUnits!==null){
       if(target.units!==binding.expectedFredUnits)add('units',binding.expectedFredUnits,target.units,'Returned FRED units differ from the reviewed expected units.');
@@ -63,10 +65,13 @@ export function buildFredDdpReceiving({packageCapture,crosswalk,plan,captures}){
   need(Array.isArray(captures)&&captures.length===plan.acquisitions.length,'Receive every planned original FRED batch.');
   const bySelection=new Map();
   for(const capture of captures){
-    const model=validateCapture(capture);need(model.sourceMode==='API_VINTAGE','Receive the planned original FRED API as-of capture.');
+    const model=validateCapture(capture);need(['API_VINTAGE','ALFRED_VINTAGE'].includes(model.sourceMode),'Receive the planned original FRED API or ALFRED vintage capture.');
     const key=canonical(model.selection);need(!bySelection.has(key),'A planned FRED selection was supplied more than once.');
     bySelection.set(key,{capture,model});
   }
+  const sourceModes=new Set([...bySelection.values()].map(item=>item.model.sourceMode));
+  need(sourceModes.size===1,'Each complete migration receiving retains one original historical source mode.');
+  const sourceMode=[...sourceModes][0];
   const identities=[],targets=new Map();
   for(const acquisition of plan.acquisitions){
     const entry=bySelection.get(canonical(acquisition.selection));need(entry,'A complete original FRED batch does not match the reviewed selection.');
@@ -156,7 +161,7 @@ export function buildFredDdpReceiving({packageCapture,crosswalk,plan,captures}){
     comparedCount:statusCounts.EQUAL+statusCounts.DIFFERENT+statusCounts.BOTH_MISSING+statusCounts.MISSING_CHANGED,
     differentCount:statusCounts.DIFFERENT,missingChangedCount:statusCounts.MISSING_CHANGED,sourceOnlyCount:statusCounts.SOURCE_ONLY,targetOnlyCount:statusCounts.TARGET_ONLY};
   const core={schema:SCHEMA,planId:plan.id,packageId:source.id,packageSha256:source.captureSha256,crosswalkId:mapping.id,crosswalkSha256:mapping.captureSha256,
-    source:{sourceMode:'DDP_CURRENT_PUBLISHED',package:source.source,crosswalk:mapping.source,fredAsOf:plan.input.asOf,
+    source:{sourceMode:'DDP_CURRENT_PUBLISHED',...(sourceMode==='ALFRED_VINTAGE'?{targetSourceMode:sourceMode}:{}),package:source.source,crosswalk:mapping.source,fredAsOf:plan.input.asOf,
       bookmark:plan.input.bookmark,note:plan.input.note},captures:identities,meanings,rows,summary};
   return {...core,id:'fred-ddp-receiving-'+ddpDigest(core)};
 }

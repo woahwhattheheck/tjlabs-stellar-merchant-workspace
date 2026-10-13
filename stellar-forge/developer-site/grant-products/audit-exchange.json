@@ -1,0 +1,97 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "audit-exchange",
+  "heading": "## Audit Exchange: original building audits, energy review and editable turnover",
+  "sources": [
+    {
+      "id": "audit-exchange-installed-operations",
+      "label": "Installed Audit Exchange, source selection and complete receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/audit-exchange/OPERATING.md",
+      "editions": [
+        {
+          "commit": "ca93854e582d954bb66077da596b0e5cbee59f3d",
+          "bytes": 4200,
+          "sha256": "c4312403bc2a57c01dee0a9bb0d0aebaf239a01f411edbae8933c62360b36241",
+          "git_blob": "b8b2e93172eab3d6e22ea89fee67251239e13dec"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-operator",
+      "label": "Complete audit import, correction, review, energy selection and turnover operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/OPERATOR.md",
+      "editions": [
+        {
+          "commit": "ca93854e582d954bb66077da596b0e5cbee59f3d",
+          "bytes": 30119,
+          "sha256": "881efcd36211836b7258d36171ebba7085949dc97ea5c364f6df3b9132d7b7e6",
+          "git_blob": "435793e980a182105a7b73bdfde03dce5e0f6e8d"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-native-application",
+      "label": "Native project, editions, review history and editable receiving contracts",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/README.md",
+      "editions": [
+        {
+          "commit": "ca93854e582d954bb66077da596b0e5cbee59f3d",
+          "bytes": 8063,
+          "sha256": "bfa8658c125b2a96028c340aad6ab02c3634d7caab228b019c5e843a2c0d2a67",
+          "git_blob": "08b617b6f29eecdeb61fd10a600bef578bdc3073"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-energy-analysis",
+      "label": "Pinned nmecr installation, original weather inputs and native energy analysis",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/ANALYSIS.md",
+      "editions": [
+        {
+          "commit": "ca93854e582d954bb66077da596b0e5cbee59f3d",
+          "bytes": 8901,
+          "sha256": "a1eb55f8ca241ef1881d6b5bcf5aab3d04736350fe2ba24808daabca48075003",
+          "git_blob": "6203705a338d70de6a4fc9583138b721643c0515"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-merchant",
+      "label": "Audit Merchant provider, agent tools and original project connection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/MERCHANT.md",
+      "editions": [
+        {
+          "commit": "ca93854e582d954bb66077da596b0e5cbee59f3d",
+          "bytes": 3408,
+          "sha256": "b36e4f8c5408770a310375e63eec4ff1b981bb8cdf09dca368a48a30618edee5",
+          "git_blob": "d972aafb33ceecd0a55602a1d853609b8ee6bec1"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-source-contract",
+      "label": "Original BuildingSync source meaning, official validation and exact turnover mappings",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/standards/AUDIT_CONTRACT.md",
+      "editions": [
+        {
+          "commit": "ca93854e582d954bb66077da596b0e5cbee59f3d",
+          "bytes": 21762,
+          "sha256": "0daa824798c4ea6e3c7a105ec018bbef51644a79dcc9a5173c3139567fa31ed4",
+          "git_blob": "f910ffadfbda95ef669003d383d667d7f3fd70d8"
+        }
+      ]
+    }
+  ]
+}

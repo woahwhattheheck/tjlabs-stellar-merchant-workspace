@@ -1,4 +1,13 @@
 /** Source-table authoring over the original native merchant workspace generator. */
+import type { DocumentTableSource, DocumentTableProjection, DocumentMetadata, ProjectedDocumentCell } from './source-document-tables.mjs';
+export interface DocumentTableIdentity { sourceId: string; projectionId: string; tableIndex: number }
+export interface DocumentTableEdition {
+  sourceId: string; sourceSha256: string; document: DocumentMetadata; projection: DocumentTableProjection;
+}
+export type DocumentTableRecord = DocumentTableIdentity & (
+  { row: number; cells: ProjectedDocumentCell[] } |
+  { headerRows: number[]; cells: DocumentTableProjection['headerCells'] }
+);
 export type Delimiter = ',' | '\t' | ';' | '|';
 export type DelimiterChoice = Delimiter | 'comma' | 'tab' | 'semicolon' | 'pipe';
 export type FieldType = 'text' | 'integer' | 'integer-text' | 'decimal-text' | 'boolean' | 'date' | 'timestamp';
@@ -10,7 +19,7 @@ export interface DialectOptions {
   header?: boolean;
   skipEmptyRecords?: boolean;
 }
-export interface SourceRecord { record: number; line: number }
+export interface SourceRecord { record: number; line: number; documentTable?: DocumentTableRecord }
 export interface ParsedRecord extends SourceRecord { cells: string[] }
 export interface ParsedTable {
   delimiter: Delimiter; header: boolean; skipEmptyRecords: boolean; headings: string[];
@@ -45,6 +54,7 @@ export interface TableMapping {
 }
 export interface SourceEdition {
   id: string; filename: string; sourceText: string; bytes: number; sha256: string; receivedAt: string;
+  documentTable?: DocumentTableEdition;
 }
 export interface ResourceField {
   name: string; sourceName: string; sourceIndex: number; type: FieldType;
@@ -53,7 +63,10 @@ export interface ResourceField {
 export type ResourceRow = Record<string, JsonScalar>;
 export interface TabularResource {
   schema: typeof RESOURCE_SCHEMA;
-  source: Pick<SourceEdition, 'filename' | 'sha256' | 'bytes'> & { editionId: string };
+  source: Pick<SourceEdition, 'filename' | 'sha256' | 'bytes'> & {
+    editionId: string;
+    documentTable?: DocumentTableIdentity & { sourceSha256: string; document: DocumentMetadata };
+  };
   fields: ResourceField[]; keyFields: string[]; rows: ResourceRow[];
 }
 export interface ReviewSummary {
@@ -92,11 +105,14 @@ export interface TableDocument {
 export interface TableProject {
   schema: typeof PROJECT_SCHEMA; id: string; name: string; createdAt: string;
   starter: NativeStarter; documents: TableDocument[];
+  /** Unique complete document extractions shared by their projected source editions. */
+  documentTableSources?: DocumentTableSource[];
 }
 export interface TableSummary {
   id: string; label: string; resourceId: string; sourceEditions: number; reviews: number;
   selectedEditionId: string; selectedReviewId: string | null;
   reviewedCurrentInput: boolean; summary: ReviewSummary | null;
+  documentTable?: DocumentTableIdentity;
 }
 export interface ProjectSummary {
   schema: typeof PROJECT_SCHEMA; id: string; name: string; folder: string; tables: TableSummary[];
@@ -124,7 +140,10 @@ export interface ReviewComparison {
 }
 export interface MaterialDocument {
   id: string; label: string; resourceId: string; selectedReviewId: string;
-  sources: { id: string; filename: string; path: string; bytes: number; sha256: string; receivedAt: string }[];
+  sources: {
+    id: string; filename: string; path: string; bytes: number; sha256: string; receivedAt: string;
+    documentTable?: { sourceId: string; projectionId: string; document: DocumentMetadata; projection: string; selection: string; rows: string };
+  }[];
   reviews: {
     id: string; editionId: string; output: string; mapping: string; record: string;
     bytes: number; sha256: string; summary: ReviewSummary;
@@ -134,6 +153,7 @@ export interface MaterialDocument {
 export interface MaterialsManifest {
   schema: 'stellar-forge.source-table-materials.v1'; projectId: string; projectName: string;
   nativeWorkspaceSchema: string; documents: MaterialDocument[];
+  documentTableSources?: { id: string; filename: string; original: string; record: string; bytes: number; sha256: string; document: DocumentMetadata }[];
 }
 export interface WorkspaceFile { path: string; content: string | Uint8Array }
 export interface TableWorkspace {
@@ -169,6 +189,11 @@ export function selectedEdition(document: TableDocument): SourceEdition;
 export function selectedReview(document: TableDocument): TableReview;
 export function addDocument(project: TableProject, input: DialectOptions & { filename: string; sourceText: string; resourceId?: string }): Promise<{ project: TableProject; documentId: string; editionId: string }>;
 export function addEdition(project: TableProject, documentId: string, input: { filename: string; sourceText: string }): Promise<{ project: TableProject; documentId: string; editionId: string; reused: boolean }>;
+/** Receive an explicit document projection into a new resource or an existing table's next edition. */
+export function addDocumentTable(project: TableProject, input: {
+  source: DocumentTableSource; projection: DocumentTableProjection;
+  filename?: string; resourceId?: string; documentId?: string;
+}): Promise<{ project: TableProject; documentId: string; editionId: string; reused: boolean; sourceId: string; projectionId: string }>;
 export function resetMapping(project: TableProject, documentId: string, options?: DialectOptions): TableProject;
 export function replaceMapping(project: TableProject, documentId: string, mapping: TableMapping): TableProject;
 export function freezeReview(project: TableProject, documentId: string): Promise<{ project: TableProject; review: TableReview; reused: boolean }>;

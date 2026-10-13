@@ -21,6 +21,7 @@ export const GRANT_CASE_ACTIONS = Object.freeze([
   'purchase.void', 'outcome.save', 'review', 'close', 'reopen',
   'cohort.prepare', 'installation.save', 'installation.return', 'installation.return-stage', 'implementation.prepare',
   'engagement.prepare', 'engagement.receiving',
+  'risk-register.save',
   'amendment.save', 'amendment.review', 'amendment.apply',
   'task-outcomes.save', 'funding.save',
   ...GRANT_COMPLETION_ACTIONS,

@@ -333,3 +333,51 @@ Use the one existing Service adjustment receiving operation and its original sou
 The factory needs the actual owner aliases, original verified capture and explicit period/coding choices. Source parsing and independent source-byte readback establish implementation custody; they do not establish that the native flow ran. Report the executed controller, original case/buyer/period/accountant IDs, exit/result and artifact hashes only after the enclosing native operation returns them.
 
 When delivering the complete product, include these source files and guide with the cohesive original Support application, its buyer/accountant dependencies, original source capture and exact generated files. Preserve upstream licenses and the complete application/project receiver.
+
+## Continue saved buyer work
+
+The Service adjustments page includes **Continue saved buyer work**, grouped by the exact saved capture, configured buyer alias and original buyer workspace ID. An alias that has been repointed remains a different workflow. Opening a saved workflow verifies its actual owner before loading references.
+
+The workbench keeps the receipt, coding, period, delivery and accountant history together. Each action offers its complete original prepared request and, when saved, its original outcome and exact delivery files. **Use references** fills the actual packet, purchase, credit, period, review, close and delivery selections for staff to review. Saved review and close selectors eliminate copying those IDs from JSON after a reload.
+
+An **Action saved** row describes the case journal. The native buyer may already have committed that request while its case outcome is still being recovered. Execute the same saved action through the existing recovery path to establish the result. **Outcome saved** links the original native outcome; neither label asserts that an issued period or live workspace is still at that earlier revision. The existing preparation checks read current native state before any new decision.
+
+The buyer action, delivery, history and download selectors follow the chosen capture and buyer identity. Complete record inspection still opens the immutable original case revision. The underlying case retains every other capture and buyer workflow.
+
+### Draft continuation
+
+After reading the selected buyer, **Save draft fields** retains the full unsubmitted form, exact allocation strings, label rows and loaded edit bases in the browser's existing request store. The key contains origin, case, capture, configured alias and actual buyer workspace ID. Switching case, capture or buyer preserves edited fields before clearing the form. Opening or inspecting a workflow without editing its fields leaves an earlier saved draft intact; only actual edits are saved automatically.
+
+**Restore saved draft** first reads the current buyer identity, then restores matching form choices. It does not prepare or execute an action. Review the current source and use the original preview/save/execute flow. A changed cost center, period or label basis continues to fail its original review check. Rechoose an accountant return file after a reload; browser file selections and return previews are deliberately renewed against the actual issued history. Prepared native requests and pending recovery requests stay in their original separate stores.
+
+**Download draft** preserves those same complete editable fields as JSON. **Discard saved draft** removes only that workflow's browser draft. It leaves the displayed fields, retained original prepared actions and case history available.
+
+### Existing read API, CLI and MCP
+
+The original buyer overview now includes:
+
+~~~json
+{
+  "workflow": {
+    "schema": "stellar-forge.merchant-service-buyer-workflow.v1",
+    "groups": [{
+      "id": "[original capture ID, original alias, original workspace ID]",
+      "capture": {"id": "original capture ID"},
+      "buyer": {"alias": "configured buyer", "workspaceId": "original identity"},
+      "actions": [{
+        "id": "original intent ID",
+        "sha256": "original intent hash",
+        "action": "period_close",
+        "stage": "period",
+        "status": "OUTCOME_SAVED",
+        "reference": {"periodId": "original period", "reviewId": "original review", "closeId": "original close"},
+        "outcome": {"id": "original outcome ID", "sha256": "original outcome hash", "files": []}
+      }]
+    }]
+  }
+}
+~~~
+
+The example describes the response shape; actual values come entirely from validated case materials. No payment, amount, date, transfer verification or current financial readiness is derived in this projection.
+
+Read the unchanged original buyer overview through `GET /api/cases/{id}/adjustments/buyer?revision={caseRevision}`, the existing `buyerRead` case owner or `merchant_service_buyer_read` MCP tool. Select `section:"intents"` or `section:"outcomes"` with the original `recordId` to load its complete material. Existing CLI operation invocation uses the same buyer read method and reviewed input file. For example, save `{"method":"buyerRead","args":{"id":"ORIGINAL_CASE_UUID","revision":"ORIGINAL_CASE_SHA256"}}` in a private request file, then run `node service-adjustments-cli.mjs --url http://127.0.0.1:PORT/ --request-file /private/buyer-read.json --out /private/buyer-workflow-edition`. Supply the actual installed listener, case and revision; the output retains the complete overview including every workflow group. The complete original materials and hash-pinned downloads remain the authority for subsequent operations.

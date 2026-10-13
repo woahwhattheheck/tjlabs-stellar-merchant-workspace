@@ -16,11 +16,13 @@ import { statementDefinitions, statementFileNames, statementFileSelectors, Merch
 import { MerchantReceivables, receivablesFileSelectors } from './accounting-receivables.mjs';
 import { platformDefinitions, platformFileNames, normalizePlatformConfig, platformSourceView, platformPathReferences, MerchantPlatforms } from './accounting-platforms.mjs';
 import { bitwaveDefinitions, normalizeBitwaveConfig, bitwaveSourceView, bitwavePathReferences, MerchantBitwave } from './bitwave.mjs';
+import { callRozoAccounting } from './accounting-rozo.mjs';
 import { accountingWorkspaceBinding } from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/binding.mjs';
 import { openAccountingWorkspace } from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/store.mjs';
 import { openAccountingMaintenance } from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/recovery-controller.mjs';
 import { openCollectionWorkspace } from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/collection-workspace.mjs';
 import { AccountantWorkspace, ACCOUNTANT_CSV_BYTES } from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/accountant-workspace.mjs';
+import { RozoAccountingWorkspace } from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/rozo-workspace.mjs';
 import { MAX_PRICING_REPORT_BYTES } from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/pricing.mjs';
 import { supportsSellerMethod } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/http-methods.mjs';
 
@@ -47,11 +49,11 @@ const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 
 
 
-const sourceKinds = ['recoveredSources', 'recoveryRequests', 'proofFiles', 'termsFiles', 'pricingReports', 'accountantReturns', 'buyerSources', 'platformInputs', 'statementUsageInputs', 'receivablesInputs', 'cryptoworthInputs', 'runbookInputs', 'portfolioInputs'];
+const sourceKinds = ['recoveredSources', 'recoveryRequests', 'proofFiles', 'termsFiles', 'pricingReports', 'accountantReturns', 'buyerSources', 'platformInputs', 'statementUsageInputs', 'receivablesInputs', 'cryptoworthInputs', 'runbookInputs', 'portfolioInputs', 'rozoSources'];
 
 
 
-const fileSelections = [...new Set(['changeId', 'runId', 'recoveryId', 'exportId', 'collectionId', 'sourceId', 'reviewId', 'closeId', 'handoffId', 'revisionId', 'adjustmentId', 'jobId', 'planId', 'responseId', 'nativePost', 'attemptId', 'file', ...statementFileSelectors, ...receivablesFileSelectors, ...cryptoworthFileSelectors, ...runbookFileSelectors, ...portfolioFileSelectors])];
+const fileSelections = [...new Set(['rozoCaptureId', 'rozoCloseId', 'changeId', 'runId', 'recoveryId', 'exportId', 'collectionId', 'sourceId', 'reviewId', 'closeId', 'handoffId', 'revisionId', 'adjustmentId', 'jobId', 'planId', 'responseId', 'nativePost', 'attemptId', 'file', ...statementFileSelectors, ...receivablesFileSelectors, ...cryptoworthFileSelectors, ...runbookFileSelectors, ...portfolioFileSelectors])];
 
 
 
@@ -266,7 +268,7 @@ export class MerchantAccounting {
   #result(key, value, operation) {
     // These providers project host metadata themselves. Reviewed operator text
     // and hash-bound native requests must cross the wire without substitutions.
-    if (operation === 'merchant_accounting_file' || operation.startsWith('merchant_accounting_cryptoworth_') || operation.startsWith('merchant_accounting_runbooks_') || operation.startsWith('merchant_accounting_portfolio_') || operation.startsWith('merchant_accounting_receivables_')) return value;
+    if (operation.startsWith('merchant_accounting_rozo_') || operation === 'merchant_accounting_file' || operation.startsWith('merchant_accounting_cryptoworth_') || operation.startsWith('merchant_accounting_runbooks_') || operation.startsWith('merchant_accounting_portfolio_') || operation.startsWith('merchant_accounting_receivables_')) return value;
     if (value?.record?.revisions) value = { ...value, record: handoffBrief(value.record) };
     if (value?.definition?.versions) value = { ...value, definition: periodBrief(value.definition) };
     const result = value?.state ? { ...value, state: this.#state(key, value.state) } : value;
@@ -470,10 +472,12 @@ export class MerchantAccounting {
   #readKey(args) { return JSON.stringify([args.workspace, args.kind, ...fileSelections.map(key => args[key] ?? null)]); }
   async #originalFile(workspace, args) {
     const { kind, runId, recoveryId, exportId, collectionId, sourceId, reviewId, closeId, handoffId, revisionId, adjustmentId, file } = args;
-    const selectors = { 'buyer-source': [], response: ['recoveryId', 'runId'], report: ['runId', 'file'], export: ['exportId'], collection: ['collectionId', 'sourceId'],
+    const selectors = { 'rozo-capture': ['rozoCaptureId'], 'rozo-close': ['rozoCloseId'], 'buyer-source': [], response: ['recoveryId', 'runId'], report: ['runId', 'file'], export: ['exportId'], collection: ['collectionId', 'sourceId'],
       pricing: ['reviewId', 'runId', 'file'], period: ['closeId', 'file'], accountant: ['handoffId', 'revisionId', 'file'], adjustment: ['adjustmentId', 'jobId', 'file'], qbo: ['planId', 'responseId', 'nativePost', 'attemptId', 'file'], xero: ['planId', 'file'],
       'qbo-source-change': ['changeId', 'file'], 'xero-source-change': ['changeId', 'file'],
       'customer-statement': ['statementId', 'file'],
+      'receivables-customer-account': ['publicationId','file'],
+      'receivables-customer-response': ['customerResponseId','file'],
       'receivables-collection': ['collectionCaseId', 'asOf', 'file'],
       'receivables-collections': ['customerId', 'asOf', 'owner', 'status', 'search', 'file'],
       'receivables-cash-plan': ['cashPlanId', 'editionId', 'file'],
@@ -494,6 +498,8 @@ export class MerchantAccounting {
       'customer-usage-period-preview': ['usageOpeningId', 'usageId', 'file'] }[kind];
     if (fileSelections.some(key => args[key] !== undefined && !selectors.includes(key))) throw fail('ACCOUNTING_INVALID_ARGUMENTS', 'Use only the original source selectors for this file kind.');
     const session = this.#sessions.get(args.workspace);
+    if (kind === 'rozo-capture') { const original = await new RozoAccountingWorkspace(workspace).file(args.rozoCaptureId); return {bytes:original.bytes,name:'original-rozo-finance-source.json'}; }
+    if (kind === 'rozo-close') return new RozoAccountingWorkspace(workspace).closeFile(args.rozoCloseId);
     if (kind === 'buyer-source') return session.accountant.startupFile();
     if (kind === 'cryptoworth') return session.cryptoworth.file(args);
     if (kind === 'runbooks') return session.runbooks.file(args);
@@ -545,6 +551,8 @@ export class MerchantAccounting {
   async #execute(operation, args, workspace) {
     const key = args.workspace, session = this.#sessions.get(key);
     requireBuyerOperation(workspace, operation, args);
+    if (operation.startsWith('merchant_accounting_rozo_')) return callRozoAccounting(workspace, session.accountant, operation, args,
+      (source, maximum) => sourceBytes(this.#source(key, 'rozoSources', source), maximum));
     if (operation.startsWith('merchant_accounting_buyer_')) return callBuyerAccounting(workspace, session.accountant, operation, args);
     if (operation.startsWith('merchant_accounting_cryptoworth_')) return session.cryptoworth.call(operation, args);
     if (operation.startsWith('merchant_accounting_runbooks_')) return session.runbooks.call(operation, args);
@@ -705,7 +713,47 @@ export class MerchantAccounting {
         throw fail('ACCOUNTING_ACCOUNTANT_UNAVAILABLE', 'Select the original open accountant workspace.');
       const binding = accountingWorkspaceBinding(record.workspace.directory, record.workspace.state);
       return operation(Object.freeze({ accountant: record.accountant,
-        workspaceId: binding.workspaceId, sourcesSha256: binding.sourcesSha256 }));
+        sourceMode: configuredAccountingMode(this.#definition(key)), workspaceId: binding.workspaceId, sourcesSha256: binding.sourcesSha256 }));
+    });
+    record.calls.add(pending);
+    try { return await pending; }
+    finally { record.calls.delete(pending); admission.release(); }
+  }
+  /** Borrow ROZO finance in this original Accounting owner and maintenance admission. */
+  async withRozoFinanceWorkspace(key, operation) {
+    const definition = this.#definition(key);
+    if (configuredAccountingMode(definition) !== 'merchant')
+      throw fail('ACCOUNTING_MERCHANT_SOURCE_REQUIRED', 'Select a merchant accounting workspace for ROZO merchant finance.');
+    if (typeof operation !== 'function') throw fail('ACCOUNTING_INVALID_ARGUMENTS', 'Use the original ROZO finance callback.');
+    if (this.#closing) throw fail('ACCOUNTING_CLOSING', 'Merchant accounting is closing.');
+    const record = this.#sessions.get(key);
+    if (!record?.maintenance || record.closing)
+      throw fail('ACCOUNTING_NOT_OPEN', 'Open the selected accounting workspace before operating its ROZO finance.');
+    const admission = record.maintenance.enter();
+    const pending = Promise.resolve().then(async () => {
+      if (!record.accountant || admission.workspace !== record.workspace)
+        throw fail('ACCOUNTING_WORKSPACE_UNAVAILABLE', 'Select the original open accounting workspace.');
+      const binding = accountingWorkspaceBinding(record.workspace.directory, record.workspace.state);
+      const controller = new RozoAccountingWorkspace(record.workspace);
+      const children = new Set(); let admitted = true;
+      const track = (method, args) => {
+        if (!admitted) throw fail('ACCOUNTING_ADMISSION_CLOSED', 'The original ROZO finance callback has completed.');
+        const task = Promise.resolve().then(() => controller[method](...args));
+        children.add(task);
+        task.then(() => children.delete(task), () => children.delete(task));
+        return task;
+      };
+      const finance = Object.freeze(Object.fromEntries([
+        'view', 'previewSource', 'rows', 'periodPreview', 'mutate', 'status',
+        'resume', 'file', 'closeFile', 'savePeriod'
+      ].map(method => [method, (...args) => track(method, args)])));
+      try {
+        return await operation(Object.freeze({ workspaceId: binding.workspaceId,
+          sourcesSha256: binding.sourcesSha256, finance, accountant: record.accountant }));
+      } finally {
+        admitted = false;
+        await Promise.allSettled([...children]);
+      }
     });
     record.calls.add(pending);
     try { return await pending; }

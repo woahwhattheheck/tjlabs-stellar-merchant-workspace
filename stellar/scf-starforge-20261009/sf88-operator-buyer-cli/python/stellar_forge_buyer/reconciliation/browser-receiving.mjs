@@ -92,7 +92,9 @@ function requestRoute(family,id){return (family==='export'?'/api':API)+'/request
 
 /**
  * The supplied URL is the ORIGINAL private DuckDB browser launch URL.
- * input = {operation_id, source_commit, workspace_id, definition, actor, reason}.
+ * input = {operation_id, source_commit, workspace_id, definition, actor, reason, saved_pair?}.
+ * saved_pair = {pair_id, revision, definition_sha256, request_id} reopens the
+ * exact saved request and preserves the existing engineer review when receiving.
  * The caller owns the original native server and the complete typed-client
  * receiving/reopen continuation. This function closes only its browser context.
  */
@@ -102,6 +104,11 @@ export async function runReconciliationBrowserReceiving({url,input,outputDirecto
   plain(input.definition)&&ID.test(input.definition.source_edition??'')&&ID.test(input.definition.target_edition??'')&&
   typeof input.actor==='string'&&input.actor.trim()&&typeof input.reason==='string'&&input.reason.trim(),
   'Use the complete original operation, source commit, workspace, definition, reviewer and observation.');
+ const savedPair=input.saved_pair??null;
+ if(savedPair!==null)need(plain(savedPair)&&ID.test(savedPair.pair_id??'')&&
+  ID.test(savedPair.definition_sha256??'')&&REQUEST.test(savedPair.request_id??'')&&
+  Number.isSafeInteger(savedPair.revision)&&savedPair.revision>0,
+  'Select the complete original saved pair revision and request.');
  const launch=new URL(url);
  need(['http:','https:'].includes(launch.protocol)&&!launch.username&&!launch.password&&launch.hash.length>1,
   'Use the original private browser launch URL.');
@@ -227,11 +234,16 @@ export async function runReconciliationBrowserReceiving({url,input,outputDirecto
    'The original browser request has not returned its complete native result.');
   step.result=remote.result;step.complete=true;step.completed_at=new Date().toISOString();await save();return remote.result;
  }
- async function step(name,route,body,create){
+ async function step(name,route,body,create,originalRequestId=null){
   const family=route===API+'/exports'?'export':'reconciliation';
   let item=record.steps[name];
   if(item)need(stable(item.expected_body)===stable(body),'The prepared '+name+' operation changed.');
   else{item={route,family,expected_body:body,prepared_at:new Date().toISOString()};record.steps[name]=item;await save();}
+  if(originalRequestId!==null){
+   need(REQUEST.test(originalRequestId)&&(!item.request_id||item.request_id===originalRequestId),
+    'The selected original request identity changed.');
+   item.request_id=originalRequestId;
+  }
   record.phase=name.toUpperCase();await save();
   const prior=await findRequest(item,family,route);
   if(prior)return reopen(item,family);
@@ -349,6 +361,20 @@ export async function runReconciliationBrowserReceiving({url,input,outputDirecto
   return reviewId;
  }
 
+ async function originalSavedPair(){
+  need(savedPair!==null,'Select the original saved pair.');
+  const pair=await get(API+'/pairs/'+savedPair.pair_id);
+  need(pair.pair_id===savedPair.pair_id&&pair.revision===savedPair.revision&&
+   pair.definition_sha256===savedPair.definition_sha256&&
+   stable(pair.definition)===stable(input.definition),
+   'The selected saved pair revision or complete original definition changed.');
+  const request=await get(requestRoute('reconciliation',savedPair.request_id));
+  need(request.kind==='pairs'&&request.state==='COMPLETE'&&
+   request.request_id===savedPair.request_id&&request.body?.request_id===savedPair.request_id&&
+   request.body.workspace_id===input.workspace_id&&stable(request.result)===stable(pair),
+   'Reopen the exact original completed request for this saved pair revision.');
+  return {pair,body:withoutId(request.body)};
+ }
  async function preparePairUI(){
   await screen('pairs');await visibleAction(page.getByRole('button',{name:'New pair',exact:true}));
   await page.locator('#screen-editor input[type="file"]').setInputFiles({
@@ -529,13 +555,16 @@ export async function runReconciliationBrowserReceiving({url,input,outputDirecto
   const identity=await get('/api/identity');
   need(identity.workspace_id===input.workspace_id,'The original native workspace identity changed.');
   let preparedPair=null;
-  if(!record.steps.pair)preparedPair=await preparePairUI();
-  const pairBody=record.steps.pair?.expected_body??preparedPair;
+  const saved=savedPair===null?null:await originalSavedPair();
+  if(!record.steps.pair&&!saved)preparedPair=await preparePairUI();
+  const pairBody=record.steps.pair?.expected_body??saved?.body??preparedPair;
+  if(saved)need(stable(pairBody)===stable(saved.body),'The original selected pair request body changed.');
   const pair=await step('pair',API+'/pairs',pairBody,async()=>{
+   need(!saved,'Continue the selected original saved pair request.');
    if(!preparedPair)preparedPair=await preparePairUI();
    need(stable(preparedPair)===stable(pairBody),'The original prepared mapping review changed.');
    await screen('editor');await visibleAction(page.getByRole('button',{name:'Save reviewed pair',exact:true}));
-  });
+  },savedPair?.request_id??null);
   need(ID.test(pair.pair_id??'')&&pair.definition.source_edition===input.definition.source_edition&&
    pair.definition.target_edition===input.definition.target_edition,'The original saved pair changed.');
   const run=await step('run',API+'/run',{workspace_id:input.workspace_id,pair_id:pair.pair_id,
@@ -547,20 +576,40 @@ export async function runReconciliationBrowserReceiving({url,input,outputDirecto
    'The native run did not account for all original rows.');
   await observeFieldsUI(run);
   await observeNormalizationsUI(run);
-  // OPEN records an actual observation without inventing a correction.
-  let preparedDecision=null;
-  if(!record.steps.decision)preparedDecision=await prepareDecisionUI(run.run_id);
-  const decisionBody=record.steps.decision?.expected_body??preparedDecision;
-  const decision=await step('decision',API+'/decision',decisionBody,async()=>{
-   if(!preparedDecision)preparedDecision=await prepareDecisionUI(run.run_id);
-   need(stable(preparedDecision)===stable(decisionBody),'The original prepared decision or review revision changed.');
-   await screen('runs');
-   await visibleAction(page.locator('#decision-editor').getByRole('button',{name:'Save review decision',exact:true}));
-  });
-  need(decision.run?.run_id===run.run_id,'The original decision belongs to another run.');
+  let reviewedRun,reportStep;
+  if(savedPair!==null){
+   // Receiving an already saved customer comparison keeps its engineer review.
+   // Freeze the existing revision before preparing the report; the native report
+   // request retains that revision on continuation.
+   const current=await get(API+'/runs/'+run.run_id);
+   need(current.run_id===run.run_id&&Number.isSafeInteger(current.review_revision),
+    'The original customer review could not be reopened.');
+   if(record.preserved_review){
+    need(record.preserved_review.run_id===run.run_id,'The retained customer review belongs to another run.');
+   }else{record.preserved_review=current;await save();}
+   reviewedRun=record.preserved_review;reportStep=record.steps.run;
+  }else{
+   // OPEN records the original new receiving observation.
+   let preparedDecision=null;
+   if(!record.steps.decision)preparedDecision=await prepareDecisionUI(run.run_id);
+   const decisionBody=record.steps.decision?.expected_body??preparedDecision;
+   const decision=await step('decision',API+'/decision',decisionBody,async()=>{
+    if(!preparedDecision)preparedDecision=await prepareDecisionUI(run.run_id);
+    need(stable(preparedDecision)===stable(decisionBody),'The original prepared decision or review revision changed.');
+    await screen('runs');
+    await visibleAction(page.locator('#decision-editor').getByRole('button',{name:'Save review decision',exact:true}));
+   });
+   need(decision.run?.run_id===run.run_id,'The original decision belongs to another run.');
+   reviewedRun=decision.run;reportStep=record.steps.decision;
+  }
   const report=await step('report',API+'/report',{workspace_id:input.workspace_id,run_id:run.run_id,
-   expected_revision:decision.run.review_revision},async()=>{
-    await reopen(record.steps.decision,'reconciliation');
+   expected_revision:reviewedRun.review_revision},async()=>{
+    await reopen(reportStep,'reconciliation');
+    if(savedPair!==null){
+     const current=await get(API+'/runs/'+run.run_id);
+     need(current.review_revision===reviewedRun.review_revision,
+      'The original engineer review changed before this report request; reopen its retained request.');
+    }
     await visibleAction(page.getByRole('button',{name:'Create complete report',exact:true}));
    });
   need(ID.test(report.report_id??'')&&report.run_id===run.run_id,'The browser report belongs to another run.');
@@ -618,6 +667,8 @@ export async function runReconciliationBrowserReceiving({url,input,outputDirecto
    ...(record.observed_fields?{observed_fields:record.observed_fields}:{}),
    ...(record.observed_normalization_previews?{observed_normalization_previews:record.observed_normalization_previews}:{}),
    ...(record.observed_normalizations?{observed_normalizations:record.observed_normalizations}:{}),
+   ...(record.preserved_review?{preserved_review:{run_id:record.preserved_review.run_id,
+    review_revision:record.preserved_review.review_revision}}:{}),
    continuation:'Receive every original export file through the same native typed client, then reopen the original report from the separate sparse working warehouse.'};
   await save();return record.result;
  }catch(error){

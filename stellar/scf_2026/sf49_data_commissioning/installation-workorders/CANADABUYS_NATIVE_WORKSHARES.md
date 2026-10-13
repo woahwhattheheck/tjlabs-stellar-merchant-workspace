@@ -209,3 +209,20 @@ Keep private procurement, party and operating-case files in the authorized desti
 The implementation adds source-native preparation and reuses the maintained Installation workflow. A source review or a successful package preparation is distinct from an actual Installation save/export/import.
 
 For a completed customer handover, retain the actual original package identity, selected Workshare UUID/revision, explicit operator mapping, SOURCE_PREPARATION, the real case and plan, saved Installation revision, full exported case and RECEIVED result. The operating owner can then connect the delivery and acceptance evidence to the actual grant/demo/milestone record. Commercial acceptance, funding and payment require their own original evidence.
+
+## Open the prepared source in the existing browser desk
+
+Package the exact five-file preparation for the existing Grant Operations Source Preparation Desk:
+
+```sh
+starforge grant-installation-workorder canadabuys package \
+  --source /absolute/private/canadabuys-source-preparation \
+  --out /absolute/private/canadabuys-source-delivery/CanadaBuys_Source.zip \
+  --python /absolute/python3
+```
+
+This command verifies and reopens the complete original native package and all five prepared outputs before publishing the ZIP. Keep its private output directory and original package receipt together. It does not require an open Grant case.
+
+In the existing authorized case, open **Installations → Prepare original source workshares**. Retain the whole ZIP, select **Receive native CanadaBuys source**, and review the selected revision, complete original Workshare history, exact cents, explicit parties and phase allocations. Attach the complete source set, then use **Open native Installation preparation**. The attached preparation supplies the original native Workshare and optional explicitly selected bindings to the unchanged editable Installation flow.
+
+[The Source Desk guide](../../sf47_budget_model/workspace/INSTALLATION_SOURCE_DESK.md#receive-an-original-canadabuys-workshare-package) gives the complete request, revision, source custody and interrupted-response workflow. Earlier editions remain available. Changes originate in the native Workshare and explicit mapping; the browser receives their next complete source package.

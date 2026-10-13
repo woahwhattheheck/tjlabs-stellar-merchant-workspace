@@ -308,3 +308,123 @@ Receive the saved return into the existing Grant **Native buyer receiving** scre
 The existing receiver retains its strict full-input digest. Keep an already-admitted operation's input unchanged. If the original two-period product journey already has a frozen input without `customerUse`, prepare this extension as an explicit following input/output continuation under the same original business operation, preserving the earlier delivery and original native store; do not overwrite `input.json` or its journal to make the old selection appear new. Coordinate the exact source/period selection with the existing operator before starting, because already-created native periods cannot be represented as a new PREPARED-before-backup exercise.
 
 The current two original receiving modules and guide remain the implementation boundary. The commissioning domain, model, CLI, HTTP, browser product and original Grant receiver are maintained by their existing source owner. No second purchasing engine or separate native case store is introduced.
+
+
+## Receive a shared plan into an independent buyer workspace
+
+The optional `planAdoption` selection continues this same installed journey after the original two periods, recovery and selected Calendar commissioning/return stages have completed. It exports one actual source period through **Share plan and inputs**, uploads that complete file through the other buyer's **Shared plans** screen, reviews the buyer's own bindings, saves an immutable adopted revision, prepares and creates a named period, and restarts the installed listener to reopen the saved plan and collection.
+
+Use an existing initialized recipient Collections store with its original inbox and operator workspace. The receiver uses the same installed `all` runtime and opens source and recipient listeners sequentially. The recipient selection is part of the original input; it does not provision an operator, choose a signer or start a second receiving operation.
+
+### Select the actual recipient before freezing the input
+
+Add this property to the full input above. The values below illustrate the shape; select the real store, source period, private bindings file and business values from the accepting operator:
+
+~~~json
+{
+  "planAdoption": {
+    "sourcePeriod": 1,
+    "recipientDirectory": "/absolute/existing-recipient/collections",
+    "bindings": {
+      "path": "/absolute/existing-case/recipient-adoption.json",
+      "bytes": 1234,
+      "sha256": "REPLACE_WITH_THE_EXACT_64_HEX_FILE_SHA256"
+    },
+    "headerSelections": [
+      { "key": "sales-summary", "names": ["X-Report-Format"] }
+    ],
+    "period": {
+      "collectionId": "recipient-october-edition",
+      "name": "Recipient October reporting",
+      "values": {
+        "businessPeriod": "2026-10",
+        "delivery": "recipient-october-edition"
+      }
+    }
+  }
+}
+~~~
+
+`sourcePeriod` is zero-based: `0` selects the original first period and `1` selects the restored later period. Both are created by the original programme before export. The source package records the original saved plan and edition identities and carries their complete captured catalogs and request bodies.
+
+The private bindings file must be a canonical, regular, same-owner file with no group or other permissions; create it with mode `0600`. Pin its exact byte count and SHA-256 in the full input. It is limited to 2 MiB. The receiver reads it again before adoption and rejects a changed file.
+
+Keep the recipient Collections store, private bindings file, recipient operators/configurations, local ticket files and recipient response directory outside `recovery.stateRoot`. The original recovery journey moves that whole source root into `retainedStateRoot` before restoring it. Keep the recipient store separate from the original source checkout, runtime workspace/install, receiving output and retained source root as well. These path checks preserve the independent buyer's original state while the source recovery runs.
+
+### Bind every operator group explicitly
+
+The private file contains the original adoption selection without `packageSha256`; the receiver obtains that hash from the actual exported file:
+
+~~~json
+{
+  "planId": "recipient-monthly-reporting",
+  "name": "Recipient monthly reporting",
+  "description": "The selected source requests operated in this buyer workspace.",
+  "operatorBindings": [
+    {
+      "groupId": "THE_ACTUAL_SOURCE_OPERATOR_GROUP_ID",
+      "operatorWorkspace": "/absolute/existing-recipient/operator"
+    }
+  ],
+  "outputDirectory": "/absolute/existing-recipient/responses",
+  "deliveryParameter": "delivery",
+  "deliveryValue": "recipient-october-edition",
+  "requestBindings": [
+    {
+      "key": "sales-summary",
+      "ticketFile": "/absolute/existing-recipient/tickets/sales-summary.json",
+      "headers": {
+        "Authorization": "THE_RECIPIENT_LOCAL_HEADER_VALUE"
+      },
+      "omitHeaders": ["X-Optional-Preference"]
+    }
+  ]
+}
+~~~
+
+Use the actual group IDs from the source package. The source edition's requests identify each operator binding; the native manifest groups requests that share the original operator source. The package preview and **Adopt shared plan** screen display those groups. Bind every group once. Select either `operatorWorkspace` or `operatorConfigFile` for each group. The latter points to the existing original operator configuration file.
+
+This independent-buyer journey requires a different recipient operator path and different native configuration hash from the corresponding source operator. The original adoption review resolves those local workspaces and configurations; the receiver retains their exact config hashes before saving the adopted revision.
+
+Use `requestBindings` only for actual local requirements. A source requiring an operation ticket needs the recipient's own `ticketFile`. A local header can receive an explicit value in `headers` or be explicitly omitted through `omitHeaders`; omission is still subject to the original request and offer requirements. Header names are matched case-insensitively in the receiving browser. Leave unnecessary optional fields out of the private file.
+
+`headerSelections` in the full receiving input selects exact custom header names by stable request key for transfer from the source. Representation headers already travel with the request. Known credential, cookie, authorization, API key, token, ticket, session, password and signature headers become local requirements. The source's bearer operation-ticket bytes remain in its original private store; only the native ticket metadata travels. The local bindings file and resulting saved recipient plan remain private operating material.
+
+### Use actual business values and a distinct output edition
+
+The adopted plan preserves the captured period's catalog/body bytes and its URL/query parameter templates. Existing parameters keep the source period's captured values as defaults. The new `deliveryParameter` provides an output namespace for this buyer's response files.
+
+Supply every parameter explicitly in `planAdoption.period.values`, including the delivery parameter. Choose a fresh collection reference distinct from both source periods. The example `businessPeriod` exists only when the actual selected plan declares that parameter.
+
+A new delivery value changes where the output belongs. To change the business data inside a body or catalog, first save a real source revision with those updated input files and prepare that edition. Replacing only an output label does not rewrite captured request bytes. Local operation tickets must be valid for the exact future resolved request; the original period preparation checks that binding and current ticket eligibility.
+
+### Native sequence and continuation
+
+The receiver performs these steps through the maintained installed product:
+
+1. Opens the selected source edition, selects the requested custom headers and downloads the complete `.request-plan.jsonl` from **Share plan and inputs**.
+2. Parses the downloaded stream through the original parser, including its complete footer and end of input. The downloaded file's bytes, SHA-256, package hash and source edition must agree.
+3. Closes the source listener and opens the existing recipient Collections store with the same installed `buyer-collections-workspace` command.
+4. Uploads the file through **Shared plans**. The original receiver resumes retained object offsets and confirms the complete package.
+5. Fills the complete explicit operator, response directory, delivery, local header and ticket selections. **Review local plan** uses the original offer, body, ticket and operator preparation.
+6. Pins that exact review, saved-plan hash and local operator configuration hashes in the original receiving journal before **Save adopted revision**.
+7. Opens the adopted revision in the existing editor, prepares the named period, creates the original collection with its reviewed preview, and retains the original collection export.
+8. Closes and restarts the recipient listener, reopens the exact immutable plan and period, and compares the original collection manifest and edition hashes.
+
+The original queue, approval, signing and purchase controls remain available on the resulting collection. This receiving stage creates and reopens the collection; the buyer operates its execution controls in the original workspace.
+
+Re-run the same full input to continue after interruption. The source package and private bindings must retain their pinned identities. A lost response after saving is reconciled through the same adoption review and immutable saved revision. A partially prepared or created period reuses the selected collection reference and original preparation/create methods. An already-owned listener can be closed and reopened only when its retained PID, process-start identity, source commit and selected store match this original journal.
+
+A changed local configuration or changed review stops that save with its concrete native error. Correct the selected original input in its owning workspace; continue the same input when the original binding is restored. If the intended business selection itself changes, use an explicit later continuation under the existing operation and preserve the completed journal, following the frozen-input rules above.
+
+The final delivery includes:
+
+- `plan-adoption/source-package.json` and the complete browser-downloaded request-plan file;
+- `plan-adoption/recipient-selection.json` with the pinned selection and file identity;
+- the original saved adoption review/configuration identities in `receiving.json`;
+- the native collection export under `collection-exports/adopted-buyer-period/`;
+- `plan-adoption/complete-recipient-journey.json`;
+- desktop and phone views of source sharing, recipient review, adopted editor, created collection and reopened collection;
+- `RESULT.json.planAdoption`, carried into the same complete archive and delivery JSON.
+
+The existing customer-use schema documents this optional selection alongside its Calendar requirements. The native `validateReceivingInput` and original product methods remain the authority for the complete input and all actual files.

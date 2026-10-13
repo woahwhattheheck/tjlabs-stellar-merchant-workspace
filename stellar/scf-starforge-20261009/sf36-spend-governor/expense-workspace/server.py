@@ -131,6 +131,8 @@ class Handler(BaseHTTPRequestHandler):
             maximum = 90_000_000 if len(parts) == 4 and parts[:2] == ["api", "closes"] and parts[3] in ("accountant-preview", "accountant-return") else 2_000_000
             if path in ("/api/node-operations", "/api/node-operations/preview"):
                 maximum = 24_000_000
+            if path in ("/api/rozo-reports", "/api/rozo-reports/preview"):
+                maximum = 96_000_000
             if not 0 <= length <= maximum:
                 raise Problem("BODY_TOO_LARGE", "The JSON body exceeds this operation's supported size", 413)
             raw = self.rfile.read(length)
@@ -166,6 +168,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(store.state())
         if len(parts) == 4 and parts[:2] == ["api", "captures"] and parts[3] == "node-original":
             return self.send(store.node_operation_original(parts[2]), filename="original-node-accounting-export.json")
+        if len(parts) == 4 and parts[:2] == ["api", "captures"] and parts[3] == "rozo-original":
+            return self.send(store.rozo_report_original(parts[2]), filename="original-rozo-finance-source.json")
         if path == "/api/refund-packets":
             return self.send(store.refund_packets(**self.paging(query)))
         if path == "/api/credits":
@@ -235,6 +239,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def change(self, path, parts, payload, expected):
         store = self.server.store
+        if path == "/api/rozo-reports/preview":
+            return store.preview_rozo_report(payload)
+        if path == "/api/rozo-reports":
+            return store.capture_rozo_report(payload, expected)
         if path == "/api/node-operations/preview":
             return store.preview_node_operation(payload)
         if path == "/api/node-operations":
