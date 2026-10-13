@@ -123,15 +123,23 @@ export async function runManagedReceiving(input){
  need(input.settings.receivingDirectory===join(directory,'workspaces')&&input.settings.connectionFile===join(plan.workspace.directory,'property-continuity-connection.json'),'MANAGED_PATHS');
  await retain(join(directory,'input.json'),input);
  await retain(join(directory,'original-completion.json'),{operationId:plan.operationId,inputSha256:originalInputSha256,nativeResultSha256,completedJournalSha256,originalSourceSha256:SOURCE_SHA256});
+ const reportInventory=await jsonFile(join(directory,'reports-inventory.json'),32*1024*1024,{privateOnly:true});
+ need(reportInventory.schema==='stellar-forge.property-continuity-report-inventory.v1'&&reportInventory.operationId===input.operationId&&Array.isArray(reportInventory.files),'REPORT_INVENTORY');
+ const expectedReports=[...native.originalReports.files.map(x=>({...x,label:'original',workspace:plan.workspace.directory})),...native.receivedReports.files.map(x=>({...x,label:'received',workspace:plan.receiving.directory}))];
+ need(reportInventory.files.length===expectedReports.length,'REPORT_INVENTORY');const reportNames=new Set();
+ for(let i=0;i<expectedReports.length;i++){const original=expectedReports[i],item=reportInventory.files[i],name=original.path.split('/').at(-1),path=join(directory,'reports',original.label,name);
+  need(item.path===path&&item.originalPath===original.path&&item.originalWorkspace===original.workspace&&item.bytes===original.bytes&&item.sha256===original.sha256&&!reportNames.has(path),'REPORT_INVENTORY');reportNames.add(path);
+  const raw=await bytes(path,64*1024*1024,{privateOnly:true});need(raw.length===item.bytes&&sha(raw)===item.sha256,'REPORT_CHANGED');
+ }
  const complete=await optional(join(directory,'result.json'));if(complete){
-  need(complete.state==='COMPLETE'&&complete.inputSha256===digest(input),'RESULT_CHANGED');
+  need(complete.state==='COMPLETE'&&complete.inputSha256===digest(input)&&canonical(complete.reportFiles)===canonical(reportInventory.files),'RESULT_CHANGED');
   for(const item of complete.artifacts){try{const raw=await bytes(item.path,384*1024*1024,{privateOnly:true});need(raw.length===item.bytes&&sha(raw)===item.sha256,'DELIVERY_CHANGED');}
    catch(error){if(error.code!=='ENOENT')throw error;const raw=await bytes(item.sourcePath,384*1024*1024,{privateOnly:true});need(raw.length===item.bytes&&sha(raw)===item.sha256,'DELIVERY_CHANGED');await privateDir(dirname(item.path));const temporary=item.path+'.partial',fd=await open(temporary,'w',0o600);try{await fd.writeFile(raw);await fd.sync();}finally{await fd.close();}await rename(temporary,item.path);await syncDir(dirname(item.path));}}
   return complete;
  }
  await inspectSource(join(HERE,'app'));
  const model=await openRuntimeWorkspace({directory:absolute(input.runtimeWorkspace)});
- const course=new Course(directory,input);let client=null,owner=null,applicationId=null;
+ const course=new Course(directory,input);let client=null,owner=null,applicationId=null,modelClosed=false;
  try{
   const modelState=await model.state({runtimeId:input.runtimeId}),runtime=modelState.runtimes.find(x=>x.id===input.runtimeId);
   need(runtime&&runtime.phase==='READY','RUNTIME_NOT_READY');const inspected=await inspectMerchantRuntime(runtime.directory,{load:false,source:false});
@@ -208,13 +216,14 @@ export async function runManagedReceiving(input){
    artifacts.push({path,bytes:raw.length,sha256:sha(raw),sourcePath:basis.path});}
   const result={schema:'stellar-forge.property-continuity-managed-result.v1',operationId:input.operationId,inputSha256:digest(input),state:'COMPLETE',applicationId,runtimeId:input.runtimeId,runtimeDirectory:runtime.directory,sourceSha256:SOURCE_SHA256,
    originalInputSha256,nativeResultSha256,received:await optional(join(directory,'control','managed-reopened','result.json')),
-   managedRuns:[course.id('first-run'),course.id('second-run')],artifacts,allOwnedResourcesClosed:true};
+   managedRuns:[course.id('first-run'),course.id('second-run')],artifacts,reportFiles:reportInventory.files,allOwnedResourcesClosed:true};
+  await model.close();modelClosed=true;
   await retain(join(directory,'result.json'),result);return result;
  }catch(error){
   const path=join(directory,'control','last-interruption.json');await writeFile(path,canonical({at:new Date().toISOString(),operationId:input.operationId,applicationId,error:{code:error.code??error.name,message:error.message},state:'INTERRUPTED',allOwnedResourcesClosed:false}),{mode:0o600});
   throw error;
  }finally{
-  const errors=[];for(const close of [()=>owner?.close(),()=>client?.close(),()=>model.close()])try{await close();}catch(error){errors.push(error);}
+  const errors=[];for(const close of [()=>owner?.close(),()=>client?.close(),()=>modelClosed?undefined:model.close()])try{await close();}catch(error){errors.push(error);}
   if(errors.length)throw new AggregateError(errors,'Managed receiving cleanup incomplete.');
  }
 }

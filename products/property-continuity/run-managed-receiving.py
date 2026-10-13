@@ -39,12 +39,46 @@ def retain(path,raw):
     os.replace(temporary,path);sync(path.parent)
 def measure(path):
     raw=read(path,MAXIMUM);return {"path":str(path),"bytes":len(raw),"sha256":digest(raw)}
+def preserve_reports(operation,out,plan,native):
+    app=ROOT/"app";selection=load(app/"source-selection.json")
+    require(selection["sha256"]==SOURCE and digest(canonical({k:v for k,v in selection.items() if k!="sha256"}))==SOURCE,"Original application selection changed.")
+    seen=set()
+    for item in selection["files"]:
+        relative=pathlib.PurePosixPath(item["path"])
+        require(not relative.is_absolute() and all(x not in (".","..") for x in relative.parts) and item["path"] not in seen,"Invalid original source inventory.")
+        seen.add(item["path"]);raw=read(app/item["path"],MAXIMUM)
+        require(len(raw)==item["bytes"] and digest(raw)==item["sha256"],"Original source body changed.")
+    sys.path.insert(0,str(app))
+    from bluewave.workspace import Workspace
+    inventory=[]
+    for label,report_key,workspace_path in (("original","originalReports",plan["workspace"]["directory"]),("received","receivedReports",plan["receiving"]["directory"])):
+        members=native[report_key]["files"];names=set();owner=None
+        try:
+            for item in members:
+                name=pathlib.Path(item["path"]).name
+                require(name not in names and name.endswith((".json",".html")),"Original report names conflict.")
+                names.add(name);target=out/"reports"/label/name
+                if target.exists():raw=read(target)
+                else:
+                    try:raw=read(pathlib.Path(item["path"]))
+                    except FileNotFoundError:
+                        if owner is None:owner=Workspace(workspace_path)
+                        raw=owner.read_blob(item["sha256"])
+                    require(len(raw)==item["bytes"] and digest(raw)==item["sha256"],"Original report bytes changed.")
+                    retain(target,raw)
+                require(len(raw)==item["bytes"] and digest(raw)==item["sha256"],"Saved report bytes changed.")
+                inventory.append({"path":str(target),"bytes":item["bytes"],"sha256":item["sha256"],"originalPath":item["path"],"originalWorkspace":workspace_path})
+            require("Complete_Command_History.json" in names,"The complete original command-history report is required.")
+        finally:
+            if owner is not None:owner.close()
+    retain(out/"reports-inventory.json",canonical({"schema":"stellar-forge.property-continuity-report-inventory.v1","operationId":plan["operationId"],"files":inventory}))
+    return inventory
 def archive_delivery(out,result):
     files=[]
     def add(name,path):
         require(not name.startswith("/") and all(x not in ("",".","..") for x in name.split("/")),"Unsafe delivery member.")
         descriptor=measure(path);files.append({"name":name,**descriptor})
-    for name in ("input.json","original-completion.json","result.json"):add(name,out/name)
+    for name in ("input.json","original-completion.json","result.json","reports-inventory.json"):add(name,out/name)
     operation=out.parent
     for name in ("input.json","native-result.json","completed-journal.json"):add("original-operation/"+name,operation/name)
     # The complete original installed source archive carries all selected framework and product sources.
@@ -56,8 +90,12 @@ def archive_delivery(out,result):
         path=pathlib.Path(item["path"]);require(path.parent==out/"artifacts","Unexpected managed artifact path.")
         actual=measure(path);require(actual["bytes"]==item["bytes"] and actual["sha256"]==item["sha256"],"Completed managed artifact changed.")
         add("workspaces/"+path.name,path)
-    for path in sorted((out/"reports").rglob("*")):
-        if path.is_file():require(not path.is_symlink(),"Report source is linked.");add("reports/"+path.relative_to(out/"reports").as_posix(),path)
+    inventory=load(out/"reports-inventory.json")
+    require(result["reportFiles"]==inventory["files"],"Complete report inventory changed.")
+    for item in inventory["files"]:
+        path=pathlib.Path(item["path"]);require(path.is_relative_to(out/"reports") and not path.is_symlink(),"Report source is linked or outside its original directory.")
+        measured=measure(path);require(measured["bytes"]==item["bytes"] and measured["sha256"]==item["sha256"],"Complete report member changed.")
+        add("reports/"+path.relative_to(out/"reports").as_posix(),path)
     for path in sorted(ROOT.rglob("*")):
         if path.is_file() and path.suffix not in (".pyc",".lock",".log") and "__pycache__" not in path.parts:
             require(not path.is_symlink(),"Source selection cannot contain a linked product leaf.")
@@ -107,6 +145,7 @@ def main():
             "settings":{"workspaceDirectory":plan["workspace"]["directory"],"pythonExecutable":str(python.resolve()),
                 "connectionFile":str(pathlib.Path(plan["workspace"]["directory"])/"property-continuity-connection.json"),"receivingDirectory":str(out/"workspaces"),"port":0}}
         retain(out/"input.json",canonical(input))
+        preserve_reports(operation,out,plan,native)
         retain(out/"control"/"caller.json",canonical({"node":str(node.resolve()),"nodeSha256":digest(read(node,MAXIMUM)),"python":str(python.resolve()),"pythonSha256":digest(read(python,MAXIMUM)),"source":str(ROOT),"sourceEntrySha256":digest(read(ROOT/"managed-receiving.mjs"))}))
         env=dict(os.environ,PROPERTY_CONTINUITY_RECEIVING_GUARD_FD=str(owner),NODE_OPTIONS="--max-old-space-size=192",OMP_NUM_THREADS="1",OPENBLAS_NUM_THREADS="1")
         # The same inherited flock prevents another Node continuation while this child remains.
