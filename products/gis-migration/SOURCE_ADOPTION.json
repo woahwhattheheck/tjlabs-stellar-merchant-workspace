@@ -11,7 +11,7 @@
   },
   "targetRepository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
   "selection": "gis-migration",
-  "nativeProgramFilesIncludingManifest": 84,
+  "nativeProgramFilesIncludingManifest": 86,
   "sourceFiles": [
     {
       "path": "stellar/scf-starforge-20261009/distribution/contributions/migration-workspaces.json",
@@ -293,7 +293,7 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/engine.py",
-      "reason": "Expose original complete mapping-register and workbook-propose reads, and pass the optional workbook source into the same plan save."
+      "reason": "Expose complete native mapping-workbook, mapping-register and workbook-propose reads, and pass the optional workbook source into the same plan save."
     }
   ],
   "installedIntegration": [
@@ -497,7 +497,9 @@
       "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/merchant/client.mjs",
       "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/merchant/tools.mjs",
       "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/merchant/index.d.mts",
-      "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/MAPPING_WORKBOOK.md"
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/MAPPING_WORKBOOK.md",
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/workbook_export.py",
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/workbook_layout.json"
     ],
     "retainedInputFiles": [
       "Mapping-Register.json",
@@ -506,6 +508,15 @@
       "saved-plan.json",
       "workbook-review.json"
     ],
-    "receiving": "The original inputs[].files declaration, workspace journal and full archive receiver retain the complete workbook source and native plan history."
+    "receiving": "The original inputs[].files declaration, workspace journal and full archive receiver retain the complete workbook source and native plan history.",
+    "portableExport": {
+      "schema": "starforge.gis-migration-mapping-workbook-export.v1",
+      "nativeCommand": "mapping-workbook",
+      "installedCommand": "workbook-export",
+      "merchantTool": "merchant_migration_mapping_workbook",
+      "layoutSourceRendererBlob": "060af18f8c06a6ec2ec3de5f1dfcdb740bdc8b2a",
+      "runtime": "Python standard library with the original native register exporter and workbook return contract.",
+      "delivery": "One complete ZIP with 16-sheet editable XLSX, exact register, every declared original input, customer guide and manifest."
+    }
   }
 }

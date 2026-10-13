@@ -91,7 +91,9 @@ no wallet key, token account or replacement spending ledger. Generated files
 use mode 0600; directories use 0700.
 
 The catalog may be omitted when the original operator configuration already
-contains its valid catalog object. The adapter binds to the original operator,
+contains its valid catalog object. **request-workspace** exposes this original
+canonical URL as **catalogUrl**. When the host exposes several catalogs, choose
+the matching URL from **bazaar_catalogs** before browsing. The adapter binds to the original operator,
 payer, policy, ledger, signer and evidence directory. Lowering the original spend
 cap is respected during subsequent preparation and original execution.
 
@@ -300,7 +302,9 @@ tool execution remains outside this HTTP merchant connection.
 
 The [native registry](NATIVE_REGISTRY.md) uses these existing native directories
 as trusted service entries. Configure a stable ID and label for each, initialize
-one private registry, and serve its authenticated endpoint. The console and typed
+one private registry, and serve its authenticated endpoint. Services can retain
+different original catalog URLs; the registry exposes that exact source set with
+stable IDs. The console and typed
 client can then select a compatible service and reopen complete history across
 all of its original HTTP request inboxes. Original wallets, payment bindings,
 approval and ledgers stay with their service workspace.

@@ -27,6 +27,8 @@
     "migration/receiving.py",
     "migration/server.py",
     "migration/workbook.py",
+    "migration/workbook_export.py",
+    "migration/workbook_layout.json",
     "migration/workspace.py",
     "postgis/qgis/OPERATIONS.md",
     "postgis/qgis/RECEIVING_RUN.md",

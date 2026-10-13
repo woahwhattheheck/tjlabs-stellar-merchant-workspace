@@ -1,5 +1,6 @@
 /** MIT. Original quote workflow and complete native result consumption. */
 import {BuyerConsoleClient} from './client.mjs';
+import {normalizeCatalogConfiguration, normalizeCatalogDescription, sameCatalog} from './catalogs.mjs';
 import {createHttpPathFields} from './path-form.mjs';
 import {createNativeRequestDesk} from './native-request.mjs';
 
@@ -12,6 +13,7 @@ const time = value => Number.isFinite(value) ? new Date(value).toLocaleString() 
 const size = bytes => Number.isFinite(bytes) ? bytes.toLocaleString() + ' bytes' : '—';
 const state = {connected:false, serial:0, view:'discover', resources:[], searchArgs:null, searchPages:[],
   searchContinuation:null, searchError:null, searching:0, searchBusy:false, searchSeen:new Set(),
+  catalogs:new Map(), defaultCatalogId:null, catalogRead:0, catalogReady:false, searchCatalog:null,
   description:null, quote:null, history:[], historyCursor:null, results:[], resultCursor:null,
   result:null, reading:null, spending:null, spendingRead:0, selection:0, describing:0, executing:new Set(), uncertain:new Set(), urls:new Set()};
 
@@ -90,9 +92,10 @@ function setView(view) {
 }
 function reset() {
   state.serial++; client.disconnect(); revokeDownloads(); nativeDesk.reset();
-  state.selection++; state.describing++; state.searching++;
+  state.selection++; state.describing++; state.searching++; state.catalogRead++;
   Object.assign(state, {connected:false, resources:[], description:null, quote:null, result:null, reading:null, spending:null,
     searchArgs:null, searchPages:[], searchContinuation:null, searchError:null, searchBusy:false,
+    catalogs:new Map(), defaultCatalogId:null, catalogReady:false, searchCatalog:null,
     history:[], historyCursor:null, results:[], resultCursor:null});
   state.searchSeen.clear();
   state.executing.clear(); state.uncertain.clear();
@@ -101,6 +104,9 @@ function reset() {
   for (const id of ['resource-detail','quote-detail','result-detail']) { $(id).replaceChildren(); $(id).hidden = true; }
   for (const id of ['search-results','history-list','results-list']) $(id).replaceChildren();
   $('durability').textContent = '';
+  $('search-catalog').replaceChildren(node('option',{value:'',text:'Connect to read catalogs'}));
+  $('search-catalog').disabled = true; $('refresh-catalogs').disabled = true;
+  $('catalog-note').textContent = '';
 }
 
 async function connect(event) {
@@ -113,11 +119,54 @@ async function connect(event) {
     $('connection-label').textContent = 'Connected · ' + (init.serverInfo?.name ?? 'Workspace');
     nativeDesk.connected();
     setView('discover'); notice('Connected. Select a resource or reopen an original request.');
+    await loadCatalogs();
     await loadHistory(false);
   }, submit);
 }
 
+async function loadCatalogs() {
+  const serial = state.serial, request = ++state.catalogRead;
+  const select = $('search-catalog'), refresh = $('refresh-catalogs');
+  const previous = select.value;
+  state.catalogReady = false; select.disabled = true; refresh.disabled = true;
+  $('catalog-note').textContent = 'Reading the configured catalog sources…';
+  try {
+    if (!client.tools.has('bazaar_catalogs')) {
+      state.catalogs.clear(); state.defaultCatalogId = null; state.catalogReady = true;
+      select.replaceChildren(node('option',{value:'',text:'Configured catalog'}));
+      $('catalog-note').textContent = 'This server uses its original single configured catalog.';
+      return;
+    }
+    const reply = await client.call('bazaar_catalogs',{});
+    if (serial !== state.serial || request !== state.catalogRead) return;
+    const configuration = normalizeCatalogConfiguration({discoveryCatalogs:{
+      schema:reply.schema, defaultCatalogId:reply.defaultCatalogId, catalogs:reply.catalogs,
+    }});
+    if (reply.total !== configuration.catalogs.length)
+      throw new Error('The configured catalog response is incomplete.');
+    state.catalogs = new Map(configuration.catalogs.map(catalog => [catalog.id,catalog]));
+    state.defaultCatalogId = configuration.defaultCatalogId;
+    select.replaceChildren(...configuration.catalogs.map(catalog =>
+      node('option',{value:catalog.id,text:catalog.label})));
+    select.value = state.catalogs.has(previous) ? previous : configuration.defaultCatalogId;
+    state.catalogReady = true;
+    $('catalog-note').textContent = state.catalogs.get(select.value).url;
+  } catch (error) {
+    if (serial === state.serial && request === state.catalogRead) {
+      $('catalog-note').textContent = errorText(error) + ' Read the configured catalogs again to explore.';
+      throw error;
+    }
+  } finally {
+    if (serial === state.serial && request === state.catalogRead) {
+      select.disabled = !state.catalogReady || state.catalogs.size < 2;
+      refresh.disabled = !client.tools.has('bazaar_catalogs');
+      updateDiscoveryDraft();
+    }
+  }
+}
+
 const discoveryFields = [
+  ['catalogId','search-catalog'],
   ['type','search-type'], ['payTo','search-recipient'], ['network','search-network'],
   ['extensions','search-extension'], ['scheme','search-scheme'], ['asset','search-asset'],
   ['maxAmount','search-amount'],
@@ -143,9 +192,13 @@ function discoveryDraftChanged() {
 function restoreDiscoverySelection() {
   if (!state.searchArgs) return;
   const args = state.searchArgs.arguments;
+  if (args.catalogId !== undefined && !state.catalogs.has(args.catalogId))
+    throw new Error('The displayed catalog is no longer in the configured list. Read catalogs and start a new source selection.');
   $('search-query').value = args.query ?? '';
   $('search-limit').value = String(args.limit);
   for (const [key, id] of discoveryFields) $(id).value = args[key] ?? '';
+  const catalog = state.catalogs.get(args.catalogId);
+  if (catalog) $('catalog-note').textContent = catalog.url;
   updateDiscoveryDraft();
 }
 function updateDiscoveryDraft() {
@@ -169,6 +222,7 @@ function renderDiscovery() {
   const caption = node('div', {className:'panel'}, [
     node('h3', {text:state.searchArgs.mode === 'search' ? 'Search: ' + state.searchArgs.arguments.query : 'Catalog browse'}),
     node('p', {className:'field-note', text:'Displayed resources use these applied filters and the original provider pages.'}),
+    ...(state.searchCatalog ? [facts([['Catalog',state.searchCatalog.label],['Catalog URL',state.searchCatalog.url]])] : []),
     facts(discoveryFields.filter(([key]) => state.searchArgs.arguments[key] !== undefined)
       .map(([key]) => [key, state.searchArgs.arguments[key]])), node('div', {id:'discovery-draft'}),
   ]);
@@ -207,6 +261,7 @@ async function search(event, more = false) {
   event?.preventDefault();
   if (more && (state.searchBusy || !state.searchContinuation)) return;
   if (more && discoveryDraftChanged()) throw new Error('Restore the displayed filters before continuing these provider pages.');
+  if (!more && !state.catalogReady) throw new Error('Read the configured catalogs before exploring a source.');
   const selection = more ? state.searchArgs : discoveryFormSelection();
   const call = more ? state.searchContinuation : {tool:'bazaar_' + selection.mode, arguments:selection.arguments};
   const args = structuredClone(call.arguments), requestKey = discoveryRequestKey(call.tool, args);
@@ -219,7 +274,25 @@ async function search(event, more = false) {
         !plain(result.page) || result.source.mode !== selection.mode ||
         discoveryRequestKey(call.tool, result.source.request) !== requestKey)
       throw new Error('The catalog response does not match the requested discovery page.');
+    const catalog = result.source.catalog === undefined ? null : normalizeCatalogDescription(result.source.catalog);
+    const configured = state.catalogs.get(args.catalogId ?? state.defaultCatalogId);
+    if (args.catalogId !== undefined && (!catalog || catalog.id !== args.catalogId) ||
+        catalog && configured && !sameCatalog(catalog,configured) ||
+        more && state.searchCatalog && !sameCatalog(state.searchCatalog,catalog) ||
+        result.resources.some(resource => resource.catalogId !== undefined && resource.catalogId !== catalog?.id))
+      throw new Error('The returned page belongs to another catalog. Start a new explicit source selection.');
+    if (result.continuation) {
+      const next = result.continuation;
+      if (next.tool !== call.tool || !plain(next.arguments)) throw new Error('Invalid original catalog continuation.');
+      const position = selection.mode === 'search' ? 'cursor' : 'offset';
+      const before = {...args}, after = {...next.arguments};
+      delete before[position]; delete after[position];
+      if (before.catalogId === undefined && catalog && after.catalogId === catalog.id) before.catalogId = catalog.id;
+      if (discoveryRequestKey(call.tool,before) !== discoveryRequestKey(call.tool,after))
+        throw new Error('The continuation changed the original catalog or applied filters.');
+    }
     if (!more) {
+      state.searchCatalog = catalog;
       state.searchArgs = {mode:selection.mode, arguments:structuredClone(result.source.request)};
       state.resources = []; state.searchPages = []; state.searchSeen.clear();
     }
@@ -357,6 +430,8 @@ async function describe(handle) {
         notice('Quote ' + quote.quoteId + ' was saved with the earlier input. Open it in Quote history to inspect that request.');
         return;
       }
+      if (value.source?.catalog && !sameCatalog(value.source.catalog,quote.source?.catalog))
+        throw new Error('The saved quote does not retain the selected catalog source. Inspect the original quote before continuing.');
       selectQuote(quote); renderQuote(); $('quote-detail').scrollIntoView({behavior:'smooth', block:'start'});
       notice('Quote created. Review the exact invocation and terms before requesting host approval.');
     }, create);
@@ -366,6 +441,7 @@ async function describe(handle) {
   ]), badge(preview.resourceType.toUpperCase())]),
   node('div', {className:'detail-grid'}, [
     node('div', {}, [node('h4', {text:'Invocation'}), facts([
+      ['Catalog', value.source?.catalog?.label], ['Catalog URL', value.source?.catalog?.url],
       ['Method', preview.method], ['Tool', preview.remoteMcp?.toolName], ['Endpoint', preview.remoteMcp?.endpoint ?? value.resource.url],
     ]), node('h4', {text:container === 'query' ? 'Declared query fields' : 'Top-level argument declarations'}), invocationFields(value),
     ...declarationErrors.map(error => node('p', {className:'notice error', text:errorText(error)})),
@@ -388,11 +464,11 @@ async function loadHistory(more = false) {
   $('durability').textContent = result.durable ? 'Durable quote workspace' : 'In-memory quotes · Configure MCP_STATE_DIR for restart retention';
   const rows = state.history.map(quote => [
     button(short(quote.quoteId), () => openQuote(quote.quoteId), {class:'linklike', title:quote.quoteId}),
-    quote.invocation?.toolName ?? quote.method, node('span', {className:'mono', text:quote.resource}),
+    quote.source?.catalog?.label ?? '—', quote.invocation?.toolName ?? quote.method, node('span', {className:'mono', text:quote.resource}),
     badge(quote.status), quote.selected?.amount + ' ' + quote.selected?.asset, time(quote.createdAt),
     button('Open quote', () => openQuote(quote.quoteId)),
   ]);
-  $('history-list').replaceChildren(rows.length ? table(['Quote','Invocation','Resource','Status','Amount','Created',''], rows) : empty('No quotes match this view.'));
+  $('history-list').replaceChildren(rows.length ? table(['Quote','Catalog','Invocation','Resource','Status','Amount','Created',''], rows) : empty('No quotes match this view.'));
   const paging = node('div', {className:'pager'}, [node('span', {text:state.history.length + ' of ' + result.total + ' quotes loaded'})]);
   if (state.historyCursor) paging.append(button('Load more quotes', () => loadHistory(true)));
   $('history-list').append(paging);
@@ -556,10 +632,12 @@ function renderQuote() {
     node('div', {}, [node('h2', {text:'Original quote'}), node('p', {className:'mono', text:q.quoteId})]), badge(q.status),
   ]), node('div', {className:'detail-grid'}, [
     node('div', {}, [node('h4', {text:'Exact invocation'}), facts([
+      ['Catalog', q.source?.catalog?.label], ['Catalog URL', q.source?.catalog?.url],
       ['Resource', q.resource], ['Endpoint', q.requestUrl], ['Method', q.method],
       ['Tool', q.invocation?.toolName], ['Created', time(q.createdAt)], ['Updated', time(q.updatedAt)],
       ['Expires', time(q.expiresAt)], ['Attempts', q.attempts], ['Phase', q.phase],
-    ]), ...(q.invocation ? [detail('Complete invocation and arguments', q.invocation)] : [])]),
+    ]), ...(q.invocation ? [detail('Complete invocation and arguments', q.invocation)] : []),
+      ...(q.source ? [detail('Original catalog page and row',q.source)] : [])]),
     node('div', {}, [node('h4', {text:'Selected payment terms'}), facts(Object.entries(q.acceptedTerms ?? q.selected ?? {})),
       ...(q.result?.paymentResponse || q.signedRequestDispatched ? [paymentInspection(q, active)] : []),
       ...(q.invocation ? [spendingInspection(q)] : []),
@@ -689,6 +767,11 @@ $('disconnect').addEventListener('click', () => { reset(); notice('Disconnected.
 $('search-form').addEventListener('submit', event => { event.preventDefault(); attempt(() => search(event), event.submitter); });
 $('search-form').addEventListener('input', updateDiscoveryDraft);
 $('search-form').addEventListener('change', updateDiscoveryDraft);
+$('refresh-catalogs').addEventListener('click',event => attempt(loadCatalogs,event.currentTarget));
+$('search-catalog').addEventListener('change',() => {
+  const selected = state.catalogs.get($('search-catalog').value);
+  if (selected) $('catalog-note').textContent = selected.url;
+});
 $('refresh-history').addEventListener('click', event => attempt(() => loadHistory(false), event.currentTarget));
 $('history-filter').addEventListener('submit', event => { event.preventDefault(); attempt(() => loadHistory(false), event.submitter); });
 $('refresh-results').addEventListener('click', event => attempt(() => loadResults(false), event.currentTarget));

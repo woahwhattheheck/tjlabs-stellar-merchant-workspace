@@ -46,6 +46,33 @@ The carrier reuses saved request UUIDs and checks accepted browser edits/receipt
 
 ## Retained outcome
 
+### Continue original live API captures
+
+The installed product's ordinary capture path uses the official Web API v3 and
+its own saved library profile. Public libraries use that path with no API-key
+reference. Keep that library, capture ID, original profile revision and all
+accepted page records when adopting a corrected source release.
+
+The API's next-page links can omit the documented default `format=json` and
+`include=data`. The original capturer restores only those two defaults before
+applying its exact origin/library/query/duplicate/limit/cursor checks. Every
+consumed page still needs its original API version, total, contiguous offset
+and library version; the complete final versions probe closes the same source
+edition. Explicit changed formats or unknown query flags remain rejected.
+
+A complete HTTP 200 response rejected during source validation remains with the
+capture as a `rejectedDocuments` entry: full original object identity, request
+URL, source response headers, observation time and reason. Accepted counts and
+cursor stay unchanged. Source restart preserves that rejected custody in the
+earlier attempt, and full native workspace receiving retains every original
+record revision and complete referenced object. HTTP error/backoff handling
+continues through the existing rate and retry state.
+
+Resume the selected original capture through the existing browser or
+`capture.control`/`resume` native request after loading corrected source. A new
+explicit control action gets a new UUID; its unchanged retry keeps that UUID.
+The local protocol carrier above retains its own fixed transport and operation.
+
 NATIVE-RESULT.json contains run/source identities, each completed phase, artifact paths and hashes, item/collection counts, original Research IDs/revisions, HTTP observations, sixteen views and final cleanup.
 
 The files directory contains source sets, complete comparison, Research source bundle and three receiving generations. The screens directory contains actual views. Workspace, Research and third-operator stores retain their original identities.

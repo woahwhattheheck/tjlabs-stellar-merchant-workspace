@@ -1,5 +1,6 @@
 // MIT. Original SF47 tool schemas without provider runtime imports.
 import {grantCohortAdoptionTools} from './grant-cohort-adoption.mjs';
+import {grantCohortDeliveryTools} from './grant-cohort-delivery.mjs';
 import {grantPlanningSourceTools} from './grant-planning-sources.mjs';
 import {GRANT_CASE_ACTIONS,GRANT_MAX_BUNDLE_BYTES,GRANT_TRANSFER_CHUNK_BYTES as CHUNK} from '../../../stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs';
 
@@ -615,6 +616,7 @@ export const grantWorkspaceTools = [
   tool('commercial_refresh', 'Refresh retained invoice, payment, allocation and credit observations from the original accounting workspace, then read the complete updated billing record.',
     {...ws,caseId:id('operation'),billingId:commercialIdentifier}, ['workspace','caseId','billingId']),
   ...grantCohortAdoptionTools,
+  ...grantCohortDeliveryTools,
   tool('cohort_seed', 'Open the original case proposal, actual purchase and deployment inventory, and explicit review inputs for tranche 2 or 3. This creates no purchase, participant, award or saved evaluation.',
     {...ws,...caseSelection,tranche:{type:'integer',minimum:2,maximum:3}},['workspace','caseId','expectedVersion','tranche'],true),
   tool('cohort_preview', 'Evaluate the explicitly selected original cohort as of its retained cutoff. Preserve exact purchase windows, historical denominators, accountable operators, transaction proof, recovery timing and source findings. Inputs may be inline or selected from one retained original input.',
