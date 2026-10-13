@@ -150,3 +150,47 @@ The original SF88 exporter is create-only. The wrapper therefore checks the orig
 This reconciliation needs the original canonical inbox identity in --root, but does not require reading or modifying that inbox. The copied original export supplies the retained operation/page evidence. No new purchase, response download or raw provider acquisition occurs. Full original raw Econdb responses are not copied into a filtered buyer delivery; the selected original buyer pages and release metadata define its boundary.
 
 Runtime: the maintained SF30 README declares Node.js22+; recorded native x402 receiving used Node24.19.0. Optional native packages are @x402/core@2.28.0, @x402/stellar@2.28.0 and @x402/extensions@2.28.0. Reuse the original installed runtime and facilitator. Compiler and challenge-only service need no npm dependencies.
+
+## Complete project publication and the same original buyer route
+
+The native project built or imported by maritime-project-cli.mjs can now become one typed SF30 dataset. First inspect the original project dashboard and every selected current/prior entry. The project.json selections remain authoritative: each entry retains its own original source, endpoint, LOCODE, measure, population, frequency and half-open local Date interval. No cross-port or cross-measure totals are manufactured.
+
+Choose the exposed edition roles explicitly:
+- current publishes each entry's selected current observations.
+- current-and-previous also publishes the selected window from that entry's explicitly assigned previous edition, if present. It never treats another entry as a previous edition, synthesizes a missing previous source, or invents a date filter for an API.
+
+From the installed Econdb directory, using the original private working directory and completed project:
+
+```sh
+node sf30-publication.mjs build-project --project "$WORK/project-delivery" --editions current --name 'Reviewed maritime project observations' --out "$WORK/publications/project"
+node sf30-publication.mjs inspect --publication "$WORK/publications/project"
+node sf30-publication.mjs merchant-init --publication "$WORK/publications/project" --state "$WORK/project-store"
+```
+
+The first command accepts a completed native project bundle, including one produced by the original browser-workspace import. It checks every original project member and both analysis-module hashes, reopens all exact original responses/descriptors, and recomputes the project analysis and selected rows with those same engines. It compares that fresh analysis to the retained original. An edited cached report or unsupported old engine cannot silently supply a new publication.
+
+The immutable output retains the complete original project under project/, including original current/prior responses, descriptors, receiving manifests, report/CSV files, original source modules and original browser workspace. It adds dataset.csv, dataset.json and release.json. A copied project must pass the same receiving checks before release.json completes the publication. Repeating the exact command on a complete matching output reopens it. A different or incomplete output is retained and refused; do not erase or rename it as successful. Recover its original interrupted operation before selecting another destination.
+
+The project publication caps the complete original project at 256 MiB, combined current/prior raw responses at 64 MiB, all selected dataset rows at 250,000, exact CSV at 64 MiB and publication metadata at 16 MiB. The project engine's own 48-entry/500,000-source-cell ceilings also remain. These limits are checked without clipping source. A project that exceeds publication capacity remains intact and can be narrowed explicitly into a separately reviewed project; no automatic hidden subset is emitted.
+
+### Typed project rows
+
+The project dataset adds project_id, entry_id, entry_title, edition_role, selection_from, selection_until_exclusive, operator and top to the 17 existing source columns listed above. A row is identified by entry + edition role + original edition/source hash + zero-based source row + series. The same original observation appearing in two deliberately different project entries remains two distinct views.
+
+Exact decimal values and original numeric lexemes remain strings. known, null, absent and unsupported_value remain separate statuses. Unknown LOCODE/flow/operator/top remain null. Repeated dates and absent cells are preserved; no missing value becomes zero. Equality filters are entry_id, edition_role, locode, endpoint, flow, measure, series and status; date is the explicit string-range field. The original query compiler stays within its declared limits.
+
+The new release format is econdb.sf30-project-publication.v1. It contains the original project input and manifest hashes, both calculation-source hashes, each selected entry and role's complete source/selection/coverage metadata, and every retained file identity. The existing single-period format and physical dataset contract remain receivable.
+
+### Original version and payment operation
+
+The same inspect, merchant-init, merchant-configure, merchant-refresh and original-version-cli commands accept this release. merchant-init is only for a new original store; reopen the existing store with the unchanged original tools. Refresh still requires the actual current snapshot and revision, preserving the original A→B→A guard. Changing from single-period columns to project columns is a contract change requiring a separately reviewed route; do not refresh a running single-period route with that changed contract.
+
+Keep the existing approved public payment terms, canonical route, native factory and facilitator. Creating a publication or previewing its loader is not a purchase or a settlement. No configured seller is started by build-project. The full maintained SF30/SF88/SF100 dependency closure stays with the application, separate from the portable project's own analysis-source closure.
+
+For an already authorized, completed original buyer selection, the same buyer-export command verifies the original SF88/SF100 results and matches their physical snapshot. Its additive econdb-publication.json uses econdb.sf30-project-buyer-source-binding.v1 and carries the selected project/entry/role identities and complete release metadata. It copies no additional raw project into a filtered buyer export. The original selected buyer pages, evidence, original outcomes, terminal cursor and JSONL/CSV/review remain the delivery boundary. The existing interrupted-export reconciliation completes only a missing binding on a fully verified original export.
+
+### Original receiving course
+
+The existing receive-econdb-native.mjs now additionally publishes the original two-entry issuer project, receives its 15 typed selected rows (14 known and one null) through the original loader, checks every selected original identity/value, reopens the publication, initializes/reopens the original project version store and independently copies/reopens that same publication/store with the whole application. The issuer examples have no identified ports and remain explicitly documentation examples; they do not stand in for acquired commercial port data.
+
+This is an additive step in the same existing Econdb host request, not another programme or payment operation. Use the complete source manifest containing these postimages before starting that course. If the earlier source edition has already run, retain its journals and outputs and coordinate the original operator's source-bound continuation; do not overwrite its bound checkout. The existing browser course still opens the populated project/workbench, operates real selections/downloads and independently reopens the results. View the actual outgoing screens and every attachment before declaring it ready. These instructions and source acceptance do not claim that a host, browser, seller or payment has run.
