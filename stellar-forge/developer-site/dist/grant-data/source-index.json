@@ -16148,7 +16148,7 @@
         "purpose": "Complete timed presentation and original purchase/receiving guide in the existing operator chapter."
       },
       "shell_example_normalization": "ASCII option indentation restored only inside fenced shell examples after Canvas rich-text transport; command arguments, values and quoted data retained.",
-      "reviewer_entry_git_blob": "b4beccf32d39f0b0205cf83e71f77c8d93a1521f",
+      "reviewer_entry_git_blob": "a215e20a19f135203f3d6a29dc4727e94ce1299a",
       "delivery_plan_git_blob": "5c3e9bc3444afda6b9753f8643d519fe2e75dd0f",
       "a2a_projector_git_blob": "835eaf91ab8ba65a3b2eed4433e79153c9d0af71",
       "a2a_source_catalogue": {
