@@ -5,6 +5,8 @@ export class CommissioningCustomerClient{
   invoke(action,args={}){return this.callTool('merchant_commissioning_'+action,{...args,instance:this.instance});}
   instances(){return this.callTool('merchant_commissioning_instances',{});}
   state(){return this.invoke('state');}
+  installations(jobId){return this.invoke('installations',{jobId});}
+  installation(input){return this.invoke('installation',input);}
   release(releaseId){return this.invoke('release',{releaseId});}
   history(input){return this.invoke('history',input);}
   sourceBegin(upload){return this.invoke('source_begin',{upload});}

@@ -25,7 +25,8 @@
           "sha256": "6a2ae6e6676d1c207ae899f7ed4cb907c993b93fa74636269d01bbbb8b337a35",
           "git_blob": "09ed0c76c786e2e384bad581388d8ce5ed5a47ab"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "replication-workbench-operator",
@@ -41,7 +42,8 @@
           "sha256": "e63ada365ae7eeb17cc9ac6e9bfea9fae3c384e7552d2e4220af94f85d586add",
           "git_blob": "0332ed1a52f271cac51f8b552e4b19742fa26f42"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "replication-workbench-workspace",
@@ -57,7 +59,8 @@
           "sha256": "3682104562b09e52d1425cb2b63344a84a519cb409891af51ed86b5f386cbdbb",
           "git_blob": "5940c1000f4efdf2559be28ac1c50858d405630d"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "replication-workbench-runtime",
@@ -185,7 +188,8 @@
           "sha256": "09b8f7657a022302f6f579ec692215d53f852dc8bb8c50b62440b187eb3624a3",
           "git_blob": "b732040f07886fc10f46e10ea620dca4067e45bd"
         }
-      ]
+      ],
+      "required": false
     },
     {
       "id": "replication-workbench-maintained-source",

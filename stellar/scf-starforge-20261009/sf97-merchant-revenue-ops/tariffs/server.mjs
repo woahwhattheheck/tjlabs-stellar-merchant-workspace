@@ -32,7 +32,7 @@ export async function handleTariffRequest({req,res,url,workspace,prefix='/api',a
         const originalFile = /^\/(pricing|repricing)\/([a-f0-9-]{36})\/files\/(.+)$/.exec(path);
         if (file) {
           const name = decodeURIComponent(file[2]), bytes = await workspace.download(file[1],name);
-          reply(200,name.endsWith('.csv')?'text/csv; charset=utf-8':'application/json; charset=utf-8',bytes,
+          reply(200,name.endsWith('.csv')?'text/csv; charset=utf-8':name.endsWith('.html')?'text/html; charset=utf-8':'application/json; charset=utf-8',bytes,
             {'content-disposition':'attachment; filename="'+name.replace(/[^a-zA-Z0-9_.-]/g,'_')+'"'});
         } else if (originalFile) {
           const name = decodeURIComponent(originalFile[3]);
@@ -74,6 +74,7 @@ export async function startTariffServer({workspace,port=0}={}) {
   const assets = new Map(await Promise.all([
     ['/','index.html','text/html; charset=utf-8'],
     ['/browser.mjs','browser.mjs','text/javascript; charset=utf-8'],
+    ['/review.mjs','review.mjs','text/javascript; charset=utf-8'],
     ['/style.css','style.css','text/css; charset=utf-8']
   ].map(async([path,name,type])=>[path,{type,bytes:await readFile(new URL('./public/'+name,import.meta.url))}])));
   let hosts = new Set(), origins = new Set(), closing;

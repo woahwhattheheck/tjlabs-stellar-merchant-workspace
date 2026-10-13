@@ -6,7 +6,7 @@ This component lets an authorized customer agent operate the same complete commi
 
 The existing commissioning listener owns its original job and seller. The Merchant interface borrows that authenticated listener. The native SF82 release and provider SDK, SF88 buyer approval/signing, original payment records and complete receiver remain the implementation authorities. A saved buyer plan is a prepared input for the original buyer.
 
-The same configured customer has eighteen tools, an installed command and a typed client. Their complete requests and captured files remain in the host's existing private exports directory. After process restart, the customer can recover the same original operation and deliver the same retained file without inventing another seller run or purchase.
+The same configured customer has twenty tools, an installed command and a typed client. Their complete requests and captured files remain in the host's existing private exports directory. After process restart, the customer can recover the same original operation and deliver the same retained file without inventing another seller run or purchase.
 
 ## Install with the original application
 
@@ -207,7 +207,7 @@ Join the existing original paid HPD/customer course. Retain its actual release/c
 - Capture the complete original buyer plan/configuration and useful report.
 - Export the whole original job, download it through EOF, and receive it in the existing selected independent destination.
 - Reopen the stopped received job under its original current-host source mapping and compare the original selection, complete files and saved outcome.
-- View the actual populated eight-screen product, report and receiving output at desktop and narrow widths; operate the important controls and downloads.
+- View the actual populated nine-screen product, report and receiving output at desktop and narrow widths; operate the important controls and downloads.
 
 Record the source edition, original job/operation/export IDs, actual result files and native outcome together. An offline admission before process creation leaves this original course pending. Source parsing or an earlier provider-only result does not replace the new application's actual operating result.
 
@@ -231,3 +231,8 @@ The producing worker must literally open, view, play or use every final attachme
 ## Original Customer Installation
 
 Use [the complete paired-service Installation course](INSTALLATION.md) to bind a full original commissioning transfer to its actual Workshare/Grant case and unchanged native Installation seed. The installable facilitator-installation command retains every original source file, maps exact case source identities, preserves both provider selections and prepares the original preview/save input. The original Installation writer retains funding, work assignments, actual acceptance and full case receiving.
+
+
+## Customer Installation through the same operator
+
+The customer now exposes 20 operations. `merchant_commissioning_installations` reads the original source cuts and saved preparations; `merchant_commissioning_installation` reads the selected summary or all paged original sources/files. The existing typed `prepare`/`apply` protocol accepts `installation-template` with `{sourceTransferId,seed,caseSnapshot}` and `installation-prepare` with `{templateOperationId,bindings}`. Each file reference is the original `{sha256,bytes}`. Capture uses `{kind:'installation',id:operationId,name:originalMemberPath}` or `{kind:'installation-archive',id:operationId}`. The complete operator archive retains all preparations and pending source bindings for the existing receiver. Follow [the complete Installation desk course](INSTALLATION_DESK.md) through the actual native preview, every attachment and received working project.

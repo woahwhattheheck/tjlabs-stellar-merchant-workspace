@@ -9,6 +9,7 @@ import { MAX_PACKET_BYTES, makeSeaTableSourcePacket } from './packet.mjs';
 import { inspectSeaTableAuthoring } from './launch.mjs';
 import { UUID, SHA256, deploymentFile } from './catalog.mjs';
 export { seatableWorkspaceTools } from './catalog.mjs';
+import { MAX_WORKSPACE_BYTES } from './handover.mjs';
 import { normalizeConnections } from './provider.mjs';
 
 export const SEATABLE_WORKSPACE_CONNECTION_SCHEMA = 'stellar-forge.seatable-authoring-connection.v1';
@@ -97,8 +98,8 @@ export async function readSeaTableWorkspaceConfiguration(path) {
     for (const [alias, item] of Object.entries(input.inputs ?? {})) {
       identifier(alias, 'SeaTable input alias');
       exact(item, ['kind', 'file', 'label'], ['kind', 'file']);
-      if (!['source', 'packet'].includes(item.kind))
-        throw failure('CONFIGURATION_ERROR', 'A source input is an original frozen declaration; a packet carries its original complete capture.');
+      if (!['source', 'packet', 'workspace'].includes(item.kind))
+        throw failure('CONFIGURATION_ERROR', 'A source input is an original frozen declaration; packet is a complete capture; workspace is an original complete .stwh handover.');
       inputs[alias] = { kind: item.kind, file: hostPath(item.file, base),
         label: line(item.label ?? alias, 'SeaTable input label') };
     }
@@ -142,14 +143,14 @@ function safeError(issue) {
 }
 
 export class MerchantSeaTableWorkspaces {
-  #config; #publishers; #entries = new Map(); #opening = new Map(); #closing = false; #close;
-  #reads = new RetainedFileReads({ errorPrefix: 'SEATABLE_PACKET' });
+  #derived=new Map(); #config; #publishers; #entries = new Map(); #opening = new Map(); #closing = false; #close;
+  #reads = new RetainedFileReads({ errorPrefix: 'SEATABLE_PACKET',maxImmutableFileBytes:MAX_WORKSPACE_BYTES+32*1024*1024+13 });
   constructor(config, publishers) { this.#config = config; this.#publishers = publishers; }
   get summary() {
     return { configured: Boolean(this.#config.seatableWorkspaces), ...this.#reads.summary,
-      workspaces: Object.entries(this.#config.seatableWorkspaces?.workspaces ?? {}).map(([workspace, value]) => {
+      workspaces: [...Object.entries(this.#config.seatableWorkspaces?.workspaces ?? {}),...this.#derived.entries()].map(([workspace, value]) => {
         const entry = this.#entries.get(workspace);
-        return { workspace, label: value.label, open: Boolean(entry), opening: this.#opening.has(workspace),
+        return { workspace, label: value.label, open: Boolean(entry?.admitted??(entry&&entry.model)), cleanupPending:Boolean(entry?.cleanupPending), opening: this.#opening.has(workspace),
           closing: Boolean(entry?.closing), instanceId: entry?.instanceId ?? null,
           browserUrl: entry?.service.url ?? null, inputAliases: Object.keys(value.inputs),
           connectionAliases: Object.keys(value.connections), workspaceIdentity: value.identity, buyerConfigured: Boolean(value.seller) };
@@ -157,7 +158,7 @@ export class MerchantSeaTableWorkspaces {
   }
   #definition(alias) {
     identifier(alias, 'SeaTable workspace alias');
-    const definition = this.#config.seatableWorkspaces?.workspaces[alias];
+    const definition = this.#config.seatableWorkspaces?.workspaces[alias]??this.#derived.get(alias);
     if (!definition) throw failure('SEATABLE_WORKSPACE_NOT_CONFIGURED', 'Choose a host-declared alias from merchant_seatable_workspaces.');
     return definition;
   }
@@ -165,6 +166,7 @@ export class MerchantSeaTableWorkspaces {
     this.#definition(alias);
     const entry = this.#entries.get(alias);
     if (!entry) throw failure('SEATABLE_WORKSPACE_NOT_OPEN', 'Explicitly open this original SeaTable source workspace first.');
+    if(entry.cleanupPending)throw failure('SEATABLE_CLEANUP_PENDING','Close the retained original instance.');
     if (entry.closing) throw failure('SEATABLE_WORKSPACE_CLOSING', 'This owned original SeaTable workspace is draining.');
     return entry;
   }
@@ -177,6 +179,7 @@ export class MerchantSeaTableWorkspaces {
   }
   async #open(alias) {
     const definition = this.#definition(alias);
+    if(this.#entries.get(alias)?.cleanupPending)throw failure('SEATABLE_CLEANUP_PENDING','Close the exact retained instance before opening another.');
     if (this.#entries.has(alias)) return this.#state(this.#entry(alias));
     if (this.#opening.has(alias)) return this.#opening.get(alias);
     const opening = (async () => {
@@ -188,27 +191,37 @@ export class MerchantSeaTableWorkspaces {
           seller: definition.seller, resource: definition.resource, expectedIdentity: definition.identity });
         service = await serveSeaTableAuthoring({ workspace: model, port: 0 });
         if (this.#closing) throw failure('SEATABLE_WORKSPACE_CLOSING', 'The merchant operator is closing.');
-        const entry = { alias, model, service, instanceId: randomUUID(), pending: new Set(), closing: null };
+        const entry = { alias, model, service, instanceId: randomUUID(), pending: new Set(), closing: null,admitted:false,cleanupPending:false };
         this.#entries.set(alias, entry);
-        try { return await this.#state(entry); }
-        catch (issue) { this.#entries.delete(alias); throw issue; }
-      } catch (issue) { if (service) await service.close().catch(() => {}); else await model?.close().catch(() => {}); throw issue; }
+        try {const state=await this.#state(entry);entry.admitted=true;return state;}
+        catch (issue) {entry.cleanupPending=true;throw issue;}
+       } catch (issue) {
+        let entry=this.#entries.get(alias);
+        const owner=service??model??issue.seaTableCleanup;
+        if(owner&&!entry){entry={alias,model:model??null,service:service??{close:()=>owner.close()},instanceId:randomUUID(),pending:new Set(),closing:null,admitted:false,cleanupPending:true};this.#entries.set(alias,entry);}
+        if(entry){entry.cleanupPending=true;try{await this.#closeEntry(entry);}catch(cleanup){issue.cleanupCode=cleanup.code??'SEATABLE_CLOSE_FAILED';}}
+        throw issue;
+      }
     })();
     this.#opening.set(alias, opening);
     try { return await opening; } finally { this.#opening.delete(alias); }
   }
   async #closeEntry(entry) {
-    if (!entry.closing) entry.closing = (async () => {
-      await Promise.allSettled([...entry.pending]);
-      try { await this.#reads.closeScope(this.#scope(entry.alias)); }
-      finally {
-        await entry.service.close();
-        if (this.#entries.get(entry.alias) === entry) this.#entries.delete(entry.alias);
-      }
-      return { workspace: entry.alias, instanceId: entry.instanceId, state: 'CLOSED' };
-    })();
-    return entry.closing;
+    if(!entry.closing){
+      const attempt=(async()=>{
+        await Promise.allSettled([...entry.pending]);
+        for(const child of [...this.#entries.values()].filter(c=>c.parentAlias===entry.alias))await this.#closeEntry(child);
+        await this.#reads.closeScope(this.#scope(entry.alias));
+        if(entry.parentAlias){const parent=this.#entries.get(entry.parentAlias);if(parent)await parent.model.closeReceivedWorkspace(entry.childName);else await entry.service.close();}
+        else await entry.service.close();
+        if(this.#entries.get(entry.alias)===entry)this.#entries.delete(entry.alias);
+        if(entry.parentAlias)this.#derived.delete(entry.alias);
+        return{workspace:entry.alias,instanceId:entry.instanceId,state:'CLOSED'};
+      })();
+      entry.closing=attempt;attempt.catch(()=>{if(entry.closing===attempt)entry.closing=null;});
+    }return entry.closing;
   }
+
   #input(alias, input) {
     identifier(input, 'SeaTable input alias');
     const configured = this.#definition(alias).inputs[input];
@@ -220,7 +233,7 @@ export class MerchantSeaTableWorkspaces {
     if (selectedInput === undefined) return { workspace: alias,
       inputs: Object.entries(configured).map(([input, value]) => ({ input, label: value.label, kind: value.kind })) };
     const input = this.#input(alias, selectedInput);
-    const current = await privateFile(input.file, input.kind === 'packet' ? MAX_PACKET_BYTES : 1048576);
+    const current = await privateFile(input.file, input.kind === 'workspace' ? MAX_WORKSPACE_BYTES+32*1024*1024+13 : input.kind === 'packet' ? MAX_PACKET_BYTES : 1048576);
     return { workspace: alias, input: selectedInput, label: input.label, kind: input.kind,
       file: { name: basename(input.file), bytes: current.bytes, sha256: current.sha256 } };
   }
@@ -259,6 +272,31 @@ export class MerchantSeaTableWorkspaces {
       });
     }
     switch (name) {
+      case 'merchant_seatable_workspace_export': return {workspace,native:view(await original.exportWorkspace(input))};
+      case 'merchant_seatable_workspace_exports': return {workspace,exports:view(await original.workspaceExports())};
+      case 'merchant_seatable_workspace_transfer': return {workspace,receipt:view(input.kind==='export'?await original.workspaceExportStatus(nativeId(input.requestId)):await original.workspaceReceiveStatus(nativeId(input.requestId)))};
+      case 'merchant_seatable_workspace_receive': {
+        const source=this.#input(workspace,input.input);if(source.kind!=='workspace')throw failure('SEATABLE_INPUT_KIND_CONFLICT','Choose a complete workspace alias.');
+        return {workspace,native:view(await original.receiveWorkspaceFile({archiveFile:source.file,expectedSha256:expectedDigest(input.expectedSha256),name:input.name,requestId:nativeId(input.requestId)}))};
+      }
+      case 'merchant_seatable_workspace_received': return {workspace,received:view(await original.receivedWorkspaces())};
+      case 'merchant_seatable_workspace_open_received': {
+        const alias=(workspace.slice(0,28)+'_received_'+createHash('sha256').update(JSON.stringify([workspace,input.name])).digest('hex').slice(0,16));
+        await original.withReceivedWorkspace(input.name,async child=>{
+          const old=this.#entries.get(alias);
+          if(old&&old.model!==child.model)throw failure('SEATABLE_RECEIVED_INSTANCE_CHANGED','Close the original received alias before opening a replacement.');
+          if(!old){const parent=this.#definition(workspace),definition={...parent,directory:child.model.directory,identity:(await inspectSeaTableAuthoring(child.model.directory)).sha256,label:parent.label+' / '+input.name};
+            this.#derived.set(alias,definition);this.#entries.set(alias,{alias,model:child.model,service:child.service,instanceId:randomUUID(),parentAlias:workspace,childName:input.name,pending:new Set(),closing:null});}
+        });
+        return {parentWorkspace:workspace,childWorkspace:alias,...await this.#state(this.#entry(alias))};
+      }
+      case 'merchant_seatable_workspace_read': {
+        const id=nativeId(input.requestId);const chunk=await this.#reads.read({scope:this.#scope(workspace),key:'workspace:'+id,kind:'seatable-whole-workspace',
+          directory:this.#definition(workspace).directory,readId:input.readId,expectedSha256:input.expectedSha256,offset:input.offset,limit:input.limit,
+          load:async()=>{const file=await original.exportWorkspaceFile(id);const handle=await open(file.path,constants.O_RDONLY|constants.O_NOFOLLOW);
+            return{readonlyFileHandle:handle,name:file.filename,type:file.mime,bytes:file.bytes,sha256:file.sha256};}});
+        return{workspace,requestId:id,...chunk};
+      }
       case 'merchant_seatable_status': return this.#state(entry, input);
       case 'merchant_seatable_inputs': return this.#inputs(workspace, input.input);
       case 'merchant_seatable_import': return this.#import(entry, args, 'source');
@@ -349,12 +387,13 @@ export class MerchantSeaTableWorkspaces {
     }
   }
   async call(name, args = {}) {
-    if (this.#closing) throw failure('SEATABLE_WORKSPACE_CLOSING', 'The merchant operator is closing.');
+    args=structuredClone(args);
+    if (this.#closing && name!=='merchant_seatable_close') throw failure('SEATABLE_WORKSPACE_CLOSING', 'The merchant operator is closing.');
     try {
       if (name === 'merchant_seatable_workspaces') return this.summary;
       if (name === 'merchant_seatable_open') return await this.#open(args.workspace);
       if (name === 'merchant_seatable_close') {
-        const entry = this.#entry(args.workspace);
+        this.#definition(args.workspace);const entry=this.#entries.get(args.workspace);if(!entry)throw failure('SEATABLE_WORKSPACE_NOT_OPEN','No owned instance is open.');
         if (entry.instanceId !== nativeId(args.instanceId))
           throw failure('SEATABLE_INSTANCE_CONFLICT', 'Close only the current SeaTable instance owned by this MCP process.');
         return await this.#closeEntry(entry);
@@ -367,13 +406,14 @@ export class MerchantSeaTableWorkspaces {
   close() {
     if (!this.#close) {
       this.#closing = true;
-      this.#close = (async () => {
+      const attempt = (async () => {
         await Promise.allSettled([...this.#opening.values()]);
         const results = await Promise.allSettled([...this.#entries.values()].map(entry => this.#closeEntry(entry)));
         await this.#reads.close();
         if (results.some(result => result.status === 'rejected'))
           throw failure('SEATABLE_SHUTDOWN_INCOMPLETE', 'An original owned SeaTable workspace reported incomplete shutdown.');
       })();
+      this.#close=attempt;attempt.catch(()=>{if(this.#close===attempt)this.#close=null;});
     }
     return this.#close;
   }

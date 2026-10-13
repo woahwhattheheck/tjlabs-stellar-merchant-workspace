@@ -236,6 +236,14 @@ The `merchant-accounting-bank-sources` command and `./merchant/accounting-bank-s
 
 Follow [the complete source-agent guide](../../stellar-forge/mcp-merchant-operator/ACCOUNTING_BANK_SOURCES.md) for installed commands, exact request forms, full row paging, download and lost-response recovery. A changed configured alias cannot change a retained request. Incomplete source retention is reported as `RETAINING`; a completed result is returned only after every original input and output has been retained. Preserve the exact selected source edition when resuming unfinished work.
 
+## Installed source preparation desk
+
+Open **Bank reconciliation → Source preparation** to choose actual configured originals, retain the complete request, review collection/profile choices, explicitly execute the original parser and recover the same preparation after a lost response. The desk retains unfinished mappings and conflicting browser drafts, pages complete report populations, downloads every original file and reopens the exact complete preparation capsule. The existing financial Bank intake remains a separate reviewed step.
+
+The [operator guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_PREPARATION_DESK.md) covers all eight operations, draft/request recovery and recipient file inspection. The [installed host guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_PREPARATIONS_DESK.md) provides the original accounting configuration, serve command, environment settings and independent capsule receiving.
+
+Select `--source-config /actual/private/accounting-config.json --source-workspace original-alias` on the existing Bank serve command, or the documented private environment settings. The alias must select the same existing directory and accounting source identities. No browser-supplied paths, new accounting owner or automatic financial action is introduced. DFF77/RD12 retain the original equipped Bank receiving course; this whole UI/host edition is selected deliberately in that same operation.
+
 ## TJLabs owner rule: actual rendered-product inspection
 
 Revision: `rendered-product-inspection-20261013-all-attachments-v1`.

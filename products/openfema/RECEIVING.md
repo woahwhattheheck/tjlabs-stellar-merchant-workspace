@@ -10,6 +10,7 @@ Receive the complete product and the original analyst workspace, attach the next
 | Runtime installation record or complete retained runtime transfer | Select the matching source and dependency closure on the receiving host |
 | Complete OpenFEMA workspace ZIP and SHA-256 | Restore the original source, analyst, customer and publisher history |
 | Complete project-delivery and reconciliation ZIPs | Open the useful programme output and its original customer file independently |
+| Complete private working-copy JSON | Retain unfinished forms, full selected files and original request/receipt references alongside the native workspace |
 | Original operation IDs and result records | Continue interrupted work and identify what already completed |
 | Original customer workorder and host-selected connection inputs | Preserve the actual source scope, receiving analyst and existing service arrangement |
 
@@ -22,7 +23,7 @@ The adopted component is pinned in [SOURCE_ADOPTION.json](SOURCE_ADOPTION.json).
 Build or receive the original archive using selection openfema-portfolios, then use the exact archive and SHA with runtime-install prepare/install/inspect as shown in [OPERATING.md](OPERATING.md#1-install-the-maintained-product). The source recipe selects:
 
 - The original openfema contribution, with four operating commands, the Public Assistance application and 41 merchant tools.
-- The complete 69-file OpenFEMA component, including the browser's own asset manifest, typed client, full data integration, recorded examples and native receiving sources.
+- The complete OpenFEMA component, including the browser's own asset manifest, typed client, full data integration, recorded examples and native receiving sources.
 - The shared runtime installation, Applications, merchant, native publisher and buyer components.
 - Explicit dataset and publisher helpers used by the original runtime imports.
 
@@ -207,6 +208,12 @@ The existing transfer journal preserves prefix progress, immutable manifest iden
 Offline reopen validates the complete file set against its retained manifest. Restoring the native workspace is the separate original restore operation. Both outcomes appear in a complete installation handover.
 
 A direct file_read call returns a held read ID, original filename/content type/bytes/SHA, offset, next offset and base64 bytes. Continue that original handle and release it when finished. A new read after expiry uses the same original file SHA and actual offset. The original reader and downloader enforce the complete 1 GiB transfer budget and bounded chunks.
+
+## Receive unfinished operator preparation
+
+After restoring the original native workspace and opening its actual UUID, choose **Working copy → Import as separate copy**. Receive the complete private JSON containing all original files and request payloads. The import validates full bytes and hashes before adopting a separate copy, and preserves the original operation identities.
+
+The [working-copy guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/WORKING_COPIES.md) supplies the complete original-workspace browser receiving entry point. Operate the ordinary forms, actual native request continuation, full export/import/reopen, and desktop/narrow page. View the rendered screenshots themselves before presenting the receiving result.
 
 ## Continue original actions and publication
 

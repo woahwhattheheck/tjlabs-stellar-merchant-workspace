@@ -5,6 +5,7 @@ import { join, resolve } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { failure, privateSupportDirectory, writePrivate } from './host-files.mjs';
 import { TARIFF_MCP_OPERATIONS } from './catalog/pricing-tariffs.mjs';
+import { TARIFF_REPORT_FILES } from '../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/public/review.mjs';
 
 const MAX_PORTFOLIO_BYTES=64*1024*1024;
 const HASH=/^[a-f0-9]{64}$/;
@@ -123,13 +124,13 @@ export class MerchantPricingTariffs {
     const key=kind+':'+id,cached=this.#manifests.get(key);
     if(cached)return cached;
     const workspace=await this.#native();let bytes,manifest;
-    if(kind==='plan') {
+    if(kind==='plan'||kind==='report') {
       const plan=await workspace.load(id),files={};
-      for(const name of ['plan.json','tariffs.json','comparison.csv']){
+      for(const name of (kind==='report'?TARIFF_REPORT_FILES:['plan.json','tariffs.json','comparison.csv'])){
         const data=await workspace.download(id,name);
         files[name]={bytes:data.length,sha256:sha(data)};
       }
-      manifest={schema:'stellar-forge.merchant-tariff-plan-files.v1',planId:id,
+      manifest={schema:kind==='report'?'stellar-forge.merchant-tariff-report-files.v1':'stellar-forge.merchant-tariff-plan-files.v1',planId:id,
         version:plan.version,tariffReviewSha256:plan.review.tariffReviewSha256,files};
       bytes=encode(manifest);
     }else if(kind==='portfolio'){
@@ -145,7 +146,7 @@ export class MerchantPricingTariffs {
     return this.#remember(key,{bytes,manifest,manifestFile:{name:'manifest.json',bytes:bytes.length,sha256:sha(bytes)}});
   }
   async #download(kind,id,args,selectedPortfolio) {
-    const selectors={kind,id,...(kind==='plan'?{planId:id}:kind==='portfolio'?{portfolioSha256:id}:
+    const selectors={kind,id,...((kind==='plan'||kind==='report')?{planId:id}:kind==='portfolio'?{portfolioSha256:id}:
       kind==='review'?{version:id}:{decision:id})};
     if(args.view===undefined||args.view==='manifest'){
       if(fileFields.some(key=>args[key]!==undefined))
@@ -179,7 +180,7 @@ export class MerchantPricingTariffs {
             return {readonlyFileHandle:handle,name:file,bytes:metadata.bytes,sha256:metadata.sha256,type:'application/json'};
           }catch(error){await handle.close();throw error;}
         }
-        const workspace=await this.#native(),bytes=await(kind==='plan'?workspace.download(id,file):
+        const workspace=await this.#native(),bytes=await((kind==='plan'||kind==='report')?workspace.download(id,file):
           kind==='review'?workspace.downloadPricing(id,file):workspace.downloadRepricing(id,file));
         if(bytes.length!==metadata.bytes||sha(bytes)!==metadata.sha256)
           throw fail('FILE_CHANGED','The selected original bytes differ from their saved manifest.');
@@ -211,6 +212,7 @@ export class MerchantPricingTariffs {
             resolve(this.#settings.releaseStore)===resolve(this.#operatorReleaseStore))};
       }
       case 'download':return this.#download('plan',input.planId,args);
+      case 'report':return this.#download('report',input.planId,args);
       case 'downloadPricing':return this.#download('review',input.version,args);
       case 'downloadRepricing':return this.#download('decision',input.decision,args);
       case 'bundle':{

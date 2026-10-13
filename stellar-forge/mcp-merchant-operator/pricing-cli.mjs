@@ -5,7 +5,7 @@ import { open } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { callMerchantPricing,downloadMerchantScenario,downloadMerchantCosts,downloadMerchantPriceDecision,pricingClientOperations,
-  downloadMerchantTariffPlan,downloadMerchantTariffPortfolio,downloadMerchantTariffPricingReview,downloadMerchantPerformance } from './pricing-client.mjs';
+  downloadMerchantTariffPlan,downloadMerchantTariffReport,downloadMerchantTariffPortfolio,downloadMerchantTariffPricingReview,downloadMerchantPerformance } from './pricing-client.mjs';
 
 const fail=(code,message)=>Object.assign(new Error(message),{code:'PRICING_CLIENT_'+code});
 const HELP = `merchant-mcp pricing
@@ -29,9 +29,10 @@ const HELP = `merchant-mcp pricing
   tariff-state|tariff-list --url MCP_ENDPOINT --workspace ALIAS
   tariff-source --url MCP_ENDPOINT --workspace ALIAS --version SAVED_REVIEW
   tariff-preview|tariff-save|tariff-commit --url MCP_ENDPOINT --input PRIVATE_JSON
-  tariff-load|tariff-manifest --url MCP_ENDPOINT --workspace ALIAS --plan-id UUID
+  tariff-load|tariff-manifest|tariff-report-manifest --url MCP_ENDPOINT --workspace ALIAS --plan-id UUID
   tariff-selection --url MCP_ENDPOINT --workspace ALIAS --plan-id UUID --comparison-id SHA256
   tariff-download --url MCP_ENDPOINT --workspace ALIAS --plan-id UUID --out PRIVATE_DIRECTORY
+  tariff-report-download --url MCP_ENDPOINT --workspace ALIAS --plan-id UUID --out PRIVATE_DIRECTORY
   tariff-bundle --url MCP_ENDPOINT --workspace ALIAS [--selection-request-id UUID] [--portfolio-sha256 SHA256]
   tariff-portfolio-download --url MCP_ENDPOINT --workspace ALIAS --out PRIVATE_DIRECTORY
       [--selection-request-id UUID] [--portfolio-sha256 SHA256] [--manifest-sha256 SHA256] [--chunk-bytes BYTES]
@@ -134,7 +135,7 @@ async function inputFile(path,maximum=8*1024*1024) {
 export async function main(argv=process.argv.slice(2),{environment=process.env,write=value=>process.stdout.write(JSON.stringify(value)+'\n')}={}) {
   if (!argv.length || argv.length===1 && ['--help','help'].includes(argv[0])) {process.stdout.write(HELP);return;}
   const [operation,...rest]=argv, values=options(rest);
-  if (!Object.hasOwn(pricingClientOperations,operation) && !['download','cost-download','price-download','tariff-download','tariff-portfolio-download','tariff-price-download','tariff-review-download'].includes(operation))
+  if (!Object.hasOwn(pricingClientOperations,operation) && !['download','cost-download','price-download','tariff-download','tariff-report-download','tariff-portfolio-download','tariff-price-download','tariff-review-download'].includes(operation))
     throw fail('ARGUMENTS','Choose an operation listed by merchant-mcp pricing --help.');
   if (!values.has('--url')) throw fail('ARGUMENTS','Supply the existing --url MCP endpoint.');
   const args=values.has('--input') ? await inputFile(values.get('--input'),(operation.startsWith('tariff-')||operation.startsWith('performance-'))?128*1024*1024:8*1024*1024) : {};
@@ -169,6 +170,7 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,w
     const tariffDownloads={
       'performance-download':{run:downloadMerchantPerformance,fields:['workspace','performanceId']},
       'tariff-download':{run:downloadMerchantTariffPlan,fields:['workspace','planId']},
+      'tariff-report-download':{run:downloadMerchantTariffReport,fields:['workspace','planId']},
       'tariff-portfolio-download':{run:downloadMerchantTariffPortfolio,fields:['workspace','portfolioSha256','selectionRequestId']},
       'tariff-review-download':{run:downloadMerchantTariffPricingReview,fields:['workspace','version']}
     };

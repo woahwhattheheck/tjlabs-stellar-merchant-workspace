@@ -305,7 +305,39 @@ try {
   report.archive=archive;report.received=received;assert.deepEqual(problems,[]);
   report.state='PASS';
 } catch(error){report.state='FAIL';report.error={message:error.message,code:error.code,stack:error.stack};report.providerErrors=problems;}
-finally {if(browser)await browser.close();if(listener)await listener.close();if(workbench)await workbench.close();globalThis.fetch=originalFetch;server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
+finally {
+  // Attempt every original resource close independently in its original order.
+  // A rejected browser
+  // close must not skip the owner/workbench, fetch restoration or saved result.
+  const cleanupActions=[
+    ['browser',async()=>{const owned=browser;if(owned){await owned.close();if(browser===owned)browser=null;}}],
+    ['listener',async()=>{const owned=listener;if(owned){await owned.close();if(listener===owned)listener=null;}}],
+    ['workbench',async()=>{const owned=workbench;if(owned){await owned.close();if(workbench===owned)workbench=null;}}],
+    ['protocol target',async()=>{
+      server.closeAllConnections();
+      await new Promise((resolve,reject)=>server.close(error=>
+        error&&error.code!=='ERR_SERVER_NOT_RUNNING'?reject(error):resolve()));
+    }]
+  ];
+  const cleanupErrors=[];
+  for(const [resource,close] of cleanupActions){
+    try { await close(); }
+    catch(error){
+      cleanupErrors.push({
+        resource,message:String(error?.message??error),
+        ...(error?.code?{code:error.code}:{}),
+        ...(error?.stack?{stack:error.stack}:{})
+      });
+    }
+  }
+  globalThis.fetch=originalFetch;
+  delete report.cleanupErrors;
+  if(cleanupErrors.length){
+    report.cleanupErrors=cleanupErrors;
+    report.state='FAIL';
+    report.error??={message:'Original receiving resources did not all close; see cleanupErrors.'};
+  }
+}
 report.completedAt=new Date().toISOString();
 await writeFile(join(root,'remote-publication-result.json'),JSON.stringify(report,null,2)+'\n',{mode:0o600});
 console.log(JSON.stringify(report));if(report.state!=='PASS')process.exitCode=1;

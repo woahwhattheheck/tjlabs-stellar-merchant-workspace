@@ -217,3 +217,9 @@ The complete browser/publisher/customer, Applications and MCP receiving flows ar
 The outer preparation/lease/stage/archive entry composes those original engines. Its operation journals describe receiving progress; they do not replace a publisher, seller, application or source database. MIT source notices are preserved.
 
 Source publication is not an execution receipt. Until the existing provider operation returns actual input and native results, installed/browser receiving remains pending.
+
+## Continue through the maintained whole-workspace controls
+
+The original native receiving programme can now exercise the in-product complete editable handover described in [HANDOVER.md](HANDOVER.md) and the [SeaTable commissioning course](../../../../products/seatable/COMMISSIONING.md). After the original live SQL/native-view capture and authoring/publisher/deployment course, prepare a full `.stwh` archive, download its exact bytes, receive a named independent workspace, operate that project, and reopen its complete later handover. Preserve the existing source acquisition, selected release and original operation.
+
+The private external receiving archive produced by this programme remains its full run material. The new in-product archive additionally provides supported relocation, original request/version history and independent project receiving through the maintained browser, CLI and customer-agent tools.

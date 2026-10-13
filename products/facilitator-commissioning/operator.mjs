@@ -7,6 +7,7 @@ import {createHash, randomUUID} from 'node:crypto';
 import {spawn} from 'node:child_process';
 import {createCommissioningJob, openCommissioningJob, inspectCommissioningTransfer, SCHEMA} from './commissioning.mjs';
 import {renderCommissioningReport} from './report.mjs';
+import {createInstallationDesk} from './installation-desk.mjs';
 import {normalizeFacilitatorProfiles} from '../../stellar/scf-starforge-20261009/sf82-seller-pilot/release-facilitator.mjs';
 import {inspectRelease, releaseStatus} from '../../stellar/scf-starforge-20261009/sf82-seller-pilot/releases.mjs';
 import {config as readBuyerConfiguration,execution as validateBuyerExecution} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/config.mjs';
@@ -60,6 +61,7 @@ export async function openCommissioningOperator({directory:where,store,setupFile
   const uploadPath=id=>join(ui,'uploads',operation(id)+'.json');
   const inputPath=sha=>{need(HASH.test(sha),'SOURCE_HASH','Select a complete retained source file.');return join(ui,'inputs',sha);};
   async function input(ref){exact(ref,['sha256','bytes']);need(HASH.test(ref.sha256)&&Number.isSafeInteger(ref.bytes)&&ref.bytes>=0&&ref.bytes<=FILE_LIMIT,'SOURCE_IDENTITY','Select a completed upload.');const p=inputPath(ref.sha256),actual=await hashFile(p);need(actual.bytes===ref.bytes&&actual.sha256===ref.sha256,'SOURCE_CHANGED','Original input bytes changed.');return p;}
+  const installation=createInstallationDesk({root,ui,exportsRoot,input});
   async function uploadRows(){const names=(await readdir(join(ui,'uploads'))).filter(n=>UUID.test(n.slice(0,-5))&&n.endsWith('.json'));return Promise.all(names.map(n=>json(join(ui,'uploads',n))));}
   async function uploadState(id){const v=await json(uploadPath(id));const completed=await json(join(ui,'uploads',id+'.complete.json'),true);if(completed){await input(completed.file);return{...v,state:'COMPLETE',file:completed.file,offset:v.bytes};}const part=join(ui,'uploads',id+'.part');let s;try{s=await lstat(part);}catch(e){if(e.code!=='ENOENT')throw e;}need(!s||s.isFile()&&!s.isSymbolicLink()&&s.size<=v.bytes,'UPLOAD_CHANGED','The original upload staging changed.');return{...v,state:'UPLOADING',offset:s?.size??0};}
   async function view(){
@@ -199,11 +201,12 @@ export async function openCommissioningOperator({directory:where,store,setupFile
       completeUpload:id=>run(async()=>{operation(id);const v=await uploadState(id);if(v.state==='COMPLETE')return v;need(v.offset===v.bytes,'UPLOAD_INCOMPLETE','Continue the original upload to its complete length.',409);const part=join(ui,'uploads',id+'.part');if(v.bytes===0)await publish(part,Buffer.alloc(0));const got=await hashFile(part);need(got.sha256===v.sha256&&got.bytes===v.bytes,'UPLOAD_HASH','The complete uploaded bytes differ from the selected original file.',409);await publish(inputPath(v.sha256),await ordinary(part));await publish(join(ui,'uploads',id+'.complete.json'),encode({file:got}));await unlink(part);return uploadState(id);}),
       prepare:command=>run(async()=>{
         exact(command,['operationId','expectedRevision','action','payload']);operation(command.operationId);
-        need(['initialize','review','stage','select','receive-run','buyer-plan','receive','start','stop','export'].includes(command.action)&&object(command.payload)&&Number.isInteger(command.expectedRevision)&&command.expectedRevision>=0,'COMMAND_REQUIRED','Choose a complete documented command.');
+        need(['initialize','review','stage','select','receive-run','buyer-plan','receive','start','stop','export','installation-template','installation-prepare'].includes(command.action)&&object(command.payload)&&Number.isInteger(command.expectedRevision)&&command.expectedRevision>=0,'COMMAND_REQUIRED','Choose a complete documented command.');
         const path=join(ui,'requests',command.operationId+'.json'),old=await json(path,true);
         if(old){need(stable(old)===stable(command),'REQUEST_CONFLICT','The original prepared request differs.',409);return{request:old,replayed:true};}
         const revision=job?(await job.inspect()).revision:0;
         need(command.expectedRevision===revision,'REVISION_CONFLICT','Refresh the original job before preparing new work.',409);
+        if(command.action==='installation-template'||command.action==='installation-prepare')await installation.binding(command,await jobRequired().inspect());
         await publish(path,encode(command));return{request:command,replayed:false};
       }),
       receive:operationId=>run(async()=>{
@@ -247,10 +250,15 @@ export async function openCommissioningOperator({directory:where,store,setupFile
             need(runs.some(r=>r.endedAt),'RUN_OWNER','This process has no live owner for that run; inspect its original native observation.',409);return{runOperationId:command.payload.runOperationId,runs};
           }
           if(command.action==='export'){exact(command.payload,[]);return transfer(command);}
+          if(command.action==='installation-template'||command.action==='installation-prepare')return installation.execute(command,current);
           return executeBound(command,()=>commandInput(command.action,command.payload));
         });
       }),
+      installations:()=>run(async()=>installation.catalog(await jobRequired().inspect())),
+      installationArchive:id=>run(()=>installation.archive(operation(id))),
+      installation:({id,kind,offset=0,limit=50})=>run(()=>installation.view(operation(id),{kind,offset,limit})),
       readFile:({kind,id,name}={})=>run(async()=>{
+        if(kind==='installation')return installation.file(operation(id),text(name,'Original preparation filename',1000));
         let path,filename,type='application/octet-stream';
         if(kind==='input'){need(HASH.test(id),'FILE_ID','Select an original input hash.');path=inputPath(id);filename=name?text(name,'Filename',240).replace(/[\/\\\r\n]/g,'_'):id;}
         else if(kind==='blob'){need(HASH.test(id),'FILE_ID','Select an original source hash.');jobRequired();path=join(root,'blobs',id);filename=id;}

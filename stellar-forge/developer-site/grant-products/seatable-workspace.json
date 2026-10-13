@@ -1,0 +1,119 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "seatable-workspace",
+  "heading": "## Report and content commissioning and complete receiving",
+  "sources": [
+    {
+      "id": "seatable-customer-commissioning",
+      "label": "Complete SeaTable customer commissioning and private workspace handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/seatable/COMMISSIONING.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "cd785b637b165375b1deb6d08aeaf83c7d8d67cc",
+          "bytes": 33214,
+          "sha256": "3a1577c5d6f5c75ab8073a391742889a5bc63d5740bd17ad00e5ba5174d77356",
+          "git_blob": "c9647ea934545dc8b70b77a54843fd3508711bbe"
+        }
+      ]
+    },
+    {
+      "id": "seatable-complete-workspace",
+      "label": "Complete SeaTable source authoring and original publisher workspace",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/WORKSPACE.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "cd785b637b165375b1deb6d08aeaf83c7d8d67cc",
+          "bytes": 38219,
+          "sha256": "dcfe5c53eeed23b925983ea24ebdb0bd97f003145bf00d8a587c60de0d21f163",
+          "git_blob": "abfa19d3c7d9f37dda4c58f5dc1470951748493a"
+        }
+      ]
+    },
+    {
+      "id": "seatable-workspace-handover",
+      "label": "Complete independent SeaTable receiving and operating course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/HANDOVER.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "cd785b637b165375b1deb6d08aeaf83c7d8d67cc",
+          "bytes": 12784,
+          "sha256": "09b9b9639cc128e3c1c4f8aa5e5859e5ed024d2d4741ebc16f53df7c74b96ad4",
+          "git_blob": "271aee4920f05c026ebb0638c9eb6422ec7c1f18"
+        }
+      ]
+    },
+    {
+      "id": "seatable-authoring-engine",
+      "label": "Original SeaTable authoring history and complete workspace receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/model.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "cd785b637b165375b1deb6d08aeaf83c7d8d67cc",
+          "bytes": 74579,
+          "sha256": "c39609f90fcfb75e5b2f125e279805e12f2f1e46bfdc7de20120da9a9966d44c",
+          "git_blob": "7586dedf17d7a843fbce69abeb84417591db4e8f"
+        }
+      ]
+    },
+    {
+      "id": "seatable-native-receiving",
+      "label": "Original SeaTable SQL, native-view and merchant receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/RECEIVING.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "cd785b637b165375b1deb6d08aeaf83c7d8d67cc",
+          "bytes": 21681,
+          "sha256": "9b00e1a66d61dd49b1e3e6933f6183fba5a4e83cd7d7af796f8d6feefdfacaae",
+          "git_blob": "189a2457c65c7a36382f2db1a2c5fb1b75a3db26"
+        }
+      ]
+    },
+    {
+      "id": "seatable-customer-distribution",
+      "label": "Installed SeaTable customer application and provider distribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/seatable-authoring.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "cd785b637b165375b1deb6d08aeaf83c7d8d67cc",
+          "bytes": 1586,
+          "sha256": "67ce6d5272fac851496d5def54d336c866693756919e8677c4e394b67e6cb62c",
+          "git_blob": "1e113e6c07eb5c11eea616c1e4e660f14377af92"
+        }
+      ]
+    },
+    {
+      "id": "seatable-private-workspace-transfer-engine",
+      "label": "Complete streamed SeaTable workspace archive and independent receiving engine",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/handover.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "cd785b637b165375b1deb6d08aeaf83c7d8d67cc",
+          "bytes": 26192,
+          "sha256": "e0cfbb5af1da684b2d7fc4bce5f60e3aaa3032508ab655d6e2aabc03cf831262",
+          "git_blob": "d40c42ad1c29e7df926c04d650ab3e8930c9ce2d"
+        }
+      ]
+    }
+  ]
+}

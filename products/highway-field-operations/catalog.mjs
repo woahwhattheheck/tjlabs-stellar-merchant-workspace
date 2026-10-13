@@ -1,0 +1,26 @@
+// MIT. Agent tools for the maintained Highway HTTP owner and original native engine.
+const alias={type:'string',pattern:'^[a-z0-9][a-z0-9_-]{0,63}$'},uuid={type:'string',format:'uuid'},hash={type:'string',pattern:'^[a-f0-9]{64}$'};
+const scoped={workspace:alias,workspaceId:uuid,workspaceDirectory:{type:'string',description:'Exact selected original or received physical directory.'}};
+const required=['workspace','workspaceId','workspaceDirectory'],read={readOnly:true,idempotent:true};
+const page={offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:100}};
+export function highwayFieldTools(tool){return [
+ tool('merchant_highway_workspaces','List configured Highway owner identities and host-selected complete file aliases.',{},[],read),
+ tool('merchant_highway_state','Read the complete original staff state, revision, source selection, field/dispatch views and paired availability.',scoped,required,read),
+ tool('merchant_highway_history','Page complete original command inputs and first results; follow nextOffset.',{...scoped,...page},required,read),
+ tool('merchant_highway_request','Read an original staff request by its retained UUID.',{...scoped,requestId:uuid},[...required,'requestId'],read),
+ tool('merchant_highway_records','Page actual captured feature attributes, geometry, identity, attachments and complete coverage metadata.',{...scoped,captureId:uuid,layerId:{type:'integer',minimum:0},...page},[...required,'captureId','layerId'],read),
+ tool('merchant_highway_inspection','Read the complete original inspection, form/version/source assessment and linked proposals.',{...scoped,inspectionId:uuid},[...required,'inspectionId'],read),
+ tool('merchant_highway_command','Apply the exact original capture/form/inspection/supervisor/dispatch/proposal/reconciliation.record command and expected revision. No automatic retry.',
+  {...scoped,command:{type:'object',description:'Complete {requestId,kind,actor:{id,name},at,body} retained unchanged before dispatch.'},expectedRevision:{type:'integer',minimum:0}},[...required,'command','expectedRevision'],{}),
+ tool('merchant_highway_upload','Receive one complete host-declared source blob or full archive with exact bytes and SHA.',{...scoped,kind:{type:'string',enum:['blob','archive']},fileAlias:alias,bytes:{type:'integer',minimum:0,maximum:402653184},sha256:hash},[...required,'kind','fileAlias','bytes','sha256'],{}),
+ tool('merchant_highway_prepare_dataset','Project actual captured or approved-proposal values through the original CSV/SF30/SF100 producer. Retain the same operationId and complete selection.',
+  {...scoped,operationId:uuid,selection:{type:'object',description:'Original {captureId,layerId,formId,objectIdColumn,fieldMap,sourceKind,proposalId?,proposalSha256?}.'}},[...required,'operationId','selection'],{}),
+ tool('merchant_highway_native','Use the original paired engine with full retained inputs and source bindings. Result recordBody is associated separately through reconciliation.record at the reviewed staff revision.',
+  {...scoped,operationId:uuid,operation:{type:'string',enum:['status','inspect-delivery','review-import','import','review-pair','save-pair','run','decision','report','request','resume','read','page','row','export','receive']},body:{type:'object',description:'Exact maintained native operation body. Follow original next_offset for complete native pages; retain a distinct original operationId per requested page.'}},[...required,'operationId','operation','body'],{}),
+ tool('merchant_highway_native_request','Inspect the original retained native operation state without replaying it.',{...scoped,operationId:uuid},[...required,'operationId'],read),
+ tool('merchant_highway_restore_native','Restore the complete native package already retained in a staff reconciliation record into a distinct original receiving directory. Preserve both record and operation UUIDs.',{...scoped,recordId:uuid,operationId:uuid},[...required,'recordId','operationId'],{}),
+ tool('merchant_highway_export','Freeze one exact staff revision under a publication UUID and return its full source/history/blob archive identity.',{...scoped,publicationId:uuid,revision:{type:'integer',minimum:0}},[...required,'publicationId','revision'],{}),
+ tool('merchant_highway_receive','Receive the already uploaded full Highway archive into a separate physical directory named by the original operation UUID; repeated receiving preserves subsequent edits.',{...scoped,operationId:uuid,sha256:hash,bytes:{type:'integer',minimum:0,maximum:402653184}},[...required,'operationId','sha256','bytes'],{}),
+ tool('merchant_highway_file_read','Read every original byte of a source blob, frozen full export or frozen dispatch HTML report using the existing retained-file reader.',{...scoped,selection:{type:'object',description:'{kind:"blob"|"archive"|"dispatch-report",id,expectedSha256?,expectedBytes?}; archive requires both exact expected fields.'},expectedSha256:hash,offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:196608},readId:{type:'string'}},[...required,'selection'],read),
+ tool('merchant_highway_file_release','Close only this borrowed original file reader.',{...scoped,readId:{type:'string'}},[...required,'readId'],read)
+];}

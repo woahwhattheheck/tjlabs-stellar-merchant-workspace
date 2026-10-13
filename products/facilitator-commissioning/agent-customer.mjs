@@ -31,6 +31,7 @@ function filename(header,fallback){
   return name&&name.length<=240&&!/[\/\\\x00-\x1f]/.test(name)&&name!=='.'&&name!=='..'?name:fallback;
 }
 function sourcePath(file){
+  if(file.kind==='installation-archive'){need(UUID.test(file.id??''),'Select the original completed Installation preparation UUID.');return'/api/installation/archive?operationId='+encodeURIComponent(file.id);}
   if(file.kind==='archive'){need(UUID.test(file.id??''),'Select the original completed export UUID.');return'/api/archive?operationId='+encodeURIComponent(file.id);}
   const q=new URLSearchParams({kind:file.kind});if(file.id!==undefined)q.set('id',file.id);if(file.name!==undefined)q.set('name',file.name);return'/api/file?'+q;
 }
@@ -191,20 +192,28 @@ export class CommissioningCustomerAgent{
     }
     return this.#connected(args.instance,async({connection,state})=>{
       if(args.file.kind==='report')need(state.job.revision===args.reportRevision,'Refresh the original report revision.','COMMISSIONING_REPORT_CHANGED');
-      let exportReceipt;
+      let exportReceipt,preparationReceipt;
+      if(['installation','installation-archive'].includes(args.file.kind)){
+        preparationReceipt=await this.#http(connection,'/api/receive?operationId='+encodeURIComponent(args.file.id));
+        need(preparationReceipt.state==='COMPLETE'&&['installation-template','installation-prepare'].includes(preparationReceipt.receipt?.action)&&preparationReceipt.receipt.operationId===args.file.id&&preparationReceipt.receipt.result.jobId===args.jobId&&preparationReceipt.receipt.result.selectionSha256===state.job.selectionSha256,'Choose a complete Installation preparation from this exact original job.','COMMISSIONING_INSTALLATION_REQUIRED');
+      }
       if(args.file.kind==='archive'){
         exportReceipt=await this.#http(connection,'/api/receive?operationId='+encodeURIComponent(args.file.id));
         need(exportReceipt.state==='COMPLETE'&&exportReceipt.receipt?.action==='export'&&exportReceipt.receipt.operationId===args.file.id&&exportReceipt.receipt.result.jobId===args.jobId&&exportReceipt.receipt.result.selectionSha256===state.job.selectionSha256,'Choose a complete export from this exact original job.','COMMISSIONING_EXPORT_REQUIRED');
       }
       const {response,dispose}=await this.#http(connection,sourcePath(args.file),{binary:true});
       try{
-        const size=Number(response.headers.get('content-length')),sha=response.headers.get('x-content-sha256'),maximum=args.file.kind==='archive'?MAX_ARCHIVE_BYTES:MAX_SOURCE_BYTES;
+        const size=Number(response.headers.get('content-length')),sha=response.headers.get('x-content-sha256'),maximum=['archive','installation-archive'].includes(args.file.kind)?MAX_ARCHIVE_BYTES:MAX_SOURCE_BYTES;
         need(response.headers.get('content-length')!==null&&Number.isSafeInteger(size)&&size>=0&&size<=maximum&&SHA.test(sha??''),'The original file needs its complete bounded byte count and SHA256.','COMMISSIONING_FILE_IDENTITY');
         need((args.expectedSha256===undefined||sha===args.expectedSha256)&&(args.expectedBytes===undefined||size===args.expectedBytes),'The selected complete file identity changed.','COMMISSIONING_FILE_CHANGED');
+        if(args.file.kind==='installation'){
+          const selected=preparationReceipt.receipt.result.files.find(x=>x.path===args.file.name);
+          need(selected&&selected.bytes===size&&selected.sha256===sha,'The selected complete Installation member changed.','COMMISSIONING_INSTALLATION_CHANGED');
+        }
         const source={jobId:args.jobId,selectionSha256:state.job.selectionSha256,file:args.file,bytes:size,sha256:sha,
           filename:filename(response.headers.get('content-disposition'),args.file.kind==='archive'?'commissioning.tar':'original-file'),
           contentType:response.headers.get('content-type')??'application/octet-stream',
-          ...(args.file.kind==='report'?{reportRevision:args.reportRevision}:{}),...(exportReceipt?{exportReceipt}: {})};
+          ...(args.file.kind==='report'?{reportRevision:args.reportRevision}:{}),...(exportReceipt?{exportReceipt}: {}),...(preparationReceipt?{preparationReceipt}:{})};
         await writeConsoleWorkflowFile(join(directory,'source.json'),source);
         const body=await writeConsoleWorkflowStream(join(directory,'content'),async handle=>{
           const hash=createHash('sha256');let bytes=0;
@@ -269,6 +278,17 @@ export class CommissioningCustomerAgent{
     if(action==='source_begin')await this.#uploadIntent(args.instance,args.upload);
     return this.#connected(args.instance,async({connection,state})=>{
       if(action==='state')return{instance:args.instance,native:state};
+      if(action==='installations'){
+        const result=await this.#http(connection,'/api/installations');
+        need(result.jobId===definition.jobId&&result.selectionSha256===state.job.selectionSha256,'The Installation catalog belongs to another original job.','COMMISSIONING_INSTALLATION_CHANGED');
+        return{instance:args.instance,...result};
+      }
+      if(action==='installation'){
+        const q=new URLSearchParams({id:args.operationId,kind:args.kind??'summary',offset:String(args.offset??0),limit:String(args.limit??50)});
+        const result=await this.#http(connection,'/api/installation?'+q);
+        need(result.preparation?.operationId===args.operationId&&result.preparation.jobId===definition.jobId&&result.preparation.selectionSha256===state.job.selectionSha256,'The selected Installation preparation changed.','COMMISSIONING_INSTALLATION_CHANGED');
+        return{instance:args.instance,...result};
+      }
       if(action==='release')return{instance:args.instance,release:await this.#http(connection,'/api/release?id='+encodeURIComponent(args.releaseId))};
       if(action==='history'){const q=new URLSearchParams({kind:args.kind??'results',offset:String(args.offset??0),limit:String(args.limit??50),revision:String(args.revision)});const result=await this.#http(connection,'/api/history?'+q);need(result.jobId===definition.jobId&&result.revision===args.revision,'The original history snapshot changed.','COMMISSIONING_HISTORY_CHANGED');return{instance:args.instance,...result};}
       const input=action==='source_begin'?args.upload:await this.#uploadSelected(args.instance,args.uploadId);

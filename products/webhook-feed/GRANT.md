@@ -120,6 +120,38 @@ is retained by the original commissioning owner with its exact source inputs and
 outputs. Product/source completion and the actual deployed customer result each
 retain their own recorded state.
 
+## Explore and retain the customer's actual payload mapping
+
+Receive the same complete original NDJSON and manifest, then open the field
+explorer in Event programmes. It examines every actual payload path across the
+whole acquired window and reports present, missing, JSON-null and value-kind
+counts. Search and page the catalogue, open complete values by original event,
+and choose the fields whose actual meaning supports the customer's task.
+Short examples are labelled previews; the complete value pages and catalogue
+remain downloadable.
+
+Name the selected output columns and download the complete mapping handover.
+It retains the original workspace, input, source edition and both full file
+identities. Reopen that handover against the same received input before
+continuing the original review/apply operation. The customer determines the
+business meaning of the fields. Empty windows, mixed kinds and missing values
+retain their real states, while the original source and individual event
+identities remain attached to the accepted table.
+
+The existing file-only CLI and installed agent use that same source projector.
+The agent retains the entire native field/value record and receives all ranges;
+the browser maps the same actual paths. Original array indexes, escaped object
+names and complete string values remain coherent across those interfaces.
+Whole-catalogue limits fail explicitly and retain the existing manual mapping
+route. See the consumed Event programmes and Analysis Event receiving guides
+for exact commands, source limits and actual operator controls.
+
+The receiving course includes catalogue search and paging, empty/mixed source
+states, complete values, naming, mapping download/reopen, full review, explicit
+apply and the ordinary customer delivery. The producer opens those exact
+normal/narrow rendered views and every downloaded attachment, uses the important
+controls, and inspects the returned screenshots before presenting the result.
+
 ## Receive the Analysis result into its original Customer Installation
 
 Use the complete [Event customer Installation course](../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/WEBHOOK_EVENT_ANALYSIS.md)
@@ -254,8 +286,13 @@ installed contribution and complete operating guide select merged commit
 3cc516d47cb5ca2a692ee1bc750905cfaab4e2e9. Complete Customer Installation
 receiving, its typed interface, selected profile and whole operator course select
 cdaafeb22d7ffdd080a11362822c28ad01ac96ab. The existing agent guide and installed
-contribution keep both original and current editions. All eighteen preceding
+contribution keep both original and current editions. All twenty-three preceding
 source IDs and their accepted source editions remain in this same contribution.
+The complete source exploration, browser/API coordination, agent operations and
+three operating guides now select merged commit
+3aaae9928df6047ac86a32b5dae7302b7937cfcb. Eleven original source IDs keep both
+preceding and current measured editions. The original file-only source CLI is
+registered as one additional optional source with its full measured identity.
 
 The independent registration is
 stellar-forge/developer-site/grant-products/webhook-customer-analysis.json.
