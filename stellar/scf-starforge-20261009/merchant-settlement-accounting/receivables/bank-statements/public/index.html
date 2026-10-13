@@ -20,6 +20,7 @@
   </div>
   <nav class="tabs" aria-label="Bank workspace">
     <button type="button" data-tab="overview" aria-current="page">Overview</button>
+    <button type="button" data-tab="collection">Statement collections</button>
     <button type="button" data-tab="import">Import statement</button>
     <button type="button" data-tab="transactions">Transactions</button>
     <button type="button" data-tab="close">Close statement</button>
@@ -28,6 +29,7 @@
   <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
   <main id="main" tabindex="-1">
     <section id="view-overview" class="view"></section>
+    <section id="view-collection" class="view" hidden></section>
     <section id="view-import" class="view" hidden></section>
     <section id="view-transactions" class="view" hidden></section>
     <section id="view-close" class="view" hidden></section>

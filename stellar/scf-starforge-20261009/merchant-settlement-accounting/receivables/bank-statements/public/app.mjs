@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MIT
+import {sourceInputForItem} from './source-collection-model.mjs';
+import {installSourceCollections} from './source-collections.mjs';
 import { BankStatementsClient } from './sdk/client.mjs';
 import { ReceivablesClient } from './client.mjs';
 import {camtStatementHtml,camtEntryHtml,camtEntrySummary,originalStatementRows} from './camt.mjs';
@@ -24,6 +26,7 @@ const ctx = {
  assemblyPreview:null,assemblySignature:null,assemblyPage:0,assemblyLoad:0,
  closePreview:null,closePage:0,record:null,recordLoad:0,db:null,storageProblem:null,invoiceDetail:null,invoiceLoad:0
 };
+let sourceCollections=null;
 const MAP_FIELDS = [
  ['postedDate','Posted date'],['amount','Signed amount'],['debit','Debit'],['credit','Credit'],['providerId','Provider transaction ID'],
  ['payee','Payee / description'],['memo','Memo'],['reference','Reference'],['checkNumber','Check number'],['type','Transaction type'],
@@ -101,7 +104,7 @@ async function refreshState({render=true}={}){
  const picker=$('#account-picker');picker.innerHTML=option('','All accounts',ctx.accountId)+state.accounts.map(x=>option(x.id,x.name+' · '+x.currency.code,ctx.accountId)).join('');
  $('#workspace-identity').textContent='Workspace '+state.workspaceId+' · revision '+state.revision;
  $('#connection').textContent='Connected · revision '+state.revision+' · '+new Date().toLocaleTimeString();
- if(render){renderOverview();if(ctx.tab==='close')renderClose();if(ctx.sourcePreview)renderSourcePreview();lockForms();}
+ if(render){renderOverview();if(ctx.tab==='collection')sourceCollections?.render();if(ctx.tab==='close')renderClose();if(ctx.sourcePreview)renderSourcePreview();lockForms();}
  return state;
 }
 async function completePending(result){
@@ -200,8 +203,10 @@ function defaultMapping(){
 }
 function renderImport(){
  const d=ctx.sourceMapping||defaultMapping();
+ const collectionLabel=sourceCollections?.workingLabel();
  const headerFields=MAP_FIELDS.map(([key,label])=>field(label,'col-'+key,d.columns[key]||'','text','data-source-field placeholder="Header or #column"')).join('');
  $('#view-import').innerHTML=
+ (collectionLabel?'<section class="panel"><p>Working collection: <strong>'+esc(collectionLabel)+'</strong></p><button type="button" data-tab="collection">Return to all original files</button></section>':'')+
  '<section class="panel"><div class="section-heading"><div><h2>Original statement file</h2><p class="small muted">Choose the complete bank export. OFX, QFX and CAMT.053 XML provide original account and transaction records; CSV uses your explicit source mapping.</p></div></div><form id="source-form"><div class="grid three">'+
  '<label>Original file<input id="statement-file" type="file" accept=".ofx,.qfx,.xml,.csv,.tsv,.txt,application/x-ofx,application/vnd.intu.qfx,application/xml,text/xml,text/csv"></label>'+
  selectField('File format','format',[{value:'OFX',label:'OFX bank statement'},{value:'QFX',label:'QFX bank statement'},{value:'CAMT053',label:'CAMT.053 XML statement'},{value:'CSV',label:'Mapped CSV'}],d.format,null,'data-source-field')+
@@ -250,30 +255,16 @@ function captureMapping(){
  const values=formObject(form),prior=ctx.sourceMapping||defaultMapping(),columns={};
  for(const[key]of MAP_FIELDS)columns[key]=values['col-'+key]??prior.columns?.[key]??'';
  ctx.sourceMapping={...prior,...Object.fromEntries(Object.keys(prior).filter(x=>x!=='columns').map(key=>[key,values[key]??prior[key]])),columns};
- writeSmall('source-mapping',ctx.sourceMapping);return ctx.sourceMapping;
+ writeSmall('source-mapping',ctx.sourceMapping);sourceCollections?.mappingChanged(ctx.sourceFile,ctx.sourceMapping);return ctx.sourceMapping;
 }
-function mappedColumn(value){if(!String(value||'').trim())return undefined;const raw=String(value).trim();return /^#\d+$/.test(raw)?Number(raw.slice(1)):raw;}
 function sourceInput(){
  if(ctx.sourceFileLoading)throw new Error('Wait for the selected original file to finish loading.');
  if(!ctx.sourceFile)throw new Error('Choose the original bank statement file first.');
- const d=captureMapping(),source={format:d.format,file:{name:ctx.sourceFile.name,dataBase64:ctx.sourceFile.dataBase64}};
- if(d.textEncoding)source.textEncoding=d.textEncoding;
- if(d.accountNamespace)source.accountNamespace=d.accountNamespace.trim();
- if(d.format==='CAMT053'){
-  source.camt={detailPolicy:d.camtDetailPolicy||'PRESERVE_ONLY'};
-  if(d.camtMessageVersion)source.camt.messageVersion=d.camtMessageVersion;
- }
- if(d.format==='CSV'){
-  const columns=Object.fromEntries(MAP_FIELDS.map(([key])=>[key,mappedColumn(d.columns[key])]).filter(([,value])=>value!==undefined));
-  source.csv={delimiter:d.delimiter,headerRow:Number(d.headerRow),dateFormat:d.dateFormat,decimalSeparator:d.decimalSeparator,groupSeparator:d.groupSeparator,amountMode:d.amountMode,
-   account:{bankId:d.bankId,branchId:d.branchId,accountId:d.accountId,accountType:d.accountType,currency:d.currency.toUpperCase()},columns,
-   balanceRecords:JSON.parse(d.balanceRecords||'[]'),skipRecords:JSON.parse(d.skipRecords||'[]')};
-  if(columns.status!==undefined)source.csv.statusValues={posted:d.postedStatuses.split(',').map(x=>x.trim()).filter(Boolean),pending:d.pendingStatuses.split(',').map(x=>x.trim()).filter(Boolean)};
- }
- return source;
+ return sourceInputForItem({file:ctx.sourceFile,mapping:captureMapping()});
 }
 async function chooseFile(file){
  if(!file)return;
+ captureMapping();await sourceCollections?.flush();sourceCollections?.detach();
  const generation=++ctx.sourceFileLoad;captureMapping();resetSourcePreview();
  ctx.sourceFileLoading=true;ctx.sourceLoadingName=file.name;renderSourceFile();
  try{
@@ -285,6 +276,7 @@ async function chooseFile(file){
   d.format=ext==='qfx'?'QFX':['csv','tsv'].includes(ext)?'CSV':ext==='ofx'?'OFX':ext==='xml'?'CAMT053':d.format;
   if(ext==='tsv')d.delimiter='\t';
   await dbWrite(storageKey('source-file'),saved);
+  if(generation!==ctx.sourceFileLoad)return;
   // Completed storage transactions remain the fallback until a later complete file commits.
   ctx.sourceFile=saved;ctx.sourceMapping=d;writeSmall('source-mapping',d);
  }catch(error){if(generation===ctx.sourceFileLoad)throw error;}
@@ -301,6 +293,7 @@ async function previewSource(){
   ctx.sourcePreview={...preview,reviewSha256:result.reviewSha256||preview.reviewSha256};
   ctx.sourceStatementId=preview.statements.find(x=>x.kind!=='CLOSING_INFORMATION')?.id||preview.statements[0]?.id||'';
   ctx.previewSourceInput=structuredClone(source);renderSourcePreview();
+  await sourceCollections?.previewed(ctx.sourceFile,captureMapping(),ctx.sourcePreview);
  }finally{if(button.isConnected){button.disabled=ctx.sourceFileLoading;button.textContent=ctx.sourceFileLoading?'Reading selected file…':'Review original source';}}
 }
 function receiptIntakeBinding(source,accountId){
@@ -881,6 +874,7 @@ async function restoreCloseFile(file){
  writeSmall('close-draft:'+ctx.accountId,ctx.closeDraft);invalidateAssembly();renderClose();notice('Original working reconciliation inputs restored. Review the retained pages again when using a page assembly.');
 }
 async function restoreSourceFile(file){
+ captureMapping();await sourceCollections?.flush();sourceCollections?.detach();
  const generation=++ctx.sourceFileLoad;captureMapping();resetSourcePreview();
  ctx.sourceFileLoading=true;ctx.sourceLoadingName=file.name;renderSourceFile();
  try{
@@ -892,6 +886,7 @@ async function restoreSourceFile(file){
   if(generation!==ctx.sourceFileLoad)return;
   const saved={...data.file,bytes:bytes.length,sha256:digest},mapping={...defaultMapping(),...data.mapping,columns:{...defaultMapping().columns,...data.mapping.columns}};
   await dbWrite(storageKey('source-file'),saved);
+  if(generation!==ctx.sourceFileLoad)return;
   ctx.sourceFile=saved;ctx.sourceMapping=mapping;writeSmall('source-mapping',mapping);
   if(generation===ctx.sourceFileLoad)notice('Complete original bank source and its mapping restored. Review the source before retaining an import.');
  }catch(error){if(generation===ctx.sourceFileLoad)throw error;}
@@ -909,12 +904,13 @@ async function selectAccount(id){
  renderOverview();if(ctx.tab==='transactions')await loadTransactions(0);if(ctx.tab==='close')renderClose();
 }
 async function setTab(tab){
- if(!['overview','import','transactions','close'].includes(tab))return;
+ if(!['overview','collection','import','transactions','close'].includes(tab))return;
+ if(ctx.tab==='import'){captureMapping();await sourceCollections?.flush();}
  if(ctx.tab==='close')captureCloseDraft();
  ctx.tab=tab;writeSmall('tab',tab);
  for(const button of $$('[data-tab]')){if(button.closest('nav')){if(button.dataset.tab===tab)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');}}
  for(const node of $$('.view'))node.hidden=node.id!=='view-'+tab;
- if(tab==='overview')renderOverview();else if(tab==='import')renderImport();else if(tab==='transactions'){renderTransactions();await loadTransactions();}else renderClose();
+ if(tab==='overview')renderOverview();else if(tab==='collection')await sourceCollections?.open();else if(tab==='import')renderImport();else if(tab==='transactions'){renderTransactions();await loadTransactions();}else renderClose();
  lockForms();
 }
 function clickHandler(event){
@@ -984,7 +980,7 @@ function submitHandler(event){
   else if(form.id==='bank-account-form'){
    const source=selectedSource();if(!source?.account.identitySha256)throw new Error('Review a source with a complete institution/account identity first.');
    const values=formObject(form),scale=Number(values.scale);if(!Number.isInteger(scale)||scale<0||scale>6)throw new Error('Enter an integer currency scale from 0 to 6.');
-   ctx.sourceMapping.accountName=values.name;ctx.sourceMapping.scale=String(scale);writeSmall('source-mapping',ctx.sourceMapping);
+   ctx.sourceMapping.accountName=values.name;ctx.sourceMapping.scale=String(scale);writeSmall('source-mapping',ctx.sourceMapping);sourceCollections?.mappingChanged(ctx.sourceFile,ctx.sourceMapping);
    const result=await mutate('/accounts',{account:{name:values.name,currency:{code:source.account.currency,scale},sourceIdentitySha256:source.account.identitySha256,note:values.note}},'Bank account');
    if(result?.account?.id){await selectAccount(result.account.id);renderSourcePreview();}
   }
@@ -1091,7 +1087,7 @@ async function boot(){
  document.addEventListener('click',clickHandler);document.addEventListener('submit',submitHandler);document.addEventListener('change',changeHandler);document.addEventListener('input',inputHandler);
  $('#detail-dialog').addEventListener('cancel',()=>{saveDetailDraft();ctx.detailLoad++;ctx.invoiceLoad++;ctx.detail=null;ctx.invoiceDetail=null;});
  $('#record-dialog').addEventListener('cancel',()=>{ctx.recordLoad++;ctx.record=null;});
- window.addEventListener('pagehide',()=>{saveDetailDraft();captureCloseDraft();if(ctx.state)writeSmall('actor',$('#actor').value);});
+ window.addEventListener('pagehide',()=>{saveDetailDraft();captureCloseDraft();captureMapping();if(ctx.state)writeSmall('actor',$('#actor').value);});
  try{
   const response=await fetch(new URL('./config.json',location.href),{credentials:'same-origin',cache:'no-store'});if(!response.ok)throw new Error('Workspace configuration could not be opened.');
   ctx.config=await response.json();
@@ -1107,6 +1103,32 @@ async function boot(){
   ctx.closeDraft={...ctx.closeDraft,...readSmall('close-draft:'+ctx.accountId,{})};
   try{ctx.sourceFile=await dbRead(storageKey('source-file'));ctx.pending=await dbRead(storageKey('pending'));}
   catch(error){ctx.storageProblem=error;notice('Original retry storage could not open. '+errorMessage(error),'error');}
+  
+  sourceCollections=installSourceCollections({
+   root:$('#view-collection'),workspaceId:ctx.state.workspaceId,getImports:()=>ctx.state?.imports||[],
+   readIndex:()=>dbRead(storageKey('source-collections-index')),
+   readCollection:id=>dbRead(storageKey('source-collection:'+id)),
+   saveCollection:async(collection,index)=>{
+    const db=await openDb();
+    await new Promise((resolve,reject)=>{const tx=db.transaction('records','readwrite'),records=tx.objectStore('records');
+     records.put(collection,storageKey('source-collection:'+collection.id));records.put(index,storageKey('source-collections-index'));
+     tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Collection save was interrupted.'));});
+   },
+   uuid,defaultMapping,download:localDownload,notice,run,
+   openItem:async(item)=>{
+    if(ctx.sourceFileLoading)throw new Error('Wait for the current source file to finish loading.');
+    const generation=++ctx.sourceFileLoad;resetSourcePreview();ctx.sourceFileLoading=true;ctx.sourceLoadingName=item.file.name;renderSourceFile();
+    try{
+     await dbWrite(storageKey('source-file'),item.file);
+     if(generation!==ctx.sourceFileLoad)return;
+     ctx.sourceFile=structuredClone(item.file);ctx.sourceMapping={...defaultMapping(),...structuredClone(item.mapping),columns:{...defaultMapping().columns,...structuredClone(item.mapping.columns)}};
+     writeSmall('source-mapping',ctx.sourceMapping);ctx.sourceFileLoading=false;ctx.sourceLoadingName='';
+     await setTab('import');notice('Opened '+item.file.name+'. Its complete original and working interpretation remain in the collection.');
+    }finally{if(generation===ctx.sourceFileLoad){ctx.sourceFileLoading=false;ctx.sourceLoadingName='';renderImport();}}
+   }
+  });
+  try{await sourceCollections.init();}catch(error){notice('Original statement collections need attention. '+errorMessage(error),'error');}
+
   renderPending();renderOverview();renderImport();renderTransactions();renderClose();
   const query=new URLSearchParams(location.search),requested=query.get('view'),transactionId=query.get('transaction');
   await setTab(transactionId?'transactions':requested||readSmall('tab','overview'));
