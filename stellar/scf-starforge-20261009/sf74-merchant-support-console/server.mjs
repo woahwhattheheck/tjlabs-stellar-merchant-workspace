@@ -68,6 +68,9 @@ const ASSETS = Object.freeze({
   '/ckan-render.mjs': ['ckan-render.mjs', 'text/javascript; charset=utf-8'],
   '/oauth-render.mjs': ['oauth-render.mjs', 'text/javascript; charset=utf-8'],
   '/oauth-desk.mjs': ['oauth-desk.mjs', 'text/javascript; charset=utf-8'],
+  '/x402-render.mjs': ['x402-render.mjs', 'text/javascript; charset=utf-8'],
+  '/x402-desk.mjs': ['x402-desk.mjs', 'text/javascript; charset=utf-8'],
+  '/X402_MERCHANT_SUPPORT.md': ['X402_MERCHANT_SUPPORT.md', 'text/markdown; charset=utf-8'],
   '/OAUTH_SUPPORT.md': ['OAUTH_SUPPORT.md', 'text/markdown; charset=utf-8'],
   '/handoff-desk.mjs': ['handoff-desk.mjs', 'text/javascript; charset=utf-8'],
   '/incident-desk.mjs': ['incident-desk.mjs', 'text/javascript; charset=utf-8'],
@@ -297,7 +300,7 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
           const envelope=await boundedBody(req,65_536);
           json(res,200,await incidentDesk.recoveryOperation(source,action,envelope));return;
         }
-        const match=/^\/api\/incidents\/([a-z0-9][a-z0-9_-]{0,63})(?:\/(configure|destination|inspect-object|inspect-ckan|inspect-oauth|start|stop)|\/notifications\/([a-f0-9-]{36})\/(retry|cancel)|\/([a-f0-9-]{36})(?:\/(ack|notify|case))?)?$/.exec(route);
+        const match=/^\/api\/incidents\/([a-z0-9][a-z0-9_-]{0,63})(?:\/(configure|destination|inspect-object|inspect-ckan|inspect-oauth|inspect-x402|start|stop)|\/notifications\/([a-f0-9-]{36})\/(retry|cancel)|\/([a-f0-9-]{36})(?:\/(ack|notify|case))?)?$/.exec(route);
         if(!match){json(res,404,{error:'NOT_FOUND'});return;}
         const [,source,operation,eventId,eventAction,incidentId,incidentAction]=match;
         if(req.method==='GET'&&!operation&&!eventId&&!incidentAction) {
@@ -321,6 +324,7 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
         else if(operation==='inspect-object')result=await incidentDesk.inspectObject(source,input);
         else if(operation==='inspect-ckan')result=await incidentDesk.inspectCkan(source,input);
         else if(operation==='inspect-oauth')result=await incidentDesk.inspectOAuth(source,input);
+        else if(operation==='inspect-x402')result=await incidentDesk.inspectX402(source,input);
         else if(operation==='start')result=await incidentDesk.start(source,input);
         else if(operation==='stop') {
           if(Object.keys(input).length)throw new TypeError('Unexpected stop input');
