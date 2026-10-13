@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { openAtlasWorkspace } from './workspace.mjs';
 import { writeWorkspaceTransfer, receiveWorkspaceTransfer } from './workspace-transfer.mjs';
 import { CAPTURE_FILTERS, normalizeCaptureSearch } from './capture-search.mjs';
+import { inspectCatalogReview, CATALOG_REVIEW_LIMITS } from './catalog-review.mjs';
 
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -74,11 +75,28 @@ async function collect(workspace, input, append) {
 export async function runAtlasSearchJourney(configuration) {
   const config = clone(configuration);
   need(plain(config) && Object.keys(config).every(key => ['workspace', 'captureId', 'queriesFile', 'query', 'filters',
-    'pageSize', 'selected', 'selectionId', 'label', 'request', 'bodyFile', 'ticketFile', 'handoff', 'outputDirectory'].includes(key)),
+    'pageSize', 'selected', 'selectionId', 'label', 'request', 'bodyFile', 'ticketFile', 'handoff', 'outputDirectory', 'reviewFile'].includes(key)),
   'ATLAS_JOURNEY_CONFIGURATION_INVALID');
   for (const field of ['workspace', 'queriesFile', 'outputDirectory'])
     need(typeof config[field] === 'string' && isAbsolute(config[field]) && resolve(config[field]) === config[field],
       'ATLAS_JOURNEY_ABSOLUTE_PATH_REQUIRED');
+  let originalReview = null, reviewText = null;
+  if (config.reviewFile !== undefined) {
+    reviewText = decode(await bytesAt(config.reviewFile, CATALOG_REVIEW_LIMITS.packetBytes));
+    originalReview = await inspectCatalogReview(reviewText);
+    const packet = originalReview.packet, selected = { pageFile: packet.source.pageFile,
+      row: packet.selection.row, accept: packet.selection.acceptIndex };
+    need(config.selected === undefined || same(config.selected, selected), 'ATLAS_JOURNEY_REVIEW_SELECTION_CHANGED');
+    need(config.label === undefined || config.label === packet.label, 'ATLAS_JOURNEY_REVIEW_LABEL_CHANGED');
+    const requested = normalizeCaptureSearch({ query: config.query ?? packet.search.query,
+      filters: config.filters ?? packet.search.filters });
+    need(requested.query === packet.search.query && same(requested.filters, packet.search.filters),
+      'ATLAS_JOURNEY_REVIEW_SEARCH_CHANGED');
+    need(config.captureId === undefined || config.captureId === 'page-' + packet.source.pageSha256.slice(0, 40),
+      'ATLAS_JOURNEY_REVIEW_CAPTURE_CHANGED');
+    config.selected = selected; config.label = packet.label;
+    config.query = packet.search.query; config.filters = clone(packet.search.filters);
+  }
   need(plain(config.selected) && Object.keys(config.selected).every(key => ['pageFile', 'row', 'accept'].includes(key)) &&
     typeof config.selectionId === 'string' && typeof config.label === 'string' && plain(config.request) &&
     (config.handoff === undefined || typeof config.handoff === 'boolean'), 'ATLAS_JOURNEY_EXPLICIT_SELECTION_REQUIRED');
@@ -97,6 +115,19 @@ export async function runAtlasSearchJourney(configuration) {
     const summary = await workspace.summary();
     need(!summary.selections.some(item => item.id === config.selectionId), 'ATLAS_JOURNEY_SELECTION_ID_ALREADY_EXISTS');
     report.workspaceId = summary.id;
+    let receivedReview = null;
+    if (originalReview) {
+      receivedReview = await workspace.receiveCatalogReview({ reviewText, selectionId: config.selectionId });
+      const captureId = receivedReview.capture.captureId;
+      need(config.captureId === undefined || config.captureId === captureId, 'ATLAS_JOURNEY_REVIEW_CAPTURE_CHANGED');
+      config.captureId = captureId; selectedQuery.captureId = captureId; report.captureId = captureId;
+      need(receivedReview.selection.catalogReview?.packetId === originalReview.packet.packetId &&
+        receivedReview.retained.sha256 === originalReview.sha256, 'ATLAS_JOURNEY_REVIEW_RECEIPT_CHANGED');
+      report.catalogReview = { file: config.reviewFile, packetId: originalReview.packet.packetId,
+        bytes: originalReview.bytes, sha256: originalReview.sha256, sourcePageSha256: originalReview.packet.source.pageSha256,
+        row: originalReview.packet.selection.row, acceptIndex: originalReview.packet.selection.acceptIndex,
+        search: clone(originalReview.packet.search) };
+    }
     queryOutput = await open(join(config.outputDirectory, 'search-pages.ndjson'), 'wx', 0o600);
     let snapshotId = null;
     for (const query of queries) {
@@ -124,7 +155,7 @@ export async function runAtlasSearchJourney(configuration) {
     need(offer && offer.matchingAcceptIndexes.includes(config.selected.accept), 'ATLAS_JOURNEY_SELECTED_ROW_NOT_IN_QUERY');
     report.selectedSearch = { query: selectedQuery.query, filters: selectedQuery.filters, pages: selected.pages,
       total: selected.offers.length, offer };
-    let selection = await workspace.saveSelection({ captureId: config.captureId, ...config.selected,
+    let selection = receivedReview?.selection ?? await workspace.saveSelection({ captureId: config.captureId, ...config.selected,
       label: config.label, selectionId: config.selectionId });
     const inputs = { selectionId: selection.id, revision: selection.revision, request: clone(config.request) };
     if (config.bodyFile !== undefined) inputs.bodyText = decode(await bytesAt(config.bodyFile, 1048576));
@@ -159,6 +190,13 @@ export async function runAtlasSearchJourney(configuration) {
       reopened.prepared?.sourceFileSha256 === selection.prepared.sourceFileSha256 &&
       reopened.prepared?.originalConfigSha256 === selection.prepared.originalConfigSha256 &&
       reopened.handoff?.sha256 === selection.handoff?.sha256, 'ATLAS_JOURNEY_RECEIVED_SELECTION_CHANGED');
+    if (originalReview) {
+      const review = await received.catalogReview({ selectionId: config.selectionId, sha256: originalReview.sha256 });
+      need(review.text === reviewText && review.packetId === originalReview.packet.packetId &&
+        review.sha256 === originalReview.sha256 && review.source.pageSha256 === originalReview.packet.source.pageSha256,
+      'ATLAS_JOURNEY_RECEIVED_REVIEW_CHANGED');
+      report.receivedCatalogReview = { packetId: review.packetId, sha256: review.sha256, bytes: review.bytes };
+    }
     const cold = await collect(received, { ...selectedQuery, snapshotId });
     need(same(cold.offers, selected.offers) && same(cold.coverage, selected.coverage), 'ATLAS_JOURNEY_RECEIVED_SEARCH_CHANGED');
     const coldSummary = await received.summary();
@@ -188,6 +226,9 @@ const HELP = `Run the original Atlas search, preparation and complete receiving 
 
 The configuration selects an existing workspace/capture, original query file,
 exact pageFile/row/accept, a new selectionId and explicit native buyer request.
+An optional reviewFile receives the complete original catalog selection first;
+its saved page, row, option, query, filters and label become the selected source.
+The same original review is checked again after complete workspace receiving.
 The complete output directory must be new. See CAPTURE_SEARCH.md for the full
 configuration and the original-source measurement/receiving contract.
 `;

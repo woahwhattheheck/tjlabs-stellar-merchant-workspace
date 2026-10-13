@@ -22,6 +22,16 @@ This package adds durable application operations and result recovery around thos
 
 ## Choose the customer's product workflow
 
+The [Research quotation programme](RESEARCH-QUOTE-PROGRAMMES.md) carries the
+complete original case, saved native steps, quoted delivery, full dossier and
+paid-publication files to another operator. Use `ResearchQuoteProgrammes` for
+creation, exact step review/apply/replay, complete package export and receiving
+through the original case and dossier writers. `ResearchQuoteProgrammeHandover`
+reopens the complete package using its original manifest SHA. The installed
+`quotes-programme-*` commands and two-workspace receiving example operate the
+same saved workflow.
+
+
 The complete [Research customer quotation workflow](RESEARCH-QUOTES.md) carries
 original commercial cases and pricing through a reviewed Research brief, actual
 customer response, paid publication, Buyer receiving and realized reporting.

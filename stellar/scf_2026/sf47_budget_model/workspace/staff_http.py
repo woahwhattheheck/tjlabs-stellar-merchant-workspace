@@ -8,6 +8,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 from model import Problem
 from staff_access import SCHEMA, owner_principal, fail
+from operations_agenda_http import ROUTE as DELIVERY_AGENDA_ROUTE, selection as agenda_selection
 
 FINANCE_COMMANDS = {
     "source.add", "contributor.save", "work.save", "work.submit",
@@ -156,6 +157,13 @@ def authorize(handler):
                 bind_actor(handler, handler.json_body())
             return
         fail("A lead or finance operator uses the installation's accounting directory.")
+    if DELIVERY_AGENDA_ROUTE.fullmatch(path) and method in ("GET", "HEAD"):
+        if role == "contributor":
+            fail("Open the contributor work desk at /team.")
+        identities, _as_of, _versions = agenda_selection(parse_qs(parsed.query, keep_blank_values=True))
+        if any(not access.case_allowed(principal, ident) for ident in identities):
+            fail("Select agenda cases available to this staff profile.")
+        return
     if path in ("/api/operations", "/api/operations/installation-source-profiles") and method in ("GET", "HEAD"):
         if role == "contributor":
             fail("Open the contributor work desk at /team.")

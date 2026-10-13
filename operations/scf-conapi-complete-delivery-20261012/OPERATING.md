@@ -300,3 +300,92 @@ managed operation receipts, browser journey, full exports and successful archive
 saves. The source manifest identifies the exact programme sent to the receiving
 host; the operating report identifies the application and native result it
 actually produced.
+
+## Following workbook review and complete customer receiving
+
+The same owning continuation now runs the complete offline supplier workbook
+operation after the original supplier/installed phase completes. The original
+application remains selected at its original `e5520a2a` commit. Its accepted
+requests, native Analysis workspace, original source editions and installation
+receipts retain that selection.
+
+The workbook leg uses the separately merged supplier product, including PR858
+and the PR883 shutdown correction. Supply an existing complete canonical
+checkout containing that exact driver:
+
+```bash
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -I \
+  "$DATASETTE_ROOT/conapi-continuation-source/continue_conapi.py" \
+  --root "$DATASETTE_ROOT" \
+  --workbook-source-root /actual/retained/complete/canonical-checkout
+```
+
+The current driver is
+`products/conapi/supplier-report/tools/receive_review_workbook.mjs`,
+53,144 bytes, SHA-256
+`2a0b3bf4af4eb278b987cb404fde97dfac5b56835474b0c109a935b06554dbd3`,
+merged in PR883 at
+`d7a36ab7532e63c1d897db7c5c718e62670825dd`. The supplied checkout may contain later
+unrelated contributions: the helper records its actual full commit, requires a
+clean supplier product and checks the exact driver, original model and retained
+input. It reads the existing Git checkout and performs no checkout or fetch.
+
+If `--workbook-source-root` is omitted, the original root's
+`canonical-repository` is selected. Keep that recorded source checkout at its
+selected commit until the native operation and automatic preservation finish.
+The original Conapi application worktree remains separate and unchanged.
+
+The helper resolves Playwright through the actual `playwrightModule` from
+`installed-input.json` and selects `programme.originalPython.python` from the
+successfully installed workbooks environment. It uses that original returned
+installation ID and the existing browser executable. There is no new environment
+installation or independent receiver allocation.
+
+### Original continuation identity
+
+The workbook operation is
+`CONAPI-SUPPLIER-WORKBOOK-RECEIVING-7A2F-20261012`. Its exact 65,289-byte
+`elite-reimport-workspace.json` has SHA-256
+`4020b1ee82e66b7b25886159248c92b7a1ee5006bc7fc71f698844e61a8924b9`.
+It retains the original 23-item comparison and explicitly attributed workbook
+receiving exercise decisions.
+
+Before invoking the maintained driver, the helper saves
+`conapi-workbook-selected-input.json`: the actual parent programme ID and
+original input, selected source commit and file identities, original workbook
+Python installation, existing browser/module paths and exact output directory.
+The full original completed parent programme is retained alongside it.
+Subsequent invocations require the same selection and call the existing driver's
+saved-operation continuation.
+
+The default output is `$DATASETTE_ROOT/conapi-workbook-native`. If the original
+receiver already selected another workbook output beneath this same root, pass
+`--workbook-output /that/exact/original/directory`. Keep the already selected
+operation and its directory. The parent continuation's original flock stays held
+through the workbook leg and final archive save; the workbook driver also checks
+its own original process identity before resuming.
+
+### Operating result and preservation
+
+The native driver carries actual browser XLSX download, editable return, stale
+decision review, original `decideMany` and `finalize`, fresh browser receiving,
+same-operation CLI replay preserving the later revision, complete customer
+source/data export and actual SQLite receiving. Every delivery adoption reparses
+the retained XLSX through the original Python reader before accepting its saved
+decision input.
+
+The helper reads the original `COMPLETE.json`, requires the exact operation,
+source/core/input binding and rechecks the entire returned ZIP's bytes and hash.
+It writes `Conapi_Workbook_Following_Result.json` and adds that full result to
+`Conapi_Complete_Operating_Result.json`. The original
+`save_complete_delivery` then includes the complete workbook output directory,
+customer folder, original and returned spreadsheets, native receipts, source
+files and `Supplier_Workbook_Receiving.zip` in the same complete workspace
+checkpoint.
+
+An interrupted workbook stage leaves the outer result at
+`WORKBOOK_CONTINUATION` and preserves the full original root using the existing
+saving helper before returning failure. Resume the same owning continuation with
+its retained source and output selection. Its successful original supplier phase
+remains in `result.programme`; the workbook stage cannot turn an incomplete
+native receipt into a completed customer result.

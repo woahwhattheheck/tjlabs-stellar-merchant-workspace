@@ -445,3 +445,9 @@ Site acceptance or grant submission. The actual combined native Page callback
 and original publisher's saved/deployed version are separate owner-reported
 results. The current source edition can advance through the existing composer;
 the receiver always binds the actual four-file edition selected for that run.
+
+## Complete issuer programme and native plan
+
+The existing handover now receives the original Grant Operations issuer-case ZIP, including correspondence, selected terms, commissioning and native planning history. Use **Issuer programme and selected native plan** in Submission handover to review and retain the programme, then explicitly receive its case-selected plan through Planning edition. The selected context is frozen with each prepared edition and retained in the complete editable draft.
+
+The full operating flow, receiving profile, original files and CLI export are documented in [GRANT_ISSUER_CONTEXT.md](./GRANT_ISSUER_CONTEXT.md).

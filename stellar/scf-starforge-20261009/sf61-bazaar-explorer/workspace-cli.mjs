@@ -5,11 +5,15 @@ import { open } from 'node:fs/promises';
 import { isAbsolute, resolve, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openAtlasWorkspace } from './workspace.mjs';
+import { inspectCatalogReview, catalogReviewSummary, CATALOG_REVIEW_LIMITS } from './catalog-review.mjs';
 import { CAPTURE_FILTERS } from './capture-search.mjs';
 import { writeWorkspaceTransfer, receiveWorkspaceTransfer, inspectWorkspaceTransfer } from './workspace-transfer.mjs';
 
 const HELP = `Atlas retained catalogs, buyer requests and complete workspace transfer
 
+  atlas-workspace inspect-review --input /data/atlas-catalog-review.json
+  atlas-workspace receive-review --workspace /private/atlas --input /data/atlas-catalog-review.json [--name TEXT] [--selection ID]
+  atlas-workspace review --workspace /private/atlas --selection ID [--sha256 SHA256]
   atlas-workspace summary --workspace /private/atlas
   atlas-workspace receive-page --workspace /private/atlas --input /data/page.json --name "Provider capture"
   atlas-workspace receive-capture --workspace /private/atlas --input /data/original-capture --name "Provider capture"
@@ -25,6 +29,11 @@ const HELP = `Atlas retained catalogs, buyer requests and complete workspace tra
   atlas-workspace export --workspace /private/atlas --output /private/atlas.ndjson
   atlas-workspace inspect --input /private/atlas.ndjson
   atlas-workspace receive --input /private/atlas.ndjson --workspace /private/received [--resume]
+
+A catalog review carries its complete original page, exact row/payment option and
+applied search. inspect-review validates it; receive-review keeps all original
+source bytes and opens that same selection in the existing request workflow.
+review returns the complete retained review with its original file digest.
 
 Search ranks the retained original pages with the maintained Bazaar query engine.
 An empty query browses source order. All payment filters match the same original
@@ -42,6 +51,9 @@ using this CLI on the same directory. Input/output/workspace paths are absolute.
 Receive resumes only the same transfer; every original saved file travels together.
 `;
 const commands = {
+  'inspect-review': { required: ['input'] },
+  'receive-review': { required: ['workspace', 'input'], optional: ['name', 'selection'] },
+  review: { required: ['workspace', 'selection'], optional: ['sha256'] },
   summary: { required: ['workspace'] },
   'receive-page': { required: ['workspace', 'input', 'name'] },
   'receive-capture': { required: ['workspace', 'input', 'name'] },
@@ -102,6 +114,8 @@ export async function runWorkspaceCli(argv = process.argv.slice(2)) {
   let workspace, input;
   const print = result => { console.log(JSON.stringify(result, null, 2)); return result; };
   try {
+    if (options.command === 'inspect-review')
+      return print(catalogReviewSummary(await inspectCatalogReview(await inputText(options.input, CATALOG_REVIEW_LIMITS.packetBytes))));
     if (options.command === 'inspect' || options.command === 'receive') {
       input = createReadStream(options.input);
       if (options.command === 'inspect') return print(await inspectWorkspaceTransfer(input));
@@ -111,7 +125,12 @@ export async function runWorkspaceCli(argv = process.argv.slice(2)) {
       return print(result);
     }
     workspace = await openAtlasWorkspace({ directory: options.workspace,
-      create: ['receive-page', 'receive-capture'].includes(options.command) });
+      create: ['receive-page', 'receive-capture', 'receive-review'].includes(options.command) });
+    if (options.command === 'receive-review') return print(await workspace.receiveCatalogReview({
+      reviewText: await inputText(options.input, CATALOG_REVIEW_LIMITS.packetBytes),
+      ...(options.name ? { name: options.name } : {}), ...(options.selection ? { selectionId: options.selection } : {}) }));
+    if (options.command === 'review') return print(await workspace.catalogReview({ selectionId: options.selection,
+      ...(options.sha256 ? { sha256: options.sha256 } : {}) }));
     if (options.command === 'summary') return print(await workspace.summary());
     if (options.command === 'export') return print(await writeWorkspaceTransfer(workspace, options.output));
     if (options.command === 'receive-page')

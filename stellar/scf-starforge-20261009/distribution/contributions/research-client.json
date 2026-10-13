@@ -126,7 +126,8 @@
     "./buyer/research-dossiers/study-flow/model": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/study-flow/model.mjs",
     "./buyer/research-dossiers/study-flow/render": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/study-flow/render.mjs",
     "./buyer/research-dossiers/study-flow/cli": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/study-flow/cli.mjs",
-    "./buyer/research-dossiers/customer-quotes/python-bridge": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/research-quotes-delivery.mjs"
+    "./buyer/research-dossiers/customer-quotes/python-bridge": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/research-quotes-delivery.mjs",
+    "./buyer/research-dossiers/customer-quotes/python-programme-bridge": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/research-quote-programme-delivery.mjs"
   },
   "components": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/europe-pmc",
@@ -394,7 +395,13 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/research-quotes-delivery.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/research_quote_types.py",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/research_quotes.py",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/research_quotes_cli.py"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/research_quotes_cli.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/research-quote-programme-delivery.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/research_quote_programmes.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/research_quote_programme_types.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/research_quote_programmes_cli.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_quote_programme_receiving.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH-QUOTE-PROGRAMMES.md"
   ],
   "browserAssets": [
     {

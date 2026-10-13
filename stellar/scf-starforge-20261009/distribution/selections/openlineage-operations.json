@@ -184,7 +184,9 @@
     "stellar-forge/mcp-paid-agent/serve.mjs",
     "stellar-forge/mcp-paid-agent/remote-mcp.mjs",
     "stellar-forge/mcp-paid-agent/operator-ui/client.mjs",
-    "stellar/scf-starforge-20261009/distribution/runtime-workspace/SOURCE_BUILDS.md"
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/SOURCE_BUILDS.md",
+    "stellar/scf-starforge-20261009/sf82-seller-pilot/facilitator-supported-worker.mjs",
+    "stellar-forge/developer-site/a2a-customer-commissioning.json"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

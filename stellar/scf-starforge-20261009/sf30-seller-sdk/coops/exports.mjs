@@ -5,7 +5,7 @@ import {join} from 'node:path';
 import {randomBytes,createHash} from 'node:crypto';
 import {privateDirectory,jsonBytes,stable} from '../stellar-expert/store.mjs';
 import {COLUMNS,SOURCE_CONTRACT} from './schema.mjs';
-import {iterateEditionRows,comparisonSummary,iterateComparisonChanges,recordComparisonChange} from './domain.mjs';
+import {rowSelection,iterateEditionRows,comparisonSummary,iterateComparisonChanges,recordComparisonChange} from './domain.mjs';
 import {fault,text,hashBytes} from './provider.mjs';
 const MAX=1024*1024*1024,ID=/^[a-z0-9-]{8,100}$/;
 const cell=v=>{const s=String(v??'');return /[",\r\n]/.test(s)?'"'+s.replaceAll('"','""')+'"':s;};
@@ -103,10 +103,12 @@ export function tableProjection(mapping,table){
  const columns=mapping?mapping.columns.map(c=>c.heading):COLUMNS,fields=mapping?mapping.columns.map(c=>c.source):COLUMNS;
  return{columns,fields,project:row=>Object.fromEntries(columns.map((heading,i)=>[heading,row[fields[i]]]))};
 }
-export async function writeTableExport(store,{id,editions,annotations,table,format,mapping=null,createdAt,backfill=null}){
+export async function writeTableExport(store,{id,editions,annotations,table,format,mapping=null,createdAt,backfill=null,selection=null}){
  if(!['json','jsonl','csv'].includes(format))throw fault('COOPS_EXPORT','Choose JSON, JSONL or CSV for a streamed table.');
+ if(selection&&(editions.length!==1||selection.table!==table))throw fault('COOPS_EXPORT_SELECTION','A selected-window export requires its exact single edition and original table.');
+ const chosen=selection?rowSelection(editions[0],selection):null;
  const {columns,project}=tableProjection(mapping,table),
-  metadata={schema:'stellar-forge.coops-table-export.v1',editionIds:editions.map(e=>e.id),sourceIdentities:editions.map(e=>({id:e.id,query:e.query,sourceSha256:e.sourceSha256})),table,columns,mapping,annotations,backfill,source:SOURCE_CONTRACT},
+  metadata={schema:'stellar-forge.coops-table-export.v1',editionIds:editions.map(e=>e.id),sourceIdentities:editions.map(e=>({id:e.id,query:e.query,sourceSha256:e.sourceSha256})),table,columns,mapping,annotations,backfill,source:SOURCE_CONTRACT,...(chosen?{selection:chosen}:{})},
   item={id,kind:'edition',editionId:editions.length===1?editions[0].id:null,backfillId:backfill?.id??null,editionIds:metadata.editionIds,table,format,
    mappingId:mapping?.id??null,mapping:structuredClone(mapping),metadata,createdAt,name:'coops-'+(backfill?.id??editions[0].id).slice(0,20)+'.'+table+'.'+format,
    type:format==='csv'?'text/csv; charset=utf-8':format==='jsonl'?'application/x-ndjson; charset=utf-8':'application/json; charset=utf-8'};
@@ -114,7 +116,7 @@ export async function writeTableExport(store,{id,editions,annotations,table,form
   if(format==='csv')yield columns.map(cell).join(',')+'\r\n';
   if(format==='json')yield JSON.stringify(metadata).slice(0,-1)+',"rows":[';
   let first=true;
-  for(const edition of editions)for await(const row of iterateEditionRows(store,edition,{table})){
+  for(const edition of editions)for await(const row of iterateEditionRows(store,edition,chosen??{table})){
    const selected=project(row);
    if(format==='csv')yield columns.map(c=>cell(selected[c])).join(',')+'\r\n';
    else if(format==='jsonl')yield JSON.stringify(selected)+'\n';

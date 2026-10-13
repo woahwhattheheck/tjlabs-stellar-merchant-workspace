@@ -22,6 +22,7 @@ if _TYPE_CHECKING:
     from .research_workspace import ResearchWorkspace, ResearchError
     from .research_commerce import ResearchCommerce, ResearchCommerceArchive
     from .research_quotes import ResearchQuotes, ResearchQuoteExport, ResearchQuoteBundle
+    from .research_quote_programmes import ResearchQuoteProgrammes, ResearchQuoteProgrammeHandover
     from .research_extraction import ResearchExtraction
     from .research_customer_updates import ResearchCustomerUpdates, ResearchCustomerDelivery
     from .research_customer_receiving import ResearchCustomerCancelled, run_research_customer_delivery
@@ -34,6 +35,7 @@ __all__ = [
     "ResearchCustomerUpdates", "ResearchCustomerDelivery", "ResearchCustomerCancelled", "run_research_customer_delivery",
     "ResearchCommerce", "ResearchCommerceArchive",
     "ResearchQuotes", "ResearchQuoteExport", "ResearchQuoteBundle",
+    "ResearchQuoteProgrammes", "ResearchQuoteProgrammeHandover",
     "ResearchWorkspace", "ResearchError", "ResearchExtraction", "ResearchDocuments", "ResearchPipelines",
     "ResearchSelection", "ResearchInputFile", "ResearchDocumentSource",
     "AcquisitionWorkspace", "AcquisitionResult", "AcquisitionProcess", "AcquisitionError",
@@ -54,6 +56,8 @@ _EXPORTS = {
     "ResearchCustomerDelivery": ".research_customer_updates",
     "ResearchCustomerCancelled": ".research_customer_receiving",
     "run_research_customer_delivery": ".research_customer_receiving",
+    "ResearchQuoteProgrammes": ".research_quote_programmes",
+    "ResearchQuoteProgrammeHandover": ".research_quote_programmes",
     "ResearchQuotes": ".research_quotes",
     "ResearchQuoteExport": ".research_quotes",
     "ResearchQuoteBundle": ".research_quotes",

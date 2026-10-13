@@ -80,7 +80,7 @@ function localCommands(key){return new Promise((resolve,reject)=>{
   r.onsuccess=()=>{rows=r.result??[];};tx.oncomplete=()=>resolve(rows);tx.onerror=()=>reject(tx.error||r.error);tx.onabort=()=>reject(tx.error||new Error('The original browser requests could not be read.'));
 });}
 /** A draft, immutable request and workspace-wide pending marker commit together. */
-function writeLocal({draft,command=null,outcome=null}={}){
+function writeLocal({draft,command=null,outcome=null,requireUnblocked=false,checkLive=null}={}){
   const key=recovery.key,binding=clone(recovery.binding),actor=recovery.actor,expected=recovery.cache?.version;
   requireLocal(key&&recovery.cache,'Open the original operator record first.');
   if(draft!==undefined)requireLocal(utf8(JSON.stringify(draft)).length<=RECOVERY_DRAFT_LIMIT,'This complete browser draft exceeds 64 MiB. Download it and use the original CLI or operating backup.');
@@ -95,7 +95,8 @@ function writeLocal({draft,command=null,outcome=null}={}){
       const g=gates.get(scopeKey(binding));g.onerror=()=>fail(g.error);g.onsuccess=()=>{try{
         next=clone(old);next.version++;next.updatedAt=new Date().toISOString();if(draft!==undefined)next.draft=clone(draft);
         nextGate=g.result??{key:scopeKey(binding),binding:clone(binding),pending:null};requireLocal(same(nextGate.binding,binding),'The browser workspace marker changed.');
-        const finish=()=>{contexts.put(next);gates.put(nextGate);};
+        if(requireUnblocked)requireLocal(!old.pending&&!nextGate.pending,'Another operator or tab retains this workspace’s pending request. Reconcile it before adopting worksheet values.');
+        const finish=()=>{if(checkLive)checkLive();contexts.put(next);gates.put(nextGate);};
         if(command){
           requireLocal(!old.pending||old.pending===command.key,'Reconcile the original pending request before submitting another.');
           requireLocal(!nextGate.pending||nextGate.pending.contextKey===key&&nextGate.pending.commandKey===command.key,'Another operator or tab retains this workspace’s pending request.');
@@ -132,6 +133,7 @@ function snapshotDraft(){
   saveDraft();savePlanDraft();
   return {schema:RECOVERY_SCHEMA,binding:clone(recovery.binding),actor:recovery.actor,fields:Object.fromEntries(DRAFT_FIELDS.map(id=>[id,$(id).value])),nameDirty:$('qbo-name').dataset.dirty==='true',
     sourceChoice,sourceIdentity:sourceIdentity(),planDrafts:[...planDrafts].map(([key,value])=>[key,clone(value)]),sourceDrafts:[...sourceDrafts].map(([key,value])=>[key,{...value,rows:[...value.rows].map(([id,row])=>[id,clone(row)]),selected:[...value.selected]}]),
+    worksheetRecords:[...worksheetRecords].map(([id,row])=>[id,clone(row)]),worksheetSelection,
     createIdentity:clone(createIdentity),selected,selectedResponse,loadedCompany:clone(loadedCompany),loadedCompanyOrigin:clone(loadedCompanyOrigin),loadedFile:loadedFile?{name:loadedFile.name,content:loadedFile.content}:null,
     planPreview:clone(planPreview),responsePreview:clone(responsePreview),nativePreview:clone(nativePreview),view:document.querySelector('[data-qbo-view].active')?.dataset.qboView??'journal'};
 }
@@ -155,11 +157,13 @@ async function flushDraft(){
 function clearLiveDraft(){
   for(const [id,value] of defaultDraftFields)$(id).value=value;
   delete $('qbo-name').dataset.dirty;
+  worksheetRecords=new Map();worksheetSelection='';worksheetOffset=0;worksheetIssueOffset=0;
   source=null;sourceChoice='';recovery.restoredSourcePin=null;draftRows=new Map();draftSelected=new Set();sourceDrafts=new Map();planDrafts=new Map();buyerValuationBasis='';
   selected='';selectedResponse='';detail=null;responseDetail=null;currentAccountant=null;loadedCompany=null;loadedCompanyOrigin=null;loadedFile=null;fileLoading=false;
   planPreview=null;responsePreview=null;nativePreview=null;createIdentity=identity();draftOffset=0;lineOffset=0;lineIndex=-1;comparisonOffset=0;previewOffset=0;
   ++fileToken;++sourceToken;++detailToken;++responseToken;++nativeToken;
   for(const id of ['qbo-response-file','qbo-company-info-file','qbo-company-preferences-file','qbo-company-accounts-file'])$(id).value='';
+  $('qbo-worksheet-record-file').value='';$('qbo-worksheet-csv-file').value='';
   $('qbo-native-confirm').checked=false;$('qbo-cancel-unused').checked=false;
   $('qbo-plan-preview-panel').hidden=true;$('qbo-preview-panel').hidden=true;$('qbo-native-preview-panel').hidden=true;
   if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl='';}$('qbo-preview-download').hidden=true;
@@ -169,6 +173,10 @@ function restoreDraft(value){
   requireLocal(value.schema===RECOVERY_SCHEMA&&same(value.binding,recovery.binding)&&value.actor===recovery.actor,'The browser draft belongs to another original workspace or operator.');
   for(const id of DRAFT_FIELDS)if(typeof value.fields?.[id]==='string')$(id).value=value.fields[id];
   if(value.nameDirty)$('qbo-name').dataset.dirty='true';
+  worksheetRecords=new Map((value.worksheetRecords??[]).map(([id,row])=>{
+    requireLocal(row?.schema===WORKSHEET_RECORD_SCHEMA&&row.id===id&&row.actor===recovery.actor&&same(row.binding,recovery.binding),
+      'A retained worksheet belongs to another original operator or workspace.');return [id,clone(row)];
+  }));worksheetSelection=value.worksheetSelection??'';worksheetOffset=0;worksheetIssueOffset=0;
   planDrafts=new Map((value.planDrafts??[]).map(([key,row])=>[key,clone(row)]));
   sourceDrafts=new Map((value.sourceDrafts??[]).map(([key,row])=>[key,{...row,rows:new Map(row.rows),selected:new Set(row.selected)}]));
   sourceChoice=value.sourceChoice??'';recovery.restoredSourcePin=clone(value.sourceIdentity??null);createIdentity=clone(value.createIdentity??identity());selected=value.selected??'';selectedResponse=value.selectedResponse??'';
@@ -562,7 +570,7 @@ function controls(){
   for(const button of $('qbo-plan-list').querySelectorAll('button'))button.disabled=busy||Boolean(pending);
   for(const form of ['qbo-create-form','qbo-review-form','qbo-response-form','qbo-company-form','qbo-cancel-form'])for(const input of $(form).querySelectorAll('input,select,textarea'))if(!input.closest('#qbo-mappings'))input.disabled=!writable||((form==='qbo-response-form'&&!receivable())||(form==='qbo-review-form'&&cancelled()));
   $('qbo-operator').disabled=busy||Boolean(pending);
-  renderRecovery();
+  worksheetControls(writable);renderRecovery();
   document.body.classList.toggle('working',busy);
 }
 function invalidatePlan(){planPreview=null;createIdentity=identity();$('qbo-plan-preview-panel').hidden=true;controls();}
@@ -652,7 +660,7 @@ function renderSource(){
       (buyer?'<p class="hint">Each expense or credit allocation needs an explicit journal decision. Original asset amounts and recognition dates are preserved; enter home-currency values and both account directions yourself.</p><details><summary>Buyer and handoff source</summary><dl class="record-values">'+definitions({buyer:source.buyer??origin.buyer,source:origin})+'</dl></details>':'<p class="hint">'+esc(origin.periodClose?'Retained period close '+origin.periodClose.id+' · version '+origin.periodClose.revision:'Original reconciliation '+(origin.runId??''))+'</p>');
   }else $('qbo-source-description').innerHTML='<p>Prepare an accountant handoff in the merchant workspace, then return here to choose its source.</p>';
   $('qbo-buyer-basis-field').hidden=!buyer;$('qbo-valuation-basis').required=buyer;$('qbo-valuation-basis').value=buyerValuationBasis;
-  $('qbo-buyer-bulk').hidden=!buyer;
+  $('qbo-buyer-bulk').hidden=!buyer;renderWorksheets();
   $('qbo-mapping-title').textContent=buyer?'Decide every buyer allocation and map its journal lines':'Select source events and map their journal lines';
   $('qbo-mapping-description').textContent=buyer?'Include or exclude every allocation. Included expenses and credits need a positive home-currency amount, two distinct accounts and a valuation note. Exclusions need a reason and stay local to this journal plan.':'Enter the amount in company home currency and the debit and credit accounts for each selected original event.';
   $('qbo-draft-search-label').textContent=buyer?'Find buyer allocations':'Find source events';
@@ -895,6 +903,277 @@ function renderCompany(){
 function useManualCompany({message=true}={}){
   loadedCompany=null;loadedCompanyOrigin=null;renderCompany();invalidatePlan();if(message)notify('Company and account fields remain available for manual entry.');
 }
+
+// Buyer allocation worksheets use the original persistent operator draft.
+const WORKSHEET_RECORD_SCHEMA='stellar-forge.qbo-browser-worksheet.v1';
+const WORKSHEET_RESPONSE_SCHEMA='stellar-forge.qbo-worksheet-response.v1';
+const WORKSHEET_FIELDS=['decision','amount','debitAccountId','creditAccountId','valuationNote','reason','description'];
+const WORKSHEET_CSV_LIMIT=16*1024*1024;
+let worksheetRecords=new Map(),worksheetSelection='',worksheetOffset=0,worksheetIssueOffset=0;
+function selectedWorksheet(){return worksheetRecords.get(worksheetSelection)??null;}
+function worksheetDraft(){
+  requireLocal(buyerSource()&&source?.rows?.length,'Choose the original buyer allocation handoff.');
+  return {valuationBasis:buyerValuationBasis,rows:source.rows.map(row=>{
+    const value=draftRows.get(row.rowId);requireLocal(value,'The original allocation draft is missing.');
+    return {rowId:row.rowId,decision:value.decision??'pending',amount:value.amount??'',
+      debitAccountId:value.debitAccount?.value??'',creditAccountId:value.creditAccount?.value??'',
+      valuationNote:value.valuationNote??'',reason:value.reason??'',description:value.description??''};
+  })};
+}
+function worksheetContext(){
+  requireLocal(contextReady()&&!pending&&!recovery.gate?.pending&&!metadata?.reopenRequired,
+    'Open the original operator and reconcile any pending request before working on this worksheet.');
+  requireLocal(buyerSource()&&sourceChoice===source?.record?.id&&$('qbo-handoff').value===sourceChoice,
+    'Choose the current original buyer allocation handoff.');
+  requireLocal(loadedCompany&&RECOVERY_SHA.test(loadedCompany.integrity?.sha256??''),
+    'Load the original QuickBooks company chart before exporting or inspecting a worksheet.');
+  requireLocal(loadedCompany.realmId===$('qbo-realm').value.trim()&&loadedCompany.companyName===$('qbo-company-name').value.trim()&&
+    loadedCompany.baseCurrency===$('qbo-currency').value,'The selected company fields differ from the loaded chart. Restore that company or load the new chart explicitly.');
+  return {binding:clone(recovery.binding),handoffId:sourceChoice,expectedParentId:source.expectedParentId??null,
+    companySnapshot:clone(loadedCompany),environment:$('qbo-environment').value};
+}
+function worksheetScope(){
+  const value=worksheetContext();
+  return canonical({actor:operator(),binding:value.binding,source:sourceIdentity(),parent:value.expectedParentId,
+    companySha256:value.companySnapshot.integrity.sha256,environment:value.environment});
+}
+function worksheetFits(record){
+  try{
+    const context=worksheetContext(),binding=record?.worksheet?.binding;
+    return record.actor===recovery.actor&&same(record.binding,recovery.binding)&&same(record.source,sourceIdentity())&&
+      binding.handoffId===context.handoffId&&binding.accountantRevisionId===context.expectedParentId&&
+      binding.companySha256===context.companySnapshot.integrity.sha256&&binding.environment===context.environment;
+  }catch{return false;}
+}
+async function worksheetReply(path,request){
+  requireLocal(utf8(JSON.stringify(request)).length<=RECOVERY_REQUEST_LIMIT,
+    'The complete worksheet request exceeds 32 MiB. Download the files and shorten draft explanations before another inspection.');
+  const value=await api('/api/qbo/worksheets/'+path,request);
+  requireLocal(value.schema===WORKSHEET_RESPONSE_SCHEMA&&same(value.binding,recovery.binding)&&!value.reopenRequired&&!metadata?.reopenRequired,
+    'Reopen the original workspace before relying on this worksheet response.');
+  return value;
+}
+async function worksheetVerifyRecord(worksheet){
+  requireLocal(worksheet?.schema==='stellar-forge.qbo-allocation-worksheet.v1'&&RECOVERY_SHA.test(worksheet.integrity?.sha256??''),
+    'Choose the complete original allocation worksheet record.');
+  const {integrity,...body}=worksheet;
+  requireLocal(await sha256(canonical(body))===integrity.sha256,'The original worksheet record changed.');
+}
+async function worksheetVerifyAccounts(reference,worksheet){
+  requireLocal(reference?.companySha256===worksheet.binding.companySha256&&reference.realmId===worksheet.binding.realmId&&
+    reference.csvSha256===await sha256(reference.csvText)&&reference.csvBytes===utf8(reference.csvText).length,
+    'The account reference differs from the original worksheet company chart.');
+}
+async function worksheetVerifyPreview(preview,request){
+  requireLocal(preview?.schema==='stellar-forge.qbo-allocation-worksheet-preview.v1'&&
+    preview.worksheetId===request.worksheet.id&&preview.worksheetSha256===request.worksheet.integrity.sha256&&
+    preview.csv?.sha256===await sha256(request.csvText)&&preview.csv?.bytes===utf8(request.csvText).length&&
+    preview.currentDraftSha256===await sha256(canonical(request.currentDraft)),
+    'The worksheet preview does not match the original file, exported base and current draft.');
+  const {integrity,...body}=preview;
+  requireLocal(RECOVERY_SHA.test(integrity?.sha256??'')&&await sha256(canonical(body))===integrity.sha256,
+    'The complete worksheet preview changed.');
+}
+async function persistWorksheets(records,selection,{draft=null,checkLive=null}={}){
+  const saved=draft??snapshotDraft();
+  saved.worksheetRecords=[...records].map(([key,value])=>[key,clone(value)]);
+  saved.worksheetSelection=selection;
+  await writeLocal({draft:saved,requireUnblocked:true,checkLive});
+  worksheetRecords=records;worksheetSelection=selection;recovery.dirty=false;
+  renderWorksheets();return saved;
+}
+async function flushWorksheetDraft(){await recovery.queue;await flushDraft();requireLocal(contextReady(),'Reopen the original saved operator draft before continuing.');}
+function worksheetRequest(record){
+  requireLocal(record&&worksheetFits(record),'This worksheet belongs to another handoff, accountant return or company chart. Keep its downloads and export from the current source.');
+  requireLocal(record.returned&&typeof record.returned.text==='string','Choose and retain the complete edited CSV first.');
+  return {...worksheetContext(),worksheet:clone(record.worksheet),csvText:record.returned.text,
+    currentDraft:worksheetDraft(),resolutions:clone(record.resolutions??[])};
+}
+function worksheetBlob(name,text,type){
+  const url=URL.createObjectURL(new Blob([text],{type})),link=document.createElement('a');
+  link.href=url;link.download=name;document.body.append(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+async function readWorksheetFile(file,limit){
+  requireLocal(file&&file.size>0&&file.size<=limit,'Choose the complete original file within its stated size limit.');
+  const raw=await file.arrayBuffer(),text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(raw),sha=await sha256(raw);
+  requireLocal(utf8(text).length===raw.byteLength&&await sha256(text)===sha,'The file cannot be retained as exact UTF-8 text.');
+  return {name:file.name,text,bytes:raw.byteLength,sha256:sha};
+}
+async function exportWorksheet(){
+  return reading(async()=>{
+    await flushWorksheetDraft();const scope=worksheetScope(),draft=worksheetDraft(),request={...worksheetContext(),...identity(),draft};
+    const value=await worksheetReply('export',request);await worksheetVerifyRecord(value.worksheet);await worksheetVerifyAccounts(value.accountReference,value.worksheet);
+    requireLocal(scope===worksheetScope()&&same(draft,worksheetDraft())&&value.worksheet.id===request.id&&
+      value.worksheet.createdAt===request.createdAt&&same(value.worksheet.base,draft),
+      'The source or draft changed during worksheet export. Keep the current draft and export again.');
+    requireLocal(value.csvSha256===await sha256(value.csvText)&&value.csvBytes===utf8(value.csvText).length,'The worksheet CSV differs from its native receipt.');
+    const record={schema:WORKSHEET_RECORD_SCHEMA,id:request.id,actor:recovery.actor,binding:clone(recovery.binding),source:sourceIdentity(),
+      worksheet:clone(value.worksheet),csvText:value.csvText,csvSha256:value.csvSha256,csvBytes:value.csvBytes,accountReference:clone(value.accountReference),
+      returned:null,resolutions:[],inspection:null,inspectionScope:null,adoptions:[]};
+    const records=new Map(worksheetRecords);requireLocal(!records.has(record.id),'This worksheet identity already exists.');records.set(record.id,record);
+    await persistWorksheets(records,record.id);worksheetOffset=0;renderWorksheets();
+    worksheetBlob('quickbooks-allocations-'+record.id+'.csv',record.csvText,'text/csv;charset=utf-8');
+    notify('The complete exported base is saved in this operator’s browser record. Download its worksheet record with the CSV before editing.');
+  });
+}
+async function openWorksheetRecord(){
+  const file=$('qbo-worksheet-record-file').files[0];if(!file)return;
+  return reading(async()=>{
+    await flushWorksheetDraft();const scope=worksheetScope(),original=await readWorksheetFile(file,RECOVERY_REQUEST_LIMIT);
+    const parsed=JSON.parse(original.text.replace(/^\uFEFF/,'')),worksheet=parsed.worksheet??parsed;
+    await worksheetVerifyRecord(worksheet);
+    const request={...worksheetContext(),worksheet},value=await worksheetReply('open',request);await worksheetVerifyAccounts(value.accountReference,worksheet);
+    requireLocal(scope===worksheetScope()&&same(value.worksheet,worksheet),'The original source changed while reopening the worksheet.');
+    requireLocal(value.csvSha256===await sha256(value.csvText)&&value.csvBytes===utf8(value.csvText).length,'The original worksheet CSV receipt differs.');
+    const prior=worksheetRecords.get(worksheet.id);
+    if(prior)requireLocal(same(prior.worksheet,worksheet)&&prior.csvSha256===value.csvSha256&&prior.csvText===value.csvText,
+      'This worksheet ID already retains another base. Preserve both source files and use the original saved record.');
+    const record=prior??{schema:WORKSHEET_RECORD_SCHEMA,id:worksheet.id,actor:recovery.actor,binding:clone(recovery.binding),source:sourceIdentity(),
+      worksheet:clone(worksheet),csvText:value.csvText,csvSha256:value.csvSha256,csvBytes:value.csvBytes,accountReference:clone(value.accountReference),
+      importedRecord:original,returned:null,resolutions:[],inspection:null,inspectionScope:null,adoptions:[]};
+    const records=new Map(worksheetRecords);records.set(record.id,record);await persistWorksheets(records,record.id);
+    $('qbo-worksheet-record-file').value='';worksheetOffset=0;renderWorksheets();notify('The original worksheet base is open. Its identity and all original allocations were checked against this workspace.');
+  });
+}
+async function retainWorksheetCsv(){
+  const file=$('qbo-worksheet-csv-file').files[0];if(!file)return;
+  return reading(async()=>{
+    await flushWorksheetDraft();const scope=worksheetScope(),selected=worksheetSelection,record=selectedWorksheet();
+    requireLocal(worksheetFits(record),'Select a worksheet for this exact source and chart.');
+    const returned=await readWorksheetFile(file,WORKSHEET_CSV_LIMIT);
+    requireLocal(selected===worksheetSelection&&scope===worksheetScope(),'The selected worksheet or source changed while reading the file.');
+    const next={...clone(record),returned,resolutions:[],inspection:null,inspectionScope:null};
+    const records=new Map(worksheetRecords);records.set(next.id,next);await persistWorksheets(records,next.id);
+    $('qbo-worksheet-csv-file').value='';worksheetOffset=0;renderWorksheets();
+    notify('The complete edited CSV bytes are saved. Inspect them against the exported base and current draft.');
+  });
+}
+async function inspectWorksheet(){
+  return reading(async()=>{
+    await flushWorksheetDraft();const scope=worksheetScope(),record=selectedWorksheet(),request=worksheetRequest(record);
+    const value=await worksheetReply('inspect',request);await worksheetVerifyPreview(value.preview,request);
+    requireLocal(scope===worksheetScope()&&same(request.currentDraft,worksheetDraft())&&record.id===worksheetSelection,
+      'The source or current draft changed during inspection. Inspect again before adoption.');
+    const next={...clone(record),inspection:clone(value.preview),inspectionScope:scope};
+    const records=new Map(worksheetRecords);records.set(next.id,next);await persistWorksheets(records,next.id);
+    worksheetOffset=0;renderWorksheets();notify(value.preview.sourceIssues.length?'The file has source coverage issues. No draft values were adopted.':
+      value.preview.summary.unresolved?'Choose which value to keep for every conflict, then inspect again.':'The worksheet return is ready for draft adoption.');
+  });
+}
+function changeWorksheetResolution(id,choice){
+  if(!canEdit())return;
+  const record=selectedWorksheet(),conflict=record?.inspection?.conflicts?.find(row=>row.id===id);
+  requireLocal(conflict&&['','current','returned'].includes(choice),'Choose an existing worksheet conflict.');
+  const resolutions=new Map((record.resolutions??[]).map(row=>[row.id,row.choice]));
+  if(choice)resolutions.set(id,choice);else resolutions.delete(id);
+  record.resolutions=[...resolutions].sort(([a],[b])=>a.localeCompare(b)).map(([id,choice])=>({id,choice}));
+  record.inspectionScope=null;markRecoveryDirty();renderWorksheets();controls();
+}
+function worksheetAdoptionSnapshot(record,preview){
+  const next=snapshotDraft(),key=draftSourceKey(),prior=next.sourceDrafts.find(([id])=>id===key);
+  requireLocal(prior&&same(prior[1].source,sourceIdentity()),'The current source draft is missing from the original saved context.');
+  const previous=new Map(prior[1].rows),candidate=preview.candidate;
+  const rows=candidate.rows.map(row=>{
+    const old=previous.get(row.rowId);requireLocal(old,'An original allocation is missing from this draft.');
+    const account=(field,id)=>({value:id,name:old[field]?.value===id?old[field]?.name??'':accountName(id.trim())});
+    return [row.rowId,{...clone(old),decision:row.decision,amount:row.amount,
+      debitAccount:account('debitAccount',row.debitAccountId),creditAccount:account('creditAccount',row.creditAccountId),
+      valuationNote:row.valuationNote,reason:row.reason,description:row.description}];
+  });
+  const replacement={...prior[1],expectedParentId:source.expectedParentId??null,valuationBasis:candidate.valuationBasis,
+    rows,selected:candidate.rows.filter(row=>row.decision==='include').map(row=>row.rowId)};
+  next.sourceDrafts=next.sourceDrafts.map(([id,value])=>[id,id===key?replacement:value]);
+  next.planPreview=null;next.createIdentity=identity();return {next,replacement};
+}
+async function adoptWorksheet(){
+  return reading(async()=>{
+    await flushWorksheetDraft();const record=selectedWorksheet(),reviewed=record?.inspection,scope=worksheetScope();
+    requireLocal(reviewed?.readyToAdopt&&record.inspectionScope===scope,'Inspect the current source and resolve every conflict before adopting this return.');
+    const request=worksheetRequest(record),value=await worksheetReply('inspect',request);
+    await worksheetVerifyPreview(value.preview,request);
+    requireLocal(value.preview.readyToAdopt&&value.preview.integrity.sha256===reviewed.integrity.sha256&&
+      scope===worksheetScope()&&same(request.currentDraft,worksheetDraft()),
+      'The reviewed worksheet result no longer matches the current draft. Inspect and review it again.');
+    const {next,replacement}=worksheetAdoptionSnapshot(record,value.preview);
+    const accepted={...clone(record),adoptions:[...(record.adoptions??[]),{id:crypto.randomUUID(),at:new Date().toISOString(),
+      actor:recovery.actor,worksheetSha256:record.worksheet.integrity.sha256,csvSha256:record.returned.sha256,
+      previewSha256:value.preview.integrity.sha256,priorDraftSha256:value.preview.currentDraftSha256,
+      acceptedDraftSha256:await sha256(canonical(value.preview.candidate)),createIdentity:clone(next.createIdentity)}],
+      inspectionScope:null};
+    const records=new Map(worksheetRecords);records.set(record.id,accepted);
+    // Commit the complete replacement through the original IDB version CAS and
+    // actual same-workspace pending marker before changing any live mapping.
+    await persistWorksheets(records,record.id,{draft:next,checkLive:()=>{
+      requireLocal(scope===worksheetScope()&&same(request.currentDraft,worksheetDraft())&&worksheetSelection===record.id,
+        'The current draft or worksheet changed before its reviewed replacement could be saved.');
+    }});
+    draftRows=new Map(replacement.rows);draftSelected=new Set(replacement.selected);buyerValuationBasis=replacement.valuationBasis;
+    sourceDrafts.set(draftSourceKey(),{...replacement,rows:draftRows,selected:draftSelected});
+    createIdentity=clone(next.createIdentity);planPreview=null;$('qbo-plan-preview-panel').hidden=true;
+    draftOffset=0;renderSource();renderWorksheets();
+    notify('The reviewed values are saved in the original draft. Review the allocation table, then use Preview journal plan.');
+  });
+}
+function worksheetPreviewRows(record){
+  const preview=record?.inspection;if(!preview)return [];
+  const sourceRows=new Map((source?.rows??[]).map(row=>[row.rowId,row])),choices=new Map((record.resolutions??[]).map(row=>[row.id,row.choice]));
+  return preview.changes.slice(worksheetOffset,worksheetOffset+PAGE).map(row=>({...row,label:row.rowId==='JOURNAL'?'Common journal basis':sourceRows.has(row.rowId)?sourceTitle(sourceRows.get(row.rowId)):row.rowId,
+    selectedChoice:row.id?choices.get(row.id)??'':null}));
+}
+function renderWorksheets(){
+  const panel=$('qbo-worksheets');if(!panel)return;
+  panel.hidden=!buyerSource()&&!worksheetRecords.size;
+  const select=$('qbo-worksheet-select'),record=selectedWorksheet();
+  select.innerHTML='<option value="">Choose a retained worksheet</option>'+[...worksheetRecords.values()].map(value=>
+    '<option value="'+esc(value.id)+'"'+(value.id===worksheetSelection?' selected':'')+'>'+esc(value.worksheet.createdAt)+' · '+esc(value.worksheet.sourceCount)+' allocations · '+esc(short(value.id))+'</option>').join('');
+  const fits=record&&worksheetFits(record),preview=record?.inspection,rows=preview?.changes??[];
+  worksheetOffset=Math.min(worksheetOffset,Math.max(0,Math.floor((rows.length-1)/PAGE)*PAGE));
+  $('qbo-worksheet-status').textContent=!record?'Export the complete current buyer draft, or open an earlier worksheet record.':
+    (fits?'Original source and company chart selected. ':'Different current source or chart; retained files remain downloadable. ')+
+    (record.returned?'Edited file '+record.returned.name+' · '+record.returned.bytes+' bytes retained. ':'Choose the edited CSV when ready.')+
+    (record.adoptions?.length?' '+record.adoptions.length+' reviewed draft adoption(s) retained.':'');
+  $('qbo-worksheet-source').innerHTML=record?'<details><summary>Worksheet source and files</summary><dl class="record-values">'+
+    definitions({...record.worksheet.binding,worksheetId:record.id,worksheetSha256:record.worksheet.integrity.sha256,
+      originalCsvSha256:record.csvSha256,returnedCsvSha256:record.returned?.sha256??null})+'</dl></details>':'';
+  $('qbo-worksheet-preview').hidden=!preview;
+  $('qbo-worksheet-summary').textContent=preview?
+    preview.summary.allocations+' allocations · '+preview.summary.changedFields+' draft fields to change · '+preview.summary.conflicts+' conflicts · '+
+    preview.summary.unresolved+' unresolved in the last inspection. '+(record.inspectionScope?'':'Source, draft or resolution changes require another inspection. ')+
+    'Journal readiness: '+(preview.readyForPlan?'ready for the original native preview.':preview.draftIssues.length+' items remain.'):'';
+  const issues=[...(preview?.sourceIssues??[]),...(preview?.draftIssues??[])];
+  worksheetIssueOffset=Math.min(worksheetIssueOffset,Math.max(0,Math.floor((issues.length-1)/PAGE)*PAGE));
+  $('qbo-worksheet-issues').innerHTML=issues.length?'<ul>'+issues.slice(worksheetIssueOffset,worksheetIssueOffset+PAGE).map(row=>'<li>'+esc(row.message)+(row.rowId?' <code>'+esc(short(row.rowId))+'</code>':'')+
+    (row.fields?.length?' · '+esc(row.fields.join(', ')):'')+'</li>').join('')+'</ul>':'';
+  $('qbo-worksheet-issues-page').textContent=issues.length?(worksheetIssueOffset+1)+'–'+Math.min(issues.length,worksheetIssueOffset+PAGE)+' of '+issues.length+' source and draft items':'No source or draft items';
+  const page=worksheetPreviewRows(record);
+  $('qbo-worksheet-changes').innerHTML=page.map(row=>'<tr><td><strong>'+esc(row.label)+'</strong><span class="subtle">'+esc(row.field)+'</span><code>'+esc(short(row.rowId))+'</code></td>'+
+    '<td class="qbo-worksheet-value">'+esc(row.base||'∅')+'</td><td class="qbo-worksheet-value">'+esc(row.current||'∅')+'</td>'+
+    '<td class="qbo-worksheet-value">'+esc(row.returned||'∅')+'</td><td>'+(row.id?
+      '<label class="sr-only" for="worksheet-choice-'+esc(row.id)+'">Keep value for '+esc(row.field)+' on '+esc(row.rowId)+'</label>'+
+      '<select id="worksheet-choice-'+esc(row.id)+'" data-qbo-worksheet-conflict="'+esc(row.id)+'"><option value="">Choose a value</option>'+
+      '<option value="current"'+(row.selectedChoice==='current'?' selected':'')+'>Keep current</option><option value="returned"'+(row.selectedChoice==='returned'?' selected':'')+'>Use returned</option></select>':
+      esc(row.status==='CURRENT'?'Keep later local edit':row.status==='SAME'?'Same value':'Use returned value'))+'</td></tr>').join('')||
+    '<tr><td colspan="5">No changed fields in this inspected file.</td></tr>';
+  $('qbo-worksheet-page').textContent=rows.length?(worksheetOffset+1)+'–'+(worksheetOffset+page.length)+' of '+rows.length+' changed fields':'0 changed fields';
+}
+function worksheetControls(writable){
+  const record=selectedWorksheet(),fits=record&&worksheetFits(record),preview=record?.inspection;
+  $('qbo-worksheet-export').disabled=!writable||!buyerSource()||!loadedCompany;
+  $('qbo-worksheet-select').disabled=busy||Boolean(pending);
+  $('qbo-worksheet-record-file').disabled=!writable||!buyerSource()||!loadedCompany;
+  $('qbo-worksheet-csv-file').disabled=!writable||!fits;
+  $('qbo-worksheet-inspect').disabled=!writable||!fits||!record.returned;
+  $('qbo-worksheet-adopt').disabled=!writable||!fits||!preview?.readyToAdopt||!record.inspectionScope;
+  for(const name of ['record','original','accounts','edited','review'])$('qbo-worksheet-download-'+name).disabled=!record||
+    (name==='accounts'&&!record.accountReference)||(name==='edited'&&!record.returned)||(name==='review'&&!preview);
+  $('qbo-worksheet-previous').disabled=busy||worksheetOffset===0;
+  $('qbo-worksheet-next').disabled=busy||worksheetOffset+PAGE>=(preview?.changes?.length??0);
+  $('qbo-worksheet-issues-previous').disabled=busy||worksheetIssueOffset===0;
+  $('qbo-worksheet-issues-next').disabled=busy||worksheetIssueOffset+PAGE>=((preview?.sourceIssues?.length??0)+(preview?.draftIssues?.length??0));
+  for(const input of $('qbo-worksheet-changes').querySelectorAll('select'))input.disabled=!writable||!fits;
+}
+
 function accountName(value){return loadedCompany?.accounts?.find(a=>a.value===value&&a.selectable===true)?.name??'';}
 async function readJsonFile(file,label,{allowArray=false}={}){
   if(!file)throw new Error('Choose the '+label+' JSON file.');
@@ -1314,6 +1593,36 @@ window.addEventListener('beforeunload',event=>{
   if(previewUrl)URL.revokeObjectURL(previewUrl);
   if(recovery.dirty){event.preventDefault();event.returnValue='';}
 });
+
+$('qbo-worksheet-export').addEventListener('click',()=>attempt(exportWorksheet));
+$('qbo-worksheet-record-file').addEventListener('change',()=>attempt(openWorksheetRecord));
+$('qbo-worksheet-csv-file').addEventListener('change',()=>attempt(retainWorksheetCsv));
+$('qbo-worksheet-select').addEventListener('change',()=>{
+  worksheetSelection=$('qbo-worksheet-select').value;worksheetOffset=0;worksheetIssueOffset=0;
+  $('qbo-worksheet-csv-file').value='';renderWorksheets();markRecoveryDirty();controls();
+});
+$('qbo-worksheet-inspect').addEventListener('click',()=>attempt(inspectWorksheet));
+$('qbo-worksheet-adopt').addEventListener('click',()=>attempt(adoptWorksheet));
+$('qbo-worksheet-changes').addEventListener('change',event=>{
+  const input=event.target.closest('[data-qbo-worksheet-conflict]');if(input)attempt(()=>changeWorksheetResolution(input.dataset.qboWorksheetConflict,input.value));
+});
+$('qbo-worksheet-previous').addEventListener('click',()=>{worksheetOffset=Math.max(0,worksheetOffset-PAGE);renderWorksheets();controls();});
+$('qbo-worksheet-next').addEventListener('click',()=>{worksheetOffset+=PAGE;renderWorksheets();controls();});
+$('qbo-worksheet-issues-previous').addEventListener('click',()=>{worksheetIssueOffset=Math.max(0,worksheetIssueOffset-PAGE);renderWorksheets();controls();});
+$('qbo-worksheet-issues-next').addEventListener('click',()=>{worksheetIssueOffset+=PAGE;renderWorksheets();controls();});
+for(const kind of ['record','original','accounts','edited','review'])$('qbo-worksheet-download-'+kind).addEventListener('click',()=>attempt(()=>{
+  const record=selectedWorksheet();requireLocal(record,'Choose a retained worksheet.');
+  if(kind==='record')downloadJSON('quickbooks-worksheet-'+record.id+'.json',record.worksheet);
+  else if(kind==='accounts'){requireLocal(record.accountReference,'Reopen this worksheet to retrieve its original chart reference.');worksheetBlob('quickbooks-accounts-'+record.id+'.csv',record.accountReference.csvText,'text/csv;charset=utf-8');}
+  else if(kind==='review')downloadJSON('quickbooks-worksheet-review-'+record.id+'.json',{
+    schema:WORKSHEET_RECORD_SCHEMA,actor:record.actor,binding:record.binding,source:record.source,worksheet:record.worksheet,
+    returned:record.returned,resolutions:record.resolutions,inspection:record.inspection,adoptions:record.adoptions});
+  else{
+    const file=kind==='original'?{name:'quickbooks-allocations-'+record.id+'.csv',text:record.csvText}:record.returned;
+    requireLocal(file,'Choose and retain the edited CSV first.');worksheetBlob(file.name,file.text,'text/csv;charset=utf-8');
+  }
+}));
+
 for(const id of DRAFT_FIELDS)defaultDraftFields.set(id,$(id).value);
 renderCompany();renderConnection();controls();attempt(startRecovery);
 

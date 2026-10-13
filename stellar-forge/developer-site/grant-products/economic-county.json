@@ -1,0 +1,87 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "economic-county",
+  "heading": "## Recurring economic-report installation",
+  "sources": [
+    {
+      "id": "economic-county-report",
+      "label": "County report publication, original purchase and complete customer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/MERCHANT.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7aa35eda5fe25bbbb177772c533e425f31b6da6b",
+          "bytes": 20630,
+          "sha256": "26ff6fdf711c37c5466600d54f5ab96c822ebb94203122d466addfb6dd82f068",
+          "git_blob": "527d4a0cfb0e5f68754488d96f067d0b544141b3"
+        }
+      ]
+    },
+    {
+      "id": "economic-county-source-methods",
+      "label": "Original county source, calculation profiles and complete report production",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/README.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7aa35eda5fe25bbbb177772c533e425f31b6da6b",
+          "bytes": 17663,
+          "sha256": "806ccca5756dcb8a527ca6812c4187c79a94c0d9cd1aa956046341b662ea7ced",
+          "git_blob": "280726d20e6c80dd812781f74b05d7a1b2c85ffd"
+        }
+      ]
+    },
+    {
+      "id": "economic-county-workspace",
+      "label": "Complete county source-production workspace and original operating recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/WORKSPACE.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7aa35eda5fe25bbbb177772c533e425f31b6da6b",
+          "bytes": 10346,
+          "sha256": "a461ef6620d10ce1bcc87b43b1c7432aa04b600f032e0e3e4769c6e77349a37f",
+          "git_blob": "0e7289d5a54465dd9428a03d7f1b83a20f440a5b"
+        }
+      ]
+    },
+    {
+      "id": "economic-county-native-journey",
+      "label": "Complete original county Merchant and Customer receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/merchant-journey.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7aa35eda5fe25bbbb177772c533e425f31b6da6b",
+          "bytes": 58204,
+          "sha256": "eaeee202e9730161bf0c219f6fb78f91ba5eb72ea5a2c343f68595f219c8def9",
+          "git_blob": "88e380d1f1c834b27c509a9f7fff3ffbc67d9dcd"
+        }
+      ]
+    },
+    {
+      "id": "economic-county-project-handover",
+      "label": "Full county publication and Customer inventory in the original economic project",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/bundle.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7aa35eda5fe25bbbb177772c533e425f31b6da6b",
+          "bytes": 10229,
+          "sha256": "b656de01464163aaa5ecf3d57406db66badfabf8466c71057507a5bbd05c349b",
+          "git_blob": "1ec055edf46714f8f2c034c75e9a5c867d4345cd"
+        }
+      ]
+    }
+  ]
+}
