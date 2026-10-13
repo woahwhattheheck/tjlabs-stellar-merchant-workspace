@@ -1,0 +1,21 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "rialto-customer",
+  "description": "Complete Rialto catalogue receiving, concrete customer requests and original SF88 portable buyer preparation",
+  "components": [
+    "stellar/scf-starforge-20261009/partners/rialto"
+  ],
+  "commands": {
+    "rialto-customer": "stellar/scf-starforge-20261009/partners/rialto/customer.mjs"
+  },
+  "commandDescriptions": {
+    "rialto-customer": "Receive all original Rialto pages, review a useful request and reopen its original buyer handoff"
+  },
+  "exports": {
+    "./partners/rialto": {
+      "types": "./source/stellar/scf-starforge-20261009/partners/rialto/index.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/partners/rialto/core.mjs"
+    },
+    "./partners/rialto/report": "./source/stellar/scf-starforge-20261009/partners/rialto/report.mjs"
+  }
+}
