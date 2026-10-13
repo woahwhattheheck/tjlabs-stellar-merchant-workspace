@@ -1,0 +1,55 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "tourism-series",
+  "description": "Complete tourism source, qualified reports and target returns joined to original commercial Installation and independent receiving",
+  "components": [
+    "services/tourism-series-workspace",
+    "services/migration-receiving",
+    "products/tourism-series",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders"
+  ],
+  "commands": {
+    "tourism-series": "services/tourism-series-workspace/cli.mjs",
+    "tourism-series-build": "services/tourism-series-workspace/build.mjs",
+    "tourism-installation": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-installation.mjs",
+    "tourism-installation-receive": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-installation-receiving.mjs"
+  },
+  "commandDescriptions": {
+    "tourism-series": "Operate complete tourism source editions, qualified analyses, reports and actual target CSV returns",
+    "tourism-series-build": "Build complete working HTML, original files, reports, source and ZIP from the original saved workspace",
+    "tourism-installation": "Bind full original tourism editions and explicit customer scope to the existing commercial Installation",
+    "tourism-installation-receive": "Independently receive complete tourism work and its original saved Installation, retaining later recipient edits"
+  },
+  "exports": {
+    "./tourism-series": "./source/services/tourism-series-workspace/engine.mjs",
+    "./tourism-series/portable": "./source/services/tourism-series-workspace/portable.mjs",
+    "./grant/tourism-installation": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-installation-core.mjs"
+  },
+  "supportFiles": [
+    "services/tourism-series-workspace/engine.mjs",
+    "services/tourism-series-workspace/sha256.mjs",
+    "services/tourism-series-workspace/cli.mjs",
+    "services/tourism-series-workspace/API.md",
+    "services/tourism-series-workspace/CORE_OPERATING.md",
+    "services/tourism-series-workspace/templates/observations.csv",
+    "services/tourism-series-workspace/template.html",
+    "services/tourism-series-workspace/style.css",
+    "services/tourism-series-workspace/portable.mjs",
+    "services/tourism-series-workspace/build.mjs",
+    "services/tourism-series-workspace/app.mjs",
+    "services/tourism-series-workspace/README.md",
+    "services/tourism-series-workspace/BROWSER_OPERATING.md",
+    "services/tourism-series-workspace/run_browser_receiving.mjs",
+    "services/tourism-series-workspace/Tourism_Series_Workspace.html",
+    "services/migration-receiving/continuation.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-installation-core.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-installation-io.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-installation-operations.py",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-installation.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-installation-receiving.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-series.json",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/TOURISM_INSTALLATION.md",
+    "products/tourism-series/SOURCE_ADOPTION.json",
+    "products/tourism-series/OPERATING.md"
+  ]
+}
