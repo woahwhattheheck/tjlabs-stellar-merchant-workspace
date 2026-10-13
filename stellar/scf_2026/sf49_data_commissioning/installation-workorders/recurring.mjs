@@ -18,7 +18,7 @@ async function main() {
   const argv = process.argv.slice(2);
   const command = argv.shift();
   if (command === "--help" || command === "help" || !command) {
-    process.stdout.write("recurring.mjs calendar --input calendar-input.json --out NEW_DIRECTORY\nrecurring.mjs compose --seed NATIVE_SEED.json --profile PROFILE --bindings NATIVE_BINDINGS.json --calendar CALENDAR_INPUT.json [--task-budget BUDGET.json] --out NEW_DIRECTORY\nrecurring.mjs bindings --seed NATIVE_SEED.json --profile PROFILE --out NEW_DIRECTORY\nrecurring.mjs programme --seed NATIVE_SEED.json --profile PROFILE --document COMPLETE_DRAFT.json --commissioning COMPLETE_COMMISSIONING.json --calendar CALENDAR_INPUT.json [--selection ORIGINAL_SELECTION.json] [--task-budget BUDGET.json] [--native-change NATIVE_CHANGE.json] --out NEW_DIRECTORY\nrecurring.mjs change --seed NATIVE_SEED.json [--base-document ORIGINAL_DRAFT.json] --document EDITED_NATIVE_DRAFT.json --out NEW_DIRECTORY\n");
+    process.stdout.write("recurring.mjs calendar --input calendar-input.json --out NEW_DIRECTORY\nrecurring.mjs compose --seed NATIVE_SEED.json --profile PROFILE --bindings NATIVE_BINDINGS.json --calendar CALENDAR_INPUT.json [--task-budget BUDGET.json] --out NEW_DIRECTORY\nrecurring.mjs bindings --seed NATIVE_SEED.json --profile PROFILE --out NEW_DIRECTORY\nrecurring.mjs programme --seed NATIVE_SEED.json --profile PROFILE --document COMPLETE_DRAFT.json --commissioning COMPLETE_COMMISSIONING.json --calendar CALENDAR_INPUT.json [--selection ORIGINAL_SELECTION.json] [--task-budget BUDGET.json] [--native-change NATIVE_CHANGE.json] [--accepted-save ORIGINAL_ACCEPTED_SAVE.json] --out NEW_DIRECTORY\nrecurring.mjs change --seed NATIVE_SEED.json [--base-document ORIGINAL_DRAFT.json] --document EDITED_NATIVE_DRAFT.json --out NEW_DIRECTORY\n");
     return;
   }
   const flags = {};
@@ -29,7 +29,7 @@ async function main() {
   }
   const allowed = {calendar: ["input", "out"], bindings: ["seed", "profile", "out"],
     compose: ["seed", "profile", "bindings", "calendar", "task-budget", "out"],
-    programme: ["seed", "profile", "document", "commissioning", "calendar", "selection", "task-budget", "native-change", "out"],
+    programme: ["seed", "profile", "document", "commissioning", "calendar", "selection", "task-budget", "native-change", "accepted-save", "out"],
     change: ["seed", "base-document", "document", "out"]}[command];
   if (!allowed || Object.keys(flags).some(key => !allowed.includes(key))) throw new Error("Use a declared command and its flags; see --help.");
   if (!flags.out) throw new Error("Select a new private output directory.");
@@ -70,7 +70,8 @@ async function main() {
         calendarInput: await read(flags.calendar, files, "original-calendar-input.json"),
         selection: flags.selection ? await read(flags.selection, files, "original-commercial-selection.json") : undefined,
         taskBudget: flags["task-budget"] ? await read(flags["task-budget"], files, "original-task-budget.json") : undefined,
-        nativeChange: flags["native-change"] ? await read(flags["native-change"], files, "original-native-change.json") : undefined
+        nativeChange: flags["native-change"] ? await read(flags["native-change"], files, "original-native-change.json") : undefined,
+        acceptedSave: flags["accepted-save"] ? await read(flags["accepted-save"], files, "original-accepted-save.json") : undefined
       });
       for (const [name, content] of programmeFiles(result)) files.set(name, content);
       files.set("installation-document.json", json(result.document));
