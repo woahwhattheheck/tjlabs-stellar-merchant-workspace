@@ -159,7 +159,10 @@ class ResearchQuoteProgrammeDesk {
  }
  run(work){
   need(!this.stopping,'RESEARCH_QUOTE_PROGRAMME_DESK_CLOSING',409);
-  const operation=(async()=>{await assertQuoteDirectory(this.identity);return work();})();
+  const operation=(async()=>{await assertQuoteDirectory(this.identity);return work();})().catch(error=>{
+   if(error?.close&&typeof error.close==='function')this.sources.add(error);
+   throw error;
+  });
   this.pending.add(operation);operation.then(()=>this.pending.delete(operation),()=>this.pending.delete(operation));return operation;
  }
  async client(){
