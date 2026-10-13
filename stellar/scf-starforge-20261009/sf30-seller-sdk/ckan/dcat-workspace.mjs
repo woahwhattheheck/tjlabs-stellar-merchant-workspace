@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { parseCkanJson } from './capture.mjs';
 import { spawn } from 'node:child_process';
+import { validateDcatSemanticState, validateDcatSemanticFiles } from './dcat-semantic.mjs';
 import { createDcatAcquisition, validateDcatAcquisitions, validateDcatAcquisitionFiles } from './dcat-acquisition.mjs';
 import { object, bytes, digest, readPrivate, createFile, privateDirectory, fault, stamp }
   from '../postgres/publisher/files.mjs';
@@ -84,6 +85,7 @@ export function validateDcatState(value) {
   }
   need(value.activeReleaseId === null || seen.has(value.activeReleaseId), 'DCAT_PROJECT_INVALID');
   validateDcatAcquisitions(value);
+  validateDcatSemanticState(value);
 }
 async function externalCatalog(file) {
   need(typeof file === 'string' && file.startsWith('/'), 'DCAT_FILE_REQUIRED', 'Choose an absolute catalog file path.');
@@ -228,6 +230,7 @@ export async function validateDcatWorkspaceFiles(directory, state) {
   validateDcatState(state);
   if (!state) return;
   await validateDcatAcquisitionFiles(directory, state);
+  await validateDcatSemanticFiles(directory, state);
   for (const item of state.catalogs)
     await retained(directory, 'catalogs/' + item.id + '/catalog.json', item.sha256, item.bytes, DCAT_MAX_CATALOG_BYTES);
   for (const item of state.reviews) {

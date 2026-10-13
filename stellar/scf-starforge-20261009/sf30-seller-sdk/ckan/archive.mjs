@@ -16,6 +16,7 @@ import { readCkanRefreshComparison } from './refresh.mjs';
 import { inspectCkanMerchantPackage } from './publisher/release.mjs';
 import { CKAN_SOURCE_LOCATIONS_SCHEMA, ckanWorkspaceMember } from './source-locations.mjs';
 import { validateDcatState, validateDcatWorkspaceFiles } from './dcat-workspace.mjs';
+import { dcatSemanticSummary } from './dcat-semantic.mjs';
 
 import { validateCkanRemoteState, validateCkanRemoteFiles, ckanRemoteSummary } from './remote-workspace.mjs';
 
@@ -158,6 +159,7 @@ function summary(state) {
   return { catalogOrigin: state.catalogOrigin, projectCreatedAt: state.createdAt, sourceKind: state.sourceKind ?? 'ckan',
     ...(state.remote ? { remote: ckanRemoteSummary(state.remote) } : {}),
     ...(state.dcat ? { dcat: { schema: state.dcat.schema, activeReleaseId: state.dcat.activeReleaseId,
+      ...(state.dcat.semantic ? { semantic: dcatSemanticSummary(state.dcat) } : {}),
       catalogs: state.dcat.catalogs.map(({ id, sha256, bytes, profile }) => ({ id, sha256, bytes, profile })),
       reviews: state.dcat.reviews.map(({ id, sourceId, comparisonId, candidateId, status, reportSha256, candidateSha256, reviewSha256 }) =>
         ({ id, sourceId, comparisonId, candidateId, status, reportSha256, candidateSha256, reviewSha256 })),
@@ -412,6 +414,8 @@ async function relocate(root, archive, history, signal) {
       initial.createdAt !== archive.manifest.source.projectCreatedAt || initial.catalogOrigin !== archive.manifest.source.catalogOrigin)
     throw fault('CKAN_RECEIVE_PROJECT_CHANGED');
   const state = rebase(initial, archive.manifest.source.directory, root), rewritten = [];
+  // Semantic paths are relative and historical native values are immutable evidence.
+  if (initial.dcat?.semantic) state.dcat.semantic = initial.dcat.semantic;
   await validateDcatWorkspaceFiles(root, state.dcat);
   await validateCkanRemoteFiles(root, state.remote);
   const locations = { schema: CKAN_SOURCE_LOCATIONS_SCHEMA, projectCreatedAt: initial.createdAt,

@@ -12,6 +12,7 @@ import { bindCkanCapture, projectCkanValue } from './source.mjs';
 import { describeCkanSemantics, projectCkanSemantics, checkCkanSemanticReview, compareCkanSemantics } from './semantics.mjs';
 import { createCkanReviewedRefreshes } from './reviewed-refresh.mjs';
 import { createDcatWorkspace, validateDcatState } from './dcat-workspace.mjs';
+import { createDcatSemanticWorkspace } from './dcat-semantic.mjs';
 import { createCkanRemoteWorkspace } from './remote-workspace.mjs';
 import { interruptDcatAcquisitions } from './dcat-acquisition.mjs';
 import { openCkanPublisher } from './publisher/model.mjs';
@@ -211,10 +212,12 @@ export async function openCkanWorkbench({ directory, create = false, origin, sou
     const dcat = createDcatWorkspace({ directory, state, launch, persist, environment });
     const remote = await createCkanRemoteWorkspace({ directory, state, launch, persist, environment,
       assertSource: source => reviewedRefreshes.assertRefreshPublicationSource(source) });
+    const semantic = await createDcatSemanticWorkspace({ directory, state, dcat, launch, persist, environment });
     if (create) await persist();
     const api = {
       ...reviewedRefreshes,
       ...dcat,
+      ...semantic.api,
       ...remote,
       directory,
       status: () => structuredClone({ ...state, directory, active: active ? active.operation.id : null }),
@@ -448,7 +451,7 @@ export async function openCkanWorkbench({ directory, create = false, origin, sou
       cancel() { if (!active) throw fault('CKAN_NO_ACTIVE_OPERATION'); active.controller.abort(); return { cancelling: active.operation.id }; },
       async close() {
         if (closed) return; closed = true; active?.controller.abort();
-        try { await active?.completion; } finally { await release(); }
+        try { await active?.completion; } finally { await semantic.close(); await release(); }
       },
     };
     return api;
