@@ -91,6 +91,16 @@ Undo retains the original match history. Reopening creates a separate event. A r
 
 Foreign-currency TRNAMT values retain their native currency and original conversion fields. The bank desk asks for an explicit account-currency valuation and explanation before matching an unconverted foreign-currency movement. It preserves the original amount, source rate and reviewed valuation. The sign must continue to represent the original debit or credit.
 
+## Assemble a complete original CAMT statement
+
+A daily statement can arrive as several XML files or as several statement sections in one file. Receive each original page into the same saved account through the ordinary import review. In **Close statement → Combine original statement pages**, select those retained imports and review their original page numbers, final-page indicator, period, sequences and balance boundaries.
+
+The application connects the first original opening balance through each intermediate booked boundary to the final original closing balance. It checks each page's signed cash, the original summary scope and every selected booked entry's current posted transaction. The default summary scope is the bank's complete statement summary on the first page. Select a separate summary per page only when the actual bank convention supplies it, and retain the explanation. When original page IDs differ and no common original sequence establishes the grouping, retain the operator's account-period explanation.
+
+Choose **Use these original statement balances** after the page review is eligible. This fills the existing close form with the exact source period and balances. Complete the normal cash matching and close review, then retain the close through the same original request journal. The saved account archive includes every selected original XML, including empty pages, and the full connected page review.
+
+The source selection persists across the import table's pages and in **Download working inputs**. Restored inputs require a fresh review of the currently retained source interpretations. The [complete page-assembly guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/PAGE_ASSEMBLY.md) gives the browser, typed client, CLI, complete retained close shape and original-workspace receiving course.
+
 ## Retain a balanced close
 
 Select the original account, inclusive source calendar dates, opening balance and closing balance. The opening balance is the balance immediately before the period's included transactions; the closing balance is the balance after them. A selected complete source balance pair fixes those values to the original record.
@@ -162,7 +172,7 @@ Create/select the account and refresh the workspace revision before preparing th
 
 If the response is interrupted, recover the original request with getOperation(requestId). An unrecorded operation returns HTTP 404; the caller may then retry the same original body. A stale revision requires a fresh review of the current workspace. The browser retains source bytes and unresolved operation bodies across reloads. Selecting or restoring another file clears the earlier preview immediately; review becomes available when the selected complete file has loaded. Closing a source, transaction or saved-close dialog leaves later read responses attached to their original selection instead of reopening an earlier record.
 
-Pure preview routes are /source-preview and /close-preview. Mutation routes create accounts/imports, match or create customer receipts, undo matches, resolve source rows and retain/reopen closes. See [client.d.ts](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/client.d.ts) for complete request and result types, and run starforge bank-statements help for native commands.
+Pure preview routes are /source-preview, /assembly-preview and /close-preview. Mutation routes create accounts/imports, match or create customer receipts, undo matches, resolve source rows and retain/reopen closes. See [client.d.ts](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/client.d.ts) for complete request and result types, and run starforge bank-statements help for native commands.
 
 ## Runtime and full native receiving
 
@@ -188,4 +198,10 @@ The same receiving operation also runs both bank screens against the original le
 
 The original bank workflow also receives CAMT.053 XML in the explicitly supported .02 and .08 message structures. The existing statement upload, account review, source records, receipt and invoice allocation, transaction decisions, close and complete editable handover preserve each original booked entry together with its reversals, charge groups, batch and transaction detail records. Information entries remain accessible with the retained original file.
 
-The installed `prepare-source` command creates a complete request from an original XML, OFX, QFX or mapped CSV file, with create-only private output. See [CAMT053.md](CAMT053.md) for the full operator, CLI, API, source metadata, original balance and receiving workflow. The browser includes the same format and interpretation controls, original message/statement review and paged transaction-detail display.
+The installed `prepare-source` command creates a complete request from an original XML, OFX, QFX or mapped CSV file, with create-only private output. See [CAMT053.md](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/CAMT053.md) for the full operator, CLI, API, source metadata, original balance and receiving workflow. The browser includes the same format and interpretation controls, original message/statement review and paged transaction-detail display.
+
+## Receive and review the accountant's complete edition
+
+Choose **Accountant receiving** in the Bank header and receive the original `account.tar`. The workbench opens original source files, exact postings, customer receipt and invoice lineage, and earlier or replacement closes. It retains source-bound accountant notes in a separate private review and can export the complete original archives, immutable note history and self-contained browser handover.
+
+Use `starforge bank-statements accountant` for the same native inspection, comparison, private review, complete export and cold receiving. The [complete accountant guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/ACCOUNTANT_RECEIVING.md) covers those commands and the independent reader. The [operator handover](HANDOVER.md) carries a close through that review and back to the original financial operator for any correction.

@@ -83,13 +83,19 @@
       "label": "Complete CAMT.053 original statement and operator workflow",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/CAMT053.md",
-      "commit": "933219ca2f66ebbaf28d5a7ef69cefe278de2a98",
+      "commit": "c15e2ea80154078886011d792e0aa7be6a5a94b2",
       "editions": [
         {
           "commit": "933219ca2f66ebbaf28d5a7ef69cefe278de2a98",
           "git_blob": "fb69324910a16d25b661743963b047589d8c6148",
           "sha256": "a6379f2b473d6175e5a0ec324a7ca7f5b7083acdd8ee1382cda8bc5f9e430dc9",
           "bytes": 13503
+        },
+        {
+          "commit": "c15e2ea80154078886011d792e0aa7be6a5a94b2",
+          "git_blob": "8dca9caa0fd70e7d934a0027ada650035f3593a2",
+          "sha256": "4e772ef864faaa4f5b2aa414fa53ae0fc33a114e581901f4f0a23173721c6b52",
+          "bytes": 16406
         }
       ]
     },
@@ -125,16 +131,22 @@
     },
     {
       "id": "merchant-bank-camt053-cli",
-      "label": "Installed original-file preparation and bank application command",
+      "label": "Installed original-file preparation, complete-page assembly and accountant receiving command",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/cli.mjs",
-      "commit": "933219ca2f66ebbaf28d5a7ef69cefe278de2a98",
+      "commit": "c15e2ea80154078886011d792e0aa7be6a5a94b2",
       "editions": [
         {
           "commit": "933219ca2f66ebbaf28d5a7ef69cefe278de2a98",
           "git_blob": "90b1c4e282c023aad2b3c7d9ae3ccf2f6e8e51d4",
           "sha256": "5656cfc288951a75e0ce9c5c8da0fd73dd0a2a2eafc1d67a83d8038da10e6bd3",
           "bytes": 13430
+        },
+        {
+          "commit": "c15e2ea80154078886011d792e0aa7be6a5a94b2",
+          "git_blob": "5f224e4f54fe6aa66fbc804378c44fe3d737aba1",
+          "sha256": "5d47c73acdd80d12074a670f2e5c61e86ca6f5ee1a99693cf36ba79233260c5c",
+          "bytes": 13874
         }
       ]
     },
@@ -150,6 +162,66 @@
           "git_blob": "d4526a552c3f07841db47468e01ce62168c275a3",
           "sha256": "bdbd4f8f402ea559edb11e468a9df5ab74779310492558cd8c35b13a6a4bd769",
           "bytes": 14921
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-camt-page-assembly",
+      "label": "Original complete-statement page and balance assembler",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/assembly.mjs",
+      "commit": "c15e2ea80154078886011d792e0aa7be6a5a94b2",
+      "editions": [
+        {
+          "commit": "c15e2ea80154078886011d792e0aa7be6a5a94b2",
+          "git_blob": "3661811adc13bad358fd7b4c3362102fd09d5556",
+          "sha256": "c6a8aab15dd092fdc14a0a97ad9b2c7c76dbd3504af8b0709006283b9f777dd8",
+          "bytes": 18733
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-camt-page-workflow",
+      "label": "Complete original-page selection, review and retained closing workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/PAGE_ASSEMBLY.md",
+      "commit": "c15e2ea80154078886011d792e0aa7be6a5a94b2",
+      "editions": [
+        {
+          "commit": "c15e2ea80154078886011d792e0aa7be6a5a94b2",
+          "git_blob": "113e21843cff07df576f59ca8526b9c2634a77e5",
+          "sha256": "c677af25ef7b208aa6ba9c3da634026a759ea330e0b3a986e662f4fd20b7a687",
+          "bytes": 12121
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-camt-page-receiving",
+      "label": "Complete original-workspace page receiving, account export and cold reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/PAGE_ASSEMBLY_RECEIVE.mjs",
+      "commit": "c15e2ea80154078886011d792e0aa7be6a5a94b2",
+      "editions": [
+        {
+          "commit": "c15e2ea80154078886011d792e0aa7be6a5a94b2",
+          "git_blob": "163d0479f35981ef0568a40dc1d8458ff52af6d9",
+          "sha256": "361680313330cf94c7f23ba600eda639e74d2a2cd3c80ba705dc4308252217eb",
+          "bytes": 14597
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-accountant-receiving",
+      "label": "Original accountant archive, source-bound review and complete offline handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/ACCOUNTANT_RECEIVING.md",
+      "commit": "c15e2ea80154078886011d792e0aa7be6a5a94b2",
+      "editions": [
+        {
+          "commit": "c15e2ea80154078886011d792e0aa7be6a5a94b2",
+          "git_blob": "ec625716e9363e795e9cfeafaceec1ee403a227f",
+          "sha256": "cf699710dcfeade79e8f273c0c1da6a3f7f12699921d677932869a4ab8e474cc",
+          "bytes": 14827
         }
       ]
     }
