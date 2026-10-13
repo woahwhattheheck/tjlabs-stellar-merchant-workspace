@@ -4,6 +4,7 @@ import {open,lstat,realpath} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {cwCanonical,cwHash} from '../accountant/cryptoworth-csv.mjs';
 import {accountingSourceMode,buyerStartupDescriptor} from './buyer-startup.mjs';
+import {accountingIdentityBasis} from './relocation.mjs';
 const SCHEMA='stellar-forge.merchant-accounting-workspace.v1',SHA=/^[a-f0-9]{64}$/;
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const fail=(code,message)=>Object.assign(new Error(message),{code});
@@ -21,9 +22,10 @@ export function accountingWorkspaceBinding(directory,state){
       'INVALID_ACCOUNTING_BINDING','Retain the original absolute accounting source paths.');
     sources[field]=value;
   }
+  const logical=accountingIdentityBasis(directory,state,sources);
   return {schema:'stellar-forge.accounting-workspace-binding.v1',directory,
-    workspaceId:cwHash(cwCanonical({schema:state.schema,createdAt:state.createdAt,directory})),
-    sourcesSha256:cwHash(cwCanonical(sources)),sources};
+    workspaceId:cwHash(cwCanonical({schema:state.schema,createdAt:state.createdAt,directory:logical.directory})),
+    sourcesSha256:cwHash(cwCanonical(logical.sources)),sources};
 }
 /** Called inside the original workspace lease, before any startup recovery write. */
 export function assertAccountingWorkspaceBinding(directory,state,{expectedWorkspaceId,expectedSourcesSha256}={}){

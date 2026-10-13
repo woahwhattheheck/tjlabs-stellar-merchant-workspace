@@ -2,6 +2,7 @@
 // MIT — Python operates the original SF88 library, worker and review writers.
 import {randomUUID} from 'node:crypto';
 import {createReviewBrowser} from './review-browser.mjs';
+import {createJournalBinding,journalActions} from './review-journals.mjs';
 import {createResearchBinding,researchActions} from './review-reading.mjs';
 import {openLibrary} from '../resource-library/library.mjs';
 import {collectionMembers, inspectOriginalCollection, receiveOriginalCollection, openOriginalCollection, collectionDownload} from './review-collections.mjs';
@@ -10,9 +11,9 @@ import {readSnapshot, requireValue, digest} from '../resource-library/files.mjs'
 const SCHEMA='stellar-forge.sf88.python-review.v1';
 const MAX_FRAME=8*1024*1024, CHUNK=1024*1024;
 let reportDescriptor,verifyHandover,available=[];
-let library=null, browser=null, research=null, closing=false, input=Buffer.alloc(0), output=Promise.resolve();
+let library=null, browser=null, research=null, journals=null, closing=false, input=Buffer.alloc(0), output=Promise.resolve();
 const active=new Map(), transfers=new Map();
-const ACTIONS=[...researchActions,
+const ACTIONS=[...researchActions,...journalActions,'review.receive',
   'library.status','library.scan','library.search','library.resource','library.preview','library.select',
   'annotation.save','annotation.history','collections.list','collections.show','collections.history','collections.save',
   'collections.members','collections.inspectArchive','collections.receiveArchive',
@@ -56,22 +57,24 @@ async function dispatch(action,p,signal){
         p.collectionMaxBytes===undefined&&!p.collectionResume,'COLLECTION_RECEIVED_DIRECTORY_REQUIRED');
       library=await openLibrary(p);
     }
-    browser=createReviewBrowser(library);research=createResearchBinding(library);
+    browser=createReviewBrowser(library);research=createResearchBinding(library);journals=createJournalBinding(library,{readPacket});
     // The existing source library remains usable while its optional edition
     // product is composed. Never install or synthesize a comparison engine.
     if(library.comparisons){
       ({reportDescriptor}=await import('../resource-library/comparison-transfer.mjs'));
       ({verifyHandover}=await import('../resource-library/comparison-report.mjs'));
     }
-    available=ACTIONS.filter(action=>action.startsWith('returns.')?Boolean(library.comparisons?.returns):
+    available=ACTIONS.filter(action=>action.startsWith('reviewReturns.')?journals.available:
+      action==='review.receive'?Boolean(library.comparisons):action.startsWith('returns.')?Boolean(library.comparisons?.returns):
       action.startsWith('comparisons.')||action==='handover.verify'?Boolean(library.comparisons):true);
     return {schema:SCHEMA,node:process.versions.node,actions:available,
-      features:{resources:true,browser:true,collections:true,research:true,comparisons:Boolean(library.comparisons),returns:Boolean(library.comparisons?.returns)},
+      features:{resources:true,browser:true,collections:true,research:true,comparisons:Boolean(library.comparisons),returns:Boolean(library.comparisons?.returns),reviewReturns:journals.available},
       collectionReceipt,library:library.status()};
   }
   requireValue(library&&!closing,'REVIEW_NOT_OPEN',409);
   requireValue(available.includes(action),'REVIEW_CAPABILITY_UNAVAILABLE',409);
   if(action.startsWith("research."))return research.dispatch(action,p,signal);
+  if(action==='review.receive'||action.startsWith('reviewReturns.'))return journals.dispatch(action,p);
   const c=library.comparisons,r=c?.returns,{id,options={},input:body={}}=p;
   switch(action){
     case 'browser.start':return browser.start(p);
@@ -119,14 +122,15 @@ async function dispatch(action,p,signal){
     }
     case 'transfer.open':{
       requireValue(transfers.size<8,'REVIEW_TRANSFER_CAPACITY',409);
-      requireValue(['resource','comparison','return','library-review','collection','reading-handover'].includes(p.kind),'REVIEW_TRANSFER_KIND_INVALID');
+      requireValue(['resource','comparison','return','review-journal','library-review','collection','reading-handover'].includes(p.kind),'REVIEW_TRANSFER_KIND_INVALID');
       let descriptor;
       if(p.kind==='reading-handover')descriptor=await research.download(id,signal);
       else if(p.kind==='resource')descriptor=await library.download(id,{signal});
       else if(p.kind==='collection')descriptor=await collectionDownload(library,p,signal);
       else {
         requireValue(typeof reportDescriptor==='function','REVIEW_COMPARISON_RUNTIME_REQUIRED',409);
-        const report=p.kind==='return'?r.handover(id,{format:p.format??'json'}):
+        const report=p.kind==='review-journal'?journals.report(id,p.format??'json'):
+          p.kind==='return'?r.handover(id,{format:p.format??'json'}):
           p.kind==='library-review'?{filename:'resource-review.json',mime:'application/json',
             chunks:(async function*(){yield JSON.stringify(library.exportReview(),null,2)+'\n';})()}:undefined;
         descriptor=await reportDescriptor(library,id??'resource-review',{format:p.format??'json',signal,report});

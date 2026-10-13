@@ -3,7 +3,9 @@
 Install and run the complete native facilitator operator through the existing
 Runtime Workspace. Review and retain payment profiles, start their original
 Stellar backend, inspect durable Bazaar publication and receive complete
-catalog views through the browser or typed Node client.
+catalog views through the browser, typed Node client or merchant agent host.
+Agent receiving retains exact profiles and complete catalog files for resumable
+delivery after the original capture.
 
 The selected product keeps the native facilitator, original host commissioning
 command, dual-network gateway, durable catalog and its source-owned Applications
@@ -61,6 +63,10 @@ The selected command inventory includes:
 | `stellar-facilitator-gateway` | Original network-specific payment and Bazaar gateway |
 | `facilitator-host` | Original Linux service commissioning, transition and host receiving |
 | `runtime-workspace` | Source selection, installation, saved Applications and retained managed operations |
+| `merchant-providers` | Inspect and initialize the original native facilitator agent provider |
+| `native-facilitator-agent` | Review and run the original native agent host through its saved Application or direct command |
+| `merchant-mcp`, `merchant-mcp-stdio`, `merchant-mcp-client-config` | Original authenticated HTTP or subprocess agent host and installed host registration |
+| `native-facilitator-receive` | Receive complete retained profile/catalog files and resume the same export |
 | `runtime-profile`, `runtime-install`, `runtime-transfer`, `installation` | Original source, dependency, release and receiving lifecycle |
 
 ## Save and open an Application
@@ -168,7 +174,7 @@ include `./facilitator/operator/server` and
 | Client method | Original API/result |
 | --- | --- |
 | `status()` | Management instance and current native runtime |
-| `profiles({after})` / `profile(name)` | Original saved profile page / complete selected file and commands |
+| `profiles({after, limit})` / `profile(name)` | Original saved profile page / complete selected file and commands |
 | `downloadProfile({name, sha256})` | Exact original JSON file content |
 | `review(config)` / `save({name, config, expectedSha256})` | Native normalized review / immutable reviewed save |
 | `probe({name, sha256})` / `probe({runtimeId})` | Original configured RPC or current native readiness observation |
@@ -176,6 +182,7 @@ include `./facilitator/operator/server` and
 | `catalog({runtimeId, query, expectedVersion})` | Complete original list/search page at the selected runtime/revision |
 | `exportCatalog(selection)` | Entire selected view as one JSON object |
 | `receiveCatalog(selection)` | Entire selected view as completed JSON parts, metadata and counts |
+| `streamCatalog(selection, {write})` | Write each verified original page directly to the receiving sink, with completion metadata |
 
 For example, receive a complete current catalog after selecting a running native
 profile with catalog publication:
@@ -215,6 +222,44 @@ The client returns the native HTTP error code/status and records the failed
 method/path. After a disconnected start, save, probe or drain, read the same
 operator's current state and original profile before choosing the following
 action.
+
+## Connect agents and retain complete exports
+
+The source-owned `native-facilitator-operators` merchant provider exposes 17
+operations on host-declared native operator aliases. The installed product
+includes the original MCP transports, provider initializer, client registration,
+managed native agent Application and complete receiving command. The
+[agent operations guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/native-facilitator/workspace/MERCHANT_AGENT.md)
+contains exact host connection JSON, private receipt/environment selection,
+initialization, agent workflows and download examples.
+
+Attach the original Applications URL receipt or foreground operator URL under
+a private named connection. The agent reads the current instance and original
+profile/runtime identifiers, reviews and saves complete configurations, starts
+or drains the selected backend, and reads actual catalog pages.
+
+The **Native Stellar agent** Application selects that initialized merchant
+configuration and its native alias. Review and start it through the same saved
+Applications lifecycle after opening the original native facilitator.
+Its private start binding retains the exact configuration/connection/URL files
+and source, then authenticates the existing native operator. Open reuses that
+native browser; the same retained startup supplies the original agent MCP
+endpoint. Stop drains the companion agent host's accepted calls and receiving.
+The `native-facilitator-agent inspect|serve` command and typed
+`./facilitator/operator/agent` export expose the same original launcher.
+
+A stable `profile_export` or `catalog_export` ID retains its original request
+and exact files. Catalog capture streams all original matching pages into one
+file and retains the first profile, network, resource version and journal/queue
+observation. It captures the exact original profile alongside that catalog.
+A complete capture finishes through its same Linux receiving lease after an
+interruption; a completed same-ID call reopens its original manifest.
+
+`native-facilitator-receive inspect|download` uses the original merchant file
+receiver. It verifies the selected manifest and every file SHA256, retains
+download progress, and resumes into the same local directory. The installed
+`./facilitator/operator/download` export supplies that receiver with adjacent
+TypeScript declarations.
 
 ## Stop, upgrade and receive
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // MIT. Operate the same original Research listener from a local command.
 import {RIS_COMMANDS,RIS_USAGE,main as risMain} from './ris-source/cli.mjs';
+import {DOSSIER_RETURN_COMMANDS,DOSSIER_RETURN_USAGE,dossierReturnCliError,main as dossierReturnMain} from './dossier-returns/cli.mjs';
 import {parseArgs} from 'node:util';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -12,8 +13,10 @@ import {RISK_OF_BIAS_COMMANDS,main as riskOfBiasMain} from './risk-of-bias/cli.m
 import {CUSTOMER_UPDATE_COMMANDS,main as customerUpdateMain} from './customer-updates/cli.mjs';
 import {RESEARCH_COMMERCE_COMMANDS,main as researchCommerceMain} from './customer-commerce/cli.mjs';
 import {RESEARCH_QUOTES_COMMANDS,main as researchQuotesMain} from './customer-quotes/cli.mjs';
+import {RESEARCH_QUOTE_PROGRAMME_COMMANDS,main as quotationProgrammeMain} from './customer-quotes/programme-cli.mjs';
 import {RESEARCH_QUOTATION_SETUP_COMMANDS,main as quotationSetupMain} from './customer-quotes/setup-cli.mjs';
 import {STUDY_EXTRACTION_COMMANDS,main as extractionMain} from './study-extraction-cli.mjs';
+import {STUDY_FLOW_COMMANDS,STUDY_FLOW_USAGE,main as studyFlowMain} from './study-flow/cli.mjs';
 import {TEMPLATE_EXCHANGE_COMMANDS,main as templateMain} from './template-exchange/template-workspace-cli.mjs';
 import {parseJson,need,safeCode} from '../node/store.mjs';
 
@@ -21,6 +24,9 @@ const usage=String.raw`Research workspace client
 
   research-client COMMAND --connection-file /private/application-url.json --directory /original/dossier-store [OPTIONS]
   research-dossiers remote COMMAND --connection-file /private/application-url.json --directory /original/dossier-store [OPTIONS]
+
+Retained quotation programme:
+  quotes-programme-help
 
 Read the existing workspace:
   status
@@ -206,9 +212,13 @@ const commandOptions=Object.freeze({
 const compact=value=>value?.dossier?{...value,dossier:researchSummary(value.dossier)}:value;
 const selected=value=>Object.fromEntries(Object.entries(value).filter(([,item])=>item!==undefined));
 export async function main(argv=process.argv.slice(2),{output=process.stdout}={}){
+  if(DOSSIER_RETURN_COMMANDS.includes(argv[0]))return dossierReturnMain(argv,{output});
   if(RIS_COMMANDS.includes(argv[0]))return risMain(argv,{output});
   if(RESEARCH_QUOTATION_SETUP_COMMANDS.includes(argv[0])){
     const code=await quotationSetupMain(argv,{stdout:output});if(code)process.exitCode=code;return code;
+  }
+  if(RESEARCH_QUOTE_PROGRAMME_COMMANDS.includes(argv[0])){
+    const code=await quotationProgrammeMain(argv,{stdout:output});if(code)process.exitCode=code;return code;
   }
   if(RESEARCH_QUOTES_COMMANDS.includes(argv[0])){
     const code=await researchQuotesMain(argv,{stdout:output});if(code)process.exitCode=code;return code;
@@ -220,10 +230,11 @@ export async function main(argv=process.argv.slice(2),{output=process.stdout}={}
   if(DOCUMENT_COMMANDS.includes(argv[0]))return documentMain(argv,{output});
   if(ELIGIBILITY_COMMANDS.includes(argv[0]))return eligibilityMain(argv,{output});
   if(RISK_OF_BIAS_COMMANDS.includes(argv[0]))return riskOfBiasMain(argv,{output});
+  if(STUDY_FLOW_COMMANDS.includes(argv[0]))return studyFlowMain(argv,{output});
   if(STUDY_EXTRACTION_COMMANDS.includes(argv[0]))return extractionMain(argv,{output});
   if(TEMPLATE_EXCHANGE_COMMANDS.includes(argv[0]))return templateMain(argv,{output});
   const [command,...args]=argv;
-  if(!command||['help','--help','-h'].includes(command)){output.write(usage+'\n'+RIS_USAGE);return;}
+  if(!command||['help','--help','-h'].includes(command)){output.write(usage+'\n'+RIS_USAGE+'\n'+DOSSIER_RETURN_USAGE+'\n'+STUDY_FLOW_USAGE);return;}
   need(Object.hasOwn(commandOptions,command),'COMMAND_UNKNOWN');
   const fields=['connection-file','directory','timeout-ms',...commandOptions[command]];
   const {values,tokens}=parseArgs({args,options:Object.fromEntries(fields.map(key=>[key,{type:'string'}])),strict:true,tokens:true});
@@ -322,6 +333,9 @@ export async function main(argv=process.argv.slice(2),{output=process.stdout}={}
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   main().catch(error=>{
+    if(error.returnOperation){
+      process.stderr.write(JSON.stringify(dossierReturnCliError(error))+'\n');process.exitCode=1;return;
+    }
     process.stderr.write(JSON.stringify({error:safeCode(error.code,'RESEARCH_COMMAND_FAILED'),
       ...(Number.isInteger(error.status)?{status:error.status}:{}),
       ...(error.destinationPublished?{destinationPublished:true,file:error.file}:{}),

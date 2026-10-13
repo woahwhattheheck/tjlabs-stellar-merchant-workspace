@@ -37,7 +37,8 @@
   "contributions": [
     "grant-reviewer",
     "merchant-grant-reviewer",
-    "merchant-console"
+    "merchant-console",
+    "operator-discovery"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",

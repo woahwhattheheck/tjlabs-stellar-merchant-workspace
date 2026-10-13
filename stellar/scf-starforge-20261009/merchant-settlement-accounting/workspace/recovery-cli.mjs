@@ -19,14 +19,23 @@ Use the existing merchant-accounting-workspace command, or node workspace/server
     --state-root /private/merchant --bundle /private/backups/accounting-2026-10-11 \\
     --pass-env STARFORGE_ACCOUNTING_BACKUP_PASSPHRASE --quiesced
 
+  restore --workspace /private/received/accounting-workspace \\
+    --state-root /private/received --bundle /private/backups/accounting-2026-10-11 \\
+    --pass-env STARFORGE_ACCOUNTING_BACKUP_PASSPHRASE --quiesced --relocate \\
+    --expected-workspace-id ORIGINAL_WORKSPACE_SHA256 \\
+    --expected-sources-sha256 ORIGINAL_SOURCES_SHA256
+
   recovery-status --workspace /private/merchant/accounting-workspace
 
 Stop the workspace and original input writers before backup or restore.
 Set the private passphrase in the named host environment variable; do not pass its value on the command line.
 Merchant backup preserves original workspace, outbox, proofs, terms, recovered settlements and saved recovery inputs.
 Buyer-source mode preserves its complete accounting directory and exact retained issued source; it requires no merchant source roots.
-Restore uses the original absolute paths, creates missing files, and reuses only identical existing bytes.
-Changed existing files are preserved. Resume an interrupted restore with the SAME backup and paths.
+Restore normally uses the original absolute paths, creates missing files, and reuses only identical existing bytes.
+--relocate installs the authenticated account and captured sources beneath the new --state-root and --workspace.
+Its original account identity, source identity and complete financial history are retained; current physical paths are returned.
+Optional --expected-workspace-id and --expected-sources-sha256 must be supplied together and pin the original account.
+Changed existing files are preserved. Resume an interrupted restore with the SAME backup, paths, relocation mode and identity.
 Optional --expected-sha256 pins the encrypted manifest for inspect, verify and restore.
 Requires Node22+, Linux flock and the original bundled SF101 recovery engine. No network or signing operation.
 `;
@@ -35,19 +44,19 @@ export async function recoveryMain(argv,{signal}={}){
   if(rest.length===1&&rest[0]==='--help'){process.stdout.write(RECOVERY_HELP);return;}
   const allowed={backup:['--workspace','--state-root','--out','--pass-env','--quiesced'],
     'inspect-backup':['--bundle','--expected-sha256'],'verify-backup':['--bundle','--expected-sha256','--pass-env'],
-    restore:['--workspace','--state-root','--bundle','--expected-sha256','--pass-env','--quiesced'],
+    restore:['--workspace','--state-root','--bundle','--expected-sha256','--pass-env','--quiesced','--relocate','--expected-workspace-id','--expected-sources-sha256'],
     'recovery-status':['--workspace']}[command],options={};
   if(!allowed)throw new Error(RECOVERY_HELP);
   for(let i=0;i<rest.length;i++){
     const key=rest[i];if(!allowed.includes(key)||Object.hasOwn(options,key))throw new Error(RECOVERY_HELP);
-    if(key==='--quiesced'){options[key]=true;continue;}
+    if(key==='--quiesced'||key==='--relocate'){options[key]=true;continue;}
     if(!rest[i+1]||rest[i+1].startsWith('--'))throw new Error(RECOVERY_HELP);options[key]=rest[++i];
   }
   const required={backup:['--workspace','--state-root','--out','--quiesced'],restore:['--workspace','--state-root','--bundle','--quiesced'],
     'inspect-backup':['--bundle'],'verify-backup':['--bundle'],'recovery-status':['--workspace']}[command];
   if(required.some(key=>options[key]===undefined))throw new Error(RECOVERY_HELP);
   const args={signal};for(const [key,value] of Object.entries(options)){
-    const name={'--workspace':'directory','--state-root':'stateRoot','--out':'output','--bundle':'bundle','--pass-env':'passEnv','--expected-sha256':'expectedSha256','--quiesced':'quiesced'}[key];
+    const name={'--workspace':'directory','--state-root':'stateRoot','--out':'output','--bundle':'bundle','--pass-env':'passEnv','--expected-sha256':'expectedSha256','--quiesced':'quiesced','--relocate':'relocate','--expected-workspace-id':'expectedWorkspaceId','--expected-sources-sha256':'expectedSourcesSha256'}[key];
     args[name]=['directory','stateRoot','output','bundle'].includes(name)?resolve(value):value;
   }
   const operation={backup:snapshotAccountingWorkspace,'inspect-backup':inspectAccountingBackup,'verify-backup':verifyAccountingBackup,restore:restoreAccountingWorkspace,'recovery-status':accountingRecoveryStatus}[command];

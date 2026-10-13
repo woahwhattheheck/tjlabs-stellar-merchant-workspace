@@ -22,17 +22,55 @@ ZERO = Decimal("0")
 SCHEMA = engagements.SCHEMA + ".receiving"
 
 
+class _NativeValidation:
+    """Reuse successful native calculations only within one receiving operation.
+
+    Every key contains the whole original argument values and the native function.
+    A changed source, snapshot, input, report or pinned plan therefore runs the
+    original validator again. Nothing is shared between requests or persisted.
+    """
+
+    def __init__(self):
+        self._values = {}
+
+    def call(self, function, *args):
+        try:
+            before = digest(args)
+        except (TypeError, ValueError, OverflowError):
+            # Preserve the original validator's behavior for non-JSON input.
+            return function(*args)
+        key = (function, before)
+        if key in self._values:
+            try:
+                return deepcopy(self._values[key])
+            except MemoryError:
+                # A cache is optional; the original native function remains valid.
+                pass
+        value = function(*args)
+        try:
+            # Only a calculation that left its complete inputs unchanged can
+            # supply a later identical call. Copies never expose cached state.
+            if before == digest(args):
+                self._values[key] = deepcopy(value)
+        except (TypeError, ValueError, OverflowError, MemoryError):
+            pass
+        return value
+
+
 def reference(value):
     return {"id": value["id"], "sha256": value["sha256"]}
 
 
-def selected_agreements(context, book, selection, saved):
+def selected_agreements(context, book, selection, saved, *, _validation=None):
     engagements.check_current(context, book)
     if (selection.get("reviewId") != book["id"] or selection.get("reviewSha256") != book["sha256"]
             or selection.get("forecastId") != saved["id"]):
         engagements.fail("Keep the exact selected engagement edition and native forecast.",
                          "ENGAGEMENT_SELECTION_CHANGED", 409)
-    portfolios.check_source(context, saved)
+    if _validation is None:
+        portfolios.check_source(context, saved)
+    else:
+        _validation.call(portfolios.check_source, context, saved)
     document = book["engagements"]["document"]
     if document["asOfDate"] != saved["inputs"]["asOfDate"]:
         engagements.fail("Use the same as-of date for the agreement's remaining amounts and the original forecast.")
@@ -69,10 +107,10 @@ def contributions(chosen):
     return result
 
 
-def forecast_preview(context, book, saved, raw):
+def forecast_preview(context, book, saved, raw, *, _validation=None):
     raw = engagements.obj(deepcopy(raw), {"reviewId", "reviewSha256", "forecastId", "agreementIds",
         "remainders", "paymentModes", "name", "note"}, "Engagement forecast selection")
-    chosen = selected_agreements(context, book, raw, saved)
+    chosen = selected_agreements(context, book, raw, saved, _validation=_validation)
     allocated = contributions(chosen)
     baseline = {row["id"]: row for row in saved["report"]["packages"]}
     if set(allocated) - set(baseline):
@@ -162,7 +200,8 @@ def forecast_preview(context, book, saved, raw):
     existing_order = [row["costId"] for row in inputs["packageOverrides"]]
     inputs["packageOverrides"] = [overrides[key] for key in existing_order] + [
         overrides[key] for key in sorted(set(overrides) - set(existing_order))]
-    candidate = forecasts.preview(context, inputs)
+    candidate = (forecasts.preview(context, inputs) if _validation is None else
+                 _validation.call(forecasts.preview, context, inputs))
     return {"selection": selection, "inputs": candidate["inputs"], "forecast": candidate,
         "projection": {"packages": projection, "timingBasis": candidate["report"].get("paymentTimingBasis",
             "Each original package uses its selected native Forecast payment mode and retains its original direct payments.")},
@@ -190,10 +229,10 @@ def resource(agreement, person, resource_id, calendar):
             "Received contributor availability", 12000)}
 
 
-def portfolio_preview(context, book, saved, raw):
+def portfolio_preview(context, book, saved, raw, *, _validation=None):
     raw = engagements.obj(deepcopy(raw), {"reviewId", "reviewSha256", "forecastId", "agreementIds",
         "resourceMap", "inputs", "name", "note"}, "Engagement portfolio selection")
-    chosen = selected_agreements(context, book, raw, saved)
+    chosen = selected_agreements(context, book, raw, saved, _validation=_validation)
     allocated = contributions(chosen)
     mapping, resource_ids = {}, set()
     for row in engagements.rows(raw.get("resourceMap"), "Named resource mappings", len(chosen)):
@@ -276,7 +315,8 @@ def portfolio_preview(context, book, saved, raw):
         # The original calendar/Installation phase selections stay exactly authored.
         updated_alternatives.append(changed)
     inputs["alternatives"] = updated_alternatives
-    candidate = portfolios.preview(context, saved, inputs)
+    candidate = (portfolios.preview(context, saved, inputs) if _validation is None else
+                 _validation.call(portfolios.preview, context, saved, inputs))
     selection = {"reviewId": book["id"], "reviewSha256": book["sha256"], "forecastId": saved["id"],
         "agreementIds": list(raw["agreementIds"]),
         "resourceMap": [{"engagementId": row["id"], "resourceId": mapping[row["id"]]} for row in chosen],
@@ -289,9 +329,12 @@ def portfolio_preview(context, book, saved, raw):
                    "selectionSha256": digest(selection)}}
 
 
-def lookup_forecast(operations, context, forecast_id):
+def lookup_forecast(operations, context, forecast_id, *, _validation=None):
     value = operations._portfolio_forecast(context["program"]["id"], forecast_id)
-    forecasts.validate_saved(value, context["plan"])
+    if _validation is None:
+        forecasts.validate_saved(value, context["plan"])
+    else:
+        _validation.call(forecasts.validate_saved, value, context["plan"])
     return value
 
 
@@ -308,16 +351,20 @@ def preview_portfolio(operations, context, selection):
     return portfolio_preview(context, book, saved, selection)
 
 
-def validate_join(book, saved_forecast, saved_portfolio, base_forecast, data, pinned_plan=None):
-    engagements.validate_review(book, pinned_plan)
-    forecasts.validate_saved(base_forecast, pinned_plan)
-    forecasts.validate_saved(saved_forecast, pinned_plan)
-    portfolios.validate_saved(saved_portfolio, pinned_plan)
+def validate_join(book, saved_forecast, saved_portfolio, base_forecast, data, pinned_plan=None,
+                  *, _validation=None):
+    validation = _validation if _validation is not None else _NativeValidation()
+    validation.call(engagements.validate_review, book, pinned_plan)
+    validation.call(forecasts.validate_saved, base_forecast, pinned_plan)
+    validation.call(forecasts.validate_saved, saved_forecast, pinned_plan)
+    validation.call(portfolios.validate_saved, saved_portfolio, pinned_plan)
     if (data.get("reviewId") != book["id"] or data.get("reviewSha256") != book["sha256"]
             or data.get("forecastId") != saved_forecast["id"] or data.get("portfolioId") != saved_portfolio["id"]):
         engagements.fail("Keep the complete original agreement, forecast and allocation selection.", "ENGAGEMENT_RECEIVING_CHANGED", 409)
-    finance = forecast_preview(saved_forecast["snapshot"], book, base_forecast, data["forecastSelection"])
-    allocation = portfolio_preview(saved_portfolio["snapshot"], book, saved_forecast, data["portfolioSelection"])
+    finance = forecast_preview(saved_forecast["snapshot"], book, base_forecast, data["forecastSelection"],
+                               _validation=validation)
+    allocation = portfolio_preview(saved_portfolio["snapshot"], book, saved_forecast, data["portfolioSelection"],
+                                   _validation=validation)
     if (data["forecastSelection"] != finance["selection"] or data["portfolioSelection"] != allocation["selection"]
             or saved_forecast["inputs"] != finance["inputs"] or saved_forecast["report"] != finance["forecast"]["report"]
             or saved_portfolio["inputs"] != allocation["inputs"] or saved_portfolio["report"] != allocation["portfolio"]["report"]
@@ -334,14 +381,16 @@ def receive(operations, context, data, actor, next_version, note):
         engagements.fail("Retain both complete normalized native handover selections.")
     book = engagements.raw_review(operations, context["program"]["id"], data.get("reviewId"))
     engagements.check_current(context, book)
-    saved_forecast = lookup_forecast(operations, context, data.get("forecastId"))
-    base = lookup_forecast(operations, context, data["forecastSelection"].get("forecastId"))
+    validation = _NativeValidation()
+    saved_forecast = lookup_forecast(operations, context, data.get("forecastId"), _validation=validation)
+    base = lookup_forecast(operations, context, data["forecastSelection"].get("forecastId"), _validation=validation)
     raw = operations.db.execute("SELECT body_json FROM ops_portfolios WHERE program_id=? AND id=?",
                                 (context["program"]["id"], data.get("portfolioId"))).fetchone()
     if not raw:
         engagements.fail("The original saved allocation is unavailable.", "PORTFOLIO_NOT_FOUND", 404)
     saved_portfolio = json.loads(raw[0])
-    finance, allocation = validate_join(book, saved_forecast, saved_portfolio, base, data, context["plan"])
+    finance, allocation = validate_join(book, saved_forecast, saved_portfolio, base, data, context["plan"],
+                                        _validation=validation)
     snapshot = operations._business(context)
     received = {"schema": SCHEMA, "engineVersion": engagements.ENGINE_VERSION,
         "book": reference(book), "baseForecast": reference(base), "forecast": reference(saved_forecast),
@@ -355,7 +404,8 @@ def receive(operations, context, data, actor, next_version, note):
         "businessSha256": digest(snapshot), "snapshot": snapshot, "report": domain.report(**context),
         "engagementReceiving": received}
     review["sha256"] = digest(review)
-    validate_receiving(review, {book["id"]: book}, [base, saved_forecast], [saved_portfolio], context["plan"])
+    validate_receiving(review, {book["id"]: book}, [base, saved_forecast], [saved_portfolio], context["plan"],
+                       _validation=validation)
     operations.db.execute("INSERT INTO ops_reviews VALUES(?,?,?)",
                           (context["program"]["id"], review["id"], canonical(review)))
     return {"before": None, "after": engagements.receiving_summary(review), "kind": "review",
@@ -363,7 +413,8 @@ def receive(operations, context, data, actor, next_version, note):
             "book": reference(book), "forecast": reference(saved_forecast), "portfolio": reference(saved_portfolio)}
 
 
-def _validate_receiving(review, books, saved_forecasts, saved_portfolios, pinned_plan=None):
+def _validate_receiving(review, books, saved_forecasts, saved_portfolios, pinned_plan=None,
+                        *, _validation=None):
     if not isinstance(review, dict) or review.get("purpose") != engagements.RECEIVING_PURPOSE:
         engagements.fail("Select a complete contributor receiving review.")
     engagements.ident(review.get("id"), "Original receiving review")
@@ -390,7 +441,7 @@ def _validate_receiving(review, books, saved_forecasts, saved_portfolios, pinned
     finance, allocation = validate_join(book, forecast, portfolio, base, {
         "reviewId": book["id"], "reviewSha256": book["sha256"], "forecastId": forecast["id"],
         "portfolioId": portfolio["id"], "forecastSelection": value["forecastSelection"],
-        "portfolioSelection": value["portfolioSelection"]}, pinned_plan)
+        "portfolioSelection": value["portfolioSelection"]}, pinned_plan, _validation=_validation)
     if finance["projection"] != value["financialProjection"] or allocation["projection"] != value["allocationProjection"]:
         engagements.fail("The contributor receiving projections differ from the original native outputs.")
     if (value.get("allocationStatus") != portfolio["report"]["alternatives"][0]["status"]
@@ -399,9 +450,11 @@ def _validate_receiving(review, books, saved_forecasts, saved_portfolios, pinned
     return review
 
 
-def validate_receiving(review, books, saved_forecasts, saved_portfolios, pinned_plan=None):
+def validate_receiving(review, books, saved_forecasts, saved_portfolios, pinned_plan=None,
+                       *, _validation=None):
     try:
-        return _validate_receiving(review, books, saved_forecasts, saved_portfolios, pinned_plan)
+        return _validate_receiving(review, books, saved_forecasts, saved_portfolios, pinned_plan,
+                                   _validation=_validation)
     except (KeyError, TypeError, ValueError, AttributeError, ArithmeticError, IndexError) as error:
         from model import Problem
         if isinstance(error, Problem):

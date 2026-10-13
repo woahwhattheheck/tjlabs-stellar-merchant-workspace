@@ -23,7 +23,7 @@ export class PreparationCustomerFiles{
     preparationNeed(record?.schema==='stellar-forge.data-preparation-delivery.v1'&&record.fileId===fileId&&
       record.workspaceSha256===scope.workspaceSha256&&PREPARATION_HASH.test(record.sha256??'')&&
       PREPARATION_HASH.test(record.stateSha256??'')&&Number.isSafeInteger(record.bytes)&&record.bytes>=0&&
-      ['project','merchant','report','result'].includes(record.kind)&&
+      ['project','merchant','report','result','pipeline-project','pipeline-results','pipeline-report','pipeline-merchant','pipeline-result'].includes(record.kind)&&
       record.filename===basename(record.filename)&&!/[\\/\x00-\x1f\x7f]/.test(record.filename)&&
       typeof record.mediaType==='string'&&
       preparationDigest(Buffer.from(JSON.stringify([scope.workspaceSha256,record.operationId])))===fileId,

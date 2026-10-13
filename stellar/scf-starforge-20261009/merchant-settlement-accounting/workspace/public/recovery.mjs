@@ -10,6 +10,7 @@ const definitionRows = pairs => pairs.map(([name,value]) => '<dt>' + esc(name) +
 const operationName = value => ({pause:'Pause workspace',review:'Review sources',backup:'Create backup',verify:'Verify backup',restore:'Restore operation',resume:'Reopen workspace'}[String(value).toLowerCase()] || friendly(value));
 const errorText = value => typeof value === 'string' ? value : value?.message || value?.code || shown(value);
 const active = job => job && ['QUEUED','RUNNING'].includes(job.status);
+const SHA = /^[a-f0-9]{64}$/;
 
 export async function mountRecovery({api, operator, onModeChange}) {
   const fragment = await fetch('/recovery.html', {cache:'no-store'});
@@ -20,6 +21,14 @@ export async function mountRecovery({api, operator, onModeChange}) {
   let pending = null, storageKey = '', loadedPending = false, disposed = false;
   const currentBackup = () => state?.backups?.find(item => item.id === selectedBackup);
   const activeJob = () => state?.jobs?.find(item => item.id === state.activeJobId) || state?.jobs?.find(active);
+  const recoveryIntent = () => state?.recovery?.status === 'RESTORE_IN_PROGRESS' ? state.recovery : null;
+  function selectedIdentity() {
+    const expectedWorkspaceId = $('maintenance-restore-workspace-id').value.trim();
+    const expectedSourcesSha256 = $('maintenance-restore-sources-sha256').value.trim();
+    if (!expectedWorkspaceId && !expectedSourcesSha256) return {};
+    if (!SHA.test(expectedWorkspaceId) || !SHA.test(expectedSourcesSha256)) throw new Error('Supply both original account identity values as 64 lowercase hexadecimal characters.');
+    return {expectedWorkspaceId,expectedSourcesSha256};
+  }
   function message(text, error = false) {
     $('maintenance-message').textContent = text;
     $('maintenance-message').hidden = !text;
@@ -44,8 +53,14 @@ export async function mountRecovery({api, operator, onModeChange}) {
     $('maintenance-review').disabled = !idle || state.mode !== 'PAUSED';
     $('maintenance-backup-create').disabled = !idle || state.mode !== 'PAUSED' || !key || !state.review?.reviewId || !$('maintenance-backup-writers').checked;
     $('maintenance-verify').disabled = !idle || !key || !currentBackup();
-    $('maintenance-restore').disabled = !idle || !paused || !key || !currentBackup() || !$('maintenance-restore-writers').checked || !$('maintenance-restore-confirm').checked;
-    $('maintenance-restore').textContent = state?.mode === 'RECOVERY_REQUIRED' ? 'Continue recovery from this backup' : 'Restore selected backup';
+    let identityValid = true; try { selectedIdentity(); } catch { identityValid = false; }
+    const interrupted = recoveryIntent();
+    $('maintenance-restore').disabled = !idle || !paused || !key || !SHA.test(currentBackup()?.manifestSha256 || '') || !identityValid || !$('maintenance-restore-writers').checked || !$('maintenance-restore-confirm').checked;
+    $('maintenance-restore').textContent = interrupted ? 'Continue recovery from this backup' : 'Restore selected backup';
+    for (const id of ['maintenance-restore-mode','maintenance-restore-workspace-id','maintenance-restore-sources-sha256'])
+      $(id).disabled = !idle || Boolean(interrupted);
+    $('maintenance-backup-select').disabled = !idle || Boolean(interrupted);
+    renderRestoreChoice();
     for (const button of $('area-maintenance').querySelectorAll('[data-maintenance-cancel]')) {
       const job = state?.jobs?.find(item => item.id === button.dataset.maintenanceCancel) || selectedJobDetail;
       button.disabled = submitting || Boolean(pending) || !active(job) || !job.cancellable || Boolean(job.cancelRequested);
@@ -96,8 +111,20 @@ export async function mountRecovery({api, operator, onModeChange}) {
     $('maintenance-auxiliary').hidden = !auxiliary || (typeof auxiliary === 'number' ? auxiliary < 1 : Array.isArray(auxiliary) ? auxiliary.length === 0 : Object.keys(auxiliary).length === 0);
     $('maintenance-auxiliary-values').textContent = shown(auxiliary);
   }
+  function renderRestoreChoice() {
+    const relocated = $('maintenance-restore-mode').value === 'relocate';
+    $('maintenance-restore-target').textContent = 'Workspace: ' + shown(state?.config?.directory) + '. Operating root: ' + shown(state?.config?.stateRoot) + '.';
+    $('maintenance-restore-explanation').textContent = relocated
+      ? 'Receive the complete captured account at the host location shown above. Its original account identity, invoices, payments and history stay together; captured source paths are mapped into this location.'
+      : 'Recover the complete account at the original paths recorded in the backup. The configured host location must match those retained paths.';
+  }
   function renderBackups() {
     const backups = state.backups || [];
+    const interrupted = recoveryIntent();
+    if (interrupted) {
+      const original = backups.find(item => item.manifestSha256 === interrupted.manifestSha256);
+      if (original) selectedBackup = original.id;
+    }
     if (!backups.some(item => item.id === selectedBackup)) selectedBackup = backups[0]?.id || '';
     const options = backups.length ? backups.map(item => '<option value="' + esc(item.id) + '">' + esc((item.label || item.id) + ' · ' + date(item.createdAt)) + '</option>').join('') : '<option value="">No retained backups</option>';
     const element = $('maintenance-backup-select');
@@ -108,6 +135,13 @@ export async function mountRecovery({api, operator, onModeChange}) {
     if (identity !== backupIdentity) {
       backupIdentity = identity;
       $('maintenance-restore-confirm').checked = $('maintenance-restore-writers').checked = false;
+      $('maintenance-restore-mode').value = 'original';
+      $('maintenance-restore-workspace-id').value = $('maintenance-restore-sources-sha256').value = '';
+    }
+    if (interrupted && backup?.manifestSha256 === interrupted.manifestSha256) {
+      $('maintenance-restore-mode').value = interrupted.relocate ? 'relocate' : 'original';
+      $('maintenance-restore-workspace-id').value = interrupted.expectedWorkspaceId || '';
+      $('maintenance-restore-sources-sha256').value = interrupted.expectedSourcesSha256 || '';
     }
     $('maintenance-backup-empty').hidden = Boolean(backup);
     $('maintenance-backup-detail').hidden = !backup;
@@ -118,7 +152,7 @@ export async function mountRecovery({api, operator, onModeChange}) {
       ['Last verification',backup.verifiedAt ? date(backup.verifiedAt) : 'Not yet verified by this workspace'],
       ['Manifest SHA-256',backup.manifestSha256],['Host location',folder]
     ]);
-    $('maintenance-restore-target').textContent = 'Workspace: ' + shown(state.config?.directory) + '. Operating root: ' + shown(state.config?.stateRoot) + '.';
+    renderRestoreChoice();
   }
   function renderJobs() {
     const jobs = state.jobs || [];
@@ -139,7 +173,15 @@ export async function mountRecovery({api, operator, onModeChange}) {
     const target = $('maintenance-job-detail');
     target.hidden = !job;
     if (!job) return;
-    target.innerHTML = '<h3>' + esc(operationName(job.kind)) + '</h3>' + definitions([
+    const restored = job.kind === 'restore' && job.status === 'COMPLETE' && job.result?.status === 'ACCOUNTING_WORKSPACE_RESTORED';
+    const binding = restored ? job.result.binding : null;
+    const receiving = restored ? '<section class="summary"><h3>Account ready to reopen</h3><p>' +
+      esc(job.result.relocated ? 'The same account is now retained at this host’s new receiving location.' : 'The original accounting operation has been restored.') +
+      ' Use Reopen accounting workspace to continue its saved work.</p>' + definitions([
+        ['Workspace',job.result.directory],['Retained revision',job.result.revision],
+        ...(binding ? [['Workspace identity',binding.workspaceId],['Source identity',binding.sourcesSha256]] : [])
+      ]) + (binding?.sources ? '<details><summary>Current source locations</summary><pre>' + esc(shown(binding.sources)) + '</pre></details>' : '') + '</section>' : '';
+    target.innerHTML = receiving + '<h3>' + esc(operationName(job.kind)) + '</h3>' + definitions([
       ['Operation',job.id],['Operator',job.actor],['State',friendly(job.status)],['Current phase',friendly(job.phase)],
       ['Accepted',date(job.createdAt)],['Started',date(job.startedAt)],['Finished',date(job.finishedAt)]
     ]) + (job.error ? '<div class="message error" role="alert">' + esc(errorText(job.error)) + '</div>' : '') +
@@ -226,9 +268,17 @@ export async function mountRecovery({api, operator, onModeChange}) {
   }));
   $('maintenance-restore-form').addEventListener('submit',event => { event.preventDefault(); attempt(async () => {
     const backup = currentBackup();
-    if (!backup || !$('maintenance-restore-writers').checked || !$('maintenance-restore-confirm').checked) throw new Error('Review the selected backup, original target and stopped source writers before recovery.');
-    await action('restore',{backupId:backup.id,expectedSha256:backup.manifestSha256,externalWritersStopped:true});
+    if (!backup || !$('maintenance-restore-writers').checked || !$('maintenance-restore-confirm').checked) throw new Error('Review the selected backup, receiving location and stopped source writers before recovery.');
+    const relocate = $('maintenance-restore-mode').value === 'relocate';
+    await action('restore',{backupId:backup.id,expectedSha256:backup.manifestSha256,externalWritersStopped:true,
+      ...(relocate ? {relocate:true} : {}),...selectedIdentity()});
   }); });
+  $('maintenance-restore-mode').addEventListener('change',() => {
+    $('maintenance-restore-confirm').checked = $('maintenance-restore-writers').checked = false; controls();
+  });
+  for (const id of ['maintenance-restore-workspace-id','maintenance-restore-sources-sha256']) $(id).addEventListener('input',() => {
+    $('maintenance-restore-confirm').checked = false; controls();
+  });
   for (const id of ['maintenance-backup-writers','maintenance-restore-writers','maintenance-restore-confirm']) $(id).addEventListener('change',controls);
   $('maintenance-more').addEventListener('click',() => { limit += 12; renderJobs(); controls(); });
   $('area-maintenance').addEventListener('click',event => {

@@ -19,6 +19,7 @@ import publishing_cli
 import organisation_cli
 import organisation_reconciliation_cli
 import refresh_cli
+import geography_cli
 import results.cli as results_cli
 import amp_cli
 import document_evidence_cli
@@ -104,6 +105,7 @@ def main(argv=None):
     organisation_cli.register(sub)
     organisation_reconciliation_cli.register(sub)
     refresh_cli.register(sub)
+    geography_cli.register(sub)
     results_cli.register(sub)
     amp_cli.register(sub)
     document_evidence_cli.register(sub)
@@ -116,7 +118,8 @@ def main(argv=None):
     with IatiWorkspace(args.workspace, create=args.command == "init") as ws:
         if binding is not None: binding = require_binding(str(ws.root), binding["sha256"])
         command = args.command
-        if command == "reconciliation": result = organisation_reconciliation_cli.command(ws, args)
+        if command.startswith("geography-"): result = geography_cli.command(ws, args)
+        elif command == "reconciliation": result = organisation_reconciliation_cli.command(ws, args)
         elif command.startswith("document-evidence-"): result = document_evidence_cli.command(ws, args)
         elif command.startswith("amp-"): result = amp_cli.command(ws, args)
         elif command.startswith("organisation-"): result = organisation_cli.command(ws, args)

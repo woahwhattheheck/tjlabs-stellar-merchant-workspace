@@ -10,11 +10,13 @@ import base64
 from copy import deepcopy
 from html import escape
 import hashlib
+import io
 import json
+import zipfile
 import re
 import uuid
 
-from model import Problem, canonical, digest, now, text
+from model import Problem, canonical, digest, now, text, inspect_planning_history
 import operations_domain as domain
 import operations_installations as installations
 import operations_installation_effort as installation_effort
@@ -24,6 +26,7 @@ PURPOSE = "INSTALLATION_RETURN"
 STAGE_PURPOSE = "INSTALLATION_RETURN_REVIEW"
 MAX_REVIEW = 8 * 1024 * 1024
 MAX_REVIEWS = 200
+MAX_PROOF_DEPTH = 16
 OBSERVATION_KEYS = ("state", "operator", "observedAt", "note", "sourceIds",
                     "workIds", "purchaseIds", "outcomeIds")
 DEFINITION_KEYS = ("id", "title", "criterion", "tranche", "required")
@@ -276,8 +279,12 @@ def validate_sources(context, files):
             fail("Retain every complete receiving source with its original hash.")
 
 
-def validate_return_in_case(row, context, events, saved_installations, files):
+def validate_return_in_case(row, context, events, saved_installations, files, *, plan_for_version=None):
     validate_return(row)
+    if plan_for_version is not None:
+        import operations_amendments as amendments
+        if amendments.plan_core(review_context(row)["plan"]) != amendments.plan_core(plan_for_version(row["version"] - 1)):
+            fail("The receiving observation differs from the native plan selected at its original save.")
     value = row["installationReturn"]
     baseline = value["baseline"]
     if not any(equal(item, baseline) for item in saved_installations):
@@ -298,19 +305,133 @@ def validate_return_in_case(row, context, events, saved_installations, files):
     validate_sources({"sources": value["snapshot"]["sources"]}, files)
 
 
+
+def planning_evidence(ops, program_id):
+    """Keep native history/source content stable across preview and its later save."""
+    program, _ = ops._program(program_id)
+    raw = ops.workspace.export(program["planId"])
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+        original = json.loads(archive.read("workspace.json"))
+        source = archive.read("original-source.json")
+    # Export time describes an individual download, not the selected plan. Every
+    # original revision and the exact source bytes remain in this complete proof.
+    document = {key: original[key] for key in ("schema", "plan", "revisions")}
+    return {"document": document, "originalSource": {"bytes": len(source),
+        "sha256": hashlib.sha256(source).hexdigest(), "contentBase64": base64.b64encode(source).decode("ascii")}}
+
+
+def plan_for_proof(proof, files):
+    import operations_amendments as amendments
+    import operations_work_intake as work_intake
+    from operations import Operations
+    context, events = proof["context"], proof["events"]
+    evidence = proof.get("planningEvidence")
+    if evidence is None:
+        if proof.get("amendments") or proof.get("workIntakes") or any(
+                event.get("action", "").startswith("amendment.") for event in events):
+            fail("Retain the original native planning history behind this amended receiving case.")
+        return lambda version: context["plan"]
+    obj(evidence, ("document", "originalSource"), "original native planning evidence")
+    source = obj(evidence.get("originalSource"), ("bytes", "sha256", "contentBase64"), "original planner source")
+    try:
+        raw = base64.b64decode(source.get("contentBase64", ""), validate=True)
+        if (type(source.get("bytes")) is not int or source["bytes"] != len(raw)
+                or hashlib.sha256(raw).hexdigest() != source.get("sha256")):
+            fail("The original planning source bytes changed.")
+        document = evidence["document"]
+        inspect_planning_history(document, raw)
+        selected = next((row for row in document["revisions"] if row["revision"] == context["plan"]["revision"]), None)
+        if (document["plan"]["id"] != context["plan"]["id"]
+                or document["plan"]["source"] != context["plan"]["source"] or selected is None
+                or amendments.plan_core(selected) != amendments.plan_core(context["plan"])):
+            fail("The complete original planning history does not contain the selected receiving plan.")
+        history = amendments.validate_import(Operations, context, proof.get("amendments", []), events, None,
+            work_intakes=proof.get("workIntakes", []), planning_document=document)
+        selected_plan = lambda version: amendments.plan_at(history, context["plan"], version)
+        work_intake.validate_import(context, proof.get("workIntakes", []), events, files, plan_for_version=selected_plan)
+        return selected_plan
+    except (KeyError, TypeError, ValueError, UnicodeError) as exc:
+        if isinstance(exc, Problem):
+            raise
+        raise Problem("The complete native planning evidence is unreadable.", 422, "INVALID_INSTALLATION_RETURN") from exc
+
+
+def retained_review_pin(value):
+    obj(value, ("id", "sha256"), "retained owner review selection")
+    return {"id": review_id(value.get("id")),
+            "sha256": domain.sha(value.get("sha256"), "Retained owner review", False)}
+
+
+def retained_review(reviews, selection, before_version=None):
+    pin = retained_review_pin(selection)
+    found = [row for row in reviews if row.get("id") == pin["id"]]
+    if len(found) != 1 or found[0].get("sha256") != pin["sha256"]:
+        fail("The retained owner review differs from this exact selected case.", "INSTALLATION_RETURN_SELECTION", 409)
+    row = found[0]
+    validate_row_identity(row, STAGE_PURPOSE)
+    if before_version is not None and row["version"] >= before_version:
+        fail("A continued return must reference an earlier original owner review.")
+    return row
+
+
+def case_review_rows(ops, program_id):
+    return [json.loads(row[0]) for row in ops.db.execute(
+        "SELECT body_json FROM ops_reviews WHERE program_id=? ORDER BY rowid", (program_id,))
+        if json.loads(row[0]).get("purpose") in (PURPOSE, STAGE_PURPOSE)]
+
+
+def retained_original_files(ops, context, row):
+    """Reconstruct original returned names from the owner's already retained bytes."""
+    value, original_files = row["installationReturnReview"], {}
+    for mapping in value["sourceMappings"]:
+        original, retained = mapping["original"], mapping["retained"]
+        actual, raw = ops.source(context["program"]["id"], retained["id"])
+        if (not equal(actual, retained) or not equal(context["sources"].get(retained["id"]), retained)
+                or len(raw) != original["bytes"] or hashlib.sha256(raw).hexdigest() != original["sha256"]):
+            fail("An original returned file differs from its retained owner mapping.", "INSTALLATION_RETURN_SOURCE", 409)
+        original_files["sources/" + original["id"]] = raw
+    validate_proof(value["returnedProof"], original_files)
+    return original_files
+
+
+def proof_selection(ops, context, supplied):
+    if supplied.get("retainedReview") is not None:
+        rows = case_review_rows(ops, context["program"]["id"])
+        origin = retained_review(rows, supplied["retainedReview"])
+        proof = deepcopy(origin["installationReturnReview"]["returnedProof"])
+        if (supplied.get("returnedCaseId") != proof["context"]["program"]["id"]
+                or supplied.get("reviewId") != proof["review"]["id"]
+                or supplied.get("reviewSha256") != proof["review"]["sha256"]):
+            fail("Keep the original customer return behind the selected owner review.", "INSTALLATION_RETURN_SELECTION", 409)
+        return proof, retained_original_files(ops, context, origin), origin
+    proof = proof_for(ops, supplied.get("returnedCaseId"), supplied.get("reviewId"))
+    files = {"sources/" + ident: ops.source(proof["context"]["program"]["id"], ident)[1]
+             for ident in proof["context"]["sources"]}
+    validate_proof(proof, files)
+    return proof, files, None
+
+
 def proof_for(ops, program_id, selected_review):
     context = context_view(ops._context(case_id(program_id)))
     row = ops.review(program_id, review_id(selected_review))
     validate_return(row)
     events = [json.loads(value[0]) for value in ops.db.execute(
         "SELECT body_json FROM ops_events WHERE program_id=? ORDER BY version", (program_id,))]
+    import operations_amendments as amendments
+    import operations_work_intake as work_intake
     proof = {"schema": SCHEMA + ".original-case-evidence", "context": context,
-             "installations": installations.load(ops, program_id), "events": events, "review": row}
+             "installations": installations.load(ops, program_id), "events": events, "review": row,
+             "planningEvidence": planning_evidence(ops, program_id), "amendments": amendments.load(ops, program_id),
+             "workIntakes": work_intake.load(ops, program_id), "receivingReviews": case_review_rows(ops, program_id)}
     return bounded(proof)
 
 
-def validate_proof(proof, files):
-    obj(proof, ("schema", "context", "installations", "events", "review"), "complete original receiving evidence")
+def validate_proof(proof, files, *, _depth=0):
+    if _depth > MAX_PROOF_DEPTH:
+        fail("The retained receiving lineage exceeds the supported complete proof depth.", "INSTALLATION_RETURN_SIZE", 413)
+    bounded(proof)
+    obj(proof, ("schema", "context", "installations", "events", "review", "planningEvidence",
+                "amendments", "workIntakes", "receivingReviews"), "complete original receiving evidence")
     if proof.get("schema") != SCHEMA + ".original-case-evidence":
         fail("Use the original returned case evidence.")
     context, events = proof["context"], proof["events"]
@@ -337,14 +458,25 @@ def validate_proof(proof, files):
             if any(key != "state" and not equal(record.get(key), item) for key, item in prepared.items()):
                 fail("An original receiving record differs from its normalized source.")
     validate_sources(context, files)
-    installations.validate_import(context, proof["installations"], events, context["program"]["version"], files)
-    validate_return_in_case(proof["review"], context, events, proof["installations"], files)
+    selected_plan = plan_for_proof(proof, files)
+    installations.validate_import(context, proof["installations"], events, context["program"]["version"], files,
+                                  plan_for_version=selected_plan)
+    validate_return_in_case(proof["review"], context, events, proof["installations"], files, plan_for_version=selected_plan)
+    if "receivingReviews" in proof:
+        if not isinstance(proof["receivingReviews"], list) or len(proof["receivingReviews"]) > MAX_REVIEWS:
+            fail("Keep the complete bounded original receiving review history.")
+        if not any(equal(row, proof["review"]) for row in proof["receivingReviews"]):
+            fail("The selected original return is absent from its complete receiving review history.")
+        validate_import(context, proof["receivingReviews"], events, proof["installations"], files,
+                        plan_for_version=selected_plan, _depth=_depth + 1)
+    elif any(row["preview"].get("returnReview") is not None for row in proof["installations"]):
+        fail("The received Installation lost its original staged-review binding.")
     return proof
 
 
 def normalized_review(supplied, returned, current):
     obj(supplied, ("returnedCaseId", "reviewId", "reviewSha256", "installationId",
-                   "expectedRevision", "name", "note", "choices"), "owner receiving review")
+                   "expectedRevision", "name", "note", "choices", "retainedReview"), "owner receiving review")
     case_id(supplied.get("returnedCaseId"))
     review_id(supplied.get("reviewId"))
     if supplied.get("reviewId") != returned["id"] or supplied.get("reviewSha256") != returned["sha256"]:
@@ -369,7 +501,8 @@ def normalized_review(supplied, returned, current):
             "reviewSha256": returned["sha256"], "installationId": current["id"], "expectedRevision": current["revision"],
             "name": text(supplied.get("name"), "Owner review name", 300, True),
             "note": text(supplied.get("note"), "Owner receiving review scope", 12000, True),
-            "choices": [choices[item["id"]] for item in original]}
+            "choices": [choices[item["id"]] for item in original],
+            **({"retainedReview": retained_review_pin(supplied["retainedReview"])} if supplied.get("retainedReview") is not None else {})}
 
 
 def evaluate_review(context, current, proof, supplied):
@@ -427,14 +560,11 @@ def review_preview(ops, context, body):
     if not isinstance(supplied, dict):
         fail("Use the complete owner receiving choices.")
     current = installations.get(ops, context["program"]["id"], supplied.get("installationId"))
-    proof = proof_for(ops, supplied.get("returnedCaseId"), supplied.get("reviewId"))
+    proof, files, _ = proof_selection(ops, context, supplied)
     baseline = proof["review"]["installationReturn"]["baseline"]
     retained = installations.get(ops, context["program"]["id"], baseline["id"], baseline["revision"])
     if not equal(retained, baseline):
         fail("The receiving baseline is not the owner's retained original edition.", "INSTALLATION_RETURN_BASELINE", 409)
-    files = {"sources/" + ident: ops.source(proof["context"]["program"]["id"], ident)[1]
-             for ident in proof["context"]["sources"]}
-    validate_proof(proof, files)
     return evaluate_review(context, current, proof, supplied)
 
 
@@ -467,14 +597,22 @@ def stage(ops, context, data, actor, version, note):
     if candidate["previewSha256"] != domain.sha(data.get("expectedPreviewSha256"), "Reviewed return selection", False):
         fail("The owner or returned case changed. Preview the original selection again.", "INSTALLATION_RETURN_PREVIEW", 409)
     sources = context["sources"]
+    proof, original_files, origin = proof_selection(ops, context, candidate["inputs"])
+    if not equal(proof, candidate["returnedProof"]):
+        fail("The selected complete return changed before staging.", "INSTALLATION_RETURN_SOURCE", 409)
+    prior_mappings = {mapping["original"]["id"]: mapping for mapping in
+                      origin["installationReturnReview"]["sourceMappings"]} if origin else {}
     mappings, added = [], []
     for metadata in candidate["sources"]:
-        original_meta, raw = ops.source(candidate["inputs"]["returnedCaseId"], metadata["id"])
-        if not equal(original_meta, metadata):
+        raw = original_files["sources/" + metadata["id"]]
+        if len(raw) != metadata["bytes"] or hashlib.sha256(raw).hexdigest() != metadata["sha256"]:
             fail("The selected original receiving file changed.", "INSTALLATION_RETURN_SOURCE", 409)
-        existing = sources.get(metadata["id"])
-        if existing is not None and equal(existing, metadata):
-            owner_metadata, owner_raw = ops.source(context["program"]["id"], metadata["id"])
+        prior_mapping = prior_mappings.get(metadata["id"])
+        existing = sources.get(prior_mapping["retained"]["id"] if prior_mapping else metadata["id"])
+        if prior_mapping and not equal(existing, prior_mapping["retained"]):
+            fail("The retained return mapping differs from its original owner review.", "INSTALLATION_RETURN_SOURCE", 409)
+        if existing is not None and (prior_mapping is not None or equal(existing, metadata)):
+            owner_metadata, owner_raw = ops.source(context["program"]["id"], existing["id"])
             if owner_raw != raw:
                 fail("The original shared source identity has different bytes.")
             retained = owner_metadata
@@ -501,10 +639,19 @@ def stage(ops, context, data, actor, version, note):
             "document": document, "sourceChange": {"added": added}, "unchanged": False}
 
 
-def validate_stage(row, context, events, saved_installations, files):
+def validate_stage(row, context, events, saved_installations, files, *, reviews=(), plan_for_version=None, _depth=0):
     validate_row_identity(row, STAGE_PURPOSE)
     value = row["installationReturnReview"]
     before = review_context(row)
+    if plan_for_version is not None:
+        import operations_amendments as amendments
+        if amendments.plan_core(before["plan"]) != amendments.plan_core(plan_for_version(row["version"] - 1)):
+            fail("The staged owner review differs from its original selected native plan.")
+    origin = retained_review(reviews, value["inputs"]["retainedReview"], row["version"]) if value["inputs"].get("retainedReview") else None
+    if origin and not equal(origin["installationReturnReview"]["returnedProof"], value["returnedProof"]):
+        fail("The continued owner review changed its selected original returned proof.")
+    prior_mappings = {mapping["original"]["id"]: mapping for mapping in
+                      origin["installationReturnReview"]["sourceMappings"]} if origin else {}
     candidate = evaluate_review(before, value["currentInstallation"], value["returnedProof"], value["inputs"])
     expected_keys = set(candidate) | {"sourceMappings", "receipt", "document"}
     if set(value) != expected_keys or value.get("schema") != SCHEMA + ".owner-stage" or not equal(
@@ -534,8 +681,12 @@ def validate_stage(row, context, events, saved_installations, files):
             fail("The original source-copy observation changed.")
         if copied:
             if retained["id"] in before["sources"]:
-                fail("A newly copied return source overwrites an earlier owner source.")
-            added.append(retained)
+                if not origin or not equal(prior_mappings.get(original["id"]), mapping) or not equal(before["sources"][retained["id"]], retained):
+                    fail("A copied return source must retain its exact earlier owner mapping.")
+            else:
+                if origin:
+                    fail("The continued owner review lost a file retained by its selected earlier review.")
+                added.append(retained)
         elif not equal(before["sources"].get(original["id"]), original):
             fail("The reused original source was not present before staging.")
         after_sources[retained["id"]] = retained
@@ -543,7 +694,7 @@ def validate_stage(row, context, events, saved_installations, files):
         if not isinstance(raw, bytes) or len(raw) != original["bytes"] or hashlib.sha256(raw).hexdigest() != original["sha256"]:
             fail("A returned original file is missing from the owner's full case.")
         reconstructed["sources/" + original["id"]] = raw
-    validate_proof(candidate["returnedProof"], reconstructed)
+    validate_proof(candidate["returnedProof"], reconstructed, _depth=_depth + 1)
     receipt = value["receipt"]
     if receipt["id"] in before["sources"] or receipt["id"] in seen or not equal(context["sources"].get(receipt["id"]), receipt):
         fail("The owner receiving receipt lost its distinct original identity.")
@@ -568,23 +719,107 @@ def validate_stage(row, context, events, saved_installations, files):
     return row
 
 
-def validate_import(context, reviews, events, saved_installations, files):
+def validate_import(context, reviews, events, saved_installations, files, *, plan_for_version=None, _depth=0):
     wanted, found = {"installation.return": set(), "installation.return-stage": set()}, set()
-    for row in reviews:
+    for row in sorted(reviews, key=lambda item: item.get("version", 0)):
         if row.get("purpose") == PURPOSE:
-            validate_return_in_case(row, context, events, saved_installations, files)
+            validate_return_in_case(row, context, events, saved_installations, files, plan_for_version=plan_for_version)
             wanted["installation.return"].add(row["id"])
         elif row.get("purpose") == STAGE_PURPOSE:
-            validate_stage(row, context, events, saved_installations, files)
+            validate_stage(row, context, events, saved_installations, files, reviews=reviews,
+                           plan_for_version=plan_for_version, _depth=_depth)
             wanted["installation.return-stage"].add(row["id"])
         else:
             continue
         if row["id"] in found:
             fail("The complete case repeats a receiving review.")
         found.add(row["id"])
+    for installation in saved_installations:
+        candidate = installation["preview"]
+        if candidate.get("returnReview") is not None:
+            selected = retained_review(reviews, candidate["returnReview"], installation["version"])
+            prior = next((item for item in saved_installations if item["id"] == installation["id"]
+                          and item["revision"] == installation["revision"] - 1), None)
+            require_stage_application(candidate["snapshot"], selected, prior, candidate["document"])
     for action, ids in wanted.items():
         if {event.get("recordId") for event in events if event.get("action") == action} != ids:
             fail("The complete case lost an original Installation receiving review.")
+
+
+
+def stage_snapshot(row):
+    value, before = row["installationReturnReview"], review_context(row)
+    sources = {**before["sources"], **{item["retained"]["id"]: item["retained"] for item in value["sourceMappings"]},
+               value["receipt"]["id"]: value["receipt"]}
+    return installations.capture({**before, "sources": sources}, value["document"])
+
+
+def selected_stage_basis(snapshot):
+    import operations_amendments as amendments
+    return {"mode": snapshot["program"]["mode"], "calendarStart": snapshot["program"].get("calendarStart"),
+            "plan": amendments.plan_core(snapshot["plan"]), "records": snapshot["records"], "sources": snapshot["sources"]}
+
+
+def stage_application_state(context, row, current):
+    validate_row_identity(row, STAGE_PURPOSE)
+    value, expected = row["installationReturnReview"], stage_snapshot(row)
+    original = value["currentInstallation"]
+    same_edition = current is not None and ref(current) == ref(original)
+    installation_changes = installations.differences(original["preview"]["document"],
+        current["preview"]["document"] if current else None)
+    try:
+        document = installations.normalized(context, value["document"])
+        actual = installations.capture(context, document)
+        selected_changes = installations.differences(selected_stage_basis(expected), selected_stage_basis(actual))
+        document_changes = installations.differences(value["document"], document)
+        unavailable = None
+    except (Problem, KeyError) as exc:
+        selected_changes, document_changes = [], []
+        unavailable = str(exc)
+    return {"schema": SCHEMA + ".stage-state", "returnReview": {"id": row["id"], "sha256": row["sha256"]},
+            "source": installations._source(context), "stagedInstallation": ref(original),
+            "currentInstallation": ref(current) if current else None, "sameInstallationEdition": same_edition,
+            "installationChanges": installation_changes, "selectedBasisChanges": selected_changes,
+            "documentChanges": document_changes, "unavailable": unavailable,
+            "canSave": same_edition and not selected_changes and not document_changes and unavailable is None}
+
+
+def require_stage_application(context, row, current, document):
+    state = stage_application_state(context, row, current)
+    if not equal(document, row["installationReturnReview"]["document"]):
+        fail("The staged Installation document changed. Regenerate the owner review for the current selection.",
+             "INSTALLATION_RETURN_STAGE_CHANGED", 409)
+    if not state["canSave"]:
+        fail("The staged Installation and current case differ. Compare the original owner review, then regenerate "
+             "and review its current selection.", "INSTALLATION_RETURN_STAGE_CHANGED", 409)
+    return {"id": row["id"], "sha256": row["sha256"]}
+
+
+def verify_stage_application(ops, context, selection, current, document):
+    pin = retained_review_pin(selection)
+    row = ops.review(context["program"]["id"], pin["id"])
+    row = retained_review([row], pin, context["program"]["version"] + 1)
+    return require_stage_application(context, row, current, document)
+
+
+def review_seed(ops, context, body):
+    obj(body, ("expectedVersion", "retainedReview"), "retained owner review seed")
+    installations._current(context, body.get("expectedVersion"))
+    pin = retained_review_pin(body.get("retainedReview"))
+    row = retained_review(case_review_rows(ops, context["program"]["id"]), pin)
+    value = row["installationReturnReview"]
+    retained_original_files(ops, context, row)
+    current = installations.get(ops, context["program"]["id"], value["currentInstallation"]["id"])
+    proof, returned = value["returnedProof"], value["returnedProof"]["review"]
+    inputs = {**deepcopy(value["inputs"]), "retainedReview": pin, "expectedRevision": current["revision"],
+              "choices": [{"id": choice["id"], "action": "KEEP", "note": choice["note"]} for choice in value["inputs"]["choices"]]}
+    applications = [{"id": item["id"], "revision": item["revision"], "sha256": item["sha256"], "version": item["version"]}
+        for item in installations.load(ops, context["program"]["id"])
+        if equal(item["preview"].get("returnReview"), pin) and equal(item["preview"]["document"], value["document"])]
+    return bounded({"schema": SCHEMA + ".owner-seed", "source": installations._source(context),
+        "retainedReview": pin, "returned": deepcopy(returned), "inputs": inputs,
+        "previousChoices": deepcopy(value["inputs"]["choices"]), "application": stage_application_state(context, row, current),
+        "savedInstallations": applications})
 
 
 def list_reviews(ops, context):

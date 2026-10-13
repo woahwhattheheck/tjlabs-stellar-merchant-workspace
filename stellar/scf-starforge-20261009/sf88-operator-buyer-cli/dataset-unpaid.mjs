@@ -9,6 +9,8 @@ import {randomUUID} from 'node:crypto';
 import {need,InputError} from './config.mjs';
 import {canonical,digest} from './dataset-page.mjs';
 import {analyzeOne} from '../sf52-buyer-outcomes/outcomes.mjs';
+import {checkoutPaths} from '../sf82-checkout-evidence/checkpoint.mjs';
+import {withDatasetUnpaidWireHistory} from './attempt-wire.mjs';
 
 const SCHEMA='stellar-forge.sf88.unpaid-continuation.v1';
 const WORKER=fileURLToPath(new URL('./dataset-unpaid.py',import.meta.url));
@@ -106,7 +108,7 @@ export async function pendingUnpaidContinuation(directory,cfg) {
   }
   return pending;
 }
-async function eligible(directory,cfg,attempt,result) {
+async function eligible(directory,cfg,attempt,result,historyDirectory=null) {
   if(attempt?.schema!=='stellar-forge.sf88.dataset-attempt.v1'||
     attempt.intentId!==cfg.operation.intentId||attempt.configurationSha256!==digest(canonical(cfg))||
     result?.schema!=='stellar-forge.sf88.dataset-attempt-result.v1')return null;
@@ -115,7 +117,10 @@ async function eligible(directory,cfg,attempt,result) {
     summary.intentId!==cfg.operation.intentId||summary.error?.paymentSent!==false||
     summary.operatorReservation!==null||summary.status!==null||summary.httpStatus!==null||
     summary.responseFile?.status!=='NOT_STARTED'||summary.evidenceError||summary.responseCleanupError)return null;
-  const originals=paths(directory,cfg),evidenceRaw=await bytes(originals['evidence.json'],262144,true);
+  const originalPaths=paths(directory,cfg);
+  const originals=historyDirectory===null?originalPaths:
+    Object.fromEntries(NAMES.map(name=>[name,join(historyDirectory,name)]));
+  const evidenceRaw=await bytes(originals['evidence.json'],262144,true);
   if(!evidenceRaw||await bytes(cfg.responseFile.destination,1,true)!==null)return null;
   let evidence;
   try{evidence=JSON.parse(new TextDecoder('utf8',{fatal:true}).decode(evidenceRaw));}catch{return null;}
@@ -129,7 +134,7 @@ async function eligible(directory,cfg,attempt,result) {
     evidence.observation.buyer?.attempts!==0||
     evidence.observation.buyer?.receipt!=null||evidence.observation.chain!=null||
     analyzeOne(evidence.observation).status!=='BLOCKED_BEFORE_SIGNATURE'||
-    summary.evidencePath!==originals['evidence.json'])return null;
+    summary.evidencePath!==originalPaths['evidence.json'])return null;
   const attemptRaw=await bytes(originals['attempt.json'],8192);
   need(canonical(JSON.parse(attemptRaw))===canonical(attempt),'DATASET_ATTEMPT_CHANGED');
   const source=[];
@@ -162,32 +167,123 @@ function ledgerAbsent(cfg,configurationPath,configurationSha256,environment,sign
     const child=spawn(cfg.operator.python,['-I','-B','-u',WORKER,
       '--config',datasetStoragePath(configurationPath),'--sha256',configurationSha256],
       {env,shell:false,stdio:['ignore','pipe','ignore']});
-    const chunks=[];let size=0,done=false;
-    const finish=(error,value)=>{if(done)return;done=true;clearTimeout(timer);
-      signal?.removeEventListener('abort',abort);error?reject(error):resolve(value);};
-    const abort=()=>{child.kill('SIGKILL');finish(new InputError('OPERATOR_ABORTED'));};
-    const timer=setTimeout(()=>{child.kill('SIGKILL');finish(new InputError('DATASET_UNPAID_LEDGER_TIMEOUT'));},35000);
+    const chunks=[];let size=0,stopping=null;
+    const stop=error=>{
+      stopping??=error;
+      try{child.kill('SIGKILL');}catch(killError){stopping.retirementCode=killError.code??'DATASET_UNPAID_LEDGER_STOP_FAILED';}
+    };
+    const abort=()=>stop(new InputError('OPERATOR_ABORTED'));
+    const timer=setTimeout(()=>stop(new InputError('DATASET_UNPAID_LEDGER_TIMEOUT')),35000);
     signal?.addEventListener('abort',abort,{once:true});
     if(signal?.aborted)abort();
-    child.once('error',()=>finish(new InputError('DATASET_UNPAID_LEDGER_START_FAILED')));
-    child.stdout.on('data',raw=>{size+=raw.length;if(size>8192){child.kill('SIGKILL');
-      finish(new InputError('DATASET_UNPAID_LEDGER_RESULT_TOO_LARGE'));}else chunks.push(raw);});
+    child.once('error',()=>{stopping??=new InputError('DATASET_UNPAID_LEDGER_START_FAILED');});
+    child.stdout.on('error',()=>stop(new InputError('DATASET_UNPAID_LEDGER_READ_FAILED')));
+    child.stdout.on('data',raw=>{
+      if(stopping)return;
+      size+=raw.length;
+      if(size>8192)stop(new InputError('DATASET_UNPAID_LEDGER_RESULT_TOO_LARGE'));
+      else chunks.push(raw);
+    });
+    // Keep this original child's ownership through actual close, including
+    // abort, timeout and stream errors, before the Dataset run lock can retire.
     child.once('close',code=>{
-      if(done)return;
+      clearTimeout(timer);signal?.removeEventListener('abort',abort);
+      if(stopping){reject(stopping);return;}
       try{
         const value=JSON.parse(Buffer.concat(chunks).toString('utf8'));
         if(value.schema!=='stellar-forge.sf88.unpaid-ledger-check.v1')throw new Error();
         if(code!==0||value.outcome!=='ABSENT_FROM_AUTHENTICATED_ORIGINAL_LEDGER') {
           const reason=/^[A-Z0-9_]{1,120}$/.test(value.code??'')?value.code:'DATASET_UNPAID_LEDGER_REFUSED';
-          return finish(new InputError(reason));
+          reject(new InputError(reason));return;
         }
         need(value.intentId===cfg.operation.intentId&&value.ledger===cfg.operator.ledger&&
           value.reservationsForIntent===0,'DATASET_UNPAID_LEDGER_MISMATCH');
-        finish(null,value);
-      }catch{finish(new InputError('DATASET_UNPAID_LEDGER_RESULT_INVALID'));}
+        resolve(value);
+      }catch{reject(new InputError('DATASET_UNPAID_LEDGER_RESULT_INVALID'));}
     });
   });
 }
+
+const CHECKOUT_HISTORY=SCHEMA+'.checkout-history';
+const CHECKOUT_NAMES=['checkout-checkpoint.json','body-checkpoint.json'];
+function checkoutFiles(cfg) {
+  const selected=checkoutPaths(cfg.evidenceDir,cfg.operation.intentId);
+  return {'checkout-checkpoint.json':selected.checkpointPath,'body-checkpoint.json':selected.bodyPath};
+}
+/** Preserve the original SF82 checkpoint and body observation alongside its
+ * terminal evidence. The separate immutable selection also upgrades an older
+ * already-prepared unpaid plan without rewriting that original plan. */
+async function retainCheckoutHistory(cfg,plan,planSha256) {
+  const history=plan.historyDirectory,path=join(history,'checkout-selection.json');
+  const original=checkoutFiles(cfg);
+  const evidence=await json(join(history,'evidence.json'));
+  let raw=await bytes(path,262144,true),selection=raw===null?null:JSON.parse(raw);
+  const newSelection=selection===null;
+  if(selection===null) {
+    const files=[];
+    for(const name of CHECKOUT_NAMES) {
+      const value=await bytes(original[name],262144,true);
+      files.push({name,path:original[name],state:value===null?'ABSENT':'SAVED',
+        bytes:value?.length??0,sha256:value===null?null:digest(value)});
+    }
+    selection={schema:CHECKOUT_HISTORY,intentId:plan.intentId,attemptSha256:plan.attemptSha256,
+      planSha256,configurationSha256:plan.configurationSha256,files};
+    raw=Buffer.from(JSON.stringify(selection,null,2)+'\n');
+  }
+  need(selection.schema===CHECKOUT_HISTORY&&selection.intentId===plan.intentId&&
+    selection.attemptSha256===plan.attemptSha256&&selection.planSha256===planSha256&&
+    selection.configurationSha256===plan.configurationSha256&&
+    Array.isArray(selection.files)&&selection.files.length===2&&
+    selection.files.every((file,index)=>file.name===CHECKOUT_NAMES[index]&&file.path===original[file.name]&&
+      (file.state==='ABSENT'&&file.bytes===0&&file.sha256===null||
+       file.state==='SAVED'&&Number.isSafeInteger(file.bytes)&&file.bytes>=1&&
+       file.bytes<=262144&&HASH.test(file.sha256??''))),
+    'DATASET_UNPAID_CHECKOUT_SELECTION_CHANGED');
+  const captured={},retainedFiles=[];
+  for(const file of selection.files) {
+    const current=await bytes(file.path,262144,true);
+    if(current!==null)need(file.state==='SAVED'&&current.length===file.bytes&&
+      digest(current)===file.sha256,'DATASET_UNPAID_CHECKOUT_SOURCE_CHANGED');
+    const archive=join(history,file.name);
+    let saved=await bytes(archive,262144,true);
+    if(file.state==='ABSENT') {
+      need(saved===null,'DATASET_UNPAID_CHECKOUT_HISTORY_CHANGED');
+      continue;
+    }
+    if(saved===null) {
+      need(current!==null,'DATASET_UNPAID_CHECKOUT_SOURCE_MISSING');
+      saved=current;
+    }
+    need(saved.length===file.bytes&&digest(saved)===file.sha256,
+      'DATASET_UNPAID_CHECKOUT_HISTORY_CHANGED');
+    captured[file.name]=JSON.parse(saved);
+    retainedFiles.push({path:archive,raw:saved});
+  }
+  const checkpoint=captured['checkout-checkpoint.json'],body=captured['body-checkpoint.json'];
+  if(evidence.sourceCheckpoint===undefined) {
+    need(!checkpoint&&!body,'DATASET_UNPAID_CHECKOUT_NOT_IN_ORIGINAL_EVIDENCE');
+  } else {
+    need(checkpoint?.schema==='scf82.checkout-checkpoint.v1'&&
+      checkpoint.intentId===plan.intentId&&checkpoint.observedAt===evidence.observedAt&&
+      checkpoint.operatorReservation===null&&
+      checkpoint.trustedPayer===(cfg.trustedPayer??null)&&
+      canonical(checkpoint.observation)===canonical(evidence.observation)&&
+      canonical(checkpoint.reconciliation)===canonical(evidence.reconciliation)&&
+      evidence.sourceCheckpoint.path===original['checkout-checkpoint.json']&&
+      evidence.sourceCheckpoint.sha256===selection.files[0].sha256&&
+      body?.schema==='scf82.checkout-body-checkpoint.v1'&&body.intentId===plan.intentId&&
+      body.checkpointSha256===selection.files[0].sha256&&
+      canonical(body.bodyCapture)===canonical(evidence.bodyCapture),
+      'DATASET_UNPAID_ORIGINAL_CHECKOUT_CHANGED');
+  }
+  // Publish only a complete validated selection; missing original bytes must
+  // not freeze an ABSENT entry that contradicts the retained SF82 evidence.
+  if(newSelection)await createAtomic(path,raw);
+  for(const file of retainedFiles)await createAtomic(file.path,file.raw);
+  need(digest(await bytes(path))===digest(raw),'DATASET_UNPAID_CHECKOUT_SELECTION_CHANGED');
+  return {sha256:digest(raw),files:selection.files};
+}
+
 /** Called only while the original dataset run lock is held. */
 export async function continueUnpaidPage(directory,cfg,{expectedAttemptSha256,environment,signal}={}) {
   need(HASH.test(expectedAttemptSha256??''),'DATASET_UNPAID_ATTEMPT_REVIEW_REQUIRED');
@@ -234,21 +330,58 @@ export async function continueUnpaidPage(directory,cfg,{expectedAttemptSha256,en
   if(!await json(archived,true))await createAtomic(archived,{schema:SCHEMA,
     attemptSha256:plan.attemptSha256,outcome:'ORIGINAL_BYTES_DURABLY_ARCHIVED',
     archivedAt:new Date().toISOString(),originalLedgerCheck:checked});
-  // Keep the durable attempt marker until every terminal file is archived and
-  // removed. A crash in this phase remains PREPARED, which ordinary run refuses.
-  for(const name of ['result.json','failure.json','evidence.json','attempt.json']) {
-    const expected=plan.files.find(x=>x.name===name);
-    const raw=await bytes(original[name],262144,true);
-    if(raw!==null) {
-      need(expected&&raw.length===expected.bytes&&digest(raw)===expected.sha256,
-        'DATASET_UNPAID_SOURCE_CHANGED');
-      await unlink(original[name]);await sync(dirname(original[name]));
+  const planRaw=await bytes(join(plan.historyDirectory,'plan.json'));
+  need(canonical(JSON.parse(planRaw))===canonical(plan),'DATASET_UNPAID_HISTORY_CHANGED');
+  const planSha256=digest(planRaw);
+  const checkout=await retainCheckoutHistory(cfg,plan,planSha256);
+  return withDatasetUnpaidWireHistory({cfg,historyDirectory:plan.historyDirectory,
+    planSha256,sourceAttemptSha256:plan.attemptSha256,signal,
+    verifyOriginal:async()=>{
+      need(digest(await bytes(join(plan.historyDirectory,'plan.json')))===planSha256,
+        'DATASET_UNPAID_HISTORY_CHANGED');
+      const candidate=await eligible(directory,cfg,await json(join(plan.historyDirectory,'attempt.json')),
+        await json(join(plan.historyDirectory,'result.json')),plan.historyDirectory);
+      need(candidate&&candidate.attemptSha256===plan.attemptSha256&&
+        canonical(candidate.source.map(({raw,...metadata})=>metadata))===canonical(plan.files),
+        'DATASET_UNPAID_ORIGINAL_HISTORY_CHANGED');
+      for(const file of plan.files) {
+        const current=await bytes(original[file.name],262144,true);
+        if(current!==null)need(current.length===file.bytes&&digest(current)===file.sha256,
+          'DATASET_UNPAID_SOURCE_CHANGED');
+      }
+      need(digest(await bytes(original['config.json'],65536))===digest(cfgRaw)&&
+        await bytes(cfg.responseFile.destination,1,true)===null,'DATASET_UNPAID_CONFIG_OR_OUTPUT_CHANGED');
+      const currentCheckout=await retainCheckoutHistory(cfg,plan,planSha256);
+      need(currentCheckout.sha256===checkout.sha256,'DATASET_UNPAID_CHECKOUT_SELECTION_CHANGED');
+      const summary=(await json(join(plan.historyDirectory,'result.json'))).summary;
+      const originalLedgerCheck=await ledgerAbsent(cfg,original['config.json'],digest(cfgRaw),environment,signal);
+      return {schema:SCHEMA,intentId:plan.intentId,planSha256,attemptSha256:plan.attemptSha256,
+        configurationSha256:plan.configurationSha256,checkoutSelectionSha256:checkout.sha256,
+        originalWire:summary.transportCheckpoint??null,originalLedgerCheck};
+    },
+  },async({history})=>{
+    // Both complete checkout records and the inactive original wire are now
+    // durable. Keep the original attempt marker until every terminal path is
+    // retired; a crash remains PREPARED and never implies another dispatch.
+    const retire=[
+      ...['result.json','failure.json','evidence.json'].map(name=>({
+        path:original[name],expected:plan.files.find(file=>file.name===name)})),
+      ...checkout.files.map(file=>({path:file.path,expected:file.state==='SAVED'?file:null})),
+      {path:original['attempt.json'],expected:plan.files.find(file=>file.name==='attempt.json')},
+    ];
+    for(const file of retire) {
+      const raw=await bytes(file.path,262144,true);
+      if(raw!==null) {
+        need(file.expected&&raw.length===file.expected.bytes&&digest(raw)===file.expected.sha256,
+          'DATASET_UNPAID_SOURCE_CHANGED');
+        await unlink(file.path);await sync(dirname(file.path));
+      }
     }
-  }
-  await createAtomic(join(plan.historyDirectory,'continued.json'),{schema:SCHEMA,
-    attemptSha256:plan.attemptSha256,outcome:'ORIGINAL_UNPAID_ATTEMPT_ARCHIVED',
-    completedAt:new Date().toISOString()});
-  return view(plan,'ARCHIVED');
+    await createAtomic(join(plan.historyDirectory,'continued.json'),{schema:SCHEMA,
+      attemptSha256:plan.attemptSha256,outcome:'ORIGINAL_UNPAID_ATTEMPT_ARCHIVED',
+      checkoutSelectionSha256:checkout.sha256,wireHistory:history,completedAt:new Date().toISOString()});
+    return {...view(plan,'ARCHIVED'),checkoutSelectionSha256:checkout.sha256,wireHistory:history};
+  });
 }
 
 // Reuse the original authenticated SF36 absence audit for explicit Node continuations.

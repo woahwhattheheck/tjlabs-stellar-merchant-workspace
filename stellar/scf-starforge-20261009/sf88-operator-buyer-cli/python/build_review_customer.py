@@ -143,6 +143,72 @@ library's SQLite files retain source paths and are not a portable customer hando
 Use complete JSON exports for another operator. The original comparison and return
 CLI commands remain available; run `python review.py --help` and command `--help`.
 
+## Complete reviewer journals
+
+The customer receiver recognizes a complete journal envelope and delegates it to the
+original returned-journal engine. Bare comparison handovers keep the incoming-review
+workflow. Use --return-format incoming or --return-format returned to choose explicitly.
+
+Receive a complete journal into a new workspace, or stage it against the same comparison
+already in this workspace:
+
+```sh
+python review.py --state "$HOME/customer-review" receive \
+  --input "/absolute/complete-journal.json" --operation-id "journal-receive-1" \
+  --serve --open-browser
+python review.py --state "$HOME/customer-review" receive \
+  --input "/absolute/returned-journal.json" --operation-id "journal-stage-1" \
+  --stage-return --return-format returned --label "Reviewer return" \
+  --serve --open-browser
+
+```
+
+The staged plan opens at /review-returns with its exact plan ID and comparison ID.
+A new receiving result opens that comparison at /comparisons. Receiving without
+--serve saves the same location for the next serve command. The private workspace
+remembers only page/identifier metadata; the original native engine retains decisions,
+operation receipts and every source journal.
+
+```sh
+python review.py --state "$HOME/customer-review" serve --open-browser
+python review.py --state "$HOME/customer-review" serve --plan-id PLAN_ID --open-browser
+python review.py --state "$HOME/customer-review" serve --return-id INCOMING_RETURN_ID --open-browser
+python review.py --state "$HOME/customer-review" serve --comparison-id COMPARISON_ID --open-browser
+
+python review.py --state "$HOME/customer-review" review-returns list --comparison-id COMPARISON_ID
+python review.py --state "$HOME/customer-review" review-returns show PLAN_ID
+python review.py --state "$HOME/customer-review" review-returns targets PLAN_ID --all
+python review.py --state "$HOME/customer-review" review-returns history SOURCE_JOURNAL_ID --all
+python review.py --state "$HOME/customer-review" review-returns apply PLAN_ID \
+  --input "/absolute/saved-resolution.json"
+python review.py --state "$HOME/customer-review" review-returns export COMPARISON_ID \
+  --format json --out "/absolute/complete-reviewed-journal.json"
+
+```
+
+The saved resolution file carries the original operationId, expectedBaseId, actor
+and resolutions. Reuse that exact file after a lost response. Resolutions use the
+original KEEP_LOCAL, TAKE_RETURNED or CUSTOM choices. An explicit review-returns
+restage PLAN_ID --operation-id ID prepares a new plan against the current local
+journal; it preserves the earlier plan and receipt.
+
+Full-journal export supports JSON, CSV and HTML. JSON contains the whole comparison,
+every retained source journal, reconciliation plan and receipt. Its file transfer uses
+the existing resumable byte cursor and checksum. Reopening a saved plan keeps its
+original ID even after it is applied. Selecting another case in the native comparison
+screen takes precedence over an older remembered CLI receipt.
+
+| Command or screen | Identifier |
+| --- | --- |
+| compare, /comparisons | comparison ID |
+| return, /comparison-returns | incoming return ID |
+| review-returns show/targets/apply/restage, /review-returns | full-journal plan ID |
+| review-returns history | source-journal ID |
+| review-returns export | comparison ID, with complete lineage |
+
+The original return namespace and compare export continue to use the incoming-review
+contract. Use review-returns export for the complete journal delivery.
+
 ## Python application use
 
 The included wheel can be installed without dependencies, or import the supplied
@@ -198,6 +264,8 @@ def build(checkout: Path, out: Path, source_manifest: Path, reviews=(), wheel: P
     if not out.parent.is_dir() or out.parent.resolve() != out.parent:
         raise ValueError("Existing canonical output directory required")
     required = [BASE / "python/review-bridge.mjs", BASE / "python/review-browser.mjs",
+        BASE / "python/review-journals.mjs", BASE / "python/stellar_forge_buyer/review_journals.py",
+        BASE / "python/stellar_forge_buyer/review_journal_cli.py", BASE / "python/stellar_forge_buyer/review_location.py",
         BASE / "python/stellar_forge_buyer/review_browser.py", BASE / "python/stellar_forge_buyer/review_serve.py",
         BASE / "resource-library/library.mjs", BASE / "resource-library/server.mjs",
         BASE / "resource-library/comparison-extension.mjs"]
@@ -214,10 +282,19 @@ def build(checkout: Path, out: Path, source_manifest: Path, reviews=(), wheel: P
         selected_sources[name] = row
     for item in required:
         if item.as_posix() not in selected_sources:raise ValueError("Customer runtime missing from source selection: " + str(item))
-    # Required source-owned review pages are checked independently of the optional
-    # Collections extension so a missing shipped page cannot become an empty UI.
-    for name in ["index.html", "app.js", "style.css", "comparison.html", "comparison.js", "comparison.css",
-                 "comparison-returns.html", "comparison-returns.js", "comparison-returns.css"]:
+    journal_runtime = (BASE / "resource-library/review-returns.mjs").as_posix() in selected_sources
+    if journal_runtime:
+        for name in ("review-returns.mjs", "review-return-format.mjs", "review-return-extension.mjs",
+                     "comparison-return-compat.mjs"):
+            path = BASE / "resource-library" / name
+            if path.as_posix() not in selected_sources or not (checkout / path).is_file():
+                raise ValueError("Missing full-journal runtime: " + name)
+    # Require each selected native review screen in the complete customer source.
+    assets = ["index.html", "app.js", "style.css", "comparison.html", "comparison.js", "comparison.css",
+              "comparison-returns.html", "comparison-returns.js", "comparison-returns.css"]
+    if journal_runtime:
+        assets += ["review-return.html", "review-return.js", "review-return.css"]
+    for name in assets:
         if not (checkout / BASE / "resource-library" / name).is_file() or (BASE / "resource-library" / name).as_posix() not in selected_sources:
             raise ValueError("Missing review browser asset: " + name)
     with tempfile.TemporaryDirectory(prefix=".review-build-", dir=out.parent) as temp:
@@ -252,7 +329,8 @@ def build(checkout: Path, out: Path, source_manifest: Path, reviews=(), wheel: P
         files = [{"path": p.relative_to(stage).as_posix(), "bytes": p.stat().st_size, "sha256": sha(p)}
                  for p in sorted(stage.rglob("*")) if p.is_file()]
         manifest = {"schema": SCHEMA, "python": ">=3.11 POSIX", "node": ">=22.16", "reviewFiles": selected,
-            "browserPages": ["resources", "comparisons", "returns"] + (["collections"] if (BASE/"resource-library/collection-ui.mjs").as_posix() in selected_sources else []),
+            "browserPages": ["resources", "comparisons", "returns"] + (["review-returns"] if journal_runtime else []) + (["collections"] if (BASE/"resource-library/collection-ui.mjs").as_posix() in selected_sources else []),
+            "reviewFormats": ["incoming"] + (["returned"] if journal_runtime else []),
             "files": files}
         (stage / "PACKAGE.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
         archive = Path(temp) / "complete.zip"

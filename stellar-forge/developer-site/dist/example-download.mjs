@@ -2,7 +2,7 @@
 import { zipWorkspace } from './onboarding.mjs';
 
 const BASE = new URL('./examples/fred-briefing-20261012/', import.meta.url);
-const MANIFEST = Object.freeze({"bytes":4512,"sha256":"526415a2fad4811bcaad73177c333368a67685a826a64cac7c082506dd68dd78"});
+const MANIFEST = Object.freeze({"bytes":4804,"sha256":"5eb5922b9446a56316e9cafdb21a889d4a23fea49f4aa970d78d9c448e68b3b5"});
 const MAX_PACKAGE_BYTES = 1024 * 1024;
 export const FRED_EXAMPLE = Object.freeze({
   id: 'fred-briefing-20261012',
@@ -10,7 +10,7 @@ export const FRED_EXAMPLE = Object.freeze({
   reportHref: new URL("stellar/scf-starforge-20261009/sf30-seller-sdk/fred/examples/briefing-20261012/briefing.html", BASE).href,
   guideHref: new URL('START_HERE.md', BASE).href,
   files: 15,
-  bytes: 324723
+  bytes: 325502
 });
 
 function aborted(signal) {
@@ -94,7 +94,9 @@ export async function downloadFredExample({ signal, onProgress = () => {} } = {}
     aborted(controller.signal);
     const bytes = zipWorkspace(files);
     aborted(controller.signal);
-    return { bytes, filename: FRED_EXAMPLE.filename, files: files.length };
+    return { bytes, filename: FRED_EXAMPLE.filename, files: files.length,
+      sha256: await digest(bytes), manifestSha256: MANIFEST.sha256,
+      source: { ...manifest.source }, report: { ...manifest.report } };
   } finally {
     clearTimeout(timeout);
     signal?.removeEventListener('abort', cancel);

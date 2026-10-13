@@ -185,6 +185,7 @@ const HELP = `Starforge accounting maintenance client
       --action pause|review|backup|verify|restore|resume|cancel [--request-id UUID]
       [--token-env NAME] [--review-id SHA256] [--backup-id ID] [--sha256 SHA256]
       [--external-writers-stopped true] [--label NAME] [--job-id UUID]
+      [--relocate true|false] [--expected-workspace-id SHA256 --expected-sources-sha256 SHA256]
   execute|reconcile --dir PRIVATE_OPERATION [--wait-ms N] [--poll-ms N]
   download --url MCP_URL --workspace ALIAS --selection PRIVATE_JSON
       --sha256 SHA256 --out NEW_PRIVATE_FILE [--token-env NAME] [--chunk-bytes N]
@@ -194,6 +195,8 @@ prepare writes a private request without contacting the service. execute first r
 its original job UUID, then submits that exact request only if no job is retained.
 reconcile reads/waits for the same job and never submits it. The saved endpoint,
 workspace and token environment NAME are reused; no token or passphrase is saved.
+For restore, --relocate true uses the host's declared new receiving paths. Both optional
+identity hashes pin the original account; the saved request retains the exact choice.
 Exit 0: complete/read/prepared; 3: pending or not observed; 2: failed/interrupted/error.
 `;
 function options(args, allowed) {
@@ -221,10 +224,15 @@ export async function main(args = process.argv.slice(2)) {
   let result;
   if (command === 'prepare') {
     const values = options(rest, ['--dir', ...connectionFields, '--actor', '--action', '--request-id', '--review-id', '--backup-id',
-      '--sha256', '--external-writers-stopped', '--label', '--job-id']);
+      '--sha256', '--external-writers-stopped', '--label', '--job-id', '--relocate', '--expected-workspace-id', '--expected-sources-sha256']);
     const value = { actor: required(values, '--actor') };
     for (const [option, field] of [['--request-id', 'requestId'], ['--review-id', 'expectedReviewId'], ['--backup-id', 'backupId'],
-      ['--sha256', 'expectedSha256'], ['--label', 'label'], ['--job-id', 'jobId']]) if (values.has(option)) value[field] = values.get(option);
+      ['--sha256', 'expectedSha256'], ['--label', 'label'], ['--job-id', 'jobId'],
+      ['--expected-workspace-id', 'expectedWorkspaceId'], ['--expected-sources-sha256', 'expectedSourcesSha256']]) if (values.has(option)) value[field] = values.get(option);
+    if (values.has('--relocate')) {
+      if (!['true', 'false'].includes(values.get('--relocate'))) throw fail('ARGUMENTS', 'Use --relocate true or false.');
+      value.relocate = values.get('--relocate') === 'true';
+    }
     if (values.has('--external-writers-stopped')) {
       if (values.get('--external-writers-stopped') !== 'true') throw fail('ARGUMENTS', 'Use --external-writers-stopped true only after stopping external source writers.');
       value.externalWritersStopped = true;

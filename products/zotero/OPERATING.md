@@ -57,6 +57,22 @@ In **Libraries**, save the numeric user or group library ID, its title, source a
 
 Backoff and Retry-After are retained in the capture record. Resume a waiting capture when its displayed time is eligible. **Restart source attempt** preserves the prior pages and starts another attempt on the same capture record after the library changes. Cancellation retains the existing cursor and source objects. Replaying a prior control UUID cannot cancel a successor attempt.
 
+The official API can omit the default `format=json` and `include=data` values
+from its next-page link. The capture reifies those two documented defaults and
+continues the same original JSON/data request. Explicitly different values,
+unknown parameters, duplicate query keys, changed library/path, noncontiguous
+cursors and changed source versions remain errors. The original response's
+`Link` header stays with its complete retained page.
+
+A complete consumed HTTP 200 response that fails header, page or pagination
+validation is retained under that capture's `rejectedDocuments`, with its
+original body hash, request URL, response headers and reason. Its cursor and
+accepted-page counts stay at the previous committed page. Source-attempt restart
+retains that rejected custody with the earlier attempt. After adopting corrected
+source, use the existing capture's **Resume** action and original workspace;
+a new reviewed resume action gets its own UUID. Receiving and subsequent export
+carry the full saved capture revisions and original response objects.
+
 To import files that have already been acquired, use the browser or wrap the exact originals:
 
 ~~~sh
@@ -98,6 +114,27 @@ In **Research delivery**, select the original dossier and question, then the rev
 
 The source bundle carries the full original page custody and project lineage, a complete original JSON file for each item in the selected view, and the reviewed evidence and findings. The maintained Research receiver owns normalization, revisions and saved source-bundle history.
 
+Large collection views keep the original Research limits. If embedding every
+item again makes the manifest exceed 1 MiB, the bridge uses a compact manifest.
+Each citation's `originalFile` names its complete item JSON in the same source
+bundle. `metadata.originKey` resolves that item's exact source-page entries in
+`zotero-project-lineage.json`. Bibliographic titles, authors, URLs, DOI values,
+item keys/versions/types, selections, full decision notes and findings remain
+in the manifest. Its abstract preview uses 128, 64 or zero characters to fit;
+the full abstract and every unknown field remain in the original item file.
+The custody source identifies this projection and its complete lineage file.
+
+Small handoffs retain their existing manifest representation. Blank native item
+titles get a readable display name from their original type/key; original item
+JSON stays unchanged. Views still need the receiver's source-count, full-file
+byte and complete-bundle bounds. An oversized view reports the precise
+`ZOTERO_RESEARCH_MANIFEST_LIMIT` instead of discarding source records.
+
+Download the complete prepared handoff through the existing **Research delivery**
+view or `zotero download --kind handoff`. Its `files` entries provide each
+original filename, byte count, SHA-256 and complete base64 body. Those exact
+files resolve the compact citations independently of a running operator.
+
 After receiving, retain the handoff ID, source digest, original Research edition and resulting dossier revision. A lost reply continues with the same handoff and request UUID. Changed input under that UUID is rejected.
 
 Original Research reports and portable exports remain available through its existing browser, CLI and client. The [Research operating guide](../research/OPERATING.md) and [complete receiving guide](../research/RECEIVING.md) cover those downstream workflows.
@@ -114,6 +151,12 @@ starforge zotero export \
 ~~~
 
 Keep the complete byte count and SHA-256 returned by the command. An accepted export UUID returns its original exact file even after later edits. Use a new UUID to publish a later edition. The export reports an unavailable linked original Research store rather than omitting its history.
+
+Before creating a new portable file, export validates every immutable record
+hash, contiguous revision chain, original head and saved request. A damaged
+native index/history therefore fails before an invalid export UUID/file is
+published. Preserve the original workspace and its source objects for repair;
+the normal receiver applies the same strict history and object checks.
 
 Environment reference names are retained. API-key values, current browser capabilities, live locks and process handles are not exported.
 

@@ -1,0 +1,260 @@
+{
+  "schema": "commons.scf.scientific-array-customer-workorder.v1",
+  "operation_id": "SCF-ZARR-CUSTOMER-COMMISSIONING-14F5-20261013",
+  "status": "PROPOSED_COMPLEMENT_TO_EXISTING_WORKSHARE",
+  "original_case_id": "brightband-ewb-model-receiving-20261012",
+  "original_operation_id": "BRIGHTBAND-EWB-CUSTOMER-RECEIVING-0C7A-20261012",
+  "original_thread": "https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791788467414179",
+  "original_commercial": {
+    "currency": "USD",
+    "amount_minor": 720000,
+    "business_days": 10,
+    "milestones": [
+      {
+        "name": "kickoff",
+        "amount_minor": 360000
+      },
+      {
+        "name": "accepted handover",
+        "amount_minor": 360000
+      }
+    ],
+    "consolidated_reviews": 2,
+    "handover_minutes": 60,
+    "delivered_scope_correction_business_days": 10,
+    "customer_agreement": null,
+    "start_date": null,
+    "invoice_dates": [],
+    "collections": [],
+    "original_sender_owner": "0C7A work_scout",
+    "proposal_reference": "https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791796412406469?thread_ts=1791788467.414179",
+    "native_document_asset": "urn:aaid:sc:US:cc3b38d7-0375-41c9-b9a7-525f2ce3b2d1",
+    "source_publication": "c07cb1c1966bee6c36f604c4a8dee9d50e1568c3"
+  },
+  "scientific_authority": {
+    "project": "ExtremeWeatherBench",
+    "version": "1.1.0",
+    "commit": "7ce3232305532d4ffc021b3c2f8dad41cef3c7e2",
+    "application_selection": "e67dee9d37cc8a7118c50e5b159e6bb8c4fbd91e",
+    "case_id": 3,
+    "case_label": "California June 7–15, 2022",
+    "forecast_models": [
+      "FOUR_v200_GFS",
+      "PANG_v100_GFS"
+    ],
+    "target": "ERA5",
+    "metrics": [
+      "MAE",
+      "peak MAE",
+      "RMSE"
+    ],
+    "source_contract": "https://github.com/woahwhattheheck/commons/blob/5eceeaacc2b65d7eef4331cf1c2508a2a15e15b9/opportunities/brightband_ewb_receiving_2026/SCIENCE-AND-ACCEPTANCE.md",
+    "alignment_boundary_tolerance_policy": "Use the original selected evaluator and issued event definition unchanged; retain all actual missing and excluded source populations."
+  },
+  "product": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+    "directory": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr",
+    "native_decoder": "zarr==3.4.1",
+    "source_kinds": [
+      "complete local directory",
+      "complete ZIP"
+    ],
+    "operated_source_baseline": {
+      "workspace_id": "fd072b35-cafe-4e00-93bd-cee34265c5bc",
+      "revision": 166,
+      "upstream_arrays": 40,
+      "upstream_cells": 338,
+      "reviewed_results": 41,
+      "source_packet_files": 317,
+      "independent_source_receive": true,
+      "whole_merchant_receiving_status": "ORIGINAL_OWNER_EXECUTION_PENDING"
+    }
+  },
+  "selection": {
+    "payer": null,
+    "source_owner": null,
+    "merchant_operator": null,
+    "buyer_operator": null,
+    "receiving_engineer": null,
+    "maintenance_owner": null,
+    "source_edition": null,
+    "original_source_reference": null,
+    "rights_reference": null,
+    "complete_export": {
+      "path": null,
+      "sha256": null,
+      "bytes": null,
+      "original_transform_reference": null
+    },
+    "variables": [],
+    "coordinate_arrays": [],
+    "scientific_meaning": {
+      "units": null,
+      "time_basis": null,
+      "calendar": null,
+      "initialization": null,
+      "valid_time": null,
+      "aggregation_meaning": null,
+      "missing_and_padded_values": null,
+      "original_grid_and_longitude_convention": null
+    },
+    "complete_customer_task": null,
+    "expected_output_population": null,
+    "required_output_files": [],
+    "receiving_application": null
+  },
+  "variable_selection_fields": [
+    "original_array_path",
+    "native_axis_order",
+    "native_shape",
+    "native_dtype",
+    "full_original_metadata_reference",
+    "coordinate_array_paths",
+    "one_index_or_positive_slice_per_axis",
+    "complete_expected_cells",
+    "original_units",
+    "selected_scalar_representation",
+    "native_result_id",
+    "accepted_review_id",
+    "frozen_source_id"
+  ],
+  "publication": {
+    "source_workflow": "Original customer source acquisition and scientific evaluator",
+    "source_workspace_id": null,
+    "frozen_source_id": null,
+    "publisher_id": null,
+    "plan_id": null,
+    "extraction_id": null,
+    "reviewed_target_edition": null,
+    "resource_operation": null,
+    "resource_schema": null,
+    "priced_unit": null,
+    "network": null,
+    "asset": null,
+    "recipient": null,
+    "amount_atomic": null,
+    "expiry": null,
+    "buyer_spending_authority": null,
+    "whole_task_request_ids": [],
+    "actual_transfer_ids": [],
+    "complete_output_files": []
+  },
+  "phases": [
+    {
+      "name": "Source/science agreement",
+      "accepted_result": "Complete original source population, scientific definition, rights, arrays/coordinates and customer output selected",
+      "remaining_hours": null,
+      "actual_hours": null,
+      "funding_assignment": null
+    },
+    {
+      "name": "Original native evaluation",
+      "accepted_result": "Original EWB results and complete actual source coverage retained under the same programme",
+      "remaining_hours": null,
+      "actual_hours": null,
+      "funding_assignment": null
+    },
+    {
+      "name": "Operator integration",
+      "accepted_result": "Installed source/result/review/publication/customer operation usable with the complete selected output",
+      "remaining_hours": null,
+      "actual_hours": null,
+      "funding_assignment": null
+    },
+    {
+      "name": "Changed edition/recovery",
+      "accepted_result": "Original and following source/output editions retained; original interruption resumed and resolved",
+      "remaining_hours": null,
+      "actual_hours": null,
+      "funding_assignment": null
+    },
+    {
+      "name": "Complete receiving/handoff",
+      "accepted_result": "Second engineer receives all source/publisher/deployment/operator state and continues the original work",
+      "remaining_hours": null,
+      "actual_hours": null,
+      "funding_assignment": null
+    }
+  ],
+  "handover": {
+    "source_workspace_packet": null,
+    "publisher_state": null,
+    "dataset_state": null,
+    "deployment_state": null,
+    "operator_host_state": null,
+    "complete_customer_output": null,
+    "coordinate_and_science_context": null,
+    "receiving_result": null,
+    "continued_operator_action": null,
+    "acceptance": null
+  },
+  "economics": {
+    "original_quote_minor": 720000,
+    "currency": "USD",
+    "planning_hourly_rate_minor": 9500,
+    "rate_basis": "Existing SCF application assumption; not observed payroll",
+    "labor_break_even_hours_exact": "7200/95",
+    "kickoff_labor_hours_exact": "3600/95",
+    "selected_nonlabor_costs": [],
+    "source_provider_costs": [],
+    "hours_include_review_correction_and_handover": true
+  },
+  "grant": {
+    "current_request_currency": "USD",
+    "current_request_minor": 3800000,
+    "current_prospective_hours": 400,
+    "current_days": 150,
+    "day_zero": "actual award acceptance",
+    "funded_installations_selected": false,
+    "packages": [
+      {
+        "id": "T1_resource",
+        "hours": 80,
+        "amount_minor": 760000
+      },
+      {
+        "id": "T1_authority",
+        "hours": 40,
+        "amount_minor": 380000
+      },
+      {
+        "id": "T2_provider",
+        "hours": 70,
+        "amount_minor": 665000
+      },
+      {
+        "id": "T2_response",
+        "hours": 50,
+        "amount_minor": 475000
+      },
+      {
+        "id": "T3_mainnet",
+        "hours": 90,
+        "amount_minor": 855000
+      },
+      {
+        "id": "T3_recovery",
+        "hours": 70,
+        "amount_minor": 665000
+      }
+    ],
+    "allocation_rule": "Assign each remaining adaptation once to the original commercial workshare or one selected grant package.",
+    "independent_merchants": 2,
+    "independent_buyers": 2,
+    "independent_testnet_facilitators": 2,
+    "testnet": {
+      "useful_purchases_total": 10,
+      "consecutive_days": 7,
+      "complete_by_day": 90
+    },
+    "mainnet": {
+      "useful_purchases_total": 30,
+      "consecutive_days": 14,
+      "complete_by_day": 150,
+      "returning_buyers": 2
+    },
+    "counting": "Retain complete tasks, priced requests, native transfers and output files separately. Original-request retry, saved-result reopening and another representation of the same acquired output preserve the original operation."
+  },
+  "source_contribution_thread": "https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791852643120369?thread_ts=1791788467.414179"
+}

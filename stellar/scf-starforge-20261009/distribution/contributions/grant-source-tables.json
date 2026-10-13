@@ -23,7 +23,10 @@
     "stellar/scf_2026/sf47_budget_model/workspace/WORKBOOK_HANDOVER.md",
     "stellar/scf_2026/sf47_budget_model/workspace/examples/source-tables/workbook-export.profile.json",
     "stellar/scf_2026/sf47_budget_model/workspace/examples/source-tables/workbook-return.profile.json",
-    "stellar/scf_2026/sf47_budget_model/workspace/examples/source-tables/receive-current-budget-workbook-handover.mjs"
+    "stellar/scf_2026/sf47_budget_model/workspace/examples/source-tables/receive-current-budget-workbook-handover.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/source-tables-agent.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/SOURCE_TABLES_AGENT.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/examples/source-tables/receive-current-budget-workbook-mcp.mjs"
   ],
   "commands": {
     "grant-source-tables": "stellar/scf_2026/sf47_budget_model/workspace/source-tables-cli.mjs"

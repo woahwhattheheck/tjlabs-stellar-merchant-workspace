@@ -1,0 +1,299 @@
+{
+  "schema": "stellar-forge.pollar-partner.application-source.v1",
+  "rootFromWorkspace": "../../../..",
+  "runtime": {
+    "engine": "node",
+    "minimumMajor": 22,
+    "minimumMinor": 16
+  },
+  "files": [
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/pollar-partner.json",
+      "bytes": 6532,
+      "sha256": "b3ec5279250849f957d9388480792115b7bd8130438cce5dedf71c1e5379f3fc",
+      "contentType": "application/json"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/distribution.json",
+      "bytes": 79163,
+      "sha256": "69f7057ed977f4aab56d0467cbe6718746eccce11d4e05c073d52ccca80f553a",
+      "contentType": "application/json"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/product-package.mjs",
+      "bytes": 3764,
+      "sha256": "e1f33fd1940b62c7ede90288ff2ad36da529a197b06e059e8b3b6e27fba1e76d",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-install.mjs",
+      "bytes": 36763,
+      "sha256": "ee5c46c75b4cc58a6e949228f9128ba51be4d067f7b453e3de4faa66f06df591",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-profile.mjs",
+      "bytes": 26197,
+      "sha256": "b30d9c082f9bd8452e484b2535a7f23e35c54a8cc5c4b593235bd3a1eb779ca0",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-unpack.py",
+      "bytes": 9595,
+      "sha256": "683c241e74d2ef4c6bbf1502a8aa58af40195bb53e70fb0b7731191c53795d5f",
+      "contentType": "text/x-python"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-provider.mjs",
+      "bytes": 7132,
+      "sha256": "584c5db3d682e203b1d8da8637148fdc3dd14bed81adb54afeaf0ce095687ebd",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs",
+      "bytes": 9584,
+      "sha256": "90e50055b920f27e171404fe6ec9ae06e24ddd6660d64d4b25302705423b9d1c",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/selections/pollar-partner.json",
+      "bytes": 5982,
+      "sha256": "0f03e2961543402ab50cc704e2ce2f46738eadf89448524872e925b402bf7bb9",
+      "contentType": "application/json"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/source-selection.mjs",
+      "bytes": 14165,
+      "sha256": "9b73998ac30bce70fe4937a567d20f134c8377116645c1f3f90bc5311f4de102",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/specification.mjs",
+      "bytes": 23136,
+      "sha256": "0694ba6b8cd57adda81e4a9a83a1b478e5b60ef0e77c450772df0afbfe41d86c",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/application-provider.mjs",
+      "bytes": 1086,
+      "sha256": "edc1a578f6c62bcf5d687fe446b26bb0f2c8679c3dc70e692ef637c598ffc7db",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/application.mjs",
+      "bytes": 11553,
+      "sha256": "3e5e269767dadaed3cd834ba69237af8a4db0de5eb48e629b0a0b1c6e96a063c",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/APPLICATIONS.md",
+      "bytes": 9895,
+      "sha256": "2eb53ec27f5f97eb14ec5891cb0c4fcd255171deba564b173e14b4b613845dc8",
+      "contentType": "text/markdown"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/archive.mjs",
+      "bytes": 28832,
+      "sha256": "9d4dfd611c486671fb1392f22e0524ef01a86711921422780fd812d84b44782a",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/browser-assets.json",
+      "bytes": 1285,
+      "sha256": "9d19919240a81c2e2c58a59a1a269d4db9c28950700ee0138dd01faf61644404",
+      "contentType": "application/json"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/browser-bridge.mjs",
+      "bytes": 57203,
+      "sha256": "fd083eef5b215d48c8ef62c989d03feb0d3aa4fba21b701ea89457bc3c0607c9",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/catalogue.mjs",
+      "bytes": 116892,
+      "sha256": "39b2938d7eb5facd2cf03519346bb64af6ddf808c9ff05df606c702a367fb3cf",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/cli.mjs",
+      "bytes": 16816,
+      "sha256": "5cbb1c3840d46ae76584dfbcd8f34d42dcc193cfdd112376cbfa73819188cc92",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/common.mjs",
+      "bytes": 15782,
+      "sha256": "2a3e676fbc6740111392bdb7e2ef5c2bbaee273150efaca621f120518a43eafa",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/examples/connections.example.json",
+      "bytes": 601,
+      "sha256": "1dcd4adffee6bcd30722eda98d3d522a01fd69f2f523461fe0203d2962575f1f",
+      "contentType": "application/json"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/examples/operator-operation.template.json",
+      "bytes": 297,
+      "sha256": "5c6936137bb13a94f3a3c5942800511a7d0ea5a7b90a07eb709e0dd246c1a9c0",
+      "contentType": "application/json"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/examples/partner-application.template.json",
+      "bytes": 309,
+      "sha256": "bbb801840697623123a80d7437ea90449fb0f4c1d47c1ff9b72a1500e897a4c0",
+      "contentType": "application/json"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/native.mjs",
+      "bytes": 49700,
+      "sha256": "6523e4b395405ff3a0f21d1945dc062bd940b2a7c8ea457fcf71745c1bfc86dc",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/operator.mjs",
+      "bytes": 18847,
+      "sha256": "782d82f5dcb3cc2591a28361bb364d123c025f006e9b795da05a832b3f78e0be",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/README.md",
+      "bytes": 20153,
+      "sha256": "2be993912692727094698690b2d9dac13c35d782bba1d69186e8b67d29d7c542",
+      "contentType": "text/markdown"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/receiving.mjs",
+      "bytes": 48361,
+      "sha256": "83feb1e123f21ce8399e9bcf62f08a46ef790749df135128b6d0d30c70355619",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/runtime.mjs",
+      "bytes": 80191,
+      "sha256": "1d3b7a1330d3ecc647cd0c44e69d95463f9523ce605c0947ffa63bd329bcae97",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/server.mjs",
+      "bytes": 18546,
+      "sha256": "aa3bcd50fddf6a272121cafb12118573ece244e8b03593de43ea16fe5161e732",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/source/contracts.json",
+      "bytes": 36924,
+      "sha256": "fba55aa76ef7a6c1fcf4bf1b80a68872177dfe48be252e18d281f8ebe4dae76d",
+      "contentType": "application/json"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/source/pollar-docs-source.json",
+      "bytes": 331560,
+      "sha256": "06088fd1c69627a6691c71f2d2cb4e5e55d77e9d4c69e001cef628feaa30ef3e",
+      "contentType": "application/json"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/source/pollar-sdk-source.json",
+      "bytes": 4313544,
+      "sha256": "0f816bc397e634e27e0938a456a37fdf7960e59a87597919a05f0832b757115d",
+      "contentType": "application/json"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/web/app.mjs",
+      "bytes": 24183,
+      "sha256": "f39b76d605c003086c5f18b217fbe19aaac2f8304430f0113b829b96cf3848a8",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/web/index.html",
+      "bytes": 10326,
+      "sha256": "f119e619fa36c360d4b0c9e71fc694416f48c57f887c8d934fd29d17213ba989",
+      "contentType": "text/html"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/web/journal.mjs",
+      "bytes": 11632,
+      "sha256": "1dcda1740fa784121986dbccb08d87569504140986fe7de175ab7d2d79356565",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/web/portal.html",
+      "bytes": 8602,
+      "sha256": "44a7bef2543bb959fa170174c6345276dbb76a79eed70d9ab45531b46853a137",
+      "contentType": "text/html"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/web/portal.mjs",
+      "bytes": 36541,
+      "sha256": "6e6edd176969ab667694eb69683a225d253d2e50405cd5dcdf87fad3433387b8",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/web/styles.css",
+      "bytes": 5263,
+      "sha256": "42283e650c9cac39710e74cf9641e8f1f330c1f3bd97f5a7029eee670d1124fc",
+      "contentType": "text/css"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pollar-partner/workspace.mjs",
+      "bytes": 47252,
+      "sha256": "b26bfdd89d2f49a773fa00f9200da730096ca0f073d1865579cd5b81ad3e04d7",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/soroban-events/engine.mjs",
+      "bytes": 70010,
+      "sha256": "ffb5dbe7c3dd68c721d55336d0408b8aa5fd7036574bdf09f613d74e46f44be6",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/soroban-events/rpc.mjs",
+      "bytes": 12310,
+      "sha256": "2cf316e870a95ef82a5069ef8c09bdbbb9375b9c20ed4f4e4d61820d7fa6e217",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stellar-indexer/common.mjs",
+      "bytes": 14367,
+      "sha256": "a7bf697b59a685898fcdbe14b55fca3404af867ee33cb458b7b5313e0ec3465f",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/command-catalog.mjs",
+      "bytes": 5067,
+      "sha256": "86fa6a69e7b6e9efe7669052bdf195ea818d617b86faa3a6161a4db47e86e9f5",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/merchant-package.mjs",
+      "bytes": 16430,
+      "sha256": "05cfe3543c8e0a89dbb44d80b013e68b92d09699e1f41348dd3edff78067558c",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/product.mjs",
+      "bytes": 20295,
+      "sha256": "ab7cb01cc1adcb3f2204ab6485ce7ad7322ed648d3439f3fc24715b2f4debf9b",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/release-core.mjs",
+      "bytes": 14147,
+      "sha256": "3a83a5fd443719cd7cc02e257a177383e9be79c68e51f0de483ccfaea39effb5",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/runtime-package.mjs",
+      "bytes": 14751,
+      "sha256": "cb03859fba13806fdf0da33d4ed40e07dbf94bcbbce4bd22d457831d4fa374ce",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/inputs/public/sha256.mjs",
+      "bytes": 3383,
+      "sha256": "fbc57cd9ad9f17f90f084d7d387ab02794c6a330b26a98392c129bbe09ef44ba",
+      "contentType": "text/javascript"
+    }
+  ]
+}
