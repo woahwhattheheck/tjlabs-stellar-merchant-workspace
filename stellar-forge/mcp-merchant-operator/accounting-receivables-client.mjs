@@ -529,7 +529,7 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
   return Object.freeze(client);
 }
 export async function connectAccountingReceivablesClient({workspace, ...options} = {}) {
-  const connection = await openMerchantFileClient({...options,
+  const connection = await openMerchantFileClient({maximumResponseBytes:32*1024*1024,...options,
     errorPrefix: 'ACCOUNTING_RECEIVABLES', clientName: 'starforge-accounting-receivables'});
   return Object.freeze({...createAccountingReceivablesClient({workspace, call: connection.call}), endpoint: connection.endpoint});
 }
