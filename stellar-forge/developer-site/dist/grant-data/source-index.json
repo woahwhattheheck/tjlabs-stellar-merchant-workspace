@@ -2253,60 +2253,6 @@
       "application_operation": "SCF-CUSTOMER-CLOSING-APPLICATION-5245-20261012"
     },
     {
-      "id": "weather-report-renewal",
-      "kind": "published-source",
-      "label": "Customer receiving and report renewal",
-      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "e5380c046370b58c350d16a35b48b13bf91cd510",
-      "path": "stellar/scf-starforge-20261009/partners/open-meteo-operations/REPORT_RENEWAL.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e5380c046370b58c350d16a35b48b13bf91cd510/stellar/scf-starforge-20261009/partners/open-meteo-operations/REPORT_RENEWAL.md"
-    },
-    {
-      "id": "weather-report-renewal-contribution",
-      "kind": "published-source",
-      "label": "Weather report renewal installed contribution and typed interface",
-      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "e5380c046370b58c350d16a35b48b13bf91cd510",
-      "path": "stellar/scf-starforge-20261009/distribution/contributions/open-meteo-report-renewal.json",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e5380c046370b58c350d16a35b48b13bf91cd510/stellar/scf-starforge-20261009/distribution/contributions/open-meteo-report-renewal.json"
-    },
-    {
-      "id": "canadabuys-bidder-desk",
-      "kind": "published-source",
-      "label": "CanadaBuys qualification, bid decisions and complete workspace receiving",
-      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "3bed4c455063ce18cf24ee50cebdc47b89f35825",
-      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/BIDDER_DESK.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3bed4c455063ce18cf24ee50cebdc47b89f35825/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/BIDDER_DESK.md"
-    },
-    {
-      "id": "document-merchant-applications",
-      "kind": "published-source",
-      "label": "Document merchant Applications and customer operation",
-      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "039e8f2a82fa1e63bc72894a748cf7c0a24ef9f4",
-      "path": "products/document-merchant/APPLICATIONS.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/039e8f2a82fa1e63bc72894a748cf7c0a24ef9f4/products/document-merchant/APPLICATIONS.md"
-    },
-    {
-      "id": "groundwater-application-operator",
-      "kind": "published-source",
-      "label": "Groundwater managed application and complete operator receiving",
-      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "9e1a847541a0888c4fb0ed951a1d201377de749b",
-      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater-application/OPERATOR.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/9e1a847541a0888c4fb0ed951a1d201377de749b/stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater-application/OPERATOR.md"
-    },
-    {
-      "id": "groundwater-installed-operation",
-      "kind": "published-source",
-      "label": "Groundwater installed modelling, report and customer workflow",
-      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "9e1a847541a0888c4fb0ed951a1d201377de749b",
-      "path": "products/groundwater/OPERATING.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/9e1a847541a0888c4fb0ed951a1d201377de749b/products/groundwater/OPERATING.md"
-    },
-    {
       "id": "x402api-merchant-operating",
       "kind": "published-source",
       "label": "Merchant invoices, installed application and operator handover",
@@ -2395,13 +2341,233 @@
       "commit": "45e491d18a7dfc2f977530aa84cb6c7b81cbd3ee",
       "path": "products/data-preparation/receiving.py",
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/45e491d18a7dfc2f977530aa84cb6c7b81cbd3ee/products/data-preparation/receiving.py"
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "353f917bb4e152b1bced7055b9dbe29c17ff76a8",
+      "path": "products/bls-labor/OPERATING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/353f917bb4e152b1bced7055b9dbe29c17ff76a8/products/bls-labor/OPERATING.md",
+      "source_kind": "source-file",
+      "id": "bls-regional-analyst-workspace",
+      "kind": "published-source",
+      "label": "Complete BLS regional labor application and editable customer delivery",
+      "source_registration": "bls-labor",
+      "git_blob": "7b69e910a6ff30bfc9818da86dd307de314e3f24",
+      "sha256": "6c6be4112428599bc25e705efa5f519f64bf3277df0b12e71003ffce43970d9c",
+      "bytes": 16841,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "353f917bb4e152b1bced7055b9dbe29c17ff76a8",
+        "path": "products/bls-labor/OPERATING.md",
+        "git_blob": "7b69e910a6ff30bfc9818da86dd307de314e3f24",
+        "sha256": "6c6be4112428599bc25e705efa5f519f64bf3277df0b12e71003ffce43970d9c",
+        "bytes": 16841
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "353f917bb4e152b1bced7055b9dbe29c17ff76a8",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/contract.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/353f917bb4e152b1bced7055b9dbe29c17ff76a8/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/contract.json",
+      "source_kind": "source-file",
+      "id": "bls-labor-source-contract",
+      "kind": "published-source",
+      "label": "Original LAUS and QCEW source definitions and statistical contract",
+      "source_registration": "bls-labor",
+      "git_blob": "6d949648ee368475807256095f8ea54164306f07",
+      "sha256": "53db621b6a0a7164b6b43980430e5b2d364974b794ca1ab728fd55755f8feeab",
+      "bytes": 12868,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "353f917bb4e152b1bced7055b9dbe29c17ff76a8",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/contract.json",
+        "git_blob": "6d949648ee368475807256095f8ea54164306f07",
+        "sha256": "53db621b6a0a7164b6b43980430e5b2d364974b794ca1ab728fd55755f8feeab",
+        "bytes": 12868
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "353f917bb4e152b1bced7055b9dbe29c17ff76a8",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/receiving.py",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/353f917bb4e152b1bced7055b9dbe29c17ff76a8/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/receiving.py",
+      "source_kind": "source-file",
+      "id": "bls-original-case-receiving",
+      "kind": "published-source",
+      "label": "Complete original NEK source, reports and independently editable receiving",
+      "source_registration": "bls-labor",
+      "git_blob": "f725dc1bdf6873fe42683b2b9797af9e790bbfd7",
+      "sha256": "2c61c9110228b47af36477de47d3aeed1491fda5996c7307240bad3178e4a25b",
+      "bytes": 7761,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "353f917bb4e152b1bced7055b9dbe29c17ff76a8",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/receiving.py",
+        "git_blob": "f725dc1bdf6873fe42683b2b9797af9e790bbfd7",
+        "sha256": "2c61c9110228b47af36477de47d3aeed1491fda5996c7307240bad3178e4a25b",
+        "bytes": 7761
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "353f917bb4e152b1bced7055b9dbe29c17ff76a8",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/NATIVE_RECEIVING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/353f917bb4e152b1bced7055b9dbe29c17ff76a8/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/NATIVE_RECEIVING.md",
+      "source_kind": "source-file",
+      "id": "bls-native-customer-receiving",
+      "kind": "published-source",
+      "label": "Original BLS publication and SF88/Vitality customer receiving",
+      "source_registration": "bls-labor",
+      "git_blob": "bff15e5916aebb5903b47bc1251fa52c05226f04",
+      "sha256": "b2c6196ddeaa82ef9ca98e2813b6b44907d0bc7b5dc7ffc2da184ea859bf0639",
+      "bytes": 10201,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "353f917bb4e152b1bced7055b9dbe29c17ff76a8",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/NATIVE_RECEIVING.md",
+        "git_blob": "bff15e5916aebb5903b47bc1251fa52c05226f04",
+        "sha256": "b2c6196ddeaa82ef9ca98e2813b6b44907d0bc7b5dc7ffc2da184ea859bf0639",
+        "bytes": 10201
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "3bed4c455063ce18cf24ee50cebdc47b89f35825",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/BIDDER_DESK.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3bed4c455063ce18cf24ee50cebdc47b89f35825/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/BIDDER_DESK.md",
+      "source_kind": "source-file",
+      "id": "canadabuys-bidder-desk",
+      "kind": "published-source",
+      "label": "CanadaBuys qualification, bid decisions and complete workspace receiving",
+      "source_registration": "canadabuys-bidder-desk",
+      "git_blob": "9e0d2ecafa3afe5399d29e593e5640ab8bbb4517",
+      "sha256": "102ff20bcf8cb65aefdeb6c80d3df365496432b91f0c8ca5195710da3e965f7a",
+      "bytes": 18673,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "3bed4c455063ce18cf24ee50cebdc47b89f35825",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/BIDDER_DESK.md",
+        "git_blob": "9e0d2ecafa3afe5399d29e593e5640ab8bbb4517",
+        "sha256": "102ff20bcf8cb65aefdeb6c80d3df365496432b91f0c8ca5195710da3e965f7a",
+        "bytes": 18673
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "039e8f2a82fa1e63bc72894a748cf7c0a24ef9f4",
+      "path": "products/document-merchant/APPLICATIONS.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/039e8f2a82fa1e63bc72894a748cf7c0a24ef9f4/products/document-merchant/APPLICATIONS.md",
+      "source_kind": "source-file",
+      "id": "document-merchant-applications",
+      "kind": "published-source",
+      "label": "Document merchant Applications and customer operation",
+      "source_registration": "document-merchant",
+      "git_blob": "91cf506dc1e080229c4903bbde3dd7d0e0e4caf0",
+      "sha256": "fd05791f26cfc7edcd5276ec327cc52c1df4bf09ae3569fd5882d10907ba3ee7",
+      "bytes": 13664,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "039e8f2a82fa1e63bc72894a748cf7c0a24ef9f4",
+        "path": "products/document-merchant/APPLICATIONS.md",
+        "git_blob": "91cf506dc1e080229c4903bbde3dd7d0e0e4caf0",
+        "sha256": "fd05791f26cfc7edcd5276ec327cc52c1df4bf09ae3569fd5882d10907ba3ee7",
+        "bytes": 13664
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "9e1a847541a0888c4fb0ed951a1d201377de749b",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater-application/OPERATOR.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/9e1a847541a0888c4fb0ed951a1d201377de749b/stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater-application/OPERATOR.md",
+      "source_kind": "source-file",
+      "id": "groundwater-application-operator",
+      "kind": "published-source",
+      "label": "Groundwater managed application and complete operator receiving",
+      "source_registration": "groundwater-applications",
+      "git_blob": "c78e14760f2604586ae338222c789c2a1205905e",
+      "sha256": "25b7a7f8ffe5e422d85214d10ebef558d33390407cf368c21a51e8309ff0387d",
+      "bytes": 16108,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "9e1a847541a0888c4fb0ed951a1d201377de749b",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater-application/OPERATOR.md",
+        "git_blob": "c78e14760f2604586ae338222c789c2a1205905e",
+        "sha256": "25b7a7f8ffe5e422d85214d10ebef558d33390407cf368c21a51e8309ff0387d",
+        "bytes": 16108
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "9e1a847541a0888c4fb0ed951a1d201377de749b",
+      "path": "products/groundwater/OPERATING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/9e1a847541a0888c4fb0ed951a1d201377de749b/products/groundwater/OPERATING.md",
+      "source_kind": "source-file",
+      "id": "groundwater-installed-operation",
+      "kind": "published-source",
+      "label": "Groundwater installed modelling, report and customer workflow",
+      "source_registration": "groundwater-applications",
+      "git_blob": "cb1cc72ad3f39d7e9bc1a5552cc70f7a12f0a6f7",
+      "sha256": "e612328983d61d36a481621b382a16e6468f254f1e6e2403edbe14edb2ee264c",
+      "bytes": 24434,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "9e1a847541a0888c4fb0ed951a1d201377de749b",
+        "path": "products/groundwater/OPERATING.md",
+        "git_blob": "cb1cc72ad3f39d7e9bc1a5552cc70f7a12f0a6f7",
+        "sha256": "e612328983d61d36a481621b382a16e6468f254f1e6e2403edbe14edb2ee264c",
+        "bytes": 24434
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "e5380c046370b58c350d16a35b48b13bf91cd510",
+      "path": "stellar/scf-starforge-20261009/partners/open-meteo-operations/REPORT_RENEWAL.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e5380c046370b58c350d16a35b48b13bf91cd510/stellar/scf-starforge-20261009/partners/open-meteo-operations/REPORT_RENEWAL.md",
+      "source_kind": "source-file",
+      "id": "weather-report-renewal",
+      "kind": "published-source",
+      "label": "Customer receiving and report renewal",
+      "source_registration": "weather-report-renewal",
+      "git_blob": "fc8a286d3641b8ad1aeb556190070b94904b0b51",
+      "sha256": "6371c2f0069516cc610d6633e45c07b89849dbaf05c87a5e70ca51fb30ed7d12",
+      "bytes": 10470,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "e5380c046370b58c350d16a35b48b13bf91cd510",
+        "path": "stellar/scf-starforge-20261009/partners/open-meteo-operations/REPORT_RENEWAL.md",
+        "git_blob": "fc8a286d3641b8ad1aeb556190070b94904b0b51",
+        "sha256": "6371c2f0069516cc610d6633e45c07b89849dbaf05c87a5e70ca51fb30ed7d12",
+        "bytes": 10470
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "e5380c046370b58c350d16a35b48b13bf91cd510",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/open-meteo-report-renewal.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e5380c046370b58c350d16a35b48b13bf91cd510/stellar/scf-starforge-20261009/distribution/contributions/open-meteo-report-renewal.json",
+      "source_kind": "source-file",
+      "id": "weather-report-renewal-contribution",
+      "kind": "published-source",
+      "label": "Weather report renewal installed contribution and typed interface",
+      "source_registration": "weather-report-renewal",
+      "git_blob": "03ffe6e5f0655e19f2915a4728de8b6b8f72f5a9",
+      "sha256": "0d77042f04e11176911072b7c47bd2dbf976f100535602cafe110a1b32e77265",
+      "bytes": 501,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "e5380c046370b58c350d16a35b48b13bf91cd510",
+        "path": "stellar/scf-starforge-20261009/distribution/contributions/open-meteo-report-renewal.json",
+        "git_blob": "03ffe6e5f0655e19f2915a4728de8b6b8f72f5a9",
+        "sha256": "0d77042f04e11176911072b7c47bd2dbf976f100535602cafe110a1b32e77265",
+        "bytes": 501
+      }
     }
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "d89389930a98ea533e41a3aa3080238d2043d35e",
-    "bytes": 483038,
-    "sha256": "9f351a2b4ce57c13d84907774bc08989088aa505fb8b81bf696e629c75400f69",
+    "git_blob": "694aec6b4edb6f74aca2d8fa13727fef6792d9e8",
+    "bytes": 506341,
+    "sha256": "81097ab21c06527a284089cf7e2d78f97744becc8ce4892edd8a16306aa81b95",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
     "prior_git_blob": "29e0ab9723e0eb787041409803158dc3ae94c1e3"
   },
@@ -2605,7 +2771,7 @@
       "source_join": "SCF-GRANT-CUMULATIVE-COMPOSITION-81CF-20261012",
       "canonical_front_sha256": "5fcabf50cbd3347d6f3f0c556e3ac8dd0ddd7660809689d7c99328da96aa9e57",
       "canonical_front_bytes": 43503,
-      "renderer_git_blob": "29c7acaed6576601b3bded4195710267129ddcb7",
+      "renderer_git_blob": "f68f7a25e01b9579b8aa0c55fdd738d162782c3d",
       "source_editions": [
         {
           "repository": "woahwhattheheck/public-commons-sprint-2026",
@@ -2674,10 +2840,11 @@
         "Merchant invoices, paid fulfillment and portable operating projects",
         "Regional labor analysis and recurring data delivery",
         "Scientific-array customer commissioning and complete receiving",
+        "Haystack building models: reviewed point lists, validation and contractor handover",
         "10. Open the existing work"
       ],
       "previous_cumulative_commit": "1945289c8d39b7850bf3b496c13c7ae5643176bf",
-      "projector_git_blob": "c472ccd92e3035953f992a3cfca68e6cbb28d92b",
+      "projector_git_blob": "2b9f3d354d4108ebe0149c630acff4db3c2c8b5d",
       "demo_source": {
         "carrier_git_blob": "6f3dd33ab358fee08e2ee3b6131a0cd8946a62c2",
         "path": "operations/scf-submission-improvement-1b40-20261012/current-adoption/DEMO_AND_ACCEPTANCE.md",
@@ -2736,7 +2903,80 @@
         ],
         "scope": "Selected source identities and individually dated source-transfer evidence. Execution and settlement remain with their original result sources."
       },
-      "companion_projector_git_blob": "a8add1aa955bc52b8bdbe861bd2c4ff959bd86ba"
+      "companion_projector_git_blob": "a8add1aa955bc52b8bdbe861bd2c4ff959bd86ba",
+      "product_source_registrations": [
+        {
+          "id": "bls-labor",
+          "heading": "## Regional labor analysis and recurring data delivery",
+          "source_ids": [
+            "bls-regional-analyst-workspace",
+            "bls-labor-source-contract",
+            "bls-original-case-receiving",
+            "bls-native-customer-receiving"
+          ],
+          "definition": {
+            "path": "grant-products/bls-labor.json",
+            "bytes": 2628,
+            "sha256": "18935cf0d07d047c3b04b86fdf86771df0468100e8bfeed1a65d97a71bc427c8",
+            "git_blob": "b028d6c0939902f072cb94a5d684555e72b3a14c"
+          }
+        },
+        {
+          "id": "canadabuys-bidder-desk",
+          "heading": "## CanadaBuys qualification, bid decisions and complete customer receiving",
+          "source_ids": [
+            "canadabuys-bidder-desk"
+          ],
+          "definition": {
+            "path": "grant-products/canadabuys-bidder-desk.json",
+            "bytes": 824,
+            "sha256": "c087eb9e0c9f89ad9744ea0284103fbf1c40bedd272c265240993923e065c811",
+            "git_blob": "237e73a7249a913f88752406da0c35893d7bd75d"
+          }
+        },
+        {
+          "id": "document-merchant",
+          "heading": "## Document processing and complete customer receiving",
+          "source_ids": [
+            "document-merchant-applications"
+          ],
+          "definition": {
+            "path": "grant-products/document-merchant.json",
+            "bytes": 758,
+            "sha256": "ee4962c6b78e7cec2ff160e9033b391cc10a6c0afe78c5d66484cbc973b793a6",
+            "git_blob": "b6fec4c23229beefd1da8bea240886564160584a"
+          }
+        },
+        {
+          "id": "groundwater-applications",
+          "heading": "## Groundwater scenario modelling and receiving",
+          "source_ids": [
+            "groundwater-application-operator",
+            "groundwater-installed-operation"
+          ],
+          "definition": {
+            "path": "grant-products/groundwater-applications.json",
+            "bytes": 1387,
+            "sha256": "52819537352f3107d6eefe78698eb4cdf8bd110953b158598b9004da6135bb34",
+            "git_blob": "760f68fb9321740460a8d39f684c5425d5e3ee42"
+          }
+        },
+        {
+          "id": "weather-report-renewal",
+          "heading": "## Weather report receiving and renewal",
+          "source_ids": [
+            "weather-report-renewal",
+            "weather-report-renewal-contribution"
+          ],
+          "definition": {
+            "path": "grant-products/weather-report-renewal.json",
+            "bytes": 1399,
+            "sha256": "da3ec82e826cef357c83b99ef784af64106ea2e5784a147402f073d85ba11fdc",
+            "git_blob": "df4f298af6df651fbc086ae9d1902ff472bef87f"
+          }
+        }
+      ],
+      "product_registry_git_blob": "32ad33228de066f5fb46b6163bf3f098fcb067e3"
     },
     "datasette_customer_commit": "b1a6ad827c02cdf95c613b23ef07ce1996400fd6",
     "datasette_publisher_commit": "ab876f6dc2ad24b7938f6b928202d78fbdeef777",
@@ -2851,8 +3091,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "9f351a2b4ce57c13d84907774bc08989088aa505fb8b81bf696e629c75400f69",
-    "source_bytes": 483038,
+    "source_sha256": "81097ab21c06527a284089cf7e2d78f97744becc8ce4892edd8a16306aa81b95",
+    "source_bytes": 506341,
     "assets": [
       "/grant-companion.html",
       "/grant-companion.css",

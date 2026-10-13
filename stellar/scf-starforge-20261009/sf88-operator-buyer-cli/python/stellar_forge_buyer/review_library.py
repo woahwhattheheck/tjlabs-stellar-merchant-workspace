@@ -14,6 +14,7 @@ from ._review_transport import ReviewError, ReviewTransport, absolute
 from ._review_transfer import ReviewFile, ReviewTransferError, TransferProgress, copy_native_file
 from .review_collections import CollectionDelivery
 from .review_reading_exchange import ResearchDelivery
+from .review_journals import JournalDelivery, JournalReturn, ReviewReception
 from .errors import StateError
 from .storage import private_directory, read, write
 
@@ -49,7 +50,7 @@ def _iterate(fetch, *, page_size=100, **options) -> Iterator[dict[str, Any]]:
             raise StateError("REVIEW_PAGE_INCOMPLETE")
 
 
-class ResourceLibrary(CollectionDelivery, ResearchDelivery):
+class ResourceLibrary(CollectionDelivery, ResearchDelivery, JournalDelivery):
     """Owns a native process, not a second resource store. Always close or use with."""
     def __init__(self, *, checkout, state, node="node", kind=None, source=None,
                  roots=None, max_file_bytes=None, index_bytes=None,
@@ -274,6 +275,12 @@ class Comparison:
         return copy_native_file(self._library, {"kind": "comparison", "id": self.id,
             "format": format}, destination, **options)
 
+    def export_journal(self, destination, *, format: ReportFormat = "json", **options) -> ReviewFile:
+        return self._library.export_journal(self.id, destination, format=format, **options)
+
+    def journal_returns(self, *, offset=0, limit=50):
+        return self._library.journal_returns(comparison_id=self.id, offset=offset, limit=limit)
+
     def returns(self, *, offset=0, limit=50):
         return self._library.returns(comparison_id=self.id, offset=offset, limit=limit)
 
@@ -319,5 +326,5 @@ class ReviewReturn:
             "format": format}, destination, **options)
 
 
-__all__ = ["ResourceLibrary", "Comparison", "ReviewReturn", "ReviewFile", "ReviewError",
+__all__ = ["ResourceLibrary", "Comparison", "ReviewReturn", "JournalReturn", "ReviewReception", "ReviewFile", "ReviewError",
            "ReviewTransferError", "TransferProgress", "ReviewStatus", "ReviewChoice", "ReportFormat"]

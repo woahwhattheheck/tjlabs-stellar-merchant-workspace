@@ -376,25 +376,25 @@ The product is merged in PR726 at `c451614467b688b8306adb512fa6105898ac634e`. It
 
 Run the same complete composer described above and retain all four resulting reader pins. The original saved draft/review, Page and owner-private Site receive that cumulative edition. The chapter maps this reusable starting product into the existing six funded packages and the current independent merchant/buyer acceptance, with the same selected funding, capacity and schedule. The [complete preparation contribution](./GRANT_PREPARATION.md) retains the chapter and source-selection contract.
 
-## Receive Weather, CanadaBuys, Document and Groundwater customer work
+## Receive regional labor analysis and customer data delivery
 
-The canonical §9A operator chapter includes complete **Weather report receiving and renewal**, **CanadaBuys qualification, bid decisions and complete customer receiving**, and **Document processing and complete customer receiving** sections. The existing **Groundwater scenario modelling and receiving** section also includes its managed Applications lifecycle, complete scientific backup receiving, independent working copy and original scientific/Report Desk assignment. Receive these complete sections through the existing `--manuscript` operation.
+The complete regional customer guide is [BLS regional analysis and recurring delivery](../../products/bls-labor/GRANT.md). Its concise accepted chapter belongs within the canonical manuscript's existing current demonstration and operator journey. The ordinary whole-chapter `--manuscript` receiver carries this H2 into the same product and finance companion.
 
-The original `grant-customers.mjs` source upsert registers the selected operating guides directly from their chapter links:
+The BLS analyst product keeps LAUS resident measures and QCEW workplace measures in their original projections. Its retained NEK case supplies all original selected observations, six complete county/projection briefings and the full resident-labor change report. Source editions, revisioned analyst notes, publication history and complete editable project receiving remain one working project. Its maintained `bls-labor` selection and Applications entry are the operator opening path.
 
-| Source identity | Maintained operating source |
+The owned `grant-products/bls-labor.json` declaration registers these four immutable operating sources through the existing composer:
+
+| Source ID | Original operating content |
 | --- | --- |
-| weather-report-renewal | partners/open-meteo-operations/REPORT_RENEWAL.md |
-| weather-report-renewal-contribution | distribution/contributions/open-meteo-report-renewal.json |
-| canadabuys-bidder-desk | sf30-seller-sdk/canadabuys/BIDDER_DESK.md |
-| document-merchant-applications | products/document-merchant/APPLICATIONS.md |
-| groundwater-application-operator | sf30-seller-sdk/groundwater-application/OPERATOR.md |
-| groundwater-installed-operation | products/groundwater/OPERATING.md |
+| `bls-regional-analyst-workspace` | Installed application, all-row analysis, reports and full editable handover |
+| `bls-labor-source-contract` | Original LAUS/QCEW observation definitions and source selection contract |
+| `bls-original-case-receiving` | Complete retained NEK input, reports, project export and separate reopening |
+| `bls-native-customer-receiving` | Original publisher plans/runs, dataset versions, SF88 receiving and Vitality import |
 
-Paths under partners, distribution and sf30-seller-sdk retain their original stellar/scf-starforge-20261009 prefix. Each source receives the full immutable commit selected in its own chapter. The original receiver preserves all other records and their additional fields, retains a matching prior source identity and clears an obsolete blob pin when the selected source changes. The complete current projector includes the existing financial, IATI document, IATI geography and other accepted registrations. New customer sections continue through the same whole-chapter receiver.
+Each link selects the full merged product commit and source path. The product registry preserves matching measured identities and clears obsolete file measurements when the selected repository, commit or path changes. Repeated composition updates this same chapter and source records while retaining all other accepted customer work.
 
-The canonical **Weather operating reports** catalogue row retains its original product and operation links and adds **Customer receiving and report renewal**. The resulting complete companion carries the usable customer sequence and its commissioning assignment; the source index opens each operating guide.
+Use the original 4BF5/Actions BLS case for its actual native and browser result. The funded implementation contribution is customer-specific source/report configuration, existing merchant and buyer integration, complete receiving and operating handover within the current six packages. The canonical allocation remains USD38,000, 400 prospective hours and 150 days. Continue the same four-file reviewer composition, saved review and Page/Site publication.
 
-Compose the current manuscript with the entire maintained authoring source and four reader outputs. Keep the nine application answers, original six funded packages, hours, tranches, payment history and prospective customer criteria. The existing composer records the updated projector's Git blob and derives each output's complete bytes, SHA-256 and Git blob. Repeating composition against the same complete inputs should retain the same four output bodies.
+## Independent product source contributions
 
-Continue the original saved draft and review, Page and owner-private Site with that complete edition. Customer native receiving remains attached to each original working application and producing operation: the CanadaBuys delivered bidder case, the original Weather programme, the configured Document merchant/customer task and the original Groundwater scientific study and supplied backup. Their completed operating outcomes enter the application from those retained results.
+[Product registration and complete receiving](GRANT_PRODUCT_SOURCES.md) describes the default `grant-products/*.json` declarations, optional additional received files, original source-ID continuity and exact measured-edition binding. The existing `grant-compose` command receives these definitions before its current public projection and writes the same four reader outputs. A product author can maintain its own complete source declaration alongside the accepted H2 without adding another block to the shared customer projector.

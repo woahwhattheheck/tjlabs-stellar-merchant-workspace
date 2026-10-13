@@ -227,25 +227,6 @@ export function receiveGrantCustomerSources(index, companion) {
     }
     if (at < 0) index.sources.push(source); else index.sources[at] = source;
   };
-  // Operating guides follow the complete accepted customer chapters and original source upsert.
-  receive("weather-report-renewal", "Customer receiving and report renewal",
-    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-20261009\/partners\/open-meteo-operations\/REPORT_RENEWAL\.md)(?=[\s)#?]|$)/,
-    section(companion, "## Weather report receiving and renewal")?.text || '');
-  receive("weather-report-renewal-contribution", "Weather report renewal installed contribution and typed interface",
-    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-20261009\/distribution\/contributions\/open-meteo-report-renewal\.json)(?=[\s)#?]|$)/,
-    section(companion, "## Weather report receiving and renewal")?.text || '');
-  receive("canadabuys-bidder-desk", "CanadaBuys qualification, bid decisions and complete workspace receiving",
-    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-20261009\/sf30-seller-sdk\/canadabuys\/BIDDER_DESK\.md)(?=[\s)#?]|$)/,
-    section(companion, "## CanadaBuys qualification, bid decisions and complete customer receiving")?.text || '');
-  receive("document-merchant-applications", "Document merchant Applications and customer operation",
-    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/document-merchant\/APPLICATIONS\.md)(?=[\s)#?]|$)/,
-    section(companion, "## Document processing and complete customer receiving")?.text || '');
-  receive("groundwater-application-operator", "Groundwater managed application and complete operator receiving",
-    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-20261009\/sf30-seller-sdk\/groundwater-application\/OPERATOR\.md)(?=[\s)#?]|$)/,
-    section(companion, "## Groundwater scenario modelling and receiving")?.text || '');
-  receive("groundwater-installed-operation", "Groundwater installed modelling, report and customer workflow",
-    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/groundwater\/OPERATING\.md)(?=[\s)#?]|$)/,
-    section(companion, "## Groundwater scenario modelling and receiving")?.text || '');
   const economic = section(companion, '## Recurring economic-report installation')?.text || '';
   receive('economic-county-report', 'County report publication, original purchase and complete customer receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/fred\/qcew\/MERCHANT\.md)/, economic);
