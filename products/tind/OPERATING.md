@@ -377,6 +377,43 @@ Successful receiving updates the last delivered source baseline. Later source ed
 
 A prepared batch can be withdrawn before native submission. A batch already sent continues through its original native result; a revised selection is frozen as a new batch. An explicit OAI deletion requires the staff withdrawal or exclusion decision and actual native withdrawal result.
 
+
+## Continue destination jobs and receive original outcomes
+
+Open **Destination jobs** after the original native transfer has been submitted or interrupted. Bind the actual job ID and its documented GET URL to that exact transfer. Retain the original documentation URL, literal non-secret headers, existing authorization environment name, operator and source note. The URL must belong to the selected TIND institution. Saving a changed current GET contract for the same original job retains its preceding contract, operator, source note and selection time. Earlier observations keep their exact original request. This binding describes the institution's actual contract; the application does not infer an endpoint from the MARCXML file name or assign meanings to undocumented status strings.
+
+Choose **Read the original job now** to save one GET observation. It keeps the exact request, original HTTP status and headers, unchanged response bytes and observation time. A network error stays in the history; select another explicit read to observe the job again. An interrupted GET whose response never completed can resume under its same original observation ID after reopening. A returned HTTP error remains an observed response, with its bytes available for inspection.
+
+If the institution's original authenticated browser or export has already returned the job response, receive its unchanged file and actual HTTP receipt in the same desk. The receipt contains `method: "GET"`, the exact requested `url`, returned `finalURL`, integer `status`, response `headers` as name/value pairs, and `observedAt` including timezone. Request credentials and session cookies are omitted from the saved response headers. This is the same original observation path as direct GET, with the source operator and acquisition note retained.
+
+### Review the source and bind its record results
+
+Choose an observation and read its complete original response. A successful HTTP response permits result interpretation; HTTP success alone does not mark records as accepted. Select the actual observed job state and either enter explicitly reviewed original record results or declare a JSON result mapping.
+
+A reviewed record names its exact source `identifier` and the observed `accepted`, `failed`, `pending` or `withdrawn` state. Accepted and withdrawn records include their actual `nativeId`; a failed result retains its original `error`. Omit records not reported by this response. The receiver shows the number of unreported members of the exact transferred MARCXML file.
+
+For a JSON response, the mapping declares `records`, `identifier`, `status`, optional `nativeId` and `error` JSON Pointers, plus `statuses`: a literal mapping from the returned strings to their reviewed meanings. The records pointer selects the original array; the other pointers select values within each original row. Empty pointer selects the complete value. Literal `~` and `/` in field names use RFC 6901's `~0` and `~1` escapes. An absent field, unknown status or record from another transferred file must be resolved in the original source before receiving.
+
+Preview the complete result, enter the operator and interpretation note, then choose **Receive these reviewed outcomes**. The saved request binds the exact response identity, current project revision, selected mapping and complete result rows. Editing the source or interpretation requires another preview. The existing native receipt engine records these outcomes against the original batch and transfer. Continue that same batch through current destination export, original file/access receiving and reconciliation; the production wave reads its existing result.
+
+### Reopen, download and command operation
+
+Saved jobs, observations and reviews live in the same original SQLite database. Complete editable handover includes that database and every unchanged response object. Reopen the received migration, bind the existing local authorization environment when operating the original tenant, and select the saved job. **Download complete job history** streams its binding, original transfer, all observation metadata and bytes, and every receiving review and receipt into one archive. Its final file is published only after the complete archive is synchronized.
+
+All lists expose `offset`, `limit` and `next`; continue until `next` is null. The browser lists jobs and observations independently. Original response and review JSON remain subject to the existing 8 MiB save envelope. The browser accepts a response file up to 6 MiB before base64 encoding; the complete envelope is checked before sending. Direct GET retains responses up to the existing object limit, and an oversized response remains downloadable while the operator selects the institution's actual narrower result page for interactive review.
+
+~~~sh
+starforge tind-migration --workspace /private/repository destination-jobs --project ORIGINAL_PROJECT_ID
+starforge tind-migration --workspace /private/repository destination-jobs --project ORIGINAL_PROJECT_ID --id SAVED_JOB_BINDING_ID
+starforge tind-migration --workspace /private/repository job-read --project ORIGINAL_PROJECT_ID --job SAVED_JOB_BINDING_ID --id ORIGINAL_READ_OPERATION
+starforge tind-migration --workspace /private/repository job-preview --project ORIGINAL_PROJECT_ID --input /private/review-input.json
+starforge tind-migration --workspace /private/repository job-export --project ORIGINAL_PROJECT_ID --job SAVED_JOB_BINDING_ID --out /private/original-job-history.zip
+~~~
+
+Use ordinary saved apply requests for `native-job-bind`, `native-job-import` and `native-job-receive`. The bind input is `{transferId,nativeJobId,url,documentation,headers,authorizationEnvironment,reviewer,note}`. The imported response input is `{jobId,bodyBase64,transport,reviewer,note}`. A preview input is `{jobId,observationId,status,mode,records,mapping}`, where mode is `reviewed` or `json`. Receiving uses that same exact input plus `expectedPreviewSha256`, `reviewer` and `note`. Preserve its saved operation ID and expected project revision when replaying a lost response.
+
+The application owns all original native worker lifetimes. Closing stops further export pages, allows each current request to return or record its interruption, joins the owned workers and then closes the database. A complete workspace handover waits until the source/native worker is inactive. Submitted requests retain their original transfer identity throughout shutdown and recovery.
+
 ## Complete editable handover
 
 In **Handover**, download the complete working package. The producer streams its SQLite backup, original OAI responses and reviewed editions, mappings, TIND source and browser assets, native export pages, exact native request/response objects, frozen batches, staff decisions and every retained source file.

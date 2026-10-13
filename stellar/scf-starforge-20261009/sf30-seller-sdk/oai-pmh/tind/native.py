@@ -1,6 +1,8 @@
 """MIT. Original TIND MARCXML export and retained exact native transfer requests."""
 from __future__ import annotations
 import hashlib
+from contextlib import contextmanager
+import threading
 import io
 import os
 from pathlib import Path
@@ -35,10 +37,31 @@ def headers(authorization_env=None):
 
 def native_tables(owner):
     with owner.mutex:
+        if not hasattr(owner, "native_lock"):
+            owner.native_lock = threading.Lock()
+            owner.native_stop = threading.Event()
+            owner.native_active = False
         owner.db.executescript("""
         CREATE TABLE IF NOT EXISTS tind_native_searches(id TEXT PRIMARY KEY,project_id TEXT NOT NULL,body TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS tind_native_transfers(id TEXT PRIMARY KEY,project_id TEXT NOT NULL,body TEXT NOT NULL);
     """)
+
+
+@contextmanager
+def native_operation(owner):
+    native_tables(owner)
+    with owner.mutex:
+        if owner.native_stop.is_set():
+            raise InputError("The original workspace is closing; continue the saved native operation after reopening")
+        if not owner.native_lock.acquire(blocking=False):
+            raise InputError("Continue the current original native operation before another")
+        owner.native_active = True
+    try:
+        yield
+    finally:
+        with owner.mutex:
+            owner.native_active = False
+            owner.native_lock.release()
 
 def put(owner, table, value):
     owner.db.execute("INSERT INTO " + table + " VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET body=excluded.body",
@@ -49,6 +72,8 @@ def response_object(owner, response):
     writer = ObjectWriter(owner)
     try:
         while block := response.read(65536):
+            if owner.native_stop.is_set():
+                raise InputError("The original native response read was interrupted by workspace shutdown")
             writer.write(block)
         original = writer.finish()
     finally:
@@ -57,7 +82,7 @@ def response_object(owner, response):
     return {"status": response.status, "headers": [[key, value] for key, value in response.headers.items() if key.casefold() not in withheld],
             "original": original, "observedAt": stamp()}
 
-def search_export(owner, project_id, operation_id, selection, *, authorization_env=None, interval=2.1, page_size=100, export_context=None):
+def _search_export(owner, project_id, operation_id, selection, *, authorization_env=None, interval=2.1, page_size=100, export_context=None):
     """Continue the native hosted /search MARCXML API until an actual empty page."""
     plain(operation_id, "stable native export operation ID", 128)
     if not isinstance(selection, dict) or any(not isinstance(k, str) or not isinstance(v, str) for k, v in selection.items()):
@@ -97,8 +122,11 @@ def search_export(owner, project_id, operation_id, selection, *, authorization_e
     auth_headers = headers(authorization_env)
     opener = build_opener(NoRedirect())
     while True:
-        if state["pages"] and interval:
-            time.sleep(interval)
+        if owner.native_stop.is_set() or state["pages"] and interval and owner.native_stop.wait(interval):
+            with owner.mutex, owner.db:
+                state["status"] = "ready"; state["lastError"] = "Original native export paused during workspace shutdown"
+                put(owner, "tind_native_searches", state)
+            return state
         query = list(selection.items()) + [("of", "xm"), ("jrec", str(state["nextOffset"])), ("rg", str(page_size))]
         url = base + "/search?" + urlencode(query)
         with owner.mutex, owner.db:
@@ -182,7 +210,7 @@ def selected_batch_file(owner, project, request):
         raise InputError("Select one exact frozen native MARCXML file")
     return batch, entry, owner.object_path(entry)
 
-def send_exact(owner, project_id, operation_id, request, *, authorization_env=None):
+def _send_exact(owner, project_id, operation_id, request, *, authorization_env=None):
     """Send one original target-documented request; unknown writes retain their operation."""
     native_tables(owner)
     project = owner.project(project_id)
@@ -288,6 +316,9 @@ def send_exact(owner, project_id, operation_id, request, *, authorization_env=No
         selected_batch_file(owner, current, request)
         if origin(current["profile"]["instance"]) != origin(url):
             raise InputError("The selected native institution changed before transfer")
+        if owner.native_stop.is_set():
+            # No native request has begun: retain the original prepared operation.
+            raise InputError("The original native transfer was stopped before sending; continue its saved request after reopening")
         state["status"] = "sending"
         put(owner, "tind_native_transfers", state)
     try:
@@ -312,3 +343,11 @@ def send_exact(owner, project_id, operation_id, request, *, authorization_env=No
         state["httpAccepted"] = 200 <= observed["status"] < 300
         put(owner, "tind_native_transfers", state)
     return state
+
+def search_export(owner, project_id, operation_id, selection, **options):
+    with native_operation(owner):
+        return _search_export(owner, project_id, operation_id, selection, **options)
+
+def send_exact(owner, project_id, operation_id, request, **options):
+    with native_operation(owner):
+        return _send_exact(owner, project_id, operation_id, request, **options)
