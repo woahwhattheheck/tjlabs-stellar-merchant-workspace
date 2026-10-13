@@ -4,5 +4,26 @@
   "description": "research dossiers original Applications",
   "applicationProviders": {
     "research-dossiers": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/research-dossiers.mjs"
-  }
+  },
+  "exports": {
+    "./buyer/research-dossiers/comparison": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/client.mjs"
+    }
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/contracts.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/model.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/store.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/render.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/routes.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/client.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/client.d.mts",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/cli.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/receive.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/OPERATING.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/RECEIVING.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/comparison.js",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/comparison.css"
+  ]
 }

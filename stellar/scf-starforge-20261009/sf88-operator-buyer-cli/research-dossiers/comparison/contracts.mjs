@@ -86,6 +86,7 @@ export function comparisonInput(value){
  payload={caseId:id(p.caseId),caseVersionId:id(p.caseVersionId),candidateVersionId:id(p.candidateVersionId),
  rawText:text(p.rawText,'COMPARISON_RUN_JSON_REQUIRED',MAX_RUN)};
  need(Buffer.byteLength(payload.rawText)<=MAX_RUN,'COMPARISON_RUN_TOO_LARGE');
+ need(Buffer.from(payload.rawText,'utf8').toString('utf8')===payload.rawText,'COMPARISON_RUN_UTF8_INVALID');
  }else{
  const kind=value.action.split('.')[0],key=kind+'Id';
  fields(p,['caseId','caseVersionId',key,'previousVersionId','definition']);

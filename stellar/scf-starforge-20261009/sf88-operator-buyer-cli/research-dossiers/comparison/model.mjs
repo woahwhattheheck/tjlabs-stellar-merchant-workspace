@@ -151,11 +151,10 @@ export async function validateComparisonState(state,readContent,cache=new Map())
  }
  comparisonBlobMetadata(state);
 }
-export function validateComparisonTransition(previous,state,{allowImported=false}={}){
+export function validateComparisonTransition(previous,state){
  const before=previous?.comparisonEvents??[],after=state.comparisonEvents??[];
  need(after.length>=before.length&&before.every((event,index)=>same(event,after[index])),'COMPARISON_HISTORY_CHANGED');
  if(!previous){need(after.length===0,'COMPARISON_INITIAL_HISTORY_INVALID');return;}
- if(allowImported)return;
  need(after.length<=before.length+1,'COMPARISON_TRANSITION_INVALID');
  if(after.length>before.length){
   const event=after.at(-1);
