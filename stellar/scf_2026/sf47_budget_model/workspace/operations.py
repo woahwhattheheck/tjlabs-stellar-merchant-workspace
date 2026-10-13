@@ -44,6 +44,7 @@ import operations_amendments as amendments
 import operations_amendment_calendar as amendment_calendar
 import operations_work_intake as work_intake
 import operations_commercial_receivables as commercial_receivables
+import operations_expenses as expenses
 
 SCHEMA = "stellar-forge.sf47-operations.v1"
 MAX_SOURCE = 8 * 1024 * 1024
@@ -121,6 +122,7 @@ class Operations:
             installations.install(workspace.db)
             amendments.install(workspace.db)
             work_intake.install(workspace.db)
+            expenses.install(workspace.db)
             row = workspace.db.execute("SELECT value FROM ops_metadata WHERE key='schema'").fetchone()
             if row and row[0] != SCHEMA:
                 domain.fail("This workspace uses a newer operations schema.", "OPERATIONS_SCHEMA", 409)
@@ -152,6 +154,9 @@ class Operations:
             "SELECT metadata_json FROM ops_sources WHERE program_id=? ORDER BY id", (program_id,)))}
         result = {"program": program, "plan": plan, "records": records, "sources": sources,
                   "completionPlans": completion.load_plans(self, program_id)}
+        expense_records = expenses.load(self, program_id)
+        if expenses.has_records(expense_records):
+            result["expenseRecords"] = expense_records
         refs = installations.latest_refs(installations.load_heads(self, program_id))
         if refs:
             result["installationRefs"] = refs
@@ -172,6 +177,8 @@ class Operations:
             result["installationRefs"] = context["installationRefs"]
         if context.get("workIntakeRefs"):
             result["workIntakeRefs"] = context["workIntakeRefs"]
+        if expenses.has_records(expenses.retained(context)):
+            result["expenseRecords"] = context["expenseRecords"]
         return result
 
     def _read(self, program_id):
@@ -180,6 +187,7 @@ class Operations:
                   "report": domain.report(**context)}
         result["awardTerms"] = [award_terms.summary(row) for row in award_terms.heads(award_terms.records(self, program_id))]
         result["completion"] = completion.dashboard(context)
+        result["expenseAttribution"] = expenses.dashboard(context)
         result["amendments"] = [amendments.summary(row, context, digest(self._business(context)))
                                  for row in amendments.heads(amendments.load(self, program_id))]
         cohort_history = self._cohort_history(program_id)
@@ -400,6 +408,17 @@ class Operations:
                 if result["unchanged"]:
                     return {"id": program_id, "version": expected, "action": command, "kind": kind,
                             "recordId": record_id, **extra_receipt}
+            elif command in expenses.ACTIONS:
+                result = (expenses.receive(self, context, data, actor, next_version)
+                          if command == "expense.receive"
+                          else expenses.attribution_command(self, context, command, data, actor, next_version, note))
+                before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
+                source_change = result.get("sourceChange")
+                extra_receipt = {key: value for key, value in result.items()
+                                 if key not in ("before", "after", "kind", "recordId", "sourceChange")}
+                if result["unchanged"]:
+                    return {"id": program_id, "version": expected, "action": command, "kind": kind,
+                            "recordId": record_id, **extra_receipt}
             elif command == "implementation.prepare":
                 result = implementation.prepare(self, context, data, actor, next_version)
                 before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
@@ -411,7 +430,7 @@ class Operations:
                 extra_receipt = {key: value for key, value in result.items()
                                  if key not in ("before", "after", "kind", "recordId")}
             elif command.startswith("completion."):
-                if command == "completion.submit" and self.db.execute("SELECT COUNT(*) FROM ops_records WHERE program_id=?", (program_id,)).fetchone()[0] >= MAX_RECORDS:
+                if command == "completion.submit" and expenses.record_count(self, program_id) >= MAX_RECORDS:
                     domain.fail("This operations case has reached its retained-record bound.", status=413)
                 result = completion.command(self, context, command, data, actor, next_version)
                 before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
@@ -516,7 +535,7 @@ class Operations:
                              "awards": "save", "deployments": "save", "purchases": "record", "outcomes": "save"}
                     if verb != valid[kind] and not (kind == "purchases" and verb == "observe" and before):
                         domain.fail("This record uses another lifecycle action.")
-                    if not before and self.db.execute("SELECT COUNT(*) FROM ops_records WHERE program_id=?", (program_id,)).fetchone()[0] >= MAX_RECORDS:
+                    if not before and expenses.record_count(self, program_id) >= MAX_RECORDS:
                         domain.fail("This operations case has reached its retained-record bound.", status=413)
                     if kind == "purchases" and before and (verb != "observe" or not note):
                         domain.fail("Use purchase.observe with a reason to retain a later source observation.")
@@ -959,6 +978,41 @@ class Operations:
             review = self.review(program_id, review_id)
             return completion.review_files(review, lambda source_id: self.source(program_id, source_id))
 
+    def expense_request(self, program_id, body):
+        program_id = identifier(program_id, "operation")
+        if not isinstance(body, dict) or body.get("action") not in expenses.ACTIONS or not isinstance(body.get("data"), dict):
+            domain.fail("Select the complete original expense request.", "EXPENSE_REQUEST_INVALID")
+        request_id = short_id(body.get("requestId"), "Original request ID")
+        fingerprint = digest({"domain": SCHEMA, "programId": program_id, "body": body})
+        with self.workspace.mutex:
+            program, _ = self._program(program_id)
+            row = self.db.execute("SELECT fingerprint,result_json FROM requests WHERE request_id=?", (request_id,)).fetchone()
+            if row:
+                if row[0] != fingerprint:
+                    domain.fail("This original request ID belongs to different selected inputs.", "REQUEST_CONFLICT", 409)
+                return {"status": "COMMITTED", "requestId": request_id, "caseId": program_id,
+                        "receipt": json.loads(row[1]), "currentVersion": program["version"]}
+            return {"status": "NOT_RECORDED", "requestId": request_id, "caseId": program_id,
+                    "currentVersion": program["version"]}
+
+    def preview_expense(self, program_id, body):
+        with self.workspace.mutex:
+            return expenses.preview(self._context(identifier(program_id, "operation")), body)
+
+    def expense_attribution(self, program_id):
+        with self.workspace.mutex:
+            return expenses.dashboard(self._context(identifier(program_id, "operation")))
+
+    def expense_file(self, program_id, filename):
+        if filename not in expenses.EXPORT_NAMES:
+            domain.fail("Choose an original expense attribution export.", "NOT_FOUND", 404)
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            files = expenses.export_files(context)
+            if filename not in files:
+                domain.fail("Receive the original issued expense source before exporting its attribution.", "EXPENSE_SOURCE_REQUIRED", 409)
+            return files[filename]
+
     def preview_buyer(self, program_id, body):
         with self.workspace.mutex:
             context = deepcopy(self._context(identifier(program_id, "operation")))
@@ -1393,6 +1447,7 @@ class Operations:
             if settlement_view:
                 files["merchant-settlements.json"] = (canonical(settlement_view) + "\n").encode()
                 files["merchant-settlements.csv"] = csv_bytes(settlement_sources.CSV_FIELDS, settlement_sources.csv_rows(context))
+            files.update(expenses.export_files(context))
             node_view = buyer.node_observations(context)
             if node_view:
                 files["node-accounting-observations.json"] = (canonical(node_view) + "\n").encode()
@@ -1465,6 +1520,8 @@ class Operations:
         # Original completion plans and source records retain their native validation below.
         if "completion-calendar.json" in files:
             expected.add("completion-calendar.json")
+        if expenses.has_records(document.get("expenseRecords") or expenses.empty()):
+            expected.update(expenses.EXPORT_NAMES)
         node_names = {"node-accounting-observations.json", "node-accounting-observations.csv"}
         if node_names.intersection(files) or any(isinstance(row.get("buyerHandoff"), dict)
                 and row["buyerHandoff"].get("sourceSchema") == buyer.NODE_SCHEMA for row in document["sources"]):
@@ -1619,6 +1676,10 @@ class Operations:
         amendments.validate_files(saved_amendments, files)
         def selected_plan_at(version):
             return amendments.plan_at(saved_amendments, plan, version)
+        expense_records = expenses.validate_import(context, document.get("expenseRecords"), events, reviews, files,
+                                                    plan_for_version=selected_plan_at)
+        if expenses.has_records(expense_records):
+            context["expenseRecords"] = expense_records
         cohort.validate_import(reviews, events)
         completion.validate_import(context, document.get("completionPlans", []), reviews, events, source_program["version"],
                                    plan_history=saved_amendments)
@@ -1754,6 +1815,7 @@ class Operations:
                 self.db.execute("INSERT INTO ops_events VALUES(?,?,?)", (pid, event["version"], canonical(event)))
             for review in document["reviews"]:
                 self.db.execute("INSERT INTO ops_reviews VALUES(?,?,?)", (pid, review["id"], canonical(review)))
+            expenses.save_import(self, pid, expense_records)
             for value in document.get("completionPlans", []):
                 completion.save_row(self, pid, value)
             amendments.import_rows(self, pid, saved_amendments)
