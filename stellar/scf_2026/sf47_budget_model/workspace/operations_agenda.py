@@ -42,7 +42,7 @@ def agenda(contexts, as_of=None):
     if not isinstance(contexts, (list, tuple)) or not contexts:
         domain.fail("Read the selected original cases before opening their agenda.", "INVALID_DELIVERY_AGENDA")
     case_ids, _ = selected_cases([context["program"]["id"] for context in contexts])
-    selected_date = as_of
+    selected_date = None if as_of is None else domain.calendar(as_of, "Delivery agenda date")
     cases, entries, undated = [], [], []
     totals = Counter()
     kinds = Counter()
