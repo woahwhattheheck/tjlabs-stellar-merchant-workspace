@@ -477,8 +477,8 @@ def main(argv=None):
     parser.add_argument("--retained-outputs-zip", required=True, type=Path)
     parser.add_argument("--work-dir", required=True, type=Path)
     parser.add_argument("--delivery-python", type=Path, default=Path(__file__).resolve().parent)
-    parser.add_argument("--programme", required=True, type=Path,
-                        help="Captured original B41A receiving argv, source files and result paths")
+    parser.add_argument("--programme", type=Path,
+                        help="Optional captured original programme; defaults to the maintained native customer journey")
     parser.add_argument("--node", required=True, type=Path)
     parser.add_argument("--chromium", required=True, type=Path)
     parser.add_argument("--playwright-root", required=True, type=Path)
@@ -488,7 +488,7 @@ def main(argv=None):
     if sys.version_info < (3, 11) or os.name != "posix":
         parser.error("The accepted customer runtime requires Python 3.11+ on POSIX")
     try:
-        for name in ("customer_zip", "retained_outputs_zip", "programme", "node", "chromium"):
+        for name in ("customer_zip", "retained_outputs_zip", "node", "chromium"):
             value = getattr(args, name)
             if not value.is_absolute():
                 raise ValueError("Use an absolute " + name.replace("_", " ") + " path")
@@ -497,6 +497,7 @@ def main(argv=None):
         receiver_path = Path(__file__).resolve().with_name("review_continuation_receiving.py")
         receiving = module(receiver_path, "_scf_customer_continuation_receiving")
         with working_lock(work) as lock_fd:
+            receiving.select_programme(args, work)
             intent = receiving.bind(args, work, receiver_path)
             context = prepare(args, work)
             result = receiving.continue_original(args, work, intent, context, lock_fd)

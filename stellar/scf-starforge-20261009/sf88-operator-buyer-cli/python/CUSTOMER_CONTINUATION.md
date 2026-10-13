@@ -12,11 +12,13 @@ own operation, source selection, native admission and installed product.
 
 ## Run in the original customer runtime
 
-Place these two complete modules in the same Python delivery directory as the
-merged installers and their source packets:
+Use the complete continuation from the merged Python delivery directory, together
+with both previously merged installers and their source packets:
 
 - continue_review_customer.py
 - review_continuation_receiving.py
+- native_review_journey.mjs
+- native_review_sources.mjs
 - apply_review_continuation.py
 - native-patches/customer-journal-continuation.json
 - apply_review_entrypoints.py
@@ -49,7 +51,6 @@ Run one command using the actual paths retained by the native customer owner:
       --customer-zip /absolute/accepted/Starforge_Complete_Resource_Review_Application.zip \
       --retained-outputs-zip /absolute/accepted/SF88-Joined-Review-Retained-Outputs-2026-10-12.zip \
       --work-dir /absolute/original-customer-operation/continuations/customer-90ed \
-      --programme /absolute/original-customer-operation/receiving-programme.json \
       --node /absolute/existing/node \
       --chromium /absolute/existing/chrome-headless-shell \
       --playwright-root /absolute/existing/node_modules \
@@ -61,37 +62,66 @@ runtime before execution. The accepted customer receiving used Python 3.12.14,
 Node 24.19.0 and Chrome 130.0.6723.116. The actual Chrome path in its saved result
 was /workspace/scratch/bc0850d7ba23/browser-runtime/chrome-headless-shell.
 The entrypoint checks the supplied executable paths and actual versions and uses
-the supplied Playwright module root. It performs no package installation.
+the supplied node_modules containing playwright or playwright-core. The selected
+package identity is retained. It performs no package installation.
 
-## Capture the original receiving command once
+## Maintained customer receiving journey
 
-receiving-programme.json is a transport of the original B41A browser runner,
-argument array and exact output selection. Fill it from that retained source and
-invocation. Keep every source file needed by the original runner in source_files
-with its actual absolute path, byte length and SHA-256.
+The entrypoint selects the adjacent native_review_journey.mjs automatically,
+records the complete source identities of that runner and native_review_sources.mjs,
+and writes receiving-programme.json inside
+this same working directory before dispatch. Its argument array selects the
+installed full customer source, receiving directory, actual Chrome executable and
+existing Playwright module root. No separate programme file needs to be assembled
+for this maintained continuation.
 
-The accepted result is
-commons.scf-complete-receiving.v2, operation
-SCF-REVIEW-RETURNS-COMPOSITION-B41A-20261012. Its browser member has schema
-commons.scf-complete-customer-browser.v1. The wrapper accepts the complete result
-or that original browser result. It reads the same twelve customer views and
-original conflict/apply/export, independent receive/edit/reopen and incoming
-return steps. The two current source overlays travel through the installed
-customer selected in the original command.
+The journey uses the selected native resource and Python receiving APIs with the
+original retained review exports and immutable graphs. It keeps the original
+comparison, journal-plan and incoming-return identities and records original
+inputs and completed native operations in the receiving directory. Resuming uses
+those same saved operations and receiving states.
 
-Programme fields:
+Original SQLite files and their configuration are retained unchanged. A copied
+library.sqlite still points at its original configured roots; the continuation
+does not pretend that copying the database relocates those roots. Complete
+portable exports are received through the native importer into current working
+states. When an original source snapshot is required, the journey retains the
+archived source identity and uses that saved snapshot.
+
+The accepted result has schema commons.scf-complete-receiving.v2 for operation
+SCF-REVIEW-RETURNS-COMPOSITION-B41A-20261012, with browser schema
+commons.scf-complete-customer-browser.v1. The wrapper accepts either the complete
+result or that browser result. It retains the same twelve desktop and phone views
+and the original conflict/apply/export, independent receive/edit/reopen and
+incoming-return steps. The current journal UI and customer command overlays are
+exercised from the installed source.
+
+The invoked process receives SCF_CUSTOMER_PYTHON,
+SCF_CUSTOMER_RETAINED_OUTPUTS and SCF_CUSTOMER_ACCEPTED with the actual Python,
+immutable original outputs and accepted customer paths. Current mutable receiving
+state, reports and captures stay under the receiving directory. Original inputs
+remain available for the same-request recovery.
+
+### Retained original programme override
+
+An existing native owner with a captured original command can still select it
+with --programme /absolute/path/receiving-programme.json. Keep all its source
+files and their identities, actual argument array, working directory and complete
+output selection in that file. This uses the same original operation, lock and
+receiving result contract.
 
 | Field | Meaning |
 | --- | --- |
 | schema | commons.scf-original-customer-programme.v1 |
 | operation_id | SCF-REVIEW-RETURNS-COMPOSITION-B41A-20261012 |
-| source_files | Complete original runner source rows: path, bytes, sha256 |
-| argv | Actual original argument array; passed directly without a shell |
-| cwd | Original runner's required working directory |
-| result | Complete original receiving result JSON path |
+| source_files | Complete runner source rows: path, bytes, sha256 |
+| argv | Actual argument array; passed directly without a shell |
+| cwd | Runner's required working directory |
+| result | Complete receiving result JSON path |
 | screenshots_directory | Directory containing the original twelve view files |
 | portable_reports | Complete current JSON and HTML report paths, plus CSV when selected |
-| outputs | Additional original receiving files; each has archive name and source path |
+| outputs | Additional receiving files, each with archive name and source path |
+| output_directories | Explicit native output directories; every ordinary file is retained under its selected archive prefix |
 
 Paths in argv, cwd and output fields may use these exact tokens:
 
@@ -110,24 +140,14 @@ Paths in argv, cwd and output fields may use these exact tokens:
 | @@OPERATION@@ | Original B41A operation |
 | @@CONTINUATION@@ | This source/build/receiving continuation identity |
 
-The original command must explicitly select the installed customer path. Returned
-results, reports, captures and operating files stay under @@WORK@@. The runner
-source itself can remain at its original retained path. This preserves the
-accepted working customer state while giving the current installed source and
-outputs a distinct, exact selection. Keep the native runner's original request
-and continuation behavior; use its existing receiving state inputs where its
-actual command requires them.
+The default selection includes journey-journal.json, every retained input, the
+complete closed native states, the four complete JSON/HTML report pairs, the
+incoming accepted download and any original CSV exports. The completed-output
+check captures this whole selection before it adopts a completed receiving run.
 
-The invoked process also receives SCF_CUSTOMER_PYTHON,
-SCF_CUSTOMER_RETAINED_OUTPUTS and SCF_CUSTOMER_ACCEPTED with these actual paths.
-Read the original retained inputs from those roots and write current mutable
-receiving state, reports and captures under @@WORK@@. The original inputs remain
-available for the native programme's same-request recovery.
-
-Capture that runner and invocation from B41A's retained native delivery. The saved
-8,104-byte receiving JSON identifies its original outputs and installed runtime;
-the captured command must come from the original receiver source and invocation.
-Keep that receiving source attached to the original customer operation.
+The command must explicitly select the installed customer. Results, reports,
+captures and operating outputs stay under @@WORK@@. Keep the native programme's
+same-request recovery and original state inputs.
 
 ## Source and restart behavior
 

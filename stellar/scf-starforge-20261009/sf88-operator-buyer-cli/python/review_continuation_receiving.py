@@ -34,6 +34,48 @@ ORIGINAL_VIEWS = {
 }
 
 
+MAINTAINED_SOURCES = {
+    "native_review_journey.mjs": {"bytes": 41829, "sha256": "0e5871378bbbb5e88d0bb139bab73d9dbb807dc347c37273a44352ee5fda489e"},
+    "native_review_sources.mjs": {"bytes": 12147, "sha256": "2d2e766a0185370b93ebfa90aad4cec065fe55f395b1554310cf8294bafa69c8"},
+}
+
+
+def select_programme(args, work):
+    """Capture the maintained native journey or retain an explicit original one."""
+    if args.programme is not None:
+        identity(args.programme)
+        return args.programme
+    delivery = canonical_directory(args.delivery_python.resolve(strict=True))
+    sources = []
+    for name, expected in MAINTAINED_SOURCES.items():
+        path = delivery / name
+        if identity(path) != expected:
+            raise ValueError("Use the complete maintained customer journey source: " + name)
+        sources.append({"path": str(path), **expected})
+    reports = ["@@WORK@@/reviews/" + stem + suffix
+               for stem in ("origin-review", "received-review", "reopened-review", "incoming-review")
+               for suffix in (".json", ".html")]
+    plan = {
+        "schema": PROGRAMME_SCHEMA, "operation_id": OPERATION,
+        "source_files": sources,
+        "argv": ["@@NODE@@", str(delivery / "native_review_journey.mjs"),
+                 "--source", "@@SOURCE@@", "--work", "@@WORK@@",
+                 "--chromium", "@@CHROMIUM@@", "--playwright-root", "@@PLAYWRIGHT_ROOT@@"],
+        "cwd": "@@WORK@@", "result": "@@WORK@@/browser-result.json",
+        "screenshots_directory": "@@WORK@@/views", "portable_reports": reports,
+        "outputs": [{"name": "receiving/journey-journal.json", "path": "@@WORK@@/journey-journal.json"}],
+        "output_directories": [
+            {"name": "inputs", "path": "@@WORK@@/inputs"},
+            {"name": "states", "path": "@@WORK@@/states"},
+            {"name": "reviews", "path": "@@WORK@@/reviews"},
+        ],
+    }
+    selected = work / "receiving-programme.json"
+    publish_json(selected, plan)
+    args.programme = selected
+    return selected
+
+
 def canonical_directory(path):
     path = Path(path)
     if not path.is_absolute() or path.resolve(strict=True) != path or not path.is_dir():
@@ -63,6 +105,8 @@ def verify_programme(plan):
         raise ValueError("Select the original programme's complete portable report outputs")
     if not isinstance(plan.get("outputs", []), list):
         raise ValueError("The original retained receiving outputs must be an explicit file selection")
+    if not isinstance(plan.get("output_directories", []), list):
+        raise ValueError("Native receiving directories must be explicitly selected")
     return plan
 
 
@@ -114,12 +158,16 @@ def runtime_observation(args):
     node_match = re.search(r"v?(\d+)\.(\d+)", versions["node"])
     if node_match is None or tuple(map(int, node_match.groups())) < (22, 16):
         raise ValueError("The installed customer runtime requires Node 22.16 or newer")
-    playwright = args.playwright_root / "playwright" / "index.js"
-    if not playwright.is_file():
-        raise ValueError("Select the existing Playwright module root containing playwright/index.js")
+    package = next((name for name in ("playwright", "playwright-core")
+                    if (args.playwright_root / name / "package.json").is_file()), None)
+    if package is None:
+        raise ValueError("Select the existing node_modules containing playwright or playwright-core")
+    playwright = canonical_directory((args.playwright_root / package).resolve(strict=True))
     return {"versions": versions, "python": identity(Path(sys.executable).resolve(strict=True)),
             "node": identity(args.node), "chromium": identity(args.chromium),
-            "playwright": identity(playwright.resolve(strict=True))}
+            "playwright": {"package": package,
+                           "entrypoint": identity((playwright / "index.js").resolve(strict=True)),
+                           "manifest": identity(playwright / "package.json")}}
 
 
 def bind(args, work, receiver_path):
@@ -211,6 +259,29 @@ def complete_outputs(result_path, plan, mapping, receiving):
         name = str(relative(row["name"]))
         path = selected_output(row["path"], mapping, receiving)
         outputs.append({"name": name, "source": str(path), **identity(path)})
+    # Native state filenames come from the original importer. Select every actual
+    # ordinary file after closure and bind the resulting list for completed reopen.
+    for row in plan.get("output_directories", []):
+        prefix = str(relative(row["name"]))
+        root = canonical_directory(Path(expand(row["path"], mapping)))
+        root.relative_to(receiving)
+        count = 0
+        for current, directories, filenames in os.walk(root, followlinks=False):
+            directories.sort()
+            filenames.sort()
+            current = canonical_directory(Path(current))
+            for name in directories:
+                canonical_directory(current / name)
+            for name in filenames:
+                path = current / name
+                if not stat.S_ISREG(path.lstat().st_mode):
+                    raise ValueError("Native receiving outputs must be ordinary files: " + str(path))
+                checked = selected_output(str(path), mapping, receiving)
+                outputs.append({"name": prefix + "/" + checked.relative_to(root).as_posix(),
+                                "source": str(checked), **identity(checked)})
+                count += 1
+        if not count:
+            raise ValueError("The native receiving directory is incomplete: " + str(root))
     report_paths = [selected_output(value, mapping, receiving) for value in plan["portable_reports"]]
     if any(path.suffix.lower() not in {".json", ".html", ".csv"} for path in report_paths):
         raise ValueError("Keep the original complete portable JSON, HTML and CSV report formats")

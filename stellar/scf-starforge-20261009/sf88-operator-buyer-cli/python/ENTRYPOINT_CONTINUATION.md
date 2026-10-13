@@ -69,15 +69,18 @@ updated customer ZIP, complete reports and desktop/phone views through the origi
 SCF-REVIEW-RETURNS-COMPOSITION-B41A-20261012 customer receiving programme. Its
 accepted complete customer and twelve-view receiving are the baseline. Use
 CUSTOMER_CONTINUATION.md and continue_review_customer.py to retain the full source
-selection, apply both merged overlays in order, run the captured original B41A
-browser command against the installed customer, and resume the same durable save.
+selection, apply both merged overlays in order, run the maintained B41A browser continuation
+against the installed customer and original retained inputs, and resume the same
+durable save. The default command includes its complete native source adapter and
+requires no separately assembled programme JSON.
 
 ## Source identity
 
 Complete packet: native-patches/customer-review-entrypoints.json  
 SHA256: 9e05aa4e7c78d3c473ef91c92589ebf066c6870fd279290c1917057acfafb323  
 Bytes: 176329  
-Current source head: 3cf66434cd5af0ace9b2b35e1b9cec642dfef97c.
+Authored entrypoint source: ba3045363ed9e2839463f6f971c9c75fa8bfe88c.
+Merged entrypoint source: 5d5a90f73e0ece6e11fda6678ee18da1bd0a5569.
 
 The independently reviewed receipt transition selects the operation's comparison
 before saving its browser location. A later comparison selected in the native
