@@ -19,7 +19,7 @@ function failure(error){
  const result={code:error.code??'PREPARATION_ERROR',message:error.message};
  // These fields come from the original Git source reader and identify the
  // exact selected objects or limits needed to continue the same build.
- for(const key of ['sourceCommit','gitBlob','paths','bytes','limitBytes','missingObjects'])
+ for(const key of ['sourceCommit','gitBlob','paths','bytes','limitBytes','missingObjects','inspection'])
   if(error[key]!==undefined)result[key]=error[key];
  return result;
 }
