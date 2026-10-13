@@ -68,6 +68,8 @@ export interface InvoiceOutcome {order:InvoiceRecord}
 export interface CreateInvoiceInput {
   /** Retain this UUID before the first call and use it for every subsequent inspection. */
   id:string;reference:string;title:string;prices:{assetId:string;amountAtomic:string}[];
+  /** Optional exact publicOrigin/template from the reviewed original configuration. */
+  expectedTerms?:{publicOrigin:string;template:Record<string,unknown>};
 }
 export interface PaymentEnvelope {
   version:number|string;method:string;url:string;contentType:string;bodyBase64:string;

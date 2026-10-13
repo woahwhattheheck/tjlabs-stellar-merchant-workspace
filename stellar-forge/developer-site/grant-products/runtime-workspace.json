@@ -33,12 +33,18 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/README.md",
-      "commit": "9e561f5a9e09eb3ac72655e502de58cce4416c3d",
+      "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
       "editions": [
         {
           "commit": "9e561f5a9e09eb3ac72655e502de58cce4416c3d",
           "bytes": 18907,
           "sha256": "7aefd770fb633bd43b5d566bbe75e2a1174b283ce1b9bfd50ae10f8a863ed7a1"
+        },
+        {
+          "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+          "bytes": 21032,
+          "sha256": "8b59b041cbbcdd2d0baf777c206a9964a9f76a11df4e4f3565b9fa7073d673ef",
+          "git_blob": "da127d90c2df92a426bbd754cbab31120b56a8f3"
         }
       ]
     },
@@ -569,13 +575,19 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/APPLICATION_INPUT_SETS_RECEIVE.mjs",
-      "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+      "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
       "editions": [
         {
           "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
           "git_blob": "532e3f10478a207bb9fc39850c5f5d6db5125848",
           "bytes": 22855,
           "sha256": "d7d69a76fbacd096e77ada1b023ea97fae374d8e0635f308d93d984260c688d2"
+        },
+        {
+          "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+          "bytes": 23900,
+          "sha256": "1a3a6cce4ca9710966423c2ecd41ceb529a6c31a891db70de660a36eae3b9f01",
+          "git_blob": "d85dbbcc481b1f7ccf3b4f32ed825c9851b444d5"
         }
       ]
     },
@@ -710,6 +722,182 @@
           "git_blob": "d70e93f5177efb507231cb0ec8821dfeed5f712f",
           "bytes": 18918,
           "sha256": "57533b29d49f6300c60fca77dfd84be41ee0b3d27b9a0ec7a5f3bf440e2fa0e8"
+        }
+      ]
+    },
+    {
+      "id": "runtime-operation-record-reuse",
+      "label": "Bounded unchanged original operation records with fresh opened-file admission",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/operation-records.mjs",
+      "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+      "editions": [
+        {
+          "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+          "bytes": 3116,
+          "sha256": "92b429527dcce933a2de2e93988b0db101d4e9018ba4e7a9542906680daff6c0",
+          "git_blob": "e9adfda8a0f4df33922070f9671f6c3a65191cd1"
+        }
+      ]
+    },
+    {
+      "id": "runtime-operation-history-model-api",
+      "label": "Original Runtime model, complete status and compact history API",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs",
+      "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+      "editions": [
+        {
+          "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+          "bytes": 50646,
+          "sha256": "37ba4e2250f0be79246e7c47b893d15ceaf9bcd5306cbce856d2741aed3f3b87",
+          "git_blob": "03f17d8980f40e9ca97f69f94cd9ccede4dad870"
+        }
+      ]
+    },
+    {
+      "id": "runtime-operation-history-http",
+      "label": "Authenticated original history/status and installed browser routes",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/server.mjs",
+      "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+      "editions": [
+        {
+          "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+          "bytes": 43624,
+          "sha256": "8f7cb63ad14c7ed771fb49240cd0b5ffe8c4fcdfa9b677626e73d02fda2a0aaa",
+          "git_blob": "1f634dce217a3e56292c539a08b11221c376749a"
+        }
+      ]
+    },
+    {
+      "id": "runtime-operation-history-selection",
+      "label": "Shared original operation grouping, search and cursor selection",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/operation-history-model.mjs",
+      "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+      "editions": [
+        {
+          "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+          "bytes": 6373,
+          "sha256": "d611f5e5d376309b33cc895211155042ca4323a11efd419b012fb16f534b9d70",
+          "git_blob": "dfb2c0c9898481e1f1b0ebdc8ed3b7d581dc61e8"
+        }
+      ]
+    },
+    {
+      "id": "runtime-operation-history-browser",
+      "label": "Desktop and phone history, complete selected record and same-workspace reopening",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/operation-history.mjs",
+      "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+      "editions": [
+        {
+          "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+          "bytes": 12221,
+          "sha256": "a3aab9cc5b9112b9ce21773f92e1737b4fa11c6abd2dbff4373f07da05383822",
+          "git_blob": "957f8ba64e36be0bc07a879d9e64cfebedd225e1"
+        }
+      ]
+    },
+    {
+      "id": "runtime-operation-history-host",
+      "label": "Complete original Runtime host and recovery-control integration",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/app.mjs",
+      "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+      "editions": [
+        {
+          "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+          "bytes": 39107,
+          "sha256": "5d98bdd7a7e799884597953c05d1fa2474ef158f16c903a896f75e3dcce9bb48",
+          "git_blob": "b3a825aba9cef20cb62956ca63ab9d4de77a9119"
+        }
+      ]
+    },
+    {
+      "id": "runtime-operation-history-cli",
+      "label": "Installed operation history, complete status and original Runtime commands",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/cli.mjs",
+      "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+      "editions": [
+        {
+          "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+          "bytes": 25861,
+          "sha256": "c8c9a73f444554cd63a15378b1eb4eaeed0e050d300a4691ce5b430beec5b7d0",
+          "git_blob": "8f63bc88976618b70ee7e3ff329933658f3e6873"
+        }
+      ]
+    },
+    {
+      "id": "runtime-operation-history-assets",
+      "label": "Complete installed Runtime browser source registration",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/browser-assets.json",
+      "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+      "editions": [
+        {
+          "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+          "bytes": 4799,
+          "sha256": "a7687eb27d16caab3716250916bc2fda11852b6687141bae690bedc1fef30b9b",
+          "git_blob": "9c8d0e6fdae18616ca3138f7388a33fc69a16717"
+        }
+      ]
+    },
+    {
+      "id": "runtime-operation-history-layout",
+      "label": "Readable original Runtime history and full details at desktop and narrow widths",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/style.css",
+      "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+      "editions": [
+        {
+          "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+          "bytes": 7927,
+          "sha256": "cfcdca0959b17dc69b1bc18ec8981eb54bcfd9fe543ee72a1c247b20a0f5973c",
+          "git_blob": "5dbc14b9d4f6d97729967f91c73b1e5fe92c244e"
+        }
+      ]
+    },
+    {
+      "id": "runtime-operation-history-receiving",
+      "label": "Same native workspace history, complete operation download and desktop/phone receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/OPERATION_HISTORY_RECEIVE.mjs",
+      "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+      "editions": [
+        {
+          "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+          "bytes": 11820,
+          "sha256": "57357735e448c0e891586382eebba0fd77bba1509bb9013d39e7ca7d186028f3",
+          "git_blob": "75c705cfe290268507636d7206812ca23fe5bf04"
+        }
+      ]
+    },
+    {
+      "id": "runtime-operation-history-guide",
+      "label": "Whole original operation search, read, download, recovery and receiving workflow",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/OPERATION_HISTORY.md",
+      "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+      "editions": [
+        {
+          "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+          "bytes": 10553,
+          "sha256": "1dcd824942216e3c8906500a4ab8dac0e1435e44e493c0166d04ac4d20c3f7c7",
+          "git_blob": "93745cbba4fabc80d2899bc2d74fe80b6bab2c06"
         }
       ]
     }

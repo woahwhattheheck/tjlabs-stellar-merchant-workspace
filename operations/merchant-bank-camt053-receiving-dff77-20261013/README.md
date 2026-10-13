@@ -1,18 +1,71 @@
 # Receive complete original Nordea, Goldman Sachs and Bundesbank deliveries
 
-## Rendered product inspection — owner instruction, 2026-10-13
+## TJLabs owner rule: actual rendered-product inspection
 
-This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Before calling any customer/prospect-facing application, website, dashboard, demo, report, presentation or export ready, open/run/render the exact outgoing version, look at the rendered screen or its actual screenshots, and operate the important user controls. Inspect the actual screenshare width and narrow/mobile width where relevant, populated/empty/loading/error states, downloads/exports and reopening. Capturing screenshots without viewing them is insufficient. Code review, DOM counts, HTTP 200, unit checks and another worker's approval do not replace seeing the actual product.
+Revision: `rendered-product-inspection-20261013-all-attachments-v1`.
+Applies to all current and future peers and providers, in local and cloud sessions.
 
-Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk; do not run broad suites or build a verification product.
+Before calling a client/prospect-facing app, website, dashboard, demo, report,
+presentation or export ready, the producing peer must actually open, run or
+render the exact outgoing version, LOOK at the rendered screen or its real
+screenshots, and operate the important user controls. Check the actual
+screenshare width and narrow/mobile width where relevant, populated, empty,
+loading and error states, downloads/exports and reopening. Capturing screenshots
+without viewing them is insufficient. Fix ugly, broken, unstyled, cramped,
+clipped, overflowing or unreadable output within the authorized work before
+presenting it. Code review, DOM counts, HTTP 200, unit checks or another peer's
+approval do not replace seeing the actual product.
 
-Include this complete instruction in delegated assignments and the active owner-controlled policy, boot, build and receiving guidance those workers actually read. Preserve all other owner controls and original operation identities. Leave historical records and third-party/vendor policies intact. Do not force restarts, create watchers or revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+ALL ATTACHMENTS count. Literally open, view, play and use the final delivered
+HTML, PDF, report, slides, spreadsheet, map, image, video, audio, archive and
+project as its recipient would. For archives, extract and open the actual
+contained deliverables and working project. Tests, checklists and screenshots
+merely captured are not substitutes. Use available high-quality generative media
+models and natural voice generation/TTS for videos; avoid robotic default
+voices. Watch and listen to the final export for pronunciation, pacing, timing
+and audio alignment. Keep building and fixing; inspection is not review/test
+performance theatre.
+
+For the Ecosystem product use plain industrial design: readable tables, clear
+hierarchy, consistent typography and spacing, restrained controls, useful labels
+and responsive layouts. No decorative template slop. Keep the real workflows,
+data and computation. Reviews must lead directly to repairs and must not replace
+hard implementation/integration or become endless rechecking. The existing
+focused-validation policy remains; do not run broad suites or build a separate
+verification product. Prior empty-Workspace screenshots are not acceptance of a
+completed scientific Workspace.
+
+PERSISTENT PROPAGATION REQUIRED: copy this rule into every active owner-controlled
+policy/instruction surface the provider and workers actually read: global and
+project AGENTS, CLAUDE, GEMINI and rules files, provider-specific boot instructions,
+Commons source mirrors, cloud repository instruction copies, and current build
+and receiving guides. Every delegating peer includes this complete rule in child
+assignments, including its all-attachments and final-media clarification. Return
+exact changed paths, source/version and readback. A Slack ACK alone is not
+propagation. Preserve all existing owner controls and do not alter historical
+evidence or third-party/vendor policies. No forced restarts, new watchers or
+revival of owner-stopped work.
+
+Continue the same Ecosystem Sprint Integration assembled product and its original
+scientific, run, browser and receiver owners. Continue native source, runtime and
+archive joins rather than diverting everyone to cosmetic review. Preserve the
+October 13, 2026 fleet cutoff at 10:00 a.m. Eastern (EDT), 14:00 UTC. This project
+cutoff does not expire the standing inspection rule or change other projects'
+owner-directed schedules.
+
+The machine canonical policy is maintained by Root at
+`C:/Users/lucys/.commons/rendered-product-inspection-policy.md` and `.json`.
+This portable copy carries Bryce's instruction to the actual provider hooks and
+receiving guides; it does not claim to update another host merely by being
+published. Bryce's placement instruction is: "that rule goes in every policy
+file the agents read not just a slack ping" and "and not just local sessions or
+ones from this provider".
 
 Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
 
 Operation: `SCF-BANK-CAMT053-SOURCE-DFF77-20261013`  
-Edition: `NORDEA_GS_BUNDESBANK_PROFILES_ACCOUNT_MCP_20261013`  
-Application: immutable `02175e3f0ee1e6ae4605c0b960790f6dd6e10e77`, including complete source collections, saved interpretations, the original accounting identity correction and B3909's authenticated accounting Bank MCP product.
+Edition: `NORDEA_GS_BUNDESBANK_PROFILES_CONFIGURED_SOURCES_ACCOUNT_MCP_20261013`  
+Application: immutable `80f8a3380a99af55b591d8e254904e4f3cb3ebf3`, including complete source collections, saved interpretations, the original accounting identity correction, authenticated accounting Bank operations and configured-source preparation through the maintained client and CLI.
 
 The complete case retains thirty-three original XML files: eight Nordea bank-issued examples, three Goldman Sachs published examples and the full twenty-two-file Bundesbank delivery. Thirteen statement source files enter the original interpretation workflow; eleven readable files contain thirteen statements and eighty-four cash entries. Two malformed originals retain their source errors. All twenty accompanying Bundesbank CAMT052 reports remain in the complete collection. The existing application carries the original imports through replay, source-period review, complete-period closes, accountant exports and cold reopen.
 
@@ -30,7 +83,7 @@ Optional expanded-runtime location:
 python3 receive.py --artifacts /absolute/path/camt053-artifacts --temporary-directory /absolute/path/private-runtime --keep-runtime
 ```
 
-The launcher verifies all seven configuration/programme/guide/original-delivery files against `receiving-manifest.json`. The producer obtains the exact application commit through ordinary Git, expands the original import/browser-asset closure and verifies every selected Git blob and all pinned application/bootstrap files. The maintained product builder creates the original `merchant-bank-statements` distribution; its existing runtime installer selects native, schema, OpenAPI, MCP and operator dependencies, retains its exact package lock and verifies the installed source and actual imports. The application and authenticated CLI course run against that installed product. The complete release, runtime, dependencies and logs accompany the original source/account case. Both Bundesbank ZIPs are retained inside `BUNDESBANK_ORIGINALS.json`; the same complete delivery also ships with the installed application. Every archive member is checked against its original length, SHA-256 and ZIP CRC, including the directory entries.
+The launcher verifies all eight configuration/programme/guide/original-delivery files against `receiving-manifest.json`. The producer obtains the exact application commit through ordinary Git, expands the original import/browser-asset closure and verifies every selected Git blob and all pinned application/bootstrap files. The maintained product builder creates the original `merchant-bank-statements` distribution; its existing runtime installer selects native, schema, OpenAPI, MCP and operator dependencies, retains its exact package lock and verifies the installed source and actual imports. The application and authenticated CLI course run against that installed product. The complete release, runtime, dependencies and logs accompany the original source/account case. Both Bundesbank ZIPs are retained inside `BUNDESBANK_ORIGINALS.json`; the same complete delivery also ships with the installed application. Every archive member is checked against its original length, SHA-256 and ZIP CRC, including the directory entries.
 
 Accept this edition under the existing SCF operation claim before running it. An owner already running the earlier `6311d372` edition finishes and preserves that invocation first. This edition is the same operation's continuation. RD12 revision87/browser receiving keeps its existing owner.
 
@@ -80,13 +133,36 @@ The existing installed CLI then prepares, reconciles and executes two actual ope
 
 The MCP client explicitly closes the original accounting owner, reconnects and reopens that same account. All original imports and transactions, all old accountant TARs, both new request identities and the complete successor archive must survive. The Merchant host then drains and closes before the direct application reopens the account once more and saves its final current state.
 
+## Complete configured-source preparation in the original account
+
+The installed `BANK_SOURCES_RECEIVE.mjs` joins the existing authenticated account operation. Before the Merchant host starts, it receives the exact completed `source-interpretations` output: the full twenty-two-file original collection, all selected mappings, the original two-version library and its receiving history. It writes the complete original input files beneath the same private case and adds those paths to the original account's configured source aliases. The account alias, binding, owner and accounting identity remain the ones used by the preceding import/close course.
+
+The maintained source client resolves each complete configured input with its byte length and SHA-256. Each operation retains its complete request before execution and addresses immutable output files through their original preparation identity. The eight available operations are exercised as one continuing source workflow:
+
+| Operation | Complete source work |
+| --- | --- |
+| `collection_prepare` | Receive all twenty-two original XML files and their explicit mapping, inclusion and accompanying-report notes. |
+| `collection_edit` | Revise the existing collection using its exact expected revision, retaining all original bytes and per-file settings. |
+| `collection_receive` | Receive a complete original collection with its source identity and provenance. |
+| `collection_inspect` | Read every original item and download the full collection review, both selected previews/reports and all twenty-two original files. |
+| `profile_save` | Save and revise the original interpretation in its full library, retaining version history. |
+| `profile_receive` | Receive the complete historical library and reconcile repeated receiving against the retained original identities. |
+| `profile_review` | Review both selected original statements against the exact library version and collection. |
+| `profile_apply` | Apply that retained review to the complete collection and preserve the unchanged original parser results. |
+
+Every returned receipt, request, view and advertised file stays in `application-result/account-mcp/source-agent`; configured input copies stay in `application-result/account-mcp/source-agent-inputs`. All eight kinds run through the maintained typed client. A separate complete `collection_inspect` operation runs through the installed CLI's prepare, retain, execute, reconcile, repeated execution and download-all commands, preserving the private request file byte-for-byte. The CLI downloads every advertised artifact from that completed inspection. The receiving module reports the exact operation/file paths in its result. Original bytes, full reports and all physical rows are carried through the actual source API rather than replaced by summary counters.
+
+The original financial client remains responsible for account ownership. Its revision must be unchanged across this complete source preparation course. The preparation records live in the product's original `bank-source-preparations` area and accompany the existing account's whole backup. After the original account owner closes and reopens, the source client reconnects to that same account, reopens every retained preparation and request, and downloads their complete advertised files again beneath `application-result/account-mcp/cold/source-agent`. It compares the retained identities and bytes and checks the financial revision again. The original financial CLI creates its reviewed successor close before that account reopen; after the cold source readback, the maintained host closes and the direct application opens the same account for its final complete state.
+
+For the rendered continuation, open the complete downloaded library and collection from this source operation in the same installed Bank application. Review both saved versions, both original CAMT053 statements, their full rows and twenty accompanying report exclusions; save/download and reopen the complete files. Compare their actual reports with the original source-interpretations outputs. Retain the resulting working files and viewed desktop/narrow screenshots with the same case.
+
 ## Outputs
 
-The artifact directory retains a complete ZIP, JSON result and transfer receipt. The ZIP includes the original selected product release, complete installed runtime/dependency lock, profile libraries and receiving history, all authenticated MCP inventories/downloads/CLI requests and cold results, all thirty-three original issuer XML files and provenance, both complete Bundesbank archives/member inventories, the full twenty-two-file collection/extraction/received copy, complete source reports, selected application source/dependency manifest, CLI requests, application results, saved accounting workspace, accountant exports and complete logs. The result and transfer receipt identify actual outcomes and original bytes/hashes.
+The artifact directory retains a complete ZIP, JSON result and transfer receipt. The ZIP includes the original selected product release, complete installed runtime/dependency lock, profile libraries and receiving history, all authenticated MCP inventories/downloads/CLI requests and cold results, every complete configured-source input/preparation/receipt/report and downloaded original, all thirty-three original issuer XML files and provenance, both complete Bundesbank archives/member inventories, the full twenty-two-file collection/extraction/received copy, complete source reports, selected application source/dependency manifest, CLI requests, application results, saved accounting workspace, accountant exports and complete logs. The result and transfer receipt identify actual outcomes and original bytes/hashes.
 
 Archives are written on disk and hashed by streaming. By default, the invocation's expanded private runtime is removed after artifacts are written. Pass `--keep-runtime` for the same operation's rendered-browser continuation: the completed stopped installation and original accounting paths remain in place, and `browserContinuation` records the actual paths and opening arguments. The complete ZIP/result/transfer files remain retained with this choice even when the optional uploads succeed. A failed application retains its capture for repair and is not marked ready to open. After the actual browser course and final artifact preservation, the original owner can remove its own retained root. No private helper, signed URL or upload reservation is required. Keep the files for the receiving owner to save and report.
 
-Completion requires process exit0, source-reader failures0, the original runtime inspector's source/dependency readiness, `application.result.sourceProfiles.completed: true`, `application.result.accountMcp.completed: true` and `application.result.completed: true`. The two expected malformed inputs are SOURCE_REQUIRES_REVIEW with their exact codes. Any different error retains the full capture and returns nonzero. Report actual artifact paths, hashes and application outcome in the existing SCF operation thread.
+Completion requires process exit0, source-reader failures0, the original runtime inspector's source/dependency readiness, `application.result.sourceProfiles.completed: true`, `application.result.accountMcp.completed: true`, both `application.result.accountMcp.sourcePreparation.completed: true` and `application.result.accountMcp.cold.sourcePreparation.completed: true`, and `application.result.completed: true`. The two expected malformed inputs are SOURCE_REQUIRES_REVIEW with their exact codes. Any different error retains the full capture and returns nonzero. Report actual artifact paths, hashes and application outcome in the existing SCF operation thread.
 
 ## Source references
 
@@ -101,7 +177,7 @@ Completion requires process exit0, source-reader failures0, the original runtime
 
 Issuer examples retain their original attribution and provenance. Receiver source uses the repository's existing source license.
 
-The saved-profile product is PR1390; its original accounting identity repair is PR1419. The complete account-MCP product is PR1364. `source-config.json` pins their complete receiving cohort at the single application commit named above.
+The saved-profile product is PR1390; its original accounting identity repair is PR1419. The complete account-MCP product is PR1364, and its configured-source preparation extension is PR1512. `source-config.json` pins their complete receiving cohort at the single application commit named above.
 
 ## Continue in the actual rendered application
 

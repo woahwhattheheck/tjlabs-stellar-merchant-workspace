@@ -29,3 +29,11 @@ label select{display:block;margin-top:6px;font-weight:400}
 #payment-envelope-review summary {cursor:pointer;font-weight:600;margin:0.8rem 0;}
 #payment-envelope-content {max-height:22rem;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:0.8rem;border:1px solid #c9cdd1;background:#f5f6f7;color:#202428;font-size:0.8rem;}
 #payment-work .actions {flex-wrap:wrap;}
+
+/* Retained invoice preparation stays in the original neutral merchant layout. */
+#create-panel .form-grid>*,#draft-editor{min-width:0}
+#create-panel .actions{flex-wrap:wrap}
+#create-panel pre{max-height:20rem;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:0.8rem;border:1px solid #c9cdd1;background:#f5f6f7;color:#202428;font-size:0.8rem}
+#create-panel details{margin:1rem 0}#create-panel summary{cursor:pointer;font-weight:600}
+#draft-identity{overflow-wrap:anywhere}#draft-editor>label{display:block;margin:1rem 0}
+@media(max-width:420px){#create-panel .form-grid{grid-template-columns:1fr}}

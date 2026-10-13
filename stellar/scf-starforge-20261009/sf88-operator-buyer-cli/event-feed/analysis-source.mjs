@@ -13,7 +13,7 @@ const identity=v=>typeof v==='string'&&v.length>0&&v.length<=256;
 const instant=v=>typeof v==='string'&&Number.isFinite(Date.parse(v));
 const stable=v=>Array.isArray(v)?'['+v.map(stable).join(',')+']':object(v)?'{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stable(v[k])).join(',')+'}':JSON.stringify(v);
 const pointer=p=>{need(typeof p==='string'&&(p===''||p.startsWith('/'))&&!/~(?:[^01]|$)/.test(p)&&p.length<=2000,'Use an original JSON Pointer.');return p===''?[]:p.slice(1).split('/').map(x=>x.replace(/~1/g,'/').replace(/~0/g,'~'));};
-function at(value,path) {for(const key of pointer(path)){if(value===null||typeof value!=='object'||!Object.prototype.hasOwnProperty.call(value,key))return{state:'missing',value:null};value=value[key];}return{state:value===null?'null':Array.isArray(value)?'array':typeof value,value};}
+function at(value,path) {for(const key of pointer(path)){if(value===null||typeof value!=='object'||Array.isArray(value)&&(!/^(0|[1-9][0-9]*)$/.test(key)||!Number.isSafeInteger(Number(key))||Number(key)>=value.length)||!Object.prototype.hasOwnProperty.call(value,key))return{state:'missing',value:null};value=value[key];}return{state:value===null?'null':Array.isArray(value)?'array':typeof value,value};}
 const textValue=selected=>['missing','null'].includes(selected.state)?null:typeof selected.value==='string'?selected.value:JSON.stringify(selected.value);
 export function normalizeEventMapping(value={}) {
   need(object(value),'Use a complete mapping object.');
@@ -71,4 +71,66 @@ export function compareEventExports(before,after) {
   for(const event of after.events){const key=JSON.stringify([event.sourceId,event.eventId]),prior=old.get(key);if(prior){need(stable(prior)===stable(event),'An earlier accepted individual event changed. Reconcile the original source before continuing.');old.delete(key);retained++;}else{need(event.sequence>before.manifest.throughSequence,'A new event appears behind the accepted complete window.');added.push({sourceId:event.sourceId,eventId:event.eventId,sequence:event.sequence});}}
   need(old.size===0,'A later cumulative export omitted original accepted events.');
   return{schema:'stellar-forge.event-feed-window-comparison.v1',before:before.edition_id,after:after.edition_id,retained,added:added.length,new_events:added,earlier_through_sequence:before.manifest.throughSequence,later_through_sequence:after.manifest.throughSequence,earlier_pages:before.manifest.pages.length,later_pages:after.manifest.pages.length};
+}
+
+
+export const EVENT_FIELDS='stellar-forge.event-feed-payload-fields.v1';
+export const EVENT_FIELD_VALUES='stellar-forge.event-feed-payload-values.v1';
+const STATES=['null','string','number','boolean','object','array'];
+const pointerPart=key=>key.replace(/~/g,'~0').replace(/\//g,'~1');
+const originalEvent=e=>({source_id:e.sourceId,event_id:e.eventId,sequence:e.sequence,event_type:e.type,payload_sha256:e.payloadSha256});
+function fieldSource(source){
+ need(object(source)&&source.schema===ANALYSIS&&Array.isArray(source.events),'Inspect the complete original validated event source.');
+ return {edition_id:source.edition_id,source:source.source,original_files:source.original_files,
+ events:source.events.length,through_sequence:source.manifest.throughSequence,pages:source.manifest.pages.length};
+}
+/** Inspect every actual path; limits reject the whole inspection, never truncate its coverage. */
+export function inspectEventFields(source) {
+ const selected=fieldSource(source),found=new Map();
+ for(const e of source.events){
+  const pending=[['',e.payload]];
+  while(pending.length){
+   const [path,value]=pending.pop(),state=value===null?'null':Array.isArray(value)?'array':typeof value;
+   need(STATES.includes(state),'The original payload contains an unsupported JSON value.');
+   let row=found.get(path);
+   if(!row){
+    need(found.size<10000,'The complete payload field catalogue exceeds 10,000 paths. Use the original mapping directly or select a smaller useful source window.');
+    row={pointer:path,present:0,missing:0,types:Object.fromEntries(STATES.map(type=>[type,0])),
+     selectable:path.length<=2000,examples:[]};found.set(path,row);
+   }
+   row.present++;row.types[state]++;
+   if(row.examples.length<3&&!row.examples.some(example=>example.state===state)){
+    const container=state==='array'||state==='object',full=container?null:textValue({state,value});
+    let display=container?(state==='array'?'Array with '+value.length+' elements':'Object with '+Object.keys(value).length+' members'):
+     full===null?null:full.slice(0,160);
+    if(!container&&display&&/[\uD800-\uDBFF]$/.test(display))display=display.slice(0,-1);
+    row.examples.push({event:originalEvent(e),state,display,preview_kind:container?'container-summary':'value',
+     truncated:container||full!==display,value_bytes:full===null?null:bytes(full),value_sha256:full===null?null:sha(full)});
+   }
+   if(value!==null&&typeof value==='object'){
+    const entries=Object.entries(value);
+    for(let i=entries.length-1;i>=0;i--){const [key,child]=entries[i];pending.push([path+'/'+pointerPart(key),child]);}
+   }
+  }
+ }
+ const fields=[...found.values()].sort((a,b)=>a.pointer<b.pointer?-1:a.pointer>b.pointer?1:0);
+ for(const row of fields)row.missing=source.events.length-row.present;
+ const result={schema:EVENT_FIELDS,...selected,field_count:fields.length,fields};
+ need(bytes(JSON.stringify(result))<=16*1024*1024,'The complete field catalogue exceeds 16 MiB. Use the original mapping directly or select a smaller useful source window.');
+ return result;
+}
+/** Complete values for one original pointer and original event-index page, including missing/null. */
+export function inspectEventFieldValues(source,path,{offset=0,limit=25}={}) {
+ const selected=fieldSource(source);pointer(path);
+ need(integer(offset)&&offset<=source.events.length&&Number.isSafeInteger(limit)&&limit>=1&&limit<=100,
+ 'Select an original event offset and a page of one to 100 events.');
+ const rows=source.events.slice(offset,offset+limit).map((e,index)=>{
+  const value=at(e.payload,path),text=textValue(value);
+  return{index:offset+index,event:originalEvent(e),state:value.state,text,
+   value_bytes:text===null?null:bytes(text),value_sha256:text===null?null:sha(text)};
+ });
+ const result={schema:EVENT_FIELD_VALUES,...selected,pointer:path,offset,limit,total:source.events.length,
+ next_offset:offset+rows.length<source.events.length?offset+rows.length:null,rows};
+ need(bytes(JSON.stringify(result))<=48*1024*1024,'This complete field-value page exceeds 48 MiB. Request a smaller page; all original source files remain retained.');
+ return result;
 }

@@ -4,6 +4,12 @@ The selected customer release includes the original customer case tools, the com
 
 This continues operation **SCF-RECEIVABLES-NATIVE-2A51-20261012**. Its original payment programme passed seven workflows in run38343867655. The corrected original MCP programme passed eight workflows in run38359117638. Their full outputs and final disabled controls are retained under results/ and HOSTED_RECEIVING.md. The current installed-customer continuation uses those accepted predecessor results and runs the existing current customer workflow.
 
+## Current execution policy
+
+Continue this operation on existing cloud Linux or the original local receiving host, with one accepted execution owner. Keep GitHub Actions disabled in provider settings and preserve the literal-false workflow conditions and [disabled source policy](../../.github/hosted-ci-policy.json). Public visibility, free runner minutes, a native admission failure or a missing green check does not authorize a hosted enable or dispatch. The maintained [repository instructions](../../AGENTS.md) apply to this continuation.
+
+The original seven payment and eight MCP workflows are accepted predecessors; do not rerun them to resume this installed-customer operation. Use the complete native command below with the selected source, existing dependency profiles and retained output directory. Reconcile an admitted process and its original outputs before another owner launches the same operation.
+
 ## What the recipient receives
 
 The maintained merchant-commissioning-collections selection supplies the complete source and package registrations for:
@@ -152,17 +158,15 @@ The customer case’s standalone invoice/account reports can be selected for the
 
 After receiving, use starforge customer-case-serve with the retained handover to reopen the same account, then starforge customer-case to inspect current state, continue original prepared requests and capture the next dated edition. The account remains the original editable customer workspace.
 
-## Same free public fixture receiver
+## Historical hosted fixture inputs and output custody
 
-The existing manual workflow has an explicit installed-customer-fixture choice. That mode uses the public repository’s standard ubuntu-24.04 worker and the exact workflow source commit. It acquires that complete original Git commit, installs the source-owned dependency profiles, builds the selected release and runs the complete command above.
+The former manual workflow's `installed-customer-fixture` mode used the standard public Ubuntu worker and exact workflow source commit. Hosted execution is now retired under [PR1530](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/1530). Preserve its source, original conditions, literal-false guard and historical outputs. The current route is the existing native receiving command above.
 
-The hosted mode accepts no live account or --continuation input. It runs the original programme’s controlled customer scenario with the declared fixture passphrase SCF-XERO-CUSTOMER-RECEIVING-FIXTURE-20261013. This value is part of the receiving input so the retained fixture backup remains independently restorable. Actual account commands continue to require their own private secret.
+The historical fixture accepted no live account or `--continuation` input. Its declared controlled-scenario passphrase was `SCF-XERO-CUSTOMER-RECEIVING-FIXTURE-20261013`. Retain that public fixture value for any fixture backup actually produced. It is not a secret for an actual customer account; actual-account commands continue to require their own private secret.
 
-All account, source, receiver, checkpoint, prepared-request and result bytes are retained in retained-customer-workspace.tar.gz, with retained-customer-files.json mapping every member’s bytes and SHA256. The complete selected source archive is included once; duplicate extracted package files are represented by that original archive and its manifest. The actual native result, dependency profiles/locks and full phase logs are returned through numbered SHA-bound log chunks.
+The output carrier `retained-customer-workspace.tar.gz` retains the files actually produced by that attempt. Its `retained-customer-files.json` binds every member's byte count and SHA256. Once produced, the complete selected source archive is included once; duplicate extracted package files are represented by that original archive and manifest. Native results, dependency profiles/locks and complete phase logs are returned through numbered SHA-bound log chunks. A failure during selected build does not imply that an account, backup or second-operator result exists.
 
-The manual workflow has no cache or artifact upload and uses the existing same-operation concurrency group. Its receiving owner enables only that original repository/workflow for one requested job, retains the actual output, then restores both disabled states and reads them back. A source publication alone does not dispatch the programme.
-
-Select receiving_mode=installed-customer-fixture explicitly. original-mcp preserves the historical frozen continuation for its retained operation; the accepted original7+8 result is already complete.
+Both historical installed attempts stopped during selected build, before the customer financial programme started. Their complete outputs and exact source repairs are recorded in [HOSTED_RECEIVING.md](HOSTED_RECEIVING.md#installed-customer-attempts-and-native-continuation). Those preserved attempts remain useful failure evidence. Neither establishes successful installed customer receiving or rendered-product inspection.
 
 ## Recover the complete original hosted output
 
@@ -174,6 +178,21 @@ python3 operations/scf-receivables-native-2a51-20261012/recover-hosted-customer.
   --out /private/recovered-customer
 ```
 
-The decoder requires every numbered chunk and the exact original byte count and SHA256 before it publishes a file. It writes a private, create-only directory and a `LOG_RECOVERY.json` receipt bound to the complete input log. The recovered `retained-customer-workspace.tar.gz` contains the actual controlled source and receiving accounts, encrypted accounting backup, private requests and phase logs; `retained-customer-files.json` lists every original member. The complete selected release archive is retained inside that package. Keep the original log with the recovery receipt.
+The decoder requires every numbered chunk and the exact original byte count and SHA256 before it publishes a file. It writes a private, create-only directory and a `LOG_RECOVERY.json` receipt bound to the complete input log. The recovered `retained-customer-workspace.tar.gz` contains only the files the recorded phases actually produced; `retained-customer-files.json` lists every original member. Consult the original phase results before expecting a selected release, source/receiving account, encrypted backup or private request. When produced, those complete originals travel in the package. Keep the original log with the recovery receipt.
 
 The selected customer contribution explicitly includes the original SF101 `recover.mjs` engine. Accounting invokes that engine by a retained URL, so its original source must travel with the release even though it is not a static ESM dependency.
+
+## Rendered product inspection — owner instruction, 2026-10-13
+
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Bryce's standing rule is: “that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it”.
+
+Before presenting a client/prospect-facing application, website, dashboard, demo, report, presentation, export or any attachment, the producing peer must open/run/render the exact outgoing version, LOOK at it and normally use it as the recipient would. View the actual screenshots you capture. Inspect the actual presentation/screenshare width and relevant narrow/mobile width, important user controls, populated/empty/loading/error states, downloads and reopened exports. Open the usable contents of ZIPs/projects and every applicable report/PDF page. Source review, schemas, HTTP 200, DOM counts, tests, checklists and another worker's approval cannot substitute for observing and using the actual product.
+
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and continued delivery; it must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk. Do not run broad test sweeps, repeat accepted checks, build a verification product or create review bureaucracy or an approval queue.
+
+For video and audio, Bryce directs: “also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them”. Use available high-quality generative voice/TTS and useful generative media, with natural professional delivery. Actually watch/listen to the final outgoing export, including pacing, pronunciation, timing and audio alignment. Preserve existing spending, voice and attribution controls.
+
+Include this complete instruction in delegated assignments and the active owner-controlled provider/project/cloud policy, boot, build and receiving guidance those workers actually read. Reuse already updated copies and return exact updated paths/version in the original policy thread with the next substantive result. Delivery of source does not establish that every runtime loaded it. Preserve all other owner controls and original operation identities; leave historical records and third-party/vendor policies intact. This instruction creates no restarts, watchers, credential gate or new release permission and does not revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949

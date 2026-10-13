@@ -184,3 +184,36 @@ Use this course when the original Workshare includes a colleague's review or a r
 The Installation's original phase checks record the actual engineering and receiving observations from this course. A returned document or a prepared plan is a review input. Source acceptance, commercial acceptance and any additional correction allowance follow the original customer's agreement and named decision owners. The complete correction workflow guide shipped with the application supplies the exact browser, client and native command contracts.
 
 Detailed browser, typed client, CLI and MCP instructions are in [the complete colleague-correction guide](../../../scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/CORRECTIONS.md).
+
+## Open the complete commissioned return and receiving case
+
+The maintained `COMMISSIONING.py` entry point operates the same original author and receiving projects. Its complete browser and Python course is selected in [Merchant PR1590](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/1590), with the identical [public source in PR4089](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/4089). Use the full selected application and the original case/input paths already retained by the producing owner:
+
+~~~sh
+python3 /absolute/selected-application/COMMISSIONING.py \
+  --application /absolute/selected-application \
+  --directory /absolute/original-case \
+  --inputs /absolute/original-operator-input.json
+~~~
+
+The input is the complete original observed-weather and operator selection. The selected application contains its complete `SOURCE_FILES.json` distribution. Where a complete source correction has deliberately been selected, add `--adopt-source` to that same continuation; retain earlier source generations. Use `--resume-analysis REPAIR_LABEL` only for the original eligible analytical recovery after its named runtime repair. The original native owner keeps the case lease and model ownership.
+
+The course preserves the original nine business stages, then performs the full colleague exchange and corrected onward receiving before the final rendered views. **Recipient-two is the working colleague.** The final screens open the original **author** and the independently received **corrected recipient-one** project. The latter is the actual corrected application selected for handover.
+
+| Complete retained output | How the producing and receiving engineers use it |
+| --- | --- |
+| `CASE/handoff/lda-initial-workspace.json` | The original early whole-workspace handover, retained after source inspection and before the longer analytical operation. Its own source edition remains distinct from the later corrected delivery. |
+| `CASE/colleague-return/original-selection.json` and `result.json` | Read the actual original exchange selection and the saved complete correction result. |
+| `CASE/colleague-return/browser/actions` and `browser/result.json` | Retain the operated comparison, deliberate choices, review-draft download/reopen, native plan and apply. |
+| `CASE/colleague-return/native-attempts/NNNN/rendered/OPEN.html` | Open the actual colleague-control screens and their retained output files for the selected attempt. |
+| `CASE/deliveries/Colleague_Complete_Audit_Return.zip` | Open the complete original returned project with its native source and review history. |
+| `CASE/deliveries/Complete_Corrected_Audit_Application.zip` | Open and independently receive the full corrected original application. |
+| `CASE/colleague-return/onward/result.json` and `reopened-cli-*.json` / `reopened-cli.stderr.log` | Read the actual independent receiving and reopening outcomes against the accepted source, revision and edition. |
+| `CASE/corrected-received-application/` | Reopen the complete independently received corrected application retained by the course. |
+| `CASE/deliveries/Received_Corrected_Complete_Audit.zip` | Open the complete onward delivery emitted by that received application. |
+| `CASE/rendered/latest.json` | Locate the exact author, corrected-recipient and colleague-control capture indexes tied to the accepted source/revision/edition. |
+| `CASE/rendered/SOURCE_SHA/ROLE/SELECTION_SHA/attempts/NNNN/OPEN.html` | View the selected actual desktop and narrow screens, downloaded files and opened attachments. |
+
+The existing `AUDIT_BROWSER_EXECUTABLE` and `AUDIT_BROWSER_MODULE` select the actual equipped browser. `AUDIT_PDF_RENDERER` defaults to `pdftoppm`; `AUDIT_RSCRIPT` selects the original R launcher. The Node driver's `--return` and `--render` modes are internal continuations under the inherited original controller, not separate customer commands.
+
+Open the actual `OPEN.html` indexes and every intended outgoing attachment, inspect their rendered content and operate the complete downloads/reopen controls. The saved capture status remains `captured-awaiting-producer-view` until the producing worker has directly viewed the selected images/files and repaired concrete defects. A completed capture programme is the input to that human or model inspection. Keep the resulting observations with the original Installation's acceptance phases and the exact delivered files.

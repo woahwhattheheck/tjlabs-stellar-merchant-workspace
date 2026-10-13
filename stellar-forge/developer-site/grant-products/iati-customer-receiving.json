@@ -1,0 +1,232 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "iati-customer-receiving",
+  "heading": "## IATI publishing, programme finance and complete customer receiving",
+  "sources": [
+    {
+      "id": "iati-organisation-financial-workspace",
+      "label": "IATI organisation and programme financial review",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/ORGANISATION_RECONCILIATION.md",
+      "commit": "ce894f4e3c44f572fdb95105bfe84d37d67282ff",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2854a9f5f0d792dd78497228a1d23d9a69305763",
+          "git_blob": "58f1cbc9388ddc79edd76d9acd19b7becb602773",
+          "bytes": 24070,
+          "sha256": "578b73da8e0e8bf636cc8c909d0f9db6a50cd04915b7bcdc78b7b060a06931b3"
+        },
+        {
+          "commit": "ce894f4e3c44f572fdb95105bfe84d37d67282ff",
+          "git_blob": "58f1cbc9388ddc79edd76d9acd19b7becb602773",
+          "bytes": 24070,
+          "sha256": "578b73da8e0e8bf636cc8c909d0f9db6a50cd04915b7bcdc78b7b060a06931b3"
+        }
+      ]
+    },
+    {
+      "id": "iati-complete-financial-receiving",
+      "label": "IATI complete source and financial customer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/reconciliation_receiving.py",
+      "commit": "ce894f4e3c44f572fdb95105bfe84d37d67282ff",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2854a9f5f0d792dd78497228a1d23d9a69305763",
+          "git_blob": "d89325ac6166349c4d1808cc8359802c413c0253",
+          "bytes": 83109,
+          "sha256": "959c74abf9734944b4bc30c60a49bc757fae071c349c5b2ce4113fcd9505b8bb"
+        },
+        {
+          "commit": "ce894f4e3c44f572fdb95105bfe84d37d67282ff",
+          "git_blob": "e2bb0cb5802f45f37d66c7cdfae73d96187dbaf2",
+          "bytes": 123297,
+          "sha256": "9b97d61558d0ff06aab7efcebe0f29ff5e626c5d89e04cf9363eb25dfa3573f3"
+        }
+      ]
+    },
+    {
+      "id": "iati-fcdo-wadi-original-source",
+      "label": "Original FCDO organisation and WADI activity publication",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-wadi-2026/SOURCE.md",
+      "commit": "2854a9f5f0d792dd78497228a1d23d9a69305763",
+      "required": true
+    },
+    {
+      "id": "iati-document-evidence-workspace",
+      "label": "IATI published-document evidence and named source review",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/DOCUMENT_EVIDENCE.md",
+      "commit": "3d86d3e30917aad9c34a27718b4bbbc540933334",
+      "required": true
+    },
+    {
+      "id": "iati-document-evidence-receiving",
+      "label": "IATI document native, SDK, Merchant and browser receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/RECEIVING.md",
+      "commit": "3d86d3e30917aad9c34a27718b4bbbc540933334",
+      "required": true
+    },
+    {
+      "id": "iati-document-following-observation",
+      "label": "IATI following publisher observation and complete customer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/FOLLOWING.md",
+      "commit": "3d86d3e30917aad9c34a27718b4bbbc540933334",
+      "required": true
+    },
+    {
+      "id": "iati-fcdo-document-native-result",
+      "label": "FCDO document evidence original native receiving result",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-organisation-2026/document-evidence-native-result.json",
+      "commit": "3d86d3e30917aad9c34a27718b4bbbc540933334",
+      "required": true
+    },
+    {
+      "id": "iati-fcdo-document-connected-result",
+      "label": "FCDO document evidence original SDK, Merchant and browser result",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-organisation-2026/document-evidence-connected-result.json",
+      "commit": "3d86d3e30917aad9c34a27718b4bbbc540933334",
+      "required": true
+    },
+    {
+      "id": "iati-geography-workspace",
+      "label": "IATI saved geography review and complete source contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/GEOGRAPHY.md",
+      "commit": "4424e79ea489f3bcec147aed08171f5c27959f98",
+      "required": true
+    },
+    {
+      "id": "iati-geography-operator",
+      "label": "IATI geographic review, browser and typed client",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/GEOGRAPHY_UI.md",
+      "commit": "4424e79ea489f3bcec147aed08171f5c27959f98",
+      "required": true
+    },
+    {
+      "id": "iati-geography-native-receiving",
+      "label": "Complete original geography native and customer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/geography.py",
+      "commit": "4424e79ea489f3bcec147aed08171f5c27959f98",
+      "required": true
+    },
+    {
+      "id": "iati-geography-browser-receiving",
+      "label": "Original geography browser and saved-request continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/GEOGRAPHY_BROWSER.md",
+      "commit": "4424e79ea489f3bcec147aed08171f5c27959f98",
+      "required": true
+    },
+    {
+      "id": "iati-aiddata-nigeria-attribution",
+      "label": "Original AidData Nigeria research source and attribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/aiddata-nigeria-2016/AIDDATA_NIGERIA.md",
+      "commit": "4424e79ea489f3bcec147aed08171f5c27959f98",
+      "required": true
+    },
+    {
+      "id": "iati-aiddata-nigeria-metadata",
+      "label": "Original AidData Nigeria documentary source identities",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/aiddata-nigeria-2016/aiddata-nigeria.json",
+      "commit": "4424e79ea489f3bcec147aed08171f5c27959f98",
+      "required": true
+    },
+    {
+      "id": "iati-aiddata-nigeria-xml",
+      "label": "Complete original AidData Nigeria IATI publication",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/aiddata-nigeria-2016/iati_2.03_NigeriaAIMS_GeocodedResearchRelease.xml",
+      "commit": "4424e79ea489f3bcec147aed08171f5c27959f98",
+      "required": true
+    },
+    {
+      "id": "iati-document-operating-procedures",
+      "label": "IATI customer operating procedure and complete analyst handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/OPERATING_PROCEDURES.md",
+      "commit": "0110a7fde307112abee5be63a06291855aa72599",
+      "required": true
+    },
+    {
+      "id": "iati-document-operating-source",
+      "label": "IATI complete original saved-case source reader",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/operating_source.py",
+      "commit": "0110a7fde307112abee5be63a06291855aa72599",
+      "required": true
+    },
+    {
+      "id": "iati-document-operating-model",
+      "label": "IATI editable procedure, original plan receiver and renderer",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/operating_procedure.mjs",
+      "commit": "0110a7fde307112abee5be63a06291855aa72599",
+      "required": true
+    },
+    {
+      "id": "iati-document-operating-cli",
+      "label": "IATI installed procedure capture, create, show and receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence_operating_cli.mjs",
+      "commit": "0110a7fde307112abee5be63a06291855aa72599",
+      "required": true
+    },
+    {
+      "id": "iati-complete-installed-operator",
+      "label": "IATI complete installed applications and operating handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/IATI_OPERATOR.md",
+      "commit": "0110a7fde307112abee5be63a06291855aa72599",
+      "required": true
+    },
+    {
+      "id": "iati-financial-case-recovery-guide",
+      "label": "Complete original financial case receiving, source-edition continuation and recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/RECONCILIATION_RECEIVING.md",
+      "commit": "ce894f4e3c44f572fdb95105bfe84d37d67282ff",
+      "required": true,
+      "editions": [
+        {
+          "commit": "ce894f4e3c44f572fdb95105bfe84d37d67282ff",
+          "git_blob": "285fe445e9e3a790aa55fb4dc57cce373cbf6943",
+          "bytes": 29396,
+          "sha256": "03d59e3eb98cae1ad0fcd419c421c34abde1a3b467a6e46d7eface6128635bb6"
+        }
+      ]
+    }
+  ]
+}
