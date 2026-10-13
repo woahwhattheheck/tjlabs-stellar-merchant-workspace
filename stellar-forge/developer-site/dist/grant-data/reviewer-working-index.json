@@ -5,9 +5,9 @@
   "applicant": "Bryce Muhlnickel / TokenJunkieLabs",
   "application": {
     "path": "application-reviewer.md",
-    "bytes": 20167,
-    "sha256": "773c26c2f3b221f43fce2a730dcbae6e2a9416fe28ecea41234dbcdbdac663b6",
-    "git_blob": "98d8bf1500230b6050f3229d95805229d0f26ffb"
+    "bytes": 31396,
+    "sha256": "a756bb24c1d467b38e2157995d25f4e51687d90c336b3f75cda0e0a1e448e368",
+    "git_blob": "f702bd06f4fc235e1cb4a31220808092d8964b7b"
   },
   "request": {
     "basis": "prospective",
@@ -42843,7 +42843,7 @@
   "narrative_source": {
     "basis": "Concise working edition of the complete current nine-answer application; prospective financial and delivery commitments preserved.",
     "operation": "SCF-REVIEWER-CONCISE-SOURCE-20261013-BC3D",
-    "authored_at": "2026-10-13T17:50:01Z",
+    "authored_at": "2026-10-13T18:45:41.722Z",
     "source_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
     "source_commit": "82a89ae73f0d917d3881aaa90f42d5abf8f996c1",
     "original_application": {
@@ -46440,8 +46440,8 @@
     "route": "/grant-submission.html",
     "application_route": "/grant-data/application-reviewer.md",
     "source_index_route": "/grant-data/reviewer-working-index.json",
-    "application_sha256": "773c26c2f3b221f43fce2a730dcbae6e2a9416fe28ecea41234dbcdbdac663b6",
-    "application_git_blob": "98d8bf1500230b6050f3229d95805229d0f26ffb",
+    "application_sha256": "a756bb24c1d467b38e2157995d25f4e51687d90c336b3f75cda0e0a1e448e368",
+    "application_git_blob": "f702bd06f4fc235e1cb4a31220808092d8964b7b",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "export_schema": "stellar-forge.grant-submission-export.v1",
     "working_copy": {
