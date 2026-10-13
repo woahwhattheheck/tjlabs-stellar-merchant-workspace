@@ -1,5 +1,6 @@
 const $ = id => document.getElementById(id);
 let token = '', state = null, projectState = null, selectedId = null, busy = false, poll = null;
+let registerSelection = {}, registerRequest = 0, detailRequest = 0, detailOrder = null;
 const pendingKey = () => 'merchant.pending-invoice.v1.' + state.config.tenantId;
 const names = { CREATED: 'Draft', CHARGE_UNCERTAIN: 'Creating request', CHARGE_REJECTED: 'Request rejected',
   AWAITING_PAYMENT: 'Awaiting payment', PAYMENT_PENDING: 'Payment pending', PAYMENT_UNCERTAIN: 'Reconciling payment',
@@ -30,9 +31,13 @@ async function api(path, { method = 'GET', body, download = false } = {}) {
     let code = 'Request failed (' + response.status + ').';
     try { code = (await response.json()).error ?? code; } catch {}
     if (response.status === 401) disconnect();
-    throw new Error(code === 'MERCHANT_PROJECT_SNAPSHOT_IN_PROGRESS' ?
+    const error = new Error(code === 'INVOICE_REGISTER_CHANGED' ?
+      'Invoices changed while you were reviewing this selection. Refresh to read the current register, then continue.' :
+      code === 'INVOICE_REGISTER_DOWNLOAD_LIMIT' ? 'Finish the current downloads or wait two minutes, then export again.' :
+      code === 'MERCHANT_PROJECT_SNAPSHOT_IN_PROGRESS' ?
       'The project package is being captured. Your entered details are kept; retry when the package is ready.' :
       code.replaceAll('_', ' '));
+    error.code = code; error.status = response.status; throw error;
   }
   return download ? response : response.json();
 }
@@ -55,7 +60,8 @@ async function action(work) {
   }
 }
 function disconnect() {
-  token = ''; selectedId = null; state = null; projectState = null;
+  token = ''; selectedId = null; state = null; projectState = null; detailOrder = null;
+  registerRequest++; detailRequest++; registerSelection = {}; $('register-filter-form').reset();
   $('detail-content').hidden = true; $('detail-empty').hidden = false;
   delete $('detail-content').dataset.orderId;
   if (poll) clearInterval(poll); poll = null;
@@ -98,30 +104,68 @@ function renderPendingCreation() {
   $('create-submit').textContent = pending ? 'Retry original invoice' : 'Save invoice';
 }
 function renderList() {
-  const query = $('search').value.trim().toLowerCase(), rows = $('order-rows'); rows.replaceChildren();
-  const orders = [...state.orders].reverse().filter(order => (order.reference + ' ' + order.title + ' ' + order.id).toLowerCase().includes(query));
-  for (const order of orders) {
+  const rows = $('order-rows'); rows.replaceChildren();
+  for (const order of state.orders) {
     const row = element('tr'); row.tabIndex = 0; row.className = order.id === selectedId ? 'selected' : ''; row.setAttribute('aria-label', order.reference + ', ' + stateName(order.state));
     const identity = element('td'); identity.append(element('span', order.reference, 'reference'), element('span', order.title, 'description'));
     const prices = element('td');
-    for (const rail of order.frozen.rails) prices.append(element('span', amount(rail.amountAtomic, rail.decimals) + ' ' + rail.label, 'amount'));
+    for (const rail of order.offers) prices.append(element('span', amount(rail.amountAtomic, rail.decimals) + ' ' + rail.label, 'amount'));
     const status = element('td'); status.append(element('span', stateName(order.state), 'state')); row.append(identity, prices, status);
-    const choose = () => action(async () => { selectedId = order.id; renderList(); await loadDetail(); });
+    const choose = () => action(async () => { selectedId = order.id; detailOrder = null; renderList(); await loadDetail(); });
     row.addEventListener('click', choose); row.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); choose(); } });
     rows.append(row);
   }
-  $('empty-list').hidden = orders.length > 0;
-  $('empty-list').textContent = state.orders.length ? 'No matching invoices.' :
+  $('empty-list').hidden = state.orders.length > 0;
+  $('empty-list').textContent = state.counts.total ? 'No invoices match the applied filters.' :
     state.mode === 'review' ? 'This saved project contains no invoices.' : 'Create an invoice to begin.';
-  $('count-total').textContent = state.orders.length;
-  $('count-awaiting').textContent = state.orders.filter(order => ['CREATED', 'AWAITING_PAYMENT'].includes(order.state)).length;
-  $('count-progress').textContent = state.orders.filter(order => !['CREATED', 'AWAITING_PAYMENT', 'COMPLETE', 'CHARGE_REJECTED', 'PAYMENT_FAILED'].includes(order.state)).length;
-  $('count-complete').textContent = state.orders.filter(order => order.state === 'COMPLETE').length;
+  const counts = state.counts.states;
+  $('count-total').textContent = state.counts.total;
+  $('count-awaiting').textContent = (counts.CREATED ?? 0) + (counts.AWAITING_PAYMENT ?? 0);
+  $('count-progress').textContent = Object.entries(counts).filter(([key]) =>
+    !['CREATED', 'AWAITING_PAYMENT', 'COMPLETE', 'CHARGE_REJECTED', 'PAYMENT_FAILED'].includes(key)).reduce((n, [, count]) => n + count, 0);
+  $('count-complete').textContent = counts.COMPLETE ?? 0;
+  renderRegisterControls();
 }
-async function refresh() {
-  const requestedToken = token, received = await api('/api/state');
-  if (!requestedToken || token !== requestedToken) return;
-  state = received; renderList();
+function registerParameters(selection, extra = {}) {
+  const result = new URLSearchParams();
+  for (const [key, value] of Object.entries({...selection, ...extra}))
+    if (value !== '' && value !== null && value !== undefined) result.set(key, String(value));
+  return result.toString();
+}
+function selectedRegisterFilters() {
+  const selection = {q: $('search').value, state: $('register-state').value,
+    from: $('register-from').value, to: $('register-to').value};
+  const rail = $('register-rail').value;
+  if (rail) Object.assign(selection, JSON.parse(rail));
+  return selection;
+}
+function renderRegisterControls() {
+  if (!state) return;
+  const {offset, returned} = state.page, selected = state.counts.selected;
+  $('register-page-label').textContent = selected ?
+    (offset + 1) + '–' + (offset + returned) + ' of ' + selected + ' matching invoices' : '0 matching invoices';
+  $('register-source').textContent = 'Original history ' + state.source.historySequence +
+    ' · Captured ' + readableDate(state.source.capturedAt) + ' · Date filters use invoice creation in UTC.';
+  $('register-previous').disabled = busy || !state.page.previous;
+  $('register-next').disabled = busy || !state.page.next;
+  $('register-export-csv').disabled = busy;
+  $('register-export-json').disabled = busy;
+  const selectedRail = $('register-rail').value, railOptions = $('register-rail');
+  railOptions.replaceChildren(new Option('All payment options', ''));
+  const seen = new Set();
+  for (const rail of state.railOptions) {
+    const value = JSON.stringify({assetId: rail.assetId, network: rail.network});
+    if (seen.has(value)) continue; seen.add(value);
+    railOptions.append(new Option(rail.label + ' · ' + rail.network + ' · ' + rail.assetId, value));
+  }
+  if (selectedRail && !seen.has(selectedRail)) railOptions.append(new Option('Selected historical payment option', selectedRail));
+  railOptions.value = selectedRail;
+}
+async function refresh({cursor = null, selection = registerSelection} = {}) {
+  const requestedToken = token, request = ++registerRequest;
+  const received = await api('/api/register?' + registerParameters(selection, {cursor, limit: 50}));
+  if (!requestedToken || token !== requestedToken || request !== registerRequest) return;
+  state = received; registerSelection = received.selection; renderList();
   $('review-banner').hidden = state.mode !== 'review';
   $('show-create').hidden = state.mode === 'review';
   if (state.mode === 'review') $('create-panel').hidden = true;
@@ -130,18 +174,31 @@ async function refresh() {
   await refreshProject();
   if (selectedId) await loadDetail();
 }
+async function exportRegister(format) {
+  if (!state) return;
+  const requestedToken = token, revision = state.source.revision, selection = {...state.selection};
+  const selected = await api('/api/register/export?' + registerParameters(selection, {revision, format}));
+  if (token !== requestedToken) return;
+  if (!/^\/downloads\/invoices\/[0-9a-f-]{36}$/.test(selected.url) ||
+      selected.source?.revision !== revision || JSON.stringify(selected.selection) !== JSON.stringify(selection))
+    throw new Error('The register export differs from the reviewed selection.');
+  const link = element('a'); link.href = selected.url; link.download = selected.fileName;
+  link.referrerPolicy = 'no-referrer'; document.body.append(link); link.click(); link.remove();
+  notice('Prepared ' + selected.invoiceCount + ' invoices and ' + selected.offerCount +
+    ' offered payment options. The download contains every invoice matching the applied filters.');
+}
 function fact(label, value, mono = false) {
   $('detail-facts').append(element('dt', label), element('dd', value ?? '—', mono ? 'mono' : ''));
 }
 async function loadDetail() {
-  const requestedId = selectedId, requestedToken = token;
+  const requestedId = selectedId, requestedToken = token, request = ++detailRequest;
   if (!requestedId || !requestedToken) return;
   if ($('detail-content').dataset.orderId !== requestedId) {
     $('detail-content').hidden = true; $('detail-empty').hidden = false;
   }
   const received = await api('/api/orders/' + requestedId);
-  if (selectedId !== requestedId || token !== requestedToken) return;
-  const order = received.order;
+  if (selectedId !== requestedId || token !== requestedToken || request !== detailRequest) return;
+  const order = received.order; detailOrder = order;
   if (order.id !== requestedId) throw new Error('The returned invoice differs from the selection.');
   $('detail-content').dataset.orderId = requestedId;
   $('detail-empty').hidden = true; $('detail-content').hidden = false;
@@ -214,8 +271,9 @@ function applyCaptureControls() {
     button.disabled = paused;
   $('export-project').disabled = paused;
   $('reconcile').disabled = paused;
-  const order = state?.orders?.find(item => item.id === selectedId);
+  const order = detailOrder?.id === selectedId ? detailOrder : state?.orders?.find(item => item.id === selectedId);
   $('create-charge').disabled = paused || order?.state === 'CHARGE_REJECTED';
+  renderRegisterControls();
 }
 function renderProject() {
   const rows = $('project-export-rows'); rows.replaceChildren();
@@ -288,12 +346,29 @@ $('connect-form').addEventListener('submit', event => {
     $('connection-state').textContent = state.mode === 'review' ? 'Project review' : 'Connected';
     if (state.mode !== 'review') renderRails();
     if (poll) clearInterval(poll);
-    poll = setInterval(() => { if (!busy && token) refresh().catch(error => notice(error.message)); }, 15000);
+    poll = setInterval(() => {
+      if (!busy && token) {
+        const work = state?.page.offset ? Promise.all([refreshProject(), loadDetail()]) : refresh();
+        work.catch(error => notice(error.message));
+      }
+    }, 15000);
   });
 });
 $('disconnect').addEventListener('click', disconnect);
 $('refresh').addEventListener('click', () => action(refresh));
-$('search').addEventListener('input', () => { if (state) renderList(); });
+for (const [value, label] of Object.entries(names)) $('register-state').append(new Option(label, value));
+$('register-filter-form').addEventListener('submit', event => {
+  event.preventDefault(); action(() => refresh({selection: selectedRegisterFilters()}));
+});
+$('register-reset').addEventListener('click', () => action(async () => {
+  $('register-filter-form').reset(); await refresh({selection: {}});
+}));
+$('register-previous').addEventListener('click', () => action(() =>
+  state?.page.previous ? refresh({cursor: state.page.previous}) : Promise.resolve()));
+$('register-next').addEventListener('click', () => action(() =>
+  state?.page.next ? refresh({cursor: state.page.next}) : Promise.resolve()));
+$('register-export-csv').addEventListener('click', () => action(() => exportRegister('csv')));
+$('register-export-json').addEventListener('click', () => action(() => exportRegister('json')));
 $('show-create').addEventListener('click', () => { $('create-panel').hidden = false; $('create-form').elements.reference.focus(); });
 $('hide-create').addEventListener('click', () => { $('create-panel').hidden = true; });
 $('create-form').addEventListener('submit', event => {

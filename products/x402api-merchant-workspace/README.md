@@ -18,6 +18,7 @@ For the maintained package, Node 24 profile and **Applications → Merchant invo
 - Run the customer's fulfillment adapter once, reconcile interrupted work, and
   recover a previously returned result without rerunning the business operation.
 - Download the retained result, with its size and SHA-256 checked on every read.
+- Search and page the complete invoice register by original state, creation dates and payment option, then export every selected invoice as exact CSV or JSON.
 
 The server keeps the tenant credential and webhook secrets in its environment.
 The browser uses a separate operator token. The wallet handoff contains the
@@ -198,6 +199,16 @@ reconciles the same invoice and does not create a new charge or authorization.
 A definitive failed authorization remains attached to its original invoice
 for review.
 
+## Complete invoice register
+
+Use **Apply filters** to select original invoices by text, state, inclusive UTC
+creation dates and frozen payment option. Paging remains tied to the displayed
+store/history revision. **Download CSV** and **Download JSON** include every
+matching invoice across all pages, preserving exact atomic amounts and separate
+receipt/result outcomes. The same workflow is available in received-project
+review. [The full register guide](INVOICE_REGISTER.md) covers selection, complete
+exports, exact amount handling and the native/HTTP interfaces.
+
 ## HTTP interface
 
 All /api/ routes require Authorization: Bearer <operator token>. The token
@@ -206,6 +217,8 @@ belongs in a header, never a URL.
 | Method and route | Operation |
 | --- | --- |
 | GET /api/state | Public operator configuration and invoice projections |
+| GET /api/register | Complete filtered invoice counts and revision-bound page |
+| GET /api/register/export | Prepare full selected CSV/JSON and single-use streamed download |
 | POST /api/orders | Retain one invoice with its stable UUID and exact terms |
 | GET /api/orders/:id | Invoice, progress and selected activity history |
 | POST /api/orders/:id/charge | Create or reconcile its original charge |

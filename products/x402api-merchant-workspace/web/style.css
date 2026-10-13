@@ -7,3 +7,17 @@
 .project-panel .export-id { display: block; margin-top: 4px; font: 11px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; overflow-wrap: anywhere; }
 .project-panel th:last-child { min-width: 180px; }
 @media (max-width: 640px) { .project-panel .section-heading { flex-direction: column; } }
+
+/* Complete invoice register, including received-project review. */
+select{font:inherit;width:100%;max-width:100%;color:#202428;background:#fff;border:1px solid #bcc3ca;border-radius:4px;padding:9px 10px}
+select:focus-visible{outline:3px solid #8796a5;outline-offset:2px}
+label select{display:block;margin-top:6px;font-weight:400}
+.register-filters,.register-export{padding:18px;border-bottom:1px solid #e0e4e7}
+.register-filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.register-filter-grid>label{min-width:0}
+.register-pagination{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px;border-bottom:1px solid #e0e4e7}
+.register-pagination span{font-size:12px;text-align:center}
+.register-pagination button,.register-filters button{font-size:12px}
+.register-export h3{font-size:14px}.register-export .actions{margin-bottom:12px}
+#register-source{overflow-wrap:anywhere}
+@media(max-width:420px){.register-filter-grid{grid-template-columns:1fr}.register-pagination{padding:14px 10px;gap:6px}.register-pagination button{padding:8px}}

@@ -49,6 +49,7 @@ REQUIRED_PRODUCT = (
     "portable_native.py", "portable.mjs", "portable-directory.mjs",
     "portable-reservations.mjs", "portable-project-reservations.mjs", "server.mjs", "workspace.mjs",
     "store.mjs", "protocol.mjs", "provider.mjs", "application-inputs.mjs",
+    "invoice-register.mjs", "INVOICE_REGISTER.md",
     "fulfillment/file-delivery.mjs", "web/index.html", "web/app.mjs", "web/style.css",
 )
 EXPECTED_TABLES = {
@@ -1460,6 +1461,9 @@ def validate_manifest(manifest):
     legacy_needed = needed - {PRODUCT + name for name in
                               ("portable-directory.mjs", "portable-reservations.mjs", "portable-project-reservations.mjs")}
     required = needed if "reservationMappings" in manifest else legacy_needed
+    # Earlier complete projects retain their original pre-register source edition.
+    # Current exports pin these additive files through REQUIRED_PRODUCT above.
+    required -= {PRODUCT + "invoice-register.mjs", PRODUCT + "INVOICE_REGISTER.md"}
     need(isinstance(proof, list) and len(proof) == len(proof_paths)
          and required <= proof_paths <= needed,
          "PORTABLE_SOURCE_INCOMPLETE", "Keep the complete portable-capable source edition.")

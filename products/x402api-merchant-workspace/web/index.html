@@ -37,9 +37,15 @@
       </section>
       <div class="work-grid">
         <section class="panel order-panel" aria-label="Invoice list">
-          <label class="search-label">Find invoice<input id="search" type="search" placeholder="Reference, description or ID" autocomplete="off"></label>
+          <form id="register-filter-form" class="register-filters">
+            <label class="register-search">Find invoice<input id="search" type="search" placeholder="Reference, description or ID" autocomplete="off" maxlength="512"></label>
+            <div class="register-filter-grid"><label>State<select id="register-state"><option value="">All states</option></select></label><label>Payment option<select id="register-rail"><option value="">All payment options</option></select></label><label>Created from (UTC)<input id="register-from" type="date"></label><label>Created through (UTC)<input id="register-to" type="date"></label></div>
+            <div class="actions"><button type="submit" class="secondary">Apply filters</button><button type="button" id="register-reset" class="quiet">Clear filters</button></div>
+          </form>
           <div class="table-scroll"><table><thead><tr><th>Invoice</th><th>Amount</th><th>State</th></tr></thead><tbody id="order-rows"></tbody></table></div>
           <p id="empty-list" class="empty">Create an invoice to begin.</p>
+          <div class="register-pagination"><button id="register-previous" class="secondary" disabled>Previous</button><span id="register-page-label" role="status" aria-live="polite"></span><button id="register-next" class="secondary" disabled>Next</button></div>
+          <div class="register-export"><h3>Export invoice register</h3><p class="muted">Export every invoice matching the applied filters, across all pages. Each amount is an offered payment option. Receipt and delivery outcomes are recorded separately.</p><div class="actions"><button id="register-export-csv" class="secondary">Download CSV</button><button id="register-export-json" class="secondary">Download JSON</button></div><p id="register-source" class="muted"></p></div>
         </section>
         <section id="detail-panel" class="panel detail-panel" aria-labelledby="detail-title">
           <div id="detail-empty" class="empty"><h3>Choose an invoice</h3><p>Payment terms, delivery progress and the completed result appear here.</p></div>

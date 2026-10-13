@@ -7,10 +7,11 @@ import { pipeline } from 'node:stream/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join, resolve, isAbsolute } from 'node:path';
 import { parseArgs } from 'node:util';
-import { openMerchantWorkspace, openMerchantReview, validateConfig, MerchantError } from './workspace.mjs';
+import { openMerchantWorkspace, openMerchantReview, validateConfig, MerchantError, MerchantResult } from './workspace.mjs';
 import { ProtocolError } from './protocol.mjs';
 import {readMerchantObservation} from './observation.mjs';
 import {readMerchantObservationSummary, merchantSummaryHistorySequence} from './observation-summary.mjs';
+import {readInvoiceRegister,invoiceRegisterQuery,createInvoiceRegisterExport} from './invoice-register.mjs';
 import { merchantInputFiles, reviewMerchantInputs, verifyMerchantInputFingerprint, readMerchantInput } from './application-inputs.mjs';
 import { createMerchantProject, resolveMerchantProjectSource } from './portable.mjs';
 
@@ -74,7 +75,19 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
   if (!Number.isInteger(port) || port < 0 || port > 65535) fail('PORT_INVALID');
   if (!Number.isInteger(intervalMs) || intervalMs < 100 || intervalMs > 2147483647) fail('WORKER_INTERVAL_INVALID');
   let stopping = false, tick = null, closePromise = null;
-  const inFlight = new Set(), assets = new Map();
+  const inFlight = new Set(), assets = new Map(), invoiceDownloads = new Map();
+  function discardInvoiceDownload(id) {
+    const item=invoiceDownloads.get(id);if(!item)return;
+    invoiceDownloads.delete(id);clearTimeout(item.timer);item.exported.cleanup();
+  }
+  function retainInvoiceDownload(exported) {
+    const id=exported.operation;
+    const timer=setTimeout(()=>discardInvoiceDownload(id),120000);timer.unref();
+    invoiceDownloads.set(id,{exported,timer});
+    return {url:'/downloads/invoices/'+id,fileName:exported.fileName,bytes:exported.bytes,
+      sha256:exported.sha256,source:exported.report.source,selection:exported.report.selection,
+      invoiceCount:exported.report.invoiceCount,offerCount:exported.report.offerCount,expiresInSeconds:120};
+  }
   for (const [url, [name, type]] of ASSETS) assets.set(url, { bytes: await readFile(join(ROOT, 'web', name)), type });
   function runTick() {
     if (!workspace.readOnly && !stopping && !tick) {
@@ -96,6 +109,17 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
       return response.end(asset.bytes);
     }
     if (request.method === 'GET' && path === '/health' && !parsed.search) return respond(response, 200, { status: 'ready', application: 'x402api-merchant-workspace' });
+    const invoiceDownload=/^\/downloads\/invoices\/([0-9a-f-]{36})$/.exec(path);
+    if(request.method==='GET'&&invoiceDownload&&!parsed.search) {
+      const id=invoiceDownload[1],item=invoiceDownloads.get(id);
+      if(!item)fail('INVOICE_REGISTER_DOWNLOAD_EXPIRED',404);
+      invoiceDownloads.delete(id);clearTimeout(item.timer);
+      try {
+        const e=item.exported;
+        return await serveResult(response,new MerchantResult({
+          path:e.path,bytes:e.bytes,sha256:e.sha256,contentType:e.contentType,fileName:e.fileName}));
+      } finally {item.exported.cleanup();}
+    }
     const download = /^\/downloads\/project\/([0-9a-f-]{36})$/.exec(path);
     if (request.method === 'GET' && download && !parsed.search) {
       if (!project) fail('NOT_FOUND', 404);
@@ -131,6 +155,17 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
     }
     const origin = header(request, 'origin'), localOrigin = 'http://' + header(request, 'host');
     if (origin && origin !== workspace.config.publicOrigin && origin !== localOrigin) fail('ORIGIN_NOT_ALLOWED', 403);
+    if(request.method==='GET'&&path==='/api/register')
+      return respond(response,200,{...readInvoiceRegister(workspace,invoiceRegisterQuery(parsed.searchParams)),
+        config:workspace.publicConfig(),mode:workspace.readOnly?'review':'live'});
+    if(request.method==='GET'&&path==='/api/register/export') {
+      if(invoiceDownloads.size>=8)fail('INVOICE_REGISTER_DOWNLOAD_LIMIT',429);
+      const selected=invoiceRegisterQuery(parsed.searchParams,{exporting:true});
+      if(!selected.revision)fail('INVOICE_REGISTER_REVIEW_SELECTION_REQUIRED');
+      const exported=createInvoiceRegisterExport(workspace,selected);
+      if(response.destroyed){exported.cleanup();return;}
+      return respond(response,200,retainInvoiceDownload(exported));
+    }
     if (parsed.search) fail('QUERY_NOT_SUPPORTED');
     if (path === '/api/observation' && request.method === 'GET') return respond(response, 200, readMerchantObservation(workspace));
     if (path === '/api/observation/summary' && request.method === 'GET') {
@@ -209,6 +244,7 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
       server.closeIdleConnections();
       await Promise.allSettled([...inFlight, ...(tick ? [tick] : [])]);
       await closed;
+      for(const id of [...invoiceDownloads.keys()])discardInvoiceDownload(id);
       if (project) await project.close();
       await workspace.close();
     })();
