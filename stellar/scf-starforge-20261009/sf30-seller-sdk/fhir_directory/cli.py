@@ -37,6 +37,9 @@ def main(argv=None):
     def command(name):
         c=sub.add_parser(name,parents=[common]);return c
     command("init");command("state");command("catalogue");command("guidance");command("operating-plan-catalog")
+    command("selection-refresh-report").add_argument("--id",required=True)
+    c=command("selection-refresh-rows");c.add_argument("--id",required=True);c.add_argument("--offset",type=int,default=0);c.add_argument("--limit",type=int,default=50)
+    c=command("selection-refresh-file");c.add_argument("--id",required=True);c.add_argument("--member",default="Service_Choice_Refresh.zip");c.add_argument("--out",required=True)
     for name in ["operating-plan-document","operating-plan-draft","operating-plan-input","operating-plan-basis"]:
         c=command(name);c.add_argument("--id",required=True)
         if name=="operating-plan-draft":c.add_argument("--revision",type=int)
@@ -76,6 +79,11 @@ def main(argv=None):
     with Workspace(root,create=args.command in {"init","receive-workspace","receive-handoff"}and not root.exists(),credentials_file=args.credentials_file)as ws:
         name=args.command
         if name in {"init","state"}:result=ws.state()
+        elif name=="selection-refresh-report":result=ws.directory_selection_refresh_report(args.id)
+        elif name=="selection-refresh-rows":result=ws.directory_selection_refresh_rows(args.id,args.offset,args.limit)
+        elif name=="selection-refresh-file":
+            path,d=ws.directory_selection_refresh_file(args.id,args.member)
+            result={**copy_output(path,args.out),"original":d}
         elif name=="correction-worksheet-document":result=ws.directory_correction_worksheet_document(args.id)
         elif name=="correction-worksheet-receive":result=ws.import_directory_correction_worksheet_return(args.import_id,Path(args.file).expanduser().absolute())
         elif name=="operating-plan-catalog":result=ws.directory_operating_catalogue()

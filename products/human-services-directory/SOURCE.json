@@ -171,7 +171,8 @@
     "correctionWorksheetsClients": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/CORRECTION_WORKSHEET_CLIENTS.md",
     "worksheetReconciliation": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/WORKSHEET_RECONCILIATION.md",
     "worksheetReconciliationNative": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/CORRECTION_WORKSHEET_RECONCILIATION_OPERATING.md",
-    "worksheetReconciliationClients": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/CORRECTION_WORKSHEET_RECONCILIATION_CLIENTS.md"
+    "worksheetReconciliationClients": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/CORRECTION_WORKSHEET_RECONCILIATION_CLIENTS.md",
+    "selectionRefresh": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/SELECTION_REFRESH.md"
   },
   "nativeReceivingOperation": {
     "operation": "SCF-HUMAN-SERVICES-DIRECTORY-RECEIVING-450E-20261012",
@@ -402,5 +403,21 @@
     "clientOperation": "SCF-DIRECTORY-WORKSHEET-RECONCILIATION-CLIENTS-450E-20261013",
     "semantics": "Every original worksheet row retains an explicit current-row binding or unbound reason. Exact typed base/proposed/current comparisons require a decision for every proposed change. Structural conflicts retain explicit full current-row resolution. The resulting ordinary correction plan uses the chosen current edition and separate preview/accept. Original returned bytes and all source/record histories survive complete customer receiving.",
     "execution": "Source publication and source-only checks are distinct from actual native/browser/customer operation. Completed results, journals and verified full files carry execution evidence."
+  },
+  "selectionRefresh": {
+    "schema": "stellar-forge.directory-selection-refresh-source.v1",
+    "collection": "selectionRefreshes",
+    "actions": [
+      "prepare",
+      "report",
+      "rows",
+      "file",
+      "apply"
+    ],
+    "guide": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/SELECTION_REFRESH.md",
+    "receiving": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/operate_selection_refresh.py",
+    "originalOperation": "SCF-HUMAN-SERVICES-DIRECTORY-RECEIVING-450E-20261012",
+    "meaning": "Explicit complete original-to-later candidate matches, qualified omissions and current criteria. Preparing is immutable review only; separate acceptance retains the original choice as predecessor. No provider request, availability promise, reservation or clinical mutation.",
+    "execution": "Source publication and source execution do not establish actual native/browser recipient use; the original receiving course retains its actual result and all attachment observations."
   }
 }

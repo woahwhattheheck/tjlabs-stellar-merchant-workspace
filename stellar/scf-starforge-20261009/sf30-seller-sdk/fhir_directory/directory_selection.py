@@ -188,51 +188,58 @@ def evaluate_service(view,row,criteria):
         "classification":"criteria-not-met" if failures else "needs-review" if unknowns or context["findings"] else "matches-selected-criteria"}
 
 class DirectorySelection:
-    def save_directory_selection(self,raw):
+    def _directory_evaluate_selection(self,raw):
+        """Evaluate the original complete selection without publishing a record."""
         data=schema.input_value("selection",raw)
+        view=DirectoryView(self,data["editionId"])
+        data.setdefault("conversionId",None);data.setdefault("predecessorId",None)
+        if data["predecessorId"]:self.directory_record("selections",data["predecessorId"])
+        if data["conversionId"]:
+            conversion=self.directory_conversion(data["conversionId"])
+            if conversion["editionId"]!=data["editionId"]:raise InputError("The selected conversion must use this exact directory edition")
+        if not data["serviceRefs"]:raise InputError("Choose at least one original service candidate")
+        refs={ref_key(r)for r in data["serviceRefs"]}
+        if len(refs)!=len(data["serviceRefs"]):raise InputError("Selection repeats an original candidate")
+        chosen={ref_key(r)for r in data["chosenRefs"]}
+        if len(chosen)!=len(data["chosenRefs"]) or not chosen<=refs:raise InputError("Choose distinct services from the original candidate set")
+        dispositions={ref_key(r["ref"]):r for r in data["dispositions"]}
+        if len(dispositions)!=len(data["dispositions"]) or not set(dispositions)<=refs:raise InputError("Each disposition selects one original candidate")
+        if chosen!={k for k,v in dispositions.items()if v["decision"]=="selected"}:
+            raise InputError("Chosen services and the recorded selected dispositions must agree")
+        for k,v in dispositions.items():
+            view.row(v["ref"])
+            if not v["reason"].strip():raise InputError("Every service disposition retains its real selection reason")
+            if v["decision"]in {"reserve","needs-contact"} and not v.get("owner","").strip():raise InputError("An unresolved selection step requires its operating owner")
+        criteria=data["criteria"]
+        if criteria.get("at"):instant(criteria["at"])
+        if criteria.get("timezone"):zone(criteria["timezone"])
+        if criteria.get("capacity"):instant(criteria["capacity"]["asOf"],"Capacity assessment")
+        for ref in criteria.get("locationRefs",[]):
+            if view.row(ref)["table"] not in {"location","Location"}:raise InputError("A selected location must be an original location record")
+        seen=set()
+        for decision in criteria.get("scheduleDecisions",[]):
+            if ref_key(decision["ref"])in seen:raise InputError("A schedule has more than one reviewed classification")
+            seen.add(ref_key(decision["ref"]))
+            if view.row(decision["ref"])["table"]!="schedule":raise InputError("Schedule interpretation requires an exact original HSDS schedule row")
+            if not decision["reason"].strip():raise InputError("Retain the reason for each legacy schedule classification")
+        candidates=[]
+        for ref in data["serviceRefs"]:
+            row=view.row(ref)
+            if row["table"]not in {"service","HealthcareService"}:raise InputError("Choose original HSDS service or FHIR HealthcareService candidates")
+            outcome=evaluate_service(view,row,criteria)
+            outcome["disposition"]=dispositions.get(ref_key(row))
+            outcome["chosen"]=ref_key(row)in chosen
+            candidates.append(outcome)
+        result={"schema":"stellar-forge.human-services-directory-selection-analysis.v1","editionId":data["editionId"],"criteria":criteria,"candidates":candidates,
+            "summary":{"candidates":len(candidates),"chosen":len(chosen),"classificationCounts":dict(Counter(c["classification"]for c in candidates)),
+                "followUpOwners":sorted({d["owner"]for d in data["dispositions"]if d.get("owner")})}}
+        return data,result
+
+    def save_directory_selection(self,raw):
         with self.mutex,self.scratch() as temp:
-            view=DirectoryView(self,data["editionId"])
-            data.setdefault("conversionId",None);data.setdefault("predecessorId",None)
-            if data["predecessorId"]:self.directory_record("selections",data["predecessorId"])
-            if data["conversionId"]:
-                conversion=self.directory_conversion(data["conversionId"])
-                if conversion["editionId"]!=data["editionId"]:raise InputError("The selected conversion must use this exact directory edition")
-            if not data["serviceRefs"]:raise InputError("Choose at least one original service candidate")
-            refs={ref_key(r)for r in data["serviceRefs"]}
-            if len(refs)!=len(data["serviceRefs"]):raise InputError("Selection repeats an original candidate")
-            chosen={ref_key(r)for r in data["chosenRefs"]}
-            if len(chosen)!=len(data["chosenRefs"]) or not chosen<=refs:raise InputError("Choose distinct services from the original candidate set")
-            dispositions={ref_key(r["ref"]):r for r in data["dispositions"]}
-            if len(dispositions)!=len(data["dispositions"]) or not set(dispositions)<=refs:raise InputError("Each disposition selects one original candidate")
-            if chosen!={k for k,v in dispositions.items()if v["decision"]=="selected"}:
-                raise InputError("Chosen services and the recorded selected dispositions must agree")
-            for k,v in dispositions.items():
-                view.row(v["ref"])
-                if not v["reason"].strip():raise InputError("Every service disposition retains its real selection reason")
-                if v["decision"]in {"reserve","needs-contact"} and not v.get("owner","").strip():raise InputError("An unresolved selection step requires its operating owner")
-            criteria=data["criteria"]
-            if criteria.get("at"):instant(criteria["at"])
-            if criteria.get("timezone"):zone(criteria["timezone"])
-            if criteria.get("capacity"):instant(criteria["capacity"]["asOf"],"Capacity assessment")
-            for ref in criteria.get("locationRefs",[]):
-                if view.row(ref)["table"] not in {"location","Location"}:raise InputError("A selected location must be an original location record")
-            seen=set()
-            for decision in criteria.get("scheduleDecisions",[]):
-                if ref_key(decision["ref"])in seen:raise InputError("A schedule has more than one reviewed classification")
-                seen.add(ref_key(decision["ref"]))
-                if view.row(decision["ref"])["table"]!="schedule":raise InputError("Schedule interpretation requires an exact original HSDS schedule row")
-                if not decision["reason"].strip():raise InputError("Retain the reason for each legacy schedule classification")
-            candidates=[]
-            for ref in data["serviceRefs"]:
-                row=view.row(ref)
-                if row["table"]not in {"service","HealthcareService"}:raise InputError("Choose original HSDS service or FHIR HealthcareService candidates")
-                outcome=evaluate_service(view,row,criteria)
-                outcome["disposition"]=dispositions.get(ref_key(row))
-                outcome["chosen"]=ref_key(row)in chosen
-                candidates.append(outcome)
-            result={"schema":"stellar-forge.human-services-directory-selection-analysis.v1","editionId":data["editionId"],"criteria":criteria,"candidates":candidates,
-                "summary":{"candidates":len(candidates),"chosen":len(chosen),"classificationCounts":dict(Counter(c["classification"]for c in candidates)),
-                    "followUpOwners":sorted({d["owner"]for d in data["dispositions"]if d.get("owner")})}}
+            data,result=self._directory_evaluate_selection(raw)
+            if data.get("refreshId"):
+                self._verify_directory_selection_refresh_target(data["refreshId"],data)
             path=Path(temp)/"selection.json";original_workspace.private_write(path,source.lexical_json(result).encode()+b"\n")
             if path.stat().st_size>schema.MAX_RECORD:raise InputError("Complete selected-service analysis exceeds the64MiB record limit")
             return self._directory_store("selections",{**data,"summary":result["summary"],"reportFile":self._retain_file(path,"complete-directory-service-selection")})

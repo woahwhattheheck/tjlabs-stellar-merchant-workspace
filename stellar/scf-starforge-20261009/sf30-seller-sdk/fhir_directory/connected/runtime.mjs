@@ -18,6 +18,9 @@ function filename(member,fallback){
     value:fallback;
 }
 export function humanServicesDirectoryNativeRoute(action,args){
+  if(action==='directory_selection_refresh_report')return {method:'GET',target:path('selectionRefreshes',args.refreshId,'report')};
+  if(action==='directory_selection_refresh_rows')return {method:'GET',target:query(path('selectionRefreshes',args.refreshId,'rows'),{offset:args.offset,limit:args.limit})};
+  if(action==='directory_selection_refresh_file')return {method:'GET',target:path('selectionRefreshes',args.refreshId,'files',args.member),kind:'directory-export-file',filename:args.member};
   if(action==='directory_correction_worksheet_reconciliation_catalogue')return {method:'GET',target:path('correction-worksheet-reconciliations','catalogue')};
   if(action==='directory_correction_worksheet_reconciliation_rows')return {method:'GET',
     target:query(path(args.collection,args.recordId,'rows'),{offset:args.offset,limit:args.limit,rowKey:args.rowKey,state:args.state})};
@@ -161,6 +164,7 @@ export const MerchantHumanServicesDirectory=createMerchantWorkspaceRuntime({
     corrections:directoryCorrectionsContract,
     correctionWorksheets:directoryCorrectionWorksheetsContract,
     worksheetReconciliation:directoryWorksheetReconciliationContract,
+    selectionRefreshSemantics:'Every old candidate retains one explicit later-source match or omission. All proposed candidates have reviewed dispositions and current-edition criteria. Preparing does not change referrals, provider data or availability. Apply requires the exact saved report SHA and retains the old selection as predecessor. Full reports travel with workspace and refreshed handoff exports.',
     worksheetReconciliationSemantics:"Every original worksheet row retains an explicit current-row binding. Typed base/proposal/current comparisons and all explicit decisions remain immutable. Reviewed plans use the selected current edition; preview and acceptance remain separate.",
     worksheetSemantics:'Original selected rows stay immutable. A complete returned file is retained before typed field comparison. Every change needs one explicit review decision; a prepared correction plan does not preview or accept itself. Omitted rows make no proposal. Full original files remain available above the page budget.',
     correctionSemantics:'Exact original HSDS row/resource/member hashes bind ordered JSON-pointer or physical CSV edits. Original bytes remain retained. Preview produces complete derived sources, an immutable candidate edition and full comparison; acceptance records that exact candidate without replacing a mutable head or writing to a provider.',

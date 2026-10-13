@@ -822,3 +822,82 @@ export async function exportDirectoryWorksheetReconciliation({
   exportId:result.exportId,expectedManifestSha256:result.manifestSha256});
  return {prepared,prepareResult,result,receipt,payload};
 }
+
+/** Retain a complete review without changing the original saved service choice. */
+export async function prepareDirectorySelectionRefresh({client,workspace,input,requestOptions}={}){
+ checked(workspace,ALIAS,'workspace');
+ need(client&&typeof client.call==='function','HUMAN_SERVICES_DIRECTORY_CLIENT_REQUIRED');
+ const result=retained(await client.call('directory_selection_refresh_prepare',{workspace,selection_refresh_prepare:input},requestOptions));
+ need(result.native?.ok,'HUMAN_SERVICES_DIRECTORY_SELECTION_REFRESH_REJECTED');
+ const record=await readHumanServicesDirectoryValue({workspace,result,client});
+ need(record.schema==='stellar-forge.human-services-directory-selection-refresh.v1'&&
+  record.workspaceId===result.workspaceId&&record.selectionId===input.selectionId&&
+  record.afterEditionId===input.target.editionId&&record.files?.['Refresh.json'],
+  'HUMAN_SERVICES_DIRECTORY_SELECTION_REFRESH_CHANGED');
+ checked(record.id,SHA,'refresh');return {record,result};
+}
+/** Apply the exact saved report and actual accepting actor; the original selection remains immutable. */
+export async function applyDirectorySelectionRefresh({client,workspace,input,requestOptions}={}){
+ checked(workspace,ALIAS,'workspace');
+ need(client&&typeof client.call==='function','HUMAN_SERVICES_DIRECTORY_CLIENT_REQUIRED');
+ const {record:review}=await getDirectorySelectionRefresh({client,workspace,refreshId:input.refreshId,requestOptions});
+ need(input.confirm===true&&input.expectedReportSha256===review.files['Refresh.json'].sha256,
+  'HUMAN_SERVICES_DIRECTORY_SELECTION_REFRESH_CHANGED');
+ const result=retained(await client.call('directory_selection_refresh_apply',{workspace,selection_refresh_apply:input},requestOptions));
+ need(result.native?.ok,'HUMAN_SERVICES_DIRECTORY_SELECTION_REFRESH_REJECTED');
+ const record=await readHumanServicesDirectoryValue({workspace,result,client});
+ need(record.refreshId===review.id&&record.predecessorId===review.selectionId&&record.editionId===review.afterEditionId,
+  'HUMAN_SERVICES_DIRECTORY_SELECTION_REFRESH_CHANGED');
+ checked(record.id,SHA,'successor selection');return {record,result,review};
+}
+export async function getDirectorySelectionRefresh({client,workspace,refreshId,requestOptions}={}){
+ checked(workspace,ALIAS,'workspace');checked(refreshId,SHA,'refresh');
+ need(client&&typeof client.call==='function','HUMAN_SERVICES_DIRECTORY_CLIENT_REQUIRED');
+ const result=retained(await client.call('directory_record',{workspace,collection:'selectionRefreshes',recordId:refreshId},requestOptions));
+ need(result.native?.ok,'HUMAN_SERVICES_DIRECTORY_SELECTION_REFRESH_REJECTED');
+ const record=await readHumanServicesDirectoryValue({workspace,result,client});
+ need(record.id===refreshId&&record.workspaceId===result.workspaceId&&record.schema==='stellar-forge.human-services-directory-selection-refresh.v1'&&record.files?.['Refresh.json'],
+  'HUMAN_SERVICES_DIRECTORY_SELECTION_REFRESH_CHANGED');return {record,result};
+}
+export async function directorySelectionRefreshReport({client,workspace,refreshId,requestOptions}={}){
+ const {record}=await getDirectorySelectionRefresh({client,workspace,refreshId,requestOptions});
+ const result=retained(await client.call('directory_selection_refresh_report',{workspace,refreshId},requestOptions));
+ need(result.native?.ok,'HUMAN_SERVICES_DIRECTORY_SELECTION_REFRESH_REJECTED');
+ const report=await readHumanServicesDirectoryValue({workspace,result,client});
+ need(report.workspaceId===record.workspaceId&&report.selectionId===record.selectionId&&report.beforeEditionId===record.beforeEditionId&&report.afterEditionId===record.afterEditionId&&report.schema===record.schema,
+  'HUMAN_SERVICES_DIRECTORY_SELECTION_REFRESH_CHANGED');return {record,report,result};
+}
+export async function* directorySelectionRefreshRows({client,workspace,refreshId,limit=50,requestOptions}={}){
+ checked(workspace,ALIAS,'workspace');checked(refreshId,SHA,'refresh');
+ need(client&&typeof client.call==='function'&&Number.isSafeInteger(limit)&&limit>=1&&limit<=250,'HUMAN_SERVICES_DIRECTORY_SELECTION_REFRESH_SELECTION');
+ let offset=0,total;
+ while(true){
+  const result=retained(await client.call('directory_selection_refresh_rows',{workspace,refreshId,offset,limit},requestOptions));
+  need(result.native?.ok,'HUMAN_SERVICES_DIRECTORY_SELECTION_REFRESH_PAGE_REJECTED','Receive the complete Refresh.json when one source comparison exceeds the page budget.');
+  const page=await readHumanServicesDirectoryValue({workspace,result,client});
+  need(page.offset===offset&&page.limit===limit&&Number.isSafeInteger(page.total)&&page.total>=0&&
+   (total===undefined||total===page.total)&&Array.isArray(page.rows)&&page.rows.length<=limit&&
+   page.byteBudget===4194304&&Number.isSafeInteger(page.bytes)&&page.bytes>=0&&page.bytes<=page.byteBudget,
+   'HUMAN_SERVICES_DIRECTORY_SELECTION_REFRESH_PAGE_CHANGED');
+  total=page.total;const next=offset+page.rows.length;
+  need(next<=total&&(page.nextOffset===null?next===total:page.rows.length>0&&page.nextOffset===next&&next<total),
+   'HUMAN_SERVICES_DIRECTORY_SELECTION_REFRESH_PAGE_CHANGED');
+  yield {result,page};if(page.nextOffset===null)return;offset=page.nextOffset;
+ }
+}
+/** Download complete native bytes against the saved report's exact member descriptor. */
+export async function directorySelectionRefreshFile({client,workspace,refreshId,member,requestOptions,...downloadOptions}={}){
+ const {record, result:recordResult}=await getDirectorySelectionRefresh({client,workspace,refreshId,requestOptions});
+ const expected=record.files?.[member];
+ need(expected&&Number.isSafeInteger(expected.bytes)&&expected.bytes>=0&&expected.bytes<=536870912&&new RegExp(SHA).test(expected.sha256),
+  'HUMAN_SERVICES_DIRECTORY_SELECTION_REFRESH_FILE_SELECTION');
+ const result=retained(await client.call('directory_selection_refresh_file',{workspace,refreshId,member},requestOptions));
+ need(result.native?.ok,'HUMAN_SERVICES_DIRECTORY_SELECTION_REFRESH_REJECTED');
+ const inspected=await inspectHumanServicesDirectoryExport({workspace,client,exportId:result.exportId}),
+  payload=inspected.manifest.source?.payloadFile??'original-response.json',
+  descriptor=inspected.manifest.files.find(file=>file.name===payload);
+ need(inspected.manifestSha256===result.manifestSha256&&descriptor&&descriptor.bytes===expected.bytes&&descriptor.sha256===expected.sha256,
+  'HUMAN_SERVICES_DIRECTORY_SELECTION_REFRESH_FILE_CHANGED');
+ const receipt=await downloadHumanServicesDirectoryExport({...downloadOptions,workspace,client,exportId:result.exportId,expectedManifestSha256:result.manifestSha256});
+ return {record,recordResult,result,receipt,payload,descriptor};
+}
