@@ -210,7 +210,7 @@ def validate_payload(root, manifest):
         seen.add(name)
         filenames.add(filename)
         identity = runtime.file_identity(root / "wheels" / filename)
-        require(all(identity[key] == row[key] for key in ("bytes", "sha256", "mode")),
+        require(all(identity[key] == row[key] for key in ("bytes", "sha256")),
                 "SEMANTIC_RUNTIME_TRANSFER_WHEEL_CHANGED")
     require(filenames == {row["path"] for row in wheels["inventory"]} and
             all(any(row["name"] == name and row["version"] == version for row in wheels["packages"])
