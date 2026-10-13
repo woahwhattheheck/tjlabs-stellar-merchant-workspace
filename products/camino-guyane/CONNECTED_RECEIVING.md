@@ -131,6 +131,58 @@ archive and course outputs. A later authorized report revision can update the
 current working file without changing the preserved earlier edition. Only an
 unfinished affected phase resumes after a source correction.
 
+## A native host with a separate authorized provider peer
+
+The maintained connected controller also supports the existing delegated provider
+binding when the accepting native host has Python, Node and the browser but does
+not expose the three Library actions. Select one actual authorized provider peer;
+its connected tools perform only the granted original Library request. This mode
+does not start another Camino process or emulate a provider tool.
+
+Start the same selected complete course with
+`startConnectedOriginal(context,{key,selection,sourceBootstrap,providerMode:"delegated"})`.
+Default `providerMode:"connected"` continues to use the native owner's actual
+connected tools. The delegated native context requires its actual exec_command,
+write_stdin and private load/store. For the existing DSCEB3 provider binding,
+selection.library_directory is
+/workspace/scratch/ceb3e8d59b19/camino-connected-input. This provider directory
+remains distinct from the actual native root and transfer directory.
+
+After its original exclusive native grant, the controller records
+AWAITING_DELEGATED_PROVIDER and returns DELEGATED_PROVIDER_REQUEST. Carry these
+three maintained exports with the module:
+
+1. The native owner calls
+   `readDelegatedProviderRequest(context,{key,requestId})` and privately retains
+   the entire returned envelope. Its schema is
+   `commons.camino.delegated-library-request.v1`; original invocation, receiver
+   PID/source, action, consumer, request ID and argument hashes bind the request.
+   The native grant token stays with the native owner.
+2. The already-selected provider peer uses the actual admission's
+   `{operation,invocationId,receiverPid,receiverSha256}` as expected, then calls
+   `performDelegatedLibraryAction(providerContext,{key:originalProviderKey,request,expected})`.
+   That function verifies the complete argument hash, retains CALLING before the
+   one supported action, and retains the whole actual result before returning
+   `{identity,result}`.
+3. The native owner receives that exact private response, calls
+   `retainDelegatedProviderResult(context,{key,response})`, then continues with
+   `resumeConnectedOriginal(context,{key})`. Native grant validation, the
+   unchanged upload/materialization helpers, full response objects, transfer
+   headers, finalization and xattrs remain authoritative.
+
+An identical replay returns its original result. Changed arguments, invocation or
+receiver identities conflict. An uncertain peer CALLING/RESULT_UNKNOWN stays with
+the same retained request; use reconciledResult only for its actual recovered
+provider result. Keep one native consumer and one selected peer, with their
+original keys and journals. A new key cannot resolve a previously uncertain save.
+
+The whole request/result may contain temporary transfer URLs and opaque provider
+objects. Keep them in private receiving custody, outside public source, product
+reports and routine progress messages. Retain the actual returned source and
+artifact identities. The same original Camino course, twenty-one data originals,
+two runtime distributions, native inspection frames, source-successor controls
+and output-saving programme continue unchanged.
+
 ## Current repository owner instructions
 
 # Repository delivery instructions
