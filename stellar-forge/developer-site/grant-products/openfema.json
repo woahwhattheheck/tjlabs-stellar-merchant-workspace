@@ -105,13 +105,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/contributions/openfema.json",
-      "commit": "23e5f8b1de08e99fdff9eb97c787cd3cb0b38aec",
+      "commit": "79184053144aa33a94924c948e7931139aa48694",
       "required": true,
       "editions": [
         {
           "commit": "23e5f8b1de08e99fdff9eb97c787cd3cb0b38aec",
           "git_blob": "605299ab6cbf7e661a9a8067f79b306f0e0951aa",
           "bytes": 6668
+        },
+        {
+          "commit": "79184053144aa33a94924c948e7931139aa48694",
+          "git_blob": "e87b00ec0ec5da75d651f75aae6d426d4820d80d",
+          "bytes": 7094,
+          "sha256": "f66d09a69791f95aa0dc6d8490218c536d9204b55bd674a5a2fa9dc3e3ed4b69"
         }
       ]
     },
@@ -144,6 +150,91 @@
           "commit": "23e5f8b1de08e99fdff9eb97c787cd3cb0b38aec",
           "git_blob": "1f5672fa67220f4485427f36ed1efcda36540811",
           "bytes": 16100
+        }
+      ]
+    },
+    {
+      "id": "openfema-recipient-model",
+      "label": "Complete issued recipient register, analyst preparation and edition history",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/recipient-core.mjs",
+      "commit": "79184053144aa33a94924c948e7931139aa48694",
+      "required": false,
+      "editions": [
+        {
+          "commit": "79184053144aa33a94924c948e7931139aa48694",
+          "git_blob": "ee09435971baf444c75f0cfc82741ac1b1a64f40",
+          "bytes": 35088,
+          "sha256": "a6937891e126be515e70c754519fc30ce4e18507fe6e8a8706c918dd594d23a6"
+        }
+      ]
+    },
+    {
+      "id": "openfema-recipient-workspace",
+      "label": "Complete offline recipient review, original files and portable return",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/recipient.mjs",
+      "commit": "79184053144aa33a94924c948e7931139aa48694",
+      "required": false,
+      "editions": [
+        {
+          "commit": "79184053144aa33a94924c948e7931139aa48694",
+          "git_blob": "fc019c091a1236fec448039336afff150f06e770",
+          "bytes": 35639,
+          "sha256": "43a956db5dfe0b781d49b4ecb9a2c04a3aac9917c6ec89f6c26bd9289e0b40c5"
+        }
+      ]
+    },
+    {
+      "id": "openfema-recipient-operating",
+      "label": "Complete recipient review, native return and receiving course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/RECIPIENT_WORKSPACE.md",
+      "commit": "79184053144aa33a94924c948e7931139aa48694",
+      "required": false,
+      "editions": [
+        {
+          "commit": "79184053144aa33a94924c948e7931139aa48694",
+          "git_blob": "87da9e48eac8ed263750fe856b5a6cc9d92384f0",
+          "bytes": 13433,
+          "sha256": "d8555bf4b78c7778fe168031945668855634133fbf7ab1886c5ba80cb42380db"
+        }
+      ]
+    },
+    {
+      "id": "openfema-native-recipient-delivery",
+      "label": "Original native delivery and selected customer-return integration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/core.mjs",
+      "commit": "79184053144aa33a94924c948e7931139aa48694",
+      "required": false,
+      "editions": [
+        {
+          "commit": "79184053144aa33a94924c948e7931139aa48694",
+          "git_blob": "1d9adf29b587ed6c90a75a3f3e2486add6d786af",
+          "bytes": 36112,
+          "sha256": "0b4e6bef6402909835b77b6c9d59e9103be85e422d0e4c67eba4b05ee1406871"
+        }
+      ]
+    },
+    {
+      "id": "openfema-original-recipient-receiving",
+      "label": "Original complete browser recipient and native return programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/recipient-receiving.mjs",
+      "commit": "79184053144aa33a94924c948e7931139aa48694",
+      "required": false,
+      "editions": [
+        {
+          "commit": "79184053144aa33a94924c948e7931139aa48694",
+          "git_blob": "ec7a24e3ad6421145a65adeecc4432ae5f157350",
+          "bytes": 18362,
+          "sha256": "08e9a33b2c84a933bea55ad5080bc93917b1d6b874af8643a02b17e6fb90ccf8"
         }
       ]
     }
