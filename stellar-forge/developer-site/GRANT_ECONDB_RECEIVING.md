@@ -2,7 +2,7 @@
 
 This guide connects the original Econdb product to the existing SCF application and selected-customer programme. It accompanies the full chapter in GRANT_ECONDB_MARITIME.md and its measured declaration grant-products/econdb-maritime.json. It is an operating and publisher handoff; it does not start another business workspace or payment.
 
-Operation: SCF-ECONDB-MARITIME-CUSTOMER-CONTRIBUTION-BBBD-20261013. Original product operation: ECONDB-MARITIME-PERIOD-WORKSHARE-BBBD-20261013. Software baseline: PR 1802 / 3be88b396b3a94acdd9fa824ed1a97518782db4d. The existing Installation owner selects the customer/work order; the current cumulative publisher owns the four application outputs; the original equipped receiver owns source-native/browser and independent continuation. Preserve their identities.
+Operation: SCF-ECONDB-MARITIME-CUSTOMER-CONTRIBUTION-BBBD-20261013. Original product operation: ECONDB-MARITIME-PERIOD-WORKSHARE-BBBD-20261013. Software baseline: PR1802 / 3be88b396b3a94acdd9fa824ed1a97518782db4d, with the additive Merchant MCP arm PR1956 / 8978841ab610310541cc75b98c3d26505ca7e7a0. The existing Installation owner selects the customer/work order; the current cumulative publisher owns the four application outputs; the original equipped receiver owns source-native/browser and independent continuation. Preserve their identities.
 
 ## Read the contribution as a complete product
 
@@ -10,7 +10,7 @@ Start with the chapter's customer task, actual-state table and source meaning. T
 
 The implementation reaches from original API bytes through an editable analyst project to the original typed merchant and buyer return. Its documentation examples demonstrate source interpretation and code execution. They do not demonstrate an installed service, licensed customer data, paid purchase, user adoption or a completed browser inspection.
 
-The source register selects 45 complete product/operating/receiving/distribution files at the same merged baseline. Their original Git blobs, UTF-8 byte lengths and SHA-256 values are carried in the declaration. The complete 114-file source-native cohort includes the product and original dependency closure; the distribution contribution/provider/selection supply the maintained installed route. The portable cohort is not by itself an installed package.
+The source register selects 53 stable complete product/operating/receiving/distribution identities with 54 immutable editions. The original 45 records are preserved, including the prior contribution edition; eight new MCP records and the contribution's new selected edition are measured at PR1956. Their original Git blobs, UTF-8 byte lengths and SHA-256 values are carried in the declaration. The complete 114-file source-native cohort includes the product and original dependency closure; the distribution contribution/provider/selection supply the maintained installed route. The portable cohort is not by itself an installed package.
 
 ## Commission the customer before a funded operation
 
@@ -95,12 +95,30 @@ Before calling any application, report, presentation, export or attachment ready
 
 These are recipient-use requirements for the existing product, not a new broad test suite or a replacement acceptance authority.
 
+## Continue the original workspace through Merchant MCP
+
+After the original populated Econdb course, use the complete maintained Merchant checkout at 8978841ab610310541cc75b98c3d26505ca7e7a0 and the actual completed analysis ID. Preserve the same business workspace and receiving owner:
+
+~~~sh
+node stellar-forge/mcp-merchant-operator/receiving/econdb-workspace.mjs \
+  --workspace /absolute/original-econdb-workspace \
+  --analysis ACTUAL_COMPLETED_ANALYSIS_UUID \
+  --out /absolute/original-course/econdb-mcp \
+  --source-commit 8978841ab610310541cc75b98c3d26505ca7e7a0
+~~~
+
+The complete [MCP guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/8978841ab610310541cc75b98c3d26505ca7e7a0/stellar-forge/mcp-merchant-operator/ECONDB_WORKSPACE.md) explains the host-owned workspace/input/destination configuration, closed tool arguments, original UUID/revision replay, immutable file leases, checkpointed full-directory download and independent receive. The program retains one new original analysis request, uses the actual maintained HTTP client and closes only its own loopback endpoint. Its exact completed receipt can reopen without replaying commands or replacing an independently advanced workspace.
+
+The native result remains pending rendered attachment review until the producing operator opens the independent workspace at desktop and390px, uses the actual controls, opens every outgoing report/data/source/project/archive, views the captured images, then cold-reopens and continues the same application. The 114-file source-native Econdb packet remains its original closure; use the complete Merchant distribution for this additional host chapter.
+
+For the existing publisher's next selection, preserve all45 original identities and editions. Add the eight measured MCP identities and select the contribution's additional PR1956 edition. The original 1259→1304 source receiving below remains an actual historical observation; it is not re-labelled as an execution of this successor. Read back the current complete chapter/declaration pair and continue the original cumulative receiver with the exact new tuple.
+
 ## Join the existing canonical publisher
 
 The new authored files are:
 
 - stellar-forge/developer-site/GRANT_ECONDB_MARITIME.md — one complete registered H2, including its source appendix.
-- stellar-forge/developer-site/grant-products/econdb-maritime.json — one stable declaration with all 45 measured sources.
+- stellar-forge/developer-site/grant-products/econdb-maritime.json — one stable declaration with all 53 measured source identities and 54 immutable editions.
 - stellar-forge/developer-site/GRANT_ECONDB_RECEIVING.md — this whole operating/publisher course.
 
 Receive the chapter once at its exact H2 in the complete current canonical manuscript. Keep all current answers, economic/finance/threat/customer chapters and other product registrations. Do not replace the canonical document with this single chapter. A later Econdb amendment replaces its own full H2 and preserves everything else.
@@ -114,7 +132,7 @@ The same publisher produces its original four complete outputs:
 | dist/grant.html | Existing complete application reader with its Econdb companion/source route |
 | dist/grant-data/application.md | Whole application with existing economic and adoption terms retained |
 | dist/grant-data/product-and-finance.md | This full H2 once, including all subsections and source links |
-| dist/grant-data/source-index.json | 45 new stable measured records; all prior records retained |
+| dist/grant-data/source-index.json | Preserve the original 45 identities; receive eight new identities and one additional selected contribution edition, retaining all prior editions |
 
 The real maintained pure receiver was executed against the retained 1,259-source index at 63f8a4347656defb04b5d5311bf07f9a439010b0. It received all 45 new records, yielding 1,304; every preceding record remained byte-equivalent, and identical re-receiving was unchanged. Its chapter selector reported this full H2 present once. Those numbers describe that exact received basis, not a claim that a later cumulative edition has only 1,304 sources. Use fresh current source for actual composition and preserve later concurrent additions.
 

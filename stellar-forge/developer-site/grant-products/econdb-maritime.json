@@ -681,13 +681,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/contributions/econdb-maritime.json",
-      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "commit": "8978841ab610310541cc75b98c3d26505ca7e7a0",
       "editions": [
         {
           "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
           "git_blob": "42c20beabdbd20fb8f764b586fd2d23711b16425",
           "bytes": 8348,
           "sha256": "ff04cee3d1e7897b2376b4d85716b2279c62e6f2f50bb363b1b6cad579a586ee"
+        },
+        {
+          "commit": "8978841ab610310541cc75b98c3d26505ca7e7a0",
+          "git_blob": "c1027b397b3eb456943ae9e929ff0f288032dda7",
+          "bytes": 9506,
+          "sha256": "ec5b9d14f6668f33545dbc31666fa163386ab5d5033c4c796163adfe670cdd9b"
         }
       ]
     },
@@ -720,6 +726,134 @@
           "git_blob": "e6eb5b7d35e5d5d982f8494e2d1a4b1f2e1920dd",
           "bytes": 10128,
           "sha256": "d35927c424335d040b13a55889349edf3a8b3bf90b1730469a4fecea56ff7cac"
+        }
+      ]
+    },
+    {
+      "id": "econdb-mcp-catalog-econdb-workspace-mjs",
+      "label": "Econdb Merchant MCP catalog/econdb-workspace.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/catalog/econdb-workspace.mjs",
+      "commit": "8978841ab610310541cc75b98c3d26505ca7e7a0",
+      "editions": [
+        {
+          "commit": "8978841ab610310541cc75b98c3d26505ca7e7a0",
+          "git_blob": "c3ab2e9e77ea5adc8e3f98b7449f7ca7132363b3",
+          "bytes": 5413,
+          "sha256": "322c0ba5d0a130c009611885296cd35bebbb076fa935a09eccbd085baaa4c335"
+        }
+      ]
+    },
+    {
+      "id": "econdb-mcp-providers-econdb-workspaces-mjs",
+      "label": "Econdb Merchant MCP providers/econdb-workspaces.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/providers/econdb-workspaces.mjs",
+      "commit": "8978841ab610310541cc75b98c3d26505ca7e7a0",
+      "editions": [
+        {
+          "commit": "8978841ab610310541cc75b98c3d26505ca7e7a0",
+          "git_blob": "6da9af8dc223f6069edc63004d70b6f60dbe5c37",
+          "bytes": 2312,
+          "sha256": "16e61c49250bb451aa52f029d51de5a6aa64bd892cf22b808c30a7658833818a"
+        }
+      ]
+    },
+    {
+      "id": "econdb-mcp-econdb-workspace-mjs",
+      "label": "Econdb Merchant MCP econdb-workspace.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/econdb-workspace.mjs",
+      "commit": "8978841ab610310541cc75b98c3d26505ca7e7a0",
+      "editions": [
+        {
+          "commit": "8978841ab610310541cc75b98c3d26505ca7e7a0",
+          "git_blob": "c12d095445e61b49090a324c62672cd12c4582a6",
+          "bytes": 20598,
+          "sha256": "c910c5576ce087103402925a1f5eefc9315d7f9dbfc41162364c50608cb40b52"
+        }
+      ]
+    },
+    {
+      "id": "econdb-mcp-econdb-download-mjs",
+      "label": "Econdb Merchant MCP econdb-download.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/econdb-download.mjs",
+      "commit": "8978841ab610310541cc75b98c3d26505ca7e7a0",
+      "editions": [
+        {
+          "commit": "8978841ab610310541cc75b98c3d26505ca7e7a0",
+          "git_blob": "f7df3bcf06788c377e94be65190fdc8ca9c61b0c",
+          "bytes": 4095,
+          "sha256": "8f9444c6d80d6fcbc14cde3868a02794bae6c0ce587ebd2642b4e44a57f051ef"
+        }
+      ]
+    },
+    {
+      "id": "econdb-mcp-econdb-download-d-mts",
+      "label": "Econdb Merchant MCP econdb-download.d.mts",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/econdb-download.d.mts",
+      "commit": "8978841ab610310541cc75b98c3d26505ca7e7a0",
+      "editions": [
+        {
+          "commit": "8978841ab610310541cc75b98c3d26505ca7e7a0",
+          "git_blob": "f3017fb536617dfa88667f737aa83de01c53c6ea",
+          "bytes": 1388,
+          "sha256": "3d10cccf1fcd4b18418c7920ba9736ab1553fd907b543882c5397512cb2e45ae"
+        }
+      ]
+    },
+    {
+      "id": "econdb-mcp-econdb-cli-mjs",
+      "label": "Econdb Merchant MCP econdb-cli.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/econdb-cli.mjs",
+      "commit": "8978841ab610310541cc75b98c3d26505ca7e7a0",
+      "editions": [
+        {
+          "commit": "8978841ab610310541cc75b98c3d26505ca7e7a0",
+          "git_blob": "62fb6efbbd4d3a841eba965c705db673daa2aa08",
+          "bytes": 2990,
+          "sha256": "7a630565a9c621c65353dc88234c6e0a564ce9b2ce2570c23e451271a8e38edc"
+        }
+      ]
+    },
+    {
+      "id": "econdb-mcp-receiving-econdb-workspace-mjs",
+      "label": "Econdb Merchant MCP receiving/econdb-workspace.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/receiving/econdb-workspace.mjs",
+      "commit": "8978841ab610310541cc75b98c3d26505ca7e7a0",
+      "editions": [
+        {
+          "commit": "8978841ab610310541cc75b98c3d26505ca7e7a0",
+          "git_blob": "609fc9690a480aeb9af2095c4cfbbdaa70c85699",
+          "bytes": 11108,
+          "sha256": "6cf187f23295022af22736081a72a15cc3c509462152863c0fe461c4f5bea0b0"
+        }
+      ]
+    },
+    {
+      "id": "econdb-mcp-econdb-workspace-md",
+      "label": "Econdb Merchant MCP ECONDB_WORKSPACE.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/ECONDB_WORKSPACE.md",
+      "commit": "8978841ab610310541cc75b98c3d26505ca7e7a0",
+      "editions": [
+        {
+          "commit": "8978841ab610310541cc75b98c3d26505ca7e7a0",
+          "git_blob": "10984d3d130696c529de1c640ed496af30d7d5c6",
+          "bytes": 19566,
+          "sha256": "b21c058f1ca63efd718b0ffe691dd332440f241809e615f91251f8aaf243c96d"
         }
       ]
     }
