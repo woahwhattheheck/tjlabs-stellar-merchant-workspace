@@ -110,6 +110,9 @@ class OperatorServer(ThreadingHTTPServer):
 
 class OperatorHandler(BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
+    # Full-result clients page over one local persistent connection. Avoid the
+    # delayed-ACK/Nagle pause between the separately written headers and body.
+    disable_nagle_algorithm = True
 
     def log_message(self, *_):
         pass

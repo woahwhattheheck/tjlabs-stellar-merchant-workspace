@@ -276,6 +276,7 @@ class ManagedServer(OperatorServer):
 class ManagedHandler(OperatorHandler):
     # StreamRequestHandler applies this before reading any request line/header.
     timeout = 60
+    disable_nagle_algorithm = True
     def authorized(self):
         supplied = self.headers.get('Authorization', '')
         instance = self.headers.get('X-Preparation-Instance-ID')

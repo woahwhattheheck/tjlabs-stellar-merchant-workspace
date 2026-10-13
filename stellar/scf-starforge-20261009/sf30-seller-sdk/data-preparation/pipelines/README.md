@@ -20,7 +20,7 @@ Open the exact `http://127.0.0.1:PORT` address printed by the operator. The appl
 Build the complete offline archive from maintained source with `node package.mjs ./dist`. With the supplied npm archive, installation requires no network service:
 
 ```sh
-npm install --offline --ignore-scripts ./tokenjunkielabs-data-preparation-pipelines-0.1.0.tgz
+npm install --offline --ignore-scripts ./tokenjunkielabs-data-preparation-pipelines-0.2.0.tgz
 npx --no-install starforge-data-pipelines --workspace ./project init
 npx --no-install starforge-data-pipelines --workspace ./project serve
 ```

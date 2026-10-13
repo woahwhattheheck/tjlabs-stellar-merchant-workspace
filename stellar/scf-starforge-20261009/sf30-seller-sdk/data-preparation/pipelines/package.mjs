@@ -23,7 +23,7 @@ try {
   await cp(join(here,'README.md'),join(staging,'README.md'));
   await cp(join(here,'LICENSE'),join(staging,'LICENSE'));
   const metadata={
-    name:'@tokenjunkielabs/data-preparation-pipelines',version:'0.1.0',type:'module',
+    name:'@tokenjunkielabs/data-preparation-pipelines',version:'0.2.0',type:'module',
     description:'Saved multistage dataset preparation, complete native recovery and editable customer handover.',
     license:'MIT',engines:{node:'>=22'},
     bin:{'starforge-data-pipelines':'pipelines/cli.mjs'},
