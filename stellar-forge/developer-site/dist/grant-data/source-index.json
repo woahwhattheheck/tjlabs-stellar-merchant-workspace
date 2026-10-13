@@ -15818,24 +15818,24 @@
     },
     {
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "5cb3a3e544701b86a6db3c7640684fd6920ca128",
+      "commit": "0fd9bfc514e2aeba1bcbb088911bf8364ae8aa0a",
       "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/AUDIT_EXCHANGE.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5cb3a3e544701b86a6db3c7640684fd6920ca128/stellar/scf_2026/sf49_data_commissioning/installation-workorders/AUDIT_EXCHANGE.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0fd9bfc514e2aeba1bcbb088911bf8364ae8aa0a/stellar/scf_2026/sf49_data_commissioning/installation-workorders/AUDIT_EXCHANGE.md",
       "source_kind": "source-file",
       "id": "audit-exchange-customer-installation",
       "kind": "published-source",
       "label": "Complete customer Installation, rendered receiving and engineering handover",
       "source_registration": "audit-exchange",
-      "git_blob": "fac620389bc70028fd789da3419f468d8375fc07",
-      "sha256": "97e69e16db9ef5471dad4b295bddda7544f3e19c501c96716372ded09734003c",
-      "bytes": 23113,
+      "git_blob": "be45014c062ebb8b60f0633ade4a9dcb0c761230",
+      "sha256": "f109c09f8fbda8b5dee25e3d8970c6f4aae01dd7f474ef41a9be821ff83df371",
+      "bytes": 27572,
       "product_byte_identity": {
         "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-        "commit": "5cb3a3e544701b86a6db3c7640684fd6920ca128",
+        "commit": "0fd9bfc514e2aeba1bcbb088911bf8364ae8aa0a",
         "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/AUDIT_EXCHANGE.md",
-        "git_blob": "fac620389bc70028fd789da3419f468d8375fc07",
-        "sha256": "97e69e16db9ef5471dad4b295bddda7544f3e19c501c96716372ded09734003c",
-        "bytes": 23113
+        "git_blob": "be45014c062ebb8b60f0633ade4a9dcb0c761230",
+        "sha256": "f109c09f8fbda8b5dee25e3d8970c6f4aae01dd7f474ef41a9be821ff83df371",
+        "bytes": 27572
       }
     },
     {
@@ -19855,11 +19855,11 @@
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "7cc07aaa2d555fd217995479717656ebf254abc3",
-    "bytes": 1454038,
-    "sha256": "d5d5fcccf1c59e3353dd1ba61e341bd43dc71d503e6a6a4d11b2d59ffa2b9861",
+    "git_blob": "e39b193b4521b9e7e52283dd6fbec5f34a6cce57",
+    "bytes": 1454768,
+    "sha256": "c87aaf07459f8416b528a7f643cc69fa561b0885e3254f86e214b174354954fb",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
-    "prior_git_blob": "b1731368a179aa62a05da53d1f501ac87d3968a5"
+    "prior_git_blob": "7cc07aaa2d555fd217995479717656ebf254abc3"
   },
   "narrative_source": {
     "basis": "Original manuscript author's complete October 12 reviewer answer",
@@ -20344,9 +20344,9 @@
           ],
           "definition": {
             "path": "grant-products/audit-exchange.json",
-            "bytes": 8067,
-            "sha256": "b62a311486743c859205cd2ee0d3b5a8cada9066e2e083e698889c638bb3b405",
-            "git_blob": "6d4afbc0267deac59b24fd0052b562c810bba107"
+            "bytes": 8331,
+            "sha256": "a034308323ee6e77a70a81914147c003fd473b34e2be13a6c477e6b7ffa62c5c",
+            "git_blob": "6843c8250f89b1a1b7fac6a81bb24b64c578bd37"
           }
         },
         {
@@ -22267,8 +22267,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "d5d5fcccf1c59e3353dd1ba61e341bd43dc71d503e6a6a4d11b2d59ffa2b9861",
-    "source_bytes": 1454038,
+    "source_sha256": "c87aaf07459f8416b528a7f643cc69fa561b0885e3254f86e214b174354954fb",
+    "source_bytes": 1454768,
     "assets": [
       "/grant-companion-editions.mjs",
       "/grant-companion-reading.mjs",
