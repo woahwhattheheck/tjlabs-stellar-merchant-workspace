@@ -1,10 +1,18 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Commerce integration receiving</title>
 <style>
-:root{color-scheme:light}*{box-sizing:border-box}body{font:15px system-ui,sans-serif;line-height:1.55;color:#1f2933;background:#f5f6f7;margin:0}main{max-width:1220px;margin:auto;padding:28px}header,panel,section{display:block;background:white;border:1px solid #d2d7dc;border-radius:8px;padding:24px;margin-bottom:18px}h1{font-size:30px;margin:0 0 8px}h2{font-size:21px}h3{font-size:17px}p{max-width:95ch}small{color:#525d67}label{display:block;margin:12px 0}input,select,textarea,button{font:inherit}input,select,textarea{display:block;width:100%;padding:9px;border:1px solid #a9b1ba;border-radius:4px;background:white}textarea#input{font:12px ui-monospace,monospace;min-height:280px}button{border:1px solid #364759;border-radius:4px;padding:9px 14px;color:#fff;background:#263c51;cursor:pointer;margin:4px 4px 4px 0}button:disabled{opacity:.5;cursor:default}.row{display:grid;grid-template-columns:1fr 1fr;gap:20px}.notice{padding:12px;border-left:4px solid #54778b;background:#edf3f6}.error{color:#a01520}#status{min-height:28px;font-weight:600}fieldset{border:1px solid #c4ccd3;margin:16px 0;padding:16px;border-radius:4px}legend{font-weight:650}iframe{width:100%;height:620px;border:1px solid #c4ccd3;background:#fff}code{overflow-wrap:anywhere}@media(max-width:750px){main{padding:12px}.row{grid-template-columns:1fr}header,section{padding:16px}}
+:root{color-scheme:light}*{box-sizing:border-box}body{font:15px system-ui,sans-serif;line-height:1.55;color:#222;background:#f5f5f5;margin:0}main{max-width:1220px;margin:auto;padding:28px}header,panel,section{display:block;background:white;border:1px solid #d4d4d4;border-radius:8px;padding:24px;margin-bottom:18px}h1{font-size:30px;margin:0 0 8px}h2{font-size:21px}h3{font-size:17px}p{max-width:95ch}small{color:#555}label{display:block;margin:12px 0}input,select,textarea,button{font:inherit}input,select,textarea{display:block;width:100%;padding:9px;border:1px solid #aaa;border-radius:4px;background:white}textarea#input{font:12px ui-monospace,monospace;min-height:280px}button{border:1px solid #333;border-radius:4px;padding:9px 14px;color:#fff;background:#333;cursor:pointer;margin:4px 4px 4px 0}button:disabled{opacity:.5;cursor:default}.row{display:grid;grid-template-columns:1fr 1fr;gap:20px}.notice{padding:12px;border-left:4px solid #777;background:#f0f0f0}.error{color:#222;font-weight:700}#status{min-height:28px;font-weight:600}fieldset{border:1px solid #ccc;margin:16px 0;padding:16px;border-radius:4px}legend{font-weight:650}iframe{width:100%;height:620px;border:1px solid #ccc;background:#fff}code{overflow-wrap:anywhere}.saved-copy{border-top:1px solid #ddd;padding:14px 0}.saved-copy p{margin:4px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px ui-monospace,monospace}#storage-status{font-weight:600}summary{cursor:pointer}@media(max-width:750px){main{padding:12px}.row{grid-template-columns:1fr}header,section{padding:16px}}
 </style></head><body><main>
 <header><h1>Commerce integration receiving</h1><p>Compare one selected commerce export with its downstream CRM or ERP export. Keep exact amounts, duplicate keys, scope limitations and reviewer decisions visible.</p>
-<p class="notice">This page runs locally. It makes no account, order, payment or customer identity changes. Its initial example is authored receiving data. Save the complete input and review before closing; the existing Merchant Support case remains the persistent work record.</p></header>
+<p class="notice">This page runs locally. It makes no account, order, payment or customer identity changes. Its initial example is authored receiving data. Working copies keep unfinished local work and complete downloads; the validated input and review remain the receiving records. The existing Merchant Support case remains the persistent work record.</p></header>
+<section id="working-copies" aria-labelledby="working-title"><h2 id="working-title">Working copies</h2>
+<p>A working copy keeps the complete input text, including unfinished JSON, the last analyzed source and recorded review, and every current review field. It is separate from the validated input and review files used by the original receiving commands.</p>
+<label>Working copy name<input id="copy-name" value="Commerce reconciliation" maxlength="300"></label>
+<button id="save-copy">Save working copy locally</button><button id="fork-copy">Save as a separate copy</button><button id="download-copy">Download complete working copy</button>
+<label>Open complete working copy<input id="open-copy" type="file" accept=".json,application/json"></label>
+<p id="copy-status" role="status"></p><p id="storage-status" role="status"></p>
+<details id="saved-copies"><summary>Saved local window copies</summary><p>Each window owns a separate copy. Reloading reopens its last committed copy into a new window copy. Opening a saved copy or file first downloads the preceding work; other copies remain unchanged.</p>
+<button id="refresh-copies">Refresh saved copies</button><div id="copy-list"></div></details></section>
 <section><h2>1. Select the original exports</h2><label>Open complete retained input JSON<input id="open-input" type="file" accept=".json,application/json"></label>
 <div class="row"><label>Replace source CSV<input id="source-file" type="file" accept=".csv,text/csv"></label><label>Replace destination CSV<input id="destination-file" type="file" accept=".csv,text/csv"></label></div>
 <p>Edit the selected common time scope, completeness, source references, actual capture times, amount units and column mappings in this complete input. Use explicit currency precision and status pairs. Customer comparison checks only the selected keys; it does not resolve a person's identity.</p>
@@ -714,47 +722,319 @@ const INITIAL_INPUT={"schema":"stellar-forge.commerce-export-reconciliation.v1",
 
 const $=id=>document.getElementById(id),hash=originalHash.sha256Utf8;
 const engine=createCommerceReconciliation({sha256Utf8:hash});
-let current=null,currentInput=null,dirty=false,reviewDirty=false,busy=false;
+const COPY_SCHEMA='stellar-forge.commerce-reconciliation-working-copy.v1';
+const COPY_DATABASE='stellar-forge.commerce-reconciliation-working-copies.v1';
+const COPY_POINTER=COPY_DATABASE+':last-committed';
+const MAX_COPY_BYTES=512*1024*1024;
+const clone=value=>JSON.parse(JSON.stringify(value));
 const json=value=>JSON.stringify(value,null,2)+'\n';
+const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
+const uuid=()=>crypto.randomUUID();
+const now=()=>new Date().toISOString();
+const parseJson=text=>JSON.parse(text.charCodeAt(0)===0xfeff?text.slice(1):text);
+const ordered=value=>Array.isArray(value)?value.map(ordered):object(value)?Object.fromEntries(Object.keys(value).sort().map(key=>[key,ordered(value[key])])):value;
+const same=(left,right)=>JSON.stringify(ordered(left))===JSON.stringify(ordered(right));
+let current=null,currentInput=null,recordedReview=null,reviewDocument=null,inputFilename='';
+let busy=false,initializing=true,dbPromise=null,queue=Promise.resolve(),pendingWrites=0,saveTimer=null;
+let editVersion=0,exportedVersion=-1,storageError='',pointerWarning='',lastChange=now();
+let slot={id:uuid(),revision:0,createdAt:lastChange,savedVersion:-1,failed:false,sourceCopy:null};
 const status=(message,error=false)=>{$('status').textContent=message;$('status').className=error?'error':'';};
-function controls(){for(const node of document.querySelectorAll('button,input,select,textarea'))node.disabled=busy;for(const id of ['download-report','download-csv','download-review'])$(id).disabled=busy||!current;}
-function forget(message){current=null;currentInput=null;reviewDirty=false;$('summary').textContent='No analyzed selection.';$('issues').replaceChildren();$('preview').removeAttribute('srcdoc');controls();status(message);}
-function selectSource(){return !reviewDirty||window.confirm('This changes the selected source and clears unexported review edits. Continue?');}
-async function action(fn){if(busy)return;busy=true;controls();try{await fn();}catch(error){status(error.message,true);}finally{busy=false;controls();}}
-function parsed(){const value=JSON.parse($('input').value);if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Use the complete original input object.');return value;}
-function download(name,content,type='application/json'){const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-function exactCurrent(){const input=parsed(),report=engine.analyze(input);if(!current||report.input_sha256!==current.input_sha256)throw Error('The input changed. Analyze the current source before recording or downloading this review.');return input;}
 function append(parent,tag,text,attrs={}){const node=document.createElement(tag);node.textContent=text;for(const [key,value] of Object.entries(attrs))node.setAttribute(key,value);parent.append(node);return node;}
-function show(report){current=report;currentInput=parsed();$('summary').textContent=report.counts.source+' source rows · '+report.counts.destination+' destination rows · '+report.counts.matched+' exact matches · '+report.counts.issues+' findings. '+report.state;
-  $('issues').replaceChildren();for(const issue of report.issues){const box=append($('issues'),'fieldset',''),legend=append(box,'legend',issue.key||'(missing key)');legend.append(' · '+issue.kind);
+function download(name,content,type='application/json'){const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function readableDate(value){const date=new Date(value);return Number.isFinite(date.valueOf())?date.toLocaleString():value;}
+function controls(){
+  for(const node of document.querySelectorAll('button,input,select,textarea'))node.disabled=busy||initializing;
+  for(const id of ['download-report','download-csv','download-review','open-review'])$(id).disabled=busy||initializing||!current;
+  $('download-copy').disabled=false;
+  $('copy-status').textContent=(initializing?'Opening local working copy… ':pendingWrites?'Saving complete working copy… ':'')+
+    'Copy '+slot.id+' · local revision '+slot.revision+(slot.savedVersion===editVersion?' · saved':' · current fields available for download');
+  $('storage-status').textContent=storageError?'Local storage: '+storageError+' Your current fields remain available in Download complete working copy. Use Save as a separate copy to retain a new copy without replacing another window’s work.':pointerWarning;
+}
+function rawReview(){
+  return {actor:$('actor').value,observedAt:$('observed').value,reference:$('review-reference').value,
+    issues:[...$('issues').querySelectorAll('[data-issue]')].map(select=>{
+      const box=select.closest('fieldset');
+      return {issueId:select.dataset.issue,outcome:select.value,note:box.querySelector('[data-note]').value,reference:box.querySelector('[data-reference]').value};
+    })};
+}
+function snapshot(){
+  return {schema:COPY_SCHEMA,id:slot.id,revision:slot.revision,name:$('copy-name').value,
+    createdAt:slot.createdAt,updatedAt:lastChange,sourceCopy:clone(slot.sourceCopy),
+    inputText:$('input').value,inputFilename,analyzedInput:clone(currentInput),recordedReview:clone(recordedReview),
+    reviewDocument:clone(reviewDocument),reviewDraft:rawReview()};
+}
+function downloadCopy(name='commerce-working-copy.json'){
+  download(name,json(snapshot()));exportedVersion=editVersion;
+}
+function checkString(value,label,maximum=MAX_COPY_BYTES){if(typeof value!=='string'||value.length>maximum)throw Error('Keep the complete '+label+'.');}
+function checkTime(value,label){checkString(value,label,100);if(!Number.isFinite(Date.parse(value)))throw Error('Keep the original '+label+'.');}
+function checkOrigin(value){
+  if(value===null)return;
+  if(!object(value))throw Error('Keep the original working-copy lineage.');
+  checkString(value.id,'source copy identity',200);
+  if(!Number.isSafeInteger(value.revision)||value.revision<0)throw Error('Keep the source copy revision.');
+  checkTime(value.createdAt,'source copy creation time');checkTime(value.updatedAt,'source copy save time');
+}
+function validateCopy(value){
+  if(!object(value)||value.schema!==COPY_SCHEMA)throw Error('Open a complete Commerce Reconciliation working copy.');
+  checkString(value.id,'copy identity',200);if(!value.id)throw Error('Keep the original copy identity.');
+  if(!Number.isSafeInteger(value.revision)||value.revision<0)throw Error('Keep the original copy revision.');
+  checkString(value.name,'copy name',300);checkTime(value.createdAt,'copy creation time');checkTime(value.updatedAt,'copy update time');checkOrigin(value.sourceCopy);
+  checkString(value.inputText,'input text');checkString(value.inputFilename,'input filename',1000);
+  if(!object(value.reviewDraft)||!Array.isArray(value.reviewDraft.issues))throw Error('Keep every unfinished review field.');
+  for(const key of ['actor','observedAt','reference'])checkString(value.reviewDraft[key],'review '+key);
+  let report=null;
+  if(value.analyzedInput!==null){
+    if(!object(value.analyzedInput))throw Error('Keep the complete original analyzed input.');
+    report=value.recordedReview===null?engine.analyze(value.analyzedInput):engine.review(value.analyzedInput,value.recordedReview);
+  }else if(value.recordedReview!==null||value.reviewDocument!==null)throw Error('Keep the original analyzed input with its recorded review.');
+  if(value.reviewDocument!==null){
+    if(!object(value.reviewDocument))throw Error('Keep the complete original review document.');
+    checkString(value.reviewDocument.filename,'review filename',1000);checkString(value.reviewDocument.text,'original review text');
+    engine.review(value.analyzedInput,parseJson(value.reviewDocument.text));
+  }
+  const ids=new Set((report?.issues||[]).map(issue=>issue.id)),seen=new Set();
+  if(value.reviewDraft.issues.length!==ids.size)throw Error('Keep all original issue fields in the working copy.');
+  for(const row of value.reviewDraft.issues){
+    if(!object(row)||!ids.has(row.issueId)||seen.has(row.issueId))throw Error('An unfinished choice must retain its original analyzed issue.');
+    seen.add(row.issueId);for(const key of ['outcome','note','reference'])checkString(row[key],'issue '+key);
+  }
+  // Only the retained analyzed source is validated. The current input text and raw
+  // review fields can remain incomplete until the operator chooses a native export.
+  return {value:clone(value),report};
+}
+function openDatabase(){
+  if(dbPromise)return dbPromise;
+  dbPromise=new Promise((resolve,reject)=>{
+    let request,settled=false;
+    try{request=indexedDB.open(COPY_DATABASE,1);}catch(error){reject(error);return;}
+    request.onupgradeneeded=()=>{const db=request.result;db.createObjectStore('copies',{keyPath:'id'});db.createObjectStore('summaries',{keyPath:'id'});};
+    request.onerror=()=>{settled=true;reject(request.error||Error('The local working-copy database could not be opened.'));};
+    request.onblocked=()=>{settled=true;reject(Error('Another browser window is holding an older working-copy database.'));};
+    request.onsuccess=()=>{const db=request.result;if(settled){db.close();return;}db.onversionchange=()=>{db.close();dbPromise=null;};resolve(db);};
+  }).catch(error=>{dbPromise=null;throw error;});
+  return dbPromise;
+}
+async function readCopy(id){
+  const db=await openDatabase();return new Promise((resolve,reject)=>{
+    const tx=db.transaction('copies','readonly'),request=tx.objectStore('copies').get(id);let value;
+    request.onsuccess=()=>{value=request.result||null;};
+    tx.oncomplete=()=>resolve(value);tx.onerror=tx.onabort=()=>reject(tx.error||request.error||Error('The original local copy could not be read.'));
+  });
+}
+async function writeCopy(value,expected){
+  const db=await openDatabase();return new Promise((resolve,reject)=>{
+    const tx=db.transaction(['copies','summaries'],'readwrite'),copies=tx.objectStore('copies'),request=copies.get(value.id);
+    let failure=null;
+    request.onsuccess=()=>{
+      try{
+        const previous=request.result;
+        if((previous?.revision??0)!==expected||(expected===0&&previous)){
+          failure=Error('This saved copy changed in another window. Its newer revision was retained.');tx.abort();return;
+        }
+        copies.put(value);
+        tx.objectStore('summaries').put({id:value.id,revision:value.revision,name:value.name,createdAt:value.createdAt,updatedAt:value.updatedAt,
+          sourceCopy:value.sourceCopy});
+      }catch(error){failure=error;tx.abort();}
+    };
+    tx.oncomplete=()=>resolve();
+    tx.onerror=tx.onabort=()=>reject(failure||tx.error||request.error||Error('The complete working copy could not be committed.'));
+  });
+}
+function fault(error,target=slot){
+  target.failed=true;if(target===slot){storageError=error?.message||String(error);controls();}
+}
+function persist(){
+  if(saveTimer!==null){clearTimeout(saveTimer);saveTimer=null;}
+  const target=slot,value=snapshot(),version=editVersion;
+  pendingWrites++;controls();
+  queue=queue.then(async()=>{
+    if(target.failed)return;
+    const next={...value,revision:target.revision+1};
+    try{
+      await writeCopy(next,target.revision);
+      target.revision=next.revision;target.savedVersion=version;
+      try{sessionStorage.setItem(COPY_POINTER,target.id);pointerWarning='';}
+      catch{pointerWarning='This copy is saved locally, but this browser cannot remember the last selected copy. Open it from Saved local window copies after a reload.';}
+      if(target===slot)storageError='';
+    }catch(error){fault(error,target);}
+  }).finally(()=>{pendingWrites--;controls();});
+  return queue;
+}
+function changed(){
+  editVersion++;lastChange=now();
+  if(saveTimer!==null)clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{saveTimer=null;persist();},180);
+  controls();
+}
+async function flush(){if(saveTimer!==null)persist();await queue;}
+async function refreshCopies(){
+  const db=await openDatabase(),rows=await new Promise((resolve,reject)=>{
+    const tx=db.transaction('summaries','readonly'),request=tx.objectStore('summaries').getAll();let result=[];
+    request.onsuccess=()=>{result=request.result;};tx.oncomplete=()=>resolve(result);tx.onerror=tx.onabort=()=>reject(tx.error||request.error||Error('Saved copies could not be listed.'));
+  });
+  $('copy-list').replaceChildren();
+  if(!rows.length){append($('copy-list'),'p','No local working copies have been saved.');return;}
+  for(const row of rows.sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt))){
+    const box=append($('copy-list'),'article','',{'class':'saved-copy'});
+    append(box,'strong',row.name||'Unnamed working copy');
+    append(box,'p',readableDate(row.updatedAt)+' · revision '+row.revision+(row.id===slot.id?' · this window':''));
+    const detail=append(box,'details','');append(detail,'summary','Original copy details');
+    append(detail,'pre',json(row));
+    const button=append(box,'button','Open as a separate working copy',{'data-open-copy':row.id});button.disabled=busy||initializing;
+  }
+}
+function fieldsFromReport(report){
+  const review=report?.review;
+  return {actor:review?.actor??$('actor').value,observedAt:review?.observed_at??$('observed').value,reference:review?.reference??$('review-reference').value,
+    issues:(report?.issues||[]).map(issue=>{const existing=review?.decisions.find(row=>row.issue_id===issue.id);
+      return {issueId:issue.id,outcome:existing?.outcome??'',note:existing?.note??'',reference:existing?.reference??''};})};
+}
+function show(report,fields){
+  current=report;$('issues').replaceChildren();
+  $('actor').value=fields.actor;$('observed').value=fields.observedAt;$('review-reference').value=fields.reference;
+  if(!report){$('summary').textContent='No analyzed selection.';$('preview').removeAttribute('srcdoc');controls();return;}
+  $('summary').textContent=report.counts.source+' source rows · '+report.counts.destination+' destination rows · '+report.counts.matched+' exact matches · '+report.counts.issues+' findings. '+report.state+'. The report shows the last analyzed or recorded result; the fields below are the current working review.';
+  const edits=new Map(fields.issues.map(row=>[row.issueId,row]));
+  for(const issue of report.issues){
+    const box=append($('issues'),'fieldset',''),legend=append(box,'legend',issue.key||'(missing key)');legend.append(' · '+issue.kind);
     append(box,'p',issue.details.join('; '));append(box,'small','Source CSV records '+(issue.source_records.join(', ')||'—')+' · destination '+(issue.destination_records.join(', ')||'—'));
     const label=append(box,'label','Disposition'),select=append(label,'select','',{'data-issue':issue.id,'aria-label':'Disposition '+issue.id});
-    for(const [value,text] of [['','Leave pending'],['requires_repair','Requires repair'],['accepted_difference','Accepted difference'],['not_applicable','Not applicable']]){const option=append(select,'option',text);option.value=value;}
+    const options=[['','Leave pending'],['requires_repair','Requires repair'],['accepted_difference','Accepted difference'],['not_applicable','Not applicable']];
+    const edit=edits.get(issue.id)||{outcome:'',note:'',reference:''};
+    if(!options.some(([value])=>value===edit.outcome))options.push([edit.outcome,'Retained unfinished choice · '+edit.outcome]);
+    for(const [value,text] of options){const option=append(select,'option',text);option.value=value;}
     const noteLabel=append(box,'label','Reason'),note=append(noteLabel,'textarea','',{'data-note':issue.id,rows:'2','aria-label':'Reason '+issue.id});
     const referenceLabel=append(box,'label','Original authority/reference'),ref=append(referenceLabel,'input','',{'data-reference':issue.id,'aria-label':'Reference '+issue.id});
-    const existing=report.review?.decisions.find(d=>d.issue_id===issue.id);if(existing){select.value=existing.outcome;note.value=existing.note;ref.value=existing.reference;}
+    select.value=edit.outcome;note.value=edit.note;ref.value=edit.reference;
   }
-  if(report.review){$('actor').value=report.review.actor;$('observed').value=report.review.observed_at;$('review-reference').value=report.review.reference;}
   $('preview').srcdoc=engine.reportHtml(report);controls();
 }
-$('input').addEventListener('input',()=>{dirty=true;status('Input edited. Analyze again before recording a review.');});
-$('open-input').addEventListener('change',event=>action(async()=>{const file=event.target.files[0];if(!file)return;if(!selectSource()){event.target.value='';return;}if(file.size>40*1024*1024)throw Error('Select a complete input of at most 40 MiB.');const value=await file.text();JSON.parse(value);$('input').value=value;dirty=true;forget('Original input opened. Check scope, mappings and actual capture times, then analyze.');}));
-for(const side of ['source','destination'])$(side+'-file').addEventListener('change',event=>action(async()=>{const file=event.target.files[0];if(!file)return;if(!selectSource()){event.target.value='';return;}if(file.size>16*1024*1024)throw Error('Each source export is limited to 16 MiB.');const raw=new Uint8Array(await file.arrayBuffer()),content=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(raw);
-  const identity=hash(content);if(identity.bytes!==raw.byteLength||originalHash.sha256Bytes(raw).sha256!==identity.sha256)throw Error('Keep exact UTF-8 content, including any original BOM. Load its full source-bound input instead if the selected reader would change bytes.');
-  const value=parsed();if(!value[side]||typeof value[side]!=='object')throw Error('Use a complete input template before selecting CSV files.');
-  value[side]={...value[side],name:file.name,content,...identity};$('input').value=json(value);dirty=true;forget('Selected '+side+' original bytes. Set the actual export reference/capture time and column mapping.');}));
-$('analyze').addEventListener('click',()=>action(async()=>{const value=parsed(),report=engine.analyze(value);if(current&&current.input_sha256===report.input_sha256){status('This exact input is already analyzed. Existing review edits remain available.');return;}if(!selectSource())return;reviewDirty=false;show(report);dirty=true;status('Analysis uses the exact selected input. No system or customer record has been changed.');}));
-$('download-input').addEventListener('click',()=>action(async()=>{const value=parsed();engine.analyze(value);download('commerce-input.json',json(value));dirty=false;status('Complete source input downloaded. Preserve it with the original exports.');}));
-$('open-review').addEventListener('change',event=>action(async()=>{const file=event.target.files[0];if(!file)return;if(file.size>16*1024*1024)throw Error('Review return exceeds the selected limit.');const input=exactCurrent(),value=JSON.parse(await file.text()),report=engine.review(input,value);show(report);dirty=true;status('Original review reread against its exact input. Pending findings remain pending.');}));
-$('download-review').addEventListener('click',()=>action(async()=>{const input=exactCurrent(),decisions=[];
-  for(const select of document.querySelectorAll('[data-issue]'))if(select.value){const id=select.dataset.issue;decisions.push({issue_id:id,outcome:select.value,note:document.querySelector('[data-note="'+id+'"]').value,reference:document.querySelector('[data-reference="'+id+'"]').value});}
-  const review={schema:REVIEW_SCHEMA,input_sha256:current.input_sha256,actor:$('actor').value,observed_at:$('observed').value,reference:$('review-reference').value,decisions},report=engine.review(input,review);
-  show(report);download('commerce-review.json',json(review));reviewDirty=false;status('Source-bound review downloaded. Use the original CLI to create its complete receiving package and attach it to the saved case.');}));
+function applyCopy(value,report){
+  $('input').value=value.inputText;$('copy-name').value=value.name;
+  currentInput=clone(value.analyzedInput);recordedReview=clone(value.recordedReview);reviewDocument=clone(value.reviewDocument);inputFilename=value.inputFilename;
+  show(report,value.reviewDraft);
+}
+function forkSlot(value){
+  const time=now();slot={id:uuid(),revision:0,createdAt:time,savedVersion:-1,failed:false,
+    sourceCopy:{id:value.id,revision:value.revision,createdAt:value.createdAt,updatedAt:value.updatedAt}};
+  editVersion=0;exportedVersion=-1;lastChange=time;storageError='';
+}
+async function replaceCopy(checked,message){
+  await flush();
+  downloadCopy('commerce-working-copy-before-opening.json');
+  forkSlot(checked.value);applyCopy(checked.value,checked.report);changed();
+  await flush();await refreshCopies().catch(error=>fault(error));
+  status(message);controls();
+}
+async function retainReplacement(next,report,message){
+  await flush();
+  downloadCopy('commerce-working-copy-before-replacement.json');
+  const preceding=snapshot();forkSlot(preceding);applyCopy(next,report);changed();
+  await flush();await refreshCopies().catch(error=>fault(error));status(message);
+}
+async function action(fn){
+  if(busy||initializing)return;busy=true;controls();
+  try{await flush();await fn();}catch(error){status(error?.message||String(error),true);}finally{busy=false;controls();}
+}
+function parsed(){const value=parseJson($('input').value);if(!object(value))throw Error('Use the complete original input object.');return value;}
+function exactCurrent(){
+  const input=parsed(),report=engine.analyze(input);
+  if(!current||report.input_sha256!==current.input_sha256)throw Error('The input changed. Analyze the current source before recording or downloading this review.');
+  return input;
+}
+async function originalText(file,maximum,label){
+  if(file.size>maximum)throw Error(label);
+  return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(new Uint8Array(await file.arrayBuffer()));
+}
+function clearedCopy(inputText,filename){
+  const value=snapshot();value.inputText=inputText;value.inputFilename=filename;value.analyzedInput=null;value.recordedReview=null;value.reviewDocument=null;value.reviewDraft.issues=[];return value;
+}
+$('download-copy').addEventListener('click',()=>{try{downloadCopy();status('Complete working copy downloaded, including unfinished input and review fields.');}catch(error){status(error.message,true);}});
+$('save-copy').addEventListener('click',()=>action(async()=>{
+  await persist();if(slot.failed)throw Error(storageError||'Keep the complete download or save as a separate copy.');
+  await refreshCopies();status('The complete current fields are saved in this window’s local copy.');
+}));
+$('fork-copy').addEventListener('click',()=>action(async()=>{
+  await queue;const value=snapshot();
+  await replaceCopy({value,report:current},'Saved a separate working copy. Its preceding complete download and original local copy remain available.');
+}));
+$('refresh-copies').addEventListener('click',()=>action(async()=>{await refreshCopies();}));
+$('copy-list').addEventListener('click',event=>{
+  const button=event.target.closest('[data-open-copy]');if(!button)return;
+  action(async()=>{const value=await readCopy(button.dataset.openCopy);if(!value)throw Error('That saved copy is no longer available.');await replaceCopy(validateCopy(value),'Opened the selected saved copy as this window’s separate working copy.');});
+});
+$('open-copy').addEventListener('change',event=>{
+  const file=event.target.files[0];if(!file)return;
+  action(async()=>{const text=await originalText(file,MAX_COPY_BYTES,'Open a complete working copy within 512 MiB.');const checked=validateCopy(parseJson(text));
+    await replaceCopy(checked,'Opened the complete working copy. Its unfinished input and every raw review field are retained.');}).finally(()=>{event.target.value='';});
+});
+$('input').addEventListener('input',()=>{changed();status('Input edited. Analyze again before recording a review. The last analyzed source remains in the complete working copy.');});
+$('copy-name').addEventListener('input',changed);
+$('issues').addEventListener('input',changed);
+$('issues').addEventListener('change',event=>{if(event.target.matches('select'))changed();});
+for(const id of ['actor','observed','review-reference'])$(id).addEventListener('input',changed);
+$('open-input').addEventListener('change',event=>{
+  const file=event.target.files[0];if(!file)return;
+  action(async()=>{const text=await originalText(file,40*1024*1024,'Select a complete input of at most 40 MiB.');parseJson(text);
+    await retainReplacement(clearedCopy(text,file.name),null,'Original input opened. Its preceding working copy was retained. Check scope, mappings and actual capture times, then analyze.');}).finally(()=>{event.target.value='';});
+});
+for(const side of ['source','destination'])$(side+'-file').addEventListener('change',event=>{
+  const file=event.target.files[0];if(!file)return;
+  action(async()=>{
+    if(file.size>16*1024*1024)throw Error('Each source export is limited to 16 MiB.');
+    const raw=new Uint8Array(await file.arrayBuffer()),content=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(raw);
+    const identity=hash(content);if(identity.bytes!==raw.byteLength||originalHash.sha256Bytes(raw).sha256!==identity.sha256)throw Error('Keep exact UTF-8 content, including any original BOM. Load its full source-bound input instead if the selected reader would change bytes.');
+    const value=parsed();if(!object(value[side]))throw Error('Use a complete input template before selecting CSV files.');
+    value[side]={...value[side],name:file.name,content,...identity};
+    await retainReplacement(clearedCopy(json(value),''),null,'Selected '+side+' original bytes. Its preceding working copy was retained. Set the actual export reference/capture time and column mapping.');
+  }).finally(()=>{event.target.value='';});
+});
+$('analyze').addEventListener('click',()=>action(async()=>{
+  const value=parsed(),report=engine.analyze(value);
+  if(current&&current.input_sha256===report.input_sha256){status('This exact input is already analyzed. Existing raw review fields and the recorded review remain available.');return;}
+  const next=snapshot();next.analyzedInput=clone(value);next.recordedReview=null;next.reviewDocument=null;next.reviewDraft=fieldsFromReport(report);
+  if(current)await retainReplacement(next,report,'Analysis uses the exact selected input. The preceding analyzed source and unfinished review are retained in their working copy.');
+  else{applyCopy(next,report);changed();status('Analysis uses the exact selected input. No system or customer record has been changed.');}
+}));
+$('download-input').addEventListener('click',()=>action(async()=>{
+  const value=parsed();engine.analyze(value);download('commerce-input.json',json(value));status('Complete validated source input downloaded. The working copy separately retains its original text and unfinished fields.');
+}));
+$('open-review').addEventListener('change',event=>{
+  const file=event.target.files[0];if(!file)return;
+  action(async()=>{
+    const input=exactCurrent(),text=await originalText(file,16*1024*1024,'Review return exceeds the selected limit.'),value=parseJson(text),report=engine.review(input,value);
+    const next=snapshot();next.analyzedInput=clone(input);next.recordedReview=clone(value);next.reviewDocument={filename:file.name,text};next.reviewDraft=fieldsFromReport(report);
+    await retainReplacement(next,report,'Original review reread against its exact input. The preceding complete working copy is retained; pending findings remain pending.');
+  }).finally(()=>{event.target.value='';});
+});
+$('download-review').addEventListener('click',()=>action(async()=>{
+  const input=exactCurrent(),fields=rawReview(),decisions=fields.issues.filter(row=>row.outcome).map(row=>({issue_id:row.issueId,outcome:row.outcome,note:row.note,reference:row.reference}));
+  const review={schema:REVIEW_SCHEMA,input_sha256:current.input_sha256,actor:fields.actor,observed_at:fields.observedAt,reference:fields.reference,decisions},report=engine.review(input,review);
+  // Recording selected decisions never clears raw notes or references on pending findings.
+  if(recordedReview&&!same(recordedReview,review)){
+    const next=snapshot();next.analyzedInput=clone(input);next.recordedReview=clone(review);
+    await retainReplacement(next,report,'The preceding recorded review and complete working fields were retained.');
+  }else{currentInput=clone(input);recordedReview=clone(review);show(report,fields);changed();}
+  download('commerce-review.json',json(review));
+  status('Source-bound review downloaded. Unfinished fields remain in the complete working copy. Use the original CLI to create its receiving package and attach it to the saved case.');
+}));
 $('download-report').addEventListener('click',()=>action(async()=>{exactCurrent();download('commerce-reconciliation.html',engine.reportHtml(current),'text/html');}));
 $('download-csv').addEventListener('click',()=>action(async()=>{exactCurrent();download('commerce-exceptions.csv',engine.issuesCsv(current),'text/csv');}));
-$('issues').addEventListener('input',()=>{reviewDirty=true;});
-for(const id of ['actor','observed','review-reference'])$(id).addEventListener('input',()=>{reviewDirty=true;});
-window.addEventListener('beforeunload',event=>{if(dirty||reviewDirty){event.preventDefault();event.returnValue='';}});
-$('input').value=json(INITIAL_INPUT);controls();status('Authored receiving example loaded. It is not customer data. Replace both exports and select their actual scope before customer use.');
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&saveTimer!==null)persist();});
+window.addEventListener('beforeunload',event=>{if(busy||editVersion>Math.max(slot.savedVersion,exportedVersion)){event.preventDefault();event.returnValue='';}});
+$('input').value=json(INITIAL_INPUT);
+controls();status('Authored receiving example loaded. It is not customer data. Replace both exports and select their actual scope before customer use.');
+(async()=>{
+  try{
+    let pointer=null;try{pointer=sessionStorage.getItem(COPY_POINTER);}catch{pointerWarning='This browser cannot remember the selected local copy. Saved copies remain available below.';}
+    if(pointer){
+      const saved=await readCopy(pointer);
+      if(saved){const checked=validateCopy(saved);forkSlot(checked.value);applyCopy(checked.value,checked.report);status('Reopened this window’s last committed complete working copy into a separate local copy.');}
+    }
+    changed();await flush();await refreshCopies();
+  }catch(error){storageError=error?.message||String(error);slot.failed=true;}
+  finally{initializing=false;controls();}
+})();
 
 </script></body></html>
