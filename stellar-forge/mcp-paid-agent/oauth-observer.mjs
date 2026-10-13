@@ -122,7 +122,7 @@ export function createObservedOAuthResourceAuthorization(input,{
   const observedAuthority=hostAttached?input=>observationRead.getStore()===true?authorize(input):invoke('hostAuthority',
     authenticatedIssuers.get(input.context)??null,()=>authorize(input),{
       success:value=>({issuer:authenticatedIssuers.get(input.context)??null,outcome:value===true?'ALLOWED':'ACCESS_DENIED'}),
-      failure:()=> 'HOST_ERROR',tool:input.tool
+      failure:()=> 'HOST_ERROR',tool:typeof input.tool==='string'&&/^[-A-Za-z0-9_.]{1,128}$/.test(input.tool)?input.tool:null
     }):undefined;
   resource=createOAuthResourceAuthorization(input,{fetchImpl:observedFetch,clock,authorize:observedAuthority});
   function authenticate(req) {

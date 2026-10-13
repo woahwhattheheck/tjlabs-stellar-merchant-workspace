@@ -117,6 +117,22 @@ exists, its exact prior body and revision are checked before receiving the nativ
 edition. Another browser store creates its own normal binding and retains the
 origin separately.
 
+Before the original working save, the receiver retains
+`working-save-intent.json`: the full native record, original revision, selected
+source and actual browser origin. After a response loss or process interruption,
+the same command reads that record again. An unchanged preimage may use the
+original UI save. An exact next revision is accepted only when its complete
+body is the selected model's normal `retainVersion` result with the actual
+recorded saved-version timestamp. A different or later edit remains untouched.
+The accepted record is retained in `working-save-accepted.json` and
+`saved-submission-record.json` before the remaining exports; recovery does not
+click Save again for that committed result. Keep this directory with its
+original browser profile. A missing record is not permission to create another
+binding for an already issued save.
+
+A complete browser result replays locally after checking every retained output
+byte and its source selection. It does not repeat browser writes.
+
 The original review controls then save, export and reopen the entire current
 review and its selected full draft. A second browser store independently opens,
 saves, exports and reopens both documents. Each real working save adds its normal
@@ -129,3 +145,86 @@ Outputs live in the same case under
 application, submission and review downloads; both actual local records; the
 reviewed-content comparison; and `RESULT.json`. The receiver's original archive
 and version-guarded writer save this whole continuation back to the same case.
+
+
+## Receive a later complete publisher edition
+
+Continue the original case with the current publisher's full source carrier and
+four-file reviewer package. The original 131-source directory and its complete
+review remain in the archive. Each later receiving directory is derived from
+the selected source plus the complete preceding draft, review and browser
+binding, so later work does not replace an earlier edition.
+
+Materialize the exact new source locally with the publisher's actual hashes and
+commits. The source carrier uses the existing complete `files` entries:
+`path`, `content`, `bytes`, `sha256` and `git_blob`.
+
+~~~sh
+python -B prepare-source-selection.py \
+  --source-packet /absolute/existing/current-publisher-source.json \
+  --source-packet-sha256 ACTUAL_FULL_SOURCE_CARRIER_SHA256 \
+  --source-package /absolute/existing/current-reviewer-source-package.json \
+  --source-package-sha256 ACTUAL_FULL_REVIEWER_PACKAGE_SHA256 \
+  --original-source-commit ACTUAL_ORIGINAL_CASE_SOURCE_COMMIT \
+  --runtime-source-commit ACTUAL_SELECTED_RUNTIME_COMMIT \
+  --application-source-commit ACTUAL_SELECTED_APPLICATION_COMMIT \
+  --output /absolute/existing/receiving-parent/following-publisher-selection
+~~~
+
+The command verifies and materializes every complete source member, verifies all
+four reviewer objects and their source IDs, and requires the four selected
+reviewer files to match the same full publisher source. Its result supplies
+`source-selection.json`, the complete `source/` directory, the original source
+package and the reader HTML path.
+
+Compose the following operation from the actual current saved ZIP and its
+existing preceding source directory:
+
+~~~sh
+python -B compose-current-source.py \
+  --case /absolute/existing/SCF-Current-Application-and-Review.zip \
+  --expected-case-sha256 ACTUAL_CURRENT_CASE_SHA256 \
+  --selection /absolute/existing/receiving-parent/following-publisher-selection/source-selection.json \
+  --source-root /absolute/existing/receiving-parent/following-publisher-selection/source \
+  --source-package /absolute/existing/receiving-parent/following-publisher-selection/source-package.json \
+  --reader-html /absolute/existing/receiving-parent/following-publisher-selection/source/stellar-forge/developer-site/dist/grant.html \
+  --previous-source-directory receiving/source-package-continuation \
+  --original-controller /absolute/existing/receive-original-grant-review.py \
+  --library-file-id ACTUAL_ORIGINAL_LIBRARY_ITEM \
+  --library-file-version-id ACTUAL_CURRENT_FILE_VERSION \
+  --library-version ACTUAL_CURRENT_VERSION_NUMBER \
+  --output /absolute/existing/receiving-parent/following-source-runtime
+~~~
+
+For further editions, use the preceding result's `receivingDirectory`.
+The actual preceding event count is derived from the complete review in that
+selected ZIP; `--expected-review-actions` can also pin it explicitly.
+A following edition receives a new prepared review only when
+`--prepared-review` selects the authors' full review of that exact source.
+
+The composer uses a completed retained browser save when available. It opens the
+whole working draft, current local record and matching review. Normal later
+working versions and authored changes remain in that draft. The original review
+model compares them with the retained reviewed edition before it receives the
+new source.
+
+A completed native source phase can also continue before its browser journey
+has started. A retained partial browser directory, including a legacy interrupted
+run without an explicit save journal, must first complete that same browser
+phase. The composer never treats an unresolved browser save as an absent one.
+Its full current draft remains distinct from the original browser record.
+The following native record carries that origin separately; the later browser
+journey still checks the actual saved browser record before updating it.
+
+Invoke the produced wrapper through the same local command and original transfer
+input described above. The new result and all downloads live under
+`receiving/source-package-editions/<receiving identity>/`. The original source,
+native results, browser records, review events, source-specific judgments and
+prior receiving directories stay in the same archive. Reopened review targets
+use the existing original review controls.
+
+Use the new directory's `browser-receiving-input.json` with
+`receiveCurrentSourceBrowser` and the existing page/listener. Its portable path
+mapping handles both the original directory and subsequent nested editions.
+The same original archive writer saves the complete case using its selected
+current version.

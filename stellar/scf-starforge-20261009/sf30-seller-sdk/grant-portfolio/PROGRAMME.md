@@ -112,10 +112,10 @@ The complete handoff includes every uploaded document referenced anywhere in pro
 history, including replaced and archived editions. Historical record views resolve their
 links and downloads against the selected original portfolio revision.
 
-The typed client and desktop browsers with direct file saving stream downloads. The
-ordinary browser fallback downloads complete documents up to 64 MiB without attempting
-to hold a multi-gigabyte response in memory. Descriptor mismatches cancel the stream;
-interrupted direct saves abort the unfinished file.
+Documents up to 64 MiB use the browser's ordinary download flow. Larger documents
+stream directly to disk in browsers with direct file saving; the typed client also
+streams downloads. Descriptor mismatches cancel the stream, and interrupted direct
+saves abort the unfinished file.
 
 ### Project QA
 

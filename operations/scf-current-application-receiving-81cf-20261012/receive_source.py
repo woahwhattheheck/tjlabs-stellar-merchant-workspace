@@ -72,10 +72,23 @@ def receive_source(args, original):
     for directory in (case, private, temporary):
         directory.mkdir(mode=0o700)
     preserve_console(root / "producer-console.log")
-    prefix = "receiving/source-package-continuation/"
+    receiving_directory = packet.get("receivingDirectory", "receiving/source-package-continuation")
+    receiving_directory = str(original.relative_path(receiving_directory))
+    if packet.get("precedingSourceDirectory"):
+        basis = packet.get("receivingBasis", {})
+        basis_body = (json.dumps(basis, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
+        receiving_id = digest(basis_body)
+        if (packet.get("receivingId") != receiving_id or
+                receiving_directory != "receiving/source-package-editions/" + receiving_id or
+                basis.get("sourceSelection") != source_edition):
+            raise ValueError("Continue the exact selected following edition and baseline.")
+    elif receiving_directory != "receiving/source-package-continuation":
+        raise ValueError("Retain the original first source receiving directory.")
+    prefix = receiving_directory + "/"
     additional = {
         str(original.relative_path(baseline[key]))
-        for key in ("draftPath", "reviewPath", "recordPath", "resultPath")
+        for key in ("draftPath", "reviewPath", "recordPath", "resultPath", "browserRecordPath")
+        if key in baseline
     }
     with zipfile.ZipFile(args.case) as archive:
         additional.update(name for name in archive.namelist()
@@ -84,7 +97,7 @@ def receive_source(args, original):
         args.case, case, native_review=True, additional_members=additional)
     config = json.loads((case / "config.json").read_text(encoding="utf-8"))
     previous = case / "receiving"
-    output = previous / "source-package-continuation"
+    output = case / receiving_directory
     output.mkdir(parents=True, exist_ok=True, mode=0o700)
     phase_config = output / "config.json"
     saved_config = json.loads(phase_config.read_text()) if phase_config.is_file() else None
@@ -195,6 +208,10 @@ def receive_source(args, original):
         "originalDraftPath": str(case / baseline["draftPath"]),
         "originalReviewPath": str(case / baseline["reviewPath"]),
         "originalRecordPath": str(case / baseline["recordPath"]),
+        "originalBrowserRecordPath": str(case / baseline.get("browserRecordPath", baseline["recordPath"])),
+        "caseRoot": str(case), "receivingDirectory": receiving_directory,
+        "precedingSourceDirectory": packet.get("precedingSourceDirectory"),
+        "baseline": baseline,
         "originalResultPath": str(case / baseline["resultPath"]),
         "outputDirectory": str(output), "temporaryDirectory": str(temporary),
         "nodeModules": str(args.node_modules) if args.node_modules else None,
@@ -240,6 +257,7 @@ def receive_source(args, original):
     native.update({
         "schema": "stellar-forge.source-package-continuation-native.v1",
         "phaseId": PHASE, "sourceRecords": source_package["sourceRecords"],
+        "receivingDirectory": receiving_directory,
         "sourceFiles": len(rows), "sourceSelection": packet["sourceSelection"],
         "originalCase": context["original_case"], "runtime": runtime_rows,
         "retainedMembers": members, "materializedMembers": materialized,

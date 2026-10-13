@@ -11,7 +11,7 @@ import {CKAN_FILES,CKAN_FILE_LIMIT,readCkanObservationFiles} from '../sf93-selle
 import {ckanCaptureView,compareCkanCaptures,ckanRepairQueue} from './ckan-runtime.mjs';
 import {ckanCaptureHtml,ckanComparisonHtml} from './ckan-render.mjs';
 import {OAUTH_FILES,OAUTH_FILE_LIMIT,readOAuthObservationFiles} from '../sf93-seller-support-bundle/oauth-observation.mjs';
-import {oauthCaptureView,compareOAuthCaptures,oauthRepairQueue} from './oauth-runtime.mjs';
+import {oauthObservationView,oauthCaptureView,compareOAuthCaptures,oauthRepairQueue} from './oauth-runtime.mjs';
 import {oauthCaptureHtml,oauthComparisonHtml} from './oauth-render.mjs';
 
 export const RUNTIME_SCHEMA = 'stellar-forge.merchant-runtime-case.v1';
@@ -184,17 +184,17 @@ function readCaptureFiles(files) {
     const bytes=Object.fromEntries(OBJECT_FILES.map(name=>[name,source(files[name],name)]));
     return {kind:'OBJECT_SESSION',bytes,original:readObjectObservationFiles(bytes)};
   }
+  if(own(files,'oauth-observation.json')) {
+    if(Object.keys(files).length!==OAUTH_FILES.length||OAUTH_FILES.some(name=>!own(files,name)))
+      fail('An OAuth observation needs exactly both original files without another runtime capture mixed into them');
+    const bytes=Object.fromEntries(OAUTH_FILES.map(name=>[name,source(files[name],name,OAUTH_FILE_LIMIT)]));
+    return {kind:'OAUTH_RESOURCE',bytes,original:readOAuthObservationFiles(bytes)};
+  }
   if(own(files,'ckan-observation.json')) {
     if(Object.keys(files).length!==CKAN_FILES.length||CKAN_FILES.some(name=>!own(files,name)))
       fail('A CKAN observation needs all three original files without another runtime capture mixed into them');
     const bytes=Object.fromEntries(CKAN_FILES.map(name=>[name,source(files[name],name,CKAN_FILE_LIMIT)]));
     return {kind:'CKAN_WORKBENCH',bytes,original:readCkanObservationFiles(bytes)};
-  }
-  if(own(files,'oauth-observation.json')||own(files,'oauth-source.json')) {
-    if(Object.keys(files).length!==OAUTH_FILES.length||OAUTH_FILES.some(name=>!own(files,name)))
-      fail('An OAuth observation needs both exact original files without another runtime capture mixed into them');
-    const bytes=Object.fromEntries(OAUTH_FILES.map(name=>[name,source(files[name],name,OAUTH_FILE_LIMIT)]));
-    return {kind:'OAUTH_RESOURCE',bytes,original:readOAuthObservationFiles(bytes)};
   }
   const period=own(files,'history.json'),bytes={};
   if(period) {
@@ -228,15 +228,15 @@ function sample(value) {
     return {kind,scope:{inputs,routeId},files:value.files,original,
       route:{id:routeId,method:'GET'},native:null};
   }
-  if(kind==='CKAN_WORKBENCH') {
+  if(kind==='OAUTH_RESOURCE') {
     if(own(value.scope,'path')||inputs.method!=='GET'||routeId!==original.meta.registration.id)
-      fail('Select the registered original CKAN source and the GET case method');
+      fail('Select the registered original OAuth observation source and the GET case method');
     return {kind,scope:{inputs,routeId},files:value.files,original,
       route:{id:routeId,method:'GET'},native:null};
   }
-  if(kind==='OAUTH_RESOURCE') {
+  if(kind==='CKAN_WORKBENCH') {
     if(own(value.scope,'path')||inputs.method!=='GET'||routeId!==original.meta.registration.id)
-      fail('Select the registered original OAuth source and the GET case method');
+      fail('Select the registered original CKAN source and the GET case method');
     return {kind,scope:{inputs,routeId},files:value.files,original,
       route:{id:routeId,method:'GET'},native:null};
   }
@@ -280,10 +280,10 @@ export function parseRuntime(textValue) {
     sourceBytes:[before,after].filter(Boolean).reduce((n,s)=>n+Object.values(s.files).reduce((k,f)=>k+f.bytes,0),0),
     ...([before,after].some(c=>c?.kind==='OBJECT_SESSION')?
       {objectCaptures:[before,after].filter(c=>c?.kind==='OBJECT_SESSION').length}: {}),
-    ...([before,after].some(c=>c?.kind==='CKAN_WORKBENCH')?
-      {ckanCaptures:[before,after].filter(c=>c?.kind==='CKAN_WORKBENCH').length}: {}),
     ...([before,after].some(c=>c?.kind==='OAUTH_RESOURCE')?
       {oauthCaptures:[before,after].filter(c=>c?.kind==='OAUTH_RESOURCE').length}: {}),
+    ...([before,after].some(c=>c?.kind==='CKAN_WORKBENCH')?
+      {ckanCaptures:[before,after].filter(c=>c?.kind==='CKAN_WORKBENCH').length}: {}),
     ...([before,after].some(c=>c?.kind==='DURABLE_PERIOD')?
       {periodCaptures:[before,after].filter(c=>c?.kind==='DURABLE_PERIOD').length}: {})}};
 }
@@ -304,12 +304,12 @@ export function inspectRuntimeFiles({files,inputs,routeId,path}) {
     if(kind==='OBJECT_SESSION')return {kind,routes:[{id:original.meta.registration.id,method:'GET'}],
       sessionId:original.meta.selection.sessionId,capturedAt:original.meta.generatedAt,
       mode:'ORIGINAL_READ_ONLY_BUYER',object:original.summary};
+    if(kind==='OAUTH_RESOURCE')return {kind,routes:[{id:original.meta.registration.id,method:'GET'}],
+      sessionId:original.summary.sessionId,capturedAt:original.meta.generatedAt,
+      mode:'ORIGINAL_READ_ONLY_OAUTH',oauth:oauthObservationView(original)};
     if(kind==='CKAN_WORKBENCH')return {kind,routes:[{id:original.meta.registration.id,method:'GET'}],
       sessionId:original.summary.project.identity,capturedAt:original.meta.generatedAt,
       mode:'ORIGINAL_READ_ONLY_CKAN',ckan:original.summary};
-    if(kind==='OAUTH_RESOURCE')return {kind,routes:[{id:original.meta.registration.id,method:'GET'}],
-      sessionId:original.summary.sessionId,capturedAt:original.meta.generatedAt,
-      mode:'ORIGINAL_OAUTH_RESOURCE',oauth:original.summary};
     if(kind==='DURABLE_PERIOD')return {kind,routes:original.routes,sessionId:null,
       sessionIds:original.report.sessionIds,capturedAt:original.history.generatedAt,
       mode:original.report.originalSellerMode,range:original.history.range,days:original.history.days.length};
@@ -322,8 +322,8 @@ export function inspectRuntimeFiles({files,inputs,routeId,path}) {
 function captureView(capture,currentInputs) {
   if(!capture)return null;
   if(capture.kind==='OBJECT_SESSION')return objectCaptureView(capture,inputScope(currentInputs));
-  if(capture.kind==='CKAN_WORKBENCH')return ckanCaptureView(capture,inputScope(currentInputs));
   if(capture.kind==='OAUTH_RESOURCE')return oauthCaptureView(capture,inputScope(currentInputs));
+  if(capture.kind==='CKAN_WORKBENCH')return ckanCaptureView(capture,inputScope(currentInputs));
   if(capture.kind==='DURABLE_PERIOD')return periodCaptureView(capture,currentInputs);
   const o=capture.original.observation;
   const native=capture.native;
@@ -435,9 +435,10 @@ export function reviewRuntime(supportText,inputs) {
   for(const [side,capture] of [['before',before],['after',after]])if(capture) {
     if(capture.kind==='OBJECT_SESSION')queue.push(...objectRepairQueue(capture,side));
     if(capture.kind==='CKAN_WORKBENCH')queue.push(...ckanRepairQueue(capture,side));
-    if(capture.kind==='OAUTH_RESOURCE')queue.push(...oauthRepairQueue(capture,side));
+    if(capture.kind==='OAUTH_RESOURCE')queue.push(...oauthRepairQueue(capture,side,
+      {sourceIntegrity:side==='after'&&comparison.oauth?.sourceIntegrity===true}));
     if(!capture.caseMatches)queue.push({source:side,routeId:capture.scope.routeId,kind:'scope',action:'Review the saved case mapping before using this capture for the current route.'});
-    if(capture.observerAttached===false||capture.observerErrors)queue.push({source:side,routeId:capture.scope.routeId,kind:'observer',action:'Inspect the original observer lifecycle and errors before relying on complete traffic counts.'});
+    if(capture.kind!=='OAUTH_RESOURCE'&&(capture.observerAttached===false||capture.observerErrors))queue.push({source:side,routeId:capture.scope.routeId,kind:'observer',action:'Inspect the original observer lifecycle and errors before relying on complete traffic counts.'});
     if(capture.period) {
       const interrupted=capture.period.sessions.filter(session=>session.state==='INTERRUPTED');
       if(interrupted.length)queue.push({source:side,routeId:capture.scope.routeId,kind:'observer',
@@ -456,7 +457,7 @@ export function reviewRuntime(supportText,inputs) {
   return {schema:'stellar-forge.merchant-runtime-review.v1',generatedAt:new Date().toISOString(),
     before,after,comparison,queue,summary:parsed.summary,
     interpretation:[before,after].some(c=>c?.kind==='OAUTH_RESOURCE')?
-      'OAuth authentication, authorization, host-authority and JWKS stage checks retain their original counters, issuer/configuration identities and windows. Rolling windows may overlap and are never summed. These aggregate observations do not identify individual audit events, grants, payments or customer fulfillment.':
+      'OAuth observations retain the original verifier resource, reviewed configuration, authority, per-stage checks and exact source files. Authentication and authorization counts are checks, not HTTP requests. Ordinary denials remain enforcement outcomes. Only the original SF93 classifier evaluates failure and recovery conditions; other attached capture kinds retain their own source units and histories.':
       [before,after].some(c=>c?.kind==='CKAN_WORKBENCH')?
       'CKAN source captures, reviewed refresh decisions, publication output and customer delivery retain their original identities. Row changes apply to the original selected windows and comparison. Saved operation records describe the workbench state at the retained read; original source hashes identify the bytes carried in this case.':
       'HTTP outcomes, native settlement notices, merchant inbox delivery and customer fulfillment are separate observations. Original packet hashes identify retained bytes; they do not authenticate a seller.'};

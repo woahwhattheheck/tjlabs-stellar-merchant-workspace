@@ -1,3 +1,4 @@
+import type {DocumentAssemblyRequest,DocumentAssemblyView,DocumentAssemblyCounts,DocumentAssemblyDelivery} from './assembly.mjs';
 import type {JobWorkspace} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/index.mjs';
 import type {VerifiedDownload} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/verified-downloads.mjs';
 import type {DocumentProviderId,DocumentFormat,JsonValue} from './index.mjs';
@@ -13,7 +14,7 @@ export interface DocumentCompositionSourceSummary {
   id:string;name:string;provider:DocumentProviderId;merchantOrigin:string;directory:string;
   sourceSha256:string;sourceBytes:number;counts:DocumentCompositionCounts;
 }
-export type DocumentCompositionAction='stage'|'restore'|'prepare'|'run'|'receive'|'export';
+export type DocumentCompositionAction='stage'|'restore'|'prepare'|'run'|'receive'|'export'|'assembly-stage'|'assembly-prepare'|'assembly-run'|'assembly-receive'|'assembly-export';
 export interface DocumentCompositionOperation {
   id:string;compositionId:string;kind:DocumentCompositionAction;
   state:'RUNNING'|'COMPLETE'|'CONTINUATION_REQUIRED'|'STOPPED'|'FAILED';
@@ -42,6 +43,7 @@ export interface DocumentCompositionDetail extends DocumentCompositionSourceSumm
     parentTasks:DocumentBatchSnapshot['parentTasks'];
   };
   exports:Array<DocumentCompositionBrowserExport|{id:string;directory:string;state:'CONTINUATION_REQUIRED'|'REVIEW_REQUIRED';error?:{code:string;message:string}}>;
+  assemblies:Array<{id:string;name:string;sourceSha256:string;counts:DocumentAssemblyCounts}>;
   active:DocumentCompositionOperation|null;
 }
 export interface DocumentCompositionSelection {id:string;sourceSha256:string}
@@ -50,6 +52,9 @@ export interface DocumentCompositionStageInput {
   templates:Record<string,DocumentUploadedSource>;
 }
 export type DocumentCompositionDownloadInput=DocumentCompositionSelection&(
+  |{kind:'assembly-source';assemblyId:string;assemblySha256:string}
+  |{kind:'assembly-pdf';assemblyId:string;assemblySha256:string;volumeId:string}
+  |{kind:'assembly-export';assemblyId:string;assemblySha256:string;exportId:string;file:string}
   |{kind:'source-plan'}
   |{kind:'source';file:string}
   |{kind:'native-plan'}
@@ -72,12 +77,19 @@ export interface DocumentCompositionWorkspace {
         error:{code:string;message:string}})&{active:DocumentCompositionOperation|null}>;
   }>;
   get(options:{id:string;offset?:number;limit?:number;sourceSha256?:string;signal?:AbortSignal}):Promise<DocumentCompositionDetail>;
+  assembly(options:DocumentCompositionSelection&{assemblyId:string;assemblySha256:string;signal?:AbortSignal}):Promise<DocumentAssemblyView&{
+    exports:Array<{id:string;complete:boolean;counts?:DocumentAssemblyCounts;files?:DocumentAssemblyDelivery['files'];
+      native?:DocumentAssemblyDelivery['native'];archive?:DocumentAssemblyDelivery['archive'];error?:{code:string;message:string}}>}>;
   operation(options:{operationId:string}):DocumentCompositionOperation;
   start(kind:'stage',input:DocumentCompositionStageInput):DocumentCompositionOperation;
   start(kind:'restore',input:DocumentCompositionSelection&({sourceFile:string;source?:never}|{source:DocumentUploadedSource;sourceFile?:never})):DocumentCompositionOperation;
   start(kind:'run',input:DocumentCompositionSelection&{planSha256:string}):DocumentCompositionOperation;
   start(kind:'prepare'|'receive',input:DocumentCompositionSelection):DocumentCompositionOperation;
   start(kind:'export',input:DocumentCompositionSelection&{exportId?:string}):DocumentCompositionOperation;
+  start(kind:'assembly-stage',input:DocumentCompositionSelection&{assemblyId:string;request:DocumentAssemblyRequest;documentIds:string[]}):DocumentCompositionOperation;
+  start(kind:'assembly-prepare'|'assembly-receive',input:DocumentCompositionSelection&{assemblyId:string;assemblySha256:string}):DocumentCompositionOperation;
+  start(kind:'assembly-run',input:DocumentCompositionSelection&{assemblyId:string;assemblySha256:string;planSha256:string}):DocumentCompositionOperation;
+  start(kind:'assembly-export',input:DocumentCompositionSelection&{assemblyId:string;assemblySha256:string;exportId?:string}):DocumentCompositionOperation;
   cancel(options:{operationId:string}):Promise<DocumentCompositionOperation>;
   download(input:DocumentCompositionDownloadInput,options?:{signal?:AbortSignal}):Promise<VerifiedDownload>;
   /** Drains only work owned by this extension; the original host and customer retain their own close. */

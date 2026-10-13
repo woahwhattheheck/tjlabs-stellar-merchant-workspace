@@ -57,7 +57,9 @@
     "stellar-forge/route-identity"
   ],
   "supportFiles": [
-    "products/grant-reviewer/OPERATING.md"
+    "products/grant-reviewer/OPERATING.md",
+    "products/merchant-workspace/REVIEWER_WALKTHROUGH.md",
+    "products/merchant-workspace/FINANCIAL_OPERATIONS.md"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",

@@ -221,6 +221,38 @@ The [complete refresh guide](../../stellar/scf-starforge-20261009/sf30-seller-sd
 contains the exact preparation, preview, decision and candidate-publication JSON.
 Its CLI and seven refresh tools expose this same workflow.
 
+## Deliver a complete two-period customer analysis
+
+The [Zürich portal-use workflow](../../stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/ZURICH_PORTAL_USE.md)
+joins capture, field meaning, reviewed refresh, complete merchant pages and the
+editable customer application. It uses the two original retained source periods,
+publishes both reviewed editions, receives every page through SF100, and carries
+their dictionaries into the customer's saved Analysis workspace.
+
+The Zürich source's `sszFields` entries bind by their explicit technical names.
+Original CSVW and DataStore annotations keep their precedence. The field review
+retains the provider definitions, conflicting or unmatched entries and their
+provenance. This source profile does not change another catalogue's dictionary.
+
+The worked customer application receives all 8,210 selected observations and
+keeps five editable queries, full observation/resource exports, the published
+report and its three-sheet workbook. Resource comparisons use the original CKAN
+UUID; records without one retain their exact dataset/resource labels. Download
+request totals retain repeated requests, and the original per-record
+`distinct_ips` value stays attached to that record.
+
+Use the complete source and both original capture directories with the same
+publisher/customer operation. The linked guide supplies the exact publisher
+and Python commands, original capture identities, private temporary-directory
+selection, explicit failed-workbook continuation and native customer archive
+receiving. The installed source selection already includes both programmes and
+that guide with the existing CKAN and Python components.
+
+Use the original captured dates for this worked example. A new customer period
+uses the normal source capture, reviewed refresh and customer version controls.
+Its actual merchant service and priced request remain the selected deployment's
+own configuration.
+
 ## Operate through Applications and agents
 
 For a DCAT-US document project, choose **DCAT catalog migration** and select its

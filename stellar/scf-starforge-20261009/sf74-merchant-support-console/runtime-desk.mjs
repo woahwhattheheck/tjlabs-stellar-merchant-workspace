@@ -29,7 +29,7 @@ export function mountRuntimeDesk({root,readInputs,onChange=()=>{},exportCase,imp
   root.id='runtime';root.className='card runtime-desk';
   const head=add(root,'div',undefined,'section-heading'),heading=add(head,'div');
   add(heading,'p','Merchant operations','eyebrow');add(heading,'h2','Runtime support');
-  add(heading,'p','Attach an original seller packet, retained period, saved Object observation, CKAN workbench observation or OAuth resource observation. Review the operational outcomes and keep the complete sources with this case.');
+  add(heading,'p','Attach an original seller packet, retained period, saved Object, CKAN workbench or OAuth resource observation. Review the operational outcomes and keep the complete sources with this case.');
   add(head,'span','Original file intake','stage-hint');
   const status=add(root,'p','Select the four original packet files to begin. Importing files makes no seller request.','status');
   status.id='runtime-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
@@ -56,7 +56,7 @@ export function mountRuntimeDesk({root,readInputs,onChange=()=>{},exportCase,imp
   add(ckanLabel,'small','Select ckan-observation.json, ckan-workbench.json and ckan-files.json together. They carry both saved project reads and the complete selected source, refresh and publication records.');
   const ckanFile=add(ckanLabel,'input');ckanFile.type='file';ckanFile.multiple=true;ckanFile.id='runtime-ckan';
   const oauthLabel=add(grid,'label','Original OAuth observation files');oauthLabel.hidden=true;
-  add(oauthLabel,'small','Select oauth-observation.json and oauth-source.json together. They retain the exact protected source and its reviewed resource/configuration window.');
+  add(oauthLabel,'small','Select oauth-observation.json and oauth-source.json together. They retain the exact original resource snapshot or failed-read record. Authentication and authorization values count checks.');
   const oauthFile=add(oauthLabel,'input');oauthFile.type='file';oauthFile.multiple=true;oauthFile.id='runtime-oauth';
   const advanced=add(intake,'details',undefined,'source-details');add(advanced,'summary','Optional native delivery records');
   const nativeHint=add(advanced,'p','Use the original SF97 report and both copied SF98 journals from this same seller session. The original reconciler keeps each report’s own observation window.');
@@ -115,25 +115,25 @@ export function mountRuntimeDesk({root,readInputs,onChange=()=>{},exportCase,imp
   async function inspectFiles(){
     if(busy)return;busy=true;controls();const epoch=++generation;
     try{
-      const isPeriod=kind.value==='period',isObject=kind.value==='object',isCkan=kind.value==='ckan',isOauth=kind.value==='oauth',required=isPeriod?PERIOD:isObject?OBJECT:isCkan?CKAN:isOauth?OAUTH:PACKET;
-      const chosen=[...(isPeriod?period:isObject?objectFile:isCkan?ckanFile:isOauth?oauthFile:packet).files],names=chosen.map(f=>f.name);
+      const isPeriod=kind.value==='period',isObject=kind.value==='object',isCkan=kind.value==='ckan',isOAuth=kind.value==='oauth',required=isPeriod?PERIOD:isObject?OBJECT:isCkan?CKAN:isOAuth?OAUTH:PACKET;
+      const chosen=[...(isPeriod?period:isObject?objectFile:isCkan?ckanFile:isOAuth?oauthFile:packet).files],names=chosen.map(f=>f.name);
       if(chosen.length!==required.length||new Set(names).size!==required.length||required.some(n=>!names.includes(n)))
-        throw new Error(isPeriod?'Select original history.json and its matching SF97 report.json together.':isObject?'Select exactly the three original Object observation files together.':isCkan?'Select exactly the three original CKAN observation files together.':isOauth?'Select exactly both original OAuth observation files together.':'Select exactly the four original SF93 packet files together.');
-      const pickedNative=(isObject||isCkan||isOauth?[]:Object.entries(native)).filter(([name,input])=>input.files.length&&(!isPeriod||name!=='report.json')).map(([name,input])=>[name,input.files[0]]);
+        throw new Error(isPeriod?'Select original history.json and its matching SF97 report.json together.':isObject?'Select exactly the three original Object observation files together.':isCkan?'Select exactly the three original CKAN observation files together.':isOAuth?'Select exactly the two original OAuth observation files together.':'Select exactly the four original SF93 packet files together.');
+      const pickedNative=(isObject||isCkan||isOAuth?[]:Object.entries(native)).filter(([name,input])=>input.files.length&&(!isPeriod||name!=='report.json')).map(([name,input])=>[name,input.files[0]]);
       if(isPeriod&&[...chosen,...pickedNative.map(([,file])=>file)].reduce((sum,file)=>sum+file.size,0)>MAX_PERIOD)
         throw new Error('This period exceeds 64 MiB of combined original sources. Export fewer retained days or one route.');
       const files=Object.fromEntries(await Promise.all([...chosen.map(f=>[f.name,f]),...pickedNative].map(async([name,file])=>[name,await readFile(file,name)])));
       const information=await api('/api/runtime/inspect',{files});
       if(epoch!==generation)return;
       selected={files,information};route.replaceChildren();
-      add(route,'option',information.kind==='OBJECT_SESSION'?'Choose the original Object source':information.kind==='CKAN_WORKBENCH'?'Choose the original CKAN source':information.kind==='OAUTH_RESOURCE'?'Choose the original OAuth registration':'Choose an original runtime route').value='';
+      add(route,'option',information.kind==='OBJECT_SESSION'?'Choose the original Object source':information.kind==='CKAN_WORKBENCH'?'Choose the original CKAN source':information.kind==='OAUTH_RESOURCE'?'Choose the original OAuth resource':'Choose an original runtime route').value='';
       const inputs=readInputs();
       for(const [index,row] of information.routes.entries()){
         const option=add(route,'option',row.id+' · '+row.method+(information.kind==='DURABLE_PERIOD'?' '+row.path+' · '+bindingLabel(row.binding):''));option.value=String(index);
         option.disabled=row.method!==inputs.method;
       }
       mappingInfo.textContent=(information.kind==='OAUTH_RESOURCE'?
-        humanTime(information.capturedAt)+' · OAuth '+(information.oauth.resource??information.oauth.selection.resource)+' · Coverage '+information.oauth.coverage:
+        humanTime(information.capturedAt)+' · OAuth '+(information.oauth.resource??'source not observed')+' · Coverage '+information.oauth.coverage+' · Authentication and authorization checks':
         information.kind==='CKAN_WORKBENCH'?
         humanTime(information.capturedAt)+' · CKAN '+(information.ckan.project.catalogOrigin??'registered project')+' · Coverage '+information.ckan.coverage:
         information.kind==='OBJECT_SESSION'?
@@ -143,7 +143,7 @@ export function mountRuntimeDesk({root,readInputs,onChange=()=>{},exportCase,imp
         humanTime(information.capturedAt)+' · '+information.mode+' · Session '+information.sessionId)+
         '. Current case: '+(inputs.resource||'resource not entered')+' · '+inputs.method+'.';
       mapping.hidden=false;draft=true;
-      say(information.kind==='OAUTH_RESOURCE'?'Original OAuth source and its retained summary agree. Review coverage and map this registered GET source to the case.':information.kind==='CKAN_WORKBENCH'?'CKAN packet opened. Review the saved project, selected records and source coverage, then map its registered GET source to this case.':information.kind==='OBJECT_SESSION'?'All original Object observation files and their internal identities agree. Review the saved session and map its registered GET source to this case.':information.kind==='DURABLE_PERIOD'?'Original history bytes match the SF97 report and its retained coverage. Select the exact method/path and attach it to this case.':
+      say(information.kind==='OAUTH_RESOURCE'?'Original OAuth capture opened. Review its resource, authority, check outcomes and coverage, then map the registered GET source to this case.':information.kind==='CKAN_WORKBENCH'?'CKAN packet opened. Review the saved project, selected records and source coverage, then map its registered GET source to this case.':information.kind==='OBJECT_SESSION'?'All original Object observation files and their internal identities agree. Review the saved session and map its registered GET source to this case.':information.kind==='DURABLE_PERIOD'?'Original history bytes match the SF97 report and its retained coverage. Select the exact method/path and attach it to this case.':
         'Original packet files match their manifest. Select its route and attach to the current case.');
     }catch(error){if(epoch===generation){selected=null;mapping.hidden=true;say(error.message,true);}}
     finally{busy=false;controls();}
@@ -169,10 +169,10 @@ export function mountRuntimeDesk({root,readInputs,onChange=()=>{},exportCase,imp
       add(box,'h3',position==='before'?'Before / baseline':'After / follow-up');
       if(!capture){add(box,'p','No runtime capture attached.','hint');continue;}
       add(box,'p',capture.scope.routeId+' · '+capture.scope.inputs.method+(capture.scope.path?' '+capture.scope.path:''));
-      if(capture.files['oauth-observation.json'])add(box,'p','OAuth resource · original protected source, aggregate stages and reviewed configuration','hint');
       if(capture.files['history.json'])add(box,'p','Retained period · exact original history and report','hint');
       if(capture.files['object-observation.json'])add(box,'p','Object buyer · exact original observation, native report and both accounting reads','hint');
       if(capture.files['ckan-observation.json'])add(box,'p','CKAN workbench · original state reads, selected source, refresh decision and publication output','hint');
+      if(capture.files['oauth-observation.json'])add(box,'p','OAuth resource · original resource snapshot, exact authority and per-stage check outcomes','hint');
       add(box,'p',capture.scope.inputs.resource||'No external resource mapping recorded.','hint');
       add(box,'p',Object.keys(capture.files).length+' original files · '+Object.values(capture.files).reduce((sum,f)=>sum+f.bytes,0).toLocaleString()+' bytes','hint');
       const buttons=add(box,'div',undefined,'actions');
@@ -307,7 +307,7 @@ export function mountRuntimeDesk({root,readInputs,onChange=()=>{},exportCase,imp
     for(const position of ['before','after']) {
       const capture=review[position];if(!capture)continue;
       add(result,'h3',(position==='before'?'Before':'After')+' · '+capture.route.id);
-      add(result,'p',humanTime(capture.startedAt)+' → '+humanTime(capture.capturedAt)+' · '+capture.mode,'hint');
+      add(result,'p',(capture.startedAt?humanTime(capture.startedAt):'Start not observed')+' → '+humanTime(capture.capturedAt)+' · '+capture.mode,'hint');
       if(!capture.caseMatches)add(result,'p','Saved scope differs from this case’s current inputs.','status error');
       if(capture.kind==='OAUTH_RESOURCE'){const view=add(result,'div');view.innerHTML=oauthCaptureHtml(capture);}
       else if(capture.kind==='CKAN_WORKBENCH'){const view=add(result,'div');view.innerHTML=ckanCaptureHtml(capture);}
@@ -354,14 +354,14 @@ export function mountRuntimeDesk({root,readInputs,onChange=()=>{},exportCase,imp
   }
   for(const field of [packet,period,objectFile,ckanFile,oauthFile,...Object.values(native)])field.addEventListener('change',changed,{signal:controller.signal});
   kind.addEventListener('change',()=>{
-    resetDraft();const isPeriod=kind.value==='period',isObject=kind.value==='object',isCkan=kind.value==='ckan',isOauth=kind.value==='oauth';
-    packetLabel.hidden=isPeriod||isObject||isCkan||isOauth;periodLabel.hidden=!isPeriod;objectLabel.hidden=!isObject;ckanLabel.hidden=!isCkan;oauthLabel.hidden=!isOauth;advanced.hidden=isObject||isCkan||isOauth;
+    resetDraft();const isPeriod=kind.value==='period',isObject=kind.value==='object',isCkan=kind.value==='ckan',isOAuth=kind.value==='oauth';
+    packetLabel.hidden=isPeriod||isObject||isCkan||isOAuth;periodLabel.hidden=!isPeriod;objectLabel.hidden=!isObject;ckanLabel.hidden=!isCkan;oauthLabel.hidden=!isOAuth;advanced.hidden=isObject||isCkan||isOAuth;
     nativeLabels['report.json'].hidden=isPeriod;
     nativeHint.textContent=isPeriod?'Optionally attach both copied original SF98 journals. The report retains its actual saved session/day/route coverage; no outbox is inferred when files are absent.':
       'Use the original SF97 report and both copied SF98 journals from this same seller session. The original reconciler keeps each report’s own observation window.';
-    limitHint.textContent=isPeriod?'Maximum 64 MiB of combined period sources. Original bytes and source hashes are retained.':isCkan?'Maximum 8 MiB per CKAN observation file. Complete original bytes and both saved state reads are retained.':'Maximum 2 MB per packet file. Original file bytes are retained.';
-    controls();say(isPeriod?'Select original history.json and matching report.json. Existing case captures are unchanged.':isObject?
-      'Select the three original Object observation files. Existing case captures are unchanged.':isCkan?'Select the three original CKAN observation files.':isOauth?'Select both original OAuth observation files.':'Select the four original packet files. Existing case captures are unchanged.');
+    limitHint.textContent=isOAuth?'Maximum 2 MB per original OAuth file. Complete original bytes and check outcomes are retained.':isPeriod?'Maximum 64 MiB of combined period sources. Original bytes and source hashes are retained.':isCkan?'Maximum 8 MiB per CKAN observation file. Complete original bytes and both saved state reads are retained.':'Maximum 2 MB per packet file. Original file bytes are retained.';
+    controls();say(isOAuth?'Select original oauth-observation.json and oauth-source.json. Existing captures remain attached.':isPeriod?'Select original history.json and matching report.json. Existing case captures are unchanged.':isObject?
+      'Select the three original Object observation files. Existing case captures are unchanged.':isCkan?'Select the three original CKAN observation files.':'Select the four original packet files. Existing case captures are unchanged.');
   },{signal:controller.signal});
   side.addEventListener('change',()=>{generation++;controls();},{signal:controller.signal});
   route.addEventListener('change',()=>{generation++;controls();},{signal:controller.signal});

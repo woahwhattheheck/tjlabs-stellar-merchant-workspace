@@ -20,7 +20,8 @@
   },
   "components": [
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders",
-    "stellar/scf_2026/sf47_budget_model/workspace"
+    "stellar/scf_2026/sf47_budget_model/workspace",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys"
   ],
   "supportFiles": [
     "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_sources.py",

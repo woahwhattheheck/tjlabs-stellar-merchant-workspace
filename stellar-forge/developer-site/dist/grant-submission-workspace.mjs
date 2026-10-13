@@ -2,7 +2,8 @@ import {renderProductSources} from './grant-product-authoring-workspace.mjs';
 // MIT. Uses the maintained application source and original shared IndexedDB drafts.
 import {SCHEMA,ENVELOPE,MAX_BYTES,ANSWERS,REQUIREMENTS,OFFICIAL,makeSource,createDraft,validateDraft,
   retainVersion,restoreVersion,compareSource,receiveSource,useSourceAnswer,newField,rebuildField,
-  outputText,measureText,fieldStatus,applicationOutput,importFormMap,exportFormMap,receivePlanningSource} from './grant-submission-core.mjs';
+  outputText,measureText,fieldStatus,applicationOutput,importFormMap,exportFormMap,receivePlanningSource,
+  fieldSourceStatus,reviewFieldSources,refreshUneditedFormFields,formSourceReview} from './grant-submission-core.mjs';
 import {listDrafts,loadDraft,saveDraft} from './drafts.mjs';
 import {MAX_PLAN_BYTES,receivePlanningFile,verifyPlanningSource} from './grant-plan-source.mjs';
 import {renderPlanning} from './grant-plan-workspace.mjs';
@@ -67,8 +68,8 @@ async function parseEnvelope(text){
   if(await sha(JSON.stringify(value.draft))!==value.sha256)throw new Error('This draft file differs from its exported content. Reopen the original complete export.');
   return verifyDraft(value.draft);
 }
-async function boundedRead(url,maximum){
-  const response=await fetch(url,{cache:'no-cache',credentials:'same-origin'});
+async function boundedRead(url,maximum,signal){
+  const response=await fetch(url,{cache:'no-cache',credentials:'same-origin',signal});
   if(!response.ok)throw new Error('The current application source returned HTTP '+response.status+'. Reopen a retained draft or read the source again.');
   const reader=response.body?.getReader();if(!reader){const bytes=new Uint8Array(await response.arrayBuffer());if(bytes.length>maximum)throw new Error('The selected source exceeds the receiving limit.');return bytes;}
   const parts=[];let size=0;
@@ -80,13 +81,18 @@ async function readPublished(signal){
   return readReviewerSource({baseUrl:document.baseURI,
     fetchImpl:(url,options)=>fetch(url,{...options,signal})});
 }
+async function readWorkingEdition(signal){
+  const url=new URL('./grant-data/reviewer-working-source.json',document.baseURI);
+  const body=await boundedRead(url.href,MAX_BYTES*2+65536,signal);
+  return openReviewerSourcePackage(new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(body));
+}
 function sourceReadControls(){
   const reading=publishedRead!==null;
   $('workspace-root').dataset.sourceReadState=reading?'reading':'idle';
   $('refresh-source').textContent=reading?'Cancel source read':'Read current source';
   $('refresh-source').setAttribute('aria-busy',String(reading));
   for(const element of document.querySelectorAll('[data-source-read-control]')){
-    element.textContent=reading?'Cancel source read':'Read current source';
+    element.textContent=reading?'Cancel source read':(element.dataset.sourceEdition==='concise'?'Read concise working edition':'Read current source');
     element.setAttribute('aria-busy',String(reading));
   }
 }
@@ -101,6 +107,15 @@ function sourceReadButton(){
   value.addEventListener('click',()=>{
     if(publishedRead)cancelPublishedRead('Source read cancelled. Continue with the selected draft or open a source package.');
     else void refreshSource();
+  });
+  return value;
+}
+function workingEditionButton(){
+  const value=node('button','Read concise working edition');value.type='button';
+  value.dataset.sourceReadControl='';value.dataset.sourceEdition='concise';
+  value.addEventListener('click',()=>{
+    if(publishedRead)cancelPublishedRead('Source read cancelled. The current working answers remain available.');
+    else void refreshSource({edition:'concise'});
   });
   return value;
 }
@@ -167,7 +182,10 @@ function updateStats(){
   if(currentPreview)currentPreview.value=text;
   if(currentIssue&&view()==='fields'){
     const field=draft.fields.find(x=>x.id===selectedField);
-    if(field){const review=fieldStatus(field,draft.form,format());currentIssue.replaceChildren(...review.issues.map(x=>node('p',x)));currentIssue.hidden=!review.issues.length;}
+    if(field){const review=fieldStatus(field,draft.form,format()),source=fieldSourceStatus(draft,field),messages=[...review.issues];
+      if(source.status==='changed')messages.push('Selected source answers changed after this field was reviewed. Compare them below and choose the wording to retain.');
+      if(source.status==='unreviewed')messages.push('Compare this field with its selected current answers and record the wording choice.');
+      currentIssue.replaceChildren(...messages.map(x=>node('p',x)));currentIssue.hidden=!messages.length;}
   }
 }
 function editorTools(getText){
@@ -223,8 +241,59 @@ function formProfile(root){
   row.append(button('Open recorded issuer form',()=>{const url=new URL(draft.form.url);if(url.protocol!=='https:'||url.username||url.password)throw new Error('Complete the issuer HTTPS form URL.');window.open(url.href,'_blank','noopener,noreferrer');}),button('Open form map',()=>chooseFile('form')),button('Download form map',()=>download(JSON.stringify(exportFormMap(draft),null,2)+'\n',filename()+'-form-map.json')));
   details.append(row);root.append(details);
 }
+
+function formCoverageView(root){
+  const review=formSourceReview(draft),box=node('details');
+  box.dataset.formSourceCoverage='';box.append(node('summary','Answer coverage · '+(ANSWERS.length-review.unmappedAnswerIds.length)+' of '+ANSWERS.length+' areas mapped'));
+  box.append(node('p','The issuer reviews the submission itself. Map the relevant complete answers into the actual fields, then retain their useful facts within those fields. Source links and attachments support the record.','muted'));
+  for(const row of review.answers){
+    const line=node('p');line.append(node('strong',row.title+': '));
+    if(row.fieldIds.length)for(const id of row.fieldIds){const field=draft.fields.find(item=>item.id===id);
+      line.append(button(field.label||'Unlabeled field',()=>{selectedField=id;render();}));
+    }else line.append(button('Open this answer',()=>{selectedAnswer=row.id;$('view').value='answers';render();}),node('span',' · no field association entered'));
+    box.append(line);
+  }
+  box.append(node('p',review.changedFieldIds.length+' fields have changed source answers; '+review.unreviewedFieldIds.length+' mapped fields have no retained comparison.','muted'),
+    button('Refresh unchanged copied fields',()=>{
+      const result=refreshUneditedFormFields(draft);draft=result.draft;touch();render();
+      status('Refreshed '+result.updatedIds.length+' unchanged copied fields. Edited and deliberately retained wording remains available for individual comparison.');
+    }));
+  root.append(box);
+}
+function fieldSourceView(root,field){
+  const comparison=fieldSourceStatus(draft,field),box=node('section',undefined,'card');
+  box.dataset.fieldSourceReview=field.id;
+  box.append(node('h4','Compare the selected source answers'),
+    node('p',comparison.status==='changed'?'The answer selection or text changed since the preceding field review.':
+      comparison.status==='unreviewed'?'This field has no retained source comparison yet.':
+      comparison.status==='unmapped'?'Select the canonical answers that inform this field.':'The selected source answer text matches its retained review.'));
+  if(comparison.reviewedAt)box.append(node('p','Last wording choice: '+comparison.choice+' · '+comparison.reviewedAt+(comparison.fieldEdited?' · field edited afterward':''),'muted'));
+  if(comparison.orderChanged)box.append(node('p','The selected answer order or membership changed.','muted'));
+  if(comparison.rows.length){
+    const changes=node('details');changes.append(node('summary','Read the complete previous and current source text'));
+    for(const row of comparison.rows){
+      const section=node('section');section.append(node('h5',row.title+' · '+row.status));
+      if(row.before!==null)section.append(node('h6','At the preceding field review'),node('pre',row.before,'source-text'));
+      if(row.after!==null)section.append(node('h6','Current draft answer'),node('pre',row.after,'source-text'));
+      changes.append(section);
+    }
+    box.append(changes);
+  }
+  const note=()=>field.sourceReviewNote??field.sourceReview?.note??'';
+  box.append(input('Wording decision note',note(),value=>{field.sourceReviewNote=value;touch();},{area:true}).wrap);
+  const controls=node('div',undefined,'row');
+  controls.append(button('Use the current answer wording',()=>{
+    draft=reviewFieldSources(draft,field.id,{choice:'refresh',note:note()});touch();render();
+    status('Selected the complete current answer wording and retained the previous field in Saved versions.');
+  }),button('Keep field wording and record this review',()=>{
+    draft=reviewFieldSources(draft,field.id,{choice:'keep',note:note()});touch();render();
+    status('Kept the edited field and recorded the exact source answers reviewed. Later source changes remain visible.');
+  }));
+  box.append(controls);root.append(box);
+}
+
 function fieldView(root){
-  root.append(node('h2','Issuer form fields'));formProfile(root);
+  root.append(node('h2','Issuer form fields'));formProfile(root);formCoverageView(root);
   root.append(button('Add field',()=>{const field=newField(uid());draft.fields.push(field);selectedField=field.id;touch();render();}));
   if(!draft.fields.length){root.append(node('p','Add fields from the actual form, or begin with an answer using the answer editor. Several canonical answers can be combined into one form field.','empty'));return;}
   const field=draft.fields.find(x=>x.id===selectedField)||draft.fields[0];selectedField=field.id;
@@ -243,11 +312,12 @@ function fieldView(root){
   const choices=node('details'),summary=node('summary','Source answers for this field'),checks=node('div',undefined,'check-list');
   for(const [id,title]of ANSWERS){
     const label=node('label',undefined,'check-row'),checkbox=node('input');checkbox.type='checkbox';checkbox.checked=field.answerIds.includes(id);
-    checkbox.addEventListener('change',()=>{field.answerIds=ANSWERS.map(x=>x[0]).filter(x=>x===id?checkbox.checked:field.answerIds.includes(x));touch();});
+    checkbox.addEventListener('change',()=>{field.answerIds=ANSWERS.map(x=>x[0]).filter(x=>x===id?checkbox.checked:field.answerIds.includes(x));touch();render();});
     label.append(checkbox,node('span',title));checks.append(label);
   }
   choices.append(summary,checks,node('p','Refreshing explicitly replaces this field text with the selected current draft answers. The preceding version stays in Saved versions.','muted'),button('Refresh text from selected answers',()=>{draft=rebuildField(draft,field.id);touch();render();}));root.append(choices);
   root.append(input('Complete field answer',field.text,value=>{field.text=value;touch();},{area:true,className:'answer-input'}).wrap);
+  fieldSourceView(root,field);
   const limits=node('div',undefined,'grid');
   limits.append(input('Issuer word limit',field.wordLimit,value=>{field.wordLimit=value===''?null:Number(value);touch();},{type:'number',placeholder:'Not supplied'}).wrap,
     input('Issuer character limit',field.characterLimit,value=>{field.characterLimit=value===''?null:Number(value);touch();},{type:'number',placeholder:'Not supplied'}).wrap,
@@ -274,7 +344,8 @@ function reviewerFiles(bundle){
 }
 function sourceView(root){
   root.append(node('h2','Source editions'),node('p','The full source text stays with its edition. Receiving another edition updates untouched answers and preserves edited answers against their original baselines. A source package carries all four reviewer files for comparison and receiving.'));
-  root.append(button('Open source package',()=>chooseFile('source')),button('Author product sources',()=>{$('view').value='products';render();}));
+  root.append(button('Open source package',()=>chooseFile('source')),workingEditionButton(),button('Author product sources',()=>{$('view').value='products';render();}));
+  root.append(node('p','The concise working edition is a dated, complete source choice. Compare its nine answers before receiving them; the full current manuscript remains available through Read current source.','muted'));
   if(published){
     const card=node('section',undefined,'card');card.dataset.reviewerSourceBundleId=publishedBundle?.bundle.id||'';
     card.append(node('h3',publishedLabel),node('p',published.url,'code'),node('p',published.gitBlob,'code'),node('p',published.receivedAt,'muted'));
@@ -371,25 +442,26 @@ function render(){
   const root=$('editor');root.replaceChildren();root.classList.toggle('grant-handover',view()==='handover');
   root.classList.toggle('product-authoring',view()==='products');
   delete root.dataset.productSourceAuthoring;delete root.dataset.productSourceBundleId;
-  if(!draft){root.append(node('h2','Open a retained application'),node('p','Read the current source, open a complete draft JSON, or select a saved browser draft.'),button('Open source package',()=>chooseFile('source')));
+  if(!draft){root.append(node('h2','Open a retained application'),node('p','Read the current source, open a complete draft JSON, or select a saved browser draft.'),button('Open source package',()=>chooseFile('source')),workingEditionButton());
     if(view()==='saved')savedView(root);return;}
   $('draft-title').value=draft.title;
   $('copy-all').textContent=view()==='fields'?'Copy all form fields':'Copy all answers';
   ({answers:answerView,fields:fieldView,review:reviewView,source:sourceView,planning:planningView,products:productSourcesView,handover:handoverView,history:historyView,saved:savedView}[view()]||answerView)(root);updateStats();sourceReadControls();
 }
-async function refreshSource({initial=false}={}){
+async function refreshSource({initial=false,edition='current'}={}){
+  if(!['current','concise'].includes(edition))throw new Error('Select the current manuscript or the concise working edition.');
   cancelPublishedRead();
-  const request={controller:new AbortController(),view:view()};
+  const request={controller:new AbortController(),view:view(),edition};
   publishedRead=request;sourceReadControls();clearError();
-  status('Reading the current application. Saved drafts and source packages remain available.');
+  status(edition==='concise'?'Reading the complete concise working edition. Current answers remain available.':'Reading the current application. Saved drafts and source packages remain available.');
   try{
-    const received=await readPublished(request.controller.signal);
+    const received=edition==='concise'?await readWorkingEdition(request.controller.signal):await readPublished(request.controller.signal);
     if(publishedRead!==request)return;
     published=received.source;publishedBundle={bundle:received.bundle,objects:received.objects};
-    publishedLabel='Current application reader';
+    publishedLabel=edition==='concise'?'Concise working edition · '+received.source.receivedAt.slice(0,10):'Current application reader';
     if(!draft){draft=retainPublishedBundle(createDraft(published,{id:uid()}));dirty=false;}
     if(!initial&&view()===request.view)$('view').value='source';
-    render();status('Read the current application edition. Compare its complete source before receiving it.');
+    render();status(edition==='concise'?'Read the dated concise working edition with its full original manuscript, budget and companion. Compare before receiving its answers.':'Read the current application edition. Compare its complete source before receiving it.');
   }catch(error){
     if(publishedRead===request&&error.name!=='AbortError')fail(error);
   }finally{

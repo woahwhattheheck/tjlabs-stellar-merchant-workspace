@@ -9,7 +9,7 @@ const fail=(code,extra={})=>{throw Object.assign(new Error(code),{code,...extra}
 const codeOf=error=>/^[A-Z0-9_]{1,120}$/.test(error?.code??'')?error.code:'OAUTH_SOURCE_READ_FAILED';
 function tokenFor(name,environment){
   const value=environment[name];
-  if(typeof value!=='string'||!value||value.length>32768||/[\x00-\x20\x7f]/.test(value))
+  if(typeof value!=='string'||!value||value.length>65536||/[\x00-\x20\x7f]/.test(value))
     fail('OAUTH_OPERATOR_CREDENTIAL_REQUIRED');
   return value;
 }
@@ -19,8 +19,9 @@ function retryAfter(value,now){
   const ms=seconds===null?Date.parse(value)-now:seconds*1000;
   return Number.isFinite(ms)&&ms>=0?Math.min(86_400_000,Math.max(1000,ms)):1000;
 }
-/** This is a GET of the already selected original operator endpoint. It does
- * not issue a grant, replace a bearer token, invoke a tool or refresh a key. */
+/** GET the selected original operator endpoint with its existing OAuth token.
+ * The host performs its original authentication, scope and authority checks,
+ * including its normal configured-key cache behavior. */
 export async function readOAuthSource(selection,{signal,environment=process.env}={}){
   const endpoint=oauthEndpoint(selection.endpoint);
   if(signal!==undefined&&!(signal instanceof AbortSignal))fail('OAUTH_SOURCE_SIGNAL_INVALID');

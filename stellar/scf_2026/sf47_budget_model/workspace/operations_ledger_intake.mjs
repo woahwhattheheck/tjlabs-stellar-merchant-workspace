@@ -1,4 +1,5 @@
 // Complete source-file intake into the original Grant Operations case.
+import {currentStaffContext,staffDeskStorageKey} from './staff-session.mjs';
 const SCHEMA='stellar-forge.sf47-ledger-intake.v1';
 const DESK_SCHEMA='stellar-forge.sf47-ledger-desk.v1';
 const kinds=[['contributors','Contributors / suppliers'],['work','Recorded work'],['invoices','Supplier invoices'],['cash','Observed cash'],['source','Supporting attachment']];
@@ -19,19 +20,22 @@ function download(value,name,type='application/json'){
   const blob=value instanceof Blob?value:new Blob([typeof value==='string'?value:pretty(value)+'\n'],{type});
   const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),10000);
 }
-let database;
-function db(){
-  if(!database)database=new Promise((resolve,reject)=>{
-    if(!globalThis.indexedDB){reject(new Error('Browser file storage is unavailable.'));return;}
-    const request=indexedDB.open('sf47-ledger-intake',1);
-    request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains('desks'))request.result.createObjectStore('desks');};
-    request.onerror=()=>reject(request.error||new Error('Browser file storage could not open.'));
-    request.onsuccess=()=>{request.result.onversionchange=()=>{request.result.close();database=null;};resolve(request.result);};
-  });
-  return database;
+const LEDGER_DATABASE='sf47-ledger-intake',databases=new Map();
+function db(name=LEDGER_DATABASE){
+  if(!databases.has(name)){
+    const opening=new Promise((resolve,reject)=>{
+      if(!globalThis.indexedDB){reject(new Error('Browser file storage is unavailable.'));return;}
+      const request=indexedDB.open(name,1);
+      request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains('desks'))request.result.createObjectStore('desks');};
+      request.onerror=()=>reject(request.error||new Error('Browser file storage could not open.'));
+      request.onsuccess=()=>{request.result.onversionchange=()=>{request.result.close();databases.delete(name);};resolve(request.result);};
+    }).catch(problem=>{databases.delete(name);throw problem;});
+    databases.set(name,opening);
+  }
+  return databases.get(name);
 }
-async function saved(key,value,expectedRevision){
-  const database=await db();
+async function saved(key,value,expectedRevision,name=LEDGER_DATABASE){
+  const database=await db(name);
   return new Promise((resolve,reject)=>{
     const tx=database.transaction('desks',value===undefined?'readonly':'readwrite'),store=tx.objectStore('desks');
     const request=store.get(key);
@@ -52,12 +56,22 @@ async function saved(key,value,expectedRevision){
   });
 }
 
-export function mountLedgerIntake({container,current,api,saveApi=api,session,mutationId,recordingActor,onCase,onOpen}){
+export function mountLedgerIntake({container,current,api,saveApi=api,session,mutationId,recordingActor,onCase,onOpen,staffContext=currentStaffContext()}){
   const root=document.createElement('section');root.className='ledger-intake';root.setAttribute('aria-label','Bulk ledger intake');container.replaceChildren(root);
   if(!document.querySelector('link[data-ledger-intake-style]')){
     const style=document.createElement('link');style.rel='stylesheet';style.href='/operations_ledger_intake.css';style.dataset.ledgerIntakeStyle='true';document.head.append(style);
   }
   const caseId=current.program.id,prefix='/api/operations/'+caseId,storageKey=caseId;
+  const deskContext=staffContext?clone(staffContext):null,databaseName=staffDeskStorageKey(LEDGER_DATABASE,deskContext),boundStaff=databaseName!==LEDGER_DATABASE;
+  const ownSaved=(key,value,expectedRevision)=>saved(key,value,expectedRevision,databaseName);
+  let legacyCopy=null,legacySearched=false;
+  function pendingActorProblem(body) {
+    if(!boundStaff||deskContext.role==='owner'||!body)return null;
+    if(typeof body.actor==='string'&&body.actor.trim()===deskContext.actor)return null;
+    const original=typeof body.actor==='string'&&body.actor.trim()?body.actor.trim():'an unrecorded operator';
+    return Object.assign(new Error('This original request belongs to '+original+'. Sign in as that operator to resume it. The complete original copy remains available to download.'),{code:'STAFF_REQUEST_ACTOR_CHANGED',status:403});
+  }
+
   let active=true,busy=false,hostBusy=false,contract=null,error='',notice='',storageNote=session.storageConflict?storageConflictMessage:'',saveTimer;
   session.storageWrites||=Promise.resolve();
   const available=()=>active&&root.isConnected,$=selector=>root.querySelector(selector);
@@ -70,7 +84,7 @@ export function mountLedgerIntake({container,current,api,saveApi=api,session,mut
   async function persist(){
     const value=state();
     const write=session.storageWrites.catch(()=>{}).then(async()=>{
-      const revision=await saved(storageKey,value,session.storageRevision??0);
+      const revision=await ownSaved(storageKey,value,session.storageRevision??0);
       session.storageRevision=revision;session.storageConflict=false;
       return revision;
     });
@@ -82,7 +96,17 @@ export function mountLedgerIntake({container,current,api,saveApi=api,session,mut
       if(available())status();return false;
     }
   }
+  function validateDesk(value){
+    if(value?.schema!==DESK_SCHEMA||value.caseId!==caseId||value.document?.schema!==SCHEMA||!Array.isArray(value.document.files)||value.document.files.length>20)
+      throw new Error('Open a complete saved ledger desk for this original case.');
+    if(value.document.files.some(file=>!file||typeof file.contentBase64!=='string'||typeof file.id!=='string'))
+      throw new Error('Every source file must retain its complete content and file key.');
+    if(value.pending&&(!value.pending.body||typeof value.pending.body.requestId!=='string'||!Number.isInteger(value.pending.body.expectedVersion)||
+      value.pending.body.document?.schema!==SCHEMA||typeof value.pending.documentSha256!=='string'))
+      throw new Error('Retain the complete original ledger request and input identity.');
+  }
   function restore(previous){
+    validateDesk(previous);
     const values={document:{schema:SCHEMA,title:'Ledger intake',files:[]},rawDefaults:{},inspections:{},selectedFile:0,pending:null,result:null,note:'',...previous};
     for(const key of ['document','rawDefaults','inspections','selectedFile','pending','result','note'])session[key]=clone(values[key]);
     session.storageRevision=Number.isSafeInteger(previous._storedRevision)?previous._storedRevision:0;
@@ -97,12 +121,37 @@ export function mountLedgerIntake({container,current,api,saveApi=api,session,mut
       const fixed=el.dataset.liFixed==='true',always=el.dataset.liAlways==='true';
       el.disabled=fixed||(!always&&(busy||hostBusy||!!session.pending));
     }
-    for(const el of root.querySelectorAll('[data-li-action="retry"]'))el.disabled=busy||hostBusy||!session.pending;
+    for(const el of root.querySelectorAll('[data-li-action="retry"]'))el.disabled=busy||hostBusy||!session.pending||!!pendingActorProblem(session.pending?.body);
   }
   function status(){
     const node=$('[data-li-status]');
     if(node){node.textContent=error||storageNote||notice;node.setAttribute('role',error||session.storageConflict?'alert':'status');}
     const conflict=$('[data-li-storage-conflict]');if(conflict)conflict.hidden=!session.storageConflict;
+  }
+  async function inspectLegacy(){
+    const value=await saved(storageKey);if(!available())return;
+    if(value)validateDesk(value);
+    legacyCopy=value?clone(value):null;legacySearched=true;render();
+  }
+  async function openLegacy(){
+    if(!legacyCopy)throw new Error('Choose an earlier browser copy first.');
+    if(session.pending)throw new Error('Keep the current original request until its result is available.');
+    const problem=pendingActorProblem(legacyCopy.pending?.body);if(problem)throw problem;
+    clearTimeout(saveTimer);await session.storageWrites.catch(()=>{});if(!available())return;
+    const revision=session.storageRevision??0;
+    download(state(),caseId+'-ledger-intake-before-earlier-copy-'+Date.now()+'.json');
+    restore(legacyCopy);session.storageRevision=revision;legacyCopy=null;legacySearched=false;render();
+    await persist();if(!available())return;
+    notice='Opened the selected earlier copy in this sign-in with every original source file. Its original browser copy remains available.';render();
+  }
+  function legacyView(){
+    if(!legacySearched)return '';
+    if(!legacyCopy)return '<section class="ledger-intake-pending"><h4>Earlier browser copies</h4><p>No earlier ledger desk is saved for this case.</p>'+button('Close','legacy-close')+'</section>';
+    const pending=legacyCopy.pending,problem=pendingActorProblem(pending?.body);
+    return '<section class="ledger-intake-pending"><h4>Earlier browser copy</h4>'+
+      table(['Original case','Original input','Source files','Original request / operator'],[[esc(legacyCopy.caseId),esc(legacyCopy.document.title),String(legacyCopy.document.files.length),esc(pending?.body?.requestId||'No pending request')+'<small>'+esc(pending?.body?.actor||'No pending request')+'</small>']])+
+      '<p>'+esc(problem?.message||'Open this selected copy in the current sign-in. This desk is retained as a complete download first.')+'</p><div class="ledger-intake-actions">'+
+      button('Open selected earlier copy','legacy-open',{disabled:!!problem||!!session.pending})+button('Download earlier copy','legacy-download',{always:true})+button('Close','legacy-close')+'</div></section>';
   }
   function activeFile(){return draft().files[session.selectedFile||0];}
   function fileEditor(){
@@ -177,12 +226,12 @@ export function mountLedgerIntake({container,current,api,saveApi=api,session,mut
     session.selectedFile=Math.min(Math.max(session.selectedFile||0,0),Math.max(0,files.length-1));
     root.innerHTML='<header><div><h3>Bulk ledger intake</h3><p>Bring complete contributor, work, supplier invoice and cash tables into this retained case.</p></div>'+
       '<div class="ledger-intake-actions">'+button('Download complete draft','download-draft',{always:true})+
-      button('Open draft / input','open-document')+button('Open Budget performance','performance')+'</div></header>'+
+      button('Open draft / input','open-document')+button('Open Budget performance','performance')+(boundStaff?button('Find earlier browser copy','legacy-inspect'):'')+'</div></header>'+
       '<p data-li-status role="status" aria-live="polite"></p>'+
       '<section class="ledger-intake-pending" data-li-storage-conflict hidden><h4>Two tabs edited this case draft</h4><p>Keep the complete input in this tab before opening the newer stored draft. The download includes any original pending request.</p>'+
         '<div class="ledger-intake-actions">'+button('Download this draft and open saved draft','open-saved',{always:true})+'</div></section>'+
-      (session.pending?'<section class="ledger-intake-pending"><h4>Original intake request retained</h4><p>Request <code>'+esc(session.pending.body.requestId)+
-        '</code> carries the complete reviewed input for case version '+session.pending.body.expectedVersion+'. Resume that original request to receive its result.</p>'+
+      legacyView()+(session.pending?'<section class="ledger-intake-pending"><h4>Original intake request retained</h4><p>Request <code>'+esc(session.pending.body.requestId)+
+        '</code> carries the complete reviewed input for case version '+session.pending.body.expectedVersion+'.</p><p>'+esc(pendingActorProblem(session.pending.body)?.message||'Resume that original request to receive its result.')+'</p>'+
         '<div class="ledger-intake-actions">'+button('Retry original intake','retry')+button('Download original request','download-request',{always:true})+'</div></section>':'')+
       (session.result?'<section class="ledger-intake-result"><h4>Recorded intake · case version '+session.result.version+'</h4><p>'+
         session.result.summary.records+' native records and '+session.result.summary.files+' original source files are retained with their input mapping.</p>'+
@@ -241,6 +290,7 @@ export function mountLedgerIntake({container,current,api,saveApi=api,session,mut
     if(!pending)return;
     busy=true;error='';render();
     try{
+      const problem=pendingActorProblem(pending.body);if(problem)throw problem;
       const result=await saveApi(prefix+'/ledger-intake-apply',clone(pending.body));
       if(result.id!==caseId||result.documentSha256!==pending.documentSha256)
         throw new Error('The returned intake does not match the retained original request.');
@@ -252,7 +302,7 @@ export function mountLedgerIntake({container,current,api,saveApi=api,session,mut
         await onCase(next,result);
       }
     }catch(problem){
-      if(Number.isInteger(problem.status)&&problem.status>=400&&problem.status<500){
+      if([400,409,413,415,422].includes(problem.status)&&typeof problem.code==='string'){
         session.pending=null;session.preview=null;await persist();
       }
       if(available())error=problem.message||String(problem);
@@ -266,11 +316,13 @@ export function mountLedgerIntake({container,current,api,saveApi=api,session,mut
       actor:recordingActor(),note:session.note||''};
     body.requestId=await mutationId('operations-ledger-intake:'+caseId,body);
     session.pending={body,documentSha256:selected.documentSha256};
-    await persist();render();await dispatch();
+    if(!await persist())download(state(),caseId+'-ledger-intake-original-request.json');render();await dispatch();
   }
   async function openDocument(file){
     if(file.size>64*1024*1024)throw new Error('Use a complete intake document or retained desk up to 64 MiB.');
-    const parsed=JSON.parse(await file.text());
+    const parsed=JSON.parse(await file.text());if(!available())return;
+    const originalPending=parsed.schema===DESK_SCHEMA&&parsed.caseId===caseId?parsed.pending:null;
+    const problem=pendingActorProblem(originalPending?.body);if(problem)throw problem;
     const document=parsed.schema===DESK_SCHEMA?parsed.document:parsed;
     if(document?.schema!==SCHEMA||!Array.isArray(document.files)||document.files.length>20)
       throw new Error('Open a complete ledger-intake document or saved desk.');
@@ -351,11 +403,12 @@ export function mountLedgerIntake({container,current,api,saveApi=api,session,mut
     if(action==='download-request'&&session.pending){download(state(),caseId+'-ledger-intake-request.json');return;}
     if(action==='download-preview'&&session.preview){download(session.preview,caseId+'-ledger-intake-preview.json');return;}
     if(action==='download-result'&&session.result){download(session.result,caseId+'-ledger-intake-result.json');return;}
+    if(action==='legacy-download'&&legacyCopy){download(legacyCopy,caseId+'-earlier-ledger-intake-desk.json');return;}
     if(busy||hostBusy)return;
     if(action==='open-saved'){
       run(async()=>{
         clearTimeout(saveTimer);await session.storageWrites.catch(()=>{});
-        const previous=await saved(storageKey);
+        const previous=await ownSaved(storageKey);if(!available())return;
         if(previous?.schema!==DESK_SCHEMA||previous.caseId!==caseId||previous.document?.schema!==SCHEMA)
           throw new Error('The saved draft is unavailable; download this complete draft to keep it.');
         download(state(),caseId+'-ledger-intake-local-'+Date.now()+'.json');
@@ -363,6 +416,9 @@ export function mountLedgerIntake({container,current,api,saveApi=api,session,mut
       });return;
     }
     if(action==='retry'){dispatch();return;}
+    if(action==='legacy-inspect'){run(inspectLegacy);return;}
+    if(action==='legacy-open'){run(openLegacy);return;}
+    if(action==='legacy-close'){legacyCopy=null;legacySearched=false;render();return;}
     if(session.pending)return;
     if(action==='add-files'){$('[data-li-files]').click();return;}
     if(action==='open-document'){$('[data-li-document]').click();return;}
@@ -390,19 +446,23 @@ export function mountLedgerIntake({container,current,api,saveApi=api,session,mut
   });
   async function initialize(){
     if(!session.initialized){
-      try{
-        const previous=await saved(storageKey);
-        session.storageRevision=Number.isSafeInteger(previous?._storedRevision)?previous._storedRevision:0;
-        if(previous?.schema===DESK_SCHEMA&&previous.caseId===caseId)restore(previous);
-      }catch{storageNote='Browser file storage is unavailable. Download the complete draft to keep the selected source files.';}
-      session.initialized=true;
+      session.initializing||=(async()=>{
+        try{
+          const previous=await ownSaved(storageKey);
+          session.storageRevision=Number.isSafeInteger(previous?._storedRevision)?previous._storedRevision:0;
+          if(previous?.schema===DESK_SCHEMA&&previous.caseId===caseId)restore(previous);
+        }catch{storageNote='Browser file storage is unavailable. Download the complete draft to keep the selected source files.';}
+        session.initialized=true;
+      })();
+      await session.initializing;
     }
+    await session.storageWrites.catch(()=>{});if(!available())return;
     session.document||={schema:SCHEMA,title:'Ledger intake',files:[]};session.rawDefaults||={};session.inspections||={};
     session.pending||=null;session.result||=null;render();
-    contract=await api(prefix+'/ledger-intake');
+    const value=await api(prefix+'/ledger-intake');if(!available())return;contract=value;
     render();
   }
   session.document||={schema:SCHEMA,title:'Ledger intake',files:[]};session.rawDefaults||={};session.inspections||={};
-  const ready=initialize();
-  return {ready,setHostBusy(value){hostBusy=!!value;controls();},dispose(){active=false;clearTimeout(saveTimer);persist();}};
+  const ready=initialize().catch(problem=>{if(available())throw problem;});
+  return {ready,setHostBusy(value){hostBusy=!!value;controls();},dispose(){active=false;clearTimeout(saveTimer);if(session.initialized)persist();}};
 }

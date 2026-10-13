@@ -44,7 +44,8 @@ export function normalizeOAuthSource(value){
   const tokenEnv=text(value.tokenEnv,128,'OAUTH_SOURCE_TOKEN_ENV_INVALID',/^[A-Za-z_][A-Za-z0-9_]{0,127}$/);
   text(value.resource,2048,'OAUTH_SOURCE_RESOURCE_INVALID');let resource;
   try {resource=new URL(value.resource);}catch{need(false,'OAUTH_SOURCE_RESOURCE_INVALID');}
-  need(resource.protocol==='https:'&&!resource.username&&!resource.password&&!resource.hash&&!resource.search&&resource.href===value.resource,
+  need(resource.protocol==='https:'&&!resource.username&&!resource.password&&!resource.hash&&!resource.search&&
+    !/[\x00-\x20\x7f]/.test(value.resource),
     'OAUTH_SOURCE_RESOURCE_INVALID');
   need(HASH.test(value.configurationSha256??''),'OAUTH_SOURCE_CONFIGURATION_SHA256_INVALID');
   return {endpoint,tokenEnv,resource:value.resource,configurationSha256:value.configurationSha256,
@@ -107,7 +108,7 @@ export function readOAuthObservationFiles(files){
   return {meta,source,summary};
 }
 function regressed(source,previous){
-  if(source.startedAt!==previous.startedAt||source.sequence<=previous.sequence||source.capturedAt<=previous.capturedAt)return true;
+  if(source.startedAt!==previous.startedAt||source.sequence<=previous.sequence||source.capturedAt<previous.capturedAt)return true;
   for(const stage of OAUTH_STAGES){
     if(OAUTH_COUNTER_FIELDS.some(key=>source.counters[stage][key]<previous.counters[stage][key]))return true;
     if(Object.keys(source.counters[stage].outcomes).some(key=>source.counters[stage].outcomes[key]<previous.counters[stage].outcomes[key]))return true;

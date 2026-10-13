@@ -19,8 +19,10 @@ const instant=value=>typeof value==='string'&&Number.isFinite(Date.parse(value))
 function exact(value,names,label){need(plain(value)&&Object.keys(value).length===names.length&&names.every(name=>Object.hasOwn(value,name)),label);return value;}
 function text(value,max,label){need(typeof value==='string'&&value.length>0&&value.length<=max&&!/[\x00-\x1f\x7f]/.test(value),label);return value;}
 function https(value,label){
-  text(value,2048,label);let url;try {url=new URL(value);}catch{need(false,label);}
-  need(url.protocol==='https:'&&!url.username&&!url.password&&!url.hash&&url.href===value,label);return url;
+  text(value,2048,label);need(!/[\x00-\x20\x7f]/.test(value),label);
+  let url;try {url=new URL(value);}catch{need(false,label);}
+  // The original verifier keeps the configured issuer/audience spelling exact.
+  need(url.protocol==='https:'&&!url.username&&!url.password&&!url.hash,label);return url;
 }
 function sum(rows,key){const n=rows.reduce((n,row)=>n+row[key],0);need(natural(n),'counter sum');return n;}
 export function validateOAuthCounters(value,{cumulative=true}={}) {
@@ -59,16 +61,18 @@ export function validateOAuthObservation(value) {
   const issuers=new Set();
   for(const server of authority.servers){
     exact(server,['issuer','jwksUri','algorithms','tokenTypes','subjectAllowlistCount','requiredScopes','keys'],'authorization server');
-    https(server.issuer,'issuer');https(server.jwksUri,'JWKS URI');
+    need(!https(server.issuer,'issuer').search,'issuer query');https(server.jwksUri,'JWKS URI');
     need(!issuers.has(server.issuer),'duplicate issuer');issuers.add(server.issuer);
     need(Array.isArray(server.algorithms)&&server.algorithms.length>=1&&server.algorithms.length<=10&&
       new Set(server.algorithms).size===server.algorithms.length&&server.algorithms.every(a=>['RS256','RS384','RS512','PS256','PS384','PS512','ES256','ES384','ES512','EdDSA'].includes(a)),'algorithms');
     need(Array.isArray(server.tokenTypes)&&server.tokenTypes.length>=1&&server.tokenTypes.length<=8&&
+      new Set(server.tokenTypes).size===server.tokenTypes.length&&
       server.tokenTypes.every(t=>typeof t==='string'&&t.length>0&&t.length<=128&&/^(?:application\/)?[-a-z0-9!#$&^_.+]+$/i.test(t)),'token types');
     need(natural(server.subjectAllowlistCount)&&server.subjectAllowlistCount<=1024,'subject count');
     need(authority.hostCallback||server.subjectAllowlistCount>0,'original authority required');
     need(Array.isArray(server.requiredScopes)&&server.requiredScopes.length<=128&&new Set(server.requiredScopes).size===server.requiredScopes.length&&
-      server.requiredScopes.every(s=>typeof s==='string'&&s.length>0&&s.length<=256&&!/[\x00-\x20\x7f]/.test(s)),'required scopes');
+      server.requiredScopes.every(s=>typeof s==='string'&&s.length>0&&s.length<=256&&
+        /^[\x21\x23-\x5b\x5d-\x7e]+$/.test(s)&&s!=='offline_access'),'required scopes');
     exact(server.keys,['fresh','reloading','coolingDown'],'JWKS cache');
     need(Object.values(server.keys).every(v=>typeof v==='boolean'),'JWKS cache state');
   }

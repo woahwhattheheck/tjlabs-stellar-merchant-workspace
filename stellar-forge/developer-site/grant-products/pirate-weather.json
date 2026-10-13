@@ -1,0 +1,37 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "pirate-weather",
+  "heading": "## Pirate Weather recurring customer briefings and complete project receiving",
+  "sources": [
+    {
+      "id": "pirate-weather-customer-operation",
+      "label": "Pirate Weather complete forecast briefing, merchant publication and independent project receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/OPERATING.md",
+      "editions": [
+        {
+          "commit": "b18d92f3be55765d8e9c594a6a5eb59ad663ed71",
+          "bytes": 26738,
+          "sha256": "c93ee102ca95ca6c1fa5c02a32bc6790cf724523e7dcd79068154b5eb8d95172",
+          "git_blob": "ce52edc0376fc872984dce49a6d088b463c9725e"
+        }
+      ]
+    },
+    {
+      "id": "pirate-weather-original-source-contract",
+      "label": "Pirate Weather original forecast request, response, exact-value and usage contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/SOURCE_CONTRACT.md",
+      "editions": [
+        {
+          "commit": "b18d92f3be55765d8e9c594a6a5eb59ad663ed71",
+          "bytes": 9860,
+          "sha256": "82f51e91e5a00fab7e79e6dd141d450973f78f04983526f4a2481e8040eb9750",
+          "git_blob": "c4ac75791e5fd6b5d57a1d2ed44016d0dc828f22"
+        }
+      ]
+    }
+  ]
+}

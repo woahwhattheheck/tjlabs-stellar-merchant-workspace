@@ -97,6 +97,38 @@
           "git_blob": "68ffa59affb474acf725034d1bd1e6f2180c3401"
         }
       ]
+    },
+    {
+      "id": "document-merchant-assembly-guide",
+      "label": "Complete ordered PDF customer bundle setup, operation and receiving",
+      "path": "products/document-merchant/ASSEMBLY.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "required": false,
+      "editions": [
+        {
+          "commit": "adae6d07971165fc04da3391440b786cf59ef6c4",
+          "bytes": 17748,
+          "sha256": "718a99bf1ed02edbc8721d0fcfb1df01f1d220e7fe18bc656134e2dcfaacf2db",
+          "git_blob": "41f1acc238e50a8436e9807c4663f3be082be311"
+        }
+      ]
+    },
+    {
+      "id": "document-merchant-assembly-core",
+      "label": "Ordered complete PDF sources and original native batch fulfillment",
+      "path": "products/document-merchant/assembly.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "required": false,
+      "editions": [
+        {
+          "commit": "adae6d07971165fc04da3391440b786cf59ef6c4",
+          "bytes": 28867,
+          "sha256": "5c4485b286dc4e9349cff939e9860259c58d693b1d08cb0ecb8dbee459f776a3",
+          "git_blob": "70a3d17c3ca12e9c89853a0675e45b0c09794f26"
+        }
+      ]
     }
   ]
 }

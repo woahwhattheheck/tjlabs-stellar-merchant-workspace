@@ -79,6 +79,18 @@ export function parseCurityPackageManifest(value){
     'PACKAGE','The original edition and case package identities are required.');
   return value;
 }
+function companionObservation(file,nativeManifest){
+  const meanings={'PLAN.json':'PLANNED_CASE_BASELINE','ROLLBACK_PLAN.json':'PLANNED_CASE_BASELINE','ORIGINAL_PLAN.json':'PLANNED_CASE_BASELINE',
+    'APPLIED.json':'RECORDED_CASE_OUTCOME','ROLLED_BACK.json':'RECORDED_CASE_OUTCOME','ORIGINAL_APPLIED.json':'RECORDED_CASE_OUTCOME',
+    'INCIDENT_BEFORE.json':'ORIGINAL_INCIDENT_OBSERVATION','ACK_REQUEST.json':'ORIGINAL_INCIDENT_OBSERVATION',
+    'ACKNOWLEDGED.json':'ORIGINAL_INCIDENT_OBSERVATION','SOURCE_SELECTION.json':'REVIEWED_SOURCE_SELECTION',
+    'RECEIVED_HISTORY.json':'PASSIVE_RECEIVED_HISTORY'};
+  ensure(Object.hasOwn(meanings,file.name),'CASE_HISTORY','Select an original companion observation.');
+  const original=file.value.case,caseRevision=UUID.test(original?.id??'')&&SHA.test(original?.revision??'')?
+    {id:original.id,revision:original.revision}:null;
+  return {name:file.name,scope:meanings[file.name],case:caseRevision,includedInNativeHistory:caseRevision===null?null:
+    caseRevision.id===nativeManifest.case.id&&nativeManifest.caseHistory.revisions.some(row=>row.revision===caseRevision.revision)};
+}
 async function inspect(directory,expectedManifestSha256,runtime={}){
   const root=await privateDirectory(directory,{create:false}),raw=await read(join(root,'curity-case-package.json'),64*1024*1024);
   ensure(SHA.test(expectedManifestSha256??'')&&hash(raw)===expectedManifestSha256,'PACKAGE_CHANGED','The selected package manifest changed.',409);
@@ -108,6 +120,9 @@ async function inspect(directory,expectedManifestSha256,runtime={}){
     'PACKAGE','The case operation and complete audit edition do not agree.');
   ensure(manifest.history&&Array.isArray(manifest.history.operations)&&Array.isArray(manifest.history.editions),
     'CASE_HISTORY','Retain the complete provider history for this native case.');
+  ensure(typeof manifest.history.capturedAt==='string'&&Number.isFinite(Date.parse(manifest.history.capturedAt)),
+    'CASE_HISTORY','Retain the original companion capture time.');
+  same(manifest.history.nativeBoundary,{case:nativeManifest.case,headRevision:nativeManifest.caseHistory.headRevision});
   const declaredHistory=[],historical=new Map();
   for(const item of manifest.history.editions){
     ensure(SHA.test(item.manifestSha256??'')&&item.prefix==='history/editions/'+item.manifestSha256&&!historical.has(item.editionId),
@@ -128,7 +143,9 @@ async function inspect(directory,expectedManifestSha256,runtime={}){
     const selection=await read(join(root,prefix,'SOURCE_SELECTION.json'));
     ensure(historicalPlan.id===item.id&&historicalPlan.case.id===item.caseId&&hash(selection)===historicalPlan.sourceSha256&&
       historical.get(historicalPlan.source.editionId)===historicalPlan.source.manifestSha256,'CASE_HISTORY','The historical operation and original source differ.',409);
-    same(JSON.parse(selection),historicalPlan.source);historicalPlans.push(historicalPlan);declaredHistory.push(...item.files);
+    same(JSON.parse(selection),historicalPlan.source);
+    const observations=[];for(const name of item.files)observations.push(companionObservation({name:name.split('/').at(-1),value:await readJson(await member(root,name))},nativeManifest));
+    same(item.observations,observations);historicalPlans.push(historicalPlan);declaredHistory.push(...item.files);
   }
   ensure(seenOperations.has(plan.case.id+'/'+manifest.operationId),'CASE_HISTORY','The selected active operation is absent from full history.');
   const lineage=new Set([plan.case.id]);
@@ -183,7 +200,7 @@ export async function openCurityPortable({store,casesDirectory,sourceDelivery,br
       const nativeBody=await read(join(output,'native-case','case-source-package.json'),64*1024*1024);
       const nativeManifest=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(nativeBody)),inventory=[];
       const requestPath=join(output,'EXPORT_REQUEST.json');let request=await optional(requestPath);
-      if(request){const {companion,history,historyEditions,...original}=request;same(original,intent);}
+      if(request){const {companion,history,historyEditions,companionCapturedAt,...original}=request;same(original,intent);}
       else{
         const revisions=new Set(nativeManifest.caseHistory.revisions.map(row=>row.revision));
         const history=caseHistory.operations.filter(row=>row.applied?revisions.has(row.applied.case.revision):revisions.has(row.plan.case.revision));
@@ -211,7 +228,7 @@ export async function openCurityPortable({store,casesDirectory,sourceDelivery,br
             historyEditions.push({editionId:found.manifest.id,manifestSha256:found.manifestSha256});
         }
         request={...intent,companion:selectedOperation.files,
-          history:[...combined.values()],historyEditions};
+          history:[...combined.values()],historyEditions,companionCapturedAt:new Date().toISOString()};
         await retain(requestPath,request);
       }
       for(const row of nativeManifest.files)inventory.push({name:'native-case/'+row.name,...filePin(row),role:'native-case'});
@@ -232,7 +249,9 @@ export async function openCurityPortable({store,casesDirectory,sourceDelivery,br
         await copyPinned(row.path,await member(output,'application/'+row.name,{parents:true}),row);
         inventory.push({name:'application/'+row.name,...filePin(row),role:'application'});
       }
-      const history={operations:[],editions:[]};
+      const history={operations:[],editions:[],capturedAt:request.companionCapturedAt,
+        nativeBoundary:{case:nativeManifest.case,headRevision:nativeManifest.caseHistory.headRevision},
+        interpretation:'Provider companion observations at capture time; each native revision and incident observation retains its separate scope.'};
       for(const operation of request.history){
         const rows=[];
         for(const file of operation.files){
@@ -240,7 +259,8 @@ export async function openCurityPortable({store,casesDirectory,sourceDelivery,br
           await retain(await member(output,name,{parents:true}),content);
           inventory.push({name,bytes:content.length,sha256:hash(content),role:'history'});rows.push(name);
         }
-        history.operations.push({caseId:operation.caseId,id:operation.id,files:rows});
+        history.operations.push({caseId:operation.caseId,id:operation.id,files:rows,
+          observations:operation.files.map(file=>companionObservation(file,nativeManifest))});
       }
       for(const selectedEdition of request.historyEditions){
         const found=await source.locate(selectedEdition.editionId);
@@ -315,6 +335,7 @@ export async function openCurityPortable({store,casesDirectory,sourceDelivery,br
       const sourceApplied=await readJson(join(retainedRoot,'case-operation','APPLIED.json'));
       const sourceMetadata=(await readJson(join(retainedRoot,'native-case','case.json'))).metadata;
       const sourceHistory={packageId:context.manifest.id,manifestSha256:expectedManifestSha256,
+        capture:{capturedAt:context.manifest.history.capturedAt,nativeBoundary:context.manifest.history.nativeBoundary,interpretation:context.manifest.history.interpretation},
         operations:[],editions:context.manifest.history.editions.map(({editionId,manifestSha256})=>({editionId,manifestSha256}))};
       for(const item of context.manifest.history.operations){
         const files=[];

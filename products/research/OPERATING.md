@@ -1406,3 +1406,20 @@ The [Merchant return family](../../stellar-forge/mcp-merchant-operator/DOSSIER_R
 - [Original saved-case operating journey](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/examples/README.md)
 
 Keep operating directories, source credentials and private startup records outside the source checkout. Retain the complete original case and delivery together through the customer's receiving handover.
+
+
+## Complete quotation programmes and receiving
+
+The Research application includes **Customer programmes**, linked from the quotation desk and served at `/customer-quote-programmes.html`. It joins the existing quotation forms to a saved customer programme: original case and project, complete native inputs, explicit review/application/replay, frozen customer delivery, paid-publication files and realized report. The operator can download the full programme archive, resume its upload on the destination, inspect every original file, review the actual local case selection and receive the editable case and dossier through their existing writers.
+
+The [complete programme browser guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/PROGRAMME_BROWSER.md) covers working forms, retained background jobs, streamed file transfer, typed client and saved reopening. The existing Node and installed Python programme interfaces share these same native records and complete portable files. Application Stop drains accepted programme work before its quote, commerce and dossier/listener dependencies close.
+
+## Operate and transfer customer programmes through Merchant
+
+The same Research attachment now exposes the complete programme workflow through the `merchant_research_programme_*` tools. Use the [Merchant programme guide](../../stellar-forge/mcp-merchant-operator/RESEARCH_PROGRAMMES.md) for the original configuration, all twenty tool inputs, source and destination selections, and saved-file recovery.
+
+Attach each host-declared workspace and read its programme information before selecting a job. Keep the returned original workspace ID in subsequent calls. A programme submission can carry the complete native job inline or select a declared `programme-input` file; the latter retains large case records through the existing native file limits. The original browser, Node and Python programme histories remain the same operating source.
+
+Freeze the completed delivery through the native export and archive jobs. Inspect the full file inventory, retain selected files in the original Merchant exports directory, and read those exact bytes through the existing paged file reader. A transfer selects the archive's complete SHA256, byte count and manifest digest, the destination attachment and its original workspace ID. The typed `ResearchQuoteProgrammeTransfers` owner streams the archive into the destination's resumable upload and keeps both client lifetimes admitted until the accepted transfer finishes.
+
+On the receiving workspace, import that completed upload, prepare its actual case/dossier receiving selection, inspect the returned review and apply its exact review SHA. Continue an interrupted job, upload or transfer with its original ID and unchanged input. Completed local files and transfer results reopen from their retained records. The Research application continues to own its listener; Merchant detach drains accepted programme operations and retries unfinished file-owner cleanup.

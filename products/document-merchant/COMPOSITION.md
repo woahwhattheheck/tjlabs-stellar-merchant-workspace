@@ -653,3 +653,8 @@ A parent order containing an invoice and greeting is one parent task reference a
 | 130 | An interrupted active command drained its original customer |
 
 The full original interfaces are documented in [BATCHES.md](BATCHES.md), [OPERATING.md](OPERATING.md), [composition.mjs](composition.mjs), and [composition-cli.mjs](composition-cli.mjs). The typed API is in [composition.d.mts](composition.d.mts).
+
+
+## Ordered invoice and report bundles
+
+After receiving the original PDFs, use the same Document production browser's Ordered PDF bundle step or `document-merchant assemble` to prepare exact customer order, review the original assembly price, fulfill and receive every volume, and export one complete customer archive. The PDFMint-backed `assemblePdfs` function is enabled explicitly with its own native payment terms. Single-PDF volumes retain their original bytes without a merge purchase. See [ASSEMBLY.md](./ASSEMBLY.md) for complete merchant setup, local/batch source intake, CLI commands, continuation, output units and independent customer receiving.

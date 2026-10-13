@@ -217,8 +217,12 @@ def normalize(value, spec, name):
         return sorted(result)
     if spec == "dimensions":
         require(isinstance(value, dict) and len(value) <= 32, "Use up to 32 named result dimensions")
-        return {short(key, "Dimension name", 120): short(item, "Dimension value", 500)
-                for key, item in sorted(value.items())}
+        result = {}
+        for key, item in sorted(value.items()):
+            dimension = short(key, "Dimension name", 120)
+            require(dimension not in result, "Result dimensions repeat a name after trimming")
+            result[dimension] = short(item, "Dimension value", 500)
+        return result
     if spec == "sources":
         require(isinstance(value, list) and len(value) <= 256, "Select up to 256 source records")
         result = []
