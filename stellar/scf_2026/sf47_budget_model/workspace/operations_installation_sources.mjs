@@ -3,12 +3,15 @@ import {Sha256, sha256File} from './operations_installation_source_hash.mjs';
 import {bindingTemplate, prepareInstallation, renderWorkorder} from '/installation-prepare-core.mjs';
 import {composeCustomerProgramme, programmeFiles} from '/installation-workorders/customer-programme-core.mjs';
 import {createCommissioningReceivingDesk} from './operations_installation_commissioning.mjs';
+import {currentStaffContext, staffDeskStorageKey, assertStaffRequestActor} from './staff-session.mjs';
 
 const SCHEMA='stellar-forge.installation-source-desk.v1';
 const SELECTION='stellar-forge.installation-source-selection.v1';
 const NATIVE_SELECTION='stellar-forge.canadabuys-workshare-selection.v1';
 const HANDOVER_SELECTION='stellar-forge.installation-handover-selection.v1';
-const MAX_FILE=8*1024*1024, MAX_ARCHIVE=192*1024*1024;
+const MAX_FILE=8*1024*1024, MAX_ARCHIVE=192*1024*1024, MAX_WORKING=512*1024*1024;
+const WORKING_COPY='stellar-forge.installation-source-working-copy.v1';
+const activeCopies=new Map();
 const clone=value=>structuredClone(value);
 const record=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const sorted=value=>Array.isArray(value)?value.map(sorted):record(value)?
@@ -40,7 +43,7 @@ const table=(heads,rows)=>'<div class="source-desk-table"><table><thead><tr>'+he
 function field(label,path,value='',options={}){
   const a=' data-source-field="'+esc(path)+'"'+(options.readonly?' readonly':' data-source-edit');
   let input;
-  if(options.options)input='<select'+a+'>'+options.options.map(([v,label])=>'<option value="'+esc(v)+'"'+(String(value??'')===String(v)?' selected':'')+'>'+esc(label)+'</option>').join('')+'</select>';
+  if(options.options)input='<select'+a+'>'+[...options.options,...(value!==null&&value!==undefined&&String(value)!==''&&!options.options.some(([id])=>String(id)===String(value))?[[value,'Original selection · '+value]]:[])].map(([v,label])=>'<option value="'+esc(v)+'"'+(String(value??'')===String(v)?' selected':'')+'>'+esc(label)+'</option>').join('')+'</select>';
   else if(options.area)input='<textarea'+a+' rows="'+(options.rows||4)+'" spellcheck="false">'+esc(value)+'</textarea>';
   else input='<input'+a+' type="'+(options.type||'text')+'" value="'+esc(value)+'"'+(options.list?' list="'+esc(options.list)+'"':'')+'>';
   return '<label class="'+(options.wide?'source-desk-wide':'')+'"><span>'+esc(label)+'</span>'+input+
@@ -89,7 +92,67 @@ class BrowserJournal{
     });
   }
   get(name){return this.access('readonly',s=>s.get(this.key+':'+name));}
-  put(name,value){return this.access('readwrite',s=>s.put(clone(value),this.key+':'+name));}
+  async transaction(action){
+    if(this.closed)throw new Error('The original browser journal is closed.');
+    const db=await this.opening;
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction('records','readwrite'),store=tx.objectStore('records');let result,problem;
+      const fail=error=>{problem=error;try{tx.abort();}catch{}};
+      try{action(store,value=>{result=value;},fail);}catch(error){fail(error);}
+      tx.oncomplete=()=>resolve(result);tx.onabort=()=>reject(problem||tx.error||new Error('The complete browser write failed.'));tx.onerror=()=>{};
+    });
+  }
+  async entries(prefix='',key=this.key){
+    if(this.closed)throw new Error('The original browser journal is closed.');
+    const db=await this.opening,stem=key+':'+prefix;
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction('records','readonly'),values=[];
+      const request=tx.objectStore('records').openCursor(IDBKeyRange.bound(stem,stem+'\uffff'));
+      request.onsuccess=()=>{const cursor=request.result;if(cursor){values.push({key:cursor.key,value:cursor.value});cursor.continue();}};
+      tx.oncomplete=()=>resolve(values);tx.onabort=()=>reject(tx.error||request.error||new Error('The complete local inventory could not be read.'));tx.onerror=()=>{};
+    });
+  }
+  readAt(key,name){return this.access('readonly',s=>s.get(key+':'+name));}
+  async receiveRequests(records){
+    if(!records.length)return [];
+    return this.transaction((store,done,fail)=>{
+      const values=[];let remaining=records.length;
+      for(const incoming of records){
+        const key=this.key+':request:'+incoming.body.requestId,read=store.get(key);
+        read.onsuccess=()=>{try{
+          const prior=read.result;
+          if(prior&&(!equal(prior.body,incoming.body)||prior.requestSha256!==incoming.requestSha256||
+            prior.draftId!==incoming.draftId||prior.caseId!==incoming.caseId||
+            prior.receipt&&incoming.receipt&&!equal(prior.receipt,incoming.receipt)))
+            throw Object.assign(new Error('Keep both conflicting complete original request copies.'),{code:'SOURCE_REQUEST_CONFLICT'});
+          const value=prior?.receipt?{...clone(incoming),...prior}:incoming.receipt?{...prior,...clone(incoming)}:{...prior,...clone(incoming)};
+          values.push({key,value});if(--remaining===0){for(const row of values)store.put(row.value,row.key);done(values.map(row=>row.value));}
+        }catch(error){fail(error);}};
+        read.onerror=()=>fail(read.error);
+      }
+    });
+  }
+  put(name,value){
+    if(name.startsWith('request:'))return this.receiveRequests([value]).then(rows=>rows[0]);
+    return this.access('readwrite',s=>s.put(clone(value),this.key+':'+name));
+  }
+  saveCopy(value,expectedSequence=0){
+    return this.transaction((store,done,fail)=>{
+      const key=this.key+':copy:'+value.copyId,read=store.get(key);
+      read.onsuccess=()=>{try{
+        const prior=read.result;
+        if((prior?.sequence??0)!==expectedSequence)
+          throw Object.assign(new Error('This local working copy advanced in another window. Keep both complete copies and save your fields as a separate copy.'),{code:'SOURCE_COPY_CONFLICT'});
+        const saved={...clone(value),sequence:expectedSequence+1,updatedAt:new Date().toISOString()};
+        store.put(saved,key);
+        store.put({copyId:saved.copyId,sequence:saved.sequence,name:saved.name||saved.state?.copyName||'Source working copy',
+          sourceDraftId:saved.sourceDraftId,updatedAt:saved.updatedAt,pendingId:saved.state?.pendingId??null},
+          this.key+':copy-index:'+saved.copyId);
+        done(saved);
+      }catch(error){fail(error);}};
+      read.onerror=()=>fail(read.error);
+    });
+  }
   async close(){if(this.closed)return;const db=await this.opening;db.close();this.closed=true;}
 }
 
@@ -101,11 +164,17 @@ export function mountInstallationSources(root,bridge){
     link.dataset.installationSourceStyle='true';document.head.append(link);
   }
   const context=bridge.context(),scope={caseId:context.caseId,planId:context.planId,createdAt:context.createdAt},caseId=scope.caseId,prefix='/api/operations/'+caseId+'/installation-sources';
-  const journal=new BrowserJournal(caseId+':'+scope.planId+':'+scope.createdAt);
+  const staffContext=currentStaffContext(),legacyKey=caseId+':'+scope.planId+':'+scope.createdAt;
+  const journalKey=staffDeskStorageKey(legacyKey,staffContext),pointerKey=staffDeskStorageKey('sf47.installation-source-copy:'+legacyKey,staffContext);
+  const journal=new BrowserJournal(journalKey);
+  let copyId=crypto.randomUUID(),copySequence=0,copyConflict=false,localCopies=[],legacyCopy=null,selectedLocalCopy='';
+  let selectedFile=null,earlierCopies=[],copyLoading=true;
+  const requestRecords=new Map();
+  activeCopies.set(pointerKey,copyId);
   const initial={schema:SCHEMA,scope,open:false,tab:'files',draftId:null,revision:null,work:null,note:'',newTitle:'',
     upload:{filename:'',mediaType:'application/json',sourceUrl:'',observedAt:''},
     caseForm:null,pendingId:null,preparationId:null,profileWork:null,commissioningWork:null,
-    inspectionFileId:null,notice:'',error:'',rejected:[]};
+    inspectionFileId:null,notice:'',error:'',rejected:[],copyName:'Source working copy',rawFields:{},fieldErrors:{},historyRevisionText:null};
   let state=clone(initial),alive=true,busy=false,hostBusy=false,initialized=false;
   let saved=null,edition=null,heads=[],catalogue=null,prepared=null,inspection=null,request=null,chosenFile=null;
   let generation=0,persistedGeneration=0,persistence=Promise.resolve(),timer=null,storageError='',downloads=new Set();
@@ -117,21 +186,241 @@ export function mountInstallationSources(root,bridge){
   const historic=()=>saved&&state.revision!==null&&state.revision!==saved.revision;
   const workingDirty=()=>!!state.work?.dirty||!!state.caseForm?.dirty||!!state.profileWork?.dirty||!!state.commissioningWork?.dirty;
   const pending=()=>!!state.pendingId;
-  const editing=()=>initialized&&!busy&&!pending()&&!readonly()&&!historic();
+  const editing=()=>initialized&&!copyLoading&&!busy&&!pending()&&!readonly()&&!historic();
   const commissioning=createCommissioningReceivingDesk({
     state:()=>state,draft:()=>selectedDraft(),files:()=>files(),caseId,available,editing,historic,
     requireEdit,changed,render,issue,esc,pretty,stable,header,table,empty,hint,btn,field,
     api:(suffix,value)=>bridge.api(prefix+'/'+state.draftId+suffix,value),
     download:downloadBlob
   });
-  function snapshot(){return clone(state);}
+  function snapshot(){return {
+    schema:SCHEMA,workingCopySchema:WORKING_COPY,scope:clone(scope),staffContext:clone(staffContext),
+    copyId,sequence:copySequence,name:state.copyName||'Source working copy',
+    sourceDraftId:state.draftId,selectedRevision:state.revision??saved?.revision??null,
+    saved:clone(selectedDraft()),working:clone(state.work),caseForm:clone(state.caseForm),
+    profileWork:clone(state.profileWork),pendingRequest:request?clone(request):null,
+    state:clone(state),current:clone(saved),selected:clone(edition),prepared:clone(prepared),
+    inspection:clone(inspection),catalogue:clone(catalogue),selectedFile:clone(selectedFile),
+    requests:[...requestRecords.values()].map(clone),earlierCopies:clone(earlierCopies)
+  };}
+  function validateRequest(value){
+    if(!record(value)||value.schema!==SCHEMA||value.caseId!==caseId||typeof value.draftId!=='string'||
+      !/^[A-Za-z0-9][A-Za-z0-9._-]{0,159}$/.test(value.draftId)||!record(value.body)||
+      typeof value.body.requestId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value.body.requestId)||
+      value.requestSha256!==hash(stable({schema:SCHEMA,caseId,draftId:value.draftId,body:value.body})))
+      throw new Error('Keep the complete original source request and its original byte identity.');
+    if(value.receipt&&(value.receipt.schema!==SCHEMA||value.receipt.requestId!==value.body.requestId||
+      value.receipt.requestSha256!==value.requestSha256||value.receipt.draft?.caseId!==caseId||value.receipt.draft?.id!==value.draftId))
+      throw new Error('The retained original receipt differs from its complete request.');
+    return value;
+  }
+  function mergeRequests(values){
+    const merged=new Map([...requestRecords].map(([id,value])=>[id,clone(value)]));
+    for(const original of values){
+      validateRequest(original);const value=clone(original),id=value.body.requestId,prior=merged.get(id);
+      if(prior&&(!equal(prior.body,value.body)||prior.requestSha256!==value.requestSha256||prior.draftId!==value.draftId||
+        prior.receipt&&value.receipt&&!equal(prior.receipt,value.receipt)))
+        throw Object.assign(new Error('Keep both conflicting original request copies. Their complete bodies are different.'),{code:'SOURCE_REQUEST_CONFLICT'});
+      merged.set(id,prior?.receipt?{...value,...prior}:value.receipt?{...prior,...value}:{...prior,...value});
+    }
+    return merged;
+  }
+  async function retainRequest(value){
+    validateRequest(value);const merged=mergeRequests([value]);requestRecords.set(value.body.requestId,merged.get(value.body.requestId));
+    const retained=await journal.put('request:'+value.body.requestId,merged.get(value.body.requestId));
+    requestRecords.set(value.body.requestId,clone(retained));return retained;
+  }
+  function commitPointer(){
+    if(activeCopies.get(pointerKey)!==copyId)return;
+    try{sessionStorage.setItem(pointerKey,copyId);}catch(error){storageError='Saved the complete local copy; this window could not retain its reopen pointer. '+error.message;}
+  }
   function persistNow(){
     clearTimeout(timer);timer=null;const value=snapshot(),version=generation;
-    persistence=persistence.catch(()=>{}).then(()=>journal.put('working',value)).then(()=>{
-      persistedGeneration=Math.max(persistedGeneration,version);storageError='';
-    }).catch(error=>{storageError=error.message||String(error);throw error;});
+    persistence=persistence.catch(()=>{}).then(async()=>{
+      if(copyConflict)throw new Error('Keep this complete conflicting working copy or save it as a separate local copy.');
+      const stored=await journal.saveCopy({...value,copyId},copySequence);
+      copySequence=stored.sequence;persistedGeneration=Math.max(persistedGeneration,version);storageError='';commitPointer();
+    }).catch(async error=>{
+      storageError=error.message||String(error);
+      if(error.code==='SOURCE_COPY_CONFLICT'&&!copyConflict){
+        copyConflict=true;const retained={...value,copyId:crypto.randomUUID(),sequence:0,name:'Conflicting working copy'};
+        try{await journal.saveCopy(retained,0);}catch{earlierCopies.push({...retained,earlierCopies:[]});}
+      }
+      throw error;
+    });
     return persistence;
   }
+
+  function checkedFile(value){
+    if(value===null||value===undefined)return null;
+    if(!record(value)||typeof value.name!=='string'||typeof value.type!=='string'||
+      !Number.isSafeInteger(value.bytes)||value.bytes<1||value.bytes>MAX_FILE||
+      typeof value.contentBase64!=='string'||!/^[A-Za-z0-9+/]*={0,2}$/.test(value.contentBase64))
+      throw new Error('Keep the complete selected original file within its native limit.');
+    let raw;try{raw=Uint8Array.from(atob(value.contentBase64),c=>c.charCodeAt(0));}catch{throw new Error('The selected original file is incomplete.');}
+    if(raw.length!==value.bytes||base64(raw)!==value.contentBase64||hash(raw)!==value.sha256)
+      throw new Error('The selected original file differs from its complete retained bytes.');
+    return new File([raw],value.name,{type:value.type,lastModified:value.lastModified||0});
+  }
+  function validateCopy(input){
+    if(!record(input)||input.schema!==SCHEMA||!equal(input.scope,scope))
+      throw new Error('Open this complete working copy in its original operating case, plan and installation.');
+    const value=clone(input),legacy=value.workingCopySchema===undefined;
+    if(!legacy&&value.workingCopySchema!==WORKING_COPY)throw new Error('Open the complete original source working-copy format.');
+    let next=legacy?(value.state||value):value.state;
+    if(legacy&&!next.upload)next={...clone(initial),draftId:value.sourceDraftId??null,revision:value.selectedRevision??null,
+      work:value.working??null,caseForm:value.caseForm??null,profileWork:value.profileWork??null,
+      pendingId:value.pendingRequest?.body?.requestId??null};
+    if(!record(next)||!record(next.upload)||!['files','mapping','outputs','installation','commissioning','history'].includes(next.tab)||
+      !['note','newTitle'].every(key=>typeof next[key]==='string')||!['filename','mediaType','sourceUrl','observedAt'].every(key=>typeof next.upload[key]==='string')||
+      !(next.draftId===null||typeof next.draftId==='string')||!(next.pendingId===null||typeof next.pendingId==='string')||
+      !(next.revision===null||Number.isSafeInteger(next.revision)&&next.revision>0))
+      throw new Error('Keep every original source editor field and selected edition.');
+    for(const key of ['work','caseForm','profileWork','commissioningWork'])if(next[key]!==null&&!record(next[key]))
+      throw new Error('Keep the complete '+key+' editor.');
+    if(next.work&&(typeof next.work.selectionText!=='string'||next.work.draftId!==next.draftId||!Number.isSafeInteger(next.work.baseRevision)))
+      throw new Error('Keep the original complete mapping text and its selected source revision.');
+    if(next.caseForm&&(!Array.isArray(next.caseForm.fileIds)||!Array.isArray(next.caseForm.phaseRows)||
+      !record(next.caseForm.total)||!['amendmentText','bindingsText','programmeText'].every(k=>next.caseForm[k]===undefined||typeof next.caseForm[k]==='string')))
+      throw new Error('Keep every original customer mapping and effort field.');
+    if(next.profileWork&&typeof next.profileWork.bindingsText!=='string')throw new Error('Keep the complete profile bindings text, including unfinished JSON.');
+    for(const key of ['rawFields','fieldErrors'])if(next[key]!==undefined&&(!record(next[key])||Object.values(next[key]).some(v=>typeof v!=='string')))
+      throw new Error('Keep the exact unfinished guided fields.');
+    for(const name of ['current','selected','saved']){
+      const draft=value[name];if(draft!==null&&draft!==undefined&&(!record(draft)||draft.schema!==SCHEMA||
+        draft.caseId!==caseId||draft.id!==next.draftId||!Number.isSafeInteger(draft.revision)||
+        !Array.isArray(draft.files)||!Array.isArray(draft.preparations)||!Array.isArray(draft.attachments)))
+        throw new Error('The saved source edition differs from this working copy.');
+    }
+    if(value.prepared!==null&&value.prepared!==undefined&&(!record(value.prepared)||!Array.isArray(value.prepared.files)))
+      throw new Error('Keep the complete selected preparation.');
+    if(value.inspection!==null&&value.inspection!==undefined&&(!record(value.inspection)||!Array.isArray(value.inspection.numericCandidates)))
+      throw new Error('Keep the complete original file inspection.');
+    if(value.catalogue!==null&&value.catalogue!==undefined&&(!record(value.catalogue)||!Array.isArray(value.catalogue.profiles)))
+      throw new Error('Keep the complete source profile catalogue.');
+    if(value.requests!==undefined&&!Array.isArray(value.requests)||value.earlierCopies!==undefined&&!Array.isArray(value.earlierCopies))
+      throw new Error('Keep the complete original request and earlier-copy inventories.');
+    const requests=[...(value.requests||[]),...(value.pendingRequest?[value.pendingRequest]:[])];
+    const merged=mergeRequests(requests),pending=next.pendingId?merged.get(next.pendingId):null;
+    if(next.pendingId&&(!pending||pending.draftId!==next.draftId))throw new Error('The complete pending original request is missing from this copy.');
+    checkedFile(value.selectedFile);
+    return {...value,state:{...clone(initial),...next,rawFields:next.rawFields||{},fieldErrors:next.fieldErrors||{}},
+      requests:[...merged.values()],pendingRequest:pending||null,current:value.current??value.saved??null,
+      selected:value.selected??value.saved??null,selectedFile:value.selectedFile??null,earlierCopies:value.earlierCopies||[]};
+  }
+  async function refreshCopies(){
+    const rows=await journal.entries('copy-index:');
+    if(!available())return;
+    localCopies=rows.map(row=>row.value).sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt)));
+    const old=await journal.readAt(legacyKey,'working');
+    if(!available())return;
+    legacyCopy=old&&old.schema===SCHEMA&&equal(old.scope,scope)?old:null;
+  }
+  async function legacyEnvelope(){
+    const old=await journal.readAt(legacyKey,'working');
+    if(!old||old.schema!==SCHEMA||!equal(old.scope,scope))throw new Error('The original legacy working copy is unavailable in this case.');
+    const records=(await journal.entries('request:',legacyKey)).map(row=>row.value);
+    const pending=old.pendingId?records.find(row=>row.body?.requestId===old.pendingId):null;
+    return {schema:SCHEMA,scope:clone(scope),state:clone(old),requests:records,pendingRequest:pending};
+  }
+  async function parkWorking(label){
+    const value={...snapshot(),copyId:crypto.randomUUID(),sequence:0,name:label,earlierCopies:[]};
+    clearTimeout(timer);timer=null;
+    await persistence.catch(()=>{});
+    try{await journal.saveCopy(value,0);}
+    catch(error){earlierCopies.push(value);storageError='Earlier complete work remains in this copy’s download. '+error.message;}
+  }
+  function applyCopy(value){
+    const open=state.open;
+    state={...clone(initial),...clone(value.state),open,copyName:value.name||value.state.copyName||'Source working copy'};
+    saved=clone(value.current);edition=clone(value.selected);prepared=clone(value.prepared??null);
+    inspection=clone(value.inspection??null);catalogue=clone(value.catalogue??catalogue);
+    selectedFile=clone(value.selectedFile);chosenFile=checkedFile(selectedFile);
+    earlierCopies=clone(value.earlierCopies);request=clone(value.pendingRequest);
+    requestRecords.clear();for(const original of value.requests)requestRecords.set(original.body.requestId,clone(original));
+    inspectors.clear();generation++;initialized=true;
+  }
+  async function refreshSelectedCopy(){
+    await refreshHeads();await readCatalogue();
+    if(!available()||!state.draftId)return;
+    const retained=clone(state),head=await bridge.api(prefix+'/'+state.draftId);
+    if(!available())return;
+    if(head.schema!==SCHEMA||head.caseId!==caseId||head.id!==state.draftId||!Number.isSafeInteger(head.revision))
+      throw new Error('The current source head differs from this retained case.');
+    saved=head;
+    if(retained.revision!==null&&retained.revision!==head.revision)
+      edition=await bridge.api(prefix+'/'+state.draftId+'?revision='+retained.revision);
+    else edition=head;
+    if(edition.schema!==SCHEMA||edition.caseId!==caseId||edition.id!==state.draftId||
+      !Number.isSafeInteger(edition.revision)||retained.revision!==null&&edition.revision!==retained.revision)
+      throw new Error('The selected historical edition differs from the original working copy.');
+    // The full editor stays based on its original source, including unfinished raw text.
+    if(!state.work)state.work={draftId:state.draftId,baseRevision:edition.revision,selectionText:edition.selection?pretty(edition.selection):'',dirty:false};
+    else if(state.work.baseRevision!==head.revision&&retained.revision===null)state.work.dirty=true;
+    if(state.preparationId&&!prepared)await readPreparation(state.preparationId);
+  }
+  async function receiveCopy(input,{savedId=null}={}){
+    checkContext();const value=validateCopy(input);
+    if(state.pendingId&&state.pendingId!==value.state.pendingId)
+      throw new Error('Recover the current original request before opening another working copy. Its complete download remains available.');
+    clearTimeout(timer);timer=null;await persistence.catch(()=>{});
+    if(!available())return;
+    if(savedId){
+      const latest=await journal.get('copy:'+savedId);
+      if(!equal(latest,input))throw new Error('That saved copy changed in another window. Refresh the copy list and choose its complete current revision.');
+    }
+    downloadBlob(pretty(snapshot()),(state.draftId||'installation-source-working')+'-working-before-open.json');
+    await parkWorking('Before opening another complete working copy');
+    if(!available())return;
+    // Request writes are all preflighted in one transaction before the editor changes.
+    const merged=mergeRequests(value.requests);
+    try{
+      const retained=await journal.receiveRequests([...merged.values()]);
+      for(const original of retained)merged.set(original.body.requestId,clone(original));
+    }
+    catch(error){
+      if(error.code==='SOURCE_REQUEST_CONFLICT')throw error;
+      storageError='Opened in memory; original requests remain downloadable and cannot be sent until their journal is writable. '+error.message;
+    }
+    if(!available())return;
+    const previousEarlier=clone(earlierCopies);value.requests=[...merged.values()];
+    value.pendingRequest=value.state.pendingId?merged.get(value.state.pendingId):null;
+    applyCopy(value);earlierCopies.push(...previousEarlier);
+    copyId=crypto.randomUUID();copySequence=0;copyConflict=false;activeCopies.set(pointerKey,copyId);
+    render();
+    try{await persistNow();await refreshCopies();}catch(error){storageError=error.message;}
+    if(!available())return;
+    try{await refreshSelectedCopy();}catch(error){state.error='The complete editor is retained. Reopen its original native source when available. '+error.message;}
+    if(available()){changed();render();}
+  }
+  async function openWorkingFile(file){
+    if(!file)return;if(file.size>MAX_WORKING)throw new Error('Open a complete source working copy within 512 MiB.');
+    const raw=await file.arrayBuffer();if(!available())return;
+    const text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(raw);
+    await receiveCopy(JSON.parse(text.replace(/^\uFEFF/,'')));
+  }
+  async function forkWorking(){
+    await persistence.catch(()=>{});if(!available())return;
+    copyId=crypto.randomUUID();copySequence=0;copyConflict=false;activeCopies.set(pointerKey,copyId);
+    state.copyName=(state.copyName||'Source working copy')+' · separate copy';generation++;
+    await persistNow();await refreshCopies();state.notice='Saved this complete working copy separately; all earlier local copies remain.';
+  }
+  function workingCopiesView(){
+    return '<section class="source-desk-recovery">'+header('Complete working copies',
+      'Retain unfinished mappings, original file bytes, customer programmes, commissioning fields and the exact original requests.')+
+      '<div class="source-desk-fields"><label>Working copy name<input data-source-copy-name value="'+esc(state.copyName)+'"></label>'+
+      '<label>Open complete working-copy JSON<input type="file" accept=".json,application/json" data-source-working-file></label>'+
+      '<label>Saved local copy<select data-source-working-copy><option value="">Choose a complete local copy</option>'+
+      localCopies.map(row=>'<option value="'+esc(row.copyId)+'"'+(row.copyId===selectedLocalCopy?' selected':'')+'>'+
+        esc((row.name||'Source working copy')+' · '+(row.sourceDraftId||'Unfinished new preparation')+' · '+new Date(row.updatedAt).toLocaleString())+'</option>').join('')+'</select></label></div>'+
+      '<div class="source-desk-actions">'+btn('Refresh saved copies','working-refresh')+
+      btn('Open selected local copy','working-open-saved','',!selectedLocalCopy)+btn('Save as separate local copy','working-fork')+
+      (legacyCopy?btn('Open earlier original local copy','working-open-legacy','data-legacy-draft-id="'+esc(legacyCopy.draftId||'')+'" data-legacy-pending-id="'+esc(legacyCopy.pendingId||'')+'"'):'')+'</div>'+
+      hint('Every window owns a separate copy. Opening another copy downloads the preceding complete editor first. A retained request keeps its original operator; an active named operator cannot silently replace that actor.')+
+      (earlierCopies.length?hint(earlierCopies.length+' preceding complete copies are included in this download because local retention was unavailable.'):'')+
+      (copyConflict?hint('This copy has a local storage conflict. Its complete download remains available; save a separate copy to continue local retention.'):'')+'</section>';
+  }
+
   function changed(){
     generation++;clearTimeout(timer);timer=setTimeout(()=>{persistNow().catch(()=>{if(available())status();});},180);
     controls();
@@ -142,16 +431,18 @@ export function mountInstallationSources(root,bridge){
   }
   function controls(){
     if(!available())return;
-    root.setAttribute('aria-busy',String(busy||hostBusy));
+    root.setAttribute('aria-busy',String(busy||hostBusy||copyLoading));
     for(const node of root.querySelectorAll('button,input,textarea,select')){
       const action=node.dataset.sourceAction;
+      if(action==='working-download'){node.disabled=false;continue;}
       const liveDisabled={
+        'working-open-saved':!selectedLocalCopy,
         'save-selection':!saved||historic()||!state.work?.dirty,
         'prepare':!saved?.selection||saved.selection.schema===NATIVE_SELECTION||!!state.work?.dirty||!!state.caseForm?.dirty||historic(),
         'profile-apply':!state.profileWork?.preview||state.profileWork.previewBindings!==state.profileWork.bindingsText,
         'profile-download':!state.profileWork?.prepared||state.profileWork.previewBindings!==state.profileWork.bindingsText
       };
-      node.disabled=(Object.hasOwn(liveDisabled,action)?liveDisabled[action]:node.dataset.sourceFixed==='true')||busy||hostBusy||
+      node.disabled=(Object.hasOwn(liveDisabled,action)?liveDisabled[action]:node.dataset.sourceFixed==='true')||busy||hostBusy||copyLoading||
         (node.matches('[data-source-edit]')&&!editing())||
         (!!state.pendingId&&['new','upload','remove','save-selection','prepare','native-receive','attach','case-add','case-remove','case-new','case-edit','profile-seed','profile-apply','commissioning-open','commissioning-inspect','commissioning-preview','commissioning-attach','commissioning-archive-inspect','commissioning-archive-receive'].includes(action));
     }
@@ -171,7 +462,7 @@ export function mountInstallationSources(root,bridge){
       throw new Error('The saved source draft advanced. Review both complete selections and reconcile your retained mapping before editing.');
   }
   async function run(fn){
-    if(!available()||busy||hostBusy)return;
+    if(!available()||busy||hostBusy||copyLoading)return;
     busy=true;state.error='';controls();
     try{return await own(Promise.resolve().then(fn));}
     catch(error){state.error=error.message||String(error);changed();}
@@ -205,17 +496,18 @@ export function mountInstallationSources(root,bridge){
   async function openDraft(id,revision=null,force=false){
     if(pending())throw new Error('Recover the original request before replacing its source draft or selected revision.');
     if(!force&&workingDirty()&&!confirm('Keep the saved history and replace the current unsaved preparation fields?'))return;
+    await parkWorking('Before opening another source edition');if(!available())return;
     const epoch=++generation;
     const latest=await bridge.api(prefix+'/'+id);
     const value=revision===null||revision===latest.revision?latest:await bridge.api(prefix+'/'+id+'?revision='+revision);
     if(!available()||epoch!==generation)return;
-    state.draftId=id;state.commissioningWork=null;acceptState(latest,{replace:true});
+    state.draftId=id;state.commissioningWork=null;state.rawFields={};state.fieldErrors={};state.historyRevisionText=null;acceptState(latest,{replace:true});
     if(value.revision!==latest.revision){
       state.revision=value.revision;
       state.work={draftId:id,baseRevision:value.revision,selectionText:value.selection?pretty(value.selection):'',dirty:false};
     }
     edition=value;state.preparationId=value.preparations.at(-1)?.id??null;
-    state.tab='files';inspection=null;prepared=null;inspectors.clear();chosenFile=null;state.inspectionFileId=null;
+    state.tab='files';inspection=null;prepared=null;inspectors.clear();chosenFile=null;selectedFile=null;state.inspectionFileId=null;
     state.notice=revision===null?'Opened complete source preparation revision '+latest.revision+'.':'Opened retained revision '+value.revision+'.';
     await persistNow();
     if(state.preparationId)await readPreparation(state.preparationId);
@@ -227,7 +519,9 @@ export function mountInstallationSources(root,bridge){
     if(workingDirty()&&!confirm('Keep the saved history and replace the current unsaved preparation fields?'))return;
     const title=state.newTitle.trim();
     if(!title)throw new Error('Name this complete source preparation.');
+    await parkWorking('Before creating another source preparation');if(!available())return;
     const id='source-desk-'+crypto.randomUUID().replaceAll('-','');
+    state.rawFields={};state.fieldErrors={};state.historyRevisionText=null;edition=null;prepared=null;inspection=null;
     state.draftId=id;state.work=null;state.caseForm=null;state.profileWork=null;state.commissioningWork=null;state.revision=null;saved=null;
     return issue('create',{title},0);
   }
@@ -240,7 +534,7 @@ export function mountInstallationSources(root,bridge){
   async function adoptReceipt(value,original){
     verifyReceipt(value,original);
     original.receipt=clone(value);original.state='RECORDED';original.recordedAt=new Date().toISOString();
-    await journal.put('request:'+original.body.requestId,original);
+    await retainRequest(original);
     if(state.pendingId!==original.body.requestId)throw new Error('Retain the original pending request before adopting its result.');
     const beforeWork=state.work;
     state.pendingId=null;request=null;state.notice='Saved complete source preparation revision '+value.draft.revision+'.';
@@ -280,12 +574,14 @@ export function mountInstallationSources(root,bridge){
     if(action!=='create')requireEdit();
     const body={requestId:'source-'+crypto.randomUUID(),expectedRevision:expected,
       actor:bridge.recordingActor(),note:state.note,action,data:clone(data)};
+    assertStaffRequestActor(body,staffContext);
+    if(Object.keys(state.fieldErrors||{}).length)throw new Error('Correct the retained unfinished fields before recording the native request.');
     if(!body.actor?.trim())throw new Error('Enter the recording operator in the original workspace.');
     const original={schema:SCHEMA,caseId,draftId:state.draftId,body,createdAt:new Date().toISOString(),
       requestSha256:hash(stable({schema:SCHEMA,caseId,draftId:state.draftId,body})),
       editorText:state.work?.selectionText??null,state:'PREPARED'};
     // Full upload and request bytes must be retained before their first POST.
-    await journal.put('request:'+body.requestId,original);
+    await retainRequest(original);
     state.pendingId=body.requestId;request=original;changed();await persistNow();
     return sendOriginal(original);
   }
@@ -294,14 +590,16 @@ export function mountInstallationSources(root,bridge){
       throw new Error('Reopen the complete original pending request.');
     if(hash(stable({schema:SCHEMA,caseId,draftId:original.draftId,body:original.body}))!==original.requestSha256)
       throw new Error('The retained original request bytes changed.');
-    checkContext();
+    checkContext();assertStaffRequestActor(original.body,staffContext);
+    // A received in-memory copy must establish the same durable request before any replay.
+    original=await retainRequest(original);request=original;await persistNow();
     if(original.receipt)return adoptReceipt(original.receipt,original);
     let value;
     try{value=await bridge.saveApi(prefix+'/'+original.draftId,clone(original.body));}
     catch(error){
       original.lastError={message:error.message||String(error),code:error.code??null,status:error.status??null,
         definitive:[400,401,403,404,409,413,422].includes(error.status)&&typeof error.code==='string',at:new Date().toISOString()};
-      original.state='UNRESOLVED';request=original;await journal.put('request:'+original.body.requestId,original);throw error;
+      original.state='UNRESOLVED';request=original;await retainRequest(original);throw error;
     }
     return adoptReceipt(value,original);
   }
@@ -311,13 +609,13 @@ export function mountInstallationSources(root,bridge){
     if(value.schema!==SCHEMA||value.requestId!==original.body.requestId)throw new Error('The original request status changed identity.');
     if(value.state==='RECORDED')return adoptReceipt(value.result,original);
     if(value.state!=='NOT_RECORDED')throw new Error('The original request has no recognized complete status.');
-    original.statusRead={state:value.state,at:new Date().toISOString()};await journal.put('request:'+original.body.requestId,original);
+    original.statusRead={state:value.state,at:new Date().toISOString()};await retainRequest(original);
     state.notice='The original request is not recorded. Retry that same request, or reconcile its definite rejection.';return value;
   }
   async function retireRejected(){
     if(!request?.lastError?.definitive)throw new Error('Keep an uncertain original request selected for reconciliation.');
     const original=request,status=await readOriginal();if(status?.state!=='NOT_RECORDED')return;
-    original.state='REJECTED';await journal.put('request:'+original.body.requestId,original);
+    original.state='REJECTED';await retainRequest(original);
     state.rejected.push({requestId:original.body.requestId,action:original.body.action,code:original.lastError.code});
     state.pendingId=null;request=null;changed();await persistNow();
     if(saved){const current=await bridge.api(prefix+'/'+saved.id);saved=current;edition=current;}
@@ -453,6 +751,7 @@ export function mountInstallationSources(root,bridge){
   async function editCase(index=null){
     requireEdit();
     if(!replaceFormAllowed(state.caseForm))return;
+    await parkWorking('Before replacing the complete customer mapping');if(!available())return;
     const selected=selectionValue(),row=index===null?null:selected.cases[index],form=emptyCase();
     if(index!==null&&!row)throw new Error('Select the original mapped customer row.');
     if(row){
@@ -460,6 +759,8 @@ export function mountInstallationSources(root,bridge){
       const original=row.handover??row.packet;
       if(!original)throw new Error('Retain this mapping’s complete original packet or saved handover.');
       form.packetId=files().find(f=>f.filename===original.filename&&f.sha256===original.sha256)?.id??'';
+      form.originalMapping=clone(row);
+      form.missingFiles=row.files.filter(x=>!files().some(f=>f.filename===x.filename&&f.sha256===x.sha256));
       form.fileIds=row.files.map(x=>files().find(f=>f.filename===x.filename&&f.sha256===x.sha256)?.id).filter(Boolean);
       form.phaseRows=clone(row.productionEffort||[]).map(x=>({...x,sourceFile:x.sourceFile??''}));
       form.total={...clone(row.effortTotal||{}),sourceFile:row.effortTotal?.sourceFile??''};
@@ -468,7 +769,7 @@ export function mountInstallationSources(root,bridge){
       form.programmeText=row.programme?pretty(row.programme):'';
       form.sourceKind=row.handover?'delivery-handover':'workshare-packet';
     }
-    state.caseForm=form;state.tab='mapping';changed();
+    clearRawFields(['field:caseForm.']);state.caseForm=form;state.tab='mapping';changed();
     if(form.packetId)await reviewPacket();
   }
   async function reviewPacket(){
@@ -505,6 +806,7 @@ export function mountInstallationSources(root,bridge){
   function applyCase(){
     requireEdit();const form=state.caseForm;
     if(!form?.packet||!form.caseId.trim()||!form.profile)throw new Error('Review the complete original packet, case ID and installed profile first.');
+    if(form.missingFiles?.length)throw new Error('Restore the complete original supporting documents before applying this retained mapping. Their full original identities remain in the working copy.');
     const amendment=form.amendmentText.trim()?parseObject(form.amendmentText,'Explicit phase amendment'):null;
     if(!equal(amendment,form.reviewedAmendment))throw new Error('Review the edited phase amendment against the original packet before applying it.');
     const packet=files().find(f=>f.id===form.packetId),selected=selectionValue();
@@ -540,10 +842,11 @@ export function mountInstallationSources(root,bridge){
     if(form.index===null)selected.cases.push(row);else selected.cases[form.index]=row;
     keepSelection(selected);state.caseForm=null;state.notice='Applied all original phases and document bindings to the complete editable selection.';
   }
-  function removeCase(index){
+  async function removeCase(index){
     requireEdit();const selected=selectionValue(),row=selected.cases[index];
     if(!row||!confirm('Remove '+row.caseId+' from this working selection? Earlier saved editions remain retained.'))return;
-    selected.cases.splice(index,1);keepSelection(selected);state.caseForm=null;
+    await parkWorking('Before removing a customer mapping');if(!available())return;
+    selected.cases.splice(index,1);keepSelection(selected);clearRawFields(['field:caseForm.']);state.caseForm=null;
   }
   async function inspectPointerSource(index){
     const form=state.caseForm,row=index==='total'?form?.total:form?.phaseRows[Number(index)];
@@ -595,6 +898,7 @@ export function mountInstallationSources(root,bridge){
     const originalPreparation=await readPreparation(attachment.preparationId);
     const nativeSelection=originalPreparation.report.nativeReview?.selection??null;
     const sourceSelection=await preparedObject(originalPreparation,'SOURCE_SELECTION.json');
+    clearRawFields(['binding:','field:profileWork.']);
     state.profileWork={attachmentId:attachment.preparationId,selection,inventory,nativeSelection:clone(nativeSelection),
       sourceSelection,programmeInputs:null,
       workshareCaseId:inventory.cases[0]?.caseId??'',profileId:'',bindingsText:'',seed:null,
@@ -608,6 +912,7 @@ export function mountInstallationSources(root,bridge){
     requireEdit();const work=state.profileWork;
     if(!work?.workshareCaseId||!work.profileId)throw new Error('Select the original attached Workshare and installed receiving profile.');
     if(work.dirty&&!confirm('Keep the complete source history and replace the current edited profile bindings?'))return;
+    await parkWorking('Before replacing the complete Installation bindings');if(!available())return;
     await bridge.refreshCase();await readCatalogue();
     const selected=catalogue.profiles.find(x=>x.id===work.profileId);if(!selected)throw new Error('Select an installed complete profile.');
     const selection={...clone(work.selection),expectedVersion:current().version};
@@ -640,13 +945,14 @@ export function mountInstallationSources(root,bridge){
       for(const [key,target] of [['selectionFile','selection'],['taskBudgetFile','taskBudget'],['nativeChangeFile','nativeChange']])
         if(mapping[key])programmeInputs[target]=await preparedObject(preparation,mapping[key]);
     }
+    clearRawFields(['binding:','field:profileWork.']);
     work.programmeInputs=programmeInputs;
     work.selection=selection;work.seed=value;work.profile=clone(selected.profile);work.profileSha256=selected.sha256;
     work.bindingsText=pretty(bindings);work.dirty=false;work.prepared=null;work.preview=null;changed();
     state.notice='Prepared the full native profile binding template. Enter only actual known deployment, receiving and payment selections.';
   }
   async function previewProfile(){
-    requireEdit();const work=state.profileWork;
+    requireEdit();if(Object.keys(state.fieldErrors||{}).length)throw new Error('Correct the retained unfinished fields before reviewing this Installation.');const work=state.profileWork;
     if(!work?.seed)throw new Error('Read the full original Workshare/profile binding template first.');
     const bindings=parseObject(work.bindingsText,'Complete profile bindings'),beforeText=work.bindingsText;
     const value=prepareInstallation(work.seed,work.profile,bindings);
@@ -666,7 +972,7 @@ export function mountInstallationSources(root,bridge){
     state.notice='Reviewed the complete source, '+value.document.checks.length+' acceptance checks and native installation document.';
   }
   async function receiveProfile(){
-    requireEdit();const work=state.profileWork;
+    requireEdit();if(Object.keys(state.fieldErrors||{}).length)throw new Error('Correct the retained unfinished fields before receiving this Installation.');const work=state.profileWork;
     if(!work?.prepared||!work.preview||work.previewBindings!==work.bindingsText)
       throw new Error('Review the exact current complete bindings before opening their Installation draft.');
     await bridge.refreshCase();
@@ -679,11 +985,8 @@ export function mountInstallationSources(root,bridge){
     changed();await persistNow();state.open=false;root.hidden=true;bridge.close?.();
   }
   function snapshotDownload(){
-    const value={schema:SCHEMA,scope,sourceDraftId:state.draftId,selectedRevision:state.revision??saved?.revision??null,
-      saved:clone(selectedDraft()),working:clone(state.work),caseForm:clone(state.caseForm),
-      profileWork:clone(state.profileWork),pendingRequest:request?clone(request):null};
-    downloadBlob(pretty(value),(state.draftId||'installation-source-working')+'-working.json');
-    state.notice='Downloaded the complete selected draft, unsaved mappings, profile bindings and original pending request.';
+    downloadBlob(pretty(snapshot()),(state.draftId||'installation-source-working')+'-working.json');
+    state.notice='Downloaded the complete original editor, selected file, requests, customer programme and commissioning fields.';
   }
 
   function header(title,description,actions=''){
@@ -745,6 +1048,7 @@ export function mountInstallationSources(root,bridge){
       hint('Only an explicitly reviewed phase-ID/dependency mapping is supported. Keep reason, source URL and selected receiving filename; native inspection verifies the complete inverse against the original packet.')+
       field('Complete phaseIdAmendment JSON','caseForm.amendmentText',form.amendmentText,{area:true,rows:8,wide:true})+'</details>'+
       '<div class="source-desk-actions">'+btn('Review original source and every phase','packet-review')+'</div>'+
+      (form.missingFiles?.length?'<details open><summary>Original supporting documents to restore</summary><pre>'+esc(pretty(form.missingFiles))+'</pre></details>':'')+
       (form.packet?'<p><strong>'+esc(form.packet.plan.title)+'</strong><br>'+esc(form.packet.plan.customer)+' / '+esc(form.packet.plan.supplier)+
        '</p>'+hint(form.sourceKind==='delivery-handover'?'Saved delivery handover: '+(form.originalHandover?.originalCompletedPhases??0)+' of '+(form.originalHandover?.originalTotalPhases??form.phaseRows.length)+' phases recorded complete in its original source.':'Original complete Workshare receiving packet.')+
        '<details><summary>Original plan and handover identities</summary><pre>'+esc(pretty({planSha256:form.packet.planSha256,handover:form.originalHandover??null}))+'</pre></details>'+
@@ -916,7 +1220,7 @@ export function mountInstallationSources(root,bridge){
   function historyView(){
     const value=selectedDraft();
     return header('Original saved source history','Every save appends a complete draft revision. Earlier files and prepared packages retain their own identities.')+
-      (saved?'<div class="source-desk-actions"><label>Saved revision<input type="number" data-source-revision min="1" max="'+saved.revision+'" value="'+(state.revision??saved.revision)+'"></label>'+
+      (saved?'<div class="source-desk-actions"><label>Saved revision<input type="number" data-source-revision min="1" max="'+saved.revision+'" value="'+esc(state.historyRevisionText??state.revision??saved.revision)+'"></label>'+
         btn('Open exact revision','revision-open')+btn('Open current head','current-open')+'</div>'+
         table(['Revision / original request','Recording context','Change'],[...(value?.history||[])].reverse().map(row=>[
           esc(row.revision??'')+'<br><code>'+esc(row.requestId??'')+'</code>',
@@ -962,10 +1266,19 @@ export function mountInstallationSources(root,bridge){
   }
   function render(){
     if(!available())return;
+    root.dataset.sourceCopyId=copyId;root.dataset.sourceDraftId=state.draftId||'';root.dataset.sourcePendingId=state.pendingId||'';
+    root.dataset.sourceScope=JSON.stringify(scope);
     root.hidden=!state.open;
     const tabs=[['files','1 · Original files'],['mapping','2 · Source mapping'],['outputs','3 · Complete package'],['installation','4 · Installation'],['commissioning','5 · Receive commissioning'],['history','Saved history']];
-    const content=state.tab==='mapping'?mappingView():state.tab==='outputs'?outputsView():state.tab==='installation'?installationView():
-      state.tab==='commissioning'?commissioning.render():state.tab==='history'?historyView():filesView();
+    let content;
+    try{content=state.tab==='mapping'?mappingView():state.tab==='outputs'?outputsView():state.tab==='installation'?installationView():
+      state.tab==='commissioning'?commissioning.render():state.tab==='history'?historyView():filesView();}
+    catch(error){
+      content=hint('Your complete fields remain retained. Correct their original JSON before opening the guided view: '+error.message)+
+        (state.work?field('Full native selection JSON','work.selectionText',state.work.selectionText,{area:true,rows:18,wide:true}):'')+
+        (state.profileWork?field('Full native binding JSON','profileWork.bindingsText',state.profileWork.bindingsText,{area:true,rows:18,wide:true}):'')+
+        '<details><summary>Complete original editor fields</summary><pre>'+esc(pretty(state))+'</pre></details>';
+    }
     root.innerHTML=header('Prepare original source workshares','Complete documents → exact effort mapping → native receiving package → original Installation.',
       btn('Download complete working fields','working-download','',!saved)+btn('Close source desk','close'))+
       '<p data-source-status class="source-desk-status" aria-live="polite"></p>'+
@@ -980,11 +1293,18 @@ export function mountInstallationSources(root,bridge){
         (historic()?'Historical revision '+state.revision:'Current saved revision '+saved.revision)+
         (workingDirty()?' · edited fields retained in this browser':'')+'</span></div>':'')+
       (historic()?hint('This is an immutable earlier source edition. Open the current head to edit. Complete earlier files and packages remain available.'):'')+
-      recoveryView()+conflictView()+'<nav aria-label="Source preparation steps">'+tabs.map(([id,label])=>'<button type="button" data-source-action="tab" data-tab="'+id+'"'+
+      workingCopiesView()+recoveryView()+conflictView()+'<nav aria-label="Source preparation steps">'+tabs.map(([id,label])=>'<button type="button" data-source-action="tab" data-tab="'+id+'"'+
         (state.tab===id?' aria-current="page"':'')+'>'+esc(label)+'</button>').join('')+'</nav>'+
       (saved?content:empty(initialized?'Create or open an original source preparation to begin.':'Opening the retained browser journal and original operating case…'))+
       (saved?'<label class="source-desk-note">Reason for the next source change<textarea data-source-field="note" data-source-edit rows="3">'+esc(state.note)+'</textarea></label>':'')+
       '</div></div>';
+    for(const [key,value] of Object.entries(state.rawFields||{})){
+      const [kind,...parts]=key.split(':');const path=parts.join(':');
+      const attribute=kind==='binding'?'data-source-binding':kind==='field'?'data-source-field':null;
+      if(!attribute)continue;
+      const node=[...root.querySelectorAll('['+attribute+']')].find(el=>el.getAttribute(attribute)===path);
+      if(node){if(node.tagName==='SELECT'&&![...node.options].some(option=>option.value===value))node.add(new Option('Original selection · '+value,value));node.value=value;}
+    }
     status();controls();
   }
 
@@ -998,9 +1318,9 @@ export function mountInstallationSources(root,bridge){
     }else if(['merchantDeploymentId','payment.priceAtomic','payment.taskBudgetAtomic'].includes(path))value=value===''?null:value;
     setPath(bindings,path,value);work.bindingsText=pretty(bindings);work.dirty=true;work.prepared=null;work.preview=null;changed();
   }
-  function handleField(target){
+  async function handleField(target){
     const path=target.dataset.sourceField;if(!path)return;
-    if(!editing())return;
+    if(!initialized||copyLoading||pending()||readonly()||historic())return;
     let value=target.value;
     if(path.startsWith('selection.')){
       const selected=selectionValue();setPath(selected,path.slice(10),value);keepSelection(selected);return;
@@ -1010,7 +1330,7 @@ export function mountInstallationSources(root,bridge){
       if(value!==old&&work.dirty&&!confirm('Replace the edited binding fields with the newly selected original Workshare/profile?')){
         target.value=old;return;
       }
-      if(value!==old){work[key]=value;work.seed=null;work.bindingsText='';work.prepared=null;work.preview=null;work.dirty=false;changed();render();}
+      if(value!==old){await parkWorking('Before selecting another Workshare or profile');if(!available()||work!==state.profileWork)return;clearRawFields(['binding:','field:profileWork.']);work[key]=value;work.seed=null;work.bindingsText='';work.prepared=null;work.preview=null;work.dirty=false;changed();render();}
       return;
     }
     setPath(state,path,value);
@@ -1019,25 +1339,62 @@ export function mountInstallationSources(root,bridge){
     if(path==='profileWork.bindingsText'){state.profileWork.dirty=true;state.profileWork.prepared=null;state.profileWork.preview=null;}
     changed();status();
   }
+  function clearRawFields(prefixes){
+    for(const bank of [state.rawFields,state.fieldErrors])
+      for(const key of Object.keys(bank||{}))if(prefixes.some(prefix=>key.startsWith(prefix)))delete bank[key];
+  }
+  function fieldFailure(target,error){
+    const key=target.dataset.sourceBinding?'binding:'+target.dataset.sourceBinding:
+      target.dataset.sourceField?'field:'+target.dataset.sourceField:null;
+    if(key){state.rawFields[key]=target.value;state.fieldErrors[key]=error.message||String(error);}
+    state.error=error.message||String(error);changed();status();
+  }
+  function bindingEdit(target){
+    const key='binding:'+target.dataset.sourceBinding;
+    state.rawFields[key]=target.value;
+    try{editBinding(target.dataset.sourceBinding,target.value);delete state.rawFields[key];delete state.fieldErrors[key];}
+    catch(error){fieldFailure(target,error);}
+  }
+  function dispatchField(target){
+    const key='field:'+target.dataset.sourceField;
+    const switching=target.tagName==='SELECT'&&['profileWork.workshareCaseId','profileWork.profileId'].includes(target.dataset.sourceField);
+    const execute=async()=>{try{await handleField(target);delete state.rawFields[key];delete state.fieldErrors[key];}catch(error){fieldFailure(target,error);}};
+    if(switching)run(execute);else own(execute()).catch(error=>fieldFailure(target,error));
+  }
   root.addEventListener('input',event=>{
     const target=event.target;
+    if(!available()||busy||hostBusy||copyLoading)return;
     try{
+      if(target.matches('[data-source-copy-name]')){state.copyName=target.value;changed();return;}
+      if(target.matches('[data-source-revision]')){state.historyRevisionText=target.value;changed();return;}
       if(target.matches('[data-source-new-title]')){state.newTitle=target.value;changed();return;}
-      if(target.matches('[data-source-binding]')){editBinding(target.dataset.sourceBinding,target.value);return;}
-      if(target.matches('[data-source-field]')&&target.tagName!=='SELECT')handleField(target);
-    }catch(error){state.error=error.message||String(error);status();}
+      if(target.matches('[data-source-binding]')){bindingEdit(target);return;}
+      if(target.matches('[data-source-field]')&&target.tagName!=='SELECT')dispatchField(target);
+    }catch(error){fieldFailure(target,error);}
   });
   root.addEventListener('change',event=>{
     const target=event.target;
+    if(!available()||busy||hostBusy||copyLoading)return;
     try{
+      if(target.matches('[data-source-working-copy]')){selectedLocalCopy=target.value;controls();return;}
+      if(target.matches('[data-source-working-file]')){const file=target.files?.[0];run(()=>openWorkingFile(file));return;}
       if(commissioning.edit(target))return;
       if(target.matches('[data-source-upload]')){
         if(!editing())return;
-        chosenFile=target.files?.[0]??null;
-        if(chosenFile){state.upload.filename=chosenFile.name;state.upload.mediaType=chosenFile.type||'application/octet-stream';state.upload.observedAt=new Date().toISOString();}
-        changed();render();return;
+        const file=target.files?.[0]??null;
+        run(async()=>{
+          if(file&&(file.size<1||file.size>MAX_FILE))throw new Error('Choose one complete original file up to 8 MiB.');
+          const raw=file?new Uint8Array(await file.arrayBuffer()):null;if(!available())return;
+          if(raw&&raw.length!==file.size)throw new Error('Keep the complete selected original file.');
+          await parkWorking('Before choosing another complete original file');if(!available())return;
+          selectedFile=file?{name:file.name,type:file.type||'application/octet-stream',lastModified:file.lastModified,
+            bytes:raw.length,sha256:hash(raw),contentBase64:base64(raw)}:null;
+          chosenFile=checkedFile(selectedFile);
+          if(file){state.upload.filename=file.name;state.upload.mediaType=selectedFile.type;state.upload.observedAt=new Date().toISOString();}
+          changed();await persistNow();render();
+        });return;
       }
-      if(target.matches('select[data-source-binding]')){editBinding(target.dataset.sourceBinding,target.value);return;}
+      if(target.matches('select[data-source-binding]')){bindingEdit(target);return;}
       if(target.matches('[data-source-buyer]')){
         requireEdit();const work=state.profileWork,bindings=parseObject(work.bindingsText,'Complete profile bindings'),id=target.dataset.sourceBuyer;
         const selected=new Set(bindings.buyerDeploymentIds||[]);
@@ -1049,14 +1406,24 @@ export function mountInstallationSources(root,bridge){
         const ids=new Set(form.fileIds);if(target.checked)ids.add(target.dataset.sourceCaseFile);else ids.delete(target.dataset.sourceCaseFile);
         form.fileIds=[...ids];form.dirty=true;changed();return;
       }
-      if(target.matches('select[data-source-field]'))handleField(target);
-    }catch(error){state.error=error.message||String(error);status();}
+      if(target.matches('select[data-source-field]'))dispatchField(target);
+    }catch(error){fieldFailure(target,error);}
   });
   root.addEventListener('click',event=>{
     const target=event.target.closest('[data-source-action]');if(!target||!root.contains(target)||target.disabled)return;
     event.preventDefault();const action=target.dataset.sourceAction;
+    if(action==='working-download'){snapshotDownload();status();return;}
     if(action==='close'){own(closeView()).catch(error=>{state.error=error.message;status();});return;}
     run(async()=>{
+      if(action==='working-refresh')return refreshCopies();
+      if(action==='working-fork')return forkWorking();
+      if(action==='working-open-legacy')return receiveCopy(await legacyEnvelope());
+      if(action==='working-open-saved'){
+        if(!selectedLocalCopy)throw new Error('Choose the complete saved local copy.');
+        const id=selectedLocalCopy,value=await journal.get('copy:'+id);
+        if(!value)throw new Error('The selected complete local copy is unavailable.');
+        return receiveCopy(value,{savedId:id});
+      }
       if(action.startsWith('commissioning-'))return commissioning.action(action,target);
       if(action==='new')return createDraft();
       if(action==='draft-open')return openDraft(target.dataset.id);
@@ -1091,7 +1458,7 @@ export function mountInstallationSources(root,bridge){
       if(action==='case-edit')return editCase(Number(target.dataset.index));
       if(action==='case-remove')return removeCase(Number(target.dataset.index));
       if(action==='case-cancel'){
-        if(replaceFormAllowed(state.caseForm)){state.caseForm=null;state.pointerTarget=null;changed();}return;
+        if(replaceFormAllowed(state.caseForm)){await parkWorking('Before closing the complete customer mapping');if(!available())return;clearRawFields(['field:caseForm.']);state.caseForm=null;state.pointerTarget=null;changed();}return;
       }
       if(action==='packet-review')return reviewPacket();
       if(action==='pointer-inspect')return inspectPointerSource(target.dataset.index);
@@ -1111,7 +1478,7 @@ export function mountInstallationSources(root,bridge){
         return download(path+'?expectedSha256='+receipt.sha256,receipt);
       }
       if(action==='attach')return attach();
-      if(action==='installation-open')return openInstallation();
+      if(action==='installation-open'){await parkWorking('Before refreshing the Installation selection');if(!available())return;return openInstallation();}
       if(action==='profile-seed')return seedProfile();
       if(action==='profile-preview')return previewProfile();
       if(action==='profile-apply')return receiveProfile();
@@ -1133,63 +1500,52 @@ export function mountInstallationSources(root,bridge){
   };
   window.addEventListener('beforeunload',beforeUnload);
   async function closeView(){
-    if(busy||hostBusy)return;
+    if(busy||hostBusy||copyLoading)return;
     await persistNow();state.open=false;changed();await persistNow();root.hidden=true;bridge.close?.();
   }
   async function initialize(){
-    let retained=await journal.get('working');
-    if(retained){
-      if(retained.schema!==SCHEMA||!equal(retained.scope,scope))throw new Error('The retained browser draft belongs to another original case or plan.');
-      state={...clone(initial),...clone(retained)};state.error='';
-      if(state.pendingId){
-        request=await journal.get('request:'+state.pendingId);
-        if(!request||request.schema!==SCHEMA||request.caseId!==caseId||request.draftId!==state.draftId||
-           request.body?.requestId!==state.pendingId||hash(stable({schema:SCHEMA,caseId,draftId:request.draftId,body:request.body}))!==request.requestSha256)
-          throw new Error('The complete original pending request is unavailable. Keep this browser journal for recovery.');
-      }
-    }
-    await refreshHeads();await readCatalogue();
-    if(state.draftId){
-      try{
-        const head=await bridge.api(prefix+'/'+state.draftId);
-        acceptState(head,{replace:false});
-        if(retained?.revision!==null&&retained?.revision!==undefined&&retained.revision!==head.revision){
-          state.revision=retained.revision;edition=await bridge.api(prefix+'/'+state.draftId+'?revision='+state.revision);
-          state.work=clone(retained.work)||{draftId:state.draftId,baseRevision:edition.revision,selectionText:edition.selection?pretty(edition.selection):'',dirty:false};
-        }
-        if(state.preparationId)await readPreparation(state.preparationId);
-      }catch(error){
-        if(!(error.status===404&&request?.body.action==='create'))throw error;
-        saved=null;edition=null;
-      }
-    }
-    initialized=true;
-    if(request?.receipt)await adoptReceipt(request.receipt,request);
-    if(state.inspectionFileId&&saved){
-      try{inspection=await inspectFile(state.inspectionFileId);}catch(error){state.notice='Retained your working fields; reopen their original source inspection. '+error.message;}
-    }
-    await persistNow();render();
+    let retained=null;
+    try{
+      const rows=await journal.entries('request:');if(!available())return;
+      const records=mergeRequests(rows.map(row=>row.value));for(const [id,value] of records)requestRecords.set(id,value);
+      let pointer=null;try{pointer=sessionStorage.getItem(pointerKey);}catch(error){storageError='This window’s reopen pointer is unavailable. Choose a saved local copy explicitly. '+error.message;}
+      if(pointer)retained=await journal.get('copy:'+pointer);
+      if(!available())return;
+      if(retained)applyCopy(validateCopy(retained));
+      await refreshCopies();
+    }catch(error){storageError='The complete local journal could not be opened. Download current fields or explicitly open a retained complete copy. '+error.message;state.error=storageError;if(retained)earlierCopies.push({...clone(retained),earlierCopies:[]});}
+    if(!available())return;
+    initialized=true;render();
+    // Every new document owns a fresh copy even when a duplicated tab inherited its pointer.
+    try{await persistNow();}catch(error){storageError=error.message;}
+    if(!available())return;
+    try{await refreshSelectedCopy();}
+    catch(error){state.error='Your complete working fields are retained. Reopen the original source to finish readback. '+error.message;}
+    if(!available())return;
+    try{await persistNow();await refreshCopies();}catch(error){storageError=error.message;}
+    finally{copyLoading=false;if(available())render();}
   }
   render();
   const ready=own(initialize()).catch(error=>{
-    initialized=false;state.error=error.message||String(error);if(available())render();throw error;
+    copyLoading=false;initialized=true;state.error=error.message||String(error);if(available())render();throw error;
   });
   // Expose the original failure while avoiding an unobserved rejected startup.
   ready.catch(()=>{});
   return {
     ready,
-    async open(){await ready;state.open=true;changed();await persistNow();render();root.scrollIntoView({block:'start'});},
+    async open(){await ready.catch(()=>{});if(!available())return;state.open=true;changed();render();try{await persistNow();}catch(error){storageError=error.message;status();}root.scrollIntoView({block:'start'});},
     setHostBusy(value){hostBusy=!!value;controls();},
     refresh(){if(available())render();},
     dispose(){
       if(closing)return closing;
       alive=false;clearTimeout(timer);timer=null;
+      if(activeCopies.get(pointerKey)===copyId)activeCopies.delete(pointerKey);
       window.removeEventListener('beforeunload',beforeUnload);
       for(const controller of downloads)controller.abort();
       closing=(async()=>{
         // Accepted requests own their full journal through their final receipt.
         while(owned.size)await Promise.allSettled([...owned]);
-        if(!disposePersistenceAttempted){
+        if(initialized&&!disposePersistenceAttempted){
           try{await persistNow();}catch(error){disposePersistenceError=error;}
           finally{disposePersistenceAttempted=true;}
         }
