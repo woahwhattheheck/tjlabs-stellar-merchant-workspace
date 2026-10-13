@@ -37,21 +37,50 @@ async function exact(path, bytes) {
 }
 async function child(executable, args, options = {}) {
   return new Promise((accept, reject) => {
-    const process = spawn(executable, args, { stdio: ["ignore", "pipe", "pipe"], ...options });
-    let stdout = "", stderr = "", count = 0, finished = false;
+    let owned;
+    try { owned = spawn(executable, args, { stdio: ["ignore", "pipe", "pipe"], ...options }); }
+    catch (error) { reject(error); return; }
+    let stdout = "", stderr = "", count = 0, closed = false, failure, stopping = false, escalation;
+    const cleanupErrors = [];
+    const stop = () => {
+      if (closed || stopping || owned.pid === undefined) return;
+      stopping = true;
+      escalation = setTimeout(() => {
+        if (!closed) try { owned.kill("SIGKILL"); }
+        catch (error) { cleanupErrors.push({ action: "SIGKILL", message: error.message, code: error.code }); }
+      }, 5000);
+      escalation.unref?.();
+      try { owned.kill("SIGTERM"); }
+      catch (error) { cleanupErrors.push({ action: "SIGTERM", message: error.message, code: error.code }); }
+    };
+    const fail = error => {
+      if (closed) return;
+      failure ??= error;
+      stop();
+    };
     const append = (kind, bytes) => {
-      if (finished) return;
+      if (closed || failure) return; // Keep flowing and discard later output after the first failure.
       count += bytes.length;
-      if (count > 16 * 1024 * 1024) { finished = true; process.kill("SIGTERM"); reject(new Error("The original installed child exceeded its output capacity")); return; }
+      if (count > 16 * 1024 * 1024) {
+        fail(new Error("The original installed child exceeded its output capacity")); return;
+      }
       if (kind === "stdout") stdout += bytes.toString("utf8"); else stderr += bytes.toString("utf8");
     };
-    process.stdout.on("data", value => append("stdout", value));
-    process.stderr.on("data", value => append("stderr", value));
-    process.on("error", error => { finished = true; reject(error); });
-    process.on("close", (code, signal) => {
-      if (finished) return; finished = true;
-      if (code !== 0) reject(Object.assign(new Error("Original installed child failed: " + executable), { child: { args, code, signal, stdout, stderr } }));
-      else accept({ stdout, stderr, code });
+    owned.stdout?.on("data", value => append("stdout", value));
+    owned.stderr?.on("data", value => append("stderr", value));
+    owned.stdout?.on("error", fail);
+    owned.stderr?.on("error", fail);
+    owned.on("error", fail);
+    owned.once("close", (code, signal) => {
+      if (closed) return;
+      closed = true;
+      if (escalation !== undefined) clearTimeout(escalation);
+      if (code !== 0) failure ??= new Error("Original installed child failed: " + executable);
+      if (failure) {
+        failure.child = { args: [...args], code, signal, stdout, stderr, outputBytes: count,
+          terminationRequested: stopping, cleanupErrors };
+        reject(failure);
+      } else accept({ stdout, stderr, code });
     });
   });
 }
@@ -421,16 +450,23 @@ export async function receiveInstalledQuality(inputPath) {
       const openBrowser = async (address, profile) => {
         const context = await chromium.launchPersistentContext(profile, { headless: true, viewport: { width: 1440, height: 1000 },
           ...(config.browser.executablePath ? { executablePath: resolve(config.browser.executablePath) } : {}), args: config.browser.args ?? [] });
-        await context.addInitScript(({ token }) => {
-          try { sessionStorage.setItem("openlineage-access:" + location.origin + location.pathname, token); } catch {}
-        }, { token: operatorToken });
-        const page = await context.newPage(); page.on("pageerror", error => errors.push(error.message));
-        await page.goto(address, { waitUntil: "domcontentloaded" });
-        await page.locator("#connection-state").filter({ hasText: "Connected" }).waitFor({ timeout: 45000 });
-        await page.locator("#quality-nav").click();
-        await page.getByRole("combobox", { name: "Quality dataset", exact: true }).selectOption(datasetKey);
-        await page.locator(".quality-desk[aria-busy='false']").waitFor({ timeout: 45000 });
-        return { context, page };
+        browserContext = context;
+        try {
+          await context.addInitScript(({ token }) => {
+            try { sessionStorage.setItem("openlineage-access:" + location.origin + location.pathname, token); } catch {}
+          }, { token: operatorToken });
+          const page = await context.newPage(); page.on("pageerror", error => errors.push(error.message));
+          await page.goto(address, { waitUntil: "domcontentloaded" });
+          await page.locator("#connection-state").filter({ hasText: "Connected" }).waitFor({ timeout: 45000 });
+          await page.locator("#quality-nav").click();
+          await page.getByRole("combobox", { name: "Quality dataset", exact: true }).selectOption(datasetKey);
+          await page.locator(".quality-desk[aria-busy='false']").waitFor({ timeout: 45000 });
+          return { context, page };
+        } catch (error) {
+          try { await context.close(); browserContext = null; }
+          catch (cleanup) { error.browserCleanup = { message: cleanup.message, stack: cleanup.stack }; }
+          throw error;
+        }
       };
       const capture = async (page, name) => {
         await page.locator(".quality-desk[aria-busy='false']").waitFor({ timeout: 45000 });
@@ -570,7 +606,8 @@ export async function receiveInstalledQuality(inputPath) {
       return state;
     } catch (error) {
       state.status = "INTERRUPTED"; state.error = { at: new Date().toISOString(), message: error.message, stack: error.stack,
-        ...(error.child ? { child: error.child } : {}), ...(error.observed ? { observed: error.observed } : {}) };
+        ...(error.child ? { child: error.child } : {}), ...(error.observed ? { observed: error.observed } : {}),
+        ...(error.browserCleanup ? { browserCleanup: error.browserCleanup } : {}) };
       await save().catch(() => {}); throw error;
     } finally {
       await browserContext?.close().catch(() => {});
