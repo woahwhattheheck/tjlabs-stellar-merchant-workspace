@@ -17,13 +17,15 @@ from managed import require_binding, startup
 from migration import Migration, MAX_JSON
 from native import native_tables, search_export, send_exact
 from source_cases import list_collections, view_collection, plan_many, reviews, review_document, collection
+from native_jobs import pages as job_pages, view as job_view, observation as job_observation, preview as job_preview, read as job_read, write_export as job_export
 from source_files import run as acquire_files, acquisition, view as acquisition_view, list_acquisitions, full_document, original_path
 
 HERE = Path(__file__).resolve().parent
 ASSETS = {"index.html": "text/html; charset=utf-8", "browser.mjs": "text/javascript; charset=utf-8", "style.css": "text/css; charset=utf-8"}
 
 class Server(ThreadingHTTPServer):
-    daemon_threads = True
+    daemon_threads = False
+    block_on_close = True
     allow_reuse_address = False
 
     def __init__(self, workspace, port, binding, token):
@@ -34,6 +36,7 @@ class Server(ThreadingHTTPServer):
         self.native_jobs = {}
         self.job_lock = threading.Lock()
         self.source_threads = []
+        self.native_threads = []
         self.closing = False
 
     def job(self, request):
@@ -55,10 +58,10 @@ class Server(ThreadingHTTPServer):
                     return old
             if any(item["status"] == "running" for item in self.native_jobs.values()):
                 raise InputError("Continue the current native transfer before starting another")
-            if request["task"] not in {"search", "send", "source-download"} or not isinstance(request["input"], dict):
-                raise InputError("Choose native search, the exact native send contract or original source acquisition")
+            if request["task"] not in {"search", "send", "source-download", "job-read"} or not isinstance(request["input"], dict):
+                raise InputError("Choose native search, the exact native send contract, destination job reading or original source acquisition")
             with self.workspace.mutex:
-                table = {"search": "tind_native_searches", "send": "tind_native_transfers", "source-download": "tind_source_acquisitions"}[request["task"]]
+                table = {"search": "tind_native_searches", "send": "tind_native_transfers", "source-download": "tind_source_acquisitions", "job-read": "tind_job_observations"}[request["task"]]
                 lookup = request["input"].get("acquisitionId") if request["task"] == "source-download" else identity
                 previous = self.workspace.db.execute("SELECT body FROM " + table + " WHERE id=?", (lookup,)).fetchone()
                 project = self.workspace.project(request["projectId"])
@@ -75,6 +78,8 @@ class Server(ThreadingHTTPServer):
                                                authorization_env=data.get("authorizationEnvironment"),
                                                interval=data.get("interval", 2.1), page_size=data.get("pageSize", 100),
                                                export_context=data.get("exportContext"))
+                    elif request["task"] == "job-read":
+                        output = job_read(self.workspace, project["id"], data["jobId"], identity)
                     elif request["task"] == "source-download":
                         output = acquire_files(self.workspace, project["id"], data["acquisitionId"], only=data.get("only"))
                     else:
@@ -89,12 +94,20 @@ class Server(ThreadingHTTPServer):
             if request["task"] == "source-download":
                 self.workspace.source_download_stop.clear()
                 self.source_threads.append(worker)
+            else:
+                self.native_threads.append(worker)
             worker.start()
             return dict(value)
 
 class Handler(BaseHTTPRequestHandler):
     server_version = "TINDWorkspace/1"
     sys_version = ""
+
+    def setup(self):
+        # Drain accepted handlers before workspace close; incomplete local bodies
+        # and abandoned downloads must not keep that drain open indefinitely.
+        self.request.settimeout(60)
+        super().setup()
 
     def log_message(self, *_):
         pass
@@ -140,6 +153,9 @@ class Handler(BaseHTTPRequestHandler):
         return parsed.path, {key: value[0] for key, value in values.items()}
 
     def require(self, write=False):
+        if self.server.closing:
+            self.respond(503, {"error": "The original workspace is closing; continue this saved request after reopening"})
+            return False
         if not self.valid_host():
             self.respond(421, {"error": "Open the selected local operator address"})
             return False
@@ -171,6 +187,29 @@ class Handler(BaseHTTPRequestHandler):
                 with self.server.job_lock:
                     result["nativeJobs"] = list(self.server.native_jobs.values())
                 self.respond(200, result)
+            elif path == "/api/destination-jobs":
+                with owner.mutex:
+                    result = job_view(owner, query["project"], query["id"], int(query.get("offset", "0")), int(query.get("limit", "50"))) if query.get("id") else job_pages(owner, query["project"], offset=int(query.get("offset", "0")), limit=int(query.get("limit", "50")))
+                self.respond(200, result)
+            elif path == "/api/job-observation":
+                with owner.mutex:
+                    result = job_observation(owner, query["project"], query["id"])
+                self.respond(200, result)
+            elif path == "/download/destination-job":
+                self.download(lambda file: job_export(owner, query["project"], query["id"], file), "tind-destination-job.zip")
+            elif path == "/download/job-response":
+                with owner.mutex:
+                    result = job_observation(owner, query["project"], query["id"])
+                    if not result.get("response"):
+                        raise InputError("This original job read has no completed response bytes")
+                    source = owner.object_path(result["response"]["original"])
+                    size = source.stat().st_size
+                    self.send_response(200); self.send_header("Content-Type", "application/octet-stream")
+                    self.send_header("Content-Length", str(size))
+                    self.send_header("Content-Disposition", 'attachment; filename="original-native-job-response.bin"')
+                    self.common_headers(); self.end_headers()
+                    with source.open("rb") as stream:
+                        shutil.copyfileobj(stream, self.wfile, 1024 * 1024)
             elif path == "/api/history":
                 with owner.mutex:
                     result = owner.ws.history(query["kind"], int(query.get("offset", "0")), int(query.get("limit", "100")))
@@ -320,6 +359,9 @@ class Handler(BaseHTTPRequestHandler):
             data = self.rfile.read(int(raw_length))
             if len(data) != int(raw_length):
                 raise InputError("The complete request body was not received")
+            if self.server.closing:
+                self.respond(503, {"error": "The original workspace is closing; continue this saved request after reopening"})
+                return
             request = decode(data)
             if path == "/api/apply":
                 result = self.server.workspace.apply(request)
@@ -329,6 +371,12 @@ class Handler(BaseHTTPRequestHandler):
                     raise InputError("Choose the source collection and actual record identities")
                 with self.server.workspace.mutex:
                     result = plan_many(self.server.workspace, request["projectId"], request["collectionId"], request["choices"])
+                self.respond(200, result)
+            elif path == "/api/destination-job-preview":
+                if not isinstance(request, dict) or set(request) != {"projectId", "input"}:
+                    raise InputError("Choose the complete original job response and review input")
+                with self.server.workspace.mutex:
+                    result = job_preview(self.server.workspace, request["projectId"], request["input"])
                 self.respond(200, result)
             elif path == "/api/native":
                 result = self.server.job(request)
@@ -369,7 +417,8 @@ def serve(directory, port=0, expected_binding=None, startup_format=None):
         with server.job_lock:
             server.closing = True
             owner.source_download_stop.set()
+            owner.native_stop.set()
         server.server_close()
-        for worker in server.source_threads:
+        for worker in server.source_threads + server.native_threads:
             worker.join()
         owner.close()

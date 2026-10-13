@@ -1,0 +1,9 @@
+.recipient-intake{max-width:100%;overflow-wrap:anywhere}
+.recipient-intake .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.recipient-intake input,.recipient-intake select,.recipient-intake textarea{max-width:100%;min-width:0}
+.recipient-intake input[type=checkbox]{width:auto}
+.recipient-task{margin:1rem 0;padding:1rem;border:1px solid #777;border-radius:.3rem}
+.recipient-task>label{display:block;margin:.6rem 0}
+.recipient-error{color:#8e2626;white-space:pre-wrap}
+.recipient-intake pre{white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:640px){.recipient-intake .form-grid{grid-template-columns:1fr}.recipient-task{padding:.6rem}}

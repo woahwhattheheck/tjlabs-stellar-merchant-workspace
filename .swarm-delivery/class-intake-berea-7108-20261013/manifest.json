@@ -1,0 +1,21 @@
+{
+  "operation": "CLASS-INTAKE-BEREA-COMPLETE-7108-20261013",
+  "files": 24,
+  "source": {
+    "bytes": 265066,
+    "sha256": "e421ada8ffebc6d5b3e2e54e1cb637f9dc8854c71664960b1bc2a30e22873118"
+  },
+  "compressed": {
+    "bytes": 75908,
+    "sha256": "16520a949010ef41c1ef026812a3ff30330af1b8253ea16969001e7f55c13b59"
+  },
+  "frame": {
+    "bytes": 101213,
+    "sha256": "52d6cff2469b4662f1a6f7d7553e70df8a7ed9d888d88f9bb161067b305a6c96"
+  },
+  "receiver": {
+    "bytes": 5597,
+    "sha256": "c0c7624a1dd399a1ae67603ba45276ae634dead9a8003a5b475bea1989a79d03"
+  },
+  "correction": "Both browser hidden-panel waits use state:attached, matching actual hidden UI completion."
+}

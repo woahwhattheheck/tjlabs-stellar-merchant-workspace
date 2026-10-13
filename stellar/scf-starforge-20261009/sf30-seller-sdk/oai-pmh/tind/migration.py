@@ -236,10 +236,15 @@ class Migration:
         source_file_tables(self)
         from production_waves import tables as production_tables
         production_tables(self)
+        from native import native_tables
+        from native_jobs import tables as job_tables
+        native_tables(self)
+        job_tables(self)
 
     def close(self):
         self.source_download_stop.set()
-        with self.source_download_lock, self.mutex:
+        self.native_stop.set()
+        with self.source_download_lock, self.native_lock, self.mutex:
             self.ws.close()
 
     def _get(self, table, identity):
@@ -314,7 +319,9 @@ class Migration:
                 "source-download-import": self._source_download_import,
                 "production-plan": self._production_plan, "production-review": self._production_review,
                 "production-disposition": self._production_disposition, "production-prepare": self._production_prepare,
-                "production-reconcile": self._production_reconcile
+                "production-reconcile": self._production_reconcile,
+                "native-job-bind": self._native_job_bind, "native-job-import": self._native_job_import,
+                "native-job-receive": self._native_job_receive
             }
             if kind not in methods:
                 raise InputError("Unknown TIND operation")
@@ -328,6 +335,18 @@ class Migration:
                         "revision": project["revision"], "result": result}
             self.db.execute("INSERT INTO tind_operations VALUES(?,?,?)", (operation, request_sha, jbytes(response).decode()))
             return response
+
+    def _native_job_bind(self, project, value, operation):
+        from native_jobs import bind
+        return bind(self, project, value, operation)
+
+    def _native_job_import(self, project, value, operation):
+        from native_jobs import import_response
+        return import_response(self, project, value, operation)
+
+    def _native_job_receive(self, project, value, operation):
+        from native_jobs import receive
+        return receive(self, project, value, operation)
 
     def _mapped_source(self, project, observation, staff):
         record = mapped_record(observation, project["profile"], staff)
@@ -1126,8 +1145,8 @@ class Migration:
         output = Path(output).expanduser().absolute()
         source_root = Path(__file__).resolve().parent.parent.parent
         with self.mutex, tempfile.TemporaryDirectory(dir=self.area / "tmp") as directory:
-            if self.source_download_active:
-                raise InputError("Pause the original document acquisition before exporting its complete workspace")
+            if self.source_download_active or self.native_active:
+                raise InputError("Finish or pause the original source/native operation before exporting its complete workspace")
             projects = [decode(r[0]) for r in self.db.execute("SELECT body FROM tind_projects")]
             temp = Path(directory)
             database = temp / "workspace.sqlite"

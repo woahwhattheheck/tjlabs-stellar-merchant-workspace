@@ -1,7 +1,7 @@
 import type { CanadaBuysBidderDesk, BidderDeskPackage, BidderReceiveResult } from './bidder-desk-workspace.mjs';
 export type { BidderKind, BidderRecordMap, BidderDeskPackage, BidderReceiveResult } from './bidder-desk-workspace.mjs';
-import type { Stream, SourceMetadata, SourceObservation, OriginalSource, SourceEdition, Review, ReviewPatch, Workshare, WorkshareHistory, WorkshareInput, WorksharePatch, NoticeIndex, Notice, Profile, ProfileMatch } from './domain.mjs';
-export type { Stream, SourceMetadata, SourceObservation, OriginalSource, SourceEdition, Review, ReviewPatch, Workshare, WorkshareHistory, WorkshareInput, WorksharePatch, NoticeIndex, Notice, Profile, ProfileMatch } from './domain.mjs';
+import type { NoticeDerivation, SourceFragment, DerivedSourceField, Stream, SourceMetadata, SourceObservation, OriginalSource, SourceEdition, Review, ReviewPatch, Workshare, WorkshareHistory, WorkshareInput, WorksharePatch, NoticeIndex, Notice, Profile, ProfileMatch } from './domain.mjs';
+export type { NoticeDerivation, SourceFragment, DerivedSourceField, Stream, SourceMetadata, SourceObservation, OriginalSource, SourceEdition, Review, ReviewPatch, Workshare, WorkshareHistory, WorkshareInput, WorksharePatch, NoticeIndex, Notice, Profile, ProfileMatch } from './domain.mjs';
 export interface WorkspaceMetadata { schema:string;id:string;title:string;revision:number;createdAt:string;updatedAt:string }
 export interface CaptureRecord {
  id:string;stream:Stream;url:string;label:string;createdAt:string;updatedAt:string;attempts:number;revision:number;
@@ -25,7 +25,7 @@ export interface WorkspaceView {
  captures:CaptureRecord[];receivings:Receiving[];publications:Publication[];
  counts:{notices:number;awards:number;supplyArrangements:number;sources:number};
 }
-export interface SourceInput { stream:Stream;label?:string;url?:string;retrievedAt?:string;expectedSha256?:string;response?:Record<string,unknown> }
+export interface SourceInput { stream:Stream;label?:string;url?:string;retrievedAt?:string;expectedSha256?:string;response?:Record<string,unknown>|null;coverage?:'federal'|'single-notice';bodyKind?:'original-utf8-csv'|'derived-notice-utf8-csv';derivation?:NoticeDerivation;derivationSha256?:string }
 export interface Selection { scope?:'all'|'shortlist'|'selected';noticeIds?:string[] }
 export interface WorkspacePackage {
  schema:string;packageId:string;exportedAt:string;workspace:WorkspaceMetadata;selection:{scope:NonNullable<Selection['scope']>;noticeIds:string[]};

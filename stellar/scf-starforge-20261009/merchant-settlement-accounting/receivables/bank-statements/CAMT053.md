@@ -4,6 +4,8 @@ The merchant bank workspace accepts original CAMT.053 XML through its existing s
 
 The source module uses Node built-ins and reads the complete original bytes. It does not make network requests while parsing. Installation includes the source parser, browser review module, complete original-file preparation command and source format guide with the existing merchant application.
 
+For a statement divided across original pages, use the complete [page-assembly and close workflow](PAGE_ASSEMBLY.md). It receives saved statement sections across one or several original XML files, reviews page/sequence/balance/summary coverage, and carries every selected source into the ordinary close archive.
+
 ## Receive the original statement
 
 Open **Bank statements → Original statement file** and choose the bank's XML file. The browser selects **CAMT.053 XML statement** for an `.xml` file. Select an expected version when a bank connection has a fixed version; otherwise the parser reads the actual supported namespace.

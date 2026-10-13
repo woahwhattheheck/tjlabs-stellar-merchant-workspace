@@ -1,7 +1,8 @@
 import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
+import { parseZinc, encodeZinc } from './haystack-zinc.mjs';
 
-export const SUPPORTED_FORMATS = Object.freeze(['json-v4']);
+export const SUPPORTED_FORMATS = Object.freeze(['json-v4', 'zinc']);
 export const MAX_VALUE_DEPTH = 128;
 const OWN = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
 const TAG_NAME = /^[a-z][a-zA-Z0-9_]*$/;
@@ -382,7 +383,7 @@ export function validateGrid(grid) {
 function formatOption(options) {
   const format = options?.format ?? 'json-v4';
   if (!SUPPORTED_FORMATS.includes(format))
-    throw new HaystackError('UNSUPPORTED_HAYSTACK_FORMAT', 'Supported import and export format: json-v4.', { format, supported: [...SUPPORTED_FORMATS] });
+    throw new HaystackError('UNSUPPORTED_HAYSTACK_FORMAT', 'Supported import and export formats: json-v4, zinc.', { format, supported: [...SUPPORTED_FORMATS] });
   return format;
 }
 
@@ -406,7 +407,18 @@ export function parseGrid(bytes, options = {}) {
     text = text.slice(1);
     diagnostics.push(diagnostic('UTF8_BOM', 'info', 'The original source has a UTF-8 byte order mark; it is retained in the original source bytes.', ''));
   }
-  const grid = parseJson(text, diagnostics);
+  let grid;
+  if (format === 'zinc') {
+    const parsed = parseZinc(text, {
+      error: (code, message, details) => new HaystackError(code, message, details),
+      maxDepth: MAX_VALUE_DEPTH
+    });
+    grid = parsed.grid;
+    for (const item of parsed.diagnostics) {
+      const { path = '', ...details } = item.details ?? {};
+      diagnostics.push(diagnostic(item.code, item.severity, item.message, path, details));
+    }
+  } else grid = parseJson(text, diagnostics);
   const validation = validateGrid(grid);
   return {
     grid,
@@ -415,7 +427,7 @@ export function parseGrid(bytes, options = {}) {
       sha256: createHash('sha256').update(raw).digest('hex'),
       bytes: raw.length,
       format,
-      mediaType: 'application/json',
+      mediaType: format === 'zinc' ? 'text/zinc; charset=utf-8' : 'application/json',
       bom
     }
   };
@@ -436,10 +448,14 @@ function serialize(value, indentation, depth = 0) {
   return left + '\n' + pad + items.join(',\n' + pad) + '\n' + ' '.repeat(indentation * depth) + right;
 }
 
-/** A derived JSON v4 encoding; original byte download is the source-retention operation. */
+/** A derived native encoding; original byte download is the source-retention operation. */
 export function encodeGrid(grid, options = {}) {
-  formatOption(options);
+  const format = formatOption(options);
   validateGrid(grid);
+  if (format === 'zinc') return Buffer.from(encodeZinc(grid, {
+    error: (code, message, details) => new HaystackError(code, message, details),
+    maxDepth: MAX_VALUE_DEPTH
+  }), 'utf8');
   const indentation = options.indent ?? 2;
   if (!Number.isInteger(indentation) || indentation < 0 || indentation > 8)
     throw new HaystackError('JSON_INDENT', 'JSON indent must be an integer from 0 through 8.');

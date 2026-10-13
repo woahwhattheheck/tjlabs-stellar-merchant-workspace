@@ -462,7 +462,7 @@ export function mountGristOperatingPlans({api,getContext,setBlocked,notice}){
     for(const row of c.rows){
       const item=element('section',null,'op-return-row');item.append(element('h4',row.label),element('p',row.key+(row.conflict?' · Explicit decision required':''),'path'));
       if(row.reason)item.append(element('p',row.reason));
-      const values=element('div',null,'op-return-values');for(const [key,label]of [['base','Shared original'],['current','Current'],['incoming','Returned']]){const value=row.alternatives?.[key]??row[key];values.append(details(label,value));renderFiles(values,value?.files,label+' files');}item.append(values);
+      const values=element('div',null,'op-return-values');for(const [key,label]of [['base','Shared original'],['current','Current'],['incoming','Returned']]){const value=row.alternatives?.[key]??row[key];values.append(details(label,value));renderFiles(values,row.key.endsWith('/files')?value:value?.files,label+' files');}item.append(values);
       const choice=element('label','Reviewed choice'),select=element('select');
       for(const [value,label]of [['','Use original automatic choice / unresolved'],['current','Keep current'],['incoming','Take returned'],['base','Use shared original'],['custom','Custom complete JSON value']]){const option=element('option',label);option.value=value;select.append(option);}
       const selected=decisions.get(row.key),raw=returnEdits[row.key];select.value=raw?.take??selected?.take??'';
@@ -473,7 +473,7 @@ export function mountGristOperatingPlans({api,getContext,setBlocked,notice}){
       note.addEventListener('input',changed);custom.addEventListener('input',changed);
       choice.append(select);item.append(choice,custom,field('Decision note',note.value,()=>{},{}));
       item.lastChild.replaceChildren(document.createTextNode('Decision note'),note);
-      item.append(details('Proposed complete value · '+(row.reviewed?'reviewed':'automatic'),row.value));renderFiles(item,row.value?.files,'Proposed files');
+      item.append(details('Proposed complete value · '+(row.reviewed?'reviewed':'automatic'),row.value));renderFiles(item,row.key.endsWith('/files')?row.value:row.value?.files,'Proposed files');
       item.dataset.key=row.key;item._choice={select,custom,note};
       area.append(item);
     }

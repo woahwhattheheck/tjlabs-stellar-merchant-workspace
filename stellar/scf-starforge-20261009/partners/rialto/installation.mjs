@@ -31,7 +31,8 @@ function requestSummary(selected,selectionSha256){
   advertisedTerms:copy(original.selectedTerms),maxAtomic:original.maxAtomic,
   task:original.task,usefulOutput:original.usefulOutput,
   body:original.body??null,headersSha256:sha(json(selected.headers)),
-  originalSelection:'request/selection.json',originalCatalogue:'request/source/catalogue.json'
+  originalSelection:'request/selection.json',originalCatalogue:'request/source/catalogue.json',
+  ...(original.catalogueReview===undefined?{}:{catalogueReview:{...copy(original.catalogueReview),originalReview:'request/catalogue-review/received.json',report:'request/catalogue-review/report.html'}})
  };
 }
 /** Source fields augment actual selected bindings; original commercial and native records stay intact. */
@@ -50,7 +51,7 @@ export function requestBindings(bindings,request){
   const detail=request.method+' '+request.url+'\nOriginal intent: '+request.intentId+'\nRetained request selection: '+request.selectionSha256+'\nUse the original request body and headers, actual merchant challenge and native SF88 review/receiving. Full source: request/selection.json and RIALTO_REQUEST.md.';
   result.task.request=detail.length<=8000?detail:'Execute the exact original '+request.method+' request from request/selection.json, intent '+request.intentId+'. The complete URL, body/header identities, source and customer task are retained in RIALTO_REQUEST.md. Continue the original actual challenge and native SF88 approval/receiving.';
  }
- if(missing(result.source.reference))result.source.reference='Complete retained Rialto request selection '+request.selectionSha256+'; catalogue '+request.catalogueSha256+'; original intent '+request.intentId+'. Full request, all original catalogue pages and available native history are retained under request/.';
+ if(missing(result.source.reference))result.source.reference='Complete retained Rialto request selection '+request.selectionSha256+'; catalogue '+request.catalogueSha256+'; original intent '+request.intentId+'. Full request, all original catalogue pages and available native history are retained under request/.'+(request.catalogueReview?' Complete customer source decision and review notes reopen at request/catalogue-review/report.html; exact original review '+request.catalogueReview.reviewSha256+'.':'');
  return result;
 }
 function requestMarkdown(request){
@@ -58,6 +59,7 @@ function requestMarkdown(request){
   'The complete selected request and original catalogue stay in request/. Native payment and actual result records remain with their original operation.\n\n'+
   '## Customer task\n\n'+request.task+'\n\n## Complete useful output\n\n'+request.usefulOutput+
   '\n\n## Original request and source\n\n~~~json\n'+JSON.stringify(request,null,2)+'\n~~~\n\n'+
+  (request.catalogueReview?'## Customer catalogue decision\n\n[Open the complete retained review](request/catalogue-review/report.html) to inspect both exact original editions, every compared resource/payment option, the customer notes and carried request drafts. [Complete original review JSON](request/catalogue-review/received.json) reopens independently in the original report. Original review SHA-256: '+request.catalogueReview.reviewSha256+'.\n\n':'')+
   '## Continue the original operation\n\nReceive a complete private packet with the installed Rialto receive command. Before executing a received native buyer operation, use the original SF88 --import-operation to reconstruct machine-local paths and review it with the new response output. Use the current original customer intent to recover an interrupted request. The Customer installations preview/save and full-case export/import stay in the existing native SF47 case.\n';
 }
 export async function inspectInstallation(root,{verifyRequest}){
@@ -77,7 +79,7 @@ export async function inspectInstallation(root,{verifyRequest}){
   need(canonical(retainedSeed.source)===canonical(r.source),'Original native case source changed');
   const document=await readJson(path.join(root,'installation-input.json'));
   need(document.stage==='PLANNED','Original preparation stage changed');
-  return{directory:root,schema:SCHEMA,profile:PROFILE,request:copy(r.request),source:copy(r.source),workshareCaseId:r.workshareCaseId,selections:copy(r.selections),files:r.files.length,additionalFiles:actual.filter(f=>!seen.has(f.path)&&f.path!=='preparation.json').map(f=>f.path),preparationSha256:receipt.source.sha256,inputs:copy(r.inputs),document:path.join(root,'installation-input.json'),workorder:path.join(root,'WORKORDER.md')};
+  return{directory:root,schema:SCHEMA,profile:PROFILE,request:copy(r.request),source:copy(r.source),workshareCaseId:r.workshareCaseId,selections:copy(r.selections),files:r.files.length,additionalFiles:actual.filter(f=>!seen.has(f.path)&&f.path!=='preparation.json').map(f=>f.path),preparationSha256:receipt.source.sha256,inputs:copy(r.inputs),document:path.join(root,'installation-input.json'),workorder:path.join(root,'WORKORDER.md'),...(r.request.catalogueReview?{catalogueReviewReport:path.join(root,'request','catalogue-review','report.html')}:{})};
  });
 }
 export async function prepareFromRequest(options,{verifyRequest}){

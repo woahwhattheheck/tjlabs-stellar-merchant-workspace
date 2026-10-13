@@ -1,0 +1,32 @@
+{
+  "schema": "class-intake.public-source-interpretation.v1",
+  "retrievedAt": "2026-10-13T03:40:00Z",
+  "label": "Berea Fall 2026 factual catalogue transcription",
+  "provenance": "public-derived",
+  "sources": [
+    {
+      "url": "https://bereaarts.org/pdfs/FALL%202026.pdf?v2=",
+      "pages": 3,
+      "role": "catalogue"
+    },
+    {
+      "url": "https://bereaarts.org/pdfs/Art%20Classes%20Registration%20Form_7.28.24.pdf",
+      "pages": 1,
+      "role": "linked registration and policy form"
+    }
+  ],
+  "interpretation": {
+    "rows": 26,
+    "currency": "USD",
+    "timezone": "America/New_York inferred from published Berea Ohio location; offset normalization is an operator interpretation",
+    "capacity": "Six from the linked current registration form; the historical filename is retained.",
+    "deadlines": "Four Bob Ross rows explicitly retain 7|14 until a source owner resolves the conflict.",
+    "variants": "Bob Ross reduced and full prices remain one class with shared capacity.",
+    "attendance": "Flexible four-visit products retain no invented dates."
+  },
+  "limits": [
+    "No actual registrations, payment records or instructor confirmations acquired.",
+    "No customer instruction resolving the listed source conflicts received.",
+    "This factual table is derived from retrieved PDFs; it is not an unchanged original PDF."
+  ]
+}

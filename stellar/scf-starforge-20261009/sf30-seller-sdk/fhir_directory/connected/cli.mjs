@@ -24,6 +24,9 @@ const help=[
   'Conformance actions use the same call/value/download flow: directory_conformance_plan, assess, review, compare, findings, finding, rows and file.',
   'Declared relationships add directory_conformance_foreign_keys, foreign_key_candidates and foreign_key_matches with exact native pages.',
   'Use directory_conformance_file for complete foreignKeys, foreignKeyCandidates, foreignKeyMatches and foreignKeyCoverage files.',
+  'Three-way review uses directory_correction_worksheet_reconciliation_prepare/review/export plus catalogue/rows/file reads.',
+  'Bindings select every exact original/current row; decisions prepare a current-edition correction plan for separate preview/accept.',
+  'For complete actions near32MiB use declared host input_apply; complete comparison/decisions files remain available up to256MiB.',
   'Source corrections use directory_correction_prepare/preview/apply/export with exact original row hashes and separate candidate acceptance.',
   'directory_correction_rows follows all original changes; directory_correction_file retains input, changes or review with full bytes.',
   'Use native human-services-directory correction-* --input for complete correction inputs above the connected inline limit.',
@@ -72,9 +75,11 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,s
         client=await openHumanServicesDirectoryMerchantClient({url:required('url'),tokenEnv:flags['--token-env']??'MCP_ACCESS_TOKEN',environment,signal});
       }
       if(command==='call'){
-        const args=decode(await readSourceFile(resolve(required('args')),{maxBytes:4*1024*1024+65536})),timeout=flags['--timeout-ms'];
+        const action=required('action'),nativeAction=action.replace(/^merchant_human_services_directory_/,''),
+          maximum=nativeAction.startsWith('directory_correction_')?32*1024*1024+65536:4*1024*1024+65536,
+          args=decode(await readSourceFile(resolve(required('args')),{maxBytes:maximum})),timeout=flags['--timeout-ms'];
         need(timeout===undefined || /^[1-9]\d*$/.test(timeout) && Number(timeout)<=600000,'HUMAN_SERVICES_DIRECTORY_CLI_INPUT');
-        result=await client.call(required('action'),args,timeout?{timeoutMs:Number(timeout)}:undefined);
+        result=await client.call(action,args,timeout?{timeoutMs:Number(timeout)}:undefined);
       }else if(command==='value')result=await readHumanServicesDirectoryValue({...selected(),client,file:flags['--file']??'original-response.json',
         expectedManifestSha256:required('manifest-sha256')});
       else if(command==='inspect')result=await inspectHumanServicesDirectoryExport({...selected(),client});

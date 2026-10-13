@@ -294,6 +294,20 @@ so another operator can continue it after interruption. Start with
 `application-setup-export`, `application-setup-prepare`,
 `application-setup-status` and `application-setup-save`.
 
+## Complete Application output
+
+Applications and Launch Groups open the same original operation output with
+live tailing, fixed-end historical paging, byte navigation, in-page search and
+a complete original-byte download. A long commissioning run can be inspected
+and handed over without starting another operation. Browser selections stay
+with their actual Runtime workspace, Application and run.
+
+The [complete output guide](OUTPUT.md) covers original source identity,
+UTF-8 byte ranges, growing files, replacement recovery, authenticated streamed
+downloads and the native **application-output-page** / **application-output-export**
+commands. Existing terminal input and Application lifecycle controls continue
+to operate their original requests.
+
 ## Application API and retained records
 
 The workspace model and server can be embedded in another local operator tool:

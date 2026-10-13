@@ -17,6 +17,7 @@ The maintained product also includes the complete [Bank statement reconciliation
 | Merchant receivables | Issue the customer's invoice, receive or apply money, credit or refund, and continue collections. | Customer UUID, invoice and receipt records, dated allocations and original request IDs. |
 | Customer payment plans and Xero customer handovers | Agree collection dates and receive the accountant's original document outcomes. | Same accounting workspace, schedule editions and Xero package family. |
 | Bank statement reconciliation | Match actual bank movements, fees and existing customer money; retain a period close. | Original account and statement files, posting coverage and close editions. |
+| Bank accountant receiving | Inspect the retained close and source/customer lineage, compare corrections, retain findings and hand over the whole review. | Exact original close TARs, private review editions, original edit requests and complete receiving bundle. |
 | Customer statements | Explain prepaid service activity and issue or resume the customer's closing cycle. | Original merchant connection, capture sources, saved cycle and complete customer packet. |
 
 The accounting directory has one writer. Use the companion views of the running service together. To move that directory to another saved Application or a direct command, stop its current owner through the existing lifecycle and reopen the same directory. The customer-closing workbench uses the existing merchant MCP owner.
@@ -212,6 +213,112 @@ A later correction reopens the affected close and creates a reviewed successor. 
 
 **Ready to continue:** the reviewer can trace a bank row through exact posting coverage to customer money and a retained account-close edition.
 
+## 6a. Receive the complete close in the accountant's private review
+
+The accountant works from the exact retained Bank close and its original statements and customer documents. In **Close statement**, open the retained close and download **account.tar**. The existing Bank command exports the same file:
+
+~~~sh
+starforge bank-statements file --directory /private/merchant/accounting \
+  --kind close --id ORIGINAL_CLOSE_UUID --name account.tar \
+  --out /private/accountant/original-bank-close.tar
+~~~
+
+Select a runtime that includes the [complete accountant receiving application](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e7da0a7f1aff44d44398498063df2d2d9e97684b/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/ACCOUNTANT_RECEIVING.md). Its **bank-accountant-receiving** selection carries the whole browser, native command, types, guide and manual operating course through the existing builder and installer. A complete Bank runtime mounts the same application at **/bank-statements/accountant-receiving/**.
+
+### Inspect the original close and its financial sources
+
+Open **Bank reconciliation → Accountant receiving**, or run the separately installed reader:
+
+~~~sh
+starforge bank-accountant serve --port 8458
+~~~
+
+Choose **Receive original files** and select the complete Bank close TAR. The reader verifies the exact Bank file manifest, member lengths and digests, original account/period/currency and retained close basis. It also verifies the nested customer archives and original documents. Keep the original files with the review.
+
+Select the **Original close edition**. In **Transactions**, open **View lineage** on the actual movement being reviewed. Read its statement source and interpretation, exact bank amount, posting parts, matched receipt or refund, allocation history and original customer documents together. A gross customer receipt, net bank credit and separate fee retain their original amounts and units.
+
+In **Sources and files**, download the unchanged original statement or any retained document needed for the review. In **Customer accounts**, inspect the customer snapshot at the close's retained account date. A later customer account belongs to its own later source edition.
+
+### Retain the accountant's findings
+
+Choose **Add review note** on the original close, transaction, posting part, statement source or customer. Enter the actual reviewer, note, status and edition summary. **Open**, **Question**, **Examined** and **Resolved** describe this private accountant review. Each note remains bound to the original archive and record.
+
+Choose **Retain review edition**. The saved edition contains the complete note set, its reviewer, time, summary and digest. **Review edition** opens earlier retained sets. A live typed draft remains separate until retained; save it before exporting the handover. If another browser window advanced the same desk, choose **Reopen saved review**, inspect the current edition and continue the preserved draft.
+
+The browser's private store belongs to its current browser profile and address. Export the full review before changing computers, profiles or the server port. The native alternative keeps the same review in an explicit private directory:
+
+~~~sh
+starforge bank-accountant create \
+  --directory /private/accountant/close-review \
+  --name "Selected merchant close review" \
+  --archive /private/accountant/original-bank-close.tar
+
+starforge bank-accountant show --directory /private/accountant/close-review
+
+starforge bank-accountant note \
+  --directory /private/accountant/close-review \
+  --archive ORIGINAL_ARCHIVE_SHA256 --kind TRANSACTION \
+  --id ORIGINAL_TRANSACTION_UUID --status QUESTION \
+  --note-file /private/accountant/source-question.txt \
+  --actor "Accountant name" --summary "Review of selected original movement" \
+  --request ORIGINAL_EDIT_REQUEST_UUID
+~~~
+
+Use the actual archive digest, transaction identifier, reviewer and request UUID. Retain the same request and unchanged values when recovering an uncertain note write. The native command requires Node.js 22 or newer and the ordinary Linux `flock` utility.
+
+### Compare the Bank operator's correction
+
+Send the source-bound question to the responsible Bank operator with the whole review. The operator performs any financial correction in the original accounting workspace, retains the reviewed successor close and returns that close's original account TAR.
+
+Receive the successor through **Receive original files**, select it and open **Compare closes** against the earlier edition. Both selections must refer to the same original workspace, bank account, source identity and currency. Read the actual period labels, balance changes, changed transactions/postings, receipts/refunds, allocations and source imports. Expand the changed original records and download the complete comparison JSON where needed.
+
+For the native private review:
+
+~~~sh
+starforge bank-accountant add \
+  --directory /private/accountant/close-review \
+  --archive /private/accountant/corrected-bank-close.tar
+
+starforge bank-accountant compare \
+  --before /private/accountant/original-bank-close.tar \
+  --after /private/accountant/corrected-bank-close.tar \
+  --out /private/accountant/original-to-corrected.json
+~~~
+
+Record the accountant's actual outcome in the next retained review edition. The original financial correction and the accountant's findings each keep their own complete history.
+
+### Deliver and independently reopen the complete review
+
+In the browser, retain the current draft and choose **Download complete review**. This TAR contains the full review and every retained note edition, all exact original Bank close TARs and its complete manifest. The nested Bank sources include the original statements and customer documents.
+
+The native command produces the same portable review and an optional self-contained handover:
+
+~~~sh
+starforge bank-accountant export \
+  --directory /private/accountant/close-review \
+  --out /private/accountant/complete-close-review.tar
+
+starforge bank-accountant prepare \
+  --directory /private/accountant/close-review \
+  --out /private/accountant/complete-close-handover
+~~~
+
+The handover contains **reader.html**, **review.tar**, full source, operating instructions and a file manifest. The recipient opens reader.html and receives the adjacent review.tar, or uses the included local serve command when their browser restricts file-origin storage. An independent native receiver uses:
+
+~~~sh
+starforge bank-accountant receive \
+  --bundle /private/received/complete-close-review.tar \
+  --directory /private/received/close-review
+
+starforge bank-accountant show --directory /private/received/close-review
+~~~
+
+The recipient opens the original close, selected note edition, source statement and customer document, then continues the agreed review action. Compatible later reviews advance the same private history. A divergent browser return uses **Receive parallel review**, preserving both full branches; a divergent native return receives into its own private directory.
+
+Each original close may be at most 128 MB, with up to 24 close archives inside the review's 384 MB complete-export limit. The reader checks the complete projected TAR size before saving an added archive or note edition. Keep the whole exported file for delivery.
+
+**Ready to continue:** the receiving accountant can reopen the original close and financial lineage, compare its actual corrected successor, retain their findings and return a complete independently readable review. The original merchant accounting owner remains responsible for the financial records.
+
 ## 7. Schedule and follow up the remaining balance
 
 In **Payment plans**, select the issued invoice and actual balance date. Enter the agreed dates and exact installment amounts, or use **Generate installments** and edit its proposed dates.
@@ -404,6 +511,7 @@ The existing development baseline remains **18 team-operated purchases / 411,000
 | --- | --- |
 | [Public financial release](https://github.com/woahwhattheheck/public-commons-sprint-2026/commit/8aed042e255201c352564753caa3af69b46e82db) | The merged 139-path integration with 46 receivables MCP actions and complete browser, HTTP, CLI and installed financial joins. |
 | [Maintained bank product](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/commit/e57a359966f093f483a1aa5f4c2dac28566b6a5c) | Original bank statements, exact gross/net/fee coverage, remittances, correction, account closes and complete customer/accountant handover. |
+| [Complete Bank accountant reader](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e7da0a7f1aff44d44398498063df2d2d9e97684b/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/ACCOUNTANT_RECEIVING.md) | Merged PR1149 complete archive and financial-lineage reader, corrected-close comparison, private review editions, native CLI, full offline handover and independent receiving. Its original-close operating course uses the existing account TARs. |
 | [Completed customer billing handover](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/eaa169825c48c5ec3cef260672dc8fa52deb5e12/stellar/scf_2026/commercial_milestone_handover_20261012/PORTABLE.md) | Complete portable 243-file application and the original account with two planning cases; paid/open invoice states, independent receiving and later repacking through the source-owned opener. |
 | [Current financial source capsule](https://api.github.com/repos/woahwhattheheck/public-commons-sprint-2026/git/blobs/18a23dfbf4031713d0e68918fe6687ff82d638fc) | 275 source files / 5,105,857 JSON bytes, including the merged financial overlay and unchanged original receiving programmes. Source SHA-256: f8ae4e2075a123dc220d7fe5d8f0b40c536c85165deab5ba58cc48daf9a18cfb. |
 | Original PAYMENT_CHECK.mjs | Git blob 9020c4e40784b676fbc57d0fc1c7c58580be6474, 15,841 bytes; original invoice-wallet programme. |

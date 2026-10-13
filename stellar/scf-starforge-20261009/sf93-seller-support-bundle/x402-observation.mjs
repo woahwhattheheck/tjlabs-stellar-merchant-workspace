@@ -166,6 +166,12 @@ export function readX402ObservationFiles(files) {
   const summary=analyzeX402Observation(meta,source);need(isDeepStrictEqual(summary,meta.summary),'SF93_X402_SUMMARY_CHANGED');
   return {meta,source,summary};
 }
+// Stable JSON preserves every immutable descriptor field across a later capture.
+function immutablePrefixHash(value) {
+  const canonical=v=>Array.isArray(v)?v.map(canonical):plain(v)?
+    Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;
+  return sha(JSON.stringify(canonical(value)));
+}
 export function x402ObservationSignals(merchant,observation,now,previous=null) {
   const packet=observation.packet,meta=packet?.x402;
   if(!meta)return {error:observation.error??'X402_SOURCE_UNAVAILABLE',signals:{X402_SOURCE_UNAVAILABLE:{bad:true,values:{}}}};
@@ -175,15 +181,30 @@ export function x402ObservationSignals(merchant,observation,now,previous=null) {
     (s.sourceCapturedAt===null||now-Date.parse(s.sourceCapturedAt)<=30000);
   const boundary=previous?.historyBoundary;
   const original=packet.files?.['x402-source.json'];
-  const history=boundary&&original?JSON.parse(original.toString('utf8'))?.history:null;
-  const continuity=!boundary||Array.isArray(history)&&history.some(row=>row.sequence===boundary.sequence&&row.sourceSha256===boundary.sourceSha256);
+  const source=original?JSON.parse(original.toString('utf8')):null;
+  const history=source?.history;
+  // Older checkpoints retain one history row. Keep that original boundary and
+  // add complete immutable-prefix witnesses only to the watcher checkpoint:
+  // existing capture bytes/summaries and their v1 ABI remain unchanged.
+  const legacyContinuity=!boundary||Array.isArray(history)&&history.some(row=>row.sequence===boundary.sequence&&row.sourceSha256===boundary.sourceSha256);
+  const prefixes=previous?.immutablePrefixes;
+  const prefixContinuity=prefixes===undefined||plain(prefixes)&&
+    ['history','exchanges'].every(group=>{
+      const pin=prefixes[group],rows=source?.[group];
+      return plain(pin)&&count(pin.rows)&&HASH.test(pin.sha256??'')&&
+        Array.isArray(rows)&&rows.length>=pin.rows&&
+        immutablePrefixHash(rows.slice(0,pin.rows))===pin.sha256;
+    });
+  const continuity=legacyContinuity&&prefixContinuity&&['history','exchanges'].every(group=>Array.isArray(source?.[group]));
   const complete=fresh&&continuity&&s.coverage==='COMPLETE',rows=s.orders;
   const aged=(key,ageKey,threshold)=>{const chosen=rows.filter(r=>r[key]),positive=chosen.some(r=>r[ageKey]!==null&&r[ageKey]>=threshold);
     return {bad:!complete?null:positive?true:chosen.some(r=>r[ageKey]===null)?null:false,
       values:{requests:chosen.length,oldestPendingSeconds:chosen.reduce((n,r)=>Math.max(n,r[ageKey]??0),0),thresholdSeconds:threshold}};};
   const condition=key=>({bad:complete?rows.some(r=>r[key]):null,values:{requests:rows.filter(r=>r[key]).length},openAfter:1});
   return {packet,fresh,successful:complete,error:complete?null:!fresh?'X402_SOURCE_CLOCK_OR_AGE_INVALID':!continuity?'X402_ORIGINAL_HISTORY_CHANGED':meta.errorCode??s.coverage,
-    previous:{sessionId:meta.selection.storeId,startedAt:s.storeCreatedAt,capturedAt:meta.generatedAt,historyBoundary:s.historyBoundary??null},
+    previous:{sessionId:meta.selection.storeId,startedAt:s.storeCreatedAt,capturedAt:meta.generatedAt,historyBoundary:s.historyBoundary??null,
+      ...(complete?{immutablePrefixes:Object.fromEntries(['history','exchanges'].map(group=>[group,
+        {rows:source[group].length,sha256:immutablePrefixHash(source[group])}]))}:{})},
     window:{from:meta.startedAt,through:meta.generatedAt,complete,sessionStartedAt:s.storeCreatedAt},
     signals:{X402_SOURCE_UNAVAILABLE:{bad:s.identityMatches===false?null:!complete,values:{}},
       X402_IDENTITY_CHANGED:{bad:s.identityMatches===false?true:complete?false:null,values:{},openAfter:1},

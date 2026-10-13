@@ -769,6 +769,13 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
       installationView=mountInstallations({container:$('[data-ops-installations]'),current:c,api,saveApi:transport,
         session:retainedInstallationSessions.get(c.program.id),mutationId,recordingActor,
       onSources:()=>{view.tab='sources';render();},
+        onForecastInputs:async(inputs,selection)=>{
+          if(!available()||view.current?.program.id!==c.program.id)return;
+          const retainedDraft=forecastView?.draftInputs()||view.forecastDraft;
+          if(retainedDraft)download(JSON.stringify(retainedDraft,null,2)+'\n',c.program.id+'-forecast-inputs-before-effort-continuation.json');
+          view.forecastDraft=structuredClone(inputs);view.forecastId=null;view.tab='forecast';render();
+          inform('Opened the complete forecast with reviewed remaining hours from '+selection.installationSelections.length+' customer installations.');
+        },
         onCase:async(next,result)=>{
           if(!available()||view.current?.program.id!==next.program.id)return;
           view.current=next;view.events=[];view.nextAfter=null;

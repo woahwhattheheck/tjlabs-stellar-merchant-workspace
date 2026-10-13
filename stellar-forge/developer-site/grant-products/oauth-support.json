@@ -162,6 +162,102 @@
           "git_blob": "35de48d8ee91d09c7486b419333f57e22b49d5b2"
         }
       ]
+    },
+    {
+      "id": "oauth-support-operating-workflow",
+      "label": "Support case to editable customer operating plan and returned work",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/OAUTH_SUPPORT_OPERATING_PLANS.md",
+      "commit": "4927939b0776218d13e911d0472ca320af459f28",
+      "editions": [
+        {
+          "commit": "4927939b0776218d13e911d0472ca320af459f28",
+          "bytes": 13211,
+          "sha256": "eee66cd6a4881af8a8f91320ae53b5ce5d5f3b5cb17a820166f720f336ac8273",
+          "git_blob": "66500e299117081d5756ca30f812e2f70b6973a3"
+        }
+      ]
+    },
+    {
+      "id": "oauth-support-operating-model",
+      "label": "Original plan construction, source inspection and append-only result recording",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/support-operating-plan.mjs",
+      "commit": "4927939b0776218d13e911d0472ca320af459f28",
+      "editions": [
+        {
+          "commit": "4927939b0776218d13e911d0472ca320af459f28",
+          "bytes": 19006,
+          "sha256": "4be18752721d1e038637b6c5e08aee9dca457d05f7b5816216132655e2495e0c",
+          "git_blob": "35d33ebb817fe5e15195271527533dbabbe39752"
+        }
+      ]
+    },
+    {
+      "id": "oauth-support-operating-source",
+      "label": "Full original case lineage and immutable companion capture and receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/oauth-operating-source.mjs",
+      "commit": "4927939b0776218d13e911d0472ca320af459f28",
+      "editions": [
+        {
+          "commit": "4927939b0776218d13e911d0472ca320af459f28",
+          "bytes": 29421,
+          "sha256": "59a7c2520a6ceb61d52b4851868557e859fa80b9f5b6a1279c95a2c3b81a7ee8",
+          "git_blob": "8a444af72ada0e0eab2dca4c2ce4f6b8c325c8f9"
+        }
+      ]
+    },
+    {
+      "id": "oauth-support-operating-cli",
+      "label": "Installed source capture, plan creation, recording and complete-history receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/support-operating-cli.mjs",
+      "commit": "4927939b0776218d13e911d0472ca320af459f28",
+      "editions": [
+        {
+          "commit": "4927939b0776218d13e911d0472ca320af459f28",
+          "bytes": 8734,
+          "sha256": "3d93fb162b013774a326b9af591cf08260a84ac59c6e71eaf6b8041259d51c80",
+          "git_blob": "c56b7d23e284eb6b34e1b31796cb700d621c4610"
+        }
+      ]
+    },
+    {
+      "id": "oauth-support-operating-browser",
+      "label": "Existing Operating Plans browser: selected Support sources and returned evidence",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/public/support-operating-plan.mjs",
+      "commit": "4927939b0776218d13e911d0472ca320af459f28",
+      "editions": [
+        {
+          "commit": "4927939b0776218d13e911d0472ca320af459f28",
+          "bytes": 25177,
+          "sha256": "0259f91d7aae9def3763fa5b892e4710705941967440c5d83611928258fb587f",
+          "git_blob": "2c9f96b70b1b11c66d6ad19e8d8751b04b25089b"
+        }
+      ]
+    },
+    {
+      "id": "oauth-support-operating-receiving",
+      "label": "Original case snapshot selection, verification and exact receiving receipt",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/OAUTH_OPERATING_RECEIVING.md",
+      "commit": "4927939b0776218d13e911d0472ca320af459f28",
+      "editions": [
+        {
+          "commit": "4927939b0776218d13e911d0472ca320af459f28",
+          "bytes": 12444,
+          "sha256": "a11e8870f5a05817f62c88a527e03e2694a6e360deef9cd6b897ae8c33e592e9",
+          "git_blob": "3d088a82c9060aa9ebc3c9cd7bced28070e0e594"
+        }
+      ]
     }
   ]
 }

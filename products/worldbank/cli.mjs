@@ -18,6 +18,9 @@ const help = [
   '  starforge worldbank-product status --directory DIR',
   '  starforge worldbank-product action ACTION --directory DIR [--input FILE]',
   '  starforge worldbank-product analysis [--python PYTHON] prepare --handover ZIP --workspace DIR',
+  '  starforge worldbank-product analysis [--python PYTHON] recurring-review --handover ZIP --workspace DIR --operation-id ID --view NAME --report NAME --workbook NAME',
+  '  starforge worldbank-product analysis [--python PYTHON] recurring-refresh --workspace DIR --operation-id ID --review-sha256 SHA --note TEXT',
+  '  starforge worldbank-product analysis [--python PYTHON] recurring-receive --baseline-handover ZIP --candidate-handover ZIP --workspace DIR --operation-id ID --resume',
   '  starforge worldbank-product analysis [--python PYTHON] serve --workspace DIR [--port 0]',
   '  starforge worldbank-product analysis [--python PYTHON] receive --archive ZIP --sha256 SHA --workspace DIR --operation-id ID',
   '  starforge worldbank-product receive --runtime READY_DIR --workspace PRIVATE_DIR [--python PYTHON] [--python-dependencies DIR]',
@@ -83,8 +86,12 @@ export async function main(argv = process.argv.slice(2)) {
   if (command === 'analysis') {
     let python = process.env.PYTHON || 'python3';
     if (args[0] === '--python') { args.shift(); python = args.shift(); if (!python || python.startsWith('--')) throw fail('--python requires an executable.'); }
-    if (args[0] === 'prepare' && !args.includes('--worldbank-core')) args.push('--worldbank-core', worldbankCore);
-    return child(python, ['-B', '-m', 'stellar_forge_buyer.worldbank_analysis', ...args], {
+    const recurring = ['recurring-review', 'recurring-refresh', 'recurring-status', 'recurring-receive'].includes(args[0]);
+    if (recurring) args[0] = args[0].slice('recurring-'.length);
+    if ((args[0] === 'prepare' || recurring && ['review', 'receive'].includes(args[0])) && !args.includes('--worldbank-core')) args.push('--worldbank-core', worldbankCore);
+    const module = recurring ? (args[0] === 'receive' ? 'stellar_forge_buyer.worldbank_recurring_receive' : 'stellar_forge_buyer.worldbank_recurring') : 'stellar_forge_buyer.worldbank_analysis';
+    if (recurring && args[0] === 'receive') args.shift();
+    return child(python, ['-B', '-m', module, ...args], {
       env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', PYTHONPATH: [pythonPackage, process.env.PYTHONPATH].filter(Boolean).join(process.platform === 'win32' ? ';' : ':') }
     });
   }

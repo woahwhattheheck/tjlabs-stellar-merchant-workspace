@@ -134,8 +134,8 @@ export class CanadaBuysClient {
   compare(before, after, options) {
     return this.request('/api/compare?' + new URLSearchParams({ before, after }), options);
   }
-  importCsv(rawText, { stream, label, url, retrievedAt, expectedRevision, expectedSha256, ...options } = {}) {
-    return this.request('/api/import', { ...options, method: 'POST', body: { rawText, stream, label, url, retrievedAt, expectedRevision, expectedSha256 } });
+  importCsv(rawText, { stream, label, url, retrievedAt, expectedRevision, expectedSha256, response, coverage, bodyKind, derivation, derivationSha256, ...options } = {}) {
+    return this.request('/api/import', { ...options, method: 'POST', body: { rawText, stream, label, url, retrievedAt, expectedRevision, expectedSha256, response, coverage, bodyKind, derivation, derivationSha256 } });
   }
   createWorkshare(workshare, expectedRevision, options = {}) {
     return this.request('/api/workshares', { ...options, method: 'POST', body: { ...workshare, expectedRevision } });

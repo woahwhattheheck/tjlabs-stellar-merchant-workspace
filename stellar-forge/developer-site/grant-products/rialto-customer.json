@@ -122,6 +122,141 @@
           "sha256": "f423f3070da27d52194c97de68d6f8a12a3cae8439b539a60c08d61d5c419455"
         }
       ]
+    },
+    {
+      "id": "rialto-catalogue-review-runtime",
+      "label": "Complete original catalogue comparison, saved history and request draft receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rialto/comparison.mjs",
+      "commit": "a1ec07c422132af070399ba368587a167ad3ed23",
+      "editions": [
+        {
+          "commit": "a1ec07c422132af070399ba368587a167ad3ed23",
+          "bytes": 27667,
+          "sha256": "644bc7d725406b6d2ba4497fad31976efc8b8cd3c2f8e17b1dec785d63bceecd"
+        }
+      ]
+    },
+    {
+      "id": "rialto-catalogue-review-report",
+      "label": "Offline catalogue review and original customer request editor",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rialto/report.mjs",
+      "commit": "a1ec07c422132af070399ba368587a167ad3ed23",
+      "editions": [
+        {
+          "commit": "a1ec07c422132af070399ba368587a167ad3ed23",
+          "bytes": 18227,
+          "sha256": "58a0b02259c33dc61c58628385089834fa82663cfb0f282e2697e2b06c8ec369"
+        }
+      ]
+    },
+    {
+      "id": "rialto-catalogue-review-guide",
+      "label": "Customer catalogue comparison and independent handover guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rialto/CATALOGUE_COMPARISON.md",
+      "commit": "a1ec07c422132af070399ba368587a167ad3ed23",
+      "editions": [
+        {
+          "commit": "a1ec07c422132af070399ba368587a167ad3ed23",
+          "bytes": 8794,
+          "sha256": "710952acb26214952c7e085e0004d1799d3f7a1a08ca6c58d1632b9973c28906"
+        }
+      ]
+    },
+    {
+      "id": "rialto-catalogue-review-operating",
+      "label": "Complete maintained Rialto customer operations and comparison receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rialto/OPERATING.md",
+      "commit": "a1ec07c422132af070399ba368587a167ad3ed23",
+      "editions": [
+        {
+          "commit": "a1ec07c422132af070399ba368587a167ad3ed23",
+          "bytes": 13220,
+          "sha256": "ed9a6d478ea538304e232e2f2eddaaabcbf67c582aa626055de8d24cc2e16c80"
+        }
+      ]
+    },
+    {
+      "id": "rialto-catalogue-review-installed",
+      "label": "Installed Rialto customer, comparison and native Installation journeys",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/rialto/README.md",
+      "commit": "a1ec07c422132af070399ba368587a167ad3ed23",
+      "editions": [
+        {
+          "commit": "a1ec07c422132af070399ba368587a167ad3ed23",
+          "bytes": 10833,
+          "sha256": "a496bff51bce982821e5408ee5b3b4a5dad22b2c20fcedbac2bac19f7b9b8415"
+        }
+      ]
+    },
+    {
+      "id": "rialto-review-request-retention",
+      "label": "Complete source decision bound to original request and private receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rialto/review-request.mjs",
+      "commit": "32383f4efb956ad95341629278546c0c201ec0f7",
+      "editions": [
+        {
+          "commit": "32383f4efb956ad95341629278546c0c201ec0f7",
+          "bytes": 7450,
+          "sha256": "b25cbc00e31506004fbabcdb579feca8972422c3f4b2d0ed32876abaede41b3f"
+        }
+      ]
+    },
+    {
+      "id": "rialto-reviewed-customer-operation",
+      "label": "Original Rialto customer command with complete catalogue review receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rialto/customer.mjs",
+      "commit": "32383f4efb956ad95341629278546c0c201ec0f7",
+      "editions": [
+        {
+          "commit": "32383f4efb956ad95341629278546c0c201ec0f7",
+          "bytes": 19868,
+          "sha256": "554665d5123534cb67855152b253de8d84e8366abaaec89fdd2029a9e14e5b22"
+        }
+      ]
+    },
+    {
+      "id": "rialto-reviewed-installation-handover",
+      "label": "Original Installation source decision and independent customer handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rialto/installation.mjs",
+      "commit": "32383f4efb956ad95341629278546c0c201ec0f7",
+      "editions": [
+        {
+          "commit": "32383f4efb956ad95341629278546c0c201ec0f7",
+          "bytes": 12927,
+          "sha256": "bac6ae7d1f35222c65445ab05f46d7101a6e58423c3232d01313c228a6a867dd"
+        }
+      ]
+    },
+    {
+      "id": "rialto-reviewed-customer-workflow",
+      "label": "Complete catalogue decision through request and Installation operating guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rialto/CATALOGUE_COMPARISON.md",
+      "commit": "32383f4efb956ad95341629278546c0c201ec0f7",
+      "editions": [
+        {
+          "commit": "32383f4efb956ad95341629278546c0c201ec0f7",
+          "bytes": 11822,
+          "sha256": "8c06dc4750247b3f8b0eebe93169b85ff941184daf0129793eea12ac2bdbc463"
+        }
+      ]
     }
   ]
 }

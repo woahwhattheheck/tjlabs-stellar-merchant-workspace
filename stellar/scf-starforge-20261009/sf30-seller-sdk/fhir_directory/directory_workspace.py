@@ -18,6 +18,8 @@ from directory_conformance import DirectoryConformance
 from directory_operating_plans import DirectoryOperatingPlans
 from directory_operating_returns import DirectoryOperatingReturns
 from directory_corrections import DirectoryCorrections
+from directory_correction_worksheets import DirectoryCorrectionWorksheets
+from directory_correction_worksheet_reconciliation import DirectoryWorksheetReconciliation
 
 def digest(kind,record):
     return source.sha(source.jbytes({"kind":kind,"value":{k:v for k,v in record.items()if k not in {"id","createdAt"}}}))
@@ -31,7 +33,7 @@ def clean_record(kind,record):
         raise InputError("The native acquisition must retain its original operation identity")
     return record
 
-class Workspace(DirectoryCorrections,DirectoryOperatingReturns,DirectoryOperatingPlans,DirectoryConformance,DirectoryReceiving,DirectoryReferral,DirectorySelection,DirectoryMapping,DirectorySources,BaseWorkspace):
+class Workspace(DirectoryWorksheetReconciliation,DirectoryCorrectionWorksheets,DirectoryCorrections,DirectoryOperatingReturns,DirectoryOperatingPlans,DirectoryConformance,DirectoryReceiving,DirectoryReferral,DirectorySelection,DirectoryMapping,DirectorySources,BaseWorkspace):
     def __init__(self,root,create=False,credentials_file=None):
         super().__init__(root,create=create,credentials_file=credentials_file)
         try:
@@ -191,6 +193,12 @@ class Workspace(DirectoryCorrections,DirectoryOperatingReturns,DirectoryOperatin
             "receivingReviews":["label","handoffId","archiveSha256","disposition","owner","actor"],
             "receives":["state","archiveSha256","workspaceId","kind","handoffId","updatedAt","error"],
             "importProfiles":["profile"],
+            "correctionWorksheets":["schema","workspaceId","label","editionId","actor","note","predecessorId","summary","files"],
+            "correctionWorksheetImports":["schema","workspaceId","worksheetId","actor","filename","expectedSha256","expectedBytes","note","files"],
+            "correctionWorksheetReturns":["schema","workspaceId","importId","worksheetId","editionId","actor","returnedBy","returnedAt","note","summary","files"],
+            "correctionWorksheetReviews":["schema","workspaceId","label","actor","note","returnId","worksheetId","editionId","planId","outcome","summary","files"],
+            "correctionWorksheetReconciliations":["schema","workspaceId","label","actor","note","returnId","worksheetId","baseEditionId","currentEditionId","predecessorId","summary","files"],
+            "correctionWorksheetReconciliationReviews":["schema","workspaceId","label","actor","note","reconciliationId","returnId","worksheetId","baseEditionId","currentEditionId","predecessorId","planId","outcome","summary","files"],
             "correctionPlans":["schema","label","editionId","predecessorId","actor","note","summary","files"],
             "correctionPreviews":["schema","planId","editionId","candidateEditionId","comparisonId","sources","summary","files"],
             "corrections":["schema","stage","planId","previewId","editionId","beforeEditionId","expectedEditionId","comparisonId","sources","actor","summary","files"],

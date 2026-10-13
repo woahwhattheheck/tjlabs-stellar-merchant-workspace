@@ -16,7 +16,7 @@ export interface OperatingReturnDecision {
 }
 export interface OperatingPlanReturn {
   schema: typeof OPERATING_RETURN_SCHEMA; id: string; createdAt: string;
-  /** New reviews compare complete result files with progress; absence retains original historical comparison. */
+  /** New reviews group complete result files with progress. Unversioned reviews retain compatible maintained comparisons or their validated original historical interpretation. */
   reportingVersion?: 2;
   current: OperatingPlan; incoming: OperatingPlan; reviewer: string; notes: string;
   decisions: OperatingReturnDecision[];

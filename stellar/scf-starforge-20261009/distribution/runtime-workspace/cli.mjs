@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { createRuntimeWorkspace, openRuntimeWorkspace } from './model.mjs';
 import { startRuntimeWorkspace } from './server.mjs';
 import { workspaceBackupCommands, workspaceBackupHelp, runWorkspaceBackupCommand } from './workspace-backup-cli.mjs';
+import { writeApplicationOutputDownload } from './application-output.mjs';
 import { readJSON } from './storage.mjs';
 import { fail, json, saveJSON } from './storage.mjs';
 import { inspectApplicationSetup, exportApplicationSetup, prepareApplicationSetup,
@@ -73,6 +74,8 @@ const HELP = `Starforge customer runtime workspace
   runtime-workspace application-stop --workspace DIRECTORY --application-id ID --operation-id UUID
   runtime-workspace application-recover --workspace DIRECTORY --application-id ID --operation-id UUID
   runtime-workspace application-output --workspace DIRECTORY --application-id ID --operation-id UUID
+  runtime-workspace application-output-page --workspace DIRECTORY --application-id ID --operation-id UUID [--selection TOKEN] [--offset BYTES] [--limit BYTES]
+  runtime-workspace application-output-export --workspace DIRECTORY --application-id ID --operation-id UUID [--selection TOKEN] --output NEW_FILE
   runtime-workspace application-groups --workspace DIRECTORY [--group-id ID] [--run-id UUID] [--limit 20] [--cursor UUID]
   runtime-workspace application-group-save --workspace DIRECTORY --request PRIVATE_JSON
   runtime-workspace application-group-review --workspace DIRECTORY --group-id ID [--run-id UUID]
@@ -131,6 +134,8 @@ const allowed = {
   'application-stop': ['--workspace', '--application-id', '--operation-id'],
   'application-recover': ['--workspace', '--application-id', '--operation-id'],
   'application-output': ['--workspace', '--application-id', '--operation-id'],
+  'application-output-page': ['--workspace', '--application-id', '--operation-id', '--selection', '--offset', '--limit'],
+  'application-output-export': ['--workspace', '--application-id', '--operation-id', '--selection', '--output'],
   'python-status': ['--workspace', '--runtime-id'],
   'python-review': ['--workspace', '--runtime-id', '--python', '--extras'],
   'python-operation': ['--workspace', '--request'], 'python-continue': ['--workspace', '--operation-id'],
@@ -308,6 +313,21 @@ export async function main(argv = process.argv.slice(2)) {
     result = await model[method](await readJSON(resolve(options['--request'])));
   }
   else if (command === 'applications') result = await model.applicationsState({ historyLimit: options['--history-limit'] === undefined ? 1 : Number(options['--history-limit']) });
+  else if (['application-output-page', 'application-output-export'].includes(command)) {
+    if (!options['--application-id'] || !options['--operation-id']) fail('APPLICATION_OUTPUT_OPERATION_REQUIRED');
+    const input = { applicationId: options['--application-id'], operationId: options['--operation-id'],
+      ...(options['--selection'] ? { selection: options['--selection'] } : {}) };
+    for (const name of ['offset', 'limit']) if (options['--' + name] !== undefined) {
+      if (!/^(?:0|[1-9][0-9]*)$/.test(options['--' + name]) ||
+          !Number.isSafeInteger(Number(options['--' + name]))) fail('APPLICATION_OUTPUT_PAGE_INVALID');
+      input[name] = Number(options['--' + name]);
+    }
+    if (command === 'application-output-page') result = await model.applicationsOutputPage(input);
+    else {
+      if (!options['--output']) fail('APPLICATION_OUTPUT_DESTINATION_REQUIRED');
+      result = await writeApplicationOutputDownload(await model.applicationsOutputDownload(input), resolve(options['--output']));
+    }
+  }
   else if (command === 'application-history') {
     if (!options['--application-id']) fail('APPLICATION_ID_REQUIRED');
     result = await model.applicationsHistory({ applicationId: options['--application-id'],

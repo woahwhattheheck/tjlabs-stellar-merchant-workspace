@@ -20,9 +20,20 @@ export interface SourceObservation {
  id:string; sourceId:string; stream:Stream; sha256:string; bytes:number; rowCount:number;
  retrievedAt:string; observedAt:string; label:string; url:string; response:Record<string,unknown>|null;
 }
+export interface SourceFragment { startByte:number;endByte:number;sha256:string }
+export interface DerivedSourceField {
+ column:string;value:string;status:'observed'|'normalized'|'unknown';fragments:SourceFragment[];note:string;
+}
+export interface NoticeDerivation {
+ schema:'starforge.canadabuys.notice-derivation.v1';method:'manual-field-map';createdAt:string;
+ author:string;jurisdiction:string;note:string;
+ original:{url:string;retrievedAt:string;mediaType:'text/html';encoding:'base64';bytes:number;sha256:string;bodyBase64:string;response:Record<string,unknown>|null};
+ fields:DerivedSourceField[];
+}
 export interface SourceMetadata {
  id:string; stream:Stream; sha256:string; bytes:number; columns:string[]; rowCount:number; label:string; url:string;
- retrievedAt:string; coverage:'federal'; bodyKind:'original-utf8-csv'; response:Record<string,unknown>|null;
+ retrievedAt:string; coverage:'federal'|'single-notice'; bodyKind:'original-utf8-csv'|'derived-notice-utf8-csv'; response:Record<string,unknown>|null;
+ derivationSha256?:string;derivation?:NoticeDerivation;
 }
 export interface OriginalSource extends SourceMetadata { rawText:string; entryIds:string[]; observations:SourceObservation[] }
 export interface SourceEdition {

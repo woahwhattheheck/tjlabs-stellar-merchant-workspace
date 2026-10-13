@@ -558,6 +558,12 @@ class WorldBankAnalysis:
         workbook = self.job(workspace, "WORKBOOK", "workbook", {
             "name": workbook_name, "revision": workbook_definition["revision"],
             "definition_sha256": workbook_definition["definition_sha256"]}, resume=resume)
+        return self._deliver(workspace, source, review, len(rows), version, publication,
+                             publication_sha, workbook, resume=resume)
+
+    def _deliver(self, workspace, source, review, row_count, version, publication,
+                 publication_sha, workbook, *, resume=False, extra_files=()):
+        """Use the original complete delivery route for first and recurring editions."""
         destination = private_directory(self.directory / "delivery", create=True)
 
         def download(manager, job_id, source_name, output_name):
@@ -573,6 +579,7 @@ class WorldBankAnalysis:
             download(workspace.workbooks, workbook["id"], "workbook.xlsx", "WorldBank_Analysis.xlsx"),
             download(workspace.workbooks, workbook["id"], "handoff.zip", "WorldBank_Workbook_Handover.zip"),
         ]
+        files.extend(extra_files)
         for format, filename in (("html", "WorldBank_Report.html"), ("json", "WorldBank_Report.json"),
                                  ("csv", "WorldBank_Report_Tables.zip")):
             report_export = self.job(workspace, "REPORT_" + format.upper(), "report-export", {
@@ -611,7 +618,7 @@ class WorldBankAnalysis:
         result["files"] = [*files, describe(bundle)]
         self.record["result"] = result
         self.save()
-        self.emit("COMPLETE", rows=len(rows), files=len(result["files"]))
+        self.emit("COMPLETE", rows=row_count, files=len(result["files"]))
         return result
 
     def guide(self, source, review, publication, archived):
@@ -658,7 +665,10 @@ are included in Analysis_Delivery.json.
 
 Use the same receiving operation and archive hash to continue an interrupted
 workspace delivery. A completed receive preserves subsequent customer edits.
-Additional World Bank editions use their own prepare operation and view name.
+For another approved edition of the same customer monitoring workbook, use the
+recurring-review / recurring-refresh workflow with the same saved view, report
+and workbook names. Use a separate prepare operation and view for an independent
+analysis.
 
 ## Retained source edition
 

@@ -146,6 +146,8 @@ Browser copies and new pending requests bind to the native receiving workspaceâ€
 
 Complete procedure, plan, Markdown and HTML exports remain the native customer handover. Attached step files remain in drafts and returned plans. The step editor and each return alternative provide direct original-file downloads, including the proposed files, while the complete editor retains their original bytes and metadata.
 
+New return reviews retain reportingVersion: 2 and compare complete files together with recorded progress. Unversioned unfinished reviews reopen using the maintained separate-file comparisons wherever those comparisons preserve all original explicit decisions. Completed unversioned reviews must reproduce their exact saved complete result. If the maintained comparison cannot preserve an older decision or completed result, the receiver validates the complete review against the original historical interpretation instead; it retains the original body, sources and decisions without rewriting them. Both separate file choices and grouped progress choices expose downloads of their complete validated file bytes.
+
 ## Source composition
 
 The panel is `workspace/operating-browser.mjs`, mounted from the existing `workspace/browser.mjs`. The existing `index.html` gains the Operating Plans tab, editor and separate recovery area; `style.css` adds only the panel's layout rules.

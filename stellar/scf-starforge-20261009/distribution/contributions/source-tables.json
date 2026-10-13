@@ -19,7 +19,9 @@
     "stellar-forge/developer-site/dist/source-document-tables.d.mts",
     "stellar-forge/developer-site/examples/document-tables/wago221-document-source.json",
     "stellar-forge/developer-site/examples/document-tables/wago221-table-selections.json",
-    "stellar-forge/developer-site/examples/document-tables/receive-wago221.mjs"
+    "stellar-forge/developer-site/examples/document-tables/receive-wago221.mjs",
+    "stellar-forge/developer-site/dist/source-table-intake.mjs",
+    "stellar-forge/developer-site/dist/source-table-intake.d.mts"
   ],
   "commands": {
     "source-tables": "stellar-forge/developer-site/dist/source-table-cli.mjs"
@@ -35,6 +37,10 @@
     "./source-document-tables": {
       "types": "./source/stellar-forge/developer-site/dist/source-document-tables.d.mts",
       "default": "./source/stellar-forge/developer-site/dist/source-document-tables.mjs"
+    },
+    "./source-table-intake": {
+      "types": "./source/stellar-forge/developer-site/dist/source-table-intake.d.mts",
+      "default": "./source/stellar-forge/developer-site/dist/source-table-intake.mjs"
     }
   },
   "browserAssets": [

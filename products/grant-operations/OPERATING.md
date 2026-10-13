@@ -425,6 +425,22 @@ The selected product includes both matching managed-launch readers and the compl
 
 
 
+### Review phase effort and support
+
+Open the current saved customer Installation and select **Read current work and phases** for an explicit as-of date. The original Workshare supplies the complete phase list, owners, dependencies and quoted effort. The review brings those phases together with the case's actual Work records and the allocations already retained in other saved Installations.
+
+Receive timesheets through the existing **Work / invoice intake** or **Bulk ledger intake**, or record the original work in **Work**. Use **Add work allocation** to select the native Work identities and allocate their hours to the matching source phases. Each allocation retains the original Work content digest and note. The existing Work review lifecycle continues to own submission, acceptance and corrections.
+
+For each phase, record the reviewer's remaining-work estimate and the original sources and observations used for that estimate. An unentered remainder stays unentered; explicit zero records the reviewer's decision that no work remains. Select **Apply reviewed remaining hours**, then **Review complete installation** and **Save reviewed edition**. The new edition retains its original source, checks, delivery assignments and previous editions together with the effort review.
+
+A support allowance retains the included hours, selected phase IDs, the original acceptance or handoff event, the calendar-day period and pointers to the complete original scope wording. The source values remain attached to the saved review. Use the customer's actual terms when deciding which work belongs inside that allowance. For example, a delivery handover phase and included operator sessions retain their original meanings; a separate support window records its own source, period and reviewer interpretation.
+
+Select **Open remaining-work forecast**, choose the saved Forecast, and map its commercial tasks to the exact current saved effort editions. Review and save that Forecast, then continue its original commercial tasks and phase selections in Portfolio. The shared allocation still includes support work after the commercial delivery boundary. Keep the original prices, costs, invoice and collection inputs, observed cash, capacity calendars and contributor terms in the same planning case.
+
+The CLI exposes **installation-effort-seed** and **installation-effort-selection** under `starforge grant-workspace operations`. The typed client methods are `installationEffortSeed` and `installationEffortSelection`; the Merchant tools are `merchant_grant_installation_effort_seed` and `merchant_grant_installation_effort_selection`. All use the current case version and exact original Installation selection. The seed returns the complete editable document for the existing Installation preview/save workflow.
+
+The [complete effort and support guide](../../stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_EFFORT.md) includes the input fields, native report meanings, complete SDK and CLI recipes, reviewed-hour selection, recovery and receiving. Export the complete selected Installation or operating case to carry its effort review, original Work and Invoice records, source attachments and saved planning inputs together.
+
 ### Complete CoCart and Blockscout workorders
 
 The installed `starforge grant-installation-workorder` command prepares complete

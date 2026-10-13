@@ -2,6 +2,11 @@ import {HANDOVER_ROUTES,attachGrantHandover} from './grant-handover.mjs';
 // MIT. Connect the complete submission workspace to the existing grant composer.
 export const SUBMISSION_OPERATION = 'SCF-SUBMISSION-WORKSPACE-22B705-20261012';
 export const SUBMISSION_ROUTES = [
+  ['/grant-operating-plan-core.mjs',['grant-operating-plan-core.mjs','text/javascript; charset=utf-8']],
+  ['/grant-operating-plan-workspace.mjs',['grant-operating-plan-workspace.mjs','text/javascript; charset=utf-8']],
+  ['/stellar/scf-starforge-20261009/distribution/discovery/catalog.mjs',['../../../stellar/scf-starforge-20261009/distribution/discovery/catalog.mjs','text/javascript; charset=utf-8']],
+  ['/stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs',['../../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs','text/javascript; charset=utf-8']],
+  ['/stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.mjs',['../../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.mjs','text/javascript; charset=utf-8']],
   ["/grant-data/application-reviewer.md",["grant-data/application-reviewer.md","text/markdown; charset=utf-8"]],
   ["/grant-data/reviewer-working-index.json",["grant-data/reviewer-working-index.json","application/json; charset=utf-8"]],
   ["/grant-data/reviewer-working-source.json",["grant-data/reviewer-working-source.json","application/json; charset=utf-8"]],

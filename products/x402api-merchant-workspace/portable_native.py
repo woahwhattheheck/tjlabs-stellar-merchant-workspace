@@ -49,6 +49,7 @@ REQUIRED_PRODUCT = (
     "portable_native.py", "portable.mjs", "portable-directory.mjs",
     "portable-reservations.mjs", "portable-project-reservations.mjs", "server.mjs", "workspace.mjs",
     "store.mjs", "protocol.mjs", "provider.mjs", "application-inputs.mjs",
+    "invoice-register.mjs", "INVOICE_REGISTER.md",
     "fulfillment/file-delivery.mjs", "web/index.html", "web/app.mjs", "web/style.css",
 )
 EXPECTED_TABLES = {
@@ -982,6 +983,74 @@ def snapshot_results(database, directory, configuration, origins=None):
 
 
 
+def retained_result_files(workspace):
+    """Inventory all original native result files, including interrupted states."""
+    root = workspace / "results"
+    if not root.exists():
+        return []
+    files = []
+    def walk(directory):
+        private_directory(directory)
+        for path in sorted(directory.iterdir()):
+            info = path.lstat()
+            if stat.S_ISDIR(info.st_mode):
+                walk(path)
+            else:
+                with opened_regular(path) as (_fd, selected):
+                    need(selected.st_uid == os.getuid() and not selected.st_mode & 0o077
+                         and selected.st_nlink >= 1,
+                         "PRIVATE_FILE_REQUIRED", "Retain the original private result or reservation file.")
+                    identity = file_hash(path)
+                files.append({"path": "workspace/" + str(path.relative_to(workspace)), **identity})
+                need(len(files) <= 100000, "PROJECT_RESULTS_TOO_LARGE",
+                     "Keep the complete original result inventory within the project member limit.")
+    walk(root)
+    return sorted(files, key=lambda row: row["path"])
+
+
+def validate_retained_result_files(files):
+    need(isinstance(files, list) and len(files) <= 100000,
+         "PROJECT_RESULTS_INVALID", "Keep the complete original result-state file inventory.")
+    names = []
+    for row in files:
+        need(isinstance(row, dict) and set(row) == {"path", "bytes", "sha256"},
+             "PROJECT_RESULTS_INVALID", "Keep exact original result-state file identities.")
+        name = relative(row["path"])
+        need(name.startswith("workspace/results/"), "PROJECT_RESULTS_INVALID",
+             "Keep native result state beneath its original results directory.")
+        pin(row)
+        names.append(name)
+    need(names == sorted(set(names)), "PROJECT_RESULTS_INVALID",
+         "Retain each original result-state file once in its selected order.")
+    return set(names)
+
+
+def capture_project_results(control, directory, database, request_sha, snapshot, *, lease_fds=()):
+    target = control / "result-files-selection.json"
+    frozen = {"schema": "stellar-forge.merchant-project-result-selection.v1",
+              "requestSha256": request_sha, "snapshot": pin(snapshot), "directory": str(directory)}
+    selected = read_json(target, optional=True)
+    if selected is None:
+        files = retained_result_files(directory)
+        mappings = reservation_engine("inspect", database=str(database), directory=str(directory),
+                                      recordedDirectory=str(directory), lease_fds=lease_fds)
+        need(retained_result_files(directory) == files, "PROJECT_RESULTS_CHANGED",
+             "Select one complete original result and reservation state.")
+        selected = {**frozen, "files": files, "reservationMappings": mappings}
+        write_json(target, selected)
+    need(isinstance(selected, dict) and all(selected.get(key) == value for key, value in frozen.items())
+         and isinstance(selected.get("reservationMappings"), list),
+         "PROJECT_RESULTS_CHANGED", "Keep the original result selection for this request and database snapshot.")
+    validate_retained_result_files(selected.get("files"))
+    return selected
+
+
+def verify_retained_result_files(original, manifest):
+    if "retainedResultFiles" in manifest:
+        need(retained_result_files(original / "workspace") == manifest["retainedResultFiles"],
+             "PROJECT_RESULTS_CHANGED", "Keep every original result file and interrupted native partial.")
+
+
 def reservation_engine(action, *, lease_fds=(), **values):
     """Call the original SF31 reservation inspector/relocator with the same Node runtime."""
     node = os.environ.get("MERCHANT_PORTABLE_NODE") or os.environ.get("CODEX_PRIMARY_RUNTIME_NODE") or shutil.which("node")
@@ -1095,7 +1164,8 @@ def receive_project_reservations(control, original, runtime, request_sha, manife
     if not stage.exists():
         pending = private_directory(control / (".reservation-preparing-" + uuid.uuid4().hex))
         private_directory(pending / "workspace")
-        members = {row["path"]: {"path": row["path"], **pin(row)} for row in manifest["results"]}
+        members = {row["path"]: {"path": row["path"], **pin(row)}
+                   for row in manifest.get("retainedResultFiles", manifest["results"])}
         for row in reservation_files(mappings, original_directory):
             need(row["path"] not in members or members[row["path"]] == row,
                  "PROJECT_RESERVATIONS_CHANGED", "Keep a single original file edition.")
@@ -1103,12 +1173,15 @@ def receive_project_reservations(control, original, runtime, request_sha, manife
         for row in members.values():
             copy_file(original / row["path"], pending / row["path"], row)
         relocations = reservation_engine("restore", stage=str(pending), directory=str(runtime),
-                                        reservations=mappings, lease_fds=lease_fds)
+                                         database=str(original / "workspace/merchant.sqlite3"),
+                                         recordedDirectory=str(original_directory),
+                                         reservations=mappings, lease_fds=lease_fds)
         relocated = reservation_engine("inspect", database=str(original / "workspace/merchant.sqlite3"),
                                        directory=str(pending / "workspace"), recordedDirectory=str(workspace), lease_fds=lease_fds)
         need(len(relocated) == len(mappings), "PROJECT_RESERVATIONS_CHANGED",
              "Retain every original reservation in the received workspace.")
-        received_files = {row["path"]: {"path": row["path"], **pin(row)} for row in manifest["results"]}
+        received_files = {row["path"]: {"path": row["path"], **pin(row)}
+                          for row in manifest.get("retainedResultFiles", manifest["results"])}
         for row in reservation_files(relocated, workspace):
             received_files[row["path"]] = row
         record = {**frozen, "relocations": relocations, "relocatedMappings": relocated,
@@ -1138,13 +1211,17 @@ def receive_project_reservations(control, original, runtime, request_sha, manife
          "Relocate only the original reservation's destination and partial path.")
     inspect_project_reservations(original / "workspace/merchant.sqlite3", stage / "workspace", workspace,
                                  expected_mappings, lease_fds=lease_fds)
-    expected = {row["path"]: {"path": row["path"], **pin(row)} for row in manifest["results"]}
+    expected = {row["path"]: {"path": row["path"], **pin(row)}
+                for row in manifest.get("retainedResultFiles", manifest["results"])}
     for row in reservation_files(prepared["relocatedMappings"], workspace):
         expected[row["path"]] = row
     need(prepared.get("files") == [expected[name] for name in sorted(expected)],
          "PROJECT_RESERVATIONS_CHANGED", "Keep the complete prepared received file inventory.")
     for row in prepared["files"]:
         durable_file(stage / row["path"], row)
+    if "retainedResultFiles" in manifest:
+        need(retained_result_files(stage / "workspace") == prepared["files"],
+             "PROJECT_RESULTS_CHANGED", "Keep the complete original relocated result stage.")
     receipt = {"schema": "stellar-forge.merchant-project-reservations-published.v1",
                "requestSha256": request_sha, "workspace": str(workspace),
                "preparedSha256": sha_bytes(encoded(prepared)), "reservationCount": str(len(mappings))}
@@ -1244,11 +1321,21 @@ def export_project(request, normalized):
                     results = snapshot_results(database, directory, configuration, origins)
                 finally:
                     database.close()
-                reservations = reservation_engine("inspect", database=str(payload / "workspace/merchant.sqlite3"),
-                                                  directory=str(directory), recordedDirectory=str(directory),
-                                                  lease_fds=(export_lease, owned_lease))
+                result_selection = capture_project_results(capture_root / "control", directory,
+                                                           payload / "workspace/merchant.sqlite3",
+                                                           request_sha, snapshot["file"],
+                                                           lease_fds=(export_lease, owned_lease))
+                reservations = result_selection["reservationMappings"]
+                retained_files = result_selection["files"]
+                selected_files = {row["path"]: row for row in retained_files}
+                for row in retained_files:
+                    source_path = directory / str(PurePosixPath(row["path"]).relative_to("workspace"))
+                    copy_file(source_path, payload / row["path"], row)
+                    inventory[row["path"]] = {**row, "role": "original-result-state",
+                                               "originalPath": str(source_path)}
                 for row in results:
-                    copy_file(absolute(row["originalPath"]), payload / row["path"], row)
+                    need(row["path"] in selected_files and pin(selected_files[row["path"]]) == pin(row),
+                         "PROJECT_RESULTS_CHANGED", "Retain the original saved result in the full selected inventory.")
                     inventory[row["path"]] = {"path": row["path"], **pin(row), "role": "original-result",
                                               "originalPath": row["originalPath"]}
                 for row in reservation_files(reservations, directory):
@@ -1259,6 +1346,8 @@ def export_project(request, normalized):
                              "Keep the original returned final file shared by result and reservation.")
                     else:
                         inventory[row["path"]] = {**row, "role": "original-reservation", "originalPath": str(source_path)}
+                need(retained_result_files(payload / "workspace") == retained_files,
+                     "PROJECT_RESULTS_CHANGED", "Keep the exact frozen complete result inventory.")
                 inspect_project_reservations(payload / "workspace/merchant.sqlite3", payload / "workspace", directory,
                                              reservations, lease_fds=(export_lease, owned_lease))
                 inventory["workspace/merchant.sqlite3"] = {
@@ -1276,6 +1365,7 @@ def export_project(request, normalized):
                                  "selectedAt": snapshot["selectedAt"], **snapshot["summary"]},
                     "configuration": configuration, "source": source, "results": results,
                     "resultOrigins": origins_member, "reservationMappings": reservations,
+                    "retainedResultFiles": retained_files,
                     "inputFiles": sorted(inputs, key=lambda row: row["originalPath"]),
                     "files": [inventory[key] for key in sorted(inventory)],
                     "engines": {"archive": {"path": str(ARCHIVE_PATH.relative_to(SOURCE_ROOT)), "sha256": ARCHIVE_SHA},
@@ -1371,6 +1461,9 @@ def validate_manifest(manifest):
     legacy_needed = needed - {PRODUCT + name for name in
                               ("portable-directory.mjs", "portable-reservations.mjs", "portable-project-reservations.mjs")}
     required = needed if "reservationMappings" in manifest else legacy_needed
+    # Earlier complete projects retain their original pre-register source edition.
+    # Current exports pin these additive files through REQUIRED_PRODUCT above.
+    required -= {PRODUCT + "invoice-register.mjs", PRODUCT + "INVOICE_REGISTER.md"}
     need(isinstance(proof, list) and len(proof) == len(proof_paths)
          and required <= proof_paths <= needed,
          "PORTABLE_SOURCE_INCOMPLETE", "Keep the complete portable-capable source edition.")
@@ -1459,6 +1552,17 @@ def validate_manifest(manifest):
         for row in reservation_files(manifest["reservationMappings"], directory):
             member(row)
             expected_names.add(row["path"])
+    if "retainedResultFiles" in manifest:
+        need("reservationMappings" in manifest, "PROJECT_RESULTS_INVALID",
+             "Keep the native reservation mapping with the complete result state.")
+        names = validate_retained_result_files(manifest["retainedResultFiles"])
+        result_names = {row["path"] for row in results}
+        result_names |= {row["path"] for row in reservation_files(manifest["reservationMappings"], directory)}
+        need(result_names <= names, "PROJECT_RESULTS_INVALID",
+             "Keep all saved and reserved response files in the complete original inventory.")
+        for row in manifest["retainedResultFiles"]:
+            member(row)
+        expected_names |= names
     need(set(inventory) == expected_names,
          "PROJECT_INVENTORY_INVALID", "Keep only the complete explicitly selected project members.")
     need(manifest.get("receiving") == {
@@ -1978,6 +2082,7 @@ def reopen_received_complete(destination, complete, request, request_sha, manife
         need(path.exists(), "RECEIVED_PROJECT_MISSING", "Keep the complete received project: " + str(path))
         private_directory(path)
     settle_received(original, manifest)
+    verify_retained_result_files(original, manifest)
     durable_file(runtime / "source.tgz", manifest["source"], maximum=64 * CHUNK)
     source_record = received.get("sourceInstallation")
     need(isinstance(source_record, dict) and source_record.get("path") == str(control / "source-installation.json"),
@@ -2085,6 +2190,7 @@ def receive_project(request, normalized):
         need(extraction["archive"] == archive_pin(inspected["archive"]) and extraction["manifest"] == manifest,
              "PROJECT_EXTRACTION_CHANGED", "Retain the exact inspected original project.")
         settle_received(original, manifest)
+        verify_retained_result_files(original, manifest)
         export_request = parse_json(read_bytes(original / "provenance/export-request.json"), "original export request")
         validate_request(export_request)
         need(export_request.get("action") == "export" and export_request["operation"] == manifest["operation"]

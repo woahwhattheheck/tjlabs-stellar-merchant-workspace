@@ -18,6 +18,8 @@ const COLLECTION='stellar-forge.sf88.workspace-recovery.v2';
 const OBJECT='stellar-forge.sf88.object-session-recovery.v1';
 const OBJECT_RESTORES='.sf88-object-restorations';
 const OBJECT_CAPTURE=Symbol('original-object-capture');
+const UNMANAGED='stellar-forge.sf88.unmanaged-state-recovery.v1';
+const UNMANAGED_CAPTURE=Symbol('original-unmanaged-state-capture');
 const KEY_NAMES=['SF36_CONSENT_KEY_B64','SF36_AUDIT_KEY_B64','SF36_OPERATOR_KEY_B64'];
 const CRYPTO=fileURLToPath(new URL('../sf101-merchant-recovery/recover.mjs',import.meta.url));
 const LEDGER=fileURLToPath(new URL('./workspace-recovery-ledger.py',import.meta.url));
@@ -400,6 +402,75 @@ export async function restoreObjectSessionRecovery(options,context={}) {
   return restoreWorkspaceRecovery({...options,_objectOnly:true},context);
 }
 
+/** Preserve existing application files that have no managed Buyer ledger.
+ * The calling application validates its own complete original authority. This
+ * path never initializes an operator, wallet, inbox, or payment journal. */
+export async function inspectUnmanagedStateRecovery({directory,stateRoot,include=[],optionalInclude=[],absentLedgers=[],runtime=[]}={}) {
+  need(process.platform!=='win32','WORKSPACE_POSIX_OPERATOR_REQUIRED');
+  absolute(directory);await privateDirectory(stateRoot);await privateDirectory(directory);
+  need(inside(stateRoot,directory)&&directory!==stateRoot,'WORKSPACE_RECOVERY_WORKSPACE_OUTSIDE_ROOT');
+  need(Array.isArray(include)&&include.length<=64&&Array.isArray(optionalInclude)&&optionalInclude.length<=MAX_FILES&&
+    Array.isArray(absentLedgers)&&absentLedgers.length<=64&&Array.isArray(runtime)&&runtime.length<=64,
+    'WORKSPACE_RECOVERY_ROOT_LIST_INVALID');
+  const selected=new Set([directory]),missing=new Set(),parentDirectories=new Set();
+  const checked=path=>{absolute(path);need(inside(stateRoot,path),'WORKSPACE_RECOVERY_DEPENDENCY_OUTSIDE_ROOT');return path;};
+  for(const ledger of absentLedgers) {
+    checked(ledger);need(ledger.endsWith('/reservations.sqlite'),'WORKSPACE_RECOVERY_ABSENT_LEDGER_INVALID');
+    for(const path of [ledger,ledger+'-wal',ledger+'-shm']) {
+      need(!(await existing(path)),'WORKSPACE_RECOVERY_LEDGER_PRESENT_USE_MANAGED_BACKUP');missing.add(path);
+    }
+  }
+  for(const [paths,optional]of [[include,false],[optionalInclude,true]])for(const path of paths) {
+    checked(path);const st=await existing(path);
+    if(st) {
+      if(st.isDirectory())await privateDirectory(path);else {const f=await regular(path);await f.handle.close();}
+      selected.add(path);
+    }else {
+      need(optional,'WORKSPACE_RECOVERY_DEPENDENCY_MISSING');missing.add(path);
+      if(await existing(dirname(path))){await privateDirectory(dirname(path));parentDirectories.add(dirname(path));}
+    }
+  }
+  need(runtime.every(path=>typeof path==='string'&&path.length>0&&path.length<=4096&&!path.includes('\0')),
+    'WORKSPACE_RECOVERY_RUNTIME_INVALID');
+  const ledgers=[...new Set(absentLedgers)].sort();
+  const plan={schema:UNMANAGED,stateRoot,directory,inboxes:[],include:[...new Set(include)].sort(),
+    optionalInclude:[...new Set(optionalInclude)].sort(),absentLedgers:ledgers,
+    selected:[...selected].sort().filter((path,_i,all)=>!all.some(other=>other!==path&&inside(other,path))),
+    missing:[...missing].sort(),parentDirectories:[...parentDirectories].sort(),
+    runtime:[...new Set(runtime)].sort().map(path=>({path,retained:false})),
+    checkpoint:{outcome:'ORIGINAL_UNMANAGED_STATE',absentLedgers:ledgers},
+    walletEnvironmentExported:false,restoreMode:'ORIGINAL_CANONICAL_STATE_ROOT'};
+  await inventory(plan);return plan;
+}
+export async function snapshotUnmanagedStateRecovery(options,context={}) {
+  need(typeof context.prepareSnapshot==='function','WORKSPACE_RECOVERY_APPLICATION_VALIDATOR_REQUIRED');
+  return snapshotWorkspaceRecovery({...options,[UNMANAGED_CAPTURE]:true},context);
+}
+function validateUnmanagedRecord(record) {
+  const p=record.plan;
+  need(p.schema===UNMANAGED&&record.checkpoints===undefined&&p.operators===undefined&&
+    p.inboxes.length===0&&Array.isArray(p.selected)&&Array.isArray(p.include)&&Array.isArray(p.optionalInclude)&&
+    Array.isArray(p.missing)&&Array.isArray(p.parentDirectories)&&Array.isArray(p.absentLedgers)&&
+    p.absentLedgers.length<=64&&p.selected.length<=65&&p.include.length<=64&&
+    p.optionalInclude.length<=MAX_FILES&&p.missing.length<=MAX_FILES+192&&
+    p.restoreMode==='ORIGINAL_CANONICAL_STATE_ROOT'&&p.walletEnvironmentExported===false&&
+    object(record.application)&&Buffer.byteLength(JSON.stringify(record.application))<=1024*1024&&
+    same(record.checkpoint,{outcome:'ORIGINAL_UNMANAGED_STATE',absentLedgers:p.absentLedgers})&&
+    same(p.checkpoint,record.checkpoint),'WORKSPACE_RECOVERY_UNMANAGED_RECORD_INVALID');
+  absolute(p.directory);need(inside(p.stateRoot,p.directory)&&p.directory!==p.stateRoot,'WORKSPACE_RECOVERY_RECORD_PATH_INVALID');
+  for(const path of [...p.selected,...p.include,...p.optionalInclude,...p.missing,...p.parentDirectories,...p.absentLedgers]){
+    absolute(path);need(inside(p.stateRoot,path),'WORKSPACE_RECOVERY_RECORD_PATH_INVALID');
+  }
+  need(new Set(p.absentLedgers).size===p.absentLedgers.length,'WORKSPACE_RECOVERY_UNMANAGED_RECORD_INVALID');
+  for(const path of p.absentLedgers)need(path.endsWith('/reservations.sqlite')&&
+    [path,path+'-wal',path+'-shm'].every(value=>p.missing.includes(value)),'WORKSPACE_RECOVERY_ABSENT_LEDGER_INVALID');
+  need(record.files.every(row=>row.kind!=='file'||!/(^|\/)reservations\.sqlite(?:-wal|-shm)?$/.test(row.path)),
+    'WORKSPACE_RECOVERY_LEDGER_PRESENT_USE_MANAGED_BACKUP');
+}
+async function inspectUnmanagedCapture({record,map}) {
+  for(const path of record.plan.missing)need(!(await existing(map(path))),'WORKSPACE_RECOVERY_SOURCE_CHANGED');
+}
+
 /** Read the actual original workspace and inboxes; do not load wallet custody. */
 export async function inspectWorkspaceRecovery({directory,stateRoot,inboxes=[],include=[],operators,optionalInclude=[]}={}) {
   if(operators!==undefined) {
@@ -495,7 +566,7 @@ export async function inspectWorkspaceRecovery({directory,stateRoot,inboxes=[],i
     ...(optionalInclude.length?{optionalInclude:[...new Set(optionalInclude)].sort()}:{})};
 }
 
-const originalOperators=plan=>plan.schema===OBJECT?[]:[plan,...(plan.operators??[])];
+const originalOperators=plan=>[OBJECT,UNMANAGED].includes(plan.schema)?[]:[plan,...(plan.operators??[])];
 async function inventory(plan) {
   const ledgers=new Set(originalOperators(plan).map(operator=>operator.ledger));
   const excluded=new Set([...ledgers].flatMap(path=>[path+'-wal',path+'-shm']));
@@ -517,7 +588,7 @@ async function inventory(plan) {
       total+=st.size;need(total<=MAX_BYTES,'WORKSPACE_RECOVERY_SIZE_LIMIT');
       if(plan.schema===COLLECTION&&path.endsWith('/reservations.sqlite'))need(ledgers.has(path),
         'WORKSPACE_RECOVERY_UNSELECTED_OPERATOR_LEDGER');
-      if(plan.schema===OBJECT&&/\/reservations\.sqlite(?:-wal|-shm)?$/.test(path))
+      if([OBJECT,UNMANAGED].includes(plan.schema)&&/\/reservations\.sqlite(?:-wal|-shm)?$/.test(path))
         need(false,'OBJECT_RECOVERY_LEDGER_PRESENT_USE_WORKSPACE_BACKUP');
       entries.set(rel,{path:rel,kind:ledgers.has(path)?'ledger':'file',
         ...(ledgers.has(path)?{identity:{dev:st.dev,ino:st.ino}}:{stamp:stamp(st)})});
@@ -652,6 +723,12 @@ async function stagedFiles(root,signal) {
   return files.sort((a,b)=>a.path.localeCompare(b.path));
 }
 function result(record,recordSha256) {
+  if(record.schema===UNMANAGED)return {schema:UNMANAGED,recordSha256,createdAt:record.createdAt,
+    stateRoot:record.plan.stateRoot,directory:record.plan.directory,checkpoint:record.checkpoint,
+    absentLedgers:record.plan.absentLedgers,application:record.application,
+    files:record.files.filter(file=>file.kind==='file').length,
+    bytes:record.files.reduce((count,file)=>count+(file.size??0),0),runtime:record.plan.runtime,
+    walletEnvironmentExported:false,restoreMode:'ORIGINAL_CANONICAL_STATE_ROOT'};
   if(record.schema===OBJECT)return {schema:OBJECT,recordSha256,createdAt:record.createdAt,
     stateRoot:record.plan.stateRoot,directory:record.plan.directory,reviewSha256:record.plan.reviewSha256,
     objectSession:record.plan.objectSession,checkpoint:record.checkpoint,absentLedger:record.plan.absentLedger,
@@ -677,7 +754,8 @@ export async function snapshotWorkspaceRecovery(options,{environment=process.env
   need(!signal?.aborted,'WORKSPACE_RECOVERY_INTERRUPTED');
   need(options.quiesced===true,'WORKSPACE_RECOVERY_QUIESCED_SOURCE_REQUIRED');
   const inspectPlan=()=>options[OBJECT_CAPTURE]?
-    inspectStandaloneObject(options,{signal,captureLease:options[OBJECT_CAPTURE]}):inspectWorkspaceRecovery(options);
+    inspectStandaloneObject(options,{signal,captureLease:options[OBJECT_CAPTURE]}):options[UNMANAGED_CAPTURE]?
+      inspectUnmanagedStateRecovery(options):inspectWorkspaceRecovery(options);
   const plan=await inspectPlan();
   need(originalOperators(plan).every(operator=>(options.passEnv??'SF88_BACKUP_PASSPHRASE')!==operator.walletEnvironment),
     'WORKSPACE_RECOVERY_SEPARATE_PASSPHRASE_REQUIRED');
@@ -722,16 +800,16 @@ export async function snapshotWorkspaceRecovery(options,{environment=process.env
     }
     let application;
     if(prepareSnapshot!==undefined) {
-      need([COLLECTION,OBJECT].includes(plan.schema)&&typeof prepareSnapshot==='function','WORKSPACE_RECOVERY_CAPTURE_HOOK_INVALID');
+      need([COLLECTION,OBJECT,UNMANAGED].includes(plan.schema)&&typeof prepareSnapshot==='function','WORKSPACE_RECOVERY_CAPTURE_HOOK_INVALID');
       application=await prepareSnapshot({staged,stateRoot:plan.stateRoot,plan});
       need(object(application)&&Buffer.byteLength(JSON.stringify(application))<=1024*1024,
         'WORKSPACE_RECOVERY_APPLICATION_RECORD_INVALID');
     }
     const files=await stagedFiles(staged,signal);
     for(const entry of [...files].reverse())if(entry.kind==='directory')await syncDirectory(join(staged,entry.path));
-    const checkpoint=plan.schema===OBJECT?plan.checkpoint:checkpoints.find(item=>item.directory===plan.directory).checkpoint;
+    const checkpoint=[OBJECT,UNMANAGED].includes(plan.schema)?plan.checkpoint:checkpoints.find(item=>item.directory===plan.directory).checkpoint;
     const record={schema:plan.schema,createdAt:new Date().toISOString(),plan,checkpoint,files,
-      ...(plan.schema===COLLECTION?{checkpoints,...(application?{application}:{})}:plan.schema===OBJECT?{application}:{})};
+      ...(plan.schema===COLLECTION?{checkpoints,...(application?{application}:{})}:[OBJECT,UNMANAGED].includes(plan.schema)?{application}:{})};
     onProgress({stage:'ENCRYPTING',operators:checkpoints.length,files:files.length});
     const recordPath=join(temporary,'record.json');await save(recordPath,record);
     const planPath=join(temporary,'plan.json');
@@ -744,7 +822,7 @@ export async function snapshotWorkspaceRecovery(options,{environment=process.env
     need(!signal?.aborted,'WORKSPACE_RECOVERY_INTERRUPTED');
     await mkdir(output,{mode:0o700});outputPlaceholder=await lstat(output);
     await rename(encryptedPath,output);outputPlaceholder=null;await syncDirectory(dirname(output));
-    return {status:plan.schema===OBJECT?'OBJECT_SESSION_BACKUP_CREATED':'BUYER_STATE_BACKUP_CREATED',bundle:output,
+    return {status:plan.schema===OBJECT?'OBJECT_SESSION_BACKUP_CREATED':plan.schema===UNMANAGED?'UNMANAGED_STATE_BACKUP_CREATED':'BUYER_STATE_BACKUP_CREATED',bundle:output,
       ...result(record,sha(Buffer.from(json(record))))};
   } finally {
     for(const holder of holders)await holder.stop();
@@ -758,18 +836,19 @@ export async function snapshotWorkspaceRecovery(options,{environment=process.env
 }
 
 function validateRecord(record) {
-  need(object(record)&&[SCHEMA,COLLECTION,OBJECT].includes(record.schema)&&object(record.plan)&&record.plan.schema===record.schema&&
+  need(object(record)&&[SCHEMA,COLLECTION,OBJECT,UNMANAGED].includes(record.schema)&&object(record.plan)&&record.plan.schema===record.schema&&
     Array.isArray(record.files)&&record.files.length<=MAX_FILES&&Array.isArray(record.plan.inboxes)&&
     Array.isArray(record.plan.runtime)&&(record.schema===OBJECT?record.checkpoint?.outcome==='ORIGINAL_ZERO_CAP_OBJECT_STATE':
-      record.checkpoint?.outcome==='JOURNAL_CONSISTENT'),
+      record.schema===UNMANAGED?record.checkpoint?.outcome==='ORIGINAL_UNMANAGED_STATE':record.checkpoint?.outcome==='JOURNAL_CONSISTENT'),
     'WORKSPACE_RECOVERY_RECORD_INVALID');
   const p=record.plan;absolute(p.stateRoot);
   if(record.schema===OBJECT)validateObjectRecord(record);
+  if(record.schema===UNMANAGED)validateUnmanagedRecord(record);
   if(record.schema===COLLECTION)need(Array.isArray(p.operators)&&p.operators.length<=63&&
     Array.isArray(record.checkpoints)&&record.checkpoints.length===p.operators.length+1&&
     (record.application===undefined||object(record.application)&&
       Buffer.byteLength(JSON.stringify(record.application))<=1024*1024),'WORKSPACE_RECOVERY_RECORD_INVALID');
-  else if(record.schema!==OBJECT)need(p.operators===undefined&&record.checkpoints===undefined&&record.application===undefined,
+  else if(![OBJECT,UNMANAGED].includes(record.schema))need(p.operators===undefined&&record.checkpoints===undefined&&record.application===undefined,
     'WORKSPACE_RECOVERY_RECORD_INVALID');
   const operatorNames=new Set();
   for(const operator of originalOperators(p)) {
@@ -835,6 +914,7 @@ async function openBackup(options,{environment=process.env,signal,inspectSnapsho
       onProgress({stage:'LEDGER_VERIFIED',directory:operator.directory,checkpoint:checked.checkpoint});
     }
     if(record.schema===OBJECT)await inspectObjectCapture({staged,record,map,signal});
+    if(record.schema===UNMANAGED){need(typeof inspectSnapshot==='function','WORKSPACE_RECOVERY_APPLICATION_VALIDATOR_REQUIRED');await inspectUnmanagedCapture({record,map});}
     if(inspectSnapshot!==undefined) {
       need(typeof inspectSnapshot==='function','WORKSPACE_RECOVERY_CAPTURE_HOOK_INVALID');
       await inspectSnapshot({staged,record,map});
@@ -844,7 +924,7 @@ async function openBackup(options,{environment=process.env,signal,inspectSnapsho
 }
 export async function verifyWorkspaceRecovery(options,context) {
   const opened=await openBackup(options,context);
-  try {return {status:opened.record.schema===OBJECT?'OBJECT_SESSION_BACKUP_VERIFIED':'BUYER_STATE_BACKUP_VERIFIED',...result(opened.record,opened.recordSha256)};}
+  try {return {status:opened.record.schema===OBJECT?'OBJECT_SESSION_BACKUP_VERIFIED':opened.record.schema===UNMANAGED?'UNMANAGED_STATE_BACKUP_VERIFIED':'BUYER_STATE_BACKUP_VERIFIED',...result(opened.record,opened.recordSha256)};}
   finally {await rm(opened.temporary,{recursive:true,force:true});}
 }
 async function copyState(from,to,files,signal) {
@@ -897,9 +977,9 @@ export async function restoreWorkspaceRecovery(options,context) {
     await privateDirectory(target);
     need((await readdir(target)).length===0,'WORKSPACE_RECOVERY_TARGET_NOT_EMPTY');
     await rename(staged,target);
-    const collection=[COLLECTION,OBJECT].includes(record.schema);
+    const collection=[COLLECTION,OBJECT,UNMANAGED].includes(record.schema);
     const diagnostic=failure=>/^[A-Z0-9_]{1,120}$/.test(failure?.code??'')?failure.code:'WORKSPACE_RECOVERY_REOPEN_FAILED';
-    published={status:record.schema===OBJECT?'OBJECT_SESSION_STATE_RESTORED':'BUYER_STATE_RESTORED',...result(record,opened.recordSha256),
+    published={status:record.schema===OBJECT?'OBJECT_SESSION_STATE_RESTORED':record.schema===UNMANAGED?'UNMANAGED_STATE_RESTORED':'BUYER_STATE_RESTORED',...result(record,opened.recordSha256),
       executionStarted:false,originalStateRetained:true,
       ...(collection?{nativeReopenErrors:[],publicationSyncError:null,cleanupErrors:[]}: {})};
     try {await syncDirectory(parent);}catch(failure) {
@@ -929,7 +1009,7 @@ export async function restoreWorkspaceRecovery(options,context) {
     for(const path of [adjacent,opened.temporary].filter(Boolean)) {
       try {await rm(path,{recursive:true,force:true});}
       catch(failure) {
-        if(![COLLECTION,OBJECT].includes(published?.schema))throw failure;
+        if(![COLLECTION,OBJECT,UNMANAGED].includes(published?.schema))throw failure;
         published.cleanupErrors.push({directory:path,code:/^[A-Z0-9_]{1,120}$/.test(failure?.code??'')?
           failure.code:'WORKSPACE_RECOVERY_CLEANUP_FAILED'});
       }

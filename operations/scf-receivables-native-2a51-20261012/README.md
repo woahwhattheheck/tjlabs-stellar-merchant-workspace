@@ -32,3 +32,7 @@ The payment journey uses official SDK-generated transaction/result XDR through t
 Run 38343867655 passed PAYMENT_CHECK.mjs and failed during MCP provider registration. The continuation receives the original 94ad source plus correction blob `93d2f87ceab7c1ba17dbbc2f2e276c3e977f3aaa`: exact maintained Grist and SeaTable contribution descriptors at `1f44c8a18477bcfbb1b8890f8bd228ba52bb1306`. Original and replacement Git hashes are checked before applying either file. The original programmes and accounting source are unchanged. Use `--correction-object` with that original Git blob response and `--program MCP_RECEIVABLES_CHECK.mjs`. Source/result records retain both the frozen base and explicit correction identities.
 
 The prior complete native results are retained in Git blob `80c16d4ce00247d6675fe3d7b1b9c445011cc27f`.
+
+## Direct private-file import continuation
+
+The same receiving operation now includes the exact one-line CLI import correction from frozen successor `65a06ce7820ac4e436917e3951b0bc64f795b8d8`: original receivables CLI blob `bb7cd566159333727c409eb50a4077132662cda5` imports the original `writePrivate` and `privateSupportDirectory` directly from `host-files.mjs`. This avoids initializing unrelated distribution providers when preparing a durable native operation. The original private-file implementation and the original receiving programmes are unchanged. Correction capsule: `bbc06b338f4ee7b51640ec0e241b05d39e71cee8`.

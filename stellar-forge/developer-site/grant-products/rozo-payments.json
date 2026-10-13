@@ -25,13 +25,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/selections/rozo-payments.json",
-      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
       "editions": [
         {
           "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
           "git_blob": "b9e56bd0f30292a6f075333f2730fdce2f9390d2",
           "sha256": "1c27369dd5bc68ee09e89d44a1415e6a63b63a89a1f5d7fc453ab593d45824c6",
           "bytes": 51534
+        },
+        {
+          "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
+          "git_blob": "ff4bceb9d98982a20b23d9e29f9f1077e3a10279",
+          "sha256": "71cb106d385368b0c3c5d32d320f5e295ef62ffa0e4cda966a0572d44f2944b2",
+          "bytes": 51908
         }
       ]
     },
@@ -41,13 +47,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/FINANCE.md",
-      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
       "editions": [
         {
           "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
           "git_blob": "de94fa5e7fd9e967ab8e1972003f0df9fcc6a1d6",
           "sha256": "10641982ac76baba66f661a2f80ad79783b725ea523407aa145212a1295d00e2",
           "bytes": 15639
+        },
+        {
+          "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
+          "git_blob": "d3af21078b2692ff14e0833f688e1f02fa626e7a",
+          "sha256": "bfd63e702c0781a9768145eb01991317e02740a660344881ca4afe2ee624d1f2",
+          "bytes": 16008
         }
       ]
     },
@@ -73,13 +85,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/finance-service.mjs",
-      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
       "editions": [
         {
           "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
           "git_blob": "1cfa2371c0f850b797bdd00583c39466443323d3",
           "sha256": "224c55f0a8da9a2a8f5bb30d9af04a65f55973aad79bf47c5f8b889b6bbf4979",
           "bytes": 27258
+        },
+        {
+          "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
+          "git_blob": "afadab313bb1f825bb9a01df796974eacfc4d4a6",
+          "sha256": "528738aaec95bd930a337eda740997842d4b6f6898d7f9c34b404d4dafd8176b",
+          "bytes": 27410
         }
       ]
     },
@@ -121,13 +139,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/native-finance.mjs",
-      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
       "editions": [
         {
           "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
           "git_blob": "3ab955f350a1f4f3edf3a24117e7e3cb050a16c8",
           "sha256": "8b673d3360cb8b80f2b60d354f9fb57184b7ec14e41cf952b5147d07d0874d53",
           "bytes": 27544
+        },
+        {
+          "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
+          "git_blob": "d034a4e12622c7c46bc0947381e73dca2b7db186",
+          "sha256": "f8f37d42939d2ee6f50788e1ee18041695ef30ea4b0611ca813eee67e29bcc18",
+          "bytes": 32458
         }
       ]
     },
@@ -137,13 +161,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/finance-receiving.mjs",
-      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
       "editions": [
         {
           "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
           "git_blob": "c15b9cde99bbd46d5b0cadca19e2342d87495cc4",
           "sha256": "2f85b1c7d6d0fa6483bfb94bb69138f7e80762fddb5432cf3de3c6771f169615",
           "bytes": 11222
+        },
+        {
+          "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
+          "git_blob": "1b854b0ea2606ece20cc049893cefbcddefad35a",
+          "sha256": "dd46594a8e520b907272ee13f7c1bc61ef1062512c24eb4518938cef645c8598",
+          "bytes": 13779
         }
       ]
     },
@@ -153,13 +183,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/finance-archive.py",
-      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
       "editions": [
         {
           "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
           "git_blob": "817c67bce8e50a4fc9fc134156b0d63f37339bc1",
           "sha256": "bb77b87ecd211eac4d0aa136decf953f37450400437e4060a012f833c34b2e34",
           "bytes": 10136
+        },
+        {
+          "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
+          "git_blob": "a3ffe4f29e96465529659497959eb2e3a593f069",
+          "sha256": "595afbcec40986ce554ae473addbc9f902aa137b3475033604117059e1e8d0c9",
+          "bytes": 10235
         }
       ]
     },
@@ -185,13 +221,83 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/public/finance.mjs",
-      "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
+      "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
       "editions": [
         {
           "commit": "a480c70a6cb4b5dfa89976d2978013af9b70794e",
           "git_blob": "7cd05259a35c7c6bbf5413d43a07f17a66a3bb3f",
           "sha256": "a005cde9b438886263ff57f7f31b30d9f7b303b824f077ccc390a1fcc962c3ed",
           "bytes": 38892
+        },
+        {
+          "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
+          "git_blob": "86ac34cac4d176af13958380e140df53030baa7e",
+          "sha256": "3ca145be0b086943b0fc886110572ed7e4faa706a86b794306a08ad4f6291375",
+          "bytes": 39107
+        }
+      ]
+    },
+    {
+      "id": "rozo-financial-correction",
+      "label": "Complete original source comparison and affected-close review",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/finance-amendment.mjs",
+      "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
+      "editions": [
+        {
+          "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
+          "git_blob": "ad68282732a516dbbc07850d0854c03da0389a42",
+          "sha256": "8f073abfac90552a67218b6670e078ba4e404c676a4f0011c67dd7f4057f9197",
+          "bytes": 10089
+        }
+      ]
+    },
+    {
+      "id": "rozo-financial-correction-native",
+      "label": "Following financial edition and both original accountant histories",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/finance-amendment-native.mjs",
+      "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
+      "editions": [
+        {
+          "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
+          "git_blob": "5cc99fe18834a7376a07d9aea2e58c527da2c152",
+          "sha256": "1ad91ec35a30e5dc7f1cb7b072269ed01837446c0f7f84d47da342d058b15204",
+          "bytes": 15499
+        }
+      ]
+    },
+    {
+      "id": "rozo-financial-correction-staff",
+      "label": "Staff review and explicit following financial correction",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/public/finance-amendment.mjs",
+      "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
+      "editions": [
+        {
+          "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
+          "git_blob": "925abd3913bd137577a491a12bc0bc6ab474eedd",
+          "sha256": "a0f8ee73239e2e607c7baf557c4219c2e2fa64eacc1645a2d29287fdfe9f71ac",
+          "bytes": 9812
+        }
+      ]
+    },
+    {
+      "id": "rozo-financial-correction-guide",
+      "label": "Full original correction, interruption and independent receiving commands",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/FINANCE_AMENDMENTS.md",
+      "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
+      "editions": [
+        {
+          "commit": "47c67eecca93ffa3cc95731a24ef03ccba9264d9",
+          "git_blob": "479dfcf4bee0fa85060fa03a630743bfe06e557a",
+          "sha256": "477d6ea97d07b7a696597cc20c379ab66a0113a03e63bcf230cbd51e7344e6cc",
+          "bytes": 11217
         }
       ]
     }

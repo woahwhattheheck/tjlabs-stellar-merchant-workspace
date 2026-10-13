@@ -12,6 +12,7 @@ import {serveStdio} from "./protocol.mjs";
 import {actions, validateArguments} from "./catalog.mjs";
 import {plainRead, createOnlyFile} from "./files.mjs";
 import {canonical} from "./util.mjs";
+import {projectionHelp,projectionCommandOptions,runProjectionCommand} from "./projection-cli.mjs";
 
 const REQUEST_FORMAT="commons.haystack.operator.request.v1";
 const SOURCE_LIMIT=32*1024*1024;
@@ -249,7 +250,8 @@ Read original and working material
 
 Prepare and review work
   rename           --title TEXT
-  import           --file GRID.json [--name TEXT] [--source-url TEXT] [--no-select]
+  import           --file GRID [--format json-v4|zinc] [--name TEXT]
+                   [--source-url TEXT] [--no-select]
   select           --source-id SHA [--source-id SHA ...]
                    OR --sources-file ARRAY.json
   preview          --edits ARRAY.json
@@ -262,7 +264,7 @@ Prepare and review work
 Complete delivery
   report           --kind register|diagnostics [--format json|csv|html]
                    [--edition SHA] [--role site|equip|point|all] [--out FILE]
-  native-grid      --source-id SHA [--edition SHA] [--out FILE]
+  native-grid      --source-id SHA [--edition SHA] [--format json|zinc] [--out FILE]
   export-workspace [--out FILE]
   replay           --request-file ORIGINAL.request.json [--out FILE]
 
@@ -303,6 +305,31 @@ journal/CAS/replay path also serves every modelling command. Native validation
 uses only the selected local Python and original offline Brick dependency set;
 the application does not download or install packages during a request.
 
+
+VOLTTRON BACnet registry commissioning
+  volttron-status
+  volttron-configuration --configuration-id SHA
+  volttron-configuration-import --file DEVICE.json --author TEXT [--name TEXT]
+  volttron-profile-template --intake-id UUID --configuration-id SHA --device-key TEXT
+  volttron-profile --profile-id UUID [--version-id SHA]
+  volttron-profile-save --file COMPLETE_PROFILE_ARGS.json
+  volttron-preview --file COMPLETE_PROFILE_AND_DECISIONS.json
+  volttron-edition-save --file COMPLETE_EDITION_ARGS.json
+  volttron-edition --edition-id SHA
+  volttron-compare --before EDITION_SHA --after EDITION_SHA
+  volttron-receiving-record --file COMPLETE_RECEIVING_ARGS.json
+  volttron-receiving --receiving-id SHA
+  volttron-report --edition-id SHA --format json|csv|html [--out FILE]
+  volttron-output --edition-id SHA --name EXACT_FILE [--out FILE]
+  volttron-receiving-output --receiving-id SHA --name EXACT_FILE [--out FILE]
+  volttron-return-preview --file COMPLETE_WORKSPACE.json
+  volttron-return-apply --file COMPLETE_WORKSPACE.json --decisions ALL_PROFILES.json
+                        --author TEXT --note TEXT
+Use the original point-import for registry CSV/TSV. New registry commands use
+the same local/server selectors, retained request, operation ID, revision, replay
+and complete delivery verification. Read VOLTTRON_OPERATING.md for all fields,
+original driver semantics, whole receiving and editable package return.
+
 General action access
   request          ACTION --args OBJECT.json [--out FILE]
 
@@ -323,7 +350,7 @@ Existing output files are accepted only when their complete bytes already match.
 `;
 export async function main(argv=process.argv.slice(2)){
   const {command,flags,positionals}=parse([...argv]);
-  if(command==="help"||flags.help){process.stdout.write(HELP);return;}
+  if(command==="help"||flags.help){process.stdout.write(HELP+projectionHelp);return;}
   if(command==="request"){
     if(positionals.length!==1)throw new Error("Use request ACTION --args OBJECT.json.");
   }else if(positionals.length)throw new Error("Unexpected positional argument: "+positionals[0]);
@@ -371,7 +398,26 @@ export async function main(argv=process.argv.slice(2)){
     if(command==="recover-writer")return output(await workspace.recoverWriter(required(flags,"lock-id")),flags);
     await workspace.read();return serveStdio(workspace);
   }
+  const projectionCommands=projectionCommandOptions(mutationFlags,pageFlags);
   const specific={
+    ...projectionCommands,
+"volttron-status":[],
+"volttron-configuration":["configuration-id"],
+"volttron-configuration-import":["request-file","request-directory","operation-id","file","name","author","note","note-file"],
+"volttron-profile-template":["intake-id","configuration-id","device-key"],
+"volttron-profile":["profile-id","version-id"],
+"volttron-profile-save":["request-file","request-directory","operation-id","file"],
+"volttron-preview":["file"],
+"volttron-edition-save":["request-file","request-directory","operation-id","file"],
+"volttron-edition":["edition-id"],
+"volttron-compare":["before","after"],
+"volttron-receiving":["receiving-id"],
+"volttron-receiving-record":["request-file","request-directory","operation-id","file"],
+"volttron-return-preview":["file"],
+"volttron-return-apply":["request-file","request-directory","operation-id","file","decisions","author","note","note-file"],
+"volttron-report":["request-file","request-directory","operation-id","edition-id","format"],
+"volttron-output":["request-file","request-directory","operation-id","edition-id","name"],
+"volttron-receiving-output":["request-file","request-directory","operation-id","receiving-id","name"],
     standard:[],"point-intakes":pageFlags,"point-intake":[...pageFlags,"intake-id"],
     "point-import":[...mutationFlags,"file","format","name","delimiter","source-url"],"point-source-download":["intake-id"],
     "model-preview":["file"],"model-assess":["file"],models:pageFlags,model:["model-id","version-id"],
@@ -386,20 +432,50 @@ export async function main(argv=process.argv.slice(2)){
     record:["record-key","edition"],diagnostics:[...pageFlags,"edition","source-id","severity","record-key"],
     proposals:[...pageFlags,"state"],proposal:["proposal-id"],editions:pageFlags,edition:["edition"],
     operations:pageFlags,operation:["operation-id"],"source-download":["source-id"],"delivery-download":["operation-id"],
-    rename:[...mutationFlags,"title"],import:[...mutationFlags,"file","name","source-url","no-select"],
+    rename:[...mutationFlags,"title"],import:[...mutationFlags,"file","format","name","source-url","no-select"],
     select:[...mutationFlags,"source-id","sources-file"],preview:["edits"],
     propose:[...mutationFlags,"title","edits","note","note-file"],
     review:[...mutationFlags,"proposal-id","decision","note","note-file"],
     save:[...mutationFlags,"title","note","note-file"],
     compare:[...pageFlags,"before","after","source-pairs","state"],
     report:[...mutationFlags,"kind","format","edition","role"],
-    "native-grid":[...mutationFlags,"source-id","edition"],
+    "native-grid":[...mutationFlags,"source-id","edition","format"],
     "export-workspace":mutationFlags,replay:["request-file"],
     request:[...mutationFlags,"args"]
   };
   if(!specific[command])throw new Error("Unknown command "+command+". Use help for the complete workflow.");
   options(flags,[...sharedFlags,...specific[command]]);
   const target=await targetFor(flags);
+  if(projectionCommands[command])return runProjectionCommand(command,flags,target,{required,one,clean,optionalNote,semanticInput,revisionArgs,allPages,output,performMutation,deliveryToFile,readJson,plainRead});
+
+  // Registry commands share the original complete request journal, CAS and delivery path.
+  const volttronReads={
+    "volttron-status":["volttron.status",{}],
+    "volttron-configuration":["volttron.configuration.read",clean({configurationId:one(flags,"configuration-id")})],
+    "volttron-profile-template":["volttron.profile.template",clean({intakeId:one(flags,"intake-id"),configurationId:one(flags,"configuration-id"),deviceKey:one(flags,"device-key")})],
+    "volttron-profile":["volttron.profile.read",clean({profileId:one(flags,"profile-id"),versionId:one(flags,"version-id")})],
+    "volttron-edition":["volttron.edition.read",clean({editionId:one(flags,"edition-id")})],
+    "volttron-compare":["volttron.edition.compare",clean({beforeEditionId:one(flags,"before"),afterEditionId:one(flags,"after")})],
+    "volttron-receiving":["volttron.receiving.read",clean({receivingId:one(flags,"receiving-id")})]
+  };
+  if(volttronReads[command]){
+    const [action,fields]=volttronReads[command],args=await revisionArgs(target,flags,fields);validateArguments(action,args);
+    return output(await target.request(action,args),flags);
+  }
+  if(command==="volttron-preview"){const args=await revisionArgs(target,flags,await semanticInput(required(flags,"file")));validateArguments("volttron.edition.preview",args);return output(await target.request("volttron.edition.preview",args),flags);}
+  if(command==="volttron-return-preview"){const bytes=await plainRead(resolve(required(flags,"file")),PACKAGE_MAX_BYTES);return output(await target.request("volttron.return.preview",await revisionArgs(target,flags,{base64:bytes.toString("base64")})),flags);}
+  if(command.startsWith("volttron-")){
+    let action,fields;
+    if(command==="volttron-configuration-import"){const filename=resolve(required(flags,"file")),bytes=await plainRead(filename,1024*1024);action="volttron.configuration.import";fields={name:one(flags,"name",basename(filename)),base64:bytes.toString("base64"),author:required(flags,"author"),note:await optionalNote(flags)};}
+    else if(["volttron-profile-save","volttron-edition-save","volttron-receiving-record"].includes(command)){action={"volttron-profile-save":"volttron.profile.save","volttron-edition-save":"volttron.edition.save","volttron-receiving-record":"volttron.receiving.record"}[command];fields=await semanticInput(required(flags,"file"));}
+    else if(command==="volttron-return-apply"){const bytes=await plainRead(resolve(required(flags,"file")),PACKAGE_MAX_BYTES);action="volttron.return.apply";fields={base64:bytes.toString("base64"),decisions:await readJson(required(flags,"decisions")),author:required(flags,"author"),note:await optionalNote(flags)};}
+    else if(command==="volttron-report"){action="delivery.prepare";fields={kind:"volttron-report",registryEditionId:required(flags,"edition-id"),format:one(flags,"format","json")};}
+    else if(command==="volttron-output"){action="delivery.prepare";fields={kind:"volttron-output",registryEditionId:required(flags,"edition-id"),name:required(flags,"name")};}
+    else if(command==="volttron-receiving-output"){action="delivery.prepare";fields={kind:"volttron-receiving-output",receivingId:required(flags,"receiving-id"),name:required(flags,"name")};}
+    else throw new Error("Use one declared registry command.");
+    const result=await performMutation(target,action,fields,flags);return action==="delivery.prepare"?deliveryToFile(target,result,flags):output(result,flags);
+  }
+
   if(command==="standard")return output(await target.request("semantic.catalog",{}),flags);
   const semanticLists={"point-intakes":"semantic.intakes.list",models:"semantic.models.list","model-validations":"semantic.validations.list","model-returns":"semantic.returns.list"};
   if(semanticLists[command])return output(await allPages(target,semanticLists[command],await revisionArgs(target,flags,clean({modelId:one(flags,"model-id")})),flags),flags);
@@ -471,7 +547,7 @@ export async function main(argv=process.argv.slice(2)){
   else if(command==="rename"){action="workspace.rename";fields={title:required(flags,"title")};}
   else if(command==="import"){
     action="source.import";const file=resolve(required(flags,"file")),bytes=await plainRead(file,SOURCE_LIMIT);
-    fields={name:one(flags,"name",basename(file)),base64:bytes.toString("base64"),sourceUrl:one(flags,"source-url",""),format:"json-v4",select:!flags["no-select"]};
+    fields={name:one(flags,"name",basename(file)),base64:bytes.toString("base64"),sourceUrl:one(flags,"source-url",""),format:one(flags,"format","json-v4"),select:!flags["no-select"]};
   }else if(command==="select"){
     action="source.select";
     if(flags["sources-file"]&&flags["source-id"])throw new Error("Choose a complete source array file or repeated --source-id options.");
@@ -486,7 +562,7 @@ export async function main(argv=process.argv.slice(2)){
     if(!["register","diagnostics"].includes(kind))throw new Error("Use report --kind register|diagnostics, native-grid, or export-workspace.");
     if(kind==="diagnostics"&&flags.role!==undefined)throw new Error("The diagnostic delivery retains the complete selected finding set; omit --role.");
     fields=clean({kind,format:one(flags,"format","json"),editionId:one(flags,"edition"),role:kind==="register"?one(flags,"role","all"):undefined});
-  }else if(command==="native-grid"){action="delivery.prepare";fields=clean({kind:"native-grid",format:"json",sourceId:required(flags,"source-id"),editionId:one(flags,"edition")});}
+  }else if(command==="native-grid"){action="delivery.prepare";fields=clean({kind:"native-grid",format:one(flags,"format","json"),sourceId:required(flags,"source-id"),editionId:one(flags,"edition")});}
   else if(command==="export-workspace"){action="delivery.prepare";fields={kind:"workspace"};}
   const result=await performMutation(target,action,fields,flags);
   return action==="delivery.prepare"?deliveryToFile(target,result,flags):output(result,flags);

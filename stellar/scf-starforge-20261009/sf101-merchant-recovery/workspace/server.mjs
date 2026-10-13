@@ -133,6 +133,14 @@ export function createRecoveryHandler({ workspace, token, origin, connection = n
             value = { ...connection, identity: await workspace.identity() }; break;
           case '/api/object-session': { const q=query(url,['profile','session']); value=await workspace.objectSession(q.profile,q.session); break; }
           case '/api/object-evidence': { const q=query(url,['sha256']); value=await workspace.objectEvidence(q.sha256); break; }
+          case '/api/support-cases': {const q=query(url,['profile','q','offset','limit']);const input={};
+            if(q.q!==undefined)input.q=q.q;for(const key of ['offset','limit'])if(q[key]!==undefined){
+              if(!/^(0|[1-9][0-9]*)$/.test(q[key])||!Number.isSafeInteger(Number(q[key])))fail('WORKSPACE_QUERY_INVALID','Invalid Support page');
+              input[key]=Number(q[key]);}value=await workspace.supportCases(q.profile,input);break;}
+          case '/api/support-transfers': {const q=query(url,['profile']);value=await workspace.supportTransfers(q.profile);break;}
+          case '/api/support-transfer': {const q=query(url,['profile','id']);value=await workspace.supportTransfer(q.profile,q.id);break;}
+          case '/api/support-handoff': {const q=query(url,['profile','id']);value=await workspace.supportHandoff(q.profile,q.id);break;}
+          case '/api/support-package': {const q=query(url,['profile','id']);value=await workspace.supportPackage(q.profile,q.id);break;}
           case '/api/request': { const q = query(url, ['profile', 'id']); value = await workspace.request(q.profile, q.id); break; }
           case '/api/requests': { const q = query(url, ['cursor', 'limit']); value = await workspace.requests(page(q)); break; }
           case '/api/bundles': { const q = query(url, ['profile']); value = await workspace.localBundles(q.profile); break; }
@@ -149,6 +157,9 @@ export function createRecoveryHandler({ workspace, token, origin, connection = n
         if (isDraining()) fail('WORKSPACE_DRAINING', 'The original recovery listener is draining; read the retained request before continuing', 503);
         let result;
         switch (url.pathname) {
+          case '/api/support-review': result=await workspace.supportReview(value);break;
+          case '/api/support-save': result=await workspace.supportSave(value);break;
+          case '/api/support-export': result=await workspace.supportExport(value);break;
           case '/api/review': result = await workspace.review(value); break;
           case '/api/start': fields(value, ['selection', 'expectedReviewHash']); result = await workspace.start(value); break;
           case '/api/resume': { fields(value,['profileId','id','expectedReviewHash','afterAttempt','quiesced']);

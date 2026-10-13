@@ -286,8 +286,8 @@
       },
       {
         "path": "stellar-forge/mcp-merchant-operator/accounting-commissioning-cli.mjs",
-        "gitBlob": "2c43ca1130af79b59c51f18bad8d5156d4c437c5",
-        "bytes": 23445
+        "gitBlob": "5922e73dc30d9c250ccbeeed4c0d3193c4004b7a",
+        "bytes": 23449
       },
       {
         "path": "stellar-forge/mcp-merchant-operator/accounting-commissioning-cli.d.mts",
@@ -322,6 +322,13 @@
         "gitBlob": "f74f71e756a346f8a988e5a93463dfa66b94a519",
         "bytes": 4022
       }
-    ]
+    ],
+    "privateFileImport": {
+      "path": "stellar-forge/mcp-merchant-operator/accounting-commissioning-cli.mjs",
+      "previousGitBlob": "2c43ca1130af79b59c51f18bad8d5156d4c437c5",
+      "gitBlob": "5922e73dc30d9c250ccbeeed4c0d3193c4004b7a",
+      "helper": "stellar-forge/mcp-merchant-operator/host-files.mjs",
+      "reason": "Use the original private-file helpers directly without initializing ambient distribution providers during durable operation preparation."
+    }
   }
 }

@@ -1,0 +1,33 @@
+{
+  "schema": "stellar-forge.commerce-export-review.v1",
+  "input_sha256": "e83e267dfbbb96783b6a3369a3fbd92a97b57b929f392fb3a55c147d444297ae",
+  "actor": "TJLabs source receiving exercise",
+  "observed_at": "2026-10-13T03:24:00Z",
+  "reference": "Original authored acceptance criteria",
+  "decisions": [
+    {
+      "issue_id": "issue-fca3d440969419f2d3431990c0d2d9ae",
+      "outcome": "requires_repair",
+      "note": "Retain source anomaly and have original owner correct the export or actual integration.",
+      "reference": "Fixture record ord-E"
+    },
+    {
+      "issue_id": "issue-851a60c5481c7cac75cfa4b9202db728",
+      "outcome": "requires_repair",
+      "note": "Retain source anomaly and have original owner correct the export or actual integration.",
+      "reference": "Fixture record ord-D"
+    },
+    {
+      "issue_id": "issue-608cb4e3cb4fbf872d10b0cb04632c7b",
+      "outcome": "requires_repair",
+      "note": "Retain source anomaly and have original owner correct the export or actual integration.",
+      "reference": "Fixture record ord-E"
+    },
+    {
+      "issue_id": "issue-2efc968c3063a50fe1d062be0738db29",
+      "outcome": "requires_repair",
+      "note": "Retain source anomaly and have original owner correct the export or actual integration.",
+      "reference": "Fixture record ord-F"
+    }
+  ]
+}

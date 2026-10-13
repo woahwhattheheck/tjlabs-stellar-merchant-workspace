@@ -20,6 +20,10 @@ Open **Delivery agenda** in the original application to review multiple existing
 
 Read `client.read('delivery-queue', {caseId, asOfDate})` and download the complete handover with `client.download('delivery-queue', {caseId, asOfDate})`. The package now includes adjacent TypeScript declarations for the public client, complete queue, installation document and saved-edition workflow. [Installation delivery queue](DELIVERY_QUEUE.md) covers assignment editing, typed consumption, MCP paging, date semantics and complete receiving.
 
+## Installation effort and support
+
+`installationEffortSeed(caseId, body)` prepares the complete document and current native Work inventory for a saved Installation. `installationEffortSelection(caseId, body)` opens a complete original Forecast draft from exact saved effort editions. Effort persists through the existing `installationPreview` and `installationSave` methods. The typed document retains allocations, review identities and source-referenced support windows. [Installation effort and support](INSTALLATION_EFFORT.md) includes the complete seed/save/reopen recipe, hours selection, MCP tools and original receiving flow.
+
 ## Complete customer adoption operations
 
 The original Merchant owner now carries native case or Calendar source through whole-plan authoring, pricing, shared capacity scheduling, full comparison, durable source saving and reopening. Use the eleven adoption tools or the typed `grant/cohort-agent` module described in [Complete adoption work through Merchant MCP](COHORT-PLANNING.md#complete-adoption-work-through-merchant-mcp). Full inputs, original funding groups and the native save request remain attached throughout the operation.

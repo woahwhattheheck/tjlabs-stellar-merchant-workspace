@@ -110,3 +110,13 @@ The installed Human Services Directory application includes **Source corrections
 Working correction JSON, unfinished editor values and pending request bodies stay in the selected browser session and can be downloaded completely. Before leaving, retain the complete working JSON if browser storage reports a capacity failure. The application does not write to the source publisher.
 
 The same original workspace export/import includes every correction input, preview/review file, original and derived source/member/index and accepted candidate lineage. Read [SOURCE_CORRECTIONS.md](SOURCE_CORRECTIONS.md) for ordinary use and [CORRECTION_CLIENTS.md](CORRECTION_CLIENTS.md) for the complete operated customer handover.
+
+## Complete customer worksheet round
+
+Open **Customer worksheets** in the same managed Directory instance. Select original HSDS rows, export the portable customer editor, receive exact returned bytes and record every decision. **Open prepared correction plan** opens the original correction workbench, where preview and acceptance remain separate. Working inputs persist with original pending requests; full files remain available above the interactive page budget. The installed source includes all three original customer assets and the complete native/client courses. See [CORRECTION_WORKSHEETS.md](CORRECTION_WORKSHEETS.md) and [CORRECTION_WORKSHEET_CLIENTS.md](CORRECTION_WORKSHEET_CLIENTS.md).
+
+## Returned worksheet three-way review
+
+The installed Directory application includes **Three-way review** and the customer worksheet's **Review against current edition** action. Select a specific current edition and match every original worksheet row. Original, customer-proposed and current presence/type/lexical values are shown together. Each decision is retained before a normal current-edition correction plan is prepared; its preview and acceptance remain separate source-correction actions.
+
+Working JSON retains exact pending inputs and full unfinished row resolutions. A failed reopen preserves the original saved text and offers retry/download. Both immutable reconciliation collections, complete comparisons/decisions and source files are verified by the existing whole workspace receiver. See [WORKSHEET_RECONCILIATION.md](WORKSHEET_RECONCILIATION.md).

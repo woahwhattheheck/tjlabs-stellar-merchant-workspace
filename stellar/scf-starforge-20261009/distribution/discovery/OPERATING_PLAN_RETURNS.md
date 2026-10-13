@@ -218,3 +218,12 @@ The result exposes:
 All returned values are independent JSON values. Import validates the complete histories and recomputes a completed result before accepting it. The original operating-plan schema and reader remain unchanged.
 
 The maintained operator-discovery contribution registers the typed API. Its existing command delegates plan-return to the complete CLI, and its browser asset map carries the page, pure model and original dependencies into selected toolkit builds.
+
+
+## Keep complete customer result files through a return
+
+When either procedure carries attached result files, the review compares each step's complete ordered file collection. A file choice retains every original byte, name, media type and note. Compatible one-branch file changes travel with the resulting step; divergent file changes require an explicit current, incoming, shared or custom complete collection choice. A custom collection uses the original Operating Plans file format and limits.
+
+File changes are recorded results. When one branch changes the work and the other changes its files, the review requires a complete contextual step choice, just as it does for changed progress or recorded result text. Read the whole work and result before carrying those files onto different instructions.
+
+The complete review JSON retains both original file histories, decisions and the exact completed result. The grant submission receiving desk accepts that completed review directly and keeps its branches, file bytes and decisions with the original planning preparation. Use the original grant procedure guide for full draft receiving and later review export.

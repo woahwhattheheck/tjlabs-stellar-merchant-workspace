@@ -89,6 +89,23 @@ Use the actual saved migration ID and revision. Metadata is optional; its absenc
 
 The full result retains original captures, complete comparison, saved HTML/CSV/JSON and the existing portable v5/v6 project graph. The original API route retains its default request and fingerprint. Separate historical source editions may share a reviewed migration plan while keeping their own immutable receiving IDs and operation histories.
 
+## Browser acquisition and recovery
+
+Open the existing economic workspace, choose **DDP migration**, and open the complete saved migration. Its original observation interval, selected vintage and reviewed mappings remain the acquisition inputs.
+
+1. In **Historical observation source**, choose **ALFRED original vintage download**.
+2. If an original historical metadata-edition JSON file is available, select it and choose **Review selected metadata**. The browser uses the same pure metadata reader as the native source engine, checks the original source bytes and exact spans, and displays coverage for every planned series. It shows each required field's original real-time interval and leaves unavailable fields empty.
+3. Expand **Inspect complete original metadata text** to read the retained source for each supplied series. The source URL, actual retrieval time, byte count and SHA256 stay visible beside the complete text.
+4. Choose **Acquire the reviewed ALFRED vintage**. The workspace acquires every original migration batch, retains the original response attempts and captures, and opens the saved receiving. The existing HTML, CSV, JSON, observation review, release-watch and portable-project actions use this receiving.
+
+Choosing **Use observations without metadata** clears the selected companion. Original CSV observations can still be acquired; their meaning coverage stays unavailable until an original historical edition is adopted. The browser never derives meaning from a series name or a current source page.
+
+The browser retains the operation ID, original project revision, migration, source mode and metadata digest before sending. The full selected File uses the existing browser upload store; session storage contains only the compact file identity. If the connection or page is interrupted, choose **Continue** in the original recovery panel. Once metadata reached the project, native recovery uses its staged original source. If it did not reach the project and the browser cannot restore the File, re-select the named original metadata file and continue the same action. Both its complete file SHA256 and sorted metadata-edition identity must match. The source selection cannot be changed while this action is retained.
+
+An HTTP Retry-After remains part of the original source attempt. The recovery panel displays the retained retry time when available. Continuing before that time preserves the same pending acquisition. An already completed action reopens its saved result. Saved receiving choices identify their ALFRED or FRED API historical source, and the result context retains that distinction.
+
+The workspace serves the original pure source model and metadata reader through explicit local module routes. The installed distribution includes the browser module and guide with the existing economic application.
+
 ## Source contracts
 
 Typed package exports:

@@ -301,7 +301,4 @@ Its embedded editable review keeps both complete source histories and all
 decisions. The receiving application's existing complete-document limit still
 includes these contents.
 
-New saved reviews retain their file-aware comparison version. Earlier saved
-reviews reopen with the exact comparison and completed result originally
-recorded. Prepare a new review from the current and returned full plans when
-later output files need another decision.
+New return reviews retain reportingVersion: 2 and compare complete files together with recorded progress. Unversioned unfinished reviews reopen using the maintained separate-file comparisons wherever those comparisons preserve all original explicit decisions. Completed unversioned reviews must reproduce their exact saved complete result. If the maintained comparison cannot preserve an older decision or completed result, the receiver validates the complete review against the original historical interpretation instead; it retains the original body, sources and decisions without rewriting them. Both separate file choices and grouped progress choices expose downloads of their complete validated file bytes.

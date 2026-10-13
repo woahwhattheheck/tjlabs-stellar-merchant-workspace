@@ -1,0 +1,130 @@
+{
+  "schema": "stellar-forge.rumble-original-source.v1",
+  "repository": "woahwhattheheck/commons",
+  "commit": "1d200771562dd0a39475290b6c0b1a2a0e0c2b3e",
+  "tree": "e0dbff12fdacf443c73310b9fab534dab7436ef5",
+  "directory": "opportunities/rumble_fish_prices_workshare_2026/workbench",
+  "originalFiles": [
+    {
+      "path": "README.md",
+      "bytes": 11244,
+      "sha256": "6219633fe88d98ab27497acea39dc51e93f774e85b36fc737ac8c5953a760c2a"
+    },
+    {
+      "path": "analysis.mjs",
+      "bytes": 9965,
+      "sha256": "4d54c28c9fc61ba452b3811bcf95c277362beffe304ea9c4a2c1fabfcf9b92a9"
+    },
+    {
+      "path": "cli.mjs",
+      "bytes": 7843,
+      "sha256": "8a020f82ded45932cbf75f6678651e33aa39081c31ca4b8098f42de1e0f9d6bf"
+    },
+    {
+      "path": "client.mjs",
+      "bytes": 7270,
+      "sha256": "635941a60bc706356da3d8f1b4c9b280e4ba2fb125ffe6923fb9207dfd5514fb"
+    },
+    {
+      "path": "contract.d.mts",
+      "bytes": 1880,
+      "sha256": "9a24e7ff25b7a297ac939923b879ee49ab6fd894f2d5f8bd0acc2ba27f619cff"
+    },
+    {
+      "path": "contract.mjs",
+      "bytes": 19167,
+      "sha256": "ced01c40d63068dbe9c554ba83c223a3941e29e4573498723cb82a0d14104ae9"
+    },
+    {
+      "path": "delivery.mjs",
+      "bytes": 4004,
+      "sha256": "603f2387542551c66c5f1f99b116255a91286c5f4712bf531a8624a12e7b6a1d"
+    },
+    {
+      "path": "package.json",
+      "bytes": 1386,
+      "sha256": "0ee0fd5805c2d26197872c5f5f4a7db4f649a9e7ea07b86f4673d15865b3bcd5"
+    },
+    {
+      "path": "runner.d.mts",
+      "bytes": 9029,
+      "sha256": "cc79cc818a47f074d7edb1be44e3cc20d8d06fdd52d9a49b6bdd83afb33c9058"
+    },
+    {
+      "path": "runner.mjs",
+      "bytes": 16219,
+      "sha256": "13d79906b9d3e76ca0066cfaf0862e1d86aa85da75e8f0ff1781d3fd961c12f3"
+    },
+    {
+      "path": "server.mjs",
+      "bytes": 9295,
+      "sha256": "a4783c273a559dbdce3ce4a012fc49ca5e1f8f7d39bcd34351642dbe3e5a395c"
+    },
+    {
+      "path": "sources/provider-capture.json",
+      "bytes": 3056,
+      "sha256": "e52034bd81975e44adb78c54df2833adaf97e8d016e53e138b05e33355f623d8"
+    },
+    {
+      "path": "sources/provider.openapi.json",
+      "bytes": 58863,
+      "sha256": "d13b6d1296442d92991cf3323b23aa1b432549f0e49f57fcdcf7711fe22f7378"
+    },
+    {
+      "path": "ui/app.mjs",
+      "bytes": 26775,
+      "sha256": "493ef16666a40bfd5af5e941abe0ffe4c8b58bde0b1189f5033ccb17e3254e18"
+    },
+    {
+      "path": "ui/index.html",
+      "bytes": 22213,
+      "sha256": "e3d7e13d4db3ed3a672ba00887413441927db863d27ac2ce665f68b46712c60a"
+    },
+    {
+      "path": "ui/style.css",
+      "bytes": 7847,
+      "sha256": "ccb10e41f9649e3674024e8f36662cfb4c1b18bc3a9ef1649ebb6ec3c3239c3a"
+    },
+    {
+      "path": "workspace.mjs",
+      "bytes": 11120,
+      "sha256": "a6393004f22495516570e8cfb76c5c70badef56251a603432155e4bad45d1ad4"
+    },
+    {
+      "path": "consumer.mjs",
+      "bytes": 35599,
+      "sha256": "596d3a0114db2bc214a03f03c43a68ede253ee4b31442fb3de0e8fa4cfa64542"
+    },
+    {
+      "path": "ui/consumer.mjs",
+      "bytes": 16030,
+      "sha256": "61e351c1b1ed93ba7c902b0a285d7249d54a13803269d1f321f61dd39b24e1d0"
+    },
+    {
+      "path": "wallet.mjs",
+      "bytes": 4458,
+      "sha256": "cfb64ded9aab28a7dde5b9d9bcc43d01dd81c569308b7f02ea8eb8db5f1754a4"
+    },
+    {
+      "path": "consumer.d.mts",
+      "bytes": 6946,
+      "sha256": "fc94717f89ceec69392a72912fa04ac51a9d7fb179c4712a508ba16f32b23e1d"
+    },
+    {
+      "path": "wallet.d.mts",
+      "bytes": 581,
+      "sha256": "ff23b4272a5135780261f23a2cd883996a927808ab9649db537e3979dcb64924"
+    },
+    {
+      "path": "CONSUMER.md",
+      "bytes": 13178,
+      "sha256": "16dfa353a7c84a16e3f91a4978df6114dea1dab8accfef83b2b116ae76af564c"
+    }
+  ],
+  "installedChanges": {
+    "package": "Add standalone managed/SDK exports and portable source files; retain every original file.",
+    "workspace": "Exclude only the root private rumble.connection.json from portable workspace export.",
+    "additional": "Source-owned Applications/MCP/SDK and complete original receiving join.",
+    "delivery": "Keep the original256MiB/20000-file decoded limit; bound portable paths to4096 UTF-8 bytes without control characters so the512MiB SDK/reader encoded envelope includes Base64, escaping and full file metadata."
+  }
+}

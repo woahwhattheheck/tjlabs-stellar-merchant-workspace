@@ -1,0 +1,76 @@
+{
+  "name": "@tokenjunkielabs/stellar-prices-workbench",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "Retained customer price-data workspace for the original Rumble Fish Stellar Prices API.",
+  "engines": {
+    "node": ">=22.16.0"
+  },
+  "bin": {
+    "stellar-prices-workbench": "./cli.mjs",
+    "stellar-prices-managed": "./managed.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./runner.d.mts",
+      "import": "./runner.mjs"
+    },
+    "./client": "./client.mjs",
+    "./contract": {
+      "types": "./contract.d.mts",
+      "import": "./contract.mjs"
+    },
+    "./workspace": "./workspace.mjs",
+    "./analysis": "./analysis.mjs",
+    "./server": "./server.mjs",
+    "./delivery": "./delivery.mjs",
+    "./consumer": {
+      "types": "./consumer.d.mts",
+      "import": "./consumer.mjs"
+    },
+    "./wallet": {
+      "types": "./wallet.d.mts",
+      "import": "./wallet.mjs"
+    },
+    "./connection": {
+      "types": "./connection.d.mts",
+      "import": "./connection.mjs"
+    },
+    "./managed": {
+      "types": "./managed.d.mts",
+      "import": "./managed.mjs"
+    }
+  },
+  "files": [
+    "package.json",
+    "README.md",
+    "contract.mjs",
+    "contract.d.mts",
+    "client.mjs",
+    "workspace.mjs",
+    "runner.mjs",
+    "runner.d.mts",
+    "analysis.mjs",
+    "server.mjs",
+    "cli.mjs",
+    "delivery.mjs",
+    "ui/index.html",
+    "ui/style.css",
+    "ui/app.mjs",
+    "sources/provider.openapi.json",
+    "sources/provider-capture.json",
+    "consumer.mjs",
+    "consumer.d.mts",
+    "ui/consumer.mjs",
+    "CONSUMER.md",
+    "wallet.mjs",
+    "wallet.d.mts",
+    "connection.mjs",
+    "connection.d.mts",
+    "managed.mjs",
+    "managed.d.mts",
+    "INSTALLATION.md",
+    "SOURCE_PROVENANCE.json"
+  ]
+}

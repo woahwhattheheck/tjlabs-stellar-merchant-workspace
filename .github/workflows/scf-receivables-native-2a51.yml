@@ -1,6 +1,6 @@
 name: Original receivables native receiving
 
-run-name: "SCF-RECEIVABLES-NATIVE-2A51-20261012 · 94ad with maintained registration repair"
+run-name: "SCF-RECEIVABLES-NATIVE-2A51-20261012 · 94ad with maintained startup repair"
 
 on:
   workflow_dispatch:
@@ -26,11 +26,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - name: Receive maintained registration repairs and resume the original MCP programme
+      - name: Receive maintained startup repairs and resume the original MCP programme
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          EXPECTED_RECEIVER_BLOB: 005d8ef478d681815eb7e29a48182fd909125df6
+          EXPECTED_RECEIVER_BLOB: 1d13d8b14c451ca8ef78f987b6ee9382e000dfce
         run: |
           set -euo pipefail
           python3 - <<'PY'

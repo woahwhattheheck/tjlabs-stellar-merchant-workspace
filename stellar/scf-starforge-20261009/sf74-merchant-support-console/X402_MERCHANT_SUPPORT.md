@@ -139,7 +139,7 @@ Output-wait age begins at the original retained receipt-verification transition.
 
 A later verified receipt can resolve an earlier authority rejection. The original rejected webhook remains in the full history and rejection-record count.
 
-Source reads honor an original Retry-After deadline and reject redirects. Missing, stale, changed or incomplete source data cannot produce a healthy recovery poll. A retained history boundary must remain present on subsequent observations.
+Source reads honor an original Retry-After deadline and reject redirects. Missing, stale, changed or incomplete source data cannot produce a healthy recovery poll. Each accepted poll retains the count and canonical SHA-256 of its complete immutable history and exchange prefixes in the watcher checkpoint. A later source must preserve those original rows before it can establish recovery; preserving only the final history row is insufficient. Earlier watcher checkpoints keep their original last-row boundary and acquire complete prefix witnesses on the next accepted observation. The original capture files, summaries and v1 handoff format stay unchanged.
 
 The existing SF93 model owns failure streaks, recovery streaks, acknowledgment, notification queues, reminders and shutdown. Configure its original notification destination only when its operator has authorized delivery.
 
