@@ -3,14 +3,18 @@
 import {reopen as reopenWorkbookReview,nativeColumns as workbookNativeColumns}
  from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-columns.mjs';
 import {join,resolve} from 'node:path';
-import {initializationDirectory as directory,initializationBytes as bytes,
+import {initializationDirectory as directory,initializationBytes as bytes,optionalInitializationBytes as optionalBytes,
  retainInitializationFile as retainFile,retainInitializationRecord as retainRecord}
  from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/initialization.mjs';
 import {createEventWorkbookReviewSource,eventWorkbookReviewSourceStatus,receiveEventWorkbookReviewChunk,
  readEventWorkbookReviewSource,EVENT_WORKBOOK_REVIEW_LIMIT,EVENT_WORKBOOK_REQUEST_LIMIT}
  from './native-analysis-events-workbook-source.mjs';
+import {createEventMappingRequestSource,eventMappingRequestSourceStatus,receiveEventMappingRequestChunk,
+ readEventMappingRequestSource} from './native-analysis-events-mapping-request-source.mjs';
+import {mappingSourceSelection,mappingSourceSelectionHash,mappingSourceSummary}
+ from './native-analysis-events-mapping-contract.mjs';
 import {nativeEventOperations} from './native-analysis-events-schema.mjs';
-import {EVENT_DOWNLOAD_SCHEMA,EVENT_MAX_RECORD,EVENT_MAX_FILE,EVENT_ID,EVENT_HASH,EVENT_NAME,
+import {EVENT_DOWNLOAD_SCHEMA,EVENT_MAX_RECORD,EVENT_MAPPING_SOURCE_LIMIT,eventRecordLimit,EVENT_MAX_FILE,EVENT_ID,EVENT_HASH,EVENT_NAME,
  EVENT_FILES,eventObject as object,eventNeed as need,eventHash as sha,eventCanonical,eventMime,
  validateEventDownloadIndex} from './native-analysis-events-contract.mjs';
 const ROOT='/api/event-programmes',RECORD='stellar-forge.analysis-event-record.v1';
@@ -91,7 +95,7 @@ function selectedMapping(value){
 }
 
 function recordIdentity(kind,id){
- need(['overview','programme','action','fields','values','mapping'].includes(kind),'RECORD_KIND_INVALID');
+ need(['overview','programme','action','fields','values','mapping','mapping-source'].includes(kind),'RECORD_KIND_INVALID');
  if(kind==='overview')need(id==='overview','RECORD_ID_REQUIRED');
  else check(id,kind==='programme'?EVENT_NAME:EVENT_ID,'RECORD_ID_REQUIRED');
 }
@@ -112,7 +116,7 @@ export function createNativeEventActions({reads,parse}={}){
  return path;
  }
  async function retain(raw,record,kind,id){
- need(Buffer.isBuffer(raw)&&raw.length>=1&&raw.length<=EVENT_MAX_RECORD,'RECORD_SIZE_INVALID');
+ need(Buffer.isBuffer(raw)&&raw.length>=1&&raw.length<=eventRecordLimit(kind),'RECORD_SIZE_INVALID');
  const descriptor={schema:RECORD,workspace_id:record.workspaceId,kind,record_id:id,bytes:raw.length,sha256:sha(raw)};
  const path=await cache(record,kind,id);
  await retainFile(join(path,descriptor.sha256+'.json'),raw,{resume:true});
@@ -125,7 +129,7 @@ export function createNativeEventActions({reads,parse}={}){
  }
  async function readRecord(body,record){
  recordIdentity(body.kind,body.record_id);check(body.sha256,EVENT_HASH,'RECORD_DIGEST_REQUIRED');
- integer(body.bytes,1,EVENT_MAX_RECORD);
+ integer(body.bytes,1,eventRecordLimit(body.kind));
  const path=await cache(record,body.kind,body.record_id);
  const meta=parse(await bytes(join(path,body.sha256+'.record.json'),4096));
  need(meta.schema===RECORD&&meta.workspace_id===record.workspaceId&&meta.kind===body.kind&&
@@ -156,6 +160,22 @@ export function createNativeEventActions({reads,parse}={}){
  typeof getBytes==='function'&&typeof postBytes==='function','ORIGINAL_TRANSPORT_REQUIRED');
  const spec=nativeEventOperations[operation];fields(body,spec.required,Object.keys(spec.properties).filter(k=>!spec.required.includes(k)));
  signal?.throwIfAborted();
+ if(operation==='event-mapping-request-create')return createEventMappingRequestSource(record,body);
+ if(operation==='event-mapping-request-source')return eventMappingRequestSourceStatus(record,body.id);
+ if(operation==='event-mapping-request-chunk')return receiveEventMappingRequestChunk(record,body);
+ if((operation==='event-mapping-source'||operation==='event-review')&&body.mapping_request_source!==undefined){
+  const request=await readEventMappingRequestSource(record,body.mapping_request_source);
+  if(operation==='event-mapping-source'){
+   fields(body,['mapping_request_source']);
+   body=mappingSourceSelection(request);
+  }else{
+   fields(body,['programme','id','operation_id','mapping_request_source'],['resume']);
+   fields(request,['programme','id','operation_id','input_id','mapping','mapping_review']);
+   need(request.programme===body.programme&&request.id===body.id&&request.operation_id===body.operation_id,
+    'ORIGINAL_MAPPING_REQUEST_CHANGED');
+   body={...request,...(body.resume===undefined?{}:{resume:body.resume})};
+  }
+ }
  if(operation==='event-workbook-review-create')return createEventWorkbookReviewSource(record,body);
  if(operation==='event-workbook-review-source')return eventWorkbookReviewSourceStatus(record,body.id);
  if(operation==='event-workbook-review-chunk')return receiveEventWorkbookReviewChunk(record,body);
@@ -196,6 +216,22 @@ export function createNativeEventActions({reads,parse}={}){
   fields:page(value.fields,body.field_offset??0,body.field_limit??25,row=>({...row,
    pointer:preview(row.pointer),pointer_preview:preview(row.pointer)!==row.pointer}))};
  });
+ }
+ if(operation==='event-mapping-source'){
+ const selected=mappingSourceSelection(body),key=mappingSourceSelectionHash(selected);
+ const folder=await cache(record,'mapping-source',selected.input_id),path=join(folder,'selection-'+key+'.json');
+ let raw=await optionalBytes(path,EVENT_MAPPING_SOURCE_LIMIT);
+ if(raw===null){
+  raw=await postBytes(ROOT+'/named/'+selected.programme+'/mapping-source',
+   {input_id:selected.input_id,mapping:selected.mapping,expected:selected.expected},EVENT_MAPPING_SOURCE_LIMIT);
+  mappingSourceSummary(raw,selected,record.workspaceId);
+  signal?.throwIfAborted();
+  // One exact source selection remains recoverable after a lost reply or later native baseline.
+  await retainFile(path,raw,{resume:true});
+ }
+ const summary=mappingSourceSummary(raw,selected,record.workspaceId);
+ signal?.throwIfAborted();
+ return {...summary,complete_record:await retain(raw,record,'mapping-source',selected.input_id)};
  }
  if(operation==='event-input-create'){
  check(body.id,EVENT_ID,'INPUT_ID_REQUIRED');fields(body.files,['ndjson','manifest']);
@@ -289,8 +325,11 @@ export function createNativeEventActions({reads,parse}={}){
  if(body.mapping_review!==undefined){
   const value=body.mapping_review;fields(value,['comparison_sha256','programme_revision','baseline_operation_id','reviewer','note','decisions']);
   check(value.comparison_sha256,EVENT_HASH,'MAPPING_COMPARISON_REQUIRED');integer(value.programme_revision);
-  check(value.baseline_operation_id,EVENT_ID,'MAPPING_BASELINE_REQUIRED');label(value.reviewer,240);
-  need(typeof value.note==='string'&&value.note.trim()&&Buffer.byteLength(value.note)<=8000,'DECISION_NOTE_REQUIRED');
+  check(value.baseline_operation_id,EVENT_ID,'MAPPING_BASELINE_REQUIRED');
+  need(typeof value.reviewer==='string'&&value.reviewer.trim()&&Buffer.byteLength(value.reviewer)<=240&&
+   !/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(value.reviewer),'MAPPING_REVIEWER_REQUIRED');
+  need(typeof value.note==='string'&&value.note.trim()&&Buffer.byteLength(value.note)<=8000&&
+   !/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(value.note),'DECISION_NOTE_REQUIRED');
   need(Array.isArray(value.decisions)&&value.decisions.length<=200,'MAPPING_DECISIONS_REQUIRED');
   for(const decision of value.decisions){fields(decision,['name','reason']);check(decision.name,/^[A-Za-z][A-Za-z0-9_]{0,47}$/,'FIELD_NAME_INVALID');
    need(typeof decision.reason==='string'&&decision.reason.trim()&&Buffer.byteLength(decision.reason)<=4000,'MAPPING_REASON_REQUIRED');}
