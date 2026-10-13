@@ -67,6 +67,10 @@ FIELDS = {
     ] + FINANCIAL + ["record_json", "issues_json"],
 }
 
+from geography_source import (LOCATION_FIELDS, COORDINATE_STATUSES, EXACTNESS, LOCATION_CLASS,
+                              LOCATION_REACH, location_rows, CONTRACT as GEOGRAPHY_CONTRACT)
+FIELDS["locations"] = COMMON + LOCATION_FIELDS
+
 def canonical(value):
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
 
@@ -495,7 +499,7 @@ def validate_plan(raw):
         raise InputError("Use the current IATI 2.03 mapping schema and domain version")
     collection = raw.get("collection")
     if collection not in FIELDS:
-        raise InputError("Choose activities, transactions or budgets")
+        raise InputError("Choose activities, transactions, budgets or locations")
     name = raw.get("name", "IATI " + collection)
     if not isinstance(name, str) or not name.strip() or utf16_length(name) > 128 or re.search(r"[\x00-\x1f\x7f]", name):
         raise InputError("Dataset name must be printable text of 1–128 UTF-16 code units")
@@ -509,9 +513,11 @@ def validate_plan(raw):
     fields = list(fields)
     selection = raw.get("selection", {})
     permitted = {"activityIds"}
-    if collection != "activities":
+    if collection in {"transactions", "budgets"}:
         permitted |= {"currencies", "dateFrom", "dateTo",
                       "transactionTypes" if collection == "transactions" else "budgetTypes"}
+    if collection == "locations":
+        permitted |= {"coordinateStatuses", "exactness", "locationClasses", "locationReaches"}
     if not isinstance(selection, dict) or set(selection) - permitted:
         raise InputError("Selection field is not applicable to this collection")
     selected = {}
@@ -529,11 +535,16 @@ def validate_plan(raw):
                 raise InputError("Select IATI transaction type codes 1–13")
             if key == "budgetTypes" and any(v not in BUDGET_TYPES for v in values):
                 raise InputError("Select original 1 and/or revised 2 budgets")
+            location_codes = {"coordinateStatuses": COORDINATE_STATUSES, "exactness": EXACTNESS,
+                              "locationClasses": LOCATION_CLASS, "locationReaches": LOCATION_REACH}
+            if key in location_codes and any(v not in location_codes[key] for v in values):
+                raise InputError("Unknown IATI geography selection code: " + key)
             if values:
                 selected[key] = sorted(set(values))
     if selected.get("dateFrom", "0000") > selected.get("dateTo", "9999"):
         raise InputError("Selection start date follows its end date")
-    filters = sorted(v for v in ("activity_id", "reporting_org_ref", "currency", "transaction_type", "budget_type", "budget_status", "financial_eligible") if v in fields)
+    filters = sorted(v for v in ("activity_id", "reporting_org_ref", "currency", "transaction_type", "budget_type", "budget_status", "financial_eligible", "coordinate_status", "location_present", "exactness",
+                               "location_class", "location_reach", "location_ref") if v in fields)
     range_candidates = ("transaction_day", "period_start_day", "period_end_day")
     ranges = sorted(v for v in range_candidates if v in fields)
     sorts = sorted(v for v in ("row_id", "activity_id", "title", "transaction_day", "period_start_day") if v in fields)
@@ -570,6 +581,7 @@ def presets():
             "collections": [{"collection": collection, "label": collection.title(),
                              "fields": FIELDS[collection], "plan": preset(collection)}
                             for collection in FIELDS],
+            "geography": GEOGRAPHY_CONTRACT,
             "transactionTypes": TRANSACTION_TYPES, "budgetTypes": BUDGET_TYPES,
             "budgetStatuses": BUDGET_STATUSES,
             "currencyCatalog": {"asOf": CURRENCY_CATALOG_DATE, "codes": sorted(CURRENCY_CODES),
@@ -579,7 +591,9 @@ def presets():
 def selected(row, plan):
     selection, collection = plan["selection"], plan["collection"]
     for key, column in (("activityIds", "activity_id"), ("currencies", "currency"),
-                        ("transactionTypes", "transaction_type"), ("budgetTypes", "budget_type")):
+                        ("transactionTypes", "transaction_type"), ("budgetTypes", "budget_type"),
+                        ("coordinateStatuses", "coordinate_status"), ("exactness", "exactness"),
+                        ("locationClasses", "location_class"), ("locationReaches", "location_reach")):
         if key in selection and row.get(column) not in selection[key]:
             return False
     start, end = selection.get("dateFrom"), selection.get("dateTo")
@@ -611,6 +625,8 @@ def extract(stream, plan, on_record, cancel=None):
             raise InputError("Publisher source exceeds one million distinct activities")
         if plan["collection"] == "activities":
             rows = [activity_row(activity, plan["language"])]
+        elif plan["collection"] == "locations":
+            rows = location_rows(activity, plan["language"])
         else:
             rows = financial_rows(activity, plan["collection"], plan["language"])
         for row in rows:

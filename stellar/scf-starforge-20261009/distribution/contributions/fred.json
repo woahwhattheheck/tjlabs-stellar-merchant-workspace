@@ -1,12 +1,12 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "fred",
-  "description": "FRED and ALFRED economic editions, recurring briefings and original release/vintage planning",
+  "description": "FRED and ALFRED economic editions, recurring briefings, release planning, complete DDP package migration and QCEW county reports",
   "commands": {
     "fred": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/cli.mjs"
   },
   "commandDescriptions": {
-    "fred": "Acquire original sources, plan release vintages, review recurring briefings and operate economic editions"
+    "fred": "Acquire original economic sources, migrate DDP packages, review recurring briefings and produce county reports"
   },
   "exports": {
     "./seller/fred": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/merchant.mjs",
@@ -42,6 +42,50 @@
     "./seller/fred/releases/project": {
       "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/project-types.d.mts",
       "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/project.mjs"
+    },
+    "./seller/fred/qcew": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/index.d.mts",
+      "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/index.mjs"
+    },
+    "./seller/fred/ddp/files": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/files.d.mts",
+      "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/files.mjs"
+    },
+    "./seller/fred/ddp/crosswalk": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/crosswalk.d.mts",
+      "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/crosswalk.mjs"
+    },
+    "./seller/fred/ddp/package": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/package.d.mts",
+      "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/package.mjs"
+    },
+    "./seller/fred/ddp/periods": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/periods.d.mts",
+      "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/periods.mjs"
+    },
+    "./seller/fred/ddp/migration": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/migration.d.mts",
+      "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/migration.mjs"
+    },
+    "./seller/fred/ddp/receiving": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/receiving.d.mts",
+      "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/receiving.mjs"
+    },
+    "./seller/fred/ddp/source": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/source.d.mts",
+      "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/source.mjs"
+    },
+    "./seller/fred/ddp/project": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/project-types.d.mts",
+      "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/project.mjs"
+    },
+    "./seller/fred/ddp/project-validation": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/project-validation.d.mts",
+      "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/project-validation.mjs"
+    },
+    "./seller/fred/ddp/receiving-report": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/receiving-report.d.mts",
+      "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/receiving-report.mjs"
     }
   },
   "applicationProviders": {
@@ -71,6 +115,69 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/project-cli.d.mts",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/project-types.d.mts",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/PROJECT.md",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/releases.js"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/releases.js",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/model.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/profile.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/source.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/calculate.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/report.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/state.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/files.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/project.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/bundle.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/cli.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/native-journey.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/source_fetch.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/README.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/index.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/index.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/files.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/csv.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/crosswalk.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/xml.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/zip.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/package-csv.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/package-xml.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/package.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/periods.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/migration.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/receiving.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/source.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/acquisition-cli.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/files.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/crosswalk.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/package.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/periods.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/migration.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/receiving.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/source.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/acquisition-cli.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/README.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/examples/h15-migration.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/examples/h15-source.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/project-state.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/project-validation.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/receiving-report.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/workspace.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/qcew.js",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/WORKSPACE.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/workspace-journey.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/project-validation.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/receiving-report.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/project-cli.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/project-cli.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/project-types.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/PROJECT.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/ddp.js",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/http.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/canonical-stream.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/canonical-stream.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-workspace.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-workspace.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-http.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/publication-cli.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/PUBLISHED-WORKSPACE.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/ddp-published.js",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/json-response.mjs"
   ]
 }

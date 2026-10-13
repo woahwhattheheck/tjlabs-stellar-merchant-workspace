@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Merchant workspace</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.mjs"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div><span class="eyebrow">OPERATIONS</span><h1>Merchant workspace</h1></div>
+    <div class="connection"><span id="connection-state">Disconnected</span><button id="disconnect" class="quiet" hidden>Disconnect</button></div>
+  </header>
+  <main>
+    <section id="connect-panel" class="panel access-panel" aria-labelledby="access-title">
+      <div><h2 id="access-title">Open this workspace</h2><p>Enter your operator token to manage invoices, payment requests and completed results.</p></div>
+      <form id="connect-form"><label for="operator-token">Operator token</label><div class="inline"><input id="operator-token" type="password" autocomplete="off" spellcheck="false" required minlength="32"><button type="submit">Connect</button></div></form>
+    </section>
+    <p id="message" class="notice" role="status" aria-live="polite" hidden></p>
+    <div id="workspace" hidden>
+      <section class="summary" aria-label="Order overview">
+        <div><span>Total invoices</span><strong id="count-total">0</strong></div>
+        <div><span>Awaiting payment</span><strong id="count-awaiting">0</strong></div>
+        <div><span>In progress</span><strong id="count-progress">0</strong></div>
+        <div><span>Delivered</span><strong id="count-complete">0</strong></div>
+      </section>
+      <div class="toolbar"><div><h2>Invoices</h2><p id="template-line" class="muted"></p></div><div class="inline"><button id="refresh" class="secondary">Refresh</button><button id="show-create">New invoice</button></div></div>
+      <section id="create-panel" class="panel" hidden aria-labelledby="create-title">
+        <div class="section-heading"><h3 id="create-title">Create invoice</h3><button id="hide-create" class="quiet">Close</button></div>
+        <form id="create-form">
+          <div class="form-grid"><label>Reference<input name="reference" required maxlength="120" autocomplete="off" placeholder="INV-1042"></label><label>Description<input name="title" required maxlength="180" autocomplete="off" placeholder="Monthly reporting package"></label></div>
+          <fieldset><legend>Payment options</legend><p class="muted">Select the accepted assets and enter the exact price for each.</p><div id="rail-fields" class="rail-fields"></div></fieldset>
+          <div class="form-actions"><span id="creation-note" class="muted"></span><button type="submit" id="create-submit">Save invoice</button></div>
+        </form>
+      </section>
+      <div class="work-grid">
+        <section class="panel order-panel" aria-label="Invoice list">
+          <label class="search-label">Find invoice<input id="search" type="search" placeholder="Reference, description or ID" autocomplete="off"></label>
+          <div class="table-scroll"><table><thead><tr><th>Invoice</th><th>Amount</th><th>State</th></tr></thead><tbody id="order-rows"></tbody></table></div>
+          <p id="empty-list" class="empty">Create an invoice to begin.</p>
+        </section>
+        <section id="detail-panel" class="panel detail-panel" aria-labelledby="detail-title">
+          <div id="detail-empty" class="empty"><h3>Choose an invoice</h3><p>Payment terms, delivery progress and the completed result appear here.</p></div>
+          <div id="detail-content" hidden>
+            <div class="section-heading"><div><span id="detail-reference" class="eyebrow"></span><h3 id="detail-title"></h3></div><span id="detail-state" class="state"></span></div>
+            <dl id="detail-facts" class="facts"></dl>
+            <section class="subsection"><h4>Payment and delivery</h4><p id="detail-guidance" class="muted"></p><div class="actions"><button id="create-charge">Create payment request</button><button id="download-envelope" class="secondary">Download payment request</button><button id="reconcile" class="secondary">Refresh payment</button><button id="download-result">Download result</button></div></section>
+            <form id="signature-form" class="subsection"><label for="signature">Buyer payment authorization</label><p class="muted">Paste the complete PAYMENT-SIGNATURE returned by the buyer’s wallet.</p><textarea id="signature" rows="3" spellcheck="false" autocomplete="off"></textarea><div class="form-actions"><span class="muted">The original authorization is retained for retries.</span><button type="submit">Submit authorization</button></div></form>
+            <section class="subsection"><h4>Activity</h4><ol id="history" class="history"></ol></section>
+          </div>
+        </section>
+      </div>
+      <footer><span id="tenant-label"></span><span>Merchant operations · x402 API</span></footer>
+    </div>
+  </main>
+</body>
+</html>

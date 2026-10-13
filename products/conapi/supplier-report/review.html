@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Supplier feed review</title>
+  <link rel="stylesheet" href="./review-ui.css">
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f5f5f5; color: #202020; font: 14px/1.45 system-ui, sans-serif; }
+    .shell { max-width: 1560px; margin: 0 auto; padding: 24px; }
+    .shell-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; padding-bottom: 16px; border-bottom: 2px solid #333; }
+    .shell-header h1 { font-size: 24px; line-height: 1.2; margin: 0 0 6px; font-weight: 650; }
+    .shell-header p { margin: 0; max-width: 72ch; color: #555; }
+    .shell-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+    .shell button, .shell-upload { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 7px 12px; border: 1px solid #777; border-radius: 2px; background: #fff; color: #202020; font: inherit; cursor: pointer; }
+    .shell button:hover, .shell-upload:hover { background: #e9e9e9; }
+    .shell button:focus-visible, .shell-upload:focus-within, .shell input:focus-visible, .shell summary:focus-visible { outline: 2px solid #222; outline-offset: 3px; }
+    .shell button:disabled { color: #777; cursor: default; background: #eee; border-color: #bbb; }
+    .shell .shell-primary { background: #292929; color: #fff; border-color: #292929; }
+    .shell .shell-primary:hover { background: #111; }
+    .shell-upload { position: relative; overflow: hidden; }
+    .shell-upload input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
+    .shell-upload[aria-disabled="true"] { opacity: .6; cursor: default; }
+    .shell-spacer { flex: 1; }
+    .shell-state { margin: 0; color: #555; font-size: 13px; }
+    .shell-comparison { background: #fff; border: 1px solid #b9b9b9; margin-bottom: 16px; }
+    .shell-comparison summary { padding: 12px 16px; cursor: pointer; font-weight: 600; }
+    .shell-form { padding: 0 16px 16px; }
+    .shell-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; }
+    .shell-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+    .shell-field label { font-weight: 550; }
+    .shell-field input { width: 100%; min-height: 36px; padding: 7px 9px; border: 1px solid #999; border-radius: 2px; background: #fff; color: #202020; font: inherit; }
+    .shell-field input[type=file] { padding: 5px; }
+    .shell-field small { color: #555; }
+    .shell-full { grid-column: 1 / -1; }
+    .shell-form-actions { margin-top: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .shell-form-actions p { margin: 0; color: #555; max-width: 80ch; }
+    .shell-notice { padding: 12px 14px; border: 1px solid #777; background: #fff; margin: 12px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .shell-notice:empty { display: none; }
+    .shell-placeholder { padding: 32px 24px; border: 1px dashed #aaa; background: #fff; }
+    .shell-placeholder h2 { font-size: 18px; margin: 0 0 6px; }
+    .shell-placeholder p { margin: 0; color: #555; max-width: 80ch; }
+    .shell-footer { padding-top: 20px; color: #555; font-size: 12px; }
+    [hidden] { display: none !important; }
+    @media (max-width: 760px) { .shell { padding: 14px; } .shell-grid { grid-template-columns: 1fr; } .shell-header h1 { font-size: 22px; } .shell-spacer { display: none; } }
+    @media print { .shell-toolbar, .shell-comparison, .shell-footer { display: none; } .shell { max-width: none; padding: 0; } body { background: #fff; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="shell-header">
+      <div>
+        <h1>Supplier feed review</h1>
+        <p>Compare two editions, resolve changes, and export the reviewed result with its source records.</p>
+      </div>
+      <p id="shell-current" class="shell-state" aria-live="polite">No comparison loaded</p>
+    </header>
+
+    <div class="shell-toolbar" aria-label="Workspace actions">
+      <button id="shell-new" type="button" disabled>New comparison</button>
+      <label id="shell-upload-label" class="shell-upload" aria-disabled="true">
+        Open workspace
+        <input id="shell-workspace-file" type="file" accept=".json,application/json" disabled aria-label="Open a saved workspace JSON file">
+      </label>
+      <button id="shell-save" type="button" disabled>Save workspace</button>
+      <span class="shell-spacer"></span>
+      <p id="shell-save-state" class="shell-state" aria-live="polite">Loading review tools…</p>
+    </div>
+
+    <div id="shell-error" class="shell-notice" role="alert"></div>
+
+    <details id="shell-comparison" class="shell-comparison" open>
+      <summary>Create a comparison from CSV files</summary>
+      <form id="shell-form" class="shell-form">
+        <div class="shell-grid">
+          <div class="shell-field">
+            <label for="shell-request">Request ID</label>
+            <input id="shell-request" name="request" type="text" required autocomplete="off" placeholder="supplier-feed-2026-10">
+            <small>Use the same request ID when reopening or handing off this review.</small>
+          </div>
+          <div class="shell-field">
+            <label for="shell-rules">Mapping and review rules</label>
+            <input id="shell-rules" name="rules" type="file" accept=".json,application/json" required>
+            <small>Select the rules JSON for this supplier mapping.</small>
+          </div>
+          <div class="shell-field">
+            <label for="shell-baseline">Baseline CSV</label>
+            <input id="shell-baseline" name="baseline" type="file" accept=".csv,text/csv,text/plain" required>
+            <small>The existing or earlier edition.</small>
+          </div>
+          <div class="shell-field">
+            <label for="shell-candidate">Candidate CSV</label>
+            <input id="shell-candidate" name="candidate" type="file" accept=".csv,text/csv,text/plain" required>
+            <small>The incoming edition to review.</small>
+          </div>
+          <div class="shell-field">
+            <label for="shell-baseline-source">Baseline source ID</label>
+            <input id="shell-baseline-source" name="baseline-source" type="text" autocomplete="off" placeholder="Defaults to the selected file name">
+          </div>
+          <div class="shell-field">
+            <label for="shell-candidate-source">Candidate source ID</label>
+            <input id="shell-candidate-source" name="candidate-source" type="text" autocomplete="off" placeholder="Defaults to the selected file name">
+          </div>
+          <div class="shell-field">
+            <label for="shell-baseline-captured">Baseline capture time, if known</label>
+            <input id="shell-baseline-captured" name="baseline-captured" type="text" autocomplete="off" placeholder="2026-10-12T12:00:00Z">
+            <small>Leave blank to record the time this file is imported.</small>
+          </div>
+          <div class="shell-field">
+            <label for="shell-candidate-captured">Candidate capture time, if known</label>
+            <input id="shell-candidate-captured" name="candidate-captured" type="text" autocomplete="off" placeholder="2026-10-12T15:00:00Z">
+            <small>Original file name and last modified time are retained separately.</small>
+          </div>
+        </div>
+        <div class="shell-form-actions">
+          <button id="shell-create" class="shell-primary" type="submit" disabled>Create comparison</button>
+          <p>The workspace keeps both source editions, mapping rules, and the complete decision history. Save it to continue in another session.</p>
+        </div>
+      </form>
+    </details>
+
+    <section id="shell-review" aria-label="Supplier comparison review">
+      <div class="shell-placeholder">
+        <h2>Start with two source editions</h2>
+        <p>Create a comparison above, or open a saved workspace to continue reviewing its changes.</p>
+      </div>
+    </section>
+    <section id="shell-workbook" aria-label="Offline workbook review"></section>
+    <footer class="shell-footer">CSV and workspace files are read in this browser. XLSX conversion uses this original local server. Use the command-line export for a complete delivery folder.</footer>
+  </main>
+
+  <script type="module">
+    const byId = id => document.getElementById(id);
+    const elements = {
+      current: byId('shell-current'), new: byId('shell-new'), uploadLabel: byId('shell-upload-label'),
+      workspaceFile: byId('shell-workspace-file'), save: byId('shell-save'), saveState: byId('shell-save-state'),
+      error: byId('shell-error'), details: byId('shell-comparison'), form: byId('shell-form'),
+      request: byId('shell-request'), rules: byId('shell-rules'), baseline: byId('shell-baseline'),
+      candidate: byId('shell-candidate'), baselineSource: byId('shell-baseline-source'),
+      candidateSource: byId('shell-candidate-source'), baselineCaptured: byId('shell-baseline-captured'),
+      candidateCaptured: byId('shell-candidate-captured'), create: byId('shell-create'), review: byId('shell-review'), workbook: byId('shell-workbook')
+    };
+    let domain;
+    let mountSupplierReview;
+    let controller;
+    let workbookController;
+    let report;
+    let dirty = false;
+    let busy = false;
+    let ready = false;
+
+    const stripJSONBOM = value => value.replace(/^\uFEFF/, '');
+    const safeFilename = value => String(value || 'supplier-review').replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^[.-]+/, '').slice(0, 120) || 'supplier-review';
+
+    function renderState() {
+      workbookController?.setExternalBusy(busy);
+      elements.new.disabled = !ready || busy;
+      elements.workspaceFile.disabled = !ready || busy;
+      elements.uploadLabel.setAttribute('aria-disabled', String(!ready || busy));
+      elements.create.disabled = !ready || busy;
+      elements.save.disabled = !report || busy;
+      if (report) {
+        elements.current.textContent = report.requestId + ' · revision ' + report.revision + ' · ' + report.status.replaceAll('_', ' ');
+      }
+      elements.saveState.textContent = busy ? 'Working…' : !ready ? 'Loading review tools…' : dirty ? 'Unsaved changes' : report ? 'Workspace ready' : 'Ready';
+    }
+
+    function showError(failure) {
+      elements.error.textContent = (failure.code ? failure.code + ': ' : '') + failure.message;
+    }
+
+    function download({ filename, mimeType = 'text/plain;charset=utf-8', content }) {
+      const body = content instanceof Blob ? content : new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(body);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = safeFilename(filename);
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      return true;
+    }
+
+    function setReport(nextReport, changed) {
+      report = nextReport;
+      dirty = changed;
+      if (controller) controller.setReport(report);
+      else {
+        elements.review.replaceChildren();
+        controller = mountSupplierReview(elements.review, {
+          report,
+          onChange(next) { report = next; dirty = true; workbookController?.setReport(next); renderState(); },
+          onExport(payload) { return download(payload); }
+        });
+      }
+      workbookController?.setReport(report);
+      elements.details.open = false;
+      renderState();
+    }
+
+    function mayReplace() {
+      return !dirty || window.confirm('This workspace has unsaved changes. Replace it with another comparison?');
+    }
+
+    async function readFile(file) {
+      if (!file) throw new Error('Select the required input files.');
+      const bytes = await file.arrayBuffer();
+      try {
+        return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+      } catch {
+        throw new Error(file.name + ' is not valid UTF-8. Save a UTF-8 version before importing it.');
+      }
+    }
+
+    async function makeEdition(file, side, csv, sourceId, capturedAt, requestId) {
+      const importedAt = new Date().toISOString();
+      return domain.createEdition({
+        id: requestId + ':' + side,
+        sourceId: sourceId.trim() || 'file:' + file.name,
+        capturedAt: capturedAt.trim() || importedAt,
+        csv,
+        source: {
+          kind: 'browser_file', filename: file.name, byteLength: file.size,
+          modifiedAt: new Date(file.lastModified).toISOString(), importedAt
+        }
+      });
+    }
+
+    async function run(action) {
+      if (busy || !ready) return;
+      busy = true;
+      elements.error.textContent = '';
+      renderState();
+      try { await action(); }
+      catch (failure) { showError(failure); }
+      finally { busy = false; renderState(); }
+    }
+
+    elements.new.addEventListener('click', () => {
+      elements.details.open = true;
+      elements.request.focus();
+    });
+
+    elements.workspaceFile.addEventListener('change', () => run(async () => {
+      const file = elements.workspaceFile.files[0];
+      if (!file) return;
+      try {
+        if (!mayReplace()) return;
+        const text = await readFile(file);
+        setReport(domain.reopenWorkspace(stripJSONBOM(text)), false);
+      } finally { elements.workspaceFile.value = ''; }
+    }));
+
+    elements.save.addEventListener('click', () => {
+      if (!report || busy) return;
+      try {
+        download({
+          filename: safeFilename(report.requestId) + '-r' + report.revision + '.workspace.json',
+          mimeType: 'application/json;charset=utf-8',
+          content: domain.serializeWorkspace(report)
+        });
+        dirty = false;
+        renderState();
+      } catch (failure) { showError(failure); }
+    });
+
+    elements.form.addEventListener('submit', event => {
+      event.preventDefault();
+      run(async () => {
+        if (!elements.form.reportValidity() || !mayReplace()) return;
+        const requestId = elements.request.value.trim();
+        if (!requestId) throw new Error('Enter a request ID.');
+        const baselineFile = elements.baseline.files[0];
+        const candidateFile = elements.candidate.files[0];
+        const rulesFile = elements.rules.files[0];
+        const [baselineCSV, candidateCSV, rulesText] = await Promise.all([
+          readFile(baselineFile), readFile(candidateFile), readFile(rulesFile)
+        ]);
+        let rules;
+        try { rules = JSON.parse(stripJSONBOM(rulesText)); }
+        catch (failure) { throw new Error('Rules JSON is invalid: ' + failure.message); }
+        const baseline = await makeEdition(baselineFile, 'baseline', baselineCSV, elements.baselineSource.value, elements.baselineCaptured.value, requestId);
+        const candidate = await makeEdition(candidateFile, 'candidate', candidateCSV, elements.candidateSource.value, elements.candidateCaptured.value, requestId);
+        setReport(domain.reconcile({ requestId, baseline, candidate, rules }), true);
+      });
+    });
+
+    window.addEventListener('beforeunload', event => {
+      if (dirty) { event.preventDefault(); event.returnValue = ''; }
+    });
+
+    try {
+      const modules = await Promise.all([import('./supplier-report.mjs'), import('./review-ui.mjs'), import('./review-workbook-ui.mjs')]);
+      domain = modules[0];
+      mountSupplierReview = modules[1].mountSupplierReview;
+      if (typeof mountSupplierReview !== 'function') throw new Error('The review interface module is incomplete.');
+      workbookController = modules[2].mountWorkbookReview(elements.workbook, {
+        getReport: () => report,
+        onChange: next => setReport(next, true),
+        onBusy: value => { busy = value; elements.review.inert = value; elements.form.inert = value; renderState(); },
+        onError: showError,
+        mayReplace
+      });
+      ready = true;
+      renderState();
+    } catch (failure) {
+      elements.saveState.textContent = 'Review tools could not be loaded';
+      elements.error.textContent = 'Open this package using “node supplier-report-cli.mjs serve”, then use the displayed http://127.0.0.1 address.\n' + failure.message;
+    }
+  </script>
+</body>
+</html>

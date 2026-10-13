@@ -19,7 +19,12 @@ import tempfile
 import traceback
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE.parent))
+# Direct script execution puts results/ first. Keep its workspace.py out of
+# top-level imports so the original XML workspace remains the shared base.
+if sys.path and Path(sys.path[0] or os.curdir).resolve() == HERE:
+    sys.path[0] = str(HERE.parent)
+else:
+    sys.path.insert(0, str(HERE.parent))
 from iati_source import InputError, fingerprint, MAX_SOURCE
 from iati_workspace import IatiWorkspace
 from workspace import json_bytes, load_json, file_digest, regular

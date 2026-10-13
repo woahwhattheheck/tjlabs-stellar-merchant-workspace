@@ -31,3 +31,8 @@
   .planning-source-tables .pt-panel { padding:.7rem; }
   .planning-source-tables .pt-actions button { flex:1 1 180px; }
 }
+
+.planning-source-tables .pt-workbook-cell { display:grid; gap:.25rem; min-width:8rem; max-width:28rem; overflow-wrap:anywhere; }
+.planning-source-tables .pt-workbook-value { white-space:pre-wrap; }
+.planning-source-tables .pt-workbook-policies { display:grid; gap:.4rem; min-width:17rem; }
+.planning-source-tables .pt-workbook-policies .pt-field { margin:0; }

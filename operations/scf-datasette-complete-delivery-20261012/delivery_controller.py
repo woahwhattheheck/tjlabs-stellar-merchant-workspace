@@ -26,7 +26,9 @@ os.umask(0o077);sys.dont_write_bytecode=True
 original_root=os.environ.get("DATASETTE_DELIVERY_ROOT")
 root=P(original_root).resolve(strict=True) if original_root else P(tempfile.mkdtemp(prefix="datasette-publisher-a49aa-",dir="/dev"))
 if original_root and not (root/"delivery-input.json").is_file():raise RuntimeError("Resume requires the complete retained original delivery directory.")
-tmp=root/"private-temp";tmp.mkdir(mode=0o700,exist_ok=True)
+transfer_root=P(os.environ.get("DATASETTE_TRANSFER_DIRECTORY",str(root)))
+transfer_root.mkdir(mode=0o700,parents=True,exist_ok=True)
+tmp=transfer_root/"private-temp";tmp.mkdir(mode=0o700,exist_ok=True)
 os.environ["TMPDIR"]=str(tmp);tempfile.tempdir=str(tmp)
 os.environ.setdefault("AZCOPY_CONCURRENCY_VALUE","4")
 os.environ["GIT_TERMINAL_PROMPT"]="0"
@@ -108,6 +110,117 @@ def run(arguments,label,cwd=None,timeout=None):
     if code:
         raise RuntimeError(label+" returned "+str(code)+": "+err.read_text(errors="replace")[-6000:])
     return {"returncode":code,"stdout":str(out),"stderr":str(err)}
+def persist_complete_phase(original_outcome,phase):
+    outcome=json.loads(json.dumps(original_outcome))
+    outcome["checkpoint_phase"]=phase
+    if phase=="publisher":outcome["state"]="PUBLISHER_COMPLETE"
+    delivery_result={}
+    def delivered(**values):
+        delivery_result.update({"state":outcome["state"],"checkpoint_phase":phase,**values})
+        emit("datasette_delivery_saved",**delivery_result)
+    outcome["finished_at"]=stamp()
+    capacity={"observed_at":stamp(),"cgroup":{},"filesystems":{}}
+    for name in ("memory.stat","memory.current","memory.max","memory.events"):
+        path=P("/sys/fs/cgroup")/name
+        try:capacity["cgroup"][name]=path.read_text(encoding="utf-8").strip()
+        except OSError as error:capacity["cgroup"][name]={"error":type(error).__name__,"errno":error.errno}
+    for selected_path in ("/workspace/scratch/49aa6abb32bb","/dev/shm","/dev","/mnt/data"):
+        try:
+            value=os.statvfs(selected_path)
+            capacity["filesystems"][selected_path]={"total_bytes":value.f_blocks*value.f_frsize,"free_bytes":value.f_bfree*value.f_frsize,"available_bytes":value.f_bavail*value.f_frsize,"free_inodes":value.f_favail}
+        except OSError as error:capacity["filesystems"][selected_path]={"error":type(error).__name__,"errno":error.errno}
+    outcome["host_capacity_at_save"]=capacity
+    save_json(root/"host-capacity-at-save.json",capacity)
+    emit("datasette_host_capacity_at_save",**capacity)
+    report=root/("Datasette_Publisher_Complete_Result.json" if phase=="publisher" else "Datasette_Publisher_Installed_Operating_Result.json")
+    save_json(report,outcome)
+    prior_manifest=root/"complete-checkpoint-manifest.json"
+    if prior_manifest.is_file():
+        previous_digest=digest(prior_manifest)
+        retained_manifest=root/"run-history"/"checkpoint-manifests"/(previous_digest+".json")
+        retained_manifest.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
+        if retained_manifest.exists():
+            if digest(retained_manifest)!=previous_digest:raise RuntimeError("The preceding checkpoint manifest changed.")
+        else:shutil.copy2(prior_manifest,retained_manifest)
+    export=transfer_root/"export";export.mkdir(mode=0o700,exist_ok=True)
+    archive_path=export/("Datasette_Publisher_Complete_Checkpoint.zip" if phase=="publisher" else "Datasette_Publisher_Installed_Operating_Checkpoint.zip")
+    members=[];directories=[];excluded=[]
+    with zipfile.ZipFile(archive_path,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=6,allowZip64=True) as z:
+        for folder,dirs,files in os.walk(root,followlinks=False):
+            if P(folder)!=root:
+                info=P(folder).stat()
+                directories.append({"path":P(folder).relative_to(root).as_posix(),"mode":stat.S_IMODE(info.st_mode),"mtime_ns":info.st_mtime_ns})
+            dirs.sort();files.sort()
+            for name in list(dirs):
+                path=P(folder)/name
+                if path in (tmp,export):
+                    excluded.append({"path":path.relative_to(root).as_posix(),"kind":"reproducible-temporary-cache" if path==tmp else "generated-export"});dirs.remove(name)
+                elif path.is_symlink():
+                    info=path.lstat();rel=path.relative_to(root).as_posix()
+                    data=os.readlink(path).encode()
+                    zi=zipfile.ZipInfo(rel);zi.create_system=3;zi.external_attr=(stat.S_IFLNK|0o777)<<16;z.writestr(zi,data)
+                    members.append({"path":rel,"kind":"symlink","target":os.readlink(path)});dirs.remove(name)
+            for name in files:
+                path=P(folder)/name;rel=path.relative_to(root).as_posix();info=path.lstat()
+                if rel=="complete-checkpoint-manifest.json":excluded.append({"path":rel,"kind":"preceding-manifest-preserved-in-run-history"});continue
+                if stat.S_ISSOCK(info.st_mode):excluded.append({"path":rel,"kind":"runtime-socket"});continue
+                if stat.S_ISLNK(info.st_mode):
+                    data=os.readlink(path).encode();zi=zipfile.ZipInfo(rel);zi.create_system=3;zi.external_attr=(stat.S_IFLNK|0o777)<<16;z.writestr(zi,data)
+                    members.append({"path":rel,"kind":"symlink","target":os.readlink(path)});continue
+                if not stat.S_ISREG(info.st_mode):excluded.append({"path":rel,"kind":"non-regular-runtime-member"});continue
+                z.write(path,rel);members.append({"path":rel,"bytes":info.st_size,"sha256":digest(path),"mtime_ns":info.st_mtime_ns})
+        z.writestr("complete-checkpoint-manifest.json",json.dumps({"schema":"commons.datasette-complete-checkpoint.v1","operation":OP,"original_root":str(root),"state":outcome["state"],"source":source_identity,"files":members,"directories":directories,"excluded":excluded},indent=2)+"\n")
+    archive_identity={"file_name":archive_path.name,"bytes":archive_path.stat().st_size,"sha256":digest(archive_path),"members":len(members)+1}
+    emit("datasette_complete_checkpoint",state=outcome["state"],**archive_identity)
+    def save_files(paths,label):
+        request={"uploads":[{"local_path":str(path),"purpose":"create_library_file","library_artifact_type":"report" if path.suffix==".json" else "other"} for path in paths]}
+        completed=subprocess.run([sys.executable,helpers/"library_private_upload.py",tmp],input=json.dumps(request).encode(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        (tmp/(label+".stdout")).write_bytes(completed.stdout);(tmp/(label+".stderr")).write_bytes(completed.stderr)
+        for line in completed.stderr.decode(errors="replace").splitlines():
+            if line.startswith("__OPENAI_LIBRARY_FILE_WRITE_RECEIPT_V1__"):print(line,flush=True)
+        if completed.returncode:raise RuntimeError("Canonical save helper failed: "+str(completed.returncode))
+        response=json.loads(completed.stdout);rows=response.get("results")
+        if not isinstance(rows,list) or len(rows)!=len(paths):raise RuntimeError("The canonical save returned another artifact selection.")
+        for path,row in zip(paths,rows):
+            if row.get("local_path")!=str(path):raise RuntimeError("The save returned another original local file.")
+            if row.get("status")=="succeeded" and not succeeded(row):raise RuntimeError("The saved file identity is incomplete.")
+        return rows
+    saved=save_files([archive_path,report],"complete-save-01")
+    for i,row in enumerate(saved):
+        if not succeeded(row) and row.get("error_code")=="transfer_failed":
+            emit("datasette_save_transfer_retry",artifact=[archive_path,report][i].name)
+            saved[i]=save_files([[archive_path,report][i]],"complete-save-retry-"+str(i))[0]
+    if all(succeeded(row) for row in saved):
+        delivered(mode="complete_archive",archive=archive_identity,saved=[public_save(row) for row in saved])
+    else:
+        parts=[];partsdir=export/"parts";partsdir.mkdir(mode=0o700,exist_ok=True)
+        with archive_path.open("rb") as source:
+            while True:
+                data=source.read(10*1024*1024)
+                if not data:break
+                path=partsdir/(archive_path.name+".part-"+str(len(parts)+1).zfill(3));path.write_bytes(data);parts.append(path)
+        rows=save_files(parts,"complete-parts-save-01")
+        for i,row in enumerate(rows):
+            if not succeeded(row) and row.get("error_code")=="transfer_failed":rows[i]=save_files([parts[i]],"complete-part-retry-"+str(i))[0]
+        if not succeeded(saved[1]):saved[1]=save_files([report],"complete-report-retry")[0]
+        manifest=export/"Datasette_Operating_Checkpoint_Parts.json"
+        value={"schema":"commons.complete-checkpoint-parts.v1","operation":OP,"state":outcome["state"],"archive":archive_identity,"parts":[{"order":i+1,"file_name":path.name,"bytes":path.stat().st_size,"sha256":digest(path),"saved":public_save(rows[i])} for i,path in enumerate(parts)],"report":public_save(saved[1]),"assembly":"Concatenate the complete raw part files in ascending order, verify the complete archive byte count and SHA256, then restore its original retained root before resuming the same journals."}
+        save_json(manifest,value);manifest_row=save_files([manifest],"complete-parts-manifest")[0]
+        if all(succeeded(row) for row in [*rows,saved[1],manifest_row]):delivered(mode="complete_archive_parts",archive=archive_identity,parts=value["parts"],saved=[public_save(saved[1]),public_save(manifest_row)])
+        else:
+            emit("datasette_save_retry_required",root=str(root),archive=archive_identity,saved=[public_save(row) for row in [*saved,*rows,manifest_row]])
+            while True:
+                line=sys.stdin.readline()
+                if not line:raise RuntimeError("The full original Datasette checkpoint awaits canonical save at "+str(archive_path))
+                if json.loads(line).get("action")!="retry-save":continue
+                needed=[i for i,row in enumerate(saved) if not succeeded(row)]
+                updates=save_files([[archive_path,report][i] for i in needed],"complete-held-save")
+                for i,row in zip(needed,updates):saved[i]=row
+                if all(succeeded(row) for row in saved):
+                    delivered(mode="complete_archive",archive=archive_identity,saved=[public_save(row) for row in saved]);break
+                emit("datasette_save_retry_required",root=str(root),archive=archive_identity,saved=[public_save(row) for row in saved])
+    return delivery_result
+
 native_error=None
 try:
     raw=payload["capsule_raw"].encode("utf-8")
@@ -161,13 +274,35 @@ try:
     if programme.get("sourceRefresh",{}).get("state")!="COMPLETE" or not programme.get("mcpReceiving",{}).get("passed") or programme.get("managedUpload",{}).get("resumed",{}).get("state")!="COMPLETE":raise RuntimeError("The whole original refresh, upload and MCP receiving programme must complete.")
     outcome["publisher_native"]=native;outcome["publisher"]=programme
     emit("datasette_publisher_complete",journal=str(root/"journey/publisher-programme-state.json"),received_workspace=programme.get("receiving",{}).get("directory"),refresh=programme["sourceRefresh"]["state"],mcp_passed=programme["mcpReceiving"]["passed"])
+    prior_delivery=read_json(root/"Datasette_Publisher_Installed_Operating_Result.json") or {}
+    prior_publisher_save=prior_delivery.get("publisher_checkpoint",{})
+    if (all(prior_delivery.get(key)==value for key,value in source_identity.items())
+        and prior_delivery.get("publisher")==programme
+        and prior_publisher_save.get("state")=="PUBLISHER_COMPLETE"
+        and prior_publisher_save.get("mode")=="complete_archive"
+        and len(prior_publisher_save.get("saved",[]))==2
+        and all(succeeded(row) for row in prior_publisher_save["saved"])):
+        outcome["publisher_checkpoint"]=prior_publisher_save
+        emit("datasette_publisher_checkpoint_reused",archive=prior_publisher_save["archive"],saved=prior_publisher_save["saved"])
+    else:outcome["publisher_checkpoint"]=persist_complete_phase(outcome,"publisher")
     repository=root/"canonical-repository";repository.mkdir(mode=0o700,exist_ok=True)
     if not (repository/".git").is_dir():
         run(["git","init",repository],"canonical-git-init")
         run(["git","-C",repository,"remote","add","origin",payload["repository_url"]],"canonical-git-origin")
+    git_directory=repository/".git"
+    shape={name:{"directory":(git_directory/name).is_dir(),"file":(git_directory/name).is_file()} for name in ("HEAD","config","objects","refs")}
+    emit("datasette_restored_git_layout",**shape)
+    if not (git_directory/"refs").exists():
+        if (not (git_directory/"objects").is_dir() or not (git_directory/"config").is_file()
+            or not (git_directory/"HEAD").is_file()
+            or (git_directory/"HEAD").read_text().strip()!=payload["installed_source_ref"]):
+            raise RuntimeError("The retained Git metadata differs from its original detached source.")
+        original_head=(git_directory/"HEAD").read_bytes()
+        run(["git","-C",repository,"init"],"canonical-git-restore-directories")
+        if (git_directory/"HEAD").read_bytes()!=original_head:raise RuntimeError("The original Git HEAD changed while restoring its directories.")
     resolved=subprocess.run(["git","-C",repository,"rev-parse","--verify",payload["installed_source_ref"]+"^{commit}"],capture_output=True,text=True)
     if resolved.returncode:
-        run(["git","-C",repository,"-c","http.version=HTTP/1.1","fetch","--depth","1","origin",payload["installed_source_ref"]],"canonical-git-fetch",timeout=600)
+        run(["git","-C",repository,"-c","http.version=HTTP/1.1","-c","pack.threads=1","-c","pack.windowMemory=32m","fetch","--depth","1","--no-tags","origin",payload["installed_source_ref"]],"canonical-git-fetch",timeout=600)
     run(["git","-C",repository,"checkout","--detach",payload["installed_source_ref"]],"canonical-git-checkout")
     got=subprocess.check_output(["git","-C",repository,"rev-parse","HEAD"],text=True).strip()
     if got!=payload["installed_source_ref"]:raise RuntimeError("The canonical installed Git source differs.")
@@ -177,10 +312,56 @@ try:
         data=file["content"].encode()
         if len(data)!=file["bytes"] or hashlib.sha256(data).hexdigest()!=file["sha256"]:raise RuntimeError("The complete installed source postimage differs.")
         (continuation/P(file["path"]).name).write_bytes(data)
-    chromium=P(os.environ.get("DATASETTE_CHROMIUM","/workspace/scratch/bc0850d7ba23/browser-runtime/chrome-headless-shell"))
-    playwright=P(os.environ.get("CODEX_PRIMARY_RUNTIME_NODE_MODULES","/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules"))/"playwright/index.mjs"
-    if not playwright.is_file():playwright=playwright.with_name("index.js")
-    if not chromium.is_file() or not playwright.is_file():raise RuntimeError("Select the actual already installed Playwright and Chromium.")
+    for repair in payload.get("installed_runner_repairs",[]):
+        relative=P(repair["path"])
+        if relative.name!=str(relative):raise RuntimeError("Installed continuation repair must name its original runner.")
+        target=continuation/relative
+        before=target.read_bytes()
+        after=repair["content"].encode("utf-8")
+        if hashlib.sha256(before).hexdigest()!=repair["before_sha256"] or hashlib.sha256(after).hexdigest()!=repair["sha256"]:
+            raise RuntimeError("The exact installed continuation repair source differs.")
+        original=continuation/("original-"+repair["before_sha256"]+"-"+relative.name)
+        if original.exists():
+            if original.read_bytes()!=before:raise RuntimeError("The retained original runner differs.")
+        else:original.write_bytes(before)
+        target.write_bytes(after)
+        outcome.setdefault("installed_runner_repairs",[]).append({key:repair[key] for key in ("path","before_sha256","sha256","reason","source_reply")})
+        emit("datasette_installed_runner_repaired",**outcome["installed_runner_repairs"][-1])
+    browser_home=root/"native-browser";browser_home.mkdir(mode=0o700,exist_ok=True)
+    modules=P(os.environ.get("CODEX_PRIMARY_RUNTIME_NODE_MODULES","/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules"))
+    module_candidates=[]
+    if os.environ.get("DATASETTE_PLAYWRIGHT"):module_candidates.append(P(os.environ["DATASETTE_PLAYWRIGHT"]))
+    for base in (modules,root/"native-browser/node/node_modules"):
+        for name in ("playwright/index.mjs","playwright/index.js","playwright-core/index.mjs","playwright-core/index.js"):module_candidates.append(base/name)
+    playwright=next((path for path in module_candidates if path.is_file()),None)
+    if playwright is None:
+        # Select the actual published version once and retain its npm package lock.
+        run([node.parent/"npm","view","playwright","version","--json","--registry=https://registry.npmjs.org"],"browser-package-version",timeout=120)
+        selected_version=json.loads((root/"browser-package-version.stdout").read_text())
+        import re
+        if not isinstance(selected_version,str) or not re.fullmatch(r"[0-9]+[.][0-9]+[.][0-9]+(?:-[A-Za-z0-9.-]+)?",selected_version):raise RuntimeError("The published browser runtime version is invalid.")
+        run([node.parent/"npm","install","--prefix",browser_home/"node","--ignore-scripts","--no-audit","--no-fund","--save-exact","playwright@"+selected_version,"--registry=https://registry.npmjs.org"],"browser-runtime-install",timeout=600)
+        playwright=browser_home/"node/node_modules/playwright/index.mjs"
+        if not playwright.is_file():playwright=playwright.with_name("index.js")
+        if not playwright.is_file():raise RuntimeError("The installed browser module is missing.")
+    probe=browser_home/"describe.mjs"
+    probe.write_text('import {pathToFileURL} from "node:url";\nconst loaded=await import(pathToFileURL(process.argv[2]).href);\nconst chromium=loaded.chromium ?? loaded.default?.chromium;\nif(!chromium)throw new Error("The selected runtime has no Chromium launcher.");\nconsole.log(JSON.stringify({module:process.argv[2],executable:chromium.executablePath()}));\n',encoding="utf-8")
+    run([node,probe,playwright],"browser-runtime-location",timeout=60)
+    browser_description=json.loads((root/"browser-runtime-location.stdout").read_text())
+    candidates=[P(value) for value in (os.environ.get("DATASETTE_CHROMIUM"),browser_description.get("executable"),shutil.which("chromium"),shutil.which("chromium-browser"),shutil.which("google-chrome"),"/workspace/scratch/64b7f381b23e/browser-runtime/chrome-151.0.7922.34/chrome-linux64/chrome","/tmp/chromium","/workspace/scratch/97c4b0da767a/hif-browser-runtime/extracted/chromium","/workspace/scratch/5403360e55a4/counterpress-capture-runtime/bin/chromium","/workspace/scratch/b57f9a30380a/browser-runtime/chromium-153/chromium","/workspace/scratch/bc0850d7ba23/browser-runtime/chrome-headless-shell") if value]
+    chromium=next((path for path in candidates if path.is_file() and os.access(path,os.X_OK)),None)
+    if chromium is None:
+        os.environ["PLAYWRIGHT_BROWSERS_PATH"]=str(browser_home/"browsers")
+        cli=playwright.parent/"cli.js"
+        if not cli.is_file():raise RuntimeError("The selected browser runtime has no original installer.")
+        run([node,cli,"install","chromium"],"browser-chromium-install",timeout=600)
+        run([node,probe,playwright],"browser-installed-location",timeout=60)
+        browser_description=json.loads((root/"browser-installed-location.stdout").read_text())
+        chromium=P(browser_description["executable"])
+        if not chromium.is_file() or not os.access(chromium,os.X_OK):raise RuntimeError("The original Chromium installer did not return its executable.")
+    run([chromium,"--version"],"browser-executable-version",timeout=60)
+    outcome["browser_runtime"]={"playwright_module":str(playwright),"chromium":str(chromium),"version":(root/"browser-executable-version.stdout").read_text().strip(),"retained_directory":str(browser_home)}
+    emit("datasette_browser_runtime_ready",**outcome["browser_runtime"])
     installed_input={"repository":str(repository),"sourceRef":got,"publisherProgrammeDirectory":str(root/"journey"),"outputDirectory":str(root/"installed"),"playwrightModule":str(playwright),"browserExecutable":str(chromium),"port":53173,"receivedPort":53174,"offline":False,"npmCache":str(tmp/"npm-cache"),"python":sys.executable,"npm":str(node.parent/"npm")}
     save_json(root/"installed-input.json",installed_input)
     emit("datasette_installed_started",source_ref=got,port=53173,received_port=53174,publisher_directory=str(root/"journey"))
@@ -196,103 +377,42 @@ except BaseException as error:
     emit("datasette_original_continuation_preserved",error_type=native_error["type"],message=native_error["message"])
 finally:
     done.set()
-outcome["finished_at"]=stamp()
-capacity={"observed_at":stamp(),"cgroup":{},"filesystems":{}}
-for name in ("memory.stat","memory.current","memory.max","memory.events"):
-    path=P("/sys/fs/cgroup")/name
-    try:capacity["cgroup"][name]=path.read_text(encoding="utf-8").strip()
-    except OSError as error:capacity["cgroup"][name]={"error":type(error).__name__,"errno":error.errno}
-for selected_path in ("/workspace/scratch/49aa6abb32bb","/dev/shm","/dev","/mnt/data"):
-    try:
-        value=os.statvfs(selected_path)
-        capacity["filesystems"][selected_path]={"total_bytes":value.f_blocks*value.f_frsize,"free_bytes":value.f_bfree*value.f_frsize,"available_bytes":value.f_bavail*value.f_frsize,"free_inodes":value.f_favail}
-    except OSError as error:capacity["filesystems"][selected_path]={"error":type(error).__name__,"errno":error.errno}
-outcome["host_capacity_at_save"]=capacity
-save_json(root/"host-capacity-at-save.json",capacity)
-emit("datasette_host_capacity_at_save",**capacity)
-report=root/"Datasette_Publisher_Installed_Operating_Result.json"
-save_json(report,outcome)
-prior_manifest=root/"complete-checkpoint-manifest.json"
-if prior_manifest.is_file():
-    previous_digest=digest(prior_manifest)
-    retained_manifest=root/"run-history"/"checkpoint-manifests"/(previous_digest+".json")
-    retained_manifest.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
-    if retained_manifest.exists():
-        if digest(retained_manifest)!=previous_digest:raise RuntimeError("The preceding checkpoint manifest changed.")
-    else:shutil.copy2(prior_manifest,retained_manifest)
-export=root/"export";export.mkdir(mode=0o700,exist_ok=True)
-archive_path=export/"Datasette_Publisher_Installed_Operating_Checkpoint.zip"
-members=[];excluded=[]
-with zipfile.ZipFile(archive_path,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=6,allowZip64=True) as z:
-    for folder,dirs,files in os.walk(root,followlinks=False):
-        dirs.sort();files.sort()
-        for name in list(dirs):
-            path=P(folder)/name
-            if path in (tmp,export):
-                excluded.append({"path":path.relative_to(root).as_posix(),"kind":"reproducible-temporary-cache" if path==tmp else "generated-export"});dirs.remove(name)
-            elif path.is_symlink():
-                info=path.lstat();rel=path.relative_to(root).as_posix()
-                data=os.readlink(path).encode()
-                zi=zipfile.ZipInfo(rel);zi.create_system=3;zi.external_attr=(stat.S_IFLNK|0o777)<<16;z.writestr(zi,data)
-                members.append({"path":rel,"kind":"symlink","target":os.readlink(path)});dirs.remove(name)
-        for name in files:
-            path=P(folder)/name;rel=path.relative_to(root).as_posix();info=path.lstat()
-            if rel=="complete-checkpoint-manifest.json":excluded.append({"path":rel,"kind":"preceding-manifest-preserved-in-run-history"});continue
-            if stat.S_ISSOCK(info.st_mode):excluded.append({"path":rel,"kind":"runtime-socket"});continue
-            if stat.S_ISLNK(info.st_mode):
-                data=os.readlink(path).encode();zi=zipfile.ZipInfo(rel);zi.create_system=3;zi.external_attr=(stat.S_IFLNK|0o777)<<16;z.writestr(zi,data)
-                members.append({"path":rel,"kind":"symlink","target":os.readlink(path)});continue
-            if not stat.S_ISREG(info.st_mode):excluded.append({"path":rel,"kind":"non-regular-runtime-member"});continue
-            z.write(path,rel);members.append({"path":rel,"bytes":info.st_size,"sha256":digest(path)})
-    z.writestr("complete-checkpoint-manifest.json",json.dumps({"schema":"commons.datasette-complete-checkpoint.v1","operation":OP,"original_root":str(root),"state":outcome["state"],"source":source_identity,"files":members,"excluded":excluded},indent=2)+"\n")
-archive_identity={"file_name":archive_path.name,"bytes":archive_path.stat().st_size,"sha256":digest(archive_path),"members":len(members)+1}
-emit("datasette_complete_checkpoint",state=outcome["state"],**archive_identity)
-def save_files(paths,label):
-    request={"uploads":[{"local_path":str(path),"purpose":"create_library_file","library_artifact_type":"report" if path.suffix==".json" else "other"} for path in paths]}
-    completed=subprocess.run([sys.executable,helpers/"library_private_upload.py",tmp],input=json.dumps(request).encode(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    (tmp/(label+".stdout")).write_bytes(completed.stdout);(tmp/(label+".stderr")).write_bytes(completed.stderr)
-    for line in completed.stderr.decode(errors="replace").splitlines():
-        if line.startswith("__OPENAI_LIBRARY_FILE_WRITE_RECEIPT_V1__"):print(line,flush=True)
-    if completed.returncode:raise RuntimeError("Canonical save helper failed: "+str(completed.returncode))
-    response=json.loads(completed.stdout);rows=response.get("results")
-    if not isinstance(rows,list) or len(rows)!=len(paths):raise RuntimeError("The canonical save returned another artifact selection.")
-    for path,row in zip(paths,rows):
-        if row.get("local_path")!=str(path):raise RuntimeError("The save returned another original local file.")
-        if row.get("status")=="succeeded" and not succeeded(row):raise RuntimeError("The saved file identity is incomplete.")
-    return rows
-saved=save_files([archive_path,report],"complete-save-01")
-for i,row in enumerate(saved):
-    if not succeeded(row) and row.get("error_code")=="transfer_failed":
-        emit("datasette_save_transfer_retry",artifact=[archive_path,report][i].name)
-        saved[i]=save_files([[archive_path,report][i]],"complete-save-retry-"+str(i))[0]
-if all(succeeded(row) for row in saved):
-    emit("datasette_delivery_saved",state=outcome["state"],mode="complete_archive",archive=archive_identity,saved=[public_save(row) for row in saved])
-else:
-    parts=[];partsdir=export/"parts";partsdir.mkdir(mode=0o700,exist_ok=True)
-    with archive_path.open("rb") as source:
-        while True:
-            data=source.read(10*1024*1024)
-            if not data:break
-            path=partsdir/(archive_path.name+".part-"+str(len(parts)+1).zfill(3));path.write_bytes(data);parts.append(path)
-    rows=save_files(parts,"complete-parts-save-01")
-    for i,row in enumerate(rows):
-        if not succeeded(row) and row.get("error_code")=="transfer_failed":rows[i]=save_files([parts[i]],"complete-part-retry-"+str(i))[0]
-    if not succeeded(saved[1]):saved[1]=save_files([report],"complete-report-retry")[0]
-    manifest=export/"Datasette_Operating_Checkpoint_Parts.json"
-    value={"schema":"commons.complete-checkpoint-parts.v1","operation":OP,"state":outcome["state"],"archive":archive_identity,"parts":[{"order":i+1,"file_name":path.name,"bytes":path.stat().st_size,"sha256":digest(path),"saved":public_save(rows[i])} for i,path in enumerate(parts)],"report":public_save(saved[1]),"assembly":"Concatenate the complete raw part files in ascending order, verify the complete archive byte count and SHA256, then restore its original retained root before resuming the same journals."}
-    save_json(manifest,value);manifest_row=save_files([manifest],"complete-parts-manifest")[0]
-    if all(succeeded(row) for row in [*rows,saved[1],manifest_row]):emit("datasette_delivery_saved",state=outcome["state"],mode="complete_archive_parts",archive=archive_identity,parts=value["parts"],saved=[public_save(saved[1]),public_save(manifest_row)])
-    else:
-        emit("datasette_save_retry_required",root=str(root),archive=archive_identity,saved=[public_save(row) for row in [*saved,*rows,manifest_row]])
-        while True:
-            line=sys.stdin.readline()
-            if not line:raise RuntimeError("The full original Datasette checkpoint awaits canonical save at "+str(archive_path))
-            if json.loads(line).get("action")!="retry-save":continue
-            needed=[i for i,row in enumerate(saved) if not succeeded(row)]
-            updates=save_files([[archive_path,report][i] for i in needed],"complete-held-save")
-            for i,row in zip(needed,updates):saved[i]=row
-            if all(succeeded(row) for row in saved):
-                emit("datasette_delivery_saved",state=outcome["state"],mode="complete_archive",archive=archive_identity,saved=[public_save(row) for row in saved]);break
-            emit("datasette_save_retry_required",root=str(root),archive=archive_identity,saved=[public_save(row) for row in saved])
+try:
+    persist_complete_phase(outcome,"installed")
+except Exception as error:
+    if not payload.get("retain_receiver"):raise
+    outcome["complete_save_continuation"]={"type":type(error).__name__,"message":str(error),"traceback":traceback.format_exc()}
+    emit("datasette_complete_save_continuation",root=str(root),**outcome["complete_save_continuation"])
 fcntl.flock(lease.fileno(),fcntl.LOCK_UN);lease.close()
-if native_error:raise SystemExit(1)
+if payload.get("retain_receiver"):
+    if sys.stdin.isatty():
+        import termios
+        terminal=termios.tcgetattr(sys.stdin.fileno())
+        terminal[3]&=~(termios.ICANON|termios.ECHO)
+        terminal[6][termios.VMIN]=1;terminal[6][termios.VTIME]=0
+        termios.tcsetattr(sys.stdin.fileno(),termios.TCSANOW,terminal)
+    emit("datasette_saved_receiver_ready",operation=OP,root=str(root),procfs_pid=os.readlink("/proc/self"),state=outcome["state"])
+    for line in sys.stdin.buffer:
+        try:
+            request=json.loads(line)
+            if request.get("operation")!=OP or request.get("root")!=str(root):raise RuntimeError("Continuation belongs to another original operation.")
+            if request.get("action")=="close":
+                emit("datasette_saved_receiver_closed",state=read_json(root/"Datasette_Publisher_Installed_Operating_Result.json").get("state"))
+                break
+            if request.get("action")!="source":raise RuntimeError("Supply the complete reviewed continuation source.")
+            source=request["source"]
+            if hashlib.sha256(source.encode("utf-8")).hexdigest()!=request["sha256"]:raise RuntimeError("Continuation source identity differs.")
+            folder=root/"continuation-source";folder.mkdir(mode=0o700,exist_ok=True)
+            path=folder/(request["sha256"]+".py")
+            if path.exists() and path.read_text()!=source:raise RuntimeError("Saved continuation source differs.")
+            path.write_text(source,encoding="utf-8")
+            emit("datasette_continuation_source_started",sha256=request["sha256"],path=str(path))
+            exec(compile(source,str(path),"exec"),{"delivery_payload":payload,"delivery_root":root,"__name__":"__main__"})
+            emit("datasette_continuation_source_returned",sha256=request["sha256"])
+        except BaseException as error:
+            if isinstance(error,KeyboardInterrupt):raise
+            emit("datasette_continuation_source_error",error_type=type(error).__name__,message=str(error),traceback=traceback.format_exc())
+    last_result=read_json(root/"Datasette_Publisher_Installed_Operating_Result.json")
+    if not last_result or last_result.get("state")!="COMPLETE":raise SystemExit(1)
+else:
+    if native_error:raise SystemExit(1)

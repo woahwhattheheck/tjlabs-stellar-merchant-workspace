@@ -72,6 +72,16 @@ starforge givecredit-statements capture-ledger \
   --label "GiveCredit mainnet original payments"
 ~~~
 
+## Import complete original historical ledgers
+
+The ledger capture options accept `originalLedgerSources` alongside explicit original transaction hashes. Each entry carries `format: "stellar-expert-ledger-json"`, the original `sourceUrl`, its `ledger` and the complete unchanged JSON response in `content`. Optional acquisition observations retain the original source import and the later native receiving time separately.
+
+The engine decodes the original envelope, transaction result and metadata directly from that retained provider format. It preserves the entire original response, exact native outer/inner transaction identities, actual ledger order and source references. Successful classic payments use their original native operation/result amounts; path payments retain both the payer debit and the delivered destination amount. Normal contract, account, provider-event and transaction acquisition then continues from those native records.
+
+The complete [historical source reader](../../stellar/scf-starforge-20261009/partners/carbon-native-receiving/prepare-ledger-inputs.mjs) prepares the existing capture-options input from whole original ledger files and the accompanying source manifest. It derives transaction hashes using the selected original network and the existing Stellar SDK, and keeps both raw files and their precise selection in a new private directory. In the full receiving parcel, the same reader is available at `receiving/prepare-ledger-inputs.mjs`.
+
+Use that generated `capture-options.json` with `givecredit-statements capture-ledger --file`, or pass it through the full native receiving caller’s `--capture-options`. The original source directory and complete operated workspace travel in the final archive.
+
 ## 2. Inspect donations and assign the original payments
 
 In **Donations**, filter the original registry edition by organization, initiative, donor and registry creation period. Each row retains its original registry amount and reported USD value, alongside the number of saved payment assignments and native receipt relations.
@@ -205,3 +215,11 @@ A recurring run captures one fresh source edition, compares the originals, carri
 Edits include the original record ID and current expectedVersion. Statement edits use the current saved-version count. The CLI reads the current workspace revision and accepts an original stable request ID for replay.
 
 The complete native command help and typed interfaces expose every intake, paged record, allocation, comparison, export and receiving operation.
+
+## Comparing source coverage
+
+The comparison retains each edition’s observed row counts and acquisition scope. A table is compared only when both source editions acquired it. Complete native Stellarcarbon backups cover all seven tables; native API captures cover the five declared tables. Distribution transactions and minted blocks remain unavailable in an API-only edition. Their comparison change counts are `null`, their change arrays are empty, and the operator screen and CSV label the comparison unavailable. This avoids interpreting an unacquired table as deleted records. Registry imports likewise preserve their explicitly supplied table coverage. Added, removed and changed rows describe differences within the retained source populations.
+
+The HTTP and CLI comparison JSON expose `comparisonStatus`, `coverage.before`, `coverage.after` and `note` for each table. CSV exports include coverage columns and an unavailable row where a table could not be compared. Complete native receiving retains the original source editions and all saved statement versions.
+
+Typed carbon amounts compare by their exact scaled values, and civil dates compare by their original day. Equivalent source formatting and changes in which fields are reported remain in `sourceDifferences`, with all raw before/after values retained. An API-omitted contract identifier is an unavailable field. Instrument metadata updates remain explicit; source-reported year 0001 and zero total-vintage placeholders carry a source note, while the separate retired VCU and allocation amounts retain their original values.

@@ -1,0 +1,2289 @@
+{
+  "execution": "V8_EXACT_DEPENDENCY_FREE_RANKING_FUNCTIONS",
+  "sourceCapture": {
+    "sha256": "7d088b72500e47da56170296de80aad2321bc5f707d8e074755d9059f4e4eebf",
+    "bytes": 45753,
+    "rows": 27,
+    "url": "https://vellar-facilitator-testnet-production.up.railway.app/discovery/resources?network=stellar%3Atestnet&limit=100&offset=0",
+    "acquisitionStartedAt": "2026-10-12T21:44:51.728Z",
+    "verifiedAt": "2026-10-12T21:45:57.311Z"
+  },
+  "sources": {
+    "baseline": "c0b32aea7fd1083a8b44f87f3d6dee4349194d6d",
+    "candidate": "9c4bb1b43d7d5f761c8ce0b3aecac0c0430a1c7b",
+    "queryProbes": "af2a378dd412ab25db5ac71198abf278f4ec5048",
+    "catalog": "03582e141a414b9f5c239deb65a9614de2d9a340",
+    "schemaQueryExtractor": "d258b965ccd988d2a1d2ed320ccb1f66d14b395c"
+  },
+  "coverage": {
+    "httpResources": 27,
+    "mcpResources": 0,
+    "resourcesWithQueries": 23,
+    "visitedNodes": 60,
+    "traversalLimits": {
+      "nodesPerResource": 128,
+      "depth": 16,
+      "childrenPerMap": 32
+    }
+  },
+  "schemaQueries": 24,
+  "sameSourceOneShotIndexParity": true,
+  "comparisons": [
+    {
+      "id": "X402-3657-method-mismatch",
+      "kind": "original",
+      "query": "paid api POST method headers",
+      "filters": {},
+      "sources": [],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/quote||GET",
+          "score": 4.964126476652392
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/quote||GET",
+          "score": 4.964126476652392
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 4.009246887998589
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "score": 4.009246887998589
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/csv||GET",
+          "score": 3.8207407217365756
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/quote||GET",
+          "score": 4.964126476652392
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/quote||GET",
+          "score": 4.964126476652392
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/csv||GET",
+          "score": 4.066933802429586
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 4.009246887998589
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "score": 4.009246887998589
+        }
+      ],
+      "identical": false,
+      "sourceRanks": []
+    },
+    {
+      "id": "X402-3511-search-method",
+      "kind": "original",
+      "query": "chat POST request body method",
+      "filters": {},
+      "sources": [],
+      "baseline": [],
+      "candidate": [],
+      "identical": true,
+      "sourceRanks": []
+    },
+    {
+      "id": "X402-3121-mcp-canonical",
+      "kind": "original",
+      "query": "financial analysis mcp tool",
+      "filters": {
+        "type": "mcp"
+      },
+      "sources": [],
+      "baseline": [],
+      "candidate": [],
+      "identical": true,
+      "sourceRanks": []
+    },
+    {
+      "id": "STELLAR-55-currency",
+      "kind": "original",
+      "query": "stellar payment USD price",
+      "filters": {},
+      "sources": [],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "score": 7.002635826749979
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/stroops||GET",
+          "score": 7.002635826749979
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 3.597460188980005
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "score": 3.597460188980005
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/inspect/:address||GET",
+          "score": 3.3478970189467767
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/inspect/:address||GET",
+          "score": 3.2323499303714964
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/timestamp||GET",
+          "score": 3.1904655822088612
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/timestamp||GET",
+          "score": 2.6758099067670837
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "score": 7.002635826749979
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/stroops||GET",
+          "score": 7.002635826749979
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 3.597460188980005
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "score": 3.597460188980005
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/inspect/:address||GET",
+          "score": 3.370059088650884
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/inspect/:address||GET",
+          "score": 3.2804960004319823
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/timestamp||GET",
+          "score": 3.1904655822088612
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/timestamp||GET",
+          "score": 2.6758099067670837
+        }
+      ],
+      "identical": false,
+      "sourceRanks": []
+    },
+    {
+      "id": "STELLAR-71-metered",
+      "kind": "original",
+      "query": "metered API payment approval",
+      "filters": {},
+      "sources": [],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 3.597460188980005
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "score": 3.597460188980005
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "score": 3.3495705460132843
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/stroops||GET",
+          "score": 3.3495705460132843
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 3.597460188980005
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "score": 3.597460188980005
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "score": 3.3495705460132843
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/stroops||GET",
+          "score": 3.3495705460132843
+        }
+      ],
+      "identical": true,
+      "sourceRanks": []
+    },
+    {
+      "id": "X402-3226-verify-only",
+      "kind": "original",
+      "query": "verified discovery catalog",
+      "filters": {},
+      "sources": [],
+      "baseline": [],
+      "candidate": [],
+      "identical": true,
+      "sourceRanks": []
+    },
+    {
+      "id": "STELLAR-74-checkout",
+      "kind": "original",
+      "query": "stellar wallet paywall",
+      "filters": {},
+      "sources": [],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/inspect/:address||GET",
+          "score": 3.460747480259589
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/inspect/:address||GET",
+          "score": 3.341305546001996
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/timestamp||GET",
+          "score": 3.2980093658788223
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "score": 3.111425602679781
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/stroops||GET",
+          "score": 3.111425602679781
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/timestamp||GET",
+          "score": 2.76600574632103
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/inspect/:address||GET",
+          "score": 3.483656586021138
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/inspect/:address||GET",
+          "score": 3.391074517300476
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/timestamp||GET",
+          "score": 3.2980093658788223
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "score": 3.111425602679781
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/stroops||GET",
+          "score": 3.111425602679781
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/timestamp||GET",
+          "score": 2.76600574632103
+        }
+      ],
+      "identical": false,
+      "sourceRanks": []
+    },
+    {
+      "id": "X402-2942-listing",
+      "kind": "original",
+      "query": "resource catalog indexing",
+      "filters": {},
+      "sources": [],
+      "baseline": [],
+      "candidate": [],
+      "identical": true,
+      "sourceRanks": []
+    },
+    {
+      "id": "X402-3500-buyer-policy",
+      "kind": "original",
+      "query": "agent spend limit",
+      "filters": {},
+      "sources": [],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/weather||GET",
+          "score": 4.395116943681681
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/weather||GET",
+          "score": 4.395116943681681
+        }
+      ],
+      "identical": true,
+      "sourceRanks": []
+    },
+    {
+      "id": "schema-5762cd7d8f5a93d7f5e3ccbc",
+      "kind": "schema",
+      "query": "topic",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/quote||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/topic",
+          "name": "topic",
+          "title": "",
+          "description": "",
+          "queryTruncated": false
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/quote||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/topic",
+          "name": "topic",
+          "title": "",
+          "description": "",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/quote||GET",
+          "score": 6.705023190002913
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/quote||GET",
+          "score": 6.705023190002913
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/quote||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/topic",
+          "before": null,
+          "after": 2
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/quote||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/topic",
+          "before": null,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "id": "schema-362816efbac055c5509dccfc",
+      "kind": "schema",
+      "query": "usdc A USDC decimal amount, e.g. \"1.5\"",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/stroops||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/usdc",
+          "name": "usdc",
+          "title": "",
+          "description": "A USDC decimal amount, e.g. \"1.5\"",
+          "queryTruncated": false
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/usdc",
+          "name": "usdc",
+          "title": "",
+          "description": "A USDC decimal amount, e.g. \"1.5\"",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "score": 8.541994983647417
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/stroops||GET",
+          "score": 8.541994983647417
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/cron||GET",
+          "score": 5.130090264798362
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/inspect/:address||GET",
+          "score": 3.2416330196675003
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/inspect/:address||GET",
+          "score": 3.2416330196675003
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "score": 30.482621476645644
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/stroops||GET",
+          "score": 30.482621476645644
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/inspect/:address||GET",
+          "score": 5.726662291244012
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/inspect/:address||GET",
+          "score": 5.726662291244012
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/cron||GET",
+          "score": 4.013257435319893
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 3.476651258464266
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 2.0645601502839472
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/color||GET",
+          "score": 1.5812382653908839
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/stroops||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/usdc",
+          "before": 2,
+          "after": 2
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/usdc",
+          "before": 1,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "id": "schema-fa4a1d50389a5d96bbc428a5",
+      "kind": "schema",
+      "query": "input Text to hash, max 500 characters",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/hash||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/input",
+          "name": "input",
+          "title": "",
+          "description": "Text to hash, max 500 characters",
+          "queryTruncated": false
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/hash||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/input",
+          "name": "input",
+          "title": "",
+          "description": "Text to hash, max 500 characters",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/hash||GET",
+          "score": 7.7469277361316555
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "score": 7.731627452814972
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/word-count||GET",
+          "score": 7.731627452814972
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/hash||GET",
+          "score": 7.72972083534803
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 6.699943629127391
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/color||GET",
+          "score": 4.377883983805087
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/diff||GET",
+          "score": 2.3850626678184086
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 2.3001391841794865
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/markdown||GET",
+          "score": 1.9820224980764725
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/qr||GET",
+          "score": 1.8098113719362803
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/hash||GET",
+          "score": 21.29689999187217
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/hash||GET",
+          "score": 21.282404518509143
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "score": 7.2648610416623125
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/word-count||GET",
+          "score": 7.2648610416623125
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 6.814869291648657
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "score": 6.814869291648657
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/qr||GET",
+          "score": 6.535812134911021
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 4.477035195987491
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/markdown||GET",
+          "score": 3.3085073489070878
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/color||GET",
+          "score": 2.6463990735821006
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/csv||GET",
+          "score": 2.5491440767500846
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/diff||GET",
+          "score": 1.7795104633233998
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 1.7161485107187893
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/hash||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/input",
+          "before": 1,
+          "after": 1
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/hash||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/input",
+          "before": 4,
+          "after": 2
+        }
+      ]
+    },
+    {
+      "id": "schema-1323ccdb0bc7721996389b15",
+      "kind": "schema",
+      "query": "input Text to encode, or base64 to decode. Max 1000 characters",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/input",
+          "name": "input",
+          "title": "",
+          "description": "Text to encode, or base64 to decode. Max 1000 characters",
+          "queryTruncated": false
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/input",
+          "name": "input",
+          "title": "",
+          "description": "Text to encode, or base64 to decode. Max 1000 characters",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "score": 16.271416926447735
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 16.269064752444557
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "score": 7.4795091663101365
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/word-count||GET",
+          "score": 7.4795091663101365
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 6.481467206438455
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/qr||GET",
+          "score": 5.47608285651385
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/color||GET",
+          "score": 4.3015255422270915
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/diff||GET",
+          "score": 2.343462737565762
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/hash||GET",
+          "score": 2.316572383774198
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/hash||GET",
+          "score": 2.316572383774198
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 2.2600204774786814
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/markdown||GET",
+          "score": 1.9474523382263011
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "score": 31.175774587998085
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 31.17316232455258
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/qr||GET",
+          "score": 10.503312987886
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/hash||GET",
+          "score": 8.533903720570844
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/hash||GET",
+          "score": 8.533903720570844
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "score": 6.931270483626797
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/word-count||GET",
+          "score": 6.931270483626797
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 4.331044917857464
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/markdown||GET",
+          "score": 3.200621239703596
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/color||GET",
+          "score": 2.6002409502056683
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/csv||GET",
+          "score": 2.4660198133777995
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/diff||GET",
+          "score": 1.7484724901258986
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 1.686215687857415
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/input",
+          "before": 1,
+          "after": 1
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/input",
+          "before": 2,
+          "after": 2
+        }
+      ]
+    },
+    {
+      "id": "schema-bd2e338989b40b02a4c3c615",
+      "kind": "schema",
+      "query": "mode",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/mode",
+          "name": "mode",
+          "title": "",
+          "description": "",
+          "queryTruncated": false
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/mode",
+          "name": "mode",
+          "title": "",
+          "description": "",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 4.219281746510614
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "score": 4.219281746510614
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/mode",
+          "before": null,
+          "after": 2
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/mode",
+          "before": null,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "id": "schema-78854e379ea7d57a1bb6ce32",
+      "kind": "schema",
+      "query": "text Text to analyze, max 2000 characters",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/word-count||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/text",
+          "name": "text",
+          "title": "",
+          "description": "Text to analyze, max 2000 characters",
+          "queryTruncated": false
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/text",
+          "name": "text",
+          "title": "",
+          "description": "Text to analyze, max 2000 characters",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "score": 14.222669629902558
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/word-count||GET",
+          "score": 14.222669629902558
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/diff||GET",
+          "score": 2.4183426120205262
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/hash||GET",
+          "score": 2.3905930398237882
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/hash||GET",
+          "score": 2.3905930398237882
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 2.3322341495401306
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/markdown||GET",
+          "score": 2.0096786259566093
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 1.9629821346478074
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/qr||GET",
+          "score": 1.835064553870275
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "score": 20.37826833615998
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/word-count||GET",
+          "score": 20.37826833615998
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/hash||GET",
+          "score": 6.383777989376937
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/hash||GET",
+          "score": 6.383777989376937
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 4.635475726134647
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "score": 4.635475726134647
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/markdown||GET",
+          "score": 3.3948162362698815
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/qr||GET",
+          "score": 3.298191145676748
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/csv||GET",
+          "score": 2.615643487447913
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/diff||GET",
+          "score": 1.804340841881401
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 1.7400947690078887
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 1.591299787324278
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/word-count||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/text",
+          "before": 2,
+          "after": 2
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/text",
+          "before": 1,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "id": "schema-cc925d71015fa4510b179b06",
+      "kind": "schema",
+      "query": "address A Stellar G... account address",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/inspect/:address||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/pathParams/properties/address",
+          "name": "address",
+          "title": "",
+          "description": "A Stellar G... account address",
+          "queryTruncated": false
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/inspect/:address||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/pathParams/properties/address",
+          "name": "address",
+          "title": "",
+          "description": "A Stellar G... account address",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/inspect/:address||GET",
+          "score": 9.794852157276557
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/inspect/:address||GET",
+          "score": 9.475691182962281
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/timestamp||GET",
+          "score": 3.1904655822088612
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "score": 3.0099660721576145
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/stroops||GET",
+          "score": 3.0099660721576145
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/timestamp||GET",
+          "score": 2.6758099067670837
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/inspect/:address||GET",
+          "score": 19.912858174845677
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/inspect/:address||GET",
+          "score": 19.65329905754535
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "score": 5.499807431573928
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/stroops||GET",
+          "score": 5.499807431573928
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/timestamp||GET",
+          "score": 3.1904655822088612
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/timestamp||GET",
+          "score": 2.6758099067670837
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 2.1580888819243276
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/color||GET",
+          "score": 1.6528715425142966
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/inspect/:address||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/pathParams/properties/address",
+          "before": 2,
+          "after": 2
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/inspect/:address||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/pathParams/properties/address",
+          "before": 1,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "id": "schema-b9fcbbf83ec4be69a8966167",
+      "kind": "schema",
+      "query": "text Text or URL to encode, max 500 chars",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/qr||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/text",
+          "name": "text",
+          "title": "",
+          "description": "Text or URL to encode, max 500 chars",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/qr||GET",
+          "score": 8.445660303346571
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 5.166137787545377
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "score": 5.166137787545377
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "score": 2.415907860283632
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/word-count||GET",
+          "score": 2.415907860283632
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/diff||GET",
+          "score": 2.3850626678184086
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/hash||GET",
+          "score": 2.357694970468415
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/hash||GET",
+          "score": 2.357694970468415
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 2.3001391841794865
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/markdown||GET",
+          "score": 1.9820224980764725
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 1.9359686190333878
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/qr||GET",
+          "score": 23.858810697283904
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 7.634047260066618
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "score": 7.634047260066618
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/hash||GET",
+          "score": 7.164863043428132
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/hash||GET",
+          "score": 7.164863043428132
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/markdown||GET",
+          "score": 7.062377847701002
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/csv||GET",
+          "score": 5.707092484050622
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "score": 3.5955052790801556
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/word-count||GET",
+          "score": 3.5955052790801556
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/diff||GET",
+          "score": 1.7795104633233998
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 1.7161485107187893
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 1.569401166397797
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/qr||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/text",
+          "before": 1,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "id": "schema-33e15d9367b14fdc03a6839e",
+      "kind": "schema",
+      "query": "color A color as #rrggbb, rgb(r,g,b), or hsl(h,s%,l%)",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/color||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/color",
+          "name": "color",
+          "title": "",
+          "description": "A color as #rrggbb, rgb(r,g,b), or hsl(h,s%,l%)",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/color||GET",
+          "score": 19.71570342790736
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/csv||GET",
+          "score": 5.135363729251632
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/color||GET",
+          "score": 57.70505626403931
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/csv||GET",
+          "score": 4.239050453663277
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/inspect/:address||GET",
+          "score": 2.111409190744172
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/inspect/:address||GET",
+          "score": 2.111409190744172
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 2.0192128864583085
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "score": 1.8570351533862974
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/stroops||GET",
+          "score": 1.8570351533862974
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/color||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/color",
+          "before": 1,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "id": "schema-7d52857684c7e1538b19035a",
+      "kind": "schema",
+      "query": "markdown Markdown source, max 5000 chars",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/markdown||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/markdown",
+          "name": "markdown",
+          "title": "",
+          "description": "Markdown source, max 5000 chars",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/markdown||GET",
+          "score": 6.561123471251376
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/markdown||GET",
+          "score": 27.392724238720742
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/qr||GET",
+          "score": 4.555673375510763
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/csv||GET",
+          "score": 4.379787034511539
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/hash||GET",
+          "score": 1.564998449715782
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "score": 1.564998449715782
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/hash||GET",
+          "score": 1.564998449715782
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/word-count||GET",
+          "score": 1.564998449715782
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 1.2845451877091925
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "score": 1.2845451877091925
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/markdown||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/markdown",
+          "before": 1,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "id": "schema-0ddb41e4ddf9df4e94e9c68b",
+      "kind": "schema",
+      "query": "original",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/diff||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/original",
+          "name": "original",
+          "title": "",
+          "description": "",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/diff||GET",
+          "score": 7.611485886693185
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/diff||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/original",
+          "before": null,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "id": "schema-575a5d6e69360533595cb2be",
+      "kind": "schema",
+      "query": "revised",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/diff||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/revised",
+          "name": "revised",
+          "title": "",
+          "description": "",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/diff||GET",
+          "score": 7.611485886693185
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/diff||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/revised",
+          "before": null,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "id": "schema-1ff64f17d7b7b817ceef4cd6",
+      "kind": "schema",
+      "query": "pattern",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/pattern",
+          "name": "pattern",
+          "title": "",
+          "description": "",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 8.26214626744746
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 8.54804249535464
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/pattern",
+          "before": 1,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "id": "schema-910caa69b741de71d4c25ecb",
+      "kind": "schema",
+      "query": "text",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/text",
+          "name": "text",
+          "title": "",
+          "description": "",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "score": 3.6586664161965268
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/word-count||GET",
+          "score": 3.6586664161965268
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/diff||GET",
+          "score": 3.6170612728713416
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/hash||GET",
+          "score": 3.5801467043527455
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/hash||GET",
+          "score": 3.5801467043527455
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 3.5025133181955863
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/markdown||GET",
+          "score": 3.073425695079893
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 3.011306509393872
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/qr||GET",
+          "score": 2.8411409202861453
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "score": 2.851584506330371
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/word-count||GET",
+          "score": 2.851584506330371
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/diff||GET",
+          "score": 2.800269927273423
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/hash||GET",
+          "score": 2.7938967458949224
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/hash||GET",
+          "score": 2.7938967458949224
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 2.714804967946274
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/qr||GET",
+          "score": 2.538194209326713
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 2.516866689559819
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/markdown||GET",
+          "score": 2.39465995653013
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/csv||GET",
+          "score": 1.7733922657623613
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 1.6749455635262978
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "score": 1.6749455635262978
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/text",
+          "before": 8,
+          "after": 8
+        }
+      ]
+    },
+    {
+      "id": "schema-bfe7b56ab8bacb6277eee0b1",
+      "kind": "schema",
+      "query": "flags RegExp flags, default \"g\"",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/flags",
+          "name": "flags",
+          "title": "",
+          "description": "RegExp flags, default \"g\"",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 6.032163946576068
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 22.395599099011562
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/password||GET",
+          "score": 3.372878789380335
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 2.8260610580331016
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/inspect/:address||GET",
+          "score": 2.256626198404524
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/inspect/:address||GET",
+          "score": 2.256626198404524
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "score": 1.9847570034554423
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/stroops||GET",
+          "score": 1.9847570034554423
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/color||GET",
+          "score": 1.6528715425142966
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/flags",
+          "before": 1,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "id": "schema-a0c76e563e376a6adea2340c",
+      "kind": "schema",
+      "query": "paragraphs How many paragraphs, 1 to 10, default 1",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/paragraphs",
+          "name": "paragraphs",
+          "title": "",
+          "description": "How many paragraphs, 1 to 10, default 1",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 18.567245205373673
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 34.83094989209401
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/password||GET",
+          "score": 10.167225577664354
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 2.969285582534528
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "score": 2.730800572930862
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/stroops||GET",
+          "score": 2.730800572930862
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/paragraphs",
+          "before": 1,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "id": "schema-a2d873f5f1db0f7984abb65f",
+      "kind": "schema",
+      "query": "csv CSV text, first row is headers, max 10000 chars",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/csv||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/csv",
+          "name": "csv",
+          "title": "",
+          "description": "CSV text, first row is headers, max 10000 chars",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/csv||GET",
+          "score": 23.748983307571315
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 3.885107362796798
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "score": 3.885107362796798
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "score": 2.373769932487987
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/word-count||GET",
+          "score": 2.373769932487987
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/diff||GET",
+          "score": 2.343462737565762
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/hash||GET",
+          "score": 2.316572383774198
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/hash||GET",
+          "score": 2.316572383774198
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 2.2600204774786814
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/markdown||GET",
+          "score": 1.9474523382263011
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 1.9022017245153635
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/qr||GET",
+          "score": 1.778244894518787
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/csv||GET",
+          "score": 41.58054783793161
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/markdown||GET",
+          "score": 6.738084987347385
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 6.703906499295042
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "score": 6.703906499295042
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/qr||GET",
+          "score": 6.235698312389595
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "score": 3.478260541718847
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/word-count||GET",
+          "score": 3.478260541718847
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/hash||GET",
+          "score": 3.4340001048330286
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/hash||GET",
+          "score": 3.4340001048330286
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/diff||GET",
+          "score": 1.7484724901258986
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 1.686215687857415
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 1.5420278902396958
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/csv||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/csv",
+          "before": 1,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "id": "schema-cbdf9af354464f6f8ec57853",
+      "kind": "schema",
+      "query": "words How many words, 3 to 8, default 4",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/password||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/words",
+          "name": "words",
+          "title": "",
+          "description": "How many words, 3 to 8, default 4",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 15.817816523848366
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "score": 3.604571836223575
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/word-count||GET",
+          "score": 3.604571836223575
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/password||GET",
+          "score": 3.3996187444527393
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/password||GET",
+          "score": 31.29239534797344
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 18.25639198739886
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "score": 3.604571836223575
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/word-count||GET",
+          "score": 3.604571836223575
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 2.939691374070729
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/password||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/words",
+          "before": 4,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "id": "schema-d1d395310b1c14aa982e3620",
+      "kind": "schema",
+      "query": "separator Joiner, default \"-\"",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/password||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/separator",
+          "name": "separator",
+          "title": "",
+          "description": "Joiner, default \"-\"",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/password||GET",
+          "score": 5.880950004297886
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/password||GET",
+          "score": 17.16114348165436
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 3.1764450417811227
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 2.9213215431353405
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/password||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/separator",
+          "before": 1,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "id": "schema-5bbf50d59903fd3cbee4110c",
+      "kind": "schema",
+      "query": "expression Standard 5-field cron expression",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/cron||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/expression",
+          "name": "expression",
+          "title": "",
+          "description": "Standard 5-field cron expression",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/cron||GET",
+          "score": 19.889393824869554
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 4.387399218177286
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/cron||GET",
+          "score": 33.617112920797645
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/regex||GET",
+          "score": 4.387399218177286
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "score": 2.768904766971758
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/stroops||GET",
+          "score": 2.768904766971758
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/cron||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/expression",
+          "before": 1,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "id": "schema-2591c932e58e1f4f2a927a47",
+      "kind": "schema",
+      "query": "value",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/units||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/value",
+          "name": "value",
+          "title": "",
+          "description": "",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "score": 6.169419956143517
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/stroops||GET",
+          "score": 6.169419956143517
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "score": 5.365893913912068
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/stroops||GET",
+          "score": 5.365893913912068
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/units||GET",
+          "score": 5.252664101968464
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/units||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/value",
+          "before": null,
+          "after": 3
+        }
+      ]
+    },
+    {
+      "id": "schema-5348413e2ab6d383943370cc",
+      "kind": "schema",
+      "query": "from",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/units||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/from",
+          "name": "from",
+          "title": "",
+          "description": "",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/timestamp||GET",
+          "score": 6.169419956143517
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/timestamp||GET",
+          "score": 6.169419956143517
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/timestamp||GET",
+          "score": 5.365893913912068
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/timestamp||GET",
+          "score": 5.365893913912068
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/units||GET",
+          "score": 5.252664101968464
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/units||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/from",
+          "before": null,
+          "after": 3
+        }
+      ]
+    },
+    {
+      "id": "schema-3ed85121fa2f06b44d9dab65",
+      "kind": "schema",
+      "query": "to",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/units||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/to",
+          "name": "to",
+          "title": "",
+          "description": "",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/markdown||GET",
+          "score": 5.043014849866482
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/csv||GET",
+          "score": 5.032769325314728
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/timestamp||GET",
+          "score": 4.286512680929073
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/timestamp||GET",
+          "score": 4.286512680929073
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/qr||GET",
+          "score": 4.075459096083769
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/markdown||GET",
+          "score": 2.0871198890986764
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/csv||GET",
+          "score": 2.0833970002420936
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/qr||GET",
+          "score": 1.8827476576576951
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/timestamp||GET",
+          "score": 1.8122317190991137
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/timestamp||GET",
+          "score": 1.8122317190991137
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/units||GET",
+          "score": 1.7800307227132661
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 1.6501935127065148
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/base64||GET",
+          "score": 1.6501935127065148
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/weather||GET",
+          "score": 1.5909960746753158
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/hash||GET",
+          "score": 1.5389903161584964
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "score": 1.5389903161584964
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/hash||GET",
+          "score": 1.5389903161584964
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/word-count||GET",
+          "score": 1.5389903161584964
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/lorem||GET",
+          "score": 1.4475096859067973
+        },
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/password||GET",
+          "score": 1.3348792196787658
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/units||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/to",
+          "before": null,
+          "after": 6
+        }
+      ]
+    },
+    {
+      "id": "schema-56857d4298563192029ca2ad",
+      "kind": "schema",
+      "query": "city City name to look up",
+      "filters": {
+        "type": "http"
+      },
+      "sources": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/weather||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/city",
+          "name": "city",
+          "title": "",
+          "description": "City name to look up",
+          "queryTruncated": false
+        }
+      ],
+      "baseline": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/weather||GET",
+          "score": 5.553842576362986
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 0.8667400642830684
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/hash||GET",
+          "score": 0.8667400642830684
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/quote||GET",
+          "score": 0.8667400642830684
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "score": 0.8667400642830684
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/timestamp||GET",
+          "score": 0.8667400642830684
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/uuid||GET",
+          "score": 0.8667400642830684
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/inspect/:address||GET",
+          "score": 0.8212109169374596
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "score": 0.8212109169374596
+        }
+      ],
+      "candidate": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/weather||GET",
+          "score": 22.516619830028144
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/base64||GET",
+          "score": 0.7858738507316604
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/hash||GET",
+          "score": 0.7858738507316604
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/quote||GET",
+          "score": 0.7858738507316604
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/stroops||GET",
+          "score": 0.7858738507316604
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/timestamp||GET",
+          "score": 0.7858738507316604
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/uuid||GET",
+          "score": 0.7858738507316604
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/inspect/:address||GET",
+          "score": 0.7445925395064564
+        },
+        {
+          "key": "http|https://vellar-seller-demo-testnet-production.up.railway.app|/word-count||GET",
+          "score": 0.7445925395064564
+        }
+      ],
+      "identical": false,
+      "sourceRanks": [
+        {
+          "key": "http|https://vellar-seller-demo.onrender.com|/weather||GET",
+          "path": "#/extensions/bazaar/schema/properties/input/properties/queryParams/properties/city",
+          "before": 1,
+          "after": 1
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "queryResourcePairs": 31,
+    "sourceResourceFound": {
+      "baseline": 22,
+      "candidate": 31
+    },
+    "sourceResourceTopThree": {
+      "baseline": 19,
+      "candidate": 29
+    },
+    "improved": 11,
+    "worsened": 0
+  },
+  "publicProjection": {
+    "schema": "stellar-forge.public-evaluation-projection.v1",
+    "originalRecordBytes": 76306,
+    "originalRecordSha256": "bcee28bd6bb27fbd492558d5831753f7643423f40e66773bdee5980d52f3a777",
+    "omittedFields": [
+      "sourceCapture.attachment"
+    ],
+    "omissionReason": "Internal transfer locator",
+    "capturePath": "catalog-source-vellar-20261012.json"
+  }
+}

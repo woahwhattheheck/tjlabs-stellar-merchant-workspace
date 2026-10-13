@@ -1,3 +1,4 @@
+import type { ChannelOperation, ChannelRecordKind, ChannelRecord, ChannelJob, ChannelBytes } from '../../stellar/scf-starforge-20261009/mpp-channel/client.mjs';
 import type { MppContract, CustomerBundle, CustomerExport, CustomerDraft, CustomerWorkbenchProfile,
   CustomerRequestPreview, CustomerResourcePreview, PurchaseInputs, PurchaseView, WorkbenchSnapshot,
   NativeReceipt } from '../../stellar/scf-starforge-20261009/mpp-charge/customer/index.mjs';
@@ -39,6 +40,11 @@ export class MppProductClient {
   readonly directory:string;readonly workspaceDirectory:string;
   identity():Promise<NativeIdentity>;
   state():Promise<ConsoleState>;
+  channelState():Promise<ChannelRecord>;
+  channelAction(name:ChannelOperation,input:ChannelRecord):Promise<ChannelJob>;
+  channelRecord(kind:ChannelRecordKind,key:string):Promise<ChannelRecord>;
+  channelResponse(purchaseId:string):Promise<ChannelBytes>;
+  channelHandover(sha256:string):Promise<ChannelBytes>;
   catalog():Promise<Catalog>;
   handoff(kind:'contract'|'openapi'|'package',profileId:string):Promise<Handoff>;
   configureProfile(kind:'merchant'|'buyer'|'customer',profile:Record<string,unknown>|CustomerWorkbenchProfile,revision:number):Promise<ProfileSelection>;

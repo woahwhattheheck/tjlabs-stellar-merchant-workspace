@@ -11,7 +11,7 @@ import {
 export const GRANT_HANDOFF_BROWSER_ACTIONS = Object.freeze({
   list: ['cursor'], cases: ['applicationId', 'allowStart'], inspect: ['packageText'],
   export: ['id', 'applicationId', 'caseId', 'expectedVersion', 'name', 'allowStart'],
-  prepare: ['id', 'packageText', 'bindingsValue'], status: ['id'], resume: ['id'],
+  prepare: ['id', 'packageText', 'caseBase64', 'caseFilename', 'bindingsValue'], status: ['id'], resume: ['id'],
   receive: ['id'], save: ['id'], download: ['id'],
 });
 export const grantHandoffBodyLimit = action =>
@@ -68,7 +68,8 @@ export async function grantHandoffBrowserAction(model, action, input = {}) {
     applicationId: input.applicationId, caseId: input.caseId, expectedVersion: input.expectedVersion,
     name: input.name, allowStart: input.allowStart === true, requestId: input.id });
   if (action === 'prepare') return prepareGrantHandoff(model, { operation: path,
-    packageText: input.packageText ?? null, bindingsValue: input.bindingsValue ?? null, requestId: input.id });
+    packageText: input.packageText ?? null, caseBase64: input.caseBase64 ?? null, caseFilename: input.caseFilename ?? null,
+    bindingsValue: input.bindingsValue ?? null, requestId: input.id });
   if (action === 'status') return grantHandoffStatus({ operation: path });
   if (action === 'receive') return receiveGrantHandoff(model, { operation: path });
   if (action === 'save') return saveGrantHandoffApplication(model, { operation: path });

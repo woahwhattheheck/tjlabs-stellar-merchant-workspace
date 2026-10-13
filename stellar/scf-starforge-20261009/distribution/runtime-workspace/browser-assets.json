@@ -162,6 +162,27 @@
         "source-catalog.css",
         "text/css; charset=utf-8"
       ]
+    ],
+    [
+      "/product-plan-runtime.mjs",
+      [
+        "../product-plan-runtime.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/product-requirements.mjs",
+      [
+        "../../discovery/product-requirements.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/product-plan-briefing.css",
+      [
+        "product-plan-briefing.css",
+        "text/css; charset=utf-8"
+      ]
     ]
   ]
 }

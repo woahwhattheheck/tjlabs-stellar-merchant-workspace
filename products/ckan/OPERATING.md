@@ -1,5 +1,9 @@
 # CKAN data merchant
 
+The installed product also includes [merchant Support](SUPPORT.md): named CKAN
+workspace review, original incident watching, saved merchant cases and complete
+portable handoff receiving.
+
 Capture a complete CKAN resource, review its fields and source definitions, publish
 a native dataset, and hand the whole working project to another operator.
 The same saved project opens in the browser, through the CLI and through the

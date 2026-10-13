@@ -122,7 +122,13 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   const required = [...Object.values(spec.commands), ...Object.values(product.bin), product.readme,
     ...valuesDeep(spec.exports).filter(path => path.startsWith('./source/')).map(path => path.slice(9)),
     ...Object.values(spec.applicationProviders ?? {}), ...Object.values(spec.merchantProviders ?? {})];
-  const explicitRuntime = new Set([...spec.supportFiles, ...specificationPaths,
+  // Exporters read these original modules as output bytes. Their generated
+  // siblings exist only in the customer's completed export, not this checkout.
+  // Keep template syntax and bytes; never accept one as a runnable entrypoint.
+  const moduleTemplates = new Set(spec.moduleTemplates ?? []);
+  for (const path of moduleTemplates) if (required.includes(path))
+    throw new TypeError('A module template cannot be a packaged entrypoint: ' + path);
+  const explicitRuntime = new Set([...spec.supportFiles, ...moduleTemplates, ...specificationPaths,
     ...Object.values(spec.applicationProviders ?? {}), ...Object.values(spec.merchantProviders ?? {}),
     ...(recipe ? [...required, ...Object.values(spec.runtimePackageManifests ?? {}),
       ...(spec.browserAssets ?? []).flatMap(entry => [entry.server, entry.manifest])] : [])]);
@@ -145,7 +151,7 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   for (const root of spec.components)
     if (!selected.some(item => item.path.startsWith(root + '/'))) throw new TypeError('Missing component: ' + root);
   const names = new Set(selected.map(item => item.path));
-  for (const path of [...required, ...spec.supportFiles, ...specificationPaths, ...Object.values(spec.runtimePackageManifests ?? {})])
+  for (const path of [...required, ...spec.supportFiles, ...moduleTemplates, ...specificationPaths, ...Object.values(spec.runtimePackageManifests ?? {})])
     if (!names.has(path)) throw new TypeError('Missing packaged entry: ' + path);
   const sources = new Map();
   let totalBytes = 0;
@@ -153,7 +159,9 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
     const loaded = source.readFiles(items);
     for (const [path, bytes] of loaded) {
       totalBytes += bytes.length;
-      if (bytes.length > MAX_SOURCE_FILE_BYTES || totalBytes > MAX_SOURCE_BYTES)
+      if (bytes.length > MAX_SOURCE_FILE_BYTES)
+        throw new RangeError(`Distribution source file exceeds ${MAX_SOURCE_FILE_BYTES} bytes (${bytes.length}): ${path}`);
+      if (totalBytes > MAX_SOURCE_BYTES)
         throw new RangeError(`Distribution source exceeds ${MAX_SOURCE_BYTES} bytes: ${totalBytes}`);
       sources.set(path, bytes);
     }
@@ -172,6 +180,8 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   });
   const missingModules = [];
   const enqueue = (target, importer, discovered) => {
+    if (moduleTemplates.has(target))
+      throw new TypeError('Executable source cannot import a module template: ' + importer + ' -> ' + target);
     if (names.has(target)) return;
     const item = byPath.get(target);
     if (!item || excluded.has(target) || !selectionIncludes(target) || !isRuntimeFile(target, explicitRuntime.has(target) || declaredRuntime.has(target))) {
@@ -192,6 +202,7 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   while (frontier.size) {
     const discovered = [];
     for (const [path, requests] of staticModuleRequests(frontier)) {
+      if (moduleTemplates.has(path)) continue;
       for (const request of requests) {
         const served = browserAssets.resolve(path, request);
         if (request.startsWith('.')) {
@@ -278,8 +289,8 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   if (packageBytes > MAX_SOURCE_BYTES)
     throw new RangeError(`Distribution package exceeds ${MAX_SOURCE_BYTES} unpacked bytes: ${packageBytes}`);
   for (const file of files)
-    if (file.bytes.length > 4 * 1024 * 1024)
-      throw new RangeError('Distribution package member exceeds 4 MiB: ' + file.path);
+    if (file.bytes.length > MAX_SOURCE_FILE_BYTES)
+      throw new RangeError(`Distribution package member exceeds ${MAX_SOURCE_FILE_BYTES} bytes (${file.bytes.length}): ${file.path}`);
 
   const operation = await openDistributionBuild({ output: out, resume, manifest, files,
     onProgress: (phase, details) => source.progress(phase, details) });

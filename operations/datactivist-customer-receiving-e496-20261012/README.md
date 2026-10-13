@@ -92,7 +92,7 @@ The runner prints the actual process identifier, paths and newly completed progr
 
 After execution, the runner preserves Datactivist_Original_Operating_Workspace.zip and DATACTIVIST_NATIVE_RUN_RESULT.json together. A completed customer journey also yields Datactivist_Complete_Customer_Handover.zip. The original operating package contains the selected source, original capture, original saved operation, complete controller and native output. If a programme reports an error, its actual original workspace and output remain in the operating package for continuation.
 
-Artifact preservation runs before the foreground command returns. The runner creates root/runtime-tmp and sets the process-wide TMPDIR and Python tempfile directory before starting Node, Chromium or the unchanged preservation helper. It passes the documented uploads-only request and returns each preserved file identity, current version number and exact package hash.
+Artifact preservation runs before the foreground command returns. The runner creates root/runtime-tmp and sets the process-wide TMPDIR and Python tempfile directory before starting Node, Chromium or the unchanged preservation helper. It passes the documented uploads-only request and returns each preserved file identity, current version number and exact package hash. The upload child explicitly initializes Python's tempfile directory before running the unchanged helper, so an interpreter that cached /tmp still uses the owned private upload directory.
 
 ## Completed outputs
 
@@ -145,12 +145,36 @@ The restore procedure checks every output path, keeps existing live workspace fi
 Run the complete continuation with the private configuration:
 
 ~~~sh
-NODE_OPTIONS="--max-old-space-size=128 --max-semi-space-size=4" \
+NODE_OPTIONS="--max-old-space-size=256 --max-semi-space-size=8" \
   python3 -B runtime/resume_saved.py /ABSOLUTE_PRIVATE_CONFIG/resume-original.json
 ~~~
 
-The Node settings provide an explicit heap budget for the shared cloud machine. The runtime records the actual NODE_OPTIONS in its output. They preserve the full original dataset and every customer page. Use the machine's actual available memory when selecting a different heap budget.
+The Node settings provide an explicit heap budget for the shared cloud machine. The complete original core and customer queries ran at 128 MiB, but loading the browser stage reached that V8 heap limit; the full continuation therefore selects 256 MiB. The runtime records the actual NODE_OPTIONS in its output. They preserve the full original dataset and every customer page. Use the machine's actual available memory when selecting a different heap budget.
 
 The original workspace ZIP and result should update their existing saved files. Map Datactivist_Original_Operating_Workspace.zip and DATACTIVIST_NATIVE_RUN_RESULT.json to their observed file IDs and current version numbers in library_replacements. The unchanged upload helper applies those version guards and returns the new versions. The completed customer handover is created with the full package only after that installed customer operation completes.
 
 Each native programme prints actual newly completed phases. The runner reads its current stdout and newly written result, so prior saved stages are not presented as progress from a new invocation. Full command output and the prior source edition stay available with the original operation.
+
+## Continuing completed product arms on the shared host
+
+The runner preserves the completed original publisher workspace and result before starting the separate installed customer programme. That first save includes the original desktop and phone captures, complete native archive and independent receiving. The following save advances the same workspace and result identities using the version numbers returned by the first save. A response that leaves a write uncertain is retained for reconciliation before another replacement begins.
+
+A later continuation reuses the completed publisher only when the complete application SHA-256, original publication and snapshot, actual saved result, and exported native archive hash agree. It emits `COMPLETED_ORIGINAL_PUBLISHER_REUSED` and keeps the original request IDs, archive and browser output. The installed customer programme then continues from its original source pin and retained installation directories. Restoring an interrupted installation also reapplies its native private directory and file modes.
+
+Each operating programme runs in a process group created by this runner. If its driver exits abnormally, the runner sends termination to that owned group and settles remaining server/browser children before saving the case. It escalates to a kill signal only within that same owned group after the grace period. This prevents a terminated driver from leaving its active browser or server competing with the save process.
+
+The customer controller releases the verified full source/archive buffers after recording their hashes and original identities. The restorer and runner likewise release decoded source copies after hydration. The selected files and original datasets remain on disk for the full customer operation, while browser loading uses the documented 256-MiB Node heap.
+
+
+### Complete installed browser handover
+
+The complete publisher case at application commit `1025cb17d9f38d1285d474a931d9f2605b64a7c3` has finished all eight original operating stages, including desktop and 390-pixel browser views, native archive creation, and independent receiving. Its saved publisher result and archive let the customer continuation retain the original workspace and continue directly from that completed arm.
+
+The installed browser's source and workspace downloads now join the download listener and click in the same handled operation. Full-workspace downloads use the native server's 360-second request window. The controller records the actual response status, request failure, downloaded byte count, and any returned error body in the existing attempt log directory. It also watches the original server process, so a server exit becomes an immediate native failure rather than an unexplained download timeout. These observations carry no private connection headers.
+
+The installed server's stdout and stderr stream directly into their existing attempt files for the whole process lifetime. Browser failures still run the normal context, service, and owned-process cleanup, while the actual server output remains available for the same-case continuation and delivery save.
+
+
+### Restoring the current saved result
+
+An operating archive may contain both its current top-level native result and earlier copies under the retained source-history directory. The restorer selects the archive's top-level result after all members are restored. It preserves any earlier result under its own SHA-256 filename before that selection. This keeps the completed publisher's source, archive, and original identity checks tied to the saved package being resumed, so earlier history cannot cause the current completed publisher to run again.

@@ -48,3 +48,14 @@ export {runStudyProtocolCommand} from './study-protocol-cli.mjs';
 export {inspectStudyProtocolBundle,STUDY_PROTOCOL_INSPECTION} from './study-protocol-inspection.mjs';
 export {createStudyProtocolClient,inspectStudyProtocolReceiveRequest,STUDY_PROTOCOL_RECEIVE_REQUEST} from './study-protocol-client.mjs';
 export {runStudyProtocolReview,STUDY_PROTOCOL_PREPARED} from './study-protocol-operator.mjs';
+
+export {createResearchQuotesClient} from './customer-quotes/client.mjs';
+export {openResearchCustomerQuotes} from './customer-quotes/workspace.mjs';
+export {QUOTES_SCHEMA,QUOTE_OPERATION_SCHEMA,QUOTE_HOST_SCHEMA} from './customer-quotes/contracts.mjs';
+
+export {inspectResearchQuoteLaunch,assertResearchQuoteLaunch,researchQuoteLaunchView} from './customer-quotes/launch-inspection.mjs';
+export {normalizeResearchQuoteConfiguration,readResearchQuoteConfiguration} from './customer-quotes/configuration.mjs';
+export {prepareResearchQuotationSetup,readResearchQuotationSetup,saveResearchQuotationSetup,
+ exportResearchQuotationSetup,RESEARCH_QUOTATION_SETUP_SCHEMA} from './customer-quotes/setup.mjs';
+
+export {createDossierReturnsClient} from './dossier-returns/client.mjs';

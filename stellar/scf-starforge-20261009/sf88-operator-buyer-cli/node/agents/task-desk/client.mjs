@@ -175,6 +175,38 @@ export class TaskDeskClient {
     return this.#request("/api/jobs", { signal: options?.signal });
   }
 
+  #rpcPath(intentId, { commerceDirectory, readId, responseSha256 } = {}, download = false) {
+    let path = "/api/jobs/" + segment(intentId, "intentId") + "/rpc-results";
+    const query = new URLSearchParams();
+    if (commerceDirectory !== undefined) {
+      segment(commerceDirectory, "commerceDirectory");
+      query.set("commerceDirectory", commerceDirectory);
+    }
+    if (readId !== undefined) {
+      path += "/" + segment(readId, "readId") + (download ? "/download" : "");
+      segment(responseSha256, "responseSha256");
+      query.set("responseSha256", responseSha256);
+    }
+    return path + (query.size ? "?" + query : "");
+  }
+
+  /** Read retained editions through the original authenticated commerce reader. */
+  listRpcResponses(intentId, { commerceDirectory, signal } = {}) {
+    return this.#request(this.#rpcPath(intentId, { commerceDirectory }), { signal });
+  }
+
+  /** Inspect and verify one exact saved read; its original attempt remains in job. */
+  getRpcResponse(intentId, selection, options) {
+    segment(selection?.readId, "readId");
+    return this.#request(this.#rpcPath(intentId, selection), { signal: options?.signal });
+  }
+
+  /** Complete original response bytes as a streamed Response. */
+  downloadRpcResponse(intentId, selection, options) {
+    segment(selection?.readId, "readId");
+    return this.#request(this.#rpcPath(intentId, selection, true), { signal: options?.signal, mode: "raw" });
+  }
+
   listTasks(options) {
     return this.#request("/api/tasks", { signal: options?.signal });
   }

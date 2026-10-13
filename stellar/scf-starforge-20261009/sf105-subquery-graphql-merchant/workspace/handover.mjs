@@ -8,6 +8,7 @@ import { readExport, verifyExport, verifyFiles } from './merchant.mjs';
 import { readDeployment } from './deployment.mjs';
 import { readPreview } from './authoring.mjs';
 import { collectNativeRequestClosure, collectRequestClosure } from './request-files.mjs';
+import { collectNativePreparationClosure, collectPreparationClosure } from './preparation-files.mjs';
 import { readComparison, comparisonReference, comparisonRelativeFile, validateComparisonRecord, verifyComparisonSources } from './comparison.mjs';
 import { WORKSPACE_PATHS_SCHEMA, pathContext, readProjectPaths, referenceDirectory, usedPathRoots, workspaceOrigin } from './paths.mjs';
 
@@ -129,6 +130,8 @@ function allowedFile(filename, project, revision) {
     && (parts[2] === 'head.json' || /^[1-9]\d*\.json$/.test(parts[2]) && Number(parts[2].slice(0, -5)) <= revision);
   if (parts[0] === 'packages' || parts[0] === 'deployments')
     return parts.length >= 3 && parts[1].startsWith(project + '-');
+  if (parts[0] === 'merchant-preparations') return parts.length === 3 && UUID.test(parts[1])
+    && /^[1-9]\d*\.json$/.test(parts[2]) && Number(parts[2].slice(0, -5)) <= 256;
   if (parts[0] === 'comparisons') return parts.length === 3 && UUID.test(parts[1])
     && /^[1-9]\d*\.json$/.test(parts[2]) && Number(parts[2].slice(0, -5)) <= 256;
   if (parts[0] === 'request-sets') return parts.length === 2 && UUID.test(parts[1].slice(0, -5)) && parts[1].endsWith('.json');
@@ -179,8 +182,10 @@ export async function describeProjectHandover(store, { project, revision } = {})
   const versions = [];
   for (let number = 1; number <= revision; number++) versions.push(await store.read(project, number));
   const requestClosure = await collectNativeRequestClosure(store, versions);
+  const preparationClosure = await collectNativePreparationClosure(store, versions);
+  const preparationFilesSha256 = digest(json([...preparationClosure.files.values()].map(item => item.file).sort((a, b) => a.name.localeCompare(b.name))));
   const requestFilesSha256 = digest(json([...requestClosure.files.values()].map(item => item.file).sort((a, b) => a.name.localeCompare(b.name))));
-  const cacheName = digest(json({ project, revision, selectedSha256, root: store.root, closureVersion: 3, requestFilesSha256 })) + '.json';
+  const cacheName = digest(json({ project, revision, selectedSha256, root: store.root, closureVersion: 4, requestFilesSha256, preparationFilesSha256 })) + '.json';
   try {
     const bytes = await bytesAt(cache, cacheName), sha256 = digest(bytes), index = indexOf(bytes, sha256);
     if (index.project.id !== project || index.project.revision !== revision || index.project.inputDigest !== selected.inputDigest
@@ -250,13 +255,15 @@ export async function describeProjectHandover(store, { project, revision } = {})
     }
   }
   for (const item of requestClosure.files.values()) await add(join(store.root, item.file.name), item.file);
+  for (const value of preparationClosure.records.values()) for (const item of value.history) usedPathRoots(item.record, context, roots);
+  for (const item of preparationClosure.files.values()) await add(join(store.root, item.file.name), item.file);
   const head = json({ id: project, revision, inputDigest: selected.inputDigest }), headName = 'projects/' + project + '/head.json';
   loaders.set(headName, { file: entry(headName, head), load: async () => head });
   const index = { schema: PROJECT_HANDOVER_SCHEMA,
     project: { id: project, revision, inputDigest: selected.inputDigest, title: selected.input.title, updatedAt: selected.updatedAt },
     roots: [...roots].sort(), files: [...loaders.values()].map(item => item.file).sort((a, b) => a.name.localeCompare(b.name)),
     counts: { revisions: revision, merchantRecords: exports.size, deploymentGenerations: deployments.size, completedPreviews: previews.size,
-      comparisonGenerations: comparisons.size, ...requestClosure.counts },
+      comparisonGenerations: comparisons.size, ...requestClosure.counts, ...preparationClosure.counts },
     deploymentBinding: 'Retained packets preserve their original installed adapter and host. Prepare a new local packet through the original deployment compiler.' };
   const bytes = json(index), sha256 = digest(bytes);
   indexOf(bytes, sha256);
@@ -394,6 +401,15 @@ async function verifyClosure(index, load) {
     },
   });
   for (const item of requestClosure.files.values()) requireFile(item.file.name, item.file);
+  const preparationClosure = await collectPreparationClosure(versions, {
+    ids: async () => [...new Set([...files.keys()].filter(filename => filename.startsWith('merchant-preparations/'))
+      .map(filename => filename.split('/')[1]))],
+    generations: async id => [...files.keys()].filter(filename => filename.startsWith('merchant-preparations/' + id + '/'))
+      .map(filename => Number(filename.split('/')[2].slice(0, -5))).sort((a, b) => a - b),
+    load: async (filename, sha256) => load(requireFile(filename, sha256 ? { sha256 } : undefined)),
+    attemptFiles: async attempt => [...files.values()].filter(file => file.name.startsWith(attempt.task + '/')),
+  });
+  for (const item of preparationClosure.files.values()) requireFile(item.file.name, item.file);
   const head = decode(await load(requireFile('projects/' + index.project.id + '/head.json')));
   if (head.id !== index.project.id || head.revision !== index.project.revision || head.inputDigest !== last.inputDigest
       || last.inputDigest !== index.project.inputDigest || last.input.title !== index.project.title
@@ -401,8 +417,8 @@ async function verifyClosure(index, load) {
     fail('The handover head does not match its selected original revision.');
   if (required.size !== files.size) fail('The handover includes files outside the selected committed project closure.');
   const counts = { revisions: index.project.revision, merchantRecords: exported.size,
-    deploymentGenerations: deployed.size, completedPreviews: previewed.size, comparisonGenerations: compared.size, ...requestClosure.counts };
-  if (!plain(index.counts) || Object.entries(counts).some(([key, count]) => (key === 'comparisonGenerations' || key.startsWith('request') ? index.counts[key] ?? 0 : index.counts[key]) !== count))
+    deploymentGenerations: deployed.size, completedPreviews: previewed.size, comparisonGenerations: compared.size, ...requestClosure.counts, ...preparationClosure.counts };
+  if (!plain(index.counts) || Object.entries(counts).some(([key, count]) => (key === 'comparisonGenerations' || key.startsWith('request') || key.startsWith('merchantPreparation') ? index.counts[key] ?? 0 : index.counts[key]) !== count))
     fail('The handover totals do not match its original committed history.');
   return last;
 }

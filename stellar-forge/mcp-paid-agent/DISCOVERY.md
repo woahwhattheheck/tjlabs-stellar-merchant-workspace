@@ -118,7 +118,8 @@ Select a returned handle and call `bazaar_describe`. Read its `bazaar`
 declaration and `preview.input` description. Its `accepts` array contains
 the complete eligible alternatives in the order used by `acceptIndex`.
 
-For the direct HTTP GET/HEAD workflow, explicitly supply the intended query:
+For the direct HTTP GET/HEAD workflow, explicitly supply the intended path
+parameters and query. An exact resource with query fields uses:
 
 ```json
 {
@@ -145,6 +146,44 @@ parameters for other keys stay in the URL. Required query names are checked
 against the final URL, so an existing fixed value counts. The form leaves example
 values and defaults for the customer to inspect and choose explicitly. Unsupported
 query declarations produce their original structured error.
+
+### Published path parameters
+
+A published URL such as **/inspect/:address** declares a value inside the path.
+Its original **bazaar.routeTemplate** and **input.pathParams** declaration supply
+the template and field meanings. Read **preview.input.path** alongside the query
+description. It reports the original template, advertised parameter names, required
+explicit values, already fixed bindings, field descriptions and input limits.
+
+Supply raw string values under **input.path**. The maintained route identity
+codec encodes each value once into the advertised segment and preserves the
+original origin and fixed route segments. Query inputs continue through the
+existing query codec after the concrete path is resolved.
+
+~~~json
+{
+  "handle": "ORIGINAL_RESOURCE_HANDLE",
+  "acceptIndex": 0,
+  "input": {
+    "path": {
+      "address": "CUSTOMER_SELECTED_ADDRESS"
+    },
+    "query": {}
+  }
+}
+~~~
+
+Use the selected advertisement's actual field names and the intended address.
+A resource whose URL already names a concrete address reports it in
+**fixedValues**; preserve that binding when supplying inputs. An advertised
+placeholder requires its explicit value. A caller supplies values, while the
+original advertisement supplies the route template. Unsupported schemas,
+unadvertised inputs, missing required values and mismatched templates return the
+source's structured **PATH_*** errors.
+
+The prepared quote's **requestUrl** contains the complete concrete URL. Its
+original resource and accepted payment terms remain available for review,
+execution and recovery.
 
 For a remote MCP resource, provide its declared JSON argument object:
 
@@ -207,10 +246,29 @@ protocol and preserves structured tool errors and recovery metadata.
 | `browse(request)`, `search(request)` | Return one complete discovery page with original source and row coverage. |
 | `browsePages(request)`, `searchPages(request)` | Yield complete pages on demand and preserve the original filters across continuation. |
 | `describe(handle)` | Read the original cached declaration and full payment alternatives. |
+| `previewHttp({handle, path, query, acceptIndex})` | Bind explicit path values and query fields to the original advertised route. |
 | `previewHttpQuery({handle, query, acceptIndex})` | Prepare the explicit HTTP query using the seller's maintained codec. |
 | `previewMcpArguments({handle, arguments, acceptIndex})` | Prepare the original remote MCP invocation. |
 | `preview({handle, acceptIndex, input})` | Use the shared preview operation directly. |
 | `close()` | Abort owned pending calls and wait for their completion. |
+
+For a selected current HTTP handle:
+
+~~~js
+const description = await discovery.describe(selectedHandle);
+const quote = await discovery.previewHttp({
+  handle: description.handle,
+  acceptIndex: selectedPaymentIndex,
+  path: { address: selectedAddress },
+  query: {},
+});
+console.log(quote.requestUrl);
+~~~
+
+The same input is accepted by **preview({handle, input: {path, query}})**.
+**previewHttpQuery** retains its existing query-only interface. The client
+captures inputs before yielding to the transport, preserving the selected values
+if the caller later edits its form or request object.
 
 Each call accepts an optional `{signal, timeoutMs}`. The default timeout is
 120 seconds; select 1 through 300,000 milliseconds for this client. Iterators
@@ -234,7 +292,8 @@ starforge registrations --command mcp-buyer
 
 The source-owned `buyer-discovery` contribution registers the typed client and
 this operating guide. The existing `mcp-buyer` and `mcp-stdio` commands load
-the shared broker, discovery request handling, descriptor and HTTP query codec.
+the shared broker, discovery request handling, descriptor, HTTP query codec and
+original route identity/path codec.
 The complete archive also includes the browser's corresponding discovery form
 and connection handling.
 

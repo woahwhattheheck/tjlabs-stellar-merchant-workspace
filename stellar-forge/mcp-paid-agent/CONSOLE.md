@@ -21,11 +21,12 @@ reloading or disconnecting requires connecting again. The server adds only its
 exact loopback origin to its original MCP client-origin allowlist. Other clients
 continue to use `MCP_CLIENT_ORIGINS` and the same bearer authentication.
 
-The installed component must include `operator-console.mjs` and all four files
-under `operator-ui/`. The server serves these fixed files; the shell contains no
-token, quote, private configuration or returned data. No external script, font
-or analytics service is loaded. The console uses the original JSON-response MCP
-transport, including initialization and the advertised tools list.
+The installed component includes `operator-console.mjs`,
+`operator-ui/browser-assets.json`, and every source module declared by that
+asset manifest. The server serves the declared local asset routes; the shell
+contains no token, quote, private configuration or returned data. No external
+script, font or analytics service is loaded. The console uses the original
+JSON-response MCP transport, including initialization and the advertised tools list.
 
 ## Discover and review the exact invocation
 
@@ -147,3 +148,14 @@ SHA-256 before structured/text display and file download.
 
 See [NATIVE_REQUESTS.md](NATIVE_REQUESTS.md) for the full workflow, available actions,
 transport/body limits and installed typed client.
+
+## Multiple native HTTP services
+
+A host configured with [NATIVE_REGISTRY.md](NATIVE_REGISTRY.md) exposes its full
+service list in the HTTP requests desk. The selected catalog offer shows only
+route/payment-compatible native choices. Each saved request retains its service,
+original intent, exact input and complete original provider page. Opening history
+from any service restores that request's original service for execution,
+cancellation, recovery and saved-response download. The inbox can show one
+service or the complete combined history. A busy operation stays associated with
+its saved request and can be explicitly executed when admission is available.

@@ -38,6 +38,7 @@ export function grantEntryLinks(html,{filmUrl=null}={}){
     runtimeGuide:anchor(html,'Runtime installation'),
     application:'./grant-data/application.md',
     companion:'./grant-data/product-and-finance.md',
+    companionReader:'./grant-companion.html',
     budget:'./grant-data/budget.csv',
     sourceIndex:'./grant-data/source-index.json'
   };
@@ -50,14 +51,16 @@ function panel(links,filmHtml){
     '<p>Watch the operated purchase, inspect a complete customer report, or reopen the original purchase in the installed reviewer. The full application and funded delivery plan follow below.</p></header>'+
     '<nav class="grant-entry-jumps" aria-label="Choose a product review"><a href="#review-watch">Watch the purchase</a><a href="#review-result">Inspect a complete result</a><a href="#review-operate">Operate the reviewer</a><a href="#project-and-requested-outcome">Read the application</a></nav>'+
     '<div class="grant-entry-grid"><section class="grant-entry-card" id="review-watch" aria-labelledby="review-watch-title"><h3 id="review-watch-title">Watch the purchase</h3>'+
-    '<p>The 3:32 product film follows the source query, approved terms, native testnet purchase, complete result and reopening.</p>'+
+    '<p>The 3:32 product film follows one 0.005-testnet-XLM query purchase through its approved terms, complete returned result, download and reopening.</p>'+
     filmHtml+
-    '<p class="grant-entry-caption">The original HPD query produces 100 rows and 14 columns. Its source vintage and query remain available with the saved result.</p>'+
+    '<p class="grant-entry-caption"><strong>Paid query example.</strong> The original HPD query returns 100 rows, 14 columns and 53,468 bytes. Its recorded truncation flag is true. The complete limited-query response retains its source vintage and query.</p>'+
     link(links.film,'Open the film in a separate window',external)+'</section>'+
     '<section class="grant-entry-card" id="review-result" aria-labelledby="review-result-title"><h3 id="review-result-title">Inspect a complete result</h3>'+
-    '<p>Open the retained economic briefing, compare its series and source states, and inspect the original observations. The complete package includes the report, data, review history and receiving guide.</p>'+
-    '<div class="grant-entry-actions">'+link(links.report,'Open the economic report',' class="button primary" target="_blank" rel="noopener noreferrer"')+
-    link(links.reportPackage,'Download the complete report package',' class="button" download')+'</div>'+
+    '<p><strong>Economic report example.</strong> Inspect the retained briefing, its series and original observations. This report has its own source and review history; its complete package and receiving guide open below.</p>'+
+    '<div class="grant-entry-actions">'+link(links.report,'Open the economic report',' data-grant-report class="button primary" target="_blank" rel="noopener noreferrer"')+
+    link(links.reportPackage,'Download the complete report package',' id="grant-entry-report-download" class="button" download')+
+    '<button type="button" id="grant-entry-report-cancel" class="button" hidden>Cancel download</button></div>'+
+    '<p id="grant-entry-report-status" class="grant-entry-status" role="status" aria-live="polite">The complete saved edition includes the report, original source, review and opening guide.</p>'+
     '<p>'+link(links.reportGuide,'Read the report opening and receiving guide',external)+'</p>'+
     '<dl class="grant-entry-facts"><div><dt>Inspect</dt><dd>Original units, periods, revisions and missing source values.</dd></div>'+
     '<div><dt>Retain</dt><dd>Full source files, report and machine-readable data in one package.</dd></div>'+
@@ -80,19 +83,27 @@ function panel(links,filmHtml){
     '<label>Purchase source<select name="purchaseSource"><option value="bundled">Bundled original purchase</option><option value="received">Existing exported packet</option></select></label>'+
     '<div id="grant-entry-packet-fields" hidden><label>Complete packet file<input name="packetFile" type="text" spellcheck="false" placeholder="/srv/starforge/received/grant-reviewer-packet.json"></label>'+
     '<label>Packet SHA-256<input name="packetSha256" type="text" spellcheck="false" inputmode="text" minlength="64" maxlength="64" pattern="[a-f0-9]{64}" aria-describedby="grant-entry-digest-help"></label>'+
-    '<p class="grant-entry-help" id="grant-entry-digest-help">Use the exact digest displayed with the complete exported packet.</p></div>'+
+    '<p class="grant-entry-help" id="grant-entry-digest-help">Use the exact digest displayed with the complete exported packet.</p>'+
+    '<label>Compare the exported file<input id="grant-entry-packet-file" type="file" accept=".json,application/json" aria-describedby="grant-entry-packet-status"></label>'+
+    '<p id="grant-entry-packet-status" class="grant-entry-status" role="status" aria-live="polite">Select the exported file to compare it with the supplied SHA-256.</p></div>'+
     '<div class="grant-entry-actions"><button type="submit" class="button">Prepare command</button><button type="button" class="button" id="grant-entry-copy" disabled>Copy command</button><button type="button" class="button" id="grant-entry-download" disabled>Download opening guide</button></div>'+
     '<p class="grant-entry-status" id="grant-entry-status" role="status" aria-live="polite">Prepare the command after selecting the directory.</p></form>'+
     '<noscript><p>Use the original command above and the full operating guide for the selected directory and packet.</p></noscript></details></section></div>'+
+    '<section class="grant-entry-connection" id="review-open-running" aria-labelledby="review-open-running-title"><h4 id="review-open-running-title">Open a running workbench</h4>'+
+    '<p>After Applications or the command starts the reviewer, select its <strong>workbench-connection.json</strong> using a browser on that same host. The file identifies the running instance and opens its private connection.</p>'+
+    '<label>Current workbench connection<input id="grant-entry-connection-file" type="file" accept=".json,application/json" aria-describedby="grant-entry-connection-status"></label>'+
+    '<div class="grant-entry-actions"><button type="button" class="button" id="grant-entry-open-workbench" disabled>Open this workbench</button><button type="button" class="button" id="grant-entry-forget-connection" disabled>Forget connection</button></div>'+
+    '<p id="grant-entry-connection-status" class="grant-entry-status" role="status" aria-live="polite">Choose the connection file from the running workbench on this browser’s host.</p>'+
+    '<p class="grant-entry-help">The running reviewer accepts its access code from the local opening link and clears the fragment after connecting. After restarting the workbench, select its current connection file.</p></section>'+
     '<section class="grant-entry-journey" aria-labelledby="review-journey-title"><h4 id="review-journey-title">Complete the same review and handover</h4>'+
     '<ol class="grant-entry-steps"><li><strong>Source.</strong> In Packet intake, choose Review bundled purchase. Open Source and query to inspect the exact query, terms and complete source documents.</li>'+
     '<li><strong>Result.</strong> Choose Receive this packet, then Open original Buyer. In Buyer results, select each quote and Read complete saved result. Both original quote outcomes stay visible.</li>'+
     '<li><strong>Handover.</strong> Choose Handover → Close Buyer and export packet. Retain the complete packet and its displayed SHA-256.</li>'+
-    '<li><strong>Receiving.</strong> Select that packet and digest in another operator’s private workbench, receive it, and read the same complete original results.</li></ol>'+
+    '<li><strong>Receiving.</strong> Choose Existing exported packet in the command panel. Select the full file, its supplied digest and its absolute path on the receiving host. Run the prepared command to inspect the packet and open a separate private workbench, then receive it and read the same complete original results.</li></ol>'+
     '<details><summary>Use the merchant’s customer-delivery workflow</summary><p>In the installed Merchant operator, open <strong>Customers → Reviewer customer delivery</strong>. Its saved delivery recipe carries fourteen native steps through source review, complete results, closed export and receiving. The six-step receiving recipe starts from the reviewed export. Open the existing recipe editor to review its selected workbench aliases and native contracts before installing that workflow.</p>'+
     '<p>'+link(links.reviewerGuide,'Open the complete customer-delivery instructions',external)+'</p></details></section></section>'+
     '<section class="grant-entry-documents" aria-labelledby="review-documents-title"><h3 id="review-documents-title">Keep the application and delivery plan</h3>'+
-    '<div class="grant-entry-actions">'+link(links.application,'Application answer',' download')+link(links.companion,'Product and financing',' download')+link(links.budget,'Six-package budget',' download')+link(links.sourceIndex,'Source and measure index',' download')+
+    '<div class="grant-entry-actions">'+link(links.application,'Application answer',' download')+link(links.companionReader,'Read product and financing')+link(links.companion,'Download complete companion',' download')+link(links.budget,'Six-package budget',' download')+link(links.sourceIndex,'Source and measure index',' download')+
     '<a href="#three-funded-tranches-and-six-priced-deliverables">Read the funded work</a></div></section></section>\n'+END;
 }
 /** Idempotent page composition. The application prose and all existing-work content remain selected by the original composer. */
@@ -135,14 +146,19 @@ export function composeGrantEntry(templateHtml){
   if(!html.includes(STYLE)){need(html.includes('</head>'),'Keep the existing page head.');html=html.replace('</head>',STYLE+'\n</head>');}
   if(!html.includes(SCRIPT)){need(html.includes('</body>'),'Keep the existing page body.');html=html.replace('</body>',SCRIPT+'\n</body>');}
   return {html,links,entry:{schema:GRANT_ENTRY_SCHEMA,provider:'grant-reviewer',command:'grant-demo',
-    browser:'/grant-entry-browser.mjs',stylesheet:'/grant-entry.css',opening:'#review-the-product',operating:'#review-operate'}};
+    browser:'/grant-entry-browser.mjs',stylesheet:'/grant-entry.css',opening:'#review-the-product',operating:'#review-operate',
+    runningWorkbench:'#review-open-running',connectionSchema:'stellar-forge.grant-reviewer-workbench-connection.v1',
+    packetSchema:'stellar-forge.grant-reviewer-packet.v1',maximumPacketBytes:8*1024*1024,
+    reportDownload:'/example-download.mjs',companionReader:links.companionReader}};
 }
 export function declareGrantEntryAssets(manifest){
   need(manifest&&manifest.schema==='stellar-forge.browser-assets.v1'&&Array.isArray(manifest.routes),'Select the original browser asset manifest.');
   const copy=JSON.parse(JSON.stringify(manifest));
   for(const [route,file,type] of [
     ['/grant-entry-browser.mjs','grant-entry-browser.mjs','text/javascript; charset=utf-8'],
-    ['/grant-entry.css','grant-entry.css','text/css; charset=utf-8']
+    ['/grant-entry.css','grant-entry.css','text/css; charset=utf-8'],
+    ['/example-download.mjs','example-download.mjs','text/javascript; charset=utf-8'],
+    ['/onboarding.mjs','onboarding.mjs','text/javascript; charset=utf-8']
   ]){
     const existing=copy.routes.filter(row=>row[0]===route);
     need(existing.length<=1&&(!existing.length||JSON.stringify(existing[0][1])===JSON.stringify([file,type])),'Keep the original '+route+' declaration.');

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // MIT. Operate the same original Research listener from a local command.
 import {RIS_COMMANDS,RIS_USAGE,main as risMain} from './ris-source/cli.mjs';
+import {DOSSIER_RETURN_COMMANDS,DOSSIER_RETURN_USAGE,dossierReturnCliError,main as dossierReturnMain} from './dossier-returns/cli.mjs';
 import {parseArgs} from 'node:util';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -11,6 +12,8 @@ import {ELIGIBILITY_COMMANDS,main as eligibilityMain} from './eligibility-cli.mj
 import {RISK_OF_BIAS_COMMANDS,main as riskOfBiasMain} from './risk-of-bias/cli.mjs';
 import {CUSTOMER_UPDATE_COMMANDS,main as customerUpdateMain} from './customer-updates/cli.mjs';
 import {RESEARCH_COMMERCE_COMMANDS,main as researchCommerceMain} from './customer-commerce/cli.mjs';
+import {RESEARCH_QUOTES_COMMANDS,main as researchQuotesMain} from './customer-quotes/cli.mjs';
+import {RESEARCH_QUOTATION_SETUP_COMMANDS,main as quotationSetupMain} from './customer-quotes/setup-cli.mjs';
 import {STUDY_EXTRACTION_COMMANDS,main as extractionMain} from './study-extraction-cli.mjs';
 import {TEMPLATE_EXCHANGE_COMMANDS,main as templateMain} from './template-exchange/template-workspace-cli.mjs';
 import {parseJson,need,safeCode} from '../node/store.mjs';
@@ -60,6 +63,13 @@ Preparation binds that review to an original managed processing operation.
 Submit, monitor and receive that same operation in the existing Pipelines pane
 or with the documents-* and pipelines-* commands below.
 
+Commission the complete original quotation application:
+  quotes-setup-help
+  quotes-setup-prepare|quotes-setup-save|quotes-setup-status|quotes-setup-export
+
+These local retained commands use an existing installed runtime and complete
+original configuration. Run quotes-setup-help for input and receiving details.
+
 Operate original Documents and the complete managed Pipeline lifecycle:
   documents-help
   documents-list|documents-review|documents-elements|documents-receive|documents-download
@@ -82,6 +92,12 @@ Commission and deliver complete recurring customer work in the same dossier:
   customer-updates|customer-updates-record|customer-updates-preview|customer-updates-save
   customer-updates-work|customer-updates-export|customer-updates-source-plan
   customer-updates-handover|customer-updates-inspect|customer-updates-receive|customer-updates-operation
+
+Quote and deliver a complete customer evidence programme:
+  quotes-help
+
+Run quotes-help for the original commercial case/pricing workflow, reviewed brief,
+customer response, native paid publication, realized report and complete file export.
 
 Publish and receive a paid original customer delivery:
   commerce-help
@@ -191,7 +207,14 @@ const commandOptions=Object.freeze({
 const compact=value=>value?.dossier?{...value,dossier:researchSummary(value.dossier)}:value;
 const selected=value=>Object.fromEntries(Object.entries(value).filter(([,item])=>item!==undefined));
 export async function main(argv=process.argv.slice(2),{output=process.stdout}={}){
+  if(DOSSIER_RETURN_COMMANDS.includes(argv[0]))return dossierReturnMain(argv,{output});
   if(RIS_COMMANDS.includes(argv[0]))return risMain(argv,{output});
+  if(RESEARCH_QUOTATION_SETUP_COMMANDS.includes(argv[0])){
+    const code=await quotationSetupMain(argv,{stdout:output});if(code)process.exitCode=code;return code;
+  }
+  if(RESEARCH_QUOTES_COMMANDS.includes(argv[0])){
+    const code=await researchQuotesMain(argv,{stdout:output});if(code)process.exitCode=code;return code;
+  }
   if(RESEARCH_COMMERCE_COMMANDS.includes(argv[0])){
     const code=await researchCommerceMain(argv,{stdout:output});if(code)process.exitCode=code;return code;
   }
@@ -202,7 +225,7 @@ export async function main(argv=process.argv.slice(2),{output=process.stdout}={}
   if(STUDY_EXTRACTION_COMMANDS.includes(argv[0]))return extractionMain(argv,{output});
   if(TEMPLATE_EXCHANGE_COMMANDS.includes(argv[0]))return templateMain(argv,{output});
   const [command,...args]=argv;
-  if(!command||['help','--help','-h'].includes(command)){output.write(usage+'\n'+RIS_USAGE);return;}
+  if(!command||['help','--help','-h'].includes(command)){output.write(usage+'\n'+RIS_USAGE+'\n'+DOSSIER_RETURN_USAGE);return;}
   need(Object.hasOwn(commandOptions,command),'COMMAND_UNKNOWN');
   const fields=['connection-file','directory','timeout-ms',...commandOptions[command]];
   const {values,tokens}=parseArgs({args,options:Object.fromEntries(fields.map(key=>[key,{type:'string'}])),strict:true,tokens:true});
@@ -301,6 +324,9 @@ export async function main(argv=process.argv.slice(2),{output=process.stdout}={}
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   main().catch(error=>{
+    if(error.returnOperation){
+      process.stderr.write(JSON.stringify(dossierReturnCliError(error))+'\n');process.exitCode=1;return;
+    }
     process.stderr.write(JSON.stringify({error:safeCode(error.code,'RESEARCH_COMMAND_FAILED'),
       ...(Number.isInteger(error.status)?{status:error.status}:{}),
       ...(error.destinationPublished?{destinationPublished:true,file:error.file}:{}),

@@ -97,6 +97,14 @@ catalog, inspection, comparison and installation planning from the terminal.
 Its [complete command guide](../product-catalog/README.md) explains every input
 and the original build and installation commands returned by a plan.
 
+## Select required capabilities
+
+After loading products, choose exact requirements from the **Required capability** list. **Cover every requirement** shows recipes that provide the whole selection. **Show partial matches** identifies missing capabilities for comparison. The selected product panel shows each capability's source registration, and complete matches can export an accepted native build review request.
+
+Product inspection reads selected runtime-package manifests and their matching committed npm lockfiles. Direct version declarations and exact locked production dependencies remain separate. The existing package installer selects the actual runtime groups and target platform.
+
+The [capability requirements guide](../discovery/PRODUCT_REQUIREMENTS.md) includes the installed terminal workflow, complete JSON plans, source ownership and typed APIs. Source review hashing, saved review IDs, operation UUIDs and original build/install continuations remain the same.
+
 ## Reopen and continue the same build
 
 A saved review binds the repository path, immutable commit, recipe, complete
