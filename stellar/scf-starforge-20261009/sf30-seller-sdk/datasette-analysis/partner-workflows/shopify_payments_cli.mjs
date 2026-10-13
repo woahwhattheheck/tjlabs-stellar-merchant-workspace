@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** Complete retained Shopify Payments acquisition, preparation and receiving. Node >=20. */
-import {readFile,writeFile,mkdir,lstat,readdir,rename,rm,open,copyFile} from "node:fs/promises";
+import {readFile,writeFile,mkdir,lstat,readdir,rename,rm,open,copyFile,link} from "node:fs/promises";
 import {createReadStream,constants} from "node:fs";
 import {createHash,randomUUID} from "node:crypto";
 import {resolve,join,relative,dirname,sep,isAbsolute} from "node:path";
@@ -62,17 +62,43 @@ async function exact(root,entry){
  need(actual.bytes===entry.bytes&&actual.sha256===entry.sha256,"RETAINED_SOURCE_CHANGED",entry.path);
  return path;
 }
+let captureWrites=null;
+async function completeTemporary(path,raw,publish){
+ await mkdir(dirname(path),{recursive:true,mode:0o700});await ordinaryRoot(dirname(path));
+ const rel=captureWrites?relative(captureWrites.root,resolve(path)):null;
+ const owned=captureWrites&&rel!==""&&rel!==".."&&!rel.startsWith(".."+sep)&&!isAbsolute(rel);
+ const directory=owned?captureWrites.directory:dirname(path);
+ await ordinaryRoot(directory);
+ const temporary=owned?join(directory,"writing-"+randomUUID()):path+".writing-"+randomUUID();
+ let file,created=false;
+ try{
+  file=await open(temporary,"wx",0o600);created=true;await file.writeFile(raw);await file.sync();
+  await file.close();file=null;await publish(temporary);
+ }finally{
+  try{if(file)await file.close();}finally{if(created)await rm(temporary,{force:true});}
+ }
+}
 async function atomic(path,value){
  const raw=typeof value==="string"||Buffer.isBuffer(value)?value:canonical(value)+"\n";
- await mkdir(dirname(path),{recursive:true,mode:0o700});
- const temporary=path+".writing-"+randomUUID();const file=await open(temporary,"wx",0o600);
- try{await file.writeFile(raw);await file.sync();}finally{await file.close();}
- try{await rename(temporary,path);}catch(e){await rm(temporary,{force:true});throw e;}
+ await completeTemporary(path,raw,async temporary=>{
+  if(!await absent(path)){
+   const stat=await lstat(path);need(stat.isFile()&&!stat.isSymbolicLink(),"REGULAR_SOURCE_FILE_REQUIRED",path);
+  }
+  await rename(temporary,path);
+ });
 }
 async function immutable(path,raw){
- await mkdir(dirname(path),{recursive:true,mode:0o700});
- if(!await absent(path)){const prior=await regular(path,Infinity);need(prior.equals(Buffer.from(raw)),"IMMUTABLE_SOURCE_CHANGED",path);return;}
- const file=await open(path,"wx",0o600);try{await file.writeFile(raw);await file.sync();}finally{await file.close();}
+ const expected=Buffer.from(raw);
+ if(!await absent(path)){
+  need((await regular(path,Infinity)).equals(expected),"IMMUTABLE_SOURCE_CHANGED",path);return;
+ }
+ await completeTemporary(path,expected,async temporary=>{
+  try{await link(temporary,path);}
+  catch(e){
+   if(e.code!=="EEXIST")throw e;
+   need((await regular(path,Infinity)).equals(expected),"IMMUTABLE_SOURCE_CHANGED",path);
+  }
+ });
 }
 async function walk(root,directory="",ignore=new Set()){
  const result=[];
@@ -283,6 +309,7 @@ async function capture(a){
  const config=json(await regular(resolve(a.config)));
  await mkdir(a.out,{recursive:true,mode:0o700});const root=await ordinaryRoot(a.out);
  const release=await lock(root,a["recover-lock"]);
+ captureWrites={root,directory:join(root,"capture.lock")};
  try{
   let state;
   if(await absent(join(root,"state.json"))){
@@ -359,7 +386,7 @@ async function capture(a){
   const manifest=await finalize(root,state),finished=await inspectCapture(root);
   output({state:"SHOPIFY_CAPTURE_COMPLETE",directory:root,operationId:state.operationId,result:state.result,
    files:manifest.files.length,manifestSha256:finished.manifestSha256,replayed:false});
- }finally{await release();}
+ }finally{try{await release();}finally{captureWrites=null;}}
 }
 async function executableMatchesCapture(root){
  const edition=json(await regular(join(root,"source-edition.json")));
