@@ -948,7 +948,7 @@ The standalone source and full operating selection are delivered in the original
 
 ## Merchant settlement, customer billing and accountant receiving
 
-A working Stellar merchant needs the useful paid result and a financial record its customer and accountant can continue. The maintained product joins native settlement accounting, customer invoicing, dated receipt allocation, credit notes, installment schedules and Xero document receiving around the same original accounting workspace. That connection makes the installation maintainable after the first successful payment.
+A working Stellar merchant needs the useful paid result and a financial record its customer and accountant can continue. The maintained product joins original settlement accounting, customer invoicing and credit review, dated receipt allocation, credit notes and refunds, bank source matching, installment schedules, service closing and Xero document receiving around the same accounting workspace. The customer can follow the charge, actual money, remaining obligation and ongoing service through one complete operating history.
 
 ### The customer's complete operating task
 
@@ -967,6 +967,8 @@ The accounting reconciliation retains the actual network, asset, transaction ide
 
 
 ### Shipped foundation and demonstrated operation
+
+The complete [public financial integration](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2583) is merged at 8aed042e255201c352564753caa3af69b46e82db. Its 139 changed paths join the original invoice-wallet collection and payer correction, refunds and paid-credit movements, bank receipt intake and customer splits, credit policy and reviewed invoice release, service agreements, payment plans, customer closing and canonical Xero. Browser, HTTP, CLI, typed clients and the 46 receivables MCP actions use the existing customer and accounting records. The full installed selections retain their original dependency and browser declarations. The following completed operating examples keep their own exact source editions and returned results.
 
 The [installed receivables product](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/8886181672f00ff8301477e111d97f20012f6962/products/merchant-receivables/README.md) receives the original service quotation, reviews exact-decimal invoice lines, freezes issued customer files and continues payments, credits and historical allocations. Its original complete native exercise passed with the accounting and quotation controllers, customer export, cold reopening and HTTP interface.
 
@@ -1101,15 +1103,34 @@ The existing request remains **USD 38,000 / 400 prospective hours / 150 days**. 
 
 The selected workorder names its commissioning payer, merchant, independent buyer, receiving engineer and accounting decision-maker; its source rights and access; the exact request and useful output; network, asset, recipient, amount and fee responsibility; the commercial valuation and destination contract when selected; and the person accepting delivery. Each implementation item is assigned to its original grant package or a separately commissioned commercial workorder. Existing product development, ordinary bookkeeping and sales retain their original funding basis.
 
+The completed portable customer billing handover supplies an operated account for this walkthrough. Its full 243-file application, original accounting workspace and two planning cases retain the first USD 4,400 milestone as Paid with its original receipt allocation and zero due, and the later USD 4,400 invoice as Open. The original desktop and 390-pixel billing operation, complete repack, independent cold receive and reopen finished with both planning databases and the full financial account intact. The [portable opening and later-work guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/eaa169825c48c5ec3cef260672dc8fa52deb5e12/stellar/scf_2026/commercial_milestone_handover_20261012/PORTABLE.md) opens the existing private customer root and repacks the current work for a later move. These recorded operating outcomes remain linked to that original example; the proposal's independent customer and paid-Stellar measures continue through their respective original registers.
+
 ### Demonstrate and receive the same task
 
-Begin the demonstration in the existing retained purchase workbench. Open its selected quote, native outcome, complete result and source. Reopen that same result with its retained identity, then show the merchant's original accounting event and its explicit commercial basis if one exists. This keeps the useful customer output at the center of the Stellar story.
+The [complete reviewer walkthrough](./financial-walkthrough.md) opens the actual installed applications and keeps the selected merchant, customer, original source and account period throughout. It gives the receiving engineer the full setup, command, customer-document and recovery procedure.
 
-For a customer that has a separately issued obligation, continue in the same accounting customer: open the original quotation/invoice, dated receipt allocation, credit and statement; review the effective installment edition and its original customer files; then show the Xero package, actual returned record and any correction family. The receiving engineer opens the complete saved workspace and continues those same records.
+|Step in the original application|Operator decision and useful result|
+| --- | --- |
+|Set up the merchant|Select the original source/runtime and accounting inputs, save issuer/customer details, and open the retained accounting directory through Applications.|
+|Open the useful purchase|Read the exact approved source/query and complete saved result; open its original native outcome and matching merchant accounting event.|
+|Issue the actual obligation|Receive the original quotation/acceptance or complete manual source, review the exact invoice and any enabled customer-credit policy, then issue its frozen customer files.|
+|Receive and apply money|Review invoice-bound Stellar terms or match the original bank/receipt source; retain the actual receipt, valuation and effective allocation against that obligation.|
+|Refund or move paid credit|Review the original receipt, issued credit, released/replacement allocations and before/after customer funds; retain the completed payment or original wallet receiving.|
+|Reconcile the bank period|Match exact original statement coverage, customer payments, fees and refunds; retain a complete balanced close and any reviewed successor.|
+|Continue the remaining account|Open the dated amount due, effective installment edition and original collection promises, then review the retained cash-planning scenario.|
+|Close customer service|Choose the same customer's original order assignments and service captures, review and issue or resume the closing cycle, and deliver its complete account and service packet.|
+|Receive the accountant's result|Open the Xero profile/package and complete original returned document outcomes; retain eligible correction history beside the native customer money records.|
+|Hand over and continue|Receive the complete saved workspace, sources and files, reconcile post-backup activity, and complete the agreed next customer action with the original records.|
 
-The demonstration records the actual selected source, customer, dates, output and result. The funded useful-purchase cohort follows its approved resource intent, independently observed transfer and complete useful output. Invoice collection retains its own issued obligation and original receipt. The application's purchase register keeps its existing distinct network transactions and useful-output definition. Collection schedules, accounting exports and repeated receiving contribute to operating continuity. Customer acceptance establishes whether the agreed complete result works in the receiving application, alongside measured active effort, source period/population and recovery time.
+The opening purchase and any separately issued service obligation keep their actual source bindings. The bundled reviewer preserves the original 100-row limited HPD response; the separate Queens HPD operation retains its complete 144-row task in two purchases. The financial continuation uses the selected merchant's actual customer and account, with the original transaction and any agreed commercial valuation visible together.
 
-The official [Build criteria](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria) require the submitted answer to carry its substantive explanation. This chapter supplies that explanation within the existing manuscript; its product links give the receiving engineer the complete source and operator instructions. The [budget guidance](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/budget-and-deliverable-guidelines) supplies the future-development and tranche structure used by the unchanged six-package plan.
+The retained original invoice exercise completed invoice issue, allocations, credits, quotation receiving, customer export, cold reopening and HTTP operation. The original Xero result and accepted renewal example above supply their own complete accountant/calendar continuation. The bank operator's original account work retained a 150.00 close and its corrected 155.00 successor; its complete source and returned saved account stay with that original operation.
+
+The merged financial release also has a complete 275-file current source capsule containing its two unchanged original invoice programmes. The existing source and installed-account receiving operations retain the actual selected package, account, runtime and returned result. The walkthrough and source index identify that continuation beside the completed examples.
+
+A customer acceptance records whether the complete agreed output opens and works in the receiving application, the selected source period/population, actual active effort and recovery duration. The useful-purchase cohort follows the original approved resource intent, independently observed transfer and complete output. Invoice collection, installment editions, usage statements and repeated handovers retain their respective records in the same financial history.
+
+The [Build criteria](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria) require the submitted answer itself to explain the architecture, readiness and Stellar value. This chapter supplies that explanation; the walkthrough gives its operator the concrete route through the working product. The [budget guidance](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/budget-and-deliverable-guidelines) supports the existing future-development and tranche structure. The six packages, $38,000, 400 prospective hours and 150-day scope remain as stated above.
 
 ## Wholesale order commissioning and complete ERP receiving
 
