@@ -50,7 +50,8 @@ export class MerchantHighwayField{
    reader=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW);await unlink(path);await rmdir(dir);
    const handle=reader;reader=null;
    return {readonlyFileHandle:handle,bytes:result.bytes,sha256:result.sha256,
-    name:selection.kind==='archive'?'Highway_Field_Workspace.zip':selection.kind==='blob'?'Original_Source.bin':'Highway_Operating_Report.html',type:result.mediaType};
+    name:selection.kind==='archive'?'Highway_Field_Workspace.zip':selection.kind==='blob'?'Original_Source.bin':
+     selection.kind.startsWith('field-')?'Highway_Field_'+selection.id+(result.mediaType.startsWith('text/html')?'.html':'.json'):'Highway_Operating_Report.html',type:result.mediaType};
   }finally{
    const errors=[];
    for(const close of [()=>writer?.close(),()=>reader?.close(),()=>unlink(path),()=>rmdir(dir)]){
@@ -71,6 +72,9 @@ export class MerchantHighwayField{
    if(action==='history')return await client.history(args);
    if(action==='request')return await client.request(args.requestId);
    if(action==='records')return await client.records(args.captureId,args.layerId,args);
+   if(action==='field_issue')return await client.fieldIssue(args.request,args.expectedRevision);
+   if(action==='field_compare')return await client.fieldComparison(args.returnId,args.editionId,args.adoptionId);
+   if(action==='field_document')return await client.fieldDocument(args.kind,args.recordId);
    if(action==='inspection')return await client.inspection(args.inspectionId);
    if(action==='prepare_dataset')return await client.prepareDataset(args.operationId,args.selection);
    if(action==='native')return await client.native(args.operationId,args.operation,args.body);

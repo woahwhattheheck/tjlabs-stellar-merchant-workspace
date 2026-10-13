@@ -5,7 +5,8 @@ from .common import *
 from .workspace import Workspace
 from .exchange import export_workspace, receive_archive, validate_archive, source_inventory
 from .server import Application
-from . import domain, dispatch
+from . import domain, dispatch, field_exchange
+from .field_delivery import issue_field, retain_return, field_file, compare_field
 
 def selected_source(root):
     root=Path(root).resolve(strict=True)
@@ -46,6 +47,19 @@ def main(argv=None):
         if name=="import-capture":s.add_argument("--directory",required=True);s.add_argument("--request",required=True)
         if name=="export":s.add_argument("--publication-id",required=True)
         if name=="serve":s.add_argument("--port",type=int,default=0);s.add_argument("--launch",required=True);s.add_argument("--paired-workspace")
+    for name in ("issue-field","retain-field","receive-field","compare-field","download-field"):
+        s=sub.add_parser(name);s.add_argument("--workspace",required=True)
+        if name in ("issue-field","receive-field"):s.add_argument("--request",required=True)
+        if name=="issue-field":
+            s.add_argument("--json-output");s.add_argument("--html-output")
+        if name in ("retain-field","receive-field"):
+            s.add_argument("--file",required=True);s.add_argument("--sha256",required=True);s.add_argument("--bytes",type=int,required=True)
+        if name=="compare-field":
+            s.add_argument("--return-id",required=True);s.add_argument("--edition-id");s.add_argument("--adoption-id")
+        if name=="download-field":
+            s.add_argument("--kind",choices=("issues","returns"),required=True)
+            s.add_argument("--id",required=True);s.add_argument("--format",choices=("original","json","html"),default="original")
+            s.add_argument("--output",required=True)
     inspect=sub.add_parser("inspect");inspect.add_argument("--archive",required=True);inspect.add_argument("--sha256");inspect.add_argument("--bytes",type=int)
     receive=sub.add_parser("receive");receive.add_argument("--archive",required=True);receive.add_argument("--directory",required=True);receive.add_argument("--operation-id",required=True);receive.add_argument("--sha256",required=True);receive.add_argument("--bytes",type=int,required=True)
     args=p.parse_args(argv);root,selection=selected_source(args.source_root)
@@ -62,6 +76,40 @@ def main(argv=None):
         if args.action=="state":
             current=w.current();return {**current,"view":domain.describe(current["state"],w.read_blob),"dispatch":dispatch.dispatch_view(current["state"],w.read_blob)}
         if args.action=="history":return w.history(args.offset,args.limit)
+        if args.action in ("issue-field","receive-field"):
+            request=loads(read_regular(args.request,16*1024*1024))
+            keys={"workspaceId","workspaceDirectory","expectedRevision","request" if args.action=="issue-field" else "command"}
+            require(isinstance(request,dict) and set(request)==keys,"FIELD_REQUEST","Use the complete original branch-bound request.")
+            require(request["workspaceId"]==w.current()["state"]["id"] and
+                    request["workspaceDirectory"]==str(w.directory),
+                    "WORKSPACE_BRANCH_CHANGED","This field request belongs to another physical workspace.")
+            if args.action=="issue-field":
+                result=issue_field(w,request["request"],request["expectedRevision"],root,selection)
+                for output,format in ((args.json_output,"json"),(args.html_output,"html")):
+                    if output:
+                        raw,_,_=field_file(w,"issues",request["request"]["id"],format)
+                        atomic_file(output,raw,immutable=True)
+                return result
+            raw=read_regular(args.file,MAX_BLOB)
+            require(len(raw)==args.bytes and sha(raw)==sha_id(args.sha256),"FIELD_FILE_CHANGED","Original returned-file identity differs.")
+            command=request["command"]
+            require(command.get("kind")=="field.receive" and
+                    command.get("body",{}).get("document")=={"sha256":args.sha256,"bytes":args.bytes},
+                    "FIELD_REQUEST","The receiving command must bind the complete selected original file.")
+            retained=retain_return(w,raw,args.sha256)
+            require(command["body"]["issueId"]==retained["issueId"],"FIELD_REQUEST","Returned issue differs from this request.")
+            return w.execute(command,request["expectedRevision"])
+        if args.action=="retain-field":
+            raw=read_regular(args.file,MAX_BLOB)
+            require(len(raw)==args.bytes and sha(raw)==sha_id(args.sha256),"FIELD_FILE_CHANGED","Original returned-file identity differs.")
+            return retain_return(w,raw,args.sha256)
+        if args.action=="compare-field":
+            return compare_field(w,args.return_id,args.edition_id,args.adoption_id)
+        if args.action=="download-field":
+            raw,media,name=field_file(w,args.kind,args.id,args.format)
+            atomic_file(args.output,raw,immutable=True)
+            return {"path":str(Path(args.output).absolute()),"filename":name,"mediaType":media,"bytes":len(raw),"sha256":sha(raw)}
+
         if args.action in ("command","import-capture"):
             request=loads(read_regular(args.request,16*1024*1024))
             require(set(request)=={"expectedRevision","command"},"REQUEST","Use the complete retained request.")

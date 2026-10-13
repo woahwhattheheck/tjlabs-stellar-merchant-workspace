@@ -117,7 +117,7 @@ The host writes a private JSON configuration:
 
 The numbers/placeholders illustrate the schema; replace them with the measured existing file. The service configuration input is highwayFieldConnection, family highwayField, provider highway-field-workspaces. Host-selected file aliases preserve actual bytes and paths; the agent cannot choose arbitrary files through an upload request.
 
-Every scoped tool takes workspace alias, workspaceId and workspaceDirectory. All tools use the merchant_highway_ prefix. The sixteen suffixes are workspaces, state, history, request, records, inspection, command, upload, prepare_dataset, native, native_request, restore_native, export, receive, file_read, and file_release.
+Every scoped tool takes workspace alias, workspaceId and workspaceDirectory. All tools use the merchant_highway_ prefix. The nineteen suffixes are workspaces, state, history, request, records, inspection, command, upload, prepare_dataset, native, native_request, restore_native, export, receive, file_read, file_release, field_issue, field_compare, and field_document.
 
 file_read uses the existing retained reader: retain readId and file identity, consume base64 bytes through nextOffset:null, then release. It supports exact source blobs, complete exports and dispatch HTML. The owner drains calls and readers on close, without stopping Applications or closing a separately owned workspace.
 
@@ -126,3 +126,28 @@ file_read uses the existing retained reader: retain readId and file identity, co
 The standalone selection includes the full original application, original Python paired engine, original two-file SF30/SF100 producer, all guides, managed lifecycle, SDK, agent tools and the following managed course. The original Geocove operation's 20 completed phases remain on source 16b651c6. This integration's successor source is recorded independently in ADOPTION.json and app/source-selection.json.
 
 Source publication is not an executed native result. MANAGED_RECEIVING.md describes the complete same-operation following course, actual browser operation and customer archive. Review the returned images before stating pixel QA passed.
+
+## Named field exchange API
+
+The methods below use the same original connection, logical workspace ID and exact physical directory. They add no owner or database. Each input is frozen before asynchronous dispatch.
+
+| Method | Complete contract |
+| --- | --- |
+| fieldIssue(request, expectedRevision) | Original preparation request {id,recipient,inspectionIds,workspaceRevision,stateSha256,note,actor,at}; id is both issue and request UUID. Returns the original command result plus issue document/html descriptors. |
+| fieldComparison(returnId, editionId?, adoptionId?) | Full current issued/current/returned comparison, current source/assignment, actual selected edition and review SHA. Omit editionId only to use the return's actual selected edition. |
+| fieldDocument('issues' or 'returns', recordId) | Complete retained record and parsed original document; exact original bytes are downloaded separately. |
+| uploadBytes('field-file', buffer, identity) | Validate the complete original return and retain all original source/addition bytes before any field.receive command. Returns exact file identity, issue ID, editions and draft availability. |
+| uploadFile('field-file', path, identity) | Same intake over the caller's exact bounded original local file, streamed to the borrowed owner. |
+| command(fieldReceiveCommand, expectedRevision) | Original field.receive envelope binds returned file SHA/bytes and original issue. |
+| command(fieldAdoptCommand, expectedRevision) | Original field.adopt envelope binds complete current comparison SHA and each explicit inspection decision. |
+| download({kind:'field-issue-json' or 'field-issue-html' or 'field-return',id,expectedSha256,expectedBytes}, onChunk) | Every exact byte of the original issued/returned file, with required expected descriptor verified after full streaming. |
+
+A parsed document is useful for inspection. It is not a substitute for the complete original HTML/JSON bytes. Preserve the actual descriptor and use download for onward copies. All field files use the original 64 MiB allowance. Issue JSON and editable HTML and every new return member are capacity-checked as a whole before original blob retention.
+
+A typical caller retains an original request, calls fieldIssue once and saves the complete result. It downloads each returned descriptor, then delivers the original file through the agreed human workflow. Later it retains the colleague's file and its full descriptor, uploads it with kind field-file, and saves a fixed field.receive command before sending that command. Only after an explicit actual comparison does it save a field.adopt command with that comparison's SHA and reviewed choices. See app/FIELD_EXCHANGE.md for complete commands, timestamps and unfinished-draft behavior.
+
+The additive merchant tools are merchant_highway_field_issue, merchant_highway_field_compare and merchant_highway_field_document. Existing merchant_highway_upload accepts field-file; merchant_highway_command handles exact field.receive and field.adopt envelopes; merchant_highway_file_read accepts all three field download kinds and the mandatory expected descriptor. Follow its original readId/offset sequence through every byte and release the reader. Host file aliases remain explicit original file selections.
+
+The file reader names a returned JSON or HTML according to the actual native content type. Both original issued formats and complete returned files remain downloadable after whole-workspace receiving. A local field draft, request or file reader never follows another selected physical directory automatically.
+
+Pass the original adoptionId as fieldComparison's third argument to reopen the exact comparison behind a saved adoption. The result carries readOnly:true, historicalAdoption and the original workspaceRevision. It is recomputed from the retained original state and checked against the saved review SHA; it cannot replace the current comparison used for a new adoption.

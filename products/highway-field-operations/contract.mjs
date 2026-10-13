@@ -8,7 +8,7 @@ export const SOURCE_SCHEMA='geocove.highway-source.v1';
 export const BINDING_SCHEMA='stellar-forge.highway-field-operations-binding.v1';
 export const CONNECTION_SCHEMA='stellar-forge.highway-field-operations-connection.v1';
 export const STARTUP_SCHEMA='stellar-forge.highway-field-operations-startup.v1';
-export const SOURCE_SHA256='28294c27bfaa32febad5012787972c420cf26aa5616fa1a40ad0453a489af5f4';
+export const SOURCE_SHA256='576bc1319d01caf6848f10b218f037419e905ed2fdbf7160664c02ed5f17a957';
 export const HASH=/^[a-f0-9]{64}$/,UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 export const MAX_BLOB=64*1024*1024,MAX_ARCHIVE=384*1024*1024;
 export const sha=value=>createHash('sha256').update(value).digest('hex');

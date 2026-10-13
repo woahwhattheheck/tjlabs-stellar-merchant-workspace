@@ -4,9 +4,9 @@
   "commit": "1f079bc12859cb9baff21cdf8bdb92c8a6e25342",
   "sourcePrefix": "opportunities/geocove_highway_field_operations_20261013/",
   "originalNativeSourceSha256": "16b651c694f00b28a1c18d27b88b196a02d6f5e1c5933a94085ead4ecf1cca6a",
-  "adoptedSourceSha256": "28294c27bfaa32febad5012787972c420cf26aa5616fa1a40ad0453a489af5f4",
+  "adoptedSourceSha256": "576bc1319d01caf6848f10b218f037419e905ed2fdbf7160664c02ed5f17a957",
   "originalOperationId": "352d7b0a-548a-4d96-82fc-27394485a43f",
-  "meaning": "Original captured County source, field proposals, comparison engine and completed native phases remain their original case. This separate installed successor adds managed lifecycle and physical-branch selection; it does not claim a new native run.",
+  "meaning": "The complete original native operation and its captured source/business history retain their original identity. This following maintained source adds named field-copy issue, editable offline work, complete returned evidence and explicit three-value adoption on a separately received physical branch. It does not claim a new capture, GIS write or executed receiving programme.",
   "files": [
     {
       "path": "app/DISPATCH_OPERATING.md",
@@ -27,13 +27,22 @@
       "changed": false
     },
     {
+      "path": "app/FIELD_EXCHANGE.md",
+      "originalPath": null,
+      "originalBytes": null,
+      "originalSha256": null,
+      "bytes": 18158,
+      "sha256": "dd8e21db9bf4f98a5d2003abfbc88c03de3691df755e5f6190ed83fc27d7d1ce",
+      "changed": true
+    },
+    {
       "path": "app/OPERATING.md",
       "originalPath": "opportunities/geocove_highway_field_operations_20261013/OPERATING.md",
       "originalBytes": 14331,
       "originalSha256": "55fa56fb73e392fb57bedbe242e5b47f49898e2fce82ef6ed8b62b7a98a0057f",
-      "bytes": 14331,
-      "sha256": "55fa56fb73e392fb57bedbe242e5b47f49898e2fce82ef6ed8b62b7a98a0057f",
-      "changed": false
+      "bytes": 24379,
+      "sha256": "7e1b6f0e1fc89e4271369d77b0afdb517a7de3280efc93121279d0e42f9dbe2e",
+      "changed": true
     },
     {
       "path": "app/ORIGINAL_LOCAL_DATASET_PRODUCER.md",
@@ -85,9 +94,9 @@
       "originalPath": "opportunities/geocove_highway_field_operations_20261013/highway/cli.py",
       "originalBytes": 7505,
       "originalSha256": "15859f7a88d402f659243e7b90c01379a2919aca1ecfaa7287780c127fdce4aa",
-      "bytes": 7505,
-      "sha256": "15859f7a88d402f659243e7b90c01379a2919aca1ecfaa7287780c127fdce4aa",
-      "changed": false
+      "bytes": 11164,
+      "sha256": "ccea22b2284457afefaeb44f5a79d0efb6854f6a2a7ecd11142849df426b17a5",
+      "changed": true
     },
     {
       "path": "app/highway/common.py",
@@ -121,9 +130,9 @@
       "originalPath": "opportunities/geocove_highway_field_operations_20261013/highway/domain.py",
       "originalBytes": 87334,
       "originalSha256": "bb65145f5017829da7e6f7766cd9e7869a585446bc1fe2f25ec2c042b74704e2",
-      "bytes": 87334,
-      "sha256": "bb65145f5017829da7e6f7766cd9e7869a585446bc1fe2f25ec2c042b74704e2",
-      "changed": false
+      "bytes": 87832,
+      "sha256": "7e54a053baf21fd2e72397d129784bad4de9a8cbe4b7754e638a726650813810",
+      "changed": true
     },
     {
       "path": "app/highway/exchange.py",
@@ -133,6 +142,24 @@
       "bytes": 22761,
       "sha256": "a1383d7365dc8240ecdf26b34b5fc80ca675c271242bc5aca47cfc4d433625e5",
       "changed": false
+    },
+    {
+      "path": "app/highway/field_delivery.py",
+      "originalPath": null,
+      "originalBytes": null,
+      "originalSha256": null,
+      "bytes": 11585,
+      "sha256": "601e6f6ae45220aadc3f9e06e29b0e732f816303037e39dd91c4a8d3f6f06278",
+      "changed": true
+    },
+    {
+      "path": "app/highway/field_exchange.py",
+      "originalPath": null,
+      "originalBytes": null,
+      "originalSha256": null,
+      "bytes": 33330,
+      "sha256": "95d4e64a56ea32b61e1e66b313084172b0b3d6ae80840e4ea3d82c667e26d1ee",
+      "changed": true
     },
     {
       "path": "app/highway/local_delivery.mjs",
@@ -166,8 +193,8 @@
       "originalPath": "opportunities/geocove_highway_field_operations_20261013/highway/server.py",
       "originalBytes": 12614,
       "originalSha256": "29012bb2925c82bbf7495f08837405eaf9b113dcc754a4d9453a9ee53d227ad6",
-      "bytes": 13808,
-      "sha256": "4fa1230573233d27a4a626f91572b40aeba60ae3f75e4e56817971ac5bce7344",
+      "bytes": 15259,
+      "sha256": "735835ea5ac12faf2b57226ea35ee4fa08802a3d621492d648ceaf2301bd2edb",
       "changed": true
     },
     {
@@ -175,17 +202,53 @@
       "originalPath": "opportunities/geocove_highway_field_operations_20261013/highway/workspace.py",
       "originalBytes": 14745,
       "originalSha256": "21aad50cd29f34654621a312266b7378b4a5c239e01198c5babb86c5053a5b49",
-      "bytes": 14745,
-      "sha256": "21aad50cd29f34654621a312266b7378b4a5c239e01198c5babb86c5053a5b49",
-      "changed": false
+      "bytes": 15316,
+      "sha256": "e7fc5bb0fc4ba7ecc54cf2fafb60dc045a4fed525f1624b2dc02c8f955bf47c8",
+      "changed": true
     },
     {
       "path": "app/public/app.js",
       "originalPath": "opportunities/geocove_highway_field_operations_20261013/public/app.js",
       "originalBytes": 74628,
       "originalSha256": "4bef022484f7c227a3682cd9883f345d2d6779ea453c672af90aa65a7931406c",
-      "bytes": 76736,
-      "sha256": "77586a1d4aa1725b6dc5a2ef22381b924f74841cc20ac73a366fb22f6e60ea28",
+      "bytes": 77002,
+      "sha256": "54b51f2c9eadba19f5b07b818e3503ace5025108cb6d280065f9163df42d84da",
+      "changed": true
+    },
+    {
+      "path": "app/public/field-copy.css",
+      "originalPath": null,
+      "originalBytes": null,
+      "originalSha256": null,
+      "bytes": 4118,
+      "sha256": "58d9e05b13eb5c8bb3eadf5cdaa2b00062b95f6c87e7abff612c95ff8a8afffb",
+      "changed": true
+    },
+    {
+      "path": "app/public/field-copy.html",
+      "originalPath": null,
+      "originalBytes": null,
+      "originalSha256": null,
+      "bytes": 1255,
+      "sha256": "491bb0705605452f9a1848b6d162c893008f0d14e111b0dba4cc92249bffcb1e",
+      "changed": true
+    },
+    {
+      "path": "app/public/field-copy.js",
+      "originalPath": null,
+      "originalBytes": null,
+      "originalSha256": null,
+      "bytes": 52172,
+      "sha256": "f68fa59b5bbdb477f4bcab96c24bf539854a74d0256989f0eb4b608a6ce4b3d0",
+      "changed": true
+    },
+    {
+      "path": "app/public/field-host.js",
+      "originalPath": null,
+      "originalBytes": null,
+      "originalSha256": null,
+      "bytes": 29693,
+      "sha256": "8c46e86ebaff69d1052f9e5a2160e5909947752f7f4b33875c842aa5305b932c",
       "changed": true
     },
     {
@@ -193,18 +256,18 @@
       "originalPath": "opportunities/geocove_highway_field_operations_20261013/public/guide.html",
       "originalBytes": 14302,
       "originalSha256": "b09939c930fdf1eb6f3930389a3c8532fa9efab852c8fb1fe7385655fab05543",
-      "bytes": 14302,
-      "sha256": "b09939c930fdf1eb6f3930389a3c8532fa9efab852c8fb1fe7385655fab05543",
-      "changed": false
+      "bytes": 17597,
+      "sha256": "1dab2f7a57eb0823e18ae2a890d54cc6ca35528d69675166f6f0901f113615a2",
+      "changed": true
     },
     {
       "path": "app/public/index.html",
       "originalPath": "opportunities/geocove_highway_field_operations_20261013/public/index.html",
       "originalBytes": 1173,
       "originalSha256": "6bc825e5ce6bb54ff9ec1bda4472d055f2fbae101eb854bb179f0e9675e88699",
-      "bytes": 1173,
-      "sha256": "6bc825e5ce6bb54ff9ec1bda4472d055f2fbae101eb854bb179f0e9675e88699",
-      "changed": false
+      "bytes": 1217,
+      "sha256": "af130b627211c35762d3a92a100aceddc79d5cec58cd563bbd06705c60876e5e",
+      "changed": true
     },
     {
       "path": "app/public/style.css",
@@ -220,8 +283,17 @@
       "originalPath": "opportunities/geocove_highway_field_operations_20261013/source-selection.json",
       "originalBytes": 32676,
       "originalSha256": "defa6a6987272a376b3c9150c6d78e73e1d98ecef854e14f1b71c450bd1d1a92",
-      "bytes": 38065,
-      "sha256": "2dcd022fe673043e28a7b1f8ade3d661a58ded0f7bfce452e9d7d8fa6193d7e3",
+      "bytes": 39824,
+      "sha256": "c094a2dc113fe38befd61b01c673838e8540b3e9ed528d7559d3c29c484016ad",
+      "changed": true
+    },
+    {
+      "path": "app/tools/FIELD_RECEIVING.md",
+      "originalPath": null,
+      "originalBytes": null,
+      "originalSha256": null,
+      "bytes": 24099,
+      "sha256": "95c67c7130aa8b314b7205309a97f111088095d79b422710a238d85b1c737374",
       "changed": true
     },
     {
@@ -234,6 +306,24 @@
       "changed": true
     },
     {
+      "path": "app/tools/field-browser-owner.mjs",
+      "originalPath": null,
+      "originalBytes": null,
+      "originalSha256": null,
+      "bytes": 12304,
+      "sha256": "7e623b2606ff84a97130abdec40490f91ba072b89b43ff205ffeaa82efb0e0ff",
+      "changed": true
+    },
+    {
+      "path": "app/tools/field-browser-receiving.mjs",
+      "originalPath": null,
+      "originalBytes": null,
+      "originalSha256": null,
+      "bytes": 33455,
+      "sha256": "1b21604a66e54a873f86c0c21b2b1247e43a72ffaf9130cfa6e611b305429491",
+      "changed": true
+    },
+    {
       "path": "app/tools/native_program.py",
       "originalPath": "opportunities/geocove_highway_field_operations_20261013/tools/native_program.py",
       "originalBytes": 33662,
@@ -241,6 +331,15 @@
       "bytes": 33662,
       "sha256": "7004c66be1ddcc49f117c5168d89cf54871a510d99c1fe68599fcbd96341f765",
       "changed": false
+    },
+    {
+      "path": "app/tools/run-field-receiving.py",
+      "originalPath": null,
+      "originalBytes": null,
+      "originalSha256": null,
+      "bytes": 33132,
+      "sha256": "502718fddf656d10476886af603bc4323995e1c360198cd67b0a2f898c59a9f3",
+      "changed": true
     },
     {
       "path": "app/vendor/original-paired/LICENSE",
@@ -1439,5 +1538,18 @@
       "sha256": "923fa1b5ad8476cc9294e78d33d8a891b0ea5a13ec79f61dc350c8e438c9721f",
       "changed": false
     }
-  ]
+  ],
+  "previousManagedSourceSha256": "28294c27bfaa32febad5012787972c420cf26aa5616fa1a40ad0453a489af5f4",
+  "followingFieldExchange": {
+    "operation": "HIGHWAY-NAMED-FIELD-EXCHANGE-9B23-20261013",
+    "priorRepository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "priorCommit": "facc425cd6554cba219c2eb365c1f121c202c19d",
+    "priorSourceSha256": "28294c27bfaa32febad5012787972c420cf26aa5616fa1a40ad0453a489af5f4",
+    "sourceSha256": "576bc1319d01caf6848f10b218f037419e905ed2fdbf7160664c02ed5f17a957",
+    "originalOperationId": "352d7b0a-548a-4d96-82fc-27394485a43f",
+    "sourceReview": "Complete domain, host, storage, CLI, managed client and editor joins reviewed; full course source included.",
+    "native": "NOT_STARTED",
+    "rendered": "NOT_STARTED",
+    "receivingBranch": "field-exchange-following/staff-workspace"
+  }
 }

@@ -25,6 +25,15 @@ export interface WorkspaceState {
  directory:string;sourceSha256:string;pairedAvailable:boolean;dispatch:JsonObject
 }
 export interface CommandResult {requestId:string;revision:number;sha256:string;outcome:Json;reused:boolean}
+export interface FieldIssueRequest {
+ id:string;recipient:Actor;inspectionIds:string[];workspaceRevision:number;stateSha256:string;
+ note:string;actor:Actor;at:string
+}
+export interface FieldIssueResult extends CommandResult {issue:{id:string;document:FileIdentity;html:FileIdentity}}
+export interface FieldReturnIntake extends FileIdentity {
+ issueId:string;selectedEditionId:string|null;editions:Array<{id:string;parentId:string|null;label:string;actor:Actor;at:string}>;
+ attachmentCount:number;draftRetained:boolean
+}
 export interface ProjectionSelection {
  captureId:string;layerId:number;formId:string;objectIdColumn:string;
  fieldMap:Array<{captureField:string;deliveryField:string;encoding?:'native'|'json-text'}>;
@@ -44,6 +53,7 @@ export interface DatasetResult {
 export type DownloadSelection =
  {kind:'blob';id:string;expectedSha256?:string;expectedBytes?:number} |
  {kind:'archive';id:string;expectedSha256:string;expectedBytes:number} |
+ {kind:'field-issue-json'|'field-issue-html'|'field-return';id:string;expectedSha256:string;expectedBytes:number} |
  {kind:'dispatch-report';id:string;expectedSha256?:string;expectedBytes?:number};
 export interface DownloadResult extends FileIdentity {mediaType:string}
 export interface ClientOptions {
@@ -64,6 +74,9 @@ export class HighwayFieldClient {
  request(requestId:string):Promise<{request:OriginalRequest|null}>;
  records(captureId:string,layerId:number,options?:PageOptions):Promise<RecordPage>;
  inspection(inspectionId:string):Promise<JsonObject>;
+ fieldIssue(request:FieldIssueRequest,expectedRevision:number):Promise<FieldIssueResult>;
+ fieldComparison(returnId:string,editionId?:string,adoptionId?:string):Promise<JsonObject>;
+ fieldDocument(kind:'issues'|'returns',recordId:string):Promise<{record:JsonObject;document:JsonObject}>;
  nativeRequest(operationId:string):Promise<JsonObject>;
  prepareDataset(operationId:string,selection:ProjectionSelection):Promise<DatasetResult>;
  native(operationId:string,operation:NativeOperation,input:JsonObject):Promise<NativeResult>;
@@ -73,8 +86,8 @@ export class HighwayFieldClient {
  command(command:Command,expectedRevision:number):Promise<CommandResult>;
  exportWorkspace(publicationId:string,revision:number):Promise<JsonObject>;
  receive(input:FileIdentity&{operationId:string}):Promise<JsonObject>;
- uploadBytes(kind:'blob'|'archive',data:Buffer,expected:FileIdentity):Promise<FileIdentity&{reused?:boolean}>;
- uploadFile(kind:'blob'|'archive',file:string,expected:FileIdentity):Promise<FileIdentity&{reused?:boolean}>;
+ uploadBytes(kind:'blob'|'archive'|'field-file',data:Buffer,expected:FileIdentity):Promise<(FileIdentity&{reused?:boolean})|FieldReturnIntake>;
+ uploadFile(kind:'blob'|'archive'|'field-file',file:string,expected:FileIdentity):Promise<(FileIdentity&{reused?:boolean})|FieldReturnIntake>;
  download(selection:DownloadSelection,onChunk:(chunk:Buffer)=>void|Promise<void>):Promise<DownloadResult>;
  /** Drains this borrowed client's original calls; never stops the Applications owner. */
  close():Promise<void>;

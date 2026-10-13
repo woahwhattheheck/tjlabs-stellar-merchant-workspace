@@ -104,6 +104,13 @@ class Workspace:
                 current=self.current()
                 require(expected_revision==current["revision"],"REVISION_CONFLICT","The workspace changed. Preserve the draft and review the current revision.")
                 require(current["revision"]<10000,"HISTORY_CAPACITY","Workspace revision allowance reached.")
+                if command["kind"]=="field.issue":
+                    body=command["body"]
+                    require(isinstance(body,dict) and isinstance(body.get("document"),dict),
+                            "FIELD_ISSUE","Use the complete originally prepared field issue.")
+                    issued=loads(self.read_blob(sha_id(body["document"].get("sha256"))))
+                    require(issued.get("workspaceRevision")==expected_revision,
+                            "FIELD_REVISION","The issued field copy must retain this exact original workspace revision.")
                 if command["kind"].startswith("dispatch."):
                     next_state,outcome=dispatch.apply_dispatch(loads(canonical(current["state"])),command,self.read_blob)
                 else:

@@ -1026,6 +1026,9 @@ def apply(state, command, read_blob):
     elif kind=="reconciliation.record":
         from .reconciliation import apply_reconciliation
         work,result=apply_reconciliation(work,command,read_blob)
+    elif isinstance(kind,str) and kind.startswith("field."):
+        from .field_exchange import apply_field_exchange
+        work,result=apply_field_exchange(work,command,read_blob)
     elif kind=="capture.import":
         manifest=body.get("manifest")
         _validate_manifest(manifest,source)
@@ -1272,6 +1275,11 @@ def describe(state, read_blob):
         result["reconciliation"]=None
     else:
         result["reconciliation"]=reconciliation_view(state,read_blob)
+    if state.get("fieldExchange") is not None:
+        from .field_exchange import view
+        result["fieldExchange"]=view(state,read_blob)
+    else:
+        result["fieldExchange"]=None
     return result
 
 def validate_state(state, read_blob):
@@ -1416,4 +1424,7 @@ def validate_state(state, read_blob):
     if state.get("reconciliation") is not None:
         from .reconciliation import validate_reconciliation
         validate_reconciliation(state,read_blob)
+    if state.get("fieldExchange") is not None:
+        from .field_exchange import validate
+        validate(state,read_blob)
     canonical(state)
