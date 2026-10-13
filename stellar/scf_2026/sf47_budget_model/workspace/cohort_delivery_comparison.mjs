@@ -195,7 +195,7 @@ function count(rows,key) { return rows.filter(row => row[key]).length; }
 function delta(actual,planned) { return planned === null || planned === undefined || actual === null || actual === undefined ? null : actual - planned; }
 function currentCompletion(intent, cutoff) {
   return intent.completions.filter(row => row.current && timestamp(row.completedAt,'completion.completedAt').ticks <= cutoff.ticks)
-    .slice().sort((a,b) => timestamp(a.completedAt,'completion.completedAt').ticks < timestamp(b.completedAt,'completion.completedAt').ticks ? -1 : 1)[0] || null;
+    .slice().sort((a,b) => { const first=timestamp(a.completedAt,'completion.completedAt').ticks, second=timestamp(b.completedAt,'completion.completedAt').ticks; return first<second?-1:first>second?1:0; })[0] || null;
 }
 export function compareCohortDelivery(raw) {
   const input = normalizeInput(raw), plan = checkedPlan(input.planDocument), c = checkedReview(input.review);
@@ -297,9 +297,11 @@ export function compareCohortDelivery(raw) {
       completionDelta:complete-target.plannedCompletePurchases,
       remainingDue:target.dueAtCutoff?Math.max(0,target.plannedCompletePurchases-complete):0,
       additionalIntents:Math.max(0,observedIntents-target.plannedPaymentRequests),
-      state:!target.observedOperationId||!target.observedBuyerId||!target.observedMerchantId||(target.facilitatorId&&!target.observedFacilitatorId)?'ASSOCIATION_REQUIRED':!target.dueAtCutoff?'PLANNED_LATER':complete>=target.plannedCompletePurchases&&target.plannedCompletePurchases>0?'DELIVERED':
+      state:!target.observedOperationId||!target.observedBuyerId||!target.observedMerchantId||(target.facilitatorId&&!target.observedFacilitatorId)?'ASSOCIATION_REQUIRED':
+        complete>0&&complete>=target.plannedCompletePurchases?'DELIVERED':
         actual.some(row=>row.refundedAfterSettlement||row.cancelledAfterSettlement)?'ADJUSTED':
-        actual.some(row=>row.currentCompletedAt)?'DELIVERED_OUTSIDE_REVIEW_SCOPE':actual.length?'IN_PROGRESS':'AWAITING_RECORD',
+        actual.some(row=>row.currentCompletedAt&&!row.completeInWindow)?'DELIVERED_OUTSIDE_REVIEW_SCOPE':
+        !target.dueAtCutoff?'PLANNED_LATER':target.plannedCompletePurchases===0?'NO_PAID_COMPLETION_PLANNED':actual.length?'IN_PROGRESS':'AWAITING_RECORD',
       note:target.scheduleId?schedules.get(target.scheduleId)?.note||'':''
     };
   });
