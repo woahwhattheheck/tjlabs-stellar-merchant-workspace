@@ -1,6 +1,6 @@
 # External application archive to installed Runtime
 
-Operation: **SCF-RUNTIME-ARCHIVE-GRANT-9F05-AZ-20261013**. This guide joins the maintained source collector and Runtime Companion importer to the existing grant chapter. The original implementation and native receiving operation remain **TAR-APPLICATION-SOURCE-RECEIVING-D76C-20261013**. The cumulative grant manuscript and four reviewer outputs remain with E496.
+Operation: **SCF-RUNTIME-ARCHIVE-GRANT-9F05-AZ-20261013**. This guide joins the maintained source collector and Runtime Companion importer to the existing grant chapter. The original implementation and native receiving operation remain **TAR-APPLICATION-SOURCE-RECEIVING-D76C-20261013**. The original cumulative grant manuscript and four-output operation remains SCF-CURRENT-CUSTOMER-SOURCE-05C7-20261013. BBBD continues its next complete composition after E496/MI-DFF7's published PR2018, preserving the original saved-v7 receiving.
 
 ## Select the actual source and installation
 
@@ -141,7 +141,7 @@ The original readers reject unsupported members and limits as complete inputs. T
 
 The author files are `grant-chapters/runtime-original-inputs.md` and `grant-products/runtime-workspace.json`. The current addition retains every original 142 source row and measured edition, adding 38 independently read complete file declarations: the 31-member toolkit, two installed wrappers, source-edition file, installed README, contribution, recipe and original TAR receiving guide. New IDs use `required:false` so an earlier complete chapter can still reopen; the current chapter explicitly selects all 180 sources.
 
-The existing product registration remains `runtime-workspace`, with H2 **Product selection, installation and recurring buyer work**. In the latest canonical manuscript, replace only the exact existing H3 **Original application files from device to restored workspace** and its content with the matched full author successor. Preserve all other H3s in that H2 and every other chapter. Select the complete matching declaration through the original composer. E496 retains the cumulative source index, manuscript and four reviewer outputs.
+The existing product registration remains `runtime-workspace`, with H2 **Product selection, installation and recurring buyer work**. In the latest canonical manuscript, replace only the exact existing H3 **Original application files from device to restored workspace** and its content with the matched full author successor. Preserve all other H3s in that H2 and every other chapter. Select the complete matching declaration through the original composer. The original cumulative publisher retains the source index, manuscript and four reviewer outputs; BBBD's following composition at message 1791925100.635479 continues that same operation. Generated commercial grant packages remain on the existing internal Slack/Page destination under the current owner instruction.
 
 Use the existing `grant-compose.mjs` and `receiveGrantProductSources` implementation; current source metadata identifies core Git blob `b71687eb37574db66df482578d3290e1f500922c`. Receive against the publisher's latest complete index, retaining all unrelated records, source-registration ownership and historical editions. This addition changes neither the USD 38,000 request, 400 hours, 150-day schedule nor the six funded packages.
 
@@ -153,6 +153,7 @@ Original receiving: <https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p179
 Original Companion receiving: <https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791908908346609?thread_ts=1791843214.761669>.
 Grant author integration: <https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791924511932689?thread_ts=1791843214.761669>.
 Cumulative publisher: <https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791733597745419>.
+Current whole-package continuation: <https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791925100635479?thread_ts=1791733597.745419>.
 
 ## Current producing-owner instruction
 
