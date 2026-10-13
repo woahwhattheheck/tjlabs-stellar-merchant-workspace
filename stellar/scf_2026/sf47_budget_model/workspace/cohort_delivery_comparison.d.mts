@@ -142,7 +142,8 @@ export interface CohortRecordedCostAllocation {
   supplierCoverage:'PARTIAL'|'COMPLETE';laborCoverage:'PARTIAL'|'COMPLETE';coverageNote:string;
   costs:Array<{costId:string;share:string}>;
 }
-export interface CohortRecordedCostChoices {name:string;note:string;allocations:CohortRecordedCostAllocation[];}
+/** New calculations count completed useful tasks; absent only in retained historical documents. */
+export interface CohortRecordedCostChoices {name:string;note:string;quantityBasis?:'COMPLETED_TASKS';allocations:CohortRecordedCostAllocation[];}
 export interface CohortRecordedCostPlan {
   schema:typeof COHORT_RECORDED_COST_PLAN_SCHEMA;
   sourceDocument:CohortDeliveryComparison;
@@ -154,6 +155,7 @@ export interface CohortRecordedCostPlan {
   derivations:Array<{
     id:string;targetScheduleId:string;sourceServiceId:string;outputQuantity:string;outputUnit:string;outputSource:string;
     measurement?:CohortTaskMeasurementObservation & {comparisonId:string;revision:number;sourceId:string;sourceSha256:string;customer:string;task:string;serviceBasis:string;originCaseId?:string;selectedCaseId?:string};
+    quantityBasis?:{kind:'COMPLETED_TASKS';completedTasks:string;requestsPerTask:number;correspondingRequests:string;supplierCostPerTask:string|null;interpretation:string};
     sourceService:Record<string,unknown>;originalEconomics:Record<string,unknown>|null;
     derivedEconomics:{unitCost:string|null;activeHoursPerTask:string|null;hourlyCost:string|null};
     supplierCoverage:'PARTIAL'|'COMPLETE';laborCoverage:'PARTIAL'|'COMPLETE';coverageNote:string;

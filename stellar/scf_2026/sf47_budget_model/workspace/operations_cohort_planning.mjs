@@ -1320,7 +1320,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     state.notice='The allocation is editable manually; its earlier saved measurement remains retained.';
   }
   function recordedCostState(){
-    if(!state.recordedCostChoices)state.recordedCostChoices={name:plan()?.name+' · recorded cost basis',note:'',allocations:[]};
+    if(!state.recordedCostChoices)state.recordedCostChoices={name:plan()?.name+' · recorded cost basis',note:'',quantityBasis:'COMPLETED_TASKS',allocations:[]};
     return state.recordedCostChoices;
   }
   function recordedCostView(){
@@ -1342,7 +1342,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
         '<label>Future schedule'+select('targetScheduleId',rowOptions('schedules'),draft.targetScheduleId)+'</label>'+
         '<label>Original service'+select('sourceServiceId',commercial.services.map(row=>[row.id,row.label]),draft.sourceServiceId)+'</label>'+
         taskMeasurementView()+
-        '<label>Useful-output quantity'+input('outputQuantity',draft.outputQuantity||'')+'</label>'+
+        '<label>Completed useful tasks'+input('outputQuantity',draft.outputQuantity||'')+'</label>'+
         '<label>Useful-output unit'+input('outputUnit',draft.outputUnit||'')+'</label>'+
         '<label>Original measurement/source basis'+input('outputSource',draft.outputSource||'')+'</label>'+
         '<label>Supplier cost coverage'+select('supplierCoverage',[['PARTIAL','Partial / unknown remainder'],['COMPLETE','Complete for this measured output']],draft.supplierCoverage)+'</label>'+
@@ -1353,12 +1353,13 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
           esc(row.serviceId)+'<br>'+esc(row.label),esc(row.costType),esc(fmt(row.calculatedAmount))+' '+esc(commercial.currency)+'<br>'+esc(fmt(row.activeHours))+' hours',
           esc(row.sourceReference)+(row.originalCost?'<small>'+esc(row.originalCost.recordId)+' / '+esc(row.originalCost.lineId)+'</small>':'')]))+
         '<button type="submit">Keep complete allocation</button>'+btn('Clear allocation form','recorded-cost-clear')+'</form>'+
-        note('Leave an unselected cost share empty. Each cost can be apportioned across several schedules, with a total at most 1. Payment fees retain their existing funding/payment model. Partial coverage produces unknown estimates. Complete coverage, including a zero-cost category, needs the entered explanation.')+
+        note('Count completed useful tasks. One measured result must correspond to one complete future task; explain that relationship in the source or saved measurement basis. Supplier cost per task is distributed across the selected schedule’s requests per task. Labor hours stay per task. Leave an unselected cost share empty; all shares of each cost total at most 1. Payment fees retain their original model. Partial coverage stays unknown; complete coverage needs its entered explanation.')+
         table(['Allocation','Future schedule','Measured output','Coverage',''],choices.allocations.map(row=>[esc(row.id),esc(row.targetScheduleId),esc(row.outputQuantity)+' '+esc(row.outputUnit)+(row.measurement?'<small>'+esc(row.measurement.original.edition.id)+' / r'+esc(row.measurement.original.edition.revision)+'</small>':''),esc(row.supplierCoverage)+' supplier / '+esc(row.laborCoverage)+' labor',btn('Edit','recorded-cost-edit','data-id="'+esc(row.id)+'"')+btn('Remove','recorded-cost-remove','data-id="'+esc(row.id)+'"')]))+
         '<label>Successor name<input data-cp-recorded-choice="name" value="'+esc(choices.name)+'"></label><label>Planning note<textarea data-cp-recorded-choice="note">'+esc(choices.note)+'</textarea></label>'+
         '<div class="cp-actions">'+btn('Calculate complete successor','recorded-cost-calculate','',!choices.allocations.length)+btn('Download full editable source and choices','recorded-cost-working')+'</div>'):'')+
       (preview?section('Reviewed cost basis and prospective result',
-        table(['Future schedule','Measured outputs','Supplier / result','Hours / result','Hourly cost'],preview.derivations.map(row=>[esc(row.targetScheduleId),esc(row.outputQuantity)+' '+esc(row.outputUnit),esc(fmt(row.derivedEconomics.unitCost)),esc(fmt(row.derivedEconomics.activeHoursPerTask)),esc(fmt(row.derivedEconomics.hourlyCost))]))+
+        (preview.choices.quantityBasis?note('Supplier / task is the selected useful-output cost. Supplier / request is the rate used by the original calculator. The request multiplier is taken from the retained future schedule.'):note('This historical proposal retains its original calculation. Choose Calculate complete successor to convert completed tasks into the selected schedule’s request units before applying a new cost basis.'))+
+        table(['Future schedule','Measured tasks','Requests / task','Corresponding requests','Supplier / task','Supplier / request','Hours / task','Hourly cost'],preview.derivations.map(row=>[esc(row.targetScheduleId),esc(row.outputQuantity)+' '+esc(row.outputUnit),esc(fmt(row.quantityBasis?.requestsPerTask)),esc(fmt(row.quantityBasis?.correspondingRequests)),esc(fmt(row.quantityBasis?.supplierCostPerTask)),esc(fmt(row.derivedEconomics.unitCost)),esc(fmt(row.derivedEconomics.activeHoursPerTask)),esc(fmt(row.derivedEconomics.hourlyCost))]))+
         table(['Future schedule','Original measurement','Basis / review','Customer response','Service relationship'],preview.derivations.filter(row=>row.measurement).map(row=>[esc(row.targetScheduleId),esc(row.measurement.comparisonId)+' / r'+esc(row.measurement.revision)+' / '+esc(row.measurement.observationId||'Installed'),esc(row.measurement.basis)+' / '+esc(row.measurement.status),esc(row.measurement.acceptance?.status||'Not recorded for initial method'),esc(row.measurement.serviceBasis)]))+
         table(['Actual cost row','Selected share','Unselected share'],preview.costBalances.map(row=>[esc(row.costId),esc(row.selectedShare),esc(row.unselectedShare)]))+
         '<div class="cp-actions">'+btn('Apply to editable future plan','recorded-cost-adopt')+btn('Apply and save complete edition','recorded-cost-save')+
@@ -1383,10 +1384,11 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   }
   function calculateRecordedCost(){
     const value=planCohortFromRecordedCosts(state.recordedCostSource,state.recordedCostBaseline,recordedCostState());
-    state.recordedCostPreview=value;persist();return value;
+    state.recordedCostPreview=value;state.recordedCostChoices=copy(value.choices);persist();return value;
   }
   function adoptRecordedCost(){
     const value=reopenCohortRecordedCostPlan(state.recordedCostPreview);
+    if(!value.choices.quantityBasis)throw new Error('Calculate a complete successor with the selected request units before applying this historical proposal. Its original document remains retained.');
     if(JSON.stringify(value.choices)!==JSON.stringify(recordedCostState())||JSON.stringify(value.sourceDocument)!==JSON.stringify(state.recordedCostSource)||JSON.stringify(value.planDocument)!==JSON.stringify(state.recordedCostBaseline))
       throw new Error('Recalculate the complete currently selected costs, baseline and choices before applying.');
     rememberPrior('Applied reviewed recorded-cost basis');
