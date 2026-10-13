@@ -415,6 +415,15 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/gleif\/SOURCE_CONTRACT\.md)/, companyResearch);
   receive('gleif-company-grant-workflow', 'Company research service, customer commissioning and existing funded packages',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/gleif\/GRANT\.md)/, companyResearch);
+  const x402apiMerchant = section(companion, '## Merchant invoices, paid fulfillment and portable operating projects')?.text || '';
+  receive('x402api-merchant-operating', 'Merchant invoices, installed application and operator handover',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/OPERATING\.md)/, x402apiMerchant);
+  receive('x402api-merchant-application', 'Merchant invoice, payment, fulfillment and result interfaces',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/README\.md)/, x402apiMerchant);
+  receive('x402api-merchant-native-receiving', 'Original complete merchant protocol commissioning and receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/NATIVE_RECEIVING\.md)/, x402apiMerchant);
+  receive('x402api-merchant-installed-receiving', 'Installed merchant Applications and completed-workspace receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/INSTALLED_RECEIVING\.md)/, x402apiMerchant);
   index.narrative_source = { ...index.narrative_source, composition: {
     ...index.narrative_source?.composition,
     retained_product_sections: headings(clean(companion)).filter(item => item.level === 2).map(item => item.text.slice(3)),

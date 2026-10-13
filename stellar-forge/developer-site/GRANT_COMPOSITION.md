@@ -327,3 +327,22 @@ Preserve the original case identities when incorporating its native result. Prov
 ## A2A source catalogue in the current composition
 
 The existing customer-source receiver also imports `grant-a2a.mjs` and calls its receiver after selecting the A2A chapter. This completes the chapter's source catalogue and retains original dated file/source observations through public-link projection and repeated composition. The composer records `a2a_projector_git_blob` alongside the current renderer, customer projector and delivery-plan identities. The [complete A2A catalogue guide](./GRANT_A2A_CATALOGUE.md) explains the selected sources, retained file witnesses and original dated receiving. Use the same complete four-file composition and the existing publication operation.
+
+## Receive merchant invoices and complete operating projects
+
+Receive the complete canonical §9A chapter **Merchant invoices, paid fulfillment and portable operating projects** through the existing --manuscript operation. The whole-section receiver carries its full operator journey, completed commissioning, current installation and portable execution states, customer handover and existing funded-work assignment.
+
+The existing customer source receiver registers four immutable guides from that chapter:
+
+- x402api-merchant-operating selects the complete products/x402api-merchant-workspace/OPERATING.md.
+- x402api-merchant-application selects README.md in that same original product directory.
+- x402api-merchant-native-receiving selects NATIVE_RECEIVING.md.
+- x402api-merchant-installed-receiving selects INSTALLED_RECEIVING.md.
+
+Each guide retains its actual repository, commit and path. A changed identity clears an obsolete blob pin through the original receive helper. An older manuscript that has no merchant chapter or guide link preserves the existing source register. The chapter does not install a second section projector.
+
+The original native result contains five local x402api commissioning invoices and their complete received files. Keep those fixture observations separate from the canonical eighteen Stellar purchases, their 0.0411 XLM, and all independent-customer targets. The installed and portable programmes retain their own original operation IDs and actual returned completion state. Source publication or parsing does not supply a missing native receiving result.
+
+Compose this chapter and its four sources with every current chapter and registration, including the accepted Haystack and Connected Systems changes. Preserve the application's current answers, budget, six packages, prospective hours, independent merchants and buyers, purchase targets and tranches. The completed merchant foundation supports future customer-specific operating and handover work within those existing allocations.
+
+Run the original composer and retain its four source pins for grant.html, grant-data/application.md, grant-data/product-and-finance.md, and grant-data/source-index.json. Continue the same saved draft/review, Page and owner-private Site publication. The [full merchant chapter and receiving boundary](./GRANT_X402API_MERCHANT.md) explains this source contribution.
