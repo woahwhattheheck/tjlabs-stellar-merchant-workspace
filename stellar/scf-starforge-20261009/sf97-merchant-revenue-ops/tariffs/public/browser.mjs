@@ -1,4 +1,5 @@
 // MIT. Private merchant tariff operator. Exact requests stay attached to their reviews.
+import { tariffReviewBasisHtml, tariffComparisonHtml, tariffScheduleHtml, tariffThresholdsHtml, tariffSourceHtml } from './review.mjs';
 const $ = id => document.getElementById(id);
 const integrated = location.pathname.startsWith('/tariffs/');
 const api = integrated ? '/api/tariffs' : '/api';
@@ -68,7 +69,7 @@ const amount = value => value === null || value === undefined ? 'Unknown' : '$'+
 const pretty = value => JSON.stringify(value,null,2);
 function resetPreview() {
   if(!bootStudyRestore&&!restoringStudy)localPlanId=null;
-  activePreview=null; activePlan=null; selection=null; $('save-plan').disabled=true;
+  activePreview=null; activePlan=null; selection=null; clearComparison(); $('save-plan').disabled=true;
   $('selection-section').hidden=true; $('commit-selection').disabled=true;
   $('download-plan').disabled=true; $('download-csv').disabled=true;
   for (const button of $('comparison-table').querySelectorAll('button')) button.disabled=true;
@@ -220,29 +221,78 @@ async function loadSourceVersion() {
   if(!draft.tariffs.length)draft.tariffs.push(newTariff());
   $('calculate').disabled=false;renderEditors();persist();
 }
+let comparisonReview=null,comparisonChoice=null;
+function reviewExportState() {
+  const enabled=Boolean(activePlan && comparisonReview &&
+    activePlan.review.tariffReviewSha256===comparisonReview.tariffReviewSha256);
+  for(const id of ['download-report','download-bands','download-thresholds','print-plan'])$(id).disabled=!enabled;
+}
+function clearComparison() {
+  comparisonReview=null;comparisonChoice=null;
+  $('comparison-table').hidden=true;$('comparison-table').querySelector('tbody').replaceChildren();
+  $('comparison-filters').hidden=true;$('review-schedules').hidden=true;$('review-source').hidden=true;
+  for(const id of ['review-basis','comparison-detail','comparison-action','review-schedules-body','review-source-body'])$(id).replaceChildren();
+  $('comparison-empty').hidden=false;$('comparison-empty').textContent='Calculate the current inputs to review their complete results.';
+  reviewExportState();
+}
+function reviewOptions(id,rows,label,keep) {
+  const select=$(id),selected=keep?select.value:'';
+  select.replaceChildren();const all=node('option',label);all.value='';select.append(all);
+  for(const [value,label] of rows){const option=node('option',label);option.value=value;select.append(option);}
+  select.value=rows.some(row=>row[0]===selected)?selected:'';
+}
 function renderComparison(review) {
-  const table=$('comparison-table'), body=table.querySelector('tbody');body.replaceChildren();table.hidden=false;
-  $('comparison-empty').hidden=true;
+  const keep=comparisonReview?.tariffReviewSha256===review.tariffReviewSha256;
+  comparisonReview=review;if(!keep)comparisonChoice=null;
+  const context=activePlan?.review.tariffReviewSha256===review.tariffReviewSha256?activePlan:activePreview?.result??{};
+  $('review-basis').innerHTML=tariffReviewBasisHtml(review,context);
+  $('review-schedules-body').innerHTML=tariffScheduleHtml(review)+tariffThresholdsHtml(review);
+  $('review-schedules').hidden=false;
+  $('review-source').hidden=!context.planId;
+  $('review-source-body').innerHTML=context.planId?tariffSourceHtml(context):'';
+  const routes=[...new Map(review.comparisons.map(row=>[row.routeId,row.method+' '+row.path+' / '+row.routeId])).entries()];
+  reviewOptions('review-route',routes,'All routes',keep);
+  reviewOptions('review-tariff',review.tariffs.map(tariff=>[tariff.id,tariff.label]),'All tariffs',keep);
+  reviewOptions('review-quantity',review.volumes.map(value=>[value,value+' requests']),'All quantities',keep);
+  $('comparison-filters').hidden=false;reviewExportState();renderComparisonRows();
+}
+function renderComparisonRows() {
+  if(!comparisonReview)return;
+  const review=comparisonReview,rows=review.comparisons.filter(row=>
+    (!$('review-route').value||row.routeId===$('review-route').value)&&
+    (!$('review-tariff').value||row.tariffId===$('review-tariff').value)&&
+    (!$('review-quantity').value||row.quantity===$('review-quantity').value));
+  if(!rows.some(row=>row.id===comparisonChoice))comparisonChoice=rows[0]?.id??null;
+  const table=$('comparison-table'),body=table.querySelector('tbody');body.replaceChildren();table.hidden=!rows.length;
+  $('comparison-empty').hidden=Boolean(rows.length);
+  $('comparison-empty').textContent='No comparison matches these filters. Show all comparisons or choose another route, tariff or quantity.';
+  $('comparison-count').textContent=rows.length+' of '+review.comparisons.length+' outcomes shown. Downloads and the full report include every outcome.';
   const names=new Map(review.tariffs.map(tariff=>[tariff.id,tariff.label]));
-  for(const row of review.comparisons) {
-    const tr=node('tr'), name=node('td',names.get(row.tariffId) ?? row.tariffId);
+  for(const row of rows) {
+    const tr=node('tr'),name=node('td',names.get(row.tariffId)??row.tariffId);
     name.append(node('span',row.routeId,'muted'));tr.append(name);
     for(const value of [row.quantity,row.quote.totalUsd,row.grossDeltaUsd,row.contributionBeforeFixedUsd,
       row.quote.chosenUniformQuoteUsd,row.quote.roundingDeltaUsd])tr.append(node('td',valueText(value)));
-    const action=node('td'), choose=button('Review',async()=>{
+    const action=node('td'),open=button('Details',async()=>{
+      comparisonChoice=row.id;renderComparisonRows();$('comparison-detail').scrollIntoView({behavior:'smooth',block:'start'});
+    },'small');
+    open.setAttribute('aria-pressed',String(row.id===comparisonChoice));action.append(open);tr.append(action);body.append(tr);
+  }
+  const selected=rows.find(row=>row.id===comparisonChoice);
+  $('comparison-detail').innerHTML=selected?tariffComparisonHtml(review,selected):'';
+  const actions=$('comparison-action');actions.replaceChildren();
+  if(selected) {
+    const choose=button('Review this uniform quote',async()=>{
       if(!activePlan || activePlan.review.tariffReviewSha256!==review.tariffReviewSha256)
         throw new Error('Save this comparison before choosing its fixed quote.');
-      selection=await request('/selection',{planId:activePlan.planId,comparisonId:row.id});
+      selection=await request('/selection',{planId:activePlan.planId,comparisonId:selected.id});
       renderSelection();$('selection-section').scrollIntoView({behavior:'smooth',block:'start'});
       message('Review the exact fixed quote and complete commercial terms before saving.');
-    },'small');
-    choose.disabled=!row.scenario || !activePlan || activePlan.review.tariffReviewSha256!==review.tariffReviewSha256;
-    action.append(choose);tr.append(action);body.append(tr);
-  }
-  const notices=$('boundary-notices');notices.replaceChildren();
-  for(const detail of review.tariffDetails ?? [])for(const boundary of detail.boundaries ?? []) {
-    if(boundary.decreasesGross)notices.append(node('p',
-      (names.get(detail.tariffId) ?? detail.tariffId)+': monthly total decreases at this volume boundary. '+pretty(boundary),'notice'));
+    });
+    choose.disabled=!selected.scenario || !activePlan || activePlan.review.tariffReviewSha256!==review.tariffReviewSha256;
+    actions.append(choose,node('p',!selected.scenario?'A uniform quote needs a positive request quantity.':
+      !activePlan?'Save the calculated plan to continue with this uniform quote.':
+      'The original selection flow reviews the complete merchant terms before saving.','muted'));
   }
 }
 async function calculate() {
@@ -250,7 +300,7 @@ async function calculate() {
   const result=await request('/preview',input);activePreview={input,result};activePlan=null;selection=null;
   $('selection-section').hidden=true;
   $('save-plan').disabled=JSON.stringify(formInput())!==JSON.stringify(input);
-  $('download-plan').disabled=true;$('download-csv').disabled=true;$('print-plan').disabled=false;
+  $('download-plan').disabled=true;$('download-csv').disabled=true;$('print-plan').disabled=true;
   renderComparison(result.review);
   $('saved-plan-status').textContent='Calculated from '+result.sourceLabel+'. Save to retain these inputs and results.';
   message('Comparison calculated. '+result.review.comparisons.length+' exact quantity outcomes.');
@@ -278,19 +328,21 @@ async function savePlan() {
 }
 async function openPlan(planId) {
   await saveBeforeSwitch();
+  const selectedPlan=await request('/plans/'+encodeURIComponent(planId));
+  const selectedSource=await request('/source?version='+encodeURIComponent(selectedPlan.version));
   study=null;studyRequest=null;localPlanId=null;pendingSave=null;pendingCommit=null;priceSaveRequest=null;
   paymentDraft={version:null,valuations:[]};priceSource=null;
   priceInput=null;pricePreview=null;priceDecision=null;
   $('valuation-rows').replaceChildren();$('price-preview').replaceChildren();$('price-downloads').replaceChildren();
   $('preview-prices').disabled=true;$('save-prices').disabled=true;$('stage-prices').disabled=true;
   $('study-label').value='Study from saved tariff plan';$('study-history').replaceChildren();
-  activePlan=await request('/plans/'+encodeURIComponent(planId));activePreview=null;selection=null;
+  activePlan=selectedPlan;activePreview=null;selection=null;
   draft={version:activePlan.version,label:activePlan.label,volumes:activePlan.inputs.volumes.join(', '),
     tariffs:structuredClone(activePlan.inputs.tariffs)};
   $('plan-label').value=draft.label;$('volumes').value=draft.volumes;
   $('source-version').value=draft.version;
   if(!$('source-version').value){const option=node('option',activePlan.sourceLabel+' (retained source)');option.value=draft.version;$('source-version').append(option);$('source-version').value=draft.version;}
-  source=await request('/source?version='+encodeURIComponent(draft.version));
+  source=selectedSource;
   $('source-summary').textContent=source.label+' / '+source.routes.length+' selected routes'+(source.sellerChanged?' / current seller changed':'');
   renderEditors();renderComparison(activePlan.review);persist();
   $('selection-section').hidden=true;$('save-plan').disabled=true;$('download-plan').disabled=false;
@@ -705,7 +757,19 @@ $('commit-selection').addEventListener('click',()=>run(commitSelection));
 $('download-selection').addEventListener('click',()=>{if(selection)localDownload('tariff-selection.json',pretty(selection)+'\n');});
 $('download-plan').addEventListener('click',()=>run(()=>serverDownload('/plans/'+activePlan.planId+'/files/plan.json','tariff-plan.json')));
 $('download-csv').addEventListener('click',()=>run(()=>serverDownload('/plans/'+activePlan.planId+'/files/comparison.csv','tariff-comparison.csv')));
-$('print-plan').addEventListener('click',()=>window.print());
+for(const id of ['review-route','review-tariff','review-quantity'])$(id).addEventListener('change',renderComparisonRows);
+$('review-reset').addEventListener('click',()=>{for(const id of ['review-route','review-tariff','review-quantity'])$(id).value='';renderComparisonRows();});
+for(const [id,name] of [['download-report','report.html'],['download-bands','band-charges.csv'],['download-thresholds','thresholds.csv']])
+  $(id).addEventListener('click',()=>run(async()=>{
+    if(!activePlan || activePlan.review.tariffReviewSha256!==comparisonReview?.tariffReviewSha256)
+      throw new Error('Open the original saved plan in the reader before exporting.');
+    await serverDownload('/plans/'+activePlan.planId+'/files/'+name,'tariff-'+activePlan.planId+'-'+name);
+  }));
+$('print-plan').addEventListener('click',()=>run(async()=>{
+  if(!activePlan || activePlan.review.tariffReviewSha256!==comparisonReview?.tariffReviewSha256)
+    throw new Error('Open the original saved plan in the reader before printing.');
+  window.print();
+}));
 $('load-prices').addEventListener('click',()=>run(loadPrices));
 $('preview-prices').addEventListener('click',()=>run(previewPrices));
 $('save-prices').addEventListener('click',()=>run(savePrices));

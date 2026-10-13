@@ -78,6 +78,7 @@ export const TARIFF_MCP_OPERATIONS: Readonly<{
   selection:'merchant_pricing_tariff_selection';
   commitSelection:'merchant_pricing_tariff_commit_selection';
   download:'merchant_pricing_tariff_download';
+  report:'merchant_pricing_tariff_report';
   bundle:'merchant_pricing_tariff_bundle';
   inspectPortfolio:'merchant_pricing_tariff_inspect_portfolio';
   receive:'merchant_pricing_tariff_receive';
@@ -103,6 +104,7 @@ export class MerchantTariffClient {
   selection(input:TariffSelectionInput,options?:MerchantTariffRequestOptions):Promise<TariffSelection>;
   commitSelection(input:TariffCommitSelectionInput,options?:MerchantTariffRequestOptions):Promise<TariffCommitSelectionResult>;
   download(planId:string,name:string,options?:MerchantTariffReadOptions):Promise<MerchantTariffFile>;
+  report(planId:string,name?:string,options?:MerchantTariffReadOptions):Promise<MerchantTariffFile>;
   /** Receives complete original JSON by verified chunks from its retained export. */
   bundle(options?:MerchantTariffBundleOptions):Promise<TariffBundle>;
   inspectPortfolio(bundle:TariffBundle,options?:MerchantTariffRequestOptions):Promise<MerchantTariffPortfolioInspection>;
@@ -160,3 +162,6 @@ export function downloadMerchantTariffPortfolio(options:MerchantTariffDownloadOp
 export function inspectMerchantTariffPortfolio(options:MerchantTariffClientOptions&{readonly portfolioSha256:string}):Promise<MerchantTariffManifestInspection>;
 export function downloadMerchantTariffPricingReview(options:MerchantTariffDownloadOptions&{readonly version:string}):Promise<MerchantTariffSavedDownload>;
 export function inspectMerchantTariffPricingReview(options:MerchantTariffClientOptions&{readonly version:string}):Promise<MerchantTariffManifestInspection>;
+
+export function downloadMerchantTariffReport(options:MerchantTariffDownloadOptions&{readonly planId:string}):Promise<MerchantTariffSavedDownload>;
+export function inspectMerchantTariffReport(options:MerchantTariffClientOptions&{readonly planId:string}):Promise<MerchantTariffManifestInspection>;

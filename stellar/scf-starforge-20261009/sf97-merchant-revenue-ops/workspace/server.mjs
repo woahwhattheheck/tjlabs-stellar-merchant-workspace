@@ -35,6 +35,7 @@ export async function startWorkspace({port = 8457, ...options} = {}) {
     ['/planning/style.css','../planning/style.css','text/css; charset=utf-8'],
     ['/tariffs/','../tariffs/public/index.html','text/html; charset=utf-8'],
     ['/tariffs/browser.mjs','../tariffs/public/browser.mjs','text/javascript; charset=utf-8'],
+    ['/tariffs/review.mjs','../tariffs/public/review.mjs','text/javascript; charset=utf-8'],
     ['/tariffs/style.css','../tariffs/public/style.css','text/css; charset=utf-8'],
     ['/performance/','../performance/public/index.html','text/html; charset=utf-8'],
     ['/performance/browser.mjs','../performance/public/browser.mjs','text/javascript; charset=utf-8'],

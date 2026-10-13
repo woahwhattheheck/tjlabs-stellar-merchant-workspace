@@ -350,6 +350,7 @@ export class TariffClient {
   selection(input: TariffSelectionInput, options?: TariffRequestOptions): Promise<TariffSelection>;
   commitSelection(input: TariffCommitSelectionInput, options?: TariffRequestOptions): Promise<TariffCommitSelectionResult>;
   download(planId: string, name: string, options?: TariffRequestOptions): Promise<TariffDownload>;
+  report(planId: string, name?: 'report.html' | 'band-charges.csv' | 'thresholds.csv', options?: TariffRequestOptions): Promise<TariffDownload>;
   bundle(options?: TariffBundleOptions): Promise<TariffBundle>;
   inspectPortfolio(bundle: TariffBundle, options?: TariffRequestOptions): Promise<TariffPortfolioInspection>;
   receive(bundle: TariffBundle, options?: TariffRequestOptions): Promise<JsonValue>;
