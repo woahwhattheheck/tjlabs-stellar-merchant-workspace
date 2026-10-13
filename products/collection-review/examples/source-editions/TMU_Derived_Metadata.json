@@ -1,0 +1,142 @@
+{
+  "schema": "stellar-forge.collection-input.v1",
+  "provenance": {
+    "kind": "derived-metadata-transport",
+    "sourceId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b",
+    "sourceSha256": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851",
+    "note": "TJLabs source-edition operation using the retained credential-redacted catalogue. No new institutional observation."
+  },
+  "institution": {
+    "title": "Toronto Metropolitan University – (Formerly Ryerson University)",
+    "description": "The Archives serves as the institutional memory of the Toronto Metropolitan University community. The Archives appraises, preserves, and makes accessible a broad range of primary source materials which provide administrative, academic, fiscal, legal, social, and cultural record of Toronto Metropolitan University.",
+    "address": "\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tToronto Metropolitan University\n\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t\t\t350 Victoria Street\n\n\t\t\t\t\t\t\t\t\t\tToronto, ON\n\n\t\t\t\t\t\t\t\t\t\tM5B 2K3\t\t\t\t\t\t\t\t\t\n\n\t\t\t\t\t\t\t\t",
+    "topics": [
+      "Community and Social Life",
+      "Historical Achievements, Figures, and Biography",
+      "Military Service and War Efforts",
+      "Oppression, Activism, and Resistance"
+    ],
+    "characteristics": [
+      "Performing Arts",
+      "Oral Histories",
+      "Ethnicity, Culture & Society",
+      "Portraits"
+    ]
+  },
+  "entries": [
+    {
+      "title": "Black Canada and the Great War",
+      "url": "https://www.torontomu.ca/black-canada-and-the-great-war/",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:1",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "title": "Mount Dennis Athletes Had Fine Minstrel Show 1921",
+      "url": "https://archives.library.torontomu.ca/index.php/mount-dennis-athletes-had-fine-minstrel-show",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:2",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "title": "Minstrel Show Group Portrait 1930-1950",
+      "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_dpla_primary_3c1ffe15c97a885512555d1dda317f6a&context=PC&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Primo%20Central&tab=OCULDiscoveryNetwork&query=any,contains,Minstrel%20show%20group%20portrait%201930&offset=0&pcAvailability=true",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:3",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "title": "Portrait of Richard Gordineer ",
+      "url": "https://archives.library.torontomu.ca/index.php/portrait-of-richard-gordineer",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:4",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "title": "Third Annual Kodak Minstrel Show - ‟Minstrel Maids\" 1922",
+      "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_proquest_hnp_1016284443&context=PC&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Primo%20Central&tab=OCULDiscoveryNetwork&query=any,contains,Minstrel%20Maids%201922&offset=0&pcAvailability=true",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:5",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "title": "Part of Kodak Canada Corporate Archives and Heritage Collection 1922",
+      "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991014477070808636&context=L&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Local%20Search%20Engine&tab=OCULDiscoveryNetwork&query=any,contains,Part%20of%20Kodak%20Canada%20Corporate%20Archives%20and%20Heritage%20Collection&offset=0&pcAvailability=true",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:6",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "title": "First Annual Kodak Minstrel Show 1920",
+      "url": "https://archives.library.torontomu.ca/index.php/kodak-minstrels",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:7",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "title": "Minstrel Shows 1985-2006",
+      "url": "https://archives.library.torontomu.ca/index.php/minstrel-shows",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:8",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "title": "Second Annual Kodak Minstrel Show 1921",
+      "url": "https://archives.library.torontomu.ca/index.php/kodak-minstrels-2",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:9",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "title": "Third Annual Kodak Minstrel Show - Crystal Theatre 1922",
+      "url": "https://archives.library.torontomu.ca/index.php/kodak-minstrels-crystal-theater",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:10",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "title": "Part of Kodak Canada Corporate Archives and Heritage Collection 1895-2006",
+      "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991014477070808636&context=L&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Local%20Search%20Engine&tab=OCULDiscoveryNetwork&query=any,contains,Part%20of%20Kodak%20Canada%20Corporate%20Archives%20and%20Heritage%20Collection&offset=0&pcAvailability=true",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:11",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "title": "At Kodak Heights / Canadian Kodak Co. 1921-1932",
+      "url": "https://archives.library.torontomu.ca/index.php/at-kodak-heights-canadian-kodak-co",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:12",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "title": "Lena Horne: The Lady and Her Music Television Production 1982",
+      "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_proquest_hnp_138164922&context=PC&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Primo%20Central&tab=OCULDiscoveryNetwork&query=any,contains,Lena%20Horne:%20The%20Lady%20and%20Her%20Music%20television%20production%20Paddy%20sampson&offset=0&pcAvailability=true",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:13",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "title": "Ethnicity and Recreation behaviour in Toronto: A Study of Canadian Blacks, Chinese and Italians 1993",
+      "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991000869809708636&context=L&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Local%20Search%20Engine&tab=OCULDiscoveryNetwork&query=any,contains,Ethnicity%20and%20recreation%20behaviour%20in%20Toronto:%20a%20study%20of%20Canadian%20Blacks,%20Chinese%20and%20Italians&offset=0&pcAvailability=true",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:14",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "title": "Patrick Watson / Harry Belafonte Interviews: Part 1 [unedited footage] 1976",
+      "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-part-1-unedited-footage",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:15",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "title": "Patrick Watson / Harry Belafonte Interviews: Part 2 [unedited footage] 1976",
+      "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-part-2-unedited-footage",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:16",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+      "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-2on-harry-belafonte-interviews-unedited-footage-2",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:17",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+      "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-3",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:18",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+      "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-4",
+      "originalOccurrence": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:19",
+      "sourceSHA": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    }
+  ]
+}

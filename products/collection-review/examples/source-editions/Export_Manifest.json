@@ -1,0 +1,158 @@
+{
+  "schema": "stellar-forge.collection-review-files.v1",
+  "workspaceId": "2d72a9c1-1010-4ea4-8cde-14b650617ff9",
+  "selectedRevisionId": "revision-9176f90781062cb097f4f4401c3e742834cb509c5ba457971b093981da668e75",
+  "workspaceSha256": "5202a0482fe17098e19a488e4b39b754d57a9fbcc500ea5534063a3c9a1f3834",
+  "files": [
+    {
+      "path": "collection-review/workspace.json",
+      "bytes": 594166,
+      "sha256": "e47e67d5c28fdb97d48bb3b573dc6fdf7e6a884dc749aa1e5b7abeb8d2254ec6"
+    },
+    {
+      "path": "collection-review/review.json",
+      "bytes": 133907,
+      "sha256": "935f14bbccae1f220aabef7b0d76963affb94c1b3ad229b565959e18ca2566ec"
+    },
+    {
+      "path": "collection-review/review.html",
+      "bytes": 91376,
+      "sha256": "170ddca99b2d7e2b2fd9d504786ac9033a0644cd53da0172143c43312c8270db"
+    },
+    {
+      "path": "collection-review/occurrences.csv",
+      "bytes": 34492,
+      "sha256": "55f46b31c62969d778f1aecc51fa7a55b150f6117a737577179062f3a974506a"
+    },
+    {
+      "path": "collection-review/relationships.csv",
+      "bytes": 7172,
+      "sha256": "6a1c0c58ea418aa84b05b3deb1948db200bd48cc12f1841f87628620bf6cfa02"
+    },
+    {
+      "path": "collection-review/story.json",
+      "bytes": 2390,
+      "sha256": "22fc07eb9bf5f6427f5aeb645558748a88b824b20652169875738be63f9f1459"
+    },
+    {
+      "path": "collection-review/source-editions/revision-9176f90781062cb097f4f4401c3e742834cb509c5ba457971b093981da668e75.json",
+      "bytes": 61489,
+      "sha256": "9c88be5fbc7fac2bfdbad32fadd4d2ed0ba7370f599da8d140537c1f2dcc870e"
+    },
+    {
+      "path": "collection-review/source-editions/revision-9176f90781062cb097f4f4401c3e742834cb509c5ba457971b093981da668e75.html",
+      "bytes": 75020,
+      "sha256": "7ae19b36af97c8b63ca46bbb5fb97b1b710199d7315ae19f8d907b87bab3994d"
+    },
+    {
+      "path": "collection-review/sources/collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b/original.html",
+      "bytes": 127506,
+      "sha256": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851"
+    },
+    {
+      "path": "collection-review/sources/collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b/source.json",
+      "bytes": 165321,
+      "sha256": "554c4dbd2e910520d188ca58a27712c33cd9cde615b8cfa0d224d493750b481c"
+    },
+    {
+      "path": "collection-review/sources/collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed/original.html",
+      "bytes": 127389,
+      "sha256": "92196d63685211b567a0f7889459cb2ce15eeaa776eb5a675b48e661de7fefb8"
+    },
+    {
+      "path": "collection-review/sources/collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed/source.json",
+      "bytes": 166740,
+      "sha256": "1b73e78dd5a9086b8c9422ffc78ec9b0011418cd6d75cc5731ce207e6d433ac7"
+    },
+    {
+      "path": "collection-review/sources/collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f/original.json",
+      "bytes": 10505,
+      "sha256": "e47e5c4d81457a366028c7d6fa26d1b4a16229ea40d5aee6d424389eeefa96c2"
+    },
+    {
+      "path": "collection-review/sources/collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f/source.json",
+      "bytes": 30920,
+      "sha256": "90cdd8270ce0a3d994ca975b88153db1c6bebc757de18fec1224d3cbf3fd3145"
+    },
+    {
+      "path": "collection-review/README.md",
+      "bytes": 1123,
+      "sha256": "c9d8038534058ea647ff4f65b3edcf8fa4d6d83c38dfe7baa2093ea8a7ff3a83"
+    },
+    {
+      "path": "merchant/seller.json",
+      "bytes": 701,
+      "sha256": "9fd3156ff746b0db9c3dfcfb44e759f3cbe97f65a0f1e430744efca9f51d2c73"
+    },
+    {
+      "path": "merchant/workspace.json",
+      "bytes": 129,
+      "sha256": "ea34a665b1b2824e273cdade4cabe20694f10627139bb6e4025dbc91d9ce1153"
+    },
+    {
+      "path": "merchant/data/collection-occurrences.json",
+      "bytes": 56450,
+      "sha256": "0569ca7007928ba2d9616d632b09c1cacc029de39471cea4d94e7bbe5d053dca"
+    },
+    {
+      "path": "merchant/starter-input.json",
+      "bytes": 61942,
+      "sha256": "27879592d13130289641d7c8b73d8b36e31fc560536daaecfc80b1aac4e4dd5d"
+    },
+    {
+      "path": "merchant/README.md",
+      "bytes": 6212,
+      "sha256": "191815c58a8a2b3a792636ee9d65d8d7ebabc4b1fec9f769cfc21184c8ed05a8"
+    },
+    {
+      "path": "merchant/.gitignore",
+      "bytes": 24,
+      "sha256": "dbcd18a69f990ba6f05ecadc91643149e9bd0ce7c85017a31dd6a1d1b9aca608"
+    },
+    {
+      "path": "merchant/.private/.gitkeep",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "merchant/source-tables/project.json",
+      "bytes": 176506,
+      "sha256": "7487c882eed103d02796ed6521b185c4abab2c4580ab5a8577b904c9af8aa119"
+    },
+    {
+      "path": "merchant/source-tables/sources/table-00000000-0000-4000-8000-000000000002/e-55f46b31c62969d778f1aecc51fa7a55b150f6117a737577179062f3a974506a.txt",
+      "bytes": 34492,
+      "sha256": "55f46b31c62969d778f1aecc51fa7a55b150f6117a737577179062f3a974506a"
+    },
+    {
+      "path": "merchant/source-tables/reviews/table-00000000-0000-4000-8000-000000000002/r-1ff8dc3b6def377eab905bbccad55db984f41562937adb0c0903dd83c0605cae/output.json",
+      "bytes": 56450,
+      "sha256": "0569ca7007928ba2d9616d632b09c1cacc029de39471cea4d94e7bbe5d053dca"
+    },
+    {
+      "path": "merchant/source-tables/reviews/table-00000000-0000-4000-8000-000000000002/r-1ff8dc3b6def377eab905bbccad55db984f41562937adb0c0903dd83c0605cae/mapping.json",
+      "bytes": 4046,
+      "sha256": "7a35aa6d4caa42d53306f7bbe95e377c0dc8758c8f572d46db864d87a9e8b397"
+    },
+    {
+      "path": "merchant/source-tables/reviews/table-00000000-0000-4000-8000-000000000002/r-1ff8dc3b6def377eab905bbccad55db984f41562937adb0c0903dd83c0605cae/review.json",
+      "bytes": 7224,
+      "sha256": "48aca46ee0d4bc362ac26eedbc60171d3031a4b1f95d5b637249690f1165f973"
+    },
+    {
+      "path": "merchant/source-tables/materials.json",
+      "bytes": 2167,
+      "sha256": "bae409e5b89665fd37a952ed1011e17ee64491f98921d4e5c5dae2fae8c69061"
+    },
+    {
+      "path": "merchant/source-tables/OPERATING.md",
+      "bytes": 3008,
+      "sha256": "4eb6543cc6703f90007c0928f081d005feeba047a7aa12c744f27e767b817077"
+    },
+    {
+      "path": "merchant/source-tables/files.json",
+      "bytes": 2842,
+      "sha256": "7a94ed8dcd907f22f9416cb0dce296bdeb9a2d34683943ce67a465a952bc1c66"
+    }
+  ]
+}
