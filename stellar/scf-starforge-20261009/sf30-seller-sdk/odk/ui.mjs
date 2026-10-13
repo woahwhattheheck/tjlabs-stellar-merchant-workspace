@@ -111,7 +111,7 @@ document.addEventListener('visibilitychange',schedulePoll);
 bind('refresh',()=>refresh());
 form('unlock-form',async()=>{token=$('operator-token').value.trim();writeStorage('token',token);await refresh();$('operator-token').value='';});
 form('connection-form',async data=>{const result=await retainedAction('connect',{id:uuid(),name:data.get('name'),url:data.get('url'),
-  authEnv:data.get('authEnv'),allowLoopback:data.has('allowLoopback')});await refresh();$('source-connection').value=result.id;$('plan-connection').value=result.id;selectedConnection=result.id;selectedForms=[];renderSelectedForms();$('new-connection').open=false;notice('Central connection verified. Load its projects to choose forms.');});
+  authEnv:data.get('authEnv'),...(data.get('codespacesTokenEnv')?{codespacesTokenEnv:data.get('codespacesTokenEnv')}:{}),allowLoopback:data.has('allowLoopback')});await refresh();$('source-connection').value=result.id;$('plan-connection').value=result.id;selectedConnection=result.id;selectedForms=[];renderSelectedForms();$('new-connection').open=false;notice('Central connection verified. Load its projects to choose forms.');});
 bind('load-projects',async()=>{const connectionId=chosen('source-connection','a Central connection'),result=await action('projects',{connectionId});
   options('source-project',result.projects,{label:item=>item.name||String(item.id)});projectForms=[];replace('source-forms',empty(result.projects.length?'Choose a project and load its forms.':'This Central user has no accessible projects.'));notice(result.projects.length+' projects received.');});
 $('source-connection').addEventListener('change',()=>{$('source-project').replaceChildren();projectForms=[];replace('source-forms',empty('Load projects from this connection.'));});
