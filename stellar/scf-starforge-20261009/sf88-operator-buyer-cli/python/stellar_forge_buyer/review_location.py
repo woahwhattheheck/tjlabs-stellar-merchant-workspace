@@ -82,6 +82,9 @@ def _resolve(library, location):
 
 def resolve_location(library, args, *, received=None, return_format=None):
     if received:
+        if received.get("kind") == "collection":
+            # Preserve the existing collection caller's explicit page choice.
+            return _resolve(library, {"page": "collections" if args.page == "auto" else args.page})
         location = _resolve(library, receipt_location(received, return_format=return_format))
         if location.get("comparison_id"):
             library.select_comparison(location["comparison_id"])
