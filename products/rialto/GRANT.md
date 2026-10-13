@@ -18,6 +18,12 @@ The offline customer report now completes the catalogue-change handover itself. 
 
 The source decision also travels within the actual customer operation. The original select command accepts the complete downloaded review, verifies its after catalogue and exact selected row before staging, and retains its byte-exact review, both complete source editions and self-contained report. The original request verifies every retained file when it reopens. Full private receiving and the existing Customer Installation snapshot carry that decision with the customer's task, source, request and native history. The original Installation annex links the complete review and returns the receiving machine's local report path, while earlier editions retain their established summaries.
 
+The acquisition workflow also supports unfinished source receiving. An operator can open the original capture before a catalogue has been saved, inspect every retained attempt and its exact request, and see which successful original response supplies each accepted page. The report distinguishes an unstarted capture, a failed first page, partial pagination, a complete sequence awaiting catalogue publication and a verified completed catalogue. A genuine empty catalogue requires a successful terminal source page; a failed request or unavailable row count remains visibly different.
+
+The same offline report carries the complete private source edition, including original response bodies, headers, timestamps, unsuccessful attempts, accepted pages and any saved catalogue. Its receiving packet uses the existing whole-source receiver and reopens in a new private directory. Operators then resume the original plan with the maintained capture command: successful valid pages are reused, failed attempts remain retained, and an interrupted final catalogue save can complete from the original pages. A saved catalogue is checked against the exact reconstructed page sequence and capability-source references before request selection. Source inspection and reporting make no network calls.
+
+This extends the prospective customer programme's usable handover from completed catalogues to interrupted and partially available source operations. A receiving engineer can carry the full acquisition state to another machine, diagnose the actual source outcome, and continue the customer's original task without rebuilding its source history. Once enumeration completes, the same catalogue comparison, selected request, native buyer and Customer Installation workflow continue. Service-specific acceptance can retain the actual capture outcome, complete source packet and independent receiving report together with the later useful customer output. Source coverage and capability-read outcomes remain explicit throughout that course.
+
 ### Complete source
 
 [Complete Rialto customer receiving and independent reopening](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/7b2c8e94a9dc08124c75e372c802839db18ebb15/stellar/scf-starforge-20261009/partners/rialto/OPERATING.md)
@@ -57,3 +63,11 @@ The source decision also travels within the actual customer operation. The origi
 ## Source registration
 
 The original grant composer reads `stellar-forge/developer-site/grant-products/rialto-customer.json`. It selects all seventeen measured immutable source editions only when the complete H2 above is present in the selected manuscript or companion. The existing source index and all other registered products remain with their original cumulative composition. The application owner can use this complete chapter through the maintained chapter chooser and original save/export workflow.
+
+[Complete original Rialto acquisition progress and private source receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/802f9a74f152777461119f30805b93c621eb2ebb/stellar/scf-starforge-20261009/partners/rialto/capture-progress.mjs)
+
+[Maintained customer commands for partial acquisition and independent reopening](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/802f9a74f152777461119f30805b93c621eb2ebb/stellar/scf-starforge-20261009/partners/rialto/customer.mjs)
+
+[Whole failed and partial capture, interpretation, transfer and resume guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/802f9a74f152777461119f30805b93c621eb2ebb/stellar/scf-starforge-20261009/partners/rialto/CAPTURE_PROGRESS.md)
+
+[Complete Rialto acquisition, comparison, customer and Installation operating course](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/802f9a74f152777461119f30805b93c621eb2ebb/stellar/scf-starforge-20261009/partners/rialto/OPERATING.md)
