@@ -41,6 +41,10 @@ export async function serveWorkspace(directory,{port=0,expectedConfiguration}={}
     const type=format==='html'?'text/html; charset=utf-8':format==='zip'?'application/zip':format==='summary'||format==='series'?'text/csv; charset=utf-8':'application/json; charset=utf-8';
     reply(200,bytes,type,{'content-disposition':'attachment; filename="'+name+'"'});return;
    }
+   if(request.method==='POST'&&['/api/source/review','/api/source/import'].includes(url.pathname)){
+    const bytes=await input(request);if(url.pathname.endsWith('/review')){reply(200,workspace.inspectSource(bytes));return;}
+    const expected=url.searchParams.get('expected');need(/^[a-f0-9]{64}$/.test(expected??''),'SOURCE_REVIEW_REQUIRED');reply(200,workspace.importSource(bytes,expected));return;
+   }
    if(request.method==='POST'&&['/api/receive/review','/api/receive/commit'].includes(url.pathname)){
     const bytes=await input(request),inspection=workspace.inspectReceiving(bytes);
     if(url.pathname.endsWith('/review')){reply(200,inspection.summary);return;}

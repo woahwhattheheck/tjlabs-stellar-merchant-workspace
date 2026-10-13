@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id);
 const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const number=v=>v===null||v===undefined?'—':Number(v).toLocaleString('en',{maximumFractionDigits:3});
 const measures={pm25:['PM2.5','µg/m³'],pm10:['PM10','µg/m³'],atmp:['Temperature','°C'],rhum:['Relative humidity','%'],rco2:['CO₂','ppm']};
-let state,loadedProjectId,review,receiveReview,receivedProjectId,definitionBase64,cataloguePage=0,poll;
+let state,loadedProjectId,review,receiveReview,sourceReview,receivedProjectId,definitionBase64,cataloguePage=0,poll;
 function notice(message,error=false){$('notice').textContent=message;$('notice').dataset.error=String(error);}
 async function request(path,body,raw=false){
  const response=await fetch(path,{...(body!==undefined?{method:'POST',headers:{'content-type':raw?'application/octet-stream':'application/json'},body:raw?body:JSON.stringify(body)}:{}),credentials:'same-origin'});
@@ -45,7 +45,13 @@ function rowTable(rows){
 function renderPlan(){
  const plan=state.plans.find(x=>x.id===$('plan').value);$('tasks').innerHTML=plan?'<table><thead><tr><th>Selection</th><th>State</th><th>Latest response</th></tr></thead><tbody>'+plan.tasks.map(t=>'<tr><td>'+escape(t.task_key)+'</td><td>'+escape(t.status)+'</td><td>'+escape(t.error??'')+'</td></tr>').join('')+'</tbody></table>':'';
  const active=state.active;$('acquisition-state').textContent=active?'Acquiring · '+active.results.length+' request results retained · started '+active.startedAt:plan?plan.tasks.filter(x=>x.status==='COMPLETE').length+' / '+plan.tasks.length+' selections complete':'Save a project and reporting period to begin.';
- $('acquire').disabled=Boolean(active)||!plan;$('stop').disabled=!active;$('reprocess').disabled=Boolean(active)||!plan;$('review').disabled=!plan;
+ $('acquire').disabled=Boolean(active)||!plan||Boolean(plan.sourceSetId);$('stop').disabled=!active;$('reprocess').disabled=Boolean(active)||!plan;$('review').disabled=!plan;
+}
+function renderSource(){
+ const source=state.sourceSets?.find(v=>v.id===$('source-set').value);
+ $('source-use').disabled=!source;$('source-window-use').disabled=!source;
+ options('source-window',source?.reportWindows??[],v=>v.id+' · '+v.start.slice(0,10)+' → '+v.end.slice(0,10),'Select a period');
+ $('source-detail').innerHTML=source?'<p>'+escape(source.operationId)+' · '+source.locations.length+' locations · '+source.files+' original files</p><p>Retained request overlap: '+escape(source.range.start)+' → '+escape(source.range.end)+' · '+escape(source.range.bucket)+'. Measures available across this selection: '+source.commonMeasures.map(m=>escape(measures[m][0])).join(', ')+'.</p><details><summary>Locations and available history</summary><div class="tablewrap"><table><thead><tr><th>Source / location</th><th>Customer label</th><th>Available history</th></tr></thead><tbody>'+source.locations.map(v=>'<tr><td>'+escape(v.sourceType+' · '+v.id)+'</td><td>'+escape(v.label)+'</td><td>'+v.measures.map(m=>escape(measures[m][0])).join(', ')+'</td></tr>').join('')+'</tbody></table></div></details>':'<p class="hint">This plan will acquire original provider responses for the selected reporting period.</p>';
 }
 function renderReport(){
  const report=state.reports.find(x=>x.id===$('report').value);$('report-detail').innerHTML=report?'<p>'+escape(report.period.start)+' → '+escape(report.period.end)+' · '+escape(report.period.bucket)+'</p>'+rowTable(report.rows):'';
@@ -58,8 +64,9 @@ async function refresh(force=false){
  if(force||loadedProjectId===undefined||loadedProjectId!==(state.currentProject?.id??null))projectForm(state.currentProject);
  options('plan',[...state.plans].reverse(),v=>v.title+' · '+v.period.start.slice(0,10)+' → '+v.period.end.slice(0,10));
  options('report',[...state.reports].reverse(),v=>v.title+' · '+v.period.start.slice(0,10)+' → '+v.period.end.slice(0,10));
+ options('source-set',state.sourceSets??[],v=>v.operationId+' · '+v.locations.length+' locations','New provider acquisition');
  options('baseline',[...state.reports].reverse(),v=>v.title+' · '+v.period.start.slice(0,10)+' → '+v.period.end.slice(0,10),'First edition');
- renderPlan();renderReport();clearTimeout(poll);if(state.active)poll=setTimeout(()=>refresh().catch(e=>notice(e.message,true)),2000);
+ renderSource();renderPlan();renderReport();clearTimeout(poll);if(state.active)poll=setTimeout(()=>refresh().catch(e=>notice(e.message,true)),2000);
 }
 $('add-location').onclick=()=>{if($('locations').rows.length>=20){notice('This customer project already contains twenty locations.',true);return;}locationRow();};
 $('refresh').onclick=action(()=>refresh());
@@ -67,8 +74,8 @@ $('connection').onchange=configureLocationTypes;
 $('save-project').onclick=action(async()=>{const result=await request('/api/project',{project:readProject(),expectedCurrent:loadedProjectId??null});await refresh();notice('Customer project revision saved.');});
 $('create-plan').onclick=action(async()=>{
  if(!state.currentProject)throw new Error('Save the customer project first.');
- const result=await request('/api/plan',{expectedProjectId:state.currentProject.id,title:$('title').value,period:{start:new Date($('start').value+'Z').toISOString(),end:new Date($('end').value+'Z').toISOString()},baselineReportId:$('baseline').value||null,notes:$('notes').value});
- await refresh();$('plan').value=result.id;renderPlan();review=null;$('commit').disabled=true;notice('Acquisition plan saved with the selected project revision, source connection and UTC period.');
+ const result=await request('/api/plan',{expectedProjectId:state.currentProject.id,title:$('title').value,period:{start:new Date($('start').value+'Z').toISOString(),end:new Date($('end').value+'Z').toISOString()},baselineReportId:$('baseline').value||null,sourceSetId:$('source-set').value||null,notes:$('notes').value});
+ await refresh();$('plan').value=result.id;renderPlan();review=null;$('commit').disabled=true;notice(result.sourceSetId?'Retained source selected for this period. Review the complete report.':'Acquisition plan saved with the selected project revision, source connection and UTC period.');
 });
 $('plan').onchange=()=>{review=null;$('commit').disabled=true;$('report-review').replaceChildren();renderPlan();};
 $('acquire').onclick=action(async()=>{await request('/api/acquire',{planId:$('plan').value,retryFailed:$('retry').checked});await refresh();});
@@ -98,6 +105,29 @@ async function catalogue(page){
 }
 $('catalogue-type').onchange=()=>{$('catalogue').replaceChildren();$('catalogue-next').disabled=true;cataloguePage=0;$('catalogue-state').textContent='Read the selected source page.';};
 $('catalogue-first').onclick=action(()=>catalogue(1));$('catalogue-next').onclick=action(()=>catalogue(cataloguePage+1));
+$('source-file').onchange=()=>{sourceReview=null;$('source-import').disabled=true;$('source-review-detail').replaceChildren();};
+$('source-review').onclick=action(async()=>{
+ const file=$('source-file').files[0];if(!file)throw new Error('Select the complete original source packet.');
+ sourceReview=await request('/api/source/review',file,true);$('source-review-detail').textContent=sourceReview.operationId+' · '+sourceReview.files+' complete files · '+sourceReview.locations.length+' locations · '+number(sourceReview.sourceBytes)+' original source bytes';$('source-import').disabled=false;
+});
+$('source-import').onclick=action(async()=>{
+ if(!sourceReview)throw new Error('Review this source collection first.');
+ const selected=await request('/api/source/import?expected='+encodeURIComponent(sourceReview.packetSha256),$('source-file').files[0],true);
+ await refresh();$('source-set').value=selected.id;renderSource();$('source-import').disabled=true;notice('Complete original source collection retained. Select its locations or continue your current customer selection.');
+});
+$('source-set').onchange=renderSource;
+$('source-window-use').onclick=action(async()=>{
+ const source=state.sourceSets.find(v=>v.id===$('source-set').value),window=source?.reportWindows.find(v=>v.id===$('source-window').value);
+ if(!window)throw new Error('Select one retained reporting period.');$('start').value=window.start.slice(0,16);$('end').value=window.end.slice(0,16);notice('Reporting period selected. Choose the prior edition when continuing an existing report.');
+});
+$('source-use').onclick=action(async()=>{
+ const source=state.sourceSets.find(v=>v.id===$('source-set').value);if(!source)throw new Error('Select the retained source collection.');
+ const current=readProject(),selected=source.commonMeasures;
+ projectForm({id:loadedProjectId,createdAt:state.currentProject?.createdAt??'',value:{...current,connectionId:source.connectionId,bucket:source.range.bucket,locations:source.locations.map(({id,sourceType,label,timezone})=>({id,sourceType,label,timezone})),measures:selected,thresholds:Object.fromEntries(Object.entries(current.thresholds).filter(([key])=>selected.includes(key)))}});
+ $('project-state').textContent='Source locations selected. Review customer labels, timezones and measurements, then save the project revision.';
+ if(source.reportWindows[0]){$('source-window').value=source.reportWindows[0].id;$('start').value=source.reportWindows[0].start.slice(0,16);$('end').value=source.reportWindows[0].end.slice(0,16);}
+ notice('Original source locations and common measurements selected for this customer project.');
+});
 $('receive-file').onchange=()=>{receiveReview=null;$('receive-commit').disabled=true;$('receiving-detail').replaceChildren();};
 $('receive-review').onclick=action(async()=>{
  const file=$('receive-file').files[0];if(!file)throw new Error('Select the complete ZIP or editable JSON.');

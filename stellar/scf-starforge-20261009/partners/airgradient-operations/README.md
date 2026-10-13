@@ -23,7 +23,7 @@ The contribution registers the command, browser assets, typed imports and Applic
 
 ## Complete the customer installation
 
-1. **Select the actual customer project.** Enter the organisation, report title and operating owner. The public outdoor catalogue reads the provider's own pages. Select the required Location IDs and labels, choose measurements, bucket and local display timezone, and save the project revision. Up to twenty locations share one customer project. Save customer operating thresholds with their stated purposes when useful.
+1. **Select the actual customer project.** Enter the organisation, report title and operating owner. The public indoor and outdoor catalogues read the provider's own pages. Select the required Location IDs and labels, choose measurements, bucket and local display timezone, and save the project revision. Up to twenty locations share one customer project. Save customer operating thresholds with their stated purposes when useful.
 2. **Save the explicit period.** The browser initially selects the last thirty complete UTC days. Choose the period that serves the customer. UTC bounds must align to the selected 15-minute, hourly, eight-hour or daily bucket. The saved plan retains its exact project revision, connection and every source request.
 3. **Acquire the source.** Each HTTP request has a retained attempt before it starts, and each returned body and its attempt/task reference are saved together before interpretation. Progress remains readable while acquisition runs. Reopen the same workspace after interruption; completed selections retain their original responses. **Acquire / resume** continues pending selections. Selecting **Retry failed or interrupted requests** also continues those original tasks. Supplier Retry-After values remain attached to the actual response and are obeyed. **Reopen saved responses** reinterprets a retained successful HTTP body after an actual parser correction, without fetching it again.
 4. **Review the complete report.** Every chosen location and measurement appears, including missing values, gaps and acquisition responses. The review shows returned bucket coverage, the selected threshold, arithmetic mean of returned bucket means and comparison with the chosen prior edition. Commit binds exactly that review. A repeated accepted commit opens the same immutable report.
@@ -118,3 +118,61 @@ The original private files, SQLite state lease, public HTTPS transport, explicit
 Continue this same installation in an equipped cloud or native workspace. Use the actual public catalogues and the original twenty-location intake to select the same indoor and outdoor AirGradient locations, operate the initial thirty-day report and a second actual period, then deliver the full package into its customer directory. Receive both the editable JSON and complete ZIP in a separate workspace, select the received project, make the next saved plan, and reopen the same workspaces after stopping their native processes. Desktop and narrow browser views expose the same complete operation.
 
 Retain the original chosen locations, periods, source responses, report IDs, customer ZIP and the receiving workspace. Feed an actual product correction back to this source arm in the existing [commissioning thread](https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791850296790379?thread_ts=1791730220.899469). The native operation joins the original environmental customer package, including the already retained complete Dashboard definition.
+
+## Continue from an original source collection
+
+A complete retained public Map source collection can supply several reporting periods. Import the original Commons source packet through **Open an original source collection**, review its complete source and location counts, and retain that exact selection. The collection includes the complete provider definition, all original source files, source manifest, original location pages and complete history responses.
+
+Choose the collection in **Reporting period and source**. **Use source locations and measures** fills the twenty-location selection, actual source type and available common measurements into the customer form. Review the proposed labels, explicit display timezones and operating criteria, then save the project revision. The public source packet's indoor locations have no provider location name or timezone; their editable customer label uses the indoor ID and their initial display timezone is explicitly UTC.
+
+The existing 6A62 collection contains ten outdoor PM2.5 histories and ten indoor all-field histories. PM2.5 is the common measurement across all twenty. Indoor-only selections can use the other retained indoor fields, including original decimal strings and nulls. Select the desired measurements for the saved project. A measurement or period outside the selected collection identifies a source selection to change.
+
+Use the retained **initial** period, or enter any aligned contained interval. Saving its plan selects the original documents and prepares the report immediately. Its task URLs remain the original thirty-one-day URLs. The reporting interval separately selects the half-open thirty-day period; the original source files retain their complete observations before and after that selection. Original metadata pages are retained whole, with each selected location's actual row.
+
+The retained record carries the original reader, content basis and retrieval window. Its HTTP status, network attempt and exact acquisition timestamp stay empty because this collection supplies reader-retained documents and a recorded retrieval interval. The HTML and full-series CSV expose that source basis. A live source acquisition keeps its actual HTTP response, network attempt and exact retrieval timestamp.
+
+Commit and deliver the first report through the usual customer workflow. Receive its complete ZIP or editable JSON into another workspace, select the same retained collection and the **later** reporting period, use the first report as baseline, and commit the later edition. The whole original collection travels in the editable package and as **original-source-PACKET_SHA256.json** in the customer delivery. It remains available for another contained reporting period after cold reopening.
+
+### Complete original-source customer operation
+
+The maintained native programme operates the entire saved-source customer journey:
+
+    node stellar/scf-starforge-20261009/partners/airgradient-operations/examples/receive-original-source.mjs \
+      --input /absolute/private/AirGradient-complete-source.json \
+      --project /absolute/private/customer-settings.json \
+      --output /absolute/private/airgradient-original-customer
+
+The output parent must already exist. The programme creates its private customer output directory, preserves the exact input packet, saves the project, produces the first report and its whole delivery, receives the actual ZIP into another saved workspace, produces the later report from the same original source with the first as baseline, returns the complete later package to the first workspace, reopens the original accepted destination, and cold reopens the receiving workspace. Both native SQLite workspaces and all report packages remain under the selected output directory.
+
+Use the existing source operation **AIRGRADIENT-API-SOURCE-6A62-20261013** and its unchanged original packet. The complete logical JSON is **1,939,630 bytes**, SHA256 **5465e53d831cedae734f9f4225b97fc683ea49eed038190c80271ff01fa1d99f**. It contains **41 original files / 1,688,975 source bytes**. The source operation's original nine-part gzip transport is **273,728 bytes**, SHA256 **5f771ecf53d879cff3a6bef8f0e61e62ad117833511430df3312e5a8b0279ae6**. Decode that transport into the full JSON input using the existing Commons source receiver.
+
+A customer settings file supplies the real organisation and operating owner. For this internal public-source operation:
+
+~~~json
+{
+  "organisation": "TokenJunkieLabs environmental operations",
+  "title": "Public monitor reporting operation",
+  "owner": "Bryce Muhlnickel",
+  "minimumCoverage": 0.9,
+  "thresholds": {},
+  "notes": "Original public AirGradient source operation and independent customer receiving."
+}
+~~~
+
+Omitting locations and measures selects the collection's original twenty locations and its common PM2.5 history. Explicit customer locations and measures can select a subset. A customer's operating threshold includes its chosen purpose; the programme supplies no health or certification criterion.
+
+The first period is September 12–October 12, 2026 UTC. The later period is September 13–October 13 UTC. Both select 720 possible hourly bins per location from the original September 12–October 13 source requests. The retained source's coverage table records 13,833 initial and 13,876 later returned PM2.5 rows across the twenty locations, including the later-starting indoor 102112443 history. The operating programme writes the actual report rows, means, counts, readiness and source relationships into **operation-result.json**, together with complete customer paths and file hashes.
+
+The programme is resumable in the same output directory. It retains the original intent and source packet, reuses its saved project and exact edition plans, opens the original ZIP identities and accepted delivery receipts, and continues the same receiving operations. A prior customer selection in either workspace remains available. An explicit **projectId** can select an original project revision for a plan without changing the workspace's current project.
+
+### Source collection commands and interfaces
+
+    starforge airgradient-operations source-inspect --workspace /absolute/private/customer --input /absolute/private/source.json
+    starforge airgradient-operations source-import --workspace /absolute/private/customer --input /absolute/private/source.json --expected-packet PACKET_SHA256
+    starforge airgradient-operations source-project --workspace /absolute/private/customer --source-set SOURCE_SET_ID --input /absolute/private/customer-settings.json --output /absolute/private/project.json
+
+The source-project command writes the complete proposed customer project. Save that project with the existing project-save command, then include **sourceSetId** in each plan input. The normal review, commit, deliver, export and receiving commands continue the same workflow.
+
+The authenticated HTTP operations are **POST /api/source/review** and **POST /api/source/import?expected=PACKET_SHA256**, both with the complete original packet body. The latter binds the selected packet from the review. **POST /api/plan** accepts sourceSetId and an optional explicit projectId beside expectedProjectId, period and baselineReportId. Installed imports include **./partners/airgradient/source-intake** and the complete typed Workspace methods.
+
+The saved collection is immutable. Importing the same original packet reopens its existing identity. Report plans retain the exact collection, definition, selected source file, original request URL and metadata selector. Receiving reconstructs those selections against the whole original collection before reopening the reports, then retains the full collection for continued work.
