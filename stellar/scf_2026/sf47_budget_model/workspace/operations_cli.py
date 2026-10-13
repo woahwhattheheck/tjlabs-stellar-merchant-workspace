@@ -451,6 +451,13 @@ def register(subparsers, common):
     target = command("completion-corrections-export", "Export the immutable correction review, full original preparation and source evidence", case=True)
     target.add_argument("--review", required=True)
     target.add_argument("--output", required=True)
+    target = command("completion-installations", "List current saved Installation checks for the original tranche packages", case=True, output=True)
+    target.add_argument("--tranche", type=int, choices=(1, 2, 3), required=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target = command("completion-installations-preview", "Compare exact selected Installation evidence with the complete assignment draft without saving", case=True, output=True)
+    target.add_argument("--inputs", required=True, help="Complete original completion inputs JSON, including selected Installation editions/checks")
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--as-of-date", help="Actual evidence cutoff in YYYY-MM-DD form")
     target = command("completion-seed", "Open the original tranche assignments without saving", case=True, output=True)
     target.add_argument("--tranche", type=int, choices=(1, 2, 3), required=True)
     target.add_argument("--expected-version", type=int, required=True)
@@ -1247,6 +1254,19 @@ def operate(workspace, args):
                 "requestId": args.request_id, "note": args.note, "action": "completion.corrections.save",
                 "data": {"inputs": inputs, "asOfDate": args.as_of_date,
                          "expectedPreviewSha256": args.expected_preview_sha256}})
+    elif action == "completion-installations":
+        result = ops.completion_installations(args.case, {"expectedVersion": args.expected_version, "tranche": args.tranche})
+    elif action == "completion-installations-preview":
+        try:
+            inputs = json.loads(read_bytes(args.inputs, MAX_SOURCE))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Completion assignments must be a complete UTF-8 JSON object.", 422, "INVALID_JSON") from exc
+        if not isinstance(inputs, dict):
+            raise Problem("Use the complete original completion assignment object.", 422, "INVALID_COMPLETION")
+        body = {"expectedVersion": args.expected_version, "inputs": inputs}
+        if args.as_of_date is not None:
+            body["asOfDate"] = args.as_of_date
+        result = ops.preview_completion_installations(args.case, body)
     elif action == "completion-seed":
         result = ops.seed_completion(args.case, {"expectedVersion": args.expected_version, "tranche": args.tranche})
     elif action == "completion-export":
