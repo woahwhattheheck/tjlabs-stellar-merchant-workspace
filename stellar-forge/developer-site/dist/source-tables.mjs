@@ -512,10 +512,7 @@ async function loadDocumentSource(source, projection = null, {restoring=false}={
   const tableIndex=projection?.selection.tableIndex || prior?.selectedTable || inspection.tables[0].tableIndex;
   const saved=documentPreparation(state,verified.id,tableIndex);
   documentIntake = {source:verified,inspection,tableIndex,rowPage:0,columnPage:0,projection:null};
-  $('document-source-url').value = verified.sourceUrl || verified.document?.url || '';
-  $('document-original-name').value = verified.document?.filename || '';
-  $('document-provider').value = verified.extraction?.provider || verified.extraction?.method || '';
-  if(!restoring){project.documentIntake ||= createDocumentIntake();project.documentIntake.sourceDetails={url:$('document-source-url').value,filename:$('document-original-name').value,provider:$('document-provider').value};}
+  // These inputs describe the next text file; source navigation preserves their unfinished values.
   resetDocumentSelection();
   if(saved)applyDocumentPreparation(saved);
   if(projection) { writeDocumentSelection(projection.selection);documentIntake.projection=projection; }
