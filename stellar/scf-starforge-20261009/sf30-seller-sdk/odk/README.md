@@ -63,6 +63,41 @@ starforge odk-central-workspace publisher-receive --workspace /private/received-
 
 Read [PUBLISHER_TRANSFER.md](./PUBLISHER_TRANSFER.md) for full source custody, partial preparation, exact replay and destination activation.
 
+## Read Central through its existing private Codespaces port
+
+A private Codespaces forwarded Central API needs the existing GitHub proxy
+credential alongside Central authentication. Add an environment **alias** to the
+original connection:
+
+```json
+{
+  "id": "field-central",
+  "name": "Field operations",
+  "url": "https://ACTUAL-CODESPACE-PORT.app.github.dev",
+  "authEnv": "CENTRAL_AUTHORIZATION",
+  "codespacesTokenEnv": "GITHUB_TOKEN"
+}
+```
+
+Use the actual selected Central URL and existing host environment names.
+`codespacesTokenEnv` is optional, must differ from `authEnv`, and is allowed
+only for HTTPS `<one-label>.app.github.dev` on port 443. Other origins omit it.
+Both credential values are resolved from the process environment at request
+time; only aliases are saved. The proxy header remains within the original
+same-origin/API-path redirect boundary.
+
+The field connection form, connection JSON, CLI
+`--codespaces-token-env GITHUB_TOKEN` and merchant source profile use that
+same field. A saved connection ID rejects a changed or omitted proxy alias.
+Complete archives and commissioning handovers carry the alias so a receiving
+host can supply its own authorized environment.
+
+This upstream Central API URL is separate from the reporting operator's
+`externalOrigin`. Browser proxy cookies do not authenticate native API calls.
+Keep the original service, port visibility, workspace and operation. Read the
+[Central host guide](central-host/HOST.md) before changing an already selected
+host configuration.
+
 ## Complete command workflow
 
 A connection input identifies an existing server and a credential reference:
