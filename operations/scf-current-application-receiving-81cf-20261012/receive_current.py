@@ -7,12 +7,16 @@ import hashlib
 import json
 import os
 from pathlib import Path, PurePosixPath
-import signal
-import subprocess
 import sys
+import subprocess
 import tempfile
 import time
 import zipfile
+
+sys.dont_write_bytecode = True
+from scf_native_process import (
+    preserve_console, record_runtime_selection, retain_runtime_edition, run_receiving_program,
+)
 
 OPERATION = "SCF-GRANT-CURRENT-REVIEW-81CF-20261012"
 
@@ -45,7 +49,7 @@ def stage_rows(rows, directory, require_git):
         if row.get("encoding", "utf-8") == "utf-8":
             body = row["content"].encode("utf-8")
         elif row["encoding"] == "base64":
-            body = base64.b64decode(row["content"], validate=True)
+            body = base64.b64decode("".join(row["content"].split()), validate=True)
         else:
             raise ValueError("Unsupported source encoding")
         if len(body) != row["bytes"] or digest(body) != row["sha256"]:
@@ -85,21 +89,36 @@ def save_outputs(runtime, output_paths, private, replacement):
         if index == 0 and replacement:
             item = {"local_path": str(path), "purpose": "replace_library_file",
                     "library_file_id": replacement[0], "expected_current_version": replacement[1],
-                    "version_reason": "Complete current SCF application, retained original review and native desktop/phone receiving"}
+                    "version_reason": "Complete current SCF application, retained original review and independent receiving"}
         else:
             item = {"local_path": str(path), "purpose": "create_library_file",
                     "library_artifact_type": "image" if path.suffix.lower() == ".png" else "other"}
         uploads.append(item)
     request = {"uploads": uploads}
-    adapter = (
-        "import json,sys; from pathlib import Path; "
-        "sys.path.insert(0,sys.argv[1]); "
-        "from library_upload import LibraryUploadWorkflow,HostedAppsClient,LibraryFileMaterializer,SignedUrlUploader; "
-        "result=LibraryUploadWorkflow(apps_client=HostedAppsClient(),"
-        "materializer=LibraryFileMaterializer(),uploader=SignedUrlUploader(),"
-        "state_parent=Path(sys.argv[2])).run(json.load(sys.stdin)); "
-        "print(json.dumps(result,separators=(',',':')))"
-    )
+    adapter = """
+import json,sys,time,traceback,urllib.error
+from pathlib import Path
+sys.path.insert(0,sys.argv[1])
+from library_upload import LibraryUploadWorkflow,HostedAppsClient,LibraryFileMaterializer,SignedUrlUploader
+request=json.load(sys.stdin)
+private=Path(sys.argv[2])
+for attempt in range(3):
+    try:
+        result=LibraryUploadWorkflow(apps_client=HostedAppsClient(),
+            materializer=LibraryFileMaterializer(),uploader=SignedUrlUploader(),
+            state_parent=private).run(request)
+        print(json.dumps(result,separators=(',',':')))
+        break
+    except Exception as error:
+        frames={frame.name for frame in traceback.extract_tb(error.__traceback__)}
+        cause=error.__cause__
+        retry=('_prepare' in frames and isinstance(cause,urllib.error.HTTPError) and cause.code==502)
+        (private/('library-prepare-attempt-'+str(attempt+1)+'.txt')).write_text(traceback.format_exc(),encoding='utf-8')
+        if not retry or attempt==2:
+            raise
+        print('SCF_LIBRARY_PREPARE_RETRY '+str(attempt+1),file=sys.stderr,flush=True)
+        time.sleep(1)
+"""
     upload = subprocess.run([sys.executable, "-B", "-c", adapter, str(runtime), str(private)],
                             input=json.dumps(request), capture_output=True, text=True, timeout=300)
     (private / "library-upload-result.json").write_text(upload.stdout, encoding="utf-8")
@@ -158,8 +177,17 @@ def main():
     temporary = root / "tmp"
     for path in (source, runtime, output, private, temporary):
         path.mkdir(mode=0o700)
+    preserve_console(output / "producer-console.log")
     source_manifest = stage_rows(packet["files"], source, True)
     runtime_manifest = stage_rows(packet["runtime"], runtime, False)
+    preceding_runtime = retain_runtime_edition(runtime, root)
+    # Keep the executed producer and shared controller in the saved runtime,
+    # including when a maintained producer receives an older complete packet.
+    for name in ("receive_current.py", "scf_native_process.py"):
+        actual_source = Path(__file__).with_name(name).read_bytes()
+        (runtime / name).write_bytes(actual_source)
+        (runtime / name).chmod(0o600)
+    actual_runtime = record_runtime_selection(runtime, root, preceding_runtime)
     json_file(root / "source-selection.json", {
         "operationId": OPERATION, "sourceRepository": packet["sourceRepository"],
         "sourceCommit": packet["sourceCommit"], "reviewCommit": packet["reviewCommit"],
@@ -181,50 +209,34 @@ def main():
     environment = dict(os.environ)
     environment.update({"TMPDIR": str(temporary), "TEMP": str(temporary), "TMP": str(temporary),
                         "PYTHONDONTWRITEBYTECODE": "1"})
-    parse = subprocess.run([str(args.node), "--check", str(runtime / "receive-current.cjs")],
-                           capture_output=True, text=True, env=environment, timeout=30)
-    if parse.returncode:
-        raise ValueError("The native Node parser rejected the received browser programme: " + parse.stderr)
-    versions = subprocess.run([str(args.node), "--version"], capture_output=True,
-                              text=True, timeout=30, env=environment)
+    print("SCF_NATIVE_START " + json.dumps({
+        "operationId": OPERATION, "root": str(root), "sourceFiles": len(source_manifest),
+        "sourceCommit": packet["sourceCommit"], "originalReview": packet["originalReviewId"],
+        "nativeRecord": str(output / "native-process.json"),
+    }), flush=True)
+    native_summary, result = run_receiving_program(
+        OPERATION, root, output,
+        {"source_commit": packet["sourceCommit"], "packet_sha256": args.expected_packet_sha256,
+         "original_review_id": packet["originalReviewId"], "runtime_selection": actual_runtime,
+         "library_replacement": {
+             "library_file_id": args.replace_library_file_id,
+             "expected_version": args.expected_library_version,
+         }},
+        args.node, args.chromium, runtime / "receive-current.cjs", root / "config.json",
+        root, environment, args.timeout_seconds, "current-application",
+    )
+    state = native_summary["state"]
+    native_summary.update(sourceCommit=packet["sourceCommit"], outputDirectory=str(output))
     json_file(output / "native-runtime.json", {
-        "node": str(args.node), "nodeVersion": versions.stdout.strip(),
-        "chromium": str(args.chromium), "nodeModules": str(args.node_modules),
-        "python": sys.version, "startedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "operationId": OPERATION, "sourceFiles": len(source_manifest),
+        "node": str(args.node), "nodeVersion": native_summary["nodeVersion"],
+        "chromium": str(args.chromium), "browserVersion": native_summary["browserVersion"],
+        "nodeModules": str(args.node_modules), "python": sys.version,
+        "startedAt": native_summary["started_utc"], "operationId": OPERATION,
+        "sourceFiles": len(source_manifest),
         "sourceBytes": sum(row["bytes"] for row in source_manifest),
         "sourceCommit": packet["sourceCommit"], "root": str(root),
+        "nativeRecord": str(output / "native-process.json"),
     })
-    print("SCF_NATIVE_START " + json.dumps({"root": str(root), "sourceFiles": len(source_manifest),
-          "sourceCommit": packet["sourceCommit"], "originalReview": packet["originalReviewId"]}), flush=True)
-    began = time.monotonic()
-    timed_out = False
-    with (output / "native-process.log").open("wb") as log:
-        process = subprocess.Popen([str(args.node), str(runtime / "receive-current.cjs"), str(root / "config.json")],
-                                   cwd=root, env=environment, stdin=subprocess.DEVNULL,
-                                   stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
-        try:
-            exit_code = process.wait(timeout=args.timeout_seconds)
-        except subprocess.TimeoutExpired:
-            timed_out = True
-            try:
-                os.killpg(process.pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
-            try:
-                exit_code = process.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-                exit_code = process.wait(timeout=10)
-    result_path = output / "RESULT.json"
-    result = json.loads(result_path.read_text()) if result_path.exists() else None
-    state = "COMPLETE" if exit_code == 0 and result and result.get("state") == "COMPLETE" else "INCOMPLETE"
-    native_summary = {"state": state, "processExit": exit_code, "timedOut": timed_out,
-                      "durationSeconds": round(time.monotonic() - began, 3),
-                      "sourceCommit": packet["sourceCommit"], "outputDirectory": str(output)}
     if result:
         native_summary.update({key: result[key] for key in
                                ("originalDraftId", "originalReviewId", "reviewActions", "retainedOriginalActions")
@@ -232,7 +244,7 @@ def main():
     json_file(root / "native-result.json", native_summary)
     archive = root / ("SCF-Current-Application-and-Review" + ("" if state == "COMPLETE" else "-Partial") + ".zip")
     with zipfile.ZipFile(archive, "x", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as bundle:
-        for directory in (source, runtime, output):
+        for directory in (source, runtime, output, root / "runtime-editions"):
             for file in sorted(directory.rglob("*")):
                 if file.is_symlink():
                     raise ValueError("Receiving output must retain ordinary files: " + str(file))
@@ -242,7 +254,7 @@ def main():
                         continue
                     bundle.write(file, file.relative_to(root).as_posix())
         for file in (root / "source-selection.json", root / "complete-source-packet.json",
-                     root / "config.json", root / "native-result.json"):
+                     root / "config.json", root / "native-result.json", root / "runtime-selection.json"):
             bundle.write(file, file.relative_to(root).as_posix())
     archive_meta = {"path": str(archive), "bytes": archive.stat().st_size,
                     "sha256": digest(archive.read_bytes())}
@@ -266,7 +278,9 @@ def main():
             print("SCF_NATIVE_FAILURE " + incomplete.read_text(), flush=True)
         else:
             print("SCF_NATIVE_FAILURE " + json.dumps({"logTail":
-                  (output / "native-process.log").read_text(errors="replace")[-8000:]}), flush=True)
+                  next((Path(row["stdout"]).read_text(errors="replace")[-8000:]
+                        for row in reversed(list(native_summary["phases"].values()))
+                        if Path(row["stdout"]).is_file()), "")}), flush=True)
         return 1
     return 0
 

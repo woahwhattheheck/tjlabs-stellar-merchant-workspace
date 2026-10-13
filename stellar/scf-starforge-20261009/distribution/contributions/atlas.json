@@ -1,8 +1,24 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "atlas",
-  "description": "atlas original Applications",
+  "description": "Original Atlas application with retained catalog ranking, typed saved-request workflow and complete receiving journey",
   "applicationProviders": {
     "atlas": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/atlas.mjs"
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf61-bazaar-explorer/WORKSPACE.md",
+    "stellar/scf-starforge-20261009/sf61-bazaar-explorer/CAPTURE_SEARCH.md"
+  ],
+  "exports": {
+    "./catalog/atlas/search": {
+      "types": "./source/stellar/scf-starforge-20261009/sf61-bazaar-explorer/workspace.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf61-bazaar-explorer/workspace.mjs"
+    }
+  },
+  "commands": {
+    "atlas-search-journey": "stellar/scf-starforge-20261009/sf61-bazaar-explorer/workspace-search-journey.mjs"
+  },
+  "commandDescriptions": {
+    "atlas-search-journey": "Search original retained catalog pages, prepare an explicit buyer request and reopen the complete workspace transfer"
   }
 }

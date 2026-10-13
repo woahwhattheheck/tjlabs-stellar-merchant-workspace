@@ -115,6 +115,21 @@ Create, edit, add, receive and copy require a new output path. Exports use the e
 
 The show action emits the complete document by default. With --revision N it emits a summary and editable draft of that historical revision; draft --revision N prepares that content against the latest saved base. The markdown and html formats render the selected saved revision. Input files and browser transfers accept UTF-8 JSON documents up to 32 MiB.
 
+## Receive work from the original SCF planning review
+
+The installed grant reviewer can create this same plan from its selected
+native SF47 work packages. Each step keeps the package's original scope,
+completion result, price, hours and relative dates. Import the resulting
+complete JSON here to continue the customer's detailed operating work.
+
+Use **Toolkit catalog JSON** or `starforge discover plan catalog --out NEW.json`
+to export the complete selected toolkit for the original planning review's
+registration picker. The download retains all items, original source records
+and declared runtime features.
+
+The [native grant procedure guide](../../../../stellar-forge/developer-site/GRANT_OPERATING_PLANS.md)
+covers the original saved draft, native JSON/ZIP and installed command.
+
 ## Application API
 
 The pure model is exported with TypeScript declarations:
@@ -150,3 +165,7 @@ const handover = renderOperatingPlanHTML(revised);
 The model returns independent values and validates the complete saved history. Persisting applications should read and save the original plan in one transaction. The browser uses an IndexedDB read/write transaction; the CLI writes a new complete file. The receiveOperatingPlan function supplies the same prefix-history import behavior for other receivers.
 
 The maintained distribution/contributions/operator-discovery.json contribution registers the typed API, command, browser source and static assets with the original Command finder component. The original builder follows that component and its asset map into selected packages.
+
+## Grant reporting
+
+Select **Create Grant reporting plan** to prepare a complete procedure from the original Grant case, Source Tables project, reporting period and selected toolkit. The creation interface retains complete preparation inputs and opens its result in this same plan editor. Continue with [Grant reporting procedures](./GRANT_REPORTING.md) for preparation, native work and receiving.

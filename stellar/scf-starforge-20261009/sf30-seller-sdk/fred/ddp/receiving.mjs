@@ -7,7 +7,7 @@ import { inspectFredDdpCrosswalk } from './crosswalk.mjs';
 import { validateFredDdpMigrationPlan } from './migration.mjs';
 import { normalizeFredDdpPeriod,inferredFredDdpPeriodRule,fredDdpFrequencyKind,exactFredDdpScaledValue,fredDdpObservationMissing } from './periods.mjs';
 const SCHEMA='stellar-forge.fred-ddp-receiving.v1';
-const same=(a,b)=>canonical(a)===canonical(b);
+const same=(a,b)=>ddpDigest(a)===ddpDigest(b);
 export const FRED_DDP_RECEIVING_STATUSES=Object.freeze(['EQUAL','DIFFERENT','BOTH_MISSING','MISSING_CHANGED','SOURCE_ONLY','TARGET_ONLY','MEANING_REVIEW','EXCLUDED','UNMAPPED','AMBIGUOUS']);
 const normalized=value=>String(value??'').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-US');
 const sourceText=value=>value?.label||value?.code||null;
@@ -59,7 +59,7 @@ function counts(){
 }
 export function buildFredDdpReceiving({packageCapture,crosswalk,plan,captures}){
   const source=inspectFredDdpPackage(packageCapture),mapping=inspectFredDdpCrosswalk(crosswalk);
-  validateFredDdpMigrationPlan(plan,{packageCapture,crosswalk});need(plan.summary.ready,'Resolve the complete original package mapping and period selections before acquiring its target batches.');
+  validateFredDdpMigrationPlan(plan,{packageCapture,crosswalk,copy:false});need(plan.summary.ready,'Resolve the complete original package mapping and period selections before acquiring its target batches.');
   need(Array.isArray(captures)&&captures.length===plan.acquisitions.length,'Receive every planned original FRED batch.');
   const bySelection=new Map();
   for(const capture of captures){
@@ -77,7 +77,7 @@ export function buildFredDdpReceiving({packageCapture,crosswalk,plan,captures}){
       need(!targets.has(series.id),'The whole package supplied the same FRED target twice.');
       targets.set(series.id,{metadata:series,rows:[],captureId:capture.captureSha256});
     }
-    for(const row of model.rows)targets.get(row.series).rows.push({...clone(row),captureId:capture.captureSha256});
+    for(const row of model.rows)targets.get(row.series).rows.push(row);
   }
   need(bySelection.size===0,'The receiving includes an unplanned FRED source selection.');
   const original=new Map(source.series.map(series=>[series.id,series])),meanings=[],rows=[],statusCounts=counts();
@@ -85,7 +85,7 @@ export function buildFredDdpReceiving({packageCapture,crosswalk,plan,captures}){
   for(const selected of plan.series){
     const series=original.get(selected.id),target=selected.fredSeriesId?targets.get(selected.fredSeriesId):null;
     need(series,'The plan refers to a missing original package series.');
-    const meaning=describeMeaning(series,target?.metadata??null,selected.binding),sourceRows=selected.sourceIndices.map(index=>series.observations[index]);
+    const meaning=describeMeaning(series,target?.metadata??null,selected.binding),observations=series.observations,sourceRows=selected.sourceIndices.map(index=>observations[index]);
     meanings.push(meaning);
     const identity={seriesId:series.id,release:series.release,boardSeriesId:series.boardSeriesId,fredSeriesId:selected.fredSeriesId};
     if(selected.mappingStatus!=='MAPPED'){
@@ -95,12 +95,22 @@ export function buildFredDdpReceiving({packageCapture,crosswalk,plan,captures}){
     }
     need(target,'A mapped target is missing from the complete original FRED batches.');
     const targetRule=inferredFredDdpPeriodRule({label:target.metadata.frequency});
-    let targetRows=target.rows.map(row=>({...row,periodKey:normalizeFredDdpPeriod(row.date,targetRule).key}));
-    if(plan.input.window.kind==='last')targetRows=targetRows.filter(row=>row.periodKey<=plan.input.asOf).slice(-plan.input.window.count);
-    else{
+    let targetRows=[];
+    if(plan.input.window.kind==='last'){
+      const count=plan.input.window.count;let received=0;
+      for(const row of target.rows){
+        const periodKey=normalizeFredDdpPeriod(row.date,targetRule).key;
+        if(periodKey>plan.input.asOf)continue;
+        targetRows[received%count]={...row,captureId:target.captureId,periodKey};received++;
+      }
+      if(received>count){const first=received%count;targetRows=[...targetRows.slice(first),...targetRows.slice(0,first)];}
+    }else{
       const start=plan.input.window.kind==='fixed'?plan.input.window.start:selected.window.start;
       const end=plan.input.window.kind==='fixed'?plan.input.window.end:selected.window.end;
-      targetRows=targetRows.filter(row=>start!==null&&end!==null&&row.periodKey>=start&&row.periodKey<=end);
+      if(start!==null&&end!==null)for(const row of target.rows){
+        const periodKey=normalizeFredDdpPeriod(row.date,targetRule).key;
+        if(periodKey>=start&&periodKey<=end)targetRows.push({...row,captureId:target.captureId,periodKey});
+      }
     }
     const sourceKeys=new Map(),targetKeys=new Map(),matched=new Set();
     for(const observation of sourceRows){
@@ -150,7 +160,8 @@ export function buildFredDdpReceiving({packageCapture,crosswalk,plan,captures}){
       bookmark:plan.input.bookmark,note:plan.input.note},captures:identities,meanings,rows,summary};
   return {...core,id:'fred-ddp-receiving-'+ddpDigest(core)};
 }
-export function validateFredDdpReceiving(value,{packageCapture=null,crosswalk=null,plan=null,captures=null}={}){
+export function validateFredDdpReceiving(value,{packageCapture=null,crosswalk=null,plan=null,captures=null,copy=true}={}){
+  need(typeof copy==='boolean','Choose whether to copy the validated receiving report.');
   need(plain(value)&&value.schema===SCHEMA&&Array.isArray(value.rows)&&Array.isArray(value.meanings)&&Array.isArray(value.captures)&&plain(value.summary),'A complete immutable DDP receiving report is required.');
   const {id,...core}=value;need(id==='fred-ddp-receiving-'+ddpDigest(core),'The complete receiving report identity changed.');
   need(/^fred-ddp-migration-plan-[a-f0-9]{64}$/.test(value.planId)&&value.packageId==='fred-ddp-package-'+value.packageSha256&&value.crosswalkId==='fred-ddp-crosswalk-'+value.crosswalkSha256,
@@ -165,15 +176,18 @@ export function validateFredDdpReceiving(value,{packageCapture=null,crosswalk=nu
   need(new Set(value.captures.map(item=>item.id)).size===value.captures.length&&value.captures.every(item=>item.id===item.captureSha256&&/^[a-f0-9]{64}$/.test(item.id)),'The report repeats or changes an original FRED capture identity.');
   const complete=[packageCapture,crosswalk,plan,captures].filter(item=>item!==null).length;
   need(complete===0||complete===4,'Provide the complete original source, plan and FRED batches together.');
-  if(complete===4)need(same(value,buildFredDdpReceiving({packageCapture,crosswalk,plan,captures})),'The receiving report does not derive from its complete original sources.');
-  return clone(value);
+  if(complete===4)need(value.id===buildFredDdpReceiving({packageCapture,crosswalk,plan,captures}).id,'The receiving report does not derive from its complete original sources.');
+  return copy?clone(value):value;
 }
 export function pageFredDdpReceiving(value,{offset=0,limit=100,changesOnly=true,seriesId=null}={}){
-  const receiving=validateFredDdpReceiving(value);
+  const receiving=validateFredDdpReceiving(value,{copy:false});
   need(Number.isSafeInteger(offset)&&offset>=0&&Number.isSafeInteger(limit)&&limit>=1&&limit<=1000&&typeof changesOnly==='boolean'&&
     (seriesId===null||typeof seriesId==='string'),'Choose a valid complete receiving page.');
   if(seriesId!==null)need(receiving.meanings.some(item=>item.seriesId===seriesId),'The selected original receiving series does not exist.');
-  const selected=receiving.rows.filter(row=>(seriesId===null||row.seriesId===seriesId)&&(!changesOnly||!['EQUAL','BOTH_MISSING'].includes(row.status)));
-  const {rows,...metadata}=receiving;
-  return {...metadata,filter:{changesOnly,seriesId},offset,limit,total:selected.length,nextOffset:offset+limit<selected.length?offset+limit:null,rows:selected.slice(offset,offset+limit)};
+  let total=0;const rows=[];
+  for(const row of receiving.rows)if((seriesId===null||row.seriesId===seriesId)&&(!changesOnly||!['EQUAL','BOTH_MISSING'].includes(row.status))){
+    if(total>=offset&&rows.length<limit)rows.push(clone(row));total++;
+  }
+  const {rows:completeRows,...metadata}=receiving;
+  return {...clone(metadata),filter:{changesOnly,seriesId},offset,limit,total,nextOffset:offset+limit<total?offset+limit:null,rows};
 }

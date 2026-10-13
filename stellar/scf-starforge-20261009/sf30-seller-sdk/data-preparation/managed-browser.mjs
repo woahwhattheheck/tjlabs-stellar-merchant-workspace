@@ -40,5 +40,8 @@ try {
       download.href=result.url;download.download=link.download;document.body.append(download);download.click();download.remove();
     })().catch(error=>message(error.message));
   },true);
+  const navigation=document.createElement('p'),pipelines=document.createElement('a');
+  pipelines.href='/pipelines/#'+token;pipelines.textContent='Open preparation pipelines';navigation.append(pipelines);
+  (document.querySelector('header')??document.body).append(navigation);
   await import('/app.js');
 } catch(error) {message(error.message);}

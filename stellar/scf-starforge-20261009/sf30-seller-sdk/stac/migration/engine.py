@@ -18,7 +18,8 @@ RESULT_MARKER = "MIGRATION_RESULT_JSON "
 READ_COMMANDS = frozenset(("state", "records", "document", "draft", "source-rows",
                          "issues", "history", "operation", "files", "native-info", "comparison-rows",
                          "cartography.inventory", "cartography.preview", "cartography.operation",
-                         "cartography.publication", "cartography.download", "qgis-info"))
+                         "cartography.publication", "cartography.download", "qgis-info",
+                         "mapping-register", "mapping-workbook", "workbook-propose"))
 WRITE_COMMANDS = frozenset(("capture", "receive-capture", "save-plan", "review-plan",
                            "build-edition", "build-projects", "export", "receive", "compare-captures",
                            "cartography.save-plan", "cartography.publish", "cartography.reopen"))
@@ -67,6 +68,12 @@ def execute(workspace_path, command, payload, *, progress=None, exports_root=Non
         return workspace.document(payload["kind"], payload["id"])
     if command == "draft":
         return workspace.draft(payload["captureId"], payload.get("predecessorPlanId"))
+    if command == "mapping-workbook":
+        from migration import workbook_export
+        return workbook_export.export(workspace, payload["planId"])
+    if command in ("mapping-register", "workbook-propose"):
+        from migration import workbook
+        return workbook.export(workspace, payload["planId"]) if command == "mapping-register" else workbook.propose(workspace, payload["source"])
     if command == "source-rows":
         return workspace.source_rows(payload["captureId"], payload["layerId"],
                                      offset=payload.get("offset", 0), limit=payload.get("limit", 50))
@@ -114,7 +121,8 @@ def execute(workspace_path, command, payload, *, progress=None, exports_root=Non
     if command == "receive-capture":
         return workspace.receive_capture(payload["directory"], payload["expectedManifestSha256"], **common)
     if command == "save-plan":
-        return workspace.save_plan(payload["plan"], original_base64=payload.get("originalBase64"), **common)
+        return workspace.save_plan(payload["plan"], original_base64=payload.get("originalBase64"),
+                                   workbook_source=payload.get("workbookSource"), **common)
     if command == "review-plan":
         return workspace.review_plan(payload["planId"], payload["outcome"], payload["note"], **common)
     if command == "compare-captures":

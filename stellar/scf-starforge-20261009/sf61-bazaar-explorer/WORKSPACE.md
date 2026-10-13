@@ -21,7 +21,7 @@ starforge atlas \
   --workspace /private/atlas
 ```
 
-From a source checkout of `public-commons-sprint-2026`, the equivalent commands
+From a source checkout of `tjlabs-stellar-merchant-workspace`, the equivalent commands
 run from the repository root:
 
 | Installed command | Source entry point |
@@ -67,6 +67,14 @@ Saved catalogs remain available after live browsing moves to another source. Use
 the saved catalog's search and paging to find the resource, then save the intended
 row and one exact offered payment option. Atlas retains that selection independently
 of subsequent live filters and page changes.
+
+Saved search uses the maintained Bazaar query index and schema-aware ranking.
+Exact type, payment and extension filters preserve each original option's identity.
+Search responses retain their original page/row mapping, applied query and complete
+continuation, with receiving completeness and provider-reported coverage shown
+separately. The [retained search guide](CAPTURE_SEARCH.md) covers the browser,
+expanded `atlas-workspace` commands, typed API and complete search-to-receiving
+journey.
 
 Prepare the buyer request against that retained selection. The revision editor
 can keep, replace, or remove saved body and ticket inputs. Each accepted request

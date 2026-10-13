@@ -7,6 +7,7 @@ import {pathToFileURL,fileURLToPath} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
 import {spawn} from 'node:child_process';
 import {createServer} from 'node:net';
+import {finished} from 'node:stream/promises';
 
 const REF='e5520a2a962ccebc461d478edf6aebb4b6c7fb20';
 const DIST='stellar/scf-starforge-20261009/distribution/';
@@ -48,19 +49,45 @@ async function wait(readValue,ready,label,ms=300000){
   do{last=await readValue();if(ready(last))return last;await sleep(350);}while(Date.now()<deadline);
   throw Object.assign(new Error(label),{code:'CONAPI_OPERATION_PENDING',detail:last});
 }
+function loggedChild(executable,args,{cwd,logs,label}={}){
+  const name=label??'command-'+randomUUID(),errors=[];
+  const out=logs?createWriteStream(join(logs,name+'.stdout'),{flags:'a',mode:0o600}):null;
+  const err=logs?createWriteStream(join(logs,name+'.stderr'),{flags:'a',mode:0o600}):null;
+  const flushes=[['stdout',out],['stderr',err]].filter(([,stream])=>stream).map(([channel,stream])=>
+    finished(stream,{cleanup:true}).catch(error=>{errors.push({stage:'log-close',channel,...issue(error)});}));
+  let child;
+  try{child=spawn(executable,args,{cwd,env:process.env,stdio:['ignore','pipe','pipe']});}
+  catch(error){out?.end();err?.end();throw error;}
+  let stdout='',stderr='';
+  child.stdout.on('data',chunk=>{stdout=(stdout+chunk.toString()).slice(-1024*1024);});
+  child.stderr.on('data',chunk=>{stderr=(stderr+chunk.toString()).slice(-1024*1024);});
+  for(const [channel,stream] of [['stdout',child.stdout],['stderr',child.stderr]])
+    stream.on('error',error=>errors.push({stage:'child-output',channel,...issue(error)}));
+  if(out)child.stdout.pipe(out);
+  if(err)child.stderr.pipe(err);
+  child.once('error',error=>errors.push({stage:'spawn',...issue(error)}));
+  // Retain this promise at spawn. A later stop must observe the original close,
+  // including all stdio and log writes, even when the child has already exited.
+  const completion=new Promise(done=>child.once('close',(code,signal)=>done({code,signal}))).then(async exit=>{
+    if(out&&!out.writableEnded&&!out.destroyed)out.end();
+    if(err&&!err.writableEnded&&!err.destroyed)err.end();
+    await Promise.all(flushes);
+    return {...exit,stdout,stderr,errors,completedAt:stamp()};
+  });
+  return {child,completion,name};
+}
+async function closeChild(native){
+  const child=native.child,alive=()=>child.exitCode===null&&child.signalCode===null;
+  if(alive())child.kill('SIGTERM');
+  const timer=setTimeout(()=>{if(alive())child.kill('SIGKILL');},10000);
+  try{return await native.completion;}finally{clearTimeout(timer);}
+}
 async function command(executable,args,{cwd,logs,label,acceptFailure=false}={}){
   if(logs)await mkdir(logs,{recursive:true,mode:0o700});
-  const name=label??'command-'+randomUUID(),out=logs?createWriteStream(join(logs,name+'.stdout'),{flags:'a',mode:0o600}):null;
-  const err=logs?createWriteStream(join(logs,name+'.stderr'),{flags:'a',mode:0o600}):null;
-  return new Promise((done,fail)=>{
-    const child=spawn(executable,args,{cwd,env:process.env,stdio:['ignore','pipe','pipe']});
-    let stdout='',stderr='';
-    child.stdout.on('data',chunk=>{out?.write(chunk);stdout=(stdout+chunk.toString()).slice(-1024*1024);});
-    child.stderr.on('data',chunk=>{err?.write(chunk);stderr=(stderr+chunk.toString()).slice(-1024*1024);});
-    child.once('error',error=>{out?.end();err?.end();fail(error);});
-    child.once('close',(code,signal)=>{out?.end();err?.end();const value={code,signal,stdout,stderr};
-      code===0||acceptFailure?done(value):fail(Object.assign(new Error('Native '+name+' failed.'),{code:'CONAPI_NATIVE_COMMAND_FAILED',detail:value}));});
-  });
+  const native=loggedChild(executable,args,{cwd,logs,label}),value=await native.completion;
+  need(value.errors.length===0,'CONAPI_NATIVE_OUTPUT_FAILED',value);
+  need(value.code===0||acceptFailure,'CONAPI_NATIVE_COMMAND_FAILED',{name:native.name,...value});
+  return value;
 }
 async function availablePort(){
   const listener=createServer();
@@ -94,7 +121,7 @@ export async function runConapiDelivery(input){
     for(const selected of state.files){const actual=await file(selected.path);need(same(actual,selected),'CONAPI_DELIVERED_FILE_CHANGED');}
     return {state:'COMPLETE',reused:true,report:stateFile,files:state.files};
   }
-  let apps,host,context,supplierProcess,failed=false;
+  let apps,host,context,supplierProcess,supplierNative,failed=false;
   const active=new Map();
   try{
     await checkpoint('ORIGINAL_INPUTS_RETAINED');
@@ -149,14 +176,48 @@ export async function runConapiDelivery(input){
     };
     const originalRuntime=await ensureRuntime('original');
     const model=await moduleAt(originalRuntime.sourceRoot,DIST+'runtime-workspace/model.mjs');
-    const appsDirectory=join(output,'applications');
-    if(!await exists(join(appsDirectory,'workspace.json')))await model.createRuntimeWorkspace({directory:appsDirectory});
+    let workspaceSelection=state.runtimeWorkspaceSelection;
+    if(!workspaceSelection){
+      const directory=state.runtimeWorkspace?.directory??join(output,'applications');
+      workspaceSelection=state.runtimeWorkspaceSelection={directory,attempts:[{directory,retainedAt:stamp()}],
+        ...(state.runtimeWorkspace?.workspaceId?{workspaceId:state.runtimeWorkspace.workspaceId}:{})};
+      await checkpoint('APPLICATIONS_DIRECTORY_RETAINED');
+    }
+    let appsDirectory=absolute(workspaceSelection.directory);
+    if(state.runtimeWorkspace)need(state.runtimeWorkspace.directory===appsDirectory,
+      'CONAPI_ORIGINAL_APPLICATIONS_DIRECTORY_CHANGED');
+    const declarationPath=()=>join(appsDirectory,'workspace.json');
+    if(!await exists(declarationPath())){
+      // createRuntimeWorkspace commits workspace.json last and requires a new
+      // directory. Preserve an unfinished creation; never replace a workspace
+      // that already owns saved applications or accepted native operations.
+      need(!state.runtimeWorkspace&&!workspaceSelection.workspaceId&&
+        Object.keys(state.applications).length===0&&Object.keys(state.python).length===0&&state.runs.length===0,
+        'CONAPI_ORIGINAL_APPLICATIONS_WORKSPACE_MISSING',{directory:appsDirectory});
+      if(await exists(appsDirectory)){
+        const prior=workspaceSelection.attempts.at(-1);
+        prior.preservedAt=stamp();prior.state='INITIALIZATION_INCOMPLETE';
+        appsDirectory=join(output,'applications-recovery-'+randomUUID());
+        need(!await exists(appsDirectory),'CONAPI_APPLICATIONS_TARGET_EXISTS',appsDirectory);
+        workspaceSelection.directory=appsDirectory;
+        workspaceSelection.attempts.push({directory:appsDirectory,retainedAt:stamp()});
+        await checkpoint('APPLICATIONS_INITIALIZATION_RECOVERY_RETAINED');
+      }
+      await model.createRuntimeWorkspace({directory:appsDirectory});
+    }
+    const declaration=await read(declarationPath());
+    if(workspaceSelection.workspaceId)need(workspaceSelection.workspaceId===declaration.workspaceId,
+      'CONAPI_ORIGINAL_APPLICATIONS_ID_CHANGED');
     apps=await model.openRuntimeWorkspace({directory:appsDirectory});
+    workspaceSelection.workspaceId=declaration.workspaceId;
+    workspaceSelection.attempts.at(-1).state='CREATED';
+    await checkpoint('APPLICATIONS_WORKSPACE_OPEN');
     const originalAttachment=await apps.attach({directory:originalRuntime.directory,label:'Conapi original complete supplier delivery'});
     const applicationCatalog=await apps.applicationsState();
     for(const kind of ['datasette','datasette-analysis','datasette-workflow'])
       need(applicationCatalog.catalog.some(item=>item.id===kind),'CONAPI_INSTALLED_APPLICATION_MISSING',kind);
-    state.runtimeWorkspace={directory:appsDirectory,sourceRoot:originalRuntime.sourceRoot,sourceCommit:REF};
+    state.runtimeWorkspace={...state.runtimeWorkspace,directory:appsDirectory,workspaceId:declaration.workspaceId,
+      sourceRoot:originalRuntime.sourceRoot,sourceCommit:REF};
     const server=await moduleAt(originalRuntime.sourceRoot,DIST+'runtime-workspace/server.mjs');
     host=await server.startRuntimeWorkspace({directory:appsDirectory,port:0});
     state.runtimeWorkspace.listener={url:host.url,origin:host.origin,at:stamp()};
@@ -422,16 +483,12 @@ export async function runConapiDelivery(input){
       const attempt={id:randomUUID(),port:state.supplierBrowserPort,script:await file(script),createdAt:stamp()};
       state.supplierBrowserAttempts.push(attempt);await checkpoint('SUPPLIER_BROWSER_INPUT_RETAINED');
       supplierUrl='http://127.0.0.1:'+attempt.port+'/';
-      supplierProcess=spawn(process.execPath,[script,'serve','--port',String(attempt.port)],
-        {cwd:supplier,env:process.env,stdio:['ignore','pipe','pipe']});
+      supplierNative=loggedChild(process.execPath,[script,'serve','--port',String(attempt.port)],
+        {cwd:supplier,logs,label:'supplier-editor-'+attempt.id});
+      supplierProcess=supplierNative.child;supplierExit=supplierNative.completion;
       attempt.pid=supplierProcess.pid;
-      const supplierLog=createWriteStream(join(logs,'supplier-editor-'+attempt.id+'.stdout'),{flags:'a',mode:0o600});
-      const supplierErrorLog=createWriteStream(join(logs,'supplier-editor-'+attempt.id+'.stderr'),{flags:'a',mode:0o600});
-      supplierProcess.stdout.pipe(supplierLog);supplierProcess.stderr.pipe(supplierErrorLog);
       let observedOut='',observedErr='';
       supplierProcess.stderr.on('data',bytes=>{observedErr=(observedErr+bytes.toString()).slice(-65536);});
-      supplierExit=new Promise(done=>{supplierProcess.once('exit',(code,signal)=>done({code,signal}));
-        supplierProcess.once('error',error=>done(issue(error)));});
       try{
         await new Promise((done,fail)=>{
           const deadline=setTimeout(()=>fail(Object.assign(new Error('The original supplier child has not announced its listener.'),
@@ -453,7 +510,9 @@ export async function runConapiDelivery(input){
       }catch(error){
         attempt.error=issue(error);await checkpoint('SUPPLIER_BROWSER_ATTEMPT_RETURNED');
         if(error.code!=='EADDRINUSE')throw error;
-        await supplierExit;supplierProcess=null;state.supplierBrowserPort=await availablePort();
+        attempt.completion=await supplierExit;
+        need(attempt.completion.errors.length===0,'CONAPI_NATIVE_OUTPUT_FAILED',attempt.completion);
+        supplierProcess=null;supplierNative=null;state.supplierBrowserPort=await availablePort();
       }
     }
     await page.goto(supplierUrl,{waitUntil:'domcontentloaded',timeout:120000});
@@ -485,7 +544,8 @@ export async function runConapiDelivery(input){
     await screenshot('Conapi_Received_Supplier_Edit.png');
     state.supplierEdit={file:await file(edited),requestId:editedReport.requestId,comparisonId:editedReport.comparisonId,
       revision:editedReport.revision,status:editedReport.status,originalRevision:23,downloadFilename};
-    supplierProcess.kill('SIGTERM');state.supplierEditorExit=await supplierExit;supplierProcess=null;
+    state.supplierEditorExit=await closeChild(supplierNative);supplierProcess=null;supplierNative=null;
+    need(state.supplierEditorExit.errors.length===0,'CONAPI_NATIVE_OUTPUT_FAILED',state.supplierEditorExit);
     need(browserAttempt.errors.length===0,'CONAPI_BROWSER_APPLICATION_ERRORS',browserAttempt.errors);
     browserAttempt.completedAt=stamp();await context.close();context=null;
     const preparedContinuation=await read(join(project,'supplier-c-prepared-continuation.json'));
@@ -508,17 +568,32 @@ export async function runConapiDelivery(input){
   }catch(error){
     failed=true;state.errors.push({at:stamp(),...issue(error)});await checkpoint('PRESERVED_FOR_CONTINUATION');throw error;
   }finally{
-    if(context)await context.close().catch(error=>state.errors.push({stage:'browser-close',...issue(error)}));
-    if(supplierProcess&&!supplierProcess.killed)supplierProcess.kill('SIGTERM');
-    // Stop only listeners selected by this programme's own managed application IDs.
-    // Detached original jobs retain their native journals for recovery.
-    if(apps)for(const selected of active.values()){
-      try{const current=(await apps.applicationsState()).applications.find(item=>item.id===selected.applicationId);
-        if(current?.current?.active&&current.current.id===selected.operationId)await apps.applicationsStop(selected);
-      }catch(error){state.errors.push({stage:'managed-stop',...selected,...issue(error)});}
+    const cleanupErrors=[],retainCleanup=record=>{cleanupErrors.push(record);state.errors.push({at:stamp(),...record});};
+    if(context)await context.close().catch(error=>retainCleanup({stage:'browser-close',...issue(error)}));
+    if(supplierNative){
+      try{
+        const closed=await closeChild(supplierNative);
+        state.supplierCleanup??=[];state.supplierCleanup.push({at:stamp(),pid:supplierProcess.pid,result:closed});
+        need(closed.errors.length===0,'CONAPI_NATIVE_OUTPUT_FAILED',closed);
+      }catch(error){retainCleanup({stage:'supplier-close',...issue(error)});}
     }
-    if(host)await host.close().catch(error=>state.errors.push({stage:'host-close',...issue(error)}));
-    if(failed){state.updatedAt=stamp();await save(stateFile,state);}
+    // Drain only this programme's selected listeners. Original detached native
+    // jobs keep their existing journals and operation identities for recovery.
+    if(apps)for(const selected of active.values()){
+      try{
+        const get=async()=>(await apps.applicationsState()).applications.find(item=>item.id===selected.applicationId);
+        const current=await get();
+        if(current?.current?.active&&current.current.id===selected.operationId){
+          await apps.applicationsStop(selected);
+          await wait(get,value=>!value?.current?.active||value.current.id!==selected.operationId,
+            'The original Conapi listener must close before workspace capture.',120000);
+        }
+      }catch(error){retainCleanup({stage:'managed-stop',...selected,...issue(error)});}
+    }
+    if(host)await host.close().catch(error=>retainCleanup({stage:'host-close',...issue(error)}));
+    if(cleanupErrors.length)state.phase='PRESERVED_FOR_CONTINUATION';
+    if(failed||cleanupErrors.length||state.supplierCleanup?.length){state.updatedAt=stamp();await save(stateFile,state);}
+    need(cleanupErrors.length===0,'CONAPI_NATIVE_CLEANUP_INCOMPLETE',cleanupErrors);
   }
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){

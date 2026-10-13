@@ -7,13 +7,41 @@ const local=value=>String(value||'').split(':').at(-1);
 const attributes=node=>Object.fromEntries(Object.entries(node.attributes).filter(([key])=>key!=='xmlns'&&!key.startsWith('xmlns:')));
 const clean=value=>String(value).trim();
 const metadataKeys={frequency:'FREQ',unit:'UNIT',multiplier:'UNIT_MULT',currency:'CURRENCY',seasonalAdjustment:'SA'};
-function codeLabels(files){
-  const lists=[],bindings=[],references=[];
-  for(const file of files){
-    if(!file.forceXml&&!/\.(?:xml|xsd)$/i.test(file.name))continue;
-    let currentList=null,currentCode=null,currentType=null,currentEnum=null,family=null;
+const xmlSeriesSources=new WeakMap();
+const escapeAttribute=value=>String(value).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function originalSeriesObservations(source,{offset=0,limit=source.extent.count}={}){
+  need(Number.isSafeInteger(offset)&&offset>=0&&Number.isSafeInteger(limit)&&limit>=0,'Choose a supported original observation range.');
+  const end=Math.min(source.extent.count,offset+limit),rows=[];
+  if(offset>=end)return Object.freeze(rows);
+  const names=Object.entries(source.namespaces).filter(([key])=>key!=='xml'&&key!=='xmlns');
+  const prefix='<ddp-source'+names.map(([key,value])=>' '+(key?'xmlns:'+key:'xmlns')+'="'+escapeAttribute(value)+'"').join('')+'>';
+  const ranged=source.directObservations;
+  const start=ranged?source.spans[offset*2]:source.start,stop=ranged?source.spans[(end-1)*2+1]:source.end;
+  const body=prefix+source.text.slice(start,stop)+'</ddp-source>',adjust=start-prefix.length;
+  let seen=ranged?offset:0;
+  scanFredDdpXml(body,{start(node){
+    if(node.localName!=='Obs'||!BOARD.test(node.namespaceURI))return;
+    const index=seen++,a=attributes(node);
+    if(index<offset||index>=end)return;
+    rows.push(Object.freeze({index,period:a.TIME_PERIOD,value:a.OBS_VALUE??'',status:a.OBS_STATUS??null,
+      original:Object.freeze({attributes:Object.freeze(a)}),
+      location:Object.freeze({filename:source.filename,start:node.location.start+adjust,end:node.location.end+adjust})}));
+  }},{retainAttributeLocations:false});
+  need(seen===(ranged?end:source.extent.count)&&rows.length===end-offset,'The retained original observation extent changed.');
+  return Object.freeze(rows);
+}
+export function fredDdpXmlSeriesExtent(series){return xmlSeriesSources.get(series)?.extent??null;}
+export function retainFredDdpXmlSeriesSource(original,series){
+  const source=xmlSeriesSources.get(original);if(source)xmlSeriesSources.set(series,source);return series;
+}
+export function pageFredDdpXmlSeriesObservations(series,{offset=0,limit=100}={}){
+  const source=xmlSeriesSources.get(series);return source?originalSeriesObservations(source,{offset,limit}):null;
+}
+function structureCollector(file,catalog){
+  const {lists,bindings,references}=catalog;
+  let currentList=null,currentCode=null,currentType=null,currentEnum=null,family=null;
     const textBuffers=new Map();
-    scanFredDdpXml(file.text,{
+  return {
       start(node,stack){
         const name=node.localName,a=node.attributes;
         if(name==='KeyFamily')family={id:a.id||null,depth:stack.length};
@@ -45,7 +73,7 @@ function codeLabels(files){
           for(let i=0;i<parts.length;i+=2)references.push({filename:file.name,kind:'schemaLocation',namespace:parts[i],href:parts[i+1]});
         }
       },
-      text(value,where,node,stack){for(const parent of stack)if(textBuffers.has(parent))textBuffers.set(parent,textBuffers.get(parent)+value);},
+      text(value,where,node,stack){if(textBuffers.size)for(const parent of stack)if(textBuffers.has(parent))textBuffers.set(parent,textBuffers.get(parent)+value);},
       end(node,stack){
         const name=node.localName;
         if(textBuffers.has(node)){
@@ -60,9 +88,8 @@ function codeLabels(files){
         if(currentType&&stack.length===currentType.depth&&name==='simpleType'){if(currentType.name){currentType.id=currentType.name;delete currentType.depth;lists.push(currentType);}currentType=null;}
         if(family&&stack.length===family.depth&&name==='KeyFamily')family=null;
       }
-    });
-  }
-  return {lists,bindings,references};
+
+  };
 }
 function labelFor(catalog,concept,code,dataset){
   if(code===null||code===undefined)return {code:null,label:null};
@@ -74,13 +101,14 @@ function labelFor(catalog,concept,code,dataset){
   return {code,label:labels.length===1?labels[0]:null,definitions:clone(hits)};
 }
 export function readFredDdpXmlPackage(files,{release}){
-  const catalog=codeLabels(files),series=[],documents=[],datasets=[];
+  const catalog={lists:[],bindings:[],references:[]},series=[],documents=[],datasets=[];
   let totalObservations=0;
   for(const file of files){
-    if(!file.forceXml&&!/\.xml$/i.test(file.name))continue;
-    let dataset=null,current=null,annotation=null,headerDepth=null,document=null;
+    if(!file.forceXml&&!/\.(?:xml|xsd)$/i.test(file.name))continue;
+    const readData=file.forceXml||/\.xml$/i.test(file.name),structure=structureCollector(file,catalog);
+    let dataset=null,current=null,currentExtent=null,currentNamespaces=null,annotation=null,headerDepth=null,document=null;
     const texts=new Map();
-    scanFredDdpXml(file.text,{
+    const data={
       start(node,stack){
         if(stack.length===1)document={filename:file.name,namespaceURI:node.namespaceURI,attributes:attributes(node),fields:[],datasets:[]};
         if(node.localName==='Header'&&!current)headerDepth=stack.length;
@@ -96,8 +124,10 @@ export function readFredDdpXmlPackage(files,{release}){
           const a=attributes(node);need(typeof a.SERIES_NAME==='string'&&a.SERIES_NAME.length>0&&a.SERIES_NAME.length<=512,'An original Board series needs its exact SERIES_NAME.');
           current={release,boardSeriesId:a.SERIES_NAME,datasetId:dataset.id,title:a.SERIES_NAME,annotations:[],
             original:{attributes:a,namespaceURI:node.namespaceURI,datasetAttributes:clone(dataset.attributes)},
-            location:{filename:file.name,...clone(node.location)},observations:[],depth:stack.length};
-          for(const [key,concept] of Object.entries(metadataKeys))current[key]=labelFor(catalog,concept,a[concept]??null,{...dataset,namespaceURI:node.namespaceURI});
+            location:{filename:file.name,...clone(node.location)},depth:stack.length};
+          currentExtent={count:0,firstPeriod:null,lastPeriod:null,minPeriod:null,maxPeriod:null,spans:[],directObservations:true};
+          currentNamespaces=Object.assign({},node.namespaces);
+          for(const [key,concept] of Object.entries(metadataKeys))current[key]={code:a[concept]??null,label:null};
         }
         if(node.localName==='Annotation'&&current){need(annotation===null,'Original series annotations must not nest.');annotation={type:'',text:'',original:attributes(node),location:{filename:file.name,...clone(node.location)},depth:stack.length};}
         if(annotation&&['AnnotationType','AnnotationText'].includes(node.localName))texts.set(node,'');
@@ -105,13 +135,18 @@ export function readFredDdpXmlPackage(files,{release}){
           need(current,'An original Board observation must belong to a series.');
           const a=attributes(node);need(typeof a.TIME_PERIOD==='string'&&a.TIME_PERIOD.length>0&&a.TIME_PERIOD.length<=100,'An original observation needs its TIME_PERIOD.');
           need(a.OBS_VALUE===undefined||typeof a.OBS_VALUE==='string'&&a.OBS_VALUE.length<=1024,'Invalid original Board observation value.');
-          current.observations.push({index:current.observations.length,period:a.TIME_PERIOD,value:a.OBS_VALUE??'',status:a.OBS_STATUS??null,
-            original:{attributes:a},location:{filename:file.name,...clone(node.location)}});
+          const period=a.TIME_PERIOD;currentExtent.count++;
+          currentExtent.firstPeriod??=period;currentExtent.lastPeriod=period;
+          if(currentExtent.minPeriod===null||period<currentExtent.minPeriod)currentExtent.minPeriod=period;
+          if(currentExtent.maxPeriod===null||period>currentExtent.maxPeriod)currentExtent.maxPeriod=period;
+          node.ddpObservationSpan=currentExtent.spans.length;currentExtent.spans.push(node.location.start,node.location.end);
+          if(stack.at(-2)?.localName!=='Series'||!BOARD.test(stack.at(-2)?.namespaceURI||''))currentExtent.directObservations=false;
           need(++totalObservations<=3000000,'This original Board package exceeds its observation capacity.');
         }
       },
-      text(value,where,node,stack){for(const parent of stack)if(texts.has(parent))texts.set(parent,texts.get(parent)+value);},
+      text(value,where,node,stack){if(texts.size)for(const parent of stack)if(texts.has(parent))texts.set(parent,texts.get(parent)+value);},
       end(node,stack){
+        if(node.ddpObservationSpan!==undefined)currentExtent.spans[node.ddpObservationSpan+1]=node.location.end;
         if(texts.has(node)){
           const value=clean(texts.get(node));texts.delete(node);
           if(annotation&&node.localName==='AnnotationType')annotation.type=value;
@@ -125,15 +160,27 @@ export function readFredDdpXmlPackage(files,{release}){
           const title=current.annotations.find(item=>/^(?:short description|series description|title)$/i.test(item.type))?.text||
             current.annotations.find(item=>/description/i.test(item.type))?.text;
           if(title)current.title=title;
-          current.location.end=node.location.end;delete current.depth;series.push(current);current=null;
+          current.location.end=node.location.end;delete current.depth;
+          const {spans,directObservations,...extent}=currentExtent;
+          const retained={filename:file.name,text:file.text,start:current.location.start,end:current.location.end,namespaces:currentNamespaces,
+            spans:Uint32Array.from(spans),directObservations,extent:Object.freeze(extent)};
+          Object.defineProperty(current,'observations',{enumerable:true,get:()=>originalSeriesObservations(retained)});
+          xmlSeriesSources.set(current,retained);series.push(current);current=null;currentExtent=null;currentNamespaces=null;
           need(series.length<=100000,'This original Board package exceeds its series capacity.');
         }
         if(dataset&&node.localName==='DataSet'&&stack.length===dataset.depth){dataset.location.end=node.location.end;delete dataset.depth;dataset=null;}
         if(headerDepth&&node.localName==='Header'&&stack.length===headerDepth)headerDepth=null;
         if(stack.length===1&&document)documents.push(document);
       }
-    });
+    };
+    scanFredDdpXml(file.text,{
+      start(node,stack){structure.start(node,stack);if(readData)data.start(node,stack);},
+      text(value,where,node,stack){structure.text(value,where,node,stack);if(readData)data.text(value,where,node,stack);},
+      end(node,stack){structure.end(node,stack);if(readData)data.end(node,stack);}
+    },{retainAttributeLocations:false});
   }
+  for(const item of series)for(const [key,concept] of Object.entries(metadataKeys))
+    item[key]=labelFor(catalog,concept,item.original.attributes[concept]??null,{id:item.datasetId,namespaceURI:item.original.namespaceURI});
   need(series.length>0,'The original package contains no Board compact SDMX series.');
   const names=new Set(files.map(file=>file.name));
   for(const reference of catalog.references){

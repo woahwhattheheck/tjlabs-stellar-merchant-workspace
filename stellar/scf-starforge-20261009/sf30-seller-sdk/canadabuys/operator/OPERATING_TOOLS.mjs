@@ -21,14 +21,16 @@ async function stop(child) {
 }
 
 /**
- * Continue an actual completed browser case. Every write uses its existing SQLite workspace.
+ * Continue an actual completed operator case. Every write uses its existing SQLite workspace.
  * The case-result.json identifies the original source, saved workshare and merchant publication.
  */
 export async function operateCanadaBuysTools({ sourceDirectory, caseDirectory, outputDirectory } = {}) {
   sourceDirectory = resolve(sourceDirectory);
   caseDirectory = resolve(caseDirectory);
   const original = JSON.parse(await readFile(join(caseDirectory, 'case-result.json'), 'utf8'));
-  need(original.status === 'complete', 'Continue the completed original browser case.');
+  need(original.status === 'complete', 'Continue the completed original operator case.');
+  const operator = original.operator || original.browser;
+  need(operator?.status === 'completed' && operator.saved?.workshare, 'Retain the completed browser or HTTP operator journey.');
   const workspaceDirectory = join(caseDirectory, 'operator-workspace');
   const receivingDirectory = join(caseDirectory, 'receiving-workspace');
   for (const directory of [workspaceDirectory, receivingDirectory]) {
@@ -38,12 +40,12 @@ export async function operateCanadaBuysTools({ sourceDirectory, caseDirectory, o
   const parent = resolve(outputDirectory || join(caseDirectory, 'tool-journey'));
   await mkdir(parent, { recursive: true, mode: 0o700 });
   const directory = await mkdtemp(join(parent, 'operating-'));
-  const result = { operation: original.operation, status: 'running', startedAt: new Date().toISOString(), directory, stages: [] };
+  const result = { operation: original.operation, operatorInterface: operator.interface || 'browser', status: 'running', startedAt: new Date().toISOString(), directory, stages: [] };
   const save = async () => { await writeFile(join(directory, 'result.json'), json(result), { mode: 0o600 }); };
   const moduleAt = path => import(pathToFileURL(join(sourceDirectory, path)));
   const prefix = 'stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/';
   const mcpPrefix = 'stellar-forge/mcp-merchant-operator/';
-  const savedWorkshare = original.browser.saved.workshare;
+  const savedWorkshare = operator.saved.workshare;
   const noticeId = savedWorkshare.noticeId;
   const originalWorkspace = original.stages.find(stage => stage.stage === 'cold-reopen').operator;
   let owner, child;

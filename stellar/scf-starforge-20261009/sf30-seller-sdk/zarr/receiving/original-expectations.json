@@ -1,0 +1,756 @@
+{
+  "schema": "stellar-forge.zarr-original-input-expectations.v1",
+  "repository": "zarr-developers/pizzarr",
+  "commit": "d94b221b707dd78cd89105567a99bd9d883d6b5c",
+  "sources": [
+    {
+      "id": "v3",
+      "file": "examples/pizzarr/v3/zarr_python_v3.zarr.zip",
+      "sha256": "43ac1cf05e4e22e5ff4afe2e4178471828afb9a6b9d4762188bbef2e5b030470",
+      "root": "zarr_python_v3.zarr",
+      "title": "Original Zarr v3 interoperability example",
+      "provenance": {
+        "kind": "upstream-interoperability-example",
+        "repository": "zarr-developers/pizzarr",
+        "commit": "d94b221b707dd78cd89105567a99bd9d883d6b5c",
+        "original": "https://github.com/zarr-developers/pizzarr/blob/d94b221b707dd78cd89105567a99bd9d883d6b5c/inst/extdata/fixtures/v3/zarr_python_v3.zarr.zip",
+        "gitBlob": "f976ac01b34e279a105261673476384a9761b8e7",
+        "acquisition": "Exact original repository file bytes; no regeneration",
+        "license": "MIT; complete original LICENSE.md retained beside both generators"
+      },
+      "expected": {
+        "int32_1d": {
+          "shape": [
+            6
+          ],
+          "kind": "integer",
+          "values": [
+            10,
+            20,
+            30,
+            40,
+            50,
+            60
+          ]
+        },
+        "float64_1d": {
+          "shape": [
+            5
+          ],
+          "kind": "float",
+          "values": [
+            1.1,
+            2.2,
+            3.3,
+            4.4,
+            5.5
+          ]
+        },
+        "bool_1d": {
+          "shape": [
+            4
+          ],
+          "kind": "boolean",
+          "values": [
+            true,
+            false,
+            true,
+            false
+          ]
+        },
+        "uint8_1d": {
+          "shape": [
+            4
+          ],
+          "kind": "integer",
+          "values": [
+            0,
+            127,
+            128,
+            255
+          ]
+        },
+        "float32_1d": {
+          "shape": [
+            4
+          ],
+          "kind": "float",
+          "values": [
+            -1.5,
+            0,
+            1.5,
+            3.140000104904175
+          ]
+        },
+        "int16_2d": {
+          "shape": [
+            4,
+            3
+          ],
+          "kind": "integer",
+          "values": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+          ]
+        },
+        "float64_3d": {
+          "shape": [
+            2,
+            3,
+            4
+          ],
+          "kind": "float",
+          "values": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        "with_fill": {
+          "shape": [
+            6
+          ],
+          "kind": "float",
+          "values": [
+            1,
+            2,
+            3,
+            -9999,
+            -9999,
+            -9999
+          ]
+        },
+        "ragged_2d": {
+          "shape": [
+            5,
+            7
+          ],
+          "kind": "integer",
+          "values": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34
+          ]
+        },
+        "var_group/temperature": {
+          "shape": [
+            3,
+            4
+          ],
+          "kind": "float",
+          "values": [
+            280.1000061035156,
+            281.20001220703125,
+            282.29998779296875,
+            283.3999938964844,
+            284.5,
+            285.6000061035156,
+            286.70001220703125,
+            287.79998779296875,
+            288.8999938964844,
+            290,
+            291.1000061035156,
+            292.20001220703125
+          ]
+        },
+        "var_group/pressure": {
+          "shape": [
+            3,
+            4
+          ],
+          "kind": "float",
+          "values": [
+            101325,
+            101320,
+            101315,
+            101310,
+            101305,
+            101300,
+            101295,
+            101290,
+            101285,
+            101280,
+            101275,
+            101270
+          ]
+        }
+      }
+    },
+    {
+      "id": "v2",
+      "file": "examples/pizzarr/v2/data.zarr.zip",
+      "sha256": "9c23c0fc04cd80b1cea2a8e69837d788e51d4e62717a8564825eab7e65a99f43",
+      "root": "data.zarr",
+      "title": "Original Zarr v2 interoperability example",
+      "provenance": {
+        "kind": "upstream-interoperability-example",
+        "repository": "zarr-developers/pizzarr",
+        "commit": "d94b221b707dd78cd89105567a99bd9d883d6b5c",
+        "original": "https://github.com/zarr-developers/pizzarr/blob/d94b221b707dd78cd89105567a99bd9d883d6b5c/inst/extdata/fixtures/v2/data.zarr.zip",
+        "gitBlob": "b649d8f105f2511af20225e54617317a2843a079",
+        "acquisition": "Exact original repository file bytes; no regeneration",
+        "license": "MIT; complete original LICENSE.md retained beside both generators"
+      },
+      "expected": {
+        "1d.contiguous.zlib.i2": {
+          "shape": [
+            4
+          ],
+          "kind": "integer",
+          "values": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "1d.contiguous.blosc.i2": {
+          "shape": [
+            4
+          ],
+          "kind": "integer",
+          "values": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "1d.contiguous.lz4.i2": {
+          "shape": [
+            4
+          ],
+          "kind": "integer",
+          "values": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "1d.contiguous.zstd.i2": {
+          "shape": [
+            4
+          ],
+          "kind": "integer",
+          "values": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "1d.contiguous.raw.i2": {
+          "shape": [
+            4
+          ],
+          "kind": "integer",
+          "values": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "1d.contiguous.i4": {
+          "shape": [
+            4
+          ],
+          "kind": "integer",
+          "values": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "1d.contiguous.u1": {
+          "shape": [
+            4
+          ],
+          "kind": "integer",
+          "values": [
+            255,
+            0,
+            255,
+            0
+          ]
+        },
+        "1d.contiguous.f4.le": {
+          "shape": [
+            4
+          ],
+          "kind": "float",
+          "values": [
+            -1000.5,
+            0,
+            1000.5,
+            0
+          ]
+        },
+        "1d.contiguous.f4.be": {
+          "shape": [
+            4
+          ],
+          "kind": "float",
+          "values": [
+            -1000.5,
+            0,
+            1000.5,
+            0
+          ]
+        },
+        "1d.contiguous.f8": {
+          "shape": [
+            4
+          ],
+          "kind": "float",
+          "values": [
+            1.5,
+            2.5,
+            3.5,
+            4.5
+          ]
+        },
+        "1d.contiguous.U13.le": {
+          "shape": [
+            4
+          ],
+          "kind": "text",
+          "values": [
+            "a",
+            "b",
+            "cc",
+            "d"
+          ]
+        },
+        "1d.contiguous.U13.be": {
+          "shape": [
+            4
+          ],
+          "kind": "text",
+          "values": [
+            "a",
+            "b",
+            "cc",
+            "d"
+          ]
+        },
+        "1d.contiguous.U7": {
+          "shape": [
+            4
+          ],
+          "kind": "text",
+          "values": [
+            "a",
+            "b",
+            "cc",
+            "d"
+          ]
+        },
+        "1d.contiguous.raw.vlen-utf8": {
+          "shape": [
+            4
+          ],
+          "kind": "text",
+          "values": [
+            "a",
+            "b",
+            "cc",
+            "d"
+          ]
+        },
+        "1d.contiguous.blosc.vlen-utf8": {
+          "shape": [
+            4
+          ],
+          "kind": "text",
+          "values": [
+            "a",
+            "b",
+            "cc",
+            "d"
+          ]
+        },
+        "1d.contiguous.S7": {
+          "shape": [
+            4
+          ],
+          "kind": "bytes",
+          "values": [
+            "a",
+            "b",
+            "cc",
+            "d"
+          ]
+        },
+        "1d.contiguous.b1": {
+          "shape": [
+            4
+          ],
+          "kind": "boolean",
+          "values": [
+            true,
+            false,
+            true,
+            false
+          ]
+        },
+        "1d.chunked.i2": {
+          "shape": [
+            4
+          ],
+          "kind": "integer",
+          "values": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "1d.chunked.ragged.i2": {
+          "shape": [
+            5
+          ],
+          "kind": "integer",
+          "values": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        "2d.contiguous.i2": {
+          "shape": [
+            2,
+            2
+          ],
+          "kind": "integer",
+          "values": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "2d.chunked.i2": {
+          "shape": [
+            2,
+            2
+          ],
+          "kind": "integer",
+          "values": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "2d.chunked.U7": {
+          "shape": [
+            2,
+            2
+          ],
+          "kind": "text",
+          "values": [
+            "a",
+            "b",
+            "cc",
+            "d"
+          ]
+        },
+        "2d.chunked.raw.vlen-utf8": {
+          "shape": [
+            2,
+            2
+          ],
+          "kind": "text",
+          "values": [
+            "a",
+            "b",
+            "cc",
+            "d"
+          ]
+        },
+        "2d.chunked.blosc.vlen-utf8": {
+          "shape": [
+            2,
+            2
+          ],
+          "kind": "text",
+          "values": [
+            "a",
+            "b",
+            "cc",
+            "d"
+          ]
+        },
+        "2d.chunked.ragged.i2": {
+          "shape": [
+            3,
+            3
+          ],
+          "kind": "integer",
+          "values": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        "3d.contiguous.i2": {
+          "shape": [
+            3,
+            3,
+            3
+          ],
+          "kind": "integer",
+          "values": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "3d.chunked.i2": {
+          "shape": [
+            3,
+            3,
+            3
+          ],
+          "kind": "integer",
+          "values": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "3d.chunked.mixed.i2.C": {
+          "shape": [
+            3,
+            3,
+            3
+          ],
+          "kind": "integer",
+          "values": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "3d.chunked.mixed.i2.F": {
+          "shape": [
+            3,
+            3,
+            3
+          ],
+          "kind": "integer",
+          "values": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        }
+      }
+    }
+  ],
+  "cuts": [
+    {
+      "id": "temperature-strided",
+      "source": "v3",
+      "array": "var_group/temperature",
+      "axes": [
+        {
+          "start": 0,
+          "stop": 3,
+          "step": 2
+        },
+        {
+          "start": 1,
+          "stop": 4,
+          "step": 2
+        }
+      ],
+      "title": "Selected temperature cells in kelvin",
+      "review": "The four selected original example cells retain their two-dimensional source coordinates, native float32 values and upstream K unit. No environmental measurement or unit conversion is claimed.",
+      "valueType": "number",
+      "expected": {
+        "shape": [
+          2,
+          2
+        ],
+        "kind": "float",
+        "values": [
+          281.20001220703125,
+          283.3999938964844,
+          290,
+          292.20001220703125
+        ]
+      }
+    }
+  ]
+}

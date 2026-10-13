@@ -1,9 +1,14 @@
 // MIT. Saved procedures use the same pure operating-plan model as the installed CLI.
 import { searchCommandCatalog } from '/catalog.mjs';
+import { installGrantReportingEditor } from '/grant-reporting-editor.mjs';
 import { inspectOperatingPlan, createOperatingPlan, createOperatingStep, snapshotRegistration,
   operatingPlanDraft, operatingPlanRevision, saveOperatingPlanRevision, forkOperatingPlan,
   receiveOperatingPlan, compareOperatingPlan, summarizeOperatingPlan, shellArgument,
   renderOperatingPlanMarkdown, renderOperatingPlanHTML } from '/operating-plan-core.mjs';
+
+import { IATI_OPERATING_SOURCE_SCHEMA, IATI_OPERATING_PROCEDURE_SCHEMA,
+  createDocumentOperatingProcedure, inspectDocumentOperatingProcedure,
+  receiveDocumentOperatingProcedure } from '/iati/document_evidence/operating_procedure.mjs';
 
 const $ = id => document.getElementById(id);
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -387,10 +392,37 @@ async function receivePlan(incoming) {
     : 'Imported the complete plan · ' + received.addedRevisions + ' received revisions.');
   broadcast?.postMessage({ id: received.plan.id, revision: received.plan.revisions.length });
 }
+async function readProcedureFile(file) {
+  if (!file || file.size > 64 * 1024 * 1024) throw new TypeError('Choose one complete JSON file up to 64 MiB.');
+  return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await file.arrayBuffer()));
+}
+function completePlanCapacity(plan) {
+  if (new TextEncoder().encode(JSON.stringify(plan, null, 2) + '\n').length > maximumBytes)
+    throw new TypeError('The complete editable plan exceeds the existing 32 MiB plan capacity.');
+  return plan;
+}
+function completeProcedureCapacity(bundle) {
+  completePlanCapacity(bundle.plan);
+  if (new TextEncoder().encode(JSON.stringify(bundle, null, 2) + '\n').length > 64 * 1024 * 1024)
+    throw new TypeError('The complete IATI procedure package exceeds the 64 MiB file capacity.');
+  return bundle;
+}
 async function importFile(file) {
   if (!file) return;
-  if (file.size > maximumBytes) throw new TypeError('Choose a complete JSON plan up to 32 MiB.');
-  const incoming = inspectOperatingPlan(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await file.arrayBuffer())));
+  const value = await readProcedureFile(file);
+  if (value?.schema === IATI_OPERATING_SOURCE_SCHEMA) {
+    if (!catalog) await refreshCatalog();
+    if (!catalog) throw new Error('Load the installed toolkit catalog before creating a customer procedure.');
+    const bundle = completeProcedureCapacity(createDocumentOperatingProcedure(value, catalog, { id: crypto.randomUUID() }));
+    await flushDraft();
+    await receivePlan(bundle.plan);
+    download(bundle, 'iati-procedure-' + bundle.plan.id + '.json');
+    status('Created the IATI procedure and downloaded its complete source package. Add the customer, period and receiving details, then save a revision.');
+    return;
+  }
+  const incoming = value?.schema === IATI_OPERATING_PROCEDURE_SCHEMA
+    ? inspectDocumentOperatingProcedure(value).plan : inspectOperatingPlan(value);
+  completePlanCapacity(incoming);
   await flushDraft();
   try { await receivePlan(incoming); } catch (error) {
     if (!['PLAN_ORIGIN_CONFLICT', 'PLAN_HISTORY_DIVERGED'].includes(error.code)) throw error;
@@ -416,10 +448,13 @@ async function exportPlan(format) {
   else if (format === 'comparison') download(compareOperatingPlan(current, catalog, { revision }), stem + '-r' + revision + '-source-comparison.json');
   status(format === 'draft' ? 'Downloaded the working draft.' : 'Downloaded saved plan material from revision ' + revision + '.');
 }
-async function run(action) {
-  if (busy) return;
+async function run(action, { propagate = false } = {}) {
+  if (busy) {
+    if (propagate) throw new Error('Finish the current operating-plan action before opening the reporting plan.');
+    return;
+  }
   busy = true; document.querySelector('main').inert = true; errorMessage(null);
-  try { await action(); } catch (error) { errorMessage(error); }
+  try { return await action(); } catch (error) { errorMessage(error); if (propagate) throw error; }
   finally { busy = false; document.querySelector('main').inert = false; if (current) { $('save-plan').disabled = !editable(); $('copy-plan').disabled = false; } }
 }
 
@@ -433,6 +468,12 @@ $('new-plan-form').addEventListener('submit', event => {
 });
 $('plan-filter').addEventListener('input', renderPlanList);
 $('refresh-catalog').addEventListener('click', () => run(refreshCatalog));
+$('export-catalog').addEventListener('click', () => run(async () => {
+  if (!catalog) await refreshCatalog();
+  if (!catalog) throw new Error('Refresh the selected toolkit catalog before exporting it.');
+  download(catalog, 'starforge-toolkit-catalog.json');
+  status('Downloaded the complete toolkit catalog with its original source and runtime registrations.');
+}));
 $('reload-plans').addEventListener('click', () => run(async () => { await flushDraft(); await refreshPlanList(); if (current) await openPlan(current.id); }));
 $('save-plan').addEventListener('click', () => run(savePlan));
 $('copy-plan').addEventListener('click', () => run(saveCopy));
@@ -520,6 +561,24 @@ $('import-copy').addEventListener('click', () => run(async () => {
     title: incoming.revisions.at(-1).title.slice(0, 293) + ' (copy)' });
   await receivePlan(copied);
 }));
+const iatiPackageFile = node('input');
+iatiPackageFile.type = 'file'; iatiPackageFile.accept = '.json,application/json'; iatiPackageFile.hidden = true;
+const updateIatiPackage = node('button', 'Update IATI package');
+updateIatiPackage.type = 'button';
+updateIatiPackage.title = 'Join this saved plan history to its original complete IATI source package';
+$('export-json').parentElement.append(updateIatiPackage, iatiPackageFile);
+updateIatiPackage.addEventListener('click', () => run(async () => {
+  if (!current) throw new Error('Open and save the IATI operating plan first.');
+  iatiPackageFile.value = ''; iatiPackageFile.click();
+}));
+iatiPackageFile.addEventListener('change', () => run(async () => {
+  const file = iatiPackageFile.files[0]; if (!file) return;
+  if (!current) throw new Error('Open the corresponding saved operating plan.');
+  await flushDraft();
+  const joined = completeProcedureCapacity(receiveDocumentOperatingProcedure(await readProcedureFile(file), current));
+  download(joined, 'iati-procedure-' + joined.plan.id + '-r' + joined.plan.revisions.length + '.json');
+  status('Downloaded the complete IATI package with saved plan revision ' + joined.plan.revisions.length + ' and all original case source records.');
+}));
 for (const format of ['json', 'markdown', 'html', 'draft', 'comparison'])
   $('export-' + format).addEventListener('click', () => run(() => exportPlan(format)));
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushDraft().catch(errorMessage); });
@@ -540,3 +599,14 @@ await run(async () => {
   else status(savedPlans.length + ' saved operating plans. Create or open one to continue.');
 });
 await run(refreshCatalog);
+
+installGrantReportingEditor({
+  trigger: $('create-grant-reporting'),
+  getCatalog: () => catalog,
+  receive: plan => run(async () => {
+    if (!database) throw new Error('Reopen Operating plans to restore its saved-plan storage.');
+    await flushDraft();
+    await receivePlan(plan);
+  }, { propagate: true }),
+  onStatus: status,
+});

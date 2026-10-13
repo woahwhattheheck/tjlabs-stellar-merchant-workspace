@@ -11,8 +11,8 @@
     },
     {
       "path": "run_conapi.mjs",
-      "bytes": 42582,
-      "sha256": "01e533d8379214b94703d8bfd4902ae4dc6b979ee5c42acb06c958c659abcd2a"
+      "bytes": 46875,
+      "sha256": "aa5234d893fb564cfa2ffa53d3f1a09641563165d75ded082f722c7a362c37a7"
     },
     {
       "path": "preserve_delivery.py",
@@ -21,13 +21,13 @@
     },
     {
       "path": "continue_conapi.py",
-      "bytes": 10105,
-      "sha256": "88bc053d58dd00a71eaf04c3b88b5985a2a8cace16a461d7e66e8f169e0978c0"
+      "bytes": 14197,
+      "sha256": "c215de5419ec8a199a1b76ffe1b374acd119430839901321d3139670e273b88c"
     },
     {
       "path": "OPERATING.md",
-      "bytes": 14209,
-      "sha256": "03392ee682705b5caefb13d2353006fbeca7e46e50167e54fee1d1457cea7297"
+      "bytes": 16766,
+      "sha256": "8067adcd57be28e21af07d07b87a15acc8167b97e4fa4bd385e08798205b1f3c"
     }
   ]
 }

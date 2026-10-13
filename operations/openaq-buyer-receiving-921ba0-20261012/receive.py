@@ -152,6 +152,10 @@ def source_parent(source,relative):
   s=parent.lstat()
   if not stat.S_ISDIR(s.st_mode) or stat.S_ISLNK(s.st_mode) or s.st_uid!=os.getuid() or parent.resolve()!=parent:raise RuntimeError("ORIGINAL_SOURCE_PARENT_CHANGED")
  return parent/parts[-1]
+SIGNER_SOURCE_REPAIR={"schema":"stellar-forge.openaq-buyer-source-repair.v1","repository":"woahwhattheheck/tjlabs-stellar-merchant-workspace","baseCommit":"c7ac4399e3bb419fafd42395841bace7d089036a","reason":"Import the original native signing diagnostic validator from its actual diagnostics module; preserve the original signer adapter and all request/payment behavior.","before":{"path":"stellar/scf-starforge-20261009/sf88-operator-buyer-cli/native-signer.mjs","gitBlob":"053825b1862f3a5b3fc42aaa248f6b8aa6401254","bytes":13420,"sha256":"66d744c89f3e23157ba895f228729d6b294893260202cfdfe830cb7a8215461c"},"after":{"path":"stellar/scf-starforge-20261009/sf88-operator-buyer-cli/native-signer.mjs","gitBlob":"c12720ce4f432e24f4972523021d71fa9d85e2ce","bytes":13483,"sha256":"b30f43740c9d0a7f99439ac8e6876aea6284d15efad71cf5168bed9d8c705cc0"}}
+UNPAID_SOURCE_REPAIR={"schema":"stellar-forge.openaq-buyer-unpaid-source-selection.v1","repository":"woahwhattheheck/tjlabs-stellar-merchant-workspace","baseCommit":"c7ac4399e3bb419fafd42395841bace7d089036a","sourceManifestSha256":"6c9d4ca8c04c5a3c52d6aba940660682dff02ad244bb36e6a35da2309ddde15c","assetsSha256":"6b2dbcd5dacf9e8ecb280611772da607198731e0f73bb526c7a4c75504a9dcbc","packetSha256":"6b1737f1f98c82ef777e3f3dde78433bb0e55287aa0efc906897aea090e52998","reason":"Preserve the original Dataset unsigned wire and linked SF82 checkout records in its existing unpaid history before explicit same-page continuation.","files":[{"before":{"path":"stellar/scf-starforge-20261009/sf88-operator-buyer-cli/attempt-wire.mjs","gitBlob":"e87fd6310a8261c490930ace3225dbd3a857de78","bytes":36219,"sha256":"8247cf9b2f0a6df5e5417adaf9cf8d14a491b4c1c8477029e43b2c514254f35b"},"after":{"path":"stellar/scf-starforge-20261009/sf88-operator-buyer-cli/attempt-wire.mjs","bytes":43462,"sha256":"055e76e4f6f4655a1cce000dc8b13cec2a24d733d746d6f43be68dbe4978cf2c","gitBlob":"092304ce9ed33fe7a2c1d483501a091e3db6c7b9"}},{"before":{"path":"stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-unpaid.mjs","gitBlob":"d01a8e16d70d35a27ec7bc67fd2e1d51461dc743","bytes":14526,"sha256":"7d098e04db4524c223e3e7f8849e65938b1a334c6654a35889b08f91586a82e7"},"after":{"path":"stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-unpaid.mjs","bytes":22182,"sha256":"f9b9832a16c09cab1ca4b6ced416f94e060d778c1be38606cad4a93cfbfb99fe","gitBlob":"a99c40ec7ee4c2df8a8df9d9339b05a3e469ba08"}}]}
+def source_body_matches(raw,item):
+ return len(raw)==item["bytes"] and digest(raw)==item["sha256"] and hashlib.sha1(b"blob "+str(len(raw)).encode()+b"\0"+raw).hexdigest()==item["gitBlob"]
 def verify_source_file(path,item):
  try:
   before=path.lstat()
@@ -159,7 +163,9 @@ def verify_source_file(path,item):
  if not stat.S_ISREG(before.st_mode) or stat.S_ISLNK(before.st_mode) or before.st_uid!=os.getuid() or path.resolve()!=path:raise RuntimeError("ORIGINAL_SOURCE_FILE_CHANGED:"+str(path))
  raw=path.read_bytes();after=path.lstat()
  if (before.st_dev,before.st_ino,before.st_size,before.st_mtime_ns,before.st_ctime_ns)!=(after.st_dev,after.st_ino,after.st_size,after.st_mtime_ns,after.st_ctime_ns):raise RuntimeError("ORIGINAL_SOURCE_FILE_CHANGED:"+str(path))
- if len(raw)!=item["bytes"] or digest(raw)!=item["sha256"] or hashlib.sha1(b"blob "+str(len(raw)).encode()+b"\0"+raw).hexdigest()!=item["gitBlob"]:raise RuntimeError("ORIGINAL_SOURCE_FILE_CHANGED:"+str(path))
+ if not source_body_matches(raw,item):
+  repairs=[SIGNER_SOURCE_REPAIR]+UNPAID_SOURCE_REPAIR["files"]
+  if not any(item==repair["before"] and source_body_matches(raw,repair["after"]) for repair in repairs):raise RuntimeError("ORIGINAL_SOURCE_FILE_CHANGED:"+str(path))
  return True
 def source_manifest(raw):
  if digest(raw)!=SOURCE_MANIFEST_SHA:raise RuntimeError("ORIGINAL_SOURCE_MANIFEST_CHANGED")
@@ -290,7 +296,109 @@ def receive_assets(source,raw=None):
  exact(source/"SOURCE-ASSETS.json",encoded(selection))
  say({"phase":"ORIGINAL_RUNTIME_ASSETS_READY","files":SOURCE_ASSET_COUNT,"totalSourceFiles":SOURCE_FILE_COUNT+SOURCE_ASSET_COUNT,"sha256":SOURCE_ASSETS_SHA})
 
-def main(journey,stream_source=False,assets=None):
+def apply_signer_source_repair(source):
+ item=SIGNER_SOURCE_REPAIR["before"];post=SIGNER_SOURCE_REPAIR["after"]
+ target=source_parent(source,item["path"])
+ if not verify_source_file(target,item):raise RuntimeError("ORIGINAL_SIGNER_SOURCE_REQUIRED")
+ info=target.lstat();raw=target.read_bytes()
+ exact(CONTROL/"source-signing-import-repair.json",encoded(SIGNER_SOURCE_REPAIR))
+ if not source_body_matches(raw,post):
+  if not source_body_matches(raw,item):raise RuntimeError("ORIGINAL_SIGNER_SOURCE_PREIMAGE_CHANGED")
+  original=b"import { createNativeBuyerSigner, readNativeSigningDiagnostic } from '../sf103-native-buyer-signer/adapter.mjs';"
+  replacement=b"import { createNativeBuyerSigner } from '../sf103-native-buyer-signer/adapter.mjs';\nimport { readNativeSigningDiagnostic } from '../sf103-native-buyer-signer/diagnostics.mjs';"
+  if raw.count(original)!=1:raise RuntimeError("ORIGINAL_SIGNER_IMPORT_CHANGED")
+  corrected=raw.replace(original,replacement)
+  if not source_body_matches(corrected,post):raise RuntimeError("ORIGINAL_SIGNER_POSTIMAGE_CHANGED")
+  pending=target.with_name(target.name+"."+post["gitBlob"]+".pending")
+  exact(pending,corrected)
+  current=target.lstat()
+  identity=lambda value:(value.st_dev,value.st_ino,value.st_size,value.st_mtime_ns,value.st_ctime_ns)
+  if identity(info)!=identity(current) or target.read_bytes()!=raw:raise RuntimeError("ORIGINAL_SIGNER_SOURCE_MOVED")
+  os.replace(pending,target)
+  parent=os.open(target.parent,os.O_RDONLY|os.O_DIRECTORY)
+  try:os.fsync(parent)
+  finally:os.close(parent)
+ if not verify_source_file(target,post):raise RuntimeError("ORIGINAL_SIGNER_CORRECTION_INCOMPLETE")
+ exact(source/"SOURCE-REPAIRS.json",encoded(SIGNER_SOURCE_REPAIR))
+ say({"phase":"ORIGINAL_SIGNER_IMPORT_READY","path":item["path"],"before":item["gitBlob"],"after":post["gitBlob"]})
+
+def receive_unpaid_repairs(source,inline=None):
+ import select
+ retained=CONTROL/("source-unpaid-repairs."+UNPAID_SOURCE_REPAIR["packetSha256"]+".json")
+ if inline is not None:raw=inline
+ elif retained.exists():
+  info=retained.lstat()
+  if not stat.S_ISREG(info.st_mode) or stat.S_ISLNK(info.st_mode) or info.st_uid!=os.getuid() or info.st_mode&0o077:raise RuntimeError("ORIGINAL_UNPAID_REPAIR_PACKET_CHANGED")
+  raw=retained.read_bytes()
+ else:
+  terminal_state=None;pending=bytearray();deadline=time.monotonic()+180
+  try:
+   if os.isatty(sys.stdin.fileno()):
+    terminal_state=termios.tcgetattr(sys.stdin.fileno());current=termios.tcgetattr(sys.stdin.fileno())
+    current[3]&=~(termios.ECHO|termios.ICANON);termios.tcsetattr(sys.stdin.fileno(),termios.TCSANOW,current)
+   say({"phase":"READY_FOR_ORIGINAL_UNPAID_REPAIRS","files":2,"sha256":UNPAID_SOURCE_REPAIR["packetSha256"]})
+   while b"\n" not in pending:
+    if requested:raise RuntimeError("ORIGINAL_RECEIVING_INTERRUPTED")
+    remaining=deadline-time.monotonic()
+    if remaining<=0:raise TimeoutError("ORIGINAL_UNPAID_REPAIR_INPUT_DEADLINE")
+    if not select.select([sys.stdin.fileno()],[],[],min(remaining,1))[0]:continue
+    chunk=os.read(sys.stdin.fileno(),65536)
+    if not chunk:raise RuntimeError("ORIGINAL_UNPAID_REPAIR_INPUT_CLOSED")
+    pending.extend(chunk)
+    if len(pending)>262144:raise RuntimeError("ORIGINAL_UNPAID_REPAIR_INPUT_TOO_LARGE")
+   if pending.index(10)+1!=len(pending):raise RuntimeError("ORIGINAL_UNPAID_REPAIR_TRAILING_BYTES")
+   raw=bytes(pending)
+  finally:
+   if terminal_state is not None:termios.tcsetattr(sys.stdin.fileno(),termios.TCSANOW,terminal_state)
+ if digest(raw)!=UNPAID_SOURCE_REPAIR["packetSha256"]:raise RuntimeError("ORIGINAL_UNPAID_REPAIR_PACKET_CHANGED")
+ value=json.loads(raw)
+ if value["schema"]!="stellar-forge.openaq-buyer-unpaid-source.v1" or value["repository"]!=UNPAID_SOURCE_REPAIR["repository"] or value["baseCommit"]!=COMMIT or value["sourceManifestSha256"]!=SOURCE_MANIFEST_SHA or value["assetsSha256"]!=SOURCE_ASSETS_SHA or len(value["files"])!=2:raise RuntimeError("ORIGINAL_UNPAID_REPAIR_SELECTION_CHANGED")
+ for file,pin in zip(value["files"],UNPAID_SOURCE_REPAIR["files"]):
+  if file["before"]!=pin["before"] or file["after"]!=pin["after"] or file["encoding"]!="utf-8" or not source_body_matches(file["content"].encode("utf-8"),pin["after"]):raise RuntimeError("ORIGINAL_UNPAID_REPAIR_BODY_CHANGED")
+ exact(retained,raw)
+ exact(CONTROL/("source-unpaid-repair-selection."+UNPAID_SOURCE_REPAIR["packetSha256"]+".json"),encoded(UNPAID_SOURCE_REPAIR))
+ for file in value["files"]:
+  before=file["before"];post=file["after"];target=source_parent(source,before["path"])
+  if not verify_source_file(target,before):raise RuntimeError("ORIGINAL_UNPAID_SOURCE_REQUIRED")
+  info=target.lstat();current=target.read_bytes()
+  if not source_body_matches(current,post):
+   if not source_body_matches(current,before):raise RuntimeError("ORIGINAL_UNPAID_SOURCE_PREIMAGE_CHANGED")
+   pending=target.with_name(target.name+"."+post["gitBlob"]+".pending")
+   exact(pending,file["content"].encode("utf-8"))
+   latest=target.lstat()
+   identity=lambda entry:(entry.st_dev,entry.st_ino,entry.st_size,entry.st_mtime_ns,entry.st_ctime_ns)
+   if identity(info)!=identity(latest) or target.read_bytes()!=current:raise RuntimeError("ORIGINAL_UNPAID_SOURCE_MOVED")
+   os.replace(pending,target)
+   parent=os.open(target.parent,os.O_RDONLY|os.O_DIRECTORY)
+   try:os.fsync(parent)
+   finally:os.close(parent)
+  if not verify_source_file(target,post):raise RuntimeError("ORIGINAL_UNPAID_SOURCE_INCOMPLETE")
+ exact(source/"SOURCE-UNPAID-REPAIRS.json",encoded(UNPAID_SOURCE_REPAIR))
+ say({"phase":"ORIGINAL_UNPAID_HISTORY_SOURCE_READY","files":2,"packetSha256":UNPAID_SOURCE_REPAIR["packetSha256"]})
+
+SOURCE_OPERATOR_SELECTION={"schema":"stellar-forge.openaq-buyer-original-operator-source.v1","repository":"woahwhattheheck/tjlabs-stellar-merchant-workspace","baseCommit":"c7ac4399e3bb419fafd42395841bace7d089036a","sourceManifestSha256":"6c9d4ca8c04c5a3c52d6aba940660682dff02ad244bb36e6a35da2309ddde15c","assetsSha256":"6b2dbcd5dacf9e8ecb280611772da607198731e0f73bb526c7a4c75504a9dcbc","files":[{"path":"stellar/scf-starforge-20261009/sf62-human-approval-cli/console.py","gitBlob":"9edcb4f9ac15a4659438bf82e781bbaf76b2b122","bytes":10763,"sha256":"67abdaf937e11211bb6b2d1862b613488e966a98d7f42a93a088960ac86fdbc7","encoding":"utf-8"},{"path":"stellar/scf-starforge-20261009/sf54-buyer-governor-intent/intent_adapter.py","gitBlob":"6d61d651b7137ba411d2b24cb69f0639080e1515","bytes":4084,"sha256":"873b576c1738dfcba7fe32cb1afcc514d827f95c950a7b1e6e511d474460a836","encoding":"utf-8"},{"path":"stellar/scf-starforge-20261009/sf59-operator-reservation-gate/operator_gate.py","gitBlob":"9817043b7f74d6f570905c09c0592e442bfa85cb","bytes":3785,"sha256":"e14bea10b2cfb7c5cfbeea142f339e0939b39a1863212465a61d0b2ba59c36ce","encoding":"utf-8"}],"packetSha256":"df6a22deeba2837845775f1759f78c48500492e29b2ed6da40f8740af914819d"}
+def receive_operator_sources(source,raw=None):
+ retained=CONTROL/"source-operator.json"
+ if raw is None:
+  if not retained.exists():raise RuntimeError("ORIGINAL_OPERATOR_SOURCE_PACKET_REQUIRED")
+  raw=retained.read_bytes()
+ if digest(raw)!=SOURCE_OPERATOR_SELECTION["packetSha256"]:raise RuntimeError("ORIGINAL_OPERATOR_SOURCE_PACKET_CHANGED")
+ value=json.loads(raw)
+ expected={k:v for k,v in SOURCE_OPERATOR_SELECTION.items() if k not in ("packetSha256","files")}
+ if {k:v for k,v in value.items() if k!="files"}!=expected or len(value.get("files",[]))!=len(SOURCE_OPERATOR_SELECTION["files"]):raise RuntimeError("ORIGINAL_OPERATOR_SOURCE_SELECTION_CHANGED")
+ paths=set()
+ for item,selected in zip(value["files"],SOURCE_OPERATOR_SELECTION["files"]):
+  if {k:v for k,v in item.items() if k!="content"}!=selected or item["path"] in paths:raise RuntimeError("ORIGINAL_OPERATOR_SOURCE_MEMBER_CHANGED")
+  paths.add(item["path"])
+  body=item["content"].encode("utf-8")
+  if item["encoding"]!="utf-8" or not source_body_matches(body,item):raise RuntimeError("ORIGINAL_OPERATOR_SOURCE_BODY_CHANGED")
+  target=source_parent(source,item["path"])
+  if not verify_source_file(target,item):exact(target,body)
+ exact(retained,raw)
+ exact(source/"SOURCE-OPERATOR.json",encoded(SOURCE_OPERATOR_SELECTION))
+ say({"phase":"ORIGINAL_OPERATOR_SOURCE_READY","files":len(value["files"]),"packetSha256":SOURCE_OPERATOR_SELECTION["packetSha256"]})
+
+def main(journey,stream_source=False,assets=None,repairs=None,operator_sources=None):
  CONTROL.mkdir(mode=0o700,exist_ok=True);owned(CONTROL)
  fd=os.open(CONTROL/"operation.lock",os.O_RDWR|os.O_CREAT|os.O_NOFOLLOW,0o600)
  fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -301,9 +409,9 @@ def main(journey,stream_source=False,assets=None):
   predecessor="43bc5e869bbc5f5e3cfe9506512b0f8b36915cecac974012dad67eabed6013ba"
   if initial.exists():
    prior=json.loads(initial.read_text())
-   if {k:v for k,v in prior.items() if k!="journeySha256"}!={k:v for k,v in expected.items() if k!="journeySha256"} or prior["journeySha256"] not in (predecessor,expected["journeySha256"]):raise RuntimeError("ORIGINAL_OPERATION_SELECTION_CHANGED")
+   if {k:v for k,v in prior.items() if k!="journeySha256"}!={k:v for k,v in expected.items() if k!="journeySha256"} or prior["journeySha256"] not in (predecessor,"96ba6cf6fff8daa7afea3b9a4188840280114fec25e3f2836c43cbcbc97d8ab6",expected["journeySha256"]):raise RuntimeError("ORIGINAL_OPERATION_SELECTION_CHANGED")
    if prior["journeySha256"]!=expected["journeySha256"]:
-    exact(CONTROL/("driver-"+expected["journeySha256"]+".json"),encoded({"previous":prior["journeySha256"],"current":expected["journeySha256"],"reason":"Explicitly select the original SF81 controlling-terminal channel in the allocated host PTY, after the browser socket is unavailable; retain all source, Buyer and native request identities."}))
+    exact(CONTROL/("driver-"+expected["journeySha256"]+".json"),encoded({"previous":prior["journeySha256"],"current":expected["journeySha256"],"reason":"Correct the original true-admission Dataset handler and explicitly continue the reviewed unsigned page through complete original checkout/wire history; retain all source, Buyer and native request identities."}))
   else:exact(initial,encoded(expected))
   # Mutable original journals survive invocation-specific /dev mounts.
   # Git and dependencies are exact reproducible source only.
@@ -318,41 +426,68 @@ def main(journey,stream_source=False,assets=None):
   source=bulk/"source";native=CONTROL/"native";deps=bulk/"dependencies"
   for path in (native,deps):path.mkdir(mode=0o700,exist_ok=True);owned(path)
   driver=native/"native-journey.mjs"
+  if (native/"NATIVE_RESULT.json").exists() and json.loads((native/"NATIVE_RESULT.json").read_text()).get("driverSha256")!=expected["journeySha256"]:raise RuntimeError("ORIGINAL_COMPLETED_JOURNEY_SOURCE_CHANGED")
   if driver.exists() and digest(driver.read_bytes())!=expected["journeySha256"]:
    old=driver.read_bytes()
-   if digest(old) not in (predecessor,"0e3e0b98a86ccef0f891c9aba31d1eff95c615d9da8515094d1c1ba57e2b5544"):raise RuntimeError("ORIGINAL_JOURNEY_SOURCE_CHANGED")
+   if digest(old) not in (predecessor,"0e3e0b98a86ccef0f891c9aba31d1eff95c615d9da8515094d1c1ba57e2b5544","96ba6cf6fff8daa7afea3b9a4188840280114fec25e3f2836c43cbcbc97d8ab6"):raise RuntimeError("ORIGINAL_JOURNEY_SOURCE_CHANGED")
    exact(native/("native-journey."+digest(old)+".mjs"),old)
    pending=native/("native-journey."+expected["journeySha256"]+".mjs")
    exact(pending,journey)
    os.replace(pending,driver)
   else:exact(driver,journey)
-  if (native/"NATIVE_RESULT.json").exists():
-   say({"state":"COMPLETE_REOPENED","result":json.loads((native/"NATIVE_RESULT.json").read_text()),"directory":str(native)})
+  completed=(native/"NATIVE_RESULT.json").exists()
+  if completed:
+   saved_result=json.loads((native/"NATIVE_RESULT.json").read_text())
+   if saved_result.get("driverSha256")!=expected["journeySha256"]:raise RuntimeError("ORIGINAL_COMPLETED_JOURNEY_SOURCE_CHANGED")
+   say({"state":"COMPLETE_REOPENED","result":saved_result,"directory":str(native)})
+   target=CONTROL/"OpenAQ_Original_Buyer_Workspace.zip"
+   if target.exists() and (CONTROL/"package.json").exists():
+    saved=json.loads((CONTROL/"package.json").read_text())
+    if target.stat().st_size!=saved["bytes"] or digest(target.read_bytes())!=saved["sha256"]:raise RuntimeError("ORIGINAL_PACKAGE_CHANGED")
+    say(saved);return
+  # Source is reproducible; restore it for an interrupted package-only reopen
+  # even after /dev changes. A completed native result is never rerun.
+  say({"phase":"ORIGINAL_SOURCE_ACQUISITION","bulk":str(bulk),"commit":COMMIT})
+  if stream_source:
+   source.mkdir(mode=0o700,exist_ok=True);owned(source);receive_source(source);receive_assets(source,assets)
   else:
-   say({"phase":"ORIGINAL_SOURCE_ACQUISITION","bulk":str(bulk),"commit":COMMIT})
-   if stream_source:
-    source.mkdir(mode=0o700,exist_ok=True);owned(source);receive_source(source);receive_assets(source,assets)
-   else:
-    if not source.exists():
-     source.mkdir(mode=0o700);run(["git","init","--quiet",str(source)],str(bulk),guard_fd=fd)
-    owned(source)
-    # Normal configured Git fetch; no authenticated REST or account replacement.
-    head=subprocess.run(["git","rev-parse","HEAD"],cwd=source,capture_output=True,text=True,pass_fds=(fd,))
-    if head.returncode:
-     run(["git","-c","http.lowSpeedLimit=1","-c","http.lowSpeedTime=60","fetch","--no-tags","--depth=1",REPOSITORY,COMMIT],str(source),grace=30,timeout=180,guard_fd=fd)
-     run(["git","checkout","--quiet","--detach","FETCH_HEAD"],str(source),guard_fd=fd)
-    selected_head=subprocess.check_output(["git","rev-parse","HEAD"],cwd=source,text=True,pass_fds=(fd,)).strip()
-    if selected_head!=COMMIT:raise RuntimeError("ORIGINAL_SOURCE_COMMIT_CHANGED")
-    dirty=subprocess.check_output(["git","status","--porcelain","--untracked-files=no"],cwd=source,text=True,pass_fds=(fd,))
-    if dirty:raise RuntimeError("ORIGINAL_TRACKED_SOURCE_CHANGED")
+   if not source.exists():
+    source.mkdir(mode=0o700);run(["git","init","--quiet",str(source)],str(bulk),guard_fd=fd)
+   owned(source)
+   # Normal configured Git fetch; no authenticated REST or account replacement.
+   head=subprocess.run(["git","rev-parse","HEAD"],cwd=source,capture_output=True,text=True,pass_fds=(fd,))
+   if head.returncode:
+    run(["git","-c","http.lowSpeedLimit=1","-c","http.lowSpeedTime=60","fetch","--no-tags","--depth=1",REPOSITORY,COMMIT],str(source),grace=30,timeout=180,guard_fd=fd)
+    run(["git","checkout","--quiet","--detach","FETCH_HEAD"],str(source),guard_fd=fd)
+   selected_head=subprocess.check_output(["git","rev-parse","HEAD"],cwd=source,text=True,pass_fds=(fd,)).strip()
+   if selected_head!=COMMIT:raise RuntimeError("ORIGINAL_SOURCE_COMMIT_CHANGED")
+   dirty=subprocess.check_output(["git","status","--porcelain","--untracked-files=no"],cwd=source,text=True,pass_fds=(fd,))
+   if dirty:
+    allowed={repair["after"]["path"]:repair["after"] for repair in [SIGNER_SOURCE_REPAIR]+UNPAID_SOURCE_REPAIR["files"]}
+    for line in dirty.splitlines():
+     path=line[3:]
+     if not line.startswith(" M ") or path not in allowed or not source_body_matches(source_parent(source,path).read_bytes(),allowed[path]):raise RuntimeError("ORIGINAL_TRACKED_SOURCE_CHANGED")
+  receive_operator_sources(source,operator_sources)
+  apply_signer_source_repair(source)
+  receive_unpaid_repairs(source,repairs)
+  if not completed:
    # The exact original SF88 profile supplies all original buyer SDK versions.
    original=source/"stellar/scf-starforge-20261009/sf88-operator-buyer-cli"
    for name in ("package.json","package-lock.json"):exact(deps/name,(original/name).read_bytes())
-   if not (deps/"node_modules/@x402/stellar/package.json").exists():
+   dependency_ready=deps/"dependency-ready.json"
+   dependency_selection=encoded({"schema":"stellar-forge.openaq-original-dependencies.v1","commit":COMMIT,
+    "packageSha256":digest((deps/"package.json").read_bytes()),
+    "lockSha256":digest((deps/"package-lock.json").read_bytes())})
+   if dependency_ready.exists():
+    exact(dependency_ready,dependency_selection)
+    if not (deps/"node_modules/@x402/stellar/package.json").is_file():raise RuntimeError("ORIGINAL_DEPENDENCY_READY_TREE_CHANGED")
+   else:
     npm=shutil.which("npm")
     if not npm:raise RuntimeError("ORIGINAL_NPM_REQUIRED")
     env=dict(os.environ);env["npm_config_cache"]=str(CONTROL/"npm-cache");env["npm_config_prefer_offline"]="true"
+    env["NODE_OPTIONS"]=env.get("NODE_OPTIONS","")+" --max-old-space-size=192"
     run([npm,"ci","--ignore-scripts","--no-audit","--no-fund"],str(deps),env,guard_fd=fd)
+    exact(dependency_ready,dependency_selection)
    link=source/"node_modules"
    if link.is_symlink():
     if link.resolve()!=(deps/"node_modules").resolve():raise RuntimeError("ORIGINAL_DEPENDENCY_SELECTION_CHANGED")
@@ -386,11 +521,16 @@ def main(journey,stream_source=False,assets=None):
       file=Path(base,name)
       if file.is_symlink():raise RuntimeError("ORIGINAL_CUSTOMER_SYMLINK")
       archive.write(file,file.relative_to(native).as_posix())
-   for name in ("NATIVE_RESULT.json","native-journey.mjs","original-accounting.json"):
-    archive.write(native/name,name)
+   for name in ("NATIVE_RESULT.json","native-journey.mjs","original-accounting.json","unpaid-continuation-request.json"):
+    if (native/name).exists():archive.write(native/name,name)
+   for repair in [SIGNER_SOURCE_REPAIR]+UNPAID_SOURCE_REPAIR["files"]:
+    archive.write(source/repair["after"]["path"],"source-corrections/"+repair["after"]["path"])
+   for item in SOURCE_OPERATOR_SELECTION["files"]:
+    archive.write(source/item["path"],"source-original-operator/"+item["path"])
+   archive.write(source/"SOURCE-OPERATOR.json","SOURCE-OPERATOR.json")
    archive.write(source/"stellar/scf-starforge-20261009/sf88-operator-buyer-cli/openaq-study/OPERATING.md","OPERATING.md")
    archive.writestr("SOURCE.json",encoded({"repository":REPOSITORY,"commit":COMMIT,"operator":expected["operation"],
-    "product":"stellar/scf-starforge-20261009/sf88-operator-buyer-cli/openaq-study","journeySha256":expected["journeySha256"]}))
+    "product":"stellar/scf-starforge-20261009/sf88-operator-buyer-cli/openaq-study","journeySha256":expected["journeySha256"],"sourceRepair":SIGNER_SOURCE_REPAIR,"unpaidSourceRepair":UNPAID_SOURCE_REPAIR,"originalOperatorSource":SOURCE_OPERATOR_SELECTION}))
   temporary.chmod(0o600)
   data=temporary.read_bytes()
   if target.exists():
@@ -404,6 +544,8 @@ def main(journey,stream_source=False,assets=None):
  finally:os.close(fd)
 if __name__=="__main__":
  source=Path(__file__).with_name("native-journey.mjs").read_bytes()
- if digest(source)!="96ba6cf6fff8daa7afea3b9a4188840280114fec25e3f2836c43cbcbc97d8ab6":raise RuntimeError("ORIGINAL_JOURNEY_SOURCE_CHANGED")
+ if digest(source)!="f3940401de94c25b38f5f98e95a1066b6390597a384535f0d6e7ab0ba76cdb07":raise RuntimeError("ORIGINAL_JOURNEY_SOURCE_CHANGED")
  if sys.argv[1:] not in ([],["--source-stdin"]):raise RuntimeError("ORIGINAL_RECEIVER_ARGUMENT_INVALID")
- main(source,stream_source=bool(sys.argv[1:]),assets=Path(__file__).with_name("source-assets.json").read_bytes() if sys.argv[1:] else None)
+ main(source,stream_source=bool(sys.argv[1:]),assets=Path(__file__).with_name("source-assets.json").read_bytes() if sys.argv[1:] else None,
+  repairs=Path(__file__).with_name("source-unpaid-repairs.json").read_bytes(),
+  operator_sources=Path(__file__).with_name("source-operator.json").read_bytes())

@@ -217,6 +217,47 @@ original request/status/result objects, not abbreviated business reconstructions
 The original source-workflow locks and managed native operation journals remain
 authoritative when an external transport retry reaches the same request.
 
+### Native process ownership and interrupted initialization
+
+The continuation wrapper passes its original locked file descriptor to the
+accepted Node process. That process keeps the same lock if the wrapper exits
+abruptly. A second wrapper continues to contend on the original lock file until
+the accepted child finishes. The wrapper closes its own descriptor when finished;
+it does not explicitly unlock a lease still held by that child.
+
+Native stdout and stderr append directly to the original full log files. They
+continue to receive bytes if the observing wrapper disappears. Progress parsing
+tails these files from this invocation's starting offsets and limits only an
+individual progress-line buffer to 20,000 bytes. The underlying logs retain the
+complete output. Each actual child has its own retained
+`conapi-native-invocations/*.json` record with the command, PID, source, log paths
+and final native return code.
+
+SIGINT or SIGTERM to the wrapper records the shutdown request and lets its
+already accepted native programme finish before capture and canonical saves.
+The wrapper returns the signal's exit status after those saves. If the signal
+arrives before native acceptance, the wrapper saves the existing workspace
+without starting another native process. An observer or wrapper exception also
+waits for the accepted child before reaching capture. Use the original managed
+operation controls when a particular native job needs to be stopped.
+
+Every spawned command retains one original close completion, including its
+stdout/stderr and full log writes. The supplier browser's normal stop and
+failure cleanup await that same completion; a supplier child still alive after
+its graceful stop receives SIGKILL after ten seconds. The cleanup path also
+waits for this programme's selected managed listeners to become inactive.
+A cleanup failure is retained in the programme before the caller reports
+`PRESERVED_FOR_CONTINUATION`.
+
+Applications creation now retains its target before calling the original
+create-only API. If interruption leaves that target without the final
+`workspace.json`, the caller preserves the incomplete directory and records a
+new recovery target. Once the declaration exists, it opens that same workspace
+and retains its declared workspace ID. Established Applications directories,
+saved application IDs, Python requests and run IDs always continue through their
+original workspace. A missing declaration after those identities exist remains
+an error for that original workspace; it cannot silently create a replacement.
+
 ## Full outputs and restoration
 
 The same-process wrapper writes:

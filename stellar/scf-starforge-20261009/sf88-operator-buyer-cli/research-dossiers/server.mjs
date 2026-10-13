@@ -9,6 +9,7 @@ import {privateDirectory,writeJson,digest,jsonBytes as canonicalBytes} from '../
 import {RESEARCH_WORKSPACE_API,RESEARCH_WORKSPACE_CONNECTION,researchWorkspaceId,researchSummary,researchPage,researchSection,researchComparison,researchCrossrefReview} from './workspace-protocol.mjs';
 import { openDossierStore } from './dossier.mjs';
 import {handleEligibilityRoute,ELIGIBILITY_REVIEW_LIMIT} from './eligibility-routes.mjs';
+import {handleDossierReturnRoute,DOSSIER_RETURN_SOURCE_LIMIT,DOSSIER_RETURN_REQUEST_LIMIT,DOSSIER_RETURN_ERROR_STATUS} from './dossier-returns/routes.mjs';
 import {handleCustomerUpdateRoute} from './customer-updates/routes.mjs';
 import {ResearchWorkspaceClient} from './workspace-client.mjs';
 import {openResearchCustomerCommerce} from './customer-commerce/controller.mjs';
@@ -19,6 +20,7 @@ import {handleResearchQuoteRoute,readResearchQuoteAsset} from './customer-quotes
 import {QUOTE_REQUEST_LIMIT} from './customer-quotes/contracts.mjs';
 import {handleRiskOfBiasRoute,readRiskOfBiasAsset,RISK_OF_BIAS_REQUEST_LIMIT} from './risk-of-bias/routes.mjs';
 import {handleStudyExtractionRoute,STUDY_EXTRACTION_REVIEW_LIMIT} from './study-extraction-routes.mjs';
+import {handleStudyFlowRoute,STUDY_FLOW_REQUEST_LIMIT} from './study-flow/routes.mjs';
 import {createTemplateExchangeDispatcher,TEMPLATE_POST_ACTIONS} from './template-exchange/http.mjs';
 import {MAX_WORKBOOK_BYTES} from './template-exchange/workbook.mjs';
 import {openZoteroResearchBridge} from './zotero-workspace.mjs';
@@ -48,9 +50,14 @@ const TYPES = Object.freeze({
   'ris-sources.js':'text/javascript; charset=utf-8',
   'ris-sources.css':'text/css; charset=utf-8',
   'ris-drafts.js':'text/javascript; charset=utf-8',
+  'dossier-returns.js':'text/javascript; charset=utf-8',
+  'dossier-return-drafts.js':'text/javascript; charset=utf-8',
+  'dossier-returns.css':'text/css; charset=utf-8',
   'study-extraction.js': 'text/javascript; charset=utf-8',
   'study-extraction-drafts.js': 'text/javascript; charset=utf-8',
   'study-extraction.css': 'text/css; charset=utf-8',
+  'study-flow.js':'text/javascript; charset=utf-8',
+  'study-flow.css':'text/css; charset=utf-8',
   'zotero-browser.mjs': 'text/javascript; charset=utf-8',
   'style.css': 'text/css; charset=utf-8',
   'crossref.js': 'text/javascript; charset=utf-8',
@@ -251,7 +258,9 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
   const workspaceId = researchWorkspaceId(store.directory), instanceId = randomUUID();
   const api = {schema:RESEARCH_WORKSPACE_API,metadata:true,revisionPages:true,streamedPortable:true,sourceBundles:true,sourceInspection:true,studyProtocolInspection:true,
     studyExtraction:true,studyExtractionRequestLimit:STUDY_EXTRACTION_REVIEW_LIMIT,extractionPublications:true,zoteroBridge:zotero!==null,
+    studyFlow:true,studyFlowRequestLimit:STUDY_FLOW_REQUEST_LIMIT,
     customerUpdates:true,customerUpdateRequestLimit:16*1024*1024,
+    dossierReturns:true,dossierReturnSourceLimit:DOSSIER_RETURN_SOURCE_LIMIT,dossierReturnRequestLimit:DOSSIER_RETURN_REQUEST_LIMIT,
     customerCommerce:true,customerCommerceConfigured:customerCommerceConfiguration!==null,customerCommerceRequestLimit:2*1024*1024,
     customerQuotes:true,customerQuotesConfigured:customerQuotesConfiguration!==null,customerQuoteRequestLimit:QUOTE_REQUEST_LIMIT,
     templateExchange:true,templateExchangeRequestLimit:MAX_TEMPLATE_REVIEW_BODY,templateWorkbookBytesLimit:MAX_WORKBOOK_BYTES,
@@ -457,8 +466,16 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
       const match = path.match(/^\/api\/dossiers\/([^/]+)(?:\/(.*))?$/);
       if (!match) {send(404, {error: 'ROUTE_NOT_FOUND'}); return;}
       const id = pathId(match[1]), action = match[2] || '';
+      if(action==='returns'||action.startsWith('returns/')){
+        // Return comparisons, retained drafts and receipts keep their complete
+        // native values; source inspection projection must not alter them.
+        sourceProjection='full';
+        if(await handleDossierReturnRoute({store,dossierId:id,action,req,res,url,headers,readBody:readJson,send}))return;
+      }
       if(await handleRisRoute({store,dossierId:id,action,req,url,readBody:readJson,send,
         setHeader:(name,value)=>res.setHeader(name,value)}))return;
+      if(await handleStudyFlowRoute({store,dossierId:id,action,req,url,projection,
+        readBody:readJson,send,setHeader:(name,value)=>res.setHeader(name,value)}))return;
       if(await handleStudyExtractionRoute({store,dossierId:id,action,req,url,projection,
         readBody:(request,limit)=>readJson(request,limit),send,
         setHeader:(name,value)=>res.setHeader(name,value)}))return;
@@ -739,6 +756,7 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
       if (res.headersSent) {res.destroy(); return;}
       const code = safeCode(error);
       const status = code === 'AUTH_REQUIRED' ? 401 : ['HOST_REFUSED', 'ORIGIN_REFUSED'].includes(code) ? 403 :
+        DOSSIER_RETURN_ERROR_STATUS[code]??(
         code.startsWith('TEMPLATE_')&&Number.isInteger(error.status)&&error.status>=400&&error.status<=599 ? error.status :
         (code.startsWith('EUROPE_PMC_')&&/(?:CHANGED|CONFLICT|REUSED|RUNNING_ELSEWHERE|COOLDOWN)$/.test(code)) ? 409 :
         ['REVISION_CONFLICT','CITATION_REVIEW_CHANGED','CITATION_REVIEW_REQUEST_CHANGED','PORTABLE_HISTORY_CONFLICT','ROUTESCAN_RECORD_BUSY','CROSSREF_OPERATION_RUNNING_ELSEWHERE','UNSTRUCTURED_REVIEWED_EDITION_CHANGED','UNSTRUCTURED_RECEIVING_LABEL_CONFLICT','CLINICALTRIALS_REVIEW_CHANGED','CLINICALTRIALS_PLAN_CHANGED','CLINICALTRIALS_QUESTION_CHANGED','CLINICALTRIALS_SOURCE_CONFIGURATION_CHANGED','PIPELINE_REVISION_CHANGED','PIPELINE_REVIEWED_EDITION_CHANGED',
@@ -746,8 +764,9 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
           'PIPELINE_ACTION_REQUEST_REUSED','PIPELINE_OPERATION_RUNNING_ELSEWHERE',
           'RESEARCH_OBJECT_SESSION_CHANGED','RESEARCH_OBJECT_REVIEW_CHANGED','RESEARCH_OBJECT_REVIEW_SOURCE_CHANGED',
           'RESEARCH_OBJECT_INVENTORY_CHANGED','RESEARCH_OBJECT_CURSOR_CHANGED','RESEARCH_OBJECT_REVIEW_REQUEST_CHANGED'].includes(code) ? 409 : code === 'ENOENT' || code === 'DOSSIER_NOT_FOUND' ? 404 :
-          ['UPLOAD_SIZE_LIMIT','PORTABLE_SIZE_LIMIT','PORTABLE_RECORD_SIZE_LIMIT','PIPELINE_UPLOAD_TOO_LARGE'].includes(code) ? 413 : 400;
-      send(status, {error: code, ...(error.openAlexImport ? {openAlexImport:error.openAlexImport} : {})});
+          ['UPLOAD_SIZE_LIMIT','PORTABLE_SIZE_LIMIT','PORTABLE_RECORD_SIZE_LIMIT','PIPELINE_UPLOAD_TOO_LARGE'].includes(code) ? 413 : 400);
+      send(status, {error: code, ...(error.openAlexImport ? {openAlexImport:error.openAlexImport} : {}),
+        ...(code.startsWith('RETURN_')&&plain(error.details)?{details:error.details}:{})});
     }
   });
   server.requestTimeout = 60000;

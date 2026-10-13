@@ -56,7 +56,10 @@ def _receive_metadata(workspace, snapshot):
     Import only JSON, never an incoming SQLite file. Saved SQL is not executed
     during receiving. An actual run still requires an explicit operator action.
     """
-    if snapshot.get('schema') != SCHEMA or set(snapshot) != {'schema', 'definitions', 'executions', 'events'}:
+    from interop import origin_inventory, validate_execution_origin, validate_attempt_origin, ensure_origins
+    from reuse import request_selection, validate_reuse
+    required = {'schema', 'definitions', 'executions', 'events'}
+    if snapshot.get('schema') != SCHEMA or not required.issubset(snapshot) or set(snapshot) - required - {'origins'}:
         raise PreparationError('Unsupported pipeline metadata')
     for collection in ('definitions', 'executions', 'events'):
         if not isinstance(snapshot[collection], list):
@@ -77,9 +80,11 @@ def _receive_metadata(workspace, snapshot):
         revisions = sorted(rev for p, rev in definitions if p == pipeline_id)
         if revisions != list(range(1, len(revisions) + 1)):
             raise PreparationError('Pipeline revision history has a gap')
+    origins = origin_inventory(workspace, snapshot.get('origins', []), definitions)
     executions = {}
     request_keys = set()
     for execution in snapshot['executions']:
+        validate_execution_origin(execution, origins)
         eid = identifier(execution['id'], EID)
         if eid in executions or execution['requestKey'] in request_keys:
             raise PreparationError('Duplicate execution or request key')
@@ -93,7 +98,7 @@ def _receive_metadata(workspace, snapshot):
         inputs = execution['inputs']
         if set(inputs) != set(definition['inputs']) or set(execution['inputOriginals']) != set(inputs):
             raise PreparationError('Execution input names differ from its definition')
-        if execution['requestDigest'] != sha({'pipelineId': definition['id'], 'revision': definition['revision'], 'inputs': inputs}):
+        if execution['requestDigest'] != sha(request_selection(execution)):
             raise PreparationError('Execution request digest differs')
         for alias, source_id in inputs.items():
             if canonical(workspace.native.get('sources', source_id)) != canonical(execution['inputOriginals'][alias]):
@@ -110,7 +115,8 @@ def _receive_metadata(workspace, snapshot):
                     raise PreparationError('Attempt identity differs from its original stage')
                 if attempt.get('nativeRecipe'):
                     recipe = workspace.native.get('recipes', attempt['nativeRecipe'], attempt['nativeRevision'])
-                    if recipe['note'] != attempt['token'] or recipe['sql'] != stage['sql'] or recipe['parameters'] != stage['parameters'] or recipe['bindings'] != attempt['bindings']:
+                    imported = validate_attempt_origin(workspace, execution, sid, attempt, recipe, origins)
+                    if (not imported and recipe['note'] != attempt['token']) or recipe['sql'] != stage['sql'] or recipe['parameters'] != stage['parameters'] or recipe['bindings'] != attempt['bindings']:
                         raise PreparationError('Native recipe differs from the pipeline stage')
                     if set(attempt['bindings']) != set(stage['bindings']):
                         raise PreparationError('Native aliases differ from the stage')
@@ -132,7 +138,8 @@ def _receive_metadata(workspace, snapshot):
                         raise PreparationError('Native run does not belong to its retained attempt')
             if stage_state['status'] == 'COMPLETE':
                 native = workspace._validate_complete(stage_state)
-                if not stage_state['attempts'] or native['id'] != stage_state['attempts'][-1].get('nativeRun') or native['rows'] != stage_state['rows'] or native['columns'] != stage_state['columns']:
+                native_attempt_matches = bool(stage_state['attempts']) and native['id'] == stage_state['attempts'][-1].get('nativeRun')
+                if (not stage_state.get('reuseFrom') and not native_attempt_matches) or native['rows'] != stage_state['rows'] or native['columns'] != stage_state['columns']:
                     raise PreparationError('Completed stage metadata differs from its native result')
         if execution['status'] == 'COMPLETE':
             if any(s['status'] != 'COMPLETE' for s in execution['stages'].values()):
@@ -141,6 +148,7 @@ def _receive_metadata(workspace, snapshot):
                 raise PreparationError('Final output selection differs')
         executions[eid] = execution
         request_keys.add(execution['requestKey'])
+    validate_reuse(workspace, executions)
     previous = 0
     for event in snapshot['events']:
         if type(event['sequence']) is not int or event['sequence'] <= previous or event['execution'] not in executions or not isinstance(event['body'], dict):
@@ -148,6 +156,10 @@ def _receive_metadata(workspace, snapshot):
         previous = event['sequence']
     with workspace.connection() as db:
         db.execute('BEGIN IMMEDIATE')
+        if origins:
+            ensure_origins(db)
+            for origin in origins.values():
+                db.execute('INSERT INTO pipeline_origins VALUES(?,?)', (origin['id'], dumps(origin)))
         for definition in definitions.values():
             db.execute('INSERT INTO pipeline_definitions VALUES(?,?,?)', (definition['id'], definition['revision'], dumps(definition)))
         for execution in executions.values():
@@ -158,7 +170,10 @@ def _receive_metadata(workspace, snapshot):
 
 
 def receive_project(archive, destination, *, max_bytes=20 * 1024**3):
+    from interop import is_original_archive, receive_original_project
     archive, destination = Path(archive).resolve(), Path(destination).resolve()
+    if is_original_archive(archive):
+        return receive_original_project(archive, destination, max_bytes=max_bytes)
     if destination.exists():
         raise PreparationError('Receiving requires a new directory')
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -209,7 +224,10 @@ def report(workspace, execution_id, destination):
         stage = next(s for s in definition['stages'] if s['id'] == sid)
         state = execution['stages'][sid]
         bindings = ', '.join(alias + ' ← ' + ('Input ' + v['input'] if 'input' in v else 'Stage ' + v['stage']) for alias, v in stage['bindings'].items())
-        rows.append(f'<section><h2>{esc(stage["label"])}</h2><p>{esc(state["status"].capitalize())} · {state.get("rows", 0):,} rows · {len(state["attempts"])} attempts</p><p>{esc(bindings)}</p><pre>{esc(stage["sql"])}</pre><p>Parameters: {esc(canonical(stage["parameters"]))}</p></section>')
+        attempts = len(state['attempts'])
+        activity = 'Reused original result' if state.get('reuseFrom') else f'{attempts} attempt' + ('' if attempts == 1 else 's')
+        output_kind = 'Customer result' if sid in definition['outputs'] else 'Retained intermediate'
+        rows.append(f'<section><h2>{esc(stage["label"])}</h2><p>{esc(state["status"].capitalize())} · {state.get("rows", 0):,} rows · {esc(activity)} · {esc(output_kind)}</p><p>{esc(bindings)}</p><pre>{esc(stage["sql"])}</pre><p>Parameters: {esc(canonical(stage["parameters"]))}</p></section>')
     inputs = ''.join(f'<tr><td>{esc(alias)}</td><td>{esc(src["label"])}</td><td>{src["rows"]:,}</td><td>{esc(src["originalName"])}</td></tr>' for alias, src in execution['inputOriginals'].items())
     text = f'''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{esc(definition['label'])}</title>
 <style>body{{font:15px/1.6 system-ui,sans-serif;color:#222;background:#fff;max-width:1050px;margin:40px auto;padding:0 24px}}h1{{font-size:30px}}h2{{font-size:20px}}section{{border-top:1px solid #ccc;padding:20px 0}}pre{{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f3f3;padding:16px}}table{{border-collapse:collapse;width:100%}}th,td{{padding:10px;border-bottom:1px solid #ddd;text-align:left}}@media(max-width:600px){{body{{margin:20px auto;padding:0 16px}}table{{font-size:12px}}}}@media print{{section{{break-inside:avoid}}}}</style>
