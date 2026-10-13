@@ -7,7 +7,7 @@ import { startSetupServer } from '../serve.mjs';
 import {
   LIMITS, createProject, addDocument, addEdition, addDocumentTable, resetMapping, replaceMapping, freezeReview,
   importProject, inspectSource, decodeSource, selectedEdition, compareReviews, comparisonCsv,
-  projectSummary, createTableArchive, SourceTableError,
+  projectSummary, createTableArchive, SourceTableError, recordCorrection, selectedCorrections, sourceRecords, correctionsCsv,
 } from './source-table-workspace.mjs';
 import { importWorkspaceDraft } from './onboarding.mjs';
 import { createDocumentIntake, createDocumentIntakePacket, receiveDocumentIntakePacket } from './source-table-intake.mjs';
@@ -30,6 +30,9 @@ const HELP = 'Stellar Forge source tables\n\n' +
   'reset-mapping --project PROJECT.json --document ID --out NEW_PROJECT.json [dialect options]\n' +
   'review --project PROJECT.json --document ID --out NEW_PROJECT.json\n' +
   'compare --project PROJECT.json --document ID --baseline REVIEW_ID [--current REVIEW_ID] [--csv] [--out NEW_COMPARISON]\n' +
+  'records --project PROJECT.json --document ID [--offset N] [--limit N]\n' +
+  'corrections --project PROJECT.json --document ID [--csv] [--out NEW_HISTORY]\n' +
+  'correct --project PROJECT.json --document ID --decision DECISION.json --out NEW_PROJECT.json\n' +
   'show --project PROJECT.json\n' +
   'export --project PROJECT.json --out NEW_WORKSPACE.zip\n\n' +
   'All saves create a new file. Dialect and mapping decisions, original sources, previous reviews and original merchant payment choices are retained in the project.\n';
@@ -130,6 +133,9 @@ export async function runSourceTableCli(args, io = { stdout: process.stdout, std
     'reset-mapping': ['project', 'document', 'out', 'delimiter', 'no-header', 'skip-empty'],
     review: ['project', 'document', 'out'],
     compare: ['project', 'document', 'baseline', 'current', 'csv', 'out'],
+    records: ['project','document','offset','limit'],
+    corrections: ['project','document','csv','out'],
+    correct: ['project','document','decision','out'],
     show: ['project'],
     export: ['project', 'out'],
   };
@@ -187,6 +193,16 @@ export async function runSourceTableCli(args, io = { stdout: process.stdout, std
     project = resetMapping(project, required(o, 'document'), dialect(o));
   } else if (command === 'review') {
     result = await freezeReview(project, required(o, 'document')); project = result.project;
+  } else if (command === 'correct') {
+    const decision=JSON.parse(await readText(required(o,'decision'),LIMITS.sourceBytes));
+    project=recordCorrection(project,required(o,'document'),decision);
+  } else if (command === 'records' || command === 'corrections') {
+    const doc=project.documents.find(row=>row.id===required(o,'document'));
+    if(!doc)throw new Error('The selected document is absent.');
+    const output=command==='records'?json(sourceRecords(doc,{offset:o.offset===undefined?0:Number(o.offset),limit:o.limit===undefined?20:Number(o.limit)})):
+      o.csv?correctionsCsv(selectedCorrections(doc)):json(selectedCorrections(doc));
+    if(o.out)io.stdout.write(json(await save(o.out,output,[o.project])));else io.stdout.write(output);
+    return 0;
   } else if (command === 'show') {
     io.stdout.write(json(projectSummary(project))); return 0;
   } else if (command === 'mapping' || command === 'compare') {
@@ -202,7 +218,7 @@ export async function runSourceTableCli(args, io = { stdout: process.stdout, std
     const archive = await createTableArchive(project), receipt = await save(required(o, 'out'), archive.bytes, [o.project]);
     io.stdout.write(json({ ...receipt, summary: archive.workspace.summary })); return 0;
   }
-  const receipt = await save(required(o, 'out'), json(project), [o.project, o.source, o.mapping, o.merchant, o.selection].filter(Boolean));
+  const receipt = await save(required(o, 'out'), json(project), [o.project, o.source, o.mapping, o.merchant, o.selection, o.decision].filter(Boolean));
   io.stdout.write(json({ ...receipt, ...(result ? { documentId: result.documentId, editionId: result.editionId, reviewId: result.review?.id, reused: result.reused, sourceId: result.sourceId, projectionId: result.projectionId } : {}), project: projectSummary(project) }));
   return 0;
 }

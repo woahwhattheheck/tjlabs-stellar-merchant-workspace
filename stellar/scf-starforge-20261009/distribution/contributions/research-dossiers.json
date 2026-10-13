@@ -24,6 +24,17 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/OPERATING.md",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/RECEIVING.md",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/comparison.js",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/comparison.css"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/comparison.css",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/inspect-handover.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/handover.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/handover-archive.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/handover-cli.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/HANDOVER.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/prepare.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/receive.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/review.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/OPERATING.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/plan-template.json",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/receiving-template.json"
   ]
 }

@@ -1,0 +1,6 @@
+{
+  "node": "/absolute/path/to/node",
+  "playwrightModule": "/absolute/path/to/playwright/index.mjs",
+  "executablePath": "/absolute/path/to/chromium",
+  "args": []
+}

@@ -934,6 +934,13 @@
       ]
     ],
     [
+      "/source-table-corrections.mjs",
+      [
+        "source-table-corrections.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/source-table-guide.md",
       [
         "../SOURCE_TABLES.md",

@@ -20,7 +20,7 @@ const group=(...children)=>{const n=node('div',null,'comparison-grid');n.append(
 const named=(form,name)=>form.elements.namedItem(name)?.value??'';
 function parsed(value,label,kind){let v;try{v=JSON.parse(value);}catch{throw new Error(label+' must contain complete valid JSON.');}if(kind==='object'&&(!v||typeof v!=='object'||Array.isArray(v)))throw new Error(label+' must be a JSON object.');if(kind==='array'&&!Array.isArray(v))throw new Error(label+' must be a JSON array.');return v;}
 export function createComparisonPanel({root,api,task,notify,getDossier,getWorkspace,isBusy,onReceived}){
-  let visible=false,epoch=0,busy=false,overview=null,page=null,selectedCase=null,kind='candidates',offset=0,current=null,storageFailure=null;
+  let visible=false,epoch=0,busy=false,overview=null,page=null,selectedCase=null,selectedCaseVersion=null,caseEditions=[],kind='candidates',offset=0,current=null,storageFailure=null;
   let storePromise=null,writer=Promise.resolve(),seenSelection=null;
   const drafts=new Map(),diskRevisions=new Map(),unwritten=new Map();
   const store=()=>storePromise??=openProtocolDraftStore().catch(e=>{storePromise=null;throw e;});
@@ -28,7 +28,7 @@ export function createComparisonPanel({root,api,task,notify,getDossier,getWorksp
   const same=(a,b)=>a.workspaceId===b.workspaceId&&a.dossierId===b.dossierId;
   const endpoint=(suffix='',sel=selection())=>'/api/dossiers/'+encodeURIComponent(sel.dossierId)+'/comparison'+suffix;
   const selectedApi=(path,opts={},sel=selection())=>api(path,{...opts,workspaceId:sel.workspaceId});
-  const activeCase=()=>overview?.cases?.find(x=>x.id===selectedCase)??null;
+  const activeCase=()=>overview?.case?.id===selectedCase&&overview.case.versionId===selectedCaseVersion?overview.case:null;
   const actorFields=d=>group(field('actorId','Operator identifier',d.actor?.id??''),field('actorName','Operator name',d.actor?.name??''));
   const runTask=fn=>task(async()=>{if(busy)return;busy=true;updateBusy();try{await fn();}finally{busy=false;updateBusy();}});
   const changed=d=>{const x={...d,commitId:crypto.randomUUID(),updatedAt:new Date().toISOString()};drafts.set(x.id,x);unwritten.set(x.id,clone(x));if(current?.id===x.id)current=x;return x;};
@@ -44,27 +44,46 @@ export function createComparisonPanel({root,api,task,notify,getDossier,getWorksp
   function contextOK(sel,ticket){return visible&&ticket===epoch&&same(sel,selection());}
   async function refresh(proposed={}){
     const sel=selection(),ticket=++epoch;if(!sel.dossierId||!sel.workspaceId)return;
-    let nextCase=Object.hasOwn(proposed,'caseId')?proposed.caseId:selectedCase;const nextKind=proposed.kind??kind,nextOffset=proposed.offset??offset;
+    let nextCase=Object.hasOwn(proposed,'caseId')?proposed.caseId:selectedCase;
+    let nextCaseVersion=Object.hasOwn(proposed,'caseVersionId')?proposed.caseVersionId:(nextCase===selectedCase?selectedCaseVersion:null);
+    const nextKind=proposed.kind??kind,nextOffset=proposed.offset??offset;
     try{
-    const q=new URLSearchParams({section:'overview',offset:'0',limit:'100'});
-    if(nextCase)q.set('caseId',nextCase);
-    let nextOverview=await selectedApi(endpoint('?'+q,sel),{},sel);
-    if(!contextOK(sel,ticket))return;
-    if(nextCase&&!nextOverview.cases.some(x=>x.id===nextCase))nextCase=null;
-    if(!nextCase&&nextOverview.cases.length)nextCase=nextOverview.cases[0].id;
-    if(nextCase&&nextOverview.caseId!==nextCase){
-      const oq=new URLSearchParams({section:'overview',caseId:nextCase,revision:String(nextOverview.revision),offset:'0',limit:'100'});
-      nextOverview=await selectedApi(endpoint('?'+oq,sel),{},sel);
+      const q=new URLSearchParams({section:'overview',offset:'0',limit:'100'});
+      if(nextCase)q.set('caseId',nextCase);
+      if(nextCaseVersion)q.set('caseVersionId',nextCaseVersion);
+      let nextOverview=await selectedApi(endpoint('?'+q,sel),{},sel);
       if(!contextOK(sel,ticket))return;
-    }
-    let nextPage=null;
-    if(nextCase){
-      const qp=new URLSearchParams({section:nextKind,caseId:nextCase,offset:String(nextOffset),limit:'25',revision:String(nextOverview.revision)});
-      nextPage=await selectedApi(endpoint('?'+qp,sel),{},sel);
-      if(!contextOK(sel,ticket))return;
-    }
-    await loadDrafts();if(!contextOK(sel,ticket))return;
-    selectedCase=nextCase;kind=nextKind;offset=nextOffset;overview=nextOverview;page=nextPage;render();
+      if(nextCase&&!nextOverview.cases.some(x=>x.id===nextCase))throw new Error('The selected original comparison case is unavailable.');
+      if(!nextCase&&nextOverview.cases.length){nextCase=nextOverview.cases[0].id;nextCaseVersion=null;}
+      if(nextCase&&(nextOverview.caseId!==nextCase||(nextCaseVersion&&nextOverview.caseVersionId!==nextCaseVersion))){
+        const oq=new URLSearchParams({section:'overview',caseId:nextCase,revision:String(nextOverview.revision),offset:'0',limit:'100'});
+        if(nextCaseVersion)oq.set('caseVersionId',nextCaseVersion);
+        nextOverview=await selectedApi(endpoint('?'+oq,sel),{},sel);
+        if(!contextOK(sel,ticket))return;
+      }
+      let nextPage=null;const nextEditions=[];
+      if(nextCase){
+        if(!nextOverview.case||nextOverview.case.id!==nextCase||nextOverview.case.versionId!==nextOverview.caseVersionId)throw new Error('The selected original protocol could not be read completely.');
+        nextCaseVersion=nextOverview.caseVersionId;
+        let editionOffset=0;
+        do{
+          const eq=new URLSearchParams({section:'case-editions',caseId:nextCase,revision:String(nextOverview.revision),offset:String(editionOffset),limit:'200'});
+          const editions=await selectedApi(endpoint('?'+eq,sel),{},sel);
+          if(!contextOK(sel,ticket))return;
+          if(editions.revision!==nextOverview.revision||editions.caseId!==nextCase||editions.offset!==editionOffset||!Array.isArray(editions.items))throw new Error('The complete protocol edition inventory changed.');
+          nextEditions.push(...editions.items);
+          const next=editions.nextOffset;
+          if(next!==null&&(!Number.isSafeInteger(next)||next<=editionOffset))throw new Error('The protocol edition inventory did not advance.');
+          editionOffset=next;
+        }while(editionOffset!==null);
+        if(!nextEditions.some(x=>x.id===nextCase&&x.versionId===nextCaseVersion))throw new Error('The selected protocol edition is absent from its original history.');
+        const qp=new URLSearchParams({section:nextKind,caseId:nextCase,caseVersionId:nextCaseVersion,offset:String(nextOffset),limit:'25',revision:String(nextOverview.revision)});
+        nextPage=await selectedApi(endpoint('?'+qp,sel),{},sel);
+        if(!contextOK(sel,ticket))return;
+        if(nextPage.revision!==nextOverview.revision||nextPage.caseId!==nextCase||nextPage.caseVersionId!==nextCaseVersion)throw new Error('The saved records belong to another protocol selection.');
+      }else nextCaseVersion=null;
+      await loadDrafts();if(!contextOK(sel,ticket))return;
+      selectedCase=nextCase;selectedCaseVersion=nextCaseVersion;caseEditions=nextEditions;kind=nextKind;offset=nextOffset;overview=nextOverview;page=nextPage;render();
     }catch(error){if(contextOK(sel,ticket))render();throw error;}
   }
   function sourceRefsEditor(form,d){
@@ -132,7 +151,7 @@ export function createComparisonPanel({root,api,task,notify,getDossier,getWorksp
     capture(form);await writer;const d=current;
     if(!same(d,selection()))throw new Error('The original dossier selection changed.');
     if(d.request)return;
-    if(d.action!=='case.save'&&d.caseId!==selectedCase)throw new Error('Reopen this working copy’s original comparison case before preparing it.');
+    if(d.action!=='case.save'&&(d.caseId!==selectedCase||d.caseVersionId!==selectedCaseVersion))throw new Error('Reopen this working copy’s original comparison case and protocol edition before preparing it.');
     if(!d.actor.id.trim()||!d.actor.name.trim())throw new Error('Enter the actual operator identifier and name.');
     const request={requestId:crypto.randomUUID(),expectedRevision:d.expectedRevision,actor:clone(d.actor),action:d.action,payload:payload(d)};
     current=changed({...d,request});await persist(current);render();
@@ -147,7 +166,7 @@ export function createComparisonPanel({root,api,task,notify,getDossier,getWorksp
   function draftEditor(){
     const d=current;if(!d)return section('Prepare and review',node('p','Create a case, select a candidate or reopen a complete saved working copy.'));
     const form=node('form');form.dataset.comparisonForm='';
-    if(d.caseId&&d.caseId!==selectedCase)form.append(node('p','This working copy belongs to its original case '+d.caseId+'.'),button('Reopen this working copy’s case',()=>runTask(async()=>{await refresh({caseId:d.caseId,offset:0});})));form.addEventListener('submit',e=>{e.preventDefault();runTask(()=>freeze(form));});
+    if(d.caseId&&(d.caseId!==selectedCase||d.caseVersionId&&d.caseVersionId!==selectedCaseVersion))form.append(node('p','This working copy belongs to its original case '+d.caseId+' and protocol '+d.caseVersionId+'. Changing the viewed protocol does not change this saved basis.'),button('Reopen this working copy’s protocol',()=>runTask(async()=>{await refresh({caseId:d.caseId,caseVersionId:d.caseVersionId,offset:0});})));form.addEventListener('submit',e=>{e.preventDefault();runTask(()=>freeze(form));});
     form.append(node('h3',d.action.replace('.save','').replace('.import',' import')),node('p','Saved basis: dossier revision '+d.expectedRevision+(d.caseVersionId?' · case edition '+d.caseVersionId:''),'comparison-hint'),actorFields(d));
     const v=d.form,candidates=overview?.candidates??[],c=activeCase();
     const candidateOptions=candidates.filter(x=>x.caseVersionId===d.caseVersionId).map(x=>[x.versionId,x.definition.name+' · '+x.definition.version+' · '+x.versionId]);
@@ -171,7 +190,7 @@ export function createComparisonPanel({root,api,task,notify,getDossier,getWorksp
     form.addEventListener('input',()=>capture(form));form.addEventListener('change',()=>capture(form));
     const actions=node('div',null,'comparison-actions');
     if(!d.request){
-      const submit=node('button','Prepare complete request');submit.type='submit';actions.append(submit,button('Review current basis',()=>runTask(async()=>{capture(form);await writer;await refresh();if(!current||current.id!==d.id||current.request)return;if(current.action!=='case.save'&&current.caseId!==selectedCase)throw new Error('Select this working copy’s original comparison case before reviewing its basis.');const nowCase=activeCase();current=changed({...current,expectedRevision:overview?.revision??getDossier().revision,...(current.action!=='case.save'?{caseVersionId:nowCase?.versionId??current.caseVersionId}:{}),basisReview:{at:new Date().toISOString(),previousRevision:d.expectedRevision,previousCaseVersionId:d.caseVersionId}});await persist(current);render();})));
+      const submit=node('button','Prepare complete request');submit.type='submit';actions.append(submit,button('Review current basis',()=>runTask(async()=>{capture(form);await writer;await refresh();if(!current||current.id!==d.id||current.request)return;if(current.caseId&&(current.caseId!==selectedCase||current.caseVersionId&&current.caseVersionId!==selectedCaseVersion))throw new Error('Select this working copy’s original case and protocol edition before reviewing its dossier revision.');const nowCase=activeCase();current=changed({...current,expectedRevision:overview?.revision??getDossier().revision,...(current.action!=='case.save'?{caseVersionId:nowCase?.versionId??current.caseVersionId}:{}),basisReview:{at:new Date().toISOString(),previousRevision:d.expectedRevision,previousCaseVersionId:d.caseVersionId}});await persist(current);render();})));
     }
     actions.append(button('Download complete working copy',()=>{capture(form);saveFile(json(current)+'\n','comparison-working-copy.json');}),button('Preserve a separate working copy',()=>runTask(async()=>{capture(form);const value={...clone(current),id:'comparison:'+current.workspaceId+':'+current.dossierId+':'+crypto.randomUUID()};current=changed(value);await persist(current);storageFailure=null;render();})));
     form.append(actions);
@@ -186,7 +205,7 @@ export function createComparisonPanel({root,api,task,notify,getDossier,getWorksp
     return table(['Record','Original edition and basis','Read and continue'],page.items.map(r=>{
       const controls=node('div',null,'comparison-actions');controls.append(detail('Complete original record',r));
       const actions={'candidates':'candidate.save','candidate-editions':'candidate.save','case-editions':'case.save','judgments':'judgment.save','decisions':'decision.save'};
-      const rowAction=actions[kind];if(rowAction)controls.append(button('Prepare successor',()=>runTask(async()=>prepareDraft(rowAction,r))));
+      const rowAction=actions[kind];if(rowAction)controls.append(button('Prepare successor',()=>runTask(async()=>{const sel=selection();await refresh({caseId:r.caseId,caseVersionId:r.caseVersionId,offset:0});if(!visible||!same(sel,selection())||selectedCase!==r.caseId||selectedCaseVersion!==r.caseVersionId)return;prepareDraft(rowAction,r);})));
       if(kind==='case-editions'){controls.append(button('Read this protocol report',()=>runTask(()=>showReport(r))));for(const f of ['html','json','csv'])controls.append(button('This edition '+f.toUpperCase(),()=>runTask(()=>exportCase(f,r))));}
       if(kind==='runs'){
         controls.append(button('Download complete original run',()=>runTask(()=>downloadRun(r))));
@@ -244,6 +263,11 @@ export function createComparisonPanel({root,api,task,notify,getDossier,getWorksp
     controls.append(select,button('New comparison case',()=>runTask(async()=>prepareDraft('case.save'))),button('Refresh saved work',()=>runTask(refresh)));root.append(controls);
     const c=activeCase();
     if(c){
+      const protocol=node('select');protocol.setAttribute('aria-label','Protocol edition');
+      const head=overview.cases.find(x=>x.id===selectedCase);
+      protocol.append(...caseEditions.map(x=>option(x.versionId,x.definition.title+' · '+x.versionId+(x.versionId===head?.versionId?' · latest saved protocol':' · retained earlier protocol'))));protocol.value=selectedCaseVersion;
+      protocol.addEventListener('change',()=>runTask(async()=>{await refresh({caseId:selectedCase,caseVersionId:protocol.value,offset:0});}));
+      root.append(section('Selected protocol edition',protocol,node('p','Records, candidate choices, measured results, judgments and reports use this exact protocol. Switching editions preserves every existing working copy’s original basis.','comparison-hint')));
       root.append(section(c.definition.title,node('p',c.definition.purpose),node('p',c.definition.scope),detail('Exact protocol and original sources',c),button('Prepare case successor',()=>runTask(async()=>prepareDraft('case.save',c)))));
       const actions=node('div',null,'comparison-actions');
       [['Candidate','candidate.save'],['Import measured run','run.import'],['Named judgment','judgment.save'],['Decision','decision.save']].forEach(([label,a])=>actions.append(button(label,()=>runTask(async()=>prepareDraft(a)))));
@@ -259,5 +283,5 @@ export function createComparisonPanel({root,api,task,notify,getDossier,getWorksp
     root.append(section('Saved working copies',saved,upload),draftEditor());updateBusy();
   }
   function updateBusy(){for(const e of root.querySelectorAll('button,input,select,textarea')){if(e.closest('form')&&current?.request&&e.tagName!=='BUTTON'){e.disabled=true;continue;}if(busy||isBusy()){if(e.dataset.comparisonDisabled===undefined)e.dataset.comparisonDisabled=e.dataset.wasDisabled??(e.disabled?'1':'0');e.disabled=true;}else if(e.dataset.comparisonDisabled!==undefined){e.disabled=e.dataset.comparisonDisabled==='1';delete e.dataset.comparisonDisabled;}}root.setAttribute('aria-busy',String(busy||isBusy()));}
-  return{show(value){visible=value;const sel=selection();if(!same(sel,seenSelection??{})){++epoch;seenSelection=sel;overview=null;page=null;selectedCase=null;current=null;offset=0;if(value)render();}if(value)refresh().catch(e=>notify(e.message,'error'));else ++epoch;},updateBusy};
+  return{show(value){visible=value;const sel=selection();if(!same(sel,seenSelection??{})){++epoch;seenSelection=sel;overview=null;page=null;selectedCase=null;selectedCaseVersion=null;caseEditions=[];current=null;offset=0;if(value)render();}if(value)refresh().catch(e=>notify(e.message,'error'));else ++epoch;},updateBusy};
 }

@@ -23,6 +23,7 @@ async function packageInput(base,spec){
  const content={};for(const f of manifest.files)content[f.path]=await original(join(directory,f.path),f);
  const plan=JSON.parse(content['plan.json']),review=JSON.parse(content['review.json']),rawText=new TextDecoder('utf8',{fatal:true}).decode(content['run.json']),run=parseRun(rawText).value;
  need(manifest.planSha256===descriptor(content['plan.json']).sha256&&review.planSha256===manifest.planSha256&&review.status==='READY','OUTPUT_PLAN_CHANGED');
+ const retainedPlan=run.artifacts.find(a=>a.id==='preparation-plan');need(retainedPlan&&retainedPlan.sha256===manifest.planSha256&&retainedPlan.bytes===content['plan.json'].length,'OUTPUT_PACKAGE_PLAN_MEMBER_CHANGED');
  need(run.result?.planSha256===manifest.planSha256&&same(run.result?.coverage,review.coverage),'OUTPUT_RUN_REVIEW_CHANGED');
  caseDefinition(plan.protocol);candidateDefinition(plan.candidate);
  need(same(caseDefinition(plan.protocol),review.protocol)&&same(candidateDefinition(plan.candidate),review.candidate),'OUTPUT_PACKAGE_DEFINITION_CHANGED');
@@ -72,16 +73,15 @@ export async function receiveOutputs({directory,storeDirectory,selection,selecti
   const page=await store.comparison(selection.dossierId,{caseId:existing.caseId,caseVersionId:existing.caseVersionId});
   need(page.case&&same(page.case.definition,protocol),'OUTPUT_EXISTING_PROTOCOL_CHANGED');caseRecord=page.case;
  }else caseRecord=await apply('case','case.save',{caseId:null,previousVersionId:null,definition:protocol});
- const scope={caseId:caseRecord.id,caseVersionId:caseRecord.versionId},runs=[];
+ const scope={caseId:caseRecord.id,caseVersionId:caseRecord.versionId},runs=[],files=[];
  for(const p of packages){
   const name=p.selection.name,candidate=await apply(name+'-candidate','candidate.save',{...scope,candidateId:null,previousVersionId:null,definition:p.review.candidate});
   const run=await apply(name+'-run','run.import',{...scope,candidateVersionId:candidate.versionId,rawText:p.rawText});
   runs.push({name,candidateVersionId:candidate.versionId,runId:run.id,externalRunId:run.definition.externalRunId,coverage:p.review.coverage});
-  await retain(join(outputs,name+'-mapping-review.json'),json(p.review));
-  await retain(join(outputs,name+'-mapping-review.html'),p.reviewHtml);
+  files.push(await retain(join(outputs,name+'-mapping-review.json'),json(p.review)));
+  files.push(await retain(join(outputs,name+'-mapping-review.html'),p.reviewHtml));
  }
  const revision=operations.at(-1).dossierRevision,report=await store.comparisonReport(selection.dossierId,{revision,...scope});
- const files=[];
  for(const format of ['json','html','csv']){
   const value=await store.exportComparison(selection.dossierId,{revision,...scope,format});
   files.push(await retain(join(outputs,'comparison.'+format),value.body));

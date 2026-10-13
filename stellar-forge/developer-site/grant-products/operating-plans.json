@@ -9,7 +9,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/discovery/OPERATING_PLANS.md",
-      "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
+      "commit": "7a7990dbdff82f7c183ae8892f05961f9875379b",
       "required": false,
       "editions": [
         {
@@ -29,6 +29,12 @@
           "bytes": 28413,
           "sha256": "d7e0407a8128fa75754b324004a28626e0ce04f2a16e8b55ab0899df109f2269",
           "git_blob": "ade72f7cf0def173abab99d2545d0202088a7915"
+        },
+        {
+          "commit": "7a7990dbdff82f7c183ae8892f05961f9875379b",
+          "bytes": 37149,
+          "sha256": "380fe78e3b12e962a784f1370ae91d26a32ef7cf3d85c943e075992347ef53cd",
+          "git_blob": "c99c25f83e2f37cd9c399912b79debe897f2f197"
         }
       ]
     },
@@ -38,7 +44,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs",
-      "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
+      "commit": "7a7990dbdff82f7c183ae8892f05961f9875379b",
       "required": false,
       "editions": [
         {
@@ -58,6 +64,12 @@
           "bytes": 33149,
           "sha256": "e70525db82f90255559259c81cc05ef998e37a6e38b77994fe01377d1a0de6eb",
           "git_blob": "1b98f187cec9ead2292a0ec395bf03cca07b9e44"
+        },
+        {
+          "commit": "7a7990dbdff82f7c183ae8892f05961f9875379b",
+          "bytes": 42636,
+          "sha256": "458cc01f602ee54c24ceeba06673332d3285e3ad5d6a70c03dbb583fbc9a443a",
+          "git_blob": "c954923293713f0a470e1cfa1edf50bf45ae8539"
         }
       ]
     },
@@ -206,7 +218,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan-cli.mjs",
-      "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
+      "commit": "7a7990dbdff82f7c183ae8892f05961f9875379b",
       "required": false,
       "editions": [
         {
@@ -226,6 +238,12 @@
           "bytes": 14419,
           "sha256": "21da062e7af69c4b1964ac73bc45fd3a7b40319074c5d39dc39d2bfb354fb8a7",
           "git_blob": "4f54704fc7f3de50989236b8386237d23754d61e"
+        },
+        {
+          "commit": "7a7990dbdff82f7c183ae8892f05961f9875379b",
+          "bytes": 16220,
+          "sha256": "80174114886a84a81dbdee47bbd15e73df42cdf4689c24f04afadfc7751e3e5b",
+          "git_blob": "c748f5d8ab4beab0e8a508b0b974c7bb50a30257"
         }
       ]
     },
@@ -235,7 +253,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/discovery/public/operating-plan.mjs",
-      "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
+      "commit": "7a7990dbdff82f7c183ae8892f05961f9875379b",
       "required": false,
       "editions": [
         {
@@ -249,6 +267,12 @@
           "bytes": 58134,
           "sha256": "dacc3ce467eed12ee6a48d0654a07bf2b041de3d97006e9d361c72e13fa36df7",
           "git_blob": "d84f4a54bd41d6cd20cc6fd5c6c3d9c2889379b3"
+        },
+        {
+          "commit": "7a7990dbdff82f7c183ae8892f05961f9875379b",
+          "bytes": 70458,
+          "sha256": "de85b7feeca84179c910620f8a3109ff8d52198e33115e8901b94c375328d532",
+          "git_blob": "5dcd1247240717d1f6a1b4edcc6d060f00cb9800"
         }
       ]
     },
@@ -258,7 +282,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan.d.mts",
-      "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
+      "commit": "7a7990dbdff82f7c183ae8892f05961f9875379b",
       "required": false,
       "editions": [
         {
@@ -272,6 +296,12 @@
           "bytes": 7632,
           "sha256": "12f992a54340179e3841ea38dfc95b8fbae1f55c7a14e68e8d4704b153d1d2b0",
           "git_blob": "8779610b2bf8c840d931f0da26192c5522dfea55"
+        },
+        {
+          "commit": "7a7990dbdff82f7c183ae8892f05961f9875379b",
+          "bytes": 9588,
+          "sha256": "98c26979e57d0264368551e092ab867cf83497b08fcd12420cc6c622686d2e2a",
+          "git_blob": "c56f7f804c356dbed2d4b03f9ea730134c6ad51b"
         }
       ]
     },
@@ -485,7 +515,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/discovery/public/operating-plan.html",
-      "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
+      "commit": "7a7990dbdff82f7c183ae8892f05961f9875379b",
       "required": false,
       "editions": [
         {
@@ -493,6 +523,12 @@
           "bytes": 22243,
           "sha256": "b82ebe47289193d29d11cbd1acba21bf8c3ecc4363b5dd51b26add0de4a3d3bc",
           "git_blob": "dc1d0b85d8d568e790c0a597918d1435555add91"
+        },
+        {
+          "commit": "7a7990dbdff82f7c183ae8892f05961f9875379b",
+          "bytes": 25409,
+          "sha256": "0527fff034419be83aa5ced28fe5ca3ba5a6606a858885c412350d08d1fe90cd",
+          "git_blob": "812b36cb6226212f65a7942eec79cd8acd85617c"
         }
       ]
     },
@@ -502,7 +538,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/discovery/public/operating-plan.css",
-      "commit": "4ae8645020da8aaf70bff48b3e13126d86b55aaa",
+      "commit": "7a7990dbdff82f7c183ae8892f05961f9875379b",
       "required": false,
       "editions": [
         {
@@ -510,6 +546,12 @@
           "bytes": 5946,
           "sha256": "7dc13f94b0a96100c484e51c9ec1d82f8e9bd9bbb08da5a2e6cdda9c62c5ab1e",
           "git_blob": "62fc46f6156ef0302e434fc38fb0667a9d45fbf7"
+        },
+        {
+          "commit": "7a7990dbdff82f7c183ae8892f05961f9875379b",
+          "bytes": 7250,
+          "sha256": "cbd6f3a2f085cd7f6903dcbdee2fa9dc80a21ee054631c5c15f414ad9375fb99",
+          "git_blob": "8147df462404b20b586c896ccd15f5eb17b6c154"
         }
       ]
     }

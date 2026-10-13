@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "source-tables",
-  "description": "Prepare delimited and document tables, compare retained editions and deliver original merchant workspaces",
+  "description": "Prepare original tables, retain reviewed cell corrections and row exclusions, compare editions and deliver merchant workspaces",
   "supportFiles": [
     "stellar-forge/developer-site/dist/source-table-workspace.mjs",
     "stellar-forge/developer-site/dist/source-table-cli.mjs",
@@ -21,13 +21,14 @@
     "stellar-forge/developer-site/examples/document-tables/wago221-table-selections.json",
     "stellar-forge/developer-site/examples/document-tables/receive-wago221.mjs",
     "stellar-forge/developer-site/dist/source-table-intake.mjs",
-    "stellar-forge/developer-site/dist/source-table-intake.d.mts"
+    "stellar-forge/developer-site/dist/source-table-intake.d.mts",
+    "stellar-forge/developer-site/dist/source-table-corrections.mjs"
   ],
   "commands": {
     "source-tables": "stellar-forge/developer-site/dist/source-table-cli.mjs"
   },
   "commandDescriptions": {
-    "source-tables": "Import delimited text or explicitly selected document tables, review mappings, compare retained editions, reopen projects and export native merchant workspaces; serve opens the local workbench"
+    "source-tables": "Import delimited text or explicitly selected document tables, review mappings, compare retained editions, reopen projects and export native merchant workspaces; serve opens the local workbench; records/correct/corrections retain explicit source decisions"
   },
   "exports": {
     "./source-tables": {

@@ -699,7 +699,7 @@ class Acquisition:
                 "archive_url": fields["s3_link"], "metadata_url": fields["s3_link_metadata"],
                 "declared_real_size": None if fields["real_size"] == "null" else int(fields["real_size"])}
 
-    def run(self):
+    def run(self, *, dictionaries_only=False):
         dataset = self.download("publisher-dataset-metadata",
             "https://www.data.gouv.fr/api/1/datasets/base-de-donnees-nationale-des-batiments/",
             "publisher-dataset.json", MAX_METADATA)
@@ -725,6 +725,13 @@ class Acquisition:
                     need(workbook["identity"]["sha256"] == checksum["value"].lower(),
                          "Publisher dictionary checksum assertion changed")
             dictionary_index = self.workbook(self.root / workbook["path"], directory)
+            if dictionaries_only:
+                result = {"selected": chosen, "metadata": metadata, "dictionary": workbook,
+                          "dictionary_index": dictionary_index,
+                          "publisher_archive_assertion": publisher_assertion}
+                self.bank([directory / "selection.json"], edition["directory"] + "-dictionary-selection")
+                results.append(result)
+                continue
             archive = self.download(edition["directory"] + "-archive", chosen["archive_url"],
                                     edition["directory"] + "/publisher-archive",
                                     min(self.maximum, publisher_assertion["bytes"]))
@@ -738,6 +745,19 @@ class Acquisition:
             atomic(directory / "edition-received.json", result)
             self.bank([directory / "selection.json", directory / "edition-received.json"], edition["directory"] + "-edition")
             results.append(result)
+        if dictionaries_only:
+            received = {"schema": "commons.bdnb-nord-dictionaries-received.v1",
+                        "operation_id": OPERATION, "department": "59", "received_at": now(),
+                        "root": str(self.root), "delivery_mode": self.delivery_mode,
+                        "editions": results, "publisher_metadata": dataset,
+                        "saved_files": list(self.state["banks"].values()),
+                        "state": "DICTIONARIES_RECEIVED",
+                        "following": "Normalize both original dictionaries, then continue this same root without --dictionaries-only for complete archive/table receiving."}
+            atomic(self.root / "dictionaries-received.json", received)
+            self.bank([self.root / "dictionaries-received.json"], "dictionary-receiving")
+            self.record("DICTIONARIES_RECEIVED", manifest=str(self.root / "dictionaries-received.json"),
+                        identity=identity(self.root / "dictionaries-received.json"))
+            return received
         complete = {"schema": "commons.bdnb-nord-sources-complete.v1", "operation_id": OPERATION,
                     "department": "59", "completed_at": now(), "root": str(self.root),
                     "delivery_mode": self.delivery_mode,
@@ -802,6 +822,8 @@ def main():
     parser.add_argument("--retained-inputs", type=Path,
                         help="Complete original files already acquired for this same source operation")
     parser.add_argument("--max-archive-bytes", type=int, default=64 * 1024**3)
+    parser.add_argument("--dictionaries-only", action="store_true",
+                        help="Receive both original workbooks/indexes before continuing the same root with complete archives")
     args = parser.parse_args()
     root = Path(args.root).resolve()
     root.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -818,7 +840,8 @@ def main():
             previous_source = identity(retained_source)
             need(previous_source in (
                  {"bytes": 39190, "sha256": "e18162e23ed7b3e173c78be3f1a1e6041a4c3cd3d2412bc0e0027b5848779adc"},
-                 {"bytes": 48606, "sha256": "613fc130f655a24fe4c73d750595afccff6f4fc0f9b217d305b680a33235e95b"}),
+                 {"bytes": 48606, "sha256": "613fc130f655a24fe4c73d750595afccff6f4fc0f9b217d305b680a33235e95b"},
+                 {"bytes": 50900, "sha256": "1e2418c299b2cd63e6b53f41fbb1a85f48f07473ef5cc63ad5fdccbc4476ee4c"}),
                  "Resume from an exact authorized acquisition predecessor")
             historical = root / "source-history" / previous_source["sha256"] / "acquire_nord.py"
             if historical.exists():
@@ -853,7 +876,7 @@ def main():
         signal.signal(signal.SIGINT, interrupted)
         try:
             runner.bank([retained_source], "source")
-            runner.run()
+            runner.run(dictionaries_only=args.dictionaries_only)
         except BaseException as error:
             runner.record("INTERRUPTED", error={"type": type(error).__name__, "message": str(error)})
             selected = [runner.state_path] + sorted(root.glob("*/selection.json"))

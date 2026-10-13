@@ -18,7 +18,21 @@ Select the case and create each **Model**, **Platform** or **Architecture** cand
 
 Save a later candidate edition when its configuration changes. The preceding edition and runs remain available. A run binds an exact case and candidate edition; changing a displayed name never relabels existing measurements.
 
-Editing the case creates another protocol edition. Select or create candidate editions deliberately for that protocol. Earlier case editions and their reports remain reachable in **Case editions**. Keep results under their original protocol when the population, measurement definition or criterion changes.
+Editing the case creates another protocol edition. Select or create candidate editions deliberately for that protocol. Keep results under their original protocol when the population, measurement definition or criterion changes.
+
+## Select and revisit an exact protocol edition
+
+After choosing a **Comparison case**, use **Protocol edition** to select its exact saved version. The selector includes the complete retained protocol history and marks the latest saved protocol separately from earlier editions. Selecting a different case starts with that case's latest saved protocol. Refreshing the current case keeps the selected protocol, including an earlier one. Saving another protocol does not silently replace the selected edition.
+
+The selected protocol controls its purpose, scope and criteria, candidate choices, current candidates, runs, judgments, decisions and the main report/export controls. Choose **runs** in **Comparison records** to download an earlier protocol's complete original run JSON and each original member. Choose **judgments** or **decisions** to inspect that protocol's exact named reviews. The **case editions**, **candidate editions** and **operations** sections remain the complete case history; their individual records display the original version and basis.
+
+**Read comparison report** and **Download HTML**, **Download JSON** and **Download CSV** use the selected protocol and the same pinned dossier revision as the visible records. Case-edition rows also provide explicit report and export controls for that row's protocol. Original file downloads use the selected retained run identity and pinned dossier revision, then verify the whole original byte count and SHA256.
+
+Protocol inventory, selected overview and record page are received at one fixed dossier revision before the view changes. If any read fails, the previously selected case, protocol, section and page remain visible. Retry the intended selection when the source is available; no failed navigation changes a working copy or an accepted record.
+
+Creating a new candidate, importing a run, or preparing a new judgment or decision uses the explicitly selected protocol. Preparing a successor from a historical record first reopens that record's own protocol. The original backend still enforces its record-version rules: an old case or candidate version cannot silently replace a later saved version. Deliberately select the intended latest record if a version conflict occurs; retain the earlier working copy.
+
+Existing working copies keep their original case and protocol regardless of navigation. A different viewed protocol does not rebind their source selections, candidate identity, criteria or frozen request. **Reopen this working copy's protocol** returns to that saved basis. **Review current basis** can update the dossier revision only after the original case and protocol are selected; it does not move the draft to a different protocol. Start a separate new working copy when the intended scientific protocol changes.
 
 ## Receive an original measured run
 
@@ -80,9 +94,9 @@ From this module directory, the complete local command is:
 
 ~~~sh
 node cli.mjs read --store /absolute/original/research-store --id DOSSIER_ID --section cases
-node cli.mjs report --store /absolute/original/research-store --id DOSSIER_ID --case CASE_ID --revision REVISION
+node cli.mjs report --store /absolute/original/research-store --id DOSSIER_ID --case CASE_ID --case-version CASE_VERSION_ID --revision REVISION
 node cli.mjs review --store /absolute/original/research-store --id DOSSIER_ID --file /absolute/private/original-request.json
-node cli.mjs export --store /absolute/original/research-store --id DOSSIER_ID --case CASE_ID --revision REVISION --format html --out /absolute/private/comparison.html
+node cli.mjs export --store /absolute/original/research-store --id DOSSIER_ID --case CASE_ID --case-version CASE_VERSION_ID --revision REVISION --format html --out /absolute/private/comparison.html
 node cli.mjs file --store /absolute/original/research-store --id DOSSIER_ID --run RUN_ID --artifact ARTIFACT_ID --revision REVISION --out /absolute/private/original-member
 ~~~
 

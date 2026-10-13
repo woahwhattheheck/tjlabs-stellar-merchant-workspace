@@ -29,7 +29,7 @@ export async function original(file,expected,maximum=LIMIT){
   return Buffer.concat(chunks,length);
  }finally{await handle.close();}
 }
-function utf8(body){const result=new TextDecoder('utf-8',{fatal:true}).decode(body);need(Buffer.from(result).equals(body),'OUTPUT_UTF8_INVALID');return result;}
+function utf8(body){const result=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(body);need(Buffer.from(result).equals(body),'OUTPUT_UTF8_INVALID');return result;}
 export function csvRecords(input,{delimiter=',',maximumRows=10000}={}){
  need([',','\t',';'].includes(delimiter),'OUTPUT_DELIMITER_INVALID');
  let at=0,line=1,start=1,cell='',row=[],quoted=false,closed=false,started=false;const rows=[];
@@ -114,6 +114,9 @@ export async function prepareOutput(plan,{baseDirectory='.'}={}){
   const body=await original(resolve(baseDirectory,spec.file),spec);total+=body.length;need(total<=LIMIT-1024*1024,'OUTPUT_ATTACHMENTS_TOO_LARGE');
   artifacts.push({id:spec.id,path:spec.path,role:text(spec.role,'OUTPUT_ROLE_REQUIRED'),mediaType:text(spec.mediaType,'OUTPUT_MEDIA_TYPE_REQUIRED'),...descriptor(body),bodyBase64:body.toString('base64')});
  }
+ const planBody=bytes(plan);need(!artifacts.some(a=>a.id==='preparation-plan'||a.path==='preparation/plan.json'),'OUTPUT_RESERVED_PLAN_MEMBER');
+ total+=planBody.length;need(total<=LIMIT-1024*1024,'OUTPUT_ATTACHMENTS_TOO_LARGE');
+ artifacts.push({id:'preparation-plan',path:'preparation/plan.json',role:'complete selected preparation plan',mediaType:'application/json',...descriptor(planBody),bodyBase64:planBody.toString('base64')});
  const p=exact(plan.run,['externalRunId','kind','status','startedAt','finishedAt','elapsedMs','engine','input','limitations'],'OUTPUT_RUN_FIELDS');
  need(p.kind==='IMPORTED_MEASUREMENT'||p.kind==='SOURCE_NATIVE'||p.kind==='TRAINING_FIXTURE','OUTPUT_RUN_KIND');
  const review={...mapped,planSha256:digest(bytes(plan)),source:descriptor(source),originals:artifacts.map(({bodyBase64,...f})=>f)};
@@ -142,7 +145,7 @@ export async function publishPrepared(out,plan,{baseDirectory='.'}={}){
  if(prepared.envelope)files['run.json']=bytes(prepared.envelope);
  const manifest={schema:'sf88-original-output-package/v1',status:prepared.review.status,planSha256:digest(planBody),files:Object.entries(files).map(([path,body])=>({path,...descriptor(body)}))};
  // Complete edition is immutable; interrupted writes are byte-checked on the original path.
- await mkdir(out,{recursive:true,mode:0o700});const target=await lstat(out);need(target.isDirectory()&&!target.isSymbolicLink(),'OUTPUT_DIRECTORY_INVALID');
+ await mkdir(out,{recursive:true,mode:0o700});const target=await lstat(out);need(target.isDirectory()&&!target.isSymbolicLink()&&(target.mode&0o077)===0,'OUTPUT_DIRECTORY_INVALID');
  await retain(join(out,'intent.json'),bytes({schema:manifest.schema,planSha256:manifest.planSha256}));
  for(const [path,body]of Object.entries(files))await retain(join(out,path),body);
  await retain(join(out,'manifest.json'),bytes(manifest));
@@ -151,6 +154,6 @@ export async function publishPrepared(out,plan,{baseDirectory='.'}={}){
 export async function main(argv=process.argv.slice(2)){
  const{values:v}=parseArgs({args:argv,options:{plan:{type:'string'},out:{type:'string'}},strict:true});
  need(v.plan&&v.out,'OUTPUT_PLAN_AND_DIRECTORY_REQUIRED');const file=resolve(v.plan),b=await readFile(file);need(b.length<=4*1024*1024,'OUTPUT_PLAN_TOO_LARGE');
- const result=await publishPrepared(resolve(v.out),JSON.parse(utf8(b)),{baseDirectory:dirname(file)});process.stdout.write(bytes(result));
+ const result=await publishPrepared(resolve(v.out),JSON.parse(utf8(b).replace(/^\uFEFF/,'')),{baseDirectory:dirname(file)});process.stdout.write(bytes(result));
 }
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url)main().catch(e=>{process.stderr.write(JSON.stringify({error:e.code??'OUTPUT_PREPARATION_FAILED',details:e.details??{}})+'\n');process.exitCode=1;});

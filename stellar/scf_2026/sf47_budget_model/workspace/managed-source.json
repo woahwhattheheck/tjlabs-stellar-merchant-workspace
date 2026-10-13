@@ -605,6 +605,10 @@
     "portfolio-effort.css",
     "PORTFOLIO_EFFORT.md",
     "operations_statement_review.mjs",
-    "STATEMENT_RECIPIENT_REVIEW.md"
+    "STATEMENT_RECIPIENT_REVIEW.md",
+    "portfolio-sequence.mjs",
+    "portfolio-sequence-desk.mjs",
+    "portfolio-sequence.css",
+    "PORTFOLIO_SEQUENCE.md"
   ]
 }

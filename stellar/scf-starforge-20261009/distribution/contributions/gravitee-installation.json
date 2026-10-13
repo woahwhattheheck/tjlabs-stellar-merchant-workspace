@@ -1,0 +1,23 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "gravitee-installation",
+  "description": "Whole original Gravitee source/cohort preparation and independent Installation receiving",
+  "components": [
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders"
+  ],
+  "commands": {
+    "gravitee-installation": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/gravitee-installation.mjs",
+    "gravitee-installation-receive": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/gravitee-installation-receiving.mjs"
+  },
+  "commandDescriptions": {
+    "gravitee-installation": "Bind a complete original Gravitee source edition to the existing customer Installation",
+    "gravitee-installation-receive": "Independently receive the full Gravitee and saved Installation handovers in the original operation"
+  },
+  "exports": {
+    "./grant/gravitee-installation": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/gravitee-installation-core.mjs"
+  },
+  "supportFiles": [
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/gravitee-commissioning.json",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/GRAVITEE_INSTALLATION.md"
+  ]
+}

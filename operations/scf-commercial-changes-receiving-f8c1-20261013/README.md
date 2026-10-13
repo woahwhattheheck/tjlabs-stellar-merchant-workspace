@@ -1,3 +1,67 @@
+# Customer expense billing and original commercial account — complete receiving
+
+Operation: SCF-CUSTOMER-EXPENSE-BILLING-F8C1-20261013
+
+## Current complete edition
+
+This is the full continuation of the original commercial correction account. It uses all 692 selected source files (14,693,901 original UTF-8 bytes), including the current managed Grant product and the compatible original native Receivables runtime. The full manifest names every file's Git blob, byte count and SHA-256; its sourceLineage distinguishes the original native edition from the merged expense feature and recovery correction. The complete product, original planning history, original Buyer account, retained commercial amendments, expense allocations and native requests travel together.
+
+Source implementation is merged in PR1669 / 3033fe4dc85d06f25b351691db76143697ff8fde and its specific review-refusal recovery in PR1679 / 1d792709e1fa652b90080d282c88f5174b8286c9. This programme operates those original modules. Its stored source and syntax checks are separate from an actual completed native/browser run.
+
+## Receive the same original accounts
+
+Use the existing authorized artifact connection, Python 3.11+, Node 22+, installed Playwright and original Chrome 155.0.8059.39. Place the complete source part bodies at parts/part-01.json onward, plus this manifest and receiver. Supply the COMPLETE unchanged Library search result which contains the exact frozen original Buyer archive, as a private local JSON file. The receiver resolves the one returned entry matching the frozen Library/file identity and passes that unchanged original result and its actual index to the current bundled download helper; it is not published in the public source carrier.
+
+~~~sh
+python3 -u -B receive_complete.py \
+  --manifest COMPLETE_SOURCE_RECEIVING.json \
+  --parts-directory parts \
+  --buyer-search private/buyer-library-search-result.json
+~~~
+
+The original Buyer input is Buyer_Expenses_Original_Node_Complete_Project_20261012.zip, 509,912 bytes, SHA-256 d21bd47c8b720ef64727876214df71376ee2c4aa7915946df557e0a346a24524. The original customer input is SCF_Customer_Billing_Portable_Complete_20261012.zip, 11,158,060 bytes, SHA-256 a1579acfd1a1ac9f6c3597fb7ed341d37257a9bcea8a5427a51875d59f6eb834. Both complete bytes must match before any restore or source receiving.
+
+Only the newly authenticated private customer copy receives financial commands. The original archive, source planning tree, original paid invoice, original cash receipts, allocations, bank inputs, refunds and original native request records are compared before/after. The existing issuer, customer correspondence and settlement owners retain those operations.
+
+## Full source-to-invoice course
+
+The receiver first operates the retained original milestone correction journey, preserving its full unused review, reviewed credit/replacement, draft clarification and explicit issue. It then invokes the original Buyer Store on a separate extracted copy, exports actual issued closes and accepted accountant deliveries without advancing the Buyer revision, and chooses a stable original positive source row. The complete issued JSON and accountant-return archive are received through the existing expense preview/receive commands.
+
+A current original cost receives the exact native quantity as a reviewed CUSTOMER allocation. A retained internal engineering source states the explicit USD 20.00 amount, USD 15.00 remaining after credit and USD 12.00 replacement for this private receiving demonstration. Those terms do not assert outside customer assent, an exchange rate or a received payment.
+
+The actual browser then performs:
+
+1. Original source and account selection, full preview, unused preparation, blank cancellation explanation without a POST, and valid cancellation.
+2. A second preparation followed by one real allocation-note correction through the original Operations reopen/save/review commands. The original APPLY_REVIEW refusal must arrive before any native command. The operator cancels that unused preparation and selects the current reviewed edition.
+3. A new charge, deliberately lost HTTP success, saved pending desk and exact original apply replay. The original draft ID and acknowledged request history remain unchanged.
+4. Reviewed draft clarification, separate native issue, a credit reducing the original amount to USD 15.00, a reviewed credit/replacement at USD 12.00 and explicit issue of that replacement.
+5. Reopening an old pending desk after successors, explicit reconciliation, complete current desk export/reopen, exact issue replay and complete expense/Operations exports.
+6. Original protected invoices, both expense invoices and actual native credit HTML documents, all retained with their byte/hash identities.
+
+Native credit control remains the original authority. The browser uses a current authentic decision only when the native preview supplies one. An unmet original credit rule retains the complete actual result and account for the existing financial owner; no new decision writer or policy override is introduced.
+
+## Independent receiving and preservation
+
+The course validates all six retained expense reviews, seven acknowledged expense commands, the original four commercial commands and exact added native request set. It verifies protected invoices, every linked immutable document and all complete export members. It imports the actual final browser-exported Operations case into a new planning workspace, compares the complete original expense/commercial histories and replays the exact original preparation/cancellation bodies under the receiving case identity. Those original requests must return their original charge IDs without new reservations.
+
+After closing all owned services, the original native snapshot/restore engine creates an authenticated backup and restores it into a genuinely different account directory. The complete ledger, request histories, original binding, final expense invoice and reopened case must remain equal. The shipped customer opener then performs inspect → restore → actual OPEN → read-only served page → orderly close/save → final ZIP inspect, using the same original identities. The full first financial archive is saved even if the later opener phase fails.
+
+Every subprocess owns a process group. Cleanup sends SIGTERM, waits for the entire group to disappear, uses SIGKILL after the grace interval and reaps the parent. Standard output, error output, exact original source commands, before/after snapshots and actual save receipts are preserved on error. A returned save receipt is checked per intended output; failure or uncertainty remains explicit.
+
+## Producing-agent inspection
+
+Operate the exact outgoing source. The producer must open and LOOK at every actual retained desktop and 390-pixel render, including light and dark host contexts, populated and error/recovery states, original invoices and credit renditions. Check all visible labels and button text, wrapping, sizing, content order and working controls. Captures alone are not an inspection.
+
+Inspect complete ZIP member inventories and their original bytes, full source/case exports, every HTML/report/CSV attachment, and actual reopening. Fix a concrete issue in the original product and repeat the affected real journey. No synthetic model, substitute account or receipt-only review qualifies as this course.
+
+Private browser images remain local inspection material. Saved customer outputs include complete source, account/backup, original attachments, browser result records and native HTML documents. After the programme prints PIXELS_READY, inspect the exact local image paths, then write pixel-inspection-complete.json in its reported private root with the actual inspected views and findings. The producer releases only its own lifetime; it does not change another worker's browser.
+
+## Preserved original correction documentation
+
+The following original course notes remain available for the milestone stage and historical source context. The current complete manifest and commands above select the composed expense continuation; earlier source counts and part descriptions below describe that retained predecessor.
+
+---
+
 # Original commercial correction desk: complete receiving course
 
 Operation: SCF-COMMERCIAL-MILESTONE-CHANGES-F8C1-20261013

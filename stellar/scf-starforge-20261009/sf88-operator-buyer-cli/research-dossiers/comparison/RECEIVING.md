@@ -42,18 +42,18 @@ A successful controller result has `BACKEND_RECEIVING_COMPLETE`; browser and lit
 
 Attach the original Research application to the course's owned store through its normal setup. Open the actual dossier and **Comparisons**. At desktop/screenshare size and 390px width, use and view the populated application:
 
-1. Open the case and its exact criterion protocol. Inspect the original source edition and complete locator.
+1. Open the case and its exact criterion protocol. Inspect the original source edition and complete locator. Use **Protocol edition** to select the controller receipt's original `caseVersionId`, then its later `currentCaseVersionId`; confirm the displayed scope, criteria and candidate choices belong to the selected edition.
 2. Read candidates and their complete configuration. Prepare a successor working copy, enter actual draft text, reload it, and confirm that the full original body remains.
-3. Open Import measured run directly after selecting the first case. Confirm the candidate choices match the visible case and selected protocol.
-4. Inspect the retained run inventory and download its complete raw JSON and member. Reopen them in their intended application. Compare actual bytes with their declared identities.
-5. Open the named judgment and decision, including original run IDs, reviewer, time, rationale and limitations.
-6. Read the measured/judgment tables, scroll wide tables by keyboard on a narrow screen, and open complete row definitions. Read and download a previous case edition's report.
+3. Open Import measured run directly after selecting the first case. Confirm the candidate choices match the visible case and selected protocol. Preserve an unfinished working copy, switch protocols, and use **Reopen this working copy's protocol** to restore its original basis without changing its entered values.
+4. Select the receipt's earlier `caseVersionId` in **Protocol edition**, then select **runs**. Inspect its original retained run and download its complete raw JSON and member. Reopen them in their intended application. Compare actual bytes with their declared identities. Switch to the later protocol and confirm the earlier run remains under its original protocol rather than appearing as a new-protocol measurement.
+5. Under the earlier protocol, open **judgments** and **decisions**, including their original run IDs, reviewer, time, rationale and limitations. Read the exact record details, then return to the later protocol deliberately before preparing later-protocol work.
+6. Read the measured/judgment tables, scroll wide tables by keyboard on a narrow screen, and open complete row definitions. Read and download a previous protocol's report through the selector and its case-edition row controls. Confirm the selected protocol and original dossier revision in the complete report.
 7. Use HTML, JSON and CSV exports; after each download confirm that other controls remain usable. Open the CSV in a spreadsheet and the HTML in a browser. Check actual labels, values, undefined reasons and full model.
 8. Exercise a real validation error on an unaccepted working copy and recover the entered fields. Preserve/download a complete working copy and open it again.
 9. Use two tabs with the same draft. Refresh a clean copy after a remote save and inspect the whole new text. Make conflicting local edits and confirm that the losing tab retains its entered copy for download or separation.
 10. Prepare a complete request, interrupt its response, then receive the same saved request. Reopen the unchanged accepted record after another operation advances the dossier. Create an editable successor without rewriting the old request.
 11. Export the entire original dossier, reopen the received project, inspect its original files and history, and perform an additional named edit in the receiving workspace.
-12. View relevant empty, loading and error states. Navigate to another dossier while a read is pending and confirm that the original response does not appear under the new selection.
+12. View relevant empty, loading and error states. Interrupt an unaccepted protocol/page read and confirm the prior complete case, protocol, section and page remain visible. Navigate to another dossier while a read is pending and confirm that the original response does not appear under the new selection. A late edition-inventory or page response must not overwrite a later selection.
 
 Look at every captured screenshot. Inspect actual foreground/background pairs in the installed host, disabled labels, form wrapping, focus states and table scrolling. Fix the real source if text clips, controls break or downloads omit material, then rerun that affected action in the same course.
 

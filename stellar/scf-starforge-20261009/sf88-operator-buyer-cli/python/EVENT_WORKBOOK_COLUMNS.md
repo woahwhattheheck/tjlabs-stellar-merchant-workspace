@@ -136,7 +136,10 @@ that original financial operation.
 
 The portable module and CLI are shipped alongside the original Event source
 projector under sf88-operator-buyer-cli/event-feed. They need the maintained
-Node.js runtime and no additional package.
+Node.js runtime and no additional package. The maintained distribution exposes
+**starforge event-workbook-columns** with the same four commands, and exports
+the portable core as **./buyer/event-workbook-columns**. The direct source
+invocations below run from the installed sf88-operator-buyer-cli directory.
 
 Download the **complete native action record** using the original agent's
 event-action / complete_record receiving path, or retain the full

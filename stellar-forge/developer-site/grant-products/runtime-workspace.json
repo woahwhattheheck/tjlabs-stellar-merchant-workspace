@@ -33,7 +33,7 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/README.md",
-      "commit": "90777a5cd1e7f861c2f8c070d5312a79b190dc03",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
       "editions": [
         {
           "commit": "9e561f5a9e09eb3ac72655e502de58cce4416c3d",
@@ -51,6 +51,12 @@
           "bytes": 23155,
           "sha256": "2182277797df1d30dee6eca66a9a07311062c97cd61063b71df0697663c54877",
           "git_blob": "1aaa52d8efe13d3a480da2f0b91d0804fc945626"
+        },
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 24954,
+          "sha256": "33e28e67298c7aca05ee7e8705205ab7cf93a100da55a91aa8af024b6d2c6f23",
+          "git_blob": "63225321477d5cc9fddcece32e2d9597052a651e"
         }
       ]
     },
@@ -753,7 +759,7 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs",
-      "commit": "90777a5cd1e7f861c2f8c070d5312a79b190dc03",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
       "editions": [
         {
           "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
@@ -772,6 +778,12 @@
           "bytes": 55123,
           "sha256": "2059687ceba44af98a5667d0af59cf998acc0413a892e82f9f9552132477b725",
           "git_blob": "84dbaa6613e7c0fa6271a1851e07342c54ea5886"
+        },
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 55593,
+          "sha256": "3f6f5f1f29e204472c107f497ee39a6e707ef64a04758c5b489872ecb7db3914",
+          "git_blob": "468baa51e23673549af822df60565e3ba1fecea3"
         }
       ]
     },
@@ -781,7 +793,7 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/server.mjs",
-      "commit": "90777a5cd1e7f861c2f8c070d5312a79b190dc03",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
       "editions": [
         {
           "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
@@ -794,6 +806,12 @@
           "bytes": 50691,
           "sha256": "feccdcdc27dc92da0a4942a5428d585b1663bb9e7590c6dd3f647f36931637c9",
           "git_blob": "2caf480d7e8d574c8a37992ff220ba276d003629"
+        },
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 51930,
+          "sha256": "32327b9a8d793104830e48b3c75c66b75a55e4c4535f9fbd36527b62e950c8e6",
+          "git_blob": "b078f3609e2f0b9ab33caf33ed622d1b3967365c"
         }
       ]
     },
@@ -857,7 +875,7 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/cli.mjs",
-      "commit": "90777a5cd1e7f861c2f8c070d5312a79b190dc03",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
       "editions": [
         {
           "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
@@ -870,6 +888,12 @@
           "bytes": 32179,
           "sha256": "47b1015846976d1da09b4dfd9ee24ddc8238ef93c22bece9c5a5799a8231b5bb",
           "git_blob": "83bc78fa08ff9d4daf7d05e97f50ad72e346f647"
+        },
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 37177,
+          "sha256": "59c762098cef003819c39939e9bf2a49dc0ace35ecec4bcdd90daf5fdd076dd1",
+          "git_blob": "fa479ab70f34a83ec20b0440fc024fc620be4da5"
         }
       ]
     },
@@ -879,7 +903,7 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/browser-assets.json",
-      "commit": "90777a5cd1e7f861c2f8c070d5312a79b190dc03",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
       "editions": [
         {
           "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
@@ -892,6 +916,12 @@
           "bytes": 5203,
           "sha256": "1f5686e4f3f498b050cb9e85da759f99a0c32c269eed42278dff9101ddd4fa47",
           "git_blob": "d8da7c5c7f4895f0226bb6b0afdf221c6217f795"
+        },
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 6223,
+          "sha256": "5ec4b40dd1e0898e6335e6f7df8783abdc52af5abf70dd24cbb59a87fdedb676",
+          "git_blob": "cb3a106da8e41cc604b50dc92fa3c0fc98fec41c"
         }
       ]
     },
@@ -993,7 +1023,7 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/applications-core.mjs",
-      "commit": "90777a5cd1e7f861c2f8c070d5312a79b190dc03",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
       "editions": [
         {
           "commit": "abb216a6ae654471a03028961e64bc4313f44832",
@@ -1006,6 +1036,12 @@
           "bytes": 33215,
           "sha256": "a83bda6b5b1da1675a390632fe25bf5b4fc5662f2708fb1fb507f27628e15472",
           "git_blob": "c95e2d91deacff600e5e75fe68b854e45b7e548d"
+        },
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 34550,
+          "sha256": "b67f9948b80b98d8970acb8c24aea2dcd2feada5ed3b0c801cf151b5d0f01803",
+          "git_blob": "a790d75cc112b2c85673aab506458c27da5ecd39"
         }
       ]
     },
@@ -1230,6 +1266,278 @@
           "git_blob": "588d26fbfa70aa9ec796d67366f76c11a4c3ba6a",
           "bytes": 10216,
           "sha256": "114de9b0b5db10586e8c1746973a9d80751d0f2f3df7caeaa7863d96d9be34b3"
+        }
+      ]
+    },
+    {
+      "id": "runtime-grant-handoff-core",
+      "label": "Complete original Grant case and Application receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "products/grant-operations/handoff.mjs",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "editions": [
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 39452,
+          "sha256": "b61fefd4cab2fa292138bca554e8c629760727a15ecf813ef3ac94dce87faf2c",
+          "git_blob": "5c7f6b9410553e683c43424d3965d225f55f9f3f"
+        }
+      ]
+    },
+    {
+      "id": "runtime-grant-handoff-cli",
+      "label": "Installed original Grant handoff commands",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "products/grant-operations/handoff-cli.mjs",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "editions": [
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 4982,
+          "sha256": "460a6a690279340094344786091428863661daf4e09b5b3b05f4f12ae6afecf5",
+          "git_blob": "8c753f8df8ad141c15aac33a0ceac926e69d464b"
+        }
+      ]
+    },
+    {
+      "id": "runtime-grant-handoff-types",
+      "label": "Typed complete Grant handoff interface",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "products/grant-operations/handoff.d.mts",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "editions": [
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 6185,
+          "sha256": "a528fc19ae7749b7a84a95e79a30a44f31ad9e8731b3337e171c491bdfe644d8",
+          "git_blob": "0a46268e8fd6e945111d2f06430fca6078da6d65"
+        }
+      ]
+    },
+    {
+      "id": "runtime-setup-operations",
+      "label": "Complete setup export, receiving and original save recovery",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-setup-operations.mjs",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "editions": [
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 18136,
+          "sha256": "9da2a3428eaf6f1409b6f4b6de13d5a95f42cf615dd3c4fb89de1ba34fb4af10",
+          "git_blob": "372f9492f61de927579cbb00e1564e27beec02f4"
+        }
+      ]
+    },
+    {
+      "id": "runtime-setup-document",
+      "label": "Full setup document, explicit field reconciliation and browser storage",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-setup.mjs",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "editions": [
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 14975,
+          "sha256": "e03d5d2c5a6115dbb027210ffa2e37207ef4e86dae7e70b2c3f5d9f2ddf61247",
+          "git_blob": "e7345c984c8a525154bfaa6925f37c00954b680a"
+        }
+      ]
+    },
+    {
+      "id": "runtime-setup-library",
+      "label": "Named setup snapshots and complete browser receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-setup-library.mjs",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "editions": [
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 14598,
+          "sha256": "b846de619eefaddcd6a529b7ba011e64a6d443ec17a2e9095349fe6a34fd3eda",
+          "git_blob": "b7968f5ec694940d9ac53ccad62bc07e23dc06a6"
+        }
+      ]
+    },
+    {
+      "id": "runtime-setup-codec",
+      "label": "Shared complete setup-family admission and source preservation",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-setup-codec.mjs",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "editions": [
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 6723,
+          "sha256": "cc585620a75fef1e738e541ccd98e05333773e36f3d9b29e5118cb589cdc8ea4",
+          "git_blob": "4708c2c8798a77e9ec933efdec162c079c5b9544"
+        }
+      ]
+    },
+    {
+      "id": "runtime-grant-handoff-browser",
+      "label": "Grant case selection, destination host review and original operation browser",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/grant-application-handoff.mjs",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "editions": [
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 22825,
+          "sha256": "fe331245c2ff71ea4e93662fc3a346a9969d846d19af99f40b79824cf08e869d",
+          "git_blob": "8bf56d9a8e76eabc12411070d0a2f005981ceca5"
+        }
+      ]
+    },
+    {
+      "id": "runtime-grant-handoff-http",
+      "label": "Authenticated complete handoff action adapter",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/grant-application-handoff.mjs",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "editions": [
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 4928,
+          "sha256": "22ce5db075f1f3c400c42f55200ffe249d297b5d1969aab9efde2e2cac6ba2ef",
+          "git_blob": "9fcba39626d436dd275a3f77f802baab0187e71d"
+        }
+      ]
+    },
+    {
+      "id": "runtime-grant-handoff-contribution",
+      "label": "Installed Grant handoff command and API registration",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/grant-application-handoff.json",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "editions": [
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 848,
+          "sha256": "6e9c9a642ecbc626fba74bc8c6a12f43767775f4cff1a4c06f8989ac3f5ec9df",
+          "git_blob": "e2d8df268a0c0937dd5f09863b2299a5b2a36459"
+        }
+      ]
+    },
+    {
+      "id": "runtime-setup-drafts",
+      "label": "Original draft families and explicit reconciliation adoption",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-drafts.mjs",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "editions": [
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 27803,
+          "sha256": "3153f7b2be51970c545954c2a932186dad0acdd525778b77cc1f018c6702d7fc",
+          "git_blob": "f847d65832cab28a6db76b8db0fcd636b96e4abd"
+        }
+      ]
+    },
+    {
+      "id": "runtime-setup-guide",
+      "label": "Complete setup operator and source-recovery guide",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_SETUP.md",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "editions": [
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 18592,
+          "sha256": "db9a7d9b2275453061a05ff9c406e0e3484b3bfba6fd4341ee5febfff20bae1c",
+          "git_blob": "5a66ac213abb174988de0127c9cf3e71c86e3f0c"
+        }
+      ]
+    },
+    {
+      "id": "runtime-applications-browser",
+      "label": "Current Application editor, Grant receiving and original output",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/applications.mjs",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "editions": [
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 52418,
+          "sha256": "75fe550b45b841afeaa3bf154a6787193b43e545992e2967f7fd7216dc65394b",
+          "git_blob": "5f8f215d7a5410fbf0afa646b6c9d1a97a38b586"
+        }
+      ]
+    },
+    {
+      "id": "runtime-public-distribution",
+      "label": "Complete maintained public distribution registrations",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/distribution.json",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "editions": [
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 79313,
+          "sha256": "d69e41fbefa5b37aab2644ffca147429e1e183c7550b92b590182b43a034285a",
+          "git_blob": "9015c2283f26710496509069313cfbe347e7060b"
+        }
+      ]
+    },
+    {
+      "id": "runtime-grant-handoff-selection",
+      "label": "Complete public Grant handoff product source selection",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/grant-application-handoff.json",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "editions": [
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 2028,
+          "sha256": "a85a4eca80c4d544c6ad22e1ad06b84f0d0a843942886bf49569b2d1a8475762",
+          "git_blob": "7f933d83fbb405845e0bb4cb18a597aa23d1f5d8"
+        }
+      ]
+    },
+    {
+      "id": "runtime-grant-handoff-guide",
+      "label": "Complete Grant handoff, original receiving and rendered operation guide",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "products/grant-operations/HANDOFF.md",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "editions": [
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 28198,
+          "sha256": "f41dbe8014763505f898e3501e582cd41ce13aa7b97dbe11592ddf8f55a735c2",
+          "git_blob": "3beaf2987ded95a40f04d78250f0928498ffe4dc"
+        }
+      ]
+    },
+    {
+      "id": "runtime-grant-native-launcher",
+      "label": "Original native Grant launcher and explicit Buyer/Support Node host bindings",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/launcher.mjs",
+      "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+      "editions": [
+        {
+          "commit": "15beac722291f408d8a2fe869b7f20d5f160b936",
+          "bytes": 1711,
+          "sha256": "01095dd1320b1f9f6483192427acfe21833ba5f88c9776531038c840ecceb879",
+          "git_blob": "c2639bcef1475fb4304eda7cc377ec267f1f6cd0"
         }
       ]
     }
