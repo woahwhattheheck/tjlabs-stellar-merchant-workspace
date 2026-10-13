@@ -2,6 +2,8 @@
 export const GRANT_AGENT_SCHEMA = 'stellar-forge.sf47-agent.v1';
 export const GRANT_MAX_BUNDLE_BYTES = 32 * 1024 * 1024;
 export const GRANT_MAX_SOURCE_BYTES = 8 * 1024 * 1024;
+// Complete workbook handovers retain 128 MiB of original members plus ZIP framing.
+export const GRANT_MAX_WORKBOOK_HANDOVER_BYTES = 129 * 1024 * 1024;
 export const GRANT_TRANSFER_CHUNK_BYTES = 65536;
 
 export const GRANT_COMPLETION_ACTIONS = Object.freeze([

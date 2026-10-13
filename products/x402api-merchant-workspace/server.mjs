@@ -9,6 +9,7 @@ import { dirname, join, resolve, isAbsolute } from 'node:path';
 import { parseArgs } from 'node:util';
 import { openMerchantWorkspace, validateConfig, MerchantError } from './workspace.mjs';
 import { ProtocolError } from './protocol.mjs';
+import { merchantInputFiles, reviewMerchantInputs, verifyMerchantInputFingerprint } from './application-inputs.mjs';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const ASSETS = new Map([
@@ -175,11 +176,16 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
   }
   return { server, workspace, url, close, runTick };
 }
-export async function loadMerchantConfiguration(configPath, { env = process.env, allowLoopback = false } = {}) {
+export async function loadMerchantConfiguration(configPath, { env = process.env, allowLoopback = false,
+  expectedInputsSha256 = null, inputFiles = [] } = {}) {
   if (!isAbsolute(configPath)) fail('ABSOLUTE_CONFIG_PATH_REQUIRED');
-  const raw = await readFile(configPath);
+  const selectedInputs = merchantInputFiles(inputFiles);
+  if (selectedInputs.length && expectedInputsSha256 === null) fail('REVIEWED_INPUT_FINGERPRINT_REQUIRED');
+  const reviewed = expectedInputsSha256 === null ? null : verifyMerchantInputFingerprint(
+    await reviewMerchantInputs(configPath, { inputFiles: selectedInputs, allowLoopback, validateConfig }), expectedInputsSha256);
+  const raw = reviewed?.rawConfig ?? await readFile(configPath);
   if (raw.length > 1048576) fail('CONFIG_TOO_LARGE');
-  const config = validateConfig(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(raw)), { allowLoopback });
+  const config = reviewed?.config ?? validateConfig(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(raw)), { allowLoopback });
   function environment(name, minimum) {
     if (typeof name !== 'string' || !/^[A-Z][A-Z0-9_]{0,127}$/.test(name)) fail('ENVIRONMENT_REFERENCE_INVALID');
     const value = env[name];
@@ -197,17 +203,25 @@ export async function loadMerchantConfiguration(configPath, { env = process.env,
   if (typeof config.fulfillmentModule !== 'string') fail('FULFILLMENT_MODULE_REQUIRED');
   const modulePath = resolve(dirname(configPath), config.fulfillmentModule);
   const module = await import(pathToFileURL(modulePath).href);
-  const fulfillment = typeof module.createFulfillment === 'function' ? await module.createFulfillment({ configuration: config.fulfillmentOptions ?? {}, baseDirectory: dirname(configPath) }) : module;
+  const manifestPath = reviewed && typeof config.fulfillmentOptions?.manifest === 'string' ?
+    resolve(dirname(configPath), config.fulfillmentOptions.manifest) : null;
+  const expectedManifestSha256 = manifestPath ? reviewed.inputs.files.find(file => file.path === manifestPath)?.sha256 : null;
+  if (manifestPath && !expectedManifestSha256) fail('REVIEWED_DELIVERY_MANIFEST_REQUIRED');
+  const fulfillment = typeof module.createFulfillment === 'function' ? await module.createFulfillment({
+    configuration: config.fulfillmentOptions ?? {}, baseDirectory: dirname(configPath), expectedManifestSha256,
+  }) : module;
   if (typeof fulfillment.fulfill !== 'function' || typeof fulfillment.reconcile !== 'function') fail('FULFILLMENT_MODULE_CONTRACT_REQUIRED');
   return { config, credential, operatorToken, webhookSecretsByVersion, fulfillment };
 }
 export async function main(argv = process.argv.slice(2)) {
   const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, strict: true,
     options: { config: { type: 'string' }, directory: { type: 'string' }, host: { type: 'string', default: '127.0.0.1' },
-      port: { type: 'string', default: '8764' }, 'allow-loopback': { type: 'boolean', default: false } } });
+      port: { type: 'string', default: '8764' }, 'allow-loopback': { type: 'boolean', default: false },
+      'expect-inputs-sha256': { type: 'string' }, 'input-files': { type: 'string' } } });
   const command = positionals[0] ?? 'serve';
   if (!['serve', 'doctor'].includes(command) || positionals.length > 1 || !values.config) fail('USE_SERVE_OR_DOCTOR_WITH_CONFIG');
-  const selected = await loadMerchantConfiguration(resolve(values.config), { allowLoopback: values['allow-loopback'] });
+  const selected = await loadMerchantConfiguration(resolve(values.config), { allowLoopback: values['allow-loopback'],
+    expectedInputsSha256: values['expect-inputs-sha256'] ?? null, inputFiles: merchantInputFiles(values['input-files']) });
   if (command === 'doctor') {
     if (typeof selected.fulfillment.doctor === 'function') await selected.fulfillment.doctor({ binding: selected.config.fulfillmentBinding });
     process.stdout.write(JSON.stringify({ application: 'x402api-merchant-workspace', configured: true,
