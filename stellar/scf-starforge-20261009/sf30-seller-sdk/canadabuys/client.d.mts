@@ -1,4 +1,4 @@
-import type { BidderKind, BidderRecordMap, BidderCreate, BidderPatch, BidderMutation, BidderPage, BidderDeskStatus, DecisionSelection, BidderFitResult, BidderAssessResult, BidderCompareResult } from './bidder-desk-workspace.mjs';
+import type { EvidenceIntakeInput, EvidenceIntakeResult, BidderKind, BidderRecordMap, BidderCreate, BidderPatch, BidderMutation, BidderPage, BidderDeskStatus, DecisionSelection, BidderFitResult, BidderAssessResult, BidderCompareResult } from './bidder-desk-workspace.mjs';
 import type { DecisionReportFormat } from './bidder-desk-reports.mjs';
 import type { Stream, SourceInput, WorkspaceView, WorkspacePackage, SourceEdition, OriginalSource, Notice, Workshare, WorkshareHistory, WorkshareInput, WorksharePatch, ReviewPatch, Profile, ProfileMatch, Selection, Comparison, CaptureRecord, Receiving, Ingestion, ReceiveResult } from './workspace.mjs';
 export interface RequestOptions { signal?:AbortSignal;timeoutMs?:number }
@@ -13,6 +13,7 @@ export declare class CanadaBuysClient {
  request<T=unknown>(path:string,options?:RequestOptions&{method?:string;body?:unknown;raw?:false;binary?:false}):Promise<T>;
  request(path:string,options:RequestOptions&{method?:string;body?:unknown;raw:true}):Promise<RawResponse>;
  request(path:string,options:RequestOptions&{method?:string;body?:unknown;binary:true}):Promise<BinaryResponse>;
+ bidderIntakeEvidence(input:EvidenceIntakeInput,options?:RequestOptions):Promise<EvidenceIntakeResult>;
  bidderStatus(options?:RequestOptions):Promise<BidderDeskStatus>;
  bidderList<K extends BidderKind>(kind:K,options?:RequestOptions&{noticeId?:string;offset?:number;limit?:number}):Promise<BidderPage<K>>;
  bidderRecord<K extends BidderKind>(kind:K,id:string,options?:RequestOptions&{revision?:number;history?:boolean}):Promise<BidderRecordMap[K]&{history?:BidderRecordMap[K][]}>;

@@ -1,3 +1,4 @@
+import type {Cash, Credit} from './accounting-financial-control.mjs';
 // MIT. Declarations for original receivables command line operations and file delivery.
 import type {
   AccountingReceivablesClient, CompleteInvoicePreview, NativeRecord, PaymentRequestPreview, RefundPreview, CreditDispositionPreview, BankPostingPreview, RemittancePreview,
@@ -10,16 +11,18 @@ export interface ReceivablesOperationConnection {
 }
 export type ReceivablesPrepareArguments<K extends ReceivablesMutation = ReceivablesMutation> =
   ReceivablesOperationConnection & {
-    kind: K; arguments: ReceivablesArgumentsMap[K]; preview?: never; actor?: never; requestId?: never;
+    kind: K; arguments: ReceivablesArgumentsMap[K]; preview?: never; actor?: never; requestId?: never; reviewOptions?:never;
   };
 export type ReceivablesPreparePreview =
   ReceivablesOperationConnection & {actor: string; requestId?: string; arguments?: never} &
-  ({kind: 'invoice_issue'; preview: CompleteInvoicePreview} |
+  ({kind: 'invoice_issue'; preview: CompleteInvoicePreview;reviewOptions?:{creditDecisionId?:string}} |
     {kind: 'payment_create'; preview: PaymentRequestPreview} |
     {kind: 'refund_commit'; preview: RefundPreview} |
     {kind: 'credit_disposition_apply'; preview: CreditDispositionPreview} |
     {kind: 'bank_receipts_post'; preview: BankPostingPreview} |
-    {kind: 'remittance_apply'; preview: RemittancePreview});
+    {kind: 'remittance_apply'; preview: RemittancePreview} |
+    {kind:'cash_plan_save';preview:Cash.CashPlanPreview;reviewOptions?:{id?:string;expectedVersion?:number}} |
+    {kind:'credit_decision_save';preview:Credit.CreditAssessmentPreview;reviewOptions:{outcome:Credit.CreditDecisionOutcome;reason:string}});
 export type ReceivablesPrepareOptions = ReceivablesPrepareArguments | ReceivablesPreparePreview;
 export interface PreparedReceivablesOperation<K extends ReceivablesMutation = ReceivablesMutation> {
   directory: string; kind: K; requestSha256: string; arguments: ReceivablesArgumentsMap[K]; phase: 'PREPARED';
@@ -46,6 +49,12 @@ export function prepareAccountingReceivablesOperation(
 export function prepareAccountingReceivablesOperation(
   options: ReceivablesPreparePreview & {kind: 'remittance_apply'},
 ): Promise<PreparedReceivablesOperation<'remittance_apply'>>;
+export function prepareAccountingReceivablesOperation(
+  options: ReceivablesPreparePreview & {kind:'cash_plan_save'},
+): Promise<PreparedReceivablesOperation<'cash_plan_save'>>;
+export function prepareAccountingReceivablesOperation(
+  options: ReceivablesPreparePreview & {kind:'credit_decision_save'},
+): Promise<PreparedReceivablesOperation<'credit_decision_save'>>;
 export function prepareAccountingReceivablesOperation(
   options: ReceivablesPrepareOptions,
 ): Promise<PreparedReceivablesOperation>;

@@ -8,7 +8,7 @@ import {spawnSync} from "node:child_process";
 import {bindingTemplate, prepareInstallation, renderWorkorder} from "./prepare-core.mjs";
 import {profileCatalog, readProfile} from "./profiles.mjs";
 import {PROGRAMME_FIELDS, PROGRAMME_SCHEMA, composeCustomerProgramme,
-  programmeFiles} from "./customer-programme-core.mjs";
+  programmeFiles, validateProgrammeSave} from "./customer-programme-core.mjs";
 
 const schema = "stellar-forge.installation-workshare-receiving.v1";
 const usage = "node receive.mjs --operations-cli /absolute/workspace/cli.py --workspace /absolute/original-workspace --case operation-ID --plan plan-ID --inputs PAIR_RECEIVING.json --source-root /absolute/original-files --out /absolute/private-output --receiving-workspace /absolute/receiving-workspace --actor ACTUAL_OPERATOR [--receiving-actor ACTUAL_RECEIVER] [--python python3]";
@@ -309,12 +309,13 @@ function prepareProgramme(customer, attached) {
     outputs.push({...retain(join(directory, filename), bytes), filename, mediaType,
       role: "source", sourceUrl: original.sourceUrl, observedAt: original.observedAt});
   }
-  return {selected, value, outputs, commissioning};
+  return {selected, value, outputs, commissioning, directory};
 }
-function programmeResult(programme, attached, original) {
+function programmeResult(programme, attached, original, acceptedSave) {
   if (!programme) return null;
   return {
     schema: PROGRAMME_SCHEMA + ".receiving",
+    ...(acceptedSave === undefined ? {} : {acceptedSave}),
     commercial: {currency: programme.value.commercial.commercial.currency,
       amount: programme.value.commercial.commercial.amount,
       priceStatus: programme.value.commercial.commercial.price_status,
@@ -337,6 +338,36 @@ function programmeResult(programme, attached, original) {
   };
 }
 
+function acceptedProgrammeSave(customer, before, seed, programme) {
+  const change = programme?.selected.nativeChange;
+  if (!before || !change || change.installationId !== null || change.expectedRevision !== 0)
+    return undefined;
+  // The original native writer retains its first edition and matching case event
+  // even when this receiver never received the successful save response.
+  const opened = native(["installation-show", "--case", options.case, "--installation", before.id,
+    "--revision", "1"]);
+  const {current: observation, ...edition} = opened;
+  const sourceVersion = edition.preview?.source?.version;
+  if (!Number.isSafeInteger(sourceVersion) || sourceVersion < 1 ||
+      !Number.isSafeInteger(edition.version) || edition.version !== sourceVersion + 1)
+    fail("The original first Installation edition has no retained source version.");
+  const history = native(["history", "--case", options.case, "--after", String(sourceVersion), "--limit", "1"]);
+  if (!Array.isArray(history.events) || history.events.length !== 1 ||
+      history.events[0].version !== edition.version)
+    fail("Reopen the complete original first-save event before continuing the customer programme.");
+  const requestId = operationId("installation", {caseId: options.case, version: sourceVersion,
+    installationId: null, expectedRevision: 0, previewSha256: edition.preview.previewSha256});
+  const event = history.events[0];
+  // Another operator's first save does not authorize this request's identity.
+  // The unchanged exact-current-document path can still review such a draft.
+  if (event.requestId !== requestId) return undefined;
+  const accepted = {schema: "stellar-forge.installation-programme-save.v1",
+    requestId, actor: options.actor, edition, event};
+  validateProgrammeSave({seed, change, acceptedSave: accepted});
+  retain(join(programme.directory, "accepted-first-save.json"), json(accepted));
+  return accepted;
+}
+
 function receiveCustomer(customer, attached, programme) {
   const profile = readProfile(customer.profile).value;
   return retryCurrent(state => {
@@ -355,8 +386,9 @@ function receiveCustomer(customer, attached, programme) {
       bindings = appliedBindings(bindingTemplate(seed, profile), customer.bindings || {}, linkedSources);
       prepared = prepareInstallation(seed, profile, bindings);
     }
+    const acceptedSave = acceptedProgrammeSave(customer, before, seed, programme);
     if (programme) prepared.document = composeCustomerProgramme({seed, document: prepared.document, profile,
-      commissioning: programme.commissioning, ...programme.selected}).document;
+      commissioning: programme.commissioning, ...programme.selected, acceptedSave}).document;
     const tag = customer.profile + "-v" + version + "-" + hash(json(prepared.document)).slice(0, 16);
     retain(join(options.out, tag + "-seed.json"), json(seed));
     retain(join(options.out, tag + "-bindings.json"), json(bindings));
@@ -375,7 +407,7 @@ function receiveCustomer(customer, attached, programme) {
       return {profile: customer.profile, workshareCaseId: customer.workshareCaseId,
         installation: {id: before.id, revision: before.revision, sha256: before.sha256},
         document, workorder, original: before, pendingSelections: prepared.selections,
-        programme: programmeResult(programme, attached, before)};
+        programme: programmeResult(programme, attached, before, acceptedSave)};
     }
     if (typeof preview.previewSha256 !== "string") fail("Retain the complete native Installation preview.");
     const requestId = operationId("installation", {caseId: options.case, version,
@@ -394,7 +426,7 @@ function receiveCustomer(customer, attached, programme) {
     return {profile: customer.profile, workshareCaseId: customer.workshareCaseId,
       installation: {id: opened.id, revision: opened.revision, sha256: opened.sha256},
       document, workorder, original: opened, pendingSelections: prepared.selections,
-      programme: programmeResult(programme, attached, opened)};
+      programme: programmeResult(programme, attached, opened, acceptedSave)};
   });
 }
 let options, input;

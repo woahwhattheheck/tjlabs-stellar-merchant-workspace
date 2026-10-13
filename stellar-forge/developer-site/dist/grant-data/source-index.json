@@ -3906,7 +3906,7 @@
         "application_operation": "SCF-FINANCIAL-REVIEWER-WALKTHROUGH-3FC8-20261013",
         "basis": "Complete original financial reviewer workflow and operating example joined into the current nine-answer application and complete companion.",
         "source_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-        "source_commit": "a4abafd2bee1e05bb18c90f4b6ed331b5384163c",
+        "source_commit": "6bd7a88e1a5291810806e33ec2a44be15be1e4da",
         "previous_application_git_blob": "cb0164d3f24c413d76f359339fff5f94d2fa4f0f",
         "previous_companion_git_blob": "92559edafa43069c3e87e064d9fc3846b9f61c5a",
         "source_path": "stellar-forge/developer-site/dist/grant-data/financial-walkthrough.md",

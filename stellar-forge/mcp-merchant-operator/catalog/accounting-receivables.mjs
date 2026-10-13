@@ -1,3 +1,5 @@
+import {financialControlDefinitions} from './accounting-financial-control.mjs';
+import {FINANCIAL_CONTROL_FILES} from '../accounting-financial-control.mjs';
 // MIT. Native invoice and payment-request operations on the existing accounting owner.
 const PREFIX = 'merchant_accounting_receivables_';
 const text = (max, min = 0) => ({type: 'string', minLength: min, maxLength: max});
@@ -133,6 +135,7 @@ const remittanceSource = object({sourceId: text(160, 1), filename: text(240, 1),
 const remittanceApplySource = {...remittanceSource, required: ['sourceId', 'filename', 'csv']};
 
 export const receivablesFileNames = Object.freeze([
+  ...new Set(Object.values(FINANCIAL_CONTROL_FILES).flat()),
   'invoice.json', 'invoice.csv', 'invoice.html', 'credit.json', 'credit.csv', 'credit.html',
   'manifest.json', 'status.json', 'quote.json', 'response.json', 'source.json', 'review.json',
   'preview.json', 'preview.csv', 'preview.html', 'payment-request.json', 'payment-request.html',
@@ -143,9 +146,11 @@ export const receivablesFileNames = Object.freeze([
   'source.csv', 'source.ofx', 'source.mt940', 'import.json', 'rows.json', 'rows.csv', 'reconciliation.json', 'parser-report.json',
 ]);
 export const receivablesFileSelectors = Object.freeze([
+  'collectionCaseId', 'cashPlanId', 'editionId', 'leftId', 'rightId', 'leftEditionId', 'rightEditionId', 'creditDecisionId', 'owner', 'status', 'search',
   'documentId', 'invoiceId', 'paymentRequestId', 'refundId', 'bankImportId', 'batchId', 'returnId', 'customerId', 'asOf',
 ]);
 export const receivablesDefinitions = [
+  ...financialControlDefinitions({read, mutate, uuid, hash, date, revision, text, money, currency, object}),
   read('status', 'Read original invoice, receipt, credit, allocation, aging or operation-journal rows. Summary returns issuer, scoped counts and the current accounting revision.',
     {view: {type: 'string', enum: ['summary', 'invoices', 'receipts', 'credits', 'allocations', 'aging', 'history']},
       customerId: uuid, status: text(100), search: text(300), asOf: date, ...page}),
@@ -162,7 +167,7 @@ export const receivablesDefinitions = [
   read('invoice_preview', 'Review the original draft document, native preview SHA256 and version. Summary includes complete preview file identities for the existing file reader; lines pages the original invoice lines.',
     {invoiceId: uuid, view: {type: 'string', enum: ['summary', 'lines']}, ...page}, ['invoiceId']),
   mutate('invoice_issue', 'Issue the exact reviewed original invoice using its native previewSha256 and expectedVersion. Retain the original requestId to recover a lost response.',
-    {invoiceId: uuid, previewSha256: hash, expectedVersion: revision}, ['invoiceId', 'previewSha256', 'expectedVersion']),
+    {invoiceId: uuid, previewSha256: hash, expectedVersion: revision, creditDecisionId: uuid}, ['invoiceId', 'previewSha256', 'expectedVersion']),
   read('invoice_detail', 'Open an original invoice, retained quotation binding and immutable document files, or page its lines, credits, allocations, receipts and history.',
     {invoiceId: uuid, asOf: date, view: {type: 'string', enum: ['summary', 'lines', 'credits', 'allocations', 'receipts', 'history']},
       ...page}, ['invoiceId']),

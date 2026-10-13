@@ -1,16 +1,69 @@
 // MIT. Continue the current source case through its existing browser and writers.
 // The equipped owner supplies its running source-selected page and keeps the
 // original process, archive and guarded same-case save.
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, open, link, unlink } from 'node:fs/promises';
 import { resolve, dirname, join, relative, isAbsolute } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 const OPERATION='SCF-GRANT-CURRENT-REVIEW-81CF-20261012';
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const same=(left,right)=>JSON.stringify(left)===JSON.stringify(right);
 const json=value=>JSON.stringify(value,null,2)+'\n';
 const need=(value,message)=>{if(!value)throw new Error(message);};
+
+
+async function retainedJSON(path){
+  try{return JSON.parse(await readFile(path,'utf8'));}
+  catch(error){if(error.code==='ENOENT')return null;throw error;}
+}
+
+// A complete receipt becomes visible in one link operation. An interrupted
+// partial temporary file is never interpreted as an issued or accepted save.
+async function retainJSON(path,value){
+  const body=json(value),temporary=path+'.'+randomUUID()+'.tmp';
+  const existing=await retainedJSON(path);
+  if(existing!==null){need(same(existing,value),'Keep the different retained receipt: '+path);return existing;}
+  let handle;
+  try{
+    handle=await open(temporary,'wx',0o600);await handle.writeFile(body);await handle.sync();
+    await handle.close();handle=null;
+    try{await link(temporary,path);}
+    catch(error){if(error.code!=='EEXIST')throw error;
+      need(same(await retainedJSON(path),value),'Keep the different retained receipt: '+path);}
+    const directory=await open(dirname(path),'r');
+    try{await directory.sync();}finally{await directory.close();}
+    return value;
+  }finally{
+    if(handle)await handle.close().catch(()=>{});
+    await unlink(temporary).catch(error=>{if(error.code!=='ENOENT')throw error;});
+  }
+}
+
+// Reconcile the effect of the original CAS writer, never another draft version.
+// The actual selected model supplies retainVersion; its saved timestamp comes
+// from the observed native record rather than a new time or fabricated request.
+function workingSaveDisposition(intent,candidate,retainVersion){
+  const before=intent.before;
+  need(candidate&&candidate.id===before.id,'Reconnect to the original browser save record.');
+  if(same(candidate,before))return 'pending';
+  need(candidate.revision===before.revision+1&&
+    Array.isArray(candidate.input?.versions)&&
+    candidate.input.versions.length===before.input.versions.length+1,
+    'The original browser record has later or different work. Preserve it before continuing this save.');
+  const version=candidate.input.versions.at(-1);
+  need(typeof version.savedAt==='string'&&Number.isFinite(Date.parse(version.savedAt))&&
+    typeof candidate.updatedAt==='string'&&Number.isFinite(Date.parse(candidate.updatedAt)),
+    'Keep the actual original saved-version and native record timestamps.');
+  const input=retainVersion(before.input,'Saved submission version',version.savedAt);
+  const expected={id:before.id,revision:before.revision+1,
+    name:input.folder||'Untitled merchant',
+    resources:Array.isArray(input.resources)?input.resources.length:0,
+    updatedAt:candidate.updatedAt,input};
+  need(same(candidate,expected),
+    'The next browser revision differs from the original working save. Preserve every later edit.');
+  return 'complete';
+}
 
 export async function receiveCurrentSourceBrowser(page,{
   inputPath,outputDirectory,expectedOrigin
@@ -146,11 +199,60 @@ export async function receiveCurrentSourceBrowser(page,{
     need(currentDraft.handover.selection.bundleId===packageSource.bundle.id,
       'Open the actual selected four-file source edition.');
 
+    const saveSelection={operationId:OPERATION,phaseId:input.phaseId,origin,
+      sourcePackageSha256:input.sourcePackageSha256,reviewedDraftSHA256:sha(draftText),
+      originalBrowserRecordSHA256:sha(originalRecordText),originalDraftId:currentDraft.id};
+    const saveIntentPath=join(output,'working-save-intent.json');
+    const saveReceiptPath=join(output,'working-save-accepted.json');
+    let saveIntent=await retainedJSON(saveIntentPath),saveReceipt=await retainedJSON(saveReceiptPath);
+    if(saveIntent){
+      need(saveIntent.schema==='stellar-forge.current-source-working-save.v1'&&
+        same(saveIntent.selection,saveSelection)&&
+        saveIntent.before?.id&&Number.isSafeInteger(saveIntent.before.revision)&&
+        saveIntent.before.revision>=1&&same(saveIntent.before.input,currentDraft),
+        'Keep the original complete save preimage and its selected native edition.');
+    }
+    if(saveReceipt)need(saveIntent&&
+      saveReceipt.schema==='stellar-forge.current-source-working-save-accepted.v1'&&
+      same(saveReceipt.selection,saveSelection)&&
+      workingSaveDisposition(saveIntent,saveReceipt.record,submission.retainVersion)==='complete',
+      'Retain the accepted result of this exact original browser save.');
+
+    const completed=await retainedJSON(join(output,'RESULT.json'));
+    if(completed){
+      need(completed.state==='COMPLETE'&&completed.operationId===OPERATION&&
+        completed.phaseId===input.phaseId&&completed.origin===origin&&
+        completed.sourcePackageSha256===input.sourcePackageSha256&&
+        completed.reviewedDraftSHA256===sha(draftText)&&
+        completed.originalDraftId===currentDraft.id&&completed.originalReviewId===currentRound.id&&
+        completed.retainedReviewActions===currentRound.events.length&&Array.isArray(completed.files),
+        'Keep the completed original browser result for its own source selection.');
+      for(const selected of completed.files){
+        need(typeof selected.path==='string'&&!isAbsolute(selected.path)&&
+          !selected.path.includes('\\')&&selected.path.split('/').every(p=>p&&p!=='.'&&p!=='..'),
+          'Retain each complete browser output inside its original directory.');
+        const body=await readFile(join(output,selected.path));
+        need(body.length===selected.bytes&&sha(body)===selected.sha256,
+          'Retain the complete original browser output: '+selected.path);
+      }
+      return completed;
+    }
+    const retainAccepted=async candidate=>{
+      need(workingSaveDisposition(saveIntent,candidate,submission.retainVersion)==='complete',
+        'Accept only the exact committed original working save.');
+      const accepted={schema:'stellar-forge.current-source-working-save-accepted.v1',
+        selection:saveSelection,record:candidate};
+      await retainJSON(saveReceiptPath,accepted);saveReceipt=accepted;
+      // The portable native record is preserved before any remaining export.
+      await retainJSON(join(output,'saved-submission-record.json'),candidate);
+      return candidate;
+    };
+
     // Verify this already running listener serves the same selected current code
     // and complete reviewer files before it writes anything in the browser.
     const routes=['/grant-submission.html','/grant-submission-workspace.mjs',
       '/grant-review-round.html','/grant-review-round-workspace.mjs',
-      '/grant-review-round-core.mjs','/drafts.mjs',
+      '/grant-review-round-core.mjs','/grant-submission-core.mjs','/drafts.mjs',
       '/grant-data/application.md','/grant-data/source-index.json',
       '/grant-data/budget.csv','/grant-data/product-and-finance.md'];
     for(const route of routes){
@@ -183,7 +285,14 @@ export async function receiveCurrentSourceBrowser(page,{
     need(await page.locator('#workspace-root').getAttribute('data-source-read-state')==='reading',
       'Keep the saved-draft controls available during the actual source read.');
     const originRecord=JSON.parse(originalRecordText);
-    const local=await page.evaluate(async ({draft,original})=>{
+    let local;
+    if(saveIntent){
+      const candidate=await page.evaluate(async id=>(await import('./drafts.mjs')).loadDraft(id),saveIntent.before.id);
+      const disposition=workingSaveDisposition(saveIntent,candidate,submission.retainVersion);
+      if(saveReceipt)need(same(candidate,saveReceipt.record),'The accepted browser record has later edits; preserve them unchanged.');
+      if(disposition==='complete')await retainAccepted(candidate);
+      local={record:candidate,mode:saveIntent.bindingMode};
+    }else local=await page.evaluate(async ({draft,original})=>{
       const store=await import('./drafts.mjs');
       const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
       const prior=await store.loadDraft(original.id);
@@ -199,11 +308,12 @@ export async function receiveCurrentSourceBrowser(page,{
         const candidate=await store.loadDraft(metadata.id);
         if(candidate&&same(candidate.input,draft))current.push(candidate);
       }
+      if(current.length>1)throw new Error('Multiple current local bindings exist. Keep each original record and select its retained save intent.');
       if(current.length===1)return {record:current[0],mode:'existing-current-record'};
       return {record:await store.saveDraft({input:draft}),mode:'new-local-binding'};
     },{draft:currentDraft,original:originRecord});
     const opened=await openSavedDraft(page,local.record.id);
-    need(same(opened.input,currentDraft),'Open the entire native draft in the original editor.');
+    need(same(opened,local.record),'Open the entire selected native or reconciled working record in the original editor.');
     const openedView=await page.locator('#view').inputValue();
     releaseRead();releaseRead=null;
     await page.waitForFunction(()=>document.querySelector('#workspace-root')?.dataset.sourceReadState==='idle',
@@ -229,11 +339,31 @@ export async function receiveCurrentSourceBrowser(page,{
     need(same(reopenedPackage.bundle,packageSource.bundle)&&
       same(reopenedPackage.objects,packageSource.objects),
       'Retain the complete original four-file package through the browser export.');
-    await page.locator('#save').click();await settle(page);
-    const saved=await record(page);
-    need(saved.id===opened.id&&saved.revision===opened.revision+1,
-      'Save the same local draft with its actual original revision check.');
+    let saved;
+    if(saveReceipt){
+      saved=await record(page);
+      need(same(saved,saveReceipt.record),'Preserve the accepted record and any genuine later edit.');
+    }else{
+      const before=await record(page);
+      need(same(before,opened)&&same(before.input,currentDraft),
+        'Keep the complete original record and revision before its working save.');
+      const beforeText=await download(page,page.locator('#export-draft'),'Before_Original_Working_Save.json');
+      need(same(await handover.openDraftEnvelope(beforeText),before.input),
+        'Preserve a later unsaved edit instead of saving a different body.');
+      const intent={schema:'stellar-forge.current-source-working-save.v1',
+        selection:saveSelection,bindingMode:local.mode,before};
+      await retainJSON(saveIntentPath,intent);saveIntent=intent;
+      await page.locator('#save').click();await settle(page);
+      saved=await record(page);
+      await retainAccepted(saved);
+    }
     retainedSave(currentDraft,saved.input);
+    // Include the immutable save journal in this complete portable result on
+    // both first execution and recovery after a committed but unreported save.
+    for(const name of ['working-save-intent.json','working-save-accepted.json','saved-submission-record.json']){
+      const body=await readFile(join(output,name));
+      files.push({path:name,bytes:body.length,sha256:sha(body)});
+    }
     const workingText=await download(page,page.locator('#export-draft'),'Current_Browser_Submission.json');
     need(same((await handover.openDraftEnvelope(workingText)),saved.input),
       'Export the entire saved working draft.');
@@ -250,7 +380,7 @@ export async function receiveCurrentSourceBrowser(page,{
     await page.reload({waitUntil:'domcontentloaded'});await settle(page);
     const reopened=await openSavedDraft(page,saved.id);
     need(same(reopened,saved),'Reopen the same complete original browser draft record.');
-    await write('saved-submission-record.json',json(reopened));
+    await retainJSON(join(output,'saved-submission-record.json'),reopened);
     await write('origin-and-local-binding.json',json({
       operationId:OPERATION,phaseId:input.phaseId,
       originalBrowserBinding:input.originalBrowserBinding,
@@ -331,7 +461,7 @@ export async function receiveCurrentSourceBrowser(page,{
       localBrowserBinding:{id:saved.id,revision:saved.revision},
       reviewedDraftSHA256:sha(draftText),workingDraftSHA256:sha(workingText),
       unchangedReviewedTargets:comparison.rows.length,stages,files,pageErrors};
-    await writeFile(join(output,'RESULT.json'),json(complete),{mode:0o600});
+    await retainJSON(join(output,'RESULT.json'),complete);
     return complete;
   }catch(error){
     await writeFile(join(output,'INCOMPLETE.json'),json({

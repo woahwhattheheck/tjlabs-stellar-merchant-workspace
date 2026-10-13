@@ -117,6 +117,22 @@ exists, its exact prior body and revision are checked before receiving the nativ
 edition. Another browser store creates its own normal binding and retains the
 origin separately.
 
+Before the original working save, the receiver retains
+`working-save-intent.json`: the full native record, original revision, selected
+source and actual browser origin. After a response loss or process interruption,
+the same command reads that record again. An unchanged preimage may use the
+original UI save. An exact next revision is accepted only when its complete
+body is the selected model's normal `retainVersion` result with the actual
+recorded saved-version timestamp. A different or later edit remains untouched.
+The accepted record is retained in `working-save-accepted.json` and
+`saved-submission-record.json` before the remaining exports; recovery does not
+click Save again for that committed result. Keep this directory with its
+original browser profile. A missing record is not permission to create another
+binding for an already issued save.
+
+A complete browser result replays locally after checking every retained output
+byte and its source selection. It does not repeat browser writes.
+
 The original review controls then save, export and reopen the entire current
 review and its selected full draft. A second browser store independently opens,
 saves, exports and reopens both documents. Each real working save adds its normal
@@ -192,7 +208,10 @@ working versions and authored changes remain in that draft. The original review
 model compares them with the retained reviewed edition before it receives the
 new source.
 
-A completed native source phase can also continue before its browser journey.
+A completed native source phase can also continue before its browser journey
+has started. A retained partial browser directory, including a legacy interrupted
+run without an explicit save journal, must first complete that same browser
+phase. The composer never treats an unresolved browser save as an absent one.
 Its full current draft remains distinct from the original browser record.
 The following native record carries that origin separately; the later browser
 journey still checks the actual saved browser record before updating it.

@@ -2,6 +2,8 @@
 
 This interface operates the merchant's existing invoices, customer receipts, allocations and Stellar payment requests through the same accounting owner used by the other merchant tools. A quotation can become an editable draft, a reviewed draft can become an issued invoice, and an issued balance can become a printable wallet request. A returned transaction is matched to the original request before the native accounting engine records its receipt and allocation.
 
+[Customer follow-up, cash planning and credit release](ACCOUNTING_FINANCIAL_CONTROL.md) extends this same connection with assigned casework, complete saved receipt scenarios, explicit customer credit policies and approved original invoice issue.
+
 [Customer remittance receiving](ACCOUNTING_REMITTANCES.md) adds complete CSV intake, exact native review, atomic allocation, retained source delivery and stable-request recovery to the same accounting owner.
 
 The interfaces are:

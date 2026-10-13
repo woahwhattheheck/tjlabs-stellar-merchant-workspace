@@ -91,6 +91,7 @@ export class CanadaBuysClient {
     }
   }
 
+  bidderIntakeEvidence(intake, options = {}) { return this.request('/api/bidder/evidence-intake', { ...options, method: 'POST', body: intake }); }
   bidderStatus(options) { return this.request('/api/bidder/status', options); }
   bidderList(kind, { noticeId, offset = 0, limit = 100, ...options } = {}) {
     const query = new URLSearchParams({ offset, limit });
