@@ -24,16 +24,16 @@ export function mountWorkWorkbook({container,current,saveApi,session={},mutation
   const root=document.createElement('section');root.className='workbook-desk';root.setAttribute('aria-label','Work and invoice workbook');container.replaceChildren(root);
   if(!document.querySelector('link[data-workbook-style]')){const link=document.createElement('link');link.rel='stylesheet';link.href=new URL('./operations_workbook.css',import.meta.url).href;link.dataset.workbookStyle='true';document.head.append(link);}
   const s=session,caseId=current.program.id,base='/api/operations/'+caseId;
-  let active=true,busy=false,hostBusy=false,caseView=current,books=[],selected=null,comparison=null,returnView=null,message='',error=false,page=0,tab='WORK',editing=null,timer=null,storageConflict=false;
+  let active=true,busy=false,hostBusy=false,caseView=current,books=[],selected=null,comparison=null,returnView=null,message='',error=false,page=0,tab='WORK',timer=null,storageConflict=false;
   s.selectedId??=null;s.drafts??={};s.pending??=null;s.lastRequest??=null;s.name??='Work and invoice preparation';s.note??='';
-  s.upload??=null;s.returnDecisions??={};s.selections??={WORK:{lastRow:5001,hiddenRows:'include'},INVOICES:{lastRow:5001,hiddenRows:'include'}};
+  s.editing??=null;s.upload??=null;s.returnDecisions??={};s.selections??={WORK:{lastRow:5001,hiddenRows:'include'},INVOICES:{lastRow:5001,hiddenRows:'include'}};
   s.storageVersion??=0;s.persistQueue??=Promise.resolve();
   const alive=()=>active&&root.isConnected&&isCurrent(),$=q=>root.querySelector(q);
   const draft=()=>s.drafts[s.selectedId];
   const editable=()=>selected&&selected.workbook.state==='DRAFT'&&!s.pending&&!storageConflict;
   const snapshot=()=>copy({schema:'stellar-forge.sf47-workbook-browser.v1',caseId,staff:pinned,
     selectedId:s.selectedId,drafts:s.drafts,pending:s.pending,lastRequest:s.lastRequest,name:s.name,note:s.note,
-    upload:s.upload,returnDecisions:s.returnDecisions,selections:s.selections});
+    upload:s.upload,returnDecisions:s.returnDecisions,selections:s.selections,editing:s.editing});
   function persist(){
     if(timer!==null){clearTimeout(timer);timer=null;}
     const value=snapshot();
@@ -113,7 +113,7 @@ export function mountWorkWorkbook({container,current,saveApi,session={},mutation
       showComparison(returnView,'draft')+'</details>':'<h4>Applied native operations</h4>'+table(['Action','Native record','Case version'],selected.workbook.application.operations.map(r=>[esc(r.action),esc(r.recordId),esc(r.version)])))+
       showComparison(comparison,'case')+'</section>':'')+
       '<dialog aria-labelledby="wb-row-title"><form data-row-form><h3 id="wb-row-title"></h3><div data-row-fields></div><p data-row-error role="alert"></p><div class="wb-actions">'+button('Cancel','close-row')+button('Remove pending row','remove-row')+'<button type="submit">Keep row changes</button></div></form></dialog>';
-    controls();
+    controls();if(s.editing&&(!s.editing.bookId||s.editing.bookId===s.selectedId)&&editable())drawRow();
   }
   async function refresh(){
     caseView=await saveApi(base);books=(await saveApi(base+'/workbooks')).workbooks;
@@ -168,24 +168,28 @@ export function mountWorkWorkbook({container,current,saveApi,session={},mutation
     const found=draft().rows[tab].find(r=>r.rowId===id);
     const row=found?copy(found):Object.fromEntries(FIELDS[tab].map(k=>[k,'']));
     if(!found){row.rowId='new-'+crypto.randomUUID();if(tab==='WORK')row.fundingBasis='PREAWARD';else{row.currency='USD';row.lineId='line-1';}}
-    editing={kind:tab,original:found?.rowId||null,row};
-    $('#wb-row-title').textContent=found?'Edit retained row':'Add '+(tab==='WORK'?'work':'invoice line');
-    $('[data-row-fields]').innerHTML=FIELDS[tab].map(k=>{
-      const fixed=k==='rowId'||(found&&!found.rowId.startsWith('new-')&&['invoiceId','lineId'].includes(k));
+    s.editing={bookId:s.selectedId,kind:tab,original:found?.rowId||null,row};retain();drawRow();
+  }
+  function drawRow(){
+    const row=s.editing.row,found=s.editing.original,kind=s.editing.kind;
+    $('#wb-row-title').textContent=found?'Edit retained row':'Add '+(kind==='WORK'?'work':'invoice line');
+    $('[data-row-fields]').innerHTML=FIELDS[kind].map(k=>{
+      const fixed=k==='rowId'||(found&&!found.startsWith('new-')&&['invoiceId','lineId'].includes(k));
       if(k==='contributor')return '<label>'+LABEL[k]+'<select name="'+k+'">'+options([['','Select'],...caseView.records.contributors.map(r=>[r.id,r.name+' · '+r.id])],row[k])+'</select></label>';
       if(k==='costId')return '<label>'+LABEL[k]+'<select name="'+k+'">'+options([['','Unplanned work'],...caseView.plan.scenario.future_costs.map(r=>[r.id,r.id])],row[k])+'</select></label>';
       return '<label>'+LABEL[k]+'<textarea name="'+k+'" rows="'+(k==='description'?3:1)+'"'+(fixed?' readonly':'')+'>'+esc(row[k])+'</textarea></label>';
-    }).join('');$('[data-row-error]').textContent='';$('[data-wb-action="remove-row"]').hidden=!found?.rowId.startsWith('new-');$('dialog').showModal();
+    }).join('');$('[data-row-error]').textContent='';$('[data-wb-action="remove-row"]').hidden=!found?.startsWith('new-');$('dialog').showModal();
   }
   root.addEventListener('submit',e=>{
     if(!e.target.matches('[data-row-form]'))return;e.preventDefault();
-    try{const row={...editing.row};for(const [k,v] of new FormData(e.target))row[k]=String(v);
-      const rows=draft().rows[editing.kind],at=rows.findIndex(r=>r.rowId===editing.original);
-      if(at>=0)rows[at]=row;else rows.push(row);changed();$('dialog').close();render();
+    try{const row={...s.editing.row};for(const [k,v] of new FormData(e.target))row[k]=String(v);
+      const rows=draft().rows[s.editing.kind],at=rows.findIndex(r=>r.rowId===s.editing.original);
+      if(at>=0)rows[at]=row;else rows.push(row);s.editing=null;changed();$('dialog').close();render();
     }catch(e){$('[data-row-error]').textContent=e.message;}
   });
   root.addEventListener('input',e=>{
     const el=e.target;
+    if(s.editing&&el.closest('[data-row-form]')&&FIELDS[s.editing.kind].includes(el.name)){s.editing.row[el.name]=el.value;retain();}
     if(el.matches('[data-name]')){s.name=el.value;retain();}
     if(el.matches('[data-note]')){s.note=el.value;retain();}
     if(el.dataset.last){s.selections[el.dataset.last].lastRow=Number(el.value);returnView=null;retain();}
@@ -211,7 +215,7 @@ export function mountWorkWorkbook({container,current,saveApi,session={},mutation
       if(value.schema!=='stellar-forge.sf47-workbook-browser.v1'||value.caseId!==caseId)throw new Error('Open the original case for this complete working copy.');
       if(s.pending||Object.values(s.drafts).some(d=>d.dirty))throw new Error('Save or download current work before opening another copy.');
       validatePending(value.pending);
-      for(const k of ['selectedId','drafts','pending','lastRequest','name','note','upload','returnDecisions','selections'])s[k]=copy(value[k]);
+      for(const k of ['selectedId','drafts','pending','lastRequest','name','note','upload','returnDecisions','selections','editing'])s[k]=copy(value[k]);
       await persist();await refresh();
     }
   }));
@@ -221,8 +225,8 @@ export function mountWorkWorkbook({container,current,saveApi,session={},mutation
       const action=el.dataset.wbAction,value=el.dataset.value;
       if(action==='tab'){tab=value;page=0;render();}
       else if(action==='page'){page=Number(value);render();}
-      else if(action==='close-row')$('dialog').close();
-      else if(action==='remove-row'){if(!editing?.original?.startsWith('new-'))throw new Error('Only a pending new row can be removed here.');draft().rows[editing.kind]=draft().rows[editing.kind].filter(r=>r.rowId!==editing.original);changed();$('dialog').close();render();}
+      else if(action==='close-row'){s.editing=null;retain();$('dialog').close();}
+      else if(action==='remove-row'){if(!s.editing?.original?.startsWith('new-'))throw new Error('Only a pending new row can be removed here.');draft().rows[s.editing.kind]=draft().rows[s.editing.kind].filter(r=>r.rowId!==s.editing.original);s.editing=null;changed();$('dialog').close();render();}
       else if(action==='add')editRow(null);
       else if(action==='edit')editRow(value);
       else if(action==='prepare'){const ids=[...$('[data-people]').selectedOptions].map(o=>o.value);await change('workbook.prepare',{name:s.name,...(ids.length?{contributorIds:ids}:{})});}
@@ -235,7 +239,7 @@ export function mountWorkWorkbook({container,current,saveApi,session={},mutation
       else if(action==='xlsx'){const output=await createOperationsWorkbookArchive(selected,caseView);download(output.workbook.data,output.workbook.filename,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');setMessage('Downloaded the saved workbook edition.');}
       else if(action==='case'){const response=await saveApi(base+'/export.zip',undefined,{download:true});download(await response.blob(),caseId+'.zip','application/zip');}
       else if(action==='working-download')download(JSON.stringify(snapshot(),null,2)+'\n','work-invoice-working-copy.json');
-      else if(action==='cache-open'){const value=await storage.cacheRead(caseId);if(!value)throw new Error('No saved browser copy exists.');for(const k of ['selectedId','drafts','pending','lastRequest','name','note','upload','returnDecisions','selections'])s[k]=copy(value[k]);s.storageVersion=storage.cacheRevision(value);storageConflict=false;await refresh();}
+      else if(action==='cache-open'){const value=await storage.cacheRead(caseId);if(!value)throw new Error('No saved browser copy exists.');for(const k of ['selectedId','drafts','pending','lastRequest','name','note','upload','returnDecisions','selections','editing'])s[k]=copy(value[k]);s.storageVersion=storage.cacheRevision(value);storageConflict=false;await refresh();}
       else if(action==='return-preview'){if(!s.upload)throw new Error('Choose a returned workbook.');returnView=await saveApi(base+'/workbook-return-preview',{bookId:s.selectedId,source:s.upload,selections:s.selections,decisions:s.returnDecisions});render();}
       else if(action==='return-save')await change('workbook.return',{bookId:returnView.bookId,return:{bookId:s.selectedId,source:s.upload,selections:s.selections,decisions:s.returnDecisions}});
       else if(action==='work')onOpen?.('work');
@@ -246,7 +250,7 @@ export function mountWorkWorkbook({container,current,saveApi,session={},mutation
   });
   root.innerHTML='<p role="status">Opening retained workbook preparations…</p>';
   const ready=(async()=>{
-    if(!s.initialized){const value=await storage.cacheRead(caseId);if(value){for(const k of ['selectedId','drafts','pending','lastRequest','name','note','upload','returnDecisions','selections'])if(Object.hasOwn(value,k))s[k]=copy(value[k]);s.storageVersion=storage.cacheRevision(value);}s.initialized=true;}
+    if(!s.initialized){const value=await storage.cacheRead(caseId);if(value){for(const k of ['selectedId','drafts','pending','lastRequest','name','note','upload','returnDecisions','selections','editing'])if(Object.hasOwn(value,k))s[k]=copy(value[k]);s.storageVersion=storage.cacheRevision(value);}s.initialized=true;}
     await refresh();
   })();
   return {root,ready,setHostBusy(value){hostBusy=Boolean(value);controls();},dispose(){active=false;if(timer!==null)persist().catch(()=>{});if($('dialog')?.open)$('dialog').close();}};

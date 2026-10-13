@@ -101,6 +101,20 @@ export async function runWorkbookCourse({page,native,output,caseId,preparedBookI
   await description.fill(original+' — internal operator exercise');
   await capture('workbook-row-editor.png',{width:1440,height:1000});
   await capture('workbook-row-editor-narrow.png',{width:390,height:844});
+  await page.keyboard.press('Escape');
+  const rowCopyEvent=page.waitForEvent('download');await click('[data-wb-action="working-download"]');
+  const rowCopy=await rowCopyEvent,rowCopyTemp=join(output,'row-working-copy.download');
+  await rowCopy.saveAs(rowCopyTemp);
+  const rowCopyBytes=await readFile(rowCopyTemp);
+  const rowCopyValue=JSON.parse(rowCopyBytes.toString('utf8'));
+  if(rowCopyValue.editing?.row?.description!==original+' — internal operator exercise')
+    throw new Error('The complete working copy lost its unfinished row form.');
+  await atomic('row-working-copy.json',rowCopyBytes);await unlink(rowCopyTemp);
+  await page.reload({waitUntil:'domcontentloaded'});await openDesk();
+  await desk.locator('dialog[open]').waitFor();
+  if(await desk.locator('dialog [name="description"]').inputValue()!==original+' — internal operator exercise')
+    throw new Error('Reopening lost the unfinished original row form.');
+  await capture('workbook-reopened-row.png',{width:1440,height:1000});
   await click('[data-wb-action="close-row"]');
   // Reopen the browser page, using its already authenticated original URL.
   await page.reload({waitUntil:'domcontentloaded'});
