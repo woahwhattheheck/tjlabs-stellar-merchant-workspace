@@ -130,6 +130,14 @@
     {
       "path": "products/replication-workbench/workbench/OPERATOR.md",
       "blob": "1468fdfe224ee1578a246145838c2054642322e6"
+    },
+    {
+      "path": "products/replication-workbench/receiving.mjs",
+      "blob": "3f2013c75d1bf5fb0e1d633566169410176bc867"
+    },
+    {
+      "path": "products/replication-workbench/RECEIVING.md",
+      "blob": "68e0cdb6a7c161a597145b2254de49ec58463a3d"
     }
   ]
 }

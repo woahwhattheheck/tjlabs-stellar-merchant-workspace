@@ -122,6 +122,14 @@
     {
       "path": "products/collaborative-documents/workbench/OPERATOR.md",
       "blob": "72d9359ef758c17c3bf1dbcfb21eab2b3fcd1ccb"
+    },
+    {
+      "path": "products/collaborative-documents/receiving.mjs",
+      "blob": "c48fc120eaf6842f1bc72969d506fb4be6da1fda"
+    },
+    {
+      "path": "products/collaborative-documents/RECEIVING.md",
+      "blob": "3d8cf794b71fba26cd2d89b6c1e72933a242a6cc"
     }
   ]
 }

@@ -154,10 +154,11 @@ for name,module in sorted(sys.modules.items()):
 print(json.dumps({"schema":"stellar-forge.hive-reference-python.v1","executable":sys.executable,"binary":file(sys.executable),"version":sys.version,"implementation":platform.python_implementation(),"platform":platform.platform(),"prefix":sys.prefix,"basePrefix":sys.base_prefix,"dependency":{"name":"PyYAML","version":dist.version,"files":rows,"loaded":loaded}},sort_keys=True))
 `;
 class Course{
-  constructor(options,selection,preparation,lease){this.options=options;this.selection=selection;this.preparation=preparation;this.directory=options.directory;this.root=this.directory;this.lease=lease;this.path=join(this.directory,'operation.json');this.state=null;this.apps=null;this.manager=null;this.exports=null;this.browserOwners=new Set();this.referenceChild=null;this.referenceEnded=null;this.closingTask=null;this.reference=null;}
+  constructor(options,selection,preparation,lease){this.options=options;this.selection=selection;this.preparation=preparation;this.directory=options.directory;this.root=this.directory;this.lease=lease;this.path=join(this.directory,'operation.json');this.state=null;this.apps=null;this.selectedHere=new Set();this.bound=false;this.manager=null;this.exports=null;this.browserOwners=new Set();this.referenceChild=null;this.referenceEnded=null;this.closingTask=null;this.reference=null;}
   async save(){need(this.lease,'HIVE_RECEIVING_OWNER','Keep the original integration lease.');await save(this.path,this.state);}
   async open(){if(await exists(this.path)){this.state=await json(this.path);need(this.state.schema===SCHEMA&&same(this.state.selection,this.selection),'HIVE_RECEIVING_SELECTION','Continue the original exact installed source and native request.');need(this.options.resume||this.state.status==='complete','HIVE_RECEIVING_RESUME','Continue this operation with --resume.');}
     else{this.state={schema:SCHEMA,id:'hive_merchant_'+randomUUID(),selection:this.selection,status:'prepared',createdAt:now(),phases:{},hosts:{},files:{},errors:[],attempts:[]};await this.save();}
+    this.bound=true;
     for(const d of Object.values(this.state.files))await verify(join(this.directory,d.path),d);
     this.apps=await openRuntimeWorkspace({directory:this.options['merchant-workspace']});return this;
   }
@@ -348,8 +349,10 @@ class Course{
   async start(name,stage){
     const host=this.state.hosts[name];await this.configure(name);await this.connected(name);let current=host.starts.find(r=>r.stage===stage&&!r.closed);
     if(!current){const a=await this.app(name);need(!a.current||a.current.active===false&&!['PENDING','QUEUED','INTERRUPTED','OBSERVATION_UNAVAILABLE'].includes(a.current.phase),'HIVE_APPLICATION_OWNED','Reconcile the original current Applications run before another start.',{current:a.current});
-      const review=await this.apps.applicationsStartReview({applicationId:host.applicationId});current={stage,requestId:randomUUID(),reviewId:review.id,createdAt:now()};host.starts.push(current);await this.save();await this.record(name+'-'+current.requestId+'-start-review',review);}
+      const review=await this.apps.applicationsStartReview({applicationId:host.applicationId});current={stage,requestId:randomUUID(),reviewId:review.id,createdAt:now(),dispatch:'selected'};host.starts.push(current);this.selectedHere.add(current.requestId);await this.save();await this.record(name+'-'+current.requestId+'-start-review',review);}
+    current.dispatch='dispatching';await this.save();this.selectedHere.delete(current.requestId);
     await this.observed(name+'-start',()=>this.apps.applicationsStart({applicationId:host.applicationId,requestId:current.requestId,reviewId:current.reviewId}));
+    current.dispatch='entered';await this.save();
     let recovered=false;
     for(let i=0;i<600;i++){const a=await this.app(name),run=a?.runs.find(r=>r.id===current.requestId);
       if(run?.active===true&&run.privateUrl){
@@ -368,13 +371,52 @@ class Course{
   }
   async stop(name){
     const host=this.state.hosts[name];if(!host?.applicationId)return;
+    const cancelled=v=>v?.schema==='stellar-forge.application-run-cancellation.v1'&&v.applicationId===host.applicationId&&v.state==='CANCELLED'&&v.launched===false;
+    const closed=v=>{const r=v?.commandResult;return v?.active===false&&v.phase==='SUCCEEDED'&&r?.operation==='original-command'&&typeof r.completedAt==='string'&&Number.isFinite(Date.parse(r.completedAt))&&
+      (r.state==='STOPPED'&&r.stopped===true&&r.launched===false||r.launched===true&&['STOPPED','COMPLETED','EXITED'].includes(r.state)&&(Number.isInteger(r.exitCode)||typeof r.signal==='string'&&r.signal.length>0)||
+        r.state==='LAUNCH_FAILED'&&r.exitCode===null&&r.signal===null&&r.error&&
+        r.closure?.schema==='stellar-forge.managed-command-closure.v1'&&
+        typeof r.closure.childCreated==='boolean'&&r.closure.childClosed===true&&
+        typeof r.closure.observerCreated==='boolean'&&r.closure.observerClosed===true);};
     for(const run of host.starts.filter(x=>!x.closed)){
-      await this.apps.applicationsStop({applicationId:host.applicationId,operationId:run.requestId});
-      for(;;){const output=await this.apps.applicationsOutput({applicationId:host.applicationId,operationId:run.requestId});
-        if(output.active===false&&output.phase!=='OBSERVATION_UNAVAILABLE'){
-          if(this.manager){const all=await this.call('status',{}),status=all.workspaces.find(row=>row.workspace===name);if(status?.state==='CONNECTED')await this.call('disconnect',{workspace:name,launchId:status.connection.launchId});}
-          run.closed=true;run.closedAt=now();await this.save();await this.record(name+'-'+run.requestId+'-stopped',output);break;}
-        await delay(1000);}
+      // Reopen this exact proof before observations or another Stop can change.
+      const proof=await this.intent(name+'-'+run.requestId+'-closed',async()=>{
+        let absent=false;
+        try{await this.apps.applicationsOutput({applicationId:host.applicationId,operationId:run.requestId});}
+        catch(error){if(error.code!=='ENOENT')throw error;absent=true;}
+        if(absent&&(run.dispatch==='selected'||this.selectedHere.has(run.requestId))){
+          return{applicationId:host.applicationId,operationId:run.requestId,cancellation:null,output:null,
+            unentered:{schema:'stellar-forge.receiving-unentered-launch.v1',state:'CANCELLED_BEFORE_DISPATCH',nativeRunObserved:false},closedAt:now()};
+        }
+        if(absent){
+          // A prior caller may have entered Start: reconcile only its saved ID.
+          await this.apps.applicationsStart({applicationId:host.applicationId,requestId:run.requestId,reviewId:run.reviewId});
+        }
+        const cancellation=await this.apps.applicationsStop({applicationId:host.applicationId,operationId:run.requestId});
+        if(cancelled(cancellation)&&cancellation.operationId===run.requestId)
+          return{applicationId:host.applicationId,operationId:run.requestId,cancellation,output:null,closedAt:now()};
+        for(;;){
+          const output=await this.apps.applicationsOutput({applicationId:host.applicationId,operationId:run.requestId});
+          if(output.operationId===run.requestId&&closed(output))
+            return{applicationId:host.applicationId,operationId:run.requestId,cancellation:null,output,closedAt:now()};
+          // Inactive pending/queued/interrupted/unknown observations retain ownership.
+          await delay(1000);
+        }
+      });
+      const unentered=proof.unentered?.schema==='stellar-forge.receiving-unentered-launch.v1'&&
+        proof.unentered.state==='CANCELLED_BEFORE_DISPATCH'&&proof.unentered.nativeRunObserved===false;
+      need(proof.applicationId===host.applicationId&&proof.operationId===run.requestId&&
+        typeof proof.closedAt==='string'&&Number.isFinite(Date.parse(proof.closedAt))&&
+        (unentered||cancelled(proof.cancellation)&&proof.cancellation.operationId===run.requestId||
+          proof.output?.operationId===run.requestId&&closed(proof.output)),
+        'MERCHANT_APPLICATION_CLOSURE','Retain the positive closure proof for this exact original application and operation.');
+      if(this.manager){
+        const all=await this.call('status',{}),status=all.workspaces.find(row=>row.workspace===name);
+        if(status?.state==='CONNECTED')await this.call('disconnect',{workspace:name,launchId:status.connection.launchId});
+      }
+      run.closed=true;run.closedAt=proof.closedAt;
+      if(unentered)run.cancelledBeforeDispatch=true;
+      this.selectedHere.delete(run.requestId);await this.save();
     }
   }
   async originalArchive(alias,input,key){
@@ -503,6 +545,11 @@ class Course{
   async close(){
     if(this.closingTask)return this.closingTask;
     this.closingTask=(async()=>{
+      if(!this.bound)return;
+      if(!this.apps&&Object.values(this.state?.hosts??{}).some(host=>host.starts.some(run=>!run.closed))){
+        for(;;){try{this.apps=await openRuntimeWorkspace({directory:this.options['merchant-workspace']});break;}
+          catch(error){process.stderr.write(JSON.stringify({state:'APPLICATION_OBSERVER_CLOSE_PENDING',error:err(error)})+'\n');await delay(1000);}}
+      }
       if(this.referenceEnded)await this.referenceEnded;
       for(const owner of [...this.browserOwners])for(;;){try{await owner.close();this.browserOwners.delete(owner);break;}catch(e){process.stderr.write(JSON.stringify({operationId:this.state?.id,state:'BROWSER_CLOSE_PENDING',error:err(e)})+'\n');await delay(1000);}}
       for(const name of Object.keys(this.state?.hosts??{}))while(this.state.hosts[name].starts.some(x=>!x.closed)){
