@@ -4,6 +4,7 @@ import { need, plain, clone, canonical } from './model.mjs';
 
 export const QCEW_MERCHANT = 'stellar-forge.qcew-merchant.v1';
 export const QCEW_PUBLICATION_EXTENSION = 'stellar-forge.fred-qcew-extension.v2';
+export const QCEW_CUSTOMER_EXTENSION = 'stellar-forge.fred-qcew-extension.v3';
 export const QCEW_REPORT_PACKAGE = 'report-package.json.gz';
 export const QCEW_PUBLICATION_MAX_BYTES = 16 * 1024 * 1024;
 export const QCEW_PUBLICATION_MAX_BUDGET = 64 * 1024 * 1024;

@@ -161,7 +161,7 @@ Omit **--file** from **received-file** to export the original complete package. 
 
 ## Complete project handover
 
-The existing complete FRED project export includes county sources, profiles, report files, original predecessor relationships and retained county publications. Each publication includes its original merchant plan and exact compressed report package.
+The existing complete FRED project export includes county sources, profiles, report files, original predecessor relationships and retained county publications. Each publication includes its original merchant plan, exact compressed report package and complete saved customer requests. Prepared intents retain their original configuration and purchase identity; a selected customer receiving directory retains its original package binding and selection time.
 
 ~~~sh
 starforge fred qcew export \
@@ -173,11 +173,17 @@ starforge fred qcew receive \
   --source /absolute/handover/economic-project.json
 ~~~
 
-The receiving project reconstructs each county merchant using the retained compressed bytes and original public terms. Reopen the saved publication on that project and use the receiving host's configured Buyer, facilitator and proxy.
+The receiving project reconstructs each county merchant using the retained compressed bytes and original public terms, then restores its original prepared requests and receiving selections. In the Customer desk, choose the saved publication and original request. Review its unchanged intent, expected payment and exact report file, then recover that request using the original configured Buyer. The saved receiving selection reopens the full report and every predecessor when that customer directory remains available.
 
-Buyer operation directories remain part of the configured Buyer's own storage. Move them through that Buyer's existing backup and receiving procedures when transferring an in-progress or completed native purchase between operator hosts.
+The project can be received into a different project directory. Its original prepared request, configuration digest and purchase digest stay unchanged. Preparing that same intent again returns the retained request. The original prepared response destination remains part of that request's source identity; SF88 continues to own the actual response file in its original operation directory.
 
-Projects without county publications retain their existing QCEW extension v1. A project with county publications uses QCEW extension v2 inside the existing FRED project envelope. The envelope preserves its original version and all other economic source, release, briefing and DDP content.
+Buyer operation directories remain part of the configured Buyer's own storage. On the same host, reopen the received project with that same Buyer store to recover completed or pending requests. When transferring the operation to another operator host, receive the Buyer's original store through its existing backup procedures and retain the customer's saved receiving directory at its original absolute path. To inspect a report at another customer directory, use the standalone **receive-report** command with the original downloaded package. The existing purchase continues to identify its original selected receiving directory.
+
+Prepared requests are also retained before a Buyer operation starts. After receiving the project, **recover** reports that original request as prepared and not started; the operator can continue it through the existing review and buy commands. Project receiving itself restores the requests and their selected paths. It does not execute the Buyer or write the customer's external report directory.
+
+The complete handover validates every saved purchase against the reconstructed original merchant offer, including its report, source, payment selection, configuration digest and expected bytes. Each receiving selection must belong to its original full-package purchase. Duplicate intent records and conflicting retained requests are rejected before any customer records are written. An interrupted receiving operation can continue the same complete bundle.
+
+Projects without county publications retain QCEW extension v1. New exports with publications use extension v3, carrying the complete customer state inside the existing FRED project envelope. Original publication-only extension v2 bundles still receive successfully; they contain the publication and report bytes recorded by that earlier format. The envelope preserves its original version and all other economic source, release, briefing and DDP content.
 
 ## Original files and capacity
 
@@ -228,6 +234,8 @@ All public terms, publication selections, payment intents and receiving destinat
 Outputs remain under **native/merchant-workspace**: **journey.json**, **merchant-result.json**, the public payment file, complete native Buyer result records, purchased downloads, all received report members, desktop and phone screenshots, the independent report receiver, and the complete project transfer. The journal records the original launch binding and Buyer settings SHA256; the private Buyer configuration remains in its existing installation.
 
 The original **run_native.py** controller accepts a complete **--merchant-packet** and its **--merchant-packet-sha256** plus these launch options. The default command runs source acquisition, report production, browser receiving and then the paid continuation. **--paid-only** appends the paid phase to the same already-completed native and browser operation. The controller retains its original packet and source, stages the complete paid source separately, and preserves the whole operation archive after completion or interruption.
+
+Complete the same handover with the original prepared and completed requests and their selected receiving records. Prepare one additional original intent without starting its Buyer operation. Export the complete project, receive it at a different project directory, and reopen that pending intent and the completed package purchase using the original configured Buyer store. Reopen the saved customer receiving directory and every predecessor file. The customer inventory and original request/configuration hashes remain identical after relocation; a partial receiving continuation completes only the same exact inventory.
 
 ## Module interface
 

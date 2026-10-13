@@ -322,9 +322,9 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
         return sendJsonFile(res, 200, await exportFredProject({ directory }), 'fred-economic-project.json');
       if (req.method === 'GET' && url.pathname === '/api/publication') {
         const selected = await selectEconomicPublication(directory, url.searchParams.get('publication'));
-        const { edition, plan, offers } = await selected.engine.read(selected.directory);
+        const merchant = await selected.engine.read(selected.directory), { edition, plan, offers } = merchant;
         if (selected.kind === 'QCEW') return send(res, 200, { kind: selected.kind, edition, plan, offers,
-          requests: await listQcewPurchases(selected.directory) });
+          requests: await listQcewPurchases(selected.directory, { merchant }) });
         const names = await readdir(join(selected.directory, 'customer-requests')).catch(error => { if (error.code === 'ENOENT') return []; throw error; });
         const requests = [];
         for (const name of names) {

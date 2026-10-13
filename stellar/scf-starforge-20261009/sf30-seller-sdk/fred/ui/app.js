@@ -244,6 +244,7 @@ async function showPublication(customer = false) {
   if (customer && customerPublication && customerPublication.plan.publicationId !== id) {
     if (customerPublication.requests.some(item => item.intentId === $('intent').value)) $('intent').value = freshId('economic');
     previous = null; delivery = null; clearCountyReceiving();
+    $('customer-result').textContent = '';
   }
   const originalSelection = customer ? customerSelection() : null;
   const receivingDirectory = customer ? $('county-purchase-directory').value.trim() : null;
@@ -255,12 +256,14 @@ async function showPublication(customer = false) {
   if (!selected()) return null;
   const county = value.kind === 'QCEW';
   if (customer) {
+    const showSelectedTerms = sameCustomerSelection(originalSelection) &&
+      receivingDirectory === $('county-purchase-directory').value.trim();
     customerPublication = value;
     select('customer-file', [...(county ? [] : [['','Observation page']]),
       ...value.plan.downloads.map(item => [item.path,
         (item.path === 'report-package.json.gz' ? 'Complete report package' : item.path) + ' · ' + item.bytes + ' bytes'])]);
     select('request-select', value.requests.map(item => [item.intentId,item.intentId + ' · ' + item.url]));
-    if (sameCustomerSelection(originalSelection) && receivingDirectory === $('county-purchase-directory').value.trim())
+    if (showSelectedTerms)
       $('customer-result').textContent = JSON.stringify({ editionId: value.edition.editionId,
         ...(county ? { title: value.edition.title, period: value.edition.period } : { selection: value.edition.selection }),
         payment: value.plan.payment, resource: value.plan.resource, sourceFiles: value.plan.downloads }, null, 2);
@@ -408,10 +411,12 @@ event('merchant-stop', async () => { await action('merchant-stop', { publication
 event('preview', async () => { const result = await api('/api/preview?' + new URLSearchParams({ publication: $('publication-select').value, query: $('preview-query').value })); table('preview-result', result.rows ?? []); message('Original native dataset preview: ' + result.page.returned + ' of ' + result.page.total + ' rows.'); });
 event('customer-publication', async () => {
   previous = null; delivery = null; clearCountyReceiving();
+  $('customer-result').textContent = '';
   await showPublication(true);
 }, 'change');
 event('customer-file', () => {
   previous = null; delivery = null; clearCountyReceiving();
+  $('customer-result').textContent = '';
   if (customerPublication?.requests.some(item => item.intentId === $('intent').value)) $('intent').value = freshId('economic');
   syncCustomerResource();
 }, 'change');
