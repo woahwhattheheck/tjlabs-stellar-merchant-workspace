@@ -92,6 +92,91 @@ process.stdout.write(JSON.stringify(result));
   return requests;
 }
 
+// Read-only closure check for a retained immutable source inventory. This uses
+// the builder's parser and browser/physical resolution without running a build.
+export function inspectDistributionSourceImports({ sources, browserAssets, nodeEntrypoints = [] } = {}) {
+  if (!(sources instanceof Map) || !sources.size || typeof browserAssets?.resolve !== 'function' ||
+      !Array.isArray(nodeEntrypoints) || nodeEntrypoints.some(path => typeof path !== 'string' || !path) ||
+      [...sources].some(([path, bytes]) => typeof path !== 'string' || !Buffer.isBuffer(bytes)))
+    throw new TypeError('Source import inspection requires original source bytes and the maintained browser asset index');
+  const parsed = staticModuleRequests(sources), requestsByPath = new Map(parsed), missing = [], external = new Set();
+  const invalid = parsed.filter(([, , error]) => error);
+  if (invalid.length) {
+    const error = new TypeError('Invalid original source modules:\n' +
+      invalid.map(([path, , message]) => path + ': ' + message).join('\n'));
+    error.code = 'DISTRIBUTION_SOURCE_IMPORTS_INVALID';
+    error.modules = invalid.map(([path, , message]) => ({ path, message }));
+    throw error;
+  }
+  let staticSpecifiers = 0, physicalRelativeImports = 0, browserImports = 0;
+  const required = (importer, specifier, target, kind) => {
+    if (!sources.has(target)) missing.push({ importer, specifier, target, kind });
+  };
+  const nodeReachable = new Set(), queue = [];
+  for (const path of new Set(nodeEntrypoints)) {
+    required('declared Node entrypoint', path, path, 'node-entrypoint');
+    if (sources.has(path)) { nodeReachable.add(path); queue.push(path); }
+  }
+  // A module can serve both Node and browser callers. A browser route must not
+  // hide its physical dependency from an original Node/provider import chain.
+  for (let index = 0; index < queue.length; index++) {
+    const importer = queue[index];
+    for (const request of requestsByPath.get(importer) ?? []) {
+      if (!request.startsWith('.')) continue;
+      const target = posix.normalize(posix.join(posix.dirname(importer), request));
+      if (sources.has(target) && !nodeReachable.has(target)) { nodeReachable.add(target); queue.push(target); }
+    }
+  }
+  for (const [path, requests] of parsed) {
+    for (const request of requests) {
+      staticSpecifiers++;
+      if (/^file:/i.test(request)) {
+        missing.push({ importer: path, specifier: request, target: request, kind: 'absolute-local-import' });
+        continue;
+      }
+      let served;
+      try { served = browserAssets.resolve(path, request); }
+      catch (cause) {
+        const error = new TypeError('Unresolved original browser import: ' + path + ' -> ' + request + ': ' + cause.message);
+        error.code = 'DISTRIBUTION_SOURCE_IMPORTS_MISSING';
+        error.imports = [{ importer: path, specifier: request, target: request, kind: 'unserved-browser-import' }];
+        throw error;
+      }
+      if (request.startsWith('.')) {
+        const target = posix.normalize(posix.join(posix.dirname(path), request));
+        // A file's presence does not create a Node execution context for a
+        // browser-only module. Preserve physical edges only for actual native
+        // reachability or modules without a serving context.
+        if (served === null || nodeReachable.has(path)) {
+          physicalRelativeImports++;
+          required(path, request, target, 'physical-relative-import');
+        }
+      } else if (request.startsWith('/') && (served === null || nodeReachable.has(path))) {
+        missing.push({ importer: path, specifier: request, target: request, kind: 'absolute-local-import' });
+      } else if (served === null) external.add(request);
+      for (const target of served ?? []) {
+        browserImports++;
+        required(path, request, target, 'served-browser-import');
+      }
+    }
+  }
+  if (missing.length) {
+    const error = new TypeError('Original source imports are missing from the retained inventory:\n' +
+      missing.map(row => row.importer + ' -> ' + row.specifier + ' => ' + row.target).join('\n'));
+    error.code = 'DISTRIBUTION_SOURCE_IMPORTS_MISSING';
+    error.imports = missing;
+    throw error;
+  }
+  return { schema: 'stellar-forge.distribution-source-imports.v1',
+    status: 'STATIC_ESM_AND_BROWSER_IMPORTS_CHECKED', sourceFiles: sources.size,
+    parsedModules: parsed.length, staticSpecifiers, physicalRelativeImports, browserImports,
+    nodeEntrypoints: new Set(nodeEntrypoints).size, nodeReachableFiles: nodeReachable.size,
+    nodeReachableModules: [...nodeReachable].filter(path => requestsByPath.has(path)).length,
+    externalSpecifiers: [...external].sort(),
+    unscannedModuleKinds: ['dynamic-import', 'commonjs-require'],
+    runtimeStatus: 'PARSED_WITHOUT_APPLICATION_EVALUATION_OR_DEPENDENCY_INSTALLATION' };
+}
+
 export async function buildDistribution({ repository = fileURLToPath(new URL('../../../', import.meta.url)), ref, output,
   offline = false, resume = false, selection, python = 'python3', onProgress = () => {} }) {
   if (typeof output !== 'string' || !output) throw new TypeError('An output directory is required');

@@ -89,6 +89,7 @@
     "merchant-provider-delivery",
     "merchant-provider-fleet",
     "merchant-provider-tools",
+    "merchant-recovery",
     "mysql",
     "openapi",
     "postgres",

@@ -9,6 +9,7 @@ export const HELP = 'SF101 recovery workspace\n\n' +
   'starforge merchant-recovery-remote workspace serve --config ABS_HOST_CONFIG --directory ABS_PRIVATE_STATE [--port 8481]\n' +
   'starforge merchant-recovery-remote workspace show --config ABS_HOST_CONFIG --directory ABS_PRIVATE_STATE\n' +
   'starforge merchant-recovery-remote workspace COMMAND --config ABS_HOST_CONFIG --directory ABS_PRIVATE_STATE [OPTIONS]\n\n' +
+  'handoff     Export, review and cold-adopt original source/state; handoff --help.\n' +
   'comparison-artifact Read full saved comparison/report: --profile ID --id ID --kind result|html|markdown --sha256 HASH.\n' +
   'bundle-inspection Inspect a declared encrypted archive: --profile ID --archive ID.\n' +
   'bundle-report Read full retained verification/report: --profile ID --id ID [--kind report|verification|publication].\n' +
@@ -213,6 +214,10 @@ async function callRunningWorkspace(options) {
 }
 
 export async function main(argv = process.argv.slice(2), { output = process.stdout } = {}) {
+  if (argv[0] === 'handoff') {
+    const { main: handoff } = await import('./host-handoff-cli.mjs');
+    return handoff(argv.slice(1), { output });
+  }
   const options = parseWorkspaceArguments(argv);
   if (options.help) { output.write(HELP); return { help: true }; }
   if (options.command === 'show') {
