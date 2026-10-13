@@ -35,6 +35,10 @@ export const nativeCollectionDeliveryOperations=Object.freeze({
   'Append up to two contiguous original chunks within the existing request limit. Every committed replay must match its retained bytes.'),
  'upload-finish':spec(['sha256'],{sha256:hash},'Verify and seal the complete original package without receiving it.'),
  receive:spec(['sha256'],{sha256:hash},'Receive the same completed package into the original selected recipient. Reopen the same digest after uncertainty.'),
+ 'received-list':spec([],{...page,expectedHistorySha256:hash},'Page original saved recipient receipts, including incomplete/unavailable records. A continuation binds the same complete history snapshot.'),
+ 'received-package':spec(['sha256'],{sha256:hash},'Verify the complete original received package and all members; inspect its retained download manifest without the sender or original listener.'),
+ 'received-manifest-file':spec(['sha256','expectedFileSha256'],{sha256:hash,expectedFileSha256:hash,...range},'Read the exact retained manifest for one original received package.'),
+ 'received-package-file':spec(['sha256','expectedFileSha256'],{sha256:hash,expectedFileSha256:hash,...range},'Read every original byte of the selected received package by verified range.'),
  received:spec(['sha256'],{sha256:hash,...page},'Verify the received original members and page their full inventory.'),
  'received-file':spec(['sha256','path','expectedFileSha256'],{sha256:hash,path:{type:'string',minLength:1,maxLength:2048},expectedFileSha256:hash,...range},
   'Read a retained original response, review or full source member by exact original name and digest.')

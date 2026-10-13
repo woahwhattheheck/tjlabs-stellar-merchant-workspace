@@ -13,7 +13,7 @@ import {bytes,identity,need,measure,inspectPackage,copyFile,MAX_PACKAGE} from '.
 import {receiveCustomerDelivery} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/delivery/receiving/receive.mjs';
 import {initializeCollectionReceiver,openCollectionReceiver,startCollectionReceiver} from './native-collections-receiver.mjs';
 import {openNativeCollectionDeliveryClient,retainNativeCustomerRequest,uploadNativeCustomerPackage,checkedDeliveryRange} from './native-collection-delivery-client.mjs';
-import {inspectNativeCustomerPackage,downloadNativeCustomerPackage,reopenNativeCustomerPackage,receiveDownloadedCustomerPackage} from './native-collection-delivery-download.mjs';
+import {inspectNativeCustomerPackage,downloadNativeCustomerPackage,reopenNativeCustomerPackage,receiveDownloadedCustomerPackage,inspectReceivedCustomerPackage,downloadReceivedCustomerPackage,reopenReceivedCustomerPackage} from './native-collection-delivery-download.mjs';
 
 const SCHEMA='stellar-forge.collection-customer-mcp-receiving.v1';
 const hash=v=>createHash('sha256').update(v).digest('hex');
@@ -32,6 +32,20 @@ async function exactRows(client,digest){
  }while(offset!==null);
  need(rows.length===first.total&&new Set(rows.map(r=>r.path)).size===rows.length,'MCP_DELIVERY_RECEIVING_INVENTORY');
  return{...first,items:rows,offset:0,nextOffset:null};
+}
+async function exactHistory(client){
+ const items=[];let offset=0,first;
+ do{
+  const value=await client.receivedHistory({offset,limit:25,...(first?{expectedHistorySha256:first.historySha256}:{})});
+  first??=value;
+  need(value.historySha256===first.historySha256&&value.total===first.total&&value.offset===offset&&
+   Array.isArray(value.items)&&value.items.length<=25&&
+   (value.nextOffset===null||value.nextOffset===offset+value.items.length&&value.items.length>0),
+   'MCP_DELIVERY_RECEIVING_HISTORY_CHANGED');
+  items.push(...value.items);offset=value.nextOffset;
+ }while(offset!==null);
+ need(items.length===first.total&&new Set(items.map(row=>row.sha256)).size===items.length,'MCP_DELIVERY_RECEIVING_HISTORY_CHANGED');
+ return{...first,items,offset:0,nextOffset:null};
 }
 /** Caller retains the original Collections object and its existing queue owner. */
 export async function receiveNativeCustomerDelivery({directory,collections,sourceRoot,sourceManifest,collectionId,intentIds,onProgress=()=>{}}){
@@ -174,6 +188,45 @@ export async function receiveNativeCustomerDelivery({directory,collections,sourc
   const one=await coldRecipient.call('received-file',{sha256:state.original.package.sha256,path:response.path,expectedFileSha256:response.sha256,byteOffset:0,maxBytes:65536});
   checkedDeliveryRange(one.file,{...response,byteOffset:0,maxBytes:65536});
   state.steps.originalOwnersClosedReadback=true;await save();
+  // Discover the original recipient without a hash supplied to its history call.
+  // The original sender and recipient listeners remain closed for this whole path.
+  const history=await exactHistory(coldRecipient),selected=history.items.find(row=>row.sha256===state.original.package.sha256);
+  need(selected?.state==='COMPLETE'&&selected.bytes===state.original.package.bytes&&
+   selected.manifestSha256===state.original.package.manifestSha256&&
+   selected.collectionId===(packageInspection.manifest.collection?.id??null)&&
+   identity(selected.task??null)===identity(packageInspection.manifest.task??null),'MCP_DELIVERY_RECEIVING_HISTORY_SELECTION');
+  if(!state.recipientHistory){state.recipientHistory=history;await save();}
+  const originalSelection=state.recipientHistory.items.find(row=>row.sha256===selected.sha256);
+  need(originalSelection&&identity(originalSelection)===identity(selected),'MCP_DELIVERY_RECEIVING_HISTORY_SELECTION');
+  // Preserve the originally observed discovery snapshot if unrelated receipts arrive.
+  await retainedJson('recipient-history.json',state.recipientHistory);
+  const receivedManifest=await inspectReceivedCustomerPackage({...coldOptions,deliveryWorkspace:'recipient',receivedSha256:selected.sha256});
+  if(!state.receivedDownloadManifest){state.receivedDownloadManifest=receivedManifest;await save();}
+  need(identity(receivedManifest)===identity(state.receivedDownloadManifest),'MCP_DELIVERY_RECEIVING_RECIPIENT_SELECTION');
+  const recipientDownload={...coldOptions,deliveryWorkspace:'recipient',receivedSha256:selected.sha256,
+   expectedManifestSha256:receivedManifest.manifestSha256,directory:join(directory,'recipient-download')};
+  if(!state.steps.recipientDownloadInterrupted){
+   try{await downloadReceivedCustomerPackage({...recipientDownload,onProgress:async progress=>{
+    if(progress.state==='DOWNLOADING'&&progress.bytes>0){state.steps.recipientDownloadInterrupted=true;await save();
+     throw Object.assign(new Error('Original received package prefix retained'),{code:'MCP_DELIVERY_RECEIVING_RECIPIENT_PREFIX'});}
+   }});}catch(error){if(error.code!=='MCP_DELIVERY_RECEIVING_RECIPIENT_PREFIX')throw error;}
+   need(state.steps.recipientDownloadInterrupted,'MCP_DELIVERY_RECEIVING_NO_RECIPIENT_PREFIX');
+  }
+  const recipientDownloaded=await downloadReceivedCustomerPackage(recipientDownload);
+  need(recipientDownloaded.packageSha256===state.original.package.sha256&&
+   recipientDownloaded.packageManifestSha256===state.original.package.manifestSha256,
+   'MCP_DELIVERY_RECEIVING_RECIPIENT_PACKAGE_CHANGED');
+  await measure(join(recipientDownload.directory,'customer-delivery.ndjson'),state.original.package,MAX_PACKAGE);
+  await retainedJson('recipient-download-manifest.json',receivedManifest);
+  await closeOne('mcp');
+  // The retained download reopens after every owner has closed, with no connection.
+  await reopenReceivedCustomerPackage({deliveryWorkspace:'recipient',receivedSha256:selected.sha256,
+   expectedManifestSha256:receivedManifest.manifestSha256,directory:recipientDownload.directory});
+  const forwarded=await receiveDownloadedCustomerPackage({file:join(recipientDownload.directory,'customer-delivery.ndjson'),
+   receivingDirectory:join(directory,'recipient-independent-customer'),expectedSha256:selected.sha256});
+  need(forwarded.manifestSha256===packageInspection.manifestSha256,'MCP_DELIVERY_RECEIVING_RECIPIENT_INDEPENDENT_CHANGED');
+  state.steps.recipientHistoryDiscovered=true;state.steps.receivedPackageDownloaded=true;
+  state.steps.receivedPackageOfflineReopened=true;state.steps.receivedPackageIndependentlyReceived=true;await save();
   await retainedJson('receiving-evidence.json',{schema:SCHEMA+'.evidence',operationId:state.operationId,originalIntents:intentIds,
    source:{sha256:source.sha256,files:source.files.length,bytes:source.bytes},package:state.original.package,
    downloadManifestSha256:state.downloadManifest.manifestSha256,memberCount:inventory.total,

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 export interface ConnectionOptions {url:string;deliveryWorkspace?:string;tokenEnv?:string;environment?:Record<string,string|undefined>;signal?:AbortSignal}
 export interface Page {offset?:number;limit?:number}
+export interface HistoryPage extends Page {expectedHistorySha256?:string}
 export interface Range {byteOffset?:number;maxBytes?:number}
 export interface FileIdentity {bytes:number;sha256:string}
 export interface OriginalRequest {id:string;collectionId:string;expectedManifestSha256:string;title:string;note:string;intentIds:string[];maxVerifyBytes:number;allowIncomplete:boolean}
@@ -16,6 +17,10 @@ export interface Requests {
  'upload-chunk':{sha256:string;offset:number;base64:string;chunkSha256:string};
  'upload-chunks':{sha256:string;chunks:UploadChunk[]};
  'upload-finish':{sha256:string};receive:{sha256:string};
+ 'received-list':HistoryPage;
+ 'received-package':{sha256:string};
+ 'received-manifest-file':{sha256:string;expectedFileSha256:string}&Range;
+ 'received-package-file':{sha256:string;expectedFileSha256:string}&Range;
  received:{sha256:string}&Page;
  'received-file':{sha256:string;path:string;expectedFileSha256:string}&Range;
 }
@@ -25,6 +30,11 @@ export interface CompleteDelivery {schema:string;id:string;state:'COMPLETE';requ
 export interface Upload extends FileIdentity {filename:string;offset:number;complete:boolean;uploadBatchChunks?:1|2}
 export interface Member extends FileIdentity {path:string;role:'source'|'response'|'review'}
 export interface Received extends FileIdentity {schema:string;manifestSha256:string;outputsComplete:boolean;title:string;items:Member[];offset:number;total:number;nextOffset:number|null}
+export interface TaskOrigin {taskSha256:string;planSha256:string;system:string;id:string;revision:string}
+export type ReceiptSummary = {sha256:string;state:'COMPLETE';title:string;collectionId:string|null;task?:TaskOrigin;capturedAt:string;manifestSha256:string;bytes:number;files:number;contentBytes:number;outputsComplete:boolean;requestCount:number}
+ | {sha256:string;state:'INCOMPLETE'} | {sha256:string;state:'UNAVAILABLE';code:string};
+export interface ReceivedHistory {schema:string;historySha256:string;items:ReceiptSummary[];offset:number;total:number;nextOffset:number|null}
+export interface ReceivedPackage {schema:string;state:'COMPLETE';sha256:string;package:FileIdentity&{manifestSha256:string};origin:{collectionId:string|null;task?:TaskOrigin};outputsComplete:boolean;files:{manifest:FileIdentity&{name:'manifest.json'}}}
 export interface Preview {schema:string;request:OriginalRequest;previewSha256:string;source:{sha256:string;files:number;bytes:number};[key:string]:unknown}
 export interface Responses {
  workspaces:{schema:string;operation:'workspaces';items:unknown[];offset:number;total:number;nextOffset:number|null};
@@ -34,6 +44,9 @@ export interface Responses {
  'result-file':{id:string;filename:'result.json';file:SavedRange};
  'package-file':{id:string;filename:'customer-delivery.ndjson';file:SavedRange};
  'upload-start':Upload;'upload-status':Upload;'upload-chunk':Upload;'upload-chunks':Upload;'upload-finish':Upload;
+ 'received-list':ReceivedHistory;'received-package':ReceivedPackage;
+ 'received-manifest-file':{sha256:string;filename:'manifest.json';file:SavedRange};
+ 'received-package-file':{sha256:string;filename:'customer-delivery.ndjson';file:SavedRange};
  receive:Received;received:Received;'received-file':{packageSha256:string;path:string;file:SavedRange};
 }
 export interface Context {requestSignal?:AbortSignal|null;timeoutMs?:number}
@@ -44,6 +57,8 @@ export interface NativeCustomerClient {
  prepare(request:PrepareRequest,context?:Context):Promise<CompleteDelivery>;
  inspect(id:string,context?:Context):Promise<Responses['inspect']>;
  received(sha256:string,range?:Page,context?:Context):Promise<Received>;
+ receivedHistory(page?:HistoryPage,context?:Context):Promise<ReceivedHistory>;
+ receivedPackage(sha256:string,context?:Context):Promise<ReceivedPackage>;
 }
 export const DELIVERY_NATIVE_SCHEMA:string;
 export function openNativeCollectionDeliveryClient(options:ConnectionOptions):Promise<NativeCustomerClient>;
