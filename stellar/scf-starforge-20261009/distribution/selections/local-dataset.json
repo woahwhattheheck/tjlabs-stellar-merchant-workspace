@@ -76,7 +76,9 @@
     "dataset-buyer",
     "python",
     "merchant-provider-publishers",
-    "merchant-provider-dataset"
+    "merchant-provider-dataset",
+    "merchant-provider-dataset-studies",
+    "merchant-provider-tools"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
@@ -125,7 +127,10 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/application.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/DATASET_STUDIES.md",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-query-studies.d.mts"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-query-studies.d.mts",
+    "stellar-forge/mcp-merchant-operator/dataset-studies-client.d.mts",
+    "stellar-forge/mcp-merchant-operator/dataset-studies-setup.d.mts",
+    "stellar-forge/mcp-merchant-operator/DATASET_STUDIES.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

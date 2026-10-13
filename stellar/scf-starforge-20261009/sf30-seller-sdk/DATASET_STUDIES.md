@@ -120,3 +120,88 @@ The original /api/query and /api/activate behavior remains available. Study muta
 The dataset contribution adds the native command, original workspace/study exports, typed store interface and complete browser asset manifest. The existing local-dataset selection includes this capability alongside its original Frictionless, DuckDB, publisher, payment and buyer receiving flows.
 
 Use the original dataset receiving operation with its actual saved configuration/service, known successful query and multiple-page result. Operate the outgoing desktop and narrow layouts, edit and save unfinished values, fork/reopen an original study, preserve a failed query, export every row, interrupt and resume the same result, and independently reopen its JSON/CSV/manifest. Return the actual rendered views and exact retained output files through that original course. This feature requires no buyer payment or new source engine.
+
+## Agent and browser on the same original workspace
+
+The installed `dataset-studies-agent` command opens the selected native source and
+private study store once. The authenticated merchant agent and the browser both
+borrow that same owner. Browser close leaves the study owner and result jobs
+available; closing the owner waits for its browser and original jobs. Reopening
+the same private studies directory returns the same persistent workspace ID and a
+new process instance ID. Agent mutations carry both IDs.
+
+Declare the actual host paths in a private connection JSON file. A file source
+uses `datasetPath`; a service uses `stateDirectory` instead. The studies directory
+must already exist with private permissions. Optional `resource` selects the
+original service route; optional `imports` names complete original study JSON
+files that the agent may inspect and import. File paths remain in this host
+configuration, not in agent tool arguments.
+
+```json
+{
+  "schema": "stellar-forge.merchant-dataset-studies.v1",
+  "workspaces": {
+    "analysis": {
+      "label": "Original dataset analysis",
+      "datasetPath": "/private/source/dataset.json",
+      "studiesDirectory": "/private/analysis/studies",
+      "imports": {
+        "returned-study": "/private/received/study.json"
+      }
+    }
+  }
+}
+```
+
+Add `datasetStudyConnection` to the original merchant configuration, or initialize
+a new private merchant through `merchant-providers init dataset-studies --options
+HOST_SETUP_JSON`. The setup JSON selects `directory`, `connection` and optionally
+`name`; it preserves the normal merchant release store and private export path.
+
+```sh
+starforge dataset-studies-agent inspect --config MERCHANT_JSON --workspace analysis
+starforge dataset-studies-agent serve --config MERCHANT_JSON --workspace analysis
+```
+
+Inspection binds the original merchant and connection file bytes plus resolved
+declarations. Serve checks those declarations again after the original MCP host
+starts, then returns the selected source summary, private browser URL, MCP URL,
+persistent workspace ID and current instance ID. Set the ordinary MCP bearer
+token in the selected host environment; the token value is not an agent argument.
+
+The complete native tool family is `merchant_dataset_study_`: list/open/status,
+working and historical inspection, create/save, declared-file inspection/import,
+fork/restore/rebind, query, full export start/resume/status, retained file manifest
+and byte reads, borrowed browser open/close, and owner close. Every save/query
+selects its original expected storage revision and explicit operation time.
+Retry those exact inputs after a lost reply before preparing another revision.
+
+### Complete client receiving and reopening
+
+Import `openDatasetStudiesClient` from the installed
+`./merchant/dataset-studies/client` export. Open the original declared alias,
+then use the same typed client for the native operations and complete downloads.
+The client uses the original merchant transport and durable retained-file receiver.
+
+A saved study export ID is `study.ID.REVISION`. It contains the complete original
+`study.json`, including unfinished controls, successful page and every retained
+edition. A result export ID is its original native 64-character job ID. Its
+download inventory includes the original CSV, typed JSONL, saved study, native
+result manifest, optional supplied meanings, and **every original response page**.
+`download-manifest.json` binds these files to the persistent workspace and saved
+study revision. It adds no alternate query calculation or buyer delivery identity.
+
+The original receiver verifies the complete manifest, file sizes and hashes,
+writes private files, and resumes retained byte offsets after interruption.
+After restarting the merchant, explicitly reopen the same workspace to obtain
+its new instance ID; download recovery stays bound to the same persistent
+workspace and original manifest. Whole native study imports preserve their
+source binding. An import from another dataset remains inspectable and editable;
+explicitly rebind it before querying the newly selected source.
+
+`waitExport` observes a running job until it completes or pauses. A cold-reopened
+`READY` job returns to the caller for an explicit `resumeExport` of that same ID.
+The observer does not start another job. Full tool shapes, host setup and typed
+client examples are in
+[`DATASET_STUDIES.md`](../../../stellar-forge/mcp-merchant-operator/DATASET_STUDIES.md)
+in the merchant operator source.
