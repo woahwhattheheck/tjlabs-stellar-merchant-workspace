@@ -1,0 +1,5 @@
+name: GovHub original receiving boundary
+type: module
+description: One owned GovHub commissioning native import shutdown for original-operation recovery.
+core_version_requirement: ^11
+package: GovHub receiving

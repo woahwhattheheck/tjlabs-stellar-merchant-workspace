@@ -1,0 +1,33 @@
+{
+  "schema": "govhub-tugboat-customer-receiving/v1",
+  "operation_id": "ORIGINAL_CUSTOMER_OPERATION_ID",
+  "work_directory": "/ABSOLUTE/PRIVATE/tugboat-receiving",
+  "workspace": {
+    "workspace": "/ABSOLUTE/PRIVATE/existing-govhub-project",
+    "source_root": "/ABSOLUTE/PRIVATE/original-supplied-inputs",
+    "assessment_core": "/ABSOLUTE/govhub-operations/workspace/vendor/assessment-core",
+    "username": "EXISTING_GOVHUB_USER",
+    "password_env": "EXISTING_GOVHUB_PASSWORD"
+  },
+  "environment_id": "EXISTING_LOCAL_ENVIRONMENT_RECORD_ID",
+  "profile": {
+    "source_kind": "tugboat",
+    "environment_id": "ACTUAL_PROJECT_ID/ACTUAL_REPOSITORY_ID",
+    "access_token_env": "EXISTING_TUGBOAT_API_KEY",
+    "site_root": "/ABSOLUTE/ORIGINAL/git-checkout",
+    "git_path": "/usr/bin/git",
+    "base_preview_id": "none",
+    "children": false,
+    "force": false,
+    "timeout_seconds": 120,
+    "max_artifact_bytes": 1073741824
+  },
+  "authorization_reference": "ORIGINAL_CUSTOMER_PREVIEW_AUTHORIZATION",
+  "actions": [
+    "create",
+    "refresh",
+    "rebuild",
+    "stop",
+    "start"
+  ]
+}

@@ -1,0 +1,17 @@
+/* Restrained additions to the original industrial GovHub interface. */
+.static-tabs{display:flex;gap:16px;flex-wrap:wrap;padding:0 0 20px;border-bottom:1px solid #d4d4d4;margin-bottom:22px}
+.static-tabs a{color:#262626;text-underline-offset:3px}
+.static-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:0 0 22px}
+.static-metrics>div{border:1px solid #d4d4d4;background:#fff;padding:18px}
+.static-metrics strong{display:block;font-size:27px;font-weight:600;line-height:1.15}
+.static-metrics span{display:block;font-size:13px;margin-top:8px;color:#555}
+.static-request{padding:14px 18px;border:1px solid #aaa;background:#f6f6f6;margin-bottom:20px}
+.static-request>strong{margin-right:12px}.static-request details{margin-top:8px}
+.static-controls{border:0;padding:0;margin:0;min-width:0}
+.static-controls[disabled]{opacity:.7}
+.static-filter{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.static-filter label{flex:1;min-width:180px}
+.static-filter button{margin-bottom:0}
+.static-pager{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px;color:#555;font-size:13px}
+#main code{overflow-wrap:anywhere}
+@media(max-width:680px){.static-metrics{gap:8px}.static-metrics>div{padding:12px}.static-metrics strong{font-size:23px}.static-metrics span{font-size:12px}.static-filter{display:block}.static-filter button{margin-top:12px}}

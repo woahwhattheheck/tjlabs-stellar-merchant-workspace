@@ -1,0 +1,20 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "govhub",
+  "description": "Complete GovHub native site operations, content, release, recovery and private project receiving",
+  "components": [
+    "products/govhub"
+  ],
+  "commands": {
+    "govhub": "products/govhub/cli.mjs"
+  },
+  "commandDescriptions": {
+    "govhub": "Operate the original GovHub Python application and native receiving programmes"
+  },
+  "exports": {
+    "./govhub": "./source/products/govhub/cli.mjs"
+  },
+  "applicationProviders": {
+    "govhub": "products/govhub/application-provider.mjs"
+  }
+}

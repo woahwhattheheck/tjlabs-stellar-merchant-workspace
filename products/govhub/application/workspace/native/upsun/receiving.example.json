@@ -1,0 +1,110 @@
+{
+  "schema": "govhub-upsun-native-receiving/v1",
+  "operation_id": "SELECT-ORIGINAL-UPSUN-COURSE",
+  "work_directory": "/PRIVATE/SELECT_ORIGINAL_RECEIVING",
+  "workspace": {
+    "workspace": "/PRIVATE/SELECT_EXISTING_GOVHUB_WORKSPACE",
+    "source_root": "/PRIVATE/SELECT_COMPLETE_ORIGINAL_INPUTS",
+    "assessment_core": "/ABS/GOVHUB/workspace/vendor/assessment-core",
+    "username": "SELECT_EXISTING_STAFF",
+    "password_env": "SELECT_EXISTING_PASSWORD_ENV"
+  },
+  "authorization_reference": "SELECT_ORIGINAL_OPERATING_AUTHORITY",
+  "steps": [
+    {
+      "id": "01-source",
+      "type": "CAPTURE",
+      "native_action": "upsun-capture",
+      "environment_id": "SELECT_LOCAL_NONPRODUCTION_ENVIRONMENT_RECORD",
+      "profile": {
+        "source_kind": "upsun",
+        "environment_id": "SELECT_PROJECT/SELECT_ENVIRONMENT",
+        "api_token_env": "SELECT_EXISTING_UPSUN_API_TOKEN_ENV",
+        "site_root": "/ABS/SELECT_ORIGINAL_SOURCE",
+        "git_path": "/ABS/SELECT_EXISTING_GIT",
+        "upsun_path": "/ABS/SELECT_EXISTING_UPSUN",
+        "ssh_path": "/ABS/SELECT_EXISTING_SSH",
+        "rsync_path": "/ABS/SELECT_EXISTING_RSYNC",
+        "source_app": "SELECT_ORIGINAL_APP",
+        "source_database": "SELECT_NATIVE_DATABASE_RELATIONSHIP",
+        "source_database_schema": "SELECT_NATIVE_DATABASE_SCHEMA",
+        "source_mounts_json": "[]",
+        "timeout_seconds": 3600,
+        "max_artifact_bytes": 2147483648
+      }
+    },
+    {
+      "id": "02-native-snapshot",
+      "type": "BACKUP_CREATE",
+      "native_action": "upsun-backup-create",
+      "environment_id": "SELECT_LOCAL_NONPRODUCTION_ENVIRONMENT_RECORD",
+      "profile": {
+        "source_kind": "upsun",
+        "environment_id": "SELECT_PROJECT/SELECT_ENVIRONMENT",
+        "api_token_env": "SELECT_EXISTING_UPSUN_API_TOKEN_ENV",
+        "site_root": "/ABS/SELECT_ORIGINAL_SOURCE",
+        "git_path": "/ABS/SELECT_EXISTING_GIT",
+        "upsun_path": "/ABS/SELECT_EXISTING_UPSUN",
+        "ssh_path": "/ABS/SELECT_EXISTING_SSH",
+        "rsync_path": "/ABS/SELECT_EXISTING_RSYNC",
+        "source_app": "SELECT_ORIGINAL_APP",
+        "source_database": "SELECT_NATIVE_DATABASE_RELATIONSHIP",
+        "source_database_schema": "SELECT_NATIVE_DATABASE_SCHEMA",
+        "source_mounts_json": "[]",
+        "timeout_seconds": 3600,
+        "max_artifact_bytes": 2147483648
+      }
+    },
+    {
+      "id": "03-native-redeploy",
+      "type": "PREVIEW",
+      "native_action": "upsun-redeploy",
+      "environment_id": "SELECT_LOCAL_NONPRODUCTION_ENVIRONMENT_RECORD",
+      "profile": {
+        "source_kind": "upsun",
+        "environment_id": "SELECT_PROJECT/SELECT_ENVIRONMENT",
+        "api_token_env": "SELECT_EXISTING_UPSUN_API_TOKEN_ENV",
+        "site_root": "/ABS/SELECT_ORIGINAL_SOURCE",
+        "git_path": "/ABS/SELECT_EXISTING_GIT",
+        "upsun_path": "/ABS/SELECT_EXISTING_UPSUN",
+        "ssh_path": "/ABS/SELECT_EXISTING_SSH",
+        "rsync_path": "/ABS/SELECT_EXISTING_RSYNC",
+        "source_app": "SELECT_ORIGINAL_APP",
+        "source_database": "SELECT_NATIVE_DATABASE_RELATIONSHIP",
+        "source_database_schema": "SELECT_NATIVE_DATABASE_SCHEMA",
+        "source_mounts_json": "[]",
+        "timeout_seconds": 3600,
+        "max_artifact_bytes": 2147483648
+      },
+      "profile_sources": [
+        {
+          "field": "source_revision",
+          "step": "01-source",
+          "pointer": "/native_result/observations/native_inventory/environment/head_commit"
+        }
+      ]
+    },
+    {
+      "id": "04-following-source",
+      "type": "CAPTURE",
+      "native_action": "upsun-capture",
+      "environment_id": "SELECT_LOCAL_NONPRODUCTION_ENVIRONMENT_RECORD",
+      "profile": {
+        "source_kind": "upsun",
+        "environment_id": "SELECT_PROJECT/SELECT_ENVIRONMENT",
+        "api_token_env": "SELECT_EXISTING_UPSUN_API_TOKEN_ENV",
+        "site_root": "/ABS/SELECT_ORIGINAL_SOURCE",
+        "git_path": "/ABS/SELECT_EXISTING_GIT",
+        "upsun_path": "/ABS/SELECT_EXISTING_UPSUN",
+        "ssh_path": "/ABS/SELECT_EXISTING_SSH",
+        "rsync_path": "/ABS/SELECT_EXISTING_RSYNC",
+        "source_app": "SELECT_ORIGINAL_APP",
+        "source_database": "SELECT_NATIVE_DATABASE_RELATIONSHIP",
+        "source_database_schema": "SELECT_NATIVE_DATABASE_SCHEMA",
+        "source_mounts_json": "[]",
+        "timeout_seconds": 3600,
+        "max_artifact_bytes": 2147483648
+      }
+    }
+  ]
+}
