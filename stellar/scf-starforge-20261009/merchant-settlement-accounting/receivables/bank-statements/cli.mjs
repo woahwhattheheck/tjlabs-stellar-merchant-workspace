@@ -13,6 +13,7 @@ import {BANK_SOURCE_BYTES,BANK_ROW_LIMIT} from './domain.mjs';
 import {readBankStatementSource} from './source.mjs';
 
 const HELP='Merchant bank statements and cash reconciliation\n\n'+
+  'starforge bank-statements profile help\n'+
   'starforge bank-statements collection help\n'+
   'starforge bank-statements accountant help\n'+
   'starforge bank-statements serve --directory /private/accounting [--port 8448]\n'+
@@ -109,6 +110,7 @@ async function prepareSource(flags) {
       summary:statement.summary,issues:statement.issues})),issues:report.issues};
 }
 export async function runBankStatementsCli(argv=process.argv.slice(2)) {
+  if(argv[0]==='profile'){const {runBankProfileCli}=await import('./profile-cli.mjs');return runBankProfileCli(argv.slice(1));}
   if(argv[0]==='collection'){const {runBankCollectionCli}=await import('./collection-cli.mjs');return runBankCollectionCli(argv.slice(1));}
   if(argv[0]==='accountant'){const {runAccountantReceivingCli}=await import('./accountant-receiving/cli.mjs');return runAccountantReceivingCli(argv.slice(1));}
   const {command,flags}=parseBankArguments(argv);

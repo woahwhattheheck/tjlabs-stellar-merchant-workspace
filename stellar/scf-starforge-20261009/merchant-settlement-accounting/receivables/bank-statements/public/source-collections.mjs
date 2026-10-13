@@ -49,6 +49,7 @@ export function installSourceCollections({root,workspaceId,getImports,readIndex,
    const p=byId.get(item.id),tr=node('tr'),file=node('td'),interpretation=node('td'),status=node('td'),decision=node('td'),actions=node('td');
    file.append(node('strong',item.file.name),node('p',item.file.bytes.toLocaleString()+' bytes',{class:'small'}),node('code',item.file.sha256,{class:'small'}));
    interpretation.append(node('p',item.mapping.format),node('p',item.mapping.accountNamespace||'Original institution identity',{class:'small'}));
+   if(item.mapping.sourceProfile)interpretation.append(node('p',item.mapping.sourceProfile.name+' · saved version '+item.mapping.sourceProfile.version,{class:'small'}));
    status.append(node('p',p.status.toLowerCase().replaceAll('_',' ')),node('p',p.completed+' / '+p.total+' current sections retained',{class:'small'}));
    if(!p.total&&p.existingImports)status.append(node('p',p.existingImports+' imports have these original bytes; prepare the current interpretation to identify all sections.',{class:'small muted'}));
    for(const s of p.sections){const text=s.accountId+' · '+s.currency+' · '+(s.from||'unspecified')+' – '+(s.until||'unspecified')+' · '+s.postedCount+' rows · '+s.activeImports.length+' current / '+s.imports.length+' retained imports';const label=node('p',text,{class:'small'});status.append(label);}

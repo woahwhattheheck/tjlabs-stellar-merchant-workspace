@@ -162,6 +162,27 @@
         "../SOURCE_COLLECTIONS.md",
         "text/markdown; charset=utf-8"
       ]
+    ],
+    [
+      "/bank-statements/source-profile-model.mjs",
+      [
+        "source-profile-model.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/source-profiles.mjs",
+      [
+        "source-profiles.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/SOURCE_PROFILES.md",
+      [
+        "../SOURCE_PROFILES.md",
+        "text/markdown; charset=utf-8"
+      ]
     ]
   ]
 }
