@@ -60,10 +60,6 @@ This extends the prospective customer programme's usable handover from completed
 
 [Complete catalogue decision through request and Installation operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32383f4efb956ad95341629278546c0c201ec0f7/stellar/scf-starforge-20261009/partners/rialto/CATALOGUE_COMPARISON.md)
 
-## Source registration
-
-The original grant composer reads `stellar-forge/developer-site/grant-products/rialto-customer.json`. It selects all seventeen measured immutable source editions only when the complete H2 above is present in the selected manuscript or companion. The existing source index and all other registered products remain with their original cumulative composition. The application owner can use this complete chapter through the maintained chapter chooser and original save/export workflow.
-
 [Complete original Rialto acquisition progress and private source receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/802f9a74f152777461119f30805b93c621eb2ebb/stellar/scf-starforge-20261009/partners/rialto/capture-progress.mjs)
 
 [Maintained customer commands for partial acquisition and independent reopening](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/802f9a74f152777461119f30805b93c621eb2ebb/stellar/scf-starforge-20261009/partners/rialto/customer.mjs)
@@ -71,3 +67,7 @@ The original grant composer reads `stellar-forge/developer-site/grant-products/r
 [Whole failed and partial capture, interpretation, transfer and resume guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/802f9a74f152777461119f30805b93c621eb2ebb/stellar/scf-starforge-20261009/partners/rialto/CAPTURE_PROGRESS.md)
 
 [Complete Rialto acquisition, comparison, customer and Installation operating course](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/802f9a74f152777461119f30805b93c621eb2ebb/stellar/scf-starforge-20261009/partners/rialto/OPERATING.md)
+
+## Source registration
+
+The original grant composer reads `stellar-forge/developer-site/grant-products/rialto-customer.json`. It selects all twenty-one measured immutable source editions only when the complete H2 above is present in the selected manuscript or companion. The existing source index and all other registered products remain with their original cumulative composition. The application owner can use this complete chapter through the maintained chapter chooser and original save/export workflow.
