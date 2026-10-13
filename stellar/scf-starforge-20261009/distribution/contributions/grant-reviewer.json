@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "grant-reviewer",
-  "description": "Complete SCF application, editable submission, named review rounds, planning and handover, original grant purchase reviewer and complete receiving.",
+  "description": "Complete SCF application, editable submission, named review rounds, planning and handover, retained catalog selection into Atlas, original grant purchase reviewer and complete receiving.",
   "applicationProviders": {
     "grant-reviewer": "stellar/scf_2026/presentation/reviewer/application-provider.mjs"
   },
@@ -25,7 +25,8 @@
     "./grant/customer-closing/composition": "./source/stellar-forge/developer-site/grant-customer-closing.mjs",
     "./grant/issuer-context": "./source/stellar-forge/developer-site/grant-issuer-context.mjs",
     "./grant/issuer-context/source": "./source/stellar-forge/developer-site/dist/grant-issuer-source.mjs",
-    "./grant/issuer-context/core": "./source/stellar-forge/developer-site/dist/grant-issuer-core.mjs"
+    "./grant/issuer-context/core": "./source/stellar-forge/developer-site/dist/grant-issuer-core.mjs",
+    "./grant/static-reader": "./source/stellar-forge/developer-site/grant-static-export.mjs"
   },
   "commands": {
     "grant-application": "stellar-forge/developer-site/grant.mjs",
@@ -34,7 +35,7 @@
     "grant-operating-plan": "stellar-forge/developer-site/grant-operating-plan.mjs"
   },
   "commandDescriptions": {
-    "grant-application": "Read the complete SCF application, prepare and review a saved draft, retain its handover and open the original grant purchase reviewer",
+    "grant-application": "Read or export the complete source-selected SCF application, inspect its retained catalog and continue original buyer workflows",
     "grant-compose": "Compose the complete selected SCF manuscript and maintained product sections into the existing reviewer and source downloads",
     "grant-export": "Prepare a complete saved SCF draft as exact field text, native handover files and an offline copy and print page",
     "grant-operating-plan": "Prepare an editable customer operating procedure from selected original SF47 work packages or a complete saved submission"
@@ -59,6 +60,7 @@
     "operations/scf-submission-improvement-1b40-20261012/current-adoption/DEMO_AND_ACCEPTANCE.md",
     "products/bls-labor/GRANT.md",
     "stellar-forge/developer-site/GRANT_ISSUER_CONTEXT.md",
-    "stellar-forge/developer-site/GRANT_ISSUER_RECEIVING.mjs"
+    "stellar-forge/developer-site/GRANT_ISSUER_RECEIVING.mjs",
+    "stellar-forge/developer-site/GRANT_CATALOG.md"
   ]
 }
