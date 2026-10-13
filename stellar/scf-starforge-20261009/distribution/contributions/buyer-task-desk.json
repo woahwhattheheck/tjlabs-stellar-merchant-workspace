@@ -3,10 +3,12 @@
   "id": "buyer-task-desk",
   "description": "Local caller-task desk with original Inbox execution, complete result packets and reviewed customer delivery",
   "commands": {
-    "buyer-task-desk": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/agents/task-desk/cli.mjs"
+    "buyer-task-desk": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/agents/task-desk/cli.mjs",
+    "merchant-task-desk": "stellar-forge/mcp-merchant-operator/task-desk-cli.mjs"
   },
   "commandDescriptions": {
-    "buyer-task-desk": "Select, review, operate, receive and prepare complete customer task deliveries"
+    "buyer-task-desk": "Select, review, operate, receive and prepare complete customer task deliveries",
+    "merchant-task-desk": "Operate the original running InboxTask desk and receive complete files"
   },
   "exports": {
     "./buyer/node/agents/task-desk": {
@@ -16,6 +18,10 @@
     "./buyer/node/agents/task-desk/server": {
       "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/agents/task-desk/server.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/agents/task-desk/server.mjs"
+    },
+    "./merchant/task-desk": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/task-desk.d.mts",
+      "import": "./source/stellar-forge/mcp-merchant-operator/task-desk.mjs"
     }
   },
   "browserAssets": [
@@ -50,9 +56,13 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/operations-handoff/capture.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/operations-handoff/contract.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/config.mjs",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/inbox.mjs"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/inbox.mjs",
+    "stellar-forge/mcp-merchant-operator/TASK_DESK.md"
   ],
   "applicationProviders": {
     "buyer-task-desk": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/buyer-task-desk.mjs"
+  },
+  "merchantProviders": {
+    "buyer-task-desk": "stellar-forge/mcp-merchant-operator/providers/task-desk.mjs"
   }
 }
