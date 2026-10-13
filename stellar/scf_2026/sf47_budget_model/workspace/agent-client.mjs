@@ -1256,6 +1256,22 @@ export class GrantWorkspaceClient {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Forecast inputs');
     return this.#request('/api/operations/' + caseId + '/forecast-preview', {body:{expectedVersion, inputs}, mutation:false});
   }
+  forecastOptionsPreview(caseId, expectedVersion, options) {
+    id(caseId, 'operation'); integer(expectedVersion, 'Current case version');
+    need(Array.isArray(options) && options.length >= 1 && options.length <= 24,
+      'GRANT_INVALID_INPUT', 'Select from one through 24 complete financing options.');
+    const seen = new Set();
+    for (const option of options) {
+      exact(option, ['id', 'name', 'inputs'], ['id', 'name', 'inputs']);
+      text(option.id, 'Financing option identity', 100);
+      need(/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(option.id) && !seen.has(option.id),
+        'GRANT_INVALID_INPUT', 'Retain unique financing option identities.');
+      seen.add(option.id); text(option.name, 'Financing option name', 200);
+      object(option.inputs, 'Complete Forecast inputs');
+    }
+    return this.#request('/api/operations/' + caseId + '/forecast-options-preview',
+      {body:{expectedVersion, options}, mutation:false});
+  }
   forecastSave(caseId, body) {
     id(caseId, 'operation');
     exact(body, ['expectedVersion', 'requestId', 'actor', 'note', 'inputs', 'expectedPreviewSha256'],

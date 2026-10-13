@@ -28,6 +28,10 @@ from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static.update({"/forecast-financing.mjs": ("forecast-financing.mjs", "text/javascript; charset=utf-8"),
+                   "/forecast-financing-desk.mjs": ("forecast-financing-desk.mjs", "text/javascript; charset=utf-8"),
+                   "/forecast-financing.css": ("forecast-financing.css", "text/css; charset=utf-8"),
+                   "/FORECAST_FINANCING.md": ("FORECAST_FINANCING.md", "text/markdown; charset=utf-8")})
     static.update({"/forecast-customer-funding.mjs": ("forecast-customer-funding.mjs", "text/javascript; charset=utf-8"),
                    "/FORECAST_CUSTOMER_FUNDING.md": ("FORECAST_CUSTOMER_FUNDING.md", "text/markdown; charset=utf-8")})
     static.update({"/portfolio-sequence.mjs": ("portfolio-sequence.mjs", "text/javascript; charset=utf-8"),
@@ -581,7 +585,7 @@ def write(handler, parsed):
     elif path == "/api/operations":
         result = ops.create(handler.json_body())
     else:
-        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|settlement/preview|settlement/correction-preview|funding-seed|funding-preview|task-outcomes-seed|task-outcomes-preview|customer-use-calendar|customer-use-calendar-expand|customer-use-calendar-cohort|account-reconciliation-preview|account-reconciliation|engagement-request|engagement-seed|engagement-preview|engagement-forecast|engagement-portfolio|cash-correction-preview|cash-correction|amendment-calendar-export|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-seed|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-inspect|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-commissioning-seed|installation-commissioning-review|installation-commercial|installation-commercial-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-effort-seed|installation-effort-selection|installation-preview|completion-installations|completion-installations-preview|completion-seed|completion-preview|completion-corrections-seed|completion-corrections-preview|support-preview|buyer-preview|expense-preview|expense-request|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
+        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|settlement/preview|settlement/correction-preview|funding-seed|funding-preview|task-outcomes-seed|task-outcomes-preview|customer-use-calendar|customer-use-calendar-expand|customer-use-calendar-cohort|account-reconciliation-preview|account-reconciliation|engagement-request|engagement-seed|engagement-preview|engagement-forecast|engagement-portfolio|cash-correction-preview|cash-correction|amendment-calendar-export|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-seed|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-inspect|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-commissioning-seed|installation-commissioning-review|installation-commercial|installation-commercial-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-effort-seed|installation-effort-selection|installation-preview|completion-installations|completion-installations-preview|completion-seed|completion-preview|completion-corrections-seed|completion-corrections-preview|support-preview|buyer-preview|expense-preview|expense-request|forecast-preview|forecast-options-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
         if not match:
             raise Problem("Operations command not found.", 404, "NOT_FOUND")
         body = handler.json_body()
@@ -625,6 +629,7 @@ def write(handler, parsed):
                    "support-preview": ops.preview_support, "buyer-preview": ops.preview_buyer,
                    "expense-preview": ops.preview_expense, "expense-request": ops.expense_request,
                    "forecast-preview": ops.preview_forecast,
+                   "forecast-options-preview": ops.preview_forecast_options,
                    "portfolio-preview": ops.preview_portfolio, "portfolio-seed": ops.seed_portfolio,
                    "portfolio-selection": ops.select_portfolio}
         result = methods[match.group(2)](match.group(1), body)

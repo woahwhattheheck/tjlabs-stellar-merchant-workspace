@@ -855,6 +855,11 @@
     "billing_evidence_course.py",
     "operations_installation_dcat_following.py",
     "../../sf49_data_commissioning/installation-workorders/dcat-installation-following.mjs",
-    "../../sf49_data_commissioning/installation-workorders/DCAT_FOLLOWING_INSTALLATION.md"
+    "../../sf49_data_commissioning/installation-workorders/DCAT_FOLLOWING_INSTALLATION.md",
+    "forecast_financing.py",
+    "forecast-financing.mjs",
+    "forecast-financing-desk.mjs",
+    "forecast-financing.css",
+    "FORECAST_FINANCING.md"
   ]
 }

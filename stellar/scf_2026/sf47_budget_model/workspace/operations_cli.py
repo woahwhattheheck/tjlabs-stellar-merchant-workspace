@@ -535,6 +535,9 @@ def register(subparsers, common):
     target = command("forecast-preview", "Calculate a dated forecast from current original records", case=True, output=True)
     target.add_argument("--inputs", required=True, help="Forecast input JSON file")
     target.add_argument("--expected-version", type=int, required=True)
+    target = command("forecast-options-preview", "Compare complete financing options against one original case version", case=True, output=True)
+    target.add_argument("--options", required=True, help="UTF-8 JSON array of one through 24 complete {id,name,inputs} options")
+    target.add_argument("--expected-version", type=int, required=True)
     target = command("forecast-save", "Save exactly the reviewed forecast and its original source snapshot", case=True, output=True)
     mutation(target, version=True)
     target.add_argument("--inputs", required=True, help="Same forecast input JSON used for preview")
@@ -1378,6 +1381,12 @@ def operate(workspace, args):
             raw, _mime, _filename = forecast_comparison.output(ops, args.case, args.before, args.after,
                                                              args.format, args.expected_comparison_sha256)
             return {"output": publish(args.output, raw)}
+    elif action == "forecast-options-preview":
+        try:
+            options = json.loads(read_bytes(args.options, MAX_SOURCE))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Financing options must be a complete UTF-8 JSON array.", 422, "INVALID_JSON") from exc
+        result = ops.preview_forecast_options(args.case, {"expectedVersion": args.expected_version, "options": options})
     elif action in ("forecast-preview", "forecast-save"):
         try:
             inputs = json.loads(read_bytes(args.inputs, MAX_SOURCE))

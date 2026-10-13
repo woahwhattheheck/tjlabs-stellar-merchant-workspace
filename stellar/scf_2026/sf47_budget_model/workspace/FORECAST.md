@@ -4,6 +4,12 @@ Use **Delivery operations → Operating forecast** to answer two dated questions
 
 The forecast is saved inside the original SF47 operations case. It uses the pinned planning revision, original work and invoices, observed payments, and source attachments. Saving a forecast adds one immutable planning record and an event to that case. The existing budget calculator continues to calculate the application and its conditional payouts.
 
+## Compare financing options before choosing a forecast
+
+The integrated **Financing options** desk retains several named complete input captures, including unfinished raw controls, and calculates every active option with the original native Forecast engine against one original case version. Inspect exact grant-only, combined and protected-customer funding needs alongside dated cash, capacity and missing values; review the full before/after inputs and explicitly adopt one option into this same editor. Earlier captures and comparisons remain intact. The normal preview/save still owns the immutable financial planning record.
+
+Download/reopen the complete study with its original source bytes, or save it through the existing case source writer with exact request recovery. The current Forecast working file includes the whole desk. See [Financing options](FORECAST_FINANCING.md) for the complete operating and original receiving course.
+
 ## Create and use a forecast
 
 1. Open the retained planning workspace and select **Delivery operations**. Select the original case and enter the recording operator in its existing controls.
