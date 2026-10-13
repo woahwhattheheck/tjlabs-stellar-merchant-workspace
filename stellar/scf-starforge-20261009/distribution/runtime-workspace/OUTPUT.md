@@ -158,3 +158,109 @@ The maintained distribution includes this reader, browser component and
 guide through its original Runtime workspace source component. Both
 Applications and Launch Groups use the same reader and original operation
 state.
+
+## Runtime operations and installation attempt handover
+
+The **Operations** screen uses this same complete output reader for source builds,
+managed commands and releases, Python operations, image operations, transfers,
+installation and recovery. Open the original operation's output from its existing
+workflow. The heading carries its saved operation ID and operation name. Its
+saved result, process observation and recovery controls continue to come from the
+original operation; reading a log does not change them.
+
+For an existing registered runtime, choose **Read installation attempts**. The
+list reads the original retained filenames from that runtime's directory, newest
+attempt number first. It supports both original `install-N.log` files and the
+current installer's `install-N-UUID.log` files. The latest saved filename and phase
+come from `install-state.json`. Older attempts display their actual filename,
+observed byte count and file modification time. A historical filename does not
+supply an outcome. The list opens fifty attempts at a time; **Load earlier
+retained attempts** continues from the last actual filename. **Refresh source
+list** starts a fresh inventory while preserving the exact selected filename.
+If that cursor file was removed, refresh the list instead of combining pages
+against an invented continuation.
+
+An operation with an existing registered result/runtime exposes **Open
+installation attempts**, so an operator can move from the worker's output to the
+installer's retained attempt bytes. This navigation does not start installation
+or recovery. A runtime with no current state log can still expose its earlier
+retained attempts.
+
+### Read, preserve and return to the original output
+
+1. Select the original operation or exact npm attempt.
+2. Use **Beginning**, **Previous output**, **Next output**, **Go to byte** and
+   page search to read the complete retained output.
+3. Choose **Keep this output selection** before reviewing an older span while
+   the existing worker continues. The selected end and page remain fixed.
+4. Download the complete selected output. This streams the original file from
+   byte zero through the selected exclusive end; it does not load the whole
+   log into a server string or download only the displayed page.
+5. Return to **Follow live output** explicitly when ready to read new bytes.
+
+The selected source and per-source frozen page restore in the same browser
+session. A different operation, runtime, npm attempt or workspace has a different
+selection. Runtime tokens include the actual workspace identity and source kind;
+the original Application selection format remains compatible. The original
+append-only file checks and UTF-8 page boundary behavior described above apply
+to all sources. A replaced/shortened file or changed head/end guard requires a
+new explicit selection. These guards do not hash the entire middle of the file.
+
+### Native Runtime interfaces
+
+| Interface | Operation |
+| --- | --- |
+| `model.runtimeOutputSources(input)` | Original worker source or paginated retained npm attempt inventory |
+| `model.runtimeOutputPage(input)` | Fixed-end original byte page |
+| `model.runtimeOutputDownload(input)` | Complete selected stream, byte count, source identity and explicit close |
+| `GET /api/runtime-output/sources` | Capability-authenticated source selection |
+| `GET /api/runtime-output/page` | Capability-authenticated page |
+| `POST /api/runtime-output/download` | Same-origin authenticated preparation of one-use, 60-second download URL |
+
+Each input chooses exactly one of:
+
+- `{operationId}` for an existing saved operation and its fixed worker.log.
+- `{runtimeId, logFile}` for an existing registered runtime and the exact
+  native npm filename. The inventory accepts `{runtimeId, cursor?, limit?}`;
+  the page/export requires the explicit filename.
+
+Page options are the same `selection`, `offset` and `limit` described above.
+No caller supplies a path or directory. Model reads use the registered private
+runtime directory or original private operation directory. The inventory reports
+a not-yet-created worker file distinctly from a file that cannot be read.
+
+```bash
+# Select the original worker output, then read from its beginning.
+runtime-workspace output-sources --workspace /absolute/customer-workspace --operation-id ORIGINAL_UUID
+runtime-workspace output-page --workspace /absolute/customer-workspace --operation-id ORIGINAL_UUID --offset 0
+
+# Enumerate the actual retained attempt names; use the returned filename.
+runtime-workspace output-sources --workspace /absolute/customer-workspace --runtime-id ORIGINAL_RUNTIME_ID
+runtime-workspace output-page --workspace /absolute/customer-workspace --runtime-id ORIGINAL_RUNTIME_ID --log-file ORIGINAL_INSTALL_FILENAME --offset 0
+
+# Export the exact fixed end returned by a previous page.
+runtime-workspace output-export --workspace /absolute/customer-workspace --operation-id ORIGINAL_UUID --selection ORIGINAL_SELECTION_TOKEN --output /absolute/new-output.log
+runtime-workspace output-export --workspace /absolute/customer-workspace --runtime-id ORIGINAL_RUNTIME_ID --log-file ORIGINAL_INSTALL_FILENAME --selection ORIGINAL_SELECTION_TOKEN --output /absolute/new-attempt.log
+```
+
+CLI exports use the same exclusive new-file writer and streamed SHA-256 as
+Application exports. They preserve original bytes, print source/selection/size/
+hash metadata, and refuse to overwrite an existing operator file. Omitting a
+selection explicitly opens a fresh selection of the current original file.
+
+### Existing native receiving course
+
+Continue the original Runtime/backup operation and its retained customer
+workspace. Use one existing worker log and one earlier npm attempt, each beyond
+a single page where available. Read beginning/next/a byte jump; freeze the
+selected end while its existing writer appends; restore that selection after
+reopening; export and compare against the same original prefix. Open a second
+source and return to confirm its saved page remains source-specific. Use the
+original Application/Launch Group reader with its earlier selection to confirm
+the shared core retained that interface. Preserve the existing managed result
+classification, terminal input, backup contents and cold-restore continuation.
+
+Use a disposable copy of the original output for replacement/truncation behavior.
+Return the native result to the existing distribution/backup receiving operation,
+with the original source/workspace/run/attempt identity. This is a continuation of
+the cumulative Runtime customer workflow.

@@ -1,4 +1,4 @@
-// MIT. Shared original-output reader for Applications and Launch Groups.
+// MIT. One original-output reader for Applications, Launch Groups and Runtime operations.
 const node = (tag, text, className) => {
   const value = document.createElement(tag);
   if (text !== undefined) value.textContent = text;
@@ -7,10 +7,15 @@ const node = (tag, text, className) => {
 };
 const readable = text => String(text ?? '').replace(/\x1b\][^\x07]*?(?:\x07|\x1b\\)/g, '')
   .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-const query = input => '/api/applications/output-page?' + new URLSearchParams(
+const query = (path, input) => path + '?' + new URLSearchParams(
   Object.entries(input).filter(([, value]) => value !== undefined && value !== null));
 const PAGE = 65536;
-export function createApplicationOutputReader({ root, api, getWorkspaceId, error, output = null }) {
+export function createApplicationOutputReader({ root, api, getWorkspaceId, error, output = null,
+  pageRoute = '/api/applications/output-page', downloadRoute = '/api/applications/output-download',
+  sourceFields = ['applicationId', 'operationId'], storagePrefix = 'starforge-application-output-',
+  describe = value => 'operation ' + value.operationId }) {
+  const sourceInput = value => Object.fromEntries(sourceFields.filter(key => value[key] !== undefined).map(key => [key, value[key]]));
+  const sourceIdentity = value => [value.workspaceId, ...sourceFields.map(key => value[key] ?? '')].join(':');
   let context = null, page = null, live = true, selection = null, offset = null;
   let generation = 0, loading = false, requested = false, failed = false;
   let selectedMatch = 0, matches = [], visibleText = '', renderedPage = null;
@@ -36,9 +41,7 @@ export function createApplicationOutputReader({ root, api, getWorkspaceId, error
   const refresh = button('Refresh output', () => load());
   const download = button('Download complete selected output', async () => {
     if (!context || !page || loading || failed) return;
-    const own = identity(), value = await api('/api/applications/output-download', {
-      applicationId: context.applicationId, operationId: context.operationId, selection: page.selection,
-    });
+    const own = identity(), value = await api(downloadRoute, { ...sourceInput(context), selection: page.selection });
     if (identity() !== own) return;
     const link = node('a', 'Download original output'); link.href = value.url; link.download = value.filename;
     root.append(link); link.click(); link.remove();
@@ -70,8 +73,8 @@ export function createApplicationOutputReader({ root, api, getWorkspaceId, error
     findStatus.textContent = ((selectedMatch - 1) % matches.length + 1) + ' of ' + matches.length + ' shown matches';
   });
   root.append(toolbar, info, failure, location, findRow, body);
-  const identity = () => context ? [context.workspaceId, context.applicationId, context.operationId].join(':') : '';
-  const key = () => 'starforge-application-output-' + identity();
+  const identity = () => context ? sourceIdentity(context) : '';
+  const key = () => storagePrefix + identity();
   function persist() {
     if (!context) return;
     try { sessionStorage.setItem(key(), JSON.stringify({ live, selection, offset })); } catch { /* Reading and downloads remain available. */ }
@@ -128,7 +131,7 @@ export function createApplicationOutputReader({ root, api, getWorkspaceId, error
       (live ? 'Live tail' : 'Retained selection') + ' · bytes ' + page.offset + '–' + page.nextOffset +
       ' of selected 0–' + page.endOffset + ' · ' + page.totalBytes + ' currently retained' +
       (page.appendedBytes ? ' · ' + page.appendedBytes + ' newer bytes beyond this selection' : '') +
-      ' · operation ' + context.operationId;
+      ' · ' + describe(context);
     root.title = page ? 'Original output source ' + page.sourceId : '';
   }
   async function load() {
@@ -136,8 +139,7 @@ export function createApplicationOutputReader({ root, api, getWorkspaceId, error
     if (loading) { requested = true; return; }
     loading = true; const own = identity(), ticket = ++generation; render();
     try {
-      const value = await api(query({ applicationId: context.applicationId, operationId: context.operationId,
-        ...(live ? {} : { selection, offset }), limit: PAGE }));
+      const value = await api(query(pageRoute, { ...sourceInput(context), ...(live ? {} : { selection, offset }), limit: PAGE }));
       if (identity() !== own || generation !== ticket) return;
       page = value; failed = false; failure.hidden = true;
       if (!live) { selection = value.selection; offset = value.offset; persist(); }
@@ -156,13 +158,14 @@ export function createApplicationOutputReader({ root, api, getWorkspaceId, error
     }
   }
   return {
-    async update(value) {
-      const nextIdentity = [getWorkspaceId(), value.applicationId, value.operationId].join(':');
+    async update(value, { force = false } = {}) {
+      const nextIdentity = sourceIdentity({ ...value, workspaceId: getWorkspaceId() });
       if (identity() !== nextIdentity) select(value);
       // A frozen page keeps its original bytes and scroll position between
       // automatic status refreshes. Refresh output explicitly checks its file.
-      if (live || !page) await load();
+      if (live || !page || force) await load();
     },
+    async refresh() { await load(); },
     reset() {
       generation++; context = page = null; loading = requested = failed = false;
       live = true; selection = offset = null; body.textContent = ''; failure.hidden = true; render();
