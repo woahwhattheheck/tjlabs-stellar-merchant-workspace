@@ -91,3 +91,18 @@ also operate a meaningful declined/pending state. Check source text, amounts,
 controls, wrapping and export/reopen behavior, then fix observed product defects
 in the same implementation. Record the source edition and inspected views with
 the complete saved customer case.
+
+## Definitively rejected browser actions
+
+The desk reads the authoritative saved command journal after a refused action and
+on refresh/reopen. It releases its browser recovery lock only for that exact
+proposal, operator, change and issue review after a definite precommit rejection,
+or an acknowledged original action. The complete outgoing action and matching
+journal remain in the downloadable desk history. An uncommitted first step can
+then be cancelled and reviewed again; a declined issue can use a new authorized
+draft correction and current native credit decision. A pending native command or
+partially applied replacement continues its original remaining request.
+
+Native-facing purchase order and note text use the original Receivables trimming,
+control-character and UTF-16 length rules. Earlier retained raw proposals compare
+against their native rendition without changing original requests or hashes.
