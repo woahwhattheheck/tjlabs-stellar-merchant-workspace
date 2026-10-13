@@ -8,6 +8,7 @@ const assets = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
   ['/app.mjs', ['app.mjs', 'text/javascript; charset=utf-8']],
   ['/portable.mjs', ['portable.mjs', 'text/javascript; charset=utf-8']],
+  ['/returns.mjs', ['returns.mjs', 'text/javascript; charset=utf-8']],
   ['/style.css', ['style.css', 'text/css; charset=utf-8']],
 ]);
 const POLICY = "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'; form-action 'self'";
@@ -120,6 +121,40 @@ export async function startEdgarWorkspace({ directory, storeDirectory, workspace
         if (!selected[2]) return reply(req, res, 200, await workspace.getEdition(id));
         return reply(req, res, 200, await workspace.readRaw(id), 'application/json; charset=utf-8',
           { 'content-disposition': 'attachment; filename="' + id.replace(/[^A-Za-z0-9._-]/g, '_') + '-source.json"' });
+      }
+      if (path === '/api/returns' && req.method === 'GET')
+        return reply(req, res, 200, await workspace.listReturns());
+      if (path === '/api/returns/receive' && req.method === 'POST')
+        return reply(req, res, 200, await workspace.receiveReturn(await body(req, 16384)));
+      const upload = path.match(/^\/api\/returns\/upload\/([a-z0-9][a-z0-9_-]{0,79})$/);
+      if (upload && req.method === 'PUT') {
+        const params = [...url.searchParams.keys()];
+        if (params.some(key => !['sha256', 'label'].includes(key)) || new Set(params).size !== params.length)
+          throw failure(400, 'EDGAR_RETURN_UPLOAD_PARAMETERS', 'Use the original archive hash and return label.');
+        const label = url.searchParams.get('label') || '';
+        if (label.length > 256) throw failure(400, 'EDGAR_RETURN_LABEL_INVALID', 'Keep the return label within 256 characters.');
+        const expectedArchiveSha256 = url.searchParams.get('sha256');
+        const { receiveEdgarReturnUpload } = await import('./receiving/upload.mjs');
+        const received = await receiveEdgarReturnUpload(req, { directory: workspace.directory,
+          uploadId: upload[1], expectedArchiveSha256 });
+        return reply(req, res, 200, await workspace.receiveReturn({
+          archivePath: received.archivePath, expectedArchiveSha256, label }));
+      }
+      const returned = path.match(/^\/api\/returns\/([a-f0-9]{64})(?:\/(preview|apply|archive|operations)(?:\/([A-Za-z0-9][A-Za-z0-9_-]{0,127}))?)?$/);
+      if (returned) {
+        const returnId = returned[1], action = returned[2];
+        if (!action && req.method === 'GET') return reply(req, res, 200, await workspace.inspectReturn({ returnId }));
+        if (action === 'preview' && req.method === 'POST')
+          return reply(req, res, 200, await workspace.previewReturn({ ...await body(req, 16384), returnId }));
+        if (action === 'apply' && req.method === 'POST')
+          return reply(req, res, 200, await workspace.applyReturn({ ...await body(req), returnId }));
+        if (action === 'operations' && returned[3] && req.method === 'GET')
+          return reply(req, res, 200, await workspace.returnOperation({ returnId, requestId: returned[3] }));
+        if (action === 'archive' && req.method === 'GET') {
+          const selected = await workspace.inspectReturn({ returnId });
+          const { streamEdgarOperatorArchive } = await import('./receiving/http.mjs');
+          return await streamEdgarOperatorArchive(req, res, selected, { 'content-security-policy': POLICY });
+        }
       }
       if (path === '/api/portable/review' && req.method === 'GET')
         return reply(req, res, 200, await workspace.reviewPortable());

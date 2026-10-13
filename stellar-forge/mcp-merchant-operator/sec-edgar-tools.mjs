@@ -126,13 +126,13 @@ export async function readEdgarWorkspaceConfiguration(path) {
   for (const [name, entry] of Object.entries(raw.workspaces)) {
     identifier(name, 'SEC workspace alias');
     exact(entry, ['label', 'directory', 'storeDirectory', 'browserPort', 'captures',
-      'acquisitions', 'merchantProfiles', 'packages', 'runtime'], ['directory']);
+      'acquisitions', 'merchantProfiles', 'packages', 'returnedWorkspaces', 'runtime'], ['directory']);
     const directory = await declaredDirectory(entry.directory, base);
     if (seen.has(directory)) throw failure('CONFIGURATION_ERROR', 'Give each original SEC workspace one alias.');
     seen.add(directory);
     const storeDirectory = await declaredDirectory(entry.storeDirectory ?? join(directory, 'captures'), base);
     const captures = Object.create(null), acquisitions = Object.create(null);
-    const merchantProfiles = Object.create(null), packages = Object.create(null);
+    const merchantProfiles = Object.create(null), packages = Object.create(null), returnedWorkspaces = Object.create(null);
     for (const [key, selected] of named(entry.captures, 'retained captures')) {
       exact(selected, ['label', 'file', 'sha256', 'id', 'kind', 'cik', 'sourceUrl', 'capturedAt'],
         ['file', 'sha256', 'id', 'kind', 'cik']);
@@ -164,11 +164,16 @@ export async function readEdgarWorkspaceConfiguration(path) {
       packages[key] = { label: line(selected.label ?? key), directory: await declaredDirectory(selected.directory, base),
         manifestSha256: pinnedHash(selected.manifestSha256) };
     }
+    for (const [key, selected] of named(entry.returnedWorkspaces, 'complete returned operator workspaces')) {
+      exact(selected, ['label', 'file', 'sha256'], ['file', 'sha256']);
+      returnedWorkspaces[key] = { label: line(selected.label ?? key),
+        file: hostPath(selected.file, base), sha256: pinnedHash(selected.sha256) };
+    }
     const runtime = selectedRuntime(entry.runtime);
     for (const field of ['availabilityDirectory', 'historyDirectory'])
       if (entry.runtime?.[field] !== undefined) runtime[field] = await declaredDirectory(entry.runtime[field], base);
     workspaces[name] = { label: line(entry.label ?? name), directory, storeDirectory,
-      browserPort: count(entry.browserPort ?? 0, 'Browser port', 0, 65535), captures, acquisitions, merchantProfiles, packages, runtime };
+      browserPort: count(entry.browserPort ?? 0, 'Browser port', 0, 65535), captures, acquisitions, merchantProfiles, packages, returnedWorkspaces, runtime };
   }
   return { workspaces };
 }
@@ -217,6 +222,7 @@ export class MerchantEdgarWorkspaces {
         captures: Object.entries(entry.captures).map(([capture, value]) => ({ capture, label: value.label, editionId: value.id, kind: value.kind, cik: value.cik, sha256: value.sha256 })),
         acquisitions: Object.entries(entry.acquisitions).map(([profile, value]) => ({ profile, label: value.label, kind: value.kind, cik: value.cik })),
         merchantProfiles: Object.entries(entry.merchantProfiles).map(([profile, value]) => ({ profile, label: value.label })),
+        returnedWorkspaces: Object.entries(entry.returnedWorkspaces ?? {}).map(([archive, value]) => ({ archive, label: value.label, sha256: value.sha256 })),
         packages: Object.entries(entry.packages).map(([packageName, value]) => ({ package: packageName, label: value.label, manifestSha256: value.manifestSha256 })),
       })) };
     this.#declared(name);
@@ -495,6 +501,32 @@ export class MerchantEdgarWorkspaces {
           source: result.source, totalMatched: result.body?.totalMatched, totalReturned: result.body?.totalReturned,
           nextCursor: result.body?.nextCursor });
       }
+      case 'merchant_edgar_returns': {
+        const value = await native.listReturns();
+        return { workspace: args.workspace, ...pageRows(value.returns, args.offset, args.limit) };
+      }
+      case 'merchant_edgar_return_receive': {
+        const selected = entry.returnedWorkspaces?.[identifier(args.archive, 'Returned workspace alias')];
+        if (!selected) throw failure('EDGAR_RETURN_NOT_CONFIGURED', 'Choose a host-declared complete returned workspace.');
+        if (pinnedHash(args.expectedArchiveSha256) !== selected.sha256)
+          throw failure('EDGAR_RETURN_ARCHIVE_CHANGED', 'Choose the original declared archive SHA-256.');
+        return this.#present(args.workspace, { workspace: args.workspace, ...await native.receiveReturn({
+          archivePath: selected.file, expectedArchiveSha256: selected.sha256, label: selected.label }) });
+      }
+      case 'merchant_edgar_return_inspect':
+        return this.#present(args.workspace, { workspace: args.workspace, ...await native.inspectReturn({ returnId: pinnedHash(args.returnId) }) });
+      case 'merchant_edgar_return_preview':
+        return this.#present(args.workspace, { workspace: args.workspace, ...await native.previewReturn({
+          returnId: pinnedHash(args.returnId), ...(args.issuedRevision === undefined ? {} : { issuedRevision: count(args.issuedRevision, 'Issued revision') }) }) });
+      case 'merchant_edgar_return_apply':
+        return this.#present(args.workspace, { workspace: args.workspace, ...await native.applyReturn({
+          returnId: pinnedHash(args.returnId), reviewSha256: pinnedHash(args.reviewSha256),
+          requestId: args.requestId, decisions: args.decisions, actor: args.actor,
+          ...(args.issuedRevision === undefined ? {} : { issuedRevision: count(args.issuedRevision, 'Issued revision') }),
+          ...(args.notes === undefined ? {} : { notes: args.notes }) }) });
+      case 'merchant_edgar_return_operation':
+        return this.#present(args.workspace, { workspace: args.workspace, ...await native.returnOperation({
+          returnId: pinnedHash(args.returnId), requestId: args.requestId }) });
       case 'merchant_edgar_revisions': return { workspace: args.workspace, ...await native.listRevisions({ limit: args.limit ?? 50 }) };
       case 'merchant_edgar_restore':
         return this.#present(args.workspace, { workspace: args.workspace, ...await native.restoreRevision(args) });
@@ -596,7 +628,7 @@ export class MerchantEdgarWorkspaces {
     }
     if (handle.closing) throw failure('EDGAR_WORKSPACE_CLOSING', 'The original SEC workspace is closing.');
     const mutate = ['merchant_edgar_import', 'merchant_edgar_acquire', 'merchant_edgar_save', 'merchant_edgar_product',
-      'merchant_edgar_restore', 'merchant_edgar_export'].includes(name) ||
+      'merchant_edgar_restore', 'merchant_edgar_export', 'merchant_edgar_return_receive', 'merchant_edgar_return_apply'].includes(name) ||
       name === 'merchant_edgar_receive' && args.action === 'receive' ||
       name === 'merchant_edgar_merchant' && args.action !== 'status';
     if (mutate && handle.busy) throw failure('EDGAR_WORKSPACE_BUSY', 'Another operation is updating this original workspace; status and cancellation remain available.');

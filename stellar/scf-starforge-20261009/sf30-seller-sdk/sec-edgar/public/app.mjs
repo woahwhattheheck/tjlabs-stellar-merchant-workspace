@@ -1,4 +1,5 @@
 import { connectPortable } from './portable.mjs';
+import { connectReturns } from './returns.mjs';
 const $ = id => document.getElementById(id);
 const clone = value => structuredClone(value);
 const formatDate = value => value ? new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—';
@@ -50,6 +51,7 @@ function tab(name) {
     if (active) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
   });
   if (name === 'handoff') renderHandoff();
+  if (name === 'returns') run('Opening returned workspaces…', () => returnedWorkspaces.refresh());
   if (name === 'history') run('Loading saved revisions…', loadHistory);
 }
 function editions() { return state?.editions ?? []; }
@@ -317,6 +319,7 @@ $('restore').addEventListener('click', () => run('Restoring selected revision…
 window.addEventListener('beforeunload', event => { if (hasEdits()) { event.preventDefault(); event.returnValue = ''; } });
 
 connectPortable({ api, run, notice, hasEdits });
+const returnedWorkspaces = connectReturns({ api, run, notice, hasEdits, getState: () => state, refresh, download, saveBlob });
 
 await run('Opening the retained workspace…', async () => {
   const key = new URLSearchParams(location.hash.slice(1)).get('session');
