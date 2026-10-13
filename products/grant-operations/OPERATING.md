@@ -710,6 +710,18 @@ The full account ZIP contains offline HTML, complete JSON/CSVs, original correct
 
 Use the [Cash accounts operating guide](../../stellar/scf_2026/sf47_budget_model/workspace/CASH_ACCOUNTS.md) for the complete workflow and original native receiving continuation.
 
+## Customer reporting procedures and returned operating history
+
+Open the installed **Command finder → Operating plans → Create Grant reporting plan** to prepare ordered reporting work from the original complete Grant case and Source Tables project. Enter the customer, period, responsible operator, original workspace paths and receiving workspace. Keep the browser's explicit loopback address and port, including when reopening saved preparation inputs.
+
+The creator retains the complete original case/project/catalog inputs, selected file editions, mappings, reviews, workbook lineage and native command/runtime registrations. A preview contains planned work. Record actual native results and save revisions in the existing Operating plans editor as the reporting work proceeds.
+
+Download the complete preparation JSON to reopen its entered fields and exact original sources. Download the ordinary Operating plan JSON to carry its full revision history; readable HTML and Markdown accompany the same plan. The installed starforge grant-reporting-plan command creates that same procedure from a complete preparation, native input object or selected compact references.
+
+Return to the original Grant case's **Operating procedures** pane to attach the full plan and its explicit source/table/Installation/task-outcome selections. Save and export through the original case transaction, then receive the complete directory with starforge grant-procedures or the existing receiving pane. The delivery includes the whole source case. Each receiving workspace records its actual native IDs; procedure revisions retain the full original parent history.
+
+Use the [reporting creator guide](../../stellar/scf-starforge-20261009/distribution/discovery/GRANT_REPORTING.md), [Operating plans guide](../../stellar/scf-starforge-20261009/distribution/discovery/OPERATING_PLANS.md), [native case procedure guide](../../stellar/scf_2026/sf47_budget_model/workspace/GRANT_PROCEDURES.md) and [complete receiving command](../../stellar/scf_2026/sf47_budget_model/workspace/GRANT_PROCEDURES_RECEIVING.md) for the complete browser/CLI workflow.
+
 ## Original source references
 
 | Area | Maintained source |

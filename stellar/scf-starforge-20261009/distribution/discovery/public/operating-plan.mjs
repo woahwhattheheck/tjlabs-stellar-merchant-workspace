@@ -1,5 +1,6 @@
 // MIT. Saved procedures use the same pure operating-plan model as the installed CLI.
 import { searchCommandCatalog } from '/catalog.mjs';
+import { installGrantReportingEditor } from '/grant-reporting-editor.mjs';
 import { inspectOperatingPlan, createOperatingPlan, createOperatingStep, snapshotRegistration,
   operatingPlanDraft, operatingPlanRevision, saveOperatingPlanRevision, forkOperatingPlan,
   receiveOperatingPlan, compareOperatingPlan, summarizeOperatingPlan, shellArgument,
@@ -447,10 +448,13 @@ async function exportPlan(format) {
   else if (format === 'comparison') download(compareOperatingPlan(current, catalog, { revision }), stem + '-r' + revision + '-source-comparison.json');
   status(format === 'draft' ? 'Downloaded the working draft.' : 'Downloaded saved plan material from revision ' + revision + '.');
 }
-async function run(action) {
-  if (busy) return;
+async function run(action, { propagate = false } = {}) {
+  if (busy) {
+    if (propagate) throw new Error('Finish the current operating-plan action before opening the reporting plan.');
+    return;
+  }
   busy = true; document.querySelector('main').inert = true; errorMessage(null);
-  try { await action(); } catch (error) { errorMessage(error); }
+  try { return await action(); } catch (error) { errorMessage(error); if (propagate) throw error; }
   finally { busy = false; document.querySelector('main').inert = false; if (current) { $('save-plan').disabled = !editable(); $('copy-plan').disabled = false; } }
 }
 
@@ -595,3 +599,14 @@ await run(async () => {
   else status(savedPlans.length + ' saved operating plans. Create or open one to continue.');
 });
 await run(refreshCatalog);
+
+installGrantReportingEditor({
+  trigger: $('create-grant-reporting'),
+  getCatalog: () => catalog,
+  receive: plan => run(async () => {
+    if (!database) throw new Error('Reopen Operating plans to restore its saved-plan storage.');
+    await flushDraft();
+    await receivePlan(plan);
+  }, { propagate: true }),
+  onStatus: status,
+});

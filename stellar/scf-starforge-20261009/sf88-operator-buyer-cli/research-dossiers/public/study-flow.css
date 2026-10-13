@@ -1,0 +1,55 @@
+/* MIT. Study Flow shares the original Research host, with restrained local layout. */
+.study-flow{color:#202020;background:#fff;font:14px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:1560px}
+.study-flow *{box-sizing:border-box}
+.study-flow .sf-top{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 24px;border-bottom:1px solid #c8c8c8;padding:0 0 14px;margin-bottom:16px}
+.study-flow h2{font-size:24px;line-height:1.2;margin:0}
+.study-flow h3{font-size:19px;line-height:1.35;margin:0 0 6px}
+.study-flow h4{font-size:15px;margin:26px 0 10px}
+.study-flow p{margin:7px 0 13px}
+.study-flow .sf-heading{margin:4px 0 20px}
+.study-flow .sf-heading p{max-width:104ch}
+.study-flow .sf-muted{color:#5c5c5c}
+.study-flow .sf-code,.study-flow code,.study-flow pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;overflow-wrap:anywhere}
+.study-flow .sf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px 20px;align-items:start;margin:14px 0}
+.study-flow .sf-field{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;margin:11px 0;min-width:0}
+.study-flow .sf-grid>.sf-field{margin:0}
+.study-flow input:not([type=checkbox]),.study-flow select,.study-flow textarea{width:100%;font:inherit;font-size:14px;font-weight:400;line-height:1.45;color:#202020;background:#fff;border:1px solid #aaa;border-radius:3px;padding:8px 10px;min-height:38px;box-shadow:none}
+.study-flow textarea{font-family:inherit;resize:vertical;min-height:76px}
+.study-flow textarea[data-sf=definition-json]{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.55;tab-size:2;white-space:pre;overflow:auto}
+.study-flow select[multiple]{min-height:112px;padding:3px}
+.study-flow select[multiple] option{padding:5px 7px}
+.study-flow input[type=file]{font-size:13px}
+.study-flow .sf-check{display:flex;gap:9px;align-items:flex-start;font-size:14px;font-weight:400;margin:10px 0}
+.study-flow .sf-check input{flex:none;width:16px;height:16px;margin:3px 0 0;accent-color:#333}
+.study-flow button{font:500 13px/1.35 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#252525;background:#fff;border:1px solid #a8a8a8;border-radius:3px;padding:8px 11px;min-height:34px;box-shadow:none;cursor:pointer;text-align:left}
+.study-flow button:hover:not(:disabled){background:#eee;border-color:#686868}
+.study-flow button.sf-primary{background:#2b2b2b;color:#fff;border-color:#2b2b2b}
+.study-flow button.sf-primary:hover:not(:disabled){background:#444;border-color:#444}
+.study-flow button:disabled,.study-flow input:disabled,.study-flow textarea:disabled,.study-flow select:disabled{color:#777;background:#f4f4f4;border-color:#d3d3d3;cursor:default;opacity:1}
+.study-flow :focus-visible{outline:2px solid #333;outline-offset:2px}
+.study-flow .sf-actions{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:11px 0 17px}
+.study-flow .sf-nav{display:flex;flex-wrap:wrap;gap:0;margin:22px 0 20px;border-bottom:1px solid #999}
+.study-flow .sf-nav button{border:0;border-radius:0;border-bottom:3px solid transparent;padding:11px 13px;margin:0;min-height:42px;font-weight:500;background:#fff}
+.study-flow .sf-nav button[aria-current=page]{border-bottom-color:#242424;color:#151515;font-weight:700;background:#f2f2f2}
+.study-flow .sf-content{min-height:180px}
+.study-flow .sf-card{border:1px solid #c9c9c9;border-radius:3px;background:#fff;padding:14px 17px;margin:14px 0}
+.study-flow .sf-notice{background:#f3f3f3;border-left:3px solid #737373;padding:11px 14px;color:#333}
+.study-flow .sf-pill{display:inline-block;border:1px solid #bdbdbd;background:#f7f7f7;border-radius:3px;padding:2px 7px;font-size:12px}
+.study-flow .sf-table{overflow:auto;max-width:100%;border:1px solid #c9c9c9;margin:12px 0 20px;border-radius:3px}
+.study-flow table{width:100%;border-collapse:collapse;font-size:13px}
+.study-flow thead{background:#f1f1f1}
+.study-flow th{font-weight:600;text-align:left;white-space:nowrap;padding:10px 12px;border-bottom:1px solid #bbb}
+.study-flow td{vertical-align:top;padding:10px 12px;border-bottom:1px solid #dedede;min-width:90px;max-width:580px;overflow-wrap:anywhere}
+.study-flow tr:last-child td{border-bottom:0}
+.study-flow td p{margin:5px 0}
+.study-flow td .sf-actions{margin:0}
+.study-flow td details{margin:0;max-width:570px}
+.study-flow td .sf-check{margin:0}
+.study-flow details{margin:12px 0}
+.study-flow summary{font-weight:600;cursor:pointer;padding:6px 0}
+.study-flow pre{background:#f5f5f5;border:1px solid #ddd;border-radius:3px;padding:12px;max-height:500px;overflow:auto;white-space:pre-wrap;font-weight:400;line-height:1.55}
+.study-flow .sf-diagram{border:1px solid #c9c9c9;background:white;padding:10px;overflow:auto;margin:16px 0 24px}
+.study-flow .sf-diagram svg{display:block;width:100%;height:auto;min-width:680px}
+.study-flow [aria-busy=true]{cursor:progress}
+@media(max-width:720px){.study-flow .sf-top{display:block}.study-flow .sf-grid{grid-template-columns:1fr}.study-flow .sf-nav button{padding:10px}.study-flow .sf-card{padding:11px}.study-flow th,.study-flow td{padding:8px}}
+@media print{.study-flow .sf-nav,.study-flow .sf-actions,.study-flow>.sf-grid,.study-flow>details{display:none}.study-flow .sf-diagram{border:0;overflow:visible;padding:0}.study-flow .sf-diagram svg{min-width:0}.study-flow .sf-table{overflow:visible}.study-flow{font-size:11px}.study-flow button{border:0;padding:0;background:transparent}.study-flow details:not([open]){display:none}}

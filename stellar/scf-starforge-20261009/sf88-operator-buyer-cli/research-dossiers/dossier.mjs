@@ -22,6 +22,8 @@ import {riskOfBiasDigest,riskOfBiasInput,riskOfBiasModel,riskOfBiasPage,riskOfBi
 import {riskOfBiasRegistry} from './risk-of-bias/registry.mjs';
 import {createCustomerUpdateStore,validateCustomerUpdateTransition} from './customer-updates/store.mjs';
 import {createRisSourceStore,validateRisState,validateRisTransition} from './ris-source/store.mjs';
+import {createStudyFlowStore} from './study-flow/store.mjs';
+import {validateStudyFlowState,validateStudyFlowTransition} from './study-flow/model.mjs';
 import {validateCustomerUpdateState,customerUpdateBlobMetadata} from './customer-updates/model.mjs';
 import {createTemplateExchange,validateTemplateExchangeState,
   validateTemplateExchangeTransition,templateExchangeBlobs} from './template-exchange/engine.mjs';
@@ -63,6 +65,8 @@ const summary = state => ({
   templateReturnCount:(state.templateExchangeEvents??[]).filter(value=>value.action==='receive-return').length,
   extractionFormCount:(state.extractionEvents??[]).filter(value=>value.action==='create-form').length,
   extractionPublicationCount:(state.extractionPublicationEvents??[]).filter(value=>value.action==='publish-table').length,
+  studyFlowCount:new Set((state.studyFlowEvents??[]).map(value=>value.flowId)).size,
+  studyFlowEditionCount:(state.studyFlowEvents??[]).filter(value=>value.action==='save').length,
 });
 const referenceKeys = new Set(['id', 'editionId', 'queryId', 'workspaceId', 'operationId']);
 function referenceValue(reference) {
@@ -255,7 +259,7 @@ export async function openDossierStore(directory, { providers = {}, extractionOp
     const id = newId('d'), now = timestamp();
     const state = { schema: DOCUMENT, id, title, description, revision: 1,
       previous: null, createdAt: now, updatedAt: now, change: 'Created dossier',
-      questions: [], editions: [], selections: [], findings: [], citationReviews: [], eligibilityEvents: [], extractionEvents: [], extractionPublicationEvents: [], riskOfBiasEvents: [], customerUpdateEvents: [], templateExchangeEvents: [] };
+      questions: [], editions: [], selections: [], findings: [], citationReviews: [], eligibilityEvents: [], extractionEvents: [], extractionPublicationEvents: [], riskOfBiasEvents: [], customerUpdateEvents: [], templateExchangeEvents: [], studyFlowEvents: [] };
     await writeJson(join(await revisionsDirectory(id, true), filename(1)),
       { sha256: digest(jsonBytes(state)), state }, { exclusive: true });
     return projection === 'metadata' ? getMetadata(id) : get(id);
@@ -752,6 +756,7 @@ export async function openDossierStore(directory, { providers = {}, extractionOp
       }
       validateCitationReviewState(state,editions);
       validateEligibilityState(state,editions,knownOccurrences);
+      validateStudyFlowState(state,editions,knownOccurrences);
       validateStudyExtractionState(state);
       validateExtractionPublicationState(state);
       validateRiskOfBiasState(state,editions,knownOccurrences);
@@ -795,10 +800,12 @@ export async function openDossierStore(directory, { providers = {}, extractionOp
     const hasPublication=(state.extractionPublicationEvents?.length??0)>(previous?.extractionPublicationEvents?.length??0);
     const hasRiskOfBias=(state.riskOfBiasEvents?.length??0)>(previous?.riskOfBiasEvents?.length??0);
     const hasCustomerUpdate=(state.customerUpdateEvents?.length??0)>(previous?.customerUpdateEvents?.length??0);
-    const projected=(hasCitation||hasEligibility||hasExtraction||hasPublication||hasRiskOfBias||hasCustomerUpdate)&&previous?
+    const hasStudyFlow=(state.studyFlowEvents?.length??0)>(previous?.studyFlowEvents?.length??0);
+    const projected=(hasCitation||hasEligibility||hasExtraction||hasPublication||hasRiskOfBias||hasCustomerUpdate||hasStudyFlow)&&previous?
       await projections(previous,{references:false,readContent}):undefined;
     validateCitationReviewTransition(previous,state,projected);
     validateEligibilityTransition(previous,state,projected);
+    validateStudyFlowTransition(previous,state,projected);
     await validateStudyExtractionTransition(previous,state,projected,extractionOptions);
     const context=hasPublication&&previous?extractionPublicationContext(previous,studyExtractionModel(previous,projected)):undefined;
     await validateExtractionPublicationTransition(previous,state,context);
@@ -1009,12 +1016,13 @@ export async function openDossierStore(directory, { providers = {}, extractionOp
   const dossierReturnStore=createDossierReturnStore({directory,dossierDirectory,head,history,readRevision,commit,blob,putBlob,
     sourceAdapter:returnSourceAdapter,validateCandidate:validateReturnCandidate,validateCapacity:validateReturnCapacity});
 
+  const studyFlowStore=createStudyFlowStore({head,commit,metadata,get,projections});
   const risSourceStore=createRisSourceStore({head,commit,metadata,blob,putBlob});
   const customerUpdateStore=createCustomerUpdateStore({head,commit,metadata,get,projections,blob,putBlob,exportStream});
   const templateExchange=createTemplateExchange({head,commit,blob,putBlob,reviewExtraction,
     workbookOptions:{python:extractionOptions.python??'python3',signal:extractionOptions.signal}});
   return Object.freeze({ directory, list, create, get, getMetadata, readRetainedEdition, listRevisions, update, addQuestion, updateQuestion,
-    ...customerUpdateStore,...risSourceStore,...dossierReturnStore,templateExchange,
+    ...customerUpdateStore,...risSourceStore,...dossierReturnStore,...studyFlowStore,templateExchange,
     receive, previewSourceBundle, receiveSourceBundle, receiveBuyerResult, receiveReference, selectEvidence, updateSelection, addFinding, updateFinding,
     citationUpdates,reviewCitationUpdate,eligibility,reviewEligibility,exportEligibility,
     riskOfBias,reviewRiskOfBias,exportRiskOfBias,
