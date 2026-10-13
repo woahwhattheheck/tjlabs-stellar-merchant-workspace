@@ -536,7 +536,7 @@ function requestsView(container) {
     offset => { S.offset = offset; return render(); }));
 }
 const programmeConsole = GrantProgrammeConsole({state:() => S, node, button, field, panel, heading, metric,
-  table, api, response, action, render, notice, failure, showDialog, currentEdit, rawDetails, sourceName});
+  table, api, response, action, runOriginal, render, notice, failure, showDialog, currentEdit, rawDetails, sourceName});
 const awardsConsole = GrantAwardsConsole({state:() => S, node, button, field, panel, heading, metric,
   table, api, response, runOriginal, action, render, notice, failure, showDialog, currentEdit, rawDetails, sourceName});
 const planningConsole = GrantBudgetPlanningConsole({state:() => S, node, button, field, panel, heading, metric,

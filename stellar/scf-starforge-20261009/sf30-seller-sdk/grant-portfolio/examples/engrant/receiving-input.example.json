@@ -1,0 +1,26 @@
+{
+  "schema": "stellar-forge.engrant-receiving-input.v1",
+  "actor": "Commons internal receiving",
+  "asOf": "2026-10-13",
+  "fixture": "internal-research-preparation-v1",
+  "originalSourcePacket": {
+    "path": "/dev/engrant-research-application-handoff-7de2-20261013/inputs/Engrant_Original_Customer_Sources.json",
+    "bytes": 349294,
+    "sha256": "1ef6f19beb2720da0665ee46dccc7bed0abf7b21a40a844df805aaab484b3fcc"
+  },
+  "packageBuildPacket": {
+    "path": "/dev/engrant-research-application-handoff-7de2-20261013/inputs/Engrant_Original_Engine_Package_Build.json",
+    "bytes": 1044551,
+    "sha256": "27eaff1a8ceb7189cf7983d83b604585857882ab2ed09edfa4c4b6e90789b17d"
+  },
+  "packages": [
+    {
+      "key": "free-sample",
+      "directory": "free-sample"
+    },
+    {
+      "key": "five-nonprofits",
+      "directory": "five-nonprofits"
+    }
+  ]
+}
