@@ -129,6 +129,8 @@ class OperatorServer(ThreadingHTTPServer):
 
 class OperatorHandler(BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
+    # Bound idle keep-alive readers so owned shutdown can drain HTTP threads.
+    timeout = 30
     # Full-result clients page over one local persistent connection. Avoid the
     # delayed-ACK/Nagle pause between the separately written headers and body.
     disable_nagle_algorithm = True
@@ -141,6 +143,8 @@ class OperatorHandler(BaseHTTPRequestHandler):
         return self.server.workspace
 
     def check_origin(self, write=False):
+        if self.server.closed:
+            raise Busy('Applications is stopping; reopen the saved workspace')
         expected = urlsplit(self.server.origin).netloc
         if self.headers.get('Host') != expected:
             raise PreparationError('Use the exact local application address')
