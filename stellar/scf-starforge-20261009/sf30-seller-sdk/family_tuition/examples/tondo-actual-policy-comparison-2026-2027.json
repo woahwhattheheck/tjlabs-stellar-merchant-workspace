@@ -1,0 +1,181 @@
+{
+  "schema": "tjlabs.tondo.actual-policy-comparison.v1",
+  "sources": {
+    "registration": {
+      "url": "https://www.tondoartstudio.com/s/Student-Registration-Form-1-1-1.pdf",
+      "collectedAt": "2026-10-13T05:28:26Z",
+      "filename": "Student-Registration-Form-1-1-1.pdf",
+      "bytes": 3594789,
+      "sha256": "eec6450f43b9798892d77c3688dba20f3aa9f11e4da9055e9f63f6d9ae754e7a",
+      "pages": 4,
+      "programmePage": 2,
+      "policyPage": 3
+    },
+    "terms": {
+      "url": "https://www.tondoartstudio.com/s/Terms-Conditions-2026-2027.pdf",
+      "filename": "Terms-Conditions-2026-2027.pdf",
+      "bytes": 263593,
+      "sha256": "68fb0614ad67c0703ae2c74dfe455a9356c25bd720e651bf953fc95b386a313f",
+      "collectedAt": "2026-10-13T05:28:25Z",
+      "pages": 3
+    }
+  },
+  "terms": {
+    "monthlyDueDay": 1,
+    "monthlyTuition": "Flat; independent of class count",
+    "vacations": "Full tuition remains due",
+    "feeRefunds": "Published fees are nonrefundable",
+    "possibleAnnualIncreasePercent": "Up to5%; not an automatically selected increase",
+    "sibling": {
+      "percent": "10",
+      "basis": "Tuition of second child from same family",
+      "page": 3
+    },
+    "spaceConfirmation": "Text approval/confirmation before registering",
+    "paymentMethods": [
+      "Zelle",
+      "cash",
+      "personal check"
+    ],
+    "pages": [
+      1,
+      2,
+      3
+    ]
+  },
+  "makeupEditions": [
+    {
+      "id": "registration-form-page3",
+      "noticeHours": 24,
+      "studioExceptions": [
+        "illness",
+        "emergency"
+      ],
+      "window": {
+        "days": 30,
+        "relativeTo": "missed lesson",
+        "direction": "within30days; form does not explicitly discuss scheduling before absence"
+      },
+      "annualLimit": null,
+      "annualLimitMeaning": "No numerical cap stated on this form",
+      "activeMembershipAtMakeup": true,
+      "studioApprovalRequired": true,
+      "subjectToCapacity": true,
+      "expiresOn": [
+        "withdrawal",
+        "pause"
+      ],
+      "carryOver": false,
+      "transferable": false,
+      "cashValue": false,
+      "excludedReasons": [
+        "observed holidays",
+        "winter/spring breaks"
+      ],
+      "page": 3
+    },
+    {
+      "id": "terms-pages1-2",
+      "noticeHours": 24,
+      "window": {
+        "days": 14,
+        "relativeTo": "missed class",
+        "direction": "before or after"
+      },
+      "annualLimit": 4,
+      "annualPeriod": "September–June",
+      "carryToNextSemester": false,
+      "parentSchedulesAtCancellation": true,
+      "regularClassPolicyApplies": true,
+      "pages": [
+        1,
+        2
+      ]
+    }
+  ],
+  "operationalSelections": [
+    {
+      "id": "programme",
+      "action": "Choose one actual programme/plan/slot edition or record a specific source-bound correction; keep all earlier sources."
+    },
+    {
+      "id": "sibling-registration",
+      "action": "Retain new/returning as the student fact; apply the form's sibling25USD fee through a named charge decision where applicable."
+    },
+    {
+      "id": "second-child-tuition",
+      "action": "Choose the specific second child and eligible enrollment IDs; use1000basis points and the selected exact rounding. Do not infer family ranking from input order."
+    },
+    {
+      "id": "senior",
+      "action": "Record actual eligibility and a named charge decision for15%; preserve any explicit stacking decision."
+    },
+    {
+      "id": "card-surcharge",
+      "action": "Use the actual chosen payment method and source-based4%tuition calculation; keep provider processing cost separate from a school charge."
+    },
+    {
+      "id": "calendar",
+      "action": "Import all18 closed dates and actual first/last class dates; art shows stay event records."
+    },
+    {
+      "id": "makeup-policy",
+      "action": "Present the two complete rules, record the actual studio selection and use that retained edition for make-up eligibility and expiry."
+    }
+  ],
+  "formFields": {
+    "student": [
+      "full name",
+      "date of birth",
+      "email",
+      "phone",
+      "home address",
+      "medical conditions/allergies"
+    ],
+    "guardian": [
+      "full name",
+      "address",
+      "email",
+      "cell phone",
+      "work phone"
+    ],
+    "referral": [
+      "friend",
+      "Facebook",
+      "Google search",
+      "Instagram",
+      "flyer",
+      "other"
+    ],
+    "emergency": [
+      "full name",
+      "relationship",
+      "phone",
+      "address"
+    ],
+    "choices": [
+      "programme",
+      "frequency",
+      "weekly slots"
+    ],
+    "agreement": [
+      "tuition/missed-class signature",
+      "media permission initials",
+      "calendar receipt initials",
+      "payment-due acknowledgement",
+      "student typed name",
+      "adult student signature",
+      "guardian typed name",
+      "guardian signature",
+      "date"
+    ],
+    "sourcePages": [
+      1,
+      2,
+      3,
+      4
+    ]
+  },
+  "formFormat": "The original four-page PDF contains printed entry lines and checkboxes; PdfReader found no AcroForm field tree."
+}
+

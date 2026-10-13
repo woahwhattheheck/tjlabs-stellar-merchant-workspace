@@ -1,0 +1,68 @@
+{
+  "schema": "tjlabs.tondo.publication-comparison.v1",
+  "sources": [
+    {
+      "edition": "homepage-2026-2027",
+      "url": "https://www.tondoartstudio.com/",
+      "reference": "turn776view0"
+    },
+    {
+      "edition": "artclasses-2026-2027",
+      "url": "https://www.tondoartstudio.com/artclasses",
+      "reference": "turn775view0"
+    }
+  ],
+  "academicYear": "2026-2027",
+  "programmeCounts": {
+    "homepage": 6,
+    "artclasses": 7
+  },
+  "differences": [
+    {
+      "key": "school-age-bands",
+      "homepage": [
+        "tondo-7-10"
+      ],
+      "artclasses": [
+        "tondo-7-9",
+        "tondo-8-10"
+      ]
+    },
+    {
+      "key": "adult-monthly-tuition",
+      "homepage": "205.00",
+      "artclasses": "240.00",
+      "currency": "USD"
+    },
+    {
+      "key": "adult-stated-duration-minutes",
+      "homepage": 90,
+      "artclasses": 120
+    },
+    {
+      "key": "adult-Wednesday-session",
+      "homepage": {
+        "start": "10:00",
+        "end": "11:30"
+      },
+      "artclasses": {
+        "start": "09:30",
+        "end": "11:00"
+      }
+    },
+    {
+      "key": "artclasses-internal-adult-duration",
+      "sourceStatedMinutes": 120,
+      "weeklySlotMinutes": 90
+    }
+  ],
+  "sameProgrammeIdentities": [
+    "tondo-3-5",
+    "tondo-4-6",
+    "tondo-10-15",
+    "tondo-intensive-10-17",
+    "tondo-adult-18-plus"
+  ],
+  "originalCollectionRequest": "https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791868121968429?thread_ts=1791723885.463529&cid=C0BTTA66TK3",
+  "decision": "Operator selects one complete source edition and names any correction; publication retrieval order does not determine precedence."
+}
