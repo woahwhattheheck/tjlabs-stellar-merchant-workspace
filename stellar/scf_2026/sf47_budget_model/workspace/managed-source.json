@@ -852,6 +852,9 @@
     "operations_billing_evidence_http.py",
     "operations_billing_evidence_cli.py",
     "BILLING_EVIDENCE.md",
-    "billing_evidence_course.py"
+    "billing_evidence_course.py",
+    "operations_installation_dcat_following.py",
+    "../../sf49_data_commissioning/installation-workorders/dcat-installation-following.mjs",
+    "../../sf49_data_commissioning/installation-workorders/DCAT_FOLLOWING_INSTALLATION.md"
   ]
 }

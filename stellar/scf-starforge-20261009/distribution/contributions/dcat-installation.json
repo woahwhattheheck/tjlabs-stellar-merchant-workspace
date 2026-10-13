@@ -10,7 +10,7 @@
     "dcat-installation-receive": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-receiving.mjs"
   },
   "commandDescriptions": {
-    "dcat-installation": "Retain complete catalogue archives and source inputs, select actual commissioned work, and prepare the original Workshare Installation",
+    "dcat-installation": "Retain complete catalogue editions, review following scope and prepare the same original Workshare Installation",
     "dcat-installation-receive": "Receive an actual saved catalogue Installation through both original application archives, verify every member and continue the actual browser course"
   },
   "applicationProviders": {
@@ -21,7 +21,8 @@
     "./grant/dcat-installation/source": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-source.mjs",
     "./grant/dcat-installation/service": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation/service.mjs",
     "./grant/dcat-installation/server": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation/server.mjs",
-    "./grant/dcat-installation/receiving": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-receiving.mjs"
+    "./grant/dcat-installation/receiving": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-receiving.mjs",
+    "./grant/dcat-installation/following": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-following.mjs"
   },
   "supportFiles": [
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation.mjs",
@@ -43,6 +44,10 @@
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-receiving.mjs",
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-operations.py",
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-browser.mjs",
-    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/DCAT_INSTALLATION_RECEIVING.md"
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/DCAT_INSTALLATION_RECEIVING.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_dcat_following.py",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-following.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/DCAT_FOLLOWING_INSTALLATION.md",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation/public/following.mjs"
   ]
 }

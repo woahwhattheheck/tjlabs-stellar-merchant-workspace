@@ -397,3 +397,7 @@ Source inspection, schemas, HTTP success, DOM counts, automated checks and anoth
 For produced video/audio, use available high-quality generative voice/TTS where appropriate, then actually watch/listen to the final export, including timing, pronunciation and attachment context. Generated images must not pretend to be a functioning application.
 
 Carry these instructions in the original receiving assignment. Native unavailability means the same existing equipped receiver gets the exact source and opening steps; it does not justify claiming a viewed product. The operating source remains useful while its actual runtime and customer outcome are pending.
+
+## Continue an existing Installation with the next complete catalogue
+
+Use [Following-edition commissioning](DCAT_FOLLOWING_INSTALLATION.md) for the complete before/after comparison, explicit scope review, original Source Desk Preview/Save, same-request recovery and full Source Desk/case/catalogue receiving. This preserves existing commercial terms and observations. The complete standing producer/all-attachments rule in that guide applies to this continuation.

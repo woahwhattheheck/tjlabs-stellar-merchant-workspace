@@ -8,13 +8,14 @@ import {regular,operationLease} from '../../../../scf-starforge-20261009/distrib
 import {readProfile} from '../profiles.mjs';
 import {dcatInstallationTemplate,prepareDcatInstallation} from '../dcat-installation-core.mjs';
 import {inspectDcatInstallationArchive,dcatInstallationMember} from '../dcat-installation-source.mjs';
+import {dcatFollowingTemplate,prepareDcatFollowing,nativeDcatFollowingInput,renderDcatFollowing} from '../dcat-installation-following.mjs';
 
 const escaped=value=>String(value??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));
 function renderDcatInstallationSource(source,selection=null){return '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Complete catalogue source</title><style>body{font:16px system-ui;max-width:1000px;margin:2rem auto;padding:1rem;color:#181818;background:#fff}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #bbb;padding:1rem}</style><h1>Complete catalogue source</h1><p>This document carries the complete inspected source record and selected commissioning scope. Retain the accompanying original .ckanw archive for every original file and editable receiving.</p>'+(selection?'<h2>Selected work</h2><pre>'+escaped(JSON.stringify(selection,null,2))+'</pre>':'')+'<h2>Whole original source</h2><pre>'+escaped(JSON.stringify(source,null,2))+'</pre></html>';}
 const SCHEMA='stellar-forge.dcat-installation-preparation-service.v1';
 const UUID=/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
 const HASH=/^[a-f0-9]{64}$/;
-const KINDS=new Set(['archive','case','seed','bindings','selection','report','installation','preview','workorder','preparation','profile']);
+const KINDS=new Set(['archive','case','seed','bindings','selection','report','installation','preview','workorder','preparation','profile','prior-preparation','saved-installation','following-review']);
 const MAX_ARCHIVE=128*1024*1024,MAX_JSON=8*1024*1024,MAX_REPORT=128*1024*1024;
 const ordered=v=>Array.isArray(v)?v.map(ordered):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
 const encode=v=>Buffer.from(JSON.stringify(v,null,2)+'\n');
@@ -117,7 +118,7 @@ export async function createDcatInstallationService({directory}={}){
  async function validateResult(request,result){
   need(plain(result)&&result.schema===SCHEMA+'.result'&&result.requestId===request.requestId&&result.type===request.type&&Array.isArray(result.files),'The retained preparation result differs.');
   for(const row of result.files)need(canonical((await file(row.fileId)).descriptor)===canonical(row),'The complete result attachment differs.');
-  for(const key of ['archiveId','caseId','seedId','bindingsId','selectionId'])if(request[key])await file(request[key]);
+  for(const key of ['archiveId','caseId','seedId','bindingsId','selectionId','priorPreparationId','installationId','reviewId'])if(request[key])await file(request[key]);
  }
  async function get(value){
   const folder=join(root,'requests',requestId(value)),request=parse(await regular(join(folder,'request.json'),MAX_JSON));
@@ -127,7 +128,7 @@ export async function createDcatInstallationService({directory}={}){
  }
  async function importStream({requestId:uuid,kind,name,bytes,sha256,stream}){
   requestId(uuid);
-  need(['archive','case','seed','bindings','selection'].includes(kind),'Select an original input kind.');
+  need(['archive','case','seed','bindings','selection','prior-preparation','saved-installation','following-review'].includes(kind),'Select an original input kind.');
   filename(name);need(Number.isSafeInteger(bytes)&&bytes>=0&&bytes<=maximum(kind)&&HASH.test(sha256??''),'Select the complete file size and SHA-256.');
   // Consume every offered body, including retries, before adopting the retained request.
   const request={schema:SCHEMA+'.request',type:'import',requestId:requestId(uuid),kind,name,bytes,sha256};
@@ -228,6 +229,71 @@ export async function createDcatInstallationService({directory}={}){
     selections:value.prepared.selections,installation:value.prepared.document,scope:value.snapshot});
   });
  }
+
+ function followingRequest(input,preparing){
+  const {requestId:uuid,beforeInspectionId,afterInspectionId,priorPreparationId,installationId,caseId,afterArchiveSourceId}=input;
+  need(typeof afterArchiveSourceId==='string'&&afterArchiveSourceId.length>0&&afterArchiveSourceId.length<=200,
+   'Select the original later archive source ID in this case.');
+  const request={schema:SCHEMA+'.request',type:preparing?'prepare':'following-template',mode:'following',
+   requestId:requestId(uuid),beforeInspectionId:requestId(beforeInspectionId),afterInspectionId:requestId(afterInspectionId),
+   priorPreparationId:id(priorPreparationId),installationId:id(installationId),caseId:id(caseId),afterArchiveSourceId};
+  if(preparing){
+   need(typeof input.reviewSourceId==='string'&&input.reviewSourceId.length>0&&input.reviewSourceId.length<=200,
+    'Attach the exact reviewed JSON through the original case source writer.');
+   request.reviewId=id(input.reviewId);request.reviewSourceId=input.reviewSourceId;
+  }
+  return request;
+ }
+ async function followingInputs(request){
+  const before=await inspection(request.beforeInspectionId),after=await inspection(request.afterInspectionId);
+  const prior=await jsonInput(request.priorPreparationId,'prior-preparation'),
+   installation=await jsonInput(request.installationId,'saved-installation'),caseInput=await jsonInput(request.caseId,'case');
+  // Each canonical inspection was produced by the original complete archive
+  // receiver. Recheck both full compressed originals once for this preparation.
+  const archives=[await selected(before.row.archiveId,'archive'),await selected(after.row.archiveId,'archive')];
+  return{before,after,archives,files:[prior.descriptor,installation.descriptor,caseInput.descriptor],
+   input:{before:before.source,after:after.source,priorPreparation:parse(prior.raw),
+    installation:parse(installation.raw),caseValue:parse(caseInput.raw),afterArchiveSourceId:request.afterArchiveSourceId}};
+ }
+ async function followingTemplate(input){
+  const request=followingRequest(input,false);
+  return transaction(request,async()=>{
+   const selected=await followingInputs(request),value=dcatFollowingTemplate(selected.input);
+   const files=[...selected.files,...selected.archives.map(v=>v.descriptor),
+    await retainFile('report','Dcat_Following_Comparison.json',encode(value.comparison)),
+    await retainFile('report','Dcat_Following_Comparison.html',Buffer.from(renderDcatFollowing(value.comparison))),
+    await retainFile('following-review','Dcat_Following_Review.json',encode(value.review))];
+   return result('following-template',request.requestId,files,{...value,
+    beforeInspectionId:request.beforeInspectionId,afterInspectionId:request.afterInspectionId,
+    priorPreparationId:request.priorPreparationId,installationId:request.installationId,caseId:request.caseId,
+    afterArchiveSourceId:request.afterArchiveSourceId});
+  });
+ }
+ async function followingPrepare(input){
+  const request=followingRequest(input,true);
+  return transaction(request,async()=>{
+   const selected=await followingInputs(request),review=await jsonInput(request.reviewId,'following-review');
+   const whole={...selected.input,reviewRaw:review.raw,reviewSourceId:request.reviewSourceId};
+   const value=prepareDcatFollowing(whole),native=nativeDcatFollowingInput(value,whole);
+   const files=[...selected.files,...selected.archives.map(v=>v.descriptor),review.descriptor,
+    await retainFile('installation','installation-input.json',encode(value.prepared.document)),
+    await retainFile('preview','installation-preview-input.json',encode(value.prepared.preview)),
+    await retainFile('workorder','WORKORDER.md',Buffer.from(value.workorder)),
+    await retainFile('report','Dcat_Installation_Scope.json',encode(value.scope)),
+    await retainFile('report','Dcat_Complete_Source_Report.json',encode(selected.after.source)),
+    await retainFile('report','Dcat_Previous_Source_Report.json',encode(selected.before.source)),
+    await retainFile('report','Dcat_Following_Comparison.json',encode(value.following.comparison)),
+    await retainFile('report','Dcat_Following_Comparison.html',Buffer.from(renderDcatFollowing(value.following.comparison,value.following.review))),
+    await retainFile('selection','Dcat_Following_Native_Input.json',encode(native)),
+    await retainFile('preparation','preparation.json',encode({...value.prepared,following:value.following}))];
+   return result('prepare',request.requestId,files,{mode:'following',following:value.following,
+    beforeInspectionId:request.beforeInspectionId,afterInspectionId:request.afterInspectionId,
+    inspectionId:request.afterInspectionId,archiveId:selected.after.row.archiveId,priorArchiveId:selected.before.row.archiveId,
+    priorPreparationId:request.priorPreparationId,source:value.prepared.source,workshareCaseId:value.prepared.workshareCaseId,
+    selections:value.prepared.selections,installation:value.prepared.document,scope:value.scope});
+  });
+ }
+
  async function list({offset=0,limit=100}={}){
   need(Number.isSafeInteger(offset)&&offset>=0&&Number.isSafeInteger(limit)&&limit>=1&&limit<=200,'Select a valid request page.');
   const ids=(await readdir(join(root,'requests'))).filter(x=>UUID.test(x)).sort();
@@ -250,6 +316,6 @@ export async function createDcatInstallationService({directory}={}){
   promise.then(()=>accepted.delete(promise),()=>accepted.delete(promise));return promise;
  };
  let stopped;
- return Object.freeze({directory:root,...Object.fromEntries(Object.entries({importFile,importStream,inspect,template,prepare,get,file,list,sourceFile}).map(([key,fn])=>[key,owned(fn)])),
+ return Object.freeze({directory:root,...Object.fromEntries(Object.entries({importFile,importStream,inspect,template,prepare,followingTemplate,followingPrepare,get,file,list,sourceFile}).map(([key,fn])=>[key,owned(fn)])),
   close(){closing=true;return stopped??=Promise.allSettled([...accepted]).then(()=>active);}});
 }

@@ -11,7 +11,7 @@ export const INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES = 256 * 1024 * 1024;
 export const INSTALLATION_SOURCE_MAX_JSON_BYTES = 256 * 1024 * 1024;
 export const INSTALLATION_SOURCE_ACTIONS = Object.freeze([
   'create','file.add','file.remove','selection.save','prepare','native.receive','attach',
-  'commissioning.attach','commissioning.archive.receive','edition.apply','mapping.apply',
+  'commissioning.attach','commissioning.archive.receive','edition.apply','mapping.apply','dcat-following.save',
 ]);
 export const INSTALLATION_SOURCE_READS = Object.freeze([
   'profiles','list','detail','request','file-inspect','file','preparation','archive-describe',

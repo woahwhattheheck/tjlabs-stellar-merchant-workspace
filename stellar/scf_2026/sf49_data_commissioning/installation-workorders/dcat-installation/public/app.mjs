@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
+import {createFollowingDesk} from './following.mjs';
 const $=id=>document.getElementById(id);
 const text=(tag,value,cls)=>{const e=document.createElement(tag);e.textContent=String(value??'');if(cls)e.className=cls;return e;};
-const state={schema:'stellar-forge.dcat-installation-editor.v1',inputs:{},inspectionId:null,templateId:null,source:null,selection:null,bindings:null,selectionSourceId:'',selectionDirty:true,bindingText:{},bindingErrors:{},pending:null,result:null};
+const state={schema:'stellar-forge.dcat-installation-editor.v1',inputs:{},mode:'initial',retiredRequests:[],inspectionId:null,templateId:null,source:null,selection:null,bindings:null,selectionSourceId:'',selectionDirty:true,bindingText:{},bindingErrors:{},pending:null,result:null};
 let token=new URLSearchParams(location.hash.slice(1)).get('token')??'',busy=false,page=0,filePage=0,historyOffset=0,saveQueue=Promise.resolve();
 if(token)history.replaceState(null,'',location.pathname+location.search);
 const message=value=>{$('status').textContent=value;};
@@ -19,13 +20,13 @@ async function db(){
   request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
  });
 }
-async function remember(){
+async function remember({required=false}={}){
  const snapshot=structuredClone({...state,source:null,result:null});
  saveQueue=saveQueue.catch(()=>{}).then(async()=>{
   const database=await db();
   await new Promise((resolve,reject)=>{const tx=database.transaction('draft','readwrite');tx.objectStore('draft').put(snapshot,'current');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??new Error('Local draft save was interrupted.'));});
  });
- try{await saveQueue;}catch(error){message('The browser could not retain this draft. Download the complete editor draft before closing. '+error.message);}
+ try{await saveQueue;}catch(error){message('The browser could not retain this draft. Download the complete editor draft before closing. '+error.message);if(required)throw error;}
 }
 async function restore(){
  try{
@@ -65,7 +66,7 @@ function fileRow(row){
 }
 function renderInputs(){
  $('inputs').replaceChildren();
- for(const kind of ['archive','case','seed','selection','bindings']){
+ for(const kind of ['archive','case','seed','selection','bindings','prior-preparation','saved-installation','following-review']){
   const row=state.inputs[kind];if(!row)continue;
   const e=text('div','', 'record');e.append(text('h3',readable(kind)),fileRow(row));$('inputs').append(e);
  }
@@ -75,7 +76,7 @@ function filtered(){
  return(state.source?.records??[]).filter(r=>(!family||r.family===family)&&(!query||[r.key,r.id,r.label,r.state,r.ownerId,r.revisionId].filter(x=>x!=null).join(' ').toLowerCase().includes(query)));
 }
 function renderScope(){
- $('scope-section').hidden=!state.source;
+ $('scope-section').hidden=!state.source||state.mode==='following';
  if(!state.source)return;
  renderArchiveFiles();
  const family=$('family').value;const families=[...new Set(state.source.records.map(r=>r.family))].sort();
@@ -144,7 +145,7 @@ function renderArchiveFiles(){
  $('file-previous').disabled=filePage===0;$('file-next').disabled=(filePage+1)*100>=rows.length;
 }
 function renderBindings(){
- $('bindings-section').hidden=!state.bindings;
+ $('bindings-section').hidden=!state.bindings||state.mode==='following';
  if(!state.bindings)return;
  $('binding-selection').replaceChildren(text('p','Case '+state.bindings.selection.caseId+' · version '+state.bindings.selection.version+' · Workshare '+(state.bindings.workshareCaseId??'Unselected'),'metadata'));
  $('bindings').replaceChildren();bindingField($('bindings'),state.bindings,'merchantDeploymentId');bindingField($('bindings'),state.bindings,'buyerDeploymentIds');
@@ -158,18 +159,20 @@ function renderBindings(){
 function renderResult(result=state.result){
  if(!result)return;$('result').replaceChildren(text('h3',readable(result.type)+' · '+result.requestId));
  if(result.type==='prepare'){
-  $('result').append(text('p','Download the complete Installation input and open it in the original case’s Customer installations desk. Preview and save it there, then export and independently receive the complete case.'));
+  $('result').append(text('p',result.mode==='following'?'Open the complete Dcat_Following_Native_Input.json in the original Source Desk’s following-edition action. Preview and save the next revision of this same Installation, then export and independently receive the complete case.':'Download the complete Installation input and open it in the original case’s Customer installations desk. Preview and save it there, then export and independently receive the complete case.'));
   if(result.selections?.length){$('result').append(text('h3','Selections to complete in the original case'));const list=text('ul');for(const r of result.selections)list.append(text('li',r.field+': '+r.purpose));$('result').append(list);}
   const details=document.createElement('details');details.append(text('summary','Complete prepared Installation'),text('pre',JSON.stringify(result.installation,null,2)));$('result').append(details);
  }
  for(const f of result.files??[])$('result').append(fileRow(f));
+ const whole=text('button','Download complete retained request result');whole.addEventListener('click',()=>run(async()=>downloadJSON(await api('/api/requests/'+result.requestId),'Dcat_Complete_Preparation_Result_'+result.requestId+'.json')));$('result').append(whole);
 }
 function renderPending(){
  const pending=state.pending;$('pending-section').hidden=!pending;
  $('pending-description').textContent=pending?'Request '+pending.requestId+' · '+pending.action+'. Reconcile its retained result or continue with the same complete inputs.':'';
- for(const id of ['import','inspect','template','prepare'])$(id).disabled=!!pending;
+ for(const id of ['import','inspect','template','prepare'])$(id).disabled=!!pending;followingDesk.render();
 }
 async function adopt(result,{carry=true}={}){
+ await followingDesk.adopt(result,{carry});
  state.result=result;
  if(result.type==='import'){
   if(['selection','bindings'].includes(result.file.kind))state[result.file.kind]=await api('/api/files/'+result.file.fileId);
@@ -197,14 +200,14 @@ async function adopt(result,{carry=true}={}){
 }
 async function mutate(action,body){
  if(state.pending)throw new Error('Continue the retained request or retain it and start a new draft first.');
- const requestId=uuid();state.pending={action,requestId,body:{...body,requestId},carry:$('carry-choices').checked};await remember();renderPending();
+ const requestId=uuid();state.pending={action,requestId,body:{...body,requestId},carry:action.startsWith('following-')?true:$('carry-choices').checked,...(action.startsWith('following-')?{followingRevision:state.following.revision}:{})};await remember({required:true});renderPending();
  const result=await api('/api/'+action,{method:'POST',body:state.pending.body});await adopt(result,{carry:state.pending.carry});return result;
 }
 async function upload(kind,file,{textValue=null}={}){
  if(state.pending)throw new Error('Continue the retained request before importing another file.');
  if(file.size>(kind==='archive'?128:8)*1024*1024)throw new Error('The complete input exceeds the selected receiving capacity.');
  const buffer=await file.arrayBuffer(),digest=await sha(buffer),requestId=uuid();
- state.pending={action:'import',requestId,kind,name:file.name,bytes:buffer.byteLength,sha256:digest,text:textValue};await remember();renderPending();
+ state.pending={action:'import',requestId,kind,name:file.name,bytes:buffer.byteLength,sha256:digest,text:textValue};await remember({required:true});renderPending();
  return continueUpload(buffer);
 }
 async function continueUpload(buffer){
@@ -214,6 +217,7 @@ async function continueUpload(buffer){
  const result=await api('/api/import?'+query,{method:'PUT',body:buffer,raw:true});await adopt(result);return result;
 }
 async function restoreRecordInputs(result,inspected=null){
+ if(await followingDesk.restoreInputs(result))return;
  if(!['template','prepare'].includes(result.type))return;
  const request=result.request??{},files=result.files??[],next={};
  const choose=(kind,key)=>files.find(f=>f.fileId===request[key])??files.find(f=>f.kind===kind);
@@ -233,15 +237,19 @@ async function historyPage(reset=false){
    const result=await api('/api/requests/'+row.requestId);
    if(result.status==='PENDING'){
     if(state.pending&&state.pending.requestId!==row.requestId)throw new Error('Retain the current pending request before selecting this one.');
-    state.pending=result.type==='import'?{action:'import',...result.request}:{action:result.type,requestId:row.requestId,body:result.request};await remember();renderPending();message('Original request selected for continuation.');
+    state.pending=result.type==='import'?{action:'import',...result.request}:{action:result.request?.mode==='following'&&result.type==='prepare'?'following-prepare':result.type,requestId:row.requestId,body:result.request};await remember();renderPending();message('Original request selected for continuation.');
    }else{
-    let inspected=null;if(result.inspectionId){inspected=await api('/api/requests/'+result.inspectionId);state.inspectionId=result.inspectionId;state.source=inspected.source;}
-    await restoreRecordInputs(result,inspected);await adopt(result,{carry:false});
+    if(followingDesk.active(result)){await adopt(result,{carry:false});}else{let inspected=null;if(result.inspectionId){inspected=await api('/api/requests/'+result.inspectionId);state.inspectionId=result.inspectionId;state.source=inspected.source;}
+    await restoreRecordInputs(result,inspected);await adopt(result,{carry:false});}
    }
   }));box.append(label,button);$('history').append(box);
  }
  historyOffset=result.nextOffset;$('more-history').hidden=historyOffset===null;
 }
+const followingDesk=createFollowingDesk({state,$,text,canonical,bytes,sha,api,run,remember,downloadJSON,download,fileRow,mutate,upload,message});
+function renderMode(){renderScope();renderBindings();followingDesk.render();}
+$('mode-initial').addEventListener('click',()=>run(async()=>{state.mode='initial';await remember();renderMode();}));
+$('mode-following').addEventListener('click',()=>run(async()=>{state.mode='following';await remember();await followingDesk.refresh();renderMode();}));
 $('import').addEventListener('click',()=>run(async()=>{const file=$('input-file').files[0];if(!file)throw new Error('Choose the complete original file.');await upload($('input-kind').value,file);await historyPage(true);}));
 $('inspect').addEventListener('click',()=>run(async()=>{if(!state.inputs.archive)throw new Error('Retain the complete catalogue archive first.');await mutate('inspect',{archiveId:state.inputs.archive.fileId});await historyPage(true);}));
 $('template').addEventListener('click',()=>run(async()=>{if(!state.inspectionId||!state.inputs.case||!state.inputs.seed)throw new Error('Inspect the catalogue and retain the current case and original seed first.');await mutate('template',{inspectionId:state.inspectionId,caseId:state.inputs.case.fileId,seedId:state.inputs.seed.fileId});await historyPage(true);}));
@@ -266,7 +274,7 @@ $('resume').addEventListener('click',()=>run(async()=>{
  }else await adopt(await api('/api/'+pending.action,{method:'POST',body:pending.body}),{carry:pending.carry});
  await historyPage(true);
 }));
-$('new-draft').addEventListener('click',()=>run(async()=>{state.pending=null;await remember();renderPending();message('Original request retained in preparation history. The editor is ready for a new request.');}));
+$('new-draft').addEventListener('click',()=>run(async()=>{if(state.pending)state.retiredRequests=[...(state.retiredRequests||[]),{retiredAt:new Date().toISOString(),request:structuredClone(state.pending)}];state.pending=null;await remember();renderPending();message('Original request retained in the complete editor draft and any received preparation history. The editor is ready for a new request.');}));
 $('family').addEventListener('change',()=>{page=0;renderScope();});$('query').addEventListener('input',()=>{page=0;renderScope();});
 $('file-query').addEventListener('input',()=>{filePage=0;renderArchiveFiles();});$('file-previous').addEventListener('click',()=>{filePage--;renderArchiveFiles();});$('file-next').addEventListener('click',()=>{filePage++;renderArchiveFiles();});
 $('previous').addEventListener('click',()=>{page--;renderScope();});$('next').addEventListener('click',()=>{page++;renderScope();});
@@ -279,10 +287,10 @@ $('download-bindings').addEventListener('click',()=>{if(Object.keys(state.bindin
 $('save-draft').addEventListener('click',()=>downloadJSON(state,'Catalogue_Installation_Editor.json'));
 $('open-draft').addEventListener('change',()=>run(async()=>{
  const file=$('open-draft').files[0];if(!file)return;if(file.size>256*1024*1024)throw new Error('Select a complete editor draft within its 256 MiB capacity.');
- const value=JSON.parse(await file.text());if(value.schema!==state.schema||!value.inputs||!value.inspectionId)throw new Error('Select the original complete catalogue Installation editor draft.');
- const inspected=await api('/api/requests/'+value.inspectionId);
- if(inspected.type!=='inspect'||inspected.source.sourceSha256!==value.source?.sourceSha256)throw new Error('Reopen this draft with its original preparation directory and catalogue.');
- Object.assign(state,value,{source:inspected.source});await remember();renderInputs();renderScope();renderBindings();renderResult();renderPending();message('Complete editor draft reopened.');
+ const value=JSON.parse(await file.text());if(value.schema!==state.schema||!value.inputs||typeof value.inputs!=='object')throw new Error('Select the original complete catalogue Installation editor draft.');
+ const inspected=value.inspectionId?await api('/api/requests/'+value.inspectionId):null;
+ if(inspected&&(inspected.type!=='inspect'||inspected.source.sourceSha256!==value.source?.sourceSha256))throw new Error('Reopen this draft with its original preparation directory and catalogue.');
+ await followingDesk.validateDraft(value);if(state.following?.review)followingDesk.archiveDraft();const retained=state.following?.archivedReviews||[];Object.assign(state,value,{source:inspected?.source??null});if(state.following)state.following.archivedReviews=[...retained,...(state.following.archivedReviews||[])];await followingDesk.refresh();await remember();renderInputs();renderScope();renderBindings();renderResult();renderPending();message('Complete editor draft reopened.');
 }));
 $('more-history').addEventListener('click',()=>run(()=>historyPage()));
 $('refresh').addEventListener('click',()=>run(async()=>{await api('/api/launch');await historyPage(true);message('Retained preparation history refreshed.');}));
@@ -290,7 +298,7 @@ async function start(){
  if(!token){$('authentication').hidden=false;$('controls').hidden=true;message('Open the original private desk link.');return;}
  await api('/api/launch');$('authentication').hidden=true;$('controls').hidden=false;
  if(state.inspectionId){const row=await api('/api/requests/'+state.inspectionId);state.source=row.source;}
- renderInputs();renderScope();renderBindings();renderResult();renderPending();await historyPage(true);message('Retained catalogue preparation ready.');
+ await followingDesk.refresh();renderInputs();renderScope();renderBindings();renderResult();renderPending();await historyPage(true);message('Retained catalogue preparation ready.');
 }
 $('authenticate').addEventListener('click',()=>run(async()=>{token=$('credential').value;$('credential').value='';await start();}));
 await restore();await run(start);

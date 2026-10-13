@@ -28,6 +28,7 @@ import operations_installation_commissioning as merchant_commissioning
 import operations_installation_commissioning_archive as commissioning_archive
 import operations_installation_source_editions as source_editions
 import operations_installation_mapping_reconciliation as mapping_reconciliation
+import operations_installation_dcat_following as dcat_following
 
 SCHEMA = "stellar-forge.installation-source-desk.v1"
 PREPARATION = "stellar-forge.installation-source-desk-preparation.v1"
@@ -328,9 +329,13 @@ class SourceDesk:
         package, package_receipt = native_package()
         handover, handover_receipt = native_handover()
         return {"schema": SCHEMA, "engine": receipt, "profiles": result,
+                "dcatFollowing": {"schema": dcat_following.SELECTION, "engine": dcat_following.engine(),
+                                  "archiveBytes": 128 * 1024 * 1024, "catalogueBytes": 256 * 1024 * 1024,
+                                  "caseBundleBytes": 320 * 1024 * 1024},
                 "sourceFormats": [
                     {"schema": module.SCHEMA, "label": "Original Workshare packets", "engine": receipt},
-                    {"schema": handover.SCHEMA, "label": "Saved delivery handovers", "engine": handover_receipt}],
+                    {"schema": handover.SCHEMA, "label": "Saved delivery handovers", "engine": handover_receipt},
+                    {"schema": dcat_following.SELECTION, "label": "Following catalogue Installation", "engine": dcat_following.engine()}],
                 "nativePackages": [{"schema": package.SCHEMA, "kind": "canadabuys-native-workshare",
                                     "profile": "canadabuys-bidder-desk", "engine": package_receipt}],
                 "limits": {"fileBytes": MAX_FILE, "selectedInputBytes": MAX_INPUTS,
@@ -446,6 +451,8 @@ class SourceDesk:
             return output.getvalue()
 
     def _prepare(self, state, context, data):
+        if isinstance(state.get("selection"), dict) and state["selection"].get("schema") == dcat_following.SELECTION:
+            return dcat_following.prepare(self, state, context, data)
         module, source = native()
         selected = state["selection"]
         need(isinstance(selected, dict), "Save the complete original source selection before preparing.")
@@ -646,6 +653,7 @@ class SourceDesk:
         case = self.ops._context(state["caseId"])
         need(case["program"]["version"] == expected, "The original case changed. Review its current sources before attachment.",
              "OPERATIONS_CONFLICT", 409)
+        need(prepared.get("kind") != "dcat-following", "This preparation already binds complete case-owned catalogue sources. Use its original dcat-following.save action.")
         needed, selected = [], []
         for file in prepared["files"]:
             existing = next((f for f in case["sources"].values() if all(f.get(key) == file[key] for key in
@@ -710,7 +718,7 @@ class SourceDesk:
         request_id = short_id(body["requestId"], "Original source-desk request ID")
         actor, note = text(body["actor"], "Recording operator", 300, True), text(body.get("note", ""), "Preparation note", 12000)
         action = body["action"]
-        need(action in ("create", "file.add", "file.remove", "selection.save", "prepare", "native.receive", "attach", "commissioning.attach", "commissioning.archive.receive", "edition.apply", "mapping.apply"),
+        need(action in ("create", "file.add", "file.remove", "selection.save", "prepare", "native.receive", "attach", "commissioning.attach", "commissioning.archive.receive", "edition.apply", "mapping.apply", "dcat-following.save"),
              "Choose a supported original source preparation action.")
         need(isinstance(body["data"], dict), "Use the complete source action data.")
         expected = integer(body["expectedRevision"], "source draft revision")
@@ -787,6 +795,8 @@ class SourceDesk:
                     need(isinstance(selected, dict) and len(json_bytes(selected)) <= MAX_FILE,
                          "Keep the complete editable native selection within 8 MiB.", status=413)
                     state["selection"] = deepcopy(selected)
+                elif action == "dcat-following.save":
+                    result = dcat_following.save(self, state, context, data)
                 elif action == "mapping.apply":
                     result = mapping_reconciliation.apply(self, state, data, context)
                 elif action == "edition.apply":
@@ -825,6 +835,8 @@ class SourceDesk:
             if isinstance(returned, dict) and returned.get("state") == "PREPARED_SOURCE":
                 need(self._preparation(draft["caseId"], draft["id"], returned["id"]) == returned,
                      "The complete original preparation receipt differs.", "INSTALLATION_SOURCE_CHANGED", 409)
+            elif isinstance(returned, dict) and returned.get("state") == "SAVED_DCAT_FOLLOWING":
+                dcat_following.verify_saved(self, returned)
             elif isinstance(returned, dict) and returned.get("state") == "RECONCILED_SOURCE_MAPPING":
                 mapping_reconciliation.verify_receipt(self, draft, returned)
             elif isinstance(returned, dict) and returned.get("state") == "EDITABLE_SOURCE_EDITION":

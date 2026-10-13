@@ -52,6 +52,13 @@ function selectedOptions(input){
  need(input&&typeof input==='object'&&!Array.isArray(input)&&required.every(key=>Object.hasOwn(input,key)),
   'Provide the complete original prepared/saved Installation and independent receiving directories.');
  const value=Object.fromEntries(required.map(key=>[key,input[key]]));
+ for(const key of ['sourceDeskDraftId','sourceDeskPreparationId','sourceDeskSaveRequestId','receivingPriorCatalogDirectory'])
+  if(input[key]!==undefined)value[key]=input[key];
+ if(value.receivingPriorCatalogDirectory!==undefined){
+  need(typeof value.receivingPriorCatalogDirectory==='string'&&isAbsolute(value.receivingPriorCatalogDirectory),
+   'Select the original separate earlier catalogue receiving directory.');
+  value.receivingPriorCatalogDirectory=resolve(value.receivingPriorCatalogDirectory);
+ }
  for(const key of ['preparationDirectory','operationsWorkspace','receivingOperationsDirectory','receivingCatalogDirectory','outputDirectory','python']){
   need(typeof value[key]==='string'&&isAbsolute(value[key])&&!value[key].includes('\0'),'Select absolute original host paths.');
   value[key]=resolve(value[key]);
@@ -62,12 +69,12 @@ function selectedOptions(input){
  need(Number.isSafeInteger(value.installationRevision)&&value.installationRevision>=1,'Select the actual saved historical Installation revision.');
  need(typeof value.actor==='string'&&value.actor.trim()===value.actor&&value.actor.length>0&&value.actor.length<=160,
   'Name the actual receiving operator.');
- const paths=['preparationDirectory','operationsWorkspace','receivingOperationsDirectory','receivingCatalogDirectory','outputDirectory'];
+ const paths=['preparationDirectory','operationsWorkspace','receivingOperationsDirectory','receivingCatalogDirectory','outputDirectory',...(value.receivingPriorCatalogDirectory?['receivingPriorCatalogDirectory']:[])];
  for(let i=0;i<paths.length;i++)for(let j=i+1;j<paths.length;j++)
   need(!contains(value[paths[i]],value[paths[j]])&&!contains(value[paths[j]],value[paths[i]]),
    'Use independent non-overlapping preparation, sender, receiver and output directories.');
  need(!contains(originalRoot,value.outputDirectory)&&!contains(originalRoot,value.receivingCatalogDirectory)&&
-  !contains(originalRoot,value.receivingOperationsDirectory),'Receive outside the installed original source.');
+  !contains(originalRoot,value.receivingOperationsDirectory)&&(!value.receivingPriorCatalogDirectory||!contains(originalRoot,value.receivingPriorCatalogDirectory)),'Receive outside the installed original source.');
  return value;
 }
 async function nativeCommand({python,args,outputDirectory,name,signal,timeoutMs=300000}){
@@ -163,7 +170,7 @@ export async function runDcatInstallationReceiving(input,{signal,playwright,chro
     expectedSha256:descriptor.sha256,out:join(out,'prepared',filename),signal});
    descriptors.push({...descriptor,retainedPath:result.file});
    if(['Dcat_Complete_Source_Report.json','installation-input.json','Dcat_Installation_Scope.json',
-    'Selected_Dcat_Scope.json'].includes(descriptor.name))
+    'Selected_Dcat_Scope.json','Dcat_Previous_Source_Report.json'].includes(descriptor.name))
     selected.set(descriptor.name,parsed(await regular(result.file,128*1024*1024)));
   }
   const source=validateDcatInstallationSource(selected.get('Dcat_Complete_Source_Report.json'));
@@ -187,7 +194,32 @@ export async function runDcatInstallationReceiving(input,{signal,playwright,chro
     fileId:member.path,expectedSha256:member.sha256,out:destination,signal});
    members.push({path:member.path,retainedPath:exported.file,bytes:member.bytes,sha256:member.sha256});
   }
-  await saved('Complete_Preparation_Files.json',{files:descriptors,members});
+  let priorSource=null,priorArchive=null;const priorMembers=[];
+  if(prepared.mode==='following'){
+   need(options.receivingPriorCatalogDirectory&&typeof options.sourceDeskDraftId==='string'&&
+    typeof options.sourceDeskPreparationId==='string'&&typeof options.sourceDeskSaveRequestId==='string',
+    'Keep both independent catalogue receivers and the exact original Source Desk draft, preparation and accepted save request.');
+   priorSource=validateDcatInstallationSource(selected.get('Dcat_Previous_Source_Report.json'));
+   const descriptor=descriptors.find(file=>file.fileId===prepared.priorArchiveId);
+   need(descriptor?.kind==='archive'&&descriptor.sha256===priorSource.archive.sha256&&descriptor.bytes===priorSource.archive.bytes,
+    'Keep the complete earlier catalogue archive.');
+   priorArchive=descriptor.retainedPath;
+   need(same(priorSource.archive,{bytes:prepared.following.basis.before.archive.bytes,sha256:prepared.following.basis.before.archive.sha256}),
+    'The following preparation names another earlier archive.');
+   for(const member of priorSource.manifest.files){
+    signal?.throwIfAborted();
+    const originalMember=await service.sourceFile({inspectionId:prepared.beforeInspectionId,path:member.path});
+    need(originalMember.sha256===member.sha256&&originalMember.bytes===member.bytes,'The complete earlier source member differs.');
+    const destination=join(out,'prior-catalogue-members',member.path);
+    need(contains(join(out,'prior-catalogue-members'),destination),'Keep the earlier original member in the owned output.');
+    await ownDirectory(dirname(destination));
+    const exported=await exportDcatInstallationFile({service:{file:async()=>({path:originalMember.path,
+     descriptor:{name:member.path.split('/').at(-1),bytes:member.bytes,sha256:member.sha256}})},
+     fileId:member.path,expectedSha256:member.sha256,out:destination,signal});
+    priorMembers.push({path:member.path,retainedPath:exported.file,bytes:member.bytes,sha256:member.sha256});
+   }
+  }
+  await saved('Complete_Preparation_Files.json',{files:descriptors,members,priorMembers});
   await service.close();service=null;
   const original=await phase('Original_Saved_Installation',async()=>{
    const value=await native('installation-show',['installation-show','--case',options.caseId,
@@ -208,6 +240,23 @@ export async function runDcatInstallationReceiving(input,{signal,playwright,chro
   for(const [id,identity]of [[scope.archive.sourceId,scope.archive],[scope.selection.sourceId,scope.selection]]){
    need(sourceIds.includes(id)&&originalCase.sources.some(row=>row.id===id&&
     row.bytes===identity.bytes&&row.sha256===identity.sha256),'The saved case lacks its complete original selected source.');
+  }
+  if(priorSource){
+   const priorReceived=await receiveCkanWorkspaceArchive({file:priorArchive,expectedSha256:priorSource.archive.sha256,
+    directory:options.receivingPriorCatalogDirectory,signal});
+   need(priorReceived.state==='COMPLETE'&&priorReceived.manifestSha256===priorSource.manifestSha256,
+    'Resume the same complete earlier catalogue receive.');
+   await phase('Prior_Catalogue_Independent_Receive',async()=>priorReceived);
+   const priorInspected=await inspectDcatInstallationArchive({archivePath:priorArchive,
+    expectedArchiveSha256:priorSource.archive.sha256,directory:options.receivingPriorCatalogDirectory,signal});
+   need(priorInspected.sourceSha256===priorSource.sourceSha256,'The original earlier catalogue source differs.');
+   await phase('Prior_Catalogue_Complete_Inspection',async()=>priorInspected);
+   model=await openCkanWorkbench({directory:options.receivingPriorCatalogDirectory});
+   const first=model.status();await model.close();model=null;
+   model=await openCkanWorkbench({directory:options.receivingPriorCatalogDirectory});
+   const second=model.status();
+   for(const key of ['createdAt','catalogOrigin','sourceKind','dcat'])need(same(first[key],second[key]),'The earlier original catalogue changed on cold reopen.');
+   await saved('Prior_Catalogue_Cold_Reopen_'+digest(encoded(second))+'.json',second);await model.close();model=null;
   }
   const receiving=await receiveCkanWorkspaceArchive({file:catalogArchive,expectedSha256:source.archive.sha256,
    directory:options.receivingCatalogDirectory,signal});
@@ -275,6 +324,19 @@ export async function runDcatInstallationReceiving(input,{signal,playwright,chro
   const opened=await readRecipient('recipient'),cold=await readRecipient('cold-recipient');
   need(same(opened,cold),'The original Installation changed during independent cold reopen.');
   await phase('Installation_Cold_Reopen',async()=>cold);
+  let followingCustody=null;
+  if(priorSource){
+   const deskCli=join(dirname(originalCli),'installation-source-desk.py'),custodyPath=join(out,'Original_Following_Custody.json');
+   await nativeCommand({python:options.python,args:[deskCli,'--workspace',options.operationsWorkspace,'--case',options.caseId,
+    '--out',custodyPath,'following-custody','--draft',options.sourceDeskDraftId,
+    '--preparation',options.sourceDeskPreparationId,'--save-request-id',options.sourceDeskSaveRequestId,
+    '--directory',join(out,'following-custody')],outputDirectory:out,name:'following-complete-custody',signal});
+   followingCustody=parsed(await regular(custodyPath,192*1024*1024));
+   need(followingCustody.state==='COMPLETE'&&followingCustody.save.result.result.installation.id===options.installationId&&
+    followingCustody.save.result.result.installation.revision===options.installationRevision&&
+    followingCustody.save.result.result.installation.sha256===original.sha256,
+    'Retain the exact original following save, all Source Desk history and cold-reopened workspace.');
+  }
   let browser=null;
   const verifyBrowserFiles=async value=>{
    for(const row of [...(value.downloads??[]),...(value.screenshots??[])]){
@@ -283,8 +345,10 @@ export async function runDcatInstallationReceiving(input,{signal,playwright,chro
      'Retain complete browser file identities under the owned browser output.');
     let maximum=320*1024*1024;
     if(row.role==='original-source-member'){
-     const member=source.manifest.files.find(file=>file.path===row.source?.path);
-     need(member&&row.source.inspectionId===prepared.inspectionId&&member.bytes===row.bytes&&
+     const selectedSource=row.source?.inspectionId===prepared.inspectionId?source:
+      priorSource&&row.source?.inspectionId===prepared.beforeInspectionId?priorSource:null;
+     const member=selectedSource?.manifest.files.find(file=>file.path===row.source?.path);
+     need(member&&member.bytes===row.bytes&&
       member.sha256===row.sha256&&member.bytes<=8*1024*1024*1024,
       'The larger browser member must bind its exact original archive descriptor.');
      maximum=member.bytes;
@@ -332,7 +396,9 @@ export async function runDcatInstallationReceiving(input,{signal,playwright,chro
    received:{caseId:imported.id,operationsDirectory:options.receivingOperationsDirectory,
     catalogueDirectory:options.receivingCatalogDirectory,sourceSha256:source.sourceSha256,
     manifestSha256:source.manifestSha256},archive:exported,originalCatalogue:source.archive,
-   requestId,files:descriptors,members,browser,
+   requestId,files:descriptors,members,priorMembers,browser,
+   following:priorSource?{source:priorSource.sourceSha256,archive:priorSource.archive,
+    catalogueDirectory:options.receivingPriorCatalogDirectory,custody:followingCustody}:null,
    renderedUse:{performed:Boolean(browser?.complete),viewedByOperator:false,
     requirement:'Open the actual outgoing applications and every attachment, use important controls at desktop/narrow widths, and inspect saved images. Native source receiving is complete; personal visual review is separate.'}};
   await saved(result.state==='COMPLETE'?'Dcat_Installation_Complete_Receiving.json':'Dcat_Installation_Incomplete_'+randomUUID()+'.json',result);return result;

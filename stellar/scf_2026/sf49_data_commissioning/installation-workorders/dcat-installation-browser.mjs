@@ -114,7 +114,7 @@ export async function runDcatInstallationBrowser({
   page.on('request',request=>{
    try{
     const url=new URL(request.url());
-    if(url.origin!==origin.origin||!['PUT','POST'].includes(request.method())||!['/api/import','/api/inspect','/api/template','/api/prepare'].includes(url.pathname))return;
+    if(url.origin!==origin.origin||!['PUT','POST'].includes(request.method())||!['/api/import','/api/inspect','/api/template','/api/prepare','/api/following-template','/api/following-prepare'].includes(url.pathname))return;
     const body=request.method()==='PUT'?Object.fromEntries(url.searchParams):request.postDataJSON();
     if(UUID.test(body?.requestId??''))report.requests.push({method:request.method(),action:url.pathname.slice(5),requestId:body.requestId,request:body});
    }catch(error){report.errors.push({code:'BROWSER_REQUEST_RECEIPT_CAPTURE',message:scrub(error.message)});}
@@ -194,16 +194,18 @@ export async function runDcatInstallationBrowser({
   need(response.ok(),'BROWSER_RETAINED_REQUEST_UNAVAILABLE');
   return response.json();
  }
+ const followingInputKeys=['beforeInspectionId','afterInspectionId','priorPreparationId','installationId','caseId','afterArchiveSourceId','reviewId','reviewSourceId'];
  async function recoverPreparation(page,actual){
   const body=preparationIntent.request;
-  need(body.inspectionId===actual.inspectionId&&body.caseId===actual.request.caseId&&body.seedId===actual.request.seedId&&body.selectionSourceId===actual.request.selectionSourceId,'BROWSER_PREPARATION_CHECKPOINT_INPUT_MISMATCH');
+  const action=actual.mode==='following'?'following-prepare':'prepare';
+  need(actual.mode==='following'?followingInputKeys.every(key=>same(body[key],actual.request[key])):body.inspectionId===actual.inspectionId&&body.caseId===actual.request.caseId&&body.seedId===actual.request.seedId&&body.selectionSourceId===actual.request.selectionSourceId,'BROWSER_PREPARATION_CHECKPOINT_INPUT_MISMATCH');
   const response=await page.request.get(origin.origin+'/api/requests/'+body.requestId,{headers:{Authorization:'Bearer '+secret},timeout:300000});
   need(response.ok()||response.status()===404,'BROWSER_PREPARATION_RECOVERY_UNAVAILABLE');
   let retained=response.ok()?await response.json():null;
   if(retained?.status!=='COMPLETE'){
    if(retained)need(retained.status==='PENDING'&&retained.type==='prepare'&&Object.entries(body).every(([key,value])=>same(retained.request[key],value)),'BROWSER_PREPARATION_PENDING_INPUT_MISMATCH');
-   report.requests.push({method:'POST',action:'prepare',requestId:body.requestId,request:body,recovery:true});
-   const retried=await page.request.post(origin.origin+'/api/prepare',{headers:{Authorization:'Bearer '+secret,'Content-Type':'application/json'},data:body,timeout:300000});
+   report.requests.push({method:'POST',action,requestId:body.requestId,request:body,recovery:true});
+   const retried=await page.request.post(origin.origin+'/api/'+action,{headers:{Authorization:'Bearer '+secret,'Content-Type':'application/json'},data:body,timeout:300000});
    need(retried.ok(),'BROWSER_ORIGINAL_PREPARATION_RETRY_FAILED');
    retained=await getRecord(page,body.requestId);
   }
@@ -255,13 +257,198 @@ export async function runDcatInstallationBrowser({
    await page.route('**/*',route=>['file:','data:','about:'].includes(new URL(route.request().url()).protocol)?route.continue():route.abort());
    await page.goto(pathToFileURL(viewPath).href,{waitUntil:'load',timeout:300000});
    if(kind==='complete-text-viewer')need(await page.locator('pre').textContent()===content,'BROWSER_ATTACHMENT_RENDER_TRUNCATED');
-   else need(await page.locator('h1').textContent()==='Complete catalogue source','BROWSER_SOURCE_HTML_RENDER_MISMATCH');
+   else need(await page.locator('h1').textContent()===(row.name==='Dcat_Following_Comparison.html'?'Catalogue following edition':'Complete catalogue source'),'BROWSER_SOURCE_HTML_RENDER_MISMATCH');
    const top=await shot(page,'attachment-'+String(report.views.length).padStart(3,'0')+'-top');
    await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
    const bottom=await shot(page,'attachment-'+String(report.views.length).padStart(3,'0')+'-bottom');
    report.views.push({path:row.path,sha256:row.sha256,kind,browserRendered:true,completeText:kind==='complete-text-viewer',viewerPath:viewPath,screenshots:[top.path,bottom.path],viewedByOperator:false});
   }finally{await page.close({runBeforeUnload:false});}
  }
+
+async function followingCourse(page,actual,downloadedById,recoveredPreparation){
+ const comparison=actual.following?.comparison,review=actual.following?.review;
+ need(comparison&&review&&Array.isArray(comparison.rows)&&same(comparison.basis,review.basis)&&comparison.sha256===review.comparisonSha256,'BROWSER_FOLLOWING_COMPLETE_REVIEW_REQUIRED');
+ const sources={};
+ for(const [which,name]of[['before','Dcat_Previous_Source_Report.json'],['after','Dcat_Complete_Source_Report.json']]){
+  const descriptor=actual.files.find(file=>file.name===name);
+  need(descriptor&&downloadedById.has(descriptor.fileId),'BROWSER_FOLLOWING_SOURCE_REPORT_MISSING');
+  sources[which]=await readJSON(downloadedById.get(descriptor.fileId));
+  need(Array.isArray(sources[which].records)&&Array.isArray(sources[which].manifest?.files)&&sources[which].sourceSha256===comparison.basis[which].sourceSha256,'BROWSER_FOLLOWING_SOURCE_INVENTORY_MISMATCH');
+ }
+ const reviewFile=downloadedById.get(actual.request.reviewId);
+ need(reviewFile&&same(await readJSON(reviewFile),review),'BROWSER_FOLLOWING_ORIGINAL_REVIEW_MISSING');
+ const baselineDraft=await capture(page,page.locator('#save-draft'),{role:'baseline-editor-draft',name:'Catalogue_Installation_Editor.json'});
+ const baseline=await readJSON(baselineDraft);
+ function checkDraft(value){
+  need(value.mode==='following'&&same(value.following?.comparison,comparison)&&same(value.following?.review,review),'BROWSER_FOLLOWING_EDITOR_CONTENT_MISMATCH');
+  for(const [kind,key]of[['case','caseId'],['prior-preparation','priorPreparationId'],['saved-installation','installationId'],['following-review','reviewId']])
+   need(value.inputs[kind]?.fileId===actual.request[key],'BROWSER_FOLLOWING_HISTORY_INPUT_MISMATCH');
+  for(const which of['before','after']){
+   const id=actual[which+'InspectionId']??actual.request[which+'InspectionId'];
+   need(value.following[which]?.inspectionId===id&&value.following[which]?.sourceSha256===comparison.basis[which].sourceSha256&&value.following.comparisonInspections?.[which]?.inspectionId===id,'BROWSER_FOLLOWING_HISTORY_SOURCE_MISMATCH');
+  }
+  need(value.following.afterArchiveSourceId===actual.request.afterArchiveSourceId&&value.following.reviewSourceId===actual.request.reviewSourceId,'BROWSER_FOLLOWING_CASE_SOURCES_MISMATCH');
+ }
+ checkDraft(baseline);
+ await page.locator('#following-pair').scrollIntoViewIfNeeded();await shot(page,'desktop-following-editions');
+ await page.locator('#following-records').scrollIntoViewIfNeeded();await shot(page,'desktop-following-review');
+ await page.locator('#result').scrollIntoViewIfNeeded();await shot(page,'desktop-following-prepared-work');
+ const families=[...new Set(comparison.rows.map(row=>row.family))].sort();
+ for(const family of families){
+  await page.locator('#following-family').selectOption(family);
+  const count=comparison.rows.filter(row=>row.family===family).length;
+  need((await page.locator('#following-count').textContent()).startsWith(count.toLocaleString()+' matching of '),'BROWSER_FOLLOWING_FAMILY_FILTER_MISMATCH');
+ }
+ await page.locator('#following-family').selectOption('');
+ for(const status of['UNCHANGED','CHANGED','NEW','MISSING']){
+  await page.locator('#following-state').selectOption(status);
+  const count=comparison.rows.filter(row=>row.status===status).length;
+  need((await page.locator('#following-count').textContent()).startsWith(count.toLocaleString()+' matching of '),'BROWSER_FOLLOWING_STATE_FILTER_MISMATCH');
+ }
+ await page.locator('#following-state').selectOption('');
+ await page.locator('#following-query').fill('no-matching-source-'+attemptId);
+ need(await page.locator('#following-records > .record').count()===0&&(await page.locator('#following-records').textContent()).includes('No matching records.'),'BROWSER_FOLLOWING_EMPTY_FILTER_MISMATCH');
+ await shot(page,'desktop-following-empty-search');
+ await page.locator('#following-query').fill('');
+ let recordIndex=0,recordPages=0;
+ while(true){
+  const rows=page.locator('#following-records > .record'),count=await rows.count();
+  need(count===Math.min(40,comparison.rows.length-recordIndex),'BROWSER_FOLLOWING_RECORD_PAGE_MISMATCH');
+  for(let index=0;index<count;index++){
+   const record=comparison.rows[recordIndex++],row=rows.nth(index);
+   need((await row.textContent()).includes(record.key),'BROWSER_FOLLOWING_RECORD_ID_MISMATCH');
+   const details=row.locator('details');await details.locator('summary').click();
+   const values=details.locator('pre');
+   for(const [offset,which]of['before','after'].entries()){
+    const original=sources[which].records.find(value=>value.key===record.key)??record[which];
+    need(same(JSON.parse(await values.nth(offset).textContent()),original),'BROWSER_FOLLOWING_COMPLETE_RECORD_MISMATCH');
+   }
+   await details.locator('summary').click();
+  }
+  recordPages++;
+  if(await page.locator('#following-next').isDisabled())break;
+  await page.locator('#following-next').click();
+  need(recordPages<=Math.max(1,Math.ceil(comparison.rows.length/40)),'BROWSER_FOLLOWING_RECORD_PAGING_STALLED');
+ }
+ need(recordIndex===comparison.rows.length,'BROWSER_FOLLOWING_RECORDS_INCOMPLETE');
+ if(recordPages>1){
+  await page.locator('#following-previous').click();
+  need((await page.locator('#following-count').textContent()).includes(' · '+((recordPages-2)*40+1)+'–'),'BROWSER_FOLLOWING_PREVIOUS_RECORD_MISMATCH');
+ }
+ await page.locator('#following-query').fill('');await page.locator('#following-family').selectOption('');
+ await observe('following-complete-record-controls-used',{families,records:recordIndex,recordPages,statuses:['UNCHANGED','CHANGED','NEW','MISSING']});
+ const details=page.locator('#following-all-files');
+ if(!await details.evaluate(element=>element.open))await details.locator('summary').click();
+ for(const which of['before','after']){
+  await page.locator('#following-file-edition').selectOption(which);
+  const allFiles=sources[which].manifest.files;
+  if(allFiles.length){
+   await page.locator('#following-file-query').fill(allFiles[0].path);
+   need(await page.locator('#following-files > .file-row').count()>0,'BROWSER_FOLLOWING_FILE_SEARCH_MISSING');
+  }
+  await page.locator('#following-file-query').fill('');
+  let memberIndex=0,filePages=0;
+  while(true){
+   const rows=page.locator('#following-files > .file-row'),count=await rows.count();
+   need(count===Math.min(100,allFiles.length-memberIndex),'BROWSER_FOLLOWING_FILE_PAGE_MISMATCH');
+   for(let index=0;index<count;index++){
+    const file=allFiles[memberIndex++],row=rows.nth(index);
+    need((await row.textContent()).includes(file.path)&&(await row.textContent()).includes(file.sha256),'BROWSER_FOLLOWING_FILE_ROW_MISMATCH');
+    await capture(page,row.getByRole('button',{name:'Download original file',exact:true}),{role:'original-source-member',name:basename(file.path),expected:file,source:{inspectionId:actual[which+'InspectionId']??actual.request[which+'InspectionId'],path:file.path}});
+   }
+   filePages++;
+   if(await page.locator('#following-file-next').isDisabled())break;
+   await page.locator('#following-file-next').click();
+   need(filePages<=Math.max(1,Math.ceil(allFiles.length/100)),'BROWSER_FOLLOWING_FILE_PAGING_STALLED');
+  }
+  need(memberIndex===allFiles.length,'BROWSER_FOLLOWING_FILES_INCOMPLETE');
+  if(filePages>1){
+   await page.locator('#following-file-previous').click();
+   need((await page.locator('#following-file-count').textContent()).includes('page '+(filePages-1)+' of '+filePages),'BROWSER_FOLLOWING_FILE_PREVIOUS_MISMATCH');
+  }
+  await observe('following-original-source-members-downloaded',{edition:which,files:memberIndex,filePages});
+ }
+ const downloadedReview=await capture(page,page.locator('#following-download-review'),{role:'editor-following-review',name:'Dcat_Following_Review.json',expected:reviewFile});
+ const downloadedComparison=await capture(page,page.locator('#following-download-comparison'),{role:'editor-following-comparison',name:'Dcat_Following_Comparison.json'});
+ const downloadedResult=await capture(page,page.locator('#result').getByRole('button',{name:'Download complete retained request result',exact:true}),{role:'editor-complete-preparation',name:'Dcat_Complete_Preparation_Result.json'});
+ need(same(await readJSON(downloadedReview),review)&&same(await readJSON(downloadedComparison),comparison)&&same(await readJSON(downloadedResult),actual),'BROWSER_FOLLOWING_COMPLETE_EDITOR_DOWNLOAD_MISMATCH');
+ // The saved Installation and original attached review stay unchanged. Exercise
+ // only an unfinished editor draft, including raw enabled-but-empty text.
+ if(comparison.rows.length){
+  await page.locator('#following-query').fill(comparison.rows[0].key);
+  const first=page.locator('#following-records > .record').filter({has:page.locator('p.metadata').filter({hasText:comparison.rows[0].key})}).first();
+  await first.locator('textarea').nth(1).fill('Unfinished browser draft '+attemptId);
+  need(!await first.locator('input[type=checkbox]').isChecked(),'BROWSER_FOLLOWING_DRAFT_REVIEW_NOT_RESET');
+ }
+ const amendments=page.locator('#following-amendments'),amendmentDetails=amendments.locator('..');
+ if(!await amendmentDetails.evaluate(element=>element.open))await amendmentDetails.locator('summary').click();
+ const amendment=amendments.locator('textarea[aria-label="source reference"]');
+ const group=amendments.locator('.binding-group').first(),enabled=group.locator('input[type=checkbox]').first();
+ await enabled.setChecked(true);await amendment.fill('');
+ await click(page,page.locator('#following-download-review'));
+ need(/Complete and explicitly review every scope decision|Complete the enabled source\.reference amendment/.test(await page.locator('#status').textContent()),'BROWSER_FOLLOWING_VALIDATION_MESSAGE_MISSING');
+ const editedDraft=await capture(page,page.locator('#save-draft'),{role:'edited-editor-draft',name:'Catalogue_Installation_Editor.json'}),edited=await readJSON(editedDraft);
+ need(edited.following?.amendmentDrafts?.['source.reference']===''&&Object.hasOwn(edited.following.review.amendments.source,'reference')&&edited.following.review.amendments.source.reference==='','BROWSER_FOLLOWING_UNFINISHED_AMENDMENT_LOST');
+ if(comparison.rows.length)need(edited.following.review.decisions.find(row=>row.key===comparison.rows[0].key)?.reviewed===false,'BROWSER_FOLLOWING_UNFINISHED_REVIEW_LOST');
+ await openEditor(page);
+ if(!await amendmentDetails.evaluate(element=>element.open))await amendmentDetails.locator('summary').click();
+ need(await enabled.isChecked()&&await amendment.inputValue()==='','BROWSER_FOLLOWING_UNFINISHED_RELOAD_MISMATCH');
+ const reloadedDraft=await capture(page,page.locator('#save-draft'),{role:'reloaded-editor-draft',name:'Catalogue_Installation_Editor.json'});
+ const reloaded=await readJSON(reloadedDraft);
+ need(same(reloaded.following.review,edited.following.review)&&same(reloaded.following.amendmentDrafts,edited.following.amendmentDrafts),'BROWSER_FOLLOWING_RELOAD_DRAFT_MISMATCH');
+ await page.locator('#open-draft').setInputFiles(baselineDraft.path);await settle(page);
+ need(await page.locator('#status').textContent()==='Complete editor draft reopened.','BROWSER_FOLLOWING_BASELINE_DRAFT_OPEN_FAILED');
+ const restoredDraft=await capture(page,page.locator('#save-draft'),{role:'restored-editor-draft',name:'Catalogue_Installation_Editor.json'}),restored=await readJSON(restoredDraft);
+ checkDraft(restored);need(same(restored.inputs,baseline.inputs),'BROWSER_FOLLOWING_BASELINE_INPUTS_RESTORE_MISMATCH');
+ await observe('following-unfinished-draft-reloaded-and-restored',{baseline:baselineDraft.sha256,edited:editedDraft.sha256,reloaded:reloadedDraft.sha256,restored:restoredDraft.sha256});
+ if(prepareAgain){
+  let retained;
+  if(preparationIntent){retained=recoveredPreparation??await recoverPreparation(page,actual);await reopen(page,preparationIntent.request.requestId);}
+  else{
+   let dispatchError=null;
+   const endpoint=origin.origin+'/api/following-prepare';
+   await page.route(endpoint,async route=>{
+    try{
+     const request=route.request(),body=request.postDataJSON();
+     need(request.method()==='POST'&&UUID.test(body?.requestId??'')&&body.requestId!==preparationRequestId,'BROWSER_FOLLOWING_PREPARATION_REQUEST_INVALID');
+     need(followingInputKeys.every(key=>same(body[key],actual.request[key])),'BROWSER_FOLLOWING_UI_PREPARATION_INPUT_MISMATCH');
+     need(!preparationIntent,'BROWSER_SECOND_PREPARATION_ALREADY_ADMITTED');
+     const value={schema:'stellar-forge.dcat-installation-browser-request.v1',baselinePreparationRequestId:preparationRequestId,baselinePreparationSha256:baselineSha256,request:body};
+     report.preparationRequestReceipt=await checkpoint(checkpointPath,value);preparationIntent=value;
+     need(await page.locator('#controls').evaluate(element=>element.inert),'BROWSER_FOLLOWING_LOADING_CONTROLS_NOT_RETAINED');await shot(page,'desktop-following-preparation-loading');await route.continue();
+    }catch(error){dispatchError=error;await route.abort('failed').catch(()=>{});}
+   });
+   const responsePromise=page.waitForResponse(response=>response.url()===endpoint&&response.request().method()==='POST',{timeout:300000});
+   const failedPromise=page.waitForEvent('requestfailed',{predicate:request=>request.url()===endpoint&&request.method()==='POST',timeout:300000}).then(()=>{throw dispatchError??new Error('BROWSER_FOLLOWING_PREPARATION_DISPATCH_FAILED');});
+   const [response]=await Promise.all([Promise.race([responsePromise,failedPromise]),click(page,page.locator('#following-prepare'))]);
+   need(response.ok(),'BROWSER_FOLLOWING_UI_PREPARATION_FAILED');
+   const result=await response.json();
+   need(preparationIntent&&result.requestId===preparationIntent.request.requestId&&result.type==='prepare'&&result.mode==='following','BROWSER_FOLLOWING_UI_PREPARATION_RECEIPT_INVALID');
+   retained=await getRecord(page,result.requestId);
+  }
+  report.preparationRequestReceipt??={path:checkpointPath,...await identity(checkpointPath)};report.browserPreparation=retained;
+  need(retained?.status==='COMPLETE'&&retained.mode==='following'&&same(retained.installation,actual.installation)&&same(retained.scope,actual.scope)&&same(retained.source,actual.source)&&same(retained.following,actual.following)&&followingInputKeys.every(key=>same(retained.request[key],actual.request[key]))&&same(contentInventory(retained.files),contentInventory(actual.files)),'BROWSER_FOLLOWING_UI_PREPARATION_CONTENT_MISMATCH');
+  await observe('same-input-following-ui-preparation-retained',{requestId:retained.requestId,files:retained.files.map(file=>({fileId:file.fileId,name:file.name,kind:file.kind,bytes:file.bytes,sha256:file.sha256}))});
+ }else await observe('original-following-case-and-preparation-preserved',{requestId:preparationRequestId});
+ await reopen(page,preparationRequestId);
+ await page.setViewportSize({width:390,height:844});
+ for(const [selector,name]of[['#following-pair','narrow-following-editions'],['#following-records','narrow-following-review'],['#following-amendments','narrow-following-amendments'],['#result','narrow-following-prepared-files']]){
+  if(selector==='#following-amendments'){
+   const parent=page.locator(selector).locator('..');if(!await parent.evaluate(element=>element.open))await parent.locator('summary').click();
+  }
+  await page.locator(selector).scrollIntoViewIfNeeded();await shot(page,name);
+ }
+ await page.setViewportSize({width:1440,height:1000});
+ await page.locator('#history').scrollIntoViewIfNeeded();await shot(page,'desktop-following-history');
+ await page.close({runBeforeUnload:false});
+ const cold=await newPage('cold-following-history');await cold.setViewportSize({width:1440,height:1000});await openEditor(cold);await reopen(cold,preparationRequestId);
+ const coldDraft=await capture(cold,cold.locator('#save-draft'),{role:'cold-editor-draft',name:'Catalogue_Installation_Editor.json'}),coldValue=await readJSON(coldDraft);
+ checkDraft(coldValue);
+ need(same(await getRecord(cold,preparationRequestId),expectedPreparation),'BROWSER_FOLLOWING_ORIGINAL_PREPARATION_MUTATED');
+ await shot(cold,'desktop-cold-following-history');
+ await observe('cold-following-history-reopened',{requestId:preparationRequestId,draftSha256:coldDraft.sha256});
+ for(const row of downloadedById.values())await viewAttachment(row);
+}
  try{
   check();
   report.source={path:fileURLToPath(import.meta.url),sha256:digest(await readFile(fileURLToPath(import.meta.url)))};
@@ -299,6 +486,8 @@ export async function runDcatInstallationBrowser({
    need((await rows.nth(index).textContent()).includes(file.name)&&(await rows.nth(index).textContent()).includes(file.sha256),'BROWSER_PREPARED_FILE_ROW_MISMATCH');
    downloadedById.set(file.fileId,await capture(page,rows.nth(index).getByRole('button',{name:'Download complete file',exact:true}),{role:'prepared-attachment',name:file.name,expected:file,source:{requestId:preparationRequestId,fileId:file.fileId}}));
   }
+  if(actual.mode==='following')await followingCourse(page,actual,downloadedById,recoveredPreparation);
+  else{
   const selectionFile=downloadedById.get(actual.request.selectionId),bindingsFile=downloadedById.get(actual.request.bindingsId);
   need(selectionFile&&bindingsFile,'BROWSER_PREPARATION_INPUTS_MISSING');
   const selection=await readJSON(selectionFile),bindings=await readJSON(bindingsFile);
@@ -466,6 +655,7 @@ export async function runDcatInstallationBrowser({
   await shot(cold,'desktop-cold-history');
   await observe('cold-history-reopened',{requestId:preparationRequestId,draftSha256:coldDraft.sha256});
   for(const row of [...downloadedById.values()])await viewAttachment(row);
+  }
   need(report.pageErrors.length===0&&report.errors.length===0,'BROWSER_PAGE_SCRIPT_ERRORS');
   check();report.complete=true;
  }catch(error){
