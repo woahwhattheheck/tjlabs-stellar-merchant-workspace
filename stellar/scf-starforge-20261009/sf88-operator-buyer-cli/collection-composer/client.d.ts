@@ -198,8 +198,187 @@ export interface CreateEditionInput {
   expectedEditionSha256: string;
   expectedPreviewSha256: string;
 }
+/** Identity and original period retained by a portable plan package. */
+export interface PlanPackageOrigin {
+  planId: string;
+  planSha256: string;
+  collectionId: string;
+  editionSha256: string;
+  createdAt: string;
+  values: Record<string, string>;
+}
+export interface PlanPackageObject {
+  sha256: string;
+  bytes: number;
+}
+export interface PlanPackageOperator {
+  id: string;
+  kind: "workspace" | "configuration";
+  path: string;
+  configSha256: string;
+  manifestSha256?: string;
+  actor: string;
+  service: string;
+}
+export interface OperationTicketMetadata {
+  schema: string;
+  operationKey: string;
+  requestHash: string;
+  expiresAt: number;
+  requestHeader: string;
+  sha256: string;
+  bytes: number;
+  expired?: boolean;
+}
+export interface PlanPackageHeader {
+  name: string;
+  kind: "included" | "local";
+  credential: boolean;
+}
+export interface PlanPackageSource {
+  key: string;
+  operatorGroup: string;
+  catalog: PlanPackageObject;
+  body?: PlanPackageObject;
+  ticket?: { required: true; metadata: OperationTicketMetadata };
+  headers: PlanPackageHeader[];
+}
+export interface PlanPackageManifest {
+  schema: "stellar-forge.sf88.collection-plan-package.v1";
+  origin: PlanPackageOrigin;
+  /** Portable placeholders replace sender input, operator and ticket file bindings. */
+  plan: CollectionPlan & { parameters: PlanParameter[] };
+  planSha256: string;
+  operators: PlanPackageOperator[];
+  sources: PlanPackageSource[];
+  objects: PlanPackageObject[];
+}
+export interface PlanPackageObjectStatus extends PlanPackageObject {
+  receivedBytes: number;
+  complete: boolean;
+}
+export interface PlanPackageStatus {
+  schema: "stellar-forge.sf88.collection-plan-package-status.v1";
+  packageSha256: string;
+  manifest: PlanPackageManifest;
+  phase: "RECEIVING" | "READY";
+  objects: PlanPackageObjectStatus[];
+  receivedBytes: number;
+  totalBytes: number;
+}
+export interface PlanPackageChunkReceipt {
+  schema: "stellar-forge.sf88.collection-plan-package-chunk.v1";
+  packageSha256: string;
+  objectSha256: string;
+  /** Complete object's size, not this chunk's size. */
+  bytes: number;
+  receivedBytes: number;
+  complete: boolean;
+}
+export interface PlanPackageSummary {
+  packageSha256: string;
+  planId: string;
+  name: string;
+  sourceCollectionId: string;
+  requestCount: number;
+  phase: PlanPackageStatus["phase"];
+  receivedBytes: number;
+  totalBytes: number;
+}
+export interface PlanPackageFile {
+  path: string;
+  name: string;
+  bytes: number;
+  sha256: string;
+  packageSha256: string;
+  manifest: PlanPackageManifest;
+  downloadUrl?: string;
+}
+export interface PlanPackageExportInput {
+  collectionId: string;
+  expectedEditionSha256: string;
+  /** Explicitly include selected noncredential custom headers by request key. */
+  headerSelections?: Array<{ key: string; names: string[] }>;
+}
+export type AdoptionOperatorBinding = OperatorBinding & { groupId: string };
+export interface AdoptionRequestBinding {
+  key: string;
+  ticketFile?: string;
+  headers?: Record<string, string>;
+  omitHeaders?: string[];
+}
+export interface PlanAdoptionInput {
+  packageSha256: string;
+  planId: string;
+  name: string;
+  description?: string;
+  operatorBindings: AdoptionOperatorBinding[];
+  requestBindings?: AdoptionRequestBinding[];
+  outputDirectory: string;
+  deliveryParameter: string;
+  deliveryValue: string;
+}
+export interface PlanAdoptionSource {
+  key: string;
+  operatorGroup: string;
+  sourceCollectionId: string;
+  sourceIntentId: string;
+  catalog: PlanPackageObject;
+  body?: PlanPackageObject;
+  discoveryFile: string;
+  bodyFile?: string;
+}
+export interface PlanAdoptionOperator {
+  key: string;
+  configFile: string;
+  configSha256: string;
+  manifestSha256?: string;
+  expect: AcceptedRequestTerms;
+  ticket: OperationTicketMetadata | null;
+  responseOut: string;
+}
+export interface PlanAdoptionReview {
+  reviewSha256: string;
+  plan: CollectionPlan & { parameters: PlanParameter[] };
+  packageSha256: string;
+  origin: PlanPackageOrigin;
+  operators: PlanAdoptionOperator[];
+  sourceMap: PlanAdoptionSource[];
+}
+export interface PlanAdoptionRecord extends PlanAdoptionReview {
+  schema: "stellar-forge.sf88.collection-plan-adoption.v1";
+  planId: string;
+  planSha256: string;
+  savedAt: string;
+}
+export interface CollectionPlanSharingClient {
+  listPackages(options?: RequestOptions): Promise<{
+    schema: "stellar-forge.sf88.collection-plan-packages.v1";
+    packages: PlanPackageSummary[];
+  }>;
+  exportPackage(input: PlanPackageExportInput, options?: RequestOptions): Promise<PlanPackageFile>;
+  receiveManifest(input: { manifest: PlanPackageManifest }, options?: RequestOptions): Promise<PlanPackageStatus>;
+  inspectPackage(input: { packageSha256: string }, options?: RequestOptions): Promise<PlanPackageStatus>;
+  receiveChunk(input: {
+    packageSha256: string;
+    objectSha256: string;
+    offset: number;
+    base64: string;
+  }, options?: RequestOptions): Promise<PlanPackageChunkReceipt>;
+  finishReceiving(input: { packageSha256: string }, options?: RequestOptions): Promise<PlanPackageStatus>;
+  packageFile(input: { packageSha256: string }, options?: RequestOptions): Promise<PlanPackageFile>;
+  /** Authenticated GET. Stream response.body or use response.arrayBuffer() as appropriate. */
+  downloadPackage(input: { packageSha256: string }, options?: RequestOptions): Promise<Response>;
+  reviewAdoption(input: PlanAdoptionInput, options?: RequestOptions): Promise<PlanAdoptionReview>;
+  adoptPlan(input: PlanAdoptionInput & { expectedReviewSha256: string }, options?: RequestOptions): Promise<{
+    saved: SavedPlan;
+    adoption: PlanAdoptionRecord;
+  }>;
+}
+
 export interface CollectionComposerClient {
   readonly origin: string;
+  readonly sharing: CollectionPlanSharingClient;
   listPlans(options?: RequestOptions): Promise<{
     schema: "stellar-forge.sf88.collection-plans.v1";
     directory: string;

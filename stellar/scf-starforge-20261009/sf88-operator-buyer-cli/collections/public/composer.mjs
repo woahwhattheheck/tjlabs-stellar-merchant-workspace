@@ -1,10 +1,25 @@
+import { createPlanSharingPanel } from '/plan-sharing.mjs';
 export function createCollectionComposerPanel({ host, api, onCreated = async () => {}, onBusy = () => {} }) {
   const schema = 'stellar-forge.sf88.collection-plan.v1';
   const state = { connected: false, visible: false, blocked: false, busy: false, epoch: 0,
     workspace: null, attempted: false, plans: [], editions: [], draft: null, saved: null,
     dirty: false, tab: 'plan', requestIndex: 0, requestQuery: '', libraryQuery: '',
     catalogs: new Map(), headerTexts: new Map(), edition: null, period: null, referenceEdited: false };
-  let shell, notice, body, statusLabel, saveButton;
+  let shell, notice, body, statusLabel, saveButton, sharingReturnTab = 'plan';
+  const sharing = createPlanSharingPanel({ api, run, say,
+    navigate(target) {
+      if (target === 'sharing') { if (state.tab !== 'sharing') sharingReturnTab = state.tab; state.tab = 'sharing'; }
+      else state.tab = sharingReturnTab;
+      render();
+    },
+    onAdopted(saved) {
+      clearPlan(); state.saved = saved; state.draft = clone(saved.plan); state.referenceEdited = true;
+      state.plans = [{ ...saved, name: saved.plan.name, description: saved.plan.description ?? '',
+        requestCount: saved.plan.requests.length, parameters: saved.plan.parameters },
+        ...state.plans.filter(item => item.id !== saved.id || item.planSha256 !== saved.planSha256)];
+      sharing.reset(); render();
+    },
+  });
   const el = (tag, text, className) => {
     const result = document.createElement(tag);
     if (text !== undefined && text !== null) result.textContent = String(text);
@@ -564,6 +579,7 @@ export function createCollectionComposerPanel({ host, api, onCreated = async () 
     else add(actions, button('Continue original preparation', resumeEdition));
     add(actions, button('Refresh status', refreshEdition),
       button('Download period JSON', () => download(edition, edition.collectionId + '-period.json')));
+    if (edition.editionSha256) add(actions, button('Share plan and inputs', () => sharing.showExport(edition)));
     add(section, actions);
     return section;
   }
@@ -615,7 +631,8 @@ export function createCollectionComposerPanel({ host, api, onCreated = async () 
     const upload = el('input'); upload.type = 'file'; upload.accept = '.json,application/json'; upload.hidden = true;
     upload.addEventListener('change', () => { importPlan(upload.files?.[0]); upload.value = ''; });
     add(actions, button('New request plan', newPlan, 'primary'), button('Import plan JSON', () => upload.click()),
-      button('Saved periods', () => { state.tab = 'editions'; render(); }), upload);
+      button('Saved periods', () => { state.tab = 'editions'; render(); }),
+      button('Shared plans', () => sharing.showLibrary()), upload);
     add(section, actions, field('Find a plan', state.libraryQuery, value => { state.libraryQuery = value; draw(); }, { type: 'search' }).wrap, content);
     function draw() {
       const query = state.libraryQuery.toLowerCase().trim();
@@ -643,6 +660,7 @@ export function createCollectionComposerPanel({ host, api, onCreated = async () 
     notice = el('p', null, 'composer-notice'); notice.setAttribute('role', 'status'); notice.setAttribute('aria-live', 'polite'); notice.hidden = true;
     body = el('div', null, 'composer-main'); add(shell, notice, body); add(host, shell);
     if (!state.connected) { add(body, el('p', 'Open an existing Collections workspace to author request plans.')); sync(); return; }
+    if (state.tab === 'sharing') { sharing.render(body); sync(); return; }
     if (!state.draft) {
       if (state.tab === 'editions') add(body, button('All request plans', () => { state.tab = 'plan'; render(); }), renderEditions());
       else if (state.tab === 'period' && state.edition) add(body, button('All saved periods', () => { state.tab = 'editions'; render(); }), renderPeriod());
@@ -667,12 +685,15 @@ export function createCollectionComposerPanel({ host, api, onCreated = async () 
   return {
     connect(status) {
       const changed = state.workspace !== status.directory;
+      if (changed) { sharing.reset(); if (state.tab === 'sharing') state.tab = sharingReturnTab; }
+      else sharing.reconnect();
       state.epoch++; state.busy = false; onBusy(false);
       state.connected = Boolean(status.directory); state.workspace = status.directory ?? null; state.attempted = false;
       if (changed) { clearPlan(); state.plans = []; state.editions = []; }
       render(); autoLoad();
     },
     disconnect() {
+      sharing.reset();
       state.epoch++; state.connected = false; state.busy = false; state.workspace = null; state.attempted = false;
       clearPlan(); state.plans = []; state.editions = []; onBusy(false); render();
     },
