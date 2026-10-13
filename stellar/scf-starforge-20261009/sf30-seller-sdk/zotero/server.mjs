@@ -8,6 +8,10 @@ import {privateDirectory,readJson,writeJson} from '../../sf88-operator-buyer-cli
 import {SCHEMA,LIMIT,need,plain,parse,json,sha256,requestId,safeCode,safeFilename} from './contracts.mjs';
 import {openZoteroWorkspace,receiveWorkspace} from './workspace.mjs';
 
+import {zoteroSourceBinding,zoteroWorkspaceBinding} from './agent-binding.mjs';
+import {retainZoteroCleanup} from './agent-cleanup.mjs';
+import {ZOTERO_AGENT_VIEWS} from './agent-requests.mjs';
+
 const PUBLIC=fileURLToPath(new URL('./public/',import.meta.url));
 const ASSETS={'/':'index.html','/app.mjs':'app.mjs','/style.css':'style.css'};
 const TYPES={'.html':'text/html; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8'};
@@ -30,9 +34,11 @@ export async function startZoteroWorkspace({directory,researchDirectory=null,dos
   need(isAbsolute(directory)&&resolve(directory)===directory,'ZOTERO_ABSOLUTE_DIRECTORY_REQUIRED');
   need(Number.isInteger(port)&&port>=0&&port<=65535,'ZOTERO_PORT_INVALID');
   const workspace=await openZoteroWorkspace({directory,researchDirectory,dossierStore,fetchImpl,environment,transport});
-  const instanceId=randomUUID(),token=randomBytes(32).toString('hex'),requests=new Set(),children=new Map(),opening=new Map();
+  let sourceBinding,workspaceBinding;
+  const instanceId=randomUUID(),token=randomBytes(32).toString('hex'),requests=new Set(),children=new Map(),opening=new Map(),receivingCleanup=new Map();
   let server,origin,url,closing=false,closed,stopped,stopTimer,closedAt,connectionPath=connectionFile??join(directory,'connection.json');
   try{
+    sourceBinding=await zoteroSourceBinding();workspaceBinding=await zoteroWorkspaceBinding(directory);
     need(isAbsolute(connectionPath)&&resolve(connectionPath)===connectionPath,'ZOTERO_CONNECTION_PATH_INVALID');
     const authenticate=req=>{
       need(req.headers.host===new URL(origin).host,'ZOTERO_HTTP_HOST_INVALID');
@@ -47,11 +53,12 @@ export async function startZoteroWorkspace({directory,researchDirectory=null,dos
       if(opening.has(name))return opening.get(name);
       need(!closing,'ZOTERO_WORKSPACE_CLOSING');
       const childDirectory=join(directory,'received',name);
+      if(receivingCleanup.has(name)){await receivingCleanup.get(name).close();receivingCleanup.delete(name);}
       const work=(async()=>{
         const marker=await readJson(join(childDirectory,'receiving.json'));
         need(marker.status==='COMPLETE','ZOTERO_RECEIVING_INCOMPLETE');
-        const child=await startZoteroWorkspace({directory:childDirectory,
-          researchDirectory:marker.research?.length?join(childDirectory,'research'):null});
+        let child;try{child=await startZoteroWorkspace({directory:childDirectory,
+          researchDirectory:marker.research?.length?join(childDirectory,'research'):null});}catch(error){if(error.zoteroCleanup)receivingCleanup.set(name,error.zoteroCleanup);throw error;}
         // Register ownership before checking a close that raced with startup.
         // The parent then retains this child even if its first close fails.
         children.set(name,child);
@@ -64,7 +71,7 @@ export async function startZoteroWorkspace({directory,researchDirectory=null,dos
       const path=parsed.pathname;
       need(req.headers.host===new URL(origin).host,'ZOTERO_HTTP_HOST_INVALID');
       if(req.method==='GET'&&path==='/health')return reply(res,200,{schema:SCHEMA.connection,instanceId,
-        workspaceId:workspace.identity.workspaceId,active:true});
+        workspaceId:workspace.identity.workspaceId,active:true,agentSchema:'stellar-forge.zotero-agent-api.v1',sourceBinding,workspaceBinding});
       if(req.method==='GET'&&Object.hasOwn(ASSETS,path)){
         const asset=ASSETS[path],bytes=await readFile(join(PUBLIC,asset));
         res.writeHead(200,{'Content-Type':TYPES[asset.slice(asset.lastIndexOf('.'))],'Content-Length':bytes.length,
@@ -72,6 +79,32 @@ export async function startZoteroWorkspace({directory,researchDirectory=null,dos
           'Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff'});res.end(bytes);return;
       }
       authenticate(req);
+      if(path.startsWith('/api/agent/')||path.startsWith('/api/')&&req.headers['x-zotero-workspace']){
+        need(req.headers['x-zotero-workspace']===workspace.identity.workspaceId&&req.headers['x-zotero-instance']===instanceId,'ZOTERO_CONNECTION_INSTANCE_CHANGED');
+        const currentSource=await zoteroSourceBinding(),currentWorkspace=await zoteroWorkspaceBinding(directory);
+        need(sha256(json(currentSource))===sha256(json(sourceBinding))&&sha256(json(currentWorkspace))===sha256(json(workspaceBinding)),'ZOTERO_IMPLEMENTATION_CHANGED');
+        need(!closing,'ZOTERO_WORKSPACE_CLOSING');
+      }
+      if(req.method==='GET'&&path==='/api/agent/request')return reply(res,200,await workspace.agentGet(requestId(parsed.searchParams.get('requestId'))));
+      if(req.method==='POST'&&path==='/api/agent/view'){
+        const value=parse(await body(req,LIMIT.control));need(!closing,'ZOTERO_WORKSPACE_CLOSING');
+        need(plain(value)&&ZOTERO_AGENT_VIEWS.includes(value.method)&&plain(value.input??{}),'ZOTERO_AGENT_VIEW_INVALID');
+        return reply(res,200,await workspace.invoke(value.method,value.input??{}));
+      }
+      if(req.method==='POST'&&path==='/api/agent/save'){
+        const value=parse(await body(req,LIMIT.control));need(!closing,'ZOTERO_WORKSPACE_CLOSING');
+        return reply(res,200,await workspace.agentSave(value));
+      }
+      if(req.method==='POST'&&path==='/api/agent/resume'){
+        const value=parse(await body(req,LIMIT.control));need(!closing,'ZOTERO_WORKSPACE_CLOSING');
+        return reply(res,200,await workspace.agentResume(requestId(value.requestId)));
+      }
+      if(req.method==='POST'&&path==='/api/agent/import'){
+        const bytes=await body(req,LIMIT.capture);need(!closing,'ZOTERO_WORKSPACE_CLOSING');
+        const request={requestId:requestId(req.headers['x-zotero-request-id']),method:'documents.import',input:{profileId:parsed.searchParams.get('profileId'),profileRevision:Number(parsed.searchParams.get('profileRevision'))},source:{bytes:bytes.length,sha256:sha256(bytes)}};
+        need(request.source.sha256===req.headers['x-zotero-source-sha256'],'ZOTERO_AGENT_SOURCE_CHANGED');
+        return reply(res,200,await workspace.agentSave(request,bytes));
+      }
       if(req.method==='GET'&&path==='/api/state')return reply(res,200,await workspace.snapshot());
       if(req.method==='POST'&&path==='/api/invoke'){
         const value=parse(await body(req,LIMIT.control));need(!closing,'ZOTERO_WORKSPACE_CLOSING');need(plain(value)&&typeof value.method==='string'&&plain(value.input??{}),'ZOTERO_HTTP_INVOKE_INVALID');
@@ -102,7 +135,10 @@ export async function startZoteroWorkspace({directory,researchDirectory=null,dos
           need(marker.status==='COMPLETE'&&marker.requestId===op&&marker.packetSha256===sha256(bytes)&&
             marker.workspaceId===activeChild.workspace.identity.workspaceId,'ZOTERO_RECEIVING_INPUT_CHANGED');
           receipt={...marker,replayed:true};
-        }else receipt=await receiveWorkspace(bytes,{directory:childDirectory,requestId:op});
+        }else {
+          if(receivingCleanup.has(name)){await receivingCleanup.get(name).close();receivingCleanup.delete(name);}
+          try{receipt=await receiveWorkspace(bytes,{directory:childDirectory,requestId:op});}catch(error){if(error.zoteroCleanup)receivingCleanup.set(name,error.zoteroCleanup);throw error;}
+        }
         const child=await openReceiver(name);
         return reply(res,200,{receipt,name,connection:{schema:SCHEMA.connection,instanceId:child.instanceId,
           workspaceId:child.workspace.identity.workspaceId,url:child.url,active:true}});
@@ -132,7 +168,7 @@ export async function startZoteroWorkspace({directory,researchDirectory=null,dos
     await new Promise((yes,no)=>{server.once('error',no);server.listen(port,'127.0.0.1',()=>{server.off('error',no);yes();});});
     origin='http://127.0.0.1:'+server.address().port;url=origin+'/#token='+token;
     const connection={schema:SCHEMA.connection,mode:'ZOTERO_LIBRARY_WORKSPACE',instanceId,
-      workspaceId:workspace.identity.workspaceId,directory,url,active:true};
+      workspaceId:workspace.identity.workspaceId,directory,url,active:true,agentSchema:'stellar-forge.zotero-agent-api.v1',sourceBinding,workspaceBinding};
     await writeJson(connectionPath,connection);
     async function close() {
       if(closed)return closed;closing=true;
@@ -146,6 +182,7 @@ export async function startZoteroWorkspace({directory,researchDirectory=null,dos
         // Each request retains its own outcome. Drain it before closing its stores.
         // An opening child is registered above before its closing response can reject.
         await Promise.allSettled([...requests,...opening.values()]);
+        for(const [name,cleanup]of receivingCleanup){try{await cleanup.close();receivingCleanup.delete(name);}catch(error){errors.push(error);}}
         for(const [name,child]of children){
           try{await child.close();children.delete(name);}catch(error){errors.push(error);}
         }
@@ -161,5 +198,8 @@ export async function startZoteroWorkspace({directory,researchDirectory=null,dos
       closed.catch(()=>{closed=null;});return closed;
     }
     return {workspace,instanceId,origin,url,connectionFile:connectionPath,get active(){return !closing;},close};
-  }catch(error){server?.closeAllConnections?.();server?.close();await workspace.close().catch(()=>{});throw error;}
+   }catch(error){
+    const stop={async close(){if(!server)return;server.closeAllConnections?.();await new Promise((yes,no)=>server.close(e=>e&&e.code!=='ERR_SERVER_NOT_RUNNING'?no(e):yes()));}};
+    const cleanup=retainZoteroCleanup(error,[stop,workspace]);try{await cleanup.close();}catch(secondary){error.cleanupFailure=secondary.code??'ZOTERO_SERVER_CLOSE_FAILED';}throw error;
+  }
 }

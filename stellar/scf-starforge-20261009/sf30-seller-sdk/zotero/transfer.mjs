@@ -8,6 +8,8 @@ import {privateDirectory,writeBytes,readBytes,writeJson,readJson} from '../../sf
 import {SCHEMA,LIMIT,need,plain,json,parse,sha256,requestId,now} from './contracts.mjs';
 import {openZoteroStore,validateSnapshot,snapshotObjectReferences} from './store.mjs';
 
+import {retainZoteroCleanup} from './agent-cleanup.mjs';
+
 const researchIdentity=directory=>'research_'+sha256(Buffer.from(directory));
 const pair=(workspaceId,dossierId)=>workspaceId+'/'+dossierId;
 const validResearchId=value=>typeof value==='string'&&/^research_[a-f0-9]{64}$/.test(value);
@@ -164,7 +166,7 @@ export async function receiveWorkspace(bytes,{directory,requestId:operation}={})
     catch(error){if(error.code!=='EEXIST')throw error;marker=await readJson(markerPath);
       need(marker.requestId===op&&marker.packetSha256===prepared.sha256,'ZOTERO_RECEIVING_INPUT_CHANGED');}
   }
-  let store;
+  let store,primary;
   try{
     store=await openZoteroStore(directory,{receiving:true});
     if(marker.status==='COMPLETE'){
@@ -195,6 +197,6 @@ export async function receiveWorkspace(bytes,{directory,requestId:operation}={})
       sourceWorkspaceId:prepared.packet.state.identity.workspaceId,recordRevisions:prepared.packet.state.records.length,objects:prepared.objects.size};
     await writeJson(markerPath,complete);
     return {...complete,replayed:false};
-  }finally{store?.close();}
+  }catch(error){primary=error;throw error;}finally{if(store){try{store.close();}catch(error){const selected=primary??error;retainZoteroCleanup(selected,[store]);if(primary)primary.cleanupFailure=error.code??'ZOTERO_CLOSE_FAILED';else throw selected;}}}
 }
 export {parseTransfer};
