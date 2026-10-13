@@ -172,6 +172,18 @@ The complete original ZIP bodies remain the large native acquisition inputs.
 The metadata assertions above bind the received archives before extraction.
 Preserve the same Nord59 source operation and its existing accepting owner.
 
+## Receive and normalize both original dictionaries before the large archives
+
+The same acquisition supports `--dictionaries-only`. This first phase receives both selected catalogue/metadata originals and both complete XLSX workbooks, validates publisher assertions and retains each full `dictionary-members.json`. It uses the same acquisition lock, source history, retained-input adoption and native/hosted saving. The phase returns `dictionaries-received.json` with state `DICTIONARIES_RECEIVED`; it does not publish or replace the complete archive manifest.
+
+Run `python3 acquire_nord.py --root "$original_root" --delivery-mode native --retained-inputs "$original_input_manifest" --dictionaries-only` on the existing ordinary-disk receiver. The retained-input flag is optional when the original files are already present at that root or the same receiver is fetching their immutable public URLs.
+
+Use the complete selected checkout's `normalize_dictionary.py --input "$dictionary_input" --output "$dictionary_output" --inspect` to read the actual workbook layout, then run the same entry without `--inspect` for each edition. The exact whole input, original selected cells, respective edition dictionary and current source roster remain retained. See [DICTIONARY_NORMALIZATION.md](DICTIONARY_NORMALIZATION.md) for the full input contract; the resulting dictionary bindings go directly into [INPUT_JOIN.md](INPUT_JOIN.md).
+
+Continue `acquire_nord.py` with the same root and saving route, omitting `--dictionaries-only`, to receive both whole Nord archives and selected tables. Existing whole originals are verified and reused. After `COMPLETE_SOURCE_RECEIVING`, run `prepare_receiving.py` and the existing `receiving.py` with the original IDs and saved receiving state. The normalizer mapping supplies the complete current 46-field schema; the predecessor is derived from its actual workbook. Source counts and null/geometry interpretation remain distinct from customer review decisions.
+
+The original importer streams complete rows through a disk spool into SQLite. Comparison uses disk-backed SQLite seen-ID bookkeeping and retains original correspondence components; full annex export streams its selected SQL. Reserve ordinary persistent disk for compressed archives, full selected CSV copies, source segments/documents, typed SQLite rows, spool, complete annexes and editable workspace archives. The published compressed total is 2,184,780,942 bytes; expanded and typed sizes must be measured from actual originals. Temporary shared memory is unsuitable for the full department receiving.
+
 # Rendered product inspection policy
 
 ## Standing lab rule: inspect the rendered product before presenting it
