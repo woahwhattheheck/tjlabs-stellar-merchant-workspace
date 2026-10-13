@@ -16,7 +16,7 @@ import tempfile
 import zipfile
 
 from continue_review_customer import (
-    OPERATION, CONTINUATION, ACCEPTED, PYTHON, PINNED,
+    OPERATION, CONTINUATION, ACCEPTED, ACCEPTED_OUTPUTS, PYTHON, PINNED,
     build_customer, checked_row, copy_exact, directory, encoded, identity,
     module, now, publish_bytes, publish_json, read_json, relative, sync,
 )
@@ -73,6 +73,8 @@ def replacements(args, work):
         "@@CUSTOMER@@": str(installed),
         "@@SOURCE@@": str(installed / "source"),
         "@@PYTHON_SOURCE@@": str(installed / "source" / PYTHON),
+        "@@RETAINED_OUTPUTS@@": str(work / "retained-outputs"),
+        "@@ACCEPTED_CUSTOMER@@": str(work / "accepted-customer"),
         "@@PYTHON@@": str(Path(sys.executable).resolve(strict=True)),
         "@@NODE@@": str(args.node),
         "@@CHROMIUM@@": str(args.chromium),
@@ -132,6 +134,7 @@ def bind(args, work, receiver_path):
         "schema": "commons.scf-customer-continuation-intent.v1",
         "operation_id": OPERATION, "continuation_id": CONTINUATION,
         "accepted_archive": {"path": str(args.customer_zip), **identity(args.customer_zip)},
+        "retained_outputs_archive": {"path": str(args.retained_outputs_zip), **identity(args.retained_outputs_zip)},
         "programme": {"path": str(args.programme), **identity(args.programme)},
         "programme_source": plan["source_files"],
         "argv": [expand(value, mapping) for value in plan["argv"]],
@@ -148,6 +151,8 @@ def bind(args, work, receiver_path):
     }
     if selected["accepted_archive"] != {"path": str(args.customer_zip), **ACCEPTED}:
         raise ValueError("Continue the exact accepted complete customer package")
+    if selected["retained_outputs_archive"] != {"path": str(args.retained_outputs_zip), **ACCEPTED_OUTPUTS}:
+        raise ValueError("Continue the exact accepted retained review state and outputs")
     if not any(str(work / "installed" / "customer-review") in value for value in selected["argv"]):
         raise ValueError("The original receiving command must explicitly select the installed customer source")
     result_path = Path(selected["result"])
@@ -281,6 +286,9 @@ def run_original(args, work, intent, context, lock_fd):
         env["SCF_CUSTOMER_CONTINUATION_WORK"] = str(receiving)
         env["SCF_CUSTOMER_CONTINUATION_SOURCE"] = str(context["installed"] / "source")
         env["SCF_CUSTOMER_CHROMIUM"] = str(args.chromium)
+        env["SCF_CUSTOMER_PYTHON"] = str(Path(sys.executable).resolve(strict=True))
+        env["SCF_CUSTOMER_RETAINED_OUTPUTS"] = str(context["retained_outputs"])
+        env["SCF_CUSTOMER_ACCEPTED"] = str(context["accepted_customer"])
         prior_signals = {}
         child = None
         def forward(signum, _frame):
@@ -407,7 +415,7 @@ def delivery(args, work, intent, context, received, result, captures):
                              out / "Starforge_Complete_Resource_Review_Application.zip",
                              reports, context["wheel"], context["example_data"])
     source = read_json(context["selection"])
-    binding = {"accepted_customer": ACCEPTED,
+    binding = {"accepted_customer": ACCEPTED, "accepted_retained_outputs": ACCEPTED_OUTPUTS,
                "source_manifest": identity(context["selection"]),
                "receiving": identity(work / "receiving-completed.json")}
     source_members = [{"name": "source/" + row["path"], "source": str(context["checkout"] / row["path"]),

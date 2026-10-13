@@ -28,6 +28,8 @@ BASE = "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/"
 PYTHON = BASE + "python/"
 ACCEPTED = {"bytes": 4513584,
             "sha256": "68d20e9923d9a05b15c48f1b109a0b72c9777b4b97a987e411b76b2393ee0aa1"}
+ACCEPTED_OUTPUTS = {"bytes": 1180242,
+                    "sha256": "424053e0883e2fd6380b82def0b93e205fd8924a09bdacca66dc2ef27efb680d"}
 PINNED = {
     "apply_review_continuation.py": "4d201f3afccf3f915079373083dcf2993bee2846df4d4349a4820451f18a2050",
     "native-patches/customer-journal-continuation.json": "94eb78d75b3f2e1a56c5c90b02cce639fe14f6cd3ee9937682862ed4f1106424",
@@ -98,7 +100,11 @@ def directory(path):
     path = Path(path)
     if not path.is_absolute():
         raise ValueError("An absolute working directory is required")
-    path.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if not path.exists() and not path.is_symlink():
+        directory(path.parent)
+        if path.parent.resolve(strict=True) != path.parent:
+            raise ValueError("A canonical working parent is required: " + str(path.parent))
+        path.mkdir(exist_ok=True, mode=0o700)
     if path.resolve(strict=True) != path or not path.is_dir():
         raise ValueError("A canonical working directory is required: " + str(path))
     return path
@@ -286,6 +292,62 @@ def verify_selection(checkout, selection):
     return seen
 
 
+
+def prepare_retained_outputs(archive, destination):
+    """Preserve every member of the original accepted receiving-state archive."""
+    before = identity(archive)
+    if before != ACCEPTED_OUTPUTS:
+        raise ValueError("Use the complete accepted B41A retained-output archive")
+    directory(destination)
+    rows, seen = [], set()
+    with zipfile.ZipFile(archive) as zipped:
+        entries = zipped.infolist()
+        if len(entries) > 8192 or sum(x.file_size for x in entries) > MAX_ARCHIVE_BYTES:
+            raise ValueError("The original retained archive exceeds the receiving limit")
+        for info in entries:
+            if info.is_dir():
+                continue
+            name = str(relative(info.filename))
+            mode = info.external_attr >> 16
+            if name in seen or stat.S_IFMT(mode) not in (0, stat.S_IFREG) or info.flag_bits & 1:
+                raise ValueError("The original retained archive requires unique regular unencrypted members")
+            seen.add(name)
+            target = destination / name
+            directory(target.parent)
+            fd, temporary_name = tempfile.mkstemp(prefix=".original-receiving-", dir=target.parent)
+            temporary = Path(temporary_name)
+            value, count = hashlib.sha256(), 0
+            try:
+                with os.fdopen(fd, "wb") as out, zipped.open(info) as inp:
+                    for chunk in iter(lambda: inp.read(1024 * 1024), b""):
+                        value.update(chunk)
+                        count += len(chunk)
+                        out.write(chunk)
+                    out.flush()
+                    os.fsync(out.fileno())
+                expected = {"bytes": count, "sha256": value.hexdigest()}
+                if count != info.file_size or identity(temporary) != expected:
+                    raise ValueError("An original retained member changed during extraction")
+                if target.exists() or target.is_symlink():
+                    if identity(target) != expected:
+                        raise ValueError("The immutable retained input changed: " + name)
+                else:
+                    try:
+                        os.link(temporary, target)
+                    except FileExistsError:
+                        if identity(target) != expected:
+                            raise ValueError("A different original retained input was concurrently written")
+                    sync(target.parent)
+                rows.append({"path": name, **expected})
+            finally:
+                temporary.unlink(missing_ok=True)
+    if sum(Path(name).name == "OUTPUTS.json" for name in seen) != 1:
+        raise ValueError("The complete original retained archive must include its OUTPUTS.json")
+    if identity(archive) != before:
+        raise ValueError("The original retained archive changed during extraction")
+    return {"archive": before, "archive_members": len(entries),
+            "files": sorted(rows, key=lambda row: row["path"])}
+
 def original_build_inputs(baseline, manifest, rows):
     reviews = []
     for name in manifest.get("reviewFiles", []):
@@ -336,6 +398,9 @@ def prepare(args, work):
         pins[name] = identity(path)
         if pins[name]["sha256"] != expected:
             raise ValueError("Use the merged complete installer source: " + name)
+    retained_root = work / "retained-outputs"
+    retained = prepare_retained_outputs(args.retained_outputs_zip, retained_root)
+    publish_json(work / "retained-outputs-selection.json", retained)
     manifest, rows, package_raw = package_index(args.customer_zip, expected=ACCEPTED)
     original = source_selection(rows, ACCEPTED)
     baseline = work / "accepted-customer"
@@ -397,16 +462,19 @@ def prepare(args, work):
               "selected_source_files": len(selection["files"]), "package": built,
               "installed_customer": str(installed), "verification": verified,
               "installers": pins, "original_review_files": manifest.get("reviewFiles", []),
-              "original_wheel": str(wheel) if wheel else None, "example_data": example_data}
+              "original_wheel": str(wheel) if wheel else None, "example_data": example_data,
+              "retained_outputs": {"root": str(retained_root), "selection": identity(work / "retained-outputs-selection.json")}}
     publish_json(phase, record)
     return {"record": record, "builder": builder, "checkout": checkout,
             "selection": final_selection, "installed": installed, "reviews": reviews,
-            "wheel": wheel, "example_data": example_data, "delivery": delivery}
+            "wheel": wheel, "example_data": example_data, "delivery": delivery,
+            "retained_outputs": retained_root, "accepted_customer": baseline}
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--customer-zip", required=True, type=Path)
+    parser.add_argument("--retained-outputs-zip", required=True, type=Path)
     parser.add_argument("--work-dir", required=True, type=Path)
     parser.add_argument("--delivery-python", type=Path, default=Path(__file__).resolve().parent)
     parser.add_argument("--programme", required=True, type=Path,
@@ -420,7 +488,7 @@ def main(argv=None):
     if sys.version_info < (3, 11) or os.name != "posix":
         parser.error("The accepted customer runtime requires Python 3.11+ on POSIX")
     try:
-        for name in ("customer_zip", "programme", "node", "chromium"):
+        for name in ("customer_zip", "retained_outputs_zip", "programme", "node", "chromium"):
             value = getattr(args, name)
             if not value.is_absolute():
                 raise ValueError("Use an absolute " + name.replace("_", " ") + " path")

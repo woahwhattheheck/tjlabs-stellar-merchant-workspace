@@ -34,10 +34,20 @@ Use the accepted Starforge_Complete_Resource_Review_Application.zip:
 Its existing durable file is libfile_656b196547a88191b0c24e3bd85b34e4,
 also posted as F0C8LKVLEKG.
 
+Retain the original receiving state and outputs in
+SF88-Joined-Review-Retained-Outputs-2026-10-12.zip, posted as F0C8S84QWAY:
+1,180,242 bytes, SHA-256
+424053e0883e2fd6380b82def0b93e205fd8924a09bdacca66dc2ef27efb680d.
+This accepted archive carries 120 members, including OUTPUTS.json and the
+original incoming-browser, final return, Python-review and HTTP receiving inputs.
+The command preserves every ordinary member under retained-outputs/ and binds the
+archive and extracted member identities before invoking the customer journey.
+
 Run one command using the actual paths retained by the native customer owner:
 
     python continue_review_customer.py \
       --customer-zip /absolute/accepted/Starforge_Complete_Resource_Review_Application.zip \
+      --retained-outputs-zip /absolute/accepted/SF88-Joined-Review-Retained-Outputs-2026-10-12.zip \
       --work-dir /absolute/original-customer-operation/continuations/customer-90ed \
       --programme /absolute/original-customer-operation/receiving-programme.json \
       --node /absolute/existing/node \
@@ -90,6 +100,8 @@ Paths in argv, cwd and output fields may use these exact tokens:
 | @@CUSTOMER@@ | The complete installed customer-review directory |
 | @@SOURCE@@ | Its full repository-relative source root |
 | @@PYTHON_SOURCE@@ | Its selected Python source directory |
+| @@RETAINED_OUTPUTS@@ | Complete immutable original receiving state and outputs |
+| @@ACCEPTED_CUSTOMER@@ | Complete immutable original accepted customer and reports |
 | @@WORK@@ | The receiving directory inside this same continuation |
 | @@PYTHON@@ | Actual current Python executable |
 | @@NODE@@ | Selected existing Node executable |
@@ -105,6 +117,12 @@ accepted working customer state while giving the current installed source and
 outputs a distinct, exact selection. Keep the native runner's original request
 and continuation behavior; use its existing receiving state inputs where its
 actual command requires them.
+
+The invoked process also receives SCF_CUSTOMER_PYTHON,
+SCF_CUSTOMER_RETAINED_OUTPUTS and SCF_CUSTOMER_ACCEPTED with these actual paths.
+Read the original retained inputs from those roots and write current mutable
+receiving state, reports and captures under @@WORK@@. The original inputs remain
+available for the native programme's same-request recovery.
 
 Capture that runner and invocation from B41A's retained native delivery. The saved
 8,104-byte receiving JSON identifies its original outputs and installed runtime;
