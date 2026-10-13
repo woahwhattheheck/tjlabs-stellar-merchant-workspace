@@ -385,6 +385,10 @@
     "managed-source.json",
     "../../../scf-starforge-20261009/distribution/managed-source.mjs",
     "MANAGED_SOURCE.md",
-    "managed_source.py"
+    "managed_source.py",
+    "operations_commercial_changes.py",
+    "operations_commercial_changes.mjs",
+    "operations_commercial_changes.css",
+    "COMMERCIAL_CHANGES.md"
   ]
 }

@@ -35,8 +35,19 @@ def handle(handler, parsed, operations, method):
         raise Problem("Commercial billing route not found.", 404, "NOT_FOUND")
     case_id, rest = parts[0], parts[2:]
     billing = commercial_store(operations)
+    changes = operations.commercial_changes
+    change_route = len(rest) >= 2 and rest[0] == "changes"
+    milestone_changes = len(rest) >= 4 and rest[1] == "milestones" and rest[3] == "changes"
     if method == "GET":
-        if not rest:
+        if change_route and len(rest) == 2:
+            result = changes.get(case_id, rest[1])
+        elif change_route and len(rest) == 3 and rest[2] == "export.zip":
+            exported = changes.export_bundle(case_id, rest[1])
+            handler.send(200, base64.b64decode(exported["contentBase64"], validate=True), exported["mediaType"], exported["filename"])
+            return True
+        elif milestone_changes and len(rest) == 4:
+            result = changes.list(case_id, rest[0], rest[2])
+        elif not rest:
             result = billing.list(case_id)
         elif len(rest) == 1:
             result = billing.get(case_id, rest[0])
@@ -49,7 +60,16 @@ def handle(handler, parsed, operations, method):
             raise Problem("Commercial billing page not found.", 404, "NOT_FOUND")
     elif method == "POST":
         body = handler.json_body()
-        if len(rest) == 1 and rest[0] in ("schedule", "prepare"):
+        if milestone_changes and len(rest) == 5 and rest[4] in ("preview", "prepare"):
+            result = getattr(changes, rest[4])(case_id, rest[0], rest[2], body)
+        elif change_route and len(rest) == 3 and rest[2] in ("apply", "cancel", "issue", "refresh", "preview-issue"):
+            if rest[2] == "refresh":
+                result = changes.get(case_id, rest[1], True)
+            elif rest[2] == "preview-issue":
+                result = changes.preview_issue(case_id, rest[1])
+            else:
+                result = getattr(changes, rest[2])(case_id, rest[1], body)
+        elif len(rest) == 1 and rest[0] in ("schedule", "prepare"):
             result = getattr(billing, rest[0])(case_id, body)
         elif len(rest) == 2 and rest[1] == "refresh":
             result = billing.refresh(case_id, rest[0])

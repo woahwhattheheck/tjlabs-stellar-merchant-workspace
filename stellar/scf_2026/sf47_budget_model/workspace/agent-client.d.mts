@@ -633,6 +633,42 @@ export interface GrantCommercialCommandResult {
   commercial: GrantCommercialPrepared;
 }
 
+export type GrantCommercialChangeMode = 'DRAFT_EDIT' | 'CREDIT' | 'VOID' | 'REPLACE';
+export interface GrantCommercialChangeInput {
+  expectedVersion:number; previousChangeId?:string|null; actor:string; sourceIds:string[];
+  mode:GrantCommercialChangeMode; resolution?:'VOID'|'CREDIT'; targetAmount:string;
+  issueDate?:string; dueDate?:string; effectiveDate:string; authorizedOn:string;
+  description?:string; reason:string; authorization:string; purchaseOrder?:string; note?:string;
+}
+export interface GrantCommercialChangeProposal extends GrantObject {
+  schema:'stellar-forge.commercial-milestone-changes.v1';
+  preparedId:string; milestoneId:string; obligationKey:string; originalPreparedSha256:string;
+  originalMilestone:GrantCommercialMilestone; originalWorkshare:GrantCommercialSchedule;
+  endpointId:string; accountingIdentity:GrantObject; customerId:string; currency:GrantCommercialCurrency;
+  invoiceId:string; mode:GrantCommercialChangeMode; targetAmount:string; actor:string;
+  authorization:string; authorizationSources:Array<{id:string;metadata:GrantObject;contentBase64:string}>;
+  nativeBefore:GrantObject; nativeBeforeSha256:string; nativeFingerprint:string;
+  steps:Array<{action:'draft'|'credit'|'void';body:GrantObject}>;
+  consequences:GrantObject;
+}
+export interface GrantCommercialChange extends GrantObject {
+  id:string; obligationKey:string; sequence:number; createdAt:string;
+  state:'PREPARED'|'RUNNING'|'APPLIED'|'CANCELLED';
+  proposal:GrantCommercialChangeProposal; proposalSha256:string; activeInvoiceId:string|null;
+  commands:Array<GrantObject & {index:number;action:'draft'|'credit'|'void'|'issue';requestId:string;
+    state:'PENDING'|'ACKNOWLEDGED'|'REJECTED';body:GrantObject;intentSha256:string}>;
+  currentNative?:GrantObject[];
+}
+export interface GrantCommercialChanges {
+  schema:'stellar-forge.commercial-milestone-changes.v1';programId:string;preparedId:string;milestoneId:string;
+  previousChangeId:string|null;items:Array<{id:string;sequence:number;state:GrantCommercialChange['state'];createdAt:string;mode:GrantCommercialChangeMode;targetAmount:string}>;
+}
+export interface GrantCommercialChangePreview {schema:string;proposal:GrantCommercialChangeProposal;previewSha256:string}
+export interface GrantCommercialChangeIssuePreview extends GrantObject {
+  id:string;nativePreview:GrantCommercialIssuePreview['nativePreview'];issuePreviewSha256:string;
+  eligibility?:GrantCommercialEligibility;retainedCommand?:GrantObject;
+}
+
 export interface GrantAmendmentInputs {
   /** Explicit budget attribution; null leaves a retained observation unassigned. */
   packageMappings?: Array<{ fromCostId: string; toCostId: string | null; note: string }>;
@@ -4039,6 +4075,7 @@ export interface GrantDownloadSelections {
   installation: { caseId: string; installationId: string; revision: number };
   'installation-return': { caseId: string; reviewId: string };
   commercial: { caseId: string; billingId: string };
+  'commercial-change': {caseId:string;changeId:string};
   source: { caseId: string; sourceId: string };
   settlement: { caseId: string; reviewId: string };
   completion: { caseId: string; reviewId: string };
@@ -4167,6 +4204,15 @@ export class GrantWorkspaceClient {
   installationEffortSelection(caseId: string, body: GrantInstallationEffortSelectionInput): Promise<GrantJsonResponse<GrantInstallationEffortSelection>>;
   installationPreview(caseId: string, body: GrantInstallationPreviewInput): Promise<GrantJsonResponse<GrantInstallationPreview>>;
   installationSave(caseId: string, body: GrantInstallationSaveInput): Promise<GrantJsonResponse<GrantInstallationSaveReceipt>>;
+  commercialChanges(caseId:string,billingId:string,milestoneId:string):Promise<GrantJsonResponse<GrantCommercialChanges>>;
+  commercialChange(caseId:string,changeId:string):Promise<GrantJsonResponse<GrantCommercialChange>>;
+  commercialChangePreview(caseId:string,billingId:string,milestoneId:string,body:GrantCommercialChangeInput):Promise<GrantJsonResponse<GrantCommercialChangePreview>>;
+  commercialChangePrepare(caseId:string,billingId:string,milestoneId:string,body:GrantCommercialChangeInput & {requestId:string;expectedPreviewSha256:string}):Promise<GrantJsonResponse<GrantCommercialChange>>;
+  commercialChangeApply(caseId:string,changeId:string,body:{actor:string;expectedProposalSha256:string}):Promise<GrantJsonResponse<GrantCommercialChange>>;
+  commercialChangeCancel(caseId:string,changeId:string,body:{actor:string;expectedProposalSha256:string;requestId:string;reason:string}):Promise<GrantJsonResponse<GrantCommercialChange>>;
+  commercialChangePreviewIssue(caseId:string,changeId:string):Promise<GrantJsonResponse<GrantCommercialChangeIssuePreview>>;
+  commercialChangeIssue(caseId:string,changeId:string,body:{actor:string;expectedIssuePreviewSha256:string;expectedProposalSha256?:string;creditDecisionId?:string}):Promise<GrantJsonResponse<GrantCommercialChange>>;
+  commercialChangeRefresh(caseId:string,changeId:string):Promise<GrantJsonResponse<GrantCommercialChange>>;
   commercialConnections(): Promise<GrantJsonResponse<GrantCommercialConnections>>;
   commercialConfigureConnection<T = GrantObject>(body: GrantCommercialConnectionInput): Promise<GrantJsonResponse<T>>;
   commercialCustomers(endpointId: string): Promise<GrantJsonResponse<GrantCommercialCustomers>>;

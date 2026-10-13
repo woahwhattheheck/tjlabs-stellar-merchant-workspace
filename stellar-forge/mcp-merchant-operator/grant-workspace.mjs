@@ -796,6 +796,20 @@ export class MerchantGrantWorkspaces {
       original=verb==='installation_preview'?await client.installationPreview(caseId,{...body,document}):
         await client.installationSave(caseId,{...body,document});
     }
+    else if (verb === 'commercial_changes') original=await client.commercialChanges(args.caseId,args.billingId,args.milestoneId);
+    else if (verb === 'commercial_change') original=await client.commercialChange(args.caseId,args.changeId);
+    else if (verb === 'commercial_change_preview'||verb === 'commercial_change_prepare') {
+      const {caseId,billingId,milestoneId,...body}=rest;
+      original=verb==='commercial_change_preview'?await client.commercialChangePreview(caseId,billingId,milestoneId,body):
+        await client.commercialChangePrepare(caseId,billingId,milestoneId,body);
+    }
+    else if (['commercial_change_apply','commercial_change_cancel','commercial_change_issue'].includes(verb)) {
+      const {caseId,changeId,...body}=rest;
+      const methods={commercial_change_apply:'commercialChangeApply',commercial_change_cancel:'commercialChangeCancel',commercial_change_issue:'commercialChangeIssue'};
+      original=await client[methods[verb]](caseId,changeId,body);
+    }
+    else if (verb === 'commercial_change_preview_issue') original=await client.commercialChangePreviewIssue(args.caseId,args.changeId);
+    else if (verb === 'commercial_change_refresh') original=await client.commercialChangeRefresh(args.caseId,args.changeId);
     else if (verb === 'commercial_connections') original=await client.commercialConnections();
     else if (verb === 'commercial_connection_configure') original=await client.commercialConfigureConnection(rest);
     else if (verb === 'commercial_customers') original=await client.commercialCustomers(args.endpointId);

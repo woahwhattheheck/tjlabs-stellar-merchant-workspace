@@ -38,6 +38,18 @@ def register(command):
         target.add_argument("--milestone", required=True)
         target.add_argument("--file", required=True, help="JSON operator request; issue includes expectedIssuePreviewSha256")
 
+    for action in ("list", "preview", "prepare"):
+        target = command("commercial-change-" + action, "Read or prepare a source-backed milestone change", case=True, output=True)
+        target.add_argument("--billing", required=True)
+        target.add_argument("--milestone", required=True)
+        if action != "list":
+            target.add_argument("--file", required=True, help="Complete customer authorization and reviewed request")
+    for action in ("show", "refresh", "apply", "cancel", "preview-issue", "issue", "export"):
+        target = command("commercial-change-" + action, "Continue the original milestone correction", case=True, output=True)
+        target.add_argument("--change", required=True)
+        if action in ("apply", "cancel", "issue"):
+            target.add_argument("--file", required=True, help="Original operator and review identities")
+
 
 def operate(operations, args, read_bytes, publish):
     action = args.operation
@@ -53,7 +65,26 @@ def operate(operations, args, read_bytes, publish):
             raise Problem("The request file must contain a JSON object.", 422, "COMMERCIAL_INPUT_INVALID")
     adapter = CommercialConnectionAdapter(operations.workspace)
     billing = commercial_store(operations)
-    if action == "commercial-connections":
+    if action.startswith("commercial-change-"):
+        changes = operations.commercial_changes
+        selected = action.removeprefix("commercial-change-")
+        if selected in ("list", "preview", "prepare"):
+            result = (changes.list(args.case, args.billing, args.milestone) if selected == "list" else
+                      getattr(changes, selected)(args.case, args.billing, args.milestone, body))
+        elif selected in ("show", "refresh"):
+            result = changes.get(args.case, args.change, selected == "refresh")
+        elif selected == "preview-issue":
+            result = changes.preview_issue(args.case, args.change)
+        elif selected in ("apply", "cancel", "issue"):
+            result = getattr(changes, selected)(args.case, args.change, body)
+        elif selected == "export":
+            if not args.output:
+                raise Problem("Choose --output for the complete customer change.", 422, "OUTPUT_REQUIRED")
+            result = changes.export_bundle(args.case, args.change)
+            return {"changeId": args.change, "output": publish(args.output, base64.b64decode(result["contentBase64"], validate=True))}
+        else:
+            raise Problem("Milestone-change command not found.", 404, "NOT_FOUND")
+    elif action == "commercial-connections":
         result = adapter.endpoints()
     elif action == "commercial-connect":
         result = adapter.configure(body)

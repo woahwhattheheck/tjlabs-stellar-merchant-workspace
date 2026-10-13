@@ -61,6 +61,8 @@ export async function commercialReceivablesRequest({operation, endpoint, payload
   if (operation === 'draft') return client.saveDraft({...body, customerId});
   if (operation === 'preview') return client.preview(invoiceId);
   if (operation === 'issue') return client.issue(invoiceId, body);
+  if (operation === 'void') return client.voidInvoice(invoiceId, body);
+  if (operation === 'credit') return client.credit(invoiceId, body);
   if (operation === 'detail') return client.detail(invoiceId);
   if (operation === 'document') {
     const response = await client.file(invoiceId, body.name);
