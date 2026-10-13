@@ -78,7 +78,7 @@ export async function openEdgarWorkspace(directory, { storeDirectory, title = 'S
             Number.isSafeInteger(returnedWorkspace[key]) && returnedWorkspace[key] >= 0) ||
           returnedWorkspace.currentRevision !== expectedRevision ||
           typeof returnedWorkspace.actor !== 'string' || !returnedWorkspace.actor.trim() || returnedWorkspace.actor.length > 256 ||
-          (returnedWorkspace.notes !== undefined && (typeof returnedWorkspace.notes !== 'string' || returnedWorkspace.notes.length > 8000)))
+          (returnedWorkspace.notes !== undefined && (typeof returnedWorkspace.notes !== 'string' || returnedWorkspace.notes.length > 8192)))
         throw error('EDGAR_RETURN_APPLICATION_INVALID', 'The original returned-workspace decision is invalid.');
     }
     if (!object(config)) throw error('EDGAR_CONFIG_REQUIRED', 'A merchant configuration is required.');

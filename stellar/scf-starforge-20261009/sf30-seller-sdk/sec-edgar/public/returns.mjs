@@ -227,7 +227,7 @@ export function connectReturns({ api, run, notice, hasEdits, getState, refresh, 
     try {
       const result = await api('/api/returns/' + encodeURIComponent(pending.returnId) + '/operations/' + encodeURIComponent(pending.requestId));
       if (result.state === 'rejected') {
-        pending = null; retain(); renderRows();
+        pending = null; review = null; retain(); renderReview();
         notice('The original request records a completed rejection. Reopen the current comparison before making a new selection.'); return;
       }
     }

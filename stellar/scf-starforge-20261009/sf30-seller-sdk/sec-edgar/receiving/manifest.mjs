@@ -56,6 +56,32 @@ export function validateOperatorManifest(value) {
     expected.add('source-store/editions/' + edition.id + '.json');
     expected.add('source-store/blobs/' + edition.sourceSha256 + '.json');
   }
+  const nativeExpected = new Set(expected);
+  const returned = value.returnedWorkspaces ?? [];
+  need(Array.isArray(returned) && returned.length < MAX_MEMBERS &&
+    new Set(returned.map(row => row?.id)).size === returned.length, 'EDGAR_RETURN_MANIFEST_INVALID');
+  const returnIds = new Map();
+  for (const row of returned) {
+    need(object(row) && Object.keys(row).every(key => ['id', 'recordSha256'].includes(key)) &&
+      HASH.test(row.id ?? '') && HASH.test(row.recordSha256 ?? ''), 'EDGAR_RETURN_MANIFEST_INVALID');
+    returnIds.set(row.id, row);
+  }
+  need(Array.isArray(value.files), 'EDGAR_PORTABLE_INVENTORY_INVALID');
+  for (const file of value.files) {
+    if (nativeExpected.has(file?.path)) continue;
+    const match = /^workspace\/returned-workspaces\/([a-f0-9]{64})\/(.+)$/.exec(file?.path ?? '');
+    need(match && returnIds.has(match[1]) && !/[\\\u0000]/.test(match[2]) &&
+      match[2].split('/').every(part => part && part !== '.' && part !== '..'),
+      'EDGAR_RETURN_MANIFEST_PATH_INVALID');
+    const tail = match[2];
+    need(['return.json', 'request.json', 'original.zip'].includes(tail) || tail.startsWith('source/') ||
+      /^operations\/[A-Za-z0-9][A-Za-z0-9_-]{0,127}\/(?:request|result|rejection)\.json$/.test(tail),
+      'EDGAR_RETURN_MANIFEST_PATH_INVALID');
+    expected.add(file.path);
+  }
+  for (const row of returned)
+    for (const name of ['return.json', 'request.json', 'original.zip'])
+      need(expected.has('workspace/returned-workspaces/' + row.id + '/' + name), 'EDGAR_RETURN_MANIFEST_INCOMPLETE');
   need(Array.isArray(value.files) && value.files.length === expected.size && value.files.length + 1 <= MAX_MEMBERS &&
     new Set(value.files.map(file => file?.path)).size === value.files.length,
   'EDGAR_PORTABLE_INVENTORY_INVALID');
@@ -64,7 +90,8 @@ export function validateOperatorManifest(value) {
   const byPath = new Map();
   for (const file of value.files) {
     need(object(file) && expected.has(file.path) && typeof file.bytes === 'string' &&
-      /^(0|[1-9][0-9]{0,15})$/.test(file.bytes) && Number(file.bytes) > 0 && Number(file.bytes) <= MAX_FILE_BYTES &&
+      /^(0|[1-9][0-9]{0,15})$/.test(file.bytes) && Number(file.bytes) > 0 && Number(file.bytes) <=
+        (nativeExpected.has(file.path) ? MAX_FILE_BYTES : file.path.endsWith('/original.zip') ? MAX_EXPANDED_BYTES : MAX_MANIFEST_BYTES) &&
       HASH.test(file.sha256 ?? ''),
     'EDGAR_PORTABLE_FILE_INVALID');
     expanded += Number(file.bytes);
@@ -78,6 +105,11 @@ export function validateOperatorManifest(value) {
     const file = byPath.get('source-store/blobs/' + edition.sourceSha256 + '.json');
     need(file.sha256 === edition.sourceSha256 && Number(file.bytes) === edition.sourceBytes,
       'EDGAR_PORTABLE_SOURCE_BINDING_INVALID');
+  }
+  for (const row of returned) {
+    const prefix = 'workspace/returned-workspaces/' + row.id + '/';
+    need(byPath.get(prefix + 'return.json').sha256 === row.recordSha256 &&
+      byPath.get(prefix + 'original.zip').sha256 === row.id, 'EDGAR_RETURN_MANIFEST_BINDING_INVALID');
   }
   return value;
 }
