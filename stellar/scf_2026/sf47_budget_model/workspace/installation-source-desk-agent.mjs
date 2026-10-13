@@ -9,11 +9,11 @@ export const INSTALLATION_SOURCE_MAX_FILE_BYTES = 8 * 1024 * 1024;
 export const INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES = 256 * 1024 * 1024;
 export const INSTALLATION_SOURCE_ACTIONS = Object.freeze([
   'create','file.add','file.remove','selection.save','prepare','native.receive','attach',
-  'commissioning.attach','commissioning.archive.receive',
+  'commissioning.attach','commissioning.archive.receive','edition.apply',
 ]);
 export const INSTALLATION_SOURCE_READS = Object.freeze([
   'profiles','list','detail','request','file-inspect','file','preparation','archive-describe',
-  'archive','output','commissioning-inspect','commissioning-preview','archive-inspect',
+  'archive','output','commissioning-inspect','commissioning-preview','archive-inspect','edition-compare','edition-preview',
 ]);
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&
   (Object.getPrototypeOf(value)===Object.prototype||Object.getPrototypeOf(value)===null);
@@ -242,6 +242,9 @@ export function planInstallationSourceOperation(action,input={}){
         options.maxResponseBytes=INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES;
       }
       if(action==='output')route=query(route+'/outputs/'+identity(input.filename,'filename'),input,['expectedSha256']);
+    }else if(['edition-compare','edition-preview'].includes(action)){
+      exact(input,[...selection,'body']);need(plain(input.body),'Keep the complete selected edition request.');
+      route+='/editions/'+(action==='edition-compare'?'compare':'preview');options.body=input.body;
     }else if(['commissioning-inspect','commissioning-preview','archive-inspect'].includes(action)){
       exact(input,[...selection,'body']);need(plain(input.body),'Retain the complete original preview input.');
       const names={'commissioning-inspect':'inspect','commissioning-preview':'preview','archive-inspect':'archive-inspect'};
@@ -288,4 +291,16 @@ export async function performInstallationSourceOperation(plan,send){
   if(plan.action==='reconcile')return {state:'NOT_RECORDED',operation,response:lookup,receipt:null,replayed:false};
   const response=await send(base,{body:operation.request,originalRequestId:operation.request.requestId,mutation:true});
   return {state:'RECORDED',operation,response,receipt:checkReceipt(response.value,operation),replayed:false};
+}
+
+/** Freeze a reviewed successor through the same immutable native command file. */
+export function prepareInstallationSourceEdition(plan,context){
+  plan=copy(plan);exact(context,['requestId','actor','note'],['requestId','actor']);
+  need(plan.schema==='stellar-forge.installation-source-edition-plan.v1'&&plain(plan.target),
+    'Keep the complete source edition preview.');
+  const original={...plan},seal=identity(plan.sha256,'sha256');delete original.sha256;
+  need(digest(original)===seal,'The complete source edition plan changed.','GRANT_INSTALLATION_SOURCE_CHANGED');
+  return prepareInstallationSourceCommand(plan.caseId,plan.target.draftId,{
+    ...context,expectedRevision:whole(plan.target.revision,'selected target revision',1),
+    action:'edition.apply',data:{plan}});
 }
