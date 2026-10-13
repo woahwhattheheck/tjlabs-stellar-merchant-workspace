@@ -211,3 +211,14 @@ The ZIP includes the original selected input, preserved original operation recor
 Private live connection files and browser profile databases remain in their owned runtime directories. The source and delivery inventories explicitly select the intended files. Customer operating data in the portable workspace and attachments follows the original customer delivery route.
 
 Attach the actual archive and its receipt to the original receiving thread and Installation, alongside the rendered inspection and the exact source edition. Keep the original operation, commercial owner and ongoing source/provider work connected to that finished delivery.
+
+
+## Receiving launch preparation and ordered recovery records
+
+The maintained browser course incorporates the original 493D preparation correction and 9EEA journal-ordering correction from the [shared receiving source thread](https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791888028440609). The complete incoming launch is registered with shutdown before its first asynchronous journal write. If a signal arrives while the live owner is still preparing and has not dispatched an executable, that same owner records the preparation as closed with `notDispatched: true`. Every dispatched launch still requires its exact original process receipt, host/namespace/start-tick binding and full surviving-group closure.
+
+The original journal writer serializes saves. A slower older preparation save therefore cannot overwrite a later proved closure. Each caller still receives its own write error; a following cleanup save can proceed after a previous failed write. Original requests, accepted outputs, browser profiles, artifact inventory and complete source selection remain with their existing operation.
+
+Select this entire maintained source edition before a fresh receiving continuation. For an already initialized source-bound course, retain its original source-selection and results; settle its exact recorded browser ownership with the original source first. Keep the historical result and start the following managed source stage within the same original parent operation, using its complete accepted workspace and the existing parent lock. The earlier result is never relabelled as execution of this updated source.
+
+Use the existing managed receiving command documented above. The original producing owner opens the complete application, exercises actual controls and all downloads/reopened files, and personally views its desktop/narrow outputs under the full rendered-product instruction in this guide. Source publication leaves that original equipped operation intact.

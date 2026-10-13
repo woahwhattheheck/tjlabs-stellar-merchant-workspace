@@ -1,6 +1,6 @@
 # MPC managed store and HTTP contract
 
-This service hosts the delivered MPC operating model. It does not replace the original planner, domain validation, reports or command history. The original 26-file application and its offline IndexedDB edition remain unchanged under `app/`.
+This service hosts the delivered MPC operating model. It does not replace the original planner, domain validation, reports or command history. The complete 26-file application remains under `app/`, with the same operating model, planning data, UI and offline IndexedDB behavior. Its maintained branch receiver includes the original launch-preparation and ordered-journal corrections, and the full embedded-source HTML is regenerated from that selection. `ADOPTION.json` retains the exact original predecessor and identifies the maintained source edition; the other 24 original application bodies remain byte-identical.
 
 ## Lifetime and initialization
 
