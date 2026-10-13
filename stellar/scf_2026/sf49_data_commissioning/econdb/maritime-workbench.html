@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'"><title>Maritime period workbench</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f4f4;color:#1d1d1d;font:15px/1.5 system-ui,sans-serif}main{max-width:1360px;margin:0 auto;padding:28px}header{border-bottom:2px solid #333;margin-bottom:22px}h1{font-size:28px;line-height:1.2;margin:0 0 10px}h2{font-size:21px;margin:0 0 14px}h3{font-size:18px;margin:24px 0 10px}p{margin:10px 0}.muted{color:#555;font-size:14px}.panel{background:#fff;border:1px solid #c5c5c5;padding:20px;margin-bottom:18px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.fields{display:flex;flex-wrap:wrap;align-items:end;gap:14px}.field{display:flex;flex-direction:column;gap:5px;min-width:180px;flex:1}label{font-weight:600}input,button{font:inherit}input[type=file]{max-width:100%;width:100%;border:1px solid #aaa;padding:7px;background:#fafafa}input[type=date]{padding:8px;border:1px solid #888;background:#fff}button{padding:9px 14px;border:1px solid #777;background:#eee;color:#161616;cursor:pointer;border-radius:2px}button.primary{background:#262626;color:#fff;border-color:#262626}button:disabled{opacity:.45;cursor:default}button:focus-visible,input:focus-visible{outline:3px solid #444;outline-offset:3px}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px}.notice{background:#fff;border-left:4px solid #777;padding:14px 18px;margin:18px 0;overflow-wrap:anywhere}.notice.error{border:2px solid #333;font-weight:600}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.metrics div{border:1px solid #ccc;padding:12px}.metrics strong{display:block;font-size:25px;font-variant-numeric:tabular-nums}.metrics span{font-size:13px}.table{overflow-x:auto}table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}th,td{text-align:left;border-bottom:1px solid #ccc;padding:9px 12px;vertical-align:top;max-width:440px;overflow-wrap:anywhere}th{background:#eee}dl{display:grid;grid-template-columns:170px minmax(0,1fr);gap:7px 16px}dt{font-weight:600}dd{margin:0;overflow-wrap:anywhere}details{margin-top:16px}summary{cursor:pointer;font-weight:600}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}.check{display:block;margin:15px 0 10px}.pager{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:16px 0}.pager span{flex:1;font-size:13px}footer{font-size:13px;color:#555;padding:5px 0 20px}@media(max-width:760px){main{padding:14px}.grid{grid-template-columns:1fr}.panel{padding:15px}.metrics{grid-template-columns:1fr 1fr}dl{grid-template-columns:1fr;gap:1px}dd{margin-bottom:10px}h1{font-size:25px}.fields{align-items:stretch}.field{min-width:140px}.actions button{flex:1}th,td{padding:8px}}
+</style></head><body><main>
+<header><h1>Maritime period workbench</h1><p>Review complete original port observations, compare periods and source editions, and export a reproducible result.</p><p class="muted">Local files stay in this browser. Authorized source acquisition runs in the companion native CLI. The two examples below reproduce published Econdb documentation and have no assigned port identity.</p></header>
+<section class="panel"><h2>1. Select a source edition</h2><div class="grid"><div><div class="field"><label for="raw-file">Original response JSON</label><input id="raw-file" type="file" accept=".json,application/json"></div><div class="field"><label for="descriptor-file">Retained descriptor JSON</label><input id="descriptor-file" type="file" accept=".json,application/json"></div><div class="actions"><button id="load-current" class="primary">Open source edition</button></div></div><div><p>Explore the issuer’s documented data shape:</p><div class="actions"><button id="capacity-example">Capacity example</button><button id="traffic-example">Container-traffic example</button></div><p class="muted">Capacity examples cover February and March 2022 in one response. Container traffic preserves its single original date and its unknown transshipment value.</p></div></div><div id="source-summary"><p class="muted">No source edition selected.</p></div></section>
+<section class="panel"><h2>2. Choose a local reporting window</h2><div class="fields"><div class="field"><label for="from">From date, inclusive</label><input id="from" type="date"></div><div class="field"><label for="until">Until date, exclusive</label><input id="until" type="date"></div></div><label class="check"><input id="compare-toggle" type="checkbox"> Compare equal, complete monthly periods within this response</label><div class="grid"><div class="fields"><div class="field"><label for="before-from">Before: from</label><input id="before-from" type="date"></div><div class="field"><label for="before-until">Before: until</label><input id="before-until" type="date"></div></div><div class="fields"><div class="field"><label for="after-from">After: from</label><input id="after-from" type="date"></div><div class="field"><label for="after-until">After: until</label><input id="after-until" type="date"></div></div></div>
+<details><summary>Compare against a previously retained source edition</summary><p class="muted">Use a later capture as the current edition. Both requests must have the same port, endpoint, flow and population. Published examples are a single source illustration.</p><div class="grid"><div class="field"><label for="previous-raw">Previous original response</label><input id="previous-raw" type="file" accept=".json,application/json"></div><div class="field"><label for="previous-descriptor">Previous descriptor</label><input id="previous-descriptor" type="file" accept=".json,application/json"></div></div><div class="actions"><button id="load-previous">Open previous edition</button></div><p id="previous-label">No previous edition selected.</p><label class="check"><input id="revision-toggle" type="checkbox"> Include source revision comparison</label></details><div class="actions"><button id="apply" class="primary">Apply selection and compare</button></div></section>
+<div id="message" class="notice" role="status" aria-live="polite">Open a retained edition or choose an issuer example.</div>
+<section class="panel"><h2>3. Review coverage and changes</h2><div id="summary"></div><div id="comparison"></div><div id="revisions"></div><h3>Selected original observations</h3><div id="observations"></div><div class="pager"><button id="previous-page">Previous</button><span id="page-label"></span><button id="next-page">Next</button></div><details><summary>Source structure exceptions</summary><pre id="exceptions">[]</pre></details></section>
+<section class="panel"><h2>4. Export and continue</h2><p>Downloads use the applied selection. A saved workspace includes both complete original responses, descriptors and review choices.</p><div class="actions"><button id="source-download" disabled>Original response</button><button id="csv-download" disabled>Observation CSV</button><button id="json-download" disabled>Review JSON</button><button id="report-download" disabled>Complete HTML report</button><button id="workspace-download" disabled>Save workspace</button></div><h3>Reopen a saved workspace</h3><div class="fields"><div class="field"><label for="workspace-file">Review workspace JSON</label><input id="workspace-file" type="file" accept=".json,application/json"></div><button id="restore">Reopen workspace</button></div></section>
+<footer>Calling-vessel TEU capacity and estimated container TEU retain separate measures. Empty source cells remain explicit. Source: Econdb OpenAPI, retained October 13, 2026.</footer>
+</main><script>// BEGIN MARITIME ENGINE
+// Econdb maritime analysis over retained original JSON. No network or payment side effects.
+const VERSION='1.0.0';
+const MAX_SOURCE_CELLS=500000;
+const CONTRACT_SHA256='c271e5e1799a7a47b3f598cdf286d25c7bb68108cd9f3e466231f4f95a82c915';
+function sha256(value) {
+ const raw=encodeURIComponent(value).replace(/%([0-9A-F]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
+ const bytes=Array.from(raw,c=>c.charCodeAt(0)),bits=bytes.length*8;
+ bytes.push(128);while(bytes.length%64!==56)bytes.push(0);
+ for(let i=7;i>=0;i--)bytes.push(Math.floor(bits/2**(8*i))&255);
+ const h=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+ const k=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+ const rotr=(x,n)=>(x>>>n)|(x<<(32-n));
+ for(let offset=0;offset<bytes.length;offset+=64){
+ const w=new Uint32Array(64);for(let i=0;i<16;i++)w[i]=((bytes[offset+i*4]<<24)|(bytes[offset+i*4+1]<<16)|(bytes[offset+i*4+2]<<8)|bytes[offset+i*4+3])>>>0;
+ for(let i=16;i<64;i++){const x=w[i-15],y=w[i-2];w[i]=(w[i-16]+(rotr(x,7)^rotr(x,18)^(x>>>3))+w[i-7]+(rotr(y,17)^rotr(y,19)^(y>>>10)))>>>0;}
+ let [a,b,c,d,e,f,g,j]=h;
+ for(let i=0;i<64;i++){const t1=(j+(rotr(e,6)^rotr(e,11)^rotr(e,25))+((e&f)^(~e&g))+k[i]+w[i])>>>0,t2=((rotr(a,2)^rotr(a,13)^rotr(a,22))+((a&b)^(a&c)^(b&c)))>>>0;j=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
+ [a,b,c,d,e,f,g,j].forEach((x,i)=>h[i]=(h[i]+x)>>>0);
+ }
+ return h.map(x=>x.toString(16).padStart(8,"0")).join("");
+}
+const own=(x,k)=>Object.prototype.hasOwnProperty.call(x,k);
+function need(ok,message){if(!ok)throw new Error(message)}
+function obj(v,label){need(v&&typeof v==='object'&&!Array.isArray(v),label+' must be an object');return v}
+function str(v,label){need(typeof v==='string'&&v.trim()&&v.length<=2000,label+' must be nonempty text');return v}
+function keys(v,allowed,label){for(const k of Object.keys(v))need(allowed.includes(k),label+': unsupported field '+k)}
+const ptr=s=>s.replace(/~/g,'~0').replace(/\//g,'~1');
+function dateOnly(value){
+ need(typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value),'Use an explicit YYYY-MM-DD date');
+ const d=new Date(value+'T00:00:00Z');need(Number.isFinite(d.valueOf())&&d.toISOString().slice(0,10)===value,'Invalid calendar date');
+ return value;
+}
+function decimal(text){
+ need(typeof text==='string'&&/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(text),'Invalid source decimal');
+ const m=text.match(/^(-?)(\d+)(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/);
+ const exp=Number(m[4]||0);need(Number.isSafeInteger(exp)&&Math.abs(exp)<=1000&&text.length<=2000,'Source number exceeds exact arithmetic range');
+ let n=BigInt((m[1]||'')+m[2]+(m[3]||'')),s=(m[3]||'').length-exp;
+ if(s<0){n*=10n**BigInt(-s);s=0}
+ while(s&&n%10n===0n){n/=10n;s--}
+ return {n,s};
+}
+function decimalText({n,s}){
+ let x=(n<0n?-n:n).toString().padStart(s+1,'0');
+ if(s)x=x.slice(0,-s)+'.'+x.slice(-s);
+ return (n<0n?'-':'')+x;
+}
+function add(a,b){const x=decimal(a),y=decimal(b),s=Math.max(x.s,y.s);return decimalText({n:x.n*10n**BigInt(s-x.s)+y.n*10n**BigInt(s-y.s),s})}
+function subtract(a,b){const x=decimal(b);return add(a,decimalText({n:-x.n,s:x.s}))}
+function percentage(a,b){
+ const x=decimal(a),y=decimal(b);if(y.n===0n)return null;
+ let n=x.n*10n**BigInt(y.s)*100n,d=y.n*10n**BigInt(x.s);if(d<0n){n=-n;d=-d}
+ const neg=n<0n,aN=neg?-n:n,scale=10000n,q=aN*scale/d,r=aN*scale%d;
+ return {numerator:n.toString(),denominator:d.toString(),display:decimalText({n:(q+(r*2n>=d?1n:0n))*(neg?-1n:1n),s:4})};
+}
+// Retain every numeric lexeme so JSON binary floating-point cannot change arithmetic.
+function parseExactJSON(text){
+ need(typeof text==='string','Original JSON must be UTF-8 text');
+ let i=0;const numbers=new Map();const ws=()=>{while(i<text.length&&/[\t\n\r ]/.test(text[i]))i++};
+ function string(){const start=i++;while(i<text.length){if(text[i]==='\\'){i+=2;continue}if(text[i++]==='"')return JSON.parse(text.slice(start,i))}throw new Error('Unterminated JSON string')}
+ function read(path,depth){
+  need(depth<64,'JSON nesting exceeds 63 levels');ws();const ch=text[i];
+  if(ch==='"')return string();
+  if(ch==='{'){
+   i++;const value=Object.create(null);ws();if(text[i]==='}'){i++;return value}
+   while(true){ws();need(text[i]==='"','Expected JSON object key');const key=string();need(!own(value,key),'Repeated JSON key at '+path+'/'+ptr(key));ws();need(text[i++]===':','Expected colon');value[key]=read(path+'/'+ptr(key),depth+1);ws();const end=text[i++];if(end==='}')return value;need(end===',','Expected comma')}
+  }
+  if(ch==='['){i++;const value=[];ws();if(text[i]===']'){i++;return value}while(true){value.push(read(path+'/'+value.length,depth+1));ws();const end=text[i++];if(end===']')return value;need(end===',','Expected array comma')}}
+  for(const [literal,value] of [['true',true],['false',false],['null',null]])if(text.startsWith(literal,i)){i+=literal.length;return value}
+  const m=text.slice(i).match(/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/);need(m,'Invalid JSON value at '+path);
+  i+=m[0].length;const value=Number(m[0]);need(Number.isFinite(value),'Nonfinite JSON number at '+path);decimal(m[0]);numbers.set(path,m[0]);return value;
+ }
+ const value=read('',0);ws();need(i===text.length,'Trailing JSON content');return {value,numbers};
+}
+function requestPlan(input){
+ obj(input,'Request');keys(input,['kind','locode','flow','operator','top'],'Request');
+ need(['ports','capacity-by-operator','container-traffic'].includes(input.kind),'Choose ports, capacity-by-operator or container-traffic');
+ if(input.kind==='ports'){need(Object.keys(input).length===1,'Port catalogue has no declared query options');return {kind:'ports',method:'GET',url:'https://api.econdb.com/v1/ports/',query:{},locode:null,measure:null,population:'issuer_top_400_ports',frequency:null}}
+ const locode=str(input.locode,'Original LOCODE');need(/^[A-Z]{2} ?[A-Z0-9]{3}$/.test(locode),'Use the exact selected issuer LOCODE');
+ const query={};let measure='container_volume_teu',population='operation_types',frequency=null;
+ if(input.kind==='capacity-by-operator'){
+  query.flow=input.flow??'throughput';need(['throughput','import','export','transshipment','cargo'].includes(query.flow),'Unsupported flow');
+  measure=query.flow==='throughput'?'calling_vessel_capacity_teu':'container_volume_teu';frequency='monthly';
+  if(input.operator!==undefined&&input.operator!==null&&input.operator!==''){
+   query.operator=str(input.operator,'Original operator');need(input.top===undefined,'top is ignored with operator; leave it absent');
+   population='selected_operator';
+  }else{
+   const top=input.top??'0';need(top==='0'||top==='all'||(typeof top==='string'&&/^[1-9]\d{0,3}$/.test(top)),'top must be 0, all or positive integer text');
+   query.top=top;population=top==='0'||top==='all'?'requested_all_operators':'top_operators_and_others';
+  }
+ }else need(input.flow===undefined&&input.operator===undefined&&input.top===undefined,'Container traffic declares no query parameters');
+ const suffix=Object.entries(query).map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');
+ return {kind:input.kind,method:'GET',url:'https://api.econdb.com/v1/ports/'+encodeURIComponent(locode)+'/'+input.kind+'/'+(suffix?'?'+suffix:''),query,locode,measure,population,frequency};
+}
+function readSnapshot(text,descriptor){
+ obj(descriptor,'Snapshot descriptor');keys(descriptor,['id','kind','locode','flow','operator','top','source_role','captured_at','source_sha256','original_url','basis'],'Snapshot descriptor');
+ const id=str(descriptor.id,'Edition ID'),role=descriptor.source_role;
+ need(['authenticated_response','operator_supplied_response','issuer_documentation_example'].includes(role),'Record the actual source role');
+ need(/^[a-f0-9]{64}$/.test(descriptor.source_sha256||''),'Original source SHA-256 required');
+ need(sha256(text)===descriptor.source_sha256,'Original source SHA-256 does not match its exact UTF-8 content');
+ str(descriptor.captured_at,'Capture time');need(Number.isFinite(Date.parse(descriptor.captured_at))&&/Z$/.test(descriptor.captured_at),'Capture time must be UTC');
+ let request;
+ if(role==='issuer_documentation_example'){
+  need(descriptor.locode===null,'Published port examples do not identify a port');
+  need(descriptor.flow===undefined&&descriptor.top===undefined&&descriptor.operator===undefined,'Documentation example has no observed query');
+  need(['capacity-by-operator','container-traffic'].includes(descriptor.kind),'Unsupported documented sample');
+  request={kind:descriptor.kind,locode:null,query:null,url:null,measure:descriptor.kind==='capacity-by-operator'?'calling_vessel_capacity_teu':'container_volume_teu',population:'documented_example',frequency:descriptor.kind==='capacity-by-operator'?'monthly':null};
+ }else{
+  const q={};for(const key of ['kind','locode','flow','operator','top'])if(own(descriptor,key))q[key]=descriptor[key];request=requestPlan(q);
+  need(descriptor.original_url===request.url,'Original response URL must match the retained exact request');
+ }
+ const parsed=parseExactJSON(text),source=obj(parsed.value,'Timeseries response');
+ need(source.type==='timeseries'&&Array.isArray(source.series)&&Array.isArray(source.data),'Expected documented timeseries shape');
+ const series=[],codes=new Set(),issues=[];
+ for(const item of source.series){obj(item,'Series');const code=str(item.code,'Series code');need(code!=='Date'&&!codes.has(code),'Repeated or reserved series code');codes.add(code);series.push({code,name:typeof item.name==='string'?item.name:code,declared:true,source_metadata:item})}
+ for(const row of source.data){obj(row,'Source row');for(const code of Object.keys(row))if(code!=='Date'&&!codes.has(code)){codes.add(code);series.push({code,name:code,declared:false,source_metadata:null});issues.push({kind:'undeclared_series',code})}}
+ need(source.data.length*series.length<=MAX_SOURCE_CELLS,'Source exceeds the 500,000-cell in-memory analysis limit; the native receiver retains its original bytes for partitioned receiving');
+ const seenDates=new Set(),rows=[];
+ for(let index=0;index<source.data.length;index++){
+  const sourceRow=source.data[index],date=dateOnly(sourceRow.Date);
+  if(seenDates.has(date))issues.push({kind:'repeated_date',date,index});seenDates.add(date);
+  if(request.frequency==='monthly'&&!date.endsWith('-01'))issues.push({kind:'monthly_label_not_first_day',date,index});
+  for(const s of series){
+   const path='/data/'+index+'/'+ptr(s.code),value=sourceRow[s.code];
+   let status=own(sourceRow,s.code)?value===null?'null':typeof value==='number'?'known':'unsupported_value':'absent';
+   const literal=status==='known'?parsed.numbers.get(path):null;
+   rows.push({source_row:index,date,series:s.code,status,source_value:status==='absent'?null:value,source_lexeme:literal,exact:literal===null?null:decimalText(decimal(literal))});
+  }
+ }
+ if(request.population==='requested_all_operators'&&series.some(s=>s.code.trim().toLowerCase()==='others'))issues.push({kind:'others_in_all_operator_response'});
+ return {schema:'econdb.maritime-edition.v1',id,source:{...descriptor,original_bytes:unescape(encodeURIComponent(text)).length},request,title:typeof source.title==='string'?source.title:descriptor.kind,source_metadata:Object.fromEntries(Object.entries(source).filter(([k])=>!['data','series'].includes(k))),series,rows,source_row_count:source.data.length,issues};
+}
+function range(input){obj(input,'Local selection');keys(input,['from','until'],'Local selection');const from=dateOnly(input.from),until=dateOnly(input.until);need(from<until,'Local selection must have from < until');return {from,until,basis:'local_original_Date',end:'exclusive'}}
+function monthLabels(r){const out=[];let [y,m]=r.from.slice(0,7).split('-').map(Number);if(r.from.slice(8)!=='01'||r.until.slice(8)!=='01')return null;while(true){const s=String(y).padStart(4,'0')+'-'+String(m).padStart(2,'0')+'-01';if(s>=r.until)break;out.push(s);if(++m>12){m=1;y++}need(out.length<=1200,'Choose at most 100 years per local monthly selection')}return out}
+function selectPeriod(edition,selection){
+ need(edition?.schema==='econdb.maritime-edition.v1','Use a received maritime edition');const r=range(selection),rows=edition.rows.filter(x=>x.date>=r.from&&x.date<r.until);
+ const dates=[...new Set(rows.map(x=>x.date))].sort(),expected=edition.request.frequency==='monthly'?monthLabels(r):null;
+ const missing_dates=expected?expected.filter(x=>!dates.includes(x)):null;
+ return {edition_id:edition.id,selection:r,source:edition.source,request:edition.request,series:edition.series,rows,dates,expected_dates:expected,missing_dates,frequency:edition.request.frequency,issues:edition.issues.filter(x=>!x.date||(x.date>=r.from&&x.date<r.until))};
+}
+function comparePeriods(edition,beforeRange,afterRange){
+ const before=selectPeriod(edition,beforeRange),after=selectPeriod(edition,afterRange);
+ need(edition.request.kind==='capacity-by-operator','Period totals apply only to declared monthly capacity/operator series; container traffic retains source-dated rows');
+ need(before.expected_dates&&after.expected_dates,'Select whole monthly periods');
+ need(before.expected_dates.length===after.expected_dates.length,'Compare periods with the same number of months');
+ need(before.selection.until<=after.selection.from,'Compare nonoverlapping chronological periods');
+ function total(period,code){
+  const rows=period.rows.filter(x=>x.series===code),dates=rows.map(x=>x.date);
+  const reasons=[];if(period.missing_dates.length)reasons.push('missing_months');
+  if(new Set(dates).size!==dates.length)reasons.push('repeated_dates');
+  if(rows.some(x=>x.status!=='known'))reasons.push('unknown_values');
+  if(period.issues.some(x=>x.kind==='monthly_label_not_first_day'))reasons.push('ambiguous_month_labels');
+  if(!rows.length)reasons.push('no_rows');
+  return {value:reasons.length?null:rows.reduce((a,x)=>add(a,x.exact),'0'),reasons,observed_rows:rows.length,expected_months:period.expected_dates.length};
+ }
+ const comparisons=edition.series.map(s=>{
+  const a=total(before,s.code),b=total(after,s.code),delta=a.value!==null&&b.value!==null?subtract(b.value,a.value):null;
+  return {series:s.code,name:s.name,before:a,after:b,delta,percent_change:delta===null?null:percentage(delta,a.value),percent_basis:a.value==='0'?'zero_baseline':delta===null?'incomplete':'before_period_total'};
+ });
+ return {schema:'econdb.maritime-period-comparison.v1',edition_id:edition.id,source:edition.source,request:edition.request,before,after,comparisons,aggregation:'sum of the selected disjoint monthly values within each same source series',cross_measure_total:null};
+}
+function compareEditions(before,after,selection){
+ need(before?.schema==='econdb.maritime-edition.v1'&&after?.schema==='econdb.maritime-edition.v1','Use two received editions');
+ need(before.source.source_role!=='issuer_documentation_example'&&after.source.source_role!=='issuer_documentation_example','A documentation example is not an observed edition revision');
+ need(JSON.stringify(before.request)===JSON.stringify(after.request),'Edition comparison needs the same exact port, endpoint, flow, operator and population');
+ need(before.source.source_role===after.source.source_role,'Keep the original source-role basis consistent');
+ need(Date.parse(after.source.captured_at)>Date.parse(before.source.captured_at),'After edition must be captured later');
+ const a=selectPeriod(before,selection),b=selectPeriod(after,selection);need(!a.issues.concat(b.issues).some(x=>x.kind==='repeated_date'),'Resolve repeated date keys before revision comparison');
+ const map=p=>new Map(p.rows.map(r=>[JSON.stringify([r.date,r.series]),r])),am=map(a),bm=map(b);
+ const all=[...new Set([...am.keys(),...bm.keys()])].sort(),changes=[];
+ const canonical=value=>JSON.stringify(value&&typeof value==='object'?Array.isArray(value)?value.map(v=>JSON.parse(canonical(v))):Object.fromEntries(Object.keys(value).sort().map(k=>[k,JSON.parse(canonical(value[k]))])):value);
+ const metadata_changes=[];
+ for(const key of ['title','source_metadata'])if(canonical(before[key])!==canonical(after[key]))metadata_changes.push({field:key,before:before[key],after:after[key]});
+ const oldSeries=new Map(before.series.map(v=>[v.code,v])),newSeries=new Map(after.series.map(v=>[v.code,v]));
+ for(const code of new Set([...oldSeries.keys(),...newSeries.keys()])){const x=oldSeries.get(code),y=newSeries.get(code);if(!x||!y||canonical(x)!==canonical(y))metadata_changes.push({field:'series',code,kind:!x?'added':!y?'removed':'changed',before:x??null,after:y??null})}
+ if(canonical(a.dates)!==canonical(b.dates)||canonical(a.missing_dates)!==canonical(b.missing_dates))metadata_changes.push({field:'selected_coverage',before:{dates:a.dates,missing_dates:a.missing_dates},after:{dates:b.dates,missing_dates:b.missing_dates}});
+ for(const key of all){
+  const x=am.get(key),y=bm.get(key),[date,series]=JSON.parse(key);
+  let kind=!x?'added':!y?'removed':x.status!==y.status?'value_state_changed':x.exact!==y.exact?'revised':JSON.stringify(x.source_value)!==JSON.stringify(y.source_value)?'revised':'unchanged';
+  changes.push({date,series,kind,before:x||null,after:y||null,delta:x?.status==='known'&&y?.status==='known'?subtract(y.exact,x.exact):null});
+ }
+ return {schema:'econdb.maritime-edition-comparison.v1',before_id:before.id,after_id:after.id,request:before.request,selection:a.selection,before_source:before.source,after_source:after.source,metadata_changes,changes,counts:Object.fromEntries(['added','removed','value_state_changed','revised','unchanged'].map(k=>[k,changes.filter(x=>x.kind===k).length]))};
+}
+function exportRowsCSV(period){
+ const fields=['edition_id','locode','endpoint','flow','measure','population','date','series','status','exact_value','source_lexeme','source_row','source_sha256'];
+ const safe=value=>{let s=value==null?'':String(value);if(/^[\s]*[=+@]/.test(s)||/^[\t\r\n]/.test(s)||(/^[\s]*-/.test(s)&&!/^\-\d+(?:\.\d+)?(?:e[+-]?\d+)?$/i.test(s)))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'};
+ const rows=period.rows.map(r=>[period.edition_id,period.request.locode,period.request.kind,period.request.query?.flow,period.request.measure,period.request.population,r.date,r.series,r.status,r.exact,r.source_lexeme,r.source_row,period.source.source_sha256]);
+ return [fields,...rows].map(row=>row.map(safe).join(',')).join('\r\n')+'\r\n';
+}
+function reportHTML({edition,period,comparison=null,editionComparison=null,engine_sha256=null}){
+ if(engine_sha256!==null)need(/^[a-f0-9]{64}$/.test(engine_sha256),'Use the exact producing analysis source SHA-256');
+ need(period.edition_id===edition.id&&period.source.source_sha256===edition.source.source_sha256&&JSON.stringify(period.request)===JSON.stringify(edition.request),'Report period belongs to a different source edition');
+ if(comparison)need(comparison.edition_id===edition.id&&comparison.source.source_sha256===edition.source.source_sha256,'Report comparison belongs to a different source edition');
+ if(editionComparison)need(editionComparison.after_id===edition.id&&editionComparison.after_source.source_sha256===edition.source.source_sha256,'Revision report must use the later source edition');
+ const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const table=(headers,rows)=>'<div class="table"><table><thead><tr>'+headers.map(x=>'<th scope="col">'+esc(x)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(x=>'<td>'+esc(x)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+ const issueText=edition.issues.length?edition.issues.map(x=>JSON.stringify(x)).join('\n'):'No structural exceptions recorded.';
+ const coverage='<h2>Selected coverage</h2>'+table(['Observed dates','Expected monthly dates','Missing monthly dates','Known cells','Null cells','Absent cells','Unsupported cells'],[[period.dates.length,period.expected_dates?.length??'Not inferred for this selection',period.missing_dates?.length??'Not inferred',...['known','null','absent','unsupported_value'].map(k=>period.rows.filter(x=>x.status===k).length)]])+'<p>Missing monthly labels: '+esc(period.missing_dates?.join(', ')|| (period.expected_dates?'None':'Not inferred for this selection and source frequency'))+'</p>';
+ let detail=coverage;
+ if(comparison)detail+='<h2>Selected period comparison</h2><p>'+esc(comparison.aggregation)+'. Before: '+esc(comparison.before.selection.from)+' ≤ Date &lt; '+esc(comparison.before.selection.until)+'. After: '+esc(comparison.after.selection.from)+' ≤ Date &lt; '+esc(comparison.after.selection.until)+'. Percent change is undefined for a zero baseline.</p>'+table(['Series','Before','After','Change','Change %','Incomplete basis'],comparison.comparisons.map(x=>[x.name,x.before.value??'Unknown',x.after.value??'Unknown',x.delta??'Unknown',x.percent_change?.display??'Undefined',x.before.reasons.concat(x.after.reasons).join(', ')]));
+ if(editionComparison)detail+='<h2>Source revisions</h2><p>'+esc(editionComparison.before_id)+' → '+esc(editionComparison.after_id)+'</p>'+table(['Date','Series','Change','Before','After','Delta'],editionComparison.changes.filter(x=>x.kind!=='unchanged').map(x=>[x.date,x.series,x.kind,x.before?.exact??x.before?.status??'Absent',x.after?.exact??x.after?.status??'Absent',x.delta??'']));
+ if(editionComparison)detail+='<h2>Edition metadata and coverage changes</h2>'+table(['Field','Series','Change','Before','After'],editionComparison.metadata_changes.map(x=>[x.field,x.code??'',x.kind??'changed',JSON.stringify(x.before),JSON.stringify(x.after)]));
+ return '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maritime period review</title><style>body{font:15px/1.5 system-ui,sans-serif;color:#202020;background:#fff;max-width:1180px;margin:32px auto;padding:0 22px}h1{font-size:28px}h2{margin-top:30px;font-size:20px}.muted{color:#555}.table{overflow-x:auto}table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}th,td{padding:9px 12px;border-bottom:1px solid #d5d5d5;text-align:left;vertical-align:top}th{background:#eeeeee}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f5f5;padding:14px}.meta{display:grid;grid-template-columns:150px 1fr;gap:6px 16px}.meta dd{margin:0;overflow-wrap:anywhere}button{font:inherit;padding:8px 14px;background:#eee;border:1px solid #777;cursor:pointer}@media(max-width:600px){body{margin:18px auto;padding:0 12px}.meta{grid-template-columns:1fr;gap:2px}.meta dd{margin-bottom:9px}th,td{padding:7px}}@media print{body{max-width:none;margin:0}.table{overflow:visible}button{display:none}thead{display:table-header-group}tr{break-inside:avoid}}</style><body><h1>Maritime period review</h1><p>'+esc(edition.title)+'</p><dl class="meta"><dt>Edition</dt><dd>'+esc(edition.id)+'</dd><dt>Source role</dt><dd>'+esc(edition.source.source_role)+'</dd><dt>Port LOCODE</dt><dd>'+esc(edition.request.locode??'Unspecified in issuer example')+'</dd><dt>Endpoint</dt><dd>'+esc(edition.request.kind)+'</dd><dt>Flow</dt><dd>'+esc(edition.request.query?.flow??'Not specified in this source')+'</dd><dt>Operator / top</dt><dd>'+esc(edition.request.query?.operator??'No individual operator')+' / '+esc(edition.request.query?.top??'No top parameter')+'</dd><dt>Original URL</dt><dd>'+esc(edition.source.original_url??'Unspecified')+'</dd><dt>Measure</dt><dd>'+esc(edition.request.measure)+'</dd><dt>Population</dt><dd>'+esc(edition.request.population)+'</dd><dt>Local selection</dt><dd>'+esc(period.selection.from)+' ≤ original Date &lt; '+esc(period.selection.until)+'</dd><dt>Capture</dt><dd>'+esc(edition.source.captured_at)+'</dd><dt>Analysis version / source</dt><dd>'+esc(VERSION)+' / '+esc(engine_sha256??'See accompanying exact source package')+'</dd><dt>Original SHA-256</dt><dd>'+esc(edition.source.source_sha256)+'</dd></dl><p class="muted">The original complete response is retained separately. Dates are selected locally; the port API does not declare date filtering. Capacity and container volume retain separate measures. Null, absent and unsupported values remain explicit.</p>'+detail+'<h2>Selected original observations</h2>'+table(['Date','Source series','Value','State','Original row'],period.rows.map(r=>[r.date,r.series,r.exact??'Unknown',r.status,r.source_row]))+'<h2>Source review</h2><pre>'+esc(issueText)+'</pre></body></html>';
+}
+
+// END MARITIME ENGINE
+const ENGINE_ID='778a2f23096fe93bdad8ed5a11850c7e1c559fad2f290996c8ff853f5996d9d6';
+const EXAMPLES={"capacity-by-operator":{"raw":"{\n  \"type\": \"timeseries\",\n  \"title\": \"Throughput by operator\",\n  \"series\": [\n    {\n      \"code\": \"Mediterranean Shipping\",\n      \"name\": \"Mediterranean Shipping\",\n      \"display\": \"stacked\"\n    },\n    {\n      \"code\": \"Hapag-Lloyd\",\n      \"name\": \"Hapag-Lloyd\",\n      \"display\": \"stacked\"\n    },\n    {\n      \"code\": \"CMA CGM\",\n      \"name\": \"CMA CGM\",\n      \"display\": \"stacked\"\n    },\n    {\n      \"code\": \"Maersk\",\n      \"name\": \"Maersk\",\n      \"display\": \"stacked\"\n    },\n    {\n      \"code\": \"Ocean Network Express\",\n      \"name\": \"Ocean Network Express\",\n      \"display\": \"stacked\"\n    },\n    {\n      \"code\": \"Others\",\n      \"name\": \"Others\",\n      \"display\": \"stacked\"\n    }\n  ],\n  \"data\": [\n    {\n      \"Date\": \"2022-02-01\",\n      \"Mediterranean Shipping\": 84622,\n      \"Hapag-Lloyd\": 61658,\n      \"CMA CGM\": 54621,\n      \"Maersk\": 18385,\n      \"Ocean Network Express\": 13918,\n      \"Others\": 38394\n    },\n    {\n      \"Date\": \"2022-03-01\",\n      \"Mediterranean Shipping\": 156663,\n      \"Hapag-Lloyd\": 95629,\n      \"CMA CGM\": 74605,\n      \"Maersk\": 29990,\n      \"Ocean Network Express\": 235,\n      \"Others\": 26042\n    }\n  ]\n}\n","descriptor":{"id":"issuer-doc-capacity-by-operator","kind":"capacity-by-operator","locode":null,"source_role":"issuer_documentation_example","captured_at":"2026-10-13T09:20Z","source_sha256":"5c9eba876ecf179a1c65aeddf5ce0159cb63c6a3c62c6a48705e2d307ca57d11","original_url":"https://api.econdb.com/v1/schema/","basis":{"original_openapi_sha256":"c271e5e1799a7a47b3f598cdf286d25c7bb68108cd9f3e466231f4f95a82c915","example":"CapacityByOperator","representation":"Exact JSON value transcribed from original YAML; numeric lexemes belong to this JSON transcription."}}},"container-traffic":{"raw":"{\n  \"type\": \"timeseries\",\n  \"title\": \"Container volume (TEU, full)\",\n  \"series\": [\n    {\n      \"code\": \"Imports\",\n      \"name\": \"Gross imports\",\n      \"axis\": 0\n    },\n    {\n      \"code\": \"Exports\",\n      \"name\": \"Gross exports\",\n      \"axis\": 0\n    },\n    {\n      \"code\": \"Transshipment\",\n      \"name\": \"Transshipment\",\n      \"axis\": 0\n    }\n  ],\n  \"data\": [\n    {\n      \"Date\": \"2022-02-21\",\n      \"Exports\": 26635,\n      \"Imports\": 34850,\n      \"Transshipment\": null\n    }\n  ]\n}\n","descriptor":{"id":"issuer-doc-container-traffic","kind":"container-traffic","locode":null,"source_role":"issuer_documentation_example","captured_at":"2026-10-13T09:20Z","source_sha256":"673c8bcc57cb15f550366c97dd27dc0ed6c372a08c7c96400476a4f20f9b3e6d","original_url":"https://api.econdb.com/v1/schema/","basis":{"original_openapi_sha256":"c271e5e1799a7a47b3f598cdf286d25c7bb68108cd9f3e466231f4f95a82c915","example":"SampleContainerVolume","representation":"Exact JSON value transcribed from original YAML; numeric lexemes belong to this JSON transcription."}}}};
+
+const $=id=>document.getElementById(id);
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const showMessage=(message,error=false)=>{$('message').textContent=message;$('message').className=error?'notice error':'notice'};
+const state={current:null,previous:null,period:null,comparison:null,revisions:null,page:0,report:null,applied:null};
+const plain=x=>JSON.stringify(x,null,2)+'\n';
+const nextDate=(date,monthly=false)=>{const d=new Date(date+'T00:00:00Z');if(monthly)d.setUTCMonth(d.getUTCMonth()+1);else d.setUTCDate(d.getUTCDate()+1);return d.toISOString().slice(0,10)};
+function download(name,text,type='application/json'){
+ const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+function descriptorPair(raw,descriptor){return {raw,descriptor,edition:readSnapshot(raw,descriptor)}}
+function table(headers,rows){return '<div class="table"><table><thead><tr>'+headers.map(v=>'<th scope="col">'+esc(v)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>'}
+let loadGeneration=0;
+function cancelLoading(){loadGeneration++;$('load-current').disabled=false;$('load-previous').disabled=false}
+function setCurrent(value,reset=true,review=true){
+ state.current=value;state.previous=null;$('previous-label').textContent='No previous edition selected.';
+ $('revision-toggle').checked=false;state.page=0;
+ const dates=[...new Set(value.edition.rows.map(r=>r.date))].sort();
+ if(reset&&dates.length){$('from').value=dates[0];$('until').value=nextDate(dates.at(-1),value.edition.request.frequency==='monthly');$('before-from').value=dates[0];$('before-until').value=nextDate(dates[0],true);$('after-from').value=dates.at(-1);$('after-until').value=nextDate(dates.at(-1),true)}
+ $('compare-toggle').checked=reset&&value.edition.request.frequency==='monthly'&&dates.length>1;
+ const e=value.edition;
+ $('source-summary').innerHTML='<dl><dt>Edition</dt><dd>'+esc(e.id)+'</dd><dt>Source</dt><dd>'+esc(e.source.source_role)+'</dd><dt>Port</dt><dd>'+esc(e.request.locode??'Unspecified in issuer example')+'</dd><dt>Endpoint / flow</dt><dd>'+esc(e.request.kind)+' / '+esc(e.request.query?.flow??'Not specified in this source')+'</dd><dt>Operator / top</dt><dd>'+esc(e.request.query?.operator??'No individual operator')+' / '+esc(e.request.query?.top??'No top parameter')+'</dd><dt>Original URL</dt><dd>'+esc(e.source.original_url??'Unspecified')+'</dd><dt>Measure / population</dt><dd>'+esc(e.request.measure)+' / '+esc(e.request.population)+'</dd><dt>Frequency</dt><dd>'+esc(e.request.frequency??'Undeclared; original dates retained')+'</dd><dt>Captured</dt><dd>'+esc(e.source.captured_at)+'</dd><dt>Original bytes / SHA-256</dt><dd>'+esc(e.source.original_bytes)+' / '+esc(e.source.source_sha256)+'</dd></dl>';
+ $('source-download').disabled=false;if(review)runReview();else clearDerived();
+}
+function ranges(){return {selection:{from:$('from').value,until:$('until').value},before:{from:$('before-from').value,until:$('before-until').value},after:{from:$('after-from').value,until:$('after-until').value}}}
+function clearDerived(){
+ state.period=null;state.comparison=null;state.revisions=null;state.report=null;state.applied=null;
+ for(const id of ['csv-download','json-download','report-download','workspace-download'])$(id).disabled=true;
+ $('summary').textContent='Apply a valid local selection to produce a review.';$('observations').innerHTML='';$('comparison').innerHTML='';$('revisions').innerHTML='';$('page-label').textContent='';$('previous-page').disabled=true;$('next-page').disabled=true;
+}
+function runReview(){
+ clearDerived();if(!state.current){showMessage('Load an original response and its descriptor, or choose an issuer example.');return}
+ try{
+  const e=state.current.edition,r=ranges(),period=selectPeriod(e,r.selection);
+  const comparison=$('compare-toggle').checked?comparePeriods(e,r.before,r.after):null;
+  let revisions=null;if($('revision-toggle').checked){if(!state.previous)throw new Error('Load the previous original response and descriptor first');revisions=compareEditions(state.previous.edition,e,r.selection)}
+  state.period=period;state.comparison=comparison;state.revisions=revisions;state.applied=r;state.report=reportHTML({edition:e,period,comparison,editionComparison:revisions,engine_sha256:ENGINE_ID});state.page=0;
+  const unknown=period.rows.filter(x=>x.status!=='known').length;
+  $('summary').innerHTML='<div class="metrics"><div><strong>'+period.rows.length+'</strong><span>selected cells</span></div><div><strong>'+period.dates.length+'</strong><span>observed dates</span></div><div><strong>'+unknown+'</strong><span>null / absent / unsupported</span></div><div><strong>'+(period.missing_dates?.length??'—')+'</strong><span>missing monthly labels</span></div></div><p>Local selection: '+esc(r.selection.from)+' ≤ original Date &lt; '+esc(r.selection.until)+'. Expected months: '+(period.expected_dates?.length??'not inferred for this range/frequency')+'.</p><p>Missing labels: '+esc(period.missing_dates?.join(', ')||(period.expected_dates?'none':'not inferred'))+'.</p>';
+  $('comparison').innerHTML=comparison?'<h3>Period comparison</h3><p>Before '+esc(r.before.from)+' ≤ Date &lt; '+esc(r.before.until)+'; after '+esc(r.after.from)+' ≤ Date &lt; '+esc(r.after.until)+'.</p>'+table(['Source series','Before','After','Change','Change %','Incomplete basis'],comparison.comparisons.map(x=>[x.name,x.before.value??'Unknown',x.after.value??'Unknown',x.delta??'Unknown',x.percent_change?.display??'Undefined',x.before.reasons.concat(x.after.reasons).join(', ')])):'';
+  $('revisions').innerHTML=revisions?'<h3>Edition revisions</h3><p>'+esc(revisions.before_id)+' → '+esc(revisions.after_id)+'</p>'+table(['Date','Series','Change','Before','After','Delta'],revisions.changes.filter(x=>x.kind!=='unchanged').map(x=>[x.date,x.series,x.kind,x.before?.exact??x.before?.status??'Absent',x.after?.exact??x.after?.status??'Absent',x.delta??'']))+'<h3>Metadata / coverage changes</h3>'+table(['Field','Series','Before','After'],revisions.metadata_changes.map(x=>[x.field,x.code??'',JSON.stringify(x.before),JSON.stringify(x.after)])):'';
+  $('exceptions').textContent=JSON.stringify(period.issues,null,2);
+  for(const id of ['csv-download','json-download','report-download','workspace-download'])$(id).disabled=false;
+  renderPage();showMessage(period.rows.length?'Review updated from the retained original response.':'The selected window contains no source observations. Choose another period or retain this explicit empty result.');
+ }catch(error){showMessage(error.message,true)}
+}
+function renderPage(){
+ const rows=state.period?.rows||[],pages=Math.max(1,Math.ceil(rows.length/100));state.page=Math.max(0,Math.min(state.page,pages-1));
+ $('observations').innerHTML=table(['Original date','Source series','Exact value','Source state','Original row'],rows.slice(state.page*100,state.page*100+100).map(r=>[r.date,r.series,r.exact??'Unknown',r.status,r.source_row]));
+ $('page-label').textContent='Page '+(state.page+1)+' of '+pages+' · '+rows.length+' cells · downloads contain the whole selected result';
+ $('previous-page').disabled=state.page===0;$('next-page').disabled=state.page===pages-1;
+}
+async function loadFiles(rawId,descriptorId,previous=false,generation){
+ const rawFile=$(rawId).files[0],descriptorFile=$(descriptorId).files[0];if(!rawFile||!descriptorFile)throw new Error('Choose both the original JSON response and its descriptor');
+ if(rawFile.size>128*1024*1024||descriptorFile.size>2*1024*1024)throw new Error('Use the native receiver for a response above 128 MiB or descriptor above 2 MiB');
+ const [raw,descriptorText]=await Promise.all([rawFile.text(),descriptorFile.text()]);if(generation!==loadGeneration)return;const value=descriptorPair(raw,JSON.parse(descriptorText));
+ if(previous){state.previous=value;$('previous-label').textContent=value.edition.id+' · '+value.descriptor.captured_at;$('revision-toggle').checked=true;runReview()}else setCurrent(value);
+}
+async function guarded(action){const generation=++loadGeneration;$('load-current').disabled=true;$('load-previous').disabled=true;showMessage('Reading the selected local source…');try{await action(generation)}catch(error){if(generation===loadGeneration)showMessage(error.message,true)}finally{if(generation===loadGeneration){$('load-current').disabled=false;$('load-previous').disabled=false}}}
+$('load-current').onclick=()=>guarded(generation=>loadFiles('raw-file','descriptor-file',false,generation));
+$('load-previous').onclick=()=>guarded(generation=>loadFiles('previous-raw','previous-descriptor',true,generation));
+$('apply').onclick=runReview;
+$('capacity-example').onclick=()=>{cancelLoading();setCurrent(descriptorPair(EXAMPLES['capacity-by-operator'].raw,EXAMPLES['capacity-by-operator'].descriptor))};
+$('traffic-example').onclick=()=>{cancelLoading();setCurrent(descriptorPair(EXAMPLES['container-traffic'].raw,EXAMPLES['container-traffic'].descriptor))};
+for(const id of ['raw-file','descriptor-file','previous-raw','previous-descriptor','workspace-file'])$(id).onchange=()=>{cancelLoading();showMessage('File selected. Use the corresponding Open or Reopen button to apply it.')};
+$('previous-page').onclick=()=>{state.page--;renderPage()};$('next-page').onclick=()=>{state.page++;renderPage()};
+$('source-download').onclick=()=>download('response.json',state.current.raw);
+$('csv-download').onclick=()=>download('observations.csv',exportRowsCSV(state.period),'text/csv;charset=utf-8');
+$('json-download').onclick=()=>download('selected-review.json',plain({period:state.period,comparison:state.comparison,edition_comparison:state.revisions}));
+$('report-download').onclick=()=>download('maritime-period-report.html',state.report,'text/html;charset=utf-8');
+$('workspace-download').onclick=()=>download('maritime-review-workspace.json',plain({schema:'econdb.review-workspace.v1',engine:{version:VERSION,sha256:ENGINE_ID,contract_sha256:CONTRACT_SHA256},current:{raw:state.current.raw,descriptor:state.current.descriptor},previous:state.previous?{raw:state.previous.raw,descriptor:state.previous.descriptor}:null,...state.applied,compare_periods:state.comparison!==null,compare_editions:state.revisions!==null}));
+$('restore').onclick=()=>guarded(async(generation)=>{
+ const file=$('workspace-file').files[0];if(!file)throw new Error('Choose the previously saved review workspace');if(file.size>256*1024*1024)throw new Error('Workspace exceeds the browser receiving limit');
+ const saved=JSON.parse(await file.text());if(generation!==loadGeneration)return;if(saved.schema!=='econdb.review-workspace.v1')throw new Error('Unsupported review workspace');if(saved.engine?.sha256!==ENGINE_ID)throw new Error('This workspace was created with another analysis source. Reopen its original source pair for an explicit new analysis, or use the accompanying original workbench.');
+ const current=descriptorPair(saved.current.raw,saved.current.descriptor),previous=saved.previous?descriptorPair(saved.previous.raw,saved.previous.descriptor):null;
+ selectPeriod(current.edition,saved.selection);if(saved.compare_periods===true)comparePeriods(current.edition,saved.before,saved.after);if(saved.compare_editions===true){if(!previous)throw new Error('Saved revision review is missing its previous original');compareEditions(previous.edition,current.edition,saved.selection)}
+ for(const prefix of ['before','after'])for(const key of ['from','until'])if(typeof saved[prefix]?.[key]!=='string')throw new Error('Saved comparison choices are incomplete');
+ setCurrent(current,false,false);state.previous=previous;$('previous-label').textContent=previous?previous.edition.id:'No previous edition selected.';
+ $('from').value=saved.selection.from;$('until').value=saved.selection.until;
+ for(const prefix of ['before','after'])for(const key of ['from','until'])$(prefix+'-'+key).value=saved[prefix][key];
+ $('compare-toggle').checked=saved.compare_periods===true;$('revision-toggle').checked=saved.compare_editions===true;runReview();
+});
+clearDerived();
+
+</script></body></html>

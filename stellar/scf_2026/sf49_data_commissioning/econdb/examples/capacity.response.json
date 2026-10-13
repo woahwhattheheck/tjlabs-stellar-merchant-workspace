@@ -1,0 +1,56 @@
+{
+  "type": "timeseries",
+  "title": "Throughput by operator",
+  "series": [
+    {
+      "code": "Mediterranean Shipping",
+      "name": "Mediterranean Shipping",
+      "display": "stacked"
+    },
+    {
+      "code": "Hapag-Lloyd",
+      "name": "Hapag-Lloyd",
+      "display": "stacked"
+    },
+    {
+      "code": "CMA CGM",
+      "name": "CMA CGM",
+      "display": "stacked"
+    },
+    {
+      "code": "Maersk",
+      "name": "Maersk",
+      "display": "stacked"
+    },
+    {
+      "code": "Ocean Network Express",
+      "name": "Ocean Network Express",
+      "display": "stacked"
+    },
+    {
+      "code": "Others",
+      "name": "Others",
+      "display": "stacked"
+    }
+  ],
+  "data": [
+    {
+      "Date": "2022-02-01",
+      "Mediterranean Shipping": 84622,
+      "Hapag-Lloyd": 61658,
+      "CMA CGM": 54621,
+      "Maersk": 18385,
+      "Ocean Network Express": 13918,
+      "Others": 38394
+    },
+    {
+      "Date": "2022-03-01",
+      "Mediterranean Shipping": 156663,
+      "Hapag-Lloyd": 95629,
+      "CMA CGM": 74605,
+      "Maersk": 29990,
+      "Ocean Network Express": 235,
+      "Others": 26042
+    }
+  ]
+}
