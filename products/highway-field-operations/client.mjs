@@ -69,6 +69,20 @@ export class HighwayFieldClient{
  request(requestId){id(requestId);return this.#track(()=>this.#perform('/api/request',{query:{id:requestId}}));}
  records(captureId,layerId,{offset=0,limit=100}={}){id(captureId);integer(layerId);integer(offset);integer(limit,250);return this.#track(()=>this.#perform('/api/records',{query:{capture:captureId,layer:layerId,offset,limit}}));}
  inspection(inspectionId){id(inspectionId);return this.#track(()=>this.#perform('/api/inspection',{query:{id:inspectionId}}));}
+ fieldIssue(request,expectedRevision){
+  need(plain(request),'FIELD_ISSUE');integer(expectedRevision);id(request.id);
+  const body=JSON.parse(canonical(this.#selectedBody({request,expectedRevision})));
+  return this.#track(()=>this.#perform('/api/field-issue',{method:'POST',body,operation:{kind:'field.issue',requestId:body.request.id,expectedRevision}}));
+ }
+ fieldComparison(returnId,editionId,adoptionId){
+  id(returnId);if(editionId!==undefined)need(typeof editionId==='string'&&editionId.length>0&&editionId.length<=180,'FIELD_EDITION');
+  if(adoptionId!==undefined)id(adoptionId);const query={id:returnId,edition:editionId,adoption:adoptionId};
+  return this.#track(()=>this.#perform('/api/field-compare',{query}));
+ }
+ fieldDocument(kind,recordId){
+  need(['issues','returns'].includes(kind),'FIELD_KIND');id(recordId);const query={kind,id:recordId};
+  return this.#track(()=>this.#perform('/api/field-document',{query}));
+ }
  nativeRequest(operationId){id(operationId);return this.#track(()=>this.#perform('/api/native-request',{query:{id:operationId}}));}
  prepareDataset(operationId,selection){
   id(operationId);need(plain(selection),'SELECTION');const body=JSON.parse(canonical(this.#selectedBody({operationId,selection})));
@@ -113,7 +127,7 @@ export class HighwayFieldClient{
  }
  uploadBytes(kind,data,expected){
   expected={bytes:expected.bytes,sha256:expected.sha256};
-  need(['blob','archive'].includes(kind)&&Buffer.isBuffer(data),'UPLOAD');hash(expected.sha256);integer(expected.bytes,kind==='blob'?MAX_BLOB:MAX_ARCHIVE);
+  need(['blob','archive','field-file'].includes(kind)&&Buffer.isBuffer(data),'UPLOAD');hash(expected.sha256);integer(expected.bytes,kind==='archive'?MAX_ARCHIVE:MAX_BLOB);
   need(data.length===expected.bytes&&sha(data)===expected.sha256,'FILE_CHANGED');const frozen=Buffer.from(data);
   return this.#track(async()=>{
    const result=await this.#perform('/api/'+kind,{method:'POST',raw:{body:frozen,bytes:frozen.length,sha256:expected.sha256},operation:{kind:'upload-'+kind,...expected}});
@@ -121,7 +135,7 @@ export class HighwayFieldClient{
   });
  }
  uploadFile(kind,file,expected){expected={bytes:expected.bytes,sha256:expected.sha256};return this.#track(async()=>{
-  need(['blob','archive'].includes(kind),'UPLOAD');absolute(file);hash(expected.sha256);integer(expected.bytes,kind==='blob'?MAX_BLOB:MAX_ARCHIVE);
+  need(['blob','archive','field-file'].includes(kind),'UPLOAD');absolute(file);hash(expected.sha256);integer(expected.bytes,kind==='archive'?MAX_ARCHIVE:MAX_BLOB);
   const handle=await open(file,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
   try{
    const before=await handle.stat({bigint:true});need(before.isFile()&&before.size===BigInt(expected.bytes),'FILE_CHANGED');
@@ -139,9 +153,13 @@ export class HighwayFieldClient{
   need(typeof onChunk==='function','DOWNLOAD','Consume and retain the complete streamed file.');
   let path,query={};if(kind==='blob'){hash(recordId);path='/api/blob';query={sha256:recordId};expectedSha256=recordId;}
   else if(kind==='archive'){path='/api/export';query={id:id(recordId)};hash(expectedSha256);integer(expectedBytes,MAX_ARCHIVE);}
+  else if(['field-issue-json','field-issue-html','field-return'].includes(kind)){
+   path='/api/field-file';query={kind:kind==='field-return'?'returns':'issues',id:id(recordId),format:kind==='field-return'?'original':kind==='field-issue-html'?'html':'json'};
+   hash(expectedSha256);integer(expectedBytes,MAX_BLOB);
+  }
   else{need(kind==='dispatch-report','DOWNLOAD_KIND');path='/api/dispatch-report';query={id:id(recordId)};}
   return this.#track(async()=>{
-   const result=await this.#perform(path,{query,onChunk,maximum:kind==='blob'?MAX_BLOB:MAX_ARCHIVE});
+   const result=await this.#perform(path,{query,onChunk,maximum:kind==='archive'?MAX_ARCHIVE:MAX_BLOB});
    need(expectedSha256===undefined||result.sha256===expectedSha256,'DOWNLOAD_CHANGED');
    need(expectedBytes===undefined||result.bytes===expectedBytes,'DOWNLOAD_CHANGED');return result;
   });

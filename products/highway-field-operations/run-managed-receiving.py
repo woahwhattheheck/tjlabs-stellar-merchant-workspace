@@ -3,7 +3,7 @@
 import argparse,fcntl,hashlib,json,os,pathlib,stat,subprocess,sys,zipfile
 ROOT=pathlib.Path(__file__).resolve().parent
 SCHEMA="stellar-forge.highway-field-operations-managed-receiving.v1"
-SOURCE="28294c27bfaa32febad5012787972c420cf26aa5616fa1a40ad0453a489af5f4"
+SOURCE="576bc1319d01caf6848f10b218f037419e905ed2fdbf7160664c02ed5f17a957"
 MAXIMUM=1024*1024*1024
 def require(value,message):
     if not value:raise RuntimeError(message)

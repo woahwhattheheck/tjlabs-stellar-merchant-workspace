@@ -165,3 +165,96 @@ Select the two imported editions, review the key/value mappings and save the com
 Prepared deliveries and native requests retain their original IDs before effects. Continue those same entries after an interrupted response. If the native result completed while the staff revision advanced, inspect its retained result and explicitly associate it with the reviewed current staff revision. A retry never changes the original native request body.
 
 The original paired engine's complete operator guide is `PAIRED_REVIEW.md`; the exact source producer and null/empty-text contract are in `ORIGINAL_LOCAL_DATASET_PRODUCER.md`.
+
+## Named field copies and returned observations
+
+Open **Field copies & returns** after creating the actual saved inspections. For an assignment, use its existing **Inspect asset** action first so the inspection carries that assignment's source identity. Set the actual operating person in **Source editions**.
+
+1. Enter the colleague's name/reference, select the existing inspections and add field instructions. Choose **Prepare field JSON and editable HTML**. This freezes the complete selected inspection histories, form editions, source captures, attachment bytes and actual crew/assignment context. Download both original files from **Issued field copies**.
+2. Give the editable HTML to the named colleague through the agreed delivery channel. It is self-contained and has no external script, account or network dependency. The JSON carries the same original issue. Keep the original files unchanged alongside subsequent returned files.
+3. In the standalone editor, inspect the actual source and assignment, enter the observations and retain added files. Save an attributed named edition only when every selected inspection passes its original form rules. Incomplete fields and notes can still be downloaded as an unfinished file. Empty text and null remain separate.
+4. The editor keeps a distinct working-copy identity. On reopening a different version of the same copy, inspect the saved device copy and incoming file and deliberately select the intended copy or create an independent one. A named edition remains immutable when later draft values change.
+5. Back in **Field copies & returns**, choose the complete JSON or HTML and **Retain and receive selected file**. Intake retains the exact original returned file and all its attachment bytes; it does not apply observations. A return with no named edition is retained with its unfinished draft and cannot be adopted.
+6. Select an actual named edition and choose **Compare with current inspections**. For every inspection, select **Keep current inspection** or **Apply reviewed field observations**, record the reason, and resolve every competing value. The screen shows the issued value, the current workspace value and the returned value separately, plus original/current assignment and actual source assessment.
+7. A different current form or source binding requires keeping that inspection. Rebase or correct it through the ordinary saved inspection workflow and issue another field copy when appropriate. Matching source bindings can merge disjoint changes; an attachment-set conflict needs an explicit whole-set choice.
+8. Choose **Save receiving decisions**. Changed observations become ordinary draft/corrected inspection editions, preserving earlier submissions and decisions. Continue normal save, submission and supervisor review before closing assignments or producing approved proposals.
+
+A colleague's named edition is evidence of their field work, not a supervisor approval. The application does not write ArcGIS or provide an ArcGIS replica. Source coverage and advertised attachment/sync capabilities remain those of the actual retained source edition.
+
+### Recover the same field request
+
+The field screen retains the whole original command, expected revision, selected directory, person and time before dispatch. A selected returned file is also retained in full before upload. **Field request recovery** can continue that exact request or look up its original saved result. Reopening an old result settles only the draft still linked to that request; later observations remain for review.
+
+An uncertain result keeps its original UUID. A new revised request is available only after a definite rejected response and an independent absence check; the original request remains visible. When the workspace advances, inspect the new values and deliberately select **Use the reviewed current workspace revision** or **Use this reviewed current comparison**. The old field copy and returned evidence are not rewritten.
+
+### Complete onward receiving
+
+The ordinary **Handover & receiving** archive carries every original issue JSON, issued editable HTML, returned JSON/HTML, added attachment, field command/result and subsequent inspection history in the existing flat blob inventory. There is no second field-work database. After cold receiving into a different directory, open **Field copies & returns** and use its original file downloads, named-edition comparison and normal inspection views. The received logical workspace ID remains the same; physical directory binding prevents an old request or local draft being applied to a different received branch.
+
+A complete JSON or HTML field file must fit 64 MiB, including its embedded bytes and editor. The unfinished draft allowance is 4 MiB; complete named histories permit 1,000 editions and an issue can select at most 1,000 inspections. The full source objects remain subject to the existing 256 MiB workspace allowance. Issue publication and return intake preflight all new unique bytes before retaining a batch. Capacity failures keep the selected files intact; do not trim original evidence or silently omit source members.
+
+The full business and file contracts are in [FIELD_EXCHANGE.md](FIELD_EXCHANGE.md).
+
+### Native CLI over the original workspace
+
+Change into the selected source directory before invoking the module. The original workspace owner must be closed before a separate CLI opens the same database. Use the authenticated SDK/HTTP API to borrow a running owner.
+
+```sh
+cd /absolute/source
+python -m highway.cli --source-root /absolute/source issue-field \
+  --workspace /absolute/private/highway \
+  --request /absolute/private/issue-request.json \
+  --json-output /absolute/private/Field_Issue.json \
+  --html-output /absolute/private/Field_Issue.html
+
+python -m highway.cli --source-root /absolute/source receive-field \
+  --workspace /absolute/private/highway \
+  --file /absolute/private/Returned_Field.html \
+  --sha256 ORIGINAL_COMPLETE_FILE_SHA256 --bytes ORIGINAL_COMPLETE_FILE_BYTES \
+  --request /absolute/private/receive-request.json
+
+python -m highway.cli --source-root /absolute/source compare-field \
+  --workspace /absolute/private/highway \
+  --return-id ORIGINAL_RETURN_ID --edition-id SELECTED_NAMED_EDITION_ID
+
+python -m highway.cli --source-root /absolute/source download-field \
+  --workspace /absolute/private/highway --kind issues --id ORIGINAL_ISSUE_ID \
+  --format html --output /absolute/private/Exact_Issued_Field.html
+```
+
+Replace placeholders with the retained actual IDs, hashes and full byte counts; do not mint replacement identities during retry. Output destinations are immutable: matching repeated output is reused, different bytes are rejected.
+
+An issue request file is exactly:
+
+```json
+{
+  "workspaceId": "ACTUAL_WORKSPACE_UUID",
+  "workspaceDirectory": "/absolute/private/highway",
+  "expectedRevision": 42,
+  "request": {
+    "id": "ORIGINAL_REQUEST_AND_ISSUE_UUID",
+    "recipient": {"id": "ACTUAL_RECIPIENT_REFERENCE", "name": "Actual recipient"},
+    "inspectionIds": ["ACTUAL_SAVED_INSPECTION_ID"],
+    "workspaceRevision": 42,
+    "stateSha256": "ACTUAL_STATE_SHA256",
+    "note": "Actual field instructions",
+    "actor": {"id": "ACTUAL_OPERATOR_REFERENCE", "name": "Actual operator"},
+    "at": "ACTUAL_CANONICAL_UTC_TIME"
+  }
+}
+```
+
+The example is a shape, not executable business data. Read the actual current revision/hash and saved inspection IDs first. The issue UUID is also its command request UUID; actor/time remain fixed across its first attempt and retries.
+
+A receive request uses the same four branch/revision envelope keys, with `command` instead of `request`. Its complete command is `{requestId,kind:"field.receive",actor,at,body:{id,issueId,document:{sha256,bytes}}}`; the document descriptor is the complete chosen JSON or HTML file. `retain-field` accepts the same file/hash/bytes without committing a field.receive command and returns its issue and edition identities.
+
+Adoption uses the existing `command --request FILE` command with `{expectedRevision,command}`. The command body is the exact `field.adopt` contract in FIELD_EXCHANGE.md: original return ID, selected edition, complete current review hash and a decision for every issued inspection. It never invents a review hash or automatically chooses a conflicting field.
+
+`download-field --kind returns --format original` retrieves the exact original returned format. `compare-field` with no edition ID uses the return's explicitly selected named edition. The same commands work after independent whole-workspace receiving against its actual new directory.
+
+After decisions are saved, **Open original receiving comparison** reopens the exact original issued/current/returned review with its saved choices, reasons and original workspace revision. It is read-only; later inspection changes remain separate. The CLI equivalent is `compare-field --return-id ORIGINAL_RETURN_ID --adoption-id ORIGINAL_ADOPTION_ID`. This works after independent whole-workspace receiving because the full original states and files travel with the archive.
+
+
+## Following field-exchange receiving on the retained case
+
+The complete executable course is in [tools/FIELD_RECEIVING.md](tools/FIELD_RECEIVING.md). It operates the actual retained County inspection through issued HTML, unfinished drafts, named editions, attachment reopening, concurrent-copy recovery, explicit supervisor comparison/adoption and complete independent receiving. It uses the original programme lock and creates `field-exchange-following/staff-workspace` through the maintained full archive receiver. New business commands occur on that named physical branch; the original capture programme, input, journal and business revision remain available for their original continuation. Run the four selected course files together with this complete source selection and the actual original input and installed executables. The guide records the exact command, recovery procedure, output archive and rendered review instructions.

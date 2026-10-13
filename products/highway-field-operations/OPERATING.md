@@ -272,3 +272,20 @@ Grant reporting references the same original maintained source and observed work
 Deliver the full selected source and licenses; the original and received working directories or their complete validated archives; source/capture and native package inventories; full reports; actual browser/agent observations; and the named support owners. Keep private connection files and tokens in the appropriate operating configuration.
 
 The next operator should be able to identify an original asset, follow its inspection and assignment decisions, inspect the proposed edit and paired comparison, reopen the complete case and continue a legitimate later change. Record the customer's actual acceptance in the existing Installation and retain the agreed maintenance and correction procedure with that same case.
+
+## Complete named field work and return review
+
+The maintained application now includes **Field copies & returns**. Its named issue contains complete actual source, forms, inspections, crew/assignment context and attachments. The colleague receives one self-contained editable HTML; complete named editions and unfinished draft are carried back as original JSON or HTML. Supervisor comparison explicitly separates issued/current/returned values before the original workspace command adopts changes. No ArcGIS write or replica is implied.
+
+Use the full staff instructions and CLI examples in [app/OPERATING.md](app/OPERATING.md#named-field-copies-and-returned-observations), and the exact business/file contract in [app/FIELD_EXCHANGE.md](app/FIELD_EXCHANGE.md). The source reference is part of this following installed edition; the original captured workspace and its 352d operation retain their actual prior source and results.
+
+The existing complete workspace export and receiver retain both issued formats, every exact returned file, added bytes, first requests/results and original inspection history. Original and received copies share a logical ID and keep separate physical directories. Select the intended Application/connection before any command or download. Field-specific requests and drafts retain that physical branch.
+
+The SDK provides fieldIssue, fieldComparison and fieldDocument, plus complete field-file uploads and exact streamed issue/return downloads. Agent tools borrow the same authenticated owner. Complete command inputs and file identities must be retained before dispatch; an uncertain call is reconciled by its original UUID. See [SDK.md](SDK.md#named-field-exchange-api).
+
+After decisions are saved, **Open original receiving comparison** reopens the exact original issued/current/returned review with its saved choices, reasons and original workspace revision. It is read-only; later inspection changes remain separate. The CLI equivalent is `compare-field --return-id ORIGINAL_RETURN_ID --adoption-id ORIGINAL_ADOPTION_ID`. This works after independent whole-workspace receiving because the full original states and files travel with the archive.
+
+
+## Following field-exchange receiving on the retained case
+
+The complete executable course is in [tools/FIELD_RECEIVING.md](app/tools/FIELD_RECEIVING.md). It operates the actual retained County inspection through issued HTML, unfinished drafts, named editions, attachment reopening, concurrent-copy recovery, explicit supervisor comparison/adoption and complete independent receiving. It uses the original programme lock and creates `field-exchange-following/staff-workspace` through the maintained full archive receiver. New business commands occur on that named physical branch; the original capture programme, input, journal and business revision remain available for their original continuation. Run the four selected course files together with this complete source selection and the actual original input and installed executables. The guide records the exact command, recovery procedure, output archive and rendered review instructions.

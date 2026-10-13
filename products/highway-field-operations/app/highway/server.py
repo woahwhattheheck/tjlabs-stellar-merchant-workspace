@@ -5,7 +5,8 @@ from pathlib import Path
 from .common import *
 from .workspace import Workspace
 from .exchange import export_workspace, receive_archive, source_inventory, validate_archive
-from . import domain, dispatch
+from . import domain, dispatch, field_exchange
+from .field_delivery import issue_field, retain_return, field_file, compare_field
 
 class Application:
     def __init__(self,workspace,source_root,selection,port=0,native_workspace=None,receiving_root=None):
@@ -63,7 +64,7 @@ class Application:
                     api=path.startswith("/api/");self.boundary(api)
                     if not api:
                         require(method=="GET","METHOD","Use the original API for changes.")
-                        paths={"/":"public/index.html","/app.js":"public/app.js","/style.css":"public/style.css","/guide":"public/guide.html"}
+                        paths={"/":"public/index.html","/app.js":"public/app.js","/style.css":"public/style.css","/guide":"public/guide.html","/field-host.js":"public/field-host.js"}
                         require(path in paths,"NOT_FOUND","This application page does not exist.")
                         target=app.root/paths[path];data=read_regular(target)
                         selected=next((x for x in app.source_files if x["path"]==paths[path]),None)
@@ -76,6 +77,16 @@ class Application:
                             current=app.workspace.current();state=current["state"]
                             if path=="/api/state":
                                 return self.send(200,{**current,"directory":str(app.workspace.directory),"view":domain.describe(state,app.workspace.read_blob),"dispatch":dispatch.dispatch_view(state,app.workspace.read_blob),"sourceSha256":app.selection["sha256"],"pairedAvailable":app.bridge is not None})
+                            if path=="/api/field-compare":
+                                return self.send(200,compare_field(app.workspace,identifier(q.get("id",[""])[0]),
+                                    q.get("edition", [None])[0],q.get("adoption", [None])[0]))
+                            if path=="/api/field-document":
+                                return self.send(200,field_exchange.read_document(state,q.get("kind",[""])[0],
+                                    identifier(q.get("id",[""])[0]),app.workspace.read_blob))
+                            if path=="/api/field-file":
+                                raw,media,filename=field_file(app.workspace,q.get("kind",[""])[0],
+                                    identifier(q.get("id",[""])[0]),q.get("format",["original"])[0])
+                                return self.send(200,raw,media,filename)
                             if path=="/api/records":
                                 capture=q.get("capture",[""])[0];identifier(capture)
                                 layer=int(q.get("layer",["-1"])[0]);offset=int(q.get("offset",["0"])[0]);limit=int(q.get("limit",["100"])[0])
@@ -100,6 +111,9 @@ class Application:
                                 pub=identifier(q.get("id",[""])[0]);p=app.workspace.directory/"exports"/pub/"Highway_Field_Workspace.zip"
                                 return self.send(200,read_regular(p,MAX_ARCHIVE),"application/zip","Highway_Field_Workspace.zip")
                             fail("NOT_FOUND","This saved record is unavailable.")
+                        if method=="POST" and path=="/api/field-file":
+                            raw=self.body(MAX_BLOB,False)
+                            return self.send(200,retain_return(app.workspace,raw,self.headers.get("X-Content-SHA256")))
                         if method=="POST" and path=="/api/blob":
                             raw=self.body(MAX_BLOB,False);expected=self.headers.get("X-Content-SHA256")
                             return self.send(200,app.workspace.put_blob(raw,expected))
@@ -112,6 +126,8 @@ class Application:
                             return self.send(200,desc)
                         if method=="POST":
                             body=self.body();self.selected(q,body)
+                            if path=="/api/field-issue":
+                                return self.send(200,issue_field(app.workspace,body["request"],body["expectedRevision"],app.root,app.selection))
                             if path=="/api/dataset":
                                 require(app.bridge is not None,"NATIVE_NOT_CONFIGURED","Start the application with its original paired workspace.")
                                 from .dataset import prepare_dataset
