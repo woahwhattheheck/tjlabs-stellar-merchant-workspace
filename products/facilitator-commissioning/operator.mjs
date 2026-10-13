@@ -8,6 +8,7 @@ import {spawn} from 'node:child_process';
 import {createCommissioningJob, openCommissioningJob, inspectCommissioningTransfer, SCHEMA} from './commissioning.mjs';
 import {renderCommissioningReport} from './report.mjs';
 import {createInstallationDesk} from './installation-desk.mjs';
+import {createInstallationReceivingDesk,NATIVE_DESK_ACTIONS} from './installation-receiving-desk.mjs';
 import {normalizeFacilitatorProfiles} from '../../stellar/scf-starforge-20261009/sf82-seller-pilot/release-facilitator.mjs';
 import {inspectRelease, releaseStatus} from '../../stellar/scf-starforge-20261009/sf82-seller-pilot/releases.mjs';
 import {config as readBuyerConfiguration,execution as validateBuyerExecution} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/config.mjs';
@@ -31,14 +32,14 @@ async function json(path,optional=false){try{return JSON.parse(new TextDecoder('
 async function directory(path,create=false){if(create)await mkdir(path,{mode:0o700}).catch(e=>{if(e.code!=='EEXIST')throw e;});const s=await lstat(path);need(s.isDirectory()&&!s.isSymbolicLink()&&await realpath(path)===path&&(process.platform==='win32'||(s.mode&0o077)===0&&s.uid===process.getuid()),'PRIVATE_DIRECTORY','Use a private directory owned by the current operator.');}
 async function publish(path,raw){try{need((await ordinary(path)).equals(raw),'RETAINED_CONFLICT','The retained original file has different content.',409);return;}catch(e){if(e.code!=='ENOENT')throw e;}const tmp=join(dirname(path),'.operator-'+randomUUID());const h=await open(tmp,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|constants.O_NOFOLLOW,0o600);try{try{await h.writeFile(raw);await h.sync();}finally{await h.close();}try{await link(tmp,path);}catch(e){if(e.code!=='EEXIST')throw e;need((await ordinary(path)).equals(raw),'RETAINED_CONFLICT','The original publication differs.',409);}const d=await open(dirname(path),'r');try{await d.sync();}finally{await d.close();}}finally{await unlink(tmp).catch(e=>{if(e.code!=='ENOENT')throw e;});}}
 async function hashFile(path){const h=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW);try{const s=await h.stat();need(s.isFile(),'FILE_REQUIRED','The original file is unavailable.');const hash=createHash('sha256');for await(const b of h.createReadStream({autoClose:false}))hash.update(b);const after=await h.stat();need(after.size===s.size&&after.mtimeMs===s.mtimeMs&&after.ctimeMs===s.ctimeMs,'FILE_CHANGED','The selected file changed.');return{bytes:s.size,sha256:hash.digest('hex')};}finally{await h.close();}}
-async function configFile(path){if(!path)return null;const raw=await ordinary(resolve(path),1024*1024), c=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw));exact(c,['store','profilesFile','buyerTemplates'],['store','profilesFile']);const base=dirname(resolve(path));const templates={};for(const [alias,v]of Object.entries(c.buyerTemplates??{})){identifier(alias);exact(v,['title','file']);templates[alias]={title:text(v.title,'Buyer template title',240),file:resolve(base,text(v.file,'Original buyer template path'))};}return{store:await realpath(resolve(base,c.store)),profilesFile:resolve(base,c.profilesFile),buyerTemplates:templates,sha256:digest(raw)};}
+async function configFile(path){if(!path)return null;const raw=await ordinary(resolve(path),1024*1024), c=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw));exact(c,['store','profilesFile','buyerTemplates','installationReceiving'],['store','profilesFile']);const base=dirname(resolve(path));const templates={};for(const [alias,v]of Object.entries(c.buyerTemplates??{})){identifier(alias);exact(v,['title','file']);templates[alias]={title:text(v.title,'Buyer template title',240),file:resolve(base,text(v.file,'Original buyer template path'))};}const installationReceiving={};for(const [alias,v]of Object.entries(c.installationReceiving??{})){identifier(alias);exact(v,['title','file']);installationReceiving[alias]={title:text(v.title,'Original receiving connection',240),file:resolve(base,text(v.file,'Original receiving host configuration'))};}return{installationReceiving,store:await realpath(resolve(base,c.store)),profilesFile:resolve(base,c.profilesFile),buyerTemplates:templates,sha256:digest(raw)};}
 function page(items,offset=0,limit=50){need(Number.isInteger(offset)&&offset>=0&&Number.isInteger(limit)&&limit>=1&&limit<=250,'PAGE_RANGE','Choose a page of 1–250 records.');return{items:items.slice(offset,offset+limit),offset,limit,total:items.length,next_offset:offset+limit<items.length?offset+limit:null};}
 
 /** Own one original job and one browser input journal for the entire foreground lifetime. */
 export async function openCommissioningOperator({directory:where,store,setupFile,exportDirectory}={}){
   const root=resolve(text(where,'Job directory'));await directory(root,true);
   const ui=join(root,'.operator');await directory(ui,true);
-  for(const n of ['uploads','inputs','requests','results','plans','native-requests'])await directory(join(ui,n),true);
+  for(const n of ['uploads','inputs','requests','results','plans','native-requests','installation-observations'])await directory(join(ui,n),true);
   const release=await lockPrivateDirectory({directory:ui,filename:'operator.lock',namespace:'facilitator-operator',busyCode:'OPERATOR_ALREADY_OWNED',unavailableCode:'OPERATOR_LOCK_UNAVAILABLE'});
   let exportsRoot,instanceId;
   try{
@@ -62,6 +63,7 @@ export async function openCommissioningOperator({directory:where,store,setupFile
   const inputPath=sha=>{need(HASH.test(sha),'SOURCE_HASH','Select a complete retained source file.');return join(ui,'inputs',sha);};
   async function input(ref){exact(ref,['sha256','bytes']);need(HASH.test(ref.sha256)&&Number.isSafeInteger(ref.bytes)&&ref.bytes>=0&&ref.bytes<=FILE_LIMIT,'SOURCE_IDENTITY','Select a completed upload.');const p=inputPath(ref.sha256),actual=await hashFile(p);need(actual.bytes===ref.bytes&&actual.sha256===ref.sha256,'SOURCE_CHANGED','Original input bytes changed.');return p;}
   const installation=createInstallationDesk({root,ui,exportsRoot,input});
+  const nativeInstallation=createInstallationReceivingDesk({ui,installation,hosts:setup?.installationReceiving??{}});
   async function uploadRows(){const names=(await readdir(join(ui,'uploads'))).filter(n=>UUID.test(n.slice(0,-5))&&n.endsWith('.json'));return Promise.all(names.map(n=>json(join(ui,'uploads',n))));}
   async function uploadState(id){const v=await json(uploadPath(id));const completed=await json(join(ui,'uploads',id+'.complete.json'),true);if(completed){await input(completed.file);return{...v,state:'COMPLETE',file:completed.file,offset:v.bytes};}const part=join(ui,'uploads',id+'.part');let s;try{s=await lstat(part);}catch(e){if(e.code!=='ENOENT')throw e;}need(!s||s.isFile()&&!s.isSymbolicLink()&&s.size<=v.bytes,'UPLOAD_CHANGED','The original upload staging changed.');return{...v,state:'UPLOADING',offset:s?.size??0};}
   async function view(){
@@ -162,7 +164,7 @@ export async function openCommissioningOperator({directory:where,store,setupFile
     let intent=await json(intentPath,true);
     if(!intent){
       const rows=[{path:'operator/instance.json',...await hashFile(join(ui,'instance.json'))},...nativeManifest.files.map(f=>({...f,path:'job/'+f.path})),{path:'job/TRANSFER.json',...await hashFile(join(destination,'job','TRANSFER.json'))}];
-      for(const folder of ['uploads','inputs','requests','results','native-requests'])for(const name of (await readdir(join(ui,folder))).sort()){
+      for(const folder of ['uploads','inputs','requests','results','native-requests','installation-observations'])for(const name of (await readdir(join(ui,folder))).sort()){
         if(name.startsWith('.')||name.endsWith('.part'))continue;
         const f=join(ui,folder,name);rows.push({path:'operator/'+folder+'/'+name,...await hashFile(f)});
       }
@@ -201,12 +203,13 @@ export async function openCommissioningOperator({directory:where,store,setupFile
       completeUpload:id=>run(async()=>{operation(id);const v=await uploadState(id);if(v.state==='COMPLETE')return v;need(v.offset===v.bytes,'UPLOAD_INCOMPLETE','Continue the original upload to its complete length.',409);const part=join(ui,'uploads',id+'.part');if(v.bytes===0)await publish(part,Buffer.alloc(0));const got=await hashFile(part);need(got.sha256===v.sha256&&got.bytes===v.bytes,'UPLOAD_HASH','The complete uploaded bytes differ from the selected original file.',409);await publish(inputPath(v.sha256),await ordinary(part));await publish(join(ui,'uploads',id+'.complete.json'),encode({file:got}));await unlink(part);return uploadState(id);}),
       prepare:command=>run(async()=>{
         exact(command,['operationId','expectedRevision','action','payload']);operation(command.operationId);
-        need(['initialize','review','stage','select','receive-run','buyer-plan','receive','start','stop','export','installation-template','installation-prepare'].includes(command.action)&&object(command.payload)&&Number.isInteger(command.expectedRevision)&&command.expectedRevision>=0,'COMMAND_REQUIRED','Choose a complete documented command.');
+        need(['initialize','review','stage','select','receive-run','buyer-plan','receive','start','stop','export','installation-template','installation-prepare',...NATIVE_DESK_ACTIONS].includes(command.action)&&object(command.payload)&&Number.isInteger(command.expectedRevision)&&command.expectedRevision>=0,'COMMAND_REQUIRED','Choose a complete documented command.');
         const path=join(ui,'requests',command.operationId+'.json'),old=await json(path,true);
         if(old){need(stable(old)===stable(command),'REQUEST_CONFLICT','The original prepared request differs.',409);return{request:old,replayed:true};}
         const revision=job?(await job.inspect()).revision:0;
         need(command.expectedRevision===revision,'REVISION_CONFLICT','Refresh the original job before preparing new work.',409);
         if(command.action==='installation-template'||command.action==='installation-prepare')await installation.binding(command,await jobRequired().inspect());
+        if(NATIVE_DESK_ACTIONS.includes(command.action))await nativeInstallation.binding(command,await jobRequired().inspect());
         await publish(path,encode(command));return{request:command,replayed:false};
       }),
       receive:operationId=>run(async()=>{
@@ -251,13 +254,17 @@ export async function openCommissioningOperator({directory:where,store,setupFile
           }
           if(command.action==='export'){exact(command.payload,[]);return transfer(command);}
           if(command.action==='installation-template'||command.action==='installation-prepare')return installation.execute(command,current);
+          if(NATIVE_DESK_ACTIONS.includes(command.action))return nativeInstallation.execute(command,current);
           return executeBound(command,()=>commandInput(command.action,command.payload));
         });
       }),
       installations:()=>run(async()=>installation.catalog(await jobRequired().inspect())),
+      installationReceivings:()=>run(async()=>nativeInstallation.catalog(await jobRequired().inspect())),
+      installationReceiving:({id,...options})=>run(async()=>nativeInstallation.view(operation(id),await jobRequired().inspect(),options)),
       installationArchive:id=>run(()=>installation.archive(operation(id))),
       installation:({id,kind,offset=0,limit=50})=>run(()=>installation.view(operation(id),{kind,offset,limit})),
-      readFile:({kind,id,name}={})=>run(async()=>{
+      readFile:({kind,id,name,snapshotSha256}={})=>run(async()=>{
+        if(kind==='installation-native')return nativeInstallation.file(operation(id),await jobRequired().inspect(),text(name,'Original native filename',1000),snapshotSha256);
         if(kind==='installation')return installation.file(operation(id),text(name,'Original preparation filename',1000));
         let path,filename,type='application/octet-stream';
         if(kind==='input'){need(HASH.test(id),'FILE_ID','Select an original input hash.');path=inputPath(id);filename=name?text(name,'Filename',240).replace(/[\/\\\r\n]/g,'_'):id;}
@@ -317,7 +324,7 @@ export async function openCommissioningOperator({directory:where,store,setupFile
           return{path:target,filename:'commissioning-'+operationId+'.tar',contentType:'application/x-tar',...actual};
         }finally{await unlink(temporary).catch(e=>{if(e.code!=='ENOENT')throw e;});}
       }),
-      async close(){if(!closing){stopping=true;closing=(async()=>{await queue;const errors=[];try{if(job)await job.close();}catch(e){errors.push(e);}try{await release();}catch(e){errors.push(e);}if(errors.length)throw new AggregateError(errors,'The original commissioning owner could not close cleanly.');})();}return closing;},
+      async close(){if(!closing){stopping=true;closing=(async()=>{await queue;const errors=[];try{await nativeInstallation.close();}catch(e){errors.push(e);}try{if(job)await job.close();}catch(e){errors.push(e);}try{await release();}catch(e){errors.push(e);}if(errors.length)throw new AggregateError(errors,'The original commissioning owner could not close cleanly.');})();}return closing;},
     };
-  }catch(e){try{if(job)await job.close();}catch(closeError){e=new AggregateError([e,closeError],'Opening and closing the original job both failed.');}await release();throw e;}
+  }catch(e){try{await nativeInstallation.close();}catch(c){e=new AggregateError([e,c],'Opening and closing the native Installation desk failed.');}try{if(job)await job.close();}catch(closeError){e=new AggregateError([e,closeError],'Opening and closing the original job both failed.');}await release();throw e;}
 }

@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "facilitator-commissioning",
-  "description": "Complete paired-service commissioning, Customer Installation desk and portable authenticated customer receiving",
+  "description": "Complete paired-service commissioning, native Customer Installation receiving and portable authenticated customer source",
   "components": [
     "products/facilitator-commissioning"
   ],
@@ -49,7 +49,8 @@
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/facilitator-commissioning.json",
     "products/facilitator-commissioning/INSTALLATION_RECEIVING.md",
     "stellar/scf_2026/sf47_budget_model/sf10_current_candidate.json",
-    "products/facilitator-commissioning/INSTALLATION_DESK.md"
+    "products/facilitator-commissioning/INSTALLATION_DESK.md",
+    "products/facilitator-commissioning/INSTALLATION_NATIVE_DESK.md"
   ],
   "managedSourceManifests": [
     "stellar/scf_2026/sf47_budget_model/workspace/managed-source.json"

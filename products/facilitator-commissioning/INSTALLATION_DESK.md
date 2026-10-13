@@ -139,3 +139,9 @@ Use the same actual customer job and selected case throughout this course:
 Every final attachment must actually be opened, viewed, played or used according to its format: HTML, PDF, reports, slides, spreadsheets, maps, images, video, audio, archives and projects. Extract archives and open their contained deliverables and working project. Captured screenshots alone are insufficient.
 
 The operating receiver records the actual host, original customer/job/case IDs, selected source identities, performed actions, native preview/save results, downloaded member identities and viewed rendered outputs. Keep that result with the original customer course.
+
+## Continue directly through native receiving
+
+The same Customer Installation screen now provides explicit native Preview, Save, Export and Receive controls for a host-declared pair of existing Grant Operations services. Follow INSTALLATION_NATIVE_DESK.md for configuration, full native document review, original UUID recovery, complete files, independent receiving and the entire customer operating course.
+
+The preparation and its original case/Workshare/source identities remain unchanged. Native receiving writes through the existing SF47 client and original receiving bridge. Original accepted operations remain attached to their native requests and workspaces.

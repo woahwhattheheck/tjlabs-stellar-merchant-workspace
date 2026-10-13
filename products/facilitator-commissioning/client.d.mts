@@ -17,6 +17,10 @@ export interface ActionPayloads {
   receive:{provider:string;requestId:string;runOperationId:string;summary:FileRef;evidence:FileRef;output?:FileRef;receiving:{operator:string;decision:'ACCEPTED'|'CHANGES_REQUIRED'|'INCOMPLETE';note:string;receivedAt:string};supersedesOperationId?:string};
   'installation-template':{sourceTransferId:string;seed:FileRef;caseSnapshot:FileRef};
   'installation-prepare':{templateOperationId:string;bindings:FileRef};
+  'installation-preview':{hostAlias:string;preparationOperationId:string;actor:string;note:string;receivingName:string};
+  'installation-save':{receivingOperationId:string;expectedSnapshotSha256:string};
+  'installation-export':{receivingOperationId:string;expectedSnapshotSha256:string};
+  'installation-receive':{receivingOperationId:string;expectedSnapshotSha256:string};
   export:Record<string,never>;
 }
 export type Action=keyof ActionPayloads;
@@ -28,6 +32,9 @@ export interface OperatorState {schema:string;instanceId:string;job:null|({id:st
 export interface InstallationSummary {operationId:string;mode:'template'|'prepare';jobId:string;selectionSha256:string;sourceTransferId:string;basis:Json;nativeReceipt:FileRef;files:number;selections:Array<{field:string;purpose:string}>;missingSourceCount:number;completedAt:string}
 export interface InstallationCatalog {schema:string;jobId:string;selectionSha256:string;revision:number;preparations:InstallationSummary[];sources:Array<{operationId:string;completedAt:string;sourceMembers:number;manifestSha256:string}>}
 export interface InstallationView {schema:string;preparation:InstallationSummary;bindings?:Json;defaults?:Json;workshare?:Json;workorder?:Json;assignments?:Json;checks?:Json;continuation?:Json;prepared?:Json;items?:Json[];offset?:number;limit?:number;total?:number;next_offset?:number|null}
+export interface NativeInstallationSummary {receivingOperationId:string;preparationOperationId:string;hostAlias:string;state:string;basis:Json;observedAt:string|null;snapshotSha256?:string;errorCount?:number;responses?:Record<string,{validated:boolean;bytes:number;sha256:string;mediaType:string}>;completion?:Json}
+export interface NativeInstallationCatalog {schema:string;jobId:string;selectionSha256:string;hosts:Array<{alias:string;title:string}>;items:NativeInstallationSummary[]}
+export interface NativeInstallationView extends NativeInstallationSummary {schema:string;jobId:string;selectionSha256:string;snapshotSha256:string;host?:Json;files?:number;originalCommand?:Command;file?:{name:string;bytes:number;sha256:string};value?:Json;items?:Array<{name:string;bytes:number;sha256:string;contentType:string}>;offset?:number;limit?:number;total?:number;next_offset?:number|null}
 export class CommissioningClient {
   constructor(options?:{origin?:string;token?:string;fetch?:typeof globalThis.fetch});
   request(path:string,options?:{method?:string;body?:unknown;raw?:boolean}):Promise<unknown>;
@@ -36,6 +43,8 @@ export class CommissioningClient {
   installations():Promise<InstallationCatalog>;
   installation(options:{id:string;kind?:'summary'|'files'|'sources';offset?:number;limit?:number}):Promise<InstallationView>;
   installationArchiveURL(operationId:string):string;
+  installationReceivings():Promise<NativeInstallationCatalog>;
+  installationReceiving(options:{id:string;kind?:'summary'|'files'|'preview'|'saved'|'received'|'operation';offset?:number;limit?:number;snapshotSha256?:string}):Promise<NativeInstallationView>;
   release(id:string):Promise<Json>;
   history(options?:{kind?:'results'|'runs'|'pending';offset?:number;limit?:number;revision?:number}):Promise<HistoryPage>;
   prepare(command:Command):Promise<{request:Command;replayed:boolean}>;
@@ -45,6 +54,6 @@ export class CommissioningClient {
   uploadState(id:string):Promise<Upload>;
   uploadChunk(id:string,offset:number,body:ArrayBuffer|Uint8Array):Promise<Upload>;
   completeUpload(id:string):Promise<Upload>;
-  fileURL(options:{kind:'input'|'blob'|'buyer'|'buyer-execution'|'command'|'report'|'transfer'|'installation';id?:string;name?:string}):string;
+  fileURL(options:{kind:'input'|'blob'|'buyer'|'buyer-execution'|'command'|'report'|'transfer'|'installation'|'installation-native';id?:string;name?:string;snapshotSha256?:string}):string;
   archiveURL(operationId:string):string;
 }

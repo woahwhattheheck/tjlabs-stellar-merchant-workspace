@@ -55,7 +55,7 @@ async function extract(archive,target,expected){
   }finally{await handle.close();}
 }
 const nativePath=/^(?:blobs\/[a-f0-9]{64}|(?:commands|results)\/[a-f0-9-]{36}\.json|reviews\/[a-f0-9-]{36}(?:\.buyer)?\.json|runs\/[a-f0-9-]{36}(?:\.(?:selection|started|stopped|failed))?\.json|buyers\/[a-f0-9-]{36}-[a-z0-9_-]{1,64}\.(?:json|body)|job\.json|selection\.json)$/;
-const operatorPath=/^(?:instance\.json|inputs\/[a-f0-9]{64}|uploads\/[a-f0-9-]{36}(?:\.complete)?\.json|(?:requests|results|native-requests)\/[a-f0-9-]{36}\.json)$/;
+const operatorPath=/^(?:installation-observations\/[a-f0-9-]{36}-[0-9]{10}\.json|instance\.json|inputs\/[a-f0-9]{64}|uploads\/[a-f0-9-]{36}(?:\.complete)?\.json|(?:requests|results|native-requests)\/[a-f0-9-]{36}\.json)$/;
 async function inspectExtracted(root,files){
   const raw=await ordinary(join(root,'OPERATOR_TRANSFER.json')),m=JSON.parse(raw.toString('utf8'));
   need(m.schema==='stellar-forge.facilitator-operator-transfer.v1'&&UUID.test(m.id)&&HASH.test(m.selectionSha256)&&HASH.test(m.originalManifestSha256)&&Array.isArray(m.files),'Select a complete original operator transfer.');
@@ -130,7 +130,7 @@ export async function receiveOperatorTransfer({archive,directory,expected}={}){
     matchExpected({jobId:verified.manifest.jobId,transferId:verified.manifest.id,selectionSha256:verified.manifest.selectionSha256,operatorManifestSha256:digest(verified.manifestBytes)});
     const assembled=join(stage,'job');await privateDir(assembled,true);
     for(const dir of ['blobs','commands','results','reviews','runs','buyers','.operator'])await privateDir(join(assembled,dir),true);
-    for(const dir of ['uploads','inputs','requests','results','native-requests','plans','received-transfer'])await privateDir(join(assembled,'.operator',dir),true);
+    for(const dir of ['uploads','inputs','requests','results','native-requests','plans','received-transfer','installation-observations'])await privateDir(join(assembled,'.operator',dir),true);
     for(const f of verified.mapped)await publish(join(assembled,f.target),await ordinary(join(raw,f.path)));
     const receipt={schema:'stellar-forge.facilitator-operator-receive.v1',archive:sourceId,transferId:verified.manifest.id,jobId:verified.manifest.jobId,selectionSha256:verified.manifest.selectionSha256,operatorManifestSha256:digest(verified.manifestBytes),originalManifestSha256:verified.manifest.originalManifestSha256,files:verified.mapped,metadata:[{path:'.operator/received-transfer/OPERATOR_TRANSFER.json',bytes:verified.manifestBytes.length,sha256:digest(verified.manifestBytes)},{path:'.operator/received-transfer/TRANSFER.json',bytes:verified.nativeBytes.length,sha256:digest(verified.nativeBytes)},{path:'.operator/received-transfer/OPERATOR_EXPORT_RECEIPT.json',bytes:verified.exportReceiptBytes.length,sha256:digest(verified.exportReceiptBytes)},{path:'.operator/results/'+verified.manifest.id+'.json',bytes:verified.exportReceiptBytes.length,sha256:digest(verified.exportReceiptBytes)}]};
     const retained=join(assembled,'.operator','received-transfer');

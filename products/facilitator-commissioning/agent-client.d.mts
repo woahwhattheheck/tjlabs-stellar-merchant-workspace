@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-import type {Command,FileRef,Receipt,Receiving,HistoryPage,OperatorState,Upload,Json,InstallationCatalog,InstallationView} from './client.mjs';
+import type {Command,FileRef,Receipt,Receiving,HistoryPage,OperatorState,Upload,Json,InstallationCatalog,InstallationView,NativeInstallationCatalog,NativeInstallationView} from './client.mjs';
 export interface CustomerTransport {(name:string,args:Record<string,unknown>):Promise<any>}
-export interface CustomerSource {kind:'input'|'blob'|'buyer'|'buyer-execution'|'command'|'report'|'transfer'|'archive'|'installation'|'installation-archive';id?:string;name?:string}
+export interface CustomerSource {kind:'input'|'blob'|'buyer'|'buyer-execution'|'command'|'report'|'transfer'|'archive'|'installation'|'installation-archive'|'installation-native';id?:string;name?:string;snapshotSha256?:string}
 export interface CustomerFile {name:string;bytes:number;sha256:string;contentType:string}
 export interface CaptureInput {jobId:string;captureId:string;file:CustomerSource;reportRevision?:number;expectedSha256?:string;expectedBytes?:number}
 export interface CaptureManifest {schema:string;instance:string;jobId:string;captureId:string;request:CaptureInput&{instance:string};source:Record<string,unknown>;file:CustomerFile}
@@ -16,6 +16,8 @@ export class CommissioningCustomerClient{
   state():Promise<{instance:string;native:OperatorState}>;
   installations(jobId:string):Promise<InstallationCatalog&{instance:string}>;
   installation(input:{jobId:string;operationId:string;kind?:'summary'|'sources'|'files';offset?:number;limit?:number}):Promise<InstallationView&{instance:string}>;
+  installationReceivings(jobId:string):Promise<NativeInstallationCatalog&{instance:string}>;
+  installationReceiving(input:{jobId:string;operationId:string;snapshotSha256:string;kind?:'summary'|'files'|'preview'|'saved'|'received';offset?:number;limit?:number}):Promise<NativeInstallationView&{instance:string}>;
   release(releaseId:string):Promise<{instance:string;release:Json}>;
   history(input:{jobId:string;revision:number;kind?:'results'|'runs'|'pending';offset?:number;limit?:number}):Promise<HistoryPage&{instance:string}>;
   allHistory(input:{jobId:string;revision:number;kind?:'results'|'runs'|'pending'}):Promise<{instance:string;jobId:string;revision:number;kind:string;items:Json[];total:number}>;

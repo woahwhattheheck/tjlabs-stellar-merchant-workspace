@@ -7,6 +7,8 @@ export class CommissioningCustomerClient{
   state(){return this.invoke('state');}
   installations(jobId){return this.invoke('installations',{jobId});}
   installation(input){return this.invoke('installation',input);}
+  installationReceivings(jobId){return this.invoke('installation_receivings',{jobId});}
+  installationReceiving(input){return this.invoke('installation_receiving',input);}
   release(releaseId){return this.invoke('release',{releaseId});}
   history(input){return this.invoke('history',input);}
   sourceBegin(upload){return this.invoke('source_begin',{upload});}
