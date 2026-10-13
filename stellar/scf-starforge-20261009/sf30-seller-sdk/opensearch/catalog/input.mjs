@@ -3,6 +3,7 @@ import { createReadStream, constants } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import { WorkspaceError } from '../workspace/store.mjs';
 import { readXChangeSourceRows } from './supplier/xchange/source.mjs';
+import { readBMEcatSourceRows } from './supplier/bmecat/source.mjs';
 
 const fail = (code, message) => { throw new WorkspaceError(code, message); };
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -14,8 +15,8 @@ const MAX_JSON = 256 * 1024 * 1024;
 export function catalogInputFormat(value = {}) {
   if (!object(value)) fail('CATALOG_FORMAT_REQUIRED', 'Choose a catalog input format.');
   const kind = value.kind ?? 'csv';
-  if (!['csv', 'tsv', 'jsonl', 'json', 'xchange-json'].includes(kind))
-    fail('CATALOG_FORMAT_INVALID', 'Choose CSV, TSV, JSON Lines, a JSON row array, or ETIM xChange JSON.');
+  if (!['csv', 'tsv', 'jsonl', 'json', 'xchange-json', 'bmecat-xml'].includes(kind))
+    fail('CATALOG_FORMAT_INVALID', 'Choose CSV, TSV, JSON Lines, a JSON row array, ETIM xChange JSON, or original BMEcat XML.');
   const result = { kind };
   if (kind === 'csv' || kind === 'tsv') {
     const delimiter = value.delimiter ?? (kind === 'tsv' ? '\t' : ',');
@@ -140,6 +141,10 @@ export async function* readCatalogRows(filename, rawFormat = {}, context = {}) {
   const format = catalogInputFormat(rawFormat);
   if (format.kind === 'xchange-json') {
     yield* readXChangeSourceRows(filename, context);
+    return;
+  }
+  if (format.kind === 'bmecat-xml') {
+    yield* readBMEcatSourceRows(filename, context);
     return;
   }
   let ordinal = 0;

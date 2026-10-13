@@ -18,6 +18,7 @@ Read the original retained workspace:
   catalog-show       --catalog ID [--revision N]
   catalog-history    --catalog ID
   catalog-source     --source-id ID
+  catalog-bmecat-profile [--source-id ID]
   catalog-edition    --edition ID
   catalog-material   --edition ID --material-key KEY
   catalog-materials  --edition ID [--offset N] [--limit N] [--search TEXT]
@@ -55,6 +56,11 @@ Supplier formats: review.json, issues.csv, products.jsonl, bmecat.xml,
                   xchange.json, recipient.jsonl, impact.csv, parameters.xml, 2ba.zip.
                   2ba.zip pairs the reviewed native JSON with parameters.xml.
 Use format.kind=xchange-json for an original ETIM xChange document.
+Use format.kind=bmecat-xml for an original BMEcat document. The complete XML
+is checked before an upload sample or material edition is returned. New catalogs
+use full mode; product updates use declared delta mode and a selected base.
+Price-only and product-data transactions stay retained for lookup/source review.
+Use catalog-bmecat-profile for the original XML material/supplier mappings.
 A complete catalog bundle also carries supplier plan/correction histories
 and every immutable supplier review; original v1 bundles remain readable.
 
@@ -108,6 +114,7 @@ const OPTIONS = {
   'catalog-show': ['--catalog', '--revision'],
   'catalog-history': ['--catalog'],
   'catalog-source': ['--source-id'],
+  'catalog-bmecat-profile': ['--source-id'],
   'catalog-edition': ['--edition'],
   'catalog-material': ['--edition', '--material-key'],
   'catalog-materials': ['--edition', '--search', ...PAGING],
@@ -327,6 +334,8 @@ async function perform(workspace, command, options, context) {
   if (Object.hasOwn(MUTATIONS, command))
     return catalog[MUTATIONS[command]](await requestInput(options, context.stdin, {
       requireRequestId: command !== 'catalog-retire-import-stage' }));
+  if (command === 'catalog-bmecat-profile')
+    return catalog.bmecatInputProfile(options['--source-id'] ? {sourceId:options['--source-id']} : {});
   if (command === 'catalog-supplier-profile') return catalog.supplier.templates(options['--target']?{target:options['--target']}:{});
   if (command === 'catalog-supplier-state') return catalog.supplier.state({catalogId:required(options,'--catalog')});
   if (command === 'catalog-supplier-plan') return catalog.supplier.plan(required(options,'--submission'));

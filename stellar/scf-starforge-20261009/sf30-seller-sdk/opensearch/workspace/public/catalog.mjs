@@ -24,6 +24,7 @@ const emptyMapping = () => ({ schema: MAPPING_SCHEMA, fields: Object.fromEntries
 export function createCatalogController({ host, api, perform, refresh, recover, retry, notice, view, element, attempt }) {
   const $ = id => document.getElementById(id);
   let snapshot = { catalogs: [], sources: [], editions: [] }, catalog = null, edition = null, sourceId = '';
+  let sourceReview = null;
   let dirty = false, reading = false, pageOffset = 0, pageNext = null, rowMode = 'materials';
   let matchOffset = 0, matchNext = null, matchInput = null, matchCandidates = [], matchChosen = null, editingDecision = null;
   let decisionOffset = 0, decisionNext = null, selectedPanel = 'setup', fileNotice = '', quantityUrl = null;
@@ -42,7 +43,7 @@ export function createCatalogController({ host, api, perform, refresh, recover, 
     '<section id="cat-panel-setup" aria-label="Catalog sources and mapping">',
     '<div class="two-column"><label>Catalog title<input id="cat-title" maxlength="120" autocomplete="off"></label><label>Tenant identifier<input id="cat-tenant" maxlength="256" autocomplete="off"><span class="help">Use the retained organization identifier for this catalog.</span></label></div>',
     '<h3>Map original material fields</h3><p class="help">Enter a CSV header or JSON Pointer. Complex fields also accept a declared constant, text join or retained lookup as JSON. Identifier values keep their original text.</p>',
-    '<div class="actions"><button id="cat-sap" type="button">Map SAP product columns</button><button id="cat-xchange" type="button">Map ETIM xChange products</button><label>Identifier matching<select id="cat-policy"><option value="exact">Exact original identifiers</option><option value="casefold">Explicit case-insensitive lookup</option></select></label></div>',
+    '<div class="actions"><button id="cat-sap" type="button">Map SAP product columns</button><button id="cat-xchange" type="button">Map ETIM xChange products</button><button id="cat-bmecat" type="button">Map original BMEcat products</button><label>Identifier matching<select id="cat-policy"><option value="exact">Exact original identifiers</option><option value="casefold">Explicit case-insensitive lookup</option></select></label></div>',
     '<div id="cat-fields" class="cat-field-grid"></div>',
     '<details><summary>References, attributes, unit aliases and deltas</summary>',
     '<div class="two-column"><label>Material reference mappings<textarea id="cat-references" class="code" rows="8" spellcheck="false">[]</textarea><span class="help">Each entry declares kind, value and an optional delimiter. Supplier accounts belong in attributes.</span></label><label>Retained source attributes<textarea id="cat-attributes" class="code" rows="8" spellcheck="false">{}</textarea></label></div>',
@@ -54,8 +55,8 @@ export function createCatalogController({ host, api, perform, refresh, recover, 
     '<div class="two-column"><label>Lookup value field<input id="cat-lookup-value" value="TEXT"></label><label>Equality filters as JSON<textarea id="cat-lookup-where" class="code" rows="3" spellcheck="false">{}</textarea></label></div><button id="cat-use-lookup" type="button">Apply retained lookup to mapping</button></details>',
     '<div class="actions"><button id="cat-save" type="button" class="primary">Save catalog mapping</button><span id="cat-saved" class="help">New catalog</span></div>',
     '<article><h3>Retain an original source file</h3><p class="help">The workspace streams the selected bytes into a retained source. The browser keeps its size and checksum with the original request.</p>',
-    '<label>Original CSV, TSV, JSONL or JSON file<input id="cat-file" type="file" accept=".csv,.tsv,.jsonl,.ndjson,.json,text/csv,application/json"></label>',
-    '<div class="two-column"><label>File format<select id="cat-format"><option value="csv">CSV</option><option value="tsv">TSV</option><option value="jsonl">JSON Lines</option><option value="json">JSON document</option><option value="xchange-json">ETIM xChange 2.0 document</option></select></label><label id="cat-delimiter-label">CSV delimiter<input id="cat-delimiter" maxlength="1" value=","></label></div>',
+    '<label>Original CSV, TSV, JSONL, JSON or XML file<input id="cat-file" type="file" accept=".csv,.tsv,.jsonl,.ndjson,.json,.xml,text/csv,application/json,application/xml,text/xml"></label>',
+    '<div class="two-column"><label>File format<select id="cat-format"><option value="csv">CSV</option><option value="tsv">TSV</option><option value="jsonl">JSON Lines</option><option value="json">JSON document</option><option value="xchange-json">ETIM xChange 2.0 document</option><option value="bmecat-xml">Original BMEcat XML document</option></select></label><label id="cat-delimiter-label">CSV delimiter<input id="cat-delimiter" maxlength="1" value=","></label></div>',
     '<div id="cat-tabular"><label class="cat-check"><input id="cat-header" type="checkbox" checked> The first row contains field names.</label><label id="cat-columns-label" hidden>Headerless column names as a JSON array<textarea id="cat-columns" class="code" rows="3" spellcheck="false">[]</textarea></label></div>',
     '<label id="cat-rows-path-label" hidden>JSON Pointer to the rows array<input id="cat-rows-path" placeholder="/records"><span class="help">Leave empty when the document itself is the rows array.</span></label>',
     '<details><summary>Source provenance</summary><div class="two-column"><label>Original source URL<input id="cat-source-url" type="url" placeholder="https://"></label><label>Publisher<input id="cat-publisher" maxlength="240"></label></div><div class="two-column"><label>Source revision<input id="cat-source-revision" maxlength="240"></label><label>Source kind<input id="cat-source-kind" maxlength="80" placeholder="supplier-catalog"></label></div><label>Source note<textarea id="cat-source-note" rows="3" maxlength="1600"></textarea></label></details>',
@@ -64,6 +65,7 @@ export function createCatalogController({ host, api, perform, refresh, recover, 
     '</article></section>',
     '<section id="cat-panel-review" aria-label="Catalog edition review" hidden>',
     '<h3>Create a reviewable edition</h3><div class="two-column"><label>Retained input source<select id="cat-review-source"></select></label><label>Update interpretation<select id="cat-mode"><option value="full">Full catalog replacement</option><option value="delta">Declared upserts and deletes</option></select></label></div>',
+    '<p id="cat-source-interpretation" class="help" role="status"></p>',
     '<label>Comparison base<select id="cat-base"></select></label><div class="actions"><button id="cat-preview" type="button" class="primary">Build edition for review</button></div><p class="help">A full source defines the complete resulting catalog. A delta applies its declared operations to the selected base edition.</p>',
     '<article><label>Retained edition<select id="cat-edition"></select></label><p id="cat-edition-summary" class="summary">Build or choose an edition.</p><div id="cat-counts" class="cat-counts"></div>',
     '<div class="actions"><button id="cat-select" type="button" class="primary">Select reviewed edition</button><button id="cat-use-edition-mapping" type="button">Use this edition\'s mapping</button><span id="cat-selection-note" class="help"></span></div>',
@@ -219,16 +221,34 @@ export function createCatalogController({ host, api, perform, refresh, recover, 
     buttons();
   }
   async function selectSource(id) {
-    sourceId = id; $('cat-source').value = id; $('cat-review-source').value = id;
+    sourceId = id; sourceReview = null; $('cat-source').value = id; $('cat-review-source').value = id;
+    sourceInterpretation();
     const target = $('cat-source-info'); target.replaceChildren();
     if (!id) return;
     const value = await api('/api/catalog/sources/' + encoded(id));
+    sourceReview = value.format?.kind === 'bmecat-xml' ? value.bmecat ?? null : null;
+    sourceInterpretation();
     target.append(element('p', value.name + ' · ' + value.bytes + ' bytes · ' + (value.format?.kind ?? 'retained file')),
       element('p', 'SHA-256 ' + value.sha256, { class: 'code' }));
     if (value.provenance?.url) target.append(element('p', 'Original source: ' + value.provenance.url));
     if (value.provenance?.publisher || value.provenance?.revision)
       target.append(element('p', [value.provenance.publisher, value.provenance.revision].filter(Boolean).join(' · ')));
+    if (sourceReview) {
+      target.append(element('p', 'Original XML transaction: ' + sourceReview.transaction.name + ' · ' + sourceReview.productCount + ' product records'));
+      const details = element('details');
+      details.append(element('summary', 'Complete original XML header and transaction'), element('pre', pretty(sourceReview)));
+      target.append(details);
+    }
     if (value.columns) target.append(element('p', 'Retained fields: ' + value.columns.join(', '), { class: 'code' }));
+  }
+  function sourceInterpretation() {
+    const modes = sourceReview?.catalogModes;
+    for (const option of $('cat-mode').options) option.disabled = Array.isArray(modes) && !modes.includes(option.value);
+    if (Array.isArray(modes) && modes.length && !modes.includes($('cat-mode').value)) $('cat-mode').value = modes[0];
+    $('cat-source-interpretation').textContent = !sourceReview ? '' : modes?.length
+      ? sourceReview.transaction.name + ' · ' + sourceReview.productCount + ' original product records · ' + (modes[0] === 'full' ? 'Complete catalog replacement. Review the resulting edition before selecting it.' : 'Declared product updates and deletes. Choose the exact retained base edition.')
+      : sourceReview.transaction.name + ' is retained for source review and mapped lookups. It contains partial product data; choose a complete catalog or product-update source to create a material edition.';
+    return !Array.isArray(modes) || modes.includes($('cat-mode').value);
   }
   function renderEdition(value) {
     edition = value; pageOffset = 0; pageNext = null; $('cat-row-detail').hidden = true;
@@ -445,7 +465,7 @@ export function createCatalogController({ host, api, perform, refresh, recover, 
   }
   function formatValue() {
     const kind = $('cat-format').value;
-    if (['jsonl','xchange-json'].includes(kind)) return { kind };
+    if (['jsonl','xchange-json','bmecat-xml'].includes(kind)) return { kind };
     if (kind === 'json') return { kind, rowsPath: $('cat-rows-path').value };
     const hasHeader = $('cat-header').checked;
     return { kind, hasHeader, ...(kind === 'csv' ? { delimiter: $('cat-delimiter').value } : {}),
@@ -498,7 +518,7 @@ export function createCatalogController({ host, api, perform, refresh, recover, 
       (['catalog-upload', 'catalog-import'].includes(host.pending.kind) && !fileFor(host.pending.kind));
     $('cat-save').disabled = held || !dirty;
     $('cat-tenant').disabled = held || Boolean(catalog);
-    $('cat-preview').disabled = held || !catalog || dirty || !$('cat-review-source').value;
+    $('cat-preview').disabled = held || !catalog || dirty || !$('cat-review-source').value || !sourceInterpretation();
     $('cat-reload').disabled = held || !catalog;
     const matchingMapping = edition && catalog && edition.mappingSha256 === catalog.mappingSha256;
     $('cat-select').disabled = held || !catalog || dirty || !edition || !matchingMapping || edition.id === catalog.activeEditionId;
@@ -574,6 +594,11 @@ export function createCatalogController({ host, api, perform, refresh, recover, 
     fillMapping(template.catalogMapping);$('cat-format').value='xchange-json';formatControls();changed();
     notice('The complete native xChange product and supplier context are mapped. Save this mapping, then retain and review the original document.');
   })));
+  $('cat-bmecat').addEventListener('click', () => attempt(() => read(async () => {
+    const template = await api('/api/catalog/bmecat/profile');
+    fillMapping(template.catalogMapping); $('cat-format').value = 'bmecat-xml'; formatControls(); changed();
+    notice('The original BMEcat product, complete XML tree and supplier fields are mapped. Save this mapping, retain the original XML and review its declared transaction.');
+  })));
   $('cat-use-lookup').addEventListener('click', () => attempt(async () => {
     const lines = id => $(id).value.split(/\r?\n/).map(value => value.trim()).filter(Boolean);
     const lookup = { sourceId: $('cat-lookup-source').value, key: lines('cat-lookup-key'), from: lines('cat-lookup-from'),
@@ -583,6 +608,7 @@ export function createCatalogController({ host, api, perform, refresh, recover, 
   }));
   $('cat-lookup-source').addEventListener('change', buttons);
   for (const id of ['cat-source', 'cat-review-source']) $(id).addEventListener('change', () => attempt(() => read(async () => { await selectSource($(id).value); buttons(); })));
+  $('cat-mode').addEventListener('change', buttons);
   $('cat-format').addEventListener('change', formatControls); $('cat-header').addEventListener('change', formatControls);
   $('cat-file').addEventListener('change', () => { fileNotice = fileFor('catalog-upload')?.name ?? ''; renderFileState(); buttons(); });
   $('cat-bundle-file').addEventListener('change', () => { renderFileState(); buttons(); });

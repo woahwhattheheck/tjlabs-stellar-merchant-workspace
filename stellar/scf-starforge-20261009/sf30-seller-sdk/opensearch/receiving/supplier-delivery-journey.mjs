@@ -111,7 +111,9 @@ for name in sys.argv[2:]:
 print(json.dumps({'schema':sys.argv[1],'validator':'lxml.etree.XMLSchema','files':results}))
 `;
 export async function runSupplierDeliveryJourney({directory,inputsDirectory=join(HERE,'../examples/supplier-etim'),
-  operationId='supplier-etim-original',python=process.env.PYTHON??'python3'}={}) {
+  inputFormat='jsonl',operationId=inputFormat==='bmecat-xml'?'supplier-bmecat-original':'supplier-etim-original',
+  python=process.env.PYTHON??'python3'}={}) {
+  if(!['jsonl','bmecat-xml'].includes(inputFormat))throw new TypeError('Use jsonl or bmecat-xml for the original published source course.');
   if(!directory||!/^[A-Za-z0-9][A-Za-z0-9_-]{0,50}$/.test(operationId))
     throw new TypeError('Supply a private directory and stable operation ID.');
   directory=resolve(directory);inputsDirectory=resolve(inputsDirectory);
@@ -131,6 +133,7 @@ export async function runSupplierDeliveryJourney({directory,inputsDirectory=join
   try{
     const completed=JSON.parse(await readFile(join(directory,'supplier-delivery-native.json'),'utf8'));
     assert.equal(completed.operationId,operationId);assert.equal(completed.state,'CLOSED');
+    assert.equal(completed.inputFormat??'jsonl',inputFormat,'The completed original course used another source format.');
     for(const artifact of completed.exports){const actual=await hashCatalogFile(join(directory,'exports',artifact.name));
       assert.equal(actual.sha256,artifact.sha256);assert.equal(actual.bytes,artifact.bytes);}
     return completed;
@@ -142,8 +145,9 @@ export async function runSupplierDeliveryJourney({directory,inputsDirectory=join
   // Retain every original XML node, including fields outside the current supplier projection.
   const wrapped=records.map(record=>({...record,originalSource:{url:PUBLISHED+'#'+xmlName,
     filename:xmlName,...inputs[xmlName],contentXml:raw[xmlName].toString('utf8')}}));
-  await originalFile(wrappedFile,wrapped.map(record=>JSON.stringify(record)+'\n').join(''));
-  const sourceIdentity=await hashCatalogFile(wrappedFile);
+  if(inputFormat==='jsonl')await originalFile(wrappedFile,wrapped.map(record=>JSON.stringify(record)+'\n').join(''));
+  const inputFile=inputFormat==='bmecat-xml'?join(inputsDirectory,xmlName):wrappedFile;
+  const sourceIdentity=await hashCatalogFile(inputFile);
   const config={sourceFile,env:{...process.env,SUPPLIER_JOURNEY_ENDPOINT:'http://127.0.0.1:9200'}};
   const openWorkspace=async name=>{
     const workspace=await createOpenSearchWorkspace({...config,directory:join(directory,name)});
@@ -155,7 +159,7 @@ export async function runSupplierDeliveryJourney({directory,inputsDirectory=join
   let producer,receiver,running;
   try{
     producer=await openWorkspace('producer');
-    const mapping={schema:'stellar-forge.material-catalog-mapping.v1',fields:{
+    const mapping=inputFormat==='bmecat-xml'?producer.catalog.bmecatInputProfile().catalogMapping:{schema:'stellar-forge.material-catalog-mapping.v1',fields:{
       materialId:'/materialId',title:'/supplier/descriptions/eng/short',
       partNumber:'/supplier/manufacturerProductId',manufacturer:'/supplier/manufacturerName'},
       attributes:{supplier:'/supplier',originalSource:'/originalSource'},identifierPolicy:'exact'};
@@ -163,20 +167,28 @@ export async function runSupplierDeliveryJourney({directory,inputsDirectory=join
       requestId,title:'Published ETIM supplier delivery',tenantId:'etim-published-sample',mapping}));
     const catalogId=saved.catalog.id;
     const uploaded=await operation(producer,operationId+'-source',requestId=>producer.catalog.upload({
-      requestId,name:'etim-original-input.jsonl',...sourceIdentity,format:{kind:'jsonl'},
+      requestId,name:basename(inputFile),...sourceIdentity,format:{kind:inputFormat},
       provenance:{url:PUBLISHED,publisher:'ETIM International',revision:'2024-12-12 / ETIM 10 sample',
-        kind:'published-standard-example',note:'The complete original XML and all converted product fields are retained in each source record.'}
-    },createReadStream(wrappedFile)));
+        kind:'published-standard-example',note:inputFormat==='bmecat-xml'
+          ?'The unchanged original XML is the uploaded source; its complete tree, fields and header accompany the reviewed projection.'
+          :'The complete original XML and all converted product fields are retained in each source record.'}
+    },createReadStream(inputFile)));
     const preview=await operation(producer,operationId+'-edition',requestId=>producer.catalog.preview({
       requestId,catalogId,expectedRevision:saved.catalog.revision,sourceId:uploaded.source.id,mode:'full',baseEditionId:null}));
     const selected=await operation(producer,operationId+'-select',requestId=>producer.catalog.select({
       requestId,catalogId,expectedRevision:saved.catalog.revision,editionId:preview.edition.id,reviewSha256:preview.edition.reviewSha256}));
     const material=producer.catalog.materials({editionId:preview.edition.id}).rows[0];
     assert.deepEqual(material.attributes.supplier,product);
-    assert.equal(material.attributes.originalSource.contentXml,raw[xmlName].toString('utf8'));
+    if(inputFormat==='bmecat-xml'){
+      assert.equal(uploaded.source.bmecat.transaction.name,'T_NEW_CATALOG');
+      assert.equal(uploaded.source.bmecat.productCount,1);
+      assert.equal(material.attributes.bmecat.source.document.sha256,inputs[xmlName].sha256);
+      assert.equal(producer.store.db.prepare("SELECT COUNT(*) n FROM sqlite_temp_master WHERE name LIKE 'catalog_bmecat_%'").get().n,0);
+    }else assert.equal(material.attributes.originalSource.contentXml,raw[xmlName].toString('utf8'));
     const originalBundle=await emit('catalog-before-supplier-v1.jsonl',await producer.catalog.export(catalogId,'catalog-bundle.jsonl'));
     record('original_source_and_catalog',{catalogId,editionId:preview.edition.id,materials:preview.edition.counts.total,
-      source:sourceIdentity,originalXmlSha256:inputs[xmlName].sha256,bundle:originalBundle});
+      source:sourceIdentity,inputFormat,transaction:uploaded.source.bmecat?.transaction??null,
+      originalXmlSha256:inputs[xmlName].sha256,bundle:originalBundle});
 
     const allBindings=Object.fromEntries(Object.keys(product).map(key=>['/'+key,'/attributes/supplier/'+key]));
     const initialBindings={...allBindings};delete initialBindings['/prices'];
@@ -246,6 +258,11 @@ export async function runSupplierDeliveryJourney({directory,inputsDirectory=join
         {env:config.env,stdout:capture(stdout),stderr:capture(stderr)});
       return{result,stdout:Buffer.concat(stdout).toString('utf8'),stderr:Buffer.concat(stderr).toString('utf8')};
     };
+    if(inputFormat==='bmecat-xml'){
+      const cliProfile=await runCli(['catalog-bmecat-profile','--source-id',uploaded.source.id]);
+      assert.deepEqual(cliProfile.result.catalogMapping,mapping);
+      record('original_xml_cli_mapping',{sourceId:uploaded.source.id,originalFormat:inputFormat});
+    }
     const cliRow=await runCli(['catalog-supplier-row','--review',remapped.supplierReview.id,'--material-key',material.key]);
     assert.deepEqual(JSON.parse(cliRow.stdout).product,product);
     const cliPath=join(directory,'exports','etim-cli-delivery.xml');
@@ -262,6 +279,14 @@ export async function runSupplierDeliveryJourney({directory,inputsDirectory=join
         origin:running.url,'x-workspace-token':session.token,'content-type':'application/json'},body:JSON.stringify(request)}:undefined);
       const value=await response.json();assert.ok(response.ok,JSON.stringify(value));return value;
     };
+    if(inputFormat==='bmecat-xml'){
+      const httpProfile=await api('/api/catalog/bmecat/profile?'+new URLSearchParams({sourceId:uploaded.source.id}));
+      assert.deepEqual(httpProfile,receiver.catalog.bmecatInputProfile({sourceId:uploaded.source.id}));
+      assert.deepEqual(httpProfile.catalogMapping,mapping);
+      assert.equal(httpProfile.supplierProfile.envelope.receiverAccepted,false);
+      assert.equal(httpProfile.supplierProfile.envelope.subsetAgreed,false);
+      record('original_xml_http_profile',{sourceId:uploaded.source.id,route:'/api/catalog/bmecat/profile'});
+    }
     const state=await api('/api/catalog/supplier/state?'+new URLSearchParams({catalogId}));
     assert.equal(state.plans.find(item=>item.id===planId).revision,2);
     for(const path of ['/supplier.mjs','/catalog.mjs','/style.css']){
@@ -290,13 +315,27 @@ export async function runSupplierDeliveryJourney({directory,inputsDirectory=join
       reviewId:finalReview.id,format,expectedReviewSha256:finalReview.sha256}));
     const finalBundle=await emit('supplier-customer-workspace-v2.jsonl',await receiver.catalog.export(catalogId,'catalog-bundle.jsonl'));
     await running.close();running=null;receiver=null;
-    receiver=await openWorkspace('receiver');
+    // Receive the exact final outgoing attachment, including the revision-three
+    // correction, into its own recipient before closing and reopening it.
+    receiver=await openWorkspace('final-recipient');
+    const finalReceived=await receive(finalBundle,'-receive-final-customer');
+    assert.equal(finalReceived.handover.schema,'stellar-forge.material-catalog-bundle.v2');
+    await receiver.close();receiver=await openWorkspace('final-recipient');
+    assert.equal(receiver.catalog.supplier.plan(planId).revision,2);
     assert.equal(receiver.catalog.supplier.currentProduct({planId,materialKey:material.key}).correction.revision,3);
     assert.deepEqual(receiver.catalog.supplier.reviewRow({reviewId:finalReview.id,materialKey:material.key}).product,product);
     const retained=await receiver.catalog.retainedSource(uploaded.source.id);
     assert.equal(retained.sha256,sourceIdentity.sha256);
-    const receivedSource=JSON.parse((await readFile(retained.path,'utf8')).trim());
-    assert.equal(receivedSource.originalSource.contentXml,raw[xmlName].toString('utf8'));
+    if(inputFormat==='bmecat-xml'){
+      assert.ok((await readFile(retained.path)).equals(raw[xmlName]),'Cold reopened original XML differs.');
+      assert.deepEqual(receiver.catalog.source(uploaded.source.id).bmecat,uploaded.source.bmecat,
+        'Cold reopened complete XML source metadata differs.');
+      assert.deepEqual(receiver.catalog.bmecatInputProfile({sourceId:uploaded.source.id}).sourceProfile,
+        uploaded.source.bmecat.sourceProfile,'Cold reopened original XML header profile differs.');
+    }else{
+      const receivedSource=JSON.parse((await readFile(retained.path,'utf8')).trim());
+      assert.equal(receivedSource.originalSource.contentXml,raw[xmlName].toString('utf8'));
+    }
     await receiver.close();receiver=null;
     const validation=await exec(python,['-c',XML_CHECK,join(inputsDirectory,'bmecat_etim_501.xsd'),
       join(inputsDirectory,xmlName),join(directory,'exports','etim-original-delivery.xml'),
@@ -304,10 +343,11 @@ export async function runSupplierDeliveryJourney({directory,inputsDirectory=join
     const schemaValidation=JSON.parse(validation.stdout);
     for(const file of schemaValidation.files){assert.equal(file.products,1);assert.deepEqual(file.identifiers,['411061']);assert.equal(file.features,30);}
     record('official_schema_and_final_reopen',{schema:inputs['bmecat_etim_501.xsd'],
-      validation:schemaValidation,retainedCorrectionRevision:3,completeOriginalXmlPreserved:true,customerBundle:finalBundle});
+      validation:schemaValidation,retainedCorrectionRevision:3,completeOriginalXmlPreserved:true,
+      finalCustomerBundleImportedAndColdReopened:true,customerBundle:finalBundle});
     const report={schema:'stellar-forge.supplier-delivery-native.v1',operationId,state:'CLOSED',
       startedAt,completedAt:new Date().toISOString(),runtime:{node:process.version,python},
-      directory,inputs,productId:product.supplierProductId,products:records.length,phases,exports};
+      directory,inputFormat,inputs,productId:product.supplierProductId,products:records.length,phases,exports};
     await originalFile(join(directory,'supplier-delivery-native.json'),JSON.stringify(report,null,2)+'\n');
     return report;
   }finally{
@@ -319,8 +359,8 @@ export async function runSupplierDeliveryJourney({directory,inputsDirectory=join
 export async function main(args=process.argv.slice(2)){
   const values={};
   for(let i=0;i<args.length;i+=2){
-    const name={'--directory':'directory','--inputs':'inputsDirectory','--operation':'operationId','--python':'python'}[args[i]];
-    if(!name||values[name]!==undefined||!args[i+1])throw new TypeError('Use --directory PRIVATE_DIRECTORY [--inputs DIRECTORY] [--operation STABLE_ID] [--python EXECUTABLE].');
+    const name={'--directory':'directory','--inputs':'inputsDirectory','--operation':'operationId','--python':'python','--input-format':'inputFormat'}[args[i]];
+    if(!name||values[name]!==undefined||!args[i+1])throw new TypeError('Use --directory PRIVATE_DIRECTORY [--inputs DIRECTORY] [--operation STABLE_ID] [--input-format jsonl|bmecat-xml] [--python EXECUTABLE].');
     values[name]=args[i+1];
   }
   const report=await runSupplierDeliveryJourney(values);process.stdout.write(JSON.stringify(report,null,2)+'\n');return report;
