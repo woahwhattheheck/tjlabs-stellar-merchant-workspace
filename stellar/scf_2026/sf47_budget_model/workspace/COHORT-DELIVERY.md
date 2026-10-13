@@ -148,3 +148,99 @@ The comparison engine is pure ESM and shared by the browser and Node command. It
 | `COHORT-DELIVERY.md` | This operator guide |
 
 The standard launch source rosters, authenticated static registration, Operations navigation, and distribution contribution include this complete arm.
+
+## Merchant agent workflow
+
+The installed Merchant MCP and typed client operate the same saved-source comparison as the desk and command above. The source module is `cohort_delivery_agent.mjs`; the public typed export is `@tokenjunkielabs/starforge-merchant/grant/cohort-delivery-agent`.
+
+Start with the current original case. Select its saved adoption source by source ID and SHA256 and its complete frozen `COHORT_EVALUATION` review by review ID. The seed downloads the whole saved plan, verifies its recorded length and SHA256, and reads the original review. An optional `expectedReviewBusinessSha256` pins the selected review's business identity. The original comparison engine verifies the case and tranche and retains both complete documents.
+
+All nine tools use the existing configured `workspace` alias:
+
+| Tool suffix after `merchant_grant_cohort_delivery_` | Operation |
+| --- | --- |
+| `seed` | Read `caseId`, `expectedVersion`, `planSourceId`, `expectedPlanSha256`, `reviewId`, optional review business SHA, title and note; retain the full initial comparison |
+| `edit` | Apply explicit identity associations, intent placements, title or note to the complete document and retain its complete predecessor |
+| `review` | Read the current `caseId` and `expectedVersion`; verify the full original plan source and frozen review against the selected comparison |
+| `refresh` | Read the newly selected current plan source and frozen review using the same source fields as seed; retain the previous explicit choices and full predecessor |
+| `prepare` | Prepare one original source request using `caseId`, `expectedVersion`, `requestId`, `actor`, `note`, `createdAt` and the complete reviewed document |
+| `save` | Commit the verified prepared file using its returned `preparedSha256`; retain the original response and recover its complete saved source |
+| `request` | Reopen the retained request by case, request ID and prepared SHA; inspect its original native event and accepted response |
+| `open` | Reopen the complete saved comparison using `caseId`, `sourceId` and `expectedSourceSha256` |
+| `export` | Retain all JSON, CSV or readable HTML bytes from the complete document |
+
+For document-taking tools, supply the full `inputs` object or the existing verified `input` reference with `expectedInputSha256`. A reference can select an original host input, retained snapshot or completed transfer. `inputPointer` selects a complete document inside an original response. The returned snapshot identifies the retained whole file; read its complete bytes through `merchant_grant_file_read`. Saving uses a verified reference to the entire prepared object and its separate `expectedPreparedSha256`.
+
+### Associate and place the actual recorded work
+
+The complete comparison exposes `document.joins`, `document.records`, `document.rows` and `document.candidateGroups`. Use their original identifiers to build the edit:
+
+```js
+const changes = [
+  {
+    action: 'LINK_IDENTITY',
+    kind: 'buyer',
+    plannedId: selectedPlannedBuyer.id,
+    observedId: selectedRecordedBuyer.id,
+    note: sourceBasisForBuyerAssociation
+  },
+  {
+    action: 'PLACE_INTENT',
+    intentId: selectedOriginalIntent.id,
+    targetId: selectedOriginalOpportunity.id,
+    note: sourceBasisForPlacement
+  }
+];
+```
+
+Other identity kinds are `merchant`, `operation` and `facilitator`. `UNLINK_IDENTITY` removes a selected explicit association using its kind and planned ID. `CLEAR_PLACEMENT` removes a selected original intent placement. `TITLE_NOTE` changes the comparison title or note.
+
+Select valid opportunities from the candidate group named by the record's `candidateGroupId`. Its `targetIds` preserve the complete original opportunity list. A same-date ambiguity between purchased funding groups remains explicit until the operator chooses the actual group. Identity associations retain their basis and do not change the frozen review's native completion, refund, independence or team-operated classifications. Planned funding identities, useful-result quantities, exact amounts and original timestamps remain in their complete source documents.
+
+An edit or source refresh that invalidates an existing choice returns `state: "EDITABLE_INPUT"` with the whole editable input, complete previous document and precise finding, such as `UNKNOWN_IDENTITY_LINK` or `INTENT_IDENTITY_CONFLICT`. Use `edit` on that result to correct the original association or clear the obsolete placement. The same workflow then recalculates the complete comparison. The retained inputs make the constraint repairable without dropping the original intent or silently changing its participant, network or asset.
+
+### Review, save and reopen
+
+Review and prepare verify that the comparison still contains the exact saved plan and the complete frozen review selected from the current case. Preparation records a named comparison edition inside `input.recording`, while retaining its original `planSourceId`. The source filename begins `sf47-cohort-delivery-` and the saved document uses the existing `stellar-forge.sf47-cohort-delivery-comparison.v1` schema, so the original Cohort delivery desk and command reopen it directly.
+
+The existing adoption request owner retains the prepared bytes and source attachment request before sending. It uses the original client's `attach` operation and the current case's native actor/action handling. Retain the same request ID, complete input, creation time and prepared SHA across retries. Repeating the same MCP prepare reopens that original prepared request after its accepted source attachment advances the case version. A changed operation uses a newly selected current case version and its own request.
+
+The owner retains the complete accepted response before downloading the source. If that read is interrupted, `save` resumes from the same original response and case event; `request` can inspect that retained operation. The returned source ID, length and SHA256 identify the complete saved comparison. Export its JSON, CSV and HTML, and carry the original case through the existing case export/import operation. On the receiving case, select its actual current source ID and SHA and call `open`, or open the same saved source in the Cohort delivery desk.
+
+### Typed operation
+
+Use the existing configured `GrantWorkspaceClient`. The source selection and edited document are the same as the MCP sequence:
+
+```js
+import {
+  seedGrantCohortDelivery, editCohortDelivery,
+  reviewGrantCohortDelivery, prepareGrantCohortDelivery,
+  saveGrantCohortDelivery, openGrantCohortDelivery,
+  exportGrantCohortDelivery
+} from '@tokenjunkielabs/starforge-merchant/grant/cohort-delivery-agent';
+
+const seeded = await seedGrantCohortDelivery(client, caseId, sourceSelection);
+const edited = editCohortDelivery(seeded, changes);
+const reviewed = await reviewGrantCohortDelivery(
+  client, caseId, sourceSelection.expectedVersion, edited
+);
+const prepared = await prepareGrantCohortDelivery(client, caseId, {
+  expectedVersion: sourceSelection.expectedVersion,
+  requestId, actor, note, createdAt, document: reviewed
+});
+await retainPrepared(prepared);
+const saved = await saveGrantCohortDelivery(
+  client, prepared, prepared.preparedSha256,
+  {retainResponse: retainOriginalNativeResponse}
+);
+const opened = await openGrantCohortDelivery(
+  client, caseId, saved.source.id, saved.source.sha256
+);
+const json = exportGrantCohortDelivery(opened, 'JSON');
+const csv = exportGrantCohortDelivery(opened, 'CSV');
+const html = exportGrantCohortDelivery(opened, 'HTML');
+```
+
+`retainPrepared` and `retainOriginalNativeResponse` are the caller's durable original-file retention callbacks. The Merchant MCP supplies that ownership automatically. A direct-client retry passes the same prepared object and, when retained, `acceptedResponse` to `saveGrantCohortDelivery`. The module also exports `inspectGrantCohortDeliveryRequest` and `refreshGrantCohortDelivery` for that same saved operation and subsequent source review.
+
+JSON retains the complete selected wrapper, including the full original plan and frozen review and any retained predecessor. CSV and HTML use the original comparison engine's complete exports.
