@@ -92,8 +92,17 @@ additional product with a new ID can instead be appended to the installed
 defaults using `--product-registration /absolute/path/to/new-product.json`.
 
 The retained companion determines the authoring preview. The selected current
-canonical manuscript determines the final composition. The same composer
-continues to produce its complete application reader, application Markdown,
+canonical manuscript determines the final composition. A registered complete H2
+can remain in its author's existing manuscript location, including after the
+main demonstration section. The composer receives that whole chapter through
+the same declaration and reports each product's actual companion presence in
+`productChapterCoverage`. Multiple declarations may share one H2; the complete
+chapter is received once and their source IDs remain distinct.
+
+If a complete chapter is absent from the retained preview edition, receive the
+later four-file reviewer bundle after its canonical composition. The chapter
+chooser then opens that complete received chapter. The same composer continues
+to produce its complete application reader, application Markdown,
 product-and-finance companion and source index.
 
 ## Source organization
