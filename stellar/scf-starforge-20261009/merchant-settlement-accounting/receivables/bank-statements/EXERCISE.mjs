@@ -17,6 +17,10 @@ import {json,sha} from '../core.mjs';
 import {receiveOriginalIntakeAlias,receivePartialIntake} from './INTAKE_RECEIVE.mjs';
 import {receiveBankBrowser} from './BROWSER_RECEIVE.mjs';
 
+if(process.env.SCF_BANK_EXISTING){
+ const {receiveSavedBankCase}=await import('./SAVED_CASE_RECEIVE.mjs');
+ console.log(json(await receiveSavedBankCase()));
+}else{
 const phases=[],files=[];
 const phase=(name,details={})=>phases.push({name,...details});
 const actor='Native bank and customer account receiving';
@@ -287,4 +291,6 @@ try {
 } finally {
   if(running)await running.close();if(workspace)await workspace.close();
   if(process.env.SCF_BANK_KEEP!=='1')await rm(root,{recursive:true,force:true});
+}
+
 }
