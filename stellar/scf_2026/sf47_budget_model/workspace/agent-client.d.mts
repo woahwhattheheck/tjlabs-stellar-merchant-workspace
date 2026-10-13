@@ -2524,6 +2524,20 @@ export interface GrantForecastPreview extends GrantObject {
   report: GrantObject;
   previewSha256: string;
 }
+export interface GrantForecastFinancingOption {
+  id: string;
+  name: string;
+  inputs: GrantObject;
+}
+export interface GrantForecastFinancingPreview {
+  schema: 'stellar-forge.forecast-financing-preview.v1';
+  source: GrantForecastSource;
+  options: Array<{id: string; name: string; inputSha256: string; preview: GrantForecastPreview}>;
+  /** Native canonical digest of the complete submitted {expectedVersion, options}. */
+  requestSha256: string;
+  /** Native canonical digest of the complete result before this sha256 member. */
+  sha256: string;
+}
 export interface GrantSavedForecast extends GrantForecastPreview {
   id: string;
   createdAt: string;
@@ -4503,6 +4517,7 @@ export class GrantWorkspaceClient {
   amendmentCalendarExport(caseId: string, selection: GrantAmendmentCalendarExportSelection): Promise<GrantNativeResponse>;
   amendmentPreview<T = GrantAmendmentPreview>(caseId: string, expectedVersion: number, inputs: GrantAmendmentInputs): Promise<GrantJsonResponse<T>>;
   forecastPreview<T = GrantForecastPreview>(caseId: string, expectedVersion: number, inputs: GrantObject): Promise<GrantJsonResponse<T>>;
+  forecastOptionsPreview<T = GrantForecastFinancingPreview>(caseId: string, expectedVersion: number, options: GrantForecastFinancingOption[]): Promise<GrantJsonResponse<T>>;
   forecastSave<T = GrantForecastSaveReceipt>(caseId: string, body: GrantModelSaveInput): Promise<GrantJsonResponse<T>>;
   portfolioSeed<T = GrantPortfolioSeed>(caseId: string, expectedVersion: number, forecastId: string, options?: GrantPortfolioSeedOptions): Promise<GrantJsonResponse<T>>;
   portfolioPreview<T = GrantPortfolioPreview>(caseId: string, expectedVersion: number, inputs: GrantObject): Promise<GrantJsonResponse<T>>;

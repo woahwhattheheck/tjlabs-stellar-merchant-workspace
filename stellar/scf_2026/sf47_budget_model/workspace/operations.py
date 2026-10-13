@@ -16,6 +16,7 @@ import operations_domain as domain
 import operations_workbook as workbooks
 import operations_supplier_statements as supplier_statements
 import forecast as forecasts
+import forecast_financing
 import portfolio as portfolios
 import portfolio_installations as portfolio_installations
 import operations_support as support
@@ -1298,6 +1299,17 @@ class Operations:
             if context["program"]["version"] != expected:
                 domain.fail("The original case changed. Reopen it before previewing.", "OPERATIONS_CONFLICT", 409)
             return forecasts.preview(context, body.get("inputs"))
+
+    def preview_forecast_options(self, program_id, body):
+        if not isinstance(body, dict) or set(body) != {"expectedVersion", "options"}:
+            domain.fail("Use the declared financing options preview object.", "INVALID_FORECAST_OPTIONS")
+        expected = domain.integer(body.get("expectedVersion"), "Reviewed operations version", 1, 10000000)
+        with self.workspace.mutex:
+            context = self._context(identifier(program_id, "operation"))
+            if context["program"]["version"] != expected:
+                domain.fail("The original case changed. Reopen it before comparing financing options.",
+                            "OPERATIONS_CONFLICT", 409)
+            return forecast_financing.preview(context, body["options"])
 
     def list_forecasts(self, program_id):
         with self.workspace.mutex:
