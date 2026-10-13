@@ -46,6 +46,31 @@ function authorization(authEnv) {
   if (!value || /[\r\n]/.test(value)) throw fault('CENTRAL_AUTH_MISSING', 'Set the selected Central Authorization environment variable on this host.');
   return value;
 }
+// A private Codespaces proxy and Central use independent credentials. Retain only
+// the selected environment names; resolve values on this host for each request.
+export function normalizeCodespacesTokenEnv(value, baseUrl, authEnv) {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string' || !/^[A-Z_][A-Z0-9_]{0,127}$/.test(value) || value === authEnv)
+    throw fault('CENTRAL_CODESPACES_REFERENCE', 'Choose a distinct host environment variable for the Codespaces proxy token.');
+  const url = new URL(baseUrl);
+  if (url.protocol !== 'https:' || url.port || !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.app\.github\.dev$/i.test(url.hostname))
+    throw fault('CENTRAL_CODESPACES_ORIGIN', 'The proxy token is restricted to this original HTTPS Codespaces forwarded origin.');
+  return value;
+}
+export function centralRequestHeaders(connection, { accept = 'application/json', authenticated = true, extended = false } = {}) {
+  const baseUrl = normalizeCentralUrl(connection.url, { allowLoopback: connection.allowLoopback === true });
+  const proxyEnv = normalizeCodespacesTokenEnv(connection.codespacesTokenEnv, baseUrl, connection.authEnv);
+  const headers = { Accept: accept };
+  if (authenticated) headers.Authorization = authorization(connection.authEnv);
+  if (extended) headers['X-Extended-Metadata'] = 'true';
+  if (proxyEnv !== undefined) {
+    const value = process.env[proxyEnv];
+    if (!value || /[\u0000-\u0020\u007f]/u.test(value))
+      throw fault('CENTRAL_CODESPACES_TOKEN_MISSING', 'Set the selected Codespaces proxy token environment variable on this host.');
+    headers['X-Github-Token'] = value;
+  }
+  return headers;
+}
 function boundary(input, base, apiRoot) {
   let url;
   try { url = new URL(input, base); } catch { throw fault('CENTRAL_RESOURCE_URL', 'Central returned an invalid resource URL.', 502); }
@@ -54,13 +79,14 @@ function boundary(input, base, apiRoot) {
     throw fault('CENTRAL_RESOURCE_BOUNDARY', 'Central returned a resource outside this connection.', 502);
   return url.href;
 }
-export function createCentralSource({ url, authEnv, allowLoopback = false, fetchImpl = globalThis.fetch, timeoutMs = 120000 } = {}) {
+export function createCentralSource({ url, authEnv, codespacesTokenEnv, allowLoopback = false, fetchImpl = globalThis.fetch, timeoutMs = 120000 } = {}) {
   const baseUrl = normalizeCentralUrl(url, { allowLoopback }), apiRoot = new URL('v1/', baseUrl).href;
+  const proxyEnv = normalizeCodespacesTokenEnv(codespacesTokenEnv, baseUrl, authEnv);
   if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1000 || timeoutMs > 3600000) throw fault('CENTRAL_TIMEOUT', 'Choose a request timeout from one second to one hour.');
   async function request(path, { signal, accept = 'application/json', consume, maxBytes = 64 * 1024 * 1024, optional = false } = {}) {
     const requestedUrl = boundary(path, apiRoot, apiRoot);
     const timed = AbortSignal.timeout(timeoutMs), combined = signal ? AbortSignal.any([signal, timed]) : timed;
-    const headers = { Accept: accept, Authorization: authorization(authEnv), 'X-Extended-Metadata': 'true' };
+    const headers = centralRequestHeaders({ url: baseUrl, authEnv, codespacesTokenEnv: proxyEnv, allowLoopback }, { accept, extended: true });
     let target = requestedUrl;
     for (let redirects = 0; redirects <= 5; redirects++) {
       combined.throwIfAborted();

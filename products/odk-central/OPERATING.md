@@ -200,6 +200,35 @@ host's returned CA path before Node starts. The selected Authorization value
 stays in the private host environment. The connection and source agreement
 record its alias.
 
+## Reach the existing private Codespaces Central API
+
+Native health checks, fixture publication and captures through a private
+Codespaces port need the existing GitHub proxy credential as well as Central
+authentication. The host selection uses `codespaces_token_env`; its emitted
+connection uses `codespacesTokenEnv` beside the original `authEnv`. These
+are distinct environment aliases, never credential values.
+
+This selection is restricted to the actual HTTPS
+`<one-label>.app.github.dev` origin on port 443 with host mode `upstream`.
+The transport reads the current process environment for each request and sends
+`X-Github-Token` within the original origin/redirect boundary. Preserve the
+existing Central service and port visibility. Read the host guide's
+first-selection and immutable-configuration instructions before changing a
+bound host.
+
+Use the complete current host and reporting product together. The field form,
+CLI `--codespaces-token-env`, source JSON and merchant profile accept the same
+alias. Commissioning retains it through host handover, inspection, period
+installation and full source capture. Complete transfer retains the reference;
+the receiving host supplies its own existing authorized environment. The
+generated `connection-secret.json` continues to contain Central authentication
+only.
+
+Keep the upstream Central URL distinct from the reporting operator's
+`externalOrigin`. See the
+[Central host guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odk/central-host/HOST.md)
+for exact configuration and continuation.
+
 ## Prepare, operate and hand over the Central service
 
 The complete host controller uses Central v2026.3.1, frontend commit

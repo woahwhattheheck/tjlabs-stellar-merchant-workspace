@@ -215,3 +215,27 @@ Company dates, prices, terms and relationship messages remain in the existing pr
 `commissioning/INTEGRATION.md` documents the trusted Store/server ABI, one managed listener, native return shapes and the original receiving-operation join.
 
 Source completion, source parse, upstream deployment, actual capture, browser review and recipient receiving are separate results. Describe a running system from the original operation's actual observed output, not this source package alone.
+
+
+## Private Codespaces Central API credentials
+
+The original host connection may name `codespacesTokenEnv`, the existing
+environment alias for the GitHub proxy token. It must differ from Central's
+`authEnv` and applies only to the actual HTTPS
+`<one-label>.app.github.dev` origin on the default port. Other origins omit it.
+
+The connection normalizer retains the alias, the host-handover check compares
+it, and period installation passes it unchanged into the workspace connection.
+Saved inspections, commissioning versions and complete customer exports retain
+references only. The original Central actor check still runs before installing
+the period plans.
+
+Keep the proxy credential in the running host environment. The optional private
+host authorization file continues to supply Central Authorization only. A
+receiving operator supplies both selected aliases on its authorized host before
+continuing the same retained source and request. A changed or omitted proxy
+alias cannot silently replay a previously bound connection.
+
+This setting authenticates native acquisition. The reporting browser's trusted
+external origin and existing proxy session remain separately selected through
+the managed application's original settings.

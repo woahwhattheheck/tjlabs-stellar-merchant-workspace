@@ -1,5 +1,5 @@
 // MIT. Original Central customer agreement and reporting-plan preparation.
-import { normalizeCentralUrl, normalizeScope } from '../source.mjs';
+import { normalizeCentralUrl, normalizeScope, normalizeCodespacesTokenEnv } from '../source.mjs';
 import { digest, fault, stable } from '../../odata/state.mjs';
 
 export const COMMISSIONING_SCHEMA='stellar-forge.central-commissioning.v1';
@@ -19,7 +19,9 @@ export function normalizeConnection(value) {
   if(typeof value.authEnv!=='string'||!/^[A-Z_][A-Z0-9_]{0,127}$/.test(value.authEnv))
     throw fault('CENTRAL_AUTH_REFERENCE','Select the host environment variable holding the original Authorization header.');
   const allowLoopback=value.allowLoopback===true,url=normalizeCentralUrl(value.url,{allowLoopback});
+  const proxyEnv=normalizeCodespacesTokenEnv(value.codespacesTokenEnv,url,value.authEnv);
   return {url,authEnv:value.authEnv,allowLoopback,
+    ...(proxyEnv===undefined?{}:{codespacesTokenEnv:proxyEnv}),
     name:text(value.name)||'Central commissioning',
     ...(text(value.connectionId??value.id)?{connectionId:value.connectionId??value.id}:{}),
     ...(value.hostReference===undefined?{}:{hostReference:normalizeHostReference(value.hostReference)})};

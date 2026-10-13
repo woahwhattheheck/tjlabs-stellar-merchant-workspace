@@ -8,6 +8,8 @@ export interface CentralScope {
 export interface CentralFormSelection {projectId:number|string;formId:string}
 export interface CentralConnectionInput {
   id?:string;name:string;url:string;authEnv:string;allowLoopback?:boolean;
+  /** Existing host environment alias for the selected private HTTPS Codespaces origin; never a token value. */
+  codespacesTokenEnv?:string;
 }
 export interface CentralPlanInput {
   id?:string;name:string;connectionId:string;forms:CentralFormSelection[];scope:CentralScope;
@@ -268,11 +270,11 @@ export interface CentralCommissioningHostReference {
   sourceCommit?:string;release?:string;observedAt?:string;
 }
 export interface CentralCommissioningConnectionInput {
-  id?:string;connectionId?:string;name?:string;url:string;authEnv:string;
+  id?:string;connectionId?:string;name?:string;url:string;authEnv:string;codespacesTokenEnv?:string;
   allowLoopback?:boolean;hostReference?:CentralCommissioningHostReference;
 }
 export interface CentralCommissioningConnection {
-  connectionId?:string;name:string;url:string;authEnv:string;allowLoopback:boolean;
+  connectionId?:string;name:string;url:string;authEnv:string;allowLoopback:boolean;codespacesTokenEnv?:string;
   hostReference?:CentralCommissioningHostReference;
 }
 export interface CentralCommissioningHostHandover extends RecordValue {
