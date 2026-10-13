@@ -7,7 +7,7 @@
     "prefix": "tools/mpc-recovery-operations",
     "files": 26,
     "sourceSelectionSha256": "9027c8b723d3870b5a09ab179de6d288a1b78df40c9b4a2ade1ecf7015aa90c8",
-    "preservation": "Every original application/source body remains byte-identical under app/. Managed HTTP serving substitutes only its branch transport and store-selection UI; offline exports return the original complete HTML."
+    "preservation": "The complete26-file original edition remains the retained predecessor. The maintained app changes only branch-receiving.mjs and regenerates its complete embedded-source HTML to incorporate original493D preparation and9EEA ordered-writer corrections; every other original source body remains byte-identical. Original model, UI, planning data and accepted11912 result are preserved."
   },
   "originalReceiving": {
     "operation": "mpc-recovery-complete-receiving-20261013",
@@ -40,5 +40,25 @@
   "originalOpportunity": {
     "thread": "https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791861335520549",
     "scope": "Proposal support workshare, USD 3,200, 40 aggregate hours, approximately 6 principal hours, two USD 1,600 milestones. Distinct from the full backup service described by the issuer."
+  },
+  "maintainedSource": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "base": "d668db2c13dcb72a0d0012125a54551a21551ed2",
+    "edition": "mpc-complete-receiving-preparation-20261013",
+    "files": 26,
+    "sourceSelectionSha256": "252bb22da655ba8fd54ba3355bf71f52c66bae50307ca7f2b130a9b2b5589184",
+    "changedOriginalFiles": [
+      "branch-receiving.mjs",
+      "recovery-operations.html"
+    ],
+    "correctionSources": [
+      {
+        "thread": "https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791892199942859",
+        "blob": "6eedea0e0804dd88eca16dbf6764d64087cc3816"
+      },
+      {
+        "thread": "https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791893931850809"
+      }
+    ]
   }
 }

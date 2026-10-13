@@ -3,7 +3,7 @@
 import argparse,datetime,fcntl,hashlib,json,os,pathlib,signal,stat,subprocess,sys,uuid,zipfile
 ROOT=pathlib.Path(__file__).resolve().parent
 SCHEMA="stellar-forge.mpc-recovery-managed-receiving.v1"
-SOURCE="9027c8b723d3870b5a09ab179de6d288a1b78df40c9b4a2ade1ecf7015aa90c8"
+SOURCE="252bb22da655ba8fd54ba3355bf71f52c66bae50307ca7f2b130a9b2b5589184"
 MAXIMUM=1024*1024*1024
 def require(value,message):
     if not value:raise RuntimeError(message)

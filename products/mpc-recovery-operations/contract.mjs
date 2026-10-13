@@ -8,7 +8,7 @@ export const SOURCE_SCHEMA='stellar-forge.mpc-recovery-source.v1';
 export const BINDING_SCHEMA='stellar-forge.mpc-recovery-operations-binding.v1';
 export const CONNECTION_SCHEMA='stellar-forge.mpc-recovery-operations-connection.v1';
 export const STARTUP_SCHEMA='stellar-forge.mpc-recovery-operations-startup.v1';
-export const SOURCE_SHA256='9027c8b723d3870b5a09ab179de6d288a1b78df40c9b4a2ade1ecf7015aa90c8';
+export const SOURCE_SHA256='252bb22da655ba8fd54ba3355bf71f52c66bae50307ca7f2b130a9b2b5589184';
 export const HASH=/^[a-f0-9]{64}$/,UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 export const MAX_BLOB=104*1024*1024,MAX_ARCHIVE=128*1024*1024;
 export const sha=value=>createHash('sha256').update(value).digest('hex');
