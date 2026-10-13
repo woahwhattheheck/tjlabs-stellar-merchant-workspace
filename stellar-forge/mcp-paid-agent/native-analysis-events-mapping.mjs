@@ -23,6 +23,8 @@ const REQUEST='mapping-capture-request.json',COMPARISON='original-comparison.jso
 const SOURCE='mapping-source.json',MANIFEST='mapping-source-index.json',PREFIX='native_analysis_mapping';
 const REVIEW_REQUEST='mapping-review-request.json',WORKING='mapping-working.json';
 const SOURCE_NAMES=['analysis-source.mjs','mapping-working.mjs','mapping-working-html.mjs','mapping-working-ui.mjs'];
+const COLLEAGUE_NAMES=['mapping-review.mjs','mapping-review-ui.mjs'];
+const COLLEAGUE_SCHEMA='stellar-forge.event-mapping-colleague-working.v1';
 const SOURCE_BASE=new URL('../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/',import.meta.url);
 const encoded=v=>Buffer.from(eventCanonical(v)+'\n');
 const decode=b=>JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(b));
@@ -57,8 +59,14 @@ async function installed(name){
 }
 async function sourceFiles(root,identities,{capture=false,from}={}){
  const folder=join(root,'renderer');await directory(folder,{create:capture});
+ let names=identities?Object.keys(identities):[...SOURCE_NAMES,...COLLEAGUE_NAMES];
+ if(!identities&&from){
+  const capture=decode(await bytes(join(from,REQUEST),65536));names=Object.keys(capture.renderer||{});
+ }
+ need(SOURCE_NAMES.every(name=>names.includes(name))&&names.every(name=>[...SOURCE_NAMES,...COLLEAGUE_NAMES].includes(name))&&
+  (!names.includes('mapping-review-ui.mjs')||names.includes('mapping-review.mjs')),'RETAINED_MAPPING_RENDERER_CHANGED');
  const result={};
- for(const name of SOURCE_NAMES){
+ for(const name of names){
   let raw=await optionalBytes(join(folder,name),2*1024*1024);
   if(identities){need(raw!==null,'RETAINED_MAPPING_RENDERER_REQUIRED');sourceIdentity(raw,identities[name]);}
   else{
@@ -67,7 +75,7 @@ async function sourceFiles(root,identities,{capture=false,from}={}){
   }
   result[name]=raw;
  }
- need(!identities||same(Object.keys(identities).sort(),SOURCE_NAMES.slice().sort()),'RETAINED_MAPPING_RENDERER_CHANGED');
+ need(!identities||same(Object.keys(identities).sort(),Object.keys(result).sort()),'RETAINED_MAPPING_RENDERER_CHANGED');
  return result;
 }
 function runtime(sources,comparison){
@@ -78,11 +86,21 @@ function runtime(sources,comparison){
  const renderer=new Function(body+'\nreturn {createEventMappingWorkingRuntime,renderEventMappingWorking};')();
  const assets={modelSource:text(sources['mapping-working.mjs']),parserSource:text(sources['analysis-source.mjs']),
   controllerSource:text(sources['mapping-working-ui.mjs'])};
- return {api:renderer.createEventMappingWorkingRuntime(assets),html:working=>renderer.renderEventMappingWorking(working,assets)};
+ const api=renderer.createEventMappingWorkingRuntime(assets);let reviewApi=null;
+ if(sources['mapping-review.mjs']){
+  const reviewBody=text(sources['mapping-review.mjs']).replace(/^export\s+(?=(?:const|function|class)\b)/gm,'');
+  need(!/^\s*(?:import|export)\s/m.test(reviewBody),'INSTALLED_MAPPING_COLLEAGUE_MODEL_REQUIRED');
+  const modelBody=assets.modelSource.replace(/^export\s+(?=(?:const|function|class)\b)/gm,'');
+  const hashes=new Function(modelBody+'\nreturn {eventMappingHash,eventMappingBytes};')();
+  const factory=new Function(reviewBody+'\nreturn createEventMappingReviewAPI;')();
+  reviewApi=factory({workingAPI:api,...hashes});
+  if(sources['mapping-review-ui.mjs'])Object.assign(assets,{reviewModelSource:text(sources['mapping-review.mjs']),reviewControllerSource:text(sources['mapping-review-ui.mjs'])});
+ }
+ return {api,reviewApi,html:working=>renderer.renderEventMappingWorking(working,assets)};
 }
 async function retainSources(root,sources){
  await directory(join(root,'renderer'),{create:true});
- for(const name of SOURCE_NAMES)await retainFile(join(root,'renderer',name),sources[name],{resume:true});
+ for(const name of Object.keys(sources))await retainFile(join(root,'renderer',name),sources[name],{resume:true});
 }
 async function supplied(path,saved,limit,code){
  let raw=saved;
@@ -106,7 +124,7 @@ function captureRequest(options,comparisonRaw,draftRaw,sources){
  }
  return {schema:EVENT_MAPPING_CAPTURE,analysisWorkspace:options.analysisWorkspace,
   workspace_id:options.expectedWorkspaceId,selection,comparison:identity(comparisonRaw),draft:identity(draftRaw),
-  renderer:Object.fromEntries(SOURCE_NAMES.map(name=>[name,identity(sources[name])]))};
+  renderer:Object.fromEntries(Object.keys(sources).map(name=>[name,identity(sources[name])]))};
 }
 async function readCapture(options){
  const root=chosen(options);await directory(root);
@@ -293,11 +311,13 @@ function reviewRequest(options,workingRaw,captureRaw,sources){
  const original=decode(captureRaw),working=decode(workingRaw),c=original.original?.comparison;
  checkContext(c,options);
  const reader=runtime(sources,c);reader.api.reopen(original);
- need(same(working?.original,original.original),'ORIGINAL_MAPPING_CAPTURE_CHANGED');
- const result=reviewBody(working,reader,options);
+ const selected=working?.schema===COLLEAGUE_SCHEMA
+  ?(need(reader.reviewApi,'ORIGINAL_MAPPING_COLLEAGUE_READER_REQUIRED'),reader.reviewApi.reopen(working).working):working;
+ need(same(selected?.original,original.original),'ORIGINAL_MAPPING_CAPTURE_CHANGED');
+ const result=reviewBody(selected,reader,options);
  return {schema:EVENT_MAPPING_REVIEW,analysisWorkspace:options.analysisWorkspace,workspace_id:options.expectedWorkspaceId,
   working:identity(workingRaw),capture:identity(captureRaw),
-  renderer:Object.fromEntries(SOURCE_NAMES.map(name=>[name,identity(sources[name])])),request:result.request};
+  renderer:Object.fromEntries(Object.keys(sources).map(name=>[name,identity(sources[name])])),request:result.request};
 }
 async function readReview(options){
  const root=chosen(options,true);await directory(root);
@@ -310,13 +330,16 @@ async function readReview(options){
   const capture=await reopenNativeAnalysisEventMappingWorking({...options,directory:options.captureDirectory});
   need((await bytes(capture.workingFile,MAX)).equals(captureRaw),'ORIGINAL_MAPPING_CAPTURE_CHANGED');
  }
- return {root,request,working:decode(workingRaw),sources};
+ const returned=decode(workingRaw),reader=runtime(sources,decode(captureRaw).original.comparison);
+ const working=returned.schema===COLLEAGUE_SCHEMA?reader.reviewApi.reopen(returned).working:returned;
+ return {root,request,working,returned,sources};
 }
 function reviewResult(prepared,state,extra={}){
  return {schema:EVENT_MAPPING_REVIEW,state,directory:prepared.root,analysisWorkspace:prepared.request.analysisWorkspace,
   workspace_id:prepared.request.workspace_id,programme:prepared.request.request.programme,
   input_id:prepared.request.request.input_id,action_id:prepared.request.request.id,
-  operation_id:prepared.request.request.operation_id,request:prepared.request.request,...extra};
+  operation_id:prepared.request.request.operation_id,request:prepared.request.request,
+  workingFile:join(prepared.root,WORKING),captureFile:join(prepared.root,'original-capture-working.json'),...extra};
 }
 /** Preserve full returned work and its exact original reader before creating the stable native review. */
 export async function prepareNativeAnalysisEventMappingReview(options={}){
@@ -328,6 +351,12 @@ export async function prepareNativeAnalysisEventMappingReview(options={}){
  const captureRaw=await bytes(capture.workingFile,MAX);
  const workingRaw=await supplied(options.workingPath,await optionalBytes(join(root,WORKING),MAX),MAX,'ORIGINAL_MAPPING_RETURN_REQUIRED');
  const sources=await sourceFiles(root,null,{capture:true,from:resolve(options.captureDirectory)});
+ if(decode(workingRaw)?.schema===COLLEAGUE_SCHEMA&&!sources['mapping-review.mjs']){
+  const retained=await optionalBytes(join(root,'renderer','mapping-review.mjs'),2*1024*1024);
+  const selected=await installed('mapping-review.mjs');
+  need(retained===null||retained.equals(selected),'ORIGINAL_MAPPING_COLLEAGUE_READER_REQUIRED');
+  sources['mapping-review.mjs']=selected;
+ }
  const request=reviewRequest(options,workingRaw,captureRaw,sources);
  options.signal?.throwIfAborted();
  await retainSources(root,sources);

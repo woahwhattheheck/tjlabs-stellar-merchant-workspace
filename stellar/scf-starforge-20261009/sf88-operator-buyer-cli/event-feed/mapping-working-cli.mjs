@@ -64,8 +64,8 @@ export async function main(argv=process.argv.slice(2)){
  if(command==='compare')return publish(o['--out'],api.serialize(api.compare(value)));
  if(command==='native')return publish(o['--out'],JSON.stringify(api.nativeReview(value))+'\n');
  if(command==='html'){
-  const [modelSource,parserSource,controllerSource]=await Promise.all(['mapping-working.mjs','analysis-source.mjs','mapping-working-ui.mjs'].map(name=>original(join(here,name),1024*1024)));
-  return publish(o['--out'],renderEventMappingWorking(value,{modelSource,parserSource,controllerSource}));
+  const [modelSource,parserSource,controllerSource,reviewModelSource,reviewControllerSource]=await Promise.all(['mapping-working.mjs','analysis-source.mjs','mapping-working-ui.mjs','mapping-review.mjs','mapping-review-ui.mjs'].map(name=>original(join(here,name),1024*1024)));
+  return publish(o['--out'],renderEventMappingWorking(value,{modelSource,parserSource,controllerSource,reviewModelSource,reviewControllerSource}));
  }
  throw Error('Use create, update, compare, inspect, native, html or sources.');
 }
