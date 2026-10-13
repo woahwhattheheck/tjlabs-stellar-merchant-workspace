@@ -13,8 +13,8 @@ export { checkSeaTableColumnTypes, encodeSeaTableRow };
 const description = (query, selection) => ({ sql: query.sql, columns: query.columns, parameters: {}, parameterOrder: [],
   columnTypes: Object.entries(query.projection).map(([name, spec]) => ({ name, type: spec.type, nullable: spec.nullable })),
   source: { projection: query.projection, responseKind: responseKind(selection), atomicSourceSnapshot: false } });
-export async function inspectSeaTableSource(filename) {
-  const selected = await readSeaTableSourceFile(filename); let observation = null;
+export async function inspectSeaTableSource(filename, options = {}) {
+  const selected = await readSeaTableSourceFile(filename, options); let observation = null;
   if (selected.captureFile) {
     const capture = await readSeaTableCapture(selected.captureFile, selected.config.connection.sha256);
     bindSeaTableCapture(capture, selected.config);
@@ -24,8 +24,8 @@ export async function inspectSeaTableSource(filename) {
     connectionKind: selected.config.connection.kind, source: selected.binding, observation,
     queries: Object.fromEntries(Object.entries(selected.queries).map(([name, query]) => [name, description(query, selected.binding)])) };
 }
-export async function openSeaTableSourceFile(filename, { env = process.env } = {}) {
-  const selected = await readSeaTableSourceFile(filename);
+export async function openSeaTableSourceFile(filename, { env = process.env, resolveCaptureFile = value => value } = {}) {
+  const selected = await readSeaTableSourceFile(filename, { resolveCaptureFile });
   const retained = selected.captureFile ? await readSeaTableCapture(selected.captureFile, selected.config.connection.sha256) : null;
   if (retained) bindSeaTableCapture(retained, selected.config);
   let closed = false, active = false; const lifetime = new AbortController();

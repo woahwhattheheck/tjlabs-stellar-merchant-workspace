@@ -463,3 +463,11 @@ Use `seatable-receive --prepare /absolute/private/selection.json` and then `seat
 Source implementation and source review are distinct from installed/native receiving. A joined provider/authoring/publisher/merchant receiving result must identify its real captured source, exact selected source/runtime, native versions/publications and actual outcomes before it is described as complete.
 
 The team composes one SeaTable receiving journey with the provider owner. This guide does not claim customer data, provider extraction, seller activation or a paid buyer result merely from the existence of source code. Existing NocoDB, Sheets and Sheet Best operations remain separate retained work.
+
+## Complete editable workspace handover
+
+The **Workspace handover** view prepares a streamed private `.stwh` archive of the complete authoring project. It retains original captures, drafts, versions, reviews, requests, publisher state, dataset history and deployment packages. Preparing a new archive deliberately stops this workspace's owned publisher and deployment services; replaying a completed export returns its original file.
+
+Receive the exact archive into a named independent workspace. Host paths are rebound separately while original source and deployment identities remain in the saved history. The receiving project can be opened, edited, published and handed over again through the same original application and merchant tools. Original source/version packets remain available for narrower source-only intake.
+
+Use [Workspace handover](HANDOVER.md) for browser, streamed CLI, recovery and receiving controls. The complete [customer commissioning course](../../../../products/seatable/COMMISSIONING.md) joins source review, independent receiving, original publisher/SF82 operation and delivery in the existing SeaTable programme.
