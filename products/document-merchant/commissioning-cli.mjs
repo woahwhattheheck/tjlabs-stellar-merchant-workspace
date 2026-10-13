@@ -9,6 +9,7 @@ import {acquireStateLease} from '../../stellar/scf-starforge-20261009/merchant-f
 import {inspectCommerceSetup} from '../../stellar/scf-starforge-20261009/sf66-demo-launcher/commerce-setup.mjs';
 import {reviewDocumentCommissioning,prepareDocumentCommissioning,inspectDocumentCommissioning,
   openCommissionedDocumentService} from './commissioning.mjs';
+import {runDocumentCommissioningApplication} from './commissioning-application.mjs';
 import {documentError} from './contracts.mjs';
 const HELP=[
   'Document merchant commissioning from original commerce or an operator account','',
@@ -19,6 +20,8 @@ const HELP=[
   '       (--customer-options FILE | --customer-directory DIR)',
   '       [--seller-port N] [--customer-port N] [--operator-port N] [--operations-port N]',
   '       [--expected-selection SHA] [--out FILE]',
+  '  document-merchant commission launch --options FILE --managed-source DIR --expected-selection SHA',
+  '       [--managed-launch FILE]',
   '  document-merchant commission inspect --directory DIR [--out FILE]',
   '  document-merchant commission serve --directory DIR [--expected-selection SHA]','',
   'offers and review read the retained original source without starting a payment or renderer.',
@@ -38,9 +41,10 @@ function parse(argv){
       'seller-port','customer-port','operator-port','operations-port','out'],
     prepare:['account-source','commerce-directory','directory','intent','provider','anonymous','customer-options','customer-directory',
       'seller-port','customer-port','operator-port','operations-port','expected-selection','out'],
-    inspect:['directory','out'],serve:['directory','expected-selection']
+    inspect:['directory','out'],serve:['directory','expected-selection'],
+    launch:['options','managed-source','expected-selection','managed-launch']
   };
-  if(!byCommand[command])fail('Choose offers, review, prepare, inspect or serve.');
+  if(!byCommand[command])fail('Choose offers, review, prepare, inspect, serve or launch.');
   const options={};
   for(let i=0;i<tail.length;i++){
     const flag=tail[i],name=flag?.startsWith('--')?flag.slice(2):'';
@@ -49,7 +53,7 @@ function parse(argv){
     const value=tail[++i];if(!value||value.startsWith('--'))fail('Supply a value for '+flag+'.');
     options[name]=value;
   }
-  const required=command==='offers'?['commerce-directory']:['directory',
+  const required=command==='offers'?['commerce-directory']:command==='launch'?['options','managed-source','expected-selection']:['directory',
     ...(['review','prepare'].includes(command)?['provider']:[])];
   for(const name of required)if(!options[name])fail('Supply --'+name+'.');
   if(['review','prepare'].includes(command)){
@@ -88,6 +92,11 @@ export async function runDocumentCommissioningCommand(argv=process.argv.slice(2)
 }={}){
   const {command,options}=parse(argv);if(command==='help')return print(HELP);
   const emit=async value=>{const output=options.out?await save(options.out,value):value;print(JSON.stringify(output,null,2));return value;};
+  if(command==='launch')return runDocumentCommissioningApplication({
+    optionsFile:absolute(resolve(options.options)),expectedSelection:options['expected-selection'],
+    launchSourceDirectory:absolute(resolve(options['managed-source'])),
+    launchFile:options['managed-launch']?absolute(resolve(options['managed-launch'])):null
+  },{print,environment,signal});
   if(command==='offers'){
     const source=await inspectCommerceSetup(absolute(resolve(options['commerce-directory'])));
     return emit({commerceDirectory:source.directory,operatorWorkspace:source.workspace,

@@ -293,3 +293,7 @@ Keep the original saved customer store, exact pack/edition, original task refere
 | Service stops during native work | Its original close and facilitator drain retain ownership until accepted work completes |
 
 The operating [document guide](OPERATING.md), [batch guide](BATCHES.md), [composition guide](COMPOSITION.md) and [ordered PDF guide](ASSEMBLY.md) remain the downstream customer workflows.
+
+## Start and stop through the existing Applications workspace
+
+The complete commissioning options JSON can be selected directly in the existing **Document merchant** application. **Review** reads the full original account and product source; first **Start** prepares that same installation and opens the original Jobs/facilitator lifetime. **Open**, **Stop** and restart use the original managed launch and merchant resource. Follow the complete [Applications commissioning workflow](APPLICATIONS.md#commission-the-existing-account-in-applications). The direct `commission serve` route remains available for an original foreground operator.

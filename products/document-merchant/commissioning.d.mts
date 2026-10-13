@@ -45,7 +45,7 @@ export function reviewDocumentCommissioning(options:DocumentCommissioningOptions
 export function prepareDocumentCommissioning(options:DocumentCommissioningOptions,control?:{expectedSelection?:string}):Promise<DocumentCommissioning>;
 export function inspectDocumentCommissioning(directory:string):Promise<DocumentCommissioning>;
 export function openCommissionedDocumentService(options:{directory:string;expectedSelection?:string},control?:{
-  environment?:Record<string,string|undefined>;signal?:AbortSignal;
+  environment?:Record<string,string|undefined>;signal?:AbortSignal;launchFile?:string|null;launchSourceDirectory?:string;
 }):Promise<{
   commissioning:DocumentCommissioning;service:Awaited<ReturnType<typeof openDocumentService>>;
   launch:Awaited<ReturnType<typeof openDocumentService>>['launch'];

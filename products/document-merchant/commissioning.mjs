@@ -235,7 +235,7 @@ export async function inspectDocumentCommissioning(directory){
 }
 /** One original Jobs service with its original native facilitator; release signer ownership last. */
 export async function openCommissionedDocumentService({directory,expectedSelection}={},{
-  environment=process.env,signal
+  environment=process.env,signal,launchFile=null,launchSourceDirectory=ROOT
 }={}){
   signal?.throwIfAborted();
   const current=await inspectDocumentCommissioning(directory);
@@ -264,7 +264,7 @@ export async function openCommissionedDocumentService({directory,expectedSelecti
   try{
     await factory.begin({environment});begun=true;signal?.throwIfAborted();
     service=await openDocumentService(current.serviceOptions,{env:environment,signal,
-      expectedSelection:serviceSelection.selectionSha256});
+      expectedSelection:serviceSelection.selectionSha256,launchFile,launchSourceDirectory});
     signal?.throwIfAborted();
     service.closed.then(()=>close().catch(()=>{}),error=>{failure=error;close().catch(()=>{});});
     signal?.addEventListener('abort',onAbort,{once:true});
