@@ -4,6 +4,7 @@ import { open, mkdir, lstat, link, unlink, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { exact, failure, identifier as aliasId, plain } from './config.mjs';
+import { MAX_RETAINED_CHUNK_BYTES } from './retained-file-contracts.mjs';
 import { MATERIAL_EXPORT_FORMATS, SUPPLIER_EXPORT_FORMATS } from './catalog/opensearch-materials.mjs';
 import { OPENSEARCH_MATERIAL_EXPORT_SCHEMA, OPENSEARCH_MATERIAL_EXPORT_MANIFEST,
   MAX_OPENSEARCH_MATERIAL_EXPORT_FILE_BYTES, MAX_OPENSEARCH_MATERIAL_MANIFEST_BYTES,
@@ -18,6 +19,9 @@ import { openCatalogReadSnapshot, fingerprintCatalogExportSnapshot } from
   '../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/catalog/read-snapshot.mjs';
 import { previewRecipientReview } from
   '../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/catalog/recipient-return.mjs';
+
+import { openAuthorWorklist, MAX_AUTHOR_WORKLIST_BYTES } from
+  '../../products/material-catalog/recipient/author-worklist.mjs';
 
 const SHA256 = /^[a-f0-9]{64}$/;
 const CHUNK_BYTES = 262144;
@@ -135,6 +139,53 @@ function recipientComparisonPage(comparison,args) {
   }
   result.nextOffset=paging.offset+items.length<rows.length?paging.offset+items.length:null;
   return {...result,...(limited?{byteLimited:true,replyByteLimit:REPLY_BYTES}:{})};
+}
+
+function worklistItem(worklist,returnId) {
+  hash(returnId,'complete return SHA-256');
+  const item=worklist.items.find(item=>item.id===returnId);
+  if(!item)fail('OPENSEARCH_WORKLIST_RETURN_NOT_FOUND','Select a complete retained return from this exact worklist.',404);
+  return item;
+}
+function worklistIdentity(worklist,args) {
+  return {workspaceId:worklist.workspaceId,inputId:args.inputId,inputSha256:args.expectedInputSha256};
+}
+function worklistPage(worklist,args) {
+  if(args.catalogId!==undefined)identifier(args.catalogId,'catalog ID');
+  if(args.search!==undefined&&(typeof args.search!=='string'||args.search.length>2000))
+    fail('OPENSEARCH_MATERIAL_INVALID_PARAMS','Use a search of at most2,000 characters.');
+  const search=(args.search??'').toLocaleLowerCase(),paging=page(args);
+  const selected=worklist.items.filter(item=>(args.catalogId===undefined||item.catalogId===args.catalogId)&&
+    (!search||[item.id,item.catalogId,item.reviewer].some(value=>value.toLocaleLowerCase().includes(search))));
+  const result={...worklistIdentity(worklist,args),...paging,total:selected.length,items:[],nextOffset:null};
+  let used=Buffer.byteLength(JSON.stringify(result)),limited=false;
+  for(const item of selected.slice(paging.offset,paging.offset+paging.limit)){
+    const draft=item.draft;
+    const row={returnId:item.id,reviewSha256:item.reviewSha256,catalogId:item.catalogId,reviewer:item.reviewer,
+      returnBytes:Buffer.byteLength(item.returnText),draft:draft?{comparisonSha256:draft.comparison.sha256,
+        actor:draft.actor,reason:draft.reason,contexts:draft.comparison.rows.length,
+        choices:draft.comparison.rows.reduce((counts,row)=>{const choice=draft.choices[row.id]||'unfinished';counts[choice]=(counts[choice]??0)+1;return counts;},{})}:null,
+      historicalDrafts:item.history.length,requests:item.requests.length,outcomes:item.outcomes.length};
+    const next=addPageItem(result.items,row,used);if(next===null){limited=true;break;}used=next;
+  }
+  result.nextOffset=paging.offset+result.items.length<selected.length?paging.offset+result.items.length:null;
+  return {...result,...(limited?{byteLimited:true,replyByteLimit:REPLY_BYTES}:{})};
+}
+function worklistRecordBytes(worklist,args) {
+  const item=worklistItem(worklist,args.returnId);
+  choice(args.section,['return','draft','history','request','outcome'],'retained worklist section');
+  let raw;
+  if(args.section==='return'||args.section==='draft'){
+    if(args.index!==undefined)fail('OPENSEARCH_MATERIAL_INVALID_PARAMS','Only historical drafts, requests and outcomes use an index.');
+    if(args.section==='draft'&&!item.draft)fail('OPENSEARCH_WORKLIST_RECORD_NOT_FOUND','This return has no retained current draft.',404);
+    raw=args.section==='return'?item.returnText:jsonBytes(item.draft).toString('utf8');
+  }else{
+    const index=integer(args.index,'retained record index',0);
+    const values=args.section==='history'?item.history:args.section==='request'?item.requests:item.outcomes;
+    if(index>=values.length)fail('OPENSEARCH_WORKLIST_RECORD_NOT_FOUND','Select an original retained record index.',404);
+    raw=args.section==='request'?values[index].raw:jsonBytes(values[index]).toString('utf8');
+  }
+  return Buffer.from(raw);
 }
 function summary(kind, value) {
   if (kind === 'catalogs' || kind === 'catalog') return omit(value, ['mapping']);
@@ -816,6 +867,56 @@ export class MerchantOpenSearchMaterials {
     else this.#readOwners.set(read.readId,{scope,exportId:args.exportId});
     return {exportId:args.exportId,manifestSha256:result.manifestSha256,...read};
   }
+  #worklistReadKey(model,args) {
+    aliasId(args.inputId,'Material input alias');hash(args.expectedInputSha256,'worklist file SHA-256');
+    hash(args.returnId,'complete return SHA-256');choice(args.section,['return','draft','history','request','outcome'],'retained worklist section');
+    if(['history','request','outcome'].includes(args.section))integer(args.index,'retained record index',0);
+    else if(args.index!==undefined)fail('OPENSEARCH_MATERIAL_INVALID_PARAMS','Only historical drafts, requests and outcomes use an index.');
+    return JSON.stringify({kind:'material-author-worklist-record',workspaceId:model.store.id,inputId:args.inputId,
+      inputSha256:args.expectedInputSha256,returnId:args.returnId,section:args.section,index:args.index??null});
+  }
+  async #readWorklistRecord(scope,model,entry,files,args) {
+    const key=this.#worklistReadKey(model,args);
+    if(args.readId!==undefined&&(typeof args.readId!=='string'||!args.readId||args.readId.length>160))
+      fail('OPENSEARCH_MATERIAL_READ_INVALID','Use the original retained worklist record read ID.');
+    if(args.expectedRecordSha256!==undefined)hash(args.expectedRecordSha256,'record SHA-256');
+    const offset=integer(args.offset??0,'record byte offset',0);
+    const limit=integer(args.limit??MAX_RETAINED_CHUNK_BYTES,'record byte page',1,MAX_RETAINED_CHUNK_BYTES);
+    this.#pruneReads(scope,files);
+    const result=await files.read({scope,key,kind:'material-author-worklist-record',directory:entry.directory,
+      readId:args.readId,expectedSha256:args.expectedRecordSha256,offset,limit,
+      load:async()=>{
+        // One complete validation per original read; subsequent pages use the existing immutable snapshot.
+        const worklist=await this.#worklist(scope,model,entry,args);
+        return {bytes:worklistRecordBytes(worklist,args),name:'author-'+args.section+(args.index===undefined?'':'-'+args.index)+'.json',
+          type:'application/json; charset=utf-8'};
+      }});
+    if(result.nextOffset===null)this.#readOwners.delete(result.readId);
+    else this.#readOwners.set(result.readId,{scope,kind:'material-author-worklist-record',key});
+    return {workspaceId:model.store.id,inputId:args.inputId,inputSha256:args.expectedInputSha256,returnId:args.returnId,
+      section:args.section,...(args.index===undefined?{}:{index:args.index}),readId:result.readId,
+      recordSha256:result.file.sha256,recordBytes:result.file.bytes,offset:result.offset,bytes:result.bytesRead,
+      dataBase64:result.data,nextOffset:result.nextOffset};
+  }
+  async #releaseWorklistRecord(scope,model,files,args) {
+    const key=this.#worklistReadKey(model,args);
+    if(typeof args.readId!=='string'||!args.readId||args.readId.length>160)
+      fail('OPENSEARCH_MATERIAL_READ_INVALID','Use the original retained worklist record read ID.');
+    const live=this.#pruneReads(scope,files),selected=this.#readOwners.get(args.readId);
+    if(live.has(args.readId)&&(!selected||selected.scope!==scope||selected.kind!=='material-author-worklist-record'||selected.key!==key))
+      fail('OPENSEARCH_READ_CONFLICT','This read ID belongs to a different original file selection.',409);
+    await files.release(scope,args.readId);this.#readOwners.delete(args.readId);
+    return {released:true,readId:args.readId};
+  }
+  async #worklist(scope,model,entry,args) {
+    const input=selectedInput(entry,args.inputId);
+    const raw=await recipientInputText(input,this.#owner(scope),MAX_AUTHOR_WORKLIST_BYTES,args.expectedInputSha256);
+    let worklist;try{worklist=openAuthorWorklist(raw);}
+    catch{fail('OPENSEARCH_WORKLIST_INVALID','Select a complete original author worklist, retaining every return, comparison, request and outcome.');}
+    if(worklist.workspaceId!==model.store.id)
+      fail('OPENSEARCH_WORKLIST_WORKSPACE_CHANGED','This complete worklist belongs to a different original workspace.',409);
+    return worklist;
+  }
   async call(name,args,{model,entry,files}) {
     const scope=args.workspace,request=omit(args,['workspace']);
     const readSnapshot=action=>this.#snapshot(scope,model,action);
@@ -869,6 +970,34 @@ export class MerchantOpenSearchMaterials {
         case 'merchant_opensearch_material_select':return model.catalog.select(request);
         case 'merchant_opensearch_material_decision':return model.catalog.saveDecision(request);
         case 'merchant_opensearch_material_draft':return model.catalog.createDraft(request);
+        case 'merchant_opensearch_material_worklist_list':
+          return worklistPage(await this.#worklist(scope,model,entry,args),args);
+        case 'merchant_opensearch_material_worklist_record':
+          return await this.#readWorklistRecord(scope,model,entry,files,args);
+        case 'merchant_opensearch_material_worklist_record_release':
+          return await this.#releaseWorklistRecord(scope,model,files,args);
+        case 'merchant_opensearch_material_worklist_preview': {
+          const worklist=await this.#worklist(scope,model,entry,args),item=worklistItem(worklist,args.returnId);
+          return await readSnapshot(catalog=>({...recipientComparisonPage(previewRecipientReview(catalog,item.returnText),args),
+            workspaceId:worklist.workspaceId,returnId:item.id}));
+        }
+        case 'merchant_opensearch_material_worklist_receive': {
+          identifier(args.requestId,'original receiving request ID');hash(args.expectedRequestSha256,'original request file SHA-256');
+          hash(args.returnId,'complete return SHA-256');hash(args.expectedInputSha256,'worklist file SHA-256');
+          let saved;try{saved=model.store.operation(args.requestId);}catch(error){if(error.code!=='WORKSPACE_OPERATION_NOT_FOUND')throw error;}
+          // Native request identity is authoritative after admission, even if its source alias has been retired.
+          if(saved){
+            if(saved.kind!=='catalog-recipient-review'||sha(jsonBytes(saved.request))!==args.expectedRequestSha256||
+              typeof saved.request.reviewText!=='string'||sha(Buffer.from(saved.request.reviewText))!==args.returnId)
+              fail('WORKSPACE_REQUEST_REUSED','This request ID belongs to different original return or reviewed request bytes.',409);
+            return model.catalog.receiveRecipientReview(saved.request);
+          }
+          const worklist=await this.#worklist(scope,model,entry,args),item=worklistItem(worklist,args.returnId);
+          const selected=item.requests.find(saved=>saved.request.requestId===args.requestId);
+          if(!selected||Buffer.byteLength(selected.raw)>8*1024*1024||sha(Buffer.from(selected.raw))!==args.expectedRequestSha256)
+            fail('OPENSEARCH_WORKLIST_REQUEST_CHANGED','Select the exact already-reviewed request retained in this worklist.',409);
+          return model.catalog.receiveRecipientReview(selected.request);
+        }
         case 'merchant_opensearch_material_recipient_preview': {
           const input=selectedInput(entry,args.inputId);
           const raw=await recipientInputText(input,this.#owner(scope),4*1024*1024,args.expectedInputSha256);

@@ -32,3 +32,136 @@ The server exposes both exact source modules, and the maintained Material select
 ## Actual rendered inspection
 
 The producing peer must open/run the exact outgoing installed version and look at the actual desktop and narrow screenshots. Use the populated worklist, empty search, retained draft, stale comparison, local save, portable import, concurrent-tab conflict and original request recovery controls. Open the full downloaded worklist and reopened contents. Repair unreadable tables, clipped controls or overflow. Source review and DOM counts are not substitutes for viewing the actual product. This is the original equipped receiving course, not an additional browser job.
+
+
+## Installed agents and complete worklists
+
+An installed agent can now use the same complete author worklist downloaded from
+**Material catalogs → Returned customer reviews**. The host declares that original
+file once in the existing OpenSearch workspace connection's `materialInputs`.
+Use its exact `path`, flat `name`, UTF-8 `bytes` and whole-file `sha256`; the
+tool caller receives only an alias. The file can be up to128MiB and1,000 complete
+returns. The small tool/CLI input contains only this alias and exact identities;
+the existing2MiB control-request limit is unchanged.
+
+The worklist's `workspaceId` must equal the actual original workspace's ID.
+Do not substitute the configurable alias for that ID, or edit a worklist to
+make it belong to another workspace. Cross-workspace catalogue receiving still
+uses the original complete catalogue bundle workflow. The full original
+worklist validator checks every return, comparison, historical draft, approved
+request and retained outcome before reading or first applying its contents.
+
+The installed commands are available through the existing
+`opensearch-materials-client` entrypoint (or this repository's
+`stellar-forge/mcp-merchant-operator/opensearch-material-cli.mjs`):
+
+| Command | Complete behavior |
+| --- | --- |
+| `material-worklist-list --all-pages` | Page named returns, source hashes, current draft counts and every history/request/outcome count; optional original catalogue/search filter. |
+| `material-worklist-record --all-pages` | Return exact Base64 byte pages for a selected complete original return, current draft, historical draft, approved request or outcome. Every page carries the full record identity. |
+| `read-worklist-record` | Reassemble a selected record, verify its complete byte count/SHA-256 and UTF-8, then emit its exact original text on stdout. No partial record is presented as complete. |
+| `material-worklist-record-release` | Release an unfinished selected record read without changing its input or Journal. |
+| `material-worklist-preview --all-pages` | Compare a selected original return with the actual current catalogue using its unchanged read snapshot; pin the full comparison hash across pages. |
+| `material-worklist-receive` | Apply or recover only an exact request already reviewed and retained in that worklist, through the original catalogue transaction and Journal. |
+
+For each command use `--url MCP_URL --workspace ALIAS --input selection.json`.
+Start with this small selection, using actual host-declared values:
+
+```json
+{"inputId":"author-worklist","expectedInputSha256":"<whole original worklist SHA-256>"}
+```
+
+List results supply `returnId` (SHA-256 of the exact original return text).
+For a complete request record add `returnId`, `section:"request"`, `index:0`.
+Historical drafts, requests and outcomes use zero-based indexes from their
+retained order; current `draft` and `return` sections omit `index`.
+For example:
+
+```sh
+opensearch-materials-client material-worklist-list --url "$MCP_URL" --workspace materials --input worklist-selection.json --all-pages
+opensearch-materials-client read-worklist-record --url "$MCP_URL" --workspace materials --input selected-request.json > original-reviewed-request.json
+opensearch-materials-client material-worklist-preview --url "$MCP_URL" --workspace materials --input selected-return.json --all-pages
+```
+
+The typed client exposes `materialWorklistList`, `materialWorklistRecord`,
+`materialWorklistPreview`, `materialWorklistReceive`,
+`materialWorklistRecordRelease`, and
+`readWorklistRecord`. The last returns the complete verified text plus its
+record/input/workspace identity. Byte pages use the original retained reader's
+196,608-byte maximum; ordinary summaries and comparisons retain the existing
+reply budget. The first record read verifies the entire selected input and all
+original worklist contents once, then gives the selected exact record to the
+unchanged retained reader. It keeps records up to32KiB in memory and larger
+records in a private unlinked descriptor, under its shared256,000,000-byte
+snapshot budget and four-read limit. Subsequent pages use that same immutable
+snapshot and never reopen or revalidate the full worklist.
+
+Continue with the returned `readId`, exact `expectedRecordSha256` and
+`nextOffset`, preserving the input/workspace/return/section/index selection.
+The typed `pages()` and complete-text reader keep these bindings automatically
+and release an unfinished read when iteration exits. Explicit
+`materialWorklistRecordRelease` uses the same selection and `readId`.
+Completion, the original120-second idle expiry, or owner close releases the
+snapshot. After expiry/restart, omit `readId` and reopen the same original input
+with the expected record hash and retained byte offset; changed source bytes
+are refused. This is the existing retained-file lifecycle, with no new cache
+or workspace. Lists/current previews still inspect the declared complete input.
+
+To receive a request, preserve the same `inputId`, `expectedInputSha256`,
+`returnId`, original `requestId`, and `expectedRequestSha256` (the exact
+pretty-JSON request file hash returned by the record reader). First admission
+retains the original8MiB request-file limit even inside a128MiB worklist. The tool does not
+turn a draft into approval, silently choose conflicts, or refresh a saved
+request. A first application still checks the original complete comparison and
+current catalogue inside the unchanged transaction. If the catalogue has
+changed, explicitly refresh and review the return in the original author UI,
+save its new request and complete worklist, then select that new original file.
+
+After admission, the original Journal owns request recovery. An exact matching
+request ID, request-file hash and return hash recovers its original native
+outcome before opening the input alias. Thus an already-admitted request remains
+recoverable if its worklist file or alias has been retired. A mismatched request
+or return hash is rejected. This does not claim that the worklist is still
+present; use the read commands separately to inspect its present file custody.
+The worklist itself remains immutable during every tool call.
+
+### Same completed receiving case
+
+The maintained `receive-installed.mjs` adds a preparation helper and optional
+MCP suffix to the same original directory/operation. Run only at the existing
+owner's source-selection boundary, after the original offline/browser/native
+return is complete; retain an already-running source generation and its intent.
+
+```js
+import {prepareInstalledAuthorWorklist, receiveInstalledRecipientMcp}
+  from './products/material-catalog/recipient/receive-installed.mjs';
+
+const prepared = await prepareInstalledAuthorWorklist({
+  directory: originalDirectory, operationId: originalOperationId,
+  workspaceId: actualOriginalWorkspaceId
+});
+// Add prepared.file to that SAME host's materialInputs as "author-worklist".
+// Keep existing return/request aliases and the original caller-owned client.
+await receiveInstalledRecipientMcp({
+  client, directory: originalDirectory, operationId: originalOperationId,
+  returnInputId: originalReturnAlias, requestInputId: originalRequestAlias,
+  worklistInputId: 'author-worklist'
+});
+```
+
+Preparation consumes the retained complete author working copy, original
+comparison, request and completed native outcome from `RECEIVING.json`.
+It saves one full `installed-author-worklist.json` and its immutable
+`INSTALLED_AUTHOR_WORKLIST_INPUT.json` identity. It neither creates another
+customer adoption nor invents a new review. Reentry requires those exact
+original bytes, workspace and selected source.
+
+The suffix reads all worklist summaries, reconstructs the full original request
+through small byte pages, compares the full current return rows with the
+existing direct-return path, and replays only that already-completed request.
+It also recovers that request with an undeclared retired-input alias, then reads
+the unchanged original Journal result. All earlier installed browser
+desktop/narrow/download/worklist/cold-open steps remain present.
+Caller-owned model/client/server and Page lifetimes remain explicit. Actual
+native/rendered completion must be reported by that equipped original course;
+source review alone does not claim it.
