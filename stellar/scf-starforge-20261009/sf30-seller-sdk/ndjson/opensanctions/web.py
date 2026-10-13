@@ -12,6 +12,7 @@ import matching
 import updates
 import review_cycles
 import gleif_portfolio
+import portfolio_refresh
 
 HERE = Path(__file__).resolve().parent
 
@@ -33,6 +34,7 @@ class Handler(ndjson_application.Handler):
                   "/monitor/": ("index.html", "text/html; charset=utf-8"),
                   "/monitor/app.js": ("app.js", "text/javascript; charset=utf-8"),
                   "/monitor/gleif-intake.js": ("gleif-intake.js", "text/javascript; charset=utf-8"),
+                  "/monitor/portfolio-refresh.js": ("portfolio-refresh.js", "text/javascript; charset=utf-8"),
                   "/monitor/review-cycles.js": ("review-cycles.js", "text/javascript; charset=utf-8"),
                   "/monitor/style.css": ("style.css", "text/css; charset=utf-8")}
         if target.path in assets:
@@ -63,6 +65,19 @@ class Handler(ndjson_application.Handler):
             return self._json(review_cycles.report(d, q["id"], int(q["version"])))
         if path == "cycle-report-html":
             raw = review_cycles.report_html(d, q["id"], int(q["version"])).encode("utf-8")
+            self._headers(200, "text/html; charset=utf-8", len(raw)); self.wfile.write(raw); return
+        if path in {"portfolio-refreshes", "portfolio-refresh", "portfolio-refresh-request", "portfolio-refresh-report", "portfolio-refresh-report-html"}:
+            self._cycle_branch()
+            if path == "portfolio-refreshes":
+                return self._json(portfolio_refresh.view(d))
+            if path == "portfolio-refresh":
+                return self._json(portfolio_refresh.view(d, q["id"], offset=int(q.get("offset", "0")),
+                    limit=int(q.get("limit", "50")), kind=q.get("kind"), query=q.get("query", "")))
+            if path == "portfolio-refresh-request":
+                return self._json(portfolio_refresh.operation(d, q["requestId"]))
+            if path == "portfolio-refresh-report":
+                return self._json(portfolio_refresh.report(d, q["id"]))
+            raw = portfolio_refresh.report_html(d, q["id"]).encode("utf-8")
             self._headers(200, "text/html; charset=utf-8", len(raw)); self.wfile.write(raw); return
         if path == "gleif-intake":
             self._cycle_branch()
@@ -158,6 +173,21 @@ class Handler(ndjson_application.Handler):
             with d.object_path(body["metadata"]).open("rb") as meta, d.object_path(body["entities"]).open("rb") as entities:
                 return self._json(d.accept_edition(meta, entities, metadata_url=body["metadataUrl"],
                                     label=body.get("label"), entitlement=body.get("entitlement")), 201)
+        if path == "portfolio-refresh-prepare":
+            self._cycle_branch()
+            return self._json(portfolio_refresh.prepare(d, body["before"], body["after"]), 201)
+        if path == "portfolio-refresh-command":
+            self._cycle_branch()
+            try:
+                return self._json(portfolio_refresh.command(d, body), 201)
+            except InputError as error:
+                not_committed = False
+                try:
+                    not_committed = not portfolio_refresh.operation(d, body.get("requestId"))["committed"]
+                except InputError:
+                    pass
+                return self._json({"error": str(error), "requestId": body.get("requestId"),
+                                   "notCommitted": not_committed}, 400)
         if path == "gleif-preview":
             self._cycle_branch()
             return self._json(gleif_portfolio.preview(d, body["original"],

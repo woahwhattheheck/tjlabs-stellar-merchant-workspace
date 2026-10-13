@@ -14,6 +14,7 @@ import matching
 import updates
 import review_cycles
 import gleif_portfolio
+import portfolio_refresh
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
@@ -48,6 +49,19 @@ def main():
     gleif_receive.add_argument("--request", required=True)
     gleif_status = sub.add_parser("gleif-intake", help="Reconcile the original intake request")
     gleif_status.add_argument("--request-id", required=True)
+    refresh_prepare = sub.add_parser("portfolio-refresh-prepare", help="Compare two original customer portfolio editions")
+    refresh_prepare.add_argument("--before", required=True); refresh_prepare.add_argument("--after", required=True)
+    sub.add_parser("portfolio-refreshes")
+    refresh_view = sub.add_parser("portfolio-refresh")
+    refresh_view.add_argument("--id", required=True)
+    refresh_view.add_argument("--offset", type=int, default=0); refresh_view.add_argument("--limit", type=int, default=50)
+    refresh_view.add_argument("--kind"); refresh_view.add_argument("--query", default="")
+    refresh_command = sub.add_parser("portfolio-refresh-command")
+    refresh_command.add_argument("--request", required=True)
+    refresh_request = sub.add_parser("portfolio-refresh-request"); refresh_request.add_argument("--request-id", required=True)
+    refresh_report = sub.add_parser("portfolio-refresh-report")
+    refresh_report.add_argument("--id", required=True); refresh_report.add_argument("--output", required=True)
+    refresh_report.add_argument("--html", action="store_true")
     args = p.parse_args()
     if args.action == "binding":
         from application_binding import inspect_binding
@@ -91,7 +105,30 @@ def main():
                     signal.signal(sig, handler)
             return
         matching.recover_interrupted(d)
-        if args.action == "gleif-preview":
+        if args.action == "portfolio-refresh-prepare":
+            result = portfolio_refresh.prepare(d, args.before, args.after)
+        elif args.action == "portfolio-refreshes":
+            result = portfolio_refresh.view(d)
+        elif args.action == "portfolio-refresh":
+            result = portfolio_refresh.view(d, args.id, offset=args.offset, limit=args.limit, kind=args.kind, query=args.query)
+        elif args.action == "portfolio-refresh-command":
+            from model import load_json
+            result = portfolio_refresh.command(d, load_json(Path(args.request).read_bytes()))
+        elif args.action == "portfolio-refresh-request":
+            result = portfolio_refresh.operation(d, args.request_id)
+        elif args.action == "portfolio-refresh-report":
+            from model import private_write
+            result = portfolio_refresh.report(d, args.id)
+            content = portfolio_refresh.report_html(d, args.id).encode() if args.html else json_bytes(result)
+            output = Path(args.output)
+            if output.exists():
+                if output.read_bytes() != content:
+                    raise InputError("The selected report snapshot output already contains different bytes; choose a new output")
+            else:
+                private_write(output, content)
+            result = {"comparisonId": args.id, "file": str(output), "bytes": len(content),
+                      "sha256": __import__("hashlib").sha256(content).hexdigest()}
+        elif args.action == "gleif-preview":
             with Path(args.input).open("rb") as stream:
                 original = d.put_object(stream, Path(args.input).name, "application/json")
             result = gleif_portfolio.preview(d, original["id"], offset=args.offset, limit=args.limit)

@@ -1,6 +1,7 @@
 /* MIT. Original-source operator on the retained NDJSON Workspace. */
 import {mountReviewCycles} from "./review-cycles.js";
 import {mountGleifIntake} from "./gleif-intake.js";
+import {mountPortfolioRefresh} from "./portfolio-refresh.js";
 const $ = (selector, root=document) => root.querySelector(selector);
 const $$ = (selector, root=document) => [...root.querySelectorAll(selector)];
 const pretty = value => JSON.stringify(value, null, 2);
@@ -14,6 +15,7 @@ let state, contract, busy = false, view = "overview", selectedUpdate, selectedCh
 let entityOffset=0, counterpartyOffset=0, changeOffset=0;
 let currentChangeRows=[];
 let pendingCandidate=null;
+let portfolioRefresh=null;
 const escape = value => String(value ?? "—").replace(/[&<>"']/g, ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const p = value => "<pre class='scroll-box'>" + escape(pretty(value)) + "</pre>";
 const message = (text, error=false) => { const n=$("#notice"); n.textContent=text; n.className=error?"error":"success"; };
@@ -73,9 +75,11 @@ function comparison(id) {return state.comparisons.find(item=>item.id===id);}
 function editionLabel(row) {return row.dataset+" · "+row.version;}
 function comparisonLabel(row) {return row.dataset+" · "+(edition(row.before)?.version||short(row.before))+" → "+(edition(row.after)?.version||short(row.after));}
 function navigate(name) {
+  if(view==='portfolio-refresh'&&name!==view)portfolioRefresh?.deactivate();
   view=name;
   $$("nav [data-view]").forEach(el=>el.classList.toggle("selected",el.dataset.view===name));
-  $$("main>section").forEach(el=>el.hidden=el.id!=="view-"+name);
+  $("main>section").forEach(el=>el.hidden=el.id!=="view-"+name);
+  if(name==="portfolio-refresh")portfolioRefresh?.activate();
 }
 $$("[data-view]").forEach(el=>el.addEventListener("click",()=>navigate(el.dataset.view)));
 function renderState() {
@@ -122,7 +126,7 @@ function renderState() {
 async function refresh() {
   state=await api("state");
   if (!contract) contract=await api("contract");
-  renderState();gleifIntake.refresh(state);
+  renderState();gleifIntake.refresh(state);portfolioRefresh?.refresh();
   await Promise.all([loadEntities(),loadCounterparties(),loadChanges()]);
   if (selectedUpdate) inspectUpdate(selectedUpdate.id);
   if (selectedRequest) await inspectRequest(selectedRequest.id);
@@ -423,4 +427,6 @@ const gleifIntake=await mountGleifIntake({root:$("#gleif-intake"),api,refresh,ge
     navigate("review");message("LEI is included in this case monitoring draft. Review the unchanged identity and relevance choices before saving.");
   }});
 await mountReviewCycles({api,run,navigate,inspectCase,getState:()=>state,refresh,escape,pretty});
+portfolioRefresh=await mountPortfolioRefresh({root:$("#view-portfolio-refresh"),api,getState:()=>state,refresh,
+  inspectCase:id=>run("Open original case",()=>inspectCase(id)),message,escape});
 await run("Open retained source workspace",refresh);

@@ -3,3 +3,12 @@
 @media(max-width:600px){header{padding:12px;align-items:flex-start}header strong{font-size:16px}header>div:first-child{display:flex;flex-direction:column}header span{margin:2px 0 0;font-size:12px}.header-actions{align-items:flex-end;flex-direction:column;gap:6px}.header-actions span{max-width:155px;text-align:right}.layout{display:block}nav{flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--line);padding:9px;gap:3px}nav button,nav a{font-size:12px;padding:7px 9px}nav a{margin:0}main{padding:18px 12px 35px}h1{font-size:24px}.page-heading{margin-bottom:16px}article{padding:14px}.metrics{gap:8px}.metric{padding:11px}.metric strong{font-size:25px}.kv{grid-template-columns:minmax(90px,.4fr) minmax(0,1fr)}td,th{padding:8px}.update-item{flex-direction:column}.actions{align-items:stretch}.actions button{flex:1}footer{padding:12px}.property-change .two-columns{grid-template-columns:1fr}}
 
 #gleif-intake pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;max-height:28rem}#gleif-intake .actions{display:flex;gap:.5rem;flex-wrap:wrap;margin:.75rem 0}#gleif-intake code{overflow-wrap:anywhere}#gleif-intake [data-intake-history]>article{border-top:1px solid #d5d8dc;padding:1rem 0}#gleif-intake h4{margin:.5rem 0}
+
+/* Original customer portfolio edition review. */
+#view-portfolio-refresh code {overflow-wrap:anywhere;word-break:break-word}
+#view-portfolio-refresh pre {white-space:pre-wrap;overflow-wrap:anywhere;max-height:24rem;overflow:auto}
+#view-portfolio-refresh .refresh-case {padding:1rem;border:1px solid var(--line,#d8dee6);border-radius:.5rem;margin:.75rem 0}
+#view-portfolio-refresh .refresh-case p {overflow-wrap:anywhere}
+#view-portfolio-refresh [data-refresh-page] {align-self:center}
+#view-portfolio-refresh select {max-width:100%;min-width:0}
+@media(max-width:600px){#view-portfolio-refresh .actions{display:grid;grid-template-columns:1fr}#view-portfolio-refresh th,#view-portfolio-refresh td{min-width:10rem}}
