@@ -15,7 +15,10 @@
     "nativeExportSha256": "ca166f57c3bc126b4a7372c825c38773a1490caff3c78100de8ef882c7786beb",
     "sourceModules": 14,
     "corruptionRejected": true,
-    "originalUnchanged": true
+    "originalUnchanged": true,
+    "scenarioTimestamp": "2026-10-13T07:30:00.000Z",
+    "scenarioTimestampMeaning": "Explicit source-model editorial timeline for generated examples; not an observed issuer, browser or operator action time.",
+    "resultRecordedAt": "2026-10-13T07:23:47.000Z"
   },
   "files": [
     {
