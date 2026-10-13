@@ -15,6 +15,11 @@
     "stellar/scf_2026/sf47_budget_model/workspace/grant_procedures_native.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/grant_procedures.mjs",
     "stellar-forge/mcp-merchant-operator/grant-planning-sources.mjs",
-    "stellar-forge/mcp-merchant-operator/catalog/grant-planning-sources.mjs"
+    "stellar-forge/mcp-merchant-operator/catalog/grant-planning-sources.mjs",
+    "stellar-forge/mcp-merchant-operator/grant-installation-sources.mjs",
+    "stellar-forge/mcp-merchant-operator/catalog/grant-installation-sources.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.d.mts",
+    "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_SOURCE_DESK_AGENT.md"
   ]
 }

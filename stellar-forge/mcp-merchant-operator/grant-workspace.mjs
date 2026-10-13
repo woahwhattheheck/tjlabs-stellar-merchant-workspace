@@ -7,6 +7,8 @@ import {seedGrantCohortAdoption,reviewGrantCohortAdoption,editCohortAdoption,reb
   scheduleCohortAdoption,compareCohortAdoption,prepareGrantCohortAdoption,validateCohortAdoptionPrepared,
   inspectGrantCohortAdoptionRequest,saveGrantCohortAdoption,openGrantCohortAdoption,exportCohortAdoption}
   from '../../stellar/scf_2026/sf47_budget_model/workspace/cohort_planning_agent.mjs';
+import {grantInstallationSourceVerbs, executeGrantInstallationSourceTool} from './grant-installation-sources.mjs';
+import {INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES} from '../../stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.mjs';
 import {grantPlanningSourceVerbs,executeGrantPlanningSourceTool} from './grant-planning-sources.mjs';
 import {grantReportingCaptureVerbs,executeGrantReportingCaptureTool} from './grant-reporting-capture.mjs';
 import {grantProcedureVerbs,executeGrantProcedureTool} from './grant-procedures.mjs';
@@ -26,7 +28,7 @@ import { GrantWorkspaceClient, inspectGrantAgentBinding, readGrantAgentFile,
 export const GRANT_WORKSPACE_CONNECTION_SCHEMA = 'stellar-forge.sf47-workspace-connection.v1';
 const SNAPSHOT = 'stellar-forge.sf47-agent-snapshot.v1', TRANSFER = 'stellar-forge.sf47-agent-input.v1';
 const MAX_JSON = 64 * 1024 * 1024, PAGE_BYTES = 48000;
-const MAX_RETAINED = Math.max(MAX_JSON,GRANT_MAX_WORKBOOK_HANDOVER_BYTES);
+const MAX_RETAINED = Math.max(MAX_JSON,GRANT_MAX_WORKBOOK_HANDOVER_BYTES,INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES);
 const canonicalSourceRequest = value => value === null || typeof value !== 'object' ? JSON.stringify(value)
   : Array.isArray(value) ? '['+value.map(canonicalSourceRequest).join(',')+']'
   : '{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+canonicalSourceRequest(value[key])).join(',')+'}';
@@ -601,6 +603,10 @@ export class MerchantGrantWorkspaces {
           pointer:args.pointer + '/' + next, recovery:'Use merchant_grant_snapshot for selected nested values or merchant_grant_file_read for the complete original response.'}} : {})};
     }
     const client = this.#client(alias);
+    if (grantInstallationSourceVerbs.has(verb)) return executeGrantInstallationSourceTool(verb,args,{
+      alias,binding,client,load:(input,expected)=>this.#input(alias,input,expected),
+      retain:(original,selection)=>this.#snapshot(alias,original,selection),
+    });
     if (grantPlanningSourceVerbs.has(verb)) return executeGrantPlanningSourceTool(verb,args,{
       client,load:(input,expected)=>this.#input(alias,input,expected),
       retain:(original,selection)=>this.#snapshot(alias,original,selection),

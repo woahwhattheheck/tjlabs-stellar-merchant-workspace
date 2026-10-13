@@ -1,5 +1,8 @@
 import { GRANT_AGENT_SCHEMA, GRANT_MAX_BUNDLE_BYTES, GRANT_MAX_SOURCE_BYTES, GRANT_CASE_ACTIONS } from './agent-contracts.mjs';
 import {performGrantPlanningSourceOperation} from './source-tables-agent.mjs';
+import {planInstallationSourceOperation, performInstallationSourceOperation,
+  INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES} from './installation-source-desk-agent.mjs';
+export * from './installation-source-desk-agent.mjs';
 export {grantPlanningSourceProfiles,GRANT_PLANNING_SOURCE_SCHEMA,GRANT_PLANNING_SOURCE_ACTIONS} from './source-tables-agent.mjs';
 export { GRANT_AGENT_SCHEMA, GRANT_MAX_BUNDLE_BYTES, GRANT_MAX_SOURCE_BYTES, GRANT_MAX_WORKBOOK_HANDOVER_BYTES, GRANT_CASE_ACTIONS } from './agent-contracts.mjs';
 // MIT. Typed agent access to the original SF47 planning and delivery service.
@@ -428,7 +431,10 @@ function originalSource(connection) {
     executionSourceDirectory:record.execution.sourceDirectory};
 }
 function transport(connection, route, {body, contentType = 'application/json', headers = {},
-  originalRequestId, timeoutMs = 30000, mutation = body !== undefined} = {}) {
+  originalRequestId, timeoutMs = 30000, mutation = body !== undefined, maxResponseBytes = MAX_RESPONSE_BYTES} = {}) {
+  need(Number.isSafeInteger(maxResponseBytes) && maxResponseBytes >= 1 &&
+    maxResponseBytes <= INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES, 'GRANT_RESPONSE_LIMIT',
+    'Use the declared complete original response bound.');
   const target = new URL(route, connection.original.url), authorization = new URL(connection.url).hash.slice('#access='.length);
   need(target.origin === new URL(connection.original.url).origin && route.startsWith('/api/'),
     'GRANT_ROUTE_INVALID', 'Use an original declared grant API route.');
@@ -455,8 +461,8 @@ function transport(connection, route, {body, contentType = 'application/json', h
       const chunks = []; let length = 0;
       response.on('data', chunk => {
         length += chunk.length;
-        if (length > MAX_RESPONSE_BYTES) {
-          req.destroy(error('GRANT_RESPONSE_TOO_LARGE', 'The original response exceeds the 64 MiB receiving bound.')); return;
+        if (length > maxResponseBytes) {
+          req.destroy(error('GRANT_RESPONSE_TOO_LARGE', 'The original response exceeds its declared complete receiving bound of ' + maxResponseBytes + ' bytes.')); return;
         }
         chunks.push(chunk);
       });
@@ -825,6 +831,14 @@ export class GrantWorkspaceClient {
     if (body.preview !== undefined) object(body.preview,'Original worksheet selection');
     if (body.mapping !== undefined) object(body.mapping,'Original workbook mapping');
     return this.#request('/api/source-tables/workbook/' + action,{body,mutation:false});
+  }
+  installationSources(action, input = {}) {
+    const plan = planInstallationSourceOperation(action, input);
+    if (plan.operation?.workspaceDirectory !== undefined)
+      need(plan.operation.workspaceDirectory === this.#binding.directory, 'GRANT_INSTALLATION_SOURCE_CHANGED',
+        'This saved operation belongs to another original workspace directory.');
+    return this.#admit(() => performInstallationSourceOperation(plan,
+      async (route, options) => transport(await this.#readLaunch(), route, options)));
   }
   planningSources(action, body) {
     return this.#admit(() => performGrantPlanningSourceOperation(this,action,body));
