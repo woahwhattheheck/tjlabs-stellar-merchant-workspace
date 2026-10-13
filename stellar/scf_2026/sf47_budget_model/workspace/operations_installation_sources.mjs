@@ -8,6 +8,7 @@ import {createSourceCollectionDesk, validateCollection} from './operations_insta
 import {createSourceEditionDesk, validateSourceEditionWork} from './operations_installation_source_editions.mjs';
 import {currentStaffContext, staffDeskStorageKey, assertStaffRequestActor, resumeStaffSession} from './staff-session.mjs';
 import {createFlowableSourceDesk, validateFlowableSourceWork} from './operations_flowable_sources.mjs';
+import {createResearchSourceDesk, validateResearchSourceWork} from './operations_installation_research.mjs';
 import {createEcondbSourceDesk, validateEcondbSourceWork} from './operations_econdb_sources.mjs';
 
 const SCHEMA='stellar-forge.installation-source-desk.v1';
@@ -185,7 +186,7 @@ export function mountInstallationSources(root,bridge){
   activeCopies.set(pointerKey,copyId);
   const initial={schema:SCHEMA,scope,open:false,tab:'files',draftId:null,revision:null,work:null,note:'',newTitle:'',
     upload:{filename:'',mediaType:'application/json',sourceUrl:'',observedAt:''},
-    caseForm:null,pendingId:null,preparationId:null,profileWork:null,commissioningWork:null,collectionWork:null,editionWork:null,flowableWork:null,econdbWork:null,nativeDraftJSON:null,
+    caseForm:null,pendingId:null,preparationId:null,profileWork:null,commissioningWork:null,collectionWork:null,editionWork:null,flowableWork:null,researchWork:null,econdbWork:null,nativeDraftJSON:null,
     inspectionFileId:null,notice:'',error:'',rejected:[],copyName:'Source working copy',rawFields:{},fieldErrors:{},historyRevisionText:null};
   let state=clone(initial),alive=true,busy=false,hostBusy=false,initialized=false;
   let saved=null,edition=null,heads=[],catalogue=null,prepared=null,inspection=null,request=null,chosenFile=null;
@@ -197,7 +198,7 @@ export function mountInstallationSources(root,bridge){
   const readonly=()=>hostBusy||!!bridge.readOnlyReason?.();
   const historic=()=>saved&&state.revision!==null&&state.revision!==saved.revision;
   const workingDirty=()=>!!state.work?.dirty||!!state.caseForm?.dirty||!!state.profileWork?.dirty||!!state.commissioningWork?.dirty;
-  const pending=()=>!!state.pendingId;
+  const pending=()=>!!state.pendingId||!!state.researchWork?.pending;
   const editing=()=>initialized&&!copyLoading&&!busy&&!pending()&&!readonly()&&!historic();
   const commissioning=createCommissioningReceivingDesk({
     state:()=>state,draft:()=>selectedDraft(),files:()=>files(),caseId,available,editing,historic,
@@ -290,6 +291,29 @@ export function mountInstallationSources(root,bridge){
       return value;
     }
   });
+  const research=createResearchSourceDesk({
+    state:()=>state,draft:()=>selectedDraft(),caseId,staffContext,editing,requireEdit,checkContext,
+    changed,persistNow,parkWorking,render,esc,header,table,hint,empty,download:downloadBlob,
+    actor:()=>bridge.recordingActor(),verifyStaff:()=>resumeStaffSession(staffContext),
+    context:current,caseData:()=>bridge.caseData?.(),api:(path,value,options)=>bridge.api(path,value,options),
+    refreshCase:()=>bridge.refreshCase(),receiveDraft:input=>bridge.receiveDraft(input),keepSelection,issue,prepare,readPreparation,
+    notice:message=>{state.notice=message;status();},progress:message=>{state.notice=message;status();},
+    downloadLarge:(path,file)=>download(path,file,2*1024*1024*1024),
+    downloadPrepared:async(value,name)=>{
+      const file=value?.files.find(f=>f.filename===name);if(!file)throw new Error('Select a complete original prepared output.');
+      return download(prefix+'/'+state.draftId+'/preparations/'+value.id+'/outputs/'+encodeURIComponent(name)+'?expectedSha256='+file.sha256,file,2*1024*1024*1024);
+    },
+    closeToInstallation:async()=>{state.open=false;changed();await persistNow();root.hidden=true;bridge.close?.();},
+    nativeWorkshares:async(explicit=null)=>{
+      requireEdit();const attachment=latestAttachment();
+      if(!explicit&&!attachment)throw new Error('Attach the original Workshare preparation, or enter its full source selection in the Research tab.');
+      await bridge.refreshCase();const selection={...clone(explicit??attachment.selection),expectedVersion:current().version};
+      const inventory=await bridge.api('/api/operations/'+caseId+'/installation-workshares',selection);
+      if(!Array.isArray(inventory.cases)||inventory.source?.caseId!==undefined&&inventory.source.caseId!==caseId)
+        throw new Error('The original Workshare inventory differs from this case.');
+      return {inventory,selection};
+    }
+  });
   function snapshot(){return {
     schema:SCHEMA,workingCopySchema:WORKING_COPY,scope:clone(scope),staffContext:clone(staffContext),
     copyId,sequence:copySequence,name:state.copyName||'Source working copy',
@@ -368,7 +392,7 @@ export function mountInstallationSources(root,bridge){
     if(legacy&&!next.upload)next={...clone(initial),draftId:value.sourceDraftId??null,revision:value.selectedRevision??null,
       work:value.working??null,caseForm:value.caseForm??null,profileWork:value.profileWork??null,
       pendingId:value.pendingRequest?.body?.requestId??null};
-    if(!record(next)||!record(next.upload)||!['files','mapping','outputs','installation','commissioning','editions','history','flowable','econdb'].includes(next.tab)||
+    if(!record(next)||!record(next.upload)||!['files','mapping','outputs','installation','commissioning','editions','history','flowable','econdb','research'].includes(next.tab)||
       !['note','newTitle'].every(key=>typeof next[key]==='string')||!['filename','mediaType','sourceUrl','observedAt'].every(key=>typeof next.upload[key]==='string')||
       !(next.draftId===null||typeof next.draftId==='string')||!(next.pendingId===null||typeof next.pendingId==='string')||
       !(next.revision===null||Number.isSafeInteger(next.revision)&&next.revision>0))
@@ -408,6 +432,7 @@ export function mountInstallationSources(root,bridge){
     }
     validateSourceEditionWork(next.editionWork,{caseId,draftId:next.draftId});
     validateFlowableSourceWork(next.flowableWork);
+    validateResearchSourceWork(next.researchWork,{caseId,draftId:next.draftId});
     validateEcondbSourceWork(next.econdbWork);
     if(next.collectionWork!==null&&next.collectionWork!==undefined)
       validateCollection(next.collectionWork,{hash,checkedFile,draftId:next.draftId,requests:[...merged.values()]});
@@ -469,6 +494,8 @@ export function mountInstallationSources(root,bridge){
   }
   async function receiveCopy(input,{savedId=null}={}){
     checkContext();const value=validateCopy(input);
+    if(state.researchWork?.pending&&(!value.state.researchWork?.pending||!equal(state.researchWork.pending.query,value.state.researchWork.pending.query)||state.researchWork.pending.sha256!==value.state.researchWork.pending.sha256))
+      throw new Error('Recover the original Research upload before opening a different complete working copy.');
     if(state.pendingId&&state.pendingId!==value.state.pendingId)
       throw new Error('Recover the current original request before opening another working copy. Its complete download remains available.');
     clearTimeout(timer);timer=null;await persistence.catch(()=>{});
@@ -542,8 +569,9 @@ export function mountInstallationSources(root,bridge){
     root.setAttribute('aria-busy',String(busy||hostBusy||copyLoading));
     for(const node of root.querySelectorAll('button,input,textarea,select')){
       const action=node.dataset.sourceAction;
-      if(action==='working-download'||action==='collection-download'||action?.startsWith('edition-download-')||['flowable-working-download','flowable-request-download','econdb-working-download','econdb-request-download'].includes(action)){node.disabled=false;continue;}
+      if(action==='working-download'||action==='collection-download'||action?.startsWith('edition-download-')||['flowable-working-download','flowable-request-download','econdb-working-download','econdb-request-download','research-working-download','research-requests-download'].includes(action)){node.disabled=false;continue;}
       if(action==='collection-pause'){node.disabled=!collection.running();continue;}
+      if(node.hasAttribute('data-research-upload')&&state.researchWork?.pending){node.disabled=busy||hostBusy||copyLoading||readonly()||historic();continue;}
       if(node.hasAttribute('data-flowable-upload')&&state.flowableWork?.pending?.method==='import'&&state.flowableWork.pending.args.kind===node.dataset.flowableUpload){node.disabled=busy||hostBusy||copyLoading||readonly()||historic();continue;}
       if(node.hasAttribute('data-econdb-upload')&&state.econdbWork?.pending?.method==='import'&&state.econdbWork.pending.args.kind===node.dataset.econdbUpload){node.disabled=busy||hostBusy||copyLoading||readonly()||historic();continue;}
       const liveDisabled={
@@ -616,7 +644,7 @@ export function mountInstallationSources(root,bridge){
     const latest=await bridge.api(prefix+'/'+id);
     const value=revision===null||revision===latest.revision?latest:await bridge.api(prefix+'/'+id+'?revision='+revision);
     if(!available()||epoch!==generation)return;
-    state.draftId=id;state.commissioningWork=null;state.collectionWork=null;state.editionWork=null;state.rawFields={};state.fieldErrors={};state.historyRevisionText=null;acceptState(latest,{replace:true});
+    state.draftId=id;state.commissioningWork=null;state.collectionWork=null;state.editionWork=null;state.researchWork=null;state.rawFields={};state.fieldErrors={};state.historyRevisionText=null;acceptState(latest,{replace:true});
     if(value.revision!==latest.revision){
       state.revision=value.revision;
       state.work={draftId:id,baseRevision:value.revision,selectionText:value.selection?pretty(value.selection):'',dirty:false};
@@ -638,7 +666,7 @@ export function mountInstallationSources(root,bridge){
     await parkWorking('Before creating another source preparation');if(!available())return;
     const id='source-desk-'+crypto.randomUUID().replaceAll('-','');
     state.rawFields={};state.fieldErrors={};state.historyRevisionText=null;edition=null;prepared=null;inspection=null;
-    state.draftId=id;state.work=null;state.caseForm=null;state.profileWork=null;state.commissioningWork=null;state.collectionWork=null;state.editionWork=null;state.revision=null;saved=null;
+    state.draftId=id;state.work=null;state.caseForm=null;state.profileWork=null;state.commissioningWork=null;state.collectionWork=null;state.editionWork=null;state.researchWork=null;state.revision=null;saved=null;
     return issue('create',{title},0);
   }
   function verifyReceipt(value,original){
@@ -673,6 +701,8 @@ export function mountInstallationSources(root,bridge){
       state.tab='outputs';state.notice='Saved the following scope as the next revision of the same original Installation. Earlier revisions and the complete source preparation remain retained.';
     }
     commissioning.adoptReceipt(value.result);
+    research.adoptReceipt(value,original);
+    if(value.result?.kind==='economic-research'||original.body.action==='research.attach'||original.body.action==='selection.save'&&value.draft.selection?.schema==='stellar-forge.research-installation-selection.v1')state.tab='research';
     editions.adoptReceipt(value,original);
     editions.adoptNativeDraft(value);
     changed();
@@ -684,7 +714,7 @@ export function mountInstallationSources(root,bridge){
       if(value.result?.state==='ATTACHED_SOURCES'){
         await bridge.refreshCase();
         if(available())await readPreparation(value.result.preparationId);
-      }else if(['ATTACHED_COMMISSIONING','SAVED_DCAT_FOLLOWING'].includes(value.result?.state)){
+      }else if(['ATTACHED_COMMISSIONING','SAVED_DCAT_FOLLOWING','ATTACHED_RESEARCH_INSTALLATION'].includes(value.result?.state)){
         await bridge.refreshCase();
       }
     }catch(error){state.error='Saved original request; refresh its current case to finish readback. '+(error.message||String(error));changed();}
@@ -808,7 +838,7 @@ export function mountInstallationSources(root,bridge){
       if(!profile)throw new Error('Select an installed profile for every original customer.');
       profiles[profile.id]=profile.sha256;
     }
-    const engine=catalogue.sourceFormats?.find(x=>x.schema===selected.schema)?.engine??(selected.schema===SELECTION?catalogue.engine:null);
+    const engine=catalogue.sourceFormats?.find(x=>x.schema===selected.schema)?.engine??(catalogue.research?.schema===selected.schema?catalogue.research.engine:null)??(selected.schema===SELECTION?catalogue.engine:null);
     if(!engine?.sha256)throw new Error('Open the installed source reader for this complete original format.');
     return issue('prepare',{expectedEngineSha256:engine.sha256,expectedSelectionSha256:original.selectionSha256,expectedProfiles:profiles});
   }
@@ -820,13 +850,14 @@ export function mountInstallationSources(root,bridge){
   }
   async function attach(){
     requireEdit();if(!prepared)throw new Error('Open a complete preparation first.');
+    if(prepared.kind==='economic-research')return issue('research.attach',{preparationId:prepared.id,expectedVersion:current().version});
     if(prepared.kind==='dcat-following')
       return issue('dcat-following.save',{preparationId:prepared.id,expectedPreviewSha256:prepared.nativePreview.previewSha256});
     await bridge.refreshCase();
     return issue('attach',{preparationId:prepared.id,expectedSelectionSha256:prepared.selectionSha256,expectedVersion:current().version});
   }
-  async function download(path,receipt){
-    if(!Number.isSafeInteger(receipt.bytes)||receipt.bytes<0||receipt.bytes>MAX_ARCHIVE||!/^[a-f0-9]{64}$/.test(receipt.sha256))
+  async function download(path,receipt,maxBytes=MAX_ARCHIVE){
+    if(!Number.isSafeInteger(receipt.bytes)||receipt.bytes<0||receipt.bytes>maxBytes||!/^[a-f0-9]{64}$/.test(receipt.sha256))
       throw new Error('Keep the complete original file receipt.');
     const controller=new AbortController();downloads.add(controller);
     let reader,writer,published=false;
@@ -1430,10 +1461,10 @@ export function mountInstallationSources(root,bridge){
     root.dataset.sourceCopyId=copyId;root.dataset.sourceDraftId=state.draftId||'';root.dataset.sourcePendingId=state.pendingId||'';
     root.dataset.sourceScope=JSON.stringify(scope);
     root.hidden=!state.open;
-    const tabs=[['files','1 · Original files'],['mapping','2 · Source mapping'],['outputs','3 · Complete package'],['installation','4 · Installation'],['commissioning','5 · Receive commissioning'],['flowable','Flowable programmes'],['econdb','Econdb customer handover'],['editions','Customer editions'],['history','Saved history']];
+    const tabs=[['files','1 · Original files'],['mapping','2 · Source mapping'],['outputs','3 · Complete package'],['installation','4 · Installation'],['commissioning','5 · Receive commissioning'],['research','Research Installation'],['flowable','Flowable programmes'],['econdb','Econdb customer handover'],['editions','Customer editions'],['history','Saved history']];
     let content;
     try{content=state.tab==='mapping'?mappingView():state.tab==='outputs'?outputsView():state.tab==='installation'?installationView():
-      state.tab==='commissioning'?commissioning.render():state.tab==='flowable'?flowable.render():state.tab==='econdb'?econdb.render():state.tab==='editions'?editions.render():state.tab==='history'?historyView():filesView();}
+      state.tab==='commissioning'?commissioning.render():state.tab==='research'?research.render():state.tab==='flowable'?flowable.render():state.tab==='econdb'?econdb.render():state.tab==='editions'?editions.render():state.tab==='history'?historyView():filesView();}
     catch(error){
       content=hint('Your complete fields remain retained. Correct their original JSON before opening the guided view: '+error.message)+
         (state.work?field('Full native selection JSON','work.selectionText',state.work.selectionText,{area:true,rows:18,wide:true}):'')+
@@ -1529,6 +1560,7 @@ export function mountInstallationSources(root,bridge){
       if(target.matches('[data-source-copy-name]')){state.copyName=target.value;changed();return;}
       if(target.matches('[data-source-revision]')){state.historyRevisionText=target.value;changed();return;}
       if(target.matches('[data-source-new-title]')){state.newTitle=target.value;changed();return;}
+      if(research.edit(target))return;
       if(flowable.edit(target))return;
       if(econdb.edit(target))return;
       if(editions.edit(target))return;
@@ -1544,6 +1576,8 @@ export function mountInstallationSources(root,bridge){
       if(target.matches('[data-source-working-copy]')){selectedLocalCopy=target.value;controls();return;}
       if(target.matches('[data-source-working-file]')){const file=target.files?.[0];run(()=>openWorkingFile(file));return;}
       if(target.matches('[data-source-collection-files]')){const selected=Array.from(target.files||[]);run(()=>collection.readFiles(selected));return;}
+      if(target.matches('[data-research-upload]')){run(()=>research.chooseFile(target));return;}
+      if(research.edit(target)){render();return;}
       if(target.matches('[data-flowable-upload]')){run(()=>flowable.chooseFile(target));return;}
       if(target.matches('[data-econdb-upload]')){run(()=>econdb.chooseFile(target));return;}
       if(flowable.edit(target)){render();return;}
@@ -1585,6 +1619,7 @@ export function mountInstallationSources(root,bridge){
     const target=event.target.closest('[data-source-action]');if(!target||!root.contains(target)||target.disabled)return;
     event.preventDefault();const action=target.dataset.sourceAction;
     if(action==='working-download'){snapshotDownload();status();return;}
+    if(['research-working-download','research-requests-download'].includes(action)){own(Promise.resolve().then(()=>research.action(action,target))).catch(error=>{state.error=error.message;status();});return;}
     if(['flowable-working-download','flowable-request-download'].includes(action)){own(Promise.resolve().then(()=>flowable.action(action,target))).catch(error=>{state.error=error.message;status();});return;}
     if(['econdb-working-download','econdb-request-download'].includes(action)){own(Promise.resolve().then(()=>econdb.action(action,target))).catch(error=>{state.error=error.message;status();});return;}
     if(action==='collection-download'){own(Promise.resolve().then(()=>collection.action(action,target))).catch(error=>{state.error=error.message||String(error);status();});return;}
@@ -1592,6 +1627,7 @@ export function mountInstallationSources(root,bridge){
     if(action==='collection-pause'){collection.pause();controls();status();return;}
     if(action==='close'){own(closeView()).catch(error=>{state.error=error.message;status();});return;}
     run(async()=>{
+      if(action.startsWith('research-'))return research.action(action,target);
       if(action.startsWith('flowable-'))return flowable.action(action,target);
       if(action.startsWith('econdb-'))return econdb.action(action,target);
       if(action.startsWith('edition-'))return editions.action(action,target);
@@ -1676,7 +1712,7 @@ export function mountInstallationSources(root,bridge){
     });
   });
   const beforeUnload=event=>{
-    if(workingDirty()||editions.isDirty()||collection.collectionDirty()||flowable.dirty()||flowable.pending()||econdb.dirty()||econdb.pending()||pending()||storageError||persistedGeneration<generation){
+    if(workingDirty()||editions.isDirty()||collection.collectionDirty()||flowable.dirty()||flowable.pending()||econdb.dirty()||econdb.pending()||research.dirty()||research.pending()||pending()||storageError||persistedGeneration<generation){
       event.preventDefault();event.returnValue='';
     }
   };
@@ -1724,7 +1760,7 @@ export function mountInstallationSources(root,bridge){
       if(activeCopies.get(pointerKey)===copyId)activeCopies.delete(pointerKey);
       window.removeEventListener('beforeunload',beforeUnload);
       for(const controller of downloads)controller.abort();
-      flowable.dispose();
+      flowable.dispose();research.dispose();
       econdb.dispose();
       closing=(async()=>{
         // Accepted requests own their full journal through their final receipt.

@@ -1,7 +1,9 @@
-import type {FlowableSourceInputs,FlowableSourceResponses} from './flowable-source-desk-agent.mjs';
-export * from './flowable-source-desk-agent.mjs';
 import type {EcondbSourceInputs,EcondbSourceResponses} from './econdb-source-desk-agent.mjs';
 export * from './econdb-source-desk-agent.mjs';
+import type {ResearchInstallationInputs,ResearchInstallationResponses,ResearchInstallationDownloads,ResearchInstallationDownloaded} from './research-installation-agent.mjs';
+export * from './research-installation-agent.mjs';
+import type {FlowableSourceInputs,FlowableSourceResponses} from './flowable-source-desk-agent.mjs';
+export * from './flowable-source-desk-agent.mjs';
 import type {InstallationSourceInputs,InstallationSourceResponses} from './installation-source-desk-agent.mjs';
 export * from './installation-source-desk-agent.mjs';
 // MIT. TypeScript declarations for the original SF47 client and its saved delivery workflow.
@@ -4454,10 +4456,14 @@ export function inspectGrantAgentBinding(input: GrantBindingInput): Promise<Gran
 export function readGrantAgentFile(filename: string, maximum?: number, privateOnly?: boolean): Promise<Buffer>;
 
 export class GrantWorkspaceClient {
-  /** Complete Flowable sidecar custody on this original authenticated case service. */
-  flowableSources<K extends keyof FlowableSourceInputs>(action:K,input:FlowableSourceInputs[K]):Promise<FlowableSourceResponses[K]>;
   /** Complete retained Econdb source; use the original Python CLI for streamed large files. */
   econdbSources<K extends keyof EcondbSourceInputs>(action:K,input:EcondbSourceInputs[K]):Promise<EcondbSourceResponses[K]>;
+  /** Whole original economic sources use exact native per-kind limits; ordinary agent JSON stays bounded. */
+  researchInstallation<K extends keyof ResearchInstallationInputs>(action:K,input:ResearchInstallationInputs[K]):Promise<ResearchInstallationResponses[K]>;
+  /** Stream a SHA-selected original file/archive to an existing private directory using exclusive atomic publication. */
+  downloadResearchInstallationFile<K extends keyof ResearchInstallationDownloads>(action:K,input:ResearchInstallationDownloads[K],filename:string):Promise<ResearchInstallationDownloaded>;
+  /** Complete Flowable sidecar custody on this original authenticated case service. */
+  flowableSources<K extends keyof FlowableSourceInputs>(action:K,input:FlowableSourceInputs[K]):Promise<FlowableSourceResponses[K]>;
   /** Complete original Source Desk lifecycle using this client's existing owner and drain. */
   installationSources<K extends keyof InstallationSourceInputs>(action:K,input:InstallationSourceInputs[K]):Promise<InstallationSourceResponses[K]>;
   constructor(binding: GrantBinding);

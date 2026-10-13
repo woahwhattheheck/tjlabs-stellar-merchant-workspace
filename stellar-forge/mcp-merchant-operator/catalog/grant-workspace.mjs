@@ -1,3 +1,4 @@
+import {grantResearchInstallationTools} from './grant-research-installation.mjs';
 import {grantSourceCollectionTools} from './grant-source-collection.mjs';
 import {grantInstallationSourceTools} from './grant-installation-sources.mjs';
 // MIT. Original SF47 tool schemas without provider runtime imports.
@@ -487,6 +488,7 @@ const evidenceRequired=['workspace','caseId','expectedVersion','expectedRevision
 
 export const grantWorkspaceTools = [
   ...grantInstallationSourceTools,
+  ...grantResearchInstallationTools,
   ...grantSourceCollectionTools,
   tool('workspaces', 'List host-declared SF47 workspaces and original source selections without opening SQLite or starting a process.', {}, [], true),
   tool('open', 'Attach to the original verified Grant application; if the host allows it and the original service is closed, explicitly launch the same original managed server. Original workspace locking remains authoritative.',
@@ -1005,9 +1007,9 @@ export const grantWorkspaceTools = [
     {...ws, snapshotId:{type:'string'}, readId:nonempty(64)}, ['workspace','snapshotId','readId'], true),
   tool('inputs', 'List declared host input aliases, or inspect exact current file size and SHA256 for one alias.',
     {...ws, input:alias}, ['workspace'], true),
-  tool('receive_begin', 'Declare one exact input file and stable transfer request ID. Ordinary files retain their 32 MiB allowance; select kind case-bundle for one complete operated case up to 320 MiB. Bytes arrive in fixed 65,536-byte parts and remain separate from original business records until explicit native import.',
-    {...ws, requestId:nonempty(180), filename:nonempty(240), bytes:{type:'integer',minimum:0,maximum:GRANT_MAX_CASE_BUNDLE_BYTES},
-      kind:{type:'string',enum:['original','case-bundle']}, sha256:digest, mediaType:nonempty(200)}, ['workspace','requestId','filename','bytes','sha256']),
+  tool('receive_begin', 'Declare one exact input file and stable transfer request ID. Ordinary files retain their 32 MiB allowance; select kind case-bundle for one complete operated case up to 320 MiB. Research inputs retain project480 MiB or issued-package/customer-return256 MiB through their explicit research-* kinds; they remain full file transfers. Bytes arrive in fixed 65,536-byte parts and remain separate from original business records until explicit native import.',
+    {...ws, requestId:nonempty(180), filename:nonempty(240), bytes:{type:'integer',minimum:0,maximum:480*1024*1024},
+      kind:{type:'string',enum:['original','case-bundle','research-project','research-issued-package','research-customer-return']}, sha256:digest, mediaType:nonempty(200)}, ['workspace','requestId','filename','bytes','sha256']),
   tool('receive_chunk', 'Retain the exact next or repeated original input part. A conflicting part is rejected; completed files support identical part replay.',
     {...ws, transferId:{type:'string'}, offset:{type:'integer',minimum:0}, data:{type:'string',maxLength:Math.ceil(CHUNK / 3) * 4}},
     ['workspace','transferId','offset','data']),

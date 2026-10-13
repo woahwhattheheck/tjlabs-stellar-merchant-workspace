@@ -29,6 +29,7 @@ import operations_installation_commissioning_archive as commissioning_archive
 import operations_installation_source_editions as source_editions
 import operations_installation_mapping_reconciliation as mapping_reconciliation
 import operations_installation_dcat_following as dcat_following
+import operations_installation_research as research_installation
 
 SCHEMA = "stellar-forge.installation-source-desk.v1"
 PREPARATION = "stellar-forge.installation-source-desk-preparation.v1"
@@ -329,6 +330,8 @@ class SourceDesk:
         package, package_receipt = native_package()
         handover, handover_receipt = native_handover()
         return {"schema": SCHEMA, "engine": receipt, "profiles": result,
+                "research": {"schema": research_installation.SELECTION, "engine": research_installation.engine(),
+                             **research_installation.profile(), "limits": {**research_installation.LIMITS, "archive": research_installation.MAX_ARCHIVE}},
                 "dcatFollowing": {"schema": dcat_following.SELECTION, "engine": dcat_following.engine(),
                                   "archiveBytes": 128 * 1024 * 1024, "catalogueBytes": 256 * 1024 * 1024,
                                   "caseBundleBytes": 320 * 1024 * 1024},
@@ -416,6 +419,10 @@ class SourceDesk:
         need(row is not None, "The complete preparation is not retained.",
              "INSTALLATION_SOURCE_PREPARATION_NOT_FOUND", 404)
         result = json.loads(row[0])
+        if result.get("kind") == "economic-research":
+            for file in result["files"]:
+                research_installation.output(self, result, file["filename"])
+            return result
         for file in result["files"]:
             raw = self._blob(case_id, draft_id, file["sha256"])
             need(len(raw) == file["bytes"], "A complete prepared output changed.",
@@ -429,6 +436,8 @@ class SourceDesk:
     def output(self, case_id, draft_id, preparation_id, filename):
         with self.workspace.mutex:
             result = self._preparation(case_id, draft_id, preparation_id)
+            if result.get("kind") == "economic-research":
+                return research_installation.output(self, result, filename)
             file = next((row for row in result["files"] if row["filename"] == filename), None)
             need(file is not None, "Select an original complete output from this preparation.",
                  "INSTALLATION_SOURCE_FILE_NOT_FOUND", 404)
@@ -437,6 +446,7 @@ class SourceDesk:
     def export(self, case_id, draft_id, preparation_id):
         with self.workspace.mutex:
             prepared = self._preparation(case_id, draft_id, preparation_id)
+            need(prepared.get("kind") != "economic-research", "Use the complete Research Installation archive after the original explicit Installation save.")
             contents = [(f["filename"], self._blob(case_id, draft_id, f["sha256"])) for f in prepared["files"]]
             need(sum(len(raw) for _, raw in contents) <= MAX_ZIP,
                  "The complete preparation ZIP exceeds its 192 MiB archive bound.", status=413)
@@ -451,6 +461,8 @@ class SourceDesk:
             return output.getvalue()
 
     def _prepare(self, state, context, data):
+        if isinstance(state.get("selection"), dict) and state["selection"].get("schema") == research_installation.SELECTION:
+            return research_installation.prepare(self, state, context, data)
         if isinstance(state.get("selection"), dict) and state["selection"].get("schema") == dcat_following.SELECTION:
             return dcat_following.prepare(self, state, context, data)
         module, source = native()
@@ -653,6 +665,7 @@ class SourceDesk:
         case = self.ops._context(state["caseId"])
         need(case["program"]["version"] == expected, "The original case changed. Review its current sources before attachment.",
              "OPERATIONS_CONFLICT", 409)
+        need(prepared.get("kind") != "economic-research", "Use the explicit research.attach action for complete Research source custody.")
         need(prepared.get("kind") != "dcat-following", "This preparation already binds complete case-owned catalogue sources. Use its original dcat-following.save action.")
         needed, selected = [], []
         for file in prepared["files"]:
@@ -718,7 +731,7 @@ class SourceDesk:
         request_id = short_id(body["requestId"], "Original source-desk request ID")
         actor, note = text(body["actor"], "Recording operator", 300, True), text(body.get("note", ""), "Preparation note", 12000)
         action = body["action"]
-        need(action in ("create", "file.add", "file.remove", "selection.save", "prepare", "native.receive", "attach", "commissioning.attach", "commissioning.archive.receive", "edition.apply", "mapping.apply", "dcat-following.save"),
+        need(action in ("create", "file.add", "file.remove", "selection.save", "prepare", "native.receive", "attach", "commissioning.attach", "commissioning.archive.receive", "edition.apply", "mapping.apply", "dcat-following.save", "research.attach"),
              "Choose a supported original source preparation action.")
         need(isinstance(body["data"], dict), "Use the complete source action data.")
         expected = integer(body["expectedRevision"], "source draft revision")
@@ -745,6 +758,9 @@ class SourceDesk:
                 result = None
             else:
                 before = self._state(case_id, draft_id)
+                need(request_id not in (before.get("receivedFrom") or {}).get("requestIds", []),
+                     "This request belongs to the original received case. Read its retained original receipt and use a new current-case request.",
+                     "RESEARCH_INSTALLATION_ORIGINAL_REQUEST", 409)
                 need(before["revision"] == expected, "The source draft changed. Reopen and reconcile its current edition.",
                      "INSTALLATION_SOURCE_CONFLICT", 409)
                 state, data, result = deepcopy(before), body["data"], None
@@ -795,6 +811,16 @@ class SourceDesk:
                     need(isinstance(selected, dict) and len(json_bytes(selected)) <= MAX_FILE,
                          "Keep the complete editable native selection within 8 MiB.", status=413)
                     state["selection"] = deepcopy(selected)
+                    if selected.get("schema") == research_installation.SELECTION and state.get("requiresCurrentTemplate"):
+                        current = self.ops._context(case_id)
+                        installations = research_installation.installations
+                        installations._current(current, selected.get("expectedVersion"))
+                        document = installations.normalized(current, selected.get("document"))
+                        research_installation.workshares.verify_document(self.ops, current, document)
+                        need(document == selected.get("document"), "Retain the complete current received Workshare template.")
+                        state["requiresCurrentTemplate"] = False
+                elif action == "research.attach":
+                    result = research_installation.attach(self, state, context, data)
                 elif action == "dcat-following.save":
                     result = dcat_following.save(self, state, context, data)
                 elif action == "mapping.apply":
@@ -835,6 +861,8 @@ class SourceDesk:
             if isinstance(returned, dict) and returned.get("state") == "PREPARED_SOURCE":
                 need(self._preparation(draft["caseId"], draft["id"], returned["id"]) == returned,
                      "The complete original preparation receipt differs.", "INSTALLATION_SOURCE_CHANGED", 409)
+            elif isinstance(returned, dict) and returned.get("state") == "ATTACHED_RESEARCH_INSTALLATION":
+                research_installation.verify_receipt(self, returned)
             elif isinstance(returned, dict) and returned.get("state") == "SAVED_DCAT_FOLLOWING":
                 dcat_following.verify_saved(self, returned)
             elif isinstance(returned, dict) and returned.get("state") == "RECONCILED_SOURCE_MAPPING":
@@ -870,6 +898,7 @@ class SourceDesk:
 
 
 def register_static(static):
+    research_installation.register_static(static)
     static.update({
         "/operations_installation_sources.mjs": ("operations_installation_sources.mjs", "text/javascript; charset=utf-8"),
         "/operations_installation_source_editions.mjs": ("operations_installation_source_editions.mjs", "text/javascript; charset=utf-8"),
@@ -897,6 +926,8 @@ def mapping_http_result(result):
 
 
 def handle(handler, parsed, operations, method):
+    if research_installation.handle(handler, parsed, operations, method):
+        return True
     """Join the existing authenticated handler after its original guard."""
     from urllib.parse import parse_qs, unquote
     mapping_path = re.fullmatch(

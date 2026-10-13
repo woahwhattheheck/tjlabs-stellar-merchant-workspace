@@ -14,6 +14,9 @@ import stat
 import sys
 import uuid
 
+sys.dont_write_bytecode = True
+
+from operations_research_installation_cli import execute_research, register_research_commands
 from model import Workspace, Problem
 from operations import Operations
 from operations_installation_sources import SourceDesk, MAX_FILE, MAX_ZIP, json_bytes
@@ -119,6 +122,8 @@ def publish(path, raw):
 
 def execute(desk, args):
     case, draft = args.case, getattr(args, "draft", None)
+    if args.command.startswith("research-"):
+        return execute_research(desk, args, object_file)
     if args.command.startswith("flowable-"):
         client = FlowableSourceDeskClient(desk, case)
         action = args.command[len("flowable-"):]
@@ -356,8 +361,9 @@ def main(argv=None):
         else:
             command.add_argument("--inspection-id", required=True)
             command.add_argument("--path", required=True)
+    register_research_commands(sub)
     args = parser.parse_args(argv)
-    if args.command != "profiles" and not args.case:
+    if args.command not in ("profiles", "research-receive") and not args.case:
         parser.error("--case must select the original existing Operations case")
     root = args.workspace.expanduser().absolute()
     info = os.lstat(root)

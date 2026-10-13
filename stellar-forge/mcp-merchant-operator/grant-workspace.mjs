@@ -1,3 +1,5 @@
+import {grantResearchInstallationVerbs,executeGrantResearchInstallationTool} from './grant-research-installation.mjs';
+import {researchInstallationInputLimit,RESEARCH_INSTALLATION_MAX_ARCHIVE,RESEARCH_INSTALLATION_INPUT_KINDS} from '../../stellar/scf_2026/sf47_budget_model/workspace/research-installation-agent.mjs';
 import {grantSourceCollectionVerbs,executeGrantSourceCollectionTool} from './grant-source-collection.mjs';
 import {SOURCE_COLLECTION_MAX_COPY_BYTES} from '../../stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-store.mjs';
 import {grantWorkspaceTools} from './catalog/grant-workspace.mjs';
@@ -31,9 +33,9 @@ export const GRANT_WORKSPACE_CONNECTION_SCHEMA = 'stellar-forge.sf47-workspace-c
 const SNAPSHOT = 'stellar-forge.sf47-agent-snapshot.v1', TRANSFER = 'stellar-forge.sf47-agent-input.v1';
 const MAX_JSON = 64 * 1024 * 1024, PAGE_BYTES = 48000;
 const inputLimit = kind => kind === 'source-working-copy' ? SOURCE_COLLECTION_MAX_COPY_BYTES
-  : kind === 'case-bundle' ? GRANT_MAX_CASE_BUNDLE_BYTES : GRANT_MAX_BUNDLE_BYTES;
-const transferLimit = manifest => manifest.kind === 'case-bundle' ? GRANT_MAX_CASE_BUNDLE_BYTES : GRANT_MAX_BUNDLE_BYTES;
-const MAX_RETAINED = Math.max(MAX_JSON,GRANT_MAX_WORKBOOK_HANDOVER_BYTES,INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES,SOURCE_COLLECTION_MAX_COPY_BYTES);
+  : kind === 'case-bundle' ? GRANT_MAX_CASE_BUNDLE_BYTES : researchInstallationInputLimit(kind) ?? GRANT_MAX_BUNDLE_BYTES;
+const transferLimit = manifest => manifest.kind === 'case-bundle' ? GRANT_MAX_CASE_BUNDLE_BYTES : researchInstallationInputLimit(manifest.kind) ?? GRANT_MAX_BUNDLE_BYTES;
+const MAX_RETAINED = Math.max(MAX_JSON,GRANT_MAX_WORKBOOK_HANDOVER_BYTES,INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES,SOURCE_COLLECTION_MAX_COPY_BYTES,RESEARCH_INSTALLATION_MAX_ARCHIVE);
 const canonicalSourceRequest = value => value === null || typeof value !== 'object' ? JSON.stringify(value)
   : Array.isArray(value) ? '['+value.map(canonicalSourceRequest).join(',')+']'
   : '{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+canonicalSourceRequest(value[key])).join(',')+'}';
@@ -139,7 +141,7 @@ export async function readGrantWorkspaceConfiguration(filename) {
       const filename = hpath(file.file, base), stat = await lstat(filename);
       const inputMaximum=inputLimit(file.kind);
       need(stat.isFile() && !stat.isSymbolicLink() && stat.size <= inputMaximum &&
-        await realpath(filename) === filename, 'GRANT_CONFIGURATION_ERROR', 'Declare a complete regular input file: ordinary inputs 32 MiB, explicit case-bundle inputs 320 MiB and source-working-copy inputs 512 MiB.');
+        await realpath(filename) === filename, 'GRANT_CONFIGURATION_ERROR', 'Declare a complete regular input file: ordinary inputs 32 MiB, case-bundle 320 MiB, source-working-copy 512 MiB, research-project 480 MiB and research-issued-package/research-customer-return 256 MiB.');
       if (file.sha256 !== undefined) sha(file.sha256);
       inputs[inputAlias] = {file:filename, label:line(file.label ?? inputAlias),
         kind:boundedText(file.kind ?? 'original', 'Input kind', 80),
@@ -245,6 +247,41 @@ export class MerchantGrantWorkspaces {
     return {...retained, retention:{state:'COMPLETE'}, ...(original.value === undefined ? {} : presentation(original.value)),
       fileRead:{tool:'merchant_grant_file_read', workspace:alias, snapshotId:id, expectedSha256:digest}};
   }
+  async #researchFile(alias,client,action,input,selection) {
+    const root=await this.#root(alias), files=await directory(join(root,'files')), snapshots=await directory(join(root,'snapshots'));
+    const temporary=join(files,'.research-'+randomUUID());
+    let original;
+    try {
+      original=await client.downloadResearchInstallationFile(action,input,temporary);
+      const descriptor=original.file,id='snapshot-'+randomUUID();
+      const retained={schema:SNAPSHOT,id,workspace:alias,createdAt:new Date().toISOString(),selection,
+        source:original.source,file:{name:descriptor.name,bytes:descriptor.bytes,sha256:descriptor.sha256,contentType:descriptor.contentType}};
+      try {
+        await link(temporary,join(files,descriptor.sha256)).catch(async error=>{
+          if(error.code!=='EEXIST')throw error;
+          // Existing complete content remains immutable. The original reader verifies
+          // its full SHA before it can be delivered; validate it now without buffering.
+          const fd=await open(join(files,descriptor.sha256),constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
+          try {
+            const before=await fd.stat({bigint:true});need(before.isFile()&&before.size===BigInt(descriptor.bytes),
+              'GRANT_SNAPSHOT_CHANGED','The existing full retained file size changed.');
+            const digest=createHash('sha256'),buffer=Buffer.alloc(1024*1024);let offset=0;
+            while(offset<descriptor.bytes){const r=await fd.read(buffer,0,Math.min(buffer.length,descriptor.bytes-offset),offset);
+              need(r.bytesRead>0,'GRANT_SNAPSHOT_CHANGED','The existing original file ended early.');
+              digest.update(buffer.subarray(0,r.bytesRead));offset+=r.bytesRead;}
+            const after=await fd.stat({bigint:true});
+            need(['dev','ino','size','mtimeNs','ctimeNs'].every(k=>before[k]===after[k])&&digest.digest('hex')===descriptor.sha256,
+              'GRANT_SNAPSHOT_CHANGED','The existing full retained file differs.');
+          } finally {await fd.close();}
+        });
+        await syncDirectory(files);await immutable(join(snapshots,id+'.json'),json(retained));
+      } catch(error) {
+        return {...retained,id:null,originalStatus:original.status,retention:{state:'FAILED',code:error.code??'GRANT_RETENTION_FAILED',
+          recovery:'Retain the exact described archive/source SHA and repeat the same original download after storage is available.'}};
+      }
+      return {...retained,retention:{state:'COMPLETE'},fileRead:{tool:'merchant_grant_file_read',workspace:alias,snapshotId:id,expectedSha256:descriptor.sha256}};
+    } finally {await unlink(temporary).catch(()=>{});}
+  }
   async #snapshotMeta(alias, selected, expected) {
     const root = await this.#root(alias), meta = decode(await readGrantAgentFile(join(root, 'snapshots', snapshotId(selected) + '.json'), 65536));
     need(meta.schema === SNAPSHOT && meta.workspace === alias && meta.id === selected &&
@@ -255,7 +292,7 @@ export class MerchantGrantWorkspaces {
   }
   async #loadSnapshot(alias, selected, expected) {
     const {meta,directory:root}=await this.#snapshotMeta(alias,selected,expected);
-    const bytes = await readGrantAgentFile(join(root, 'files', meta.file.sha256), MAX_RETAINED);
+    const bytes = await readGrantAgentFile(join(root, 'files', meta.file.sha256), SOURCE_COLLECTION_MAX_COPY_BYTES);
     need(bytes.length === meta.file.bytes && hash(bytes) === meta.file.sha256, 'GRANT_SNAPSHOT_CHANGED', 'The retained original file differs from its manifest.');
     return {meta, bytes, directory:root};
   }
@@ -402,8 +439,8 @@ export class MerchantGrantWorkspaces {
   }
   async #receiveBegin(alias, args) {
     name(args.filename); sha(args.sha256);
-    need(args.kind === undefined || ['original','case-bundle'].includes(args.kind), 'GRANT_INVALID_INPUT', 'Select the original input kind or a complete case-bundle.');
-    uint(args.bytes, 'Input length', args.kind === 'case-bundle' ? GRANT_MAX_CASE_BUNDLE_BYTES : GRANT_MAX_BUNDLE_BYTES);
+    need(args.kind === undefined || ['original','case-bundle',...Object.keys(RESEARCH_INSTALLATION_INPUT_KINDS)].includes(args.kind), 'GRANT_INVALID_INPUT', 'Select an original input, complete case bundle or declared complete Research source.');
+    uint(args.bytes, 'Input length', transferLimit({kind:args.kind}));
     if (args.mediaType !== undefined) boundedText(args.mediaType, 'Input MIME type', 200);
     need(typeof args.requestId === 'string' && args.requestId.length >= 1 && args.requestId.length <= 180,
       'GRANT_INVALID_INPUT', 'Retain the original transfer request ID.');
@@ -411,7 +448,7 @@ export class MerchantGrantWorkspaces {
     const parent = await directory(join(await this.#root(alias), 'inputs')), root = await directory(join(parent, id));
     const manifest = {schema:TRANSFER, id, workspace:alias, requestId:args.requestId, filename:args.filename,
       bytes:args.bytes, sha256:args.sha256, mediaType:args.mediaType ?? 'application/octet-stream', chunkBytes:CHUNK,
-      ...(args.kind === 'case-bundle' ? {kind:'case-bundle'} : {})};
+      ...(args.kind && args.kind !== 'original' ? {kind:args.kind} : {})};
     await immutable(join(root, 'manifest.json'), json(manifest));
     return this.#transferStatus({root, manifest});
   }
@@ -620,6 +657,11 @@ export class MerchantGrantWorkspaces {
       alias,binding,client,directory,root:()=>this.#root(alias),pending:this.#sourceCollections,
       load:(input,expected,maximum)=>this.#input(alias,input,expected,maximum),
       retain:(original,selection)=>this.#snapshot(alias,original,selection),
+    });
+    if (grantResearchInstallationVerbs.has(verb)) return executeGrantResearchInstallationTool(verb,args,{
+      alias,binding,client,load:(input,expected,maximum)=>this.#input(alias,input,expected,maximum),
+      retain:(original,selection)=>this.#snapshot(alias,original,selection),
+      retainFile:(action,input,selection)=>this.#researchFile(alias,client,action,input,selection),
     });
     if (grantInstallationSourceVerbs.has(verb)) return executeGrantInstallationSourceTool(verb,args,{
       alias,binding,client,load:(input,expected)=>this.#input(alias,input,expected),
