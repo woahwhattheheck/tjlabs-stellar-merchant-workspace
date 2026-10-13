@@ -1,0 +1,199 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "source-monitoring",
+  "heading": "## Source monitoring: useful editions and complete reviewer handover",
+  "sources": [
+    {
+      "id": "source-monitoring-installed-operation",
+      "label": "Complete installed customer monitoring and source workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/source-monitoring/OPERATING.md",
+      "commit": "7b142022a315055123bd01072c9465818d3080fc",
+      "editions": [
+        {
+          "commit": "7b142022a315055123bd01072c9465818d3080fc",
+          "bytes": 24899,
+          "sha256": "0e1495a460b6da3eb5be8a50ace3127638bb6180eb386c82ace985d01ec270d8",
+          "git_blob": "3a3c5cf53ce12201b7deed7e1e5033bdf9fd3712"
+        }
+      ]
+    },
+    {
+      "id": "source-monitoring-saved-cycles",
+      "label": "Assigned saved cycles, completion and original request recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/source-monitoring/REVIEW_CYCLES.md",
+      "commit": "7b142022a315055123bd01072c9465818d3080fc",
+      "editions": [
+        {
+          "commit": "7b142022a315055123bd01072c9465818d3080fc",
+          "bytes": 17191,
+          "sha256": "74c8cf7bcad9ea83d6de10772ff8055e9079067bd3d798516e8c702a1095aeff",
+          "git_blob": "40dcd5538651be70151f2d4662c1443ae78bfa41"
+        }
+      ]
+    },
+    {
+      "id": "source-monitoring-reviewer-exchange",
+      "label": "Complete independent reviewer, return and receiving workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/source-monitoring/REVIEWER_EXCHANGE.md",
+      "commit": "7b142022a315055123bd01072c9465818d3080fc",
+      "editions": [
+        {
+          "commit": "7b142022a315055123bd01072c9465818d3080fc",
+          "bytes": 26618,
+          "sha256": "beedcae40aaec8ad86a02775b22ee685490418286884ed4c1b3fc83990410ce5",
+          "git_blob": "3a54a2d3345fd58e0a46ba962c4be2a4218e20f1"
+        }
+      ]
+    },
+    {
+      "id": "source-monitoring-native-exchange",
+      "label": "Atomic original case, cycle and attributed return implementation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/review_exchange.py",
+      "commit": "7b142022a315055123bd01072c9465818d3080fc",
+      "editions": [
+        {
+          "commit": "7b142022a315055123bd01072c9465818d3080fc",
+          "bytes": 66485,
+          "sha256": "3ed87d5a39155e39f7a6992c9e9929153fb78ff4a21c7b8b9595d3bf6d7b3bdf",
+          "git_blob": "359604e06d61195c9b9516c8f74633f52d77ebbe"
+        }
+      ]
+    },
+    {
+      "id": "source-monitoring-independent-editor",
+      "label": "Full source-bearing editable reviewer HTML implementation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/public/reviewer-copy.js",
+      "commit": "7b142022a315055123bd01072c9465818d3080fc",
+      "editions": [
+        {
+          "commit": "7b142022a315055123bd01072c9465818d3080fc",
+          "bytes": 49498,
+          "sha256": "2267b799f8f49f109f8752fa4ec3944a391e8a74ed9ef9014cd60b872010dbfc",
+          "git_blob": "e2df56686946d4e222828d71b2fff71bb327ba1f"
+        }
+      ]
+    },
+    {
+      "id": "source-monitoring-typed-client",
+      "label": "Original HTTP client, complete source streaming and request recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/source-monitoring/client.mjs",
+      "commit": "7b142022a315055123bd01072c9465818d3080fc",
+      "editions": [
+        {
+          "commit": "7b142022a315055123bd01072c9465818d3080fc",
+          "bytes": 29604,
+          "sha256": "f7cda638eb1b26c050bf62725a5012e8af960a43e632c289a15322bd0b91e5de",
+          "git_blob": "e370481bcf9feba0477a0aaaca6d993f096f6f24"
+        }
+      ]
+    },
+    {
+      "id": "source-monitoring-client-types",
+      "label": "Complete installed client type declarations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/source-monitoring/client.d.mts",
+      "commit": "7b142022a315055123bd01072c9465818d3080fc",
+      "editions": [
+        {
+          "commit": "7b142022a315055123bd01072c9465818d3080fc",
+          "bytes": 4780,
+          "sha256": "3c07feb3786ac5ec841ec743807aaad47c67908e7a96f8a0ba0dbcbdf7f41c36",
+          "git_blob": "2b07902f6af1ae39861bcde2c023d497afc00b67"
+        }
+      ]
+    },
+    {
+      "id": "source-monitoring-installed-cli",
+      "label": "Installed original monitoring CLI and reviewer operations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/source-monitoring/cli.mjs",
+      "commit": "7b142022a315055123bd01072c9465818d3080fc",
+      "editions": [
+        {
+          "commit": "7b142022a315055123bd01072c9465818d3080fc",
+          "bytes": 8328,
+          "sha256": "813702612df8b203b563d7157775acd97a8d8d339222cf3fc2a3a1344e3e825a",
+          "git_blob": "9ed856b77a1650d93b3bd03cbe8fcb9f469a62f9"
+        }
+      ]
+    },
+    {
+      "id": "source-monitoring-following-receiving",
+      "label": "Original complete reviewer and two-workspace receiving course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/source-monitoring/receiving/reviewer-exchange.mjs",
+      "commit": "7b142022a315055123bd01072c9465818d3080fc",
+      "editions": [
+        {
+          "commit": "7b142022a315055123bd01072c9465818d3080fc",
+          "bytes": 27223,
+          "sha256": "3c33c659c170eb53ff2cda80684ed5bfcab3326524ef0b496c4ca0a8bc7b96e4",
+          "git_blob": "2b627a96bb09d9bf59f400bb5e7e2f413255e755"
+        }
+      ]
+    },
+    {
+      "id": "source-monitoring-reviewer-browser",
+      "label": "Original borrowed-browser full reviewer operation and reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/source-monitoring/receiving/reviewer-copy-browser.mjs",
+      "commit": "7b142022a315055123bd01072c9465818d3080fc",
+      "editions": [
+        {
+          "commit": "7b142022a315055123bd01072c9465818d3080fc",
+          "bytes": 28995,
+          "sha256": "92547818cfcb14d591a50e2634f87579f61068cc93cda1435db4a6b987e3fc8b",
+          "git_blob": "2dad350c99fd53e1ea63aeea764c15106db77824"
+        }
+      ]
+    },
+    {
+      "id": "source-monitoring-portfolio-review-cycles",
+      "label": "Original portfolio retain-or-continue decisions and saved cycles",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/PORTFOLIO_REVIEW_CYCLES.md",
+      "commit": "7b142022a315055123bd01072c9465818d3080fc",
+      "editions": [
+        {
+          "commit": "7b142022a315055123bd01072c9465818d3080fc",
+          "bytes": 15284,
+          "sha256": "6202a5313c78b1a4e132d181a708a78692c9e061fbd47b3f5635f03fcce1ecf7",
+          "git_blob": "04829266004e27cc73d9a581559e77d3e31ff35b"
+        }
+      ]
+    },
+    {
+      "id": "source-monitoring-workspace-archives",
+      "label": "Complete selected ZIP workspace handover and native receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/REVIEW_WORKSPACE_ARCHIVES.md",
+      "commit": "7b142022a315055123bd01072c9465818d3080fc",
+      "editions": [
+        {
+          "commit": "7b142022a315055123bd01072c9465818d3080fc",
+          "bytes": 12314,
+          "sha256": "e69cc71a0fd79be9ed1b774d6ed4ee7d678865ea962969dcebe18946b58ba0f7",
+          "git_blob": "e10b6e34fcbec0c253a1cde01cc7f9e7a393e86d"
+        }
+      ]
+    }
+  ]
+}
