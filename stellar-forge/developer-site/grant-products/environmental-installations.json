@@ -162,6 +162,40 @@
           "git_blob": "12a8b6fcfa0e9343e2163a0194bcee06f2d15277"
         }
       ]
+    },
+    {
+      "id": "environment-commercial-phase-guide",
+      "label": "Complete five-workshare environmental scope, 25 phases and receiving evidence",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "required": false,
+      "path": "stellar-forge/developer-site/grant-sources/environmental-evidence.md",
+      "commit": "2232525137522fa22848d6b51dd238653b78eedb",
+      "editions": [
+        {
+          "commit": "2232525137522fa22848d6b51dd238653b78eedb",
+          "bytes": 8979,
+          "sha256": "89729e48d2b35bf3d50f7cbe9e13daaf85529b20aaffc98e9791c53ec5ecfca0",
+          "git_blob": "7c8305bde660857845fa089f4ba4b9723efc452b"
+        }
+      ]
+    },
+    {
+      "id": "environment-commercial-phase-evidence",
+      "label": "Exact environmental phase IDs, effort pointers, proposal amounts and funding separation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "required": false,
+      "path": "stellar-forge/developer-site/grant-sources/environmental-evidence.json",
+      "commit": "2232525137522fa22848d6b51dd238653b78eedb",
+      "editions": [
+        {
+          "commit": "2232525137522fa22848d6b51dd238653b78eedb",
+          "bytes": 22055,
+          "sha256": "bfc9b6561c9ba0c4667ef81a70ff1c29178f6505268ad645e0592dce77833af7",
+          "git_blob": "8150913585444b1f009c45d75b3bf4b28b566774"
+        }
+      ]
     }
   ]
 }
