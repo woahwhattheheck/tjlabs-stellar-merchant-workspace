@@ -14,6 +14,7 @@ import { openRuntimeWorkspace } from './model.mjs';
 import { OPENAPI_SETUP_ROUTES, openApiSetupBodyLimit } from './openapi-connection-setup.mjs';
 import { GRANT_HANDOFF_BROWSER_ACTIONS, grantHandoffBodyLimit, grantHandoffBrowserAction } from './grant-application-handoff.mjs';
 import { plain, need, fail } from './storage.mjs';
+import { RUNTIME_PROCEDURE_BODY_MAX_BYTES } from './operating-procedures.mjs';
 
 const HOST = '127.0.0.1';
 const security = { 'cache-control': 'no-store', 'x-content-type-options': 'nosniff',
@@ -62,6 +63,7 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
     ['/style.css', 'style.css', 'text/css; charset=utf-8'],
     ['/transfer.mjs', 'transfer.mjs', 'text/javascript; charset=utf-8'],
     ['/workspace-receiving.mjs', 'workspace-receiving.mjs', 'text/javascript; charset=utf-8'],
+    ['/operating-procedures.mjs', 'operating-procedures.mjs', 'text/javascript; charset=utf-8'],
     ['/image.mjs', 'image.mjs', 'text/javascript; charset=utf-8'],
     ['/python.mjs', 'python.mjs', 'text/javascript; charset=utf-8'],
     ['/source-build.mjs', 'source-build.mjs', 'text/javascript; charset=utf-8'],
@@ -83,6 +85,9 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
     bytes: await readFile(new URL('./public/source-catalog.css', import.meta.url)),
     type: 'text/css; charset=utf-8',
   });
+  for (const name of ['operating-plan.mjs','operating-plan-return.mjs','catalog.mjs'])
+    assets.set('/'+name,{bytes:await readFile(new URL('../discovery/'+name,import.meta.url)),type:'text/javascript; charset=utf-8'});
+  assets.set('/runtime-procedures-guide',{bytes:await readFile(new URL('./RUNTIME_PROCEDURES.md',import.meta.url)),type:'text/markdown; charset=utf-8'});
   let origin, host, closing = false;
   const workspaceBackupDownloads = new Map(), applicationOutputDownloads = new Map();
   const sockets = new Set(), imageDownloads = new Map(), transferDownloads = new Map(), pythonDownloads = new Map(), sourceBuildDownloads = new Map();
@@ -181,6 +186,26 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
       const supplied = Buffer.from(typeof req.headers['x-runtime-workspace-token'] === 'string' ? req.headers['x-runtime-workspace-token'] : '');
       need(supplied.length === tokenBytes.length && timingSafeEqual(supplied, tokenBytes),
         'RUNTIME_WORKSPACE_CAPABILITY_REQUIRED', 'Open the current private URL printed by the workspace command', 401);
+      if (req.method === 'GET' && url.pathname === '/api/runtime-procedures')
+        return send(200,await model.runtimeProceduresState(params(url,['storageDirectory'])));
+      if (req.method === 'POST' && url.pathname.startsWith('/api/runtime-procedures/')) {
+        params(url,[]);
+        const actions={
+          read:['runtimeProcedureRead',['procedureId']],
+          create:['runtimeProcedureCreate',['requestId','title','customer','owner','period','purpose','selection']],
+          save:['runtimeProcedureSave',['requestId','procedureId','expectedSha256','draft']],
+          record:['runtimeProcedureRecord',['requestId','procedureId','expectedSha256','stepId','status','recordedResult','owner','selection']],
+          return:['runtimeProcedureReturn',['requestId','procedureId','expectedSha256','incoming','reviewer','notes']],
+          decide:['runtimeProcedureDecide',['requestId','procedureId','expectedSha256','reviewId','key','decision']],
+          apply:['runtimeProcedureApply',['requestId','procedureId','expectedSha256','reviewId']],
+          receive:['runtimeProcedureReceive',['requestId','document']],
+          export:['runtimeProcedureExport',['procedureId','format','reviewId']],
+        };
+        const action=url.pathname.slice('/api/runtime-procedures/'.length);
+        need(Object.hasOwn(actions,action),'RUNTIME_PROCEDURE_ACTION',undefined,404);
+        const [method,fields]=actions[action];
+        return send(200,await model[method](await body(req,fields,RUNTIME_PROCEDURE_BODY_MAX_BYTES)));
+      }
       if (req.method === 'GET' && url.pathname === '/api/workspace-backups/state')
         return send(200, await model.workspaceBackupState(params(url, ['storageDirectory'])));
       if (req.method === 'GET' && url.pathname === '/api/source-builds/plans') {
