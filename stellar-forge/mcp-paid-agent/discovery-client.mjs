@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { openMerchantFileClient } from '../mcp-merchant-operator/retained-download.mjs';
-import { normalizeDiscoveryArguments } from './discovery.mjs';
+import { normalizeDiscoveryArguments, discoveryRequestUrl } from './discovery.mjs';
+import { normalizeCatalogConfiguration, normalizeCatalogDescription, sameCatalog } from './catalogs.mjs';
 
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const copy = value => structuredClone(value);
@@ -24,7 +25,23 @@ function pathInput(value) {
   'BAZAAR_DISCOVERY_INPUT_INVALID', 'Supply explicit HTTP path parameter values as a string map.');
   return value;
 }
-function continuationRequest(mode, current, continuation) {
+function sourceCatalog(source, request = source.request) {
+  if (source.catalog === undefined) {
+    requireValue(request?.catalogId === undefined, 'BAZAAR_DISCOVERY_CATALOG_MISSING',
+      'The running buyer did not retain the explicitly selected catalog.');
+    return null;
+  }
+  let catalog;
+  try { catalog = normalizeCatalogDescription(source.catalog); }
+  catch { throw failure('BAZAAR_DISCOVERY_CATALOG_INVALID','The original catalog identity is invalid.'); }
+  const normalized = normalizeDiscoveryArguments(source.mode,source.request);
+  requireValue(keyOf(normalized) === keyOf(source.request) &&
+    (request?.catalogId === undefined || request.catalogId === catalog.id) &&
+    discoveryRequestUrl(catalog.url,source.mode,normalized).href === source.url,
+  'BAZAAR_DISCOVERY_CATALOG_CHANGED','The provider page belongs to another configured catalog.');
+  return catalog;
+}
+function continuationRequest(mode, current, continuation, catalog = null) {
   if (continuation === null) return null;
   requireValue(plain(continuation) && continuation.tool === toolFor(mode) && plain(continuation.arguments),
     'BAZAAR_DISCOVERY_CONTINUATION_INVALID', 'The catalog continuation uses a different discovery operation.');
@@ -32,6 +49,9 @@ function continuationRequest(mode, current, continuation) {
   const position = mode === 'search' ? 'cursor' : 'offset';
   const originalFilters = { ...current }, nextFilters = { ...next };
   delete originalFilters[position]; delete nextFilters[position];
+  // An implicit first-page default becomes an explicit original source on continuation.
+  if (originalFilters.catalogId === undefined && catalog !== null && nextFilters.catalogId === catalog.id)
+    originalFilters.catalogId = catalog.id;
   requireValue(keyOf(originalFilters) === keyOf(nextFilters),
     'BAZAAR_DISCOVERY_CONTINUATION_CHANGED', 'The catalog continuation changed the original search or filters.');
   requireValue(mode === 'search'
@@ -61,7 +81,11 @@ function validatePage(mode, request, value) {
   'BAZAAR_DISCOVERY_PAGE_INVALID', 'The discovery continuation outcome is missing.');
   requireValue(value.page.continuationError === null || value.continuation === null,
     'BAZAAR_DISCOVERY_PAGE_INVALID', 'A failed continuation cannot also request another page.');
-  continuationRequest(mode, request, value.continuation);
+  const catalog = sourceCatalog(value.source,request);
+  requireValue(value.resources.every(resource => resource.catalogId === undefined ||
+    catalog !== null && resource.catalogId === catalog.id),
+  'BAZAAR_DISCOVERY_CATALOG_CHANGED','A resource handle names another catalog.');
+  continuationRequest(mode, request, value.continuation,catalog);
   return value;
 }
 
@@ -117,14 +141,19 @@ export async function openBazaarDiscoveryClient({
   async function* pages(mode, arguments_, options) {
     let request = normalizeDiscoveryArguments(mode, arguments_);
     const seen = new Set();
+    let originalCatalog;
     for (;;) {
       const identity = keyOf(request);
       requireValue(!seen.has(identity), 'BAZAAR_DISCOVERY_CONTINUATION_CYCLE',
         'The catalog returned an already visited page. Retain the current observations and restart discovery.');
       seen.add(identity);
       const page = await readPage(mode, request, options);
+      const catalog = sourceCatalog(page.source,request);
+      if (originalCatalog === undefined) originalCatalog = catalog;
+      else requireValue(originalCatalog === null && catalog === null || sameCatalog(originalCatalog,catalog),
+        'BAZAAR_DISCOVERY_CATALOG_CHANGED','The catalog source changed during this page sequence.');
       // Capture the next step before giving mutable response data to the caller.
-      const next = continuationRequest(mode, request, page.continuation);
+      const next = continuationRequest(mode, request, page.continuation,catalog);
       const continuationError = copy(page.page.continuationError);
       const errorPage = continuationError ? copy(page) : null;
       yield page;
@@ -142,6 +171,7 @@ export async function openBazaarDiscoveryClient({
     const value = await invoke('bazaar_describe', { handle }, options);
     requireValue(value.handle === handle, 'BAZAAR_DISCOVERY_RESOURCE_CHANGED',
       'The description belongs to a different resource handle.');
+    if (plain(value.source) && value.source.catalog !== undefined) sourceCatalog(value.source);
     return value;
   }
   async function preview(request, options) {
@@ -151,10 +181,22 @@ export async function openBazaarDiscoveryClient({
     const value = await invoke('bazaar_preview', request, options);
     requireValue(text(value.quoteId) && value.status === 'PREVIEWED' && text(value.requestUrl),
       'BAZAAR_DISCOVERY_QUOTE_INVALID', 'The buyer did not return the prepared original quote.');
+    if (plain(value.source) && value.source.catalog !== undefined) sourceCatalog(value.source);
     return value;
   }
   return Object.freeze({
     endpoint: transport.endpoint,
+    async catalogs(options) {
+      const value = await invoke('bazaar_catalogs',{},options);
+      let configuration;
+      try {
+        configuration = normalizeCatalogConfiguration({discoveryCatalogs:{schema:value.schema,
+          defaultCatalogId:value.defaultCatalogId,catalogs:value.catalogs}});
+      } catch { throw failure('BAZAAR_DISCOVERY_CATALOGS_INVALID','The buyer did not return its complete configured catalog list.'); }
+      requireValue(value.total === configuration.catalogs.length,'BAZAAR_DISCOVERY_CATALOGS_INVALID',
+        'The configured catalog count does not match the complete source list.');
+      return {...configuration,total:value.total};
+    },
     browse: (request = {}, options) => readPage('resources', request, options),
     search: (request, options) => readPage('search', request, options),
     browsePages: (request = {}, options) => pages('resources', request, options),

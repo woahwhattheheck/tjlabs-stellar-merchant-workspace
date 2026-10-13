@@ -83,6 +83,8 @@ component, such as `sf30-seller-sdk`, does not need another component entry.
 | --- | --- |
 | `components` | Original source directories included by the builder. |
 | `supportFiles` | Explicit additional original files. |
+| `moduleTemplates` | Exact valid JavaScript source templates retained for the original customer exporter. |
+| `sourceFormats` | Exact original serialized source paths mapped to `"json"`; bytes and filenames stay unchanged. |
 | `excludeFiles` | Explicit omissions under the original builder rules. |
 | `commands` | Lowercase command names mapped to original Node `.mjs` entrypoints. |
 | `commandDescriptions` | Help for commands declared in the same file. |
@@ -107,6 +109,15 @@ selection and native-driver preparation still apply.
 Browser servers keep using `readBrowserAssets`. Contributions give the existing
 collector those same server manifests. [BROWSER_ASSETS.md](BROWSER_ASSETS.md)
 defines the URL mapping and original asset closure.
+
+For upstream JSON published under a `.js` filename, declare its exact path in
+`sourceFormats` rather than treating it as a JavaScript template. The builder
+strictly parses the original UTF-8 JSON and retains the complete bytes and format
+provenance. Composition rejects a declared data path used as a command, bin,
+export, provider or browser server; static executable imports to it also fail.
+Installed readers verify the original format map and full data file hashes.
+See [original JSON source data](BUILDING.md#original-json-source-data) for the
+complete source and receiving contract.
 
 ## Applications providers
 

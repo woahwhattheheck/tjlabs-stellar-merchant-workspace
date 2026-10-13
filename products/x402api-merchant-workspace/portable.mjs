@@ -44,7 +44,19 @@ const SOURCE_FILES = [
   "products/x402api-merchant-workspace/PORTABLE.md",
   "products/x402api-merchant-workspace/portable-receiving.mjs",
   "products/x402api-merchant-workspace/receive-portable-native.py",
-  "products/x402api-merchant-workspace/portable-reservations.mjs"
+  "products/x402api-merchant-workspace/portable-reservations.mjs",
+  "products/x402api-merchant-workspace/application-inputs.mjs",
+  "products/x402api-merchant-workspace/application-provider.mjs",
+  "products/x402api-merchant-workspace/managed-application.mjs",
+  "products/x402api-merchant-workspace/package.json",
+  "products/x402api-merchant-workspace/OPERATING.md",
+  "products/x402api-merchant-workspace/INSTALLED_RECEIVING.md",
+  "products/x402api-merchant-workspace/INSTALLED_FOREGROUND.md",
+  "stellar/scf-starforge-20261009/distribution/runtime-profile.mjs",
+  "stellar/scf-starforge-20261009/distribution/specification.mjs",
+  "stellar/scf-starforge-20261009/distribution/product-package.mjs",
+  "stellar/scf-starforge-20261009/distribution/source-selection.mjs",
+  "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-provider.mjs"
 ];
 const SCHEMA = 'stellar-forge.x402api-merchant-handover.v1';
 const RESTORE_SCHEMA = 'stellar-forge.x402api-merchant-restoration.v1';
@@ -57,6 +69,20 @@ const quote = value => '"' + value.replaceAll('"', '""') + '"';
 const own = info => process.getuid === undefined || info.uid === process.getuid();
 const same = (a,b) => a.dev === b.dev && a.ino === b.ino && a.size === b.size &&
   a.mtimeMs === b.mtimeMs && a.ctimeMs === b.ctimeMs;
+
+const FILE_ADAPTER_ORIGINAL = Object.freeze({bytes:6737,sha256:'3251c490ed7bf16c146cf908abe14f51a4ecf054d387ba66f6648e6d1da28482'});
+const FILE_ADAPTER_REVIEWED = Object.freeze({bytes:6994,sha256:'d8ef397d66201b13ef9c2a79929807b87989ba7593eee13d231f282b2735da89'});
+const sameIdentity = (a,b) => a.bytes === b.bytes && a.sha256 === b.sha256;
+function fileAdapterAdoption(selected, current) {
+  const unchanged = sameIdentity(selected,current);
+  const reviewedManifest = sameIdentity(selected,FILE_ADAPTER_ORIGINAL) && sameIdentity(current,FILE_ADAPTER_REVIEWED);
+  need(unchanged || reviewedManifest, 'MERCHANT_PORTABLE_FILE_DELIVERY_REQUIRED',
+    'Use the maintained file-delivery adapter or its recorded original predecessor.');
+  return {schema:'stellar-forge.merchant-file-adapter-adoption.v1',
+    kind:unchanged ? 'same-source' : 'reviewed-delivery-manifest',
+    original:{path:'original/fulfillment/file-delivery.mjs',bytes:selected.bytes,sha256:selected.sha256},
+    operating:{path:'source/' + PRODUCT + '/fulfillment/file-delivery.mjs',bytes:current.bytes,sha256:current.sha256}};
+}
 
 function archivePath(value) {
   need(typeof value === 'string' && value.length > 0 && value.length <= 4096 &&
@@ -293,9 +319,16 @@ export async function exportMerchant({ directory, configPath, output, allowLoopb
     database = openDatabase(originalDatabase);
     const identity = databaseIdentity(database);
     const reservations = await inspectMerchantReservations({database,directory,recordedDirectory});
+    const originalModule = translate(resolve(dirname(configPath),config.fulfillmentModule));
+    const selectedModule = await fileIdentity(originalModule);
+    const builtIn = await fileIdentity(join(SOURCE_ROOT,PRODUCT,'fulfillment/file-delivery.mjs'));
+    const fulfillmentAdapter = fileAdapterAdoption(selectedModule,builtIn);
     if (await exists(output)) {
       const old = await inspectMerchantArchive({ bundle: output });
       need(old.manifest.original.logicalSha256 === identity.logicalSha256 &&
+        old.manifest.original.directory === recordedDirectory &&
+        old.manifest.original.receivedDirectory === directory &&
+        old.manifest.original.configPath === configPath &&
         old.manifest.original.configSha256 === digest(originalConfig) &&
         JSON.stringify(old.manifest.reservationMappings) === JSON.stringify(reservations), 'MERCHANT_EXPORT_DESTINATION_IN_USE');
       for (const path of SOURCE_FILES) {
@@ -314,9 +347,9 @@ export async function exportMerchant({ directory, configPath, output, allowLoopb
         need(previous && actual.bytes === previous.bytes && actual.sha256 === previous.sha256,
           'MERCHANT_EXPORT_WORKSPACE_CHANGED');
       }
-      const moduleFile = await fileIdentity(translate(resolve(dirname(configPath),config.fulfillmentModule)));
-      const adapter = old.manifest.files.find(file => file.path === 'source/' + PRODUCT + '/fulfillment/file-delivery.mjs');
-      need(adapter && moduleFile.bytes === adapter.bytes && moduleFile.sha256 === adapter.sha256,
+      const adapter = old.manifest.files.find(file => file.path === fulfillmentAdapter.original.path);
+      need(adapter && sameIdentity(selectedModule,adapter) &&
+        JSON.stringify(old.manifest.fulfillmentAdapter) === JSON.stringify(fulfillmentAdapter),
         'MERCHANT_EXPORT_FULFILLMENT_CHANGED');
       const manifestPath = translate(resolve(dirname(configPath),config.fulfillmentOptions?.manifest ?? ''));
       const manifestBytes = await readFile(manifestPath);
@@ -345,10 +378,7 @@ export async function exportMerchant({ directory, configPath, output, allowLoopb
     const skip = new Set(['merchant-owner.lock','merchant.sqlite3','merchant.sqlite3-wal','merchant.sqlite3-shm','merchant.sqlite3-journal']);
     for (const path of await filesIn(directory)) if (!skip.has(path)) await copyOriginal(join(directory,path),join(stage,'workspace',path));
     for (const path of SOURCE_FILES) await copyOriginal(join(SOURCE_ROOT,path),join(stage,'source',path));
-    const originalModule = translate(resolve(dirname(configPath),config.fulfillmentModule));
-    const selectedModule = await fileIdentity(originalModule), builtIn = await fileIdentity(join(SOURCE_ROOT,PRODUCT,'fulfillment/file-delivery.mjs'));
-    need(selectedModule.bytes === builtIn.bytes && selectedModule.sha256 === builtIn.sha256,
-      'MERCHANT_PORTABLE_FILE_DELIVERY_REQUIRED', 'This handover includes the maintained file-delivery adapter and all of its retained editions.');
+    await copyOriginal(originalModule,join(stage,fulfillmentAdapter.original.path),selectedModule);
     const originalManifestPath = translate(resolve(dirname(configPath),config.fulfillmentOptions?.manifest ?? ''));
     const originalManifestBytes = await readFile(originalManifestPath);
     need(originalManifestBytes.length <= 1048576, 'MERCHANT_DELIVERY_MANIFEST_TOO_LARGE');
@@ -402,7 +432,8 @@ export async function exportMerchant({ directory, configPath, output, allowLoopb
     const manifest = { schema:SCHEMA,createdAt,application:'x402api-merchant-workspace',
       original:{...identity,directory:recordedDirectory,receivedDirectory:directory,configPath,configSha256:digest(originalConfig)},
       entrypoint:'index.html',configuration:'configuration/merchant.json',database:'workspace/merchant.sqlite3',
-      sourceEntrypoint:'source/' + PRODUCT + '/server.mjs',resultMappings:mappings,reservationMappings:reservations,files };
+      sourceEntrypoint:'source/' + PRODUCT + '/server.mjs',fulfillmentAdapter,
+      resultMappings:mappings,reservationMappings:reservations,files };
     await writeNew(join(stage,'MANIFEST.json'),json(manifest)); await syncDirectory(stage);
     need(!(await exists(output)), 'MERCHANT_EXPORT_DESTINATION_IN_USE');
     await rename(stage,output); await syncDirectory(reserved.parent);
@@ -439,6 +470,16 @@ export async function inspectMerchantArchive({ bundle, expectedSha256 = null }) 
   need(observed.length === unique.size && observed.every(path => unique.has(path)), 'MERCHANT_ARCHIVE_INVENTORY_CHANGED');
   for (const path of [manifest.database,manifest.configuration,manifest.sourceEntrypoint,'index.html','original/merchant.configuration.json'])
     need(unique.has(path), 'MERCHANT_ARCHIVE_MEMBER_MISSING');
+  const originalAdapter = manifest.files.find(file => file.path === 'original/fulfillment/file-delivery.mjs');
+  if (originalAdapter || manifest.fulfillmentAdapter !== undefined) {
+    const adoption = manifest.fulfillmentAdapter;
+    need(adoption && typeof adoption === 'object' && adoption.original && adoption.operating,
+      'MERCHANT_ARCHIVE_ADAPTER_ADOPTION_INVALID');
+    const operatingAdapter = manifest.files.find(file => file.path === 'source/' + PRODUCT + '/fulfillment/file-delivery.mjs');
+    need(originalAdapter && operatingAdapter &&
+      JSON.stringify(adoption) === JSON.stringify(fileAdapterAdoption(originalAdapter,operatingAdapter)),
+      'MERCHANT_ARCHIVE_ADAPTER_ADOPTION_CHANGED');
+  }
   const database = openDatabase(join(bundle,manifest.database));
   let identity;
   try {
@@ -481,8 +522,9 @@ export async function restoreMerchant({ bundle, directory, expectedSha256 = null
         own(currentFile) && !(currentFile.mode & 0o077), 'MERCHANT_RESTORED_DATABASE_CHANGED');
       const current = openDatabase(join(previous.workspace,'merchant.sqlite3'));
       try {
-        need(current.prepare('SELECT store_id FROM merchant_meta WHERE singleton=1').get()?.store_id === previous.storeId,
-          'MERCHANT_RESTORED_STORE_CHANGED');
+        const metadata = current.prepare('SELECT store_id,schema_version FROM merchant_meta WHERE singleton=1').get();
+        need(metadata?.schema_version === 1, 'MERCHANT_ARCHIVE_DATABASE_SCHEMA_CHANGED');
+        need(metadata.store_id === previous.storeId, 'MERCHANT_RESTORED_STORE_CHANGED');
       } finally { current.close(); }
       return {...previous,alreadyRestored:true};
     }

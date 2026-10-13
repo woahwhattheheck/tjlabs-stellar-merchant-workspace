@@ -166,12 +166,14 @@ try {
   const repeated=await restoreMerchant({bundle:selection.output,directory:restored.directory,expectedSha256:exported.manifestSha256});
   assert.equal(repeated.alreadyRestored,true);
   const {loadMerchantConfiguration,startMerchantServer}=await import(pathToFileURL(restored.server).href);
-  const {openMerchantWorkspace}=await import(pathToFileURL(join(restored.directory,'source/products/x402api-merchant-workspace/workspace.mjs')).href);
+  const {openMerchantWorkspace,validateConfig}=await import(pathToFileURL(join(restored.directory,'source/products/x402api-merchant-workspace/workspace.mjs')).href);
+  const {reviewMerchantInputs}=await import(pathToFileURL(join(restored.directory,'source/products/x402api-merchant-workspace/application-inputs.mjs')).href);
   const config=JSON.parse(await readFile(restored.configPath,'utf8')),env={...process.env};
   env[config.tenantCredentialEnv]='retained-case-receiving-credential';
   env[config.operatorTokenEnv]=randomBytes(32).toString('hex');
   for(const name of Object.values(config.webhook.secretEnvironmentByVersion))env[name]=randomBytes(32).toString('hex');
-  const selected=await loadMerchantConfiguration(restored.configPath,{env});
+  const reviewedInputs=await reviewMerchantInputs(restored.configPath,{validateConfig});
+  const selected=await loadMerchantConfiguration(restored.configPath,{env,expectedInputsSha256:reviewedInputs.inputsSha256});
   await selected.fulfillment.doctor({binding:selected.config.fulfillmentBinding});
   const providerInvocations=[];
   const provider=new Proxy({}, {get:(_,name)=>async(...args)=>{providerInvocations.push({method:String(name),argumentCount:args.length});throw new Error('Unexpected provider invocation while reopening original completed invoices');}});
@@ -212,6 +214,7 @@ try {
   assert.equal((await inspectMerchantArchive({bundle:selection.output,expectedSha256:exported.manifestSha256})).summary.logicalSha256,identity.logicalSha256);
   await record('restored_original_merchant_received',{storeId:identity.storeId,restoration:restored,receivedDownloads,
     receivedPhone:receivedWidth,providerInvocations,completeOriginalBusinessRowsPreserved:true,
+    fulfillmentAdapter:inspected.manifest.fulfillmentAdapter,restoredInputReview:{inputsSha256:reviewedInputs.inputsSha256,files:reviewedInputs.inputs.files},
     originalRuntimeRowsPreserved:true,oneReceivingRuntimeClosed:true,sourceArchiveUnchanged:true});
   const complete={schema:'stellar-forge.x402api-merchant-portable-receiving.v1',operation:'X402API-PORTABLE-MERCHANT-48DB-20261012',
     completedAt:new Date().toISOString(),runtime:{node:process.version,platform:process.platform},originalCase:{directory:original,...identity},

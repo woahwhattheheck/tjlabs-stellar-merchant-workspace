@@ -113,6 +113,10 @@ export function createDocumentEvidenceClient(request) {
     plan(id, { revision: selected, ...options } = {}) {
       return read('plan', { id: digest(id), ...(selected === undefined ? {} : { revision: revision(selected) }) }, options);
     },
+    /** Complete original case input for customer Operating Plans. */
+    operatingSource(id, { revision: selected, ...options } = {}) {
+      return read('operating-source', { id: digest(id), ...(selected === undefined ? {} : { revision: revision(selected) }) }, options);
+    },
     history: (id, options) => read('history', { id: digest(id) }, options),
     request: (id, options) => read('request', { requestId: requestId(id) }, options),
     rows(id, input, options) {

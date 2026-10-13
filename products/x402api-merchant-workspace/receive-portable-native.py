@@ -37,7 +37,19 @@ SOURCE_PATHS = [
     "products/x402api-merchant-workspace/PORTABLE.md",
     "products/x402api-merchant-workspace/portable-receiving.mjs",
     "products/x402api-merchant-workspace/receive-portable-native.py",
-    "products/x402api-merchant-workspace/portable-reservations.mjs"
+    "products/x402api-merchant-workspace/portable-reservations.mjs",
+    "products/x402api-merchant-workspace/application-inputs.mjs",
+    "products/x402api-merchant-workspace/application-provider.mjs",
+    "products/x402api-merchant-workspace/managed-application.mjs",
+    "products/x402api-merchant-workspace/package.json",
+    "products/x402api-merchant-workspace/OPERATING.md",
+    "products/x402api-merchant-workspace/INSTALLED_RECEIVING.md",
+    "products/x402api-merchant-workspace/INSTALLED_FOREGROUND.md",
+    "stellar/scf-starforge-20261009/distribution/runtime-profile.mjs",
+    "stellar/scf-starforge-20261009/distribution/specification.mjs",
+    "stellar/scf-starforge-20261009/distribution/product-package.mjs",
+    "stellar/scf-starforge-20261009/distribution/source-selection.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-provider.mjs"
 ]
 
 def digest(raw): return hashlib.sha256(raw).hexdigest()
@@ -53,10 +65,24 @@ def complete_file(path, raw):
             raise ValueError("The original retained file changed: "+str(path))
         return
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    descriptor=os.open(path, os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW, 0o600)
-    with os.fdopen(descriptor, "wb") as output:
-        output.write(raw); output.flush(); os.fsync(output.fileno())
-    sync_directory(path.parent)
+    temporary=path.parent/("."+path.name+".receiving-"+uuid.uuid4().hex)
+    descriptor=os.open(temporary, os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW, 0o600)
+    try:
+        with os.fdopen(descriptor, "wb") as output:
+            output.write(raw); output.flush(); os.fsync(output.fileno())
+        # The enclosing receive() owns the original operation lease. Check the
+        # destination again while that lease is held before atomic publication.
+        try:
+            info=path.lstat()
+        except FileNotFoundError:
+            os.rename(temporary, path)
+            sync_directory(path.parent)
+        else:
+            if not stat.S_ISREG(info.st_mode) or info.st_nlink!=1 or path.read_bytes()!=raw:
+                raise ValueError("The original retained file changed: "+str(path))
+    finally:
+        try: temporary.unlink()
+        except FileNotFoundError: pass
 def save_json(path, value):
     complete_file(path,(json.dumps(value, ensure_ascii=False, indent=2)+"\n").encode("utf-8"))
 @contextlib.contextmanager
@@ -174,6 +200,10 @@ def receive(options, root, original_zip, original_raw, lease):
                     "Use the included restore command to choose the receiving machine's working directory. "
                     "The restored/ directory in this ZIP preserves the completed receiving run at its recorded location; "
                     "the handover/ directory is the complete source for a new restoration.\n\n"
+                    "Run the restored merchant with this handover\'s retained server. To manage it through Applications, "
+                    "use the existing ready x402api-merchant runtime, choose the restored configuration, and save a fresh input review. "
+                    "Run build, install and installed-receiving commands from your complete maintained distribution checkout, "
+                    "preserving its existing runtime and application records.\n\n"
                     "The original/ directory retains the entire previously completed 121-file commissioning ZIP. "
                     "The receiving/ directory contains the complete native receiving result, exact executed source inventory, "
                     "command and log. DELIVERY_MANIFEST.json lists every complete member with its original length and SHA256.\n")

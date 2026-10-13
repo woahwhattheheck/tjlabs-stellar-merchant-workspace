@@ -5,6 +5,8 @@ payment reconciliation and paid file delivery. The operator works in one
 plain gray interface. Each invoice retains its original request, charge,
 authorization, payment identity and result.
 
+For the maintained package, Node 24 profile and **Applications → Merchant invoices** workflow, see [Install and operate](OPERATING.md). [Installed receiving](INSTALLED_RECEIVING.md) opens the original completed five-invoice workspace through that same lifecycle.
+
 ## What an operator can do
 
 - Create an invoice with exact prices on one or more configured payment rails.
@@ -265,4 +267,4 @@ lease remain in their existing repository paths.
 
 ## Complete portable merchant
 
-Use the same CLI to export the whole business workspace, inspect every retained file, open its offline invoice viewer, or restore a fresh working directory. [The complete handover guide](./PORTABLE.md) covers the original database, all fulfillment editions, local file relocation and the full original five-invoice receiving programme.
+Use the same CLI to export the whole business workspace, inspect every retained file, open its offline invoice viewer, or restore a fresh working directory. [The complete handover guide](./PORTABLE.md) covers the original database, all fulfillment editions, local file relocation and the full original five-invoice receiving programme. The restored configuration can also be reviewed and opened through the maintained **Applications → Merchant invoices** workflow described in [Install and operate](./OPERATING.md).

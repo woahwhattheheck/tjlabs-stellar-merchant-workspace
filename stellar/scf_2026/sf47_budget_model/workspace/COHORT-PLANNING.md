@@ -868,6 +868,73 @@ groups and full currency totals remain identical to the source plan. The
 original completion dates and cohort opportunity results are recalculated from
 the proposed delivery dates.
 
+### Resolve competing delivery dates
+
+Choose **Resolve competing dates** in the existing Schedule delivery tab when
+flexible services compete for the same available days. The calculation first
+retains the original ordered allocation, then revisits complete service groups
+that share possible delivery capacity. It can move an earlier flexible service
+to another permitted day so a later service also fits its actual commitment.
+
+For example, a higher-priority service may permit Tuesday or Wednesday while
+another service permits Tuesday only. The reviewed successor can place the first
+service on Wednesday and the second on Tuesday, retaining both complete jobs,
+their prices and the same entered daily capacity. All entered priority, release,
+deadline, funding-date, weekday, cutoff and sequence rules still apply.
+
+Each linked prepaid/spacing group stays together. The calculation releases only
+the flexible members of the competing groups while preserving all fixed, past,
+unknown and otherwise unplaceable work in the capacity ledger. It searches in
+the original priority and service order, using the selected date preference.
+Only a complete placement of that whole competing set replaces the retained
+allocation. The result lists each attempted set, its result and any changed
+dates. A set without a complete accepted placement keeps its previous dates and
+full constraints; other independent sets can still receive a complete solution.
+
+**Standard** uses up to 100,000 candidate placements; **Extended** uses up to
+1,000,000. The limit and exact visited count travel in the complete result. The
+result identifies a completed placement, an exhausted search, or a search that
+used its selected effort. These describe the deterministic operation under the
+entered constraints. Edit the original service or capacity inputs to calculate
+another complete alternative.
+
+The original **Original service order** method remains available. Saved results
+from that method preserve their original JSON representation and calculation.
+Selecting another method or effort makes the displayed result require a fresh
+calculation before its dates are adopted. Opening a saved allocation restores
+its actual method and effort.
+
+A complete plan file or saved source that finishes opening after newer edits
+stays in **Compare plans → Received sources**. The current draft and selected
+allocation method remain selected. Choose **Adopt received source** to open that
+complete original deliberately. An invalid saved allocation is rejected before
+it can replace the editable plan.
+
+The existing **Use dated successor**, **Open full comparison**, and **Save
+successor and comparison** actions use the selected complete result. The one
+source edition retains the original source, exact funding groups, full
+allocation and comparison. JSON and readable HTML include every competing-date
+decision. Allocation CSV adds the selected method, effort, component result and
+previous allocated date to each row. Service-choice JSON retains the original
+service constraints; complete allocation JSON retains those choices together
+with its selected method.
+
+The same installed command operates this method:
+
+~~~sh
+starforge grant-cohort-plan schedule \
+  --input original-plan.json --constraints delivery-choices.json \
+  --method resolve-conflicts --max-search-steps 100000 \
+  --output resolved-delivery-allocation.json
+~~~
+
+Use **--method first-fit** for the original method. The typed ESM operation takes
+**{method: "RESOLVE_CONFLICTS", maxSearchSteps: 100000}** as its third argument,
+alongside an optional successor name. The default is **FIRST_FIT**.
+**maxSearchSteps** accepts a whole number from 1 through 1,000,000 for conflict
+resolution. Complete results retain these fields in **resolution**, and the
+existing reopener recalculates the same original source and selected method.
+
 ### Keep occurrence identities when dates coincide
 
 A schedule retains its original cadence, exclusions, useful-task count, payment
@@ -980,3 +1047,76 @@ The scheduling choices live in optional plan.deliveryScheduling. Plans without
 this field or date allocations keep their original normalized shape, occurrence
 IDs and calculated result. Both maintained launchers and the authenticated
 browser source route include the same scheduling module.
+
+## Complete adoption work through Merchant MCP
+
+The existing Merchant Grant workspace owner provides the same adoption calculator, saved Calendar bridge, pricing editor and capacity allocator to agents. It uses its declared workspace connection and retains complete original inputs and outputs through the existing snapshot and file tools. The installed module is `@tokenjunkielabs/starforge-merchant/grant/cohort-agent`; its adjacent declaration covers the full operation.
+
+| Tool | Complete operation |
+| --- | --- |
+| merchant_grant_adoption_seed | Read the current native case and tranche seed, or one saved Calendar group with its exact Installation editions. Return the full native source, editable plan, report and scheduling choices. |
+| merchant_grant_adoption_review | Recalculate the whole plan against the current native case and seed. Retain the entered rule and show the actual source differences. |
+| merchant_grant_adoption_edit | Apply explicit plan edits or keyed row updates, additions and removals. Return the successor, calculated result and complete predecessor comparison. |
+| merchant_grant_adoption_rebase | Explicitly adopt the current source and proposed rule in the original case while retaining the previous complete document and all editable rows. |
+| merchant_grant_adoption_schedule | Allocate every original occurrence using the complete selected flexibility, dates, weekdays, spacing, priorities and capacity. |
+| merchant_grant_adoption_compare | Compare complete plans, reports, editions or delivery allocations with both original documents attached. |
+| merchant_grant_adoption_prepare | Retain one complete reviewed edition and its exact original save request. |
+| merchant_grant_adoption_save | Submit that prepared request through the original source attachment operation, retain its native response and reopen every saved byte. |
+| merchant_grant_adoption_request | Reopen the original prepared request and any returned response, and inspect the exact native version event. |
+| merchant_grant_adoption_open | Open the full native source by case, source ID and SHA256, including a source carried in an imported case. |
+| merchant_grant_adoption_export | Retain complete JSON, CSV or readable HTML through the original file reader. |
+
+### Select, author and allocate the whole source
+
+Use source CASE with tranche 2 or 3. Use source CALENDAR with the saved groupId and, when selecting particular editions, each original Installation id, revision and SHA256. Calendar groups keep their original window. Original funding groups, allowance uses, cancelled work, prices and unknown commercial terms all travel with the source plan.
+
+An input can be the full inline inputs object or one verified input reference. References select a declared hostInput, complete snapshotId or committed transferId and the exact whole-file expectedInputSha256. An optional inputPointer selects a complete object within that verified original file. The file is verified before selection. The owner reads the full retained document, including arrays that were presented as counts in chat.
+
+Edits address buyers, merchants, facilitators, operations, schedules, workshares, capacityPools and fundingGroups by their original row ID. UPDATE merges the explicitly supplied nested object fields and replaces supplied arrays in full. Original id and origin stay attached to the row. ADD supplies a complete distinct row; REMOVE names the exact row. PLAN edits the name, observation date, window start, operating calendar, sensitivity, note or complete scheduling choices. Rebase is the explicit operation for changing the native source and rule.
+
+Enter delivery effort and commercial terms in those complete rows. Null remains unpriced or unspecified; a zero is an entered zero. Funding revenue and shared fees remain on the original funding group. Scheduling uses the existing capacity operation described above, including fixed defaults, original source dates, purchased funding and every unresolved constraint. Its full result can be scheduled again or compared without stripping the previous allocation.
+
+### Carry the retained result through one native save
+
+The following sequence uses an already configured Merchant owner and real values read from its existing workspace. `changes` and `constraints` are the operator's complete selected edits and scheduling choices.
+
+~~~js
+const call = (name, args) => merchant.call('merchant_grant_' + name, {workspace, ...args});
+const input = snapshot => ({
+  input: {snapshotId: snapshot.id},
+  expectedInputSha256: snapshot.file.sha256
+});
+
+const seed = await call('adoption_seed', {
+  caseId, expectedVersion, source: 'CALENDAR', groupId, installationRefs, asOfAt
+});
+const authored = await call('adoption_edit', {...input(seed), changes});
+const allocated = await call('adoption_schedule', {...input(authored), constraints});
+const reviewed = await call('adoption_review', {caseId, expectedVersion, ...input(allocated)});
+
+// Retain these original values and reuse the same complete input on a retry.
+const prepared = await call('adoption_prepare', {
+  caseId, expectedVersion, ...input(reviewed), requestId, actor, note, createdAt
+});
+const fingerprint = await call('snapshot', {
+  snapshotId: prepared.id, expectedSha256: prepared.file.sha256,
+  pointer: '/preparedSha256'
+});
+const saved = await call('adoption_save', {
+  ...input(prepared), expectedPreparedSha256: fingerprint.value
+});
+~~~
+
+Prepare retains the original case creation identity, selected native seed, complete edition bytes, file hash, exact source.add body and deterministic edition identity. A plan edition contains its plan and calculated report, full native seed, allocation and original comparison. Select parentSourceId and expectedParentSha256 together when saving a successor to a particular existing source.
+
+The Merchant owner stores the complete prepared request in its existing private workspace directory. After the native attachment returns, it retains the original response before source readback. Repeating the same prepare input returns the original prepared document even after the case advances. Repeating save first reconciles the original case event and retained response. If the response was lost, the same native request identity recovers its original result. A changed case/version or differing request body produces the actual conflict and original request to review.
+
+Use adoption_request with caseId, requestId and expectedPreparedSha256 to inspect that original request. Use adoption_open with the returned source ID and SHA256 to reopen its complete edition. The existing browser opens the same saved source.
+
+### Deliver the complete result
+
+JSON preserves the full selected original wrapper and its source, plan, allocation or comparison. CSV uses the existing complete plan, scheduling or comparison exporter. HTML includes the full workload, original target rows, currencies, service pricing, every daily capacity row, funding groups, occurrences, allocation constraints and original editable JSON. Retrieve every byte with merchant_grant_file_read and its returned file identity.
+
+For another operator's editable case, use the existing merchant_grant_export with kind case and the original case_import operation. The saved adoption source travels with the native case package. A receiving case keeps its own identity while adoption_open preserves the source edition's original identities.
+
+Applications using the module directly pass their existing GrantWorkspaceClient to the exported functions. saveGrantCohortAdoption also takes a retainResponse callback that durably stores the complete native response before resolving; the Merchant owner supplies this using its existing immutable file writer.

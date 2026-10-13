@@ -192,14 +192,34 @@ export async function runGeographyBrowserReceiving(input){
  const drain=async()=>{while(tasks.size)await Promise.allSettled([...tasks]);assert(observerErrors.length===0,'An original browser observation could not be retained: '+observerErrors.join('\n'));};
  const phase=async(name,data)=>{if(!progress.phases.some(p=>p.name===name)){progress.phases.push({name,at:new Date().toISOString(),data});await save();}};
  const shot=async(name,target=page)=>{
-  const path=join(out,'screens',name+'.png');
+  const path=join(out,'screens',name+'.png'),scopePath=join(out,'screens',name+'-capture.json');
   if(await exists(path)){
    const item=await fileIdentity(path),retained=progress.screens.find(x=>x.path===path);
    if(retained)await verifyFiles([retained]);else progress.screens.push(item);
+   if(await exists(scopePath))remember(await fileIdentity(scopePath));
    remember(item);await save();return item;
   }
-  // Retain the complete screenshot only after Playwright returns its full bytes.
-  const item=await write(path,await target.screenshot({fullPage:true}),true);
+  const viewport=target.viewportSize();
+  assert(viewport&&Number.isSafeInteger(viewport.width)&&Number.isSafeInteger(viewport.height)&&viewport.width>0&&viewport.height>0&&viewport.width<=4096&&viewport.height<=4096,'Retain the selected bounded browser viewport.');
+  const layout=await target.evaluate(()=>({
+   scrollWidth:Math.max(document.documentElement.scrollWidth,document.body?.scrollWidth||0),
+   scrollHeight:Math.max(document.documentElement.scrollHeight,document.body?.scrollHeight||0),
+   innerWidth:window.innerWidth,innerHeight:window.innerHeight,devicePixelRatio:window.devicePixelRatio
+  }));
+  let scope;
+  if(await exists(scopePath)){
+   scope=await json(scopePath);
+   assert(scope.schema==='stellar-forge.iati-geography-screenshot.v1'&&scope.selectionSha256===selectionSha256&&scope.name===name&&scope.mode==='viewport'&&same(scope.viewport,viewport)&&scope.documentAtFirstAttempt.devicePixelRatio===layout.devicePixelRatio,'Continue the exact original screenshot scope.');
+   remember(await fileIdentity(scopePath));
+  }else{
+   scope={schema:'stellar-forge.iati-geography-screenshot.v1',selectionSha256,name,mode:'viewport',viewport,documentAtFirstAttempt:layout,fullPagePixelsAtFirstAttempt:layout.scrollWidth*layout.scrollHeight,viewportPixels:viewport.width*viewport.height};
+   await record('screens/'+name+'-capture.json',scope,true);
+  }
+  // Preserve the measured document extent before Chromium allocates an image.
+  // The full register is checked through its native/DOM/export contracts; QA
+  // images retain the useful viewport, including a long offline report.
+  await save();
+  const item=await write(path,await target.screenshot({fullPage:false}),true);
   progress.screens.push(item);remember(item);await save();return item;
  };
  const retainDownload=async(download,label,descriptor)=>{

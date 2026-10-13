@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "data-preparation-workspace",
-  "description": "Managed original SQL preparation, typed merchant operations and complete editable customer receiving",
+  "description": "Managed original SQL preparation and multistage pipelines, typed merchant operations and complete editable customer receiving",
   "commands": {
     "data-preparation-managed": "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/managed.mjs"
   },
@@ -20,6 +20,10 @@
     "./seller/data-preparation/mcp": {
       "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/mcp.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/mcp.mjs"
+    },
+    "./seller/data-preparation/pipelines/connection": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/pipeline-connection.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/pipeline-connection.mjs"
     }
   },
   "applicationProviders": {

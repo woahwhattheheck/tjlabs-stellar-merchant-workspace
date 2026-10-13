@@ -4,9 +4,39 @@
   "source_commit": "da8c3d84885b63c9653eb95ad5520948823ca2e5",
   "source_pull_request": 2614,
   "target_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-  "target_base_commit": "a60419562a96b0342676a1007b1f90ceccbab46f",
+  "target_base_commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96",
   "selection": "open311-service-configuration",
   "source_files": [
+    {
+      "path": "products/open311/OPERATING.md",
+      "mode": "100644",
+      "bytes": 30709,
+      "sha256": "22587e9a6f12ab6bdd19a94fe728c31609cad26a14ff7caa5c77016c1bae10f7",
+      "git_blob": "fad4b4402cbd1a69cebad8541f0f862732b15ab9",
+      "source_commit": "71351b4277da849261a10041a7ab3158639a9256",
+      "source_pull_request": 2659,
+      "source_merge_commit": "8bb91bd265c412f2208711f27c32c99008085946"
+    },
+    {
+      "path": "products/open311/RECEIVING.md",
+      "mode": "100644",
+      "bytes": 21052,
+      "sha256": "161f0a6dab9dd1406c96e33281550103fd6ad20fa16c100fe44d3650771f43bb",
+      "git_blob": "1711152436c8135abbecced571f7c7daea34b2b2",
+      "source_commit": "71351b4277da849261a10041a7ab3158639a9256",
+      "source_pull_request": 2659,
+      "source_merge_commit": "8bb91bd265c412f2208711f27c32c99008085946"
+    },
+    {
+      "path": "products/open311/WORKFLOWS.md",
+      "mode": "100644",
+      "bytes": 23414,
+      "sha256": "e3d84283d798b0c209d59af24f45b7aafb8fe85d19b19392cf15c1b416a2a492",
+      "git_blob": "1de15d30a562d09a3e34910585d881a93ad7eb46",
+      "source_commit": "71351b4277da849261a10041a7ab3158639a9256",
+      "source_pull_request": 2659,
+      "source_merge_commit": "8bb91bd265c412f2208711f27c32c99008085946"
+    },
     {
       "path": "stellar/scf-starforge-20261009/distribution/contributions/open311-field-desk.json",
       "bytes": 1657,
@@ -590,12 +620,12 @@
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/follow-through/cli.mjs",
       "mode": "100644",
-      "git_blob": "c1d6a862be97734263eadd8217ffb21ffa65b82b",
-      "bytes": 10126,
-      "sha256": "9c65c38e85ded18735222441aa981550d1f601e22e1cea043190b41b10a93903",
-      "source_commit": "23132498a928e33f253ede095d00e2168814a5cf",
-      "source_pull_request": 2513,
-      "source_merge_commit": "02e32f219b5fa267e53ce5bba8d8fb1ed825a4f9"
+      "git_blob": "5a2b03f8ab568f46584a368f4f8fa591669d1482",
+      "bytes": 10718,
+      "sha256": "24d7a661371f8e141d123f2c24e42e8657f9dce90af683e21c79dcb0f534c793",
+      "source_commit": "71351b4277da849261a10041a7ab3158639a9256",
+      "source_pull_request": 2659,
+      "source_merge_commit": "8bb91bd265c412f2208711f27c32c99008085946"
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/follow-through/csv.mjs",
@@ -1493,13 +1523,13 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/service-configuration/INSTALL.md",
-      "bytes": 5873,
-      "sha256": "ff74b02944bce360b74977ec9289d2d77adceee7ad863103462a7bdf40528536",
-      "git_blob": "a29013973df18c5bc162525c7bbaf41547cb7bb5",
+      "bytes": 6331,
+      "sha256": "a7ba4bb170f82dc6130fb652f9d86ecfa95a271fe0ccd3fe242edc3824375461",
+      "git_blob": "f3c1ed8a207f5907c339a39a694de5143a66bfc9",
       "mode": "100644",
-      "source_commit": "da8c3d84885b63c9653eb95ad5520948823ca2e5",
-      "source_pull_request": 2614,
-      "source_merge_commit": "1fff9bc6437ec149e4525a967985b59b7bb63605"
+      "source_commit": "71351b4277da849261a10041a7ab3158639a9256",
+      "source_pull_request": 2659,
+      "source_merge_commit": "8bb91bd265c412f2208711f27c32c99008085946"
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/service-configuration/mcp-client.d.mts",
@@ -2268,6 +2298,31 @@
         "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/service-configuration/MODEL_CONTRACT.json",
         "operations/open311-service-configuration-8e5f-20261012/source-packet.json"
       ]
+    },
+    {
+      "source_commit": "1432a246c0da5ed4a53ac0388211c989dfb1f953",
+      "source_pull_request": 2621,
+      "source_merge_commit": "57fcc56ef23db9903c8686116546bcd01d5e043a",
+      "paths": [
+        "operations/open311-collection-8e5f-20261012/vendor/pako-2.1.0/pako_deflate.min.js",
+        "operations/open311-collection-8e5f-20261012/vendor/pako-2.1.0/LICENSE",
+        "operations/open311-collection-8e5f-20261012/vendor/pako-2.1.0/ZLIB_NOTICE.txt",
+        "operations/open311-collection-8e5f-20261012/vendor/lzma-js-2.3.2/lzma_worker.js",
+        "operations/open311-collection-8e5f-20261012/vendor/lzma-js-2.3.2/LICENSE",
+        "operations/open311-collection-8e5f-20261012/INLINE_INPUT.md"
+      ]
+    },
+    {
+      "source_commit": "71351b4277da849261a10041a7ab3158639a9256",
+      "source_pull_request": 2659,
+      "source_merge_commit": "8bb91bd265c412f2208711f27c32c99008085946",
+      "paths": [
+        "products/open311/OPERATING.md",
+        "products/open311/RECEIVING.md",
+        "products/open311/WORKFLOWS.md",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/service-configuration/INSTALL.md",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/follow-through/cli.mjs"
+      ]
     }
   ],
   "previous_adoptions": [
@@ -2342,6 +2397,12 @@
       "source_pull_request": 2579,
       "target_pull_request": 712,
       "target_merge_commit": "0023f7ea528bf4231bc7675edcd11e1dc2784b89"
+    },
+    {
+      "source_commit": "da8c3d84885b63c9653eb95ad5520948823ca2e5",
+      "source_pull_request": 2614,
+      "target_pull_request": 790,
+      "target_merge_commit": "8b15c8d851408d14dabd9d7b22bc864e99738507"
     }
   ],
   "selections": [
@@ -2626,6 +2687,66 @@
       "source_commit": "da8c3d84885b63c9653eb95ad5520948823ca2e5",
       "source_pull_request": 2614,
       "source_merge_commit": "1fff9bc6437ec149e4525a967985b59b7bb63605"
+    },
+    {
+      "path": "operations/open311-collection-8e5f-20261012/vendor/pako-2.1.0/pako_deflate.min.js",
+      "mode": "100644",
+      "git_blob": "b560534f2527fc32fb86299680be6f361480ead6",
+      "bytes": 27876,
+      "sha256": "9429785d1e7f805d46640c4155957fd0f286144dec05cea09f6f2eaa646adb21",
+      "source_commit": "1432a246c0da5ed4a53ac0388211c989dfb1f953",
+      "source_pull_request": 2621,
+      "source_merge_commit": "57fcc56ef23db9903c8686116546bcd01d5e043a"
+    },
+    {
+      "path": "operations/open311-collection-8e5f-20261012/vendor/pako-2.1.0/LICENSE",
+      "mode": "100644",
+      "git_blob": "a934ef8db478453e38b2f29af67610916fa9fc99",
+      "bytes": 1104,
+      "sha256": "a04665b3b2de56c66730c1f720f528175739e4104f79073614aa611da1e85539",
+      "source_commit": "1432a246c0da5ed4a53ac0388211c989dfb1f953",
+      "source_pull_request": 2621,
+      "source_merge_commit": "57fcc56ef23db9903c8686116546bcd01d5e043a"
+    },
+    {
+      "path": "operations/open311-collection-8e5f-20261012/vendor/pako-2.1.0/ZLIB_NOTICE.txt",
+      "mode": "100644",
+      "git_blob": "0808c261c67c6e9deb5bd4e8108a69464eb8395b",
+      "bytes": 961,
+      "sha256": "bacde3235362088d7c7b928059dd24b362e9fc242603961512ba1dee47261e31",
+      "source_commit": "1432a246c0da5ed4a53ac0388211c989dfb1f953",
+      "source_pull_request": 2621,
+      "source_merge_commit": "57fcc56ef23db9903c8686116546bcd01d5e043a"
+    },
+    {
+      "path": "operations/open311-collection-8e5f-20261012/vendor/lzma-js-2.3.2/lzma_worker.js",
+      "mode": "100644",
+      "git_blob": "d8acf43a105af3eed975570048311e5dbbbf7ccb",
+      "bytes": 111982,
+      "sha256": "b2704cc4536d113ba9d4badfb4b262ec878b16824e300596895c0a1080fbdc50",
+      "source_commit": "1432a246c0da5ed4a53ac0388211c989dfb1f953",
+      "source_pull_request": 2621,
+      "source_merge_commit": "57fcc56ef23db9903c8686116546bcd01d5e043a"
+    },
+    {
+      "path": "operations/open311-collection-8e5f-20261012/vendor/lzma-js-2.3.2/LICENSE",
+      "mode": "100644",
+      "git_blob": "5c4cb7cd362d41e8268a9d01be3fb1e8e6dd936d",
+      "bytes": 1063,
+      "sha256": "2a85a87a012b6f2099902bc20e94f4292c222a80f66072ecf5151d1377377385",
+      "source_commit": "1432a246c0da5ed4a53ac0388211c989dfb1f953",
+      "source_pull_request": 2621,
+      "source_merge_commit": "57fcc56ef23db9903c8686116546bcd01d5e043a"
+    },
+    {
+      "path": "operations/open311-collection-8e5f-20261012/INLINE_INPUT.md",
+      "mode": "100644",
+      "git_blob": "3d52a6355e7c8ec63432c13c86ec154cab13e987",
+      "bytes": 6735,
+      "sha256": "feb2b7cf5980d5fa03be03db91e923a60eaef259428fdb9ff7be85ea38c71a55",
+      "source_commit": "1432a246c0da5ed4a53ac0388211c989dfb1f953",
+      "source_pull_request": 2621,
+      "source_merge_commit": "57fcc56ef23db9903c8686116546bcd01d5e043a"
     }
   ],
   "source_merge_commit": "1fff9bc6437ec149e4525a967985b59b7bb63605"

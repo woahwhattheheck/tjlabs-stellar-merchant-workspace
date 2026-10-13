@@ -1234,6 +1234,7 @@ function comparisonPlan(document, label) {
   object(document, label);
   if (document.schema === COHORT_PLAN_SCHEMA) return document;
   if (document.schema === COHORT_PLAN_REPORT_SCHEMA && document.kind === "PLAN") return document.input;
+  if (document.schema === "stellar-forge.sf47-delivery-schedule-report.v1") return document.candidate;
   if (document.schema === "stellar-forge.sf47-cohort-plan-edition.v1") return document.plan;
   fail("INVALID_COMPARISON_SOURCE", label + " must be a complete plan, planning report or saved edition.", label);
 }

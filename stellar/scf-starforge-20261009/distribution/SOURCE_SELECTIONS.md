@@ -32,6 +32,14 @@ without that original HTTP host receive no extra console capability from this
 rule. The recipe's selected commands, exports, providers, dependency groups
 and runtime profile remain its original choices.
 
+The current Research HTTP host's accounting and commerce source graph imports
+SF86's `terms.mjs`, which reads its unchanged public `networks.json` at module
+load. The same common declared host closure carries that catalog as an explicit
+runtime support file. It stays at its original repository path and retains its
+exact Git blob, SHA-256 and byte count. This completes the original installed
+Research constructor before it opens a dossier, Zotero bridge or listener;
+ordinary static ESM discovery alone cannot find this filesystem read.
+
 A source selection that explicitly excludes a required console/runtime input or
 mapped source still fails the existing packaged-entry/import checks. Use a
 separate product selection when omitting the HTTP host; an incomplete declared
@@ -86,6 +94,32 @@ complete lock-bound package and dependency parts, and reopens the independently
 received runtime. Its source contract checks all 64 scientific files in both
 installations; the original scientific operation retains its own model inputs,
 runs, reports and portal receiving.
+
+## Original JSON source format
+
+An upstream serialized JSON reference can retain its original `.js` name.
+Declare its exact original path as `"json"` in the optional `sourceFormats` map
+on its contribution, the base specification or the recipe. The Zotero
+contribution owns the original `zotero/reference/zotero/itemJSON.js` declaration;
+Research and Zotero recipes inherit it by selecting that contribution. Base
+format declarations are retained only for source selected by the recipe, while
+each selected contribution and recipe carries its own complete format map.
+
+The declaration explicitly selects that original file. The builder parses
+strict UTF-8 JSON, keeps the exact bytes and records the format in the ordinary
+source manifest and registration provenance. Explicit exclusions and original
+file, directory, Git and byte checks remain in force. It rejects a missing
+source, invalid JSON, executable registration or static executable import to
+declared JSON. A JSON source cannot be a `moduleTemplates` entry; JavaScript
+template syntax remains independently validated. See [the complete format and
+installed receiving contract](BUILDING.md#original-json-source-data).
+
+Installed packages recompose their retained declarations, compare the declared
+formats with `manifest.sourceFormats`, verify each complete data file against
+its manifest hash and parse it again. The CLI's `source` view includes that same
+manifest, and `registrations --source zotero` shows the original format owner.
+No new command, runtime feature, dependency version or product entry is implied
+by a source format declaration.
 
 ## Build through the runtime workspace
 

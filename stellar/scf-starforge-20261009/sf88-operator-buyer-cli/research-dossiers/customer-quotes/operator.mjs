@@ -6,17 +6,22 @@ import {readResearchHostFile} from '../workspace-files.mjs';
 import {customerDirectory,withCustomerOperation,readCustomerJson,retainCustomerBytes,
  describeCustomerFile,copyCustomerFile} from '../customer-updates/files.mjs';
 import {exists,digest} from '../../node/store.mjs';
-import {QUOTES_SCHEMA,QUOTE_FILE_LIMIT,QUOTE_REQUEST_LIMIT,id,hash,alias,need,same,fingerprint,
+import {QUOTES_SCHEMA,QUOTE_FILE_LIMIT,QUOTE_REQUEST_LIMIT,QUOTE_CASE_TRANSFER_LIMIT,id,hash,alias,need,same,fingerprint,
  caseSelection,briefSelection,responseSelection,normalizePublicationSelection,realizedSelection,applySelection} from './contracts.mjs';
 import {captureResearchQuoteInput,validateResearchQuoteOperation,RESEARCH_QUOTES_CASE_ACTIONS,
  RESEARCH_QUOTES_PRICING_ACTIONS} from './client.mjs';
 
+import {caseTransferInput,caseTransferSelection,validateCaseTransferSelection} from './case-transfer.mjs';
+
 export const RESEARCH_QUOTES_WRITES=Object.freeze([
- 'create-case','native-case','pricing','prepare','apply','prepare-response','prepare-publication','enroll-publication','prepare-report',
+ 'create-case','prepare-case-transfer','apply-case-transfer','native-case','pricing','prepare','apply','prepare-response','prepare-publication','enroll-publication','prepare-report',
 ]);
 const REQUEST='sf88-research-quote-operator-request/v1',RESULT='sf88-research-quote-operator-result/v1',
  EXPORT='sf88-research-quote-export-selection/v1',EXPORTED='sf88-research-quote-export-result/v1';
 const timestamp=()=>new Date().toISOString();
+const inputMaximum=command=>command==='prepare-case-transfer'?QUOTE_CASE_TRANSFER_LIMIT:QUOTE_REQUEST_LIMIT;
+const exportMaximum=value=>value?.request?.kind==='case'&&value?.selection?.original?.kind==='CASE_RECORD'
+ ?QUOTE_CASE_TRANSFER_LIMIT:QUOTE_FILE_LIMIT;
 const compact=value=>Buffer.from(JSON.stringify(value));
 function json(body){
  try{return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(body));}
@@ -32,10 +37,13 @@ async function stored(root,name){
  // Retire only this original exact file's stopped hard-link publication.
  await retainCustomerBytes(root,name,original.body);return original.value;
 }
-function binding(command,value,{caseId,action,profile}={}){
+function binding(command,value,{caseId,action,profile}={},retained=false){
  need(RESEARCH_QUOTES_WRITES.includes(command),'RESEARCH_QUOTE_COMMAND_INVALID');
- let input=captureResearchQuoteInput(value),extra={};
- const validators={'create-case':caseSelection,prepare:briefSelection,apply:applySelection,
+ let input=command==='prepare-case-transfer'?
+  retained?validateCaseTransferSelection(value):caseTransferSelection(caseTransferInput(value)):
+  captureResearchQuoteInput(value),extra={};
+ const validators={'create-case':caseSelection,'prepare-case-transfer':validateCaseTransferSelection,
+  'apply-case-transfer':applySelection,prepare:briefSelection,apply:applySelection,
   'prepare-response':responseSelection,'prepare-publication':normalizePublicationSelection,
   'enroll-publication':applySelection,'prepare-report':realizedSelection};
  if(validators[command])input=validators[command](input);
@@ -51,9 +59,9 @@ function binding(command,value,{caseId,action,profile}={}){
 function requestRecord(value){
  need(value?.schema===REQUEST&&/^research_[a-f0-9]{64}$/.test(value.workspaceId??'')&&
   value.requestSha256===fingerprint(value.selection)&&
-  same(value.selection,binding(value.selection.command,value.selection.input,value.selection))&&
+  same(value.selection,binding(value.selection.command,value.selection.input,value.selection,true))&&
   value.input?.name==='input.json'&&Number.isSafeInteger(value.input.bytes)&&value.input.bytes>0&&
-  value.input.bytes<=QUOTE_REQUEST_LIMIT,'RESEARCH_QUOTE_OPERATOR_REQUEST_CHANGED');
+  value.input.bytes<=inputMaximum(value.selection.command),'RESEARCH_QUOTE_OPERATOR_REQUEST_CHANGED');
  hash(value.input.sha256);return value;
 }
 function reply(value,selection,workspaceId){
@@ -63,10 +71,11 @@ function reply(value,selection,workspaceId){
    (selection.command==='native-case'?value.caseId===selection.caseId:value.profile===selection.profile),
    'RESEARCH_QUOTE_OPERATOR_RESULT_CHANGED');return value;
  }
- const kinds={'create-case':'CASE',prepare:'BRIEF','prepare-response':'RESPONSE','prepare-publication':'PUBLICATION','prepare-report':'REALIZED'};
+ const kinds={'create-case':'CASE','prepare-case-transfer':'CASE_TRANSFER',prepare:'BRIEF','prepare-response':'RESPONSE','prepare-publication':'PUBLICATION','prepare-report':'REALIZED'};
  validateResearchQuoteOperation(value,kinds[selection.command]?{
   requestId:selection.input.requestId,kind:kinds[selection.command],input:selection.input
  }:{requestId:selection.input.id,reviewSha256:selection.input.reviewSha256});
+ if(selection.command==='apply-case-transfer')need(value.kind==='CASE_TRANSFER'&&value.status==='COMPLETE','RESEARCH_CASE_TRANSFER_APPLY_RESULT_CHANGED');
  if(selection.command==='apply')need(['BRIEF','RESPONSE'].includes(value.kind)&&value.status==='COMPLETE','RESEARCH_QUOTE_OPERATOR_RESULT_CHANGED');
  if(selection.command==='enroll-publication')need(value.kind==='PUBLICATION'&&value.status==='COMPLETE','RESEARCH_QUOTE_OPERATOR_RESULT_CHANGED');
  return value;
@@ -85,28 +94,28 @@ async function originalClient(source,workspaceId,signal){
   (workspaceId===undefined||status.workspaceId===workspaceId),'RESEARCH_QUOTE_OPERATOR_WORKSPACE_CHANGED');
  return {client,quotes:client.customerQuotes(),workspaceId:status.workspaceId};
 }
-async function retainedInput(root,expected){
- const body=await readResearchHostFile(join(root,'input.json'),QUOTE_REQUEST_LIMIT);
+async function retainedInput(root,expected,maximum=QUOTE_REQUEST_LIMIT){
+ const body=await readResearchHostFile(join(root,'input.json'),maximum);
  need(body.length===expected.bytes&&digest(body)===expected.sha256,'RESEARCH_QUOTE_OPERATOR_INPUT_CHANGED');
  await retainCustomerBytes(root,'input.json',body);return {body,value:json(body)};
 }
-async function suppliedInput(root,inputFile,input){
+async function suppliedInput(root,inputFile,input,maximum=QUOTE_REQUEST_LIMIT){
  need(!(inputFile&&input!==undefined),'RESEARCH_QUOTE_SELECT_ONE_INPUT');
  let body;
- if(inputFile)body=await readResearchHostFile(inputFile,QUOTE_REQUEST_LIMIT);
+ if(inputFile)body=await readResearchHostFile(inputFile,maximum);
  else if(input!==undefined)body=compact(input);
- else if(await exists(join(root,'input.json')))body=await readResearchHostFile(join(root,'input.json'),QUOTE_REQUEST_LIMIT);
- need(body&&body.length>0&&body.length<=QUOTE_REQUEST_LIMIT,'RESEARCH_QUOTE_OPERATOR_INPUT_REQUIRED');
+ else if(await exists(join(root,'input.json')))body=await readResearchHostFile(join(root,'input.json'),maximum);
+ need(body&&body.length>0&&body.length<=maximum,'RESEARCH_QUOTE_OPERATOR_INPUT_REQUIRED');
  return {body,value:json(body)};
 }
 async function compareExternal(file,input,request,root){
  if(file&&await exists(file)){
-  const bytes=await readResearchHostFile(file,QUOTE_REQUEST_LIMIT);
+  const bytes=await readResearchHostFile(file,inputMaximum(request.selection.command));
   need(bytes.length===request.input.bytes&&digest(bytes)===request.input.sha256,'RESEARCH_QUOTE_OPERATOR_INPUT_CHANGED');
  }
  if(input!==undefined)need(same(binding(request.selection.command,input,request.selection),request.selection),
   'RESEARCH_QUOTE_OPERATOR_INPUT_CHANGED');
- const retained=await retainedInput(root,request.input);
+ const retained=await retainedInput(root,request.input,inputMaximum(request.selection.command));
  need(same(binding(request.selection.command,retained.value,request.selection),request.selection),
   'RESEARCH_QUOTE_OPERATOR_INPUT_CHANGED');
 }
@@ -116,8 +125,9 @@ function errorRecord(error){
   if(error?.[key]!==undefined)try{value[key]=JSON.parse(JSON.stringify(error[key]));}catch{}
  return value;
 }
-async function invoke(quotes,selection,signal){
- const methods={'create-case':'createCase',prepare:'prepare',apply:'apply','prepare-response':'prepareResponse',
+async function invoke(quotes,selection,signal,originalInput){
+ if(selection.command==='prepare-case-transfer')return quotes.prepareCaseTransfer(originalInput,{signal});
+ const methods={'create-case':'createCase','apply-case-transfer':'applyCaseTransfer',prepare:'prepare',apply:'apply','prepare-response':'prepareResponse',
   'prepare-publication':'preparePublication','enroll-publication':'enrollPublication','prepare-report':'prepareReport'};
  if(selection.command==='native-case')return quotes.caseAction(selection.caseId,selection.action,selection.input,{signal});
  if(selection.command==='pricing')return quotes.pricing(selection.profile,selection.action,selection.input,{signal});
@@ -125,7 +135,7 @@ async function invoke(quotes,selection,signal){
 }
 /** Repeat reopens the first complete reply before opening a connection or current settings. */
 export function submitResearchQuote({client,directory,command,inputFile,input,caseId,action,profile,signal}={}){
- const file=inputFile?resolve(inputFile):null,selected=input===undefined?undefined:captureResearchQuoteInput(input),
+ const file=inputFile?resolve(inputFile):null,selected=input===undefined?undefined:captureResearchQuoteInput(input,{maximum:QUOTE_CASE_TRANSFER_LIMIT}),
   controls={command,caseId,action,profile};
  need(!(file&&selected!==undefined),'RESEARCH_QUOTE_SELECT_ONE_INPUT');
  return withCustomerOperation(directory,async root=>{
@@ -137,7 +147,7 @@ export function submitResearchQuote({client,directory,command,inputFile,input,ca
     need(controls[key]===request.selection[key],'RESEARCH_QUOTE_OPERATOR_SELECTION_CHANGED');
    await compareExternal(file,selected,request,root);
   }else{
-   const original=await suppliedInput(root,file,selected),selection=binding(command,original.value,controls),
+   const original=await suppliedInput(root,file,selected,inputMaximum(command)),selection=binding(command,original.value,controls),
     connected=await originalClient(client,undefined,signal);
    await retainCustomerBytes(root,'input.json',original.body);
    request={schema:REQUEST,workspaceId:connected.workspaceId,selection,requestSha256:fingerprint(selection),
@@ -152,7 +162,9 @@ export function submitResearchQuote({client,directory,command,inputFile,input,ca
   signal?.throwIfAborted();
   await save(root,'attempt-'+attemptId+'.json',attempt);
   try{
-   const value=reply(await invoke(connected.quotes,request.selection,signal),request.selection,request.workspaceId);
+   const originalInput=request.selection.command==='prepare-case-transfer'?
+    (await retainedInput(root,request.input,QUOTE_CASE_TRANSFER_LIMIT)).value:undefined;
+   const value=reply(await invoke(connected.quotes,request.selection,signal,originalInput),request.selection,request.workspaceId);
    const result={schema:RESULT,workspaceId:request.workspaceId,requestSha256:request.requestSha256,
     attemptId,result:value,resultSha256:fingerprint(value),completedAt:timestamp()};
    await save(root,'result.json',result);
@@ -170,7 +182,7 @@ export async function replayResearchQuote({client,directory,sourceDirectory,sign
  const source=await customerDirectory(sourceDirectory,{create:false}),target=resolve(directory);
  need(source!==target,'RESEARCH_QUOTE_DISTINCT_REPLAY_DIRECTORY_REQUIRED');
  const original=await withCustomerOperation(source,async root=>{
-  const request=requestRecord(await stored(root,'request.json')),input=await retainedInput(root,request.input);
+  const request=requestRecord(await stored(root,'request.json')),input=await retainedInput(root,request.input,inputMaximum(request.selection.command));
   need(same(binding(request.selection.command,input.value,request.selection),request.selection),'RESEARCH_QUOTE_OPERATOR_INPUT_CHANGED');
   return {request,body:input.body};
  });
@@ -185,16 +197,16 @@ export async function replayResearchQuote({client,directory,sourceDirectory,sign
  });
  return submitResearchQuote({client,directory:target,signal});
 }
-function fileDescriptor(value){
+function fileDescriptor(value,maximum=QUOTE_FILE_LIMIT){
  need(value&&/^[A-Za-z0-9][A-Za-z0-9._-]{0,179}$/.test(value.name??'')&&
-  Number.isSafeInteger(value.bytes)&&value.bytes>=0&&value.bytes<=QUOTE_FILE_LIMIT&&
+  Number.isSafeInteger(value.bytes)&&value.bytes>=0&&value.bytes<=maximum&&
   typeof value.contentType==='string','RESEARCH_QUOTE_EXPORT_FILE_CHANGED');hash(value.sha256);return value;
 }
 function exportRecord(value,kind){
  need(['operation','case','tariff'].includes(kind)&&value?.schema===EXPORT&&value.request?.kind===kind&&/^research_[a-f0-9]{64}$/.test(value.workspaceId??'')&&
   value.selectionSha256===fingerprint(value.selection)&&Array.isArray(value.selection.files)&&value.selection.files.length<=103,
   'RESEARCH_QUOTE_EXPORT_SELECTION_CHANGED');
- value.selection.files.forEach(fileDescriptor);
+ value.selection.files.forEach(file=>fileDescriptor(file,exportMaximum(value)));
  need(new Set(value.selection.files.map(file=>file.name)).size===value.selection.files.length,'RESEARCH_QUOTE_EXPORT_SELECTION_CHANGED');
  if(kind==='operation'){
   id(value.request.id);validateResearchQuoteOperation(value.selection.operation,{requestId:value.request.id});
@@ -213,7 +225,7 @@ async function completeExport(root,selected){
  const paths=[],filesRoot=await customerDirectory(join(root,'files'));
  for(const descriptor of selected.selection.files){
   const file=await describeCustomerFile(join(filesRoot,descriptor.name),{
-   sha256:descriptor.sha256,bytes:descriptor.bytes,maximum:QUOTE_FILE_LIMIT});
+   sha256:descriptor.sha256,bytes:descriptor.bytes,maximum:exportMaximum(selected)});
   paths.push({...descriptor,path:file.path});
  }
  let result=await stored(root,'result.json'),reused=!!result;
@@ -268,7 +280,7 @@ export function retainResearchQuoteCaseFile({client,directory,caseId,inputFile,i
  const file=inputFile?resolve(inputFile):null,value=input===undefined?undefined:captureResearchQuoteInput(input);
  need(!(file&&value!==undefined),'RESEARCH_QUOTE_SELECT_ONE_INPUT');need(typeof tariff==='boolean','RESEARCH_QUOTE_EXPORT_KIND_REQUIRED');
  if(caseId!==undefined)id(caseId);if(expectedSha256!==undefined)hash(expectedSha256);
- if(expectedBytes!==undefined)need(Number.isSafeInteger(expectedBytes)&&expectedBytes>=0&&expectedBytes<=QUOTE_FILE_LIMIT,'RESEARCH_QUOTE_FILE_SIZE_INVALID');
+ if(expectedBytes!==undefined)need(Number.isSafeInteger(expectedBytes)&&expectedBytes>=0&&expectedBytes<=QUOTE_CASE_TRANSFER_LIMIT,'RESEARCH_QUOTE_FILE_SIZE_INVALID');
  return withCustomerOperation(directory,async root=>{
   need(!await exists(join(root,'request.json')),'RESEARCH_QUOTE_DISTINCT_RUN_DIRECTORY_REQUIRED');
   let selected=await stored(root,'export.json');const kind=tariff?'tariff':'case';
@@ -357,7 +369,7 @@ export function copyResearchQuoteExport(result,destination){
   await save(root,'quote-export-selection.json',selection);
   const copied=[];
   for(const file of selected.files)copied.push(await copyCustomerFile(file.path,join(root,file.name),{
-   sha256:file.sha256,bytes:file.bytes,maximum:QUOTE_FILE_LIMIT}));
+   sha256:file.sha256,bytes:file.bytes,maximum:exportMaximum(selected)}));
   await save(root,'quote-export.json',{...selection,schema:EXPORTED});
   return {directory:root,files:copied};
  });
