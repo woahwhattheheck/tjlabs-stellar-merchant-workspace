@@ -1,4 +1,4 @@
-import type {StudyExport} from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-query-studies.mjs';
+import type {StudyExport,ComparisonInput,ComparisonRead,ComparisonSource,ComparisonField,ComparisonKind,ComparisonRecord,ComparisonMembers} from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-query-studies.mjs';
 export interface CallOptions {requestSignal?: AbortSignal|null; timeoutMs?: number}
 export interface MerchantStudyTransport {
  readonly endpoint: string;
@@ -34,12 +34,13 @@ export interface OpenedStudyWorkspace {
  studiesPage: PageInfo; browser: {open: boolean;url?: string}; imports: string[]; fileReads: Record<string,unknown>;
 }
 export interface StudyFileDescriptor {name: string;bytes: number;sha256: string}
+export interface ComparisonDownloadSource {resultId:string;studyId:string;storageRevision:number;manifestSha256:string}
 export interface StudyDownloadManifest {
  schema: 'stellar-forge.dataset-study-download.v1';mode: 'LOCAL_OPERATOR_PREVIEW';
- workspaceId: string;exportId: string;kind: 'study'|'result';studyId: string;storageRevision: number;files: StudyFileDescriptor[];
+ workspaceId: string;exportId: string;kind: 'study'|'result'|'comparison';studyId?: string;storageRevision?: number;comparisonId?:string;comparisonSha256?:string;baseline?:ComparisonDownloadSource;target?:ComparisonDownloadSource;files: StudyFileDescriptor[];
 }
 export interface ManifestSelection {
- state: 'MANIFEST_RETAINED';exportId: string;manifestFile: StudyFileDescriptor;kind: 'study'|'result';fileCount: number;workspaceId: string;
+ state: 'MANIFEST_RETAINED';exportId: string;manifestFile: StudyFileDescriptor;kind: 'study'|'result'|'comparison';fileCount: number;workspaceId: string;
 }
 export interface DownloadOptions {
  exportId: string;directory: string;signal?: AbortSignal;chunkSize?: number;expectedManifestSha256?: string;
@@ -47,7 +48,7 @@ export interface DownloadOptions {
 }
 export interface DownloadResult {
  schema: 'stellar-forge.dataset-study-downloaded.v1';state: 'COMPLETE';directory: string;exportId: string;
- workspaceId: string;kind: 'study'|'result';studyId: string;storageRevision: number;manifestSha256: string;
+ workspaceId: string;kind: 'study'|'result'|'comparison';studyId?: string;storageRevision?: number;comparisonId?:string;comparisonSha256?:string;baseline?:ComparisonDownloadSource;target?:ComparisonDownloadSource;manifestSha256: string;
  resumed: boolean;resumedBytes: number;files: number;bytes: number;
 }
 export interface ImportInspection {
@@ -80,6 +81,14 @@ export interface DatasetStudiesClient {
  resumeExport(exportId: string,options?: CallOptions): Promise<{export: StudyExport}>;
  exports(input: {exportId: string;studyId?: string}&PageInput,options?: CallOptions): Promise<{export: StudyExport}>;
  exports(input?: {studyId?: string}&PageInput,options?: CallOptions): Promise<Paged<StudyExport>>;
+ comparisons(input?:PageInput,options?:CallOptions):Promise<Paged<ComparisonRecord>&{workspaceId:string;warnings:Array<Record<string,unknown>>}>;
+ inspectComparison(input:{baselineId:string;targetId:string},options?:CallOptions):Promise<{workspaceId:string;baseline:ComparisonSource;target:ComparisonSource;fields:ComparisonField[]}>;
+ createComparison(input:ComparisonInput,options?:CallOptions):Promise<ComparisonRead>;
+ readComparison(input:{id:string;kind?:ComparisonKind}&PageInput,options?:CallOptions):Promise<ComparisonRead>;
+ comparisonMembers(input:{id:string;ordinal:number;side:'baseline'|'target'}&PageInput,options?:CallOptions):Promise<ComparisonMembers>;
+ resumeComparison(id:string,options?:CallOptions):Promise<ComparisonRead>;
+ waitComparison(id:string,options?:{signal?:AbortSignal;intervalMs?:number;onProgress?:(value:ComparisonRead)=>void|Promise<void>}):Promise<ComparisonRead>;
+ downloadComparison(id:string,options:Omit<DownloadOptions,'exportId'>):Promise<DownloadResult>;
  manifest(exportId: string,options?: CallOptions): Promise<ManifestSelection>;
  file(input: FileReadInput,options?: CallOptions): Promise<FileReadResult>;
  releaseFile(exportId: string,readId: string,options?: CallOptions): Promise<{released: true;exportId: string;readId: string}>;

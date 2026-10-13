@@ -22,6 +22,14 @@ const HELP=[
   'dataset-studies exports --studies PRIVATE_DIR [--id ID]',
   'dataset-studies status --studies PRIVATE_DIR --export-id SHA256',
   'dataset-studies download --studies PRIVATE_DIR --export-id SHA256 --name FILE --output NEW_FILE',
+  'dataset-studies comparisons --studies PRIVATE_DIR',
+  'dataset-studies comparison-inspect --studies PRIVATE_DIR --baseline RESULT_SHA --target RESULT_SHA [--output NEW.json]',
+  'dataset-studies comparison-create --studies PRIVATE_DIR --input ORIGINAL_REQUEST.json',
+  'dataset-studies comparison-read --studies PRIVATE_DIR --id UUID [--kind all|added|removed|changed|unchanged|ambiguous|moved] [--offset N] [--limit N]',
+  'dataset-studies comparison-members --studies PRIVATE_DIR --id UUID --ordinal N --side baseline|target [--offset N] [--limit N]',
+  'dataset-studies comparison-resume --studies PRIVATE_DIR --id UUID',
+  'dataset-studies comparison-download --studies PRIVATE_DIR --id UUID --name FILE --output NEW_FILE',
+  'Comparisons use two COMPLETE retained results and explicit field/key mapping. No dataset source query is executed.',
   'Save retains unfinished input. Query explicitly executes the original engine and saves its successful page.',
   'Export starts from the saved successful query and reads every original page; resume uses the same retained job.',
   'Complete result files remain under the private studies directory. --output always creates a new file.',
@@ -36,7 +44,11 @@ function parseArgs(args) {
     query:['studies','dataset','state','id','expected-revision','query','resource'],
     export:['studies','dataset','state','id','expected-revision','request-id','resource'],
     resume:['studies','dataset','state','export-id','resource'],
-    exports:['studies','id'],status:['studies','export-id'],download:['studies','export-id','name','output']
+    exports:['studies','id'],status:['studies','export-id'],download:['studies','export-id','name','output'],
+    comparisons:['studies'],'comparison-inspect':['studies','baseline','target','output'],
+    'comparison-create':['studies','input'],'comparison-read':['studies','id','kind','offset','limit'],
+    'comparison-members':['studies','id','ordinal','side','offset','limit'],
+    'comparison-resume':['studies','id'],'comparison-download':['studies','id','name','output']
   }[command];
   if(!allowed)throw new TypeError('Choose a dataset study command; use --help.');
   for(let i=0;i<rest.length;i+=2) {
@@ -51,6 +63,19 @@ function parseArgs(args) {
 function positive(value,label) {
   if(typeof value!=='string'||!/^[1-9][0-9]{0,7}$/.test(value))throw new TypeError(label+' must be a positive native revision.');
   return Number(value);
+}
+function nonnegative(value,label,fallback){
+ if(value===undefined)return fallback;
+ if(typeof value!=='string'||!/^(0|[1-9][0-9]{0,12})$/.test(value))throw new TypeError(label+' must be a nonnegative integer.');
+ return Number(value);
+}
+async function readComparisonRequest(path){
+ if(typeof path!=='string'||!path)throw new TypeError('--input ORIGINAL_REQUEST.json is required.');
+ const handle=await open(resolve(path),constants.O_RDONLY|(constants.O_NOFOLLOW??0));
+ try{const info=await handle.stat();if(!info.isFile()||info.size>65536)throw new TypeError('Select a complete original comparison request within 64 KiB.');
+  const bytes=await handle.readFile();if(bytes.length>65536)throw new TypeError('The original request exceeds 64 KiB.');
+  return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+ }finally{await handle.close();}
 }
 async function readWorking(path) {
   if(typeof path!=='string'||!path)throw new TypeError('--input is required.');
@@ -123,6 +148,23 @@ export async function main(args=process.argv.slice(2)) {
         const output=await writeNew(o.output,async file=>{for await(const chunk of retained.stream)await file.writeFile(chunk);});
         result={exportId:o['export-id'],file:retained.descriptor,output};
       } finally {retained.stream.destroy();}
+    }
+    else if(o.command==='comparisons')result=await store.comparisonList();
+    else if(o.command==='comparison-inspect'){
+      result=await store.comparisonInspect({baselineId:o.baseline,targetId:o.target});
+      if(o.output)result={...result,output:await writeNew(o.output,file=>file.writeFile(JSON.stringify(result,null,2)+'\n'))};
+    }else if(o.command==='comparison-create'){
+      result=await store.comparisonCreate(await readComparisonRequest(o.input));
+      result=await store.waitComparison(result.comparison.id);
+    }else if(o.command==='comparison-read')result=await store.comparisonRead({id:o.id,kind:o.kind,offset:nonnegative(o.offset,'--offset',0),limit:nonnegative(o.limit,'--limit',25)});
+    else if(o.command==='comparison-members')result=await store.comparisonMembers({id:o.id,ordinal:nonnegative(o.ordinal,'--ordinal'),side:o.side,offset:nonnegative(o.offset,'--offset',0),limit:nonnegative(o.limit,'--limit',25)});
+    else if(o.command==='comparison-resume'){result=await store.comparisonResume(o.id);result=await store.waitComparison(o.id);}
+    else if(o.command==='comparison-download'){
+      const retained=await store.openComparisonFile(o.id,o.name);
+      try{
+        const output=await writeNew(o.output,async target=>{for await(const chunk of retained.readonlyFileHandle.createReadStream({start:0,autoClose:false}))await target.writeFile(chunk);});
+        result={comparisonId:o.id,file:{name:retained.name,bytes:retained.bytes,sha256:retained.sha256},output};
+      }finally{await retained.readonlyFileHandle.close();}
     }
     console.log(JSON.stringify(result,null,2));return result;
   } finally {await store.close();}

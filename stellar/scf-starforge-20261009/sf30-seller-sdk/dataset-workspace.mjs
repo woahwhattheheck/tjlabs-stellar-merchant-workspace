@@ -98,7 +98,7 @@ export async function startDatasetWorkspace({ datasetPath, stateDirectory, catal
   const studies=borrowed?.studies??(selectedStudies?await openDatasetQueryStudies({directory:selectedStudies,schema,queryPage:source.queryPage}):null);
   // Attach the original source before opening the browser. A borrowed owner retains its engine and store.
   await schema();
-  const [html, javascript, studyCore] = await Promise.all(['dataset-workspace.html', 'dataset-workspace.js', 'dataset-study-core.mjs']
+  const [html, javascript, studyCore, comparisonCore, comparisonBrowser] = await Promise.all(['dataset-workspace.html', 'dataset-workspace.js', 'dataset-study-core.mjs', 'dataset-study-comparison-core.mjs', 'dataset-study-comparison-browser.mjs']
     .map(name => readFile(new URL(name, import.meta.url))));
   const token = randomBytes(32).toString('base64url');
   const expectedAuth = Buffer.from('Bearer ' + token);
@@ -119,6 +119,8 @@ export async function startDatasetWorkspace({ datasetPath, stateDirectory, catal
       if (req.method === 'GET' && req.url === '/') return reply(200, html, 'text/html; charset=utf-8');
       if (req.method === 'GET' && req.url === '/workspace.js') return reply(200, javascript, 'text/javascript; charset=utf-8');
       if (req.method === 'GET' && req.url === '/dataset-study-core.mjs') return reply(200, studyCore, 'text/javascript; charset=utf-8');
+      if (req.method === 'GET' && req.url === '/dataset-study-comparison-core.mjs') return reply(200, comparisonCore, 'text/javascript; charset=utf-8');
+      if (req.method === 'GET' && req.url === '/dataset-study-comparison-browser.mjs') return reply(200, comparisonBrowser, 'text/javascript; charset=utf-8');
       const auth = Buffer.from(req.headers.authorization ?? '');
       if (auth.length !== expectedAuth.length || !timingSafeEqual(auth, expectedAuth))
         return reply(401, { error: 'SESSION_REQUIRED', message: 'Reopen the session URL printed by the workspace command.' });
@@ -140,11 +142,23 @@ export async function startDatasetWorkspace({ datasetPath, stateDirectory, catal
         return reply(200,studies?await studies.list():{enabled:false,studies:[]});
       }
       if(req.method==='GET'&&studyPath==='/api/studies/exports'&&!studies)return reply(200,{exports:[]});
+      if(req.method==='GET'&&studyPath==='/api/studies/comparisons'&&!studies)return reply(200,{workspaceId:null,comparisons:[],warnings:[]});
       if(studyPath.startsWith('/api/studies/')) {
         if(!studies)return reply(409,{error:'DATASET_STUDIES_DISABLED',message:'Reopen with --studies PRIVATE_DIR to retain named studies and complete results.'});
         const parts=studyPath.slice('/api/studies/'.length).split('/');
         if(req.method==='GET') {
-          if(parts[0]==='exports') {
+          if(parts[0]==='comparisons') {
+            if(route.search)return reply(400,{error:'DATASET_STUDY_COMPARISON_INVALID'});
+            if(parts.length===1)return reply(200,await studies.comparisonList());
+            if(parts.length===4&&parts[2]==='files'){
+              const file=await studies.openComparisonFile(parts[1],parts[3]);
+              res.writeHead(200,{'content-type':file.type,'content-length':file.bytes,
+                'content-disposition':'attachment; filename="'+file.name+'"','cache-control':'no-store',
+                'x-content-type-options':'nosniff','referrer-policy':'no-referrer',
+                'content-security-policy':"default-src 'none'; frame-ancestors 'none'; sandbox"});
+              await pipeline(file.readonlyFileHandle.createReadStream({start:0,autoClose:true}),res);return;
+            }
+          } else if(parts[0]==='exports') {
             if(parts.length===1) {
               if([...route.searchParams.keys()].some(k=>k!=='studyId')||route.searchParams.getAll('studyId').length>1)
                 return reply(400,{error:'DATASET_STUDY_INVALID'});
@@ -173,19 +187,30 @@ export async function startDatasetWorkspace({ datasetPath, stateDirectory, catal
         }
         if(route.search)return reply(400,{error:'DATASET_STUDY_INVALID'});
       }
-      if (req.method !== 'POST' || !(['/api/query', '/api/activate', '/api/studies/save', '/api/studies/export-result'].includes(req.url) || /^\/api\/studies\/exports\/[a-f0-9]{64}\/resume$/.test(req.url)))
+      if (req.method !== 'POST' || !(['/api/query', '/api/activate', '/api/studies/save', '/api/studies/export-result', '/api/studies/comparisons/inspect', '/api/studies/comparisons/create', '/api/studies/comparisons/read', '/api/studies/comparisons/members', '/api/studies/comparisons/resume'].includes(req.url) || /^\/api\/studies\/exports\/[a-f0-9]{64}\/resume$/.test(req.url)))
         return reply(404, { error: 'NOT_FOUND' });
       if (req.headers['content-type'] !== 'application/json') return reply(415, { error: 'JSON_REQUIRED' });
       let size = 0;
       const chunks = [];
       for await (const chunk of req) {
         size += chunk.length;
-        if (size > (req.url==='/api/studies/save'?9*1024*1024:16384)) return reply(413, { error: 'QUERY_TOO_LARGE' });
+        if (size > (req.url==='/api/studies/save'?9*1024*1024:req.url.startsWith('/api/studies/comparisons/')?65536:16384)) return reply(413, { error: 'QUERY_TOO_LARGE' });
         chunks.push(chunk);
       }
       let input;
       try { input = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks))); }
       catch { return reply(400, { error: 'INVALID_JSON' }); }
+      if(req.url.startsWith('/api/studies/comparisons/')){
+        const action=req.url.slice('/api/studies/comparisons/'.length);
+        const keys={inspect:['baselineId','targetId'],create:['id','title','baselineId','targetId','baselineSha256','targetSha256','fields'],
+          read:['id','kind','offset','limit'],members:['id','ordinal','side','offset','limit'],resume:['id']};
+        const required={inspect:['baselineId','targetId'],create:keys.create,read:['id'],members:['id','ordinal','side'],resume:['id']};
+        if(!object(input)||!keys[action]||Object.keys(input).some(k=>!keys[action].includes(k))||required[action].some(k=>!Object.hasOwn(input,k)))
+          return reply(400,{error:'DATASET_STUDY_COMPARISON_INVALID'});
+        const result=action==='inspect'?await studies.comparisonInspect(input):action==='create'?await studies.comparisonCreate(input):
+          action==='read'?await studies.comparisonRead(input):action==='members'?await studies.comparisonMembers(input):await studies.comparisonResume(input.id);
+        return reply(action==='create'||action==='resume'?202:200,result);
+      }
       if(req.url==='/api/studies/save') {
         if(!object(input)||Object.keys(input).sort().join(',')!=='expectedRevision,study')return reply(400,{error:'DATASET_STUDY_INVALID'});
         return reply(200,await studies.save(input));

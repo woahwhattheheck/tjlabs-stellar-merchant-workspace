@@ -4,7 +4,7 @@ const alias={type:'string',pattern:'^[a-z0-9][a-z0-9_-]{0,63}$'};
 const uuid={type:'string',pattern:'^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$'};
 const id={type:'string',pattern:'^[A-Za-z0-9][A-Za-z0-9_-]{7,79}$'};
 const hash={type:'string',pattern:'^[a-f0-9]{64}$'};
-const exportId={type:'string',pattern:'^([a-f0-9]{64}|study\\.[A-Za-z0-9][A-Za-z0-9_-]{7,79}\\.[1-9][0-9]{0,14})$'};
+const exportId={type:'string',pattern:'^([a-f0-9]{64}|comparison\\.[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}|study\\.[A-Za-z0-9][A-Za-z0-9_-]{7,79}\\.[1-9][0-9]{0,14})$'};
 const title={type:'string',maxLength:160};
 const time={type:'string',pattern:'^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$'};
 const count=(minimum,maximum=Number.MAX_SAFE_INTEGER)=>({type:'integer',minimum,maximum});
@@ -35,7 +35,16 @@ export function datasetStudyTools(tool) {
     native('export_start','Retain and run the whole result from the saved successful query, starting at its original first page. Pin snapshot and requestId; repeat that UUID to recover the same original job.',{studyId:id,expectedRevision:revision,requestId:uuid},['studyId','expectedRevision','requestId']),
     native('export_resume','Resume the same original full-result job and cursor chain. Previously retained pages remain intact.',{exportId:hash},['exportId']),
     native('exports','Inspect an original result status or page its saved result jobs. COMPLETE includes native output filenames and digests.',{studyId:id,exportId:hash,...page},[],read),
-    native('manifest','Return the exact complete download-manifest.json descriptor for study.ID.revision or a completed native result ID. Result packages include original CSV, typed JSONL, study, native manifest, optional meanings and every retained page.',{exportId},['exportId'],read),
+    native('comparisons','List complete and unfinished original comparisons. The immutable request retains both completed result identities and explicit field mapping; counts describe key groups.',{...page},[],read),
+    native('comparison_inspect','Inspect two COMPLETE original result exports, exact manifest hashes and complete selected field schemas. Suggestions do not select keys or modify source results.',{baselineId:hash,targetId:hash},['baselineId','targetId'],read),
+    native('comparison_create','Retain the exact original comparison request UUID, both reviewed manifest hashes and complete explicit field mapping. Starts an asynchronous local comparison; retry identical bytes after a lost response.',{
+      id:uuid,title:{type:'string',maxLength:240},baselineId:hash,targetId:hash,baselineSha256:hash,targetSha256:hash,
+      fields:{type:'array',minItems:1,maxItems:128,items:fields({baseline:{type:['string','null'],maxLength:48},target:{type:['string','null'],maxLength:48},key:{type:'boolean'}},['baseline','target','key'])}
+    },['id','title','baselineId','targetId','baselineSha256','targetSha256','fields']),
+    native('comparison_read','Read comparison progress and a bounded indexed page of original key groups. Null/duplicate keys retain every original record without arbitrary pairing. Oversized groups expose member paging and complete files.',{id:uuid,kind:{enum:['all','added','removed','changed','unchanged','ambiguous','moved']},...page},['id'],read),
+    native('comparison_members','Read original baseline or target records from one retained key group, including every duplicate. Original source ordinals and typed values are preserved; oversized individual records retain complete-file access.',{id:uuid,ordinal:count(0),side:{enum:['baseline','target']},...page},['id','ordinal','side'],read),
+    native('comparison_resume','Resume the same immutable original comparison request after interruption; selected inputs and original engine hashes stay fixed.',{id:uuid},['id']),
+    native('manifest','Return the exact complete download-manifest.json descriptor for study.ID.revision, comparison.UUID or a completed native result ID. Result packages include original CSV, typed JSONL, study, native manifest, optional meanings and every retained page.',{exportId},['exportId'],read),
     native('file','Read an original immutable native file in verified byte ranges. Select a file and exact SHA256 from download-manifest.json. Resume with the same expectedManifestSha256, expectedSha256 and offset after restart; readId is process-owned. EOF releases its descriptor.',{exportId,file:{type:'string',maxLength:255},expectedManifestSha256:hash,expectedSha256:hash,readId:uuid,offset:count(0),limit:count(1,MAX_RETAINED_CHUNK_BYTES)},['exportId','file','expectedManifestSha256','expectedSha256'],read),
     native('file_release','Release an unfinished original file read while preserving every native saved file.',{exportId,readId:uuid},['exportId','readId']),
     native('browser_open','Open the industrial browser over this same source and study store. Existing native query, editing and complete-result workflows remain available.',{port:count(0,65535)}),

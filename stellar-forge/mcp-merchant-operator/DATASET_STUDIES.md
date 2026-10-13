@@ -339,3 +339,11 @@ Include this complete instruction in delegated assignments and the active owner-
 
 Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
 Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
+
+## Complete saved-result comparisons
+
+The existing provider also exposes `comparisons`, `comparison_inspect`, `comparison_create`, `comparison_read`, `comparison_members`, and `comparison_resume` under the same `merchant_dataset_study_` prefix. Use the original open workspace and process identifiers. Inspect two COMPLETE result exports, retain their exact manifest hashes, and explicitly select all field pairs and 1–16 typed keys. The asynchronous request UUID is immutable: retry its exact input after a lost response and resume that same request after interruption. Null and duplicate keys keep every original record in an ambiguous group; group counts and original-row counts are separate.
+
+A completed comparison has `exportId: comparison.UUID`. The same `manifest`, `file`, `file_release`, whole-file typed client, and durable receiving directory preserve its full nine files: original baseline and target JSONL, their original manifests, request, full comparison metadata, every group as JSONL, CSV and a readable standalone HTML report. `client.downloadComparison(id, options)` uses the same manifest/hash/offset recovery as complete studies and result exports. It carries explicit baseline/target result and saved-study identities rather than presenting the comparison as a new query result.
+
+Native details, original field meanings, complete CLI examples and browser operation: [Dataset comparisons](../../stellar/scf-starforge-20261009/sf30-seller-sdk/DATASET_COMPARISONS.md). Existing Frictionless/DuckDB customer work and workbook-edition comparisons retain their own source and receiving operations.

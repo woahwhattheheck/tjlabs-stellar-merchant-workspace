@@ -130,7 +130,11 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-query-studies.d.mts",
     "stellar-forge/mcp-merchant-operator/dataset-studies-client.d.mts",
     "stellar-forge/mcp-merchant-operator/dataset-studies-setup.d.mts",
-    "stellar-forge/mcp-merchant-operator/DATASET_STUDIES.md"
+    "stellar-forge/mcp-merchant-operator/DATASET_STUDIES.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/DATASET_COMPARISONS.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-study-comparison-core.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-study-comparison-browser.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-study-comparisons.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

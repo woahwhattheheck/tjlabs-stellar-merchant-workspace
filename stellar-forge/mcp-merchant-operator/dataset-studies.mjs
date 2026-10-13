@@ -121,7 +121,7 @@ function savedSummary(saved) {
 }
 function selectedExport(value) {
   const selected=validateDatasetStudyExportId(value);
-  return selected.kind==='result'?{kind:'result',id:selected.exportId}:
+  return selected.kind==='comparison'?{kind:'comparison',id:selected.comparisonId}:selected.kind==='result'?{kind:'result',id:selected.exportId}:
     {kind:'study',id:selected.studyId,revision:selected.storageRevision};
 }
 async function withNative(h,original,operation) {
@@ -156,6 +156,12 @@ const operations = {
  export_start:['workspace','workspaceId','instanceId','studyId','expectedRevision','requestId'],
  export_resume:['workspace','workspaceId','instanceId','exportId'],
  exports:['workspace','workspaceId','instanceId','studyId','exportId','offset','limit'],
+ comparisons:['workspace','workspaceId','instanceId','offset','limit'],
+ comparison_inspect:['workspace','workspaceId','instanceId','baselineId','targetId'],
+ comparison_create:['workspace','workspaceId','instanceId','id','title','baselineId','targetId','baselineSha256','targetSha256','fields'],
+ comparison_read:['workspace','workspaceId','instanceId','id','kind','offset','limit'],
+ comparison_members:['workspace','workspaceId','instanceId','id','ordinal','side','offset','limit'],
+ comparison_resume:['workspace','workspaceId','instanceId','id'],
  manifest:['workspace','workspaceId','instanceId','exportId'],
  file:['workspace','workspaceId','instanceId','exportId','file','expectedManifestSha256','expectedSha256','readId','offset','limit'],
  file_release:['workspace','workspaceId','instanceId','exportId','readId'],
@@ -222,8 +228,13 @@ export class MerchantDatasetStudies {
     const selected=selectedExport(exportId),store=h.operator.studies;
     const cached=h.manifests.get(exportId);
     if(cached){h.manifests.delete(exportId);h.manifests.set(exportId,cached);return cached;}
-    let files,studyId_,revision;
-    if(selected.kind==='study') {
+    let files,studyId_,revision,comparison;
+    if(selected.kind==='comparison'){
+      const selectedComparison=await store.comparisonRead({id:selected.id,limit:1});
+      comparison=selectedComparison.comparison;
+      need(comparison.status==='COMPLETE','Resume this same comparison before receiving its complete original files.','DATASET_STUDY_COMPARISON_INCOMPLETE');
+      files=comparison.files.map(({name,bytes,sha256})=>({name,bytes,sha256}));
+    } else if(selected.kind==='study') {
       const saved=await store.get(selected.id,{revision:selected.revision});
       const original=await store.openStudyFile(selected.id,{revision:selected.revision});
       files=await withNative(h,original,async value=>[{name:'study.json',bytes:value.bytes,sha256:value.sha256}]);
@@ -241,7 +252,11 @@ export class MerchantDatasetStudies {
         Number.isSafeInteger(f.bytes)&&f.bytes>=0&&f.bytes<=256*1024*1024&&HASH.test(f.sha256))&&
       files.reduce((sum,f)=>sum+f.bytes,0)<=1024*1024*1024,'The complete native file inventory differs.','DATASET_STUDY_CORRUPT');
     const manifest={schema:DATASET_STUDY_DOWNLOAD_SCHEMA,mode:'LOCAL_OPERATOR_PREVIEW',workspaceId:h.operator.workspaceId,
-      exportId,kind:selected.kind,studyId:studyId_,storageRevision:revision,files},bytes=json(manifest);
+      exportId,kind:selected.kind,...(selected.kind==='comparison'?{
+        comparisonId:comparison.id,comparisonSha256:comparison.sha256,
+        baseline:{resultId:comparison.baseline.id,studyId:comparison.baseline.studyId,storageRevision:comparison.baseline.storageRevision,manifestSha256:comparison.baseline.manifestSha256},
+        target:{resultId:comparison.target.id,studyId:comparison.target.studyId,storageRevision:comparison.target.storageRevision,manifestSha256:comparison.target.manifestSha256}
+      }:{studyId:studyId_,storageRevision:revision}),files},bytes=json(manifest);
     need(bytes.length<=8*1024*1024,'The complete download manifest exceeds its declared maximum.');
     parseDatasetStudyDownloadManifest(bytes,exportId);
     const retained={selected,manifest,bytes,descriptor:{name:'download-manifest.json',bytes:bytes.length,sha256:sha(bytes)}};
@@ -347,6 +362,15 @@ export class MerchantDatasetStudies {
       const value=await store.listExports(args.studyId===undefined?{}:{studyId:studyId(args.studyId)});
       return page(value.exports,args.offset,args.limit);
     }
+    if(action==='comparisons'){
+      const result=await store.comparisonList();return {workspaceId:result.workspaceId,warnings:result.warnings,...page(result.comparisons,args.offset,args.limit)};
+    }
+    if(action==='comparison_inspect')return store.comparisonInspect({baselineId:args.baselineId,targetId:args.targetId});
+    if(action==='comparison_create')return store.comparisonCreate({id:args.id,title:args.title,baselineId:args.baselineId,targetId:args.targetId,
+      baselineSha256:args.baselineSha256,targetSha256:args.targetSha256,fields:args.fields});
+    if(action==='comparison_read')return store.comparisonRead({id:args.id,kind:args.kind,offset:args.offset,limit:args.limit});
+    if(action==='comparison_members')return store.comparisonMembers({id:args.id,ordinal:args.ordinal,side:args.side,offset:args.offset,limit:args.limit});
+    if(action==='comparison_resume')return store.comparisonResume(args.id);
     if(action==='manifest') {
       const value=await this.#manifest(h,args.exportId);
       return {state:'MANIFEST_RETAINED',exportId:args.exportId,manifestFile:value.descriptor,
@@ -360,6 +384,7 @@ export class MerchantDatasetStudies {
       const result=await this.#reads.read({scope:args.workspace,key:args.exportId+':'+args.file,kind:value.selected.kind,
         directory:this.#config.exportsDirectory,expectedSha256:file.sha256,readId:args.readId,offset:args.offset,limit:args.limit,
         load:async()=>args.file===value.descriptor.name?{bytes:value.bytes,name:file.name,type:'application/json'}:
+          value.selected.kind==='comparison'?store.openComparisonFile(value.selected.id,file.name):
           value.selected.kind==='study'?store.openStudyFile(value.selected.id,{revision:value.selected.revision}):
           store.openExportFile(value.selected.id,file.name)});
       const activeReads=new Set(this.#reads.status(args.workspace).sessions.map(read=>read.readId));

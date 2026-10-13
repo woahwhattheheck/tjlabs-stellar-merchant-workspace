@@ -3,7 +3,7 @@ import {openMerchantFileClient,createRetainedDownload} from './retained-download
 import {failure,identifier} from './host-files.mjs';
 import {DATASET_STUDY_DOWNLOAD_MANIFEST,DATASET_STUDY_DOWNLOAD_FILE_BYTES,
  DATASET_STUDY_DOWNLOAD_MANIFEST_BYTES,DATASET_STUDY_UUID,parseDatasetStudyDownloadManifest,
- validateDatasetStudyExportId,datasetStudyExportId} from './dataset-studies-download-contract.mjs';
+ validateDatasetStudyExportId,datasetStudyExportId,datasetComparisonExportId} from './dataset-studies-download-contract.mjs';
 
 export async function openDatasetStudiesClient({
  url,tokenEnv,environment,workspace,workspaceId,instanceId,client,signal
@@ -37,7 +37,7 @@ export async function openDatasetStudiesClient({
    stateSchema:'stellar-forge.dataset-study-download-state.v1',resultSchema:'stellar-forge.dataset-study-downloaded.v1',
    toolPrefix:'merchant_dataset_study',errorPrefix:'DATASET_STUDY',clientName:'starforge-dataset-studies',
    validateExportId:validateDatasetStudyExportId,
-   describe:manifest=>({workspaceId:manifest.workspaceId,kind:manifest.kind,studyId:manifest.studyId,storageRevision:manifest.storageRevision})
+   describe:manifest=>({workspaceId:manifest.workspaceId,kind:manifest.kind,...(manifest.kind==='comparison'?{comparisonId:manifest.comparisonId,comparisonSha256:manifest.comparisonSha256,baseline:manifest.baseline,target:manifest.target}:{studyId:manifest.studyId,storageRevision:manifest.storageRevision})})
   });
   return {adapter,transfer};
  }
@@ -72,6 +72,12 @@ export async function openDatasetStudiesClient({
   startExport:(input,options)=>call('export_start',input,options),
   resumeExport:(exportId,options)=>call('export_resume',{exportId},options),
   exports:(input={},options)=>call('exports',input,options),
+  comparisons:(input={},options)=>call('comparisons',input,options),
+  inspectComparison:(input,options)=>call('comparison_inspect',input,options),
+  createComparison:(input,options)=>call('comparison_create',input,options),
+  readComparison:(input,options)=>call('comparison_read',input,options),
+  comparisonMembers:(input,options)=>call('comparison_members',input,options),
+  resumeComparison:(id,options)=>call('comparison_resume',{id},options),
   manifest:(exportId,options)=>call('manifest',{exportId},options),
   file:(input,options)=>call('file',input,options),
   releaseFile:(exportId,readId,options)=>call('file_release',{exportId,readId},options),
@@ -110,6 +116,26 @@ export async function openDatasetStudiesClient({
   async download(options){
    const {adapter,transfer}=receiver();
    return transfer.download({...options,client:adapter});
+  },
+  async downloadComparison(id,options){
+   const {adapter,transfer}=receiver();
+   return transfer.download({...options,exportId:datasetComparisonExportId(id),client:adapter});
+  },
+  async waitComparison(id,{signal:waitingSignal=signal,intervalMs=750,onProgress}={}){
+   if(!Number.isSafeInteger(intervalMs)||intervalMs<100||intervalMs>10000)
+    throw failure('DATASET_STUDIES_CLIENT_INTERVAL','Choose a status interval from 100 through 10000 milliseconds.');
+   for(;;){
+    waitingSignal?.throwIfAborted();
+    const value=await call('comparison_read',{id,limit:1},{requestSignal:waitingSignal});
+    if(value.comparison?.id!==id||!['READY','RUNNING','PAUSED','COMPLETE'].includes(value.comparison.status))
+     throw failure('DATASET_STUDIES_CLIENT_RESULT','The original comparison status differs.');
+    await onProgress?.(value);if(value.comparison.status!=='RUNNING')return value;
+    await new Promise((resolve,reject)=>{
+     const finish=()=>{waitingSignal?.removeEventListener('abort',abort);resolve();},timer=setTimeout(finish,intervalMs);
+     const abort=()=>{clearTimeout(timer);waitingSignal?.removeEventListener('abort',abort);reject(waitingSignal.reason??failure('DATASET_STUDIES_CLIENT_CANCELLED','Observation stopped; the same comparison remains retained.'));};
+     waitingSignal?.addEventListener('abort',abort,{once:true});if(waitingSignal?.aborted)abort();
+    });
+   }
   },
   async downloadStudy(studyId,storageRevision,options){
    const {adapter,transfer}=receiver();
