@@ -96,7 +96,7 @@ PACKAGE = "_merchant_catalogue_original"
 def source(configuration):
     root = Path(configuration["applicationDirectory"])
     directory(root)
-    body = raw(configuration["sourceManifestFile"], 4194304)
+    body = raw(configuration["sourceManifestFile"], 33554432)
     need(sha(body) == configuration["sourceManifestSha256"], "The reviewed private source authority changed.")
     manifest = json.loads(body.decode("utf-8"))
     need(set(manifest) == {"schema", "files"} and manifest["schema"] == SOURCE_SCHEMA and

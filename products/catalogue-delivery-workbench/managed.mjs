@@ -23,7 +23,7 @@ export async function acquireLease(path){
 
 const BRIDGE=join(HERE,'managed_host.py');
 export async function inspectOriginalSource({directory,sourceManifestFile,sourceManifestSha256}={}){
-  const root=absolute(directory),selected=await readJson(sourceManifestFile,4*1024*1024);
+  const root=absolute(directory),selected=await readJson(sourceManifestFile,32*1024*1024);
   digest(sourceManifestSha256);exact(selected.value,['schema','files'],['schema','files']);
   need(selected.sha256===sourceManifestSha256&&selected.value.schema===SOURCE_SCHEMA&&Array.isArray(selected.value.files)&&
     selected.value.files.length>=14&&selected.value.files.length<=25000,
