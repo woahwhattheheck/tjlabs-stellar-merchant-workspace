@@ -52,19 +52,378 @@
       "bytes": 39733,
       "sha256": "7774dd5f0860bae8d06dd52f42e5a49ad15537b7111eb9166b646c2561e176bb",
       "preimage_sha256": "b7f98f90621aa54e8a2dab132b4d7a6f5f38f682357a7e8fb20138ff0761c372"
+    },
+    {
+      "path": "operations/scf-datasette-installed-browser-20261012/run-installed.mjs",
+      "preimageGitBlob": "fd6d926c3516b99ed8581b35d9cf1f896ba5eb6a",
+      "preimageSha256": "d7a5e075ba33626d6dfc65b2904429d5e8a7ea460e85fd61c69ee4b7b739d4a6",
+      "content": "// MIT. Continue the completed original Datasette programme through its installed application and browser.\nimport {readFile, writeFile, mkdir, rename, open, lstat, realpath} from 'node:fs/promises';\nimport {join, dirname, resolve, isAbsolute} from 'node:path';\nimport {pathToFileURL} from 'node:url';\nimport {createHash, randomUUID} from 'node:crypto';\nimport {spawn} from 'node:child_process';\n\nconst SDK='stellar/scf-starforge-20261009/sf30-seller-sdk/datasette/';\nconst DIST='stellar/scf-starforge-20261009/distribution/';\nconst WRI='stellar/scf-starforge-20261009/sf30-seller-sdk/datasette/sources/wri-geothermal-20261012/wri-geothermal.sfds.gz';\nconst ARCHIVE_SHA='53f2486406d61f18c9e1c9ceaac659c265bbad7afe2fe54b1a17f43307cb0ca0';\nconst EDITION_SHA='ee34942e0c4c090d4e5cab66eeb51dda49c5cf8852f86d9dfa299913b4115616';\nconst COLUMNS=['rowid','country','country_long','name','gppd_idnr','capacity_mw','latitude','longitude','primary_fuel','other_fuel1','other_fuel2','other_fuel3','commissioning_year','owner','source','url','geolocation_source','wepp_id','year_of_capacity_data','generation_gwh_2013','generation_gwh_2014','generation_gwh_2015','generation_gwh_2016','generation_gwh_2017','generation_data_source','estimated_generation_gwh'];\nconst sha=raw=>createHash('sha256').update(raw).digest('hex');\nconst same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);\nconst need=(value,code,message=code)=>{if(!value)throw Object.assign(new Error(message),{code});};\nconst delay=ms=>new Promise(done=>setTimeout(done,ms));\nconst stamp=()=>new Date().toISOString();\nconst issue=error=>({code:error.code??error.name,message:error.message,\n  ...(error.observed!==undefined?{observed:error.observed}:{}),\n  ...(error.result!==undefined?{result:error.result}:{}),\n  ...(error.inspection!==undefined?{inspection:error.inspection}:{})});\nconst readJSON=async file=>JSON.parse(await readFile(file,'utf8'));\nconst exists=async file=>{try{await lstat(file);return true;}catch(error){if(error.code==='ENOENT')return false;throw error;}};\nasync function retain(file,value) {\n  await mkdir(dirname(file),{recursive:true,mode:0o700});\n  const temporary=file+'.pending-'+randomUUID(),handle=await open(temporary,'wx',0o600);\n  try{await handle.writeFile(JSON.stringify(value,null,2)+'\\n');await handle.sync();}finally{await handle.close();}\n  await rename(temporary,file);\n  const directory=await open(dirname(file),'r');try{await directory.sync();}finally{await directory.close();}\n}\nasync function runCommand(executable,args,options={}) {\n  return new Promise((done,fail)=>{\n    const child=spawn(executable,args,{cwd:options.cwd,env:process.env,stdio:['ignore','pipe','pipe']});\n    let stdout='',stderr='';\n    child.stdout.on('data',raw=>{stdout+=raw.toString();});\n    child.stderr.on('data',raw=>{stderr+=raw.toString();});\n    child.once('error',fail);\n    child.once('close',(code,signal)=>code===0?done({code,signal,stdout,stderr}):\n      fail(Object.assign(new Error('Installed command failed: '+stderr),{code:'DATASETTE_INSTALLED_COMMAND',result:{code,signal,stdout,stderr}})));\n  });\n}\nasync function waitFor(read,accept,label,timeout=120000) {\n  const until=Date.now()+timeout;let value;\n  do{value=await read();if(accept(value))return value;await delay(150);}while(Date.now()<until);\n  throw Object.assign(new Error(label),{code:'DATASETTE_INSTALLED_WAIT',observed:value});\n}\nasync function journalFromBrowser(page) {\n  return page.evaluate(async()=>new Promise((done,fail)=>{\n    const opened=indexedDB.open('starforge-datasette-operations',1);\n    opened.onerror=()=>fail(opened.error);\n    opened.onsuccess=()=>{\n      const database=opened.result,request=database.transaction('operations').objectStore('operations').getAll();\n      request.onerror=()=>{database.close();fail(request.error);};\n      request.onsuccess=()=>{const rows=request.result;database.close();done(rows);};\n    };\n  }));\n}\nasync function waitBrowser(page) {\n  await page.waitForFunction(()=>document.querySelector('#ds-active')?.textContent==='Connected',{},{timeout:120000});\n}\nasync function readRenderedRows(page,expected) {\n  const rows=[],types=[];\n  for(;;){\n    await waitBrowser(page);\n    const view=await page.locator('#ds-source-rows tbody tr').evaluateAll(records=>records.map(row=>({\n      values:[...row.querySelectorAll('.ds-cell-value')].map(cell=>cell.textContent),\n      types:[...row.querySelectorAll('.ds-cell-type')].map(cell=>cell.textContent),\n    })));\n    rows.push(...view.map(row=>row.values));types.push(...view.map(row=>row.types));\n    need(rows.length<=expected.rows.length,'DATASETTE_BROWSER_ROWS_OVERFLOW');\n    const next=page.locator('#ds-row-pages button').nth(1);\n    if(await next.isDisabled())break;\n    const wanted=expected.rows[rows.length][0] === '' ? '\"\"' : expected.rows[rows.length][0] === null ? 'null' : String(expected.rows[rows.length][0]);\n    await next.click();\n    await page.waitForFunction(value=>document.querySelector('#ds-source-rows tbody tr .ds-cell-value')?.textContent===value,wanted,{timeout:120000});\n  }\n  const textRows=expected.rows.map(row=>row.map(value=>value===''?'\"\"':value===null?'null':String(value)));\n  need(same(rows,textRows)&&same(types,expected.cellTypes),'DATASETTE_BROWSER_SOURCE_VALUES_CHANGED');\n  return {rows:rows.length,columns:expected.columns.length,exactTypesAndValues:true};\n}\nasync function browserDownload(page,container,destination) {\n  const pending=page.waitForEvent('download');\n  await page.locator(container).getByRole('button',{name:/Download original package/}).click();\n  const download=await pending;\n  await download.saveAs(destination);\n  const raw=await readFile(destination);\n  return {file:destination,name:download.suggestedFilename(),bytes:raw.length,sha256:sha(raw)};\n}\nfunction absolute(value,name) {\n  need(typeof value==='string'&&isAbsolute(value)&&resolve(value)===value,'DATASETTE_INSTALLED_INPUT',name+' must be an absolute canonical path.');\n  return value;\n}\n\n/**\n * Input uses the completed publisher-programme-result.json and its same received workspace.\n * This continuation creates its own install and managed Applications records. Source acquisition,\n * extraction, publication, payment and the separate customer Analysis run retain their original owners.\n */\nexport async function runInstalledDatasetteBrowser({\n  repository,sourceRef,publisherProgrammeDirectory,outputDirectory,\n  playwrightModule='playwright',browserExecutable,port=53173,receivedPort=53174,\n  offline=false,npmCache,python='python3',npm='npm',\n}={}) {\n  for(const [name,value] of Object.entries({repository,publisherProgrammeDirectory,outputDirectory}))\n    absolute(value,name);\n  need(Number.isInteger(port)&&port>0&&port<65536&&Number.isInteger(receivedPort)&&receivedPort>0&&receivedPort<65536&&port!==receivedPort,\n    'DATASETTE_INSTALLED_EXPLICIT_PORTS');\n  need(Number(process.versions.node.split('.')[0])>=24,'DATASETTE_INSTALLED_NODE_24');\n  await mkdir(outputDirectory,{recursive:true,mode:0o700});\n  need(await realpath(outputDirectory)===outputDirectory,'DATASETTE_INSTALLED_CANONICAL_DIRECTORY');\n  const stateFile=join(outputDirectory,'installed-browser-journey.json');\n  let state=await exists(stateFile)?await readJSON(stateFile):null;\n  if(state)need(state.schema==='stellar-forge.datasette-installed-browser-journey.v1',\n    'DATASETTE_INSTALLED_JOURNEY_CHANGED');\n  let sourceResolution=sourceRef===undefined?'repository-head':'explicit';\n  if(sourceRef===undefined){\n    if(state){\n      sourceRef=state.input?.sourceRef;sourceResolution='retained-original';\n    }else{\n      const git=await runCommand('git',['-C',repository,'rev-parse','--verify','HEAD^{commit}']);\n      sourceRef=git.stdout.trim();\n    }\n  }\n  need(/^[a-f0-9]{40}$/.test(sourceRef??''),'DATASETTE_INSTALLED_SOURCE_REF');\n  const programme=await readJSON(join(publisherProgrammeDirectory,'publisher-programme-result.json'));\n  const sourceState=await readJSON(join(publisherProgrammeDirectory,'publisher-programme-state.json'));\n  need(sourceState.phase==='COMPLETE'&&programme.sourceRefresh?.state==='COMPLETE'&&programme.mcpReceiving?.passed&&\n    programme.managedUpload?.resumed?.state==='COMPLETE','DATASETTE_INSTALLED_COMPLETED_ORIGINAL_PROGRAMME',\n    'Continue the completed original publisher programme and its retained received workspace.');\n  const workspaceDirectory=absolute(programme.receiving.directory,'Original received workspace');\n  const sourceDeclaration=await readJSON(join(workspaceDirectory,'workspace.json'));\n  const input={repository,sourceRef,publisherProgrammeDirectory,outputDirectory,workspaceDirectory,\n    workspaceId:sourceDeclaration.workspaceId,port,receivedPort,playwrightModule,browserExecutable:browserExecutable??null};\n  if(state)need(same(state.input,input),'DATASETTE_INSTALLED_ORIGINAL_INPUT_CHANGED');\n  else state={schema:'stellar-forge.datasette-installed-browser-journey.v1',id:randomUUID(),input,\n    sourceResolution:{kind:sourceResolution,commit:sourceRef},startedAt:stamp(),phase:'CREATED',checks:{},applications:{},runs:[],browserErrors:[],artifacts:[]};\n  const save=async phase=>{state.phase=phase;state.updatedAt=stamp();await retain(stateFile,state);\n    process.stderr.write(JSON.stringify({operation:'datasette-installed-browser',phase,at:state.updatedAt})+'\\n');};\n  if(state.phase==='COMPLETE'){\n    for(const file of state.artifacts)need(sha(await readFile(file.file))===file.sha256,'DATASETTE_INSTALLED_ARTIFACT_CHANGED');\n    return {state:'COMPLETE',reused:true,report:stateFile,checks:state.checks,artifacts:state.artifacts};\n  }\n  const fromRepo=path=>import(pathToFileURL(join(repository,path)).href);\n  let apps,context,browserAttempt,activeApp=null,stopActive=null,failed=false;\n  try{\n    await save('ORIGINAL_PROGRAMME_RETAINED');\n    const {buildDistribution}=await fromRepo(DIST+'build.mjs');\n    const buildDirectory=join(outputDirectory,'build');\n    state.build=await buildDistribution({repository,ref:sourceRef,output:buildDirectory,\n      selection:'datasette',offline:true,resume:await exists(buildDirectory),python,onProgress:event=>{\n        if(['selected','materializing','packaged','reused'].includes(event.phase))\n          process.stderr.write(JSON.stringify({operation:'datasette-installed-build',...event})+'\\n');\n      }});\n    need(state.build.sourceCommit===sourceRef&&typeof state.build.archive==='string','DATASETTE_INSTALLED_BUILD_SOURCE');\n    if(!state.artifacts.some(file=>file.file===state.build.archive))state.artifacts.push({file:state.build.archive,bytes:state.build.archiveBytes,sha256:state.build.sha256});\n    await save('BUILT');\n    const installer=await fromRepo(DIST+'runtime-install.mjs');\n    if(!state.installation){\n      state.installation={archive:state.build.archive,sha256:state.build.sha256,\n        attempts:[{directory:join(outputDirectory,'runtime'),from:null,createdAt:stamp()}]};\n      await save('RUNTIME_PREPARATION_INPUT_RETAINED');\n    }\n    need(state.installation.archive===state.build.archive&&state.installation.sha256===state.build.sha256,\n      'DATASETTE_INSTALLED_PREPARATION_INPUT_CHANGED');\n    let preparation=state.installation.attempts.at(-1);\n    need(preparation&&isAbsolute(preparation.directory),'DATASETTE_INSTALLED_PREPARATION_REQUIRED');\n    let runtimeDirectory=preparation.directory;\n    // The original installer creates a private directory before its plan and state.\n    // Retain an interrupted directory, and use its original recovery operation in\n    // a new, journaled target. Dependency-install retries keep the prepared target.\n    while(!await exists(join(runtimeDirectory,'runtime-install.json'))||\n      !await exists(join(runtimeDirectory,'install-state.json'))){\n      if(await exists(runtimeDirectory)){\n        const hasPreparation=await exists(join(runtimeDirectory,'preparation.json'));\n        preparation.interruptedAt??=stamp();\n        preparation.observed={preparation:hasPreparation,\n          plan:await exists(join(runtimeDirectory,'runtime-install.json')),\n          state:await exists(join(runtimeDirectory,'install-state.json'))};\n        const previousDirectory=runtimeDirectory;\n        const recoveryFrom=hasPreparation?previousDirectory:preparation.from;\n        runtimeDirectory=join(outputDirectory,'runtime-recovery-'+String(state.installation.attempts.length).padStart(4,'0'));\n        preparation={directory:runtimeDirectory,from:recoveryFrom??null,previousDirectory,createdAt:stamp()};\n        state.installation.attempts.push(preparation);\n        await save('RUNTIME_RECOVERY_INPUT_RETAINED');\n        continue;\n      }\n      const prepared=preparation.from\n        ?await installer.recoverRuntime({from:preparation.from,directory:runtimeDirectory,\n          install:false,python,offline,npm,cache:npmCache??null})\n        :await installer.prepareRuntimeInstall({directory:runtimeDirectory,archive:state.build.archive,\n          sha256:state.build.sha256,native:false,features:[],operator:false,python,\n          from:preparation.previousDirectory??null});\n      need(prepared.directory===runtimeDirectory&&prepared.sourceCommit===sourceRef,\n        'DATASETTE_INSTALLED_PREPARATION_RESULT');\n      state.prepared=prepared;preparation.result=prepared;preparation.completedAt=stamp();\n      await save('RUNTIME_PREPARED');\n    }\n    state.installation.directory=runtimeDirectory;\n    await save('RUNTIME_INSTALL_INPUT_RETAINED');\n    state.runtime=await installer.installRuntime({directory:runtimeDirectory,offline,npm,cache:npmCache??null});\n    const runtime=await installer.inspectRuntimeInstall({directory:runtimeDirectory,source:true,load:true,python});\n    need(runtime.status==='READY'&&runtime.ready&&runtime.sourceCommit===sourceRef,'DATASETTE_INSTALLED_RUNTIME_READY');\n    state.runtime=runtime;\n    const fromInstalled=path=>import(pathToFileURL(join(runtime.sourceRoot,path)).href);\n    const packageRoot=dirname(runtime.sourceRoot),manifest=await readJSON(join(packageRoot,'manifest.json'));\n    const packageJSON=await readJSON(join(packageRoot,'package.json'));\n    const {readDistributionSpecification}=await fromInstalled(DIST+'specification.mjs');\n    const {spec}=await readDistributionSpecification({sourceRoot:runtime.sourceRoot});\n    need(manifest.sourceSelection?.id==='datasette','DATASETTE_INSTALLED_SELECTION');\n    for(const command of ['datasette','datasette-application','datasette-mcp','datasette-analysis'])\n      need(typeof spec.commands[command]==='string','DATASETTE_INSTALLED_COMMAND_MISSING',command);\n    for(const entry of ['./seller/datasette/client','./operator/datasette','./merchant/mcp/datasette/client'])\n      need(typeof packageJSON.exports[entry]?.types==='string'&&typeof packageJSON.exports[entry]?.import==='string',\n        'DATASETTE_INSTALLED_TYPED_EXPORT',entry);\n    const rawArchive=await readFile(join(runtime.sourceRoot,WRI));\n    need(sha(rawArchive)===ARCHIVE_SHA&&manifest.files.some(file=>file.path===WRI&&file.sha256===ARCHIVE_SHA),\n      'DATASETTE_INSTALLED_ORIGINAL_GZIP');\n    const pythonTypes=manifest.files.filter(file=>file.path.includes('/datasette-analysis/')&&file.path.endsWith('.pyi'));\n    need(pythonTypes.length>0,'DATASETTE_INSTALLED_PYTHON_TYPES');\n    state.installedSource={sourceRoot:runtime.sourceRoot,sourceCommit:sourceRef,sourceSelection:manifest.sourceSelection,\n      originalArchive:{bytes:rawArchive.length,sha256:sha(rawArchive)},pythonTypes,\n      commands:Object.fromEntries(['datasette','datasette-application','datasette-mcp','datasette-analysis'].map(name=>[name,spec.commands[name]]))};\n    state.checks={...state.checks,selectedSourceBuilt:true,installedRuntimeReady:true,originalGzipRetained:true,pythonTypesRetained:true,typedClientExports:true};\n    await save('INSTALLED_SOURCE_VERIFIED');\n    const runtimeModel=await fromInstalled(DIST+'runtime-workspace/model.mjs');\n    if(!state.applicationWorkspace){\n      state.applicationWorkspace={attempts:[{directory:join(outputDirectory,'applications'),createdAt:stamp()}]};\n      await save('APPLICATION_WORKSPACE_INPUT_RETAINED');\n    }\n    let applicationPreparation=state.applicationWorkspace.attempts.at(-1);\n    let appsDirectory=applicationPreparation.directory;\n    while(!await exists(join(appsDirectory,'workspace.json'))){\n      if(await exists(appsDirectory)){\n        need(!Object.values(state.applications).some(item=>item.saved),\n          'DATASETTE_INSTALLED_ORIGINAL_APPLICATION_WORKSPACE_MISSING');\n        applicationPreparation.interruptedAt??=stamp();\n        const previousDirectory=appsDirectory;\n        appsDirectory=join(outputDirectory,'applications-recovery-'+\n          String(state.applicationWorkspace.attempts.length).padStart(4,'0'));\n        applicationPreparation={directory:appsDirectory,previousDirectory,createdAt:stamp()};\n        state.applicationWorkspace.attempts.push(applicationPreparation);\n        await save('APPLICATION_WORKSPACE_RECOVERY_RETAINED');\n        continue;\n      }\n      applicationPreparation.result=await runtimeModel.createRuntimeWorkspace({directory:appsDirectory});\n      applicationPreparation.completedAt=stamp();\n      await save('APPLICATION_WORKSPACE_CREATED');\n    }\n    apps=await runtimeModel.openRuntimeWorkspace({directory:appsDirectory});\n    const applicationConfig=await readJSON(join(appsDirectory,'workspace.json'));\n    need(!state.applicationWorkspace.workspaceId||\n      state.applicationWorkspace.workspaceId===applicationConfig.workspaceId,\n      'DATASETTE_INSTALLED_ORIGINAL_APPLICATION_WORKSPACE_CHANGED');\n    state.applicationWorkspace.directory=appsDirectory;\n    state.applicationWorkspace.workspaceId=applicationConfig.workspaceId;\n    applicationPreparation.result??=applicationConfig;\n    await save('APPLICATION_WORKSPACE_RETAINED');\n    const attachment=await apps.attach({directory:runtimeDirectory,label:'Datasette complete installed receiving'});\n    const ensureApplication=async(role,directory,selectedPort)=>{\n      let item=state.applications[role];\n      if(!item){item=state.applications[role]={requestId:randomUUID(),directory,port:selectedPort};await save('APPLICATION_INPUT_RETAINED');}\n      if(!item.review){\n        item.review=await apps.applicationsReview({runtimeId:attachment.runtimeId,kind:'datasette',\n          label:role==='source'?'Datasette original received publisher':'Datasette browser-received workspace',\n          settings:{workspaceDirectory:directory,connectionFile:join(directory,'connection.json'),port:selectedPort}});\n        await save('APPLICATION_REVIEWED');\n      }\n      if(!item.saved){item.saved=await apps.applicationsSave({requestId:item.requestId,reviewId:item.review.id});await save('APPLICATION_SAVED');}\n      let selected=(await apps.applicationsState()).applications.find(app=>app.id===item.saved.applicationId);\n      if(!selected?.release){\n        // Save may have retained the binding before its worker launch returned.\n        // applicationsConnect reopens that same adoption, including queued,\n        // interrupted and failed worker states; its request identity is native.\n        item.connections??=[];\n        const connection={at:stamp(),applicationId:item.saved.applicationId};\n        item.connections.push(connection);await save('APPLICATION_CONNECTION_RETAINED');\n        connection.result=await apps.applicationsConnect({applicationId:item.saved.applicationId});\n        await save('APPLICATION_CONNECTING');\n        selected=await waitFor(async()=>(await apps.applicationsState()).applications.find(app=>app.id===item.saved.applicationId),\n          value=>Boolean(value?.release)||value?.phase==='UNAVAILABLE'||\n            !value?.adoption?.active&&['FAILED','INTERRUPTED'].includes(value?.adoption?.phase),\n          'The original managed runtime adoption did not settle.',300000);\n      }\n      need(selected?.release,'DATASETTE_INSTALLED_APPLICATION_ADOPTION',JSON.stringify(selected));\n      item.connected={at:stamp(),release:selected.release,home:selected.home};await save('APPLICATION_CONNECTED');\n      return item;\n    };\n    const startApplication=async item=>{\n      const applicationId=item.saved.applicationId;\n      const readApplication=async()=>(await apps.applicationsState()).applications.find(app=>app.id===applicationId);\n      let selected=await readApplication();\n      need(selected,'DATASETTE_INSTALLED_APPLICATION_MISSING');\n      if(selected.phase==='STOPPING'){\n        activeApp={applicationId,operationId:selected.current.id};\n        selected=await waitFor(readApplication,value=>!value?.current?.active,\n          'The original retained application stop did not settle.',30000);\n        activeApp=null;\n      }\n      if(selected.phase!=='RUNNING'){\n        if(selected.current&&(selected.current.active||\n          ['PENDING','QUEUED','RUNNING','INTERRUPTED'].includes(selected.current.phase))){\n          activeApp={applicationId,operationId:selected.current.id};\n          if(!selected.current.active){\n            item.recoveries??=[];\n            const recovery={...activeApp,at:stamp()};\n            item.recoveries.push(recovery);await save('APPLICATION_RECOVERY_RETAINED');\n            recovery.result=await apps.applicationsRecover(activeApp);\n            await save('APPLICATION_RECOVERING');\n          }\n        }else{\n          // A start input is saved before dispatch. Reuse an input that never\n          // reached its native run record after an interrupted response.\n          let run=state.runs.findLast(value=>value.applicationId===applicationId&&!value.dispatched&&\n            value.requestId!==selected.current?.id&&!state.stops?.some(stop=>stop.operationId===value.requestId));\n          if(!run){\n            const review=await apps.applicationsStartReview({applicationId});\n            run={applicationId,requestId:randomUUID(),reviewId:review.id,startedAt:stamp()};\n            state.runs.push(run);await save('APPLICATION_START_RETAINED');\n          }\n          activeApp={applicationId,operationId:run.requestId};\n          run.result=await apps.applicationsStart({applicationId,requestId:run.requestId,reviewId:run.reviewId});\n          run.dispatched=stamp();await save('APPLICATION_START_DISPATCHED');\n        }\n        selected=await waitFor(readApplication,\n          value=>['RUNNING','FAILED','UNAVAILABLE','INTERRUPTED','STOPPED'].includes(value?.phase),\n          'The managed original Datasette application did not announce its listener.',120000);\n      }\n      need(selected?.phase==='RUNNING'&&selected.current?.privateUrl,'DATASETTE_INSTALLED_APPLICATION_START',JSON.stringify(selected));\n      const url=new URL(selected.current.privateUrl);\n      need(url.hostname==='127.0.0.1'&&url.protocol==='http:'&&Number(url.port)===item.port,'DATASETTE_INSTALLED_APPLICATION_ORIGIN');\n      activeApp={applicationId:selected.id,operationId:selected.current.id};\n      const announcement=await readJSON(join(item.directory,'connection.json'));\n      need(announcement.url===url.href&&announcement.workspaceId===input.workspaceId,'DATASETTE_INSTALLED_ANNOUNCEMENT');\n      item.starts??=[];item.starts.push({at:stamp(),operationId:selected.current.id,announcement});\n      await save('APPLICATION_RUNNING');return announcement;\n    };\n    const stopApplication=async({cleanup=false}={})=>{\n      if(!activeApp)return;\n      const stopping=activeApp;\n      if(cleanup){\n        const selected=(await apps.applicationsState()).applications.find(app=>app.id===stopping.applicationId);\n        if(!selected?.current?.active){\n          state.cleanupObservations??=[];state.cleanupObservations.push({at:stamp(),...stopping,selected});\n          activeApp=null;return;\n        }\n      }\n      await apps.applicationsStop(stopping);\n      const stopped=await waitFor(async()=>(await apps.applicationsState()).applications.find(app=>app.id===stopping.applicationId),\n        value=>!value?.current?.active&&['STOPPED','FAILED','CANCELLED'].includes(value?.phase),\n        'The original managed application did not stop.',30000);\n      need(stopped.phase==='STOPPED','DATASETTE_INSTALLED_APPLICATION_STOP',JSON.stringify(stopped));\n      state.stops??=[];state.stops.push({at:stamp(),...stopping,result:stopped.current.result});\n      activeApp=null;await save('APPLICATION_STOPPED');\n    };\n    stopActive=()=>stopApplication({cleanup:true});\n    const sourceApp=await ensureApplication('source',workspaceDirectory,port);\n    let announcement=await startApplication(sourceApp);\n    const {createDatasetteClient}=await fromInstalled(SDK+'client.mjs');\n    let native=createDatasetteClient({url:announcement.url,expectedWorkspaceId:input.workspaceId});\n    const baseline=await native.dispatch('editions.inspect',{id:'wri-geothermal',offset:0,limit:250});\n    need(baseline.editionSha256===EDITION_SHA&&baseline.rows.length===189&&same(baseline.columns,COLUMNS),\n      'DATASETTE_INSTALLED_ORIGINAL_EDITION');\n    const moduleName=isAbsolute(playwrightModule)?pathToFileURL(playwrightModule).href:playwrightModule;\n    const browser=await import(moduleName);\n    const chromium=browser.chromium??browser.default?.chromium;\n    need(typeof chromium?.launchPersistentContext==='function','DATASETTE_INSTALLED_BROWSER_RUNTIME');\n    browserAttempt={id:randomUUID(),startedAt:stamp(),errorOffset:state.browserErrors.length};\n    state.browserAttempts??=[];state.browserAttempts.push(browserAttempt);\n    await save('BROWSER_ATTEMPT_RETAINED');\n    const openBrowser=async(url,width=1440,height=1000)=>{\n      context=await chromium.launchPersistentContext(join(outputDirectory,'browser-profile'),{\n        headless:true,viewport:{width,height},acceptDownloads:true,\n        ...(browserExecutable?{executablePath:browserExecutable}:{}),args:['--disable-dev-shm-usage']});\n      const page=context.pages()[0]??await context.newPage();\n      page.on('pageerror',error=>{state.browserErrors.push({at:stamp(),...issue(error)});});\n      await page.goto(url,{waitUntil:'domcontentloaded',timeout:120000});\n      await waitBrowser(page);return page;\n    };\n    let page=await openBrowser(announcement.url);\n    if(!state.checks.exactBrowserRows){\n      await page.locator('#ds-editions button').filter({hasText:baseline.edition.name}).first().click();\n      await waitBrowser(page);\n      state.browserRows=await readRenderedRows(page,baseline);\n      const aliases=await page.locator('#ds-projection input[data-field=\"name\"]').evaluateAll(inputs=>inputs.map(input=>input.value));\n      need(same(aliases,Object.keys(baseline.review.projection)),'DATASETTE_BROWSER_REVIEWED_ALIASES');\n      await page.locator('#ds-example').click();\n      need(same(JSON.parse(await page.locator('#ds-columns').inputValue()),COLUMNS),'DATASETTE_BROWSER_WRI_COLUMNS');\n      await page.locator('#ds-use-selection').click();\n      need(same(JSON.parse(await page.locator('#ds-columns').inputValue()),COLUMNS),'DATASETTE_BROWSER_REUSED_COLUMNS');\n      const window=baseline.capture.consistency.observationWindow;\n      const observation=await page.locator('#ds-observation').textContent();\n      need(window?.notBefore&&observation.includes(window.notBefore.replace('T',' ').replace(/Z$/,' UTC')),\n        'DATASETTE_BROWSER_OBSERVATION_WINDOW');\n      await page.screenshot({path:join(outputDirectory,'desktop-source.png'),fullPage:true});\n      state.checks.exactBrowserRows=true;state.checks.reviewedAliasesRetained=true;state.checks.wriSelectionReusable=true;\n      await save('BROWSER_SOURCE_REVIEWED');\n    }\n    const editionId='browser-received-wri';\n    if(!state.uploadResponse){\n      let interceptionError=null;\n      await page.route('**/api/upload?**',async route=>{\n        try{\n          if(route.request().method()!=='POST'){await route.continue();return;}\n          const response=await route.fetch(),value=await response.json();\n          need(response.status()===200,'DATASETTE_BROWSER_UPLOAD_HTTP',JSON.stringify(value));\n          if(value.state==='COMPLETE'&&!state.uploadResponse){\n            state.uploadResponse=value;await save('BROWSER_UPLOAD_NATIVE_COMPLETE');\n            await route.abort('connectionreset');\n          }else await route.fulfill({response});\n        }catch(error){interceptionError=error;await route.abort('failed').catch(()=>{});}\n      });\n      await page.locator('#ds-receive-kind').selectOption('source');\n      await page.locator('#ds-receive-id').fill(editionId);\n      await page.locator('#ds-receive-sha').fill(ARCHIVE_SHA);\n      await page.locator('#ds-receive-file').setInputFiles(join(runtime.sourceRoot,WRI));\n      await page.locator('#ds-receive-submit').click();\n      await waitFor(()=>{if(interceptionError)throw interceptionError;return journalFromBrowser(page);},\n        records=>records.some(record=>state.uploadResponse&&record.input?.uploadId===state.uploadResponse.uploadId&&record.state==='UNCERTAIN'),\n        'The browser did not retain the uncertain original completed-upload response.');\n      state.browserUploadBeforeRestart=(await journalFromBrowser(page)).find(record=>record.input?.uploadId===state.uploadResponse.uploadId);\n      need(state.browserUploadBeforeRestart.receiving.id===editionId,'DATASETTE_BROWSER_RECEIVING_IDENTITY');\n      await page.unroute('**/api/upload?**');await save('BROWSER_UPLOAD_RESPONSE_INTERRUPTED');\n    }\n    if(!state.checks.browserUploadReceivingRecovery){\n      await context.close();context=null;await stopApplication();\n      const previousInstance=announcement.instanceId;\n      announcement=await startApplication(sourceApp);\n      need(announcement.instanceId!==previousInstance&&Number(new URL(announcement.url).port)===port,'DATASETTE_BROWSER_SAME_ORIGIN_RESTART');\n      native=createDatasetteClient({url:announcement.url,expectedWorkspaceId:input.workspaceId});\n      page=await openBrowser(announcement.url);\n      need(await page.locator('#ds-receive-file').evaluate(input=>input.files.length)===0,'DATASETTE_BROWSER_FILE_RESELECTED');\n      const existingUpload=(await journalFromBrowser(page)).find(record=>record.input?.uploadId===state.uploadResponse.uploadId);\n      if(existingUpload?.state!=='COMPLETE'){\n        await page.locator('#ds-pending-inspect').click();await waitBrowser(page);\n        const uploaded=(await journalFromBrowser(page)).find(record=>record.input?.uploadId===state.uploadResponse.uploadId);\n        need(['UPLOADED','RECEIVING','UNCERTAIN'].includes(uploaded?.state)&&!await page.locator('#ds-pending').isHidden(),\n          'DATASETTE_BROWSER_UPLOAD_PREMATURELY_FINISHED');\n        await page.locator('#ds-pending-retry').click();await waitBrowser(page);\n      }\n      const actual=await native.dispatch('editions.inspect',{id:editionId,offset:0,limit:250});\n      const finished=(await journalFromBrowser(page)).find(record=>record.input?.uploadId===state.uploadResponse.uploadId);\n      need(actual.editionSha256===EDITION_SHA&&actual.rows.length===189&&finished?.state==='COMPLETE'&&\n        finished.receivingInput.sha256===ARCHIVE_SHA&&finished.receivingInput.id===editionId,\n        'DATASETTE_BROWSER_COMPLETE_RECEIVING_RECOVERY');\n      state.browserUploadAfterRestart=finished;state.checks.browserUploadReceivingRecovery=true;\n      await save('BROWSER_RECEIVING_RECOVERED');\n    }\n    if(!state.checks.browserNativeRequestRecovery){\n      await page.locator('#ds-editions button').filter({hasText:baseline.edition.name}).last().click();\n      await waitBrowser(page);\n      if(!state.selectionResponse){\n        let interceptionError=null;\n        await page.route('**/api/operation',async route=>{\n          try{\n            const body=route.request().postDataJSON();\n            if(body?.operation!=='source.select'||state.selectionResponse){await route.continue();return;}\n            const response=await route.fetch(),value=await response.json();\n            need(response.status()===200,'DATASETTE_BROWSER_SELECTION_HTTP',JSON.stringify(value));\n            state.selectionInput=body.input;state.selectionResponse=value;await save('BROWSER_SELECTION_NATIVE_COMPLETE');\n            await route.abort('connectionreset');\n          }catch(error){interceptionError=error;await route.abort('failed').catch(()=>{});}\n        });\n        await page.locator('#ds-select-edition').click();\n        await waitFor(()=>{if(interceptionError)throw interceptionError;return journalFromBrowser(page);},\n          records=>records.some(record=>state.selectionInput?.requestId&&record.input?.requestId===state.selectionInput.requestId&&record.state==='UNCERTAIN'),\n          'The original selected-source request was not retained after its response ended.');\n        await page.unroute('**/api/operation');\n      }\n      const pendingSelection=(await journalFromBrowser(page)).find(record=>record.input?.requestId===state.selectionInput.requestId);\n      if(pendingSelection?.state!=='COMPLETE'){await page.locator('#ds-pending-inspect').click();await waitBrowser(page);}\n      const receipt=await native.dispatch('requests.inspect',{requestId:state.selectionInput.requestId});\n      const local=(await journalFromBrowser(page)).find(record=>record.input?.requestId===state.selectionInput.requestId);\n      need(receipt.state==='COMPLETE'&&local?.state==='COMPLETE'&&same(receipt.result,state.selectionResponse),\n        'DATASETTE_BROWSER_NATIVE_REQUEST_RECOVERY');\n      state.selectionReceipt=receipt;state.checks.browserNativeRequestRecovery=true;\n      await save('BROWSER_ORIGINAL_REQUEST_RECOVERED');\n    }\n    if(!state.sourceDownload){\n      await page.locator('#ds-export-edition').click();await waitBrowser(page);\n      const receipt=JSON.parse(await page.locator('#ds-export-result pre').textContent());\n      const downloaded=await browserDownload(page,'#ds-export-result',join(outputDirectory,'browser-source.sfds.gz'));\n      need(downloaded.sha256===receipt.sha256,'DATASETTE_BROWSER_SOURCE_DOWNLOAD');\n      state.sourceDownload=downloaded;state.artifacts.push(downloaded);await save('BROWSER_SOURCE_DOWNLOADED');\n    }\n    if(!state.workspaceDownload){\n      await page.locator('#ds-export-workspace').click();await waitBrowser(page);\n      const receipt=JSON.parse(await page.locator('#ds-workspace-export-result pre').textContent());\n      const downloaded=await browserDownload(page,'#ds-workspace-export-result',join(outputDirectory,'browser-workspace.zip'));\n      need(downloaded.sha256===receipt.sha256,'DATASETTE_BROWSER_WORKSPACE_DOWNLOAD');\n      state.workspaceDownload=downloaded;state.workspaceExport=receipt;state.artifacts.push(downloaded);await save('BROWSER_WORKSPACE_DOWNLOADED');\n    }\n    const browserReceivedDirectory=join(outputDirectory,'browser-received-workspace');\n    if(!state.workspaceReceived){\n      await page.locator('#ds-receive-kind').selectOption('workspace');\n      await page.locator('#ds-receive-directory').fill(browserReceivedDirectory);\n      await page.locator('#ds-receive-sha').fill(state.workspaceDownload.sha256);\n      await page.locator('#ds-receive-file').setInputFiles(state.workspaceDownload.file);\n      await page.locator('#ds-receive-submit').click();await waitBrowser(page);\n      const result=JSON.parse(await page.locator('#ds-receive-result pre').textContent());\n      need(result.directory===browserReceivedDirectory&&result.sha256===state.workspaceDownload.sha256,\n        'DATASETTE_BROWSER_WORKSPACE_RECEIVING');\n      state.workspaceReceived=result;await save('BROWSER_WORKSPACE_RECEIVED');\n    }\n    await context.close();context=null;await stopApplication();\n    const copied=await ensureApplication('received',browserReceivedDirectory,receivedPort);\n    const copiedAnnouncement=await startApplication(copied);\n    const copiedNative=createDatasetteClient({url:copiedAnnouncement.url,expectedWorkspaceId:input.workspaceId});\n    const copiedEdition=await copiedNative.dispatch('editions.inspect',{id:editionId,offset:0,limit:250});\n    need(copiedEdition.editionSha256===EDITION_SHA&&same(copiedEdition.rows,baseline.rows),\n      'DATASETTE_BROWSER_WORKSPACE_REOPEN');\n    const cliCommand=await installer.runtimeCommand({directory:runtimeDirectory,args:['datasette','status',\n      '--url-file',join(browserReceivedDirectory,'connection.json'),'--expected-workspace-id',input.workspaceId]});\n    const cli=await runCommand(cliCommand.executable,cliCommand.args,{cwd:cliCommand.cwd});\n    need(JSON.parse(cli.stdout).workspaceId===input.workspaceId,'DATASETTE_INSTALLED_CLI_REOPEN');\n    state.installedCommand={...cliCommand,code:cli.code,workspaceId:input.workspaceId};\n    page=await openBrowser(copiedAnnouncement.url,390,844);\n    await page.locator('#ds-editions button').filter({hasText:baseline.edition.name}).last().click();await waitBrowser(page);\n    const layout=await page.evaluate(()=>({viewport:innerWidth,page:document.documentElement.scrollWidth,\n      tables:[...document.querySelectorAll('.table-wrap')].filter(element=>element.scrollWidth>element.clientWidth).length}));\n    need(layout.page<=layout.viewport+1,'DATASETTE_BROWSER_MOBILE_OVERFLOW',JSON.stringify(layout));\n    state.mobile={...layout,workspaceId:input.workspaceId,editionSha256:copiedEdition.editionSha256};\n    await page.screenshot({path:join(outputDirectory,'mobile-received.png'),fullPage:true});\n    await context.close();context=null;await stopApplication();\n    for(const name of ['desktop-source.png','mobile-received.png']){\n      const file=join(outputDirectory,name),raw=await readFile(file);\n      if(!state.artifacts.some(item=>item.file===file))state.artifacts.push({file,bytes:raw.length,sha256:sha(raw)});\n    }\n    const currentBrowserErrors=state.browserErrors.slice(browserAttempt.errorOffset);\n    browserAttempt.endedAt=stamp();browserAttempt.errorCount=currentBrowserErrors.length;\n    need(currentBrowserErrors.length===0,'DATASETTE_BROWSER_RUNTIME_ERRORS',JSON.stringify(currentBrowserErrors));\n    state.checks={...state.checks,managedReviewSaveStart:true,managedStopReopen:true,stableBrowserOrigin:true,\n      completeSourceBrowserDownload:true,completeWorkspaceBrowserDownload:true,completeWorkspaceBrowserReceiving:true,\n      receivedApplicationReopened:true,installedCommandReopened:true,mobileOperatorLayout:true};\n    state.completedAt=stamp();await save('COMPLETE');\n    return {state:'COMPLETE',report:stateFile,sourceCommit:sourceRef,workspaceId:input.workspaceId,\n      checks:state.checks,installedRuntime:runtimeDirectory,receivedWorkspace:browserReceivedDirectory,artifacts:state.artifacts};\n  }catch(error){\n    failed=true;\n    if(browserAttempt){browserAttempt.endedAt=stamp();browserAttempt.errorCount=state.browserErrors.length-browserAttempt.errorOffset;}\n    state.error=issue(error);state.phase='INTERRUPTED';state.updatedAt=stamp();await retain(stateFile,state);throw error;\n  }\n  finally{\n    if(context)await context.close().catch(error=>process.stderr.write(JSON.stringify(issue(error))+'\\n'));\n    if(activeApp&&apps)await (stopActive?stopActive():apps.applicationsStop(activeApp)).catch(error=>process.stderr.write(JSON.stringify(issue(error))+'\\n'));\n    await apps?.close();\n    if(failed){state.phase='INTERRUPTED';state.updatedAt=stamp();await retain(stateFile,state);}\n  }\n}\nif(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){\n  try{\n    need(process.argv.length===4&&process.argv[2]==='--input'&&isAbsolute(process.argv[3]),\n      'DATASETTE_INSTALLED_INPUT','Use --input ABSOLUTE_JSON_FILE.');\n    process.stdout.write(JSON.stringify(await runInstalledDatasetteBrowser(await readJSON(process.argv[3])))+'\\n');\n  }catch(error){process.stderr.write(JSON.stringify(issue(error))+'\\n');process.exitCode=1;}\n}\n",
+      "bytes": 39526,
+      "sha256": "764bd5ac25424029f70403739e6ea79a81235d522b9b8ecbb679fbdad2d031fa",
+      "git_blob_sha": "9761570c32e75209662ccc6f4bff90b57a2839f4",
+      "source_ref": "23e6efbab33e6c74d49b027fc599a06ecd5e50fe"
+    },
+    {
+      "path": "operations/scf-datasette-installed-browser-20261012/README.md",
+      "preimageGitBlob": "2b545128b5a789b608dbab6501e2c8f33cbbac78",
+      "preimageSha256": "11b9bde6067da41e4b4f074daf00a4e3b7029b41792201723c715cbe70588560",
+      "content": "# Installed Datasette application and browser continuation\n\nThis programme continues the already completed original publisher journey into the complete installed Datasette selection. It uses the maintained distribution builder, runtime installer, Applications review/save/start/stop operations, original Datasette HTTP client and a real Chromium browser.\n\nThe caller supplies the exact retained publisher programme directory and the full Git checkout containing the selected merged commit. Run the existing publisher programme through COMPLETE first so its received workspace, original WRI edition, merchant receiving files and finished shutdown/upload record are available.\n\n## Run\n\nSelect Node 24 and the existing Playwright installation on the accepting host. Supply its module path when it is outside normal Node resolution. Retain an explicit source port and a distinct receiving port; browser recovery depends on reopening the same origin. The caller accepts both named chromium exports and the default.chromium export exposed by an existing CommonJS Playwright entry; it uses that same installed browser implementation.\n\n```json\n{\n  \"repository\": \"/absolute/public-commons-sprint-2026\",\n  \"sourceRef\": \"e22cb42649f327ddf887fabc9abad227e3441da9\",\n  \"publisherProgrammeDirectory\": \"/absolute/original-publisher-programme\",\n  \"outputDirectory\": \"/absolute/installed-datasette-continuation\",\n  \"playwrightModule\": \"/absolute/node_modules/playwright/index.mjs\",\n  \"port\": 53173,\n  \"receivedPort\": 53174,\n  \"offline\": false,\n  \"python\": \"python3\",\n  \"npm\": \"npm\"\n}\n```\n\nThe explicit sourceRef above is the immutable public source containing the complete Datasette selection, final browser recovery and customer Analysis SQL and query-job support. For a canonical repository that has its own commit history, omit sourceRef to resolve that checkout's HEAD to a complete commit SHA on the first invocation. The journey saves that resolved SHA with its original input before building. A rerun without sourceRef reuses the saved SHA even when repository HEAD has advanced; it never selects a new source implicitly. An explicitly supplied sourceRef must match the retained source on a rerun.\n\nAn existing populated npm cache may be supplied as npmCache; offline selects the maintained installer's offline dependency path. browserExecutable can select the host's installed Chromium executable.\n\n```sh\nnode operations/scf-datasette-installed-browser-20261012/run-installed.mjs --input /absolute/installed-browser-input.json\n```\n\nThe builder uses the pinned Git source with offline object reads. It creates a resumable complete Datasette product archive, then the original installer prepares and verifies that selected runtime. The full checkout must retain the source objects for that commit.\n\nThe journey records each runtime preparation target before invoking the maintained installer. If a preparation is interrupted before its complete plan and state are present, the next invocation preserves that directory and calls recoverRuntime into a retained recovery target. A partial dependency installation resumes in its same prepared directory. Managed Applications workspace initialization retains its chosen directory before creation. If creation ends before its complete workspace record exists, the next invocation preserves that original directory and records a separate recovery target before calling the original workspace creator. A completed workspace and its saved application identities always reopen in their original directory. Managed application reconnection uses applicationsConnect on the saved binding; pending and interrupted launches use applicationsRecover on the original run identity.\n\n## Whole workflow\n\nThe installed source is checked for the original WRI gzip, customer Python stubs, maintained command entries and typed client exports. The programme attaches that READY runtime to a new managed Applications workspace, reviews the original received publisher directory, saves its application and starts its maintained launcher.\n\nThe desktop browser reads all 189 original rows and their 26 source positions, comparing displayed values and explicit cell types with the native edition response. It reads the original projection aliases, observation bounds and reusable WRI column declaration.\n\nThe browser then uploads the actual original WRI archive. A single transport interception allows the native upload to finish and drops only its response. The browser and managed application close and reopen on the same explicit port. The saved browser input finishes source receiving from the completed archive without reselecting the file.\n\nA second actual response interruption exercises the original source-selection request receipt. The native source change completes once, and the browser resolves the saved requestId through the retained native request result.\n\nThe browser exports and downloads a complete source package and a complete source/publisher workspace ZIP, verifies the downloaded hashes, receives the ZIP into its own private directory and reopens that directory as a managed installed application. The installed Datasette command reads the same received workspace through its connection file. A mobile viewport opens the received edition, checks layout containment and retains a full screenshot.\n\nThe journey retains application reviews, start identities, stop outcomes, original upload/selection responses and downloaded archives in installed-browser-journey.json. Browser execution attempts retain their start time and error-history offset; a completed recovery checks its own error segment while preserving all earlier page errors. Screenshot completion is recorded after the image is written, and source/workspace downloads are marked complete only after their bytes match the original export receipt. Its normal completed result lists the product archive, source archive, workspace ZIP and desktop/mobile images. Continuing the same output directory retains the same source, publisher and receiving identities.\n\nThe separate customer Analysis programme continues its own analytical directory, saved queries, reports and workbook through its original receiver.\n",
+      "bytes": 6197,
+      "sha256": "17f99132a1eb80aa5c2e36d52d5a3b37e038e8be539719536b9aea6240aceddb",
+      "git_blob_sha": "2408d9cb22ac729105249fd65c3f23942e009a29",
+      "source_ref": "23e6efbab33e6c74d49b027fc599a06ecd5e50fe"
     }
   ],
   "current_checkpoint": {
-    "library_file_id": "libfile_974ec561b3988191a8e9d805702fc62e",
-    "file_id": "file_00000000c14c81f9a4ec5243fcbf50e9",
-    "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint(2).zip",
-    "current_version_number": 0,
-    "bytes": 8559933,
-    "sha256": "e97d3f0fc6be84aa49daaac204ce6e544a9ef106e78a3f698c786cc0b7b6c154"
+    "kind": "ordered_parts",
+    "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip",
+    "bytes": 227281857,
+    "sha256": "260c3b71361aeda2561f1d486933703ae921dc7dd8fdad359f9c2d87015a9962",
+    "members": 11098,
+    "manifest": {
+      "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/Datasette_Operating_Checkpoint_Parts.json",
+      "status": "succeeded",
+      "library_file_id": "libfile_e726231170f48191841c57f404e8ed17",
+      "file_id": "file_000000009c2081fdb0565a9e4b10a359",
+      "file_name": "Datasette_Operating_Checkpoint_Parts(3).json",
+      "current_version_number": 0
+    },
+    "parts": [
+      {
+        "order": 1,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-001",
+        "bytes": 10485760,
+        "sha256": "1af2b534feb1694b0210921f543c7b59b4797b6ce49542bc0ed94bc552168a65",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-001",
+          "status": "succeeded",
+          "library_file_id": "libfile_0aa606ff2fbc8191be67af284e766e73",
+          "file_id": "file_00000000f67c81f7b4e8371b6af1d7dc",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-001",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 2,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-002",
+        "bytes": 10485760,
+        "sha256": "a6b00ff3387a4b3d2a98c791d7d7d6ff293e0bf62d01b68a24032dc9be5b6b9a",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-002",
+          "status": "succeeded",
+          "library_file_id": "libfile_4708efa3ce0481919bb55ae56344b9b1",
+          "file_id": "file_0000000046e88230996a8dc33882fdba",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-002",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 3,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-003",
+        "bytes": 10485760,
+        "sha256": "3fc1e8b52414d37187f714a660c48215e5fae9a85a0c25002da68dda4204f8f7",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-003",
+          "status": "succeeded",
+          "library_file_id": "libfile_402f478651588191b49552b4940ab2a3",
+          "file_id": "file_0000000011a88230b323576f882116e7",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-003",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 4,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-004",
+        "bytes": 10485760,
+        "sha256": "5ec164fc2369c85231e5b86f54383dc5ce077c73fc35ec74b40378b14080a71a",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-004",
+          "status": "succeeded",
+          "library_file_id": "libfile_bcc9fc2622f08191ad231c1cca69ec7c",
+          "file_id": "file_00000000d17481fd9f32a6e26e76cdc0",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-004",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 5,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-005",
+        "bytes": 10485760,
+        "sha256": "ed1597bbb5bfb38a2f1ed49f5ae8d81ff0b860d1a441b4ea92bfb7dfc09b836f",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-005",
+          "status": "succeeded",
+          "library_file_id": "libfile_2888901964b48191954285a81aa77fbc",
+          "file_id": "file_000000002ba481fda2f1b4a383850054",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-005",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 6,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-006",
+        "bytes": 10485760,
+        "sha256": "b0df5076870881005ff67c0d7626be8539768b5d1aba7a5bfa43ff4797008951",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-006",
+          "status": "succeeded",
+          "library_file_id": "libfile_d0783beeac68819194ec7db8418e89d0",
+          "file_id": "file_0000000040cc81fdb5792802396e2307",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-006",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 7,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-007",
+        "bytes": 10485760,
+        "sha256": "4b09de62d417f8ab2f42a831572d86321fb3b99d4214a737c91edb869ef183d9",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-007",
+          "status": "succeeded",
+          "library_file_id": "libfile_c1f147156b008191863400bd75ac98de",
+          "file_id": "file_00000000abf482308db03ca4e88a37e6",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-007",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 8,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-008",
+        "bytes": 10485760,
+        "sha256": "6fe0cb9daaaa0092cb62730e3bbf7c46f3f313e96fbff8de6e56ad0152201dee",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-008",
+          "status": "succeeded",
+          "library_file_id": "libfile_fd4ed7cfcc08819196947cb5f80dfeac",
+          "file_id": "file_000000003ee881f7967271a2b839c395",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-008",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 9,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-009",
+        "bytes": 10485760,
+        "sha256": "d997e3c8c9575f988b23333e1377bc09f20fc4e59f1c9380b703b8018f22b03d",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-009",
+          "status": "succeeded",
+          "library_file_id": "libfile_98539eb751c481919b1c719a4f6b16aa",
+          "file_id": "file_000000002e1c81fd9d7ce732f83b1cb0",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-009",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 10,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-010",
+        "bytes": 10485760,
+        "sha256": "639a2fab322b4b3a960caa16b611ec5792ccb6cd83a0451cff4aefef73670bf1",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-010",
+          "status": "succeeded",
+          "library_file_id": "libfile_e76dd35913788191a3eb9c264b6a7b17",
+          "file_id": "file_00000000ce3c81fd8b0c241606aba8de",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-010",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 11,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-011",
+        "bytes": 10485760,
+        "sha256": "2e31eb6d8576796522973b71007e45408692418fb7f355347779a4320e4a1fbf",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-011",
+          "status": "succeeded",
+          "library_file_id": "libfile_3c2d00d7b7748191a15e06f2aa4a9d27",
+          "file_id": "file_00000000e4fc81f79a874d9be76665d4",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-011",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 12,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-012",
+        "bytes": 10485760,
+        "sha256": "26641f21f5f56ca95a29b873a9f102d3f26296b02087f260360b743dd9591e48",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-012",
+          "status": "succeeded",
+          "library_file_id": "libfile_da9d632515bc8191a07325024333546d",
+          "file_id": "file_00000000390882308598c71d56d4d4ba",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-012",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 13,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-013",
+        "bytes": 10485760,
+        "sha256": "24e7bd26e22ac6c25bbef337f053ce0aaf4f8f56cd32fe143c2400d72e3310bf",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-013",
+          "status": "succeeded",
+          "library_file_id": "libfile_5ff57c8514448191b31cf53a4201e7ca",
+          "file_id": "file_000000008ebc8230b74ba67204e595a9",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-013",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 14,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-014",
+        "bytes": 10485760,
+        "sha256": "3bcff4e2c59fd81d09c80a8c50341dd17696c964c292ec5336beb4970f0b5106",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-014",
+          "status": "succeeded",
+          "library_file_id": "libfile_32026e2439588191a918c8871be7b28a",
+          "file_id": "file_0000000064bc8230a7cf27407b8d9028",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-014",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 15,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-015",
+        "bytes": 10485760,
+        "sha256": "880805c43f658f390628e122475646d58d3ad550035fd9f9fa09d2de5a07f3e3",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-015",
+          "status": "succeeded",
+          "library_file_id": "libfile_a1e91b877cdc81918bae3ef777125c5b",
+          "file_id": "file_00000000faa481fb980856b5e87d2646",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-015",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 16,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-016",
+        "bytes": 10485760,
+        "sha256": "a69a2a0d1e28dd3ed38e76629df2a9cab654c775ad3996b4e7bd7a780fc0d860",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-016",
+          "status": "succeeded",
+          "library_file_id": "libfile_b61e9f0c80048191b1238ff6c57dea9e",
+          "file_id": "file_00000000164881f79f23022671387faf",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-016",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 17,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-017",
+        "bytes": 10485760,
+        "sha256": "618d3c4443f354d20a7e3f50ac4866d3c037741615af29d16684fc5e321173d5",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-017",
+          "status": "succeeded",
+          "library_file_id": "libfile_1c94a3e0d51081919e8415dbf8f7eb1d",
+          "file_id": "file_000000003a7082308548ad86f4c33a0f",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-017",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 18,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-018",
+        "bytes": 10485760,
+        "sha256": "4753d509cffe94f85176f8ad13b14815f36ee6bbe2ae09ab0e90ca8ae021c26b",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-018",
+          "status": "succeeded",
+          "library_file_id": "libfile_fd472f21d19c8191bab09bfb71682129",
+          "file_id": "file_00000000bf6881f79c2b5147e65e96b4",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-018",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 19,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-019",
+        "bytes": 10485760,
+        "sha256": "3834d823d56a56aee9b18ce32a4c501c5a8a9c7e0a9a1b4747bb06667afbe65f",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-019",
+          "status": "succeeded",
+          "library_file_id": "libfile_6d7fe722b3188191b7111e6412903361",
+          "file_id": "file_000000004c408230b25d7f2caee3ace5",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-019",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 20,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-020",
+        "bytes": 10485760,
+        "sha256": "3d2d21fb8f8480ee992afe5685ff3a6265a0acdfe3b67946b2c2584c5f74fc7c",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-020",
+          "status": "succeeded",
+          "library_file_id": "libfile_292d0dad78488191945fa8247eb470e4",
+          "file_id": "file_000000000f4481fdaf9d286b0bbb03cc",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-020",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 21,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-021",
+        "bytes": 10485760,
+        "sha256": "835285b627f45a1ff1f11ebe30a859fbef0be549952116b81b30c89a9fa1325f",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-021",
+          "status": "succeeded",
+          "library_file_id": "libfile_dcca5e36b7308191a4fc63e02a108c95",
+          "file_id": "file_000000004f4081fb98d9a4c7e24bc8bf",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-021",
+          "current_version_number": 0
+        }
+      },
+      {
+        "order": 22,
+        "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-022",
+        "bytes": 7080897,
+        "sha256": "fd3e0ca3a692df5e13365918c41598663765591efe505569823fbc7ad39e92f0",
+        "saved": {
+          "local_path": "/dev/datasette-publisher-a49aa-fq7r4j79/export/parts/Datasette_Publisher_Installed_Operating_Checkpoint.zip.part-022",
+          "status": "succeeded",
+          "library_file_id": "libfile_51d363feb7288191b2513048670d1a41",
+          "file_id": "file_00000000065881f79f58fa030af79f6d",
+          "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint.zip(3).part-022",
+          "current_version_number": 0
+        }
+      }
+    ]
   },
   "source_recovery": {
     "original_missing_assets": "Five complete original developer portal assets",
     "exports_directory": "Existing private merchant-exports directory",
-    "restored_inventory": "Preserve the original full native inventory; compare every source file by its complete identity across restores and retain current native modification times separately."
+    "restored_inventory": "Preserve the original full native inventory; compare every source file by its complete identity across restores and retain current native modification times separately.",
+    "complete_report": "Save the complete current operating report before the large checkpoint archive; retain and reuse its actual successful file receipt.",
+    "verified_transfer_release": "Release only this invocation's own complete received archive after full original-member restore and unchanged size/hash/stat verification; retain the original saved parts."
+  },
+  "preceding_checkpoints": [
+    {
+      "library_file_id": "libfile_974ec561b3988191a8e9d805702fc62e",
+      "file_id": "file_00000000c14c81f9a4ec5243fcbf50e9",
+      "file_name": "Datasette_Publisher_Installed_Operating_Checkpoint(2).zip",
+      "current_version_number": 0,
+      "bytes": 8559933,
+      "sha256": "e97d3f0fc6be84aa49daaac204ce6e544a9ef106e78a3f698c786cc0b7b6c154"
+    }
+  ],
+  "receiving_attempt": {
+    "session_id": 89019,
+    "procfs_pid": 340206,
+    "child_pid": 75,
+    "child_returncode": -9,
+    "receiver_exit_code": 137,
+    "selected_source": "a78709d02d323924446702a851e85bcf256f2437",
+    "installed_journal": "555b8d80-50d9-4e18-92bd-6cca3dab97de",
+    "at": "2026-10-13T01:21:32.541611+00:00"
   }
 }

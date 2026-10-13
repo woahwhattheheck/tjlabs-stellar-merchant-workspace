@@ -1,6 +1,6 @@
 # Original bank statement intake
 
-This module reads bank-issued OFX/QFX files and explicitly mapped CSV exports into a complete, reviewable source report. The merchant reconciliation workspace retains the original bytes and then binds a selected source account to its existing cash, receipt, refund and allocation records.
+This module reads bank-issued OFX/QFX and CAMT.053 XML files and explicitly mapped CSV exports into a complete, reviewable source report. The merchant reconciliation workspace retains the original bytes and then binds a selected source account to its existing cash, receipt, refund and allocation records.
 
 ## Operator workflow
 
@@ -43,6 +43,24 @@ For a base64 string in a generic file form, use content plus encoding: 'base64'.
 A non-UTF-8 bank file should arrive through dataBase64. UTF-8, ASCII, Windows-1252, ISO-8859-1 and UTF-16 LE/BE are supported. The reader honors the original BOM and encoding declaration; conflicting choices produce a useful input error. UTF-16 files need valid complete code units. Unsupported encodings can be converted in a separate source-preserving adapter, retaining the original file and an explicit conversion record.
 
 OFX 1 uses the original OFXHEADER/VERSION declaration and tolerates its omitted scalar closing tags. OFX 2 uses complete XML structure. QFX is accepted through the same native banking structure. The parser retains unknown original fields and rejects malformed markup, duplicate required fields, DTD/entity declarations and incomplete source. It does not fetch referenced resources or execute file content.
+
+## CAMT.053 XML statements
+
+Use `format: 'CAMT053'` for an original `camt.053.001.02` or `camt.053.001.08` file. The original namespace chooses the structure; optional `camt.messageVersion` must match it. `camt.detailPolicy` preserves original entry amounts by default and can additionally check transaction-detail amounts stated in the entry currency.
+
+The complete [CAMT.053 operator and integration guide](CAMT053.md) covers original XML upload, command-line preparation, message/statement/entry fields, posted/pending/information entries, reversal and charge meaning, exact source references, original balances, pagination and close. Its complete original-source receiving uses the bank-issued Nordea standard and extended examples.
+
+```js
+const source = {
+  format: 'CAMT053',
+  file: {name: 'statement.xml', dataBase64: originalBytes.toString('base64')},
+  camt: {detailPolicy: 'PRESERVE_ONLY'}
+};
+```
+
+Prepare a complete request directly from the original file with
+`starforge bank-statements prepare-source --file /private/statement.xml --format CAMT053 --out /private/source.json`.
+The existing source preview and reviewed receiving methods consume that request.
 
 ## Explicit CSV mapping
 

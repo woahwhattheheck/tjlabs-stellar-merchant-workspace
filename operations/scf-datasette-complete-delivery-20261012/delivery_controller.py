@@ -134,6 +134,30 @@ def persist_complete_phase(original_outcome,phase):
     emit("datasette_host_capacity_at_save",**capacity)
     report=root/("Datasette_Publisher_Complete_Result.json" if phase=="publisher" else "Datasette_Publisher_Installed_Operating_Result.json")
     save_json(report,outcome)
+    # Preserve the complete original outcome before creating its large archive.
+    # The same successful report receipt is reused by the final delivery.
+    def save_files(paths,label):
+        request={"uploads":[{"local_path":str(path),"purpose":"create_library_file","library_artifact_type":"report" if path.suffix==".json" else "other"} for path in paths]}
+        completed=subprocess.run([sys.executable,helpers/"library_private_upload.py",tmp],input=json.dumps(request).encode(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        (tmp/(label+".stdout")).write_bytes(completed.stdout);(tmp/(label+".stderr")).write_bytes(completed.stderr)
+        for line in completed.stderr.decode(errors="replace").splitlines():
+            if line.startswith("__OPENAI_LIBRARY_FILE_WRITE_RECEIPT_V1__"):print(line,flush=True)
+        if completed.returncode:raise RuntimeError("Canonical save helper failed: "+str(completed.returncode))
+        response=json.loads(completed.stdout);rows=response.get("results")
+        if not isinstance(rows,list) or len(rows)!=len(paths):raise RuntimeError("The canonical save returned another artifact selection.")
+        for path,row in zip(paths,rows):
+            if row.get("local_path")!=str(path):raise RuntimeError("The save returned another original local file.")
+            if row.get("status")=="succeeded" and not succeeded(row):raise RuntimeError("The saved file identity is incomplete.")
+        return rows
+    report_saved=None
+    try:
+        report_saved=save_files([report],"complete-report-first")[0]
+        if succeeded(report_saved):
+            emit("datasette_operating_report_saved",checkpoint_phase=phase,state=outcome["state"],saved=public_save(report_saved),bytes=report.stat().st_size,sha256=digest(report))
+        else:
+            emit("datasette_operating_report_retry",checkpoint_phase=phase,error_code=report_saved.get("error_code"),status=report_saved.get("status"))
+    except Exception as error:
+        emit("datasette_operating_report_retry",checkpoint_phase=phase,error_type=type(error).__name__,message=str(error))
     prior_manifest=root/"complete-checkpoint-manifest.json"
     if prior_manifest.is_file():
         previous_digest=digest(prior_manifest)
@@ -172,20 +196,10 @@ def persist_complete_phase(original_outcome,phase):
         z.writestr("complete-checkpoint-manifest.json",json.dumps({"schema":"commons.datasette-complete-checkpoint.v1","operation":OP,"original_root":str(root),"state":outcome["state"],"source":source_identity,"files":members,"directories":directories,"excluded":excluded},indent=2)+"\n")
     archive_identity={"file_name":archive_path.name,"bytes":archive_path.stat().st_size,"sha256":digest(archive_path),"members":len(members)+1}
     emit("datasette_complete_checkpoint",state=outcome["state"],**archive_identity)
-    def save_files(paths,label):
-        request={"uploads":[{"local_path":str(path),"purpose":"create_library_file","library_artifact_type":"report" if path.suffix==".json" else "other"} for path in paths]}
-        completed=subprocess.run([sys.executable,helpers/"library_private_upload.py",tmp],input=json.dumps(request).encode(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        (tmp/(label+".stdout")).write_bytes(completed.stdout);(tmp/(label+".stderr")).write_bytes(completed.stderr)
-        for line in completed.stderr.decode(errors="replace").splitlines():
-            if line.startswith("__OPENAI_LIBRARY_FILE_WRITE_RECEIPT_V1__"):print(line,flush=True)
-        if completed.returncode:raise RuntimeError("Canonical save helper failed: "+str(completed.returncode))
-        response=json.loads(completed.stdout);rows=response.get("results")
-        if not isinstance(rows,list) or len(rows)!=len(paths):raise RuntimeError("The canonical save returned another artifact selection.")
-        for path,row in zip(paths,rows):
-            if row.get("local_path")!=str(path):raise RuntimeError("The save returned another original local file.")
-            if row.get("status")=="succeeded" and not succeeded(row):raise RuntimeError("The saved file identity is incomplete.")
-        return rows
-    saved=save_files([archive_path,report],"complete-save-01")
+    if report_saved is not None and succeeded(report_saved):
+        saved=[save_files([archive_path],"complete-archive-save-01")[0],report_saved]
+    else:
+        saved=save_files([archive_path,report],"complete-save-01")
     for i,row in enumerate(saved):
         if not succeeded(row) and row.get("error_code")=="transfer_failed":
             emit("datasette_save_transfer_retry",artifact=[archive_path,report][i].name)

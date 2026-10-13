@@ -18,6 +18,7 @@ from native_sources import file_info
 from workspace import ACTIONS, sync_dir
 from programme import PROGRAMME_TABLES, programme_schema
 from programme_service import read_programme, programme_document
+from workspace_extensions import read_http as extension_read_http, static_routes as extension_static_routes
 
 HERE = Path(__file__).resolve().parent
 
@@ -116,9 +117,17 @@ class Console:
                               "/programme.js": ("programme.js", "text/javascript; charset=utf-8"),
                               "/programme.css": ("programme.css", "text/css; charset=utf-8"),
                               "/style.css": ("style.css", "text/css; charset=utf-8")}
-                    if path in static:
-                        filename, content_type = static[path]
-                        data = (HERE / "web" / filename).read_bytes()
+                    extra_static = extension_static_routes()
+                    if path in static or path in extra_static:
+                        if path in static:
+                            filename, content_type = static[path]
+                            data = (HERE / "web" / filename).read_bytes()
+                        else:
+                            filename, content_type = extra_static[path]
+                            original_asset = HERE / filename
+                            require(original_asset.resolve(strict=True) == original_asset,
+                                    "Use the original maintained extension asset.")
+                            data = original_asset.read_bytes()
                         self.send_response(200)
                         self.send_header("Content-Type", content_type)
                         self.send_header("Content-Length", str(len(data)))
@@ -127,6 +136,14 @@ class Console:
                         return
                     self.authorized()
                     ws = console.workspace
+                    extension = extension_read_http(ws, path, query)
+                    if extension is not None:
+                        if extension["kind"] == "json":
+                            self.send_json(extension["value"])
+                        else:
+                            require(extension["kind"] == "file", "Use the complete maintained extension response.")
+                            self.file(extension["path"], extension["descriptor"], extension["content_type"])
+                        return
                     if path == "/api/schema":
                         self.send_json({"schema": SCHEMA, "workspaceId": ws.marker["workspaceId"],
                             "actions": list(ACTIONS), "tables": [*TABLES, *PROGRAMME_TABLES], "maxPacketBytes": MAX_PACKET,
@@ -175,9 +192,8 @@ class Console:
                     path, query = self.select()
                     self.authorized()
                     require(not query, "Actions use their complete body")
-                    if path in {"/api/upload", "/api/programme/upload"}:
-                        length = self.read_body(MAX_PACKET, "application/zip" if path == "/api/upload"
-                                                else "application/octet-stream")
+                    if path in ("/api/upload", "/api/dataverse/upload", "/api/programme/upload"):
+                        length = self.read_body(MAX_PACKET, "application/zip" if path == "/api/upload" else "application/octet-stream")
                         result = console.workspace.upload(self.rfile, length)
                         expected = self.headers.get("X-Content-SHA256")
                         if expected is not None:

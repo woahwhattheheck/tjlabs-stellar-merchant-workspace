@@ -2,7 +2,7 @@
 import {join,dirname} from 'node:path';
 import {deflateRawSync,inflateRawSync} from 'node:zlib';
 import {privateDirectory,readPrivate,publish} from '../open-meteo-operations/files.mjs';
-import {need,encoded,sha,digest,MAX_PACKAGE} from './contract.mjs';
+import {need,encoded,sha,digest,verifyEnvelope,MAX_PACKAGE} from './contract.mjs';
 import {normalizeCapture,reportingBins} from './source.mjs';
 
 const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -99,7 +99,50 @@ export function deliveryFiles(report,handover){
  files.push({name:'OPERATE.md',bytes:Buffer.from(operatingGuide(report,handover))});
  need(files.reduce((n,f)=>n+f.bytes.length,0)<=MAX_PACKAGE,'DELIVERY_TOO_LARGE');
  const manifest={schema:'stellar-forge.airgradient-delivery.v1',reportId:report.id,reportSha256:report.sha256,packageId:handover.id,packageSha256:handover.sha256,files:files.map(f=>({name:f.name,bytes:f.bytes.length,sha256:sha(f.bytes)}))};
- files.push({name:'manifest.json',bytes:encoded(manifest)});return files;
+ files.push({name:'manifest.json',bytes:encoded(manifest)});need(files.reduce((n,f)=>n+f.bytes.length,0)<=MAX_PACKAGE,'DELIVERY_TOO_LARGE');return files;
+}
+function deliveryManifest(files,family='DELIVERY'){
+ const code=value=>family+'_'+value;
+ need(files instanceof Map&&files.has('manifest.json')&&files.has('editable.airgradient.json')&&files.has('report.json'),code('FILES_INCOMPLETE'));
+ const manifest=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(files.get('manifest.json')));
+ need(manifest.schema==='stellar-forge.airgradient-delivery.v1'&&Array.isArray(manifest.files)&&manifest.files.length===files.size-1,code('MANIFEST_CHANGED'));
+ const named=new Set();let total=files.get('manifest.json').length;
+ for(const entry of manifest.files){
+  need(typeof entry.name==='string'&&/^(?:sources\/)?[A-Za-z0-9_.-]+$/.test(entry.name)&&!entry.name.split('/').some(x=>x==='.'||x==='..')&&entry.name!=='manifest.json'&&!named.has(entry.name),code('MANIFEST_PATH_CHANGED'));
+  const bytes=files.get(entry.name);need(bytes&&bytes.length===entry.bytes&&sha(bytes)===entry.sha256,code('MANIFEST_FILE_CHANGED'));named.add(entry.name);total+=bytes.length;
+ }
+ need(total<=MAX_PACKAGE,code('TOO_LARGE'));
+ const report=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(files.get('report.json'))),handover=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(files.get('editable.airgradient.json')));
+ verifyEnvelope(report,'report');verifyEnvelope(handover,'handover');
+ need(report.id===manifest.reportId&&report.sha256===manifest.reportSha256&&handover.rootReportId===report.id&&handover.id===manifest.packageId&&handover.sha256===manifest.packageSha256&&Array.isArray(handover.reports)&&handover.reports.some(x=>x.id===report.id&&x.sha256===report.sha256),code('REPORT_SELECTION_CHANGED'));
+ need(encoded(report).equals(encoded(handover.reports.find(x=>x.id===report.id))),code('FROZEN_REPORT_CHANGED'));
+ for(const source of handover.sourceSets??[]){const bytes=files.get('original-source-'+source.packetSha256+'.json');need(bytes&&bytes.length===source.packetBytes&&sha(bytes)===source.packetSha256&&bytes.equals(Buffer.from(source.rawBase64,'base64')),code('ORIGINAL_SOURCE_COLLECTION_CHANGED'));}
+ return {manifest,report,handoverBytes:files.get('editable.airgradient.json')};
+}
+export async function readPublishedDelivery(directory,report){
+ await privateDirectory(directory,{create:true});
+ const optional=async name=>{try{return await readPrivate(join(directory,name),MAX_PACKAGE);}catch(error){if(error.code==='ENOENT')return null;throw error;}};
+ const manifestBytes=await optional('manifest.json');
+ if(manifestBytes){
+  const manifest=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(manifestBytes));
+  need(manifest.schema==='stellar-forge.airgradient-delivery.v1'&&Array.isArray(manifest.files)&&manifest.files.length>0&&manifest.files.length<65534,'DELIVERY_MANIFEST_CHANGED');
+  const files=new Map();let total=manifestBytes.length;
+  for(const entry of manifest.files){
+   need(typeof entry.name==='string'&&/^(?:sources\/)?[A-Za-z0-9_.-]+$/.test(entry.name)&&!entry.name.split('/').some(x=>x==='.'||x==='..')&&entry.name!=='manifest.json'&&!files.has(entry.name),'DELIVERY_MANIFEST_PATH_CHANGED');
+   need(Number.isSafeInteger(entry.bytes)&&entry.bytes>=0&&(total+=entry.bytes)<=MAX_PACKAGE,'DELIVERY_TOO_LARGE');
+   const bytes=await readPrivate(join(directory,entry.name),MAX_PACKAGE);need(bytes.length===entry.bytes&&sha(bytes)===entry.sha256,'DELIVERY_MANIFEST_FILE_CHANGED');files.set(entry.name,bytes);
+  }
+  files.set('manifest.json',manifestBytes);const selected=deliveryManifest(files);
+  need(selected.report.id===report.id&&selected.report.sha256===report.sha256,'DESTINATION_CONTAINS_DIFFERENT_EDITION');
+  return {files:[...files].map(([name,bytes])=>({name,bytes})),handoverBytes:selected.handoverBytes};
+ }
+ const handoverBytes=await optional('editable.airgradient.json');
+ if(handoverBytes){
+  const originalReport=verifyEnvelope(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await readPrivate(join(directory,'report.json'),MAX_PACKAGE))),'report');
+  need(originalReport.id===report.id&&originalReport.sha256===report.sha256,'DESTINATION_CONTAINS_DIFFERENT_EDITION');
+  return {files:null,handoverBytes};
+ }
+ return null;
 }
 export async function publishDelivery(files,directory,report){
  await privateDirectory(directory,{create:true});const written=[];
@@ -153,11 +196,5 @@ export function readDeliveryZip(input){
   need(bytes.length===length&&crc32(bytes)===crc,'ZIP_ENTRY_BYTES_CHANGED');files.set(name,bytes);lastEnd=dataStart+packed;position+=46+nameLength;
  }
  need(position===tail&&lastEnd===start&&files.has('manifest.json')&&files.has('editable.airgradient.json')&&files.has('report.json'),'ZIP_FILES_INCOMPLETE');
- const manifest=JSON.parse(files.get('manifest.json').toString('utf8'));need(manifest.schema==='stellar-forge.airgradient-delivery.v1'&&Array.isArray(manifest.files)&&manifest.files.length===files.size-1,'ZIP_MANIFEST_CHANGED');
- const named=new Set();for(const entry of manifest.files){const bytes=files.get(entry.name);need(entry.name!=='manifest.json'&&!named.has(entry.name)&&bytes&&bytes.length===entry.bytes&&sha(bytes)===entry.sha256,'ZIP_MANIFEST_FILE_CHANGED');named.add(entry.name);}
- const report=JSON.parse(files.get('report.json').toString('utf8')),handover=JSON.parse(files.get('editable.airgradient.json').toString('utf8'));
- need(report.id===manifest.reportId&&report.sha256===manifest.reportSha256&&handover.rootReportId===report.id&&handover.id===manifest.packageId&&handover.sha256===manifest.packageSha256&&handover.reports.some(x=>x.id===report.id&&x.sha256===report.sha256),'ZIP_REPORT_SELECTION_CHANGED');
- need(encoded(report).equals(encoded(handover.reports.find(x=>x.id===report.id))),'ZIP_FROZEN_REPORT_CHANGED');
- for(const source of handover.sourceSets??[]){const bytes=files.get('original-source-'+source.packetSha256+'.json');need(bytes&&bytes.length===source.packetBytes&&sha(bytes)===source.packetSha256&&bytes.equals(Buffer.from(source.rawBase64,'base64')),'ZIP_ORIGINAL_SOURCE_COLLECTION_CHANGED');}
- return files.get('editable.airgradient.json');
+ return deliveryManifest(files,'ZIP').handoverBytes;
 }

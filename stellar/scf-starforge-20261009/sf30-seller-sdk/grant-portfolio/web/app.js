@@ -568,3 +568,6 @@ if (!/^[A-Za-z0-9_-]{43}$/.test(S.token)) {
   notice("Open this workspace's saved console link to connect.", "error");
   $("#connection").textContent = "Connection required";
 } else refresh().catch(failure);
+
+// The same private console connection opens the composed support application.
+$("#open-support").addEventListener("click", () => { location.assign("/support/#" + S.token); });

@@ -71,6 +71,20 @@
         "../SOURCE_FORMATS.md",
         "text/markdown; charset=utf-8"
       ]
+    ],
+    [
+      "/bank-statements/camt.mjs",
+      [
+        "camt.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/CAMT053.md",
+      [
+        "../CAMT053.md",
+        "text/markdown; charset=utf-8"
+      ]
     ]
   ]
 }

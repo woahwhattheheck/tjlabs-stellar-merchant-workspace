@@ -1,3 +1,4 @@
+import {mountRegionalAnalysis} from './regional-browser.mjs';
 // Complete local BLS analyst workflow. Source observations and working requests stay with their workspace.
 const $=id=>document.getElementById(id);
 const text=(tag,value,className)=>{const item=document.createElement(tag);item.textContent=String(value??'');if(className)item.className=className;return item;};
@@ -8,7 +9,7 @@ let token='',launch=null,state=null,pending=null,busy=false,working=false,noteRe
 let observation={edition:'',projection:'laus',filters:{},offset:0,next:null,total:0};
 let pages={editions:[],reports:[],operations:[]},stateOffset=0;
 const TERMINAL=new Set(['complete','failed','interrupted']);
-const mutationButtons=()=>document.querySelectorAll('#source-form button[type=submit],#note-form button[type=submit],#report-form button[type=submit],#comparison-form button[type=submit],#receive-form button[type=submit],#native-form button[type=submit],[data-publisher],#stop-publishers,#export-project,[data-mutation]');
+const mutationButtons=()=>document.querySelectorAll('#source-form button[type=submit],#note-form button[type=submit],#report-form button[type=submit],#comparison-form button[type=submit],#receive-form button[type=submit],#native-form button[type=submit],#regional-form button[type=submit],[data-publisher],#stop-publishers,#export-project,[data-mutation]');
 const notice=(message,error=false)=>{$('notice').textContent=message;$('notice').dataset.error=String(error);};
 const scope=key=>'stellar-forge:bls:'+launch.workspaceId+':'+key;
 function saveLocal(key,value){
@@ -30,12 +31,12 @@ function remember(request){
   saveLocal('pending',request);
 }
 function forget(){removeLocal('pending');pending=null;updateBusy();}
-async function api(path,{method='GET',body,raw=false}={}){
+async function api(path,{method='GET',body,raw=false,signal}={}){
   const headers={'X-BLS-Session':token};
   if(body!==undefined&&!raw)headers['Content-Type']='application/json';
   let response;
-  try{response=await fetch(path,{method,headers,body:body===undefined?undefined:raw?body:JSON.stringify(body),cache:'no-store',credentials:'omit'});}
-  catch(issue){throw Object.assign(new Error('The workspace response was interrupted. Resume the same operation after reconnecting. '+issue.message),{network:true});}
+  try{response=await fetch(path,{method,headers,body:body===undefined?undefined:raw?body:JSON.stringify(body),cache:'no-store',credentials:'omit',signal});}
+  catch(issue){if(issue.name==='AbortError')throw issue;throw Object.assign(new Error('The workspace response was interrupted. Resume the same operation after reconnecting. '+issue.message),{network:true});}
   const instance=response.headers.get('X-BLS-Instance');
   if(launch&&instance!==launch.instanceId)throw Object.assign(new Error('The original listener changed. Reopen this workspace from its current Applications link or connection file.'),{network:true});
   if(raw&&method==='GET'&&response.ok)return response;
@@ -154,7 +155,8 @@ function renderState(){
   for(const row of pages.reports){
     const tr=document.createElement('tr'),actions=document.createElement('td');
     for(const name of ['report.json','report.csv','report.html'])actions.append(button(name,()=>download('report',row.id,name)));
-    actions.append(button('Read saved rows',()=>showReport(row.id)));
+    actions.append(button(row.kind==='regional'?'Open regional analysis':'Read saved rows',()=>row.kind==='regional'?regional.show(row.id):showReport(row.id)));
+    if(row.kind==='regional')actions.append(button('Revise this analysis',()=>regional.revise(row.id)));
     tr.append(text('td',row.title),text('td',row.projection+' · '+row.row_count+' complete rows · '+row.edition),actions);$('reports-body').append(tr);
   }
   $('operations').replaceChildren();
@@ -169,6 +171,7 @@ function renderState(){
     if(op.state==='complete'&&op.kind==='receive')card.append(text('p','Received workspace: '+op.result.workspace));
     $('operations').append(card);
   }
+  regional.update();
   renderPublishers();
   $('native-connection').textContent=state.native_connection.configured?'Original host connection: '+state.native_connection.path:'Publication uses the original saved datasets. Customer receiving uses the existing host connection at '+state.native_connection.path+'.';
 }
@@ -290,6 +293,7 @@ function renderResult(operation){
       text('pre',pretty(value.state.pages)));
   }
   if(operation.kind==='native-receive')renderNative(value,true);
+  if(operation.kind==='regional')run(()=>regional.show(operation.id));
   if(operation.kind==='note'&&value.subject===noteSubject)run(async()=>{removeLocal('note:'+noteSubject);await openNote(noteSubject);});
 }
 async function upload(which){
@@ -371,4 +375,6 @@ async function open(){
   else notice('Opened the complete original BLS workspace.');
   if(pages.editions.length)await readObservations(0);
 }
+const regional=mountRegionalAnalysis({api,query,mutate,download,run,notice,saveLocal,readLocal,
+  getPages:()=>pages});
 run(open);

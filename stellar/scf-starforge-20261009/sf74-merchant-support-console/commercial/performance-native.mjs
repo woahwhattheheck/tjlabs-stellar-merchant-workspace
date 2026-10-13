@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // MIT. One complete original Pricing performance → revised Commercial quotation → recipient operation.
 import assert from 'node:assert/strict';
-import {readFile,mkdir} from 'node:fs/promises';
+import {readFile,mkdir,lstat,readdir} from 'node:fs/promises';
+import {createReadStream} from 'node:fs';
 import {join,resolve,isAbsolute} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {randomUUID,createHash} from 'node:crypto';
@@ -44,6 +45,209 @@ async function file(path,result){
   assert.equal(hash(bytes),result.descriptor.sha256);await retain(path,bytes);
   return {...result.descriptor,path};
 }
+
+const COMMERCIAL_PHASE_SCHEMA='stellar-forge.merchant-performance-commercial-phase.v1';
+const COMMERCIAL_PHASE_NAME='commercial-phase.json';
+const COMMERCIAL_REQUEST_NAMES=[
+  'performance-save','customer-receive-performance','publish-original-rate-revision',
+  'save-native-monthly-proposal','commit-native-monthly-proposal','receive-revised-native-tariff',
+  'publish-revised-native-rate','recipient-owned-draft',
+];
+function phaseFilePaths({nativeRun,customerRun,output,settings}){
+  return [
+    join(output,'operation.json'),join(nativeRun,'operation.json'),join(nativeRun,'flow-result.json'),
+    join(customerRun,'flow-result.json'),settings.config,settings.snapshot,
+    ...COMMERCIAL_REQUEST_NAMES.map(name=>join(output,'requests',name+'.json')),
+    ...['native-performance-source.json','case-native-performance-source.json','revised-customer-draft.json',
+      'quote-comparison.json','customer-quote.md','usage-report.md'].map(name=>join(output,'downloads',name)),
+  ];
+}
+function phaseTreePaths({output}){
+  return ['revised-pricing-source','complete-customer-package','received-package','recipient-sources']
+    .map(name=>join(output,name));
+}
+// Hash completed files incrementally. Retained material bytes do not remain in
+// the process after their identity has been recorded or checked.
+async function pinnedFile(path){
+  absolute(path);
+  const before=await lstat(path);
+  assert.ok(before.isFile()&&!before.isSymbolicLink(),'Completed material must be a regular file: '+path);
+  const digest=createHash('sha256');let bytes=0;
+  for await(const chunk of createReadStream(path,{highWaterMark:65536})){digest.update(chunk);bytes+=chunk.length;}
+  const after=await lstat(path);
+  assert.ok(after.isFile()&&!after.isSymbolicLink(),'Completed material changed type: '+path);
+  assert.equal(after.dev,before.dev);assert.equal(after.ino,before.ino);
+  assert.equal(after.size,before.size);assert.equal(after.mtimeMs,before.mtimeMs);
+  assert.equal(bytes,before.size);
+  return {path,bytes,sha256:digest.digest('hex')};
+}
+async function pinnedTree(root,{restoreEmpty=false}={}){
+  absolute(root);
+  let rootInfo;
+  try{rootInfo=await lstat(root);}
+  catch(error){
+    if(error.code!=='ENOENT'||!restoreEmpty)throw error;
+    // Full-work archives may omit an original empty service directory. Recreate
+    // only the exact empty recipient-source root declared by the saved phase.
+    try{await mkdir(root,{mode:0o700});}catch(createError){if(createError.code!=='EEXIST')throw createError;}
+    rootInfo=await lstat(root);
+  }
+  assert.ok(rootInfo.isDirectory()&&!rootInfo.isSymbolicLink(),'Completed material directory changed: '+root);
+  const files=[];
+  async function visit(directory){
+    const children=await readdir(directory,{withFileTypes:true});
+    children.sort((a,b)=>a.name<b.name?-1:a.name>b.name?1:0);
+    for(const entry of children){
+      const path=join(directory,entry.name);
+      assert.ok(!entry.isSymbolicLink(),'Completed material contains a link: '+path);
+      if(entry.isDirectory())await visit(path);
+      else{
+        assert.ok(entry.isFile(),'Completed material contains a non-file: '+path);
+        files.push(await pinnedFile(path));
+      }
+    }
+  }
+  await visit(root);
+  return {root,files};
+}
+async function pinnedCase({directory,id,revision}){
+  const store=await openCaseStore(directory);
+  // The original store checks the content-addressed version, workspace and
+  // runtime source. Read that saved revision even if the current head advances.
+  const saved=await store.read(id,revision);
+  assert.equal(saved.id,id);assert.equal(saved.revision,revision);
+  const textIdentity=text=>({bytes:Buffer.byteLength(text,'utf8'),sha256:hash(text)});
+  return {directory,id,revision,workspace:textIdentity(saved.workspaceText),
+    runtime:saved.supportText===null?null:textIdentity(saved.supportText)};
+}
+async function modelMaterialPins(model,usageVersion,pricingVersion){
+  const files=[
+    {version:usageVersion,name:'manifest.json'},
+    {version:usageVersion,name:'report/report.json'},
+    {version:pricingVersion,name:'manifest.json'},
+  ],result=[];
+  for(const entry of files){
+    const bytes=Buffer.from(await model.download(entry.version,entry.name));
+    result.push({...entry,bytes:bytes.length,sha256:hash(bytes)});
+  }
+  return result;
+}
+function assertPhaseIdentity(phase,{nativeRun,customerRun,output,id,operation,settings}){
+  assert.equal(phase.schema,COMMERCIAL_PHASE_SCHEMA);assert.equal(phase.state,'COMMERCIAL_COMPLETE');
+  assert.equal(phase.nativeRun,nativeRun);assert.equal(phase.customerRun,customerRun);
+  assert.equal(phase.operationDirectory,output);assert.equal(phase.caseId,id);
+  assert.equal(phase.settings.directory,settings.directory);
+  absolute(phase.settings.config);absolute(phase.settings.snapshot);
+  const result=phase.result;
+  assert.equal(result.schema,'stellar-forge.merchant-performance-customer-result.v1');
+  assert.equal(result.state,'COMMERCIAL_COMPLETE');
+  assert.equal(result.operationDirectory,output);assert.equal(result.originalNative,nativeRun);
+  assert.equal(result.originalCustomer,customerRun);assert.equal(result.originalCaseId,id);
+  assert.equal(result.recorded.performanceId,operation.performanceRequestId);
+  assert.equal(result.quotes.measured.id,operation.measuredQuoteId);
+  assert.equal(result.quotes.oldRateRevision.id,operation.sameRateQuoteRequestId);
+  assert.equal(result.quotes.revisedNativeRate.id,operation.revisedQuoteRequestId);
+  assert.equal(result.nativeProposal.requestId,operation.proposalRequestId);
+  assert.equal(result.nativeProposal.pricingRequestId,operation.proposalPricingRequestId);
+  assert.equal(result.completeSource.path,join(output,'downloads','case-native-performance-source.json'));
+  assert.equal(result.completeSource.sha256,result.recorded.sourceSha256);
+  assert.equal(result.customerDocument.path,join(output,'downloads','customer-quote.md'));
+  assert.equal(result.report.path,join(output,'downloads','usage-report.md'));
+  assert.equal(result.package.directory,join(output,'complete-customer-package'));
+  assert.deepEqual(result.receiving,{completeOriginalSource:true,originalQuoteHistory:true,recipientDraftPreserved:true});
+  assert.equal(result.http.state,'COMPLETE');assert.equal(result.mcp.state,'COMPLETE');
+  assert.equal(result.mcp.sha256,result.recorded.sourceSha256);
+  assert.ok(!Object.hasOwn(result,'pricingInterfaces'));
+}
+async function retainCommercialPhase(context,{result,modelMaterials,caseRevisions}){
+  const files=[];
+  for(const path of phaseFilePaths(context))files.push(await pinnedFile(path));
+  const trees=[];
+  for(const root of phaseTreePaths(context))trees.push(await pinnedTree(root));
+  const cases=[];
+  for(const selected of caseRevisions)cases.push(await pinnedCase(selected));
+  const operationFile=files.find(file=>file.path===join(context.output,'operation.json'));
+  const phase={
+    schema:COMMERCIAL_PHASE_SCHEMA,state:'COMMERCIAL_COMPLETE',
+    createdAt:new Date().toISOString(),operationDirectory:context.output,nativeRun:context.nativeRun,
+    customerRun:context.customerRun,caseId:context.id,operationSha256:operationFile.sha256,
+    settings:context.settings,result:{...result,state:'COMMERCIAL_COMPLETE'},
+    files,trees,cases,modelMaterials,
+  };
+  assertPhaseIdentity(phase,context);
+  await retain(join(context.output,COMMERCIAL_PHASE_NAME),phase);
+  return phase;
+}
+async function verifyCommercialPhase(context,phase){
+  assertPhaseIdentity(phase,context);
+  const paths=phaseFilePaths(context),originalPaths=phaseFilePaths({...context,settings:phase.settings});
+  assert.deepEqual(phase.files.map(file=>file.path),originalPaths);
+  assert.deepEqual(phase.trees.map(tree=>tree.root),phaseTreePaths(context));
+  for(let index=0;index<paths.length;index++){
+    const descriptor=phase.files[index],actual=await pinnedFile(paths[index]);
+    // A receiver may restore the byte-identical configuration in a new code
+    // checkout. Case/native paths remain fixed; source identity is its bytes.
+    assert.deepEqual(actual,{...descriptor,path:paths[index]});
+  }
+  for(const descriptor of phase.trees){
+    const restoreEmpty=descriptor.root===join(context.output,'recipient-sources')&&
+      Array.isArray(descriptor.files)&&descriptor.files.length===0;
+    assert.deepEqual(await pinnedTree(descriptor.root,{restoreEmpty}),descriptor);
+  }
+  const operationFile=phase.files.find(file=>file.path===join(context.output,'operation.json'));
+  assert.equal(operationFile.sha256,phase.operationSha256);
+  const nativeFile=phase.files.find(file=>file.path===join(context.nativeRun,'operation.json'));
+  assert.equal(nativeFile.sha256,context.operation.nativeOperationSha256);
+  const sourceFile=phase.files.find(file=>file.path===join(context.output,'downloads','native-performance-source.json'));
+  assert.equal(sourceFile.sha256,phase.result.recorded.sourceSha256);
+  const retainedSourceFile=phase.files.find(file=>file.path===phase.result.completeSource.path);
+  assert.equal(retainedSourceFile.sha256,phase.result.completeSource.sha256);
+  assert.equal(retainedSourceFile.bytes,phase.result.completeSource.bytes);
+  const quoteFile=phase.files.find(file=>file.path===phase.result.customerDocument.path);
+  assert.equal(quoteFile.sha256,phase.result.customerDocument.sha256);
+  assert.equal(quoteFile.bytes,phase.result.customerDocument.bytes);
+  const reportFile=phase.files.find(file=>file.path===phase.result.report.path);
+  assert.equal(reportFile.sha256,phase.result.report.sha256);
+  assert.equal(reportFile.bytes,phase.result.report.bytes);
+  assert.deepEqual(phase.cases.map(({directory,id})=>({directory,id})),[
+    {directory:context.casesDirectory,id:context.id},
+    {directory:join(context.output,'recipient-cases'),id:phase.result.recipientCaseId},
+  ]);
+  for(const selected of phase.cases)assert.deepEqual(await pinnedCase(selected),selected);
+  const receiving=await readJSON(join(context.output,'requests','recipient-owned-draft.json'));
+  assert.equal(receiving.id,phase.result.recipientCaseId);
+  assert.equal(receiving.requestId,context.operation.receiverDraftRequestId);
+  const model=await openWorkspace(context.settings);
+  assert.deepEqual(await modelMaterialPins(model,context.native.pricingVersion,phase.result.nativeProposal.pricingVersion),
+    phase.modelMaterials);
+}
+async function finishPricingInterfaces(context,phase,{verify=true}={}){
+  if(verify)await verifyCommercialPhase(context,phase);
+  const requests=join(context.output,'requests');
+  const envelope=await readJSON(join(context.output,'downloads','native-performance-source.json'));
+  const saveInput=await readJSON(join(requests,'performance-save.json'));
+  const proposalSave=await readJSON(join(requests,'save-native-monthly-proposal.json'));
+  const proposalCommit=await readJSON(join(requests,'commit-native-monthly-proposal.json'));
+  assert.equal(envelope.id,phase.result.recorded.sourceId);
+  assert.equal(envelope.record.performanceId,context.operation.performanceRequestId);
+  assert.equal(saveInput.requestId,context.operation.performanceRequestId);
+  assert.equal(proposalSave.performanceId,context.operation.performanceRequestId);
+  assert.equal(proposalSave.requestId,context.operation.proposalRequestId);
+  assert.equal(proposalCommit.performanceId,context.operation.performanceRequestId);
+  assert.equal(proposalCommit.proposalRequestId,context.operation.proposalRequestId);
+  assert.equal(proposalCommit.planRequestId,context.operation.proposalPlanRequestId);
+  assert.equal(proposalCommit.pricingRequestId,context.operation.proposalPricingRequestId);
+  // The commercial phase has returned and closed its owners. Its model, case
+  // views, report buffers, previews and source text are now eligible for release.
+  const pricingInterfaces=await runPerformanceInterfaces({settings:context.settings,nativeRun:context.nativeRun,
+    output:join(context.output,'pricing-interfaces'),performanceId:context.operation.performanceRequestId,
+    envelope,saveInput,proposalSave,proposalCommit});
+  assert.equal(pricingInterfaces.state,'COMPLETE');
+  assert.equal(pricingInterfaces.sourceSha256,phase.result.recorded.sourceSha256);
+  const result={...phase.result,state:'COMPLETE',completedAt:new Date().toISOString(),pricingInterfaces};
+  return await keep(join(context.output,'flow-result.json'),async()=>result);
+}
+
 export async function runPerformanceCommercial({nativeRun,output,customerRun,python='python3'}={}){
   process.umask(0o077);nativeRun=absolute(nativeRun);output=absolute(output);await privateDirectory(output);
   const native=await readJSON(join(nativeRun,'flow-result.json'));
@@ -82,11 +286,22 @@ export async function runPerformanceCommercial({nativeRun,output,customerRun,pyt
     assert.equal(completed.pricingInterfaces.sourceSha256,completed.recorded.sourceSha256);
     return completed;
   }
+  const settings={config:join(PRICING,'illustrative-service.json'),
+    snapshot:join(PRICING,'illustrative-native-shape-snapshot.json'),directory:join(nativeRun,'pricing')};
+  const context={nativeRun,output,customerRun,python,native,customer,origin,casesDirectory,store,id,scope,commercial,operation,settings};
+  let phase=await optional(join(output,COMMERCIAL_PHASE_NAME));
+  const resumed=Boolean(phase);
+  if(!phase){
+    const completedCommercial=await runCommercialPhase(context);
+    phase=await retainCommercialPhase(context,completedCommercial);
+  }
+  return await finishPricingInterfaces(context,phase,{verify:resumed});
+}
+async function runCommercialPhase({nativeRun,output,customerRun,python,native,customer,origin,casesDirectory,
+  store,id,scope,commercial,operation,settings}){
   const requests=join(output,'requests'),downloads=join(output,'downloads');
   await privateDirectory(requests);await privateDirectory(downloads);
   const request=(name,create)=>keep(join(requests,name+'.json'),create);
-  const settings={config:join(PRICING,'illustrative-service.json'),
-    snapshot:join(PRICING,'illustrative-native-shape-snapshot.json'),directory:join(nativeRun,'pricing')};
   const model=await openWorkspace(settings),tariffs=await openTariffWorkspace({model,directory:settings.directory});
   let performance=await openPerformanceWorkspace({model,tariffs,directory:settings.directory});
   const inputs={selectionRequestId:origin.pricingRequestId,usageVersion:native.pricingVersion,basis:'HTTP_2XX'};
@@ -206,8 +421,9 @@ export async function runPerformanceCommercial({nativeRun,output,customerRun,pyt
     }));
 
     // Native reopen retains the original performance source after later Pricing commits.
-    performance=await openPerformanceWorkspace({model:await openWorkspace(settings),
-      tariffs:await openTariffWorkspace({model:await openWorkspace(settings),directory:settings.directory}),directory:settings.directory});
+    const reopenedModel=await openWorkspace(settings);
+    const reopenedTariffs=await openTariffWorkspace({model:reopenedModel,directory:settings.directory});
+    performance=await openPerformanceWorkspace({model:reopenedModel,tariffs:reopenedTariffs,directory:settings.directory});
     assert.deepEqual(await performance.capture(saved.performanceId),envelope);
     assert.equal((await performance.save(saveInput)).recovered,true);
 
@@ -259,13 +475,21 @@ export async function runPerformanceCommercial({nativeRun,output,customerRun,pyt
       exportsDirectory:()=>retainedDirectory,reads,environment:{...process.env,SCF_PYTHON:python}});
     const choice={id:recipientId,revision:receiver.revision,sourceId:performanceSourceId,kind:'SOURCE',expectedSha256:sourceSha256};
     let page=await mcp.call('merchant_case_commercial_performance_file',{...choice,limit:127});
-    const chunks=[Buffer.from(page.data,'base64')],prefix=page.nextOffset;assert.ok(prefix!==null);
+    const prefix=page.nextOffset;assert.ok(prefix!==null);
+    let sourceOffset=0;const sourceDigest=createHash('sha256');
+    const compareChunk=part=>{
+      const bytes=Buffer.from(part.data,'base64');
+      assert.ok(bytes.length>0);assert.ok(sourceOffset+bytes.length<=sourceBytes.length);
+      assert.deepEqual(bytes,sourceBytes.subarray(sourceOffset,sourceOffset+bytes.length));
+      sourceOffset+=bytes.length;sourceDigest.update(bytes);
+    };
+    compareChunk(page);assert.equal(sourceOffset,prefix);
     await mcp.call('merchant_case_commercial_file_release',{id:recipientId,readId:page.readId});
     page=await mcp.call('merchant_case_commercial_performance_file',{...choice,offset:prefix,limit:16381});
     let pages=2;
-    for(;;){chunks.push(Buffer.from(page.data,'base64'));if(page.nextOffset===null)break;
+    for(;;){compareChunk(page);if(page.nextOffset===null)break;
       page=await mcp.call('merchant_case_commercial_performance_file',{...choice,readId:page.readId,offset:page.nextOffset,limit:16381});pages++;}
-    assert.deepEqual(Buffer.concat(chunks),sourceBytes);
+    assert.equal(sourceOffset,sourceBytes.length);assert.equal(sourceDigest.digest('hex'),sourceSha256);
     const result={
       schema:'stellar-forge.merchant-performance-customer-result.v1',state:'COMPLETE',completedAt:new Date().toISOString(),
       operationDirectory:output,originalNative:nativeRun,originalCustomer:customerRun,
@@ -282,9 +506,11 @@ export async function runPerformanceCommercial({nativeRun,output,customerRun,pyt
       http:{state:'COMPLETE',explicitLaterMonthlyVolume:'1750',assets},
       mcp:{state:'COMPLETE',prefixBytes:prefix,pages,sha256:sourceSha256},
     };
-    result.pricingInterfaces=await runPerformanceInterfaces({settings,nativeRun,output:join(output,'pricing-interfaces'),
-      performanceId:saved.performanceId,envelope,saveInput,proposalSave,proposalCommit});
-    return await keep(join(output,'flow-result.json'),async()=>result);
+    const modelMaterials=await modelMaterialPins(model,inputs.usageVersion,committed.result.pricing.version);
+    return {result,modelMaterials,caseRevisions:[
+      {directory:casesDirectory,id,revision:exportRevision},
+      {directory:receivedCases,id:recipientId,revision:receiver.revision},
+    ]};
   }finally{await Promise.allSettled([mcp?.close(),reads?.close(),recipientSupport?.close(),support?.close(),tariffController.close()]);}
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){

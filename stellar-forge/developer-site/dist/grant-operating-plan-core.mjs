@@ -1,10 +1,12 @@
-// MIT. Turn selected native SF47 work into an editable customer procedure.
+// MIT. Prepare and receive customer procedures in the original native SF47 review.
 import { planSummary, selectedPlan, validatePlanningState, validatePlanSources, usd } from './grant-plan-core.mjs';
-import { createOperatingPlan, createOperatingStep, inspectOperatingPlan } from
+import { createOperatingPlan, createOperatingStep, inspectOperatingPlan, receiveOperatingPlan } from
   '../../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs';
 
 export const GRANT_OPERATING_SELECTION_SCHEMA = 'stellar-forge.grant-operating-selection.v1';
 export const GRANT_OPERATING_PREPARATION_SCHEMA = 'stellar-forge.grant-operating-preparation.v1';
+export const GRANT_OPERATING_CONTINUATION_SCHEMA = 'stellar-forge.grant-operating-continuation.v1';
+export const GRANT_OPERATING_RETURN_COMPARISON_SCHEMA = 'stellar-forge.grant-operating-return-comparison.v1';
 const copy = value => JSON.parse(JSON.stringify(value));
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const need = (condition, message) => { if (!condition) throw new TypeError(message); };
@@ -41,6 +43,7 @@ export function validateGrantOperatingSelection(value, source, revision) {
     need(item?.schema === GRANT_OPERATING_PREPARATION_SCHEMA && item.source?.sha256 === source.sha256 &&
       item.source.revision === revision, 'Retain each prepared procedure with its original native source.');
     inspectOperatingPlan(item.plan);
+    validateContinuation(item);
     need(!identities.has(item.plan.id), 'Keep unique prepared operating-plan identities.'); identities.add(item.plan.id);
     need(Array.isArray(item.packageIds) && item.packageIds.every(id => packageIds.has(id)) &&
       new Set(item.packageIds).size === item.packageIds.length, 'Retain the original selected work-package identities.');
@@ -108,4 +111,115 @@ export function prepareGrantOperatingPlan(source, review, {
 export function grantOperatingSelectionOf(review, source) {
   const selection = review.operatingSelection ?? newGrantOperatingSelection(source, review.revision);
   return copy(validateGrantOperatingSelection(selection, source, review.revision));
+}
+
+const canonicalValue = value => Array.isArray(value) ? value.map(canonicalValue) : plain(value)
+  ? Object.fromEntries(Object.keys(value).sort().map(key => [key, canonicalValue(value[key])])) : value;
+const sameValue = (left, right) => JSON.stringify(canonicalValue(left)) === JSON.stringify(canonicalValue(right));
+const STEP_COMPARISON_FIELDS = ['title', 'instruction', 'inputs', 'expectedResult', 'owner', 'due', 'status', 'recordedResult', 'argv', 'selection'];
+const PLAN_COMPARISON_FIELDS = ['title', 'customer', 'purpose', 'period', 'owner', 'receiving', 'notes'];
+function receivingTime(value) {
+  need(typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(value) &&
+    Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 19) === value.slice(0, 19),
+  'Retain the procedure receiving time as a complete UTC timestamp.');
+}
+function validateContinuation(prepared) {
+  if (prepared.continuation === undefined) return;
+  const value = prepared.continuation;
+  need(plain(value) && value.schema === GRANT_OPERATING_CONTINUATION_SCHEMA &&
+    Array.isArray(value.receipts) && value.receipts.length > 0, 'Retain the complete customer procedure continuation.');
+  const received = receiveOperatingPlan(value.plan, prepared.plan);
+  need(received.plan.revisions.length === value.plan.revisions.length,
+    'The customer continuation must retain the whole prepared procedure.');
+  let previous = prepared.plan.revisions.length;
+  for (const receipt of value.receipts) {
+    need(plain(receipt), 'Retain each original procedure receiving entry.');
+    receivingTime(receipt.at); text(receipt.filename, 'Returned procedure filename', 300);
+    text(receipt.note, 'Procedure receiving note');
+    need(receipt.fromRevision === previous && Number.isSafeInteger(receipt.toRevision) &&
+      receipt.toRevision > previous && receipt.toRevision <= value.plan.revisions.length,
+    'Retain the ordered complete customer procedure revisions with their receiving entries.');
+    previous = receipt.toRevision;
+  }
+  need(previous === value.plan.revisions.length, 'Keep the selected procedure revision with its original receiving entry.');
+}
+/** The original preparation stays intact; later work uses the received whole history. */
+export function grantOperatingContinuationPlan(prepared) {
+  need(prepared?.schema === GRANT_OPERATING_PREPARATION_SCHEMA, 'Choose a retained grant operating preparation.');
+  inspectOperatingPlan(prepared.plan); validateContinuation(prepared);
+  return inspectOperatingPlan(prepared.continuation?.plan ?? prepared.plan);
+}
+function returnContext(source, review, incoming) {
+  validatePlanSources([source]); validatePlanningState(review, [source]);
+  const selection = grantOperatingSelectionOf(review, source), received = inspectOperatingPlan(incoming);
+  const index = selection.prepared.findIndex(item => item.plan.id === received.id);
+  need(index >= 0, 'Open the original native planning review containing this prepared operating-plan identity.');
+  const prepared = selection.prepared[index], native = selectedPlan([source], review).plan;
+  const summary = planSummary(source, native.revision, prepared.packageIds);
+  const orderedIds = summary.tranches.flatMap(tranche => tranche.costs.map(cost => cost.id));
+  need(sameValue(prepared.packageIds, orderedIds), 'Retain the original native package order for this prepared procedure.');
+  const basis = { filename: source.filename, sha256: source.sha256, bytes: source.bytes,
+    planId: native.id, planName: native.name, revision: native.revision, contentSha256: native.contentSha256,
+    scenarioSourceSha256: native.source.sha256, scenarioCalculationSha256: native.report.scenarioSha256 };
+  const totals = { plannedUsd: summary.amount, estimatedHours: summary.hours,
+    awardRequestUsd: summary.award, projectEndDay: summary.duration };
+  need(sameValue(prepared.source, basis) && sameValue(prepared.totals, totals),
+    'Receive customer work against the complete original native preparation and its selected totals.');
+  const original = prepared.plan.revisions.at(-1), existing = grantOperatingContinuationPlan(prepared);
+  const merged = receiveOperatingPlan(received, existing);
+  const packages = prepared.packageIds.map(packageId => {
+    const position = native.scenario.future_costs.findIndex(cost => cost.id === packageId);
+    const cost = native.scenario.future_costs[position], stepId = 'native-package-' + (position + 1);
+    const baseline = original.steps.find(step => step.id === stepId);
+    need(baseline && baseline.instruction === cost.remaining_work && baseline.expectedResult === cost.measurable_proof,
+      'Retain the prepared native work and completion measure for package ' + packageId + '.');
+    return { packageId, stepId, native: copy(cost), original: copy(baseline) };
+  });
+  return { selection, index, prepared, received, existing, merged, packages };
+}
+/** Inspect the whole incoming history before receiving it into the original planning review. */
+export function compareGrantOperatingReturn(source, review, incoming) {
+  const context = returnContext(source, review, incoming);
+  const { prepared, received, existing, merged } = context;
+  const original = prepared.plan.revisions.at(-1), previous = existing.revisions.at(-1), next = received.revisions.at(-1);
+  const packages = context.packages.map(item => {
+    const before = previous.steps.find(step => step.id === item.stepId) ?? null;
+    const returned = next.steps.find(step => step.id === item.stepId) ?? null;
+    return { ...item, previous: copy(before), returned: copy(returned), status: returned?.status ?? 'missing',
+      changedFromPrepared: STEP_COMPARISON_FIELDS.filter(field => !sameValue(item.original[field], returned?.[field])),
+      changedFromPrevious: STEP_COMPARISON_FIELDS.filter(field => !sameValue(before?.[field], returned?.[field])) };
+  });
+  const originalIds = new Set(packages.map(item => item.stepId));
+  return { schema: GRANT_OPERATING_RETURN_COMPARISON_SCHEMA,
+    planId: prepared.plan.id, source: copy(prepared.source), packageIds: copy(prepared.packageIds), totals: copy(prepared.totals),
+    preparedRevision: prepared.plan.revisions.length, previousRevision: existing.revisions.length,
+    incomingRevision: received.revisions.length, selectedRevision: merged.plan.revisions.length,
+    addedRevisions: merged.addedRevisions, reused: merged.reused,
+    originalTitle: original.title, previousTitle: previous.title, incomingTitle: next.title,
+    planChanges: PLAN_COMPARISON_FIELDS.filter(field => !sameValue(previous[field], next[field])).map(field =>
+      ({ field, original: copy(original[field]), previous: copy(previous[field]), returned: copy(next[field]) })),
+    packages, additionalSteps: copy(next.steps.filter(step => !originalIds.has(step.id))),
+    counts: Object.fromEntries(['planned', 'in-progress', 'completed', 'skipped', 'missing'].map(status =>
+      [status, packages.filter(item => item.status === status).length])) };
+}
+/** Receive original later revisions once, keeping the native plan and preparation intact. */
+export function receiveGrantOperatingReturn(source, review, incoming, {
+  at = new Date().toISOString(), filename = '', note = '', expectedRevision,
+} = {}) {
+  receivingTime(at); text(filename, 'Returned procedure filename', 300); text(note, 'Procedure receiving note');
+  const comparison = compareGrantOperatingReturn(source, review, incoming);
+  if (expectedRevision !== undefined) need(Number.isSafeInteger(expectedRevision) &&
+    expectedRevision === comparison.previousRevision, 'The procedure advanced after comparison. Reopen its current return before receiving.');
+  if (comparison.reused) return { review: copy(review), comparison, reused: true, addedRevisions: 0 };
+  const next = copy(review), selection = grantOperatingSelectionOf(next, source);
+  const prepared = selection.prepared.find(item => item.plan.id === comparison.planId);
+  const current = grantOperatingContinuationPlan(prepared);
+  const received = receiveOperatingPlan(incoming, current);
+  prepared.continuation = { schema: GRANT_OPERATING_CONTINUATION_SCHEMA, plan: received.plan,
+    receipts: [...copy(prepared.continuation?.receipts ?? []), {
+      at, filename, note, fromRevision: comparison.previousRevision, toRevision: comparison.incomingRevision,
+    }] };
+  validateGrantOperatingSelection(selection, source, next.revision);
+  next.operatingSelection = selection;
+  return { review: next, comparison, reused: false, addedRevisions: received.addedRevisions };
 }

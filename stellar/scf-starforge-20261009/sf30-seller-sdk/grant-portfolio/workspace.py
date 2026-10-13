@@ -23,7 +23,12 @@ HERE = Path(__file__).resolve().parent
 SDK = HERE.parent
 PACKET = "stellar-forge.grant-portfolio-packet.v1"
 WORKSPACE = "stellar-forge.grant-portfolio-workspace.v1"
-ACTIONS = ("source.receive", "portfolio.save", "review.save", "portfolio.export", "portfolio.receive")
+from workspace_extensions import (
+    extension_actions, initialize_extensions, is_extension, requires_commit_revision,
+    validate_extension, prepare_extension, commit_extension, error_details, retryable,
+)
+
+ACTIONS = ("source.receive", "portfolio.save", "review.save", "portfolio.export", "portfolio.receive") + extension_actions()
 
 
 def sync_dir(path):
@@ -134,6 +139,7 @@ class Workspace:
                             "code": "PROCESS_INTERRUPTED", "message": "Resume this saved operation with its retained original input.",
                             "retryable": True})
                         self._store_request(request)
+            initialize_extensions(self)
         except BaseException:
             if hasattr(self, "db"):
                 self.db.close()
@@ -241,6 +247,8 @@ class Workspace:
         require(value["action"] in ACTIONS and isinstance(value["payload"], dict), "Select a supported complete action")
         if "expectedRevision" in value:
             require(type(value["expectedRevision"]) is int and value["expectedRevision"] >= 0, "Invalid workspace revision")
+        if is_extension(value["action"]):
+            validate_extension(self, value)
         input_sha = digest(value)
         with self.transaction():
             row = self.db.execute("SELECT body FROM requests WHERE id=?", (ident,)).fetchone()
@@ -604,12 +612,16 @@ class Workspace:
                 request.pop("error", None)
                 self._store_request(request)
             try:
-                expected = original.get("expectedRevision")
+                extension = is_extension(original["action"])
+                expected = (original.get("expectedRevision")
+                            if requires_commit_revision(original["action"]) else None)
                 if expected is not None:
                     require(expected == self.current_revision(), "The workspace revision changed",
                             "WORKSPACE_REVISION_CONFLICT", 409)
                 action, payload = original["action"], original["payload"]
-                if action == "source.receive":
+                if extension:
+                    prepared = prepare_extension(self, request)
+                elif action == "source.receive":
                     prepared = self._prepare_source(payload)
                 elif action in {"portfolio.save", "review.save"}:
                     prepared = self._prepare_revision(action, payload, request)
@@ -621,7 +633,9 @@ class Workspace:
                     if expected is not None:
                         require(expected == self.current_revision(self.db), "The workspace revision changed",
                                 "WORKSPACE_REVISION_CONFLICT", 409)
-                    if action == "source.receive":
+                    if extension:
+                        result = commit_extension(self, request, prepared)
+                    elif action == "source.receive":
                         result = self._commit_source(prepared)
                     elif action in {"portfolio.save", "review.save"}:
                         result = self._commit_revision(prepared)
@@ -652,7 +666,9 @@ class Workspace:
                 with self.transaction():
                     request.update(state="FAILED", updatedAt=now(), error={
                         "code": getattr(error, "code", type(error).__name__), "message": str(error),
-                        "retryable": not isinstance(error, InputError) or error.code == "NATIVE_RECEIVING_FAILED"})
+                        "retryable": retryable(error) if is_extension(request["action"]) else
+                            not isinstance(error, InputError) or error.code == "NATIVE_RECEIVING_FAILED",
+                        **(error_details(error) if is_extension(request["action"]) else {})})
                     self._store_request(request)
                 if isinstance(error, (KeyboardInterrupt, SystemExit)):
                     raise
