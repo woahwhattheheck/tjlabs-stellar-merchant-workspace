@@ -548,6 +548,7 @@ def _binding(inventory):
             "engine_id": inventory["docker_engine"]["ID"],
             "castor_version": inventory["castor_version"], "native_executables": inventory["native_executables"],
             "selected_files": inventory["selected_files"], "compose_config": inventory["compose_config"],
+            "images": sorted(inventory["images"], key=_json),
             "task_definitions": inventory["task_definitions"]}
 
 
