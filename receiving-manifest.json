@@ -10,13 +10,13 @@
   "files": {
     "runner": {
       "path": "run-received.py",
-      "bytes": 16096,
-      "sha256": "17c7b9cee8018ea79a5106dc03a67bee891f0a0e03793e5b38f7647cc17f313b"
+      "bytes": 18956,
+      "sha256": "115eeac398e7f37d98d29a7691d2d547db1732acd7e27a2a570dc778ec16dc27"
     },
     "frame": {
       "path": "complete-source-and-inputs.json.gz.b64",
-      "bytes": 4658093,
-      "sha256": "6578123b1bf8ea3ae99db9f5bd8d532169190ffee67438fbd6c917c631eaf2ad"
+      "bytes": 4658849,
+      "sha256": "21b5ab8cbae757d19ce6ce656699ed7d9fc762024f7b3772827ad05f9cb62ee5"
     },
     "authority": {
       "path": "source-authority.json",
@@ -25,12 +25,12 @@
     }
   },
   "decoded": {
-    "bytes": 15194753,
-    "sha256": "bbd02a601deb23c244027916a1935c6161aad62886328b4a5988d300ad915028"
+    "bytes": 15197748,
+    "sha256": "f086a81b93b2ea9df430ec016c3dadef2352d6dc70b7b499c14f841e61234846"
   },
   "gzip": {
-    "bytes": 3493568,
-    "sha256": "58efbe434001a139d96e7cd90c48a03cb2bef9cabfbbe858fb4b9737f0f6a5c5"
+    "bytes": 3494134,
+    "sha256": "82a06a23a0fab57e562bd0b6654705dca702cdf6d777dd7ac3abff44366fe7ec"
   },
   "counts": {
     "all": 592,

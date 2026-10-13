@@ -141,28 +141,70 @@ if code:
 result=json.loads((ROOT/"case/operated-case.json").read_bytes())
 if result.get("status")!="COMPLETE" or result.get("operation")!=OP: raise RuntimeError("Original complete case result is missing")
 output=ROOT/"Humanitarian_Complete_Engineering_Receiving_20261013.zip"
+selection_path=ROOT/"engineering-archive-selection.json"
+if selection_path.exists():
+    regular(selection_path);archive_selection=json.loads(selection_path.read_bytes())
+    if archive_selection.get("operation")!=OP or archive_selection.get("source")!=packet["source"]:
+        raise RuntimeError("Retained engineering archive selected another original operation")
+else:
+    members=[]
+    for path in sorted(ROOT.rglob("*")):
+        rel=path.relative_to(ROOT)
+        if path in (output,selection_path) or path.name.endswith(".partial") or path.name=="native-receiving.lock" or "__pycache__" in rel.parts:
+            continue
+        if path.is_symlink(): raise RuntimeError("Original case contains a path alias")
+        if path.is_file():
+            members.append({"path":rel.as_posix(),"bytes":regular(path).st_size,"sha256":sha(path)})
+    archive_selection={"schema":"stellar-forge.humanitarian-engineering-archive.v1","operation":OP,
+                       "source":packet["source"],"files":members}
+    publish(selection_path,(json.dumps(archive_selection,ensure_ascii=False,sort_keys=True,indent=2)+"\n").encode())
+selection_body=selection_path.read_bytes()
+names=set()
+for selected_member in archive_selection["files"]:
+    name=selected_member["path"];parts=PurePosixPath(name).parts
+    if (not parts or name.startswith("/") or "\\" in name or PurePosixPath(name).as_posix()!=name
+        or any(p in ("",".","..") for p in parts) or name in names or name=="engineering-archive-selection.json"
+        or type(selected_member["bytes"]) is not int or selected_member["bytes"]<0):
+        raise RuntimeError("Retained engineering member selection is invalid")
+    names.add(name)
+def verify_engineering_archive(path):
+    regular(path)
+    with zipfile.ZipFile(path) as archive:
+        entries=archive.infolist()
+        if len(entries)!=len(names)+1 or {x.filename for x in entries}!=names|{"engineering-archive-selection.json"}:
+            raise RuntimeError("Complete engineering archive member selection changed")
+        if archive.read("engineering-archive-selection.json")!=selection_body:
+            raise RuntimeError("Complete engineering archive selection changed")
+        for wanted in archive_selection["files"]:
+            entry=archive.getinfo(wanted["path"])
+            if entry.is_dir() or entry.flag_bits&1 or stat.S_IFMT(entry.external_attr>>16)!=stat.S_IFREG or entry.file_size!=wanted["bytes"]:
+                raise RuntimeError("Original engineering archive member metadata changed")
+            size=0;hashed=hashlib.sha256()
+            with archive.open(entry) as stream:
+                for block in iter(lambda:stream.read(1024*1024),b""):
+                    size+=len(block)
+                    if size>wanted["bytes"]: raise RuntimeError("Original engineering archive member expanded")
+                    hashed.update(block)
+            if size!=wanted["bytes"] or hashed.hexdigest()!=wanted["sha256"]:
+                raise RuntimeError("Complete engineering archive member changed: "+wanted["path"])
 if not output.exists():
     stage=ROOT/(".complete-delivery-"+uuid.uuid4().hex+".partial")
     with zipfile.ZipFile(stage,"x",compression=zipfile.ZIP_DEFLATED,compresslevel=6,allowZip64=True) as archive:
-        for path in sorted(ROOT.rglob("*")):
-            rel=path.relative_to(ROOT)
-            if path==stage or path==output or path.name.endswith(".partial") or path.name=="native-receiving.lock" or "__pycache__" in rel.parts:
-                continue
-            if path.is_symlink(): raise RuntimeError("Original case contains a path alias")
-            if path.is_dir():
-                archive.writestr(zipfile.ZipInfo(rel.as_posix()+"/",(1980,1,1,0,0,0)),b"")
-            elif path.is_file():
-                info=zipfile.ZipInfo(rel.as_posix(),(1980,1,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED
-                info.create_system=3;info.external_attr=(stat.S_IFREG|0o600)<<16
-                with path.open("rb") as source,archive.open(info,"w",force_zip64=True) as target:
-                    shutil.copyfileobj(source,target,1024*1024)
+        for wanted in archive_selection["files"]:
+            path=ROOT/wanted["path"]
+            if regular(path).st_size!=wanted["bytes"] or sha(path)!=wanted["sha256"]:
+                raise RuntimeError("Original engineering source member changed before packaging: "+wanted["path"])
+            info=zipfile.ZipInfo(wanted["path"],(1980,1,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED
+            info.create_system=3;info.external_attr=(stat.S_IFREG|0o600)<<16
+            with path.open("rb") as source,archive.open(info,"w",force_zip64=True) as target:
+                shutil.copyfileobj(source,target,1024*1024)
+        info=zipfile.ZipInfo("engineering-archive-selection.json",(1980,1,1,0,0,0))
+        info.compress_type=zipfile.ZIP_DEFLATED;info.create_system=3;info.external_attr=(stat.S_IFREG|0o600)<<16
+        archive.writestr(info,selection_body)
     with stage.open("rb") as stream: os.fsync(stream.fileno())
-    with zipfile.ZipFile(stage) as archive:
-        bad=archive.testzip()
-        if bad: raise RuntimeError("Complete artifact CRC failed: "+bad)
+    verify_engineering_archive(stage)
     os.link(stage,output);sync(ROOT);stage.unlink();sync(ROOT)
-with zipfile.ZipFile(output) as archive:
-    if archive.testzip() is not None: raise RuntimeError("Retained complete artifact changed")
+verify_engineering_archive(output)
 print(json.dumps({"phase":"CORE_COMPLETE","operation":OP,"source":packet["source"],"files":len(selected),
                   "case":str(ROOT/"case"),"repo":str(ROOT/"repo"),"counts":result["counts"],"comparison":result["comparison"],
                   "artifact":{"path":str(output),"bytes":regular(output).st_size,"sha256":sha(output)}},separators=(",",":")),flush=True)

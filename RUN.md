@@ -27,7 +27,7 @@ Set the six variables below to the actual selected host paths and actor; then ex
 ```bash
 python3 -B "$HUMANITARIAN_RECEIVING/run-received.py" \
   --frame "$HUMANITARIAN_RECEIVING/complete-source-and-inputs.json.gz.b64" \
-  --sha256 bbd02a601deb23c244027916a1935c6161aad62886328b4a5988d300ad915028 \
+  --sha256 f086a81b93b2ea9df430ec016c3dadef2352d6dc70b7b499c14f841e61234846 \
   --directory "$HUMANITARIAN_OPERATION" \
   --run-installed \
   --npm-executable "$HUMANITARIAN_NPM" \
@@ -60,9 +60,13 @@ Reply in the original Muse runtime thread with the actual operation directory, e
 
 The machine-readable receiving-manifest.json contains the exact runner, encoded frame, compressed bytes, decoded JSON and source-authority identities. The runner's --sha256 argument binds the decoded JSON.
 
-- Runner SHA-256: 17c7b9cee8018ea79a5106dc03a67bee891f0a0e03793e5b38f7647cc17f313b
-- Encoded frame SHA-256: 6578123b1bf8ea3ae99db9f5bd8d532169190ffee67438fbd6c917c631eaf2ad
-- Decoded JSON SHA-256: bbd02a601deb23c244027916a1935c6161aad62886328b4a5988d300ad915028
+- Runner SHA-256: 115eeac398e7f37d98d29a7691d2d547db1732acd7e27a2a570dc778ec16dc27
+- Encoded frame SHA-256: 21b5ab8cbae757d19ce6ce656699ed7d9fc762024f7b3772827ad05f9cb62ee5
+- Decoded JSON SHA-256: f086a81b93b2ea9df430ec016c3dadef2352d6dc70b7b499c14f841e61234846
 - Exact source authority SHA-256: c51939c2e8ac09147e031cac22f1fefa4e59668b0763b0fc6316841504706369
 
 The source authority includes all 12,768 tree entries and the exact original commit text. Its reconstructed commit and tree were independently checked against the published Git identities before this keeper was written.
+
+## Complete engineering archive recovery
+
+The intermediate engineering archive retains its complete immutable member selection. Creation and every reuse read every ZIP member and compare its original byte count and SHA-256, including recovery after publication before a later receipt. The complete historic core archive remains bound to its source selection as the installed workflow advances the editable workspace.
