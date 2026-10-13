@@ -106,3 +106,32 @@ partially applied replacement continues its original remaining request.
 Native-facing purchase order and note text use the original Receivables trimming,
 control-character and UTF-16 length rules. Earlier retained raw proposals compare
 against their native rendition without changing original requests or hashes.
+
+## Reopen the original action after later account activity
+
+A retained apply can be recovered from its complete acknowledged step prefix even
+after an invoice issue has been appended to the same change. The later issue keeps
+its own original state and request; it does not erase the earlier completed apply.
+An uncertain or partly applied replacement continues its original remaining step.
+
+Required recording operators, cancellation request IDs/reasons and issue decision
+IDs are compared using the original Operations Python text contract, including
+its Unicode whitespace and code-point limits. Optional purchase order and note
+values retain the separate Receivables contract described above. Recovery leaves
+the original request bytes, proposal hash and saved history unchanged. Cancellation
+matches its actual saved operator, request and reason; the operator may differ
+from the person who prepared the proposal.
+
+When **Resume original invoice issue** is shown, the review displays the original
+credit decision as retained text. The outgoing continuation uses that same saved
+decision. A newly entered decision belongs to a new source-backed draft correction
+and its separately reviewed invoice issue.
+
+In the existing customer receiving programme, reopen a desk retaining an apply
+after its issue has been appended and after a later source-backed change exists.
+Confirm the completed apply is recovered from its saved journal. Reopen an unused
+cancellation recorded by another permitted operator and inspect its original reason.
+Also view and operate a retained invoice issue with an older entered decision still
+in the desk: the visible decision and resumed request must use the original saved
+command. Inspect these actual desktop and 390-pixel views alongside the complete
+desk download, cold reopen and original native account export.
