@@ -4,6 +4,14 @@ This is the optional Portfolio course in the maintained `case_planning_browser.m
 
 The Portfolio continuation operates the same saved allocation, native preview, original case command and complete case export used by staff. Named working copies, source attachments and the original request stay together throughout recovery.
 
+## Resource availability continuation
+
+For the complete Resource availability product successor, set `portfolioAvailability: true` in the same original context. Pin its current complete source editions: update the original four `portfolioSourceSha256` entries and add `portfolio-availability.mjs`, `portfolio-availability-desk.mjs` and `portfolio-availability.css`. Do not use the older example hashes below for a newer installed edition. The course rechecks every selected served body on each invocation.
+
+The added phase follows the original stale-window recovery and precedes its native preview/save. It retains incomplete resource-calendar date and hour fields, reopens them, reviews every date of an explicit three-day zero-capacity planning assumption, and captures desktop/narrow screens. It applies the selected review to the existing editable copy, downloads the complete calendar/review/working files, reopens the applied history, and reviews a blank weekday over the whole program horizon without applying that later proposal. Restart detects its exact already-applied dated review before adding another local application. The existing native calculation, original pending request and cold reopen continue unchanged.
+
+See `PORTFOLIO_AVAILABILITY.md` for the complete staff workflow and zero/unknown/closed-date semantics. These are recorded course planning assumptions, not statements of actual personnel availability. Preserve the original operation and exact installed-source binding when receiving the new source.
+
 ## Exact source and context
 
 Install the complete current managed application and the four exact Portfolio product files selected for this operation. Preserve later unrelated application/source-owner additions. This continuation adds `portfolio-working-copies-browser.mjs` beside the original runner; the module is a Node receiving helper, not a new web route.
