@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Original SF101 recovery request -> reviewed existing Support case.
 const make=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=String(text);if(cls)e.className=cls;return e;};
-const objectCommand=value=>['object-snapshot','object-verify','object-restore'].includes(value);
+const objectCommand=value=>['object-snapshot','object-verify','object-restore','object-compare'].includes(value);
 const query=(path,value)=>path+'?'+new URLSearchParams(value);
 export function createRecoverySupportDesk({root,api,post,notice,showDetails}){
   let state=null,profileId='',requests=[],cases=[],nextOffset=null,transfers=[],review=null,result=null;
   let generation=0,busy=false,loadedProfile=null;
   const heading=make('h2','Send recovery evidence to Support');
-  const intro=make('p','Select a saved recovery request and an existing Support case. Review the exact capture before saving it into the case’s before or after slot.','hint');
-  const external=make('p','The capture retains every original request and native evidence file. The encrypted backup remains external; its path and original record identity are preserved.','hint');
+  const intro=make('p','Select a saved recovery or backup-comparison request and an existing Support case. Review the exact capture before saving it into the case’s before or after slot.','hint');
+  const external=make('p','The capture retains the complete original request and every referenced evidence or comparison artifact. Encrypted backups remain external; their paths and original record identities are preserved.','hint');
   const controls=make('div',undefined,'actions'),reload=make('button','Refresh cases and saved transfers'),more=make('button','Load more cases');
   reload.type=more.type='button';controls.append(reload,more);
   const form=make('form'),requestSelect=make('select'),caseSelect=make('select'),slot=make('select'),transfer=make('input');
@@ -16,12 +16,12 @@ export function createRecoverySupportDesk({root,api,post,notice,showDetails}){
   slot.append(new Option('After','after'),new Option('Before','before'));
   transfer.maxLength=64;transfer.pattern='[a-z0-9][a-z0-9_-]{0,63}';transfer.autocomplete='off';transfer.spellcheck=false;
   function field(text,node){const label=make('label',text);label.htmlFor=node.id;form.append(label,node);}
-  field('Original recovery request',requestSelect);field('Existing Support case',caseSelect);
+  field('Original recovery or comparison request',requestSelect);field('Existing Support case',caseSelect);
   field('Case observation slot',slot);field('Transfer ID',transfer);
   form.append(make('p','Keep this transfer ID after a lost response. A later case revision is preserved; the original transfer remains readable.','hint'));
   const prepare=make('button','Review complete capture','primary');prepare.type='submit';form.append(prepare);
   const reviewPanel=make('section'),summary=make('dl',undefined,'key-values'),confirmLabel=make('label'),confirm=make('input');
-  confirm.type='checkbox';confirmLabel.append(confirm,document.createTextNode(' I reviewed this exact request, evidence inventory, case revision and slot.'));
+  confirm.type='checkbox';confirmLabel.append(confirm,document.createTextNode(' I reviewed this exact request, complete evidence/artifact inventory, case revision and slot.'));
   const reviewButtons=make('div',undefined,'actions'),save=make('button','Save reviewed case','primary'),detail=make('button','Full review'),handoff=make('button','Download Support handoff'),pack=make('button','Export full case and history'),inspect=make('button','Inspect saved package');
   for(const button of [save,detail,handoff,pack,inspect])button.type='button';
   reviewButtons.append(save,detail,handoff,pack,inspect);reviewPanel.append(make('h3','Retained transfer review'),summary,confirmLabel,reviewButtons);
@@ -53,11 +53,18 @@ export function createRecoverySupportDesk({root,api,post,notice,showDetails}){
       const rows=[
         ['Transfer',review.transferId],['Original request',review.selection.id],
         ['Saved phase / attempt',review.phase+' / '+review.attempts],['Action / session',review.command+' / '+review.sessionId],
-        ['Complete request SHA-256',review.request.sha256],['Evidence files',review.evidence.length],
+        ['Complete request SHA-256',review.request.sha256],[review.command==='object-compare'?'Comparison artifacts':'Evidence files',review.evidence.length],
+        ['Retained source bytes',review.evidence.reduce((total,row)=>total+row.bytes,review.request.bytes)],
         ['Case',review.case.name+' · '+review.case.id],['Selected case revision',review.selection.expectedRevision],
         ['Observation slot',review.selection.slot+(review.replacing.present?' · replaces current slot in a new retained revision':'')],
-        ['Review SHA-256',review.reviewSha256],['External backup',review.bundle.path],
-        ['Backup record',review.bundle.recordSha256??'No successful record is claimed'],
+        ['Review SHA-256',review.reviewSha256],
+        ...(review.command==='object-compare'?[
+          ['Before declared backup',review.comparison.beforeObjectSessionId],['Before external path',review.bundles.before.path],
+          ['Before reviewed record',review.comparison.beforeExpectedRecordSha256],
+          ['After declared backup',review.comparison.afterObjectSessionId],['After external path',review.bundles.after.path],
+          ['After reviewed record',review.comparison.afterExpectedRecordSha256],
+          ['Saved observation',review.custodyNote]
+        ]:[['External backup',review.bundle.path],['Backup record',review.bundle.recordSha256??'No successful record is claimed']]),
         ...(result?[['Saved revision',result.revision],['Later case state','Reopening this transfer preserves the case’s current head.']]:[])
       ];
       for(const [key,value]of rows)summary.append(make('dt',key),make('dd',value,'mono'));
@@ -161,7 +168,7 @@ export function createRecoverySupportDesk({root,api,post,notice,showDetails}){
     if(!current())return;
     const url=URL.createObjectURL(new Blob([data],{type:'application/json'})),a=make('a');
     a.href=url;a.download=value.filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-    setStatus('Downloaded the complete original Support handoff. Its encrypted native backup remains external.');
+    setStatus('Downloaded the complete original Support handoff. Its encrypted native backup bytes remain external.');
   }));
   pack.addEventListener('click',()=>run(async current=>{
     const value=await post('/api/support-export',{profileId,transferId:review.transferId,expectedReviewSha256:review.reviewSha256});

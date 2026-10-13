@@ -303,10 +303,17 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
     const found=await objectAdapter.evidence(sha256),raw=Buffer.from(JSON.stringify(found.evidence)+'\n');
     need(raw.length===found.bytes&&hash(raw)===sha256,'WORKSPACE_OBJECT_EVIDENCE_CHANGED');return raw;
   }
+  async function originalComparisonArtifactBytes(ref){
+    const artifact=await comparisonAdapter.artifact(ref.sha256);
+    need(artifact.bytes===ref.bytes&&artifact.mediaType===ref.mediaType,'WORKSPACE_COMPARISON_ARTIFACT_CHANGED');
+    const raw=Buffer.from(artifact.text,'utf8');
+    need(raw.length===ref.bytes&&hash(raw)===ref.sha256,'WORKSPACE_COMPARISON_ARTIFACT_CHANGED');return raw;
+  }
   const bundleAdapter=createObjectBundleAdapter({directory,workspaceId:workspaceState.id,
     readRequestBytes:originalRequestBytes,readEvidenceBytes:originalEvidenceBytes});
   const support = createRecoverySupport({directory,workspaceId:workspaceState.id,profiles:host.profiles,currentHost,
     readRequestBytes:originalRequestBytes,readEvidenceBytes:originalEvidenceBytes,
+    readComparisonArtifactBytes:originalComparisonArtifactBytes,
     isActive:(profileId,id)=>active?.key===requestPath(profileId,id),isClosing:()=>closing||closed,readOnly});
   const objectReviews = join(directory,'object-reviews');
   function declaredObject(profile,id) {

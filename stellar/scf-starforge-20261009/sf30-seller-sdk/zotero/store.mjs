@@ -7,7 +7,7 @@ import {randomUUID} from 'node:crypto';
 import {privateDirectory,writeBytes,readBytes,writeJson,readJson} from '../../sf88-operator-buyer-cli/node/store.mjs';
 import {SCHEMA,LIMIT,need,plain,parse,json,sha256,clone,id,requestId,revision,now,objectReference} from './contracts.mjs';
 import {retainZoteroCleanup} from './agent-cleanup.mjs';
-const KINDS=new Set(['profile','capture','edition','project','comparison','handoff','rate','agent-request']);
+const KINDS=new Set(['profile','capture','edition','project','comparison','handoff','rate','agent-request','project-return','project-delivery']);
 const format='stellar-forge.zotero-store.v1';
 const hash=/^[a-f0-9]{64}$/;
 const encode=value=>json(value).toString('utf8');
@@ -86,6 +86,13 @@ export async function openZoteroStore(directory,{receiving=false}={}) {
       try{const result=work();need(!(result&&typeof result.then==='function'),'ZOTERO_ASYNC_TRANSACTION_FORBIDDEN');db.exec('COMMIT');return result;}
       catch(error){try{db.exec('ROLLBACK');}catch{}throw error;}
     }
+    function actionResult(op,method,input) {
+      live();const operation=requestId(op),inputHash=sha256(json({method,input}));
+      const old=db.prepare('SELECT * FROM requests WHERE id=?').get(operation);
+      if(!old)return null;
+      need(old.input_hash===inputHash&&old.method===method,'ZOTERO_REQUEST_INPUT_CHANGED');
+      return {replayed:true,...parse(Buffer.from(old.result))};
+    }
     function action(op,method,input,work) {
       const operation=requestId(op),inputHash=sha256(json({method,input}));
       return transaction(()=>{
@@ -140,7 +147,7 @@ export async function openZoteroStore(directory,{receiving=false}={}) {
         lease.close();closed=true;
       }catch(error){throw new AggregateError([error],'ZOTERO_CLOSE_FAILED');}
     }
-    return {directory,get identity(){return clone(identity);},get,list,history,put,transaction,action,putObject,objectBytes,snapshot,adopt,close};
+    return {directory,get identity(){return clone(identity);},get,list,history,put,transaction,action,actionResult,putObject,objectBytes,snapshot,adopt,close};
   }catch(error){const cleanup=retainZoteroCleanup(error,[db,lease]);try{await cleanup.close();}catch(secondary){error.cleanupFailure=secondary.code??'ZOTERO_CLOSE_FAILED';}throw error;}
 }
 export function validateSnapshot(value) {

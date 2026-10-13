@@ -1,3 +1,4 @@
+import {createProjectReturnsView} from './project-returns.mjs';
 // MIT. Industrial operator UI. Access capability remains only in this document's memory.
 const fragment=new URLSearchParams(location.hash.slice(1));let token=fragment.get('token')??'';
 history.replaceState(null,'',location.pathname);
@@ -94,7 +95,13 @@ function projectSelector(){
   const select=field('Saved project','select');options(select.node,state.records.project.rows.map(p=>({value:p.id,label:p.title+' · r'+p.revision})),selectedProject);
   select.node.onchange=()=>{selectedProject=select.node.value;newProjectEdition=null;projectOffset=0;epoch++;show(page).catch(e=>toast(e.message,true));};return select;
 }
+const returnedProjects=createProjectReturnsView({
+  el,append,field,options,row,panel,table,note,button,http,invoke,digest,saveDownload,detail,toast,
+  main,state:()=>state,current,refresh,
+  openProject:id=>{selectedProject=id;newProjectEdition=null;projectOffset=0;return show('projects');}
+});
 const pages={
+  async returns(c){await returnedProjects.mount(c);},
   async overview(){
     heading('Library editions and review','Capture or import original Zotero documents, review their changes, and deliver selected evidence into the maintained Research dossier.');
     if(state.transport?.mode==='local-protocol-exercise')main.append(note('Local protocol exercise · '+state.transport.sourceReference+'. This workspace is not reading a live Zotero library.'));
@@ -329,7 +336,7 @@ const pages={
   }
 };
 for(const [name,label]of [['overview','Overview'],['libraries','Libraries'],['capture','Capture and intake'],['editions','Editions'],
-  ['projects','Projects'],['compare','Changes'],['research','Research delivery'],['transfer','Receiving']]){
+  ['projects','Projects'],['returns','Returned projects'],['compare','Changes'],['research','Research delivery'],['transfer','Receiving']]){
   const b=button(label,()=>show(name),true);b.dataset.page=name;$('#navigation').append(b);
 }
 window.addEventListener('pagehide',()=>{token='';clearTimeout(poll);});

@@ -13,7 +13,7 @@ import {retainZoteroCleanup} from './agent-cleanup.mjs';
 import {ZOTERO_AGENT_VIEWS} from './agent-requests.mjs';
 
 const PUBLIC=fileURLToPath(new URL('./public/',import.meta.url));
-const ASSETS={'/':'index.html','/app.mjs':'app.mjs','/style.css':'style.css'};
+const ASSETS={'/':'index.html','/app.mjs':'app.mjs','/style.css':'style.css','/project-returns.mjs':'project-returns.mjs'};
 const TYPES={'.html':'text/html; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8'};
 async function body(req,limit) {
   const length=req.headers['content-length'];
@@ -104,6 +104,16 @@ export async function startZoteroWorkspace({directory,researchDirectory=null,dos
         const request={requestId:requestId(req.headers['x-zotero-request-id']),method:'documents.import',input:{profileId:parsed.searchParams.get('profileId'),profileRevision:Number(parsed.searchParams.get('profileRevision'))},source:{bytes:bytes.length,sha256:sha256(bytes)}};
         need(request.source.sha256===req.headers['x-zotero-source-sha256'],'ZOTERO_AGENT_SOURCE_CHANGED');
         return reply(res,200,await workspace.agentSave(request,bytes));
+      }
+      if(req.method==='POST'&&path==='/api/agent/project-return/import'){
+        const bytes=await body(req,LIMIT.transfer);need(!closing,'ZOTERO_WORKSPACE_CLOSING');
+        const request={requestId:requestId(req.headers['x-zotero-request-id']),method:'project.return.import',input:{projectId:parsed.searchParams.get('projectId')},source:{bytes:bytes.length,sha256:sha256(bytes)}};
+        need(request.source.sha256===req.headers['x-zotero-source-sha256'],'ZOTERO_AGENT_SOURCE_CHANGED');
+        return reply(res,200,await workspace.agentSave(request,bytes));
+      }
+      if(req.method==='POST'&&path==='/api/project-return/import'){
+        const bytes=await body(req,LIMIT.transfer);need(!closing,'ZOTERO_WORKSPACE_CLOSING');
+        return reply(res,200,await workspace.invoke('project.return.import',{projectId:parsed.searchParams.get('projectId'),bytes},requestId(req.headers['x-zotero-request-id'])));
       }
       if(req.method==='GET'&&path==='/api/state')return reply(res,200,await workspace.snapshot());
       if(req.method==='POST'&&path==='/api/invoke'){

@@ -305,3 +305,8 @@ The complete portfolio.json remains the source-bound record. Each alternative's 
 The full original operations-case export still supplies the native reopening carrier, including source attachments, saved Forecasts, Portfolios and their original events. Receive that whole case through the existing import interface. Validation recalculates the saved Portfolio against its retained source and valuation rather than current external rates.
 
 To review the complete new mode, use the original native-currency case with a missing rate, create and save an operationally ready allocation, and inspect its explicit financial exclusion. Then save a reviewed Forecast successor with the selected source rate and any required native credits, create its allocation, compare the eligible alternatives and select a date plan. Export the complete Portfolio and case, reopen the original database and receive the whole case into a fresh workspace. Preserve each stage's original request IDs and source identities. This is the receiving procedure; execution evidence belongs to the accompanying actual native run.
+
+
+## Complete named working copies
+
+The original Portfolio desk now retains named, durable working copies and immutable checkpoints, with the exact input/result selection, unfinished resource and phase controls, complete source attachments and original interrupted save request. See [Portfolio working copies](PORTFOLIO_WORKING_COPIES.md) for the complete operator workflow, recovery and existing native receiving course. The original allocation calculation, saved record identities and exports remain authoritative.

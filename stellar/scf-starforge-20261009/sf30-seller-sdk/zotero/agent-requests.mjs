@@ -1,8 +1,8 @@
 // MIT. Exact customer requests retained in the original Zotero SQLite history.
 import {LIMIT,need,plain,clone,json,sha256,requestId,now,safeCode} from './contracts.mjs';
 export const ZOTERO_AGENT_SCHEMA='stellar-forge.zotero-agent-request.v1';
-export const ZOTERO_AGENT_ACTIONS=Object.freeze(['profile.save','capture.prepare','capture.control','documents.import','project.save','project.decide','edition.compare','research.prepare','research.receive']);
-export const ZOTERO_AGENT_VIEWS=Object.freeze(['state','record.get','record.list','record.history','edition.get','project.get','project.page','capture.get','research.get','research.preview']);
+export const ZOTERO_AGENT_ACTIONS=Object.freeze(['profile.save','capture.prepare','capture.control','documents.import','project.save','project.decide','edition.compare','research.prepare','research.receive','project.return.prepare','project.return.import','project.return.review','project.return.apply']);
+export const ZOTERO_AGENT_VIEWS=Object.freeze(['state','record.get','record.list','record.history','edition.get','project.get','project.page','capture.get','research.get','research.preview','project.return.preview']);
 export function createZoteroAgentRequests({store,invoke,admit}){
  const active=new Map();let closing=false;
  const recordId=op=>'agent:'+requestId(op);
@@ -13,6 +13,9 @@ export function createZoteroAgentRequests({store,invoke,admit}){
   'profile.save':['id','expectedRevision','definition'],'capture.prepare':['profileId','profileRevision'],'capture.control':['id','operation'],
   'documents.import':['profileId','profileRevision'],'project.save':['id','expectedRevision','editionId','title','description','scope','decisions','findings'],
   'project.decide':['projectId','expectedRevision','changes'],'edition.compare':['before','after'],
+  'project.return.prepare':['projectId','projectRevision'],'project.return.import':['projectId'],
+  'project.return.review':['id','expectedRevision','expectedProjectRevision','previewSha256','choices','note'],
+  'project.return.apply':['id','expectedRevision','expectedProjectRevision','previewSha256'],
   'research.prepare':['projectId','projectRevision','dossierId','questionId'],'research.receive':['id','expectedDossierRevision']
  };
  function checked(value){
@@ -25,7 +28,7 @@ export function createZoteroAgentRequests({store,invoke,admit}){
    need(plain(definition.library)&&Object.keys(definition.library).every(key=>['type','id'].includes(key)),'ZOTERO_AGENT_LIBRARY_FIELDS');
    if(definition.scope!==undefined)need(plain(definition.scope)&&Object.keys(definition.scope).every(key=>['collectionKeys','includeDescendants'].includes(key)),'ZOTERO_AGENT_SCOPE_FIELDS');
   }
-  if(request.method==='documents.import'){need(plain(request.source)&&Object.keys(request.source).length===2&&/^[a-f0-9]{64}$/.test(request.source.sha256)&&Number.isSafeInteger(request.source.bytes)&&request.source.bytes>0&&request.source.bytes<=LIMIT.capture,'ZOTERO_AGENT_FILE_REQUIRED');}
+  if(['documents.import','project.return.import'].includes(request.method)){need(plain(request.source)&&Object.keys(request.source).length===2&&/^[a-f0-9]{64}$/.test(request.source.sha256)&&Number.isSafeInteger(request.source.bytes)&&request.source.bytes>0&&request.source.bytes<=(request.method==='project.return.import'?LIMIT.transfer:LIMIT.capture),'ZOTERO_AGENT_FILE_REQUIRED');}
   else need(request.source===undefined,'ZOTERO_AGENT_SOURCE_UNEXPECTED');
   need(json(request).length<=LIMIT.control,'ZOTERO_HTTP_BODY_LIMIT');return request;
  }

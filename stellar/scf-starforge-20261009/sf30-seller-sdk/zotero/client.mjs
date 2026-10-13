@@ -46,6 +46,8 @@ export function createZoteroClient(connection,{fetchImpl=globalThis.fetch,timeou
     invoke:(method,input={},op=null)=>request('/api/invoke',{method:'POST',body:json({method,input,requestId:op})}),
     importDocuments:(bytes,{profileId,profileRevision,requestId:op})=>request('/api/import?'+new URLSearchParams({profileId,profileRevision:String(profileRevision)}),
       {method:'POST',body:Buffer.from(bytes),headers:{'X-Zotero-Request-Id':requestId(op)}}),
+    importProjectReturn:(bytes,{projectId,requestId:op})=>request('/api/project-return/import?'+new URLSearchParams({projectId}),
+      {method:'POST',body:Buffer.from(bytes),headers:{'X-Zotero-Request-Id':requestId(op)}}),
     download:input=>request('/api/download?'+new URLSearchParams(Object.entries(input).filter(([,v])=>v!==null&&v!==undefined).map(([k,v])=>[k,String(v)])),{raw:true}),
     exportWorkspace:op=>request('/api/export?'+new URLSearchParams({requestId:requestId(op)}),{raw:true}),
     receiveWorkspace:(bytes,{name,requestId:op})=>request('/api/receive?'+new URLSearchParams({name}),{method:'POST',body:Buffer.from(bytes),

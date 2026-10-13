@@ -9,6 +9,7 @@ import {openCaseStore,retainCaseArtifact} from '../../sf74-merchant-support-cons
 import {parseWorkspace,MAX_WORKSPACE_BYTES} from '../../sf74-merchant-support-console/workspace-file.mjs';
 import {parseRuntime,encodeRuntimeSource,exportRuntimeHandoff,MAX_RUNTIME_BYTES} from '../../sf74-merchant-support-console/runtime-support.mjs';
 import {createRecoveryObservationFiles,recoveryEvidenceReferences} from '../../sf74-merchant-support-console/recovery-runtime.mjs';
+import {createComparisonObservationFiles,comparisonArtifactReferences} from '../../sf74-merchant-support-console/comparison-runtime.mjs';
 import {exportCaseSourcePackage,inspectCaseSourcePackage} from '../../sf74-merchant-support-console/case-source-package.mjs';
 import {createCaseSourceDelivery} from '../../sf74-merchant-support-console/case-source-delivery.mjs';
 
@@ -80,6 +81,8 @@ function selection(input){
 }
 function reviewHash(review){const {reviewSha256,...body}=review;return hash(json(body));}
 function publicReview(review){
+  if(review.command==='object-compare')return {...clone(review),
+    custodyNote:'This capture contains the complete original comparison request and every referenced result/report artifact. Both encrypted backups remain external; reopening this saved evidence does not authenticate current paths.'};
   return {...clone(review),bundle:{...clone(review.bundle),
     note:'The native encrypted backup is external. This case capture contains the complete saved request and native evidence, not the backup bytes.'}};
 }
@@ -89,7 +92,7 @@ function publicReview(review){
  * No recovery command, acquisition, notification or automatic save replay occurs.
  */
 export function createRecoverySupport({directory,workspaceId,profiles,currentHost,readRequestBytes,
-  readEvidenceBytes,isActive,isClosing=()=>false,readOnly=false,environment=process.env}){
+  readEvidenceBytes,readComparisonArtifactBytes,isActive,isClosing=()=>false,readOnly=false,environment=process.env}){
   const root=join(directory,'support-transfers'),shutdown=new AbortController(),pending=new Set(),sources=new Map();
   const identities=new Map();let closed=false,closePromise=null;
   function available(write=false){
@@ -142,7 +145,8 @@ export function createRecoverySupport({directory,workspaceId,profiles,currentHos
       sourceReviewHash:review.selection.expectedReviewHash,sourceAttempt:review.selection.afterAttempt,
       caseId:saved.id,revision:saved.revision,previousRevision:saved.previousRevision,
       slot:review.selection.slot,workspaceSha256:review.files.workspace.sha256,
-      supportSha256:review.files.support.sha256,bundle:review.bundle};
+      supportSha256:review.files.support.sha256,bundle:review.bundle,
+      ...(review.command==='object-compare'?{comparison:clone(review.comparison),bundles:clone(review.bundles)}:{})};
   }
   async function recordedResult(folder,review){
     const raw=await optional(join(folder,'result.json'),MAX_REQUEST);if(!raw)return null;
@@ -201,20 +205,38 @@ export function createRecoverySupport({directory,workspaceId,profiles,currentHos
     need(request.review?.profileId===chosen.profileId&&request.review?.operationId===chosen.id&&
       request.review?.reviewHash===chosen.expectedReviewHash&&request.attempts===chosen.afterAttempt,
       'WORKSPACE_SUPPORT_SOURCE_CHANGED');
-    const evidenceBytes=new Map();let evidenceTotal=0;
-    for(const ref of recoveryEvidenceReferences(request)){
+    const comparison=request.review.command==='object-compare';
+    need(comparison||['object-snapshot','object-verify','object-restore'].includes(request.review.command),
+      'WORKSPACE_SUPPORT_COMMAND_UNSUPPORTED');
+    const references=comparison?comparisonArtifactReferences(request):recoveryEvidenceReferences(request);
+    const encodedInventoryBytes=references.reduce((sum,ref)=>sum+
+      Buffer.byteLength(JSON.stringify({...ref,data:''}))+4*Math.ceil(ref.bytes/3)+1,0);
+    need(references.every(ref=>Number.isSafeInteger(ref.bytes)&&ref.bytes>0)&&
+      requestBytes.length+encodedInventoryBytes<=MAX_COHORT,'WORKSPACE_SUPPORT_CAPTURE_TOO_LARGE',
+      'The complete request and artifact inventory exceeds the 64 MiB Support transport limit; no file was omitted or truncated. Keep the complete original comparison downloads.');
+    const evidenceBytes=new Map();let evidenceTotal=requestBytes.length;
+    for(const ref of references){
       signal.throwIfAborted();
-      const name=ref.sha256+'.evidence.json',prior=await optional(join(folder,name),16*1024*1024);
-      const raw=prior??await readEvidenceBytes(ref.sha256);
+      // Check the complete selected inventory before reading any large body.
+      // The builder below also bounds base64 wrappers and observation metadata.
+      need(Number.isSafeInteger(ref.bytes)&&ref.bytes>0&&ref.bytes<=MAX_COHORT-evidenceTotal,
+        'WORKSPACE_SUPPORT_CAPTURE_TOO_LARGE',
+        'The complete selected request/artifact cohort exceeds the 64 MiB Support transport limit; no artifact can be omitted or truncated.');
+      const maximum=comparison?MAX_COHORT:16*1024*1024;
+      const name=ref.sha256+(comparison?'.comparison-artifact':'.evidence.json');
+      const prior=await optional(join(folder,name),maximum);
+      need(!comparison||typeof readComparisonArtifactBytes==='function','WORKSPACE_SUPPORT_COMPARISON_SOURCE_REQUIRED');
+      const raw=prior??(comparison?await readComparisonArtifactBytes(ref):await readEvidenceBytes(ref.sha256));
       need(same(pin(raw),{sha256:ref.sha256,bytes:ref.bytes}),'WORKSPACE_SUPPORT_EVIDENCE_CHANGED');
       if(!prior)await retained(join(folder,name),raw);
-      evidenceTotal+=raw.length;need(evidenceTotal<=MAX_COHORT,'WORKSPACE_SUPPORT_CAPTURE_TOO_LARGE');
-      evidenceBytes.set(ref.sha256,raw);
+      evidenceTotal+=raw.length;evidenceBytes.set(ref.sha256,raw);
     }
     const timePath=join(folder,'capture-time.json'),time=await optional(timePath,1024);
     const capturedAt=time?JSON.parse(decode(time)).capturedAt:new Date().toISOString();
     if(!time)await retained(timePath,json({capturedAt}));
-    const files=createRecoveryObservationFiles({capturedAt,workspaceId,requestBytes,evidenceBytes:[...evidenceBytes.values()]});
+    const files=comparison?
+      createComparisonObservationFiles({capturedAt,workspaceId,requestBytes,artifactBytes:[...evidenceBytes.values()]}):
+      createRecoveryObservationFiles({capturedAt,workspaceId,requestBytes,evidenceBytes:[...evidenceBytes.values()]});
     let total=0;for(const data of Object.values(files))total+=data.length;
     need(total<=MAX_COHORT,'WORKSPACE_SUPPORT_CAPTURE_TOO_LARGE');
     const record=await store.read(chosen.caseId,chosen.expectedRevision);
@@ -229,7 +251,7 @@ export function createRecoverySupport({directory,workspaceId,profiles,currentHos
     const body={schema:'stellar-forge.merchant-runtime-case.v1',
       before:support?.before??null,after:support?.after??null,[chosen.slot]:capture};
     const supportText=json(body);parseRuntime(supportText);
-    const observation=JSON.parse(decode(files['recovery-observation.json']));
+    const observation=JSON.parse(decode(files[comparison?'comparison-observation.json':'recovery-observation.json']));
     const selected={
       workspace:await retained(join(folder,'workspace.json'),record.workspaceText),
       support:await retained(join(folder,'support.json'),supportText),
@@ -238,8 +260,13 @@ export function createRecoverySupport({directory,workspaceId,profiles,currentHos
     for(const [name,data]of Object.entries(files))await retained(join(folder,name),data);
     const reviewed={schema:REVIEW_SCHEMA,workspaceId,profileId:chosen.profileId,transferId:chosen.transferId,
       selection:chosen,capturedAt,request:pin(requestBytes),phase:request.phase,attempts:request.attempts,
-      command:request.review.command,sessionId:observation.sessionId,objectSessionId:observation.objectSessionId,
-      evidence:observation.evidence,bundle:observation.bundle,
+      command:request.review.command,sessionId:observation.sessionId,objectSessionId:observation.objectSessionId??null,
+      evidence:comparison?observation.artifacts:observation.evidence,bundle:comparison?null:observation.bundle,
+      ...(comparison?{comparison:{beforeObjectSessionId:request.review.objectComparison.before.id,
+        afterObjectSessionId:request.review.objectComparison.after.id,
+        beforeExpectedRecordSha256:request.review.objectComparison.beforeExpectedRecordSha256,
+        afterExpectedRecordSha256:request.review.objectComparison.afterExpectedRecordSha256},
+        bundles:clone(observation.bundles)}:{}),
       case:{id:record.id,revision:record.revision,name:record.name,metadata:record.metadata},
       replacing:record.supportText?{slot:chosen.slot,present:!!support?.[chosen.slot],
         supportSha256:hash(record.supportText)}:{slot:chosen.slot,present:false,supportSha256:null},
@@ -359,6 +386,8 @@ export function createRecoverySupport({directory,workspaceId,profiles,currentHos
         'WORKSPACE_SUPPORT_ATTACHMENT_SELECTION_INVALID');
       const {folder,review,result}=await originalResult(input.profileId,input.transferId);
       need(result&&review.reviewSha256===input.expectedReviewSha256,'WORKSPACE_SUPPORT_SAVE_REQUIRED');
+      need(review.command!=='object-compare','WORKSPACE_SUPPORT_COMPARISON_BUNDLES_EXTERNAL',
+        'Comparison captures retain two external backups. Use each original encrypted-bundle transport and its reviewed native attachment workflow.');
       const transport=input.transport,archive=input.archive;
       need(transport?.status==='COMPLETE'&&transport.command==='object-bundle-export'&&
         transport.recordSha256===review.bundle.recordSha256&&
