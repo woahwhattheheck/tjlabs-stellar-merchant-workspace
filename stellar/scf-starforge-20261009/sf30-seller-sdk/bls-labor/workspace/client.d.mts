@@ -33,7 +33,11 @@ export interface ObservationPage {
 export interface Note {subject:string;revision:number;text:string;history:Array<{id:number;subject:string;revision:number;created:string;text:string;operation:string}>}
 export interface UploadReceipt {id:string;name:string;path:string;bytes:number;sha256:string}
 export interface BlsLaborWorkspaceClient {
-  readonly workspaceId:string;readonly instanceId:string;
+  readonly workspaceId:string;readonly instanceId:string;readonly launch:Readonly<Record<string,unknown>>;
+  verify():Promise<Record<string,unknown>>;
+  close():void;
+  operationLookup(id:string):Promise<{found:boolean;workspace_id:string;operation?:Operation;request?:OperationRequest}>;
+  stopNative(id:string):Promise<{operation_id:string;state:string;signal_sent:boolean}>;
   state(options?:{offset?:number;limit?:number}):Promise<WorkspaceState>;
   defaultSelection():Promise<Record<string,unknown>>;
   edition(id:string):Promise<Record<string,unknown>>;
@@ -48,11 +52,11 @@ export interface BlsLaborWorkspaceClient {
   save(request:OperationRequest,options:{requestFile:string}):Promise<Operation>;
   resume(requestFile:string):Promise<Operation>;
   wait(operationId:string,options?:{signal?:AbortSignal;intervalMs?:number}):Promise<Operation>;
-  upload(options:{file:string;id:string;name?:string;signal?:AbortSignal}):Promise<UploadReceipt>;
+  upload(options:{file:string;id:string;name?:string;signal?:AbortSignal;expectedSha256?:string}):Promise<UploadReceipt>;
   uploadReceipt(id:string):Promise<UploadReceipt>;
-  download(options:{kind:'source'|'report'|'export';id:string;name?:string;destination:string;signal?:AbortSignal}):Promise<{destination:string;bytes:number}>;
+  download(options:{kind:'source'|'report'|'export';id:string;name?:string;destination:string;signal?:AbortSignal}):Promise<{destination:string;bytes:number;sha256:string;contentType:string}>;
 }
-export function openBlsLaborWorkspaceClient(options:{connectionFile:string;expectedWorkspaceId?:string}):Promise<BlsLaborWorkspaceClient>;
+export function openBlsLaborWorkspaceClient(options:{connectionFile:string;expectedWorkspaceId?:string;expectedBinding?:string;expectedInstanceId?:string}):Promise<BlsLaborWorkspaceClient>;
 
 export interface RegionalAnalysisInput {
   edition_id:string;title:string;region_name:string;narrative:string;

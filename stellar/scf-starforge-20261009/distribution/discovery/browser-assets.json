@@ -269,6 +269,20 @@
       ]
     ],
     [
+      "/stellar-forge/developer-site/dist/source-document-tables.mjs",
+      [
+        "../../../../../stellar-forge/developer-site/dist/source-document-tables.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/stellar-forge/developer-site/dist/source-table-intake.mjs",
+      [
+        "../../../../../stellar-forge/developer-site/dist/source-table-intake.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/fred-operating-plan.mjs",
       [
         "fred-operating-plan.mjs",
