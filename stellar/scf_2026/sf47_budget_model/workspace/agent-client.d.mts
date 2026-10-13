@@ -4444,6 +4444,8 @@ export class GrantWorkspaceClient {
   portfolioPreview<T = GrantPortfolioPreview>(caseId: string, expectedVersion: number, inputs: GrantObject): Promise<GrantJsonResponse<T>>;
   portfolioSave<T = GrantPortfolioSaveReceipt>(caseId: string, body: GrantModelSaveInput): Promise<GrantJsonResponse<T>>;
   portfolioSelection<T = GrantPortfolioSelection>(caseId: string, expectedVersion: number, portfolioId: string, alternativeId: string): Promise<GrantJsonResponse<T>>;
+  read(view: 'award-terms', selection: {caseId: string}): Promise<GrantJsonResponse<GrantAwardTermsCatalog>>;
+  read(view: 'award-term', selection: {caseId: string; termsId: string; revision?: number}): Promise<GrantJsonResponse<GrantAwardTermsView>>;
   read(view: 'cost-funding', selection: {caseId: string}): Promise<GrantJsonResponse<{catalog: GrantFundingCatalog; history: GrantFundingSummary[]}>>;
   read(view: 'funding-edition', selection: {caseId: string; revision?: number}): Promise<GrantJsonResponse<GrantFundingView>>;
   read(view: 'funding-request', selection: {caseId: string; requestId: string}): Promise<GrantJsonResponse<GrantFundingRequest>>;
@@ -4576,4 +4578,24 @@ export class GrantWorkspaceClient {
   detach(expectedInstanceId?: string): Promise<GrantCloseResult>;
   /** Permanent admission stop; repeated calls retry a failed close of the same original owners. */
   close(): Promise<GrantCloseResult>;
+}
+
+/** Complete existing issuer-terms source read; selection does not commission an award. */
+export interface GrantAwardTermsSummary extends GrantObject {
+ id:string;revision:number;title:string;stage:string;track:string;issuedOn:string|null;savedAt:string;
+ caseVersion:number;sourceId:string;sourceSha256:string;sha256:string;nativeAwardId:string|null;
+ awardAmountUsd:string|null;changedFields:unknown[];
+}
+export interface GrantAwardTermsEdition extends GrantObject {
+ schema:'stellar-forge.sf47-award-terms.v1';id:string;revision:number;caseVersion:number;
+ savedAt:string;actor:string;note:string;document:GrantObject;
+ source:{case:GrantObject;plan:GrantObject;sources:GrantObject[]};
+ comparison:GrantObject;previewSha256:string;sha256:string;nativeAwardId:string|null;
+}
+export interface GrantAwardTermsView {
+ source:GrantObject;edition:GrantAwardTermsEdition;history:GrantAwardTermsSummary[];commissioning:GrantObject[];
+}
+export interface GrantAwardTermsCatalog {
+ terms:GrantAwardTermsSummary[];commissioning:GrantObject[];plan:GrantObject;program:GrantObject;
+ sources:GrantObject[];correspondence:GrantObject[];
 }

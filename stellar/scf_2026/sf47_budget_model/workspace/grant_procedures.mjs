@@ -120,10 +120,103 @@ export async function makeProcedureTable({key,origin,originalText,metadata=null,
   return {key,origin,metadata:metadata?clone(metadata):null,nativePlan,original,selection:await tableSummary(value)};
 }
 function selectedEdition(value,kind) {
-  return kind==='installation'?value:value?.edition;
+  return kind==='installation'||immutableFinancial(kind)?value:value?.edition;
 }
+
+export const PROCEDURE_EDITION_KINDS = Object.freeze(['installation','task-outcome','forecast','portfolio','cost-funding','award-terms']);
+const immutableFinancial = kind => kind==='forecast'||kind==='portfolio';
+const sourcedFinancial = kind => kind==='cost-funding'||kind==='award-terms';
+function financialEditionRef(value,kind) {
+  const e=immutableFinancial(kind)?value:value.edition;
+  need(plain(e),'PROCEDURE_EDITION','Retain the complete saved financial edition.');
+  if(immutableFinancial(kind)) {
+    ident(e.id,kind);positive(e.version,'Original saved case version');hash(e.sha256);
+    const schema=kind==='forecast'?'stellar-forge.sf47-operating-forecast.v1':'stellar-forge.sf47-portfolio.v1';
+    need(e.schema===schema&&plain(e.inputs)&&plain(e.report)&&plain(e.source)&&plain(e.snapshot)&&
+      plain(e.snapshot.program)&&plain(e.snapshot.plan)&&plain(e.snapshot.records)&&plain(e.snapshot.sources),
+      'PROCEDURE_EDITION','Select the complete saved '+kind+' with its original inputs, report and case snapshot.');
+    ident(e.source.programId,'operation');positive(e.source.version,'Original source case version');hash(e.source.factsSha256);
+    need(e.source.version<e.version&&e.snapshot.program.id===e.source.programId&&e.snapshot.program.version===e.source.version,
+      'PROCEDURE_EDITION','The saved financial edition must retain its actual preceding case snapshot.');
+    if(kind==='portfolio'){
+      need(plain(e.baseForecast)&&plain(e.baseForecastSnapshot),'PROCEDURE_EDITION','Retain the complete portfolio source forecast.');
+      const base=financialEditionRef(e.baseForecastSnapshot,'forecast');
+      need(base.id===e.baseForecast.id&&base.sha256===e.baseForecast.sha256,'PROCEDURE_EDITION','The portfolio source forecast identity differs.');
+    }
+    return {id:e.id,revision:e.version,sha256:e.sha256};
+  }
+  if(kind==='cost-funding')need(e.id==='cost-funding','PROCEDURE_EDITION','Select the original single case funding book.');
+  else ident(e.id,'terms');
+  positive(e.revision,'Native edition revision');positive(e.caseVersion,'Original saved case version');hash(e.sha256);
+  need(e.schema==='stellar-forge.sf47-'+kind+'.v1'&&plain(e.document)&&plain(e.source)&&plain(e.source.case)&&
+    plain(e.source.plan)&&Array.isArray(e.source.sources)&&plain(kind==='cost-funding'?e.report:e.comparison),
+    'PROCEDURE_EDITION','Retain the whole financial source, document and original calculation.');
+  ident(e.source.case.id,'operation');positive(e.source.case.version,'Original financial source version');
+  need(e.source.case.version<e.caseVersion,'PROCEDURE_EDITION','The saved financial source must precede its native save.');
+  sourceMetadata(value.source);
+  const marker=value.source[kind==='cost-funding'?'costFunding':'awardTerms'];
+  need(plain(marker)&&marker.schema===e.schema&&marker.id===e.id&&marker.revision===e.revision&&marker.sha256===e.sha256,
+    'PROCEDURE_EDITION','The financial edition differs from its original native source marker.');
+  if(kind==='cost-funding')hash(e.reportSha256);
+  need(Array.isArray(value.history)&&value.history.length>=e.revision,'PROCEDURE_EDITION','Retain the complete descending native financial history.');
+  for(let i=0;i<value.history.length;i++){
+    const row=value.history[i];
+    need(plain(row)&&row.revision===value.history.length-i,'PROCEDURE_EDITION','Keep each financial revision in its original order.');
+    const rowSha=kind==='cost-funding'?row.editionSha256:row.sha256;
+    hash(rowSha);ident(row.sourceId,'source');hash(row.sourceSha256);
+    if(kind==='award-terms')need(row.id===e.id,'PROCEDURE_EDITION','The financial history selects another terms workspace.');
+    if(row.revision===e.revision)need(rowSha===e.sha256&&row.sourceId===value.source.id&&row.sourceSha256===value.source.sha256,
+      'PROCEDURE_EDITION','The selected financial revision differs from its retained history.');
+  }
+  return {id:e.id,revision:e.revision,sha256:e.sha256};
+}
+/** Actual native attachment metadata; the complete case ZIP retains the bytes. */
+export function procedureEditionSources(kind,value) {
+  editionRef(value,kind);
+  let rows=[];
+  if(kind==='task-outcome')rows=[value.source];
+  else if(immutableFinancial(kind)){
+    rows=Object.values(value.snapshot.sources);
+    if(kind==='portfolio')rows.push(...procedureEditionSources('forecast',value.baseForecastSnapshot));
+  }else if(sourcedFinancial(kind))rows=[value.source,...value.edition.source.sources];
+  const seen=new Map();
+  for(const row of rows){const meta=sourceMetadata(row);
+    need(!seen.has(meta.id)||equal(seen.get(meta.id),meta),'PROCEDURE_SOURCE_CHANGED','A financial source identity has conflicting original metadata.');
+    seen.set(meta.id,meta);
+  }
+  return [...seen.values()];
+}
+export function procedureEditionSummary(kind,value) {
+  const ref=editionRef(value,kind),e=selectedEdition(value,kind);
+  const currentRevision=immutableFinancial(kind)?ref.revision:(value.history?.[0]?.revision??value.current?.revision??ref.revision);
+  const sourceChanged=Boolean(value.current?.sourceChanged||value.current?.installationSourceChanged||
+    (Array.isArray(value.currentSourceChanges)&&value.currentSourceChanges.length));
+  return {kind,ref,label:e.inputs?.name??e.document?.title??e.preview?.document?.name??e.name??ref.id,
+    caseVersion:immutableFinancial(kind)||kind==='installation'?e.version:e.caseVersion,
+    revisionLabel:immutableFinancial(kind)?'Saved case v'+ref.revision:'Revision '+ref.revision,
+    sourceChanged,currentRevision,laterEditionAvailable:currentRevision>ref.revision};
+}
+/** Relative original authenticated routes; no alternate reader or server. */
+export function procedureEditionRoute(kind,ref,{download=false,expectedVersion,reportSha256}={}) {
+  need(PROCEDURE_EDITION_KINDS.includes(kind)&&plain(ref),'PROCEDURE_EDITION','Select a supported native edition.');
+  positive(ref.revision,'Selected edition revision');
+  let path;
+  if(immutableFinancial(kind)){ident(ref.id,kind);path='/'+(kind==='forecast'?'forecasts/':'portfolios/')+ref.id;return path+(download?'/export.zip':'');}
+  if(kind==='cost-funding'){
+    need(ref.id==='cost-funding','PROCEDURE_EDITION','Select the original single case funding book.');
+    path='/cost-funding/'+(download?'export.zip':'edition')+'?revision='+ref.revision;
+    if(download){positive(expectedVersion,'Export case version');hash(reportSha256);path+='&expectedVersion='+expectedVersion+'&expectedReportSha256='+reportSha256;}
+    return path;
+  }
+  ident(ref.id,kind==='installation'?'installation':kind==='task-outcome'?'task-outcomes':'terms');
+  path='/'+({installation:'installations/','task-outcome':'task-outcomes/','award-terms':'award-terms/'})[kind]+ref.id+
+    (download?'/export.zip':'')+'?revision='+ref.revision;
+  if(download&&kind==='award-terms'){positive(expectedVersion,'Export case version');path+='&expectedVersion='+expectedVersion;}
+  return path;
+}
+
 function stableEdition(value,kind) {
-  if(kind==='task-outcome')return {source:clone(value.source),edition:clone(value.edition)};
+  if(kind==='task-outcome'||sourcedFinancial(kind))return {source:clone(value.source),edition:clone(value.edition)};
   const result=clone(value);delete result.current;return result;
 }
 function sameRetainedEdition(received,expected,kind) {
@@ -131,11 +224,13 @@ function sameRetainedEdition(received,expected,kind) {
   // The original task view includes current case context and an append-only
   // descending history. Preserve its full captured bytes, while allowing a
   // later native edition to extend that history after receiving.
-  return kind!=='task-outcome'||received.history.length>=expected.history.length&&
+  return !(kind==='task-outcome'||sourcedFinancial(kind))||received.history.length>=expected.history.length&&
     equal(received.history.slice(received.history.length-expected.history.length),expected.history);
 }
 function editionRef(value,kind) {
+  need(PROCEDURE_EDITION_KINDS.includes(kind),'PROCEDURE_EDITION','Select a supported native edition kind.');
   need(plain(value),'PROCEDURE_EDITION','Read the complete selected native edition.');
+  if(immutableFinancial(kind)||sourcedFinancial(kind))return financialEditionRef(value,kind);
   const edition=selectedEdition(value,kind);
   need(plain(edition),'PROCEDURE_EDITION','Retain the native task view with its complete edition and source metadata.');
   ident(edition.id,kind==='installation'?'installation':'task-outcomes');positive(edition.revision,'Native edition');
@@ -168,7 +263,7 @@ function editionRef(value,kind) {
   return {id:edition.id,revision:edition.revision,sha256:edition.sha256};
 }
 export async function makeProcedureEdition(kind,originalText) {
-  need(['installation','task-outcome'].includes(kind),'PROCEDURE_EDITION','Choose an Installation or task comparison.');
+  need(PROCEDURE_EDITION_KINDS.includes(kind),'PROCEDURE_EDITION','Choose a saved native installation, task, financial or delivery edition.');
   const original=await packProcedureText(originalText),value=await unpackProcedureText(original);
   return {kind,ref:editionRef(value,kind),original};
 }
@@ -231,9 +326,9 @@ export async function inspectGrantProcedure(input) {
     const key=edition.kind+':'+edition.ref.id+':'+edition.ref.revision;
     need(!editionKeys.has(key)&&equal(edition,rebuilt),'PROCEDURE_EDITION_CHANGED','Keep each complete native edition exactly once.');editionKeys.add(key);
     const doc=await unpackProcedureText(edition.original);
-    need((edition.kind==='installation'?doc.version:doc.edition.caseVersion)<=value.case.version,'PROCEDURE_EDITION_CHANGED','The selected edition is newer than the reviewed native case.');
-    if(edition.kind==='task-outcome')need(value.sources.some(meta=>equal(meta,doc.source)),
-      'PROCEDURE_SOURCE','Retain the complete original native source metadata for every selected task comparison.');
+    need(procedureEditionSummary(edition.kind,doc).caseVersion<=value.case.version,'PROCEDURE_EDITION_CHANGED','The selected edition is newer than the reviewed native case.');
+    for(const source of procedureEditionSources(edition.kind,doc))need(value.sources.some(meta=>equal(meta,source)),
+      'PROCEDURE_SOURCE','Retain every original attachment selected by the saved native edition.');
   }
   linksFor(value.stepLinks,plan,value.sourceTables,value.editions,value.sources);
   if(value.parent!==null){
@@ -257,11 +352,13 @@ export async function prepareGrantProcedure({current,operatingPlanText,selectedR
     const meta=current.sources.find(x=>x.id===table.metadata?.id);
     need(meta&&equal(meta,table.metadata),'PROCEDURE_SOURCE','The table source belongs to the reviewed original case.');selectedSources.push(sourceMetadata(meta));
   }
-  for(const item of editions)if(item.kind==='task-outcome'){
-    const view=await unpackProcedureText(item.original);editionRef(view,item.kind);
-    const meta=current.sources.find(x=>x.id===view.source.id);
-    need(meta&&equal(meta,view.source),'PROCEDURE_SOURCE','The selected task comparison belongs to this original case source history.');
-    if(!selectedSources.some(x=>x.id===meta.id))selectedSources.push(sourceMetadata(meta));
+  for(const item of editions){
+    const view=await unpackProcedureText(item.original);
+    for(const original of procedureEditionSources(item.kind,view)){
+      const meta=current.sources.find(x=>x.id===original.id);
+      need(meta&&equal(meta,original),'PROCEDURE_SOURCE','The selected native edition must retain every original attachment in this case.');
+      if(!selectedSources.some(x=>x.id===meta.id))selectedSources.push(sourceMetadata(meta));
+    }
   }
   let previous=null;
   if(parent){
@@ -305,11 +402,11 @@ export async function verifyGrantProcedure(input,{current,readSource,readEdition
   for(const meta of d.sources)await checkSource(meta);
   const verifiedEditions=[];
   for(const edition of d.editions){
-    need(typeof readEdition==='function','PROCEDURE_READER','Use the original Installation/task comparison reader.');
+    need(typeof readEdition==='function','PROCEDURE_READER','Use the original native edition reader.');
     const received=await readEdition(edition.kind,clone(edition.ref)),expected=await unpackProcedureText(edition.original);
     need(equal(editionRef(received,edition.kind),edition.ref)&&sameRetainedEdition(received,expected,edition.kind),
       'PROCEDURE_EDITION_CHANGED','The complete selected native edition differs: '+edition.ref.id);
-    verifiedEditions.push({kind:edition.kind,...edition.ref});
+    verifiedEditions.push({kind:edition.kind,...edition.ref,current:procedureEditionSummary(edition.kind,received)});
   }
   let cursor=d,cursorPlan=inspected.plan;const precedingTables=[];
   if(verifyParents)while(cursor.parent){
@@ -329,7 +426,7 @@ export async function verifyGrantProcedure(input,{current,readSource,readEdition
       need(equal(editionRef(received,edition.kind),edition.ref)&&sameRetainedEdition(received,expected,edition.kind),
         'PROCEDURE_EDITION_CHANGED','An edition cited by the original procedure history differs.');
       if(!verifiedEditions.some(x=>x.kind===edition.kind&&x.id===edition.ref.id&&x.revision===edition.ref.revision))
-        verifiedEditions.push({kind:edition.kind,...edition.ref});
+        verifiedEditions.push({kind:edition.kind,...edition.ref,current:procedureEditionSummary(edition.kind,received)});
     }
     cursor=prior.document;cursorPlan=prior.plan;
   }
@@ -361,7 +458,7 @@ export async function grantProcedureFiles(input,verification=null) {
   d.sourceTables.forEach((x,i)=>{files['table-'+(i+1)+'.json']=x.original.text;});
   d.editions.forEach((x,i)=>{files[x.kind+'-'+(i+1)+'.json']=x.original.text;});
   if(verification!==null)files['receiving-inspection.json']=procedureJSON(verification);
-  files['README.md']='# '+inspected.summary.title+'\n\nOpen procedure.html for the selected operating steps. operating-plan.json is the complete original Command finder plan, including every saved revision. Import it through Operating plans to continue that history.\n\nThe original Grant Operations case ZIP travels beside these files. Import that ZIP through the existing application or grant-procedures receive, then reopen grant-procedure.json from Sources / Operating procedures. The original importer assigns a new case ID and preserves all source bytes and prior history. Use the explicit source links to inspect the selected tables, Installation editions and task comparisons. Authored status text does not create a payment, completed task or measured customer result.\n';
+  files['README.md']='# '+inspected.summary.title+'\n\nOpen procedure.html for the selected operating steps. operating-plan.json is the complete original Command finder plan, including every saved revision. Import it through Operating plans to continue that history.\n\nThe original Grant Operations case ZIP travels beside these files. Import that ZIP through the existing application or grant-procedures receive, then reopen grant-procedure.json from Sources / Operating procedures. The original importer assigns a new case ID and preserves all source bytes and prior history. Use the explicit source links to inspect the selected tables, installation/task editions, saved forecasts, delivery portfolios, cost funding and issuer terms. Authored status text does not create a payment, completed task or measured customer result.\n';
   const members=[];for(const [name,raw] of Object.entries(files)){const p=await packProcedureText(raw);members.push({name,bytes:p.bytes,sha256:p.sha256});}
   files['MANIFEST.json']=procedureJSON({schema:GRANT_PROCEDURE_SCHEMA+'.files',editionId:d.editionId,operatingPlanId:inspected.plan.id,
     selectedRevision:d.selectedRevision,members});

@@ -1,6 +1,6 @@
 # Complete Grant Operations procedure receiving
 
-This programme joins an existing Grant Operations case to its original Operating Plan, selected full source-table projects and optional native Installation/customer task editions. It saves a procedure as one ordinary native case source, exports the whole case, receives it in a separate original workspace, saves a reviewed second Operating Plan revision, and exports/receives the complete second case again.
+This programme joins an existing Grant Operations case to its original Operating Plan, selected full source-table projects and saved installation, customer task, Forecast, Delivery Portfolio, Cost funding and Award terms editions. It saves a procedure as one ordinary native case source, exports the whole case, receives it in a separate original workspace, saves a reviewed second Operating Plan revision, and exports/receives the complete second case again.
 
 The programme is `grant_procedures_receiving.mjs`, exposed by the maintained distribution as:
 
@@ -110,7 +110,7 @@ Tables use one of the following complete origins:
 
 A full source-table project includes its original documents, source editions, rows, mappings, explicit exclusions, review choices, workbook identity where present, and baseline. The original importer validates those fields. The programme never rebuilds a project from selected summary rows.
 
-An edition selection is `{kind:"installation"|"task-outcome", id, revision}`. The programme reads the actual complete native edition. For customer tasks the returned object is the original `{source,edition,history,case}` view. It retains every field and the full source bytes, verifies the selected immutable source/edition and captured history, and allows later native history to extend that original history without replacing it. Installation reads retain their actual `current` context beside the immutable selected edition.
+An edition selection is `{kind, id, revision}` with kind `installation`, `task-outcome`, `forecast`, `portfolio`, `cost-funding` or `award-terms`. The programme reads the actual complete native edition. For customer tasks the returned object is the original `{source,edition,history,case}` view. It retains every field and the full source bytes, verifies the selected immutable source/edition and captured history, and allows later native history to extend that original history without replacing it. Installation reads retain their actual `current` context beside the immutable selected edition.
 
 A step link is:
 
@@ -212,3 +212,9 @@ Use the actual browser and original application writer. Record the selected nati
 A successful programme establishes actual original API source writes, complete native exports/imports, source/edition verification, and independently reopened revision history. It does not establish that an authored command ran, a customer accepted delivery, money was paid, an award was made, or a proposed operating target was achieved.
 
 The programme stops on missing original sources, incompatible source installation, differing retained bytes, original native rejection, unreturned dispatch without explicit resume, or a failed complete receiving check. It preserves the same operation for recovery and reports the actual returned state.
+
+## Financial selections and original receiving
+
+The existing `selectionFile.editions` and optional second selection accept the six kinds documented in `GRANT_PROCEDURES.md`. Forecast/Portfolio `revision` is the immutable object's original save case version. Cost funding keeps ID `cost-funding`; issuer terms keep their native `terms-...` ID. Each selected edition remains a complete original, including required attachments and a portfolio's complete source forecast. Reusing a parent selection preserves its captured text while current native reads verify immutable contents and original history. A later revision or changed case context is shown separately.
+
+For the financial course, retain the actual original case ZIP and full first/second Operating Plans and selection inputs in this same receiving directory. Use real source bindings supplied by the original equipped owner. Inspect the saved procedure after both independent imports, open each captured financial JSON and native ZIP, follow its step links, and use Compare current source without replacing the selected edition. Continue with a real authored revision and reopen its preserved first revision. Include the exact browser's desktop and narrow rendered views with the original course result so each producing peer can open and inspect them.

@@ -17,7 +17,7 @@ export type NativeProcedureTableInput=
  | {key:string;origin:'preceding-procedure'};
 export interface NativeProcedureSelection {
  caseId:string;operatingPlanText:string;selectedRevision?:number;actor:string;note?:string;editionId?:string;createdAt?:string;
- sourceIds?:string[];tables?:NativeProcedureTableInput[];editions?:{kind:ProcedureEditionKind;id:string;revision:number}[];
+ sourceIds?:string[];tables?:NativeProcedureTableInput[];editions?:{kind:ProcedureEditionKind;id:string;revision:number;originalText?:string}[];
  stepLinks?:ProcedureStepLinks[];parentSourceId?:string|null;
 }
 export interface NativePreparedProcedure extends PreparedGrantProcedure {

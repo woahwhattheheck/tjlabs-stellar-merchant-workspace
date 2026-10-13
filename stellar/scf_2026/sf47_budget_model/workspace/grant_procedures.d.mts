@@ -34,7 +34,8 @@ export interface ProcedureTable {
  /** Full original pinned plan for case-plan; null for other origins. */
  nativePlan:RetainedProcedureText|null;original:RetainedProcedureText;selection:ProcedureTableSelection;
 }
-export type ProcedureEditionKind='installation'|'task-outcome';
+export type ProcedureEditionKind='installation'|'task-outcome'|'forecast'|'portfolio'|'cost-funding'|'award-terms';
+export const PROCEDURE_EDITION_KINDS:readonly ProcedureEditionKind[];
 export interface ProcedureEditionRef {id:string;revision:number;sha256:string}
 export interface ProcedureEdition {kind:ProcedureEditionKind;ref:ProcedureEditionRef;original:RetainedProcedureText}
 export interface ProcedureStepLinks {stepId:string;sourceIds:string[];tableKeys:string[];editionKeys:string[];note:string}
@@ -55,14 +56,14 @@ export interface ProcedureVerification {
  schema:typeof GRANT_PROCEDURE_REPORT_SCHEMA;editionId:string;operatingPlanId:string;selectedRevision:number;headRevision:number;
  originalCase:ProcedureCaseSelection;receivingCase:ProcedureCaseSelection;sourceId:string|null;sameCase:boolean;currentPlanMatches:boolean;
  verifiedSources:{id:string;bytes:number;sha256:string}[];
- verifiedEditions:(ProcedureEditionRef & {kind:ProcedureEditionKind})[];
+ verifiedEditions:(ProcedureEditionRef & {kind:ProcedureEditionKind;current:ProcedureEditionSummary})[];
  verifiedParentSources:string[];sourceTables:{key:string;origin:ProcedureTable['origin'];selection:ProcedureTableSelection}[];
  stepLinks:ProcedureStepLinks[];summary:OperatingPlanSummary;interpretation:string;
 }
 export interface ProcedureReaders {
  current:ProcedureCase;
  readSource:(sourceId:string)=>Promise<Uint8Array>;
- readEdition?:(kind:ProcedureEditionKind,ref:ProcedureEditionRef)=>Promise<GrantInstallationEdition|GrantTaskOutcomeView>;
+ readEdition?:(kind:ProcedureEditionKind,ref:ProcedureEditionRef)=>Promise<GrantInstallationEdition|GrantTaskOutcomeView|GrantObject>;
  sourceId?:string|null;verifyParents?:boolean;
 }
 export interface PrepareGrantProcedureInput {
@@ -84,3 +85,12 @@ export function verifyGrantProcedure(input:string|GrantProcedure,readers:Procedu
 export function procedureCandidates(current:ProcedureCase):ProcedureSource[];
 /** Full selected source plus readable documents; original case.zip is added by native export. */
 export function grantProcedureFiles(input:string|GrantProcedure,verification?:ProcedureVerification|null):Promise<Record<string,string>>;
+
+export interface ProcedureEditionSummary {
+ kind:ProcedureEditionKind;ref:ProcedureEditionRef;label:string;caseVersion:number;revisionLabel:string;
+ sourceChanged:boolean;currentRevision:number;laterEditionAvailable:boolean;
+}
+export function procedureEditionSources(kind:ProcedureEditionKind,value:GrantObject):ProcedureSource[];
+export function procedureEditionSummary(kind:ProcedureEditionKind,value:GrantObject):ProcedureEditionSummary;
+export function procedureEditionRoute(kind:ProcedureEditionKind,ref:Pick<ProcedureEditionRef,'id'|'revision'>,
+ options?:{download?:boolean;expectedVersion?:number;reportSha256?:string}):string;
