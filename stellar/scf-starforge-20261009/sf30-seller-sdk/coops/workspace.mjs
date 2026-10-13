@@ -19,7 +19,7 @@ export async function startCoopsWorkspace({directory,inboxDirectory,port=0,relea
   if(expectedWorkspaceId!==undefined&&app.schema().workspaceId!==expectedWorkspaceId){
     await app.close();throw fault('COOPS_WORKSPACE_IDENTITY_CHANGED','Reopen the originally selected workspace.',409);
   }
-  let files;try{files=await Promise.all(['index.html','app.js','style.css','study.js'].map(p=>readFile(new URL('./web/'+p,import.meta.url))));}
+  let files;try{files=await Promise.all(['index.html','app.js','style.css','study.js','inspection.js'].map(p=>readFile(new URL('./web/'+p,import.meta.url))));}
   catch(e){await app.close();throw e;}
   const token=randomBytes(32).toString('base64url'),authorization=Buffer.from('Bearer '+token);
   let origin,closing=false;const downloads=new Map();
@@ -37,6 +37,7 @@ export async function startCoopsWorkspace({directory,inboxDirectory,port=0,relea
       if(req.method==='GET'&&req.url==='/workspace.js')return reply(200,files[1],'text/javascript; charset=utf-8');
       if(req.method==='GET'&&req.url==='/workspace.css')return reply(200,files[2],'text/css; charset=utf-8');
       if(req.method==='GET'&&req.url==='/study.js')return reply(200,files[3],'text/javascript; charset=utf-8');
+      if(req.method==='GET'&&req.url==='/inspection.js')return reply(200,files[4],'text/javascript; charset=utf-8');
       const downloadMatch=/^\/api\/download\/([a-f0-9]{48})$/.exec(req.url??'');
       if(req.method==='GET'&&downloadMatch){
         const ticket=downloads.get(downloadMatch[1]);downloads.delete(downloadMatch[1]);
@@ -54,6 +55,8 @@ export async function startCoopsWorkspace({directory,inboxDirectory,port=0,relea
         if(url.pathname==='/api/editions')return reply(200,await app.editions({
           offset:Number(url.searchParams.get('offset')??0),limit:Number(url.searchParams.get('limit')??100),profileId:url.searchParams.get('profileId')??undefined}));
         if(url.pathname==='/api/edition')return reply(200,await app.edition(url.searchParams.get('editionId')));
+        if(url.pathname==='/api/inspection-rows')return reply(200,await app.inspectionRows(url.searchParams.get('editionId'),Object.fromEntries(['product','beginDate','endDate','buckets'].filter(k=>url.searchParams.has(k)).map(k=>[k,k==='buckets'?Number(url.searchParams.get(k)):url.searchParams.get(k)])),{offset:Number(url.searchParams.get('offset')??0),limit:Number(url.searchParams.get('limit')??50)}));
+        if(url.pathname==='/api/inspection')return reply(200,await app.inspection(url.searchParams.get('editionId'),Object.fromEntries(['product','beginDate','endDate','buckets'].filter(k=>url.searchParams.has(k)).map(k=>[k,k==='buckets'?Number(url.searchParams.get(k)):url.searchParams.get(k)]))));
         if(url.pathname==='/api/rows'){
           const offset=Number(url.searchParams.get('offset')??0),limit=Number(url.searchParams.get('limit')??100);
           if(!Number.isInteger(limit)||limit<1||limit>500)throw fault('COOPS_ROWS_RANGE','Display from one to 500 rows per page.');
@@ -78,10 +81,14 @@ export async function startCoopsWorkspace({directory,inboxDirectory,port=0,relea
           return deliver(selected,res,reply);
         }
       }
-      if(req.method==='POST'&&['/api/mapping-file','/api/study-preview'].includes(url.pathname)&&!url.search){
+      if(req.method==='POST'&&['/api/mapping-file','/api/study-preview','/api/inspection-point'].includes(url.pathname)&&!url.search){
         if(!/^application\/json(?:; *charset=utf-8)?$/i.test(req.headers['content-type']??''))return reply(415,{error:'JSON_REQUIRED'});
         let count=0;const parts=[];for await(const part of req){count+=part.length;if(count>128*1024)return reply(413,{error:'MAPPING_FILE_TOO_LARGE'});parts.push(part);}
         let value;try{value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(parts)));}catch{return reply(400,{error:'INVALID_JSON'});}
+        if(url.pathname==='/api/inspection-point'){
+         if(!value||Object.keys(value).some(k=>!['editionId','reference'].includes(k)))throw fault('COOPS_INSPECTION_POINT','Choose the original edition and complete point reference.');
+         return reply(200,await app.inspectionPoint(value.editionId,value.reference));
+        }
         return reply(200,url.pathname==='/api/study-preview'?await app.studyPreview(value):app.inspectMappingFile(value));
       }
       if(req.method==='POST'&&url.pathname==='/api/download-ticket'&&!url.search){
