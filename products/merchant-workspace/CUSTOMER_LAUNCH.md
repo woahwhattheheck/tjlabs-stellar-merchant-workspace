@@ -40,6 +40,99 @@ Each installation should have one useful service whose behavior can be followed 
 
 The pairing gives the delivery team two different customer outcomes while preserving the same payment, delivery and handover architecture. Its source adaptations occupy the original six funded work packages below.
 
+### Source-qualified channels and the actual commercial starting point
+
+#### GeoRobotix: complete observation periods
+
+**Public fit.** [GeoRobotix's services](https://georobotix.com/services/) offer cloud and self-hosted sensor platforms, integration APIs, selected private sharing and implementation expertise. Its public business route is **sales@georobotix.com** and its [contact page](https://georobotix.com/contact/). The [research subsidiary's own account](https://georobotix.us/about-us/) distinguishes GeoRobotix, Inc's commercial service from GeoRobotix Innovative Research and its government work. The original case must select the actual contracting entity and authorised civil/environmental source.
+
+**Existing proposal.** The original observation workshare proposes **$9,600 /72 engineering hours /12 active business days**, with **$4,800 at commencement and $4,800 at acceptance**. The first offer was sent on 13 October at 00:05:31 UTC. Its [maintained Installation programme](../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/GEOROBOTIX_CSAPI.md) preserves the complete eight-phase plan, start dependencies, source selection and receiving. The working foundation has operated the publisher's retained illustrative observation through query, export and independent reopening. The selected customer's live source and installation remain to be commissioned.
+
+**Useful pilot.** Receive one agreed JSON observation population for a named system/datastream and time window. Retain the actual schema, all returned pages, original identifiers, timestamps, units, quality fields and explicit coverage. Produce the customer's selected query/report and the complete reusable dataset. The buyer reopens it in its receiving application and compares the next genuinely needed window or corrected source edition.
+
+**Role and acceptance decision.** GeoRobotix may introduce a customer, commission implementation or operate the merchant if it has the necessary source rights. The independent buyer is the named organization that needs and uses the selected result. Its technical operator approves the question and source period; the merchant specifies the complete paid unit, source/retention permission and correction treatment. Select the exact deployed API conformance and schema from the actual host. The public platform description does not supply an endpoint authorization, resale licence or client agreement.
+
+The commercial conversation can decide three concrete points from a prepared example: which existing source and customer decision need this result; who authorizes and pays for that selected operation; and which next observation period the buyer will actually need. The engineering team brings the public API material, existing product and an already prepared output structure to that conversation.
+
+#### Lutra Consulting: reviewed vector editions and customer receiving
+
+**Public fit and identity.** The original prospect is **Lutra Consulting Limited at lutraconsulting.co.uk**. Its [migration service](https://www.lutraconsulting.co.uk/migration-to-open-source-gis) covers data conversion, workflow integration, plugins and training, and publishes **info@lutraconsulting.co.uk**, the same organization route used by the existing offer. The separate water-company domain lutra.com is outside this case.
+
+**Existing proposal.** The original offer is **$8,000 /60 planned hours /12 business days**, sent on 12 October. It covers up to ten vector layers, two QGIS projects, one baseline and one corrected-source set, two consolidated reviews and two operator sessions. The five phases retain **8/20/16/10/6 hours** and the **$2,400 /$4,000 /$1,600** milestone schedule, with fourteen-day payment terms. The [original workshare source](https://github.com/woahwhattheheck/commons/tree/a473520dce373c5704196c74d4fa0cbe41309eb6/operations/lutra-qgis-migration-20261012) and [complete Installation guide](../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/LUTRA_QGIS.md) remain authoritative.
+
+**Useful pilot.** Start with the client's authorised vector export, stable feature keys, agreed source/destination coordinate systems and two project definitions. Deliver complete native data, reviewed mapping, both QGIS projects and their selected publications; receive the corrected source as its own edition. The receiving engineer opens the actual delivered projects and complete editable workspace. A separately agreed recurring service could then deliver a new source edition or useful reviewed publication through the paid merchant.
+
+**Named possible introductions.** Lutra's [public reference page](https://www.lutraconsulting.co.uk/references) names **HighWater** for a Postgres/PostGIS, QGIS and Mergin Maps client/data system. Its [FLO-2D case study](https://www.lutraconsulting.co.uk/blogs/case-study-flo-2d-qgis-plugin) documents a model-preparation relationship and a GeoPackage-based workflow. These provide specific introduction candidates for a field-data edition or model-input preparation task. They are published supplier relationships, with no recorded introduction or pilot agreement in this selection.
+
+The [FLO-2D vendor's own current plugin page](https://flo-2d.com/qgis-plugin/) records supported QGIS/plugin combinations and an older incompatible combination. A selected customer must therefore receive its actual supported environment. Solver execution, mesh work, new CAD interpretation and production database administration enter only through their own agreed scope. They are not implied by the existing ten-layer vector proposal.
+
+**Selection consequence.** A fixed migration plus its included correction can be valuable paid commissioning. It does not by itself supply ten testnet or thirty mainnet purchases. Use this channel for one funded service only when a real buyer identifies sufficient new, authorised editions or distinct outputs during the actual grant windows. Lutra retains its client relationship, extraction/production decisions and ongoing support; the service workshare assigns the remaining integration and receiving responsibilities explicitly.
+
+#### CoCart and Inspry: a merchant-owned digital order
+
+**Public fit.** [CoCart](https://cocartapi.com/) supplies a headless WooCommerce API and publishes **support@cocartapi.com** as a contact route. Its [licensing page](https://cocartapi.com/pricing/) permits use on client websites and places support with the licence holder. The [support policy](https://cocartapi.com/support-policy/) separates platform support from customer-specific store and plugin customization. The existing proposal's agency implementation and handover can address that concrete boundary.
+
+[Inspry's own development description](https://www.inspry.com/wordpress-services/javascript-frameworks/) documents React/Vue, headless WordPress and WooCommerce API work; its [business contact page](https://www.inspry.com/contact/) is public. The original Inspry proposal was sent on 12 October at 11:33:50 UTC: **$8,400 /56 hours /14 business days** for one selected headless store and one quantity-one digital product. CoCart's separate original **$7,200 /60-hour /15-business-day** proposal remains a different commissioning arrangement. Select the relevant original commercial case and avoid adding both prices for the same delivered scope.
+
+**Useful pilot.** The store owns the product and fulfilment terms. Carry the selected headless cart through the original approved Woo checkout/order, the exact Stellar payment decision, native order/fulfilment and customer receipt. The receiving engineer reviews a genuinely separate later order, a payment/delivery interruption and the original recovery outcome. The agency retains the customer's architecture, approvals, hosting and production release.
+
+**Selection consequence.** CoCart's founder has engaged on introductions, fees and responsibility, and Bryce owns that favorable relationship. Inspry's sent offer supplies a concrete agency channel; the underlying merchant and independent paying buyer remain to be selected. API calls that update a cart are implementation work. A qualifying purchase is the original approved paid operation and delivered result under the selected grant rule. The customer must actually want Stellar for that transaction; retain the existing Woo payment/fulfilment policy and the precise agreed release conditions.
+
+### Select a pair by customer work, source and independence
+
+Prioritize the channel with an available authorised source, a specific receiving customer and a time-bound recurring need. GeoRobotix is a direct recurring-observation candidate; Lutra supplies a concrete native receiving task but needs a demonstrated later-edition cadence; CoCart/Inspry offers a commerce implementation channel whose merchant and buyers must be named. Keep one suitable alternative active while the two selected cases develop.
+
+The independent organizations may differ from the three suppliers above. Record the legal/operator role and its relationship to TJLabs once, then retain that identity across clients, wallets and environments. A second wallet, employee login or test account does not make a second independent buyer.
+
+Complete these decisions in each original Workshare and Installation:
+
+| Decision | Complete selection to retain | Useful result of the decision |
+| --- | --- | --- |
+| Customer task | Named buyer, its existing method, decision/question, required output and intended next occurrence | The buyer can explain what work the service removes and why another occurrence will be useful |
+| Source and authority | Original source family, approved population/window, licence/retention, actual private access reference and accountable source owner | The engineer can acquire exactly the authorized input without inventing client access |
+| Merchant and payer | Actual commissioning payer, legal seller/resource recipient and support owner | Implementation fee, resource revenue and any referral obligation have distinct owners |
+| Receiving application | Actual host, supported environment, input/output contract and named receiving engineer | The complete result can be opened and continued independently |
+| Payment | Original network/asset/recipient, exact atomic unit price, paid unit, aggregate cap, spender and purchase-cost owner | Buyer approval and native settlement attach to the actual resource |
+| Cadence | Actual recurring periods, changed inputs or independent orders and the two selected evaluation windows | Planned demand can support the original testnet/mainnet thresholds |
+| Implementation | Exact release/source, remaining change list, package assignment, available engineer and dates | The 400 future hours are allocated once to unfinished Stellar-integrated work |
+| Care and exit | Included corrections, ongoing support, withdrawal/source-change process and receiving-host restoration | The customer has an accountable operating service after the handover |
+
+A negative decision is useful customer learning. For example, an adequate existing subscription, a quarterly-only update, incompatible data rights or a customer's preference for its existing checkout may remove that candidate from the grant pair while leaving its separately priced implementation offer intact. Continue qualification of the existing alternative using the same decisions.
+
+### What the application must establish before submission
+
+The [published SCF #46 round](https://communityfund.stellar.org/awards/recxrSMYwAl8vcglg), read on 13 October, lists **8 November 2026** for Build submission, **11–18 November** for panel review and **23 November–3 December** for community voting. Award distribution is undated. The original interest acknowledgment and invitation correspondence stay in the applicant's existing case; use the actual invitation for submission access and any specific cutoff.
+
+The [submission criteria](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria) require a self-contained application, meaningful Stellar integration, a defined development plan and verifiable traction or validated need supported by relevant experience. This plan therefore supplies concise facts for the original answers, with complete operating material behind them. It keeps actual commercial responses, original product operation and proposed customer deployment as distinct evidence.
+
+The [budget guidelines](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/budget-and-deliverable-guidelines) fund future development, with three deliverable tranches and a programme of at most six months. Marketing/user acquisition and past work are outside this Open Track request. Pre-award qualification, sales discussions and contractual negotiation use the existing commercial operation; the 400 hours cover the remaining Stellar-integrated engineering and technical receiving. The selected architecture and customer-specific implementation must be ready for award, rather than placing customer discovery in tranche one.
+
+The [Open Track criteria](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/open-track) also ask for business and technical differentiation and an on-chain growth plan. For this product, the proposed contribution is the connection between an approved useful operation, native settlement, complete delivery, original commercial/accounting state and another operator's recoverable installation. The pilot measures whether customers value that whole result compared with their current source access and existing applications.
+
+### Work before the 8 November submission
+
+The following dates are planned internal work dates, not customer commitments or an assumed award date. Qualification and relationship work use the commercial operation. Actual customer responses update the original cases. Bryce handles existing favorable conversations; source and engineering preparation continues internally while those conversations progress.
+
+| Planned dates in 2026 | Owner role | Complete work to finish | Decision or output |
+| --- | --- | --- | --- |
+| 14–16 October | Customer-source engineer with original case owner | Reopen each existing offer and current maintained product; prepare the relevant public documentation, one complete output example, source/rights questions, prior method and proposed recurring paid unit | One prepared decision brief per existing channel; exact unknown customer selections remain visible |
+| 19–23 October | Bryce with the original commercial owner and candidate's actual decision-maker | Use the prepared brief to settle payer/merchant/buyer roles, source access, useful result, recurring demand, support and available receiving engineer | Two conditional installation choices and a viable alternative, or a recorded reason and another existing candidate to qualify |
+| 26–30 October | Integration engineer and each consenting receiving engineer | Operate an authorized baseline in the original product; open the full result; compare actual source/output and effort with the customer's present method; agree the actual paid unit and later work | Customer-specific task/source/output and measurable value; complete remaining adaptation and actual native/browser outcomes |
+| 2–4 November | Technical lead with capacity/finance owners | Assign remaining engineering to the six packages, select named available contributors, separate commissioned work and direct costs, and populate the real testnet/mainnet task windows | A feasible pair and one original capacity/cash selection; complete architecture and remaining scope ready for funded development |
+| 5–6 November | Applicant and original manuscript/publisher owners | Carry the actual qualification results into the nine application answers and issuer fields; check limits, source wording, team roles and unchanged budget; open the selected outgoing reader and files | A self-contained submission edition ready for the issuer's actual invited deadline |
+
+If customer timing changes, revise these internal dates and the affected original scope/capacity selection. The application states the actual resulting selection stage. It does not convert a pending decision into acceptance to meet an internal date.
+
+#### Three prepared commercial decisions
+
+For a current buyer conversation, bring the existing result and ask for a decision on concrete work rather than asking the prospect to locate material already available publicly:
+
+1. **Choose the useful result.** Show the proposed output and source boundaries. Which existing task will it replace or improve, who uses it, and which next period/order needs another result?
+2. **Choose the operating and payment arrangement.** Who commissions implementation, owns source access, operates the merchant, approves the buyer's spending and accepts the complete delivery?
+3. **Choose the receiving slot and original scope.** Which existing supported host/application and engineer receive it, what correction constitutes acceptance, and which actual dates/costs can they commit?
+
+The technical lead then converts those decisions into the actual existing Installation bindings. Public sources establish why the channel is plausible; original customer decisions establish which service will be commissioned.
+
 ## 2. Define the whole task and its paid unit
 
 Separate the complete customer result from the requests priced by the merchant. A report may require several paid pages. A prepaid allowance may fund several later operations. An event window may require cursor continuation. Write all three meanings into the workorder:
@@ -122,6 +215,12 @@ The product already supplies a browser, CLI, typed client and Merchant MCP inter
 The native seed's `document` is the complete editable Installation input. Its preview uses the current case version and intended installation edition. Save that same document with the returned preview identity and original request ID. The [full contract](../../stellar/scf_2026/sf47_budget_model/workspace/INSTALLATIONS.md#native-api-and-typed-client) supplies the envelope and receiving semantics.
 
 Assign actual implementation and receiving work in the existing [delivery queue](../../stellar/scf_2026/sf47_budget_model/workspace/DELIVERY_QUEUE.md). Its assignee, due date and priority support planning; the observer of completed work retains its own native identity.
+
+### Prepare the selected original customer profile
+
+The named channels above already have complete profile-based workorders in the [maintained Installation catalogue](../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/README.md). Use georobotix-csapi, lutra-qgis or cocart for the corresponding original Workshare. Run starforge grant-installation-workorder profiles to inspect the installed catalogue, then its template and prepare commands with the complete original installation-workshare-seed envelope. The full original seed, case version, plan and commercial bindings remain selected. Fill actual source authority, merchant/buyer deployments, payment, host and receiving engineer in the produced bindings.json; the catalogue's instructional placeholders remain planning until those selections exist.
+
+Load the complete prepared installation-input.json through the existing Customer installations desk, review it and save the original edition. Its WORKORDER.md carries the original commercial phases alongside the technical operating course. GeoRobotix's 72 hours, Lutra's 60 hours and the selected CoCart or Inspry scope remain their separate commercial allocations. Each remaining funded adaptation is assigned once within the six packages in section 6.
 
 ## 4. Install the agreed service and receiving application
 
@@ -234,6 +333,16 @@ For the stated T2 measurement, select the original seven consecutive UTC calenda
 
 The original Cohort interface evaluates the selected case population and saves the reviewed result. It can retain incomplete observations while the actual installation continues. Use **Cohort acceptance** in the same operating case and select the existing original purchases, useful operation, facilitator and customer output. The [native contract](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS-COHORT.md#native-cli-and-api) also exposes the same seed, preview, prepare and export through the CLI and authenticated service.
 
+### Validate the actual recurring workload before selecting the pair
+
+Use the [Customer-use Calendar](../../stellar/scf_2026/sf47_budget_model/workspace/CUSTOMER_USE_CALENDAR.md) in the same saved Installation. Plan the customer's actual questions, periods, source editions or independent orders. Planned entries use PLANNED or CANCELLED; completion, payment and failure retain their original native records. Attach an actual purchase identity only after its original record exists.
+
+Two buyers buying once on each of ten weekdays produce twenty purchases in fourteen days, before holidays. A thirty-purchase plan could have three genuinely separate useful resources on each of ten operating dates, distributed across the two buyers and both merchants. That arithmetic is a planning check; the buyer's actual work must supply every occurrence. A monthly GIS publication cannot become daily paid demand merely by creating more rows. A source correction included in a fixed implementation price retains its original commercial treatment.
+
+For an equivalent source and complete output, compare the customer's prior active effort with preparation, corrections and receiving after installation. Retain actual elapsed time, useful output and incremental resource/provider/hosting/support costs. The next real customer request gives the reason to return. An installation fee tests willingness to commission engineering; a later resource purchase tests use of the merchant service. Preserve both original observations.
+
+If a candidate's actual cadence cannot supply the agreed cohort, resolve that during qualification and testnet operation: select another genuinely needed source/output, a suitable existing alternative or an agreed issuer scope revision. Continue the original case and its actual result history.
+
 ## 8. Hand over a service the maintainer can keep using
 
 Deliver the complete selected Installation edition through **Export complete handover**. Its native ZIP retains the original operating case, commercial/source attachments, saved editions, complete history and the selected-edition marker.
@@ -253,6 +362,12 @@ The receiving session should leave the engineer with:
 Continue an interrupted purchase using its existing request and recorded financial state. Continue an interrupted handover using its existing source and receiving operation. A deliberate source, price or scope change becomes a reviewed later edition with its own native history.
 
 The result is a maintained customer installation and its next useful operation. Keep its commissioning, recurring use, financial records and receiving history together in the existing product.
+
+### Inspect the exact outgoing product
+
+Bryce's current rendered-product instruction applies to the installed pilot, customer outputs, reports and exports. The producing engineer opens the exact outgoing version, views its actual screens or screenshots at desktop/screenshare and narrow/mobile sizes, and operates important controls. Review populated, empty, loading and error states; use the actual downloads, exports and independent reopen. Capturing screenshots without viewing them is insufficient. Source, DOM, HTTP, unit checks or another agent's approval do not replace this inspection. Repair practical readability, interaction and completeness problems before presentation. Keep the plain industrial interface.
+
+Continue each product's existing native/browser operation and source selection. If its runtime is unavailable in the present seat, send the exact complete source, current operation and opening steps to that original equipped receiver, inspect the actual returned screens/results, and continue useful source and customer preparation meanwhile.
 
 ## Maintained sources
 
