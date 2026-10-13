@@ -5,7 +5,7 @@ import {fault,hashBytes} from './provider.mjs';
 import {stable} from '../stellar-expert/store.mjs';
 
 export const INSPECTION_SCHEMA='stellar-forge.coops-observation-inspection.v1';
-export const INSPECTION_LIMITS={buckets:480,identityKeys:200000,selectedPoints:32};
+export const INSPECTION_LIMITS={buckets:480,identityKeys:200000,selectedPoints:32,gridSlots:2000000};
 const HASH=/^[a-f0-9]{64}$/,DAY=86400000,plain=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const sha=v=>hashBytes(Buffer.from(stable(v)));
 const need=(value,code,message,status=400)=>{if(!value)throw fault(code,message,status);};
@@ -74,7 +74,7 @@ export async function inspectEdition(store,edition,input={}){
   end=Date.parse(selection.endDate+'T00:00:00Z')+DAY,span=end-begin,
   step=selection.product==='predictions'?(edition.query.predictionInterval==='6'?6:edition.query.predictionInterval==='h'?60:null):PRODUCTS[selection.product].stepMinutes,
   expected=step&&edition.query.timeZone!=='lst_ldt'?span/(step*60000):null,
-  grid=expected===null?null:new Uint8Array(expected),keys=new Map(),
+  grid=expected===null?null:(need(Number.isSafeInteger(expected)&&expected>=0&&expected<=INSPECTION_LIMITS.gridSlots,'COOPS_INSPECTION_CAPACITY','This window exceeds two million expected grid slots. Choose narrower original dates; no rows have been omitted.',413),new Uint8Array(expected)),keys=new Map(),
   bins=Array.from({length:selection.buckets},(_,index)=>({index,beginClock:new Date(begin+Math.floor(index*span/selection.buckets)).toISOString().slice(0,19).replace('T',' '),
    endExclusiveClock:new Date(begin+Math.floor((index+1)*span/selection.buckets)).toISOString().slice(0,19).replace('T',' '),
    records:0,numericRecords:0,unavailableRecords:0,unplottableRecords:0,expectedSlots:expected===null?null:0,
