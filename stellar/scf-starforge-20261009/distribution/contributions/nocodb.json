@@ -12,7 +12,7 @@
     "nocodb-source": "Discover, capture, import and freeze selected NocoDB tables or views.",
     "nocodb-publisher": "Review, publish and schedule NocoDB dataset editions through the seller publisher.",
     "nocodb-deployment": "Review and package published NocoDB captures, stage seller releases, and open the release console.",
-    "nocodb-workspace": "Discover NocoDB tables, review fields, save source versions, and manage publication and deployment."
+    "nocodb-workspace": "Discover NocoDB tables, review fields, publish and deploy saved versions, and export/independently receive complete editable workspaces."
   },
   "exports": {
     "./seller/nocodb": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/nocodb/source.mjs",
@@ -23,7 +23,8 @@
     "./seller/nocodb/workspace": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/nocodb/workspace/model.mjs",
     "./seller/nocodb/workspace/server": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/nocodb/workspace/server.mjs",
     "./seller/nocodb/workspace/launch": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/nocodb/workspace/launch.mjs",
-    "./seller/nocodb/workspace/packet": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/nocodb/workspace/packet.mjs"
+    "./seller/nocodb/workspace/packet": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/nocodb/workspace/packet.mjs",
+    "./seller/nocodb/workspace/handover": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/nocodb/workspace/handover.mjs"
   },
   "applicationProviders": {
     "nocodb": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/nocodb.mjs"
