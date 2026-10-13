@@ -77,8 +77,12 @@ async function capture(options,{template=false}={}){
  const app=await application();add(source,'source/profile.json',app.get('application/'+ORIGINAL+'supplier-catalogues.json'));
  const attachments=options.attachments?await disk(options.attachments):json({schema:SCHEMA+'.attachments',files:[]});
  add(source,'source/attachments.json',attachments);
- for(const f of checkAttachmentList(parseJson(attachments)).files){
-  const path=resolve(options.attachments?dirname(resolve(options.attachments)):'.',f.path),body=await disk(path,64*1024*1024);
+ const selectedAttachments=checkAttachmentList(parseJson(attachments));
+ const declaredBytes=[...source.values(),...app.values()].reduce((n,body)=>n+body.length,0)+
+  selectedAttachments.files.reduce((n,file)=>n+file.bytes,0);
+ need(declaredBytes<=MAX_TOTAL,'The selected complete inputs and application exceed 512 MiB. Choose a resource-appropriate complete source selection before reading attachments.');
+ for(const f of selectedAttachments.files){
+  const path=resolve(options.attachments?dirname(resolve(options.attachments)):'.',f.path),body=await disk(path,f.bytes);
   need(same(identity(body),{bytes:f.bytes,sha256:f.sha256}),'Original attachment differs: '+f.filename);add(source,'attachments/'+f.filename,body);
  }
  inspectMaterialSource(source.get('source/customer-catalog.jsonl'),options.sha256);
