@@ -5,6 +5,7 @@ import { renderAccountingApplicationReview } from './accounting-application.mjs'
 import { createOpenApiConnectionSetupView } from './openapi-connection-setup.mjs';
 import { createApplicationOutputReader } from './application-output.mjs';
 import { createApplicationLibrary } from './application-library.mjs';
+import { createApplicationInputsView } from './application-inputs.mjs';
 import { createApplicationDrafts } from './application-drafts.mjs';
 import { createGrantApplicationHandoffView } from './grant-application-handoff.mjs';
 const element = (tag, text, className) => {
@@ -68,7 +69,7 @@ async function textHash(text) {
   const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
   return [...bytes].map(byte => byte.toString(16).padStart(2, '0')).join('');
 }
-export function createApplicationsWorkspaceView({ root, api, getState, refreshWorkspace, switchView, message, error }) {
+export function createApplicationsWorkspaceView({ root, api, getState, getToken, refreshWorkspace, switchView, message, error }) {
   let data = null, selectedId = null, selectedRun = null, editingId = null, configurationReview = null, startReview = null;
   let loading = false, sending = false, scope = 0, settingsScope = 0, initial = true, navigationVersion = 0;
   let historyData = null, historyApplicationId = null, historyCursor = null, historyTrail = [], historyScope = 0, historyLoading = false;
@@ -88,6 +89,9 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
     button('New application', () => edit(null)));
   const intro = element('p', 'Open the original merchant and buyer tools using an installed runtime. Application data, private URLs and process history stay with this workspace.', 'note');
   const libraryRoot = element('div'); libraryRoot.id = 'application-library';
+  const inputRoot=element('div');
+  const inputLibrary=createApplicationInputsView({root:inputRoot,api,getToken,
+    getWorkspaceId:()=>getState()?.workspaceId,onError:error,onMessage:message,readSaved,saveSaved});
   const draftRoot = element('div'); draftRoot.id = 'application-setup-drafts';
   const grantHandoffRoot = element('div'); grantHandoffRoot.id = 'grant-application-handoff';
   const configuration = element('details'); configuration.open = true;
@@ -208,7 +212,7 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
   const outputReader = createApplicationOutputReader({ root: outputReaderRoot, api,
     getWorkspaceId: () => getState()?.workspaceId, error, output });
   outputDescription.hidden = true;
-  root.replaceChildren(header, intro, libraryRoot, configuration, grantHandoffRoot, selectedPanel, history, outputPanel);
+  root.replaceChildren(header, intro, libraryRoot, inputRoot, configuration, grantHandoffRoot, selectedPanel, history, outputPanel);
   const grantHandoff = createGrantApplicationHandoffView({
     root: grantHandoffRoot, api, getState, getApplications: () => data?.applications ?? [], message, error,
     async onApplicationSaved(id) {
@@ -378,6 +382,14 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
       const row = field(item.label, node);
       if (item.description) row.append(element('p', item.description, 'note'));
       settings.append(row);
+      if(item.type==='path') row.append(button('Use saved file',()=>{
+        const original=node.value,selectedKind=kind.value,selectedRuntime=runtime.value,workspaceId=getState()?.workspaceId;
+        const current=()=>generation===settingsScope && node.isConnected && kind.value===selectedKind &&
+          runtime.value===selectedRuntime && getState()?.workspaceId===workspaceId && node.value===original;
+        inputLibrary.choose({kind:selectedKind,field:item.name,label:item.label,current,
+          apply(path){if(!current())return;node.value=path;node.dispatchEvent(new Event('input',{bubbles:true}));
+            configuration.open=true;reviewButton.focus();}});
+      }));
       if (isInstallation) {
         node.replaceChildren(new Option('Loading installed environments', ''));
         const selectedRuntime = runtime.value;
@@ -708,7 +720,7 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
       }
       drafts.refresh();
       if (!data.applications.some(item => item.id === selectedId)) { selectedId = data.applications[0]?.id ?? null; resetHistory(selectedId); }
-      library.update(data, selectedId); grantHandoff.update();
+      library.update(data, selectedId); inputLibrary.update(); grantHandoff.update();
       recoverRequest.hidden = !readSaved('pending');
       if (data.applications.length && editingId === null && !configurationReview && !label.value && !drafts.hasDraft())
         configuration.open = false;
@@ -763,7 +775,7 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
       scope++; navigationVersion++; data = null; selectedId = selectedRun = editingId = null; configurationReview = startReview = null;
       resetHistory(null); outputReader.reset(); initial = true; drafts.reset(); library.reset(); label.value = ''; kind.replaceChildren(); runtime.replaceChildren();
       selectedPanel.hidden = history.hidden = outputPanel.hidden = reviewResult.hidden = true; configuration.open = true;
-      openapiSetup.reset(); grantHandoff.reset();
+      openapiSetup.reset(); inputLibrary.reset(); grantHandoff.reset();
     },
   };
 }
