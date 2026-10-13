@@ -130,3 +130,85 @@ Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/arch
 
 
 Keep the existing GitHub Actions zero-spend policy. This feature neither enables nor dispatches hosted CI.
+
+
+## Following complete financing decision handover
+
+This additive course starts only after the original financing result is complete. It preserves FINANCING_INTENT.json, FINANCING_PROGRESS.json, FINANCING_COMPLETE.json and FINANCING_RESTORED.json as the same accepted bytes. It does not replay comparison, Forecast save, source save, payment or any native command.
+
+### Original input and parent
+
+Use prepareFinancingHandoverInput({input, priorResult, sourcePins}) with the exact original financing input, complete first result and current installed pins. It retains the study's selected comparison and selected assessment; the latter selects its own comparison. No option, criterion or comparison is changed to manufacture a receiving result.
+
+Pin all six actually served files: forecast.mjs, forecast-financing.mjs, forecast-financing-desk.mjs, forecast-financing-decision.mjs, forecast-financing.css and forecast-financing-handover.mjs. This is a separate following input. Do not rewrite an accepted original input to add later source pins. If the original course has not started, its producer prepares its original input from the actual installation before first dispatch as usual.
+
+The same case_planning_browser.mjs parent adds:
+
+- mode financing-handover: input.financing.input, directory, priorResult (actual FINANCING_COMPLETE.json path) and handoverInput (complete prepared object).
+- mode financing-handover-cold: additionally priorHandoverResult (actual financing-handover/HANDOVER_COMPLETE.json path), with the original received input.caseId. Complete the existing financing-cold course first.
+
+The parent retains the original persistent context/profile, preserves the occupied application page, and supplies one separate blank artifact page in that same context. It closes that page without replacing a primary error. Cold continuation uses the existing cold profile. Following modes have separate parent progress filenames and do not overwrite prior phase results. No new browser, server, controller, host or business case is created.
+
+Direct same-parent use:
+
+~~~javascript
+const handoverInput = prepareFinancingHandoverInput({
+  input: originalFinancingInput,
+  priorResult: exactFinancingComplete,
+  sourcePins: currentInstalledPins
+});
+const artifactPage = await originalContext.newPage();
+let primaryError;
+try {
+  await receiveFinancingHandover({
+    page: originalSelectedApplicationPage,
+    artifactPage,
+    directory: originalFinancingDirectory,
+    input: originalFinancingInput,
+    priorResult: exactFinancingComplete,
+    handoverInput
+  });
+} catch (error) {
+  primaryError = error;
+  throw error;
+} finally {
+  try { await artifactPage.close(); }
+  catch (error) { if (!primaryError) throw error; }
+}
+~~~
+
+Use inspectFinancingHandover for the actual received case, passing priorHandoverResult and programId as well. The callback refuses an unrelated occupied artifact page. It never navigates the application page to an outgoing file or silently selects a different case.
+
+### Actual downloads and full source correspondence
+
+The course clicks the real comparison handover ZIP/HTML controls and the retained assessment handover controls when present. It retains each complete download. Different export instants remain distinct editions: the ZIP report and separate HTML are verified against their own actual timestamps and full selection identities.
+
+Every ZIP member is checked against the complete original manifest. All JSON is parsed; all CSV cells and rows are read. The pinned exporter runs against the exact retained original native study/context and export instant, and its complete member inventory must match every outgoing file. Typed assumptions, differences, dates, cash events, customer reservations, criteria, findings, nulls, absent values and explicit zeros stay intact. Original source attachments are additionally compared byte-for-byte to every original comparison/source relationship. Every member is retained as an ordinary file with its original path recorded in the result.
+
+The actual retained HTML is opened from disk in the artifact page. At desktop and narrow widths the course selects an option, exercises an empty search, clears filters, expands all sections, and captures empty and populated views. It clicks the print control and retains the complete browser print PDF. The report's own download control emits the complete editable study, whose exact embedded bytes are retained.
+
+That file reopens through the existing app's Reopen study input. The app's full before-receive study download is retained when import changes the local edition. If the accepted complete study is already present after a lost return, recovery recognizes it without importing again. Native cash, source IDs, request IDs, complete history, original Forecast fields and previous writing remain unchanged.
+
+The received-case course opens the same original outgoing HTML and study after the original independent case receipt. The original source/received-case lineage is verified by the actual native application. Only the existing receivedAt field for that original lineage may reflect the actual receiving instant; every other option, criterion, source, request and unrelated working field must match.
+
+### Draft custody and interruption
+
+The receiver downloads the actual complete in-memory working file before any adoption. The initial handover must match the last completed original financing working edition. The cold handover must match the exact accepted restored edition. Pending native commands and unrelated writing are retained and refused with an explicit recovery filename.
+
+During a phase only its retained before-state, exact expected local study receipt or already accepted local result can continue. Read-only artifact operations cannot adopt unrelated writing that appears while the report is open. A returned local study receipt is recognized from the complete retained before/expected binding.
+
+Files are staged and fsynced before no-replace publication. Stable completion is retained in progress before publishing its final file; a finalization failure reopens that same result without changing its completed timestamps or replaying a business phase. Actual handover ZIP/HTML files retain the exporter's 512 MiB whole-file allowance. Original working/study limits remain unchanged.
+
+The original directory receives:
+
+- financing-handover/HANDOVER_INTENT.json, HANDOVER_PROGRESS.json and HANDOVER_COMPLETE.json;
+- complete original ZIP/HTML, every archive member, embedded study, predecessor study when imported, wide/narrow captures and full print PDF;
+- financing-handover/received-ORIGINAL_CASE/HANDOVER_RECEIVED.json with the same complete outgoing artifacts and actual restored study receipt.
+
+Keep each original pending phase and unknown result. On an unrelated editor refusal, retain its named complete current file and explicitly reopen the named original phase-before or accepted edition through the existing working-file control. Never start a replacement native request.
+
+### Producing-owner render and file inspection
+
+Publishing this complete source and passing source/grammar checks does not assert native/browser/render execution. The equipped original producer must open the exact outgoing app and report, LOOK at desktop and narrow populated/empty/loading/error states, USE the controls, inspect all complete attachments in ordinary viewers, and perform the original reopen/independent receiving before ready. Screenshots and hashes support that work; they do not replace it.
+
+Return the actual existing owner/handle, original operation and resulting complete files in the original675D thread. Continue the original native queue. GitHub Actions remains disabled.

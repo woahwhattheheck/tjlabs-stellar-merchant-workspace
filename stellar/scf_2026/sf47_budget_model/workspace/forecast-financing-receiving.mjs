@@ -591,3 +591,297 @@ export async function inspectFinancingOptions({page,directory,input,priorResult,
   artifacts:[R.beforeWorking,work.artifact,await shot(page,J,'restored-financing-desktop.png',1440),await shot(page,J,'restored-financing-narrow.png',390)]};
  R.completedResult=result;await durable(statePath,encoded(R),{replace:true});await durable(final,encoded(result));return result;
 }
+
+
+// Following artifact-only receiving. The complete original prefix and journals remain unchanged.
+import {pathToFileURL as handoverFileURL} from 'node:url';
+export const HANDOVER_RECEIVING_SCHEMA='stellar-forge.forecast-financing-handover-receiving.v1';
+const HANDOVER_LIMIT=512*1024*1024;
+const HANDOVER_SOURCES=['/forecast.mjs','/forecast-financing.mjs','/forecast-financing-desk.mjs','/forecast-financing-decision.mjs','/forecast-financing.css','/forecast-financing-handover.mjs'];
+function handoverPhase(first,id){const p=first.phases?.find(x=>x.id===id);need(p?.result,'Retain completed original phase '+id);return p.result;}
+function handoverSelections(study){const rows=[{key:'comparison',comparisonId:study.selectedComparisonId,assessmentId:null}],a=study.decision?.assessments?.find(x=>x.id===study.decision.selectedId);if(a)rows.push({key:'assessment',comparisonId:a.comparisonId,assessmentId:a.id});return rows;}
+export function prepareFinancingHandoverInput({input,priorResult,sourcePins}){
+ validateInput(input);need(priorResult?.schema===SCHEMA&&priorResult.inputSha256===sha(canonical(input)),'Select the exact completed financing course');
+ const study=handoverPhase(priorResult,'full-financing-delivery').study;
+ const value={schema:HANDOVER_RECEIVING_SCHEMA,operationId:input.operationId+'-handover',originalInputSha256:priorResult.inputSha256,
+  originalResultSha256:sha(encoded(priorResult)),studySha256:sha(canonical(study)),selections:handoverSelections(study),
+  servedSources:sourcePins.map(p=>({url:p.url||'/'+p.path.split('/').at(-1),bytes:p.bytes,sha256:p.sha256})).filter(p=>HANDOVER_SOURCES.includes(p.url))};
+ return validateHandoverInput(value,input,priorResult);
+}
+function validateHandoverInput(v,input,first){
+ const study=handoverPhase(first,'full-financing-delivery').study;
+ need(v?.schema===HANDOVER_RECEIVING_SCHEMA&&v.operationId===input.operationId+'-handover','Keep the original artifact continuation');
+ need(v.originalInputSha256===sha(canonical(input))&&v.originalResultSha256===sha(encoded(first))&&v.studySha256===sha(canonical(study)),'Keep original input/result/study bytes');
+ need(study.selectedComparisonId&&same(v.selections,handoverSelections(study)),'Use the actual retained comparison and assessment');
+ need(Array.isArray(v.servedSources)&&v.servedSources.length===6,'Pin all six current served sources');
+ for(const url of HANDOVER_SOURCES)need(v.servedSources.filter(p=>p.url===url&&HASH.test(p.sha256)&&Number.isSafeInteger(p.bytes)&&p.bytes>0).length===1,'Retain exact current source '+url);
+ return v;
+}
+async function handoverWrite(file,bytes,{replace=false}={}){
+ need(Buffer.byteLength(bytes)<=HANDOVER_LIMIT,'Complete handover exceeds 512 MiB');
+ const tmp=file+'.writing-'+crypto.randomUUID(),fd=await fs.open(tmp,'wx',0o600);
+ try{await fd.writeFile(bytes);await fd.sync();}finally{await fd.close();}
+ try{if(replace)await fs.rename(tmp,file);else try{await fs.link(tmp,file);}catch(e){if(e.code!=='EEXIST')throw e;need((await fs.readFile(file)).equals(bytes),'Existing handover differs: '+path.basename(file));}await syncDir(path.dirname(file));}
+ finally{await fs.unlink(tmp).catch(e=>{if(e.code!=='ENOENT')throw e;});}
+}
+async function handoverJournal(directory,binding){
+ const dir=await ownDirectory(directory),fingerprint=sha(canonical(binding)),file=path.join(dir,'HANDOVER_PROGRESS.json');
+ await handoverWrite(path.join(dir,'HANDOVER_INTENT.json'),encoded({schema:HANDOVER_RECEIVING_SCHEMA,bindingSha256:fingerprint,binding}));
+ const progress=await exists(file)?await readJSON(file):{schema:HANDOVER_RECEIVING_SCHEMA,bindingSha256:fingerprint,phases:[],pending:null,custody:[],completedResult:null};
+ need(progress.schema===HANDOVER_RECEIVING_SCHEMA&&progress.bindingSha256===fingerprint,'Keep the original full handover selection');
+ async function save(){await handoverWrite(file,encoded(progress),{replace:true});}
+ async function artifact(name,bytes){identity(name,'the complete artifact filename');await handoverWrite(path.join(dir,name),bytes);return{name,bytes:bytes.length,sha256:sha(bytes)};}
+ async function verify(a){identity(a.name,'the original artifact filename');const s=await fs.lstat(path.join(dir,a.name));need(s.isFile()&&!s.isSymbolicLink()&&s.size<=HANDOVER_LIMIT,'Keep a complete ordinary artifact');const b=await fs.readFile(path.join(dir,a.name));need(b.length===a.bytes&&sha(b)===a.sha256,'Retained handover changed: '+a.name);return b;}
+ return{dir,fingerprint,progress,save,artifact,verify};
+}
+async function handoverDownload(page,H,name,trigger){
+ const target=path.join(H.dir,name);if(await exists(target)){const b=await fs.readFile(target);need(b.length<=HANDOVER_LIMIT,'Keep complete bounded download');return{bytes:b,descriptor:{name,bytes:b.length,sha256:sha(b)}};}
+ const waiting=page.waitForEvent('download',{timeout:120000});await trigger();const d=await waiting;need(!(await d.failure()),'Original download failed');
+ const tmp=path.join(H.dir,'.download-'+crypto.randomUUID());
+ try{await d.saveAs(tmp);need((await fs.stat(tmp)).size<=HANDOVER_LIMIT,'Complete download exceeds 512 MiB');const b=await fs.readFile(tmp);return{bytes:b,descriptor:await H.artifact(name,b)};}
+ finally{await fs.unlink(tmp).catch(e=>{if(e.code!=='ENOENT')throw e;});}
+}
+function handoverJSON(bytes){return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}
+function handoverEmbedded(bytes){
+ const html=new TextDecoder('utf-8',{fatal:true}).decode(bytes),m=[...html.matchAll(/<script id="financing-handover-data" type="application\/json">([\s\S]*?)<\/script>/g)];
+ need(m.length===1,'Keep the exact offline data block');const embedded=JSON.parse(m[0][1]);need(typeof embedded.study==='string','Keep complete embedded study text');return{html,embedded,file:JSON.parse(embedded.study)};
+}
+function handoverCSV(bytes){
+ const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes).replace(/^\uFEFF/,''),rows=[];let row=[],cell='',quoted=false,ended=false;
+ for(let i=0;i<text.length;i++){const c=text[i];if(quoted){if(c==='"'){if(text[i+1]==='"'){cell+='"';i++;}else{quoted=false;ended=true;}}else cell+=c;}
+  else if(c==='"'&&!cell&&!ended)quoted=true;
+  else if(c===','){row.push(cell);cell='';ended=false;}
+  else if(c==='\r'&&text[i+1]==='\n'){row.push(cell);rows.push(row);row=[];cell='';ended=false;i++;}
+  else if(c==='\n'){row.push(cell);rows.push(row);row=[];cell='';ended=false;}
+  else{need(!ended,'Unexpected data after CSV cell');cell+=c;}}
+ need(!quoted,'Complete CSV is unfinished');if(cell||row.length||ended){row.push(cell);rows.push(row);}
+ const headers=rows.shift()||[];need(new Set(headers).size===headers.length,'CSV repeats columns');for(const r of rows)need(r.length===headers.length,'CSV omits a cell');return{headers,rows:rows.length};
+}
+async function verifyHandoverSelection(page,input,file,selection,selected,expectedStudy,current){
+ need(file.schema==='stellar-forge.forecast-financing.v1.file'&&file.sourceMode==='COMPLETE'&&same(file.study,expectedStudy),'Retain the exact complete original study');
+ need(selection.schema==='stellar-forge.forecast-financing-handover.v1'&&selection.studyId===expectedStudy.id&&selection.studyRevision===expectedStudy.revision&&selection.comparisonId===selected.comparisonId&&selection.assessmentId===selected.assessmentId,'Original handover selection changed');
+ const c=expectedStudy.comparisons.find(x=>x.id===selected.comparisonId);need(c&&same(c.result.source,selection.source)&&c.result.sha256===selection.comparisonSha256,'Native comparison identity changed');
+ need(selection.baselineId===(c.result.options.find(x=>x.id===expectedStudy.baselineId)||c.result.options[0]).id,'Retained reference option changed');
+ need(file.exportedAt===selection.exportedAt&&Number.isFinite(Date.parse(selection.exportedAt)),'Keep the actual export instant');
+ const expected=await page.evaluate(async({file,selection,current})=>{
+  const F=await import('/forecast-financing.mjs'),M=await import('/forecast-financing-handover.mjs'),s=await F.receiveFinancingFile(file,current);
+  await F.verifyFinancingState(s,current,{complete:true});
+  const h=await M.buildFinancingHandover(s,current,{comparisonId:selection.comparisonId,assessmentId:selection.assessmentId,baselineId:selection.baselineId,exportedAt:selection.exportedAt});
+  return{selection:h.selection,manifest:h.manifest,htmlSha256:await F.financingSha(h.html),zipBytes:h.bytes.length,zipSha256:await F.financingSha(h.bytes)};
+ },{file,selection,current});
+ need(same(expected.selection,selection),'Exported selection/current-context hash differs');return expected;
+}
+async function verifyHandoverArchive(page,input,H,raw,selected,expectedStudy,current){
+ const z=handoverZIP(raw),selection=handoverJSON(z.files.get('selection.json')),file=handoverJSON(z.files.get('study.json'));
+ need(same(z.manifest.selection,selection),'Archive selects another study');
+ const expected=await verifyHandoverSelection(page,input,file,selection,selected,expectedStudy,current);
+ need(raw.length===expected.zipBytes&&sha(raw)===expected.zipSha256,'Complete ZIP bytes differ from the original deterministic native export');
+ need(same(expected.manifest,z.manifest),'Every complete native CSV/JSON/source member must match the selected original study');
+ const c=expectedStudy.comparisons.find(x=>x.id===selected.comparisonId);
+ need(same(handoverJSON(z.files.get('comparison.json')),c),'Original comparison changed');
+ need(same(handoverJSON(z.files.get('assessments.json')),(expectedStudy.decision?.assessments||[]).filter(a=>a.comparisonId===c.id)),'Original assessments changed');
+ const csv=[],artifacts=[];
+ for(const [name,bytes]of z.files){
+  if(name.endsWith('.json'))handoverJSON(bytes);if(name.endsWith('.csv'))csv.push({path:name,...handoverCSV(bytes)});
+  const a=await H.artifact(selected.key+'-member-'+sha(name).slice(0,16)+'-'+path.basename(name),bytes);artifacts.push({...a,memberPath:name});
+ }
+ const index=handoverJSON(z.files.get('source-index.json'));let count=0;
+ for(const comparison of expectedStudy.comparisons)for(const a of comparison.attachments){
+  count++;const meta=comparison.context.sources.find(x=>x.id===a.id),entry=index.find(x=>x.comparisonId===comparison.id&&x.id===a.id),b=z.files.get('sources/'+a.sha256+'.bin');
+  need(entry&&entry.path==='sources/'+a.sha256+'.bin'&&entry.bytes===meta.bytes&&entry.sha256===meta.sha256&&b&&b.equals(Buffer.from(a.dataBase64,'base64')),'Source bytes or original comparison relationship changed');
+ }
+ need(index.length===count,'Source index omitted or repeated an original edition');
+ const embedded=handoverEmbedded(z.files.get('report.html'));
+ need(same(embedded.file,file)&&same(embedded.embedded.selection,selection),'Archive HTML and complete study differ');
+ need(same(embedded.embedded.manifest,{...z.manifest,files:z.manifest.files.filter(x=>x.path!=='report.html')}),'HTML source inventory differs');
+ return{selection,file,manifest:z.manifest,inventory:z.inventory,csv,artifacts};
+}
+async function handoverOriginal(directory,input,priorResult){
+ validateInput(input);const dir=await ownDirectory(directory),first=await readJSON(path.join(dir,'FINANCING_COMPLETE.json')),intent=await readJSON(path.join(dir,'FINANCING_INTENT.json'));
+ need(same(first,priorResult)&&first.inputSha256===sha(canonical(input))&&same(intent.input,input)&&intent.inputSha256===first.inputSha256,'Keep original financing intent/result bytes');
+ const J={verify:async a=>{identity(a.name,'the original artifact');const b=await fs.readFile(path.join(dir,a.name));need(b.length===a.bytes&&sha(b)===a.sha256,'Original course artifact changed: '+a.name);return b;}};
+ await verifyArtifacts(J,first);return{dir,first,J,delivery:handoverPhase(first,'full-financing-delivery')};
+}
+function handoverReceiveMatches(actual,expected,file,programId){
+ const e=clone(actual);e.financing=clone(expected.financing);
+ return financingWorkingSha256(e)===financingWorkingSha256(expected)&&receivedStudyMatches(actual.financing,expected.financing,file,programId);
+}
+async function handoverCustody(page,input,H,programId,allowed){
+ const seen=await observe(page,input,H,{programId,label:'handover-before'});
+ need(!seen.value.saveRequest&&!seen.value.pendingWorkbook&&!seen.value.financing?.pendingSource,'Retain '+seen.artifact.name+' and complete the original pending request first');
+ let okay=false;for(const a of allowed.filter(Boolean))if(await explicitRestoration(H,seen.value,handoverJSON(await H.verify(a)))){okay=true;break;}
+ const e=H.progress.pending?.receiveExpectation;
+ if(!okay&&e)okay=handoverReceiveMatches(seen.value,handoverJSON(await H.verify(e.expectedWorking)),handoverJSON(await H.verify(e.file)),programId);
+ need(okay,'Preserve current editor '+seen.artifact.name+'. Explicitly reopen the exact pending-before or most recent accepted working file; no unrelated editor is replaced.');
+ return seen;
+}
+async function handoverStep(page,input,H,programId,id,work){
+ const prior=H.progress.phases.find(x=>x.id===id);if(prior){for(const a of prior.result.artifacts||[])await H.verify(a);return prior.result;}
+ need(!H.progress.pending||H.progress.pending.id===id,'Complete the same original handover phase first');
+ const p0=H.progress.pending,seen=await handoverCustody(page,input,H,programId,p0?[p0.beforeWorking,p0.expectedWorking,p0.localResult?.working]:[H.progress.phases.at(-1)?.result.working||H.progress.initialWorking]);
+ H.progress.pending ||= {id,startedAt:new Date().toISOString(),beforeWorking:seen.artifact};await H.save();const p=H.progress.pending;
+ if(p.localResult){for(const a of p.localResult.artifacts||[])await H.verify(a);need(await explicitRestoration(H,seen.value,handoverJSON(await H.verify(p.localResult.working))),'Reopen the exact already accepted local result');}
+ else{
+  const result=await work(p,seen),after=await observe(page,input,H,{programId,label:'handover-complete-'+id});
+  if(p.receiveExpectation){const e=p.receiveExpectation;need(handoverReceiveMatches(after.value,handoverJSON(await H.verify(e.expectedWorking)),handoverJSON(await H.verify(e.file)),programId),'Preserve changed writing after study reopening');}
+  else need(await explicitRestoration(H,after.value,seen.value),'Read-only artifact work encountered unrelated editing. Its complete current file is retained; reopen exact phase-before to continue.');
+  p.localResult={...result,working:after.artifact,artifacts:[...(result.artifacts||[]),seen.artifact,after.artifact]};await H.save();
+ }
+ H.progress.phases.push({id,completedAt:new Date().toISOString(),result:p.localResult});H.progress.pending=null;await H.save();return H.progress.phases.at(-1).result;
+}
+async function handoverCompleted(H,file){
+ const check=async r=>{need(r.bindingSha256===H.fingerprint,'Keep original accepted handover');for(const p of r.phases)for(const a of p.result.artifacts||[])await H.verify(a);for(const c of r.custody||[])await H.verify(c.artifact);return r;};
+ if(await exists(file))return check(await readJSON(file));
+ if(H.progress.completedResult){await check(H.progress.completedResult);await handoverWrite(file,encoded(H.progress.completedResult));return H.progress.completedResult;}
+ return null;
+}
+
+async function handoverView(artifactPage,H,name,descriptor,file,selection){
+ need(artifactPage&&typeof artifactPage.goto==='function','Original parent must supply a separate artifact page');
+ const target=handoverFileURL(path.join(H.dir,descriptor.name)).href;
+ need(artifactPage.url()==='about:blank'||artifactPage.url().startsWith(handoverFileURL(H.dir+path.sep).href),'Preserve an unrelated occupied artifact page');
+ await artifactPage.goto(target,{waitUntil:'load'});
+ const data=JSON.parse(await artifactPage.locator('#financing-handover-data').textContent());
+ need(data.study===JSON.stringify(file)+'\n'&&same(data.selection,selection),'Opened HTML changed complete study or selection');
+ const viewport=artifactPage.viewportSize(),artifacts=[];
+ const capture=async(filename)=>{const b=await exists(path.join(H.dir,filename))?await fs.readFile(path.join(H.dir,filename)):await artifactPage.screenshot({fullPage:true});artifacts.push(await H.artifact(filename,b));};
+ try{
+  for(const width of [1440,390]){
+   await artifactPage.setViewportSize({width,height:900});
+   const first=file.study.comparisons.find(c=>c.id===selection.comparisonId).result.options[0];
+   await artifactPage.locator('#option-filter').selectOption(first.id);
+   need(await artifactPage.locator('.option:visible').count()===1,'Option filter did not select the retained option');
+   await artifactPage.locator('#row-filter').fill('absent-original-row-'+selection.sha256);
+   need(await artifactPage.locator('tbody tr:visible').count()===0,'Search did not produce an empty view');await capture(name+'-empty-'+width+'.png');
+   await artifactPage.locator('#clear-filters').click();
+   need(await artifactPage.locator('#option-filter').inputValue()===''&&await artifactPage.locator('#row-filter').inputValue()==='','Show all did not clear both filters');
+   await artifactPage.locator('#expand-all').click();
+   need(await artifactPage.locator('details:not([open]),tbody tr[hidden],.option[hidden]').count()===0,'Expand/show all omitted retained rows');
+   await capture(name+'-'+width+'.png');
+  }
+  await artifactPage.locator('#print-report').click();
+  const namePDF=name+'-complete-print.pdf',pdf=await exists(path.join(H.dir,namePDF))?await fs.readFile(path.join(H.dir,namePDF)):await artifactPage.pdf({printBackground:true,preferCSSPageSize:true});
+  artifacts.push(await H.artifact(namePDF,pdf));
+  const outgoing=await handoverDownload(artifactPage,H,name+'-embedded-study.json',()=>artifactPage.locator('#download-study').click());
+  need(outgoing.bytes.equals(Buffer.from(data.study,'utf8')),'Embedded study download differs');
+  return{artifacts:[...artifacts,outgoing.descriptor],studyArtifact:outgoing.descriptor};
+ }finally{if(viewport)await artifactPage.setViewportSize(viewport);}
+}
+async function handoverReopen(page,input,H,programId,studyArtifact){
+ const file=handoverJSON(await H.verify(studyArtifact)),p=H.progress.pending,original=handoverJSON(await H.verify(p.beforeWorking));
+ if(!p.receiveExpectation){
+  const candidate=await verifyStudy(page,input,file,{programId,complete:true}),expected=clone(original);expected.financing=candidate;
+  p.expectedWorking=await H.artifact('expected-reopened-'+sha(canonical(expected))+'.json',encoded(expected));
+  p.receiveExpectation={file:studyArtifact,expectedWorking:p.expectedWorking};await H.save();
+ }
+ need(same(p.receiveExpectation.file,studyArtifact),'Keep the same complete study reopening');
+ const expected=handoverJSON(await H.verify(p.receiveExpectation.expectedWorking)),before=await observe(page,input,H,{programId,label:'before-complete-study-reopen'});
+ if(!handoverReceiveMatches(before.value,expected,file,programId)){
+  need(await explicitRestoration(H,before.value,original),'Preserve the unrelated editor before reopening the study');
+  const waiting=page.waitForEvent('download',{timeout:120000});
+  await page.locator('[data-financing-file]').setInputFiles(path.join(H.dir,studyArtifact.name));
+  const d=await waiting,tmp=path.join(H.dir,'.before-study-'+crypto.randomUUID());
+  try{await d.saveAs(tmp);const b=await fs.readFile(tmp);need(b.length<=LIMIT,'Keep complete bounded predecessor study');const v=handoverJSON(b);
+   need(v.sourceMode==='CASE_RETAINED'&&same(v.study,original.financing),'The app did not retain the actual complete preceding study');
+   p.predecessorStudy=await H.artifact('before-reopen-study-'+sha(b)+'.json',b);await H.save();
+  }finally{await fs.unlink(tmp).catch(e=>{if(e.code!=='ENOENT')throw e;});}
+  await ready(page,input,programId);
+ }
+ const received=await observe(page,input,H,{programId,label:'accepted-complete-study-reopen'});
+ need(handoverReceiveMatches(received.value,expected,file,programId),'Reopened study changed source, criteria, unknown/zero fields or unrelated Forecast writing');
+ return{studySha256:sha(canonical(received.value.financing)),reopened:received.artifact,artifacts:[studyArtifact,p.expectedWorking,...(p.predecessorStudy?[p.predecessorStudy]:[]),received.artifact]};
+}
+/** Append artifact receiving to the exact completed original financing course. */
+export async function receiveFinancingHandover({page,artifactPage,directory,input,priorResult,handoverInput}){
+ need(artifactPage!==page,'Preserve the original application page');
+ const original=await handoverOriginal(directory,input,priorResult);validateHandoverInput(handoverInput,input,original.first);
+ const sub=path.join(original.dir,'financing-handover');await fs.mkdir(sub,{recursive:true,mode:0o700});
+ const H=await handoverJournal(sub,{input:handoverInput,programId:input.programId}),final=path.join(sub,'HANDOVER_COMPLETE.json'),done=await handoverCompleted(H,final);if(done)return done;
+ await verifySources(page,{...input,servedSources:handoverInput.servedSources});await ready(page,input);
+ if(!H.progress.initialWorking){
+  const seen=await observe(page,input,H,{label:'handover-initial'}),expected=handoverJSON(await original.J.verify(original.delivery.working));
+  need(financingWorkingSha256(seen.value)===financingWorkingSha256(expected),'Preserve '+seen.artifact.name+'; reopen the exact last completed original financing working file');
+  need(!seen.value.saveRequest&&!seen.value.pendingWorkbook&&!seen.value.financing?.pendingSource,'Finish the original pending request first');
+  H.progress.initialWorking=seen.artifact;H.progress.current=await context(page,input);H.progress.history=await history(page,input);await H.save();
+ }
+ const expectedStudy=original.delivery.study,current=H.progress.current;
+ need(same(await context(page,input),current)&&same(await history(page,input),H.progress.history),'Original native case/history changed during artifact continuation');
+ for(const selected of handoverInput.selections){
+  await handoverStep(page,input,H,input.programId,'download-'+selected.key,async()=>{
+   const before=handoverJSON(await H.verify(H.progress.pending.beforeWorking)),s=before.financing;
+   need(s.selectedComparisonId===expectedStudy.selectedComparisonId&&s.decision?.selectedId===expectedStudy.decision?.selectedId,'Keep the actual original comparison/assessment selection');
+   await openFinancingTab(page,input,selected.key==='assessment'?'decision':'comparison');const prefix=selected.key==='assessment'?'decision-':'';
+   const zip=await handoverDownload(page,H,selected.key+'-handover.zip',()=>page.locator(action(prefix+'handover-zip')).click());await ready(page,input);
+   const parsed=await verifyHandoverArchive(page,input,H,zip.bytes,selected,expectedStudy,current);
+   const html=await handoverDownload(page,H,selected.key+'-handover.html',()=>page.locator(action(prefix+'handover-html')).click());await ready(page,input);
+   const embedded=handoverEmbedded(html.bytes),expected=await verifyHandoverSelection(page,input,embedded.file,embedded.embedded.selection,selected,expectedStudy,current);
+   need(sha(html.bytes)===expected.htmlSha256,'Actual outgoing HTML differs from the complete selected report');
+   return{selection:parsed.selection,htmlSelection:embedded.embedded.selection,manifest:parsed.manifest,csv:parsed.csv,zip:zip.descriptor,html:html.descriptor,artifacts:[zip.descriptor,html.descriptor,...parsed.artifacts]};
+  });
+  await handoverStep(page,input,H,input.programId,'view-'+selected.key,async()=>{
+   const previous=H.progress.phases.find(p=>p.id==='download-'+selected.key).result,embedded=handoverEmbedded(await H.verify(previous.html));
+   return handoverView(artifactPage,H,selected.key+'-report',previous.html,embedded.file,previous.htmlSelection);
+  });
+ }
+ await handoverStep(page,input,H,input.programId,'reopen-complete-report-study',async()=>{
+  const last=handoverInput.selections.at(-1),view=H.progress.phases.find(p=>p.id==='view-'+last.key).result;
+  return handoverReopen(page,input,H,input.programId,view.studyArtifact);
+ });
+ need(same(await context(page,input),current)&&same(await history(page,input),H.progress.history),'Artifact receiving changed original native data or history');
+ const result={schema:HANDOVER_RECEIVING_SCHEMA,bindingSha256:H.fingerprint,operationId:handoverInput.operationId,originalResultSha256:handoverInput.originalResultSha256,
+  programId:input.programId,completedAt:H.progress.phases.at(-1).completedAt,phases:H.progress.phases,custody:H.progress.custody,nativeMutationCount:0,
+  visualInspection:'Exact outgoing report controls, populated/empty desktop+narrow captures and complete print retained. Producing owner must VIEW and inspect all actual files in normal viewers before ready.'};
+ H.progress.completedResult=result;await H.save();await handoverWrite(final,encoded(result));return result;
+}
+/** Reopen the same outgoing files on the actual independently received original case. */
+export async function inspectFinancingHandover({page,artifactPage,directory,input,priorResult,handoverInput,priorHandoverResult,programId}){
+ need(artifactPage!==page,'Preserve the received application page');
+ const original=await handoverOriginal(directory,input,priorResult);validateHandoverInput(handoverInput,input,original.first);
+ const firstDir=path.join(original.dir,'financing-handover'),first=await readJSON(path.join(firstDir,'HANDOVER_COMPLETE.json'));
+ need(same(first,priorHandoverResult)&&first.originalResultSha256===handoverInput.originalResultSha256,'Keep exact completed handover result');
+ const restored=await readJSON(path.join(original.dir,'FINANCING_RESTORED.json'));
+ need(restored.programId===programId&&restored.originalResultSha256===sha(encoded(original.first)),'Complete original native-case receiving first');
+ const sub=path.join(firstDir,'received-'+programId);await fs.mkdir(sub,{recursive:true,mode:0o700});
+ const H=await handoverJournal(sub,{input:handoverInput,programId,firstHandoverSha256:sha(encoded(first)),originalRestoredSha256:sha(encoded(restored))}),final=path.join(sub,'HANDOVER_RECEIVED.json'),done=await handoverCompleted(H,final);if(done)return done;
+ await verifySources(page,{...input,servedSources:handoverInput.servedSources});await ready(page,input,programId);
+ const current=await context(page,input,programId);need(programId===input.programId||current.program.origin?.programId===input.programId,'Use the actual received original case lineage');
+ if(!H.progress.initialWorking){
+  const seen=await observe(page,input,H,{programId,label:'handover-restored-initial'}),expected=handoverJSON(await original.J.verify(restored.working));
+  need(financingWorkingSha256(seen.value)===financingWorkingSha256(expected),'Preserve '+seen.artifact.name+'; reopen the exact accepted restored working study');
+  H.progress.initialWorking=seen.artifact;H.progress.current=current;H.progress.history=await history(page,input,programId);await H.save();
+ }
+ need(same(current,H.progress.current)&&same(await history(page,input,programId),H.progress.history),'Received case changed before artifact inspection');
+ for(const phase of first.phases)for(const a of phase.result.artifacts||[]){const b=await fs.readFile(path.join(firstDir,a.name));need(b.length===a.bytes&&sha(b)===a.sha256,'Original handover artifact changed');await H.artifact(a.name,b);}
+ const last=handoverInput.selections.at(-1),downloaded=first.phases.find(p=>p.id==='download-'+last.key).result;
+ await handoverStep(page,input,H,programId,'received-offline-report',async()=>{const embedded=handoverEmbedded(await H.verify(downloaded.html));return handoverView(artifactPage,H,'received-report',downloaded.html,embedded.file,downloaded.htmlSelection);});
+ await handoverStep(page,input,H,programId,'received-complete-study',async()=>{const view=H.progress.phases.find(p=>p.id==='received-offline-report').result;return handoverReopen(page,input,H,programId,view.studyArtifact);});
+ need(same(await context(page,input,programId),H.progress.current)&&same(await history(page,input,programId),H.progress.history),'Received artifact course changed native data/history');
+ const result={schema:HANDOVER_RECEIVING_SCHEMA+'.received',bindingSha256:H.fingerprint,operationId:handoverInput.operationId,programId,originalHandoverSha256:sha(encoded(first)),
+  completedAt:H.progress.phases.at(-1).completedAt,phases:H.progress.phases,custody:H.progress.custody,nativeMutationCount:0,
+  visualInspection:'Actual original report/control/capture and editable source reopening; producing-owner visual review remains required.'};
+ H.progress.completedResult=result;await H.save();await handoverWrite(final,encoded(result));return result;
+}
+
+function handoverZIP(raw){
+ need(Buffer.isBuffer(raw)&&raw.length<=HANDOVER_LIMIT,'Use the complete bounded native ZIP');
+ let end=-1;for(let i=raw.length-22;i>=Math.max(0,raw.length-65557);i--)if(raw.readUInt32LE(i)===0x06054b50&&i+22+raw.readUInt16LE(i+20)===raw.length){end=i;break;}
+ need(end>=0,'Native ZIP central directory is missing');
+ const count=raw.readUInt16LE(end+10),offset=raw.readUInt32LE(end+16),size=raw.readUInt32LE(end+12);
+ need(raw.readUInt16LE(end+4)===0&&raw.readUInt16LE(end+6)===0&&raw.readUInt16LE(end+8)===count&&count>0&&count<20000&&offset+size===end,'Unsupported complete ZIP directory');
+ let at=offset,total=0;const files=new Map;
+ for(let n=0;n<count;n++){
+  need(at+46<=end&&raw.readUInt32LE(at)===0x02014b50,'Native ZIP directory entry missing');
+  const flags=raw.readUInt16LE(at+8),method=raw.readUInt16LE(at+10),compressed=raw.readUInt32LE(at+20),expanded=raw.readUInt32LE(at+24),nameLen=raw.readUInt16LE(at+28),extra=raw.readUInt16LE(at+30),comment=raw.readUInt16LE(at+32),local=raw.readUInt32LE(at+42);
+  need(!(flags&1)&&[0,8].includes(method)&&at+46+nameLen+extra+comment<=end,'Unsupported native ZIP entry');
+  const name=raw.subarray(at+46,at+46+nameLen).toString('utf8');need(name&&!name.startsWith('/')&&!name.includes('\\')&&!name.split('/').some(p=>!p||p==='.'||p==='..')&&!files.has(name),'Native ZIP has ambiguous paths');
+  total+=expanded;need(total<=HANDOVER_LIMIT&&local+30<=offset&&raw.readUInt32LE(local)===0x04034b50,'Native ZIP expansion or local header invalid');
+  const ln=raw.readUInt16LE(local+26),le=raw.readUInt16LE(local+28),start=local+30+ln+le;
+  need(raw.subarray(local+30,local+30+ln).toString('utf8')===name&&raw.readUInt16LE(local+8)===method&&start+compressed<=offset,'Native ZIP member identity differs');
+  const packed=raw.subarray(start,start+compressed),body=method===0?Buffer.from(packed):inflateRawSync(packed,{maxOutputLength:expanded+1});
+  need(body.length===expanded,'Native ZIP member size differs');files.set(name,body);at+=46+nameLen+extra+comment;
+ }
+ need(at===end&&files.has('manifest.json'),'Native ZIP complete manifest missing');
+ const manifest=JSON.parse(files.get('manifest.json').toString('utf8'));need(Array.isArray(manifest.files)&&manifest.files.length===files.size-1,'Native ZIP manifest does not cover its full payload');
+ const named=new Set;for(const d of manifest.files){const b=files.get(d.path);need(d.path!=='manifest.json'&&!named.has(d.path)&&b&&b.length===d.bytes&&sha(b)===d.sha256,'Native ZIP payload differs from its exact manifest: '+d.path);named.add(d.path);}
+ return {files,manifest,inventory:[...files].map(([name,b])=>({name,bytes:b.length,sha256:sha(b)}))};
+}
