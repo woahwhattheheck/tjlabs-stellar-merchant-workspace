@@ -122,13 +122,84 @@ The complete SDK declarations are in `index.d.mts` and `index.d.ts`; the parent 
 
 ## Original native receiving case
 
-The existing native Central programme can exercise the entire desk with the published structural-change case already maintained under `odk/native/released-fixtures.mjs` and the pinned provider source below.
+Continue the existing native Central programme, original host, selected project
+and retained receiving journal. The generic fixture module
+`odk/native/released-fixtures.mjs` and the published removed-field example are
+distinct source sequences. See the existing [native receiving guide](../native/RELEASED_FIXTURES.md)
+and the [pinned provider structural-change case](https://github.com/getodk/central-backend/blob/de0d2a07fd7c9ff698cbc312e550dd40ff058340/test/integration/api/forms/versions.js)
+for their original source and operating context.
 
-Use the original `simple` blank-version XML as the published baseline. The provider's case changes the version to `2` and removes only the main-instance `<age/>` element, retaining the rest of the original XML, including its old bind/input. Receive native fields from Central for both definitions. The native schema is the authoritative field membership; an XML text search for the remaining old bind would be wrong.
+The generic module publishes `simple` with blank and `updated` versions. Its
+`updated` XML changes the version attribute only and retains the age field:
+845 bytes, SHA-256
+`5563cff48739e852e2b1e46d6765515a297e79a1df65a45a868da11e3c1e25a2`.
+It also creates the original submission `two` as Bob with age 34 under the
+blank version. Completing that programme does not establish a removed-age draft
+or a version-`2` publication.
 
-Keep the existing approved age output and the original row-count output. Retain the current draft, bind the actual age selector, and inspect its affected output. Record the collection coverage review from the complete original XForms. Preserve the earlier captured age value in the workspace, save the reporting decision, approve the exact candidate, and give that frozen plan to the existing native publisher. Receive the resulting published source into the same review, then reopen the complete workspace to continue its next reporting period.
+The separate published structural-change case uses the original `simple`
+blank-version XML as baseline, then changes its version to `2` and removes
+only the main-instance `<age/>` element. Its old age bind and input remain.
+Receive the actual native fields for both definitions; a text search for the
+remaining bind does not establish native field membership.
 
-Original baseline XML: 827 bytes, SHA-256 `93fdcefabfe5b6ea49f207e0c6fc8ba72ceb34828bff9c7929ef56eafd2d84cc`. Exact structural candidate: 833 bytes, SHA-256 `bc2cc021848d1cdf66107b118f0cbd407eb35c0f138324ec0b0628576da661f5`. The guide records the provider case and expected source selection; the native receiving operator retains its actual operation result in the original programme.
+Original baseline XML: 827 bytes, SHA-256
+`93fdcefabfe5b6ea49f207e0c6fc8ba72ceb34828bff9c7929ef56eafd2d84cc`.
+Exact structural candidate: 833 bytes, SHA-256
+`bc2cc021848d1cdf66107b118f0cbd407eb35c0f138324ec0b0628576da661f5`.
+Preserve these literal provider originals and their attribution.
+
+Before staging or publishing the candidate, the original source owner inspects
+the actual current project/form, published version and XML, draft and existing
+submission IDs. Reopen any already accepted source request under its original
+ID. Do not rerun the generic fixture creator to manufacture the structural
+case, rewrite its saved inputs, or reuse an existing submission ID for different
+XML. In particular, the structural case's version-`2` Bob submission named
+`two` differs from the generic programme's already-created `two`.
+
+A historical blank generation remains a valid retained comparison source.
+A publication plan based on it also requires blank to be the actual current
+published version and requires that exact current XML hash. If the current form
+is already `updated` or another version, preserve the historical comparison
+and inspect the current native source. Any authorized following publication
+needs a separately reviewed comparison against that actual current retained
+baseline. Do not relabel `updated` as blank, synthesize a replacement pair or
+bypass the frozen plan's destination preconditions.
+
+For the exact blank-to-`2` provider sequence, reopen the programme's original
+structural-case target when present. Otherwise, the same native owner selects
+or retains a distinct actual target within the existing authorized programme,
+recording its original request identity before any creation. Keep the literal
+form ID `simple`: if that ID is already occupied by the generic cohort, select
+a different actual project in which this source will not collide. Retain the
+returned native project ID and all request/response originals. The existing
+native API publishes the exact baseline, receives its original submission,
+stages the exact candidate as a draft, and continues only after review. This
+uses the same host and original operation journal; it adds no competing
+controller, altered fixture XML or assumed customer source. An uncertain create
+is reconciled through its original unique request and actual native objects
+before any replay.
+
+In the selected original Store, retain the actual age output and row-count
+commitment from commissioning or the approved warehouse source. A generic
+saved report alone is not a substitute for those dependency records. Receive
+the current draft through the baseline's existing connection, explicitly bind
+its actual age selector, and inspect the affected output and collection
+coverage. Keep earlier captured age values and schemas unchanged. Complete the
+current staff and colleague review; refresh changed reporting definitions before
+approval.
+
+Give the resulting frozen plan to the existing native publisher. It validates
+the current approval and exact target, then verifies the actual published
+version/XML before its original mutation. Receive the complete actual published
+source afterward and retain any differences. The review desk neither publishes
+XML nor supplies a replacement publisher. A draft-only course ends with the
+reviewed draft/plan and explicitly has no publication result. Reopen the same
+complete workspace and continue its actual next reporting period.
+
+The source hashes above identify provider example inputs, not an observed
+Central result. The native receiving operator retains its real source,
+publication and rendered-operation outcomes in the original programme.
 
 ## Complete colleague review and returned feedback
 
@@ -149,10 +220,15 @@ See [COLLEAGUE_REVIEW.md](./COLLEAGUE_REVIEW.md) for the complete staff course, 
 
 ## Rendered product inspection — owner instruction, 2026-10-13
 
-This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Before calling any customer/prospect-facing application, website, dashboard, demo, report, presentation or export ready, open/run/render the exact outgoing version, look at the rendered screen or its actual screenshots, and operate the important user controls. Inspect the actual screenshare width and narrow/mobile width where relevant, populated/empty/loading/error states, downloads/exports and reopening. Capturing screenshots without viewing them is insufficient. Code review, DOM counts, HTTP 200, unit checks and another worker's approval do not replace seeing the actual product.
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Bryce's standing rule is: “that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it”.
 
-Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk; do not run broad suites or build a verification product.
+Before presenting a client/prospect-facing application, website, dashboard, demo, report, presentation, export or any attachment, the producing peer must open/run/render the exact outgoing version, LOOK at it and normally use it as the recipient would. View the actual screenshots you capture. Inspect the actual presentation/screenshare width and relevant narrow/mobile width, important user controls, populated/empty/loading/error states, downloads and reopened exports. Open the usable contents of ZIPs/projects and every applicable report/PDF page. Source review, schemas, HTTP 200, DOM counts, tests, checklists and another worker's approval cannot substitute for observing and using the actual product.
 
-Include this complete instruction in delegated assignments and the active owner-controlled policy, boot, build and receiving guidance those workers actually read. Preserve all other owner controls and original operation identities. Leave historical records and third-party/vendor policies intact. Do not force restarts, create watchers or revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and continued delivery; it must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk. Do not run broad test sweeps, repeat accepted checks, build a verification product or create review bureaucracy or an approval queue.
+
+For video and audio, Bryce directs: “also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them”. Use available high-quality generative voice/TTS and useful generative media, with natural professional delivery. Actually watch/listen to the final outgoing export, including pacing, pronunciation, timing and audio alignment. Preserve existing spending, voice and attribution controls.
+
+Include this complete instruction in delegated assignments and the active owner-controlled provider/project/cloud policy, boot, build and receiving guidance those workers actually read. Reuse already updated copies and return exact updated paths/version in the original policy thread with the next substantive result. Delivery of source does not establish that every runtime loaded it. Preserve all other owner controls and original operation identities; leave historical records and third-party/vendor policies intact. This instruction creates no restarts, watchers, credential gate or new release permission and does not revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
 
 Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
