@@ -182,12 +182,31 @@ Downloads remain private files. The receiver creates a separate private `<destin
 
 ## Complete installed receiving programme
 
-The source includes `examples/run-invoice-settlement-customer-receiving.mjs`. Select one private receiving root with the complete committed repository at `source/` beneath it. Run its original programme with the existing Node and Python installations:
+The source includes `examples/run-invoice-settlement-customer-receiving.mjs`. Use the original complete receiving input and the guarded Python entry with the existing Node and Python installations. The input retains the original operation ID, fixed root, complete selected source, and unchanged official Library helper closure:
 
 ```sh
-node --max-old-space-size=192 /absolute/customer-receiving/source/stellar-forge/mcp-merchant-operator/examples/run-invoice-settlement-customer-receiving.mjs /absolute/customer-receiving
+python3 /absolute/source/stellar-forge/mcp-merchant-operator/examples/run-invoice-settlement-customer.py /absolute/original-invoice-input.json
 ```
 
 This whole journey builds the selected distribution, installs it through the native runtime installer, opens the authenticated MCP provider, operates an authored loopback Horizon case, retains interrupted original responses, exports and downloads every member, closes the services, then receives and reopens the native workspace offline. Original phase results, request/response records, installed source and complete delivery files stay under that receiving root. Continue with the same root after an interruption; completed native requests retain their original UUIDs and immutable inputs.
 
 The published source has received complete custody and API review. The initial two complete execution admissions (2677 and2694) ended before process creation with `environment_offline409`; neither transmitted source input nor ran a native phase. The eighteen-phase installed result remains pending an available executor. This status is separate from the earlier operated seventeen-phase native Horizon feature.
+
+
+### Complete run ownership, recovery and delivery
+
+The guarded entry preserves operation `SCF-INVOICE-SETTLEMENT-MCP-CUSTOMER-20261013` at `/dev/invoice-customer-6ba15-20261013`. Select the complete published input before the first execution. It can also receive the original framed input over a raw PTY: wait for `INVOICE_INPUT_READY`, then send one JSON line containing the exact UTF-8 byte count and SHA-256 followed by those exact input bytes. The full helper request receives EOF internally; no second parent stdin message is needed to save.
+
+The permanent operation flock is inherited through the original programme, durable command supervisor, native children and uploader. The child records its own `/proc/self` process identity before entering the original command; the namespace PID returned by `Popen` is used only for parent wait and group cleanup. These identities are distinct on equipped hosts where `/proc` exposes host PIDs. A changed boot or PID namespace requires reconciliation of the original host; it is not evidence that the original job stopped.
+
+Each child retains its exact request, entered marker, process identity, complete stdout/stderr and returned exit record. Log byte counts and hashes are verified on both first receipt and reentry. Every isolated child group is closed before its supervisor publishes a returned record. The original customer-operation module still owns all business replay decisions and original native UUIDs.
+
+The programme writes each phase result atomically. Once download phase16 is complete, continuation reconstructs the saved online result from those exact phase and request records and runs only offline native receiving and independent reopening. A complete eighteen-phase result is returned after checking its retained checkpoint inventory, without opening the MCP provider or Horizon endpoint. Source HTTP records are retained individually before a response, so the complete source-request history survives a parent disconnect.
+
+Shutdown attempts every owned customer, provider, MCP server, source server and child closer. `OWNED_DRAIN_COMPLETE` is emitted only after all close operations return successfully. Failure records and original child results stay available for the same operation.
+
+The complete archive carries selected source, installed distribution, workspace history, requests and first results, original source records, reports, downloaded package, independent receiving, entry sources and earlier acknowledged save history. Its immutable member recipe fixes each byte count, SHA-256 and mode; the archive is verified against that recipe before upload.
+
+The unchanged `library_upload.py` (SHA-256 `5bc473dadefe1f68ee8797baaed19d6662642d0ea4bcba128fa12938faa0d767`) performs preparation, PUT, finalization and local metadata in the same initial process. Its full request precedes dispatch; an independent guarded supervisor saves complete stdout/stderr and its own exit record. Receipt validation checks the original ordered path, purpose, filename, returned IDs, exact version and metadata result. An unresolved invocation stops for original-save reconciliation. It cannot trigger a second create. Later changed archive editions replace the same acknowledged Library file with its expected version; an identical completed edition reuses the saved result.
+
+A successful remote save with incomplete local metadata retains its canonical provider IDs and pauses for local metadata repair. It is not uploaded again. Preserved source and records do not establish an operated result: the whole eighteen-phase customer programme remains pending until an actual equipped executor returns its completed native and save records.
