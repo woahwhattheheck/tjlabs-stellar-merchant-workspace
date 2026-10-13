@@ -195,3 +195,13 @@ To use an already opened original receiving console, run
 `expected_config_revision`, `playwright_module` and `chromium_path`.
 Keep that original host alive throughout its course. Both programs retain the
 same request and phase checkpoint when resuming the original directory.
+
+The receiver records each private Node and Chromium process group before execution,
+including its original boot, PID namespace and process start time. Normal completion,
+errors, SIGTERM and SIGINT use the same cleanup path; the receiver checks surviving
+group members even after a launcher exits. Chromium's separate process group is
+reconciled from its own retained record. Keep `receiving-process.mjs` with both
+receiving programs and preserve their process-control receipts when resuming.
+`SF74_RECEIVING_PYTHON` may select the existing absolute Python executable used
+by the private launch wrapper. These receipts never authorize closing another
+operator's browser or a process whose original identity no longer matches.

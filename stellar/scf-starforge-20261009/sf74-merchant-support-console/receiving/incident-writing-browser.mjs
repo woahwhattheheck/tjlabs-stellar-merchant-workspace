@@ -4,6 +4,7 @@ import {readFile,writeFile,mkdir,rename} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
 import {createRequire} from 'node:module';
+import {createReceivingProcessOwner} from './receiving-process.mjs';
 const require=createRequire(import.meta.url);
 const fail=message=>{throw new Error(message);};
 const need=(ok,message)=>{if(!ok)fail(message);};
@@ -27,7 +28,14 @@ need(progress.sourceId===config.source_id,'This original course belongs to anoth
 const save=async()=>{const path=progressPath+'.'+attempt+'.tmp';await writeFile(path,JSON.stringify(progress,null,2)+'\n',{mode:0o600});await rename(path,progressPath);};
 const completed=name=>progress.done.includes(name);
 const KEY='stellar-forge.incident-writing.v1';
-let browser,context,page,expectedNetworkError=false,routeTail=Promise.resolve();
+let browser,context,page,owner,interrupted=null,shutdownPromise=null,expectedNetworkError=false,routeTail=Promise.resolve();
+async function shutdown(reason=null){
+ if(reason&&!interrupted)interrupted=reason;if(shutdownPromise)return shutdownPromise;
+ shutdownPromise=(async()=>{if(owner)await owner.close(async()=>{if(context)await context.close();if(browser)await browser.close();});})();return shutdownPromise;
+}
+function signalReceived(signal){process.exitCode=signal==='SIGTERM'?143:130;void shutdown(Error('Original browser receiving interrupted by '+signal)).catch(e=>{progress.cleanupError=e.stack||String(e);});}
+const onTerminate=()=>signalReceived('SIGTERM'),onInterrupt=()=>signalReceived('SIGINT');
+process.on('SIGTERM',onTerminate);process.on('SIGINT',onInterrupt);
 const errors=[];
 function loadPlaywright(){
   if(config.playwright_module)return require(config.playwright_module);
@@ -79,7 +87,10 @@ async function working(){
 async function controlsReady(){await page.waitForFunction(()=>!document.querySelector('#incident-config-json').disabled);}
 try{
   const {chromium}=loadPlaywright();
-  browser=await chromium.launch({headless:true,...(config.chromium_path?{executablePath:config.chromium_path}:{}),args:['--disable-dev-shm-usage']});
+  owner=await createReceivingProcessOwner({directory:join(out,'process-control'),operation:'493D-SF74-INCIDENT-CONFIGURATION-WRITING-20261013:browser',sourceSha256:hash(await readFile(new URL(import.meta.url))),executable:config.chromium_path||chromium.executablePath()});
+  if(interrupted)throw interrupted;
+  browser=await owner.launch(({executablePath,env})=>chromium.launch({headless:true,executablePath,env,timeout:15000,handleSIGTERM:false,handleSIGINT:false,handleSIGHUP:false,args:['--disable-dev-shm-usage']}));
+  if(interrupted)throw interrupted;
   context=await browser.newContext({viewport:{width:1280,height:900},acceptDownloads:true});
   await context.addInitScript(({session,local,origin,courseId})=>{
     if(location.origin!==origin||sessionStorage.getItem('incident-writing-course-restored')===courseId)return;
@@ -236,15 +247,17 @@ try{
     await page.waitForFunction(raw=>document.querySelector('#incident-config-json').value===raw,progress.raw);
     await screenshot('phone-reopened-working-file');await page.setViewportSize({width:1280,height:900});
   });
-  await checkpoint();need(!errors.length,'Original browser errors: '+errors.join('; '));
+  await checkpoint();if(interrupted)throw interrupted;need(!errors.length,'Original browser errors: '+errors.join('; '));
   progress.status='passed';progress.completedAt=new Date().toISOString();await save();
 }catch(error){progress.status='failed';progress.error=error.stack||String(error);try{await checkpoint();if(page&&!page.isClosed())await screenshot('failure');}catch{}await save();process.exitCode=1;}
 finally{
+  try{await shutdown();}catch(error){progress.cleanupError=error.stack||String(error);progress.status='failed';process.exitCode=1;}
   await routeTail.catch(()=>{});
-  if(context)await context.close().catch(()=>{});if(browser)await browser.close().catch(()=>{});
+  if(interrupted){progress.status='failed';progress.error=interrupted.stack||String(interrupted);}
+  await save();process.removeListener('SIGTERM',onTerminate);process.removeListener('SIGINT',onInterrupt);
   const result={schema:progress.schema,status:progress.status,id:progress.id,sourceId:progress.sourceId,
     original:progress.original,completed:progress.done,requests:progress.requests,downloads:progress.downloads,
-    screenshots:progress.screenshots,pageErrors:errors,error:progress.error??null,progressPath};
+    screenshots:progress.screenshots,pageErrors:errors,error:progress.error??null,cleanupError:progress.cleanupError??null,processes:owner?.report??null,progressPath};
   await writeFile(join(attemptDir,'browser-result.json'),JSON.stringify(result,null,2)+'\n',{mode:0o600});
   console.log(JSON.stringify(result));
 }
