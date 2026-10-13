@@ -1,0 +1,43 @@
+{
+  "schema": "stellar-forge.standalone-object-existing-executor-request.v1",
+  "operation_id": "SCF-STANDALONE-OBJECT-RECOVERY-33E6-20261012",
+  "source_commit": "b09765c47a6e71b552bfc7b38958d7b1b9750678",
+  "input": {
+    "path": "source-input.json.gz",
+    "bytes": 922084,
+    "sha256": "b97c270ec529225d879357e264da94011a567f8810e58bdf104137965a19cf85",
+    "decodedBytes": 3021730,
+    "decodedSha256": "f96e9cf40e94c73341022dc4bd7a4ec72274b9bd9348bee92f586cd45e7fd1ea"
+  },
+  "private_source_archive": {
+    "filename": "Stellar_Forge_Original_Object_Recovery_a8e6646c_20261012.zip",
+    "bytes": 291120,
+    "sha256": "33aad8127ff99514ed990607fea1e0ab908da3a6788029708cccc48239f03957",
+    "members": 102,
+    "sourceSessionId": "a8e6646c-a8ff-4545-9399-362f3e831bb4",
+    "archivedSessionId": "f269be5c-ca82-4a78-b603-3f526abf90a9",
+    "objectBytes": 267,
+    "objectSha256": "80bc251619f969166dd39f60290b0450663fbf54ab2dc037a2635dbfb921c19a"
+  },
+  "execution_owner": null,
+  "existing_host": null,
+  "paths": {
+    "source_input": null,
+    "original_object_archive": null,
+    "work_directory": null,
+    "node": null,
+    "python": null,
+    "library_helpers": null,
+    "delivery_directory": null
+  },
+  "resources": {
+    "memory_mib": 768,
+    "memory_reserve_mib": 256,
+    "disk_mib": 128,
+    "disk_reserve_mib": 64,
+    "inodes": 4000,
+    "inode_reserve": 1000,
+    "kind": "PLANNING_ESTIMATE_BIND_TO_ORIGINAL_ADMISSION"
+  },
+  "continuation": "SAME_OPERATION_SAME_ACCEPTED_OWNER"
+}
