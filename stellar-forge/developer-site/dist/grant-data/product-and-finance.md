@@ -1658,6 +1658,48 @@ The browser journey opened all six desktop views, then acquisition and handover 
 
 The [following-observation command](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3d86d3e30917aad9c34a27718b4bbbc540933334/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/FOLLOWING.md) continues from the saved recipient revision. On an authorized worker it requests the same first publisher URL, retains the complete response, carries the prior decision set into the next review, saves the historical comparison and independently receives a new packet. The new evidence enters with a deferred substantive review, while the second row's correction remains available. Native, SDK and Merchant downloads must agree on the response's byte count and SHA-256. The earlier observations, original packet and receiving note remain in the case history.
 
+### Customer operating procedures and recurring analyst handover
+
+A reviewed case becomes useful recurring work when another analyst can operate it. The [customer operating procedure](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0110a7fde307112abee5be63a06291855aa72599/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/OPERATING_PROCEDURES.md) turns one exact saved document-evidence edition into an editable procedure in the existing Operating Plans application. The customer receives the selected case, ordered work, responsible people, original commands, saved changes and a readable handover together.
+
+The commissioning workorder names the publisher, customer, reporting period, operating owner, reviewer and receiving destination. The operator selects the original saved document-evidence ID and revision. The procedure retains the whole selected organisation record, preceding evidence revisions, every selected document row and observation, comparisons and the current correction draft. Its [native source reader](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0110a7fde307112abee5be63a06291855aa72599/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/operating_source.py) reads that edition under the existing workspace lock.
+
+#### Operate the complete customer task
+
+|Customer step|Original application and receiving result|
+|---|---|
+|Select the saved edition|In IATI Document evidence, open the exact case and revision. Publisher handoff provides Download operating source with the complete selected case.|
+|Create the operating procedure|Import that JSON through Command finder → Operating plans. The application creates the ordinary editable plan and downloads the complete IATI procedure package.|
+|Assign the work|Enter the customer, owner, reporting period and receiving destination; edit the ordered work, commands and customer-specific instructions. Save those changes as a new plan revision.|
+|Resolve the selected review work|Use the original IATI controls to acquire, review, compare or correct the published material. Record the actual outcome against the corresponding task. Named review, acquisition and source correction retain their own case history.|
+|Prepare the handover|Download the complete plan, Markdown or printable HTML. Update IATI package joins the currently saved plan history to its original complete source and catalog.|
+|Receive and continue|Import the full procedure package in the receiving Operating Plans application and receive the original document-evidence ZIP through IATI. Reopen the case, retain the receiving analyst's edits and operate the next agreed reporting edition.|
+
+The [procedure model](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0110a7fde307112abee5be63a06291855aa72599/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/operating_procedure.mjs) uses the maintained Operating Plans format, revision receiver and renderer. Each registered step carries the selected toolkit command, source declarations and runtime groups. The operator can inspect and edit the complete procedure using the same controls as other customer operating plans.
+
+A usable review decision enters as completed work; an explicit exclusion enters as skipped work. Deferred assessment and needed source correction remain visible tasks. Completing a plan step records the operator's work on that procedure. The acquisition response, original document and publisher correction remain in their corresponding native IATI records. A later observation or source edition creates its own explicit case revision and can supply the next procedure.
+
+#### Complete files for the next operator
+
+|File|Purpose|
+|---|---|
+|Complete IATI procedure JSON|Carries the original source edition, actual selected toolkit catalog and full saved operating-plan history. It can be received and edited on another browser or machine.|
+|Operating-plan JSON|Provides the complete ordinary plan for existing Operating Plans editing and revision receiving.|
+|Markdown and HTML handover|Give the customer the ordered work, source context, saved decisions and operating instructions in readable files.|
+|Original document-evidence ZIP|Carries the native workspace, retained document bodies and source assets, complete requests, observations, decisions, comparisons and correction material.|
+
+These files support different parts of the same receiving task. The plan package identifies its source edition and describes the work; the original native ZIP carries the underlying workspace and acquired bytes. The workorder specifies both where the receiving analyst needs to repeat the review.
+
+The [installed IATI selection](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0110a7fde307112abee5be63a06291855aa72599/stellar/scf-starforge-20261009/distribution/selections/IATI_OPERATOR.md) supplies Command finder, Operating Plans and the document-evidence application together. The [complete procedure CLI](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0110a7fde307112abee5be63a06291855aa72599/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence_operating_cli.mjs) exposes capture, create, show and receive for the same saved source. Its normal customer operation is `starforge iati-document-procedure`; the guide gives the complete arguments for the original connection, case revision, customer fields and output files. The typed SDK exposes the same source reader and pure procedure creator, receiver and renderer. The customer can therefore use the browser during review and retain the complete command-based operation for recurring work.
+
+#### Commercial output and funded adaptation
+
+A partner can commission a publisher-period review with an operating procedure, corrected source where agreed, readable report and complete analyst receiving. The workorder defines the actual publication selection, review responsibilities, useful files and acceptance owner. It also separates installation and care fees from the merchant's advertised paid resource and the buyer's approved aggregate task cost. A saved procedure step is an operating instruction; the original purchase and acquired resource retain their financial identities.
+
+The implemented procedure is part of the pre-award product. Within the existing six grant packages, T1 binds the selected customer's real source, review roles, approved output and receiving application. T2 connects that complete task to the original purchase and delivery operation, facilitator deployments and installed recovery. T3 carries the recurring customer workflow, complete procedure and original workspace into production receiving, restoration and maintainer handover. Each remaining adaptation belongs to its existing package or a separately commissioned workorder.
+
+Customer acceptance means opening the complete selected source, saving a meaningful change in the procedure, performing the corresponding native task, explaining its actual review outcome and continuing the full case on the receiving installation. The operator can then measure active effort, corrections and time to accepted output over successive reporting editions, using the existing customer-value and recurring-use measures.
+
 ### Recurring customer work and the purchased output
 
 A commissioned document task identifies the organisation and reporting periods, selected publications, authorized source, output formats, reviewer and receiving application. The engineer connects those sources to the customer's reporting process. The analyst reviews the evidence, resolves publishing errors where appropriate, explains changes between editions and hands over the report with its supporting material.

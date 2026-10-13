@@ -46,6 +46,8 @@ The maintained Zarr product gives a scientific-data customer a complete source-e
 
 The remaining installation work connects the approved scientific output to the original publisher and customer application, then completes changed-edition operation and second-engineer receiving. The existing six grant packages fund their selected source/output adaptation, independent-provider operation, production deployment and recovery. The USD 38,000 / 400-hour request is unchanged, and commercial and grant hours are assigned once. Complete scientific-array commissioning chapter.
 
+**IATI customer operating procedure.** A recurring publisher review also needs instructions another analyst can use. The installed IATI workflow turns an exact saved document-evidence edition into an editable Operating Plans procedure with the customer, owner, reporting period, ordered work and receiving destination. Its complete package carries the original case and saved plan history into the next analyst's application.
+
 ## Why Stellar and what we contribute
 
 Stellar provides native authorization and settlement for the reviewed purchase. In its [x402 Exact flow](https://developers.stellar.org/docs/build/agentic-payments/x402/built-on-stellar), the buyer signs a Soroban token-transfer authorization binding payer, recipient, atomic amount and expiration. A facilitator submits it on the selected network; fee sponsorship can cover the transaction fee. Our implementation uses existing SDKs and token contracts.
@@ -124,6 +126,8 @@ The [company-research workflow](./product-and-finance.md#company-research-recurr
 
 These operations demonstrate the shared foundation: acquire the agreed result, use it in the original application, retain its commercial history, and let another engineer reopen and continue it. The funded work adapts that foundation to the selected independent customers.
 
+**Implemented IATI procedure and handover.** The merged [customer operating procedure](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0110a7fde307112abee5be63a06291855aa72599/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/OPERATING_PROCEDURES.md) joins the original document case to editable Operating Plans, the installed CLI and typed SDK. The customer can retain the selected source, catalog, ordered work and complete plan revisions, then export Markdown/HTML and receive the full package. The original IATI ZIP supplies the native workspace and acquired document bytes.
+
 ## Three funded tranches and six priced deliverables
 Day zero is actual award acceptance. The planning rate is **$95/hour**. Each package funds remaining implementation and deployment under the [Build budget and deliverable guidelines](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/budget-and-deliverable-guidelines).
 
@@ -159,6 +163,8 @@ The six packages extend the maintained product in the two selected installations
 |T3 recovery and handover — 70 hours / $6,650|Original backup/receiving, complete product plans and installed handoffs, buyer and merchant continuity, release history and support/accounting workspaces.|Integrate the selected supervision and off-host retention; implement receiving-host configuration and post-backup reconciliation. Deliver the restored customer application, original source and buyer state, measured recovery, independent support case and readable installation/operating handover.|
 
 A source change is assigned to one package and one selected installation requirement before it enters the estimate. A reusable fix belongs to the public component; customer data, signing material and private configuration stay with the deployment. Package completion includes the corresponding documentation and receiving changes so the next operator can use the delivered capability.
+
+**IATI procedure in the funded installation.** The merged operating-procedure component supplies the starting product. T1 binds customer sources, review roles and receiving instructions; T2 joins the complete task to its original purchase, deployed delivery and recovery; T3 delivers recurring production operation and complete maintainer receiving. These adaptations use the existing packages and allocation.
 
 ## Threat response and outcome measurement
 The T2 response package includes a documented threat model, its corresponding installed monitoring plan, and material corrections. Each installation records its source edition, authority, network, facilitator, protected records, observations, thresholds, notification destinations and primary/backup responders. Threats include changed offers or approvals, wrong payment/output attribution, unauthorized access, interrupted delivery, missing observations and restoration of the wrong generation. Each threat is linked to an observable signal, a monitor, an accountable responder and the recovery action; source and delivery failures receive the appropriate application-level observation. The plan follows Stellar's [threat-modeling guidance](https://developers.stellar.org/docs/build/security-docs/threat-modeling) and [builder monitoring template](https://developers.stellar.org/docs/build/security-docs/monitoring/monitoring-template-builders).
