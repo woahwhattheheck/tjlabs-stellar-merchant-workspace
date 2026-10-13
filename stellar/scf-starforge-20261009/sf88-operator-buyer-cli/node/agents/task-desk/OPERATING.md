@@ -593,3 +593,17 @@ console.log(delivery.state, delivery.package);
 | `GET /api/tasks/:id/customer-deliveries/named/:deliveryId/download` | Original delivery ID | Full native NDJSON attachment, byte count and `X-Content-SHA256`. |
 
 The original recipient workflow, independent receiving, offline review and source use are documented in `collections/delivery/OPERATOR.md`. This desk produces that same native customer package and preserves its original outcome and recovery semantics.
+
+## Authenticated Merchant caller
+
+The existing running desk can be selected through the maintained source-owned
+Merchant provider. Its host connection retains the original launch or Applications
+URL record, every operating root and the current instance. The nineteen tools
+cover original caller-task selection, native review/execute/recover/receive,
+operation history, saved RPC editions and complete packet/response receiving.
+The same desk remains the native controller.
+
+Use the complete [Merchant task desk guide](../../../../../../stellar-forge/mcp-merchant-operator/TASK_DESK.md)
+for private connection setup, original request recovery, typed imports and
+`starforge merchant-task-desk` full-file downloads. Existing customer-delivery
+and recipient tools remain with their original Collections provider.

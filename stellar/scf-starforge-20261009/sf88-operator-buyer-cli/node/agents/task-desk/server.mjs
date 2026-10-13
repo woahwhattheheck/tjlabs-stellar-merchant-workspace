@@ -428,6 +428,7 @@ export async function startTaskDesk({ inbox, tasksDirectory, outputsDirectory,
     ['/client.mjs', { path: fileURLToPath(new URL('./client.mjs', import.meta.url)), type: 'text/javascript; charset=utf-8' }],
   ]);
   const server = createServer((request, response) => {
+    response.setHeader('X-Task-Desk-Instance', instanceId);
     response.setHeader('X-Content-Type-Options', 'nosniff');
     response.setHeader('Referrer-Policy', 'no-referrer');
     response.setHeader('Content-Security-Policy',
