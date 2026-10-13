@@ -29,7 +29,7 @@ python -B compose-current-source.py \
   --output /absolute/existing/receiving-parent/current-source-runtime
 ```
 
-The composer verifies the complete original source, source package and review binding; it parses the completed wrapper before writing it. Its output includes all eight native and browser runtime files, the full locally composed source input, the executable wrapper and `LOCAL-COMPOSITION.json`.
+The composer verifies the complete original source, source package and review binding; it parses the completed wrapper before writing it. Its output includes all ten native and browser runtime files, the full locally composed source input, the executable wrapper and `LOCAL-COMPOSITION.json`.
 
 Prepare the transfer for the actual same saved case, then invoke the complete local wrapper:
 
@@ -180,9 +180,51 @@ python -B prepare-source-selection.py \
 
 The command verifies and materializes every complete source member, verifies all
 four reviewer objects and their source IDs, and requires the four selected
-reviewer files to match the same full publisher source. Its result supplies
+reviewer files to match the same full publisher source.
+
+
+Its result supplies
 `source-selection.json`, the complete `source/` directory, the original source
 package and the reader HTML path.
+### Select an optional reviewer edition without replacing canonical files
+
+The package keeps its original logical names, including `application.md` and
+`source-index.json`. An optional edition can retain different original paths
+inside the complete publisher carrier. Select them explicitly with
+`--reviewer-paths /absolute/existing/reviewer-carrier-paths.json`:
+
+```json
+{
+  "schema": "stellar-forge.reviewer-carrier-paths.v1",
+  "roles": {
+    "application": "stellar-forge/developer-site/dist/grant-data/application-reviewer.md",
+    "source-index": "stellar-forge/developer-site/dist/grant-data/reviewer-working-index.json",
+    "budget": "stellar-forge/developer-site/dist/grant-data/budget.csv",
+    "product-and-finance": "stellar-forge/developer-site/dist/grant-data/product-and-finance.md"
+  }
+}
+```
+
+This is the path selection for the optional PR1062 reviewer package. Supply that
+package and a complete publisher carrier containing these exact four bodies;
+the three-file PR does not replace the complete carrier. All four selected
+paths must be distinct and inside the original grant-data directory. Every
+selected carrier body must equal the complete corresponding package object.
+Source URLs do not override this explicit selection.
+
+The prepared manifest retains `reviewerPaths`, and the composer includes it in
+the source-edition identity. The original native receiver checks the same full
+bytes before materialization, retains the files at those selected paths, and
+passes the selection into the existing browser continuation. The browser
+verifies both its normal published-source routes and the selected optional
+files against the retained complete source manifest. It receives the full
+selected package through the original Source editions controls.
+
+Omitting `--reviewer-paths` keeps the canonical filename defaults. Existing
+prepared inputs without `reviewerPaths` keep their original source identity and
+receiving behavior, including the selected initial 131-source case. Keep the
+same saved review and settle its original browser phase before choosing this
+following optional edition.
 
 Compose the following operation from the actual current saved ZIP and its
 existing preceding source directory:
