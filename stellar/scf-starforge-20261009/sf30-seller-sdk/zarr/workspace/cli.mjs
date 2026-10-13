@@ -11,7 +11,7 @@ async function input(){
  return JSON.parse(Buffer.concat(parts).toString('utf8'));
 }
 function options(argv){
- const allowed=new Set(['--directory','--connections','--python','--id','--offset','--limit','--source-directory']),v={};
+ const allowed=new Set(['--directory','--connections','--python','--id','--offset','--limit','--format','--source-directory']),v={};
  for(let i=0;i<argv.length;i++){
   const key=argv[i];need(allowed.has(key)&&!Object.hasOwn(v,key),'ZARR_OPTION','Unknown or repeated option '+key);
   const value=argv[++i];need(typeof value==='string'&&value&&!value.startsWith('--'),'ZARR_OPTION','Retain the value for '+key);v[key]=value;
@@ -24,7 +24,8 @@ export async function zarrWorkspaceMain(argv=process.argv.slice(2)){
   process.stdout.write('Zarr source workspace\n\n'+
    'zarr-workspace init --directory ABS [--python PYTHON]\n'+
    'zarr-workspace serve --directory ABS --connections ABS [--python PYTHON] [--port 8471]\n'+
-   'zarr-workspace status|operation|result|frozen --directory ABS [--id ORIGINAL_ID]\n'+
+   'zarr-workspace status|operation|result|comparison|frozen --directory ABS [--id ORIGINAL_ID]\n'+
+   'zarr-workspace comparison-file|comparison-file-read --directory ABS --id COMPARISON_SHA --format json|csv|html [--offset 0 --limit 262144]\n'+
    'zarr-workspace prepare|apply --directory ABS --connections ABS < exact-request.json\n'+
    'zarr-workspace resume|export --directory ABS --id UUID\n'+
    'zarr-workspace receive --directory ABS --connections ABS < receiving-request.json\n'+
@@ -53,7 +54,7 @@ export async function zarrWorkspaceMain(argv=process.argv.slice(2)){
  if(command==='inspect-source'){text(await inspectZarrLaunchSource(sourceDirectory));return;}
  need(directory,'ZARR_DIRECTORY','Select the original workspace directory');
  if(command==='inspect-workspace'){text(await inspectZarrAuthoring(directory,{python,sourceDirectory}));return;}
- need(['init','status','operation','result','frozen','prepare','apply','resume','export','receive'].includes(command),'ZARR_COMMAND','Choose an original documented workspace command');
+ need(['init','status','operation','result','comparison','comparison-file','comparison-file-read','frozen','prepare','apply','resume','export','receive'].includes(command),'ZARR_COMMAND','Choose an original documented workspace command');
  const connections=v['--connections']?await readZarrConnections(resolve(v['--connections'])):{inputs:[],destinations:[],sha256:sha(encoded(null))};
  if(['prepare','apply','receive'].includes(command))need(v['--connections'],'ZARR_CONNECTIONS','Select the same original host connections declaration');
  const workspace=await openZarrWorkspace({directory,python,sourceDirectory,connections,create:command==='init'});
@@ -63,6 +64,9 @@ export async function zarrWorkspaceMain(argv=process.argv.slice(2)){
    case 'init':case 'status':value=await workspace.status();break;
    case 'operation':value=await workspace.operation(v['--id']);break;
    case 'result':value=await workspace.result(v['--id'],Number(v['--offset']??0),Number(v['--limit']??100));break;
+   case 'comparison':value=await workspace.comparison(v['--id'],Number(v['--offset']??0),Number(v['--limit']??100));break;
+   case 'comparison-file':value=await workspace.comparisonFile(v['--id'],v['--format']);break;
+   case 'comparison-file-read':value=await workspace.comparisonFileRead(v['--id'],v['--format'],Number(v['--offset']??0),Number(v['--limit']??262144));break;
    case 'frozen':value=await workspace.frozen(v['--id']);break;
    case 'prepare':value=await workspace.prepare(await input());break;
    case 'apply':value=await workspace.apply(await input());break;

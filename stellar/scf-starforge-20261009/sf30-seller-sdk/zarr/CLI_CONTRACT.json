@@ -39,6 +39,21 @@
     "abandon": {
       "operationId": "original interrupted UUID",
       "reason": "1–4000 characters; retains all original source/artifacts"
+    },
+    "compare": {
+      "leftResultId": "exact retained result SHA",
+      "rightResultId": "exact retained result SHA",
+      "leftContentSha256": "exact complete original left result content SHA256",
+      "rightContentSha256": "exact complete original right result content SHA256",
+      "title": "1–200 characters",
+      "note": "1–4000 characters; purpose and source/coordinate/unit limitations",
+      "pairing": "source-index (required literal)"
+    },
+    "comparison-review": {
+      "comparisonId": "saved comparison SHA",
+      "contentSha256": "exact complete comparison content SHA256",
+      "decision": "accepted | needs-changes | rejected",
+      "comment": "1–4000 characters; interpretation and source limitations"
     }
   },
   "request": {
@@ -51,7 +66,7 @@
     "operationId": "UUID",
     "state": "COMPLETE",
     "revision": "integer",
-    "item": "immutable source/selection/result/review/frozen/closure receipt"
+    "item": "immutable source/selection/result/review/frozen/closure receipt or comparison/comparison-review receipt"
   },
   "status": {
     "workspaceId": "original UUID",
@@ -61,7 +76,9 @@
     "results": "metadata + native result file/SHA",
     "reviews": "all explicit reviews",
     "frozen": "reviewed scalar sources with relative file/SHA",
-    "operations": "last100 exact accepted requests/state/receipts"
+    "operations": "last100 exact accepted requests/state/receipts",
+    "comparisons": "all immutable saved comparison metadata, counts and complete JSON/CSV/HTML file pins",
+    "comparisonReviews": "all immutable comparison decisions against exact content SHA"
   },
   "resultPage": {
     "result": "immutable metadata",
@@ -82,5 +99,96 @@
     "record",
     "subarray"
   ],
-  "lifecycle": "Python mutation holds permanent operation.lock; reads are SQLite read snapshots. RUNNING/INTERRUPTED UUID is explicitly resumed with its same complete saved request. Abandon is only admitted once that native flock can be acquired; no process killing. Node must retain/drain its child promises, and show saved pending UUIDs after reopen. Init reopens only a fully valid existing original workspace; it does not overwrite invalid/partial state."
+  "lifecycle": "Python mutation holds permanent operation.lock; reads are SQLite read snapshots. RUNNING/INTERRUPTED UUID is explicitly resumed with its same complete saved request. Abandon is only admitted once that native flock can be acquired; no process killing. Node must retain/drain its child promises, and show saved pending UUIDs after reopen. Init reopens only a fully valid existing original workspace; it does not overwrite invalid/partial state.",
+  "comparison": {
+    "schema": "stellar-forge.zarr-result-comparison.v1",
+    "pairing": "source-index",
+    "meaning": "Exact original source-index tuples and typed representations only; no physical coordinate alignment, regridding, unit conversion, numerical difference or scientific equality is inferred.",
+    "statuses": [
+      "same",
+      "changed",
+      "left-only",
+      "right-only"
+    ],
+    "metadata": {
+      "id": "SHA derived from operationId and contentSha256",
+      "title": "string",
+      "note": "string",
+      "createdAt": "original operation timestamp",
+      "operationId": "UUID",
+      "leftResultId": "SHA",
+      "rightResultId": "SHA",
+      "leftContentSha256": "SHA",
+      "rightContentSha256": "SHA",
+      "pairing": "source-index",
+      "contentSha256": "SHA256 of complete original comparison JSON bytes",
+      "rowCount": "complete union count",
+      "counts": {
+        "same": "integer",
+        "changed": "integer",
+        "left-only": "integer",
+        "right-only": "integer"
+      },
+      "files": {
+        "json": "{file: relative original path,bytes,sha256}",
+        "csv": "{file: relative original path,bytes,sha256}",
+        "html": "{file: relative original path,bytes,sha256}"
+      }
+    },
+    "page": {
+      "comparison": "immutable metadata above",
+      "context": {
+        "left": "{source,selection,result,metadata,reviews}; full original context frozen at creation",
+        "right": "{source,selection,result,metadata,reviews}; full original context frozen at creation",
+        "pairing": "source-index",
+        "meaning": "explicit scientific interpretation limit",
+        "metadataEqual": "boolean",
+        "sourceEditionEqual": "boolean",
+        "arrayPathEqual": "boolean",
+        "dtypeEqual": "boolean",
+        "sourceShapeEqual": "boolean",
+        "leftRows": "integer",
+        "rightRows": "integer"
+      },
+      "rows": "[{ordinal,sourceIndex:[integers],status,left: original typed result row|null,right: original typed result row|null}]",
+      "offset": "integer",
+      "next": "offset or null",
+      "total": "complete union count"
+    },
+    "nativeCommands": {
+      "comparison": "comparison --directory ABS --id HASH [--offset 0 --limit 100]",
+      "comparisonFile": "comparison-file --directory ABS --id HASH --format json|csv|html"
+    },
+    "fileResponse": "{id,format,path:absolute verified retained report,name,bytes,sha256,contentType}",
+    "reviewReceipt": "{id,createdAt,comparisonId,contentSha256,decision,comment}; original COMPLETE operation envelope supplies operationId",
+    "limits": {
+      "maxComparisonBytes": 100663296,
+      "maxRows": 2000000,
+      "maxReportBytes": 402653184,
+      "maxPageRows": 500,
+      "maxFileChunkBytes": 1048576,
+      "maxRequestBytes": 1048576
+    },
+    "reportHistory": "Reports retain creation-time source/result review context. Later comparison-review operations remain separate immutable history in the complete workspace packet.",
+    "packet": {
+      "currentApplication": [
+        "files.py",
+        "native.py",
+        "workspace.py",
+        "packet.py",
+        "cli.py",
+        "comparison.py"
+      ],
+      "legacyApplication": [
+        "files.py",
+        "native.py",
+        "workspace.py",
+        "packet.py",
+        "cli.py"
+      ],
+      "maxBytes": 2147483648,
+      "maxEntries": 200000,
+      "continuity": "Complete legacy inventories remain accepted. Existing completed export identities preserve their original application bytes; current exports use a new export identity."
+    }
+  }
 }

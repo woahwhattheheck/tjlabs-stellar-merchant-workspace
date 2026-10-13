@@ -15,14 +15,14 @@ const empty=(title,text)=>'<section class="empty"><h2>'+esc(title)+'</h2><p>'+es
 const detail=(title,value)=>'<details><summary>'+esc(title)+'</summary><pre>'+json(value)+'</pre></details>';
 const field=(name,label,value='',extra='')=>'<label>'+esc(label)+'<input name="'+esc(name)+'" value="'+esc(value)+'" '+extra+'></label>';
 const area=(name,label,value,extra='')=>'<label>'+esc(label)+'<textarea name="'+esc(name)+'" '+extra+'>'+esc(value??'')+'</textarea></label>';
-const titles={overview:'Workspace overview',sources:'Retained sources',selections:'Array selections',results:'Results & review',publisher:'Dataset publisher',transfer:'Receive & transfer',operations:'Original operations'};
-const state={session:null,native:null,tab:'overview',source:null,array:null,result:null,offset:0,limit:100,
+const titles={overview:'Workspace overview',sources:'Retained sources',selections:'Array selections',results:'Results & review',comparisons:'Compare saved results',publisher:'Dataset publisher',transfer:'Receive & transfer',operations:'Original operations'};
+const state={session:null,native:null,tab:'overview',source:null,array:null,result:null,offset:0,limit:100,comparison:null,comparisonOffset:0,
  frozen:null,publisher:null,publisherError:null,epoch:0,busy:0,drafts:{},local:[],files:[],publisherRequests:[],publisherOffsets:{}};
 const tokenKey='zarr-operator-token:'+location.origin;
 let token=new URLSearchParams(location.hash.slice(1)).get('token')||sessionStorage.getItem(tokenKey);
 if(token){sessionStorage.setItem(tokenKey,token);history.replaceState(null,'',location.pathname+location.search);}
 let storeKey=null;
-function persist(){if(storeKey)localStorage.setItem(storeKey,JSON.stringify({drafts:state.drafts,local:state.local,source:state.source,array:state.array,result:state.result,frozen:state.frozen}));}
+function persist(){if(storeKey)localStorage.setItem(storeKey,JSON.stringify({drafts:state.drafts,local:state.local,source:state.source,array:state.array,result:state.result,comparison:state.comparison,comparisonOffset:state.comparisonOffset,frozen:state.frozen}));}
 function retain(value){const at=state.local.findIndex(x=>x.id===value.id);if(at<0)state.local.push(value);else state.local[at]=value;persist();return value;}
 function notice(text,kind='info'){const n=$('#notice');n.hidden=!text;n.className='notice '+kind;n.textContent=text??'';}
 function fail(error){notice((error.code?error.code+': ':'')+(error.message??error),'error');}
@@ -56,7 +56,7 @@ async function refresh({render=true}={}){
  state.native=current;reconcileLocal();$('#revision').textContent='Revision '+current.revision;
  $('#workspace-label').textContent='WORKSPACE '+short(current.workspaceId);
  $('#source-count').textContent=count(current.sources.length);$('#selection-count').textContent=count(current.selections.length);
- $('#result-count').textContent=count(current.results.length);$('#pending-count').textContent=count(current.operations.filter(x=>['RUNNING','INTERRUPTED'].includes(x.state)).length);
+ $('#result-count').textContent=count(current.results.length);$('#comparison-count').textContent=count((current.comparisons??[]).length);$('#pending-count').textContent=count(current.operations.filter(x=>['RUNNING','INTERRUPTED'].includes(x.state)).length);
  if(render)await renderPage();
 }
 async function task(callback){state.busy++;$('#main').setAttribute('aria-busy','true');try{return await callback();}catch(error){fail(error);throw error;}finally{state.busy--;$('#main').setAttribute('aria-busy',state.busy?'true':'false');}}
@@ -86,7 +86,7 @@ function overview(){
  (pending.length?'<section class="callout warning"><h3>Continue the original operation</h3><p>'+pending.length+' retained operation(s) need a completed response or an explicit closure. Open Operations to inspect the exact request.</p><button data-go="operations">Review operations</button></section>':'')+
  '<section class="card"><div class="section-heading"><h2>Working sequence</h2><span class="muted">Each edition keeps its source identity</span></div><ol class="steps">'+[
  ['Retain a source','Import one named complete Zarr directory or ZIP store.','sources'],['Choose the cells','Save a named axis selection against its native metadata.','selections'],
- ['Inspect & review','Page the complete typed result and record its interpretation.','results'],['Publish an edition','Freeze the selected scalar type, extract and review the original dataset.','publisher']
+ ['Inspect & review','Page the complete typed result and record its interpretation.','results'],['Compare saved results','Pair original source indices, inspect changes and retain an interpretation.','comparisons'],['Publish an edition','Freeze the selected scalar type, extract and review the original dataset.','publisher']
  ].map(([a,b,c],i)=>'<li><span class="step-number">'+(i+1)+'</span><div><h3>'+a+'</h3><p>'+b+'</p><button class="link" data-go="'+c+'">Open '+a.toLowerCase()+' →</button></div></li>').join('')+'</ol></section>'+
  '<section class="two-column"><article class="card"><h2>Original workspace</h2><dl><dt>Workspace UUID</dt><dd>'+hashView(n.workspaceId)+'</dd><dt>Revision</dt><dd>'+n.revision+'</dd><dt>Connected instance</dt><dd>'+hashView(state.session.instanceId)+'</dd><dt>Native engine</dt><dd>'+esc(JSON.stringify(state.session.runtime))+'</dd></dl></article>'+
  '<article class="card"><h2>Typed values remain explicit</h2><p>Large integers, non-finite numbers, bytes, dates, complex values and records retain their native tags. A public scalar projection is a separate reviewed choice.</p><button class="secondary" data-go="results">Inspect retained results</button></article></section>';
@@ -157,6 +157,80 @@ async function loadResult(epoch){
  '<div class="table-wrap"><table><thead><tr><th>Ordinal</th><th>Source index</th><th>Native value</th></tr></thead><tbody>'+value.rows.map(row=>'<tr><td>'+esc(row.ordinal)+'</td><td><code>'+esc(JSON.stringify(row.sourceIndex))+'</code></td><td>'+typed(row.value)+'</td></tr>').join('')+'</tbody></table></div>'+
  '<p class="hint">Values are displayed from the immutable result. Numeric text is not converted to JavaScript numbers.</p>';
 }
+function comparisonResultSummary(id){
+ const r=original(id,state.native.results);
+ if(!r)return '<p class="hint">Select a complete retained result.</p>';
+ const source=original(r.sourceId,state.native.sources),selection=original(r.selectionId,state.native.selections);
+ return '<dl class="comparison-result"><dt>Result</dt><dd>'+esc(r.title)+' · '+count(r.rowCount)+' cells</dd><dt>Array / shape</dt><dd>'+esc(r.array||'/')+' · '+esc(JSON.stringify(r.sourceShape??r.shape))+'</dd><dt>Native dtype</dt><dd>'+esc(typeof r.dtype==='string'?r.dtype:JSON.stringify(r.dtype))+'</dd><dt>Result content</dt><dd>'+hashView(r.contentSha256)+'</dd></dl>'+
+ detail('Original source and selection',{source:source??null,selection:selection??null,result:r});
+}
+function comparisonChoices(){
+ const f=$('form[data-form="compare"]');if(!f)return;
+ for(const side of ['left','right']){
+  const panel=$('#comparison-'+side+'-summary');
+  if(panel)panel.innerHTML=comparisonResultSummary(f.elements[side+'ResultId'].value);
+ }
+}
+function comparisons(){
+ const n=state.native,items=n.comparisons??[],results=n.results??[];
+ const choice=(side,label)=>'<label>'+label+'<select name="'+side+'ResultId" required><option value="">Choose an exact saved result</option>'+
+ results.map(x=>option(x.id,x.title+' · '+x.rowCount+' cells · '+short(x.id))).join('')+'</select></label>';
+ let html='<section class="card"><h2>Compare two saved result editions</h2><p>Pair cells by their original source-index tuple. Each result keeps its original typed values and metadata. Enter the purpose and interpretation needed to understand this comparison.</p>'+
+ '<p class="callout">Matching index tuples describe positions in the saved arrays. Geographic coordinates, units, times and physical meaning must be interpreted from the original metadata.</p>'+
+ (results.length?'<form data-form="compare" data-draft="compare"><div class="two-column comparison-pair"><section>'+choice('left','Left result')+'<div id="comparison-left-summary"></div></section><section>'+choice('right','Right result')+'<div id="comparison-right-summary"></div></section></div>'+
+ field('title','Comparison title','','required maxlength="200"')+
+ area('note','Purpose and interpretation','','required maxlength="4000"')+
+ '<p class="hint">The saved report includes all same, changed, left-only and right-only rows. Pairing: original source index.</p><button>Create saved comparison</button></form>':
+ '<p class="empty">Run and retain a selection in Results &amp; review to create a comparison.</p>')+'</section>';
+ if(!items.length)return html+empty('No saved comparisons yet','Select both original result editions and save the comparison above.');
+ if(!original(state.comparison,items)){state.comparison=items[0].id;state.comparisonOffset=0;}
+ const c=original(state.comparison,items),reviews=(n.comparisonReviews??[]).filter(x=>x.comparisonId===c.id);
+ html+='<section class="card"><label>Saved comparison<select id="comparison-select">'+items.map(x=>option(x.id,x.title+' · '+x.rowCount+' paired positions',state.comparison)).join('')+'</select></label>'+
+ '<div class="section-heading comparison-heading"><div><h2>'+esc(c.title)+'</h2><p class="comparison-note">'+esc(c.note)+'</p></div>'+badge('Saved '+date(c.createdAt))+'</div>'+
+ '<section class="metrics comparison-metrics">'+[['same','Same typed representation'],['changed','Changed typed representation'],['left-only','Left only'],['right-only','Right only']].map(([k,label])=>'<article class="metric"><span>'+label+'</span><strong>'+count(c.counts[k])+'</strong></article>').join('')+'</section>'+
+ '<div class="button-row comparison-downloads">'+['html','csv','json'].filter(f=>c.files?.[f]).map(f=>'<button class="secondary" data-comparison-file="'+f+'" data-comparison-id="'+esc(c.id)+'">Download complete '+f.toUpperCase()+'</button>').join('')+'</div>'+
+ '<p class="hint">Each download contains the complete saved population, independent of the page displayed below.</p><div id="comparison-page" aria-live="polite"><p class="muted">Opening the saved comparison…</p></div></section>'+
+ '<section class="two-column"><article class="card"><h2>Review this saved comparison</h2><form data-form="comparison-review" data-draft="comparison-review:'+c.id+'"><label>Decision<select name="decision" required><option value="">Choose a decision</option><option value="accepted">Accept</option><option value="needs-changes">Needs changes</option><option value="rejected">Reject</option></select></label>'+
+ area('comment','Interpretation and review note','','required maxlength="4000"')+'<button>Record comparison review</button></form><p class="hint">The review is attached to this exact saved report. Original result reviews and publisher choices retain their own history.</p></article>'+
+ '<article class="card"><h2>Comparison review history</h2>'+(reviews.length?reviews.map(x=>'<article class="history-item">'+badge(x.decision)+' <span class="muted">'+esc(date(x.createdAt))+'</span><p class="comparison-note">'+esc(x.comment)+'</p>'+detail('Complete original review',x)+'</article>').join(''):'<p class="muted">No review has been recorded for this comparison.</p>')+'</article></section>'+
+ '<section class="card"><h2>Complete comparison identity</h2>'+detail('Original comparison, reports and source bindings',c)+'</section>';
+ return html;
+}
+function comparedValue(row){
+ if(row===null)return '<span class="muted">No original row at this source index.</span>';
+ return typed(row.value)+detail('Complete original typed row',row);
+}
+async function loadComparison(epoch){
+ comparisonChoices();
+ const id=state.comparison;if(!id||!original(id,state.native.comparisons??[]))return;
+ const offset=state.comparisonOffset,limit=state.limit;
+ const value=await api('/api/comparisons/'+id+'?offset='+offset+'&limit='+limit);
+ if(epoch!==state.epoch||id!==state.comparison||state.tab!=='comparisons')return;
+ const node=$('#comparison-page');if(!node)return;
+ if(value.comparison.id!==id)throw Error('The returned comparison differs from the selected saved edition.');
+ const ctx=value.context??{};
+ node.innerHTML='<section class="comparison-context"><h3>Source and interpretation</h3><p>'+esc(ctx.meaning??'Rows are paired by original source-index tuple; typed representations remain exact.')+'</p>'+
+ '<dl class="inline-details">'+[['sourceEditionEqual','Same retained source edition'],['arrayPathEqual','Same array path'],['dtypeEqual','Same dtype'],['sourceShapeEqual','Same original shape'],['metadataEqual','Same saved metadata']].map(([key,label])=>'<dt>'+label+'</dt><dd>'+esc(ctx[key]===true?'Yes':ctx[key]===false?'No':'Not stated')+'</dd>').join('')+'</dl>'+
+ '<div class="two-column">'+detail('Left: complete original source, selection, result, metadata and reviews',ctx.left??null)+detail('Right: complete original source, selection, result, metadata and reviews',ctx.right??null)+'</div></section>'+
+ '<div class="section-heading comparison-pagination"><p>'+count(value.total)+' paired positions · rows '+count(value.rows.length?offset+1:0)+'–'+count(offset+value.rows.length)+'</p><div class="button-row">'+
+ '<button class="secondary small" data-comparison-prev '+(offset===0?'disabled':'')+'>Previous</button><button class="secondary small" data-comparison-next="'+esc(value.next??'')+'" '+(value.next===null?'disabled':'')+'>Next</button></div></div>'+
+ '<div class="table-wrap"><table class="comparison-table"><caption class="visually-hidden">Complete original typed rows paired by source-index tuple</caption><thead><tr><th scope="col">Position</th><th scope="col">Comparison</th><th scope="col">Left original value</th><th scope="col">Right original value</th></tr></thead><tbody>'+
+ value.rows.map(row=>'<tr><th scope="row"><span class="muted">Row '+esc(row.ordinal)+'</span><code>'+esc(JSON.stringify(row.sourceIndex))+'</code></th><td>'+badge(row.status)+'</td><td>'+comparedValue(row.left)+'</td><td>'+comparedValue(row.right)+'</td></tr>').join('')+'</tbody></table></div>'+
+ (!value.rows.length?'<p class="empty">This saved comparison has no rows at the selected page.</p>':'')+
+ '<p class="hint">Same and changed refer to the complete saved typed representation. All original rows are available through pagination and the complete reports.</p>';
+}
+async function downloadComparison(id,format){
+ const c=original(id,state.native.comparisons??[]),f=c?.files?.[format];
+ if(!f||!['html','csv','json'].includes(format))throw Error('Select a complete report from the original saved comparison.');
+ const response=await fetch('/api/comparisons/'+id+'/files/'+format,{headers:{authorization:'Bearer '+token}});
+ if(!response.ok){let value;try{value=await response.json();}catch{}throw Error(value?.message??'The complete comparison report could not be read.');}
+ const raw=await response.arrayBuffer(),digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',raw))).map(x=>x.toString(16).padStart(2,'0')).join('');
+ if(raw.byteLength!==f.bytes||digest!==f.sha256)throw Error('The saved comparison report bytes differ from its retained original.');
+ const name=String(f.file??('Comparison_'+id+'.'+format)).split(/[\\/]/).pop(),
+ url=URL.createObjectURL(new Blob([raw],{type:{html:'text/html;charset=utf-8',csv:'text/csv;charset=utf-8',json:'application/json'}[format]})),
+ a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+ notice('Downloaded the complete '+format.toUpperCase()+' report for '+c.title+'.','success');
+}
 function queryDescription(source){const queries=source?.queries;return Array.isArray(queries)?queries.find(x=>x.id==='selected'||x.name==='selected'||x.query==='selected'):queries?.selected;}
 function defaultPlan(frozen,publisher){
  const query=queryDescription(publisher.source);const rawTypes=query?.projection??query?.columnTypes??publisher.source?.columnTypes;const types=Array.isArray(rawTypes)?Object.fromEntries(rawTypes.map(x=>[x.name,x])):rawTypes;
@@ -219,7 +293,7 @@ function publisherPending(rows){return '<section class="card"><h2>Publisher requ
  (!['COMPLETE','CLOSED_UNCONFIRMED'].includes(r.state)?'<div class="button-row"><button data-pub-transport="'+r.requestId+'">Continue same request</button><button class="secondary" data-pub-close="'+r.requestId+'">Close unknown response</button></div>':'')+detail('Exact retained publisher input',r.input)+'</article>').join(''))+'</section>';}
 function transfers(){
  const inputs=state.session.connections.inputs.filter(x=>x.kind==='packet'),destinations=state.session.connections.destinations;
- return '<section class="two-column"><article class="card"><p class="eyebrow">SOURCE AUTHORING</p><h2>Export the complete workspace</h2><p>The original packet includes complete retained stores, selections, typed results, reviews, frozen source editions and operation history. It can reopen independently with the same workspace UUID and revision.</p>'+
+ return '<section class="two-column"><article class="card"><p class="eyebrow">SOURCE AUTHORING</p><h2>Export the complete workspace</h2><p>The original packet includes complete retained stores, selections, typed results, saved comparisons and their complete reports, original reviews, frozen source editions and operation history. It can reopen independently with the same workspace UUID and revision.</p>'+
  '<p class="callout">Publisher and dataset target stores belong to the separate full merchant handover. This source packet does not claim to contain those stores or a deployed service.</p><button data-export>Prepare source workspace ZIP</button></article>'+
  '<article class="card"><h2>Receive a declared packet</h2><p>Receive into a new directory under an explicitly declared destination. The original archive verifier owns the complete file and database checks.</p>'+
  (inputs.length&&destinations.length?'<form data-form="receive" data-draft="receive"><label>Declared complete packet<select name="inputId">'+inputs.map(x=>option(x.id,x.title+' · '+short(x.sha256))).join('')+'</select></label><label>Separate receiving root<select name="destinationId">'+destinations.map(x=>option(x.id,x.title)).join('')+'</select></label><button>Receive original workspace</button></form>':'<p class="muted">Declare a complete packet and a separate destination in the host connection file to enable receiving.</p>')+'</article></section>'+
@@ -255,8 +329,9 @@ function operationRow(x){return '<article class="history-item"><div class="secti
  detail('Complete original request, result and error',x)+'</article>';}
 async function renderPage(){
  if(!state.native)return;captureDrafts();const epoch=++state.epoch;$('#page-title').textContent=titles[state.tab];for(const b of document.querySelectorAll('[data-tab]')){b.classList.toggle('active',b.dataset.tab===state.tab);b.setAttribute('aria-current',b.dataset.tab===state.tab?'page':'false');}
- const renderers={overview,sources,selections,results,publisher:publisherPage,transfer:transfers,operations};$('#main').innerHTML=renderers[state.tab]();restoreDrafts();$('#main').setAttribute('aria-busy',state.busy?'true':'false');
+ const renderers={overview,sources,selections,results,comparisons,publisher:publisherPage,transfer:transfers,operations};$('#main').innerHTML=renderers[state.tab]();restoreDrafts();$('#main').setAttribute('aria-busy',state.busy?'true':'false');
  if(state.tab==='results')await loadResult(epoch);
+ if(state.tab==='comparisons')await loadComparison(epoch);
  if(state.tab==='publisher')await loadPublisher(epoch);
  if(state.tab==='transfer')await loadFiles(epoch);
  if(state.tab==='selections')selectionEstimate();
@@ -282,6 +357,8 @@ async function dialog(title,html,onSubmit,{button='Continue'}={}){
 }
 document.addEventListener('input',event=>{if(event.target.closest('form[data-draft]'))captureDrafts();if(event.target.closest('form[data-form="selection"]'))selectionEstimate();});
 document.addEventListener('change',event=>{
+ if(event.target.closest('form[data-form="compare"]')){captureDrafts();comparisonChoices();}
+ if(event.target.id==='comparison-select'){captureDrafts();state.comparison=event.target.value;state.comparisonOffset=0;void task(renderPage).catch(()=>{});}
  if(event.target.id==='result-select'){captureDrafts();state.result=event.target.value;state.offset=0;void task(renderPage).catch(()=>{});}
  if(event.target.id==='frozen-select'){captureDrafts();state.frozen=event.target.value;state.publisher=null;state.publisherError=null;state.publisherOffsets={};void task(renderPage).catch(()=>{});}
 });
@@ -293,6 +370,16 @@ document.addEventListener('submit',event=>{
    case 'selection':return nativeAction('selection',selectionInput(form));
    case 'review':{const r=original(state.result,state.native.results);return nativeAction('review',{resultId:r.id,contentSha256:r.contentSha256,decision:String(f.get('decision')),comment:String(f.get('comment'))});}
    case 'freeze':{const r=original(state.result,state.native.results),review=latestReview(r.id);const result=await nativeAction('freeze',{resultId:r.id,reviewId:review.id,title:String(f.get('title')),valueType:String(f.get('valueType'))});state.frozen=result.item.id;return;}
+   case 'compare':{
+    const left=original(String(f.get('leftResultId')),state.native.results),right=original(String(f.get('rightResultId')),state.native.results);
+    if(!left||!right)throw Error('Select both complete original results.');
+    const result=await nativeAction('compare',{leftResultId:left.id,rightResultId:right.id,leftContentSha256:left.contentSha256,rightContentSha256:right.contentSha256,title:String(f.get('title')),note:String(f.get('note')),pairing:'source-index'});
+    state.comparison=result.item.id;state.comparisonOffset=0;persist();return renderPage();
+   }
+   case 'comparison-review':{
+    const c=original(state.comparison,state.native.comparisons??[]);if(!c)throw Error('Select the original saved comparison.');
+    return nativeAction('comparison-review',{comparisonId:c.id,contentSha256:c.contentSha256,decision:String(f.get('decision')),comment:String(f.get('comment'))});
+   }
    case 'publisher-plan':return publisherWrite('save-plan',{plan:JSON.parse(String(f.get('plan')))});
    case 'receive':{const id=uid();return receiveWorkspace(retain({id,kind:'receive',state:'PREPARED',createdAt:new Date().toISOString(),request:{id,inputId:String(f.get('inputId')),destinationId:String(f.get('destinationId'))}}));}
    case 'lookup':{const id=String(f.get('id')).trim(),result=await api('/api/operations/'+encodeURIComponent(id));$('#operation-lookup').innerHTML=operationRow(result);return;}
@@ -306,6 +393,9 @@ document.addEventListener('click',event=>{
  void task(async()=>{
   if(b.hasAttribute('data-select-array')){captureDrafts();state.source=b.dataset.source;state.array=b.dataset.selectArray;state.tab='selections';return renderPage();}
   if(b.dataset.run&&!b.dataset.pubAction)return dialog('Run this saved selection?','<p>The original engine will read the retained source cells for this selection and retain a new complete typed result.</p>'+hashView(b.dataset.run),()=>nativeAction('run',{selectionId:b.dataset.run}),{button:'Run original selection'});
+  if(b.hasAttribute('data-comparison-prev')){state.comparisonOffset=Math.max(0,state.comparisonOffset-state.limit);return renderPage();}
+  if(b.hasAttribute('data-comparison-next')){state.comparisonOffset=number(b.dataset.comparisonNext,'Comparison offset');return renderPage();}
+  if(b.dataset.comparisonFile)return downloadComparison(b.dataset.comparisonId,b.dataset.comparisonFile);
   if(b.hasAttribute('data-result-prev')){state.offset=Math.max(0,state.offset-state.limit);return renderPage();}
   if(b.hasAttribute('data-result-next')){state.offset=number(b.dataset.resultNext,'Result offset');return renderPage();}
   if(b.dataset.resume)return nativeResume(b.dataset.resume);
@@ -339,7 +429,7 @@ async function main(){
  try{
   if(!token)throw Error('Open the private URL printed by zarr-workspace serve or by its original Applications entry.');
   state.session=await api('/api/session');storeKey='zarr-ui:'+state.session.workspaceId;
-  const old=JSON.parse(localStorage.getItem(storeKey)||'null');if(old){state.drafts=old.drafts??{};state.local=old.local??[];for(const k of ['source','array','result','frozen'])state[k]=old[k]??null;}
+  const old=JSON.parse(localStorage.getItem(storeKey)||'null');if(old){state.drafts=old.drafts??{};state.local=old.local??[];state.comparisonOffset=Number.isSafeInteger(old.comparisonOffset)&&old.comparisonOffset>=0?old.comparisonOffset:0;for(const k of ['source','array','result','comparison','frozen'])state[k]=old[k]??null;}
   $('#connection-label').textContent='Connected to original workspace';$('#connection-signal').classList.add('connected');
   await refresh();
  }catch(error){$('#connection-label').textContent='Private connection required';$('#main').innerHTML=empty('Open the original operator',error.message);fail(error);}

@@ -6,6 +6,7 @@ from files import (require, object_fields, encoded, digest, value_digest, relati
                    sync_directory, destination, read_file, read_json, file_identity, publish, atomic_json,
                    tree_manifest, verify_tree, copy_file, ZarrWorkspaceError)
 import native
+import comparison
 
 SCHEMA="stellar-forge.zarr-workspace.v1"
 HASH=re.compile(r"^[a-f0-9]{64}$")
@@ -101,6 +102,7 @@ class Workspace:
         return {"schema":SCHEMA,"workspaceId":self.meta("id"),"revision":self.meta("revision"),
                 "sources":self.items("sources"),"selections":self.items("selections"),"results":self.items("results"),
                 "reviews":self.items("reviews"),"frozen":self.frozen_items(),
+                "comparisons":self.comparison_items(),"comparisonReviews":self.comparison_reviews(),
                 "operations":[self.operation(x["id"]) for x in self.db.execute("SELECT id FROM operations ORDER BY rowid DESC LIMIT 100")]}
     def read_result(self,ident,offset=0,limit=100):
         item=self.entity("results",ident)
@@ -153,7 +155,8 @@ class Workspace:
             if replayed:return {**op["result"],"replayed":True}
             try:
                 actions={"import":self.import_source,"selection":self.save_selection,"run":self.run_selection,
-                         "review":self.review_result,"freeze":self.freeze_result,"abandon":self.abandon_operation}
+                         "review":self.review_result,"freeze":self.freeze_result,"abandon":self.abandon_operation,
+                         "compare":self.compare_results,"comparison-review":self.review_comparison}
                 require(request["action"] in actions,"ZARR_ACTION","Choose an existing source-workspace action")
                 table,item=actions[request["action"]](op,request["input"])
                 return self.commit(op,table,item)
@@ -162,6 +165,42 @@ class Workspace:
                 with self.db:self.db.execute("UPDATE operations SET state='INTERRUPTED',updated=?,error=? WHERE id=?",
                     (now(),json.dumps({"code":code,"message":str(e)[:1000]}),op["id"]))
                 raise
+
+    def comparison_items(self):
+        return [json.loads(row["result"])["item"] for row in self.db.execute(
+            "SELECT result FROM operations WHERE state='COMPLETE' AND json_extract(request,'$.action')='compare' ORDER BY rowid DESC")]
+    def comparison_reviews(self):
+        return [json.loads(row["result"])["item"] for row in self.db.execute(
+            "SELECT result FROM operations WHERE state='COMPLETE' AND json_extract(request,'$.action')='comparison-review' ORDER BY rowid DESC")]
+    def comparison_item(self,ident):
+        matches=[x for x in self.comparison_items() if x["id"]==identity(ident)]
+        require(len(matches)==1,"ZARR_COMPARISON_NOT_FOUND","The selected saved comparison is not retained",404)
+        return matches[0]
+    def read_comparison(self,ident,offset=0,limit=100):
+        require(type(offset) is int and offset>=0 and type(limit) is int and 1<=limit<=500,
+                "ZARR_PAGE","Use a non-negative offset and 1–500 rows")
+        item=self.comparison_item(ident);data=comparison.read(self,item)
+        return {"comparison":item,"context":data["context"],"rows":data["rows"][offset:offset+limit],
+                "offset":offset,"next":offset+limit if offset+limit<data["rowCount"] else None,"total":data["rowCount"]}
+    def comparison_file(self,ident,fmt):
+        return comparison.report_file(self,self.comparison_item(ident),fmt)
+    def compare_results(self,op,value):
+        return None,comparison.build(self,op,value)
+    def review_comparison(self,op,value):
+        object_fields(value,("comparisonId","contentSha256","decision","comment"),
+                      ("comparisonId","contentSha256","decision","comment"),"comparison review")
+        item=self.comparison_item(value["comparisonId"])
+        require(item["contentSha256"]==value["contentSha256"],"ZARR_COMPARISON_REVIEW_CHANGED",
+                "Review the complete exact retained comparison",409)
+        comparison.read(self,item)
+        require(value["decision"] in ("accepted","needs-changes","rejected"),"ZARR_REVIEW","Choose a comparison review decision")
+        require(isinstance(value["comment"],str) and 1<=len(value["comment"].strip())<=4000,
+                "ZARR_REVIEW","Record the comparison interpretation and source limitations")
+        result={"id":value_digest({"operationId":op["id"],"input":value}),"createdAt":op["created"],
+                "comparisonId":item["id"],"contentSha256":item["contentSha256"],"decision":value["decision"],
+                "comment":value["comment"].strip()}
+        return None,result
+
     def abandon_operation(self,op,value):
         object_fields(value,("operationId","reason"),("operationId","reason"),"close interrupted operation")
         original=self.operation(value["operationId"])

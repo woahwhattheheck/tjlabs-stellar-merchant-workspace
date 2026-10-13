@@ -5,7 +5,7 @@ import {zarrWorkspaceTools} from './catalog.mjs';
 export const ZARR_MCP_CONFIGURATION_SCHEMA='stellar-forge.zarr-workspaces.v1';
 const ALIAS=/^[a-z][a-z0-9-]{0,63}$/;
 const schemas=new Map(zarrWorkspaceTools((name,_description,properties,required)=>({name,properties,required})).map(x=>[x.name,x]));
-const READ=new Set(['merchant_zarr_status','merchant_zarr_browser','merchant_zarr_operation','merchant_zarr_result_page','merchant_zarr_frozen','merchant_zarr_files','merchant_zarr_file_read','merchant_zarr_publisher_requests']);
+const READ=new Set(['merchant_zarr_status','merchant_zarr_browser','merchant_zarr_operation','merchant_zarr_result_page','merchant_zarr_comparison_page','merchant_zarr_comparison_file_read','merchant_zarr_frozen','merchant_zarr_files','merchant_zarr_file_read','merchant_zarr_publisher_requests']);
 const PUBLISHER_READ=new Set(['source','status','target','plan','run','inspect','buyer-offer','cancel']);
 export async function readZarrWorkspaceConfiguration(path){
  const read=await readJson(resolve(path),{maximum:1024*1024,privateFile:true}),value=fields(read.value,['schema','workspaces']);
@@ -59,6 +59,17 @@ export class MerchantZarrWorkspaces{
    case 'merchant_zarr_operation':return client.request('/api/operations/'+args.operationId);
    case 'merchant_zarr_resume':return client.request('/api/resume',{method:'POST',body:{id:args.operationId}});
    case 'merchant_zarr_result_page':return client.request('/api/results/'+args.resultId+'?offset='+args.offset+'&limit='+args.limit);
+   case 'merchant_zarr_comparison_page':return client.request('/api/comparisons/'+args.comparisonId+'?offset='+args.offset+'&limit='+args.limit);
+   case 'merchant_zarr_comparison_file_read':{
+    const value=await client.request('/api/comparisons/'+args.comparisonId+'/files/'+args.format+'/read?offset='+args.offset+'&limit='+args.limit),raw=Buffer.from(value.content??'','base64');
+    need(value.file?.id===args.comparisonId&&value.file.format===args.format&&value.file.sha256===args.expectedSha256&&
+     Number.isSafeInteger(value.file.bytes)&&value.file.bytes>=0&&value.offset===args.offset&&value.bytes===raw.length&&
+     raw.length===Math.min(args.limit,value.file.bytes-args.offset)&&args.offset+raw.length<=value.file.bytes&&
+     value.next===(args.offset+raw.length<value.file.bytes?args.offset+raw.length:null)&&
+     (raw.length>0||args.offset===value.file.bytes)&&sha(raw)===value.sha256&&value.encoding==='base64'&&raw.toString('base64')===value.content,
+     'ZARR_MCP_COMPARISON_FILE_CHANGED','The original comparison report or returned exact range changed',409);
+    return value;
+   }
    case 'merchant_zarr_frozen':return client.request('/api/frozen/'+args.frozenId);
    case 'merchant_zarr_export':return client.request('/api/export',{method:'POST',body:{id:args.operationId}});
    case 'merchant_zarr_receive':return client.request('/api/receive',{method:'POST',body:{id:args.operationId,inputId:args.inputId,destinationId:args.destinationId}});
