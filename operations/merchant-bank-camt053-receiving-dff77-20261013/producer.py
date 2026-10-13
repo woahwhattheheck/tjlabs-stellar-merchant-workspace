@@ -236,8 +236,20 @@ try:
     "dependencyLockSha256":sha((runtime_directory/"package-lock.json").read_bytes()),
     "retention":"Complete original source release, installed source, dependency tree, runtime plans, exact dependency lock and logs."}
   bank=installed_source/"stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements"
-  receiver=bank/"CAMT_RECEIVE.mjs";receiver.write_text(application["nodeProgram"],encoding="utf-8")
-  (bank/"MCP_RECEIVE.mjs").write_text(application["mcpProgram"],encoding="utf-8")
+  source_manifest["installedSourceRoot"]=str(installed_source)
+  original_manifest=installed_source.parent/"manifest.json"
+  source_manifest["installedProductManifest"]={"bytes":original_manifest.stat().st_size,"sha256":sha(original_manifest.read_bytes())}
+  source_manifest["executedOverlays"]=[]
+  for name,body in (("CAMT_RECEIVE.mjs",application["nodeProgram"]),("MCP_RECEIVE.mjs",application["mcpProgram"])):
+   target=bank/name;raw=body.encode("utf-8")
+   with target.open("x",encoding="utf-8")as stream:stream.write(body)
+   actual=target.read_bytes()
+   if actual!=raw:raise ValueError("The installed receiving programme changed: "+name)
+   source_manifest["executedOverlays"].append({"path":target.relative_to(installed_source).as_posix(),"bytes":len(actual),
+    "sha256":sha(actual),"git_blob_sha1":hashlib.sha1(b"blob "+str(len(actual)).encode()+b"\0"+actual).hexdigest(),
+    "kind":"explicit original receiving programme"})
+  (root/"APPLICATION_SOURCE_MANIFEST.json").write_text(json.dumps(source_manifest,indent=2)+"\n")
+  receiver=bank/"CAMT_RECEIVE.mjs"
   shutil.rmtree(app_root/".git")
   app_run=subprocess.run([node,str(receiver),str(root),str(root/"application-result")],cwd=installed_source,text=True,capture_output=True,timeout=1200)
   out["application"]={"sourceCommit":application["source_commit"],"sourceFiles":len(source_files),"exitCode":app_run.returncode,"stdout":app_run.stdout,"stderr":app_run.stderr}

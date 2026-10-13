@@ -114,6 +114,7 @@ export async function receiveBankMcp({directory,inputRoot,out,received,retainedC
   const actor='Original issued account MCP receiving',reopenRequest={workspaceId,revision:initial.revision,actor,requestId:randomUUID(),
    bankStatementCloseId:originalZero.id,reason:'Continue the same original zero-entry issuer statement through its authenticated accounting owner.'};
   result.reopening=await operate('original-zero-entry-reopen','reopen',reopenRequest);
+  assert(originalZero.request.sourceClosing,'Keep the original issuer balance-pair binding for this zero-entry close');
   const closeInput=Object.fromEntries(['accountId','from','until','openingBalance','closingBalance','sourceClosing'].map(key=>[key,serial(originalZero.request[key])]));
   const closePreview=await client.previewClose(closeInput);assert.equal(closePreview.ready,true);assert.equal(closePreview.difference,'0.00');assert.equal(closePreview.transactions.length,0);
   await save('zero-entry-current-close-preview.json',closePreview);
@@ -138,13 +139,16 @@ export async function receiveBankMcp({directory,inputRoot,out,received,retainedC
   const coldArchive=await client.fileBytes(detail.archive);assert.equal(sha(coldArchive.bytes),result.successorArchive.sha256);
   const currentClose=await client.closeDetail({bankStatementCloseId:successor.id});assert.equal(currentClose.close.previousCloseId,originalZero.id);
   assert.equal((await client.reconcileOperation('reopen',reopenRequest)).found,true);assert.equal((await client.reconcileOperation('close',closeRequest)).found,true);
-  result.final=cold;result.cold.transactions=await save('cold/transactions.json',transactions);result.completed=true;result.completedAt=new Date().toISOString();
-  result.resultFile=await save('MCP_RECEIVING_RESULT.json',result);return result;
- }catch(error){failure=error;result.error={code:error.code,message:error.message,stack:error.stack};await save('MCP_RECEIVING_ERROR.json',result);throw error;}
+  result.final=cold;result.cold.transactions=await save('cold/transactions.json',transactions);
+ }catch(error){failure=error;}
  finally{
+  result.release={accountingOwnerClosed:false,merchantHostClosed:false};
   let closingError;
-  try{if(client)await client.closeWorkspace();}catch(error){closingError=error;}
-  try{if(host)await host.close();}catch(error){closingError??=error;}
-  if(closingError){if(failure)failure.releaseError={code:closingError.code,message:closingError.message};else throw closingError;}
+  try{if(client)await client.closeWorkspace();result.release.accountingOwnerClosed=true;}catch(error){closingError=error;}
+  try{if(host)await host.close();result.release.merchantHostClosed=true;}catch(error){closingError??=error;}
+  if(closingError){result.release.error={code:closingError.code,message:closingError.message};if(failure)failure.releaseError=result.release.error;else failure=closingError;}
  }
+ if(failure){result.error={code:failure.code,message:failure.message,stack:failure.stack,releaseError:failure.releaseError};await save('MCP_RECEIVING_ERROR.json',result);throw failure;}
+ result.completed=true;result.completedAt=new Date().toISOString();
+ result.resultFile=await save('MCP_RECEIVING_RESULT.json',result);return result;
 }
