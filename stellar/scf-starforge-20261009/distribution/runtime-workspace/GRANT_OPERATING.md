@@ -79,6 +79,87 @@ adoption records both its source root and dependency root. A deliberate runtime
 move follows the original installer's recovery into a new final directory,
 followed by normal registration and reviewed adoption.
 
+## Receive the customer's original file into Applications
+
+Open **Applications → Original input files** in the selected Runtime workspace.
+Choose the complete original file from the current computer or phone and save it
+under its intended filename. The maintained input engine supports files up to
+16 MiB, retaining one-megabyte parts and the verified complete original. Larger
+inputs use the existing absolute host-path controls. A partial upload resumes
+after reselecting the same complete file.
+
+Open the intended application configuration. Beside its file setting, choose
+**Use saved file**, select the original and choose **Prepare working copy**.
+This retains the original selection UUID, application kind and field, then
+prepares a separate private working file. **Review application** applies the
+existing provider's format, runtime and related-path requirements; **Save**
+retains the reviewed configuration. Use the ordinary application controls for
+its explicit connection or start.
+
+The untouched uploaded original and editable working copy have different roles.
+The original can always be downloaded in full. The shelf shows the current
+working path and whether its bytes differ. Reopening the original selection
+reuses that same path without replacing edits. A changed application or field
+during upload leaves the file in the shelf, ready for an explicit later choice.
+**Continue prepared file selection** retains the same saved request after an
+uncertain response.
+
+For the Grant application, select **Grant planning and delivery → Original
+planning scenario** and the customer's original SF47 scenario JSON. Keep its
+selected private Grant workspace and READY runtime. The native Grant provider
+remains responsible for reviewing the actual scenario and reopening saved plans.
+
+~~~sh
+starforge runtime-workspace input-file-import \
+  --workspace /srv/starforge/runtime-workspace \
+  --file /srv/customer/original-scenario.json
+
+starforge runtime-workspace input-files \
+  --workspace /srv/starforge/runtime-workspace
+
+starforge runtime-workspace input-file-prepare \
+  --workspace /srv/starforge/runtime-workspace \
+  --upload-id ORIGINAL_RETURNED_UPLOAD_SHA256 \
+  --request-id ORIGINAL_SELECTION_UUID \
+  --kind grant-workspace --field scenarioFile
+
+starforge runtime-workspace input-file-selection \
+  --workspace /srv/starforge/runtime-workspace \
+  --request-id ORIGINAL_SELECTION_UUID
+
+starforge runtime-workspace input-file-export \
+  --workspace /srv/starforge/runtime-workspace \
+  --upload-id ORIGINAL_RETURNED_UPLOAD_SHA256 \
+  --output /srv/customer/original-returned.json
+~~~
+
+Retain the selection UUID before its first prepare request. Pass the returned
+working path to the ordinary application review and save. Original bytes,
+manifests, incomplete transfers, selection intents, working files and completion
+records are retained under WORKSPACE/application-inputs/. Whole-workspace backup
+includes that complete tree; restoration and binding review reopen the same
+original application and its file selections.
+
+The [complete original-file guide](APPLICATION_INPUTS.md) defines all eight
+native methods, authenticated routes, allowances and working-copy behavior.
+The original input-to-application course uses the selected READY installation,
+complete scenario and existing browser:
+
+~~~sh
+node receiving/APPLICATION_INPUTS_RECEIVE.mjs \
+  --operation /absolute/private/original-input-case \
+  --file /absolute/original-scenario.json \
+  --runtime /absolute/existing-ready-runtime \
+  --chromium /absolute/existing/chrome \
+  --playwright-root /absolute/existing/node_modules
+~~~
+
+Continue the same operation directory and inputs. It retains the original
+partial upload, saved selection, browser configuration, edited working copy,
+CLI original-file download, complete workspace backup, original-path restore,
+saved application revision and desktop/320-pixel views. The course's actual
+RECEIVING.json and original owner's result supply its operating outcome.
+
 ## Read an uncertain original operation
 
 The Operations and Managed releases views offer **Refresh operation status** for
@@ -364,13 +445,88 @@ The guide defines exact prerequisites, existing-workspace checks, continuation
 and the complete result files. Native completion is reported only from its actual
 returned result; source preparation is a separate result.
 
-### Current operating evidence
+### Current source and operating continuation
 
-This extension is published from the actual procedure source edition
-`74ec0c02b875973ca2371c1704e26eccd16544f0`. The existing backup/observation native continuation described above
-remains its original operation. Procedure source review, original-engine reuse,
-static dependency closure and parsing are reported as source checks. A completed
-native operating, returned-work and independent receiving outcome is recorded
-only when that original course returns its actual outputs. Neither the procedure
-source nor an exported handover changes the grant’s funded hours, budget,
-independent-use acceptance or purchase counts.
+The complete public Runtime procedures release is PR3565 at
+`b50c67989a8204f2baee2e7b96c9e10ca97cdb79`; its eighteen changed source files were
+independently read back. Merchant PR1376 at
+`2352dffc46f2860ccf52595d2e486b0294b976e8` carries the same complete browser
+save/workspace-switch correction. Seven executed asynchronous source
+interleavings preserve the original draft, saved request and workspace binding.
+The original Plan/Return receiving course completed four revisions, a conflicting
+return, full file history, replay and independent receiving, including an older
+completed review.
+
+Merchant PR1416 at `8ec0d7d36f01a8ec7ebbf19f6f75d5cfdd75e4ca` supplies the complete
+Applications input library and its original selected-file operating course.
+All fourteen merged source bodies were read back by its owner. The complete public counterpart is selected at `18434e93edd99b5bd0ed7bdf19628112c17e483d`; its original input guide and seven source declarations retain the same file identities. The original
+source and browser-state checks accompany the complete programme. Its full
+physical file-to-review/backup course remains with the original input-library
+receiver and actual READY installation.
+
+The original Runtime procedure API/CLI course is queued through its existing
+A465 receiving request. The earlier backup/observation course and F8C1's complete
+Collections browser/MCP customer receiving retain their original saved cases
+and owners. Each actual operating result joins the selected course and complete
+source record. Source publications, model operations and physical receiving
+results remain individually attributable within that same customer workflow.
+
+## Deliver the completed recurring task to its customer
+
+Use the original Collections workspace for the paid request and its retained
+output. The Runtime installation and procedure identify the task, source,
+operating responsibilities and acceptance criteria; the original buyer owns
+approval, spending, dispatch and payment recovery.
+
+After the result is retained, open **Customer delivery** in that same Collections
+workspace. Select the original Collection and its relevant requests, or open a
+complete received InboxTask by its original directory and task digest. Select
+the complete executing application source and its source manifest, then review
+the chosen responses and their original outcome observations. The
+[complete customer-delivery guide](../../sf88-operator-buyer-cli/collections/delivery/OPERATOR.md)
+defines the exact source inventory and all browser/CLI options.
+
+Prepare one stable named delivery against that reviewed selection. The browser
+retains its full original request before sending it. **Continue exact retained
+operation** resolves an uncertain preparation response using that same delivery
+and source. A deliberately different output or source population receives its
+own reviewed selection and delivery ID.
+
+The full package contains original response bytes, readable JSON/HTML review,
+the complete selected application source and the ordered member manifest. A
+received InboxTask requires every selected response to be complete and verified.
+When a task chooses a later recovered response, the earlier uncertain attempt
+and later response observation remain separate original records.
+
+Open the existing receiving workspace and its **Customer delivery** page.
+Select the package, enter the sender's exact SHA-256 and choose **Verify and
+receive**. Upload retains its committed chunks and resumes the same original
+package. Whole-package and individual-member checks complete before the receipt
+is published. **Received customer packages** reopens that saved receipt after
+reload or from a fresh browser. **Download original complete package** retrieves
+the identical package, including all response, review and source members.
+Keep the full received members directory together for offline review.
+
+The [registered MCP delivery guide](../../../../stellar-forge/mcp-paid-agent/COLLECTION_DELIVERY.md)
+extends this same workflow to an agent. A host registers the original sender or
+recipient listener under a reviewed local name. An InboxTask sender retains the
+full packet, original digest and selected source. Private connection information,
+file paths and credential values stay in that host configuration. The registered
+operations inspect the task, prepare its original request, resume the complete
+download/upload, explicitly receive it, discover recipient history and reopen
+the same package offline after the original listeners close.
+
+Use the original package SHA, manifest, request and selected source across every
+interface. A customer can receive and inspect the whole output before the
+receiving engineer prepares its application through the normal Runtime setup.
+File handover, application setup, the reviewed operating procedure and complete
+workspace backup keep their own original identities. Link them through the
+selected customer's workorder and useful result.
+
+For commissioning, record the actual source owner, receiving engineer, host,
+complete response population and desired receiving application. T1 resource
+integration and authority/handover adapt that source and destination; T3 recovery
+carries the original task and customer state through the next maintainer's
+restoration. Count paid use through its original purchase and accepted useful
+output, preserving the application's existing funding-group rules.
+
