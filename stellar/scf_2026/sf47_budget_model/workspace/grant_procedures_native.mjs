@@ -212,6 +212,7 @@ async function validateDelivery(directory){
   const raw=utf8(await readProcedureFile(join(directory,'grant-procedure.json'),GRANT_PROCEDURE_MAX_BYTES));
   const inspected=await inspectGrantProcedure(raw);
   need(inspected.document.editionId===manifest.editionId&&
+    inspected.plan.id===manifest.operatingPlanId&&inspected.document.selectedRevision===manifest.selectedRevision&&
     before.sources.some(x=>x.id===manifest.sourceId&&x.sha256===hash(Buffer.from(raw))&&x.bytes===Buffer.byteLength(raw))&&
     after.sources.some(x=>x.id===manifest.sourceId&&x.sha256===hash(Buffer.from(raw))),
     'PROCEDURE_DELIVERY_CHANGED','The original procedure source is not bound to this complete case export.');
