@@ -422,7 +422,8 @@ def serve(workspace, *, port=0, export_root=None, handoff_root=None,
             }
             if vgi_operator is not None:
                 assets.update(vgi_operator.assets())
-            if self.command in {"GET", "HEAD"} and url.path in assets and not url.query:
+            if self.command in {"GET", "HEAD"} and url.path in assets and (
+                    not url.query or (vgi_operator is not None and url.path in {"/vgi", "/vgi/"})):
                 value, mime = assets[url.path]
                 return self._reply(200, value.encode(), mime)
             if self.command in {"GET", "HEAD"}:

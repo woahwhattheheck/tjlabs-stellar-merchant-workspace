@@ -2,7 +2,7 @@
 
 This component turns complete original DuckDB query exports into an authenticated VGI catalog. The operator reviews the source export and batch size, publishes immutable Arrow batches in the original warehouse, selects a table head and opens the native Query.Farm listener. A receiving application can continue its original scan after the listener restarts or the warehouse is restored.
 
-The complete product uses the existing buyer workspace, Python wheel cohort, Applications configuration, private launch record and managed process lifecycle. The operator interface is deliberately plain: Catalog, Review and publish, Access, Run service, and History and recovery.
+The complete product uses the existing buyer workspace, Python wheel cohort, Applications configuration, private launch record and managed process lifecycle. The operator interface is deliberately plain: Catalog, Review and publish, Query a result, Access, Run service, and History and recovery. The header also opens the complete Acquired result workflow on the same original workspace.
 
 ## Install in the maintained product
 
@@ -80,20 +80,28 @@ The service applies its current allowlist after the SDK's full authentication ch
 
 Applications **Stop** interrupts the original VGI workspace command. Its original buyer HTTP server, VGI listener and warehouse handles close through their normal owners. Reopen the saved Applications configuration to use the same warehouse and installed environment. A changed authentication environment is selected by restarting the original operator process.
 
+## Open the acquired result and prepare its SQL client
+
+The header's **Acquired result workflow** opens the original delivery, retained source, view, query, export and publication journey. Each step keeps its complete original source and request, with the existing buyer responsible for acquisition. Read [RESULT_WORKFLOW.md](RESULT_WORKFLOW.md) for its full operation and recovery.
+
+After a result is published and its original listener is running, open **Query a result**. Select the retained dataset, choose **Inspect selected dataset**, review its source and Arrow schema, and inspect the running alias beside the current saved head. Set the recipient-reachable address; explain an address that differs from the observed listener. Choose **Prepare SQL client handover**, review the complete package and **Download complete SQL client ZIP**.
+
+The ZIP contains the exact original publication, connection settings, editable query, complete Python SQL client, operating guide and member manifest. Supply the recipient's token separately at runtime. The prepared package does not change the source, table head or listener. It records the observed running selection; the included client inspects the actual selected remote table when attaching and retains its output. Read [CLIENT_HANDOVER.md](CLIENT_HANDOVER.md) for the complete command and source/output recovery.
+
 ## Native SQL and receiving clients
 
 The vendor's SQL client connects to the running VGI endpoint:
 
     INSTALL vgi FROM community;
     LOAD vgi;
-    ATTACH 'purchased' (
+    ATTACH 'YOUR_CONFIGURED_CATALOG_NAME' AS purchased (
         TYPE vgi,
         LOCATION 'http://127.0.0.1:8080/',
         bearer_token 'YOUR_PRIVATE_TOKEN'
     );
     SELECT * FROM purchased.results.purchased_events;
 
-Use the actual recorded listener address and reviewed table name. The service exposes its exact retained Arrow schema. The SQL engine evaluates projection, filtering and sampling above the complete scan because this worker advertises those pushdowns as disabled.
+Use the actual recorded listener address, running catalog name from Access/Run service, and reviewed table name. The source catalog name is distinct from the local SQL alias `purchased`. The service exposes its exact retained Arrow schema. The SQL engine evaluates projection, filtering and sampling above the complete scan because this worker advertises those pushdowns as disabled.
 
 Run SQL in a receiving client connection. The original warehouse's query engine keeps its existing restricted external-access settings.
 
@@ -170,6 +178,10 @@ The original C271 operating input available for the integrated receiving is a co
 | runtime.py | Selected vendor source checks and original listener lifetime |
 | operator.py | Optional routes and static UI on the original private buyer server |
 | cli.py | Installed foreground and receiving entrypoint |
+| result_workflow.py | Original acquired delivery, source lineage and retained workflow requests |
+| client_handover.py | Complete selected-publication client package and observed listener selection |
+| result_sql_client.py | Independent recipient DuckDB query and retained complete output |
+| CLIENT_HANDOVER.md / RESULT_WORKFLOW.md | Full operator and recipient instructions |
 | public/ | Industrial operator interface |
 | original duckdb_http.py | Optional VGI route/static/lifecycle join |
 | distribution/python-runtime/ | Existing wheel/Applications selection and private launch binding |

@@ -81,6 +81,19 @@ def _hex(value):
     return value
 
 
+def _expected_source(source, expected):
+    """Optional exact original report precondition; native IDs stay unchanged."""
+    if expected is None:
+        return
+    keys = {"manifest_sha256", "source_binding_sha256", "input_report_sha256"}
+    if not isinstance(expected, dict) or set(expected) != keys:
+        raise StateError("DUCKDB_EXPECTED_SOURCE_INVALID")
+    for key in keys:
+        _hex(expected[key])
+    if not isinstance(source, dict) or any(source.get(key) != expected[key] for key in keys):
+        raise StateError("DUCKDB_EXPECTED_SOURCE_CHANGED")
+
+
 def _type(value):
     if not isinstance(value, str):
         raise StateError("DUCKDB_TYPE_INVALID")
@@ -487,8 +500,24 @@ class DuckDBWorkspace:
                 "default_columns": columns,
                 **_semantics.delivery_fields(delivery, result["manifest"], columns, document=True)}
 
-    def review_import(self, report_path, columns=None, keys=None):
+    def _review_source_binding(self, db, review, expected_source):
+        """Receive an existing review against its actual retained or open source."""
+        if expected_source is None:
+            return
+        existing = db.execute("SELECT record FROM sf_editions WHERE id=?",
+                              [review["review_id"]]).fetchone()
+        if existing:
+            source = parse(existing[0].encode())["source"]
+        elif review.get("timescale_source") is not None:
+            from .timescale_intake.source import open_review_delivery
+            _, _, source = open_review_delivery(review, self, db)
+        else:
+            _, _, source = self._delivery(review["report_path"], db=db)
+        _expected_source(source, expected_source)
+
+    def review_import(self, report_path, columns=None, keys=None, *, expected_source=None):
         inspected = self.inspect_delivery(report_path)
+        _expected_source(inspected, expected_source)
         columns = inspected["default_columns"] if columns is None else columns
         if not isinstance(columns, list) or len(columns) != len(inspected["fields"]):
             raise StateError("DUCKDB_COMPLETE_COLUMN_MAPPING_REQUIRED")
@@ -510,6 +539,7 @@ class DuckDBWorkspace:
         if not isinstance(keys, list) or len(set(keys)) != len(keys) or any(key not in [c["name"] for c in mapped] for key in keys):
             raise StateError("DUCKDB_KEY_MAPPING_INVALID")
         delivery, _, source = self._delivery(report_path)
+        _expected_source(source, expected_source)
         if source["manifest_sha256"] != inspected["manifest_sha256"] or source["source_binding_sha256"] != inspected["source_binding_sha256"]:
             raise StateError("DUCKDB_DELIVERY_CHANGED_DURING_REVIEW")
         for row in self._rows(delivery, inspected["fields"], inspected["row_count"]):
@@ -524,7 +554,9 @@ class DuckDBWorkspace:
         with self._guard(), self._connection(writeable=True) as db:
             existing = db.execute("SELECT record FROM sf_reviews WHERE id=?", [review["review_id"]]).fetchone()
             if existing:
-                return {**parse(existing[0].encode()), **semantic_fields}
+                retained = parse(existing[0].encode())
+                self._review_source_binding(db, retained, expected_source)
+                return {**retained, **semantic_fields}
             db.execute("INSERT INTO sf_reviews VALUES(?,?,?)", [review["review_id"], review["created_at"], _json(review)])
         return review
 
@@ -532,19 +564,22 @@ class DuckDBWorkspace:
         with self._guard(), self._connection() as db:
             return {"reviews": [parse(row[0].encode()) for row in db.execute("SELECT record FROM sf_reviews ORDER BY created_at DESC").fetchall()]}
 
-    def import_review(self, review_id):
+    def import_review(self, review_id, *, expected_source=None):
         review_id = _hex(review_id)
         with self._guard(), self._connection(writeable=True) as db:
             review = self._record(db, "sf_reviews", review_id)
             existing = db.execute("SELECT record FROM sf_editions WHERE id=?", [review_id]).fetchone()
             if existing:
-                return {**_semantics.edition_fields(db, parse(existing[0].encode())),
+                retained = parse(existing[0].encode())
+                _expected_source(retained["source"], expected_source)
+                return {**_semantics.edition_fields(db, retained),
                         "import_status": "UNCHANGED"}
             if review.get("timescale_source") is not None:
                 from .timescale_intake.source import open_review_delivery
                 delivery, manifest_raw, source = open_review_delivery(review, self, db)
             else:
                 delivery, manifest_raw, source = self._delivery(review["report_path"], db=db)
+            _expected_source(source, expected_source)
             if source["manifest_sha256"] != review["manifest_sha256"] or source["source_binding_sha256"] != review["source_binding_sha256"]:
                 raise StateError("DUCKDB_REVIEWED_DELIVERY_CHANGED")
             table = "sf_edition_" + review_id

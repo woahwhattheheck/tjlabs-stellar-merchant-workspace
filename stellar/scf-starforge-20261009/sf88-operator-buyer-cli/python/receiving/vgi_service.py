@@ -256,12 +256,19 @@ class Receiving:
         return result
 
     def browser(self, api, url, stage, publication_id=None):
+        receiving_directory = self.root / "browser" / stage
+        if stage == "client":
+            observed = api("/api/vgi/state")["runtime"]
+            need(observed.get("observed") == "RUNNING", "Use the current original listener")
+            request_id = observed.get("request_id", "")
+            need(re.fullmatch(r"[a-f0-9]{32}", request_id), "The current listener request changed")
+            receiving_directory = self.root / "browser" / ("client-" + request_id + "-" + publication_id[:12])
         configuration = {
             "operation": OPERATION, "stage": stage, "url": url,
             "workspace_id": WORKSPACE_ID, "table_name": TABLE,
             "export_id": EXPORT_ID, "principal": PRINCIPAL,
             "publication_id": publication_id,
-            "directory": str(self.root / "browser" / stage),
+            "directory": str(receiving_directory),
             "profile": str(self.root / "private" / "browser-profile"),
             "playwright": str(self.args.playwright), "chromium": str(self.args.chromium)}
         config_path = self.root / "private" / ("browser-" + stage + ".json")
@@ -413,7 +420,7 @@ def canonical_value(value, logical_type=None):
     return value
 
 
-def sql_client(root, address, token, expected, columns):
+def sql_client(root, address, token, expected, columns, catalog_name):
     import duckdb
     extension_root = private(root / "client-runtime")
     connection = duckdb.connect(":memory:", config={
@@ -433,7 +440,7 @@ def sql_client(root, address, token, expected, columns):
             extension["file_sha256"] = checksum(path)
             extension["file_bytes"] = Path(path).stat().st_size
         connection.execute(
-            "ATTACH 'purchased' (TYPE vgi, LOCATION " + literal(address)
+            "ATTACH " + literal(catalog_name) + " AS purchased (TYPE vgi, LOCATION " + literal(address)
             + ", bearer_token " + literal(token) + ")")
         result = connection.execute('SELECT * FROM purchased.results."' + TABLE
                                     + '" ORDER BY sf_row')
@@ -466,6 +473,156 @@ def sql_client(root, address, token, expected, columns):
                 "query": 'SELECT * FROM purchased.results."' + TABLE + '" ORDER BY sf_row'}
     finally:
         connection.close()
+
+
+
+def receive_client_package(root, receipt, label, expected_publication):
+    """Receive the complete actual browser download before running its local client."""
+    destination = private(root / "client-handover" / label)
+    package = private(destination / "package")
+    path = Path(receipt["path"])
+    need(path.is_file() and not path.is_symlink()
+         and path.stat().st_size == receipt["bytes"]
+         and checksum(path) == receipt["sha256"],
+         "The actual selected client ZIP changed")
+    wanted = {"connection.json", "publication.json", "query.sql",
+              "result_sql_client.py", "README.md", "manifest.json"}
+    with zipfile.ZipFile(path) as archive:
+        members = archive.infolist()
+        need(len(members) == len(wanted)
+             and {item.filename for item in members} == wanted
+             and all(not item.is_dir() and not stat.S_ISLNK(item.external_attr >> 16)
+                     and item.file_size <= 8 * 1024 * 1024 for item in members),
+             "The complete selected client member set changed")
+        bodies = {item.filename: archive.read(item) for item in members}
+    manifest = json.loads(bodies["manifest.json"])
+    configuration = json.loads(bodies["connection.json"])
+    publication = json.loads(bodies["publication.json"])
+    need(manifest.get("schema") == "stellar-forge.vgi-client-handover.v1.package"
+         and configuration.get("schema") == "stellar-forge.vgi-client-handover.v1"
+         and publication == expected_publication,
+         "The selected client source or schema changed")
+    for key in ("workspace_id", "service_id", "publication_id"):
+        need(manifest.get(key) == publication[key] == configuration[key] == receipt[key],
+             "The selected client original identity changed: " + key)
+    need(configuration["export_id"] == publication["source"]["export_id"]
+         and configuration["expected_rows"] == publication["rows"]
+         and configuration["expected_arrow_schema_sha256"] == publication["arrow_schema_sha256"]
+         and configuration["listener_request_id"] == receipt["listener_request_id"],
+         "The selected client source/listener binding changed")
+    descriptors = manifest.get("files")
+    need(isinstance(descriptors, list) and len(descriptors) == len(wanted) - 1
+         and {item["name"] for item in descriptors} == wanted - {"manifest.json"},
+         "The complete selected client manifest changed")
+    for item in descriptors:
+        raw = bodies[item["name"]]
+        need(len(raw) == item["bytes"]
+             and hashlib.sha256(raw).hexdigest() == item["sha256"],
+             "A complete selected client source member changed")
+    need(manifest["configuration_sha256"] == hashlib.sha256(bodies["connection.json"]).hexdigest()
+         and manifest["publication_sha256"] == hashlib.sha256(bodies["publication.json"]).hexdigest(),
+         "The selected client manifest source identity changed")
+    for name, raw in bodies.items():
+        target = package / name
+        if target.exists():
+            need(not target.is_symlink() and target.read_bytes() == raw,
+                 "An already received selected client member changed")
+        else:
+            temporary = package / (name + ".pending")
+            with temporary.open("wb") as handle:
+                handle.write(raw)
+            temporary.chmod(0o600)
+            temporary.replace(target)
+    received = {"archive": {"path": str(path), "bytes": path.stat().st_size,
+                            "sha256": checksum(path)},
+                "package": str(package), "configuration": configuration,
+                "publication_id": publication["publication_id"],
+                "source_export_id": publication["source"]["export_id"],
+                "files": manifest["files"]}
+    save(destination / "received-package.json", received, immutable=True)
+    return received
+
+
+def run_received_sql_client(root, browser_result, publication, token, expected, columns):
+    receipt = browser_result["client_handover"]
+    label = publication["publication_id"][:16] + "-" + receipt["listener_request_id"]
+    received = receive_client_package(root, receipt, label, publication)
+    destination = Path(received["package"]).parent
+    completed = destination / "received-result.json"
+    if completed.exists():
+        saved = read(completed)
+        need(saved["publication_id"] == publication["publication_id"]
+             and saved["client_zip_sha256"] == receipt["sha256"],
+             "The completed selected client receiving changed")
+        for item in saved["retained_outputs"]:
+            file = Path(item["path"])
+            need(file.is_file() and not file.is_symlink()
+                 and file.stat().st_size == item["bytes"] and checksum(file) == item["sha256"],
+                 "A completed selected client output changed")
+        return saved
+    package = Path(received["package"])
+    inspection = command_json([sys.executable, "-B", package / "result_sql_client.py",
+                               "--package", package, "--inspect"], destination / "offline", "package")
+    need(inspection.get("status") == "VERIFIED_OFFLINE",
+         "The complete downloaded client did not reopen offline")
+    attempt = "consumer-" + secrets.token_hex(8)
+    output = destination / attempt
+    invocation = [sys.executable, "-B", str(package / "result_sql_client.py"),
+                  "--package", str(package), "--output", str(output)]
+    save(destination / (attempt + ".invocation.json"), {
+        "command": invocation, "publication_id": publication["publication_id"],
+        "configuration_sha256": checksum(package / "connection.json"),
+        "client_sha256": checksum(package / "result_sql_client.py"),
+        "token_source": "Original receiving process environment", "started_at": now()},
+        immutable=True)
+    environment = dict(os.environ)
+    environment["RESULT_SERVICE_TOKEN"] = token
+    stdout = destination / (attempt + ".stdout.json")
+    stderr = destination / (attempt + ".stderr.txt")
+    with stdout.open("wb") as out, stderr.open("wb") as err:
+        result = subprocess.run(invocation, env=environment, stdout=out, stderr=err)
+    stdout.chmod(0o600)
+    stderr.chmod(0o600)
+    need(result.returncode == 0,
+         "The selected SQL client did not complete; its original private output is retained")
+    lines = stdout.read_text().splitlines()
+    need(lines, "The selected SQL client returned no outcome")
+    outcome = json.loads(lines[-1])
+    returned = source_table(Path(outcome["result_parquet"])).sort_by([("sf_row", "ascending")])
+    wanted = expected.sort_by([("sf_row", "ascending")])
+    need(returned.column_names == wanted.column_names
+         and returned.num_rows == wanted.num_rows == publication["rows"],
+         "The downloaded client changed the complete original row or column population")
+    normalize = lambda row: [
+        canonical_value(row[name], columns[i]["type"])
+        for i, name in enumerate(expected.column_names)]
+    actual_values = [normalize(row) for row in returned.to_pylist()]
+    expected_values = [normalize(row) for row in wanted.to_pylist()]
+    need(actual_values == expected_values,
+         "The downloaded client changed an original result value or encoding")
+    retained = []
+    for name in ("result_parquet", "result_csv", "result_descriptor", "receipt", "source_parquet"):
+        file = Path(outcome[name]).absolute()
+        need(file.is_relative_to(output.absolute()) and file.is_file() and not file.is_symlink(),
+             "The selected client output escaped its original private directory")
+        retained.append({"kind": name, "path": str(file), "bytes": file.stat().st_size,
+                         "sha256": checksum(file)})
+    reopened = command_json([sys.executable, "-B", package / "result_sql_client.py",
+                              "--verify-output", output], destination / "offline", attempt)
+    need(reopened.get("status") == "VERIFIED_OUTPUT"
+         and reopened.get("publication_id") == publication["publication_id"]
+         and reopened.get("rows") == returned.num_rows,
+         "The complete selected client result did not cold reopen")
+    value = {"publication_id": publication["publication_id"],
+             "source_export_id": publication["source"]["export_id"],
+             "listener_request_id": receipt["listener_request_id"],
+             "client_zip_sha256": receipt["sha256"], "package": received["package"],
+             "rows": returned.num_rows, "columns": outcome["columns"],
+             "values_sha256": hashlib.sha256(encoded(actual_values)).hexdigest(),
+             "retained_outputs": retained, "consumer": outcome,
+             "offline_package": inspection, "offline_reopen": reopened, "completed_at": now()}
+    save(completed, value, immutable=True)
+    return value
 
 
 def native_receiving(args, root, installation):
@@ -522,6 +679,7 @@ def native_receiving(args, root, installation):
             api("/api/vgi/stop", {"request_id": current["request_id"]})
 
     with buyer(workspace, root, exports) as (api, url):
+        workflow = received.phase("acquired_workflow", lambda: received.browser(api, url, "workflow"))
         initial = received.phase("operator_publish", lambda: received.browser(api, url, "publish"))
         first_publication = service.publication(initial["publication_id"])
         need(first_publication["rows"] == 32
@@ -529,6 +687,10 @@ def native_receiving(args, root, installation):
              "The reviewed first publication must retain two exact 16-row batches")
 
         runtime = start(api, "first-listener")
+        workflow_publication = service.publication(workflow["publication_id"])
+        received.phase("acquired_workflow_sql_client", lambda: run_received_sql_client(
+            root, received.browser(api, url, "client", workflow["publication_id"]),
+            workflow_publication, token, expected, query_manifest["columns"]))
         received.phase("first_native_batch", lambda: first_batch(
             root, "first-publication", runtime["address"], token,
             first_publication["publication_id"], expected.slice(0, 16)))
@@ -544,7 +706,7 @@ def native_receiving(args, root, installation):
                  "The original following query revision changed")
             return received.request(api, "following-original-export", "/api/exports", {
                 "request_id": "", "query_id": QUERY_ID, "expected_revision": 2,
-                "expected_views": workspace.views()["views"]})
+                "expected_views": workspace.views()})
         following = received.phase("following_original_export", following_export)
         exports[following["export_id"]] = following["directory"]
         review = received.phase("following_review", lambda: api("/api/vgi/review", {
@@ -613,7 +775,11 @@ def native_receiving(args, root, installation):
             root, "following-publication", runtime["address"], token,
             second_id, reversed_expected.slice(0, 16)))
         received.phase("native_sql_client", lambda: sql_client(
-            root, runtime["address"], token, expected, query_manifest["columns"]))
+            root, runtime["address"], token, expected, query_manifest["columns"],
+            runtime["catalog"]["catalog_name"]))
+        received.phase("downloaded_sql_client", lambda: run_received_sql_client(
+            root, received.browser(api, url, "client", second_id), second, token,
+            expected, query_manifest["columns"]))
         stop(api)
         handover = received.phase("operator_handover", lambda:
             received.browser(api, url, "handover", second_id))
@@ -654,6 +820,8 @@ def native_receiving(args, root, installation):
         "initial_export_id": EXPORT_ID, "following_export_id": following["export_id"],
         "initial_publication_id": first_publication["publication_id"],
         "following_publication_id": second_id,
+        "workflow_publication_id": workflow["publication_id"],
+        "workflow_export_id": workflow["export_id"],
         "rows": 32, "batch_rows": [16, 16],
         "installation_id": installation["id"], "candidate_id": installation["candidate"],
         "lock_sha256": installation["lockSha256"],
@@ -680,24 +848,52 @@ def main():
         parser.add_argument("--" + name, required=True, type=Path)
     parser.add_argument("--source-ref", required=True)
     parser.add_argument("--source-sha256", required=True)
+    parser.add_argument("--source-successor", action="store_true",
+                        help="Receive the selected complete source edition under the original operation lock")
     parser.add_argument("--installed", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--lease-fd", type=int, help=argparse.SUPPRESS)
     args = parser.parse_args()
     for key, value in vars(args).items():
         if isinstance(value, Path):
             setattr(args, key, value.expanduser().absolute())
-    root = private(args.directory)
+    operation_root = private(args.directory)
+    if args.source_successor:
+        need(re.fullmatch(r"[a-f0-9]{40}", args.source_ref)
+             and re.fullmatch(r"[a-f0-9]{64}", args.source_sha256),
+             "Select the exact complete source successor")
+        root = private(operation_root / "source-editions" /
+                       (args.source_ref + "-" + args.source_sha256[:16]))
+    else:
+        root = operation_root
     os.environ["TMPDIR"] = str(private(root / "temporary"))
     if args.lease_fd is None:
-        fd = os.open(root / "receiving.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+        fd = os.open(operation_root / "receiving.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
         fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
     else:
         fd = args.lease_fd
-        need(os.fstat(fd).st_ino == (root / "receiving.lock").stat().st_ino
-             and os.fstat(fd).st_dev == (root / "receiving.lock").stat().st_dev,
+        need(os.fstat(fd).st_ino == (operation_root / "receiving.lock").stat().st_ino
+             and os.fstat(fd).st_dev == (operation_root / "receiving.lock").stat().st_dev,
              "The original receiving lifetime changed")
     try:
         source_selection(args, root)
+        if args.source_successor:
+            predecessor = operation_root / "selection.json"
+            prior = read(predecessor) if predecessor.exists() else None
+            if prior is not None:
+                need(prior.get("operation") == OPERATION
+                     and prior.get("input_sha256") == CASE_SHA,
+                     "The original source predecessor belongs to another operation")
+            save(root / "source-adoption.json", {
+                "schema": "stellar-forge.vgi-receiving-source-adoption.v1",
+                "operation": OPERATION, "operation_root": str(operation_root),
+                "source_edition_directory": str(root),
+                "source_ref": args.source_ref, "source_archive_sha256": args.source_sha256,
+                "input_archive_sha256": CASE_SHA,
+                "predecessor_selection": str(predecessor) if prior is not None else None,
+                "predecessor_selection_sha256": checksum(predecessor) if prior is not None else None,
+                "previous_source_ref": prior.get("source_ref") if prior else None,
+                "receiving_lock": str(operation_root / "receiving.lock"),
+            }, immutable=True)
         completed = root / "receiving" / "result.json"
         if completed.exists():
             result = read(completed)

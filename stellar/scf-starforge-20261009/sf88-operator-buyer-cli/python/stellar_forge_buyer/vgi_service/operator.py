@@ -7,6 +7,8 @@ from urllib.parse import unquote
 from ..errors import StateError
 from .model import VgiService
 from .runtime import HTTPRuntime, runtime_info
+from .client_handover import prepare_handover
+from .result_workflow import ResultWorkflow
 
 
 def _fields(body, required=(), optional=()):
@@ -24,9 +26,16 @@ class VgiOperator:
         self.service = VgiService(operator.workspace,
                                   export_locations=export_locations or {})
         self.runtime = HTTPRuntime(self.service)
+        self.workflow = ResultWorkflow(self)
         root = resources.files(__package__).joinpath("public")
         self.installed_runtime = runtime_info()
         self._assets = {
+            "/vgi/workflow/": (root.joinpath("result-workflow.html").read_text(encoding="utf-8"),
+                              "text/html;charset=utf-8"),
+            "/vgi/result-workflow.mjs": (root.joinpath("result-workflow.mjs").read_text(encoding="utf-8"),
+                                       "text/javascript;charset=utf-8"),
+            "/vgi/result-workflow.css": (root.joinpath("result-workflow.css").read_text(encoding="utf-8"),
+                                       "text/css;charset=utf-8"),
             "/vgi/": (root.joinpath("index.html").read_text(encoding="utf-8"),
                       "text/html;charset=utf-8"),
             "/vgi/app.mjs": (root.joinpath("app.mjs").read_text(encoding="utf-8"),
@@ -47,6 +56,8 @@ class VgiOperator:
 
     def read(self, path, parameters):
         with self.original.mutex:
+            if path.startswith("/api/vgi/workflow/"):
+                return self.workflow.read(path, parameters)
             if path == "/api/vgi/history":
                 if set(parameters) - {"before", "limit"}:
                     raise StateError("VGI_OPERATOR_PARAMETERS_INVALID")
@@ -69,6 +80,16 @@ class VgiOperator:
 
     def perform(self, path, body):
         with self.original.mutex:
+            if path.startswith("/api/vgi/workflow/"):
+                return self.workflow.perform(path, body)
+            if path == "/api/vgi/client-handover":
+                _fields(body, ("publication_id", "listener_request_id",
+                               "expected_revision", "expected_head_revision",
+                               "client_address", "address_note"))
+                state = self.service.state()
+                runtime = self.runtime.state()
+                publication = self.service.publication(body["publication_id"])
+                return prepare_handover(state, runtime, publication, body)
             if path == "/api/vgi/review":
                 _fields(body, ("export_id",), ("batch_rows",))
                 return self.service.review_export(body["export_id"], batch_rows=body.get("batch_rows", 4096))
