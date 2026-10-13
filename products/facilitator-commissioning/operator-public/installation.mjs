@@ -1,0 +1,88 @@
+// SPDX-License-Identifier: MIT
+// Full typed preparation over the original source, case and funded Installation.
+const clone=v=>JSON.parse(JSON.stringify(v));
+const labels={
+ task:{completeOutput:'Complete useful output',repeatTrigger:'Reason for a new purchase',pricedUnit:'Actual priced unit'},
+ source:{reference:'Actual source edition or live connection',mode:'Original source mode',population:'Complete source population',meaning:'Keys, units, types and time',authority:'Source-use authority',changePolicy:'Source changes and withdrawal'},
+ payment:{network:'Payment network',asset:'Payment asset',recipient:'Merchant recipient',priceAtomic:'Unit price in atomic units',taskUnits:'Useful task units',taskBudgetAtomic:'Approved task budget in atomic units',authority:'Buyer approval and spending authority',termsSourceIds:'Original payment-terms source IDs'},
+ receiving:{application:'Receiving application and source edition',host:'Actual receiving host',operator:'Named receiving engineer',acceptanceRule:'Complete useful-output acceptance',changeAndWithdraw:'Independent change and withdrawal',recovery:'Original operation recovery',maintenance:'Maintenance and support owner'}
+};
+export function createInstallationView({api,esc,detail,badge,when,size,option,input,select,area,button,submit,panel,table,fileField,value,ref,prepare,retainJson,state,desk}){
+  const link=(id,name,label)=>'<a href="'+esc(api.fileURL({kind:'installation',id,name}))+'">'+esc(label??name)+'</a>';
+  const ids=v=>Array.isArray(v)?v.join('\n'):'';
+  const field=(section,key,label,v)=>{
+    const name=section+'.'+key,required=['host','operator','authority'].includes(key);
+    if(key==='termsSourceIds')return area(name,label,ids(v),false)+'<p class="source-note full">Use one actual source ID per line from the original case. Existing seed terms remain attached.</p>';
+    if(['priceAtomic','taskBudgetAtomic'].includes(key))return input(name,label,v??'','text',false,'inputmode="numeric" pattern="(0|[1-9][0-9]{0,29})"');
+    if(key==='taskUnits')return input(name,label,v??'','number',false,'min="0" max="1000000000000" step="1"');
+    return ['mode','network','asset','recipient','host','operator'].includes(key)?input(name,label,v??'','text',required):area(name,label,v??'',required);
+  };
+  function editor(data){
+    const r=data.preparation,base=data.defaults,b=data.bindings;
+    let forms='<form data-form="installation-prepare" data-template="'+esc(r.operationId)+'" data-draft-key="installation-prepare:'+esc(r.operationId)+'" data-installation-basis="'+esc(r.operationId)+'">';
+    forms+='<p>The source, case version and two provider identities below stay bound to this template. Save the completed preparation, then open its complete document in the original Installation application for preview and save.</p>';
+    forms+='<fieldset><legend>Existing accountable deployments</legend><div class="form-grid">'+input('merchantDeploymentId','Merchant deployment ID',b.merchantDeploymentId??base.merchantDeploymentId??'','text',false)+area('buyerDeploymentIds','Original buyer deployment IDs',ids(b.buyerDeploymentIds??base.buyerDeploymentIds),false)+'</div><p class="source-note">Use one original buyer deployment ID per line. These IDs belong to the selected Operations case.</p></fieldset>';
+    for(const section of ['task','source','payment','receiving']){
+      const title={task:'Complete customer task',source:'Authorized original source',payment:'Payment and whole-task budget',receiving:'Independent receiving and operation'}[section];
+      forms+='<fieldset><legend>'+title+'</legend><div class="form-grid">'+Object.entries(labels[section]).map(([key,label])=>field(section,key,label,base[section]?.[key])).join('')+'</div></fieldset>';
+    }
+    forms+=panel('Original facilitator selections',table(['Operator','Endpoint','Authority sources'],b.payment.facilitators.map(p=>[esc(p.operatorId),esc(p.endpoint),p.sourceIds.map(esc).join('<br>')]))+detail('Complete fixed provider selections',b.payment.facilitators));
+    forms+=detail('Retained original source attachment IDs',{source:b.source.sourceIds,receiving:b.receiving.sourceIds})+
+      '<p class="source-note">Blank optional values remain explicit selections for native review. Preparing this document retains the original funding and work assignments.</p>'+submit('Review complete Installation preparation')+'</form>';
+    return forms;
+  }
+  function pager(page,kind){
+    return '<div class="actions">'+button('Previous page','installation-page','data-kind="'+kind+'" data-offset="'+Math.max(0,page.offset-page.limit)+'"'+(page.offset===0?' disabled':''))+
+      button('Next page','installation-page','data-kind="'+kind+'" data-offset="'+esc(page.next_offset??0)+'"'+(page.next_offset===null?' disabled':''))+'</div>';
+  }
+  async function render(){
+    const q=desk(),s=state(),catalog=await api.installations();q.catalog=catalog;
+    if(q.selectedId&&!catalog.preparations.some(r=>r.operationId===q.selectedId))q.selectedId=null;
+    const sources=option('','Choose an original complete transfer')+catalog.sources.map(r=>option(r.operationId,when(r.completedAt)+' · '+r.sourceMembers+' source members · '+r.operationId)).join('');
+    const saved=option('','Choose a saved preparation')+catalog.preparations.map(r=>option(r.operationId,(r.mode==='template'?'Template':'Prepared Installation')+' · '+when(r.completedAt)+' · Case '+r.basis.caseId+' v'+r.basis.caseVersion,r.operationId===q.selectedId)).join('');
+    let html='<h1>Customer Installation</h1><p>Prepare the same complete service for its existing funded case. Source selection, original provider authority and customer receiving stay with the saved job.</p>';
+    html+=panel('Prepare from the original case','<form data-form="installation-template" data-installation-basis="'+esc(catalog.selectionSha256)+'"><div class="form-grid">'+select('sourceTransferId','Original complete service transfer',sources)+fileField('caseSnapshot','Complete current Operations case JSON')+fileField('seed','Original Workshare / Installation seed JSON')+'</div><p>Upload both complete files in Files. If source attachments changed, receive the case and seed again at the same current version.</p>'+submit('Review original source template')+'</form><div class="actions">'+button('Open Files','navigate','data-page="files"')+button('Open complete Handover','navigate','data-page="handover"')+'</div>');
+    if(!catalog.sources.length)html+='<p class="notice">Retain a complete service transfer in Handover first. Its full original source cut supplies this Installation.</p>';
+    html+=panel('Saved preparations','<form data-form="installation-select">'+select('selectedId','Original template or prepared Installation',saved,false)+submit('Open saved preparation')+'</form>');
+    if(!q.selectedId){q.detail=null;return html;}
+    const data=await api.installation({id:q.selectedId});q.detail=data;
+    const r=data.preparation;
+    html+=panel(r.mode==='template'?'Original source template':'Complete prepared Installation',
+      '<dl><dt>Case</dt><dd>'+esc(r.basis.caseId)+' · Version '+esc(r.basis.caseVersion)+'</dd><dt>Workshare</dt><dd>'+esc(r.basis.workshareCaseId??'Awaiting original Workshare selection')+'</dd><dt>Plan edition</dt><dd>'+esc(r.basis.planId)+' · '+esc(r.basis.planRevision)+'</dd><dt>Original requests</dt><dd>'+esc(r.basis.requestCount)+' per provider</dd><dt>Prepared files</dt><dd>'+esc(r.files)+'</dd><dt>Missing source matches</dt><dd>'+esc(r.missingSourceCount)+'</dd></dl>'+
+      detail('Complete original source basis',r.basis)+detail('Original funded work and assignments',{workshare:data.workshare,workorder:data.workorder,assignments:data.assignments,checks:data.checks})+
+      '<div class="actions">'+link(r.operationId,'bindings.json','Download complete bindings')+'<a class="button" href="'+esc(api.installationArchiveURL(r.operationId))+'">Download complete preparation TAR</a></div>');
+    const sourcePage=await api.installation({id:q.selectedId,kind:'sources',offset:q.sourceOffset??0,limit:25});
+    html+=panel('Original source matching · '+sourcePage.total+' files',table(['Original member','Case source','Result'],sourcePage.items.map(f=>[esc(f.path)+'<br><span class="muted">'+size(f.bytes)+'</span>',esc(f.sourceId??'Attach this exact original file'),badge(f.state)+detail('Exact original identity and matching sources',{sha256:f.sha256,bytes:f.bytes,matchingSourceIds:f.matchingSourceIds??[]})]))+pager(sourcePage,'sources'));
+    if(r.mode==='template'){
+      if(r.missingSourceCount)html+=panel('Complete source attachment','<p>The source table identifies every missing original. Download this whole preparation and attach its complete originals through the existing Operations case. Then receive the current case and seed and prepare a new template. The previous template remains saved with its original version.</p>');
+      else html+=panel('Edit complete operating choices',editor(data));
+    }else{
+      html+=panel('Native Installation handoff','<p>Open the complete Installation document in the existing Customer Installation application. It uses original case version '+esc(r.basis.caseVersion)+'. Preview and save there with the original native operation identity.</p><div class="actions">'+link(r.operationId,'installation-input.json','Complete Installation document')+link(r.operationId,'installation-preview-input.json','Native preview input')+link(r.operationId,'WORKORDER.md','Readable complete workorder')+'</div>'+
+        (r.selections.length?table(['Selection still needed','Purpose'],r.selections.map(x=>[esc(x.field),esc(x.purpose)])):'<p>All preparer selections have values. Inspect the native preview and actual customer conditions before saving.</p>')+
+        detail('Full prepared native document',data.prepared));
+    }
+    const filesPage=await api.installation({id:q.selectedId,kind:'files',offset:q.fileOffset??0,limit:25});
+    html+=panel('Complete original files · '+filesPage.total,table(['File','Size','Download'],filesPage.items.map(f=>[esc(f.path),size(f.bytes),link(r.operationId,f.path,'Complete file')+detail('Original SHA256',f.sha256)]))+pager(filesPage,'files'));
+    html+=panel('Continue at another operator','<p>The complete commissioning handover retains this preparation, its current source files, original request, exact case and seed, profile and bindings. Receive that full operator TAR through the existing commissioning receiver, reopen this same job, and select this preparation in Customer Installation. Its individual files and complete package are reconstructed from the original retained identities.</p><p>Open the complete workorder, native document, source matching and all delivered attachments. Operate and view the actual desktop and narrow application, downloads and reopened project before presenting the installation to its customer.</p>');
+    return html;
+  }
+  async function form(form){
+    if(form.dataset.form==='installation-select'){desk().selectedId=value(form,'selectedId')||null;desk().sourceOffset=0;desk().fileOffset=0;return{viewChanged:true};}
+    if(form.dataset.form==='installation-template')return prepare('installation-template',{sourceTransferId:value(form,'sourceTransferId'),seed:ref(form,'seed'),caseSnapshot:ref(form,'caseSnapshot')},form);
+    if(form.dataset.form!=='installation-prepare')return false;
+    const templateId=form.dataset.template,data=desk().detail;
+    if(!data||data.preparation.operationId!==templateId||data.preparation.mode!=='template')throw new Error('Reopen the original complete template before editing.');
+    const b=clone(data.bindings),split=v=>v.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+    b.merchantDeploymentId=value(form,'merchantDeploymentId')||null;b.buyerDeploymentIds=split(value(form,'buyerDeploymentIds'));
+    for(const section of Object.keys(labels)){
+      b[section]??={};
+      for(const key of Object.keys(labels[section])){
+        const v=value(form,section+'.'+key);
+        b[section][key]=key==='termsSourceIds'?split(v):['priceAtomic','taskBudgetAtomic'].includes(key)?v||null:key==='taskUnits'?(v===''?null:Number(v)):v;
+      }
+    }
+    const bindings=await retainJson('installation-bindings-'+templateId+'.json',b);
+    return prepare('installation-prepare',{templateOperationId:templateId,bindings},form);
+  }
+  return{render,form};
+}

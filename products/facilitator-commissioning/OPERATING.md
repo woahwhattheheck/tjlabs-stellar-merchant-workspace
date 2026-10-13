@@ -464,7 +464,7 @@ The HTTP request/JSON limit is 1 MiB; complete file inputs use the retained chun
 
 ### Inspect the exact outgoing product
 
-The producing operator must open and view the exact outgoing application and generated report before presenting them. On the original populated commissioning job, operate all eight screens, complete source downloads, original buyer configuration and current-host execution copy, report download, complete TAR handover and reopened received job. Inspect desktop/screenshare and narrow/mobile widths, and relevant empty, loading and error states. View the actual screenshots if the browser operates on another host; filenames or DOM measurements alone do not complete this inspection.
+The producing operator must open and view the exact outgoing application and generated report before presenting them. On the original populated commissioning job, operate all nine screens, including Customer Installation, complete source downloads, original buyer configuration and current-host execution copy, report download, complete TAR handover and reopened received job. Inspect desktop/screenshare and narrow/mobile widths, and relevant empty, loading and error states. View the actual screenshots if the browser operates on another host; filenames or DOM measurements alone do not complete this inspection.
 
 Fix unreadable, clipped, overflowing, cramped, unstyled or broken output in the same source edition, retaining the original service data and native operation. Use readable tables, clear hierarchy, consistent typography and spacing, restrained controls and useful labels. Source review, HTTP success and another peer's approval supplement the actual rendered inspection. Keep the existing focused operating course; no broad test suite or separate verification product is required.
 
@@ -483,3 +483,8 @@ The producing worker must literally open, view, play or use every final attachme
 ## Original Customer Installation
 
 Use [the complete paired-service Installation course](INSTALLATION.md) to bind a full original commissioning transfer to its actual Workshare/Grant case and unchanged native Installation seed. The installable facilitator-installation command retains every original source file, maps exact case source identities, preserves both provider selections and prepares the original preview/save input. The original Installation writer retains funding, work assignments, actual acceptance and full case receiving.
+
+
+## Complete Customer Installation desk
+
+The ninth screen joins the original source transfer to the saved Operations case and full Workshare seed. It retains complete source matching, typed task/payment/receiving choices, the original native Installation document and whole-package receiving. Follow [Customer Installation desk](INSTALLATION_DESK.md) for every field, pending-request recovery, complete downloads and cold reopening. The original native Installation application performs preview and save with the selected case version and existing funded checks.

@@ -1,0 +1,48 @@
+{
+  "schema": "stellar-forge.browser-assets.v1",
+  "root": "./",
+  "routes": [
+    [
+      "/",
+      [
+        "operator-public/index.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/app.mjs",
+      [
+        "operator-public/app.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/style.css",
+      [
+        "operator-public/style.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/client.mjs",
+      [
+        "client.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/recovery.mjs",
+      [
+        "operator-public/recovery.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/installation.mjs",
+      [
+        "operator-public/installation.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ]
+  ]
+}
