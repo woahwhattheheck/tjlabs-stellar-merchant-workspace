@@ -29,6 +29,8 @@ The maintained commercial importer remains the entry for an original customer Wo
 | INDUSTRIAL_RECONCILIATION.md | Whole source/meaning intake, original Workshare phases and fee, Installation setup, operator/CLI/MCP workflow and independent complete receiving |
 | canadabuys-bidder-desk.json | Complete procurement source → reviewed capability/evidence/decision → original publication → editable independent customer receiving |
 | CANADABUYS_INSTALLATION.md | Original Workshare/source preparation, installed MCP customer, complete download/recovery and native Installation receiving |
+| canadabuys-source.mjs / canadabuys-commissioning.mjs | Complete native CanadaBuys package, selected Workshare revision and explicit phase/party/working-day mapping into the original Installation reader |
+| CANADABUYS_NATIVE_WORKSHARES.md | Native Workshare selection, complete local source preparation, existing-case save/export/receive and original owner handover |
 | supplier-catalogues.json | Complete supplier editions → selected customer import → full current recipient catalogue → customer receiving |
 | supplier-orders.json | Complete original order/profile/adapter → fulfilment and declared HTTPS → portable editable customer receiving |
 | source-inputs.py | Complete original packets and explicit effort sources → original native commissioning/packet formats |
@@ -42,6 +44,8 @@ Use the repository's maintained Linux/Node runtime. The preparation CLI uses Nod
 ## Discover the installed customer programmes
 
 For CanadaBuys procurement commissioning, select **canadabuys-bidder-desk** and follow [CANADABUYS_INSTALLATION.md](CANADABUYS_INSTALLATION.md). It carries the complete retained source, decision and installed customer workflow into the original Workshare/Installation; its actual execution status remains in the original receiving records.
+
+For a Workshare already saved in the native CanadaBuys application, use `starforge grant-installation-workorder canadabuys` and [CANADABUYS_NATIVE_WORKSHARES.md](CANADABUYS_NATIVE_WORKSHARES.md). Its complete original package and revision, currency/cents and effort remain intact. Explicit party, phase and working-day selections feed the existing Installation source reader and complete-case receiver in the actual owner's saved case.
 
 ~~~sh
 starforge grant-installation-workorder profiles
