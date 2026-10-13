@@ -538,4 +538,8 @@ def report(program, plan, records, sources, completionPlans=None, installationRe
     original_node = node_report({"sources": sources})
     if original_node is not None:
         result["delivery"]["nodeAccounting"] = original_node
+    from operations_settlement import report as merchant_settlement_report
+    original_merchant = merchant_settlement_report({"sources": sources, "records": records})
+    if original_merchant is not None:
+        result["merchantSettlements"] = original_merchant
     return result

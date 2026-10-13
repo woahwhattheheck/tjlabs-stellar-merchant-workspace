@@ -1,5 +1,6 @@
 // MIT. The complete original preparation workflow through typed merchant tools.
 import {MAX_RETAINED_CHUNK_BYTES} from '../../../../stellar-forge/mcp-merchant-operator/retained-file-contracts.mjs';
+import {preparationPipelineTools} from './pipeline-tools.mjs';
 const text=(max,min=1)=>({type:'string',minLength:min,maxLength:max});
 const integer=(min=0,max=Number.MAX_SAFE_INTEGER)=>({type:'integer',minimum:min,maximum:max});
 const choice=values=>({type:'string',enum:values});
@@ -15,6 +16,7 @@ const read={readOnly:true,idempotent:true};
 export function preparationWorkspaceTools(tool){
   const scoped=properties=>({workspace:alias,...properties});
   return [
+    ...preparationPipelineTools(tool),
     tool('merchant_preparation_status','List configured original workspaces and declared inputs/destinations, or inspect a connected workspace and its coherent state SHA.',
       scoped({}),[],read),
     tool('merchant_preparation_connect','Attach to the exact Applications-owned Python listener and its original workspace identity.',

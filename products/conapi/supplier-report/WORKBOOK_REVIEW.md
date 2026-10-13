@@ -212,3 +212,21 @@ The browser's original workspace adoption and the CLI's file adoption are distin
 - openpyxl, [Validating cells](https://openpyxl.readthedocs.io/en/stable/validation.html): native spreadsheet choice lists.
 
 The domain definitions are supplied by the maintained original `supplier-report.mjs` recovery core, SHA-256 `989dade5e1ae1a37d2a62b568e2e5f5f18efb0e531ad573304c8a30f242899bd`, and its original CLI/UI source contract. Any successor core is joined by the same cumulative product publisher.
+
+## Receiving the actual workbook cells
+
+The browser and CLI send the exact retained `returned.xlsx` through the original Python reader before adopting a receiving packet. The complete parsed return must equal the original operation input, including row identities, reviewer, decisions, corrections and file identity. Matching packet hashes alone do not replace this check. CLI apply also reparses the XLSX from its retained review directory; customer export uses the same checked receiving route. Set `CONAPI_WORKBOOK_PYTHON` for the existing installed Analysis environment, or use `--python` on workbook review, apply and receive. The pure `receiveWorkbookDelivery(packet, {readWorkbook})` adapter requires that existing reader callback and retains the original supplier decision/replay engine.
+
+## Complete original receiving continuation
+
+`tools/receive_review_workbook.mjs` runs sequentially inside the maintained Conapi programme. It uses the genuine completed `examples/elite-reimport-workspace.json` (65,289 bytes, SHA256 `4020b1ee82e66b7b25886159248c92b7a1ee5006bc7fc71f698844e61a8924b9`), keeping its original 23 unchanged rows and complete source. The copied receiving case records explicitly attributed exercise decisions; it does not rewrite the supplier’s captured prices or capture dates.
+
+Run with the actual installed dependencies and published complete-source commit:
+
+```sh
+node tools/receive_review_workbook.mjs --out /absolute/owned/workbook-operation --source-commit ACTUAL_COMMIT --node-modules /absolute/installed/node_modules --browser /absolute/installed/chromium --python /absolute/installed/python
+```
+
+An existing original local supplier server can be passed with `--url http://127.0.0.1:PORT/`; its served source bytes are compared before use. Otherwise the driver starts and closes the original CLI server once. It does not register a separate fleet job. A repeat invocation uses the same native state, source selection, browser profile and immutable outputs. Completed stage files are rechecked; a completed browser adoption is recovered from its retained original operation instead of creating another decision history. A packaging-only continuation reuses the final manifest without starting the application again.
+
+The connected flow downloads the actual XLSX through the browser, fills and sorts its original rows with the existing openpyxl installation, preserves two actual intervening native decisions, resolves the one overlapping return in the browser, and adopts the reviewed output through the original engine. It then receives the complete packet in a fresh browser, uses the four CLI workbook commands, preserves a later local decision on same-operation replay, exports the full original supplier customer folder, and loads the accepted SQL into a real SQLite receiver. The final ZIP includes source, original input, both XLSX files, exact review/operation, complete workspace history, customer files, screenshots and the result manifest. Python, Chromium and Playwright are reused from the equipped owner’s installation.

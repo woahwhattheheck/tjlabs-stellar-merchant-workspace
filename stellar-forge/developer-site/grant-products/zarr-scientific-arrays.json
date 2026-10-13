@@ -1,0 +1,124 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "zarr-scientific-arrays",
+  "heading": "## Scientific-array customer commissioning and complete receiving",
+  "sources": [
+    {
+      "id": "zarr-native-array-guide",
+      "label": "Original native Zarr array source and operating limits",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/README.md",
+      "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+      "editions": [
+        {
+          "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+          "git_blob": "99fe59b35f42d3c7c257e3d7717300605f811cfd",
+          "sha256": "4f27fb742a3b28c42247c33e229a4a62f9d4254eb63fe3fc0c31ed588c89864a",
+          "bytes": 14332
+        }
+      ]
+    },
+    {
+      "id": "zarr-array-workspace-guide",
+      "label": "Complete Zarr operator, publisher and receiving workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/WORKSPACE.md",
+      "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+      "editions": [
+        {
+          "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+          "git_blob": "28718e5f780dda32b3efdda8cef1130f3a83aa4b",
+          "sha256": "4c973a4f36ccba54ad9bbf0ee518508addb5a5359625ad4569d2ac96d5b8b790",
+          "bytes": 20355
+        }
+      ]
+    },
+    {
+      "id": "zarr-array-native-contract",
+      "label": "Original Zarr native command and operation contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/CLI_CONTRACT.json",
+      "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+      "editions": [
+        {
+          "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+          "git_blob": "824b816ff80c10d7ba400eb4abaf522dc840f3f1",
+          "bytes": 3655
+        }
+      ]
+    },
+    {
+      "id": "zarr-array-source-provenance",
+      "label": "Original Zarr engine, upstream arrays and source provenance",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/UPSTREAM.md",
+      "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+      "editions": [
+        {
+          "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+          "git_blob": "4cc6a71f91b64914994d8c2075f7136137cc7c9a",
+          "bytes": 6026
+        }
+      ]
+    },
+    {
+      "id": "zarr-array-merchant-receiving",
+      "label": "Complete original Zarr merchant and customer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/RECEIVING.md",
+      "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+      "editions": [
+        {
+          "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+          "git_blob": "73f522cecd73a1cd75dd3a920f70c1851b6c2a37",
+          "bytes": 15443
+        }
+      ]
+    },
+    {
+      "id": "zarr-customer-commissioning",
+      "label": "Scientific-array customer commissioning and delivery economics",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/developer-site/ZARR_CUSTOMER_COMMISSIONING.md",
+      "commit": "d901b45911a14df19acef842b43553ec0ee06653",
+      "editions": [
+        {
+          "commit": "d901b45911a14df19acef842b43553ec0ee06653",
+          "git_blob": "527608a5c3a6ce6cdb136898155518e5035f2790",
+          "sha256": "2fd0024c020ea995e61aa3282d5e5cee602fdb6a8cb74c34ab0178450b80b381",
+          "bytes": 14788
+        }
+      ]
+    },
+    {
+      "id": "zarr-customer-selection-workorder",
+      "label": "Editable original Brightband scientific source and delivery workorder",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/developer-site/zarr-customer-commissioning.json",
+      "commit": "d901b45911a14df19acef842b43553ec0ee06653",
+      "editions": [
+        {
+          "commit": "d901b45911a14df19acef842b43553ec0ee06653",
+          "git_blob": "b2a6de4841fdff86e0c9beff7f60512e8e6dea1a",
+          "sha256": "0bd238991c0c88d8e5e2506cbadab6a5fe5dd7c62b29227da9218c89062264a9",
+          "bytes": 8644
+        }
+      ]
+    },
+    {
+      "id": "brightband-ewb-scientific-agreement",
+      "label": "Original Brightband issued scientific case and acceptance definition",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "opportunities/brightband_ewb_receiving_2026/SCIENCE-AND-ACCEPTANCE.md",
+      "commit": "5eceeaacc2b65d7eef4331cf1c2508a2a15e15b9"
+    }
+  ]
+}

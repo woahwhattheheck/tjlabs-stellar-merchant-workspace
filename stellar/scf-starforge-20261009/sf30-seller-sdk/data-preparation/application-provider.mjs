@@ -11,7 +11,7 @@ export default{
   catalog({common,field}){return [{
     id:PREPARATION_APPLICATION_ID,command:'data-preparation-managed',title:'Data preparation',terminal:false,
     requiredSource:'stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/managed.mjs',
-    description:'Join original CSV and JSONL editions, run saved SQL, review complete results and deliver editable customer projects.',
+    description:'Retain original CSV and JSONL editions, run saved SQL and multistage pipelines, review complete results and reopen editable customer projects.',
     fields:[field('workspaceDirectory','Saved preparation workspace','path',true,
       'Private original directory created with data-preparation init or received from a complete project archive.'),...common],
   }];},

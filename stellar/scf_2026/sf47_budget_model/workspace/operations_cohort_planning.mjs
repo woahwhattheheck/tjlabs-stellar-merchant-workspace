@@ -72,7 +72,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   const sourceOptions=()=>{const values=new Map();for(const item of [...(state.latestSeed?.sources||[]),...(caseValue.sources||[])])values.set(item.id,item);return [...values.values()].map(item=>[item.id,item.filename+' · '+String(item.sha256||'').slice(0,12)]);};
   const inputMatchesReport=()=>Boolean(state.report&&plan()&&state.reportInput===JSON.stringify(plan()));
   function persist(critical=false){
-    const retained={};for(const key of ['schema','caseId','plan','report','reportInput','rowDrafts','lastEditorKey','selectedDate','caseRefreshReceipt','latestSeed','tranche','tab','editor','editorDraft','pending','accepted','priorDrafts','parentSourceId','savedSourceId','savedEnvelope','filter','pages','reportSection','importText','incomingCalendar','comparison','comparisonSelections','comparisonHistory','comparisonIncoming','comparisonSavedSourceId','comparisonMetric','schedulingResult','schedulingInput','schedulingEditorId'])retained[key]=state[key];
+    const retained={};for(const key of ['schema','caseId','plan','report','reportInput','rowDrafts','lastEditorKey','selectedDate','caseRefreshReceipt','latestSeed','tranche','tab','editor','editorDraft','pending','accepted','priorDrafts','parentSourceId','savedSourceId','savedEnvelope','filter','pages','reportSection','importText','incomingCalendar','comparison','comparisonSelections','comparisonHistory','comparisonIncoming','comparisonSavedSourceId','comparisonMetric','schedulingResult','schedulingInput','schedulingEditorId','schedulingOptions'])retained[key]=state[key];
     try{sessionStorage.setItem(storageKey,JSON.stringify(retained));state.storageWarning='';}catch(error){state.storageWarning='This browser could not retain the latest local draft. Download its JSON before closing this tab.';if(critical)throw new Error('The browser could not retain the exact source request before dispatch. Download the draft or free this site’s session storage, then save again. '+error.message);}
   }
   function controls(){
@@ -553,11 +553,11 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     payload.requestId=await mutationId('operations:'+caseId,payload);
     state.pending={payload,raw,editionId};persist(true);await sendPending();
   }
-  async function openDocument(document,{meta=null,raw=null}={}){
+  function openDocument(document,{meta=null,raw=null}={}){
     if(document?.schema===COHORT_DELIVERY_SCHEDULE_SCHEMA){
       const result=reopenCohortDeliverySchedule(document);
-      await openDocument(copy(result.candidate),{meta:null,raw:null});
-      state.schedulingResult=result;state.schedulingInput=JSON.stringify(result.sourceDocument?.plan||result.sourceDocument?.input||result.sourceDocument);
+      openDocument(copy(result.candidate),{meta:null,raw:null});
+      state.schedulingResult=result;state.schedulingOptions=schedulingOptionsFor(result);state.schedulingInput=JSON.stringify(result.sourceDocument?.plan||result.sourceDocument?.input||result.sourceDocument);
       captureSchedulingComparison(result);state.tab='scheduling';persist();return;
     }
     if(document?.schema===COHORT_PLAN_COMPARISON_SCHEMA){adoptComparison(document,{meta,raw});return;}
@@ -567,8 +567,15 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       if(meta){state.viewedSource={meta:copy(meta),raw:raw||JSON.stringify(document,null,2),envelope:document};state.tab='editions';state.notice='Opened the retained source document. Its original JSON remains available below.';return;}
       throw new Error('Select a cohort plan, saved edition, or complete cohort plan report JSON.');
     }
-    let report;
-    try{report=evaluateCohortPlan(copy(supplied),{nativeSeed:state.latestSeed?copy(state.latestSeed):undefined});}
+    let report,openedDelivery=null;
+    try{
+      report=evaluateCohortPlan(copy(supplied),{nativeSeed:state.latestSeed?copy(state.latestSeed):undefined});
+      if(envelope?.deliverySchedule){
+        openedDelivery=reopenCohortDeliverySchedule(envelope.deliverySchedule);
+        if(JSON.stringify(report.input)!==JSON.stringify(openedDelivery.candidate))
+          throw new Error('The saved allocation belongs to a different editable successor. Retain the complete original edition for review.');
+      }
+    }
     catch(error){
       if(meta){state.viewedSource={meta:copy(meta),raw:raw||JSON.stringify(document,null,2),envelope:document};state.tab='editions';state.notice='Opened the original source. This engine cannot recalculate that document: '+error.message;return;}
       throw error;
@@ -576,7 +583,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     rememberPrior(meta?'Opened source '+meta.id:'Imported plan JSON');
     state.plan=copy(supplied);state.report=report;state.reportInput=JSON.stringify(state.plan);state.tranche=Number(supplied.rule.target.tranche);
     state.parentSourceId=meta?.id||envelope?.parentSourceId||null;state.savedSourceId=meta?.id||null;state.savedEnvelope=envelope?copy(envelope):null;
-    if(envelope?.deliverySchedule){state.schedulingResult=reopenCohortDeliverySchedule(envelope.deliverySchedule);state.schedulingInput=JSON.stringify(state.schedulingResult.sourceDocument);captureSchedulingComparison(state.schedulingResult);}
+    if(openedDelivery){state.schedulingResult=openedDelivery;state.schedulingOptions=schedulingOptionsFor(openedDelivery);state.schedulingInput=JSON.stringify(openedDelivery.sourceDocument);captureSchedulingComparison(openedDelivery);}
     if(meta)state.viewedSource={meta:copy(meta),raw,envelope:document};
     state.editor=null;state.editorDraft=null;state.pages={};state.tab='report';
     state.notice=meta?'Opened the original plan from '+meta.filename+'. Current source differences are shown in the report.':'Imported the plan with its original source, rule, identities, and editable rows.';
@@ -596,18 +603,33 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     persist();onCalendarReceived(received.requestId);
   }
 
+  let planningReadSequence=0;
+  function planningFingerprint(){
+    return JSON.stringify([state.plan,state.parentSourceId,state.savedSourceId,state.editor,state.editorDraft,state.rowDrafts,
+      state.comparison,state.schedulingResult,state.schedulingOptions,state.pending,state.accepted]);
+  }
+  function receivePlanning(document,{meta=null,raw=null,origin={}}={},expected,sequence){
+    if(!available()||sequence!==planningReadSequence||planningFingerprint()!==expected){
+      comparisonState();state.comparisonIncoming.push({id:uid('planning-incoming'),planning:true,document:copy(document),
+        meta:meta?copy(meta):null,raw,origin:copy(origin),receivedAt:now()});
+      state.notice='The complete incoming plan is retained in Compare plans for explicit adoption; current edits remain selected.';persist();return;
+    }
+    openDocument(document,{meta,raw});
+  }
   async function openSaved(id){
+    const expected=planningFingerprint(),sequence=++planningReadSequence;
     const meta=caseValue.sources.find(row=>row.id===id);if(!meta)throw new Error('Refresh the case to select its retained source.');
     const raw=await readSource(meta);
     let parsed;try{parsed=JSON.parse(raw);}catch{throw new Error('The selected source is not a JSON document.');}
-    await openDocument(parsed,{meta,raw});
+    receivePlanning(parsed,{meta,raw,origin:{label:meta.filename,filename:meta.filename,sourceId:meta.id,sha256:meta.sha256}},expected,sequence);
   }
   function chooseFile(accept){return new Promise(resolve=>{const input=document.createElement('input');input.type='file';input.accept=accept;input.hidden=true;root.append(input);const finish=value=>{input.remove();resolve(value);};input.addEventListener('change',()=>finish(input.files?.[0]||null),{once:true});input.addEventListener('cancel',()=>finish(null),{once:true});input.click();});}
   async function importJson(){
+    const expected=planningFingerprint(),sequence=++planningReadSequence;
     const file=await chooseFile('.json,application/json');if(!file)return;
     if(file.size>8*1024*1024)throw new Error('Choose a plan, saved edition, or complete report JSON document no larger than 8 MiB.');
     const raw=await file.text();let parsed;try{parsed=JSON.parse(raw);}catch(error){throw new Error('The selected file is not valid JSON: '+error.message);}
-    await openDocument(parsed,{raw});
+    receivePlanning(parsed,{raw,origin:{filename:file.name,label:file.name,bytes:file.size}},expected,sequence);
   }
   function exportJson(){
     let report=null;try{report=evaluate();}catch(error){state.notice='Downloaded the editable draft; its report needs corrected inputs: '+error.message;}
@@ -974,9 +996,16 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     if(!plan())throw new Error('Open the complete customer-use plan first.');
     plan().deliveryScheduling=seedCohortDeliveryScheduling(plan());changed();
   }
+  function schedulingOptionsFor(result){
+    return result?.resolution?{method:'RESOLVE_CONFLICTS',maxSearchSteps:result.resolution.maxSearchSteps}:{method:'FIRST_FIT'};
+  }
+  function selectedSchedulingOptions(){
+    return copy(state.schedulingOptions||schedulingOptionsFor(state.schedulingResult));
+  }
   function schedulingMatches(){
     if(!state.schedulingResult||!plan())return false;
-    const current=JSON.stringify(plan());
+    const current=JSON.stringify(plan()),selected=selectedSchedulingOptions(),retained=schedulingOptionsFor(state.schedulingResult);
+    if(selected.method!==retained.method||selected.method==='RESOLVE_CONFLICTS'&&selected.maxSearchSteps!==retained.maxSearchSteps)return false;
     return current===state.schedulingInput||current===JSON.stringify(state.schedulingResult.candidate);
   }
   function schedulingApplied(){return Boolean(state.schedulingResult&&JSON.stringify(plan())===JSON.stringify(state.schedulingResult.candidate));}
@@ -986,6 +1015,10 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     return section('Delivery allocation',table(['Placement','Occurrences','Moved','Needs input','Capacity before','Capacity after'],[
       [esc(label(summary.status)),esc(summary.occurrences),esc(summary.moved),esc(summary.unresolved),esc(label(summary.capacityBefore)),esc(label(summary.capacityAfter))]
     ])+note(result.method)+
+      (result.resolution?table(['Reconsidered service groups','Placed groups','Revised dates','Search effort'],[[
+        esc(result.resolution.reconsideredGroups),esc(result.resolution.resolvedGroups),esc(result.resolution.revisedDates),
+        esc(result.resolution.visitedSteps)+' / '+esc(result.resolution.maxSearchSteps)
+      ]])+jsonDetail('Complete competing-date decisions',result.resolution):'')+
       table(['Original occurrence','Date / complete output','Effort / pool','Result','Constraint and decision'],page.rows.map(row=>[
         '<strong>'+esc(row.label)+'</strong><small>'+esc(row.occurrenceId)+'</small><small>Original cadence '+esc(row.sourceDate)+'</small>',
         esc(row.originalDate)+' → '+esc(row.date)+'<small>'+esc(row.plannedCompleteAt)+'</small>',
@@ -1006,8 +1039,14 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       btn('Set up delivery scheduling','scheduling-setup'));
     const settings=plan().deliveryScheduling, data=filteredRows('schedules');
     const policyById=new Map(settings.schedules.map((row,index)=>[row.scheduleId,{row,index}]));
-    const chosen=policyById.get(state.schedulingEditorId), result=state.schedulingResult, fresh=schedulingMatches();
+    const chosen=policyById.get(state.schedulingEditorId), result=state.schedulingResult, fresh=schedulingMatches(), allocationOptions=selectedSchedulingOptions();
     const listing=section('Service flexibility',
+      '<div class="cp-fields">'+
+      field('Allocation method','',allocationOptions.method,{options:[['FIRST_FIT','Original service order'],['RESOLVE_CONFLICTS','Resolve competing dates']],attrs:'data-cp-scheduling-option="method"'})+
+      (allocationOptions.method==='RESOLVE_CONFLICTS'?field('Search effort','',String(allocationOptions.maxSearchSteps),{
+        options:[['100000','Standard'],['1000000','Extended'],...([100000,1000000].includes(allocationOptions.maxSearchSteps)?[]:[[String(allocationOptions.maxSearchSteps),'Saved effort · '+allocationOptions.maxSearchSteps]])],
+        attrs:'data-cp-scheduling-option="maxSearchSteps"',help:'Revisit complete competing services; every accepted result keeps all their constraints and funding.'
+      }):'')+'</div>'+
       '<section data-cp-plan><div class="cp-fields">'+
       field('Date preference','deliveryScheduling.strategy',settings.strategy,{options:[['NEAREST','Nearest original service date'],['EARLIEST','Earliest permitted date']]})+
       field('Scheduling basis','deliveryScheduling.note',settings.note,{area:true,wide:true,help:'Retain the customer’s actual flexibility, deadline and staffing assumptions.'})+'</div></section>'+
@@ -1052,9 +1091,10 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   }
   function calculateScheduling(){
     ensureScheduling();
-    state.schedulingResult=scheduleCohortDelivery(copy(plan()),copy(plan().deliveryScheduling));
+    state.schedulingResult=scheduleCohortDelivery(copy(plan()),copy(plan().deliveryScheduling),selectedSchedulingOptions());
+    state.schedulingOptions=schedulingOptionsFor(state.schedulingResult);
     state.schedulingInput=JSON.stringify(plan());persist();
-    state.notice='Calculated every original occurrence against the entered service windows and shared capacity.';
+    state.notice=state.schedulingResult.resolution?'Reconsidered complete competing service groups and retained every original occurrence, capacity constraint and funding group.':'Calculated every original occurrence against the entered service windows and shared capacity.';
   }
   function captureSchedulingComparison(result){
     retainComparison('Opened the complete delivery scheduling comparison');
@@ -1109,6 +1149,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   root.addEventListener('input',event=>{
     const el=event.target;if(!editable())return;
     if(el.hasAttribute('data-cp-filter')){state.filter=el.value;return;}
+    if(el.dataset.cpSchedulingOption)return;
     if(el.dataset.cpComparisonSelect){comparisonState();state.comparisonSelections[el.dataset.cpComparisonSelect]=el.value;persist();return;}
     if(el.dataset.cpComparisonField){
       const key=el.dataset.cpComparisonField;if(!['title','note'].includes(key))return;
@@ -1126,6 +1167,15 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   });
   root.addEventListener('change',event=>{
     const el=event.target;if(!editable())return;
+    if(el.dataset.cpSchedulingOption){
+      const selected=selectedSchedulingOptions();
+      if(el.dataset.cpSchedulingOption==='method'&&['FIRST_FIT','RESOLVE_CONFLICTS'].includes(el.value)){
+        state.schedulingOptions=el.value==='FIRST_FIT'?{method:'FIRST_FIT'}:{method:'RESOLVE_CONFLICTS',maxSearchSteps:selected.maxSearchSteps||state.schedulingResult?.resolution?.maxSearchSteps||100000};
+      }else if(el.dataset.cpSchedulingOption==='maxSearchSteps'&&/^[1-9]\d*$/.test(el.value)&&Number(el.value)<=1000000){
+        state.schedulingOptions={method:'RESOLVE_CONFLICTS',maxSearchSteps:Number(el.value)};
+      }else return;
+      state.notice='Calculate the selected allocation method before adopting its delivery dates.';persist();render();return;
+    }
     if(el.hasAttribute('data-cp-comparison-metric')){if(metrics.includes(el.value)){state.comparisonMetric=el.value;persist();render();}return;}
     if(el.dataset.cpComparisonSelect){comparisonState();state.comparisonSelections[el.dataset.cpComparisonSelect]=el.value;persist();return;}
     if(el.dataset.cpControl&&state.editor)switchControl(el);
@@ -1189,7 +1239,8 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       }
       if(action==='comparison-adopt'){
         const entry=state.comparisonIncoming?.find(row=>row.id===target.dataset.id);if(!entry)return;
-        if(entry.comparison)adoptComparison(entry.document);
+        if(entry.planning)openDocument(entry.document,{meta:entry.meta||null,raw:entry.raw||null});
+        else if(entry.comparison)adoptComparison(entry.document);
         else replaceComparisonSide(entry.side,entry.document,entry.origin);
         state.comparisonIncoming=state.comparisonIncoming.filter(row=>row.id!==entry.id);return;
       }

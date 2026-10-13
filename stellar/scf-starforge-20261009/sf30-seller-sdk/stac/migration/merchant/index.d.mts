@@ -117,12 +117,21 @@ export interface MigrationWorkbookSource {
   schema: "starforge.gis-migration-workbook-source.v1";
   registerBase64: string; workbookBase64: string; filename?: string;
 }
+export interface MigrationMappingWorkbookExport {
+  schema: "starforge.gis-migration-mapping-workbook-export.v1";
+  workspaceId: string; workspaceRevision: number; planId: string; captureId: string;
+  file: MigrationDeclaredFile; bundleBase64: string; files: MigrationDeclaredFile[];
+  rows: { fields: number; layers: number; keys: number; projects: number };
+  review: MigrationValue;
+  build: { sheets: { name: string; rows: number }[]; longTextParts: number; sourceChoices: number; proposedEdits: number };
+}
 export interface MigrationNativeArguments {
   state: Record<string, never>;
   records: MigrationPaging & { kind: MigrationRecordKind };
   document: { kind: string; id: string };
   draft: { captureId: string; predecessorPlanId?: string };
   "mapping-register": { planId: string };
+  "mapping-workbook": { planId: string };
   "workbook-propose": { source: MigrationWorkbookSource };
   'source-rows': MigrationPaging & { captureId: string; layerId: string };
   issues: MigrationPaging & { planId: string; layerId?: string; kind?: string };
@@ -241,6 +250,7 @@ export interface MigrationToolArguments {
     predecessorPlanId?: string;
   };
   "merchant_migration_mapping_register": { workspace: string; planId: string; };
+  "merchant_migration_mapping_workbook": { workspace: string; planId: string; };
   "merchant_migration_workbook_propose": { workspace: string; sourceJson: string; };
   "merchant_migration_source_rows": {
     workspace: string;
@@ -485,6 +495,7 @@ export interface MigrationToolResults {
   "merchant_migration_document": MigrationNativeTask & WorkspaceSelection;
   "merchant_migration_draft": MigrationNativeTask & WorkspaceSelection;
   "merchant_migration_mapping_register": MigrationNativeTask & WorkspaceSelection;
+  "merchant_migration_mapping_workbook": MigrationNativeTask<MigrationMappingWorkbookExport> & WorkspaceSelection;
   "merchant_migration_workbook_propose": MigrationNativeTask & WorkspaceSelection;
   "merchant_migration_source_rows": MigrationNativeTask & WorkspaceSelection;
   "merchant_migration_issues": MigrationNativeTask & WorkspaceSelection;

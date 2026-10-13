@@ -61,6 +61,7 @@ export interface CentralRowsPage {rows:RecordValue[];next:string|null;[key:strin
 export interface CentralResourcesPage {resources:RecordValue[];next:number|null;[key:string]:unknown}
 export interface CentralWorkspace {
   directory:string;
+  formReleases?:import('./release-review/index.mjs').CentralFormReleaseReview;
   state():CentralState;
   connect(input:CentralConnectionInput):Awaitable<RecordValue>;
   projects(input:{connectionId:string}):Awaitable<unknown>;
@@ -102,6 +103,7 @@ export interface CentralExtensionStore {
   writeRecord<T extends RecordValue>(kind:string,id:string,value:T,expectedRevision?:number):T;
   transaction<T>(operation:()=>T):T;
   retain(body:Uint8Array|string):Promise<{sha256:string;bytes:number}>;
+  retainStream(body:AsyncIterable<Uint8Array>|Iterable<Uint8Array>):Promise<{sha256:string;bytes:number}>;
   raw(hash:string):Promise<Uint8Array>;
   resource(captureId:string,key:string):RecordValue|null;
   saveResource(captureId:string,key:string,kind:string,receipt:RecordValue):RecordValue;
@@ -202,12 +204,15 @@ export interface CentralManagedOptions {
   commissioningConnection?:CentralCommissioningConnectionInput;
   commissioningConnectionFile?:string;commissioningEnvironmentFile?:string;
   warehouseProfiles?:CentralWarehouseProfileInput[];warehouseProfilesFile?:string;
+  formAuthoring?:import('./release-review/index.mjs').CentralFormAuthoring;
 }
 export interface ManagedCentralWorkspace extends CentralServer {
   workspace:CentralWorkspace;operator:string;connection:{path:string;sha256:string;bytes:number;value:CentralConnectionValue};
   instanceId:string;restored:RestoreCentralResult|null;commissioning:CentralCommissioning;
   commissioningUrl:string;warehouse:CentralWarehouse;warehouseUrl:string;
-  warehouseProfilesSha256:string|null;close():Promise<void>;
+  warehouseProfilesSha256:string|null;
+  formReleases:import('./release-review/index.mjs').CentralFormReleaseReview;formReleasesUrl:string;
+  close():Promise<void>;
 }
 export function centralManagedOptions(argv:string[]):CentralManagedOptions;
 export function startManagedCentralWorkspace(options:CentralManagedOptions):Promise<ManagedCentralWorkspace>;
@@ -569,7 +574,9 @@ export interface OpenCentralWarehouse {
 }
 export interface OpenCentralWarehouseOptions {
   directory:string;connection?:CentralCommissioningConnectionInput;profiles?:CentralWarehouseProfileInput[];
-  fetchImpl?:typeof fetch;
+  fetchImpl?:typeof fetch;extraExtensions?:CentralServerExtension[];
+  extend?:(context:{workspace:CentralWorkspace;store:CentralExtensionStore;
+    commissioning:CentralCommissioning;warehouse:CentralWarehouse})=>Awaitable<unknown>;
 }
 export function openCentralWarehouse(options:OpenCentralWarehouseOptions):Promise<OpenCentralWarehouse>;
 export interface ServedCentralWarehouse extends OpenCentralWarehouse {
@@ -582,3 +589,5 @@ export function serveCentralWarehouse(options:OpenCentralWarehouseOptions&{
 export function runCentralWarehouseCli(argv?:string[]):Promise<unknown>;
 export function inspectCentralWarehouse(connection:CentralConnection,options?:CentralRequestOptions):Promise<CentralWarehouseState>;
 export const CENTRAL_WAREHOUSE_READ_ACTIONS:Set<CentralWarehouseAction>,CENTRAL_WAREHOUSE_ACTIONS:Set<CentralWarehouseAction>;
+
+export * from './release-review/index.mjs';

@@ -1,0 +1,38 @@
+{
+  "schema": "tjlabs.blockrun-usage-capture.v1",
+  "selection": {
+    "accountReference": "example-platform-account",
+    "keyReference": "example-reviewed-key",
+    "from": "2026-10-10T00:00:00.000Z",
+    "to": "2026-10-11T00:00:00.000Z",
+    "limit": 3
+  },
+  "pages": [
+    {
+      "cursor": null,
+      "requestUrl": "https://api.blockrun.ai/v1/usage?from=2026-10-10T00%3A00%3A00.000Z&to=2026-10-11T00%3A00%3A00.000Z&limit=3",
+      "status": 200,
+      "capturedAt": "2026-10-13T01:00:00.000Z",
+      "responseText": "{\"object\":\"list\",\"data\":[{\"request_id\":\"example-correction\",\"timestamp\":\"2026-10-10T23:40:00.000Z\",\"endpoint\":\"/v1/chat/completions\",\"model\":\"example-selected-model\",\"job_id\":null,\"job_status\":null,\"kind\":\"chat\",\"input_tokens\":20,\"output_tokens\":10,\"cost_usd\":-0.0023,\"cost_state\":\"priced\",\"status\":200,\"correction_of\":\"example-chat-1\"},{\"request_id\":\"example-media-complete\",\"timestamp\":\"2026-10-10T23:30:00.000Z\",\"endpoint\":\"/v1/images/generations/example-media-1\",\"model\":\"example-selected-model\",\"job_id\":\"example-media-1\",\"job_status\":\"completed\",\"kind\":\"service\",\"input_tokens\":20,\"output_tokens\":10,\"cost_usd\":0.024,\"cost_state\":\"priced\",\"status\":200,\"correction_of\":null},{\"request_id\":\"example-media-poll\",\"timestamp\":\"2026-10-10T23:20:00.000Z\",\"endpoint\":\"/v1/images/generations/example-media-1\",\"model\":\"example-selected-model\",\"job_id\":\"example-media-1\",\"job_status\":\"in_progress\",\"kind\":\"service\",\"input_tokens\":20,\"output_tokens\":10,\"cost_usd\":0,\"cost_state\":\"free\",\"status\":200,\"correction_of\":null}],\"next_cursor\":\"example-next-page\",\"unavailable_days\":[]}"
+    },
+    {
+      "cursor": "example-next-page",
+      "requestUrl": "https://api.blockrun.ai/v1/usage?from=2026-10-10T00%3A00%3A00.000Z&to=2026-10-11T00%3A00%3A00.000Z&limit=3&cursor=example-next-page",
+      "status": 200,
+      "capturedAt": "2026-10-13T01:00:01.000Z",
+      "responseText": "{\"object\":\"list\",\"data\":[{\"request_id\":\"example-chat-2\",\"timestamp\":\"2026-10-10T23:00:00.000Z\",\"endpoint\":\"/v1/chat/completions\",\"model\":\"example-selected-model\",\"job_id\":null,\"job_status\":null,\"kind\":\"chat\",\"input_tokens\":20,\"output_tokens\":10,\"cost_usd\":0.000000000000000001,\"cost_state\":\"priced\",\"status\":200,\"correction_of\":null},{\"request_id\":\"example-media-create\",\"timestamp\":\"2026-10-10T22:40:00.000Z\",\"endpoint\":\"/v1/images/generations\",\"model\":\"example-selected-model\",\"job_id\":\"example-media-1\",\"job_status\":\"queued\",\"kind\":\"service\",\"input_tokens\":20,\"output_tokens\":10,\"cost_usd\":0,\"cost_state\":\"free\",\"status\":202,\"correction_of\":null},{\"request_id\":\"example-chat-1\",\"timestamp\":\"2026-10-10T22:30:00.000Z\",\"endpoint\":\"/v1/chat/completions\",\"model\":\"example-selected-model\",\"job_id\":null,\"job_status\":null,\"kind\":\"chat\",\"input_tokens\":20,\"output_tokens\":10,\"cost_usd\":0.0064,\"cost_state\":\"priced\",\"status\":200,\"correction_of\":null}],\"next_cursor\":null,\"unavailable_days\":[]}"
+    }
+  ],
+  "summary": {
+    "requestUrl": "https://api.blockrun.ai/v1/usage/summary?from=2026-10-10T00%3A00%3A00.000Z&to=2026-10-11T00%3A00%3A00.000Z",
+    "status": 200,
+    "capturedAt": "2026-10-13T01:00:02.000Z",
+    "responseText": "{\"object\":\"usage_summary\",\"window\":{\"from\":\"2026-10-10T00:00:00.000Z\",\"to\":\"2026-10-11T00:00:00.000Z\",\"preset\":null,\"timezone\":\"UTC\",\"day_aligned\":true},\"totals\":{\"usd\":0.028100000000000001,\"calls\":3,\"tokens\":90,\"unpriced_calls\":0},\"per_day\":[],\"per_model\":[],\"per_endpoint\":[],\"per_key\":[],\"unavailable_days\":[],\"counted_through\":null}"
+  },
+  "credits": {
+    "requestUrl": "https://api.blockrun.ai/v1/credits",
+    "status": 200,
+    "capturedAt": "2026-10-13T01:00:03.000Z",
+    "responseText": "{\"object\":\"credit_balance\",\"account_id\":\"example-native-account\",\"billing_mode\":\"ungated\",\"currency\":\"USD\",\"granted_usd\":0,\"spent_usd\":0.028100000000000001,\"remaining_usd\":null,\"blocked\":false,\"blocked_reason\":null}"
+  }
+}

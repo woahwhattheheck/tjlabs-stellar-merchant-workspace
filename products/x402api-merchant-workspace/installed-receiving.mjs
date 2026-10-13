@@ -612,9 +612,35 @@ async function receive() {
   const connectingAt = Date.now();
   for (;;) {
     stopped(); const current = await applicationView(applicationId);
+    const failed = ['FAILED','INTERRUPTED'].includes(current.adoption?.phase);
+    const timedOut = Date.now() - connectingAt >= 120000;
+    if (current.release || failed || timedOut) {
+      // Keep the exact original operation projection, including state.result
+      // and state.error, before a guard or local receipt failure can unwind.
+      // The ordinary command-result projection can be null for managed-adopt.
+      const observation = { schema: 'stellar-forge.merchant-managed-adoption-observation.v1',
+        operation: OPERATION, sourceCommit: values['source-commit'], observedAt: new Date().toISOString(),
+        applicationId, runtimeDirectory: RUNTIME, applicationsDirectory: APPLICATIONS,
+        adoption: current.adoption ?? null };
+      const bytes = Buffer.from(encoding(observation)), digest = sha(bytes);
+      const receiptPath = join(ROOT, 'managed-adoption', digest + '.json');
+      await retainCompleted('original-managed-adoption-observation',
+        () => save(receiptPath, bytes, { original: true }));
+      const adoption = observation.adoption, nativeResult = adoption?.state?.result ?? adoption?.result ?? null;
+      const error = adoption?.state?.error ?? adoption?.result?.error ?? null;
+      const short = (value, maximum) => typeof value === 'string' ?
+        value.replace(/[\u0000-\u001f\u007f]/g, ' ').slice(0, maximum) : null;
+      emit({ state: 'ORIGINAL_MANAGED_ADOPTION_OBSERVED', applicationId,
+        adoptionId: adoption?.id ?? null, phase: short(adoption?.phase, 64), active: adoption?.active === true,
+        workerPhase: short(adoption?.state?.phase, 64),
+        nativeResultPresent: nativeResult !== null, nativeResultState: short(nativeResult?.state, 64),
+        error: error ? { code: short(error.code, 120), message: short(error.message, 600) } : null,
+        receiptPath, receiptSha256: digest });
+      stopped();
+    }
     if (current.release) break;
-    assert(!['FAILED','INTERRUPTED'].includes(current.adoption?.phase), 'Use the original adoption Retry/Resume with its retained result.');
-    assert(Date.now() - connectingAt < 120000, 'The original managed adoption has not returned.');
+    assert(!failed, 'Use the original adoption Retry/Resume with its retained result.');
+    assert(!timedOut, 'The original managed adoption has not returned.');
     await pause(200);
   }
   const firstPath = join(ROOT, 'browser-complete.json');

@@ -15,7 +15,20 @@ starforge carbon-native-receiving inspect-source --source-root /absolute/new-car
 
 `source` uses the maintained bootstrap to validate every complete part, file identity and the whole original handover before it writes a new private directory. `inspect-source` rereads all manifest files, checks exact bytes and Git identities, and checks the whole customer handover. Its returned manifest identity is retained with the run.
 
-Source, output and archive destinations preserve existing work. Select new source and output directories, and an archive outside both. Use the same original capture checkpoint and matching selection for recovery, with a new output directory for the next attempt.
+Source, output and archive destinations preserve existing work. Select new source and output directories, and an archive outside both. Continue a saved receiving output with `--resume-from` and the current source packet as described below. Its completed accounting draft and reporting stages are reused in a new continuation output.
+
+## Prepare the original SDK and historical inputs
+
+When the host already resolves a compatible installed Stellar SDK, pass that existing module directly. The maintained `sdk` command can also prepare the original published standalone SDK bundle with its complete npm metadata and original license. It checks the bundle's published identity, preserves its original bytes, creates the native adapter, loads the actual required exports and retains the full result in `sdk-runtime.json`.
+
+```sh
+starforge carbon-native-receiving sdk --bundle /absolute/original-downloads/stellar-sdk-16.3.1-original.min.js --metadata /absolute/new-carbon-source/receiving/sdk-originals/stellar-sdk-16.3.1-original-npm-metadata.json --output /absolute/new-carbon-source/receiving/stellar-sdk-16.3.1
+starforge carbon-native-receiving archive-inputs --source-root /absolute/new-carbon-source --source-manifest /absolute/original-downloads/givecredit-public-source-manifest-20261012.json --ledger-json /absolute/original-downloads/givecredit-original-ledger-51890145-transactions.json --ledger-json /absolute/original-downloads/givecredit-original-ledger-51890864-transactions.json --sdk-module /absolute/new-carbon-source/receiving/stellar-sdk-16.3.1/stellar-sdk-16.3.1.mjs --output /absolute/new-carbon-source/receiving/public-ledger-inputs
+```
+
+Use each result's actual `sdkModule` and `captureOptions` paths for the full `run`. SDK output and historical-input output must be new directories. Inspect existing `sdk-runtime.json`, `archive-inputs.json` and `capture-options.json` before selecting a recovery path. The historical command checks the whole source closure, then imports the source packet's own original input reader. Every repeated `--ledger-json` value is retained in order. Its returned counts and hashes come from decoding the supplied complete original ledger records.
+
+The package carries the SDK preparer declaration, original npm and distribution metadata, full license and `SDK_RUNTIME.md`. The SDK guide gives the pinned public bundle URL and its exact original file integrity. `./carbon-native-receiving/sdk-runtime` is its typed package export.
 
 ## Operate the complete desks
 
@@ -34,7 +47,8 @@ Add original inputs as needed:
 | Existing complete ledger edition | `--ledger-source /absolute/original-ledger.json` |
 | Authorized complete registry edition | `--registry-source /absolute/original-registry.json` |
 | Original ledger capture selection | `--capture-options /absolute/capture-options.json` |
-| Interrupted original capture | `--capture-checkpoint /absolute/prior-run/givecredit-ledger-capture-checkpoint.json` |
+| Preserved receiving output | `--resume-from /absolute/preserved-run/operated` |
+| Explicit matching capture checkpoint | `--capture-checkpoint /absolute/prior-run/givecredit-ledger-capture-checkpoint.json` |
 | Customer statement period | `--from YYYY-MM-DD --before YYYY-MM-DD` |
 | Closed delivery archive | `--archive-path /absolute/sibling/carbon-native.tar.gz` |
 | Reopen the received desks afterward | `--keep-open` |
@@ -42,6 +56,25 @@ Add original inputs as needed:
 The statement period includes its start and excludes its end. Capture selection and original relation closure remain in the capture options; statement dates do not silently trim the acquired original source.
 
 Historical acquisition can use the complete retained public ledger payloads prepared by the maintained `prepare-ledger-inputs.mjs` reader. That reader preserves whole original provider bodies, uses the existing SDK to derive the actual matching envelopes, and writes the original capture options. Its guide and native types are carried in the same component. The typed package export `./carbon-native-receiving/archive-inputs` exposes `prepareArchiveInputs`; pass its returned capture-options path to this run.
+
+## Continue a preserved receiving run
+
+Select the original operated directory containing its complete `receiving.json`, workspaces, report files and capture checkpoint. If a recovery archive was restored at a different absolute path, use that actual restored output directory. The recorded original output and source paths remain in the provenance.
+
+Receive the current complete source packet first. Its source manifest declares `capabilities.resumeFrom: "preserved-output-v1"`, and `inspect-source` returns that capability together with the whole source identity. This prevents an older caller from accepting the recovery argument and starting its accounting work again.
+
+```sh
+starforge carbon-native-receiving inspect-source --source-root /absolute/current-carbon-source
+starforge carbon-native-receiving run --source-root /absolute/current-carbon-source --resume-from /absolute/preserved-run/operated --output /absolute/new-carbon-continuation --chromium /absolute/existing/chromium --sdk-module /absolute/existing/stellar-sdk.mjs --archive-path /absolute/carbon-continuation.tar.gz --actor "Native receiving operator"
+```
+
+The runtime copies and reopens the saved closed workspaces, verifies their original source and report bindings, reuses completed stage results and the existing accounting draft, and continues the unfinished GiveCredit intake and remaining browser, receiving, reopen and archive work. The original operated directory is preserved. Keep the selected actual accounting directory and customer binding when supplying accounting options; the continuation reuses the completed original case.
+
+The saved matching capture checkpoint is selected by default. `--capture-checkpoint` can choose another complete checkpoint for that same original capture selection. Keep its complete original source inputs available, including any retained historical ledgers; a checkpoint cannot substitute a different query or source edition.
+
+Before starting, the launcher reads the preserved receipt and matching invocation records. It compares the recorded host, boot identity, PID and native process start time with the current host. An actually observed running source operation returns `RESUME_RUNNING` so its existing owner can continue that process. Restored receipts from another host and legacy receipts without process identity retain that observation as unknown. The launcher records the original receipt's full byte count and SHA256, original locations and process observations in the new sibling invocation, and checks that the receipt is unchanged before launching.
+
+The new output, archive and sidecar paths must be separate from the preserved output. The current source is also separate. `status` returns the saved `resume` relationship alongside the continuation's stages and final archive state.
 
 ## Join the maintained accounting case
 
@@ -80,7 +113,7 @@ Move the entire archive and its descriptor through the host's existing durable f
 
 ## Native client
 
-The installation exposes typed package subpaths `./carbon-native-receiving` and `./carbon-native-receiving/client`. `CarbonNativeReceivingClient` provides `receiveSource`, `inspectSource`, `start`, `run`, `status` and `verify`.
+The installation exposes typed package subpaths `./carbon-native-receiving` and `./carbon-native-receiving/client`. `CarbonNativeReceivingClient` provides `receiveSource`, `inspectSource`, `prepareSdk`, `prepareLedgerInputs`, `start`, `run`, `status` and `verify`.
 
 ```js
 const client = new CarbonNativeReceivingClient();

@@ -6,6 +6,11 @@ rule editions, saved evaluations, decisions and report documents from the instal
 application, the command line and the merchant MCP connection. The resulting delivery
 also includes the complete editable workspace and source package.
 
+Use the [selected product package](SELECTED_PACKAGE.md) for the original source
+inventory, pinned builder and resumable package operation. Build from the same
+published source commit used by the selected package, and retain its complete
+archive and identity for this installed journey.
+
 The installed continuation belongs to
 `OPENLINEAGE-INSTALLED-QUALITY-E496-20261012`. Its input is the complete export and
 native result from `OPENLINEAGE-DATASET-QUALITY-9EEA-20261012`. The original Quality
