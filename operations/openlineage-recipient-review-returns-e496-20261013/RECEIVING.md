@@ -64,11 +64,11 @@ The complete final workspace is exported through the original client, downloaded
 
 The journal is source/input-bound and written atomically after each retained output. Different existing output is never overwritten. Files are named by their complete SHA-256 so resuming a changed screenshot or working-copy timestamp preserves both full versions. Export records are retained before transfer, allowing the unchanged original client to resume its range download.
 
-A completed receiver reopens its original result, all retained files and the actual independent workspace without dispatching another recipient operation. A partial receiver reconciles original pending requests and accepted native records. Browser-local draft loss does not authorize a replacement request: the actual accepted records contain every original request field, and the native journal checks exact replay.
+A completed receiver reopens its original result and all retained files, verifies the actual independent directory's received.json package and payload binding, and compares every received application and object file byte-for-byte with the complete original export before accepting its saved workspace state. It preserves the original installation identity and does not dispatch another recipient operation. A partial receiver reconciles original pending requests and accepted native records. Browser-local draft loss does not authorize a replacement request: the actual accepted records contain every original request field, and the native journal checks exact replay.
 
 This module expects the existing operation owner to serialize mutations in this workspace. It verifies the original revision increased by exactly two and original unrelated data stayed identical. Other legitimate work can continue before or after this original course, but should not race its saved baseline.
 
-Native receiveBundle retains its established complete source contract. If an independent receiving already exists, it is reused only when received.json binds the exact complete export. A different existing directory is preserved. The module does not clean another operation's staging or change a receiver's chosen source.
+Native receiveBundle retains its established complete source contract. Before importing the received store, a new or existing independent receiving must have the original received.json package/payload binding and every complete application and object byte from that export. A different existing directory is preserved. The module does not clean another operation's staging or change a receiver's chosen source.
 
 ## Actual product inspection
 
