@@ -9,11 +9,13 @@ import {execFileSync} from 'node:child_process';
 const args=process.argv.slice(2),option=name=>{const i=args.indexOf(name);return i<0?null:args[i+1];};
 const input=JSON.parse(await readFile(option('--context'),'utf8')),mode=option('--mode')||'operate';
 const portfolioMode=mode==='portfolio'||mode==='portfolio-cold';
-const financingMode=mode==='financing'||mode==='financing-cold';
+const financingHandoverMode=mode==='financing-handover'||mode==='financing-handover-cold';
+const financingColdMode=mode==='financing-cold'||mode==='financing-handover-cold';
+const financingMode=mode==='financing'||mode==='financing-cold'||financingHandoverMode;
 if(financingMode){assert.ok(input.financing?.input&&typeof input.financing.directory==='string','Retain the complete original financing input and receiving directory');assert.equal(input.financing.input.browserPlacement,'isolated-cloud');assert.equal(new URL(input.baseUrl).origin,input.financing.input.origin);}
 assert.match(input.caseId,/^operation-[a-f0-9]{32}$/);
 assert.match(input.asOfDate,/^\d{4}-\d{2}-\d{2}$/);
-const root=resolve(input.directory),out=join(root,financingMode?(mode==='financing-cold'?'browser-financing-cold':'browser-financing'):portfolioMode?(mode==='portfolio-cold'?'browser-portfolio-cold':'browser-portfolio'):(mode==='cold'?'browser-cold':'browser'));
+const root=resolve(input.directory),out=join(root,financingMode?(financingHandoverMode?'browser-'+mode:(financingColdMode?'browser-financing-cold':'browser-financing')):portfolioMode?(mode==='portfolio-cold'?'browser-portfolio-cold':'browser-portfolio'):(mode==='cold'?'browser-cold':'browser'));
 const exportsDirectory=join(out,'exports');
 await mkdir(exportsDirectory,{recursive:true,mode:0o700});
 const json=value=>JSON.stringify(value,null,2)+'\n';
@@ -28,7 +30,7 @@ async function native(path,{binary=false}={}){
   if(!response.ok)throw new Error('Original native read '+path+' returned '+response.status+': '+(await response.text()).slice(0,1000));
   return binary?Buffer.from(await response.arrayBuffer()):response.json();
 }
-const progressPath=join(root,financingMode?(mode==='financing-cold'?'browser-financing-cold-progress.json':'browser-financing-progress.json'):portfolioMode?(mode==='portfolio-cold'?'browser-portfolio-cold-progress.json':'browser-portfolio-progress.json'):(mode==='cold'?'browser-cold-progress.json':'browser-progress.json'));
+const progressPath=join(root,financingMode?(financingHandoverMode?'browser-'+mode+'-progress.json':(financingColdMode?'browser-financing-cold-progress.json':'browser-financing-progress.json')):portfolioMode?(mode==='portfolio-cold'?'browser-portfolio-cold-progress.json':'browser-portfolio-progress.json'):(mode==='cold'?'browser-cold-progress.json':'browser-progress.json'));
 let progress=await exists(progressPath)?JSON.parse(await readFile(progressPath,'utf8')):
   {schema:'stellar-forge.sf47-case-workbook-browser.v1',operationId:input.operationId,caseId:input.caseId,planId:input.planId,asOfDate:input.asOfDate,startedAt:stamp(),phases:{},files:{}};
 assert.equal(progress.caseId,input.caseId);assert.equal(progress.planId,input.planId);assert.equal(progress.asOfDate,input.asOfDate);
@@ -43,7 +45,7 @@ async function phase(name,work){
 const modulePath=process.env.SF47_PLAYWRIGHT_MODULE||'/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.js';
 const chrome=process.env.SF47_CHROMIUM||'/workspace/scratch/705ebf077387/browser-runtime/chrome-headless-shell-linux64/chrome-headless-shell';
 const {chromium}=await import(pathToFileURL(modulePath).href);
-const browser=await chromium.launchPersistentContext(join(root,portfolioMode?'portfolio-browser-profile':((mode==='cold'||mode==='financing-cold')?'cold-browser-profile':'browser-profile')),{
+const browser=await chromium.launchPersistentContext(join(root,portfolioMode?'portfolio-browser-profile':((mode==='cold'||financingColdMode)?'cold-browser-profile':'browser-profile')),{
   executablePath:chrome,headless:true,viewport:{width:1440,height:1000},acceptDownloads:true,
   args:['--no-sandbox','--disable-dev-shm-usage']});
 const page=browser.pages()[0]||await browser.newPage();
@@ -253,9 +255,23 @@ try{
       assert.equal(declared.origin,input.financing.input.origin);
       await page.goto(declared.href,{waitUntil:'domcontentloaded'});
     }
-    const {receiveFinancingOptions,inspectFinancingOptions}=await import('./forecast-financing-receiving.mjs');
+    const {receiveFinancingOptions,inspectFinancingOptions,receiveFinancingHandover,inspectFinancingHandover}=await import('./forecast-financing-receiving.mjs');
     await mkdir(resolve(input.financing.directory),{recursive:true,mode:0o700});
-    if(mode==='financing-cold'){
+    if(financingHandoverMode){
+      assert.ok(input.financing.priorResult&&input.financing.handoverInput,'Retain exact completed financing result and separate handover input');
+      const priorResult=JSON.parse(await readFile(input.financing.priorResult,'utf8'));
+      const artifactPage=await browser.newPage();
+      let primaryError=null;
+      try{
+        const args={page,artifactPage,directory:input.financing.directory,input:input.financing.input,priorResult,handoverInput:input.financing.handoverInput};
+        if(mode==='financing-handover-cold'){
+          assert.ok(input.financing.priorHandoverResult,'Retain the first complete handover result');
+          const priorHandoverResult=JSON.parse(await readFile(input.financing.priorHandoverResult,'utf8'));
+          await inspectFinancingHandover({...args,priorHandoverResult,programId:input.caseId});
+        }else{assert.equal(input.caseId,input.financing.input.programId);await receiveFinancingHandover(args);}
+      }catch(error){primaryError=error;throw error;}
+      finally{try{await artifactPage.close();}catch(error){if(!primaryError)throw error;}}
+    }else if(mode==='financing-cold'){
       assert.ok(input.financing.priorResult,'Retain the first complete financing result');
       const priorResult=JSON.parse(await readFile(input.financing.priorResult,'utf8'));
       await inspectFinancingOptions({page,directory:input.financing.directory,input:input.financing.input,priorResult,programId:input.caseId});
