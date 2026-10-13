@@ -30,7 +30,9 @@ export async function openNativeCollectionDeliveryClient(options={}){
   preview:(request,context)=>call('preview',request,context),
   prepare:(request,context)=>call('prepare',request,context),
   inspect:(id,context)=>call('inspect',{id},context),
-  received:(sha256,range={},context)=>call('received',{sha256,...range},context)});
+  received:(sha256,range={},context)=>call('received',{sha256,...range},context),
+  receivedHistory:(range={},context)=>call('received-list',range,context),
+  receivedPackage:(sha256,context)=>call('received-package',{sha256},context)});
 }
 export function checkedDeliveryRange(value,{bytes:total,sha256,byteOffset,maxBytes}){
  need(value?.verifiedSavedFile===true&&value.encoding==='base64'&&value.bytes===total&&value.sha256===sha256&&

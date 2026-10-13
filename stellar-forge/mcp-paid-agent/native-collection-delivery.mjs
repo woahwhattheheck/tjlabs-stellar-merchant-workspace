@@ -10,6 +10,7 @@ import {initializationDirectory as privateDirectory,initializationBytes as priva
 import {need,InputError} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/config.mjs';
 import {collectionsWorkspaceUrl,COLLECTIONS_WORKSPACE_LAUNCH_SCHEMA,COLLECTION_RECOVERY_WORKSPACE_LAUNCH_SCHEMA}
  from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/launch.mjs';
+import {openCustomerDelivery} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/delivery/model.mjs';
 import {selectSource} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/delivery/source.mjs';
 import {SCHEMA as PACKAGE,MAX_PACKAGE,inspectPackage,measure,identity}
  from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/delivery/format.mjs';
@@ -19,6 +20,7 @@ export {nativeCollectionDeliveryActions,nativeCollectionDeliverySchema} from './
 
 export const DELIVERY_NATIVE_SCHEMA='stellar-forge.mcp-native-collection-delivery.v1';
 export const DELIVERY_DOWNLOAD_SCHEMA='stellar-forge.collection-customer-download-manifest.v1';
+export const RECEIVED_DOWNLOAD_SCHEMA='stellar-forge.received-customer-download-manifest.v1';
 const SCHEMA=DELIVERY_NATIVE_SCHEMA,STATUS='stellar-forge.sf88.customer-delivery-status.v1';
 const ALIAS=/^[A-Za-z][A-Za-z0-9_-]{0,63}$/,ID=/^[A-Za-z0-9._-]{1,100}$/,HASH=/^[a-f0-9]{64}$/;
 const MAX_JSON=32*1024*1024,MAX_TOOL=256*1024,MAX_REQUEST=256*1024;
@@ -199,6 +201,48 @@ export function createNativeCollectionDelivery({manifest,isClosed=()=>false,maxU
   for(const path of [join(root,'received'),join(root,'received',record.name),directory])await privateDirectory(path,{create:true});
   await retainRecord(join(directory,'result.json'),value,{resume:true});return value;
  }
+ // Borrow only the original read methods. Existing directories must already exist;
+ // no new recipient, server, queue or package registry is created by discovery.
+ async function withRecipientReader(record,read){
+  for(const path of [record.scope,join(record.scope,'deliveries'),join(record.scope,'received')])await privateDirectory(path);
+  const original=await openCustomerDelivery({directory:record.scope});
+  try{return await read(original);}finally{await original.close();}
+ }
+ async function receivedHistory(record,body){
+  const value=await withRecipientReader(record,original=>original.listReceived());
+  need(value?.schema===PACKAGE+'.received-list'&&Array.isArray(value.packages),'MCP_DELIVERY_HISTORY_CHANGED');
+  const historySha256=identity(value);
+  if(body.expectedHistorySha256!==undefined)need(hash(body.expectedHistorySha256)===historySha256,'MCP_DELIVERY_HISTORY_CHANGED');
+  return{schema:value.schema,historySha256,...page(value.packages,body)};
+ }
+ async function receivedPackageView(record,expected){
+  const value=await withRecipientReader(record,original=>original.received(expected));
+  await retainReceived(record,value,expected);
+  const directory=join(root,'received',record.name,expected);
+  const manifest={schema:RECEIVED_DOWNLOAD_SCHEMA,id:expected,
+   package:{sha256:expected,bytes:value.bytes,manifestSha256:value.manifestSha256},
+   origin:{collectionId:value.manifest.collection?.id??null,...(value.manifest.task?{task:value.manifest.task}:{})},
+   files:[{name:'customer-delivery.ndjson',bytes:value.bytes,sha256:expected}]};
+  await retainRecord(join(directory,'manifest.json'),manifest,{resume:true});
+  return{schema:RECEIVED_DOWNLOAD_SCHEMA,state:'COMPLETE',sha256:expected,package:manifest.package,origin:manifest.origin,
+   outputsComplete:value.outputsComplete,files:{manifest:{name:'manifest.json',...await measure(join(directory,'manifest.json'))}}};
+ }
+ async function receivedPackageFile(record,body,operation){
+  const expected=hash(body.sha256),directory=join(root,'received',record.name,expected);
+  const value=await savedReceived(record,expected);
+  need(value,'MCP_DELIVERY_RECEIVED_INSPECT_REQUIRED');
+  const manifest=await json(join(directory,'manifest.json'));
+  need(manifest.schema===RECEIVED_DOWNLOAD_SCHEMA&&manifest.id===expected&&manifest.package?.sha256===expected&&
+   manifest.package.bytes===value.bytes&&manifest.package.manifestSha256===value.manifestSha256&&
+   identity(manifest.files)===identity([{name:'customer-delivery.ndjson',bytes:value.bytes,sha256:expected}]),
+   'MCP_DELIVERY_RECEIVED_MANIFEST_CHANGED');
+  const name=operation==='received-manifest-file'?'manifest.json':'customer-delivery.ndjson';
+  const destination=name==='manifest.json'?join(directory,name):join(record.scope,'received',expected,name);
+  const descriptor=name==='manifest.json'?await measure(destination):{bytes:value.bytes,sha256:expected};
+  need(descriptor.sha256===hash(body.expectedFileSha256),'MCP_DELIVERY_FILE_CHANGED');
+  return{sha256:expected,filename:name,file:await reader({destination,...descriptor,
+   contentType:name==='manifest.json'?'application/json':'application/x-ndjson'},body)};
+ }
  async function savedReceived(record,expected){
   const raw=await optionalBytes(join(root,'received',record.name,expected,'result.json'),MAX_JSON);
   if(raw===null)return null;const value=parse(raw);
@@ -230,6 +274,9 @@ export function createNativeCollectionDelivery({manifest,isClosed=()=>false,maxU
   }
   const record=await registered(args.deliveryWorkspace);
   const result=value=>{const response={schema:SCHEMA,workspace:record.name,operation,value};need(encoded(response).length<=MAX_TOOL,'MCP_DELIVERY_TOOL_PAGE_LIMIT');return response;};
+  if(operation==='received-list')return result(await receivedHistory(record,body));
+  if(operation==='received-package')return result(await receivedPackageView(record,hash(body.sha256)));
+  if(['received-manifest-file','received-package-file'].includes(operation))return result(await receivedPackageFile(record,body,operation));
   if(['result-file','manifest-file','package-file'].includes(operation)){
    hash(body.expectedFileSha256);const saved=await retained(record,id(body.id));
    const name=operation==='result-file'?'result.json':operation==='manifest-file'?'manifest.json':'customer-delivery.ndjson';

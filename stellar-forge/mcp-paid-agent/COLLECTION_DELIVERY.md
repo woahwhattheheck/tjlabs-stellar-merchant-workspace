@@ -233,3 +233,80 @@ The native sequence retains credentials privately before use, binds all executin
 The programme saves the full NDJSON package, complete remote result, full recipient inventory, original response and receiving evidence in its files directory. Result descriptors bind every file by bytes and SHA256. Reopening a completed programme verifies those files and the whole package rather than rerunning preparation or a purchase.
 
 Native execution has not yet been claimed for this addition. The existing owner's actual complete output selection, source edition and admitted runtime must be used for its one original receiving continuation.
+
+
+## Returning recipients: discover and retain the complete original package
+
+A registered recipient can now discover its own saved receipts without retaining a
+sender delivery ID or finding the original package hash elsewhere. Use the existing
+recipient alias. Discovery reads the original customer-delivery store, including
+receipts created before MCP registration, and works after the borrowed recipient
+and sender listeners have closed. The registered MCP host remains the authenticated
+transport; it does not start either original listener.
+
+`received-list` returns a page of COMPLETE, INCOMPLETE and UNAVAILABLE receipts.
+A COMPLETE history summary is a saved-record observation. Opening that selection
+through `received-package` verifies the original full package and every original
+member before returning its small download manifest. The package keeps its original
+SHA-256 and bytes. Collection origins retain their collection ID; InboxTask origins
+retain the original task/plan SHA-256, system, task ID and revision. A damaged receipt
+remains visible and does not hide other saved packages.
+
+The list includes `historySha256`, `total` and `nextOffset`. Pass the same
+`expectedHistorySha256` with each later page. If the actual history changes,
+the caller receives `MCP_DELIVERY_HISTORY_CHANGED` and can deliberately restart
+discovery instead of silently skipping a receipt. No receiving date is invented:
+the displayed time remains the original capture time.
+
+### Installed commands
+
+```sh
+starforge mcp-collection-delivery received-list --url ORIGINAL_MCP_URL --workspace recipient --limit 25
+starforge mcp-collection-delivery received-list --url ORIGINAL_MCP_URL --workspace recipient --offset NEXT_OFFSET --limit 25 --history-sha256 ORIGINAL_HISTORY_SHA
+
+starforge mcp-collection-delivery received-inspect --url ORIGINAL_MCP_URL --workspace recipient --sha256 SELECTED_RECEIPT_SHA
+starforge mcp-collection-delivery received-download --url ORIGINAL_MCP_URL --workspace recipient --sha256 SELECTED_RECEIPT_SHA --manifest-sha256 REVIEWED_MANIFEST_SHA --directory /private/original-recipient-download
+
+starforge mcp-collection-delivery received-reopen --workspace recipient --sha256 SELECTED_RECEIPT_SHA --manifest-sha256 REVIEWED_MANIFEST_SHA --directory /private/original-recipient-download
+```
+
+Choose a receipt explicitly from the returned history and review its complete
+manifest before downloading. Repeat the identical download command/directory after
+an interruption; the maintained retained-file engine resumes the same original
+selection. The recipient download state and origin are distinct from a sender
+delivery download. A different alias, receipt or manifest cannot reuse that state.
+`received-reopen` is offline and needs neither a listener nor a token. Keep the
+entire download directory, including its reviewed manifest and retained state.
+
+The resulting `customer-delivery.ndjson` is the original complete package,
+including readable review, every selected response and complete selected source.
+Use the existing `receive-local` command or original private recipient workflow
+to receive it elsewhere. Downloaded application source remains inert.
+
+### Typed clients and registered operations
+
+The existing client exports `receivedHistory({offset,limit,expectedHistorySha256})`
+and `receivedPackage(sha256)`. The existing download export adds
+`inspectReceivedCustomerPackage`, `downloadReceivedCustomerPackage` and
+`reopenReceivedCustomerPackage`; select `receivedSha256` rather than a sender
+`id`. Each download retains the reviewed `expectedManifestSha256`, original
+endpoint and alias, full original package identity and verified byte ranges.
+
+Registered operations are `received-list`, `received-package`,
+`received-manifest-file` and `received-package-file`. They use the same
+`collection-delivery` action, registered authority and bounded tool/file
+responses. Local paths stay in the trusted host registration. No new registry,
+sender, purchase, task execution or source adoption occurs.
+
+### Complete existing receiving programme
+
+The original `receiveNativeCustomerDelivery` programme now continues after its
+original owners close: it pages the actual recipient history, explicitly selects
+the original receipt, inspects its full verified package, retains an interrupted
+download, resumes the exact bytes and closes MCP. It then reopens that package
+offline and independently receives it through the original full package reader.
+The operation records `recipientHistoryDiscovered`, `receivedPackageDownloaded`,
+`receivedPackageOfflineReopened` and `receivedPackageIndependentlyReceived`
+only after those actions succeed. Its original request, package and sender/upload
+steps remain unchanged. An already completed prior operation returns its original
+observations; these new steps are not claimed retroactively.
