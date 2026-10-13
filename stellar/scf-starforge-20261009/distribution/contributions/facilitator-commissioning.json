@@ -47,6 +47,10 @@
     "products/facilitator-commissioning/INSTALLATION.md",
     "products/facilitator-commissioning/installation.d.mts",
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/facilitator-commissioning.json",
-    "products/facilitator-commissioning/INSTALLATION_RECEIVING.md"
+    "products/facilitator-commissioning/INSTALLATION_RECEIVING.md",
+    "stellar/scf_2026/sf47_budget_model/sf10_current_candidate.json"
+  ],
+  "managedSourceManifests": [
+    "stellar/scf_2026/sf47_budget_model/workspace/managed-source.json"
   ]
 }

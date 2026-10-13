@@ -67,7 +67,7 @@ export async function openInstallationReceiving({directory,sourceClient,receivin
   const release=await lockPrivateDirectory({directory:root,filename:'installation-receiving.lock',namespace:'facilitator-installation-receiving',
     busyCode:'INSTALLATION_RECEIVING_BUSY',unavailableCode:'INSTALLATION_RECEIVING_LOCK_UNAVAILABLE'});
   let closing=null,stopping=false,queue=Promise.resolve();
-  const returned=new Map(),failureObservations=new Map();
+  const returned=new Map(),validatedReturns=new Set(),failureObservations=new Map();
   const run=fn=>{if(stopping)return Promise.reject(fail('INSTALLATION_RECEIVING_CLOSING','Finish the original receiving close.'));const p=queue.then(fn);queue=p.catch(()=>{});return p;};
   const owner={schema:RECEIVING_SCHEMA+'.owner',source,receiving};
   try{await writeConsoleWorkflowFile(join(root,'OWNER.json'),owner);}catch(e){await release();throw e;}
@@ -105,6 +105,7 @@ export async function openInstallationReceiving({directory,sourceClient,receivin
     }
     const decoded=responseValue(value);
     await validate(decoded);
+    validatedReturns.add(key);
     await writeConsoleWorkflowFile(path,encode(value));
     return decoded;
   }
@@ -246,8 +247,8 @@ export async function openInstallationReceiving({directory,sourceClient,receivin
   async function read(id){
     const ctx=await input(id),responses={};
     for(const name of ['preview','save','export','receive']){
-      const stored=await json(join(ctx.dir,name+'.response.json'),true)??returned.get(join(ctx.dir,name+'.response.json'));
-      if(stored){const r=responseValue(stored);responses[name]={sha256:r.sha256,bytes:r.bytes.length,mediaType:r.mediaType,
+      const path=join(ctx.dir,name+'.response.json'),disk=await json(path,true),stored=disk??returned.get(path);
+      if(stored){const r=responseValue(stored);responses[name]={validated:!!disk||validatedReturns.has(path),sha256:r.sha256,bytes:r.bytes.length,mediaType:r.mediaType,
         ...(r.value===undefined?{}:{value:r.value})};}
     }
     const errors=new Map();
@@ -259,7 +260,7 @@ export async function openInstallationReceiving({directory,sourceClient,receivin
     for(const [path,value]of failureObservations)if(dirname(path)===ctx.dir)errors.set(path.split(/[\\/]/).pop(),value);
     const completion=await json(join(ctx.dir,'RECEIVED.json'),true);
     return {schema:RECEIVING_SCHEMA,operationId:id,intent:ctx.intent,
-      state:completion?'RECEIVED':responses.receive?'VERIFY_RECEIVING':responses.export?'EXPORTED':responses.save?'SAVED':responses.preview?'PREVIEWED':'PREPARED',
+      state:completion?'RECEIVED':responses.receive?.validated?'VERIFY_RECEIVING':responses.export?.validated?'EXPORTED':responses.save?.validated?'SAVED':responses.preview?.validated?'PREVIEWED':'PREPARED',
       preparation:ctx.prepared.identity,basis:ctx.prepared.binding.basis,selections:ctx.prepared.preparation.selections??[],
       responses,errors:[...errors].map(([filename,observation])=>({filename,observation})),completion,saveRequest:await json(join(ctx.dir,'save-request.json'),true),
       receiveRequest:await json(join(ctx.dir,'receive-request.json'),true)};
@@ -270,7 +271,9 @@ export async function openInstallationReceiving({directory,sourceClient,receivin
     const formats={'native-preview.json':'preview','native-save.json':'save','complete-case.zip':'export','native-receive.json':'receive',
       'original-saved-edition.json':'saved-edition','independently-received-edition.json':'received-edition'};
     if(Object.hasOwn(formats,name)){
-      const response=responseValue(await json(join(ctx.dir,formats[name]+'.response.json')));
+      const path=join(ctx.dir,formats[name]+'.response.json'),saved=await json(path,true)??returned.get(path);
+      need(saved,'The original response has not returned for this phase.');
+      const response=responseValue(saved);
       return {body:response.bytes,bytes:response.bytes.length,sha256:response.sha256,filename:name,contentType:response.mediaType};
     }
     if(name==='operation.json'){const body=encode(await read(id));return{body,bytes:body.length,sha256:sha(body),filename:name,contentType:'application/json'};}

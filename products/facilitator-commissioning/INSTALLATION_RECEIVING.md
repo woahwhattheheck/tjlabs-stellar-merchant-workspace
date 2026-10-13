@@ -37,7 +37,7 @@ Keep the original work together:
 
 A native seed can exist without a Workshare. Preserve the seed you actually selected; do not invent commercial acceptance or a Workshare ID to fill an optional field. Missing choices remain visible through the maintained preparation and native preview.
 
-The preparation directory contains exactly its completed declared source files. Keep native preview responses, notes and later observations in the separate receiving operation directory. If an earlier manual course saved additional output beside the preparation, retain that full original course and produce a separately named clean preparation through the maintained preparer; do not discard the earlier output.
+The preparation directory contains its complete declared source files and maintained private folders. The reader also recognizes an original publisher pending-UUID file only when its complete bytes match the declared member: a single-link stage or the final file’s same-inode two-link alias. It leaves that residue untouched; partial or unrelated files are refused, and every final declared member is still required. Keep native preview responses, notes and later observations in the separate receiving operation directory. If an earlier manual course saved additional output beside the preparation, retain that full original course and produce a separately named clean preparation through the maintained preparer; do not discard the earlier output.
 
 The preparation directory is an immutable exported source cut for this operation. Changed case inputs, source, bindings or selected providers produce a new named preparation with its own complete receipt. Keep earlier preparations for their original pending or completed operations.
 

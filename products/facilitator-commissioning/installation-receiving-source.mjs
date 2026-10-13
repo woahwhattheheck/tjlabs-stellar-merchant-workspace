@@ -61,16 +61,18 @@ async function inventory(root,rows,{partial=false}={}){
       }
       need(stat.isFile(),'Use only complete ordinary original preparation files: '+rel+'.');
       if(expected.has(rel)){found.add(rel);continue;}
-      // The unchanged exclusive publisher may leave its complete temporary hard link
-      // after a crash. It is an alias, not another source member; retain it in place.
+      // The unchanged publisher can leave a full private stage before linking or
+      // a completed two-link alias. Neither is another source member; retain it.
       const match=/^\.(.+)\.pending-([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})$/.exec(name);
       const finalName=match&&(base?base+'/':'')+match[1],row=finalName&&expected.get(finalName);
       need(row,'An unlisted file is present in the complete preparation: '+rel+'.');
-      const final=await lstat(join(root,finalName));
-      need(final.isFile()&&!final.isSymbolicLink()&&stat.dev===final.dev&&stat.ino===final.ino&&
-        stat.nlink===2&&final.nlink===2,'An unlisted publication file is not the original completed alias: '+rel+'.');
+      if(stat.nlink!==1){
+        const final=await lstat(join(root,finalName));
+        need(final.isFile()&&!final.isSymbolicLink()&&stat.dev===final.dev&&stat.ino===final.ino&&
+          stat.nlink===2&&final.nlink===2,'An unlisted publication file is not the original completed alias: '+rel+'.');
+      }
       const raw=await readWorkflowSeriesPrivateFile(path,MAX_FILE);
-      need(raw.length===row.bytes&&hash(raw)===row.sha256,'The complete original publication alias differs: '+rel+'.');
+      need(raw.length===row.bytes&&hash(raw)===row.sha256,'The complete original publication stage differs: '+rel+'.');
     }
   }
   await visit('');
