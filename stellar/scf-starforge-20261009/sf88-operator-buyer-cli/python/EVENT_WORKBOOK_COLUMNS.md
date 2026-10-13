@@ -62,8 +62,10 @@ cache is offered as an explicit restoration, with confirmation before replacing
 the displayed choices. Cache failure leaves complete file saving available.
 Opening an older copy does not silently substitute a newer browser draft.
 If browser storage fails or fills up, the visible storage warning survives the
-change notification. The complete choices remain in the open editor and its
-full-file downloads remain available.
+change notification. A separate warning beside the column controls remains
+visible even when the host displays another status message, and clears only
+after a successful complete browser-storage write and readback. The complete
+choices remain in the open editor and its full-file downloads remain available.
 The editor warns before leaving changed choices. Requesting a download keeps
 that reminder in the original window, since the browser may cancel the file
 save. Reopen the complete saved file to continue its retained edition.
@@ -114,7 +116,8 @@ and carries no Analysis capability. Original JSON inputs keep the existing
 the full escaped source/choices and installed editor without truncation.
 
 Both choice-file controls and the CLI template use the exact UTF-8 return-file
-allowance, including its final newline. They retain readable indented JSON when
+allowance, including its final newline. The original-proposal download and CLI
+native-columns output apply the same exact bound before download/publication. They retain readable indented JSON when
 it fits and use complete compact JSON when that is needed to stay within
 16 MiB. If the complete current choices still exceed that allowance, the
 operator sees a return-size error; no rows, proposal fields or unfinished
@@ -304,7 +307,9 @@ existing work is preserved. It never contacts a host or starts a native action.
 
 The shared module exports context, initial, reopen, sourceColumns,
 selectedOrdinal, chooseSource, replaceColumns, review, nativeColumns and
-reviewHTML for the same portable source-bound flow. The browser mount is
+reviewHTML for the same portable source-bound flow. serializeChoices and
+serializeNativeJSON retain complete return files within
+MAX_EVENT_WORKBOOK_CHOICES_BYTES, including the final newline. The browser mount is
 createEventWorkbookColumnReview. The native backend and original workbook
 writer are unchanged.
 

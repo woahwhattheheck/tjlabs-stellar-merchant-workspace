@@ -3,7 +3,7 @@
 import { open, lstat, realpath, link, unlink, readFile } from 'node:fs/promises';
 import { resolve, dirname, basename, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { initial, reopen, review, nativeColumns, reviewHTML, serializeChoices } from './workbook-columns.mjs';
+import { initial, reopen, review, nativeColumns, reviewHTML, serializeChoices, serializeNativeJSON } from './workbook-columns.mjs';
 import { renderEditableWorkbookColumns } from './workbook-editor.mjs';
 const MAX=16*1024*1024;
 const need=(ok,text)=>{if(!ok)throw Error(text);};
@@ -71,7 +71,7 @@ async function main(){
         readFile(new URL('./workbook-columns.mjs',import.meta.url),'utf8'),
         readFile(new URL('./workbook-editor.js',import.meta.url),'utf8')]);
       raw=renderEditableWorkbookColumns(value,{coreSource,controllerSource});
-    }else raw=a.command==='columns'?JSON.stringify(nativeColumns(value),null,2)+'\n':reviewHTML(value);
+    }else raw=a.command==='columns'?serializeNativeJSON(nativeColumns(value)):reviewHTML(value);
     console.log(JSON.stringify(await publish(a.out,raw),null,2));
   }
 }
