@@ -14,9 +14,14 @@ export async function openNativeAnalysisEventsClient({url,analysisWorkspace,toke
  need(typeof analysisWorkspace==='string'&&ALIAS.test(analysisWorkspace),'WORKSPACE_ALIAS_REQUIRED');
  const client=await openMerchantFileClient({url,tokenEnv,environment,signal,errorPrefix:'MCP_ANALYSIS_EVENT',
  clientName:'starforge-analysis-events',maximumResponseBytes:512*1024});
- return {endpoint:client.endpoint,analysisWorkspace,async call(operation,request={},options){
+ return {endpoint:client.endpoint,analysisWorkspace,async call(operation,request={},options={}){
+ need(object(options),'CALL_OPTIONS_INVALID');
+ const {signal:requestSignal,...transportOptions}=options;
+ need(requestSignal===undefined||transportOptions.requestSignal===undefined||
+ requestSignal===transportOptions.requestSignal,'CALL_SIGNAL_CONFLICT');
+ if(requestSignal!==undefined)transportOptions.requestSignal=requestSignal;
  const value=await client.call('sf43_discover_review_and_pay',{action:'analysis',analysisWorkspace,
- analysisOperation:operation,analysisRequest:request},options);
+ analysisOperation:operation,analysisRequest:request},transportOptions);
  need(object(value)&&value.schema===NATIVE&&value.analysisWorkspace===analysisWorkspace&&value.operation===operation&&
  object(value.result),'ORIGINAL_RESPONSE_CHANGED');return value.result;
  }};

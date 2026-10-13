@@ -50,7 +50,12 @@ function adapt(client,index,alias){
  const raw=eventIndexBytes(index),manifestSha256=sha(raw),
  manifestFile={name:EVENT_INDEX_NAME,bytes:raw.length,sha256:manifestSha256};
  return {endpoint:'urn:stellar-forge:analysis-events:'+index.workspace_id+':'+index.programme+':'+index.delivery_id+':'+index.index_sha256+':'+alias,
- async call(name,args,options){
+ async call(name,args,options={}){
+ need(object(options),'CALL_OPTIONS_INVALID');
+ const {requestSignal,...nativeOptions}=options;
+ need(requestSignal===undefined||nativeOptions.signal===undefined||
+ requestSignal===nativeOptions.signal,'CALL_SIGNAL_CONFLICT');
+ if(requestSignal!==undefined)nativeOptions.signal=requestSignal;
  need(object(args)&&args.exportId===index.delivery_id,'DELIVERY_SELECTION_CHANGED');
  if(name===PREFIX+'_manifest'){
  need(sameKeys(args,['exportId']),'DOWNLOAD_ARGUMENTS_INVALID');
@@ -66,7 +71,7 @@ function adapt(client,index,alias){
  else{
  need(client,'DOWNLOAD_INCOMPLETE');
  const value=await client.call('event-delivery-file',{programme:index.programme,delivery_id:index.delivery_id,
- index_sha256:index.index_sha256,filename:file.name,sha256:file.sha256,byteOffset:args.offset,maxBytes:args.limit},options);
+ index_sha256:index.index_sha256,filename:file.name,sha256:file.sha256,byteOffset:args.offset,maxBytes:args.limit},nativeOptions);
  const part=value?.file;
  need(value?.workspace_id===index.workspace_id&&value.programme===index.programme&&value.delivery_id===index.delivery_id&&
  value.index_sha256===index.index_sha256&&value.filename===file.name&&part?.verifiedSavedFile===true&&
@@ -103,7 +108,8 @@ export async function reopenNativeAnalysisEventDelivery(options={}){
  selection(options);const destination=root(options.directory);await directory(destination);
  const retained=await saved(destination,options.deliveryId);need(retained,'ORIGINAL_DOWNLOAD_REQUIRED');reviewed(retained.index,options);
  return transport.lockedDownload(destination,async context=>{
- await transport.loadContext(context,retained.raw,retained.index.delivery_id);
+ await transport.loadContext(context,retained.raw,retained.index.delivery_id,
+ adapt(null,retained.index,options.analysisWorkspace).endpoint);
  for(const file of retained.index.files){
  options.signal?.throwIfAborted();context.lease.assertHeld();
  await transport.verifiedFile(join(destination,file.name),file,options.signal);

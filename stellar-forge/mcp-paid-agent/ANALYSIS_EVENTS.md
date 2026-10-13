@@ -282,6 +282,39 @@ from the accepted programme with a fresh delivery ID or later actual source
 window. The restored workspace, original report/workbook and prior source
 history remain the same customer application.
 
+## Operate and inspect the outgoing customer result
+
+Before presenting an application, demonstration, report or export as ready,
+the producing maintainer must open, run or render the exact outgoing version,
+look at its actual screen or real screenshots, and operate its important
+controls. This applies to every local or cloud provider and to future delegated
+work. Include the instruction in each delegated receiving assignment.
+
+For this course, open the populated Event programmes workspace and its actual
+report and workbook at the intended screenshare width and at a narrow width
+where relevant. Operate original-file receiving, complete-review selection,
+apply, customer edits, later-window continuation and fresh delivery. Check the
+empty, loading and error states used by the workflow. Download every outgoing
+attachment, open its intended view, and reopen the exact complete package and
+restored workspace. Inspect all attachments, including readable tables and
+instructions. Play any final video or audio and inspect its actual presentation
+and voice quality before including it.
+
+Use plain industrial presentation: readable tables, clear hierarchy,
+consistent typography and spacing, restrained controls and useful labels.
+Repair unreadable, unstyled, cramped, clipped or overflowing output directly in
+the original product. A captured screenshot must actually be viewed; source
+review, DOM counts, HTTP responses, automated checks and another peer's
+approval do not replace the producer seeing the result.
+
+Where the existing native owner operates the equipped host, return the exact
+outgoing source edition, resulting file locations, actual normal/narrow
+screenshots and control/download/reopen outcomes to the producing maintainer
+in the original receiving operation. The producer opens those images and
+resolves concrete defects there. Continue the same implementation and native
+operation; keep the existing focused-validation policy and owner schedule.
+The current fleet cutoff is October 13, 2026 at 14:00 UTC.
+
 ## Operator and implementation ownership
 
 The private Analysis host owns its process, capability, trusted source receiver,

@@ -2,7 +2,7 @@
 export interface EventNativeClient {
  endpoint: string;
  analysisWorkspace: string;
- call(operation: string, request?: Record<string, unknown>, options?: {signal?: AbortSignal}): Promise<Record<string, unknown>>;
+ call(operation: string, request?: Record<string, unknown>, options?: {signal?: AbortSignal; requestSignal?: AbortSignal | null; timeoutMs?: number}): Promise<Record<string, unknown>>;
 }
 export interface EventConnectionOptions {
  url?: string;
