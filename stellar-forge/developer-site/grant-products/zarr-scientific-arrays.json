@@ -106,43 +106,35 @@
     },
     {
       "id": "zarr-customer-commissioning",
-      "label": "Scientific-array customer commissioning and delivery economics",
+      "label": "Scientific-array technical commissioning and handover",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar-forge/developer-site/ZARR_CUSTOMER_COMMISSIONING.md",
-      "commit": "d901b45911a14df19acef842b43553ec0ee06653",
+      "commit": "1cb66e281be201e80e0528ebe404fdbcb52fe213",
       "editions": [
         {
-          "commit": "d901b45911a14df19acef842b43553ec0ee06653",
-          "git_blob": "527608a5c3a6ce6cdb136898155518e5035f2790",
-          "sha256": "2fd0024c020ea995e61aa3282d5e5cee602fdb6a8cb74c34ab0178450b80b381",
-          "bytes": 14788
+          "commit": "1cb66e281be201e80e0528ebe404fdbcb52fe213",
+          "git_blob": "b19d47ae878c518248902183265abe7d7e8043c4",
+          "sha256": "c1565380f7bee1c723688a8d213b4e9ee766fd448b1ae36c0dabb0507ffe1df6",
+          "bytes": 15377
         }
       ]
     },
     {
       "id": "zarr-customer-selection-workorder",
-      "label": "Editable original Brightband scientific source and delivery workorder",
+      "label": "Unfilled scientific-array technical selection and receiving worksheet",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar-forge/developer-site/zarr-customer-commissioning.json",
-      "commit": "d901b45911a14df19acef842b43553ec0ee06653",
+      "commit": "1cb66e281be201e80e0528ebe404fdbcb52fe213",
       "editions": [
         {
-          "commit": "d901b45911a14df19acef842b43553ec0ee06653",
-          "git_blob": "b2a6de4841fdff86e0c9beff7f60512e8e6dea1a",
-          "sha256": "0bd238991c0c88d8e5e2506cbadab6a5fe5dd7c62b29227da9218c89062264a9",
-          "bytes": 8644
+          "commit": "1cb66e281be201e80e0528ebe404fdbcb52fe213",
+          "git_blob": "a9b1e863e2c9e372b592d0f1a8eb225f74b73edf",
+          "sha256": "1868538f6cdd3ebcadc26db77ed1b1a18cd81796468f9dce37863a0b5cc35ca5",
+          "bytes": 4606
         }
       ]
-    },
-    {
-      "id": "brightband-ewb-scientific-agreement",
-      "label": "Original Brightband issued scientific case and acceptance definition",
-      "repository": "woahwhattheheck/commons",
-      "kind": "blob",
-      "path": "opportunities/brightband_ewb_receiving_2026/SCIENCE-AND-ACCEPTANCE.md",
-      "commit": "5eceeaacc2b65d7eef4331cf1c2508a2a15e15b9"
     },
     {
       "id": "zarr-retained-comparison-engine",
