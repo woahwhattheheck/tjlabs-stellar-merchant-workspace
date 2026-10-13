@@ -110,6 +110,12 @@ export async function receiveMerchantInvoiceAgent({url,operatorToken,tokenEnviro
    const before=await call('payment',{invoiceId});
    assert.equal(before.state,'COMPLETE');assert(before.chargeId);
    assert.equal(before.envelopeSha256,before.envelopeArtifact.payload.sha256);
+   // A mistaken review selection must leave the original invoice available
+   // for the actual retained envelope/authorization chosen immediately below.
+   const wrongEnvelopeSha256=(before.envelopeSha256[0]==='0'?'1':'0')+before.envelopeSha256.slice(1);
+   await assert.rejects(()=>owner.call('merchant_invoice_authorize',{merchant:'original',invoiceId,
+    expectedEnvelopeSha256:wrongEnvelopeSha256,paymentSignature:originalAuthorizations[invoiceId].paymentSignature}),
+    error=>error.code==='MERCHANT_INVOICE_PAYMENT_ENVELOPE_CHANGED'&&error.outcome===undefined);
    const actions=[];
    for(const action of ['charge','authorize','reconcile']) {
     const result=await call(action,{invoiceId,...(action==='authorize'?{

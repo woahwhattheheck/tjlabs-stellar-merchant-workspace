@@ -110,7 +110,7 @@ Read merchant_invoice_payment again. Its envelopeArtifact contains the complete 
 
 ### Submit the buyer's actual authorization
 
-Use the buyer's existing authorized wallet/payment route to review the original selected payment option and produce its authorization for this exact envelope. The provider accepts the complete original printable-ASCII authorization string; it does not generate a signature, select another account or alter the payment requirement.
+Use the buyer's existing authorized wallet/payment route to review the original selected payment option and produce its authorization for this exact envelope. The provider accepts the complete original printable-ASCII authorization string up to 65,536 characters, within the original server's 70,000-byte encoded JSON-body limit. Quotes and backslashes count at their encoded JSON size. This capacity is checked before reserving a request and again when selecting an original replay; the bytes are never truncated. The provider does not generate a signature, select another account or alter the payment requirement.
 
 Call merchant_invoice_authorize with:
 
@@ -123,7 +123,7 @@ Call merchant_invoice_authorize with:
 }
 ~~~
 
-The agent first retains that complete request privately. It then rereads the original server envelope and compares its complete SHA with expectedEnvelopeSha256 before sending the authorization. A changed envelope fails before the payment POST. Keep the same invoice and investigate the actual change; a saved authorization request remains bound to its selected original envelope.
+The agent first checks the original server envelope against expectedEnvelopeSha256. A mistyped or stale selection fails before reserving the invoice's immutable authorization request, so the caller can receive and select the actual original envelope. The validated complete request is then retained privately. Immediately before its payment POST, the agent checks that same envelope binding again. A saved authorization request remains bound to its selected original envelope.
 
 This call can authorize a real payment. Use only the buyer's actual authorization for the reviewed invoice. The original server retains its exact bytes before contacting the payment provider. The server accepts an identical replay and rejects another signature for the same invoice.
 

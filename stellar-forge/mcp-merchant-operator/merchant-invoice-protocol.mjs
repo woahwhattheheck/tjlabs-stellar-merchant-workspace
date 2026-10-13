@@ -75,5 +75,8 @@ export function merchantInvoiceArguments(kind,value) {
  if(!d||value===null||typeof value!=='object'||Array.isArray(value)||!d[1].every(k=>Object.hasOwn(value,k))||
   !Object.keys(value).every(k=>Object.hasOwn(d[0],k)&&valid(value[k],d[0][k])))
   throw Object.assign(new TypeError('Use the declared original Merchant invoice arguments.'),{code:'MERCHANT_INVOICE_ARGUMENTS'});
+ if(kind==='authorize'&&Buffer.byteLength(JSON.stringify({paymentSignature:value.paymentSignature}))>70000)
+  throw Object.assign(new TypeError('Keep the complete original authorization within the existing 70000-byte HTTP body.'),
+   {code:'MERCHANT_INVOICE_AUTHORIZATION_CAPACITY'});
  return structuredClone(value);
 }

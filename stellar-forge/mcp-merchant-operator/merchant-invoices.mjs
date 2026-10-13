@@ -69,14 +69,15 @@ export class MerchantInvoices {
   return {...this.#invoiceSummary(inspection),artifact,
    ...(envelopeArtifact?{envelopeArtifact,envelopeSha256:envelopeArtifact.payload.sha256}:{})};
  }
+ async #paymentEnvelope(client,invoiceId,expectedSha256) {
+  const envelope=await client.paymentEnvelope(invoiceId);
+  need(invoiceHash(Buffer.from(JSON.stringify(envelope)+'\n'))===expectedSha256,
+   'MERCHANT_INVOICE_PAYMENT_ENVELOPE_CHANGED');
+ }
  async #paymentMutation(client,files,action,body,request) {
   const invoiceId=body.invoiceId,recovery={tool:'merchant_invoice_payment',invoiceId};
   // This read-only binding check precedes dispatch to the original writer.
-  if(action==='authorize') {
-   const envelope=await client.paymentEnvelope(invoiceId);
-   need(invoiceHash(Buffer.from(JSON.stringify(envelope)+'\n'))===body.envelopeSha256,
-    'MERCHANT_INVOICE_PAYMENT_ENVELOPE_CHANGED');
-  }
+  if(action==='authorize')await this.#paymentEnvelope(client,invoiceId,body.envelopeSha256);
   let value;
   try {
    value=action==='charge'?await client.createCharge(invoiceId):
@@ -158,6 +159,9 @@ export class MerchantInvoices {
     } else {
      body={invoiceId:a.invoiceId,...(action==='authorize'?
       {envelopeSha256:a.expectedEnvelopeSha256,paymentSignature:a.paymentSignature}:{})};
+     // A failed read-only review must not reserve this invoice's immutable
+     // authorization request. Retain the validated request before any POST.
+     if(action==='authorize')await this.#paymentEnvelope(client,a.invoiceId,body.envelopeSha256);
      request=await files.request(requestKind,a.invoiceId,body);
     }
     native=await this.#paymentMutation(client,files,action,body,request);
