@@ -75,3 +75,9 @@ Complete original logs and twelve exact result files are retained in Git blob `8
 The continuation uses correction blob `93d2f87ceab7c1ba17dbbc2f2e276c3e977f3aaa`, sourced from maintained commit `1f44c8a18477bcfbb1b8890f8bd228ba52bb1306`. The two exact postimages are Grist `628fc04f8e1de10cc35c497064fa8cac8438a483` and SeaTable `8c24dca1c4f6333b4c844bd4b8ca06ba3a0b573a`. Both turn command descriptors into native source path strings and add the required ./source/ prefix to exports. The original distribution composer accepted all289 retained contributions and518 commands with these exact repairs. Every source correction records its original and replacement Git hashes.
 
 The corrected receiver capsule is `5dfec853b254e0f67dc489d650b1ec85affa0f43`; its hosted acquisition helper is `005d8ef478d681815eb7e29a48182fd909125df6`. Only the failed original MCP programme is rerun. The accepted payment result remains the first run’s original output. Each new result records the frozen base, explicit correction and unchanged selected programme together.
+
+## Completed original run and installed-source continuation
+
+The original run 38343867655 completed with payment PASS and MCP provider-admission failure against its frozen 94ad source. Preserve that run and its twelve complete output files. The current-source registration correction is already maintained; the frozen capsules above remain historical input.
+
+Use [INSTALLED_RECEIVING.md](./INSTALLED_RECEIVING.md) for the same operation's corrected source continuation. It uses the complete maintained merchant-receivables selected archive and authoritative installed manifest, checks actual provider admission, then runs both original programmes with their unchanged source hashes. Its existing Linux receiver reuses the retained SDK/MCP dependencies and full output/recovery path. This continuation does not dispatch or rerun Actions and leaves original policy restoration with its owner.

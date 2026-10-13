@@ -232,6 +232,30 @@ Choose the actual as-of date. Review issued invoices, credit notes, received fun
 
 Download the complete dated customer account, including original issued documents, receipt advice, correction relationships and allocation history. The recipient can trace the selected balance to those files.
 
+### Publish the account and receive the customer's original response
+
+Use **Receivables → Customer accounts** on the same running accounting owner. Select **Publish account**, choose the original customer and account date, then **Review complete operation**. Inspect the actual invoices, amounts by currency and complete file count before **Publish reviewed account**.
+
+Download **Complete customer account**, extract the entire TAR and open `customer-account.html`. Keep its original `documents/` directory and filenames together. The customer can inspect the dated account, original invoices and credits, payments and source files. Use **Respond** beside the original invoice to prepare a message, payment promise, dispute or reported-payment reference. Save the entry and select **Download complete response**; its complete JSON is the original return to receive.
+
+For the retained Freeform Solutions billing example above, choose the actual later invoice from that saved account. Its displayed issued amount, current balance and currency determine the response. Select the actual response and promise dates at operation time. The earlier completed paid/open invoice records remain the example's original baseline while this next customer action is prepared.
+
+Back in the staff desk, choose **Receive response**, select that original JSON, inspect the matched publication/customer/date/author and receive the reviewed source. Open it and select **Review entry**. Review the original published invoice beside its balance at the chosen effective date, then choose the outcome and record the operator's reason.
+
+| Staff choice | Result in the existing account |
+| --- | --- |
+| Record in the original collection case | Retain the original inbound contact, promise or dispute through Collections. A new case receives its actual owner, priority and follow-up date. |
+| Acknowledge or decline | Keep the original entry and complete final reason in the received response. |
+| Defer | Keep the reason and leave the entry available for a later decision. |
+
+Explicitly acknowledge a changed account before recording. Inspect any closed case, open promise or unresolved dispute and select the applicable reopen, replacement or resolution choice. Current invoice amount and original case constraints remain visible in the full review. Reported payments retain the customer's source and reference for the original receipt/bank/remittance/Stellar matching step.
+
+Save the reviewed outcome. Open its original case and inspect the linked activity, then download **Complete operator archive**. That archive retains the exact customer response, full staff review, decisions and original account files. Keep it with internal staff records. The separate customer delivery keeps the fixed dated account and offline desk.
+
+**Ready to continue:** the same original account now carries the selected customer's response, its reasoned staff outcome and any original collection event. A saved request can be reconciled after an interrupted reply; a full account backup carries the same source and decision history to the next operator.
+
+Complete [browser, HTTP and native customer-account guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/03b310b8998f420dfa4cc71647c054f123073954/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/CUSTOMER_ACCOUNT_RESPONSES.md) and [remote MCP/typed/durable CLI guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/03b310b8998f420dfa4cc71647c054f123073954/stellar-forge/mcp-merchant-operator/ACCOUNTING_CUSTOMER_RESPONSES.md) describe the exact fields, files and recovery path.
+
 ### Prepaid service closing
 
 In **Customer statements**, use the original running merchant MCP address, accounting alias, named operator and saved closing directory. The installed direct entry is:
@@ -299,7 +323,7 @@ starforge merchant-accounting-workspace restore \
   --quiesced
 ~~~
 
-Reopen the original customer, invoice files, receipt/credit/refund history, bank close, schedule editions, service-close cycle and Xero packages. Continue the original reconciliation for activity after the backup point. The existing restore preserves surviving changes for that review and resumes its own interrupted publication.
+Reopen the original customer, invoice files, receipt/credit/refund history, bank close, schedule editions, saved customer account publications/responses, service-close cycle and Xero packages. Continue the original reconciliation for activity after the backup point. The existing restore preserves surviving changes for that review and resumes its own interrupted publication.
 
 For the bundled Buyer example, **Handover → Close Buyer and export packet** drains its original writer and exports the retained purchase. Another operator reviews and receives the complete packet under their own private workbench and reads the same original results.
 
@@ -324,6 +348,36 @@ starforge merchant-accounting-receivables status \
 Its durable **prepare**, **execute** and **reconcile** operations retain the connection, original body and request ID in the selected private operation directory. Invoice issue, wallet creation and financial corrections use the same native previews as their operator workflow. Retained file reads carry the selected original read ID, complete byte count and digest through every chunk.
 
 An agent completes the customer's useful task through the existing account and file APIs, then returns the full readable customer output. The source-selection registrations identify the actual installed commands and exports.
+
+### Publish, receive and review the same customer account
+
+The maintained remote continuation is [PR1104](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/1104). Use the existing merchant endpoint and workspace alias; the complete account/response workflow joins that same owner. It offers `customer-account-preview`, `customer-account-publish`, `customer-response-preview`, `customer-response-receive`, `customer-response-detail`, `customer-response-review-preview`, `customer-response-review` and `customer-account-list`.
+
+Save the full preview for each of the three writes. The original private selection files retain the chosen publication/customer/date or response/entry/version and actual review choices. For original customer intake, select its saved publication and use the returned file directly:
+
+~~~sh
+starforge merchant-accounting-receivables customer-response-preview \
+  --url "$MERCHANT_MCP_URL" --workspace "$MERCHANT_WORKSPACE" \
+  --token-env MCP_ACCESS_TOKEN \
+  --request /private/account/response-selection.json \
+  --source /private/account/customer-response.json \
+  --out /private/account/response-preview.json
+
+starforge merchant-accounting-receivables prepare \
+  --url "$MERCHANT_MCP_URL" --workspace "$MERCHANT_WORKSPACE" \
+  --token-env MCP_ACCESS_TOKEN \
+  --dir /private/account/receive-operation --action customer-response-receive \
+  --preview /private/account/response-preview.json --actor "$MERCHANT_OPERATOR"
+
+starforge merchant-accounting-receivables execute \
+  --dir /private/account/receive-operation
+~~~
+
+`response-selection.json` contains the original `publicationId`. The original file is read as complete UTF-8, up to 1,500,000 bytes, and remains embedded in the saved intake review and request. After an interrupted reply, use `reconcile --dir /private/account/receive-operation`; a retry executes that same saved operation. A later entry decision follows its own complete review preview and retained request.
+
+Download the customer package with `kind:"receivables-customer-account"`, its `publicationId` and `file:"account.tar"`. Download staff history with `kind:"receivables-customer-response"`, its `customerResponseId` and `file:"response.tar"`. Both use the original retained-file reader, full byte/hash identity and release lifecycle.
+
+The [complete guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/03b310b8998f420dfa4cc71647c054f123073954/stellar-forge/mcp-merchant-operator/ACCOUNTING_CUSTOMER_RESPONSES.md) supplies publication and decision commands, all original input shapes, typed helpers and full recovery instructions. Use the installed source selection that includes this merged continuation when receiving the same workflow into another runtime.
 
 ## Present the result and connect it to the award
 

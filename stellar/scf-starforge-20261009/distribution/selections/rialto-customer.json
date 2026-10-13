@@ -108,7 +108,11 @@
     "stellar/scf-starforge-20261009/distribution/RUNTIME_TRANSFER.md",
     "stellar/scf-starforge-20261009/distribution/RUNTIME.md",
     "stellar/scf-starforge-20261009/distribution/SOURCE_SELECTIONS.md",
-    "stellar/scf-starforge-20261009/distribution/BUILDING.md"
+    "stellar/scf-starforge-20261009/distribution/BUILDING.md",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare-core.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/profiles.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/rialto-customer.json",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/RIALTO_CUSTOMER.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

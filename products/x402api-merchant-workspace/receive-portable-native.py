@@ -38,6 +38,15 @@ SOURCE_PATHS = [
     "products/x402api-merchant-workspace/portable-receiving.mjs",
     "products/x402api-merchant-workspace/receive-portable-native.py",
     "products/x402api-merchant-workspace/portable-reservations.mjs",
+  "products/x402api-merchant-workspace/portable-project-reservations.mjs",
+    "products/x402api-merchant-workspace/portable-directory.mjs",
+    "products/x402api-merchant-workspace/portable-directory-receiving.mjs",
+    "products/x402api-merchant-workspace/portable_native.py",
+    "products/x402api-merchant-workspace/PORTABLE_PROJECT.md",
+    "products/x402api-merchant-workspace/PORTABLE_FOREGROUND.md",
+    "products/x402api-merchant-workspace/process_family.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/source_bundle_archive.py",
+    "stellar/scf-starforge-20261009/distribution/runtime-unpack.py",
     "products/x402api-merchant-workspace/application-inputs.mjs",
     "products/x402api-merchant-workspace/application-provider.mjs",
     "products/x402api-merchant-workspace/managed-application.mjs",
@@ -128,7 +137,7 @@ def receive(options, root, original_zip, original_raw, lease):
     for relative in SOURCE_PATHS:
         raw=(source_root/relative).read_bytes()
         source.append({"path":relative,"bytes":len(raw),"sha256":digest(raw)})
-    command=[options.node,str(source_root/PRODUCT/"portable-receiving.mjs"),"--case",str(original),
+    command=[options.node,str(source_root/PRODUCT/"portable-directory-receiving.mjs"),"--case",str(original),
         "--directory",str(native),"--original-root",ORIGINAL_ROOT,"--chromium",options.chromium,
         "--playwright-module",options.playwright_module]
     result_path=native/"portable-native-result.json";intent_path=root/"receiving-intent.json"

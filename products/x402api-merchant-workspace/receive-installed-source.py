@@ -165,11 +165,16 @@ def selected_runtime(frame):
 
 
 def main():
+    global OPERATION, ROOT
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bytes", type=int, required=True)
     parser.add_argument("--sha256", required=True)
     parser.add_argument("--frame", type=Path)
+    parser.add_argument("--portable", action="store_true")
     args = parser.parse_args()
+    if args.portable:
+        OPERATION = "SCF-X402API-MERCHANT-PORTABLE-PROJECT-7DE2-20261012"
+        ROOT = Path("/dev/x402api-merchant-portable-7de2-20261012")
     need(0 < args.bytes <= 8 * 1024 * 1024, "Use one complete bounded source frame.")
     need(len(args.sha256) == 64 and all(c in "0123456789abcdef" for c in args.sha256),
          "Use the complete original frame hash.")
@@ -205,6 +210,7 @@ def main():
     frame = json.loads(received)
     need(frame.get("schema") == "stellar-forge.merchant-installed-source-frame.v1"
          and frame.get("operation") == OPERATION and frame.get("root") == str(ROOT)
+         and frame.get("portable", False) is args.portable
          and frame.get("originalRoot") == str(ORIGINAL) and frame.get("originalArchive") == ORIGINAL_IDENTITY,
          "Keep the original installed source/customer selection.")
     support = frame["support"]
@@ -229,6 +235,16 @@ def main():
                 "requiredPaths": authority["requiredPaths"]}
     _source, entries, required, _objects = receiver.validate_metadata(metadata)
     selected_paths = {row["path"] for row in required}
+    if args.portable:
+        portable_paths = {PRODUCT + name for name in (
+            "installed-receiving.mjs", "portable-receiving.mjs", "portable_native.py", "portable.mjs",
+            "server.mjs", "workspace.mjs", "store.mjs", "protocol.mjs", "provider.mjs",
+            "application-inputs.mjs", "fulfillment/file-delivery.mjs",
+            "web/index.html", "web/app.mjs", "web/style.css")}
+        portable_paths.update((
+            "stellar/scf-starforge-20261009/sf30-seller-sdk/source_bundle_archive.py",
+            "stellar/scf-starforge-20261009/distribution/runtime-unpack.py"))
+        need(portable_paths <= selected_paths, "Receive the complete selected portable source closure.")
     for row in support:
         original_path = row["sourcePath"]
         if original_path is None:
@@ -266,6 +282,8 @@ def main():
         "donors": frame.get("donors", {"repositories": [], "sources": []}),
         "bootstrap": [{key: row[key] for key in ("path", "sourcePath", "bytes", "sha256")} for row in support],
     }
+    if args.portable:
+        input_value["portable"] = True
     input_bytes = encoded(input_value)
     directory(ROOT / "control")
     descriptor = os.open(ROOT / "control/operation.lock", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
@@ -297,7 +315,8 @@ def main():
     finally:
         os.close(descriptor)
     os.execv(sys.executable, [sys.executable, "-B", "-u",
-                             str(ROOT / "support/run-installed-receiving.py"), "--root", str(ROOT)])
+                             str(ROOT / "support/run-installed-receiving.py"), "--root", str(ROOT),
+                             *(["--portable"] if args.portable else [])])
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 import {currentStaffContext,staffDeskStorageKey} from './staff-session.mjs';
-import {defineSections,normalizeNavigationState} from './operations_navigation.mjs';
+import {defineSections,normalizeNavigationState,validateOperatingWorkflows} from './operations_navigation.mjs';
 import {mountOperationsNavigation} from './operations_navigation_ui.mjs';
 import {mountStatements} from './operations_statements.mjs';
 import {mountForecast} from './forecast.mjs';
@@ -145,7 +145,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
   let taskOutcomeView=null,awardTermsView=null,fundingView=null,procedureView=null;
   let settlementView=null,riskView=null;
   const visibleNavigationSections=navigationSections.filter(section=>visibleTab(section.id));
-  let navigationView=null;
+  let navigationView=null,savedWorkflowState=null;
   let localBusy=false,hostBusy=false;
   view.forecastId=null;view.forecastDraft=null;view.portfolioId=null;
   const available=()=>active&&root.isConnected;
@@ -167,6 +167,93 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     if(!available()||view.busy||!visibleNavigationSections.some(section=>section.id===sectionId))return;
     view.tab=sectionId;render();$('[data-ops-current-panel]')?.focus();
   }
+  const savedWorkflowSections=new Set(['statements','account-reconciliation','funding','award-terms','cohort-delivery','procedures']);
+  const hasSavedWorkflows=visibleNavigationSections.some(section=>savedWorkflowSections.has(section.id));
+  function sameWorkflowCase(caseId,version) {
+    return available()&&view.current?.program.id===caseId&&view.current.program.version===version;
+  }
+  async function loadNavigationWorkflows(retry=false) {
+    const c=view.current;
+    if(!available()||!c||!hasSavedWorkflows)return null;
+    const caseId=c.program.id,version=c.program.version;
+    if(!savedWorkflowState||savedWorkflowState.caseId!==caseId||savedWorkflowState.version!==version)
+      savedWorkflowState={caseId,version,data:null,error:null,promise:null};
+    const retained=savedWorkflowState;
+    const present=()=>sameWorkflowCase(caseId,version)&&savedWorkflowState===retained;
+    if(retained.data){if(present())navigationView?.setWorkflows(retained.data);return retained.data;}
+    if(retained.error&&!retry){if(present())navigationView?.setWorkflows(null,{error:retained.error});return null;}
+    if(present())navigationView?.setWorkflows(null,{loading:true});
+    if(retained.promise)return retained.promise;
+    retained.error=null;
+    retained.promise=Promise.resolve().then(()=>api('/api/operations/'+caseId+'/operating-workflows?expectedVersion='+version))
+      .then(value=>{
+        validateOperatingWorkflows(value,c);retained.data=value;
+        if(present())navigationView?.setWorkflows(value);
+        return value;
+      }).catch(error=>{
+        retained.error=error;
+        if(present())navigationView?.setWorkflows(null,{error});
+        return null;
+      }).finally(()=>{retained.promise=null;});
+    return retained.promise;
+  }
+  async function openSavedWorkflowEntry(entry,origin) {
+    const c=view.current,index=savedWorkflowState?.data;
+    if(!sameWorkflowCase(origin.caseId,origin.version)||index?.case.id!==origin.caseId||index.case.version!==origin.version)
+      throw new Error('Reload the original saved-workflow index before opening its edition.');
+    const original=index.entries.find(row=>'workflow:'+row.key===entry.key);
+    if(!original||original.id!==entry.id||original.section!==entry.section||
+       !visibleNavigationSections.some(section=>section.id===original.section))
+      throw new Error('This original saved workflow is unavailable in the current profile.');
+    const selection={...structuredClone(original.selection),caseId:c.program.id,expectedVersion:c.program.version};
+    const requireCurrent=()=>{if(!sameWorkflowCase(origin.caseId,origin.version))throw new Error('The case changed while opening its original saved work.');};
+    if(selection.kind==='statement-original') {
+      const detail=await api('/api/operations/'+c.program.id+'/account-reconciliation-statements/'+encodeURIComponent(selection.sourceId)+'/inputs');
+      requireCurrent();
+      if(detail?.caseId!==c.program.id||detail.expectedVersion!==c.program.version||
+         detail.statementSourceId!==selection.sourceId||!detail.inputs)
+        throw new Error('The returned original statement differs from this saved selection.');
+      const retained=retainedStatementSessions.get(c.program.id)||{};
+      retained.incomingOriginalInputs=structuredClone(detail);
+      retainedStatementSessions.set(c.program.id,retained);
+      view.tab='statements';render();const mounted=statementView;await mounted?.ready;requireCurrent();
+      if(!mounted||statementView!==mounted)throw new Error('The statement desk changed while its original inputs were opening.');
+      inform('The original statement inputs are retained in Account statements. Open original inputs there to continue with existing drafts and request recovery.');
+    } else if(selection.kind==='account-reconciliation') {
+      const retained=retainedAccountReconciliationSessions.get(c.program.id)||{};
+      retained.incomingSelection={reconciliationId:selection.reconciliationId,revision:selection.revision};
+      retainedAccountReconciliationSessions.set(c.program.id,retained);
+      view.tab='account-reconciliation';render();const mounted=accountReconciliationView;await mounted?.ready;requireCurrent();
+      const receipt=mounted?.currentSavedWorkflow?.();
+      if(accountReconciliationView!==mounted||receipt?.caseId!==c.program.id||receipt.expectedVersion!==c.program.version||
+         receipt.kind!=='account-reconciliation'||receipt.reconciliationId!==selection.reconciliationId||receipt.revision!==selection.revision)
+        throw new Error('The account desk has not opened the selected reconciliation revision. Review its original receiving message.');
+      inform('Opened the selected original reconciliation revision; retained drafts remain in the account desk.');
+    } else if(selection.kind==='cost-funding') {
+      const retained=retainedFundingSessions.get(c.program.id)||{};
+      retained.requestOpen={revision:selection.revision};retainedFundingSessions.set(c.program.id,retained);
+      view.tab='funding';render();const mounted=fundingView;await mounted?.ready;requireCurrent();
+      if(!mounted||fundingView!==mounted)throw new Error('The funding desk changed while its original revision was opening.');
+      inform('Opened the selected funding revision with the existing funding drafts retained.');
+    } else {
+      const targets={'award-terms':'award-terms','cohort-delivery':'cohort-delivery','grant-procedure':'procedures'};
+      const target=targets[selection.kind];
+      if(!target||target!==original.section)throw new Error('Use the original section to open this saved workflow.');
+      view.tab=target;render();
+      const child=selection.kind==='award-terms'?awardTermsView:selection.kind==='cohort-delivery'?cohortDeliveryView:procedureView;
+      if(!child?.openSavedWorkflow)throw new Error('Reopen the installed original workflow desk before selecting this source.');
+      await child.ready;requireCurrent();
+      const receipt=await child.openSavedWorkflow(selection);requireCurrent();
+      const currentChild=selection.kind==='award-terms'?awardTermsView:selection.kind==='cohort-delivery'?cohortDeliveryView:procedureView;
+      if(currentChild!==child)throw new Error('The original workflow desk changed while its edition was opening.');
+      if(receipt?.outcome!=='opened'||receipt.caseId!==c.program.id||receipt.kind!==selection.kind||
+         (selection.sourceId&&receipt.sourceId!==selection.sourceId)||
+         (selection.id&&(receipt.id!==selection.id||receipt.revision!==selection.revision)))
+        throw new Error('The original desk did not confirm the selected saved edition.');
+      inform('Opened the original '+original.kindLabel.toLowerCase()+' with current drafts retained.');
+    }
+    $('[data-ops-current-panel]')?.focus();
+  }
   async function openNavigationEntry(entry,action,origin) {
     if(!available())return;
     await run(async()=>{
@@ -185,6 +272,10 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
         download(JSON.stringify(original,null,2)+'\n',entry.id+'.json');return;
       }
       if(!visibleNavigationSections.some(section=>section.id===entry.section))throw new Error('The original section is unavailable.');
+      if(entry.workflowSelection){
+        if(action!=='open')throw new Error('Open this saved edition through its original desk.');
+        await openSavedWorkflowEntry(entry,origin);return;
+      }
       if(entry.collection==='forecasts'){
         if(!c.forecasts.some(row=>row.id===entry.id))throw new Error('The original forecast is unavailable in this case.');
         const retainedDraft=forecastView?.draftInputs()||view.forecastDraft;
@@ -419,8 +510,10 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
         sections:visibleNavigationSections,activeSection:view.tab,session:navigationSession(c.program.id),
         onSection:openSection,onEntry:openNavigationEntry,onError:alertError,
         canEditRecord:canEditNavigationRecord,
+        onRetryWorkflows:hasSavedWorkflows?()=>loadNavigationWorkflows(true):null,
         onState:preferences=>saveNavigation(c.program.id,preferences)});
       navigationView.setHostBusy(view.busy);
+      if(hasSavedWorkflows)void loadNavigationWorkflows();
     }
     if(c&&view.tab==='forecast'){
       const retained=c.forecasts.some(row=>row.id===view.forecastId)?view.forecastId:null;

@@ -117,7 +117,8 @@ async function mutate(method,args,label,{revision}={}) {
     current.revision=revision;
   }
   values[values.length-1]={...values[values.length-1],...current};
-  if(new Blob([JSON.stringify(values[values.length-1])]).size>Number(config.requestBytes||2000000))throw new Error('The operation exceeds the workspace request limit. Reduce the source file size before saving.');
+  const requestBytes=method==='receiveCustomerResponse'?Number(config.customerAccountRequestBytes||4000000):Number(config.requestBytes||2000000);
+  if(new Blob([JSON.stringify(values[values.length-1])]).size>requestBytes)throw new Error('The operation exceeds the workspace request limit. Reduce the source file size before saving.');
   ui.pending={method,args:values,label,requestId:current.requestId,revision:current.revision,createdAt:new Date().toISOString()};
   saveSession('pending',ui.pending);
   await runPending();
