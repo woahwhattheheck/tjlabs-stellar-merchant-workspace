@@ -25,7 +25,7 @@ export type RecoverySelection = {
   id: RecoveryOperationId;
 } & (
   | { action:'object-compare';beforeObjectSessionId:string;afterObjectSessionId:string;beforeExpectedRecordSha256:RecoveryDigest;afterExpectedRecordSha256:RecoveryDigest }
-  | { action:'object-bundle-export';sourceRequestId:string;sourceReviewHash:RecoveryDigest;sourceAttempt:number }
+  | { action:'object-bundle-export';sourceRequestId:string;sourceReviewHash:RecoveryDigest;sourceAttempt:number;sourceSide?:'before'|'after' }
   | { action:'object-bundle-receive';archiveId:string;objectSessionId:string }
   | { action: 'snapshot'; capturePlanId: string; quiesced: true; destinationName?: string }
   | { action: 'verify'; bundleId: string }
@@ -65,15 +65,21 @@ export interface RecoverySupportSelection {
   expectedRevision:RecoveryDigest;slot:'before'|'after';expectedReviewHash:RecoveryDigest;afterAttempt:number;
 }
 export interface RecoverySupportInput extends RecoveryProfileInput {transferId:string;}
+export type RecoveryAttachmentIdentity =
+  | {archiveSha256:RecoveryDigest;pairSha256?:never}
+  | {pairSha256:RecoveryDigest;archiveSha256?:never};
 export interface RecoveryToolInputs {
   merchant_recovery_comparison_artifact:RecoveryOriginalInput & {kind:'result'|'html'|'markdown';sha256:RecoveryDigest};
   merchant_recovery_bundle_inspection:RecoveryProfileInput & {archiveId:string};
   merchant_recovery_bundle_report:RecoveryOriginalInput & {kind?:'report'|'verification'|'publication'};
   merchant_recovery_bundle_artifact:RecoveryOriginalInput;
+  merchant_recovery_bundle_pair:RecoveryProfileInput & {beforeId:string;afterId:string};
+  merchant_recovery_bundle_pair_attach:RecoverySupportInput & {beforeId:string;afterId:string;expectedPairSha256:RecoveryDigest;
+    expectedReviewSha256:RecoveryDigest;expectedRevision:RecoveryDigest;actor:string};
   merchant_recovery_bundle_attach:RecoveryOriginalInput & {transferId:string;expectedReviewSha256:RecoveryDigest;
     expectedRevision:RecoveryDigest;actor:string};
-  merchant_recovery_bundle_attachment:RecoverySupportInput & {archiveSha256:RecoveryDigest};
-  merchant_recovery_bundle_case_export:RecoverySupportInput & {archiveSha256:RecoveryDigest};
+  merchant_recovery_bundle_attachment:RecoverySupportInput & RecoveryAttachmentIdentity;
+  merchant_recovery_bundle_case_export:RecoverySupportInput & RecoveryAttachmentIdentity;
   merchant_recovery_support_cases:RecoveryProfileInput & {q?:string;offset?:number;limit?:number};
   merchant_recovery_support_transfers:RecoveryProfileInput;
   merchant_recovery_support_transfer:RecoverySupportInput;

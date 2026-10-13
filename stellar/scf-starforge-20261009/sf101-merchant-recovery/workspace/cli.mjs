@@ -13,9 +13,11 @@ export const HELP = 'SF101 recovery workspace\n\n' +
   'bundle-inspection Inspect a declared encrypted archive: --profile ID --archive ID.\n' +
   'bundle-report Read full retained verification/report: --profile ID --id ID [--kind report|verification|publication].\n' +
   'bundle-artifact Read completed ciphertext artifact path/hash: --profile ID --id ID.\n' +
+  'bundle-pair Read exact completed comparison exports: --profile ID --before-id ID --after-id ID.\n' +
+  'bundle-pair-attach Attach both archives: --profile ID --before-id ID --after-id ID --expected-pair-sha256 HASH --transfer-id ID --expected-support-review HASH --case-revision HASH --actor NAME.\n' +
   'bundle-attach Attach complete archive to saved commissioned case: --profile ID --id ID --transfer-id ID --expected-support-review HASH --case-revision HASH --actor NAME.\n' +
-  'bundle-attachment Read original attachment before continuing: --profile ID --transfer-id ID --archive-sha256 HASH.\n' +
-  'bundle-case-export Export actual attached case/history/source: --profile ID --transfer-id ID --archive-sha256 HASH.\n' +
+  'bundle-attachment Read original attachment before continuing: --profile ID --transfer-id ID --archive-sha256 HASH or --pair-sha256 HASH.\n' +
+  'bundle-case-export Export actual attached case/history/source: --profile ID --transfer-id ID --archive-sha256 HASH or --pair-sha256 HASH.\n' +
   'support-cases List existing cases: --profile ID [--limit N].\n' +
   'support-transfers List saved/prepared transfers: --profile ID.\n' +
   'support-transfer Read the original transfer: --profile ID --transfer-id ID.\n' +
@@ -55,8 +57,9 @@ export const HELP = 'SF101 recovery workspace\n\n' +
 const COMMAND_OPTIONS = {
   'comparison-artifact':['profileId','id','kind','sha256'],
   'bundle-inspection':['profileId','archiveId'],'bundle-report':['profileId','id','kind'],
+  'bundle-pair':['profileId','beforeId','afterId'],'bundle-pair-attach':['profileId','beforeId','afterId','transferId','expectedPairSha256','expectedReviewSha256','expectedRevision','actor'],
   'bundle-artifact':['profileId','id'],'bundle-attach':['profileId','id','transferId','expectedReviewSha256','expectedRevision','actor'],
-  'bundle-case-export':['profileId','transferId','archiveSha256'],'bundle-attachment':['profileId','transferId','archiveSha256'],
+  'bundle-case-export':['profileId','transferId','archiveSha256','pairSha256'],'bundle-attachment':['profileId','transferId','archiveSha256','pairSha256'],
   serve: ['port'], show: [], status: [],
   'support-cases':['profileId','limit'],'support-transfers':['profileId'],
   'support-transfer':['profileId','transferId'],'support-review':['selectionFile'],
@@ -72,8 +75,9 @@ const COMMAND_OPTIONS = {
 const REQUIRED_OPTIONS = {
   'comparison-artifact':['profileId','id','kind','sha256'],
   'bundle-inspection':['profileId','archiveId'],'bundle-report':['profileId','id'],
+  'bundle-pair':['profileId','beforeId','afterId'],'bundle-pair-attach':['profileId','beforeId','afterId','transferId','expectedPairSha256','expectedReviewSha256','expectedRevision','actor'],
   'bundle-artifact':['profileId','id'],'bundle-attach':['profileId','id','transferId','expectedReviewSha256','expectedRevision','actor'],
-  'bundle-case-export':['profileId','transferId','archiveSha256'],'bundle-attachment':['profileId','transferId','archiveSha256'],
+  'bundle-case-export':['profileId','transferId'],'bundle-attachment':['profileId','transferId'],
   'support-cases':['profileId'],'support-transfers':['profileId'],
   'support-transfer':['profileId','transferId'],'support-review':['selectionFile'],
   'support-save':['profileId','transferId','expectedReviewSha256'],'support-handoff':['profileId','transferId'],
@@ -96,6 +100,7 @@ export function parseWorkspaceArguments(argv) {
     throw argumentError('Choose a documented recovery workspace command', 'WORKSPACE_COMMAND_INVALID');
   const result = { command };
   const flags = { '--config': 'configFile', '--directory': 'directory', '--port': 'port',
+    '--before-id':'beforeId','--after-id':'afterId','--pair-sha256':'pairSha256','--expected-pair-sha256':'expectedPairSha256',
     '--archive':'archiveId','--kind':'kind','--case-revision':'expectedRevision','--actor':'actor','--archive-sha256':'archiveSha256',
     '--profile': 'profileId', '--id': 'id', '--cursor': 'cursor', '--limit': 'limit',
     '--selection': 'selectionFile', '--expected-review-hash': 'expectedReviewHash',
@@ -133,7 +138,7 @@ export function parseWorkspaceArguments(argv) {
       throw argumentError('Select the exact original ' + key);
   if(result.archiveId!==undefined&&!/^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$/.test(result.archiveId))
     throw argumentError('Use the host-declared archive ID.');
-  for(const key of ['expectedRevision','archiveSha256'])if(result[key]!==undefined&&!/^[a-f0-9]{64}$/.test(result[key]))
+  for(const key of ['expectedRevision','archiveSha256','pairSha256','expectedPairSha256'])if(result[key]!==undefined&&!/^[a-f0-9]{64}$/.test(result[key]))
     throw argumentError('Use the complete original '+key);
   if(result.kind!==undefined&&!(command==='comparison-artifact'?['result','html','markdown']:['report','verification','publication']).includes(result.kind))throw argumentError('Choose report or verification.');
   if(result.actor!==undefined&&(!result.actor.trim()||Buffer.byteLength(result.actor)>200))throw argumentError('Use the actual operator name within200 bytes.');
@@ -200,7 +205,7 @@ async function callRunningWorkspace(options) {
   } } });
   try {
     const input = { workspace: 'local' };
-    for (const key of ['profileId', 'id', 'cursor', 'limit', 'expectedReviewHash', 'objectSessionId', 'sha256', 'afterAttempt', 'quiesced', 'transferId', 'expectedReviewSha256','archiveId','kind','expectedRevision','actor','archiveSha256'])
+    for (const key of ['profileId', 'id', 'cursor', 'limit', 'expectedReviewHash', 'objectSessionId', 'sha256', 'afterAttempt', 'quiesced', 'transferId', 'expectedReviewSha256','archiveId','kind','expectedRevision','actor','archiveSha256','beforeId','afterId','pairSha256','expectedPairSha256'])
       if (options[key] !== undefined) input[key] = options[key];
     if (options.selectionFile !== undefined) input.selection = await readSelection(options.selectionFile);
     return await client.call('merchant_recovery_' + options.command.replaceAll('-', '_'), input);

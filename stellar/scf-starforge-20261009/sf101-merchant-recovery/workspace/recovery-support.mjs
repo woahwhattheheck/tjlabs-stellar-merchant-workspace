@@ -12,6 +12,7 @@ import {createRecoveryObservationFiles,recoveryEvidenceReferences} from '../../s
 import {createComparisonObservationFiles,comparisonArtifactReferences} from '../../sf74-merchant-support-console/comparison-runtime.mjs';
 import {exportCaseSourcePackage,inspectCaseSourcePackage} from '../../sf74-merchant-support-console/case-source-package.mjs';
 import {createCaseSourceDelivery} from '../../sf74-merchant-support-console/case-source-delivery.mjs';
+import {comparisonBundlePair} from './object-bundles.mjs';
 
 const SCHEMA='stellar-forge.sf101.support-transfer.v1';
 const REVIEW_SCHEMA='stellar-forge.sf101.support-review.v1';
@@ -427,12 +428,66 @@ export function createRecoverySupport({directory,workspaceId,profiles,currentHos
         encryptedArchive:request.archive,recordSha256:request.recordSha256};
       await retained(join(path,'result.json'),json(output));return output;
     },true),
+    attachComparison:input=>tracked(async signal=>{
+      fields(input,['profileId','transferId','expectedReviewSha256','expectedRevision','actor','before','after','expectedPairSha256']);
+      need(SHA.test(input.expectedReviewSha256??'')&&SHA.test(input.expectedRevision??'')&&
+        SHA.test(input.expectedPairSha256??'')&&typeof input.actor==='string'&&input.actor.trim()&&Buffer.byteLength(input.actor)<=200,
+        'WORKSPACE_SUPPORT_ATTACHMENT_SELECTION_INVALID');
+      const {folder,review,result}=await originalResult(input.profileId,input.transferId);
+      need(result&&review.command==='object-compare'&&review.reviewSha256===input.expectedReviewSha256,
+        'WORKSPACE_SUPPORT_COMPARISON_SAVE_REQUIRED');
+      const pair=comparisonBundlePair(input.before,input.after);
+      need(pair.pairSha256===input.expectedPairSha256&&pair.sourceRequest.id===review.selection.id&&
+        pair.sourceRequest.reviewHash===review.selection.expectedReviewHash&&pair.sourceRequest.sha256===review.request.sha256&&
+        pair.sourceRequest.attempt===review.selection.afterAttempt&&['before','after'].every(side=>
+          pair.archives[side].recordSha256===review.bundles[side].recordSha256),
+        'WORKSPACE_SUPPORT_ORIGINAL_COMPARISON_CHANGED');
+      const {profile:selected}=await storeFor(input.profileId),delivery=await sourceDelivery(selected);
+      need(delivery,'WORKSPACE_SUPPORT_SOURCE_NOT_CONFIGURED');
+      const attachmentId='comparison-'+hash(input.transferId+'\n'+pair.pairSha256).slice(0,48);
+      const request={schema:'stellar-forge.sf101.comparison-bundle-attachment.v1',profileId:input.profileId,
+        transferId:input.transferId,reviewSha256:review.reviewSha256,caseId:result.caseId,
+        sourceCaseRevision:result.revision,expectedRevision:input.expectedRevision,actor:input.actor,
+        pair,attachmentId};
+      const path=join(folder,'native-comparison-'+pair.pairSha256);await privateDirectory(path,true);
+      await retained(join(path,'request.json'),json(request));
+      const prior=await optional(join(path,'result.json'),MAX_REQUEST);
+      if(prior){const saved=JSON.parse(decode(prior));need(same(saved.request,request),'WORKSPACE_SUPPORT_ATTACHMENT_CHANGED');return saved;}
+      signal.throwIfAborted();const service=delivery.service;
+      const attachInput={id:attachmentId,caseId:result.caseId,expectedRevision:input.expectedRevision,
+        requestId:attachmentId+'-attach',actor:input.actor};
+      const finish=async attached=>{
+        const output={schema:request.schema,status:'ATTACHED',request,result:attached,pair};
+        await retained(join(path,'result.json'),json(output));return output;
+      };
+      let retainedAttachment=null;
+      try{retainedAttachment=await service.attachmentStatus({id:attachmentId,requestId:attachInput.requestId});}
+      catch(error){if(error.code!=='SF49_DELIVERY_NOT_FOUND')throw error;}
+      if(retainedAttachment){
+        // The native service owns the original exact request and saved-case event.
+        // Reconcile that request before rereading either multi-gigabyte archive.
+        signal.throwIfAborted();return finish(await service.attach(attachInput));
+      }
+      await service.begin({id:attachmentId,kind:'source',caseId:result.caseId,caseRevision:input.expectedRevision,
+        label:'Original encrypted Object comparison '+review.sessionId,actor:input.actor,
+        files:['before','after'].map(side=>({id:'object-'+side,name:side+'-'+input[side].archive.filename,
+          role:'encrypted-object-'+side,bytes:String(pair.archives[side].bytes),sha256:pair.archives[side].sha256}))});
+      for(const side of ['before','after']){
+        signal.throwIfAborted();const stream=createReadStream(input[side].archive.path,{flags:constants.O_RDONLY|constants.O_NOFOLLOW});
+        try{await service.upload({id:attachmentId,fileId:'object-'+side,stream,signal});}
+        finally{stream.destroy();}
+      }
+      signal.throwIfAborted();await service.prepare({id:attachmentId});signal.throwIfAborted();
+      return finish(await service.attach(attachInput));
+    },true),
     attachment:input=>tracked(async()=>{
-      fields(input,['profileId','transferId','archiveSha256']);need(SHA.test(input.archiveSha256??''),'WORKSPACE_SUPPORT_ARCHIVE_ID_REQUIRED');
+      fields(input,['profileId','transferId','archiveSha256','pairSha256']);
+      const pair=input.pairSha256!==undefined,identity=pair?input.pairSha256:input.archiveSha256;
+      need(SHA.test(identity??'')&&!(pair&&input.archiveSha256!==undefined),'WORKSPACE_SUPPORT_ARCHIVE_ID_REQUIRED');
       const {folder,review}=await readReview(input.profileId,input.transferId);
-      const path=join(folder,'native-bundle-'+input.archiveSha256);
+      const path=join(folder,(pair?'native-comparison-':'native-bundle-')+identity);
       const request=JSON.parse(decode(await bytes(join(path,'request.json'),MAX_REQUEST)));
-      need(request.archive.sha256===input.archiveSha256&&request.reviewSha256===review.reviewSha256,
+      need((pair?request.pair?.pairSha256:request.archive?.sha256)===identity&&request.reviewSha256===review.reviewSha256,
         'WORKSPACE_SUPPORT_ATTACHMENT_CHANGED');
       const saved=await optional(join(path,'result.json'),MAX_REQUEST);
       const result=saved?JSON.parse(decode(saved)):null;
@@ -440,14 +495,15 @@ export function createRecoverySupport({directory,workspaceId,profiles,currentHos
       return {status:result?'ATTACHED_RECORDED':'NEEDS_CONTINUATION',request,result};
     }),
     exportAttached:input=>tracked(async signal=>{
-      fields(input,['profileId','transferId','archiveSha256']);
-      need(SHA.test(input.archiveSha256??''),'WORKSPACE_SUPPORT_ARCHIVE_ID_REQUIRED');
+      fields(input,['profileId','transferId','archiveSha256','pairSha256']);
+      const pair=input.pairSha256!==undefined,identity=pair?input.pairSha256:input.archiveSha256;
+      need(SHA.test(identity??'')&&!(pair&&input.archiveSha256!==undefined),'WORKSPACE_SUPPORT_ARCHIVE_ID_REQUIRED');
       const {folder,review,result}=await originalResult(input.profileId,input.transferId);
       need(result,'WORKSPACE_SUPPORT_SAVE_REQUIRED');
-      const path=join(folder,'native-bundle-'+input.archiveSha256);
+      const path=join(folder,(pair?'native-comparison-':'native-bundle-')+identity);
       const saved=JSON.parse(decode(await bytes(join(path,'result.json'),MAX_REQUEST)));
       const original=JSON.parse(decode(await bytes(join(path,'request.json'),MAX_REQUEST)));
-      need(saved.status==='ATTACHED'&&same(saved.request,original)&&original.archive.sha256===input.archiveSha256&&
+      need(saved.status==='ATTACHED'&&same(saved.request,original)&&(pair?original.pair?.pairSha256:original.archive?.sha256)===identity&&
         original.caseId===result.caseId&&original.reviewSha256===review.reviewSha256,
         'WORKSPACE_SUPPORT_ATTACHMENT_CHANGED');
       const revision=saved.result?.attachment?.result?.revision;
@@ -456,7 +512,7 @@ export function createRecoverySupport({directory,workspaceId,profiles,currentHos
       const {profile:selected,store}=await storeFor(input.profileId),delivery=await sourceDelivery(selected);
       need(delivery,'WORKSPACE_SUPPORT_SOURCE_NOT_CONFIGURED');
       return exportCaseSourcePackage({store,casesDirectory:selected.casesDirectory,id:result.caseId,revision,
-        directory:join(path,'case-package'),exportId:'encrypted-'+hash(input.transferId+'\n'+input.archiveSha256).slice(0,48),
+        directory:join(path,'case-package'),exportId:'encrypted-'+hash(input.transferId+'\n'+identity).slice(0,48),
         sourceDelivery:delivery,generatedAt:review.capturedAt,environment,signal});
     },true),
     close(){

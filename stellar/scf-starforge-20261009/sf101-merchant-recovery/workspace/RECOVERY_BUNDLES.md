@@ -84,6 +84,71 @@ Receiving retains and validates the original archive before extracting. A stage 
 
 An existing unrelated destination is never emptied or overwritten. Cancellation before publication leaves the retained transfer available for the same queue's resume action. Cancellation or a failed reply after publication is resolved by reopening that same operation, checking its ownership receipt and all original members.
 
+
+## Carry both encrypted editions from one comparison
+
+A clean completed `object-compare` request can supply either original edition to the existing encrypted-bundle exporter. Select its exact request ID, outer review hash, observed attempt and `sourceSide`. Prepared, partial and failed comparisons remain readable in Support but cannot supply a paired ciphertext delivery. A successful prior comparison does not replace export-time authentication: each selected original bundle is independently verified again by the original exporter.
+
+For a before export, put this selection in a private JSON file, replacing every placeholder with the original saved identities:
+
+~~~json
+{
+  "profileId": "original",
+  "action": "object-bundle-export",
+  "id": "comparison-before-export-1",
+  "sourceRequestId": "comparison-maintenance-1",
+  "sourceReviewHash": "ACTUAL_ORIGINAL_COMPARISON_REVIEW_HASH",
+  "sourceAttempt": 1,
+  "sourceSide": "before"
+}
+~~~
+
+Prepare and start it through the existing `workspace review --selection ABS_JSON` and `workspace start --selection ABS_JSON --expected-review-hash HASH`. The start hash is the returned **export review** hash. Repeat with a separate original export ID and `"sourceSide": "after"`, retaining the same original comparison request, review and attempt. Browser operators select the comparison and **Original comparison edition** in **Encrypted Object backup transfer**.
+
+Preparation freezes the complete original request and every referenced JSON, HTML and Markdown artifact before publishing its review. After an interruption, the same export ID reopens those frozen bytes even if the live comparison request has since advanced. Changing the selection requires a different operation ID. The complete comparison cohort remains limited to 64 MiB including its base64 transport wrappers; no earlier history or artifact is omitted.
+
+Read the pair after both original exports complete:
+
+~~~sh
+starforge merchant-recovery-remote workspace bundle-pair \
+  --config ABS_HOST_CONFIG --directory ABS_PRIVATE_STATE \
+  --profile original --before-id comparison-before-export-1 \
+  --after-id comparison-after-export-1
+~~~
+
+The result binds the exact original request bytes, review and attempt; native comparison digest and both record hashes; and both completed export request IDs, archive byte counts and SHA-256 values. Its `pairSha256` is the attachment selection. Reversed sides, unrelated comparisons, differing source attempts and incomplete exports are refused.
+
+### Attach and independently receive the whole case
+
+Save the same complete comparison into an existing Support case first, following [RECOVERY_SUPPORT.md](RECOVERY_SUPPORT.md). For the optional binary attachment, that existing case must have its genuine original commissioning terms and the host must declare its existing `caseSourceDirectory`. In the browser, choose **Refresh saved Support transfers** after saving in the adjacent Support desk. Read the saved transfer, select both completed exports, review the exact pair, enter the actual current case revision and operator, then confirm **Attach complete encrypted source**.
+
+~~~sh
+starforge merchant-recovery-remote workspace bundle-pair-attach \
+  --config ABS_HOST_CONFIG --directory ABS_PRIVATE_STATE \
+  --profile original --before-id comparison-before-export-1 \
+  --after-id comparison-after-export-1 --expected-pair-sha256 ACTUAL_PAIR_SHA256 \
+  --transfer-id comparison-support-1 --expected-support-review ACTUAL_SUPPORT_REVIEW_SHA256 \
+  --case-revision ACTUAL_CURRENT_CASE_REVISION --actor "Original operator"
+
+starforge merchant-recovery-remote workspace bundle-attachment \
+  --config ABS_HOST_CONFIG --directory ABS_PRIVATE_STATE \
+  --profile original --transfer-id comparison-support-1 --pair-sha256 ACTUAL_PAIR_SHA256
+
+starforge merchant-recovery-remote workspace bundle-case-export \
+  --config ABS_HOST_CONFIG --directory ABS_PRIVATE_STATE \
+  --profile original --transfer-id comparison-support-1 --pair-sha256 ACTUAL_PAIR_SHA256
+~~~
+
+One original SF49 source delivery contains two complete files, `object-before` and `object-after`, with their native archive bytes and hashes. Both uploads and the same prepared workorder belong to one retained attachment request. Existing source-delivery per-file and total-size limits still apply; a valid standalone archive pair may exceed those commercial attachment limits and is rejected without truncation. Standalone export, download and receiving remain available without commissioning terms.
+
+A lost attachment reply is reconciled through that exact original SF49 attachment request before either archive is reread. The native service preserves its original saved case event and rejects a differing request. The local recorded attachment points to the actual attached case revision; a later edit to the case head is retained. Full case export uses that attached revision and the existing exporter, including all original case history, complete comparison evidence and both real source files.
+
+Use the maintained SF74 case-source receiver with every manifest-declared file, the complete installed source and the same original receiving request. Reopen the received case and verify both native source-file identities against the pair. Extract each original archive through the maintained source-delivery file API, declare it on the receiving recovery host and use the existing archive inspect/receive workflow separately for each side. Receiving authenticates the encrypted backup; canonical state-root acceptance and restore remain a separate original Object review. Passphrase values never enter the pair, Support capture, source delivery or case package.
+
+### Validation of this continuation
+
+The focused source course used the actual pure comparison constructor, full comparison validator/report renderer, producer and bundle caller with explicit reference storage and native-service boundaries. It covered interrupted frozen preparation, both edition identities, reversed-pair refusal, same-operation reopen, two complete streams in one delivery, lost attachment publication followed by a later case edit, and export of the actual attached revision. This establishes source behavior; it does not claim native encryption, installed receiving or viewed browser execution. Complete the existing installed and rendered-product acceptance on the exact outgoing application and all original attachments before presenting it as customer-ready.
+
 ## Integration and validation status
 
 The module joins the existing SF101 local request queue, trusted host profiles, browser/CLI and optional original SF49 Support attachment. It creates no new server, remote control channel, scheduled task or hosted CI workflow.
