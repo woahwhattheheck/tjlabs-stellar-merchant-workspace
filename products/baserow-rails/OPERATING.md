@@ -240,8 +240,10 @@ also gives complete row, original-file and attachment commands.
 The [Rails importer setup](../../stellar/scf-starforge-20261009/sf30-seller-sdk/developer/ruby-client/examples/rails_dataset/README.md)
 includes the complete migration, models, mapping, job and commissioning CLI.
 Use the application's existing authenticated account and target relation.
-The application declares the target model, tenant scope, stream, key columns,
-column conversions and removal policy.
+The application declares its target model, tenant scope, streams and received
+source catalogue. A catalogue entry may carry an existing mapping or leave field
+selection to the authorized operator. The form derives available types and
+unique record keys from that same application's schema.
 
 The [operator integration
 guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/developer/ruby-client/examples/rails_dataset/operator/README.md)
@@ -272,13 +274,47 @@ importer = Starforge::RailsDataset.new(
 
 In the operator:
 
-1. Select the declared source. Its complete received copy belongs to that review.
-2. Prepare and read every change category. Pages preserve exact before/after
-   values, source row and key.
-3. Download the complete JSON/CSV preview when needed.
-4. Approve the exact saved preview and run the original import job.
-5. Read the committed receipt, every edition and original attachment.
-6. Refresh the source to prepare a new review against the current target state.
+1. Choose **Read source and configure fields** for the declared delivery. The
+   background source job retains its complete received copy and reads every row.
+   A review can reach this source stage even when its original mapping is absent
+   or needs correction.
+2. Read the complete column profile, browse every original row, and download the
+   full original CSV/JSONL or source handoff. Source numbers retain their exact
+   values; missing fields and explicit empty values have separate counts.
+3. Select a source column for each application field that this dataset manages.
+   The application supplies the real type, size and precision. Leave a field
+   unselected to preserve application-owned values. Choose how explicit empty
+   values and missing source fields are handled.
+4. For a new stream, choose an existing unique application key and map all of its
+   fields. An established stream retains the original key fields and conversions.
+   Choose retained or archived handling for keys absent from later complete
+   editions. An archive field also declares its present/removed Boolean direction.
+5. Choose **Save mapping and prepare complete review**. This retains a new review
+   of the same original source, including the selected mapping and full source
+   and target context. Read every change category and the complete JSON/CSV
+   preview. The original source review remains available.
+6. Approve that exact saved preview and run the original import job. Read the
+   committed receipt, every edition, original attachment and saved working
+   dataset. Refresh creates another complete review against current records.
+
+A delivery with an existing complete mapping can still use **Prepare complete
+review** directly. Reopen or resume the same selected review after an interrupted
+source or import job. The mapping form requires a current context for a new
+selection; a retry of an already admitted mapping retains its original request.
+
+The same complete source and mapping operations are available to the authorized
+application CLI:
+
+~~~sh
+starforge baserow-rails dataset-source --ruby "$RUBY" -- --help
+~~~
+
+For a managed application, provide the original **--application** directory,
+paired **--runtime-source**, and private **--environment** directory together.
+For an existing Rails application, use its configured `bin/rails runner` and
+original tenant resolver as shown in the operator guide. Source and mapping
+operations retain review UUIDs, selection hashes and full output files. The
+commands do not accept an arbitrary model or target relation from a request.
 
 The importer applies the target rows, current source keys, immutable edition and
 original receipt in one database transaction. A repeated business operation
@@ -494,6 +530,8 @@ against its original byte count and SHA.
 | Customer packet | customer resume with the original output |
 | Ruby client package | client resume with the original source output |
 | Ruby receiving job | receive … resume with the original job |
+| Complete source preparation | Resume the original source review; its selected files and complete profile stay bound together |
+| Field mapping | Reuse the original mapping review ID and selected context/input, then resume its whole preview |
 | Rails preview/import | Reopen the saved review/business operation and original receipt |
 | Later managed data edition | Reopen its original edition, review and runtime operation; resume that UUID |
 | Connected file download or runtime upload | Reopen the retained transfer or receiving operation and continue at its durable byte offset |

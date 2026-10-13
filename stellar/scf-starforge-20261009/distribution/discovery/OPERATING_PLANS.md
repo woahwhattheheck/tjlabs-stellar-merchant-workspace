@@ -115,6 +115,21 @@ Create, edit, add, receive and copy require a new output path. Exports use the e
 
 The show action emits the complete document by default. With --revision N it emits a summary and editable draft of that historical revision; draft --revision N prepares that content against the latest saved base. The markdown and html formats render the selected saved revision. Input files and browser transfers accept UTF-8 JSON documents up to 32 MiB.
 
+## Receive work from the original SCF planning review
+
+The installed grant reviewer can create this same plan from its selected
+native SF47 work packages. Each step keeps the package's original scope,
+completion result, price, hours and relative dates. Import the resulting
+complete JSON here to continue the customer's detailed operating work.
+
+Use **Toolkit catalog JSON** or `starforge discover plan catalog --out NEW.json`
+to export the complete selected toolkit for the original planning review's
+registration picker. The download retains all items, original source records
+and declared runtime features.
+
+The [native grant procedure guide](../../../../stellar-forge/developer-site/GRANT_OPERATING_PLANS.md)
+covers the original saved draft, native JSON/ZIP and installed command.
+
 ## Application API
 
 The pure model is exported with TypeScript declarations:

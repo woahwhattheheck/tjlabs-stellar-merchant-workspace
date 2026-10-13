@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // MIT. Operate the same original Research listener from a local command.
 import {RIS_COMMANDS,RIS_USAGE,main as risMain} from './ris-source/cli.mjs';
+import {DOSSIER_RETURN_COMMANDS,DOSSIER_RETURN_USAGE,dossierReturnCliError,main as dossierReturnMain} from './dossier-returns/cli.mjs';
 import {parseArgs} from 'node:util';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -206,6 +207,7 @@ const commandOptions=Object.freeze({
 const compact=value=>value?.dossier?{...value,dossier:researchSummary(value.dossier)}:value;
 const selected=value=>Object.fromEntries(Object.entries(value).filter(([,item])=>item!==undefined));
 export async function main(argv=process.argv.slice(2),{output=process.stdout}={}){
+  if(DOSSIER_RETURN_COMMANDS.includes(argv[0]))return dossierReturnMain(argv,{output});
   if(RIS_COMMANDS.includes(argv[0]))return risMain(argv,{output});
   if(RESEARCH_QUOTATION_SETUP_COMMANDS.includes(argv[0])){
     const code=await quotationSetupMain(argv,{stdout:output});if(code)process.exitCode=code;return code;
@@ -223,7 +225,7 @@ export async function main(argv=process.argv.slice(2),{output=process.stdout}={}
   if(STUDY_EXTRACTION_COMMANDS.includes(argv[0]))return extractionMain(argv,{output});
   if(TEMPLATE_EXCHANGE_COMMANDS.includes(argv[0]))return templateMain(argv,{output});
   const [command,...args]=argv;
-  if(!command||['help','--help','-h'].includes(command)){output.write(usage+'\n'+RIS_USAGE);return;}
+  if(!command||['help','--help','-h'].includes(command)){output.write(usage+'\n'+RIS_USAGE+'\n'+DOSSIER_RETURN_USAGE);return;}
   need(Object.hasOwn(commandOptions,command),'COMMAND_UNKNOWN');
   const fields=['connection-file','directory','timeout-ms',...commandOptions[command]];
   const {values,tokens}=parseArgs({args,options:Object.fromEntries(fields.map(key=>[key,{type:'string'}])),strict:true,tokens:true});
@@ -322,6 +324,9 @@ export async function main(argv=process.argv.slice(2),{output=process.stdout}={}
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   main().catch(error=>{
+    if(error.returnOperation){
+      process.stderr.write(JSON.stringify(dossierReturnCliError(error))+'\n');process.exitCode=1;return;
+    }
     process.stderr.write(JSON.stringify({error:safeCode(error.code,'RESEARCH_COMMAND_FAILED'),
       ...(Number.isInteger(error.status)?{status:error.status}:{}),
       ...(error.destinationPublished?{destinationPublished:true,file:error.file}:{}),

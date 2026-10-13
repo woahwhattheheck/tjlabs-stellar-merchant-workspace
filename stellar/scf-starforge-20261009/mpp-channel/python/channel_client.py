@@ -23,7 +23,8 @@ ACTIONS = frozenset({
     "purchase-prepare", "purchase-execute", "purchase-resume", "purchase-refresh",
     "purchase-cancel", "merchant-save", "merchant-start", "merchant-stop",
     "delivery-recover", "close-prepare", "close-execute", "close-resume",
-    "close-reconcile", "close-cancel", "contract-fetch", "export", "receive",
+    "close-reconcile", "close-cancel", "funder-template", "funder-save", "channel-observe", "funding-prepare", "funding-execute", "funding-resume", "funding-reconcile", "funding-cancel", "collection-prepare", "collection-execute", "collection-resume", "collection-reconcile", "collection-cancel",
+    "contract-fetch", "export", "receive",
 })
 
 
@@ -64,7 +65,7 @@ def _operation_ids(method: str, value: Mapping[str, Any]) -> dict[str, str]:
         return {}
     return {
         key: item for key, item in selected.items()
-        if key in {"taskId", "purchaseId", "settlementId", "handoverId", "id"}
+        if key in {"taskId", "purchaseId", "settlementId", "fundingId", "handoverId", "id"}
         and isinstance(item, str)
     }
 
@@ -294,7 +295,7 @@ class ChannelClient:
         return self.call("state")
 
     def record(self, kind: str, identifier: str) -> dict[str, Any]:
-        if kind not in {"tasks", "purchases", "contracts"}:
+        if kind not in {"tasks", "purchases", "contracts", "funders", "funding", "settlements", "observations"}:
             raise ValueError("record kind must be tasks, purchases or contracts")
         return self.call("record", {"kind": kind, "id": identifier})
 

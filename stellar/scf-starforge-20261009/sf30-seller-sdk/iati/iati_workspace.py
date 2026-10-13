@@ -163,6 +163,24 @@ def completed_packet_matches(output, sources, schema, metadata, entries):
                     return False
         return True
 
+def reconcile_export_stage(output, stage):
+    """Reconcile this original private publication stage while its lease is held."""
+    if stage.exists() or stage.is_symlink():
+        info = stage.lstat()
+        if not stat.S_ISREG(info.st_mode) or (os.name == "posix" and (info.st_uid != os.getuid() or info.st_mode & 0o077)):
+            raise InputError("Export stage is not an operator-owned private file")
+        if output.exists() and not output.is_symlink() and os.path.samefile(stage, output):
+            if info.st_nlink != 2:
+                raise InputError("Published export has an unexpected additional hard link")
+            stage.unlink()
+            sync_dir(output.parent)
+        else:
+            if info.st_nlink != 1:
+                raise InputError("Incomplete export has an unexpected hard link")
+            preserved = stage.with_name(stage.name + ".interrupted-" + os.urandom(8).hex())
+            os.rename(stage, preserved)
+            sync_dir(output.parent)
+
 def packet_write(output, sources, schema, metadata):
     """Stage the complete archive, then publish atomically without replacing a file."""
     entries = {name: {"bytes": regular(path, MAX_METADATA if name.endswith(".json") else MAX_PACKET).st_size,
@@ -176,21 +194,7 @@ def packet_write(output, sources, schema, metadata):
         raise InputError("Packet manifest exceeds 64 MiB")
     stage = output.parent / ("." + output.name + ".iati-export.partial")
     with export_lease(output):
-        if stage.exists() or stage.is_symlink():
-            info = stage.lstat()
-            if not stat.S_ISREG(info.st_mode) or (os.name == "posix" and (info.st_uid != os.getuid() or info.st_mode & 0o077)):
-                raise InputError("Export stage is not an operator-owned private file")
-            if output.exists() and not output.is_symlink() and os.path.samefile(stage, output):
-                if info.st_nlink != 2:
-                    raise InputError("Published export has an unexpected additional hard link")
-                stage.unlink()
-                sync_dir(output.parent)
-            else:
-                if info.st_nlink != 1:
-                    raise InputError("Incomplete export has an unexpected hard link")
-                preserved = stage.with_name(stage.name + ".interrupted-" + os.urandom(8).hex())
-                os.rename(stage, preserved)
-                sync_dir(output.parent)
+        reconcile_export_stage(output, stage)
         if output.exists() or output.is_symlink():
             if not completed_packet_matches(output, sources, schema, metadata, entries):
                 raise InputError("Completed output belongs to a different export; choose another output path")
@@ -295,6 +299,8 @@ class IatiWorkspace(Workspace):
         self.results = IatiResults(self)
         from amp import AmpWorkspace
         self.amp = AmpWorkspace(self)
+        from geography import IatiGeography
+        self.geography = IatiGeography(self)
         from document_evidence import DocumentEvidence
         self.document_evidence = DocumentEvidence(self)
 
@@ -842,6 +848,9 @@ class IatiWorkspace(Workspace):
         from amp.portable import SCHEMA as AMP_PACKET
         if isinstance(manifest, dict) and manifest.get("schema") == AMP_PACKET:
             return self.amp.receive(path)
+        from geography_portable import PACKET as GEOGRAPHY_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == GEOGRAPHY_PACKET:
+            return self.geography.receive({"path": path})
         from document_evidence.portable import PACKET as DOCUMENT_EVIDENCE_PACKET
         if isinstance(manifest, dict) and manifest.get("schema") == DOCUMENT_EVIDENCE_PACKET:
             return self.document_evidence.receive({"path": path})

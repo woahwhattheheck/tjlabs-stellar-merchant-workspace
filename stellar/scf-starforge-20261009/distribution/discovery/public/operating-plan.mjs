@@ -433,6 +433,12 @@ $('new-plan-form').addEventListener('submit', event => {
 });
 $('plan-filter').addEventListener('input', renderPlanList);
 $('refresh-catalog').addEventListener('click', () => run(refreshCatalog));
+$('export-catalog').addEventListener('click', () => run(async () => {
+  if (!catalog) await refreshCatalog();
+  if (!catalog) throw new Error('Refresh the selected toolkit catalog before exporting it.');
+  download(catalog, 'starforge-toolkit-catalog.json');
+  status('Downloaded the complete toolkit catalog with its original source and runtime registrations.');
+}));
 $('reload-plans').addEventListener('click', () => run(async () => { await flushDraft(); await refreshPlanList(); if (current) await openPlan(current.id); }));
 $('save-plan').addEventListener('click', () => run(savePlan));
 $('copy-plan').addEventListener('click', () => run(saveCopy));

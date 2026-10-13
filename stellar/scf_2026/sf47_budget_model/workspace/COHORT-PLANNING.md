@@ -800,3 +800,256 @@ Full JSON and comparative CSV carry daily, weekly, unassigned-effort,
 capacity-sensitivity and service-price results. The readable HTML contains all
 eight calendar measures, independent of the currently selected browser measure,
 alongside the complete comparative capacity and price sections.
+
+
+## Schedule the complete delivery workload
+
+Open **Schedule delivery** after entering each service’s active effort and shared
+delivery pool in **Capacity & pricing**. This operation allocates the complete
+existing workload to those daily hours. The original cohort calculator still
+owns the useful-task counts, payment groups, allowance use, source rule, economics
+and target comparison.
+
+### Set the service commitments
+
+Choose **Edit service rule** for each service that can move. New rules default to
+fixed dates. Enter the actual permitted movement and retain its basis:
+
+| Input | Operating meaning |
+| --- | --- |
+| Permit date movement | Allows future occurrences to use a reviewed date allocation. Fixed rows reserve their existing dates. |
+| Days earlier / later | The permitted range around each original cadence date, including an occurrence moved in an earlier plan. A successor cannot reset that original tolerance. |
+| Release date | Earliest date the service can start. Each named funding group’s purchase date is an additional lower bound. |
+| Complete output due by | The whole output must arrive by the end of this UTC date, including the original delivery delay. The original cohort completion window also applies. |
+| Permitted weekdays | Intersects the original plan calendar and service exclusions. |
+| Minimum days between occurrences | Minimum calendar-day spacing between this service’s whole occurrences. |
+| Priority | Larger values receive shared capacity first. |
+| Note | The original commitment, permission or planning assumption supporting these choices. |
+
+The date preference selects **Nearest original service date** or **Earliest
+permitted date**. Capacity stays at its entered daily precision, including
+explicit date overrides. Unknown availability or effort is returned as a field
+to complete. One whole occurrence must fit one pool/day; its useful tasks are
+kept together.
+
+Work scheduled at or before the plan’s exact cutoff retains its current date.
+Cancelled/zero-task entries remain in the plan. Named funding groups keep their
+IDs, purchase dates, purchased operation, price, facilitator and full original
+Installation source. A useful result can move only on or after all of its named
+funding dates.
+
+### Review the actual allocation
+
+Choose **Calculate delivery dates**. The result shows every original occurrence,
+its former and proposed dates, complete-output timestamp, effort, pool, funding
+IDs and status. Open **Complete dates and constraints** for the service policy,
+all permitted dates and exact rejected-date reasons. **Edit service rule**,
+**Edit effort and pool**, and **Edit capacity and pricing** return to those
+original inputs in the same application.
+
+The allocator reserves all fixed and unresolved work. It considers service
+groups by descending priority, the earliest end of a permitted occurrence
+window, then the original occurrence order. Within a group it uses the selected
+date preference. Implicit prepaid sequences retain their original chronological
+consumption order. A sequence linked by prepaid use or minimum spacing is placed
+together; if its continuation cannot fit, the whole sequence retains its original
+dates and capacity reservation.
+
+**Complete** means the active future occurrences fit the entered constraints.
+**Unresolved** preserves the full work and identifies the remaining decision
+under this allocation order. Adjust the original capacity, service window,
+spacing or priority and calculate another complete alternative. The existing
+capacity report separately retains unknown availability on unused dates and
+the original historical workload.
+
+Scheduling keeps useful tasks and underlying requests exact. It also checks that
+new payment requests, paid purchases, allowance consumption, explicit funding
+groups and full currency totals remain identical to the source plan. The
+original completion dates and cohort opportunity results are recalculated from
+the proposed delivery dates.
+
+### Keep occurrence identities when dates coincide
+
+A schedule retains its original cadence, exclusions, useful-task count, payment
+and cost inputs. Its optional dateAllocations array maps an original occurrence
+to its reviewed date:
+
+~~~json
+{
+  "dateAllocations": [
+    {"sourceDate": "2026-10-19", "date": "2026-10-21"},
+    {"sourceDate": "2026-10-20", "date": "2026-10-21"}
+  ]
+}
+~~~
+
+These are two complete occurrences on October 21. Their IDs remain
+SCHEDULE_ID:2026-10-19 and SCHEDULE_ID:2026-10-20; neither row disappears when the
+dates coincide. Each report row includes its original sourceDate and
+originalScheduledAt alongside the actual planned timestamp. A source date must
+still identify an active occurrence of the retained cadence/calendar, and an
+allocated date must be open and inside the same original rule window.
+
+The normal schedule editor exposes **Reviewed date allocations**, one original
+date | allocated date per line. An empty list restores the original dates.
+Editable row CSV retains the complete mapping as JSON. Changing a cadence or
+calendar so that an allocated source occurrence no longer exists returns that
+exact mismatch for review.
+
+### Save the successor and comparison together
+
+Choose **Use dated successor** to continue the full candidate in the existing
+editor. **Open full comparison** shows the original plan and complete candidate
+through the maintained comparison, including stable occurrence changes, daily
+capacity, service pricing, funding, participants and original targets.
+
+**Save successor and comparison** applies the reviewed candidate and saves one
+normal cohort-plan source edition. It contains the editable successor, its
+current report, the complete original scheduling operation and both full
+comparison documents/reports. The existing expected case version, original
+request UUID, exact attachment readback and interrupted-save recovery apply to
+that one source write.
+
+Opening that edition restores its editable scheduling choices and original
+allocation. Complete case export/import carries it through the original
+Operations source store. The original Customer-use Calendar and Cohort seed
+remain inside calendarSource. The scheduling plan is a reviewed delivery
+alternative; operating Calendar changes continue through the existing
+Installation editor with their actual current revision.
+
+Download **Complete scheduling JSON** to retain the original input document,
+choices, complete candidate/report and every assignment. **Allocation CSV**
+includes all row-level constraints and rejected dates. **Readable allocation**
+contains the entire table and original/candidate input documents. A saved
+successor’s ordinary plan JSON carries the allocation and comparison together.
+
+### Installed CLI and typed ESM
+
+Use the existing grant-cohort-plan command:
+
+~~~sh
+starforge grant-cohort-plan schedule-seed \
+  --input original-plan.json --output delivery-choices.json
+
+starforge grant-cohort-plan schedule \
+  --input original-plan.json --constraints delivery-choices.json \
+  --name "Customer service delivery" --output delivery-allocation.json
+
+starforge grant-cohort-plan schedule-plan \
+  --input delivery-allocation.json --output delivery-successor.json
+
+starforge grant-cohort-plan schedule-compare \
+  --input delivery-allocation.json --output delivery-comparison.json
+
+starforge grant-cohort-plan csv \
+  --input delivery-allocation.json --output delivery-allocation.csv
+~~~
+
+Edit the complete choices returned by schedule-seed before calculating. Omitting
+--constraints uses the plan’s existing saved choices, with fixed defaults for
+new services. schedule-plan and schedule-compare recalculate the retained source
+and choices before producing their complete output. Each CLI destination uses
+the existing atomic create-only publisher.
+
+The source module and its adjacent declaration expose the same pure operation:
+
+~~~js
+import {
+  seedCohortDeliveryScheduling,
+  scheduleCohortDelivery,
+  reopenCohortDeliverySchedule,
+  exportCohortDeliveryScheduleCsv
+} from './cohort_planning_scheduling.mjs';
+
+const choices = seedCohortDeliveryScheduling(originalPlan);
+const selected = choices.schedules.find(row => row.scheduleId === originalScheduleId);
+selected.flexible = true;
+selected.delayDays = 3;
+selected.dueDate = originalCompletionDeadline;
+selected.note = originalFlexibilityBasis;
+
+const allocation = scheduleCohortDelivery(originalPlan, choices);
+const completeOriginal = reopenCohortDeliverySchedule(allocation);
+const editableSuccessor = completeOriginal.candidate;
+const allAssignmentsCsv = exportCohortDeliveryScheduleCsv(completeOriginal);
+~~~
+
+The installed export is
+@tokenjunkielabs/starforge-merchant/grant/cohort-scheduling.
+The scheduling choices live in optional plan.deliveryScheduling. Plans without
+this field or date allocations keep their original normalized shape, occurrence
+IDs and calculated result. Both maintained launchers and the authenticated
+browser source route include the same scheduling module.
+
+## Complete adoption work through Merchant MCP
+
+The existing Merchant Grant workspace owner provides the same adoption calculator, saved Calendar bridge, pricing editor and capacity allocator to agents. It uses its declared workspace connection and retains complete original inputs and outputs through the existing snapshot and file tools. The installed module is `@tokenjunkielabs/starforge-merchant/grant/cohort-agent`; its adjacent declaration covers the full operation.
+
+| Tool | Complete operation |
+| --- | --- |
+| merchant_grant_adoption_seed | Read the current native case and tranche seed, or one saved Calendar group with its exact Installation editions. Return the full native source, editable plan, report and scheduling choices. |
+| merchant_grant_adoption_review | Recalculate the whole plan against the current native case and seed. Retain the entered rule and show the actual source differences. |
+| merchant_grant_adoption_edit | Apply explicit plan edits or keyed row updates, additions and removals. Return the successor, calculated result and complete predecessor comparison. |
+| merchant_grant_adoption_rebase | Explicitly adopt the current source and proposed rule in the original case while retaining the previous complete document and all editable rows. |
+| merchant_grant_adoption_schedule | Allocate every original occurrence using the complete selected flexibility, dates, weekdays, spacing, priorities and capacity. |
+| merchant_grant_adoption_compare | Compare complete plans, reports, editions or delivery allocations with both original documents attached. |
+| merchant_grant_adoption_prepare | Retain one complete reviewed edition and its exact original save request. |
+| merchant_grant_adoption_save | Submit that prepared request through the original source attachment operation, retain its native response and reopen every saved byte. |
+| merchant_grant_adoption_request | Reopen the original prepared request and any returned response, and inspect the exact native version event. |
+| merchant_grant_adoption_open | Open the full native source by case, source ID and SHA256, including a source carried in an imported case. |
+| merchant_grant_adoption_export | Retain complete JSON, CSV or readable HTML through the original file reader. |
+
+### Select, author and allocate the whole source
+
+Use source CASE with tranche 2 or 3. Use source CALENDAR with the saved groupId and, when selecting particular editions, each original Installation id, revision and SHA256. Calendar groups keep their original window. Original funding groups, allowance uses, cancelled work, prices and unknown commercial terms all travel with the source plan.
+
+An input can be the full inline inputs object or one verified input reference. References select a declared hostInput, complete snapshotId or committed transferId and the exact whole-file expectedInputSha256. An optional inputPointer selects a complete object within that verified original file. The file is verified before selection. The owner reads the full retained document, including arrays that were presented as counts in chat.
+
+Edits address buyers, merchants, facilitators, operations, schedules, workshares, capacityPools and fundingGroups by their original row ID. UPDATE merges the explicitly supplied nested object fields and replaces supplied arrays in full. Original id and origin stay attached to the row. ADD supplies a complete distinct row; REMOVE names the exact row. PLAN edits the name, observation date, window start, operating calendar, sensitivity, note or complete scheduling choices. Rebase is the explicit operation for changing the native source and rule.
+
+Enter delivery effort and commercial terms in those complete rows. Null remains unpriced or unspecified; a zero is an entered zero. Funding revenue and shared fees remain on the original funding group. Scheduling uses the existing capacity operation described above, including fixed defaults, original source dates, purchased funding and every unresolved constraint. Its full result can be scheduled again or compared without stripping the previous allocation.
+
+### Carry the retained result through one native save
+
+The following sequence uses an already configured Merchant owner and real values read from its existing workspace. `changes` and `constraints` are the operator's complete selected edits and scheduling choices.
+
+~~~js
+const call = (name, args) => merchant.call('merchant_grant_' + name, {workspace, ...args});
+const input = snapshot => ({
+  input: {snapshotId: snapshot.id},
+  expectedInputSha256: snapshot.file.sha256
+});
+
+const seed = await call('adoption_seed', {
+  caseId, expectedVersion, source: 'CALENDAR', groupId, installationRefs, asOfAt
+});
+const authored = await call('adoption_edit', {...input(seed), changes});
+const allocated = await call('adoption_schedule', {...input(authored), constraints});
+const reviewed = await call('adoption_review', {caseId, expectedVersion, ...input(allocated)});
+
+// Retain these original values and reuse the same complete input on a retry.
+const prepared = await call('adoption_prepare', {
+  caseId, expectedVersion, ...input(reviewed), requestId, actor, note, createdAt
+});
+const fingerprint = await call('snapshot', {
+  snapshotId: prepared.id, expectedSha256: prepared.file.sha256,
+  pointer: '/preparedSha256'
+});
+const saved = await call('adoption_save', {
+  ...input(prepared), expectedPreparedSha256: fingerprint.value
+});
+~~~
+
+Prepare retains the original case creation identity, selected native seed, complete edition bytes, file hash, exact source.add body and deterministic edition identity. A plan edition contains its plan and calculated report, full native seed, allocation and original comparison. Select parentSourceId and expectedParentSha256 together when saving a successor to a particular existing source.
+
+The Merchant owner stores the complete prepared request in its existing private workspace directory. After the native attachment returns, it retains the original response before source readback. Repeating the same prepare input returns the original prepared document even after the case advances. Repeating save first reconciles the original case event and retained response. If the response was lost, the same native request identity recovers its original result. A changed case/version or differing request body produces the actual conflict and original request to review.
+
+Use adoption_request with caseId, requestId and expectedPreparedSha256 to inspect that original request. Use adoption_open with the returned source ID and SHA256 to reopen its complete edition. The existing browser opens the same saved source.
+
+### Deliver the complete result
+
+JSON preserves the full selected original wrapper and its source, plan, allocation or comparison. CSV uses the existing complete plan, scheduling or comparison exporter. HTML includes the full workload, original target rows, currencies, service pricing, every daily capacity row, funding groups, occurrences, allocation constraints and original editable JSON. Retrieve every byte with merchant_grant_file_read and its returned file identity.
+
+For another operator's editable case, use the existing merchant_grant_export with kind case and the original case_import operation. The saved adoption source travels with the native case package. A receiving case keeps its own identity while adoption_open preserves the source edition's original identities.
+
+Applications using the module directly pass their existing GrantWorkspaceClient to the exported functions. saveGrantCohortAdoption also takes a retainResponse callback that durably stores the complete native response before resolving; the Merchant owner supplies this using its existing immutable file writer.

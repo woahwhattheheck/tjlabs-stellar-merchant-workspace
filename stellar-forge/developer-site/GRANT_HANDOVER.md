@@ -224,6 +224,25 @@ validate the complete candidate before replacing the working state. An oversized
 addition does not discard the current editor. This is a complete bounded
 submission draft, not a repository for arbitrarily large source datasets.
 
+## Turn the reviewed plan into customer operating work
+
+The same saved submission can prepare an editable customer operating procedure
+from its selected original SF47 work packages. In **Planning → Customer operating
+procedure**, enter the customer, useful result, operator and receiving details;
+attach original Command finder registrations where useful and create the
+complete Operating plans JSON.
+
+The preparation keeps the native scope, completion measures, price, hours and
+relative work window in each ordered step. It remains attached to the saved
+planning review and travels with the complete submission. The receiving operator
+imports it into Operating plans, adds actual due dates and detailed commands,
+then saves the work and results as further operating revisions. Prepared JSON,
+HTML and Markdown remain available from the original planning review.
+
+The [customer procedure guide](GRANT_OPERATING_PLANS.md) covers both browser
+and `starforge grant-operating-plan` paths, complete catalog selection and the
+six current grant work packages.
+
 ## Maintained source composition
 
 The additive source files are:

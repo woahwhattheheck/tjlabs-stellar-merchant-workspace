@@ -344,5 +344,16 @@ export function mountFredReleases({ api, download, table, select, getState, refr
     if (latest.busy || latest.project.pending) throw new Error('Continue the original project action before clearing this browser request.');
     sessionStorage.removeItem(requestKey()); await refresh(); message('The browser request is cleared; the project history is retained.');
   });
-  return { onState };
+  function useSelection({ name, series, observationStart, observationEnd, baselineAsOf }) {
+    if (!Array.isArray(series) || !series.length) throw new Error('Choose an original retained FRED selection.');
+    $('release-watch-template').value = '';
+    $('release-watch-series').readOnly = false;
+    $('release-watch-name').value = name; $('release-watch-series').value = series.join(', ');
+    $('release-watch-start').value = observationStart;
+    $('release-watch-end-current').checked = observationEnd === 'as_of';
+    $('release-watch-end').disabled = observationEnd === 'as_of';
+    if (observationEnd !== 'as_of') $('release-watch-end').value = observationEnd;
+    $('release-watch-baseline').value = baselineAsOf; sync();
+  }
+  return { onState, useSelection };
 }

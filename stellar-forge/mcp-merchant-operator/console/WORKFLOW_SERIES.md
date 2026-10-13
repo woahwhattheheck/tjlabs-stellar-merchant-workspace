@@ -272,3 +272,7 @@ python3 run-series-native.py --source-packet series-source-map.json \
 ```
 
 The receiver keeps an existing workspace as a private backup, streams the exact archived files into the original receiving path, restores any original configured source inputs, and runs the completed entry through its actual launch and customer APIs. A fresh native completion follows this same archive extraction and reopen path before producing the customer delivery summary.
+
+## Merchant agent tools
+
+The configured Merchant provider operates the complete original recurring-work lifecycle, native run recovery, customer receiving, complete handover files and agenda calendar export. See [WORKFLOW_SERIES_AGENT.md](WORKFLOW_SERIES_AGENT.md) for connection configuration, the full operating flow and receiving instructions.

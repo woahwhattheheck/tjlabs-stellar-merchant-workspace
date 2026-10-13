@@ -1,8 +1,11 @@
 /** HTTP client for Xero customer document handovers. Mutations are never replayed automatically. */
 export class XeroReceivablesApiError extends Error {
-  constructor(message, {status = 0, code = 'REQUEST_FAILED', details = null, requestId = null, response = null} = {}) {
+  constructor(message, {
+    status = 0, code = 'REQUEST_FAILED', details = null, requestId = null, response = null,
+    outcomeUnknown, reopenRequired, commitUncertainty,
+  } = {}) {
     super(message); this.name = 'XeroReceivablesApiError';
-    Object.assign(this, {status, code, details, requestId, response});
+    Object.assign(this, {status, code, details, requestId, response, outcomeUnknown, reopenRequired, commitUncertainty});
   }
 }
 function segment(value) {
@@ -59,6 +62,9 @@ export class XeroReceivablesClient {
       throw new XeroReceivablesApiError(problem?.message || (typeof payload?.error === 'string' ? payload.error : 'Request failed (' + response.status + ').'), {
         status: response.status, code: problem?.code || payload?.code || 'REQUEST_FAILED',
         details: problem?.details ?? payload?.details ?? null,
+        outcomeUnknown: problem?.outcomeUnknown ?? payload?.outcomeUnknown,
+        reopenRequired: problem?.reopenRequired ?? payload?.reopenRequired,
+        commitUncertainty: problem?.commitUncertainty === undefined ? payload?.commitUncertainty : problem.commitUncertainty,
         requestId: payload?.requestId || response.headers.get('x-request-id'), response: payload,
       });
     }
@@ -78,5 +84,58 @@ export class XeroReceivablesClient {
   exportFile(id, name = 'handover.tar') {
     return this.request('/packages/' + segment(id) + '/export' + queryString({name}), {binary: true});
   }
+  cashPreview(packageId, value, {signal} = {}) {
+    return this.request('/packages/' + segment(packageId) + '/cash/preview', {method: 'POST', body: value, signal});
+  }
+  cashCapture(packageId, value, {signal} = {}) {
+    return this.request('/packages/' + segment(packageId) + '/cash/cycles', {method: 'POST', body: value, signal});
+  }
+  cashCycles(packageId, {signal} = {}) {
+    return this.request('/packages/' + segment(packageId) + '/cash/cycles', {signal});
+  }
+  cashCycle(packageId, cycleId, {signal} = {}) {
+    return this.request('/packages/' + segment(packageId) + '/cash/cycles/' + segment(cycleId), {signal});
+  }
+  cashFile(packageId, cycleId, name, {signal} = {}) {
+    return this.request('/packages/' + segment(packageId) + '/cash/cycles/' + segment(cycleId) + '/files/' + segment(name), {binary: true, signal});
+  }
+  cashExport(packageId, cycleId, {signal} = {}) {
+    return this.request('/packages/' + segment(packageId) + '/cash/cycles/' + segment(cycleId) + '/export', {signal});
+  }
+  cashExportFile(packageId, cycleId, name = 'handover.tar', {signal} = {}) {
+    return this.request('/packages/' + segment(packageId) + '/cash/cycles/' + segment(cycleId) + '/export' + queryString({name}), {binary: true, signal});
+  }
+
 }
+
+/**
+ * Bind the original complete selection to its reviewed revision and digest.
+ * Pass the input used for cashPreview, including original provider file bytes.
+ * A saved cycle's selection contains source metadata and is not a capture input.
+ * The native workspace recomputes the complete review before saving the cycle.
+ */
+export function xeroCashCaptureArguments(selection, preview, {actor, requestId} = {}) {
+  if (!selection || typeof selection !== 'object' || Array.isArray(selection)) {
+    throw new TypeError('Keep the complete original cash selection used for the preview.');
+  }
+  if (!preview || !Number.isSafeInteger(preview.revision) || preview.revision < 0 ||
+      !/^[a-f0-9]{64}$/.test(preview.previewSha256 || '')) {
+    throw new TypeError('Use a complete successful cash preview with its original revision and SHA.');
+  }
+  if (typeof actor !== 'string' || !actor.trim() ||
+      typeof requestId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(requestId)) {
+    throw new TypeError('Supply the actor and one stable original requestId for this capture.');
+  }
+  if (selection.additionalSources !== undefined && (!Array.isArray(selection.additionalSources) ||
+      selection.additionalSources.some(source => !source || !source.file ||
+        typeof source.file.name !== 'string' || typeof source.file.dataBase64 !== 'string' ||
+        typeof source.observedAt !== 'string'))) {
+    throw new TypeError('Keep every original provider file and its observation time in additionalSources.');
+  }
+  let original;
+  try { original = JSON.parse(JSON.stringify(selection)); }
+  catch { throw new TypeError('The original cash selection must be JSON serializable.'); }
+  return {...original, revision: preview.revision, actor, requestId, previewSha256: preview.previewSha256};
+}
+
 export function createXeroReceivablesClient(options) { return new XeroReceivablesClient(options); }

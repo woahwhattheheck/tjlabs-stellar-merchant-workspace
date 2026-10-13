@@ -133,6 +133,22 @@ export function merchantConfig(value) {
   }
   return result;
 }
+export function funderConfig(value) {
+  need(plain(value) && plain(value.funding), 'MPP_CHANNEL_FUNDER_PROFILE_REQUIRED');
+  const terms=channel(value.channel);
+  need(validStrKey(terms.funder,'G') && value.funding.account===terms.funder,
+    'MPP_CHANNEL_FUNDER_ACCOUNT_SIGNER_REQUIRED');
+  return {schema:'stellar-forge.mpp-channel-funder.v1',
+    title:text(value.title,200,'MPP_CHANNEL_FUNDER_TITLE_REQUIRED'),channel:terms,
+    dependencyRoot:absolute(value.dependencyRoot),
+    funding:{account:terms.funder,keyEnv:envName(value.funding.keyEnv),
+      maximumFeeStroops:amount(value.funding.maximumFeeStroops),operator:id(value.funding.operator)}};
+}
+export function draftFunder(terms) {
+  return {schema:'stellar-forge.mpp-channel-funder.v1',title:'',channel:terms?channel(terms):draftTask().channel,
+    dependencyRoot:'',funding:{account:terms?.funder ?? '',keyEnv:'MPP_CHANNEL_FUNDER_SECRET',
+      maximumFeeStroops:'',operator:''}};
+}
 export function humanAmount(value, decimals) {
   const digits=amount(value).padStart(decimals+1, '0');
   return decimals ? digits.slice(0,-decimals)+'.'+digits.slice(-decimals) : digits;

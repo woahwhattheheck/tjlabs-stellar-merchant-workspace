@@ -1,4 +1,5 @@
 // MIT. Original SF47 tool schemas without provider runtime imports.
+import {grantCohortAdoptionTools} from './grant-cohort-adoption.mjs';
 import {GRANT_CASE_ACTIONS,GRANT_MAX_BUNDLE_BYTES,GRANT_TRANSFER_CHUNK_BYTES as CHUNK} from '../../../stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs';
 
 const str = (maximum = 12000) => ({type:'string', maxLength:maximum});
@@ -14,22 +15,51 @@ const originalRequest = {requestId:requestIdentifier, actor:nonempty(300), note:
 const planSelection = {planId:id('plan'), expectedRevision:{type:'integer', minimum:1, maximum:1000000}};
 const planComparisonRevision = {type:'integer',minimum:1,maximum:1000000};
 const caseSelection = {caseId:id('operation'), expectedVersion:integer};
+const installationReviewRef={type:'object',additionalProperties:false,properties:{id:id('review'),sha256:digest},required:['id','sha256']};
 const inputRef = {type:'object', additionalProperties:false,
   properties:{hostInput:alias, snapshotId:{type:'string'}, transferId:{type:'string'}, sourceWorkspace:alias},
   oneOf:[{required:['hostInput']}, {required:['snapshotId']}, {required:['transferId']}]};
 const originalInput = {input:inputRef, expectedInputSha256:digest};
 const modelInput = {inputs:object, ...originalInput, inputPointer:str(4000)};
 const statementCategories={enum:['GRANT','INVOICE','CUSTOMER','CAPITAL','REFUND','OTHER']};
-const statementInput={type:'object',additionalProperties:false,
-  description:'Original statement bytes, exact source format, stable account identity and physical-row decisions. Money remains decimal text.',
+const statementSource={type:'object',additionalProperties:false,
+  properties:{filename:nonempty(240),contentBase64:{...nonempty(Math.floor((8*1024*1024+2)*4/3)+16),
+    description:'Base64 of the complete original CSV, OFX / QFX or MT940 file, up to 8 MiB. Preserve the original bytes and declared encoding.'},
+    sourceUrl:str(4000),observedAt:{type:'string',format:'date-time'}},
+  required:['filename','contentBase64','observedAt']};
+const mt940Options={type:'object',additionalProperties:false,
   properties:{
-    source:{type:'object',additionalProperties:false,
-      properties:{filename:nonempty(240),contentBase64:{...nonempty(Math.floor((8*1024*1024+2)*4/3)+16),
-        description:'Base64 of the complete original UTF-8 CSV, up to 8 MiB.'},
-        sourceUrl:str(4000),observedAt:{type:'string',format:'date-time'}},
-      required:['filename','contentBase64','observedAt']},
+    profile:{enum:['TEXT_BODY','FIN_ENVELOPE']},
+    encoding:{enum:['ASCII','UTF-8','ISO-8859-1']},
+    debitCreditProfile:{enum:['CD_ONLY','CD_REVERSALS']},
+    yearWindowStart:{type:'integer',minimum:1900,maximum:2000},
+    dateBasis:{const:'VALUE_DATE'},
+    currencyScales:{type:'object',minProperties:1,maxProperties:32,
+      propertyNames:{pattern:'^[A-Z]{3}$'},additionalProperties:{type:'integer',minimum:0,maximum:6}}
+  },required:['profile','encoding','debitCreditProfile','yearWindowStart','dateBasis','currencyScales']};
+const ofxOptions={anyOf:[{type:'object',maxProperties:0},{type:'null'}]};
+const nativeStatementOptions={anyOf:[mt940Options,...ofxOptions.anyOf]};
+const nativeStatementRules=[
+  {if:{properties:{sourceFormat:{const:'OFX'}},required:['sourceFormat']},
+    then:{properties:{statementOptions:ofxOptions}}},
+  {if:{properties:{sourceFormat:{const:'MT940'}},required:['sourceFormat']},
+    then:{required:['statementOptions'],properties:{statementOptions:mt940Options}}}
+];
+const statementInspectionInput={type:'object',additionalProperties:false,
+  description:'Inspect exact original OFX / QFX or MT940 bytes and return cash-eligible native account sections before choosing a stable account alias.',
+  properties:{sourceFormat:{enum:['OFX','MT940'],description:'OFX also accepts an original QFX file.'},
+    source:statementSource,statementOptions:nativeStatementOptions},
+  required:['sourceFormat','source'],allOf:nativeStatementRules};
+const statementInput={type:'object',additionalProperties:false,
+  description:'Original statement bytes, selected format and account, exact cash classifications and row decisions. Money remains decimal text. OFX / QFX and MT940 use the native section ID returned by inspection.',
+  properties:{
+    sourceFormat:{enum:['CSV','OFX','MT940'],default:'CSV',description:'Use OFX for both OFX and QFX files. An omitted format preserves the original CSV workflow.'},
+    source:statementSource,
+    statementId:{...digest,description:'Exact native account/currency section ID returned by merchant_grant_statement_inspect.'},
+    statementOptions:nativeStatementOptions,
+    sourceReviewNote:str(4000),
     accountId:{type:'string',pattern:'^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$',
-      description:'Stable nonsecret account key; reuse it for overlapping statements from this account.'},
+      description:'Stable nonsecret account key; reuse it for overlapping statements from this original account.'},
     accountLabel:str(300),currency:nonempty(40),
     format:{type:'object',additionalProperties:false,
       properties:{delimiter:{enum:[',',';','\t','|']},decimalMark:{enum:['.',',']},
@@ -38,19 +68,28 @@ const statementInput={type:'object',additionalProperties:false,
         amountMode:{enum:['SIGNED','DEBIT_CREDIT']},positiveDirection:{enum:['IN','OUT']}},
       required:['delimiter','decimalMark','groupMark','dateFormat','amountMode','positiveDirection']},
     columns:{type:'object',additionalProperties:false,
-      description:'Exact original CSV headings, including any heading whitespace. Map date/reference and the selected amount column or debit/credit pair.',
+      description:'Exact original CSV headings, including heading whitespace. Native bank formats omit this mapping and use their original source fields.',
       properties:Object.fromEntries(['date','reference','description','amount','debit','credit','currency','usdValue'].map(key=>[key,str(300)])),
       required:['date','reference']},
     defaultCategory:statementCategories,openingBalance:str(100),closingBalance:str(100),valuationNote:str(4000),
     decisions:{type:'array',maxItems:5000,items:{type:'object',additionalProperties:false,
-      properties:{rowNumber:{type:'integer',minimum:2,maximum:10000000},action:{enum:['IMPORT','EXCLUDE']},
-        reason:str(4000),category:statementCategories,tranche:{anyOf:[{type:'integer',minimum:0,maximum:3},{type:'null'}]},
+      properties:{rowNumber:{type:'integer',minimum:2,maximum:10000000,
+        description:'CSV physical record-start line, or the selected native account movement rowNumber returned by preview. Source-line metadata remains separate.'},
+        action:{enum:['IMPORT','EXCLUDE']},reason:str(4000),category:statementCategories,
+        tranche:{anyOf:[{type:'integer',minimum:0,maximum:3},{type:'null'}]},
         allocations:{type:'array',maxItems:200,items:{type:'object',additionalProperties:false,
           properties:{invoiceId:id('invoice'),amountUsd:nonempty(100)},required:['invoiceId','amountUsd']}}},
       required:['rowNumber','action'],
       allOf:[{if:{properties:{action:{const:'EXCLUDE'}},required:['action']},then:{required:['reason'],properties:{reason:nonempty(4000)}}}]}}
-  },required:['source','accountId','currency','format','columns']};
+  },required:['source','accountId','currency'],
+  allOf:[
+    {if:{properties:{sourceFormat:{enum:['OFX','MT940']}},required:['sourceFormat']},
+      then:{required:['statementId'],not:{anyOf:[{required:['format']},{required:['columns']}]}},
+      else:{required:['format','columns']}},
+    ...nativeStatementRules
+  ]};
 const statementModelInput={...modelInput,inputs:statementInput};
+const statementInspectionModelInput={...modelInput,inputs:statementInspectionInput};
 // Contributor Engagements reuse the original reviews, retained sources and allocators.
 const engagementId = {type:'string', pattern:'^[a-z][a-z0-9-]{1,99}$'};
 const engagementDate = {type:'string', pattern:'^[0-9]{4}-[0-9]{2}-[0-9]{2}$'};
@@ -306,9 +345,11 @@ export const grantWorkspaceTools = [
   tool('case_command', 'Record or transition original contributor, work, invoice, cash, award, deployment, purchase, outcome, review or plan-amendment decisions. Amendment save/review/apply retain the exact selected baseline, original work and cash identities, operator decision and full history. Native action validation, state, version and same-ID replay remain authoritative.',
     {...ws, ...caseSelection, ...originalRequest, action:{enum:GRANT_CASE_ACTIONS}, data:object},
     ['workspace','caseId','expectedVersion','requestId','actor','action','data']),
-  tool('statement_preview', 'Review an original UTF-8 statement against the selected case. Keep exact account, currency, date/number/column mapping and source-row decisions; compare complete statement balances, original payment identities and supplier invoice allocations. Complete results remain available through snapshot and row paging.',
+  tool('statement_inspect', 'Inspect complete original OFX / QFX or MT940 bytes against the current case version. Return native account/currency sections, original dated balances, pending observations and source findings. Retain the exact section ID and format options for preview. Complete results use the original snapshot and row readers.',
+    {...ws,...caseSelection,...statementInspectionModelInput},['workspace','caseId','expectedVersion'],true),
+  tool('statement_preview', 'Review original CSV, OFX / QFX or MT940 against the selected case. Keep the exact original bytes, account/currency selection, native options or CSV mapping and source-row decisions. Reconcile original balances, payment identities and supplier invoice allocations; complete results use the snapshot and row readers.',
     {...ws,...caseSelection,...statementModelInput},['workspace','caseId','expectedVersion'],true),
-  tool('statement_receive', 'Receive the exact reviewed statement through the original case transaction: retain the CSV and complete review, reconcile existing payment identities and add selected new cash observations. Preserve the reviewed preview SHA and original request ID for recovery.',
+  tool('statement_receive', 'Receive the exact reviewed CSV, OFX / QFX or MT940 through the original case transaction: retain source bytes, full native parser report and complete review, reconcile existing payment identities and add selected new cash observations. Preserve the reviewed preview SHA, selected account/options and original request ID for recovery.',
     {...ws,...caseSelection,...statementModelInput,...originalRequest,expectedPreviewSha256:digest},
     ['workspace','caseId','expectedVersion','requestId','actor','expectedPreviewSha256']),
   tool('case_import', 'Receive the complete original operating-case ZIP, including every source, review, forecast and portfolio, into the named original workspace.',
@@ -317,6 +358,19 @@ export const grantWorkspaceTools = [
   tool('intake', 'Adopt a complete original source-intake packet through the existing SF47 intake authority, preserving source purchase and deployment identity.',
     {...ws, ...originalInput, ...Object.fromEntries(Object.entries(createCase).filter(([key]) => key !== 'mode'))},
     ['workspace','input','expectedInputSha256','planId','selectedRevision','expectedContentSha256','name','actor','requestId']),
+  tool('cost_funding', 'Read every original Work row and supplier invoice line, exact current source identities and the one funding book history. Funding assignments are separate from work acceptance, cost, cash and issuer decisions.',
+    {...ws,caseId:id('operation')},['workspace','caseId'],true),
+  tool('funding_edition', 'Open the complete original funding edition, all source revisions, exact period report and later source differences. Omit revision only to select the current saved head.',
+    {...ws,caseId:id('operation'),revision:integer},['workspace','caseId'],true),
+  tool('funding_request', 'Read the original funding-save request fingerprint, complete committed result and source/event join without a mutation.',
+    {...ws,caseId:id('operation'),requestId:requestIdentifier},['workspace','caseId','requestId'],true),
+  tool('funding_seed', 'Prepare complete editable funding inputs from current or selected historical edition. Keeps all assignments and selects the current head as successor base; no cost or grant decision is inferred.',
+    {...ws,...caseSelection,revision:integer},['workspace','caseId','expectedVersion'],true),
+  tool('funding_preview', 'Calculate exact invoice-cent and work-hour splits, genuine unassigned remainders, source-condition observations and full opening/period/closing balances. Complete inputs are inline or an original retained file.',
+    {...ws,...caseSelection,...modelInput},['workspace','caseId','expectedVersion'],true),
+  tool('funding_save', 'Save a complete reviewed funding successor through the original case transaction. The existing MCP owner retains the complete request and native response; a surviving accepted response cannot replay into an older restored journal. Keeps all original costs, payments and acceptance records.',
+    {...ws,...caseSelection,...modelInput,...originalRequest,expectedPreviewSha256:digest,acceptedResult:object},
+    ['workspace','caseId','expectedVersion','requestId','actor','note','expectedPreviewSha256']),
   tool('task_outcomes', 'List complete customer task comparisons and their current saved editions in the original case.',
     {...ws,caseId:id('operation')},['workspace','caseId'],true),
   tool('task_outcome', 'Read the complete original task comparison, both method inputs, exact calculation, source selection and full revision history.',
@@ -448,9 +502,11 @@ export const grantWorkspaceTools = [
   tool('installation_return', 'Freeze the exact reviewed receiving report under the existing case request journal. Retain the original request, named operator, note and full preview SHA; this records observations and preserves every source file.',
     {...ws,...caseSelection,...modelInput,...originalRequest,expectedPreviewSha256:digest},
     ['workspace','caseId','expectedVersion','requestId','actor','note','expectedPreviewSha256']),
+  tool('installation_return_review_seed', 'Reopen an exact owner review retained in this same case, including its original returned evidence after cold receiving. Compare staged/current plan and records; new choices start KEEP. Existing original decisions and saved Installation editions are returned separately.',
+    {...ws,...caseSelection,retainedReview:installationReviewRef},['workspace','caseId','expectedVersion','retainedReview'],true),
   tool('installation_return_review_preview', 'Compare an imported complete receiving case with the owner current Installation. Inputs explicitly KEEP or APPLY every returned check; changed criteria or acceptance basis require fresh receiving. Work and purchases remain original evidence.',
     {...ws,...caseSelection,...modelInput},['workspace','caseId','expectedVersion'],true),
-  tool('installation_return_stage', 'Retain the exact owner review and full original evidence files, returning a complete proposed Installation document at /document. It does not save an Installation: pass that document to the original installation_preview and installation_save after owner confirmation.',
+  tool('installation_return_stage', 'Retain the exact owner review and full original evidence files, returning a complete proposed Installation document at /document. Pass that document and returnReview {id:recordId,sha256:reviewSha256} to the original installation_preview and installation_save. The selected staged review must still match the current plan, sources and original Installation edition.',
     {...ws,...caseSelection,...modelInput,...originalRequest,expectedPreviewSha256:digest},
     ['workspace','caseId','expectedVersion','requestId','actor','note','expectedPreviewSha256']),
   tool('customer_use_calendar', 'Read complete saved Installation customer-use calendars, their pinned proposal rules, dated useful requests, separately planned direct/prepaid settlements and linked original receipt states. Supply exact editions to reopen historical choices. Planned counts do not qualify as actual cohort results.',
@@ -477,10 +533,10 @@ export const grantWorkspaceTools = [
       cycleIds:{type:'array',items:{type:'string',pattern:'^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$'},minItems:1,maxItems:100,uniqueItems:true}},
     ['workspace','caseId','expectedVersion','sourceId','expectedSourceSha256','cycleIds','installationId','expectedRevision'],true),
   tool('installation_preview', 'Review the complete selected customer installation against the original case version and current saved edition. Supply the document as inputs or one exact retained input with inputPointer /document from the seed.',
-    {...ws,...caseSelection,...installationSelection,...modelInput},
+    {...ws,...caseSelection,...installationSelection,...modelInput,returnReview:installationReviewRef},
     ['workspace','caseId','expectedVersion','installationId','expectedRevision'],true),
   tool('installation_save', 'Append the exact reviewed customer installation edition in the original case journal. Retain the original request ID, operator, save reason, case version, installation selection and reviewed preview SHA.',
-    {...ws,...caseSelection,...installationSelection,...modelInput,...originalRequest,expectedPreviewSha256:digest},
+    {...ws,...caseSelection,...installationSelection,...modelInput,...originalRequest,expectedPreviewSha256:digest,returnReview:installationReviewRef},
     ['workspace','caseId','expectedVersion','installationId','expectedRevision','requestId','actor','note','expectedPreviewSha256']),
   tool('commercial_connections', 'Read the configured original receivables endpoints and their retained workspace/source identities.',
     {...ws}, ['workspace'], true),
@@ -513,6 +569,7 @@ export const grantWorkspaceTools = [
     ['workspace','caseId','billingId','milestoneId','actor','expectedIssuePreviewSha256']),
   tool('commercial_refresh', 'Refresh retained invoice, payment, allocation and credit observations from the original accounting workspace, then read the complete updated billing record.',
     {...ws,caseId:id('operation'),billingId:commercialIdentifier}, ['workspace','caseId','billingId']),
+  ...grantCohortAdoptionTools,
   tool('cohort_seed', 'Open the original case proposal, actual purchase and deployment inventory, and explicit review inputs for tranche 2 or 3. This creates no purchase, participant, award or saved evaluation.',
     {...ws,...caseSelection,tranche:{type:'integer',minimum:2,maximum:3}},['workspace','caseId','expectedVersion','tranche'],true),
   tool('cohort_preview', 'Evaluate the explicitly selected original cohort as of its retained cutoff. Preserve exact purchase windows, historical denominators, accountable operators, transaction proof, recovery timing and source findings. Inputs may be inline or selected from one retained original input.',
@@ -577,8 +634,8 @@ export const grantWorkspaceTools = [
     {...ws, ...caseSelection, ...originalInput, ...originalRequest, filename:nonempty(240), kind:nonempty(80),
       mediaType:nonempty(200), sourceUrl:str(2000), observedAt:str(100)},
     ['workspace','caseId','expectedVersion','input','expectedInputSha256','requestId','actor','filename','kind','mediaType']),
-  tool('export', 'Task-outcomes exports retain the complete operating case, all comparison revisions, offline HTML and complete effort/cost CSVs; select caseId, comparisonId, revision and current expectedVersion. For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, Contributor Engagements review with complete case and source handover, completion preparation, selected installation handover, complete returned receiving case selected by reviewId, complete dated delivery queue, grant delivery calendar and saved customer-use calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account, complete dated cash account with correction sources and whole case, full account reconciliation with saved original editions and native case, source, scenario or dated CSV export for verified byte paging and host download.',
-    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','installation-return','implementation','implementation-original','delivery-queue','delivery-calendar','customer-use-calendar','performance','supplier-account','cash-account','account-reconciliation','commercial','engagement','task-outcomes']},
+  tool('export', 'Cost-funding exports select caseId, revision, expectedVersion and expectedReportSha256; they include the full period report, every allocation and remainder, source/assignment changes, original native case and all funding history. Task-outcomes exports retain the complete operating case, all comparison revisions, offline HTML and complete effort/cost CSVs; select caseId, comparisonId, revision and current expectedVersion. For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, Contributor Engagements review with complete case and source handover, completion preparation, selected installation handover, complete returned receiving case selected by reviewId, complete dated delivery queue, grant delivery calendar and saved customer-use calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account, complete dated cash account with correction sources and whole case, full account reconciliation with saved original editions and native case, source, scenario or dated CSV export for verified byte paging and host download.',
+    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','installation-return','implementation','implementation-original','delivery-queue','delivery-calendar','customer-use-calendar','performance','supplier-account','cash-account','account-reconciliation','commercial','engagement','task-outcomes','cost-funding']},
       planId:id('plan'), caseId:id('operation'), forecastId:id('forecast'), portfolioId:id('portfolio'), sourceId:id('source'), reviewId:id('review'),
       fromRevision:planComparisonRevision,toRevision:planComparisonRevision,toPlanId:id('plan'),expectedComparisonSha256:digest,
       installationId:id('installation'),comparisonId:id('task-outcomes'),billingId:commercialIdentifier,revision:installationRevision,sha256:digest,asOfDate:supportDate,
