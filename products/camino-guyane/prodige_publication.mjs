@@ -143,6 +143,11 @@ function uuid(value) {
     fail('RESOURCE_UUID', 'Use the existing selected catalogue resource UUID.');
   return value;
 }
+function canonicalGid(value, label) {
+  if (typeof value === 'number' && Number.isSafeInteger(value)) return String(value);
+  if (typeof value === 'string' && /^(?:0|-?[1-9][0-9]*)$/.test(value)) return value;
+  fail('GID_VALUE', 'Retain a safe integer or canonical decimal integer string without leading zeros.', {label});
+}
 function geometry(value, selection, label) {
   if (selection.kind === 'tabular') {
     if (value !== undefined && value !== null) fail('TABULAR_GEOMETRY', label);
@@ -247,9 +252,9 @@ export function prepareRequests(specificationText, edition, target, {identify} =
   const features = edition.geojson.features.map(f=>{
     const out=clone(f), key=f.properties[edition.selection.key];
     if (mode === 'update') {
-      if (!own(map,key) || (!Number.isSafeInteger(map[key]) && !/^[0-9]+$/.test(map[key] || '')))
+      if (!own(map,key))
         fail('GID_MAPPING', 'Updates require each actual target gid received from the target.', {key});
-      const gid=String(map[key]);
+      const gid=canonicalGid(map[key], 'update gid for ' + key);
       if (gids.has(gid)) fail('DUPLICATE_GID', 'Two business keys resolve to the same target record.', {gid});
       gids.add(gid); out.properties.gid=map[key];
     } else if (own(map,key)) fail('APPEND_GID', 'Append must leave server-generated gid absent.', {key});
@@ -315,8 +320,8 @@ export function reconcilePublished(plan, pages, {identify} = {}) {
       const key=f.properties[plan.selection.key];
       if(typeof key!=='string'||!key.length) fail('TARGET_KEY','Complete readback contains a missing or nontext publication key.');
       if(byKey.has(key)) fail('TARGET_DUPLICATE_KEY','The target contains more than one record for a business key.',{key});
-      if(!own(f.properties,'gid')||(!Number.isSafeInteger(f.properties.gid)&&!/^[0-9]+$/.test(f.properties.gid||''))) fail('TARGET_GID','Readback must retain a valid server gid.');
-      const gid=String(f.properties.gid);
+      if(!own(f.properties,'gid')) fail('TARGET_GID','Readback must retain a valid server gid.');
+      const gid=canonicalGid(f.properties.gid, 'readback gid for ' + key);
       if(byGid.has(gid)) fail('TARGET_DUPLICATE_GID','The target repeats a server gid.',{gid});
       byKey.set(key,f);byGid.set(gid,key);
     }
@@ -351,7 +356,7 @@ export function reconcilePublished(plan, pages, {identify} = {}) {
     }
     if(stable(actual.geometry??null)!==stable(f.geometry??null))
       differences.push({key,type:'geometry',expected:f.geometry,actual:actual.geometry??null});
-    if(plan.target.mode==='update'&&String(actual.properties.gid)!==String(f.properties.gid))
+    if(plan.target.mode==='update'&&canonicalGid(actual.properties.gid,'actual update gid')!==canonicalGid(f.properties.gid,'selected update gid'))
       differences.push({key,type:'gid',expected:f.properties.gid,actual:actual.properties.gid});
     matched.push({key,gid:actual.properties.gid});
   }

@@ -57,7 +57,7 @@ First save the actual complete instance OpenAPI JSON returned by its original do
 
 The target selection JSON has exactly these fields: origin, resourceUuid, specification, mode, batchSize and optional gidByBusinessKey. specification contains the actual file's bytes and sha256. The origin is one HTTPS catalogue origin; no credentials, URL user information or extra transport configuration belongs in this file. mode is append or update. Supply the instance's accepted batch size explicitly.
 
-For append, leave gidByBusinessKey empty so the server creates IDs. For update, map every selected original business key to its actual target gid from retained complete readback. Extra mappings, missing mappings or duplicate IDs are rejected. Retain the original operator selection and current target structure with this mapping.
+For append, leave gidByBusinessKey empty so the server creates IDs. For update, map every selected original business key to its actual target gid from retained complete readback. Extra mappings, missing mappings or duplicate IDs are rejected. Textual gids must use canonical decimal integer notation without leading zeros; arbitrarily large textual IDs remain exact and are never coerced through Number. Retain the original operator selection and current target structure with this mapping.
 
     node products/camino-guyane/prodige_publication_cli.mjs plan \
       --spec /absolute/source/instance-openapi.json \
