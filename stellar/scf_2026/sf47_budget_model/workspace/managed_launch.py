@@ -317,7 +317,12 @@ BOOT_FILES = (
     "../../sf49_data_commissioning/installation-workorders/stellarcarbon.json",
     "../../sf49_data_commissioning/installation-workorders/supplier-catalogues.json",
     "../../sf49_data_commissioning/installation-workorders/supplier-orders.json",
-    "../../sf49_data_commissioning/installation-workorders/taskerarmy-notifications.json"
+    "../../sf49_data_commissioning/installation-workorders/taskerarmy-notifications.json",
+    "../../sf49_data_commissioning/installation-workorders/laboratory-edd-reissue.json",
+    "../../sf49_data_commissioning/installation-workorders/geotech-dts8d.json",
+    "../../sf49_data_commissioning/installation-workorders/water-quality-analysis.json",
+    "../../sf49_data_commissioning/installation-workorders/kiwis-water-quality.json",
+    "../../sf49_data_commissioning/installation-workorders/ENVIRONMENTAL_INSTALLATIONS.md"
 )
 PRIVATE_NAME = "managed-launch.json"
 
