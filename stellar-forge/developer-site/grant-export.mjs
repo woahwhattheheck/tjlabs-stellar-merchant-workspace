@@ -1,3 +1,4 @@
+import {createFormWorkbook,openFormWorkbook,reviewFormWorkbook,applyFormWorkbook,formWorkbookReferenceText,MAX_FORM_WORKBOOK_BYTES} from './dist/grant-form-workbook.mjs';
 import {createNativeOfflineEditor} from './grant-offline.mjs';
 import {inflateRawSync} from 'node:zlib';
 import {receiveIssuerContext} from './grant-issuer-context.mjs';
@@ -120,6 +121,41 @@ async function readJson(path, label) {
   try { return JSON.parse(read.text.replace(/^\uFEFF/,'')); }
   catch { throw new Error(label + ' must be complete JSON.'); }
 }
+
+function addFormWorkbookFiles(files,workbook,prefix='form-workbook'){
+  const extension=workbook.sheets.delimiter===','?'csv':'tsv';
+  files.set(prefix+'.json',JSON.stringify(workbook,null,2)+'\n');
+  files.set(prefix+'-profile.'+extension,workbook.sheets.profile);
+  files.set(prefix+'-fields.'+extension,workbook.sheets.fields);
+  files.set(prefix+'-answers.md',formWorkbookReferenceText(workbook));
+}
+async function receiveFormWorkbook(draft,options){
+  const original=await readBounded(resolve(options['receive-form-workbook']),'Complete form workbook',MAX_FORM_WORKBOOK_BYTES);
+  const workbook=await openFormWorkbook(original.text,draft),returned={};
+  if(options['form-profile'])returned.profile=(await readBounded(resolve(options['form-profile']),'Returned form profile')).text;
+  if(options['form-fields'])returned.fields=(await readBounded(resolve(options['form-fields']),'Returned form fields')).text;
+  if(options['form-delimiter']){requireValue(['csv','tsv'].includes(options['form-delimiter']),'Use --form-delimiter csv or tsv.');returned.delimiter=options['form-delimiter']==='csv'?',':'\t';}
+  const decisions=options['form-decisions']?await readJson(resolve(options['form-decisions']),'Form worksheet decisions'):{};
+  const review=await reviewFormWorkbook(draft,workbook,returned,decisions);
+  const returnedWorkbook={...workbook,sheets:{...workbook.sheets,...returned}};
+  if(options['form-review-only'])return{draft,review,workbook:returnedWorkbook,decisions,reviewOnly:true};
+  const applied=await applyFormWorkbook(draft,workbook,returned,{expectedReviewSha256:options['form-review-sha'],decisions});
+  return{...applied,workbook:returnedWorkbook,decisions,reviewOnly:false};
+}
+async function writeFormWorkbookReview(options,received){
+  const {draft,review,workbook,decisions}=received,files=new Map();
+  files.set('draft.json',await createDraftEnvelope(draft,{planningOptions:nativePlanningOptions}));
+  addFormWorkbookFiles(files,workbook,'returned-form-workbook');
+  files.set('form-workbook-review.json',JSON.stringify(review,null,2)+'\n');
+  files.set('form-workbook-decisions.json',JSON.stringify(Object.fromEntries(review.changes.map(change=>[change.key,
+    Object.prototype.hasOwnProperty.call(decisions,change.key)?decisions[change.key]:change.status==='conflict'?'':review.decisions[change.key]])),null,2)+'\n');
+  const directory=resolve(options.out);await mkdir(dirname(directory),{recursive:true,mode:0o700});await mkdir(directory,{mode:0o700});
+  const manifest={schema:'stellar-forge.grant-form-workbook-review-files.v1',draftId:draft.id,reviewSha256:review.reviewSha256,baselineSha256:review.baselineSha256,files:[]};
+  for(const [name,text]of files){const bytes=Buffer.from(text,'utf8');await writeFile(join(directory,name),bytes,{flag:'wx',mode:0o600});manifest.files.push({path:name,bytes:bytes.length,sha256:sha256(bytes)});}
+  await writeFile(join(directory,'manifest.json'),JSON.stringify(manifest,null,2)+'\n',{flag:'wx',mode:0o600});
+  return{directory,draftId:draft.id,reviewOnly:true,reviewSha256:review.reviewSha256,changes:review.counts.changes,conflicts:review.counts.conflicts,unresolved:review.unresolved.length,files:files.size+1};
+}
+
 export async function writeGrantExport(options) {
   const fromDraft = Boolean(options.draft);
   requireValue(fromDraft !== Boolean(options.source), 'Choose a saved draft or an application source.');
@@ -128,6 +164,12 @@ export async function writeGrantExport(options) {
   requireValue(Boolean(options['receive-issuer-case'])===Boolean(options['issuer-profile']),'Receive an issuer case together with its explicit --issuer-profile.');
   requireValue(!(options['receive-issuer-case']&&options['issuer-context']),'Receive a new issuer case or select an existing context.');
   if (fromDraft) requireValue(!options['source-index'] && !options['source-url'] && !options.budget && !options.companion && !options.id && !options.title, 'A saved draft retains its own source, identity and title.');
+
+  requireValue(!options['receive-form-workbook']||fromDraft,'Receive an issuer-form workbook into its original --draft.');
+  requireValue(!(options['receive-form-workbook']&&options['form-map']),'Receive a reviewed workbook or a complete form map in one operation.');
+  for(const key of ['form-profile','form-fields','form-delimiter','form-decisions','form-review-sha','form-review-only'])
+    requireValue(!options[key]||options['receive-form-workbook'],'--'+key+' needs --receive-form-workbook.');
+  requireValue(!(options['form-review-only']&&options['form-review-sha']),'Review the current workbook or apply an explicit review hash.');
   let draft;
   if (fromDraft) {
     const saved = await readBounded(resolve(options.draft),'Saved submission',MAX_BYTES*2+65536);
@@ -163,9 +205,21 @@ export async function writeGrantExport(options) {
   }
   if(options['issuer-context'])draft=selectIssuerProgramme(draft,options['issuer-context']==='none'?null:options['issuer-context']);
   if (options['form-map']) draft = importFormMap(draft,await readJson(resolve(options['form-map']),'Issuer form map'));
+  let formReceiving=null;
+  if(options['receive-form-workbook']){
+    formReceiving=await receiveFormWorkbook(draft,options);
+    if(formReceiving.reviewOnly)return writeFormWorkbookReview(options,formReceiving);
+    draft=formReceiving.draft;
+  }
   const exported = await prepareGrantExport(draft,{selection:options.select || 'auto',format:options.format || 'plain'});
   draft = exported.draft;
   const {prepared,files} = exported;
+  if(options['form-workbook'])addFormWorkbookFiles(files,await createFormWorkbook(draft,{createdAt:prepared.generatedAt}));
+  if(formReceiving){
+    addFormWorkbookFiles(files,formReceiving.workbook,'received-form-workbook');
+    files.set('form-workbook-review.json',JSON.stringify(formReceiving.review,null,2)+'\n');
+    files.set('form-workbook-decisions.json',JSON.stringify(formReceiving.decisions,null,2)+'\n');
+  }
   if(options['offline-editor'])files.set('edit.html',await createNativeOfflineEditor({envelope:files.get('draft.json'),planningOptions:nativePlanningOptions,exportedAt:prepared.generatedAt}));
   for (const field of prepared.fields) requireValue(Buffer.from(field.value,'utf8').toString('utf8') === field.value, 'Correct invalid Unicode text in field ' + field.id + '.');
   const directory = resolve(options.out);
@@ -187,7 +241,7 @@ export async function writeGrantExport(options) {
 
 export async function runCLI(args=process.argv.slice(2)) {
   const {values} = parseArgs({args,options:{
-    help:{type:'boolean'},'offline-editor':{type:'boolean'},draft:{type:'string'},source:{type:'string'},'source-index':{type:'string'},'source-url':{type:'string'},budget:{type:'string'},companion:{type:'string'},
+    help:{type:'boolean'},'form-workbook':{type:'boolean'},'receive-form-workbook':{type:'string'},'form-profile':{type:'string'},'form-fields':{type:'string'},'form-delimiter':{type:'string'},'form-review-only':{type:'boolean'},'form-review-sha':{type:'string'},'form-decisions':{type:'string'},'offline-editor':{type:'boolean'},draft:{type:'string'},source:{type:'string'},'source-index':{type:'string'},'source-url':{type:'string'},budget:{type:'string'},companion:{type:'string'},
     'receive-source-package':{type:'string'},'receive-issuer-case':{type:'string'},'issuer-profile':{type:'string'},'issuer-context':{type:'string'},'form-map':{type:'string'},out:{type:'string'},select:{type:'string'},format:{type:'string'},id:{type:'string'},title:{type:'string'}
   },allowPositionals:false});
   if (values.help) {
@@ -200,6 +254,9 @@ export async function runCLI(args=process.argv.slice(2)) {
       'Options: --budget budget.csv --companion product-and-finance.md; --form-map native-map.json; --select auto|answers|fields; --format plain|markdown.\n' +
       'New source drafts may use --id and --title. Saved draft identities and all history are retained.\n' +
       '--offline-editor adds edit.html with the complete original draft, editor modules and styles. Open it directly in a browser; export an updated HTML or full draft after editing. Guide: GRANT_OFFLINE.md.\n' +
+      '--form-workbook includes a complete baseline, profile/field CSV sheets and original answer reference. Guide: GRANT_FORM_WORKBOOK.md.\n' +
+      'Review returned sheets with --receive-form-workbook original.json --form-profile profile.csv --form-fields fields.csv --form-review-only.\n' +
+      'Apply the reviewed return with the same files, --form-review-sha HASH and --form-decisions choices.json; --form-delimiter csv|tsv selects the actual separator.\n' +
       'A selected complete reviewer bundle is also exported as source-package.json for source receiving.\n' +
       'Issuer receiving retains the original case, terms, correspondence and exact selected native plan. The profile explicitly chooses whether to receive that plan.\n' +
       'Select an existing issuer context with --issuer-context ID, or clear the working selection with --issuer-context none. Complete receiving guide: GRANT_ISSUER_CONTEXT.md.\n');

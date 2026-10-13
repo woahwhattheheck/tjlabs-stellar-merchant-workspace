@@ -109,3 +109,8 @@ Continue the existing saved-application/browser receiving case:
 6. Receive an actual source-package file through the existing comparison flow and retain another complete edition.
 
 Use the same actual application and original receiving operation. This is a continuation of its customer workflow; it does not create a second review round, source registry, application or publisher.
+
+
+## Prepare an issuer-form workbook in the offline editor
+
+The complete offline graph also carries **Issuer-form workbook** in the original Form fields view. Prepare the baseline and profile/field CSV or TSV sheets from the retained application, read complete original answer references, receive edited sheets from the device, compare them with the current native form and apply explicit choices through the original history. Export the complete updated draft or offline HTML afterward. Keep the workbook JSON if you want to retain unfinished worksheet text before closing. [GRANT_FORM_WORKBOOK.md](./GRANT_FORM_WORKBOOK.md) describes the full spreadsheet and native return workflow.

@@ -1,3 +1,4 @@
+import {createFormWorkbookPanel} from './grant-form-workbook-workspace.mjs';
 import {collectBrowserOfflineRuntime,createOfflineEditor,OFFLINE_SCHEMA} from './grant-offline-package.mjs';
 import {renderRequirementReviews} from './grant-requirement-review-workspace.mjs';
 import {renderProductSources} from './grant-product-authoring-workspace.mjs';
@@ -239,6 +240,7 @@ function answerView(root){
     const field=newField(uid(),[answer.id],draft);draft.fields.push(field);selectedField=field.id;$('view').value='fields';touch();render();
   }));
 }
+const formWorkbookPanel=createFormWorkbookPanel({getDraft:()=>draft,work,download,status,onApply:(next,changed)=>{draft=next;if(changed)touch();render();}});
 function formProfile(root){
   const details=node('details'),summary=node('summary','Issuer form and source');details.append(summary);
   const grid=node('div',undefined,'grid');
@@ -249,6 +251,7 @@ function formProfile(root){
   const row=node('div',undefined,'row');
   row.append(button('Open recorded issuer form',()=>{const url=new URL(draft.form.url);if(url.protocol!=='https:'||url.username||url.password)throw new Error('Complete the issuer HTTPS form URL.');window.open(url.href,'_blank','noopener,noreferrer');}),button('Open form map',()=>chooseFile('form')),button('Download form map',()=>download(JSON.stringify(exportFormMap(draft),null,2)+'\n',filename()+'-form-map.json')));
   details.append(row);root.append(details);
+  const workbookRoot=node('div');root.append(workbookRoot);formWorkbookPanel.render(workbookRoot);
 }
 
 function formCoverageView(root){
@@ -504,7 +507,7 @@ async function downloadOfflineEditor(){
     status('Downloaded the complete editable HTML. Open it in your browser, edit the same application, and download a new offline edition or full draft to keep changes.');
   }finally{clearTimeout(timeout);if(offlineExportController===controller)offlineExportController=null;}
 }
-window.addEventListener('pagehide',()=>offlineExportController?.abort());
+window.addEventListener('pagehide',()=>{offlineExportController?.abort();formWorkbookPanel.dispose();});
 $('export-offline').addEventListener('click',()=>work(downloadOfflineEditor));
 
 $('import-draft').addEventListener('click',()=>chooseFile('draft'));

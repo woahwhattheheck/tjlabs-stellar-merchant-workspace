@@ -108,6 +108,27 @@
       ]
     ],
     [
+      "/collection-review-edition-report.mjs",
+      [
+        "collection-review-edition-report.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review-edition-ui.mjs",
+      [
+        "collection-review-edition-ui.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review-editions.mjs",
+      [
+        "collection-review-editions.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/collection-review-guide.md",
       [
         "collection-review-guide.md",
@@ -119,6 +140,13 @@
       [
         "collection-review-report.mjs",
         "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review-source-editions.md",
+      [
+        "collection-review-source-editions.md",
+        "text/markdown; charset=utf-8"
       ]
     ],
     [
@@ -483,6 +511,20 @@
       [
         "grant-financial-walkthrough.html",
         "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-form-workbook-workspace.mjs",
+      [
+        "grant-form-workbook-workspace.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-form-workbook.mjs",
+      [
+        "grant-form-workbook.mjs",
+        "text/javascript; charset=utf-8"
       ]
     ],
     [
@@ -878,6 +920,13 @@
       ]
     ],
     [
+      "/source-delimited.mjs",
+      [
+        "source-delimited.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/source-document-tables.mjs",
       [
         "source-document-tables.mjs",
@@ -1008,34 +1057,6 @@
       [
         "woo.html",
         "text/html; charset=utf-8"
-      ]
-    ],
-    [
-      "/collection-review-editions.mjs",
-      [
-        "collection-review-editions.mjs",
-        "text/javascript; charset=utf-8"
-      ]
-    ],
-    [
-      "/collection-review-edition-ui.mjs",
-      [
-        "collection-review-edition-ui.mjs",
-        "text/javascript; charset=utf-8"
-      ]
-    ],
-    [
-      "/collection-review-edition-report.mjs",
-      [
-        "collection-review-edition-report.mjs",
-        "text/javascript; charset=utf-8"
-      ]
-    ],
-    [
-      "/collection-review-source-editions.md",
-      [
-        "collection-review-source-editions.md",
-        "text/markdown; charset=utf-8"
       ]
     ]
   ]
