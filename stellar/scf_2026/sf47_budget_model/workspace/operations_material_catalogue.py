@@ -25,7 +25,7 @@ MAX_HANDOVER = 512 * 1024 * 1024
 SOURCE_ID = re.compile(r"source-[a-f0-9]{32}")
 FIELDS = {"expectedVersion", "sourceId", "expectedSourceSha256", "originalSourceId",
           "table", "offset", "limit", "beforeEditionId", "afterEditionId",
-          "document", "operationId", "selection", "bindings", "expectedPreparationSha256"}
+          "document", "installationId", "expectedRevision", "expectedInstallationSha256", "previousSourceId", "expectedPreviousSourceSha256", "followingReview", "operationId", "selection", "bindings", "expectedPreparationSha256"}
 BASE = {"expectedVersion", "sourceId", "expectedSourceSha256"}
 SCHEMA = "stellar-forge.material-source-desk-result.v1"
 
@@ -83,16 +83,36 @@ def _payload(ops, case_id, action, body, context, raw):
         if key in body:
             payload[key] = deepcopy(body[key])
     if action in ("template", "prepare", "handover"):
-        document = installations.normalized(context, body.get("document"))
+        previous_installation = None
+        if body.get("installationId") is not None:
+            previous_installation = installations.get(ops, case_id, body["installationId"])
+            if (previous_installation["revision"] != body.get("expectedRevision") or
+                    previous_installation["sha256"] != body.get("expectedInstallationSha256")):
+                fail("The selected saved Installation changed. Preserve the draft and reopen its actual current edition.", "MATERIAL_INSTALLATION_CHANGED", 409)
+            document = deepcopy(previous_installation["preview"]["document"])
+            if body.get("document") is not None and canonical(body["document"]) != canonical(document):
+                fail("Use the exact current saved Installation; keep unsaved edits as a separate draft.", "MATERIAL_INSTALLATION_CHANGED", 409)
+            previous_meta, previous_raw = _source(ops, case_id, body.get("previousSourceId"), body.get("expectedPreviousSourceSha256"))
+            selected_meta, _ = _source(ops, case_id, body["sourceId"], body["expectedSourceSha256"])
+            payload["following"] = {"schema": "stellar-forge.material-installation-following.v1.input",
+                "installation": previous_installation, "previousSource": previous_meta, "source": selected_meta,
+                "review": deepcopy(body.get("followingReview"))}
+            payload["previousSourceBase64"] = base64.b64encode(previous_raw).decode("ascii")
+        else:
+            if any(body.get(k) is not None for k in ("expectedInstallationSha256", "previousSourceId", "expectedPreviousSourceSha256", "followingReview")):
+                fail("Select the actual saved Installation before following-source inputs.")
+            document = installations.normalized(context, body.get("document"))
         if not document.get("workshare"):
             fail("Receive the original complete commercial Workshare in the Installation editor first.")
-        workshares.verify_document(ops, context, document)
+        verified_workshare = workshares.verify_document(ops, context, document)
+        workshare_row = verified_workshare['workshare']
         binding = document["workshare"]
         _, original = _source(ops, case_id, binding["sourceId"], binding["sourceSha256"])
         packet = None
         if binding.get("packetSourceId") is not None:
             _, packet = _source(ops, case_id, binding["packetSourceId"], binding["packetSha256"])
-        excluded = {body["sourceId"], binding["sourceId"], binding.get("packetSourceId")}
+        excluded = {body["sourceId"], binding["sourceId"], binding.get("packetSourceId"),
+                    body.get("previousSourceId") if previous_installation else None}
         selected_ids = set()
         def collect(value):
             if isinstance(value, dict):
@@ -111,6 +131,7 @@ def _payload(ops, case_id, action, body, context, raw):
                     collect(item)
         collect(document)
         collect(body.get("bindings"))
+        collect(body.get("followingReview"))
         attachments = []
         for selected_id in sorted(selected_ids - excluded):
             descriptor, selected_bytes = ops.source(case_id, selected_id)
@@ -123,7 +144,11 @@ def _payload(ops, case_id, action, body, context, raw):
         payload["attachments"] = attachments
         payload.update(
             seed={"source": installations._source(context), "document": document,
-                  "installationId": None, "expectedRevision": 0},
+                  "workshare": {"caseId": workshare_row["caseId"], "planSha256": workshare_row["planSha256"],
+                      "commercial": deepcopy(workshare_row["plan"]["commercial"]), "hours": workshare_row["hours"],
+                      "phaseCount": len(workshare_row["plan"]["phases"]), "resetPhaseIds": []},
+                  "installationId": previous_installation["id"] if previous_installation else None,
+                  "expectedRevision": previous_installation["revision"] if previous_installation else 0},
             caseValue=ops._read(case_id), operationId=body.get("operationId"),
             commissioningBase64=base64.b64encode(original).decode("ascii"),
             packetBase64=base64.b64encode(packet).decode("ascii") if packet is not None else None)
@@ -221,10 +246,13 @@ def perform(ops, case_id, action, body):
 def register_static(static):
     for name, media in {
         "operations_material_catalogue.mjs": "text/javascript; charset=utf-8",
+        "operations_material_following.mjs": "text/javascript; charset=utf-8",
+        "operations_material_following_model.mjs": "text/javascript; charset=utf-8",
         "operations_material_catalogue_model.mjs": "text/javascript; charset=utf-8",
         "operations_material_catalogue.css": "text/css; charset=utf-8",
         "MATERIAL_CATALOGUE_SOURCE_DESK.md": "text/markdown; charset=utf-8",
         "MATERIAL_CATALOGUE_OPERATOR.md": "text/markdown; charset=utf-8",
+        "MATERIAL_INSTALLATION_FOLLOWING.md": "text/markdown; charset=utf-8",
     }.items():
         static["/" + name] = (name, media)
 

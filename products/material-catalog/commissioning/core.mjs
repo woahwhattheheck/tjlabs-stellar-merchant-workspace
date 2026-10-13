@@ -3,6 +3,7 @@ import {openText,canonical} from '../recipient/core.mjs';
 import {sha256Utf8,sha256Bytes} from '../recipient/sha256.mjs';
 import {bindingTemplate,prepareInstallation,renderWorkorder} from '../../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare-core.mjs';
 import {commercialWorkshare,commercialMarkdown,commercialHtml} from '../../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/commercial-workshare-core.mjs';
+import {materialFollowingTemplate,prepareMaterialFollowing} from './following.mjs';
 export const SCHEMA='stellar-forge.material-customer-installation.v1';
 export const PROFILE='supplier-catalogues';
 export const need=(ok,message)=>{if(!ok)throw Error(message);};
@@ -83,16 +84,18 @@ function selected(bundle,selection){
 }
 export function materialInstallationTemplate(input){
  const bundle=inspectMaterialSource(input.bundleBytes,input.expectedBundleSha256),d=documents(input),m=matching(input,bundle);
- const bindings=bindingTemplate(input.seed,input.profile),plan=d.commercial.originalPlan;
+ const bindings=input.following?{schema:'stellar-forge.installation-workorder-bindings.v1',profile:PROFILE,selection:clone(input.seed.source),workshareCaseId:input.seed.document.workshare.caseId,merchantDeploymentId:input.seed.document.merchantDeploymentId,buyerDeploymentIds:clone(input.seed.document.buyerDeploymentIds)}:bindingTemplate(input.seed,input.profile),plan=d.commercial.originalPlan;
+ bindings.source??={};bindings.receiving??={};
  bindings.task={name:plan.title,purpose:plan.outcome,request:plan.phases.map(p=>p.title+': '+p.description).join('\n\n'),completeOutput:plan.outcome};
  bindings.source.reference='Original catalogue '+bundle.catalog.id+' revision '+bundle.catalog.revision+'; active edition '+bundle.catalog.activeEditionId+'; complete customer bundle SHA-256 '+bundle.identity.sha256+'. Original commercial Workshare '+d.commercial.caseId+'.';
  bindings.source.authority=input.seed.document.source.authority;
  bindings.source.sourceIds=m.files.filter(x=>x.sourceId).map(x=>x.sourceId);
  bindings.receiving.sourceIds=[...bindings.source.sourceIds];
+ if(input.following)for(const section of ['task','source','payment','receiving'])bindings[section]=clone(input.seed.document[section]);
  const selection={schema:SCHEMA+'.selection',operationId:input.operationId,catalogId:bundle.catalog.id,catalogRevision:bundle.catalog.revision,
   activeEditionId:bundle.catalog.activeEditionId,bundleSha256:bundle.identity.sha256,supplierPlanId:null,supplierPlanRevision:null,supplierReviewId:null};
  selected(bundle,selection);
- return {schema:SCHEMA+'.template',selection,bindings,missingSources:m.missing,sourceBindings:m.files,
+ return {schema:SCHEMA+'.template',...(input.following?{following:materialFollowingTemplate(input)}:{}),selection,bindings,missingSources:m.missing,sourceBindings:m.files,
   supplierPlans:bundle.tables.catalog_supplier_plans.map(x=>({id:x.id,revision:x.revision,title:x.record.title??x.record.name??x.id})),
   supplierReviews:bundle.tables.catalog_supplier_reviews.map(x=>({id:x.id,planId:x.record.planId,editionId:x.record.editionId,createdAt:x.record.createdAt})),
   summary:clone(bundle.summary),commercialCaseId:d.commercial.caseId};
@@ -107,7 +110,12 @@ export function prepareMaterialInstallation(input){
   bindings[section]??={};const prior=bindings[section].sourceIds??[];
   need(Array.isArray(prior),'Select the complete source IDs.');bindings[section].sourceIds=[...new Set([...prior,...m.files.map(x=>x.sourceId)])];
  }
- const prepared=prepareInstallation(input.seed,input.profile,bindings);
+ const following=input.following?prepareMaterialFollowing(input):null;
+ const prepared=following?{schema:'stellar-forge.installation-workorder-preparation.v1',profile:PROFILE,source:clone(input.seed.source),
+  workshareCaseId:d.commercial.caseId,document:clone(following.document),preview:clone(following.preview),selections:[],
+  implementation:clone(input.profile.steps),inputs:clone(input.profile.inputs),sourceFiles:clone(input.profile.sourceFiles)}:
+  prepareInstallation(input.seed,input.profile,bindings);
+ if(following)for(const section of ['task','source','payment','receiving'])bindings[section]=clone(prepared.document[section]);
  for(const section of ['source','receiving','payment']){
   const key=section==='payment'?'termsSourceIds':'sourceIds';
   for(const id of prepared.document[section][key])need(input.caseSnapshot.sources.some(x=>x.id===id),'The selected source ID is absent from this original case.');
@@ -115,7 +123,7 @@ export function prepareMaterialInstallation(input){
  for(const f of prepared.document.payment.facilitators??[])for(const id of f.sourceIds??[])
   need(input.caseSnapshot.sources.some(x=>x.id===id),'A selected facilitator source is absent from this original case.');
  const source={
-  schema:SCHEMA+'.source',operationId:s.selection.operationId,selection:s.selection,
+  schema:SCHEMA+'.source',...(following?{following:clone(following)}:{}),operationId:s.selection.operationId,selection:s.selection,
   installationSource:clone(prepared.source),workshare:clone(input.seed.document.workshare),
   bundle:clone(bundle.summary),catalogue:clone(bundle.catalog),
   editions:bundle.tables.catalog_editions.map(x=>clone(x.record)),

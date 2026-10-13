@@ -3,6 +3,7 @@ import {readFile,mkdir,rename,open,stat,link,unlink} from 'node:fs/promises';
 import {resolve,join,basename,dirname,relative} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
+import {receiveMaterialFollowing} from './material-installation-following-browser.mjs';
 import {readArchive} from './operations_material_catalogue_model.mjs';
 const [inputPath,accessPath]=process.argv.slice(2);
 const input=JSON.parse(await readFile(inputPath,'utf8')),access=JSON.parse(await readFile(accessPath,'utf8'));
@@ -477,6 +478,7 @@ try{
   await viewedFile(final,{label:'24-complete-working-archive'});
   report.workingFinal=await receipt(final);await save();
  });
+ if(input.followingInstallation)await receiveMaterialFollowing({input,report,page,desk,prefix,api,idle,stage,save,keep,download,capture,click,snapshot,installationSession,root,receipt,viewedFile,exists,navigate});
  need(!report.pageErrors?.length,'The original browser reported a JavaScript error.');
  report.state='COMPLETE';report.visualReview='PENDING_PRODUCING_SEAT_OPEN_AND_LOOK';delete report.error;
 }catch(e){failure=e;report.state='INTERRUPTED';report.error={name:e.name,message:e.message};}

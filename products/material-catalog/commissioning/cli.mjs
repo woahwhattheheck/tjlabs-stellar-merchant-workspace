@@ -3,10 +3,10 @@
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {inspectMaterialInstallationFile,templateMaterialInstallationFiles,prepareMaterialInstallationFiles,reopenMaterialInstallation} from './files.mjs';
-export const USAGE='material-installation inspect --bundle FILE --sha256 SHA | template --bundle FILE --sha256 SHA --seed FILE --case FILE --commissioning FILE [--packet FILE] [--attachments FILE] --operation ORIGINAL_ID --out NEW_DIRECTORY | prepare --bundle FILE --sha256 SHA --seed FILE --case FILE --commissioning FILE [--packet FILE] [--attachments FILE] --bindings FILE --selection FILE --out NEW_DIRECTORY | reopen --directory COMPLETE_DIRECTORY';
+export const USAGE='material-installation inspect --bundle FILE --sha256 SHA | template --bundle FILE --sha256 SHA --seed FILE --case FILE --commissioning FILE [--packet FILE] [--attachments FILE] [--following COMPLETE_FOLLOWING_INPUT.json --previousBundle OLD_CATALOG.jsonl] --operation ORIGINAL_ID --out NEW_DIRECTORY | prepare --bundle FILE --sha256 SHA --seed FILE --case FILE --commissioning FILE [--packet FILE] [--attachments FILE] --bindings FILE --selection FILE --out NEW_DIRECTORY | reopen --directory COMPLETE_DIRECTORY';
 export function parseArguments(argv){
  const [command,...args]=argv;
- const allowed={inspect:['bundle','sha256'],template:['bundle','sha256','seed','case','commissioning','packet','attachments','operation','out'],prepare:['bundle','sha256','seed','case','commissioning','packet','attachments','bindings','selection','out'],reopen:['directory']};
+ const allowed={inspect:['bundle','sha256'],template:['bundle','sha256','seed','case','commissioning','packet','attachments','following','previousBundle','operation','out'],prepare:['bundle','sha256','seed','case','commissioning','packet','attachments','following','previousBundle','bindings','selection','out'],reopen:['directory']};
  if(!allowed[command]||args.length%2)throw Error(USAGE);
  const options={};
  for(let i=0;i<args.length;i+=2){
@@ -14,7 +14,7 @@ export function parseArguments(argv){
   if(!allowed[command].includes(key)||!args[i+1]||args[i+1].startsWith('--')||Object.hasOwn(options,key))throw Error(USAGE);
   options[key]=args[i+1];
  }
- const required=allowed[command].filter(k=>!['packet','attachments'].includes(k));
+ const required=allowed[command].filter(k=>!['packet','attachments','following','previousBundle'].includes(k));
  if(required.some(k=>!options[k]))throw Error(USAGE);
  return {command,options};
 }

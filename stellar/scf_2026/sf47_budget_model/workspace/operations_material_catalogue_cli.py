@@ -34,7 +34,13 @@ def register(command, mutation):
             target.add_argument("--before-edition", required=True)
             target.add_argument("--after-edition", required=True)
         if action.endswith(("-template", "-prepare", "-handover")):
-            target.add_argument("--document", required=True, help="Complete original native Installation document JSON")
+            target.add_argument("--document", help="Complete original new Installation document; existing targets use their exact saved document")
+            target.add_argument("--installation", help="Exact saved Installation ID for following-source review")
+            target.add_argument("--installation-revision", type=int)
+            target.add_argument("--installation-sha256")
+            target.add_argument("--previous-source")
+            target.add_argument("--previous-sha256")
+            target.add_argument("--following-review", help="Complete attributed following review JSON; required for saved-target prepare/handover")
             target.add_argument("--operation-id", required=True, help="Original customer preparation operation")
         if action.endswith(("-prepare", "-handover")):
             target.add_argument("--bindings", required=True)
@@ -127,7 +133,24 @@ def operate(ops, args, read_bytes, publish):
     if action == "compare":
         body.update(beforeEditionId=args.before_edition, afterEditionId=args.after_edition)
     if action in ("template", "prepare", "handover"):
-        body.update(document=document(args.document, read_bytes), operationId=args.operation_id)
+        body["operationId"] = args.operation_id
+        if args.installation:
+            if not all((args.installation_revision, args.installation_sha256, args.previous_source, args.previous_sha256)):
+                fail("Select the exact saved Installation revision/SHA and previous attached source/SHA.")
+            body.update(installationId=args.installation, expectedRevision=args.installation_revision,
+                        expectedInstallationSha256=args.installation_sha256, previousSourceId=args.previous_source,
+                        expectedPreviousSourceSha256=args.previous_sha256)
+            if args.document:
+                body["document"] = document(args.document, read_bytes)
+            if action != "template":
+                if not args.following_review:
+                    fail("Supply the complete reviewed following-source choices.")
+                body["followingReview"] = document(args.following_review, read_bytes)
+        else:
+            if not args.document or any((args.installation_revision, args.installation_sha256, args.previous_source,
+                                         args.previous_sha256, args.following_review)):
+                fail("Choose a complete new document or an explicit saved Installation with both source identities.")
+            body["document"] = document(args.document, read_bytes)
     if action in ("prepare", "handover"):
         body.update(bindings=document(args.bindings, read_bytes),
                     selection=document(args.selection, read_bytes))
