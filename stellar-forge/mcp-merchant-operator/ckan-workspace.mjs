@@ -14,6 +14,7 @@ import { executeCkanDcat, pageDcatState, forgetDcatReview, DCAT_INPUT_MAX_BYTES 
 import { CORRECTION_PROPOSAL_MAX_BYTES, CORRECTION_CHOICES_MAX_BYTES } from './ckan-dcat-correction-exchanges.mjs';
 import { CORRECTION_INPUT_MAX_BYTES } from './ckan-dcat-corrections.mjs';
 import { SEMANTIC_INPUT_MAX_BYTES } from './ckan-dcat-semantic.mjs';
+import { MerchantDcatInstallations, readDcatInstallationConfiguration } from './ckan-dcat-installation.mjs';
 
 export const CKAN_WORKSPACE_CONNECTION_SCHEMA = 'stellar-forge.ckan-workbench-connection.v1';
 const NATIVE_SCHEMA = 'stellar-forge.ckan-workbench.v1';
@@ -86,9 +87,9 @@ export async function readCkanWorkspaceConfiguration(path) {
     if (issue.code) throw issue;
     throw failure('CONFIGURATION_ERROR', 'The CKAN connection must be complete UTF-8 JSON.');
   }
-  exact(raw, ['schema', 'workspaces'], ['schema', 'workspaces']);
+  exact(raw, ['schema', 'workspaces', 'installations'], ['schema', 'workspaces']);
   if (raw.schema !== CKAN_WORKSPACE_CONNECTION_SCHEMA || !plain(raw.workspaces) ||
-      !Object.keys(raw.workspaces).length || Object.keys(raw.workspaces).length > 32)
+      (!Object.keys(raw.workspaces).length && !Object.keys(raw.installations ?? {}).length) || Object.keys(raw.workspaces).length > 32)
     throw failure('CONFIGURATION_ERROR', 'Declare between 1 and 32 original CKAN projects or receiving aliases.');
   const base = dirname(path), directories = new Set(), workspaces = Object.create(null);
   for (const [alias, input] of Object.entries(raw.workspaces)) {
@@ -128,7 +129,9 @@ export async function readCkanWorkspaceConfiguration(path) {
       receiveTarget: input.receiveTarget ?? false,
       seller: input.seller === undefined ? null : hostOrigin(input.seller, 'seller') };
   }
-  return { schema: CKAN_WORKSPACE_CONNECTION_SCHEMA, workspaces };
+  const installations = await readDcatInstallationConfiguration(raw.installations, { base,
+    workspaceDirectories: [...directories] });
+  return { schema: CKAN_WORKSPACE_CONNECTION_SCHEMA, workspaces, installations };
 }
 
 // Provider/public values may legitimately be called "file", "directory" or
@@ -158,7 +161,9 @@ function view(value) {
 }
 function safeError(issue) {
   const code = /^[A-Z][A-Z0-9_]{0,79}$/.test(issue?.code ?? '') ? issue.code : 'CKAN_WORKSPACE_OPERATION_FAILED';
-  const guidance = code === 'CKAN_RELEASE_STORE_MISMATCH'
+  const guidance = code.startsWith('DCAT_INSTALLATION_')
+    ? 'Read merchant_ckan_dcat_installation_requests/get for the same preparation alias and original request UUID.'
+    : code === 'CKAN_RELEASE_STORE_MISMATCH'
     ? 'Initialize the CKAN host with this workspace selected, or bind its original project seller-releases with --release-store.'
     : code === 'CKAN_OPERATION_CHANGED'
       ? 'Read merchant_ckan_status and reconcile its original operation and retained item IDs before another changing action.'
@@ -174,8 +179,10 @@ export class MerchantCkanWorkspaces {
   #reads = new RetainedFileReads({ errorPrefix: 'CKAN_FILE' });
   #transferInspections = new CkanWorkspaceTransferInspections();
   #receiving = new Map();
+  #installations;
   constructor(config, options = {}) {
     this.#config = config; this.#environment = { ...(options.environment ?? process.env) };
+    this.#installations = new MerchantDcatInstallations(config.ckanWorkspaces?.installations, { privateFile });
   }
   #storeMatches(definition) {
     return typeof this.#config.releaseStore === 'string' &&
@@ -183,6 +190,7 @@ export class MerchantCkanWorkspaces {
   }
   get summary() {
     return { configured: Boolean(this.#config.ckanWorkspaces), ...this.#reads.summary,
+      installationPreparations: this.#installations.summary,
       workspaces: Object.entries(this.#config.ckanWorkspaces?.workspaces ?? {}).map(([workspace, definition]) => {
         const entry = this.#entries.get(workspace);
         return { workspace, label: definition.label, open: Boolean(entry), opening: this.#opening.has(workspace),
@@ -606,6 +614,8 @@ export class MerchantCkanWorkspaces {
       if (!plain(args) || Object.keys(args).some(key => !Object.hasOwn(definition[2], key)) ||
           definition[3].some(key => !Object.hasOwn(args, key)))
         throw failure('INVALID_PARAMS', 'Use the declared CKAN tool arguments.');
+      if (name.startsWith('merchant_ckan_dcat_installation_'))
+        return await this.#installations.call(name, args);
       if (name === 'merchant_ckan_workspaces') return this.summary;
       if (name === 'merchant_ckan_open') return await this.#open(args.workspace);
       if (name === 'merchant_ckan_close') {
@@ -626,6 +636,7 @@ export class MerchantCkanWorkspaces {
         await Promise.allSettled([...this.#opening.values()]);
         const results = await Promise.allSettled([...this.#entries.values()].map(entry => this.#closeEntry(entry)));
         await this.#reads.close();
+        await this.#installations.close();
         this.#transferInspections.clear();
         if (results.some(result => result.status === 'rejected'))
           throw failure('CKAN_SHUTDOWN_INCOMPLETE', 'An original owned CKAN workbench reported incomplete shutdown.');

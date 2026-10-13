@@ -681,6 +681,7 @@
     "STATEMENT_RULES.md",
     "forecast_customer_funding.py",
     "forecast-customer-funding.mjs",
-    "FORECAST_CUSTOMER_FUNDING.md"
+    "FORECAST_CUSTOMER_FUNDING.md",
+    "operations_dcat_sources.py"
   ]
 }

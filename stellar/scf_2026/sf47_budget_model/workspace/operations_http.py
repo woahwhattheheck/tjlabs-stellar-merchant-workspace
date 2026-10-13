@@ -8,6 +8,7 @@ import json
 
 from model import Problem
 from operations import Operations, decoded
+import operations_dcat_sources as dcat_sources
 import operations_calendar as calendar_model
 import operations_workbook_http as workbook_http
 from operations_supplier_statements_http import handle as supplier_statements_http
@@ -543,6 +544,11 @@ def write(handler, parsed):
         methods = {"risk-register-seed": ops.seed_risks, "risk-register-preview": ops.preview_risks,
                    "risk-register-request": ops.risk_request}
         handler.send(200, methods[risk_match.group(2)](risk_match.group(1), handler.json_body()))
+        return True
+    dcat_match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/dcat-source", path)
+    if dcat_match:
+        body = handler.json_body()
+        handler.send(200, ops.command(dcat_match.group(1), {**body, "action": dcat_sources.ACTION}))
         return True
     if path == "/api/operations/import":
         query = parse_qs(parsed.query)

@@ -104,6 +104,25 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/public/dcat-correction-exchanges.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-correction-exchange-cli.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/CORRECTION_EXCHANGES.md",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/CORRECTION_EXCHANGES_AGENT.md"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/CORRECTION_EXCHANGES_AGENT.md",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-source.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-core.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-catalogues.json",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/profiles.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare-core.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/DCAT_INSTALLATION.md",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation/service.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation/server.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation/public/app.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation/public/index.html",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation/public/style.css",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-dcat-installation.mjs",
+    "stellar-forge/mcp-merchant-operator/ckan-dcat-installation.mjs",
+    "stellar-forge/mcp-merchant-operator/catalog/ckan-dcat-installation.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-receiving.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-operations.py",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-browser.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/DCAT_INSTALLATION_RECEIVING.md"
   ]
 }

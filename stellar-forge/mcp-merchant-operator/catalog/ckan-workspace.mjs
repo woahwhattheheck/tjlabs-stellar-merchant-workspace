@@ -1,5 +1,6 @@
 // MIT. Original tool metadata; provider runtimes load only when selected.
 import { MAX_RETAINED_CHUNK_BYTES } from '../retained-file-contracts.mjs';
+import { dcatInstallationDefinitions } from './ckan-dcat-installation.mjs';
 import { dcatCorrectionExchangeDefinitions } from './ckan-dcat-correction-exchanges.mjs';
 import { dcatCorrectionDefinitions } from './ckan-dcat-corrections.mjs';
 import { dcatWorkspaceDefinitions } from './ckan-dcat.mjs';
@@ -49,6 +50,7 @@ const projection = { type: 'object', minProperties: 1, maxProperties: 64,
     required: ['field', 'type', 'nullable', 'encoding'] } };
 
 const definitions = [
+  ...dcatInstallationDefinitions({ alias, uuid, digest, offset, read }),
   ...dcatWorkspaceDefinitions({ selected, changing, changed, alias, uuid, digest, offset, read, mutation }),
   ...dcatCorrectionDefinitions({ selected, changing, changed, alias, uuid, digest, offset, read, mutation }),
   ...dcatCorrectionExchangeDefinitions({ selected, changing, changed, alias, uuid, digest, offset, read, mutation }),
