@@ -32,6 +32,8 @@ BOOT_FILES = (
     "WORKBOOK_HANDOVER.md",
     "../../../scf-starforge-20261009/sf30-seller-sdk/dataset-refresh/workbook/reader.py",
     "source-tables-core.mjs",
+    "source-tables-agent.mjs",
+    "SOURCE_TABLES_AGENT.md",
     "source-tables.mjs",
     "source-tables.css",
     "source-tables-cli.mjs",

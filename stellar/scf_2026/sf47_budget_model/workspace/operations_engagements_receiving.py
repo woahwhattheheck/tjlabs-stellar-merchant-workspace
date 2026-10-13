@@ -1916,9 +1916,23 @@ def receive_agent(client, outcome):
 def preserve_source(client):
     for row in client.manifest["files"]:
         copy_exact(client.source_root / row["path"], client.output / "source" / row["path"], row)
+    execution_sources = []
+    selected = client.agent_execution_continuation
+    if selected is not None:
+        record = selected["record"]
+        for name, filename in (("python", "operations_engagements_receiving.py"),
+                               ("node", "engagement-agent-receiving.mjs")):
+            current = record["document"]["corrections"][name]["current"]
+            destination = ("source/execution-continuations/" +
+                           record["reference"]["sha256"] + "/" + filename)
+            copy_exact(Path(current["path"]), client.output / destination, current)
+            execution_sources.append({"path": destination,
+                **{key: current[key] for key in ("bytes", "sha256", "mode")}})
     directories = {client.output, client.output / "source"}
-    for row in client.manifest["files"]:
-        current = (client.output / "source" / row["path"]).parent
+    source_paths = [client.output / "source" / row["path"] for row in client.manifest["files"]]
+    source_paths.extend(client.output / row["path"] for row in execution_sources)
+    for path in source_paths:
+        current = path.parent
         while current != client.output:
             directories.add(current)
             current = current.parent
@@ -1927,7 +1941,9 @@ def preserve_source(client):
     sync_dir(client.output.parent)
     return {"files": len(client.manifest["files"]),
             "bytes": sum(row["bytes"] for row in client.manifest["files"]),
-            "manifestSha256": client.config["sourceManifest"]["sha256"]}
+            "manifestSha256": client.config["sourceManifest"]["sha256"],
+            **({"executionContinuation": {"reference": deepcopy(selected["record"]["reference"]),
+                 "files": execution_sources}} if selected is not None else {})}
 
 
 def publish_delivery(client, outcome):
@@ -1962,6 +1978,10 @@ def publish_delivery(client, outcome):
     for row in client.manifest["files"]:
         name = "source/" + row["path"]
         members[name] = {"path": name, "bytes": row["bytes"], "sha256": row["sha256"], "mode": row["mode"]}
+    for row in source_receipt.get("executionContinuation", {}).get("files", []):
+        need(row["path"] not in members, "EXECUTION_SOURCE_COLLISION",
+             "Keep the declared execution source separate from the original source selection.")
+        members[row["path"]] = deepcopy(row)
     for name in ("receiving-input.json", "SOURCE_SELECTION.json", "RECEIVING_SELECTION.json",
                  "delivery/ENGAGEMENT_NATIVE_JOURNAL.json"):
         info = descriptor(client.output / name)

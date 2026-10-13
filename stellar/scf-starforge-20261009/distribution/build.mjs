@@ -227,7 +227,8 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   for (const [group, path] of Object.entries(spec.runtimePackageManifests ?? {})) {
     const original = JSON.parse(sources.get(path));
     if (!original.dependencies || typeof original.dependencies !== 'object' || Array.isArray(original.dependencies) ||
-        !Object.keys(original.dependencies).length) throw new TypeError('Runtime dependencies missing: ' + path);
+        !Object.keys(original.dependencies).length && !/^>=\d+(?:\.\d+)?(?:\.\d+)?$/.test(original.engines?.node ?? ''))
+      throw new TypeError('Runtime dependencies or an explicit Node engine are required: ' + path);
     featurePeers[group] = {};
     for (const [name, version] of Object.entries(original.dependencies)) {
       if (!/^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/.test(name) ||

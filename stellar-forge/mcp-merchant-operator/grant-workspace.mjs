@@ -4,6 +4,8 @@ import {seedGrantCohortAdoption,reviewGrantCohortAdoption,editCohortAdoption,reb
   scheduleCohortAdoption,compareCohortAdoption,prepareGrantCohortAdoption,validateCohortAdoptionPrepared,
   inspectGrantCohortAdoptionRequest,saveGrantCohortAdoption,openGrantCohortAdoption,exportCohortAdoption}
   from '../../stellar/scf_2026/sf47_budget_model/workspace/cohort_planning_agent.mjs';
+import {grantPlanningSourceVerbs,executeGrantPlanningSourceTool} from './grant-planning-sources.mjs';
+import {GRANT_MAX_WORKBOOK_HANDOVER_BYTES} from '../../stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs';
 export {grantWorkspaceTools} from './catalog/grant-workspace.mjs';
 import {GRANT_TRANSFER_CHUNK_BYTES as CHUNK} from '../../stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs';
 // MIT. Merchant MCP tools for the original SF47 grant planning and delivery service.
@@ -19,6 +21,10 @@ import { GrantWorkspaceClient, inspectGrantAgentBinding, readGrantAgentFile,
 export const GRANT_WORKSPACE_CONNECTION_SCHEMA = 'stellar-forge.sf47-workspace-connection.v1';
 const SNAPSHOT = 'stellar-forge.sf47-agent-snapshot.v1', TRANSFER = 'stellar-forge.sf47-agent-input.v1';
 const MAX_JSON = 64 * 1024 * 1024, PAGE_BYTES = 48000;
+const MAX_RETAINED = Math.max(MAX_JSON,GRANT_MAX_WORKBOOK_HANDOVER_BYTES);
+const canonicalSourceRequest = value => value === null || typeof value !== 'object' ? JSON.stringify(value)
+  : Array.isArray(value) ? '['+value.map(canonicalSourceRequest).join(',')+']'
+  : '{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+canonicalSourceRequest(value[key])).join(',')+'}';
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const json = value => Buffer.from(JSON.stringify(value) + '\n');
 const need = (test, code, message, details = {}) => {
@@ -178,6 +184,7 @@ function presentation(value, base = '') {
 
 export class MerchantGrantWorkspaces {
   #config; #clients = new Map(); #readers = new RetainedFileReads({errorPrefix:'GRANT'});
+  #planningHandovers = new Map();
   #closing = false; #close; #pending = new Set();
   constructor(config) { this.#config = config; }
   get summary() { return {configured:Boolean(this.#config.grantWorkspaces),
@@ -222,13 +229,87 @@ export class MerchantGrantWorkspaces {
     return {...retained, retention:{state:'COMPLETE'}, ...(original.value === undefined ? {} : presentation(original.value)),
       fileRead:{tool:'merchant_grant_file_read', workspace:alias, snapshotId:id, expectedSha256:digest}};
   }
-  async #loadSnapshot(alias, selected, expected) {
+  async #snapshotMeta(alias, selected, expected) {
     const root = await this.#root(alias), meta = decode(await readGrantAgentFile(join(root, 'snapshots', snapshotId(selected) + '.json'), 65536));
     need(meta.schema === SNAPSHOT && meta.workspace === alias && meta.id === selected &&
-      sha(meta.file?.sha256) === sha(expected), 'GRANT_SNAPSHOT_CONFLICT', 'Use the original workspace, snapshot and file SHA together.');
-    const bytes = await readGrantAgentFile(join(root, 'files', meta.file.sha256), MAX_JSON);
+      sha(meta.file?.sha256) === sha(expected) && Number.isSafeInteger(meta.file.bytes) &&
+      meta.file.bytes >= 0 && meta.file.bytes <= MAX_RETAINED,
+    'GRANT_SNAPSHOT_CONFLICT', 'Use the original workspace, snapshot, complete byte count and file SHA together.');
+    return {meta,directory:root};
+  }
+  async #loadSnapshot(alias, selected, expected) {
+    const {meta,directory:root}=await this.#snapshotMeta(alias,selected,expected);
+    const bytes = await readGrantAgentFile(join(root, 'files', meta.file.sha256), MAX_RETAINED);
     need(bytes.length === meta.file.bytes && hash(bytes) === meta.file.sha256, 'GRANT_SNAPSHOT_CHANGED', 'The retained original file differs from its manifest.');
     return {meta, bytes, directory:root};
+  }
+  async #openSnapshotFile(alias, selected, expected) {
+    const {meta,directory:root}=await this.#snapshotMeta(alias,selected,expected);
+    const handle=await open(join(root,'files',meta.file.sha256),
+      constants.O_RDONLY | constants.O_NOFOLLOW | (constants.O_NONBLOCK ?? 0));
+    try {
+      const stat=await handle.stat();
+      need(stat.isFile() && stat.size===meta.file.bytes && typeof process.getuid==='function' &&
+        stat.uid===process.getuid() && (stat.mode & 0o077)===0,
+      'GRANT_SNAPSHOT_CHANGED','Open the original private immutable snapshot with its complete retained size.');
+      // The shared reader takes sole custody, verifies the full descriptor hash
+      // and checks its identity before every chunk. Large handovers need no copy.
+      return {readonlyFileHandle:handle,bytes:meta.file.bytes,sha256:meta.file.sha256,
+        name:meta.file.name,type:meta.file.contentType};
+    } catch(error) { await handle.close(); throw error; }
+  }
+  async #cachedPlanningHandover(alias, identity, create) {
+    need(plain(identity) && /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(identity.requestId ?? '') &&
+      /^plan-[a-f0-9]{32}$/.test(identity.planId ?? '') && Number.isSafeInteger(identity.revision) &&
+      identity.revision>0 && identity.revision<=1000000,
+    'GRANT_HANDOVER_REQUEST','Use the original request ID and exact saved plan revision.');
+    sha(identity.expectedContentSha256);
+    const requestSha256=hash(Buffer.from(canonicalSourceRequest(identity)));
+    const key=alias+'\0'+identity.requestId, pending=this.#planningHandovers.get(key);
+    if(pending) {
+      need(pending.requestSha256===requestSha256,'GRANT_HANDOVER_REQUEST_CONFLICT',
+        'This handover request already owns a different original saved revision or export profile.');
+      return pending.promise;
+    }
+    const operation=(async()=>{
+      const parent=await directory(join(await this.#root(alias),'planning-handovers'));
+      const root=await directory(join(parent,hash(Buffer.from(identity.requestId))));
+      const declaration={schema:'stellar-forge.sf47-workbook-handover-request.v1',workspace:alias,
+        requestSha256,selection:JSON.parse(canonicalSourceRequest(identity))};
+      await immutable(join(root,'request.json'),json(declaration));
+      const existing=async()=>{
+        let record;
+        try {record=decode(await readGrantAgentFile(join(root,'result.json'),256*1024));}
+        catch(error) {if(error.code==='ENOENT')return null;throw error;}
+        need(record.schema==='stellar-forge.sf47-workbook-handover-result.v1' &&
+          record.workspace===alias && record.requestSha256===requestSha256 &&
+          record.result?.requestId===identity.requestId && record.result?.retention?.state==='COMPLETE',
+        'GRANT_HANDOVER_RESULT_CONFLICT','Keep the original complete handover result and request together.');
+        for(const item of [record.result.archive,...record.result.files]) {
+          const {meta,directory:retained}=await this.#snapshotMeta(alias,item.id,item.file.sha256);
+          const stat=await lstat(join(retained,'files',meta.file.sha256));
+          need(stat.isFile()&&!stat.isSymbolicLink()&&stat.size===meta.file.bytes&&
+            meta.file.bytes===item.file.bytes,'GRANT_HANDOVER_FILE_CHANGED',
+          'A retained original handover file is unavailable at its complete size.');
+        }
+        return record.result;
+      };
+      const retained=await existing();if(retained)return retained;
+      const result=await create();
+      if(result.retention?.state!=='COMPLETE')return result;
+      const record={schema:'stellar-forge.sf47-workbook-handover-result.v1',workspace:alias,requestSha256,result};
+      try {await immutable(join(root,'result.json'),json(record));}
+      catch(error) {
+        // Independent clients may finish the same read-only export together.
+        // The first complete original result owns this request permanently.
+        if(error.code!=='GRANT_RETAINED_CONFLICT')throw error;
+      }
+      const complete=await existing();
+      need(complete,'GRANT_HANDOVER_RESULT_UNAVAILABLE','Reopen the original complete handover result after retained storage is available.');
+      return complete;
+    })();
+    this.#planningHandovers.set(key,{requestSha256,promise:operation});
+    try {return await operation;}finally{this.#planningHandovers.delete(key);}
   }
   async #input(alias, selection, expected) {
     exact(selection, ['hostInput', 'snapshotId', 'transferId', 'sourceWorkspace']);
@@ -479,10 +560,9 @@ export class MerchantGrantWorkspaces {
     if (['snapshot','rows','file_read'].includes(verb)) {
       if (verb === 'file_read') return this.#readers.read({scope:alias + ':' + snapshotId(args.snapshotId),
         key:args.snapshotId, kind:'SF47_ORIGINAL', directory:await this.#root(alias), readId:args.readId,
-        expectedSha256:sha(args.expectedSha256), offset:uint(args.offset ?? 0, 'Byte offset', MAX_JSON),
+        expectedSha256:sha(args.expectedSha256), offset:uint(args.offset ?? 0, 'Byte offset', MAX_RETAINED),
         limit:uint(args.limit ?? CHUNK, 'Byte page size', CHUNK, 1),
-        load:async () => { const data = await this.#loadSnapshot(alias, args.snapshotId, args.expectedSha256);
-          return {bytes:data.bytes, name:data.meta.file.name, type:data.meta.file.contentType}; }});
+        load:() => this.#openSnapshotFile(alias,args.snapshotId,args.expectedSha256)});
       const original = await this.#loadSnapshot(alias, args.snapshotId, args.expectedSha256);
       need(/^application\/json\b/i.test(original.meta.file.contentType), 'GRANT_JSON_REQUIRED', 'This complete native file is not a JSON snapshot.');
       const value = pointer(decode(original.bytes), args.pointer ?? '');
@@ -501,6 +581,11 @@ export class MerchantGrantWorkspaces {
           pointer:args.pointer + '/' + next, recovery:'Use merchant_grant_snapshot for selected nested values or merchant_grant_file_read for the complete original response.'}} : {})};
     }
     const client = this.#client(alias);
+    if (grantPlanningSourceVerbs.has(verb)) return executeGrantPlanningSourceTool(verb,args,{
+      client,load:(input,expected)=>this.#input(alias,input,expected),
+      retain:(original,selection)=>this.#snapshot(alias,original,selection),
+      cachedHandover:(identity,create)=>this.#cachedPlanningHandover(alias,identity,create),
+    });
     if (verb === 'open') return client.open({expectedSelectionSha256:args.expectedSelectionSha256});
     if (verb === 'inspect') return client.inspect();
     if (verb === 'browser') return client.browser();
