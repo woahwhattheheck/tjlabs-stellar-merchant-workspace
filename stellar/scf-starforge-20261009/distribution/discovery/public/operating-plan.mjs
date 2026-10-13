@@ -1,5 +1,6 @@
 // MIT. Saved procedures use the same pure operating-plan model as the installed CLI.
 import { searchCommandCatalog } from '/catalog.mjs';
+import { mountSupportOperatingPlan } from '/support-operating-plan.mjs';
 import { installGrantReportingEditor } from '/grant-reporting-editor.mjs';
 import { inspectOperatingPlan, createOperatingPlan, createOperatingStep, snapshotRegistration,
   operatingPlanDraft, operatingPlanRevision, saveOperatingPlanRevision, forkOperatingPlan,
@@ -21,6 +22,7 @@ const names = { command: 'Command', source: 'Source', feature: 'Runtime group',
 let database, savedPlans = [], catalog, current, draft, rawArguments = {}, selectedStep = '', selectedRevision = null;
 let catalogPage = 1, catalogResult, pendingImport, draftTimer, draftQueued = false, busy = false;
 let pendingDraftWrites = 0;
+let supportController = null;
 let draftWrites = Promise.resolve(), pendingItemId = new URL(location.href).searchParams.get('add');
 const sessionId = crypto.randomUUID();
 let previousSessionId = null;
@@ -184,6 +186,7 @@ async function openPlan(id, { fresh = false } = {}) {
 }
 function renderEditor() {
   $('empty-plan').hidden = Boolean(current); $('plan-editor').hidden = !current;
+  supportController?.update();
   if (!current) return;
   const content = body(), editing = editable();
   $('plan-heading').textContent = content.title || 'Untitled operating plan';
@@ -309,7 +312,7 @@ async function refreshCatalog() {
   try {
     const response = await fetch('/api/catalog', { cache: 'no-store' }), value = await response.json();
     if (!response.ok) throw new Error(value.error ?? response.statusText);
-    catalog = value; $('package').textContent = catalog.package.name + ' · ' + catalog.package.version;
+    catalog = value; supportController?.update(); $('package').textContent = catalog.package.name + ' · ' + catalog.package.version;
     $('catalog-count').textContent = catalog.items.length + ' registrations · ' + (catalog.package.sourceSelection?.title ?? 'Selected toolkit');
     renderCatalog(); if (selected()) renderRegistration(selected());
     $('export-comparison').disabled = !current; showPendingSelection();
@@ -591,6 +594,11 @@ if (broadcast) broadcast.onmessage = event => {
   if (current?.id === event.data?.id && current.revisions.length < event.data.revision)
     status('Another tab saved revision ' + event.data.revision + '. Your working draft is retained; reopen saved plans before continuing.');
 };
+supportController = mountSupportOperatingPlan({
+  host: $('support-procedure'), getCatalog: () => catalog, getPlan: () => current,
+  run, addPlan, receivePlan, retainWorkingDraft,
+});
+$('show-support-procedure').addEventListener('click', () => supportController.open());
 await run(async () => {
   database = await openDatabase();
   await refreshPlanList();

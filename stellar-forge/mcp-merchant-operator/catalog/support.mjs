@@ -1,3 +1,4 @@
+import { supportOperatingTools } from './support-operating.mjs';
 import {commercialTools} from './commercial.mjs';
 import {serviceAdjustmentTools} from './service-adjustments.mjs';
 import {casePackageTools} from './case-packages.mjs';
@@ -43,6 +44,7 @@ const sourceTools = new Set(['merchant_support_profiles', 'merchant_support_conf
 function supportTools(tool) {
   const read = { readOnly: true, idempotent: true };
   return [
+    ...supportOperatingTools(tool),
     ...serviceTools(tool),
     ...serviceRenewalTools(tool),
     ...serviceAdjustmentTools(tool),

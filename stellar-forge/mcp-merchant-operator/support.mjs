@@ -1,3 +1,4 @@
+import { handlesSupportOperating, callSupportOperating } from './support-operating.mjs';
 import {merchantCommercial} from './support-commercial.mjs';
 import {merchantServiceAdjustments} from './support-service-adjustments.mjs';
 import {merchantServiceRenewals} from './support-service-renewals.mjs';
@@ -471,6 +472,7 @@ export class MerchantSupport {
     if (this.#closing) throw failure('OPERATOR_CLOSING', 'Merchant support is closing.');
     try {
       return await (async () => {
+      if(handlesSupportOperating(name))return callSupportOperating(name,args);
       if(this.#serviceRenewals.handles(name))return this.#serviceRenewals.call(name,args);
       if(this.#serviceAdjustments.handles(name))return this.#serviceAdjustments.call(name,args);
       if(name.startsWith('merchant_case_package_'))return (await this.#packages()).call(name,args);
