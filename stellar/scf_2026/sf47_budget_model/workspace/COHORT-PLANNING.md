@@ -1373,7 +1373,10 @@ comparison, original case/Installation/source selection and history directory.
 The retained planning document carries all of it. Native review and preparation
 reopen each selected comparison revision through the original Task Outcomes
 reader, which validates the original source and calculation. Newer comparison
-history can coexist with a pinned earlier edition. An altered selected source
+history can coexist with a pinned earlier edition. After complete case receiving,
+the measurement retains its original producer case identity. The planning desk
+records the selected receiving case separately and verifies the same original
+source through that case's native inventory and reader. An altered selected source
 requires explicit re-selection; the existing allocation and entered cost
 portions remain available for review.
 
@@ -1416,11 +1419,13 @@ node cohort_planning_cli.mjs recorded-cost-plan \
 ~~~
 
 Choose `--kind INSTALLED` and omit `--observation` for the original installed
-method. The source and choices commands keep existing destinations intact.
+method. For a comparison opened from an independently received case, include
+`--case RECEIVING_CASE_ID`; the original producer identity remains in the saved
+source. The browser supplies its current selected case automatically. The source and choices commands keep existing destinations intact.
 
 The pure module exposes `inspectCohortTaskMeasurements` and
 `bindCohortRecordedCostMeasurement`. The latter receives the complete allocation,
-native saved response and explicit `{kind, observationId, serviceBasis}`; it
+native saved response and explicit `{kind, observationId, serviceBasis, caseId?}`; it
 returns the complete editable allocation and retains an earlier selected
 measurement before accepting another. `planCohortFromRecordedCosts` checks the
 bound count/unit/reference and calculates through the same existing engine.
@@ -1435,13 +1440,16 @@ An allocation's optional `measurement` is:
   "schema": "stellar-forge.sf47-cohort-task-measurement.v1",
   "original": {"source": {}, "edition": {}, "history": []},
   "kind": "FOLLOWUP",
+  "caseId": "ORIGINAL_OR_RECEIVING_CASE_ID",
   "observationId": "ORIGINAL_OBSERVATION_ID",
   "serviceBasis": "Original measured task and selected cost relationship"
 }
 ~~~
 
 The empty objects above identify the fields; supply the entire native source,
-edition and history. The operation derives `outputQuantity`, `outputUnit` and
+edition and history. Optional `caseId` names the selected case holding that source;
+omission retains the original producer case. Native preparation verifies the
+actual selected source and saved revision in that case. The operation derives `outputQuantity`, `outputUnit` and
 `outputSource` when omitted; supplied values must equal that original selection.
 Continue the existing adoption review, prepare, save, request recovery and open
 tools. The Task Outcomes writer, its original revisions and any measurement

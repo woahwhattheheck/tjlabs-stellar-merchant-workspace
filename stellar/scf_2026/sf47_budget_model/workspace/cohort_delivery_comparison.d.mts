@@ -153,7 +153,7 @@ export interface CohortRecordedCostPlan {
   comparison:import('./cohort_planning.mjs').CohortPlanComparison;
   derivations:Array<{
     id:string;targetScheduleId:string;sourceServiceId:string;outputQuantity:string;outputUnit:string;outputSource:string;
-    measurement?:CohortTaskMeasurementObservation & {comparisonId:string;revision:number;sourceId:string;sourceSha256:string;customer:string;task:string;serviceBasis:string};
+    measurement?:CohortTaskMeasurementObservation & {comparisonId:string;revision:number;sourceId:string;sourceSha256:string;customer:string;task:string;serviceBasis:string;originCaseId?:string;selectedCaseId?:string};
     sourceService:Record<string,unknown>;originalEconomics:Record<string,unknown>|null;
     derivedEconomics:{unitCost:string|null;activeHoursPerTask:string|null;hourlyCost:string|null};
     supplierCoverage:'PARTIAL'|'COMPLETE';laborCoverage:'PARTIAL'|'COMPLETE';coverageNote:string;
@@ -184,7 +184,7 @@ export interface CohortTaskMeasurementObservation {
 }
 export interface CohortTaskMeasurementSelection {
   schema:typeof COHORT_TASK_MEASUREMENT_SCHEMA;original:CohortTaskMeasurementOriginal;
-  kind:'INSTALLED'|'FOLLOWUP';observationId:string;serviceBasis:string;
+  kind:'INSTALLED'|'FOLLOWUP';observationId:string;serviceBasis:string;caseId?:string;
 }
 export interface CohortTaskMeasurementCatalog {
   schema:'stellar-forge.sf47-cohort-task-measurement.v1.catalog';original:CohortTaskMeasurementOriginal;
@@ -194,4 +194,4 @@ export interface CohortTaskMeasurementCatalog {
 }
 export function inspectCohortTaskMeasurements(original:CohortTaskMeasurementOriginal|{value:CohortTaskMeasurementOriginal}):CohortTaskMeasurementCatalog;
 export function bindCohortRecordedCostMeasurement(allocation:CohortRecordedCostAllocation|Record<string,unknown>,original:CohortTaskMeasurementOriginal,
-  selection:{kind:'INSTALLED'|'FOLLOWUP';observationId?:string;serviceBasis:string}):CohortRecordedCostAllocation;
+  selection:{kind:'INSTALLED'|'FOLLOWUP';observationId?:string;serviceBasis:string;caseId?:string}):CohortRecordedCostAllocation;
