@@ -529,6 +529,120 @@ async function recurringClassificationBrowser(receiving,originalInputs){
   followingPeriodKind:'explicitly authored software receiving source; no financial command'});
 }
 
+async function concurrentStatementDraftBrowser(receiving,originalInputs){
+ const originalPage=page,browser=receiving.browser();need(browser,'Use the existing isolated cloud browser.');
+ const before=JSON.parse((await download('draft-export','tabs-original-before-course.json')).raw);
+ need(canonical(before.inputs)===canonical(originalInputs),'Begin the tab course with the complete unchanged original statement inputs.');
+ const nativeBefore=await preview('tabs-original-native-preview');
+ need(nativeBefore.canImport&&nativeBefore.summary.newCount===3,'Use the original three-row case before its first financial import.');
+ const requests=[];
+ const observe=request=>{
+  const url=new URL(request.url());
+  if(url.origin===origin&&request.method()==='POST'&&url.pathname.endsWith('/command'))requests.push(JSON.parse(request.postData()||'null'));
+ };
+ receiving.on('request',observe);
+ const second=await receiving.newPage();
+ let cold;
+ try{
+  page=second;await openOperations(origin+'/#access='+token,state.caseId);await openStatements();
+  let desk=page.locator('.statement-desk');
+  await desk.locator('[name="accountLabel"]').fill('Operating USD · second tab review');
+  await preview('tabs-second-original-native-preview');
+  const secondSaved=JSON.parse((await download('draft-export','tabs-second-saved-draft.json')).raw);
+  page=originalPage;desk=page.locator('.statement-desk');
+  await desk.locator('[name="accountLabel"]').fill('Operating USD · first tab unfinished review');
+  await desk.locator('[aria-label="Concurrent statement draft recovery"] [role="alert"]').waitFor();
+  const firstConflict=await download('draft-conflict-export','tabs-first-complete-conflict-archive.json'),conflict=JSON.parse(firstConflict.raw);
+  const pair=conflict.records.find(row=>row.local.inputs.accountLabel==='Operating USD · first tab unfinished review'&&row.shared?.inputs.accountLabel==='Operating USD · second tab review');
+  need(pair,'The actual two-tab collision retains both full original drafts.');
+  need(canonical(pair.local.inputs.source)===canonical(originalInputs.source)&&canonical(pair.shared.inputs.source)===canonical(originalInputs.source),'Both retained branches preserve all original bank bytes.');
+  await capture('00-tabs-complete-comparison-desktop');
+  await page.setViewportSize({width:390,height:844});await capture('00-tabs-complete-comparison-phone');await page.setViewportSize({width:1360,height:1000});
+  await desk.locator('[data-statement-action="draft-use-shared"]').click();
+  await desk.locator('.statement-notice').filter({hasText:'Both complete drafts are retained.'}).waitFor();
+  need(await desk.locator('[name="accountLabel"]').inputValue()===secondSaved.inputs.accountLabel,'Explicit shared opening uses the actual second-tab draft.');
+  const currentPreview=await preview('tabs-selected-shared-native-preview');
+  need(currentPreview.canImport&&currentPreview.summary.newCount===3,'Selected draft passes the actual original native preview.');
+  // This private context already aborts every command POST. The app creates and retains its actual request; no fabricated receipt is supplied.
+  await desk.locator('[data-statement-confirm]').check();
+  await desk.locator('[data-statement-action="import"]').click();
+  await desk.locator('[data-statement-action="retry"]').waitFor();
+  await desk.locator('.statement-error').waitFor();
+  const pending=JSON.parse((await download('draft-export','tabs-original-network-interrupted-request.json')).raw);
+  need(pending.pending?.payload?.action==='statement.receive'&&requests.length===1,'The real original request survives the deliberately interrupted private-context transport.');
+  need(canonical(requests[0])===canonical(pending.pending.payload),'Retained pending payload equals the actual attempted command.');
+  page=second;desk=page.locator('.statement-desk');
+  await desk.locator('[name="accountLabel"]').fill('Operating USD · stale second tab must not replace request');
+  await desk.locator('[aria-label="Concurrent statement draft recovery"] [role="alert"]').waitFor();
+  need(await desk.locator('[data-statement-action="draft-use-local"]').isDisabled(),'A pending shared original cannot be replaced by the stale tab.');
+  const withPending=JSON.parse((await download('draft-conflict-export','tabs-pending-complete-conflict-archive.json')).raw);
+  need(withPending.records.some(row=>canonical(row.shared?.pending?.payload)===canonical(pending.pending.payload)),'The immutable pair preserves the full actual shared request.');
+  await capture('00-tabs-pending-shared-original-desktop');
+  await desk.locator('[data-statement-action="draft-use-shared"]').click();
+  await desk.locator('.statement-notice').filter({hasText:'Both complete drafts are retained.'}).waitFor();
+  await desk.locator('[data-statement-action="retry"]').click();await desk.locator('.statement-error').waitFor();
+  const resumed=JSON.parse((await download('draft-export','tabs-same-original-retried-request.json')).raw);
+  need(requests.length===2&&canonical(requests[1])===canonical(requests[0])&&canonical(resumed.pending?.payload)===canonical(pending.pending.payload),'Recovery retries the identical original request, including its actual mutation identity.');
+  await desk.locator('[data-statement-action="draft-sync"]').click();
+  await page.waitForFunction(()=>document.querySelector('.statement-desk')?.getAttribute('aria-busy')==='false');
+  const staged=await page.evaluate(async caseId=>{
+   const staff=await import('/staff-session.mjs'),name=staff.staffDeskStorageKey('sf47-statement-drafts',staff.currentStaffContext());
+   const db=await new Promise((resolve,reject)=>{const request=indexedDB.open(name,1);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
+   try{return await new Promise((resolve,reject)=>{
+    const tx=db.transaction('drafts','readwrite'),store=tx.objectStore('drafts'),get=store.get(caseId);let result;
+    tx.oncomplete=()=>resolve(result);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+    get.onsuccess=()=>{const original=get.result;if(!original){tx.abort();return;}
+     const unreadable={...structuredClone(original),schema:'authored.receiving.invalid-draft-schema'};
+     store.put(unreadable,caseId);result={original,unreadable};
+    };
+   });}finally{db.close();}
+  },state.caseId);
+  need(canonical(staged.original.pending.payload)===canonical(pending.pending.payload),'The explicitly authored invalid-schema course starts from the actual retained original request.');
+  const repairedPath=join(work,'tabs-repaired-original-complete-draft.json');await atomic(repairedPath,staged.original);
+  await openOperations(origin+'/#access='+token,state.caseId);await openStatements();desk=page.locator('.statement-desk');
+  await desk.locator('[aria-label="Unreadable saved statement draft"]').waitFor();
+  const unreadable=JSON.parse((await download('draft-unreadable-export','tabs-preserved-unreadable-original.json')).raw);
+  need(canonical(unreadable)===canonical(staged.unreadable),'Failed original loading preserves the complete unreadable saved value.');
+  need(await desk.locator('[data-statement-action="preview"]').first().isDisabled(),'An unreadable current draft grants no native-preview/write authority.');
+  await capture('00-tabs-unreadable-original-desktop');
+  const repairChooser=page.waitForEvent('filechooser');await desk.locator('[data-statement-action="draft-unreadable-import"]').click();await(await repairChooser).setFiles(repairedPath);
+  await desk.locator('.statement-notice').filter({hasText:'Received the complete repaired draft'}).waitFor();
+  const repaired=JSON.parse((await download('draft-export','tabs-received-repaired-original.json')).raw);
+  need(canonical(repaired.pending.payload)===canonical(pending.pending.payload),'Explicit repair preserves the unchanged original request.');
+  const archive=await download('draft-conflict-export','tabs-complete-pending-recovery-archive.json'),complete=JSON.parse(archive.raw);
+  need(complete.records.some(row=>canonical(row.rawShared)===canonical(staged.unreadable)),'The complete archive retains the exact unreadable predecessor beside its selected repair.');
+  need(canonical(complete.current.pending.payload)===canonical(pending.pending.payload),'The full archive carries this tab’s actual pending current draft.');
+  await page.setViewportSize({width:390,height:844});await capture('00-tabs-pending-shared-original-phone');
+  cold=await browser.newContext({viewport:{width:1360,height:1000},acceptDownloads:true});
+  await cold.route('**/*',async route=>{
+   const request=route.request(),url=new URL(request.url());
+   if(!['http:','https:'].includes(url.protocol)){await route.continue();return;}
+   if(url.origin!==origin||request.method()==='POST'&&url.pathname.endsWith('/command')){await route.abort();return;}await route.continue();
+  });
+  page=await cold.newPage();await openOperations(origin+'/#access='+token,state.caseId);await openStatements();desk=page.locator('.statement-desk');
+  const receive=async()=>{
+   const chooser=page.waitForEvent('filechooser');await desk.locator('[data-statement-action="draft-conflict-import"]').click();await(await chooser).setFiles(archive.path);
+   await desk.locator('.statement-notice').filter({hasText:'complete tab-recovery records. The current draft and its requests remain selected.'}).waitFor();
+  };
+  await receive();
+  let readback=JSON.parse((await download('draft-conflict-export','tabs-empty-browser-first-receiving.json')).raw);
+  for(const row of complete.records)need(readback.records.some(value=>value.id===row.id&&canonical(value)===canonical(row)),'Independent receiving preserves every immutable full original pair.');
+  need(!readback.current.pending,'Archive receiving leaves the empty browser’s active draft unchanged.');
+  const firstCount=readback.records.length;await receive();
+  readback=JSON.parse((await download('draft-conflict-export','tabs-empty-browser-exact-replay.json')).raw);
+  need(readback.records.length===firstCount,'Exact archive replay adds no duplicate current or conflict record.');
+  await desk.locator('[data-statement-action="draft-conflict-open"]').click();
+  await desk.locator('[data-statement-action="retry"]').waitFor();
+  const restored=JSON.parse((await download('draft-export','tabs-empty-browser-restored-original-request.json')).raw);
+  need(canonical(restored.pending.payload)===canonical(pending.pending.payload),'Cold receiving reopens the exact original pending payload.');
+  await capture('00-tabs-empty-browser-pending-original-desktop');await page.setViewportSize({width:390,height:844});await capture('00-tabs-empty-browser-pending-original-phone');
+  await stage('original-statement-concurrent-drafts-received',{caseId:state.caseId,conflicts:complete.records.length,independentRecords:readback.records.length,originalRequestId:pending.pending.payload.requestId,
+   interruptedCommandAttempts:requests.length,archiveSha256:sha(archive.raw),sourceSha256:sha(Buffer.from(originalInputs.source.contentBase64,'base64'))});
+ }finally{
+  receiving.off('request',observe);if(cold)await cold.close();await second.close();page=originalPage;
+ }
+}
+
 async function receiveStatementCopiesInFreshBrowser(archive,csvEdition,originalInputs){
  const browser=context.browser();need(browser,'Use the existing browser to open an independent private receiving context.');
  const originalPage=page;
@@ -561,6 +675,7 @@ async function receiveStatementCopiesInFreshBrowser(archive,csvEdition,originalI
   await capture('00-copies-independent-native-preview-phone');
   await recipientReviewBrowser(receiving,originalInputs);
   await recurringClassificationBrowser(receiving,originalInputs);
+  await concurrentStatementDraftBrowser(receiving,originalInputs);
   const full=await download('copies-export','statement-working-copies-independent-complete.json'),fullValue=JSON.parse(full.raw);
   const original=JSON.parse(archive.raw);
   for(const edition of original.editions){

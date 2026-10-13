@@ -60,6 +60,8 @@ Archive import is one transaction. A conflict or storage failure leaves the orig
 
 The desk keeps its existing per-case automatic draft separately from explicitly saved editions. The new list is stored in the same object store with case-scoped keys; it is not a second case or cash ledger. Browser site-data removal clears browser preparation, so retain its complete downloads.
 
+The automatic draft now detects a changed same-Staff shared draft atomically and retains both complete versions before any recovery choice. Use **Statement drafts in this browser** to compare the local/shared source and original request, preserve both, and download or reopen the full tab-recovery archive. See [Statement draft recovery](STATEMENT_DRAFT_RECOVERY.md) for the exact controls and original-request continuation. These choices preserve named copies and their immutable editions.
+
 ## Accountant recipient review
 
 The same current statement can be sent for complete offline finance review. Use the current native preview, retain its original edition, receive an attributed recommendation file, compare original/current/returned fields and apply explicit choices before the existing native re-preview. See [Accountant recipient review](STATEMENT_RECIPIENT_REVIEW.md) for the complete source, recovery and original receiving journey.

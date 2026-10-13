@@ -1,3 +1,4 @@
+import {createStatementDraftAccess,statementDraftToken,statementDraftRequest,validateStatementDraftArchive,statementDraftRecoveryPanel} from './operations_statement_drafts.mjs';
 import {statementRuleWork,statementRuleEditor,validateStatementRule,mergeStatementRuleLibraries,saveStatementRulebook,editStatementRulebook,prepareStatementRuleReview,statementRuleReviewCurrent,chooseStatementRule,chooseUnambiguousStatementRules,applyStatementRuleReview,statementRulesPanel} from './operations_statement_rules.mjs';
 import {statementReviewWorklist,selectedStatementReview,receiveStatementReviewWork,statementReviewBasis,statementReviewComparisonCurrent,startStatementReviewComparison,chooseStatementReviewField,noteStatementReview,recordStatementReviewApplication,replaceStatementReviewWork,statementReviewWorklistPanel} from './operations_statement_review_worklist.mjs';
 import {prepareStatementRecipientPacket,validateStatementRecipientPacket,receiveStatementRecipientReturn,compareStatementRecipientReturn,applyStatementRecipientReturn,statementRecipientPanel,statementRecipientReviewHTML} from './operations_statement_review.mjs';
@@ -106,18 +107,7 @@ function draftStore(name='sf47-statement-drafts'){
     });
     return opening;
   }
-  const access=async(key,value)=>{
-    const db=await database();
-    return new Promise((resolve,reject)=>{
-      const writing=value!==undefined,tx=db.transaction('drafts',writing?'readwrite':'readonly'),store=tx.objectStore('drafts');
-      const request=writing?store.put(value,key):store.get(key);
-      let result;
-      request.onsuccess=()=>{result=request.result;};
-      tx.oncomplete=()=>resolve(result);
-      tx.onerror=()=>reject(tx.error||request.error||new Error('Could not retain the statement draft.'));
-      tx.onabort=()=>reject(tx.error||new Error('The statement draft was not retained.'));
-    });
-  };
+  const access=createStatementDraftAccess(database);
   access.copies=caseId=>createStatementCopyStore(database,caseId);
   return access;
 }
@@ -134,7 +124,8 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
   if(!document.querySelector('link[data-statement-batch-style]')){const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_statement_batch.css';link.dataset.statementBatchStyle='true';document.head.append(link);}
   if(!document.querySelector('link[data-statement-allocation-style]')){const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_statement_allocations.css';link.dataset.statementAllocationStyle='true';document.head.append(link);}
   if(!document.querySelector('link[data-statement-rule-style]')){const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_statement_rules.css';link.dataset.statementRuleStyle='true';document.head.append(link);}
-  let active=true,busy=false,hostBusy=false,loading=true,caseValue=current,persistQueue=Promise.resolve(),persistTimer=null;
+  let active=true,busy=false,hostBusy=false,loading=true,caseValue=current,persistTimer=null;
+  session.storageWrites||=Promise.resolve();
   const prefix='/api/operations/'+encodeURIComponent(current.program.id);
   const available=()=>active&&root.isConnected;
   const $=selector=>root.querySelector(selector);
@@ -145,17 +136,38 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
   session.currentCaseVersion=current.program.version;
   const source=()=>session.inputs.source;
   const native=()=>bankFormat(session.inputs);
-  const locked=()=>loading||busy||hostBusy||!!session.inflight||!!session.pending||!!session.accepted||!!session.setupPending;
+  const locked=()=>loading||busy||hostBusy||!!session.inflight||!!session.pending||!!session.accepted||!!session.setupPending||!!session.storageConflict||!!session.storageReadFailure;
   const editable=()=>!locked()&&caseValue.program.state==='OPEN';
   const rowDecision=number=>session.inputs.decisions.find(row=>row.rowNumber===number);
   function snapshot(){return {classificationRules:clone(session.classificationRules),recipientWorklist:clone(session.recipientWorklist),recipientName:session.recipientName,recipientRole:session.recipientRole,recipientPackets:clone(session.recipientPackets),recipientReturn:clone(session.recipientReturn),recipientHistory:clone(session.recipientHistory),workingCopyId:session.workingCopyId,copyName:session.copyName,copyNote:session.copyNote,lastReceipt:clone(session.lastReceipt||null),schema:'sf47.statement-draft.v1',caseId:current.program.id,inputs:clone(session.inputs),headers:clone(session.headers),inspection:clone(session.inspection),nativeScalesText:session.nativeScalesText,preview:clone(session.preview),dirty:session.dirty,pending:clone(session.pending),accepted:clone(session.accepted),setupPending:clone(session.setupPending),setupChoice:session.setupChoice,setupName:session.setupName,setupNote:session.setupNote,originalInputHandoff:clone(session.originalInputHandoff||null),batchSelection:clone(session.batchSelection),batchChange:clone(session.batchChange),batchUndo:clone(session.batchUndo),allocationRow:session.allocationRow,allocationWorks:clone(session.allocationWorks)};}
+  function draftMeta(reason){return {id:'statement-tab-'+crypto.randomUUID(),savedAt:new Date().toISOString(),reason};}
+  async function refreshDraftRecoveries(){session.draftRecoveryIndex=await storeDraft.list(current.program.id);}
+  function draftStoragePage(){const failure=session.storageReadFailure?'<section class="statement-panel" aria-label="Unreadable saved statement draft"><h4>Preserve the saved original before recovery</h4><p class="statement-error" role="alert">'+esc(session.storageReadFailure.error)+'</p><p>The complete original remains unchanged. Download it, repair its interpretation in a full recovery file, then explicitly receive that file. Its original pending request and result must stay identical.</p><div class="statement-actions">'+button('Download unreadable saved original','draft-unreadable-export',session.storageReadFailure.unread===true,'data-statement-recovery="true" data-statement-draft-recovery="true"')+button('Open repaired complete draft','draft-unreadable-import',session.storageReadFailure.unread===true,'data-statement-recovery="true" data-statement-draft-recovery="true"')+'</div></section>':'';return failure+statementDraftRecoveryPanel({local:snapshot(),shared:session.storageShared??null,conflict:!!session.storageConflict||!!session.storageReadFailure,comparisonReady:!!session.storageComparisonReady,index:session.draftRecoveryIndex,page:session.draftRecoveryPage||0,detailPage:session.draftDifferencePage||0,selected:session.draftRecoverySelected||null});}
   async function persist(critical=false){
     const value=snapshot();
-    persistQueue=persistQueue.catch(()=>{}).then(()=>storeDraft(current.program.id,value));
-    try{await persistQueue;session.storageWarning='';}
+    const work=session.storageWrites.catch(()=>{}).then(async()=>{
+      if(session.storageReadFailure||typeof session.storageToken!=='string')throw new Error('The browser draft has not been read. Reopen the Statements desk before recording a request.');
+      const localToken=statementDraftToken(value);
+      if(session.storageConflict&&session.storageConflictLocalToken===localToken){
+        if(critical)throw new Error('Resolve the changed shared draft before sending this retained request.');
+        return;
+      }
+      const result=await storeDraft.write(current.program.id,value,session.storageToken,draftMeta('Another tab changed the current statement draft'));
+      if(!result.saved){
+        session.storageConflict=result.record.id;session.storageConflictLocalToken=localToken;session.storageShared=result.current;session.storageComparisonReady=true;
+        session.draftRecoverySelected=result.record;await refreshDraftRecoveries();
+        session.storageWarning='This tab and the shared draft were both retained. Compare them in Statement drafts in this browser before continuing.';
+        if(available())render();
+        if(critical)throw new Error('The shared draft changed. This complete request was retained in tab recovery and has not been sent by this action. Open the shared draft before resuming.');
+        return;
+      }
+      session.storageToken=result.token;session.storageConflict=null;session.storageConflictLocalToken=null;session.storageWarning='';
+    });
+    session.storageWrites=work;
+    try{await work;}
     catch(error){
-      session.storageWarning='This browser could not save the draft. Download a recovery copy before closing this page.';
-      if(critical)throw new Error('The original import request could not be retained. Download a recovery copy, enable this site’s storage, and resume the same request. '+error.message);
+      if(!session.storageConflict)session.storageWarning='This browser could not save the draft. Download a recovery copy before closing this page. '+error.message;
+      if(critical)throw error;
     }
   }
   function schedulePersist(){clearTimeout(persistTimer);persistTimer=setTimeout(()=>{persistTimer=null;void persist();},350);}
@@ -163,8 +175,8 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
     if(!available())return;
     root.setAttribute('aria-busy',String(loading||busy||hostBusy||!!session.inflight));
     root.querySelectorAll('button,input,select,textarea').forEach(el=>{
-      const recovery=el.dataset.statementRecovery==='true';
-      el.disabled=el.dataset.statementFixed==='true'||loading||busy||hostBusy||!!session.inflight||(!recovery&&!!(session.pending||session.accepted||session.setupPending))||(el.dataset.statementWrite==='true'&&caseValue.program.state!=='OPEN');
+      const recovery=el.dataset.statementRecovery==='true',draftRecovery=el.dataset.statementDraftRecovery==='true'||el.dataset.statementAction==='draft-export';
+      el.disabled=el.dataset.statementFixed==='true'||loading||busy||hostBusy||!!session.inflight||(!draftRecovery&&!!(session.storageConflict||session.storageReadFailure))||(!recovery&&!!(session.pending||session.accepted||session.setupPending))||(el.dataset.statementWrite==='true'&&caseValue.program.state!=='OPEN');
     });
     root.querySelectorAll('[data-statement-row-select]').forEach(el=>{el.checked=session.batchSelection.includes(Number(el.dataset.statementRowSelect));el.disabled=!editable()||session.dirty;});
     const importButton=$('[data-statement-action="import"]');
@@ -183,11 +195,11 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
     if(!decision){decision={rowNumber:number,action:'IMPORT'};session.inputs.decisions.push(decision);}
     Object.assign(decision,patch);changed();
   }
-  async function run(action){
+  async function run(action,{persistAfter=true}={}){
     if(!available()||loading||busy||hostBusy||session.inflight)return;
     busy=true;session.error='';controls();
     try{await action();}catch(error){session.error=error.message||String(error);}
-    finally{busy=false;void persist();if(available())render();}
+    finally{busy=false;if(persistAfter)void persist();if(available())render();}
   }
   function headersFromSource(guess=false){
     if(native()){session.headers=[];return;}
@@ -317,6 +329,7 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
   }
   async function finishAccepted(){
     const accepted=session.accepted;if(!accepted)return;
+    await persist(true);
     const result=accepted.result,next=await refresh();
     if(result.id!==next.program.id||next.program.version<result.version||result.action!=='statement.receive'||result.previewSha256!==accepted.payload.data.expectedPreviewSha256)throw new Error('The original import receipt has not reconciled with this case yet.');
     const ids=new Set((next.records.cash||[]).map(row=>row.id));
@@ -346,7 +359,7 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
     })();
     session.inflight=work;controls();
     try{await work;}finally{if(session.inflight===work)session.inflight=null;}
-    if(available())await finishAccepted();
+    if(available()&&!session.storageConflict)await finishAccepted();
   }
   async function importReviewed(){
     if(caseValue.program.state!=='OPEN'||session.pending||session.accepted||session.setupPending)throw new Error('Reopen the case and finish its current import before recording another statement.');
@@ -994,6 +1007,74 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
       });},{once:true});input.click();
     }
   }
+  async function compareSharedDraft(){
+    clearTimeout(persistTimer);persistTimer=null;await session.storageWrites.catch(()=>{});
+    const saved=await storeDraft(current.program.id);
+    if(saved!==null)validateDraftRecovery(saved);
+    if(session.storageReadFailure?.unread){session.storageReadFailure=null;session.storageToken=statementDraftToken(null);}
+    session.storageShared=saved;session.storageComparisonReady=true;session.draftDifferencePage=0;
+    if(statementDraftToken(saved)!==session.storageToken){await persist();session.storageShared=await storeDraft(current.program.id);}
+    await refreshDraftRecoveries();
+  }
+  async function draftRecoveryAction(action,target){
+    if(action==='draft-export'){download(snapshot(),'statement-recovery.json');return;}
+    if(action==='draft-unreadable-export'){download(session.storageReadFailure?.value,'statement-unreadable-original.json');return;}
+    if(action==='draft-raw-record-export'){download(session.draftRecoverySelected?.rawShared,'statement-preserved-unreadable-original.json');return;}
+    if(action==='draft-unreadable-import'){
+      if(!session.storageReadFailure||session.storageReadFailure.unread)throw new Error('Read the current saved original before repairing it.');
+      const original=clone(session.storageReadFailure.value),input=document.createElement('input');input.type='file';input.accept='.json,application/json';
+      input.addEventListener('change',()=>{void run(async()=>{
+        const file=input.files?.[0];if(!file)return;if(file.size>64*1024*1024)throw new Error('Choose a complete repaired draft up to 64 MiB.');
+        const saved=JSON.parse(await file.text());validateDraftRecovery(saved);
+        const result=await storeDraft.repair(current.program.id,saved,original,draftMeta('Explicit repaired-copy receiving; complete unreadable original retained'));
+        restoreStoredDraft(result.value);session.storageToken=result.token;session.storageReadFailure=null;session.storageConflict=null;session.storageConflictLocalToken=null;session.storageWarning='';
+        session.storageComparisonReady=false;session.storageShared=null;session.draftRecoverySelected=result.record;await refreshDraftRecoveries();session.dirty=true;session.confirmed=false;
+        session.notice='Received the complete repaired draft and preserved the entire earlier original. Resume its unchanged request or preview current native records.';
+      },{persistAfter:false});},{once:true});input.click();return;
+    }
+    if(action==='draft-sync'){await compareSharedDraft();return;}
+    if(action==='draft-shared-export'){if(session.storageShared)download(session.storageShared,'statement-compared-shared-draft.json');return;}
+    if(action==='draft-detail-previous'){session.draftDifferencePage=Math.max(0,(session.draftDifferencePage||0)-1);return;}
+    if(action==='draft-detail-next'){session.draftDifferencePage=(session.draftDifferencePage||0)+1;return;}
+    if(action==='draft-conflict-previous'){session.draftRecoveryPage=Math.max(0,(session.draftRecoveryPage||0)-1);return;}
+    if(action==='draft-conflict-next'){session.draftRecoveryPage=(session.draftRecoveryPage||0)+1;return;}
+    if(action==='draft-conflict-select'){session.draftRecoverySelected=await storeDraft.record(current.program.id,target.dataset.record);return;}
+    if(action==='draft-conflict-local-export'||action==='draft-conflict-shared-export'){
+      const selected=session.draftRecoverySelected?.[action==='draft-conflict-local-export'?'local':'shared'];
+      if(!selected)throw new Error('Choose the retained complete recovery record.');download(selected,'statement-retained-'+(action==='draft-conflict-local-export'?'local':'shared')+'.json');return;
+    }
+    if(action==='draft-conflict-export'){download(await storeDraft.archive(current.program.id,snapshot()),'statement-tab-recovery-archive.json');return;}
+    if(action==='draft-conflict-import'){
+      const input=document.createElement('input');input.type='file';input.accept='.json,application/json';
+      input.addEventListener('change',()=>{void run(async()=>{
+        const file=input.files?.[0];if(!file)return;if(file.size>256*1024*1024)throw new Error('Choose a complete tab-recovery archive up to 256 MiB.');
+        const archive=validateStatementDraftArchive(JSON.parse(await file.text()),current.program.id);
+        validateDraftRecovery(archive.current);
+        for(const record of archive.records){validateDraftRecovery(record.local);if(record.shared)validateDraftRecovery(record.shared);}
+        const result=await storeDraft.importArchive(current.program.id,archive);
+        session.draftRecoveryIndex=result.index;session.draftRecoverySelected=await storeDraft.record(current.program.id,archive.currentRecordId);
+        session.notice='Received '+result.added+' complete tab-recovery records. The current draft and its requests remain selected.';
+      },{persistAfter:false});},{once:true});input.click();return;
+    }
+    if(action==='draft-conflict-open'){
+      if(session.storageConflict||session.storageReadFailure)throw new Error('Resolve the shared current draft before opening retained work.');
+      const saved=session.draftRecoverySelected?.local;if(!saved)throw new Error('Choose a retained local draft.');
+      await importDraft(new File([JSON.stringify(saved)],'statement-retained-tab-draft.json',{type:'application/json'}));return;
+    }
+    if(action==='draft-use-shared'||action==='draft-use-local'){
+      if(session.storageReadFailure)throw new Error('Receive a complete repaired original before choosing another current draft.');
+      if(!session.storageComparisonReady)throw new Error('Compare the complete shared draft before choosing.');
+      clearTimeout(persistTimer);persistTimer=null;await session.storageWrites.catch(()=>{});
+      const local=snapshot(),shared=session.storageShared??null;validateDraftRecovery(local);if(shared)validateDraftRecovery(shared);
+      const result=await storeDraft.resolve(current.program.id,local,shared,action==='draft-use-local'?'LOCAL':'SHARED',draftMeta(action==='draft-use-local'?'Explicitly continued this tab; retained the previous shared draft':'Explicitly opened the shared draft; retained this tab'));
+      restoreStoredDraft(result.value);session.storageToken=result.token;session.storageConflict=null;session.storageConflictLocalToken=null;session.storageWarning='';
+      session.storageShared=null;session.storageComparisonReady=false;session.draftRecoverySelected=result.record;await refreshDraftRecoveries();
+      if(!statementDraftRequest(result.value).length){session.dirty=true;session.confirmed=false;}
+      session.notice='Both complete drafts are retained. '+(action==='draft-use-shared'?'Opened the shared draft.':'Continued this tab.')+' Resume its exact retained request or preview current native records before importing.';
+      await resumeRecipientWork();return;
+    }
+    throw new Error('Choose an available statement draft-recovery action.');
+  }
   function recoveryPage(){
     if(session.accepted)return '<section class="statement-panel"><h4>Import accepted</h4><p>The original import has a server receipt. Read the saved case to finish receiving its cash records and sources.</p><div class="statement-actions">'+button('Read saved case','readback',false,'data-statement-recovery="true"')+button('Download recovery copy','draft-export',false,'data-statement-recovery="true"')+'</div></section>';
     if(session.pending)return '<section class="statement-panel"><h4>Resume the original import</h4><p>The exact reviewed request is retained. Resuming sends the same request identity and payload; the case returns its prior result if already saved.</p><div class="statement-actions">'+button('Resume original import','retry',false,'data-statement-recovery="true"')+button('Download recovery copy','draft-export',false,'data-statement-recovery="true"')+'</div></section>';
@@ -1008,7 +1089,7 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
       (session.notice?'<p class="statement-notice" role="status" aria-live="polite">'+esc(session.notice)+'</p>':'')+
       (session.storageWarning?'<p class="statement-notice">'+esc(session.storageWarning)+'</p>':'')+
       (caseValue.program.state==='CLOSED'?'<p class="statement-notice">This case is closed. Reopen the case to import additional cash movements.</p>':'')+
-      recoveryPage()+copiesPage()+recipientWorkPage()+recipientPage()+originalInputPage()+sourcePage()+setupPage()+rulesPage()+reviewPage()+
+      draftStoragePage()+recoveryPage()+copiesPage()+recipientWorkPage()+recipientPage()+originalInputPage()+sourcePage()+setupPage()+rulesPage()+reviewPage()+
       (session.lastReceipt?detail('Last statement import',session.lastReceipt):'');
     if(rulesOpen&&$('[data-rule-editor]'))$('[data-rule-editor]').open=true;session.rulesEditorOpen=false;
     controls();
@@ -1029,11 +1110,12 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
     }
     schedulePersist();
   }
-  async function importDraft(file,{selectedCopy=null}={}){
-    if(!file)return;
-    if(session.pending||session.accepted||session.setupPending||session.inflight)throw new Error('Finish the retained request before opening another recovery copy.');
-    if(file.size>64*1024*1024)throw new Error('Select a complete statement recovery copy up to 64 MiB.');
-    const saved=JSON.parse(await file.text());if(!available())return;
+  function restoreStoredDraft(saved){
+    validateDraftRecovery(saved);
+    restoreRecipientWork(saved);session.inputs=editingInput(saved.inputs);session.workingCopyId=saved.workingCopyId||null;session.copyName=saved.copyName||'';session.copyNote=saved.copyNote||'';session.lastReceipt=saved.lastReceipt||null;session.headers=saved.headers||[];session.inspection=usableInspection(saved.inspection,saved.inputs,current.program.id)?saved.inspection:null;session.nativeScalesText=saved.nativeScalesText??scaleText(saved.inputs.statementOptions?.currencyScales);session.preview=saved.preview||null;session.dirty=saved.dirty!==false;session.pending=saved.pending||null;session.accepted=saved.accepted||null;session.setupPending=saved.setupPending||null;session.setupChoice=saved.setupChoice||'';session.setupName=saved.setupName||'';session.setupNote=saved.setupNote||'';session.originalInputHandoff=saved.originalInputHandoff||null;session.batchSelection=statementSelection(session.preview,saved.batchSelection).map(row=>row.rowNumber);if(saved.batchChange&&typeof saved.batchChange==='object')session.batchChange={...session.batchChange,...saved.batchChange};session.batchUndo=saved.batchUndo||null;restoreAllocationWorks(saved);
+    session.copyReview=null;session.recipientComparison=null;session.recipientChoices={};session.batchProposal=null;clearAllocationProposals();session.confirmed=false;session.error='';session.page=0;session.status='ALL';session.query='';session.appliedQuery='';session.editRevision++;
+  }
+  function validateDraftRecovery(saved){
     if(saved.schema!=='sf47.statement-draft.v1'||saved.caseId!==current.program.id||!draftInput(saved.inputs))throw new Error('Choose a statement recovery copy for this original case.');
     statementReviewWorklist(saved,current.program.id);statementRuleWork(saved.classificationRules,current.program.id);
     if(saved.inputs.source?.contentBase64?.length>(maximumSource+2)*4/3+16)throw new Error('The recovery copy contains a statement larger than 8 MiB.');
@@ -1046,6 +1128,14 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
       if(request.data.inputs.source.contentBase64?.length>(maximumSource+2)*4/3+16)throw new Error('The retained import contains a statement larger than 8 MiB.');
     }
     if(saved.originalInputHandoff&&(saved.originalInputHandoff.caseId!==current.program.id||!saved.originalInputHandoff.inputs?.source?.contentBase64||!draftInput(saved.originalInputHandoff.inputs,true)||saved.originalInputHandoff.inputs.source.contentBase64.length>(maximumSource+2)*4/3+16))throw new Error('The queued original statement needs its complete source bytes and interpretation in this case.');
+    return saved;
+  }
+  async function importDraft(file,{selectedCopy=null}={}){
+    if(!file)return;
+    if(session.pending||session.accepted||session.setupPending||session.inflight)throw new Error('Finish the retained request before opening another recovery copy.');
+    if(file.size>64*1024*1024)throw new Error('Select a complete statement recovery copy up to 64 MiB.');
+    const saved=JSON.parse(await file.text());if(!available())return;
+    validateDraftRecovery(saved);
     if(source())await preserveCurrentCopy('Before opening '+(selectedCopy?.name||file.name));
     session.workingCopyId=selectedCopy?.id||null;session.copyName=selectedCopy?.name||'';session.copyNote='';session.copyReview=null;
     session.setupPending=clone(saved.setupPending||null);session.setupChoice=saved.setupChoice||'';session.setupName=saved.setupName||'';session.setupNote=saved.setupNote||'';
@@ -1059,6 +1149,7 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
     await resumeRecipientWork();await persist(true);
   }
   root.addEventListener('input',event=>{
+    if(session.storageConflict||session.storageReadFailure)return;
     if(event.target.name?.startsWith('rule.')){captureRuleField(event.target);return;}
     if(event.target.name==='recipientWorkQuery'){session.recipientWorkQuery=event.target.value;return;}
     if(event.target.name==='recipientWorkNote'){
@@ -1077,6 +1168,7 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
     if(event.target.name==='reviewQuery')session.query=event.target.value;
   });
   root.addEventListener('change',event=>{
+    if(session.storageConflict||session.storageReadFailure)return;
     if(event.target.dataset.statementRuleChoice){
       try{batchReady();const work=session.classificationRules;
         if(!statementRuleReviewCurrent(work.review,snapshot(),caseValue.program.version)||JSON.stringify(work.review.edition)!==JSON.stringify(rulesEdition()))throw new Error('Review this changed draft and selected rulebook again before choosing rows.');
@@ -1137,10 +1229,13 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
   root.addEventListener('click',event=>{
     const target=event.target.closest('[data-statement-action]');if(!target||target.disabled)return;
     const action=target.dataset.statementAction;
+    const draftRecovery=target.dataset.statementDraftRecovery==='true'||action==='draft-export';
+    if((session.storageConflict||session.storageReadFailure)&&!draftRecovery)return;
     if(action==='preview'||action==='inspect'){const form=$('[data-statement-mapping]');if(form)captureMapping(form);}
     if(action.startsWith('allocation-')||action==='allocations'||action==='close-allocations'){const form=$('[data-statement-allocations]');if(form)captureAllocations(form);}
     void run(async()=>{
-      if(action.startsWith('rules-'))await ruleAction(action,target);
+      if(target.dataset.statementDraftRecovery==='true')await draftRecoveryAction(action,target);
+      else if(action.startsWith('rules-'))await ruleAction(action,target);
       else if(action.startsWith('recipient-'))await recipientAction(action,target);
       else if(action.startsWith('copies-'))await copyAction(action,target);
       else if(action.startsWith('allocation-'))await allocationAction(action,target);
@@ -1176,7 +1271,7 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
         if(!session.allocationWorks[String(row.rowNumber)])session.allocationWorks[String(row.rowNumber)]=newAllocationWork(row.rowNumber);
       }
       else if(action==='close-allocations')session.allocationRow=null;
-    });
+    },{persistAfter:!draftRecovery});
   });
   const earlier=mountEarlierStaffDesk({root,staffContext:pinnedContext,title:'Statement',
     readCopy:()=>statementStore(null)(current.program.id),isBusy:()=>loading||busy||hostBusy||!!session.inflight,setDeskBusy:value=>{busy=value;if(value)controls();else render();},
@@ -1188,27 +1283,42 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
   const ready=(async()=>{
     if(!session.loaded){
       if(!session.loadingDraft)session.loadingDraft=(async()=>{
+        let saved;
         try{
-          const saved=await storeDraft(current.program.id);
-          if(saved?.schema==='sf47.statement-draft.v1'&&saved.caseId===current.program.id&&draftInput(saved.inputs)){restoreRecipientWork(saved);session.inputs=editingInput(saved.inputs);session.workingCopyId=saved.workingCopyId||null;session.copyName=saved.copyName||'';session.copyNote=saved.copyNote||'';session.lastReceipt=saved.lastReceipt||null;session.headers=saved.headers||[];session.inspection=usableInspection(saved.inspection,saved.inputs,current.program.id)?saved.inspection:null;session.nativeScalesText=saved.nativeScalesText??scaleText(saved.inputs.statementOptions?.currencyScales);session.preview=saved.preview||null;session.dirty=saved.dirty!==false;session.pending=saved.pending||null;session.accepted=saved.accepted||null;session.setupPending=saved.setupPending||null;session.setupChoice=saved.setupChoice||'';session.setupName=saved.setupName||'';session.setupNote=saved.setupNote||'';session.originalInputHandoff=saved.originalInputHandoff||null;session.batchSelection=statementSelection(session.preview,saved.batchSelection).map(row=>row.rowNumber);if(saved.batchChange&&typeof saved.batchChange==='object')session.batchChange={...session.batchChange,...saved.batchChange};session.batchUndo=saved.batchUndo||null;restoreAllocationWorks(saved);}
-        }catch{session.storageWarning='This browser could not open its saved draft. A downloaded recovery copy can be opened here.';}
+          saved=await storeDraft(current.program.id);
+          if(saved!==null)restoreStoredDraft(saved);
+          session.storageToken=statementDraftToken(saved);session.storageReadFailure=null;
+        }catch(error){
+          session.storageToken=undefined;
+          if(saved!==undefined)session.storageReadFailure={value:clone(saved),error:'The saved original could not be opened: '+error.message};
+          session.storageWarning='This browser could not open its saved draft. The original is preserved; ordinary and native writes remain unavailable until it is recovered.';
+        }
         session.loaded=true;
       })();
       await session.loadingDraft;
     }
+    if(typeof session.storageToken!=='string'&&!session.storageReadFailure){
+      try{
+        const saved=await storeDraft(current.program.id);
+        const plain=saved?{...saved}:null;if(plain)delete plain._storedRevision;
+        session.storageToken=saved===null||statementDraftToken(plain)===statementDraftToken(snapshot())?statementDraftToken(saved):statementDraftToken(null);
+        if(saved!==null&&session.storageToken!==statementDraftToken(saved))await persist();
+      }catch(error){session.storageReadFailure={unread:true,error:'Browser storage could not be read: '+error.message};}
+    }
+    try{await refreshDraftRecoveries();}catch(error){session.storageWarning='Tab-recovery records could not be opened. '+error.message;}
     try{await refreshCopies();}catch(error){session.storageWarning='Saved working copies could not be opened. Download the current recovery copy before changing source. '+error.message;}
     if(available()&&session.incomingOriginalInputs){
       if(session.originalInputHandoff&&JSON.stringify(session.originalInputHandoff)!==JSON.stringify(session.incomingOriginalInputs))
         download(session.originalInputHandoff,'statement-previous-original-inputs.json');
       session.originalInputHandoff=clone(session.incomingOriginalInputs);delete session.incomingOriginalInputs;await persist();
-      if(!session.pending&&!session.accepted&&!session.setupPending&&!session.inflight){try{await openOriginalInputs();}catch(error){session.error=error.message||String(error);}}
+      if(!session.storageReadFailure&&!session.storageConflict&&!session.pending&&!session.accepted&&!session.setupPending&&!session.inflight){try{await openOriginalInputs();}catch(error){session.error=error.message||String(error);}}
     }
     loading=false;
     if(session.preview?.expectedVersion!==current.program.version){clearBatch();clearAllocationProposals();session.dirty=true;session.confirmed=false;}
     await resumeRecipientWork();
     if(available())render();
     if(session.inflight){try{await session.inflight;}catch{}if(available())render();}
-    if(available()&&session.accepted)await run(finishAccepted);
+    if(available()&&session.accepted&&!session.storageReadFailure&&!session.storageConflict)await run(finishAccepted);
   })();
   return {root,ready,dispose(){earlier.dispose();active=false;clearTimeout(persistTimer);if(session.loaded)void persist();},setHostBusy(value){hostBusy=!!value;controls();}};
 }
