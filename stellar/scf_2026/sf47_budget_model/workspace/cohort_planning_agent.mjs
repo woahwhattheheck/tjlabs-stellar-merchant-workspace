@@ -254,10 +254,12 @@ export function editCohortAdoption(document,changes,{title,note=''}={}){
 }
 
 export function scheduleCohortAdoption(input){
-  exact(input,['document','constraints','name'],['document']);
+  exact(input,['document','constraints','name','method','maxSearchSteps'],['document']);
   const checked=checkedDocument(input.document);
   need(checked.plan,'GRANT_ADOPTION_INPUT','Schedule one complete editable plan.');
-  return scheduleCohortDelivery(checked.document,input.constraints,input.name===undefined?{}:{name:input.name});
+  const options=Object.fromEntries(['name','method','maxSearchSteps']
+    .filter(key=>input[key]!==undefined).map(key=>[key,input[key]]));
+  return scheduleCohortDelivery(checked.document,input.constraints,options);
 }
 export function compareCohortAdoption(input){
   exact(input,['beforeDocument','afterDocument','options'],['beforeDocument','afterDocument']);
@@ -488,8 +490,21 @@ export function exportCohortAdoption(document,format='JSON'){
       html+='<h2>Baseline</h2>'+reportHtml(checked.comparison.before)+'<h2>Successor</h2>'+reportHtml(checked.comparison.after);
       html+=table('Comparison findings',checked.comparison.findings,['code','message']);
     }
-    if(checked.deliverySchedule)html+=table('Complete delivery allocation',checked.deliverySchedule.assignments,
-      ['occurrenceId','sourceDate','originalDate','date','scheduledTasks','scheduledRequests','requiredHours','capacityPoolId','fundingGroupIds','status','fixedReason','permittedDates','rejectedDates','issues']);
+    if(checked.deliverySchedule){
+      const allocation=checked.deliverySchedule;
+      html+='<h2>Delivery allocation method</h2><p>'+escape(allocation.method)+'</p>';
+      html+=table('Allocation result',[allocation.summary],
+        ['status','occurrences','moved','fixed','unresolved','capacityBefore','capacityAfter']);
+      if(allocation.resolution){
+        const resolution=allocation.resolution;
+        html+=table('Resolve competing dates',[resolution],
+          ['method','maxSearchSteps','visitedSteps','reconsideredGroups','resolvedGroups','revisedDates']);
+        html+=table('Complete competing service groups',resolution.components,
+          ['groupIds','occurrenceIds','status','visitedSteps','revisedDates']);
+      }
+      html+=table('Complete delivery allocation',allocation.assignments,
+        ['occurrenceId','sourceDate','originalDate','date','scheduledTasks','scheduledRequests','requiredHours','capacityPoolId','fundingGroupIds','status','fixedReason','permittedDates','rejectedDates','issues']);
+    }
     if(checked.comparison&&checked.plan)html+=table('Comparison targets',checked.comparison.targets,['key','expected','planned','gap']);
     html+='<details><summary>Complete original editable document and source</summary><pre>'+escape(JSON.stringify(document,null,2))+'</pre></details></body></html>';
     bytes=Buffer.from(html,'utf8');mediaType='text/html; charset=utf-8';extension='html';
