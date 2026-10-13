@@ -4,11 +4,12 @@ This is the continuation of **STUDY-FLOW-ORIGINAL-RIS-63DD-20261012**. The origi
 
 ## Complete inputs
 
-Keep these two inputs intact:
+Keep these three inputs intact:
 
 | Input | Exact identity |
 | --- | --- |
 | RECEIVING_SOURCE.json, beside this guide | 6,224,643 bytes; SHA256 aeb44fe395890ce3b404f3ac7fbf2daa68d03c216bd2582aadb50111357ece5e |
+| RUNTIME_ASSETS.json, beside this guide | 34,100 bytes; SHA256 f9d35454aaf09f8eac53fae90f26b4a9d29b5e668d275eb5ae2626e8ae1bb92b |
 | study-flow-native-handoff-20261013.zip | 192,327 bytes; SHA256 41803ffd17f47f9f55ddff16d9f9cc0568122d9b449010e6e4a486e63880d418 |
 
 The original saved handoff is Library file **libfile_eff500789a888191b072d7c0403be0d5**, version 0. Its existing local copy is /workspace/scratch/63dd864d58e4/study-flow/study-flow-native-handoff-20261013.zip. Receive that exact existing file through the maintained file-download route; do not replace it with a newly generated dossier. The archive contains all 35 original files, including complete source responses, counts CSV, requests, reports, native result and exports/workspace.research.json.
@@ -32,7 +33,7 @@ python3 receive-original.py \
   --chromium /ABS/EXISTING/chrome-headless-shell
 ~~~
 
-The two helper files receive-original.py and restore-portable.mjs must stay beside this guide. All original relative modules and browser assets are inside the carrier. The receiver creates only missing exact files; any existing path with different bytes or a symlink raises an explicit error. It retains the existing journal, candidates, original result and every source file. It serializes this one receiving invocation with an advisory lock on its selected output directory.
+The two helper files receive-original.py and restore-portable.mjs, together with RUNTIME_ASSETS.json, must stay beside this guide. Keep the original RECEIVING_SOURCE.json beside them or select it with --source-carrier. The unchanged 380-file carrier is supplemented by four exact original runtime assets: sf86-rpc-transfer-reconcile/networks.json and the seller developer index.html, browser.mjs and style.css. The original Research host imports these through its existing dependency graph at module load; retaining them does not invoke an RPC, seller or payment operation. Their full bytes, SHA256 and Git identities are checked before the host starts. The receiver creates only missing exact files; any existing path with different bytes or a symlink raises an explicit error. It retains the existing journal, candidates, original result and every source file. It serializes this one receiving invocation with an advisory lock on its selected output directory.
 
 The runner materializes the complete source and exact 35 archive members, then calls the original openDossierStore and store.reopen on the saved portable. Native import validates every original revision and source blob and resumes an interrupted import without creating new revision identities. The receiver requires the original dossier ID, all 15 matching history hashes, identical report hash and identical SVG. It refuses a destination containing another dossier or a later revision. Existing source paths inside the original result remain untouched; receiving-placement.json records the new actual receiving paths separately.
 
@@ -54,7 +55,8 @@ Important outputs:
 
 - result.json: unchanged original completed native result.
 - operation.json, requests/, inputs/, reports/, exports/: unchanged original accepted material.
-- receiving-placement.json: exact source/input placement.
+- receiving-placement.json: unchanged exact 380-file source/input placement.
+- receiving-runtime-assets.json: separate exact original four-asset provenance, preserving an already accepted placement.
 - receiving-restoration/result.json: actual same-dossier portable reopening.
 - mcp-receiving/operation.json and result.json: complete actual tool/export/restart operation.
 - mcp-receiving/exports/: original retained export inventory and bytes.
@@ -65,4 +67,6 @@ The mcp-receiving/private/original-connection.json file contains the local liste
 
 ## Current acceptance
 
-The original core/native/portable operation is completed and saved. PR999's complete catalog, adapter, native export joins and recovery guide were independently source-reviewed and all seven merged files read back exactly. The added MCP/browser continuation and this portable placement path have not executed: recent cloud calls ended with environment_offline before CreateProcess. This is a fully specified receiving continuation ready for the one equipped owner, not a report of a completed browser run. Existing Research/NCT producers retain their own operations; this kit does not dispatch them.
+The original core/native/portable operation is completed and saved. PR999's complete catalog, adapter, native export joins and recovery guide were independently source-reviewed and all seven merged files read back exactly. The original portable has now also been received in the recovered host: the same 15 revision identities, report SHA256 958d79a60191b98731862648418d2a94e543be21cda07b28c78f4633732c1f23 and SVG SHA256 d650e852deb9f4fb375115fb011d145dbab9a089a9a91c59cc462a7ec6d6652b were verified. No original producer was replayed.
+
+The first host start exposed missing module-time data/static assets in the sparse source carrier. RUNTIME_ASSETS.json supplies those four exact original pinned leaves. This additive correction keeps the original source carrier, archived handoff and accepted restoration unchanged. MCP/browser acceptance is recorded only in the actual completed continuation results; source placement or a started process alone does not claim completion. The original Muse request was withdrawn in its own thread before local continuation took custody. Existing Research/NCT producers retain their own operations.
