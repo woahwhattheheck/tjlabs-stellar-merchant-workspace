@@ -1,7 +1,8 @@
 import {mountMerchantIntake} from './invoice-intake.mjs';
+import {mountMerchantPayment} from './payment-desk.mjs';
 const $ = id => document.getElementById(id);
 let token = '', state = null, projectState = null, selectedId = null, busy = false, poll = null;
-let registerSelection = {}, registerRequest = 0, detailRequest = 0, detailOrder = null;
+let registerSelection = {}, registerRequest = 0, detailRequest = 0, detailOrder = null, ownerIdentity = null, connectionEpoch = 0;
 const pendingKey = () => 'merchant.pending-invoice.v1.' + state.config.tenantId;
 const names = { CREATED: 'Draft', CHARGE_UNCERTAIN: 'Creating request', CHARGE_REJECTED: 'Request rejected',
   AWAITING_PAYMENT: 'Awaiting payment', PAYMENT_PENDING: 'Payment pending', PAYMENT_UNCERTAIN: 'Reconciling payment',
@@ -25,12 +26,16 @@ function atomic(value, decimals) {
 function readableDate(value) { return value ? new Date(value).toLocaleString() : '—'; }
 function element(tag, text, className) { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (className) node.className = className; return node; }
 async function api(path, { method = 'GET', body, download = false } = {}) {
-  const headers = { Authorization: 'Bearer ' + token };
+  const requestEpoch = connectionEpoch, requestIdentity = ownerIdentity ? {...ownerIdentity} : null;
+  const headers = { Authorization: 'Bearer ' + token,
+    ...(requestIdentity ? {'X-Merchant-Store-Id':requestIdentity.storeId,'X-Merchant-Tenant-Id':requestIdentity.tenantId} : {}) };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   const response = await fetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), cache: 'no-store', redirect: 'error' });
+  if (requestEpoch !== connectionEpoch) throw new Error('The connection changed while this original request was in progress. Reconnect and read its saved status.');
   if (!response.ok) {
     let code = 'Request failed (' + response.status + ').';
     try { code = (await response.json()).error ?? code; } catch {}
+    if (requestEpoch !== connectionEpoch) throw new Error('The connection changed while this original request was in progress. Read its saved status.');
     if (response.status === 401) disconnect();
     const error = new Error(code === 'INVOICE_REGISTER_CHANGED' ?
       'Invoices changed while you were reviewing this selection. Refresh to read the current register, then continue.' :
@@ -40,7 +45,15 @@ async function api(path, { method = 'GET', body, download = false } = {}) {
       code.replaceAll('_', ' '));
     error.code = code; error.status = response.status; throw error;
   }
-  return download ? response : response.json();
+  const value = download ? response : await response.json();
+  if (requestEpoch !== connectionEpoch) throw new Error('The connection changed while this original request was in progress. Read its saved status.');
+  const selected = requestIdentity || (!download && path.startsWith('/api/register?') ?
+    {storeId:value.source?.storeId,tenantId:value.config?.tenantId} : null);
+  if (!selected || !/^[a-f0-9-]{36}$/i.test(selected.storeId??'') || !/^[a-f0-9-]{36}$/i.test(selected.tenantId??'') ||
+      response.headers.get('x-merchant-store-id')!==selected.storeId || response.headers.get('x-merchant-tenant-id')!==selected.tenantId)
+    throw new Error('The response belongs to a different original merchant. Reconnect to the selected workspace.');
+  if (!ownerIdentity) ownerIdentity={...selected};
+  return value;
 }
 async function download(path, name) {
   const response = await api(path, { download: true }), blob = await response.blob(), url = URL.createObjectURL(blob);
@@ -61,10 +74,12 @@ async function action(work) {
   }
 }
 function disconnect() {
-  intake.reset();
+  connectionEpoch++; intake.reset(); payment.detach(); ownerIdentity = null;
   token = ''; selectedId = null; state = null; projectState = null; detailOrder = null;
   registerRequest++; detailRequest++; registerSelection = {}; $('register-filter-form').reset();
   $('detail-content').hidden = true; $('detail-empty').hidden = false;
+  $('detail-empty').querySelector('h3').textContent = 'Choose an invoice';
+  $('detail-empty').querySelector('p').textContent = 'Payment terms, delivery progress and the completed result appear here.';
   delete $('detail-content').dataset.orderId;
   if (poll) clearInterval(poll); poll = null;
   $('workspace').hidden = true; $('connect-panel').hidden = false; $('disconnect').hidden = true;
@@ -113,7 +128,7 @@ function renderList() {
     const prices = element('td');
     for (const rail of order.offers) prices.append(element('span', amount(rail.amountAtomic, rail.decimals) + ' ' + rail.label, 'amount'));
     const status = element('td'); status.append(element('span', stateName(order.state), 'state')); row.append(identity, prices, status);
-    const choose = () => action(async () => { selectedId = order.id; detailOrder = null; renderList(); await loadDetail(); });
+    const choose = () => action(async () => { selectedId = order.id; payment.select(selectedId); detailOrder = null; renderList(); await loadDetail(); });
     row.addEventListener('click', choose); row.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); choose(); } });
     rows.append(row);
   }
@@ -198,6 +213,8 @@ async function loadDetail() {
   if (!requestedId || !requestedToken) return;
   if ($('detail-content').dataset.orderId !== requestedId) {
     $('detail-content').hidden = true; $('detail-empty').hidden = false;
+    $('detail-empty').querySelector('h3').textContent = 'Loading selected invoice…';
+    $('detail-empty').querySelector('p').textContent = requestedId;
   }
   const received = await api('/api/orders/' + requestedId);
   if (selectedId !== requestedId || token !== requestedToken || request !== detailRequest) return;
@@ -244,6 +261,7 @@ async function loadDetail() {
     if (detail) row.append(element('div', detail, 'history-detail'));
     $('history').append(row);
   }
+  await payment.observe(received);
 }
 function exportPendingKey() { return 'merchant.pending-project-export.v1.' + projectState.storeId; }
 function projectSize(value) {
@@ -277,7 +295,7 @@ function applyCaptureControls() {
   const order = detailOrder?.id === selectedId ? detailOrder : state?.orders?.find(item => item.id === selectedId);
   $('create-charge').disabled = paused || order?.state === 'CHARGE_REJECTED';
   renderRegisterControls();
-  intake.controls();
+  intake.controls(); payment.controls();
 }
 function renderProject() {
   const rows = $('project-export-rows'); rows.replaceChildren();
@@ -345,7 +363,9 @@ $('export-project').addEventListener('click', () => action(async () => {
 $('connect-form').addEventListener('submit', event => {
   event.preventDefault();
   action(async () => {
-    token = $('operator-token').value; await refresh(); $('operator-token').value = '';
+    connectionEpoch++; ownerIdentity = null; token = $('operator-token').value;
+    try { await refresh(); } catch (error) { disconnect(); throw error; }
+    $('operator-token').value = '';
     $('connect-panel').hidden = true; $('workspace').hidden = false; $('disconnect').hidden = false;
     $('connection-state').textContent = state.mode === 'review' ? 'Project review' : 'Connected';
     if (state.mode !== 'review') renderRails();
@@ -393,26 +413,24 @@ $('create-form').addEventListener('submit', event => {
       renderPendingCreation();
     }
     const created = await api('/api/orders', { method: 'POST', body: payload });
-    sessionStorage.removeItem(pendingKey()); selectedId = created.order.id; $('create-panel').hidden = true;
+    sessionStorage.removeItem(pendingKey()); selectedId = created.order.id; payment.select(selectedId); $('create-panel').hidden = true;
     $('create-form').reset(); renderRails(); await refresh();
     notice('Invoice saved. Create its payment request when the terms are ready.');
   });
 });
-$('create-charge').addEventListener('click', () => action(async () => { await api('/api/orders/' + selectedId + '/charge', { method: 'POST' }); await refresh(); }));
-$('download-envelope').addEventListener('click', () => action(() => download('/api/orders/' + selectedId + '/envelope', 'payment-request-' + selectedId + '.json')));
-$('reconcile').addEventListener('click', () => action(async () => { await api('/api/orders/' + selectedId + '/reconcile', { method: 'POST' }); await refresh(); }));
+
+
+
 $('download-result').addEventListener('click', () => action(async () => {
   const detail = await api('/api/orders/' + selectedId);
   await download('/api/orders/' + selectedId + '/result', detail.order.result.fileName);
 }));
-$('signature-form').addEventListener('submit', event => {
-  event.preventDefault();
-  action(async () => {
-    const signature = $('signature').value;
-    if (!signature) throw new Error('Paste the complete buyer authorization.');
-    await api('/api/orders/' + selectedId + '/payment-authorization', { method: 'POST', body: { paymentSignature: signature } });
-    $('signature').value = ''; await refresh();
-  });
-});
+const payment=mountMerchantPayment({api,action,notice,identity:()=>ownerIdentity,state:()=>state,
+ busy:()=>busy,capturing:()=>projectState?.capturing===true,changed:refresh});
+// Closing or a back/forward cache transition drops the operator credential.
+// Invoice-bound work remains in this tab's memory; its private file reopens a
+// separate browser session through the same original owner and invoice.
+window.addEventListener('pagehide',disconnect);
+window.addEventListener('pageshow',event=>{if(event.persisted)disconnect();});
 
 const intake=mountMerchantIntake({api,action,notice,state:()=>state,busy:()=>busy,capturing:()=>projectState?.capturing===true,changed:refresh});

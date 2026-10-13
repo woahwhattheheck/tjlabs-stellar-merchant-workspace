@@ -20,6 +20,7 @@ const ROOT = dirname(fileURLToPath(import.meta.url));
 const ASSETS = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
   ['/app.mjs', ['app.mjs', 'text/javascript; charset=utf-8']],
+  ['/payment-desk.mjs', ['payment-desk.mjs', 'text/javascript; charset=utf-8']],
   ['/invoice-intake.mjs', ['invoice-intake.mjs', 'text/javascript; charset=utf-8']],
   ['/style.css', ['style.css', 'text/css; charset=utf-8']]
 ]);
