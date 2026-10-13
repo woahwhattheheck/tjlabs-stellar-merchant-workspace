@@ -37,7 +37,7 @@ export function mountPropertyCoordinator(ctx){
  function fullSource(name){const row=ctx.getSources().find(r=>r.name===name);need(row,"Reload the complete original "+name+".");return row;}
  function sourceText(row){return new TextDecoder("utf-8",{fatal:true}).decode(row.raw);}
  function snapshot(){return {schema:"stellar-forge.property-coordinator-draft.v1",mapping:clone(mapping),history:clone(history),selectedSource,page,sourcePage,sourceDrafts:[...sourceDrafts].map(([name,value])=>[name,clone(value)]),reader:clone(reader)};}
- function bounded(value){need(new TextEncoder().encode(JSON.stringify(value)).length<=8*1024*1024,"The complete retained mapping draft exceeds 8 MiB. Download it before choosing another source.");return value;}
+ function bounded(value){need(new TextEncoder().encode(JSON.stringify(value,null,2)+"\n").length<=8*1024*1024,"The complete retained mapping draft exceeds 8 MiB. Download it before choosing another source.");return value;}
  function retainOld(){if(mapping)bounded({...snapshot(),history:[...history,clone(mapping)]});if(mapping)history.push(clone(mapping));}
  function changeMapping(fn){need(mapping,"Choose an original CSV first.");fn(mapping);preview=null;ctx.touch();}
  function validateDraft(value,originals=ctx.getSources()){
