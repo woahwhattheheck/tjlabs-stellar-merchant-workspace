@@ -149,6 +149,150 @@
           "sha256": "b5aa36ef7c32e9763086491e655c5ed478887120d8e1202b746694c3c8edaf51"
         }
       ]
+    },
+    {
+      "id": "webhook-event-agent-contract",
+      "label": "Complete event delivery index and source identity contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-events-contract.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "3cc516d47cb5ca2a692ee1bc750905cfaab4e2e9",
+          "git_blob": "c3a5f040289c40e9f0f2b4b42e018680585b347a",
+          "bytes": 3985,
+          "sha256": "06fd77f9e4ab4bcd377ef6690e03aa170f51842a9117523d79e1b72b54e56d19"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-agent-schema",
+      "label": "Original event programme agent operation schema",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-events-schema.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "3cc516d47cb5ca2a692ee1bc750905cfaab4e2e9",
+          "git_blob": "aee02bde949399ca71821b24ea4ea29462b3288e",
+          "bytes": 4991,
+          "sha256": "18a467a6d6904c6ac8e2333a1323cfbe9fea45b6760b8c78c14772eead23ebd0"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-agent-provider",
+      "label": "Same-service event programme adapter and complete immutable review records",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-events.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "3cc516d47cb5ca2a692ee1bc750905cfaab4e2e9",
+          "git_blob": "5d6f01f75e703513edb567010b3e3c4b9cd34b28",
+          "bytes": 15529,
+          "sha256": "2ee965ad80e2c7e7ab20d84fd9faf992f7deb32290c5d33317fc2fc31adb098f"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-agent-client",
+      "label": "Original input receiving and complete native review client",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-events-client.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "3cc516d47cb5ca2a692ee1bc750905cfaab4e2e9",
+          "git_blob": "185d6e15e628158c9ef5cd02e0a7758b2a891b99",
+          "bytes": 8772,
+          "sha256": "c947cc82563a87fafa63f08cc11b1cba2386caec160adaafa4564161a8f4f624"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-agent-client-types",
+      "label": "Typed original event input and full-review receiving interface",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-events-client.d.mts",
+      "required": false,
+      "editions": [
+        {
+          "commit": "3cc516d47cb5ca2a692ee1bc750905cfaab4e2e9",
+          "git_blob": "100d1f0d3957e89f4f43d40ab105d3fea79473c8",
+          "bytes": 1963,
+          "sha256": "bd7bb73d4d140da69a435f25428fc9cf21b38fff4ec7b8af510bb6c3f6852735"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-agent-delivery",
+      "label": "Complete sixteen-file retained download and offline reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-events-download.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "3cc516d47cb5ca2a692ee1bc750905cfaab4e2e9",
+          "git_blob": "a3651d039f8daf16e4e4dd8e600cf314283cc710",
+          "bytes": 12014,
+          "sha256": "35c39445afb50195771ade012efd350e25522a4e1268d74eba84b80bed1ac483"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-agent-delivery-types",
+      "label": "Typed complete event delivery receiving interface",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-events-download.d.mts",
+      "required": false,
+      "editions": [
+        {
+          "commit": "3cc516d47cb5ca2a692ee1bc750905cfaab4e2e9",
+          "git_blob": "1d4947b39aca05082962b901fe9a8de69ed2bcf7",
+          "bytes": 2093,
+          "sha256": "10c04ae4b7f3b7293cbb26375b8d30fa795d8494dc1da29ff77a75e02e4b49d3"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-agent-operating",
+      "label": "Installed complete event agent and independent customer operating course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/ANALYSIS_EVENTS.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "3cc516d47cb5ca2a692ee1bc750905cfaab4e2e9",
+          "git_blob": "b009e0ea10eaf60da4226964b1555b72a21c71e8",
+          "bytes": 16130,
+          "sha256": "cb46d01750b6b6b14f1062c0fcb4bf2171e877155735c1360069d58efe4ba443"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-agent-installation",
+      "label": "Existing product installation and agent receiving command contribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/analysis-events.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "3cc516d47cb5ca2a692ee1bc750905cfaab4e2e9",
+          "git_blob": "d0f99177fd10fad04b5155c9f293671ebf1c1a30",
+          "bytes": 1445,
+          "sha256": "41d3b1aaf1e0f08df07afcef7d9e9b8309d5cdb21b5a9ed211424c405157e6d9"
+        }
+      ]
     }
   ]
 }
