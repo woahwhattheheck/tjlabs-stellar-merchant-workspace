@@ -98,6 +98,9 @@ def derive(value,family,source_get):
  d=definition(value);binding=d["family"]
  if any(family[k]!=binding[k] for k in ("id","revision","derivedSha256")):raise Conflict("Selected original family edition differs")
  f=family["definition"];derived=family["derived"];year=f["year"];zone=year["timezone"];asof=instant(d["asOf"]);today=asof.astimezone(ZoneInfo(zone)).date().isoformat()
+ # This is the implementation association for these specific 2026–27 source editions,
+ # not a claim that the PDFs publish September 1/August 31 policy-expiry dates.
+ if year["start"]<"2026-09-01" or year["end"]>"2027-08-31":raise ValueError("These original 2026–27 policy editions do not establish applicability to a different academic year")
  policies={p["id"]:p for p in d["policies"]}
  for p in policies.values():
   raw=source_get(p["source"])
