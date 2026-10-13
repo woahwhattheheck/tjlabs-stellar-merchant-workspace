@@ -398,7 +398,7 @@ def operate(args):
                     "/api/operations/" + case_row["id"] + "/delivery-calendar?asOfDate=" + as_of)))
             context = {"schema": SCHEMA, "operationId": OPERATION, "baseUrl": server.origin, "ownerKey": server.token,
                        "caseId": case_row["id"], "planId": case["program"]["planId"], "asOfDate": as_of,
-                       "directory": str(root), "sourceDirectory": str(HERE), "python": sys.executable}
+                       "directory": str(root), "workspace": str(workspace), "sourceDirectory": str(HERE), "python": sys.executable}
             private_write(root / "browser-context.json", encode(context))
             browser = run_browser(args.node, root / "browser-context.json", root)
             after = request(server.origin, server.token, "/api/operations/" + case_row["id"])
@@ -419,6 +419,14 @@ def operate(args):
             private_write(root / "installation-manifest.json", encode(manifest))
             result["wholeInstallation"] = identity(root / "whole-installation.zip")
             private_write(record_path, encode(result))
+        agenda_command = [str(args.node), str(HERE / "case_planning_agenda_receiving.mjs"),
+                          "--context", str(root / "browser-context.json")]
+        with open(root / "agenda-native.stdout", "ab") as out, open(root / "agenda-native.stderr", "ab") as err:
+            agenda_run = subprocess.run(agenda_command, cwd=HERE, stdout=out, stderr=err, timeout=600, check=False)
+        if agenda_run.returncode:
+            raise RuntimeError("Continue the original managed agenda receiving; native return " + str(agenda_run.returncode))
+        result["agendaNative"] = read_json(root / "AGENDA_NATIVE_RECEIVING.json")
+        private_write(record_path, encode(result))
         result["coldReceiving"] = cold_receive(root / "whole-installation.zip", root, result, args.node)
         result["complete"] = True
         result["completedAt"] = stamp()

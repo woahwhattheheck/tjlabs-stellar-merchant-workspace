@@ -129,3 +129,13 @@ python3 case_planning_receiving.py \
 Set `SF47_PLAYWRIGHT_MODULE` and `SF47_CHROMIUM` to the already installed Playwright module and Chromium executable when their locations differ from the receiving host's runtime. The programme uses the original case and source selection; it records the actual plan/case IDs and dates in the complete output.
 
 The receiving directory keeps the original input, installed source, working browser draft, exact native save and amendment results, complete source project, selected planning downloads, paired calendars, case export, desktop and phone views, and the cold reopened case. Its continuation file retains the original operation so an interrupted browser resumes that same operated case.
+
+## Continue the selected cases in Delivery agenda
+
+The original **Delivery agenda** tab keeps the current case planning work attached to its own case. An agenda entry opens the selected original payment, tranche or calendar at the agenda's review date. Returning to planning or to the saved amendment uses the working draft's original case and exact selected plan revision. Opening another case from the agenda does not retarget that working draft.
+
+A saved case planning draft can retain the agenda tab across reload. The agenda itself keeps its own explicit case selection, display filters and review date. The complete download still contains every selected original row while display filters are active.
+
+The complete receiving programme operates the original calendar handover's retained case and its operated walkthrough together. It checks each agenda collection against the complete native per-case calendar, receives ICS/CSV/JSON while the view is filtered, follows the original payment and Completion receipt, opens the case calendar, and reopens the same selection after reload. Desktop and phone review uses the current grouped Operations navigation, including collapsed section groups. The cold restored installation repeats this same multi-case route with the original working draft.
+
+After the original browser service closes, `case_planning_agenda_receiving.mjs` opens that same operated workspace through its managed launcher. The typed client and Merchant MCP read the complete selected agenda with its exact case versions; MCP export bytes are received through the original retained-file chunk reader. The service then releases its workspace lock and the original CLI reads and exports the same selection. The programme compares complete native rows, CSV row identities and original iCalendar properties, retaining every resulting file in the complete delivery.

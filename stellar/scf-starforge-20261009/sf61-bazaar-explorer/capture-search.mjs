@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Search projections never replace the original saved page or its selected row.
 import { CatalogQueryIndex } from '../../../scf46-stellar-bazaar/src/query-index.mjs';
-import { validateCatalogEntry } from '../../../scf46-stellar-bazaar/src/catalog.mjs';
+import { projectCatalogSearchEntry } from '../../../scf46-stellar-bazaar/src/entry-identity.mjs';
 
 export const ATLAS_CAPTURE_SEARCH_SCHEMA = 'stellar-forge.sf61.capture-search.v1';
 export const CAPTURE_FILTERS = Object.freeze(['type', 'payTo', 'network', 'scheme', 'asset', 'extensions']);
@@ -43,7 +43,7 @@ function matchesUnindexed(listing, filters) {
   return !PAYMENT_FILTERS.some(key => Object.hasOwn(filters, key)) || matchingCaptureAcceptIndexes(listing, filters).length > 0;
 }
 
-/** Apply the existing catalog's structural projection to a saved original row.
+/** Apply the shared catalog structure and search metadata to a saved original row.
  * Top-level Vellar metadata is lifted into its existing resource envelope.
  * This is a read projection, not an ownership or payment admission decision. */
 export function projectCaptureListing(original) {
@@ -52,7 +52,7 @@ export function projectCaptureListing(original) {
     : plain(original.resource) ? { ...original.resource } : {};
   for (const key of ['description', 'serviceName', 'tags', 'iconUrl'])
     if (resource[key] === undefined && original[key] !== undefined) resource[key] = clone(original[key]);
-  return validateCatalogEntry({ ...original, resource });
+  return projectCatalogSearchEntry({ ...original, resource });
 }
 
 function retainedFields(row) {

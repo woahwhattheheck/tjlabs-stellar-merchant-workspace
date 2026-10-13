@@ -367,6 +367,16 @@ The optional `implementationReviewIds` field composes with the cohort selection 
 
 Preparation retains the exact `receiptId`, calendar date, summary, preview SHA and selected frozen evidence. Submission uses the preparation's business SHA and the actual issuer form reference, submission date and source records. Read the new case version after every committed action, and recover a lost result with the unchanged request. The [Completion contract](../../stellar/scf_2026/sf47_budget_model/workspace/COMPLETION.md) and [typed-client guide](../../stellar/scf_2026/sf47_budget_model/workspace/AGENT.md) provide the exact field names and calendar behavior.
 
+## Read and export a delivery agenda across cases
+
+Use `merchant_grant_delivery_agenda` with the original `workspace` and explicit `caseIds`. Optional `asOfDate` selects the review date; optional `expectedVersions` must map every selected original case to its current version. The native service reads the selected cases in one workspace snapshot and returns each unchanged original calendar entry with its case identity.
+
+The response retains complete `cases`, `entries` and `undated` arrays through the existing snapshot and row tools. Each case includes its native calendar metadata, pinned plan and native report hash. Received copies remain independent selected cases.
+
+Use `merchant_grant_export` with `kind: "delivery-agenda"`, the same workspace alias, all fields from the returned `selection`, and `format: "ics"`, `"csv"` or `"json"`. These are the complete selected case exports. ICS keeps original event UIDs and adds case labels; CSV and JSON retain every undated row. A changed selected case returns a version conflict so the operator can refresh the whole selection.
+
+The browser, native CLI and typed client provide the same complete flow. See [Delivery agenda across cases](../../stellar/scf_2026/sf47_budget_model/workspace/DELIVERY_AGENDA.md).
+
 ## Read and export the grant delivery calendar
 
 Use `merchant_grant_delivery_calendar` with the original `workspace`, `caseId`, and optional `asOfDate`. The calendar combines the native payment-derived completion deadlines, confirmed extensions, saved deliverable assignments, planned submissions, and recorded form submissions. Entries with one known date retain the other bound as null; undated work remains in the returned `undated` array.

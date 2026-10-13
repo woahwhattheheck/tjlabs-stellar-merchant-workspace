@@ -5,7 +5,7 @@ export const CASE_PLANNING_SCHEMA='stellar-forge.sf47-case-planning-draft.v1';
 export const CASE_PLANNING_MAX_BYTES=4*GRANT_MAX_BUNDLE_BYTES;
 const DATABASE='sf47-case-planning-drafts-v1',STORE='drafts',MAX_BYTES=CASE_PLANNING_MAX_BYTES;
 const PLAN=/^plan-[a-f0-9]{32}$/,CASE=/^operation-[a-f0-9]{32}$/,HASH=/^[a-f0-9]{64}$/;
-const TABS=new Set(['overview','source-tables','work','milestones','staffing','payments','delivery','history','comparison','operations']);
+const TABS=new Set(['overview','source-tables','work','milestones','staffing','payments','delivery','history','comparison','operations','agenda']);
 const copy=value=>structuredClone(value),stamp=()=>new Date().toISOString();
 const isObject=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const need=(ok,message,code='CASE_PLANNING')=>{if(!ok)throw Object.assign(new Error(message),{code});};

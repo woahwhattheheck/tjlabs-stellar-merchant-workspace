@@ -45,6 +45,12 @@ Each editor session saves its own draft. When another tab advances the saved pla
 
 Readable handovers use saved revisions; save the current work first when it belongs in the handover. The HTML export is a standalone printable document with a monochrome layout and escaped customer text. Complete JSON is the editable transfer format.
 
+## Review work returned by another operator
+
+Choose **Returned procedures** when the receiving operator and your own team both continued the same saved procedure. Its complete comparison retains both histories and the shared saved revision, reviews overlapping instructions, whole steps, command selections, progress and operating order, then receives the reviewed result through this original plan model.
+
+The review retains unfinished decision text, complete returned source, recorded choices and the exact completed result. It can save into the original browser plan or produce ordinary complete plan JSON for the current receiver. The [returned-procedure guide](OPERATING_PLAN_RETURNS.md) covers browser receiving, recovery, `starforge discover plan-return`, the typed API and full handover files.
+
 ## Compare the current toolkit
 
 **Refresh source** reads the selected package again while preserving each step's original snapshot. Opening a step shows whether the registration is unchanged, changed or absent, and identifies changed fields, source records and runtime groups. A package identity change is shown separately.

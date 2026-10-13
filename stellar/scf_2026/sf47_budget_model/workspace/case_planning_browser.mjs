@@ -85,7 +85,12 @@ async function openCase(tab='overview'){
   if(await navigation.count()){
     const browse=navigation.getByRole('button',{name:'Browse sections',exact:true});
     if(await browse.count()&&await browse.isVisible()&&await browse.getAttribute('aria-expanded')!=='true')await click(browse);
-    if(label)candidates=navigation.getByRole('button',{name:label,exact:true});
+    candidates=navigation.locator('[data-nav-section="'+tab+'"]');
+    let shown=false;for(const control of await candidates.all())if(await control.isVisible()){shown=true;break;}
+    if(!shown){
+      const group=navigation.locator('details[data-nav-group]').filter({has:navigation.locator('[data-nav-section="'+tab+'"]')}).first();
+      if(await group.count()&&!(await group.evaluate(node=>node.open)))await group.locator('summary').click();
+    }
   }
   await waitFor(async()=>{for(const control of await candidates.all())if(await control.isVisible())return control;return null;},'Open original '+(label||tab)+' section').then(click);
 }
@@ -131,6 +136,111 @@ async function receivePendingAmendment(){
   if(desk?.pending)await click('[data-amend-action=retry]');
 }
 const editWorkbookProgram="import sys,zipfile,xml.etree.ElementTree as ET,json,hashlib,os\nfrom pathlib import Path\narchive=Path(sys.argv[1]);output=Path(sys.argv[2]);plan=json.loads(Path(sys.argv[3]).read_text())\nns={\"m\":\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"}\nwith zipfile.ZipFile(archive) as z:\n raw=z.read(\"planning.xlsx\")\nwith zipfile.ZipFile(__import__(\"io\").BytesIO(raw)) as z:\n files={x.filename:z.read(x) for x in z.infolist()}\nworkbook=ET.fromstring(files[\"xl/workbook.xml\"])\nsheet=next(x for x in workbook.find(\"m:sheets\",ns) if x.attrib[\"name\"]==\"Work packages\")\nrid=sheet.attrib[\"{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id\"]\nrels=ET.fromstring(files[\"xl/_rels/workbook.xml.rels\"])\ntarget=next(x.attrib[\"Target\"] for x in rels if x.attrib[\"Id\"]==rid)\npath=target.lstrip(\"/\") if target.startswith(\"/\") else \"xl/\"+target\nsheetxml=ET.fromstring(files[path])\nshared=[]\nif \"xl/sharedStrings.xml\" in files:\n for si in ET.fromstring(files[\"xl/sharedStrings.xml\"]):shared.append(\"\".join(t.text or \"\" for t in si.findall(\".//m:t\",ns)))\ndef value(cell):\n if cell.attrib.get(\"t\")==\"inlineStr\":return \"\".join(t.text or \"\" for t in cell.findall(\".//m:t\",ns))\n v=cell.find(\"m:v\",ns)\n if v is None:return \"\"\n return shared[int(v.text)] if cell.attrib.get(\"t\")==\"s\" else v.text or \"\"\nrows=sheetxml.find(\"m:sheetData\",ns)\nheaders={__import__(\"re\").sub(r\"\\d\",\"\",c.attrib[\"r\"]):value(c) for c in rows[0]}\nedited=None\nfor row in list(rows)[1:]:\n cells={headers.get(__import__(\"re\").sub(r\"\\d\",\"\",c.attrib[\"r\"])):c for c in row}\n if not all(k in cells for k in (\"id\",\"start_day\",\"end_day\")):continue\n start,end=int(value(cells[\"start_day\"])),int(value(cells[\"end_day\"]))\n if end<=start:continue\n original=value(cells[\"end_day\"]);cell=cells[\"end_day\"]\n for child in list(cell):cell.remove(child)\n cell.attrib[\"t\"]=\"inlineStr\"\n inline=ET.SubElement(cell,\"{\"+ns[\"m\"]+\"}is\");text=ET.SubElement(inline,\"{\"+ns[\"m\"]+\"}t\");text.text=str(end-1)\n edited={\"sheet\":\"Work packages\",\"cell\":cell.attrib[\"r\"],\"costId\":value(cells[\"id\"]),\"field\":\"end_day\",\n         \"before\":original,\"after\":str(end-1),\"reason\":\"Original calendar walkthrough: review one earlier planned package finish while retaining hours, prices, assignments and actual payment records.\"}\n break\nif not edited:raise ValueError(\"The original plan has no multi-day package for this receiving edit; choose an explicit complete workbook edit.\")\nfiles[path]=ET.tostring(sheetxml,encoding=\"utf-8\",xml_declaration=True)\noutput.parent.mkdir(parents=True,exist_ok=True)\nwith zipfile.ZipFile(output,\"w\",zipfile.ZIP_DEFLATED) as z:\n for name,data in files.items():z.writestr(name,data)\nos.chmod(output,0o600)\nprint(json.dumps({\"edit\":edited,\"originalWorkbookSha256\":hashlib.sha256(raw).hexdigest(),\"returnedWorkbookSha256\":hashlib.sha256(output.read_bytes()).hexdigest(),\"bytes\":output.stat().st_size}))\n";
+
+function agendaComparable(report){
+  const copy=structuredClone(report);delete copy.generatedAt;delete copy.sha256;
+  for(const item of copy.cases){delete item.calendar.generatedAt;delete item.calendar.sha256;}
+  return copy;
+}
+async function operateDeliveryAgenda(prefix){
+  const directory=(await native('/api/operations')).cases;
+  const received=directory.find(row=>row.id!==input.caseId&&row.name==='SCF retained grant case - calendar receiving');
+  assert.ok(received,'Use the original calendar handover with its retained receiving case and operated walkthrough.');
+  const caseIds=[input.caseId,received.id],query=new URLSearchParams({asOfDate:input.asOfDate});
+  for(const id of caseIds)query.append('caseId',id);
+  const report=await native('/api/operations/delivery-agenda?'+query);
+  assert.deepEqual(report.selection.caseIds,caseIds);assert.equal(report.asOfDate,input.asOfDate);
+  const calendars={};
+  for(const id of caseIds){
+    calendars[id]=await native('/api/operations/'+id+'/delivery-calendar?asOfDate='+input.asOfDate);
+    for(const collection of ['entries','undated'])assert.deepEqual(
+      report[collection].filter(row=>row.caseId===id).sort((a,b)=>a.position-b.position).map(row=>row.entry),
+      calendars[id][collection]);
+  }
+  const originalDraft=await storedCaseDraft();
+  async function openAgenda({select=false}={}){
+    await click('[data-tab=agenda]');
+    const root=page.locator('.delivery-agenda');await root.waitFor();
+    await waitFor(()=>root.getAttribute('aria-busy').then(value=>value!=='true'),'Original multi-case agenda');
+    if(select){
+      await click('[data-agenda-action=clear-cases]');
+      for(const id of caseIds)await page.locator('[data-agenda-case="'+id+'"]').check();
+      await page.locator('[data-agenda-field=asOfDate]').fill(input.asOfDate);
+      await page.locator('[data-agenda-field=asOfDate]').dispatchEvent('change');
+      await click('[data-agenda-action=open]');
+    }
+    await waitFor(()=>page.locator('.delivery-agenda-shown').textContent().then(value=>value.includes(input.asOfDate)&&value.includes('2 original cases')),'Selected original agenda and clock');
+    await waitFor(()=>root.getAttribute('aria-busy').then(value=>value!=='true'),'Complete original agenda');
+    return root;
+  }
+  await page.setViewportSize({width:1440,height:1000});await openAgenda({select:true});
+  await click('[data-agenda-action=clear-filters]');
+  await page.locator('[data-agenda-field=filterCase]').selectOption(input.caseId);
+  await page.locator('[data-agenda-field=kind]').selectOption('PAYMENT');
+  const exported=await download(()=>click('[data-agenda-action=export-json]'),prefix+'-all-cases.json');
+  const exportedReport=JSON.parse(await readFile(exported.path,'utf8'));
+  assert.deepEqual(agendaComparable(exportedReport),agendaComparable(report));
+  await download(()=>click('[data-agenda-action=export-csv]'),prefix+'-all-cases.csv');
+  const exportedIcs=await download(()=>click('[data-agenda-action=export-ics]'),prefix+'-all-cases.ics');
+  const combined=(await readFile(exportedIcs.path,'utf8')).replace(/\r\n[ \t]/g,'');
+  const receivedUids=[...combined.matchAll(/^UID:(.*)$/gm)].map(match=>match[1].trim()).sort();
+  const originalUids=[];
+  for(const id of caseIds){
+    const raw=await native('/api/operations/'+id+'/delivery-calendar/export.ics?asOfDate='+input.asOfDate,{binary:true});
+    const source=raw.toString('utf8').replace(/\r\n[ \t]/g,'');
+    originalUids.push(...[...source.matchAll(/^UID:(.*)$/gm)].map(match=>match[1].trim()));
+  }
+  assert.deepEqual(receivedUids,originalUids.sort());
+  const cash=report.entries.find(row=>row.caseId===input.caseId&&row.entry.kind==='GRANT_RECEIPT');
+  assert.ok(cash,'Original operated case retains its grant receipt.');
+  await page.locator('[data-agenda-field=showInactive]').check();
+  await click(page.locator('[data-agenda-action=source][data-agenda-id="'+cash.id+'"]').first());
+  await page.locator('[name=caseSelect]').waitFor();assert.equal(await page.locator('[name=caseSelect]').inputValue(),input.caseId);
+  await waitFor(()=>page.locator('.cash-account-desk').textContent().then(value=>value.includes(cash.entry.sourceId)),'Open the actual original agenda payment');
+  await openAgenda();await click('[data-agenda-action=clear-filters]');
+  await click('[data-agenda-action=view-month]');await click('[data-agenda-action=reviewed-month]');
+  await screenshot(prefix+'-month-desktop.png');
+  await page.setViewportSize({width:390,height:844});await screenshot(prefix+'-month-phone.png',{width:390,height:844});
+  await click('[data-agenda-action=view-agenda]');
+  await page.locator('[data-agenda-field=filterCase]').selectOption(input.caseId);
+  await page.locator('[data-agenda-field=kind]').selectOption('DEADLINE');
+  await page.locator('[data-agenda-field=showInactive]').check();
+  const deadline=report.entries.find(row=>row.caseId===input.caseId&&row.entry.kind==='SUBMISSION_DEADLINE'&&row.entry.active)||
+    report.entries.find(row=>row.caseId===input.caseId&&row.entry.kind==='SUBMISSION_DEADLINE');
+  assert.ok(deadline);await click(page.locator('[data-agenda-action=select][data-agenda-id="'+deadline.id+'"]').first());
+  await screenshot(prefix+'-entry-phone.png',{width:390,height:844});
+  await click(page.locator('.delivery-agenda-detail [data-agenda-action=source]'));
+  await page.locator('[name=completionAsOfDate]').waitFor();
+  assert.equal(await page.locator('[name=caseSelect]').inputValue(),input.caseId);
+  assert.equal(await page.locator('[name=completionAsOfDate]').inputValue(),input.asOfDate);
+  assert.equal(await page.locator('[name=completionReceipt]').inputValue(),deadline.entry.sourceId);
+  assert.equal(Number(await page.locator('[name=completionTranche]').inputValue()),deadline.entry.tranche);
+  await openAgenda();
+  await click(page.locator('.delivery-agenda-detail [data-agenda-action=open-case]'));
+  await page.locator('[data-calendar-setting=asOfDate]').waitFor();
+  assert.equal(await page.locator('[name=caseSelect]').inputValue(),input.caseId);
+  assert.equal(await page.locator('[data-calendar-setting=asOfDate]').inputValue(),input.asOfDate);
+  if(originalDraft){
+    const current=await settledDraft(value=>value.id===originalDraft.id);
+    assert.deepEqual(current.caseBasis,originalDraft.caseBasis);
+    assert.deepEqual(current.savedSelection,originalDraft.savedSelection);
+    assert.deepEqual(current.draft,originalDraft.draft);
+    assert.equal(current.asOfDate,originalDraft.asOfDate);
+  }
+  await openAgenda();await click('[data-agenda-action=clear-filters]');
+  await page.reload({waitUntil:'domcontentloaded'});await ready();
+  await openAgenda();
+  for(const id of caseIds)assert.equal(await page.locator('[data-agenda-case="'+id+'"]').isChecked(),true);
+  assert.equal(await page.locator('[data-agenda-field=asOfDate]').inputValue(),input.asOfDate);
+  await screenshot(prefix+'-agenda-phone.png',{width:390,height:844});
+  await screenshot(prefix+'-agenda-desktop.png');
+  await atomic(join(out,prefix+'-native.json'),report);
+  await openCase('completion');
+  return {selection:report.selection,entries:report.entries.length,undated:report.undated.length,
+    nativeRowsUnchanged:true,originalUids:receivedUids.length,completeExportsWithDisplayFilters:true,
+    receiptId:deadline.entry.sourceId,tranche:deadline.entry.tranche,planningDraftPreserved:originalDraft?.id||null};
+}
+
 try{
   await openApplication();
   if(mode==='cold'){
@@ -159,6 +269,7 @@ try{
       await screenshot('cold-completion-phone.png',{width:390,height:844});
       return {asOfDate:input.asOfDate};
     });
+    await phase('cold-complete-multi-case-agenda',()=>operateDeliveryAgenda('cold-delivery-agenda'));
     const result={schema:progress.schema,operationId:input.operationId,caseId:input.caseId,planId:input.planId,
       savedRevision:input.selectedRevision,savedContentSha256:input.selectedContentSha256,asOfDate:input.asOfDate,
       completedAt:stamp(),phases:progress.phases,files:progress.files,visualReview:progress.visualReview||{},pageErrors};
@@ -384,6 +495,7 @@ try{
       return {asOfDate:report.asOfDate,dated:report.entries.length,undated:report.undated.length,
         originalPaymentRows:payments.length,receiptId:deadline.sourceId,tranche:deadline.tranche,sourceEntryId:deadline.id};
     });
+    await phase('complete-multi-case-agenda-and-original-sources',()=>operateDeliveryAgenda('delivery-agenda'));
     await phase('deliver-exact-selected-plan-case-and-working-draft',async()=>{
       await download(()=>click('[data-case-planning-action=export]'),'case-planning-final.json');
       await download(()=>click('[data-action=export]'),'selected-planning-workspace.zip');

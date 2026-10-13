@@ -21,6 +21,7 @@ import operations_buyer as buyer
 import operations_settlement as settlement_sources
 import operations_completion as completion
 import operations_calendar as calendar_model
+import operations_agenda as agenda_model
 import operations_use_calendar as use_calendar
 import operations_cohort as cohort
 import operations_installations as installations
@@ -879,6 +880,14 @@ class Operations:
     def completion_calendar(self, program_id, as_of=None):
         with self.workspace.mutex:
             return completion.dashboard(self._context(identifier(program_id, "operation")), as_of)
+
+    def delivery_agenda(self, case_ids, as_of=None, expected_versions=None):
+        return agenda_model.read(self, case_ids, as_of, expected_versions)
+
+    def export_delivery_agenda(self, case_ids, as_of=None, format="ics", expected_versions=None):
+        with self._snapshot():
+            report = self.delivery_agenda(case_ids, as_of, expected_versions)
+            return agenda_model.export_bytes(report, format)
 
     def delivery_calendar(self, program_id, as_of=None, expected_version=None):
         with self._snapshot():
