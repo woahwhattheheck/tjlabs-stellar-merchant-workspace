@@ -24,6 +24,7 @@ import zipfile
 
 from model import Problem, canonical, digest, now, short_id, text
 import operations_workshare_installations as workshares
+import operations_installation_commissioning as merchant_commissioning
 
 SCHEMA = "stellar-forge.installation-source-desk.v1"
 PREPARATION = "stellar-forge.installation-source-desk-preparation.v1"
@@ -560,6 +561,12 @@ class SourceDesk:
                                       ("id", "draftRevision", "selectionSha256", "preparedAt", "state", "kind")})
         return result
 
+    def commissioning_inspect(self, case_id, draft_id, body):
+        return merchant_commissioning.inspect(self, case_id, draft_id, body)
+
+    def commissioning_preview(self, case_id, draft_id, body):
+        return merchant_commissioning.preview(self, case_id, draft_id, body)
+
     def _attach(self, state, context, data):
         prepared = self._preparation(state["caseId"], state["id"], data.get("preparationId"))
         need(data.get("expectedSelectionSha256") == prepared["selectionSha256"],
@@ -618,7 +625,7 @@ class SourceDesk:
         request_id = short_id(body["requestId"], "Original source-desk request ID")
         actor, note = text(body["actor"], "Recording operator", 300, True), text(body.get("note", ""), "Preparation note", 12000)
         action = body["action"]
-        need(action in ("create", "file.add", "file.remove", "selection.save", "prepare", "native.receive", "attach"),
+        need(action in ("create", "file.add", "file.remove", "selection.save", "prepare", "native.receive", "attach", "commissioning.attach"),
              "Choose a supported original source preparation action.")
         need(isinstance(body["data"], dict), "Use the complete source action data.")
         expected = integer(body["expectedRevision"], "source draft revision")
@@ -700,6 +707,8 @@ class SourceDesk:
                           ("fileId", "expectedSha256", "expectedEngineSha256", "expectedProfileSha256"),
                           "complete native source-package receiving")
                     result = self._receive_native(state, context, data)
+                elif action == "commissioning.attach":
+                    result = merchant_commissioning.attach(self, state, context, data)
                 elif action == "attach":
                     exact(data, ("preparationId", "expectedSelectionSha256", "expectedVersion"),
                           ("preparationId", "expectedSelectionSha256", "expectedVersion"), "reviewed case attachment")
@@ -721,6 +730,8 @@ class SourceDesk:
             if isinstance(returned, dict) and returned.get("state") == "PREPARED_SOURCE":
                 need(self._preparation(draft["caseId"], draft["id"], returned["id"]) == returned,
                      "The complete original preparation receipt differs.", "INSTALLATION_SOURCE_CHANGED", 409)
+            elif isinstance(returned, dict) and returned.get("state") == "ATTACHED_COMMISSIONING":
+                merchant_commissioning.verify_receipt(self, returned)
             elif isinstance(returned, dict) and returned.get("state") == "ATTACHED_SOURCES":
                 for file in returned["sources"]:
                     metadata, raw = self.ops.source(draft["caseId"], file["sourceId"])
@@ -748,6 +759,7 @@ class SourceDesk:
 def register_static(static):
     static.update({
         "/operations_installation_sources.mjs": ("operations_installation_sources.mjs", "text/javascript; charset=utf-8"),
+        "/operations_installation_commissioning.mjs": ("operations_installation_commissioning.mjs", "text/javascript; charset=utf-8"),
         "/operations_installation_sources.css": ("operations_installation_sources.css", "text/css; charset=utf-8"),
         "/operations_installation_source_hash.mjs": ("operations_installation_source_hash.mjs", "text/javascript; charset=utf-8"),
         "/installation-prepare-core.mjs": ("../../sf49_data_commissioning/installation-workorders/prepare-core.mjs", "text/javascript; charset=utf-8"),
@@ -757,6 +769,16 @@ def register_static(static):
 def handle(handler, parsed, operations, method):
     """Join the existing authenticated handler after its original guard."""
     from urllib.parse import parse_qs, unquote
+    commissioning_path = re.fullmatch(
+        r"/api/operations/(operation-[a-f0-9]{32})/installation-sources/"
+        r"(source-desk-[a-f0-9]{32})/commissioning/(inspect|preview)", parsed.path)
+    if commissioning_path:
+        need(method == "POST" and not parsed.query, "Review one original commissioning capture.", status=405)
+        case_id, draft_id, action = commissioning_path.groups()
+        desk = SourceDesk(operations)
+        read = desk.commissioning_inspect if action == "inspect" else desk.commissioning_preview
+        handler.send(200, read(case_id, draft_id, handler.json_body()))
+        return True
     global_path = "/api/operations/installation-source-profiles"
     match = re.fullmatch(
         r"/api/operations/(operation-[a-f0-9]{32})/installation-sources"
