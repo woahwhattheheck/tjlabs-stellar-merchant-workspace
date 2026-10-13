@@ -11,15 +11,17 @@ import {operateCaseCommissioning} from './case-commissioning.mjs';
 import {parseWorkspace} from './workspace-file.mjs';
 import {MAX_MATERIAL_BYTES,encodeCommissioningBytes,newCommissioning} from './commissioning.mjs';
 const json=v=>JSON.stringify(v,null,2)+'\n';
+// JSON readers may consume an initial UTF-8 BOM; retained files keep every byte.
+const parsedJson=text=>JSON.parse(text.replace(/^\uFEFF/,''));
 const sha=b=>createHash('sha256').update(b).digest('hex');
-const hash=s=>({bytes:Buffer.byteLength(s),sha256:sha(s)});
+const hash=s=>{need(typeof s==='string'&&Buffer.from(s,'utf8').toString('utf8')===s,'Keep complete well-formed UTF-8 text');return {bytes:Buffer.byteLength(s),sha256:sha(s)};};
 const engine=createCommerceReconciliation({sha256Utf8:hash});
 const need=(value,message)=>{if(!value)throw new Error(message);};
 function absolute(value,label){need(typeof value==='string'&&isAbsolute(value)&&resolve(value)===value,'Select an absolute normalized '+label);return value;}
 async function readOriginal(path,max=40*1024*1024) {
   absolute(path,'input path');const s=await lstat(path);need(s.isFile()&&!s.isSymbolicLink()&&s.size<=max,'Select a regular bounded original file');
   const bytes=await readFile(path);need(bytes.length<=max,'Original file grew beyond the selected limit');
-  return {bytes,text:new TextDecoder('utf-8',{fatal:true}).decode(bytes),sha256:sha(bytes)};
+  return {bytes,text:new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes),sha256:sha(bytes)};
 }
 async function privateOutput(path) {
   absolute(path,'output directory');need(await realpath(dirname(path))===dirname(path),'Select an existing canonical output parent');
@@ -28,8 +30,8 @@ async function privateOutput(path) {
   need(await realpath(path)===path,'Keep the canonical output directory');return path;
 }
 export async function prepareCommerceReceiving({inputPath,reviewPath=null,directory}) {
-  const inputRaw=await readOriginal(inputPath),input=JSON.parse(inputRaw.text);
-  const reviewRaw=reviewPath?await readOriginal(reviewPath):null,review=reviewRaw?JSON.parse(reviewRaw.text):null;
+  const inputRaw=await readOriginal(inputPath),input=parsedJson(inputRaw.text);
+  const reviewRaw=reviewPath?await readOriginal(reviewPath):null,review=reviewRaw?parsedJson(reviewRaw.text):null;
   const report=review?engine.review(input,review):engine.analyze(input);
   const root=await privateOutput(directory);
   const request={schema:'stellar-forge.commerce-export-package-request.v1',
@@ -51,7 +53,7 @@ export async function prepareCommerceReceiving({inputPath,reviewPath=null,direct
   return {directory:root,manifest,manifestSha256:sha(json(manifest))};
 }
 export async function inspectCommerceReceiving(directory) {
-  absolute(directory,'source package');const raw=await readOriginal(join(directory,'manifest.json'),1024*1024),manifest=JSON.parse(raw.text);
+  absolute(directory,'source package');const raw=await readOriginal(join(directory,'manifest.json'),1024*1024),manifest=parsedJson(raw.text);
   need(manifest.schema==='stellar-forge.commerce-export-package.v1'&&Array.isArray(manifest.files),'Select the complete original commerce package');
   const allowed=new Set(['input.json','source.csv','destination.csv','reconciliation.json','reconciliation.html','exceptions.csv','review-template.json','original-review.json']);
   const names=manifest.files.map(f=>f.name);
@@ -59,7 +61,7 @@ export async function inspectCommerceReceiving(directory) {
   for(const name of ['input.json','source.csv','destination.csv','reconciliation.json','reconciliation.html','exceptions.csv','review-template.json'])need(names.includes(name),'Missing original package member '+name);
   const retained={};
   for(const file of manifest.files){const r=await readOriginal(join(directory,file.name));need(r.bytes.length===file.bytes&&r.sha256===file.sha256,'Original package member changed: '+file.name);retained[file.name]=r;}
-  const input=JSON.parse(retained['input.json'].text),review=retained['original-review.json']?JSON.parse(retained['original-review.json'].text):null;
+  const input=parsedJson(retained['input.json'].text),review=retained['original-review.json']?parsedJson(retained['original-review.json'].text):null;
   const actual=review?engine.review(input,review):engine.analyze(input);
   need(json(actual)===retained['reconciliation.json'].text&&engine.reportHtml(actual)===retained['reconciliation.html'].text&&engine.issuesCsv(actual)===retained['exceptions.csv'].text,'Recompute the exact original analyzed/reviewed result');
   need(input.source.content===retained['source.csv'].text&&input.destination.content===retained['destination.csv'].text,'Original source export differs from input');
