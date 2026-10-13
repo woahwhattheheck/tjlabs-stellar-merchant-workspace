@@ -70,7 +70,7 @@ The editor warns before leaving changed choices. Requesting a download keeps
 that reminder in the original window, since the browser may cancel the file
 save. Reopen the complete saved file to continue its retained edition.
 
-**Download complete choices for original programme** exports the existing
+**Download complete choices** exports the existing
 source-bound JSON. The source proposal is independently downloadable, and
 **Download complete readable review** retains every selected row in the
 existing complete report. Keep the editable HTML when unfinished alternatives
@@ -115,7 +115,7 @@ and carries no Analysis capability. Original JSON inputs keep the existing
 16 MiB allowance; complete editable HTML has a 128 MiB allowance to include
 the full escaped source/choices and installed editor without truncation.
 
-Both choice-file controls and the CLI template use the exact UTF-8 return-file
+The legacy **Download complete choices** control and CLI template use the exact UTF-8 return-file
 allowance, including its final newline. The original-proposal download and CLI
 native-columns output apply the same exact bound before download/publication. They retain readable indented JSON when
 it fits and use complete compact JSON when that is needed to stay within
@@ -150,7 +150,8 @@ bytes and attribution. The assigning copy retains the issued assignment.
 Download the complete assignment JSON and its editable HTML. Open the HTML
 before handing it over. The recipient uses the same source and column controls;
 all unfinished fields can travel and reopen. The reviewer browser cache uses
-the active assignment identity, separately from the assigning copy. Opening
+the exact proposal, active assignment identity and issuer/reviewer role,
+separately from the assigning copy. Opening
 the file does not automatically restore another browser copy.
 
 The recipient enters their author and explanation and prepares the complete
