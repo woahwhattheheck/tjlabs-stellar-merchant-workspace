@@ -4,7 +4,7 @@ import {constants} from 'node:fs';
 import {resolve,dirname,join,isAbsolute,basename} from 'node:path';
 import {randomUUID,createHash} from 'node:crypto';
 import {
-  GRANT_PROCEDURE_SCHEMA,GRANT_PROCEDURE_MAX_BYTES,GrantProcedureError,
+  GRANT_PROCEDURE_SCHEMA,GRANT_PROCEDURE_MAX_BYTES,PROCEDURE_EDITION_KINDS,GrantProcedureError,
   procedureJSON,procedureCanonical,procedureSha256,packProcedureText,
   inspectGrantProcedure,prepareGrantProcedure,verifyGrantProcedure,makeProcedureTable,makeProcedureEdition,grantProcedureFiles,
 } from './grant_procedures.mjs';
@@ -73,10 +73,20 @@ function returnedValue(record) {
   need(same(JSON.parse(utf8(b)),r.value),'PROCEDURE_RETURN_CHANGED','Retained parsed response differs from its original bytes.');
   return r.value;
 }
+async function readProcedureEditionNative(client,current,kind,ref){
+  need(PROCEDURE_EDITION_KINDS.includes(kind),'PROCEDURE_EDITION','Select a supported saved native edition.');
+  const args={caseId:current.program.id,revision:ref.revision};
+  if(kind==='installation')args.installationId=ref.id;
+  else if(kind==='task-outcome')args.comparisonId=ref.id;
+  else if(kind==='forecast')args.forecastId=ref.id;
+  else if(kind==='portfolio')args.portfolioId=ref.id;
+  else if(kind==='award-terms')args.termsId=ref.id;
+  else need(ref.id==='cost-funding','PROCEDURE_EDITION','Select this original case funding book.');
+  return client.read(kind==='cost-funding'?'funding-edition':kind==='award-terms'?'award-term':kind,args);
+}
 function reader(client,current){
   return {current,readSource:async id=>(await client.download('source',{caseId:current.program.id,sourceId:id})).bytes,
-    readEdition:async(kind,ref)=>(await client.read(kind,{caseId:current.program.id,
-      ...(kind==='installation'?{installationId:ref.id}:{comparisonId:ref.id}),revision:ref.revision})).value};
+    readEdition:async(kind,ref)=>(await readProcedureEditionNative(client,current,kind,ref)).value};
 }
 export async function prepareGrantProcedureNative(client,{
   caseId:caseIdentifier,operatingPlanText,selectedRevision,actor,note='',editionId,createdAt,
@@ -110,10 +120,13 @@ export async function prepareGrantProcedureNative(client,{
     }
   }
   for(const item of editions){
-    need(['installation','task-outcome'].includes(item.kind),'PROCEDURE_EDITION','Select the original native edition kind.');
-    const response=await client.read(item.kind,{caseId:caseIdentifier,revision:item.revision,
-      ...(item.kind==='installation'?{installationId:item.id}:{comparisonId:item.id})});
-    nativeEditions.push(await makeProcedureEdition(item.kind,utf8(response.bytes)));
+    need(PROCEDURE_EDITION_KINDS.includes(item.kind),'PROCEDURE_EDITION','Select the original native edition kind.');
+    const retained=parentProcedure?.document.editions.find(row=>row.kind===item.kind&&row.ref.id===item.id&&row.ref.revision===item.revision);
+    const response=item.originalText!==undefined||retained?null:await readProcedureEditionNative(client,current,item.kind,item);
+    const raw=item.originalText??retained?.original.text??utf8(response.bytes);
+    const selected=await makeProcedureEdition(item.kind,raw);
+    need(selected.ref.id===item.id&&selected.ref.revision===item.revision,'PROCEDURE_EDITION_CHANGED','The retained original must match the requested exact saved edition.');
+    nativeEditions.push(selected);
   }
   const prepared=await prepareGrantProcedure({current,operatingPlanText,selectedRevision,actor,note,sourceIds,
     sourceTables,editions:nativeEditions,stepLinks,parent,...(editionId?{editionId}:{}),...(createdAt?{createdAt}:{})});

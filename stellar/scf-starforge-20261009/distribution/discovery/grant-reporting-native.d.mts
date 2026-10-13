@@ -2,7 +2,7 @@ import type { CommandCatalog } from './catalog.mjs';
 import type { OperatingPlan } from './operating-plan.mjs';
 import type { GrantReportingValues, GrantReportingPreparation, GrantReportingSelection } from './grant-reporting-input.mjs';
 import type { GrantResponseSource } from '../../../scf_2026/sf47_budget_model/workspace/agent-client.mjs';
-import type { GrantProcedure, ProcedureVerification, ProcedureStepLinks } from '../../../scf_2026/sf47_budget_model/workspace/grant_procedures.mjs';
+import type { GrantProcedure, ProcedureVerification, ProcedureStepLinks, ProcedureEditionKind } from '../../../scf_2026/sf47_budget_model/workspace/grant_procedures.mjs';
 
 export const GRANT_REPORTING_CAPTURE_SCHEMA: 'stellar-forge.grant-reporting-capture.v1';
 export class GrantReportingCaptureError extends Error {
@@ -37,7 +37,7 @@ export interface GrantReportingCaptureProcedureSelection {
   parentSourceId?: string | null;
   sourceIds?: string[];
   tables?: GrantReportingCaptureTable[];
-  editions?: {kind:'installation' | 'task-outcome'; id:string; revision:number}[];
+  editions?: {kind:ProcedureEditionKind; id:string; revision:number; originalText?:string}[];
   stepLinks?: ProcedureStepLinks[];
 }
 export type GrantReportingCaptureInput = {

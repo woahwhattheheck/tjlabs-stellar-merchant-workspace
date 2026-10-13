@@ -12,7 +12,7 @@ Use **New procedure** for manual operating steps. Use **Open Operating Plan JSON
 
 Fill in the customer or team, operating owner, useful result, recurrence or trigger, receiving instructions and notes. For every step, record the work instructions, exact inputs, expected complete output, owner and due date. Recorded status and result describe the named operator’s observation. Native purchases, task outcomes, customer use and issuer events remain their original separately selected records.
 
-A local working draft remains available when switching case sections. **Download browser checkpoint** includes the complete drafts, original plan histories, source selections and any pending source request. **Restore browser checkpoint** merges matching-case drafts and preserves conflicting local drafts as separate entries. A pending request is restored with its exact original identity and is dispatched only when the operator chooses **Reconcile original save**.
+Working drafts, complete captured editions and the original pending request are saved in the application's existing durable IndexedDB store. Writes are queued and compared with the stored revision, so another window cannot overwrite newer work. Incomplete titles and command arguments stay editable through a restart; complete procedure validation runs when preparing a save. A local working draft remains available when switching case sections. **Download browser checkpoint** includes the complete drafts, original plan histories, source selections and any pending source request. **Restore browser checkpoint** merges matching-case drafts and preserves conflicting local drafts as separate entries. A pending request is restored with its exact original identity and is dispatched only when the operator chooses **Reconcile original save**. Complete compact checkpoints support up to 256 MiB; the separate native source limit remains 8 MiB. Earlier session checkpoints remain intact during migration. If storage fails or another window advances the stored revision, download the current checkpoint before explicitly reloading the saved copy.
 
 ## Select complete original inputs
 
@@ -106,7 +106,7 @@ A selection file names only actual retained inputs:
 }
 ~~~
 
-Other supported table descriptions are `{key, origin:"case-source", sourceId}`, `{key, origin:"local-original", file}` and `{key, origin:"preceding-procedure"}`. The latter requires `parentSourceId` and copies that exact table key from the predecessor. Complete local originals are read as fatal UTF-8, never shortened to a preview. Each native edition is `{kind:"installation"|"task-outcome", id, revision}`. A step link is `{stepId, sourceIds:[], tableKeys:[], editionKeys:[], note:""}`; an edition key is `kind:id:revision`.
+Other supported table descriptions are `{key, origin:"case-source", sourceId}`, `{key, origin:"local-original", file}` and `{key, origin:"preceding-procedure"}`. The latter requires `parentSourceId` and copies that exact table key from the predecessor. Complete local originals are read as fatal UTF-8, never shortened to a preview. Each native edition is `{kind, id, revision}` with one of the six kinds listed under **Saved financial and delivery editions**. A step link is `{stepId, sourceIds:[], tableKeys:[], editionKeys:[], note:""}`; an edition key is `kind:id:revision`.
 
 Save with one explicit request ID and its own operation directory:
 
@@ -191,3 +191,37 @@ This integration uses the maintained discovery model under `distribution/discove
 The managed launch source lists and authenticated static map include the browser editor, pure model and exact original discovery dependencies. A receiving host must use the complete selected Grant workspace source, not a hand-copied Python subset.
 
 Native syntax checks of the first complete four JavaScript modules passed. The original selected-case programme and browser receiving are separate validation operations; their result must be reported from the actual returned native/browser output. Source publication alone does not establish a completed customer deployment, paid revenue, grant award or executed command.
+
+## Saved financial and delivery editions
+
+Use **Selected originals** to select any saved Forecast, Delivery Portfolio, Cost funding revision or Award terms revision in the current case. Installation and customer task selections remain available in the same list. Link each complete selection to its procedure step. The procedure retains the exact selected JSON, its native identity and every required attachment reference. The complete case export carries those attachments and saved calculations.
+
+Forecasts and portfolios are immutable saves. Their displayed **Saved case vN** is the actual case version at which that object was saved; it is not a newly invented revision or the present case version. Select the exact object ID. Cost funding uses the case's single `cost-funding` book and its explicit revision; issuer terms use their original `terms-...` ID and revision.
+
+A portfolio includes its complete original source forecast as well as its staffing/delivery alternatives, reports, inputs and captured case. Financial source selection includes the original attached records, not only a displayed total or a derived CSV. Select **Read captured original** or **Download captured JSON** to inspect the retained selection. Linked original files have their own exact read and download controls.
+
+**Compare current source** reads the same selected edition from the current case and shows changed facts or later available revisions separately. It does not replace the captured JSON or select a newer edition. Full procedure review verifies the immutable data, required sources and retained history against the original native reader. A changed immutable edition, missing source or altered prior history prevents that procedure from being saved. A new cost-funding or award-terms revision can extend native history while the old selected revision stays usable.
+
+**Download native delivery ZIP** uses the existing edition exporter. Funding export also binds the current case version and original report hash; issuer export uses its existing full-case handover. Each export brackets the native read with the actual case version. The original procedure `export`, `inspect` and `receive` commands retain the complete case and all saved financial selections. On receiving, original snapshot IDs remain intact even when the importer assigns the destination case and plan their own IDs.
+
+### Native selection
+
+The existing `grant-procedures prepare --selection` document accepts all six kinds. Obtain identifiers and versions from the selected original case:
+
+```json
+{
+  "actor": "SCF operator",
+  "editions": [
+    {"kind": "forecast", "id": "forecast-879f1a591c974dbea150951862115229", "revision": 29},
+    {"kind": "portfolio", "id": "portfolio-b7372392705a44b1b175e99b911a91cf", "revision": 32}
+  ],
+  "stepLinks": [
+    {"stepId": "financial-review", "sourceIds": [], "tableKeys": [], "editionKeys": ["forecast:forecast-879f1a591c974dbea150951862115229:29"], "note": "Review the complete saved cash forecast."},
+    {"stepId": "delivery-review", "sourceIds": [], "tableKeys": [], "editionKeys": ["portfolio:portfolio-b7372392705a44b1b175e99b911a91cf:32"], "note": "Review staffing, schedule and cash together."}
+  ]
+}
+```
+
+This example names the retained v32 SCF source; the Operating Plan must contain those step IDs. For another case, use its actual saved identifiers. `originalText` may retain the complete previously selected native JSON. Preparing a successor from `parentSourceId` automatically reuses each matching parent selection's captured text. The native reader verifies it before save. The client adds `read('award-terms', {caseId})` and `read('award-term', {caseId, termsId, revision})` to reach the existing authenticated issuer routes.
+
+The pure module exports `procedureEditionRoute`, `procedureEditionSummary` and `procedureEditionSources` for this shared selection contract. Native calculations and ledgers continue through their existing modules. The procedure stores the operator's selected inputs and instructions; each financial view retains its own original status and basis.
