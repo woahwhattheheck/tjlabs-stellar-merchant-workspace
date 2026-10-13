@@ -64,6 +64,7 @@ export interface CentralResourcesPage {resources:RecordValue[];next:number|null;
 export interface CentralWorkspace {
   directory:string;
   formReleases?:import('./release-review/index.mjs').CentralFormReleaseReview;
+  releaseOperations?:import('./release-operations/index.js').ReleaseOperations;
   state():CentralState;
   connect(input:CentralConnectionInput):Awaitable<RecordValue>;
   projects(input:{connectionId:string}):Awaitable<unknown>;
@@ -150,6 +151,7 @@ export class CentralWorkspaceClient {
   commissioningState(options?:CentralRequestOptions):Promise<CentralCommissioningState>;
   warehouseAction<T=unknown>(method:CentralWarehouseAction,input?:RecordValue,options?:CentralRequestOptions):Promise<T>;
   warehouseState(options?:CentralRequestOptions):Promise<CentralWarehouseState>;
+  releaseOperationsState(options?:CentralRequestOptions):Promise<CentralReleaseOperationsState>;
   warehousePrepare(input:CentralWarehousePrepareInput,options?:CentralRequestOptions):Promise<CentralWarehouseApproval>;
   warehouseConnect(input:CentralWarehouseConnectInput,options?:CentralRequestOptions):Promise<CentralWarehouseOperation>;
   warehouseInspect(input:CentralWarehouseInspectInput,options?:CentralRequestOptions):Promise<CentralWarehouseOperation>;
@@ -207,6 +209,7 @@ export interface CentralManagedOptions {
   commissioningConnection?:CentralCommissioningConnectionInput;
   commissioningConnectionFile?:string;commissioningEnvironmentFile?:string;
   warehouseProfiles?:CentralWarehouseProfileInput[];warehouseProfilesFile?:string;
+  releaseConnections?:import('./release-operations/index.js').GitLabConnection[];releaseConnectionsFile?:string;
   formAuthoring?:import('./release-review/index.mjs').CentralFormAuthoring;
 }
 export interface ManagedCentralWorkspace extends CentralServer {
@@ -215,6 +218,8 @@ export interface ManagedCentralWorkspace extends CentralServer {
   commissioningUrl:string;warehouse:CentralWarehouse;warehouseUrl:string;
   warehouseProfilesSha256:string|null;
   formReleases:import('./release-review/index.mjs').CentralFormReleaseReview;formReleasesUrl:string;
+  releaseOperations:import('./release-operations/index.js').ReleaseOperations;releaseOperationsUrl:string;
+  releaseConnectionsSha256:string|null;
   close():Promise<void>;
 }
 export function centralManagedOptions(argv:string[]):CentralManagedOptions;
@@ -590,6 +595,8 @@ export function serveCentralWarehouse(options:OpenCentralWarehouseOptions&{
   host?:string;port?:number;token?:string;
 }):Promise<ServedCentralWarehouse>;
 export function runCentralWarehouseCli(argv?:string[]):Promise<unknown>;
+export type CentralReleaseOperationsState=ReturnType<import('./release-operations/index.js').ReleaseOperations['state']>;
+export function inspectCentralReleaseOperations(connection:CentralConnection,options?:CentralRequestOptions):Promise<CentralReleaseOperationsState>;
 export function inspectCentralWarehouse(connection:CentralConnection,options?:CentralRequestOptions):Promise<CentralWarehouseState>;
 export const CENTRAL_WAREHOUSE_READ_ACTIONS:Set<CentralWarehouseAction>,CENTRAL_WAREHOUSE_ACTIONS:Set<CentralWarehouseAction>;
 

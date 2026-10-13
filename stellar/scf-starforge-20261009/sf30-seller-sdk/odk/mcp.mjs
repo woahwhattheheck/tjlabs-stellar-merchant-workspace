@@ -5,12 +5,12 @@ import {CentralRetainedFiles} from './mcp-files.mjs';
 import {normalizeCentralUrl,normalizeCodespacesTokenEnv} from './source.mjs';
 import {ODK_CONNECTION_FILENAME,ODK_UUID,odkNeed,odkPlain,odkExact,odkAbsolute,
   odkPrivateDirectory,odkReadPrivateJson,odkFailure,readCentralConnection,odkConnectionView,
-  odkRequest,inspectCentralListener,inspectCentralCommissioning,inspectCentralWarehouse,requestCentralAction} from './connection.mjs';
+  odkRequest,inspectCentralListener,inspectCentralCommissioning,inspectCentralWarehouse,inspectCentralReleaseOperations,requestCentralAction} from './connection.mjs';
 
 export const ODK_MCP_CONNECTION_SCHEMA='stellar-forge.odk-workspace-connection.v1';
 const ALIAS=/^[a-z0-9][a-z0-9_-]{0,63}$/;
 const COLLECTIONS=['connections','plans','captures','reviews','exports','reports','archives','running',
-  'publisherSnapshots','publisherReceiving','publisherPreparations','drafts','hostReceipts','inspections','commissions','profiles','deliveries','approvals','operations'];
+  'publisherSnapshots','publisherReceiving','publisherPreparations','drafts','hostReceipts','inspections','commissions','profiles','deliveries','approvals','operations','sources','activeOperations','centralConnections','formPlans'];
 const schemas=new Map(odkWorkspaceTools((name,description,properties,required)=>
   ({name,properties,required})).map(value=>[value.name,value]));
 function alias(value){
@@ -178,6 +178,12 @@ export class MerchantCentralWorkspaces{
         definition.inputKey?payload[definition.inputKey]:payload,definition.namespace??'actions');
     }
     switch(name){
+      case 'merchant_odk_release_operations_state':
+        return page(await inspectCentralReleaseOperations(connection),args.offset??0,args.limit??50);
+      case 'merchant_odk_release_operations_browser':
+        await inspectCentralReleaseOperations(connection);
+        return {workspace:scope.alias,instanceId:connection.value.instanceId,
+          url:(connection.value.browserOrigin??connection.value.origin)+'/release-operations/'+new URL(connection.value.url).hash};
       case 'merchant_odk_warehouse_state':
         return page(await inspectCentralWarehouse(connection),args.offset??0,args.limit??50);
       case 'merchant_odk_warehouse_browser':

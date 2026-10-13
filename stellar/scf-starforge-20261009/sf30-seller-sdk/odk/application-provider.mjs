@@ -3,9 +3,10 @@ import {join} from 'node:path';
 import {APPLICATION_PROVIDER_SCHEMA,applicationPreparation,observeApplicationStartup}
   from '../../distribution/runtime-workspace/application-provider.mjs';
 import {centralManagedOptions} from './managed.mjs';
-import {readCentralWarehouseProfiles} from './host-inputs.mjs';
+import {readCentralWarehouseProfiles,readCentralReleaseConnections} from './host-inputs.mjs';
+import {createGitLabReleaseSource} from './release-operations/gitlab-source.mjs';
 import {ODK_STARTUP_SCHEMA,ODK_CONNECTION_FILENAME,odkNeed,odkPlain,
-  readCentralConnection,inspectCentralListener,inspectCentralWarehouse,odkInspectPrivateFile} from './connection.mjs';
+  readCentralConnection,inspectCentralListener,inspectCentralWarehouse,inspectCentralReleaseOperations,odkInspectPrivateFile} from './connection.mjs';
 
 export const ODK_APPLICATION_ID='odk-central';
 export default {
@@ -28,6 +29,8 @@ export default {
           'Optional private host file containing the selected connection authorization alias.'),
         field('warehouseProfiles','Reporting warehouse profiles','path',false,
           'Optional private PostgreSQL profile file for approved datasets, SQL reviews and complete period reports.'),
+        field('releaseConnectionsFile','Software release GitLab connections','path',false,
+          'Optional original private GitLab profiles: exact server URLs, credential environment aliases and project restrictions. Token values stay in the host environment.'),
         field('restoreArchive','Original workspace archive','path',false,
           'Optional exact original archive received into a new or empty workspace before opening.'),
         field('restoreSha256','Original archive SHA-256','text',false,
@@ -43,6 +46,7 @@ export default {
     if(settings.commissioningConnection)args.push('--commissioning-connection',settings.commissioningConnection);
     if(settings.commissioningEnvironment)args.push('--commissioning-environment',settings.commissioningEnvironment);
     if(settings.warehouseProfiles)args.push('--warehouse-profiles',settings.warehouseProfiles);
+    if(settings.releaseConnectionsFile)args.push('--release-connections',settings.releaseConnectionsFile);
     if(settings.restoreArchive)args.push('--restore-archive',settings.restoreArchive);
     if(settings.restoreSha256)args.push('--restore-sha256',settings.restoreSha256);
     centralManagedOptions(args);
@@ -65,6 +69,16 @@ export default {
         ['dev','ino','mtimeMs','ctimeMs'].every(key=>retained[key]===warehouse[key]),
         'ODK_WAREHOUSE_PROFILES_CHANGED','The selected warehouse profiles changed during application preparation.',409);
       option('--warehouse-profiles',warehouse.path);
+    }
+    const releases=await path('releaseConnectionsFile','file',false,true);
+    if(releases){
+      const retained=await odkInspectPrivateFile(releases.path,1024*1024);
+      const selected=await readCentralReleaseConnections({connectionsFile:releases.path});
+      createGitLabReleaseSource({connections:selected.connections});
+      odkNeed(selected.source.sha256===retained.sha256&&retained.bytes===releases.bytes&&
+        ['dev','ino','mtimeMs','ctimeMs'].every(key=>retained[key]===releases[key]),
+        'ODK_RELEASE_CONNECTIONS_CHANGED','The selected GitLab connections changed during application preparation.',409);
+      option('--release-connections',releases.path);
     }
     const archive=await path('restoreArchive','file',false,true);
     if(archive){
@@ -106,8 +120,12 @@ export async function centralApplicationStartup(request,text){
   const browserOrigin=connection.value.browserOrigin??connection.value.origin;
   const browserUrl=connection.value.browserUrl??connection.value.url;
   const live=await inspectCentralListener(connection),warehouse=await inspectCentralWarehouse(connection);
+  const releaseOperations=await inspectCentralReleaseOperations(connection);
   const tokenHash=new URL(connection.value.url).hash;
   const warehouseUrl=browserOrigin+'/warehouse/'+tokenHash;
+  const releaseOperationsUrl=browserOrigin+'/release-operations/'+tokenHash;
+  odkNeed(announced.releaseOperationsUrl===releaseOperationsUrl,'ODK_APPLICATION_STARTUP_CHANGED',
+    'The software release URL differs from the selected original listener.',409);
   odkNeed(announced.commissioningUrl===browserOrigin+'/commissioning/'+tokenHash&&
     announced.formReleasesUrl===browserOrigin+'/form-releases/'+tokenHash,
     'ODK_APPLICATION_STARTUP_CHANGED','The browser workspaces differ from the selected operator origin.',409);
@@ -123,6 +141,20 @@ export async function centralApplicationStartup(request,text){
       'ODK_WAREHOUSE_PROFILES_CHANGED','The warehouse profiles differ from the reviewed application input.',409);
   }else odkNeed(announced.warehouseProfilesSha256===null,'ODK_WAREHOUSE_PROFILES_CHANGED',
     'The application announced an unselected warehouse profile file.',409);
+  let releaseConnections=[];
+  if(selected.releaseConnectionsFile){
+    const profiles=await readCentralReleaseConnections({connectionsFile:selected.releaseConnectionsFile});
+    const current=await odkInspectPrivateFile(selected.releaseConnectionsFile,1024*1024);
+    const reviewed=request.inputs?.find(value=>value.path===selected.releaseConnectionsFile&&value.kind==='file');
+    odkNeed(profiles.source.sha256===announced.releaseConnectionsSha256&&current.sha256===profiles.source.sha256&&
+      reviewed&&current.bytes===reviewed.bytes&&
+      ['dev','ino','mtimeMs','ctimeMs'].every(key=>current[key]===reviewed[key]),
+      'ODK_RELEASE_CONNECTIONS_CHANGED','The GitLab connections differ from the reviewed application input.',409);
+    releaseConnections=createGitLabReleaseSource({connections:profiles.connections}).connections();
+  }else odkNeed(announced.releaseConnectionsSha256===null,'ODK_RELEASE_CONNECTIONS_CHANGED',
+    'The application announced an unselected GitLab connection file.',409);
+  odkNeed(JSON.stringify(releaseOperations.connections)===JSON.stringify(releaseConnections),
+    'ODK_RELEASE_CONNECTIONS_CHANGED','The live GitLab connections differ from the reviewed application input.',409);
   const input=request.inputs?.find(value=>value.path===selected.directory&&value.kind==='directory');
   if(selected.restoreArchive){
     odkNeed(live.receivedArchive?.archiveSha256===selected.restoreSha256&&
@@ -133,13 +165,15 @@ export async function centralApplicationStartup(request,text){
   }else if(input?.exists)odkNeed(connection.value.directoryIdentity.dev===String(input.dev)&&
     connection.value.directoryIdentity.ino===String(input.ino),
   'ODK_APPLICATION_STARTUP_CHANGED','The selected original directory changed after review.',409);
-  return {url:connection.value.url,
+  return {url:connection.value.url,links:[{label:'Software releases and recovery',url:releaseOperationsUrl}],
     ...(connection.value.browserOrigin?{browserOrigin:connection.value.browserOrigin,browserUrl}:{}),
     workspaceId:live.id,connectionFile:connection.path,original:{
     schema:ODK_STARTUP_SCHEMA,workspaceId:live.id,directory:selected.directory,
     instanceId:connection.value.instanceId,connectionSha256:connection.sha256,pid:connection.value.pid,
     operator:connection.value.operator,
     ...(connection.value.browserOrigin?{browserOrigin:connection.value.browserOrigin}:{}),
+    releaseOperations:{schema:releaseOperations.schema,url:releaseOperationsUrl,
+      connectionsSha256:announced.releaseConnectionsSha256,connectionIds:releaseOperations.connections.map(value=>value.id)},
     warehouse:{schema:warehouse.schema,url:warehouseUrl,
       profilesSha256:announced.warehouseProfilesSha256,profileIds:warehouse.profiles.map(value=>value.id)},
     ...(selected.restoreArchive?{receivedArchive:live.receivedArchive}:{}),

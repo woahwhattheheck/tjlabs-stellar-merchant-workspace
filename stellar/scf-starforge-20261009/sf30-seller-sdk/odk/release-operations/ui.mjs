@@ -138,7 +138,15 @@ async function recover(){
     throw error;
   }
 }
-async function refreshState(){S.state=await api(API+'/state');S.prefix='central-release-operations:'+location.origin+':'+S.state.workspaceId;$('workspace-name').textContent='Workspace '+S.state.workspaceId;renderSourceControls();renderOperations();renderSources();}
+async function refreshState(){
+  const next=await api(API+'/state'),changed=Boolean(S.state&&S.state.workspaceId!==next.workspaceId);
+  if(changed&&S.editor&&!persistEditor())throw Error('Download the previous local draft before opening this different workspace.');
+  if(changed){S.editor=null;S.op=null;S.working={reviewer:'',note:'',decisions:{}};}
+  S.state=next;S.prefix='central-release-operations:'+location.origin+':'+S.state.workspaceId;
+  if(changed)S.pending=readStored(S.prefix+':pending');
+  $('workspace-name').textContent='Workspace '+S.state.workspaceId;renderSourceControls();renderOperations();renderSources();
+  if(changed){renderEditor();renderPending();throw Error('A different workspace is now open. Your previous local draft is preserved; choose an operation from this workspace.');}
+}
 function renderSourceControls(){
   const connections=arr(S.state.connections??S.state.gitlabConnections);
   options($('gitlab-connection'),connections.map(x=>({value:x.id,label:x.name||x.id})),$('gitlab-connection').value,'Select configured connection');
