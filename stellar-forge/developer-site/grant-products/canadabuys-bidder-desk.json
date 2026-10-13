@@ -177,6 +177,22 @@
           "bytes": 12829
         }
       ]
+    },
+    {
+      "id": "canadabuys-response-installed-mcp",
+      "label": "Complete installed response collaboration, original command recovery and rendered outgoing-file receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/response-review/MCP_GUIDE.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "76f78697abc0b11ddf860860570e29ec2e9350d6",
+          "git_blob": "8969c0d3b239f155497d8c178fc7a9f0e21d6608",
+          "bytes": 19505,
+          "sha256": "6129b6e0a9b4b6cf26577a12f8f933decd7163ec9170cdc0a9b956265270dc9e"
+        }
+      ]
     }
   ]
 }

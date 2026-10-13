@@ -7,10 +7,10 @@ This contribution joins the delivered CanadaBuys Bidder Desk to its installed cu
 | File | Role |
 | --- | --- |
 | GRANT_CANADABUYS_CHAPTER.md | Complete H2 chapter, retaining all previously accepted CanadaBuys paragraphs and adding the customer/commissioning operation. |
-| grant-products/canadabuys-bidder-desk.json | Existing stable product declaration, preserving its original source and adding ten measured original guide sources. |
+| grant-products/canadabuys-bidder-desk.json | Existing stable product declaration, preserving its original source and adding eleven measured original guide sources. |
 | GRANT_CANADABUYS.md | This complete operating, adoption and receiving handover. |
 
-The original chapter is **## CanadaBuys qualification, bid decisions and complete customer receiving**. The existing original source ID remains **canadabuys-bidder-desk**. The added declarations are optional for a preceding accepted manuscript: this lets the installed composer continue to receive that original chapter. Once the owner adopts the complete chapter supplied here, its original immutable links select all eleven sources. No declaration chooses a source from a branch name or replaces an original file with a digest-only reference.
+The original chapter is **## CanadaBuys qualification, bid decisions and complete customer receiving**. The existing original source ID remains **canadabuys-bidder-desk**. The added declarations are optional for a preceding accepted manuscript: this lets the installed composer continue to receive that original chapter. Once the owner adopts the complete chapter supplied here, its original immutable links select all twelve sources. No declaration chooses a source from a branch name or replaces an original file with a digest-only reference.
 
 The chapter retains the original application delivery evidence: seventeen native/browser phases and five inspected images. The complete installed-customer receiving programme and the later original-Grant-case receiving are separate operations with their own results. Current source publication does not turn either pending operation into a completed demonstration.
 
@@ -142,7 +142,7 @@ The unchanged command is:
 node stellar-forge/developer-site/grant-compose.mjs --directory stellar-forge/developer-site/dist --manuscript /absolute/current-canonical.md
 ~~~
 
-The browser's existing **Product sources** authoring flow can also import the complete updated registration. Keep its retained original registration bytes, selected complete reviewer edition and original source IDs. Source preview must include all eleven declared CanadaBuys guides after the complete collaboration chapter is adopted. The initial one-source chapter selects its original guide, the accepted five-source chapter retains all five, and the accepted full-feed/APM2 nine-source edition retains all nine. This following collaboration edition selects those same nine plus its two native/editor operating guides.
+The browser's existing **Product sources** authoring flow can also import the complete updated registration. Keep its retained original registration bytes, selected complete reviewer edition and original source IDs. Source preview for this current installed-response contribution must include all twelve declared CanadaBuys guides. The preceding PR1684/PR1855 collaboration chapter selects eleven. The initial one-source chapter selects its original guide, the accepted five-source chapter retains all five, and the accepted full-feed/APM2 nine-source edition retains all nine. That accepted collaboration edition selects those same nine plus its two native/editor operating guides; the current following edition also selects the installed MCP guide.
 
 The pure original `receiveGrantProductSources` reader is the authority for exact heading, immutable source URL, edition and registration ownership. This contribution changes no reader, shared composer, browser authoring engine, canonical manuscript or published four-reader output.
 
@@ -238,13 +238,13 @@ The latest whole 9FCD customer continuation ended before process creation; its s
 | [apm2/bidder-response/README.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/73fdc6a4f8ea3829c77306ef34ac8b58dd9fdeea/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/examples/apm2/bidder-response/README.md) | 73fdc6a4f8ea3829c77306ef34ac8b58dd9fdeea | 13996 | 9f5e0bb6b7238fe44c4d635756fc7c50e2e565b1dcab5f5a03cb1013a31f8256 |
 | [apm2/capacity/GUIDE.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5e7feae6aff18b03fafe037ae63c218158d15873/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/examples/apm2/capacity/GUIDE.md) | 5e7feae6aff18b03fafe037ae63c218158d15873 | 8795 | 28dc221a0bea9ffadeac06909e18714a7dae69078da93758230172f6b2d34e67 |
 
-All four new entries are optional for a preceding accepted manuscript, just like the earlier four additions. The accepted PR1592/PR1620 chapter selects all nine exact immutable links described in this subsection. The following complete partner-response chapter selects eleven, preserving those same nine editions. The original product receiver must preserve every other product/source row and the complete original CanadaBuys lineage. Keep the one declaration filename, original stable product ID and exact unique H2.
+All four new entries are optional for a preceding accepted manuscript, just like the earlier four additions. The accepted PR1592/PR1620 chapter selects all nine exact immutable links described in this subsection. The accepted PR1684/PR1855 partner-response chapter selects eleven, preserving those same nine editions. The original product receiver must preserve every other product/source row and the complete original CanadaBuys lineage. Keep the one declaration filename, original stable product ID and exact unique H2.
 
 ### Complete current manuscript and reviewer receiving
 
 Apply this entire chapter only to the current canonical manuscript's existing CanadaBuys H2. Retain every other chapter and the original nine answers, USD 38,000 / 400-hour request, 150-day schedule, six-package allocation, financial assumptions and existing customer counts.
 
-Use the original `receiveGrantProductSources` and `selectGrantProductChapters` APIs with the complete current manuscript/index and this complete declaration. For this historical PR1592/PR1620 edition, verify the one CanadaBuys H2 and nine measured selections. For the complete current collaboration edition, verify eleven selections, all nine predecessor records unchanged and every peer record preserved. Repeating that same input should retain the same source selection. This uses the original source reader; it does not substitute a new grant compiler or a partial manuscript.
+Use the original `receiveGrantProductSources` and `selectGrantProductChapters` APIs with the complete current manuscript/index and this complete declaration. For this historical PR1592/PR1620 edition, verify the one CanadaBuys H2 and nine measured selections. For the historical PR1684/PR1855 collaboration edition, verify eleven selections, all nine predecessor records unchanged and every peer record preserved. The following installed-response edition below selects twelve, preserving all eleven. Repeating that same input should retain the same source selection. This uses the original source reader; it does not substitute a new grant compiler or a partial manuscript.
 
 The cumulative owner then runs the existing `grant-compose` against the current complete dist directory and receives its four full outputs into the same reviewer page, saved draft/review, Page and Site. The original selected source descriptors and full authoring project remain in that operation. Review the actual resulting reader and all downloads at the supported widths, following the complete owner instruction below.
 
@@ -280,3 +280,44 @@ For the existing APM2 customer, `response-review/APM2_JOURNEY.mjs` joins the com
 The two new stable IDs are `canadabuys-partner-response-collaboration` and `canadabuys-partner-response-offline-editor`. Both declarations are optional for accepted older manuscript editions; their exact immutable links in the added collaboration subsection select them in this complete successor. The unchanged product-source receiver must preserve the full current cumulative union and all nine predecessor CanadaBuys records, receive these two, and replay identically. Keep one CanadaBuys H2 and the same declaration ID.
 
 The coherent implementation is PR1663 / `ffc49811e6c275c94f969fbcd04ae6d6e40dd2a0`. Its complete twenty-file source and five UI files were independently received by the original publisher. Actual original-customer native execution, rendered inspection and a supplier's own reviewed return are recorded separately as they occur. The original prospective CAD 7,200 / 60-hour APM2 response-engineering workshare and USD 38,000 / 400-hour / 150-day six-package grant remain unchanged.
+
+
+## Receive the installed response collaboration and exact outgoing files
+
+The following contribution extends the already accepted eleven-source chapter with one measured original operating guide. Preserve all eleven predecessor declarations, immutable editions and complete earlier chapter text. The historical PR1592/PR1620 edition has nine selected guides, the accepted PR1684/PR1855 collaboration edition has eleven, and this complete following chapter has twelve.
+
+Use the complete [MCP and rendered-file operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/76f78697abc0b11ddf860860570e29ec2e9350d6/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/response-review/MCP_GUIDE.md). The source is PR1910 / `76f78697abc0b11ddf860860570e29ec2e9350d6`, guide Git blob `8969c0d3b239f155497d8c178fc7a9f0e21d6608`, 19505 UTF-8 bytes, SHA-256 `6129b6e0a9b4b6cf26577a12f8f933decd7163ec9170cdc0a9b956265270dc9e`. Its stable source ID is `canadabuys-response-installed-mcp`. The new declaration is optional for an older accepted manuscript, while the exact immutable link in the new chapter selects it here. No earlier guide pin is replaced.
+
+### Complete installed customer operation
+
+| Operation | Original input and outcome |
+| --- | --- |
+| response_status | Read all saved responses or Workshares through the existing page contract at a consistent native revision. |
+| response_inspect | Read the whole declared request file, verify its bytes and SHA, and expose its actual selection without mutation. |
+| response_prepare | Enter the complete original master, saved Workshare and named response through the existing native command. |
+| response_record | Reopen exact record metadata, original binding, content counts and retained attachment metadata. |
+| response_export | Freeze an explicit response edition and publish the complete document, working transfer, offline editor or Markdown. |
+| response_compare | Read the complete return at the selected native revision and retain the full comparison plus source-bound publication. |
+| response_apply | Apply explicit choices and acknowledgements using the retained comparison and original complete command. |
+
+Each full tool name begins `merchant_canadabuys_`. All seven joins are available through the existing installed client, its typed methods and CLI operation commands; the selected provider now has 46 tools. Keep the actual host connection, credential environment reference and observed native workspace UUID. Do not infer a response API from an unrelated web-server endpoint.
+
+The original installed operation owns its exact small arguments, input-file digest and command ID. Repeating a completed preparation/application uses the native saved result before live revision admission; there is no extra client check that would prevent reopening that original result. Export and comparison do not automatically repeat after an uncertain dispatch. Use the installed publication-selection and adoption operation to select the actual original publication, matching its source revision, workspace, selected record and digests; comparison also binds the original input SHA. Continue its complete retained download and verify it without changing filenames or substituting a summary.
+
+### Continue the original saved customer and its actual delivered editor
+
+The existing `examples/apm2/continue-browser.mjs` directly awaits this new course after the original bidder/response/browser operation and all owned browser/server/receiver handles close. It preserves the same producer and receiving UUIDs, original full input source, Workshare, response, return and output directories. The native course is `response-review/OPERATING_TOOLS.mjs`, followed by `response-review/RENDERED_TOOLS.mjs`.
+
+The original response browser course saves complete immutable request bytes, command identity and result-pointer checkpoint before dispatch, then records the accepted result. The installed course only replays commands with that confirmed original input. It does not reconstruct an old request from current fields or treat a native fingerprint as the missing request body. An older saved case without that journal still performs the complete read/export/compare receiving and records the replay limitation.
+
+Every export preserves the exact original snapshot. Full publication downloads and all attachments are checked against their recorded byte counts and digests. The historical document is compared with the complete response already received in the original second workspace. Reopening a partial course retains successful original operations and publications; an uncertain publication needs explicit original-identity adoption, not regeneration.
+
+After the native owners close, the outgoing-file browser opens the exact exported post-return HTML at desktop and narrow widths, expands every source and response section, operates its answer filter, saves the unchanged complete draft and reopens that actual download. It downloads and opens each original attachment and reads the entire document, transfer, Markdown and comparison files through clearly labelled original-file readers. Overlapping captures include page and control scroll extents. Each saved image, reader, original file and real download retains its path and byte/hash identity. The actual browser belongs only to this course and closes before completion. The complete owner inspection rule above still requires the producing seat to LOOK at those actual rendered outputs and make any needed repair; saved screenshots alone do not satisfy it.
+
+### Actual delivery state and cumulative source receiving
+
+The full fourteen-file PR1910 source is merged and independently read back. Its seven-tool implementation, immutable-request retention, complete installed course, outgoing browser controls and lifecycle recovery received two independent source reviews. These facts establish the delivered source and its integration. The whole saved-customer execution and visual results must still come from that original operation; no separate response, test customer or fixture is commissioned by this grant contribution.
+
+Apply the complete appended chapter only at the original unique CanadaBuys H2. Use the unchanged `receiveGrantProductSources` and `selectGrantProductChapters` against the current cumulative manuscript/index. Expect twelve CanadaBuys selected guides, all eleven predecessor source records unchanged, every peer source retained and one exact chapter heading. Repeating that same full input retains the same selection. Continue the existing cumulative publisher's original four reviewer outputs, page, saved draft, Page and Site; preserve its authored project and source index.
+
+This extension adds no funding, customer, revenue or acceptance claim. Keep the original nine application answers, USD 38,000 / 400-hour / 150-day plan, six packages and their original independent-use criteria. The original prospective CAD 7,200 / 60-hour response workshare remains separate from a supplier's actual review, signed scope, completed delivery and collected payment.
