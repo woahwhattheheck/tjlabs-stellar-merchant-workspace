@@ -54,7 +54,7 @@ The result field contains the original operation result described below. Install
 
 Errors exit 2 and use the same result schema with ok:false, operation, request_id, adapter_sha256 and error:{code,message}. They do not echo the submitted request, an environment or a traceback. The caller retains the original request and can read its existing result before deciding how to continue.
 
-Local paths must be absolute. Selected paths and existing ancestors cannot be symbolic links. Initial installation and independent receiving select a separate private directory. Snapshot output is outside the active installation.
+Local paths must be absolute. Selected source, configuration, archive and installation paths and their existing ancestors cannot be symbolic links. The optional Python executable keeps the original native selector’s alias resolution: it records and verifies the actual canonical interpreter and version. Initial installation and independent receiving select a separate private directory. Snapshot output is outside the active installation.
 
 ## Exact numeric values
 

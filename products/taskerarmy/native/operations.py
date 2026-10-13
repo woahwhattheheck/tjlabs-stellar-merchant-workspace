@@ -178,6 +178,17 @@ def optional_path(args, key):
     return absolute(args[key], key) if args.get(key) is not None else None
 
 
+def optional_python(args):
+    value = args.get("python")
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value or "\x00" in value or not pathlib.Path(value).is_absolute():
+        fail("invalid_request", "python must be an absolute local executable path")
+    # The original native selector resolves executable aliases and records the
+    # actual canonical interpreter and version. Keep that selection behavior.
+    return str(pathlib.Path(value))
+
+
 def request(value):
     exact(value, {"schema", "operation", "installation", "arguments", "request_id", "binding"}, "Request")
     if value.get("schema") != REQUEST_SCHEMA:
@@ -754,7 +765,7 @@ def perform(raw):
             absolute(args.get("application"), "application"),
             absolute(args.get("configuration"), "configuration"),
             absolute(args.get("directory"), "directory"),
-            optional_path(args, "manifest_path"), optional_path(args, "python"), operation_id,
+            optional_path(args, "manifest_path"), optional_python(args), operation_id,
         )
         value = result.get("installation", result)
         if value.get("schema") != manage.INSTALL_SCHEMA:
@@ -763,7 +774,7 @@ def perform(raw):
     if name == "installation.receive":
         result = manage.receive(
             absolute(args.get("archive_path"), "archive_path"),
-            absolute(args.get("directory"), "directory"), optional_path(args, "python"),
+            absolute(args.get("directory"), "directory"), optional_python(args),
         )
         return response(req, result["installation"], result, result.get("replayed", False))
 
