@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>PDF statement review</title><link rel="stylesheet" href="./styles.css"></head>
-<body><header><div><h1>PDF statement review</h1><p>Original pages, reviewed cash movements and account handover.</p></div><nav><a id="bank-link" href="../">Bank reconciliation</a><a href="./PDF_STATEMENTS.md">Operating guide</a></nav></header>
+<body><header><div><h1>PDF statement review</h1><p>Original pages, reviewed cash movements and account handover.</p></div><nav><a id="bank-link" href="../">Bank reconciliation</a><a href="./review.html">Named recipient review</a><a href="./PDF_STATEMENTS.md">Operating guide</a></nav></header>
 <main><section class="toolbar" aria-label="Working copy"><label>Original PDF<input id="pdf-file" type="file" accept="application/pdf,.pdf"></label><label>Open complete working copy<input id="working-file" type="file" accept=".json,application/json"></label><label>Saved reviews<select id="saved"><option value="">Choose a working copy</option></select></label><button id="open-saved">Open saved review</button><button id="open-bank-import">Reopen retained bank PDF</button><button id="export">Download working copy</button><button id="save-conflict" hidden>Save conflict as separate review</button><button id="original">Download original PDF</button></section>
 <div id="message" role="status" aria-live="polite">Open an original PDF or a saved review.</div>
 <div id="pending" hidden></div>

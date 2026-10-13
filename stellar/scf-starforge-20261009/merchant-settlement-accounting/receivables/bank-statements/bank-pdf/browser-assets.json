@@ -78,6 +78,62 @@
         "EXTRACTION.md",
         "text/markdown; charset=utf-8"
       ]
+    ],
+    [
+      "/bank-statements/pdf/review.html",
+      [
+        "review.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/pdf/review.css",
+      [
+        "review.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/pdf/review-model.mjs",
+      [
+        "review-model.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/pdf/review-state.mjs",
+      [
+        "review-state.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/pdf/review-app.mjs",
+      [
+        "review-app.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/pdf/review-portable.mjs",
+      [
+        "review-portable.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/pdf/review-source.json",
+      [
+        "review-source.json",
+        "application/json; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/pdf/REVIEW.md",
+      [
+        "REVIEW.md",
+        "text/markdown; charset=utf-8"
+      ]
     ]
   ]
 }
