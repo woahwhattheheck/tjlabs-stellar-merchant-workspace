@@ -354,3 +354,26 @@ The original native result contains five local x402api commissioning invoices an
 Compose this chapter and its four sources with every current chapter and registration, including the accepted Haystack and Connected Systems changes. Preserve the application's current answers, budget, six packages, prospective hours, independent merchants and buyers, purchase targets and tranches. The completed merchant foundation supports future customer-specific operating and handover work within those existing allocations.
 
 Run the original composer and retain its four source pins for grant.html, grant-data/application.md, grant-data/product-and-finance.md, and grant-data/source-index.json. Continue the same saved draft/review, Page and owner-private Site publication. The [full merchant chapter and receiving boundary](./GRANT_X402API_MERCHANT.md) explains this source contribution.
+
+## Receive regional labor analysis and customer data delivery
+
+The complete regional customer guide is [BLS regional analysis and recurring delivery](../../products/bls-labor/GRANT.md). Its concise accepted chapter belongs within the canonical manuscript's existing current demonstration and operator journey. The ordinary whole-chapter `--manuscript` receiver carries this H2 into the same product and finance companion.
+
+The BLS analyst product keeps LAUS resident measures and QCEW workplace measures in their original projections. Its retained NEK case supplies all original selected observations, six complete county/projection briefings and the full resident-labor change report. Source editions, revisioned analyst notes, publication history and complete editable project receiving remain one working project. Its maintained `bls-labor` selection and Applications entry are the operator opening path.
+
+The owned `grant-products/bls-labor.json` declaration registers these four immutable operating sources through the existing composer:
+
+| Source ID | Original operating content |
+| --- | --- |
+| `bls-regional-analyst-workspace` | Installed application, all-row analysis, reports and full editable handover |
+| `bls-labor-source-contract` | Original LAUS/QCEW observation definitions and source selection contract |
+| `bls-original-case-receiving` | Complete retained NEK input, reports, project export and separate reopening |
+| `bls-native-customer-receiving` | Original publisher plans/runs, dataset versions, SF88 receiving and Vitality import |
+
+Each link selects the full merged product commit and source path. The product registry preserves matching measured identities and clears obsolete file measurements when the selected repository, commit or path changes. Repeated composition updates this same chapter and source records while retaining all other accepted customer work.
+
+Use the original 4BF5/Actions BLS case for its actual native and browser result. The funded implementation contribution is customer-specific source/report configuration, existing merchant and buyer integration, complete receiving and operating handover within the current six packages. The canonical allocation remains USD38,000, 400 prospective hours and 150 days. Continue the same four-file reviewer composition, saved review and Page/Site publication.
+
+## Independent product source contributions
+
+[Product registration and complete receiving](GRANT_PRODUCT_SOURCES.md) describes the default `grant-products/*.json` declarations, optional additional received files, original source-ID continuity and exact measured-edition binding. The existing `grant-compose` command receives these definitions before its current public projection and writes the same four reader outputs. A product author can maintain its own complete source declaration alongside the accepted H2 without adding another block to the shared customer projector.
