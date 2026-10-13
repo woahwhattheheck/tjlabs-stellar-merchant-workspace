@@ -5,6 +5,7 @@ export async function mountCompanionReadingWorkspace(root,{api,reader,initialSou
   let serial=0,busy=false,destroyed=false,readingMount=null,comparison=null,noteChapter=workspace.reading.chapter_id,noteId='',status='';
   if(initialSource){const received=await api.receive(workspace,initialSource,{origin});workspace=received.workspace;if(!received.already_received)status='The current published edition is retained. Compare it with your selected edition before switching.';}
   const edition=()=>api.getEdition(workspace),chapters=()=>reader.parseCompanionMarkdown(edition().markdown).chapters;
+  if(typeof location!=='undefined'&&location.hash){let anchor='';try{anchor=decodeURIComponent(location.hash.slice(1));}catch{}const target=chapters().find(c=>c.id===anchor||c.headings.some(h=>h.id===anchor));if(target){workspace=api.reading(workspace,{chapter_id:target.id,query:'',show_all:false});noteChapter=target.id;}}
   const selectedNote=()=>workspace.notes.find(n=>n.id===noteId);
   const one=s=>root.querySelector(s);
   const download=(body,name,type)=>{const a=document.createElement('a'),url=URL.createObjectURL(new Blob([body],{type}));a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);};
@@ -15,7 +16,7 @@ export async function mountCompanionReadingWorkspace(root,{api,reader,initialSou
     workspace=next;serial++;
     try{persist?.(workspace);}catch(error){status='Reading work is retained in this open page. Download the complete workspace; browser storage could not save this edition.';}
     if(message)status=status.startsWith('Reading work is retained in this open page.')?message+' '+status:message;
-    if(draw)render();else if(status)report(status);
+    if(draw){try{history.replaceState(null,'','#'+workspace.reading.chapter_id);}catch{}render();}else if(status)report(status);
   }
   async function operation(fn){if(busy||destroyed)return;busy=true;toggleBusy();try{await fn();}catch(error){report(error.message||String(error));}finally{busy=false;toggleBusy();}}
   function toggleBusy(){root.setAttribute('aria-busy',String(busy));root.querySelectorAll('[data-reading-operation]').forEach(b=>b.disabled=busy);}
@@ -58,7 +59,7 @@ export async function mountCompanionReadingWorkspace(root,{api,reader,initialSou
       '<details class="reading-notebook" open><summary>Chapter notes and bookmarks</summary><p data-note-binding></p><div class="reading-grid"><label>Original chapter<select name="note-chapter"></select></label><label>Note<select name="note-existing"></select></label><label>Named author<input name="note-author" maxlength="200"></label><label>Note title<input name="note-title" maxlength="500"></label></div><label>Reading note<textarea name="note-body" maxlength="50000" rows="5"></textarea></label><div class="reading-actions"><label class="reading-checkbox"><input name="note-bookmark" type="checkbox">Bookmark this chapter</label><label>Review state<select name="note-status"><option value="open">Open</option><option value="resolved">Resolved</option></select></label><button data-reading-action="save-note" data-reading-operation>Save note revision</button></div><p data-draft-count class="reading-small"></p><div data-reading-notes></div></details>'+
       '<details class="reading-comparisons"><summary>Full edition and source comparison</summary><div data-reading-comparison></div></details></section><div data-retained-reader></div>';
     const host=one('[data-retained-reader]');host.innerHTML=reader.companionReaderMarkup(model,e);
-    readingMount=reader.activateCompanionReader(host,e,null,{reading:workspace.reading,onReading:value=>{const next=api.reading(workspace,value);if(next!==workspace)retain(next);}});
+    readingMount=reader.activateCompanionReader(host,e,null,{reading:workspace.reading,honorHash:false,onReading:value=>{const next=api.reading(workspace,value);if(next!==workspace)retain(next);}});
     loadNoteForm();renderNotes();renderComparison();wire();toggleBusy();
   }
   function changeEdition(key,chapterId='') {

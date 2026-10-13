@@ -180,7 +180,7 @@ export function activateCompanionReader(root,sourceFiles,onOfflineDownload=null,
   all('button[data-action]').forEach(button=>listen(button,'click',()=>action(button.dataset.action).catch(error=>report(error.message||String(error)))));
   one('[data-action="offline"]').hidden=!onOfflineDownload;
   listen(window,'hashchange',()=>select(location.hash,true));listen(window,'afterprint',()=>{delete document.documentElement.dataset.companionPrint;});
-  update();if(location.hash)select(location.hash);
+  update();if(options.honorHash!==false&&location.hash)select(location.hash);
   return {select,chapterCount:records.length,getReading:()=>({chapter_id:selected,query:search.value,show_all:showAll}),destroy:()=>disposal.forEach(fn=>fn())};
 }
 

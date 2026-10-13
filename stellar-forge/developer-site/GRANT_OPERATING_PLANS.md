@@ -318,3 +318,35 @@ The comparison shows the complete **Originally prepared**, **Previously selected
 The additive model interfaces are `stageGrantOperatingReturn`, `refreshGrantOperatingReturn` and `closeGrantOperatingReturn`. They return new planning reviews for the original saved-draft writer. The optional `operatingSelection.returnDraft` contains the full source and review state; earlier saved selections without that field remain readable.
 
 When the installed CLI receives the exact pending plan from a saved draft, it uses the retained review note unless `--return-note` explicitly replaces it. Replaying an already retained matching plan saves any pending-desk cleanup in the full output draft, with the preceding complete version preserved. A replay with no review change retains the original draft state.
+
+
+## Receive complete customer output files
+
+The customer can attach complete reports, datasets, images and other output
+files to each operating step. Operating Plans retains the original bytes,
+name, media type, byte count and receiving note inside that step's saved
+revision. Its complete editable JSON and standalone HTML handover carry the
+files; the browser and installed command can extract individual originals.
+
+The original grant preparation remains unchanged. When a later customer
+plan returns, the package comparison includes complete file changes against
+both the originally prepared and previously selected step. The reviewer sees
+the number of added, removed and changed files and any order change. Named
+download buttons expose the actual originally prepared, previously selected
+and returned files. Files on additional customer steps remain available too.
+
+An unfinished returned plan retains these complete bytes through the same
+saved return, note, draft version, export and reopen paths. Receiving a later
+matching history places its complete file history in the original continuing
+plan; identical replay and divergent-history handling use the existing
+shared-history model. The comparison retains the customer's complete file
+contents alongside its metadata.
+
+Use the current installed
+[Operating Plans file workflow](../../stellar/scf-starforge-20261009/distribution/discovery/OPERATING_PLANS.md#carry-complete-customer-result-files)
+for customer file selection, correction, historical downloads and the
+discover plan attach, files, extract and remove-file commands.
+The original grant submission retains its existing 16 MiB complete-draft
+capacity, including all source and saved history. Select complete outputs
+that fit that receiving record and keep large native delivery archives in
+their original maintained handover.

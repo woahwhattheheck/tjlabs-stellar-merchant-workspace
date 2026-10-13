@@ -140,3 +140,4 @@ export * from './assembly.mjs';
 export * from './commissioning.mjs';
 
 export * from './commissioning-application.mjs';
+export * from './assembly-workspace.mjs';

@@ -106,7 +106,7 @@ starforge rozo-payments native-finance \
   --python /existing/runtime/python3
 ```
 
-The process holds the original owner scopes and saves the full plan before mutation. Every step records its exact original request before dispatch. Native steps accept and code sources, close both periods, create and return both typed accountant handoffs, and retain every original issued file. The browser enters one planned merchant coding through the actual form, loses its HTTP response after native acceptance, reloads and reconciles that same ID. It then visits all five finance views, downloads an original file, and captures desktop and narrow-screen evidence.
+The process holds the original owner scopes and saves the full plan before mutation. Every step records its exact original request before dispatch. Native steps accept and code sources, close both periods, create and return both typed accountant handoffs, and retain every original issued file. The browser enters one planned merchant coding through the actual form, loses its HTTP response after native acceptance, reloads and reconciles that same ID. It then visits all six finance views, downloads an original file, and captures desktop and narrow-screen evidence.
 
 The final phase pauses the original Accounting owner, runs its maintained review/backup/verify jobs, copies the complete encrypted backup, and resumes the owner. It preserves the complete Buyer project archive and the complete ROZO working export or explicit handover. A separate Node process running the received original application restores and checks the native Accounting backup and invokes the copied original Buyer receiver. The complete project is finally saved as `Rozo_Finance_Complete.zip` with a full member manifest and SHA-256 receipt.
 
@@ -154,4 +154,8 @@ A working ROZO snapshot remains read-only. A sealed handover can later be activa
 
 ## Completion records
 
-Retain `FINANCE_RESULT.json`, `FINANCE_RECEIVED.json`, the two browser phase results and `FINANCE_PACKAGE_RECEIPT.json` with the complete ZIP. Match their operation, original workspace and source identities before delivering the package. The native result identifies the retained merchant and Buyer closes, accountant handoffs/returns, complete encrypted backup and independent receiving outcome. The package receipt supplies the exact final ZIP byte count and SHA-256 for the receiving command.
+Retain `FINANCE_RESULT.json`, `FINANCE_RECEIVED.json`, the browser phase results and `FINANCE_PACKAGE_RECEIPT.json` with the complete ZIP. Match their operation, original workspace and source identities before delivering the package. The native result identifies the retained merchant and Buyer closes, accountant handoffs/returns, complete encrypted backup and independent receiving outcome. The package receipt supplies the exact final ZIP byte count and SHA-256 for the receiving command.
+
+## Correct a following source edition
+
+Use `finance-amendment-plan` and the complete workflow in `FINANCE_AMENDMENTS.md` to compare a corrected saved report, reopen its original issued periods, review new coding and issue following closes and accountant returns. The following delivery retains the exact complete first archive and independently verifies both close chains.

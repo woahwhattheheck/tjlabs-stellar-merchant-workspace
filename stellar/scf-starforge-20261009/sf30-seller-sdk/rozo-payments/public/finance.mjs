@@ -1,3 +1,4 @@
+import { createFinanceAmendments } from './finance-amendment.mjs';
 // Staff finance forms over the existing ROZO session and original request journal.
 export function createFinanceDesk(h){
   const {el,field,check,input,button,card,table,json,notify,api,command,download}=h;
@@ -40,9 +41,10 @@ export function createFinanceDesk(h){
     }).catch(error=>{if(current===generation&&root.isConnected)root.replaceChildren(card('Finance workspace',no(error.message)));});
     return root;
   }
+  const amendments=createFinanceAmendments(h,{model:()=>model,revision});
   function paint(root){
-    const pages={intake:intakePage,merchant:merchantPage,buyer:buyerPage,accountant:accountantPage,deliveries:deliveryPage};
-    const nav=el('div',{class:'toolbar','aria-label':'Finance views'},[['intake','Report intake'],['merchant','Merchant accounting'],['buyer','Buyer expenses'],['accountant','Accountant'],['deliveries','Financial handover']].map(([key,label])=>button(label,()=>{view=key;generation++;h.closeDialog();paint(root);},view===key?'':'secondary',{'data-finance-view':key})));
+    const pages={intake:intakePage,merchant:merchantPage,buyer:buyerPage,accountant:accountantPage,deliveries:deliveryPage,amendments:()=>amendments.render()};
+    const nav=el('div',{class:'toolbar','aria-label':'Finance views'},[['intake','Report intake'],['merchant','Merchant accounting'],['buyer','Buyer expenses'],['accountant','Accountant'],['deliveries','Financial handover'],['amendments','Financial corrections']].map(([key,label])=>button(label,()=>{view=key;generation++;h.closeDialog();paint(root);},view===key?'':'secondary',{'data-finance-view':key})));
     root.replaceChildren(el('p',{class:'title-note',text:'Use the original saved report, review its native financial movements, and issue complete accounting records. Provider evidence, merchant receipts, fees, settlement transfers and explicitly selected purchases keep their original identities.'}),nav,pages[view]());
   }
   function intakePage(){
