@@ -190,6 +190,23 @@ The managed product source inventory binds the job adapter, operator module,
 guide and current shared model. Install this complete selected source cohort
 at the existing receiving owner's next compatible boundary.
 
+## Complete native demonstration and receiving programme
+
+The installed source includes the [complete native receiving guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/JOB_NATIVE_RECEIVING.md),
+its Python coordinator, both native/browser modules and the full BPMN definitions.
+Continue `FLOWABLE-NATIVE-JOB-RECOVERY-B43A-20261013` through the existing receiving
+owner with its original installed Flowable release, retained WAR/runtime and
+complete preceding workspace NDJSON.
+
+The coordinator creates a separate private demonstration engine and retains the
+same H2 database across its prepare, asynchronous-failure and operated-recovery
+phases. It creates a genuine failed asynchronous job, retains its dead-letter
+exception, operates timer/executable/history recovery, reopens unfinished browser
+work, reconciles an interrupted original response, and cold-receives every
+original and added workspace revision. It packages the closed native case,
+complete selected source, workspace archives, visible downloads and browser
+observations. The guide gives the exact original command and continuation paths.
+
 ## Producing operator: actual product and attachments
 
 Continue the original Flowable engine/workspace/browser operation and its
