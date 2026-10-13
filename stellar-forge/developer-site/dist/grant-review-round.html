@@ -20,7 +20,11 @@
 <div class="review-row"><button id="review-open-draft">Open submission draft</button><button id="review-open-round">Open review JSON</button><button data-review-view="saved">Saved reviews</button><button id="review-save-copy" disabled>Save separate browser copy</button></div>
 <div class="review-row"><button id="review-export" disabled>Download complete review</button><button id="review-report" disabled>Download review report</button><button id="review-draft-export" disabled>Download selected original draft</button><button id="review-finish" disabled>Finish or reopen review</button></div>
 <p id="review-save-state" class="review-muted"></p>
-<details><summary>Unrecorded form text</summary><p>Decision and response text remains on this page until you record it. Record each form before downloading or opening another review.</p><button id="review-discard-forms" class="review-quiet">Discard unrecorded forms</button></details>
+<details open><summary>Complete working copy</summary>
+<p>Keep unfinished notes, references and revision choices across reloads or another reviewer’s browser. Each window saves independently. Recording a decision is still a separate action.</p>
+<div class="review-row"><button id="review-working-save">Save working copy now</button><button id="review-working-download">Download complete working copy</button><button id="review-working-open">Open working package</button><button id="review-working-fork">Save working as separate copy</button><button id="review-working-latest">Open latest saved working version</button></div>
+<p id="review-working-state" class="review-muted" role="status" aria-live="polite"></p></details>
+<details><summary>Unrecorded form text</summary><p>Unfinished text is retained in the complete working copy and its download. The recorded-review download contains recorded actions only; finish or discard unfinished forms before that editorial handover.</p><button id="review-discard-forms" class="review-quiet">Discard unrecorded forms</button></details>
 </section>
 <p id="review-start" class="review-muted">Choose a complete submission draft or an existing review.</p>
 <section id="review-current" hidden>
