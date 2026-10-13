@@ -327,6 +327,33 @@ def main():
     directory(request_path.parent)
     source(c)
     core, learning, study = module("analyst"), module("learning"), module("study")
+    # Retain the complete generic exchange source with this original launch.
+    names = ["learning-exchange-host.py","learning-exchange-host.mjs","learning-exchange-host.css","learning-exchange.mjs","learning-exchange-offline.mjs","learning-exchange-offline.css","learning-exchange-offline.html","learning-exchange-render.mjs"]
+    declared = bridge.get("assets")
+    need(isinstance(declared, list) and len(declared) == len(names) and
+         all(isinstance(row, dict) and set(row) == {"name", "bytes", "sha256"} for row in declared) and
+         {row["name"] for row in declared} == set(names),
+         "Select the complete installed Learning exchange assets.")
+    assets = {}
+    for row in declared:
+        body = raw(Path(bridge["path"]).parent / row["name"], 4194304, False)
+        need(type(row["bytes"]) is int and len(body) == row["bytes"] and sha(body) == row["sha256"],
+             "An installed Learning exchange asset changed.")
+        assets[row["name"]] = body
+    helper_path = Path(bridge["path"]).parent / "learning-exchange-host.py"
+    helper_spec = importlib.util.spec_from_file_location("_merchant_learning_exchange", helper_path)
+    exchange = importlib.util.module_from_spec(helper_spec)
+    exec(compile(assets["learning-exchange-host.py"], str(helper_path), "exec"), exchange.__dict__)
+    exchange.install_guard(core, learning)
+    original_index = raw(core.PROGRAM / "public" / "index.html", 33554432)
+    authority = document(c["sourceManifestFile"], 33554432)
+    index_rows = [row for row in authority["files"] if row["path"] == "application/public/index.html"]
+    need(len(index_rows) == 1 and len(original_index) == index_rows[0]["bytes"] and
+         sha(original_index) == index_rows[0]["sha256"], "The original console entry changed.")
+    need(original_index.count(b"</head>") == 1 and original_index.count(b"</body>") == 1,
+         "The original console entry needs its complete head and body.")
+    exchange_index = original_index.replace(b"</head>", b'<link rel="stylesheet" href="/_merchant/learning-exchange-host.css"></head>')
+    exchange_index = exchange_index.replace(b"</body>", b'<script type="module" src="/_merchant/learning-exchange-host.mjs"></script></body>')
     stop_requested = threading.Event()
     owner = {"server": None, "serving": False}
     connection_lease = writer = published = None
@@ -366,6 +393,29 @@ def main():
                             return selected
                     def do_GET(self):
                         route = urlsplit(self.path)
+                        if route.path == "/":
+                            return self.send(200, exchange_index, "text/html; charset=utf-8")
+                        if route.path.startswith("/_merchant/learning-exchange") and route.path.count("/") == 2:
+                            name = route.path.rsplit("/", 1)[-1]
+                            if name in assets and not name.endswith(".py"):
+                                kind = "text/css; charset=utf-8" if name.endswith(".css") else "text/html; charset=utf-8" if name.endswith(".html") else "text/javascript; charset=utf-8"
+                                return self.send(200, assets[name], kind)
+                        if route.path == "/_merchant/learning-exchange/receipt":
+                            try:
+                                need(self.authorized(), "Use the current original private console connection.")
+                                query = parse_qs(route.query)
+                                need(set(query) == {"requestId"} and len(query["requestId"]) == 1 and
+                                     re.fullmatch(r"[A-Za-z0-9._:-]{1,180}", query["requestId"][0]),
+                                     "Select the original saved request.")
+                                with core.locked(root):
+                                    selected = core.state(root)
+                                    need(selected["id"] == identity["workspaceId"] and selected["name"] == identity["workspaceName"],
+                                         "The original workspace changed.")
+                                    result = {"workspaceId": selected["id"], "requestId": query["requestId"][0],
+                                              "receipt": selected["requests"].get(query["requestId"][0])}
+                                return self.send(200, core.public_json(result).encode())
+                            except Exception as error:
+                                return self.send(400, core.public_json({"error": str(error)}).encode())
                         if route.path in ("/_merchant/info", "/_merchant/state", "/_merchant/report"):
                             try:
                                 need(self.authorized(), "Use the current original private console connection.")
@@ -392,6 +442,23 @@ def main():
                         return super().do_GET()
                     def do_POST(self):
                         route = urlsplit(self.path)
+                        if route.path == "/_merchant/learning-exchange/context":
+                            try:
+                                need(self.authorized(), "Use the current original private console connection.")
+                                origin = self.headers.get("Origin")
+                                need(not origin or origin == "http://" + self.headers.get("Host", ""), "Use the original local console.")
+                                need(self.headers.get("Content-Type", "").split(";")[0] == "application/json", "Use complete JSON input.")
+                                length = int(self.headers.get("Content-Length", "0"))
+                                need(0 < length <= core.MAX_BODY * 2, "Select complete original Learning context.")
+                                body = json.loads(self.rfile.read(length))
+                                with core.locked(root):
+                                    selected = core.state(root)
+                                    need(selected["id"] == identity["workspaceId"] and selected["name"] == identity["workspaceName"],
+                                         "The original workspace changed.")
+                                    result = exchange.build_context(core, learning, root, selected, body)
+                                return self.send(200, core.public_json(result).encode())
+                            except Exception as error:
+                                return self.send(400, core.public_json({"error": str(error)}).encode())
                         if route.path != "/_merchant/receive":
                             try:
                                 need(self.authorized(), "Use the current original private console connection.")

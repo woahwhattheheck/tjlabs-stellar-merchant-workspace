@@ -123,3 +123,14 @@ Include this complete instruction in delegated assignments and the active owner-
 
 Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
 Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
+
+
+### Offline colleague review and complete Learning return
+
+The installed workbench now lets an analyst issue an existing action or whole cycle review as a self-contained offline HTML file. The complete selected source, codebook, baseline, earlier decisions, current report and all action histories travel with it. A colleague saves and reopens a full draft and returns a proposed decision. The hosted analyst compares it with the current original workspace, explicitly resolves changed context and applies it through the original request UUID and atomic native guard.
+
+The complete receiving extension includes a saved request before dispatch, canonical bundle import against the exact pending request object, a real completed write with a lost response, native receipt recovery, preserved stale work, explicit current/returned choices and whole-cycle review. It retains all four resulting requests, exact action/review additions and complete earlier history. The independent native receive also imports the entire exchange, reopens original saved results and previous full agent file IDs, then cold reopens both installed listeners.
+
+This is part of the existing Grant Analyst Installation and original Learning receiving operation. It does not create another completed-donor programme, new case source or independent writer. The public integration carries generic source only. Full original application/commission source remains privately supplied. Source publication and source composition are engineering results; they do not assert that a native receiver ran or that a producing peer viewed the outgoing product.
+
+The complete operating and receiving sources are [LEARNING_EXCHANGE.md](../../products/grant-analyst-workbench/LEARNING_EXCHANGE.md), [LEARNING_EXCHANGE_RECEIVING.md](../../products/grant-analyst-workbench/LEARNING_EXCHANGE_RECEIVING.md), [learning-exchange.mjs](../../products/grant-analyst-workbench/learning-exchange.mjs), [learning-exchange-host.py](../../products/grant-analyst-workbench/learning-exchange-host.py), [learning-exchange-receiving.mjs](../../products/grant-analyst-workbench/learning-exchange-receiving.mjs) and [learning-exchange-browser.mjs](../../products/grant-analyst-workbench/learning-exchange-browser.mjs). The Installation profile records the exact source blob witnesses and the product contribution selects every offline asset and guide.
