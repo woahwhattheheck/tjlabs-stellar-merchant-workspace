@@ -1,6 +1,7 @@
 // MIT. Load the original maintained companion and source index into the shared reader.
 import {SOURCE_INDEX_SCHEMA,MAX_SOURCE_BYTES,parseCompanionMarkdown,companionReaderMarkup,activateCompanionReader} from './grant-companion-core.mjs';
 import {createCompanionEditionModel} from './grant-companion-editions.mjs';
+import {createCompanionReturnModel} from './grant-companion-returns.mjs';
 import {mountCompanionReadingWorkspace,offlineCompanionReadingWorkspace} from './grant-companion-reading.mjs';
 
 const reader=document.getElementById('companion-reader');
@@ -31,7 +32,7 @@ function save(body,name,type){const url=URL.createObjectURL(new Blob([body],{typ
 let activeReading=null;
 async function open(){
   reader.setAttribute('aria-busy','true');
-  const source=await sourceEdition(),api=createCompanionEditionModel({parseMarkdown:parseCompanionMarkdown}),key='scf-companion-reading:maintained-application';
+  const source=await sourceEdition(),api=createCompanionReturnModel({editions:createCompanionEditionModel({parseMarkdown:parseCompanionMarkdown})}),key='scf-companion-reading:maintained-application';
   let initial=null,warning='';
   try{const saved=localStorage.getItem(key);if(saved)initial=await api.reopen(saved);}catch(error){warning='The saved browser copy could not reopen; the current published source is selected. '+error.message;}
   activeReading?.destroy();
@@ -40,9 +41,9 @@ async function open(){
     initialSource:source,initialWorkspace:initial,origin:new URL('./grant-data/product-and-finance.md',location.href).href,
     persist:workspace=>localStorage.setItem(key,JSON.stringify(workspace)),
     onOffline:async workspace=>{
-      const paths=['./grant-companion.css','./grant-companion-core.mjs','./grant-companion-editions.mjs','./grant-companion-reading.mjs'];
-      const [css,coreSource,editionSource,viewSource]=await Promise.all(paths.map(async path=>decode(await readBytes(path,1024*1024))));
-      const html=offlineCompanionReadingWorkspace(workspace,{css,coreSource,editionSource,viewSource,applicationUrl:new URL('./grant.html',location.href).href,submissionUrl:new URL('./grant-submission.html',location.href).href});
+      const paths=['./grant-companion.css','./grant-companion-core.mjs','./grant-companion-editions.mjs','./grant-companion-reading.mjs','./grant-companion-returns.mjs'];
+      const [css,coreSource,editionSource,viewSource,returnsSource]=await Promise.all(paths.map(async path=>decode(await readBytes(path,1024*1024))));
+      const html=offlineCompanionReadingWorkspace(workspace,{css,coreSource,editionSource,viewSource,returnsSource,applicationUrl:new URL('./grant.html',location.href).href,submissionUrl:new URL('./grant-submission.html',location.href).href});
       save(html,'scf-companion-reading-workspace.html','text/html;charset=utf-8');
     }
   });
