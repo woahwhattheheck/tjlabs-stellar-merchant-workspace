@@ -13,6 +13,16 @@ export const GRANT_MAX_LAUNCH_BYTES = 256 * 1024;
 const SOURCE = dirname(fileURLToPath(import.meta.url));
 // The reviewed release includes every original operating module and its mounted UI.
 const BOOT_FILES = [
+  'staff_access.py',
+  'staff_http.py',
+  'staff_installation.py',
+  'staff-session.mjs',
+  'staff.html',
+  'staff.mjs',
+  'staff.css',
+  'STAFF_ACCESS.md',
+  'STAFF_INSTALLATION.md',
+  'STAFF_INSTALLATION_RECEIVING.py',
   '../budget.py',
   'cli.py',
   'server.py',

@@ -269,3 +269,12 @@ Every saved edition reopens its original decisions and comparison alongside the 
 **Delivery operations → Supplier accounts** brings the selected contributor or supplier, original work, invoice lines, review states, source documents and observed payments/refunds into one account. Operators can record and edit original supplier/work/invoice data, attach documents, retain actual cash allocations, and review opening/period/closing balances and invoice aging for selected dates.
 
 **Download complete account handover** includes the complete account JSON, all invoice/work/cash/activity CSVs, readable offline HTML and the original operating case with every retained attachment. Import that complete ZIP to reopen the same supplier and dates. The [Supplier accounts guide](PAYABLES.md) covers browser recovery, native commands, typed client, CLI, Merchant MCP and the source joins with Engagements, Statements, Ledger Intake and Budget Performance.
+
+
+## Named staff and complete installation receiving
+
+Open **Team workspace** at `/team` from the original private owner link. Enroll lead, finance, reviewer and contributor profiles against the existing case and contributor identities. Named HTTP sessions use individual cookies and a CSRF value; the original case commands record the enrolled actor. The contributor desk records original work and invoices and shows their paid, open and credit balances.
+
+[STAFF_ACCESS.md](STAFF_ACCESS.md) contains the operating workflow and role matrix. [STAFF_INSTALLATION.md](STAFF_INSTALLATION.md) covers whole-database backup, source and attachment transfer, individual SSH access and independent recovery. Both Applications launchers include the same named-staff source inventory.
+
+The full operating receiving entrypoint is `python3 STAFF_WORKFLOW_RECEIVING.py --output /absolute/private/receiving --node /absolute/path/to/node`. It operates the original local server through named staff HTTP and browser sessions, then opens the same complete installation in a separate recovered destination. Existing trusted integrations retain the original owner bearer API.
