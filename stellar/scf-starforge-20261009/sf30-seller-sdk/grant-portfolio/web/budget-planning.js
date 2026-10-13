@@ -3,7 +3,8 @@
 function GrantBudgetPlanningConsole(H) {
   const {state,node,button,field,panel,heading,table,api,response,action,runOriginal,render,notice,failure,showDialog,currentEdit,rawDetails,sourceName}=H;
   const SCHEMA="stellar-forge.grant-budget-planning.v1", DRAFT="stellar-forge.grant-budget-planning-draft.v1";
-  const U={selection:null,scenarioId:"",compareId:"",tab:"position",granularity:"month",search:"",period:"",direction:"",archived:false,offset:0,actor:"",draft:null,storageError:"",importEpoch:0};
+  const U={selection:null,scenarioId:"",compareId:"",tab:"position",granularity:"month",search:"",period:"",direction:"",archived:false,offset:0,actor:"",draft:null,storageError:"",importEpoch:0,worksheetBusy:false};
+  let worksheetCorePromise=null,worksheetConsolePromise=null;
   const META=new Set(["id","revision","createdAt","updatedAt","updatedBy","sha256","archived","archiveReason"]);
   const FIELDS={
     scenarios:["code","title","nodeId","owner","startMonth","endMonth","description","openingBalances","basedOn","reviewStatus","reviewer","reviewNote","documentIds","sourceRefs","notes"],
@@ -16,11 +17,64 @@ function GrantBudgetPlanningConsole(H) {
   const stable=x=>Array.isArray(x)?x.map(stable):x&&typeof x==="object"?Object.fromEntries(Object.keys(x).sort().map(k=>[k,stable(x[k])])):x;
   const equal=(a,b)=>JSON.stringify(stable(a))===JSON.stringify(stable(b));
   const plain=x=>x!==null&&typeof x==="object"&&!Array.isArray(x);
-  const selected=()=>({portfolioId:p().id,revision:p().revision,snapshot:p().snapshot,planningRevision:model()?.revision||0});
+  const selected=()=>({portfolioId:p().id,revision:p().revision,snapshot:p().snapshot,planningRevision:model()?.revision||0,...(p().definition.programme?{programmeRevision:p().definition.programme.revision}:{})});
   const key=()=>p()?"grant-budget-draft:"+state().state.workspaceId+":"+p().id:null;
   const same=(a,b)=>a&&b&&a.portfolioId===b.portfolioId&&a.revision===b.revision&&a.snapshot===b.snapshot&&a.planningRevision===b.planningRevision;
-  const editable=()=>currentEdit()&&!state().pending;
+  const editable=()=>currentEdit()&&!state().pending&&!U.worksheetBusy;
   const query=x=>new URLSearchParams({portfolioId:p().id,revision:p().revision,...x});
+  function worksheetCore(){
+    if(!worksheetCorePromise)worksheetCorePromise=import("/budget-worksheet-core.mjs").catch(error=>{worksheetCorePromise=null;throw error;});
+    return worksheetCorePromise;
+  }
+  function worksheetContext(){
+    return {workspaceId:state().state.workspaceId,...selected(),programmeRevision:p().definition.programme.revision,actor:U.actor,
+      scenarios:activeRows("scenarios"),lines:activeRows("lines"),originalScenarios:clone(rows("scenarios")),originalLines:clone(rows("lines")),
+      programme:clone(p().definition.programme.records),draft:U.draft?clone(U.draft):null};
+  }
+  function unchangedDraft(basis,draft,workspaceId){
+    if(!p()||!same(basis,selected())||state().state.workspaceId!==workspaceId||!equal(U.draft,draft))
+      throw Error("The selected portfolio or complete draft changed while the worksheet was being prepared. Current work is preserved; reopen its review.");
+  }
+  async function validateWorksheetDraft(draft,original=null){
+    if(!draft.worksheetDocuments?.length)return null;
+    const core=await worksheetCore();await core.verifyWorksheetDocuments(draft);
+    const programme=core.worksheetProgramme(draft);
+    if(draft.operation&&!equal(draft.operation.payload.programme,programme))throw Error("The retained original save differs from its complete worksheet documents.");
+    if(original){
+      if(original.definition.programme?.revision!==draft.basis.programmeRevision)throw Error("The worksheet draft differs from its original program revision.");
+      const records=original.definition.programme.records;
+      for(const document of draft.worksheetDocuments){
+        if(records.documents.some(r=>r.id===document.documentId)||!records.nodes.some(r=>r.id===document.nodeId&&!r.archived))
+          throw Error("The worksheet source document collides with an existing document or lacks its original active program scope.");
+      }
+    }
+    return core;
+  }
+  async function commitWorksheetDraft(value,{basis,expectedDraft}={}){
+    if(!editable())throw Error("Complete the current portfolio operation before applying this worksheet.");
+    const workspaceId=state().state.workspaceId;
+    unchangedDraft(basis,expectedDraft,workspaceId);
+    const next=validateDraft(value),original=p();
+    if(!same(next.basis,basis))throw Error("The prepared worksheet draft selects another saved portfolio.");
+    await validateWorksheetDraft(next,original);
+    unchangedDraft(basis,expectedDraft,workspaceId);
+    if(!editable())throw Error("The original portfolio started another operation while this worksheet was opening.");
+    U.draft=next;U.actor=next.actor;++U.importEpoch;persist();
+  }
+  async function openWorksheet(scenarioId){
+    if(!editable()||U.draft?.operation)throw Error("Receive the original pending save before opening a budget worksheet.");
+    const basis=selected(),workspaceId=state().state.workspaceId;
+    if(!worksheetConsolePromise)worksheetConsolePromise=import("/budget-worksheet.js").then(module=>module.createBudgetWorksheet({
+      node,button,field,panel,table,rawDetails,showDialog,notice,failure,api,getContext:worksheetContext,commitDraft:commitWorksheetDraft,render,editable
+    })).catch(error=>{worksheetConsolePromise=null;throw error;});
+    const controller=await worksheetConsolePromise;
+    if(!p()||!same(basis,selected())||state().state.workspaceId!==workspaceId)throw Error("The selected portfolio changed. Open its current worksheet.");
+    return controller.open(scenarioId);
+  }
+  function retainOriginalDraft(storageKey,draft){
+    try{localStorage.setItem(storageKey,JSON.stringify(draft));if(key()===storageKey)U.storageError="";}
+    catch{if(key()===storageKey)U.storageError="This browser could not retain the original draft. Download its complete JSON before leaving.";}
+  }
   function exact(o,allowed,label){if(!plain(o)||Object.keys(o).some(k=>!allowed.includes(k)))throw Error("Use the complete "+label+" with its original field names.");}
   function decimal(value,optional=false){
     if(value===""&&optional)return null;
@@ -80,10 +134,11 @@ function GrantBudgetPlanningConsole(H) {
     draft.recordBases[c+":"+r.id]={revision:original.revision,sha256:original.sha256};persist();
   }
   function validateDraft(v){
-    exact(v,["schema","basis","actor","changes","archive","recordBases","createdAt","operation"],"planning draft");
+    exact(v,["schema","basis","actor","changes","archive","recordBases","createdAt","operation","worksheetDocuments"],"planning draft");
     if(v.schema!==DRAFT||!plain(v.basis)||!Array.isArray(v.changes)||!Array.isArray(v.archive)||!plain(v.recordBases)||
        typeof v.actor!=="string"||v.changes.length+v.archive.length>2000)throw Error("Select one complete planning draft with at most 2,000 changes.");
-    exact(v.basis,["portfolioId","revision","snapshot","planningRevision"],"draft basis");
+    exact(v.basis,["portfolioId","revision","snapshot","planningRevision","programmeRevision"],"draft basis");
+    if(v.basis.programmeRevision!==undefined&&(!Number.isSafeInteger(v.basis.programmeRevision)||v.basis.programmeRevision<0))throw Error("Retain the original program revision.");
     if(!/^[0-9a-f-]{36}$/.test(v.basis.portfolioId||"")||!Number.isSafeInteger(v.basis.revision)||v.basis.revision<1||
        !Number.isSafeInteger(v.basis.planningRevision)||v.basis.planningRevision<0||!/^[0-9a-f]{64}$/.test(v.basis.snapshot||""))throw Error("The draft has no complete saved portfolio basis.");
     const ids=new Set();
@@ -97,12 +152,37 @@ function GrantBudgetPlanningConsole(H) {
       if(item.expectedRevision===0){if(basis!==null)throw Error("A new record must retain its empty prior basis.");}
       else if(!plain(basis)||basis.revision!==item.expectedRevision||!/^[0-9a-f]{64}$/.test(basis.sha256||""))throw Error("The original record hash is missing from this draft.");
     }
+    if(v.worksheetDocuments!==undefined){
+      if(!Array.isArray(v.worksheetDocuments)||v.worksheetDocuments.length>2000)throw Error("Retain the complete worksheet source document list.");
+      if(v.worksheetDocuments.length&&(!Number.isSafeInteger(v.basis.programmeRevision)||v.basis.programmeRevision<1))throw Error("Worksheet sources require their original saved program revision.");
+      const documents=new Set();
+      for(const d of v.worksheetDocuments){
+        exact(d,["documentId","nodeId","title","createdAt","source","object"],"worksheet source document");
+        if(!/^[0-9a-f-]{36}$/.test(d.documentId||"")||!/^[0-9a-f-]{36}$/.test(d.nodeId||"")||documents.has(d.documentId)||
+          typeof d.title!=="string"||!d.title.trim()||d.title.length>240||typeof d.createdAt!=="string"||!Number.isFinite(Date.parse(d.createdAt)))
+          throw Error("Retain distinct worksheet documents with their full original title, scope and preparation time.");
+        documents.add(d.documentId);exact(d.source,["filename","content","bytes","sha256"],"complete worksheet source");
+        if(typeof d.source.content!=="string"||!Number.isSafeInteger(d.source.bytes)||d.source.bytes<1||d.source.bytes>12*1024*1024||
+          new TextEncoder().encode(d.source.content).length!==d.source.bytes||!/^[0-9a-f]{64}$/.test(d.source.sha256||"")||
+          !/^[A-Za-z0-9][A-Za-z0-9._-]{0,199}$/.test(d.source.filename||""))throw Error("Keep the full original worksheet source and its exact file identity.");
+        if(d.object!==null){
+          exact(d.object,["sha256","bytes","filename","contentType"],"uploaded worksheet source");
+          if(d.object.sha256!==d.source.sha256||d.object.bytes!==d.source.bytes||d.object.filename!==d.source.filename||d.object.contentType!=="application/json")
+            throw Error("The uploaded worksheet descriptor differs from its retained source.");
+        }
+      }
+      if(new TextEncoder().encode(JSON.stringify(v)).length>16*1024*1024)throw Error("The complete draft exceeds 16 MiB.");
+    }
     if(v.operation){
       exact(v.operation,["operationId","action","payload"],"saved operation");
       if(v.operation.action!=="portfolio.save"||!plain(v.operation.payload)||v.operation.payload.id!==v.basis.portfolioId||
          !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(v.operation.operationId||""))throw Error("The retained operation belongs to another portfolio.");
       const payload=v.operation.payload;
-      exact(payload,["id","expectedPortfolioRevision","name","notes","sources","review","planning"],"retained planning save");
+      exact(payload,["id","expectedPortfolioRevision","name","notes","sources","review","planning","programme"],"retained planning save");
+      if(v.worksheetDocuments?.length){
+        if(v.worksheetDocuments.some(d=>!d.object)||!plain(payload.programme)||payload.programme.actor!==v.actor||payload.programme.expectedProgrammeRevision!==v.basis.programmeRevision)
+          throw Error("The retained worksheet save needs its complete uploaded source documents and original program basis.");
+      }else if(payload.programme!==undefined)throw Error("This planning draft contains an unrelated program change.");
       if(payload.expectedPortfolioRevision!==v.basis.revision||!equal(payload.planning,{schema:SCHEMA,actor:v.actor,expectedPlanningRevision:v.basis.planningRevision,changes:v.changes,archive:v.archive}))
         throw Error("The retained operation differs from the complete planning draft.");
     }
@@ -268,51 +348,73 @@ function GrantBudgetPlanningConsole(H) {
       button("Open complete saved edition",()=>showDialog("Record revision "+r.record.revision,[rawDetails("Original saved edition",r),button("Download original edition",()=>downloadLocal(r,"budget-record-"+r.record.id+"-r"+r.record.revision+".json"))]))
     ])),button("Download complete history",()=>downloadLocal(result,"budget-history-"+row.id+".json"))]);
   }
-  function draftPayload(draft=U.draft){
+  function draftPayload(draft=U.draft,core=null){
     const def=p().definition;
     return {id:p().id,expectedPortfolioRevision:draft.basis.revision,name:def.name,notes:def.notes,sources:def.sources,review:def.review,
-      planning:{schema:SCHEMA,actor:draft.actor,expectedPlanningRevision:draft.basis.planningRevision,changes:draft.changes,archive:draft.archive}};
+      planning:{schema:SCHEMA,actor:draft.actor,expectedPlanningRevision:draft.basis.planningRevision,changes:draft.changes,archive:draft.archive},
+      ...(draft.worksheetDocuments?.length?{programme:core.worksheetProgramme(draft)}:{})};
   }
   async function saveDraft(){
-    const draft=ensureDraft();draft.actor=U.actor;
+    let draft=ensureDraft();draft.actor=U.actor;
     if(!draft.actor.trim())throw Error("Enter the person recording this planning revision.");
     if(!draft.changes.length&&!draft.archive.length)throw Error("Stage at least one record change.");
     if(draft.changes.length+draft.archive.length>2000)throw Error("A save accepts up to 2,000 changes. Keep the full draft and save explicit batches.");
-    const payload=draftPayload(draft),bytes=new TextEncoder().encode(JSON.stringify({operationId:"grant-"+crypto.randomUUID(),action:"portfolio.save",payload})).length;
-    if(bytes>1024*1024)throw Error("This full operation is "+bytes+" bytes, beyond the original 1 MiB save limit. Download the complete draft and use smaller explicit batches.");
-    const originalKey=key();persist();
+    validateDraft(draft);const basis=selected(),workspaceId=state().state.workspaceId,originalKey=key(),original=p();
+    let expected=clone(draft),dispatched=false;U.worksheetBusy=true;persist();
     try{
-      const pending=action("portfolio.save",payload);
-      if(state().pending){draft.operation=clone(state().pending);U.draft=draft;persist();}
+      const core=await validateWorksheetDraft(draft,original);unchangedDraft(basis,expected,workspaceId);
+      for(let index=0;index<(draft.worksheetDocuments?.length||0);index++){
+        const document=draft.worksheetDocuments[index];if(document.object)continue;
+        const uploaded=await api("/api/programme/upload",{method:"POST",headers:{"Content-Type":"application/octet-stream","X-Content-SHA256":document.source.sha256},body:new Blob([document.source.content],{type:"application/json"})});
+        unchangedDraft(basis,expected,workspaceId);
+        if(uploaded.sha256!==document.source.sha256||uploaded.bytes!==document.source.bytes)throw Error("The uploaded worksheet source differs from the complete original file.");
+        draft=clone(draft);draft.worksheetDocuments[index].object={sha256:uploaded.sha256,bytes:uploaded.bytes,filename:document.source.filename,contentType:"application/json"};
+        U.draft=draft;expected=clone(draft);persist();
+      }
+      unchangedDraft(basis,expected,workspaceId);
+      if(!currentEdit()||state().pending)throw Error("The portfolio started another operation. Keep this complete draft and receive that operation first.");
+      const payload=draftPayload(draft,core),bytes=new TextEncoder().encode(JSON.stringify({operationId:"grant-"+crypto.randomUUID(),action:"portfolio.save",payload})).length;
+      if(bytes>1024*1024)throw Error("This full operation is "+bytes+" bytes, beyond the original 1 MiB save limit. Download the complete draft and use smaller explicit batches.");
+      draft.operation={operationId:"grant-"+crypto.randomUUID(),action:"portfolio.save",payload};
+      U.draft=draft;persist();
+      const pending=runOriginal(clone(draft.operation));dispatched=true;
       await pending;
-      if(originalKey)try{localStorage.removeItem(originalKey);}catch{}U.draft=null;
-      notice("The complete planning revision is saved. Review its native budget and cash summaries.");await render();
-    }catch(error){U.draft=draft;persist();throw error;}
+      if(originalKey)try{localStorage.removeItem(originalKey);}catch{}
+      if(key()===originalKey)U.draft=null;
+      notice("The complete planning revision and original worksheet documents are saved. Review its native budget and cash summaries.");await render();
+    }catch(error){
+      if(dispatched){retainOriginalDraft(originalKey,draft);if(key()===originalKey)U.draft=draft;}
+      throw error;
+    }finally{U.worksheetBusy=false;render().catch(failure);}
   }
   async function receiveDraft(){
+    if(U.worksheetBusy)throw Error("The original planning draft is already retaining or receiving its source.");
     const draft=U.draft,op=draft?.operation;if(!op)throw Error("There is no retained planning operation.");
     if(state().pending&&state().pending.operationId!==op.operationId)throw Error("Complete the other pending portfolio operation first.");
-    validateDraft(draft);
-    const original=same(draft.basis,selected())?p():await api("/api/portfolio?"+new URLSearchParams({id:draft.basis.portfolioId,revision:draft.basis.revision}));
-    if(original.snapshot!==draft.basis.snapshot||["name","notes","sources","review"].some(k=>!equal(op.payload[k],original.definition[k])))
-      throw Error("The retained planning save differs from its original portfolio definition.");
-    let status;
-    try{status=await api("/api/request?id="+encodeURIComponent(op.operationId));}
-    catch(error){
-      if(error.code!=="NOT_FOUND")throw error;
-      const originalKey=key();await runOriginal(op);
-      if(originalKey)try{localStorage.removeItem(originalKey);}catch{}
-      U.draft=null;await render();return;
-    }
-    if(status.id!==op.operationId)throw Error("The workspace returned another operation.");
-    if(status.state==="FAILED"){
-      const form=node("div");form.append(node("p",status.error?.message||"The original save failed."),rawDetails("Complete original operation result",status));
-      form.append(button("Keep changes for current-revision review",()=>{
-        if(state().pending?.operationId===op.operationId)state().pending=null;
-        delete U.draft.operation;persist();document.querySelector("#detail-dialog").close();render().catch(failure);
-      }));showDialog("Review the failed save",[form]);return;
-    }
-    const originalKey=key();await runOriginal(op);if(originalKey)try{localStorage.removeItem(originalKey);}catch{}U.draft=null;await render();
+    validateDraft(draft);const basis=selected(),expected=clone(draft),workspaceId=state().state.workspaceId,originalKey=key();
+    const ready=()=>{unchangedDraft(basis,expected,workspaceId);if(state().pending&&state().pending.operationId!==op.operationId)throw Error("Complete the other original portfolio operation first.");};
+    const finish=async()=>{ready();await runOriginal(op);if(originalKey)try{localStorage.removeItem(originalKey);}catch{}if(key()===originalKey)U.draft=null;};
+    U.worksheetBusy=true;
+    try{
+      const original=same(draft.basis,selected())?p():await api("/api/portfolio?"+new URLSearchParams({id:draft.basis.portfolioId,revision:draft.basis.revision}));
+      ready();
+      if(original.snapshot!==draft.basis.snapshot||["name","notes","sources","review"].some(k=>!equal(op.payload[k],original.definition[k])))
+        throw Error("The retained planning save differs from its original portfolio definition.");
+      await validateWorksheetDraft(draft,original);ready();
+      let status;
+      try{status=await api("/api/request?id="+encodeURIComponent(op.operationId));}
+      catch(error){if(error.code!=="NOT_FOUND")throw error;await finish();return;}
+      ready();if(status.id!==op.operationId)throw Error("The workspace returned another operation.");
+      if(status.state==="FAILED"){
+        const form=node("div");form.append(node("p",status.error?.message||"The original save failed."),rawDetails("Complete original operation result",status));
+        form.append(button("Keep changes for current-revision review",()=>{
+          if(U.worksheetBusy)throw Error("Complete the active planning source operation first.");
+          ready();if(state().pending?.operationId===op.operationId)state().pending=null;
+          delete U.draft.operation;persist();document.querySelector("#detail-dialog").close();render().catch(failure);
+        }));showDialog("Review the failed save",[form]);return;
+      }
+      await finish();
+    }finally{U.worksheetBusy=false;render().catch(failure);}
   }
   function rebaseDraft(){
     if(!U.draft||U.draft.operation)throw Error("Receive the original save before reviewing the draft basis.");
@@ -324,13 +426,19 @@ function GrantBudgetPlanningConsole(H) {
       if(base?(!r||r.revision!==base.revision||r.sha256!==base.sha256||r.archived):!!r)conflicts.push({collection:item.collection,id:item.id,prior:base,current:r||null});
     }
     if(conflicts.length){showDialog("Review changed original records",[node("p","These records changed after this draft was prepared. Download the full draft, reopen the current records, and compose the changes explicitly."),table(["Register","Record","Current revision"],conflicts.map(c=>[c.collection,title(c.current),c.current?.revision||"Missing"])),rawDetails("Complete conflicts",conflicts),button("Download complete draft",()=>downloadLocal(U.draft,"budget-planning-draft.json"))]);return;}
+    for(const document of U.draft.worksheetDocuments||[]){
+      if(prows("documents").some(r=>r.id===document.documentId)||!prows("nodes").some(r=>r.id===document.nodeId&&!r.archived))
+        throw Error("Retain the complete worksheet draft and review its source document ID and current program scope before rebasing.");
+    }
     U.draft.basis=selected();persist();notice("The original affected records are unchanged. The draft now selects this current portfolio revision; native scope and references are checked again on save.");render().catch(failure);
   }
   function draftPanel(container){
     const section=panel("Working draft","Stage related changes, review the complete change set, then save one original portfolio operation.");
-    const actor=field("Recorded by","text",U.actor);actor.input.disabled=!!U.draft?.operation;actor.input.addEventListener("input",()=>{U.actor=actor.input.value;if(U.draft){U.draft.actor=U.actor;persist();}});section.append(actor.wrapper);
+    const actor=field("Recorded by","text",U.actor);actor.input.disabled=!!U.draft?.operation||U.worksheetBusy;actor.input.addEventListener("input",()=>{if(U.worksheetBusy||U.draft?.operation){actor.input.value=U.actor;return;}U.actor=actor.input.value;if(U.draft){U.draft.actor=U.actor;persist();}});section.append(actor.wrapper);
     const d=U.draft,count=(d?.changes.length||0)+(d?.archive.length||0),actions=node("div",null,"actions");
     if(d){section.append(node("p",count+" staged changes · based on portfolio revision "+d.basis.revision+" and planning revision "+d.basis.planningRevision,"small"));
+      if(d.worksheetDocuments?.length)section.append(node("p",d.worksheetDocuments.length+" complete original worksheet source documents will accompany this planning revision.","small"));
+      if(U.worksheetBusy)section.append(node("p","Retaining the complete source or receiving the original save. Current draft changes remain together.","small"));
       if(!same(d.basis,selected()))section.append(node("p","This draft was prepared against a different saved revision. Review the original affected records before continuing.","coverage"));
       actions.append(button("Review all staged changes",()=>showDialog("Complete planning draft",[
         table(["Register","Record","Change","Original revision"],[...d.changes.map(r=>[r.collection,title(find(r.collection,r.id)),Object.keys(r.fields).join(", "),r.expectedRevision]),...d.archive.map(r=>[r.collection,r.id,"Archive: "+r.reason,r.expectedRevision])]),
@@ -342,7 +450,7 @@ function GrantBudgetPlanningConsole(H) {
         actions.append(button("Clear this browser draft",()=>showDialog("Clear unsaved draft",[
           node("p","Download the complete draft first if you want to keep these unsaved changes."),
           button("Download draft",()=>downloadLocal(U.draft,"budget-planning-draft.json")),
-          button("Clear unsaved changes",()=>{U.draft=null;persist();document.querySelector("#detail-dialog").close();render().catch(failure);})
+          button("Clear unsaved changes",()=>{if(U.worksheetBusy)throw Error("Complete the active planning source operation before clearing its draft.");U.draft=null;persist();document.querySelector("#detail-dialog").close();render().catch(failure);})
         ])));
       }
     }else section.append(node("p","No unsaved planning changes.","small"));
@@ -351,11 +459,15 @@ function GrantBudgetPlanningConsole(H) {
       const file=incoming.input.files[0],generation=++U.importEpoch,basis=selected();incoming.input.value="";
       if(!file)return;
       try{
+        if(U.worksheetBusy)throw Error("Complete the active planning source operation before receiving another draft.");
         if(U.draft)throw Error("Download and clear the current draft before receiving another complete draft.");
         if(file.size>16*1024*1024)throw Error("The complete draft exceeds 16 MiB.");
         const text=await file.text();if(generation!==U.importEpoch||!same(basis,selected()))return;
         if(U.draft)throw Error("A working draft was created while this file was opening. Its changes are preserved; download and clear it before receiving another draft.");
         const received=validateDraft(JSON.parse(text));if(received.basis.portfolioId!==p().id)throw Error("Open this draft's original portfolio first.");
+        const workspaceId=state().state.workspaceId;await validateWorksheetDraft(received);
+        if(generation!==U.importEpoch||!same(basis,selected())||state().state.workspaceId!==workspaceId)return;
+        if(U.draft||U.worksheetBusy)throw Error("The current draft changed while its worksheet sources were opening. Current changes are preserved.");
         U.draft=received;U.actor=received.actor;persist();await render();
       }catch(e){failure(e);}
     });
@@ -476,6 +588,7 @@ function GrantBudgetPlanningConsole(H) {
     if(editable())bar.append(button("Add scenario",()=>editor("scenarios"),"primary"));
     container.append(bar);draftPanel(container);
     const current=find("scenarios",U.scenarioId);
+    if(current?.revision&&!current.archived){const worksheet=button("Budget worksheet",()=>openWorksheet(current.id));worksheet.disabled=!editable()||!!U.draft?.operation;bar.append(worksheet);}
     if(U.tab==="scenarios"){scenariosView(container);return;}
     if(!current){container.append(node("p","Add or select a scenario, then enter its full horizon and budget lines.","empty"));return;}
     const summary=panel(title(current),current.startMonth+" to "+current.endMonth+" · "+current.owner);
