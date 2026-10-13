@@ -1,0 +1,19 @@
+{
+  "schema": "stellar-forge.distribution-source-selection.v1",
+  "id": "bank-accountant-receiving",
+  "title": "Bank accountant receiving",
+  "description": "Complete original Bank close and customer-document receiving, source-bound private review, close comparison and offline handover.",
+  "base": {
+    "commands": [],
+    "exports": []
+  },
+  "contributions": [
+    "bank-accountant-receiving"
+  ],
+  "components": [
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving"
+  ],
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/EXERCISE.mjs"
+  ]
+}

@@ -1,9 +1,37 @@
 # Complete installed grant portfolio receiving
 
-This runs the original Comic Relief portfolio journey from the READY standalone package,
-then prepares both resulting customer workspaces as installed products.
+Receive the selected complete application into the original customer workflow. The
+maintained source roster is
+[`source-files.json`](../../stellar/scf-starforge-20261009/sf30-seller-sdk/grant-portfolio/source-files.json);
+the installed product checks every declared member against its selected runtime
+manifest. Preserve the complete returned source selection when a following release
+adds programme, award, staff, deployment or support files.
 
-## Select the original inputs
+## Select the original operating course
+
+Use the existing course for the customer work being delivered. Each one uses the
+original portfolio workspace, saved operation identities and full native source;
+their actual inputs and resulting workspace IDs remain part of that delivery.
+
+| Course | Original maintained source and task |
+| --- | --- |
+| Publisher reconciliation and installed console recovery | The Comic Relief source intake and installed product journey below. It receives original editions, reviews the portfolio, delivers two received customer workspaces and reopens the same console after interruption. |
+| Programme delivery | [Programme receiving](../../stellar/scf-starforge-20261009/sf30-seller-sdk/grant-portfolio/examples/spc/PROGRAMME_RECEIVING.md), its original input and maintained driver. It carries programme records, source bindings, documents, corrections, submitted reports, archive, complete export, receive and historical reopening. |
+| Applications and awards | [Awards receiving](../../stellar/scf-starforge-20261009/sf30-seller-sdk/grant-portfolio/examples/awards/AWARDS_RECEIVING.md), its original input and maintained driver. Use the actual selected funding process and complete recorded application-to-monitoring course. |
+| Staff and native deployment | [Staff operations](../../stellar/scf-starforge-20261009/sf30-seller-sdk/grant-portfolio/STAFF_OPERATIONS.md) and [Dataverse receiving](../../stellar/scf-starforge-20261009/sf30-seller-sdk/grant-portfolio/DATAVERSE_RECEIVING.md). Keep selected identity/policy, target configuration, managed/unmanaged solution exports and actual native results together. |
+| Continuing support | [Support](../../stellar/scf-starforge-20261009/sf30-seller-sdk/grant-portfolio/SUPPORT.md). Continue the original implementation, retained corrections and complete related handover. |
+
+For a commissioned implementation, select the applicable original courses with the
+same receiving owner and actual customer inputs. Retain already completed stages and
+their output files when a later course joins the same project. A source release,
+an admitted native operation and its completed result are separate saved items; use
+the actual returned result to identify what the recipient can open and continue.
+
+The Comic Relief workflow below remains the original publisher/installed-product
+course. Its source-only tables and customer inputs stay intact as the broader
+application grows.
+
+## Select the original publisher inputs
 
 Use the [original source-input recipe](../../stellar/scf-starforge-20261009/sf30-seller-sdk/grant-portfolio/examples/comic-relief/SOURCE_INPUTS.md)
 and its maintained materializer, preparation and native-input commands. The complete
@@ -97,3 +125,46 @@ starforge grant-portfolio-workspace open \
 The customer can inspect every portfolio revision and original source, continue review,
 export another complete handoff and reopen through Applications. Read the actual returned
 file descriptors and phase results for the run's source, counts and file identities.
+
+## Preserve the complete application history
+
+A portfolio export enumerates each retained revision's actual table list. Source-only
+revisions keep their original tables; programme and award revisions add their own
+registers, positions and calculation rows. Original uploaded document bytes remain
+available throughout history, including replaced and archived editions.
+
+Receive the complete portfolio with its original receiver before preparing the received
+native workspace as an installed product. Retain the resulting native workspace ID,
+portfolio ID, revision and snapshot returned by that operation. Use those actual
+recipient values for a following edit and onward export.
+
+Application CSV/JSON exchange is useful for the selected application records, while
+the original complete portfolio archive carries the source packets, uploaded evidence
+and complete register history. For a CSV intake, preserve the original uploaded CSV,
+explicit mapping, selected round edition and stable application/partner/project IDs
+alongside the saved import. The original browser intake and portable exchange use the
+same full saved portfolio action.
+
+For native deployments, select the complete Dataverse delivery. It retains the related
+portfolio, managed and unmanaged solution packages, actual target observations and
+original native requests/results. Its receiving action reconstructs those histories
+through the ordinary Workspace. A support handover can carry that original native
+archive together with the continuing implementation's support work.
+
+## Continue a retained operation
+
+Use the same input files, source selection, directory and original operation ID to
+continue a saved receiving course. Read its original request and retained phase outputs
+before restarting an unfinished step. Keep pending or uncertain provider operations
+associated with their original native identities.
+
+When the source release changes, follow [Operating → Upgrade the application around
+the same workspace](OPERATING.md#8-upgrade-the-application-around-the-same-workspace).
+A new installed source selection does not require a new customer case. Close the
+owned console, select the reviewed release and reopen the same saved workspace through
+the original managed Applications flow or a newly prepared standalone product.
+
+Give the receiving operator the complete source/release selection, original source
+files and their descriptors, actual resulting workspace and portfolio identities, the
+saved operation results, and the editable full handover. The recipient can then read
+historical records, perform its next ordinary work and export that continued history.

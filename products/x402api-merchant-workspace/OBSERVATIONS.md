@@ -25,7 +25,10 @@ digest for the complete reviewed input family.
 Read the endpoint with the same bearer token used by the operator API. The
 existing origin checks, duplicate-header checks, no-query rule, response
 `no-store` policy and shutdown draining remain in force. The endpoint accepts
-GET at its exact path; it has no write or payment action.
+GET at its exact path; it has no write or payment action. Saved-project review
+mode returns `MERCHANT_OBSERVATIONS_LIVE_REQUIRED` (409). Activate the original
+application before collecting live observations; reopening an archive for review
+does not turn its saved business state into a fresh live signal.
 
 For example, from the operator's private environment:
 
