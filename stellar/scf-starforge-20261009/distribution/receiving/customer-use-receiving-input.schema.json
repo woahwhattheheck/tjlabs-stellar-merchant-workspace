@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "stellar-forge.product-collections-receiving.customer-use-input.v1",
+  "title": "Original Calendar customer-use receiving selection",
+  "description": "Required customerUse extension to the existing complete product receiving input. Contains no actual customer selections; the original operator supplies full native files and IDs. The native receiver also checks every original base input field and file binding.",
+  "type": "object",
+  "required": [
+    "schema",
+    "operationId",
+    "customerUse"
+  ],
+  "properties": {
+    "schema": {
+      "const": "stellar-forge.product-collections-receiving.v1"
+    },
+    "operationId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "customerUse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "calendar",
+        "commissionFiles",
+        "actor",
+        "expectedHeadSha256",
+        "requestIds",
+        "buyerReturn"
+      ],
+      "properties": {
+        "calendar": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "bytes",
+            "sha256"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 2,
+              "description": "Actual absolute canonical private file path."
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 33554432
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        "commissionFiles": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "bytes",
+              "sha256"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 2,
+                "description": "Actual absolute canonical private file path."
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 2097152
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          }
+        },
+        "actor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "expectedHeadSha256": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          ]
+        },
+        "requestIds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "save",
+            "prepare",
+            "create",
+            "capture"
+          ],
+          "properties": {
+            "save": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+              }
+            },
+            "prepare": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+              }
+            },
+            "create": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+              }
+            },
+            "capture": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+            }
+          }
+        },
+        "buyerReturn": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "bindingIds",
+            "maxVerifyBytes",
+            "requireSavedResponses"
+          ],
+          "properties": {
+            "bindingIds": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 2000,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$"
+              }
+            },
+            "maxVerifyBytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1073741824
+            },
+            "requireSavedResponses": {
+              "const": true
+            }
+          }
+        }
+      }
+    }
+  }
+}
