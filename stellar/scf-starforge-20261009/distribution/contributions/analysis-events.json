@@ -35,13 +35,19 @@
     "./buyer/mcp/analysis-events-workbook": {
       "types": "./source/stellar-forge/mcp-paid-agent/native-analysis-events-workbook.d.mts",
       "import": "./source/stellar-forge/mcp-paid-agent/native-analysis-events-workbook.mjs"
-    }
+    },
+    "./buyer/event-workbook-colleague-course": "./source/products/webhook-feed/receiving/workbook-colleague-review.mjs",
+    "./buyer/event-workbook-colleague-browser": "./source/products/webhook-feed/receiving/workbook-colleague-browser.mjs"
   },
   "supportFiles": [
     "stellar-forge/mcp-paid-agent/ANALYSIS_EVENTS.md",
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/webhook-event-analysis.json",
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/WEBHOOK_EVENT_ANALYSIS.md",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_WORKBOOK_COLUMNS.md",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-editor.js"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-editor.js",
+    "products/webhook-feed/receiving/workbook-colleague-review.mjs",
+    "products/webhook-feed/receiving/WORKBOOK_COLLEAGUE_REVIEW.md",
+    "products/webhook-feed/receiving/workbook-colleague-browser.mjs",
+    "products/webhook-feed/receiving/WORKBOOK_COLLEAGUE_BROWSER.md"
   ]
 }

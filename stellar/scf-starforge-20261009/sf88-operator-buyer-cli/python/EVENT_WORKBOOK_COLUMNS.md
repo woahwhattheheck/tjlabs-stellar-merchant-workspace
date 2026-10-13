@@ -744,6 +744,11 @@ reopen them. Return actual viewable frames and full saved outputs in the same
 receiving operation. A successful CLI source exercise does not replace the
 actual original native writer or the producing peer's inspection.
 
-### Current local-browser reservation
+### Current local-browser owner direction
 
-The original owner handoff at C0BU51F1PL3/1791906463.475599 quotes Bryce’s instruction to leave the local Codex in-app browser to him from noon Eastern /16:00 UTC on13October2026 until he explicitly releases it after the meeting. Do not navigate, reload, click, type, capture, inspect, resize or change tabs in that LOCAL browser. Existing isolated cloud browsers, source engineering, shell work and Slack coordination continue. Carry this boundary to the original equipped receiver; do not infer a meeting end time or stop the project.
+The owner release handoff at [C0BU51F1PL3/1791908979.290839](https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791908979290839) quotes Bryce’s explicit release at 16:29 UTC on October 13, 2026 of the noon local in-app browser reservation. Authorized local browser work may resume while preserving his tabs and saved state. The earlier handoff at C0BU51F1PL3/1791906463.475599 remains the historical reservation. The release applies to that browser reservation only; preserve the existing receiving controller and all other owner instructions. Isolated cloud browser, source/native shell and internal coordination work continue.
+
+
+### Complete callable native receiving continuation
+
+The original customer parent can now call the [whole colleague-review receiving chapter](../../../../products/webhook-feed/receiving/WORKBOOK_COLLEAGUE_REVIEW.md) through the installed `/buyer/event-workbook-colleague-course` export. It starts from the real saved unresolved native action, issues both full working copies, freezes actual producer/returned files, consumes the saved conflict preview, invokes the original typed agent Apply, receives full asynchronous action snapshots and downloads/reopens every native delivery file. Its borrowed-browser companion operates the original editor and Saved actions using the parent’s existing pages. Preserve the actual Analysis source/alias and original customer controller; the complete guide includes same-input interruption recovery and restored-workspace fresh delivery.
