@@ -27,6 +27,8 @@ The helper receives the H2 text already selected by the original customer parser
 | a2a-analysis-python-owner | Original Python environment and owner/shutdown wrapper |
 | a2a-merchant-workspace | Merchant workspace source and API guide |
 | a2a-original-sdk | Original selected A2A SDK source tree |
+| a2a-customer-commissioning-calendar | Prospective customer calendar and remaining adaptation |
+| a2a-customer-commissioning-job-register | Thirty distinct prospective jobs and original receiving bindings |
 | a2a-native-programme-eb203234 | The separately retained complete native programme edition |
 | a2a-source-transfer-89178 | Actual source-transfer attempt and its original terminal receipt |
 | a2a-source-population-9106f038 | Complete frozen source-packet descriptor |
@@ -35,7 +37,7 @@ The nine product source files are from the [selected installed product commit](h
 
 The chapter's historical programme link remains at its original commit. The later [programme guide](https://github.com/woahwhattheheck/commons/blob/eb203234c01bc9044f7efc7570ccefecba0efc63/operations/scf-a2a-native-analysis-0c7a-20261012/RUN_NATIVE.md), [source-transfer receipt](https://github.com/woahwhattheheck/commons/blob/eb203234c01bc9044f7efc7570ccefecba0efc63/operations/scf-a2a-native-analysis-0c7a-20261012/SOURCE_TRANSFER_RECEIPT.json), and [complete source population](https://github.com/woahwhattheheck/commons/blob/eb203234c01bc9044f7efc7570ccefecba0efc63/operations/scf-a2a-native-analysis-0c7a-20261012/SOURCE_PACKET.json) have distinct immutable source IDs.
 
-Twelve source files have verified SHA-256 and byte counts from retained complete bytes. Original Git blob IDs are included where supplied by the selected source. The SDK entry is a source tree, so it does not receive a fabricated file byte count or file hash. The chapter's older programme link is preserved as the original URL selection without borrowing the later programme's file identity.
+The original catalogue's twelve source files and the two added prospective commissioning files have verified SHA-256 and byte counts from retained complete bytes. Original Git blob IDs are included where supplied by the selected source. The SDK entry is a source tree, so it does not receive a fabricated file byte count or file hash. The chapter's older programme link is preserved as the original URL selection without borrowing the later programme's file identity.
 
 ## File identities and later source changes
 
@@ -87,3 +89,19 @@ The public source projector removes private URLs while retaining their exact rep
 Receiving used all 15 current source files. The ordinary pre-join composition established the current four-file baseline, including the latest bank and institutional-repository source receiver. After this additive join, normal composition receives 99 sources: the original 85 non-A2A entries plus 14 A2A entries. All 85 other entries and every original application/request/baseline/milestone/capacity/cash/submission value remain exact. The current application, rendered reader and complete companion remain byte-identical. A second complete composition reproduces all four output files byte-for-byte, including the enriched source index and all current module identities.
 
 `grant-a2a-receiving.json` retains the original contributor's earlier dated source receiving. The current complete composition above uses the existing command and the entire later source edition. Read the source catalogue through the current serial publisher's original reader operation.
+
+## Prospective customer commissioning calendar
+
+The complete [commissioning guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/33dfb64798f5316a586c165d4d7591de972ca4e2/stellar-forge/developer-site/A2A_CUSTOMER_COMMISSIONING.md) and [machine-readable job register](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/33dfb64798f5316a586c165d4d7591de972ca4e2/stellar-forge/developer-site/a2a-customer-commissioning.json) extend this same catalogue. Their full file hashes and Git blob identities bind those exact URLs. The current mapper, companion-navigation correction and composer's existing `a2a_projector_git_blob` remain unchanged.
+
+The calendar has thirty distinct useful jobs across an illustrative fourteen-calendar-day Monday-start window. Each of two prospective buyers has ten period extracts and five separate comparison or report tasks. Ten business days have three jobs each; actual customer dates, source periods, identities, independence, prices, payment authority, receiving people and procedure selections remain to be commissioned. M1 serves twenty complete extracts; M2 serves five complete comparison queries and five reports. Multiple file formats, retries and resubscriptions remain parts of one original task.
+
+The register separates useful tasks, priced requests, native settlements and received outputs. It records no customer outcomes. The existing $38,000, 400-hour, 150-day request, six funded packages and original adoption milestones remain intact. Completed reusable source is the starting component; remaining customer-specific adaptation belongs once to its funded package or a separate workorder.
+
+### Receive the exact application addition
+
+`A2A_APPLICATION_INSERTION.md` supplies the complete H3 for the existing chapter `## A2A analytical services: complete agent work, merchant delivery and customer receiving`. The canonical manuscript remains [the existing shared grant document](https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF). Its serial writer inserts that H3 while retaining the rest of the chapter, all concurrent chapters, nine answers and submission/review state, then uses the existing full composition command above. This source contribution does not independently replace the current manuscript or generated four-file reader.
+
+### Cumulative source receiving
+
+The earlier `grant-a2a-receiving.json` record remains intact. Its `continuations` array retains the separately dated customer-commissioning source receiving, including the exact current mapper, companion-link helper and catalogue preimages. The same twenty-eight focused checks exercise the full pure mapper/projector, exact source witnesses, immutable and changed-source recovery, later-observation preservation, all non-A2A fields and the prospective calendar arithmetic. This is source/projection receiving; the original native A2A programme and each actual customer purchase retain their separate evidence.

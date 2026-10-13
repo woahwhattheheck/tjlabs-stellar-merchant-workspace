@@ -1,9 +1,10 @@
 // MIT. Form-driven operator for the original Xero document handover controller.
 import {XeroReceivablesClient, XeroReceivablesApiError} from './client.mjs';
 import {parseXeroNativeJson} from './native-json.mjs';
+import {createCashDesk} from './cash-commissioning.mjs';
 
 const $ = id => document.getElementById(id);
-const PAGES = ['queue', 'profiles', 'prepare', 'current'];
+const PAGES = ['queue', 'profiles', 'prepare', 'current', 'cash'];
 const view = {
   data: null, page: 'queue', loadEpoch: 0, profileEpoch: 0, profileId: '', profileVersion: undefined,
   profileDirty: false, contacts: new Map(), lineMappings: [], templates: {}, templateLoading: new Set(), lineSource: null, lineEpoch: 0,
@@ -11,7 +12,7 @@ const view = {
   packageId: '', package: null, detailEpoch: 0, correctionIds: new Set(), correctionEpoch: 0, correctionPreview: null,
   returned: null, returnEpoch: 0, busy: false, pending: null, pendingKey: null,
 };
-let config, client, nativeClient;
+let config, client, nativeClient, cashDesk;
 
 function node(tag, text, attrs = {}) {
   const item = document.createElement(tag);
@@ -101,6 +102,7 @@ function syncActions() {
   $('save-profile').disabled = blocked || !view.data || view.templateLoading.size > 0;
   for (const fieldset of $('profile-form').querySelectorAll('fieldset')) fieldset.disabled = blocked;
   for (const id of ['profile-select', 'new-profile', 'reload-profile']) $(id).disabled = blocked;
+  cashDesk?.sync();
 }
 function invalidatePreview() {
   view.selectionEpoch += 1; view.preview = null; $('selection-preview').hidden = true; syncActions();
@@ -125,7 +127,8 @@ function selectPage(page, updateHash = true) {
     if (item.dataset.page === page) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current');
   }
   if (updateHash) {
-    const hash = page === 'current' && view.packageId ? 'package/' + encodeURIComponent(view.packageId) : page;
+    const hash = ['current', 'cash'].includes(page) && view.packageId ?
+      'package/' + encodeURIComponent(view.packageId) + (page === 'cash' ? '/cash' : '') : page;
     history.replaceState(null, '', '#' + hash);
   }
 }
@@ -141,7 +144,7 @@ function restorePendingIdentity() {
   if (retained) {
     try {
       const candidate = JSON.parse(retained);
-      if (['saveProfile', 'prepare', 'receive', 'correct'].includes(candidate.action) &&
+      if (['saveProfile', 'prepare', 'receive', 'correct', 'cashCapture'].includes(candidate.action) &&
           candidate.value && typeof candidate.value.requestId === 'string' &&
           Number.isSafeInteger(candidate.value.revision) && typeof candidate.value.actor === 'string') view.pending = candidate;
     } catch { /* Unreadable local state is never sent. */ }
@@ -154,6 +157,7 @@ async function loadState({savedProfileId, showSavedProfile = false} = {}) {
   const state = await client.state();
   if (epoch !== view.loadEpoch) return;
   view.data = state;
+  cashDesk?.onState();
   $('revision').textContent = 'Accounting revision ' + state.revision;
   if (!$('selection-date').value) $('selection-date').value = state.asOf;
   restorePendingIdentity();
@@ -169,7 +173,7 @@ async function sendPending() {
   view.busy = true; renderPending();
   let result;
   try {
-    result = ['receive', 'correct'].includes(pending.action) ?
+    result = ['receive', 'correct', 'cashCapture'].includes(pending.action) ?
       await client[pending.action](pending.id, pending.value) : await client[pending.action](pending.value);
   } catch (error) {
     const uncertain = !(error instanceof XeroReceivablesApiError) || error.status === 0 ||
@@ -177,7 +181,10 @@ async function sendPending() {
     if (!uncertain) { view.pending = null; savePending(); }
     view.busy = false; renderPending(); report(error);
     if (!uncertain && error.status === 409) {
-      try { await loadState(); if (view.packageId) await openPackage(view.packageId); } catch (readError) { report(readError); }
+      try {
+        await loadState(); if (view.packageId) await openPackage(view.packageId);
+        if (pending.action === 'cashCapture') { selectPage('cash'); await cashDesk.open(view.package); }
+      } catch (readError) { report(readError); }
     }
     return;
   }
@@ -191,6 +198,10 @@ async function sendPending() {
       const id = result.package?.id || result.operation?.result?.xeroPackageId || pending.id;
       if (pending.action === 'receive') clearReturnedFile();
       if (id) await openPackage(id);
+      if (pending.action === 'cashCapture') {
+        selectPage('cash');
+        await cashDesk.afterCapture(result);
+      }
     }
     notice(pending.label + ' saved at accounting revision ' + result.revision + '.', 'success');
   } catch (error) {
@@ -837,7 +848,7 @@ function bindEvents() {
     const target = event.target.closest('button');
     if (!target || target.disabled) return;
     const page = target.dataset.page || target.dataset.go;
-    if (page) { selectPage(page); return; }
+    if (page) { selectPage(page); if (page === 'cash') cashDesk.open(view.package).catch(report); return; }
     const action = target.dataset.action, value = target.dataset.value;
     if (!action) return;
     Promise.resolve().then(async () => {
@@ -852,9 +863,11 @@ function bindEvents() {
   });
   listen('refresh', 'click', async () => {
     $('refresh').disabled = true;
+    const cashOpen = view.page === 'cash';
     try {
       await loadState();
       if (view.packageId) await openPackage(view.packageId);
+      if (cashOpen) { selectPage('cash'); await cashDesk.open(view.package); }
       notice('Current accounting revision and handover outcomes refreshed.', 'success');
     } finally { $('refresh').disabled = false; }
   });
@@ -922,9 +935,10 @@ function bindEvents() {
 async function followHash() {
   const raw = location.hash.slice(1);
   if (raw.startsWith('package/')) {
-    let id;
-    try { id = decodeURIComponent(raw.slice(8)); } catch { throw new Error('The package link is malformed.'); }
+    let id; const cash = raw.endsWith('/cash');
+    try { id = decodeURIComponent(raw.slice(8, cash ? -5 : undefined)); } catch { throw new Error('The package link is malformed.'); }
     if (id) await openPackage(id);
+    if (cash) { selectPage('cash'); await cashDesk.open(view.package); }
   } else selectPage(PAGES.includes(raw) ? raw : 'queue', false);
 }
 async function start() {
@@ -936,9 +950,13 @@ async function start() {
       'The local handover route configuration is invalid.');
   client = new XeroReceivablesClient({baseUrl: config.apiPath});
   nativeClient = new XeroReceivablesClient({baseUrl: config.receivablesApiPath});
+  cashDesk = createCashDesk({root: $('cash-desk'),
+    context: () => ({client, nativeClient, data: view.data, package: view.package, busy: view.busy, pending: view.pending, config}),
+    reloadState: () => loadState(), mutate, originalFile, downloadResponse, report});
   for (const link of document.querySelectorAll('#receivables-link, [data-receivables-link]'))
     link.href = config.receivablesUiPath.replace(/\/$/, '') + '/';
   $('native-return-guide').href = config.uiPath.replace(/\/$/, '') + '/NATIVE_RETURN.md';
+  $('cash-commissioning-guide').href = config.uiPath.replace(/\/$/, '') + '/CASH_COMMISSIONING.md';
   try { $('actor').value = localStorage.getItem('starforge.xero.actor') || ''; } catch { /* Optional preference. */ }
   bindEvents();
   await loadState();

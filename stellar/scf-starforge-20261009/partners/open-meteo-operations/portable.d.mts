@@ -22,10 +22,15 @@ export interface WeatherDecision {
  disposition: 'review' | 'monitor' | 'reschedule' | 'proceed'; notes: string;
  rule: JsonObject; result: JsonObject; createdAt: string;
 }
+export interface WeatherRenewalRecord {
+ schema: 'stellar-forge.weather-report-renewal.v1';
+ sourceReport: { originId: string; id: string; sha256: string; title: string; createdAt: string };
+ entries: { baseline: WeatherDecision; ruleSource: WeatherDecision; updated: { id: string; revision: number } }[];
+}
 export interface WeatherReport {
  schema: 'stellar-forge.weather-report.v1'; id: string; createdAt: string; title: string; owner: string; notes: string;
  decisions: WeatherDecision[]; captures: WeatherCaptureDescriptor[]; attribution: JsonObject; sha256: string;
- receivedFrom?: { originId: string; reportId: string; reportSha256: string };
+ receivedFrom?: { originId: string; reportId: string; reportSha256: string }; renewal?: WeatherRenewalRecord;
 }
 export interface WeatherOriginalArchive {
  format: 'stellar-forge.weather-report-zip.v1'; bytes: number; sha256: string; reportId: string;
@@ -55,6 +60,7 @@ export interface WeatherHandoverReview {
  reportId: string; reportSha256: string; title: string; owner: string; createdAt: string; sourceCount: number;
  sourceBytes: number; selectedDecisions: number; decisionRevisions: number; receivingHistory: number;
  originalArchive?: { sha256: string; bytes: number }; historyScope?: string;
+ renewal?: { sourceReport: WeatherRenewalRecord['sourceReport']; decisions: number };
  sources: { id: string; sha256: string; bytes: number; title: string; site: string; family: string;
   model: string; timezone: string; timestamps: number; columns: number; provenance: JsonObject }[];
 }

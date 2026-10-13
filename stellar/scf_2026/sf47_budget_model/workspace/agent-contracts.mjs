@@ -16,6 +16,6 @@ export const GRANT_CASE_ACTIONS = Object.freeze([
   'cohort.prepare', 'installation.save', 'installation.return', 'installation.return-stage', 'implementation.prepare',
   'engagement.prepare', 'engagement.receiving',
   'amendment.save', 'amendment.review', 'amendment.apply',
-  'task-outcomes.save',
+  'task-outcomes.save', 'funding.save',
   ...GRANT_COMPLETION_ACTIONS,
 ]);

@@ -30,6 +30,8 @@ READ_POSTS = {
     "engagement-seed", "engagement-preview", "engagement-forecast", "engagement-portfolio",
     "cash-correction-preview", "amendment-preview", "amendment-calendar-export",
     "installation-commercial", "installation-commercial-seed",
+    "funding-seed", "funding-preview", "award-terms-seed", "award-terms-preview",
+    "award-terms-plan-seed", "award-terms-plan-preview", "issuer-correspondence-inspect",
     "task-outcomes-seed", "task-outcomes-preview", "customer-use-calendar",
     "customer-use-calendar-expand", "customer-use-calendar-cohort", "account-reconciliation-preview",
 }

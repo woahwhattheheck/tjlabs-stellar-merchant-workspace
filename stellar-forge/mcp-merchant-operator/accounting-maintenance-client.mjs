@@ -12,7 +12,7 @@ const FIELDS = {
   pause: [], review: [], resume: [],
   backup: ['expectedReviewId', 'externalWritersStopped', 'label'],
   verify: ['backupId', 'expectedSha256'],
-  restore: ['backupId', 'expectedSha256', 'externalWritersStopped'],
+  restore: ['backupId', 'expectedSha256', 'externalWritersStopped', 'relocate', 'expectedWorkspaceId', 'expectedSourcesSha256'],
   cancel: ['jobId'],
 };
 const FILE_FIELDS = ['kind', 'changeId', 'recoveryId', 'runId', 'exportId', 'collectionId', 'sourceId',
@@ -41,9 +41,16 @@ export function accountingMaintenanceArguments(kind, value) {
   if (typeof value.actor !== 'string' || !value.actor.trim() || value.actor.trim().length > 160)
     throw fail('ARGUMENTS', 'Supply the responsible actor, from 1 to 160 characters.');
   const args = { actor: value.actor.trim(), requestId: identifier(value.requestId, UUID, 'retained request UUID') };
+  if (kind === 'restore' && (value.expectedWorkspaceId !== undefined || value.expectedSourcesSha256 !== undefined)) {
+    identifier(value.expectedWorkspaceId, SHA, 'original workspace identity SHA256');
+    identifier(value.expectedSourcesSha256, SHA, 'original source identity SHA256');
+  }
   for (const field of FIELDS[kind]) {
-    if (field === 'label' && value.label === undefined) continue;
-    if (field === 'expectedReviewId' || field === 'expectedSha256') args[field] = identifier(value[field], SHA, field + ' SHA256');
+    if (['label', 'relocate', 'expectedWorkspaceId', 'expectedSourcesSha256'].includes(field) && value[field] === undefined) continue;
+    if (field === 'relocate') {
+      if (typeof value[field] !== 'boolean') throw fail('ARGUMENTS', 'Use an explicit boolean relocate choice.');
+      args[field] = value[field];
+    } else if (field === 'expectedReviewId' || field === 'expectedSha256' || field === 'expectedWorkspaceId' || field === 'expectedSourcesSha256') args[field] = identifier(value[field], SHA, field + ' SHA256');
     else if (field === 'jobId') args[field] = identifier(value[field], UUID, 'original job UUID');
     else if (field === 'externalWritersStopped') {
       if (value[field] !== true) throw fail('ARGUMENTS', 'Confirm externalWritersStopped:true after stopping source writers outside this MCP session.');
