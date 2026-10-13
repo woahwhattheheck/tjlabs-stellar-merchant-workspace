@@ -82,6 +82,141 @@
           "sha256": "7cda4b8e47a5f850e2ef923186a89b4ccd4fc0a29cfb52f318f93b3da00e723f"
         }
       ]
+    },
+    {
+      "id": "openlineage-policy-rollout-mjs",
+      "label": "Complete service policy rollout model and preview",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout.mjs",
+      "editions": [
+        {
+          "commit": "92596081bf3117eda3b184c40fc34b75aed45c61",
+          "git_blob": "b2908b7eb08da78b965c8e9a3f09832072129f28",
+          "bytes": 18929,
+          "sha256": "ceaedb4a89c067f15e6f1e7ccddccf81e6a9eb9aef89e786e5377209566c6e45"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-policy-rollout-catalog-mjs",
+      "label": "Service policy rollout capability catalog",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout-catalog.mjs",
+      "editions": [
+        {
+          "commit": "92596081bf3117eda3b184c40fc34b75aed45c61",
+          "git_blob": "ab052734c91306677a5d8cd6e25f401a2e690f10",
+          "bytes": 2661,
+          "sha256": "e4e6339a2079fd4a08f306f60f576955b3b4d7760491c79d55bc4d2212daa2a7"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-policy-rollout-client-mjs",
+      "label": "Typed client runtime for service policy rollouts",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout-client.mjs",
+      "editions": [
+        {
+          "commit": "92596081bf3117eda3b184c40fc34b75aed45c61",
+          "git_blob": "5c68b09c46a7eeaad0a65f4e0c9bc2febda41d85",
+          "bytes": 2421,
+          "sha256": "f053c00c0c25800799943703dde00d71e5348aca7f3c4289102c7d22ef5dde82"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-policy-rollout-client-d-mts",
+      "label": "Typed service policy rollout declarations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout-client.d.mts",
+      "editions": [
+        {
+          "commit": "92596081bf3117eda3b184c40fc34b75aed45c61",
+          "git_blob": "837f28386bd386c518125966591e41e8f7c28732",
+          "bytes": 3626,
+          "sha256": "9c8007aa2d8af3fabd54abea4202fef99c6b50e1c68a6f18a10c417148e2b0cb"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-policy-rollout-cli-mjs",
+      "label": "Service policy rollout command-line workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout-cli.mjs",
+      "editions": [
+        {
+          "commit": "92596081bf3117eda3b184c40fc34b75aed45c61",
+          "git_blob": "eb204aacef32e9763209873376ddb6be54f0a991",
+          "bytes": 14306,
+          "sha256": "5a57f6f26e351a7a3020a88f9f0f6546a4330f4b6935032768e4cf3e8a03dd92"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-policy-rollout-guide-md",
+      "label": "Service policy rollout operating and receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SERVICE_POLICY_ROLLOUT.md",
+      "editions": [
+        {
+          "commit": "92596081bf3117eda3b184c40fc34b75aed45c61",
+          "git_blob": "17da019b3269d2ae1df106fabdd598e77290f22c",
+          "bytes": 16031,
+          "sha256": "f45f186c0dfe53dfc5bbc8211669e017be99000bb23c9b859e4da6ab572267d3"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-policy-rollout-js",
+      "label": "Installed service policy rollout desk",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout.js",
+      "editions": [
+        {
+          "commit": "92596081bf3117eda3b184c40fc34b75aed45c61",
+          "git_blob": "97b881baa95fc9689877597605007b00115ecc5d",
+          "bytes": 53919,
+          "sha256": "1ea1dbb46d86f7446b22aac2fbdfafe970ecea8c92f90fa2b90a8573507d7ada"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-policy-rollout-html",
+      "label": "Service policy rollout screen and control structure",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout.html",
+      "editions": [
+        {
+          "commit": "92596081bf3117eda3b184c40fc34b75aed45c61",
+          "git_blob": "f4aaccc07d52697043582a1255dc0baadb6450ff",
+          "bytes": 11899,
+          "sha256": "9af8687cc6b960daf28945bd23029b158e76666fd07dbbeda5c597d35b7552ce"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-policy-rollout-css",
+      "label": "Service policy rollout industrial screen styling",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout.css",
+      "editions": [
+        {
+          "commit": "92596081bf3117eda3b184c40fc34b75aed45c61",
+          "git_blob": "6425807d892aaf0a2688ace1ec348789678b2855",
+          "bytes": 2919,
+          "sha256": "aa0b8139dd6c5d90f2498156ea2fe1e8319fe0b7724f25df0fcc565591b6cd59"
+        }
+      ]
     }
   ]
 }
