@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "material-catalogue-installation",
-  "description": "Original complete material source custody, edition review and commercial Customer Installation handover",
+  "description": "Original raw supplier intake, retained catalogue source and edition review, and commercial Customer Installation handover",
   "components": [
     "products/material-catalog/recipient",
     "products/material-catalog/commissioning",
@@ -27,6 +27,15 @@
     "stellar/scf_2026/sf47_budget_model/workspace/MATERIAL_CATALOGUE_SOURCE_DESK.md",
     "stellar/scf_2026/sf47_budget_model/workspace/material-catalogue-source-desk-receiving.py",
     "stellar/scf_2026/sf47_budget_model/workspace/material-catalogue-source-desk-browser.mjs",
-    "stellar/scf_2026/sf47_budget_model/workspace/MATERIAL_CATALOGUE_OPERATOR.md"
+    "stellar/scf_2026/sf47_budget_model/workspace/MATERIAL_CATALOGUE_OPERATOR.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_material_supplier_intake.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_material_supplier_intake_cli.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_material_supplier_intake_model.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_material_supplier_intake.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/MATERIAL_SUPPLIER_INTAKE.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/material-catalogue-connections.example.json",
+    "stellar/scf_2026/sf47_budget_model/workspace/material_supplier_intake_receiving.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/MATERIAL_SUPPLIER_INTAKE_RECEIVING.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/SUPPLIER_INTAKE_SAP_SOURCE.json"
   ]
 }

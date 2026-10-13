@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "material-catalogue-installation",
   "title": "Material catalogue Customer Installations",
-  "description": "Complete original material catalogue operator, retained edition desk, commercial Workshare preparation and Grant Operations receiving",
+  "description": "Complete original supplier-file intake, material catalogue operator and retained edition desk, commercial Workshare preparation and Grant Operations receiving",
   "base": {
     "commands": [
       "installation",
@@ -193,7 +193,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Complete original material catalogue operator, retained edition desk, commercial Workshare preparation and Grant Operations receiving",
+    "description": "Complete original supplier-file intake, material catalogue operator and retained edition desk, commercial Workshare preparation and Grant Operations receiving",
     "readme": "stellar/scf_2026/sf47_budget_model/workspace/MATERIAL_CATALOGUE_SOURCE_DESK.md"
   }
 }

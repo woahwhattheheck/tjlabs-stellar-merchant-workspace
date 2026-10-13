@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Retained review copies only. Catalogue validation and Installation writes stay native.
+import {validateSupplierState,mergeSupplierState} from './operations_material_supplier_intake_model.mjs';
 import {Sha256} from './operations_installation_source_hash.mjs';
 export const SCHEMA='stellar-forge.material-catalogue-working-copies.v1';
 export const COPY='stellar-forge.material-catalogue-working-copy.v1';
@@ -100,7 +101,7 @@ export function validateState(v){
  const ids=new Set();for(const c of v.copies){validateCopy(c,v.sources);need(!ids.has(c.id),'Duplicate working copy.');ids.add(c.id);}
  need(v.selected===null||ids.has(v.selected),'Keep the selected complete review.');
  const requests=new Set();for(const i of v.intakes){validateIntake(i);need(!requests.has(i.body.requestId),'Duplicate source command.');requests.add(i.body.requestId);}
- return v;
+ validateSupplierState(v);return v;
 }
 export function archive(v){validateState(v);const raw=JSON.stringify(v,null,2)+'\n';need(utf8(raw).length<=MAX_ARCHIVE,'Keep the full archive within512 MiB; retain this complete copy and start another original case review when needed.');return raw;}
 export function readArchive(raw){need(typeof raw==='string'&&utf8(raw).length<=MAX_ARCHIVE,'Select the bounded complete archive.');return validateState(JSON.parse(raw));}
@@ -119,7 +120,7 @@ export function mergeState(current,incoming,{fork=false,newId=()=>crypto.randomU
   need(fork,'A same-ID review differs. Receive it as an explicit separate alternative.');
   const next=clone(c);next.id=newId();next.name=(next.name.slice(0,280)+' · alternative');n.copies.push(next);
  }}
- archive(n);return n;
+ const joined=mergeSupplierState(n,incoming,{fork,newId});archive(joined);return joined;
 }
 export async function openStore(key){
  const db=await new Promise((resolve,reject)=>{const r=indexedDB.open('sf47-material-catalogue-source',1);r.onupgradeneeded=()=>r.result.createObjectStore('work');r.onsuccess=()=>{r.result.onversionchange=()=>r.result.close();resolve(r.result);};r.onerror=()=>reject(r.error);r.onblocked=()=>reject(Error('Close the older material desk before opening its journal.'));});

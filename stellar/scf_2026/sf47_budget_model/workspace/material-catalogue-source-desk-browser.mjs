@@ -30,7 +30,12 @@ async function receipt(path){const b=await readFile(path);return {path,bytes:b.l
 const report=await exists(reportPath)?JSON.parse(await readFile(reportPath,'utf8')):{schema:'stellar-forge.material-catalogue-source-desk-browser.v1',inputSha256:input.inputSha256,state:'PREPARED',originalInput:JSON.parse(JSON.stringify(input)),origin:access.origin,phases:{},artifacts:{},requests:{},session:null};
 need(report.inputSha256===input.inputSha256&&same(report.originalInput,input)&&report.origin===access.origin,'Resume the same complete original source input, paths and receiving origin.');
 need(same(JSON.parse(await readFile(input.documentPath,'utf8')),input.document),'The original Workshare document file differs from its complete input.');
-need(sha(await readFile(input.handoverPath))===input.sourceSha256,'The original complete catalogue file differs from its selected hash.');
+if(input.supplierIntake){
+ const spec=input.supplierIntake;need(['full','delta'].includes(spec.update?.mode)&&spec.connectionId&&spec.workspaceId&&/^[a-f0-9]{64}$/.test(spec.connectionSha256||''),'Retain the original explicit supplier connection and update semantics.');
+ for(const role of ['full','update']){const f=spec[role],bytes=await readFile(f.path);need(bytes.length>0&&bytes.length<=16*1024*1024&&bytes.length===f.bytes&&sha(bytes)===f.sha256&&f.name&&f.format,'The complete original '+role+' supplier file changed.');}
+ need(spec.mapping&&spec.updateMapping&&spec.title&&spec.tenantId&&spec.review?.actor&&spec.review?.note,'Retain both complete original mappings and the named source review.');
+ report.supplierIntake??={steps:{},nativeRequests:[],sourceReview:cloneForReport(spec.review)};
+}else need(sha(await readFile(input.handoverPath))===input.sourceSha256,'The original complete catalogue file differs from its selected hash.');
 let saveTail=Promise.resolve(),context,page,failure,closed=false;
 need(input.schema==='stellar-forge.material-catalogue-source-desk-input.v1','Use the complete original Material source desk input.');
 function save(){const body=pretty(report);saveTail=saveTail.then(()=>replace(reportPath,body));return saveTail;}
@@ -95,6 +100,181 @@ async function viewedFile(path,{html=false,label}={}){
   report.openedAttachments??=[];const item=await receipt(path);if(!report.openedAttachments.some(x=>same(x,item)))report.openedAttachments.push(item);await save();
  }finally{await viewer.close();}
 }
+
+async function receiveRawProxy(route){
+ const request=route.request(),action=new URL(request.url()).pathname.split('/').at(-1);
+ if(!['upload','save','preview','select'].includes(action)){await route.continue();return;}
+ const body=JSON.parse(request.postData()||'null'),id=body?.nativeRequest?.requestId,raw=report.supplierIntake;
+ need(raw&&/^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$/.test(id||'')&&raw.activeStep,'Bind the exact original supplier request to its retained receiving step.');
+ assertRawStepRequest(raw.activeStep,action,body);
+ let item=raw.nativeRequests.find(x=>x.body.nativeRequest.requestId===id);
+ if(item)need(item.action===action&&same(item.body,body),'Preserve the same complete original supplier request.');
+ else{item={action,body:cloneForReport(body),exchanges:[],state:'PENDING'};raw.nativeRequests.push(item);}
+ const step=raw.steps[raw.activeStep]??={};need(!step.requestId||step.requestId===id,'Do not replace a receiving step with another native request.');step.requestId=id;step.action=action;step.bodySha256=sha(Buffer.from(canonical(body)));await save();
+ try{
+  const response=await route.fetch();
+  try{const bytes=await response.body();let result;try{result=JSON.parse(bytes);}catch{}
+   item.exchanges.push({at:new Date().toISOString(),status:response.status(),response:result});
+   item.state=result?.result?.state??'PENDING';await save();await route.fulfill({response,body:bytes});
+  }finally{await response.dispose();}
+ }catch(error){item.transportError=String(error.message||error);await save();await route.abort('failed').catch(()=>{});}
+}
+async function rawArchive(label){
+ const pending=page.waitForEvent('download');await page.locator('[data-mc-action="archive"]').click();const d=await pending;
+ need(!await d.failure(),'The complete supplier working archive failed.');
+ const temp=join(out,'.raw-download-'+randomUUID());await d.saveAs(temp);
+ try{
+  const bytes=await readFile(temp),archive=readArchive(bytes.toString('utf8')),name=label+'-'+sha(bytes).slice(0,16)+'.json';
+  await keep(name,bytes);return {archive,path:join(out,name),intake:archive.supplierIntakes?.find(x=>x.id===archive.selectedSupplierIntake)||null};
+ }finally{await unlink(temp).catch(e=>{if(e.code!=='ENOENT')throw e;});}
+}
+async function ms(action,attrs='',{allowError=false}={}){
+ const locator=page.locator('[data-ms-action="'+action+'"]'+attrs);need(await locator.count()>=1,'Select an exact supplier control: '+action);
+ await locator.first().click();await idle({allowError});await snapshot();
+}
+async function msView(name){await ms('view','[data-view="'+name+'"]');}
+async function msFill(key,value){await page.locator('[data-ms-field="'+key+'"]').fill(value);await page.locator('[data-ms-field="'+key+'"]').blur();}
+
+function assertRawStepRequest(step,action,body){
+ const spec=input.supplierIntake,raw=report.supplierIntake,q=cloneForReport(body.nativeRequest);delete q.requestId;
+ need(body.connectionId===spec.connectionId&&body.expectedWorkspaceId===spec.workspaceId&&body.expectedConnectionSha256===spec.connectionSha256,'The retained step changed configured workspace.');
+ let expected;
+ if(action==='upload'){
+  const f=step==='full-upload'?spec.full:step==='update-upload'?spec.update:null;need(f,'Unknown original upload step.');
+  expected={name:f.name,format:f.format,bytes:f.bytes,sha256:f.sha256,provenance:f.provenance??{}};
+ }else if(action==='save'){
+  need(['full-mapping','update-mapping'].includes(step),'Unknown original mapping step.');
+  expected={title:spec.title,tenantId:spec.tenantId,mapping:step==='full-mapping'?spec.mapping:spec.updateMapping};
+  if(step==='update-mapping'){need(Number.isSafeInteger(q.expectedRevision)&&q.expectedRevision>0,'Retain the original mapping revision.');expected.catalogId=raw.catalogId;expected.expectedRevision=q.expectedRevision;}
+ }else if(action==='preview'){
+  need(Number.isSafeInteger(q.expectedRevision)&&q.expectedRevision>0,'Retain the exact original preview revision.');
+  expected={catalogId:raw.catalogId,expectedRevision:q.expectedRevision,sourceId:step==='full-preview'?raw.fullSourceId:raw.updateSourceId,mode:step==='full-preview'?'full':spec.update.mode,baseEditionId:step==='full-preview'?null:raw.fullEditionId};
+ }else if(action==='select'){
+  const preview=raw.steps[step==='full-select'?'full-preview':'update-preview']?.result?.edition;need(preview,'Retain the exact original native preview before selection.');
+  need(Number.isSafeInteger(q.expectedRevision)&&q.expectedRevision>0,'Retain the exact selection revision.');
+  expected={catalogId:raw.catalogId,expectedRevision:q.expectedRevision,editionId:preview.id,reviewSha256:preview.reviewSha256};
+ }else throw Error('Unknown original supplier mutation.');
+ need(same(q,expected),'The retained supplier request differs from this exact original source/mapping/base selection. Preserve it and review the conflict.');
+}
+
+async function rawOperation(step,action){
+ const raw=report.supplierIntake,previousActive=raw.activeStep;need(!previousActive||previousActive===step,'Reconcile the original active supplier receiving step before advancing.');raw.activeStep=step;await save();
+ let snapshot=await rawArchive('Supplier_'+step+'_Before'),w=snapshot.intake;
+ need(w?.id===raw.intakeId,'Reopen the exact original supplier working copy.');
+ let linked=raw.steps[step],request=linked?.requestId?w.requests.find(x=>x.id===linked.requestId):null;
+ if(linked?.requestId)need(request&&request.action===linked.action&&linked.bodySha256===sha(Buffer.from(canonical(request.body))),'The original linked supplier request is missing or changed in this complete working copy. Reopen its retained complete archive; never replace its ID.');
+ if(!request){
+  const pending=w.requests.filter(x=>['PREPARED','RUNNING'].includes(x.state));
+  if(pending.length){need(previousActive===step&&pending.length===1&&pending[0].action===action,'Preserve the other unresolved original supplier operation.');request=pending[0];raw.steps[step]={requestId:request.id,action,bodySha256:sha(Buffer.from(canonical(request.body)))};await save();}
+ }
+ if(request){
+  assertRawStepRequest(step,action,request.body);
+  need(request.action===action,'The original receiving step changed native action.');
+  if(['PREPARED','RUNNING'].includes(request.state)){
+   await ms('reconcile','[data-id="'+request.id+'"]',{allowError:true});
+   snapshot=await rawArchive('Supplier_'+step+'_Reconciled');request=snapshot.intake.requests.find(x=>x.id===request.id);
+   if(['PREPARED','RUNNING'].includes(request.state)){await ms('replay','[data-id="'+request.id+'"]',{allowError:true});snapshot=await rawArchive('Supplier_'+step+'_Replayed');request=snapshot.intake.requests.find(x=>x.id===request.id);}
+  }
+ }else{
+  await ms(action,'',{allowError:true});snapshot=await rawArchive('Supplier_'+step+'_After');
+  linked=raw.steps[step];need(linked?.requestId,'The original native request was not dispatched. Inspect the retained source/error before another operation.');
+  request=snapshot.intake.requests.find(x=>x.id===linked.requestId);
+ }
+ if(request)assertRawStepRequest(step,action,request.body);
+ need(request?.state==='COMPLETE','Original supplier '+step+' is '+(request?.state??'unresolved')+'; retain its exact input and inspect the native outcome before any new request.');
+ const item=raw.nativeRequests.find(x=>x.body.nativeRequest.requestId===request.id);
+ if(item){need(same(item.body,request.body),'The received native request differs from the full retained UI input.');item.exchanges=cloneForReport(request.exchanges);item.state=request.state;item.response=cloneForReport(request.response);}
+ else raw.nativeRequests.push({action,body:cloneForReport(request.body),exchanges:cloneForReport(request.exchanges),state:request.state,response:cloneForReport(request.response)});
+ raw.steps[step]={...raw.steps[step],requestId:request.id,action,state:request.state,result:cloneForReport(request.response.result.result)};delete raw.activeStep;await save();
+ return request.response.result.result;
+}
+async function retainRawFile(descriptor){
+ const raw=report.supplierIntake;await msView('files');
+ let snapshot=await rawArchive('Supplier_File_Selection'),f=snapshot.intake.files.find(x=>x.sha256===descriptor.sha256&&x.bytes===descriptor.bytes&&x.name===descriptor.name);
+ if(!f){await page.locator('[data-ms-file]').setInputFiles({name:descriptor.name,mimeType:'application/octet-stream',buffer:await readFile(descriptor.path)});await idle();snapshot=await rawArchive('Supplier_File_Retained');f=snapshot.intake.files.find(x=>x.sha256===descriptor.sha256&&x.bytes===descriptor.bytes&&x.name===descriptor.name);}
+ need(f,'Retain the exact complete original supplier file before upload.');
+ await page.locator('[data-ms-field="sourceFileId"]').selectOption(f.id);await idle();
+ await msFill('formatText',pretty(descriptor.format));await msFill('provenanceText',pretty(descriptor.provenance??{}));
+ const path=join(out,'Supplier_Original_'+descriptor.sha256.slice(0,16)+'_'+basename(descriptor.name));
+ if(!await exists(path)){const pending=page.waitForEvent('download');await ms('file-download');const d=await pending;need(!await d.failure(),'The original retained supplier-file download failed.');await d.saveAs(path);}
+ need(same(await receipt(path),{path,bytes:descriptor.bytes,sha256:descriptor.sha256}),'The actual original supplier-file download changed.');await remember(path);await viewedFile(path,{label:'supplier-original-'+descriptor.sha256.slice(0,12)});
+ return f;
+}
+async function runSupplierCourse(){
+ const spec=input.supplierIntake,raw=report.supplierIntake;
+ await click('supplier-mode');await ms('connections');
+ await capture('00-supplier-workspace-choice');
+ let snapshot=await rawArchive('Supplier_Original_Archive'),w=raw.intakeId?snapshot.archive.supplierIntakes?.find(x=>x.id===raw.intakeId):snapshot.archive.supplierIntakes?.find(x=>x.name===input.operationId+' supplier intake');
+ if(w){need(w.connection.id===spec.connectionId&&w.connection.workspaceId===spec.workspaceId&&w.connection.configurationSha256===spec.connectionSha256,'Preserve the original configured catalogue workspace.');await ms('open','[data-id="'+w.id+'"]');}
+ else{
+  await page.locator('[data-ms-field="connection"]').selectOption(spec.connectionId);await msFill('newName',input.operationId+' supplier intake');await ms('new');
+  snapshot=await rawArchive('Supplier_Opened_Original');w=snapshot.intake;
+ }
+ need(w?.connection.id===spec.connectionId&&w.connection.workspaceId===spec.workspaceId&&w.connection.configurationSha256===spec.connectionSha256,'The actual configured supplier workspace differs.');
+ raw.intakeId=w.id;await save();
+ if(raw.activeStep){const pending=w.requests.filter(x=>['PREPARED','RUNNING'].includes(x.state));if(pending.length){need(pending.length===1,'Preserve all original unresolved supplier operations.');await rawOperation(raw.activeStep,pending[0].action);}}
+ await stage('01a-original-full-supplier-upload',async()=>{
+  await retainRawFile(spec.full);await capture('00a-original-full-file');
+  const result=await rawOperation('full-upload','upload');need(result.source.bytes===spec.full.bytes&&result.source.sha256===spec.full.sha256,'The actual uploaded full source differs.');raw.fullSourceId=result.source.id;await save();
+  await msView('mapping');await msFill('title',spec.title);await msFill('tenantId',spec.tenantId);
+  if(!raw.steps['full-mapping']){await msFill('mappingText','{');await ms('save','',{allowError:true});need((await page.locator('.material-catalogue-desk [role="alert"]').textContent()).trim(),'The incomplete original mapping was not explained.');await capture('00b-incomplete-mapping-retained');}
+  await msFill('mappingText',pretty(spec.mapping));
+  await capture('00b-original-full-mapping');const saved=await rawOperation('full-mapping','save');await msFill('mappingText',pretty(saved.catalog.mapping));raw.catalogId=saved.catalog.id;await save();
+ });
+ await stage('01b-original-full-edition-selection',async()=>{
+  await msView('files');await page.locator('[data-ms-field="sourceId"]').selectOption(raw.fullSourceId);await idle();
+  await msView('review');await page.locator('[data-ms-field="mode"]').selectOption('full');await idle();await page.locator('[data-ms-field="baseEditionId"]').selectOption('');await idle();
+  const preview=await rawOperation('full-preview','preview');raw.fullEditionId=preview.edition.id;await save();
+  await ms('materials');await capture('00c-full-preview-materials');while(await page.locator('[data-ms-action="next"]').count())await ms('next');
+  await ms('changes');while(await page.locator('[data-ms-action="next"]').count())await ms('next');
+  const selected=await rawOperation('full-select','select');need(selected.catalog.activeEditionId===raw.fullEditionId,'The native full edition was not explicitly selected.');await capture('00d-full-edition-selected');
+ });
+ await stage('01c-original-update-source-and-mapping',async()=>{
+  await retainRawFile(spec.update);await capture('00e-original-update-file');
+  const result=await rawOperation('update-upload','upload');need(result.source.bytes===spec.update.bytes&&result.source.sha256===spec.update.sha256,'The actual retained update source differs.');raw.updateSourceId=result.source.id;await save();
+  await msView('mapping');await msFill('mappingText',pretty(spec.updateMapping));await capture('00f-explicit-update-mapping');
+  const saved=await rawOperation('update-mapping','save');await msFill('mappingText',pretty(saved.catalog.mapping));need(saved.catalog.id===raw.catalogId,'The update mapping changed original catalogue.');await save();
+ });
+ await stage('01d-original-explicit-base-update-selection',async()=>{
+  await msView('files');await page.locator('[data-ms-field="sourceId"]').selectOption(raw.updateSourceId);await idle();
+  await msView('review');await page.locator('[data-ms-field="mode"]').selectOption(spec.update.mode);await idle();await page.locator('[data-ms-field="baseEditionId"]').selectOption(raw.fullEditionId);await idle();
+  await capture('00g-explicit-original-base');
+  const preview=await rawOperation('update-preview','preview');raw.updateEditionId=preview.edition.id;need(preview.edition.baseEditionId===raw.fullEditionId&&preview.edition.mode===spec.update.mode,'The native update lost its exact chosen base or meaning.');await save();
+  await ms('changes');await capture('00h-original-update-changes');while(await page.locator('[data-ms-action="next"]').count())await ms('next');
+  await ms('materials');while(await page.locator('[data-ms-action="next"]').count())await ms('next');
+  const selected=await rawOperation('update-select','select');need(selected.catalog.activeEditionId===raw.updateEditionId,'The native update edition was not explicitly selected.');raw.catalogRevision=selected.catalog.revision;await save();await capture('00i-update-edition-selected');
+ });
+ await stage('01e-freeze-whole-original-catalogue',async()=>{
+  await msView('review');snapshot=await rawArchive('Supplier_Before_Capture');w=snapshot.intake;
+  let bundle=w.bundles.find(b=>b.identity.catalogId===raw.catalogId&&b.identity.revision===raw.catalogRevision&&b.identity.activeEditionId===raw.updateEditionId);
+  if(!bundle){await ms('bundle');snapshot=await rawArchive('Supplier_After_Capture');bundle=snapshot.intake.bundles.find(b=>b.identity.catalogId===raw.catalogId&&b.identity.revision===raw.catalogRevision&&b.identity.activeEditionId===raw.updateEditionId);}
+  need(bundle,'The exact complete selected capture was not retained.');
+  const pending=page.waitForEvent('download');await ms('bundle-download','[data-id="'+bundle.id+'"]');const d=await pending;need(!await d.failure(),'The retained complete bundle download failed.');
+  const temp=join(out,'.raw-capture-'+randomUUID());await d.saveAs(temp);
+  try{const bytes=await readFile(temp);need(bytes.length===bundle.file.bytes&&sha(bytes)===bundle.sha256,'The actual downloaded capture differs from its frozen complete archive.');await exact(input.handoverPath,bytes);}finally{await unlink(temp).catch(e=>{if(e.code!=='ENOENT')throw e;});}
+  raw.capture={...await receipt(input.handoverPath),identity:cloneForReport(bundle.identity)};raw.bundleId=bundle.id;raw.frozenCapture=cloneForReport({selection:bundle.selection,request:bundle.request,identity:bundle.identity,sha256:bundle.sha256});await save();
+  await capture('00j-frozen-complete-capture');await viewedFile(input.handoverPath,{label:'00k-captured-native-catalogue'});
+ });
+ // Attach only the exact first complete capture. An unknown original case command is reconciled unchanged.
+ const actualBefore=await api(prefix),matching=actualBefore.sources.filter(x=>x.materialCatalogue&&x.sha256===raw.capture.sha256);
+ if(!matching.length){
+  await msView('review');await ms('bundle-attach','[data-id="'+raw.bundleId+'"]',{allowError:true});
+ }
+ await click('catalogue-mode');
+ const pendingIntake=page.locator('[data-mc-action="intake-recover"]');
+ if(await pendingIntake.count()){need(await pendingIntake.count()===1,'Preserve the sole original typed bundle attachment.');await pendingIntake.click();await idle();}
+ const actual=await api(prefix),matches=actual.sources.filter(x=>x.materialCatalogue&&x.sha256===raw.capture.sha256);
+ need(matches.length===1,'Receive one exact selected complete raw-supplier catalogue attachment.');
+ const source=matches[0];
+ if(raw.effectiveSourceSelection){need(raw.effectiveSourceSelection.sourceId===source.id&&raw.effectiveSourceSelection.sourceSha256===raw.capture.sha256&&same(await receipt(raw.capture.path),{path:raw.capture.path,bytes:raw.capture.bytes,sha256:raw.capture.sha256}),'The retained effective complete source changed.');return;}
+ const template=await api(prefix+'/material-catalog/template',{expectedVersion:actual.program.version,sourceId:source.id,expectedSourceSha256:source.sha256,document:input.document,operationId:input.operationId});
+ need(template.source.id===source.id&&template.source.sha256===raw.capture.sha256,'The dynamic template differs from the actual saved complete source.');
+ const effective={sourceId:source.id,sourceSha256:source.sha256,handoverPath:input.handoverPath,selection:cloneForReport(template.result.selection),bindings:cloneForReport(template.result.bindings),beforeEditionId:raw.fullEditionId,afterEditionId:raw.updateEditionId};
+ if(raw.effectiveSourceSelection)need(same(raw.effectiveSourceSelection,effective),'The frozen effective source or original native preparation selection changed.');
+ else raw.effectiveSourceSelection=effective;
+ await keep('Supplier_Effective_Source_Selection.json',pretty(effective));await keep('Supplier_Original_Native_Template.json',pretty(template));await save();
+}
+
 try{
  const imported=await import(pathToFileURL(input.playwright).href),chromium=imported.chromium??imported.default?.chromium;
  context=await chromium.launchPersistentContext(join(root,'browser-profile'),{executablePath:input.chromium,headless:true,acceptDownloads:true,viewport:{width:1440,height:1000},args:['--no-sandbox','--disable-dev-shm-usage'],timeout:60000});
@@ -116,6 +296,7 @@ try{
    await route.fulfill({response,body:raw});
   }finally{await response.dispose();}
  }
+ if(input.supplierIntake)await context.route(access.origin+prefix+'/material-catalog-intake/**',receiveRawProxy);
  await context.route(access.origin+prefix+'/command',receiveCommand);
  await context.route(access.origin+prefix+'/material-catalog-source',receiveCommand);
  page.on('pageerror',e=>{report.pageErrors??=[];report.pageErrors.push(e.message);});
@@ -141,28 +322,31 @@ try{
  });
  await page.locator('[data-installation-action="material-catalogue-open"]').click();await idle();
  const desk=page.locator('.material-catalogue-desk');await desk.waitFor({state:'visible'});
+ if(input.supplierIntake)await runSupplierCourse();
+ const selectedSource=input.supplierIntake?report.supplierIntake.effectiveSourceSelection:input;
+ need(selectedSource&&sha(await readFile(selectedSource.handoverPath))===selectedSource.sourceSha256,'Keep the exact retained complete catalogue for the original receiving continuation.');
  const copyName=input.operationId+' original';
  await stage('02-complete-source-custody',async()=>{
   await capture('02-empty-material-desk');
-  if(input.sourceId){
-   const actual=await api(prefix),row=actual.sources.find(x=>x.id===input.sourceId);
-   need(row?.materialCatalogue&&row.sha256===input.sourceSha256,'The original attached material source changed.');report.sourceId=row.id;
+  if(selectedSource.sourceId){
+   const actual=await api(prefix),row=actual.sources.find(x=>x.id===selectedSource.sourceId);
+   need(row?.materialCatalogue&&row.sha256===selectedSource.sourceSha256,'The original attached material source changed.');report.sourceId=row.id;
   }else{
-   const actual=await api(prefix),existing=actual.sources.find(x=>x.sha256===input.sourceSha256&&x.materialCatalogue);
+   const actual=await api(prefix),existing=actual.sources.find(x=>x.sha256===selectedSource.sourceSha256&&x.materialCatalogue);
    if(existing)report.sourceId=existing.id;
    else{
-    const file=await readFile(input.handoverPath);need(sha(file)===input.sourceSha256,'The retained complete material file changed.');
-    await desk.locator('[data-mc-upload]').setInputFiles({name:basename(input.sourceFile),mimeType:'application/x-ndjson',buffer:file});await idle({allowError:true});
+    const file=await readFile(selectedSource.handoverPath);need(sha(file)===selectedSource.sourceSha256,'The retained complete material file changed.');
+    await desk.locator('[data-mc-upload]').setInputFiles({name:basename(selectedSource.handoverPath),mimeType:'application/x-ndjson',buffer:file});await idle({allowError:true});
    }
    const recovery=desk.locator('[data-mc-action="intake-recover"]');
    if(await recovery.count()){need(await recovery.count()===1,'Preserve the sole original material intake.');await recovery.click();await idle();}
-   const after=await api(prefix),matches=after.sources.filter(x=>x.materialCatalogue&&x.sha256===input.sourceSha256);
+   const after=await api(prefix),matches=after.sources.filter(x=>x.materialCatalogue&&x.sha256===selectedSource.sourceSha256);
    need(matches.length===1,'Receive one exact original complete typed Material attachment.');report.sourceId=matches[0].id;
   }
   const original=await context.request.get(access.origin+prefix+'/sources/'+report.sourceId,{headers:{Authorization:'Bearer '+access.token}});
-  need(original.ok()&&sha(await original.body())===input.sourceSha256,'The exact attached catalogue download differs.');
+  need(original.ok()&&sha(await original.body())===selectedSource.sourceSha256,'The exact attached catalogue download differs.');
   const actual=await api(prefix);
-  const inspection=await api(prefix+'/material-catalog/inspect',{expectedVersion:actual.program.version,sourceId:report.sourceId,expectedSourceSha256:input.sourceSha256});
+  const inspection=await api(prefix+'/material-catalog/inspect',{expectedVersion:actual.program.version,sourceId:report.sourceId,expectedSourceSha256:selectedSource.sourceSha256});
   await keep('Original_Native_Inspection.json',pretty(inspection));report.sourceScope=inspection.scope;await save();
  });
  await stage('03-retained-full-source',async()=>{
@@ -196,12 +380,12 @@ try{
   const d=await pending;need(!await d.failure(),'The exact original feed download failed.');const memberPath=join(out,'Original_Source_'+source.manifest.id+'.bin');await d.saveAs(memberPath);await remember(memberPath);
   const actual=await receipt(memberPath);need(actual.bytes===source.file.bytes&&actual.sha256===source.file.sha256,'The actual complete source download differs.');
   const originalPath=await download('source-download','Original_Material_Catalogue_Download.jsonl');
-  need(sha(await readFile(originalPath))===input.sourceSha256,'The actual full catalogue download differs.');
+  need(sha(await readFile(originalPath))===selectedSource.sourceSha256,'The actual full catalogue download differs.');
   report.originalMember=actual;await save();
  });
  await stage('05-retained-edition-comparison',async()=>{
   const inspection=JSON.parse(await readFile(join(out,'Original_Native_Inspection.json'),'utf8')).result;
-  const before=input.beforeEditionId??inspection.editions[0]?.id,after=input.afterEditionId??inspection.catalogue.activeEditionId;
+  const before=selectedSource.beforeEditionId??inspection.editions[0]?.id,after=selectedSource.afterEditionId??inspection.catalogue.activeEditionId;
   need(inspection.editions.some(e=>e.id===before)&&inspection.editions.some(e=>e.id===after),'Select retained actual editions for comparison.');
   await view('editions');await desk.locator('[data-mc-field="before"]').selectOption(before);await desk.locator('[data-mc-field="after"]').selectOption(after);await click('compare');
   while(await desk.locator('[data-mc-action="compare-next"]').count())await click('compare-next');
@@ -217,19 +401,19 @@ try{
    await page.locator('[data-installation-action="material-catalogue-open"]').click();await idle();await view('installation');
   }
   await click('template');
-  const selection=cloneForReport(input.selection);need(selection.operationId===input.operationId,'Keep the original selected preparation operation ID.');
+  const selection=cloneForReport(selectedSource.selection);need(selection.operationId===input.operationId,'Keep the original selected preparation operation ID.');
   await desk.locator('[data-mc-field="operation"]').fill(input.operationId);
   await desk.locator('[data-mc-field="selectionText"]').fill('{');
   await desk.locator('[data-mc-action="prepare"]').click();await idle({allowError:true});
   need((await desk.locator('[role="alert"]').textContent()).trim(),'The incomplete selection was not explained.');
   await capture('08-incomplete-selection-retained');
   await desk.locator('[data-mc-field="selectionText"]').fill(pretty(selection));
-  await desk.locator('[data-mc-field="bindingsText"]').fill(pretty(input.bindings));
+  await desk.locator('[data-mc-field="bindingsText"]').fill(pretty(selectedSource.bindings));
   await capture('09-complete-profile-bindings');
   await click('prepare');await capture('10-native-preparation');
   const file=await download('prepared-download','Complete_Material_Preparation.json'),prepared=JSON.parse(await readFile(file,'utf8'));
-  need(prepared.preparation.source.sha256===input.sourceSha256&&same(prepared.preparation.result.prepared.document.workshare,input.document.workshare),'Preparation changed the original commercial source.');
-  need(same(prepared.input.selection,selection)&&same(prepared.input.bindings,input.bindings),'Preparation changed the explicit selected source or bindings.');
+  need(prepared.preparation.source.sha256===selectedSource.sourceSha256&&same(prepared.preparation.result.prepared.document.workshare,input.document.workshare),'Preparation changed the original commercial source.');
+  need(same(prepared.input.selection,selection)&&same(prepared.input.bindings,selectedSource.bindings),'Preparation changed the explicit selected source or bindings.');
   report.preparationSha256=prepared.preparation.preparationSha256;report.preparation=prepared.preparation;
   await download('selection-download','Material_Selection.json');
   const commercialHtml=await download('commercial-html','Material_Commercial_Workshare.html');await viewedFile(commercialHtml,{html:true,label:'11-commercial-workshare'});
@@ -237,7 +421,7 @@ try{
   const workorder=await download('workorder-md','Material_Workorder.md');await viewedFile(workorder,{label:'13-workorder'});
   await viewedFile(file,{label:'14-complete-preparation'});
   const work=await download('archive','Material_Working_Review_Before_Save.json'),archive=readArchive(await readFile(work,'utf8')),copy=archive.copies.find(c=>c.id===report.originalCopyId);
-  need(copy?.prepared.preparationSha256===report.preparationSha256&&archive.sources.some(s=>s.metadata.sha256===input.sourceSha256),'The full working archive lost its source/preparation.');
+  need(copy?.prepared.preparationSha256===report.preparationSha256&&archive.sources.some(s=>s.metadata.sha256===selectedSource.sourceSha256),'The full working archive lost its source/preparation.');
   report.workingBefore=await receipt(work);await save();
  });
  await stage('07-whole-customer-package',async()=>{

@@ -26,6 +26,7 @@ import operations_gravitee as gravitee_source
 import operations_airflow as airflow_source
 import operations_material_catalogue as material_catalogue
 import operations_material_catalogue_sources as material_sources
+import operations_material_supplier_intake as material_supplier_intake
 import operations_airflow_sources as airflow_sources
 from award_terms_http import handle as award_terms_http
 
@@ -100,6 +101,7 @@ def register_static(static):
     gravitee_source.register_static(static)
     airflow_source.register_static(static)
     material_catalogue.register_static(static)
+    material_supplier_intake.register_static(static)
     static.update({
         "/operations_agenda.mjs": ("operations_agenda.mjs", "text/javascript; charset=utf-8"),
         "/operations_agenda.css": ("operations_agenda.css", "text/css; charset=utf-8"),
@@ -559,6 +561,8 @@ def write(handler, parsed):
     if gravitee_source.handle(handler, parsed, ops, "POST"):
         return True
     if airflow_source.handle(handler, parsed, ops, "POST"):
+        return True
+    if material_supplier_intake.handle(handler, parsed, ops, "POST"):
         return True
     if material_catalogue.handle(handler, parsed, ops, "POST"):
         return True

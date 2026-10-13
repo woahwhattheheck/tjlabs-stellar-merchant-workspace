@@ -902,7 +902,18 @@
     "../../../../products/material-catalog/recipient/reader.html",
     "MATERIAL_CATALOGUE_OPERATOR.md",
     "forecast-financing-decision.mjs",
+    "operations_material_supplier_intake.py",
+    "operations_material_supplier_intake_cli.py",
+    "operations_material_supplier_intake_model.mjs",
+    "operations_material_supplier_intake.mjs",
+    "MATERIAL_SUPPLIER_INTAKE.md",
+    "material-catalogue-connections.example.json",
+    "material_supplier_intake_receiving.py",
+    "MATERIAL_SUPPLIER_INTAKE_RECEIVING.md",
+    "SUPPLIER_INTAKE_SAP_SOURCE.json",
     "forecast-financing-receiving.mjs",
-    "FORECAST_FINANCING_RECEIVING.md"
+    "FORECAST_FINANCING_RECEIVING.md",
+    "../../../../products/material-catalog/recipient/renewal.mjs",
+    "../../../../products/material-catalog/recipient/renewal-panel.mjs"
   ]
 }

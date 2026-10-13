@@ -13,6 +13,7 @@ from operations import Operations, MAX_SOURCE
 import operations_dcat_sources as dcat_sources
 import operations_airflow_cli as airflow_cli
 import operations_material_catalogue_cli as material_catalogue_cli
+import operations_material_supplier_intake_cli as material_supplier_intake_cli
 import operations_commercial_cli as commercial_cli
 import operations_expense_billing_cli as expense_billing_cli
 import operations_work_billing_cli as work_billing_cli
@@ -59,6 +60,7 @@ def register(subparsers, common):
     funding_cli.register(command, mutation)
     airflow_cli.register(command, mutation)
     material_catalogue_cli.register(command, mutation)
+    material_supplier_intake_cli.register(command, mutation)
     risks_cli.register(command, mutation)
     agenda_cli.register(command)
     editions_cli.register(command, mutation)
@@ -779,6 +781,8 @@ def operate(workspace, args):
         return agenda_cli.operate(ops, args, publish)
     if action == "cost-funding" or action.startswith("funding-"):
         return funding_cli.operate(ops, args, read_bytes, publish)
+    if material_supplier_intake_cli.operates(action):
+        return material_supplier_intake_cli.operate(ops, args, read_bytes, publish)
     if material_catalogue_cli.operates(action):
         return material_catalogue_cli.operate(ops, args, read_bytes, publish)
     if airflow_cli.operates(action):
