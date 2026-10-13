@@ -15,6 +15,7 @@ import operations_installation_returns_cli as installation_returns_cli
 import operations_ledger_intake as ledger_intake
 import operations_funding_cli as funding_cli
 import award_terms_cli
+import operations_agenda_cli as agenda_cli
 
 
 def register(subparsers, common):
@@ -42,6 +43,7 @@ def register(subparsers, common):
         target.add_argument("--calendar-start", help="Explicit operational YYYY-MM-DD anchor; does not record an award")
 
     funding_cli.register(command, mutation)
+    agenda_cli.register(command)
     target = command("list", "List delivery operations cases", output=True)
     target.add_argument("--plan")
     target = command("create", "Pin a saved plan and open an operations or walkthrough case")
@@ -654,6 +656,8 @@ def publish(filename, raw):
 
 def operate(workspace, args):
     ops, action = Operations(workspace), args.operation
+    if agenda_cli.operates(action):
+        return agenda_cli.operate(ops, args, publish)
     if action == "cost-funding" or action.startswith("funding-"):
         return funding_cli.operate(ops, args, read_bytes, publish)
     if award_terms_cli.operates(action):

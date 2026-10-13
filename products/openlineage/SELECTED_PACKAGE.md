@@ -55,6 +55,11 @@ these paths can be loaded without a static JavaScript import. The console's
 OpenAPI, gRPC and reviewer workflow source remains selected. The upstream
 `OPENLINEAGE_LICENSE` is an explicit original source file.
 
+The facilitator's supported-response interpreter retains its original worker beside
+its caller. The shared A2A commissioning module retains its original customer plan
+template at the relative path read by that module. Both are exact source inputs,
+so runtime worker creation and template reads use the same published snapshot.
+
 The reviewer retains the original Buyer quote store, result store, MCP server and
 protocol modules that it loads from the selected source root. Its
 `/native-client.mjs` route serves the same explicitly retained Buyer browser client.

@@ -1,18 +1,23 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "atlas",
-  "description": "Original Atlas application with retained catalog ranking, typed saved-request workflow and complete receiving journey",
+  "description": "Original Atlas application with retained catalog ranking, complete source-bound selection import, typed saved-request workflow and full receiving journey",
   "applicationProviders": {
     "atlas": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/atlas.mjs"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf61-bazaar-explorer/WORKSPACE.md",
-    "stellar/scf-starforge-20261009/sf61-bazaar-explorer/CAPTURE_SEARCH.md"
+    "stellar/scf-starforge-20261009/sf61-bazaar-explorer/CAPTURE_SEARCH.md",
+    "stellar/scf-starforge-20261009/sf61-bazaar-explorer/CATALOG_REVIEW.md"
   ],
   "exports": {
     "./catalog/atlas/search": {
       "types": "./source/stellar/scf-starforge-20261009/sf61-bazaar-explorer/workspace.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf61-bazaar-explorer/workspace.mjs"
+    },
+    "./catalog/atlas/review": {
+      "types": "./source/stellar/scf-starforge-20261009/sf61-bazaar-explorer/catalog-review.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf61-bazaar-explorer/catalog-review.mjs"
     }
   },
   "commands": {

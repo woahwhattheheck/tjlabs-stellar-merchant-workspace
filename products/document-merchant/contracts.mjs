@@ -192,6 +192,7 @@ function validateShape(value, schema, path) {
   }
 }
 export function documentInputSchema(providerId, format) {
+  if(format==='pdf-set')return documentAssemblyInputSchema(providerId);
   const provider = documentProvider(providerId);
   requireDocument(provider.formats.includes(format), 'DOCUMENT_SOURCE_FORMAT_UNSUPPORTED');
   return {
@@ -205,6 +206,7 @@ export function documentInputSchema(providerId, format) {
   };
 }
 export function normalizeDocumentInput(providerId, format, input) {
+  if(format==='pdf-set')return normalizeDocumentAssemblyInput(providerId,input);
   const provider = documentProvider(providerId);
   requireDocument(provider.formats.includes(format), 'DOCUMENT_SOURCE_FORMAT_UNSUPPORTED',
     provider.name + ' accepts ' + provider.formats.join(' or ') + ' in this document workflow.');
@@ -221,6 +223,7 @@ export function normalizeDocumentInput(providerId, format, input) {
     taskReference: text(input.taskReference, 1, 200, 'original customer task reference'), settings};
 }
 export function buildDocumentRequest(configuration, format, input, sourceText) {
+  if(format==='pdf-set')return buildDocumentAssemblyRequest(configuration,input,sourceText);
   const config = normalizeDocumentProvider(configuration), provider = documentProvider(config.provider);
   const selected = normalizeDocumentInput(provider.id, format, input);
   requireDocument(typeof sourceText === 'string' && sourceText.trim().length > 0 &&
@@ -261,4 +264,76 @@ export function documentPriceReview(configuration, {documents = 1, supplierUnits
     billingBasis: provider.billing, sources: [...provider.sources],
     interpretation: 'The selected published plan is a planning input. Actual account usage, supplier charges and the merchant native-asset price remain their original records.'
   };
+}
+
+
+/** Complete ordered PDF input for the provider's original /v1/merge contract. */
+export const DOCUMENT_PDF_SOURCE_SCHEMA = 'stellar-forge.document-pdf-source.v1';
+export const DOCUMENT_ASSEMBLY_SOURCE_CHECKED_ON = '2026-10-13';
+export const DOCUMENT_ASSEMBLY_FORMAT = 'pdf-set';
+export const DOCUMENT_ASSEMBLY_MAX_FILES = 50;
+export function documentAssemblySettingsSchema() {
+  return objectSchema({strict:boolean,author:string(200),subject:string(500),keywords:string(1000)});
+}
+export function normalizeDocumentAssemblyInput(providerId,input) {
+  requireDocument(providerId==='pdfmint','DOCUMENT_ASSEMBLY_PROVIDER_REQUIRED',
+    'The installed ordered PDF assembly uses the original PDFMint account.');
+  fields(input,['title','taskReference','settings','$files'],'PDF assembly request');
+  const settings=copy(input.settings??{strict:true});
+  validateShape(settings,documentAssemblySettingsSchema(),'settings');
+  return {title:text(input.title,1,200,'document title'),
+    taskReference:text(input.taskReference,1,200,'original customer task reference'),settings};
+}
+export function documentAssemblyInputSchema(providerId) {
+  requireDocument(providerId==='pdfmint','DOCUMENT_ASSEMBLY_PROVIDER_REQUIRED');
+  return {type:'object',properties:{
+    title:{type:'string',minLength:1,maxLength:200},
+    taskReference:{type:'string',minLength:1,maxLength:200},
+    settings:documentAssemblySettingsSchema()
+  },required:['title','taskReference'],additionalProperties:false};
+}
+export function normalizeDocumentPdfSource(value,{minimumFiles=2}={}) {
+  fields(value,['schema','files'],'ordered PDF source');
+  requireDocument(value.schema===DOCUMENT_PDF_SOURCE_SCHEMA&&Array.isArray(value.files)&&
+    value.files.length>=minimumFiles&&value.files.length<=DOCUMENT_ASSEMBLY_MAX_FILES,
+    'DOCUMENT_ASSEMBLY_FILES_REQUIRED','Supply two to fifty complete PDFs in the required order.');
+  const seen=new Set();
+  const files=value.files.map((file,index)=>{
+    fields(file,['id','filename','bytes','sha256','base64','reference'],'PDF source file');
+    requireDocument(typeof file.id==='string'&&/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(file.id)&&
+      !seen.has(file.id),'DOCUMENT_ASSEMBLY_FILE_ID_REQUIRED');seen.add(file.id);
+    const filename=text(file.filename,1,200,'original PDF filename');
+    requireDocument(!/[\x00-\x1f\x7f/\\]/.test(filename)&&/\.pdf$/i.test(filename),
+      'DOCUMENT_ASSEMBLY_FILENAME_REQUIRED');
+    const bytes=integer(file.bytes,8,33554432,'PDF source bytes');
+    requireDocument(typeof file.sha256==='string'&&/^[a-f0-9]{64}$/.test(file.sha256)&&
+      typeof file.base64==='string'&&file.base64.length===4*Math.ceil(bytes/3)&&
+      !/[^A-Za-z0-9+/=]/.test(file.base64)&&
+      (file.base64.indexOf('=')===-1||file.base64.indexOf('=')>=file.base64.length-2)&&
+      (bytes%3===0?!file.base64.endsWith('='):bytes%3===1?file.base64.endsWith('=='):
+        file.base64.endsWith('=')&&!file.base64.endsWith('==')),
+      'DOCUMENT_ASSEMBLY_FILE_BYTES_REQUIRED','Retain every complete original PDF byte.');
+    return {id:file.id,filename,bytes,sha256:file.sha256,base64:file.base64,
+      ...(file.reference===undefined?{}:{reference:text(file.reference,1,500,'original PDF reference')})};
+  });
+  return {schema:DOCUMENT_PDF_SOURCE_SCHEMA,files};
+}
+export function buildDocumentAssemblyRequest(configuration,input,sourceText) {
+  const config=normalizeDocumentProvider(configuration);
+  const selected=normalizeDocumentAssemblyInput(config.provider,input);
+  requireDocument(typeof sourceText==='string'&&utf8Bytes(sourceText)>0&&
+    utf8Bytes(sourceText)<=config.maxSourceBytes,'DOCUMENT_SOURCE_SIZE_INVALID');
+  let value;try{value=JSON.parse(sourceText);}catch{
+    throw documentError('DOCUMENT_ASSEMBLY_SOURCE_JSON_REQUIRED','Select the complete ordered PDF source JSON.');
+  }
+  const source=normalizeDocumentPdfSource(value);
+  const {strict,...metadata}=selected.settings;
+  const body={files:source.files.map(file=>({base64:file.base64})),filename:'document.pdf',
+    output:'binary',strict:strict??true,metadata:{title:selected.title,...metadata}};
+  const bodyText=JSON.stringify(body),provider=documentProvider(config.provider);
+  requireDocument(utf8Bytes(bodyText)<=provider.maxRequestBytes,'DOCUMENT_PROVIDER_BODY_TOO_LARGE',
+    'The complete PDF assembly exceeds the original provider request limit.');
+  return {provider:provider.id,format:DOCUMENT_ASSEMBLY_FORMAT,input:selected,
+    url:provider.origin+'/v1/merge',method:'POST',contentType:'application/json',body,bodyText,
+    source,sourceCheckedOn:DOCUMENT_ASSEMBLY_SOURCE_CHECKED_ON};
 }

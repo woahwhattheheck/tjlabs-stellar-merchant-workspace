@@ -5,7 +5,11 @@ import { readFileSync, createReadStream, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { ensure, SCHEMA } from './core.mjs';
 import { workspaceFile, deliveryPacket } from './portable.mjs';
-const assets = new Map([['/', ['index.html', 'text/html']], ['/app.js', ['app.js', 'text/javascript']], ['/style.css', ['style.css', 'text/css']]]);
+// This trusted source declaration also belongs to the independently packed Node module.
+// The maintained distribution builder validates and retains these exact browser assets.
+const browserAssets = JSON.parse(readFileSync(new URL('./browser-assets.json', import.meta.url), 'utf8'));
+const assets = new Map(browserAssets.routes.map(([path, [file, type]]) =>
+    [path, { url: new URL(browserAssets.root + file, import.meta.url), type }]));
 export async function serveWorkspace(workspace, { port = 0, token = randomBytes(32).toString('base64url'), expectedBindingSha256 } = {}) {
     ensure(Number.isSafeInteger(port) && port >= 0 && port <= 65535, 'INVALID_PORT', 'Use a port from 0 to 65535.');
     const binding = workspace.binding();
@@ -21,8 +25,8 @@ export async function serveWorkspace(workspace, { port = 0, token = randomBytes(
             const url = new URL(req.url, origin);
             ensure(!url.search, 'INVALID_QUERY', 'Request parameters belong in the operation body.');
             if (req.method === 'GET' && assets.has(url.pathname)) {
-                const [file, type] = assets.get(url.pathname);
-                return send(200, readFileSync(new URL('./ui/' + file, import.meta.url)), type);
+                const asset = assets.get(url.pathname);
+                return send(200, readFileSync(asset.url), asset.type);
             }
             if (req.method === 'GET' && url.pathname === '/api/launch')
                 return send(200, { ...ready, url: origin, sessionUrl: undefined });

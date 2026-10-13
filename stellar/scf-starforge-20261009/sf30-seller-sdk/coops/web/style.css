@@ -2,3 +2,21 @@
 
 /* Original study form, including narrow staff viewports. */
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.study-wide{grid-column:1/-1;min-width:0}.study-member{min-width:0;margin:.8rem 0;padding:1rem;border:1px solid var(--line)}.study-member legend{font-weight:650}.grid>label,.grid>fieldset{min-width:0}.study-wide input[type=checkbox]{width:auto;margin-right:.4rem}.study-wide label:has(input[type=checkbox]){display:block;font-weight:400;margin:.5rem 0}@media(max-width:760px){.grid{grid-template-columns:1fr}.study-member{padding:.6rem}}
+
+/* Complete retained observation inspection. */
+.inspection-figure{margin:1.5rem 0;overflow:hidden;border:1px solid #c8c8c8;background:#fafafa;padding:.75rem;border-radius:.4rem}
+.inspection-figure svg{width:100%;height:auto;min-height:200px;display:block}
+.inspection-figure text{fill:#292929;font-size:12px;font-family:system-ui,sans-serif}
+.inspection-axis{fill:none;stroke:#707070;stroke-width:1}
+.inspection-range{stroke:#353535;stroke-width:1.5}
+.inspection-dot{fill:#111}
+.inspection-slot{fill:#e5e5e5}
+.inspection-filled{fill:#666}
+.inspection-figure figcaption{font-size:.85rem;line-height:1.5;color:#444;margin-top:.5rem}
+.inspection-counts .card{padding:.8rem;min-width:0}
+.inspection-counts strong{font-size:1.5rem;font-variant-numeric:tabular-nums}
+.inspection-counts p{margin:.3rem 0 0;font-size:.85rem}
+.inspection-basis{margin:1rem 0;padding:1rem;border-left:3px solid #555;background:#f5f5f5}
+#observation-inspection{min-width:0}
+#observation-inspection .actions{flex-wrap:wrap}
+@media(max-width:600px){.inspection-figure{padding:.35rem}.inspection-figure svg{min-height:160px}.inspection-counts{grid-template-columns:repeat(2,minmax(0,1fr))}.inspection-counts strong{font-size:1.2rem}#observation-inspection table{font-size:.85rem}}

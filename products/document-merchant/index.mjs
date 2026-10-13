@@ -31,3 +31,21 @@ export {
   prepareDocumentComposition, receiveDocumentComposition,
   prepareDocumentCompositionBatch, readDocumentCompositionBatch, exportDocumentComposition
 } from './composition.mjs';
+
+export {DOCUMENT_COMPOSITION_WORKSPACE_SCHEMA, openDocumentCompositionWorkspace} from './composition-workspace.mjs';
+export {documentCompositionExample, documentCompositionExtension} from './composition-server.mjs';
+
+export {
+  DOCUMENT_COMPOSITION_SERVICE_SELECTION_SCHEMA, DOCUMENT_COMPOSITION_SERVICE_LAUNCH_SCHEMA,
+  DOCUMENT_COMPOSITION_SERVICE_SOURCE, DOCUMENT_COMPOSITION_SERVICE_SOURCE_FILES,
+  normalizeDocumentCompositionServiceOptions, readDocumentCompositionServiceSelection,
+  assertDocumentCompositionServiceSelection, assertDocumentCompositionServiceSource,
+  openDocumentCompositionService, readDocumentCompositionServiceLaunch
+} from './composition-service.mjs';
+
+export * from './assembly.mjs';
+export {
+  DOCUMENT_PDF_SOURCE_SCHEMA,DOCUMENT_ASSEMBLY_SOURCE_CHECKED_ON,DOCUMENT_ASSEMBLY_FORMAT,
+  DOCUMENT_ASSEMBLY_MAX_FILES,documentAssemblySettingsSchema,normalizeDocumentAssemblyInput,
+  documentAssemblyInputSchema,normalizeDocumentPdfSource,buildDocumentAssemblyRequest
+} from './contracts.mjs';

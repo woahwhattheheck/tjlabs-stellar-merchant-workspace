@@ -7,6 +7,7 @@ export const GRANT_OPERATING_SELECTION_SCHEMA = 'stellar-forge.grant-operating-s
 export const GRANT_OPERATING_PREPARATION_SCHEMA = 'stellar-forge.grant-operating-preparation.v1';
 export const GRANT_OPERATING_CONTINUATION_SCHEMA = 'stellar-forge.grant-operating-continuation.v1';
 export const GRANT_OPERATING_RETURN_COMPARISON_SCHEMA = 'stellar-forge.grant-operating-return-comparison.v1';
+export const GRANT_OPERATING_RETURN_DRAFT_SCHEMA = 'stellar-forge.grant-operating-return-draft.v1';
 const copy = value => JSON.parse(JSON.stringify(value));
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const need = (condition, message) => { if (!condition) throw new TypeError(message); };
@@ -47,6 +48,23 @@ export function validateGrantOperatingSelection(value, source, revision) {
     need(!identities.has(item.plan.id), 'Keep unique prepared operating-plan identities.'); identities.add(item.plan.id);
     need(Array.isArray(item.packageIds) && item.packageIds.every(id => packageIds.has(id)) &&
       new Set(item.packageIds).size === item.packageIds.length, 'Retain the original selected work-package identities.');
+  }
+  if (value.returnDraft !== undefined && value.returnDraft !== null) {
+    const pending = value.returnDraft;
+    need(plain(pending) && pending.schema === GRANT_OPERATING_RETURN_DRAFT_SCHEMA &&
+      pending.sourceSha256 === source.sha256 && pending.nativeRevision === revision,
+      'Retain the unfinished return with its original native planning selection.');
+    text(pending.filename, 'Returned procedure filename', 300);
+    text(pending.note, 'Procedure receiving note'); receivingTime(pending.openedAt);
+    const incoming = inspectOperatingPlan(pending.incoming);
+    const prepared = value.prepared.find(item => item.plan.id === incoming.id);
+    need(prepared && pending.planId === incoming.id, 'Keep the unfinished return with its prepared procedure.');
+    receiveOperatingPlan(incoming, prepared.plan);
+    const current = grantOperatingContinuationPlan(prepared);
+    need(Number.isSafeInteger(pending.comparedRevision) &&
+      pending.comparedRevision >= prepared.plan.revisions.length &&
+      pending.comparedRevision <= current.revisions.length,
+      'Retain the exact previously compared operating revision.');
   }
   return value;
 }
@@ -198,19 +216,34 @@ export function compareGrantOperatingReturn(source, review, incoming) {
     originalTitle: original.title, previousTitle: previous.title, incomingTitle: next.title,
     planChanges: PLAN_COMPARISON_FIELDS.filter(field => !sameValue(previous[field], next[field])).map(field =>
       ({ field, original: copy(original[field]), previous: copy(previous[field]), returned: copy(next[field]) })),
+    stepOrder: {
+      prepared: original.steps.map((step, index) => ({ id: step.id, title: step.title, position: index + 1 })),
+      previous: previous.steps.map((step, index) => ({ id: step.id, title: step.title, position: index + 1 })),
+      returned: next.steps.map((step, index) => ({ id: step.id, title: step.title, position: index + 1 })),
+      changedFromPrepared: !sameValue(original.steps.map(step => step.id), next.steps.map(step => step.id)),
+      changedFromPrevious: !sameValue(previous.steps.map(step => step.id), next.steps.map(step => step.id)),
+      addedIds: next.steps.filter(step => !previous.steps.some(old => old.id === step.id)).map(step => step.id),
+      removedIds: previous.steps.filter(step => !next.steps.some(row => row.id === step.id)).map(step => step.id),
+    },
     packages, additionalSteps: copy(next.steps.filter(step => !originalIds.has(step.id))),
     counts: Object.fromEntries(['planned', 'in-progress', 'completed', 'skipped', 'missing'].map(status =>
       [status, packages.filter(item => item.status === status).length])) };
 }
 /** Receive original later revisions once, keeping the native plan and preparation intact. */
 export function receiveGrantOperatingReturn(source, review, incoming, {
-  at = new Date().toISOString(), filename = '', note = '', expectedRevision,
+  at = new Date().toISOString(), filename = '', note, expectedRevision,
 } = {}) {
+  if (note === undefined) note = sameValue(review.operatingSelection?.returnDraft?.incoming, incoming)
+    ? review.operatingSelection.returnDraft.note : '';
   receivingTime(at); text(filename, 'Returned procedure filename', 300); text(note, 'Procedure receiving note');
   const comparison = compareGrantOperatingReturn(source, review, incoming);
   if (expectedRevision !== undefined) need(Number.isSafeInteger(expectedRevision) &&
     expectedRevision === comparison.previousRevision, 'The procedure advanced after comparison. Reopen its current return before receiving.');
-  if (comparison.reused) return { review: copy(review), comparison, reused: true, addedRevisions: 0 };
+  if (comparison.reused) {
+    const next = copy(review);
+    if (sameValue(next.operatingSelection?.returnDraft?.incoming, incoming)) next.operatingSelection.returnDraft = null;
+    return { review: next, comparison, reused: true, addedRevisions: 0 };
+  }
   const next = copy(review), selection = grantOperatingSelectionOf(next, source);
   const prepared = selection.prepared.find(item => item.plan.id === comparison.planId);
   const current = grantOperatingContinuationPlan(prepared);
@@ -220,6 +253,35 @@ export function receiveGrantOperatingReturn(source, review, incoming, {
       at, filename, note, fromRevision: comparison.previousRevision, toRevision: comparison.incomingRevision,
     }] };
   validateGrantOperatingSelection(selection, source, next.revision);
+  if (sameValue(selection.returnDraft?.incoming, incoming)) selection.returnDraft = null;
   next.operatingSelection = selection;
   return { review: next, comparison, reused: false, addedRevisions: received.addedRevisions };
+}
+
+/** Keep the complete unfinished source and review in the original saved planning selection. */
+export function stageGrantOperatingReturn(source, review, incoming, {
+  filename = '', note = '', openedAt = new Date().toISOString(),
+} = {}) {
+  receivingTime(openedAt); text(filename, 'Returned procedure filename', 300); text(note, 'Procedure receiving note');
+  const comparison = compareGrantOperatingReturn(source, review, incoming);
+  const next = copy(review), selection = grantOperatingSelectionOf(next, source);
+  selection.returnDraft = { schema: GRANT_OPERATING_RETURN_DRAFT_SCHEMA,
+    sourceSha256: source.sha256, nativeRevision: review.revision, planId: comparison.planId,
+    incoming: inspectOperatingPlan(incoming), filename, note, openedAt,
+    comparedRevision: comparison.previousRevision };
+  next.operatingSelection = validateGrantOperatingSelection(selection, source, next.revision);
+  return { review: next, comparison };
+}
+export function refreshGrantOperatingReturn(source, review) {
+  const next = copy(review), selection = grantOperatingSelectionOf(next, source);
+  need(selection.returnDraft, 'Open a retained customer return first.');
+  const comparison = compareGrantOperatingReturn(source, next, selection.returnDraft.incoming);
+  selection.returnDraft.comparedRevision = comparison.previousRevision;
+  next.operatingSelection = validateGrantOperatingSelection(selection, source, next.revision);
+  return { review: next, comparison };
+}
+export function closeGrantOperatingReturn(source, review) {
+  const next = copy(review), selection = grantOperatingSelectionOf(next, source);
+  selection.returnDraft = null; next.operatingSelection = selection;
+  return next;
 }

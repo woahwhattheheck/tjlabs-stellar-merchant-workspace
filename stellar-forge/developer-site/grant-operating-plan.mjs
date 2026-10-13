@@ -147,11 +147,12 @@ export async function mainGrantOperatingPlan(args = process.argv.slice(2), { log
       return comparison;
     }
     const received = receiveGrantOperatingReturn(source, review, incoming, {
-      filename: basename(input.path), note: options['return-note'] ?? '', expectedRevision: options['expected-revision'],
+      filename: basename(input.path), note: options['return-note'], expectedRevision: options['expected-revision'],
     });
-    const next = received.reused ? draft : retainVersion(draft,
-      'Before receiving customer operating revision ' + comparison.incomingRevision);
-    if (!received.reused) next.planningReview = received.review;
+    const reviewChanged = JSON.stringify(received.review) !== JSON.stringify(draft.planningReview);
+    const next = reviewChanged ? retainVersion(draft,
+      'Before receiving customer operating revision ' + comparison.incomingRevision) : draft;
+    if (reviewChanged) next.planningReview = received.review;
     await saveTextExport(options.out, await createDraftEnvelope(validateDraft(next), { planningOptions }));
     log(JSON.stringify({ file: resolve(options.out), format: 'draft', draftId: next.id,
       planId: comparison.planId, nativeRevision: review.revision,

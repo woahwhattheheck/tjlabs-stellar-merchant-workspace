@@ -7,10 +7,12 @@ import {destinationForEvent,deliverNotification,applyDelivery,updateIncidentNoti
 import {prepareSlackRequest} from './notifications-slack.mjs';
 import {collectObjectObservation} from './object-source.mjs';
 import {collectCkanObservation} from './ckan-source.mjs';
+import {collectOAuthObservation} from './oauth-source.mjs';
 
-async function collectMerchant(merchant,signal) {
+async function collectMerchant(merchant,signal,environment) {
   if(merchant.object)return collectObjectObservation(merchant,signal);
   if(merchant.ckan)return collectCkanObservation(merchant,signal);
+  if(merchant.oauth)return collectOAuthObservation(merchant,signal,environment);
   let packet;
   try {packet=await readSupportBundle({...merchant,signal});}
   catch(error) {
@@ -134,7 +136,7 @@ export async function runIncidentWatch({directory,environment=process.env,signal
     while(!signal?.aborted) {
       lease.assertHeld();
       const begun=Date.now(),snapshot=await store.read();
-      const observations=await Promise.all(snapshot.config.merchants.map(merchant=>collectMerchant(merchant,signal)));
+      const observations=await Promise.all(snapshot.config.merchants.map(merchant=>collectMerchant(merchant,signal,environment)));
       if(signal?.aborted)break; // Intentional shutdown is not an endpoint incident.
       lease.assertHeld();
       await store.transaction(async(state,io)=>{

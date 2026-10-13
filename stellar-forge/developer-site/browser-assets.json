@@ -724,6 +724,104 @@
       ]
     ],
     [
+      "/grant-issuer-core.mjs",
+      [
+        "grant-issuer-core.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-issuer-source.mjs",
+      [
+        "grant-issuer-source.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-issuer-workspace.mjs",
+      [
+        "grant-issuer-workspace.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-catalog.mjs",
+      [
+        "../grant-catalog.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-catalog-browser.mjs",
+      [
+        "grant-catalog-browser.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-catalog.css",
+      [
+        "grant-catalog.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-catalog-guide.md",
+      [
+        "../GRANT_CATALOG.md",
+        "text/markdown; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-data/catalog-source-vellar-20261012.json",
+      [
+        "grant-data/catalog-source-vellar-20261012.json",
+        "application/json; charset=utf-8"
+      ]
+    ],
+    [
+      "/stellar/scf-starforge-20261009/sf61-bazaar-explorer/catalog-review.mjs",
+      [
+        "../../../stellar/scf-starforge-20261009/sf61-bazaar-explorer/catalog-review.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/stellar/scf-starforge-20261009/sf61-bazaar-explorer/capture-search.mjs",
+      [
+        "../../../stellar/scf-starforge-20261009/sf61-bazaar-explorer/capture-search.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/scf46-stellar-bazaar/src/entry-identity.mjs",
+      [
+        "../../../scf46-stellar-bazaar/src/entry-identity.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/scf46-stellar-bazaar/src/query-index.mjs",
+      [
+        "../../../scf46-stellar-bazaar/src/query-index.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/scf46-stellar-bazaar/src/ranking.mjs",
+      [
+        "../../../scf46-stellar-bazaar/src/ranking.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/stellar-forge/route-identity/identity.mjs",
+      [
+        "../../../stellar-forge/route-identity/identity.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/grant-data/financial-walkthrough.md",
       [
         "grant-data/financial-walkthrough.md",

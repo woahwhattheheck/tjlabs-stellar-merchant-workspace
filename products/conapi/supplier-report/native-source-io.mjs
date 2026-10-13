@@ -228,6 +228,32 @@ export async function nativeDeliveryMembers(report,{directory,archives={},cacheD
   return {files,sources};
 }
 
+async function deliveredNativeSources(directory){
+  const filename=path.join(directory,'manifest.json');
+  if(!await exists(filename))return {};
+  const original=await readSourceBytes(filename,4*1024*1024);
+  let manifest;
+  try{manifest=JSON.parse(text(original.content,'The delivery manifest').replace(/^\uFEFF/,''));}
+  catch{fail('DELIVERY_MANIFEST','The adjacent delivery manifest must contain complete JSON.');}
+  check(manifest?.format==='conapi-supplier-delivery' && manifest.version===1 && Array.isArray(manifest.files),
+    'DELIVERY_MANIFEST','Use the completed supplier delivery manifest.');
+  const selected=manifest.nativeSources || {},sources={};
+  check(selected && typeof selected==='object' && !Array.isArray(selected),
+    'DELIVERY_NATIVE_BINDING','The completed delivery must retain its original native source bindings.');
+  for(const role of ['baseline','candidate']){
+    const binding=selected[role];if(binding===undefined)continue;
+    const name=role+'-native-source.datasette.json.gz';
+    const members=manifest.files.filter(file=>file?.filename===name);
+    check(binding && binding.archive===name && Number.isSafeInteger(binding.bytes) && binding.bytes>=0 &&
+      HASH.test(binding.sha256) && HASH.test(binding.editionSha256) && HASH.test(binding.captureSha256) &&
+      members.length===1 && members[0].bytes===binding.bytes && members[0].sha256===binding.sha256,
+      'DELIVERY_NATIVE_BINDING','The completed '+role+' archive must retain its original byte and native identities.');
+    sources[role]={archive:name,bytes:binding.bytes,sha256:binding.sha256,
+      editionSha256:binding.editionSha256,captureSha256:binding.captureSha256};
+  }
+  return sources;
+}
+
 function response(res,status,value){
   const content=Buffer.from(json(value),'utf8');
   res.writeHead(status,{'Content-Type':'application/json;charset=utf-8','Content-Length':content.length,'Cache-Control':'no-store'});
@@ -260,7 +286,8 @@ export function createNativeSourceHost({cacheDirectory:cache,nativeDirectory,dir
       try{
         localRequest(req);
         if(req.method==='GET' && url.pathname==='/api/native-source/status'){
-          response(res,200,{status:closing?'closing':active?'reading':'ready',maximumArchiveBytes:ARCHIVE_LIMIT});return true;
+          response(res,200,{status:closing?'closing':active?'reading':'ready',maximumArchiveBytes:ARCHIVE_LIMIT,
+            nativeSources:await deliveredNativeSources(directory)});return true;
         }
         if(req.method==='GET' && url.pathname.startsWith('/api/native-source/archive/')){
           const expected=url.pathname.slice('/api/native-source/archive/'.length);
@@ -274,6 +301,14 @@ export function createNativeSourceHost({cacheDirectory:cache,nativeDirectory,dir
             if(original.sha256===expected){found=original;break;}
           }
           check(found,'NATIVE_ARCHIVE_REQUIRED','The original archive is not beside this received workspace. Select its saved native source package to continue.');
+          const editionHash=url.searchParams.get('edition'),captureHash=url.searchParams.get('capture');
+          if(editionHash!==null || captureHash!==null){
+            check(HASH.test(editionHash || '') && HASH.test(captureHash || ''),
+              'NATIVE_SOURCE_METADATA','Use the original edition and capture identities for this archive.');
+            const received=await receivedArchive(found,{cacheDirectory:root,nativeDirectory});
+            check(received.selected.editionSha256===editionHash && received.selected.captureSha256===captureHash,
+              'NATIVE_SOURCE_CHANGED','The downloaded archive belongs to another original native source.');
+          }
           res.writeHead(200,{'Content-Type':'application/gzip','Content-Length':found.bytes,
             'Content-Disposition':'attachment; filename="native-source-'+expected.slice(0,12)+'.datasette.json.gz"','Cache-Control':'no-store'});
           res.end(found.content);return true;

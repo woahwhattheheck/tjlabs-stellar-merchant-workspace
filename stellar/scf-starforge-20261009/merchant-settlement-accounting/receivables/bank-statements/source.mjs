@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Original bank statement intake. Node built-ins only; no network or workspace mutation.
 import { createHash } from 'node:crypto';
+import { readCamt053Statements } from './source-camt053.mjs';
 
 export const BANK_STATEMENT_SOURCE_SCHEMA = 'stellar-forge.bank-statement-source.v1';
 const MAX_BYTES = 32 * 1024 * 1024;
@@ -100,7 +101,7 @@ function decodeText(bytes, format, explicit, transport) {
       nativeHeader[key] = m[2].trim();
     }
   }
-  let declared = xml ? normalizeEncoding(xml[1]) : null;
+  let declared = xml ? (format === 'CAMT053' && /^utf-?16$/i.test(xml[1]) && bom?.startsWith('utf-16') ? bom : normalizeEncoding(xml[1])) : null;
   if (!declared && format !== 'CSV' && nativeHeader.ENCODING) {
     const enc = nativeHeader.ENCODING.toUpperCase();
     const charset = nativeHeader.CHARSET;
@@ -123,6 +124,14 @@ function decodeText(bytes, format, explicit, transport) {
     if (chosen === 'iso-8859-1') text = bytes.toString('latin1');
     else text = new TextDecoder(chosen === 'us-ascii' ? 'utf-8' : chosen, { fatal: true, ignoreBOM: true }).decode(bytes);
   } catch { fail('INVALID_TEXT_ENCODING', 'Original bytes are not valid in the selected encoding', { encoding: chosen }); }
+  if (format === 'CAMT053') {
+    const originalDeclaration = text.match(/^\ufeff?<\?xml\b[^?]*\bencoding\s*=\s*["']([^"']+)["']/i);
+    if (originalDeclaration) {
+      const originalEncoding = /^utf-?16$/i.test(originalDeclaration[1]) && chosen.startsWith('utf-16') ? chosen : normalizeEncoding(originalDeclaration[1]);
+      if (chosen !== originalEncoding && !(originalEncoding === 'us-ascii' && chosen === 'utf-8')) fail('TEXT_ENCODING_CONFLICT', 'Selected CAMT encoding conflicts with its original XML declaration', { chosen, declared: originalEncoding });
+      declared = originalEncoding;
+    }
+  }
   if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(text)) fail('INVALID_TEXT', 'Decoded statement contains invalid control characters');
   return { text, encoding: chosen, declaration: declared, bom, header: nativeHeader };
 }
@@ -494,7 +503,7 @@ function markDuplicates(statements) {
   const seen = new Map();
   for (const statement of statements) for (const row of statement.rows) {
     if (!row.providerKey) continue;
-    const fingerprint = jsonHash({date:row.postedDate,amount:row.amount,currency:row.currency,type:row.type,payee:row.payee,memo:row.memo,reference:row.reference,correction:row.correction});
+    const fingerprint = jsonHash({date:row.postedDate,amount:row.amount,currency:row.currency,type:row.type,payee:row.payee,memo:row.memo,reference:row.reference,correction:row.correction,...(row.camt?{camt:{creditDebit:row.camt.creditDebit,reversal:row.camt.reversal}}:{})});
     const prior = seen.get(row.providerKey);
     if (!prior) { seen.set(row.providerKey,{row,statement,fingerprint}); continue; }
     const same = prior.fingerprint===fingerprint;
@@ -802,13 +811,13 @@ function csvStatements(decoded,file,config) {
 export function readBankStatementSource(value) {
   object(value,'statement source input');
   const format=String(value.format||'').toUpperCase();
-  if (!['OFX','QFX','CSV'].includes(format)) fail('INVALID_FORMAT','Choose original OFX, QFX or explicitly mapped CSV');
+  if (!['OFX','QFX','CSV','CAMT053'].includes(format)) fail('INVALID_FORMAT','Choose original OFX, QFX, CAMT053 or explicitly mapped CSV');
   const input=readFile(value.file);
   const decoded=decodeText(input.bytes,format,value.textEncoding,input.transport);
-  const parsed=format==='CSV'?csvStatements(decoded,input.file,value.csv):nativeStatements(decoded,input.file,value.accountNamespace);
+  const parsed=format==='CSV'?csvStatements(decoded,input.file,value.csv):format==='CAMT053'?readCamt053Statements(decoded,input.file,value,{fail,object,issue,attempt,strictString,decimal,currency,calendarDate,addDecimals,makeLocator,entities,finishAccount,candidateFingerprint,statementSummary,markDuplicates,jsonHash}):nativeStatements(decoded,input.file,value.accountNamespace);
   return {
     schema:BANK_STATEMENT_SOURCE_SCHEMA,format,
-    file:{...input.file,type:format==='CSV'?'text/csv':format==='QFX'?'application/vnd.intu.qfx':'application/x-ofx',textEncoding:decoded.encoding},
+    file:{...input.file,type:format==='CSV'?'text/csv':format==='CAMT053'?'application/xml':format==='QFX'?'application/vnd.intu.qfx':'application/x-ofx',textEncoding:decoded.encoding},
     bytes:input.bytes,
     interpretation:{
       textEncoding:decoded.encoding,declaredEncoding:decoded.declaration,byteOrderMark:decoded.bom,

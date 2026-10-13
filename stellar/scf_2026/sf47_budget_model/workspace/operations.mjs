@@ -86,7 +86,7 @@ const empty = text => '<p class="ops-empty">'+esc(text)+'</p>';
 function b64(buffer) {let out='';const bytes=new Uint8Array(buffer);for(let n=0;n<bytes.length;n+=8192)out+=String.fromCharCode(...bytes.subarray(n,n+8192));return btoa(out);}
 function downloadFile(raw,filename,type='application/json') {const url=URL.createObjectURL(raw instanceof Blob?raw:new Blob([raw],{type}));const link=document.createElement('a');link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}
 
-export function mountOperations({container,api:transport,plan,inform:notify,mutationId,principal=null}) {
+export function mountOperations({container,api:transport,plan,inform:notify,mutationId,principal=null,initialNavigation=null}) {
   const fixedActor=principal&&principal.role!=='owner';
   const lead=!principal||['owner','lead'].includes(principal.role);
   const createCase=lead&&(!principal||principal.caseIds.includes('*'));
@@ -190,6 +190,11 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
   }
   function openCalendarSource(programId,tab,tranche,selection={}){
     if(!available()||view.current?.program.id!==programId)return;
+    if(tab==='cash'&&selection.cashId){
+      const retained=retainedCashAccountSessions.get(programId)||{};
+      retained.incomingAccount={cashId:selection.cashId};
+      retainedCashAccountSessions.set(programId,retained);
+    }
     if(tab==='completion'){
       const retained=retainedCompletionSessions.get(programId)||{};
       retained.requestCalendar={
@@ -947,6 +952,21 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
     });
   });
   root.innerHTML='<p>Opening retained delivery operations…</p>';
-  const ready=loadCases();
+  const ready=(async()=>{
+    await loadCases(initialNavigation?.caseId);
+    if(!initialNavigation||!available())return;
+    const selected=initialNavigation,caseId=view.current?.program.id;
+    if(caseId!==selected.caseId)throw new Error('Open the selected original agenda case.');
+    const requested=['cash','completion','calendar'].includes(selected.tab)?selected.tab:'calendar';
+    const tab=visibleTab(requested)?requested:'calendar';
+    if(tab==='calendar'){
+      const retained=retainedCalendarSessions.get(caseId)||{};
+      retained.incomingAgenda={asOfDate:selected.asOfDate,entryId:selected.calendarEntryId||''};
+      retainedCalendarSessions.set(caseId,retained);view.tab='calendar';render();
+    }else openCalendarSource(caseId,tab,selected.tranche,selected);
+    if(selected.caseVersion!==undefined&&view.current.program.version!==selected.caseVersion)
+      inform('Opened the original case at version '+view.current.program.version+
+        '. The agenda showed version '+selected.caseVersion+'; review its current retained records.');
+  })();
   return {ready,refresh,dispose,setHostBusy,root};
 }

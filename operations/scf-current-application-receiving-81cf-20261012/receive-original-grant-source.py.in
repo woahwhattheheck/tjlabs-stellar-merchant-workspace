@@ -189,7 +189,7 @@ try:
             assert hashlib.sha256(archive.read(baseline["draftPath"])).hexdigest()==original_submission_sha
             assert hashlib.sha256(archive.read(baseline["reviewPath"])).hexdigest()==original_review_sha
             if native_result["state"]=="COMPLETE":
-                native_reopen=json.loads(archive.read("receiving/source-package-continuation/RESULT.json"))
+                native_reopen=json.loads(archive.read(payload.get("receivingDirectory", "receiving/source-package-continuation") + "/RESULT.json"))
                 assert native_reopen["state"]=="COMPLETE"
                 assert native_reopen["retainedOriginalActions"]==baseline["reviewEvents"]
                 assert native_reopen["independentNativeReceiving"]["originalActionsRetained"]==baseline["reviewEvents"]

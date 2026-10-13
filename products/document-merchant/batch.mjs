@@ -22,8 +22,8 @@ const HASH = /^[a-f0-9]{64}$/;
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 const MAX_PLAN_BYTES = 16777216;
 const MAX_DOCUMENTS = 2000;
-const ids = {html: 'renderHtml', markdown: 'renderMarkdown'};
-const media = {html: 'text/html', markdown: 'text/markdown'};
+const ids = {html: 'renderHtml', markdown: 'renderMarkdown', 'pdf-set':'assemblePdfs'};
+const media = {html: 'text/html', markdown: 'text/markdown', 'pdf-set':'application/json'};
 const digest = value => createHash('sha256').update(value).digest('hex');
 const copy = value => structuredClone(value);
 const equal = (a,b) => canonical(a) === canonical(b);
@@ -71,7 +71,7 @@ export function normalizeDocumentBatch(value,{sourceRoot} = {}) {
     need(plain(item) && Object.keys(item).every(key => ['id','label','source','format','input'].includes(key)) &&
       ID.test(item.id ?? '') && !seen.has(item.id), 'DOCUMENT_BATCH_DOCUMENT_INVALID');
     seen.add(item.id);
-    need(provider.formats.includes(item.format), 'DOCUMENT_BATCH_FORMAT_UNSUPPORTED');
+    need(provider.formats.includes(item.format)||provider.id==='pdfmint'&&item.format==='pdf-set', 'DOCUMENT_BATCH_FORMAT_UNSUPPORTED');
     need(typeof item.source === 'string' && item.source.length > 0 && item.source.length <= 4096 &&
       !isAbsolute(item.source) && !/[\x00-\x1f\x7f]/.test(item.source), 'DOCUMENT_BATCH_SOURCE_REQUIRED');
     const path = resolve(root,item.source), local = relative(root,path);
@@ -174,9 +174,14 @@ async function validateSource(item,definition,provider) {
   let source;
   try {source = new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);}
   catch {need(false,'DOCUMENT_BATCH_SOURCE_ENCODING_REQUIRED');}
-  buildDocumentRequest({schema:DOCUMENT_PROVIDER_SCHEMA,provider,plan:'free',authentication:'bearer',
+  const request=buildDocumentRequest({schema:DOCUMENT_PROVIDER_SCHEMA,provider,plan:'free',authentication:'bearer',
     maxSourceBytes:Math.min(definition.inputFiles.slots.source.maxBytes,documentProvider(provider).maxSourceBytes)},
   item.format,item.input,source);
+  if(item.format==='pdf-set')for(const file of request.source.files){
+    const raw=Buffer.from(file.base64,'base64');
+    need(raw.toString('base64')===file.base64&&raw.length===file.bytes&&digest(raw)===file.sha256&&
+      raw.subarray(0,5).toString('ascii')==='%PDF-','DOCUMENT_ASSEMBLY_FILE_CHANGED');
+  }
   return {sha256:digest(bytes),bytes:bytes.length};
 }
 
