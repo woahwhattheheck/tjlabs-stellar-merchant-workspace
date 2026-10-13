@@ -17,6 +17,7 @@ const LIMIT=16*1024*1024;
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const need=(v,code,status=400)=>{if(!v)throw new MerchantError(code,status);};
 const json=value=>JSON.stringify(value,null,2)+'\n';
+export function serializeInvoiceDeliverySnapshot(body,revision){return json({...body,revision});}
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const names={CREATED:'Draft',CHARGE_UNCERTAIN:'Creating request',CHARGE_REJECTED:'Request rejected',
  AWAITING_PAYMENT:'Awaiting payment',PAYMENT_PENDING:'Payment pending',PAYMENT_UNCERTAIN:'Reconciling payment',
@@ -40,6 +41,12 @@ function capture(workspace,id){
  need(!workspace.closing&&!store._db.isTransaction,'INVOICE_DELIVERY_BUSY',409);
  store._db.exec('BEGIN');
  try{
+  const selected=captureWithinTransaction(workspace,id);
+  store._db.exec('COMMIT');return selected;
+ }catch(error){try{store._db.exec('ROLLBACK');}catch{}throw error;}
+}
+function captureWithinTransaction(workspace,id){
+ const store=workspace.store;need(store._db.isTransaction,'INVOICE_DELIVERY_TRANSACTION_REQUIRED',409);
   const meta=store._get('SELECT store_id FROM merchant_meta WHERE singleton=1');
   need(meta.store_id===store.storeId,'INVOICE_DELIVERY_OWNER_CHANGED',409);
   const inspected=workspace.inspect(id);need(inspected.order.id===id,'INVOICE_DELIVERY_ORDER_CHANGED',409);
@@ -51,9 +58,13 @@ function capture(workspace,id){
   const result=body.invoice.state==='COMPLETE'?workspace.result(id):null;
   if(result)need(body.invoice.result&&result.metadata.sha256===body.invoice.result.sha256&&
    result.metadata.bytes===body.invoice.result.bytes,'INVOICE_DELIVERY_RESULT_CHANGED',409);
-  store._assertOpen();store._db.exec('COMMIT');
+  store._assertOpen();
   return {body,revision:hash(encoded),result};
- }catch(error){try{store._db.exec('ROLLBACK');}catch{}throw error;}
+}
+/** Assert the original public invoice while the same business writer transaction is held. */
+export function assertInvoiceDeliveryRevision(workspace,id,revision){
+ need(UUID.test(id??'')&&SHA.test(revision??''),'INVOICE_DELIVERY_REVIEW_REQUIRED');
+ need(captureWithinTransaction(workspace,id).revision===revision,'INVOICE_DELIVERY_CHANGED',409);
 }
 function summary(selected){
  const {body,revision}=selected,invoice=body.invoice;
@@ -67,10 +78,11 @@ function summary(selected){
    ...(body.envelope?['payment-request.json']:[]),...(selected.result?[resultName(invoice.result)]:[])]};
 }
 export function previewInvoiceDelivery(workspace,id){return summary(capture(workspace,id));}
+export function readInvoiceDeliverySnapshot(workspace,id){const {body,revision}=capture(workspace,id);return {body,revision};}
 function fact(label,value){return '<div><dt>'+escape(label)+'</dt><dd>'+escape(value??'—')+'</dd></div>';}
 export function renderInvoiceDelivery(body,revision,{resultMember=null}={}){
  const order=body.invoice,rails=order.frozen.rails;
- const printScript="(()=>{let closed=[];addEventListener('beforeprint',()=>{closed=[...document.querySelectorAll('details:not([open])')];for(const item of closed)item.open=true;});addEventListener('afterprint',()=>{for(const item of closed)item.open=false;closed=[];});})();";
+ const printScript="(()=>{let closed=null;addEventListener('beforeprint',()=>{if(closed!==null)return;closed=[...document.querySelectorAll('details:not([open])')];for(const item of closed)item.open=true;});addEventListener('afterprint',()=>{if(closed===null)return;for(const item of closed)item.open=false;closed=null;});})();";
  const printDigest=createHash('sha256').update(printScript).digest('base64');
  const terms=rails.map(r=>'<tr><td>'+escape(r.label)+'</td><td class="amount">'+escape(amount(r.amountAtomic,r.decimals))+
   '</td><td>'+escape(r.network)+'</td><td class="mono">'+escape(r.assetId)+'</td><td class="mono">'+escape(r.recipient)+'</td></tr>').join('');
@@ -134,7 +146,7 @@ export async function createInvoiceDeliveryExport(workspace,{invoiceId,revision,
    const path=join(directory,'part-'+files.length);await writeFile(path,raw,{flag:'wx',mode:0o600});
    const member={name,bytes:raw.length,sha256:hash(raw),contentType};members.push(member);files.push({...member,path});return member;
   }
-  await add('invoice.json',json({...selected.body,revision}),'application/json');
+  await add('invoice.json',serializeInvoiceDeliverySnapshot(selected.body,revision),'application/json');
   if(selected.body.envelope)await add('payment-request.json',JSON.stringify(selected.body.envelope),'application/json');
   if(selected.result){
    await selected.result.verify({signal});

@@ -80,6 +80,12 @@ project-begin --connection FILE --operation ORIGINAL_UUID [--out FILE]
 project-download --connection FILE --operation ORIGINAL_UUID --out /private/project.zip
 invoice-delivery --connection FILE --id ORIGINAL_UUID --out /private/delivery-review.json
 invoice-delivery-download --connection FILE --request /private/delivery-review.json --out /private/customer.zip
+customer-reviews --connection FILE --id ORIGINAL_UUID [--out FILE]
+customer-review-issue|customer-review-receive|customer-review-decide --connection FILE --request EXACT_REQUEST_JSON --out RECEIPT_JSON
+customer-review-compare --connection FILE --id ORIGINAL_UUID --revision RETURN_SHA256 --out COMPARISON_JSON
+customer-review-document --connection FILE --id ORIGINAL_UUID --operation ISSUE_UUID --out REVIEW_HTML
+customer-review-return --connection FILE --id ORIGINAL_UUID --revision RETURN_SHA256 --out RETURN_JSON
+customer-review-support --connection FILE --id ORIGINAL_UUID --out SUPPORT_WORKSPACE_JSON
 intake-context|intakes --connection FILE [--out FILE]
 intake-prepare --connection FILE --source ORIGINAL_FILE --mapping MAPPING_JSON
                --format csv|json --operation ORIGINAL_UUID [--out REVIEW_JSON]
@@ -113,6 +119,7 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,s
     invoice:[...common,'id'],create:[...common,'request'],charge:[...common,'id'],
     envelope:[...common,'id'],authorize:[...common,'id','request'],reconcile:[...common,'id'],
     result:[...common,'id'],observation:common,'observation-summary':[...common,'history-sequence'],
+    'customer-reviews':[...common,'id'],'customer-review-issue':[...common,'request'],'customer-review-receive':[...common,'request'],'customer-review-decide':[...common,'request'],'customer-review-compare':[...common,'id','revision'],'customer-review-document':[...common,'id','operation'],'customer-review-return':[...common,'id','revision'],'customer-review-support':[...common,'id'],
     'intake-context':common,intakes:common,
     'intake-prepare':[...common,'source','mapping','format','operation'],
     'intake-status':[...common,'operation'],'intake-export':[...common,'operation'],'intake-run':[...common,'request'],
@@ -146,7 +153,7 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,s
       Object.keys(connection).every(k=>['schema','url','storeId','tenantId','tokenEnvironment','timeoutMs','maxDownloadBytes','maxJSONBytes'].includes(k))&&
       typeof connection.tokenEnvironment==='string'&&/^[A-Z][A-Z0-9_]{0,127}$/.test(connection.tokenEnvironment),
       'MERCHANT_OPERATOR_CONNECTION_INVALID');
-    const mutation=['create','charge','authorize','reconcile','project-begin','intake-prepare','intake-run'].includes(action);
+    const mutation=['create','charge','authorize','reconcile','project-begin','intake-prepare','intake-run','customer-review-issue','customer-review-receive','customer-review-decide'].includes(action);
     if(mutation&&values.out)await admitMutationOutput(values.out);
     const client=await createMerchantOperatorClient({...connection,operatorToken:environment[connection.tokenEnvironment],
       timeoutMs:numeric('timeout-ms')??connection.timeoutMs,
@@ -184,6 +191,16 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,s
     }
     else if(action==='reconcile')result=await client.reconcileInvoice(values.id,settings);
     else if(action==='result'){result=await client.downloadInvoiceResult(values.id,values.out,settings);download=true;}
+    else if(action==='customer-reviews')result=await client.customerReviews(values.id,settings);
+    else if(['customer-review-issue','customer-review-receive','customer-review-decide'].includes(action)){
+      need(values.out&&values.request,'CUSTOMER_REVIEW_EXACT_REQUEST_AND_OUTPUT_REQUIRED');
+      const original=await input('request',96*1024*1024+65536);
+      result=await client[{ 'customer-review-issue':'issueCustomerReview','customer-review-receive':'receiveCustomerReview','customer-review-decide':'decideCustomerReview'}[action]](original,settings);
+    }
+    else if(action==='customer-review-compare')result=await client.compareCustomerReview(values.id,values.revision,settings);
+    else if(action==='customer-review-document'){result=await client.downloadCustomerReview(values.id,values.operation,values.out,settings);download=true;}
+    else if(action==='customer-review-return'){result=await client.downloadCustomerReturn(values.id,values.revision,values.out,settings);download=true;}
+    else if(action==='customer-review-support'){result=await client.downloadCustomerReviewSupport(values.id,values.out,settings);download=true;}
     else if(action==='intake-context')result=await client.intakeContext(settings);
     else if(action==='intakes')result=await client.listIntakes(settings);
     else if(action==='intake-prepare'){
@@ -211,7 +228,7 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,s
     if(values.out&&!download){
       try{stdout.write(JSON.stringify(await saveJSON(values.out,result))+'\n');}
       catch(error){
-        const recovery=action.startsWith('intake-')?{kind:'intake',operation:result.operation??values.operation,action:'status'}:
+        const recovery=action.startsWith('customer-review-')?{kind:'customer-review',invoiceId:result.invoiceId,request:values.request,action:'replay-exact-request'}:action.startsWith('intake-')?{kind:'intake',operation:result.operation??values.operation,action:'status'}:
           action==='project-begin'?{kind:'project',operation:values.operation,action:'status'}:
           mutation?{kind:'invoice',id:result.order?.id??values.id,action:'inspect'}:null;
         const saveError={code:typeof error?.code==='string'?error.code:'MERCHANT_OPERATOR_OUTPUT_WRITE_FAILED'};

@@ -1,4 +1,5 @@
 // MIT. Local merchant workspace. Original modules own all diagnostic and workorder decisions.
+import {mountCustomerReviewDesk} from './customer-review-desk.mjs';
 import {mountTermsEditor} from './terms-editor.mjs';
 import {mountWorkspaceFiles} from './workspace-files.mjs';
 import {decodeSource, sourceDigest} from './workspace-file.mjs';
@@ -12,6 +13,7 @@ import {createServiceRecord} from './service-commitments.mjs';
 import {mountCommissioningDesk} from './commissioning-desk.mjs';
 import {mountSourceBundlePanel} from '/commissioning-source/panel.mjs';
 
+let customerReviewDesk=null,currentCustomerReview=null,customerReviewIdentity=0;
 let caseDesk = null;
 let runtimeDesk = null;
 let serviceDesk = null;
@@ -497,6 +499,7 @@ syncSources();
 // Portable workspaces and the private case desk compose the current console.
 const emptyTermsDraft = termsEditor.readDraft();
 const workspaceRoot = document.createElement('div');
+const customerReviewRoot=document.createElement('section');
 const caseRoot = document.createElement('div');
 const handoffRoot = document.createElement('section');
 const casePackageRoot = document.createElement('section');
@@ -513,7 +516,7 @@ portableFiles.append(portableSummary,workspaceRoot);
 $('diagnose').before(caseRoot,incidentRoot,handoffRoot,portableFiles);
 $('review').before(runtimeRoot);
 commissioningRoot.after(serviceRoot);
-serviceRoot.after(casePackageRoot);
+serviceRoot.after(casePackageRoot);casePackageRoot.after(customerReviewRoot);
 const sourceText = value => new TextDecoder('utf-8', {fatal: true, ignoreBOM: true}).decode(decodeSource(value));
 const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 function checkDisplayReport(report, kind) {
@@ -538,6 +541,7 @@ function checkDisplayReport(report, kind) {
 async function readCase() {
   if (termsImportPending) throw new Error('Finish importing the selected terms file before saving the case.');
   // Snapshot everything before the first await; file selections may change during encoding.
+  const customerReview=currentCustomerReview;
   const service = serviceDesk.read();
   const inputs = Object.fromEntries(new FormData(form).entries());
   inputs.credentialed = $('credentialed').checked;
@@ -551,9 +555,10 @@ async function readCase() {
     [field, file ? await encodedFile(file) : null])));
   sources.intake = current ? encodeBytes(new TextEncoder().encode(current)) : null;
   sources.preflight = browser ? encodeBytes(new TextEncoder().encode(browser)) : null;
-  return {service, inputs, sources, termsText, baselineOnly,workorderSource,...(commissioning?{commissioning}:{})};
+  return {service, inputs, sources, termsText, baselineOnly,workorderSource,...(commissioning?{commissioning}:{}),...(customerReview?{customerReview}:{})};
 }
 async function applyCase(state, {canReplace = ()=>true} = {}) {
+  const customerReview=await customerReviewDesk.prepare(state.customerReview??null);
   const commissioning=await commissioningDesk.prepare(state.commissioning??null);
   // Complete structural/representability checks before touching the current editor.
   const terms = state.termsText ? JSON.parse(state.termsText) :
@@ -592,6 +597,7 @@ async function applyCase(state, {canReplace = ()=>true} = {}) {
   if (!canReplace()) throw new Error('The current draft changed while this case was opening.');
   const service = await serviceDesk.load(state.service, {canReplace});
   currentServiceRecord = service;
+  customerReviewIdentity++;customerReviewDesk.apply(customerReview);
   // Retire previous diagnostic result owners before replacing the original case state.
   intakeRevision++; intakeOperation++; clearPreflight(); invalidateComparison(); invalidateWorkorder();
   termsImportRevision++; termsImportPending = false; $('terms-file').value = '';
@@ -630,6 +636,7 @@ async function applyCase(state, {canReplace = ()=>true} = {}) {
   $('terms-file-status').textContent = 'Restored raw draft fields, including existing recorded terms. Original workorder validation still applies.';
   document.querySelector('footer').textContent = 'Merchant workspace · Save case retains the full case. Portable workspace files transfer captures and draft terms.';
 }
+customerReviewDesk=mountCustomerReviewDesk({root:customerReviewRoot,readRecord:()=>currentCustomerReview,writeRecord:v=>{currentCustomerReview=v;customerReviewIdentity++;},readIdentity:()=>customerReviewIdentity,onChange:()=>caseDesk?.changed({user:true,source:false})});
 commissioningDesk=mountCommissioningDesk({root:commissioningRoot,onChange:()=>caseDesk?.changed({user:true,source:false})});
 const portable = mountWorkspaceFiles({root:workspaceRoot,readState:readCase,
   applyState:state=>caseDesk.importWorkspace(state),
@@ -646,6 +653,7 @@ caseDesk = mountCaseDesk({root:caseRoot,readState:readCase,
   applyState:async (state,options)=>{await applyCase(state,options);portable.setName(state.name);},
   readSupport:()=>runtimeDesk.getText(),
   applySavedCommissioning:(value,options)=>commissioningDesk.mergeSaved(value,options),
+  applySavedCustomerReview:(value,options)=>customerReviewDesk.mergeSaved(value,options),
   applySavedService:async(value,{canReplace})=>{
     if(!canReplace())return false;
     try {
@@ -692,7 +700,7 @@ mountHandoffDesk({root:handoffRoot,onOpenCase:id=>caseDesk.openSavedCase(id)});
 mountIncidentDesk({root:incidentRoot,exportCase:()=>caseDesk.exportSnapshot(),
   importCase:(state,files)=>caseDesk.importWorkspace(state,files)});
 for (const event of ['input','change']) document.querySelector('main').addEventListener(event,e=>{
-  if (caseRoot.contains(e.target) || incidentRoot.contains(e.target) || handoffRoot.contains(e.target) || casePackageRoot.contains(e.target) || workspaceRoot.contains(e.target) || runtimeRoot.contains(e.target) || serviceRoot.contains(e.target) || commissioningRoot.contains(e.target) ||
+  if (customerReviewRoot.contains(e.target) || caseRoot.contains(e.target) || incidentRoot.contains(e.target) || handoffRoot.contains(e.target) || casePackageRoot.contains(e.target) || workspaceRoot.contains(e.target) || runtimeRoot.contains(e.target) || serviceRoot.contains(e.target) || commissioningRoot.contains(e.target) ||
       ['permission','post-permission'].includes(e.target.id)) return;
   caseDesk.changed({user:true});
 });
@@ -710,7 +718,7 @@ async function openLinkedCase() {
   const opened = await caseDesk.openSavedCase(id,revisions[0]??null);
   if (!opened || caseDesk.currentCase()?.id !== id) return;
   const destination = url.hash === '#implementation' ? commissioningRoot :
-    url.hash === '#case-packages' ? casePackageRoot : url.hash === '#service-operations' ? serviceRoot : null;
+    url.hash === '#customer-reviews' ? customerReviewRoot : url.hash === '#case-packages' ? casePackageRoot : url.hash === '#service-operations' ? serviceRoot : null;
   if (destination) destination.scrollIntoView({block: 'start'});
 }
 void openLinkedCase().catch(error => {

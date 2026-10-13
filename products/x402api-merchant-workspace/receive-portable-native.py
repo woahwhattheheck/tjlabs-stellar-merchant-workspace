@@ -112,15 +112,27 @@ SOURCE_PATHS = [
   "stellar-forge/mcp-merchant-operator/retained-file-contracts.mjs",
   "stellar-forge/mcp-merchant-operator/retained-file-reads.mjs",
   "products/x402api-merchant-workspace/PROJECT_AGENT.md",
-  "products/x402api-merchant-workspace/project-agent-receiving.mjs"
-,
+  "products/x402api-merchant-workspace/project-agent-receiving.mjs",
   "stellar-forge/mcp-merchant-operator/merchant-invoice-connection.mjs",
   "stellar-forge/mcp-merchant-operator/merchant-invoice-files.mjs",
   "stellar-forge/mcp-merchant-operator/merchant-invoice-protocol.mjs",
   "stellar-forge/mcp-merchant-operator/merchant-invoices.mjs",
   "stellar-forge/mcp-merchant-operator/providers/merchant-invoices.mjs",
   "products/x402api-merchant-workspace/invoice-agent-receiving.mjs",
-  "products/x402api-merchant-workspace/INVOICE_AGENT.md"
+  "products/x402api-merchant-workspace/INVOICE_AGENT.md",
+  "products/x402api-merchant-workspace/customer-review-core.mjs",
+  "products/x402api-merchant-workspace/customer-review.mjs",
+  "products/x402api-merchant-workspace/customer-review-receiving.mjs",
+  "products/x402api-merchant-workspace/web/customer-review-desk.mjs",
+  "products/x402api-merchant-workspace/web/customer-review-offline.js",
+  "products/x402api-merchant-workspace/web/customer-review-offline.css",
+  "products/x402api-merchant-workspace/web/customer-review-offline.html",
+  "products/x402api-merchant-workspace/CUSTOMER_REVIEWS.md",
+  "stellar/scf-starforge-20261009/sf74-merchant-support-console/workspace-file.mjs",
+  "stellar/scf-starforge-20261009/sf74-merchant-support-console/commissioning.mjs",
+  "stellar/scf-starforge-20261009/sf74-merchant-support-console/source-bundle-reference.mjs",
+  "stellar/scf-starforge-20261009/sf74-merchant-support-console/service-commitments.mjs",
+  "stellar/scf-starforge-20261009/sf74-merchant-support-console/service-renewals.mjs"
 ]
 
 def digest(raw): return hashlib.sha256(raw).hexdigest()

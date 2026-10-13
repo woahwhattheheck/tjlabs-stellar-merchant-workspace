@@ -17,6 +17,7 @@ import { merchantInputFiles, reviewMerchantInputs, verifyMerchantInputFingerprin
 import { createMerchantProject, resolveMerchantProjectSource } from './portable.mjs';
 import {inspectMerchantIntakeSource,merchantIntakeContext,prepareMerchantIntake,readMerchantIntake,exportMerchantIntake,listMerchantIntakes,runMerchantIntake} from './invoice-intake.mjs';
 
+import {readCustomerReviews,issueCustomerReview,receiveCustomerReview,compareCustomerReview,decideCustomerReview,exportCustomerReviewSupport,exportOriginalCustomerReturn,exportCustomerReviewDocument} from './customer-review.mjs';
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const ASSETS = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
@@ -25,6 +26,8 @@ const ASSETS = new Map([
   ['/invoice-drafts.mjs', ['invoice-drafts.mjs', 'text/javascript; charset=utf-8']],
   ['/invoice-draft-store.mjs', ['invoice-draft-store.mjs', 'text/javascript; charset=utf-8']],
   ['/payment-desk.mjs', ['payment-desk.mjs', 'text/javascript; charset=utf-8']],
+  ['/customer-review-desk.mjs', ['customer-review-desk.mjs', 'text/javascript; charset=utf-8']],
+  ['/customer-review-core.mjs', ['../customer-review-core.mjs', 'text/javascript; charset=utf-8']],
   ['/customer-delivery.mjs', ['customer-delivery.mjs', 'text/javascript; charset=utf-8']],
   ['/invoice-intake.mjs', ['invoice-intake.mjs', 'text/javascript; charset=utf-8']],
   ['/style.css', ['style.css', 'text/css; charset=utf-8']]
@@ -197,6 +200,25 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
       } finally {invoiceExportsPreparing--;response.off('close',abort);}
     }
     if (parsed.search) fail('QUERY_NOT_SUPPORTED');
+
+    const review=/^\/api\/orders\/([0-9a-f-]{36})\/customer-review(?:\/(issue|receive|compare|decide|support|document|return)(?:\/([0-9a-f-]+))?)?$/i.exec(path);
+    if(review){
+      const [,invoiceId,action,selection]=review;
+      const file=(text,name,type)=>{const raw=Buffer.from(text);response.writeHead(200,{'Content-Type':type,'Content-Length':String(raw.length),'Content-Disposition':'attachment; filename="'+name+'"','Cache-Control':'no-store','X-Content-SHA256':createHash('sha256').update(raw).digest('hex')});return response.end(raw);};
+      if(!action&&request.method==='GET')return respond(response,200,await readCustomerReviews(workspace,invoiceId));
+      if(action==='support'&&!selection&&request.method==='GET')return file(await exportCustomerReviewSupport(workspace,invoiceId),'merchant-review-support-'+invoiceId+'.json','application/json');
+      if(action==='document'&&selection&&request.method==='GET')return file(await exportCustomerReviewDocument(workspace,{invoiceId,issueId:selection}),'Customer_Review_'+selection+'.html','text/html; charset=utf-8');
+      if(action==='return'&&selection&&request.method==='GET')return file(await exportOriginalCustomerReturn(workspace,{invoiceId,returnSha256:selection}),'Customer_Return_'+selection+'.json','application/json');
+      if(action==='compare'&&selection&&request.method==='GET')return respond(response,200,await compareCustomerReview(workspace,{invoiceId,returnSha256:selection}));
+      if(['issue','receive','decide'].includes(action)&&!selection&&request.method==='POST'){
+        const input=await jsonBody(request,action==='receive'?96*1024*1024+65536:131072);
+        if(input.invoiceId!==invoiceId)fail('CUSTOMER_REVIEW_INVOICE_CHANGED',409);
+        const run={issue:issueCustomerReview,receive:receiveCustomerReview,decide:decideCustomerReview}[action];
+        return respond(response,200,await run(workspace,input));
+      }
+      fail('METHOD_NOT_ALLOWED',405);
+    }
+
     if(path==='/api/invoice-intake/context'&&request.method==='GET')return respond(response,200,merchantIntakeContext(workspace));
     if(path==='/api/invoice-intake/inspect'&&request.method==='POST'){
       const input=await jsonBody(request,8*1024*1024),parsed=inspectMerchantIntakeSource(input.source);

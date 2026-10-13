@@ -82,7 +82,7 @@ export function mountWorkspaceFiles({root, readState, applyState, onNameChange =
     if (!file) { status('No case file selected. Current work is unchanged.'); return; }
     status('Reading the local case and checking its original source bytes…');
     try {
-      if (!file.size || file.size > MAX_WORKSPACE_BYTES) throw new Error('File must contain 1..16,100,000 bytes');
+      if (!file.size || file.size > MAX_WORKSPACE_BYTES) throw new Error('File must contain 1..'+MAX_WORKSPACE_BYTES+' bytes');
       const text = new TextDecoder('utf-8', {fatal: true, ignoreBOM: true}).decode(await file.arrayBuffer());
       const parsed = await parseWorkspace(text);
       if (destroyed || revision !== selection) return;

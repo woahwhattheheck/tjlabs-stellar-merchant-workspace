@@ -1,6 +1,7 @@
 import {mountInvoiceWorking} from './invoice-working.mjs';
 import {mountMerchantIntake} from './invoice-intake.mjs';
 import {mountMerchantPayment} from './payment-desk.mjs';
+import {mountMerchantCustomerReview} from './customer-review-desk.mjs';
 import {mountMerchantDelivery} from './customer-delivery.mjs';
 const $ = id => document.getElementById(id);
 let token = '', state = null, projectState = null, selectedId = null, busy = false, poll = null;
@@ -75,7 +76,7 @@ async function action(work) {
   }
 }
 function disconnect() {
-  connectionEpoch++; working.reset(); intake.reset(); payment.detach(); delivery.reset(); ownerIdentity = null;
+  connectionEpoch++; working.reset(); intake.reset(); payment.detach(); delivery.reset(); customerReview.reset(); ownerIdentity = null;
   token = ''; selectedId = null; state = null; projectState = null; detailOrder = null;
   registerRequest++; detailRequest++; registerSelection = {}; $('register-filter-form').reset();
   $('detail-content').hidden = true; $('detail-empty').hidden = false;
@@ -94,7 +95,7 @@ function renderList() {
     const prices = element('td');
     for (const rail of order.offers) prices.append(element('span', amount(rail.amountAtomic, rail.decimals) + ' ' + rail.label, 'amount'));
     const status = element('td'); status.append(element('span', stateName(order.state), 'state')); row.append(identity, prices, status);
-    const choose = () => action(async () => { selectedId = order.id; payment.select(selectedId); delivery.select(selectedId); detailOrder = null; renderList(); await loadDetail(); });
+    const choose = () => action(async () => { selectedId = order.id; payment.select(selectedId); delivery.select(selectedId); customerReview.select(selectedId); detailOrder = null; renderList(); await loadDetail(); });
     row.addEventListener('click', choose); row.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); choose(); } });
     rows.append(row);
   }
@@ -227,7 +228,7 @@ async function loadDetail() {
     if (detail) row.append(element('div', detail, 'history-detail'));
     $('history').append(row);
   }
-  await payment.observe(received); delivery.select(order.id);
+  await payment.observe(received); delivery.select(order.id); customerReview.select(order.id);
 }
 function exportPendingKey() { return 'merchant.pending-project-export.v1.' + projectState.storeId; }
 function projectSize(value) {
@@ -261,7 +262,7 @@ function applyCaptureControls() {
   const order = detailOrder?.id === selectedId ? detailOrder : state?.orders?.find(item => item.id === selectedId);
   $('create-charge').disabled = paused || order?.state === 'CHARGE_REJECTED';
   renderRegisterControls();
-  intake.controls(); payment.controls(); delivery.controls(); working.controls();
+  intake.controls(); payment.controls(); delivery.controls(); customerReview.controls(); working.controls();
 }
 function renderProject() {
   const rows = $('project-export-rows'); rows.replaceChildren();
@@ -368,7 +369,8 @@ $('download-result').addEventListener('click', () => action(async () => {
 }));
 const working=mountInvoiceWorking({api,action,notice,identity:()=>ownerIdentity,state:()=>state,
  busy:()=>busy,capturing:()=>projectState?.capturing===true,
- received:async id=>{selectedId=id;payment.select(id);delivery.select(id);await refresh();}});
+ received:async id=>{selectedId=id;payment.select(id);delivery.select(id);customerReview.select(id);await refresh();}});
+const customerReview=mountMerchantCustomerReview({api,action,notice,identity:()=>ownerIdentity,state:()=>state,busy:()=>busy,capturing:()=>projectState?.capturing===true});
 const delivery=mountMerchantDelivery({api,action,notice,identity:()=>ownerIdentity,busy:()=>busy});
 const payment=mountMerchantPayment({api,action,notice,identity:()=>ownerIdentity,state:()=>state,
  busy:()=>busy,capturing:()=>projectState?.capturing===true,changed:refresh});

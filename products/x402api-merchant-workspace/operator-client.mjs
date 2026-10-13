@@ -173,6 +173,14 @@ async function receiveFile(options,identity,path,expected,destination,{signal,au
     fail(signal?.aborted?'MERCHANT_OPERATOR_ABORTED':'MERCHANT_OPERATOR_DOWNLOAD_INTERRUPTED');
   }finally{if(fd)await fd.close().catch(()=>{});if(response?.body&&!response.body.locked)await response.body.cancel().catch(()=>{});await rm(stage,{recursive:true,force:true});}
 }
+async function receiveReviewFile(options,identity,path,destination,{signal}={}) {
+ const parent=await privateDestination(destination),stage=await mkdtemp(join(parent,'.merchant-review-')),temporary=join(stage,'complete');
+ let response,fd;try{response=await fetch(options.url+path,{redirect:'error',signal:signalFor(options.timeoutMs,signal),headers:{authorization:'Bearer '+options.operatorToken,'x-merchant-store-id':identity.storeId,'x-merchant-tenant-id':identity.tenantId}});
+ if(!response.ok){const body=parseJSON(await limitedBody(response,65536));fail(body.error||'CUSTOMER_REVIEW_DOWNLOAD_FAILED',{status:response.status});}
+ owner(response,identity.storeId,identity.tenantId);const rawSize=response.headers.get('content-length'),sha256=response.headers.get('x-content-sha256');need(/^(0|[1-9][0-9]*)$/.test(rawSize??'')&&SHA.test(sha256??''),'MERCHANT_OPERATOR_DOWNLOAD_IDENTITY_CHANGED');const bytes=Number(rawSize);need(Number.isSafeInteger(bytes)&&bytes<=Math.min(options.maxDownloadBytes,192*1024*1024),'MERCHANT_OPERATOR_DOWNLOAD_TOO_LARGE');const expected={bytes,sha256},raw=await limitedBody(response,bytes);need(raw.length===bytes&&createHash('sha256').update(raw).digest('hex')===sha256,'MERCHANT_OPERATOR_DOWNLOAD_IDENTITY_CHANGED');
+ const old=await existingFile(destination,expected);if(old)return old;fd=await open(temporary,constants.O_CREAT|constants.O_EXCL|constants.O_WRONLY|constants.O_NOFOLLOW,0o600);await fd.writeFile(raw);await fd.sync();await fd.close();fd=null;let reused=false;try{await link(temporary,destination);}catch(e){if(e.code!=='EEXIST')throw e;need(await existingFile(destination,expected),'MERCHANT_OPERATOR_DESTINATION_CHANGED');reused=true;}await rm(temporary);await syncDirectory(parent);return{path:destination,...expected,reused};
+ }finally{if(fd)await fd.close().catch(()=>{});if(response?.body&&!response.body.locked)await response.body.cancel().catch(()=>{});await rm(stage,{recursive:true,force:true});}
+}
 function query(selection,options={}) {
   const normalized=normalizeInvoiceSelection(selection),params=new URLSearchParams();
   for(const [key,value] of Object.entries(normalized))if(value!=='')params.set(key,value);
@@ -201,6 +209,17 @@ export async function createMerchantOperatorClient(input,{signal}={}) {
   const projectResponse=(value,operation)=>{
     need(value.operation===operation&&value.storeId===identity.storeId,'MERCHANT_OPERATOR_PROJECT_CHANGED');return value;
   };
+  const reviewRequest=async(path,settings={})=>(await jsonRequest({...options,maxJSONBytes:128*1024*1024},path,{...settings,identity})).value;
+  const reviewMutation=async(operation,input,settings={})=>{
+    need(object(input)&&UUID.test(input.invoiceId??'')&&UUID.test(input.requestId??'')&&SHA.test(input.expectedReviewVersion??''),'CUSTOMER_REVIEW_REQUEST_REQUIRED');
+    need(Buffer.byteLength(JSON.stringify(input))<=(operation==='receive'?96*1024*1024+65536:131072),'CUSTOMER_REVIEW_REQUEST_CAPACITY');
+    const recovery={kind:'customer-review',invoiceId:input.invoiceId,requestId:input.requestId,operation,action:'replay-exact-request'};
+    try{const value=await reviewRequest(invoicePath(input.invoiceId)+'/customer-review/'+operation,{...readSettings(settings),method:'POST',body:input,recovery});
+      need(value.invoiceId===input.invoiceId&&SHA.test(value.reviewVersion??'')&&
+       (operation!=='issue'||UUID.test(value.issueId??''))&&(operation!=='receive'||SHA.test(value.returnSha256??''))&&
+       (operation!=='decide'||value.decision?.requestId===input.requestId),'CUSTOMER_REVIEW_RESPONSE_CHANGED');return value;
+    }catch(error){if(error instanceof MerchantOperatorError&&error.status===null){error.outcome='UNKNOWN';error.recovery=recovery;}throw error;}
+  };
   const client={
     connection:Object.freeze({schema:CONNECTION,url:options.url+'/',...identity}),
     async readRegister({selection={},limit=50,cursor=null,revision=null,signal}={}) {
@@ -228,6 +247,14 @@ export async function createMerchantOperatorClient(input,{signal}={}) {
     },
     reconcileInvoice: (value,settings={})=>request(invoicePath(value)+'/reconcile',
       {...readSettings(settings),method:'POST',recovery:recoverInvoice(value)}),
+    customerReviews:async(value,settings={})=>{const original=id(value),r=await reviewRequest(invoicePath(original)+'/customer-review',readSettings(settings));need(r.invoiceId===original&&r.owner?.storeId===identity.storeId&&r.owner?.tenantId===identity.tenantId&&SHA.test(r.reviewVersion??''),'CUSTOMER_REVIEW_OWNER_CHANGED');return r;},
+    issueCustomerReview:(input,settings={})=>reviewMutation('issue',input,settings),
+    receiveCustomerReview:(input,settings={})=>reviewMutation('receive',input,settings),
+    decideCustomerReview:(input,settings={})=>reviewMutation('decide',input,settings),
+    compareCustomerReview:async(value,returnSha256,settings={})=>{const original=id(value);need(SHA.test(returnSha256??''),'CUSTOMER_REVIEW_RETURN_REQUIRED');const r=await reviewRequest(invoicePath(original)+'/customer-review/compare/'+returnSha256,readSettings(settings));need(r.invoiceId===original&&r.returnSha256===returnSha256&&SHA.test(r.comparisonSha256??'')&&SHA.test(r.reviewVersion??''),'CUSTOMER_REVIEW_COMPARISON_CHANGED');return r;},
+    downloadCustomerReview:(value,issueId,destination,settings={})=>receiveReviewFile(options,identity,invoicePath(value)+'/customer-review/document/'+id(issueId),destination,readSettings(settings)),
+    downloadCustomerReturn:(value,returnSha256,destination,settings={})=>{need(SHA.test(returnSha256??''),'CUSTOMER_REVIEW_RETURN_REQUIRED');return receiveReviewFile(options,identity,invoicePath(value)+'/customer-review/return/'+returnSha256,destination,readSettings(settings));},
+    downloadCustomerReviewSupport:(value,destination,settings={})=>receiveReviewFile(options,identity,invoicePath(value)+'/customer-review/support',destination,readSettings(settings)),
     intakeContext: (settings={})=>request('/api/invoice-intake/context',readSettings(settings)),
     listIntakes: (settings={})=>request('/api/invoice-intake',readSettings(settings)),
     inspectIntakeSource: (source,settings={})=>request('/api/invoice-intake/inspect',
