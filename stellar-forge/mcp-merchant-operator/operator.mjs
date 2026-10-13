@@ -264,6 +264,29 @@ export class MerchantReleaseOperator {
       done();
     }
   }
+  /** Keep configured finance owners in this host's original lifecycle. */
+  async withRozoFinanceOwners({accountingId=null,buyerId=null}={},operation){
+    if(this.#closing)throw failure('OPERATOR_CLOSING','Merchant operator is closing.');
+    if(typeof operation!=='function'||!accountingId&&!buyerId)
+      throw failure('INVALID_PARAMS','Select a configured Accounting or Buyer alias and its original callback.');
+    for(const value of [accountingId,buyerId])if(value!==null)identifier(value,'Finance workspace alias');
+    let done;
+    const active=new Promise(resolve=>{done=resolve;});
+    this.#active.add(active);
+    this.#activeDetails.set(active,{tool:'rozo-payments',provider:'configured-finance',changing:true,serialized:false,
+      startedAt:new Date().toISOString(),started:performance.now()});
+    const borrow=async()=>{
+      const accounting=accountingId?await this.#provider('accounting'):null;
+      const buyer=buyerId?await this.#provider('buyerExpenses'):null;
+      if(this.#closing)throw failure('OPERATOR_CLOSING','Merchant operator is closing.');
+      if(accounting)await accounting.call('merchant_accounting_open',{workspace:accountingId});
+      if(buyer)await buyer.call('merchant_buyer_expense_open',{workspace:buyerId});
+      if(this.#closing)throw failure('OPERATOR_CLOSING','Merchant operator is closing.');
+      return operation(Object.freeze({accounting,buyer,accountingId,buyerId}));
+    };
+    try{return await borrow();}
+    finally{this.#active.delete(active);this.#activeDetails.delete(active);done();}
+  }
   close() {
     if (this.#close) return this.#close;
     this.#closing = true;
