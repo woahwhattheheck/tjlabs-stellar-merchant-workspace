@@ -15,9 +15,9 @@ const sha={type:'string',pattern:'^[a-f0-9]{64}$'};
 const uuid={type:'string',pattern:'^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$'};
 const revision={type:'integer',minimum:1};
 export const FLOWABLE_RECORD_KINDS=Object.freeze(['connection','portfolio','release','process','task','migration',
-  'decisionPortfolio','decisionRelease','decisionEvaluation','casePortfolio','caseRelease','caseInstance','casePlanItem','caseTask','jobPortfolio','jobOperation','programme','delivery','receiving']);
+  'decisionPortfolio','decisionRelease','decisionEvaluation','casePortfolio','caseRelease','caseInstance','casePlanItem','caseTask','jobPortfolio','jobOperation','taskFormCapture','taskFormOperation','programme','delivery','receiving']);
 export const FLOWABLE_OPERATION_KINDS=Object.freeze(['release','process','task','migration','decisionRelease','decisionEvaluation',
-  'caseRelease','caseInstance','casePlanItem','caseTask','jobOperation']);
+  'caseRelease','caseInstance','casePlanItem','caseTask','jobOperation','taskFormOperation']);
 const kind={enum:FLOWABLE_RECORD_KINDS};
 const operationKind={enum:FLOWABLE_OPERATION_KINDS};
 const reference={type:'object',properties:{sha256:sha,bytes:{type:'integer',minimum:0},mediaType:text(200)},
@@ -30,6 +30,10 @@ const connection={type:'object',properties:{
 },required:['id','baseUrl','usernameEnv','passwordEnv'],additionalProperties:false};
 const preparation={connectionId:id,label:text(300),note:text(20000),selection:{type:'object'}};
 const dispatch={id,expectedRevision:revision,planSha256:sha};
+const taskFormSelection={type:'object',properties:{taskId:text(2000),
+  properties:{type:'array',items:{type:'object',properties:{id:text(2000),
+    value:{type:['string','null'],maxLength:FLOWABLE_MAX_JSON_BYTES}},required:['id','value'],additionalProperties:false}}},
+  required:['taskId','properties'],additionalProperties:false};
 function action(title,description,write,properties,required=[]){
   return Object.freeze({title,description,write,inputSchema:{type:'object',
     properties:{...(write?{requestId:uuid}:{}),...properties},
@@ -60,6 +64,15 @@ export const FLOWABLE_WORKSPACE_ACTIONS=Object.freeze({
   prepareJobOperation:action('Prepare job recovery','Freeze an explicit native job recovery action, original job state and exception for review.',true,
     preparation,['connectionId','selection']),
   dispatchJobOperation:action('Execute reviewed job recovery','Submit the saved native job action once and retain its actual response and readback.',true,
+    dispatch,['id','expectedRevision','planSha256']),
+  captureTaskForm:action('Capture native task form','Retain the selected native task, full returned form properties, values and original source before editing.',true,
+    {connectionId:id,taskId:text(2000),label:text(300),note:text(20000)},['connectionId','taskId']),
+  readTaskForm:action('Native task form','Read one complete saved native task/form capture with original values and source references.',false,
+    {id,revision},['id']),
+  prepareTaskFormOperation:action('Prepare native form completion','Bind the complete submitted string/null properties to an exact original form capture and current native task for separate review.',true,
+    {...preparation,captureId:id,captureRevision:revision,selection:taskFormSelection},
+    ['connectionId','captureId','captureRevision','selection']),
+  dispatchTaskFormOperation:action('Complete reviewed native form','Submit this saved native task form once and retain the actual response and task/history readback.',true,
     dispatch,['id','expectedRevision','planSha256']),
   readSource:action('Original source','Read a complete saved source or native response by its immutable reference.',false,
     {reference},['reference']),
@@ -147,6 +160,11 @@ export function validateFlowableAction(method,args){
   const invalid=message=>{throw Object.assign(new Error(message),{code:'FLOWABLE_ACTION_INPUT_INVALID',status:400});};
   if(!contract||!args||typeof args!=='object'||Array.isArray(args))invalid('Select a declared workspace action.');
   const check=(value,schema,path)=>{
+    if(Array.isArray(schema.type)){
+      const type=value===null?'null':typeof value;
+      if(!schema.type.includes(type))invalid(path+' must have one of the declared value types.');
+      return check(value,{...schema,type},path);
+    }
     if(schema.enum&&!schema.enum.includes(value))invalid(path+' has an unsupported value.');
     if(schema.type==='object'){
       if(!value||typeof value!=='object'||Array.isArray(value))invalid(path+' must be an object.');
@@ -161,7 +179,8 @@ export function validateFlowableAction(method,args){
     }else if(schema.type==='integer'){
       if(!Number.isSafeInteger(value)||schema.minimum!==undefined&&value<schema.minimum||
         schema.maximum!==undefined&&value>schema.maximum)invalid(path+' is outside its range.');
-    }else if(schema.type==='boolean'&&typeof value!=='boolean')invalid(path+' must be true or false.');
+    }else if(schema.type==='null'&&value!==null)invalid(path+' must be null.');
+    else if(schema.type==='boolean'&&typeof value!=='boolean')invalid(path+' must be true or false.');
     else if(schema.type==='array'){
       if(!Array.isArray(value)||schema.minItems!==undefined&&value.length<schema.minItems||
         schema.uniqueItems&&new Set(value.map(item=>JSON.stringify(item))).size!==value.length)invalid(path+' must be a valid selection.');

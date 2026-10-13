@@ -117,3 +117,11 @@ their source bytes, native exchanges, revisions and original request journal.
 See [Native job inspection, recovery and receiving](JOBS.md) for the complete
 workflow, exact timer dates, native move semantics, stable request recovery,
 source-bound working copies and cold handover.
+
+## Native human-task forms
+
+The **Task forms** desk captures an actual runtime task and its original native form properties, including read/write/required flags, current values, date pattern and enum IDs. It preserves complete per-capture unfinished drafts and explicit omission, empty text and null choices. Prepare the source-bound request, open its saved review and separately submit it through the same native workspace writer. Flowable form submission completes the selected task.
+
+The installed SDK, CLI and merchant agent tools use the same four actions: `captureTaskForm`, `readTaskForm`, `prepareTaskFormOperation` and `dispatchTaskFormOperation`. Original raw task actions remain available. Complete workspace handover retains captured forms, all reviewed operations, exact exchanges and full original source.
+
+Read [TASK_FORMS.md](TASK_FORMS.md) for typed authoring, complete working-file recovery, explicit dispatch and cold receiving, and the pinned [native contract](../../stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/TASK_FORM_NATIVE_CONTRACT.md) for exact Flowable semantics.

@@ -150,6 +150,10 @@ export class FlowableProductClient {
   dispatchCasePlanItem(input) { return this.call('dispatchCasePlanItem', input); }
   prepareCaseTask(input) { return this.call('prepareCaseTask', input); }
   dispatchCaseTask(input) { return this.call('dispatchCaseTask', input); }
+  captureTaskForm(input) { return this.call('captureTaskForm', input); }
+  readTaskForm(input) { return this.call('readTaskForm', input); }
+  prepareTaskFormOperation(input) { return this.call('prepareTaskFormOperation', input); }
+  dispatchTaskFormOperation(input) { return this.call('dispatchTaskFormOperation', input); }
   readJobPortfolio(input) { return this.call('readJobPortfolio', input); }
   readJob(input) { return this.call('readJob', input); }
   captureJobPortfolio(input) { return this.call('captureJobPortfolio', input); }

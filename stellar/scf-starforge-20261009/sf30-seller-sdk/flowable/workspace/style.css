@@ -37,3 +37,10 @@ details{margin-top:16px}summary{font-weight:600;cursor:pointer}a{color:#252525;t
 /* Source authoring keeps complete identities readable at narrow operator widths. */
 #programme-authoring .source-identity{overflow-wrap:anywhere}
 #programme-authoring .toolbar{margin:12px 0}
+
+.task-native-property{border:1px solid #ccc;padding:1rem;margin:1rem 0;background:#fff}
+.task-native-property h3{margin-top:0}
+.task-native-property select,.task-native-property input,.task-native-property textarea{width:100%;min-width:0}
+.task-native-property pre,#task-native-original pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:32rem;overflow:auto}
+#task-native-editor,#task-native-original{min-width:0;overflow-wrap:anywhere}
+@media(max-width:600px){.task-native-property{padding:.75rem}#task-native-copy-select{max-width:100%}}

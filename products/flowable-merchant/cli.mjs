@@ -16,7 +16,7 @@ const HELP = [
   '  flowable-product review|open --dir PRIVATE_PRODUCT [--port 0] [--expected-binding SHA256]',
   '  flowable-product actions [--name ORIGINAL_METHOD]',
   '  flowable-product status --dir PRIVATE_PRODUCT',
-  '  flowable-product records --dir PRIVATE_PRODUCT [--kind connection|portfolio|release|process|task|migration|decisionPortfolio|decisionRelease|decisionEvaluation|casePortfolio|caseRelease|caseInstance|casePlanItem|caseTask|jobOperation|delivery|receiving]',
+  '  flowable-product records --dir PRIVATE_PRODUCT [--kind connection|portfolio|release|process|task|migration|decisionPortfolio|decisionRelease|decisionEvaluation|casePortfolio|caseRelease|caseInstance|casePlanItem|caseTask|jobPortfolio|jobOperation|taskFormCapture|taskFormOperation|delivery|receiving]',
   '       [--offset 0 --limit 50 --snapshot SHA256]',
   '  flowable-product record --dir PRIVATE_PRODUCT --kind KIND --id RECORD_ID [--revision NUMBER --offset 0 --limit 50]',
   '  flowable-product portfolio --dir PRIVATE_PRODUCT --id PORTFOLIO_ID --collection NATIVE_COLLECTION [--revision NUMBER --offset 0 --limit 50]',
@@ -29,18 +29,22 @@ const HELP = [
   '  flowable-product case-definition --dir PRIVATE_PRODUCT --portfolio PORTFOLIO_ID --definition NATIVE_DEFINITION_ID [--revision NUMBER]',
   '  flowable-product case-instance --dir PRIVATE_PRODUCT --portfolio PORTFOLIO_ID --case NATIVE_CASE_ID [--revision NUMBER]',
   '  flowable-product capture-cases --dir PRIVATE_PRODUCT --request UUID --connection RECORD_ID [--label LABEL]',
-  '  flowable-product review-operation --dir PRIVATE_PRODUCT --kind release|process|task|migration|decisionRelease|decisionEvaluation|caseRelease|caseInstance|casePlanItem|caseTask|jobOperation --id RECORD_ID [--revision NUMBER]',
+  '  flowable-product review-operation --dir PRIVATE_PRODUCT --kind release|process|task|migration|decisionRelease|decisionEvaluation|caseRelease|caseInstance|casePlanItem|caseTask|jobOperation|taskFormOperation --id RECORD_ID [--revision NUMBER]',
   '  flowable-product call --dir PRIVATE_PRODUCT --method ORIGINAL_METHOD [--input PRIVATE_ARGUMENTS_JSON] [--out PRIVATE_JSON]',
   '  flowable-product download-source --dir PRIVATE_PRODUCT --reference PRIVATE_REFERENCE_JSON --out PRIVATE_FILE',
+  '  flowable-product capture-task-form --dir PRIVATE_PRODUCT --request UUID --connection RECORD_ID --task NATIVE_TASK_ID [--label LABEL --note TEXT]',
+  '  flowable-product task-form --dir PRIVATE_PRODUCT --id CAPTURE_ID [--revision NUMBER]',
+  '  flowable-product prepare-task-form --dir PRIVATE_PRODUCT --request UUID --connection RECORD_ID --capture CAPTURE_ID --capture-revision NUMBER',
+  '       --selection PRIVATE_SELECTION_JSON [--label LABEL --note TEXT]',
   '  flowable-product job-portfolio --dir PRIVATE_PRODUCT --id CAPTURE_ID --collection jobs|timerJobs|suspendedJobs|deadLetterJobs|historyJobs [--revision NUMBER --offset N --limit N]',
   '  flowable-product job --dir PRIVATE_PRODUCT --portfolio CAPTURE_ID --collection COLLECTION --job NATIVE_JOB_ID [--revision NUMBER]',
   '  flowable-product capture-jobs --dir PRIVATE_PRODUCT --request UUID --connection RECORD_ID [--label LABEL]',
   '  flowable-product capture --dir PRIVATE_PRODUCT --request UUID --connection RECORD_ID [--label LABEL]',
-  '  flowable-product prepare --dir PRIVATE_PRODUCT --kind release|process|task|migration|decisionRelease|decisionEvaluation|caseRelease|caseInstance|casePlanItem|caseTask|jobOperation --request UUID',
+  '  flowable-product prepare --dir PRIVATE_PRODUCT --kind release|process|task|migration|decisionRelease|decisionEvaluation|caseRelease|caseInstance|casePlanItem|caseTask|jobOperation|taskFormOperation --request UUID',
   '       --connection RECORD_ID --selection PRIVATE_SELECTION_JSON [--label LABEL --note TEXT]',
-  '  flowable-product dispatch --dir PRIVATE_PRODUCT --kind release|process|task|migration|decisionRelease|decisionEvaluation|caseRelease|caseInstance|casePlanItem|caseTask|jobOperation --request UUID',
+  '  flowable-product dispatch --dir PRIVATE_PRODUCT --kind release|process|task|migration|decisionRelease|decisionEvaluation|caseRelease|caseInstance|casePlanItem|caseTask|jobOperation|taskFormOperation --request UUID',
   '       --id RECORD_ID --revision NUMBER --plan-sha256 SHA256',
-  '  flowable-product reconcile --dir PRIVATE_PRODUCT --kind release|process|task|migration|decisionRelease|decisionEvaluation|caseRelease|caseInstance|casePlanItem|caseTask|jobOperation --request UUID --id RECORD_ID [--revision NUMBER]',
+  '  flowable-product reconcile --dir PRIVATE_PRODUCT --kind release|process|task|migration|decisionRelease|decisionEvaluation|caseRelease|caseInstance|casePlanItem|caseTask|jobOperation|taskFormOperation --request UUID --id RECORD_ID [--revision NUMBER]',
   '  flowable-product export --dir PRIVATE_PRODUCT --request UUID [--label LABEL]',
   '  flowable-product download --dir PRIVATE_PRODUCT --id ORIGINAL_DELIVERY_ID --out PRIVATE_FILE [--sha256 SHA256]',
   '  flowable-product receive --dir PRIVATE_PRODUCT --request UUID --file ORIGINAL_NDJSON [--label LABEL]',
@@ -128,6 +132,9 @@ export async function main(args = process.argv.slice(2)) {
     'decision-definition':['--dir','--portfolio','--definition','--revision'],
     'capture-decisions':['--dir','--request','--connection','--label'],
     'decision-execution':['--dir','--portfolio','--execution','--revision'],
+    'capture-task-form':['--dir','--request','--connection','--task','--label','--note'],
+    'task-form':['--dir','--id','--revision'],
+    'prepare-task-form':['--dir','--request','--connection','--capture','--capture-revision','--selection','--label','--note'],
     'job-portfolio':['--dir','--id','--collection','--revision','--offset','--limit'],
     job:['--dir','--portfolio','--collection','--job','--revision'],
     'capture-jobs':['--dir','--request','--connection','--label'],
@@ -139,7 +146,7 @@ export async function main(args = process.argv.slice(2)) {
     'download-source':['--dir','--reference','--out'],
     call:['--dir','--method','--input','--out'],
     capture:['--dir','--request','--connection','--label'],
-    prepare:['--dir','--kind','--request','--connection','--selection','--label','--note'],
+    prepare:['--dir','--kind','--request','--connection','--selection','--capture','--capture-revision','--label','--note'],
     dispatch:['--dir','--kind','--request','--id','--revision','--plan-sha256'],
     reconcile:['--dir','--kind','--request','--id','--revision'],
     export:['--dir','--request','--label'],download:['--dir','--id','--out','--sha256'],
@@ -149,7 +156,7 @@ export async function main(args = process.argv.slice(2)) {
   need(allowed,HELP,'ARGUMENTS');const options=parse(rest,allowed),controller=new AbortController();
   const stop=()=>controller.abort();process.once('SIGINT',stop);process.once('SIGTERM',stop);
   const revision=()=>options.has('--revision')?{revision:number(options,'--revision')}:{};
-  const selectedKind=()=>{const value=required(options,'--kind');need(FLOWABLE_OPERATION_KINDS.includes(value),'Select an original process, case or decision operation kind.','ARGUMENTS');return value;};
+  const selectedKind=()=>{const value=required(options,'--kind');need(FLOWABLE_OPERATION_KINDS.includes(value),'Select an original process, case, decision, job or task-form operation kind.','ARGUMENTS');return value;};
   let client;
   try{
     client=new FlowableProductClient({directory:required(options,'--dir'),signal:controller.signal});let result;
@@ -162,6 +169,9 @@ export async function main(args = process.argv.slice(2)) {
     if(command==='decision-definition')result=await client.readDecisionDefinition({portfolioId:required(options,'--portfolio'),definitionId:required(options,'--definition'),...revision()});
     if(command==='decision-execution')result=await client.readDecisionExecution({portfolioId:required(options,'--portfolio'),executionId:required(options,'--execution'),...revision()});
     if(command==='capture-decisions')result=await client.captureDecisionPortfolio({...request(options),connectionId:required(options,'--connection'),...optional(options,'--label')});
+    if(command==='capture-task-form')result=await client.captureTaskForm({...request(options),connectionId:required(options,'--connection'),taskId:required(options,'--task'),...optional(options,'--label'),...optional(options,'--note')});
+    if(command==='task-form')result=await client.readTaskForm({id:required(options,'--id'),...revision()});
+    if(command==='prepare-task-form')result=await client.prepareTaskFormOperation({...request(options),connectionId:required(options,'--connection'),captureId:required(options,'--capture'),captureRevision:number(options,'--capture-revision'),selection:await inputFile(required(options,'--selection')),...optional(options,'--label'),...optional(options,'--note')});
     if(command==='job-portfolio')result=await client.readJobPortfolio({id:required(options,'--id'),collection:required(options,'--collection'),...paging(options),...revision()});
     if(command==='job')result=await client.readJob({portfolioId:required(options,'--portfolio'),collection:required(options,'--collection'),jobId:required(options,'--job'),...revision()});
     if(command==='capture-jobs')result=await client.captureJobPortfolio({...request(options),connectionId:required(options,'--connection'),...optional(options,'--label')});
@@ -173,7 +183,7 @@ export async function main(args = process.argv.slice(2)) {
     if(command==='download-source')result=await client.downloadSource({reference:await inputFile(required(options,'--reference')),path:resolve(required(options,'--out'))});
     if(command==='call'){const method=required(options,'--method'),input=options.has('--input')?await inputFile(options.get('--input')):{};result=options.has('--out')?await client.callToFile(method,input,{path:resolve(options.get('--out'))}):await client.call(method,input);}
     if(command==='capture')result=await client.capturePortfolio({...request(options),connectionId:required(options,'--connection'),...optional(options,'--label')});
-    if(command==='prepare'){const kind=selectedKind(),method='prepare'+kind[0].toUpperCase()+kind.slice(1);result=await client.call(method,{...request(options),connectionId:required(options,'--connection'),selection:await inputFile(required(options,'--selection')),...optional(options,'--label'),...optional(options,'--note')});}
+    if(command==='prepare'){const kind=selectedKind(),method='prepare'+kind[0].toUpperCase()+kind.slice(1);result=await client.call(method,{...request(options),connectionId:required(options,'--connection'),selection:await inputFile(required(options,'--selection')),...(kind==='taskFormOperation'?{captureId:required(options,'--capture'),captureRevision:number(options,'--capture-revision')}:{ }),...optional(options,'--label'),...optional(options,'--note')});}
     if(command==='dispatch'){const kind=selectedKind(),method='dispatch'+kind[0].toUpperCase()+kind.slice(1);result=await client.call(method,{...request(options),id:required(options,'--id'),expectedRevision:number(options,'--revision'),planSha256:required(options,'--plan-sha256')});}
     if(command==='reconcile')result=await client.reconcileOperation({...request(options),kind:selectedKind(),id:required(options,'--id'),...(options.has('--revision')?{expectedRevision:number(options,'--revision')}:{})});
     if(command==='export')result=await client.exportWorkspace({...request(options),...optional(options,'--label')});

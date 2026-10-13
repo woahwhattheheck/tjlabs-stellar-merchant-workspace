@@ -162,6 +162,13 @@
         "job-browser.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/task-form-browser.mjs",
+      [
+        "task-form-browser.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

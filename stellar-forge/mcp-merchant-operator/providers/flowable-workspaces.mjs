@@ -12,6 +12,12 @@ export default defineMerchantProvider({
     'Use the declared Flowable workspace and its saved native process and DMN REST engine connections. '+
     'Capture complete deployments, versioned definitions, active processes, human tasks and full history. '+
     'Read original BPMN source and task state before preparing a release, process start, task action or migration. '+
+    'For native task forms, capture the exact taskId, read its saved taskFormCapture revision and all original property metadata. '+
+    'Prepare taskFormOperation with that captureId/captureRevision and selection {taskId,properties:[{id,value}]}; each value is an exact string or null, with omission represented by an absent row. '+
+    'Preserve signed-long digits, Java date text/pattern, exact enum IDs and explicit boolean strings. Read-only and hidden fields are not submitted; a form key alone is not an external form schema. '+
+    'Read required-property warnings and the full original source. Submit only through the separate saved review: successful native form submission completes the task. '+
+    'A changed captured/current task or form produces STALE. Retain the old draft and capture the actual current source for a new explicit review. '+
+    'An uncertain submission retains the original request; use its original result/reconciliation rather than another automatic POST. '+
     'Preserve original native JSON bodyText, including integer values, variable types and process identity. '+
     'Deploy one original BPMN resource or a complete native ZIP/BAR archive through the process connection. '+
     'Use the separately declared original DMN REST base for decision capture, release and evaluation. '+

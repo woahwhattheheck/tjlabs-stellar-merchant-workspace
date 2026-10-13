@@ -2,9 +2,32 @@
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 export type RecordKind = 'connection' | 'portfolio' | 'release' | 'process' | 'task' | 'migration'
   | 'decisionPortfolio' | 'decisionRelease' | 'decisionEvaluation'
-  | 'casePortfolio' | 'caseRelease' | 'caseInstance' | 'casePlanItem' | 'caseTask' | 'jobPortfolio' | 'jobOperation' | 'programme' | 'delivery' | 'receiving';
+  | 'casePortfolio' | 'caseRelease' | 'caseInstance' | 'casePlanItem' | 'caseTask' | 'jobPortfolio' | 'jobOperation' | 'taskFormCapture' | 'taskFormOperation' | 'programme' | 'delivery' | 'receiving';
 export type OperationKind = 'release' | 'process' | 'task' | 'migration' | 'decisionRelease' | 'decisionEvaluation'
-  | 'caseRelease' | 'caseInstance' | 'casePlanItem' | 'caseTask' | 'jobOperation';
+  | 'caseRelease' | 'caseInstance' | 'casePlanItem' | 'caseTask' | 'jobOperation' | 'taskFormOperation';
+/** Exact original legacy FormPropertyResponse. Unreadable properties are omitted by Flowable. */
+export interface NativeTaskFormProperty {
+  id: string; name: string | null; type: string | null; value: string | null;
+  readable: boolean; writable: boolean; required: boolean; datePattern: string | null;
+  enumValues: { id: string; name: string | null; [key: string]: unknown }[];
+  [key: string]: unknown;
+}
+export interface NativeTaskForm {
+  taskId: string; formKey?: string | null; formProperties: NativeTaskFormProperty[];
+  [key: string]: unknown;
+}
+/** Omission is absence from this array. Empty text and null remain separate native values. */
+export interface TaskFormSelection { taskId: string; properties: { id: string; value: string | null }[] }
+export interface CaptureTaskFormInput extends RequestIdentity { connectionId: string; taskId: string; label?: string; note?: string }
+export interface PrepareTaskFormOperationInput extends RequestIdentity {
+  connectionId: string; captureId: string; captureRevision: number; selection: TaskFormSelection; label?: string; note?: string;
+}
+export interface CapturedTaskForm {
+  capture: RecordReference; label: string; state: FlowableState; connectionId: string; taskId: string; capturedAt: string;
+  task: NativeEntity | null; form: NativeTaskForm | null; nativeState: Record<string, unknown>;
+  resources: NativeResource[]; atomicSnapshot: false; formStatus: number; formObservation: Record<string, unknown>;
+  availability: string; description: Record<string, unknown>; originals: { role: string; reference: SourceReference; filename?: string }[];
+}
 export type JobCollectionKind = 'jobs' | 'timerJobs' | 'suspendedJobs' | 'deadLetterJobs' | 'historyJobs';
 export type JobSelection =
   | { collection: 'jobs' | 'historyJobs'; jobId: string; action: 'execute' | 'delete' }
@@ -203,7 +226,7 @@ export interface ExportWorkspaceInput extends RequestIdentity { label?: string }
 export interface InspectDeliveryInput extends RequestIdentity { path: string; label?: string }
 export interface AdoptDeliveryInput extends RequestIdentity { id: string; expectedRevision: number; manifestSha256: string }
 export interface NativeRequestPlan {
-  action: FlowableSelection['action'] | 'validateMigration';
+  action: FlowableSelection['action'] | 'validateMigration' | 'submitTaskForm';
   requestSha256: string; connectionId: string; connectionSha256: string;
   method: string; path: string; query?: Record<string, unknown>; contentType?: string;
   bodyBase64?: string; bodyBytes: number; bodySha256: string; readback?: Record<string, unknown>;
@@ -244,8 +267,10 @@ export interface OperationReview {
     resource?: { filename: string; contentType?: string; bytes?: number; sha256?: string; mediaType?: string };
     deploymentName?: string; deploymentKey?: string; tenantId?: string; processInstanceId?: string; taskId?: string;
     caseInstanceId?: string; planItemInstanceId?: string;
+    properties?: { id: string; value: string | null }[]; formSha256?: string; formWarnings?: Record<string, unknown>[];
     mode?: 'auto' | 'decision' | 'decisionService'; singleResult?: boolean } | null;
-  before: NativeState | null; after: NativeState | null;
+  formCapture?: RecordReference;
+  before: NativeState | null; after: NativeState | null; preflight?: NativeState | null;
   validation: NativeResponse | null; response: NativeResponse | null; reconciliation: NativeReconciliation | null;
   failure: OperationValue['failure'] | null;
   originals: { role: string; reference: SourceReference; filename?: string }[];
@@ -338,6 +363,10 @@ export interface ActionInputs {
   dispatchCasePlanItem: DispatchOperationInput;
   prepareCaseTask: PrepareCaseTaskInput;
   dispatchCaseTask: DispatchOperationInput;
+  captureTaskForm: CaptureTaskFormInput;
+  readTaskForm: { id: string; revision?: number };
+  prepareTaskFormOperation: PrepareTaskFormOperationInput;
+  dispatchTaskFormOperation: DispatchOperationInput;
   readJobPortfolio: ReadJobPortfolioInput;
   readJob: { portfolioId: string; revision?: number; collection: JobCollectionKind; jobId: string };
   captureJobPortfolio: CapturePortfolioInput;
@@ -390,6 +419,10 @@ export interface ActionResults {
   dispatchCasePlanItem: FlowableRecord<OperationValue>;
   prepareCaseTask: FlowableRecord<OperationValue>;
   dispatchCaseTask: FlowableRecord<OperationValue>;
+  captureTaskForm: FlowableRecord;
+  readTaskForm: CapturedTaskForm;
+  prepareTaskFormOperation: FlowableRecord<OperationValue>;
+  dispatchTaskFormOperation: FlowableRecord<OperationValue>;
   readJobPortfolio: JobPortfolioPage;
   readJob: CapturedJob;
   captureJobPortfolio: FlowableRecord;
@@ -474,6 +507,10 @@ export class FlowableProductClient {
   dispatchCasePlanItem(input: DispatchOperationInput): Promise<FlowableRecord<OperationValue>>;
   prepareCaseTask(input: PrepareCaseTaskInput): Promise<FlowableRecord<OperationValue>>;
   dispatchCaseTask(input: DispatchOperationInput): Promise<FlowableRecord<OperationValue>>;
+  captureTaskForm(input: CaptureTaskFormInput): Promise<FlowableRecord>;
+  readTaskForm(input: { id: string; revision?: number }): Promise<CapturedTaskForm>;
+  prepareTaskFormOperation(input: PrepareTaskFormOperationInput): Promise<FlowableRecord<OperationValue>>;
+  dispatchTaskFormOperation(input: DispatchOperationInput): Promise<FlowableRecord<OperationValue>>;
   readJobPortfolio(input: ReadJobPortfolioInput): Promise<JobPortfolioPage>;
   readJob(input: ActionInputs['readJob']): Promise<CapturedJob>;
   captureJobPortfolio(input: CapturePortfolioInput): Promise<FlowableRecord>;

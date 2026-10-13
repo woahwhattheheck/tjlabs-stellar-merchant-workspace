@@ -19,6 +19,10 @@ import {FLOWABLE_JOB_COLLECTIONS as JOB_COLLECTIONS,FLOWABLE_JOB_ACTIONS as JOB_
   planFlowableJobRequest,createFlowableJobTransport,executeFlowableJobRequest,captureFlowableJobPortfolio,
   readFlowableJobRequestState,reconcileFlowableJobRequest,flowableJobStateIdentity} from '../job-native.mjs';
 
+import {planFlowableTaskFormRequest,createFlowableTaskFormTransport,executeFlowableTaskFormRequest,
+  captureFlowableTaskForm,readFlowableTaskFormState,reconcileFlowableTaskFormRequest,
+  flowableTaskFormStateIdentity,describeFlowableTaskForm} from '../task-form-native.mjs';
+
 const OPERATION_KINDS=FLOWABLE_OPERATION_KINDS;
 const DECISION_KINDS=new Set(['decisionPortfolio','decisionRelease','decisionEvaluation']);
 const PROCESS_NATIVE=Object.freeze({plan:planFlowableRequest,transport:createFlowableTransport,execute:executeFlowableRequest,
@@ -33,7 +37,11 @@ const JOB_KINDS=new Set(['jobPortfolio','jobOperation']);
 const JOB_NATIVE=Object.freeze({plan:planFlowableJobRequest,transport:createFlowableJobTransport,
   execute:executeFlowableJobRequest,capture:captureFlowableJobPortfolio,
   read:readFlowableJobRequestState,reconcile:reconcileFlowableJobRequest});
-const adapterFor=kind=>JOB_KINDS.has(kind)?JOB_NATIVE:CASE_KINDS.has(kind)?CASE_NATIVE:DECISION_KINDS.has(kind)?DECISION_NATIVE:PROCESS_NATIVE;
+const FORM_KINDS=new Set(['taskFormCapture','taskFormOperation']);
+const FORM_NATIVE=Object.freeze({plan:planFlowableTaskFormRequest,transport:createFlowableTaskFormTransport,
+  execute:executeFlowableTaskFormRequest,capture:captureFlowableTaskForm,read:readFlowableTaskFormState,
+  reconcile:reconcileFlowableTaskFormRequest});
+const adapterFor=kind=>FORM_KINDS.has(kind)?FORM_NATIVE:JOB_KINDS.has(kind)?JOB_NATIVE:CASE_KINDS.has(kind)?CASE_NATIVE:DECISION_KINDS.has(kind)?DECISION_NATIVE:PROCESS_NATIVE;
 const COLLECTIONS=['deployments','definitions','processes','tasks','historicProcesses',
   'historicTasks','historicActivities','historicVariables'];
 const collectionsFor=kind=>kind==='jobPortfolio'?JOB_COLLECTIONS:kind==='casePortfolio'?CASE_COLLECTIONS:kind==='decisionPortfolio'?DECISION_COLLECTIONS:COLLECTIONS;
@@ -41,7 +49,7 @@ const portfolioMethods={portfolio:'capturePortfolio',decisionPortfolio:'captureD
 const portfolioLabels={portfolio:'Engine portfolio',decisionPortfolio:'Decision portfolio',casePortfolio:'Case portfolio',jobPortfolio:'Native jobs'};
 const READABLE=new Set(['view','listRecords','getRecord','readPortfolio','readDefinition','readSource',
   'readReview','readDecisionPortfolio','readDecisionDefinition','readDecisionExecution',
-  'readCasePortfolio','readCaseDefinition','readCaseInstance','readJobPortfolio','readJob','readProgramme','deliveryFile','sourceFile']);
+  'readCasePortfolio','readCaseDefinition','readCaseInstance','readJobPortfolio','readJob','readTaskForm','readProgramme','deliveryFile','sourceFile']);
 const EXPECTED_ACTIONS={release:['deploy'],process:['start'],task:['claim','complete','delegate','resolve'],migration:['migrate'],
   decisionRelease:['deploy'],decisionEvaluation:['evaluate'],...CASE_ACTIONS,jobOperation:[...new Set(Object.values(JOB_ACTIONS).flat())]};
 const recordRef=record=>({kind:record.kind,id:record.id,revision:record.revision,sha256:record.sha256});
@@ -84,6 +92,7 @@ function nativeIdentity(state){
   return output;
 }
 function operationIdentity(kind,state){
+  if(FORM_KINDS.has(kind))return flowableTaskFormStateIdentity(state);
   if(JOB_KINDS.has(kind))return flowableJobStateIdentity(state);
   const native=nativeIdentity(state);
   if(CASE_KINDS.has(kind)){
@@ -101,7 +110,7 @@ function operationIdentity(kind,state){
 const SUMMARY_COLLECTIONS=['definitions','deployments','processes','historicProcesses','tasks',
   'historicTasks','activities','historicActivities','historicExecutions','resources'];
 const summaryOf=state=>Object.fromEntries([...new Set([...SUMMARY_COLLECTIONS,
-  ...CASE_COLLECTIONS.filter(key=>Array.isArray(state?.[key])),...JOB_COLLECTIONS.filter(key=>Array.isArray(state?.[key]))])].map(key=>[key,(state?.[key]??[]).length]));
+  ...CASE_COLLECTIONS.filter(key=>Array.isArray(state?.[key])),...JOB_COLLECTIONS.filter(key=>Array.isArray(state?.[key]))])].map(key=>[key,(state?.nativeState?.[key]??state?.[key]??[]).length]));
 
 export async function openFlowableWorkspace({directory,connections=[],environment=process.env,fetch=globalThis.fetch,
   signal,timeoutMs=120000,maximumResponseBytes=64*1024*1024}={}){
@@ -199,7 +208,9 @@ export async function openFlowableWorkspace({directory,connections=[],environmen
         decisions:{engine:'Flowable DMN REST',releases:'original-dmn-resource',evaluation:'native-decision-key-selection',history:'native-execution-audit'},
         cases:{engine:'Flowable CMMN REST',releases:'original-cmmn-resource',operations:CASE_ACTIONS,
           collections:CASE_COLLECTIONS,history:'native-case-and-plan-item-history'},
-        jobs:{engine:'Flowable process REST',collections:JOB_COLLECTIONS,actions:JOB_ACTIONS,recovery:'reviewed-native-request-and-original-readback'}}};
+        jobs:{engine:'Flowable process REST',collections:JOB_COLLECTIONS,actions:JOB_ACTIONS,recovery:'reviewed-native-request-and-original-readback'},
+        taskForms:{engine:'Flowable process REST',capture:'original-task-and-native-form-properties',
+          values:'original-string-null-or-omission',submission:'reviewed-native-form-completion',receiving:'complete-capture-and-operation-history'}}};
   }
   async function listRecords(input={}){
     const result=await store.list(input);return{...result,items:result.items.map(visible)};
@@ -258,6 +269,20 @@ export async function openFlowableWorkspace({directory,connections=[],environmen
     return{portfolio:recordRef(record),collection:input.collection,job,resources,
       exceptionObservations:(inventory.exceptionObservations??[]).filter(item=>item.collection===input.collection&&item.jobId===job.id),
       capturedAt:inventory.completedAt,connectionId:record.value.connectionId};
+  }
+  async function readTaskForm(input){
+    const record=await store.get('taskFormCapture',recordId(input.id),input.revision);
+    need(record.value.captureState,'FLOWABLE_TASK_FORM_CAPTURE_INCOMPLETE','This capture has no retained native form state.',409);
+    const captured=await store.getJSON(record.value.captureState),resources=[];
+    for(const item of captured.resources??[])resources.push(await hydrateResource(item));
+    return{capture:recordRef(record),label:record.value.label,state:record.value.state,
+      connectionId:record.value.connectionId,taskId:record.value.taskId,capturedAt:record.value.completedAt,
+      task:captured.task,form:captured.form,nativeState:captured.nativeState,resources,
+      formStatus:captured.formStatus,formObservation:captured.formObservation,availability:captured.availability,
+      description:describeFlowableTaskForm(captured),
+      atomicSnapshot:captured.atomicSnapshot,
+      originals:[{role:'Captured native task and form',reference:record.value.captureState},
+        ...(record.value.journal?[{role:'Original form capture journal',reference:record.value.journal}]:[])]};
   }
   async function readCapturedDefinition(kind,input){
     const{record,inventory}=await portfolioRecord(input.portfolioId,input.revision,kind);
@@ -360,6 +385,48 @@ export async function openFlowableWorkspace({directory,connections=[],environmen
   const captureDecisionPortfolio=(input,operationSignal)=>captureNativePortfolio('decisionPortfolio',input,operationSignal);
   const captureCasePortfolio=(input,operationSignal)=>captureNativePortfolio('casePortfolio',input,operationSignal);
   const captureJobPortfolio=(input,operationSignal)=>captureNativePortfolio('jobPortfolio',input,operationSignal);
+  async function captureTaskForm(input,operationSignal){
+    const method='captureTaskForm',{prior}=await replay(input,method,true);
+    if(prior&&!['CAPTURING','INTERRUPTED'].includes(prior.value.phase))return prior;
+    let record=prior,connection;
+    if(prior){
+      connection=await sameConfiguration(prior);
+      record=await store.revise(prior,{...prior.value,phase:'CAPTURING',state:'CAPTURING',failure:null,resumedAt:now()});
+    }else{
+      const selected=await lookupConnection(input.connectionId);connection=selected.connection;
+      const taskId=field(input.taskId,2000,true);
+      record=await initial('taskFormCapture',input,method,{label:field(input.label??'Task form '+taskId,300,true),
+        note:field(input.note??'',20000),taskId,connectionId:selected.record.id,connection,
+        configurationSha256:selected.record.value.configurationSha256,
+        captureInput:await store.putJSON(retainedInput(input)),phase:'CAPTURING',state:'CAPTURING',startedAt:now()});
+    }
+    try{
+      const captured=await captureFlowableTaskForm(transport(connection,operationSignal,'taskFormCapture'),
+        {taskId:record.value.taskId,...await sinks(record.id)});
+      need(captured.taskId===record.value.taskId,'FLOWABLE_TASK_FORM_CAPTURE_CHANGED');
+      const original=await store.putJSON(captured),journal=await store.journal(record.id);
+      return store.revise(record,{...record.value,captureState:original,journal:journal.original,
+        phase:'CAPTURED',state:'CAPTURED',completedAt:now(),
+        summary:{taskId:record.value.taskId,taskAvailable:!!captured.task,formAvailable:!!captured.form,
+          properties:Array.isArray(captured.form?.formProperties)?captured.form.formProperties.length:0,
+          resources:(captured.resources??[]).length}});
+    }catch(error){return retainFailure(record,error,'INTERRUPTED');}
+  }
+  async function formPreparationSource(input,connectionRecord){
+    need(Number.isSafeInteger(input.captureRevision)&&input.captureRevision>0,'FLOWABLE_TASK_FORM_CAPTURE_REQUIRED');
+    const capture=await store.get('taskFormCapture',recordId(input.captureId),input.captureRevision);
+    need(capture.value.state==='CAPTURED'&&capture.value.captureState,'FLOWABLE_TASK_FORM_CAPTURE_INCOMPLETE');
+    need(capture.value.connectionId===connectionRecord.id&&
+      capture.value.configurationSha256===connectionRecord.value.configurationSha256&&
+      capture.value.taskId===input.selection?.taskId,'FLOWABLE_TASK_FORM_CAPTURE_CHANGED',
+      'Prepare the same task and connection retained in this original form capture.',409);
+    return{capture:recordRef(capture),source:capture.value.captureState,journal:capture.value.journal,
+      state:await store.getJSON(capture.value.captureState)};
+  }
+  async function savedPlan(kind,connection,selection,record){
+    return adapterFor(kind).plan(connection,selection,
+      kind==='taskFormOperation'?await store.getJSON(record.value.formSource):undefined);
+  }
   async function prepareOperation(kind,input,operationSignal){
     const method='prepare'+kind[0].toUpperCase()+kind.slice(1),{prior}=await replay(input,method,true);
     const native=adapterFor(kind);let record=prior,connection,selection,plan;
@@ -367,14 +434,17 @@ export async function openFlowableWorkspace({directory,connections=[],environmen
       if(prior.value.dispatchedAt||!['PREPARING','INTERRUPTED','PREPARE_FAILED'].includes(prior.value.phase))return prior;
       connection=await sameConfiguration(prior);
       selection=await store.getJSON(prior.value.selection);plan=await store.getJSON(prior.value.plan);
-      need(textHash(plan)===prior.value.planSha256&&textHash(native.plan(connection,selection))===prior.value.planSha256,
+      need(textHash(plan)===prior.value.planSha256&&textHash(await savedPlan(kind,connection,selection,prior))===prior.value.planSha256,
         'FLOWABLE_NATIVE_PLAN_CHANGED');
       record=await store.revise(prior,{...prior.value,phase:'PREPARING',state:'PREPARING',
         preparationInput:prior.value.preparationInput??await store.putJSON(retainedInput(input)),failure:null,resumedAt:now()});
     }else{
-      need(EXPECTED_ACTIONS[kind]?.includes(input.selection?.action),'FLOWABLE_OPERATION_SELECTION_INVALID');
+      need(kind==='taskFormOperation'||EXPECTED_ACTIONS[kind]?.includes(input.selection?.action),'FLOWABLE_OPERATION_SELECTION_INVALID');
       const selected=await lookupConnection(input.connectionId);connection=selected.connection;selection=input.selection;
-      plan=native.plan(connection,selection);const planSha256=textHash(plan),requestBody=Buffer.from(plan.bodyBase64??'','base64');
+      const formSource=kind==='taskFormOperation'?await formPreparationSource(input,selected.record):null;
+      plan=native.plan(connection,selection,formSource?.state);
+      if(kind==='taskFormOperation')need(plan.action==='submitTaskForm','FLOWABLE_TASK_FORM_PLAN_INVALID');
+      const planSha256=textHash(plan),requestBody=Buffer.from(plan.bodyBase64??'','base64');
       need(requestBody.toString('base64')===(plan.bodyBase64??''),'FLOWABLE_NATIVE_BODY_INVALID');
       let sourceResource;
       if(selection.resource){
@@ -386,12 +456,22 @@ export async function openFlowableWorkspace({directory,connections=[],environmen
         preparationInput:await store.putJSON(retainedInput(input)),selection:await store.putJSON(selection),plan:await store.putJSON(plan),planSha256,
         requestBody:await store.putBlob(requestBody,plan.contentType??'application/octet-stream'),
         ...(sourceResource?{sourceResource}:{}),
+        ...(formSource?{formCapture:formSource.capture,formSource:formSource.source,formCaptureJournal:formSource.journal}:{}),
         summary:{action:plan.action,method:plan.method,path:plan.path,bodyBytes:requestBody.length}});
     }
     try{
       const client=transport(connection,operationSignal,kind),callbacks=await sinks(record.id);
       const before=await native.read(client,plan,callbacks),beforeRef=await store.putJSON(before);
       if(kind==='jobOperation')need(before[plan.collection]?.length===1,'FLOWABLE_JOB_NOT_FOUND','The selected native job is absent. Retain this observation and capture its current queue before preparing another review.',404);
+      if(kind==='taskFormOperation'){
+        const captured=await store.getJSON(record.value.formSource);
+        if(textHash(flowableTaskFormStateIdentity(before))!==textHash(flowableTaskFormStateIdentity(captured))){
+          const journal=await store.journal(record.id);
+          return store.revise(record,{...record.value,before:beforeRef,preflight:beforeRef,journal:journal.original,
+            phase:'STALE',state:'STALE',failure:{code:'FLOWABLE_TASK_FORM_CAPTURE_CHANGED',
+              message:'The native task or form changed after this capture. Retain this draft and capture the current form before preparing another review.',at:now()}});
+        }
+      }
       let validationRef=null,validationPlanRef=null,validation=null,valid=true;
       if(kind==='migration'){
         const validationPlan=planFlowableRequest(connection,{...selection,action:'validateMigration'});
@@ -428,13 +508,13 @@ export async function openFlowableWorkspace({directory,connections=[],environmen
     if(record.value.phase!=='PREPARED')return record;
     need(record.revision===input.expectedRevision,'FLOWABLE_RECORD_CONFLICT','Refresh the saved review.',409);
     const native=adapterFor(kind),connection=await sameConfiguration(record),plan=await store.getJSON(record.value.plan),selection=await store.getJSON(record.value.selection);
-    need(textHash(native.plan(connection,selection))===record.value.planSha256,'FLOWABLE_NATIVE_PLAN_CHANGED');
+    need(textHash(await savedPlan(kind,connection,selection,record))===record.value.planSha256,'FLOWABLE_NATIVE_PLAN_CHANGED');
     const client=transport(connection,operationSignal,kind);
     try{
       const current=await native.read(client,plan,await sinks(record.id));
       if(textHash(operationIdentity(kind,current))!==record.value.preimageSha256){
         return store.revise(record,{...record.value,phase:'STALE',state:'STALE',preflight:await store.putJSON(current),
-          failure:{code:'FLOWABLE_PREIMAGE_CHANGED',message:'The selected native definition, process, case, work item, task, decision or job changed after preparation. Prepare a new review of its current state.',at:now()}});
+          failure:{code:'FLOWABLE_PREIMAGE_CHANGED',message:'The selected native definition, process, case, work item, task, form, decision or job changed after preparation. Prepare a new review of its current state.',at:now()}});
       }
       // Migration validation is native and current at dispatch, using the original complete document.
       if(kind==='migration'){
@@ -501,7 +581,7 @@ export async function openFlowableWorkspace({directory,connections=[],environmen
     need(OPERATION_KINDS.includes(input.kind),'FLOWABLE_OPERATION_KIND_INVALID');
     const record=await store.get(input.kind,input.id,input.revision);
     const values={record:recordRef(record),value:record.value};
-    for(const key of ['plan','selection','before','after','reconciliation']){
+    for(const key of ['plan','selection','before','preflight','after','reconciliation']){
       if(record.value[key])values[key]=await store.getJSON(record.value[key]);
     }
     if(record.value.validation)values.validation=await completeExchange(await store.getJSON(record.value.validation));
@@ -532,8 +612,8 @@ export async function openFlowableWorkspace({directory,connections=[],environmen
   const programmeActions=createFlowableProgrammeActions({store,lookupConnection,sameConfiguration,
     prepareOperation,readDocument:programmeDocument});
   const methods={...programmeActions,view,listRecords,getRecord,readPortfolio,readDefinition,readDecisionPortfolio,readDecisionDefinition,
-    readCasePortfolio,readCaseDefinition,readCaseInstance,readJobPortfolio,readJob,
-    readSource,readReview,readDecisionExecution,saveConnection,capturePortfolio,captureDecisionPortfolio,captureCasePortfolio,captureJobPortfolio,
+    readCasePortfolio,readCaseDefinition,readCaseInstance,readJobPortfolio,readJob,readTaskForm,
+    readSource,readReview,readDecisionExecution,saveConnection,capturePortfolio,captureDecisionPortfolio,captureCasePortfolio,captureJobPortfolio,captureTaskForm,
     reconcileOperation,exportWorkspace,inspectDelivery,adoptDelivery,deliveryFile,sourceFile};
   for(const kind of OPERATION_KINDS){
     const name=kind[0].toUpperCase()+kind.slice(1);
@@ -557,7 +637,7 @@ export async function openFlowableWorkspace({directory,connections=[],environmen
         expectedRevision:received.value.adoptExpectedRevision,manifestSha256:received.value.manifestSha256});
     }
     for(const head of await store.heads()){
-      if(![...Object.keys(portfolioMethods),...OPERATION_KINDS].includes(head.kind))continue;
+      if(![...Object.keys(portfolioMethods),'taskFormCapture',...OPERATION_KINDS].includes(head.kind))continue;
       const record=await store.get(head.kind,head.id);
       if(['CAPTURING','PREPARING'].includes(record.value.phase))await retainFailure(record,
         {code:'FLOWABLE_PROCESS_INTERRUPTED',message:'The prior process stopped during native source capture. Its retained originals are available.'},'INTERRUPTED');
