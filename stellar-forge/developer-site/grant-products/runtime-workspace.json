@@ -1,0 +1,121 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "runtime-workspace",
+  "heading": "## Product selection, installation and recurring buyer work",
+  "sources": [
+    {
+      "id": "installation-source-builds",
+      "label": "Source Builds product selection and original installation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/SOURCE_BUILDS.md",
+      "commit": "4007537fb13f3c6088cf28b153a28293c149b496"
+    },
+    {
+      "id": "installation-product-requirements",
+      "label": "Complete capability selection and committed dependency inspection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/PRODUCT_REQUIREMENTS.md",
+      "commit": "4007537fb13f3c6088cf28b153a28293c149b496"
+    },
+    {
+      "id": "installation-product-plans",
+      "label": "Saved product, original installed Runtime and complete customer handoff",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/PRODUCT_PLANS.md",
+      "commit": "4007537fb13f3c6088cf28b153a28293c149b496"
+    },
+    {
+      "id": "runtime-workspace-operating",
+      "label": "Complete original Runtime product selection, installation and operating workflow",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/README.md",
+      "commit": "9e561f5a9e09eb3ac72655e502de58cce4416c3d",
+      "editions": [
+        {
+          "commit": "9e561f5a9e09eb3ac72655e502de58cce4416c3d",
+          "bytes": 18907,
+          "sha256": "7aefd770fb633bd43b5d566bbe75e2a1174b283ce1b9bfd50ae10f8a863ed7a1"
+        }
+      ]
+    },
+    {
+      "id": "runtime-workspace-complete-backup",
+      "label": "Complete workspace backup, original-location receiving and external binding review",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/WORKSPACE_BACKUP.md",
+      "commit": "74a378219267702ac1c4702a48ee87278781a360",
+      "editions": [
+        {
+          "commit": "74a378219267702ac1c4702a48ee87278781a360",
+          "bytes": 15262,
+          "sha256": "cecd0436cc01bb6d8bb19e3ed2bf905e9d58df58634723230757b99be3105dce"
+        }
+      ]
+    },
+    {
+      "id": "runtime-workspace-backup-contract",
+      "label": "Typed whole-workspace archive, receiving and reopening contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/workspace-backup.d.mts",
+      "commit": "74a378219267702ac1c4702a48ee87278781a360",
+      "editions": [
+        {
+          "commit": "74a378219267702ac1c4702a48ee87278781a360",
+          "bytes": 4571,
+          "sha256": "191ca637b03c53507b3111597ef9188d627e91660679b3343ee7447bdadbf122"
+        }
+      ]
+    },
+    {
+      "id": "runtime-workspace-operation-observation",
+      "label": "Managed operations, nullable native observations and retained output",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/MANAGED_OPERATIONS.md",
+      "commit": "74a378219267702ac1c4702a48ee87278781a360",
+      "editions": [
+        {
+          "commit": "74a378219267702ac1c4702a48ee87278781a360",
+          "bytes": 14753,
+          "sha256": "7f0fd43c572ebba0789e066ba3fbe8e3539f414ac7f6c282e1e20e858e00214c"
+        }
+      ]
+    },
+    {
+      "id": "runtime-workspace-native-receiving",
+      "label": "Complete original model, CLI, archive and browser receiving course",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/WORKSPACE_BACKUP_RECEIVE.mjs",
+      "commit": "9e561f5a9e09eb3ac72655e502de58cce4416c3d",
+      "editions": [
+        {
+          "commit": "9e561f5a9e09eb3ac72655e502de58cce4416c3d",
+          "bytes": 32188,
+          "sha256": "839967709e0f66d74fb97f1c05eaedf7cd4013ecf2cdde56192f457fafab6f4b"
+        }
+      ]
+    },
+    {
+      "id": "runtime-workspace-backup-distribution",
+      "label": "Original installed Runtime backup contribution and support files",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/runtime-workspace-backup.json",
+      "commit": "9e561f5a9e09eb3ac72655e502de58cce4416c3d",
+      "editions": [
+        {
+          "commit": "9e561f5a9e09eb3ac72655e502de58cce4416c3d",
+          "bytes": 975,
+          "sha256": "9133bbee76b8aa5106eb2a70101f3f2875ec58e2082a2b5be63b685ae31a5c96"
+        }
+      ]
+    }
+  ]
+}
