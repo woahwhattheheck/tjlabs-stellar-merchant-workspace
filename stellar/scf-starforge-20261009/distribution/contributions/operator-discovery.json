@@ -82,6 +82,8 @@
     "stellar/scf_2026/sf47_budget_model/workspace/source-tables-core.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/source-workbooks.mjs",
     "stellar-forge/developer-site/dist/source-table-workspace.mjs",
-    "stellar-forge/developer-site/dist/onboarding.mjs"
+    "stellar-forge/developer-site/dist/onboarding.mjs",
+    "stellar-forge/developer-site/dist/source-document-tables.mjs",
+    "stellar-forge/developer-site/dist/source-table-intake.mjs"
   ]
 }
