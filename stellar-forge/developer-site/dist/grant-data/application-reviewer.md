@@ -33,15 +33,24 @@ The commercial offer is implementation and handover followed by separately scope
 
 ## Why Stellar and what we contribute
 
-Stellar supplies purchase authorization and settlement. In the existing x402 Exact flow, the buyer signs a Soroban token-transfer authorization binding payer, recipient, atomic amount and expiry; the selected facilitator submits it on the reviewed network. An explicit sponsorship policy can cover fees. We use existing Stellar SDKs and token contracts.
+Stellar supplies purchase authorization and settlement. In the existing x402 Exact flow, the buyer authorizes a particular payer, recipient, token amount and expiry; a facilitator verifies and submits it on the selected network. Explicit sponsorship can cover fees. We use existing SDKs and token contracts. Our proposed Open Track improvement connects those payments to a complete customer task: its approved HTTP request or MCP tool and arguments, source edition, aggregate spending, every agreed output, fulfillment and independent maintenance.
 
-Our contribution connects that payment to the complete customer task: the approved HTTP method/endpoint or MCP tool/arguments, source edition, scope, aggregate spending, every agreed output, fulfillment and accounting. The buyer retains signing/spending authority; the merchant retains source, pricing and fulfillment authority.
+For an analyst buying a complete dataset or a merchant maintaining a recurring service, useful delivery can span several responses and continue after an interruption. Our application keeps the original approval, payment and source relationships attached to that work. The buyer controls signing and spending; the merchant controls source access, price and fulfillment.
 
-Stellar x402 libraries provide challenges, authorization and signed retries; the Stellar CLI supplies signing identity. Facilitators verify and settle, Bazaar describes resources, ApiCharge provides typed paid access and retained service levels, and MPP Router provides paid proxy access, response caching and job polling. The proposed Open Track value builds on these foundations: a reusable customer workflow that remains usable across multiple calls, interrupted delivery, source change and independent handover. The funded installations develop and publish the adaptations needed for recurring independent use.
+| Foundation and documented role | Application contribution |
+| --- | --- |
+| Stellar x402 libraries and facilitators provide challenges, signed authorization, verification and settlement. | Bind each original transfer and response to the reviewed request, terms and total approved task; retain every agreed page/file and its fulfillment history. |
+| The Stellar MPP SDK supplies per-payment on-chain Charge and funded Channel with off-chain cumulative commitments and later settlement. | The maintained MPP workspace adds selected service/task authority, original responses, collection/funding recovery and editable receiving. Channel commitments are not counted as individual on-chain transfers. |
+| ApiCharge documents paid route grants, purchased service levels, pricing and access limits. | Preserve the selected access terms and consumed allowance through the customer's complete source/query/output workflow, including later default changes. |
+| MPP Router documents paid proxy access, request-ID response caching and authenticated job polling. | Retain request contents, selected source/payment and original operation across interrupted delivery, complete result collection and independently reopened workspaces. |
 
-Two-facilitator acceptance uses the **same useful service**, holding schema, population and output constant. The retained Vellar/Periplo comparison found no shared seller/route identity; T2 therefore includes actual registration and wire/payment/fee-policy compatibility. Existing catalog entries are not substituted for that deployment.
+The table connects the providers' documented foundations to our implemented complete customer workflow. It gives the next operator enough original context to distinguish uncertain settlement from unfinished delivery and continue the same work.
 
-The submitted selection remains Open Track, subject to issuer invitation and review. No new token, domestic payment rail or fiat on/off-ramp is proposed.
+Actual team-operated cases include 144 HPD rows delivered as two pages of 100 and 44, with two distinct 10,000-stroop payments, and an original 100-row/14-column MySQL purchase whose complete response, truncation flag and history reopened elsewhere with signing disabled. The historical baseline remains **18 team-operated testnet purchases / 411,000 stroops**, fees separate. This is team-operated testnet development evidence. Analytical runs and Channel commitments retain separate identities.
+
+The unchanged six funded packages commission two independent merchants and two buyers. T1 requires an approved native Stellar testnet purchase and useful output for each merchant. T2 compares two facilitators using the **same useful service**, holding schema, population and output constant. The retained Vellar/Periplo comparison found no shared seller/route identity, so actual registration and compatibility remain funded work. The existing later recurring-use and mainnet acceptance conditions measure customer usefulness and publish reusable deployment/source/receiving improvements within the same **$38,000 / 400 prospective hours / 150 days**.
+
+The requested Open Track selection remains subject to issuer invitation and review. Primary sources: [Stellar x402](https://developers.stellar.org/docs/build/agentic-payments/x402/built-on-stellar), [Stellar MPP SDK](https://github.com/stellar/stellar-mpp-sdk), [ApiCharge](https://apicharge.com/Documentation/core-concepts.html), [MPP Router](https://www.mpprouter.dev/llms.txt). The comparison and operating evidence are included in this answer.
 
 ## Defined architecture and operating behavior
 
@@ -54,7 +63,7 @@ The submitted selection remains Open Track, subject to issuer invitation and rev
 |Delivery and accounting|Receive all agreed output; retain original attempts, fulfillment and acknowledgment; separate principal, fees, invoices and receipts.|
 |Recovery and receiving|Reconcile original dispatch after uncertain responses; restore source, configuration, customer files and history for the receiving engineer.|
 
-Saved intents support execution, history and complete downloads. A prepaid call retains its original selected pass and consumed allowance when defaults change. MPP Charge retains its own challenge and recovery lifecycle. An uncertain transfer is reconciled before further payment action; a settled purchase with unfinished output continues its existing entitlement or delivery session.
+Saved intents support execution, history and complete downloads. A prepaid call retains its original selected pass and consumed allowance when defaults change. MPP Charge and the implemented Channel workspace retain their distinct approval and recovery lifecycles. Channel tasks bind the selected contract, service and spending authority to original commitments, responses and later collection; commitments remain distinct from on-chain transfers and the historical testnet purchase count. An uncertain transfer is reconciled before further payment action; a settled purchase with unfinished output continues its existing entitlement or delivery session.
 
 Node.js supplies browser, CLI, typed-client and MCP interfaces, alongside Python/SQLite and PHP/WordPress/WooCommerce applications. Releases identify source, upstream SDK/contract versions and licenses; any funded contract modifications will be published under compatible open-source terms.
 

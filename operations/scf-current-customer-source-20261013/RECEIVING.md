@@ -1,32 +1,50 @@
 # Receive the complete current SCF application
 
-This edition receives the selected canonical application and the complete product declarations through the maintained publisher. It preserves the prior 1,077-source edition and the concurrently published 22-source Tyk contribution. The selected source index contains 1,255 original source records and the companion contains 103 complete H2 chapters. The primary application retains all nine original reviewer answers.
+This following edition reconciles the current canonical nine-answer application with the complete maintained funded-component map, installed responsibilities and release/support handover through the same publisher. It preserves the prior 1,077-source edition and the concurrently published 22-source Tyk contribution. The selected source index contains 1,259 original source records and the companion contains 103 complete H2 chapters. The primary application retains all nine original reviewer answers.
 
-The original request remains **USD 38,000 for 400 prospective hours at USD 95/hour over 150 days**, with the original six funded packages, tranches and acceptance conditions. The complete primary application, budget and the request, baseline, milestones, capacity, cash and submission objects are unchanged.
+The original request remains **USD 38,000 for 400 prospective hours at USD 95/hour over 150 days**, with the original six funded packages, tranches and acceptance conditions. The primary application retains its current competition comparison and distinct MPP Charge/Channel behavior. The budget and the request, baseline, milestones, capacity, cash and submission objects are unchanged.
 
 ## Complete reviewer files
 
 | File | Complete bytes | SHA-256 |
 | --- | ---: | --- |
-| [grant.html](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/38df0456bb88462cbf146768ae655bfc9634b4d4/stellar-forge/developer-site/dist/grant.html) | 105199 | d7bb28d2bd360cc66ebf5a974d67361acb8b27049748ccce0fc8ebc78d356a2a |
-| [application.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/38df0456bb88462cbf146768ae655bfc9634b4d4/stellar-forge/developer-site/dist/grant-data/application.md) | 53345 | 39f337bb16c8a9bda3a87036d46ffcbdf687a9feb7ed48bad01d50c212ad558c |
-| [product-and-finance.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/38df0456bb88462cbf146768ae655bfc9634b4d4/stellar-forge/developer-site/dist/grant-data/product-and-finance.md) | 1746506 | 6779cf5e38d6296cddd45676ecbc9a06df5e9214a4dc0ea288b7e129ff8d4a59 |
-| [source-index.json](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/38df0456bb88462cbf146768ae655bfc9634b4d4/stellar-forge/developer-site/dist/grant-data/source-index.json) | 1637299 | 681aa156b4f38d34860ba0e057a213d93547fada4db902c113ed0533b6b1a0c3 |
-| [budget.csv](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/38df0456bb88462cbf146768ae655bfc9634b4d4/stellar-forge/developer-site/dist/grant-data/budget.csv) | 597 | 4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00 |
+| [grant.html](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6e57e33978c0b53c0ba5d5bc8fd9ec79676870dd/stellar-forge/developer-site/dist/grant.html) | 110214 | 7f523fecb29fed172327df34ef5be1a4d2364a311bf613962c3987fe18e13a8c |
+| [application.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6e57e33978c0b53c0ba5d5bc8fd9ec79676870dd/stellar-forge/developer-site/dist/grant-data/application.md) | 57874 | adbcd076075023d677942f95388f2b77a1ef5cae091767d1b580cd6a2e9c5568 |
+| [product-and-finance.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6e57e33978c0b53c0ba5d5bc8fd9ec79676870dd/stellar-forge/developer-site/dist/grant-data/product-and-finance.md) | 1750550 | 74bc9bfaf04faa9a8a09a4bc984771540e87453d9a5c6604026e730fffab9a28 |
+| [source-index.json](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6e57e33978c0b53c0ba5d5bc8fd9ec79676870dd/stellar-forge/developer-site/dist/grant-data/source-index.json) | 1646112 | a6422080dbf0608fb3ff9e0e9b67a20d06917d5b8d7eb8034fcfb18a4fefee29 |
+| [budget.csv](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6e57e33978c0b53c0ba5d5bc8fd9ec79676870dd/stellar-forge/developer-site/dist/grant-data/budget.csv) | 597 | 4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00 |
 
-Open the maintained reviewer page through the existing developer Site or installed reviewer server. Its application, source index, companion reader, Prepare submission and saved-project controls remain the original application. The complete source selection in [source-selection.json](./source-selection.json) records every original module and declaration, the selected canonical source, the current publication base and the preserved prior editions. Immutable output commit: `38df0456bb88462cbf146768ae655bfc9634b4d4`.
+Open the maintained reviewer page through the existing developer Site or installed reviewer server. Its application, source index, companion reader, Prepare submission and saved-project controls remain the original application. The complete source selection in [source-selection.json](./source-selection.json) records every original module and declaration, the selected canonical source, the current publication base and the preserved prior editions. Immutable output commit: `6e57e33978c0b53c0ba5d5bc8fd9ec79676870dd`.
 
 ## Receive the portable source into the original saved application
 
 [Download the complete four-role source package](./current-source-package.json). It contains the full application Markdown, complete source index, unchanged budget CSV and complete product-and-finance companion, including every file body.
 
-Package: **4640558 bytes**, SHA-256 **6e7886661b4c9a269286bf9d8fb656447702d90481c09d95e00a36843e82f6f9**. Original bundle ID: `df20d3736ef3307fc6f2792c799bd9a1e827f5fc7964d1b948c3690765b89414`.
+Package: **4668284 bytes**, SHA-256 **21cfb73d6771eeb8c8f66ca48b4f05c1089d297d6fb793be40d64183ba1c0638**. Original bundle ID: `3e98f0b32a4d328df0e4b7f4b17fc3baa85b8df83d7c5cf62254bb0154985b13`.
 
 Use the existing selected application and its original complete-source receiving controls. Receive this package as its following source edition, then use the existing comparison and source-update decisions. Keep manual answers, issuer-form fields, requirements, review history, planning, saved source editions, customer attachments and correspondence in their original record. The operator selects this exact incoming bundle.
 
 The package was created by the maintained `makeSource`, `createSourceBundle` and `createReviewerSourcePackage` functions and reopened through `openReviewerSourcePackage`. The complete reopened value equals the original received value. All four file identities match the generated index and original budget.
 
-## What this edition integrates
+## Current full and concise selections
+
+The full application now includes every current canonical answer and the three complete maintained subsections: **Existing components and funded deployment changes**, **Installed responsibility and response**, and **Maintainable release and support handover**. The canonical front received only these three additions; all detailed author chapters remain in their existing manuscript. The complete current finance companion is byte-for-byte unchanged.
+
+The maintained `grant-reviewer-edition.mjs` also binds the existing concise answer selection and accepted payment/task comparison to this exact full output commit. Its three original routes travel together:
+
+| File | Bytes | SHA-256 |
+| --- | ---: | --- |
+| [application-reviewer.md](../../stellar-forge/developer-site/dist/grant-data/application-reviewer.md) | 24810 | c4fcb005aa6de74f8f727223251dd27214192912886b7348b70e3e4e746776c7 |
+| [reviewer-working-index.json](../../stellar-forge/developer-site/dist/grant-data/reviewer-working-index.json) | 1711285 | 5808e16dacb4cd584a515ff35023f0ded1a9a67d0a913fca03b5cdfc96a85dca |
+| [reviewer-working-source.json](../../stellar-forge/developer-site/dist/grant-data/reviewer-working-source.json) | 4677853 | 7fda9c7c7861788ecf25a0590442199eda0b6bf0b9818cca1022312fde3379a7 |
+
+The concise bundle is `1ae0b6ebfa8ec46c903825ecb049cd4100ee41eedf0cd9e3ceb628fbc55e9240`. **Open concise working edition** continues to use `grant-submission.html?source=concise`; **Download current full manuscript** retains the complete answer edition. In **Source editions**, compare the selected incoming source with the original saved application and keep the user's decisions and edited answers. Both complete packages contain the same unchanged budget and complete finance companion. Apply the actual invited issuer field labels and limits when that form is received.
+
+The full receiving source contains 1,259 source records, all 80 selected product registrations and 103 complete companion chapters. The original 18 team-operated testnet purchases and 411,000-stroop principal remain development evidence, with fees separate; the independent funded purchases and two installations remain prospective.
+
+The final fresh-main composition preserves the concurrent municipal service successor at `f34bfea6ef3f3e3b9d7842a69059fe1da1ec18a2`: its four additional original source records, six advanced source editions and complete service chapter remain in the selected index and unchanged 1,750,550-byte companion.
+
+## Retained source integration from the preceding 1,255-source publication
 
 ### Customer closing and saved-project operation
 
@@ -74,6 +92,6 @@ Return the actual selected record/source identity, running host and observed res
 
 ## Continue the maintained publisher
 
-The entry remains `stellar-forge/developer-site/grant-compose.mjs`; product ownership stays in the existing `grant-products` declarations and canonical H2 chapters. This edition executed the complete original publication and package modules with retained full inputs and standard filesystem/UTF-8/digest adapters. Repeating the original composer with the complete selected inputs produced identical files.
+The entry remains `stellar-forge/developer-site/grant-compose.mjs`; product ownership stays in the existing `grant-products` declarations and canonical H2 chapters. This reconciliation executed the original pure composer and complete-source package functions with the retained full inputs and standard UTF-8/digest adapters. Both complete packages reopened through the maintained receiving functions; the full reopened value equals its original four-role input.
 
-For a following edition, select its full current canonical and complete current declarations, start with this complete published source union, and run the maintained composer. Preserve any concurrent valid generated successor through fresh-main comparison. Keep a single coherent set of four reviewer outputs and one complete portable package. The original source selection records the 33 full publication/receiving modules used here; later runtime changes keep their own selected source edition.
+For a following edition, select its full current canonical and complete current declarations, start with this complete published source union, and run the maintained composer. Preserve any concurrent valid generated successor through fresh-main comparison. Keep a single coherent set of four reviewer outputs and one complete portable package. The source selection retains the preceding publisher's module inventory and separately records the 24 exact modules executed for this reconciliation. Its sourcePins map names every changed full and concise browser artifact. Continue the original saved application through its reviewed incoming source and retained handover.
