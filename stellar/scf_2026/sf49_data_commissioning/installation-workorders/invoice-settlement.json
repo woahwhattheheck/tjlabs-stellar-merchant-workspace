@@ -71,7 +71,7 @@
   "sourceFiles": [
     {
       "path": "stellar-forge/mcp-merchant-operator/INVOICE_SETTLEMENT_CUSTOMER.md",
-      "blob": "a14da14941d9dd79919e53cd17597a3d0992dbf6"
+      "blob": "e50c61045e9da50824f99d5cb1e2557c675679c0"
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/HORIZON_INVOICES.md",

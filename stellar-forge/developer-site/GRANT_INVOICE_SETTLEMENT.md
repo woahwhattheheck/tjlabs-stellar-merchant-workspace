@@ -25,7 +25,7 @@ The customer binds the actual workspace UUID, reads revision-bound history and p
 
 Export and download preserve the original publication UUID, native manifest and every declared file. Interrupted prefixes resume under that exact selection. Downloads stay private; independent receiving prepares a separate hash-bound source copy with the original declared file/runtime modes. The unchanged native receiver restores full application/source/runtime coverage and pauses inherited active work for explicit later continuation.
 
-The complete [installed customer guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/c1cd32e1d0e8d28ed2c2e40332276c06c7f4ae67/stellar-forge/mcp-merchant-operator/INVOICE_SETTLEMENT_CUSTOMER.md) supplies the actual configuration, CLI, typed exports, native source-import contract, request recovery, full download and offline receiving commands. Customer handover includes the complete editable workspace and operating source, while secret values stay in their existing authorised custody.
+The complete [installed customer guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1b19665fde7c5fc7fbbe6ebc37557364e3670ba6/stellar-forge/mcp-merchant-operator/INVOICE_SETTLEMENT_CUSTOMER.md) supplies the actual configuration, CLI, typed exports, native source-import contract, request recovery, full download and offline receiving commands. Customer handover includes the complete editable workspace and operating source, while secret values stay in their existing authorised custody.
 
 ### Commissioning through the original Installation
 
@@ -39,7 +39,7 @@ This supports a practical commissioning offer: install one customer's scoped pro
 
 The original Horizon feature was received through seventeen native phases and three reviewed application views. Its full original application/workspace/source archive and guide were saved. That is the feature's retained native result; it is separate from any customer's commercial acceptance.
 
-The authenticated installed customer product is merged at PR1325. Its complete eighteen-phase receiving source remains with the original receiving continuation after the initial admissions ended before process creation. This chapter does not claim that installed course has completed. The new Installation profile supplies the complete operating programme; an actual Grant case save, named recipient acceptance, paid order or subsequent recurring use requires its own original result.
+The authenticated installed customer product is merged at PR1325. Its guarded whole receiving continuation is merged at PR1410 and retains 154 complete selected source files, original child and phase results, operation lifetime and same-process saves. The original eighteen-phase execution remains pending after the initial admissions ended before process creation. This chapter does not claim that installed course has completed. The new Installation profile supplies the complete operating programme; an actual Grant case save, named recipient acceptance, paid order or subsequent recurring use requires its own original result.
 
 For a selected real customer, the useful evidence is the complete original programme/source population, actual saved decisions and discrepancies, report/publication identity, recipient reopen and later source-edition use. Count an Installation as operated only from its original recorded observations. A source import, match candidate, download or planned handover does not by itself establish a purchase or completed funded phase.
 
