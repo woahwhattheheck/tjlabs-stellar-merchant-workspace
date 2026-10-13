@@ -65,7 +65,7 @@ export function createOperatorCopies({state,render,notify,openIntegrationDocumen
     }).catch(error=>{lastError=error;dirty=true;status();throw error;});
     saving=run;return run;
   }
-  async function settleFiles(){while(pendingFiles.size)await Promise.all([...pendingFiles]);if(fileFailures.size)throw [...fileFailures.values()][0];}
+  async function settleFiles(){for(const input of document.querySelectorAll('#main input[type=file]'))if(input.files?.[0])void trackFile(input).catch(()=>{});while(pendingFiles.size)await Promise.all([...pendingFiles]);if(fileFailures.size)throw [...fileFailures.values()][0];}
   async function flush(){
     await settleFiles();capture();await save();if(lastError)throw lastError;
   }
@@ -111,10 +111,17 @@ export function createOperatorCopies({state,render,notify,openIntegrationDocumen
   }
   function trackFile(input){
     const file=input.files?.[0];if(!file)return Promise.resolve();
-    const existing=inputReads.get(input);if(existing?.file===file)return existing.promise;
-    const slot=fileSlot(input.id);fileFailures.delete(slot);
-    const promise=retainFile(input).catch(error=>{fileFailures.set(slot,error);inputReads.delete(input);throw error;}).finally(()=>pendingFiles.delete(promise));
-    pendingFiles.add(promise);inputReads.set(input,{file,promise});return promise;
+    const slot=fileSlot(input.id),existing=inputReads.get(input);
+    if(existing?.file===file&&existing.slot===slot)return existing.promise;
+    const current={file,slot,promise:null};fileFailures.delete(slot);
+    const promise=retainFile(input).then(ref=>{
+      if(inputReads.get(input)===current)fileFailures.delete(slot);
+      return ref;
+    }).catch(error=>{
+      if(inputReads.get(input)!==current)return;
+      fileFailures.set(slot,error);inputReads.delete(input);throw error;
+    }).finally(()=>pendingFiles.delete(promise));
+    current.promise=promise;pendingFiles.add(promise);inputReads.set(input,current);return promise;
   }
   async function selectedFile(id){
     const input=$('#'+id),selection=store.selection,slot=fileSlot(id),at=serial;

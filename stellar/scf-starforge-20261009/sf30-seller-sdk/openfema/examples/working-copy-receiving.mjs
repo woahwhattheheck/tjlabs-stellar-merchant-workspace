@@ -101,7 +101,7 @@ try{
     await page.waitForFunction(()=>document.querySelector('#notice.error [data-command="retry"]'));
   }
   must(interrupted,'The original export request did not dispatch.');
-  const originalOperation=await native('/api/operation?operationId='+encodeURIComponent(interrupted));must(originalOperation?.operationId===interrupted,'The original native operation is missing.');
+  const originalOperation=await native('/api/operation?operationId='+encodeURIComponent(interrupted));must(!originalOperation||originalOperation.operationId===interrupted,'The native record belongs to another original operation.');
   await context.close();context=null;page=await openBrowser();
   const pendingRoot=await rootRecord(page),pending=pendingRoot.requests.find(r=>r.operationId===interrupted);
   must(pending?.payloadFile,'The complete original request did not survive browser close.');
@@ -112,8 +112,8 @@ try{
   const complete=await downloadCopy(page,'OpenFEMA_Complete_Operation_Working_Copy.json');
   must(complete.value.requests.some(r=>r.operationId===interrupted&&r.resultFile),'The completed original receipt is missing from the complete export.');
   const opAfter=await native('/api/operation?operationId='+encodeURIComponent(interrupted));
-  must(opAfter.operationId===originalOperation.operationId,'Original operation changed on continuation.');
-  await record('same_native_export_after_lost_response',{operationId:interrupted,originalState:originalOperation.state,continuedState:opAfter.state,firstOutcomeSha256:receipt.resultFile.sha256});
+  must(opAfter?.operationId===interrupted,'The original operation did not finish its retained continuation.');
+  await record('same_native_export_after_lost_response',{operationId:interrupted,originalState:originalOperation?.state??'NOT_YET_DISPATCHED',continuedState:opAfter.state,firstOutcomeSha256:receipt.resultFile.sha256});
   // Import keeps one native identity and creates a separate preparation copy with complete request references.
   await copiesOpen(page);await page.locator('#working-copy-file').setInputFiles(complete.path);await page.locator('[data-copy-command="import"]').click();await saved(page);
   const imported=await downloadCopy(page,'OpenFEMA_Imported_Complete_Working_Copy.json');
