@@ -160,7 +160,30 @@ final class NativeProject
         $before = $this->identity($from);
         if ($before['type'] !== 'file') { throw new HandoverFailure('A complete ordinary source file is required.'); }
         Files::assertParent($to);
-        $temporary = $to . '.part-' . bin2hex(random_bytes(8));
+        $id = hash('sha256', $to);
+        $journal = $this->directory('copy-journals') . '/' . $id . '.json';
+        $intent = is_file($journal) ? Files::readJson($journal) : null;
+        $expected = ['bytes' => $before['bytes'], 'sha256' => $before['sha256']];
+        if (is_array($intent) && $intent['expected'] === $expected && $intent['state'] === 'COMPLETE') {
+            $actual = $this->identity($to);
+            if ($actual['type'] === 'file' && $actual['bytes'] === $before['bytes'] && $actual['sha256'] === $before['sha256']) { return; }
+        }
+        if (is_array($intent) && $intent['state'] === 'WRITING') {
+            $temporary = $intent['temporary'];
+            if ($temporary !== $to . '.catalogue-part-' . $intent['nonce']) { throw new HandoverFailure('Original private copy intent changed.'); }
+            $partial = $this->identity($temporary);
+            if ($partial['type'] !== 'absent') {
+                if ($partial['type'] !== 'file') { throw new HandoverFailure('An owned original copy stage changed filesystem kind.'); }
+                // This exact disposable stage was registered before creation. Retain its actual identity before cleanup.
+                $intent['interrupted_stage'] = $partial; Files::writeJson($journal, $intent);
+                if (!unlink($temporary)) { throw new HandoverFailure('Cannot retire this operation’s own interrupted copy stage.'); }
+            }
+        }
+        $nonce = bin2hex(random_bytes(12)); $temporary = $to . '.catalogue-part-' . $nonce;
+        if (is_array($intent)) { Files::writeJson($this->directory('copy-attempts') . '/' . $id . '-' . $intent['nonce'] . '.json', $intent); }
+        $intent = ['destination' => $to, 'source' => $from, 'expected' => $expected,
+            'temporary' => $temporary, 'nonce' => $nonce, 'state' => 'WRITING', 'started_at' => gmdate(DATE_ATOM)];
+        Files::writeJson($journal, $intent);
         $input = fopen($from, 'rb'); $out = fopen($temporary, 'xb');
         if ($input === false || $out === false) { throw new HandoverFailure('Cannot retain complete original bytes.'); }
         chmod($temporary, 0600);
@@ -175,6 +198,8 @@ final class NativeProject
         $after = $this->identity($from); $received = $this->identity($temporary);
         if ($after !== $before || $received['bytes'] !== $before['bytes'] || $received['sha256'] !== $before['sha256']) { throw new HandoverFailure('Source changed during complete file retention.'); }
         if (!rename($temporary, $to)) { throw new HandoverFailure('Cannot publish original retained file.'); }
+        $intent['state'] = 'COMPLETE';
+        $intent['completed_at'] = gmdate(DATE_ATOM); Files::writeJson($journal, $intent);
     }
 
     private function command(string $stage, array $argv, ?string $stdin = null): array
@@ -270,8 +295,28 @@ final class NativeProject
         return false;
     }
 
+    private function retireCopyStages(): void
+    {
+        foreach (glob($this->work . '/copy-journals/*.json') ?: [] as $path) {
+            $intent = Files::readJson($path);
+            if (($intent['state'] ?? null) !== 'WRITING') { continue; }
+            $temporary = $intent['temporary'];
+            if ($temporary !== $intent['destination'] . '.catalogue-part-' . $intent['nonce']
+                || basename($path) !== hash('sha256', $intent['destination']) . '.json') {
+                throw new HandoverFailure('Original owned copy stage binding changed.');
+            }
+            $actual = $this->identity($temporary);
+            if ($actual['type'] === 'absent') { continue; }
+            if ($actual['type'] !== 'file') { throw new HandoverFailure('An original disposable copy stage changed filesystem kind.'); }
+            $intent['interrupted_stage'] = $actual; $intent['stage_retired_at'] = gmdate(DATE_ATOM);
+            Files::writeJson($path, $intent);
+            if (!unlink($temporary)) { throw new HandoverFailure('Cannot retire this original operation’s own interrupted file stage.'); }
+        }
+    }
+
     private function inventory(): array
     {
+        $this->retireCopyStages();
         $entries = []; $sources = []; $bytes = 0;
         foreach ($this->roots as $prefix => $root) {
             $entries[$prefix] = ['path' => $prefix] + $this->identity($root);
@@ -519,18 +564,27 @@ final class NativeProject
             $plan = ['schema' => 'tjl.catalogue.native-file-plan.v1', 'archive_sha256' => $received['archive_sha256'], 'steps' => $steps];
             Files::writeJson($planPath, $plan);
         }
-        foreach ($plan['steps'] as $member => &$step) {
+        $stepDirectory = $this->directory($phase . '-file-steps');
+        foreach ($plan['steps'] as $member => $step) {
+            $stepPath = $stepDirectory . '/' . hash('sha256', $member) . '.json';
+            if (is_file($stepPath)) {
+                $saved = Files::readJson($stepPath);
+                foreach (['member', 'destination', 'before', 'after'] as $field) {
+                    if (($saved[$field] ?? null) !== $step[$field]) { throw new HandoverFailure('Original native file-step binding changed.'); }
+                }
+                $step = $saved;
+            }
             if ($step['state'] === 'COMPLETE') { continue; }
             $path = $step['destination']; Files::assertParent($path);
             $actual = $this->identity($path);
-            if ($actual === $step['after']) { $step['state'] = 'COMPLETE'; $step['adopted_at'] = gmdate(DATE_ATOM); Files::writeJson($planPath, $plan); continue; }
+            if ($actual === $step['after']) { $step['state'] = 'COMPLETE'; $step['adopted_at'] = gmdate(DATE_ATOM); Files::writeJson($stepPath, $step); continue; }
             // A previous atomic file install may have completed before the final chmod.
             $sameContent = $actual; $sameAfter = $step['after']; unset($sameContent['mode'], $sameAfter['mode']);
             if ($actual !== $step['before'] && $sameContent !== $sameAfter) {
-                $step['observed_conflict'] = $actual; Files::writeJson($planPath, $plan);
+                $step['observed_conflict'] = $actual; Files::writeJson($stepPath, $step);
                 throw new HandoverFailure('Target member differs from the reviewed preimage and original postimage: ' . $member, 'TARGET_CHANGED');
             }
-            $step['state'] = 'APPLYING'; Files::writeJson($planPath, $plan);
+            $step['state'] = 'APPLYING'; Files::writeJson($stepPath, $step);
             $after = $step['after'];
             if ($after['type'] === 'absent') {
                 if ($actual['type'] === 'directory') { if (!rmdir($path)) { throw new HandoverFailure('Original target directory contains an unreviewed member.'); } }
@@ -547,10 +601,9 @@ final class NativeProject
                 if (!symlink($after['target'], $path)) { throw new HandoverFailure('Cannot restore original internal native link.'); }
             }
             if ($this->identity($path) !== $after) { throw new HandoverFailure('Installed native postimage differs: ' . $member); }
-            $step['state'] = 'COMPLETE'; $step['completed_at'] = gmdate(DATE_ATOM); Files::writeJson($planPath, $plan);
+            $step['state'] = 'COMPLETE'; $step['completed_at'] = gmdate(DATE_ATOM); Files::writeJson($stepPath, $step);
         }
-        unset($step);
-        $this->state[$phase . '_files'] = ['path' => $planPath, 'sha256' => hash_file('sha256', $planPath), 'state' => 'COMPLETE']; $this->save();
+        $this->state[$phase . '_files'] = ['path' => $planPath, 'sha256' => hash_file('sha256', $planPath), 'step_directory' => $stepDirectory, 'state' => 'COMPLETE']; $this->save();
     }
 
     private function restore(string $phase, array $received, array $before, string $expected): array
@@ -567,6 +620,10 @@ final class NativeProject
         $this->state['status'] = strtoupper($phase) . '_APPLYING'; $this->save();
         $this->selectedCommand('verify_drained', $this->freshStage($phase . ':drained'));
         $this->applyFiles($phase, $received, $before);
+        $selectedFiles = array_values(array_filter($received['manifest']['entries'], fn (array $entry): bool => $this->destination($entry['path']) !== null));
+        if ($this->inventory()['entries'] !== $selectedFiles) {
+            throw new HandoverFailure('Actual target files differ from the authenticated source before native database import.', 'TARGET_CHANGED');
+        }
         $variables = ['database_sql' => $received['directory'] . '/database/database.sql',
             'queue_directory' => $received['directory'] . '/metadata/queue'];
         // The SQL command identity must stay stable across newly authenticated staging slots.
