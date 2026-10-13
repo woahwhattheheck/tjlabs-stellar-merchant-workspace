@@ -177,3 +177,84 @@ Follow the repository's current AGENTS.md and original native/browser receiving 
 Run focused native verification through that original host. Preserve the repository's disabled hosted Actions policy. This provider introduces metadata, a private initializer, and source-specific adapters; it uses the existing dataset, publisher, retained-file and financial implementations.
 
 Provider contracts: [generic batch API](https://apidocs.geoapify.com/docs/batch/), [OpenAPI](https://apidocs.geoapify.com/assets/openapi/specs/batch/batch-api-openapi-specs.json), [geocoding options](https://apidocs.geoapify.com/docs/geocoding/).
+
+
+## Complete Customer Installation and Workshare receiving
+
+The same address workspace now prepares a customer handover for the existing
+**Customer installations** desk. Select the complete original package and a retained
+frozen edition. Its selected intake may differ from the active source. The native
+preparer keeps the whole archive, every selected frozen file, the customer's original
+Workshare seed, explicit operator bindings and any selected complete working
+attachments. The original Installation writer still previews and saves the case.
+
+Declare private preparation directories in the existing workspace connection:
+
+```json
+{
+  "installations": {
+    "customer_october": {
+      "label": "Original customer address installation",
+      "directory": "/private/geoapify-customer-october",
+      "seed": "/private/intake/original-workshare-seed.json",
+      "bindings": "/private/intake/customer-bindings.json",
+      "attachments": "/private/intake/complete-working-files.json"
+    }
+  }
+}
+```
+
+This object belongs inside one entry in `workspaces`. Directories must already be
+canonical, private and owned. Give each preparation its own directory. The seed,
+bindings and attachments are declared full regular files; only directory is required
+for reopening an already received preparation. Omit attachments when none are selected.
+Omit bindings to use the native template at that preparation's `bindings.json`.
+Template creation requires the full original Workshare seed.
+
+1. Obtain the complete current native `installation-workshare-seed` from the existing
+   Grant Operations case and declare that exact file. It retains the original case,
+   pinned plan, commercial source, phases, effort, fees, funding and open acceptance
+   checks.
+2. Call `merchant_geoapify_installation` with `action:"template"` and
+   `payload:{preparation:"customer_october"}`. Retain the returned bindings SHA.
+   Use `merchant_geoapify_file` with `kind:"installation-template"`, the same alias
+   as `id`, and `expectedSha256` to download the complete editable bindings file.
+   Supply real source authority, merchant/buyer/payment and receiving choices in
+   that original file. Unknown choices remain visible in the native preview.
+3. Inspect the source using `action:"inspect"` and an exact `editionId`,
+   `expectedArchiveSha256`, and either an original `exportId` from this workspace
+   or a declared `sourceImport` of kind `package`. The inspector uses the same
+   complete package validator as native restore, including the original dataset
+   snapshot check. `offset` and `limit` page the full selected file inventory.
+4. Prepare with `action:"prepare"`, that same source selection and the declared
+   `preparation` alias. The selected full package and all inputs are retained with
+   the original request. Returned `inputs` and `outputs` have separate page metadata;
+   page them with the same offset/limit. The native files remain complete.
+5. Resume an interrupted preparation with `action:"resume"` and only its alias.
+   Reopen a received complete preparation with `action:"reopen"`. Both continue
+   from the original retained request and files, without replacing inputs from
+   changing host defaults.
+6. Download any listed complete input or output using `merchant_geoapify_file`,
+   `kind:"installation"`, preparation alias as `id`, the exact returned `filename`
+   and its SHA-256. Continue retained byte chunks through EOF. Restore the whole
+   Geoapify package in a distinct empty workspace, open every selected customer
+   file and load `installation-input.json` in the original Customer installations
+   desk. Preview and save with that case's current version and original request.
+   Its native checks record the actual operated outcome.
+
+The selected original files are under `delivery/files/`; the full package remains
+under `source/starforge-geoapify.json.gz` and in the receiving delivery. The source
+annex retains selected and active source/edition identities separately. Complete
+comparison HTML is carried when retained in the selected edition; older packages
+keep their original available files.
+
+The installed command is `starforge geoapify-installation
+template|inspect|prepare|reopen`. Read
+[the complete customer Installation guide](../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/GEOAPIFY_CUSTOMER.md)
+for original seeds, full attachment schema, private file modes, byte limits,
+independent handover and exact native commands. The original installed Grant
+Operations case remains the commercial and acceptance writer.
+
+Open and use the exact outgoing application at desktop and narrow widths, every
+dataset/report/working attachment and the independently reopened projects. Look at
+actual rendered output and correct concrete defects before customer presentation.

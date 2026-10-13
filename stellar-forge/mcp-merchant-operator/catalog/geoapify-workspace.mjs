@@ -16,6 +16,16 @@ const options=fields({limit:count(1,20),lang:{type:'string',pattern:'^[a-z]{2}$'
  filter:{type:'string',maxLength:1000},bias:{type:'string',maxLength:1000},
  type:{enum:['country','state','city','postcode','street','amenity','locality']},priority:{type:'number',minimum:0.5,maximum:1},
  endpoint:{enum:['https://api.geoapify.com/v1/batch','https://api-eu.geoapify.com/v1/batch']}});
+const installationPage={offset:count(0,10000),limit:count(1,100)};
+const installationSource={sourceImport:alias,exportId:id,editionId:id,expectedArchiveSha256:hash,...installationPage};
+const installationPayload={
+ template:fields({preparation:alias,...installationPage},['preparation']),
+ inspect:fields(installationSource,['editionId','expectedArchiveSha256']),
+ prepare:fields({preparation:alias,...installationSource},['preparation','editionId','expectedArchiveSha256']),
+ resume:fields({preparation:alias,...installationPage},['preparation']),
+ reopen:fields({preparation:alias,...installationPage},['preparation'])
+};
+for(const operation of ['inspect','prepare'])installationPayload[operation].oneOf=[{required:['sourceImport'],not:{required:['exportId']}},{required:['exportId'],not:{required:['sourceImport']}}];
 const providerPayload={
  prepare:fields({expectedRevision:revision,expectedIntakeSha256:hash,maximumInputs:count(1,1000),queryIds:{type:'array',minItems:1,maxItems:1000,uniqueItems:true,items:queryId},refresh:{type:'boolean'},options},['expectedRevision']),
  request:fields({id,offset:count(0,1000),limit:count(1,250),eventOffset:count(0,Number.MAX_SAFE_INTEGER),eventLimit:count(1,100)},['id']),
@@ -82,7 +92,8 @@ function geoapifyWorkspaceTools(tool){
  tool('merchant_geoapify_merchant','Configure the selected edition using a host-declared public seller/payment profile and the original SF30 compiler.',scoped({profile:alias,expectedRevision:revision}),['workspace','profile','expectedRevision']),
  tool('merchant_geoapify_export','Export the complete workspace with original source, prepared requests, retained responses, decisions, unfinished forms and editions. A selected edition additionally exports native CSV/GeoJSON, review, query, provenance and configured seller files.',scoped({expectedRevision:revision}),['workspace','expectedRevision']),
  tool('merchant_geoapify_restore','Restore a host-declared complete .json.gz package into an empty original Geoapify workspace. Verify original files and dataset identities, then continue retained provider job IDs.',scoped({sourceImport:alias,expectedRevision:revision}),['workspace','sourceImport','expectedRevision']),
- tool('merchant_geoapify_file','Read original source exports, exact prepared provider requests or native publisher/customer files in retained byte chunks. Continue with readId/expectedSha256/nextOffset; EOF releases the snapshot.',scoped({kind:{enum:['source-export','provider-request','draft-csv','draft-review','buyer-config','session-manifest','session-csv','session-jsonl','session-review','facilitator-review','facilitator-response']},id,filename:{type:'string',maxLength:500},...chunk}),['workspace','kind','id'],read),
+ actionTool(tool,'merchant_geoapify_installation','Inspect a complete retained Geoapify package and selected frozen edition, create original Workshare bindings, prepare the full Customer Installation, resume its retained request or independently reopen. Uses declared private directories and complete original inputs. Existing commercial phases, funding and OPEN checks stay with the native Installation writer.',installationPayload),
+ tool('merchant_geoapify_file','Read original source exports, exact prepared provider requests or native publisher/customer files in retained byte chunks. Continue with readId/expectedSha256/nextOffset; EOF releases the snapshot.',scoped({kind:{enum:['source-export','provider-request','installation','installation-template','draft-csv','draft-review','buyer-config','session-manifest','session-csv','session-jsonl','session-review','facilitator-review','facilitator-response']},id,filename:{type:'string',maxLength:500},...chunk}),['workspace','kind','id'],read),
  tool('merchant_geoapify_file_release','Release an unfinished process-owned chunk read while retaining its original file.',scoped({readId:uuid}),['workspace','readId'],{idempotent:true}),
  tool('merchant_geoapify_publisher','Continue the original dataset publisher, release, facilitator and buyer workflows. Prepare selects this source exportId. Release staging uses declared runtime settings; buyer sessions use declared buyer workspaces. Original generations, saved reviews, payment limits and page-attempt records remain authoritative.',scoped({action:{enum:[...publisherActions]},payload:object}),['workspace','action'],{openWorld:true}),
  tool('merchant_geoapify_browser','Open or close a local industrial browser on the same original operator. Borrowed browser close leaves the MCP workspace and its original writer lease open.',scoped({action:{enum:['open','close']},port:count(0,65535)}),['workspace','action'])
