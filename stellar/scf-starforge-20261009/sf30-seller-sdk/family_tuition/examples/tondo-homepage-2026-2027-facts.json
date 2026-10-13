@@ -1,0 +1,334 @@
+{
+  "schema": "tjlabs.tondo.complete-factual-edition.v1",
+  "edition": "homepage-2026-2027",
+  "source": {
+    "url": "https://www.tondoartstudio.com/",
+    "reference": "turn776view0",
+    "collectedAt": "2026-10-13T05:15:25Z"
+  },
+  "facts": {
+    "academicYear": "2026-2027",
+    "registrationFees": {
+      "newStudent": "50.00",
+      "returningStudent": "25.00",
+      "currency": "USD"
+    },
+    "siblingDiscount": {
+      "percent": "10",
+      "applicationBasis": "Unspecified on the listing"
+    },
+    "registrationSequence": [
+      "Signed form emailed to tondoartstudio@gmail.com",
+      "Tuition payment received",
+      "Studio registration confirmation by email"
+    ],
+    "suppliesIncluded": true,
+    "linkedDocuments": {
+      "registration": "https://www.tondoartstudio.com/s/Student-Registration-Form-1-1-1.pdf",
+      "calendar": "https://www.tondoartstudio.com/s/Calendar-2026-27.pdf",
+      "terms": "https://www.tondoartstudio.com/s/Terms-Conditions-2026-2027.pdf"
+    }
+  },
+  "interpretation": {
+    "weekday": "0=Monday through 6=Sunday",
+    "time": "24-hour local wall time transcribed from the selected page; Thursday school row omits its pm suffix, interpreted consistently with the adjacent evening rows",
+    "capacity": "Unpublished; empty source cell",
+    "location": "Per-programme venue unpublished on this listing; empty source cell",
+    "adultMaximumAge": "18+ has no published upper age; empty max_age cell",
+    "calendar": "Weekly slots only; no holiday or dated meeting inferred",
+    "discountBasis": "The listing states 10 percent sibling discount without identifying which student, which charges or stacking rule",
+    "editionPrecedence": "Neither source declares priority over the other"
+  },
+  "sources": [
+    {
+      "kind": "programmes",
+      "table": {
+        "columns": [
+          "id",
+          "title",
+          "min_age",
+          "max_age",
+          "duration_minutes",
+          "capacity",
+          "location"
+        ],
+        "rows": [
+          [
+            "tondo-3-5",
+            "3 - 5 years old",
+            "3",
+            "5",
+            "45",
+            "",
+            ""
+          ],
+          [
+            "tondo-4-6",
+            "4 - 6 years old",
+            "4",
+            "6",
+            "60",
+            "",
+            ""
+          ],
+          [
+            "tondo-7-10",
+            "7 - 10 years old",
+            "7",
+            "10",
+            "90",
+            "",
+            ""
+          ],
+          [
+            "tondo-10-15",
+            "10-15 years old",
+            "10",
+            "15",
+            "90",
+            "",
+            ""
+          ],
+          [
+            "tondo-intensive-10-17",
+            "10 - 17 years old INTENSIVE",
+            "10",
+            "17",
+            "120",
+            "",
+            ""
+          ],
+          [
+            "tondo-adult-18-plus",
+            "Adult Classes (18+ years old)",
+            "18",
+            "",
+            "90",
+            "",
+            ""
+          ]
+        ]
+      },
+      "metadata": {
+        "label": "TONDO homepage-2026-2027 programmes",
+        "filename": "tondo-homepage-2026-2027-programmes.json",
+        "url": "https://www.tondoartstudio.com/",
+        "retrievedAt": "2026-10-13T05:15:25Z",
+        "provenance": "public-derived",
+        "notice": "Complete factual tables transcribed from the current selected public programme page. Time normalization and unavailable per-row fields are documented in the enclosing edition. Preserve the other current publication independently."
+      }
+    },
+    {
+      "kind": "plans",
+      "table": {
+        "columns": [
+          "id",
+          "programme_id",
+          "frequency",
+          "tuition",
+          "currency"
+        ],
+        "rows": [
+          [
+            "tondo-3-5-1x-week",
+            "tondo-3-5",
+            "1",
+            "147.00",
+            "USD"
+          ],
+          [
+            "tondo-4-6-1x-week",
+            "tondo-4-6",
+            "1",
+            "168.00",
+            "USD"
+          ],
+          [
+            "tondo-4-6-2x-week",
+            "tondo-4-6",
+            "2",
+            "305.00",
+            "USD"
+          ],
+          [
+            "tondo-7-10-1x-week",
+            "tondo-7-10",
+            "1",
+            "205.00",
+            "USD"
+          ],
+          [
+            "tondo-7-10-2x-week",
+            "tondo-7-10",
+            "2",
+            "370.00",
+            "USD"
+          ],
+          [
+            "tondo-7-10-3x-week",
+            "tondo-7-10",
+            "3",
+            "525.00",
+            "USD"
+          ],
+          [
+            "tondo-10-15-1x-week",
+            "tondo-10-15",
+            "1",
+            "205.00",
+            "USD"
+          ],
+          [
+            "tondo-10-15-2x-week",
+            "tondo-10-15",
+            "2",
+            "370.00",
+            "USD"
+          ],
+          [
+            "tondo-intensive-10-17-1x-week",
+            "tondo-intensive-10-17",
+            "1",
+            "245.00",
+            "USD"
+          ],
+          [
+            "tondo-intensive-10-17-2x-week",
+            "tondo-intensive-10-17",
+            "2",
+            "430.00",
+            "USD"
+          ],
+          [
+            "tondo-adult-18-plus-1x-week",
+            "tondo-adult-18-plus",
+            "1",
+            "205.00",
+            "USD"
+          ]
+        ]
+      },
+      "metadata": {
+        "label": "TONDO homepage-2026-2027 plans",
+        "filename": "tondo-homepage-2026-2027-plans.json",
+        "url": "https://www.tondoartstudio.com/",
+        "retrievedAt": "2026-10-13T05:15:25Z",
+        "provenance": "public-derived",
+        "notice": "Complete factual tables transcribed from the current selected public programme page. Time normalization and unavailable per-row fields are documented in the enclosing edition. Preserve the other current publication independently."
+      }
+    },
+    {
+      "kind": "slots",
+      "table": {
+        "columns": [
+          "id",
+          "programme_id",
+          "weekday",
+          "start",
+          "end"
+        ],
+        "rows": [
+          [
+            "tondo-3-5-weekday-5",
+            "tondo-3-5",
+            "5",
+            "09:45",
+            "10:30"
+          ],
+          [
+            "tondo-4-6-weekday-1",
+            "tondo-4-6",
+            "1",
+            "16:15",
+            "17:15"
+          ],
+          [
+            "tondo-4-6-weekday-3",
+            "tondo-4-6",
+            "3",
+            "16:15",
+            "17:15"
+          ],
+          [
+            "tondo-7-10-weekday-1",
+            "tondo-7-10",
+            "1",
+            "17:30",
+            "19:00"
+          ],
+          [
+            "tondo-7-10-weekday-2",
+            "tondo-7-10",
+            "2",
+            "17:30",
+            "19:00"
+          ],
+          [
+            "tondo-7-10-weekday-3",
+            "tondo-7-10",
+            "3",
+            "17:30",
+            "19:00"
+          ],
+          [
+            "tondo-7-10-weekday-4",
+            "tondo-7-10",
+            "4",
+            "17:30",
+            "19:00"
+          ],
+          [
+            "tondo-7-10-weekday-5",
+            "tondo-7-10",
+            "5",
+            "10:45",
+            "12:15"
+          ],
+          [
+            "tondo-10-15-weekday-0",
+            "tondo-10-15",
+            "0",
+            "17:30",
+            "19:00"
+          ],
+          [
+            "tondo-10-15-weekday-3",
+            "tondo-10-15",
+            "3",
+            "17:30",
+            "19:00"
+          ],
+          [
+            "tondo-intensive-10-17-weekday-0",
+            "tondo-intensive-10-17",
+            "0",
+            "17:30",
+            "19:30"
+          ],
+          [
+            "tondo-intensive-10-17-weekday-3",
+            "tondo-intensive-10-17",
+            "3",
+            "17:30",
+            "19:30"
+          ],
+          [
+            "tondo-adult-18-plus-weekday-2",
+            "tondo-adult-18-plus",
+            "2",
+            "10:00",
+            "11:30"
+          ]
+        ]
+      },
+      "metadata": {
+        "label": "TONDO homepage-2026-2027 slots",
+        "filename": "tondo-homepage-2026-2027-slots.json",
+        "url": "https://www.tondoartstudio.com/",
+        "retrievedAt": "2026-10-13T05:15:25Z",
+        "provenance": "public-derived",
+        "notice": "Complete factual tables transcribed from the current selected public programme page. Time normalization and unavailable per-row fields are documented in the enclosing edition. Preserve the other current publication independently."
+      }
+    }
+  ]
+}

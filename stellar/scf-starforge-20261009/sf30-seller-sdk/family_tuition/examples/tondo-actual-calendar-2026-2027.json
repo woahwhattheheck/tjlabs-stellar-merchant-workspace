@@ -1,0 +1,75 @@
+{
+  "schema": "tjlabs.tondo.actual-school-calendar.v1",
+  "source": {
+    "url": "https://www.tondoartstudio.com/s/Calendar-2026-27.pdf",
+    "filename": "Calendar-2026-27.pdf",
+    "bytes": 160498,
+    "sha256": "db9d77b47546e57ce1428ebc40a6fe24aae17f304e79972a6e2b253435139117",
+    "collectedAt": "2026-10-13T05:28:25Z",
+    "page": 1
+  },
+  "academicYear": "2026-2027",
+  "firstClassDate": "2026-09-08",
+  "lastClassDate": "2027-06-26",
+  "closedIntervals": [
+    {
+      "start": "2026-11-26",
+      "end": "2026-11-28",
+      "reason": "Thanksgiving"
+    },
+    {
+      "start": "2026-12-24",
+      "end": "2027-01-01",
+      "reason": "Holiday break"
+    },
+    {
+      "start": "2027-03-29",
+      "end": "2027-04-02",
+      "reason": "Spring break"
+    },
+    {
+      "start": "2027-05-31",
+      "end": "2027-05-31",
+      "reason": "Memorial Day"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-12-20",
+      "kind": "art-show",
+      "label": "Mid-Year Student Art Show"
+    },
+    {
+      "date": "2027-06-12",
+      "kind": "art-show",
+      "label": "Final Student Art Show"
+    }
+  ],
+  "interpretation": {
+    "years": "September–December2026 and January–June2027 follow the stated2026–2027 academic year.",
+    "closedIntervalEndpoints": "Inclusive",
+    "artShows": "Events; publication does not declare closure or replace a regular class.",
+    "timezone": "America/New_York is the local zone for the school's published Rockaway,NJ address; retain as an explicit operator selection."
+  },
+  "excludedDates": [
+    "2026-11-26",
+    "2026-11-27",
+    "2026-11-28",
+    "2026-12-24",
+    "2026-12-25",
+    "2026-12-26",
+    "2026-12-27",
+    "2026-12-28",
+    "2026-12-29",
+    "2026-12-30",
+    "2026-12-31",
+    "2027-01-01",
+    "2027-03-29",
+    "2027-03-30",
+    "2027-03-31",
+    "2027-04-01",
+    "2027-04-02",
+    "2027-05-31"
+  ]
+}
+
