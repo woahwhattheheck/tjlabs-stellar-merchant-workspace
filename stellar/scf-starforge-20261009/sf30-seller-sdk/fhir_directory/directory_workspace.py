@@ -12,6 +12,7 @@ import directory_schema as schema
 from directory_source import DirectorySources
 from directory_mapping import DirectoryMapping
 from directory_selection import DirectorySelection
+from directory_selection_refresh import DirectorySelectionRefresh
 from directory_referral import DirectoryReferral
 from directory_receiving import DirectoryReceiving
 from directory_conformance import DirectoryConformance
@@ -33,7 +34,7 @@ def clean_record(kind,record):
         raise InputError("The native acquisition must retain its original operation identity")
     return record
 
-class Workspace(DirectoryWorksheetReconciliation,DirectoryCorrectionWorksheets,DirectoryCorrections,DirectoryOperatingReturns,DirectoryOperatingPlans,DirectoryConformance,DirectoryReceiving,DirectoryReferral,DirectorySelection,DirectoryMapping,DirectorySources,BaseWorkspace):
+class Workspace(DirectorySelectionRefresh,DirectoryWorksheetReconciliation,DirectoryCorrectionWorksheets,DirectoryCorrections,DirectoryOperatingReturns,DirectoryOperatingPlans,DirectoryConformance,DirectoryReceiving,DirectoryReferral,DirectorySelection,DirectoryMapping,DirectorySources,BaseWorkspace):
     def __init__(self,root,create=False,credentials_file=None):
         super().__init__(root,create=create,credentials_file=credentials_file)
         try:
@@ -186,7 +187,8 @@ class Workspace(DirectoryWorksheetReconciliation,DirectoryCorrectionWorksheets,D
             "mappings":["label","editionId","predecessorId","mode","identitySystem","referenceBase","actor"],
             "mappingPreviews":["mappingId","editionId","summary","reportFile","bundleFile","fieldMapFile"],
             "sourceConversions":["label","editionId","mappingId","previewId","sourceId","summary","actor"],
-            "selections":["label","editionId","conversionId","predecessorId","chosenRefs","summary","actor"],
+            "selections":["label","editionId","conversionId","predecessorId","chosenRefs","summary","actor","refreshId"],
+            "selectionRefreshes":["label","selectionId","beforeEditionId","afterEditionId","summary","actor","files"],
             "referralJoins":["label","selectionId","conversionId","sourceEditionId","successorEditionId","sourceId","graphId","summary","actor"],
             "handoffs":["label","selectionId","conversionId","referralJoinId","owner","recipient","requestSha256","actor"],
             "exports":["label","kind","recordId","name","file","actor"],

@@ -105,3 +105,7 @@ For a selected handoff, use `receive-handoff` with its complete original archive
 Keep the completed native receiving JSON, browser and installed application results, connected receiving result, original input index, full workspace ZIP, full handoff ZIP and complete files selected for the recipient. Their paths and byte identities remain in the corresponding receiving outputs. Use the repository's original product source commit and installed runtime transfer with the deliverable.
 
 Native archives support 2 GiB; the connected transport keeps its inherited 512 MiB maximum. Choose native complete-file receiving for a larger original archive. Source, index and comparison downloads remain whole files, while interactive views are traversed with their returned page offsets.
+
+## Review a saved choice against a later source
+
+The installed **Later-source review** screen retains every old candidate, its explicit later match or omission, current-edition criteria and all original evidence. Prepare the readable immutable report, then separately confirm its exact SHA to save an ordinary successor choice. The full report travels with editable receiving and the successor’s private handoff. Follow [the complete service-choice refresh guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/SELECTION_REFRESH.md), including its original450E native export/reopen command and full producing-operator/all-attachments instructions. Original clinical choices, referral records and source histories remain unchanged.

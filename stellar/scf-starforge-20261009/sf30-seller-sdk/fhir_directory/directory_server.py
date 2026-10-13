@@ -141,6 +141,13 @@ class Handler(BaseHandler):
             self._query(target,());return self._native_download(ws.directory_capture_file(t[1]))
         if len(t)==3 and t[0]=="mappingPreviews"and t[2]=="details":
             q,offset,limit=self._page_args(target,("group",));return self._json(ws.directory_preview_page(t[1],q.get("group","findings"),offset,limit))
+        if len(t)==3 and t[0]=="selectionRefreshes"and t[2]in {"report","rows"}:
+            if t[2]=="rows":
+                _,offset,limit=self._page_args(target)
+                return self._json(ws.directory_selection_refresh_rows(t[1],offset,limit))
+            self._query(target,());return self._json(ws.directory_selection_refresh_report(t[1]))
+        if len(t)==4 and t[0]=="selectionRefreshes"and t[2]=="files":
+            self._query(target,());return self._native_download(ws.directory_selection_refresh_file(t[1],t[3]))
         if len(t)==3 and t[0]=="selections"and t[2]=="candidates":
             q,offset,limit=self._page_args(target,("query",));return self._json(ws.directory_selection_page(t[1],offset,limit,q.get("query","")))
         if len(t)>=4 and t[:2]==["conformance","assessments"]:

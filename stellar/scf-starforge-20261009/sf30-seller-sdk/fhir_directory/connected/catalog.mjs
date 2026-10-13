@@ -128,7 +128,7 @@ const page=directorySourceInputSchemas.page.properties;
 const selected={workspace:alias};
 export const directoryCollections=Object.freeze([
   'connections','discoveries','requests','importProfiles','sources','editions','comparisons','operations',
-  'mappings','mappingPreviews','sourceConversions','selections','referralJoins','handoffs','exports','receivingReviews','receives',
+  'mappings','mappingPreviews','sourceConversions','selections','selectionRefreshes','referralJoins','handoffs','exports','receivingReviews','receives',
   ...directoryConformanceContract.recordKinds,'operatingPlans','operatingPlanReturns',...directoryCorrectionsContract.collections,...directoryCorrectionWorksheetsContract.collections,...directoryWorksheetReconciliationContract.collections
 ]);
 function tool(action,description,properties={},required=[],options={}){
@@ -139,7 +139,11 @@ function tool(action,description,properties={},required=[],options={}){
       openWorldHint:!!options.external}};
 }
 const originalId=str('Exact original record or operation ID.',{pattern:'^[A-Za-z0-9][A-Za-z0-9_.:-]{0,95}$'});
+export const directorySelectionRefreshMembers=Object.freeze(['Input.json','Refresh.json','Proposed_Selection.json','Service_Choices.csv','Criteria.csv','START_HERE.html','Service_Choice_Refresh.zip']);
 const added=[
+  tool('directory_selection_refresh_report','Read the complete immutable original and later service-choice review.',{refreshId:hash('Exact saved service-choice refresh ID.')},['refreshId']),
+  tool('directory_selection_refresh_rows','Read every explicit original-to-current service match, omission and added candidate with complete source/criteria evidence.',{refreshId:hash('Exact saved service-choice refresh ID.'),offset:page.offset,limit:page.limit},['refreshId']),
+  tool('directory_selection_refresh_file','Receive an entire original service-choice refresh file or its readable ZIP.',{refreshId:hash('Exact saved service-choice refresh ID.'),member:str('Complete original member.',{enum:directorySelectionRefreshMembers})},['refreshId','member']),
   tool('directory_correction_worksheet_reconciliation_catalogue','Read the exact native three-way reconciliation input catalogue.'),
   tool('directory_correction_worksheet_reconciliation_rows','Read complete typed base, customer proposal and current comparisons or immutable operator decisions.',{
     collection:str('Exact reconciliation collection.',{enum:directoryWorksheetReconciliationContract.collections}),

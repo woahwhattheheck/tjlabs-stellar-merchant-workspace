@@ -13,7 +13,7 @@ SCHEMA="stellar-forge.human-services-directory.v1"
 KINDS={"connections","discoveries","requests","sources","editions","comparisons",
     "acquisitions","importProfiles","mappings","mappingPreviews","sourceConversions","selections",
     "referralJoins","handoffs","exports","receivingReviews","receives",
-    "conformancePlans","conformanceAssessments","conformanceReviews","conformanceComparisons","operatingPlans","operatingPlanReturns","correctionPlans","correctionPreviews","corrections","correctionWorksheets","correctionWorksheetImports","correctionWorksheetReturns","correctionWorksheetReviews","correctionWorksheetReconciliations","correctionWorksheetReconciliationReviews"}
+    "conformancePlans","conformanceAssessments","conformanceReviews","conformanceComparisons","operatingPlans","operatingPlanReturns","correctionPlans","correctionPreviews","corrections","correctionWorksheets","correctionWorksheetImports","correctionWorksheetReturns","correctionWorksheetReviews","correctionWorksheetReconciliations","correctionWorksheetReconciliationReviews","selectionRefreshes"}
 MUTABLE={"acquisitions","receives"}
 TARGETS={"Organization","Location","HealthcareService","Endpoint"}
 ROOT_TABLES={"organization":"Organization","location":"Location","service":"HealthcareService"}

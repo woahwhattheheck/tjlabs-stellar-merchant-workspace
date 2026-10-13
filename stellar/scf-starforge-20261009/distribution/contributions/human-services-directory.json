@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "human-services-directory",
-  "description": "Original HSDS/FHIR Directory sources, standards assessments, reviewed service and referral decisions, and editable OperatingPlans with full histories. Includes recoverable plan receiving, reviewed HSDS corrections and derived sources, candidate acceptance, offline customer worksheets, exact returned files, and three-way reconciliation against a current edition with complete row matching, typed conflicts and reviewed correction plans.",
+  "description": "Original HSDS/FHIR Directory sources, standards assessments, reviewed service and referral decisions, and editable OperatingPlans with full histories. Includes recoverable plan receiving, reviewed HSDS corrections and derived sources, candidate acceptance, offline customer worksheets, exact returned files, and three-way reconciliation against a current edition with complete row matching, typed conflicts and reviewed correction plans. Saved service choices can be explicitly reviewed against a later source edition with complete old/current evidence, immutable reports and a separately confirmed successor.",
   "commands": {
     "human-services-directory": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/cli.mjs"
   },
@@ -48,6 +48,7 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/CORRECTION_WORKSHEET_RECONCILIATION_OPERATING.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/OPERATING_PLANS.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/OPERATING_RETURNS.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/SELECTION_REFRESH.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/SOURCE_CORRECTIONS.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/WORKSHEET_RECONCILIATION.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/directory-conformance-schema.json",
@@ -72,6 +73,7 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/directory_operating_return.d.mts",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/directory_operating_return_bridge.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/directory_operating_returns.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/directory_selection_refresh.py",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/operate_conformance_clients.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/operate_conformance_foreign_keys.py",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/operate_correction_clients.mjs",
@@ -85,6 +87,7 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/operate_operating_plans_browser.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/operate_operating_returns.py",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/operate_operating_returns_clients.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/operate_selection_refresh.py",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/public/directory-conformance-foreign-keys.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/public/directory-correction-worksheet-customer.css",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/public/directory-correction-worksheet-customer.html",
@@ -97,6 +100,7 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/public/directory-operating-plans.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/public/directory-operating-returns.css",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/public/directory-operating-returns.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/public/directory-selection-refresh.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/public/directory-worksheet-reconciliation.css",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/public/directory-worksheet-reconciliation.mjs"
   ]

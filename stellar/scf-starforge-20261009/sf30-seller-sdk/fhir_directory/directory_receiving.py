@@ -79,6 +79,8 @@ class DirectoryReceiving:
         for r in records["sourceConversions"]:
             for key in ["resourceMapFile","bundleFile","fieldMapFile","nativePacket"]:add(r[key])
         for r in records["selections"]:add(r["reportFile"])
+        for r in records.get("selectionRefreshes",[]):
+            for descriptor in r["files"].values():add(descriptor)
         for r in records["referralJoins"]:
             for key in ["reportFile","changesFile","nativePacket"]:add(r[key])
         for r in records["handoffs"]:
@@ -153,6 +155,10 @@ class DirectoryReceiving:
         body+="<h2>Contact and follow-through</h2>"+table(["Service","Channel","Original address"],[[r[0],r[1],r[2]]for r in contacts])+table(["Service","Disposition","Reason","Owner"],decisions)
         body+="<h2>Reviewed mapping</h2><p>"+esc(str(mapping["summary"]["resources"])+" mapped resources; "+str(mapping["summary"]["mappedFields"])+" original field bindings.")+"</p>"
         body+="<p>The mapping review retains all original identities, selected source editions and migration dispositions. Capacity observations describe their source time and unit; they do not reserve a place.</p>"
+        if selection.get("refreshId"):
+            refresh=self.directory_record("selectionRefreshes",selection["refreshId"])
+            self._verify_directory_selection_refresh_target(refresh["id"],{k:v for k,v in selection.items()if k in schema.catalogue()["inputSchemas"]["selection"]["properties"]})
+            body+="<h2>Later-source choice review</h2><p>This successor preserves the original choice and its explicit later-source matches, omissions, criteria and dispositions. <a href='Service_Choice_Refresh.zip'>Open the complete service-choice review ZIP</a>, extract it, and open START_HERE.html.</p>"
         if join:
             body+="<h2>Original referral integration</h2>"+table(["Task","Selected provider","Explicit field","Reason"],
                 [[b["taskId"],b["recipientFullUrl"],b["destinationField"],b["reason"]]for b in join["bindings"]])
@@ -166,6 +172,8 @@ class DirectoryReceiving:
             "Service_Checks.csv":csv_bytes(["service","source_id","record_id","criterion","state","reason","original_values_json"],criteria_rows),
             "Service_Contacts.csv":csv_bytes(["service","system","value","source_id","record_id","pointer"],contacts),
             "Owner_Decisions.csv":csv_bytes(["service","disposition","reason","owner"],decisions)}
+        if selection.get("refreshId"):
+            files["Service_Choice_Refresh.zip"]=self._directory_file_path(refresh["files"]["Service_Choice_Refresh.zip"])
         if join:
             files["Directory_Referral_Join.json"]=self._directory_file_path(join["reportFile"])
             files["Original_Referral_Changes.jsonl"]=self._directory_file_path(join["changesFile"])
@@ -284,11 +292,12 @@ class DirectoryReceiving:
         present=set(registry.get("records",{}));current=schema.KINDS-{"receives"}
         # Preserve exact historical registry bytes. The previous complete product
         # did not yet have the four additive conformance collections.
-        reconciliation_previous=current-set(RECONCILIATION_KINDS)
+        selection_previous=current-{"selectionRefreshes"}
+        reconciliation_previous=selection_previous-set(RECONCILIATION_KINDS)
         worksheet_previous=reconciliation_previous-set(WORKSHEET_KINDS)
         previous=worksheet_previous-set(CORRECTION_KINDS)
         prior=previous-{"operatingPlanReturns"}
-        if present not in (current,reconciliation_previous,worksheet_previous,previous,prior,prior-{"operatingPlans"},prior-{"operatingPlans"}-CONFORMANCE_KINDS):
+        if present not in (current,selection_previous,reconciliation_previous,worksheet_previous,previous,prior,prior-{"operatingPlans"},prior-{"operatingPlans"}-CONFORMANCE_KINDS):
             raise InputError("Complete receiving must retain every original directory collection")
         from directory_workspace import clean_record
         for kind,rows in registry["records"].items():
@@ -352,6 +361,7 @@ class DirectoryReceiving:
         self._verify_directory_corrections()
         self._verify_directory_correction_worksheets()
         self._verify_directory_correction_worksheet_reconciliations()
+        self._verify_directory_selection_refreshes(registry)
 
     def _receive_directory(self,packet_path,packet_schema):
         path,_,archive_id=file_info(packet_path)

@@ -133,3 +133,7 @@ node stellar/scf-starforge-20261009/distribution/runtime-transfer-cli.mjs inspec
 ```
 
 The runtime transfer preserves the complete installed source and selected runtime assets. Transfer the separately selected complete editable workspace with it when continuing the operator's saved work. The receiving guide ties the native, browser, connected and installed application results to their original inputs.
+
+## Review a saved choice against a later source
+
+The installed **Later-source review** screen retains every old candidate, its explicit later match or omission, current-edition criteria and all original evidence. Prepare the readable immutable report, then separately confirm its exact SHA to save an ordinary successor choice. The full report travels with editable receiving and the successor’s private handoff. Follow [the complete service-choice refresh guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/SELECTION_REFRESH.md), including its original450E native export/reopen command and full producing-operator/all-attachments instructions. Original clinical choices, referral records and source histories remain unchanged.
