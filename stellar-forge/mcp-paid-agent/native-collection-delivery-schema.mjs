@@ -12,6 +12,7 @@ const request={id,collectionId:{type:'string',minLength:1,maxLength:80},expected
 // Two complete 64 KiB parts, including the MCP envelope, fit the original 256 KiB request budget.
 export const nativeCollectionDeliveryUploadBatchChunks=2;
 const chunk={offset:{type:'integer',minimum:0},base64:{type:'string',maxLength:87384},chunkSha256:hash};
+const taskRequest={id,expectedTaskSha256:hash,title:request.title,note:request.note,intentIds:request.intentIds};
 const spec=(required,properties,description)=>({required,properties,description});
 export const nativeCollectionDeliveryOperations=Object.freeze({
  workspaces:spec([],page,'List original host-registered customer delivery senders and recipients.'),
@@ -19,6 +20,9 @@ export const nativeCollectionDeliveryOperations=Object.freeze({
  preview:spec(Object.keys(request),request,'Review selected original saved outputs against the host-approved complete source. Saves the exact returned preview. No purchase.'),
  prepare:spec([...Object.keys(request),'expectedPreviewSha256'],{...request,expectedPreviewSha256:hash},
   'Prepare the same named customer package from the saved preview and exact unchanged request. Reuse that ID and body after uncertainty.'),
+ 'task-inspect':spec(['expectedTaskSha256'],{expectedTaskSha256:hash,...page},'Inspect the original host-selected immutable InboxTask identity and page its verified response selection. No path, purchase or task creation.'),
+ 'task-preview':spec(Object.keys(taskRequest),taskRequest,'Review the selected complete original InboxTask outputs and host-approved source. Saves this exact preview.'),
+ 'task-prepare':spec([...Object.keys(taskRequest),'expectedPreviewSha256'],{...taskRequest,expectedPreviewSha256:hash},'Prepare the same original Task customer package from the retained request and preview. Preserve separate original and recovery observations.'),
  inspect:spec(['id'],{id},'Reopen the exact named original delivery, including a preparing intent.'),
  'manifest-file':spec(['id','expectedFileSha256'],{id,expectedFileSha256:hash,...range},'Read the small exact download manifest for the original full customer package.'),
  'result-file':spec(['id','expectedFileSha256'],{id,expectedFileSha256:hash,...range},
