@@ -8,6 +8,7 @@ import { inspectHandoff } from '../../operations-handoff/contract.mjs';
 import { initializationDirectory, initializationBytes, optionalInitializationBytes, retainInitializationFile } from '../../initialization.mjs';
 import { SCHEMA, bytes, clone, need, hash, identity, digest, absolute, measure, copyFile, ensureMember, writePackage, inspectPackage, receivePackage, validateManifest, MAX_PACKAGE } from './format.mjs';
 import { selectSource } from './source.mjs';
+import { createInboxTaskDelivery } from './inbox-task.mjs';
 
 const ID=/^[A-Za-z0-9._-]{1,100}$/;
 const date=()=>new Date().toISOString();
@@ -125,7 +126,7 @@ export async function openCustomerDelivery({collections=null,directory}){
     const result=await parsed(join(base,'result.json'));
     if(!result){packages.push({sha256,state:'INCOMPLETE'});continue;}
     receivedReceipt(result,sha256);
-    packages.push({sha256,state:'COMPLETE',title:result.manifest.title,collectionId:result.manifest.collection.id,capturedAt:result.manifest.capture.capturedAt,manifestSha256:result.manifestSha256,bytes:result.bytes,files:result.files,contentBytes:result.contentBytes,outputsComplete:result.outputsComplete,requestCount:result.manifest.rows.length});
+    packages.push({sha256,state:'COMPLETE',title:result.manifest.title,collectionId:result.manifest.collection?.id??null,...(result.manifest.task?{task:clone(result.manifest.task)}:{}),capturedAt:result.manifest.capture.capturedAt,manifestSha256:result.manifestSha256,bytes:result.bytes,files:result.files,contentBytes:result.contentBytes,outputsComplete:result.outputsComplete,requestCount:result.manifest.rows.length});
    }catch(error){packages.push({sha256,state:'UNAVAILABLE',code:/^[A-Z0-9_]+$/.test(error.code??'')?error.code:'CUSTOMER_DELIVERY_RECEIVED_RECORD'});}
   }
   packages.sort((a,b)=>String(b.capturedAt??'').localeCompare(String(a.capturedAt??''))||a.sha256.localeCompare(b.sha256));
@@ -144,5 +145,6 @@ export async function openCustomerDelivery({collections=null,directory}){
   return{path:join(receivesRoot,sha256,'customer-delivery.ndjson'),filename:'received-'+sha256+'.ndjson',mediaType:'application/x-ndjson',bytes:result.bytes,sha256:result.sha256};
  }
  async function member(sha256,path){const result=await received(sha256);const row=result.manifest.files.find(row=>row.path===path);need(row,'CUSTOMER_DELIVERY_MEMBER_NOT_FOUND');return{...row,name:path.split('/').at(-1),path:join(receivesRoot,sha256,'members',path),mediaType:path==='review.html'?'text/html; charset=utf-8':path==='review.json'?'application/json':'application/octet-stream'};}
- return{directory,preview,prepare,inspect,list,download,receive,listReceived,received,receivedPackage,member,async close(){closed=true;await Promise.allSettled([...active]);}};
+ const taskDelivery=createInboxTaskDelivery({directory,exportsRoot,lock,inspect});
+ return{directory,preview,prepare,inspectTask:taskDelivery.inspect,previewTask:taskDelivery.preview,prepareTask:taskDelivery.prepare,inspect,list,download,receive,listReceived,received,receivedPackage,member,async close(){closed=true;await Promise.allSettled([...active]);}};
 }

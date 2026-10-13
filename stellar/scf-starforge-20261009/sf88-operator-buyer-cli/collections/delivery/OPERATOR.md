@@ -149,3 +149,133 @@ Use the preview's exact `previewSha256` as `expectedPreviewSha256` in the otherw
 - The original reader may mark a saved response unavailable or over its selected limit. These are delivery observations, not a reason to rerun the purchase.
 - Both source and customer outputs remain full files. No sample, preview row limit or screenshot substitutes for a delivered response.
 - Existing private Collection recovery, Shared Plans and Customer-use commissioning keep their original purposes and file formats. This customer package does not replace them.
+
+
+## Deliver a complete received InboxTask
+
+An already received InboxTask can be the source of a new named customer delivery.
+Use its original complete packet directory and original task SHA-256. This route
+opens that packet with the maintained InboxTask reader; it requires no original
+queue, signer, active merchant, or new purchase. Every selected response must
+verify as complete.
+
+Start the existing private receiving workspace:
+
+```sh
+starforge buyer-collections serve --receiving-directory /absolute/customer-workspace --port 0
+```
+
+Open Customer delivery, choose Prepare delivery, and select **Complete received
+InboxTask**. Enter the original packet directory and task SHA-256, then choose
+**Open and verify original task**. The application reads the original manifest,
+receiving plan, task and full response files before listing the requests. Select
+the actual requests, enter a delivery ID/title/note, and choose the complete
+executing application source root and its manifest. Review the resulting source
+and task selection, then prepare the package.
+
+The source directory remains separate from this private workspace and from the
+received packet. Generate its existing source manifest before reviewing:
+
+```sh
+starforge buyer-customer-delivery source-manifest --source-root /absolute/installed-application --output /absolute/source-selection.json
+```
+
+The original task SHA identifies the retained request selections. Its original
+plan SHA, capture bytes, chosen request bindings, response bytes and complete
+application source are also fixed in the reviewed delivery request. Changing
+any of those selections requires a fresh review. Repeating a pending request
+uses its original delivery ID and preview SHA. Reusing that ID with different
+input is rejected.
+
+### Native API and CLI
+
+`openCustomerDelivery({directory})` exposes `inspectTask`,
+`previewTask` and `prepareTask` in the same delivery store. Existing
+`inspect/list/download` and recipient history/receiving methods handle the
+result normally. The inspect request is:
+
+```json
+{
+  "packetDirectory": "/absolute/original-customer-packet",
+  "expectedTaskSha256": "<original 64-character task SHA-256>"
+}
+```
+
+Save that request to a private file and invoke:
+
+```sh
+starforge buyer-customer-delivery task-inspect --receiving-directory /absolute/customer-workspace --request /absolute/task-inspection.json
+```
+
+The complete preview request contains:
+
+```json
+{
+  "kind": "inbox-task",
+  "id": "customer-delivery-2026-10",
+  "packetDirectory": "/absolute/original-customer-packet",
+  "expectedTaskSha256": "<original task SHA-256>",
+  "title": "Complete requested results",
+  "note": "Selected original responses and application source.",
+  "intentIds": ["<original intent selected from task-inspect>"],
+  "sourceRoot": "/absolute/installed-application",
+  "sourceManifest": "/absolute/source-selection.json"
+}
+```
+
+```sh
+starforge buyer-customer-delivery task-preview --receiving-directory /absolute/customer-workspace --request /absolute/task-preview.json
+starforge buyer-customer-delivery task-prepare --receiving-directory /absolute/customer-workspace --request /absolute/task-prepare.json
+```
+
+The prepare file retains every preview input and adds
+`expectedPreviewSha256` from that original preview. Authenticated HTTP uses
+POST `/api/customer-delivery/task-inspect`, `task-preview` and
+`task-prepare` with these same bodies. The existing host token, origin
+checks and mutation guard remain in force. Private packet/source paths are
+excluded from returned request projections.
+
+### Original attempt and later recovered response
+
+Some original InboxTasks explicitly select a saved RPC recovery read. The native
+reader verifies its original request, attempt, configuration, task selection,
+complete read/completed documents, settlement binding and full response bytes.
+A customer package keeps the original terminal observation and the selected
+later recovered HTTP response as separate fields. An original uncertain payment
+terminal remains visible alongside the recovered read's actual HTTP status,
+observation time, original transaction, network, asset and atomic amount. No
+historical terminal is edited and no additional provider read is made.
+
+The customer manifest uses `collection: null` and an explicit `task`
+origin containing original task/plan SHA-256, system, task ID and revision.
+Each task row carries `originalOutcome` and an optional `recovery`
+projection beside the exact complete response descriptor. Private original
+receiving/manifest bytes remain in the sender's delivery directory. The customer
+package contains the reviewed public fields, complete selected responses and
+complete application source; it does not include the private task/queue files.
+
+Existing Collections packages retain their original field set and fixed HTML
+byte-for-byte. The recipient sees this delivery in the same saved-package
+history, can reopen it in a fresh browser, download the unchanged full package
+or individual complete responses, and cold-reopen the same saved receipt.
+
+### Whole original-case receiving
+
+The maintained `receiving/receive.mjs` programme accepts
+`taskPacket` and `expectedTaskSha256` with `collections: null`,
+the real original intent IDs, complete source root/manifest and installed
+Playwright/Chromium. It operates the same full sender and recipient workflow:
+native task selection; reviewed browser prepare; deliberately lost response
+after the original server has completed; retained exact-request continuation;
+complete downloaded package; independent recipient upload/verification; full
+response download; original history/reload; closed listeners; cold receiving;
+and exact request replay. Source paths, original request identity, artifacts and
+operation checkpoints stay with that one programme.
+
+
+Task packages share the original recipient history. Their history row retains
+`collectionId: null` and the validated original `task` identity; existing
+Collection rows retain their original `collectionId`. Opening either origin
+verifies the same complete original package and every received member. The
+same receiving programme now checks that the task or collection identity also
+survives history discovery, remembered selection and fresh-browser reopening.

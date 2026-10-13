@@ -10,7 +10,9 @@
 <div id="workspace" hidden>
 <nav class="tabs"><button data-tab="prepare" id="prepare-tab">Prepare delivery</button><button data-tab="deliveries">Named deliveries</button><button data-tab="receive">Receive package</button></nav>
 <section data-panel="prepare"><h2>Select original results</h2><form id="prepare-form">
-<div class="grid"><label>Collection<select id="collection" required></select></label><label>Delivery ID<input id="delivery-id" maxlength="100" pattern="[A-Za-z0-9._-]+" required></label></div>
+<label>Result origin<select id="origin-kind"><option value="collection">Existing Collection</option><option value="inbox-task">Complete received InboxTask</option></select></label>
+<div id="task-origin" hidden><label>Original packet directory<input id="task-packet"></label><label>Expected original task SHA-256<input id="task-sha" pattern="[a-f0-9]{64}" minlength="64" maxlength="64"></label><button id="load-task" type="button">Open and verify original task</button><p id="task-description"></p></div>
+<div class="grid"><label id="collection-origin">Collection<select id="collection" required></select></label><label>Delivery ID<input id="delivery-id" maxlength="100" pattern="[A-Za-z0-9._-]+" required></label></div>
 <label>Customer title<input id="title" maxlength="160" required></label><label>Customer note<textarea id="note" maxlength="10000" rows="3"></textarea></label>
 <fieldset><legend>Original requests</legend><div id="intents"></div></fieldset>
 <details open><summary>Complete application source</summary><p>The source root must be the executing application tree, separate from the private Inbox and workspace. Generate the source manifest with the delivery CLI. Every selected source file is included.</p><label>Absolute source root<input id="source-root" required></label><label>Absolute source manifest<input id="source-manifest" required></label></details>
