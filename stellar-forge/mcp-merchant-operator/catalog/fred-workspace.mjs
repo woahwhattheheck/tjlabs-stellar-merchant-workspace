@@ -1,5 +1,6 @@
 // MIT. Static FRED tool metadata; imports no source, merchant or buyer runtime.
 import { fredResearchCommerceTools } from './fred-research-commerce.mjs';
+import { fredResearchReturnTools } from './fred-research-returns.mjs';
 import { fredResearchTools, fredResearchFileSelection } from './fred-research.mjs';
 import { fredOperatingTools } from './fred-operating.mjs';
 import { MAX_RETAINED_CHUNK_BYTES } from '../retained-file-contracts.mjs';
@@ -107,8 +108,10 @@ export const fredDdpMigrationSelection = {
 const ddpPage = { ...releasePage, offset: { type: 'integer', minimum: 0, maximum: Number.MAX_SAFE_INTEGER } };
 
 export const fredFileSelection = {
-  kind: { type: 'string', enum: ['source', 'comparison', 'project', 'customer', 'briefing', 'briefing-successor', 'release-source', 'release-plan', 'ddp-crosswalk', 'ddp-package', 'ddp-migration', 'ddp-receiving', 'research-source', 'research-catalogue', 'research-entry', 'research-product', 'research-publication', 'research-received'] },
+  kind: { type: 'string', enum: ['source', 'comparison', 'project', 'customer', 'briefing', 'briefing-successor', 'release-source', 'release-plan', 'ddp-crosswalk', 'ddp-package', 'ddp-migration', 'ddp-receiving', 'research-source', 'research-catalogue', 'research-entry', 'research-product', 'research-publication', 'research-received', 'research-return', 'research-return-view'] },
   ...fredResearchFileSelection,
+  returnId:digest,sourceId:digest,revision,
+  view:{type:'string',enum:['detail','compare','work']},
   file: { type: 'string', minLength: 1, maxLength: 2048 },
   captureId: digest, before: digest, after: digest, publicationId: digest, intentId: operation, reviewId: digest, successorId,
   releaseCaptureId: digest, planId: releasePlanId,
@@ -120,6 +123,7 @@ export function fredWorkspaceTools(tool) {
     ...fredOperatingTools(tool),
     ...fredResearchTools(tool),
     ...fredResearchCommerceTools(tool),
+    ...fredResearchReturnTools(tool),
     tool('merchant_fred_handovers','Page the original portable handover inventory. Keep the operation ID and follow nextOffset.',{
       ...workspace,offset:{type:'integer',minimum:0},limit
     },['workspace'],read),

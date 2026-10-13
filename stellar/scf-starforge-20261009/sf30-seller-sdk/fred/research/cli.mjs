@@ -79,11 +79,51 @@ async function commerceCommand(command,args,directory){
  const purchase=await readPrivateJson(join(merchant.directory,'customer-requests',args.intent,'prepared.json'),131072);
  const {result,...view}=await p.executeResearchPurchase({directory:merchant.directory,buyer,purchase});return view;
 }
+const returnHelp=[
+'research returns --project DIR [--section received|sent|drafts|adoptions --offset N --limit N]',
+'research return --project DIR --return ID',
+'research return-compare --project DIR --return ID',
+'research return-work --project DIR --return ID --draft-revision N',
+'research return-preview --project DIR --request COMPLETE_CHOICES.json',
+'research return-create|return-import|return-draft-save|return-apply --project DIR --request ORIGINAL_REQUEST.json',
+'research return-import --project DIR --request ORIGINAL_REQUEST.json --file ORIGINAL.research-return.json.gz',
+'research return-resume --project DIR --request ORIGINAL_PENDING_REQUEST.json',
+'research return-file --project DIR --return ID --member packet|original-package|source [--source ID] --out NEW_FILE',
+'Every mutation retains the complete original id, expectedRevision and action-specific choices. --request is never rewritten.',
+'Apply creates the following product definition; issue that definition separately through research-product-issue.'
+].join('\n');
+const returnCommands=new Set(['returns','return','return-compare','return-work','return-preview','return-create','return-import','return-draft-save','return-apply','return-resume','return-file']);
+async function returnCommand(command,args,directory){
+ const r=await import('./returns.mjs');
+ if(command==='returns')return r.researchReturnsView(directory,{section:args.section??'received',offset:Number(args.offset??0),limit:Number(args.limit??100)});
+ if(command==='return')return r.researchReturnDetail(directory,args.return);
+ if(command==='return-compare')return r.researchReturnCompare(directory,args.return);
+ if(command==='return-work')return r.researchReturnWork(directory,{returnId:args.return,revision:Number(args['draft-revision'])});
+ if(command==='return-file')return saveMember(args,await r.researchReturnDownload(directory,{id:args.return,file:args.member??'packet',...(args.source?{sourceId:args.source}:{})}));
+ need(args.request,'Select the complete original return request JSON.');
+ const request=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await originalBytes(args.request,16*1024*1024)));
+ need(request&&typeof request==='object'&&!Array.isArray(request),'Choose a complete original request object.');
+ if(command==='return-preview')return r.researchReturnPreview(directory,request);
+ const expected=command==='return-resume'?request.action:'research-'+command;
+ need(r.RESEARCH_RETURN_ACTIONS.includes(expected)&&(!request.action||request.action===expected),'Keep the original customer-return action.');
+ request.action=expected;
+ if(command==='return-resume')request.resume=true;
+ if(command==='return-import'&&request.resume!==true){
+  need(args.file,'Choose the complete original customer return file.');
+  const bytes=await originalBytes(args.file,PACKAGE_MAX);
+  if(request.bodyBase64!==undefined)need(request.bodyBase64===bytes.toString('base64'),'The request retains different original return bytes.');
+  request.bodyBase64=bytes.toString('base64');
+  need(request.filename,'Retain the original return filename in the request.');
+ }
+ return r.runResearchReturnAction({directory,request});
+}
+
 const commerceCommands=new Set(['commerce','publication','publication-file','publish','commerce-resume','receive-edition','merchant','prepare','buy','recover','purchase-file','purchase-receive','purchase-received','purchase-received-file']);
 const help='research catalog --project DIR [--query TEXT --topic TOPIC --geography REGION --due --offset N]\nresearch entry --project DIR --entry ID\nresearch action --project DIR --request COMPLETE_ACTION.json\nresearch upload --project DIR --request UPLOAD_ACTION.json --file ORIGINAL_FILE\nresearch csv --project DIR --out NEW.csv\nresearch source --project DIR --source ID --out NEW_FILE\nresearch export --project DIR --out COMPLETE_PROJECT.json\nresearch receive --project EMPTY_DIR --file COMPLETE_PROJECT.json\nActions retain original request ID, expectedRevision and source definition. Full project exports include every original source, definition, review and research-product edition.';
 export async function main(argv=process.argv.slice(2)){const command=argv.shift(),args={};for(let i=0;i<argv.length;i++){const k=argv[i];need(k.startsWith('--'),'Use named command options.');if(k==='--due'||k==='--allow-local-facilitator'){args[k.slice(2)]=true;continue;}need(argv[i+1]!==undefined&&!argv[i+1].startsWith('--'),'Supply the complete option value.');args[k.slice(2)]=argv[++i];}
-if(!command||command==='help'||command==='--help'){process.stdout.write(help+'\n\n'+commerceHelp+'\n');return;}need(args.project,'Select the original economic project.');const directory=resolve(args.project);let result;
-if(commerceCommands.has(command))result=await commerceCommand(command,args,directory);
+if(!command||command==='help'||command==='--help'){process.stdout.write(help+'\n\n'+commerceHelp+'\n\n'+returnHelp+'\n');return;}need(args.project,'Select the original economic project.');const directory=resolve(args.project);let result;
+if(returnCommands.has(command))result=await returnCommand(command,args,directory);
+else if(commerceCommands.has(command))result=await commerceCommand(command,args,directory);
 else if(command==='catalog')result=await researchView(directory,{query:args.query??'',topic:args.topic??'',geography:args.geography??'',due:args.due===true,offset:Number(args.offset??0),limit:Number(args.limit??100)});
 else if(command==='entry')result=await researchEntry(directory,key(args.entry));
 else if(command==='action'||command==='upload'){need(args.request,'Choose the complete original action JSON.');const request=JSON.parse(await readFile(resolve(args.request),'utf8'));if(command==='upload'){need(args.file&&request.action==='research-source-upload','Choose an original upload action and file.');request.bodyBase64=(await readFile(resolve(args.file))).toString('base64');}result=await runResearchAction({directory,request});}
@@ -91,5 +131,5 @@ else if(command==='csv'){need(args.out,'Choose a new CSV path.');const content=a
 else if(command==='source'){need(args.out&&args.source,'Select a retained source and a new output path.');const source=await researchSourceDownload(directory,args.source);await writeFile(resolve(args.out),source.bytes,{flag:'wx',mode:0o600});result={path:resolve(args.out),bytes:source.bytes.length,contentType:source.contentType};}
 else if(command==='export'){need(args.out,'Choose a new complete project path.');const bundle=await exportFredProject({directory});await writeFile(resolve(args.out),JSON.stringify(bundle,null,2)+'\n',{flag:'wx',mode:0o600});result={path:resolve(args.out),projectId:bundle.state.id,revision:bundle.state.revision,bundleSha256:bundle.bundleSha256};}
 else if(command==='receive'){need(args.file,'Select the complete original project bundle.');result=await receiveFredProject({directory,bundle:JSON.parse(await readFile(resolve(args.file),'utf8'))});}
-else throw new Error(help+'\n\n'+commerceHelp);process.stdout.write(JSON.stringify(result,null,2)+'\n');return result;}
+else throw new Error(help+'\n\n'+commerceHelp+'\n\n'+returnHelp);process.stdout.write(JSON.stringify(result,null,2)+'\n');return result;}
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href)main().catch(error=>{process.stderr.write(JSON.stringify({code:error.code??'RESEARCH_FAILED',message:error.message})+'\n');process.exitCode=1;});

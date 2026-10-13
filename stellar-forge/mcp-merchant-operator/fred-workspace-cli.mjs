@@ -145,6 +145,17 @@ export const FRED_WORKSPACE_HELP = [
   '  research-product-save --id ID --revision N --definition-file COMPLETE_PRODUCT.json',
   '  research-product-issue --id ID --revision N --product ID --issued-by ORIGINAL_ISSUER [--note-file TEXT]',
   '  research-resume --id ORIGINAL_ID --revision ORIGINAL_N --action ORIGINAL_RESEARCH_ACTION',
+  '  research-returns --section received|sent|drafts|adoptions [--offset 0 --limit 20 --revision N]',
+  '  research-return --return SHA [--section files|fields --offset 0 --limit 20 --view-sha SHA]',
+  '  research-return-compare --return SHA [--offset 0 --limit 20 --view-sha SHA]',
+  '  research-return-work --return SHA --work-revision N',
+  '  research-return-create --id ID --revision N --package-sha ORIGINAL_SHA --author NAME [--note-file TEXT]',
+  '  research-return-import --id ID --revision N --input RESEARCH_RETURN_ALIAS --sha256 ORIGINAL_SHA',
+  '  research-return-preview --return SHA --comparison-sha SHA --choices-file JSON --order-file JSON',
+  '  research-return-draft-save|research-return-apply --args-file COMPLETE_ORIGINAL_REQUEST.json',
+  '  research-return-resume --id ORIGINAL_ID --revision ORIGINAL_N --action ORIGINAL_RETURN_ACTION',
+  '  download --kind research-return --return SHA --file packet|original-package|source [--source-id SHA] --out NEW',
+  '  download --kind research-return-view --return SHA --view detail|compare|work [--work-revision N] --out NEW',
   '  research-commerce --section publications|receivings [--offset 0 --limit 20 --revision N]',
   '  research-publication --publication SHA --section files|sources|requests [--offset 0 --limit 20 --view-sha SHA]',
   '  research-publish --id ID --revision N --product ID --edition SHA --profile HOST_PROFILE [--note-file TEXT]',
@@ -203,7 +214,9 @@ const remote = new Set(['workspaces','status','inputs','input-inspect','records'
   'research-catalogue','research-taxonomy','research-entry','research-products','research-product',
   'research-entry-save','research-import','research-source-acquire','research-source-upload','research-review',
   'research-product-save','research-product-issue','research-resume','research-commerce','research-publication',
-  'research-publish','research-receive','research-commerce-resume','research-purchase-receive','research-received']);
+  'research-publish','research-receive','research-commerce-resume','research-purchase-receive','research-received',
+  'research-returns','research-return','research-return-compare','research-return-preview','research-return-work',
+  'research-return-create','research-return-import','research-return-draft-save','research-return-apply','research-return-resume']);
 const allowed = new Set(['connection','workspace','args-file','out','console-url-file','project-id','binding-sha','label',
   'inputs-file','profiles-file','payment-file','merchant-origin','merchant-path','kind','id','capture','series','offset','limit','revision','before','after','input','sha256',
   'captures','review','profile','pending','publication','intent','query','file','accept','view-sha','selection-file',
@@ -213,7 +226,8 @@ const allowed = new Set(['connection','workspace','args-file','out','console-url
   'observation-start','observation-end','baseline-as-of','catch-up','page-size','max-rows',
   'crosswalk','package','migration','receiving','package-series','release','frequency','bookmark','url','decisions-file','bindings-file',
   'comparison','result-status','series-id','source-mode','metadata-input','metadata-file-sha256','metadata-sha256','captured-at','publication-ids','plan-input','plan-file-sha256','use-current-plan','entry','product','edition','definition-id','snapshot','decision','reviewer','issued-by',
-  'filename','content-type','retrieved-at','definition-file','topic','geography','status','due','action','receiving-directory','purchase-sha']);
+  'filename','content-type','retrieved-at','definition-file','topic','geography','status','due','action','receiving-directory','purchase-sha',
+  'return','package-sha','author','comparison-sha','draft-revision','work-revision','source-id','view','choices-file','order-file']);
 function parse(values) {
   const argv = [...values], command = argv[0] && !argv[0].startsWith('--') ? argv.shift() : 'help', flags = {};
   while (argv.length) {
@@ -310,9 +324,10 @@ async function toolArgs(flags, workspace) {
     decision:'decision',reviewer:'reviewer','issued-by':'issuedBy',filename:'filename','content-type':'contentType',
     'retrieved-at':'retrievedAt',topic:'topic',geography:'geography',status:'status',action:'action',
     'receiving-directory':'receivingDirectory','purchase-sha':'expectedPurchaseSha256',
+    'return':'returnId','package-sha':'packageSha256','author':'author','comparison-sha':'comparisonSha256','source-id':'sourceId','view':'view',
     'source-mode':'sourceMode', 'metadata-input':'metadataInput', 'metadata-file-sha256':'metadataFileSha256', 'metadata-sha256':'metadataSha256' };
   for (const [flag, key] of Object.entries(strings)) if (flags[flag] !== undefined) put(key, flags[flag]);
-  for (const [flag, key] of Object.entries({ offset:'offset', limit:'limit', revision:'expectedRevision', accept:'acceptIndex', 'page-size':'pageSize', 'max-rows':'maxRows' }))
+  for (const [flag, key] of Object.entries({ offset:'offset', limit:'limit', revision:'expectedRevision', 'draft-revision':'expectedDraftRevision', 'work-revision':'revision', accept:'acceptIndex', 'page-size':'pageSize', 'max-rows':'maxRows' }))
     if (flags[flag] !== undefined) put(key, number(flags[flag], flag));
   if(flags['use-current-plan']!==undefined){
     if(!['true','false'].includes(flags['use-current-plan']))fail('Use --use-current-plan true or false.');
@@ -325,9 +340,9 @@ async function toolArgs(flags, workspace) {
   if (flags['publication-ids'] !== undefined) put('publicationIds', flags['publication-ids'] ? flags['publication-ids'].split(',') : []);
   if (flags.captures !== undefined) put('captureIds', flags.captures.split(','));
   if (flags['watch-series'] !== undefined) put('series', flags['watch-series'].split(','));
-  for (const [flag, key] of Object.entries({ 'selection-file':'selection', 'policy-file':'policy', 'previous-file':'previous', 'briefing-file':'briefing', 'window-file':'window', 'definition-file':'definition' }))
+  for (const [flag, key] of Object.entries({ 'selection-file':'selection', 'policy-file':'policy', 'previous-file':'previous', 'briefing-file':'briefing', 'window-file':'window', 'definition-file':'definition', 'choices-file':'choices' }))
     if (flags[flag] !== undefined) put(key, await jsonFile(flags[flag]));
-  for (const [flag, key] of Object.entries({ 'decisions-file':'decisions', 'bindings-file':'bindings' }))
+  for (const [flag, key] of Object.entries({ 'decisions-file':'decisions', 'bindings-file':'bindings', 'order-file':'order' }))
     if (flags[flag] !== undefined) put(key, await jsonArrayFile(flags[flag]));
   if (flags['note-file'] !== undefined) put('note', (await readFredHostFile(flags['note-file'], 32768)).toString('utf8'));
   if (flags['changes-only'] !== undefined) {

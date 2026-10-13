@@ -33,8 +33,14 @@ import { RESEARCH_PACKAGE_MAX_BYTES, RESEARCH_PACKAGE_REQUEST_BYTES, researchCom
   researchPublicationView, researchPurchaseReceivingInput, researchReceivedQuery,
   researchPublicationMember, researchReceivedMember } from './fred-research-commerce.mjs';
 export { RESEARCH_PACKAGE_MAX_BYTES, RESEARCH_PACKAGE_REQUEST_BYTES } from './fred-research-commerce.mjs';
+import { RESEARCH_RETURN_MAX_BYTES, RESEARCH_RETURN_REQUEST_BYTES, RESEARCH_RETURN_KINDS,
+ researchReturnInput, researchReturnSelection, researchReturnChoices, researchReturnAction,
+ researchReturnEnvelope, researchReturnsQuery, researchReturnsPage, researchReturnMember,
+ researchReturnJSON } from './fred-research-returns.mjs';
 import { validateResearchCommerceState } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce-model.mjs';
 import { validateResearchCommerceExtension } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce-bundle.mjs';
+import { validateResearchExchangeState } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/return-model.mjs';
+import { validateResearchReturnExtension } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/return-bundle.mjs';
 
 export const FRED_WORKSPACE_CONNECTION_SCHEMA = 'stellar-forge.fred-workspace-connection.v1';
 export const FRED_CLIENT_MAX_BYTES = 256 * 1024 * 1024;
@@ -386,7 +392,7 @@ export async function readFredWorkspaceConfiguration(path) {
       for (const [name, input] of Object.entries(value.inputs)) {
         if (!ALIAS.test(name)) fail('FRED_CONNECTION_INVALID', 'Use a lowercase input alias.');
         fields(input, ['path', 'kind', 'label', 'sha256'], 'Host input');
-        if (!['public-table', 'capture', 'release-capture', 'ddp-crosswalk', 'ddp-package', 'alfred-metadata', 'operating-archive', 'operating-plan', 'research-source', 'research-catalogue', 'research-package'].includes(input.kind))
+        if (!['public-table', 'capture', 'release-capture', 'ddp-crosswalk', 'ddp-package', 'alfred-metadata', 'operating-archive', 'operating-plan', 'research-source', 'research-catalogue', 'research-package', 'research-return'].includes(input.kind))
           fail('FRED_CONNECTION_INVALID', 'Select a complete original observation, release, DDP source or historical ALFRED metadata input.');
         entry.inputs[name] = { path: resolve(base, text(input.path, 'original source path', 8192)),
           kind: input.kind, label: text(input.label ?? name, 'input label', 240),
@@ -548,7 +554,8 @@ export class FredWorkspaceClient {
       encoded = JSON.stringify(body);
       const requestCapacity = path === '/api/action' && ['ddp-crosswalk-import', 'ddp-package-import'].includes(body?.action)
         ? FRED_DDP_MAX_SOURCE_BYTES : path === '/api/action' && body?.action === 'research-receive'
-          ? RESEARCH_PACKAGE_REQUEST_BYTES : FRED_CLIENT_MAX_REQUEST_BYTES;
+          ? RESEARCH_PACKAGE_REQUEST_BYTES : path === '/api/action' && body?.action === 'research-return-import'
+          ? RESEARCH_RETURN_REQUEST_BYTES : FRED_CLIENT_MAX_REQUEST_BYTES;
       if (Buffer.byteLength(encoded) > requestCapacity)
         fail('FRED_CLIENT_REQUEST_TOO_LARGE', 'The complete original request exceeds the native workspace capacity.');
       headers['content-type'] = 'application/json';
@@ -620,6 +627,7 @@ export class FredWorkspaceClient {
     validateFredDdpProjectState(value.project);
     validateQcewState(value.project);
     validateResearchState(value.project);
+    validateResearchExchangeState(value.project);
     return value;
   }
   async operation(id, options = {}) {
@@ -1312,6 +1320,54 @@ export class FredWorkspaceClient {
     return value;
   }
 
+  async researchReturns(input = {}, options = {}) {
+    input=researchReturnInput(input);const query=researchReturnsQuery(input);
+    return researchReturnsPage(await this.#json('/api/research/returns?'+query,options),input,this.#boundId);
+  }
+  async researchReturn(input,options={}) {
+    input=researchReturnSelection(input);
+    return researchReturnEnvelope(await this.#json('/api/research/return?'+new URLSearchParams({id:input.returnId}),
+      {...options,maximum:RESEARCH_RETURN_REQUEST_BYTES}),this.#boundId,input);
+  }
+  async researchReturnCompare(input,options={}) {
+    input=researchReturnSelection(input);
+    const value=researchReturnEnvelope(await this.#json('/api/research/return-compare?'+new URLSearchParams({id:input.returnId}),
+      {...options,maximum:RESEARCH_RETURN_REQUEST_BYTES}),this.#boundId,input);
+    if(!SHA.test(value.comparisonSha256??'')||!Array.isArray(value.items))
+      fail('FRED_CLIENT_RESEARCH_INVALID','The complete original return comparison is missing.');
+    return value;
+  }
+  async researchReturnPreview(input,options={}) {
+    input=researchReturnChoices(input);
+    const value=researchReturnEnvelope(await this.#json('/api/research/return-preview',
+      {...options,method:'POST',readOnly:true,body:input,maximum:RESEARCH_RETURN_REQUEST_BYTES}),this.#boundId,input);
+    if(value.comparisonSha256!==input.comparisonSha256)
+      fail('FRED_CLIENT_RESEARCH_INVALID','The preview differs from the selected original comparison.');
+    return value;
+  }
+  async researchReturnWork(input,options={}) {
+    input=researchReturnSelection(input);
+    if(!Number.isSafeInteger(input.revision)||input.revision<1)fail('FRED_CLIENT_RESEARCH_INVALID','Choose the original saved draft revision.');
+    const value=researchReturnEnvelope(await this.#json('/api/research/return-work?'+
+      new URLSearchParams({returnId:input.returnId,revision:String(input.revision)}),
+      {...options,maximum:RESEARCH_RETURN_REQUEST_BYTES}),this.#boundId,{returnId:input.returnId});
+    if(value.work?.revision!==input.revision||value.work?.returnId!==input.returnId||
+        !SHA.test(value.work?.id??'')||!SHA.test(value.work?.comparisonSha256??'')||
+        value.comparison?.returnId!==input.returnId||
+        value.comparison?.comparisonSha256!==value.work.comparisonSha256)
+      fail('FRED_CLIENT_RESEARCH_INVALID','The original saved review edition or its complete comparison changed.');
+    return value;
+  }
+  createResearchReturn(input,options={}) {return this.#action('research-return-create',researchReturnAction('research-return-create',input),options);}
+  importResearchReturn(input,options={}) {return this.#action('research-return-import',researchReturnAction('research-return-import',input),options);}
+  saveResearchReturnDraft(input,options={}) {return this.#action('research-return-draft-save',researchReturnAction('research-return-draft-save',input),options);}
+  applyResearchReturn(input,options={}) {return this.#action('research-return-apply',researchReturnAction('research-return-apply',input),options);}
+  resumeResearchReturn(input,options={}) {
+    input=researchReturnInput(input);
+    if(!Object.values(RESEARCH_RETURN_KINDS).includes(input.action))fail('FRED_CLIENT_RESEARCH_INVALID','Choose the original pending customer-return action.');
+    return this.#action(input.action,researchReturnAction(input.action,{...input,resume:true}),options);
+  }
+
   #action(action, input, options = {}, journaled = true) {
     object(input);
     if (journaled) { operation(input.id); revision(input.expectedRevision); }
@@ -1375,8 +1431,24 @@ export class FredWorkspaceClient {
         return result;
       }
     }
+    if(selection.kind==='research-return-view'){
+      selection=researchReturnSelection(selection);
+      const method={detail:'researchReturn',compare:'researchReturnCompare',work:'researchReturnWork'}[selection.view];
+      if(!method)fail('FRED_CLIENT_RESEARCH_INVALID','Choose a complete return detail, comparison or saved work view.');
+      const result=researchReturnJSON(await this[method](selection,options),selection);
+      if(options.expectedSha256!==undefined&&digest(options.expectedSha256)!==result.sha256)
+        fail('FRED_CLIENT_FILE_CHANGED','The complete return view changed; reopen the original selection.',{sha256:result.sha256});
+      return result;
+    }
     let path, fallback, expectedMember = null;
-    if (selection.kind === 'research-publication') {
+    if(selection.kind==='research-return'){
+      selection=researchReturnSelection(selection);
+      const detail=await this.researchReturn(selection,options);
+      expectedMember=researchReturnMember(detail,selection);
+      const query=new URLSearchParams({id:selection.returnId,file:selection.file??'packet'});
+      if(selection.sourceId!==undefined)query.set('sourceId',selection.sourceId);
+      path='/api/research/return-file?'+query;fallback=expectedMember.filename;
+    } else if (selection.kind === 'research-publication') {
       const view = await this.researchPublication(selection, options);
       expectedMember = researchPublicationMember(view, selection);
       path = '/api/research/publication?' + new URLSearchParams({ publication: selection.publicationId, file: expectedMember.path });
@@ -1448,6 +1520,7 @@ export class FredWorkspaceClient {
     const maximum = selection.kind === 'project' ? this.maxDdpResponseBytes :
       selection.kind.startsWith('ddp-') ? Math.min(this.maxDdpResponseBytes, FRED_DDP_MAX_SOURCE_BYTES) :
       selection.kind === 'research-source' ? 16 * 1024 * 1024 :
+      selection.kind === 'research-return' ? RESEARCH_RETURN_MAX_BYTES :
       ['research-publication','research-received'].includes(selection.kind) ? RESEARCH_PACKAGE_MAX_BYTES : undefined;
     const { response, bytes } = await this.#request(path, { ...options, ...(maximum === undefined ? {} : { maximum }) });
     const sha256 = fredDigest(bytes);
@@ -1490,7 +1563,7 @@ export class FredWorkspaceClient {
     if (selection.kind === 'project') {
       let bundle;
       try { bundle = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch { fail('FRED_CLIENT_BUNDLE_INVALID', 'The complete project export is not JSON.'); }
-      if (!['stellar-forge.fred-project-bundle.v5', 'stellar-forge.fred-project-bundle.v6', 'stellar-forge.fred-project-bundle.v7', 'stellar-forge.fred-project-bundle.v8'].includes(bundle.schema) && bytes.length > FRED_CLIENT_MAX_BYTES)
+      if (!['stellar-forge.fred-project-bundle.v5', 'stellar-forge.fred-project-bundle.v6', 'stellar-forge.fred-project-bundle.v7', 'stellar-forge.fred-project-bundle.v8', 'stellar-forge.fred-project-bundle.v9'].includes(bundle.schema) && bytes.length > FRED_CLIENT_MAX_BYTES)
         fail('FRED_CLIENT_BUNDLE_INVALID', 'The original version 1–4 project retains its 256 MiB file capacity.');
       result.bundle = inspectFredProjectBundle(bundle);
       if (result.bundle.projectId !== this.#boundId) fail('FRED_CLIENT_PROJECT_CHANGED', 'The export belongs to another original project.');
@@ -1587,8 +1660,9 @@ function inspectFredReleaseBundle(bundle) {
 }
 
 export function inspectFredProjectBundle(bundle) {
-  const commerceVersion = bundle?.schema === 'stellar-forge.fred-project-bundle.v8';
-  const researchVersion = commerceVersion || bundle?.schema === 'stellar-forge.fred-project-bundle.v7';
+  const returnsVersion = bundle?.schema === 'stellar-forge.fred-project-bundle.v9';
+  const commerceVersion = bundle?.schema === 'stellar-forge.fred-project-bundle.v8' || returnsVersion && bundle.researchCommerce !== undefined;
+  const researchVersion = returnsVersion || commerceVersion || bundle?.schema === 'stellar-forge.fred-project-bundle.v7';
   const qcewVersion = bundle?.schema === 'stellar-forge.fred-project-bundle.v6';
   const extended = researchVersion || qcewVersion || bundle?.schema === 'stellar-forge.fred-project-bundle.v5';
   const releases = extended || bundle?.schema === 'stellar-forge.fred-project-bundle.v4';
@@ -1614,6 +1688,11 @@ export function inspectFredProjectBundle(bundle) {
       !commerceVersion && bundle.researchCommerce !== undefined)
     fail('FRED_CLIENT_BUNDLE_INVALID', 'Retain the complete Research commerce extension in its original version 8 project.');
   validateResearchCommerceExtension(bundle.researchCommerce, bundle.state);
+  validateResearchExchangeState(bundle.state);
+  if(returnsVersion !== (bundle.state.researchExchange !== undefined) ||
+     !returnsVersion && bundle.researchReturns !== undefined)
+    fail('FRED_CLIENT_BUNDLE_INVALID','Retain the complete original customer return extension in its version 9 project.');
+  validateResearchReturnExtension(bundle.researchReturns,bundle.state);
   const ddp = ddpKeys.some(key => (bundle.state[key]?.length ?? 0) > 0), qcew = qcewStatePresent(bundle.state);
   if (qcewVersion && !qcew)
     fail('FRED_CLIENT_BUNDLE_INVALID', 'A version 6 project retains its complete original QCEW family.');
@@ -1631,7 +1710,8 @@ export function inspectFredProjectBundle(bundle) {
     ...(releases ? { releaseCaptures: bundle.releaseCaptures, releasePlans: bundle.releasePlans } : {}),
     ...(ddpSlots ? Object.fromEntries(ddpKeys.map(key => [key, bundle[key]])) : {}),
     ...(qcew ? { qcew: bundle.qcew } : {}), ...(researchVersion ? { research: bundle.research } : {}),
-    ...(commerceVersion ? { researchCommerce: bundle.researchCommerce } : {}) };
+    ...(commerceVersion ? { researchCommerce: bundle.researchCommerce } : {}),
+    ...(returnsVersion ? { researchReturns: bundle.researchReturns } : {}) };
   if (canonicalJSONDigest(identity, { primitive: canonicalFredJSON }) !== bundle.bundleSha256 ||
       bundle.state.schema !== 'stellar-forge.fred-project.v1' || !UUID.test(bundle.state.id ?? '') || bundle.state.pending ||
       !Array.isArray(bundle.state.reviews))
@@ -1688,7 +1768,8 @@ function fredBundleIdentity(bundle) {
     ...(state.research !== undefined ? { research: Object.fromEntries(['entries', 'sources', 'reviews', 'products']
       .map(key => [key, researchCatalogueState(state)[key].length])) } : {}),
     ...(state.researchCommerce === undefined ? {} : { researchCommerce: {
-      publications: state.researchCommerce.publications.length, receivings: state.researchCommerce.receivings.length } }) };
+      publications: state.researchCommerce.publications.length, receivings: state.researchCommerce.receivings.length } }),
+    ...(state.researchExchange===undefined?{}:{researchReturns:Object.fromEntries(Object.entries(state.researchExchange).filter(([,v])=>Array.isArray(v)).map(([k,v])=>[k,v.length]))}) };
 }
 
 /** Publishes the complete original bytes without replacing an existing file. */
@@ -1724,7 +1805,7 @@ async function readFredWorkspaceBundleFile(source, { expectedSha256 } = {}) {
   let bundle;
   try { bundle = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch { fail('FRED_CLIENT_BUNDLE_INVALID', 'The original project file is not complete JSON.'); }
   bytes = null;
-  if (!['stellar-forge.fred-project-bundle.v5', 'stellar-forge.fred-project-bundle.v6', 'stellar-forge.fred-project-bundle.v7', 'stellar-forge.fred-project-bundle.v8'].includes(bundle?.schema) && sourceBytes > FRED_CLIENT_MAX_BYTES)
+  if (!['stellar-forge.fred-project-bundle.v5', 'stellar-forge.fred-project-bundle.v6', 'stellar-forge.fred-project-bundle.v7', 'stellar-forge.fred-project-bundle.v8', 'stellar-forge.fred-project-bundle.v9'].includes(bundle?.schema) && sourceBytes > FRED_CLIENT_MAX_BYTES)
     fail('FRED_CLIENT_BUNDLE_INVALID', 'The original version 1–4 project retains its 256 MiB file capacity.');
   return { bundle, sourceBytes, sourceSha256 };
 }

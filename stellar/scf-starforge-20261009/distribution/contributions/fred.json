@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "fred",
-  "description": "FRED and ALFRED economic editions, recurring briefings, release planning, complete DDP migration, current publications and paid county reports",
+  "description": "FRED and ALFRED economic editions, recurring briefings, release planning, complete DDP migration, current publications and paid county reports; complete customer Research return-to-author comparison, working drafts, explicit adoption and version 9 whole-project receiving",
   "commands": {
     "fred": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/cli.mjs",
     "fred-research-commerce-receive": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce-journey.mjs"
@@ -228,6 +228,20 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/delivery.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce-browser.mjs",
     "stellar-forge/mcp-merchant-operator/FRED_RESEARCH_COMMERCE.md",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/COMMERCE.md"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/COMMERCE.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/return-model.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/return-codec.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/returns.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/return-bundle.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/RETURNS.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/research-returns.js",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/research-return-work.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/return-journey.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/return-browser.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/research-returns.css",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/developer/index.html",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/developer/browser.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/developer/style.css",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/RETURN_BROWSER.md"
   ]
 }
