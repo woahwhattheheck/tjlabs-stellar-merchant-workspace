@@ -5,6 +5,7 @@ import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { absolute, privateDirectory, makePrivate, regular, readJSON, saveJSON, operationId,
   recordId, operationLease, operationRunning, tailFile, plain, need, digest, json, canonical, now } from './storage.mjs';
+import { managedResult } from './managed-result.mjs';
 import { applicationEnvironment } from './application-environment.mjs';
 export { applicationEnvironment };
 import { defaultApplicationProviders, readApplicationProvider, applicationProviderForKind,
@@ -179,6 +180,9 @@ export async function readApplicationTerminal(root, { operationId: id, applicati
   const process = await readJSON(join(directory, 'terminal-process.json'), true);
   const result = await readJSON(join(directory, 'terminal-exit.json'), true);
   const device = await readJSON(join(directory, 'terminal-device.json'), true);
+  const state = await readJSON(join(directory, 'state.json'), true);
+  const commandResult = await readJSON(join(directory, 'command-result.json'), true);
+  const managedOutcome = managedResult(state, commandResult);
   const observed = observations?.get(id);
   const active = result ? false : observations
     ? observed?.workerActive === true || observed?.commandActive === true ? true :
@@ -199,7 +203,7 @@ export async function readApplicationTerminal(root, { operationId: id, applicati
       error: { code: error.code ?? 'RUNTIME_WORKSPACE_LOG_UNAVAILABLE', message: String(error.message ?? error).slice(0, 2000) } };
   }
   return { operationId: id, ready: active === true && Boolean(process) && device?.inputTTY === true && device?.outputTTY === true,
-    active, observation, process, device, result, output, inputs: receipts.slice(0, 40) };
+    active, observation, process, device, result, managedOutcome, output, inputs: receipts.slice(0, 40) };
 }
 export async function sendApplicationTerminal(root, { operationId: id, applicationId, inputId, text } = {}) {
   const { directory, request } = await terminalRequest(root, id);

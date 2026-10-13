@@ -229,6 +229,7 @@
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/cli.mjs",
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/image-workspace.mjs",
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/managed-command.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/managed-result.mjs",
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/managed-workspace.mjs",
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs",
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/openapi-connection-setup.d.mts",
