@@ -1,0 +1,699 @@
+{
+  "id": "a2197f07-ae64-4d8d-851a-a7d05eaeb332",
+  "expectedRevision": "revision-b2de4cbcc3d9b53b6c6da1a35d6f6d5795ff8db784f00f9c92ae74bea05b9e78",
+  "createdAt": "2026-10-13T08:21:54.000Z",
+  "actor": "TJLabs assistant — editorial proposal",
+  "note": "Complete first editorial pass over all 44 retained source occurrences: 14-link proposed route, 19 explicitly qualified relationships, and record-specific clarification questions. Original source and unreviewed edition retained; no institutional approval or rights grant recorded.",
+  "state": {
+    "collectionIds": [
+      "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282",
+      "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168"
+    ],
+    "reviews": [
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:1",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Research entry point for the proposed cross-collection route.",
+        "note": "The published label explicitly identifies Black Canada and the Great War. Use its own project description before writing claims about participants or holdings.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:2",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Historical performance notice requiring contextual description.",
+        "note": "Retain the published wording and 1921 label. Request the underlying notice's creator, publication context and an institution-approved contextual description before selecting it for a public story.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:3",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Group portrait catalogue entry with a broad date range.",
+        "note": "The published range is 1930–1950. Confirm whether the target is an item, aggregation or external discovery record, and how the institution wants the performance context described.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:4",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Named portrait whose collection-page label supplies no date or role.",
+        "note": "Preserve the trailing space and original name in the source. Ask for the linked record's descriptive context; do not infer identity, role or date from the name.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:5",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Performance notice with the published 1922 label.",
+        "note": "Keep the complete original title and its punctuation. Clarify its relationship to occurrence 10 before any grouping; a shared event/year label does not establish that they describe the same object.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:6",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Collection-level reference with the published 1922 label.",
+        "note": "This occurrence and TMU occurrence 11 have the exact same target URL but different date text. Ask whether 1922 names an item, a selected event or a description error; retain both source occurrences.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:7",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "First annual performance label with the published 1920 date.",
+        "note": "The numbering can support a proposed contextual sequence with occurrences 9 and 10. Ask the holding institution for suitable framing and item-level scope; no automated title correction.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:8",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "General performance grouping with the published 1985–2006 range.",
+        "note": "Clarify the descriptive level and meaning of the date range. Preserve it as supplied instead of treating it as an event date or a typo.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:9",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Second annual performance label with the published 1921 date.",
+        "note": "Compare the institution's record with occurrences 7 and 10 to establish the sequence and descriptive levels. The proposed relation records source-label numbering only.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:10",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Third annual performance label naming a venue and 1922.",
+        "note": "Clarify its relationship to occurrence 5, which also names the third annual show. Preserve separate occurrences until the institution supplies their item-level relationship.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:11",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Collection-level reference with the published 1895–2006 range.",
+        "note": "The target URL exactly matches occurrence 6, whose label ends 1922. Request field-level clarification; do not collapse one into the other or choose one date as authoritative.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:12",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Publication-labelled entry with a stated 1921–1932 range.",
+        "note": "Useful as documentary context for a proposed research route. Confirm issue/series scope from the holding record before citing particular contents; the source label alone is retained.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:13",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Television-production-labelled entry naming Lena Horne and 1982.",
+        "note": "Select as a metadata link in the performance section. The proposed relationship to the Hollingsworth objects is thematic; it asserts no collaboration, shared event or shared physical provenance.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:14",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Research-labelled entry whose supplied title names a 1993 recreation study.",
+        "note": "Preserve the original study title. Use it as a research-context link, without inferring study findings, participant identities or relationships to the Museum London sports objects.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:15",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Interview label explicitly identifying Part 1 and 1976.",
+        "note": "Select the first labelled part as a metadata link. Its relation to occurrence 16 follows the labels, while physical carriers, completeness and running order require the holding record.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:16",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Interview label explicitly identifying Part 2 and 1976.",
+        "note": "Select immediately after the source-labelled Part 1 in this proposed route. Keep the two occurrences separate; do not infer that the other three similarly titled records are duplicates.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:17",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Interview-labelled entry sharing its displayed title with two other occurrences.",
+        "note": "Occurrences 17, 18 and 19 have the same displayed title but different target URLs. Ask for carrier/part identifiers and descriptive hierarchy. Preserve each occurrence.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:18",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Second of three identically displayed interview labels with a distinct target.",
+        "note": "Keep the original target and occurrence identity. Request its relation to occurrences 15–19; a common label is insufficient for deduplication or timeline placement.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:19",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Third of three identically displayed interview labels with a distinct target.",
+        "note": "Keep its separate target and occurrence identity. Request the holding institution's part/carrier description before deciding whether it belongs in the proposed viewing route.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:1",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Booklet entry whose title connects family photographs and a 1910–1960 span.",
+        "note": "Use as the opening metadata link for the proposed route. The complete PDF and its image permissions have not been examined; the title supplies the route's starting context.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:2",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "White tuxedo attributed in the source label to Joey Hollingsworth, approximately the 1980s.",
+        "note": "Group with the named shoes and accessories because the labels share a named person and approximate period. This does not establish that the objects were used together.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:3",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "White tap shoes attributed in the source label to Joey Hollingsworth, approximately the 1980s.",
+        "note": "Keep 'ca. 1980s' as approximate wording. The thematic group with occurrences 2 and 4 preserves each object's independent record and rights inquiry.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:4",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Cuff link and stud set attributed in the source label to Joey Hollingsworth, approximately the 1980s.",
+        "note": "Present as the third link in the proposed performance-object group. Ask the holding institution for any supported ensemble or performance relationship.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:5",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Portrait entry naming Paul Lewis and an approximate 1940s period.",
+        "note": "Keep the source attribution and approximate date. The supplied label does not establish a biography, photographer or reproduction permission.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:6",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "First-place relay ribbon labelled Barry Howson and 1946.",
+        "note": "Use with occurrences 7–9 as a sequence of named award labels. This proposes chronological reading of the supplied labels without claiming a complete sporting history.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:7",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Third-place relay ribbon labelled Barry Howson and 1947.",
+        "note": "Retain the placing and date exactly. Do not collapse this entry with the first-place ribbons or interpret the sequence as results from one event.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:8",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "First-place relay ribbon labelled Barry Howson and 1949.",
+        "note": "Keep its separate object link and date. It belongs to the proposed source-label sequence with occurrences 6, 7 and 9.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:9",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "First-place relay ribbon labelled Barry Howson and 1950.",
+        "note": "The source-label sequence ends here for the four named ribbons. Other nearby objects are not automatically attributed to the same person.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:10",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Playgrounds championship crest carrying a published 2024 label.",
+        "note": "Ask whether 2024 is an object date, catalogue update, accession context or another value. Preserve the exact label; no alternative date is asserted.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:11",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Recreation crest described as a red award with the supplied 1959 label.",
+        "note": "Retain as a separate sports/recreation metadata link. The collection-page label does not name the recipient, so no person attribution is added.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:12",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Track-and-field trophy label with a senior individual championship and 1957–1958 range.",
+        "note": "Preserve the stated range and category. Request the object record before assigning a named recipient or interpreting the range as one event.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:13",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Football-and-basketball championship crest carrying a published 2024 label.",
+        "note": "Clarify the meaning of 2024 at the holding record. Similarity to nearby sports material does not justify replacing it with another date.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:14",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Track-and-field plaque with the published 1947 label.",
+        "note": "Retain the title and date as a separate object description. Ask for the record's recipient and event context before adding named-person relationships.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:15",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Playground-supervisors entry with the published 1958 label.",
+        "note": "The source label does not specify object type or depicted people. Keep it as a contextual catalogue link, with those details left for the holding record.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:16",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Campaign-related button attributed by the source label to Arielle Kayabaga and 2018.",
+        "note": "Select as one material format in the civic-campaign section. The proposal relies on the catalogue label, without adding political views or a claim that these objects formed a single original assemblage.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:17",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Campaign T-shirt attributed by the source label to Arielle Kayabaga and 2018.",
+        "note": "Keep the object independent while grouping source labels by the same named campaign subject and year.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:18",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Campaign door hanger attributed by the source label to Arielle Kayabaga and 2018.",
+        "note": "Select to show a second communication format in the proposed civic section. The interpretation remains a proposed grouping of catalogue labels.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:19",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Campaign sign attributed by the source label to Arielle Kayabaga and 2018.",
+        "note": "Retain as a separately linked campaign object with its own eventual image/rights inquiry.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:20",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Campaign card attributed by the source label to Arielle Kayabaga and 2018.",
+        "note": "Select as a third communication format in the proposed civic section. No claim about campaign reach, use, results or audience follows from the label.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:21",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Pride-parade costume attributed in the source label to Naomi Nadea and 2013.",
+        "note": "Retain the publicly supplied event and attribution without inferring anyone's gender identity, sexual orientation or other biographical details.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:22",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Signed rookie jersey attributed by the source label to Cleveland Brownlee with a 1984 label.",
+        "note": "Clarify what the stated year describes at the holding record. Keep the original 1984 text and do not substitute a guessed sporting or acquisition date.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:23",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Baseball attributed in the source label to Cleveland Brownlee and 2018.",
+        "note": "Group by the shared named-person label with occurrences 24 and 25, while preserving the separate objects and their independent provenance.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:24",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Black baseball bat attributed in the source label to Cleveland Brownlee and 2018.",
+        "note": "Keep the color distinction and separate record. No assertion that it and the gold bat were used in the same match or occasion.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      },
+      {
+        "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:25",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Gold baseball bat attributed in the source label to Cleveland Brownlee and 2018.",
+        "note": "Keep as a distinct object in the proposed shared-name group; color and source link remain visible.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    ],
+    "story": {
+      "title": "Routes through two collections: performance, public life and documentary context",
+      "introduction": "A TJLabs working proposal for a metadata-led route through two existing public catalogue pages. It begins with a family-photograph booklet link, explores performance objects and interview labels, follows a sequence of sporting awards, and compares campaign communication objects. Each link returns to its institution's original record. The sequence is an editorial proposal for discussion; it contains no reproduced collection media and does not represent institutional approval.",
+      "order": [
+        "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:1",
+        "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:2",
+        "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:3",
+        "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:4",
+        "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:13",
+        "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:15",
+        "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:16",
+        "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:6",
+        "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:7",
+        "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:8",
+        "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:9",
+        "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:16",
+        "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:18",
+        "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:20"
+      ],
+      "note": "Prepared by the TJLabs assistant from the two complete retained ArchiveBlack catalogue pages. All 44 original labels, links and source positions remain available. 'Include' means selected for this internal metadata proposal; all rights statuses remain unknown. Relationship labels distinguish exact source observations from proposed themes. Underlying object records and media have not supplied additional verified facts in this edition. Entries marked needs-info have concrete clarification questions and remain in the complete review, outside the selected story."
+    },
+    "relationships": [
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000001",
+        "from": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:6",
+        "to": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:11",
+        "kind": "Same target; distinct source labels",
+        "note": "Exact target URLs match in the retained original TMU page; the supplied ending dates are 1922 and 1895–2006. This is a descriptive clarification request, not an object-identity merge."
+      },
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000002",
+        "from": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:7",
+        "to": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:9",
+        "kind": "Numbered labels in a proposed sequence",
+        "note": "The source labels name first and second annual shows and 1920/1921. Holding-record context is required before interpreting the sequence."
+      },
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000003",
+        "from": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:9",
+        "to": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:10",
+        "kind": "Numbered labels in a proposed sequence",
+        "note": "The source labels name second and third annual shows and 1921/1922. No shared-item identity is asserted."
+      },
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000004",
+        "from": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:5",
+        "to": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:10",
+        "kind": "Related event labels; item relation unresolved",
+        "note": "Both source labels refer to the third annual show in 1922, with different wording and target URLs. Preserve both and ask the holding institution about the descriptive relation."
+      },
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000005",
+        "from": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:15",
+        "to": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:16",
+        "kind": "Source-labelled interview parts",
+        "note": "Original labels explicitly name Part 1 and Part 2. This supports a proposed reading order, not a claim about completeness or physical carriers."
+      },
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000006",
+        "from": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:17",
+        "to": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:18",
+        "kind": "Same displayed label; distinct targets",
+        "note": "The source titles match exactly but their URLs differ. Retain separate identities and request carrier/part descriptions."
+      },
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000007",
+        "from": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:18",
+        "to": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:19",
+        "kind": "Same displayed label; distinct targets",
+        "note": "The source titles match exactly but their URLs differ. Retain separate identities and request carrier/part descriptions."
+      },
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000008",
+        "from": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:2",
+        "to": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:3",
+        "kind": "Shared person and approximate period in labels",
+        "note": "Both original labels name Joey Hollingsworth and ca. 1980s. The grouping is proposed; joint use or an original ensemble has not been established."
+      },
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000009",
+        "from": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:2",
+        "to": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:4",
+        "kind": "Shared person and approximate period in labels",
+        "note": "Both original labels name Joey Hollingsworth and ca. 1980s. Each object keeps its own record and rights inquiry."
+      },
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000010",
+        "from": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:2",
+        "to": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:13",
+        "kind": "Proposed performance theme across institutions",
+        "note": "The object labels and television-production label make performance a possible editorial theme. This proposes navigation only, without a historical relationship between the people or objects."
+      },
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000011",
+        "from": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:6",
+        "to": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:7",
+        "kind": "Shared name; different award labels",
+        "note": "The labels name Barry Howson, distinct placings and 1946/1947. Both original objects remain distinct."
+      },
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000012",
+        "from": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:7",
+        "to": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:8",
+        "kind": "Shared name; different award labels",
+        "note": "The labels name Barry Howson, distinct placings and 1947/1949. The proposed sequence is not a complete record of participation."
+      },
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000013",
+        "from": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:8",
+        "to": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:9",
+        "kind": "Shared name; different award labels",
+        "note": "The labels name Barry Howson and first-place ribbons dated 1949/1950. No common event is asserted."
+      },
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000014",
+        "from": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:16",
+        "to": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:17",
+        "kind": "Shared campaign subject and year in labels",
+        "note": "Both source labels name Arielle Kayabaga and 2018. This groups communication formats; it does not assert original physical association."
+      },
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000015",
+        "from": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:16",
+        "to": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:18",
+        "kind": "Shared campaign subject and year in labels",
+        "note": "Both source labels name Arielle Kayabaga and 2018. The button and door hanger remain separate records."
+      },
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000016",
+        "from": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:16",
+        "to": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:19",
+        "kind": "Shared campaign subject and year in labels",
+        "note": "Both source labels name Arielle Kayabaga and 2018. The button and sign remain separate records."
+      },
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000017",
+        "from": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:16",
+        "to": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:20",
+        "kind": "Shared campaign subject and year in labels",
+        "note": "Both source labels name Arielle Kayabaga and 2018. The button and card remain separate records."
+      },
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000018",
+        "from": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:23",
+        "to": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:24",
+        "kind": "Shared name and year in source labels",
+        "note": "Both original labels name Cleveland Brownlee and 2018. No shared use, occasion or ownership history beyond the labels is asserted."
+      },
+      {
+        "id": "b50c2b08-4da6-4b54-9b75-000000000019",
+        "from": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:24",
+        "to": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:25",
+        "kind": "Shared name and year; different objects",
+        "note": "Both original labels name Cleveland Brownlee and 2018, while distinguishing black and gold bats. Preserve the color and object distinction."
+      }
+    ]
+  }
+}

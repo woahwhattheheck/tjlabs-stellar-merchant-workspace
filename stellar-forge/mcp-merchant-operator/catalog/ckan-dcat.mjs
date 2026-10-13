@@ -40,6 +40,7 @@ export function dcatWorkspaceDefinitions({ selected, changing, changed, alias, u
     ['merchant_ckan_dcat_status', 'Read DCAT catalog editions, complete-review metadata and release history from this same open CKAN workspace. Each collection has its own offset and nextOffset. The original operation ID remains the mutation baseline; completed correction reviews remain inspectable.', {
       ...selected, catalogsOffset: offset, reviewsOffset: offset, releasesOffset: offset,
       sourcesOffset: offset, acquisitionsOffset: offset,
+      semanticProfilesOffset: offset, semanticRunsOffset: offset, semanticReviewsOffset: offset,
       limit: { type: 'integer', minimum: 1, maximum: 100 },
     }, ['workspace'], read],
     ['merchant_ckan_dcat_import', 'Import one complete original or edited catalog from a host input alias of kind dcat-catalog. First inspect its exact bytes with merchant_ckan_inputs, then bind expectedSha256. Original bytes are retained unchanged; choose auto, 1.1 or 3.0 and an optional source publication URL. Follow the returned original operation and catalogId.', {

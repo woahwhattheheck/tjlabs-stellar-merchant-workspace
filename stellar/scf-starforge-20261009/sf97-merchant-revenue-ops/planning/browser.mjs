@@ -1,4 +1,6 @@
 // MIT. Explicit scenario editing over server-calculated original SF97 results.
+import { createScenarioWorking } from './working-browser.mjs';
+let working, workingBasePlanId=null, workingDetailScenarioId=null;
 const $ = id => document.getElementById(id);
 const text = (tag,value,className) => { const node=document.createElement(tag); node.textContent=value; if(className)node.className=className; return node; };
 const shown = value => value === null || value === undefined ? 'Unknown' : String(value);
@@ -23,6 +25,12 @@ function controls(){
   $('previous-routes').disabled=busy||routePage===0;
   $('next-routes').disabled=busy||!source||(routePage+1)*PAGE_SIZE>=source.routes.length;
   $('save-plan').disabled=busy||!comparison||Boolean(savedRecord)||sourceSelectionChanged();
+  if(pendingSave) {
+    for(const node of document.querySelectorAll('#scenario-form input,#source-form input,#source-form select,#source-form button'))node.disabled=true;
+    for(const id of ['calculate','add-scenario','copy-scenario','remove-scenario','save-plan','plan-label','working-name'])$(id).disabled=true;
+  }
+  working?.controls(busy);
+
 }
 async function api(path,input){
   const response=await fetch(path,{method:input===undefined?'GET':'POST',
@@ -36,7 +44,7 @@ async function run(task){if(busy)return;busy=true;controls();try{await task();}c
 function changed(){
   dirty=true;comparison=null;savedRecord=null;pendingSave=null;
   $('comparison-panel').hidden=true;$('saved-actions').hidden=true;
-  $('edit-status').textContent='Assumptions changed · calculate the comparison again.';controls();
+  $('edit-status').textContent='Assumptions changed · calculate the comparison again.';working?.changed();controls();
 }
 function baseRoute(id){return source.commercial.routes[id];}
 function values(item,id){return {...baseRoute(id),...(item.routes?.[id]??{})};}
@@ -74,7 +82,7 @@ function renderScenarioList(){
 }
 function field(value,{label,kind='decimal',onchange,optional=false}={}){
   const input=document.createElement('input');input.setAttribute('aria-label',label);input.value=value??'';
-  if(kind==='count'){input.type='number';input.min='0';input.max=String(Number.MAX_SAFE_INTEGER);input.step='1';input.required=true;}
+  if(kind==='count'){input.type='text';input.inputMode='numeric';input.pattern='[0-9]+';input.required=true;}
   else if(kind==='text'){input.type='text';input.maxLength=240;input.required=!optional;}
   else{input.inputMode='decimal';input.placeholder=optional?'Unknown':'Required';input.required=!optional;}
   input.addEventListener('input',()=>{onchange(input.value);changed();renderScenarioList();});return input;
@@ -82,7 +90,7 @@ function field(value,{label,kind='decimal',onchange,optional=false}={}){
 function renderRouteEditor(){
   const item=scenarios[selected],visible=source.routes.slice(routePage*PAGE_SIZE,(routePage+1)*PAGE_SIZE);
   const wrapper=table(visible,[['Service',route=>{const node=text('div',route.routeId);node.append(text('small',route.method+' '+route.path));return node;}],
-    ...[['Unit quote · USD','unitPriceUsd','decimal',false],['Quote basis','priceBasis','text',false],['Paid requests / month','monthlyPaidTarget','count',false],['Cost / fulfillment · USD','perFulfilledUsd','decimal',true],['Cost / challenge · USD','perChallengeUsd','decimal',true]].map(([label,key,kind,optional])=>[label,route=>field(values(item,route.routeId)[key],{label:route.routeId+' · '+label,kind,optional,onchange:value=>{item.routes??={};item.routes[route.routeId]??={};item.routes[route.routeId][key]=kind==='count'?(value===''?null:Number(value)):optional?(value.trim()||null):value;}})])]);
+    ...[['Unit quote · USD','unitPriceUsd','decimal',false],['Quote basis','priceBasis','text',false],['Paid requests / month','monthlyPaidTarget','count',false],['Cost / fulfillment · USD','perFulfilledUsd','decimal',true],['Cost / challenge · USD','perChallengeUsd','decimal',true]].map(([label,key,kind,optional])=>[label,route=>field(values(item,route.routeId)[key],{label:route.routeId+' · '+label,kind,optional,onchange:value=>{item.routes??={};item.routes[route.routeId]??={};item.routes[route.routeId][key]=value;}})])]);
   wrapper.querySelector('table').classList.add('planning-route-table');$('route-editor').replaceChildren(wrapper);
   $('route-paging').hidden=source.routes.length<=PAGE_SIZE;$('route-caption').textContent=(routePage*PAGE_SIZE+1)+'–'+Math.min((routePage+1)*PAGE_SIZE,source.routes.length)+' of '+source.routes.length+' services';
 }
@@ -123,6 +131,7 @@ function renderGoals(row){
   $('goal-suggestions').replaceChildren(cards);
 }
 function applySuggestion(id,suggestion){
+  if(pendingSave){notice('Recover the original pending comparison save before applying different assumptions.',true);return;}
   const index=scenarios.findIndex(item=>item.id===id);if(index<0||!suggestion.commercial)return;
   const original=scenarios[index],commercial=structuredClone(suggestion.commercial);
   const selectedRoutes=new Set(source.routes.map(route=>route.routeId));
@@ -135,6 +144,7 @@ function updateSavedActions(){
   const id=$('detail-scenario').value;$('saved-actions').hidden=!savedRecord;
   if(!savedRecord){$('saved-note').textContent='Save the comparison to reopen it, export it or apply a selected scenario.';return;}
   const prefix='/planning-files/'+savedRecord.planId+'/';
+  $('download-report').href=prefix+'review.html';
   $('download-plan').href=prefix+'plan.json';$('download-csv').href=prefix+'comparison.csv';$('download-terms').href=prefix+'terms-'+encodeURIComponent(id)+'.json';
   $('apply-plan').href='/#scenario-plan/'+savedRecord.planId+'/'+encodeURIComponent(id);
   $('apply-plan').hidden=Boolean(source.sellerChanged);
@@ -154,7 +164,7 @@ function renderSaved(){
   $('saved-count').textContent=planList.plans.length+' shown · '+planList.total+' saved';$('saved-plans').replaceChildren();
   if(!planList.plans.length){$('saved-plans').append(text('p','Saved scenario comparisons will appear here.','muted small'));return;}
   for(const item of planList.plans){const card=document.createElement('article');card.className='planning-saved-card';card.append(text('h3',item.label),text('p',item.sourceLabel+' · '+item.scenarioCount+' scenarios · '+new Date(item.savedAt).toLocaleString(),'muted small'));
-    const actions=document.createElement('div');actions.className='button-row';const open=text('button','Open comparison');open.type='button';open.addEventListener('click',()=>run(()=>openSaved(item.planId)));const download=text('a','Plan JSON');download.href='/planning-files/'+item.planId+'/plan.json';const csv=text('a','Comparison CSV');csv.href='/planning-files/'+item.planId+'/comparison.csv';actions.append(open,download,csv);card.append(actions);$('saved-plans').append(card);}
+    const actions=document.createElement('div');actions.className='button-row';const open=text('button','Open comparison');open.type='button';open.addEventListener('click',()=>run(()=>openSaved(item.planId)));const download=text('a','Plan JSON');download.href='/planning-files/'+item.planId+'/plan.json';const csv=text('a','Comparison CSV');csv.href='/planning-files/'+item.planId+'/comparison.csv';const report=text('a','Complete decision review');report.href='/planning-files/'+item.planId+'/review.html';report.target='_blank';report.rel='noopener';actions.append(open,report,download,csv);card.append(actions);$('saved-plans').append(card);}
 }
 async function refreshSaved(){planList=await api('/api/planning/state');renderSaved();}
 async function openSaved(planId){
@@ -162,13 +172,15 @@ async function openSaved(planId){
   const record=await api('/api/planning/load',{planId}),loadedSource=await api('/api/planning/source',{version:record.version});
   source=loadedSource;scenarios=structuredClone(record.inputs.scenarios);selected=Math.max(0,scenarios.findIndex(item=>item.id===record.selectedScenarioId));routePage=0;
   comparison={version:record.version,sourceLabel:record.sourceLabel,review:record.review};savedRecord=record;pendingSave=null;dirty=false;
-  $('plan-label').value=record.label;renderSource();renderScenarioList();renderEditor();renderComparison();history.replaceState(null,'','#'+record.planId);
+  working?.reset();workingBasePlanId=record.planId;workingDetailScenarioId=record.selectedScenarioId;
+  $('working-name').value=record.label;$('plan-label').value=record.label;renderSource();renderScenarioList();renderEditor();renderComparison();history.replaceState(null,'','#'+record.planId);
   notice('Saved comparison reopened with its original source and calculated values.');
 }
 async function loadSource(){
   if(dirty&&!window.confirm('Replace the unsaved scenarios with a new comparison from this review?'))return;
   const next=await api('/api/planning/source',{version:$('source-review').value});source=next;scenarios=[newScenario('Plan 1')];selected=0;routePage=0;
   comparison=null;savedRecord=null;pendingSave=null;dirty=false;$('comparison-panel').hidden=true;$('plan-label').value='';
+  working?.reset();workingBasePlanId=null;workingDetailScenarioId=null;$('working-name').value='';
   history.replaceState(null,'',location.pathname);renderSource();renderScenarioList();renderEditor();
   notice('Saved review loaded. Enter scenario assumptions and optional decision targets.');
 }
@@ -181,8 +193,8 @@ $('source-review').addEventListener('change',()=>{
 });
 $('scenario-form').addEventListener('submit',event=>event.preventDefault());
 $('scenario-label').addEventListener('input',()=>{scenarios[selected].label=$('scenario-label').value;changed();renderScenarioList();});
-$('scenario-fixed').addEventListener('input',()=>{scenarios[selected].sharedMonthlyFixedUsd=$('scenario-fixed').value.trim()||null;changed();});
-for(const [id,key]of [['goal-contribution','monthlyContributionUsd'],['goal-margin','marginPct']])$(id).addEventListener('input',()=>{const row=scenarios[selected];row.goal??={};const value=$(id).value.trim();if(value)row.goal[key]=value;else delete row.goal[key];if(!Object.keys(row.goal).length)delete row.goal;changed();});
+$('scenario-fixed').addEventListener('input',()=>{scenarios[selected].sharedMonthlyFixedUsd=$('scenario-fixed').value;changed();});
+for(const [id,key]of [['goal-contribution','monthlyContributionUsd'],['goal-margin','marginPct']])$(id).addEventListener('input',()=>{const row=scenarios[selected];row.goal??={};row.goal[key]=$(id).value;changed();});
 $('add-scenario').addEventListener('click',()=>{if(scenarios.length>=12)return;scenarios.push(newScenario('Plan '+(scenarios.length+1)));selected=scenarios.length-1;routePage=0;changed();renderScenarioList();renderEditor();});
 $('copy-scenario').addEventListener('click',()=>{if(scenarios.length>=12)return;const row=structuredClone(scenarios[selected]);row.id='plan-'+crypto.randomUUID();row.label=(row.label+' copy').slice(0,100);scenarios.push(row);selected=scenarios.length-1;routePage=0;changed();renderScenarioList();renderEditor();});
 $('remove-scenario').addEventListener('click',()=>{if(scenarios.length<=1)return;scenarios.splice(selected,1);selected=Math.min(selected,scenarios.length-1);routePage=0;changed();renderScenarioList();renderEditor();});
@@ -190,20 +202,110 @@ for(const [id,direction]of [['previous-routes',-1],['next-routes',1]])$(id).addE
 $('calculate').addEventListener('click',()=>run(async()=>{
   requireLoadedSource();
   if(!$('scenario-form').reportValidity())throw new Error('Complete the highlighted scenario inputs.');
-  const result=await api('/api/planning/preview',{version:source.version,scenarios});comparison=result;savedRecord=null;pendingSave=null;renderComparison();
+  const result=await api('/api/planning/preview',{version:source.version,scenarios:calculationScenarios()});comparison=result;savedRecord=null;pendingSave=null;renderComparison();
   notice('All scenarios calculated against the same saved review. Inspect target suggestions or save the comparison.');
 }));
-$('detail-scenario').addEventListener('change',()=>{pendingSave=null;showDetail();});
-$('plan-label').addEventListener('input',()=>{pendingSave=null;savedRecord=null;dirty=true;updateSavedActions();controls();});
+$('detail-scenario').addEventListener('change',()=>{if(pendingSave)return;workingDetailScenarioId=$('detail-scenario').value;showDetail();working?.changed();});
+$('plan-label').addEventListener('input',()=>{$('working-name').value=$('plan-label').value;pendingSave=null;savedRecord=null;dirty=true;updateSavedActions();working?.changed();controls();});
+$('working-name').addEventListener('input',()=>{$('plan-label').value=$('working-name').value;pendingSave=null;savedRecord=null;dirty=true;updateSavedActions();working?.changed();controls();});
 $('save-plan').addEventListener('click',()=>run(async()=>{
   requireLoadedSource();
-  if(!comparison)throw new Error('Calculate the scenario comparison first.');const label=$('plan-label').value.trim();if(!label)throw new Error('Give the comparison a name.');
-  pendingSave??={version:source.version,scenarios:structuredClone(scenarios),requestId:crypto.randomUUID(),label,
+  if(!comparison)throw new Error('Calculate the scenario comparison first.');
+  const label=$('plan-label').value.trim();if(!label)throw new Error('Give the comparison a name.');
+  pendingSave??={version:source.version,scenarios:calculationScenarios(),requestId:crypto.randomUUID(),label,
     selectedScenarioId:$('detail-scenario').value,reviewSha256:comparison.review.reviewSha256};
-  const result=await api('/api/planning/save',pendingSave);savedRecord=result.record;dirty=false;pendingSave=null;updateSavedActions();
-  history.replaceState(null,'','#'+result.planId);
-  try{await refreshSaved();}catch{notice('Comparison saved. Its downloads and selected scenario are available; reopen this page to refresh the saved list.');return;}
-  notice(result.recovered?'The earlier save completed. Its original comparison has been recovered.':'Comparison saved. Export it or use the selected scenario in the merchant pricing review.');
+  // Keep the exact final save request durably before dispatch. A reopened
+  // working copy recovers this same immutable plan ID and complete body.
+  await working.saveCurrent();
+  await recoverPendingPlan();
+  try{await working.saveCurrent();}catch(error){notice('The comparison outcome is retained. Updating its working copy needs attention: '+error.message,true);}
 }));
 window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
-run(async()=>{current=await api('/api/state');renderSourceChoices();await refreshSaved();const id=location.hash.slice(1);if(UUID.test(id))await openSaved(id);else notice(current.history.length?'Choose a saved pricing review to create a commercial comparison.':'Save a review in Merchant pricing, then return here to compare scenarios.');});
+
+function calculationScenarios() {
+  const rows=structuredClone(scenarios);
+  for(const row of rows) {
+    if(Object.hasOwn(row,'sharedMonthlyFixedUsd'))row.sharedMonthlyFixedUsd=String(row.sharedMonthlyFixedUsd??'').trim()||null;
+    for(const values of Object.values(row.routes??{})) {
+      if(Object.hasOwn(values,'monthlyPaidTarget')) {
+        const raw=String(values.monthlyPaidTarget??'');
+        if(!/^[0-9]+$/.test(raw)||!Number.isSafeInteger(Number(raw)))throw new Error('Enter a nonnegative whole-number paid-volume target for every edited service.');
+        values.monthlyPaidTarget=Number(raw);
+      }
+      for(const key of ['perFulfilledUsd','perChallengeUsd'])if(Object.hasOwn(values,key))values[key]=String(values[key]??'').trim()||null;
+    }
+    if(row.goal){for(const key of Object.keys(row.goal)){const raw=String(row.goal[key]).trim();if(raw)row.goal[key]=raw;else delete row.goal[key];}if(!Object.keys(row.goal).length)delete row.goal;}
+  }
+  return rows;
+}
+function workingSnapshot() {
+  if(!source||!scenarios.length)return null;
+  const selectedId=scenarios[selected]?.id??scenarios[0].id;
+  const detail=comparison?$('detail-scenario').value:workingDetailScenarioId;
+  return {version:source.version,sourceBinding:{version:source.version,provenance:structuredClone(source.provenance)},
+    document:{label:$('plan-label').value,scenarios:structuredClone(scenarios),selectedScenarioId:selectedId,routePage,
+      selectedReviewVersion:$('source-review').value||null,detailScenarioId:scenarios.some(row=>row.id===detail)?detail:null,
+      basePlanId:workingBasePlanId,pendingPlanSave:pendingSave?structuredClone(pendingSave):null}};
+}
+async function restoreWorking(document,loadedSource) {
+  source=loadedSource;scenarios=structuredClone(document.scenarios);
+  selected=Math.max(0,scenarios.findIndex(row=>row.id===document.selectedScenarioId));
+  routePage=Math.min(document.routePage,Math.max(0,Math.ceil(source.routes.length/PAGE_SIZE)-1));
+  workingBasePlanId=document.basePlanId;workingDetailScenarioId=document.detailScenarioId;
+  comparison=null;savedRecord=null;pendingSave=document.pendingPlanSave?structuredClone(document.pendingPlanSave):null;
+  $('plan-label').value=document.label;$('working-name').value=document.label;
+  $('comparison-panel').hidden=true;$('saved-actions').hidden=true;
+  renderSource();renderScenarioList();renderEditor();
+  if(document.selectedReviewVersion&&document.selectedReviewVersion!==source.version) {
+    if(![...$('source-review').options].some(option=>option.value===document.selectedReviewVersion)) {
+      const option=text('option','Selected review · '+document.selectedReviewVersion);option.value=document.selectedReviewVersion;$('source-review').append(option);
+    }
+    $('source-review').value=document.selectedReviewVersion;
+    $('source-status').textContent='Load the selected review to begin its comparison';
+  }
+  $('edit-status').textContent=pendingSave?'Recover the original pending comparison save before changing its inputs.':'Unfinished working copy reopened. Calculate when its inputs are ready.';
+}
+async function recoverPendingPlan() {
+  if(!pendingSave)throw new Error('There is no original pending comparison save.');
+  const request=structuredClone(pendingSave);
+  let result;
+  try { result=await api('/api/planning/save',request); }
+  catch(error) {
+    // These original endpoint codes reject before publication. Transport,
+    // filesystem and unknown errors retain the exact request for recovery.
+    const rejected=new Set(['PLAN_SAVE_DETAILS_REQUIRED','PLAN_REQUEST_CHANGED',
+      'SCENARIO_REVIEW_CHANGED','SCENARIO_SELECTION_REQUIRED','SCENARIO_PLAN_TOO_LARGE',
+      'SCENARIO_INPUT_INVALID','SCENARIO_AMOUNT_INVALID','SCENARIO_MARGIN_INVALID',
+      'SCENARIO_GOAL_INVALID','SCENARIO_ID_INVALID','SCENARIO_LABEL_INVALID',
+      'SCENARIO_ROUTE_UNKNOWN','SCENARIO_ROUTE_OUTSIDE_REVIEW','SCENARIO_GOAL_UNRESOLVED',
+      'SCENARIO_COUNT_INVALID','SCENARIO_ID_DUPLICATE']);
+    if((error.status===409||error.status===422)&&rejected.has(error.code)) {
+      pendingSave=null;comparison=null;savedRecord=null;dirty=true;
+      $('comparison-panel').hidden=true;$('saved-actions').hidden=true;
+      $('edit-status').textContent='The original save request was rejected. Your unfinished inputs remain editable; correct them and calculate again.';
+      try { await working.saveCurrent(); } catch {}
+      error.message+=' Your unfinished inputs remain here. Correct them and calculate again.';
+    }
+    throw error;
+  }
+  let matches=false;try{matches=JSON.stringify(calculationScenarios())===JSON.stringify(request.scenarios)&&$('plan-label').value.trim()===request.label;}catch{}
+  pendingSave=null;workingBasePlanId=result.planId;
+  if(matches) {
+    savedRecord=result.record;comparison={version:result.record.version,sourceLabel:result.record.sourceLabel,review:result.record.review};
+    dirty=false;renderComparison();history.replaceState(null,'','#'+result.planId);
+  }else {
+    savedRecord=null;comparison=null;dirty=true;$('comparison-panel').hidden=true;$('saved-actions').hidden=true;
+  }
+  try{await refreshSaved();}catch{notice('Original comparison saved. Refresh the saved list when available.');return result;}
+  notice(matches?(result.recovered?'The original pending save was recovered. Its complete decision review and exports are ready.':'Comparison saved with its complete decision review and original exports.'):
+    'The original pending comparison was saved as '+result.label+'. Your separate unfinished inputs remain in the editor.');
+  return result;
+}
+working=createScenarioWorking({api,run,snapshot:workingSnapshot,restore:restoreWorking,
+  markSaved:()=>{dirty=false;},notice,hasEdits:()=>dirty,recoverPlan:recoverPendingPlan});
+run(async()=>{
+  current=await api('/api/state');renderSourceChoices();await refreshSaved();
+  if(await working.initialize())return;
+  const id=location.hash.slice(1);if(UUID.test(id))await openSaved(id);
+  else notice(current.history.length?'Choose a saved pricing review or reopen an unfinished working copy.':'Save a review in Merchant pricing, then return here to compare scenarios.');
+});

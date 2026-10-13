@@ -33,7 +33,7 @@ export class MerchantInvoiceFiles {
   return this.#record(kind,{bytes:raw.length,sha256,name:kind+'.json',contentType:'application/json'},details);
  }
  async request(kind,operation,body) {
-  need(['intake','project'].includes(kind)&&UUID.test(operation??''),'MERCHANT_INVOICE_OPERATION_REQUIRED');
+  need(['intake','project','invoice-charge','invoice-authorization','invoice-reconcile'].includes(kind)&&UUID.test(operation??''),'MERCHANT_INVOICE_OPERATION_REQUIRED');
   const artifact=await this.document(kind+'-request',body,{operation});
   // Immutable original request reference: a changed body cannot replace the same operation.
   await retainMerchantArtifactBytes(await this.directory(),kind+'-'+operation.toLowerCase()+'.request',
@@ -41,7 +41,7 @@ export class MerchantInvoiceFiles {
   return artifact;
  }
  async originalRequest(kind,operation,expectedRequestSha256) {
-  need(['intake','project'].includes(kind)&&UUID.test(operation??'')&&SHA.test(expectedRequestSha256??''),
+  need(['intake','project','invoice-charge','invoice-authorization','invoice-reconcile'].includes(kind)&&UUID.test(operation??'')&&SHA.test(expectedRequestSha256??''),
    'MERCHANT_INVOICE_REQUEST_SELECTION');
   const ref=await projectJSON(join(await this.directory(),kind+'-'+operation.toLowerCase()+'.request'));
   need(ref.schema==='stellar-forge.merchant-invoice-agent-request.v1'&&ref.kind===kind&&ref.operation===operation,

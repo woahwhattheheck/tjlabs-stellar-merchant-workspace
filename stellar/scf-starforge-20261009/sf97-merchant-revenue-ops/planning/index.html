@@ -10,6 +10,16 @@
   <p class="muted small">Each comparison uses one saved seller configuration, its original operations capture and commercial assumptions. Enter your own demand and cost scenarios.</p>
   <div id="source-facts" class="source-facts"></div><p id="source-warning" class="source-note" hidden></p>
 </section>
+<section class="panel" aria-labelledby="working-title">
+  <div class="section-head"><h2 id="working-title">Unfinished decision work</h2><span id="working-count" class="muted small"></span></div>
+  <p class="muted small">Keep alternatives before every cost, volume or target is ready. Named working copies retain their original pricing source, raw inputs and revision history. A finished comparison is saved separately after calculation.</p>
+  <label>Decision name<input id="working-name" maxlength="65536" placeholder="Merchant demand and cost decision"></label>
+  <p id="working-status" role="status">Load an original review or reopen a working copy.</p>
+  <div class="button-row"><button id="working-save" type="button">Save working copy</button><button id="working-fork" type="button">Save as new copy</button><button id="working-download" type="button">Download unfinished inputs</button><button id="working-export" type="button">Export saved revision</button><button id="working-recover-plan" type="button">Recover pending comparison save</button></div>
+  <div class="working-open"><label>Saved working copy<select id="working-list"></select></label><button id="working-open" type="button">Open working copy</button><button id="working-refresh" type="button">Refresh copies</button></div>
+  <div class="working-open"><label>Original revision<select id="working-revision"></select></label><button id="working-open-revision" type="button">Open selected revision</button></div>
+  <details><summary>Receive unfinished work</summary><p class="muted small">Select a saved working-copy export or downloaded unfinished inputs. The original pricing review must already exist in this workspace. A complete workspace backup transfers that source and the full working history.</p><div class="working-open"><label>Original JSON<input id="working-file" type="file" accept=".json,application/json"></label><button id="working-import" type="button">Receive as new copy</button></div></details>
+</section>
 <section id="planning-editor" hidden>
   <div class="planning-grid">
     <aside class="panel"><div class="section-head"><h2>Scenarios</h2><span id="scenario-count" class="muted small"></span></div><nav id="scenario-list" aria-label="Commercial scenarios"></nav><div class="planning-scenario-actions"><button id="add-scenario" type="button">Add scenario</button><button id="copy-scenario" type="button">Duplicate selected</button></div><p class="muted small">The saved review remains the baseline.</p></aside>
@@ -32,7 +42,7 @@
   <details class="coverage-detail"><summary>Service contribution and break-even</summary><div id="scenario-routes"></div></details>
   <section class="planning-goal-results"><h3>Break-even and decision targets</h3><div id="goal-status"></div><div id="goal-suggestions"></div></section>
   <div class="planning-save"><label>Comparison name<input id="plan-label" maxlength="100" placeholder="October demand and cost plans"></label><button id="save-plan" class="primary" type="button">Save comparison</button></div>
-  <div id="saved-actions" class="button-row" hidden><a id="apply-plan" class="planning-link-button" href="/">Use selected scenario in pricing review</a><a id="download-plan">Plan JSON</a><a id="download-csv">Comparison CSV</a><a id="download-terms">Selected merchant terms</a></div>
+  <div id="saved-actions" class="button-row" hidden><a id="apply-plan" class="planning-link-button" href="/">Use selected scenario in pricing review</a><a id="download-report" target="_blank" rel="noopener">Complete decision review</a><a id="download-plan">Plan JSON</a><a id="download-csv">Comparison CSV</a><a id="download-terms">Selected merchant terms</a></div>
   <p id="saved-note" class="muted small"></p>
 </section>
 <section class="panel" aria-labelledby="saved-title"><div class="section-head"><h2 id="saved-title">Saved comparisons</h2><span id="saved-count" class="muted small"></span></div><div id="saved-plans"></div></section>

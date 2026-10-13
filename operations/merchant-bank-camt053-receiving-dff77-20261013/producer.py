@@ -201,16 +201,57 @@ try:
    data=(app_root/name).read_bytes()
    source_files.append({"path":name,"bytes":len(data),"sha256":sha(data),"git_blob_sha1":tree_entries[name]["git_blob_sha1"]})
   lookup={item["path"]:item for item in source_files}
-  for expected_file in application["expected_files"]:
+  for expected_file in application["expected_files"]+application["bootstrap_expected_files"]:
    for key in ("bytes","sha256","git_blob_sha1"):
     assert lookup[expected_file["path"]][key]==expected_file[key],expected_file["path"]+" "+key
   source_manifest={"schema":"stellar-forge.camt053.current-source-receiving.v1","sourceCommit":application["source_commit"],
     "tree":git_run(["rev-parse","HEAD^{tree}"]).strip(),"repository":application["repository_url"],"files":source_files,"dependencies":dependency_records}
   (root/"APPLICATION_SOURCE_MANIFEST.json").write_text(json.dumps(source_manifest,indent=2)+"\n")
   bank=app_root/"stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements"
-  receiver=bank/"CAMT_RECEIVE.mjs";receiver.write_text(application["nodeProgram"],encoding="utf-8")
+  # The maintained product builder and runtime installer own source selection,
+  # dependency versions, the generated package lock and native import readiness.
+  distribution=app_root/"stellar/scf-starforge-20261009/distribution"
+  def runtime_command(label,arguments,timeout):
+   attempt=subprocess.run([node,*map(str,arguments)],cwd=app_root,text=True,capture_output=True,timeout=timeout)
+   record={"arguments":list(map(str,arguments)),"exitCode":attempt.returncode,"stdout":attempt.stdout,"stderr":attempt.stderr}
+   (root/(label+".json")).write_text(json.dumps(record,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+   if attempt.returncode:raise RuntimeError("Original runtime operation failed: "+label)
+   return json.loads(attempt.stdout)
+  release=runtime_command("PRODUCT_RELEASE",[distribution/"build.mjs","--repo",app_root,"--ref",application["source_commit"],
+    "--selection","merchant-bank-statements","--out",root/"product-release","--python",sys.executable],1200)
+  if release["sourceCommit"]!=application["source_commit"]:raise ValueError("Original release changed its selected commit")
+  runtime_directory=root/"installed-runtime"
+  prepared=runtime_command("RUNTIME_PREPARED",[distribution/"runtime-install-cli.mjs","prepare","--dir",runtime_directory,
+    "--archive",release["archive"],"--sha256",release["sha256"],"--native","--feature","schema","--feature","openapi","--feature","mcp","--operator"],300)
+  installed=runtime_command("RUNTIME_INSTALLED",[distribution/"runtime-install-cli.mjs","install","--dir",runtime_directory],1800)
+  inspected=runtime_command("RUNTIME_INSPECTED",[distribution/"runtime-install-cli.mjs","inspect","--dir",runtime_directory,"--load","--source"],600)
+  if installed["status"]!="READY"or inspected.get("ready")is not True or inspected.get("sourceVerified")is not True:
+   raise ValueError("The maintained original runtime has not completed source/dependency receiving")
+  installed_source=pathlib.Path(installed["sourceRoot"])
+  for expected_file in application["expected_files"]:
+   installed_file=installed_source/expected_file["path"]
+   data=installed_file.read_bytes()
+   assert len(data)==expected_file["bytes"]and sha(data)==expected_file["sha256"],expected_file["path"]
+  out["installedRuntime"]={"release":release,"prepared":prepared,"installed":installed,"inspection":inspected,
+    "dependencyLockSha256":sha((runtime_directory/"package-lock.json").read_bytes()),
+    "retention":"Complete original source release, installed source, dependency tree, runtime plans, exact dependency lock and logs."}
+  bank=installed_source/"stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements"
+  source_manifest["installedSourceRoot"]=str(installed_source)
+  original_manifest=installed_source.parent/"manifest.json"
+  source_manifest["installedProductManifest"]={"bytes":original_manifest.stat().st_size,"sha256":sha(original_manifest.read_bytes())}
+  source_manifest["executedOverlays"]=[]
+  for name,body in (("CAMT_RECEIVE.mjs",application["nodeProgram"]),("MCP_RECEIVE.mjs",application["mcpProgram"])):
+   target=bank/name;raw=body.encode("utf-8")
+   with target.open("x",encoding="utf-8")as stream:stream.write(body)
+   actual=target.read_bytes()
+   if actual!=raw:raise ValueError("The installed receiving programme changed: "+name)
+   source_manifest["executedOverlays"].append({"path":target.relative_to(installed_source).as_posix(),"bytes":len(actual),
+    "sha256":sha(actual),"git_blob_sha1":hashlib.sha1(b"blob "+str(len(actual)).encode()+b"\0"+actual).hexdigest(),
+    "kind":"explicit original receiving programme"})
+  (root/"APPLICATION_SOURCE_MANIFEST.json").write_text(json.dumps(source_manifest,indent=2)+"\n")
+  receiver=bank/"CAMT_RECEIVE.mjs"
   shutil.rmtree(app_root/".git")
-  app_run=subprocess.run([node,str(receiver),str(root),str(root/"application-result")],cwd=app_root,text=True,capture_output=True,timeout=180)
+  app_run=subprocess.run([node,str(receiver),str(root),str(root/"application-result")],cwd=installed_source,text=True,capture_output=True,timeout=1200)
   out["application"]={"sourceCommit":application["source_commit"],"sourceFiles":len(source_files),"exitCode":app_run.returncode,"stdout":app_run.stdout,"stderr":app_run.stderr}
   (root/"application-stdout.log").write_text(app_run.stdout,encoding="utf-8");(root/"application-stderr.log").write_text(app_run.stderr,encoding="utf-8")
   if(root/"application-result/APPLICATION_RESULT.json").exists():out["application"]["result"]=json.loads((root/"application-result/APPLICATION_RESULT.json").read_text())

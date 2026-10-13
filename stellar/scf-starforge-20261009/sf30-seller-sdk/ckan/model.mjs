@@ -12,6 +12,7 @@ import { bindCkanCapture, projectCkanValue } from './source.mjs';
 import { describeCkanSemantics, projectCkanSemantics, checkCkanSemanticReview, compareCkanSemantics } from './semantics.mjs';
 import { createCkanReviewedRefreshes } from './reviewed-refresh.mjs';
 import { createDcatWorkspace, validateDcatState } from './dcat-workspace.mjs';
+import { createDcatSemanticWorkspace } from './dcat-semantic.mjs';
 import { createCkanCapturePlans } from './capture-plans.mjs';
 import { createCkanRemoteWorkspace } from './remote-workspace.mjs';
 import { interruptDcatAcquisitions } from './dcat-acquisition.mjs';
@@ -214,11 +215,13 @@ export async function openCkanWorkbench({ directory, create = false, origin, sou
     const dcat = createDcatWorkspace({ directory, state, launch, persist, environment });
     const remote = await createCkanRemoteWorkspace({ directory, state, launch, persist, environment,
       assertSource: source => reviewedRefreshes.assertRefreshPublicationSource(source) });
+    const semantic = await createDcatSemanticWorkspace({ directory, state, dcat, launch, persist, environment });
     if (create) await persist();
     const api = {
       ...reviewedRefreshes,
       ...capturePlans,
       ...dcat,
+      ...semantic.api,
       ...remote,
       directory,
       status: () => structuredClone({ ...state, directory, active: active ? active.operation.id : null }),
@@ -247,6 +250,14 @@ export async function openCkanWorkbench({ directory, create = false, origin, sou
       resumeCapture(value, limits = {}) {
         const entry = find('editions', value);
         if (entry.state === 'COMPLETE') throw fault('CKAN_EDITION_ALREADY_COMPLETE', 'This retained edition is complete; start a new capture to refresh it.');
+        if (entry.capturePlanRunId) {
+          const run = state.capturePlans.runs.find(row => row.id === entry.capturePlanRunId);
+          if (!run || run.editionId !== entry.id) throw fault('CKAN_CAPTURE_PLAN_EDITION_CHANGED');
+          if (!object(limits) || Object.entries(limits).some(([key, value]) =>
+            !['maxRows', 'maxBytes'].includes(key) || value !== entry.limits[key]))
+            throw fault('CKAN_CAPTURE_PLAN_LIMITS_PINNED', 'Resume this original capture plan run with its retained limits; save a new plan version to change future captures.');
+          return capturePlans.resumeCapturePlanRun(run.id, { expectedIntentSha256: run.intentSha256 });
+        }
         return launch('resume edition', (signal, progress) => { entry.limits = { ...entry.limits, ...limits }; return capture(entry, signal, progress); });
       },
       importCapture(filename, { expectedManifestSha256 } = {}) {
@@ -452,7 +463,7 @@ export async function openCkanWorkbench({ directory, create = false, origin, sou
       cancel() { if (!active) throw fault('CKAN_NO_ACTIVE_OPERATION'); active.controller.abort(); return { cancelling: active.operation.id }; },
       async close() {
         if (closed) return; closed = true; active?.controller.abort();
-        try { await active?.completion; } finally { await release(); }
+        try { await active?.completion; } finally { await semantic.close(); await release(); }
       },
     };
     return api;

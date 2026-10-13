@@ -1,0 +1,100 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "invoice-settlement",
+  "heading": "## Invoice reconciliation, reviewed Stellar deposits and independent customer receiving",
+  "sources": [
+    {
+      "id": "invoice-settlement-customer-operations",
+      "label": "Invoice & Settlement installed customer operations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/INVOICE_SETTLEMENT_CUSTOMER.md",
+      "editions": [
+        {
+          "commit": "c1cd32e1d0e8d28ed2c2e40332276c06c7f4ae67",
+          "bytes": 14164,
+          "sha256": "e3eb45920436198246507d6888de1187b4d1a0c47607aba6b65e0cb852f3323d",
+          "git_blob": "a14da14941d9dd79919e53cd17597a3d0992dbf6"
+        },
+        {
+          "commit": "1b19665fde7c5fc7fbbe6ebc37557364e3670ba6",
+          "bytes": 17895,
+          "sha256": "bc756487244fd091566bfc4a47099f0798f5344f88780990b638e913244c5cc0",
+          "git_blob": "e50c61045e9da50824f99d5cb1e2557c675679c0"
+        }
+      ]
+    },
+    {
+      "id": "invoice-settlement-horizon-review",
+      "label": "Original Horizon invoice review and decisions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/HORIZON_INVOICES.md",
+      "editions": [
+        {
+          "commit": "c1cd32e1d0e8d28ed2c2e40332276c06c7f4ae67",
+          "bytes": 11639,
+          "sha256": "b67e5f38b6bebcd9a4275d81056c4518a57fa003ca238e3804a8c02bb4a5f8eb",
+          "git_blob": "2b4dda51afe1b43be9712483cbe43bcffc4b1ae6"
+        }
+      ]
+    },
+    {
+      "id": "invoice-settlement-applications",
+      "label": "Invoice & Settlement application and full receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/APPLICATIONS.md",
+      "editions": [
+        {
+          "commit": "c1cd32e1d0e8d28ed2c2e40332276c06c7f4ae67",
+          "bytes": 17696,
+          "sha256": "7c3e1150dd54718a0964d833ea27d0714f47a1197f4fbc6e641e466725ff22d6",
+          "git_blob": "4b2d75acbdefa246c6d7dede96e6bbbfe1dbfb42"
+        }
+      ]
+    },
+    {
+      "id": "invoice-settlement-installation",
+      "label": "Complete Invoice & Settlement commissioning and Installation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/INVOICE_SETTLEMENT.md",
+      "editions": [
+        {
+          "commit": "ee5bc72e41892c7ddc7597946a0bc592920e8a3b",
+          "bytes": 20583,
+          "sha256": "b6a56502b648216b5124dbca3142619e11f3e0e2d90f9a1ac20588535029a202",
+          "git_blob": "81542a43a8e59d0126b756f8299e071ac4b80bc0"
+        },
+        {
+          "commit": "33f1e1fabbb9db1b80028512064ba973f5e5e580",
+          "bytes": 20881,
+          "sha256": "0f123d9499d31488517f0d633919227cddcce7d219a25ea6f30a5073843b48cb",
+          "git_blob": "037b38fc12e73d0c3a6fa0f7dc21d8a205d8732f"
+        }
+      ]
+    },
+    {
+      "id": "invoice-settlement-installation-profile",
+      "label": "Maintained Invoice & Settlement workorder profile",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/invoice-settlement.json",
+      "editions": [
+        {
+          "commit": "ee5bc72e41892c7ddc7597946a0bc592920e8a3b",
+          "bytes": 13227,
+          "sha256": "6f9af1c4de2f7c76f86319b6a1512866ce604f433009fd8bb43ea978205455b2",
+          "git_blob": "f000d005f0f125419d694aae991d12c00e33eef0"
+        },
+        {
+          "commit": "33f1e1fabbb9db1b80028512064ba973f5e5e580",
+          "bytes": 13227,
+          "sha256": "a9a768968f9165b49fc39b399feeb4abc26aa8ba1b786dfbedf87bedc691bd5b",
+          "git_blob": "efcb6c69d170d014f7eba6b24fccc5bed3db62d9"
+        }
+      ]
+    }
+  ]
+}
