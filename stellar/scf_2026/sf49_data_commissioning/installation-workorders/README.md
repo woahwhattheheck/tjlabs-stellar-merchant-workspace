@@ -27,6 +27,8 @@ The maintained commercial importer remains the entry for an original customer Wo
 | GEOROBOTIX_CSAPI.md | Full GeoRobotix commissioning scope, exact selected archive/reference, operator/runtime setup, recovery and complete source/Installation handover |
 | industrial-reconciliation.json | Native historian or retained local sources → reviewed immutable editions → explicit normalization/tolerances → complete accounting, engineer decisions and editable customer receiving |
 | INDUSTRIAL_RECONCILIATION.md | Whole source/meaning intake, original Workshare phases and fee, Installation setup, operator/CLI/MCP workflow and independent complete receiving |
+| canadabuys-bidder-desk.json | Complete procurement source → reviewed capability/evidence/decision → original publication → editable independent customer receiving |
+| CANADABUYS_INSTALLATION.md | Original Workshare/source preparation, installed MCP customer, complete download/recovery and native Installation receiving |
 | supplier-catalogues.json | Complete supplier editions → selected customer import → full current recipient catalogue → customer receiving |
 | supplier-orders.json | Complete original order/profile/adapter → fulfilment and declared HTTPS → portable editable customer receiving |
 | source-inputs.py | Complete original packets and explicit effort sources → original native commissioning/packet formats |
@@ -38,6 +40,8 @@ The installed Grant Operations product exposes the same CLI as `starforge grant-
 Use the repository's maintained Linux/Node runtime. The preparation CLI uses Node's standard library; the sources command also uses Python's standard library and the original SF47 Workshare importer. These local preparation commands make no service calls. The selected customer applications retain their own native runtime/dependency requirements.
 
 ## Discover the installed customer programmes
+
+For CanadaBuys procurement commissioning, select **canadabuys-bidder-desk** and follow [CANADABUYS_INSTALLATION.md](CANADABUYS_INSTALLATION.md). It carries the complete retained source, decision and installed customer workflow into the original Workshare/Installation; its actual execution status remains in the original receiving records.
 
 ~~~sh
 starforge grant-installation-workorder profiles
