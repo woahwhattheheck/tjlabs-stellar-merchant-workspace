@@ -69,3 +69,20 @@ The retained flow is **OECD.SDD.STES:DSD_STES@DF_CLI(4.1)** and its correspondin
 OECD describes the amplitude-adjusted composite leading indicator as a qualitative turning-point indicator with long-term average 100. Use the original [indicator definition](https://www.oecd.org/en/data/indicators/composite-leading-indicator-cli.html), [methodology and revision explanation](https://www.oecd.org/en/data/insights/data-explainers/2024/04/composite-leading-indicators-frequently-asked-questions.html), and [retained source record](../../stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/SOURCE.md) when interpreting a briefing.
 
 Application code is MIT. The OECD observations retain [OECD Data Terms, section 3](https://www.oecd.org/en/about/terms-conditions.html), their dataset-specific annotations and the acknowledgment carried in every new customer report.
+
+## Actual rendered-product delivery
+
+**Applies to every current and future peer, provider, local session and cloud worker.** Before calling a client/prospect-facing app, website, dashboard, demo, report, presentation or export ready, the producing peer must open, run or render the exact outgoing version, look at its actual rendered screen or real screenshots, and operate its important user controls. Capturing screenshots without viewing them is insufficient. Inspect the actual screenshare width and narrow/mobile width where relevant; inspect populated, empty, loading and error states, downloads, exports and reopening.
+
+Fix ugly, broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized product work before presenting it. Code review, DOM counts, HTTP 200, unit checks and another peer's approval do not replace seeing the actual product. Use plain industrial design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve the real workflows, data and computation.
+
+This inspection is part of delivery and leads directly to concrete repairs. It must not replace implementation and integration, become endless rechecking, create a peer-approval gate, launch broad suites or become a separate verification product. Continue useful authorized source and product work while the exact native/rendered receiving operation proceeds; preserve the actual execution state and existing operation identity.
+
+Persist this rule in every active owner-controlled instruction surface that the provider and workers actually read: global/project AGENTS, CLAUDE, GEMINI and rules files, provider boot instructions, Commons source mirrors, cloud repository instruction copies, and current build/receiving guides. Include it in child assignments. Preserve other owner controls, historical evidence and third-party/vendor instructions. Do not force restarts, add watchers or restart owner-stopped work. Existing project-specific owner cutoffs remain in force.
+
+Bryce's placement instruction: “that rule goes in every policy file the agents read not just a slack ping” and “and not just local sessions or ones from this provider”. Original coordination transport: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999 .
+
+
+The requirement covers every outgoing attachment as well as the application. Open each final report/document/archive attachment in its actual useful form; play final audio/video where present. Keep the same source edition, original operation and actual runtime custody through this course.
+
+Use the full analyst/customer browser, report, attachment and reopening course in [RECEIVING.md](RECEIVING.md#complete-oecd-analyst-and-customer-browser-course) on the original programme.

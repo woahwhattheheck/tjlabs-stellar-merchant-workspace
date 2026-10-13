@@ -329,21 +329,21 @@
       },
       {
         "path": "products/oecd/README.md",
-        "bytes": 6428,
-        "sha256": "9021c382c4db314165e701982e9c752cd3798392d0cc5b56c14474353599bbb7",
-        "git_blob": "4769dc31fb5301eb072b0540386e3149213836ce"
+        "bytes": 9256,
+        "sha256": "62c575126d6099108a993686bde697836cb527b97ee20299b138402ba3423f37",
+        "git_blob": "b4996d4e0e5b9343c87b612f7567b8e8cff11fd5"
       },
       {
         "path": "products/oecd/OPERATING.md",
-        "bytes": 10636,
-        "sha256": "74b33e764ceda4c5996004817d8fc568727e158b585c8e90b0a71684685b5dac",
-        "git_blob": "0124d3ff3e00005da3e0824f7865461ce30c6c34"
+        "bytes": 13464,
+        "sha256": "feedcd319bf79e82d3d0a65aa5938508ba74164d5a98dda1acd67b1a321fcb27",
+        "git_blob": "a1bf0b31e12f8dda7abbc58822a6a86adf914a41"
       },
       {
         "path": "products/oecd/RECEIVING.md",
-        "bytes": 8954,
-        "sha256": "a63a61809b67dcd777fefe6c148bef231f2e2282212e89cc2a0d41ed373f1487",
-        "git_blob": "a2940c747b2a628800f9a4a5e90007e83cfa1d86"
+        "bytes": 13622,
+        "sha256": "c37fab3dc363cf504fa89e20be4ac9f46a348a5ff0db45741b1bdc4d86a3d15a",
+        "git_blob": "807d075022823b472d856ffc0151b14b83efd1a9"
       },
       {
         "path": "products/oecd/SCF_PRODUCT.md",
