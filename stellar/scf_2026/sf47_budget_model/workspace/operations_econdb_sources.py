@@ -37,7 +37,7 @@ UUID = re.compile(r"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}
 SHA = re.compile(r"[a-f0-9]{64}")
 ROUTE = re.compile(r"^/api/operations/(operation-[a-f0-9]{32})/econdb-sources(?:/(.*))?$")
 ACTIONS = {"catalogue", "inspect", "template", "prepare"}
-KINDS = {"archive", "seed", "bindings", "commissioning", "attachment"}
+KINDS = {"archive", "seed", "bindings", "commissioning", "attachment", "review"}
 FIELDS = {
     "catalogue": {"requestId", "archiveId"},
     "inspect": {"requestId", "archiveId", "projectId", "projectRevision", "expectedInputSha256"},
@@ -332,7 +332,317 @@ def _seed(ops, case_id, body):
         return installations._source(context)
 
 
+FOLLOWING = "stellar-forge.econdb-installation-following.v1"
+FOLLOWING_SNAPSHOT = "stellar-forge.econdb-following-native-snapshot.v1"
+FOLLOWING_FIELDS = {
+    "following-compare": {"requestId", "priorPreparationId", "inspectionId", "nativeCaseId",
+                         "priorInstallationRevision", "priorInstallationSha256", "installationId",
+                         "expectedRevision", "expectedInstallationSha256", "expectedVersion"},
+    "following-prepare": {"requestId", "comparisonId", "reviewId", "nativeCaseId",
+                         "priorPreparationId", "inspectionId", "priorInstallationRevision", "priorInstallationSha256",
+                         "installationId", "expectedRevision", "expectedInstallationSha256", "expectedVersion"},
+}
+
+
+def _same_json(left, right):
+    """JSON equality without Python's bool == 1 alias; never re-encode JS decimals."""
+    if isinstance(left, bool) or isinstance(right, bool):
+        return type(left) is type(right) and left == right
+    if isinstance(left, (int, float)) and isinstance(right, (int, float)):
+        return left == right
+    if type(left) is not type(right):
+        return False
+    if isinstance(left, dict):
+        return left.keys() == right.keys() and all(_same_json(left[k], right[k]) for k in left)
+    if isinstance(left, list):
+        return len(left) == len(right) and all(_same_json(a, b) for a, b in zip(left, right))
+    return left == right
+
+
+def _following_snapshot(ops, case_id, body, prior_preparation):
+    """Capture actual retained rows in one original SQLite read transaction."""
+    require(body.get("nativeCaseId") == case_id, "Keep the original native case identity.")
+    ident = installations.identity(body.get("installationId"))
+    expected_revision = installations.revision(body.get("expectedRevision"))
+    prior_revision = installations.revision(body.get("priorInstallationRevision"))
+    require(SHA.fullmatch(body.get("expectedInstallationSha256", "")) and
+            SHA.fullmatch(body.get("priorInstallationSha256", "")),
+            "Select the exact current and historical Installation digests.")
+    with ops._snapshot():
+        context = ops._context(case_id)
+        installations._current(context, body.get("expectedVersion"))
+        current = installations.get(ops, case_id, ident)
+        prior = installations.get(ops, case_id, ident, prior_revision)
+        require(current["revision"] == expected_revision and
+                current["sha256"] == body["expectedInstallationSha256"] and
+                prior["sha256"] == body["priorInstallationSha256"],
+                "An original saved Installation selection changed.", "INSTALLATION_CONFLICT", 409)
+        require(isinstance(prior_preparation, dict) and
+                prior_preparation.get("schema") == "stellar-forge.econdb-customer-installation.v1" and
+                prior_preparation.get("state") == "PREPARED" and
+                prior_preparation.get("installationSource", {}).get("caseId") == case_id and
+                _same_json(prior_preparation.get("document"), prior["preview"]["document"]) and
+                prior_preparation.get("workshareCaseId") == prior["preview"]["document"].get("workshare", {}).get("caseId") and
+                SHA.fullmatch(prior_preparation.get("preparationSha256", "")),
+                "The complete prior preparation does not bind this actual historical Installation.",
+                "ECONDB_SOURCE_CHANGED", 409)
+        original_workshare = workshares.verify_document(ops, context, current["preview"]["document"])
+        prior_binding, current_binding = prior["preview"]["document"]["workshare"], current["preview"]["document"]["workshare"]
+        require(original_workshare is not None and all(
+                _same_json(prior_binding.get(key), current_binding.get(key)) for key in
+                ("caseId", "sourceId", "sourceSha256", "packetSourceId", "packetSha256", "planSha256")),
+                "The commercial Workshare selection advanced. Complete the original commercial workflow and "
+                "retain its matching complete preparation before following this source scope.",
+                "ECONDB_WORKSHARE_CHANGED", 409)
+        p, plan = context["program"], context["plan"]
+        case_value = {
+            "program": {key: deepcopy(p[key]) for key in ("id", "version", "mode", "planId")},
+            "plan": {**{key: deepcopy(plan[key]) for key in ("id", "revision", "contentSha256")},
+                     "source": {"sha256": plan["source"]["sha256"]}},
+            "installations": installations.latest_refs(installations.load_heads(ops, case_id)),
+        }
+        return {"schema": FOLLOWING_SNAPSHOT, "nativeCaseId": case_id,
+                "priorInstallation": deepcopy(prior), "installation": deepcopy(current),
+                "caseValue": case_value}, installations._source(context)
+
+
+def _descriptor_json(ops, case_id, row):
+    """Read the exact service-owned immutable blob, retaining its literal JSON bytes."""
+    require(isinstance(row, dict) and SHA.fullmatch(row.get("fileId", "")),
+            "Keep the complete retained following proof file descriptor.")
+    descriptor = _engine(ops, case_id, "file", {"fileId": row["fileId"]})
+    file, fd, before = _verified_handle(ops, case_id, descriptor)
+    try:
+        require(file["bytes"] <= MAX_JSON and file["bytes"] == row.get("bytes") and
+                file["sha256"] == row.get("sha256"),
+                "The retained following proof identity differs.", "ECONDB_SOURCE_CHANGED", 409)
+        chunks, size = [], 0
+        while True:
+            block = os.read(fd, 262144)
+            if not block:
+                break
+            chunks.append(block)
+            size += len(block)
+            require(size <= file["bytes"], "The complete following proof grew.")
+        raw = b"".join(chunks)
+        require(size == file["bytes"] and hashlib.sha256(raw).hexdigest() == file["sha256"] and
+                _identity(before) == _identity(os.fstat(fd)),
+                "The original following proof changed.", "ECONDB_SOURCE_CHANGED", 409)
+        return _json(raw)
+    finally:
+        os.close(fd)
+
+
+def _following_selection(ops, case_id, action, body):
+    if action == "following-compare":
+        return {key: body[key] for key in ("priorPreparationId", "inspectionId",
+                "priorInstallationRevision", "priorInstallationSha256")}
+    comparison = _engine(ops, case_id, "get", {"requestId": body.get("comparisonId")})
+    require(isinstance(comparison, dict) and comparison.get("type") == "following-compare" and
+            comparison.get("status") == "COMPLETE",
+            "Reopen the complete original following comparison first.", "ECONDB_SOURCE_NOT_PREPARED", 409)
+    original = _json(_read(_root(ops, case_id) / "case-requests" / (body["comparisonId"] + ".json")))
+    previous = original.get("input", {})
+    require(original.get("caseId") == case_id and original.get("action") == "following-compare" and
+            all(_same_json(previous.get(key), body.get(key)) for key in
+                ("installationId", "expectedRevision", "expectedInstallationSha256", "expectedVersion", "nativeCaseId",
+                 "priorPreparationId", "inspectionId", "priorInstallationRevision", "priorInstallationSha256")),
+            "The reviewed following comparison belongs to another actual Installation or case edition.",
+            "ECONDB_SOURCE_CHANGED", 409)
+    return {key: previous[key] for key in ("priorPreparationId", "inspectionId",
+            "priorInstallationRevision", "priorInstallationSha256")}
+
+
+def perform_following(ops, case_id, action, body):
+    require(action in FOLLOWING_FIELDS and isinstance(body, dict) and
+            set(body) == FOLLOWING_FIELDS[action],
+            "Use the complete declared following-edition request.")
+    request_id = body.get("requestId")
+    require(isinstance(request_id, str) and UUID.fullmatch(request_id),
+            "Retain the original following request UUID.")
+    for key in ("priorPreparationId", "inspectionId", "comparisonId"):
+        if key in body:
+            require(isinstance(body[key], str) and UUID.fullmatch(body[key]),
+                    "Select the original " + key + " UUID.")
+    if "reviewId" in body:
+        require(isinstance(body["reviewId"], str) and SHA.fullmatch(body["reviewId"]),
+                "Select the complete original review file identity.")
+    root = _root(ops, case_id)
+    requests = _directory(root / "case-requests")
+    retained = (canonical({"schema": SCHEMA, "caseId": case_id, "action": action, "input": body}) + "\n").encode()
+    _publish(requests / (request_id + ".json"), retained)
+    receipt_path = requests / (request_id + ".result.json")
+    try:
+        return _json(_read(receipt_path))
+    except FileNotFoundError:
+        pass
+    snapshot_path = requests / (request_id + ".native.json")
+    native_request_path = requests / (request_id + ".native-request.json")
+    prior_result = _engine(ops, case_id, "get", {"requestId": request_id})
+    recovered = isinstance(prior_result, dict) and prior_result.get("status") == "COMPLETE"
+    if recovered:
+        snapshot_raw = _read(snapshot_path, MAX_INPUT)
+        snapshot = _json(snapshot_raw)
+        native_request = _json(_read(native_request_path, MAX_INPUT))
+        require(prior_result.get("type") == action and
+                all(_same_json(prior_result.get("request", {}).get(k), v) for k, v in native_request.items()) and
+                snapshot.get("schema") == FOLLOWING_SNAPSHOT and snapshot.get("nativeCaseId") == case_id,
+                "The completed following request has another original native binding.",
+                "ECONDB_SOURCE_REQUEST_CHANGED", 409)
+        result = prior_result
+        p, plan = snapshot["caseValue"]["program"], snapshot["caseValue"]["plan"]
+        source = {"caseId": p["id"], "version": p["version"], "mode": p["mode"],
+                  "planId": plan["id"], "planRevision": plan["revision"],
+                  "planContentSha256": plan["contentSha256"], "planSourceSha256": plan["source"]["sha256"]}
+    else:
+        selection = _following_selection(ops, case_id, action, body)
+        prepared = _engine(ops, case_id, "preparation", {"requestId": selection["priorPreparationId"]})
+        snapshot, source = _following_snapshot(ops, case_id, {**body, **selection}, prepared)
+        snapshot_raw = (canonical(snapshot) + "\n").encode("utf-8")
+        require(len(snapshot_raw) <= MAX_INPUT, "The complete native source snapshot exceeds 8 MiB.", status=413)
+        _publish(snapshot_path, snapshot_raw)
+        native_request = {key: body[key] for key in
+                          (("requestId", "priorPreparationId", "inspectionId", "nativeCaseId")
+                           if action == "following-compare" else
+                           ("requestId", "comparisonId", "reviewId", "nativeCaseId"))}
+        native_request.update(nativeSnapshotPath=str(snapshot_path),
+                              nativeSnapshotSha256=hashlib.sha256(snapshot_raw).hexdigest())
+        _publish(native_request_path, (canonical(native_request) + "\n").encode())
+        result = _engine(ops, case_id, action, native_request)
+    require(result.get("schema") == SERVICE_SCHEMA and result.get("requestId") == request_id and
+            result.get("nativeSnapshotSha256") == hashlib.sha256(snapshot_raw).hexdigest(),
+            "The following result does not bind the complete actual native snapshot.",
+            "ECONDB_SOURCE_ENGINE_RESPONSE", 502)
+    result = deepcopy(result)
+    result.update(caseId=case_id, status="COMPLETE", request=deepcopy(body), nativeSource=source)
+    if action == "following-prepare":
+        _verify_following_result(ops, case_id, result, snapshot)
+        prepared = result.get("installation", {})
+        with ops._snapshot():
+            context = ops._context(case_id)
+            current = installations.get(ops, case_id, body["installationId"])
+            matches = (context["program"]["version"] == body["expectedVersion"] and
+                       current["revision"] == body["expectedRevision"] and
+                       current["sha256"] == body["expectedInstallationSha256"])
+            if recovered and not matches:
+                result["nativePreview"], result["requiresCurrentPreview"] = None, True
+            else:
+                require(matches, "The original case or Installation changed before native preview.",
+                        "INSTALLATION_CONFLICT", 409)
+                result["nativePreview"] = installations.preview(ops, context, prepared["preview"])
+                require(_same_json(result["nativePreview"]["document"], prepared["document"]),
+                        "The native writer normalized different following content.", "ECONDB_SOURCE_CHANGED", 409)
+    _publish(receipt_path, (canonical(result) + "\n").encode())
+    return result
+
+def verify_following_native(proof, snapshot):
+    """Verify literal JS proofs, selected original rows and protected native fields."""
+    require(isinstance(proof, dict) and proof.get("schema") == FOLLOWING + ".native-input" and
+            isinstance(snapshot, dict) and snapshot.get("schema") == FOLLOWING_SNAPSHOT,
+            "Retain the full original following proof and native snapshot.")
+    following, proofs = proof.get("following"), proof.get("proofs")
+    require(isinstance(following, dict) and following.get("schema") == FOLLOWING + ".prepared" and
+            isinstance(proofs, dict), "Keep the complete original prepared following result.")
+    comparison = following.get("comparison")
+    require(isinstance(comparison, dict) and comparison.get("schema") == FOLLOWING + ".comparison",
+            "Keep the full original source comparison.")
+    bodies = {"following": {k: v for k, v in following.items() if k != "sha256"},
+              "comparison": {k: v for k, v in comparison.items() if k != "sha256"},
+              **{key: proof.get(key) for key in
+                 ("before", "after", "priorPreparation", "priorInstallation", "installation", "lineage", "commercial")}}
+    require(set(proofs) == set(bodies), "Retain every original canonical proof.")
+    hashes = {}
+    for key, value in bodies.items():
+        literal = proofs[key]
+        require(isinstance(literal, str) and _same_json(_json(literal), value),
+                "The canonical proof has different complete " + key + " content.")
+        hashes[key] = hashlib.sha256(literal.encode("utf-8")).hexdigest()
+    basis = following.get("basis", {})
+    require(hashes["following"] == following.get("sha256") and
+            hashes["comparison"] == comparison.get("sha256") and
+            _same_json(basis, comparison.get("basis")) and
+            hashes["before"] == basis.get("before", {}).get("sourceSha256") and
+            hashes["after"] == basis.get("after", {}).get("sourceSha256") and
+            hashes["priorPreparation"] == basis.get("priorPreparation", {}).get("resultSha256") and
+            hashes["lineage"] == basis.get("lineageSha256") and
+            hashes["commercial"] == basis.get("commercialSha256") and
+            _same_json(comparison.get("commercial"), proof.get("commercial")),
+            "The complete following proofs differ from their original retained identities.")
+    p, plan = snapshot["caseValue"]["program"], snapshot["caseValue"]["plan"]
+    source = {"caseId": p["id"], "version": p["version"], "mode": p["mode"],
+              "planId": plan["id"], "planRevision": plan["revision"],
+              "planContentSha256": plan["contentSha256"], "planSourceSha256": plan["source"]["sha256"]}
+    require(proof.get("caseSource") == source and basis.get("caseSource") == source and
+            following.get("currentCaseVersion") == source["version"] and
+            snapshot.get("nativeCaseId") == p["id"] and
+            _same_json(proof["priorInstallation"], snapshot["priorInstallation"]) and
+            _same_json(proof["installation"], snapshot["installation"]) and
+            _same_json(following.get("previousInstallation"), snapshot["priorInstallation"]) and
+            _same_json(following.get("currentInstallation"), snapshot["installation"]),
+            "The following proof differs from the actual original native snapshot.")
+    prior, current = snapshot["priorInstallation"], snapshot["installation"]
+    ref = lambda row: {k: row[k] for k in ("id", "revision", "sha256")}
+    require(basis.get("installation") == ref(current) and basis.get("priorInstallation") == ref(prior) and
+            prior["id"] == current["id"] and
+            _same_json(proof["commercial"].get("workshareSource"), current["preview"]["document"]["workshare"]) and
+            proof["commercial"].get("planSha256") == current["preview"]["document"]["workshare"]["planSha256"] and
+            proof["priorPreparation"].get("preparationSha256") == basis["priorPreparation"].get("sha256") and
+            proof["priorPreparation"].get("preparationBytes") == basis["priorPreparation"].get("bytes") and
+            _same_json(proof["priorPreparation"].get("document"), prior["preview"]["document"]) and
+            _same_json(proof["priorPreparation"].get("source"), proof["before"]) and
+            _same_json(proof["lineage"], {"workspaceId": proof["after"]["workspace"]["id"],
+                                        "previousRecord": proof["before"]["project"]["record"]}),
+            "Preserve the actual saved prior preparation and original source lineage.")
+    document = following.get("document")
+    require(isinstance(document, dict), "Keep the complete following Installation document.")
+    old = current["preview"]["document"]
+    editable = {
+        "source": {"reference", "population", "meaning", "authority", "changePolicy"},
+        "receiving": {"application", "host", "operator", "acceptanceRule",
+                      "changeAndWithdraw", "recovery", "maintenance"},
+    }
+    require(set(document) == set(old), "Preserve every original native document field.")
+    for key in old:
+        if key not in editable:
+            require(_same_json(document[key], old[key]),
+                    "Keep the original operated or commercial " + key + " unchanged.")
+        else:
+            require(isinstance(document[key], dict) and set(document[key]) == set(old[key]),
+                    "Retain every original " + key + " field.")
+            for name in old[key]:
+                if name not in editable[key]:
+                    require(_same_json(document[key][name], old[key][name]),
+                            "Keep original " + key + "." + name + " unchanged.")
+    preview = following.get("preview")
+    require(_same_json(preview, {"expectedVersion": source["version"], "installationId": current["id"],
+                                "expectedRevision": current["revision"], "document": document}),
+            "Use the same original Installation writer and selected revisions.")
+    return {"followingSha256": following["sha256"], "comparisonSha256": comparison["sha256"],
+            "caseSource": source, "priorInstallation": ref(prior), "installation": ref(current),
+            "document": document, "preview": preview}
+
+
+def _verify_following_result(ops, case_id, result, snapshot):
+    rows = [row for row in result.get("files", []) if row.get("name") == "ECONDB_FOLLOWING_NATIVE_INPUT.json"]
+    require(len(rows) == 1, "Retain the complete original following native proof.")
+    proof = _descriptor_json(ops, case_id, rows[0])
+    checked = verify_following_native(proof, snapshot)
+    prepared = result.get("installation", {})
+    require(_same_json(result.get("following"), proof["following"]) and
+            _same_json(prepared.get("source"), checked["caseSource"]) and
+            _same_json(prepared.get("document"), checked["document"]) and
+            _same_json(prepared.get("preview"), checked["preview"]),
+            "The native following preparation differs from its verified original proof.",
+            "ECONDB_SOURCE_CHANGED", 409)
+    return checked
+
+
+ACTIONS.update(FOLLOWING_FIELDS)
+
+
 def perform(ops, case_id, action, body):
+    if action in FOLLOWING_FIELDS:
+        return perform_following(ops, case_id, action, body)
     require(action in ACTIONS and isinstance(body, dict) and not set(body) - FIELDS[action],
             "Use the complete declared Econdb source request.")
     request_id = body.get("requestId")
@@ -543,6 +853,7 @@ def _download(handler, ops, case_id, descriptor, describe=False):
 
 
 def register_static(static):
+    static["/operations_econdb_following.mjs"] = ("operations_econdb_following.mjs", "text/javascript; charset=utf-8")
     static["/operations_econdb_sources.mjs"] = ("operations_econdb_sources.mjs", "text/javascript; charset=utf-8")
     static["/operations_econdb_sources.css"] = ("operations_econdb_sources.css", "text/css; charset=utf-8")
     static["/ECONDB_SOURCE_DESK.md"] = ("ECONDB_SOURCE_DESK.md", "text/markdown; charset=utf-8")
@@ -674,7 +985,7 @@ def preparation_archive(ops, case_id, request_id):
     """Bundle the same full original preparation; the existing receiver adopts it."""
     require(isinstance(request_id, str) and UUID.fullmatch(request_id), "Keep the original preparation UUID.")
     result = lookup(ops, case_id, request_id)
-    require(result.get("schema") == SERVICE_SCHEMA and result.get("type") == "prepare" and
+    require(result.get("schema") == SERVICE_SCHEMA and result.get("type") in ("prepare", "following-prepare") and
             isinstance(result.get("files"), list) and result["files"],
             "Complete the original full preparation before downloading it.", "ECONDB_SOURCE_NOT_PREPARED", 409)
     root = _root(ops, case_id)
@@ -701,7 +1012,9 @@ def preparation_archive(ops, case_id, request_id):
     manifest = {"schema": SCHEMA + ".preparation-archive", "caseId": case_id, "requestId": request_id,
                 "preparationSha256": result.get("preparationSha256"), "files": files,
                 "preparation": public_result(result),
-                "receiving": "Use the unchanged runEcondbInstallationReceiving with all original preparation files."}
+                "receiving": ("Use runEcondbFollowingReceiving with all original prior/following preparation files."
+                              if result["type"] == "following-prepare" else
+                              "Use the unchanged runEcondbInstallationReceiving with all original preparation files.")}
     manifest_raw = (canonical(manifest) + "\n").encode()
     require(total + len(manifest_raw) <= MAX_EXPORT, "The complete original receiving archive exceeds the supported exact-integer stream size.", status=413)
     exports = _directory(root / "exports")

@@ -155,7 +155,7 @@ def execute(desk, args):
             return client.list(args.offset, args.limit), None
         if action == "file-describe":
             return client.file(args.file_id), None
-        if action in ("catalogue", "inspect", "template", "prepare"):
+        if action in ("catalogue", "inspect", "template", "prepare", "following-compare", "following-prepare"):
             return client.perform(action, object_file(args.request)), None
         raise ValueError("Choose a declared complete Econdb source operation.")
     if args.command in ("prepare-command", "prepare-upload", "archive-inspect",
@@ -331,13 +331,13 @@ def main(argv=None):
         else:
             command.add_argument("--inspection-id", required=True)
             command.add_argument("--path", required=True)
-    for action in ("catalogue", "inspect", "template", "prepare"):
+    for action in ("catalogue", "inspect", "template", "prepare", "following-compare", "following-prepare"):
         command = sub.add_parser("econdb-" + action)
         command.add_argument("--request", required=True, type=Path,
                              help="Complete original source-service request with retained UUID and case version")
     command = sub.add_parser("econdb-import")
     command.add_argument("--file", required=True, type=Path)
-    command.add_argument("--kind", required=True, choices=("archive", "seed", "bindings", "commissioning", "attachment"))
+    command.add_argument("--kind", required=True, choices=("archive", "seed", "bindings", "commissioning", "attachment", "review"))
     command.add_argument("--request-id", required=True)
     command.add_argument("--expected-sha256", required=True)
     command.add_argument("--filename")

@@ -30,12 +30,16 @@ export async function main(argv=process.argv.slice(2)){
  need(await realpath(context.workspaceDirectory)===context.workspaceDirectory&&
   inside(context.workspaceDirectory,options['--directory'])&&inside(context.workspaceDirectory,options['--input']),
   'Keep the complete invocation and sidecar inside the original private customer workspace.');
- if(['template','prepare'].includes(request.action))
+ if(['template','prepare','following-compare','following-prepare'].includes(request.action))
   need(request.input.nativeCaseId===context.caseId,'Keep this complete preparation bound to the selected original customer case.');
  if(request.action==='import-file')need(typeof request.input.path==='string'&&isAbsolute(request.input.path)&&
   resolve(request.input.path)===request.input.path&&inside(context.workspaceDirectory,request.input.path),
   'Import only the original workspace-owned staged source file.');
- const actions=new Set(['import-file','catalogue','inspect','template','prepare','get','list','file','source-file']);
+ if(['following-compare','following-prepare'].includes(request.action))need(typeof request.input.nativeSnapshotPath==='string'&&
+  isAbsolute(request.input.nativeSnapshotPath)&&resolve(request.input.nativeSnapshotPath)===request.input.nativeSnapshotPath&&
+  inside(context.workspaceDirectory,request.input.nativeSnapshotPath)&&await realpath(request.input.nativeSnapshotPath)===request.input.nativeSnapshotPath,
+  'Use the unchanged native-owned snapshot inside the original customer workspace.');
+ const actions=new Set(['import-file','catalogue','inspect','template','prepare','get','list','file','source-file','preparation','following-compare','following-prepare']);
  need(actions.has(request.action),'Use a supported original Econdb source operation.');
  const controller=new AbortController(),stop=()=>controller.abort(new Error('Original Source Desk operation interrupted.'));
  process.once('SIGINT',stop);process.once('SIGTERM',stop);
@@ -48,6 +52,9 @@ export async function main(argv=process.argv.slice(2)){
    case 'inspect':result=await service.inspect(request.input);break;
    case 'template':result=await service.template(request.input);break;
    case 'prepare':result=await service.prepare(request.input);break;
+   case 'preparation':result=await service.preparation(request.input);break;
+   case 'following-compare':result=await service.followingCompare(request.input);break;
+   case 'following-prepare':result=await service.followingPrepare(request.input);break;
    case 'get':result=await service.get(request.input.requestId);break;
    case 'list':result=await service.list(request.input);break;
    case 'file':result=await service.file(request.input.fileId);break;

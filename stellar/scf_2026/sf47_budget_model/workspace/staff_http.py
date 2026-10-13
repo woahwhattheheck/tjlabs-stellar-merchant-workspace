@@ -251,7 +251,8 @@ def authorize(handler):
                 fail("A delivery lead retains complete Econdb commissioning sources.")
             return
         if action in ("econdb-sources/catalogue", "econdb-sources/inspect",
-                      "econdb-sources/template", "econdb-sources/prepare"):
+                      "econdb-sources/template", "econdb-sources/prepare",
+                      "econdb-sources/following-compare", "econdb-sources/following-prepare"):
             if role not in ("lead", "reviewer"):
                 fail("A delivery lead or reviewer prepares the original Econdb source.")
             handler.json_body()

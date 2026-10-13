@@ -3,7 +3,7 @@ import type {Buffer} from 'node:buffer';
 import type {GrantJsonResponse,GrantNativeResponse,GrantObject} from './agent-client.mjs';
 export const ECONDB_SOURCE_DESK_SCHEMA:'stellar-forge.econdb-source-desk.v1';
 export const ECONDB_SOURCE_DESK_MAX_FILE:number;
-export type EcondbSourceKind='archive'|'seed'|'bindings'|'commissioning'|'attachment';
+export type EcondbSourceKind='archive'|'seed'|'bindings'|'commissioning'|'attachment'|'review';
 export interface EcondbSourceFile extends GrantObject {
  fileId:string;kind:string;name:string;bytes:number;sha256:string;schema:string;
  /** Download-only aliases. No host filesystem path is exposed. */
@@ -21,6 +21,19 @@ export interface EcondbSourceTemplateInput extends EcondbSourceRequest {
 }
 export interface EcondbSourcePreparationInput extends EcondbSourceTemplateInput {
  bindingsId:string;attachments?:Array<{fileId:string;name:string;purpose:string}>;
+}
+export interface EcondbFollowingCompareInput extends EcondbSourceRequest {
+ priorPreparationId:string;inspectionId:string;nativeCaseId:string;expectedVersion:number;
+ installationId:string;expectedRevision:number;expectedInstallationSha256:string;
+ priorInstallationRevision:number;priorInstallationSha256:string;
+}
+export interface EcondbFollowingPrepareInput extends EcondbFollowingCompareInput {comparisonId:string;reviewId:string}
+export interface EcondbFollowingComparison extends EcondbSourceResult {
+ comparisonId:string;priorPreparationId:string;inspectionId:string;nativeCaseId:string;
+ nativeSnapshotSha256:string;comparison:GrantObject;review:GrantObject;
+}
+export interface EcondbFollowingPreparation extends EcondbSourcePreparation {
+ comparisonId:string;reviewId:string;priorPreparationId:string;following:GrantObject;nativeSnapshotSha256:string;
 }
 export interface EcondbSourceResult extends GrantObject {
  schema:'stellar-forge.econdb-installation-preparation-service.v1.result';
@@ -59,6 +72,8 @@ export interface EcondbSourceInputs {
  inspect:{caseId:string;body:EcondbSourceInspectionInput};
  template:{caseId:string;body:EcondbSourceTemplateInput};
  prepare:{caseId:string;body:EcondbSourcePreparationInput};
+ 'following-compare':{caseId:string;body:EcondbFollowingCompareInput};
+ 'following-prepare':{caseId:string;body:EcondbFollowingPrepareInput};
  request:{caseId:string;requestId:string};
  'archive-describe':{caseId:string;requestId:string};
  list:{caseId:string;offset?:number;limit?:number};
@@ -73,6 +88,8 @@ export interface EcondbSourceResponses {
  inspect:GrantJsonResponse<EcondbSourceResult>;
  template:GrantJsonResponse<EcondbSourceTemplate>;
  prepare:GrantJsonResponse<EcondbSourcePreparation>;
+ 'following-compare':GrantJsonResponse<EcondbFollowingComparison>;
+ 'following-prepare':GrantJsonResponse<EcondbFollowingPreparation>;
  request:GrantJsonResponse<EcondbSourceResult|EcondbSourcePending>;
  'archive-describe':GrantJsonResponse<EcondbSourceFile>;
  list:GrantJsonResponse<EcondbSourceList>;

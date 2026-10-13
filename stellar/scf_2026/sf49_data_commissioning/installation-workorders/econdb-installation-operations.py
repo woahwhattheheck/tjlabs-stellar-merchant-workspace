@@ -95,13 +95,73 @@ def compare(original, original_files, received, received_files):
             "originalSources": len(original["sources"]), "receivedSources": len(received["sources"]),
             "savedEditions": totals, "laterRecordChanges": changes}
 
+def following_native(args):
+    """Original local custody read; the unchanged Installation writer performs saves."""
+    from model import Workspace
+    import operations_econdb_sources as sources
+    need(args.workspace is not None and args.case is not None,
+         "Select the existing original native workspace and case")
+    root = args.workspace.absolute()
+    need(root.resolve() == root and root.is_dir() and
+         stat.S_ISREG((root / "planning.sqlite3").lstat().st_mode),
+         "Open the existing original Operations workspace, not a new or linked directory")
+    workspace = Workspace(root, ROOT.parent / "sf10_current_candidate.json")
+    try:
+        ops = Operations(workspace)
+        if args.following_context:
+            value = json.loads(read(args.following_context, 64 * 1024 * 1024))
+            need(isinstance(value, dict) and set(value) == {"selection", "priorPreparation"},
+                 "Use the complete actual following context input")
+            snapshot, source = sources._following_snapshot(ops, args.case,
+                value["selection"], value["priorPreparation"])
+            return {"snapshot": snapshot, "source": source}
+        need(args.native_snapshot is not None, "Select the retained original native snapshot")
+        proof = json.loads(read(args.following_proof, 64 * 1024 * 1024))
+        snapshot = json.loads(read(args.native_snapshot, 8 * 1024 * 1024))
+        checked = sources.verify_following_native(proof, snapshot)
+        need(checked["caseSource"]["caseId"] == args.case,
+             "The following proof belongs to another original case")
+        with ops._snapshot():
+            context = ops._context(args.case)
+            for field in ("priorInstallation", "installation"):
+                selected = snapshot[field]
+                actual = installations.get(ops, args.case, selected["id"], selected["revision"])
+                need(sources._same_json(actual, selected), "The original saved native row changed")
+            head = installations.get(ops, args.case, checked["installation"]["id"])
+            current_source = installations._source(context)
+            current = (current_source == checked["caseSource"] and
+                       head["revision"] == checked["installation"]["revision"] and
+                       head["sha256"] == checked["installation"]["sha256"])
+            preview = installations.preview(ops, context, checked["preview"]) if current else None
+            if preview is not None:
+                need(sources._same_json(preview["document"], checked["document"]),
+                     "The original native writer normalized different following content")
+        return {**checked, "nativePreview": preview, "requiresCurrentPreview": not current,
+                "actualCurrentSource": current_source}
+    finally:
+        workspace.close()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--archive", type=Path, required=True)
-    parser.add_argument("--selection", type=Path, required=True)
+    parser.add_argument("--archive", type=Path)
+    parser.add_argument("--selection", type=Path)
+    parser.add_argument("--workspace", type=Path)
+    parser.add_argument("--case")
+    parser.add_argument("--following-context", type=Path)
+    parser.add_argument("--following-proof", type=Path)
+    parser.add_argument("--native-snapshot", type=Path)
     parser.add_argument("--received", type=Path)
     parser.add_argument("--received-case")
     args = parser.parse_args()
+    if args.following_context or args.following_proof:
+        need(bool(args.following_context) != bool(args.following_proof) and
+             not args.archive and not args.selection and not args.received and not args.received_case,
+             "Select exactly one original following-native operation")
+        print(json.dumps(following_native(args), ensure_ascii=False, allow_nan=False))
+        return
+    need(args.archive is not None and args.selection is not None and not args.workspace and
+         not args.case and not args.native_snapshot, "Select the original archive and selection")
     need(bool(args.received) == bool(args.received_case), "Select both receiving archive and native case identity")
     raw = read(args.archive, 320 * 1024 * 1024)
     expected = json.loads(read(args.selection, 8 * 1024 * 1024))

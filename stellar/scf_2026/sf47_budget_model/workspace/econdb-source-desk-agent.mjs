@@ -19,6 +19,8 @@ const fields={
  catalogue:['requestId','archiveId'],
  inspect:['requestId','archiveId','projectId','projectRevision','expectedInputSha256'],
  template:['requestId','inspectionId','seedId','commissioningId','nativeCaseId','expectedVersion'],
+ 'following-compare':['requestId','priorPreparationId','inspectionId','nativeCaseId','expectedVersion','installationId','expectedRevision','expectedInstallationSha256','priorInstallationRevision','priorInstallationSha256'],
+ 'following-prepare':['requestId','comparisonId','reviewId','priorPreparationId','inspectionId','nativeCaseId','expectedVersion','installationId','expectedRevision','expectedInstallationSha256','priorInstallationRevision','priorInstallationSha256'],
  prepare:['requestId','inspectionId','seedId','bindingsId','commissioningId','nativeCaseId','expectedVersion','attachments'],
 };
 export function planEcondbSourceOperation(action,input){
@@ -28,7 +30,7 @@ export function planEcondbSourceOperation(action,input){
  if(action==='import'){
   exact(input,['caseId','requestId','kind','name','bytes','sha256']);
   uuid(input.requestId);sha(input.sha256);
-  need(['archive','seed','bindings','commissioning','attachment'].includes(input.kind),'Choose an original source kind.');
+  need(['archive','seed','bindings','commissioning','attachment','review'].includes(input.kind),'Choose an original source kind.');
   need(typeof input.name==='string'&&input.name.length>0&&input.name.length<=200&&
    !/[/\\\x00-\x1f\x7f]/.test(input.name)&&!['.','..'].includes(input.name),'Keep the original plain filename.');
   need(Buffer.isBuffer(input.bytes)||input.bytes instanceof Uint8Array,'Retain complete original input bytes.');
@@ -43,9 +45,11 @@ export function planEcondbSourceOperation(action,input){
  }else if(Object.hasOwn(fields,action)){
   exact(input,['caseId','body']);exact(input.body,fields[action],fields[action].filter(k=>k!=='attachments'));
   const body=json(input.body);uuid(body.requestId);
-  for(const k of ['archiveId','seedId','bindingsId','commissioningId','expectedInputSha256'])
+  for(const k of ['archiveId','seedId','bindingsId','commissioningId','expectedInputSha256','reviewId','expectedInstallationSha256','priorInstallationSha256'])
    if(body[k]!==undefined)sha(body[k]);
-  if(body.inspectionId!==undefined)uuid(body.inspectionId);
+  for(const k of ['inspectionId','priorPreparationId','comparisonId'])if(body[k]!==undefined)uuid(body[k]);
+  for(const k of ['expectedRevision','priorInstallationRevision'])if(body[k]!==undefined)whole(body[k],1,Number.MAX_SAFE_INTEGER);
+  if(body.installationId!==undefined)need(/^installation-[a-f0-9]{32}$/.test(body.installationId),'Keep the actual saved Installation.');
   if(body.projectRevision!==undefined)whole(body.projectRevision,1,Number.MAX_SAFE_INTEGER);
   if(body.expectedVersion!==undefined)whole(body.expectedVersion,1,10000000);
   if(body.nativeCaseId!==undefined)need(body.nativeCaseId===input.caseId,'Retain the same original case selection.');

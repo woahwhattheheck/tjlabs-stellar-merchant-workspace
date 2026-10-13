@@ -1579,7 +1579,7 @@ export function mountInstallationSources(root,bridge){
       if(target.matches('[data-research-upload]')){run(()=>research.chooseFile(target));return;}
       if(research.edit(target)){render();return;}
       if(target.matches('[data-flowable-upload]')){run(()=>flowable.chooseFile(target));return;}
-      if(target.matches('[data-econdb-upload]')){run(()=>econdb.chooseFile(target));return;}
+      if(target.matches('[data-econdb-upload],[data-econdb-following-review-file]')){run(()=>econdb.chooseFile(target));return;}
       if(flowable.edit(target)){render();return;}
       if(econdb.edit(target)){render();return;}
       if(editions.edit(target)){render();return;}
