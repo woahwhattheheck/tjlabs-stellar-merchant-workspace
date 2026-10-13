@@ -102,3 +102,9 @@ The selected financial receiving programme reads ordinary installed source throu
 The Results transfer is the original owner's legacy-compatible complete postimage `bb11009027ad4eca01fca30998a1718775951fb8` from commit `ad07e749861424e732440d0af11f985b657a5f2c`. It reconstructs the original exporter report basis from validated projections when reopening the retained ZIP. The original `report.py` stays unchanged; old report bytes are preserved.
 
 Source preparation, a native operation result and a durable customer handover are separate receipts. This source capsule contains original application code and public publisher inputs, without an executed private customer workspace or an assertion that every native receiving phase has completed.
+
+## Private intermediate directories
+
+The installer creates every new intermediate directory with mode `0700`, including when the caller uses the usual `0022` umask. The previous implementation applied `mode=0700` only to the leaf passed to `Path.mkdir`; Python created intermediate parents with the caller's umask, and a later source member caused the installer to reject its own parent. Directory creation now temporarily applies `0077` and restores the caller's umask immediately afterward. Existing ownership, symlink, content and permission checks continue to apply.
+
+A full native installation under caller umask `0022` loaded all 203 members and 4,553,356 source bytes, parsed all 58 Python and 32 JavaScript files, and produced only `0700` source directories. This installation then restored the original completed FCDO case and exported revision 5 with the current application source.

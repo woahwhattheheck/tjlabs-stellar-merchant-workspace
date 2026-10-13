@@ -156,7 +156,7 @@ def authorize(handler):
                 bind_actor(handler, handler.json_body())
             return
         fail("A lead or finance operator uses the installation's accounting directory.")
-    if path == "/api/operations" and method in ("GET", "HEAD"):
+    if path in ("/api/operations", "/api/operations/installation-source-profiles") and method in ("GET", "HEAD"):
         if role == "contributor":
             fail("Open the contributor work desk at /team.")
         return
@@ -184,7 +184,8 @@ def authorize(handler):
             return
         if role == "contributor":
             fail("Use the contributor desk's original work and invoice commands.")
-        if action in READ_POSTS:
+        if (action in READ_POSTS or re.fullmatch(
+                r"installation-sources/source-desk-[a-f0-9]{32}/files/input-[a-f0-9]{64}/inspect", action)):
             return
         if role == "lead" or role == "finance" and (
                 action in ("ledger-intake-apply", "cash-correction", "account-reconciliation") or action.startswith("commercial/")):

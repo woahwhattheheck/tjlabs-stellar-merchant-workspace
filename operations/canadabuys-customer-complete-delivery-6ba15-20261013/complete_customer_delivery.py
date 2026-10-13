@@ -6,7 +6,7 @@ from pathlib import Path
 from datetime import datetime,timezone
 
 OP="CANADABUYS-AGENT-CUSTOMER-6BA15-20261012"
-ROOT=Path("/dev/shm/canadabuys-customer-6ba15-20261013")
+ROOT=Path("/dev/canadabuys-customer-6ba15-20261013")
 SHARED=Path("/workspace/scratch/6ba15c52ace4/canadabuys-customer-delivery-20261013")
 OWNED=None
 def now():return datetime.now(timezone.utc).isoformat()
@@ -213,6 +213,7 @@ def main():
  try:
   require(PAYLOAD["operationId"]==OP,"Original whole input belongs to another operation")
   pubjson(ROOT/"original-input.json",PAYLOAD)
+  if PAYLOAD.get("preparationHistory") is not None:pubjson(ROOT/"recovery/original-materialization-history.json",PAYLOAD["preparationHistory"])
   publish(ROOT/"producer/complete_customer_delivery.py",PAYLOAD["mainSource"].encode())
   publish(ROOT/"producer/installed_customer.mjs",PAYLOAD["nodeDriver"].encode())
   publish(ROOT/"producer/child_gate.py",PAYLOAD["gateSource"].encode())

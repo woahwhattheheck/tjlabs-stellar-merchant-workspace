@@ -28,6 +28,7 @@ import { prepareReleaseDelivery, verifyReleaseDeliveryStartup } from './release-
 import { acquireReleaseLease, releaseProcessOwner, releaseOwnerLiveness, recordedSellerAlive,
   validProcessIdentity, validReleaseLease, sameReleaseLease } from './release-process.mjs';
 import { resolveReleaseInstallation, writeReleaseInstallation } from './release-installation.mjs';
+import { writeDatasetInstallation, copyDatasetInstallation } from './release-dataset-installation.mjs';
 import { NATIVE_SDK_VERSION } from '../sf30-seller-sdk/native-version.mjs';
 
 // Resolve only the selected original native release implementation. Every stage
@@ -572,6 +573,33 @@ export async function installReleaseHandler(root, releaseId, input) {
       effectiveRuntime: installed.runtime };
   });
 }
+/** Restore a verified original dataset store under both native lifetime leases.
+ * Installation changes host placement only; the staged dataset and release stay immutable. */
+/** Hold the original stopped seller and state leases while a trusted receiver
+ * copies its complete retained source. No release selection or state is changed. */
+export async function withStoppedReleaseCopy(root, action) {
+  if (typeof action !== 'function') throw new TypeError('Supply a trusted source-copy callback.');
+  root = resolve(root); await readReleaseState(root);
+  const running = await lock(root, 'run.lock');
+  try { return await mutate(root, async () => action({ root, state: await readReleaseState(root) })); }
+  finally { await running(); }
+}
+export async function installDatasetReleaseStore(root, releaseId, input) {
+  root = resolve(root); await readReleaseState(root);
+  const running = await lock(root, 'run.lock');
+  try {
+    return await mutate(root, async () => {
+      const { record, path } = await releaseRecord(root, id(releaseId));
+      if (!record.dataset) throw new TypeError('Select an original versioned dataset release.');
+      const snapshot = await inspectDatasetRelease(path, { ignoreInstallation: true });
+      if (stable(snapshot.dataset) !== stable(record.dataset) || stable(snapshot.files) !== stable(record.files))
+        throw new Error('The original staged dataset source changed before installation.');
+      const installed = await writeDatasetInstallation(path, snapshot, input);
+      await releaseRecord(root, releaseId, true);
+      return { release: publicRelease(record), installation: installed.installation, reused: installed.reused };
+    });
+  } finally { await running(); }
+}
 export async function inspectReleaseInstallation(root, releaseId) {
   const selected = await releaseRecord(resolve(root), id(releaseId), true);
   return { release: publicRelease(selected.record), installation: selected.installation,
@@ -880,6 +908,7 @@ export async function stageRetainedRelease(root, options) {
     const snapshot = await sourceSnapshot(temp, runtime.upstreams, runtime.allowLoopbackUpstream === true);
     if (stable(snapshot.files) !== stable(original.files) || stable(snapshot.routes) !== stable(original.routes))
       throw new Error('Copied source differs from the inspected retained release.');
+    if (original.dataset) await copyDatasetInstallation(sourcePath, temp, target, { dataset: original.dataset });
     return await mutate(root, async () => {
       const concurrent = await existing();
       if (concurrent) return concurrent;

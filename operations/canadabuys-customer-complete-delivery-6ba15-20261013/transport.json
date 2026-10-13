@@ -2,61 +2,11 @@
   "schema": "commons.canadabuys-customer-native-transport.v1",
   "operationId": "CANADABUYS-AGENT-CUSTOMER-6BA15-20261012",
   "sourceCommit": "950bbacb7a55b53c43b74164679e0070cb1f9154",
-  "wireBytes": 1266072,
-  "wireSha256": "609f53ef719698e4a811529c30360ce455dc570d46876520a6a4de36b1ee7193",
-  "inputBytes": 4204142,
-  "inputSha256": "a96dbb36c226c0f3ecbc39fcce61423beff55a515d468f1153f283992e94d2a0",
-  "compressedBytes": 949553,
+  "wireBytes": 1272004,
+  "wireSha256": "d8882f32aeab098c7af69d188d6d89feff03c4be631674ef5106f62d33a6156b",
+  "inputBytes": 4219373,
+  "inputSha256": "7b8e9da2183f227a1976783687dd576b1ed8c152ee104347be4d14f7144da764",
+  "compressedBytes": 954002,
   "encoding": "deflate-raw/base64",
-  "compressor": "pako 2.1.0",
-  "files": [
-    {
-      "path": "operations/canadabuys-customer-complete-delivery-6ba15-20261013/complete_customer_delivery.py",
-      "bytes": 18488,
-      "sha256": "1cd52904a5d286fe4713cf5f1e6ec736b27c588920cbd329229ccd6f398e9d65",
-      "mode": "100755"
-    },
-    {
-      "path": "operations/canadabuys-customer-complete-delivery-6ba15-20261013/installed_customer.mjs",
-      "bytes": 7458,
-      "sha256": "a1a0399c7fc6f2a292f57c8131db20c60201bbedae0ecda2030912de5381d61a",
-      "mode": "100755"
-    },
-    {
-      "path": "operations/canadabuys-customer-complete-delivery-6ba15-20261013/child_gate.py",
-      "bytes": 963,
-      "sha256": "c43a27d24abf02440f2e41c7be49551135f7b48681536dd73f2e575c3ccc0db8",
-      "mode": "100755"
-    },
-    {
-      "path": "operations/canadabuys-customer-complete-delivery-6ba15-20261013/official_library_save_bridge.py",
-      "bytes": 6449,
-      "sha256": "1e31a986b70f5cb54c8feec6a14147fffa281294affd0056912df575c35f602c",
-      "mode": "100755"
-    },
-    {
-      "path": "operations/canadabuys-customer-complete-delivery-6ba15-20261013/bootstrap.py",
-      "bytes": 3759,
-      "sha256": "6345a9d8f01d71c162f219505796a845da0b7a536b4a91af42a1dd467db42e7d",
-      "mode": "100755"
-    },
-    {
-      "path": "operations/canadabuys-customer-complete-delivery-6ba15-20261013/controller.js",
-      "bytes": 4229,
-      "sha256": "fae249b8d20628cf91738f097cd60cab17d331e424df2e4225422886659238a0",
-      "mode": "100644"
-    },
-    {
-      "path": "operations/canadabuys-customer-complete-delivery-6ba15-20261013/input.deflate.b64",
-      "bytes": 1266072,
-      "sha256": "609f53ef719698e4a811529c30360ce455dc570d46876520a6a4de36b1ee7193",
-      "mode": "100644"
-    },
-    {
-      "path": "operations/canadabuys-customer-complete-delivery-6ba15-20261013/README.md",
-      "bytes": 6108,
-      "sha256": "c1124a352bf43703a6c458708a9ef765c3ae678da10470b7fa96dfedf38fe0d5",
-      "mode": "100644"
-    }
-  ]
+  "compressor": "pako 2.1.0"
 }

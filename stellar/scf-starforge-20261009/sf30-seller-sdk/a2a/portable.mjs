@@ -2,6 +2,8 @@
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { LIMITS, SCHEMA, fail, sha, canonical, clone, identifier, integer, object, decodeBase64, digest, nativeOutputParts, safeName, mediaType } from './foundation.mjs';
 
+import { validateCommissioning } from './commissioning.mjs';
+
 const WORKSPACE='stellar-forge.a2a-portable-workspace.v1';
 const RESULT='stellar-forge.a2a-result-edition.v1';
 export function encodePacket(packet) {
@@ -31,12 +33,16 @@ function validateHistory(packet){
   identifier(packet.projectId);integer(packet.revision,'revision',1,1000000);
   if(!Array.isArray(packet.history)||packet.history.length!==packet.revision||!Array.isArray(packet.requests))fail('PACKET_HISTORY');
   const objects=new Map(packet.objects.map(x=>[x.sha256,x.bytes])),requestIds=new Set();let previous=null;
+  const objectRows=new Map(packet.objects.map(row=>[row.sha256,row])), decoded=new Map(), resultCache=new Map();
+  const read=hash=>{if(!decoded.has(hash)){const row=objectRows.get(hash);if(!row)fail('MISSING_SOURCE_OBJECT');decoded.set(hash,decodeBase64(row.contentBase64,LIMITS.packetBytes));}return decoded.get(hash);};
+  const result=(current,editionId)=>{const edition=current.editions.find(row=>row.id===editionId);if(!edition||edition.projectRevision>current.revision)fail('EDITION_SOURCE_MISSING');const original=packet.history[edition.projectRevision-1]?.body, retained=original?.editions.find(row=>row.id===editionId);if(!retained||canonical(retained)!==canonical(edition))fail('EDITION_SOURCE_CHANGED');const key=editionId+':'+edition.projectRevision;if(!resultCache.has(key)){const selected=resultSelection(original,editionId);selected.objects=[...new Set(selected.sources.map(row=>row.sha256))].sort().map(hash=>{const row=objectRows.get(hash);if(!row)fail('MISSING_SOURCE_OBJECT');return row;});validateResult(selected);resultCache.set(key,selected);}return resultCache.get(key);};
   for(let i=0;i<packet.history.length;i++){
     const record=packet.history[i],p=record.body;
     if(record.revision!==i+1||p?.id!==packet.projectId||p.schema!==SCHEMA||p.revision!==i+1||sha(canonical(p))!==record.sha256||record.event?.sha256!==record.sha256||record.event.previousSha256!==previous||record.event.revision!==i+1)fail('HISTORY_IDENTITY');
     for(const field of ['sources','cards','messages','observations','operations','artifactCaptures','reviews','editions','handoffs','publications'])if(!Array.isArray(p[field]))fail('HISTORY_FIELDS');
     if(!p.connection||typeof p.connectionId!=='string'||typeof p.originWorkspaceId!=='string'||typeof p.executionWorkspaceId!=='string')fail('HISTORY_FIELDS');
     if(!Array.isArray(p.sources))fail('HISTORY_SOURCES');for(const source of p.sources)if(!objects.has(source.sha256)||objects.get(source.sha256)!==source.bytes)fail('MISSING_SOURCE_OBJECT');
+    validateCommissioning(p,{read,result});
     previous=record.sha256;
   }
   if(packet.history.at(-1).body.operations.some(x=>['prepared','running'].includes(x.state)))fail('PACKET_ACTIVE_OPERATION','Receive only a closed original local capture.');
@@ -134,16 +140,21 @@ export function makePacket(workspace,projectId,{revision=null,handoffId=null,inc
   const sources=history.flatMap(h=>h.body.sources);
   return{schema:WORKSPACE,projectId:selected.id,revision:selected.revision,createdAt:selected.updatedAt,handoffId,history,requests,objects:filesFor(workspace,sources,{includePrivate})};
 }
-export function makeResultPacket(workspace,project,editionId,{includePrivate=false}={}){
-  const edition=project.editions.find(x=>x.id===editionId);if(!edition)fail('EDITION_NOT_FOUND',undefined,404);
-  const p=workspace.raw(project.id,edition.projectRevision),observation=p.observations.find(x=>x.id===edition.observationId),capture=p.artifactCaptures.find(x=>x.id===edition.captureId),review=p.reviews.find(x=>x.id===edition.reviewId),card=p.cards.find(x=>x.id===edition.selection.cardId);
+function resultSelection(p,editionId){
+  const edition=p.editions.find(x=>x.id===editionId);if(!edition||edition.projectRevision>p.revision)fail('EDITION_NOT_FOUND',undefined,404);
+  const observation=p.observations.find(x=>x.id===edition.observationId),capture=p.artifactCaptures.find(x=>x.id===edition.captureId),review=p.reviews.find(x=>x.id===edition.reviewId),card=p.cards.find(x=>x.id===edition.selection.cardId);
   if(!observation||!capture||!review||!card)fail('EDITION_SOURCE_MISSING');
   const operation=p.operations.find(x=>x.id===observation.operationId),captureOperation=p.operations.find(x=>x.id===capture.operationId);
   const sourceIds=new Set([card.sourceId,observation.sourceId,...observation.sourceIds,...capture.files.map(x=>x.sourceId),...(operation?.sourceIds??[]),...(captureOperation?.sourceIds??[])]);
   const messages=p.messages.filter(x=>x.sendRequestId===observation.operationId||x.adoptedTaskId===observation.value?.id||x.native.message.taskId===observation.value?.id||(observation.value?.history??[]).some(h=>h.messageId===x.native.message.messageId));
   for(const message of messages)sourceIds.add(message.sourceId);
-  const sources=p.sources.filter(x=>sourceIds.has(x.id)),packet={schema:RESULT,project:{id:p.id,title:p.title,revision:p.revision,originWorkspaceId:p.originWorkspaceId},createdAt:edition.createdAt,edition:clone(edition),card:clone(card),messages:clone(messages),observation:clone(observation),capture:clone(capture),review:clone(review),operations:[operation,captureOperation].filter(Boolean).map(clone),sources,objects:filesFor(workspace,sources,{includePrivate})};
-  validateResult(packet);return packet;
+  const sources=p.sources.filter(x=>sourceIds.has(x.id));
+  return{schema:RESULT,project:{id:p.id,title:p.title,revision:p.revision,originWorkspaceId:p.originWorkspaceId},createdAt:edition.createdAt,edition:clone(edition),card:clone(card),messages:clone(messages),observation:clone(observation),capture:clone(capture),review:clone(review),operations:[operation,captureOperation].filter(Boolean).map(clone),sources};
+}
+export function makeResultPacket(workspace,project,editionId,{includePrivate=false}={}){
+  const edition=project.editions.find(x=>x.id===editionId);if(!edition)fail('EDITION_NOT_FOUND',undefined,404);
+  const selected=workspace.raw(project.id,edition.projectRevision),packet=resultSelection(selected,editionId);
+  packet.objects=filesFor(workspace,packet.sources,{includePrivate});validateResult(packet);return packet;
 }
 export function receiveIntoWorkspace(workspace,packet,{requestId,packetSha256}){
   identifier(requestId,'receive requestId');if(packet.schema!==WORKSPACE)fail('WORKSPACE_PACKET_REQUIRED','Use the result inspection/download workflow for a purchased result edition.');

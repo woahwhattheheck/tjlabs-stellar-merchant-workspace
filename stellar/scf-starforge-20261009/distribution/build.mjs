@@ -6,6 +6,7 @@ import { resolve, posix } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { openGitSource, MAX_SOURCE_FILE_BYTES, MAX_SOURCE_BYTES } from './git-source.mjs';
 import { createBrowserAssetIndex } from './browser-assets.mjs';
+import { runtimeNodeRequirement } from './runtime-profile.mjs';
 import { productPackageMetadata } from './product-package.mjs';
 import { distributionPath, contributionDirectory, contributionPaths, composeDistribution } from './specification.mjs';
 import { sourceSelectionDirectory, sourceSelectionPath, validateSourceSelection,
@@ -17,15 +18,15 @@ export { inspectDistributionBuild };
 
 const json = value => JSON.stringify(value, null, 2) + '\n';
 const digest = data => createHash('sha256').update(data).digest('hex');
-const supported = /\.(?:mjs|js|cjs|ts|mts|py|pyi|rb|rbs|erb|php|go|rs|java|dmn|dmn11|json|jsonl|ndjson|toml|md|html|css|txt|sql|csv|tsv|xml|xsd|dtd|yaml|yml|svg|png|woff2|service|proto)$/i;
+const supported = /\.(?:mjs|js|cjs|ts|mts|py|pyi|rb|rbs|erb|php|go|rs|java|dmn|dmn11|cmmn|json|jsonl|ndjson|toml|md|html|css|txt|sql|csv|tsv|xml|xsd|dtd|yaml|yml|svg|png|woff2|service|proto)$/i;
 const excludedName = /(?:^test[_.-]|[.]test[.]|[.]spec[.]|(?:^|[-_])acceptance(?:[-_.]|$)|(?:^|[-_])focused[-_]?check[.]|_check[.])/i;
 const excludedDirs = new Set(['test', 'tests', 'fixtures', 'snapshots', 'node_modules', '__pycache__']);
 
 function isRuntimeFile(path, explicitRuntime = false, sourceFormat) {
   const parts = path.split('/');
   // Retained source data can have an original fixtures path. Only explicitly
-  // declared data and native XML/DMN models get this exception; executable fixtures stay excluded.
-  const declaredData = explicitRuntime && (sourceFormat === 'json' || /\.(?:csv|json|txt|parquet|xml|dmn|dmn11)$/i.test(path));
+  // declared data and native XML/DMN/CMMN models get this exception; executable fixtures stay excluded.
+  const declaredData = explicitRuntime && (sourceFormat === 'json' || /\.(?:csv|json|txt|parquet|xml|dmn|dmn11|cmmn)$/i.test(path));
   // An explicit original file is an exact source selection, not a directory
   // expansion hint. Its extension cannot override that declaration. Keep the
   // heuristic format list for automatic component/import discovery; all paths
@@ -222,13 +223,14 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   if (missingModules.length) throw new TypeError('Unpackaged relative modules:\n' + missingModules.join('\n'));
   // Runtime drivers follow the exact source commit, including new production
   // dependencies such as the PostgreSQL cursor. Development fixtures stay out.
-  const runtimeDependencies = Object.create(null), runtimePackageSources = {};
+  const runtimeDependencies = Object.create(null), runtimePackageSources = {}, runtimeEngines = {};
   const featurePeers = { ...spec.featurePeers };
   for (const [group, path] of Object.entries(spec.runtimePackageManifests ?? {})) {
     const original = JSON.parse(sources.get(path));
     if (!original.dependencies || typeof original.dependencies !== 'object' || Array.isArray(original.dependencies) ||
         !Object.keys(original.dependencies).length && !/^>=\d+(?:\.\d+)?(?:\.\d+)?$/.test(original.engines?.node ?? ''))
       throw new TypeError('Runtime dependencies or an explicit Node engine are required: ' + path);
+    runtimeEngines[group] = original.engines?.node ?? null;
     featurePeers[group] = {};
     for (const [name, version] of Object.entries(original.dependencies)) {
       if (!/^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/.test(name) ||
@@ -255,7 +257,7 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   const metadata = {
     name: spec.name, version, private: true, type: 'module', license: 'MIT',
     description: product.description,
-    engines: { node: '>=22.16.0' },
+    engines: { node: runtimeNodeRequirement(runtimeEngines) },
     bin: Object.fromEntries(Object.entries(product.bin).map(([name, path]) => [name, './source/' + path])),
     exports: spec.exports, files: ['source/', 'manifest.json', 'README.md', 'LICENSE'],
     peerDependencies: Object.fromEntries(Object.entries(optionalPeers).map(([name, value]) => [name, value.version])),

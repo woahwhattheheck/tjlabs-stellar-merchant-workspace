@@ -33,6 +33,11 @@ backup --state ABS --state-root ABS --out NEW_BUNDLE --review SHA256 --quiesced
        [--profile ABS] [--pass-env SF88_BACKUP_PASSPHRASE]
 backup-verify --bundle ABS [--expect RECORD_SHA256] [--pass-env NAME] [--python ABS]
 backup-restore --bundle ABS [--expect RECORD_SHA256] [--pass-env NAME] [--python ABS]
+session-backup-review --session ABS --state-root ABS [--include ABS ...]
+session-backup --session ABS --state-root ABS --out NEW_BUNDLE --review SHA256 --quiesced
+               [--include ABS ...] [--pass-env SF88_BACKUP_PASSPHRASE]
+session-backup-verify --bundle ABS [--expect RECORD_SHA256] [--pass-env NAME]
+session-backup-restore --bundle ABS [--expect RECORD_SHA256] [--pass-env NAME]
 analysis-review --state ABS --session SAVED_NAME --name SOURCE --format json|csv
                 [--analysis-python ABS]
 analysis-open --state ABS [--session SAVED_NAME --name SOURCE --format json|csv --review SHA256]
@@ -59,6 +64,11 @@ Workspace backup captures received files, native operators, original journals,
 saved parts and completed objects through the existing encrypted recovery engine.
 Restore publishes only to the original absent/empty state root and reopens saved
 purchase records. Set its separate passphrase environment in this terminal.
+Standalone zero-cap sessions use session-backup-* with the same SF101 encryption.
+Review selects the complete original inbox, evidence, parts, assembly and lease history.
+The configured ledger must remain absent. Restore opens the original session and
+does not create a managed workspace or execute an acquisition. See
+OBJECT_SESSION_RECOVERY.md for exact review, saved-output recovery and receiving.
 All destinations are absolute and new. See OBJECTS.md for the complete journey.
 Analysis commands select a saved session NAME inside the Object Buyer workspace.
 Review binds its existing recorded file and target source revision. analysis-open
@@ -173,6 +183,9 @@ export async function main(tokens = process.argv.slice(2)) {
   }
   if (tokens[0] === 'research-open') { await researchCommand(tokens.slice(1)); return; }
   if (tokens[0] === 'operator') { await operatorCommand(tokens); return; }
+  if (['session-backup-review','session-backup','session-backup-verify','session-backup-restore'].includes(tokens[0])) {
+    await sessionRecoveryCommand(tokens); return;
+  }
   if (['backup-review','backup','backup-verify','backup-restore'].includes(tokens[0])) {
     await recoveryCommand(tokens); return;
   }
@@ -306,6 +319,49 @@ async function analysisCommand([command,...tokens]) {
   } finally {
     await model.close(); process.off('SIGINT',interrupt); process.off('SIGTERM',terminate);
     if (interrupted) process.exitCode = interrupted;
+  }
+}
+
+async function sessionRecoveryCommand([command,...tokens]) {
+  const quiesced=tokens.filter(value=>value==='--quiesced').length;
+  need(quiesced<2&&(command==='session-backup'||quiesced===0),'OBJECT_FLAG_INVALID_OR_REPEATED');
+  const args=tokens.filter(value=>value!=='--quiesced'),source=command==='session-backup-review'||command==='session-backup';
+  const names=source?['session','state-root','include',...(command==='session-backup'?['out','review','pass-env']:[])]:
+    ['bundle','expect','pass-env'];
+  need(args.length%2===0,'OBJECT_FLAG_VALUE_REQUIRED');
+  const options={include:[]};
+  for(let index=0;index<args.length;index+=2) {
+    const name=args[index].startsWith('--')?args[index].slice(2):'';
+    need(names.includes(name)&&(name==='include'||!Object.hasOwn(options,name))&&
+      args[index+1]&&!args[index+1].startsWith('--'),'OBJECT_FLAG_INVALID_OR_REPEATED');
+    if(name==='include')options.include.push(args[index+1]);else options[name]=args[index+1];
+  }
+  const controller=new AbortController();let interrupted;
+  const interrupt=()=>{interrupted??=130;controller.abort();};
+  const terminate=()=>{interrupted??=143;controller.abort();};
+  process.on('SIGINT',interrupt);process.on('SIGTERM',terminate);
+  const context={signal:controller.signal,onProgress:event=>process.stderr.write(JSON.stringify(event)+'\n')};
+  try {
+    const recovery=await import('./workspace-recovery.mjs');
+    let result;
+    if(source) {
+      need(options.session&&options['state-root'],'OBJECT_RECOVERY_SESSION_AND_ROOT_REQUIRED');
+      const input={directory:options.session,stateRoot:options['state-root'],include:options.include,
+        output:options.out,expectedReviewSha256:options.review,passEnv:options['pass-env'],quiesced:quiesced===1};
+      result=command==='session-backup-review'?await recovery.inspectObjectSessionRecovery(input,context):
+        await recovery.snapshotObjectSessionRecovery(input,context);
+    } else {
+      need(options.bundle,'WORKSPACE_RECOVERY_BUNDLE_REQUIRED');
+      const input={bundle:options.bundle,expected:options.expect,passEnv:options['pass-env']};
+      result=command==='session-backup-verify'?await recovery.verifyObjectSessionRecovery(input,context):
+        await recovery.restoreObjectSessionRecovery(input,context);
+    }
+    process.stdout.write(JSON.stringify(result,null,2)+'\n');
+    if(result.nativeReopenErrors?.length||result.publicationSyncError||result.cleanupErrors?.length||
+      result.leaseReleaseErrors?.length)process.exitCode=2;
+  } finally {
+    process.off('SIGINT',interrupt);process.off('SIGTERM',terminate);
+    if(interrupted)process.exitCode=interrupted;
   }
 }
 

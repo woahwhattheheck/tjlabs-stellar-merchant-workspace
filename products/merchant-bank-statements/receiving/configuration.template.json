@@ -368,5 +368,6 @@
   },
   "libraryHelpers": [],
   "buildHeapMiB": 512,
-  "resumeCheckpoint": null
+  "resumeCheckpoint": null,
+  "artifactDirectory": null
 }

@@ -1,0 +1,20 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "hila",
+  "description": "Source-bound HILA questionnaires, approved response editions and complete round review",
+  "commands": {
+    "dataset-hila": "stellar/scf-starforge-20261009/sf30-seller-sdk/hila/cli.mjs"
+  },
+  "commandDescriptions": {
+    "dataset-hila": "Retain the original HILA questionnaire and complete CSV/JSON editions, apply explicit approved scoring and disclosure rules, save named review decisions, and export or receive the full original source and review history."
+  },
+  "exports": {
+    "./seller/hila/client": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/hila/client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/hila/client.mjs"
+    }
+  },
+  "applicationProviders": {
+    "hila": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/hila.mjs"
+  }
+}

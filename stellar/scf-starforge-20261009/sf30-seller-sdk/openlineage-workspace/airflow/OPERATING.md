@@ -17,6 +17,19 @@ The installed Apache provider generates every event. This operator supplies conf
 
 Node 22.13.0 or later runs the workspace and operator. The Python helpers run inside the customer's installed Airflow environment. Apache provider 2.20.2 requires Airflow 2.11.0 or later. The inspector checks the installed provider and its actual dependency versions.
 
+## Choose the complete operating path
+
+| Work to complete | Entry and full guide | Result to retain |
+| --- | --- | --- |
+| Commission the customer's selected DAG cohort | [This guide](OPERATING.md), [environment inspector](environment.py), [commissioning CLI](cli.mjs) and [browser desk](desk.html) | The inspected environment, reviewed plans, complete native executions and two saved workspace editions |
+| Receive the selected Python runtime | [Runtime bundle operations](RUNTIME_BUNDLES.md) and [maintained runtime helper](runtime_bundle.py) | The exact complete dependency archive, manifest, installed inventory and runtime receiving record |
+| Operate the original CSV commissioning case | [Full native receiving guide](NATIVE_RECEIVING.md) and [native entry](RECEIVING.mjs) | Both real CSV editions, native provider events, complete reviews, customer handover and independent receiving/cold reopen |
+| Continue an interrupted case | The original native entry with `--report`, then the same original invocation | The current phase, original command/output files, existing worker or native run and subsequent receiving progress |
+
+The selected merchant installation exposes `starforge openlineage-airflow` for the commissioning CLI. The commands below use its complete source entry directly. A portable customer handover contains the original OpenLineage application and all 18 Airflow source files. [sources.json](sources.json) maps those files, their entry points, the original implementation editions and the Apache contracts.
+
+Keep the operating case, its original database and native command records on persistent storage. The Python runtime can be restored from its exact delivered archive. Its selected absolute interpreter path stays with the original plan and operation.
+
 ## 1. Inspect the original environment
 
 Run from the OpenLineage application directory:
@@ -144,6 +157,69 @@ node received-workspace/application/airflow/cli.mjs status --directory received-
 ~~~
 
 Use the newly announced connection for future execution. Keep historical plans intact; a new commissioning plan records the reopened collector origin and current environment.
+
+## 8. Receive the runtime and continue the original operation
+
+The runtime bundle is a separately delivered part of the operating package. Follow [RUNTIME_BUNDLES.md](RUNTIME_BUNDLES.md) to build it from an original installed inventory, inspect its complete members, or receive an existing archive. Use the maintained helper shipped beside this guide for receiving and restoration.
+
+Run from the complete application root:
+
+~~~bash
+python3 airflow/runtime_bundle.py receive --archive /private/incoming/airflow-original-runtime.tar.gz --sha256 DELIVERED_ARCHIVE_SHA256 --directory /private/received/airflow-runtime
+python3 airflow/runtime_bundle.py restore --bundle /private/received/airflow-runtime --runtime /original/private/selected-venv
+~~~
+
+The helper checks the delivered manifest, Python implementation, exact Python version and platform. It installs the original wheel graph with package indexes disabled, runs the native dependency check and compares the complete installed inventory. Repeating restore at the same selected location verifies and receives the existing runtime. The original reference package is CPython 3.12.14 on Linux x86_64, Airflow 2.11.0 and OpenLineage provider 2.20.2, with 144 packages; another customer's inspected environment keeps its own explicit selection.
+
+For a continued case, restore to the interpreter path already recorded in that case. Preserve the original operation directory, AIRFLOW_HOME/database, collector address, input files, exact plans and receiving destinations. These records identify the existing run and its saved work.
+
+The complete native entry in [NATIVE_RECEIVING.md](NATIVE_RECEIVING.md) performs private environment preparation, original DAG registration, both actual CSV executions and the full customer receiving journey. Its private Airflow 2 database registers the selected DAG with the native `dags reserialize --subdir` command before the first run inventory. The saved phase and command logs are reused when the operation continues.
+
+Read an existing operation without starting a DAG:
+
+~~~bash
+node /original/application/airflow/RECEIVING.mjs /original/private/operation --report
+~~~
+
+Continue that same operation after receiving its current state:
+
+~~~bash
+flock --nonblock --conflict-exit-code 75 /original/private/operation/.native-receiving.lock node /original/application/airflow/RECEIVING.mjs /original/private/operation --python /original/private/selected-venv/bin/python
+~~~
+
+The fixed report is available from startup and after each native phase. It retains the current phase, interruption history, both available execution reports and complete original command files. If an initial inventory reports an absent native DAG registration, use the current complete driver on the same private case. That inventory return occurs before creation of a native worker specification; the registered DAG can then be received by the same case. An existing worker specification or actual native run is reconciled by the executor.
+
+## Read and deliver the operating records
+
+| Record | Meaning and use |
+| --- | --- |
+| `environment.json`, exact `plan.json` and archived `plan-<sha256>.json` | The actual inspected environment, selected original DAG/configuration and immutable workspace binding |
+| Each native `execution.json` and command directory | The original native argv, process identity, stdout/stderr, exit, selected logical date and before/after run inventories |
+| `airflow-native-operation.json` | The full receiving driver's original phase checkpoints, interpreter, workspace and retained source editions |
+| `airflow-native-receiving.json` | The current full native receiving summary and exact private command/execution files, including an interrupted first command |
+| Saved commissioning reviews and comparison | The two complete original event/source cohorts and the changes between their saved editions |
+| `airflow-customer-handover.json` | The complete exported original application, all Airflow sources and reviewed commissioning documents, ready for independent receiving |
+| Runtime manifest, `runtime-intent.json` and `runtime-receiving.json` | The selected complete dependency graph, intended installation location and actual installed receiving result |
+
+The native receiving summary advances as the original case advances. A prepared runtime, a completed DAG and an independently reopened customer handover are separate completed phases in that record. Receive the full original phase outcome and its files when assessing the delivery.
+
+Keep complete native command logs, local Airflow databases and private execution records with the operating case. Customer export selects the reviewed documents and executable application through the maintained handover rules. The complete native entry then receives that export into another directory, preserves later saved work when the same archive is replayed, and opens the received application in a new process.
+
+## Complete source and implementation index
+
+The [machine-readable source index](sources.json) lists every current Airflow handover member and its role. The handover's own inventory binds the exact delivered bytes and hashes. Current exports carry 18 Airflow files; the receiver also accepts the original complete 16-file edition.
+
+| Source group | Complete maintained files |
+| --- | --- |
+| Environment and native execution | [environment.py](environment.py), [execute.py](execute.py) |
+| Plan, workspace receiving and reporting | [plan.mjs](plan.mjs), [client.mjs](client.mjs), [io.mjs](io.mjs), [report.mjs](report.mjs) |
+| Operator entry points | [cli.mjs](cli.mjs), [mcp.mjs](mcp.mjs), [desk.html](desk.html), [package.json](package.json) |
+| Portable customer receiving | [handover.mjs](handover.mjs) |
+| Original full native commissioning | [RECEIVING.mjs](RECEIVING.mjs), [receiving_csv_dag.py](receiving_csv_dag.py), [NATIVE_RECEIVING.md](NATIVE_RECEIVING.md) |
+| Original runtime delivery | [runtime_bundle.py](runtime_bundle.py), [RUNTIME_BUNDLES.md](RUNTIME_BUNDLES.md) |
+| Operating guidance and original contracts | [OPERATING.md](OPERATING.md), [sources.json](sources.json) |
+
+The implementation history joins the [complete commissioning product](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/571), [native DAG registration](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/625), [complete runtime handover](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/691), [full native progress and recovery receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/731), and [atomic runtime continuation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/739).
 
 ## Operator integration and source
 

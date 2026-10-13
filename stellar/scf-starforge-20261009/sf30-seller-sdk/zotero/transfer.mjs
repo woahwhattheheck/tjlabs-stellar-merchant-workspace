@@ -111,6 +111,7 @@ export async function exportWorkspace(store,operation,{dossiers=null}={}) {
     return {bytes:existing,filename:'zotero-workspace-'+op+'.json',sha256:read.sha256,
       workspaceId:store.identity.workspaceId,exportedAt:read.packet.exportedAt,replayed:true};}
   const state=store.snapshot(),objects=[];
+  validateSnapshot(state);
   for(const reference of snapshotObjectReferences(state)){
     const bytes=await store.objectBytes(reference);objects.push({...reference,contentBase64:bytes.toString('base64')});
   }
