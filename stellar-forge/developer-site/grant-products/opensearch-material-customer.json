@@ -1,0 +1,183 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "opensearch-material-customer",
+  "heading": "## Search products, supplier catalogues and complete customer receiving",
+  "sources": [
+    {
+      "id": "material-customer-product",
+      "label": "Complete material catalogue product",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/material-catalog/README.md",
+      "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+      "editions": [
+        {
+          "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+          "git_blob": "b00eaf5843d92e9cf2014e7ad98a39cc1cdaabfa",
+          "bytes": 7353,
+          "sha256": "c4e7bb39141329b36dca56f9eae47976146a81a1a41c1fd58cd136be5d273865"
+        }
+      ]
+    },
+    {
+      "id": "material-customer-operations",
+      "label": "Material catalogue and recipient operating workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/material-catalog/OPERATING.md",
+      "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+      "editions": [
+        {
+          "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+          "git_blob": "819e968c85f5bb185b8314fed0be2dee93f7a9b2",
+          "bytes": 23699,
+          "sha256": "e4ac50303709cb54cacbcf3fb373a7a99e7c9c829c77d463392c4b2d19794460"
+        }
+      ]
+    },
+    {
+      "id": "opensearch-source-contract",
+      "label": "Original OpenSearch source and paid merchant contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/README.md",
+      "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+      "editions": [
+        {
+          "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+          "git_blob": "7d3cf7b17d396e9d2706d8a7cea0a7db52487a18",
+          "bytes": 16264,
+          "sha256": "b9626ad7d7105b5943818e22ede8473eb4d8ac6fc29156d52afa0eb707499887"
+        }
+      ]
+    },
+    {
+      "id": "opensearch-relevance-workflow",
+      "label": "Retained native relevance and customer review",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/relevance/README.md",
+      "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+      "editions": [
+        {
+          "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+          "git_blob": "d7086c74dd4e947aba912ce01e348bfa934a05d2",
+          "bytes": 11900,
+          "sha256": "2ca725685e34eafb288fed5ad664b0e9d7e08ee478c94c75a3641c5d2a5d2256"
+        }
+      ]
+    },
+    {
+      "id": "opensearch-agent-workflow",
+      "label": "OpenSearch agent authoring and managed customer delivery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/OPENSEARCH_WORKSPACE.md",
+      "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+      "editions": [
+        {
+          "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+          "git_blob": "8e1c7aa62f97f0d0bd6b9c1982e755610e745ec9",
+          "bytes": 26037,
+          "sha256": "57cb13b2ba00b90f484717f8f2d1c72ce00dec4e38bbacdb905b942b5a7fc9c3"
+        }
+      ]
+    },
+    {
+      "id": "material-supplier-agent-workflow",
+      "label": "Material and supplier MCP and typed client",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/OPENSEARCH_MATERIALS.md",
+      "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+      "editions": [
+        {
+          "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+          "git_blob": "bb4d6d79f05d3bf9642311ff4ff2d3c01df124cd",
+          "bytes": 23885,
+          "sha256": "a20d1d91ca77851f0165d74d444097d3441bd7299a47afc6160f5e2fe2068c76"
+        }
+      ]
+    },
+    {
+      "id": "material-customer-installation",
+      "label": "Selected complete material product build and receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/MATERIAL_CATALOG.md",
+      "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+      "editions": [
+        {
+          "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+          "git_blob": "4177174c2bf4c126efd81c8a454be3a3d820bf9d",
+          "bytes": 35379,
+          "sha256": "a8b617feced0166f6173e7e00e3027610158ef28ec5d78d673c6d180d10cc4bc"
+        }
+      ]
+    },
+    {
+      "id": "material-catalogue-source-workflow",
+      "label": "Original material source, editions and customer decisions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/catalog/GUIDE.md",
+      "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+      "editions": [
+        {
+          "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+          "git_blob": "4383ebc2ec58447279691fb5d4f072710394d79f",
+          "bytes": 24748,
+          "sha256": "118771d9e128917414204264fe2c1c12ef6633cb06e0e2b769d0d5d5ebfdfa3c"
+        }
+      ]
+    },
+    {
+      "id": "opensearch-saved-workspace",
+      "label": "Original query workspace and complete customer editions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/workspace/README.md",
+      "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+      "editions": [
+        {
+          "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+          "git_blob": "34e21beb2fc5c75d68194e77223f79e203272db5",
+          "bytes": 17005,
+          "sha256": "0fbd9414a172af2609a722cf70f5a3a5896cdd28a71dc4dda3abe53ddc52a420"
+        }
+      ]
+    },
+    {
+      "id": "opensearch-original-native-relevance",
+      "label": "Completed original native OpenSearch relevance receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/receiving/relevance-native-run.json",
+      "commit": "aa426186243cd24cb06afe5423281d47c27e0f3d",
+      "editions": [
+        {
+          "commit": "aa426186243cd24cb06afe5423281d47c27e0f3d",
+          "git_blob": "5553efe7819a8aea0afd84c6ca3ba129d183e55e",
+          "bytes": 53558,
+          "sha256": "82694e8ac039cc99cdc493fa6778d1175d94be88f4abcdfbb97c82638ceaf43f"
+        }
+      ]
+    },
+    {
+      "id": "opensearch-original-native-mcp",
+      "label": "Completed original OpenSearch merchant MCP receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/receiving/mcp-native-run.json",
+      "commit": "aa426186243cd24cb06afe5423281d47c27e0f3d",
+      "editions": [
+        {
+          "commit": "aa426186243cd24cb06afe5423281d47c27e0f3d",
+          "git_blob": "d1faefc75c30416e2b04fdd46782e69aa07d5679",
+          "bytes": 3177,
+          "sha256": "c592380db59beb98256eb0da5c80c1c9972e70bc7d46a8f173f7dade245b8bf8"
+        }
+      ]
+    }
+  ]
+}
