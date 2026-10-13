@@ -1,0 +1,1270 @@
+{
+  "schema": "stellar-forge.collection-edition-comparison.v1",
+  "workspace": {
+    "id": "2d72a9c1-1010-4ea4-8cde-14b650617ff9",
+    "name": "ArchiveBlack · Institution source review · credential-redacted publication"
+  },
+  "basisRevision": "revision-63c330e37c70b5f12a4df6b414a2b6688376789ed4a92a4ee94b5aca7d264a5f",
+  "from": {
+    "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b",
+    "institution": {
+      "title": "Toronto Metropolitan University – (Formerly Ryerson University)",
+      "description": "The Archives serves as the institutional memory of the Toronto Metropolitan University community. The Archives appraises, preserves, and makes accessible a broad range of primary source materials which provide administrative, academic, fiscal, legal, social, and cultural record of Toronto Metropolitan University.",
+      "address": "\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tToronto Metropolitan University\n\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t\t\t350 Victoria Street\n\n\t\t\t\t\t\t\t\t\t\tToronto, ON\n\n\t\t\t\t\t\t\t\t\t\tM5B 2K3\t\t\t\t\t\t\t\t\t\n\n\t\t\t\t\t\t\t\t",
+      "topics": [
+        "Community and Social Life",
+        "Historical Achievements, Figures, and Biography",
+        "Military Service and War Efforts",
+        "Oppression, Activism, and Resistance"
+      ],
+      "characteristics": [
+        "Performing Arts",
+        "Oral Histories",
+        "Ethnicity, Culture & Society",
+        "Portraits"
+      ]
+    },
+    "source": {
+      "format": "archiveblack-html",
+      "filename": "ArchiveBlack_Credential_Redacted_TMU_Institution_20261013.html",
+      "url": "https://archiveblack.ca/archives/toronto-metropolitan-university-ryerson/",
+      "observedAt": "2026-10-13T07:54:47.000Z",
+      "sha256": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851",
+      "bytes": 127506
+    }
+  },
+  "to": {
+    "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f",
+    "institution": {
+      "title": "Toronto Metropolitan University – (Formerly Ryerson University)",
+      "description": "The Archives serves as the institutional memory of the Toronto Metropolitan University community. The Archives appraises, preserves, and makes accessible a broad range of primary source materials which provide administrative, academic, fiscal, legal, social, and cultural record of Toronto Metropolitan University.",
+      "address": "\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tToronto Metropolitan University\n\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t\t\t350 Victoria Street\n\n\t\t\t\t\t\t\t\t\t\tToronto, ON\n\n\t\t\t\t\t\t\t\t\t\tM5B 2K3\t\t\t\t\t\t\t\t\t\n\n\t\t\t\t\t\t\t\t",
+      "topics": [
+        "Community and Social Life",
+        "Historical Achievements, Figures, and Biography",
+        "Military Service and War Efforts",
+        "Oppression, Activism, and Resistance"
+      ],
+      "characteristics": [
+        "Performing Arts",
+        "Oral Histories",
+        "Ethnicity, Culture & Society",
+        "Portraits"
+      ]
+    },
+    "source": {
+      "format": "structured-json",
+      "filename": "TMU_reviewed_metadata_transport.json",
+      "url": "https://archiveblack.ca/archives/toronto-metropolitan-university-ryerson/",
+      "observedAt": "2026-10-13T09:48:18Z",
+      "sha256": "e47e5c4d81457a366028c7d6fa26d1b4a16229ea40d5aee6d424389eeefa96c2",
+      "bytes": 10505
+    }
+  },
+  "metadataChanges": [],
+  "rows": [
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:1",
+        "ordinal": 1,
+        "title": "Black Canada and the Great War",
+        "url": "https://www.torontomu.ca/black-canada-and-the-great-war/",
+        "sourceLocator": {
+          "start": 41267,
+          "end": 41435
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:1",
+          "ordinal": 1,
+          "title": "Black Canada and the Great War",
+          "url": "https://www.torontomu.ca/black-canada-and-the-great-war/",
+          "sourceLocator": {
+            "jsonPointer": "/entries/0"
+          },
+          "match": "exact"
+        }
+      ],
+      "candidateCount": 1,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:1",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:1",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": false,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:1",
+        "ordinal": 1,
+        "title": "Black Canada and the Great War",
+        "url": "https://www.torontomu.ca/black-canada-and-the-great-war/",
+        "sourceLocator": {
+          "jsonPointer": "/entries/0"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:1",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Research entry point for the proposed cross-collection route.",
+        "note": "The published label explicitly identifies Black Canada and the Great War. Use its own project description before writing claims about participants or holdings.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    },
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:2",
+        "ordinal": 2,
+        "title": "Mount Dennis Athletes Had Fine Minstrel Show 1921",
+        "url": "https://archives.library.torontomu.ca/index.php/mount-dennis-athletes-had-fine-minstrel-show",
+        "sourceLocator": {
+          "start": 41436,
+          "end": 41659
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:2",
+          "ordinal": 2,
+          "title": "Mount Dennis Athletes Had Fine Minstrel Show 1921",
+          "url": "https://archives.library.torontomu.ca/index.php/mount-dennis-athletes-had-fine-minstrel-show",
+          "sourceLocator": {
+            "jsonPointer": "/entries/1"
+          },
+          "match": "exact"
+        }
+      ],
+      "candidateCount": 1,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:2",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:2",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": false,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:2",
+        "ordinal": 2,
+        "title": "Mount Dennis Athletes Had Fine Minstrel Show 1921",
+        "url": "https://archives.library.torontomu.ca/index.php/mount-dennis-athletes-had-fine-minstrel-show",
+        "sourceLocator": {
+          "jsonPointer": "/entries/1"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:2",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Historical performance notice requiring contextual description.",
+        "note": "Retain the published wording and 1921 label. Request the underlying notice's creator, publication context and an institution-approved contextual description before selecting it for a public story.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    },
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:3",
+        "ordinal": 3,
+        "title": "Minstrel Show Group Portrait 1930-1950",
+        "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_dpla_primary_3c1ffe15c97a885512555d1dda317f6a&context=PC&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Primo%20Central&tab=OCULDiscoveryNetwork&query=any,contains,Minstrel%20show%20group%20portrait%201930&offset=0&pcAvailability=true",
+        "sourceLocator": {
+          "start": 41660,
+          "end": 42162
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:3",
+          "ordinal": 3,
+          "title": "Minstrel Show Group Portrait 1930-1950",
+          "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_dpla_primary_3c1ffe15c97a885512555d1dda317f6a&context=PC&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Primo%20Central&tab=OCULDiscoveryNetwork&query=any,contains,Minstrel%20show%20group%20portrait%201930&offset=0&pcAvailability=true",
+          "sourceLocator": {
+            "jsonPointer": "/entries/2"
+          },
+          "match": "exact"
+        }
+      ],
+      "candidateCount": 1,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:3",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:3",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": false,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:3",
+        "ordinal": 3,
+        "title": "Minstrel Show Group Portrait 1930-1950",
+        "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_dpla_primary_3c1ffe15c97a885512555d1dda317f6a&context=PC&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Primo%20Central&tab=OCULDiscoveryNetwork&query=any,contains,Minstrel%20show%20group%20portrait%201930&offset=0&pcAvailability=true",
+        "sourceLocator": {
+          "jsonPointer": "/entries/2"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:3",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Group portrait catalogue entry with a broad date range.",
+        "note": "The published range is 1930–1950. Confirm whether the target is an item, aggregation or external discovery record, and how the institution wants the performance context described.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    },
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:4",
+        "ordinal": 4,
+        "title": "Portrait of Richard Gordineer ",
+        "url": "https://archives.library.torontomu.ca/index.php/portrait-of-richard-gordineer",
+        "sourceLocator": {
+          "start": 42163,
+          "end": 42352
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:4",
+          "ordinal": 4,
+          "title": "Portrait of Richard Gordineer ",
+          "url": "https://archives.library.torontomu.ca/index.php/portrait-of-richard-gordineer",
+          "sourceLocator": {
+            "jsonPointer": "/entries/3"
+          },
+          "match": "exact"
+        }
+      ],
+      "candidateCount": 1,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:4",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:4",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": false,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:4",
+        "ordinal": 4,
+        "title": "Portrait of Richard Gordineer ",
+        "url": "https://archives.library.torontomu.ca/index.php/portrait-of-richard-gordineer",
+        "sourceLocator": {
+          "jsonPointer": "/entries/3"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:4",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Named portrait whose collection-page label supplies no date or role.",
+        "note": "Preserve the trailing space and original name in the source. Ask for the linked record's descriptive context; do not infer identity, role or date from the name.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    },
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:5",
+        "ordinal": 5,
+        "title": "Third Annual Kodak Minstrel Show - ‟Minstrel Maids\" 1922",
+        "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_proquest_hnp_1016284443&context=PC&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Primo%20Central&tab=OCULDiscoveryNetwork&query=any,contains,Minstrel%20Maids%201922&offset=0&pcAvailability=true",
+        "sourceLocator": {
+          "start": 42353,
+          "end": 42835
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:5",
+          "ordinal": 5,
+          "title": "Third Annual Kodak Minstrel Show - ‟Minstrel Maids\" 1922",
+          "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_proquest_hnp_1016284443&context=PC&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Primo%20Central&tab=OCULDiscoveryNetwork&query=any,contains,Minstrel%20Maids%201922&offset=0&pcAvailability=true",
+          "sourceLocator": {
+            "jsonPointer": "/entries/4"
+          },
+          "match": "exact"
+        }
+      ],
+      "candidateCount": 1,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:5",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:5",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": false,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:5",
+        "ordinal": 5,
+        "title": "Third Annual Kodak Minstrel Show - ‟Minstrel Maids\" 1922",
+        "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_proquest_hnp_1016284443&context=PC&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Primo%20Central&tab=OCULDiscoveryNetwork&query=any,contains,Minstrel%20Maids%201922&offset=0&pcAvailability=true",
+        "sourceLocator": {
+          "jsonPointer": "/entries/4"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:5",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Performance notice with the published 1922 label.",
+        "note": "Keep the complete original title and its punctuation. Clarify its relationship to occurrence 10 before any grouping; a shared event/year label does not establish that they describe the same object.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    },
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:6",
+        "ordinal": 6,
+        "title": "Part of Kodak Canada Corporate Archives and Heritage Collection 1922",
+        "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991014477070808636&context=L&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Local%20Search%20Engine&tab=OCULDiscoveryNetwork&query=any,contains,Part%20of%20Kodak%20Canada%20Corporate%20Archives%20and%20Heritage%20Collection&offset=0&pcAvailability=true",
+        "sourceLocator": {
+          "start": 42836,
+          "end": 43386
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:6",
+          "ordinal": 6,
+          "title": "Part of Kodak Canada Corporate Archives and Heritage Collection 1922",
+          "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991014477070808636&context=L&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Local%20Search%20Engine&tab=OCULDiscoveryNetwork&query=any,contains,Part%20of%20Kodak%20Canada%20Corporate%20Archives%20and%20Heritage%20Collection&offset=0&pcAvailability=true",
+          "sourceLocator": {
+            "jsonPointer": "/entries/5"
+          },
+          "match": "exact"
+        },
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:11",
+          "ordinal": 11,
+          "title": "Part of Kodak Canada Corporate Archives and Heritage Collection 1895-2006",
+          "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991014477070808636&context=L&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Local%20Search%20Engine&tab=OCULDiscoveryNetwork&query=any,contains,Part%20of%20Kodak%20Canada%20Corporate%20Archives%20and%20Heritage%20Collection&offset=0&pcAvailability=true",
+          "sourceLocator": {
+            "jsonPointer": "/entries/10"
+          },
+          "match": "url"
+        }
+      ],
+      "candidateCount": 2,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:6",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:6",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": false,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:6",
+        "ordinal": 6,
+        "title": "Part of Kodak Canada Corporate Archives and Heritage Collection 1922",
+        "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991014477070808636&context=L&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Local%20Search%20Engine&tab=OCULDiscoveryNetwork&query=any,contains,Part%20of%20Kodak%20Canada%20Corporate%20Archives%20and%20Heritage%20Collection&offset=0&pcAvailability=true",
+        "sourceLocator": {
+          "jsonPointer": "/entries/5"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:6",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Collection-level reference with the published 1922 label.",
+        "note": "This occurrence and TMU occurrence 11 have the exact same target URL but different date text. Ask whether 1922 names an item, a selected event or a description error; retain both source occurrences.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    },
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:7",
+        "ordinal": 7,
+        "title": "First Annual Kodak Minstrel Show 1920",
+        "url": "https://archives.library.torontomu.ca/index.php/kodak-minstrels",
+        "sourceLocator": {
+          "start": 43387,
+          "end": 43569
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:7",
+          "ordinal": 7,
+          "title": "First Annual Kodak Minstrel Show 1920",
+          "url": "https://archives.library.torontomu.ca/index.php/kodak-minstrels",
+          "sourceLocator": {
+            "jsonPointer": "/entries/6"
+          },
+          "match": "exact"
+        }
+      ],
+      "candidateCount": 1,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:7",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:7",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": false,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:7",
+        "ordinal": 7,
+        "title": "First Annual Kodak Minstrel Show 1920",
+        "url": "https://archives.library.torontomu.ca/index.php/kodak-minstrels",
+        "sourceLocator": {
+          "jsonPointer": "/entries/6"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:7",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "First annual performance label with the published 1920 date.",
+        "note": "The numbering can support a proposed contextual sequence with occurrences 9 and 10. Ask the holding institution for suitable framing and item-level scope; no automated title correction.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    },
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:8",
+        "ordinal": 8,
+        "title": "Minstrel Shows 1985-2006",
+        "url": "https://archives.library.torontomu.ca/index.php/minstrel-shows",
+        "sourceLocator": {
+          "start": 43570,
+          "end": 43738
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:8",
+          "ordinal": 8,
+          "title": "Minstrel Shows 1985-2006",
+          "url": "https://archives.library.torontomu.ca/index.php/minstrel-shows",
+          "sourceLocator": {
+            "jsonPointer": "/entries/7"
+          },
+          "match": "exact"
+        }
+      ],
+      "candidateCount": 1,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:8",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:8",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": false,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:8",
+        "ordinal": 8,
+        "title": "Minstrel Shows 1985-2006",
+        "url": "https://archives.library.torontomu.ca/index.php/minstrel-shows",
+        "sourceLocator": {
+          "jsonPointer": "/entries/7"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:8",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "General performance grouping with the published 1985–2006 range.",
+        "note": "Clarify the descriptive level and meaning of the date range. Preserve it as supplied instead of treating it as an event date or a typo.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    },
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:9",
+        "ordinal": 9,
+        "title": "Second Annual Kodak Minstrel Show 1921",
+        "url": "https://archives.library.torontomu.ca/index.php/kodak-minstrels-2",
+        "sourceLocator": {
+          "start": 43739,
+          "end": 43924
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:9",
+          "ordinal": 9,
+          "title": "Second Annual Kodak Minstrel Show 1921",
+          "url": "https://archives.library.torontomu.ca/index.php/kodak-minstrels-2",
+          "sourceLocator": {
+            "jsonPointer": "/entries/8"
+          },
+          "match": "exact"
+        }
+      ],
+      "candidateCount": 1,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:9",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:9",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": false,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:9",
+        "ordinal": 9,
+        "title": "Second Annual Kodak Minstrel Show 1921",
+        "url": "https://archives.library.torontomu.ca/index.php/kodak-minstrels-2",
+        "sourceLocator": {
+          "jsonPointer": "/entries/8"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:9",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Second annual performance label with the published 1921 date.",
+        "note": "Compare the institution's record with occurrences 7 and 10 to establish the sequence and descriptive levels. The proposed relation records source-label numbering only.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    },
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:10",
+        "ordinal": 10,
+        "title": "Third Annual Kodak Minstrel Show - Crystal Theatre 1922",
+        "url": "https://archives.library.torontomu.ca/index.php/kodak-minstrels-crystal-theater",
+        "sourceLocator": {
+          "start": 43925,
+          "end": 44141
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:10",
+          "ordinal": 10,
+          "title": "Third Annual Kodak Minstrel Show - Crystal Theatre 1922",
+          "url": "https://archives.library.torontomu.ca/index.php/kodak-minstrels-crystal-theater",
+          "sourceLocator": {
+            "jsonPointer": "/entries/9"
+          },
+          "match": "exact"
+        }
+      ],
+      "candidateCount": 1,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:10",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:10",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": false,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:10",
+        "ordinal": 10,
+        "title": "Third Annual Kodak Minstrel Show - Crystal Theatre 1922",
+        "url": "https://archives.library.torontomu.ca/index.php/kodak-minstrels-crystal-theater",
+        "sourceLocator": {
+          "jsonPointer": "/entries/9"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:10",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Third annual performance label naming a venue and 1922.",
+        "note": "Clarify its relationship to occurrence 5, which also names the third annual show. Preserve separate occurrences until the institution supplies their item-level relationship.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    },
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:11",
+        "ordinal": 11,
+        "title": "Part of Kodak Canada Corporate Archives and Heritage Collection 1895-2006",
+        "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991014477070808636&context=L&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Local%20Search%20Engine&tab=OCULDiscoveryNetwork&query=any,contains,Part%20of%20Kodak%20Canada%20Corporate%20Archives%20and%20Heritage%20Collection&offset=0&pcAvailability=true",
+        "sourceLocator": {
+          "start": 44142,
+          "end": 44697
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:11",
+          "ordinal": 11,
+          "title": "Part of Kodak Canada Corporate Archives and Heritage Collection 1895-2006",
+          "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991014477070808636&context=L&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Local%20Search%20Engine&tab=OCULDiscoveryNetwork&query=any,contains,Part%20of%20Kodak%20Canada%20Corporate%20Archives%20and%20Heritage%20Collection&offset=0&pcAvailability=true",
+          "sourceLocator": {
+            "jsonPointer": "/entries/10"
+          },
+          "match": "exact"
+        },
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:6",
+          "ordinal": 6,
+          "title": "Part of Kodak Canada Corporate Archives and Heritage Collection 1922",
+          "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991014477070808636&context=L&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Local%20Search%20Engine&tab=OCULDiscoveryNetwork&query=any,contains,Part%20of%20Kodak%20Canada%20Corporate%20Archives%20and%20Heritage%20Collection&offset=0&pcAvailability=true",
+          "sourceLocator": {
+            "jsonPointer": "/entries/5"
+          },
+          "match": "url"
+        }
+      ],
+      "candidateCount": 2,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:11",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:11",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": false,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:11",
+        "ordinal": 11,
+        "title": "Part of Kodak Canada Corporate Archives and Heritage Collection 1895-2006",
+        "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991014477070808636&context=L&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Local%20Search%20Engine&tab=OCULDiscoveryNetwork&query=any,contains,Part%20of%20Kodak%20Canada%20Corporate%20Archives%20and%20Heritage%20Collection&offset=0&pcAvailability=true",
+        "sourceLocator": {
+          "jsonPointer": "/entries/10"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:11",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Collection-level reference with the published 1895–2006 range.",
+        "note": "The target URL exactly matches occurrence 6, whose label ends 1922. Request field-level clarification; do not collapse one into the other or choose one date as authoritative.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    },
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:12",
+        "ordinal": 12,
+        "title": "At Kodak Heights / Canadian Kodak Co. 1921-1932",
+        "url": "https://archives.library.torontomu.ca/index.php/at-kodak-heights-canadian-kodak-co",
+        "sourceLocator": {
+          "start": 44698,
+          "end": 44909
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:12",
+          "ordinal": 12,
+          "title": "At Kodak Heights / Canadian Kodak Co. 1921-1932",
+          "url": "https://archives.library.torontomu.ca/index.php/at-kodak-heights-canadian-kodak-co",
+          "sourceLocator": {
+            "jsonPointer": "/entries/11"
+          },
+          "match": "exact"
+        }
+      ],
+      "candidateCount": 1,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:12",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:12",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": false,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:12",
+        "ordinal": 12,
+        "title": "At Kodak Heights / Canadian Kodak Co. 1921-1932",
+        "url": "https://archives.library.torontomu.ca/index.php/at-kodak-heights-canadian-kodak-co",
+        "sourceLocator": {
+          "jsonPointer": "/entries/11"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:12",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Publication-labelled entry with a stated 1921–1932 range.",
+        "note": "Useful as documentary context for a proposed research route. Confirm issue/series scope from the holding record before citing particular contents; the source label alone is retained.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    },
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:13",
+        "ordinal": 13,
+        "title": "Lena Horne: The Lady and Her Music Television Production 1982",
+        "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_proquest_hnp_138164922&context=PC&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Primo%20Central&tab=OCULDiscoveryNetwork&query=any,contains,Lena%20Horne:%20The%20Lady%20and%20Her%20Music%20television%20production%20Paddy%20sampson&offset=0&pcAvailability=true",
+        "sourceLocator": {
+          "start": 44910,
+          "end": 45461
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:13",
+          "ordinal": 13,
+          "title": "Lena Horne: The Lady and Her Music Television Production 1982",
+          "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_proquest_hnp_138164922&context=PC&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Primo%20Central&tab=OCULDiscoveryNetwork&query=any,contains,Lena%20Horne:%20The%20Lady%20and%20Her%20Music%20television%20production%20Paddy%20sampson&offset=0&pcAvailability=true",
+          "sourceLocator": {
+            "jsonPointer": "/entries/12"
+          },
+          "match": "exact"
+        }
+      ],
+      "candidateCount": 1,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:13",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:13",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": true,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:13",
+        "ordinal": 13,
+        "title": "Lena Horne: The Lady and Her Music Television Production 1982",
+        "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_proquest_hnp_138164922&context=PC&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Primo%20Central&tab=OCULDiscoveryNetwork&query=any,contains,Lena%20Horne:%20The%20Lady%20and%20Her%20Music%20television%20production%20Paddy%20sampson&offset=0&pcAvailability=true",
+        "sourceLocator": {
+          "jsonPointer": "/entries/12"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:13",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Television-production-labelled entry naming Lena Horne and 1982.",
+        "note": "Select as a metadata link in the performance section. The proposed relationship to the Hollingsworth objects is thematic; it asserts no collaboration, shared event or shared physical provenance.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    },
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:14",
+        "ordinal": 14,
+        "title": "Ethnicity and Recreation behaviour in Toronto: A Study of Canadian Blacks, Chinese and Italians 1993",
+        "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991000869809708636&context=L&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Local%20Search%20Engine&tab=OCULDiscoveryNetwork&query=any,contains,Ethnicity%20and%20recreation%20behaviour%20in%20Toronto:%20a%20study%20of%20Canadian%20Blacks,%20Chinese%20and%20Italians&offset=0&pcAvailability=true",
+        "sourceLocator": {
+          "start": 45462,
+          "end": 46086
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:14",
+          "ordinal": 14,
+          "title": "Ethnicity and Recreation behaviour in Toronto: A Study of Canadian Blacks, Chinese and Italians 1993",
+          "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991000869809708636&context=L&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Local%20Search%20Engine&tab=OCULDiscoveryNetwork&query=any,contains,Ethnicity%20and%20recreation%20behaviour%20in%20Toronto:%20a%20study%20of%20Canadian%20Blacks,%20Chinese%20and%20Italians&offset=0&pcAvailability=true",
+          "sourceLocator": {
+            "jsonPointer": "/entries/13"
+          },
+          "match": "exact"
+        }
+      ],
+      "candidateCount": 1,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:14",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:14",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": false,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:14",
+        "ordinal": 14,
+        "title": "Ethnicity and Recreation behaviour in Toronto: A Study of Canadian Blacks, Chinese and Italians 1993",
+        "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991000869809708636&context=L&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Local%20Search%20Engine&tab=OCULDiscoveryNetwork&query=any,contains,Ethnicity%20and%20recreation%20behaviour%20in%20Toronto:%20a%20study%20of%20Canadian%20Blacks,%20Chinese%20and%20Italians&offset=0&pcAvailability=true",
+        "sourceLocator": {
+          "jsonPointer": "/entries/13"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:14",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Research-labelled entry whose supplied title names a 1993 recreation study.",
+        "note": "Preserve the original study title. Use it as a research-context link, without inferring study findings, participant identities or relationships to the Museum London sports objects.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    },
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:15",
+        "ordinal": 15,
+        "title": "Patrick Watson / Harry Belafonte Interviews: Part 1 [unedited footage] 1976",
+        "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-part-1-unedited-footage",
+        "sourceLocator": {
+          "start": 46087,
+          "end": 46357
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:15",
+          "ordinal": 15,
+          "title": "Patrick Watson / Harry Belafonte Interviews: Part 1 [unedited footage] 1976",
+          "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-part-1-unedited-footage",
+          "sourceLocator": {
+            "jsonPointer": "/entries/14"
+          },
+          "match": "exact"
+        }
+      ],
+      "candidateCount": 1,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:15",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:15",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": true,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:15",
+        "ordinal": 15,
+        "title": "Patrick Watson / Harry Belafonte Interviews: Part 1 [unedited footage] 1976",
+        "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-part-1-unedited-footage",
+        "sourceLocator": {
+          "jsonPointer": "/entries/14"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:15",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Interview label explicitly identifying Part 1 and 1976.",
+        "note": "Select the first labelled part as a metadata link. Its relation to occurrence 16 follows the labels, while physical carriers, completeness and running order require the holding record.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    },
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:16",
+        "ordinal": 16,
+        "title": "Patrick Watson / Harry Belafonte Interviews: Part 2 [unedited footage] 1976",
+        "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-part-2-unedited-footage",
+        "sourceLocator": {
+          "start": 46358,
+          "end": 46628
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:16",
+          "ordinal": 16,
+          "title": "Patrick Watson / Harry Belafonte Interviews: Part 2 [unedited footage] 1976",
+          "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-part-2-unedited-footage",
+          "sourceLocator": {
+            "jsonPointer": "/entries/15"
+          },
+          "match": "exact"
+        }
+      ],
+      "candidateCount": 1,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:16",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:16",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": true,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:16",
+        "ordinal": 16,
+        "title": "Patrick Watson / Harry Belafonte Interviews: Part 2 [unedited footage] 1976",
+        "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-part-2-unedited-footage",
+        "sourceLocator": {
+          "jsonPointer": "/entries/15"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:16",
+        "status": "include",
+        "suggestedTitle": "",
+        "summary": "Interview label explicitly identifying Part 2 and 1976.",
+        "note": "Select immediately after the source-labelled Part 1 in this proposed route. Keep the two occurrences separate; do not infer that the other three similarly titled records are duplicates.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    },
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:17",
+        "ordinal": 17,
+        "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+        "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-2on-harry-belafonte-interviews-unedited-footage-2",
+        "sourceLocator": {
+          "start": 46629,
+          "end": 46934
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:17",
+          "ordinal": 17,
+          "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+          "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-2on-harry-belafonte-interviews-unedited-footage-2",
+          "sourceLocator": {
+            "jsonPointer": "/entries/16"
+          },
+          "match": "exact"
+        },
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:18",
+          "ordinal": 18,
+          "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+          "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-3",
+          "sourceLocator": {
+            "jsonPointer": "/entries/17"
+          },
+          "match": "title"
+        },
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:19",
+          "ordinal": 19,
+          "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+          "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-4",
+          "sourceLocator": {
+            "jsonPointer": "/entries/18"
+          },
+          "match": "title"
+        }
+      ],
+      "candidateCount": 3,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:17",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:17",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": false,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:17",
+        "ordinal": 17,
+        "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+        "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-2on-harry-belafonte-interviews-unedited-footage-2",
+        "sourceLocator": {
+          "jsonPointer": "/entries/16"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:17",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Interview-labelled entry sharing its displayed title with two other occurrences.",
+        "note": "Occurrences 17, 18 and 19 have the same displayed title but different target URLs. Ask for carrier/part identifiers and descriptive hierarchy. Preserve each occurrence.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    },
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:18",
+        "ordinal": 18,
+        "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+        "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-3",
+        "sourceLocator": {
+          "start": 46935,
+          "end": 47192
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:18",
+          "ordinal": 18,
+          "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+          "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-3",
+          "sourceLocator": {
+            "jsonPointer": "/entries/17"
+          },
+          "match": "exact"
+        },
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:17",
+          "ordinal": 17,
+          "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+          "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-2on-harry-belafonte-interviews-unedited-footage-2",
+          "sourceLocator": {
+            "jsonPointer": "/entries/16"
+          },
+          "match": "title"
+        },
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:19",
+          "ordinal": 19,
+          "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+          "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-4",
+          "sourceLocator": {
+            "jsonPointer": "/entries/18"
+          },
+          "match": "title"
+        }
+      ],
+      "candidateCount": 3,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:18",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:18",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": false,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:18",
+        "ordinal": 18,
+        "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+        "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-3",
+        "sourceLocator": {
+          "jsonPointer": "/entries/17"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:18",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Second of three identically displayed interview labels with a distinct target.",
+        "note": "Keep the original target and occurrence identity. Request its relation to occurrences 15–19; a common label is insufficient for deduplication or timeline placement.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    },
+    {
+      "from": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:19",
+        "ordinal": 19,
+        "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+        "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-4",
+        "sourceLocator": {
+          "start": 47193,
+          "end": 47450
+        }
+      },
+      "candidates": [
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:19",
+          "ordinal": 19,
+          "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+          "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-4",
+          "sourceLocator": {
+            "jsonPointer": "/entries/18"
+          },
+          "match": "exact"
+        },
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:17",
+          "ordinal": 17,
+          "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+          "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-2on-harry-belafonte-interviews-unedited-footage-2",
+          "sourceLocator": {
+            "jsonPointer": "/entries/16"
+          },
+          "match": "title"
+        },
+        {
+          "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:18",
+          "ordinal": 18,
+          "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+          "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-3",
+          "sourceLocator": {
+            "jsonPointer": "/entries/17"
+          },
+          "match": "title"
+        }
+      ],
+      "candidateCount": 3,
+      "exactUnique": true,
+      "decision": {
+        "fromId": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:19",
+        "toId": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:19",
+        "action": "map",
+        "carryReview": true,
+        "carryRights": false,
+        "carryStory": false,
+        "carryRelationships": true,
+        "note": "TJLabs preparation operator: carry this identical literal title and URL into a structured metadata transport derived from the retained redacted catalogue; no new institution observation."
+      },
+      "selected": {
+        "id": "collection-106d0e0c9d8e19ce6d90bf6bfc94ee684d181020f8995229400e6a449c17433f:19",
+        "ordinal": 19,
+        "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+        "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-4",
+        "sourceLocator": {
+          "jsonPointer": "/entries/18"
+        }
+      },
+      "changes": [],
+      "previousReview": {
+        "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:19",
+        "status": "needs-info",
+        "suggestedTitle": "",
+        "summary": "Third of three identically displayed interview labels with a distinct target.",
+        "note": "Keep its separate target and occurrence identity. Request the holding institution's part/carrier description before deciding whether it belongs in the proposed viewing route.",
+        "rights": {
+          "status": "unknown",
+          "basis": "",
+          "citation": ""
+        }
+      }
+    }
+  ],
+  "added": [],
+  "counts": {
+    "before": 19,
+    "after": 19,
+    "exactSuggestions": 19,
+    "ambiguous": 5,
+    "mapped": 19,
+    "omitted": 0,
+    "unresolved": 0,
+    "added": 0
+  },
+  "effects": {
+    "reviewsCarried": 19,
+    "reviewsOmitted": [],
+    "rightsCarried": 0,
+    "rightsReset": [],
+    "storyCarried": 3,
+    "storyOmitted": [],
+    "relationshipsCarried": 8,
+    "relationshipsOmitted": []
+  }
+}

@@ -7,8 +7,9 @@ import { pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { startSetupServer } from './serve.mjs';
 import { createCollectionWorkspace,addCollectionSource,collectionDraft,saveCollectionRevision,receiveCollectionWorkspace,
- createCollectionPacket,openCollectionPacket,collectionReport,createCollectionArchive,collectionSourceTables,retainCollectionWorkingCopy } from './dist/collection-review-workspace.mjs';
+ createCollectionPacket,openCollectionPacket,collectionReport,createCollectionArchive,collectionSourceTables,retainCollectionWorkingCopy,collectionEditionReport,prepareCollectionEditionRequest } from './dist/collection-review-workspace.mjs';
 import { renderCollectionReview } from './dist/collection-review-report.mjs';
+import { renderCollectionEditionComparison } from './dist/collection-review-edition-report.mjs';
 import { assertCollectionPublication } from './dist/collection-review-publication.mjs';
 const json=value=>JSON.stringify(value,null,2)+'\n';
 async function read(path,limit=64*1024*1024){
@@ -39,6 +40,9 @@ export const COLLECTION_REVIEW_HELP='Collection review\n\n'+
  'publication-check --file COMPLETE_UTF8_OR_JSON_ARTIFACT\n'+
  'draft --project WORKSPACE [--revision REVISION_ID] [--select-all] --out NEW_DRAFT.json\n'+
  'prepare --project WORKSPACE --draft DRAFT.json --actor OPERATOR [--note NOTE] --out NEW_REQUEST.json\n'+
+ 'compare-editions --project WORKSPACE --from SOURCE_ID --to SOURCE_ID [--draft DRAFT.json] --out NEW_PLAN.json\n'+
+ 'edition-report --project WORKSPACE --plan PLAN.json --out NEW_COMPARISON.html\n'+
+ 'prepare-edition --project WORKSPACE --plan PLAN.json --actor OPERATOR [--note NOTE] --out NEW_REQUEST.json\n'+
  'save --project WORKSPACE --request ORIGINAL_REQUEST.json --out NEW_WORKSPACE.json\n'+
  'keep-draft --project WORKSPACE --draft UNFINISHED_TEXT --actor OPERATOR [--note NOTE] --out NEW_WORKSPACE.json\n'+
  'receive --project LOCAL_WORKSPACE --incoming COLLEAGUE_WORKSPACE --out NEW_WORKSPACE.json\n'+
@@ -67,11 +71,21 @@ export async function runCollectionReview(argv=[]){
    url:needed(o,'url'),observedAt:needed(o,'observed-at')});output=await createCollectionPacket(result.workspace);detail={...detail,sourceId:result.source.id,occurrences:result.source.entries.length,reused:result.reused};
  }else if(command==='draft'){
   output=collectionDraft(w,o.revision||w.headId);if(o['select-all'])output.collectionIds=w.sources.map(s=>s.id);
+ }else if(command==='compare-editions'){
+  const state=o.draft?JSON.parse(await read(o.draft,2*1024*1024)):collectionDraft(w),fromSourceId=needed(o,'from'),toSourceId=needed(o,'to');
+  const comparison=await collectionEditionReport(w,{state,fromSourceId,toSourceId});
+  output={schema:'stellar-forge.collection-edition-input.v1',expectedRevision:w.headId,fromSourceId,toSourceId,state,decisions:comparison.rows.map(row=>row.decision)};
+  detail={...detail,counts:comparison.counts,note:'Resolve each original occurrence in this retained plan; prepare-edition produces the same original save request format.'};
+ }else if(command==='edition-report'||command==='prepare-edition'){
+  const plan=JSON.parse(await read(needed(o,'plan'),16*1024*1024));
+  if(plan.schema!=='stellar-forge.collection-edition-input.v1')throw Error('Choose the original complete edition plan.');
+  if(command==='edition-report')output=renderCollectionEditionComparison(await collectionEditionReport(w,{baseRevision:plan.expectedRevision,state:plan.state,fromSourceId:plan.fromSourceId,toSourceId:plan.toSourceId,decisions:plan.decisions}));
+  else{const result=await prepareCollectionEditionRequest(w,{id:randomUUID(),expectedRevision:plan.expectedRevision,actor:needed(o,'actor'),note:o.note||'',createdAt:new Date().toISOString(),state:plan.state,fromSourceId:plan.fromSourceId,toSourceId:plan.toSourceId,decisions:plan.decisions});output=result.request;detail={...detail,requestId:output.id,effects:result.report.effects};}
  }else if(command==='prepare'){
   output={id:randomUUID(),expectedRevision:w.headId,actor:needed(o,'actor'),note:o.note||'',createdAt:new Date().toISOString(),state:JSON.parse(await read(needed(o,'draft'),2*1024*1024))};
   await saveCollectionRevision(w,output);detail.requestId=output.id; // pure validation; no mutation is published
  }else if(command==='save'){
-  const request=JSON.parse(await read(needed(o,'request'),4*1024*1024)),result=await saveCollectionRevision(w,request);
+  const request=JSON.parse(await read(needed(o,'request'),64*1024*1024)),result=await saveCollectionRevision(w,request);
   output=await createCollectionPacket(result.workspace);detail={...detail,revision:result.revision.id,reused:result.reused};
  }else if(command==='keep-draft'){
   const stateText=await read(needed(o,'draft'),2*1024*1024),result=await retainCollectionWorkingCopy(w,{baseRevision:w.headId,stateText,actor:needed(o,'actor'),note:o.note||''});

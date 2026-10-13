@@ -1009,6 +1009,34 @@
         "woo.html",
         "text/html; charset=utf-8"
       ]
+    ],
+    [
+      "/collection-review-editions.mjs",
+      [
+        "collection-review-editions.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review-edition-ui.mjs",
+      [
+        "collection-review-edition-ui.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review-edition-report.mjs",
+      [
+        "collection-review-edition-report.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review-source-editions.md",
+      [
+        "collection-review-source-editions.md",
+        "text/markdown; charset=utf-8"
+      ]
     ]
   ]
 }

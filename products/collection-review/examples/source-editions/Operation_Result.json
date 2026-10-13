@@ -1,0 +1,58 @@
+{
+  "schema": "stellar-forge.collection-edition-operation.v1",
+  "operationId": "COLLECTION-REVIEW-SOURCE-EDITIONS-3459-20261013",
+  "createdAt": "2026-10-13T09:48:18Z",
+  "requestId": "58f09ec4-4727-4fa0-9817-213769fc1e80",
+  "workspaceId": "2d72a9c1-1010-4ea4-8cde-14b650617ff9",
+  "selectedRevisionId": "revision-9176f90781062cb097f4f4401c3e742834cb509c5ba457971b093981da668e75",
+  "counts": {
+    "before": 19,
+    "after": 19,
+    "exactSuggestions": 19,
+    "ambiguous": 5,
+    "mapped": 19,
+    "omitted": 0,
+    "unresolved": 0,
+    "added": 0
+  },
+  "effects": {
+    "reviewsCarried": 19,
+    "reviewsOmitted": [],
+    "rightsCarried": 0,
+    "rightsReset": [],
+    "storyCarried": 3,
+    "storyOmitted": [],
+    "relationshipsCarried": 8,
+    "relationshipsOmitted": []
+  },
+  "checks": {
+    "replay": true,
+    "receivedHeadPreserved": true,
+    "allSourcesPreserved": true,
+    "originalHistoryExact": true,
+    "story": 14,
+    "relations": 19
+  },
+  "focusedChecks": [
+    "inconsistent story carry refuses",
+    "mapped dropped review requires reason",
+    "many-to-one refuses",
+    "duplicate literal pair is not a unique suggestion",
+    "explicit omission retains effect identity",
+    "rights reset explicit",
+    "selected original rights basis retained",
+    "receiving rejects changed correspondence digest"
+  ],
+  "execution": "original JavaScript modules in V8 with controlled platform adapters",
+  "native": {
+    "processStarted": false,
+    "error": "environment_offline",
+    "renderedReadiness": false
+  },
+  "archive": {
+    "filename": "Collection_Source_Edition.zip",
+    "bytes": 2054641,
+    "sha256": "613d3d6d89e401b49891ba67bee9f858f8d2f675e30afd982717d75e3ad66f23",
+    "files": 31
+  }
+}

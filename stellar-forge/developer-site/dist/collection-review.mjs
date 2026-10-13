@@ -3,6 +3,7 @@ import { createCollectionWorkspace,validateCollectionWorkspace,addCollectionSour
  receiveCollectionWorkspace,collectionReport,createCollectionPacket,openCollectionPacket,createCollectionArchive,
  retainCollectionWorkingCopy,emptyReview,canonical } from './collection-review-workspace.mjs';
 import { renderCollectionReview } from './collection-review-report.mjs';
+import { mountCollectionEditionReview } from './collection-review-edition-ui.mjs';
 const $=id=>document.getElementById(id), clone=value=>structuredClone(value), json=value=>JSON.stringify(value,null,2)+'\n';
 const S={workspace:null,draft:null,pending:null,slot:null,revision:0,db:null,write:Promise.resolve(),storageError:null,busy:false,selected:null,mode:'open'};
 const say=(value,error=false)=>{$('notice').textContent=value;$('notice').classList.toggle('error',error);};
@@ -53,7 +54,7 @@ function render(){
  for(const [id,key]of [['story-title','title'],['story-intro','introduction'],['story-note','note']])$(id).value=S.draft.state.story[key];
  for(const [id,key]of [['relation-kind','relationKind'],['relation-note','relationNote'],['source-url','sourceURL'],['source-time','sourceTime'],['source-format','sourceFormat']])$(id).value=S.draft.aux?.[key]||'';
  $('raw-state').value=S.draft.rawText??json(S.draft.state);
- renderCollections();renderEntries();renderStory();renderRelations();renderHistory();renderEditor();renderPending();
+ renderCollections();renderEntries();renderStory();renderRelations();renderHistory();renderEditor();renderPending();editionUI.render().catch(error=>say(error.message,true));
 }
 function renderCollections(){
  const root=$('collections');root.replaceChildren();
@@ -106,7 +107,12 @@ async function recover(){
  const pending=clone(S.pending),result=await saveCollectionRevision(S.workspace,pending);
  // The original request is retained before local processing. Only that snapshot's basis advances.
  S.workspace=result.workspace;
- if(S.draft.baseRevision===pending.expectedRevision)S.draft.baseRevision=result.revision.id;
+ if(pending.sourceEdition){
+  if(S.draft.baseRevision===pending.expectedRevision&&S.draft.rawText===null&&canonical(S.draft.state)===canonical(pending.sourceEdition.basisState)){
+   S.draft.state=clone(pending.state);S.draft.baseRevision=result.revision.id;S.selected=null;
+   if(S.draft.edition?.prepared?.request?.id===pending.id)S.draft.edition=null;
+  }
+ }else if(S.draft.baseRevision===pending.expectedRevision)S.draft.baseRevision=result.revision.id;
  if(S.pending?.id===pending.id)S.pending=null;
  await persist();render();await catalog();say('Saved original review '+result.revision.id+'. Later draft text remains available.');
 }
@@ -132,7 +138,7 @@ function bind(){
  $('download-draft').onclick=()=>{if(S.workspace)download('collection-working-copy.json',{schema:'stellar-forge.collection-browser-copy.v1',value:snapshot()});};
  $('intake').onclick=()=>act(async()=>{const file=$('source-file').files[0];if(!file)throw Error('Choose a complete original source file.');if(file.size>4*1024*1024)throw Error('A source exceeds 4 MiB.');
  const raw=new TextDecoder('utf-8',{fatal:true}).decode(await file.arrayBuffer()),result=await addCollectionSource(S.workspace,{format:$('source-format').value,filename:file.name,sourceText:raw,url:$('source-url').value,observedAt:$('source-time').value});
- S.workspace=result.workspace;if(!S.draft.state.collectionIds.includes(result.source.id))S.draft.state.collectionIds.push(result.source.id);await persist();render();say('Retained '+result.source.entries.length+' ordered original occurrences.');});
+ S.workspace=result.workspace;if($('source-select').checked&&!S.draft.state.collectionIds.includes(result.source.id))S.draft.state.collectionIds.push(result.source.id);await persist();render();say('Retained '+result.source.entries.length+' ordered original occurrences.');});
  for(const [id,key]of [['actor','actor'],['revision-note','note']])$(id).oninput=()=>{S.draft[key]=$(id).value;changed();};
  for(const [id,key]of [['story-title','title'],['story-intro','introduction'],['story-note','note']])$(id).oninput=()=>{S.draft.state.story[key]=$(id).value;changed();};
  for(const [id,key]of [['relation-from','relationFrom'],['relation-to','relationTo'],['relation-kind','relationKind'],['relation-note','relationNote'],['source-url','sourceURL'],['source-time','sourceTime'],['source-format','sourceFormat']])$(id).oninput=()=>{S.draft.aux||={};S.draft.aux[key]=$(id).value;changed();};
@@ -151,9 +157,13 @@ function bind(){
  $('review-history').onclick=()=>act(()=>showReport($('history').value));$('preview').onclick=()=>act(()=>showReport(S.workspace.headId));
  $('draft-history').onclick=()=>act(async()=>{await completeWorkingCopy();const id=$('history').value;S.draft=newDraft(S.workspace,S.workspace.headId,collectionDraft(S.workspace,id),S.draft.actor);S.selected=null;await persist();render();say('Copied the chosen saved revision into a new draft against the current local head. The replaced working text remains in history.');});
  $('restore-working').onclick=()=>act(async()=>{const selected=$('working-copies').value,draft=S.workspace.workingCopies.find(x=>x.id===selected);if(!draft)throw Error('Choose a retained working copy.');await completeWorkingCopy();
- S.draft=newDraft(S.workspace,S.workspace.headId,draft.structuredState||collectionDraft(S.workspace),draft.actor);S.draft.rawText=draft.stateText;S.draft.note=draft.note;if(draft.browserDraft?.aux)S.draft.aux=clone(draft.browserDraft.aux);S.selected=null;await persist();render();say('Restored original working text. Its original pending request stays in the retained copy; it is not dispatched automatically.');});
+ S.draft=newDraft(S.workspace,S.workspace.headId,draft.structuredState||collectionDraft(S.workspace),draft.actor);S.draft.rawText=draft.stateText;S.draft.note=draft.note;if(draft.browserDraft?.aux)S.draft.aux=clone(draft.browserDraft.aux);if(draft.browserDraft?.edition)S.draft.edition=clone(draft.browserDraft.edition);S.selected=null;await persist();render();say('Restored original working text. Its original pending request stays in the retained copy; it is not dispatched automatically.');});
  for(const [id,native]of [['export',false],['native-export',true]])$(id).onclick=()=>act(async()=>{const w=await completeWorkingCopy(),result=await createCollectionArchive(w,w.headId,{native});download('collection-review.zip',result.bytes,'application/zip');say('Exported complete saved review, all source/history and the current unfinished working copy.');});
  window.addEventListener('beforeunload',event=>{if(S.busy||S.storageError){event.preventDefault();event.returnValue='';}});
 }
+const editionUI=mountCollectionEditionReview({read:()=>S,changed,act,render,download,say,preserveDraft:completeWorkingCopy,saveRequest:async request=>{
+ if(S.pending)throw Error('Recover the original pending request before saving this edition.');
+ S.pending=request;await persist();await recover();
+}});
 bind();
 (async()=>{try{await catalog();const id=location.hash.slice(1);if(id)await openSaved(id);else say('Create a workspace or open a complete editable packet.');}catch(error){say(error.message,true);}})();

@@ -156,3 +156,8 @@ Supported bounds are 4 MiB per original source, 64 sources, 20,000 retained occu
 ## Validation boundary
 
 The retained implementation checks exercise the original functions against the two exact captured pages, complete source/hash/byte-range comparisons, duplicate URL preservation, same-UUID recovery, divergent receiving with later local selection, unfinished draft receiving, source substitution refusal, rights-basis refusal, comment projection and complete original Source Tables ZIP generation/checksums. They run in V8 with controlled platform adapters. They are not a claim of a native browser layout run, customer operation or institutional acceptance.
+
+
+## Maintain later source editions
+
+The complete [source-edition operating guide](./collection-review-source-editions.md) covers retained old/new source comparison, explicit occurrence correspondence, per-field carry decisions, original save recovery and complete receiving. Use **Maintain a source edition** in the existing browser. Both earlier source and complete review history remain available; a replacement never silently inherits rights or merges repeated target URLs.

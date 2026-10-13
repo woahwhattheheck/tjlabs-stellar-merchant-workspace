@@ -3,6 +3,8 @@ import { sha256, createProject, addDocument, freezeReview, createTableWorkspace 
 import { zipWorkspace } from './onboarding.mjs';
 import { createCollectionSource, verifyCollectionSource, collectionURL } from './collection-review-source.mjs';
 import { renderCollectionReview } from './collection-review-report.mjs';
+import { renderCollectionEditionComparison } from './collection-review-edition-report.mjs';
+import { compareCollectionEditions,projectCollectionEdition,buildCollectionEditionTransition,validateCollectionEditionTransition } from './collection-review-editions.mjs';
 
 export const COLLECTION_WORKSPACE_SCHEMA='stellar-forge.collection-review.v1';
 export const COLLECTION_PACKET_SCHEMA='stellar-forge.collection-review-packet.v1';
@@ -72,6 +74,7 @@ function checkRequest(request){
 function revisionFor(workspace,id=workspace.headId){const r=workspace.revisions.find(row=>row.id===id);if(!r)fail('COLLECTION_REVISION','Choose an existing complete review revision.');return r;}
 async function buildRevision(request,sources){
   checkRequest(request);const state=checkState(request.state,sources);
+  if(request.sourceEdition){checkState(request.sourceEdition.basisState,sources);await validateCollectionEditionTransition(request.sourceEdition,sources,state);}
   const retained=copy(request), hash=await sha256(canonical(retained));
   return {id:'revision-'+hash,parentId:request.expectedRevision,createdAt:request.createdAt,actor:request.actor,note:request.note,request:retained,state};
 }
@@ -148,6 +151,19 @@ export async function saveCollectionRevision(workspace,request) {
   if(encoder.encode(json(w)).length>LIMITS.workspaceBytes)fail('COLLECTION_SIZE','This complete review would exceed the 64 MiB workspace limit. Keep the previous workspace and draft.');
   return {workspace:w,revision,reused:false};
 }
+export async function collectionEditionReport(workspace,{baseRevision=workspace.headId,state,fromSourceId,toSourceId,decisions=[]}){
+ const w=await validateCollectionWorkspace(workspace),sources=sourceMap(w);revisionFor(w,baseRevision);
+ const basis=checkState(state||collectionDraft(w,baseRevision),sources),report=compareCollectionEditions(sources.get(fromSourceId),sources.get(toSourceId),basis,decisions);
+ if(!report.counts.unresolved){try{report.effects=projectCollectionEdition(sources.get(fromSourceId),sources.get(toSourceId),basis,decisions).report.effects;}catch(error){if(error.code!=='COLLECTION_EDITION')throw error;report.preparationError=error.message;}}
+ return {schema:'stellar-forge.collection-edition-comparison.v1',workspace:{id:w.id,name:w.name},basisRevision:baseRevision,...report};
+}
+export async function prepareCollectionEditionRequest(workspace,{id,expectedRevision,actor,note,createdAt,state,fromSourceId,toSourceId,decisions}){
+ const w=await validateCollectionWorkspace(workspace),sources=sourceMap(w);checkState(state,sources);
+ const projected=await buildCollectionEditionTransition(sources.get(fromSourceId),sources.get(toSourceId),state,decisions);
+ const request={id,expectedRevision,actor,note,createdAt,state:projected.state,sourceEdition:projected.sourceEdition};
+ await saveCollectionRevision(w,request);
+ return {request,report:{schema:'stellar-forge.collection-edition-comparison.v1',workspace:{id:w.id,name:w.name},basisRevision:expectedRevision,...projected.report}};
+}
 export function collectionDraft(workspace,revisionId=workspace.headId) {return copy(revisionFor(workspace,revisionId).state);}
 export async function receiveCollectionWorkspace(local,incoming) {
   const [left,right]=await Promise.all([validateCollectionWorkspace(local),validateCollectionWorkspace(incoming)]);
@@ -172,7 +188,8 @@ export async function collectionReport(workspace,revisionId=workspace.headId) {
   for(const c of collections)for(const entry of c.entries){counts.occurrences++;counts[entry.review.status]++;if(entry.review.rights.status==='unknown')counts.rightsUnknown++;}
   return {schema:'stellar-forge.collection-review-report.v1',workspace:{id:w.id,name:w.name},
     revision:{id:revision.id,parentId:revision.parentId,createdAt:revision.createdAt,actor:revision.actor,note:revision.note},
-    collections,story:copy(state.story),relationships:copy(state.relationships),counts};
+    collections,story:copy(state.story),relationships:copy(state.relationships),counts,
+    ...(revision.request.sourceEdition?{sourceEdition:copy(revision.request.sourceEdition)}:{})};
 }
 const quote=value=>'"'+String(value??'').replace(/"/g,'""')+'"';
 function csv(rows,headers){return [headers,...rows.map(row=>headers.map(key=>row[key]))].map(row=>row.map(quote).join(',')).join('\r\n')+'\r\n';}
@@ -218,6 +235,12 @@ export async function createCollectionExport(workspace,revisionId=workspace.head
     {path:prefix+'occurrences.csv',content:rows.length?csv(rows,Object.keys(rows[0])):''},
     {path:prefix+'relationships.csv',content:csv(report.relationships,['id','from','to','kind','note'])},
     {path:prefix+'story.json',content:json(report.story)}];
+  for(const revision of w.revisions)if(revision.request.sourceEdition){
+    const transition=revision.request.sourceEdition,comparison=await validateCollectionEditionTransition(transition,sourceMap(w),revision.state);
+    const editionReport={schema:'stellar-forge.collection-edition-comparison.v1',workspace:{id:w.id,name:w.name},basisRevision:revision.parentId,revisionId:revision.id,...comparison};
+    files.push({path:prefix+'source-editions/'+revision.id+'.json',content:json(editionReport)},
+      {path:prefix+'source-editions/'+revision.id+'.html',content:renderCollectionEditionComparison(editionReport)});
+  }
   for(const source of w.sources){files.push({path:prefix+'sources/'+source.id+'/original.'+(source.source.format==='archiveblack-html'?'html':'json'),content:source.source.sourceText},
     {path:prefix+'sources/'+source.id+'/source.json',content:json(source)});}
   files.push({path:prefix+'README.md',content:'# '+w.name+'\n\nProposed collection-review capability. This is an editorial preparation, not an institutional publication, rights clearance or issuer-specific DAM implementation.\n\nOpen workspace.json in Collection review to validate and continue every source and revision. Receiving into the same workspace retains the current local selection and all incoming branches. Select an earlier/received revision explicitly as the basis of a new draft.\n\nreview.html is a printable complete institutional review plus separately ordered story proposal. Source titles combine any date exactly as published. Repeated links remain distinct occurrences. Rights observations require an operator-provided basis and citation; they do not independently establish permission. No linked media is included or fetched.\n\noccurrences.csv and relationships.csv are quoted UTF-8 metadata for explicit import to an existing CMS/catalogue. Source titles may contain spreadsheet formula characters; import all fields as text. review.json and story.json carry complete structured fields.\n'}); 
