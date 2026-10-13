@@ -17,6 +17,9 @@ function responseError(error) {
     message: String(error.message ?? 'The recovery workspace request failed').slice(0, 500) };
   for (const key of ['status', 'providerCode', 'originalCode', 'requestId', 'putRequestId', 'retryAfter', 'retryable', 'mayHaveCommitted', 'reconciliationCode', 'reconciliationStatus'])
     if (['string', 'number', 'boolean'].includes(typeof error[key])) value[key] = error[key];
+  const evidence=error.objectRecoveryResult?.nativeEvidence;
+  if(evidence&&/^[a-f0-9]{64}$/.test(evidence.sha256)&&Number.isSafeInteger(evidence.bytes)&&evidence.bytes>0)
+    value.nativeEvidence={sha256:evidence.sha256,bytes:evidence.bytes};
   return value;
 }
 function headers(res) {

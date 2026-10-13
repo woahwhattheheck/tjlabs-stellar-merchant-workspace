@@ -80,7 +80,12 @@ export function createObjectRecoveryDesk({root,api,post,refresh,notice,showDetai
  }
  async function task(fn){
   if(busy)return;busy=true;sync();
-  try{return await fn();}catch(error){notice((error.code?error.code+': ':'')+error.message,true);}
+  try{return await fn();}catch(error){
+   notice((error.code?error.code+': ':'')+error.message,true);
+   const evidence=evidenceButton(error.nativeEvidence);
+   if(evidence)observation.replaceChildren(node('h3','Retained native observation failure'),
+    facts({code:error.code,message:error.message,nativeEvidence:error.nativeEvidence}),evidence);
+  }
   finally{busy=false;sync();}
  }
  function evidenceButton(reference){

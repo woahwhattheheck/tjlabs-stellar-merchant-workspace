@@ -172,6 +172,9 @@ function nativeFailure(native, { workspace, input, status, uncertain = false, mu
   const safe = { code: typeof native?.code === 'string' ? native.code.slice(0,100) : 'RECOVERY_WORKSPACE_FAILED',
     message: typeof native?.message === 'string' ? native.message.slice(0,500) : 'The original recovery request failed.' };
   for (const key of metadataFields) if (['string','number','boolean'].includes(typeof native?.[key])) safe[key] = native[key];
+  const evidence=native?.nativeEvidence;
+  if(evidence&&SHA.test(evidence.sha256??'')&&Number.isSafeInteger(evidence.bytes)&&evidence.bytes>0)
+    safe.nativeEvidence={sha256:evidence.sha256,bytes:evidence.bytes};
   const selected = scope(workspace, input ?? {});
   const details = { outcome: uncertain ? 'OUTCOME_UNKNOWN' : Number.isInteger(status) && status >= 400 ? 'REJECTED' : 'READ_FAILED', ...selected,
     ...(Number.isInteger(status) ? { httpStatus: status } : {}), mutationRequestAttempted, error: safe };
