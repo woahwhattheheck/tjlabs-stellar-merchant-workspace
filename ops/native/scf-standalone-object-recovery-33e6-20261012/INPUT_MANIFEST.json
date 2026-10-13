@@ -5,11 +5,11 @@
   "sourceCommit": "b09765c47a6e71b552bfc7b38958d7b1b9750678",
   "input": {
     "path": "source-input.json.gz",
-    "bytes": 923023,
-    "sha256": "c0300cf4c827d27a3a88864056fafc2ffeb1305e985a7034a71c7404f4390b6a",
-    "decodedBytes": 3024829,
-    "decodedSha256": "863a7dbc361d064cdfc7b84756f41d42eff49b9b84c5f1cc88b092f5425a57ed",
-    "git_blob_sha": "0503097328661098739d5796d60ea59476fc6c3f"
+    "bytes": 923782,
+    "sha256": "9e3d2b33f3a6988a07a42541573a40b48ca313392caebe18b63af9a7f17028ba",
+    "decodedBytes": 3027879,
+    "decodedSha256": "db25e0de996004e5520756f10ea0799cc8ce36f3307e7fc4fd7e38c7a5d16d66",
+    "git_blob_sha": "096f4b866c0122b5b17a639199af494bfa083aea"
   },
   "files": [
     {
@@ -1288,8 +1288,8 @@
   "programmes": [
     {
       "path": "native-acceptance.mjs",
-      "bytes": 15513,
-      "sha256": "43e2947f59e07127f634b61740fc51c8aecb169ef5fe8947e8b31155d17978c8"
+      "bytes": 15558,
+      "sha256": "0dd909ab42aa92a9e028aeb7e139a80a86d090d56d0781b64d517728cc212076"
     },
     {
       "path": "prepare-native.py",
@@ -1303,8 +1303,8 @@
     },
     {
       "path": "source-receiving.py",
-      "bytes": 8490,
-      "sha256": "edb2789bfe469a37d7a66bcf1c44d26cdd8c6748b452e54d6b95b4da5f403dba"
+      "bytes": 11462,
+      "sha256": "11f1960274a8336f513ea6dc87e5a577f76438a5b86fb52c3bb038ff3156ef07"
     }
   ],
   "privateSourceArchive": {

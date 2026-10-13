@@ -4,10 +4,10 @@
   "source_commit": "b09765c47a6e71b552bfc7b38958d7b1b9750678",
   "input": {
     "path": "source-input.json.gz",
-    "bytes": 923023,
-    "sha256": "c0300cf4c827d27a3a88864056fafc2ffeb1305e985a7034a71c7404f4390b6a",
-    "decodedBytes": 3024829,
-    "decodedSha256": "863a7dbc361d064cdfc7b84756f41d42eff49b9b84c5f1cc88b092f5425a57ed"
+    "bytes": 923782,
+    "sha256": "9e3d2b33f3a6988a07a42541573a40b48ca313392caebe18b63af9a7f17028ba",
+    "decodedBytes": 3027879,
+    "decodedSha256": "db25e0de996004e5520756f10ea0799cc8ce36f3307e7fc4fd7e38c7a5d16d66"
   },
   "private_source_archive": {
     "filename": "Stellar_Forge_Original_Object_Recovery_a8e6646c_20261012.zip",

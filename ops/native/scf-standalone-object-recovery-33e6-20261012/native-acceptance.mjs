@@ -81,7 +81,7 @@ try{
     upstream.once('connect',()=>{socket.write('HTTP/1.1 200 Connection Established\r\n\r\n');if(head.length)upstream.write(head);socket.pipe(upstream);upstream.pipe(socket);});
    });
    await new Promise((resolve,reject)=>{proxy.once('error',reject);proxy.listen(0,'127.0.0.1',resolve);});
-   broker=await createBrowserApprovalBroker({directory:root});
+   broker=await createBrowserApprovalBroker({directory:process.env.SCF_RECOVERY_SOCKET_DIRECTORY??'/tmp'});
    const sourceEnvironment={...environment,...broker.environment,SCF_RECOVERY_REFERENCE_PROXY:'http://127.0.0.1:'+proxy.address().port};
    for(const key of ['SF36_CONSENT_KEY_B64','SF36_AUDIT_KEY_B64','SF36_OPERATOR_KEY_B64'])sourceEnvironment[key]=randomBytes(32).toString('base64');
    let report=await exists(join(session,'session.json'))?await native.inspectObjectSession(session,{signal:abort.signal}):

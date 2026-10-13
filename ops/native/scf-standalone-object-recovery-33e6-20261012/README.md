@@ -14,11 +14,11 @@ Choose an existing equipped Linux executor. Use its original resource admission/
 
 ## Inputs and existing runtime
 
-- `source-input.json.gz`: 923,023 bytes; SHA256 `c0300cf4c827d27a3a88864056fafc2ffeb1305e985a7034a71c7404f4390b6a`. Decoded complete source input: 3,024,829 bytes; SHA256 `863a7dbc361d064cdfc7b84756f41d42eff49b9b84c5f1cc88b092f5425a57ed`.
+- `source-input.json.gz`: 923,782 bytes; SHA256 `9e3d2b33f3a6988a07a42541573a40b48ca313392caebe18b63af9a7f17028ba`. Decoded complete source input: 3,027,879 bytes; SHA256 `db25e0de996004e5520756f10ea0799cc8ce36f3307e7fc4fd7e38c7a5d16d66`.
 - The private, already-saved complete original Object package `Stellar_Forge_Original_Object_Recovery_a8e6646c_20261012.zip`: **291,120 bytes**, SHA256 `33aad8127ff99514ed990607fea1e0ab908da3a6788029708cccc48239f03957`, **102 members**. Its existing file identity is supplied in the internal execution handoff. Obtain it through the original authenticated file materializer; it is an existing input, not a new data acquisition.
 - Existing absolute Node executable (the selected source is exercised with the maintained Node runtime; use Node 22 or newer), Python 3.10 or newer, and OpenSSL with `req -addext`. The programmes use Python standard-library modules and the selected original JavaScript closure. No npm installation is needed for this free-session journey.
 - Existing authenticated `LibraryUploadWorkflow` helper closure and selected transfer executable/runtime. The save uses the original preparation, transfer, finalization and local annotation path, with a private request/result recorder.
-- A new canonical private work directory under the admitted filesystem and a durable final output directory. An existing work directory is refused so that a surviving operation cannot be silently replaced.
+- A new canonical private work directory under the admitted filesystem and a durable final output directory. A fresh invocation refuses an existing work directory. Explicit `--resume-work` reopens the original canonical directory under its exclusive work-root lock, verifies the original received input and every application member, and enters the existing control protocol without dispatching native work automatically.
 
 The exact original helper hashes required by the existing save are:
 
@@ -39,7 +39,7 @@ Resolve the placeholders to the accepted owner's actual canonical paths. Preserv
 ```bash
 /ABSOLUTE/python3 /ABSOLUTE/source-receiving.py \
   --source-input /ABSOLUTE/source-input.json.gz \
-  --expected-source-sha256 c0300cf4c827d27a3a88864056fafc2ffeb1305e985a7034a71c7404f4390b6a \
+  --expected-source-sha256 9e3d2b33f3a6988a07a42541573a40b48ca313392caebe18b63af9a7f17028ba \
   --original-object-archive /ABSOLUTE/Stellar_Forge_Original_Object_Recovery_a8e6646c_20261012.zip \
   --work-directory /ABSOLUTE/NEW-PRIVATE-WORK-DIRECTORY \
   --node /ABSOLUTE/node \
@@ -49,6 +49,10 @@ Resolve the placeholders to the accepted owner's actual canonical paths. Preserv
 ```
 
 The owner also retains its original one-line compressed stdin route when `--source-input` is omitted. The file-based route is intended for an existing remote executor that has received the full pinned input.
+
+For explicit continuation after the original owner has stopped, add `--resume-work` and select the **original received** `source-input.json.gz` and its original SHA for that same work root. Retain the original runtime, archive and delivery paths. Then send the original bounded `write`, `node`, `python`, or `close` control lines. Corrected following scripts are retained as new immutable files under `records/`; the original source input and earlier scripts/logs stay unchanged. A `node` continuation needs a new log label and the same application/session inputs. Packaging after a successful native continuation uses `python` with `path: package-native.py`.
+
+The local reference approval broker uses its existing private socket-directory API under `/tmp`, independently of the persistent work-root length. An equipped owner may select another existing short absolute directory through `SCF_RECOVERY_SOCKET_DIRECTORY`.
 
 ## Complete native journey
 
