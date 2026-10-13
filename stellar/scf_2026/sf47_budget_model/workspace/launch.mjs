@@ -303,6 +303,8 @@ const BOOT_FILES = [
   "../../sf49_data_commissioning/installation-workorders/source-inputs.py",
   "../../sf49_data_commissioning/installation-workorders/prepare-core.mjs",
   "../../sf49_data_commissioning/installation-workorders/profiles.mjs",
+  "../../sf49_data_commissioning/installation-workorders/rialto-customer.json",
+  "../../sf49_data_commissioning/installation-workorders/RIALTO_CUSTOMER.md",
   "../../sf49_data_commissioning/installation-workorders/amp-iati.json",
   "../../sf49_data_commissioning/installation-workorders/ars-air-quality.json",
   "../../sf49_data_commissioning/installation-workorders/blockscout.json",
