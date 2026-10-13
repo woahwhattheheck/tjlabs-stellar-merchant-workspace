@@ -243,7 +243,8 @@
     "stellar-forge/mcp-merchant-operator/catalog/grant-planning-sources.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/source-tables-agent.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/SOURCE_TABLES_AGENT.md",
-    "stellar/scf_2026/sf47_budget_model/workspace/examples/source-tables/receive-current-budget-workbook-mcp.mjs"
+    "stellar/scf_2026/sf47_budget_model/workspace/examples/source-tables/receive-current-budget-workbook-mcp.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/examples/source-tables/checkpoint-workbook-mcp.py"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
