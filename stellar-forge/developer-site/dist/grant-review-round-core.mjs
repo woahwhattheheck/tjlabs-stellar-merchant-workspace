@@ -175,7 +175,7 @@ async function descriptor(draft, selected, format) {
 }
 function nextState(round, initialDraftId) {
   return {revision:0, selectedEdition:round.initialEdition, draftId:initialDraftId,
-    participants:[clone(round.creator)], decisions:[], decisionsHistory:[], changes:[], selections:[], status:'OPEN', completion:null};
+    participants:[clone(round.creator)], decisions:[], decisionsHistory:[], changes:[], selections:[], returnedReviews:[], status:'OPEN', completion:null};
 }
 function targetTitle(draft, selected) {
   if (selected.kind === 'application') return 'Complete prepared submission';
@@ -194,12 +194,14 @@ function readyIssues(state, draft, format) {
   for (const field of draft.fields) for (const message of fieldStatus(field,draft.form,format).issues) issues.push({kind:'field',target:{kind:'field',id:field.id},message});
   return issues;
 }
-async function reduce(round, state, event, drafts) {
+async function reduce(round, state, event, drafts, contexts=new Map(), context=returnContext()) {
   const input=event.input, currentEdition=state.selectedEdition, current=await drafts.get(currentEdition);
   need(event.expectedRevision === state.revision && event.sequence === state.revision+1, 'Retain the original review event order.');
   need(state.participants.some(x=>x.id===event.actorId), 'Retain the named participant selected for this action.');
-  if (state.status === 'COMPLETE') need(event.kind === 'reopen', 'Reopen the completed review explicitly before adding work or receiving a revised draft.');
-  if (event.kind === 'participant') {
+  if (state.status === 'COMPLETE') need(event.kind === 'reopen'||event.kind === 'return', 'Reopen the completed review explicitly before adding work or receiving a revised draft.');
+  if(event.kind==='return'){
+    await reduceReturn(round,state,event,drafts,contexts,context);
+  } else if (event.kind === 'participant') {
     exact(input,['person'],'Participant action'); person(input.person);
     need(!state.participants.some(x=>x.id===input.person.id || x.label.toLowerCase()===input.person.label.toLowerCase()),
       'Select the original participant identity for this name.');
@@ -210,7 +212,7 @@ async function reduce(round, state, event, drafts) {
     const selected=await drafts.describe(state.selectedEdition,input.target,round.format);
     need(selected.bindingSha256===input.bindingSha256,'The selected answer, field or source context changed before this review.');
     need(REVIEW_DECISIONS.includes(input.decision),'Select an explicit reviewer decision.'); text(input.note,'Reviewer note',100000,input.decision!=='accepted'); evidence(input.references);
-    const row={id:event.id,originalReviewId:event.id,actorId:event.actorId,editionId:state.selectedEdition,target:clone(input.target),
+    const row={id:event.id,originalReviewId:event.returnedFrom?.eventId||event.id,sourceEventSha256:event.sha256||event.returnedFrom?.eventSha256, ...(event.returnedFrom?{returnedFrom:clone(event.returnedFrom)}:{}),actorId:event.actorId,editionId:state.selectedEdition,target:clone(input.target),
       bindingSha256:input.bindingSha256,decision:input.decision,note:input.note,references:clone(input.references),at:event.at,carriedBy:null};
     state.decisions=state.decisions.filter(x=>!(x.actorId===row.actorId && targetKey(x.target)===targetKey(row.target)));
     state.decisions.push(row); state.decisionsHistory.push(clone(row));
@@ -222,20 +224,20 @@ async function reduce(round, state, event, drafts) {
     text(input.title,'Requested change title',300,true); need(REVIEW_PRIORITIES.includes(input.priority),'Select the change priority.');
     text(input.quote,'Original quoted text',100000); need(!input.quote||selected.text.includes(input.quote),'The quoted text must appear exactly in the selected answer or field.');
     text(input.note,'Requested change',100000,true); evidence(input.references);
-    state.changes.push({id:event.id,actorId:event.actorId,at:event.at,...clone(input),status:'open',responses:[],resolutions:[]});
+    state.changes.push({id:event.id,sourceEventSha256:event.sha256||event.returnedFrom?.eventSha256,...(event.returnedFrom?{returnedFrom:clone(event.returnedFrom)}:{}),actorId:event.actorId,at:event.at,...clone(input),status:'open',responses:[],resolutions:[]});
   } else if (event.kind === 'respond') {
     exact(input,['changeId','editionId','response','note','references'],'Author response');
     const row=state.changes.find(x=>x.id===input.changeId); need(row,'Select the original requested change.');
     need(input.editionId===state.selectedEdition,'Respond against the currently selected draft.');
     need(['addressed','declined','question'].includes(input.response),'Select the author response.'); text(input.note,'Author response note',100000,true); evidence(input.references);
-    row.responses.push({id:event.id,actorId:event.actorId,at:event.at,...clone(input)});
+    row.responses.push({id:event.id,sourceEventSha256:event.sha256||event.returnedFrom?.eventSha256,...(event.returnedFrom?{returnedFrom:clone(event.returnedFrom)}:{}),actorId:event.actorId,at:event.at,...clone(input)});
     if(row.status==='resolved') row.status='open';
   } else if (event.kind === 'resolve') {
     exact(input,['changeId','editionId','status','note'],'Review resolution');
     const row=state.changes.find(x=>x.id===input.changeId); need(row,'Select the original requested change.');
     need(input.editionId===state.selectedEdition,'Resolve the request against the currently selected draft.');
     need(['resolved','deferred','open'].includes(input.status),'Choose resolved, deferred or reopened.'); text(input.note,'Review resolution note',100000,true);
-    row.status=input.status; row.resolutions.push({id:event.id,actorId:event.actorId,at:event.at,...clone(input)});
+    row.status=input.status; row.resolutions.push({id:event.id,sourceEventSha256:event.sha256||event.returnedFrom?.eventSha256,...(event.returnedFrom?{returnedFrom:clone(event.returnedFrom)}:{}),actorId:event.actorId,at:event.at,...clone(input)});
   } else if (event.kind === 'receive') {
     exact(input,['editionId','fromEdition','note','decisions'],'Revised draft selection');
     need(input.fromEdition===state.selectedEdition && input.editionId!==input.fromEdition,'Compare and explicitly select a different received edition.');
@@ -313,7 +315,7 @@ function editionReader(captures) {
   }
   return {get, describe, has:id=>originals.has(id), summary:id=>summaries.get(id)};
 }
-async function build(round) {
+async function build(round,context=returnContext()) {
   exact(round,['schema','id','title','folder','createdAt','updatedAt','format','creator','initialEdition','editions','events'],'Complete review round');
   need(round.schema===REVIEW_SCHEMA,'Open the complete review round.'); identity(round.id,'Review identity'); text(round.title,'Review title',300,true);
   need(round.folder==='SCF review — '+round.title,'Retain the original review folder and title.'); iso(round.createdAt,'Review creation');iso(round.updatedAt,'Review update');
@@ -325,7 +327,7 @@ async function build(round) {
   for(const capture of round.editions)await drafts.get(capture.id);
   need(drafts.has(round.initialEdition),'Retain the first received draft.');
   const state=nextState(round,drafts.summary(round.initialEdition).id);
-  list(round.events,'Complete review actions',20000);const eventIds=new Set(),usedEditions=new Set([round.initialEdition]);let previous=null;
+  list(round.events,'Complete review actions',20000);const eventIds=new Set(),usedEditions=new Set([round.initialEdition]),contexts=new Map();let previous=null;
   for(const event of round.events){
     exact(event,['id','sequence','expectedRevision','at','actorId','kind','input','previousSha256','sha256'],'Saved review action');
     identity(event.id,'Review request identity');need(!eventIds.has(event.id),'Retain unique original request identities.');eventIds.add(event.id);
@@ -334,12 +336,13 @@ async function build(round) {
     need(event.previousSha256===previous,'Retain the complete review history in its original order.');
     const body=clone(event);delete body.sha256;
     need(await reviewSha256(stable(body))===event.sha256,'A saved review action differs from its retained original input.');
-    await reduce(round,state,event,drafts);previous=event.sha256;
+    contexts.set(event.id,await actionContext(state,event,drafts,round.format));
+    await reduce(round,state,event,drafts,contexts,context);previous=event.sha256;
     if(event.kind==='receive')usedEditions.add(event.input.editionId);
   }
   need(round.editions.every(x=>usedEditions.has(x.id)),'Every retained draft must belong to an explicit source selection.');
   need(round.updatedAt===(round.events.at(-1)?.at||round.createdAt),'Retain the current review’s last saved action date.');
-  return {state,drafts};
+  return {state,drafts,contexts};
 }
 export async function validateReviewRound(round) { await build(round); return round; }
 export async function createReviewRound(capture,{id,title='SCF submission review',reviewer,format='plain',now=new Date().toISOString()}={}){
@@ -374,7 +377,8 @@ export async function reviewRoundView(round,{editionId=null}={}){
   const {state,drafts}=await build(round),selectedId=editionId||state.selectedEdition,draft=await drafts.get(selectedId);
   need(draft,'Select a retained original draft edition.');
   const rows=[];for(const selected of targets(draft)) rows.push(await drafts.describe(selectedId,selected,round.format));
-  return {...clone(state),viewedEdition:selectedId,isCurrent:selectedId===state.selectedEdition,format:round.format,title:round.title,
+  const {returnedReviews,...publicState}=state;
+  return {...clone(publicState),returnedReviews:returnedReviews.map(receipt=>({...clone({...receipt,choices:undefined}),choices:receipt.choices.map(({appliedAction,context,...choice})=>clone(choice))})),viewedEdition:selectedId,isCurrent:selectedId===state.selectedEdition,format:round.format,title:round.title,
     draft:clone(draft),capture:clone(round.editions.find(x=>x.id===selectedId)),targets:rows,
     readiness:readyIssues(state,await drafts.get(state.selectedEdition),round.format),
     editions:round.editions.map(x=>({id:x.id,fileName:x.fileName,receivedAt:x.receivedAt,bytes:x.bytes,draftSha256:x.draftSha256,
@@ -439,10 +443,269 @@ export async function reviewReport(round){
     for(const resolution of row.resolutions)lines.push('', 'Review resolution — '+personLabel(resolution.actorId)+' / '+resolution.status+' / '+resolution.at,'',resolution.note);
     lines.push('');
   }
+  if(view.returnedReviews.length){
+    lines.push('## Independently returned review work','');
+    for(const receipt of view.returnedReviews){
+      lines.push('### '+receipt.capture.fileName,'',
+        'Complete returned file SHA-256: '+receipt.capture.id,
+        'Original round SHA-256: '+receipt.capture.roundSha256,
+        'Original export bytes: '+receipt.capture.bytes,
+        'Received by '+personLabel(receipt.actorId)+' at '+receipt.at+'; receiving action '+receipt.id,
+        'Shared original revision: '+receipt.common.revision+'; comparison '+receipt.comparisonSha256,'',receipt.note,'');
+      for(const choice of receipt.choices){
+        lines.push('- '+choice.eventId+' — '+choice.choice+(choice.appliedId?'; local action '+choice.appliedId:'')+'. '+choice.note,
+          '  Original event SHA-256: '+choice.eventSha256,'  '+choice.reason);
+        if(choice.returnedFrom)lines.push('  Original actor '+personLabel(choice.returnedFrom.actorId)+'; original recorded time '+choice.returnedFrom.at+'. The receiving actor and time above remain separate.',
+          ...(choice.returnedFrom.editionId?['  Original action edition: '+choice.returnedFrom.editionId+'; exact target binding '+choice.returnedFrom.bindingSha256+'.']:[]));
+      }
+      lines.push('');
+    }
+    lines.push('The complete incoming packet, declined actions and original returned history remain in the receiving event. Receiving did not select a draft edition or import a completion outcome.','');
+  }
   lines.push('## Complete selected application text','',applicationOutput(view.draft,{format:round.format,useFields:false}));
   if(view.draft.fields.length)lines.push('## Complete selected issuer fields','',applicationOutput(view.draft,{format:round.format,useFields:true}));
   lines.push('## Retained source editions','');
   for(const edition of view.editions)lines.push('- '+edition.fileName+' — export '+edition.id+'; draft '+edition.draftSha256+'; received '+edition.receivedAt);
   lines.push('','The complete review JSON retains every original draft export, reviewer identity, action input, earlier decision, source edition and author reply. Open that JSON in the same review workspace to continue.','');
   return lines.join('\n');
+}
+
+// A returned round is retained as its complete original export. Only explicitly
+// selected editorial actions are projected into the current event chain.
+export const REVIEW_RETURN_SCHEMA='stellar-forge.grant-review-return-comparison.v1';
+const RETURN_KINDS=new Set(['participant','review','change','respond','resolve']);
+function returnContext(){return {captures:new Map(),active:new Set(),depth:0};}
+function roundHeader(round){
+  return {schema:round.schema,id:round.id,title:round.title,folder:round.folder,createdAt:round.createdAt,
+    format:round.format,creator:round.creator,initialEdition:round.initialEdition};
+}
+async function verifyReviewReturn(capture,context=returnContext()){
+  exact(capture,['id','fileName','receivedAt','bytes','roundSha256','exportText'],'Returned review');
+  hex(capture.id,'Returned original file');hex(capture.roundSha256,'Returned round');
+  text(capture.fileName,'Returned file name',300,true);iso(capture.receivedAt,'Return received at');
+  text(capture.exportText,'Complete returned export',REVIEW_MAX_BYTES+65536,true);
+  need(Number.isSafeInteger(capture.bytes)&&capture.bytes===measureText(capture.exportText).utf8Bytes&&capture.bytes<=REVIEW_MAX_BYTES+65536,
+    'Retain the complete returned review within its original export allowance.');
+  const old=context.captures.get(capture.id);
+  if(old){need(old.text===capture.exportText&&old.sha===capture.roundSha256,'A return identity already owns different original bytes.');return old.value;}
+  need(!context.active.has(capture.id)&&context.depth<32,'The returned history exceeds the bounded receiving depth; preserve its original export.');
+  need(await reviewSha256(capture.exportText)===capture.id,'The complete returned file has changed.');
+  const packet=JSON.parse(capture.exportText);
+  need(packet?.schema===REVIEW_ENVELOPE&&packet.round,'Select a complete original review-round export.');
+  hex(packet.sha256,'Returned envelope digest');iso(packet.exportedAt,'Returned export date');
+  need(packet.sha256===capture.roundSha256&&await reviewSha256(JSON.stringify(packet.round))===packet.sha256,
+    'The returned round differs from its original export.');
+  context.active.add(capture.id);context.depth++;
+  try{
+    const built=await build(packet.round,context);
+    const value={round:packet.round,...built};
+    context.captures.set(capture.id,{text:capture.exportText,sha:capture.roundSha256,value});
+    return value;
+  }finally{context.active.delete(capture.id);context.depth--;}
+}
+export async function readReviewReturn(exportText,{fileName='returned-review-round.json',receivedAt=new Date().toISOString()}={}){
+  text(exportText,'Complete returned export',REVIEW_MAX_BYTES+65536,true);
+  const packet=JSON.parse(exportText);
+  const capture={id:await reviewSha256(exportText),fileName,receivedAt,bytes:measureText(exportText).utf8Bytes,roundSha256:packet?.sha256,exportText};
+  await verifyReviewReturn(capture);return capture;
+}
+function provenance(event){
+  return event.returnedFrom||{eventId:event.id,eventSha256:event.sourceEventSha256||event.sha256,actorId:event.actorId,at:event.at};
+}
+function logicalHistory(round,state,contexts){
+  const out=[];
+  for(const event of round.events){
+    out.push({eventId:event.id,event,context:contexts.get(event.id)||null,origin:provenance(event),containerId:event.id});
+    if(event.kind==='return'){
+      const receipt=state.returnedReviews.find(x=>x.id===event.id);
+      for(const choice of receipt?.choices||[])if(choice.appliedAction)
+        out.push({eventId:choice.appliedId,event:choice.appliedAction,context:choice.context,origin:choice.returnedFrom,containerId:event.id});
+    }
+  }
+  return out;
+}
+async function actionContext(state,event,drafts,format){
+  if(!['review','change','respond','resolve'].includes(event.kind))return null;
+  const change=['respond','resolve'].includes(event.kind)?state.changes.find(x=>x.id===event.input.changeId):null;
+  const selected=change?.target||event.input.target;
+  if(!selected)return null;
+  const descriptor=await drafts.describe(state.selectedEdition,selected,format);
+  return {editionId:state.selectedEdition,target:clone(selected),bindingSha256:descriptor.bindingSha256,
+    changeId:change?.id||null,discussion:change?await reviewSha256(stable({status:change.status,
+      responses:change.responses.map(x=>({origin:provenance(x).eventSha256||x.id,actorId:x.actorId,at:x.at,response:x.response,note:x.note,references:x.references})),
+      resolutions:change.resolutions.map(x=>({origin:provenance(x).eventSha256||x.id,actorId:x.actorId,at:x.at,status:x.status,note:x.note}))})):null};
+}
+async function returnComparison(round,state,drafts,contexts,capture,context){
+  const incoming=await verifyReviewReturn(capture,context);
+  need(same(roundHeader(round),roundHeader(incoming.round)),'This returned file is not the same original round and immutable source identity.');
+  const initial=round.editions.find(x=>x.id===round.initialEdition),other=incoming.round.editions.find(x=>x.id===incoming.round.initialEdition);
+  need(same(initial,other),'The returned round changed its complete original initial capture.');
+  let common=0;
+  while(common<round.events.length&&common<incoming.round.events.length&&same(round.events[common],incoming.round.events[common]))common++;
+  const prefixIds=new Set(incoming.round.events.slice(0,common).map(x=>x.id));
+  const local=logicalHistory(round,state,contexts),remote=logicalHistory(incoming.round,incoming.state,incoming.contexts);
+  const localIds=new Map(local.map(x=>[x.eventId,x]));
+  const origins=new Map(local.filter(x=>RETURN_KINDS.has(x.event.kind)).map(x=>[x.origin.eventSha256,x]));
+  const remoteIds=new Map(remote.map(x=>[x.eventId,x]));
+  const candidate=remote.filter(x=>!prefixIds.has(x.containerId)),candidates=new Map(candidate.map(x=>[x.eventId,x]));
+  const participantAdds=new Map(candidate.filter(x=>x.event.kind==='participant').map(x=>[x.event.input.person.id,x.eventId]));
+  const people=new Map(incoming.state.participants.map(x=>[x.id,x]));
+  const rowMap=new Map(),rows=[];
+  for(const selected of candidate){
+    const event=selected.event,source=selected.context,dependencies=[],reasons=[];
+    let eligible=RETURN_KINDS.has(event.kind)&&state.status==='OPEN',conflict=false,alreadyRetained=false,currentValue=null,currentRef=null;
+    if(!RETURN_KINDS.has(event.kind))reasons.push('Retained history only: source selections, completion, reopening and prior receiving decisions require their own current operator actions.');
+    if(state.status!=='OPEN')reasons.push('Reopen this current round explicitly before adopting editorial work.');
+    const sameId=localIds.get(selected.eventId),sameOrigin=origins.get(selected.origin.eventSha256);
+    if(sameId){
+      if(!same(sameId.event,event)){eligible=false;conflict=true;reasons.push('This event identity has different immutable content in the current history.');}
+      else{eligible=false;alreadyRetained=true;reasons.push('This exact original event is already retained.');}
+    }else if(sameOrigin){eligible=false;alreadyRetained=true;reasons.push('This original action was already explicitly adopted from a retained return.');}
+    const actor=state.participants.find(x=>x.id===event.actorId),originalActor=people.get(event.actorId);
+    if(actor){if(!originalActor||actor.label!==originalActor.label){eligible=false;conflict=true;reasons.push('The original actor identity conflicts with the current named participant.');}}
+    else if(participantAdds.has(event.actorId))dependencies.push(participantAdds.get(event.actorId));
+    else{eligible=false;reasons.push('The original actor is not a current participant and no returned participant action supplies it.');}
+    if(event.kind==='participant'){
+      const person=event.input.person,existing=state.participants.find(x=>x.id===person.id||x.label.toLowerCase()===person.label.toLowerCase());
+      if(existing){eligible=false;if(same(existing,person)){alreadyRetained=true;reasons.push('The exact named participant is already present.');}
+      else{conflict=true;reasons.push('The returned participant identity or name conflicts with a current participant.');}}
+    }
+    if(['review','change','respond','resolve'].includes(event.kind)){
+      let current=null;try{current=await drafts.describe(state.selectedEdition,source?.target,round.format);}catch{}
+      if(!source||!current||current.bindingSha256!==source.bindingSha256){eligible=false;reasons.push('The current target, text, issuer prompt, limits or source context differs from the original action.');}
+      if(event.kind==='review'){
+        const previous=state.decisions.find(x=>x.actorId===event.actorId&&targetKey(x.target)===targetKey(source.target));
+        if(previous){currentValue={id:previous.id,actorId:previous.actorId,decision:previous.decision,editionId:previous.editionId,bindingSha256:previous.bindingSha256,at:previous.at};currentRef={kind:'decision',id:previous.id};}
+        if(previous&&!alreadyRetained){conflict=true;reasons.push('Adoption explicitly replaces this actor’s current target decision; the existing decision remains in history.');}
+      }
+      if(['respond','resolve'].includes(event.kind)){
+        const parent=remoteIds.get(event.input.changeId);
+        const sameParentId=state.changes.find(x=>x.id===event.input.changeId);
+        const parentConflict=!!sameParentId&&(!parent||parent.event.kind!=='change'||provenance(sameParentId).eventSha256!==parent.origin.eventSha256);
+        const ownChange=parentConflict?null:sameParentId;
+        const adoptedParent=parent?.event.kind==='change'?origins.get(parent.origin.eventSha256):null;
+        if(parentConflict){eligible=false;conflict=true;reasons.push('The requested-change identity belongs to different immutable original content in the current branch; its dependent action cannot be attached to that local change.');}
+        if(!parent||parent.event.kind!=='change'){eligible=false;reasons.push('The returned action has no exact original requested-change event.');}
+        if(!ownChange&&!adoptedParent){
+          if(source.discussion!==await reviewSha256(stable({status:'open',responses:[],resolutions:[]}))){
+            conflict=true;reasons.push('The original action followed an existing discussion in the returned branch. Explain its adoption and the selected preceding replies/resolutions; omitted discussion is never assumed adopted.');
+          }
+          if(candidates.has(event.input.changeId))dependencies.push(event.input.changeId);
+          else{eligible=false;reasons.push('The original requested change is not in the current history or selectable returned actions.');}
+        }
+        if(ownChange||adoptedParent){
+          const mapped=ownChange?.id||adoptedParent.eventId,discussion=state.changes.find(x=>x.id===mapped);
+          if(discussion){currentValue={id:discussion.id,title:discussion.title,status:discussion.status,editionId:discussion.editionId,bindingSha256:discussion.bindingSha256,responseCount:discussion.responses.length,resolutionCount:discussion.resolutions.length};currentRef={kind:'change',id:discussion.id};}
+          const probe={...event,input:{...event.input,changeId:mapped}};
+          const currentContext=await actionContext(state,probe,drafts,round.format);
+          if(currentContext?.discussion!==source.discussion){conflict=true;reasons.push('The current change discussion or resolution differs; an explicit adoption note must address this later work.');}
+        }
+      }
+    }
+    // Dependency eligibility is authoritative; original event order means its
+    // prerequisite has already been classified when this row is reached.
+    for(const id of dependencies){
+      const row=rowMap.get(id);
+      if(!row||(!row.eligible&&!row.alreadyRetained)){eligible=false;reasons.push('A required original participant or requested change cannot be adopted: '+id+'.');}
+    }
+    const row={eventId:selected.eventId,kind:event.kind,actorId:event.actorId,actorLabel:originalActor?.label||event.actorId,
+      at:event.at,target:source?.target||null,input:event.kind==='return'?{capture:{id:event.input.capture.id,fileName:event.input.capture.fileName,bytes:event.input.capture.bytes,roundSha256:event.input.capture.roundSha256},comparisonSha256:event.input.comparisonSha256,note:event.input.note,choiceCount:event.input.choices.length}:clone(event.input),eligible,
+      before:source?{editionId:source.editionId,target:clone(source.target),bindingSha256:source.bindingSha256,discussionSha256:source.discussion}:null,current:currentValue,currentRef,
+      reason:reasons.join(' ')||(eligible?'Exact original target binding is unchanged; adoption requires an explicit choice.':'Retain this original history.'),
+      dependencies:[...new Set(dependencies)],conflict,alreadyRetained};
+    rowMap.set(row.eventId,row);rows.push(row);
+  }
+  const result={schema:REVIEW_RETURN_SCHEMA,roundId:round.id,revision:state.revision,headSha256:round.events.at(-1)?.sha256||null,
+    selectedEdition:state.selectedEdition,captureId:capture.id,incoming:{id:incoming.round.id,title:incoming.round.title,
+      revision:incoming.state.revision,headSha256:incoming.round.events.at(-1)?.sha256||null,status:incoming.state.status},
+    common:{revision:common,headSha256:common?round.events[common-1].sha256:null},rows,
+    counts:{total:rows.length,eligible:rows.filter(x=>x.eligible).length,conflicts:rows.filter(x=>x.conflict).length,alreadyRetained:rows.filter(x=>x.alreadyRetained).length}};
+  // Bind immutable originals and the current event chain, never translated
+  // labels or display explanations that may change without changing history.
+  result.comparisonSha256=await reviewSha256(stable({schema:REVIEW_RETURN_SCHEMA,
+    round:roundHeader(round),revision:state.revision,headSha256:result.headSha256,
+    selectedEdition:state.selectedEdition,captureId:capture.id,common:result.common}));
+  return {result,candidates,origins,people,remoteIds};
+}
+export async function compareReviewReturn(round,capture){
+  const context=returnContext(),built=await build(round,context);
+  return (await returnComparison(round,built.state,built.drafts,built.contexts,capture,context)).result;
+}
+async function reduceReturn(round,state,event,drafts,contexts,context){
+  const input=event.input;exact(input,['capture','comparisonSha256','choices','note'],'Returned-review adoption');
+  hex(input.comparisonSha256,'Reviewed return comparison');text(input.note,'Returned-review receiving note',100000,true);
+  list(input.choices,'Explicit returned-action choices',100000);
+  const prefix={...round,events:round.events.slice(0,state.revision)};
+  prefix.updatedAt=prefix.events.at(-1)?.at||prefix.createdAt;
+  // Later source editions remain in the full round, but only the selected
+  // prefix's reader and current state participate in adoption.
+  const checked=await returnComparison(prefix,state,drafts,contexts,input.capture,context);
+  need(input.comparisonSha256===checked.result.comparisonSha256,'The prepared returned-review comparison is stale or changed. Recompare the current original round.');
+  need(input.choices.length===checked.result.rows.length&&new Set(input.choices.map(x=>x.eventId)).size===input.choices.length,
+    'Choose adopt or retain for every complete returned action.');
+  const choices=new Map(input.choices.map(x=>[x.eventId,x])),rowMap=new Map(checked.result.rows.map(x=>[x.eventId,x])),mapped=new Map();
+  for(const [origin,value]of checked.origins)mapped.set(origin,value.eventId);
+  const receipt={id:event.id,actorId:event.actorId,at:event.at,capture:{id:input.capture.id,fileName:input.capture.fileName,
+    receivedAt:input.capture.receivedAt,bytes:input.capture.bytes,roundSha256:input.capture.roundSha256},
+    comparisonSha256:input.comparisonSha256,common:checked.result.common,note:input.note,choices:[]};
+  const adopted=new Set();
+  for(const row of checked.result.rows){
+    const choice=choices.get(row.eventId);exact(choice,['eventId','choice','note'],'Returned-action choice');
+    need(['adopt','retain'].includes(choice.choice),'Choose adopt or retain for each original action.');
+    text(choice.note,'Returned-action explanation',20000,choice.choice==='retain'||row.conflict);
+    const source=checked.candidates.get(row.eventId),original=source.event;
+    const record={...clone(choice),eventSha256:source.origin.eventSha256,appliedId:null,reason:row.reason,conflict:row.conflict};
+    if(choice.choice==='adopt'){
+      need(row.eligible,'This returned action cannot be adopted: '+row.reason);
+      for(const dependency of row.dependencies)need(adopted.has(dependency)||rowMap.get(dependency)?.alreadyRetained,
+        'Adopt the required original participant or requested change before this dependent action.');
+      const action=clone(original),appliedId='returned-'+await reviewSha256(stable({returnId:event.id,captureId:input.capture.id,eventId:row.eventId}));
+      action.id=appliedId;action.sequence=state.revision+1;action.expectedRevision=state.revision;
+      action.previousSha256=null;
+      action.returnedFrom={returnId:event.id,captureId:input.capture.id,eventId:source.origin.eventId,eventSha256:source.origin.eventSha256,
+        actorId:source.origin.actorId,at:source.origin.at,editionId:source.origin.editionId||source.context?.editionId||null,
+        bindingSha256:source.origin.bindingSha256||source.context?.bindingSha256||null};
+      if(['review','change','respond','resolve'].includes(action.kind))action.input.editionId=state.selectedEdition;
+      if(['respond','resolve'].includes(action.kind)){
+        const parent=checked.remoteIds.get(original.input.changeId);
+        need(parent?.event.kind==='change','Retain the exact original requested-change event for this dependent action.');
+        const sameParentId=state.changes.find(x=>x.id===original.input.changeId);
+        need(!sameParentId||provenance(sameParentId).eventSha256===parent.origin.eventSha256,
+          'The requested-change identity belongs to different original content; a returned dependent action cannot target it.');
+        action.input.changeId=sameParentId?.id||mapped.get(parent.origin.eventSha256);
+        const actualParent=state.changes.find(x=>x.id===action.input.changeId);
+        need(actualParent&&provenance(actualParent).eventSha256===parent.origin.eventSha256,
+          'The exact original requested change was not adopted; retain its dependent action.');
+        const effectiveContext=await actionContext(state,action,drafts,round.format);
+        if(effectiveContext?.discussion!==source.context?.discussion){
+          text(choice.note,'Explanation for adopting into a different current change discussion',20000,true);
+          record.conflict=true;
+          record.reason+=' The explicitly chosen preceding adoptions leave a different change discussion; the recorded explanation authorizes this adoption without claiming the original author observed that later discussion.';
+        }
+      }
+      const before=state.revision;
+      await reduce(round,state,action,drafts,contexts,context);
+      state.revision=before;
+      // Rebuild the original source's context for later independent returns.
+      action.sha256=await reviewSha256(stable({id:action.id,actorId:action.actorId,at:action.at,kind:action.kind,input:action.input,returnedFrom:action.returnedFrom}));
+      record.appliedId=appliedId;record.appliedAction=action;record.context=clone(source.context);record.returnedFrom=action.returnedFrom;
+      mapped.set(source.origin.eventSha256,appliedId);adopted.add(row.eventId);
+    }
+    receipt.choices.push(record);
+  }
+  state.returnedReviews.push(receipt);
+}
+export async function applyReturnedRound(round,capture,{requestId,expectedRevision,actorId,choices,at=new Date().toISOString(),note,comparisonSha256}){
+  return applyReviewAction(round,{requestId,expectedRevision,actorId,kind:'return',at,
+    input:{capture,comparisonSha256,choices,note}});
+}
+
+export async function reviewReturnDetails(round,capture,{eventId}={}){
+  const context=returnContext(),built=await build(round,context);
+  const checked=await returnComparison(round,built.state,built.drafts,built.contexts,capture,context);
+  const row=checked.result.rows.find(x=>x.eventId===eventId);need(row,'Select one exact returned action.');
+  const current=row.currentRef?.kind==='decision'?built.state.decisions.find(x=>x.id===row.currentRef.id):
+    row.currentRef?.kind==='change'?built.state.changes.find(x=>x.id===row.currentRef.id):null;
+  return {comparisonSha256:checked.result.comparisonSha256,row:clone(row),current:current?clone(current):null,
+    returned:clone(checked.candidates.get(eventId).event),before:clone(row.before)};
 }
