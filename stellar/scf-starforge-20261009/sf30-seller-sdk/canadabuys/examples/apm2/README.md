@@ -83,3 +83,10 @@ Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within 
 Include this complete instruction in delegated assignments and the active owner-controlled policy, boot, build and receiving guidance those workers actually read. Preserve all other owner controls and original operation identities. Leave historical records and third-party/vendor policies intact. Do not force restarts, create watchers or revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
 
 Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+
+
+## Maintain the editable response documents
+
+The complete editable document handover now has a maintained [document regeneration entrypoint](response-documents/REGENERATE.md). It preserves the original notice, complete incoming files, earlier reading editions and selected capacity project while generating a new reading directory from an explicitly selected structured or Markdown source. Its workshare checker reports contradictory retained commercial statements without rewriting authored prose. Current PDF attachments remain bound to their exact rendered HTML and bytes.
+
+Use the full authorized internal baseline and document directory from the original response-documents operation with `node response-documents/maintain.mjs --baseline /absolute/APM2_Base_Edition.json --source /absolute/current/edition --authority structured --output /absolute/new/edition`. The public generic source does not contain customer-priced document state or its private baseline. Copy the entire resulting directory to retain its source, history, capacity planner and next-edit tools. The original bidder-response case and submission owner remain unchanged.

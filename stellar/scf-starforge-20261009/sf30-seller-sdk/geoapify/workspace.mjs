@@ -10,6 +10,7 @@ import {hash,canonical,json,object,own,fail,parseJSON,text,integer,readCsvRecord
   createIntake,inspectIntake,prepareBatch,inspectRequest,sanitizeReply,inspectReply,reviewIntake,validateDecision,buildRows,csvBytes} from './source.mjs';
 import {reviewHtml,sourceComparisonHtml} from './report.mjs';
 import {inspectGeoapifyPackage} from './package.mjs';
+import {createGeoapifyCustomerReviewStore} from './customer-review-store.mjs';
 import {compareSources,inheritedMatches,reusableDecisions,validateComparison} from './source-history.mjs';
 const SCHEMA='stellar-forge.geoapify-workspace.v1',PACKAGE='stellar-forge.geoapify-package.v1';
 const MAX=256*1024*1024,HASH=/^[a-f0-9]{64}$/,now=()=>new Date().toISOString();
@@ -142,7 +143,7 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
       intake:state.intake,source:r?.source??null,mapping:r?.mapping??null,summary:r?.summary??null,sourceCount:sourceEntries().length,
       jobs:state.jobs.map(({queryIds,...job})=>({...job,intakeSha256:boundSource(job),queryCount:queryIds.length})),
       editions:state.editions.map(e=>({...e,intakeSha256:boundSource(e)})),activeEditionId:state.activeEditionId,exports:state.exports,merchant:state.merchant,
-      lastQuery:active()?state.queries[active().id]??null:null,editor:state.editor??null,
+      lastQuery:active()?state.queries[active().id]??null:null,editor:state.editor??null,customerReviews:customerReviews.summary(),
       api:{configured:Boolean(apiKey),maximumBatch:1000,minimumPollMs:60000,retentionHours:24,
         notBefore:state.providerNotBefore??null,
         spec:'https://apidocs.geoapify.com/assets/openapi/specs/batch/batch-api-openapi-specs.json'}};
@@ -371,11 +372,13 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
     await commit(s=>{s.editions.push(record);s.activeEditionId=id;});
     return {edition:record,dataset:description,preview:model.handle({query:{limit:'50'}})};
   }
+  const customerReviews=createGeoapifyCustomerReviewStore({getState:()=>state,getIntake,boundSource,read,readInput:fileBytes,readUncommitted:async file=>{try{return await fileBytes(await inside(file));}catch(error){if(error.code==='ENOENT')return null;throw error;}},immutable,commit,currentReview:review});
   async function retainedFiles(){
     const entries=new Map(),add=async d=>{if(d&&!entries.has(d.file))entries.set(d.file,await read(d));};
     for(const source of sourceEntries()){await add(source.intake);await add(source.intake.original);await add(source.comparison);}
     for(const job of state.jobs){await add(job.request);for(const e of job.events)await add(e.response);}
     for(const e of state.editions)for(const key of ['csv','config','basis','review','geojson','report','comparisonReport'])await add(e[key]);
+    for(const d of customerReviews.descriptors())await add(d);
     return entries;
   }
   async function exportPackage(input={}){
@@ -429,16 +432,18 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
     const inspected=await inspectGeoapifyPackage(raw),saved=inspected.state,entries=inspected.files;
     for(const [file,b] of entries)await immutable(file,b);
     const next={...saved,exports:[],restoredAt:now(),revision:saved.revision+1};
-    await atomic(statePath,json(next));state=next;cache=null;comparisonCache=null;
+    await atomic(statePath,json(next));state=next;cache=null;comparisonCache=null;customerReviews.reset();
     return {restored:true,id:state.id,rows:state.intake?inspected.sourceIntakes.get(state.intake.sha256).rows.length:0,
       jobs:state.jobs.length,editions:state.editions.length};
   }
-  const reads=new Set(['status','review.list','review.query','provider.request','source.inspect','source.history','source.compare']);
+  const reads=new Set(['status','review.list','review.query','provider.request','source.inspect','source.history','source.compare','customer.list','customer.inspect','customer.preview']);
   async function dispatch(action,input){
+    if(action==='customer.issue'||action==='customer.adopt'||action==='customer.receive'){const recovered=await customerReviews.recovery(action,input);if(recovered)return recovered;}
     if(!reads.has(action)&&input.expectedRevision!==state.revision)throw fail('REVISION_CONFLICT','Refresh the original workspace before saving this change.',409);
     if(input.expectedIntakeSha256!==undefined&&['review.decide','provider.prepare','edition.build','editor.save'].includes(action)&&input.expectedIntakeSha256!==state.intake?.sha256)
       throw fail('INTAKE_CHANGED','The selected active intake differs. Reopen its source and review before saving.',409);
     if(action==='status')return {};
+    if(action.startsWith('customer.'))return customerReviews.act(action,input);
     if(action==='source.history')return sourceHistory(input);
     if(action==='source.stage')return stageSource(input);
     if(action==='source.compare')return inspectComparison(input);

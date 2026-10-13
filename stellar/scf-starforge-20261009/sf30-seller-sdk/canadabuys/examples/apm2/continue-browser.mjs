@@ -17,7 +17,7 @@ need(result.operation === 'SCF-CANADABUYS-PROCUREMENT-9FCD-20261012' &&
   'Continue the completed original HTTP customer and its retained source.');
 const workshareId = result.operator.saved.workshare.id;
 const noticeId = result.operator.saved.workshare.noticeId;
-let stage = 'original-browser-reopen', browser, server, receiving;
+let stage = 'original-browser-reopen', browser, server, receiving, originalOwnersClosed = true;
 async function save() {
   const temporary = path + '.' + randomUUID() + '.tmp';
   const handle = await open(temporary, 'wx', 0o600);
@@ -115,7 +115,37 @@ if (result.browser?.status === 'completed' && result.browser.renderedDelivery?.s
     error:{message:error.message, code:error.code, stack:error.stack}, directory:error.operatorJourneyDirectory};
   await save(); process.exitCode = 1;
 } finally {
-  if (browser) await browser.close().catch(() => {});
-  if (server) await server.close().catch(() => {});
-  if (receiving) await receiving.close().catch(() => {});
+  const closing = [];
+  for (const [name, owned] of [['browser', browser], ['server', server], ['receiving', receiving]]) {
+    if (owned) try { await owned.close(); }
+    catch (error) { closing.push({owner:name, message:error.message, code:error.code}); }
+  }
+  if (closing.length) {
+    originalOwnersClosed = false;
+    result.browserContinuation = {...result.browserContinuation, status:'close-incomplete', closing};
+    await save(); process.exitCode = 1;
+  }
+}
+if (originalOwnersClosed && process.exitCode !== 1 && result.browser?.status === 'completed'
+    && result.browser.renderedDelivery?.status === 'captured' && result.responseReview?.status === 'completed') {
+  stage = 'original-response-review-mcp';
+  try {
+    const {operateResponseReviewTools} = await load('response-review/OPERATING_TOOLS.mjs');
+    const publicationSelections = process.env.CANADABUYS_RESPONSE_PUBLICATIONS
+      ? JSON.parse(await readFile(process.env.CANADABUYS_RESPONSE_PUBLICATIONS, 'utf8')) : {};
+    result.responseReviewTools = await operateResponseReviewTools({
+      sourceDirectory:join(root,'source'), caseDirectory:root, publicationSelections
+    });
+    need(result.responseReviewTools.status === 'completed', 'Complete the same response MCP continuation.');
+    result.completedInterfaces = [...new Set([...(result.completedInterfaces || []), 'response-review-mcp'])];
+    result.stages = result.stages.filter(item=>item.stage!==stage);
+    result.stages.push({stage, directory:result.responseReviewTools.directory,
+      record:result.responseReviewTools.course.record,
+      replays:result.responseReviewTools.replayAvailability,
+      publications:Object.keys(result.responseReviewTools.downloads)});
+    await save();
+  } catch (error) {
+    result.responseReviewToolsFailure = {stage, message:error.message, code:error.code, at:new Date().toISOString()};
+    await save(); process.exitCode = 1;
+  }
 }

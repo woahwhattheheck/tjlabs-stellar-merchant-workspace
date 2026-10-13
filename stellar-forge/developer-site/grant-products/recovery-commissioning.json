@@ -325,7 +325,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/cli.mjs",
-      "commit": "160d05b61ec2fdc5d2c6ed7069b0f646de84dcf3",
+      "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
       "editions": [
         {
           "commit": "134640608b6fe4b53b5a2268b02d26207e320f0d",
@@ -344,6 +344,12 @@
           "bytes": 18761,
           "sha256": "3a37eb0f3f3d0532c847428eed417ca0c6ef9285845ca8eb1a5d7fecbfa4476c",
           "git_blob": "c5aeda31ab5cfa66879323a1230ed4c0f479d9dd"
+        },
+        {
+          "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+          "bytes": 19002,
+          "sha256": "a9269fe2edce4b2303d611801f247a4e32b2e2d5f47a1055432c78016594b743",
+          "git_blob": "3b0ba17690260c27114fc71e75f44883b178d7ef"
         }
       ]
     },
@@ -1487,7 +1493,7 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff.mjs",
-      "commit": "e6d3d26651a8bedf14f19cc34bc8bc98b32ff66d",
+      "commit": "fd2af2dc3245dfa3aac437eba533e37bf245bcf7",
       "editions": [
         {
           "commit": "e8b1ddb19c9dc8fabd820c60190b7fa8b39ec66d",
@@ -1506,6 +1512,12 @@
           "bytes": 80835,
           "sha256": "0bfecafff6d3c369ec5134feb1a536514d4afd2a711a6b96c2a515bc3d88ee41",
           "git_blob": "baa28bf1aa0c22e035c97ffb74202c4fc3eac44e"
+        },
+        {
+          "commit": "fd2af2dc3245dfa3aac437eba533e37bf245bcf7",
+          "bytes": 81006,
+          "sha256": "5c0349f8297ecbd03fbc0f4d3ad318edae2f53f104ff1ef090e32fe43bf123b5",
+          "git_blob": "0d9dc58a6a864dce8825f4e9c004a318a9f3ab39"
         }
       ],
       "required": false
@@ -1625,7 +1637,7 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-cli.mjs",
-      "commit": "e6d3d26651a8bedf14f19cc34bc8bc98b32ff66d",
+      "commit": "fd2af2dc3245dfa3aac437eba533e37bf245bcf7",
       "editions": [
         {
           "commit": "ea8b9823eaf11f92ffd640d4b2a8b491e73b80ab",
@@ -1638,6 +1650,12 @@
           "bytes": 8230,
           "sha256": "28d35f4b7103279fc9ad717c082faa832374d0bdfb4608a618b3af21746602dc",
           "git_blob": "791d1b9e268dd9e945618327b1e4dbad419980d6"
+        },
+        {
+          "commit": "fd2af2dc3245dfa3aac437eba533e37bf245bcf7",
+          "bytes": 8127,
+          "sha256": "d744bd521a5db360ea9bd1821cd9e6d049c392f6867f08db746d016bfe3193e2",
+          "git_blob": "a33d8e996cee0e9d439d363dfab0147684325d31"
         }
       ],
       "required": false
@@ -1689,6 +1707,256 @@
           "bytes": 5180,
           "sha256": "e96e86ce5560f10c144bfb28f7471441c0a198aca1a789e240b92810678392e2",
           "git_blob": "a98f39d671254287f7150133a35718227057cfc4"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-canonical-host-host-handoff-md",
+      "label": "Complete canonical host custody, cold receiving and same-operation continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/HOST_HANDOFF.md",
+      "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+      "editions": [
+        {
+          "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+          "bytes": 32439,
+          "sha256": "c65c1efc886bbce5928351ef71080f4805b9f7fae344c3b07ba3903c5dc6fa79",
+          "git_blob": "9465e2cadba85d5f05ee8cce76828d0b0958213a"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-canonical-host-host-adoption-files-mjs",
+      "label": "Original adoption operation, child lifetime and recorded-only result",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-adoption-files.mjs",
+      "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+      "editions": [
+        {
+          "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+          "bytes": 10919,
+          "sha256": "6aef0170ef68de601e6558b64cb82427702aeb161218c6f99ea75ed259d62696",
+          "git_blob": "f0352ca46b9dfa4a7b3431db670a972e2e3d1d68"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-canonical-host-host-adoption-files-py",
+      "label": "Descriptor-checked private staging and atomic no-replace root publication",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-adoption-files.py",
+      "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+      "editions": [
+        {
+          "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+          "bytes": 33433,
+          "sha256": "97e1db2581fb12cf043d3218fe8b9c6e133a6eb1e7a35379d8dedb567637142d",
+          "git_blob": "a166d4d999c9a04e46c9e396e229cdd1c4757009"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-canonical-host-host-handoff-cli-mjs",
+      "label": "Plan, export, restore, review, adopt and saved-operation commands",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-cli.mjs",
+      "commit": "3ff7e5373be813254c0400a72f12d9669635bc59",
+      "editions": [
+        {
+          "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+          "bytes": 8230,
+          "sha256": "28d35f4b7103279fc9ad717c082faa832374d0bdfb4608a618b3af21746602dc",
+          "git_blob": "791d1b9e268dd9e945618327b1e4dbad419980d6"
+        },
+        {
+          "commit": "3ff7e5373be813254c0400a72f12d9669635bc59",
+          "bytes": 8127,
+          "sha256": "d744bd521a5db360ea9bd1821cd9e6d049c392f6867f08db746d016bfe3193e2",
+          "git_blob": "a33d8e996cee0e9d439d363dfab0147684325d31"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-canonical-host-host-handoff-d-mts",
+      "label": "Complete original host handoff and recorded-status type contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff.d.mts",
+      "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+      "editions": [
+        {
+          "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+          "bytes": 4755,
+          "sha256": "53acdf106bc30e559c9d9443d6b8894c3bd53f2bbf62e5ae1707fda139e50cbb",
+          "git_blob": "197ae9f2e9a4244fb370a129af4da2bb77a00125"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-canonical-host-host-handoff-mjs",
+      "label": "Whole application/state capture, authentication and read-only cold reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff.mjs",
+      "commit": "3ff7e5373be813254c0400a72f12d9669635bc59",
+      "editions": [
+        {
+          "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+          "bytes": 80835,
+          "sha256": "0bfecafff6d3c369ec5134feb1a536514d4afd2a711a6b96c2a515bc3d88ee41",
+          "git_blob": "baa28bf1aa0c22e035c97ffb74202c4fc3eac44e"
+        },
+        {
+          "commit": "3ff7e5373be813254c0400a72f12d9669635bc59",
+          "bytes": 81006,
+          "sha256": "5c0349f8297ecbd03fbc0f4d3ad318edae2f53f104ff1ef090e32fe43bf123b5",
+          "git_blob": "0d9dc58a6a864dce8825f4e9c004a318a9f3ab39"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-canonical-host-host-profile-paths-mjs",
+      "label": "Current configured Object, Support, fleet, archive and private-custody paths",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-profile-paths.mjs",
+      "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+      "editions": [
+        {
+          "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+          "bytes": 4347,
+          "sha256": "5f73504cad89ffe5ae9d5bb5ba0b2c0f87caff0843021aa13e3f14fdce45dcc2",
+          "git_blob": "8180c6b7f75b2f7981cbb2ce63e006d4a354ad04"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-canonical-host-host-request-paths-mjs",
+      "label": "Hash-bound historical request source/output and retained interruption paths",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-request-paths.mjs",
+      "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+      "editions": [
+        {
+          "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+          "bytes": 23957,
+          "sha256": "f6688212fb086cc3536514ba6845fd1a57f44c43a5c883dccabd43b421389e8f",
+          "git_blob": "db823ee2752834d56ab09b802f9f4b7de7b6b407"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-canonical-host-merchant-recovery-mjs",
+      "label": "Applications review using the selected runtime’s original host-path helper",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/merchant-recovery.mjs",
+      "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+      "editions": [
+        {
+          "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+          "bytes": 5403,
+          "sha256": "7f21484789d6d9cc731188bb56690e45fd91ec4fd5075abc20bd28c184e6a11d",
+          "git_blob": "8089e87f1b807e0472127656034495505f9636c2"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-canonical-host-delivery-lock-mjs",
+      "label": "Original SF98 lease descriptor inherited by the draining publication child",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf98-merchant-delivery/delivery-lock.mjs",
+      "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+      "editions": [
+        {
+          "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+          "bytes": 5180,
+          "sha256": "e96e86ce5560f10c144bfb28f7471441c0a198aca1a789e240b92810678392e2",
+          "git_blob": "a98f39d671254287f7150133a35718227057cfc4"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-canonical-host-merchant-recovery-json",
+      "label": "Source-owned host command, typed export and complete helper selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/merchant-recovery.json",
+      "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+      "editions": [
+        {
+          "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+          "bytes": 3475,
+          "sha256": "c5a42a7a4a99bbe5ec795858fc29ea41c2ec4f85c003cdfd1b1a02a4ee508c3a",
+          "git_blob": "9675b691f5e903fb5f9fa5d4e906c98bb6a51af9"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-canonical-host-guide-md",
+      "label": "Existing workspace operator guide with whole-host continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/GUIDE.md",
+      "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+      "editions": [
+        {
+          "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+          "bytes": 56275,
+          "sha256": "2eb7e1a68e03eb22ac596bc9c05a1e33d89d8974725076bcd620b96d03bff612",
+          "git_blob": "39fe45d57fe8ac117948f79182f05972fa48931e"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-canonical-host-merchant-fleet-json",
+      "label": "Original fleet source selection with complete recovery contribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/merchant-fleet.json",
+      "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+      "editions": [
+        {
+          "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+          "bytes": 6463,
+          "sha256": "72dec1ca89443630a2004927a176ffcf6b7f1168fe16d98d66c9b62d26256cc3",
+          "git_blob": "26480dd49ee3b79b2ad8fcd8c0ac04476f2cb6a9"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-canonical-host-build-mjs",
+      "label": "Read-only original Node/browser source inspection alongside unchanged packaging",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/build.mjs",
+      "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+      "editions": [
+        {
+          "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+          "bytes": 36064,
+          "sha256": "1733e646683187d76d1eec5086596dbaeda9b453a38322a155377641e07fb93a",
+          "git_blob": "ebe3f17f6b9a65f2813021e9c0c96e37a1cc1aba"
         }
       ],
       "required": false

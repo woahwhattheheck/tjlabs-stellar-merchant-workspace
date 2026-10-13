@@ -439,7 +439,8 @@
           "sha256": "722f71277b7e4ad34140b53f8f295d7ba53c1e84e900ae03a0d70456aab61d8e",
           "git_blob": "5aedff238905cccc778773d2ca515f68498dd750"
         }
-      ]
+      ],
+      "commit": "8f9de99a4afc2176c6044d8dc97505ffab52d6ce"
     },
     {
       "id": "audit-exchange-recipient-original-receiving",

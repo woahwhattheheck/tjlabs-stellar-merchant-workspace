@@ -258,3 +258,98 @@ Operations case remains the commercial and acceptance writer.
 Open and use the exact outgoing application at desktop and narrow widths, every
 dataset/report/working attachment and the independently reopened projects. Look at
 actual rendered output and correct concrete defects before customer presentation.
+
+
+## Offline customer review and returned choices
+
+`merchant_geoapify_customer` operates the complete original customer
+review on the same leased workspace. Issue against a selected frozen edition,
+download the standalone working HTML and JSON, receive the full customer return,
+then compare and adopt explicit choices. The issue carries every original record,
+including multiple businesses sharing one address query, invalid input rows,
+candidate details, original response identity and the issued baseline decision.
+
+The customer can search all original source records, page through grouped records,
+record candidate or keep-source choices with an attributed reason, retain
+unfinished forms, save complete working JSON or HTML, and export every original
+row to CSV. A complete return includes recorded choices and unfinished work.
+Working files reopen independently. Existing browser recovery remains protected
+until the user explicitly chooses it or the displayed file.
+
+Declare the actual returned JSON file through the existing private connection:
+
+```json
+{
+  "imports": {
+    "customer-return-october": {
+      "kind": "customer-return",
+      "label": "Original complete customer return",
+      "file": "/private/geoapify/customer-return.json"
+    }
+  }
+}
+```
+
+
+The import is a complete original file. Its bytes do not need to fit in a tool
+argument. The native reader verifies the full returned project, choices, raw
+forms, history and original issue before retaining it.
+
+| Action | Required selection | Result |
+| --- | --- | --- |
+| `issue` | Current workspace revision, original `requestId`, frozen `editionId`, title and recipient | Retained full issued review and original offline files |
+| `list` | Optional `kind` (`issues`, `returns` or `adoptions`), issue filter, offset and limit | Complete independently paged original histories |
+| `inspect` | Original issue, optional received return, query and grouped-source page selections | Original source groups, candidates, issued decisions and selected customer choices |
+| `export` | Current revision, original issue and optional received return | Original export ID and complete file descriptors |
+| `receive` | Current revision and declared `customer-return` import alias | Retained complete customer return |
+| `preview` | Original return, optional status and page selections | Issued/current/customer comparison with exact full-preview and current-query identities |
+| `adopt` | Current revision and intake, original request/return IDs, full preview SHA, explicit resolutions or `readyAll: true`, receiving reviewer and reason | Atomic original native decisions and retained complete adoption history |
+
+Use distinct request identities for distinct issue and adoption operations. If a
+write result is uncertain, retry its original request identity and exact original
+payload. Recovery checks the retained original operation before rejecting an old
+revision. Reusing an identity for changed work is rejected.
+
+For large customer returns, `readyAll: true` explicitly adopts every
+READY choice in the exact selected full preview. Conflicting and changed-context
+queries remain available for individual resolution. Do not combine it with
+`resolutions`. Individual choices select `customer`,
+`current` or `skip` and include the exact
+`expectedCurrentSha256` returned for each query. Customer attribution
+and the receiving operator's separate reason remain in the complete record.
+
+| Preview state | Meaning |
+| --- | --- |
+| READY | The current decision still matches the issued baseline; an explicit customer choice can be adopted. |
+| CONFLICT | A local decision changed after issue; inspect all three decisions and explicitly resolve it. |
+| ALREADY_CURRENT | The returned choice already agrees with the current native decision. |
+| SOURCE_CHANGED | The active source differs from the issued source. Select the original source and re-preview, or issue a new exact review. |
+| RESPONSE_CHANGED | The current query or provider candidates differ from the issued context. Issue a review of the current response. |
+| NO_CUSTOMER_CHOICE | The customer retained an unfinished form or made no recorded decision for this query. |
+
+These context checks apply to keep-source as well as provider-candidate choices.
+The original native decision validator remains the writer. Adoption retains every
+selected resolution and commits its accepted native decisions together once.
+
+Inspection has two independent page dimensions: `offset/limit` for
+queries, and `sourceOffset/sourceLimit` for the original records and
+candidate displacement entries in each query. Every omitted source item remains
+available on the next explicit page. Full customer files are read with the
+existing `merchant_geoapify_file`, using `kind: "source-export"`,
+the returned export ID, original filename and SHA-256. Continue retained chunk
+reads until their original EOF.
+
+An export contains complete `customer-review.json`,
+`customer-review-project.json`, and `customer-review.html`.
+Selecting a received return also includes its exact original
+`customer-review-return.json`. Reopening an existing export reads its
+original files; a later software update does not replace an earlier customer
+delivery.
+
+The complete workspace archive retains issued reviews, received returns,
+adoptions, offline files and source descriptors. Restore reconstructs issued
+reviews against the actual frozen source and reconstructs adoption comparisons
+against the original customer return before admitting the saved decisions.
+
+Read [the complete customer review guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/CUSTOMER_REVIEW.md)
+for native commands and the original operator workflow.

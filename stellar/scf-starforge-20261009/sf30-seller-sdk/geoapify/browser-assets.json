@@ -36,6 +36,13 @@
         "../socrata/public/publisher.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/customer-review.mjs",
+      [
+        "public/customer-review.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

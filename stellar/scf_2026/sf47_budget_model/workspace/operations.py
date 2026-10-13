@@ -59,6 +59,7 @@ import operations_expenses as expenses
 import operations_expense_billing as expense_billing
 import operations_work_billing as work_billing
 import operations_dcat_sources as dcat_sources
+import operations_airflow_sources as airflow_sources
 
 SCHEMA = "stellar-forge.sf47-operations.v1"
 MAX_SOURCE = 8 * 1024 * 1024
@@ -290,12 +291,14 @@ class Operations:
         self.db.execute("INSERT INTO ops_records VALUES(?,?,?,?,?) ON CONFLICT(program_id,kind,id) DO UPDATE SET state=excluded.state,body_json=excluded.body_json",
                         (program_id, kind, row["id"], row["state"], canonical(row)))
 
-    def _source_add(self, program_id, data, *, _maximum=MAX_SOURCE, _dcat=False):
-        if ((_dcat and _maximum != dcat_sources.MAX_SOURCE) or
-                not _dcat and _maximum not in (MAX_SOURCE, buyer.MAX_CUSTOMER_USE_HANDOFF)):
+    def _source_add(self, program_id, data, *, _maximum=MAX_SOURCE, _dcat=False, _airflow=False):
+        if ((_dcat and _airflow) or
+                (_dcat and _maximum != dcat_sources.MAX_SOURCE) or
+                (_airflow and _maximum != airflow_sources.MAX_SOURCE) or
+                not (_dcat or _airflow) and _maximum not in (MAX_SOURCE, buyer.MAX_CUSTOMER_USE_HANDOFF)):
             domain.fail("Use the supported original source bound.", status=413)
         content = decoded(data.get("contentBase64"), maximum=_maximum)
-        if not _dcat and _maximum > MAX_SOURCE:
+        if not (_dcat or _airflow) and _maximum > MAX_SOURCE:
             if json.loads(content).get("schema") != buyer.CUSTOMER_USE_SCHEMA:
                 domain.fail("The larger source bound is reserved for the native customer-use return.", status=413)
         name = text(data.get("filename"), "Original source filename", 240, True)
@@ -314,14 +317,19 @@ class Operations:
             if hashlib.sha256(content).hexdigest() != expected:
                 domain.fail("The selected DCAT workspace bytes differ.", "DCAT_SOURCE_CHANGED", 409)
             transport = dcat_sources.inspect(content)
+        elif _airflow:
+            expected = domain.sha(data.get("expectedSha256"), "Selected complete Airflow handover SHA256", False)
+            if hashlib.sha256(content).hexdigest() != expected:
+                domain.fail("The selected Airflow handover bytes differ.", "AIRFLOW_SOURCE_CHANGED", 409)
+            transport = airflow_sources.inspect(content)
         row = {"id": generated("source"), "filename": name, "mediaType": media,
                "kind": domain.enum(data.get("kind", "other"), ("invoice", "work", "grant", "payment", "deployment", "purchase", "other"), "Source kind"),
                "sourceUrl": domain.url(data.get("sourceUrl", ""), "Original source URL"),
                "observedAt": domain.timestamp(data.get("observedAt") or now(), "Source observation"),
                "bytes": len(content), "sha256": hashlib.sha256(content).hexdigest(), "createdAt": now()}
         if transport is not None:
-            row["dcatWorkspace"] = transport
-        dcat_sources.source_budget(retained + [row])
+            row["airflowHandover" if _airflow else "dcatWorkspace"] = transport
+        airflow_sources.source_budget(retained + [row])
         self.db.execute("INSERT INTO ops_sources VALUES(?,?,?,?)", (program_id, row["id"], canonical(row), content))
         return row
 
@@ -370,6 +378,9 @@ class Operations:
                 kind, record_id = "source", after["id"]
             elif command == dcat_sources.ACTION:
                 after = self._source_add(program_id, data, _maximum=dcat_sources.MAX_SOURCE, _dcat=True)
+                kind, record_id = "source", after["id"]
+            elif command == airflow_sources.ACTION:
+                after = self._source_add(program_id, data, _maximum=airflow_sources.MAX_SOURCE, _airflow=True)
                 kind, record_id = "source", after["id"]
             elif command == statement_profiles.ACTION:
                 result = statement_profiles.save(self, context, data, actor, next_version, note)
@@ -1649,7 +1660,9 @@ class Operations:
             metadata, raw = json.loads(row[0]), bytes(row[1])
             if len(raw) != metadata["bytes"] or hashlib.sha256(raw).hexdigest() != metadata["sha256"]:
                 domain.fail("The retained original source differs from its stored identity.", "SOURCE_CHANGED", 409)
-            if "dcatWorkspace" in metadata:
+            if "airflowHandover" in metadata:
+                airflow_sources.validate_source(metadata, raw)
+            elif "dcatWorkspace" in metadata:
                 dcat_sources.validate_source(metadata, raw)
             return metadata, raw
 
@@ -1670,10 +1683,10 @@ class Operations:
         with self._snapshot():
             context = self._context(program_id)
             program = context["program"]
-            bundle_limit = dcat_sources.source_budget(context["sources"].values())
+            bundle_limit = airflow_sources.source_budget(context["sources"].values())
             reviews = [json.loads(row[0]) for row in self.db.execute("SELECT body_json FROM ops_reviews WHERE program_id=? ORDER BY rowid", (program_id,))]
             events = [json.loads(row[0]) for row in self.db.execute("SELECT body_json FROM ops_events WHERE program_id=? ORDER BY version", (program_id,))]
-            dcat_sources.validate_events(context["sources"].values(), events)
+            airflow_sources.validate_events(context["sources"].values(), events)
             original = self.workspace.export(program["planId"])
             saved_forecasts = [json.loads(row[0]) for row in self.db.execute(
                 "SELECT body_json FROM ops_forecasts WHERE program_id=? ORDER BY rowid", (program_id,))]
@@ -1743,12 +1756,12 @@ class Operations:
             if award_terms_id is not None or award_terms_revision is not None:
                 files.update(award_terms.selected_files(self, program_id, award_terms_id, award_terms_revision))
         if sum(len(raw) for raw in files.values()) > bundle_limit:
-            domain.fail("The complete operations bundle exceeds its selected ordinary/DCAT capacity.", status=413)
+            domain.fail("The complete operations bundle exceeds its selected ordinary/typed-source capacity.", status=413)
         manifest = {"schema": SCHEMA + ".bundle", "files": [{"path": name, "bytes": len(raw),
                     "sha256": hashlib.sha256(raw).hexdigest()} for name, raw in sorted(files.items())]}
         files["MANIFEST.json"] = (canonical(manifest) + "\n").encode()
         if sum(len(raw) for raw in files.values()) > bundle_limit:
-            domain.fail("The complete operations bundle including its manifest exceeds its selected ordinary/DCAT capacity.", status=413)
+            domain.fail("The complete operations bundle including its manifest exceeds its selected ordinary/typed-source capacity.", status=413)
         output = io.BytesIO()
         with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
             for name, raw in sorted(files.items()):
@@ -1758,7 +1771,7 @@ class Operations:
                 archive.writestr(info, raw)
         raw = output.getvalue()
         if len(raw) > bundle_limit:
-            domain.fail("The compressed complete operations bundle exceeds its selected ordinary/DCAT capacity.", status=413)
+            domain.fail("The compressed complete operations bundle exceeds its selected ordinary/typed-source capacity.", status=413)
         return raw
 
     @staticmethod
@@ -1778,11 +1791,12 @@ class Operations:
                 document = json.loads(archive.read("operations.json"))
                 if not isinstance(document, dict) or document.get("schema") != SCHEMA:
                     domain.fail("Select the complete original Operations document.")
-                bundle_limit = dcat_sources.source_budget(document.get("sources", []))
+                bundle_limit = airflow_sources.source_budget(document.get("sources", []))
                 if len(raw) > bundle_limit or expanded > bundle_limit:
-                    domain.fail("The complete case exceeds its selected ordinary/DCAT bound.", status=413)
-                dcat_names = {"sources/" + row["id"] for row in document["sources"] if "dcatWorkspace" in row}
-                if any(row.file_size > (dcat_sources.MAX_SOURCE if row.filename in dcat_names else MAX_BUNDLE)
+                    domain.fail("The complete case exceeds its selected ordinary/typed-source bound.", status=413)
+                typed_names = {"sources/" + row["id"] for row in document["sources"]
+                               if "dcatWorkspace" in row or "airflowHandover" in row}
+                if any(row.file_size > (airflow_sources.MAX_SOURCE if row.filename in typed_names else MAX_BUNDLE)
                        for row in infos):
                     domain.fail("An original case member exceeds its selected bound.", status=413)
                 manifest = json.loads(archive.read("MANIFEST.json"))
@@ -1857,15 +1871,20 @@ class Operations:
             association = item.get("buyerHandoff", {})
             maximum = buyer.MAX_CUSTOMER_USE_HANDOFF if (isinstance(association, dict)
                 and association.get("sourceSchema") == buyer.CUSTOMER_USE_SCHEMA) else MAX_SOURCE
-            if "dcatWorkspace" in item:
+            if "airflowHandover" in item:
+                maximum = airflow_sources.MAX_SOURCE
+                if association:
+                    domain.fail("An Airflow handover cannot impersonate a customer-use source.")
+                airflow_sources.validate_source(item, content)
+            elif "dcatWorkspace" in item:
                 maximum = dcat_sources.MAX_SOURCE
                 if association:
                     domain.fail("A DCAT workspace cannot impersonate a customer-use source.")
                 dcat_sources.validate_source(item, content)
             if len(content) != item["bytes"] or hashlib.sha256(content).hexdigest() != item["sha256"] or len(content) > maximum:
                 domain.fail("An original attachment differs from its source record.")
-        dcat_sources.source_budget(document["sources"])
-        dcat_sources.validate_events(document["sources"], document.get("events", []))
+        airflow_sources.source_budget(document["sources"])
+        airflow_sources.validate_events(document["sources"], document.get("events", []))
         installations.selection_from_files(document, files)
         task_outcomes.selection_from_files(document, files)
         award_terms.selection_from_files(document, files)
@@ -1888,7 +1907,7 @@ class Operations:
                 if existing[0] != digest(original_payload):
                     raise Problem("This request identity already describes a different operation.", 409, "REQUEST_CONFLICT")
                 return json.loads(existing[1])
-        if dcat_sources.native_bundle(raw):
+        if airflow_sources.native_bundle(raw):
             # A native case is not a report wrapper. Its own complete importer
             # validates the selected capacity, every source and original history.
             native_raw = raw
@@ -1919,7 +1938,7 @@ class Operations:
         if sum(len(values) for values in document["records"].values()) > MAX_RECORDS:
             domain.fail("The operations bundle has too many records.")
         sources = {row["id"]: row for row in document["sources"]}
-        dcat_sources.source_budget(sources.values())
+        airflow_sources.source_budget(sources.values())
         context = {"program": source_program, "plan": plan, "records": document["records"], "sources": sources,
                    "restoring": True, "completionPlans": document.get("completionPlans", [])}
         for kind, values in document["records"].items():

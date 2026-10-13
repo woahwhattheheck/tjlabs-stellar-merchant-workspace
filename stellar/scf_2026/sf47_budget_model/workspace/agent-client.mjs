@@ -932,6 +932,9 @@ export class GrantWorkspaceClient {
       'case-report':() => '/api/operations/' + cid() + '/report',
       'operating-workflows':() => '/api/operations/' + cid() + '/operating-workflows?expectedVersion=' +
         integer(args.expectedVersion, 'Original case version'),
+      'award-terms':() => '/api/operations/' + cid() + '/award-terms',
+      'award-term':() => '/api/operations/' + cid() + '/award-terms/' + id(args.termsId,'terms') +
+        (args.revision===undefined?'':'?revision='+integer(args.revision,'Issuer terms edition',1,1000000)),
       'cost-funding':() => '/api/operations/' + cid() + '/cost-funding',
       'funding-edition':() => '/api/operations/' + cid() + '/cost-funding/edition' +
         (args.revision===undefined?'':'?revision='+integer(args.revision,'Funding edition',1,1000000)),

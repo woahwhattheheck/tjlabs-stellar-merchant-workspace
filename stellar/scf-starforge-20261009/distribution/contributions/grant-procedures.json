@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "grant-procedures",
-  "description": "Complete Operating Plan procedures, selected original source tables and native editions in the existing Grant Operations case, with full export and independent receiving.",
+  "description": "Complete Operating Plan procedures with original tables, saved financial and delivery editions, durable browser working records, whole-case export and independent receiving.",
   "commands": {
     "grant-procedures": "stellar/scf_2026/sf47_budget_model/workspace/grant_procedures_cli.mjs",
     "grant-procedures-receiving": "stellar/scf_2026/sf47_budget_model/workspace/grant_procedures_receiving.mjs"
@@ -33,6 +33,7 @@
     "stellar/scf_2026/sf47_budget_model/workspace/operations_procedures.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_procedures.css",
     "stellar/scf_2026/sf47_budget_model/workspace/GRANT_PROCEDURES.md",
-    "stellar/scf_2026/sf47_budget_model/workspace/GRANT_PROCEDURES_RECEIVING.md"
+    "stellar/scf_2026/sf47_budget_model/workspace/GRANT_PROCEDURES_RECEIVING.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/engagement-working-store.mjs"
   ]
 }

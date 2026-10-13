@@ -7,6 +7,7 @@ import {loadDatasetConfig} from '../dataset-handler.mjs';
 import {hash,canonical,json,object,own,fail,parseJSON,text,readCsvRecords,readJSONSourceRecords,
   createIntake,inspectIntake,inspectRequest,inspectReply,reviewIntake} from './source.mjs';
 import {inheritedMatches,validateComparison} from './source-history.mjs';
+import {inspectGeoapifyCustomerReviewHistory} from './customer-review-store.mjs';
 const SCHEMA='stellar-forge.geoapify-workspace.v1',PACKAGE='stellar-forge.geoapify-package.v1';
 const MAX=256*1024*1024,HASH=/^[a-f0-9]{64}$/,responseTypes=['PENDING','COMPLETE','PARTIAL'];
 function safeFile(v){
@@ -35,7 +36,7 @@ export async function inspectGeoapifyPackage(raw,{expectedArchiveSha256}={}){
   if(packet.schema!==PACKAGE||!Array.isArray(packet.files)||packet.files.length>10000)throw fail('PACKAGE','Read the original full Geoapify package.');
     const saved=packet.state;shape(saved);const entries=new Map();let total=0;
     for(const item of packet.files){
-      safeFile(item.file);if(!/^(source|requests|provider|editions)\//.test(item.file)||entries.has(item.file)||typeof item.base64!=='string')throw fail('PACKAGE','Invalid or duplicate retained file path.');
+      safeFile(item.file);if(!/^(source|requests|provider|editions|customer-reviews)\//.test(item.file)||entries.has(item.file)||typeof item.base64!=='string')throw fail('PACKAGE','Invalid or duplicate retained file path.');
       const b=Buffer.from(item.base64,'base64');total+=b.length;
       if(total>512*1024*1024||b.toString('base64')!==item.base64||b.length!==item.bytes||hash(b)!==item.sha256)throw fail('PACKAGE','A retained source differs from its hash or byte count.');
       entries.set(item.file,b);
@@ -112,6 +113,7 @@ export async function inspectGeoapifyPackage(raw,{expectedArchiveSha256}={}){
     }
     reviewIntake({intake,matches,decisions:saved.decisions.filter(d=>savedBinding(d)===sha)});
   }
+  await inspectGeoapifyCustomerReviewHistory({saved,check,sourceIntakes:sourceMap,boundSource:savedBinding});
   let scratch;
   try{
     if(saved.editions.length){

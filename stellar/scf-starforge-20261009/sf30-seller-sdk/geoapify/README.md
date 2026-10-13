@@ -183,7 +183,7 @@ The existing authenticated action endpoint and CLI expose the same actions. Muta
 | source.inspect / review.list / review.query | Optional sourceSha256 | Read the original historical source without selecting it |
 | editor.save / provider.prepare / review.decide / edition.build | Optional expectedIntakeSha256, in addition to revision | Reject a change aimed at a different active intake |
 
-The native provider includes merchant_geoapify_sources for recurring source work; the Customer Installation continuation below brings its current total to nineteen tool families. It uses declared host-file aliases, independently pages source changes/reusable decisions and preserves the same original operator, writer lease and account. Browser and native reads show the intake identity used for each decision. A historical query read should pass its returned intake SHA when later saving; the active source must match.
+The native provider includes merchant_geoapify_sources for recurring source work; the Customer Installation and customer-review continuations below bring its current total to twenty tool families. It uses declared host-file aliases, independently pages source changes/reusable decisions and preserves the same original operator, writer lease and account. Browser and native reads show the intake identity used for each decision. A historical query read should pass its returned intake SHA when later saving; the active source must match.
 
 Example first activation without reusing a decision:
 
@@ -212,4 +212,12 @@ The shared package inspector validates every retained source, job request/return
 
 Preparation first retains the original inputs and request in an owned private directory. Resume using only that directory, then reopen without the original external source files; both paths recheck the same source and rebuild the original derived outputs. In the existing Customer installations interface, Preview and Save use the prepared input and original case. Preserve pending original save recovery, inspect every outgoing attachment, and operate the exact desktop/narrow customer flow and independent reopening through the same receiving course.
 
-The current native provider exposes nineteen tool families. Its new Installation actions use declared host directories, exact retained package imports or original export IDs, and chunked complete-file downloads. Source staging and published-edition selection retain their existing meaning.
+The current native provider exposes twenty tool families. Its new Installation actions use declared host directories, exact retained package imports or original export IDs, and chunked complete-file downloads. Source staging and published-edition selection retain their existing meaning.
+
+## Offline customer review and complete returned choices
+
+Use [Customer address review and complete returns](CUSTOMER_REVIEW.md) for the full operator and offline customer workflow. Issue an exact frozen edition with every original grouped source row, response, candidate and baseline decision. The customer can keep unfinished forms, record deliberate address/coordinate choices, save/reopen complete JSON or standalone HTML and return the full attributed review.
+
+The original operator receives that return without changing decisions, compares issued/current/customer values, resolves conflicts explicitly and commits selected decisions through the original native validator. Both accepted-candidate and keep-source choices remain bound to the original intake and response. Whole-workspace backups and Customer Installation retain the issued originals, complete returns, raw forms/history, exact adoption request/preview/result and resulting decisions.
+
+The installed provider now has twenty tool families. The new merchant_geoapify_customer family uses the same seven native customer actions, declared return-file imports, independent query/source-row pages, original request recovery and complete retained downloads. The existing original equipped customer course covers the operator, standalone HTML, all attachments and full independent reopening.
