@@ -1,3 +1,5 @@
+import type {StellarSdkRuntimeOptions,StellarSdkRuntimeReceipt} from './prepare-sdk-runtime.mjs';
+import type {ArchiveInputOptions,ArchiveInputResult} from './prepare-ledger-inputs.mjs';
 export const OPERATION:'SCF-CARBON-NATIVE-8D45-20261012';
 export interface SourceSelection {sourceRoot:string}
 export interface SourceInspection {
@@ -38,6 +40,8 @@ export class CarbonNativeReceivingClient {
   constructor(options?:{nodeExecutable?:string});
   nodeExecutable:string;
   inspectSource(options:SourceSelection):Promise<SourceInspection>;
+  prepareSdk(options:StellarSdkRuntimeOptions):Promise<StellarSdkRuntimeReceipt>;
+  prepareLedgerInputs(options:ArchiveInputOptions):Promise<ArchiveInputResult>;
   receiveSource(options:SourceSelection&{downloads:string;signal?:AbortSignal;onStderr?:(chunk:string)=>void}):Promise<SourceInspection>;
   status(options:ReceivingStatusOptions):Promise<ReceivingStatus>;
   verify(options:ReceivingStatusOptions):Promise<ReceivingStatus>;
