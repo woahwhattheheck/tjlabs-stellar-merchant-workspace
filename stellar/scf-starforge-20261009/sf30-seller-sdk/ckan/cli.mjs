@@ -8,6 +8,7 @@ import { captureCkanResource, readCkanCapture, searchCkan } from './capture.mjs'
 import { receivePublicSourceCapture } from './retained-public-source.mjs';
 import { inspectCkanWorkspaceArchive, receiveCkanWorkspaceArchive } from './archive.mjs';
 import { startCkanServer } from './server.mjs';
+import { parseRemote, stringifyRemote } from './remote-json.mjs';
 
 const usage = [
   'CKAN dataset merchant',
@@ -42,9 +43,17 @@ const usage = [
   '  ckan offer --project DIR --id EXPORT_ID --input buyer-query.json',
   '  ckan buyer --project DIR --id EXPORT_ID --input buyer-request.json',
   '  ckan resume --project DIR --id EDITION_ID [--input limits.json]',
+  '  ckan remote-target-save --project DIR --input target.json',
+  '  ckan remote-target --project DIR --id TARGET_ID',
+  '  ckan remote-prepare --project DIR --input publication.json',
+  '  ckan remote-inspect --project DIR --id RELEASE_ID',
+  '  ckan remote-review --project DIR --id RELEASE_ID --input decision.json',
+  '  ckan remote-publish --project DIR --id RELEASE_ID --sha256 PLAN_HASH --review-id REVIEW_ID',
+  '  ckan remote-reconcile --project DIR --id RELEASE_ID',
+  '  ckan remote-file --project DIR --id RELEASE_ID --kind plan|record|receipt [--receipt-id RECEIPT_ID]',
   'All project mutations retain their result before exit. Serve opens the same original publisher workflow.',
 ].join('\n');
-const output = value => process.stdout.write(JSON.stringify(value, null, 2) + '\n');
+const print = (value, exact = false) => process.stdout.write((exact ? stringifyRemote(value) : JSON.stringify(value, null, 2)) + '\n');
 export async function main(argv = process.argv.slice(2)) {
   const command = argv.shift(), options = {};
   for (let index = 0; index < argv.length; index += 2) {
@@ -55,8 +64,11 @@ export async function main(argv = process.argv.slice(2)) {
     options[name] = argv[index + 1];
   }
   if (!command || command === 'help' || command === '--help') { process.stdout.write(usage + '\n'); return; }
+  const exact = command.startsWith('remote-');
+  const output = value => print(value, exact);
   const required = name => { if (!options[name]) throw new Error('Missing --' + name); return options[name]; };
-  const input = async (name = 'input', optional = false) => !options[name] && optional ? {} : JSON.parse(await readFile(resolve(required(name)), 'utf8'));
+  const input = async (name = 'input', optional = false) => !options[name] && optional ? {} :
+    (exact ? parseRemote : JSON.parse)(await readFile(resolve(required(name)), 'utf8'));
   if (command === 'search') { output(await searchCkan(required('origin'), { q: options.query ?? '', start: Number(options.start ?? 0), rows: Number(options.rows ?? 20), authTokenEnv: options['auth-token-env'] })); return; }
   if (command === 'capture') { const result = await captureCkanResource(await input('selection'), resolve(required('out'))); output(result.manifest); return; }
   if (command === 'capture-received') {
@@ -105,6 +117,15 @@ export async function main(argv = process.argv.slice(2)) {
     else if (command === 'offer') result = await project.buyerOffer(required('id'), await input());
     else if (command === 'buyer') result = project.prepareBuyer(required('id'), await input());
     else if (command === 'resume') result = project.resumeCapture(required('id'), await input('input', true));
+    else if (command === 'remote-target-save') result = project.saveRemoteTarget(await input());
+    else if (command === 'remote-target') result = await project.remoteTarget(required('id'));
+    else if (command === 'remote-prepare') result = project.prepareRemotePublication(await input());
+    else if (command === 'remote-inspect') result = await project.remotePublication(required('id'));
+    else if (command === 'remote-review') result = project.reviewRemotePublication(required('id'), await input());
+    else if (command === 'remote-publish') result = project.publishRemotePublication(required('id'), {
+      expectedPlanSha256: required('sha256'), expectedReviewId: required('review-id') });
+    else if (command === 'remote-reconcile') result = project.reconcileRemotePublication(required('id'));
+    else if (command === 'remote-file') result = await project.remotePublicationFile(required('id'), required('kind'), options['receipt-id']);
     else throw new Error('Unknown command.\n' + usage);
     if (result?.completion) {
       result = await result.completion; output(result);

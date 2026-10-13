@@ -7,6 +7,7 @@ import { randomBytes, randomUUID, timingSafeEqual, createHash } from 'node:crypt
 import { spawn } from 'node:child_process';
 import { constants } from 'node:fs';
 import { ExactCkanNumber, parseCkanJson } from './capture.mjs';
+import { stringifyRemote } from './remote-json.mjs';
 import { DCAT_MAX_CATALOG_BYTES } from './dcat-workspace.mjs';
 import { Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
@@ -15,6 +16,7 @@ import { readPrivate, hashPrivate, privateDirectory, syncDirectory, fault } from
 const assets = new Map([['/', ['index.html', 'text/html; charset=utf-8']],
   ['/app.mjs', ['app.mjs', 'text/javascript; charset=utf-8']],
   ['/dcat-json.mjs', ['dcat-json.mjs', 'text/javascript; charset=utf-8']],
+  ['/remote-publication.mjs', ['remote-publication.mjs', 'text/javascript; charset=utf-8']],
   ['/dcat-sources.mjs', ['dcat-sources.mjs', 'text/javascript; charset=utf-8']],
   ['/migration.mjs', ['migration.mjs', 'text/javascript; charset=utf-8']], ['/style.css', ['style.css', 'text/css; charset=utf-8']]]);
 const root = fileURLToPath(new URL('./public/', import.meta.url));
@@ -24,17 +26,17 @@ function exactPresentation(value) {
   if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, exactPresentation(item)]));
   return value;
 }
-const json = (response, value, status = 200) => {
+const json = (response, value, status = 200, exact = false) => {
   response.writeHead(status, { 'content-type': 'application/json; charset=utf-8' });
-  response.end(JSON.stringify(value));
+  response.end(exact ? stringifyRemote(value, 0) : JSON.stringify(value));
 };
-async function body(request, exact = false) {
+async function body(request, exact = false, limit = 131072) {
   if (!String(request.headers['content-type'] ?? '').startsWith('application/json'))
     throw fault('CKAN_JSON_REQUIRED', 'Send a JSON request.', 415);
   let size = 0; const chunks = [];
   for await (const chunk of request) {
     size += chunk.length;
-    if (size > 131072) throw fault('CKAN_REQUEST_TOO_LARGE', 'The request exceeds 128 KiB.', 413);
+    if (size > limit) throw fault('CKAN_REQUEST_TOO_LARGE', 'The request exceeds ' + (limit / 1024) + ' KiB.', 413);
     chunks.push(chunk);
   }
   let value;
@@ -198,6 +200,21 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
             return await downloadWorkspaceArchive(response, await workbench.dcatReviewDownload(parts[2],
               parts[3] === 'candidate' ? 'candidate' : 'report'));
         }
+        if (parts[0] === 'remote') {
+          if (parts[1] === 'targets' && parts.length === 3)
+            return json(response, await workbench.remoteTarget(parts[2]), 200, true);
+          if (parts[1] === 'publications' && parts.length === 3)
+            return json(response, await workbench.remotePublication(parts[2]), 200, true);
+          if (parts[1] === 'publications' && parts[3] === 'files' && parts.length === 5 &&
+              ['plan', 'record', 'receipt'].includes(parts[4]))
+            return await downloadWorkspaceArchive(response, await workbench.remotePublicationFile(
+              parts[2], parts[4], url.searchParams.get('receiptId') ?? undefined));
+          if (parts[1] === 'guide' && parts.length === 2) {
+            response.writeHead(200, { 'content-type': 'text/markdown; charset=utf-8',
+              'content-disposition': 'attachment; filename="REMOTE_PUBLICATION.md"' });
+            response.end(await readFile(fileURLToPath(new URL('./REMOTE_PUBLICATION.md', import.meta.url)))); return;
+          }
+        }
         if (parts[0] === 'workspace' && parts[1] === 'archives' && parts.length === 2)
           return json(response, await workbench.workspaceArchives());
         if (parts[0] === 'workspace' && parts[1] === 'archives' && parts.length === 3)
@@ -293,13 +310,23 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
       }
       if (request.method === 'POST') {
         if (uploading) throw fault('CKAN_PROJECT_BUSY', 'Finish the current upload before starting another project operation.', 409);
-        const input = await body(request, parts[0] === 'dcat');
+        const input = await body(request, ['dcat', 'remote'].includes(parts[0]), parts[0] === 'remote' ? 4194304 : 131072);
         if (parts[0] === 'editions' && parts[2] === 'semantics' && parts.length === 3)
           return json(response, await workbench.previewSemantics(parts[1], input.projection));
         if (parts[0] === 'refreshes' && parts[2] === 'preview' && parts.length === 3)
           return json(response, exactPresentation(await workbench.previewRefresh(parts[1], input)));
         let result;
-        if (parts[0] === 'dcat' && parts[1] === 'sources' && parts[2] === 'save' && parts.length === 3)
+        if (parts[0] === 'remote' && parts[1] === 'targets' && parts.length === 2)
+          result = workbench.saveRemoteTarget(input);
+        else if (parts[0] === 'remote' && parts[1] === 'publications' && parts.length === 2)
+          result = workbench.prepareRemotePublication(input);
+        else if (parts[0] === 'remote' && parts[1] === 'publications' && parts[3] === 'review' && parts.length === 4)
+          result = workbench.reviewRemotePublication(parts[2], input);
+        else if (parts[0] === 'remote' && parts[1] === 'publications' && parts[3] === 'publish' && parts.length === 4)
+          result = workbench.publishRemotePublication(parts[2], input);
+        else if (parts[0] === 'remote' && parts[1] === 'publications' && parts[3] === 'reconcile' && parts.length === 4)
+          result = workbench.reconcileRemotePublication(parts[2]);
+        else if (parts[0] === 'dcat' && parts[1] === 'sources' && parts[2] === 'save' && parts.length === 3)
           result = workbench.saveDcatSource(input);
         else if (parts[0] === 'dcat' && parts[1] === 'sources' && parts[2] === 'acquire' && parts.length === 3)
           result = workbench.acquireDcatSource(input);
@@ -325,7 +352,10 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
         else if (parts[0] === 'exports' && parts[2] === 'buyer' && parts.length === 3) result = workbench.prepareBuyer(parts[1], input);
         else if (parts[0] === 'cancel' && parts.length === 1) return json(response, workbench.cancel());
         else throw fault('CKAN_ROUTE_NOT_FOUND', 'The requested project action does not exist.', 404);
-        return json(response, { operationId: result.id, ...(result.editionId ? { editionId: result.editionId } : {}),
+        return json(response, { operationId: result.id,
+          ...(result.targetId ? { targetId: result.targetId } : {}),
+          ...(result.releaseId ? { releaseId: result.releaseId } : {}),
+          ...(result.editionId ? { editionId: result.editionId } : {}),
           ...(result.reviewId ? { reviewId: result.reviewId } : {}),
           ...(result.sourceId ? { sourceId: result.sourceId } : {}),
           ...(result.acquisitionId ? { acquisitionId: result.acquisitionId } : {}) }, 202);

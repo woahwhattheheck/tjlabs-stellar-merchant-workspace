@@ -1,5 +1,6 @@
 // MIT. Plain local operator interface; all content is inserted as text.
 import { renderDcatMigration } from './migration.mjs';
+import { renderRemotePublication } from './remote-publication.mjs';
 import { parseDcatJsonText } from './dcat-json.mjs';
 const $ = selector => document.querySelector(selector);
 let token = location.hash.slice(1);
@@ -174,6 +175,13 @@ async function renderView() {
   if (tab === 'refreshes') await renderRefreshes(generation);
   if (tab === 'merchant') renderMerchant();
   if (tab === 'workspace') await renderWorkspace(generation);
+  if (tab === 'remote') await renderRemotePublication({
+    view, state, token, api, protect, download,
+    current: () => generation === renderGeneration && tab === 'remote',
+    acceptOperation: result => { lastOperation = result.operationId; },
+    refresh: () => refresh(), render: () => renderView(),
+    openWorkspace: async () => { tab = 'workspace'; await renderView(); },
+  });
   if (tab === 'migration') await renderDcatMigration({
     view, state, token, api, protect, download,
     current: () => generation === renderGeneration && tab === 'migration',
@@ -396,7 +404,8 @@ async function renderWorkspace(generation) {
     ['catalogs', 'reviews', 'releases', 'sources', 'acquisitions'].some(key => (dcat?.[key]?.length ?? 0) > 0);
   const counts = { editions: state.editions.length, selections: state.sources.length,
     publications: state.publications.length, reviewed_refreshes: (state.refreshes ?? []).length,
-    merchant_packages: state.exports.length, buyer_requests: state.buyerRequests.length };
+    merchant_packages: state.exports.length, buyer_requests: state.buyerRequests.length,
+    remote_targets: state.remote?.targets?.length ?? 0, remote_publications: state.remote?.releases?.length ?? 0 };
   if (hasDcat) Object.assign(counts, {
     dcat_sources: dcat?.sources?.length ?? 0,
     dcat_acquisitions: dcat?.acquisitions?.length ?? 0,
@@ -406,7 +415,7 @@ async function renderWorkspace(generation) {
     active_dcat_release: dcat?.activeReleaseId ?? 'No selected release',
   });
   view.append(heading('Workspace transfer'),
-    muted('Save the retained editions, complete refresh comparisons, operator decisions, reviewed selections, publisher history, dataset versions, merchant packages, seller releases and buyer requests as one project.' +
+    muted('Save the retained editions, complete refresh comparisons, operator decisions, reviewed selections, publisher history, dataset versions, merchant packages, seller releases and buyer requests as one project. Remote catalogue targets, reviewed plans, original response files and publication recovery state travel with the same archive; supply the target credential separately on the receiving host.' +
       (hasDcat ? ' The same archive includes all DCAT source configurations and versions, retained acquisition receipts and response files, original documents, migration reviews, corrected candidates and complete release and rollback history.' : '')),
     card(heading('Export this workspace'),
       table([counts]),
