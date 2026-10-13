@@ -39,3 +39,7 @@ Start with [the installed RIS operating chapter](OPERATING.md#review-original-ri
 ## Customer handover returns
 
 [Continue a published customer handover through reviewed returns](OPERATING.md#continue-customer-handovers-through-reviewed-returns) with the installed research-customer-handover-returns command. It uses the original customer-updates baseline, full native comparisons and explicit reviewed requests, enforces cumulative inherited/new item and round scope, and delivers the complete original source, accepted dossier and independently reopened editable workspace. The [receiving chapter](RECEIVING.md#22-receive-a-customer-handover-and-accepted-returns) and [complete course guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/HANDOVER_RETURNS.md) preserve both the original published delivery and the accepted later history.
+
+## Customer handover operator
+
+The installed `research-customer-handover-desk` command opens a private operator for that same handover-return course. Select each complete returned dossier, inspect every comparison and full value, save named review drafts, apply the exact reviewed request, recover interrupted responses and download the independently received editable package. The [complete desk guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/HANDOVER_DESK.md) covers installation, the whole browser journey, separate-tab draft handling, original-request recovery and reopening.
