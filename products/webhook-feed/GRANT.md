@@ -2,8 +2,8 @@
 
 The complete event product now carries a customer's original acquired window
 through useful application work and independent receiving. This guide connects
-that delivered foundation to the existing SCF application, the original
-Mercury/Xycloo candidate and the selected future installation workorder.
+that delivered foundation to the existing SCF application and the selected
+customer installation workorder.
 
 The complete reviewer chapter is [GRANT_CHAPTER.md](GRANT_CHAPTER.md).
 The customer implementation contract is [COMMISSIONING.md](COMMISSIONING.md).
@@ -22,10 +22,10 @@ window, output destination and completion acknowledgment. Agree when a later
 window is useful. An event count by itself is an acquired-data fact; the customer
 accepts the complete report, reconciled table or application update.
 
-The original Mercury/Xycloo implementation proposal connects one selected Stellar
-contract/event family to an existing customer database or internal API and
-provides source, deployment instructions and receiving-engineer handover.
-The existing company relationship retains its original sender and terms.
+The selected implementation connects one Stellar contract/event family to an
+existing customer database or internal API and provides source, deployment
+instructions and receiving-engineer handover. The commissioning workorder keeps
+the customer's actual commercial relationship and agreed terms.
 The selected installation workorder names the actual commissioning payer and
 accepting operator before prospective implementation begins.
 
@@ -199,6 +199,52 @@ apply and the ordinary customer delivery. The producer opens those exact
 normal/narrow rendered views and every downloaded attachment, uses the important
 controls, and inspects the returned screenshots before presenting the result.
 
+## Continue the customer's saved worksheet after a later source changes
+
+A selected later window can leave one of the customer's existing worksheet
+columns without a matching source. Open the original saved Event action and
+its complete `WORKBOOK_COLUMN_CHOICES_REQUIRED` proposal in the same browser.
+Use [the complete worksheet course](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_WORKBOOK_COLUMNS.md)
+to retain the original operation, accepted review and customer's decision note.
+
+The operator works from each unresolved sheet's full preceding columns and
+actual new source. Review source selection, heading, conversion, null label and
+precision; add, remove, reorder or restore rows deliberately. Report columns
+retain their zero-based source positions and query-export columns retain their
+unique source names. All editable rows remain in the saved handover while the
+browser displays twenty at a time. Additional already-resolved sheet arrays
+remain with the complete native apply selection.
+
+Download the full working JSON before handing the task to another engineer.
+It retains the original workspace, programme, operation, review and entire
+proposal with every unfinished choice. Reopen against that same source, review
+the complete readable HTML, and continue the original explicit native apply.
+A changed source or proposal calls for its own original review. An in-flight
+file read cannot replace newly edited choices or another active native action.
+
+The existing distribution exposes `starforge event-workbook-columns` and
+`./buyer/event-workbook-columns`. The complete CLI supports template creation,
+inspection, native column-array output and readable HTML, using the same
+source binding as the browser. It retains a different existing destination
+rather than replacing that file. The installation includes the full source
+and operating guide so independent file receiving works with the selected
+product edition.
+
+Local checks match the workbook's UTF-8 heading/null-label allowances and
+permitted XML characters. Native Unicode case folding, complete source-row
+conversion and the current workbook definition are checked by the original
+workbook writer when the operator explicitly continues. Current-customer
+review remains the route for deliberately changed definitions.
+
+The producing operator opens the exact outgoing browser and every downloaded
+JSON/HTML result, operates source selection, paged and reordered columns,
+save/reopen, conflicting source selection and explicit continuation, and
+inspects the actual normal and narrow rendered views. The receiving engineer
+reopens the whole original customer workspace and carries a later source
+through the same programme, workbook and complete delivery. These operations
+join the existing native receiving record and its actual screenshots and
+outputs.
+
 ## Receive the Analysis result into its original Customer Installation
 
 Use the complete [Event customer Installation course](../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/WEBHOOK_EVENT_ANALYSIS.md)
@@ -227,9 +273,9 @@ Export and independently import the whole saved operating-case archive.
 Keep the complete Event preparation alongside that archive so every original
 source, report, workbook and native analytical workspace remains available.
 Continue the next useful source window through the same customer programme.
-The original proposed Mercury USD 2,400 / five-business-day commercial scope
-and its start/acceptance milestones stay in the original Workshare; assigned
-effort and actual customer acceptance remain its native records.
+The selected commercial fee, delivery window and start/acceptance milestones
+stay in the original Workshare; assigned effort and actual customer acceptance
+remain its native records.
 
 ## Operate and inspect the outgoing customer result
 
@@ -321,40 +367,34 @@ the installed commands used by that receiving engineer.
 
 ## Original source editions and application receiving
 
-The product contribution adopts the existing source ID
-webhook-customer-commissioning, keeping its original repository and path. Its
-current edition selects merged commit 490c84f1b933c5a9733bb1e204c97cabefca6fbb.
-The same declaration adds the original subscriber, projector and installed
-Analysis guide at that merge, then the native programme, browser, coordinator,
-private HTTP integration and browser guide at
-cf0a48c99dd896a9dc315b6f9883db850d9f232c.
-The agent provider, operation/index contracts, typed input and delivery clients,
-installed contribution and complete operating guide select merged commit
-3cc516d47cb5ca2a692ee1bc750905cfaab4e2e9. Complete Customer Installation
-receiving, its typed interface, selected profile and whole operator course select
-cdaafeb22d7ffdd080a11362822c28ad01ac96ab. The existing agent guide and installed
-contribution keep both original and current editions. All twenty-three preceding
-source IDs and their accepted source editions remain in this same contribution.
-The complete source exploration, browser/API coordination, agent operations and
-three operating guides now select merged commit
-3aaae9928df6047ac86a32b5dae7302b7937cfcb. Eleven original source IDs keep both
-preceding and current measured editions. The original file-only source CLI is
-registered as one additional optional source with its full measured identity.
-The complete publisher working-copy browser, document, presentation, two
-operating guides and original receiving continuation select
-0d33ab17665a4fca9f51d36838abee62ca149513. These six optional full-file sources join the
-same contribution, preserving all twenty-four preceding source IDs and their
-edition histories.
+The complete public product is selected at commit 131fce461f90a29bf3fd1bd430aa89efc0bef164 in
+woahwhattheheck/public-commons-sprint-2026. The independent registration at
+stellar-forge/developer-site/grant-products/webhook-customer-analysis.json keeps
+all thirty preceding source IDs and every preceding measured edition, plus the
+three complete worksheet-continuation source entries. Each
+historical edition names its original repository explicitly; the current edition
+names its actual public repository, exact commit, full Git blob, UTF-8 byte
+count and SHA-256. The worksheet continuation advances its original browser,
+HTTP, operating guides and installation contribution to the selected Merchant
+source edition; the other public product sources keep their existing selection. Historical source identities remain distinct from the current public
+source selection.
 
-The independent registration is
-stellar-forge/developer-site/grant-products/webhook-customer-analysis.json.
-Each original file has a measured full Git blob, UTF-8 byte count and SHA-256 at
-its exact commit. Its heading is the existing canonical H2, so the current
-maintained composer receives this chapter and its complete sources without a
-new application reader.
+The same public edition includes the complete commercial Workshare intake into
+Customer installations: native source selection, browser authoring, CLI and agent
+methods, saved editions, and full-source export and independent restore. It
+preserves the existing customer-period workflow and the complete merchant and
+buyer application source selection. The original customer workorder remains in
+its private operating case.
 
-The serial application owner composes against the current complete canonical
-manuscript and current source index. Preserve all other product records, nine
-answers, original budget, saved review/submission versions and subsequent
+The publisher receiving continuation retains its source-bound dispatch and
+accepted completion. A completed course can finish publishing its original result
+from the saved acceptance after interruption. Reopening verifies every original
+output and retains the original completion time. An unresolved dispatched course
+keeps its outputs for continuation of that same operation.
+
+The complete reviewer chapter is GRANT_CHAPTER.md, using the existing canonical
+H2. The maintained composer receives that chapter and the complete source
+registration into the original reviewer page. Preserve the other product records,
+nine answers, six-package budget, saved review/submission versions and subsequent
 chapters. The existing source-package and Source editions receiving carry the
 complete four reviewer outputs into the same saved application, Page and Site.
