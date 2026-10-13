@@ -183,7 +183,7 @@ await reviewComparisonAdoptionBrowser({
 });
 ```
 
-The maintained foreground supplies that callback and starts only the two declared receiving directories. The browser uses the original portable import control, so its received dossier stays editable and every original history/blob validator runs. The callback does not fabricate a dossier or replace its identity.
+The maintained foreground supplies that callback and starts only the declared receiving directories. The browser uses the original portable import control, so its received dossier stays editable and every original history/blob validator runs. The callback does not fabricate a dossier or replace its identity.
 
 Final outputs include `adoption-receiving-result.json`, `adoption-browser-result.json`, both original phase journals, complete original downloads and attempt-specific desktop/390px captures. All remain inside the one final foreground receipt. Actual readiness still requires a named operator to open and use every final HTML/report, original archive/member, working copy, complete portable and editable received project, and view all relevant images/media. Screenshots alone do not satisfy the owner's inspection instruction.
 
