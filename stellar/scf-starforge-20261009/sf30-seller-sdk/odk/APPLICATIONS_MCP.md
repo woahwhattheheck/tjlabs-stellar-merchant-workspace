@@ -78,6 +78,29 @@ This setting serves the reporting workspace. The released Central Docker
 service has its own upstream TLS, domain and administrator configuration,
 documented in [Central host operations](central-host/HOST.md).
 
+## Native API access through a private Codespaces port
+
+Add optional `codespacesTokenEnv` to the Central source connection or the
+selected merchant `workspaces.<alias>.connections.<profile>` object. It names
+an existing proxy credential environment variable and must differ from the
+original `authEnv`. The connection must name the actual HTTPS
+`<one-label>.app.github.dev` Central origin on the default port. Null, empty
+values and other origins are rejected.
+
+`merchant_odk_source_connect` continues to select that original host profile.
+The commissioning handover, saved inspection and period installation preserve
+the same alias. Supply its value through the existing process environment when
+starting the managed application or original native receiver. The optional
+`commissioningEnvironment` file still supplies only Central Authorization;
+the host's generated `connection-secret.json` does not acquire a proxy token.
+
+The transport sends `X-Github-Token` only to the selected Codespaces origin,
+alongside Central Authorization where required. Configuration, tool inputs,
+saved source and connection output contain aliases rather than token values.
+On receiving, supply both aliases in the receiving environment before continuing
+the original source inspection or capture. Retain the complete saved connection
+and request IDs; alias changes cannot silently replay earlier selections.
+
 ## Reopen a complete received archive
 
 Applications accepts the original archive plus its reviewed SHA-256 before opening the workspace. Select a new or truly empty directory:
