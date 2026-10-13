@@ -271,12 +271,12 @@ workbook writer when the operator explicitly continues. Current-customer
 review remains the route for deliberately changed definitions.
 
 The producing operator opens the exact outgoing browser and every downloaded
-JSON/HTML result, operates source selection, paged and reordered columns,
-download the complete editor, edit and switch its worksheets offline, save and
-reopen that exact file, explicitly restore a browser draft, return the full
-choices to the original browser, inspect conflicting source selection and
-explicit continuation, and
-inspects the actual normal and narrow rendered views. The receiving engineer
+JSON/HTML result and operates source selection, paged and reordered columns.
+The operator downloads the complete editor, edits and switches its worksheets
+offline, saves and reopens that exact file, explicitly restores a browser draft,
+and returns the full choices to the original browser. The operator inspects
+conflicting source selection, explicit continuation and the actual normal and
+narrow rendered views. The receiving engineer
 reopens the whole original customer workspace and carries a later source
 through the same programme, workbook and complete delivery. These operations
 join the existing native receiving record and its actual screenshots and
