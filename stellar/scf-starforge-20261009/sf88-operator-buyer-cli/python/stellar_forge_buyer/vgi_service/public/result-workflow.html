@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Acquired data workspace</title>
+<link rel="stylesheet" href="/vgi/result-workflow.css">
+<script type="module" src="/vgi/result-workflow.mjs"></script>
+</head>
+<body>
+<header><div><p class="eyebrow">Stellar Forge · Data operations</p><h1>Acquired data workspace</h1><p>Receive a delivery, work with its original data, and publish a saved result.</p></div><div class="header-actions"><a id="buyer-link" href="/">Buyer workspace</a><a id="service-link" href="/vgi/">VGI service</a><button id="refresh" type="button">Refresh workspace</button></div></header>
+<section id="connection" class="panel" hidden><h2>Open the original workspace</h2><form id="connect-form"><label>Local operator capability<input id="capability" type="password" autocomplete="off" spellcheck="false" required></label><button type="submit">Connect</button></form></section>
+<div id="notice" role="status" aria-live="polite">Reading the workspace…</div>
+<div id="identity" class="identity"></div>
+<section id="working" class="working" aria-label="Working copy"></section>
+<div class="layout"><nav aria-label="Workflow"><button data-view="receive" type="button">1. Receive data</button><button data-view="warehouse" type="button">2. Source editions</button><button data-view="query" type="button">3. Query and export</button><button data-view="publish" type="button">4. Publish result</button><button data-view="history" type="button">Requests and handover</button></nav><main id="content" tabindex="-1"></main></div>
+<footer>Changes are received by the original warehouse and VGI service. Named working copies preserve unfinished choices and the exact requests used to make them.</footer>
+</body></html>

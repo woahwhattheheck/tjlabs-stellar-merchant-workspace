@@ -73,7 +73,7 @@ export async function main(argv=process.argv.slice(2)){
   });
   const programSource=parse(selected.get('Original_Program_Source.json'));
   need(same(identity(encoded(programSource)),receipt.workingSource),'Preserve the complete original program source selection.');
-  const operation='tourism-installation-'+sha(encoded({original:source.input,workspace:options['receiving-workspace'],destination:options['tourism-destination'],actor:options.actor})).slice(0,32);
+  const operation='tourism-installation-'+sha(encoded({original:source.input,scope:snapshot.selectedEditionsSource,caseId:options.case,installation:{id:options.installation,revision:Number(options.revision),sha256:saved.sha256},workspace:options['receiving-workspace'],destination:options['tourism-destination'],actor:options.actor})).slice(0,32);
   const working=await receiveWorking({raw:originalRaw,programSource,destination:options['tourism-destination'],operation});
   await phase('Tourism_Original_Receiving',async()=>working);
   const reopened=await receiveWorking({raw:originalRaw,programSource,destination:options['tourism-destination'],operation});

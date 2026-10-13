@@ -5,7 +5,9 @@ const key='starforge-vgi:'+location.origin;
 let capability=location.hash.slice(1)||sessionStorage.getItem(key+':capability')||'';
 if(capability)sessionStorage.setItem(key+':capability',capability);
 if(location.hash)history.replaceState(null,'',location.pathname+location.search);
-let state=null,view=sessionStorage.getItem(key+':view')||'catalog',selectedPublication=null,review=null,historyPage=null;
+const clientLink=new URL(location.href).searchParams;
+let incomingPublication=clientLink.get('view')==='client'&&/^[a-f0-9]{64}$/.test(clientLink.get('publication_id')||'')?clientLink.get('publication_id'):null;
+let state=null,view=incomingPublication?'client':sessionStorage.getItem(key+':view')||'catalog',selectedPublication=null,review=null,historyPage=null;
 let busy=false;
 const object=value=>value&&typeof value==='object'&&!Array.isArray(value);
 const rows=(value,name)=>Array.isArray(value)?value:Array.isArray(value?.[name])?value[name]:[];
@@ -41,9 +43,9 @@ pending=pending.filter(row=>row!==item);persistPending();return result;}
 async function post(path,value){if(pending.filter(row=>row.workspace_id===state?.workspace_id).length>=32)throw new Error('Review retained requests before starting another operation.');const item={id:value.request_id||path.match(/^\/api\/requests\/([a-f0-9]{32})\/resume$/)?.[1]||nonce(),workspace_id:state?.workspace_id,path,body:JSON.stringify(value),created_at:new Date().toISOString(),state:'PREPARED'};pending.push(item);persistPending();return sendRetained(item);}
 function draft(name,value){drafts[name]=value;save('drafts:'+state.workspace_id,drafts);}
 function clearDraft(name){delete drafts[name];save('drafts:'+state.workspace_id,drafts);}
-async function refresh({message='',render=true}={}){const next=await get('/api/vgi/state');if(state&&state.workspace_id!==next.workspace_id)throw new Error('The original workspace identity changed. Reopen its private launch URL.');if(!state){drafts=readStored('drafts:'+next.workspace_id,{});if(!object(drafts))drafts={};}state=next;$('#connection').hidden=true;$('#main').hidden=false;$('#warehouse-link').href='/#'+capability;$('#identity').replaceChildren(badge(state.runtime?.observed||'STOPPED'),node('span',{},'Workspace ',code(state.workspace_id)),node('span',{},'Service ',code(state.service_id)),node('span',{},'Revision '+state.revision));if(message)notice(message);if(render)renderView();}
+async function refresh({message='',render=true}={}){const next=await get('/api/vgi/state');if(state&&state.workspace_id!==next.workspace_id)throw new Error('The original workspace identity changed. Reopen its private launch URL.');if(!state){drafts=readStored('drafts:'+next.workspace_id,{});if(!object(drafts))drafts={};}state=next;if(incomingPublication){draft('client',{...(drafts.client||{}),publication_id:incomingPublication});incomingPublication=null;}$('#connection').hidden=true;$('#main').hidden=false;$('#warehouse-link').href='/#'+capability;$('#acquired-workflow-link').href='/vgi/workflow/#'+capability;$('#identity').replaceChildren(badge(state.runtime?.observed||'STOPPED'),node('span',{},'Workspace ',code(state.workspace_id)),node('span',{},'Service ',code(state.service_id)),node('span',{},'Revision '+state.revision));if(message)notice(message);if(render)renderView();}
 function navigate(next){view=next;sessionStorage.setItem(key+':view',view);clearError();renderView();}
-function renderView(){if(!state)return;for(const b of document.querySelectorAll('nav button'))b.setAttribute('aria-current',b.dataset.view===view?'page':'false');content.replaceChildren();({catalog:renderCatalog,publish:renderPublish,access:renderAccess,runtime:renderRuntime,recovery:renderRecovery}[view]||renderCatalog)();}
+function renderView(){if(!state)return;for(const b of document.querySelectorAll('nav button'))b.setAttribute('aria-current',b.dataset.view===view?'page':'false');content.replaceChildren();({catalog:renderCatalog,publish:renderPublish,client:renderClient,access:renderAccess,runtime:renderRuntime,recovery:renderRecovery}[view]||renderCatalog)();}
 const short=value=>String(value??'').length>20?String(value).slice(0,12)+'…'+String(value).slice(-6):String(value??'');
 function selectPublication(id){return async()=>{selectedPublication=await get('/api/vgi/publications/'+encodeURIComponent(id));view='catalog';renderView();};}
 function renderCatalog(){const tables=rows(state.tables),publications=rows(state.publications);content.append(panel('Published catalog',node('div',{class:'metrics'},node('div',{class:'metric'},tables.filter(x=>x.active).length,node('small',{},'active tables')),node('div',{class:'metric'},publications.length,node('small',{},'retained publications'))),p('The running listener keeps its selected catalog heads. Restart it after selecting a new head. Existing continuation tokens keep their original publication while its table and principal remain active.','muted'),tables.length?table(['Table','State','Head revision','Publication','Actions'],tables.map(t=>[node('strong',{},t.name),badge(t.active?'ACTIVE':'RETIRED'),String(t.head_revision),code(short(t.publication_id)),node('div',{class:'actions'},button('Inspect',selectPublication(t.publication_id)),button(t.active?'Retire table':'Activate table',async()=>{await post('/api/vgi/activate',{request_id:nonce(),table_name:t.name,publication_id:t.publication_id,expected_head_revision:t.head_revision,active:!t.active});await refresh({message:'Saved table selection. Current policy applies to the next request.'});}))])):p('Review a complete export to publish the first table.','empty')));
@@ -62,6 +64,125 @@ for(const el of [exportSelect,size,alias])el.addEventListener('input',()=>{retai
 const reviewForm=node('form',{onsubmit:e=>{e.preventDefault();run(async()=>{const d=retainPublish();if(!d.export_id)throw new Error('Select a complete export.');review=await post('/api/vgi/review',{export_id:d.export_id,batch_rows:d.batch_rows});renderView();notice('Review captured the complete original export and selected read size.');});}},field('Complete original export',exportSelect),node('div',{class:'form-row'},field('Rows per input batch',size,'1–4096. Exact IPC byte limits may split a selected batch further.'),field('Published table name',alias,'Use a new name when the Arrow schema changes.')),node('button',{id:'review-export',class:'primary',disabled:!exports.length},'Review exact export'));
 content.append(panel('Review and publish',reviewForm));
 if(review){const v=review;content.append(panel('Reviewed result',info({'Export':code(v.export_id),'Rows':String(v.rows),'Review SHA-256':code(v.review_sha256),'Selected batch rows':String(v.limits?.input_batch_rows),'Maximum IPC bytes':String(v.limits?.ipc_batch_bytes)}),table(['Column','Query type','Published Arrow type'],rows(v.columns).map((c,i)=>[c.name,v.query_columns?.[i]?.type||c.type,v.arrow_columns?.[i]?.type||''])),details('Complete original encodings',v.column_encodings),details('Source editions, dictionary and file identities',v.source),details('Original Parquet row groups',v.parquet_row_groups),button('Publish retained result',async()=>{const d=retainPublish();if(d.export_id!==v.export_id||d.batch_rows!==v.limits.input_batch_rows)throw new Error('Review the currently selected export and batch size.');if(!/^[A-Za-z][A-Za-z0-9_]{0,119}$/.test(d.table_name))throw new Error('Enter a valid table name.');const t=rows(state.tables).find(x=>x.name.toLowerCase()===d.table_name.toLowerCase());const result=await post('/api/vgi/publish',{request_id:nonce(),table_name:d.table_name,export_id:v.export_id,review_sha256:v.review_sha256,expected_head_revision:t?.head_revision||0});selectedPublication=result.publication;review=null;clearDraft('publish');view='catalog';await refresh({message:'Published the complete retained result. Access and listener controls are available in their tabs.'});},{id:'publish-result',class:'primary'})));}}
+
+let clientPrepared=null,clientPreparedSelection=null;
+function clientDraft(){
+  const retained=drafts.client||{},runtime=state.runtime||{};
+  return {publication_id:retained.publication_id||selectedPublication?.publication_id
+      ||runtime.catalog?.tables?.[0]?.publication_id||'',
+    client_address:retained.client_address??runtime.address??'',
+    address_note:retained.address_note||''};
+}
+function captureClient(){
+  const old=clientDraft(),next={
+    publication_id:$('#client-publication')?.value??old.publication_id,
+    client_address:$('#client-address')?.value??old.client_address,
+    address_note:$('#client-address-note')?.value??old.address_note};
+  draft('client',next);
+  return next;
+}
+function selectedClientRequest(){
+  const d=captureClient(),publication=rows(state.publications).find(x=>x.publication_id===d.publication_id);
+  if(!publication)throw new Error('Select the retained dataset to query.');
+  const current=rows(state.tables).find(x=>x.name===publication.table_name);
+  if(!current)throw new Error('Refresh the original table selection.');
+  return {...d,listener_request_id:state.runtime?.request_id||'',
+    expected_revision:state.revision,expected_head_revision:current.head_revision};
+}
+async function prepareClient(){
+  const selection=selectedClientRequest();
+  const response=await fetch('/api/vgi/client-handover',{method:'POST',
+    headers:authHeaders(true),body:JSON.stringify(selection),cache:'no-store'});
+  let value;try{value=await response.json();}catch{throw new Error('The complete client handover was not received. Keep this selection and prepare it again.');}
+  if(!response.ok)throw new Error(value?.error||'The selected result handover could not be prepared.');
+  if(JSON.stringify(selectedClientRequest())!==JSON.stringify(selection))
+    throw new Error('The client selection changed while preparation was running. Prepare the current selection.');
+  if(value?.schema!=='stellar-forge.vgi-client-handover.v1.prepared'
+      ||value.configuration?.publication_id!==selection.publication_id
+      ||value.configuration?.workspace_id!==state.workspace_id
+      ||value.configuration?.service_id!==state.service_id
+      ||value.configuration?.listener_request_id!==selection.listener_request_id)
+    throw new Error('The original prepared client selection changed.');
+  clientPrepared=value;clientPreparedSelection=JSON.stringify(selection);
+  renderView();notice('The complete selected-result client handover is ready. Review its source and connection, then download the ZIP.');
+}
+async function downloadClient(){
+  if(!clientPrepared||JSON.stringify(selectedClientRequest())!==clientPreparedSelection)
+    throw new Error('Prepare the current selection before downloading its complete client.');
+  const value=clientPrepared.zip;
+  if(!value||typeof value.content_base64!=='string'||!Number.isSafeInteger(value.bytes)
+      ||!/^[a-f0-9]{64}$/.test(value.sha256))throw new Error('The complete client ZIP is unavailable.');
+  const raw=Uint8Array.from(atob(value.content_base64),c=>c.charCodeAt(0));
+  if(raw.length!==value.bytes)throw new Error('The complete client ZIP was not received.');
+  const sum=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',raw)),n=>n.toString(16).padStart(2,'0')).join('');
+  if(sum!==value.sha256)throw new Error('The downloaded client ZIP changed. Prepare it again.');
+  saveBlob(new Blob([raw],{type:'application/zip'}),value.filename);
+}
+function renderClient(){
+  const d=clientDraft(),runtime=state.runtime||{},publications=rows(state.publications);
+  const selected=publications.find(x=>x.publication_id===d.publication_id);
+  const running=rows(runtime.catalog?.tables).find(x=>x.name===selected?.table_name);
+  const current=rows(state.tables).find(x=>x.name===selected?.table_name);
+  const matches=runtime.observed==='RUNNING'&&running?.publication_id===selected?.publication_id
+    &&current?.active===true;
+  const full=selectedPublication?.publication_id===selected?.publication_id?selectedPublication:null;
+  const picker=selection('client-publication',publications.map(x=>[x.publication_id,
+    x.table_name+' · '+x.rows+' rows · '+short(x.publication_id)]),d.publication_id,'Select a retained result');
+  const address=input('client-address',d.client_address,'url',{required:''});
+  const note=node('textarea',{id:'client-address-note',rows:3,value:d.address_note});
+  for(const el of [picker,address,note])el.addEventListener('input',()=>{
+    captureClient();clientPrepared=null;clientPreparedSelection=null;
+    $('#client-package')?.remove();
+    if(el===picker)renderView();
+  });
+  const inspect=button('Inspect selected dataset',async()=>{
+    const value=captureClient();if(!value.publication_id)throw new Error('Select a retained result.');
+    selectedPublication=await get('/api/vgi/publications/'+encodeURIComponent(value.publication_id));
+    renderView();
+  },{id:'client-inspect',disabled:!selected});
+  content.append(panel('Query an acquired result',
+    p('Acquire the agreed data through the original buyer, then publish its retained result. This handover connects an ordinary DuckDB client to that already-published dataset. Reading it does not start another purchase.'),
+    field('Retained dataset',picker),node('div',{class:'actions editor'},inspect,
+      button('Open original buyer workspace',async()=>{location.href='/#'+capability;})),
+    selected?info({'Dataset':selected.table_name,'Retained result':code(selected.publication_id),
+      'Rows':String(selected.rows),'Original export':code(selected.source?.export_id),
+      'Listener':runtime.observed||'STOPPED','Source catalog':runtime.catalog?.catalog_name||'Not running','Running alias edition':code(running?.publication_id||'Not selected'),
+      'Current saved head':code(current?.publication_id||'Not selected')}):p('Publish a complete original result to prepare its client handover.','empty'),
+    !matches&&selected?p(runtime.observed!=='RUNNING'
+      ?'Start the original listener in Run service, then return to this result.'
+      :!current?.active?'This table is retired. Review its current access and activation before preparing a client.'
+      :'The selected retained edition is not the listener’s current table. Select the running edition here, or deliberately select the desired head in Catalog and restart the original listener.','muted'):null,
+    running&&current&&running.publication_id!==current.publication_id?p('The listener still serves its earlier selected edition. The current saved head will take effect after a listener restart. Both identities are recorded in this handover.','muted'):null));
+  content.append(panel('Connection and complete client',
+    p('The package includes the selected publication and source descriptors, an editable SQL query, connection settings, the complete local client and its operating guide. Enter the recipient-reachable service address explicitly when it differs from the recorded listener address.','muted'),
+    node('form',{onsubmit:e=>{e.preventDefault();run(prepareClient);}},
+      field('Recipient service address',address,'Default: the original recorded listener address. A loopback address reaches this same machine; a wildcard listen address needs an explicitly selected reachable address.'),
+      field('Address selection note',note,'Required when changing the address. Record the existing deployment or forwarding selection used by this recipient.'),
+      p('Bearer tokens stay in the recipient’s RESULT_SERVICE_TOKEN environment variable. This package contains no token or operator capability.','muted'),
+      node('button',{id:'prepare-client-handover',class:'primary',disabled:!matches||!full},'Prepare SQL client handover')),
+    !full&&selected?p('Inspect the complete original dataset and schema before preparing its client.','muted'):null));
+  if(full)content.append(panel('Selected schema and source',
+    table(['Column','Arrow type','Original query type','Export encoding'],
+      rows(full.arrow_columns).map((c,i)=>[c.name,c.type,full.query_columns?.[i]?.type||'',
+        full.column_encodings?.[i]?JSON.stringify(full.column_encodings[i]):'Original export type'])),
+    details('Complete original result and source descriptors',full)));
+  if(clientPrepared){
+    let unchanged=false;try{unchanged=JSON.stringify(selectedClientRequest())===clientPreparedSelection;}catch{}
+    if(!unchanged){clientPrepared=null;clientPreparedSelection=null;return;}
+    const value=clientPrepared;
+    content.append(panel('Prepared complete handover',
+      node('div',{id:'client-package'},info({'File':value.zip.filename,
+        'Bytes':String(value.zip.bytes),'SHA-256':code(value.zip.sha256),
+        'Selected listener request':code(value.configuration.listener_request_id)}),
+      node('div',{class:'actions editor'},button('Download complete SQL client ZIP',downloadClient,
+        {id:'download-client-handover',class:'primary'})),
+      p('Open README.md after extracting the ZIP. Review connection.json and query.sql, set your own token, then run the included local client. Keep each returned query directory with its exact configuration, SQL and complete results.','muted'),
+      node('pre',{id:'client-sql-query'},value.query),
+      table(['Complete member','Bytes','SHA-256'],rows(value.files).map(f=>[f.name,String(f.bytes),code(f.sha256)])),
+      details('Recorded connection and current alias semantics',value.configuration))));
+  }
+}
+
 function renderAccess(){const cfg=state.configuration||{},d=drafts.configuration||{expected_revision:state.revision,catalog_name:cfg.catalog_name,label:cfg.label,principals:(cfg.principals||[]).join('\n'),allow_local:cfg.allow_local};
 const catalog=input('catalog-name',d.catalog_name,'text',{pattern:'[A-Za-z][A-Za-z0-9_]{0,119}',maxlength:120,required:''}),label=input('catalog-label',d.label,'text',{required:'',maxlength:1024}),principals=node('textarea',{id:'principals',rows:7,value:d.principals}),local=input('allow-local','', 'checkbox',{checked:d.allow_local});
 function capture(){const next={expected_revision:d.expected_revision,catalog_name:catalog.value,label:label.value,principals:principals.value,allow_local:local.checked};draft('configuration',next);return next;}

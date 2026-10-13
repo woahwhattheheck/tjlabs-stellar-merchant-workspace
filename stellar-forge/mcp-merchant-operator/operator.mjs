@@ -315,5 +315,23 @@ export class MerchantReleaseOperator {
   }
 }
 export async function openMerchantOperator(configPath, options) {
-  return new MerchantReleaseOperator(await readMerchantConfig(configPath), options);
+  const operator = new MerchantReleaseOperator(await readMerchantConfig(configPath), options);
+  try {
+    // This dedicated source-owned provider must admit its complete configuration
+    // before a server, persistent console or ordinary core tool can use the host.
+    if (operator.tools.some(tool => tool.name === 'merchant_host_handoff_hosts'))
+      await operator.call('merchant_host_handoff_hosts', {});
+    return operator;
+  } catch (error) {
+    try { await operator.close(); }
+    catch (closeError) {
+      error.closeError = closeError;
+      const details = error.details && typeof error.details === 'object' && !Array.isArray(error.details)
+        ? error.details : { ...(error.details === undefined ? {} : { originalDetails: error.details }) };
+      error.details = { ...details, operatorShutdown: {
+        code: closeError.code ?? 'OPERATOR_SHUTDOWN_INCOMPLETE', message: closeError.message
+      } };
+    }
+    throw error;
+  }
 }
