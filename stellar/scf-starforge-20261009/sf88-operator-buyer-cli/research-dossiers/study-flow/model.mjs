@@ -120,7 +120,7 @@ export function captureFlowBasis(state,projected,definition,{id,priorReport=null
  validateBasisReferences(definition,basis);
  return{...basis,sha256:flowDigest(basis)};
 }
-function projectRows(definition,basis){
+function projectRows(definition,basis,{reportVersion=2}={}){
  const routes=mapBy(definition.routes,v=>v.editionId),rules=mapBy(definition.records,v=>v.occurrenceId);
  const stages=mapBy(definition.stages,v=>v.workSetId),issues=[];
  const issue=(code,message,details={})=>issues.push({code,message,level:'warning',...details});
@@ -177,7 +177,15 @@ function projectRows(definition,basis){
  if(!grouped.has(row.reportKey))grouped.set(row.reportKey,[]);grouped.get(row.reportKey).push(row);
  }
  const retrievals=mapBy(definition.retrievals,v=>v.reportKey),anchors=mapBy(definition.reportAnchors,v=>v.reportKey);
- const reasons=new Map(basis.protocols.flatMap(p=>p.definition.exclusionReasons.map(r=>[r.id,r.label])));
+ // Earlier saved editions retain their original label projection during receiving.
+ const reasons=reportVersion===1?new Map(basis.protocols.flatMap(p=>p.definition.exclusionReasons.map(r=>[r.id,r.label]))):null;
+ const workSetProtocols=new Map(basis.workSets.map(v=>[v.id,v.protocolId]));
+ const protocolReasons=new Map(basis.protocols.map(p=>[p.id,new Map(p.definition.exclusionReasons.map(r=>[r.id,r.label]))]));
+ const reasonLabel=row=>{
+ const id=row?.assessment.reason;if(!id)return null;
+ const labels=reportVersion===1?reasons:protocolReasons.get(workSetProtocols.get(row.workSetId));
+ return labels?.get(id)??id;
+ };
  const reports=[...grouped].map(([key,rows])=>{
  const anchor=anchors.get(key);let selected=anchor?rows.find(v=>v.occurrenceId===anchor.occurrenceId):rows.length===1?rows[0]:null;
  if(anchor)need(selected,'FLOW_REPORT_ANCHOR_OUTSIDE_GROUP');
@@ -207,7 +215,7 @@ function projectRows(definition,basis){
  outcomeOccurrenceId:selected?.occurrenceId??null,screening,assessment,retrieval,
  retrievalBasis:explicit?clone(explicit):{kind:inferred?'original-reviewer-basis':'not-recorded',
  resolutionIds:selected?.assessment.resolutionIds??[]},excludedReasonId:selected?.assessment.reason??null,
- excludedReason:selected?.assessment.reason?(reasons.get(selected.assessment.reason)??selected.assessment.reason):null,
+ excludedReason:reasonLabel(selected),
  resolutionIds:selected?.assessment.resolutionIds??[],included:fullTextIncluded,
  studyIds:distinct(rows.flatMap(v=>v.studyIds)),sourceRows:rows.map(v=>({occurrenceId:v.occurrenceId,
  editionId:v.editionId,sourceSha256:v.sourceSha256,contentDigest:v.contentDigest}))};
@@ -436,11 +444,14 @@ function metricProjection(definition,basis,rows){
 }
 export function buildStudyFlowReport(definition,basis,{flowId=null,edition=null,status='draft',review=null}={}){
  definition=flowDefinition(definition);validateBasisReferences(definition,basis);
- const rows=projectRows(definition,basis),metrics=metricProjection(definition,basis,rows);
+ const reportVersion=edition?(edition.reportVersion??1):2;
+ need(reportVersion===1||reportVersion===2,'FLOW_REPORT_VERSION_INVALID');
+ const rows=projectRows(definition,basis,{reportVersion}),metrics=metricProjection(definition,basis,rows);
  const issues=rows.issues.map(value=>({...value,id:'fi_'+flowDigest(value)}));
  const errors=issues.filter(v=>v.level==='error'),unknown=metrics.counts.filter(v=>metrics.activeMetricIds.includes(v.id)&&v.value===null);
  const report={schema:FLOW_SCHEMA,flowId,edition:edition?{id:edition.id,number:edition.number,
- revision:edition.revision,createdAt:edition.createdAt,actor:clone(edition.actor),reason:edition.reason}:null,
+ revision:edition.revision,createdAt:edition.createdAt,actor:clone(edition.actor),reason:edition.reason,
+ ...(edition.reportVersion===undefined?{}:{reportVersion:edition.reportVersion})}:null,
  dossier:{id:basis.dossierId,title:basis.question.text,revision:edition?.revision??basis.sourceRevision},
  definition:clone(definition),status,review:clone(review),
  source:{id:basis.id,sha256:basis.sha256,sourceRevision:basis.sourceRevision,
@@ -529,7 +540,8 @@ export function studyFlowPage(state,{flowId,editionId,section='overview',offset=
  activeMetricIds:report.activeMetricIds}:{}),items:clone(values.slice(offset,offset+limit)),
  offset,limit,total:values.length,nextOffset:offset+limit<values.length?offset+limit:null};
 }
-export function recordStudyFlowOperation(state,projected,input,createdAt){
+export function recordStudyFlowOperation(state,projected,input,createdAt,{reportVersion=2}={}){
+ need(reportVersion===1||reportVersion===2,'FLOW_REPORT_VERSION_INVALID');
  const request=flowInput(input);need(state.revision===request.expectedRevision,'REVISION_CONFLICT');
  need(typeof createdAt==='string'&&Number.isFinite(Date.parse(createdAt)),'FLOW_TIME_INVALID');
  need(!list(state.studyFlowEvents).some(v=>v.requestId===request.requestId),'FLOW_REQUEST_ALREADY_RECORDED');
@@ -552,7 +564,8 @@ export function recordStudyFlowOperation(state,projected,input,createdAt){
  validateBasisReferences(definition,basis);
  const edition={id:entityId('fe',state,request),flowId,number:(previous?.number??0)+1,definition:clone(definition),
  definitionSha256:flowDigest(definition),sourceBasisId:basis.id,supersedes:previous?.id??null,
- reason:request.data.reason,actor:clone(request.actor),createdAt,originalRevision:state.revision,revision:state.revision+1};
+ reason:request.data.reason,actor:clone(request.actor),createdAt,originalRevision:state.revision,revision:state.revision+1,
+ ...(reportVersion===2?{reportVersion}: {})};
  // Derive the whole projection before committing; malformed bindings are not stored as a later read failure.
  const report=buildStudyFlowReport(definition,basis,{flowId,edition});
  result={...(newBasis?{basis}:{}),edition,summary:report.summary,reportSha256:report.reportSha256};
@@ -610,7 +623,8 @@ export function validateStudyFlowState(state,editions,knownOccurrences){
  }
  const edition=event.result.edition;
  if(edition){need(!flowEditions.has(edition.id)&&edition.flowId===event.flowId&&bases.has(edition.sourceBasisId)&&
- edition.definitionSha256===flowDigest(flowDefinition(edition.definition)),'PORTABLE_FLOW_EDITION_CHANGED');
+ edition.definitionSha256===flowDigest(flowDefinition(edition.definition))&&
+ (edition.reportVersion===undefined||edition.reportVersion===2),'PORTABLE_FLOW_EDITION_CHANGED');
  flowEditions.set(edition.id,edition);}
  if(event.result.review)need(flowEditions.has(event.result.review.editionId),'PORTABLE_FLOW_REVIEW_EDITION_MISSING');
  if(event.result.importFile){const f=event.result.importFile;
@@ -627,7 +641,8 @@ export function validateStudyFlowTransition(previous,state,projected){
  if(!added.length)return;
  need(previous&&projected instanceof Map,'PORTABLE_FLOW_PREVIOUS_STATE_REQUIRED');
  const replay=clone(previous),event=added[0];
- recordStudyFlowOperation(replay,projected,event.request,event.createdAt);
+ recordStudyFlowOperation(replay,projected,event.request,event.createdAt,
+ {reportVersion:event.result.edition?.reportVersion??1});
  const body=v=>Object.fromEntries(Object.entries(v).filter(([key])=>!['revision','previous','updatedAt','change'].includes(key)));
  need(same(body(replay),body(state)),'PORTABLE_FLOW_TRANSITION_CHANGED');
 }
