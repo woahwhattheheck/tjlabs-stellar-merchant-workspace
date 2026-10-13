@@ -902,13 +902,19 @@
       "label": "Original-owner configured input custody and same-request source execution",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar-forge/mcp-merchant-operator/accounting-bank-sources.mjs",
-      "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+      "commit": "c2ad667f586ec73e74bc945ff2ab915e59d9d91f",
       "editions": [
         {
           "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
           "git_blob": "d1e8c376f9eb15fa4f326e471aa9827c21229894",
           "sha256": "096d464b1f3eaaf656fad22a3cc8ffdded6b137ac25b5a80632190550bbbcead",
           "bytes": 21835
+        },
+        {
+          "commit": "c2ad667f586ec73e74bc945ff2ab915e59d9d91f",
+          "git_blob": "62cac604a2008f555bc29a62f5689473af961f14",
+          "sha256": "22f01c2dbfab19606a2c70d531a8b70c7181a112d5940954cf5e66bc086798da",
+          "bytes": 21897
         }
       ]
     },
