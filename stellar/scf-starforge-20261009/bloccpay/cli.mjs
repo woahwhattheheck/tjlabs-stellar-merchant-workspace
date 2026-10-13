@@ -122,7 +122,7 @@ export async function runBloccpayIntegrationCLI(argv=process.argv.slice(2)){
    'received-open':{required:['--destination'],optional:['--selection-sha256']},
   };
   const definition=definitions[argv[0]],allowed=[...definition.required,...definition.optional];
-  for(let i=1;i<argv.length;i+=2){need(allowed.includes(argv[i])&&!Object.hasOwn(flags,argv[i]),'BLOCCPAY_ARGUMENTS_INVALID');flags[argv[i]]=argv[i+1];}
+  for(let i=1;i<argv.length;i+=2){need(allowed.includes(argv[i])&&!Object.hasOwn(flags,argv[i])&&typeof argv[i+1]==='string'&&argv[i+1].length>0,'BLOCCPAY_ARGUMENTS_INVALID');flags[argv[i]]=argv[i+1];}
   need(definition.required.every(name=>typeof flags[name]==='string'&&flags[name].length>0),'BLOCCPAY_ARGUMENTS_REQUIRED');
   need(Boolean(flags['--source-directory'])===Boolean(flags['--source-manifest-sha256']),'BLOCCPAY_SOURCE_SELECTION_PAIR_REQUIRED');
   const received=await import('./received-workspace.mjs');
