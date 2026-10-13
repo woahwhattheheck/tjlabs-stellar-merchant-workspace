@@ -3,6 +3,7 @@ import {parseWorkspace} from './workspace-file.mjs';
 import {mountIncidentRecoveryDesk} from './incident-recovery-desk.mjs';
 import {mountOAuthRegistration,renderOAuthStatus,renderOAuthDetail} from './oauth-desk.mjs';
 import {mountX402Registration,renderX402Status,renderX402Detail} from './x402-desk.mjs';
+import {mountIncidentWriting} from './incident-writing.mjs';
 
 const add=(parent,tag,text,className='')=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;parent.append(n);return n;};
 const button=(parent,text,action,className='secondary')=>{const n=add(parent,'button',text,className);n.type='button';n.addEventListener('click',action);return n;};
@@ -30,7 +31,7 @@ const terminal=new Set(['DELIVERED','CANCELLED']);
 export function mountIncidentDesk({root,exportCase,importCase}) {
   const abort=new AbortController();
   let destroyed=false,busy=false,sequence=0,selection=0,offset=0,timer=null,current=null,detail=null,selectedId=null;
-  let configDirty=false,loadedConfigRevision=null,prepared=null,recovery=null,oauthRegistration=null,x402Registration=null;
+  let configDirty=false,loadedConfigRevision=null,prepared=null,recovery=null,oauthRegistration=null,x402Registration=null,writing=null;
   let objectReview=null,objectEpoch=0,objectChoicesKey='';
   let ckanReview=null,ckanEpoch=0,ckanChoicesKey='';
   const downloads=new Set();
@@ -181,7 +182,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   configText.id='incident-config-json';configText.rows=14;configText.spellcheck=false;configText.maxLength=60000;
   const configActions=add(configForm,'div',undefined,'actions');
   const saveConfig=add(configActions,'button','Apply configuration');saveConfig.type='submit';saveConfig.id='incident-config-save';
-  const reloadConfig=button(configActions,'Reload current settings',()=>{configDirty=false;loadedConfigRevision=null;invalidateObject();invalidateCkan();oauthRegistration?.invalidate();x402Registration?.invalidate();drawConfig();controls();});
+  const reloadConfig=button(configActions,'Review current settings',()=>{writing?.reviewCurrent();controls();});
   const verify=button(configActions,'Verify Slack workspace',()=>perform('destination',()=>({expectedConfigRevision:current.configRevision})));verify.id='incident-destination';
   const destinationStatus=add(configPanel,'p','','hint');destinationStatus.setAttribute('role','status');
 
@@ -197,7 +198,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     return data;
   }
   oauthRegistration=mountOAuthRegistration({root:configPanel,readCurrent:()=>current,
-    readDraft:()=>configText.value,writeDraft(text){configText.value=text;configDirty=true;drawConfig();controls();},
+    readDraft:()=>configText.value,writeDraft(text){configText.value=text;configDirty=true;captureWriting();drawConfig();controls();},
     request:body=>api(base()+'/inspect-oauth',body),
     async run(action){
       if(destroyed||busy)throw new Error('Wait for the current incident operation to finish.');
@@ -207,7 +208,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     isBusy:()=>busy,isCurrentRevision:()=>Boolean(current)&&loadedConfigRevision===current.configRevision,
     say,signal:abort.signal});
   x402Registration=mountX402Registration({root:configPanel,readCurrent:()=>current,
-    readDraft:()=>configText.value,writeDraft(text){configText.value=text;configDirty=true;drawConfig();controls();},
+    readDraft:()=>configText.value,writeDraft(text){configText.value=text;configDirty=true;captureWriting();drawConfig();controls();},
     request:body=>api(base()+'/inspect-x402',body),
     async run(action){
       if(destroyed||busy)throw new Error('Wait for the current incident operation to finish.');
@@ -216,6 +217,13 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     },
     isBusy:()=>busy,isCurrentRevision:()=>Boolean(current)&&loadedConfigRevision===current.configRevision,
     say,signal:abort.signal});
+  writing=mountIncidentWriting({root:configPanel,readCurrent:()=>current,
+    readDraft:()=>({text:configText.value,revision:loadedConfigRevision,dirty:configDirty}),
+    restore(value){configText.value=value.text;loadedConfigRevision=value.revision;configDirty=value.dirty;
+      invalidateObject();invalidateCkan();oauthRegistration?.invalidate();x402Registration?.invalidate();},
+    isBusy:()=>busy,onControls(){drawConfig();controls();},say,signal:abort.signal});
+  writing.panel.addEventListener('incident-writing-retry',()=>perform('configure',()=>writing.retryPayload(),false,{retry:true}),{signal:abort.signal});
+  function captureWriting(){try{writing?.capture();}catch(error){say(error.message,true);}}
   function controls() {
     source.disabled=busy;search.disabled=busy;stateFilter.disabled=busy;merchant.disabled=busy;applyFilter.disabled=busy;
     refreshButton.disabled=busy||!source.value;previous.disabled=busy||offset===0;next.disabled=busy||!current?.page.hasMore;
@@ -224,7 +232,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     operator.disabled=busy;notes.disabled=busy||detail?.incident.status!=='OPEN';routeId.disabled=busy;
     prepare.disabled=busy||!detail||!detail.incident.beforeCapture&&!detail.incident.afterCapture;
     openCase.disabled=busy||!prepared;closeDetail.disabled=busy;
-    configText.disabled=busy||!current;saveConfig.disabled=busy||!current||loadedConfigRevision===null||!configDirty;reloadConfig.disabled=busy||!current;
+    configText.disabled=busy||!current;saveConfig.disabled=busy||!current||loadedConfigRevision===null||!configDirty||!writing?.canApply();reloadConfig.disabled=busy||!current;
     verify.disabled=busy||current?.config.notification?.transport!=='slack';
     for(const input of [objectSource,objectId,objectName,...Object.values(objectLimits)])input.disabled=busy||!current;
     inspectObject.disabled=busy||!current||!objectSource.value||loadedConfigRevision!==current.configRevision;
@@ -233,7 +241,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     inspectCkan.disabled=busy||!current||!ckanSource.value||loadedConfigRevision!==current.configRevision;
     ckanDraft.disabled=busy||!ckanReview||!current||loadedConfigRevision!==current.configRevision;
     for(const node of queueRows.querySelectorAll('button'))node.disabled=busy||!operator.value.trim();
-    recovery?.refreshControls();oauthRegistration?.controls();x402Registration?.controls();
+    recovery?.refreshControls();oauthRegistration?.controls();x402Registration?.controls();writing?.controls();
   }
   function drawConfig() {
     if(!current)return;
@@ -245,7 +253,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     }
     oauthRegistration?.update();x402Registration?.update();
     configSummary.textContent='Loaded revision '+loadedConfigRevision+' · current revision '+current.configRevision+
-      (configDirty?' · unsaved edits':'')+(configDirty&&loadedConfigRevision!==current.configRevision?' · reload current settings before applying a new edit.':'');
+      (configDirty?' · unsaved edits':'')+(configDirty&&loadedConfigRevision!==current.configRevision?' · review original and current settings before applying this writing.':'');
   }
   function invalidateObject(message='Inspect the selected Object before adding it to this draft.') {
     objectEpoch++;objectReview=null;objectReviewFacts.replaceChildren();objectReviewStatus.textContent=message;objectReviewStatus.className='hint';
@@ -298,7 +306,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
       const row={id,label:objectName.value,object:objectReview.result.object},index=config.merchants.findIndex(item=>item.id===id);
       if(index<0){if(config.merchants.length>=8)throw new Error('The watcher already has eight sources. Remove or replace a source in the draft first.');config.merchants.push(row);}
       else config.merchants[index]=row;
-      configText.value=JSON.stringify(config,null,2);configDirty=true;
+      configText.value=JSON.stringify(config,null,2);configDirty=true;captureWriting();
       objectReviewStatus.textContent='Exact reviewed Object added to the draft. Apply configuration to register it with the existing watcher.';
       drawConfig();controls();say('Configuration draft updated. Other sources and notification settings are preserved.');
     } catch(error){say(error.message,true);}
@@ -381,7 +389,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
       const row={id,label:ckanName.value,ckan:ckanReview.result.ckan},index=config.merchants.findIndex(item=>item.id===id);
       if(index<0){if(config.merchants.length>=8)throw new Error('The watcher already has eight sources. Remove or replace a source in the draft first.');config.merchants.push(row);}
       else config.merchants[index]=row;
-      configText.value=JSON.stringify(config,null,2);configDirty=true;
+      configText.value=JSON.stringify(config,null,2);configDirty=true;captureWriting();
       ckanReviewStatus.textContent='Reviewed CKAN selection added to the draft. Apply configuration to register it with the existing watcher.';
       drawConfig();controls();say('CKAN watcher draft updated.');
     } catch(error){say(error.message,true);}
@@ -484,7 +492,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
       const [list,value]=await Promise.all([api('/api/incidents/'+encodeURIComponent(profile)+'?'+query),
         incident?api('/api/incidents/'+encodeURIComponent(profile)+'/'+encodeURIComponent(incident)).catch(error=>{if(error.status===404)return null;throw error;}):Promise.resolve(null)]);
       if(destroyed||stamp!==sequence||epoch!==selection)return;
-      current=list;detail=value;
+      current=list;detail=value;writing?.observe(list);
       if(incident&&!value){selectedId=null;clearPrepared();say('The selected incident was removed by retention. The current queue is shown.');}
       const selectedMerchant=merchant.value;merchant.replaceChildren();add(merchant,'option','All merchants').value='';
       for(const row of list.merchants)add(merchant,'option',row.label).value=row.id;
@@ -496,22 +504,25 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     if(busy)return;selection++;selectedId=id;detail=null;notes.value='';routeId.value='';clearPrepared();drawDetail();drawList();
     await refresh();
   }
-  async function perform(action,payload,forIncident=false) {
+  async function perform(action,payload,forIncident=false,{retry=false}={}) {
     if(busy||!current||forIncident&&!detail)return;
+    let body;
+    try{body=payload();if(action==='configure')body=retry?writing.retryPayload():writing.prepare(body.config);}
+    catch(error){say(error.message,true);controls();return;}
     busy=true;sequence++;clearTimeout(timer);controls();
     try {
-      const result=await api(forIncident?incidentRoute(action):base()+'/'+action,payload());
+      const result=await api(forIncident?incidentRoute(action):base()+'/'+action,body);
       if(action==='destination') {
         destinationStatus.textContent=result.accepted?'Verified workspace '+result.teamId+' · actor '+result.actorId+' · channel '+result.channelId:human(result.reason);
         say(result.accepted?'Slack workspace and actor verified.':'Slack verification needs attention.',!result.accepted);
       } else {
-        if(action==='configure'){configDirty=false;loadedConfigRevision=null;invalidateObject();invalidateCkan();oauthRegistration?.invalidate();x402Registration?.invalidate();destinationStatus.textContent='';}
+        if(action==='configure'){writing.accepted(result);invalidateObject();invalidateCkan();oauthRegistration?.invalidate();x402Registration?.invalidate();destinationStatus.textContent='';}
         if(action==='ack')notes.value='';
         say(action==='start'?'Watcher start requested. Its state appears above.':action==='stop'?'This console’s watcher stopped and drained.':
           action==='configure'?'Watcher configuration applied.':action==='ack'?'Incident acknowledged.':action==='notify'?'Operator reminder queued.':'Operation completed.');
       }
       await refresh({force:true});
-    } catch(error){say(error.message,true);await refresh({force:true});}
+    } catch(error){if(action==='configure')writing.rejected(error);say(error.message,true);await refresh({force:true});}
     finally {busy=false;controls();schedule();}
   }
   async function queueAction(event,action) {
@@ -561,6 +572,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     }});
   selectionForm.addEventListener('submit',event=>{event.preventDefault();if(busy)return;offset=0;refresh();},{signal:abort.signal});
   async function changeSource() {
+    try{writing?.leave();}catch(error){if(current)source.value=current.source.id;say(error.message,true);return;}
     selection++;sequence++;offset=0;selectedId=null;current=null;detail=null;configDirty=false;loadedConfigRevision=null;
     invalidateObject();objectChoicesKey='';objectStatus.replaceChildren();objectStatus.hidden=true;
     invalidateCkan();ckanChoicesKey='';ckanStatus.replaceChildren();ckanStatus.hidden=true;
@@ -588,7 +600,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   },{signal:abort.signal});
   for(const input of [ckanId,ckanName,requirePublication,...Object.values(ckanRecords),...Object.values(ckanLimits)])
     input.addEventListener('input',()=>{invalidateCkan();controls();},{signal:abort.signal});
-  configText.addEventListener('input',()=>{configDirty=true;drawConfig();controls();},{signal:abort.signal});
+  configText.addEventListener('input',()=>{configDirty=true;captureWriting();drawConfig();controls();},{signal:abort.signal});
   configForm.addEventListener('submit',event=>{event.preventDefault();let config;
     try{config=JSON.parse(configText.value);}catch{say('Enter valid configuration JSON before applying settings.',true);return;}
     perform('configure',()=>({config,expectedConfigRevision:loadedConfigRevision}));},{signal:abort.signal});
@@ -600,5 +612,5 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     if(navigation){navigation.hidden=false;navigation.closest('.workflow').classList.add('has-incidents');}
     say('Choose an incident to review, or operate the selected watcher.');refresh();
   }).catch(error=>{if(!destroyed){root.hidden=false;say(error.message,true);}});
-  return {destroy(){destroyed=true;clearTimeout(timer);clearPrepared();recovery?.destroy();oauthRegistration?.destroy();x402Registration?.destroy();abort.abort();root.replaceChildren();}};
+  return {destroy(){destroyed=true;clearTimeout(timer);clearPrepared();recovery?.destroy();oauthRegistration?.destroy();x402Registration?.destroy();writing?.destroy();abort.abort();root.replaceChildren();}};
 }
