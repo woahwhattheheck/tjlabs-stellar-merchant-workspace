@@ -1278,7 +1278,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       '<label>Saved measurement edition<select data-cp-task-measurement="sourceId"><option value="">Select original comparison…</option>'+
       sources.map(row=>'<option value="'+esc(row.id)+'"'+(editor.sourceId===row.id?' selected':'')+'>'+esc(row.filename)+' · r'+esc(row.customerTaskOutcomes.revision)+'</option>').join('')+'</select></label>'+
       btn('Open selected saved measurement','recorded-task-load','',!editor.sourceId)+
-      (catalog?'<p><strong>'+esc(catalog.customer)+' — '+esc(catalog.task)+'</strong><br>'+esc(catalog.comparisonId)+' · revision '+esc(catalog.revision)+' · '+esc(catalog.unit)+'</p>'+
+      (catalog?'<p><strong>'+esc(catalog.customer)+' — '+esc(catalog.task)+'</strong><br>'+esc(catalog.comparisonId)+' · revision '+esc(catalog.revision)+' · '+esc(catalog.unit)+'<br>Original measurement case '+esc(catalog.caseId)+'<br>Selected receiving case '+esc(caseId)+'</p>'+
         '<label>Original installed / recurring task<select data-cp-task-observation>'+catalog.observations.map(row=>'<option value="'+esc(JSON.stringify([row.kind,row.observationId]))+'"'+(row.kind===editor.kind&&row.observationId===editor.observationId?' selected':'')+'>'+esc(row.label)+' · '+esc(fmt(row.quantity))+' '+esc(row.unit)+' · '+esc(row.basis)+'</option>').join('')+'</select></label>'+
         table(['Task','Count','Original basis / state','Customer response','Source and scope'],catalog.observations.map(row=>[esc(row.label),esc(fmt(row.quantity))+' '+esc(row.unit),esc(row.basis)+' / '+esc(row.status),esc(row.acceptance?.status||'Not recorded for initial method'),esc(row.method.sourceReference)+'<br>'+esc(row.method.population)+'<br>'+esc(row.method.period)+'<br>'+esc(row.method.output)+'<br>'+esc(row.method.quality)+(row.usable?'':'<br>'+esc(row.unavailable.join(' ')))]))+
         '<label>Why this task and selected costs describe the same service output<textarea data-cp-task-measurement="serviceBasis">'+esc(editor.serviceBasis)+'</textarea></label>'+
@@ -1307,7 +1307,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     const editor=taskMeasurementEditor();
     if(!editor.source||editor.source.source.id!==editor.sourceId)throw new Error('Open the currently selected original measurement first.');
     state.recordedCostDraft=bindCohortRecordedCostMeasurement(state.recordedCostDraft||{},editor.source,
-      {kind:editor.kind,observationId:editor.observationId,serviceBasis:editor.serviceBasis});
+      {kind:editor.kind,observationId:editor.observationId,serviceBasis:editor.serviceBasis,caseId});
     state.notice='Retained the original count, unit, complete saved comparison and explicit service relationship. Keep the allocation, then calculate the whole future plan.';
   }
   function manualTaskMeasurement(){

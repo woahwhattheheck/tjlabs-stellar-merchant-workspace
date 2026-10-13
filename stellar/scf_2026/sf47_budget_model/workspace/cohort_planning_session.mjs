@@ -152,7 +152,7 @@ export function validateCohortPlanningState(value,caseId){
     const editor=object(value.recordedCostMeasurementEditor,'Saved measurement working selection');
     exact(editor,['sourceId','source','kind','observationId','serviceBasis'],'Saved measurement working selection');
     for(const key of ['sourceId','kind','observationId','serviceBasis'])string(editor[key],'Saved measurement '+key);
-    if(editor.source){const catalog=inspectCohortTaskMeasurements(editor.source);need(catalog.caseId===caseId,'The opened measurement belongs to another original case.');}
+    if(editor.source)inspectCohortTaskMeasurements(editor.source); // Received cases retain the producer identity; native review checks the selected case inventory.
   }
   if(value.recordedCostSource){reopenCohortDeliveryComparison(value.recordedCostSource);need(value.recordedCostSource.source.programId===caseId,'The recorded-cost source belongs to another case.');}
   if(value.recordedCostBaseline)checkDocument(value.recordedCostBaseline,'Recorded-cost baseline');
