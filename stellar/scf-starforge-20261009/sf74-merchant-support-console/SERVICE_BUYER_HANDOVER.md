@@ -346,7 +346,7 @@ The buyer action, delivery, history and download selectors follow the chosen cap
 
 ### Draft continuation
 
-After reading the selected buyer, **Save draft fields** retains the full unsubmitted form, exact allocation strings, label rows and loaded edit bases in the browser's existing request store. The key contains origin, case, capture, configured alias and actual buyer workspace ID. Switching case, capture or buyer preserves the prior draft before clearing the form.
+After reading the selected buyer, **Save draft fields** retains the full unsubmitted form, exact allocation strings, label rows and loaded edit bases in the browser's existing request store. The key contains origin, case, capture, configured alias and actual buyer workspace ID. Switching case, capture or buyer preserves edited fields before clearing the form. Opening or inspecting a workflow without editing its fields leaves an earlier saved draft intact; only actual edits are saved automatically.
 
 **Restore saved draft** first reads the current buyer identity, then restores matching form choices. It does not prepare or execute an action. Review the current source and use the original preview/save/execute flow. A changed cost center, period or label basis continues to fail its original review check. Rechoose an accountant return file after a reload; browser file selections and return previews are deliberately renewed against the actual issued history. Prepared native requests and pending recovery requests stay in their original separate stores.
 
