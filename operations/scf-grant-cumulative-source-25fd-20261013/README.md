@@ -16,9 +16,9 @@ This composition starts with the actual reader at `f810457375913742f97c5d3c36537
 
 `source-package.json` is the existing submission application's complete four-file source package. It contains the application, source index, six-package budget and full companion. The original `createSourceBundle`, `createReviewerSourcePackage` and `openReviewerSourcePackage` created and reopened all four complete bodies using their actual byte counts, SHA-256 and Git identities.
 
-`source-files.json` retains the complete original selected runtime/source closure and joins these current reader outputs. It supplies **248 full files / 7,377,397 decoded bytes**, preserving all 247 original paths and their native receiving helpers. The source-selection materializer additionally accepts both `utf-8` and `utf8` labels for the same complete UTF-8 bytes; its original path, byte-count, SHA-256 and Git checks remain in place. The additional declaration is the already-selected Merchant monitoring source; the current Collections and Flowable declarations replace their earlier bodies. The complete concurrently merged Flowable programme, all nine new source IDs, and its original chapter remain intact. It includes 44 complete declaration files, the maintained composer and complete imports, the original browser assets and routes, the original ten-file receiving runtime, and all 18 source/helper files.
+`source-files.json` retains the complete original selected runtime/source closure and joins these current reader outputs. It supplies **248 full files / 7,380,696 decoded bytes**, preserving all 247 original paths and their native receiving helpers. The source-selection materializer additionally accepts both `utf-8` and `utf8` labels for the same complete UTF-8 bytes; its original path, byte-count, SHA-256 and Git checks remain in place. The additional declaration is the already-selected Merchant monitoring source; the current Collections and Flowable declarations replace their earlier bodies. The complete concurrently merged Flowable programme, all nine new source IDs, and its original chapter remain intact. It includes 44 complete declaration files, the maintained composer and complete imports, the original browser assets and routes, the original ten-file receiving runtime, and all 18 source/helper files.
 
-The retained runtime/source basis is `b7e180022deff675a492e41e076009c428145cbc`, received through the original complete PR1286 carrier. Its current reader overlays use the separate exact `f8104573` basis above. Each changed reader/declaration records its original and resulting Git blob in `sourceOverlays`; the additional receiving-helper overlay records its exact original and compatible successor. Every other carried runtime body is unchanged. The full binary FRED example retains its original canonical Base64. Text bodies use complete UTF-8 in `content`, and both `gitBlob` and `git_blob` refer to those exact decoded bytes.
+The retained runtime/source basis is `b7e180022deff675a492e41e076009c428145cbc`, received through the original complete PR1286 carrier. Its current reader overlays use the separate exact `f8104573` basis above. Each changed reader/declaration records its original and resulting Git blob in `sourceOverlays`; the additional receiving-helper overlay records its exact original and compatible successor. The complete customer receiver and composition guide additionally receive the maintained source-selection correction described below. Every other carried runtime body is unchanged. The full binary FRED example retains its original canonical Base64. Text bodies use complete UTF-8 in `content`, and both `gitBlob` and `git_blob` refer to those exact decoded bytes.
 
 | Reader file | UTF-8 bytes | Git blob |
 | --- | ---: | --- |
@@ -34,7 +34,7 @@ The actual maintained composition and original package APIs ran in the connected
 | Complete delivery | Bytes | SHA-256 |
 | --- | ---: | --- |
 | `source-package.json` | 2,254,177 | `df44492d0a7e802f131c6fd403b69d2de2ddc8edcaad3fdae5db9350f0149ef7` |
-| `source-files.json` | 7,850,357 | `60d85d0f87be155723ede0b12a7792479d7c830123826fa5be46ae4bdc9c9ba1` |
+| `source-files.json` | 7,850,357 | `5e5bb7844df1bf523248efabe8b32641bb8354a3b6f749d1a02aceb4af77b4d7` |
 
 ## Receive into the existing saved submission
 
@@ -58,7 +58,7 @@ Use the existing `operations/scf-current-application-receiving-81cf-20261012/pre
 ```sh
 python -B operations/scf-current-application-receiving-81cf-20261012/prepare-source-selection.py \
   --source-packet /absolute/received/source-files.json \
-  --source-packet-sha256 60d85d0f87be155723ede0b12a7792479d7c830123826fa5be46ae4bdc9c9ba1 \
+  --source-packet-sha256 5e5bb7844df1bf523248efabe8b32641bb8354a3b6f749d1a02aceb4af77b4d7 \
   --source-package /absolute/received/source-package.json \
   --source-package-sha256 df44492d0a7e802f131c6fd403b69d2de2ddc8edcaad3fdae5db9350f0149ef7 \
   --original-source-commit ACTUAL_ORIGINAL_CASE_SOURCE_COMMIT \
@@ -85,6 +85,12 @@ The default `grant-products/` directory contains the product-owned declarations.
 Product definition pins in the source index's composition history describe the retained per-product composition. The complete source carrier can include a later declaration body alongside that earlier history. Source materialization constructs its selected asset identities from the actual full `files` bodies; it does not treat historical declaration pins as current file selectors. The maintained composer reads the selected complete declaration files and records their new definition identities when a subsequent composition receives them.
 
 `GRANT_COMPOSITION.md` and `GRANT_PRODUCT_SOURCES.md` explain source selection and complete chapter receiving. The original `grant-reviewer` distribution contribution includes the entire developer-site component, so the same commands and product guides remain part of its installed source.
+
+### Preserve independently selected product sources
+
+The included customer receiver leaves a record owned by an existing `source_registration` with that product declaration. Older narrative links therefore preserve the exact selected repository, commit, path and measured file identity. The original product receiver still runs afterward: receiving the product's complete chapter and maintained declaration applies its intentional selection, including a selected `commit` and matching measured edition. Malformed ownership identifiers are rejected. Source selection does not infer release order from commit hashes.
+
+Unregistered legacy guides continue to follow their original narrative links. A repository, commit or path change clears `git_blob`, `sha256`, `bytes` and `product_byte_identity` together; changing only the link representation leaves the file measurements intact. The actual 503-source application replays with every source record unchanged. Its real 501-source predecessor receives the intended Collections guide, eight owned source updates and two new owned sources while all 492 unrelated records stay exact. Both the current composer and the complete carried composer executed these paths.
 
 ## Open and export the current application
 

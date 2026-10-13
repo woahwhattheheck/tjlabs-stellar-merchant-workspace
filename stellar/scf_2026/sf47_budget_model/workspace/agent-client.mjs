@@ -927,6 +927,32 @@ export class GrantWorkspaceClient {
     const {inputs, expectedPreviewSha256, ...original} = body;
     return this.command(caseId, {...original, action:'statement.receive', data:{inputs, expectedPreviewSha256}});
   }
+  statementSetupSave(caseId, body) {
+    exact(body, ['expectedVersion', 'requestId', 'actor', 'note', 'id', 'expectedRevision', 'name', 'status', 'inputs'],
+      ['expectedVersion', 'requestId', 'actor', 'note', 'expectedRevision', 'name']);
+    const {expectedVersion, requestId, actor, note, ...data} = body;
+    text(actor, 'Recording operator', 300); text(note, 'Statement setup reason', 12000);
+    text(data.name, 'Statement setup name', 160);
+    integer(data.expectedRevision, 'Current statement setup edition', 0);
+    if (data.id !== undefined) {
+      id(data.id, 'statement-setup');
+      need(data.expectedRevision > 0, 'GRANT_INVALID_INPUT', 'Use the selected setup revision.');
+    } else {
+      need(data.expectedRevision === 0, 'GRANT_INVALID_INPUT', 'A new setup starts with revision zero.');
+    }
+    const status = data.status ?? 'ACTIVE';
+    need(status === 'ACTIVE' || status === 'ARCHIVED', 'GRANT_INVALID_INPUT',
+      'Choose an active or archived statement setup.');
+    if (status === 'ARCHIVED') {
+      need(data.id !== undefined && data.inputs === undefined, 'GRANT_INVALID_INPUT',
+        'Archive the existing setup without replacing its saved settings.');
+    } else {
+      object(data.inputs, 'Original statement file and current mapping');
+    }
+    return this.command(caseId, {expectedVersion, requestId, actor, note,
+      action:'statement-setup.save', data});
+  }
+
   workIntakePreview(caseId, body) {
     id(caseId, 'operation');
     exact(body, ['expectedVersion', 'intakeId', 'revision', 'document'], ['expectedVersion', 'intakeId']);

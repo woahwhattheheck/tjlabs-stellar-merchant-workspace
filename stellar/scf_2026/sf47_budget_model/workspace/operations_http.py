@@ -81,7 +81,9 @@ def register_static(static):
     static.update({"/operations_commercial.mjs": ("operations_commercial.mjs", "text/javascript; charset=utf-8"),
                    "/operations_commercial.css": ("operations_commercial.css", "text/css; charset=utf-8")})
     static.update({"/operations_statements.mjs": ("operations_statements.mjs", "text/javascript; charset=utf-8"),
-                   "/operations_statements.css": ("operations_statements.css", "text/css; charset=utf-8")})
+                   "/operations_statements.css": ("operations_statements.css", "text/css; charset=utf-8"),
+                   "/operations_statement_profiles.mjs": ("operations_statement_profiles.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_statement_profiles.css": ("operations_statement_profiles.css", "text/css; charset=utf-8")})
     static.update({"/operations_payables.mjs": ("operations_payables.mjs", "text/javascript; charset=utf-8"),
                    "/operations_payables.css": ("operations_payables.css", "text/css; charset=utf-8"),
                    "/operations_ledger_intake.mjs": ("operations_ledger_intake.mjs", "text/javascript; charset=utf-8"),

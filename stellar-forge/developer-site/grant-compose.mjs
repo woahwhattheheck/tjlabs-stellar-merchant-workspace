@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 import { composeGrantEntry } from './grant-entry.mjs';
 import { attachGrantSubmission } from './grant-submission.mjs';
 import { attachGrantReviewRounds } from './grant-review-round.mjs';
+import { attachSavedProjects } from './saved-projects.mjs';
 import { attachGrantCompanion } from './grant-companion.mjs';
 import { attachCustomerClosingSources, attachCustomerClosingOpening } from './grant-customer-closing.mjs';
 import { receiveFinancialApplication, attachFinancialSources } from './grant-financial-operations.mjs';
@@ -301,7 +302,7 @@ export function composeGrantApplication({
   const submission = attachGrantSubmission(customerOpening);
   const reviewRound = attachGrantReviewRounds(submission);
   const companionReader = attachGrantCompanion(reviewRound);
-  html = projectGrantHtml(companionReader.templateHtml);
+  html = attachSavedProjects(projectGrantHtml(companionReader.templateHtml));
   index = companionReader.sourceIndex;
   const indexText = JSON.stringify(index, null, 2) + '\n';
   const files = {

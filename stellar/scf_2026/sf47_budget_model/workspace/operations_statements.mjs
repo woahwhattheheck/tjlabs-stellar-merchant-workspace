@@ -1,5 +1,6 @@
 import {currentStaffContext,staffDeskStorageKey,assertStaffRequestActor} from './staff-session.mjs';
 import {mountEarlierStaffDesk} from './staff-desk-recovery.mjs';
+import {statementSetupPanel,statementSetupComparison,statementSetupSettings,statementSetupLink,sameSetupValue} from './operations_statement_profiles.mjs';
 // Statement source mapping and reviewed cash receiving in the existing Operations case.
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone=value=>structuredClone(value);
@@ -121,20 +122,21 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
   if(!document.querySelector('link[data-statement-style]')){
     const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_statements.css';link.dataset.statementStyle='true';document.head.append(link);
   }
+  if(!document.querySelector('link[data-statement-setup-style]')){const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_statement_profiles.css';link.dataset.statementSetupStyle='true';document.head.append(link);}
   let active=true,busy=false,hostBusy=false,loading=true,caseValue=current,persistQueue=Promise.resolve(),persistTimer=null;
   const prefix='/api/operations/'+encodeURIComponent(current.program.id);
   const available=()=>active&&root.isConnected;
   const $=selector=>root.querySelector(selector);
   const defaults=()=>({source:null,accountId:'',accountLabel:'',currency:'USD',format:{delimiter:',',decimalMark:'.',groupMark:'',dateFormat:'YYYY-MM-DD',amountMode:'SIGNED',positiveDirection:'IN'},columns:{date:'',reference:'',description:'',amount:'',debit:'',credit:''},defaultCategory:'OTHER',decisions:[]});
-  const values={inputs:defaults(),headers:[],inspection:null,nativeScalesText:'USD: 2',optionsError:'',editRevision:0,preview:null,dirty:true,confirmed:false,page:0,status:'ALL',query:'',pending:null,accepted:null,inflight:null,error:'',notice:'',allocationRow:null,allocationDraft:[]};
+  const values={inputs:defaults(),headers:[],inspection:null,nativeScalesText:'USD: 2',optionsError:'',editRevision:0,preview:null,dirty:true,confirmed:false,page:0,status:'ALL',query:'',pending:null,accepted:null,setupPending:null,setupChoice:'',setupName:'',setupNote:'',inflight:null,error:'',notice:'',allocationRow:null,allocationDraft:[]};
   for(const [key,value] of Object.entries(values))if(!Object.hasOwn(session,key))session[key]=value;
   session.currentCaseVersion=current.program.version;
   const source=()=>session.inputs.source;
   const native=()=>bankFormat(session.inputs);
-  const locked=()=>loading||busy||hostBusy||!!session.inflight||!!session.pending||!!session.accepted;
+  const locked=()=>loading||busy||hostBusy||!!session.inflight||!!session.pending||!!session.accepted||!!session.setupPending;
   const editable=()=>!locked()&&caseValue.program.state==='OPEN';
   const rowDecision=number=>session.inputs.decisions.find(row=>row.rowNumber===number);
-  function snapshot(){return {schema:'sf47.statement-draft.v1',caseId:current.program.id,inputs:clone(session.inputs),headers:clone(session.headers),inspection:clone(session.inspection),nativeScalesText:session.nativeScalesText,preview:clone(session.preview),dirty:session.dirty,pending:clone(session.pending),accepted:clone(session.accepted),originalInputHandoff:clone(session.originalInputHandoff||null)};}
+  function snapshot(){return {schema:'sf47.statement-draft.v1',caseId:current.program.id,inputs:clone(session.inputs),headers:clone(session.headers),inspection:clone(session.inspection),nativeScalesText:session.nativeScalesText,preview:clone(session.preview),dirty:session.dirty,pending:clone(session.pending),accepted:clone(session.accepted),setupPending:clone(session.setupPending),setupChoice:session.setupChoice,setupName:session.setupName,setupNote:session.setupNote,originalInputHandoff:clone(session.originalInputHandoff||null)};}
   async function persist(critical=false){
     const value=snapshot();
     persistQueue=persistQueue.catch(()=>{}).then(()=>storeDraft(current.program.id,value));
@@ -150,11 +152,16 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     root.setAttribute('aria-busy',String(loading||busy||hostBusy||!!session.inflight));
     root.querySelectorAll('button,input,select,textarea').forEach(el=>{
       const recovery=el.dataset.statementRecovery==='true';
-      el.disabled=el.dataset.statementFixed==='true'||loading||busy||hostBusy||!!session.inflight||(!recovery&&!!(session.pending||session.accepted))||(el.dataset.statementWrite==='true'&&caseValue.program.state!=='OPEN');
+      el.disabled=el.dataset.statementFixed==='true'||loading||busy||hostBusy||!!session.inflight||(!recovery&&!!(session.pending||session.accepted||session.setupPending))||(el.dataset.statementWrite==='true'&&caseValue.program.state!=='OPEN');
     });
     const importButton=$('[data-statement-action="import"]');
     if(importButton)importButton.disabled=!editable()||session.dirty||!session.confirmed||!session.preview?.canImport;
     const warning=$('[data-statement-stale]');if(warning)warning.hidden=!session.dirty;
+  }
+  function clearChangedSetup(){
+    const selected=session.inputs.statementSetup;if(!selected)return;
+    const row=(caseValue.statementSetups||[]).find(item=>sameSetupValue(statementSetupLink(item),selected));
+    if(!row||!sameSetupValue(statementSetupSettings(session.inputs),row.settings)){delete session.inputs.statementSetup;session.notice='The account or interpretation changed. Save this mapping as a new setup edition to retain its reusable choice.';}
   }
   function changed(){session.editRevision++;session.dirty=true;session.confirmed=false;session.error='';schedulePersist();controls();}
   function setDecision(number,patch){
@@ -171,6 +178,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
   function headersFromSource(guess=false){
     if(native()){session.headers=[];return;}
     session.headers=source()?statementHeaders(sourceText(source().contentBase64),session.inputs.format.delimiter):[];
+    if(!guess&&session.inputs.statementSetup)return;
     const aliases={date:['date','transactiondate','posteddate','bookingdate'],reference:['transactionid','reference','id','fitid','transactionreference'],description:['description','memo','details','narrative'],amount:['amount','transactionamount'],debit:['debit','debits','withdrawal','withdrawals'],credit:['credit','credits','deposit','deposits'],currency:['currency','ccy'],usdValue:['usdvalue','amountusd']};
     const names=session.headers.map(name=>[name,name.toLowerCase().replace(/[^a-z0-9]/g,'')]);
     for(const key of Object.keys(aliases)){
@@ -184,7 +192,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
   }
   function chooseFormat(format){
     if(!['CSV','OFX','MT940'].includes(format))throw new Error('Choose CSV, OFX / QFX or MT940.');
-    const input=session.inputs;input.sourceFormat=format;
+    const input=session.inputs;delete input.statementSetup;input.sourceFormat=format;
     if(format==='CSV'){input.format=clone(defaults().format);input.columns=clone(defaults().columns);delete input.statementOptions;}
     else {delete input.format;delete input.columns;if(format==='MT940'){input.statementOptions=nativeDefaults();session.nativeScalesText=scaleText(input.statementOptions.currencyScales);}else delete input.statementOptions;}
     session.optionsError='';resetInterpretation();headersFromSource(true);
@@ -195,6 +203,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if(file.size===0||file.size>maximumSource)throw new Error('Choose a nonempty original statement file up to 8 MiB.');
     const buffer=await file.arrayBuffer();if(!available())return;
     if(!native())new TextDecoder('utf-8',{fatal:true}).decode(buffer);
+    delete session.inputs.statementSetup;
     session.inputs.source={filename:file.name,contentBase64:base64(buffer),sourceUrl:'',observedAt:new Date().toISOString()};
     resetInterpretation();headersFromSource(true);
     session.notice=native()?'Read the original bytes. Inspect the native account sections and format choices.':'Read the source file. Review its account, currency and column mapping before previewing.';
@@ -218,7 +227,8 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       if(oldOptions!==JSON.stringify(options)){session.inspection=null;delete input.statementId;input.decisions=[];session.preview=null;delete input.openingBalance;delete input.closingBalance;}
     }
     if(input.source&&data.has('sourceUrl'))input.source.sourceUrl=String(data.get('sourceUrl')||'').trim();
-    changed();
+    clearChangedSetup();changed();
+    const panel=root.querySelector('[aria-label="Saved statement setups"]');if(panel){panel.outerHTML=setupPage();controls();}
   }
   function inspectionInputs(){
     if(!native()||!source())throw new Error('Select an original OFX / QFX or MT940 file.');
@@ -248,7 +258,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if(!row){session.notice='Select an inspected original account.';return;}
     // Preserve the original inspection while changing only its selected section.
     if(!row.cashEligible)throw new Error('This original credit account belongs in Supplier accounts.');
-    session.inputs.statementId=row.id;session.inputs.currency=row.currency;
+    session.inputs.statementId=row.id;session.inputs.currency=row.currency;clearChangedSetup();
     if(row.openingBalance?.amount!==undefined&&row.closingBalance?.amount!==undefined){
       session.inputs.openingBalance=row.openingBalance.amount;session.inputs.closingBalance=row.closingBalance.amount;
     }
@@ -322,12 +332,66 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if(available())await finishAccepted();
   }
   async function importReviewed(){
-    if(caseValue.program.state!=='OPEN'||session.pending||session.accepted)throw new Error('Reopen the case and finish its current import before recording another statement.');
+    if(caseValue.program.state!=='OPEN'||session.pending||session.accepted||session.setupPending)throw new Error('Reopen the case and finish its current import before recording another statement.');
     if(!session.preview?.canImport||session.dirty||!session.confirmed)throw new Error('Review a current preview and confirm its cash movements before importing.');
     const payload={expectedVersion:session.preview.expectedVersion,actor:recordingActor(),note:'Imported reviewed statement '+source().filename,action:'statement.receive',data:{inputs:reviewedInputs(),expectedPreviewSha256:session.preview.previewSha256}};
     payload.requestId=await mutationId('operations:'+current.program.id,payload);
     session.pending={payload,createdAt:new Date().toISOString()};await persist(true);
     await sendPending();
+  }
+
+  const setupRows=()=>caseValue.statementSetups||[];
+  const setupHeaderReader=(file,delimiter)=>statementHeaders(sourceText(file.contentBase64),delimiter);
+  function setupPage(){return statementSetupPanel({rows:setupRows(),input:session.inputs,choice:session.setupChoice,name:session.setupName,note:session.setupNote,pending:session.setupPending,readHeaders:setupHeaderReader,open:caseValue.program.state==='OPEN'});}
+  function selectedSetup(){
+    const row=setupRows().find(item=>item.sourceId===session.setupChoice);
+    if(!row)throw new Error('Choose a saved statement setup.');
+    return row;
+  }
+  async function applySetup(){
+    const row=selectedSetup(),comparison=statementSetupComparison(row,session.inputs,setupHeaderReader);
+    if(!comparison.canApply)throw new Error('Choose the current original file and resolve every missing mapped header before applying this setup.');
+    const original=clone(source());
+    session.inputs={...clone(row.settings),source:original,decisions:[]};
+    resetInterpretation();
+    session.inputs.statementSetup=statementSetupLink(row);
+    session.headers=comparison.headers;session.nativeScalesText=scaleText(session.inputs.statementOptions?.currencyScales);
+    session.optionsError='';session.setupName=row.name;
+    session.notice='Applied '+row.name+' edition '+row.revision+'. '+(native()?'Inspect this original file and select its bank account.':'Review this period’s balances and row decisions.');
+    await persist(true);
+  }
+  async function finishSetup(){
+    const pending=session.setupPending,result=pending?.result;if(!result)return;
+    const next=await refresh(),row=(next.statementSetups||[]).find(item=>item.sourceId===result.recordId);
+    if(result.id!==next.program.id||result.action!=='statement-setup.save'||!row||!sameSetupValue(row,result.statementSetup)||next.program.version<result.version)throw new Error('The saved setup receipt has not reconciled with this case yet. Resume the original request.');
+    session.setupChoice=row.sourceId;session.setupName=row.name;session.setupNote='';
+    if(row.status==='ACTIVE'&&sameSetupValue(statementSetupSettings(session.inputs),row.settings))session.inputs.statementSetup=statementSetupLink(row);
+    session.setupPending=null;session.preview=null;session.dirty=true;session.confirmed=false;
+    session.notice=(row.status==='ARCHIVED'?'Archived ':'Saved ')+row.name+' edition '+row.revision+'. The complete setup history is retained in this case.';
+    await persist(true);if(available())await onCase(next,result);
+  }
+  async function sendSetup(){
+    const pending=session.setupPending;if(!pending)return;
+    assertStaffRequestActor(pending.payload,pinnedContext);await persist(true);
+    if(!pending.result){
+      try{pending.result=await saveApi(prefix+'/command',pending.payload);await persist(true);}
+      catch(error){if(definitive(error)){session.setupPending=null;await persist();}throw error;}
+    }
+    if(available())await finishSetup();
+  }
+  async function saveSetup(mode){
+    if(session.pending||session.accepted||session.setupPending||caseValue.program.state!=='OPEN')throw new Error('Finish the retained request and reopen this case before saving a setup.');
+    const mapping=$('[data-statement-mapping]');if(mapping)captureMapping(mapping);
+    const prior=mode==='new'?null:selectedSetup();
+    const name=String(session.setupName||prior?.name||'').trim(),note=String(session.setupNote||'').trim();
+    if(!name||!note)throw new Error('Enter a setup name and a reason for this edition.');
+    const data={expectedRevision:prior?.revision||0,name,status:mode==='archive'?'ARCHIVED':'ACTIVE'};
+    if(prior)data.id=prior.id;
+    if(mode!=='archive')data.inputs=reviewedInputs();
+    const payload={expectedVersion:caseValue.program.version,actor:recordingActor(),note,action:'statement-setup.save',data};
+    payload.requestId=await mutationId('operations:'+current.program.id,payload);
+    session.setupPending={payload,createdAt:new Date().toISOString()};await persist(true);
+    await sendSetup();
   }
 
   function nativeSourcePage(){
@@ -396,7 +460,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       field('Closing balance','closingBalance',input.closingBalance||'',{attrs:'inputmode="decimal"',help:'Provide both balances to compare the complete supplied movement.'})+
       '</div>'+
       (isNative?'<p class="statement-native-note">Original snapshots keep their own dates. Pending observations stay in the report. OFX totals describe the supplied posted occurrences, including replacements or repeated occurrences.</p>':'')+
-      '<div class="statement-actions">'+button('Preview statement','preview',!source()||(isNative&&!selected),'class="statement-primary"')+button('Download recovery copy','draft-export',!source(),'data-statement-recovery="true"')+button('Open recovery copy','draft-import',!!(session.pending||session.accepted),'data-statement-recovery="true"')+'</div></form></section>';
+      '<div class="statement-actions">'+button('Preview statement','preview',!source()||(isNative&&!selected),'class="statement-primary"')+button('Download recovery copy','draft-export',!source(),'data-statement-recovery="true"')+button('Open recovery copy','draft-import',!!(session.pending||session.accepted||session.setupPending),'data-statement-recovery="true"')+'</div></form></section>';
   }
   function rowState(row){return {rowNumber:row.rowNumber,action:row.action||'IMPORT',category:row.category,tranche:row.tranche,allocations:row.allocations||[],...rowDecision(row.rowNumber)};}
   function rowTable(){
@@ -461,7 +525,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
   }
   async function openOriginalInputs(){
     const selected=session.originalInputHandoff;if(!selected)return;
-    if(session.pending||session.accepted||session.inflight)throw new Error('Resume the retained original import before opening the selected source. Both complete inputs remain saved.');
+    if(session.pending||session.accepted||session.setupPending||session.inflight)throw new Error('Resume the retained original import before opening the selected source. Both complete inputs remain saved.');
     if(selected.caseId!==current.program.id||!selected.inputs?.source?.contentBase64||!draftInput(selected.inputs,true))throw new Error('The selected original statement needs its complete source bytes and interpretation in this case.');
     if(selected.inputs.source.contentBase64.length>(maximumSource+2)*4/3+16)throw new Error('The selected original statement exceeds the native 8 MiB source size.');
     const incoming=editingInput(selected.inputs),headers=bankFormat(incoming)?[]:statementHeaders(sourceText(incoming.source.contentBase64),incoming.format.delimiter);
@@ -477,8 +541,8 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
   }
   function originalInputPage(){
     const selected=session.originalInputHandoff;if(!selected)return '';
-    return '<section class="statement-panel"><h4>Selected original statement</h4><p>'+esc(selected.inputs?.source?.filename||selected.statementSourceId||'Original source')+' is retained with its complete original interpretation.</p><div class="statement-actions">'+
-      button('Open selected original statement','original-input',!!(session.pending||session.accepted||session.inflight))+
+    return '<section class="statement-panel"><h4>Selected original statement</h4><p>'+esc(selected.inputs?.source?.filename||selected.statementSourceId||'Original source')+' is retained with its complete original interpretation.</p>'+(selected.inputs?.statementSetup?'<p>Saved setup: <strong>'+esc(selected.inputs.statementSetup.name)+'</strong> · edition '+esc(selected.inputs.statementSetup.revision)+'.</p>':'')+'<div class="statement-actions">'+
+      button('Open selected original statement','original-input',!!(session.pending||session.accepted||session.setupPending||session.inflight))+
       button('Download selected original inputs','original-input-export',false,'data-statement-recovery="true"')+'</div></section>';
   }
   function recoveryPage(){
@@ -494,7 +558,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       (session.notice?'<p class="statement-notice" role="status" aria-live="polite">'+esc(session.notice)+'</p>':'')+
       (session.storageWarning?'<p class="statement-notice">'+esc(session.storageWarning)+'</p>':'')+
       (caseValue.program.state==='CLOSED'?'<p class="statement-notice">This case is closed. Reopen the case to import additional cash movements.</p>':'')+
-      recoveryPage()+originalInputPage()+sourcePage()+reviewPage()+
+      recoveryPage()+originalInputPage()+sourcePage()+setupPage()+reviewPage()+
       (session.lastReceipt?detail('Last statement import',session.lastReceipt):'');
     controls();
   }
@@ -504,12 +568,14 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
   }
   async function importDraft(file){
     if(!file)return;
-    if(session.pending||session.accepted||session.inflight)throw new Error('Finish the retained import before opening another recovery copy.');
+    if(session.pending||session.accepted||session.setupPending||session.inflight)throw new Error('Finish the retained request before opening another recovery copy.');
     if(file.size>64*1024*1024)throw new Error('Select a complete statement recovery copy up to 64 MiB.');
     const saved=JSON.parse(await file.text());if(!available())return;
     if(saved.schema!=='sf47.statement-draft.v1'||saved.caseId!==current.program.id||!draftInput(saved.inputs))throw new Error('Choose a statement recovery copy for this original case.');
     if(saved.inputs.source?.contentBase64?.length>(maximumSource+2)*4/3+16)throw new Error('The recovery copy contains a statement larger than 8 MiB.');
-    if(saved.pending&&saved.accepted)throw new Error('The recovery copy contains conflicting import states.');
+    if([saved.pending,saved.accepted,saved.setupPending].filter(Boolean).length>1)throw new Error('The recovery copy contains conflicting request states.');
+    if(saved.setupPending){const request=saved.setupPending.payload;assertStaffRequestActor(request,pinnedContext);if(request?.action!=='statement-setup.save'||typeof request.requestId!=='string'||!request.data||!['ACTIVE','ARCHIVED'].includes(request.data.status)||request.data.status==='ACTIVE'&&!draftInput(request.data.inputs,true))throw new Error('The retained setup request is incomplete.');}
+    session.setupPending=clone(saved.setupPending||null);session.setupChoice=saved.setupChoice||'';session.setupName=saved.setupName||'';session.setupNote=saved.setupNote||'';
     assertStaffRequestActor(saved.pending?.payload,pinnedContext);
     for(const request of [saved.pending?.payload,saved.accepted?.payload].filter(Boolean)){
       if(request.action!=='statement.receive'||typeof request.requestId!=='string'||!request.data?.inputs?.source||!draftInput(request.data.inputs,true)||typeof request.data.expectedPreviewSha256!=='string')throw new Error('The original import request in this recovery copy is invalid.');
@@ -526,6 +592,8 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     await persist(true);
   }
   root.addEventListener('input',event=>{
+    if(event.target.name==='setupName'){session.setupName=event.target.value;schedulePersist();return;}
+    if(event.target.name==='setupNote'){session.setupNote=event.target.value;schedulePersist();return;}
     const form=event.target.closest('[data-statement-mapping]');
     if(form&&event.target.tagName!=='SELECT')captureMapping(form);
     if(event.target.dataset.rowReason)setDecision(Number(event.target.dataset.rowReason),{reason:event.target.value});
@@ -533,6 +601,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if(event.target.name==='reviewQuery')session.query=event.target.value;
   });
   root.addEventListener('change',event=>{
+    if(event.target.name==='setupChoice'){session.setupChoice=event.target.value;session.setupName=setupRows().find(row=>row.sourceId===session.setupChoice)?.name||'';session.setupNote='';schedulePersist();render();return;}
     if(event.target.matches('[data-statement-file]')){void run(()=>chooseFile(event.target.files?.[0]));return;}
     const mapping=event.target.closest('[data-statement-mapping]');
     if(mapping){
@@ -568,7 +637,13 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if(action==='preview'||action==='inspect'){const form=$('[data-statement-mapping]');if(form)captureMapping(form);}
     if(['add-allocation','remove-allocation'].includes(action)){const form=$('[data-statement-allocations]');if(form)captureAllocations(form);}
     void run(async()=>{
-      if(action==='inspect')await inspect();
+      if(action==='setup-apply')await applySetup();
+      else if(action==='setup-new')await saveSetup('new');
+      else if(action==='setup-revise')await saveSetup('revise');
+      else if(action==='setup-archive')await saveSetup('archive');
+      else if(action==='setup-retry')await sendSetup();
+      else if(action==='setup-clear'){delete session.inputs.statementSetup;changed();session.notice='Cleared the setup selection. The current file and editable mapping are retained.';}
+      else if(action==='inspect')await inspect();
       else if(action==='preview')await preview();
       else if(action==='import')await importReviewed();
       else if(action==='retry')await sendPending();
@@ -608,7 +683,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       if(!session.loadingDraft)session.loadingDraft=(async()=>{
         try{
           const saved=await storeDraft(current.program.id);
-          if(saved?.schema==='sf47.statement-draft.v1'&&saved.caseId===current.program.id&&draftInput(saved.inputs)){session.inputs=editingInput(saved.inputs);session.headers=saved.headers||[];session.inspection=usableInspection(saved.inspection,saved.inputs,current.program.id)?saved.inspection:null;session.nativeScalesText=saved.nativeScalesText??scaleText(saved.inputs.statementOptions?.currencyScales);session.preview=saved.preview||null;session.dirty=saved.dirty!==false;session.pending=saved.pending||null;session.accepted=saved.accepted||null;session.originalInputHandoff=saved.originalInputHandoff||null;}
+          if(saved?.schema==='sf47.statement-draft.v1'&&saved.caseId===current.program.id&&draftInput(saved.inputs)){session.inputs=editingInput(saved.inputs);session.headers=saved.headers||[];session.inspection=usableInspection(saved.inspection,saved.inputs,current.program.id)?saved.inspection:null;session.nativeScalesText=saved.nativeScalesText??scaleText(saved.inputs.statementOptions?.currencyScales);session.preview=saved.preview||null;session.dirty=saved.dirty!==false;session.pending=saved.pending||null;session.accepted=saved.accepted||null;session.setupPending=saved.setupPending||null;session.setupChoice=saved.setupChoice||'';session.setupName=saved.setupName||'';session.setupNote=saved.setupNote||'';session.originalInputHandoff=saved.originalInputHandoff||null;}
         }catch{session.storageWarning='This browser could not open its saved draft. A downloaded recovery copy can be opened here.';}
         session.loaded=true;
       })();
@@ -618,7 +693,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       if(session.originalInputHandoff&&JSON.stringify(session.originalInputHandoff)!==JSON.stringify(session.incomingOriginalInputs))
         download(session.originalInputHandoff,'statement-previous-original-inputs.json');
       session.originalInputHandoff=clone(session.incomingOriginalInputs);delete session.incomingOriginalInputs;await persist();
-      if(!session.pending&&!session.accepted&&!session.inflight){try{await openOriginalInputs();}catch(error){session.error=error.message||String(error);}}
+      if(!session.pending&&!session.accepted&&!session.setupPending&&!session.inflight){try{await openOriginalInputs();}catch(error){session.error=error.message||String(error);}}
     }
     loading=false;
     if(session.preview?.expectedVersion!==current.program.version){session.dirty=true;session.confirmed=false;}

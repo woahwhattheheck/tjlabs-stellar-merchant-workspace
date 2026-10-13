@@ -284,3 +284,7 @@ The maintained `grant-operations` selection includes the complete source module,
 ## Maintained native reader source
 
 The installed statement desk includes the same original Python readers used by Merchant bank intake. Their exact original paths and Git blob identities are retained in [statement_parsers/README.md](statement_parsers/README.md). The grant adapter selects account sections and joins their original reports to the existing cash validator and transaction. Both managed launchers include the reader package and adapter, so the installed browser, CLI, typed client and Merchant tools share the same native interpretation.
+
+## Reuse the next period’s account setup
+
+The Statements desk now provides **Use a saved statement setup**. Save the actual current account and mapping as a named edition, compare exact headings and interpretation changes for the next file, and retain the selected edition with the original import. See [Saved statement setups](STATEMENT_SETUPS.md) for first-period setup, next-period receiving, revisions, archive history and full case recovery.

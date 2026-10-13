@@ -28,7 +28,9 @@
     "./grant/issuer-context/core": "./source/stellar-forge/developer-site/dist/grant-issuer-core.mjs",
     "./grant/static-reader": "./source/stellar-forge/developer-site/grant-static-export.mjs",
     "./grant/financial-walkthrough": "./source/stellar-forge/developer-site/grant-financial-walkthrough.mjs",
-    "./grant/review-round/working-copy": "./source/stellar-forge/developer-site/dist/grant-review-working-copy.mjs"
+    "./grant/review-round/working-copy": "./source/stellar-forge/developer-site/dist/grant-review-working-copy.mjs",
+    "./grant/saved-projects": "./source/stellar-forge/developer-site/dist/saved-project-library.mjs",
+    "./grant/saved-projects/composition": "./source/stellar-forge/developer-site/saved-projects.mjs"
   },
   "commands": {
     "grant-application": "stellar-forge/developer-site/grant.mjs",
@@ -65,6 +67,7 @@
     "products/bls-labor/GRANT.md",
     "stellar-forge/developer-site/GRANT_ISSUER_CONTEXT.md",
     "stellar-forge/developer-site/GRANT_ISSUER_RECEIVING.mjs",
-    "stellar-forge/developer-site/GRANT_CATALOG.md"
+    "stellar-forge/developer-site/GRANT_CATALOG.md",
+    "stellar-forge/developer-site/SAVED_PROJECTS.md"
   ]
 }
