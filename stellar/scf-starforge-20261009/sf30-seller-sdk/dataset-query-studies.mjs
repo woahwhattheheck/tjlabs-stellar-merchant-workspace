@@ -111,7 +111,19 @@ export async function openDatasetQueryStudies({directory: selectedDirectory,sche
   need(typeof selectedDirectory==='string' && selectedDirectory.length>0,'Select a private studies directory.');
   const root=resolve(selectedDirectory);
   await directory(root);
+  const identityPath=join(root,'workspace.json');
+  let identityBytes=await maybeBytes(identityPath,4096);
+  if(!identityBytes) {
+    const created={schema:'stellar-forge.dataset-studies-workspace.v1',workspaceId:randomUUID()};
+    try {await immutable(identityPath,json(created));}
+    catch(error) {if(error.code!=='DATASET_STUDY_CONFLICT')throw error;}
+    identityBytes=await bytesAt(identityPath,4096);
+  }
+  const identity=parse(identityBytes);
+  need(identity?.schema==='stellar-forge.dataset-studies-workspace.v1'&&UUID.test(identity.workspaceId??'')&&
+    Object.keys(identity).sort().join(',')==='schema,workspaceId','The original studies workspace identity changed.','DATASET_STUDY_CORRUPT',409);
   const studies=await directory(join(root,'studies')), exports=await directory(join(root,'exports'));
+  const documents=await directory(join(root,'study-files'));
   const running=new Map(), cached=new Map();
   let closed=false;
   const home=async id=>{ identifier(id); return directory(join(studies,id)); };
@@ -144,6 +156,7 @@ export async function openDatasetQueryStudies({directory: selectedDirectory,sche
     return response(record);
   }
   async function save({study,expectedRevision}) {
+    need(!closed,'The original study workspace is closed.','DATASET_STUDY_CLOSED',409);
     validateStudy(study);
     need(expectedRevision===null || Number.isSafeInteger(expectedRevision)&&expectedRevision>=1,'Select the previously saved storage revision.');
     const id=identifier(study.id), records=await history(id), desired=expectedRevision===null?1:expectedRevision+1;
@@ -355,6 +368,7 @@ export async function openDatasetQueryStudies({directory: selectedDirectory,sche
     }
   }
   async function begin({studyId,expectedRevision,query,snapshot,requestId}) {
+    need(!closed,'The original study workspace is closed.','DATASET_STUDY_CLOSED',409);
     identifier(studyId);need(UUID.test(requestId??''),'A stable full-result request UUID is required.');
     need(Number.isSafeInteger(expectedRevision)&&expectedRevision>=1,'Select the exact saved study revision.');
     need(typeof query==='string'&&query.length<=8192&&DIGEST.test(snapshot),'Select the exact successful query and snapshot.');
@@ -385,7 +399,7 @@ export async function openDatasetQueryStudies({directory: selectedDirectory,sche
     }
     await scan(id);start(id);return status(id);
   }
-  async function resume(id) {jobId(id);await scan(id);start(id);return status(id);}
+  async function resume(id) {need(!closed,'The original study workspace is closed.','DATASET_STUDY_CLOSED',409);jobId(id);await scan(id);start(id);return status(id);}
   async function resultList({studyId}={}) {
     if(studyId!==undefined)identifier(studyId);
     const names=(await readdir(exports)).filter(n=>DIGEST.test(n)).sort(),rows=[];
@@ -395,7 +409,21 @@ export async function openDatasetQueryStudies({directory: selectedDirectory,sche
     }
     return {exports:rows};
   }
-  async function readFile(id,name) {
+  async function verifiedHandle(filename,item,type) {
+    const file=await open(filename,constants.O_RDONLY|(constants.O_NOFOLLOW??0));
+    try {
+      const info=await file.stat();
+      need(info.isFile()&&info.size===item.bytes&&(process.platform==='win32'||!(info.mode&0o077)),
+        'The retained output file changed.','DATASET_STUDY_CORRUPT',409);
+      const digest=createHash('sha256');let count=0;
+      for await(const bytes of file.createReadStream({autoClose:false})) {
+        count+=bytes.length;need(count<=item.bytes,'Output grew unexpectedly.','DATASET_STUDY_CORRUPT',409);digest.update(bytes);
+      }
+      need(count===item.bytes&&digest.digest('hex')===item.sha256,'The retained output bytes changed.','DATASET_STUDY_CORRUPT',409);
+      return {readonlyFileHandle:file,name:item.name,bytes:item.bytes,sha256:item.sha256,type};
+    } catch(error) {await file.close();throw error;}
+  }
+  async function openExportFile(id,name) {
     need(typeof name==='string'&&(/^(dataset\.csv|dataset\.jsonl|study\.json|manifest\.json|semantics\.json)$/.test(name)||/^page-[0-9]{5}\.json$/.test(name)),
       'Choose an original retained result filename.','DATASET_STUDY_FILE_NOT_FOUND',404);
     const state=cached.get(jobId(id))??await scan(id),path=jobHome(id);
@@ -403,23 +431,27 @@ export async function openDatasetQueryStudies({directory: selectedDirectory,sche
     if(/^page-[0-9]{5}\.json$/.test(name)) {item=state.pages.find(p=>p.name===name);filename=join(path,'pages',name);}
     else {item=state.complete?.files.find(f=>f.name===name);filename=join(path,name);}
     need(item,'Choose a retained file from this result.','DATASET_STUDY_FILE_NOT_FOUND',404);
-    // Open once, hash the same handle, then rewind its stream for the authenticated response.
-    const file=await open(filename,constants.O_RDONLY|(constants.O_NOFOLLOW??0));
-    try {
-      const info=await file.stat();
-      need(info.isFile()&&info.size===item.bytes&&(process.platform==='win32'||!(info.mode&0o077)),
-        'The retained output file changed.','DATASET_STUDY_CORRUPT',409);
-      const digest=createHash('sha256');let count=0;
-      for await(const bytes of file.createReadStream({autoClose:false})) {count+=bytes.length;need(count<=item.bytes,'Output grew unexpectedly.','DATASET_STUDY_CORRUPT',409);digest.update(bytes);}
-      need(count===item.bytes&&digest.digest('hex')===item.sha256,'The retained output bytes changed.','DATASET_STUDY_CORRUPT',409);
-      return {descriptor:clone(item),stream:file.createReadStream({start:0,autoClose:true}),
-        contentType:name.endsWith('.csv')?'text/csv; charset=utf-8':name.endsWith('.jsonl')?'application/x-ndjson; charset=utf-8':'application/json; charset=utf-8'};
-    } catch(error) {await file.close();throw error;}
+    const type=name.endsWith('.csv')?'text/csv; charset=utf-8':name.endsWith('.jsonl')?'application/x-ndjson; charset=utf-8':'application/json; charset=utf-8';
+    return verifiedHandle(filename,item,type);
   }
-  return {directory:root,list,get,save,history:async id=>(await history(id)).map(r=>({
+  async function openStudyFile(id,{revision}={}) {
+    const selected=await get(id,{revision}),bytes=json(selected.study),digest=sha(bytes);
+    const name='study.json',path=join(documents,digest+'.json');
+    await immutable(path,bytes);
+    const opened=await verifiedHandle(path,{name,bytes:bytes.length,sha256:digest},'application/json; charset=utf-8');
+    return {...opened,studyId:selected.study.id,storageRevision:selected.storageRevision};
+  }
+  async function readFile(id,name) {
+    const opened=await openExportFile(id,name);
+    try {
+      return {descriptor:{name:opened.name,bytes:opened.bytes,sha256:opened.sha256},
+        stream:opened.readonlyFileHandle.createReadStream({start:0,autoClose:true}),contentType:opened.type};
+    } catch(error) {await opened.readonlyFileHandle.close();throw error;}
+  }
+  return {directory:root,workspaceId:identity.workspaceId,list,get,save,history:async id=>(await history(id)).map(r=>({
     storageRevision:r.storageRevision,recordSha256:r.recordSha256,studySha256:r.studySha256,title:r.study.title,
     updatedAt:r.study.updatedAt,editionCount:r.study.editions.length})),
-    beginExport:begin,resumeExport:resume,exportStatus:status,listExports:resultList,readExportFile:readFile,
+    beginExport:begin,resumeExport:resume,exportStatus:status,listExports:resultList,readExportFile:readFile,openExportFile,openStudyFile,
     waitExport:async id=>{await running.get(jobId(id));return status(id);},
     close:async()=>{closed=true;await Promise.allSettled([...running.values()]);}};
 }

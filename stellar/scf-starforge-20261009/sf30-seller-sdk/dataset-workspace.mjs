@@ -84,13 +84,19 @@ export async function openDatasetWorkspaceSource({datasetPath,stateDirectory,cat
 }
 
 export async function startDatasetWorkspace({ datasetPath, stateDirectory, catalogDirectory, studiesDirectory,
-  port = 8430, resource } = {}) {
+  port = 8430, resource, borrowed } = {}) {
   if (!Number.isInteger(port) || port < 0 || port > 65535) throw new TypeError('Invalid port');
-  const source=await openDatasetWorkspaceSource({datasetPath,stateDirectory,catalogDirectory,resource});
+  if(borrowed && (datasetPath!==undefined||stateDirectory!==undefined||catalogDirectory!==undefined||studiesDirectory!==undefined||resource!==undefined))
+    throw new TypeError('Borrow the existing source/studies owner without selecting another source.');
+  if(borrowed && (!object(borrowed)||!borrowed.source||!borrowed.studies||
+      ['schema','queryPage','preview'].some(name=>typeof borrowed.source[name]!=='function')||
+      ['list','get','save','beginExport','readExportFile'].some(name=>typeof borrowed.studies[name]!=='function')))
+    throw new TypeError('Borrow the complete original dataset source and studies owner.');
+  const source=borrowed?.source??await openDatasetWorkspaceSource({datasetPath,stateDirectory,catalogDirectory,resource});
   const {schema}=source;
   const selectedStudies=studiesDirectory??(stateDirectory?join(resolve(stateDirectory),'query-studies'):null);
-  const studies=selectedStudies?await openDatasetQueryStudies({directory:selectedStudies,schema,queryPage:source.queryPage}):null;
-  // Attach before opening the browser listener. No second store or writer is opened.
+  const studies=borrowed?.studies??(selectedStudies?await openDatasetQueryStudies({directory:selectedStudies,schema,queryPage:source.queryPage}):null);
+  // Attach the original source before opening the browser. A borrowed owner retains its engine and store.
   await schema();
   const [html, javascript, studyCore] = await Promise.all(['dataset-workspace.html', 'dataset-workspace.js', 'dataset-study-core.mjs']
     .map(name => readFile(new URL(name, import.meta.url))));
@@ -233,12 +239,72 @@ export async function startDatasetWorkspace({ datasetPath, stateDirectory, catal
     server.listen(port, '127.0.0.1', () => { server.off('error', no); yes(); });
   });
   origin = 'http://127.0.0.1:' + server.address().port;
+  let listenerClosed=false,closingListener=null;
+  const closeListener=()=>{
+    if(listenerClosed)return Promise.resolve();
+    if(!closingListener)closingListener=new Promise((yes,no)=>{
+      server.close(error=>{
+        if(error&&error.code!=='ERR_SERVER_NOT_RUNNING')no(error);
+        else {listenerClosed=true;yes();}
+      });
+      server.closeIdleConnections?.();
+    }).finally(()=>{closingListener=null;});
+    return closingListener;
+  };
   return { origin, url: origin + '/#' + token, token,
     close: async () => {
-      await Promise.all([studies?.close(),new Promise((yes,no)=>{
-        server.close(error=>error?no(error):yes());server.closeIdleConnections?.();
-      })]);
+      await closeListener();
+      if(!borrowed)await studies?.close();
     } };
+}
+
+/** One native source/store owner; its browser borrows the exact opened instances. */
+export async function openDatasetStudyWorkspace({datasetPath,stateDirectory,catalogDirectory,studiesDirectory,resource}={}) {
+  const source=await openDatasetWorkspaceSource({datasetPath,stateDirectory,catalogDirectory,resource});
+  const selected=studiesDirectory??(stateDirectory?join(resolve(stateDirectory),'query-studies'):null);
+  if(!selected)throw Object.assign(new Error('Select the private studies directory for this original dataset.'),{code:'DATASET_STUDIES_DISABLED',status:409});
+  const studies=await openDatasetQueryStudies({directory:selected,schema:source.schema,queryPage:source.queryPage});
+  let browser=null,opening=null,closing=false,closePromise=null;
+  const closed=()=>Object.assign(new Error('The original dataset study owner is closed.'),{code:'DATASET_STUDY_CLOSED',status:409});
+  const openBrowser=async({port=0}={})=>{
+    if(closing)throw closed();
+    if(!Number.isInteger(port)||port<0||port>65535)throw new TypeError('Invalid port');
+    if(browser) {
+      if(port!==0&&new URL(browser.origin).port!==String(port))
+        throw Object.assign(new Error('Close the existing borrowed browser before choosing a different port.'),{code:'DATASET_STUDY_BROWSER_OPEN',status:409});
+      return browser;
+    }
+    if(!opening)opening=(async()=>{
+      const opened=await startDatasetWorkspace({port,borrowed:{source,studies}});
+      let stopped=false,stopping=null;
+      const retained={...opened,workspaceId:studies.workspaceId,close:()=>{
+        if(stopped)return Promise.resolve();
+        if(!stopping)stopping=Promise.resolve().then(()=>opened.close()).then(()=>{
+          stopped=true;if(browser===retained)browser=null;
+        }).finally(()=>{stopping=null;});
+        return stopping;
+      }};
+      browser=retained;
+      if(closing){await retained.close();throw closed();}
+      return retained;
+    })().finally(()=>{opening=null;});
+    const opened=await opening;
+    if(port!==0&&new URL(opened.origin).port!==String(port))
+      throw Object.assign(new Error('A concurrent browser open selected a different port. Use the existing borrowed browser or close it explicitly.'),{code:'DATASET_STUDY_BROWSER_OPEN',status:409});
+    return opened;
+  };
+  const close=()=>{
+    if(!closePromise) {
+      closing=true;
+      closePromise=(async()=>{
+        if(opening)await opening.catch(()=>{});
+        await browser?.close();
+        await studies.close();
+      })().catch(error=>{closePromise=null;throw error;});
+    }
+    return closePromise;
+  };
+  return Object.freeze({workspaceId:studies.workspaceId,source,studies,openBrowser,close});
 }
 
 export async function main(args = process.argv.slice(2)) {

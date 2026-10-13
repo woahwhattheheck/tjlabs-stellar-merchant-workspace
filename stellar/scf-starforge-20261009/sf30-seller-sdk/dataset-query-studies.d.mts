@@ -10,6 +10,7 @@ export interface StudyExport {
 }
 export interface DatasetStudyStore {
   readonly directory: string;
+  readonly workspaceId: string;
   list(): Promise<{enabled: true; studies: StudySummary[]}>;
   get(id: string, options?: {revision?: number}): Promise<SavedStudy>;
   save(input: {study: Record<string, unknown>; expectedRevision: number|null}): Promise<SavedStudy>;
@@ -19,6 +20,8 @@ export interface DatasetStudyStore {
   exportStatus(id: string): Promise<{export: StudyExport}>;
   listExports(options?: {studyId?: string}): Promise<{exports: StudyExport[]}>;
   readExportFile(id: string, name: string): Promise<{descriptor: RetainedFile; stream: import('node:stream').Readable; contentType: string}>;
+  openExportFile(id: string,name: string): Promise<{readonlyFileHandle: import('node:fs/promises').FileHandle;name: string;bytes: number;sha256: string;type: string}>;
+  openStudyFile(id: string,options?: {revision?: number}): Promise<{readonlyFileHandle: import('node:fs/promises').FileHandle;name: string;bytes: number;sha256: string;type: string;studyId: string;storageRevision: number}>;
   waitExport(id: string): Promise<{export: StudyExport}>;
   close(): Promise<void>;
 }

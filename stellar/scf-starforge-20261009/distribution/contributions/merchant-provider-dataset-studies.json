@@ -1,0 +1,16 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "merchant-provider-dataset-studies",
+  "description": "Original SF30 query studies with shared source, retained complete files and borrowed browser",
+  "merchantProviders": {
+    "dataset-studies": "stellar-forge/mcp-merchant-operator/providers/dataset-studies.mjs"
+  },
+  "exports": {
+    "./merchant/dataset-studies": "./source/stellar-forge/mcp-merchant-operator/dataset-studies.mjs"
+  },
+  "supportFiles": [
+    "stellar-forge/mcp-merchant-operator/DATASET_STUDIES.md",
+    "stellar-forge/mcp-merchant-operator/dataset-studies-client.d.mts",
+    "stellar-forge/mcp-merchant-operator/dataset-studies-setup.d.mts"
+  ]
+}
