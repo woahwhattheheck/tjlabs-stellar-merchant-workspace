@@ -1,5 +1,6 @@
 // Company package intake borrows the original Operations request ledger.
 const SCHEMA='sf47.company-return-intake-draft.v1', MAX=8*1024*1024, MAX_DRAFT=128*1024*1024;
+const noteWrites=new Map(); // desk replacements await the same case's owned note writes
 const copy=v=>structuredClone(v);
 const stable=v=>v===null||typeof v!=='object'?JSON.stringify(v):Array.isArray(v)?'['+v.map(stable).join(',')+']':'{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stable(v[k])).join(',')+'}';
 const equal=(a,b)=>stable(a)===stable(b);
@@ -22,14 +23,52 @@ async function retain(db,row){
     t.oncomplete=resolve;t.onerror=()=>reject(problem||t.error);t.onabort=()=>reject(problem||t.error||Error('The original intake could not be retained.'));});
   row.localRevision=next.localRevision;
 }
-export function mountCompanyReturnIntake({container,current,api,saveApi,mutationId,recordingActor,onDraft,onBusy,locked=()=>false}){
+export function mountCompanyReturnIntake({container,current,api,saveApi,mutationId,recordingActor,onDraft,onBusy,noteDrafts={},onNoteDrafts=()=>{},onNoteError=()=>{},locked=()=>false}){
   const root=document.createElement('section');root.className='company-return-intake';container.replaceChildren(root);
   const caseId=current.program.id,prefix='/api/operations/'+caseId;
   let active=true,busy=false,externalBusy=false,selectionGeneration=0,db=null,rows=[],selected=null,caseValue=current,error='',notice='',note='';
+  let pendingNotes=Promise.resolve(),closing=false;
   const alive=()=>active&&root.isConnected;
   const chosen=()=>rows.find(x=>x.id===selected);
   const blocked=()=>externalBusy||locked();
   const sourceOf=(row,kind)=>kind==='archive'?{filename:'Installation_Return_'+row.inspection.package.returnId+'.zip',mediaType:'application/zip',kind:'other',sourceUrl:'',contentBase64:row.archiveBase64}:row.inspection.returnedSource;
+  function retainNoteDrafts(){try{onNoteDrafts();}catch(e){noteError(e);}}
+  function noteError(cause){
+    error='The intake note could not be retained: '+(cause?.message||String(cause))+
+      ' Your typed text remains in this receiving session. Refresh retained work, compare its current note, then explicitly save or download the draft.';
+    onNoteError(error);
+    if(alive()){
+      let alert=root.querySelector('[data-company-note-error]');
+      if(!alert){alert=document.createElement('p');alert.dataset.companyNoteError='true';alert.className='ir-warning';alert.setAttribute('role','alert');root.prepend(alert);}
+      alert.textContent=error;
+    }
+  }
+  function queueNote(row,text){
+    if(!row||!db)return pendingNotes;
+    const draft={note:text,baseNote:row.note||'',baseRevision:row.localRevision||0,token:crypto.randomUUID()};
+    noteDrafts[row.id]=draft;retainNoteDrafts();
+    const previous=noteWrites.get(caseId)||Promise.resolve();
+    const write=previous.then(async()=>{
+      if(noteDrafts[row.id]?.token!==draft.token)return; // later typing supersedes a queued, unstarted write
+      const next={...copy(row),note:draft.note};
+      await retain(db,next);
+      row.note=next.note;row.localRevision=next.localRevision;
+      if(noteDrafts[row.id]?.token===draft.token){delete noteDrafts[row.id];retainNoteDrafts();}
+    });
+    const settled=write.catch(noteError);pendingNotes=settled;
+    noteWrites.set(caseId,settled);
+    settled.then(()=>{if(noteWrites.get(caseId)===settled)noteWrites.delete(caseId);});
+    return settled;
+  }
+  function selectedNote(){
+    const row=chosen(),draft=row&&noteDrafts[row.id];
+    if(draft&&row.note===draft.note){delete noteDrafts[row.id];retainNoteDrafts();}
+    note=row?(noteDrafts[row.id]?.note??row.note??''):'';
+  }
+  function closeWhenDrained(){
+    if(active||busy||closing)return;closing=true;
+    pendingNotes.finally(()=>db?.close());
+  }
   function controls(){if(!alive())return;root.setAttribute('aria-busy',String(busy));for(const el of root.querySelectorAll('button,input,select,textarea'))el.disabled=el.dataset.fixed==='true'||busy||blocked()||!db;}
   function render(){
     if(!alive())return;const row=chosen(),i=row?.inspection,pending=row&&Object.values(row.steps).some(x=>x.state==='pending');
@@ -45,6 +84,7 @@ export function mountCompanyReturnIntake({container,current,api,saveApi,mutation
         '<details><summary>Complete original and proposed observations</summary><pre>'+esc(JSON.stringify(i.comparison,null,2))+'</pre></details>'+
         '<details><summary>Original package, report and source selection</summary><pre>'+esc(JSON.stringify({package:i.package,baseline:i.baseline,retained:row.retained,steps:row.steps},null,2))+'</pre></details>'+
         '<label>Reason for retaining this original return<textarea data-company-note maxlength="12000">'+esc(note)+'</textarea></label>'+
+        (noteDrafts[row.id]?'<p class="ir-warning">This session has an unsaved note. Current retained note: '+esc(row.note||'(empty)')+'. Refresh to compare another tab’s edition, then explicitly save this note or download the complete draft.</p>':'')+
         (i.returnedSourceCandidates?.length?'<label>Exact original returned JSON already retained<select data-company-json><option value="">Retain the package JSON as a new source</option>'+i.returnedSourceCandidates.map(x=>'<option value="'+esc(x.id)+'"'+(row.retained.returnedJson===x.id?' selected':'')+'>'+esc(x.filename)+' · '+esc(x.id)+'</option>').join('')+'</select></label>':'')+
         '<p>Original package: '+esc(row.retained.archive||'Not yet retained')+'<br>Original returned JSON: '+esc(row.retained.returnedJson||'Not yet retained')+'</p>'+
         (Object.values(row.steps).some(x=>x.state==='rejected')?'<p class="ir-warning">A selected source request was definitively rejected. Its full body remains here. Inspect the same package as a separate deliberate intake after resolving that error; the old request is unchanged.</p>':'')+
@@ -55,11 +95,17 @@ export function mountCompanyReturnIntake({container,current,api,saveApi,mutation
     for(const el of root.querySelectorAll('[disabled]'))el.dataset.fixed='true';
     controls();
   }
-  async function run(fn){
+  async function run(fn,{allowUnsaved=false,retryNote=false}={}){
     if(busy||blocked()||!alive()||!db)return;busy=true;error='';onBusy?.(true);controls();
-    try{const row=chosen();if(row&&row.note!==note){row.note=note;await retain(db,row);}await fn();}catch(e){error=e.message||String(e);}finally{busy=false;if(active)onBusy?.(false);else db?.close();if(alive())render();}
+    try{
+      await pendingNotes;
+      const row=chosen();
+      if(retryNote&&row&&(row.note!==note||noteDrafts[row.id]))await queueNote(row,note);
+      if(row&&noteDrafts[row.id]&&!allowUnsaved)throw Error('The typed note remains unsaved. Refresh to compare retained work, then explicitly save the note or download its complete draft.');
+      await fn();
+    }catch(e){error=e.message||String(e);}finally{busy=false;if(active)onBusy?.(false);else closeWhenDrained();if(alive())render();}
   }
-  async function refresh(){caseValue=await api(prefix);rows=await list(db,caseId);if(selected&&!chosen())selected=null;note=chosen()?.note||'';}
+  async function refresh(){caseValue=await api(prefix);rows=await list(db,caseId);if(selected&&!chosen())selected=null;selectedNote();}
   async function inspect(raw,sha,retainedId){
     const next=await api(prefix);
     const body={expectedVersion:next.program.version,archiveSha256:sha,...(retainedId?{archiveSourceId:retainedId}:{archiveBase64:base64(raw)})};
@@ -146,10 +192,10 @@ export function mountCompanyReturnIntake({container,current,api,saveApi,mutation
     await onDraft({inputs:copy(linked.inputs),checks:copy(linked.checks),baselineName:linked.baselineName,note:'',
       companyReturn:{returnId:linked.package.returnId,archiveSha256:linked.package.sha256,archiveSourceId:row.retained.archive,returnSourceId:row.retained.returnedJson}},current);
   }
-  root.addEventListener('input',e=>{if(e.target.matches('[data-company-note]'))note=e.target.value;});
+  root.addEventListener('input',e=>{if(e.target.matches('[data-company-note]')){note=e.target.value;queueNote(chosen(),note);}});
   root.addEventListener('change',e=>{
     const target=e.target;
-    if(target.matches('[data-company-work]')){const id=target.value;run(async()=>{selected=id;note=chosen()?.note||'';error='';});return;}
+    if(target.matches('[data-company-work]')){const id=target.value;run(async()=>{selected=id;selectedNote();error='';},{allowUnsaved:true});return;}
     if(target.matches('[data-company-json]')){run(async()=>{const row=chosen();if(row.steps.returnedJson)throw Error('Keep the original returned-JSON request selected.');row.retained.returnedJson=target.value||null;row.linked=null;await retain(db,row);});return;}
     const file=target.files?.[0];if(!file)return;
     if(target.matches('[data-company-file]'))run(async()=>{if(file.size>MAX)throw Error('Select a ZIP within 8 MiB.');await selectPackage(new Uint8Array(await file.arrayBuffer()),file.name);});
@@ -169,8 +215,9 @@ export function mountCompanyReturnIntake({container,current,api,saveApi,mutation
   });
   root.addEventListener('click',e=>{
     const t=e.target.closest('[data-company-action]');if(!t||t.disabled)return;
+    const action=t.dataset.companyAction;
     run(async()=>{
-      const action=t.dataset.companyAction,row=chosen();
+      const row=chosen();
       if(action==='refresh')return refresh();
       if(action==='note'){notice='The full intake and note are retained in this browser. Download the complete draft to move it.';return;}
       if(action==='source'){
@@ -183,16 +230,16 @@ export function mountCompanyReturnIntake({container,current,api,saveApi,mutation
       if(action==='open')return openDraft();
       if(!row)throw Error('Select the complete original intake.');
       if(action==='draft'){
-        const portable=copy(row);portable.linked=null; // native read-only output is regenerated on reopen
+        const portable=copy(row);portable.note=noteDrafts[row.id]?.note??row.note??'';portable.linked=null; // native read-only output is regenerated on reopen
         const raw=JSON.stringify(portable)+'\n';
         if(new Blob([raw]).size>MAX_DRAFT)throw Error('This complete draft exceeds the 128 MiB transport bound; no truncated file was emitted. Keep the native originals and current private intake.');
         return download(raw,'Company_Return_Intake_'+row.id+'.json');
       }
       if(action==='archive')return download(bytes(row.archiveBase64),'Installation_Return_'+row.inspection.package.returnId+'.zip','application/zip');
       if(action==='json')return download(bytes(row.inspection.returnedSource.contentBase64),row.inspection.returnedSource.filename);
-    });
+    },{allowUnsaved:['refresh','draft','archive','json'].includes(action),retryNote:action==='note'});
   });
-  const ready=(async()=>{db=await database();if(!alive()){db.close();return;}await refresh();render();})().catch(e=>{error='Private intake storage could not open: '+e.message;render();});
+  const ready=(async()=>{db=await database();await (noteWrites.get(caseId)||Promise.resolve());if(!alive()){db.close();return;}await refresh();render();})().catch(e=>{error='Private intake storage could not open: '+e.message;render();});
   render();
-  return {root,ready,setHostBusy(value){externalBusy=!!value;controls();},dispose(){active=false;++selectionGeneration;if(!busy)db?.close();}};
+  return {root,ready,setHostBusy(value){externalBusy=!!value;controls();},dispose(){active=false;++selectionGeneration;closeWhenDrained();}};
 }
