@@ -1717,13 +1717,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/HOST_HANDOFF.md",
-      "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+      "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
       "editions": [
         {
           "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
           "bytes": 32439,
           "sha256": "c65c1efc886bbce5928351ef71080f4805b9f7fae344c3b07ba3903c5dc6fa79",
           "git_blob": "9465e2cadba85d5f05ee8cce76828d0b0958213a"
+        },
+        {
+          "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+          "bytes": 32437,
+          "sha256": "fcd3ff7a183c82959b65a2cc4aa870d31a2c8c54e4d6edae2a668e229bddf9fb",
+          "git_blob": "ff6d3bb2ad92625f493dce9f94c597ee9eda7702"
         }
       ],
       "required": false
@@ -1899,13 +1905,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/contributions/merchant-recovery.json",
-      "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+      "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
       "editions": [
         {
           "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
           "bytes": 3475,
           "sha256": "c5a42a7a4a99bbe5ec795858fc29ea41c2ec4f85c003cdfd1b1a02a4ee508c3a",
           "git_blob": "9675b691f5e903fb5f9fa5d4e906c98bb6a51af9"
+        },
+        {
+          "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+          "bytes": 4755,
+          "sha256": "ef7989b0a342becc6a3a11dccf31571c29f74d16b192f63900c15b3866024f42",
+          "git_blob": "d09a862f42d9cbd199eced1191610d134ae2eb5d"
         }
       ],
       "required": false
@@ -1933,13 +1945,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/selections/merchant-fleet.json",
-      "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
+      "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
       "editions": [
         {
           "commit": "1aeb046e3dfac8152f73c90d7c9ffe93210f6fb1",
           "bytes": 6463,
           "sha256": "72dec1ca89443630a2004927a176ffcf6b7f1168fe16d98d66c9b62d26256cc3",
           "git_blob": "26480dd49ee3b79b2ad8fcd8c0ac04476f2cb6a9"
+        },
+        {
+          "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+          "bytes": 6496,
+          "sha256": "1caa058f3bc898a2161743b019fe7504f4bc0d481149a6b843f16da77183fbff",
+          "git_blob": "a0205f3ca990811daa8966c1d6f8ecc626d984b4"
         }
       ],
       "required": false
@@ -1957,6 +1975,142 @@
           "bytes": 36064,
           "sha256": "1733e646683187d76d1eec5086596dbaeda9b453a38322a155377641e07fb93a",
           "git_blob": "ebe3f17f6b9a65f2813021e9c0c96e37a1cc1aba"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-host-agent-catalog",
+      "label": "Complete offline host-handoff agent tool contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant-catalog.mjs",
+      "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+      "editions": [
+        {
+          "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+          "bytes": 4920,
+          "sha256": "e17e82c0f7305e8a078253b2c9577b7ce115d40d4fd56d0060f3f7e59d468f6b",
+          "git_blob": "f71f952d7c2acd7e393de60a0b89dc7cc3656b92"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-host-agent-provider",
+      "label": "Source-owned standalone handoff provider and lifecycle",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant-provider.mjs",
+      "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+      "editions": [
+        {
+          "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+          "bytes": 3386,
+          "sha256": "094366651aa2d3deb01164c1b47749dd539d23d43cd97bb936fb16be08c7db65",
+          "git_blob": "73ad5316e4ea6fd96f9a057d07e673b046db1df5"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-host-agent-setup",
+      "label": "Private dedicated Merchant host initialization",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant-setup.mjs",
+      "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+      "editions": [
+        {
+          "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+          "bytes": 2681,
+          "sha256": "5dc601a5990df44d066bc3a5c9780d8298c6be62fd70fe026ea1860126a38ec3",
+          "git_blob": "387f8a7f1702e60ebb33929e0a5fd8fff152225e"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-host-agent-guide",
+      "label": "Complete standalone agent operator and receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/HOST_HANDOFF_MCP.md",
+      "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+      "editions": [
+        {
+          "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+          "bytes": 14296,
+          "sha256": "f405e0d1b6deb6a07476891ce1f3b45dcd4a9fa9d010e13ba64fcce4134409cd",
+          "git_blob": "aecd2fcff858e3711b14961ea71b5a761b8e3c99"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-host-agent-adapter",
+      "label": "Trusted host connection, exact readback and native adapter",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant.mjs",
+      "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+      "editions": [
+        {
+          "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+          "bytes": 26273,
+          "sha256": "478f6d0bff23dd2f477188033408b8f3677b10d6b7af8f09b8af8d30feccc298",
+          "git_blob": "91a7f1d02965ddca70ec7fb60155ee8c822f7b6a"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-host-agent-types",
+      "label": "Typed standalone handoff configuration and tool results",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant.d.mts",
+      "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+      "editions": [
+        {
+          "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+          "bytes": 5388,
+          "sha256": "aec7b97e9d4df3c985547e140464db5491051e122422f42b8d1c68abe58cec3e",
+          "git_blob": "16a6987c2b6f066fb7efcbd2458d8ceea8955c71"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-host-agent-transport",
+      "label": "Original Merchant transport with actual console custody",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/serve.mjs",
+      "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+      "editions": [
+        {
+          "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+          "bytes": 87562,
+          "sha256": "394402c87797b7b115ce8c78eeadcdffdcfa6a85853ccc6a67678d6b60b8f439",
+          "git_blob": "52f709976f807c979e6274fe1c27da0455a4962f"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-host-agent-operator",
+      "label": "Original Merchant operator with awaited dedicated admission",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/operator.mjs",
+      "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+      "editions": [
+        {
+          "commit": "cd4abfd74a46347ff7bc6425bb5e5349baa2ba1a",
+          "bytes": 22474,
+          "sha256": "a4c1855471495fe8174c1ccebe5185d8df98e9f82e8c029c07847f80bc18a5c1",
+          "git_blob": "ea70a1a2613a6256938fc052b8f69316f5ba2665"
         }
       ],
       "required": false
