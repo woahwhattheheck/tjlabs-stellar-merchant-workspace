@@ -58,3 +58,7 @@ The browser phase retains its own completion or failure in `case-result.json` wh
 ## Preserve the completed customer
 
 After each admitted programme ends, preserve the updated original databases, operating records, reports, source bytes, publication and browser captures in the same customer archive. Replace the known artifact version only after reconciling the previous save result. Record the actual executed source commit, phase results and artifact identity in the original internal opportunity thread. Open the resulting browser captures before presenting the visual handoff.
+
+## Capacity and cost planning
+
+Open **APM2 capacity planner** from the procurement navigation, or open [the standalone planner](capacity/index.html) with its sibling assets. The [operating guide](capacity/GUIDE.md) covers complete editable multi-scenario telemetry, measured transfer/storage/queue factors, explicit currencies and cost periods, JSON receiving and the source-linked report. Each project retains its own measurements and authored decisions as portable JSON.
