@@ -4,6 +4,7 @@ import {bindingTemplate, prepareInstallation, renderWorkorder} from '/installati
 
 const SCHEMA='stellar-forge.installation-source-desk.v1';
 const SELECTION='stellar-forge.installation-source-selection.v1';
+const NATIVE_SELECTION='stellar-forge.canadabuys-workshare-selection.v1';
 const MAX_FILE=8*1024*1024, MAX_ARCHIVE=192*1024*1024;
 const clone=value=>structuredClone(value);
 const record=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
@@ -137,13 +138,13 @@ export function mountInstallationSources(root,bridge){
       const action=node.dataset.sourceAction;
       const liveDisabled={
         'save-selection':!saved||historic()||!state.work?.dirty,
-        'prepare':!saved?.selection||!!state.work?.dirty||!!state.caseForm?.dirty||historic(),
+        'prepare':!saved?.selection||saved.selection.schema===NATIVE_SELECTION||!!state.work?.dirty||!!state.caseForm?.dirty||historic(),
         'profile-apply':!state.profileWork?.preview||state.profileWork.previewBindings!==state.profileWork.bindingsText,
         'profile-download':!state.profileWork?.prepared||state.profileWork.previewBindings!==state.profileWork.bindingsText
       };
       node.disabled=(Object.hasOwn(liveDisabled,action)?liveDisabled[action]:node.dataset.sourceFixed==='true')||busy||hostBusy||
         (node.matches('[data-source-edit]')&&!editing())||
-        (!!state.pendingId&&['new','upload','remove','save-selection','prepare','attach','case-add','case-remove','case-new','case-edit','profile-seed','profile-apply'].includes(action));
+        (!!state.pendingId&&['new','upload','remove','save-selection','prepare','native-receive','attach','case-add','case-remove','case-new','case-edit','profile-seed','profile-apply'].includes(action));
     }
   }
   function checkContext(){
@@ -235,13 +236,13 @@ export function mountInstallationSources(root,bridge){
     state.pendingId=null;request=null;state.notice='Saved complete source preparation revision '+value.draft.revision+'.';
     if(state.draftId===value.draft.id){
       const newer=beforeWork?.dirty&&original.editorText!==beforeWork.selectionText;
-      acceptState(value.draft,{replace:!newer&&original.body.action==='selection.save'});
+      acceptState(value.draft,{replace:!newer&&['selection.save','native.receive'].includes(original.body.action)});
       if(newer){state.work=beforeWork;state.work.baseRevision=value.draft.revision;}
       else if(state.work)state.work.baseRevision=value.draft.revision;
     }
     if(value.result?.state==='PREPARED_SOURCE'){
       prepared=value.result;state.preparationId=prepared.id;state.tab='outputs';
-      state.notice='Prepared every original document and the complete native receiving package.';
+      state.notice=value.result.kind==='canadabuys-native-workshare'?'Received the complete original CanadaBuys package and mapped Workshare editions. Review them before attachment.':'Prepared every original document and the complete native receiving package.';
     }
     if(value.result?.state==='ATTACHED_SOURCES'){
       state.tab='installation';state.notice='Attached the complete prepared cohort to the original case in one transaction.';
@@ -324,10 +325,23 @@ export function mountInstallationSources(root,bridge){
     if(selection.schema!==SELECTION)throw new Error('Use the native complete source selection schema.');
     return issue('selection.save',{selection});
   }
+  async function receiveNative(fileId){
+    requireEdit();
+    if(workingDirty())throw new Error('Save or retain your edited mapping and Installation bindings before receiving another original source package.');
+    const file=files().find(x=>x.id===fileId);
+    if(!file||!file.filename.toLowerCase().endsWith('.zip'))throw new Error('Select the complete original CanadaBuys source ZIP.');
+    await readCatalogue();
+    const engine=catalogue.nativePackages?.find(x=>x.kind==='canadabuys-native-workshare');
+    const profile=catalogue.profiles.find(x=>x.id===engine?.profile);
+    if(!engine?.engine?.sha256||!profile?.sha256)throw new Error('Open the complete installed native source-package reader and CanadaBuys profile.');
+    return issue('native.receive',{fileId:file.id,expectedSha256:file.sha256,
+      expectedEngineSha256:engine.engine.sha256,expectedProfileSha256:profile.sha256});
+  }
   async function prepare(){
     requireEdit();
     if(state.work?.dirty||state.caseForm?.dirty)throw new Error('Save the complete edited source selection before native preparation.');
     if(!saved.selection)throw new Error('Save the complete native source mapping first.');
+    if(saved.selection.schema===NATIVE_SELECTION)throw new Error('Receive the complete source ZIP for this native mapping. Revise its original Workshare and explicit mapping through the installed CanadaBuys command.');
     const selected=clone(saved.selection),profiles={};
     await readCatalogue();
     for(const row of selected.cases||[]){
@@ -389,7 +403,7 @@ export function mountInstallationSources(root,bridge){
   }
   function selectionValue(){
     const value=state.work?.selectionText?.trim()?parseObject(state.work.selectionText,'Complete source selection'):blankSelection();
-    if(value.schema!==SELECTION||!Array.isArray(value.cases))throw new Error('Keep the complete native selection and customer cases.');
+    if(!((value.schema===SELECTION&&Array.isArray(value.cases))||(value.schema===NATIVE_SELECTION&&Array.isArray(value.workshares))))throw new Error('Keep the complete original source selection and its customer cases or native Workshares.');
     return value;
   }
   function keepSelection(value){
@@ -525,10 +539,13 @@ export function mountInstallationSources(root,bridge){
       state.notice='Kept your edited profile bindings. Review their original source before replacing them.';
       state.tab='installation';changed();return;
     }
-    state.profileWork={attachmentId:attachment.preparationId,selection,inventory,
+    const originalPreparation=await readPreparation(attachment.preparationId);
+    const nativeSelection=originalPreparation.report.nativeReview?.selection??null;
+    state.profileWork={attachmentId:attachment.preparationId,selection,inventory,nativeSelection:clone(nativeSelection),
       workshareCaseId:inventory.cases[0]?.caseId??'',profileId:'',bindingsText:'',seed:null,
       profileSha256:null,prepared:null,preview:null,dirty:false};
-    const mapping=saved.selection?.cases.find(x=>x.caseId===state.profileWork.workshareCaseId);
+    const mapping=nativeSelection?.workshares.find(x=>x.workshareId===state.profileWork.workshareCaseId)??
+      (saved.selection?.cases||[]).find(x=>x.caseId===state.profileWork.workshareCaseId);
     if(mapping)state.profileWork.profileId=mapping.profile;
     state.tab='installation';changed();
   }
@@ -544,8 +561,19 @@ export function mountInstallationSources(root,bridge){
     if(value.source?.caseId!==caseId||value.source.version!==selection.expectedVersion||value.installationId!==null||
        value.expectedRevision!==0||value.workshare?.caseId!==work.workshareCaseId)
       throw new Error('The native installation seed differs from the selected original Workshare.');
+    const bindings=bindingTemplate(value,selected.profile);
+    const originalBindings=work.nativeSelection?.workshares.find(x=>x.workshareId===work.workshareCaseId&&x.profile===work.profileId)?.bindings;
+    if(originalBindings!==undefined){
+      if(!originalBindings||typeof originalBindings!=='object'||Array.isArray(originalBindings))throw new Error('Keep the original optional Installation bindings as a complete object.');
+      for(const [key,original] of Object.entries(originalBindings)){
+        if(!Object.hasOwn(bindings,key))throw new Error('The original native mapping contains an unsupported Installation binding: '+key+'. Review that explicit source before continuing.');
+        if(['schema','profile','selection','workshareCaseId'].includes(key)){
+          if(!equal(bindings[key],original))throw new Error('The original native mapping differs from this fresh Installation seed identity: '+key+'.');
+        }else bindings[key]=clone(original);
+      }
+    }
     work.selection=selection;work.seed=value;work.profile=clone(selected.profile);work.profileSha256=selected.sha256;
-    work.bindingsText=pretty(bindingTemplate(value,selected.profile));work.dirty=false;work.prepared=null;work.preview=null;changed();
+    work.bindingsText=pretty(bindings);work.dirty=false;work.prepared=null;work.preview=null;changed();
     state.notice='Prepared the full native profile binding template. Enter only actual known deployment, receiving and payment selections.';
   }
   async function previewProfile(){
@@ -599,10 +627,10 @@ export function mountInstallationSources(root,bridge){
       (selected.length?table(['Original receiving file','Complete identity and provenance','Actions'],selected.map(f=>[
         '<strong>'+esc(f.filename)+'</strong><br>'+esc(f.mediaType)+' · '+f.bytes+' bytes',
         '<code>'+esc(f.sha256)+'</code><br>'+esc(f.sourceUrl)+'<br>'+esc(f.observedAt),
-        btn('Inspect JSON','inspect','data-id="'+f.id+'"')+btn('Download original','file-download','data-id="'+f.id+'"')+
+        (f.filename.toLowerCase().endsWith('.zip')?btn('Receive native CanadaBuys source','native-receive','data-id="'+f.id+'"',historic()||workingDirty()||pending()):btn('Inspect JSON','inspect','data-id="'+f.id+'"'))+btn('Download original','file-download','data-id="'+f.id+'"')+
         btn('Remove from next edition','remove','data-id="'+f.id+'"',historic()||pending())
       ])):empty('Retain the whole Workshare packet and each document that supplies original effort or commissioning context.'))+
-      inspectionView();
+      hint('For a native CanadaBuys Workshare, retain the complete ZIP produced by the installed canadabuys package command, then choose Receive native CanadaBuys source. Its original package, explicit mapping and all five prepared files stay together.')+inspectionView();
   }
   function inspectionView(){
     if(!inspection)return '';
@@ -662,8 +690,58 @@ export function mountInstallationSources(root,bridge){
        '<div class="source-desk-actions">'+btn('Apply complete mapping to selection','case-add')+'</div>':
        empty('Review the original packet to expose its full phases and commercial scope.'))+'</section>';
   }
+  function nativeMappingView(selected){
+    return header('Original CanadaBuys Workshare mapping','Review the exact native package and explicitly selected parties, effort and delivery phases.')+
+      '<p>Operation <strong>'+esc(selected.operationId)+'</strong> · package <code>'+esc(selected.package.packageId)+'</code></p>'+
+      '<p>Workspace '+esc(selected.package.workspaceId)+' · original revision '+esc(selected.package.workspaceRevision)+
+      '<br>Source '+esc(selected.sourceUrl)+' · observed '+esc(selected.observedAt)+'</p>'+
+      selected.workshares.map(row=>'<section><h3>'+esc(row.workshareId)+' · selected revision '+esc(row.revision)+'</h3>'+
+        '<p>Profile '+esc(row.profile)+' · edition <code>'+esc(row.workshareSha256)+'</code></p>'+
+        table(['Explicit party','Original selection'],[['Customer',esc(row.parties.customer)],['Supplier',esc(row.parties.supplier)],['Basis',esc(row.parties.basis)]])+
+        '<p>'+esc(row.mappingNote)+'</p><p>'+esc(row.schedule.businessDays)+' working days · '+esc(row.schedule.basis)+'</p>'+
+        '<p>Start conditions: '+esc(row.schedule.startConditions.join('; '))+'</p>'+
+        table(['Phase / original milestones','Separate effort','Working days / dependency','Owner / delivery / acceptance'],row.phases.map(phase=>[
+          '<strong>'+esc(phase.title)+'</strong><br>'+esc(phase.id)+'<br>'+esc(phase.milestoneIds.join(', ')),
+          esc(phase.productionHours)+' production hours<br>'+esc(phase.partnerHours)+' partner hours',
+          esc(phase.businessDays)+' days<br>'+esc(phase.dependsOn.join(', ')||'No preceding phase'),
+          esc(phase.owner)+'<br>'+esc(phase.deliverables)+'<br>'+esc(phase.acceptance)+'<br>Inputs: '+esc(phase.inputs)
+        ]))+'</section>').join('')+
+      hint('Revise the original Workshare in CanadaBuys and its explicit installed-command mapping, then receive the next complete source ZIP here. Earlier source editions and attachments remain available in this draft history.')+
+      '<details><summary>Complete original native selection</summary><pre>'+esc(pretty(selected))+'</pre></details>';
+  }
+  function nativeReviewView(review){
+    if(!review)return '';
+    return '<section><h3>Original native Workshares</h3>'+
+      review.workshares.map(row=>{
+        const original=row.original.selectedEdition,history=row.original.nativeHead.history;
+        return '<section><h4>'+esc(original.title||row.id)+'</h4>'+
+          '<p>'+esc(row.id)+' · selected revision '+esc(original.revision)+' of '+history.length+
+          ' · original status '+esc(original.status)+'</p>'+
+          table(['Original commercial record','Separate effort / schedule'],[
+            [esc(original.currency)+' '+esc(row.plan.commercial.amount)+' · '+esc(original.feeCents)+' cents',
+             esc(row.plan.native.productionHours)+' production hours · '+esc(row.plan.native.partnerHours)+' partner hours<br>'+
+             esc(row.plan.schedule.business_days)+' explicitly mapped working days'],
+            ['Recorded partner: '+esc(original.partner)+'<br>Recorded owner: '+esc(original.owner),
+             'Available from: '+esc(original.availableFrom)+'<br>Original delivery days: '+esc(original.deliveryDays)]
+          ])+
+          '<p>Scope: '+esc(original.scope)+'<br>Deliverables: '+esc(original.deliverables)+
+          '<br>Acceptance: '+esc(original.acceptance)+'</p>'+
+          table(['Original milestone','Exact original amount','Due / acceptance'],original.milestones.map(m=>[
+            esc(m.id)+' · '+esc(m.title),esc(original.currency)+' '+esc(m.amountCents)+' cents',
+            esc(m.due)+'<br>'+esc(m.acceptance)
+          ]))+
+          table(['Retained edition','Native status','Original amount / effort','Original operator / time'],history.map(v=>[
+            esc(v.revision),esc(v.status),esc(v.currency)+' '+esc(v.feeCents)+' cents<br>'+
+            esc(v.estimatedHours)+' production hours · '+esc(v.partnerHours)+' partner hours',esc(v.operator)+'<br>'+esc(v.updatedAt)
+          ]))+
+          '<details><summary>Complete source row, history, phase allocation and Installation plan</summary><pre>'+
+          esc(pretty(row))+'</pre></details></section>';
+      }).join('')+
+      hint('Native status and price are retained source facts. This receipt does not establish agreement, a payer, payment, or currency conversion.')+'</section>';
+  }
   function mappingView(){
     let selected,error;try{selected=selectionValue();}catch(e){error=e.message;}
+    if(selected?.schema===NATIVE_SELECTION)return nativeMappingView(selected);
     return header('Source and effort mapping','Prepare one complete receiving cohort from exact original customer documents.',
       btn('Add original customer','case-new','',!saved||historic()))+
       (selected?'<div class="source-desk-fields">'+
@@ -690,7 +768,7 @@ export function mountInstallationSources(root,bridge){
     return header('Complete prepared outputs','Original native preparation retains every declared document, exact Workshare scope and receiving input.')+
       (list.length?'<div class="source-desk-actions">'+list.map(x=>btn('Preparation from draft '+x.draftRevision,'preparation-open','data-id="'+x.id+'"')).join('')+'</div>':empty('Save a complete source mapping, then prepare its native receiving package.'))+
       (prepared?'<p><strong>'+esc(prepared.state)+'</strong> · prepared '+esc(prepared.preparedAt)+' by '+esc(prepared.actor)+'</p>'+
-       '<p>Selection <code>'+esc(prepared.selectionSha256)+'</code></p>'+
+       '<p>Selection <code>'+esc(prepared.selectionSha256)+'</code></p>'+nativeReviewView(prepared.report.nativeReview)+
        table(['Complete original customer','Original plan / effort','Installed profile'],(prepared.report.cases||[]).map(c=>[
          esc(c.caseId),'<code>'+esc(c.planSha256)+'</code><br>'+esc(c.completeEffort?.hours??'')+' hours',esc(c.profile??'')
        ]))+
@@ -911,6 +989,7 @@ export function mountInstallationSources(root,bridge){
       if(action==='rebase')return rebaseWorking();
       if(action==='upload')return upload();
       if(action==='inspect')return openInspection(target.dataset.id);
+      if(action==='native-receive')return receiveNative(target.dataset.id);
       if(action==='inspect-close'){inspection=null;state.inspectionFileId=null;state.pointerTarget=null;changed();return;}
       if(action==='remove'){
         requireEdit();const f=files().find(x=>x.id===target.dataset.id);

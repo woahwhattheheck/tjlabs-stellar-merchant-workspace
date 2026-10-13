@@ -5,9 +5,9 @@
   "applicant": "Bryce Muhlnickel / TokenJunkieLabs",
   "application": {
     "path": "application-reviewer.md",
-    "bytes": 23785,
-    "sha256": "be8c9a8c794da631191e1a9a420331ebf976be4ca58d1fb15cf6bd4d2db06eeb",
-    "git_blob": "c38f9b5dcc8691b5226801cef5f96f9fd8614920"
+    "bytes": 26330,
+    "sha256": "73abef296f724796b25b34b64209dc164a82bda549d6aa1dd1e0db8ce2e05cfe",
+    "git_blob": "fd608bcf1bb59ba37a040e6e02187e02f7af50a2"
   },
   "request": {
     "basis": "prospective",
@@ -1769,9 +1769,9 @@
       "kind": "published-source",
       "label": "Original bank statements and shared customer payment coverage",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "e57a359966f093f483a1aa5f4c2dac28566b6a5c",
+      "commit": "933219ca2f66ebbaf28d5a7ef69cefe278de2a98",
       "path": "products/merchant-bank-statements/README.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e57a359966f093f483a1aa5f4c2dac28566b6a5c/products/merchant-bank-statements/README.md"
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/933219ca2f66ebbaf28d5a7ef69cefe278de2a98/products/merchant-bank-statements/README.md"
     },
     {
       "id": "merchant-bank-statements-installation",
@@ -2359,21 +2359,21 @@
       "kind": "published-source",
       "label": "Original complete preparation and pipeline customer receiving",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "ca518e3aba84eed4dbc56147fa5ac9090904424e",
+      "commit": "0a019ffe48fadbb71adf1dcd9324932ff086b7b2",
       "path": "products/data-preparation/RECEIVING.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/ca518e3aba84eed4dbc56147fa5ac9090904424e/products/data-preparation/RECEIVING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0a019ffe48fadbb71adf1dcd9324932ff086b7b2/products/data-preparation/RECEIVING.md",
       "source_kind": "source-file",
       "source_registration": "data-preparation",
-      "git_blob": "d13236165fc1f1bc3d46ec379a9f5538cde03d5b",
-      "sha256": "c34e1e2359fa5626f7522e725f2d09c859e2d41e3469d3881ff8374a4e66cb27",
-      "bytes": 15328,
+      "git_blob": "8fe7dc8f5e10d0d3f150023ee6dcfb39732e86b0",
+      "sha256": "f41fd36de678d2351b35a92b9bb042220c4cde23e4700947b2e5d05f635969d5",
+      "bytes": 16133,
       "product_byte_identity": {
         "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-        "commit": "ca518e3aba84eed4dbc56147fa5ac9090904424e",
+        "commit": "0a019ffe48fadbb71adf1dcd9324932ff086b7b2",
         "path": "products/data-preparation/RECEIVING.md",
-        "git_blob": "d13236165fc1f1bc3d46ec379a9f5538cde03d5b",
-        "sha256": "c34e1e2359fa5626f7522e725f2d09c859e2d41e3469d3881ff8374a4e66cb27",
-        "bytes": 15328
+        "git_blob": "8fe7dc8f5e10d0d3f150023ee6dcfb39732e86b0",
+        "sha256": "f41fd36de678d2351b35a92b9bb042220c4cde23e4700947b2e5d05f635969d5",
+        "bytes": 16133
       }
     },
     {
@@ -3290,22 +3290,469 @@
         "sha256": "2f437948d3e05c2046cc2d5781904882f21f2ffe9c4c2cce9e966b83530e836b",
         "bytes": 18889
       }
+    },
+    {
+      "id": "airbyte-native-commissioning",
+      "kind": "published-source",
+      "label": "Original Airbyte CDK environment and completed native receiving",
+      "repository": "woahwhattheheck/commons",
+      "commit": "cc63ba6dcff9b827dd01f1929677cce5ab928cbb",
+      "path": "opportunities/airbyte-connector-commissioning-20261012/reference/openfema/NATIVE_ENVIRONMENT.md",
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#custom-api-commissioning-and-complete-dataset-receiving"
+    },
+    {
+      "id": "airbyte-source-contract",
+      "kind": "published-source",
+      "label": "Original source, acknowledged state and complete dataset contract",
+      "repository": "woahwhattheheck/commons",
+      "commit": "cc63ba6dcff9b827dd01f1929677cce5ab928cbb",
+      "path": "opportunities/airbyte-connector-commissioning-20261012/reference/openfema/README.md",
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#custom-api-commissioning-and-complete-dataset-receiving"
+    },
+    {
+      "id": "airbyte-managed-receiving",
+      "kind": "published-source",
+      "label": "Complete managed Application and second-operator receiving",
+      "repository": "woahwhattheheck/commons",
+      "commit": "cc63ba6dcff9b827dd01f1929677cce5ab928cbb",
+      "path": "opportunities/airbyte-connector-commissioning-20261012/applications/MANAGED_RECEIVING.md",
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#custom-api-commissioning-and-complete-dataset-receiving"
+    },
+    {
+      "id": "airbyte-customer-commissioning",
+      "kind": "published-source",
+      "label": "Customer commissioning scope, selected source and complete handover",
+      "repository": "woahwhattheheck/commons",
+      "commit": "cc63ba6dcff9b827dd01f1929677cce5ab928cbb",
+      "path": "opportunities/airbyte-connector-commissioning-20261012/commercial/metaops-20261012/IMPLEMENTATION-AND-HANDOVER.md",
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#custom-api-commissioning-and-complete-dataset-receiving"
+    },
+    {
+      "id": "haystack-installed-operations",
+      "kind": "published-source",
+      "label": "Haystack installed modelling, corrective work and contractor receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96",
+      "path": "products/haystack/OPERATING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96/products/haystack/OPERATING.md",
+      "source_kind": "source-file",
+      "source_registration": "haystack"
+    },
+    {
+      "id": "haystack-point-modelling",
+      "kind": "published-source",
+      "label": "Original point lists, reviewed mapping, dictionary and model history",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/SEMANTIC_MODELLING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/SEMANTIC_MODELLING.md",
+      "source_kind": "source-file",
+      "source_registration": "haystack"
+    },
+    {
+      "id": "haystack-native-semantic",
+      "kind": "published-source",
+      "label": "Exact Brick 1.4.4 native validation and offline receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/SEMANTIC_NATIVE.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/SEMANTIC_NATIVE.md",
+      "source_kind": "source-file",
+      "source_registration": "haystack"
+    },
+    {
+      "id": "haystack-source-contract",
+      "kind": "published-source",
+      "label": "Original typed Haystack grid and source meaning",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/HAYSTACK_CONTRACT.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/HAYSTACK_CONTRACT.md",
+      "source_kind": "source-file",
+      "source_registration": "haystack"
+    },
+    {
+      "id": "haystack-charlie-original",
+      "kind": "published-source",
+      "label": "Original anonymized Charlie example source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/fixture-charlie.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/fixture-charlie.json",
+      "source_kind": "source-file",
+      "source_registration": "haystack"
+    },
+    {
+      "id": "haystack-corrective-work",
+      "kind": "published-source",
+      "label": "Corrective work, event ancestry and returned contractor history",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/CORRECTIVE_WORK.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/CORRECTIVE_WORK.md",
+      "source_kind": "source-file",
+      "source_registration": "haystack"
+    },
+    {
+      "id": "haystack-source-license",
+      "kind": "published-source",
+      "label": "Original Haystack source licence and attribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/HAYSTACK_LICENSE.txt",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/HAYSTACK_LICENSE.txt",
+      "source_kind": "source-file",
+      "source_registration": "haystack"
+    },
+    {
+      "id": "haystack-semantic-dependencies",
+      "kind": "published-source",
+      "label": "Complete offline semantic dependency archive selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/semantic-dependencies.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/semantic-dependencies.json",
+      "source_kind": "source-file",
+      "source_registration": "haystack"
+    },
+    {
+      "id": "haystack-semantic-native-receiving",
+      "kind": "published-source",
+      "label": "Complete original point modelling native receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/SEMANTIC_RECEIVING.mjs",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/SEMANTIC_RECEIVING.mjs",
+      "source_kind": "source-file",
+      "source_registration": "haystack"
+    },
+    {
+      "id": "haystack-semantic-browser-receiving",
+      "kind": "published-source",
+      "label": "Complete original model and contractor browser programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/SEMANTIC_BROWSER.mjs",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/SEMANTIC_BROWSER.mjs",
+      "source_kind": "source-file",
+      "source_registration": "haystack"
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "71e7f79171bc3c3022729208fc15a0214414d7e2",
+      "path": "products/data-preparation/COMMISSIONING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/71e7f79171bc3c3022729208fc15a0214414d7e2/products/data-preparation/COMMISSIONING.md",
+      "source_kind": "source-file",
+      "id": "preparation-pipeline-commissioning",
+      "kind": "published-source",
+      "label": "Complete original paid pipeline configuration, purchase and editable customer receiving",
+      "source_registration": "data-preparation",
+      "git_blob": "01bee215cfd9e275bedbaf4b3552dc2638a8fc51",
+      "sha256": "fd12236a6c7802ab8761c4ace166105dcfa0f9ab32841ca81ebcd192702611e1",
+      "bytes": 16716,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "71e7f79171bc3c3022729208fc15a0214414d7e2",
+        "path": "products/data-preparation/COMMISSIONING.md",
+        "git_blob": "01bee215cfd9e275bedbaf4b3552dc2638a8fc51",
+        "sha256": "fd12236a6c7802ab8761c4ace166105dcfa0f9ab32841ca81ebcd192702611e1",
+        "bytes": 16716
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "71e7f79171bc3c3022729208fc15a0214414d7e2",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/data-preparation-jobs.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/71e7f79171bc3c3022729208fc15a0214414d7e2/stellar/scf-starforge-20261009/distribution/selections/data-preparation-jobs.json",
+      "source_kind": "source-file",
+      "id": "preparation-pipeline-jobs-selection",
+      "kind": "published-source",
+      "label": "Complete installed preparation and paid-Jobs product selection",
+      "source_registration": "data-preparation",
+      "git_blob": "aba6d5cc6112e4a0616a287e2fb1bd460d60be72",
+      "sha256": "35a0950ce41b2a868f825f34d6d0d373337888e8ae75c31fb73749a6d4ab0f88",
+      "bytes": 13064,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "71e7f79171bc3c3022729208fc15a0214414d7e2",
+        "path": "stellar/scf-starforge-20261009/distribution/selections/data-preparation-jobs.json",
+        "git_blob": "aba6d5cc6112e4a0616a287e2fb1bd460d60be72",
+        "sha256": "35a0950ce41b2a868f825f34d6d0d373337888e8ae75c31fb73749a6d4ab0f88",
+        "bytes": 13064
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "71e7f79171bc3c3022729208fc15a0214414d7e2",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/jobs/customer.mjs",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/71e7f79171bc3c3022729208fc15a0214414d7e2/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/jobs/customer.mjs",
+      "source_kind": "source-file",
+      "id": "preparation-pipeline-jobs-customer",
+      "kind": "published-source",
+      "label": "Typed complete original result-package and editable project receiving",
+      "source_registration": "data-preparation",
+      "git_blob": "5c0e4363ac3aebb8bd2fd572b58468f668e16314",
+      "sha256": "5f820cdb8842ef763a14b4d98e1e6e286306489586e85b587056396106da8003",
+      "bytes": 16912,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "71e7f79171bc3c3022729208fc15a0214414d7e2",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/jobs/customer.mjs",
+        "git_blob": "5c0e4363ac3aebb8bd2fd572b58468f668e16314",
+        "sha256": "5f820cdb8842ef763a14b4d98e1e6e286306489586e85b587056396106da8003",
+        "bytes": 16912
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "89bcf7629b0133df094c34df871c0124697adb6b",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/OPERATING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/89bcf7629b0133df094c34df871c0124697adb6b/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/OPERATING.md",
+      "source_kind": "source-file",
+      "id": "dossier-return-operating",
+      "kind": "published-source",
+      "label": "Complete reviewed dossier-return operating and editable receiving guide",
+      "source_registration": "research-dossier-returns",
+      "git_blob": "1d93d811e07a98d4486b076e0b2de1ae002ad410",
+      "sha256": "82eed559331c6ed363ba56e6f61919a597d01ccaa23771eafc89d094141e4860",
+      "bytes": 19171,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "89bcf7629b0133df094c34df871c0124697adb6b",
+        "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/OPERATING.md",
+        "git_blob": "1d93d811e07a98d4486b076e0b2de1ae002ad410",
+        "sha256": "82eed559331c6ed363ba56e6f61919a597d01ccaa23771eafc89d094141e4860",
+        "bytes": 19171
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "89bcf7629b0133df094c34df871c0124697adb6b",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/engine.mjs",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/89bcf7629b0133df094c34df871c0124697adb6b/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/engine.mjs",
+      "source_kind": "source-file",
+      "id": "dossier-return-engine",
+      "kind": "published-source",
+      "label": "Original source-bound dossier-return engine",
+      "source_registration": "research-dossier-returns",
+      "git_blob": "7ed70284163a2e88f9851334e672ffd86eb7e362",
+      "sha256": "be6b7a9f900397cfc148c67355c83be6b6696287f847bade43d6acf710407e40",
+      "bytes": 33084,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "89bcf7629b0133df094c34df871c0124697adb6b",
+        "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/engine.mjs",
+        "git_blob": "7ed70284163a2e88f9851334e672ffd86eb7e362",
+        "sha256": "be6b7a9f900397cfc148c67355c83be6b6696287f847bade43d6acf710407e40",
+        "bytes": 33084
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "6af7dfe3845f339cdd7e03619c348fc94dff6e29",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/source-native-acceptance.mjs",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6af7dfe3845f339cdd7e03619c348fc94dff6e29/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/source-native-acceptance.mjs",
+      "source_kind": "source-file",
+      "id": "dossier-return-native-receiving",
+      "kind": "published-source",
+      "label": "Complete original dossier-return native and browser receiving programme",
+      "source_registration": "research-dossier-returns",
+      "git_blob": "773dd635687321ac8c5919ad9b195fe973e4d6e8",
+      "sha256": "4fb77e678e2e991cfed6745a61023200df264db9b60458ab3fe3bf4c53bd009b",
+      "bytes": 82454,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "6af7dfe3845f339cdd7e03619c348fc94dff6e29",
+        "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/source-native-acceptance.mjs",
+        "git_blob": "773dd635687321ac8c5919ad9b195fe973e4d6e8",
+        "sha256": "4fb77e678e2e991cfed6745a61023200df264db9b60458ab3fe3bf4c53bd009b",
+        "bytes": 82454
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "0287e051ef121e9842072f93ad839378cdc06af4",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/README.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0287e051ef121e9842072f93ad839378cdc06af4/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/README.md",
+      "source_kind": "source-file",
+      "id": "research-customer-programme",
+      "kind": "published-source",
+      "label": "Complete Research customer programme and original source delivery",
+      "source_registration": "research-dossier-returns",
+      "git_blob": "b2f7b5d99f3441cc36df0ee3a26d5c6fa955824a",
+      "sha256": "8a9de7a1b9de6a2419f5a867ab73ee01f37a65c4bd5e314cee2ed1115086f282",
+      "bytes": 20933,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "0287e051ef121e9842072f93ad839378cdc06af4",
+        "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/README.md",
+        "git_blob": "b2f7b5d99f3441cc36df0ee3a26d5c6fa955824a",
+        "sha256": "8a9de7a1b9de6a2419f5a867ab73ee01f37a65c4bd5e314cee2ed1115086f282",
+        "bytes": 20933
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "4224a19629e9565285e6c7ba990254534010774b",
+      "path": "stellar/scf-starforge-20261009/partners/airgradient-operations/README.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/4224a19629e9565285e6c7ba990254534010774b/stellar/scf-starforge-20261009/partners/airgradient-operations/README.md",
+      "source_kind": "source-file",
+      "id": "airgradient-customer-operation",
+      "kind": "published-source",
+      "label": "AirGradient mixed-source reporting, original collection intake and complete customer receiving",
+      "source_registration": "airgradient-operations",
+      "git_blob": "3a826b5d851a0bb1e5a6461f9378a67b37c124d3",
+      "sha256": "51637a58408c79281bf6887678abcfb8bbab5ae354e2f3d179b15843a6f2a92b",
+      "bytes": 27295,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "4224a19629e9565285e6c7ba990254534010774b",
+        "path": "stellar/scf-starforge-20261009/partners/airgradient-operations/README.md",
+        "git_blob": "3a826b5d851a0bb1e5a6461f9378a67b37c124d3",
+        "sha256": "51637a58408c79281bf6887678abcfb8bbab5ae354e2f3d179b15843a6f2a92b",
+        "bytes": 27295
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "112c98a572ee4ddb0aab29bec83eaecac1a8c0d0",
+      "path": "stellar/scf-starforge-20261009/partners/airgradient-operations/commissioning-source",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/112c98a572ee4ddb0aab29bec83eaecac1a8c0d0/stellar/scf-starforge-20261009/partners/airgradient-operations/commissioning-source",
+      "source_kind": "source-tree",
+      "id": "airgradient-original-commissioning-collection",
+      "kind": "published-source",
+      "label": "Complete original AirGradient source collection and operated initial and later reports",
+      "source_registration": "airgradient-operations"
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "496e1e1d2f69bc66bd6c3ef24c5d830c04ecc68c",
+      "path": "products/ckan/OPERATING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/496e1e1d2f69bc66bd6c3ef24c5d830c04ecc68c/products/ckan/OPERATING.md",
+      "source_kind": "source-file",
+      "id": "ckan-merchant-operations",
+      "kind": "published-source",
+      "label": "CKAN merchant editions and original installed operation",
+      "source_registration": "ckan"
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "496e1e1d2f69bc66bd6c3ef24c5d830c04ecc68c",
+      "path": "products/ckan/RECEIVING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/496e1e1d2f69bc66bd6c3ef24c5d830c04ecc68c/products/ckan/RECEIVING.md",
+      "source_kind": "source-file",
+      "id": "ckan-complete-workspace-receiving",
+      "kind": "published-source",
+      "label": "Complete CKAN publisher workspace and customer handover",
+      "source_registration": "ckan"
+    },
+    {
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "commit": "f6c37fede046f2e234da5cd35421415f06969654",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/SEMANTIC_WORKFLOW.md",
+      "url": "https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/f6c37fede046f2e234da5cd35421415f06969654/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/SEMANTIC_WORKFLOW.md",
+      "source_kind": "source-file",
+      "id": "ckan-reviewed-source-meaning",
+      "kind": "published-source",
+      "label": "Original CKAN dictionary, reviewed publication and customer meaning",
+      "source_registration": "ckan"
+    },
+    {
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "commit": "38bcf07416c67e44f5be5c251cb3c4edaa803ba3",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/SEMANTICS.md",
+      "url": "https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/38bcf07416c67e44f5be5c251cb3c4edaa803ba3/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/SEMANTICS.md",
+      "source_kind": "source-file",
+      "id": "ckan-analytical-customer-receiving",
+      "kind": "published-source",
+      "label": "Original Python, SQLite and DuckDB semantic receiving",
+      "source_registration": "ckan"
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "496e1e1d2f69bc66bd6c3ef24c5d830c04ecc68c",
+      "path": "products/ckan/SUPPORT.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/496e1e1d2f69bc66bd6c3ef24c5d830c04ecc68c/products/ckan/SUPPORT.md",
+      "source_kind": "source-file",
+      "id": "ckan-merchant-support",
+      "kind": "published-source",
+      "label": "CKAN source monitoring and complete staff case handoff",
+      "source_registration": "ckan"
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "b4569b07d8929ef013c69da425467c548eb3e47a",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/RECOVERY_MCP.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b4569b07d8929ef013c69da425467c548eb3e47a/stellar/scf-starforge-20261009/sf74-merchant-support-console/RECOVERY_MCP.md",
+      "source_kind": "source-file",
+      "id": "ckan-support-agent-recovery",
+      "kind": "published-source",
+      "label": "Original incident snapshot, receive, reopen and reconciliation through Merchant",
+      "source_registration": "ckan"
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "b18d92f3be55765d8e9c594a6a5eb59ad663ed71",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/OPERATING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b18d92f3be55765d8e9c594a6a5eb59ad663ed71/stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/OPERATING.md",
+      "source_kind": "source-file",
+      "id": "pirate-weather-customer-operation",
+      "kind": "published-source",
+      "label": "Pirate Weather complete forecast briefing, merchant publication and independent project receiving",
+      "source_registration": "pirate-weather",
+      "git_blob": "ce52edc0376fc872984dce49a6d088b463c9725e",
+      "sha256": "c93ee102ca95ca6c1fa5c02a32bc6790cf724523e7dcd79068154b5eb8d95172",
+      "bytes": 26738,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "b18d92f3be55765d8e9c594a6a5eb59ad663ed71",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/OPERATING.md",
+        "git_blob": "ce52edc0376fc872984dce49a6d088b463c9725e",
+        "sha256": "c93ee102ca95ca6c1fa5c02a32bc6790cf724523e7dcd79068154b5eb8d95172",
+        "bytes": 26738
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "b18d92f3be55765d8e9c594a6a5eb59ad663ed71",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/SOURCE_CONTRACT.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b18d92f3be55765d8e9c594a6a5eb59ad663ed71/stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/SOURCE_CONTRACT.md",
+      "source_kind": "source-file",
+      "id": "pirate-weather-original-source-contract",
+      "kind": "published-source",
+      "label": "Pirate Weather original forecast request, response, exact-value and usage contract",
+      "source_registration": "pirate-weather",
+      "git_blob": "c4ac75791e5fd6b5d57a1d2ed44016d0dc828f22",
+      "sha256": "82f51e91e5a00fab7e79e6dd141d450973f78f04983526f4a2481e8040eb9750",
+      "bytes": 9860,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "b18d92f3be55765d8e9c594a6a5eb59ad663ed71",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/SOURCE_CONTRACT.md",
+        "git_blob": "c4ac75791e5fd6b5d57a1d2ed44016d0dc828f22",
+        "sha256": "82f51e91e5a00fab7e79e6dd141d450973f78f04983526f4a2481e8040eb9750",
+        "bytes": 9860
+      }
     }
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "7fee0fb9b67395690d2a829fe29ce4e8cc44b6ae",
-    "bytes": 578018,
-    "sha256": "46d8e6fd41598b3b4ac2b3da2859d1198e6bfc2882fcd7f58a3c641853dc5fd2",
+    "git_blob": "92559edafa43069c3e87e064d9fc3846b9f61c5a",
+    "bytes": 601568,
+    "sha256": "9594d6bb6c99e605ff6f384545d07af55fd4b390d05b2e625a2df91402c0680b",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
     "prior_git_blob": "29e0ab9723e0eb787041409803158dc3ae94c1e3"
   },
   "narrative_source": {
     "basis": "Concise working edition of the complete current nine-answer application; prospective financial and delivery commitments preserved.",
     "operation": "SCF-REVIEWER-CONCISE-SOURCE-20261013-BC3D",
-    "authored_at": "2026-10-13T03:02:04.000Z",
+    "authored_at": "2026-10-13T03:42:00Z",
     "source_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-    "source_commit": "935851923ff519ab9429dcfa4da55b8d335fe56f",
+    "source_commit": "a4abafd2bee1e05bb18c90f4b6ed331b5384163c",
     "original_application": {
       "path": "stellar-forge/developer-site/dist/grant-data/application.md",
       "bytes": 40066,
@@ -3315,9 +3762,9 @@
     },
     "original_source_index": {
       "path": "stellar-forge/developer-site/dist/grant-data/source-index.json",
-      "bytes": 224046,
-      "sha256": "be734f5feb3e99eb617af262166138fb93642a3ac9225293c10c4108e00655c4",
-      "git_blob": "fd874b32430321b42d1233389cc4ff6e797e9999"
+      "bytes": 251508,
+      "sha256": "c60f7c7f075f498ee06d950da8cd89e4f62d3a1bfe7cdfab88b3edd758914ce4",
+      "git_blob": "b7c9e2be5cf459f202cf3205fb5a778ea3dc106b"
     },
     "retained_canonical_narrative": {
       "basis": "Original manuscript author's complete October 12 reviewer answer",
@@ -3519,7 +3966,7 @@
         "source_join": "SCF-GRANT-CUMULATIVE-COMPOSITION-81CF-20261012",
         "canonical_front_sha256": "a5408e3676d7d320322b0af2d274d73c4fc234fa73a420fb4da0ac2e1b57e7dd",
         "canonical_front_bytes": 31462,
-        "renderer_git_blob": "6b00fa461d35ea132895a388c52254709ec03bed",
+        "renderer_git_blob": "668ac0e74d123a675dfa1699f0ad61c1512482f7",
         "source_editions": [
           {
             "repository": "woahwhattheheck/public-commons-sprint-2026",
@@ -3594,10 +4041,12 @@
           "OData recurring editions: complete customer delivery and managed operation",
           "Customer adoption economics, delivery scheduling and recorded outcomes",
           "Named grant delivery, contributor work and complete staff handover",
+          "Collaborative Research delivery and reviewed dossier returns",
+          "CKAN merchant editions, analytical customer use and staff Support",
           "10. Open the existing work"
         ],
         "previous_cumulative_commit": "1945289c8d39b7850bf3b496c13c7ae5643176bf",
-        "projector_git_blob": "27ee61a5c17d10ac836169595840051df5776eb3",
+        "projector_git_blob": "f70e7a838ab3d74bdc3ac2b3cc1aaa11cb64bf66",
         "demo_source": {
           "carrier_git_blob": "6f3dd33ab358fee08e2ee3b6131a0cd8946a62c2",
           "path": "operations/scf-submission-improvement-1b40-20261012/current-adoption/DEMO_AND_ACCEPTANCE.md",
@@ -3659,6 +4108,20 @@
         "companion_projector_git_blob": "a8add1aa955bc52b8bdbe861bd2c4ff959bd86ba",
         "product_source_registrations": [
           {
+            "id": "airgradient-operations",
+            "heading": "## AirGradient customer reporting, original-source intake and complete receiving",
+            "source_ids": [
+              "airgradient-customer-operation",
+              "airgradient-original-commissioning-collection"
+            ],
+            "definition": {
+              "path": "grant-products/airgradient-operations.json",
+              "bytes": 1294,
+              "sha256": "ea7319b94b2b7c658bc36221b2d9bc2ba0ca4752bdec1b94b6d661e23a3b3d7f",
+              "git_blob": "ea8e709a18d671d91730aff5730e88e274fd8bfc"
+            }
+          },
+          {
             "id": "bls-labor",
             "heading": "## Regional labor analysis and recurring data delivery",
             "source_ids": [
@@ -3690,6 +4153,24 @@
             }
           },
           {
+            "id": "ckan",
+            "heading": "## CKAN merchant editions, analytical customer use and staff Support",
+            "source_ids": [
+              "ckan-merchant-operations",
+              "ckan-complete-workspace-receiving",
+              "ckan-reviewed-source-meaning",
+              "ckan-analytical-customer-receiving",
+              "ckan-merchant-support",
+              "ckan-support-agent-recovery"
+            ],
+            "definition": {
+              "path": "grant-products/ckan.json",
+              "bytes": 2316,
+              "sha256": "938cb8a42e52ba61e5e7d2458421d13129f6661f023e32831f7062cc402974fd",
+              "git_blob": "73dddcc63c6a2999807392f5f586054abae43a40"
+            }
+          },
+          {
             "id": "cohort-adoption",
             "heading": "## Customer adoption economics, delivery scheduling and recorded outcomes",
             "source_ids": [
@@ -3716,13 +4197,16 @@
               "preparation-workspace-selection",
               "preparation-workspace-receiving",
               "preparation-workspace-source",
-              "preparation-workspace-native-receiving"
+              "preparation-workspace-native-receiving",
+              "preparation-pipeline-commissioning",
+              "preparation-pipeline-jobs-selection",
+              "preparation-pipeline-jobs-customer"
             ],
             "definition": {
               "path": "grant-products/data-preparation.json",
-              "bytes": 3664,
-              "sha256": "e6fb8c9bf5c3ffd5fa23ca1435ef9c99742f1c75ef4c64d22f913cb33d8c8d8e",
-              "git_blob": "a33d0268b973c2ed55be8d4805d5fbd08cd97a9e"
+              "bytes": 5743,
+              "sha256": "8ecf30d01bec6ee486296729888dcbf270d78a9f2353e384bfe59219f212a7ad",
+              "git_blob": "d2206985e6cf70811ee03afd2e7144cdcb5eb34e"
             }
           },
           {
@@ -3738,9 +4222,9 @@
             ],
             "definition": {
               "path": "grant-products/document-merchant.json",
-              "bytes": 3945,
-              "sha256": "78c94d4f670063bfbe1d6d1161c2e9b3aea1636df829bd0531e898097b240c8a",
-              "git_blob": "75ad2e323a134d86dcbe29da6398f31d9ead56e6"
+              "bytes": 5172,
+              "sha256": "bf841f02fb25970d900fe65e8a27291208a6e01ea7f01ec5ae1a140591327796",
+              "git_blob": "0a4a00fbee67210eff38b29ddd43911c05873f13"
             }
           },
           {
@@ -3771,6 +4255,52 @@
               "bytes": 1387,
               "sha256": "52819537352f3107d6eefe78698eb4cdf8bd110953b158598b9004da6135bb34",
               "git_blob": "760f68fb9321740460a8d39f684c5425d5e3ee42"
+            }
+          },
+          {
+            "id": "haystack",
+            "heading": "## Haystack building models: reviewed point lists, validation and contractor handover",
+            "source_ids": [
+              "haystack-installed-operations",
+              "haystack-point-modelling",
+              "haystack-native-semantic",
+              "haystack-source-contract",
+              "haystack-charlie-original",
+              "haystack-corrective-work",
+              "haystack-source-license",
+              "haystack-semantic-dependencies",
+              "haystack-semantic-native-receiving",
+              "haystack-semantic-browser-receiving"
+            ],
+            "definition": {
+              "path": "grant-products/haystack.json",
+              "bytes": 4049,
+              "sha256": "0f65af55e43fde0e19f8da107681da6f32af0d2a9bc906d0ec6fbdffdf780f92",
+              "git_blob": "349140c7304a9df08062a3896ef489025cfbcba3"
+            }
+          },
+          {
+            "id": "pirate-weather",
+            "heading": "## Pirate Weather recurring customer briefings and complete project receiving",
+            "source_ids": [
+              "pirate-weather-customer-operation",
+              "pirate-weather-original-source-contract"
+            ]
+          },
+          {
+            "id": "research-dossier-returns",
+            "heading": "## Collaborative Research delivery and reviewed dossier returns",
+            "source_ids": [
+              "dossier-return-operating",
+              "dossier-return-engine",
+              "dossier-return-native-receiving",
+              "research-customer-programme"
+            ],
+            "definition": {
+              "path": "grant-products/research-dossier-returns.json",
+              "bytes": 3016,
+              "sha256": "663a4da1b8acdff6eb9472a7520f2d465c41cadb9f3473fb70a8ab8f51e0a44a",
+              "git_blob": "d84a13a2f5671cc694763957fa5d7fe1e9b1118c"
             }
           },
           {
@@ -3851,6 +4381,124 @@
       "round": "https://communityfund.stellar.org/awards/recxrSMYwAl8vcglg",
       "full_submission_date": "2026-11-08",
       "field_limits": "Apply only the actual issuer fields and limits when the invitation/form is available."
+    },
+    "editorial_revision": {
+      "operation": "SCF-REVIEWER-CANONICAL-CORRECTIONS-6ARMS-20261013",
+      "received_at": "2026-10-13T03:39:00Z",
+      "basis": "Complete current nine-answer corrections received over original PR1019. The full latest canonical manuscript is retained as its exact source; the original 233-source companion and budget remain intact in this selected package.",
+      "previous_working_source": {
+        "commit": "0d5264d368ba04ae068a8c1b5a17064daa361fcd",
+        "application_sha256": "be8c9a8c794da631191e1a9a420331ebf976be4ca58d1fb15cf6bd4d2db06eeb"
+      },
+      "current_source_package": {
+        "canvas": "F0C8STMLANM",
+        "operation": "SCF-GRANT-PRODUCT-SOURCE-ADOPTION-B3909-20261013",
+        "base_commit": "a4abafd2bee1e05bb18c90f4b6ed331b5384163c",
+        "source_count": 233,
+        "sha256": "6513c60a59b243ed3c3916741eeb1eeb24993ae559a23c7b1ea2bfc4e6af7a96"
+      },
+      "added_registration": {
+        "schema": "stellar-forge.grant-product-registration.v1",
+        "id": "pirate-weather",
+        "heading": "## Pirate Weather recurring customer briefings and complete project receiving",
+        "sources": [
+          {
+            "id": "pirate-weather-customer-operation",
+            "label": "Pirate Weather complete forecast briefing, merchant publication and independent project receiving",
+            "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+            "kind": "blob",
+            "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/OPERATING.md",
+            "editions": [
+              {
+                "commit": "b18d92f3be55765d8e9c594a6a5eb59ad663ed71",
+                "bytes": 26738,
+                "sha256": "c93ee102ca95ca6c1fa5c02a32bc6790cf724523e7dcd79068154b5eb8d95172",
+                "git_blob": "ce52edc0376fc872984dce49a6d088b463c9725e"
+              }
+            ]
+          },
+          {
+            "id": "pirate-weather-original-source-contract",
+            "label": "Pirate Weather original forecast request, response, exact-value and usage contract",
+            "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+            "kind": "blob",
+            "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/SOURCE_CONTRACT.md",
+            "editions": [
+              {
+                "commit": "b18d92f3be55765d8e9c594a6a5eb59ad663ed71",
+                "bytes": 9860,
+                "sha256": "82f51e91e5a00fab7e79e6dd141d450973f78f04983526f4a2481e8040eb9750",
+                "git_blob": "c4ac75791e5fd6b5d57a1d2ed44016d0dc828f22"
+              }
+            ]
+          }
+        ]
+      },
+      "changes": [
+        [
+          "Concise working edition prepared from the complete application at `935851923ff519ab9429dcfa4da55b8d335fe56f`.",
+          "Concise working edition prepared from the complete application at `935851923ff519ab9429dcfa4da55b8d335fe56f`, with the October 13 canonical submission-readiness corrections received into these nine answers."
+        ],
+        [
+          "Existing foundations already provide substantial capabilities: the Stellar x402 CLI covers challenge, signed retry, response and transfer confirmation; facilitators verify and settle; Bazaar publishes resource schemas. ApiCharge supplies typed paid endpoints and continuity across pricing changes. MPP Router supplies Stellar discovery, signed asynchronous polling and request-ID caching.",
+          "Existing foundations already provide substantial capabilities. Stellar's x402 client libraries handle payment challenges, Soroban authorization and signed retries; the Stellar CLI supplies the signing identity. Facilitators verify and settle, and Bazaar publishes resource schemas. ApiCharge's published proxy/access-grant approach provides typed paid access and retained purchased service levels. MPP Router provides paid proxy access, request-ID response caching and signed job polling."
+        ],
+        [
+          "The six funded packages implement that workflow in two independent services and publish the resulting improvements.",
+          "The six funded packages implement that workflow in two independent services and publish the resulting improvements. The original relationship among source, approval, distinct native transfers, output and accounting survives changes of provider, source edition or receiving operator. Open Track fit rests on this contribution and its measured usefulness; track selection remains subject to the issuer's invitation and review."
+        ],
+        [
+          "The selected service workorders determine the actual remaining source and receiving adaptations.",
+          "The selected service workorders determine the actual remaining source and receiving adaptations. The x402 Exact integration uses existing Stellar token contracts. Its public release identifies the upstream contract and SDK source, versions and licenses alongside our integration code; any funded contract-code changes will use compatible open-source terms. The [unified development guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/68929767fd9c138e3bcee2df65ea9e5928ca565a/products/merchant-workspace/DEVELOPMENT.md) retains the complete architecture, diagram, interface ownership, roadmap, development material and native acceptance/recovery plan."
+        ],
+        [
+          "The same operation completes through both facilitators with approval, transfer and full output joined.",
+          "Distinct approved purchases of the same useful service complete through each facilitator, holding the service, schema, population and output constant; each retains its own approval, observed transfer and complete output."
+        ],
+        [
+          "Implement the installed threat assessment, monitoring, notifications and response corrections. Operate an interrupted settled purchase and a merchant-delivery failure while preserving the financial outcome, unfinished step, acknowledgment, recovery and useful result.",
+          "Deliver the customer threat model and installed monitoring plan with actual coverage, observations, responsible responders, material corrections and residual findings. Operate both an interrupted settled purchase and a merchant-delivery failure while preserving each original financial outcome, unfinished step, acknowledgment, recovery and useful result. Managed Stop/reopen retains the connection, edition and original request."
+        ],
+        [
+          "T2 includes the installed threat assessment and corresponding monitoring procedure.",
+          "T2 delivers a customer threat model, corresponding installed monitoring plan and material corrections."
+        ],
+        [
+          "The proposed classifications are",
+          "The submitted selections are"
+        ],
+        {
+          "old": "The separate commercial-capacity study models five proposed workshares totaling 320 hours / $40,320 fees, with $9,560 contribution before further costs at its stated assumptions. These contracts, named capacity and collections remain inputs to be confirmed. A stress case increasing both grant and customer effort by 20% requires 864 hours: 480 grant hours cost $45,600 at $95/hour against the unchanged request, yielding a $4,120 combined modeled deficit. The current forecast retains the original timing, cost alternatives and cash curves so actual scope, rates and availability can be reconciled before commitments. The separate 72-hour GeoRobotix scope requires additional capacity or a nonconflicting window.",
+          "new": "The separate commercial-capacity study models five proposed workshares totaling 320 hours / $40,320 fees, with $9,560 contribution before further costs at its stated labor and referral assumptions. The maintained Lutra workshare also reserves $200 for source/compute. Including that internal allowance leaves **$9,360 before other costs**, or **$3,280 with 20% more customer effort**. A stress case increasing both grant and customer effort by 20% requires 864 hours: 480 grant hours cost $45,600 at $95/hour against the unchanged request, yielding a **$4,320 combined modeled deficit including the reserve**. At separate $85 core / $75 additional-engineer cost targets, the same increased workload leaves $5,952 after referral and the reserve. Contracts, named capacity, dates and collections remain planning inputs; the original forecast retains each scenario and its cash curve. The separate 72-hour GeoRobotix scope requires additional capacity or a nonconflicting window."
+        },
+        {
+          "old": "Node.js supplies browser, CLI, typed-client and MCP interfaces;",
+          "new": "The [complete financial walkthrough](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/2d1854f4b148b41d8c96bc0f8de2924faa2a8f84/stellar-forge/developer-site/dist/grant-data/financial-walkthrough.md) carries the same customer from the paid result through quote/invoice review, actual Stellar or bank receiving, dated allocations, refunds, reconciliation and customer close. Purchase principal, fees, commercial valuation, issued obligations and later service activity retain their own records.\n\nNode.js supplies browser, CLI, typed-client and MCP interfaces;"
+        },
+        {
+          "old": "|OpenLineage Quality receiving|An operated case retained 1,000 reported rows. A reviewed 1,001-row requirement failed; an unreported column count remained unknown. The accepted baseline, measurements and decisions reopened for another engineer, and two complete 76-file exports matched.|",
+          "new": "|OpenLineage Quality receiving|An operated case retained 1,000 reported rows. A reviewed 1,001-row requirement failed; an unreported column count remained unknown. The accepted baseline, measurements and decisions reopened for another engineer, and two complete 76-file exports matched.|\n|Portable customer billing operation|The original 243-file application, accounting workspace and two planning cases completed desktop/mobile operation, repack, independent cold receiving and reopen. That operated example retains its first $4,400 milestone as Paid with zero due and its later $4,400 invoice as Open. These example account records retain their own identity alongside the proposal's independent-customer and paid-Stellar measures.|"
+        },
+        {
+          "old": "Concise working edition prepared from the complete application at `935851923ff519ab9429dcfa4da55b8d335fe56f`, with the October 13 canonical submission-readiness corrections received into these nine answers. The nine answers contain the proposed funding case; the complete source manuscript, budget and product chapters remain available for editing and due diligence. Actual issuer field labels and limits will be applied in the existing submission workspace when the invitation is received.",
+          "new": "Concise working edition incorporating the October 13 canonical submission-readiness, financial walkthrough and source/compute-reserve updates. These nine answers state the proposed funding case; the complete source manuscript, budget and product chapters remain available for editing and due diligence. Actual issuer field labels and limits will be applied in the existing submission workspace when the invitation is received."
+        },
+        {
+          "before": "T2 runs the same useful operation through two independently operated testnet facilitators.",
+          "after": "T2 runs the same useful service through two independently operated testnet facilitators."
+        }
+      ],
+      "canonical_snapshot": {
+        "bytes": 1174634,
+        "sha256": "7ba3e830fea7829b2613ed2ec6b9d5aba0cfe71b355581faf29408fa4b64e51f",
+        "received_at": "2026-10-13T03:39:00Z",
+        "retention": "Complete original manuscript remains in the existing internal canonical application and the full three-part source carrier F0C8UMV2RQU/F0C8JQDH5BM/F0C8P2RE0MU."
+      },
+      "publication": {
+        "projection": "Maintained projectGrantSourceIndex; complete canonical authoring manuscript remains in its original internal source.",
+        "projector_git_blob": "27ee61a5c17d10ac836169595840051df5776eb3",
+        "source_inventory_basis": "Dated B3909 233-source selection plus the two published PR1029 Pirate Weather source IDs. Later cumulative publication remains independently maintained."
+      }
     }
   },
   "submission_workspace": {
@@ -3858,8 +4506,8 @@
     "route": "/grant-submission.html",
     "application_route": "/grant-data/application-reviewer.md",
     "source_index_route": "/grant-data/reviewer-working-index.json",
-    "application_sha256": "be8c9a8c794da631191e1a9a420331ebf976be4ca58d1fb15cf6bd4d2db06eeb",
-    "application_git_blob": "c38f9b5dcc8691b5226801cef5f96f9fd8614920",
+    "application_sha256": "73abef296f724796b25b34b64209dc164a82bda549d6aa1dd1e0db8ce2e05cfe",
+    "application_git_blob": "fd608bcf1bb59ba37a040e6e02187e02f7af50a2",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "export_schema": "stellar-forge.grant-submission-export.v1",
     "form_map_schema": "stellar-forge.grant-form-map.v1",
@@ -3922,7 +4570,7 @@
         "receiving": "The original editable draft retains full message sources, terms history, commissioning, prepared context and manual answer edits."
       }
     },
-    "source_choice": "Explicit dated working edition; the original manuscript remains a separate selectable source."
+    "source_choice": "Explicit dated working edition with its complete source package; original manuscript and companion remain separately selectable."
   },
   "financial_operations": {
     "schema": "stellar-forge.grant-financial-operations.v1",
@@ -3962,8 +4610,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "46d8e6fd41598b3b4ac2b3da2859d1198e6bfc2882fcd7f58a3c641853dc5fd2",
-    "source_bytes": 578018,
+    "source_sha256": "9594d6bb6c99e605ff6f384545d07af55fd4b390d05b2e625a2df91402c0680b",
+    "source_bytes": 601568,
     "assets": [
       "/grant-companion.html",
       "/grant-companion.css",

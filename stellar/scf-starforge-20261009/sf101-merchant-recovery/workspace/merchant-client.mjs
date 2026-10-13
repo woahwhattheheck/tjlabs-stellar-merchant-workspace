@@ -96,10 +96,12 @@ const paged = new Set(['merchant_recovery_inventory', 'merchant_recovery_request
 const writes = new Set(['merchant_recovery_start', 'merchant_recovery_resume', 'merchant_recovery_cancel']);
 function validateSelection(value) {
   exact(value, ['profileId', 'action', 'id', 'bundleId', 'snapshotId', 'destinationName',
-    'capturePlanId', 'quiesced', 'restoreId', 'publisherRestoreId', 'fleetRestoreId', 'fleetTargetId'],
+    'capturePlanId', 'quiesced', 'restoreId', 'publisherRestoreId', 'fleetRestoreId', 'fleetTargetId',
+    'objectSessionId', 'expectedRecordSha256'],
     ['profileId', 'action', 'id']);
   checked(value.profileId, ID, 'profile ID'); checked(value.id, ID, 'operation ID');
-  if (!['snapshot', 'verify', 'publisher-prepare', 'fleet-prepare', 'push', 'pull', 'restore', 'resume'].includes(value.action))
+  if (!['snapshot', 'verify', 'publisher-prepare', 'fleet-prepare', 'push', 'pull', 'restore', 'resume',
+    'object-snapshot', 'object-verify', 'object-restore'].includes(value.action))
     throw failure('INVALID_PARAMS', 'Choose an original recovery action.');
   for (const key of ['destinationName', 'capturePlanId', 'restoreId', 'publisherRestoreId', 'fleetRestoreId', 'fleetTargetId'])
     if (value[key] !== undefined) checked(value[key], ID, key);
@@ -109,6 +111,16 @@ function validateSelection(value) {
     throw failure('INVALID_PARAMS', 'Use the exact bundleId returned by this original workspace.');
   if (value.quiesced !== undefined && value.quiesced !== true)
     throw failure('INVALID_PARAMS', 'Capture and fleet preparation require the explicit actual producer-quiescence acknowledgment.');
+  if (value.action.startsWith('object-')) {
+    const snapshot = value.action === 'object-snapshot';
+    exact(value, ['profileId', 'action', 'id', 'objectSessionId', ...(snapshot ? ['quiesced'] : ['expectedRecordSha256'])],
+      ['profileId', 'action', 'id', 'objectSessionId', ...(snapshot ? ['quiesced'] : ['expectedRecordSha256'])]);
+    checked(value.objectSessionId, ID, 'host-declared Object session ID');
+    if (snapshot && value.quiesced !== true) throw failure('INVALID_PARAMS', 'Confirm the original Object writers are stopped.');
+    if (!snapshot) checked(value.expectedRecordSha256, SHA, 'original Object backup record');
+  } else if (Object.hasOwn(value, 'objectSessionId') || Object.hasOwn(value, 'expectedRecordSha256')) {
+    throw failure('INVALID_PARAMS', 'Object session selectors belong to the original Object recovery actions.');
+  }
   if (value.action === 'fleet-prepare') {
     exact(value, ['profileId', 'action', 'id', 'restoreId', 'fleetRestoreId', 'fleetTargetId', 'quiesced'],
       ['profileId', 'action', 'id', 'fleetTargetId', 'quiesced']);
@@ -127,6 +139,16 @@ function validate(name, input) {
   if (input.profileId !== undefined) checked(input.profileId, ID, 'profile ID');
   if (input.id !== undefined) checked(input.id, ID, 'operation ID');
   if (input.selection !== undefined) validateSelection(input.selection);
+  if (input.objectSessionId !== undefined) checked(input.objectSessionId, ID, 'host-declared Object session ID');
+  if (input.sha256 !== undefined) checked(input.sha256, SHA, 'retained native evidence SHA256');
+  if (input.afterAttempt !== undefined && (!Number.isSafeInteger(input.afterAttempt) || input.afterAttempt < 0))
+    throw failure('INVALID_PARAMS', 'Select the original observed nonnegative attempt number.');
+  if (input.quiesced !== undefined && input.quiesced !== true)
+    throw failure('INVALID_PARAMS', 'Confirm the original Object writers are stopped.');
+  if (name === 'merchant_recovery_resume' &&
+      (input.afterAttempt !== undefined || input.expectedReviewHash !== undefined || input.quiesced !== undefined) &&
+      (input.afterAttempt === undefined || input.expectedReviewHash === undefined))
+    throw failure('INVALID_PARAMS', 'An Object continuation binds both the saved review and observed original attempt.');
   if (input.expectedReviewHash !== undefined) checked(input.expectedReviewHash, SHA, 'native review hash');
   if (paged.has(name)) {
     if (input.limit !== undefined && (!Number.isSafeInteger(input.limit) || input.limit < 1 || input.limit > 100))
@@ -150,6 +172,9 @@ function nativeFailure(native, { workspace, input, status, uncertain = false, mu
   const safe = { code: typeof native?.code === 'string' ? native.code.slice(0,100) : 'RECOVERY_WORKSPACE_FAILED',
     message: typeof native?.message === 'string' ? native.message.slice(0,500) : 'The original recovery request failed.' };
   for (const key of metadataFields) if (['string','number','boolean'].includes(typeof native?.[key])) safe[key] = native[key];
+  const evidence=native?.nativeEvidence;
+  if(evidence&&SHA.test(evidence.sha256??'')&&Number.isSafeInteger(evidence.bytes)&&evidence.bytes>0)
+    safe.nativeEvidence={sha256:evidence.sha256,bytes:evidence.bytes};
   const selected = scope(workspace, input ?? {});
   const details = { outcome: uncertain ? 'OUTCOME_UNKNOWN' : Number.isInteger(status) && status >= 400 ? 'REJECTED' : 'READ_FAILED', ...selected,
     ...(Number.isInteger(status) ? { httpStatus: status } : {}), mutationRequestAttempted, error: safe };
@@ -186,6 +211,8 @@ export class MerchantRecoveryWorkspaces {
     const action = name.slice('merchant_recovery_'.length);
     let method = 'GET', route, body;
     if (action === 'status') route = '/api/state';
+    else if (action === 'object_session') route = urlQuery('/api/object-session', { profile: input.profileId, session: input.objectSessionId });
+    else if (action === 'object_evidence') route = urlQuery('/api/object-evidence', { sha256: input.sha256 });
     else if (action === 'requests') route = urlQuery('/api/requests', { cursor: input.cursor, limit: input.limit });
     else if (['request', 'operation'].includes(action)) route = urlQuery('/api/' + action, { profile: input.profileId, id: input.id });
     else if (['bundles', 'inventory', 'operations'].includes(action))

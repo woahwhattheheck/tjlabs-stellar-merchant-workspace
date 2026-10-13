@@ -4,15 +4,79 @@ The Source Preparation Desk turns complete original customer documents into the 
 
 The desk retains the complete uploaded files, editable source selections, every saved revision, the native preparation outputs and the original request receipts. The last step opens a separate draft in the existing Installation editor. Save and receive that Installation through its original workflow.
 
-A prepared or attached source package describes proposed work. It does not record a customer acceptance, payment, funded award, configured deployment or completed commissioning.
+A prepared or attached source package retains the original recorded scope and commercial status. It does not record a customer acceptance, payment, funded award, configured deployment or completed commissioning.
 
 ## What to have ready
 
-Use the existing authorized operating case and its recording operator. In a managed workspace, sign in with the original owner link or a delivery-lead staff profile that includes that case. An enrolled lead's stable actor is recorded with every request. The existing staff case restrictions and read permissions also apply to source history, inspection and complete downloads. Bring the full original Workshare receiving packet and every complete document that supplies effort or other selected source context. Each packet must preserve the original `prepared_case.id` and `workshare_input.source.case_id`, with its complete `dealscout.workshare-plan.v1` plan. The native reader validates the plan and its original commercial currency.
+Use the existing authorized operating case and its recording operator. In a managed workspace, sign in with the original owner link or a delivery-lead staff profile that includes that case. An enrolled lead's stable actor is recorded with every request. The existing staff case restrictions and read permissions also apply to source history, inspection and complete downloads. Bring the full original Workshare receiving packet and every complete document that supplies effort or other selected source context. For the original DealScout packet path, each packet must preserve the original `prepared_case.id` and `workshare_input.source.case_id`, with its complete `dealscout.workshare-plan.v1` plan. The native reader validates the plan and its original commercial currency.
 
 For each phase, identify the exact JSON pointer that supplies its assigned effort, the original unit (hours or minutes), and an explanation of the mapping. Identify the original complete effort total as well. The total must equal every selected phase together. The desk never divides a price by an assumed rate to invent hours.
 
 All source files are selected explicitly. A file's receiving filename, complete byte length, SHA-256, media type, source reference and observed time travel together. If the original filename contains characters outside the native receiving format, choose a distinct receiving filename with letters, numbers, dots, underscores or hyphens; the file's original content stays unchanged.
+
+
+## Receive an original CanadaBuys Workshare package
+
+A native CanadaBuys Workshare can enter this same desk through its complete prepared source package. Use the original CanadaBuys application to author or revise the Workshare. The installed `canadabuys prepare` command retains its complete exported application package and the separately authored party, milestone, effort and working-day mapping. See [CANADABUYS_NATIVE_WORKSHARES.md](../../sf49_data_commissioning/installation-workorders/CANADABUYS_NATIVE_WORKSHARES.md) for that full source preparation.
+
+Package the resulting private directory without changing any of its five files:
+
+```sh
+starforge grant-installation-workorder canadabuys package \
+  --source /absolute/private/canadabuys-source-preparation \
+  --out /absolute/private/canadabuys-source-delivery/CanadaBuys_Source.zip \
+  --python /absolute/python3
+```
+
+The output directory must be private to the current operator. This command verifies the complete original native package, every retained Workshare edition, the exact selected source row and the explicit operator mapping. It reruns the maintained deterministic preparation and requires every output to match the supplied bytes. An existing identical ZIP reopens; different output bytes are preserved and rejected.
+
+The ZIP contains a `CANADABUYS_SOURCE_PACKAGE.json` manifest and these five complete originals:
+
+| Member | Preserved source |
+|---|---|
+| `SOURCE_SELECTION.json` | Original complete operator mapping, including any selected Installation bindings |
+| `CANADABUYS_NATIVE_WORKSHARES.json` | Native package binding, full Workshare history and selected editions |
+| Original package filename | Complete byte-identical CanadaBuys application package |
+| `SUPPLIER_RECEIVING.json` | Existing Installation receiving input |
+| `SOURCE_PREPARATION.json` | Complete original native preparation result |
+
+In an existing authorized case, create or open a source draft. Retain the whole ZIP in **Original files**, with its original reference and observation time. Save or retain any current edited fields before selecting **Receive native CanadaBuys source**.
+
+The request uses the existing source-draft journal and revision guard. It binds the original ZIP bytes, both installed native reader modules and the current CanadaBuys profile. The receiver checks all six ZIP entries, every member digest and size, the complete original package and the deterministic five-file output. No partial source set is accepted. The selected ZIP and all five original files are retained in the existing draft's blob custody.
+
+**Source mapping** shows the exact selected package and workspace, selected Workshare revision, explicit customer and supplier with their mapping basis, every original milestone allocation, separate production and partner effort, working-day dependencies, and original delivery/acceptance inputs. **Complete package** also shows the original native status, currency and exact cents, full Workshare history, selected source row and normalized Installation plan.
+
+The native source selection is read-only in this view. To revise it, change the original Workshare or explicit mapping through the installed source workflow, then receive the next complete ZIP. The earlier original ZIP, selection, preparation and attachments remain in source-draft history.
+
+Choose **Attach complete cohort to this case**, then **Open native Installation preparation**. The existing transaction attaches the complete source set and selects its real native commissioning and packet filenames. The Installation reader continues through the original Workshare seed. Any optional operating bindings come from that exact attached preparation and remain editable before the existing preview/save/receive workflow. Fresh seed identity, Workshare assignments, checks and payment controls remain those of the original engine.
+
+A retained native status is a source fact. Receiving this package does not create a DealScout case, establish agreement or funding, select a payer, convert currency, dispatch payment or mark commissioning complete.
+
+### Native package command and recovery
+
+The same existing command endpoint accepts:
+
+```json
+{
+  "requestId": "the-original-native-source-request",
+  "expectedRevision": 3,
+  "actor": "The recording operator",
+  "note": "The reason for receiving this original package",
+  "action": "native.receive",
+  "data": {
+    "fileId": "input-ORIGINAL64LOWERHEX",
+    "expectedSha256": "ORIGINAL_COMPLETE_ZIP_SHA256",
+    "expectedEngineSha256": "ORIGINAL_NATIVE_READER_SET_SHA256",
+    "expectedProfileSha256": "ORIGINAL_CANADABUYS_PROFILE_SHA256"
+  }
+}
+```
+
+Use actual identities returned by the original file receipt and installed catalogue. `nativePackages` in the catalogue identifies the two-file native reader set and its profile. Retain the complete original request before submission. Response loss uses the existing request-status/read/retry controls, with no replacement request ID.
+
+The received result remains `PREPARED_SOURCE` and adds `kind: canadabuys-native-workshare`, complete `nativeReview`, the original ZIP descriptor, and explicit commissioning/packet source roles. The selected source-file SHA is the original exact byte hash returned in `selectionSha256`; use that value for attachment.
+
+The native source ZIP shares the existing 8 MiB upload limit. Its five complete source files each share the original 8 MiB bound, with a 64 MiB unpacked bound. Ordinary stored or deflated flat ZIP members are accepted; duplicate paths, additional members, encryption, special files, incomplete bytes and conflicting manifests are rejected. Existing draft storage and case attachment bounds continue to apply to the whole retained set.
 
 ## 1. Retain the complete original files
 
@@ -198,6 +262,7 @@ The displayed empty selection is a schema illustration; provide the complete nat
 | `file.remove` | `fileId` from the current draft |
 | `selection.save` | Complete `selection` object |
 | `prepare` | `expectedEngineSha256,expectedSelectionSha256,expectedProfiles` |
+| `native.receive` | `fileId,expectedSha256,expectedEngineSha256,expectedProfileSha256` |
 | `attach` | `preparationId,expectedSelectionSha256,expectedVersion` |
 
 The preparation request's selection hash is the canonical compact JSON hash used by the original workspace. The returned preparation's `selectionSha256` identifies its exact retained, formatted source-selection file; use that returned value for attachment. Do not exchange those two distinct identities.
@@ -247,7 +312,7 @@ Base: `/api/operations/{caseId}/installation-sources`
 | GET `/{draftId}/preparations/{preparationId}/archive?describe=1` | Complete ZIP identity |
 | GET `/{draftId}/preparations/{preparationId}/archive?expectedSha256=SHA` | Whole prepared ZIP |
 
-`GET /api/operations/installation-source-profiles` returns the installed helper identity and every currently installed profile's complete JSON and source hash. The catalogue is dynamic; this desk does not maintain a second hardcoded profile list.
+`GET /api/operations/installation-source-profiles` returns the installed helper identity and every currently installed profile's complete JSON and source hash. The catalogue is dynamic; this desk does not maintain a second hardcoded profile list. Its `nativePackages` entries also expose the original complete native package reader set and applicable profile.
 
 ## Bounds and complete receiving
 

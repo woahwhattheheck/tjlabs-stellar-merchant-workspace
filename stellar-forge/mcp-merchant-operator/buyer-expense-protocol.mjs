@@ -31,6 +31,13 @@ export function validateBuyerExpenseArguments(action,args) {
   const invalid=message=>{throw Object.assign(new Error(message),{code:'BUYER_EXPENSE_ARGUMENTS'});};
   if(!definition)invalid('Choose an original buyer expense action.');
   function visit(value,spec,path) {
+    if(spec.anyOf){
+      for(const choice of spec.anyOf){
+        try{visit(value,choice,path);return;}
+        catch(error){if(error.code!=='BUYER_EXPENSE_ARGUMENTS')throw error;}
+      }
+      invalid(path+' must match one of its declared original forms.');
+    }
     if(spec.enum&&!spec.enum.includes(value))invalid(path+' must use a declared choice.');
     if(spec.type==='object'){
       if(value===null||typeof value!=='object'||Array.isArray(value))invalid(path+' must be an object.');

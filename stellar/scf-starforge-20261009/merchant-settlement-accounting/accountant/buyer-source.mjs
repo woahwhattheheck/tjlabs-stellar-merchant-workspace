@@ -75,7 +75,7 @@ export function inspectBuyerSource(input){
       for(const key of ['item_id','coding_id','source_id','source_capture','center_id'])ident(original[key],key);
       if(kind==='CREDIT')ident(original.credit_id,'credit identity');
       check(Number.isSafeInteger(original.line)&&original.line>0,'INVALID_BUYER_SOURCE','Retain the original positive allocation line number.');
-      text(original.network,'network',200);text(original.asset,'asset',1000);text(original.center_code,'cost center code',160);text(original.project,'project',2000,true);text(original.account_code,'account code',160,true);
+      text(original.network,'network',1000);text(original.asset,'asset',1000);text(original.center_code,'cost center code',160);text(original.project,'project',2000,true);text(original.account_code,'account code',160,true);
       const amount=nativeAmount(original.amount,'allocation amount'),maximum=nativeAmount(kind==='EXPENSE'?original.settled_actual:original.native_return,'original economic amount');
       check(amount<=maximum,'BUYER_ALLOCATION_CHANGED','An allocation exceeds its original economic amount.',409);
       const economicKey=buyerCanonical([kind,kind==='CREDIT'?original.credit_id:original.item_id]);

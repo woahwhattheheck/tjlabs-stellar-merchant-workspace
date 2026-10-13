@@ -78,6 +78,27 @@
         "customer-use.css",
         "text/css; charset=utf-8"
       ]
+    ],
+    [
+      "/plan-sharing.mjs",
+      [
+        "plan-sharing.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-composer/package-format.mjs",
+      [
+        "../../collection-composer/package-format.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-composer/plan.mjs",
+      [
+        "../../collection-composer/plan.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

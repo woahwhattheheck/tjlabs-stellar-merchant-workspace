@@ -11,6 +11,7 @@ import {readCustomerSelection,readEngineSelection} from './selection.mjs';
 import {receiveCustomerSources,receiveCustomerCitationReviews,receiveChronologyBundle,preserveUnselected} from './citation.mjs';
 import {renderCustomerChronology} from './chronology.mjs';
 import {runCustomerEuropePmc} from './europe-pmc.mjs';
+import {runCustomerReturnsCli} from './returns.mjs';
 import {runCustomerBrowserReceiving,runCustomerMerchantReceiving} from './receiving.mjs';
 import {need,absolute,key,member,directory,exists,value,read,retain,retainBytes,checked,descriptor,
   step,same,digest,jsonBytes,section,requireRevision,runProcess,verifyFiles,inside,publicFiles} from './retention.mjs';
@@ -333,7 +334,9 @@ export async function runCustomerProgramme(options){
 }
 
 async function main(args){
+  if(args[0]==='--returns')return runCustomerReturnsCli(args.slice(1));
   if(args.length===0||args.includes('--help')){
+    process.stdout.write('For complete collaborator return continuation: node programme.mjs --returns --help\n');
     process.stdout.write('Usage: node programme.mjs --selection /absolute/selection.json --selection-sha256 HASH --directory /absolute/private/run --engine-root /absolute/original/checkout --engine-manifest /absolute/ENGINE_SOURCE.json --engine-manifest-sha256 HASH --playwright-module /absolute/playwright/index.mjs --chromium /absolute/chromium [--workspace /absolute/original/workspace] [--python python3] [--node node]\n');return;
   }
   need(args.length%2===0,'CUSTOMER_PROGRAMME_ARGUMENT_VALUE_REQUIRED');

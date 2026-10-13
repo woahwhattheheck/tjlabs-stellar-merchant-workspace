@@ -1,5 +1,6 @@
+import { createFinanceDesk } from './finance.mjs';
 const $=id=>document.getElementById(id);
-const tabs=[['overview','Overview'],['orders','Orders'],['payments','Payments'],['sources','Source capture'],['reports','Reports'],['requests','Requests'],['workspace','Workspace']];
+const tabs=[['overview','Overview'],['orders','Orders'],['payments','Payments'],['sources','Source capture'],['reports','Reports'],['finance','Finance'],['requests','Requests'],['workspace','Workspace']];
 const profileTypes=['merchant-key-v2','checkout-mpp-0.1.21','intent-common-0.1.43','rozo-testnet-v1'];
 const statuses=['payment_unpaid','payment_started','payment_payin_completed','payment_payout_completed','payment_completed','payment_bounced','payment_expired','payment_refunded'];
 let selected=sessionStorage.getItem('rozo-profile')??'',tab='overview',state=null,renderGeneration=0,dialogGeneration=0,fileGeneration=0,pendingFile=null,filter={query:'',status:'',unresolved:false,offset:0},loading=false;
@@ -144,7 +145,7 @@ function render(){
   $('page-title').textContent=tabs.find(t=>t[0]===tab)?.[1]??'Workspace';
   $('navigation').replaceChildren(...tabs.map(([id,title],i)=>button('',()=>navigate(id),'',{'aria-current':id===tab?'page':null})).map((b,i)=>{b.append(el('span',{class:'number',text:String(i+1).padStart(2,'0')}),tabs[i][1]);return b;}));
   if(!state){$('page').replaceChildren(empty('Opening the retained workspace','Use the private startup link to connect.'));return;}
-  const pages={overview:overviewPage,orders:ordersPage,payments:paymentsPage,sources:sourcesPage,reports:reportsPage,requests:requestsPage,workspace:workspacePage};
+  const pages={overview:overviewPage,orders:ordersPage,payments:paymentsPage,sources:sourcesPage,reports:reportsPage,finance:()=>financeDesk.render(),requests:requestsPage,workspace:workspacePage};
   $('page').replaceChildren(pages[tab]());
 }
 function requireProfile(){return selectedProfile()||null;}
@@ -399,6 +400,9 @@ async function auditPage(offset=0){
   const generation=showDialog('Original native audit',el('p',{text:'Reading audit…'})),r=await api('/api/audit?'+new URLSearchParams({offset:String(offset),limit:'100'}));if(generation!==dialogGeneration)return;
   $('dialog-body').replaceChildren(el('div',{class:'timeline'},r.items.map(v=>el('details',{},[el('summary',{text:'Revision '+v.revision+' · '+v.kind+' · '+date(v.at)}),el('p',{class:'mono',text:v.requestId??'Original source observation'}),json(v.value)]))),r.nextOffset!==null?button('Next original audit page',()=>auditPage(r.nextOffset)):null);
 }
+const financeDesk=createFinanceDesk({el,field,check,input,button,card,table,json,notify,api,command,download,showDialog,closeDialog,
+  actor:()=>$('actor').value.trim()||'Operator',context:()=>({state,tab,renderGeneration}),
+  dialogCurrent:g=>g===dialogGeneration&&$('dialog').open});
 $('profile').onchange=async e=>{selected=e.target.value;sessionStorage.setItem('rozo-profile',selected);filter.offset=0;closeDialog();await refresh();};
 $('refresh').onclick=refresh;
 $('actor').value=localStorage.getItem('rozo-actor')??'Operator';$('actor').onchange=()=>localStorage.setItem('rozo-actor',$('actor').value);

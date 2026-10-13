@@ -15,6 +15,11 @@ export const GRANT_REPORTING_HELP = [
   '',
   'starforge grant-reporting-plan create --input INPUT.json --out NEW_PLAN.json',
   '  [--catalog COMPLETE_CATALOG.json | --source-root DIRECTORY --selection PRODUCT]',
+  'starforge grant-reporting-plan capture --binding PRIVATE.json --case operation-ID',
+  '  --source-project COMPLETE_BOOK.json --input REPORT_FIELDS.json --out NEW_DIRECTORY',
+  '  [--expected-version N] [--procedure-selection SELECTION.json]',
+  '  [--catalog COMPLETE_CATALOG.json | --source-root DIRECTORY --selection PRODUCT]',
+  'starforge grant-reporting-plan capture-show --directory COMPLETE_CAPTURE_DIRECTORY',
   '',
   'Input may be the complete browser preparation, full native case/source-project input, or compact reference input.',
   'The complete preparation retains and verifies all three original JSON files and its saved preview.',
@@ -30,7 +35,10 @@ export const GRANT_REPORTING_HELP = [
   'A supplied --catalog is the complete original Command finder catalog, not a search-result export.',
   'Otherwise the maintained catalog loader reads the current installed/source selection.',
   'The catalog must contain grant-workspace, grant-source-tables and discover registrations.',
-  'All generated steps are planned; creation reads no case, runs no native business command and records no outcomes.',
+  'create keeps every generated step planned. capture reads the existing managed Grant case and',
+  'retains its exact original book/catalog with the same portable preparation and reporting plan.',
+  'An optional original procedure selection prepares grant-procedure.json for grant-procedures save.',
+  'capture-show reopens the complete frozen capture and its readable handovers.',
   'The original output is created exclusively. Keep it for the same request; reopen/edit/revise it with',
   'starforge discover plan or the existing Operating plans browser. Full JSON carries every revision.',
 ].join('\n');
@@ -39,15 +47,30 @@ export function parseGrantReportingArguments(args) {
   const words = [...args];
   if (!words.length || words.includes('--help') || words.includes('-h')) return {action: 'help', options: {}};
   const action = words.shift();
-  if (action !== 'create') throw new TypeError('Choose create; use discover plan for the original read/edit/receive commands.');
-  const allowed = ['input', 'out', 'catalog', 'source-root', 'selection'], options = {};
+  const actions = {
+    create:['input', 'out', 'catalog', 'source-root', 'selection'],
+    capture:['binding', 'case', 'source-project', 'input', 'out', 'expected-version',
+      'procedure-selection', 'catalog', 'source-root', 'selection'],
+    'capture-show':['directory'],
+  };
+  if (!Object.hasOwn(actions, action)) throw new TypeError('Choose create, capture or capture-show; use discover plan for saved plan revisions.');
+  const allowed = actions[action], options = {};
   while (words.length) {
     const flag = words.shift(), key = flag.startsWith('--') ? flag.slice(2) : '';
     if (!allowed.includes(key) || Object.hasOwn(options, key)) throw new TypeError('Unknown or repeated option: ' + flag);
     if (!words.length || words[0].startsWith('--')) throw new TypeError('A value is required for ' + flag);
     options[key] = words.shift();
   }
-  if (!options.input || !options.out) throw new TypeError('Use --input with the complete customer input and --out with a new complete plan filename.');
+  if (action === 'capture-show') {
+    if (!options.directory) throw new TypeError('Use --directory with the complete retained capture.');
+    return {action, options};
+  }
+  if (!options.input || !options.out) throw new TypeError('Use --input with the complete reporting fields and --out with a new output.');
+  if (action === 'capture' && (!options.binding || !options.case || !options['source-project']))
+    throw new TypeError('Native capture needs the original --binding, --case and --source-project.');
+  if (options['expected-version'] !== undefined &&
+      (!/^[1-9][0-9]*$/.test(options['expected-version']) || !Number.isSafeInteger(Number(options['expected-version']))))
+    throw new TypeError('--expected-version must be a positive safe integer.');
   if (options.catalog && (options['source-root'] || options.selection))
     throw new TypeError('Choose the complete retained --catalog or the original source/selection loader.');
   if (resolve(options.input) === resolve(options.out) || options.catalog && resolve(options.catalog) === resolve(options.out))
@@ -67,6 +90,34 @@ async function jsonFile(filename, maximum = 32 * 1024 * 1024) {
 export async function mainGrantReportingPlan(args = process.argv.slice(2), {log = console.log} = {}) {
   const {action, options} = parseGrantReportingArguments(args);
   if (action === 'help') {log(GRANT_REPORTING_HELP); return;}
+  if (action === 'capture-show' || action === 'capture') {
+    const native = await import('./grant-reporting-native.mjs');
+    let result;
+    if (action === 'capture-show') result = await native.readGrantReportingCapture(resolve(options.directory));
+    else {
+      const fields = await jsonFile(options.input), binding = await jsonFile(options.binding);
+      const catalogSelection = options.catalog
+        ? {catalogFile:resolve(options.catalog)}
+        : {catalog:await loadCommandCatalog({sourceRoot:options['source-root'], selection:options.selection})};
+      result = await native.captureGrantReportingPlan({
+        binding, caseId:options.case, sourceProjectFile:resolve(options['source-project']),
+        directory:resolve(options.out), fields, ...catalogSelection,
+        ...(options['source-root'] ? {sourceRoot:resolve(options['source-root'])} : {}),
+        ...(options.selection ? {sourceSelection:options.selection} : {}),
+        ...(options['expected-version'] === undefined ? {} : {expectedVersion:Number(options['expected-version'])}),
+        ...(options['procedure-selection'] === undefined ? {}
+          : {procedureSelection:await jsonFile(options['procedure-selection'])}),
+      });
+    }
+    log(JSON.stringify({action, directory:result.directory, ...summarizeOperatingPlan(result.plan),
+      caseId:result.receipt.selection.case.id, caseVersion:result.receipt.selection.case.version,
+      planId:result.receipt.selection.plan.id, planRevision:result.receipt.selection.plan.revision,
+      sourceProjectId:result.receipt.selection.sourceProject.id,
+      preparationFile:resolve(result.directory, 'reporting-preparation.json'),
+      procedureFile:result.procedure ? resolve(result.directory, 'grant-procedure.json') : null,
+      nativeConnection:result.receipt.native.closed.state}));
+    return result;
+  }
   const input = await jsonFile(options.input, 96 * 1024 * 1024);
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new TypeError('Use the complete Grant reporting input object.');
   const output = resolve(options.out);
@@ -113,6 +164,8 @@ export async function mainGrantReportingPlan(args = process.argv.slice(2), {log 
 if (process.argv[1] && await realpath(resolve(process.argv[1])).then(
   entry => pathToFileURL(entry).href === import.meta.url, () => false))
   mainGrantReportingPlan().catch(error => {
-    console.error(JSON.stringify({error: {code: error.code ?? 'GRANT_REPORTING_PLAN', message: error.message}}));
+    console.error(JSON.stringify({error: {code: error.code ?? 'GRANT_REPORTING_PLAN', message: error.message,
+      ...(error.details ? {details:error.details} : {}),
+      ...(error.closeFailure ? {closeFailure:error.closeFailure} : {})}}));
     process.exitCode = 1;
   });
