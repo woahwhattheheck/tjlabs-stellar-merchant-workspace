@@ -153,6 +153,8 @@ The complete `.ncwh` handover carries the operating project, rather than only on
 | Merchant package and SF82 records | Complete original prepared packages, releases, selection and history remain identifiable. |
 | Receiving placement history | The original host configuration and the receiving host's explicit local bindings remain distinguishable. |
 
+Each `.ncwh` exports the selected original workspace and its retained transfer history under `workspace-history`. Named independently received children are separate workspaces. The parent archive does not recursively include `received-workspaces` or cached archive payloads. Export a progressed child through that child's own browser or returned `childWorkspace` alias; keep its complete file and receipt as its own handover. Reopening the original parent on the same host continues to list its existing named children.
+
 The archive excludes live lock/control/session state and external host credential files. It preserves useful private source history; it is not a public download for arbitrary API consumers. The approved customer/client files remain the public handover chosen through the existing publisher.
 
 ### Prepare at the original service boundary
@@ -221,6 +223,18 @@ workspace-received --directory PRIVATE_DIR
 Read the actual current draft revision and selected version before export. An empty selection is the literal `null`. Keep the original UUID and all command inputs in the customer handover record. Download and receive complete files through the native streaming implementation rather than converting a many-gigabyte archive into a JSON object.
 
 Run offline CLI commands only after the active source owner releases that workspace. An independently received child can be opened through the same original source CLI after its parent's owned child listener closes. Its retained directory is the one returned by the receiving receipt.
+
+For an installed, closed `nocodb-project`, the maintained project CLI also provides these whole-workspace conveniences. Here `--directory` is the original installed project wrapper, not the source workspace directory used by the commands above. Keep the wrapper's host input declaration and its current source/runtime receipts.
+
+```text
+workspace-export --directory CLOSED_PROJECT --expected-revision N --expected-selected-version N|null --request-id UUID --out WHOLE.ncwh
+workspace-download --directory CLOSED_PROJECT --request-id EXPORT_UUID --out WHOLE.ncwh
+workspace-list --directory CLOSED_PROJECT
+workspace-transfer --directory CLOSED_PROJECT --kind export|receive --request-id UUID
+workspace-receive --directory CLOSED_PROJECT --input WHOLE_INPUT_ALIAS --name CHILD_NAME --request-id UUID
+```
+
+Declare the complete private file through the existing project setup with `kind: "workspace"`, its absolute file and full SHA-256. The original `prepare` command supports `--workspace-input WHOLE.ncwh --sha256 SHA --input ALIAS`; retain all other required original project setup inputs. The installed `workspace-receive` selects that declared alias. These commands use `--request-id`; the direct source workspace CLI above uses `--request`. Do not interchange their directory types or flags. An open installed project uses its authenticated MCP/browser owner instead of an overlapping offline invocation.
 
 ### Native model and customer-agent course
 
