@@ -138,6 +138,8 @@ BOOT_FILES = (
     "operations_statement_profiles.py",
     "operations_statement_profiles.mjs",
     "operations_statement_profiles.css",
+    "operations_statement_batch.mjs",
+    "operations_statement_batch.css",
     "STATEMENT_SETUPS.md",
     "operations_statement_formats.py",
     "statement_parsers/__init__.py",

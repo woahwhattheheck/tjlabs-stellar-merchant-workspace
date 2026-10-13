@@ -95,6 +95,29 @@ The report shows the calculated balance and its difference from the stated closi
 
 For native files, the original parser's page and account controls remain visible alongside this operator-supplied reconciliation. Original OFX totals describe the supplied posted occurrences, including corrections and repeated occurrences; review these against the source snapshots and their dates. A source containing overlapping windows or correction records does not acquire a fabricated opening balance. MT940 booked-balance differences and conflicting original page identities prevent receiving even when the optional aggregate balances are omitted.
 
+## Review a group of statement rows
+
+For a statement with many movements, use **Work with selected rows** in the existing native preview. The controls work with exact source row numbers in that preview.
+
+1. Preview the mapped source against the current case. Apply a status or reference/description filter when useful.
+2. Select individual source rows, **Select rows on this page**, or **Select all matching rows**. Page selection covers the displayed page of up to 50 rows; matching selection covers every result under the currently applied filter. Selections accumulate and stay selected when paging or filtering. **Clear selection** removes the whole selection.
+3. Check the selected count and source movement totals. Amounts are added as exact decimal strings and kept separate by currency and inflow/outflow direction. The panel counts already-recorded, excluded, conflicted and unreadable movements. These totals describe selected source rows, including exclusions and already-recorded cash.
+4. Choose **Category / grant tranche**, **Exclude from this import**, or **Include in native review**. A category or tranche can remain unchanged. Explicitly clear an existing tranche before changing a row to a non-grant category. A tranche needs a grant inflow.
+5. Enter the reason to append to every changed row. Earlier reasons remain intact. **Review selected-row changes** displays the complete proposed before/after decision, its original reference and description, and its retained invoice allocation count. Page through the proposed changes or download the complete proposal.
+6. **Apply these row decisions** updates only the editable browser draft. Use **Preview updated decisions** to run the existing native parser, duplicate checks, cash validator, source limits and balance reconciliation. Confirm and import through the original statement action.
+
+Classification skips rows already recorded in the current preview. Excluding an already-recorded source row omits it from this receiving decision; it does not void the existing cash observation. Including an excluded row sends its original facts through native review again. Source errors, changed cash facts and repeated identities keep their original conflict behavior.
+
+Group changes preserve every original allocation and source field. Invoice allocation changes remain individual decisions in **Invoice allocations**. If an appended reason would exceed the original 4,000-character bound, the proposal identifies that row and stays unapplied. No invalid row is silently dropped.
+
+### Recover or undo the current group change
+
+**Undo last group change** restores the exact previous decision array while that preview and the newly applied decisions remain current. A subsequent individual edit, mapping/source/account change or new native preview ends that undo point. Those changes also clear the old selection and proposed batch so a source row number cannot silently refer to another interpretation.
+
+The existing Staff-scoped browser draft retains selected rows, current batch controls and the current undo point alongside the original inputs and decisions. A page reload can continue the same current preview; a changed case version requires a new preview. Downloaded recovery files preserve every applied per-row decision and original source. Opening a recovery file requires fresh native review and starts a new selection.
+
+An import or setup request already awaiting its original response locks these editing controls. Resume that exact original request first. The final saved review, recorded cash, complete case ZIP and independent receiving retain the same explicit per-row decisions through the existing native transaction and source history.
+
 ## Receive the exact reviewed batch
 
 After reviewing the rows, classifications, invoice allocations and balances, confirm the preview and select Import reviewed cash movements. The original case version and preview SHA bind the request to the complete source bytes and interpretation.
