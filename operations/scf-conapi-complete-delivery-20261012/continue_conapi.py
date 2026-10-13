@@ -22,6 +22,7 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 from preserve_delivery import atomic_json, save_complete_delivery
+from workbook_following import run_workbook_following
 
 SOURCE_REF = "e5520a2a962ccebc461d478edf6aebb4b6c7fb20"
 ORIGINAL_OPERATION = "SCF-DATASETTE-SOURCE-EDITIONS-07476-20261012"
@@ -65,9 +66,10 @@ def observe_capacity():
     return result
 
 
-def run_native(command, root, *, lease, interruption):
+def run_native(command, root, *, lease, interruption, label="conapi-native",
+               operation=PRODUCT_OPERATION, source_ref=SOURCE_REF):
     """Keep full output and the original lock with the accepted native child."""
-    output, error = root / "conapi-native.stdout", root / "conapi-native.stderr"
+    output, error = root / (label + ".stdout"), root / (label + ".stderr")
     if interruption:
         return {"returncode": 128 + interruption["number"], "started": False,
                 "stdout": str(output), "stderr": str(error)}
@@ -83,8 +85,8 @@ def run_native(command, root, *, lease, interruption):
         dropping = {"stdout": False, "stderr": False}
         interruption_reported = False
         receipt_path = root / "conapi-native-invocations" / (str(time.time_ns()) + "-" + str(process.pid) + ".json")
-        receipt = {"schema": "commons.conapi-native-invocation.v1", "operation": PRODUCT_OPERATION,
-                   "sourceRef": SOURCE_REF, "state": "ACCEPTED", "pid": process.pid,
+        receipt = {"schema": "commons.conapi-native-invocation.v1", "operation": operation,
+                   "sourceRef": source_ref, "state": "ACCEPTED", "pid": process.pid,
                    "command": list(command), "startedAt": time.time(),
                    "stdout": str(output), "stderr": str(error)}
 
@@ -112,7 +114,7 @@ def run_native(command, root, *, lease, interruption):
         try:
             atomic_json(receipt_path, receipt)
             emit({"stage": "conapi_native_accepted", "pid": process.pid, "root": str(root),
-                  "source_ref": SOURCE_REF, "operation": PRODUCT_OPERATION,
+                  "source_ref": source_ref, "operation": operation,
                   "lease": "inherited-original-open-file-description", "receipt": str(receipt_path),
                   "stdout": str(output), "stderr": str(error)})
             with output.open("rb") as observed_out, error.open("rb") as observed_err:
@@ -154,6 +156,10 @@ def main():
     parser.add_argument("--transport-programme", type=Path)
     parser.add_argument("--transport-metadata", type=Path)
     parser.add_argument("--flow-delivery", type=Path)
+    parser.add_argument("--workbook-source-root", type=Path,
+                        help="Existing complete checkout with the merged workbook PR883 source.")
+    parser.add_argument("--workbook-output", type=Path,
+                        help="Original workbook output directory when continuing an already selected run.")
     args = parser.parse_args()
     root = args.root
     if not root.is_absolute() or root.resolve() != root:
@@ -238,10 +244,23 @@ def main():
             state_file = output / "conapi-operating-programme.json"
             if state_file.is_file():
                 result["programme"] = read(state_file)
-                result["state"] = result["programme"]["phase"]
+                if result["native"]["returncode"] == 0:
+                    result["state"] = result["programme"]["phase"]
             if result["native"]["returncode"] != 0:
                 result["error"] = {"message": "The original native programme returned " + str(result["native"]["returncode"]),
                                    "stderr": result["native"]["stderr"]}
+            if result["native"]["returncode"] == 0 and result["state"] in ("COMPLETE", "SUPPLIER_RECEIVING_COMPLETE"):
+                original_phase = result["state"]
+                result["state"] = "WORKBOOK_CONTINUATION"
+                result["workbook"] = run_workbook_following(
+                    root=root, node=node, original_input=original_input, programme=result["programme"],
+                    source_root=args.workbook_source_root, output_directory=args.workbook_output, emit=emit,
+                    run_native=lambda command: run_native(
+                        command, root, lease=lock, interruption=interruption,
+                        label="conapi-workbook-native",
+                        operation="CONAPI-SUPPLIER-WORKBOOK-RECEIVING-7A2F-20261012",
+                        source_ref=command[command.index("--source-commit") + 1]))
+                result["state"] = original_phase
             result["finishedAt"] = time.time()
             result["capacityAfter"] = observe_capacity()
         except BaseException as error:
