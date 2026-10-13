@@ -1,3 +1,4 @@
+import type {Account,CustomerAccountIntakePreview} from './accounting-customer-responses.mjs';
 import type {Cash, Credit} from './accounting-financial-control.mjs';
 // MIT. Declarations for original receivables command line operations and file delivery.
 import type {
@@ -15,7 +16,10 @@ export type ReceivablesPrepareArguments<K extends ReceivablesMutation = Receivab
   };
 export type ReceivablesPreparePreview =
   ReceivablesOperationConnection & {actor: string; requestId?: string; arguments?: never} &
-  ({kind: 'invoice_issue'; preview: CompleteInvoicePreview;reviewOptions?:{creditDecisionId?:string}} |
+  ({kind:'customer_account_publish';preview:Account.PublicationPreview} |
+    {kind:'customer_response_receive';preview:CustomerAccountIntakePreview} |
+    {kind:'customer_response_review';preview:Account.ResponseReviewPreview} |
+    {kind: 'invoice_issue'; preview: CompleteInvoicePreview;reviewOptions?:{creditDecisionId?:string}} |
     {kind: 'payment_create'; preview: PaymentRequestPreview} |
     {kind: 'refund_commit'; preview: RefundPreview} |
     {kind: 'credit_disposition_apply'; preview: CreditDispositionPreview} |

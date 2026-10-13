@@ -1,3 +1,8 @@
+import {CUSTOMER_ACCOUNT_METHODS,CUSTOMER_ACCOUNT_ACTIONS,CUSTOMER_ACCOUNT_SELECTORS} from './accounting-customer-responses.mjs';
+import {accountingCustomerPublicationPreview,accountingCustomerPublicationArguments,accountingCustomerResponsePreview,
+  accountingCustomerResponseArguments,accountingCustomerResponseReviewPreview,accountingCustomerResponseReviewArguments} from './accounting-customer-response-client.mjs';
+export {accountingCustomerPublicationPreview,accountingCustomerPublicationArguments,accountingCustomerResponsePreview,
+  accountingCustomerResponseArguments,accountingCustomerResponseReviewPreview,accountingCustomerResponseReviewArguments} from './accounting-customer-response-client.mjs';
 // MIT. Original invoice and collection workflows over one merchant MCP connection.
 import {createHash} from 'node:crypto';
 import {openMerchantFileClient} from './retained-download.mjs';
@@ -37,6 +42,7 @@ function identity(value) {
 }
 export const ACCOUNTING_RECEIVABLES_METHODS = Object.freeze({
   ...FINANCIAL_CONTROL_METHODS,
+  ...CUSTOMER_ACCOUNT_METHODS,
   status: 'status', saveSettings: 'settings', saveDraft: 'draft_save', importQuote: 'quote_import',
   invoicePreviewSummary: 'invoice_preview', issueInvoice: 'invoice_issue', invoice: 'invoice_detail',
   voidInvoice: 'invoice_void', issueCredit: 'credit', recordReceipt: 'receipt_record', voidReceipt: 'receipt_void',
@@ -59,6 +65,7 @@ export const ACCOUNTING_RECEIVABLES_METHODS = Object.freeze({
 const OPERATIONS = new Set(Object.values(ACCOUNTING_RECEIVABLES_METHODS));
 const ACTIONS = Object.freeze({
   ...FINANCIAL_CONTROL_ACTIONS,
+  ...CUSTOMER_ACCOUNT_ACTIONS,
   remittance_apply: 'remittance_applied',
   settings: 'settings_saved', draft_save: 'draft_saved', quote_import: 'quote_imported',
   invoice_issue: 'invoice_issued', invoice_void: 'invoice_voided', credit: 'credit_issued',
@@ -233,7 +240,7 @@ function nativeIntent(kind, input) {
   if (kind === 'draft_save' && Object.hasOwn(value, 'invoiceId')) {
     const id = value.invoiceId; delete value.invoiceId; value.id = id;
   }
-  const selector = FINANCIAL_CONTROL_SELECTORS[kind] ?? (['invoice_issue', 'invoice_void', 'credit', 'payment_create'].includes(kind) ? 'invoiceId' :
+  const selector = CUSTOMER_ACCOUNT_SELECTORS[kind] ?? FINANCIAL_CONTROL_SELECTORS[kind] ?? (['invoice_issue', 'invoice_void', 'credit', 'payment_create'].includes(kind) ? 'invoiceId' :
     kind === 'receipt_void' ? 'receiptId' : kind === 'release' ? 'allocationId' :
     ['payment_cancel', 'payment_return', 'payment_receive'].includes(kind) ? 'paymentRequestId' :
     ['refund_cancel', 'refund_reverse', 'refund_return', 'refund_receive'].includes(kind) ? 'refundId' :
@@ -345,6 +352,14 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
       return {bytes: Buffer.concat(parts, length), file: metadata};
     },
 
+    customerAccountFile({publicationId,file},options){
+      identifier(publicationId,UUID,'original customer publication UUID');
+      return client.fileBytes({kind:'receivables-customer-account',publicationId,file},options);
+    },
+    customerResponseFile({customerResponseId,file},options){
+      identifier(customerResponseId,UUID,'original customer response UUID');
+      return client.fileBytes({kind:'receivables-customer-response',customerResponseId,file},options);
+    },
     collectionFile({collectionCaseId, file, asOf}, options) {
       identifier(collectionCaseId, UUID, 'original collection case UUID');
       return client.fileBytes({kind: 'receivables-collection', collectionCaseId, file,
@@ -446,6 +461,22 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
   };
   for (const [name, operation] of Object.entries(ACCOUNTING_RECEIVABLES_METHODS))
     client[name] = (args = {}, options) => client.callOperation(operation, args, options);
+  for(const [method,validator]of [
+    ['previewCustomerAccount',accountingCustomerPublicationPreview],
+    ['previewCustomerResponse',accountingCustomerResponsePreview],
+    ['previewCustomerResponseReview',accountingCustomerResponseReviewPreview]
+  ]){
+    const original=client[method];client[method]=async(args,options)=>{
+      const result=validator(await original(args,options));
+      if(method==='previewCustomerAccount')need(result.publicationId===args.publicationId&&result.customerId===args.customerId&&
+        (args.asOf===undefined||result.asOf===args.asOf),'The reviewed customer publication belongs to another selection.','PREVIEW');
+      else if(method==='previewCustomerResponse')need(result.source.publicationId===args.publicationId&&
+        (args.responseText===undefined||result.source.responseText===args.responseText),'The received response differs from the selected original input.','PREVIEW');
+      else need(result.responseId===args.customerResponseId&&result.entry.id===args.entryId&&
+        result.responseVersion===args.expectedVersion,'The reviewed customer entry belongs to another original selection.','PREVIEW');
+      return result;
+    };
+  }
   const paymentPreview = client.previewPaymentRequest;
   client.previewPaymentRequest = async (args, options) => {
     const result = accountingPaymentRequestPreview(await paymentPreview(args, options));
