@@ -1,0 +1,64 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "transport-planning-workbench",
+  "description": "Complete installed transportation operating-source, service, performance, scenario, action and report workflow using privately supplied original source and full independent customer receiving.",
+  "commands": {
+    "transport-planning-workbench": "products/transport-planning-workbench/cli.mjs",
+    "transport-planning-workbench-prepare": "products/transport-planning-workbench/prepare.mjs",
+    "transport-planning-workbench-managed": "products/transport-planning-workbench/managed.mjs",
+    "transport-planning-workbench-receive": "products/transport-planning-workbench/receive.mjs"
+  },
+  "commandDescriptions": {
+    "transport-planning-workbench": "Operate the unchanged original transportation CLI with reviewed private source, workspace, Python and Node",
+    "transport-planning-workbench-prepare": "Prepare and independently receive all private original source with actual selected Python and Node observations",
+    "transport-planning-workbench-managed": "Run the original transportation planning application through managed Applications",
+    "transport-planning-workbench-receive": "Adopt the original native programme and operate full browser/customer-agent/onward receiving"
+  },
+  "exports": {
+    "./transport-planning-workbench/connection": "./source/products/transport-planning-workbench/connection.mjs",
+    "./transport-planning-workbench/managed": "./source/products/transport-planning-workbench/managed.mjs",
+    "./transport-planning-workbench/mcp": "./source/products/transport-planning-workbench/mcp.mjs",
+    "./transport-planning-workbench/setup": "./source/products/transport-planning-workbench/setup.mjs",
+    "./transport-planning-workbench/prepare": "./source/products/transport-planning-workbench/prepare.mjs"
+  },
+  "applicationProviders": {
+    "transport-planning-workbench": "products/transport-planning-workbench/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "transport-planning-workbench": "products/transport-planning-workbench/merchant-provider.mjs"
+  },
+  "runtimePackageManifests": {
+    "transport-planning-workbench": "products/transport-planning-workbench/runtime-package.json"
+  },
+  "components": [
+    "products/transport-planning-workbench"
+  ],
+  "supportFiles": [
+    "products/transport-planning-workbench/OPERATING.md",
+    "products/transport-planning-workbench/PREPARING.md",
+    "products/transport-planning-workbench/RECEIVING.md",
+    "products/transport-planning-workbench/application-provider.mjs",
+    "products/transport-planning-workbench/browser-bootstrap.mjs",
+    "products/transport-planning-workbench/cli.mjs",
+    "products/transport-planning-workbench/connection.mjs",
+    "products/transport-planning-workbench/files.mjs",
+    "products/transport-planning-workbench/managed.mjs",
+    "products/transport-planning-workbench/managed_host.py",
+    "products/transport-planning-workbench/mcp.mjs",
+    "products/transport-planning-workbench/merchant-provider.mjs",
+    "products/transport-planning-workbench/preparation.py",
+    "products/transport-planning-workbench/prepare.mjs",
+    "products/transport-planning-workbench/receive.mjs",
+    "products/transport-planning-workbench/receiving-browser.mjs",
+    "products/transport-planning-workbench/receiving-original.py",
+    "products/transport-planning-workbench/receiving.mjs",
+    "products/transport-planning-workbench/requests.mjs",
+    "products/transport-planning-workbench/runtime-package.json",
+    "products/transport-planning-workbench/setup.mjs",
+    "products/transport-planning-workbench/source-manifest.schema.json",
+    "products/transport-planning-workbench/tools.mjs",
+    "stellar-forge/developer-site/GRANT_TRANSPORT_PLANNING_WORKBENCH.md",
+    "stellar-forge/developer-site/grant-products/transport-planning-workbench.json",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/transport-planning-workbench.json"
+  ]
+}

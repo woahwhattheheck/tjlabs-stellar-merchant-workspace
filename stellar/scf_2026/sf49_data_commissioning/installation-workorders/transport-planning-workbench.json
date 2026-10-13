@@ -1,0 +1,108 @@
+{
+  "schema": "stellar-forge.installation-workorder-profile.v1",
+  "id": "transport-planning-workbench",
+  "title": "Transport Planning Workbench customer commissioning",
+  "task": {
+    "name": "Commission complete source-to-report transportation planning production",
+    "purpose": "Give the responsible planner one editable workflow from original service rules and operating exports through source corrections, reviewed performance, explicit scenarios, accountable actions, report editions and independently usable handover.",
+    "request": "Receive actual Workshare and Installation selections. Identify customer, transportation planner, data owner, reporting period and original equipped receiving operation. Prepare all privately supplied original application source with literal authority and actual Python/Node identities. Adopt the original saved workspace. Retain complete documents and CSVs with source families, field mappings, units, record and rider namespaces and source predecessors. Review governing service rules and metric denominators before publication. Operate source corrections, exact native command replay, selected performance periods, explicit integer-cent scenarios, dependency-complete action plans and report editions. Register host-declared customer-agent inputs and separate receiving destinations. Export full original workspace and application, independently receive and edit, cold reopen and view every outgoing report/archive. Record actual acceptance through existing Installation.",
+    "completeOutput": "A complete reviewed transportation planning edition: original source documents/rows and corrections, explicit service-rule/period/metric choices, source-bound performance and limitations, reviewed assumptions/scenarios, accountable actions and report editions, full request/history/runtime/source custody and independently editable receiving.",
+    "repeatTrigger": "A distinct approved operating-data period, service-rule change or commissioned scenario/report edition becomes a linked task. Retrying an existing command, reading ranges, copying or reopening the same result remains the original task.",
+    "pricedUnit": "One agreed complete source-to-report planning baseline or accepted recurring edition. Preserve original integer atomic price/count/budget, spending, supplier, payment and acceptance choices. Planning judgment, hosting, private data custody, source maintenance and report approval remain explicit responsibilities."
+  },
+  "source": {
+    "reference": "Select complete authorized private original application and literal source-manifest/SHA, actual Python and Node executables, all original source CSV/document bytes and provenance, governing service-rule editions, original saved workspace and full archive/result selections. Keep private customer terms and case authority separate from generic public wrappers.",
+    "mode": "The unchanged original Workspace owns SQLite source/history/command transactions and full snapshots. Operations owns intake, service/rule review, performance publication, scenarios/actions/reports. The original Node evaluator preserves service and metric meanings. Installed browser, CLI, Applications and MCP use this same application.",
+    "population": "Retain all selected source rows, identifiers, original documents, original/corrected source editions, mappings/defaults, input errors, duplicates/conflicts, missing timing/rider coverage, published observations and qualifiers. Preserve every native request, source byte, event, record/history and publication in complete recovery.",
+    "meaning": "Trip legs and round trips, coupon books and vouchers remain distinct units. Source rider namespaces prevent accidental cross-provider deduplication. Published aggregate observations are not current operating baselines. Cost-per-unit requires supported period/unit/coverage; unknowns remain unknown. Scenario assumptions and planner judgments are explicit; delivery records are authored statements, not transmission evidence.",
+    "changePolicy": "Preserve exact request.id/command/args and host-selected actor before dispatch. The original atomic command journal returns committed results on identical replay without replacing later edits. Changed requests or source editions are deliberate. Keep original expected revisions and source-family predecessor selections; full observed HTTP errors do not imply no effects."
+  },
+  "receiving": {
+    "application": "TJLabs Transport Planning Workbench at products/transport-planning-workbench; commands transport-planning-workbench, -prepare, -managed and -receive. The complete original application is supplied privately by literal authority; public adapters do not redistribute private source or case terms.",
+    "acceptanceRule": "Verify all private source members and actual selected Python/Node identities. Operate the original populated source/service/performance/scenario/action/report controls and complete customer-agent file paths. Preserve the full original native result and source selection. Export full recovery/application archives, independently receive through original readers, retain later edits and cold reopen. Personally view desktop/narrow screens, every outgoing attachment and reopened download.",
+    "changeAndWithdraw": "Use original source-family succession, record revision checks, scenario/action/report editions and Installation change/withdraw. Preserve all prior data, rules, assumptions, decisions, reports, delivery records and commands. Stop/reopen preserves the same saved workspace and does not fabricate acceptance.",
+    "recovery": "Inspect retained full request/body and native command journal. Identical original commands safely replay. Whole application/recovery receiving selects its exact original archive and new independent target; uncertain acknowledgement retains that same destination for inspection and never silently substitutes a target or combines unrelated workspaces.",
+    "maintenance": "Deliver generic adapter source through maintained public distribution; retain full authorized private application/data/runtime/operating archives through existing private custody. Preserve original native, source, sender and receiver owners. Private source-transfer, native recovery and complete installed application archives remain distinct complete inventories."
+  },
+  "steps": [
+    {
+      "title": "Receive task and original authority",
+      "result": "Join actual Workshare/Installation, customer, services, source owners, period/population, planner/reviewer and original operation. Preserve assignments and payment selections."
+    },
+    {
+      "title": "Prepare and independently receive private source",
+      "result": "Verify every literal source member and executable SOURCE_FILES closure; observe actual selected Python and Node on each host, retaining the full source transfer."
+    },
+    {
+      "title": "Review, save and start the original Application",
+      "result": "Bind private source, workspace, selected executables, host actor and connection through maintained Applications. Preserve original attribution and actual listener ownership."
+    },
+    {
+      "title": "Retain documents and preview original CSVs",
+      "result": "Keep full original bytes, names, dates and provenance. Review original field mapping, defaults, units, errors and missing coverage before accepting sources."
+    },
+    {
+      "title": "Import complete original and corrected editions",
+      "result": "Select exact source family and current predecessor. Retain all originals, rows, errors, duplicate/conflict states and source revisions."
+    },
+    {
+      "title": "Review service and metric definitions",
+      "result": "Bind governing service revisions and dates. Keep trip/round-trip/book/voucher units, namespaces, period and denominators explicit."
+    },
+    {
+      "title": "Publish source-bound performance and scenarios",
+      "result": "Select complete validated source editions and periods. Inspect whole native outputs and exact integer-cent cost lines; label assumptions and retain reviewed scenario editions."
+    },
+    {
+      "title": "Maintain accountable actions and report editions",
+      "result": "Keep owners, dates, dependencies, costs/effort, sources and completion evidence. Publish plans only with complete dependencies and reports with selected original references."
+    },
+    {
+      "title": "Export complete native working and recipient outputs",
+      "result": "Retain full source documents, JSON/CSV/HTML/ZIP editions, native SQLite recovery and complete application. Delivery events record only actual authored status."
+    },
+    {
+      "title": "Receive independently and inspect outgoing product",
+      "result": "Use unchanged original readers, exact commands, later technical edits and cold reopen. Personally view desktop/narrow controls, all attachments and full reopened archives."
+    },
+    {
+      "title": "Record actual acceptance and useful next edition",
+      "result": "Save observed source/result/receiver and customer criteria through existing Installation. Only distinct approved work creates additional tasks."
+    }
+  ],
+  "inputs": [
+    "Actual Workshare/Installation: customer, services, reporting period and complete population, named owners/reviewers, network/asset/recipient, integer atomic price/count/budget, spending and acceptance.",
+    "Complete authorized private original application, literal source authority/SHA, provenance and actual Python3.12+/Node18+ executables; generic public integration remains separate.",
+    "Complete original trip/coupon/cost/observation CSVs, source names/URLs/dates, field mappings/defaults, units, original record/rider namespaces and current family predecessors.",
+    "Retained original rule documents, governing service editions/effective dates, reporting periods, cost/timing/rider coverage and planner-approved denominator choices.",
+    "Explicit scenario assumptions and integer-cent cost lines; accountable actions with owners/dependencies/dates/evidence; full source-linked report sections and recipient selections.",
+    "Original completed operating result where available, entire original workspace/application archives, full request/history and independent received workspaces without merging unrelated identities.",
+    "Actual personally viewed desktop/narrow screens, important controls, every complete outgoing report/download/ZIP and reopened source/data/history with original equipped programme receipts."
+  ],
+  "sourceFiles": [
+    {
+      "path": "products/transport-planning-workbench/tools.mjs",
+      "blob": "eabe2d7e6b07f112ceebd8bfe3f9275ad42214b7"
+    },
+    {
+      "path": "products/transport-planning-workbench/mcp.mjs",
+      "blob": "a5408c1ec10669421e46d467ec76b648c057bb89"
+    },
+    {
+      "path": "products/transport-planning-workbench/requests.mjs",
+      "blob": "685ebb444b871f80a3517b8608db7e0b1005b338"
+    },
+    {
+      "path": "products/transport-planning-workbench/files.mjs",
+      "blob": "dd3289990c548aa0ff33b033e0101ae1bb21c21d"
+    },
+    {
+      "path": "products/transport-planning-workbench/setup.mjs",
+      "blob": "de20758b416e70a392c5d21226faa2f93310b87a"
+    },
+    {
+      "path": "products/transport-planning-workbench/source-manifest.schema.json",
+      "blob": "129e8fbe5c5b5d49ab2574070948a2a0d6358d6a"
+    }
+  ]
+}
