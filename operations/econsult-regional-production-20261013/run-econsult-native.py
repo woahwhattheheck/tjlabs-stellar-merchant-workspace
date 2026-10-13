@@ -265,6 +265,7 @@ def main():
     parser.add_argument("--chromium", required=True)
     parser.add_argument("--playwright-module", required=True)
     parser.add_argument("--pdfinfo", default="pdfinfo")
+    parser.add_argument("--weasyprint-python", help="Explicit permitted WeasyPrint renderer Python; retain its true renderer identity")
     parser.add_argument("--archive-directory")
     options = parser.parse_args()
     packet, packet_bytes = read_packet(options.packet, options.packet_sha256)
@@ -347,7 +348,8 @@ def main():
         playwright = pathlib.Path(options.playwright_module).resolve(strict=True)
         check(browser.is_file() and os.access(browser, os.X_OK) and playwright.is_file(),
               "Select the existing browser executable and complete Playwright module.")
-        # Reuse the installed browser. Keep its temporary profiles in this operation.
+        # Reuse the installed browser. Chromium's Unix socket needs a short
+        # temporary path independent of the retained operation's directory length.
         launcher = controllers / "chromium-owned-tmp.py"
         launcher_bytes = ("#!" + sys.executable + "\nimport os,sys\nbrowser=" + repr(str(browser))
                           + "\nos.execv(browser,[browser,'--disable-dev-shm-usage',*sys.argv[1:]])\n").encode()
@@ -355,7 +357,20 @@ def main():
         os.chmod(launcher, 0o700)
         environment = dict(os.environ)
         environment["PYTHONDONTWRITEBYTECODE"] = "1"
-        environment["TMPDIR"] = str(private_directory(root.parent / (root.name + "-runtime-tmp")))
+        environment["TMPDIR"] = str(private_directory(pathlib.Path("/tmp") / ("econsult-" + sha(str(root).encode())[:12])))
+        renderer_selection = inputs / "pdf-renderer-selection.json"
+        check(options.weasyprint_python or not renderer_selection.exists(),
+              "Resume this operation with its retained --weasyprint-python selection.")
+        environment.pop("FRED_QCEW_WEASYPRINT_PYTHON", None)
+        pdf_renderer = {"engine": "Chromium", "executable": str(browser)}
+        if options.weasyprint_python:
+            renderer = pathlib.Path(options.weasyprint_python).absolute()
+            check(renderer.is_file() and os.access(renderer, os.X_OK), "Select an installed WeasyPrint Python executable.")
+            version = subprocess.check_output([str(renderer), "-m", "weasyprint", "--version"], text=True).strip()
+            check(version.startswith("WeasyPrint") and len(version) <= 500, "Verify the selected document renderer.")
+            pdf_renderer = {"engine": "WeasyPrint", "executable": str(renderer), "version": version}
+            retain_exact(renderer_selection, (json.dumps(pdf_renderer, indent=2) + "\n").encode())
+            environment["FRED_QCEW_WEASYPRINT_PYTHON"] = str(renderer)
         state_path = root / "run.json"
         if state_path.exists():
             state = json.loads(read_regular(state_path).decode("utf-8"))
@@ -376,7 +391,8 @@ def main():
               "Continue the original Research product receiving with its retained selection.")
         state.update({"lastStartedAt": now(), "status": "running", "sourceEdition": source_edition,
                       "runtime": {"node": versions, "python": sys.version, "chromium": str(browser),
-                                  "playwright": str(playwright)}})
+                                  "playwright": str(playwright), "temporaryDirectory": environment["TMPDIR"],
+                                  "pdfRenderer": pdf_renderer}})
         state.pop("error", None)
         state.pop("completedAt", None)
         atomic_json(state_path, state)

@@ -372,7 +372,13 @@ export async function runFredResearchJourney({directory,researchDirectory,inputF
     });
     await step('preserve_original_economic_editions',async()=>{
       const originalState=JSON.parse(await readFile(join(directory,'original-project-state.json'),'utf8'));
-      const current=(await attachment.client.state()).project;
+      const provider=(await attachment.client.state()).project;
+      // The browser view adds optional defaults and omits operation fingerprints.
+      // Compare the complete persisted state on both sides, with the provider bound
+      // to that exact project and revision, so every original member stays checked.
+      const current=await readFredProject(project);
+      need(provider.id===current.id&&provider.revision===current.revision,
+        'The provider changed project or revision during original state receiving.');
       need(equal(quantitative(originalState),quantitative(current)),'An original quantitative project member changed during Research operation.');
       need(originalState.operations.every((item,index)=>equal(item,current.operations[index])),'Original economic operation history changed.');
       for(const product of before.products){

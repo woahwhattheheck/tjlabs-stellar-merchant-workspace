@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { createServer } from 'node:http';
 import { startFredWorkspace } from '../workspace.mjs';
 import { readFredProject } from '../project.mjs';
 import { privateDirectory, atomicJson, readPrivateJson } from '../../routescan/quota.mjs';
@@ -24,6 +25,25 @@ async function exact(file,bytes){
  await writeFile(temporary,bytes,{flag:'wx',mode:0o600});
  try{try{await link(temporary,file);}catch(error){if(error.code!=='EEXIST')throw error;need((await readFile(file)).equals(bytes),'Concurrent original output changed.');}}
  finally{await unlink(temporary);}
+}
+async function originalAttachmentViewer(files){
+ const prefix='/'+randomUUID()+'/',members=new Map();
+ for(const member of files){
+  const bytes=Buffer.from(member.bodyBase64,'base64');
+  need(bytes.length===member.bytes&&sha(bytes)===member.sha256,'Original attachment bytes changed.');
+  members.set(prefix+member.path,{bytes,type:member.contentType});
+ }
+ const server=createServer((request,response)=>{
+  let member;
+  try{member=members.get(decodeURIComponent(new URL(request.url,'http://127.0.0.1').pathname));}catch{}
+  if(!member||!['GET','HEAD'].includes(request.method)){response.writeHead(404);response.end();return;}
+  response.writeHead(200,{'content-type':member.type,'content-length':member.bytes.length,
+   'cache-control':'no-store','x-content-type-options':'nosniff'});
+  response.end(request.method==='HEAD'?undefined:member.bytes);
+ });
+ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
+ return {url:path=>'http://127.0.0.1:'+server.address().port+prefix+path.split('/').map(encodeURIComponent).join('/'),
+  close:()=>new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()))};
 }
 export async function runResearchCommerceBrowserCourse({directory,projectDirectory,customer,restored,financial,identity,journal,
  browserConfig,launchOptions={}}={}){
@@ -79,10 +99,10 @@ export async function runResearchCommerceBrowserCourse({directory,projectDirecto
  async function tab(name){await page.locator('[data-tab="'+name+'"]').click();}
  async function snapshot(name,width=1440,height=1000,target=page){
   await target.setViewportSize({width,height});await target.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
-  const relative='views/'+name+'.png';await mkdir(file('views'),{recursive:true});
-  if(!state.files.some(row=>row.path===relative))await retain(relative,await target.screenshot({fullPage:true}));
   const view=await target.evaluate(()=>({title:document.title,viewport:innerWidth,documentWidth:document.documentElement.scrollWidth,text:document.body.innerText}));
   need(view.documentWidth<=width+1,'The actual '+name+' view overflows at '+width+'px.');
+  const relative='views/'+sha(sourceBytes)+'/'+name+'.png';await mkdir(resolve(file(relative),'..'),{recursive:true});
+  if(!state.files.some(row=>row.path===relative))await retain(relative,await target.screenshot({fullPage:true}));
   const value={name,path:relative,width,height,...view};state.views.push(value);await save();return value;
  }
  async function download(control,name,expected){
@@ -172,7 +192,7 @@ export async function runResearchCommerceBrowserCourse({directory,projectDirecto
   await step('complete-original-attachment-views',async()=>{
    await stop();const received=await readResearchEditionReceiving(join(directory,'customer'));
    const context=await browser.newContext({viewport:{width:1440,height:1000}}),viewer=await context.newPage();
-   const outputs=[];
+   const outputs=[];let attachments=null;
    try{
     // Every complete original is materialized before any HTML opens its relative links.
     for(const member of received.files){
@@ -180,12 +200,13 @@ export async function runResearchCommerceBrowserCourse({directory,projectDirecto
      need(bytes.length===member.bytes&&sha(bytes)===member.sha256,'Original received file changed.');
      await retain('attachments/'+member.path,bytes);
     }
+    attachments=await originalAttachmentViewer(received.files);
     for(const member of received.files){
      const bytes=Buffer.from(member.bodyBase64,'base64');need(bytes.length===member.bytes&&sha(bytes)===member.sha256,'Original received file changed.');
      const relative='attachments/'+member.path;await retain(relative,bytes);
      const type=member.contentType.split(';')[0].trim().toLowerCase();
      if(type==='text/html'||extname(member.path)==='.html'){
-      await viewer.goto(pathToFileURL(file(relative)).href);
+      await viewer.goto(attachments.url(member.path));
       await snapshot('attachment-'+sha(member.path).slice(0,16),1440,1000,viewer);
       await snapshot('attachment-'+sha(member.path).slice(0,16)+'-narrow',390,844,viewer);
      }else if(type==='application/pdf'||extname(member.path)==='.pdf'){
@@ -199,7 +220,7 @@ export async function runResearchCommerceBrowserCourse({directory,projectDirecto
       // Render complete plain source bytes safely in their recipient text/table view.
       if(type.startsWith('text/')||type.includes('json')||type.includes('xml')){
        const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
-       await viewer.goto('about:blank');await viewer.setContent('<!doctype html><html><head><meta charset="utf-8"><style>body{font:15px/1.5 system-ui;margin:20px}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style></head><body><h1></h1><pre></pre></body></html>');
+       await viewer.goto('about:blank');await viewer.setContent('<!doctype html><html><head><meta charset="utf-8"><style>body{font:15px/1.5 system-ui;margin:20px}h1,pre{overflow-wrap:anywhere}pre{white-space:pre-wrap}</style></head><body><h1></h1><pre></pre></body></html>');
        await viewer.locator('h1').evaluate((node,value)=>node.textContent=value,member.path);
        await viewer.locator('pre').evaluate((node,value)=>node.textContent=value,text);
        await snapshot('source-'+sha(member.path).slice(0,16),1440,1000,viewer);
@@ -209,7 +230,7 @@ export async function runResearchCommerceBrowserCourse({directory,projectDirecto
      outputs.push({path:relative,bytes:bytes.length,sha256:sha(bytes),contentType:member.contentType});
     }
     return {files:outputs,ownerInstruction:'Open and visually VIEW every actual screenshot and rendered PDF page, all original files and the whole received application; fix the affected exact output before customer presentation.'};
-   }finally{await context.close();}
+   }finally{await context.close();await attachments?.close();}
   });
   if(financial){
    await open(projectDirectory,true);

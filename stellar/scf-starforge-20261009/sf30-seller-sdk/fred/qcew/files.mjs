@@ -1,10 +1,11 @@
 // MIT. Immutable full report editions, native PDF production and exact file receiving.
-import { readFile, lstat, open, unlink, link } from 'node:fs/promises';
+import { readFile, lstat, open, unlink, link, mkdtemp, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { promisify } from 'node:util';
+import { createServer } from 'node:http';
 import { privateDirectory, atomicJson, readPrivateJson, withPrivateLock } from '../../routescan/quota.mjs';
 import { need, plain, canonical, clone, csvCell } from './model.mjs';
 import { digest, sha256 } from './source.mjs';
@@ -73,13 +74,48 @@ async function writeOwned(root,name,bytes) {
     }
   } finally {await file.close().catch(()=>{});await unlink(temporary).catch(error=>{if(error.code!=='ENOENT')throw error;});}
 }
+async function renderWeasyPdf(root,pythonPath) {
+  need(typeof pythonPath==='string'&&pythonPath.startsWith('/'),
+    'Select the absolute Python executable for the explicitly configured WeasyPrint renderer.');
+  const python=await lstat(pythonPath);
+  need(python.isFile()||python.isSymbolicLink(),'The configured WeasyPrint Python executable is not available.');
+  const pdfPath=join(root,'report.pdf');
+  let version;
+  try {version=(await run(pythonPath,['-m','weasyprint','--version'],{timeout:15000,maxBuffer:65536})).stdout.trim();}
+  catch {need(false,'The selected WeasyPrint renderer did not return its version.','QCEW_PDF_EXECUTION',502);}
+  need(/^WeasyPrint\b/.test(version)&&version.length<=500,'The selected document renderer version is invalid.');
+  try {
+    const stat=await lstat(pdfPath);
+    need(stat.isFile()&&!stat.isSymbolicLink(),'The report PDF path belongs to another file type.');
+    await unlink(pdfPath);
+  } catch(error) {if(error.code!=='ENOENT')throw error;}
+  const startedAt=new Date().toISOString();
+  try {await run(pythonPath,['-m','weasyprint','--encoding','utf-8',join(root,'report.html'),pdfPath],
+    {timeout:90000,maxBuffer:1024*1024});}
+  catch {need(false,'Selected WeasyPrint PDF production did not complete; resume this same report operation.','QCEW_PDF_EXECUTION',502);}
+  const stat=await lstat(pdfPath);
+  need(stat.isFile()&&!stat.isSymbolicLink()&&stat.size>8&&stat.size<=MAX_FILE,'The selected document renderer output is incomplete.');
+  const bytes=await readFile(pdfPath);
+  need(bytes.subarray(0,5).toString('ascii')==='%PDF-','The selected document renderer did not produce a PDF.');
+  return {file:serializeFile('report.pdf','application/pdf',bytes),
+    receipt:{engine:'WeasyPrint',version,startedAt,completedAt:new Date().toISOString(),
+      input:'report.html',inputSha256:sha256(await readFile(join(root,'report.html')))}};
+}
 async function renderPdf(root,browserPath) {
+  if(process.env.FRED_QCEW_WEASYPRINT_PYTHON)
+    return renderWeasyPdf(root,process.env.FRED_QCEW_WEASYPRINT_PYTHON);
   need(typeof browserPath==='string'&&browserPath.startsWith('/'),'Configure the existing native Chromium executable for PDF production.');
   const browser=await lstat(browserPath);
   need(browser.isFile()||browser.isSymbolicLink(),'The configured Chromium executable is not available.');
-  const userData=await privateDirectory(join(root,'.chromium')),pdfPath=join(root,'report.pdf');
+  // Chromium's Unix-domain socket must fit within 108 bytes. Report editions
+  // have long hash-based paths, so keep the disposable renderer profile in a
+  // private short-lived system temp directory, outside the durable report.
+  const runtimeTmp=await mkdtemp('/tmp/starforge-qcew-');
+  let server;
+  try {
+  const userData=await privateDirectory(join(runtimeTmp,'profile')),pdfPath=join(root,'report.pdf');
   let version;
-  try {version=(await run(browserPath,['--version'],{timeout:15000,maxBuffer:65536,env:{...process.env,TMPDIR:userData}})).stdout.trim();}
+  try {version=(await run(browserPath,['--version'],{timeout:15000,maxBuffer:65536,env:{...process.env,TMPDIR:runtimeTmp}})).stdout.trim();}
   catch {need(false,'The native Chromium executable did not return its version.','QCEW_PDF_EXECUTION',502);}
   need(version.length>0&&version.length<=500,'The native renderer version is invalid.');
   // A prior interrupted attempt may leave this operation's own incomplete PDF.
@@ -88,12 +124,25 @@ async function renderPdf(root,browserPath) {
     need(stat.isFile()&&!stat.isSymbolicLink(),'The native report PDF path belongs to another file type.');
     await unlink(pdfPath);
   } catch(error) {if(error.code!=='ENOENT')throw error;}
+  // Serve only this retained, self-contained report on loopback. Managed
+  // Chromium may disallow file: navigation while supporting local HTTP.
+  const html=await readFile(join(root,'report.html'));
+  server=createServer((request,response)=>{
+    if(request.method!=='GET'||request.url!=='/report.html') {
+      response.writeHead(404);response.end();return;
+    }
+    response.writeHead(200,{'Content-Type':'text/html; charset=utf-8',
+      'Content-Length':String(html.length),'Cache-Control':'no-store'});
+    response.end(html);
+  });
+  await new Promise((accept,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',accept);});
+  const reportUrl='http://127.0.0.1:'+server.address().port+'/report.html';
   const startedAt=new Date().toISOString();
   try {
     await run(browserPath,['--headless','--disable-gpu','--no-sandbox','--disable-dev-shm-usage',
       '--no-pdf-header-footer','--run-all-compositor-stages-before-draw','--no-first-run',
-      '--user-data-dir='+userData,'--print-to-pdf='+pdfPath,pathToFileURL(join(root,'report.html')).href],
-      {timeout:90000,maxBuffer:1024*1024,env:{...process.env,TMPDIR:userData}});
+      '--user-data-dir='+userData,'--print-to-pdf='+pdfPath,reportUrl],
+      {timeout:90000,maxBuffer:1024*1024,env:{...process.env,TMPDIR:runtimeTmp}});
   } catch {need(false,'Native PDF production did not complete; resume this same report operation.','QCEW_PDF_EXECUTION',502);}
   const stat=await lstat(pdfPath);
   need(stat.isFile()&&!stat.isSymbolicLink()&&stat.size>8&&stat.size<=MAX_FILE,'The native PDF output is incomplete.');
@@ -101,6 +150,13 @@ async function renderPdf(root,browserPath) {
   need(bytes.subarray(0,5).toString('ascii')==='%PDF-','The native renderer did not produce a PDF.');
   return {file:serializeFile('report.pdf','application/pdf',bytes),
     receipt:{engine:'Chromium',version,startedAt,completedAt:new Date().toISOString(),input:'report.html',inputSha256:sha256(await readFile(join(root,'report.html')))}};
+  } finally {
+    if(server?.listening) {
+      server.closeAllConnections();
+      await new Promise(accept=>server.close(accept));
+    }
+    await rm(runtimeTmp,{recursive:true,force:true});
+  }
 }
 export function validateQcewFilePackage(packet,{report,previousReport=null,expectedEdition=null,rebuildText=true}={}) {
   need(plain(packet)&&packet.manifest?.schema===QCEW_FILES&&Array.isArray(packet.files),'Receive every original report member and its manifest.');
@@ -143,7 +199,7 @@ export function validateQcewFilePackage(packet,{report,previousReport=null,expec
   need(files.has('report.pdf')===manifest.formats.includes('pdf'),'The retained output selection differs from its complete files.');
   if(files.has('report.pdf')) {
     const pdf=files.get('report.pdf'),receipt=manifest.renderer.pdf;
-    need(pdf.bytes.subarray(0,5).toString('ascii')==='%PDF-'&&receipt?.engine==='Chromium'&&typeof receipt.version==='string'&&
+    need(pdf.bytes.subarray(0,5).toString('ascii')==='%PDF-'&&['Chromium','WeasyPrint'].includes(receipt?.engine)&&typeof receipt.version==='string'&&
       receipt.input==='report.html'&&receipt.inputSha256===files.get('report.html').file.sha256,
       'The native PDF is not bound to the original report HTML.');
   } else need(manifest.renderer.pdf===null,'The native PDF receipt has no corresponding complete file.');
