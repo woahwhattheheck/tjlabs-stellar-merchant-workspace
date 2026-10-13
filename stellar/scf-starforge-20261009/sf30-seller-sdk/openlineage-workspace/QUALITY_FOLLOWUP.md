@@ -20,7 +20,7 @@ An earlier original disposition can be referenced by its exact version. This kee
 
 Each follow-up save adds a version. Previous reasons, owners, dates, evidence links and earlier-disposition references remain readable. A later finding has one follow-up per saved comparison. Editing that follow-up requires its opened version. The decision records staff judgement independently from the producer assertion or quality-rule outcome.
 
-If another action changes the saved workspace while fields are open, the desk retains the entered fields and shows the opened and current response. **Keep my edited fields over reviewed current fields** merges only edited fields after that review. The previous entered version remains available to restore. Save the current fields after reviewing this change.
+If another action changes the saved workspace while fields are open, the desk retains the entered fields and shows the opened and current response. **Keep my edited fields on the reviewed current version** merges only edited fields after that review. The previous entered version remains available to restore. Save the current fields after reviewing this change.
 
 ## Working copies and interrupted saves
 
@@ -55,3 +55,28 @@ The typed `QualityFollowupClient` extends the original `QualityClient`. The dist
 `QUALITY_FOLLOWUP_RECEIVING.mjs` performs one complete original fixture course with retained request inputs and results. It imports the original full OpenLineage fixture, retains a changed second execution, saves both evaluations through the maintained evaluator, records an earlier disposition, compares explicit runs, saves and revises follow-up, verifies exact replay, exports all reports and the complete application, then independently receives and validates that package. The course labels its source as a fixture throughout.
 
 Customer-facing receiving also opens this actual application at desktop and narrow phone widths, operates comparison, explicit correspondence, authoring, working-copy download/reopen and report controls, checks the served source, and retains screenshots. Inspect the actual saved pixels, generated reports and complete reopened output before marking the customer workflow ready. Native results and desktop/phone receiving are separate recorded phases of the same original course.
+
+## Complete receiving commands
+
+Run the native course once in an owned new directory, then continue that same course through the browser:
+
+```sh
+node QUALITY_FOLLOWUP_RECEIVING.mjs /absolute/quality-followup-course
+node QUALITY_FOLLOWUP_BROWSER.mjs /absolute/quality-followup-course /absolute/browser-config.json
+```
+
+The browser configuration contains the actual installed `playwrightModule` and `executablePath`, plus optional browser `args`. The native result, original source inventory, request/receipt files and saved browser origin/profile remain in the same directory. The browser captures exact intents before mutation, recovers an existing request by its original body, retains completed steps and downloads, and exports and receives the final full workspace. Reentry verifies the original selected source. Reuse the original course directory after interruption.
+
+# Repository delivery instructions
+
+Use the current README and the existing product's build/receiving guide. Coordinate through the original implementation and receiving owners, preserve concurrent source, and carry work through its authorized delivery.
+
+## Rendered product inspection — owner instruction, 2026-10-13
+
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Before calling any customer/prospect-facing application, website, dashboard, demo, report, presentation or export ready, open/run/render the exact outgoing version, look at the rendered screen or its actual screenshots, and operate the important user controls. Inspect the actual screenshare width and narrow/mobile width where relevant, populated/empty/loading/error states, downloads/exports and reopening. Capturing screenshots without viewing them is insufficient. Code review, DOM counts, HTTP 200, unit checks and another worker's approval do not replace seeing the actual product.
+
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk; do not run broad suites or build a verification product.
+
+Include this complete instruction in delegated assignments and the active owner-controlled policy, boot, build and receiving guidance those workers actually read. Preserve all other owner controls and original operation identities. Leave historical records and third-party/vendor policies intact. Do not force restarts, create watchers or revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999

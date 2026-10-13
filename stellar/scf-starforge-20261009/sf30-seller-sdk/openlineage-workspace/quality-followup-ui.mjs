@@ -189,15 +189,27 @@ export function installQualityFollowupDesk({getState, action, mutate, refresh, n
         comparisonRows(value, true),
         field("Saved comparison title", textInput("Saved comparison title", selection.title, value => {selection.title = value; changed();})),
         btn("Save reviewed comparison", () => task(async () => {
+          const context = {workspaceId: ui.workspaceId, draftId: ui.draftId, work: ui.work,
+            selection: clone(selection), preview: clone(ui.preview)};
+          const stillHere = () => identity().workspaceId === context.workspaceId && ui.workspaceId === context.workspaceId &&
+            ui.draftId === context.draftId && ui.work === context.work;
           await persist();
-          if (!current() || !ui.preview || ui.preview.revision !== identity().revision) throw new Error("Compare the current source before saving");
-          const result = await mutate("quality.followup.comparison.save", {beforeEvaluationId: selection.beforeEvaluationId,
-            afterEvaluationId: selection.afterEvaluationId, runPairs: clone(selection.runPairs), findingPairs: clone(selection.findingPairs),
-            title: selection.title, expectedComparisonHash: ui.preview.comparisonSha256}, "Quality comparison",
-            {expectedRevision: ui.preview.revision});
+          if (!stillHere() || !current() || !context.preview || context.preview.revision !== identity().revision)
+            throw new Error("Compare the current source in this original working copy before saving");
+          const submitted = context.selection;
+          const result = await mutate("quality.followup.comparison.save", {beforeEvaluationId: submitted.beforeEvaluationId,
+            afterEvaluationId: submitted.afterEvaluationId, runPairs: submitted.runPairs, findingPairs: submitted.findingPairs,
+            title: submitted.title, expectedComparisonHash: context.preview.comparisonSha256}, "Quality comparison",
+            {expectedRevision: context.preview.revision});
           if (!result) return;
-          ui.work.selectedComparisonId = result.comparison.id; ui.work.selectedRowId = ""; ui.tab = "followup";
-          ui.preview = null; changed(); await persist(); ui.key = null; await load();
+          if (result.comparison.workspaceId !== context.workspaceId || result.workspaceId && result.workspaceId !== context.workspaceId)
+            throw new Error("Saved comparison belongs to a different workspace; retain its original request receipt");
+          if (!stillHere()) return;
+          if (same(ui.work.selection, submitted)) {
+            ui.work.selectedComparisonId = result.comparison.id; ui.work.selectedRowId = ""; ui.tab = "followup";
+            ui.preview = null; changed(); await persist();
+          } else ui.feedback = "The submitted comparison is saved. Newer entered comparison choices remain in this working copy.";
+          ui.key = null; await load();
         }), {disabled: ui.busy || pending() || !selection.title.trim() || ui.preview.revision !== identity().revision}));
     }
     return view;
@@ -281,14 +293,27 @@ export function installQualityFollowupDesk({getState, action, mutate, refresh, n
           set("evidenceResultIds", event.target.checked ? [...draft.values.evidenceResultIds, value.id] : draft.values.evidenceResultIds.filter(id => id !== value.id));
         }}), value.title ?? value.name ?? value.id)) : p("Attach a complete result through the original Results workflow, then refresh this desk.")));
     form.append(btn("Save follow-up", () => task(async () => {
+      const context = {workspaceId: ui.workspaceId, draftId: ui.draftId, work: ui.work, draft,
+        values: clone(draft.values), basis: clone(basis), comparisonId: comparison.id, rowId: row.id};
+      const stillHere = () => identity().workspaceId === context.workspaceId && ui.workspaceId === context.workspaceId &&
+        ui.draftId === context.draftId && ui.work === context.work && ui.work.followups[key] === context.draft;
       await persist();
-      if (!current() || !same(draft.basis, basis) || identity().revision !== basis.revision) throw new Error("Review current saved fields before saving");
-      const result = await mutate("quality.followup.save", {...clone(draft.values), comparisonId: comparison.id, rowId: row.id,
-        ...(basis.id ? {id: basis.id, version: basis.version} : {})}, "Quality finding follow-up", {expectedRevision: basis.revision});
+      if (!stillHere() || !current() || !same(draft.basis, context.basis) || identity().revision !== context.basis.revision)
+        throw new Error("Review current saved fields in this original working copy before saving");
+      const result = await mutate("quality.followup.save", {...context.values, comparisonId: context.comparisonId, rowId: context.rowId,
+        ...(context.basis.id ? {id: context.basis.id, version: context.basis.version} : {})}, "Quality finding follow-up",
+        {expectedRevision: context.basis.revision});
       if (!result) return;
+      if (result.followup.workspaceId !== context.workspaceId || result.workspaceId && result.workspaceId !== context.workspaceId ||
+        result.followup.comparisonId !== context.comparisonId || result.followup.rowId !== context.rowId)
+        throw new Error("Saved follow-up differs from its original workspace and finding; retain its original request receipt");
+      if (!stillHere() || !same(draft.basis, context.basis)) return;
       const values = followupValues(result.followup);
-      draft.values = values; draft.opened = clone(values); draft.basis = {workspaceId: ui.workspaceId, revision: result.revision,
-        id: result.followup.id, version: result.followup.version}; changed(); await persist(); ui.key = null; await load();
+      draft.previous = clone({values: draft.values, opened: draft.opened, basis: draft.basis});
+      draft.values = mergeEdited(values, context.values, draft.values);
+      draft.opened = clone(values); draft.basis = {workspaceId: context.workspaceId, revision: result.revision,
+        id: result.followup.id, version: result.followup.version};
+      changed(); await persist(); ui.key = null; await load();
     }), {disabled: stale || pending() || ui.busy || !draft.values.reason.trim()}));
     if (existing) form.append(details("Complete saved follow-up and history", existing));
     return form;

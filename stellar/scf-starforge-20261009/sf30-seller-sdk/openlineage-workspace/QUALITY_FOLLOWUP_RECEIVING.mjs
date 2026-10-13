@@ -37,6 +37,16 @@ export async function receiveQualityFollowup(directory) {
     const workspace = new LineageWorkspace(join(root, "workspace"));
     await workspace.initialize("Quality follow-up — original OpenLineage fixture course");
     const initial = await workspace.read();
+    if (await exists(join(root, "NATIVE_RESULT.json"))) {
+      const completed = await read(join(root, "NATIVE_RESULT.json"));
+      assert.equal(completed.workspaceId, initial.workspaceId); assert.equal(completed.sourceSha256, digest(manifest));
+      assert.ok(initial.revision >= completed.revision);
+      const originalExport = await fs.readFile(join(root, "quality-followup-workspace.json"));
+      const reopened = verifyBundle(originalExport);
+      assert.equal(reopened.state.workspaceId, completed.workspaceId); assert.equal(reopened.state.revision, completed.revision);
+      validateQualityFollowup(initial, {deep: true});
+      return completed;
+    }
     await exact(join(root, "receiving-identity.json"), {workspaceId: initial.workspaceId, sourceSha256: digest(manifest)});
     host = await startServer({directory: workspace.directory, port: 0, expectedWorkspaceId: initial.workspaceId});
     const client = new QualityFollowupClient(host.url, {expectedWorkspaceId: initial.workspaceId, instanceId: host.identity.instanceId});
