@@ -16,6 +16,12 @@
           "bytes": 18809,
           "sha256": "6a3eb9a603789ab1624780fe033043d1f1c8d90f463a7520e9240b0339470c71",
           "git_blob": "d93100229299aa17de5eee7d6e2d2848bf6cbef1"
+        },
+        {
+          "commit": "6899166c0a5d85602a42c7a95190b9acf3d6e180",
+          "bytes": 20558,
+          "sha256": "c956bae70259b1ff65ff8824acfe4a48a805409eede6349df5dcb0498689c745",
+          "git_blob": "6fdcaffa7b9e6cc8ec463d905a1d873d6161ea0f"
         }
       ]
     },
@@ -32,6 +38,12 @@
           "bytes": 10306,
           "sha256": "5d7159f54e9cfc551ef14521b148425b24dfe2e165945466b0539b276372c6a4",
           "git_blob": "fcdf0e7eecb7fef5e5a1b06c401a3238467ce0ed"
+        },
+        {
+          "commit": "6899166c0a5d85602a42c7a95190b9acf3d6e180",
+          "bytes": 11672,
+          "sha256": "bf802c34a80ae1ffa72b0ece635b4c34c2d5b702fd0ef80456766fba35559ef5",
+          "git_blob": "92b6276193d3287f95c3930ad6af5f20a6c73cf1"
         }
       ]
     },
@@ -48,6 +60,12 @@
           "bytes": 6107,
           "sha256": "8e326dd65cb7bc1480a3c6dd27188c01e06f59002cf293fb2f7c2dd5908dd8ba",
           "git_blob": "c99952b030e6d27bc9a2951df11d08e4c3578a55"
+        },
+        {
+          "commit": "6899166c0a5d85602a42c7a95190b9acf3d6e180",
+          "bytes": 6624,
+          "sha256": "960e987d59f2049b343f8a28e117e6e30085d38edd58489fb50bd1df51c2cb2f",
+          "git_blob": "18f8c95e13c420f7a0acde445588f0800943758b"
         }
       ]
     },
@@ -64,6 +82,12 @@
           "bytes": 13376,
           "sha256": "890df935078c5fa51204dbf5e699c43c4f9f099f0630758777efcea4135b9847",
           "git_blob": "09873642abb08d234b352064647310cd11dcf354"
+        },
+        {
+          "commit": "6899166c0a5d85602a42c7a95190b9acf3d6e180",
+          "bytes": 13711,
+          "sha256": "d9161bf0efb0f0024820c006418db0b91fff02681ceeb98e43c1557e89c37bc7",
+          "git_blob": "5fd4c6a6a3f7f545d974656af234824f00a1ac8f"
         }
       ]
     },
@@ -80,6 +104,12 @@
           "bytes": 2815,
           "sha256": "361d18d6678adce41f83fef4176efbddaba7e7ed2d9d67754128688cc3725964",
           "git_blob": "f3c97c614f38a86979e3a17fa1c0cefd9e685b77"
+        },
+        {
+          "commit": "6899166c0a5d85602a42c7a95190b9acf3d6e180",
+          "bytes": 3006,
+          "sha256": "b1628a61ebfd8025daf8cf2c8e784c4ac0e9deaeb668735905dcbf785b832836",
+          "git_blob": "c03319b71a6e9c51944264a7b744dc6329fd79fb"
         }
       ]
     },
@@ -96,6 +126,44 @@
           "bytes": 14128,
           "sha256": "3b6b217b5fcbea885da95d4c155b36b7eac685aa8a207c8df90e6af9b8e8b12b",
           "git_blob": "4714c085806a7e13793e0d9dfb2055048509d760"
+        },
+        {
+          "commit": "6899166c0a5d85602a42c7a95190b9acf3d6e180",
+          "bytes": 15568,
+          "sha256": "1e0a2ce250adb3457bb74c1ea860eca74936ff533e5c512d16da23ea747d6713",
+          "git_blob": "1a62cf98e68f0d415516e8779129b5d161980dd3"
+        }
+      ]
+    },
+    {
+      "id": "zotero-customer-commissioning",
+      "label": "Complete Zotero customer commissioning and returned-project handover",
+      "path": "products/zotero/COMMISSIONING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6899166c0a5d85602a42c7a95190b9acf3d6e180",
+          "bytes": 28591,
+          "sha256": "ebfa26e1f0a910588ac28fcf423321b3c3e7af4d45a2d57b76810db86794cd11",
+          "git_blob": "12228a9378607ff0e8ad8e20caa331a17ece0071"
+        }
+      ]
+    },
+    {
+      "id": "zotero-returned-project-engine",
+      "label": "Original project history and reviewed customer-return reconciliation",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/project-returns.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6899166c0a5d85602a42c7a95190b9acf3d6e180",
+          "bytes": 20464,
+          "sha256": "b5bc3cbd9263eff2c6cd75904e367147b958abf764c07ce1f3b536bb9fb66b6d",
+          "git_blob": "8175ea2e21aa0585fa288e4431e7712642de47d5"
         }
       ]
     }

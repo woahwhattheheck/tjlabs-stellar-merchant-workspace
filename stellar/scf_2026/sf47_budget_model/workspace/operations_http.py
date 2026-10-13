@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from urllib.parse import parse_qs, unquote
 import re
+import operations_risk_comparison as risk_comparison
 import json
 
 from model import Problem
@@ -18,6 +19,12 @@ from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static.update({"/operations_risk_comparison.mjs": ("operations_risk_comparison.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_risk_comparison.css": ("operations_risk_comparison.css", "text/css; charset=utf-8"),
+                   "/RISK_COMPARISON.md": ("RISK_COMPARISON.md", "text/markdown; charset=utf-8")})
+    static.update({"/portfolio-working-copies.mjs": ("portfolio-working-copies.mjs", "text/javascript; charset=utf-8"),
+                   "/portfolio-working-copy-store.mjs": ("portfolio-working-copy-store.mjs", "text/javascript; charset=utf-8"),
+                   "/PORTFOLIO_WORKING_COPIES.md": ("PORTFOLIO_WORKING_COPIES.md", "text/markdown; charset=utf-8")})
     static.update({"/forecast-workbook.mjs": ("forecast-workbook.mjs", "text/javascript; charset=utf-8"),
                    "/forecast-workbook-desk.mjs": ("forecast-workbook-desk.mjs", "text/javascript; charset=utf-8"),
                    "/forecast-workbook-host.mjs": ("forecast-workbook-host.mjs", "text/javascript; charset=utf-8"),
@@ -153,6 +160,8 @@ def read(handler, parsed):
     if not parsed.path.startswith("/api/operations"):
         return False
     ops, query = store(handler), parse_qs(parsed.query)
+    if risk_comparison.read_http(handler, parsed, ops):
+        return True
     if forecast_comparison.read_http(handler, parsed, ops):
         return True
     if agenda_http.read(handler, parsed.path, parse_qs(parsed.query, keep_blank_values=True), ops):

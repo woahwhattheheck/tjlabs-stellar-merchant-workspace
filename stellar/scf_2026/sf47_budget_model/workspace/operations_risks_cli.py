@@ -12,7 +12,8 @@ from operations_risks import ACTION
 from operations import MAX_SOURCE
 
 COMMANDS = {"risks", "risks-seed", "risks-preview", "risks-save", "risks-show",
-            "risks-history", "risks-export", "risks-request", "risks-resume"}
+            "risks-history", "risks-export", "risks-request", "risks-resume",
+            "risks-compare", "risks-compare-export"}
 
 
 def operates(action):
@@ -42,6 +43,21 @@ def register(command, mutation):
     target = command("risks-export", "Export the complete case, register, actions, sources and reading report", case=True)
     target.add_argument("--review", required=True)
     target.add_argument("--output", required=True, help="Create-only original case ZIP filename")
+    for action in ("risks-compare", "risks-compare-export"):
+        target = command(action, "Compare two complete original saved risk editions" if action == "risks-compare" else
+                         "Download the selected comparison or its complete original case ZIP",
+                         case=True, output=action == "risks-compare")
+        target.add_argument("--before-review", required=True)
+        target.add_argument("--before-sha256", required=True)
+        target.add_argument("--after-review", required=True)
+        target.add_argument("--after-sha256", required=True)
+        if action == "risks-compare-export":
+            target.add_argument("--output", required=True, help="Create-only comparison download filename")
+            target.add_argument("--format", choices=("json", "html", "risks-csv", "actions-csv", "context-csv", "zip"),
+                                default="zip")
+            target.add_argument("--expected-comparison-sha256", required=True)
+            target.add_argument("--expected-version", type=int,
+                                help="Required only for the complete case ZIP; use the comparison's current case version")
     for action in ("risks-request", "risks-resume"):
         target = command(action, "Read the exact original saved command receipt" if action == "risks-request" else
                          "Reconcile and resume the exact original retained command", case=True, output=True)
@@ -84,6 +100,23 @@ def operate(ops, args, read_bytes, publish):
     elif action == "risks-export":
         return {"caseId": args.case, "reviewId": args.review,
                 "output": publish(args.output, ops.export_risks(args.case, args.review))}
+    elif action in ("risks-compare", "risks-compare-export"):
+        chosen = {"beforeReviewId": args.before_review, "beforeReviewSha256": args.before_sha256,
+                  "afterReviewId": args.after_review, "afterReviewSha256": args.after_sha256}
+        if action == "risks-compare":
+            result = ops.compare_risks(args.case, chosen)
+        else:
+            kinds = {"json": "export.json", "html": "export.html", "risks-csv": "risks.csv",
+                     "actions-csv": "actions.csv", "context-csv": "context.csv", "zip": "export.zip"}
+            if (args.format == "zip") != (args.expected_version is not None):
+                raise Problem("Supply the reviewed case --expected-version only for the complete ZIP.",
+                              422, "INVALID_RISK_COMPARISON")
+            exported = ops.export_risk_comparison(args.case, chosen, args.expected_comparison_sha256,
+                                                  kind=kinds[args.format], expected_version=args.expected_version)
+            body = exported if args.format == "zip" else exported[0]
+            return {"caseId": args.case, "selection": chosen,
+                    "comparisonSha256": args.expected_comparison_sha256,
+                    "output": publish(args.output, body)}
     elif action in ("risks-request", "risks-resume"):
         command = document(args.command, read_bytes, MAX_SOURCE)
         result = ops.risk_request(args.case, {"command": command})

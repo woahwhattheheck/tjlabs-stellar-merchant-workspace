@@ -86,3 +86,6 @@
 .portfolio-phase-results article{margin:1rem 0}
 @media(max-width:800px){.portfolio-installation-plan{padding:.75rem}.portfolio-boundary-options{grid-template-columns:1fr}.portfolio-installation-picker>label{flex-basis:100%}.portfolio-installation-picker button{flex:1}.portfolio-delivery-boundary{padding:.7rem}}
 @media print{.portfolio-phase-results article{break-inside:avoid}}
+
+/* Complete original working copies share the existing Portfolio controls. */
+.portfolio-working{border:1px solid #b6b6b6;background:#f6f6f6;padding:1rem;margin:1rem 0}.portfolio-working h4{margin:0 0 .5rem}.portfolio-working .portfolio-actions{margin:.7rem 0}.portfolio-working input,.portfolio-working select{min-width:0}.portfolio-working p{max-width:90ch}.portfolio [data-portfolio-numeric]{font-variant-numeric:tabular-nums}@media(max-width:700px){.portfolio-working{padding:.75rem}.portfolio-working .portfolio-actions>button{flex:1 1 14rem;white-space:normal}}@media print{.portfolio-working{display:none}}

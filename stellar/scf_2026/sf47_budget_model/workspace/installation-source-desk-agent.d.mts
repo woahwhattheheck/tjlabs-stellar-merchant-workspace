@@ -9,7 +9,7 @@ export const INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES:number;
 export const INSTALLATION_SOURCE_ACTIONS:readonly InstallationSourceAction[];
 export const INSTALLATION_SOURCE_READS:readonly string[];
 export type InstallationSourceAction='create'|'file.add'|'file.remove'|'selection.save'|'prepare'|
-  'native.receive'|'attach'|'commissioning.attach'|'commissioning.archive.receive';
+  'native.receive'|'attach'|'commissioning.attach'|'commissioning.archive.receive'|'edition.apply';
 export interface InstallationSourceSelection {caseId:string;draftId:string}
 export interface InstallationSourceContext {requestId:string;actor:string;note?:string}
 export interface InstallationSourceCommand<Data extends GrantObject=GrantObject> extends InstallationSourceContext {
@@ -41,8 +41,11 @@ export interface InstallationSourceProfiles extends GrantObject {
   profiles:Array<GrantObject&{profile:GrantObject}>;sourceFormats:GrantObject[];nativePackages:GrantObject[];
   limits:{fileBytes:number;selectedInputBytes:number;caseSourceBytes:number;caseSourceFiles:number};
 }
+export interface InstallationSourcePreparedFile extends GrantObject {
+  filename:string;bytes:number;sha256:string;mediaType:string;sourceUrl:string;observedAt:string;
+}
 export interface InstallationSourcePreparation extends GrantObject {
-  id:string;state:'PREPARED_SOURCE';files:InstallationSourceOriginalFile[];
+  id:string;state:'PREPARED_SOURCE';files:InstallationSourcePreparedFile[];
   selectionSha256:string;draftRevision:number;preparedAt:string;
 }
 export interface InstallationSourceReceipt<Result extends GrantObject|null=GrantObject|null> {
@@ -118,6 +121,8 @@ export interface InstallationSourceInputs {
     body:InstallationCommissioningSelection&{expectedRevision:number}};
   'archive-inspect':InstallationSourceSelection&{
     body:{expectedRevision:number;archiveFileId:string;replaceFileIds?:string[]}};
+  'edition-compare':InstallationSourceSelection&{body:InstallationEditionComparisonInput};
+  'edition-preview':InstallationSourceSelection&{body:InstallationEditionPreviewInput};
   execute:{operation:InstallationSourceOperation};
   reconcile:{operation:InstallationSourceOperation};
 }
@@ -136,6 +141,8 @@ export interface InstallationSourceResponses {
   'commissioning-inspect':GrantJsonResponse<InstallationCommissioningInspection>;
   'commissioning-preview':GrantJsonResponse<InstallationCommissioningPreview>;
   'archive-inspect':GrantJsonResponse<InstallationCommissioningArchivePreview>;
+  'edition-compare':GrantJsonResponse<InstallationEditionComparison>;
+  'edition-preview':GrantJsonResponse<InstallationEditionPlan>;
   execute:InstallationSourceExecution;
   reconcile:InstallationSourceExecution;
 }
@@ -159,3 +166,45 @@ export function planInstallationSourceOperation<K extends keyof InstallationSour
 export function performInstallationSourceOperation<K extends keyof InstallationSourceInputs>(
   plan:InstallationSourcePlan,send:(route:string,options:GrantObject)=>Promise<GrantNativeResponse>):
   Promise<InstallationSourceResponses[K]>;
+
+export interface InstallationEditionRef {draftId:string;revision:number;sha256:string}
+export interface InstallationEditionFileDecision {
+  sourceFileId:string;choice:'retain'|'replace'|'remove';targetFileId:string|null;
+}
+export interface InstallationEditionMapping {mode:'source'|'target'|'explicit';selection:GrantObject|null}
+export interface InstallationEditionComparisonInput {
+  source:{draftId:string;revision:number};targetRevision:number;
+  sourcePreparationId:string|null;targetPreparationId:string|null;
+}
+export interface InstallationEditionChange {
+  pointer:string;beforePresent:boolean;afterPresent:boolean;before:unknown;after:unknown;
+}
+export interface InstallationEditionFileChange {
+  filename:string;status:'same'|'changed'|'added'|'removed';
+  source:InstallationSourceOriginalFile|null;target:InstallationSourceOriginalFile|null;
+}
+export interface InstallationEditionComparison extends GrantObject {
+  schema:'stellar-forge.installation-source-edition-comparison.v1';caseId:string;
+  source:{ref:InstallationEditionRef;draft:InstallationSourceDraft};
+  target:{ref:InstallationEditionRef;draft:InstallationSourceDraft};
+  files:InstallationEditionFileChange[];selectionChanges:InstallationEditionChange[];
+  preparations:{source:InstallationSourcePreparation|null;target:InstallationSourcePreparation|null;
+    files:InstallationEditionPreparedFileChange[];reportChanges:InstallationEditionChange[]};
+  sha256:string;
+}
+export interface InstallationEditionPreviewInput {
+  source:InstallationEditionRef;target:InstallationEditionRef;
+  files:InstallationEditionFileDecision[];mapping:InstallationEditionMapping;
+}
+export interface InstallationEditionPlan extends InstallationEditionPreviewInput,GrantObject {
+  schema:'stellar-forge.installation-source-edition-plan.v1';caseId:string;
+  resultFiles:InstallationSourceOriginalFile[];selection:GrantObject|null;selectionSha256:string;
+  findings:Array<{code:string;pointer:string;message:string}>;sha256:string;
+}
+export function prepareInstallationSourceEdition(plan:InstallationEditionPlan,
+  context:InstallationSourceContext):InstallationSourceOperation;
+
+export interface InstallationEditionPreparedFileChange {
+  filename:string;status:'same'|'changed'|'added'|'removed';
+  source:InstallationSourcePreparedFile|null;target:InstallationSourcePreparedFile|null;
+}

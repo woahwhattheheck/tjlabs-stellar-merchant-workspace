@@ -98,3 +98,9 @@ The complete source-owned 15-phase receiving programme remains `installation-sou
 The independent product declaration is `stellar-forge/developer-site/grant-products/source-desk.json`; its chapter is `grant-chapters/source-desk.md`. The existing grant composer activates the declaration when that exact chapter H2 is present in the selected canonical manuscript. It retains all unrelated product source records and uses the complete immutable source editions linked inside the chapter.
 
 The source preparation capability supports the existing commissioning and delivery programme. It preserves the canonical USD 38,000, 400-hour, 150-day application and its original six-package structure. The existing authoring and application owners carry the chapter into the cumulative application.
+
+## Customer source editions
+
+The **Customer editions** tab compares exact retained source revisions and prepared outputs, records an explicit retain/replace/remove choice for every prior source file, previews the full successor mapping and saves one editable revision through the original request journal. All new target files remain retained. Continue through the original mapping editor and native preparation after resolving the recorded findings.
+
+See [Customer source editions](SOURCE_DESK_CUSTOMER_EDITIONS.md) for the complete operator workflow, file and mapping semantics, original-byte downloads, working-copy recovery and native integration.

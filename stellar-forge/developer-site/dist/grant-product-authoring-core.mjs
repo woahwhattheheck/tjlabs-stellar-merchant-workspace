@@ -1,6 +1,6 @@
 // MIT. Editable product source registrations in the original SCF submission draft.
 import {GRANT_PRODUCT_REGISTRATION_SCHEMA,validateGrantProductRegistrations,
-  receiveGrantProductSources,grantProductChapters} from './grant-product-sources-core.mjs';
+  receiveGrantProductSources,grantProductChapters,selectGrantProductChapters} from './grant-product-sources-core.mjs';
 
 export const PRODUCT_AUTHORING_SCHEMA='stellar-forge.grant-product-authoring.v1';
 export const MAX_PRODUCT_FILE_BYTES=16*1024*1024;
@@ -245,6 +245,8 @@ export function selectProductSource(row,index,candidate,indexedId=null){
 export function previewProductSources(context,registrations){
   need(Array.isArray(registrations)&&registrations.length>0,'Add or import a complete product registration.');
   const documents=validateGrantProductRegistrations(registrations.map(registrationForComposer));
+  const chapterSelection=selectGrantProductChapters(context.markdown,documents);
+  const coverage=new Map(chapterSelection.coverage.map(row=>[row.id,row]));
   const index=receiveGrantProductSources(clone(context.index),context.markdown,documents);
   const old=new Map(context.index.sources.map(source=>[source.id,source]));
   const sources=index.sources.map(source=>{
@@ -253,14 +255,18 @@ export function previewProductSources(context,registrations){
       before:before?clone(before):null,after:clone(source)};
   });
   const products=documents.map(product=>{
-    const chapters=context.chapters.filter(chapter=>chapter.heading===product.heading);
+    const present=coverage.get(product.id).present;
     const received=index.narrative_source?.composition?.product_source_registrations?.find(row=>row.id===product.id);
-    return {id:product.id,heading:product.heading,chapterPresent:chapters.length===1,
-      sourceIds:chapters.length===1?received?.source_ids||[]:[],
-      omittedSourceIds:chapters.length===1?product.sources.map(source=>source.id).filter(id=>!received?.source_ids?.includes(id)):[]};
+    return {id:product.id,heading:product.heading,chapterPresent:present,
+      sourceIds:present?received?.source_ids||[]:[],
+      omittedSourceIds:present?product.sources.map(source=>source.id).filter(id=>!received?.source_ids?.includes(id)):[]};
   });
-  return {schema:'stellar-forge.grant-product-preview.v1',index,products,sources,
+  return {schema:'stellar-forge.grant-product-preview.v1',index,products,sources,chapterSelection,
     counts:{products:products.length,selectedProducts:products.filter(product=>product.chapterPresent).length,
+      selectedChapters:chapterSelection.chapters.length,
+      sharedChapters:chapterSelection.chapters.filter(chapter=>chapter.productIds.length>1).length,
+      absentProducts:chapterSelection.coverage.filter(product=>!product.present).length,
+      absentChapters:new Set(chapterSelection.coverage.filter(product=>!product.present).map(product=>product.heading)).size,
       sources:sources.length,added:sources.filter(source=>source.status==='added').length,
       changed:sources.filter(source=>source.status==='changed').length,
       unchanged:sources.filter(source=>source.status==='unchanged').length}};

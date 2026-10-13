@@ -1,0 +1,141 @@
+{
+  "schema": "stellar-forge.property-continuity-adoption.v1",
+  "repository": "woahwhattheheck/commons",
+  "commit": "a64e69c1bc6cb30685865e49ef98e2428b29f6e8",
+  "sourcePrefix": "opportunities/bluewave_property_continuity_20261013/",
+  "nativeSourceSha256": "cf5e60ed049ee7584d389cc8d09b2a2e361c0fa37cf00fc41af496652f641b3a",
+  "files": [
+    {
+      "path": "app/CONTINUITY_DOMAIN.md",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/CONTINUITY_DOMAIN.md",
+      "bytes": 17340,
+      "sha256": "8c516a96caa020b177b2663400d0d5cbbad2b6aa577008445b49aaef663aa54a"
+    },
+    {
+      "path": "app/OPERATING.md",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/OPERATING.md",
+      "bytes": 26714,
+      "sha256": "c22f67375e6b95908297f3451fe748296878b94781d21644540d5644350ba130"
+    },
+    {
+      "path": "app/README.md",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/README.md",
+      "bytes": 3025,
+      "sha256": "b6c1f09488d266ad479a4c92eb242404a2d6ed28c3a7971a0b4b6ae05a399817"
+    },
+    {
+      "path": "app/RECEIVING_PROGRAMME.md",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/RECEIVING_PROGRAMME.md",
+      "bytes": 10855,
+      "sha256": "bf9d864044835701421b9f25df08f3739a6697f03769526eda24bdb46c5b1384"
+    },
+    {
+      "path": "app/TRAINING.md",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/TRAINING.md",
+      "bytes": 6155,
+      "sha256": "d2a2242f3ecbaf457ec8b4ed39b0ca3e54055c7980d34e770ba5e7f049d872da"
+    },
+    {
+      "path": "app/bluewave/__init__.py",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/bluewave/__init__.py",
+      "bytes": 78,
+      "sha256": "a5b95add9b4dd937324450a901ae27a5e8b25ae0008121b695da3d9ecb96aa83"
+    },
+    {
+      "path": "app/bluewave/cli.py",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/bluewave/cli.py",
+      "bytes": 7404,
+      "sha256": "b1b8007e55694431e811b4188764522f21401495214efda1c914ba0de774d665"
+    },
+    {
+      "path": "app/bluewave/common.py",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/bluewave/common.py",
+      "bytes": 4946,
+      "sha256": "66b1ff4ee944f54c2be67bed427dd32f26d849075113a21c00f9b96c58f344d8"
+    },
+    {
+      "path": "app/bluewave/domain.py",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/bluewave/domain.py",
+      "bytes": 66243,
+      "sha256": "c76ebe17eeeee4c8d8ac5c2b6472ceb81141726b77e1f5b6ea5bb238ade52ee6"
+    },
+    {
+      "path": "app/bluewave/exchange.py",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/bluewave/exchange.py",
+      "bytes": 22856,
+      "sha256": "44fb01b7806e40253a44e2b4504c65725d26fc46e879e2aa47d0dd3d1d2436dc"
+    },
+    {
+      "path": "app/bluewave/receiving_program.py",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/bluewave/receiving_program.py",
+      "bytes": 31919,
+      "sha256": "68e2d22b6e66d4d4534e4745762b873c7853e9ad8a2c13dca076215c3ca0760c"
+    },
+    {
+      "path": "app/bluewave/server.py",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/bluewave/server.py",
+      "bytes": 16791,
+      "sha256": "7ce32d69436dac67bd92bf836aaf440f9934e0179dd1be6a39b7939520cc5d7c"
+    },
+    {
+      "path": "app/bluewave/workspace.py",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/bluewave/workspace.py",
+      "bytes": 14557,
+      "sha256": "e3277f364a91b8381cac64b3a7ab8a00273f20426734c362bff0dbeda37cdd29"
+    },
+    {
+      "path": "app/examples/make_training_case.py",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/examples/make_training_case.py",
+      "bytes": 17817,
+      "sha256": "22457602dfae6f53335fe65ccc982b5566d15e1adde5756bb4d3265bb2d5e3bc"
+    },
+    {
+      "path": "app/public/app.js",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/public/app.js",
+      "bytes": 50938,
+      "sha256": "72a2be46cc1ea7fdfea8218cc0fccc463da4efeca8d93a54cde9b45917f6b766"
+    },
+    {
+      "path": "app/public/guide.html",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/public/guide.html",
+      "bytes": 32691,
+      "sha256": "e6c7bfd197c8465da8b3240a5d76711fd715adc5abf122bcca4918d7e98be1da"
+    },
+    {
+      "path": "app/public/index.html",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/public/index.html",
+      "bytes": 1538,
+      "sha256": "ac0a616adea7f9965fbed9edb2ce70254a96c64f01d2a68b7660207ce8abd9aa"
+    },
+    {
+      "path": "app/public/style.css",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/public/style.css",
+      "bytes": 5043,
+      "sha256": "af44a91d5fa57bb8a8e8c073817a21330b7cb94328707ce4de4a91e667a6111a"
+    },
+    {
+      "path": "app/requirements.txt",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/requirements.txt",
+      "bytes": 80,
+      "sha256": "0e646126e11c3b5ec4dcea898db9a7436fc881c87e25a3a14781f51ce1ad30bf"
+    },
+    {
+      "path": "app/source-selection.json",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/source-selection.json",
+      "bytes": 3401,
+      "sha256": "32e1be200d430aa6e3a8e8736e7fc64a25ebd2ce96ce9eb491f94673c908f2ce"
+    },
+    {
+      "path": "app/sources/IDA_PMS_RTP_Extracted_Text.json",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/sources/IDA_PMS_RTP_Extracted_Text.json",
+      "bytes": 142246,
+      "sha256": "80268e27a3bb6263925f50ac7ceb3df525463ba206382b4543bf037efc5a5d23"
+    },
+    {
+      "path": "app/tools/receiving_browser.cjs",
+      "originalPath": "opportunities/bluewave_property_continuity_20261013/tools/receiving_browser.cjs",
+      "bytes": 14726,
+      "sha256": "2a2b8755bc96ce972189ba7d1c9738e7b925f2c25e4f174ff13ed42029d12b34"
+    }
+  ]
+}

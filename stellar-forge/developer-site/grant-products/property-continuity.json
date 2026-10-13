@@ -1,0 +1,67 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "property-continuity",
+  "heading": "## Property continuity: full source reconciliation, rehearsals, cutover and independent receiving",
+  "sources": [
+    {
+      "id": "property-continuity-operator",
+      "label": "Property continuity operator and complete commissioning workflow",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "opportunities/bluewave_property_continuity_20261013/OPERATING.md",
+      "editions": [
+        {
+          "commit": "a64e69c1bc6cb30685865e49ef98e2428b29f6e8",
+          "bytes": 26714,
+          "sha256": "c22f67375e6b95908297f3451fe748296878b94781d21644540d5644350ba130",
+          "git_blob": "8ddffe98563f14552ef278cda0f31ab40dccec23"
+        }
+      ]
+    },
+    {
+      "id": "property-continuity-domain",
+      "label": "Exact identity, number, relationship, rehearsal and cutover contract",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "opportunities/bluewave_property_continuity_20261013/CONTINUITY_DOMAIN.md",
+      "editions": [
+        {
+          "commit": "a64e69c1bc6cb30685865e49ef98e2428b29f6e8",
+          "bytes": 17340,
+          "sha256": "8c516a96caa020b177b2663400d0d5cbbad2b6aa577008445b49aaef663aa54a",
+          "git_blob": "b6b7e7f880dd3cf934376880b52d15488646acf2"
+        }
+      ]
+    },
+    {
+      "id": "property-continuity-receiving",
+      "label": "Original whole-case receiving programme and retained execution",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "opportunities/bluewave_property_continuity_20261013/RECEIVING_PROGRAMME.md",
+      "editions": [
+        {
+          "commit": "a64e69c1bc6cb30685865e49ef98e2428b29f6e8",
+          "bytes": 10855,
+          "sha256": "bf9d864044835701421b9f25df08f3739a6697f03769526eda24bdb46c5b1384",
+          "git_blob": "7f8b7be74b08ce0d0c80653524bfa9bc804f31b2"
+        }
+      ]
+    },
+    {
+      "id": "property-continuity-training",
+      "label": "Clearly labelled training case for the actual application",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "opportunities/bluewave_property_continuity_20261013/TRAINING.md",
+      "editions": [
+        {
+          "commit": "a64e69c1bc6cb30685865e49ef98e2428b29f6e8",
+          "bytes": 6155,
+          "sha256": "d2a2242f3ecbaf457ec8b4ed39b0ca3e54055c7980d34e770ba5e7f049d872da",
+          "git_blob": "3403ea9596fa7b7540200a9350ffbc69cbba630b"
+        }
+      ]
+    }
+  ]
+}

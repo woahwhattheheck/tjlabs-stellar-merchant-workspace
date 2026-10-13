@@ -26,7 +26,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/discovery/FRED_OPERATING_PLANS_CLI.md",
-      "commit": "633b4ca8be7c45de188903284181a1338ee1d0fd",
+      "commit": "e23751bac6a047b973ad1aca9c241a99f43e5719",
       "required": true,
       "editions": [
         {
@@ -34,6 +34,12 @@
           "git_blob": "d021aac27fb28102b7940744eae4d47d86feeabe",
           "bytes": 6772,
           "sha256": "2ae74742a6a5878397fa83a0db73c10868e38d3cd5b18dfe789e77d558441a4a"
+        },
+        {
+          "commit": "e23751bac6a047b973ad1aca9c241a99f43e5719",
+          "git_blob": "022abdaccab0bfedec092e2c19671644426422ef",
+          "bytes": 8202,
+          "sha256": "0fd1479c570e2e2aeeb732e4e3de42c8536e815317826f8f1c1910df5a447d70"
         }
       ]
     },

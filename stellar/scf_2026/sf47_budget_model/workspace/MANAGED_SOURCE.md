@@ -73,6 +73,39 @@ inventory. The new manifest and reader are ordinary source changes, so they
 produce a new reviewed source identity rather than silently changing a prior
 selection.
 
+## Retain required dependencies with their original entrypoints
+
+The managed inventory includes the original module dependencies and native
+helpers used by its selected entrypoints, as well as the browser assets and
+guides that the existing Grant server serves. This includes the original
+Support readers, buyer accounting and recovery helpers, merchant planning and
+ROZO source readers, and the Merchant Grant adapters imported by the retained
+case-planning receiving entrypoint. Their existing paths and engines remain
+authoritative.
+
+A copy containing only an entrypoint is incomplete when that file imports
+another original module or launches a paired native helper. When preparing a
+source edition, retain those complete original files in the same repository
+layout. Keep Python sibling modules, module-relative worker files and the
+original CLI dependencies with their calling source. Browser URL aliases still
+resolve through the existing server registration; retain the registered source
+filename, including downloadable operating guides such as DESK_LOADING.md.
+
+The existing Node and Python launchers now hash these dependencies through this
+same inventory. The ordinary distribution builder, installed registration,
+Risk source preparer and Engagements source preparer receive them through their
+existing manifest readers. No runtime directory scan or download occurs during
+source selection. A missing dependency therefore fails while receiving the
+selected source, before a later operator action tries to open that module.
+
+For a future capability or dependency update, inspect the imports, paired
+native helper paths and served source of the exact outgoing edition. Add every
+new required original file explicitly alongside the entrypoint. Preserve all
+existing entries and unrelated concurrent additions; do not replace the
+inventory with a feature-specific list. Reuse original source identities when
+assembling the complete receiving packet, then run the existing product and
+saved-case course under the rendered-product instruction below.
+
 ## Existing source preparation and receiving
 
 The Delivery Risk source preparer and execution owner, and the Engagements source

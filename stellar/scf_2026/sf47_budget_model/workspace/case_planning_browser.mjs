@@ -8,9 +8,10 @@ import {execFileSync} from 'node:child_process';
 
 const args=process.argv.slice(2),option=name=>{const i=args.indexOf(name);return i<0?null:args[i+1];};
 const input=JSON.parse(await readFile(option('--context'),'utf8')),mode=option('--mode')||'operate';
+const portfolioMode=mode==='portfolio'||mode==='portfolio-cold';
 assert.match(input.caseId,/^operation-[a-f0-9]{32}$/);
 assert.match(input.asOfDate,/^\d{4}-\d{2}-\d{2}$/);
-const root=resolve(input.directory),out=join(root,mode==='cold'?'browser-cold':'browser');
+const root=resolve(input.directory),out=join(root,portfolioMode?(mode==='portfolio-cold'?'browser-portfolio-cold':'browser-portfolio'):(mode==='cold'?'browser-cold':'browser'));
 const exportsDirectory=join(out,'exports');
 await mkdir(exportsDirectory,{recursive:true,mode:0o700});
 const json=value=>JSON.stringify(value,null,2)+'\n';
@@ -25,7 +26,7 @@ async function native(path,{binary=false}={}){
   if(!response.ok)throw new Error('Original native read '+path+' returned '+response.status+': '+(await response.text()).slice(0,1000));
   return binary?Buffer.from(await response.arrayBuffer()):response.json();
 }
-const progressPath=join(root,mode==='cold'?'browser-cold-progress.json':'browser-progress.json');
+const progressPath=join(root,portfolioMode?(mode==='portfolio-cold'?'browser-portfolio-cold-progress.json':'browser-portfolio-progress.json'):(mode==='cold'?'browser-cold-progress.json':'browser-progress.json'));
 let progress=await exists(progressPath)?JSON.parse(await readFile(progressPath,'utf8')):
   {schema:'stellar-forge.sf47-case-workbook-browser.v1',operationId:input.operationId,caseId:input.caseId,planId:input.planId,asOfDate:input.asOfDate,startedAt:stamp(),phases:{},files:{}};
 assert.equal(progress.caseId,input.caseId);assert.equal(progress.planId,input.planId);assert.equal(progress.asOfDate,input.asOfDate);
@@ -40,7 +41,7 @@ async function phase(name,work){
 const modulePath=process.env.SF47_PLAYWRIGHT_MODULE||'/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.js';
 const chrome=process.env.SF47_CHROMIUM||'/workspace/scratch/705ebf077387/browser-runtime/chrome-headless-shell-linux64/chrome-headless-shell';
 const {chromium}=await import(pathToFileURL(modulePath).href);
-const browser=await chromium.launchPersistentContext(join(root,mode==='cold'?'cold-browser-profile':'browser-profile'),{
+const browser=await chromium.launchPersistentContext(join(root,portfolioMode?'portfolio-browser-profile':(mode==='cold'?'cold-browser-profile':'browser-profile')),{
   executablePath:chrome,headless:true,viewport:{width:1440,height:1000},acceptDownloads:true,
   args:['--no-sandbox','--disable-dev-shm-usage']});
 const page=browser.pages()[0]||await browser.newPage();
@@ -243,7 +244,12 @@ async function operateDeliveryAgenda(prefix){
 
 try{
   await openApplication();
-  if(mode==='cold'){
+  if(portfolioMode){
+    const {operatePortfolioWorkingCopies}=await import('./portfolio-working-copies-browser.mjs');
+    const result=await operatePortfolioWorkingCopies({page,browser,input,out,progress,phase,saveProgress,native,screenshot,atomic,fileIdentity,mode});
+    result.pageErrors=pageErrors;
+    await atomic(join(root,mode==='portfolio-cold'?'browser-portfolio-cold-result.json':'browser-portfolio-result.json'),result);
+  }else if(mode==='cold'){
     await phase('cold-original-case',async()=>{
       const actual=await native('/api/operations/'+input.caseId);
       assert.equal(actual.plan.revision,input.selectedRevision);assert.equal(actual.plan.contentSha256,input.selectedContentSha256);

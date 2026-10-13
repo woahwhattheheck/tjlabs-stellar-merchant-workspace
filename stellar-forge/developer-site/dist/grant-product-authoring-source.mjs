@@ -68,13 +68,36 @@ export function productFilesZip(files){
   long(at+12,directoryBytes);long(at+16,offset);word(at+20,0);
   return result;
 }
-export async function exportProductDeclarations(draft){
+/** Receive one complete author selection for both the on-screen preview and ZIP. */
+export async function prepareProductDeclarationPreview(draft){
   const selection=draft.productSourceAuthoring?.selection;
   need(selection?.bundleId,'Select the original reviewer source edition for this author project.');
+  const bundleId=selection.bundleId;
+  const registrations=JSON.parse(JSON.stringify(selection.registrations));
   await verifyProductSourceImports(draft,contentHash);
-  const selected=await readProductAuthoringContext(draft,selection.bundleId);
-  const preview=previewProductSources(selected,selection.registrations);
-  const declarations=productDeclarationFiles(selection.registrations);
+  const selected=await readProductAuthoringContext(draft,bundleId);
+  const preview=previewProductSources(selected,registrations);
+  const declarations=productDeclarationFiles(registrations);
+  const declarationFiles=await Promise.all(declarations.map(async file=>{
+    const bytes=encoder.encode(file.content);
+    return {path:file.path,bytes:bytes.length,sha256:await contentHash(bytes)};
+  }));
+  const chapterCoverage={
+    schema:'stellar-forge.grant-product-chapter-coverage.v1',
+    basis:{bundleId:selected.bundleId,receivedAt:selected.receivedAt,
+      applicationSha256:selected.applicationSha256,
+      companion:{...selected.companion},sourceIndex:{...selected.sourceIndex}},
+    declarationFiles,
+    products:preview.chapterSelection.coverage,
+    chapters:preview.chapterSelection.chapters,
+    counts:{products:preview.counts.products,presentProducts:preview.counts.selectedProducts,
+      absentProducts:preview.counts.absentProducts,presentChapters:preview.counts.selectedChapters,
+      absentChapters:preview.counts.absentChapters,sharedChapters:preview.counts.sharedChapters},
+  };
+  return {selected,preview,declarations,chapterCoverage};
+}
+export async function exportProductDeclarations(draft){
+  const {selected,preview,declarations,chapterCoverage}=await prepareProductDeclarationPreview(draft);
   const guide=[
     '# Product source declarations',
     '',
@@ -110,6 +133,20 @@ export async function exportProductDeclarations(draft){
     'source-index-preview.json is the complete source index computed against this retained',
     'companion. The current canonical manuscript controls the final composed edition.',
     '',
+    'product-chapter-coverage.json binds that same complete reviewer edition and every',
+    'exported declaration file by bytes and SHA-256. It reports every product heading,',
+    'including absent chapters, and retains each present chapter Markdown once with all',
+    'of its product IDs. Shared chapters keep separate source ownership. This is coverage',
+    'of the selected retained edition; it does not read or certify a newer canonical.',
+    '',
+    'Present products: '+chapterCoverage.counts.presentProducts+' / '+chapterCoverage.counts.products,
+    'Present unique chapters: '+chapterCoverage.counts.presentChapters,
+    'Shared chapters: '+chapterCoverage.counts.sharedChapters,
+    'Absent products: '+chapterCoverage.counts.absentProducts+' across '+chapterCoverage.counts.absentChapters+' headings',
+    '',
+    'A registered H2 can stay in its original manuscript location. Receive the later',
+    'complete four-file reviewer edition to preview chapters added by a later composition.',
+    '',
     '## Included products',
     '',
     ...preview.products.map(product=>'- '+product.id+' — '+product.heading.replace(/^## /,'')+
@@ -121,6 +158,7 @@ export async function exportProductDeclarations(draft){
   ].join('\n');
   const files=[...declarations.map(({path,content})=>({path,content})),
     {path:'source-index-preview.json',content:JSON.stringify(preview.index,null,2)+'\n'},
+    {path:'product-chapter-coverage.json',content:JSON.stringify(chapterCoverage,null,2)+'\n'},
     {path:'README.md',content:guide}];
-  return {files,preview,bytes:productFilesZip(files),name:'scf-product-source-declarations.zip'};
+  return {files,preview,chapterCoverage,bytes:productFilesZip(files),name:'scf-product-source-declarations.zip'};
 }

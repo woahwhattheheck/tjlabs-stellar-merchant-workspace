@@ -23,6 +23,12 @@ export { inspectFredDdpCrosswalk, inspectFredDdpPackage };
 import { validateQcewState, qcewStatePresent } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/state.mjs';
 import { validateQcewExtension } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/bundle.mjs';
 
+import { researchInput, researchCatalogueQuery, researchCatalogueResult, researchTaxonomy,
+  researchEntryPage, researchProductsPage, researchProductPage, researchActionInput, researchFile,
+  researchSourceMember, RESEARCH_KINDS } from './fred-research.mjs';
+import { validateResearchState, catalogue as researchCatalogueState } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/model.mjs';
+import { validateResearchExtension } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/bundle.mjs';
+
 export const FRED_WORKSPACE_CONNECTION_SCHEMA = 'stellar-forge.fred-workspace-connection.v1';
 export const FRED_CLIENT_MAX_BYTES = 256 * 1024 * 1024;
 export const FRED_CLIENT_MAX_REQUEST_BYTES = 128 * 1024 * 1024;
@@ -373,7 +379,7 @@ export async function readFredWorkspaceConfiguration(path) {
       for (const [name, input] of Object.entries(value.inputs)) {
         if (!ALIAS.test(name)) fail('FRED_CONNECTION_INVALID', 'Use a lowercase input alias.');
         fields(input, ['path', 'kind', 'label', 'sha256'], 'Host input');
-        if (!['public-table', 'capture', 'release-capture', 'ddp-crosswalk', 'ddp-package', 'alfred-metadata', 'operating-archive', 'operating-plan'].includes(input.kind))
+        if (!['public-table', 'capture', 'release-capture', 'ddp-crosswalk', 'ddp-package', 'alfred-metadata', 'operating-archive', 'operating-plan', 'research-source', 'research-catalogue'].includes(input.kind))
           fail('FRED_CONNECTION_INVALID', 'Select a complete original observation, release, DDP source or historical ALFRED metadata input.');
         entry.inputs[name] = { path: resolve(base, text(input.path, 'original source path', 8192)),
           kind: input.kind, label: text(input.label ?? name, 'input label', 240),
@@ -605,6 +611,7 @@ export class FredWorkspaceClient {
       fail('FRED_CLIENT_PROJECT_CHANGED', 'The selected workspace no longer exposes its original project.');
     validateFredDdpProjectState(value.project);
     validateQcewState(value.project);
+    validateResearchState(value.project);
     return value;
   }
   async operation(id, options = {}) {
@@ -1214,6 +1221,54 @@ export class FredWorkspaceClient {
     if (typeof query !== 'string' || query.length > 32768) fail('FRED_CLIENT_INPUT_INVALID', 'Use the original dataset query string.');
     return this.#json('/api/preview?' + new URLSearchParams({ publication: digest(publicationId, 'publication ID'), query }), options);
   }
+
+  async researchCatalogue(input = {}, options = {}) {
+    input = researchInput(input);
+    const query = researchCatalogueQuery(input);
+    input.asOf = query.get('asOf');
+    const value = await this.#json('/api/research/catalog?' + query, options);
+    return researchCatalogueResult(value, input, this.#boundId);
+  }
+  async researchTaxonomy(input, options = {}) {
+    input = researchInput(input); return researchTaxonomy((await this.state(options)).project, input);
+  }
+  async researchEntry(input, options = {}) {
+    input = researchInput(input); return researchEntryPage((await this.state(options)).project, input);
+  }
+  async researchProducts(input = {}, options = {}) {
+    input = researchInput(input); return researchProductsPage((await this.state(options)).project, input);
+  }
+  async researchProduct(input, options = {}) {
+    input = researchInput(input); return researchProductPage((await this.state(options)).project, input);
+  }
+  saveResearchEntry(input, options = {}) {
+    return this.#action('research-entry-save', researchActionInput('research-entry-save', input), options);
+  }
+  importResearchCatalogue(input, options = {}) {
+    return this.#action('research-import', researchActionInput('research-import', input), options);
+  }
+  acquireResearchSource(input, options = {}) {
+    return this.#action('research-source-acquire', researchActionInput('research-source-acquire', input), options);
+  }
+  uploadResearchSource(input, options = {}) {
+    return this.#action('research-source-upload', researchActionInput('research-source-upload', input), options);
+  }
+  reviewResearchSource(input, options = {}) {
+    return this.#action('research-review', researchActionInput('research-review', input), options);
+  }
+  saveResearchProduct(input, options = {}) {
+    return this.#action('research-product-save', researchActionInput('research-product-save', input), options);
+  }
+  issueResearchProduct(input, options = {}) {
+    return this.#action('research-product-issue', researchActionInput('research-product-issue', input), options);
+  }
+  resumeResearch(input, options = {}) {
+    input = researchInput(input);
+    if (!Object.values(RESEARCH_KINDS).includes(input.action))
+      fail('FRED_CLIENT_RESEARCH_INVALID', 'Choose the original pending Research action.');
+    return this.#action(input.action, researchActionInput(input.action, { ...input, resume: true }), options);
+  }
+
   #action(action, input, options = {}, journaled = true) {
     object(input);
     if (journaled) { operation(input.id); revision(input.expectedRevision); }
@@ -1265,8 +1320,22 @@ export class FredWorkspaceClient {
   }
   async file(selection, options = {}) {
     object(selection, 'Original file selection');
+    if (selection.kind?.startsWith('research-')) {
+      selection = researchInput(selection);
+      if (selection.kind !== 'research-source') {
+        const result = researchFile((await this.state(options)).project, selection);
+        if (options.expectedSha256 !== undefined && digest(options.expectedSha256) !== result.sha256)
+          fail('FRED_CLIENT_FILE_CHANGED', 'The complete original Research file differs from its reviewed SHA256.',
+            { sha256: result.sha256, bytes: result.bytes.length });
+        return result;
+      }
+    }
     let path, fallback, expectedMember = null;
-    if (selection.kind === 'source') {
+    if (selection.kind === 'research-source') {
+      expectedMember = researchSourceMember((await this.state(options)).project, selection);
+      path = '/api/research/source?' + new URLSearchParams({ id: selection.snapshotId });
+      fallback = expectedMember.filename;
+    } else if (selection.kind === 'source') {
       path = '/api/source?' + new URLSearchParams({ capture: digest(selection.captureId, 'capture ID') }); fallback = 'fred-original-capture.json';
     } else if (selection.kind === 'comparison') {
       path = '/api/compare?' + new URLSearchParams({ before: digest(selection.before, 'earlier capture ID'), after: digest(selection.after, 'later capture ID'), download: '1' });
@@ -1321,11 +1390,12 @@ export class FredWorkspaceClient {
       fallback = selection.receivingId + '.' + selection.format;
     } else fail('FRED_CLIENT_INPUT_INVALID', 'Choose a complete original source, plan, DDP receiving, comparison, briefing, project or customer file.');
     const maximum = selection.kind === 'project' ? this.maxDdpResponseBytes :
-      selection.kind.startsWith('ddp-') ? Math.min(this.maxDdpResponseBytes, FRED_DDP_MAX_SOURCE_BYTES) : undefined;
+      selection.kind.startsWith('ddp-') ? Math.min(this.maxDdpResponseBytes, FRED_DDP_MAX_SOURCE_BYTES) :
+      selection.kind === 'research-source' ? 16 * 1024 * 1024 : undefined;
     const { response, bytes } = await this.#request(path, { ...options, ...(maximum === undefined ? {} : { maximum }) });
     const sha256 = fredDigest(bytes);
     if (expectedMember && (sha256 !== expectedMember.sha256 || bytes.length !== expectedMember.bytes))
-      fail(selection.kind === 'ddp-receiving' ? 'FRED_CLIENT_DDP_CHANGED' : 'FRED_CLIENT_BRIEFING_CHANGED',
+      fail(selection.kind === 'research-source' ? 'FRED_CLIENT_RESEARCH_CHANGED' : selection.kind === 'ddp-receiving' ? 'FRED_CLIENT_DDP_CHANGED' : 'FRED_CLIENT_BRIEFING_CHANGED',
         'The complete original report differs from its saved source review.', { sha256, bytes: bytes.length });
     if (options.expectedSha256 !== undefined && digest(options.expectedSha256) !== sha256)
       fail('FRED_CLIENT_FILE_CHANGED', 'The complete original download differs from its reviewed SHA256.', { sha256, bytes: bytes.length });
@@ -1363,7 +1433,7 @@ export class FredWorkspaceClient {
     if (selection.kind === 'project') {
       let bundle;
       try { bundle = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch { fail('FRED_CLIENT_BUNDLE_INVALID', 'The complete project export is not JSON.'); }
-      if (!['stellar-forge.fred-project-bundle.v5', 'stellar-forge.fred-project-bundle.v6'].includes(bundle.schema) && bytes.length > FRED_CLIENT_MAX_BYTES)
+      if (!['stellar-forge.fred-project-bundle.v5', 'stellar-forge.fred-project-bundle.v6', 'stellar-forge.fred-project-bundle.v7'].includes(bundle.schema) && bytes.length > FRED_CLIENT_MAX_BYTES)
         fail('FRED_CLIENT_BUNDLE_INVALID', 'The original version 1–4 project retains its 256 MiB file capacity.');
       result.bundle = inspectFredProjectBundle(bundle);
       if (result.bundle.projectId !== this.#boundId) fail('FRED_CLIENT_PROJECT_CHANGED', 'The export belongs to another original project.');
@@ -1460,8 +1530,9 @@ function inspectFredReleaseBundle(bundle) {
 }
 
 export function inspectFredProjectBundle(bundle) {
+  const researchVersion = bundle?.schema === 'stellar-forge.fred-project-bundle.v7';
   const qcewVersion = bundle?.schema === 'stellar-forge.fred-project-bundle.v6';
-  const extended = qcewVersion || bundle?.schema === 'stellar-forge.fred-project-bundle.v5';
+  const extended = researchVersion || qcewVersion || bundle?.schema === 'stellar-forge.fred-project-bundle.v5';
   const releases = extended || bundle?.schema === 'stellar-forge.fred-project-bundle.v4';
   const recurring = releases || bundle?.schema === 'stellar-forge.fred-project-bundle.v3';
   const briefing = recurring || bundle?.schema === 'stellar-forge.fred-project-bundle.v2';
@@ -1475,15 +1546,20 @@ export function inspectFredProjectBundle(bundle) {
   const ddpKeys = ['ddpCrosswalks', 'ddpPackages', 'ddpMigrations', 'ddpReceivings'];
   validateFredDdpProjectState(bundle.state);
   validateQcewState(bundle.state);
+  validateResearchState(bundle.state);
+  if (researchVersion !== (bundle.state.research !== undefined) ||
+      !researchVersion && bundle.research !== undefined)
+    fail('FRED_CLIENT_BUNDLE_INVALID', 'Retain the complete Research extension in its original version 7 project.');
+  validateResearchExtension(bundle.research, bundle.state);
   const ddp = ddpKeys.some(key => (bundle.state[key]?.length ?? 0) > 0), qcew = qcewStatePresent(bundle.state);
   if (qcewVersion && !qcew)
     fail('FRED_CLIENT_BUNDLE_INVALID', 'A version 6 project retains its complete original QCEW family.');
-  if (extended ? !ddp && !qcew : ddp || qcew)
+  if (extended ? !researchVersion && !ddp && !qcew : ddp || qcew)
     fail('FRED_CLIENT_BUNDLE_INVALID', 'Use the original version 5 or 6 identity for a complete DDP or QCEW project family.');
-  const ddpSlots = qcewVersion || ddp;
+  const ddpSlots = researchVersion || qcewVersion || ddp;
   if (ddpSlots ? ddpKeys.some(key => !Array.isArray(bundle[key])) : ddpKeys.some(key => bundle[key] !== undefined))
     fail('FRED_CLIENT_BUNDLE_INVALID', 'Retain all four DDP arrays in version 6 and exactly when DDP work is present in earlier project versions.');
-  if (qcewVersion && !ddp && ddpKeys.some(key => bundle[key].length > 0))
+  if ((researchVersion || qcewVersion) && !ddp && ddpKeys.some(key => bundle[key].length > 0))
     fail('FRED_CLIENT_BUNDLE_INVALID', 'The version 6 DDP slots must be empty when its original project has no DDP activity.');
   if (qcew ? !plain(bundle.qcew) : bundle.qcew !== undefined)
     fail('FRED_CLIENT_BUNDLE_INVALID', 'Retain the complete QCEW original-source and report extension exactly when its project family is present.');
@@ -1491,7 +1567,7 @@ export function inspectFredProjectBundle(bundle) {
     ...(briefing ? { briefings: bundle.briefings } : {}),
     ...(releases ? { releaseCaptures: bundle.releaseCaptures, releasePlans: bundle.releasePlans } : {}),
     ...(ddpSlots ? Object.fromEntries(ddpKeys.map(key => [key, bundle[key]])) : {}),
-    ...(qcew ? { qcew: bundle.qcew } : {}) };
+    ...(qcew ? { qcew: bundle.qcew } : {}), ...(researchVersion ? { research: bundle.research } : {}) };
   if (canonicalJSONDigest(identity, { primitive: canonicalFredJSON }) !== bundle.bundleSha256 ||
       bundle.state.schema !== 'stellar-forge.fred-project.v1' || !UUID.test(bundle.state.id ?? '') || bundle.state.pending ||
       !Array.isArray(bundle.state.reviews))
@@ -1544,7 +1620,9 @@ function fredBundleIdentity(bundle) {
       releasePlans: bundle.releasePlans.length, releaseCatchUps: (state.releaseCatchUps ?? []).length } : {}),
     ...(ddp ? Object.fromEntries(ddpKeys.map(key => [key, bundle[key].length])) : {}),
     ...(qcew ? { qcew: { captures: bundle.qcew.captures.length, profiles: state.qcew.profiles.length,
-      editions: bundle.qcew.editions.length } } : {}) };
+      editions: bundle.qcew.editions.length } } : {}),
+    ...(state.research !== undefined ? { research: Object.fromEntries(['entries', 'sources', 'reviews', 'products']
+      .map(key => [key, researchCatalogueState(state)[key].length])) } : {}) };
 }
 
 /** Publishes the complete original bytes without replacing an existing file. */
@@ -1580,7 +1658,7 @@ async function readFredWorkspaceBundleFile(source, { expectedSha256 } = {}) {
   let bundle;
   try { bundle = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch { fail('FRED_CLIENT_BUNDLE_INVALID', 'The original project file is not complete JSON.'); }
   bytes = null;
-  if (!['stellar-forge.fred-project-bundle.v5', 'stellar-forge.fred-project-bundle.v6'].includes(bundle?.schema) && sourceBytes > FRED_CLIENT_MAX_BYTES)
+  if (!['stellar-forge.fred-project-bundle.v5', 'stellar-forge.fred-project-bundle.v6', 'stellar-forge.fred-project-bundle.v7'].includes(bundle?.schema) && sourceBytes > FRED_CLIENT_MAX_BYTES)
     fail('FRED_CLIENT_BUNDLE_INVALID', 'The original version 1–4 project retains its 256 MiB file capacity.');
   return { bundle, sourceBytes, sourceSha256 };
 }
