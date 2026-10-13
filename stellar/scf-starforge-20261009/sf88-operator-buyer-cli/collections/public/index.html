@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/approval.css">
   <link rel="stylesheet" href="/composer.css">
+  <link rel="stylesheet" href="/customer-use.css">
   <script type="module" src="/app.mjs"></script>
 </head>
 <body>
@@ -34,6 +35,7 @@
       <div id="collection-list" class="collection-list" aria-label="Saved collections"></div>
       <button id="new-collection" class="wide primary" type="button">New collection</button>
       <button id="open-composer" class="wide" type="button">Request plans</button>
+      <button id="open-customer-use" class="wide" type="button">Customer-use commissioning</button>
       <button id="open-recovery" class="wide" type="button">Backup and receiving</button>
       <details class="workspace-paths"><summary>Workspace locations</summary><dl id="locations"></dl></details>
     </aside>
@@ -73,6 +75,7 @@
         </section>
       </section>
       <section id="composer-panel" class="panel" hidden aria-label="Request plans"></section>
+      <section id="customer-use-panel" class="panel" hidden aria-label="Customer-use commissioning"></section>
       <section id="recovery-panel" hidden aria-label="Backup and receiving"></section>
       <section id="detail-panel" hidden>
         <div class="panel">
