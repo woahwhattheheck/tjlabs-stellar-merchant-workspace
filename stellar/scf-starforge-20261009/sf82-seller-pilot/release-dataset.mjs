@@ -14,6 +14,7 @@ import { readSellerConfig } from '../sf30-seller-sdk/serve.mjs';
 import { compileSellerRoutes } from '../sf30-seller-sdk/resource-server.mjs';
 import { openDatasetVersions, DATASET_SNAPSHOT_PARAMETER } from '../sf30-seller-sdk/dataset-refresh/versions.mjs';
 import { startVersionedDatasetSeller } from '../sf30-seller-sdk/dataset-refresh/service.mjs';
+import {resolveDatasetInstallation} from './release-dataset-installation.mjs';
 
 
 export const DATASET_BINDING_SCHEMA = 'stellar-forge.dataset-release-binding.v1';
@@ -292,7 +293,7 @@ export async function stageDatasetRelease(directory, packageDirectory) {
     return inspectDatasetRelease(target);
   } catch (error) { if (created) await rm(target, { recursive: true, force: true }); throw error; }
 }
-export async function inspectDatasetRelease(directory) {
+export async function inspectDatasetRelease(directory, {ignoreInstallation=false}={}) {
   const root = resolve(directory), manifestBytes = await bytes(join(root, 'manifest.json'), 2 * MiB);
   const manifest = parse(manifestBytes);
   if (manifest.schema !== DATASET_SOURCE_SCHEMA || manifest.packagePath !== 'dataset' || !Array.isArray(manifest.files))
@@ -304,8 +305,9 @@ export async function inspectDatasetRelease(directory) {
   if (hash(offersBytes) !== manifest.offersSha256 || hash(serviceBytes) !== manifest.serviceConfigSha256 ||
       !offersBytes.equals(prepared.offersBytes) || !serviceBytes.equals(prepared.serviceBytes))
     fail('The retained dataset offer differs from its original source package.');
+  const datasetInstallation=ignoreInstallation?null:await resolveDatasetInstallation(root,{dataset:prepared.dataset});
   return { manifest, dataset: prepared.dataset, offers: prepared.offers, service: prepared.service,
-    config: prepared.config, description: prepared.description, hasApplication: true,
+    datasetInstallation, config: prepared.config, description: prepared.description, hasApplication: true,
     files: ordered([descriptor('manifest.json', manifestBytes), descriptor('offers.json', offersBytes),
       descriptor('seller-service.json', serviceBytes), ...prepared.files]) };
 }
@@ -327,7 +329,8 @@ function selectedRuntime(runtime) {
 /** One original version writer owns admission, response pinning and refresh IPC. */
 export async function startDatasetRelease(directory, { runtime = { port: 0 }, nativeFactory: suppliedFactory } = {}) {
   const snapshot = await inspectDatasetRelease(directory), options = selectedRuntime(runtime);
-  const versions = await openDatasetVersions({ directory: snapshot.dataset.datasetDirectory });
+  const effectiveDirectory=snapshot.datasetInstallation?.datasetDirectory??snapshot.dataset.datasetDirectory;
+  const versions = await openDatasetVersions({ directory: effectiveDirectory });
   let session;
   try {
     if (datasetContractSha256(versions.describe()) !== snapshot.dataset.contractSha256)
@@ -341,7 +344,7 @@ export async function startDatasetRelease(directory, { runtime = { port: 0 }, na
     }
     session = await startVersionedDatasetSeller({ versions, config: snapshot.service,
       port: options.port, nativeFactory, control: true, controlTransport: 'loopback' });
-    return { ...session, dataset: snapshot.dataset, snapshot };
+    return { ...session, dataset: snapshot.dataset, datasetInstallation:snapshot.datasetInstallation, snapshot };
   } catch (error) { await session?.close().catch(() => {}); await versions.close().catch(() => {}); throw error; }
 }
 export async function launch(args = process.argv.slice(2)) {

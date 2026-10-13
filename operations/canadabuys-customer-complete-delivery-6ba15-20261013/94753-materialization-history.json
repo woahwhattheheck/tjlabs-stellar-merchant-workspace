@@ -1,0 +1,145 @@
+{
+  "schema": "commons.canadabuys-customer-materialization-continuation.v1",
+  "operationId": "CANADABUYS-AGENT-CUSTOMER-6BA15-20261012",
+  "sourceCommit": "950bbacb7a55b53c43b74164679e0070cb1f9154",
+  "previous": {
+    "root": "/dev/shm/canadabuys-customer-6ba15-20261013",
+    "source": {
+      "bytes": 18488,
+      "sha256": "1cd52904a5d286fe4713cf5f1e6ec736b27c588920cbd329229ccd6f398e9d65",
+      "gitBlob": "2905099ea3ab45e6801d06acfc6ab0dcb666e3a0"
+    },
+    "inputWire": "609f53ef719698e4a811529c30360ce455dc570d46876520a6a4de36b1ee7193",
+    "native": {
+      "schema": "commons.canadabuys-customer-native-controller.v1",
+      "operationId": "CANADABUYS-AGENT-CUSTOMER-6BA15-20261012",
+      "sourceCommit": "950bbacb7a55b53c43b74164679e0070cb1f9154",
+      "inputSha256": "a96dbb36c226c0f3ecbc39fcce61423beff55a515d468f1153f283992e94d2a0",
+      "wireSha256": "609f53ef719698e4a811529c30360ce455dc570d46876520a6a4de36b1ee7193",
+      "startedAt": "2026-10-13T01:21:09.246Z",
+      "prior": null,
+      "calls": [
+        {
+          "kind": "admission",
+          "at": "2026-10-13T01:21:13.373Z",
+          "chunk_id": "8472af",
+          "wall_time_seconds": 1.000382714,
+          "session_id": 94753,
+          "original_token_count": 14,
+          "output": "{\"event\": \"CUSTOMER_INPUT_READY\", \"namespacePid\": 2}\n"
+        },
+        {
+          "kind": "single-complete-input",
+          "at": "2026-10-13T01:21:15.936Z",
+          "chunk_id": "71a4be",
+          "wall_time_seconds": 1.000968664,
+          "session_id": 94753,
+          "original_token_count": 324,
+          "output": "{\"event\": \"CUSTOMER_INPUT_VERIFIED\", \"bytes\": 4204142, \"sha256\": \"a96dbb36c226c0f3ecbc39fcce61423beff55a515d468f1153f283992e94d2a0\"}\n{\"event\":\"CUSTOMER_SOURCE_MATERIALIZING\",\"operationId\":\"CANADABUYS-AGENT-CUSTOMER-6BA15-20261012\",\"at\":\"2026-10-13T01:21:14.860103+00:00\",\"sourceCommit\":\"950bbacb7a55b53c43b74164679e0070cb1f9154\",\"files\":77,\"resources\":{\"observer\":{\"pid\":348028,\"startTicks\":\"1854700\",\"bootId\":\"bcc80c23-bcac-4c6b-8daa-1f97825fc4ae\",\"namespacePid\":2},\"memory.current\":\"8589836288\",\"memory.max\":\"8589934592\",\"memory.peak\":\"8606175232\",\"memory.events\":\"low 0\\nhigh 0\\nmax 8090881\\noom 4085\\noom_kill 123\\noom_group_kill 0\"}}\n{\"event\": \"ORIGINAL_COMMAND_FAILED\", \"error\": \"[Errno 28] No space left on device\", \"traceback\": \"Traceback (most recent call last):\\n  File \\\"<string>\\\", line 36, in <module>\\n  File \\\"complete_customer_delivery.py\\\", line 272, in <module>\\n  File \\\"complete_customer_delivery.py\\\", line 228, in main\\n  File \\\"complete_customer_delivery.py\\\", line 55, in pubjson\\n  File \\\"complete_customer_delivery.py\\\", line 47, in publish\\nOSError: [Errno 28] No space left on device\\n\"}\n{\"event\": \"READY_FOR_NEXT_ORIGINAL_JOB\", \"namespacePid\": 2, \"protocol\": \"JSON header bytes/sha256 followed by exact JSON {program} UTF-8 bytes; stop with {stop:true,exit_code:0}\"}\n"
+        }
+      ],
+      "events": [
+        {
+          "event": "CUSTOMER_INPUT_READY",
+          "namespacePid": 2
+        },
+        {
+          "event": "CUSTOMER_INPUT_VERIFIED",
+          "bytes": 4204142,
+          "sha256": "a96dbb36c226c0f3ecbc39fcce61423beff55a515d468f1153f283992e94d2a0"
+        },
+        {
+          "event": "CUSTOMER_SOURCE_MATERIALIZING",
+          "operationId": "CANADABUYS-AGENT-CUSTOMER-6BA15-20261012",
+          "at": "2026-10-13T01:21:14.860103+00:00",
+          "sourceCommit": "950bbacb7a55b53c43b74164679e0070cb1f9154",
+          "files": 77,
+          "resources": {
+            "observer": {
+              "pid": 348028,
+              "startTicks": "1854700",
+              "bootId": "bcc80c23-bcac-4c6b-8daa-1f97825fc4ae",
+              "namespacePid": 2
+            },
+            "memory.current": "8589836288",
+            "memory.max": "8589934592",
+            "memory.peak": "8606175232",
+            "memory.events": "low 0\nhigh 0\nmax 8090881\noom 4085\noom_kill 123\noom_group_kill 0"
+          }
+        },
+        {
+          "event": "ORIGINAL_COMMAND_FAILED",
+          "error": "[Errno 28] No space left on device",
+          "traceback": "Traceback (most recent call last):\n  File \"<string>\", line 36, in <module>\n  File \"complete_customer_delivery.py\", line 272, in <module>\n  File \"complete_customer_delivery.py\", line 228, in main\n  File \"complete_customer_delivery.py\", line 55, in pubjson\n  File \"complete_customer_delivery.py\", line 47, in publish\nOSError: [Errno 28] No space left on device\n"
+        },
+        {
+          "event": "READY_FOR_NEXT_ORIGINAL_JOB",
+          "namespacePid": 2,
+          "protocol": "JSON header bytes/sha256 followed by exact JSON {program} UTF-8 bytes; stop with {stop:true,exit_code:0}"
+        }
+      ],
+      "session": 94753,
+      "endedAt": "2026-10-13T01:21:15.936Z",
+      "nativeRetained": true
+    },
+    "capacity": {
+      "chunk_id": "7549b8",
+      "wall_time_seconds": 1.001349992,
+      "session_id": 94753,
+      "original_token_count": 2103,
+      "output": "{\"kind\":\"original-customer-capacity\",\"namespacePid\":2,\"procSelf\":\"348028 (python3) R 348019 348019 348019 0 -1 4194560 16653 0 0 0 22 9 0 0 20 0 1 0 1854700 60801024 7278 18446744073709551615 4329472 32290168 140728419577184 0 0 0 0 16781312 2 0 0 0 17 7 0 0 0 0 0 23068672 32290168 559312896 140728419585555 140728419589329 140728419589329 140728419594158 0\\n\",\"filesystems\":[{\"path\":\"/\",\"device\":27,\"free\":63279104,\"available\":0,\"bytes\":33770192896,\"inodesFree\":1493026},{\"path\":\"/dev\",\"device\":82,\"free\":5225730048,\"available\":5225730048,\"bytes\":5225730048,\"inodesFree\":1275797},{\"path\":\"/dev/shm\",\"device\":26,\"free\":0,\"available\":0,\"bytes\":5225730048,\"inodesFree\":1208551},{\"path\":\"/workspace/scratch/6ba15c52ace4\",\"device\":27,\"free\":63279104,\"available\":0,\"bytes\":33770192896,\"inodesFree\":1493026},{\"path\":\"/dev/shm/canadabuys-customer-6ba15-20261013\",\"device\":26,\"free\":0,\"available\":0,\"bytes\":5225730048,\"inodesFree\":1208551}],\"memory.current\":\"8543514624\\n\",\"memory.max\":\"8589934592\\n\",\"memory.events\":\"low 0\\nhigh 0\\nmax 8138215\\noom 4104\\noom_kill 131\\noom_group_kill 0\\n\",\"memory.stat\":\"anon 1211650048\\nfile 6680760320\\nkernel 650256384\\nkernel_stack 4603904\\npagetables 21807104\\nsec_pagetables 0\\npercpu 118360\\nsock 8192\\nvmalloc 90112\\nshmem 6303526912\\nfile_mapped 73728\\nfile_dirty 6295552\\nfile_writeback 0\\nswapcached 0\\nanon_thp 0\\nfile_thp 0\\nshmem_thp 0\\ninactive_anon 2175320064\\nactive_anon 5339516928\\ninactive_file 185819136\\nactive_file 191193088\\nunevictable 0\\nslab_reclaimable 559317736\\nslab_unreclaimable 64165880\\nslab 623483616\\nworkingset_refault_anon 0\\nworkingset_refault_file 325555891\\nworkingset_activate_anon 0\\nworkingset_activate_file 71162595\\nworkingset_restore_anon 0\\nworkingset_restore_file 32059171\\nworkingset_nodereclaim 279096\\npgdemote_kswapd 0\\npgdemote_direct 0\\npgdemote_khugepaged 0\\npgdemote_proactive 0\\npgscan 10228868891\\npgsteal 343843024\\npswpin 0\\npswpout 0\\npgscan_kswapd 4091034\\npgscan_direct 10224365009\\npgscan_khugepaged 412848\\npgscan_proactive 0\\npgsteal_kswapd 3283874\\npgsteal_direct 340556041\\npgsteal_khugepaged 3109\\npgsteal_proactive 0\\npgfault 610924438\\npgmajfault 389712\\npgrefill 196304190\\npgactivate 121899001\\npgdeactivate 176912664\\npglazyfree 44641\\npglazyfreed 0\\nswpin_zero 0\\nswpout_zero 0\\nthp_fault_alloc 732\\nthp_collapse_alloc 1\\nthp_swpout 0\\nthp_swpout_fallback 0\\n\",\"ownedRoots\":[\"/workspace/scratch/6ba15c52ace4/canadabuys-final-delivery-20261012\",\"/workspace/scratch/6ba15c52ace4/canadabuys-customer-delivery-20261013\",\"/workspace/scratch/6ba15c52ace4/aviary-native-restored\",\"/workspace/scratch/6ba15c52ace4/aviary-final-delivery-20261012\",\"/dev/shm/canadabuys-customer-6ba15-20261013\",\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v\",\"/dev/shm/canadabuys-source-6ba15-vnj8p2hn\"],\"ownedAllocated\":128249856,\"ownedFiles\":817,\"largestOwned\":[{\"allocated\":15339520,\"path\":\"/workspace/scratch/6ba15c52ace4/canadabuys-final-delivery-20261012/cc5dbf1149734272bf6300961f2e4c27/official-save-source/CanadaBuys_Bidder_Desk_Receiving_cc5dbf1149734272.zip\",\"bytes\":15336675,\"device\":27,\"inode\":719598,\"links\":1,\"mtimeNs\":1791845734685382166},{\"allocated\":9965568,\"path\":\"/workspace/scratch/6ba15c52ace4/aviary-final-delivery-20261012/official-save-source/Aviary_Receiving_Checkpoint_934398ae3d51ab0e.zip\",\"bytes\":9965306,\"device\":27,\"inode\":564801,\"links\":1,\"mtimeNs\":1791841790920265146},{\"allocated\":9949184,\"path\":\"/workspace/scratch/6ba15c52ace4/aviary-final-delivery-20261012/official-save-source/Aviary_Receiving_Checkpoint_6a1ada7ec7f5b073.zip\",\"bytes\":9948022,\"device\":27,\"inode\":560593,\"links\":1,\"mtimeNs\":1791841480367972278},{\"allocated\":4206592,\"path\":\"/dev/shm/canadabuys-customer-6ba15-20261013/original-input.json\",\"bytes\":4204143,\"device\":26,\"inode\":120896,\"links\":1,\"mtimeNs\":1791854474852406420},{\"allocated\":3604480,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery/receives/independent-complete-cold-package.json\",\"bytes\":3601268,\"device\":26,\"inode\":52985,\"links\":1,\"mtimeNs\":1791845726510955046},{\"allocated\":3432448,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery/receives/cold-original-concurrent-edition.json\",\"bytes\":3428455,\"device\":26,\"inode\":52871,\"links\":1,\"mtimeNs\":1791845723201623545},{\"allocated\":3362816,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery/packages/independent-complete-workspace.json\",\"bytes\":3361860,\"device\":26,\"inode\":52992,\"links\":1,\"mtimeNs\":1791845727002932373},{\"allocated\":3362816,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery/attempts/20261012225510361-491f8cb0-84c3-45ee-bd4c-52be76f47b09/http/00116.response.bin\",\"bytes\":3361860,\"device\":26,\"inode\":52990,\"links\":1,\"mtimeNs\":1791845726810941220},{\"allocated\":3280896,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery/packages/complete-cold-workspace.json\",\"bytes\":3277432,\"device\":26,\"inode\":52903,\"links\":1,\"mtimeNs\":1791845725523000553},{\"allocated\":3280896,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery/attempts/20261012225510361-491f8cb0-84c3-45ee-bd4c-52be76f47b09/http/00105.response.bin\",\"bytes\":3277432,\"device\":26,\"inode\":52901,\"links\":1,\"mtimeNs\":1791845725275011975},{\"allocated\":2924544,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery/workspaces/cold/workspace.sqlite\",\"bytes\":2924544,\"device\":26,\"inode\":52759,\"links\":1,\"mtimeNs\":1791845727318917810},{\"allocated\":2916352,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery/workspaces/independent-complete-receiver/workspace.sqlite\",\"bytes\":2916352,\"device\":26,\"inode\":52928,\"links\":1,\"mtimeNs\":1791845727158925183},{\"allocated\":2818048,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/runtime-continuations/84a98a88267c4a3e834b64eed8e9b9dc/complete-input.json\",\"bytes\":2815260,\"device\":26,\"inode\":52252,\"links\":1,\"mtimeNs\":1791845710214871149},{\"allocated\":2752512,\"path\":\"/dev/shm/canadabuys-source-6ba15-vnj8p2hn/input.json\",\"bytes\":2748876,\"device\":26,\"inode\":13676,\"links\":1,\"mtimeNs\":1791843645982256900},{\"allocated\":2752512,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/programme/input.json\",\"bytes\":2750548,\"device\":26,\"inode\":13686,\"links\":1,\"mtimeNs\":1791843646866955150},{\"allocated\":2445312,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery/attempts/20261012225510361-491f8cb0-84c3-45ee-bd4c-52be76f47b09/http/00114.request.json\",\"bytes\":2442528,\"device\":26,\"inode\":52937,\"links\":1,\"mtimeNs\":1791845725794988027},{\"allocated\":2306048,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery/attempts/20261012225510361-491f8cb0-84c3-45ee-bd4c-52be76f47b09/http/00114.response.bin\",\"bytes\":2304540,\"device\":26,\"inode\":52983,\"links\":1,\"mtimeNs\":1791845726422959101},{\"allocated\":2301952,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery/attempts/20261012225510361-491f8cb0-84c3-45ee-bd4c-52be76f47b09/http/00102.response.bin\",\"bytes\":2299503,\"device\":26,\"inode\":52876,\"links\":1,\"mtimeNs\":1791845723393631633},{\"allocated\":2301952,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery/attempts/20261012225510361-491f8cb0-84c3-45ee-bd4c-52be76f47b09/http/00100.response.bin\",\"bytes\":2299504,\"device\":26,\"inode\":52869,\"links\":1,\"mtimeNs\":1791845723091112558},{\"allocated\":1921024,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery/phases/15-receiving-preserves-later-work-and-conflicts.json\",\"bytes\":1917668,\"device\":26,\"inode\":52878,\"links\":1,\"mtimeNs\":1791845723436106709},{\"allocated\":1814528,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery/workspaces/original/workspace.sqlite\",\"bytes\":1814528,\"device\":26,\"inode\":13908,\"links\":1,\"mtimeNs\":1791845727310918179},{\"allocated\":1761280,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery/phases/17-full-package-independent-receiving.json\",\"bytes\":1758957,\"device\":26,\"inode\":52999,\"links\":1,\"mtimeNs\":1791845727202923156},{\"allocated\":1617920,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery/packages/complete-original-workspace.json\",\"bytes\":1616557,\"device\":26,\"inode\":52898,\"links\":1,\"mtimeNs\":1791845724901216466},{\"allocated\":1617920,\"path\":\"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery/attempts/20261012225510361-491f8cb0-84c3-45ee-bd4c-52be76f47b09/http/00104.response.bin\",\"bytes\":1616557,\"device\":26,\"inode\":52895,\"links\":1,\"mtimeNs\":1791845724809885260}]}\n{\"event\": \"ORIGINAL_COMMAND_COMPLETE\"}\n"
+    }
+  },
+  "selected": {
+    "root": "/dev/canadabuys-customer-6ba15-20261013",
+    "source": {
+      "bytes": 18628,
+      "sha256": "1516d4e8dfa1a5b314277e6ea4b961103e2a052e95ecadd739a170ed85ee4684"
+    }
+  },
+  "reason": "The actual original preparation failed ENOSPC on full device26 before Git/source-cache or any Node/provider command. The same held process selects observed free device82; source commit, 77 files, fixture and future operation remain unchanged.",
+  "retainedFailureGitBlob": "8cde2542319d9d28fe1ed7638299c9e8c134bfeb",
+  "following": {
+    "continuationSession": 94753,
+    "result": {
+      "error": "write_stdin failed: Unknown process id 94753",
+      "at": "2026-10-13T01:27:48.422Z"
+    },
+    "reentry2132": {
+      "schema": "commons.canadabuys-customer-native-controller.v1",
+      "operationId": "CANADABUYS-AGENT-CUSTOMER-6BA15-20261012",
+      "sourceCommit": "950bbacb7a55b53c43b74164679e0070cb1f9154",
+      "inputSha256": "83a880635dae29550c95fcbe3cd6595b8f69824bdf7c1850424430d3756a13a1",
+      "wireSha256": "fbd03de57f2af8282bc457a69337444f2e156378fd146ebea65bbe847dcc07d6",
+      "startedAt": "2026-10-13T01:29:33.437Z",
+      "prior": {
+        "error": "write_stdin failed: Unified exec process failed: exec-server transport disconnected; failed to resume exec-server session: recovery timed out after 25s",
+        "endedAt": "2026-10-13T01:27:28.857Z"
+      },
+      "calls": [],
+      "events": [],
+      "reentry": {
+        "previousSession": 94753,
+        "previousSourceBlob": "d4b5aca873e6fda92431a8c58d299f9d2c7d837d",
+        "originalSourceCommit": "950bbacb7a55b53c43b74164679e0070cb1f9154"
+      },
+      "error": "exec_command failed: CreateProcess { message: \"Io(Custom { kind: Other, error: \\\"failed to query exec-server capabilities: exec-server connection attempt failed: environment registry request failed (409 Conflict, environment_offline): Environment is not connected.\\\" })\" }",
+      "endedAt": "2026-10-13T01:32:52.672Z"
+    }
+  },
+  "cleanupOwnership": {
+    "schema": "commons.canadabuys-customer-cleanup-ownership.v1",
+    "operationId": "CANADABUYS-AGENT-CUSTOMER-6BA15-20261012",
+    "recordedAt": "2026-10-13T01:50:32.414Z",
+    "previousOwner": "/root/scf_engineering",
+    "selectedOwner": "/root",
+    "scope": "Root-owned closed Canada/Plunkett staging archives and byte-identical working-delivery files already saved in the final Canada archive",
+    "authorization": "Parent requested sole cleanup ownership and acknowledged transfer in this original task. No current customer native or cleanup invocation was pending. Original94753 continuation has unknown outcome;2132 closed before CreateProcess409.",
+    "customerBehavior": "The current customer programme performs no closed-copy cleanup; original cleanup source and unknown-outcome history remain retained.",
+    "originalContinuationSource": {
+      "bytes": 46786,
+      "sha256": "93d85ebe8309c46628a6fde6603c785b0636183c12ec23bbd17ee104be6a3afe",
+      "createdCarrierBlob": "d4b5aca873e6fda92431a8c58d299f9d2c7d837d"
+    }
+  }
+}

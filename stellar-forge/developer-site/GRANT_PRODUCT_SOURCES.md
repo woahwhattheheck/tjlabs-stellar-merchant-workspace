@@ -109,3 +109,7 @@ The complete [regional labor customer guide](../../products/bls-labor/GRANT.md) 
 | `bls-native-customer-receiving` | Original publisher plans and dataset versions, SF88 acquisition and Vitality receiving |
 
 The BLS chapter contributes a specific regional source and recurring-service example to the existing six funded packages. The canonical application continues to control USD 38,000, 400 prospective hours, the 150-day schedule, package allocations and customer outcome counts. The existing cumulative publisher receives the complete four outputs into the same saved draft, review, Page and Site.
+
+## Edit declarations in the submission workspace
+
+The existing saved submission now includes **Product sources** for chapter and source selection, registration imports, complete source-index previews, authoring versions and composer-file export. See [GRANT_PRODUCT_AUTHORING.md](GRANT_PRODUCT_AUTHORING.md) for the complete authoring and receiving workflow.

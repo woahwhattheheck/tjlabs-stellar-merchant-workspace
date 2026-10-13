@@ -375,3 +375,9 @@ buyer evidence when those records are available. The
 [Operations guide](../grant-operations/OPERATING.md#frozen-groundwater-report-receiving)
 describes the precise case/deployment/purchase selection. Neither this
 architecture addition nor opening its source creates another purchase.
+
+## Receive the issuer programme with the application
+
+Open **Prepare submission → Submission handover → Issuer programme and selected native plan** to receive the complete original issuer case from Grant Operations. Review the original correspondence, saved terms and native commissioning, record the receiving context, and select its exact native plan when ready to review that plan in the application. Prepared editions freeze the context while the complete editable draft retains every original byte and prior edition.
+
+The command-line equivalent is `starforge grant-export --draft saved-submission.json --receive-issuer-case complete-issuer-case.zip --issuer-profile issuer-profile.json --out /private/new-export`. The explicit profile selects whether to receive the case's native plan. See [the complete issuer receiving guide](../../stellar-forge/developer-site/GRANT_ISSUER_CONTEXT.md) for the full browser, CLI, file and handover flow.

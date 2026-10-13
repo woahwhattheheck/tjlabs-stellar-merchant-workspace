@@ -43,7 +43,8 @@ const CRITICAL=[
  SDK+'dataset-handler.mjs',ROOT+'distribution/contributions/hila.json',
  ROOT+'distribution/selections/hila-operator.json',ROOT+'distribution/runtime-workspace/application-hila.mjs',
  ROOT+'distribution/runtime-workspace/providers/hila.mjs',ROOT+'distribution/runtime-workspace/model.mjs',
- ROOT+'distribution/runtime-workspace/server.mjs',ROOT+'distribution/runtime-workspace/applications.mjs',
+ ROOT+'distribution/runtime-workspace/server.mjs',ROOT+'distribution/runtime-workspace/applications-core.mjs',
+ ROOT+'distribution/runtime-workspace/application-providers.mjs',
  ROOT+'distribution/runtime-workspace/application-provider.mjs',ROOT+'distribution/runtime-workspace/managed-workspace.mjs',
  ROOT+'sf46-release/runtime-package.mjs',ROOT+'merchant-fleet-gateway/state-lease.mjs'
 ];

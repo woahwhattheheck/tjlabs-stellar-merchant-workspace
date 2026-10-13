@@ -91,6 +91,7 @@ export async function main(args = process.argv.slice(2), { log = console.log } =
         pythonExecutable: profile.pythonExecutable, allowStart: values['allow-start'] === true, label: profile.title });
       const client = new GrantWorkspaceClient(binding);
       try {
+        await client.open({ expectedSelectionSha256: binding.selectionSha256 });
         const captured = await captureGrantReporting({ client, catalog, profile, caseId,
           startDate: values['start-date'], endDate, plan: previous, id: previous?.id ?? values.id ?? randomUUID() });
         result = { ...await saveGrantReportingJSON(filename, captured), planId: captured.id,

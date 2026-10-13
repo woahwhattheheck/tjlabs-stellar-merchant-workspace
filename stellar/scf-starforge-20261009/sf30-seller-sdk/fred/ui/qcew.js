@@ -1,6 +1,6 @@
 // MIT. Complete county-report production on the original economic project.
 const $ = id => document.getElementById(id);
-const actions = new Set(['qcew.import', 'qcew.cpi', 'qcew.profile', 'qcew.produce', 'qcew.receive']);
+const actions = new Set(['qcew.import', 'qcew.cpi', 'qcew.profile', 'qcew.produce', 'qcew.publish', 'qcew.receive']);
 const statuses = { available: 'Available', disclosed_components: 'Disclosed components', withheld: 'Withheld',
   historical_unavailable: 'Historical value unavailable', classification_unavailable: 'Classification unavailable',
   missing_source: 'Source unavailable', missing_price: 'Price observation unavailable', missing: 'Unavailable',
@@ -46,7 +46,7 @@ async function localRecord(key, method = 'get', value) {
     transaction.onabort = () => reject(transaction.error ?? new Error('The browser did not retain the selected county-report work.'));
   });
 }
-export function mountFredQcew({ api, download, table, select, getState, getBusy, refresh, message }) {
+export function mountFredQcew({ api, download, table, select, getState, getBusy, refresh, message, onPublication }) {
   let capabilities = null, active = null, selectedReport = null, reportGeneration = 0;
   let definition = null, jsonDirty = false, working = 0, metadataGeneration = 0;
   let openedProject = null, initialized = false, initializing = null, lastRevision = null, draftTimer = null;
@@ -116,6 +116,13 @@ export function mountFredQcew({ api, download, table, select, getState, getBusy,
     $('qcew-filter-industry').disabled = busy || !selectedReport || selectedReport.section === 'files';
     $('qcew-open-edition').disabled = busy || !$('qcew-edition').value;
     $('qcew-use-edition').disabled = busy || !$('qcew-edition').value;
+    $('qcew-publish-selected').disabled = busy || !$('qcew-edition').value;
+    const publishing = active?.request.action === 'qcew.publish';
+    $('county-publish-continue').hidden = !publishing;
+    $('county-publish-continue').disabled = busy || !publishing;
+    $('county-publication-status').textContent = publishing
+      ? (completed() ? 'The county publication completed. Continue to open its saved result.' : 'The original county publication and its payment terms are retained. Continue the same action after interruption.') : '';
+    if ($('publication-kind').value === 'QCEW') $('publish-button').disabled = busy || another || Boolean(project().pending) || !$('qcew-merchant-edition').value;
     $('qcew-download-original').disabled = busy || !$('qcew-produce-source').value;
     $('qcew-export-project').disabled = busy || Boolean(project().pending);
     $('qcew-page-previous').disabled = busy || !selectedReport || selectedReport.offset === 0;
@@ -271,7 +278,10 @@ export function mountFredQcew({ api, download, table, select, getState, getBusy,
     return transmit(record);
   }
   async function showResult(action, result) {
-    if (result.edition) {
+    if (result.publicationId) {
+      await onPublication?.(result);
+      message('The original county report and its customer resources are published in this project.');
+    } else if (result.edition) {
       $('qcew-edition').value = result.edition.id; resetReportFilters();
       $('qcew-section').value = 'overview'; await openEdition(result.edition.id);
       message('The complete county report edition is saved.');
@@ -628,7 +638,22 @@ export function mountFredQcew({ api, download, table, select, getState, getBusy,
     message('The ended request is cleared. Saved project work remains available.');
   });
   sourceMode();
-  return { onState, async open() {
+  return { onState, async publish(selection) {
+    await ensureInitialized();
+    if (working) throw new Error('The original county workspace action is still running.');
+    working++; sync();
+    try {
+      const result = await mutate('qcew.publish', selection);
+      await showResult('qcew.publish', result); return result;
+    } finally { working--; sync(); }
+  }, async continuePublication() {
+    await ensureInitialized();
+    if (working || active?.request.action !== 'qcew.publish') throw new Error('Choose the original saved county publication.');
+    working++; sync();
+    try {
+      const result = await transmit(active); await showResult('qcew.publish', result); return result;
+    } finally { working--; sync(); }
+  }, async open() {
     if (!project()) return;
     if (openedProject !== project().id) onState();
     await ensureInitialized();

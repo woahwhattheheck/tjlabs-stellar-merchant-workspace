@@ -1,4 +1,5 @@
-import type { Server } from 'node:http';
+import type { Server, IncomingMessage, ServerResponse } from 'node:http';
+import type { VerifiedDownload } from '../resource-library/verified-downloads.mjs';
 import type { Library, Resource, Scan } from '../resource-library/library.mjs';
 import type { JobIntake, IntakeStatus, InputStorageLimits } from './intake/index.mjs';
 import type { JobPackageDescription, JobPackageIdentity, JobPackageJob, JobPackageFile } from '../../sf30-seller-sdk/jobs/outputs/index.mjs';
@@ -93,7 +94,16 @@ export interface WorkspaceOptions {
 export function openJobWorkspace(options: WorkspaceOptions): Promise<JobWorkspace>;
 export type JobWorkspaceLanding = 'request' | 'checkout' | 'jobs' | 'library' | 'collections';
 export type JobApprovalMode = 'browser' | 'terminal';
-export function startJobCustomerWorkspace(options: {model: JobWorkspace; port?: number; browserApproval?: boolean; landing?: JobWorkspaceLanding}): Promise<{
+export interface JobWorkspaceExtension {
+  additionalAssets: Array<{route: string; bytes: Buffer; type: 'text/html' | 'text/javascript' | 'text/css' | 'text/plain'}>;
+  authenticatedRoute(context: {request: IncomingMessage; response: ServerResponse; url: URL;
+    send(value: unknown, status?: number): void; signal: AbortSignal; body(maximum?: number): Promise<Record<string, unknown>>;
+    registerDownload(produce: (signal: AbortSignal) => Promise<VerifiedDownload>): Promise<{url: string; bytes: number; sha256: string}>;
+  }): boolean | Promise<boolean>;
+  /** Runs after host admission closes and before original native controllers drain. */
+  close?(): void | Promise<void>;
+}
+export function startJobCustomerWorkspace(options: {model: JobWorkspace; port?: number; browserApproval?: boolean; landing?: JobWorkspaceLanding; extensions?: JobWorkspaceExtension[]}): Promise<{
   origin: string; url: string; libraryUrl: string; collectionsUrl: string; checkoutUrl: string; intakeUrl: string; resolutionUrl: string;
   approvalMode: JobApprovalMode; landing: JobWorkspaceLanding; entryUrl: string;
   token: string; server: Server; launch: JobWorkspaceLaunch; privateLaunch: string; close(): Promise<void>;
