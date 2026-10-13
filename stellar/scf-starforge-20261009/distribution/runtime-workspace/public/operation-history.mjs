@@ -44,7 +44,7 @@ export function createOperationHistoryView({ root, count, api, getState, renderC
     detailPanel.hidden = !selectedId;
     if (!selectedId) return;
     const heading = make('div', undefined, 'section-title');
-    heading.append(make('h3', 'Complete original operation'), make('span', detail?.displayPhase ?? 'Loading', 'status'));
+    heading.append(make('h3', 'Complete original operation'), make('span', detail?.displayPhase ?? (pending ? 'Loading' : 'Unavailable'), 'status'));
     const actions = make('div', undefined, 'actions');
     actions.append(button('Refresh selected operation', () => readSelected(true), Boolean(pending)),
       button('Open original worker output', () => openLog({ operationId: selectedId })),

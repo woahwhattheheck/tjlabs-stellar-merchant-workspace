@@ -55,16 +55,24 @@ export async function receiveOperationHistory({ page, model, outputDirectory }) 
       'Operations workspace overflows the actual viewport.');
   }
   await pane.getByRole('button', { name: 'Clear filters', exact: true }).click();
+  await page.waitForFunction(() => document.querySelector('#operations input[type="search"]')?.value === '' &&
+    document.querySelector('#operations [role="status"]')?.textContent.includes(' matching of '));
   await screen('desktop-existing-history');
   if (apiHistory.hasMore) {
     const before = await pane.locator('article[data-operation-id]').evaluateAll(nodes => nodes.map(node => node.dataset.operationId));
     await pane.getByRole('button', { name: 'Older operations', exact: true }).click();
+    await page.waitForFunction(previous => {
+      const rows = [...document.querySelectorAll('#operations article[data-operation-id]')];
+      return rows.length > 0 && rows.every(node => !previous.includes(node.dataset.operationId));
+    }, before);
     const after = await pane.locator('article[data-operation-id]').evaluateAll(nodes => nodes.map(node => node.dataset.operationId));
     check(after.length > 0 && after.every(id => !before.includes(id)), 'Browser page did not advance across original operations.');
     await pane.getByRole('button', { name: 'Previous page', exact: true }).click();
+    await page.waitForFunction(id => Boolean(document.querySelector('#operations article[data-operation-id="' + id + '"]')), before[0]);
   }
   await pane.getByLabel('Find an operation', { exact: true }).fill('absent-operation-' + randomUUID());
   await pane.getByRole('button', { name: 'Find operations', exact: true }).click();
+  await page.waitForFunction(() => document.querySelectorAll('#operations article[data-operation-id]').length === 0);
   check(await pane.locator('article[data-operation-id]').count() === 0, 'Empty history selection retained previous cards.');
   await screen('desktop-empty-filter');
   await pane.getByRole('button', { name: 'Clear filters', exact: true }).click();
@@ -119,8 +127,18 @@ export async function receiveOperationHistory({ page, model, outputDirectory }) 
         if (delayed) await delayed.continue().catch(() => {});
         await page.unroute('**/api/operation-status?**');
       }
+      const refreshed = page.waitForResponse(response => response.ok() &&
+        response.url().includes('/api/operation-status?') && new URL(response.url()).searchParams.get('operationId') === candidate.id);
       await detail.getByRole('button', { name: 'Refresh selected operation', exact: true }).click();
-      await detail.locator('pre').waitFor();
+      const receivedRefresh = await (await refreshed).json();
+      await page.waitForFunction(value => {
+        const panel = document.querySelector('#operations section[aria-label="Complete original operation"]');
+        if (!panel?.querySelector('pre')) return false;
+        let original; try { original = JSON.parse(panel.querySelector('pre').textContent); } catch { return false; }
+        return original.id === value.id && (original.observation?.checkedAt ?? '') >= (value.observation?.checkedAt ?? '') &&
+          !panel.textContent.includes('Refreshing the same original operation.') &&
+          !panel.textContent.includes('The current read failed.');
+      }, receivedRefresh);
       await page.reload();
       await pane.getByRole('region', { name: 'Complete original operation', exact: true }).locator('pre').waitFor();
       const reopened = JSON.parse(await pane.getByRole('region', { name: 'Complete original operation', exact: true }).locator('pre').innerText());
