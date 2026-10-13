@@ -213,28 +213,52 @@ export function importSummary(row) {
   const {rowIds,pendingRows,...rest}=row;
   return {...clone(rest),rowCount:rowIds.length,pendingCount:pendingRows.length};
 }
-export function closePreview(data,account,value,periodClose=null) {
+export function closePreview(data,account,value,periodClose=null,sourceAssembly=null) {
   const bank=bankData(data),from=dateValue(value.from,'opening date'),until=dateValue(value.until,'closing date');
   need(from<=until,'INVALID_BANK_PERIOD','The opening date must be on or before the closing date.');
   const opening=minor(value.openingBalance,account.currency,'opening bank balance',{signed:true});
   const closing=minor(value.closingBalance,account.currency,'closing bank balance',{signed:true});
   let sourceClosing=null;
   if(value.sourceClosing) {
-    const imported=record(bank.imports,value.sourceClosing.importId,'statement import');
+    const assembled=value.sourceClosing.kind==='CAMT_PAGE_ASSEMBLY';
+    need(!assembled||sourceAssembly?.id===value.sourceClosing.id,'CAMT_PAGE_REVIEW_REQUIRED','Review the complete retained page assembly before closing.');
+    const imported=record(bank.imports,assembled?sourceAssembly.selection.importIds[0]:value.sourceClosing.importId,'statement import');
     need(imported.accountId===account.id,'BANK_CLOSE_ACCOUNT','Choose closing balances for the same account.');
-    const selected=imported.balances.closing.find(row=>row.id===value.sourceClosing.id);
+    const selected=assembled?sourceAssembly.closing:imported.balances.closing.find(row=>row.id===value.sourceClosing.id);
     need(selected?.eligible&&selected.opening&&selected.closing,'BANK_CLOSE_SOURCE_REQUIRED','Choose a complete original opening and closing balance pair.');
     need(selected.currency===account.currency.code&&selected.from===from&&selected.until===until&&
       minor(selected.opening.amount,account.currency,'source opening',{signed:true})===opening&&
       minor(selected.closing.amount,account.currency,'source closing',{signed:true})===closing,
       'BANK_CLOSE_SOURCE_CHANGED','The dates and balances must match the selected original closing record.',409);
-    sourceClosing={importId:imported.id,fileSha256:imported.file.sha256,closing:clone(selected)};
+    sourceClosing={importId:imported.id,fileSha256:imported.file.sha256,closing:clone(selected),
+      ...(assembled?{kind:'CAMT_PAGE_ASSEMBLY',importIds:clone(sourceAssembly.selection.importIds),assembly:clone(sourceAssembly)}:{})};
   }
   const rows=bank.transactions.filter(row=>row.accountId===account.id&&(!row.postedDate||row.postedDate>=from&&row.postedDate<=until));
   const pending=bank.imports.filter(row=>row.accountId===account.id).flatMap(row=>row.pendingRows.map(item=>({...clone(item),importId:row.id})))
     .filter(row=>!row.postedDate||row.postedDate>=from&&row.postedDate<=until);
   const posted=rows.filter(row=>row.status==='POSTED');
   const problems=[];
+  if(sourceAssembly) {
+    const claimed=new Map(),sourceRows=new Map();
+    for(const row of posted)for(const copy of row.copies) {
+      const key=copy.importId+':'+copy.sourceRowId,group=sourceRows.get(key)??new Map();
+      group.set(row.id,row);sourceRows.set(key,group);
+    }
+    for(const entry of sourceAssembly.entries.filter(row=>row.status==='POSTED')) {
+      const candidates=[...(sourceRows.get(entry.importId+':'+entry.sourceRowId)?.values()??[])];
+      const current=candidates.length===1?candidates[0]:null;
+      if(!current||current.currency!==entry.currency||current.postedDate!==entry.postedDate||
+        minor(current.sourceAmount,account.currency,'current original entry',{signed:true})!==minor(entry.amount,account.currency,'selected original entry',{signed:true})||
+        amountOf(current,account)!==minor(entry.amount,account.currency,'selected account entry',{signed:true}))
+        problems.push({code:'CAMT_ASSEMBLED_ENTRY_CHANGED',importId:entry.importId,sourceRowId:entry.sourceRowId,
+          message:'Each selected original booked entry must retain exactly one current posted transaction with its original account amount and date.'});
+      if(current) {
+        if(claimed.has(current.id))problems.push({code:'CAMT_ASSEMBLED_ENTRY_REUSED',transactionId:current.id,
+          message:'Two selected original entries resolve to the same posted cash transaction. Review their source identities.'});
+        else claimed.set(current.id,entry);
+      }
+    }
+  }
   for(const row of rows) if(!['POSTED','DUPLICATE','SUPERSEDED','DELETED','EXCLUDED'].includes(row.status))
     problems.push({code:'TRANSACTION_REVIEW',transactionId:row.id,status:row.status,message:'Review the original transaction.'});
   let incoming=0n,outgoing=0n;
@@ -298,11 +322,12 @@ export function closePreview(data,account,value,periodClose=null) {
       problems.push({code:'BANK_CLOSING_CONTINUITY',closeId:following.id,message:'The closing balance differs from the immediately following saved close.'});
   }
   const imports=bank.imports.filter(row=>row.accountId===account.id&&rows.some(tx=>tx.copies.some(copy=>copy.importId===row.id)));
-  if(sourceClosing&&!imports.some(row=>row.id===sourceClosing.importId))imports.push(record(bank.imports,sourceClosing.importId,'statement import'));
+  for(const id of sourceClosing?.importIds??(sourceClosing?[sourceClosing.importId]:[]))
+    if(!imports.some(row=>row.id===id))imports.push(record(bank.imports,id,'statement import'));
   const report={schema:BANK_CLOSE_SCHEMA,account:clone(account),from,until,currency:clone(account.currency),
     openingBalance:money(opening,account.currency),incoming:money(incoming,account.currency),outgoing:money(outgoing,account.currency),
     calculatedClosing:money(calculated,account.currency),closingBalance:money(closing,account.currency),difference:money(difference,account.currency),
-    balanceBasis:sourceClosing?'ORIGINAL_SOURCE_CLOSING':'OPERATOR_ENTERED_STATEMENT_BALANCES',
+    balanceBasis:sourceClosing?.kind==='CAMT_PAGE_ASSEMBLY'?'ORIGINAL_SOURCE_PAGE_ASSEMBLY':sourceClosing?'ORIGINAL_SOURCE_CLOSING':'OPERATOR_ENTERED_STATEMENT_BALANCES',
     balanceNote:field(value.balanceNote??'','balance source and period note',4000,true),sourceClosing,periodClose:clone(periodClose),
     transactions:rows.map(clone),matches,pending,imports:imports.map(importSummary),
     priorCloseId:prior?.id??null,problems,ready:problems.length===0};
@@ -324,7 +349,13 @@ export function closeDocuments(report,snapshot) {
     '<table><tbody>'+[['Opening balance',report.openingBalance],['Posted credits',report.incoming],['Posted debits',report.outgoing],
       ['Calculated closing balance',report.calculatedClosing],['Statement closing balance',report.closingBalance],['Difference',report.difference]]
       .map(([label,value])=>'<tr><th>'+e(label)+'</th><td class="amount">'+e(value)+'</td></tr>').join('')+'</tbody></table>'+
-    '<p>'+e(report.balanceNote)+'</p><h2>Statement transactions</h2><table><thead><tr><th>Date</th><th>Payee / reference</th><th>Account amount</th><th>Review</th></tr></thead><tbody>'+
+    '<p>'+e(report.balanceNote)+'</p>'+ (report.sourceClosing?.kind==='CAMT_PAGE_ASSEMBLY'?
+      '<h2>Original statement pages</h2><p>'+e(report.sourceClosing.assembly.grouping.basis.replaceAll('_',' '))+
+      ' · '+e(report.sourceClosing.assembly.grouping.note)+'</p><table><thead><tr><th>Page</th><th>Original file / statement</th><th>Opening</th><th>Booked movement</th><th>Closing</th></tr></thead><tbody>'+
+      report.sourceClosing.assembly.pages.map(page=>'<tr><td>'+e(page.pagination.page)+(page.pagination.last?' · final':'')+
+        '</td><td>'+e(page.file.name)+'<br>'+e(page.originalStatementId)+'</td><td>'+e(page.opening?.amount)+
+        '</td><td>'+e(page.bookedNet)+'</td><td>'+e(page.closing?.amount)+'</td></tr>').join('')+'</tbody></table>':'')+
+      '<h2>Statement transactions</h2><table><thead><tr><th>Date</th><th>Payee / reference</th><th>Account amount</th><th>Review</th></tr></thead><tbody>'+
     report.transactions.map(row=>'<tr><td>'+e(row.postedDate)+'</td><td>'+e(row.payee)+'<br>'+e(row.reference)+'</td><td class="amount">'+
       e(row.valuation?.amount??row.amount)+'</td><td>'+e(row.status)+'</td></tr>').join('')+
     '</tbody></table><h2>Accountant posting parts</h2><table><thead><tr><th>Kind</th><th>Original record</th><th>Amount</th><th>Note</th></tr></thead><tbody>'+

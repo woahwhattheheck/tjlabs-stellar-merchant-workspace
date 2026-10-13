@@ -20,7 +20,8 @@ const ctx = {
  sourceFile:null,sourcePreview:null,sourceStatementId:'',sourceMapping:null,sourceEdit:0,sourceFileLoad:0,sourceFileLoading:false,sourceLoadingName:'',
  tx:{items:[],total:0,offset:0,limit:50,revision:null},filters:{status:'',search:''},txLoad:0,
  overviewPage:0,closeListPage:0,detail:null,detailLoad:0,parts:[],detailDrafts:new Map(),
- closeDraft:{from:'',until:'',openingBalance:'',closingBalance:'',balanceNote:'',sourceClosing:'',periodCloseId:'',name:'',note:''},
+ closeDraft:{from:'',until:'',openingBalance:'',closingBalance:'',balanceNote:'',sourceClosing:'',periodCloseId:'',name:'',note:'',pageImportIds:'[]',groupingNote:'',summaryScope:'STATEMENT'},
+ assemblyPreview:null,assemblySignature:null,assemblyPage:0,assemblyLoad:0,
  closePreview:null,closePage:0,record:null,recordLoad:0,db:null,storageProblem:null,invoiceDetail:null,invoiceLoad:0
 };
 const MAP_FIELDS = [
@@ -95,6 +96,7 @@ async function refreshState({render=true}={}){
  if(!state||!Array.isArray(state.accounts)||!Number.isInteger(state.revision)||!state.workspaceId)throw new Error('The bank workspace returned an incomplete state.');
  if(ctx.state&&ctx.state.workspaceId!==state.workspaceId)throw new Error('The server opened a different workspace. Reload this page to open its own recovery records.');
  ctx.state=state;ctx.loaded=true;
+ if(ctx.assemblySignature&&ctx.assemblySignature!==assemblySignature())invalidateAssembly();
  if(ctx.accountId&&!state.accounts.some(x=>x.id===ctx.accountId))ctx.accountId='';
  const picker=$('#account-picker');picker.innerHTML=option('','All accounts',ctx.accountId)+state.accounts.map(x=>option(x.id,x.name+' · '+x.currency.code,ctx.accountId)).join('');
  $('#workspace-identity').textContent='Workspace '+state.workspaceId+' · revision '+state.revision;
@@ -668,11 +670,89 @@ function renderImportRecord(){
 }
 
 function closingSources(accountId=ctx.accountId){
- return (ctx.state?.imports||[]).filter(item=>item.accountId===accountId).flatMap(item=>(item.balances?.closing||[]).filter(row=>row.eligible&&row.opening&&row.closing).map(row=>({
+ const sources=(ctx.state?.imports||[]).filter(item=>item.accountId===accountId).flatMap(item=>(item.balances?.closing||[]).filter(row=>row.eligible&&row.opening&&row.closing).map(row=>({
   value:JSON.stringify({importId:item.id,id:row.id}),
   label:(row.from||'?')+' to '+(row.until||'?')+' · '+row.opening.amount+' → '+row.closing.amount+' '+row.currency+' · '+item.file.name,
   source:row,import:item
  })));
+ const assembly=ctx.assemblyPreview;
+ if(assembly?.eligible&&assembly.accountId===accountId&&ctx.assemblySignature===assemblySignature())sources.push({
+  value:JSON.stringify(assembly.sourceClosing),label:assembly.period.from+' to '+assembly.period.until+' · '+assembly.pages.length+
+   ' original pages · '+assembly.closing.opening.amount+' → '+assembly.closing.closing.amount+' '+assembly.currency.code,
+  source:assembly.closing,assembly});
+ return sources;
+}
+function selectedPageImports(){
+ try{const ids=JSON.parse(ctx.closeDraft.pageImportIds||'[]');return Array.isArray(ids)?[...new Set(ids.filter(id=>typeof id==='string'))]:[];}catch{return [];}
+}
+function assemblyInput(){return {accountId:ctx.accountId,importIds:selectedPageImports(),groupingNote:ctx.closeDraft.groupingNote||'',summaryScope:ctx.closeDraft.summaryScope||'STATEMENT'};}
+function assemblySignature(){
+ const input=assemblyInput(),selected=new Set(input.importIds),imports=ctx.state?.imports||[];
+ return JSON.stringify({input,sources:input.importIds.map(id=>{
+  const row=imports.find(item=>item.id===id);
+  return {id,reviewSha256:row?.reviewSha256??null,statementId:row?.statementId??null,fileSha256:row?.file?.sha256??null,
+   successors:imports.filter(item=>item.supersedesImportId===id).map(item=>({id:item.id,reviewSha256:item.reviewSha256})).sort((a,b)=>a.id.localeCompare(b.id))};
+ })});
+}
+function captureAssemblyDraft(){
+ const form=$('#assembly-form');
+ if(form){ctx.closeDraft.groupingNote=form.elements.groupingNote.value;ctx.closeDraft.summaryScope=form.elements.summaryScope.value;}
+ writeSmall('close-draft:'+ctx.accountId,ctx.closeDraft);
+}
+function invalidateAssembly(){
+ ctx.assemblyPreview=null;ctx.assemblySignature=null;ctx.assemblyLoad++;
+ invalidateClosePreview();
+ const output=$('#assembly-review');if(output)output.innerHTML='';
+}
+function assemblyReviewHtml(report){
+ if(!report)return '';
+ const pages=report.pages||[],shown=pages.slice((ctx.assemblyReviewPage||0)*25,((ctx.assemblyReviewPage||0)+1)*25);
+ return '<section class="source-note mt16"><h3>Complete statement page review</h3><p>'+badge(report.eligible?'READY':'REVIEW REQUIRED')+
+  ' · '+esc(report.entryCount)+' original entries · '+esc(report.bookedCount)+' booked · '+esc(report.bookedNet)+' '+esc(report.currency.code)+
+  '</p>'+issuesHtml(report.issues)+
+  '<div class="table-wrap"><table><thead><tr><th>Page</th><th>Original file / statement</th><th>Opening boundary</th><th>Booked movement</th><th>Closing boundary</th></tr></thead><tbody>'+
+  shown.map(page=>'<tr><td>'+esc(page.pagination?.page)+(page.pagination?.last?' · final':'')+'</td><td><button type="button" class="small" data-action="open-import" data-id="'+esc(page.importId)+'">'+
+   esc(page.file.name)+'</button><br>'+esc(page.originalStatementId)+'</td><td class="amount">'+esc(page.opening?.amount??'Review')+'</td><td class="amount">'+
+   esc(page.bookedNet)+'</td><td class="amount">'+esc(page.closing?.amount??'Review')+'</td></tr>').join('')+'</tbody></table></div>'+
+  pagerHtml('assembly-review-page',ctx.assemblyReviewPage||0,pages.length,25)+
+  '<p class="small">Original grouping: '+esc(report.grouping.basis.replaceAll('_',' '))+'. Summary scope: '+esc(report.selection.summaryScope)+
+  '. Every boundary and summary remains available in the complete review.</p><div class="actions">'+
+  (report.eligible?'<button type="button" data-action="use-assembly">Use these original statement balances</button>':'')+
+  '<button type="button" data-action="download-assembly">Download complete page review</button></div></section>';
+}
+function renderAssembly(){
+ const all=ctx.state?.imports||[],successors=new Map();
+ for(const item of all)if(item.supersedesImportId)successors.set(item.supersedesImportId,item.id);
+ const imports=all.filter(item=>item.accountId===ctx.accountId&&item.format==='CAMT053');
+ if(!imports.length)return '';
+ const selected=new Set(selectedPageImports()),page=ctx.assemblyPage||0,items=imports.slice(page*25,(page+1)*25);
+ return '<section class="panel"><h2>Combine original statement pages</h2><p class="small muted">Receive each original page through Import, then select its saved statement section here. Review the complete page sequence, original balance boundaries and transaction summary before using the final statement balances.</p>'+
+  '<form id="assembly-form" class="stack"><div class="table-wrap"><table><thead><tr><th>Select</th><th>Original file / statement</th><th>Page</th><th>Original period</th><th>Sequence</th></tr></thead><tbody>'+
+  items.map(item=>'<tr><td><label><input type="checkbox" data-page-import="'+esc(item.id)+'"'+(selected.has(item.id)?' checked':'')+
+   (successors.has(item.id)&&!selected.has(item.id)?' disabled':'')+' aria-label="Select original '+esc(item.file.name)+'"></label></td><td>'+esc(item.file.name)+'<br>'+esc(item.camt?.statementId||item.statementId)+
+   '<p class="small">'+(successors.has(item.id)?'Superseded by '+esc(successors.get(item.id)):'Current interpretation')+'</p><p class="small mono">'+esc(item.reviewSha256)+'</p>'+
+   '</td><td>'+esc(item.camt?.pagination?.page??'Unspecified')+(item.camt?.pagination?.last?' · final':'')+'</td><td>'+esc(item.period?.from||'Unspecified')+
+   ' to '+esc(item.period?.until||'Unspecified')+'</td><td>'+esc(item.camt?.sequences?.electronic||item.camt?.sequences?.legal||'Unspecified')+'</td></tr>').join('')+
+  '</tbody></table></div>'+pagerHtml('assembly-import-page',page,imports.length,25)+'<p class="small">'+selected.size+' original page imports selected across all pages.</p>'+
+  '<div class="grid two">'+selectField('Original transaction-summary scope','summaryScope',[{value:'STATEMENT',label:'Complete statement (first-page summary)'},{value:'PAGE',label:'Separate original summary for each page'}],ctx.closeDraft.summaryScope||'STATEMENT',null)+
+  area('Original bank grouping and summary convention','groupingNote',ctx.closeDraft.groupingNote||'','maxlength="4000"')+'</div>'+
+  '<p class="small muted">Explain the original bank convention when statement identifiers change without a common sequence, or when its summaries cover separate pages.</p>'+
+  '<div class="actions"><button type="button" data-action="preview-assembly" id="preview-assembly-button">Review selected original pages</button>'+
+  '<button type="button" data-action="clear-assembly">Clear page selection</button></div></form><div id="assembly-review">'+
+  assemblyReviewHtml(ctx.assemblyPreview)+'</div></section>';
+}
+async function previewAssembly(){
+ captureCloseDraft();captureAssemblyDraft();
+ const input=assemblyInput(),signature=assemblySignature(),generation=++ctx.assemblyLoad,button=$('#preview-assembly-button');
+ ctx.assemblySignature=signature;
+ if(!input.importIds.length)throw new Error('Select the retained original pages for this account statement.');
+ if(button){button.disabled=true;button.textContent='Reading original statement pages…';}
+ try {
+  const report=await ctx.client.previewAssembly(input);
+  if(generation!==ctx.assemblyLoad||signature!==assemblySignature())return;
+  if(!report?.id||!Array.isArray(report.pages)||!Array.isArray(report.issues))throw new Error('The original page review is incomplete.');
+  ctx.assemblyPreview=report;ctx.assemblySignature=signature;ctx.assemblyReviewPage=0;invalidateClosePreview();renderClose();
+ } finally{if(button?.isConnected){button.disabled=false;button.textContent='Review selected original pages';}}
 }
 function captureCloseDraft(){
  const form=$('#close-form');if(!form)return ctx.closeDraft;
@@ -687,6 +767,9 @@ function closeInput(){
  const account=chosenAccount();if(!account)throw new Error('Select the bank account to close.');
  const draft=captureCloseDraft(),input={accountId:account.id,from:draft.from,until:draft.until,openingBalance:draft.openingBalance,closingBalance:draft.closingBalance,balanceNote:draft.balanceNote};
  if(draft.sourceClosing)input.sourceClosing=JSON.parse(draft.sourceClosing);
+ if(input.sourceClosing?.kind==='CAMT_PAGE_ASSEMBLY'&&
+  (ctx.assemblyPreview?.id!==input.sourceClosing.id||ctx.assemblySignature!==assemblySignature()))
+   throw new Error('Review these retained original pages again before reviewing the complete reconciliation.');
  if(draft.periodCloseId)input.periodCloseId=draft.periodCloseId;
  if(!input.from||!input.until||input.from>input.until)throw new Error('Enter an ordered statement period.');
  minor(input.openingBalance,account.currency.scale);minor(input.closingBalance,account.currency.scale);
@@ -703,10 +786,14 @@ function renderClose(){
  const account=chosenAccount();
  if(!account){$('#view-close').innerHTML='<section class="panel"><h2>Close a bank statement</h2><p class="empty">Select a bank account above to review a complete statement period and its original balances.</p></section>';return;}
  const d=ctx.closeDraft,sources=closingSources(),pinned=sources.find(x=>x.value===d.sourceClosing);
- if(d.sourceClosing&&!pinned)d.sourceClosing='';
+ if(d.sourceClosing&&!pinned){
+  let saved;try{saved=JSON.parse(d.sourceClosing);}catch{}
+  if(saved?.kind==='CAMT_PAGE_ASSEMBLY')sources.push({value:d.sourceClosing,label:'Saved original page selection — review selected pages again'});
+  else d.sourceClosing='';
+ }
  const periods=(ctx.state.periodCloses||[]).map(row=>({value:row.id,label:(row.name||row.period?.label||row.id)+' · '+(row.from||row.period?.from||'')+' to '+(row.until||row.period?.until||'')}));
  const readonly=pinned?' readonly':'';
- $('#view-close').innerHTML='<section class="panel"><div class="section-heading"><div><h2>Close statement · '+esc(account.name)+'</h2><p class="small muted">Compare the bank’s opening and closing balances with every posted transaction and its receipt, refund or accounting classification.</p></div><button type="button" data-tab="transactions">Review transactions</button></div>'+
+ $('#view-close').innerHTML=renderAssembly()+'<section class="panel"><div class="section-heading"><div><h2>Close statement · '+esc(account.name)+'</h2><p class="small muted">Compare the bank’s opening and closing balances with every posted transaction and its receipt, refund or accounting classification.</p></div><button type="button" data-tab="transactions">Review transactions</button></div>'+
  '<form id="close-form" class="stack">'+selectField('Balance source','sourceClosing',sources,d.sourceClosing,'Enter balances from an original statement')+
  '<p class="small muted">'+(pinned?'Dates and balances are bound to the selected original closing record.':'Enter the bank’s complete statement dates and balances. Download coverage or the earliest/latest transaction date alone does not establish a complete statement period.')+'</p>'+
  '<div class="grid four">'+field('First statement date','from',d.from,'date','required'+readonly)+field('Last statement date','until',d.until,'date','required'+readonly)+field('Opening balance · '+account.currency.code,'openingBalance',d.openingBalance,'text','required inputmode="decimal"'+readonly)+field('Closing balance · '+account.currency.code,'closingBalance',d.closingBalance,'text','required inputmode="decimal"'+readonly)+'</div>'+
@@ -791,7 +878,7 @@ async function restoreCloseFile(file){
  const data=JSON.parse(await file.text());
  if(data?.schema!=='stellar-forge.bank-close-working-inputs.v1'||data.workspaceId!==ctx.state.workspaceId||data.accountId!==ctx.accountId||!data.inputs)throw new Error('Choose a working-input file for this original bank account and workspace.');
  for(const key of Object.keys(ctx.closeDraft))ctx.closeDraft[key]=String(data.inputs[key]??'');
- writeSmall('close-draft:'+ctx.accountId,ctx.closeDraft);invalidateClosePreview();renderClose();notice('Original working reconciliation inputs restored.');
+ writeSmall('close-draft:'+ctx.accountId,ctx.closeDraft);invalidateAssembly();renderClose();notice('Original working reconciliation inputs restored. Review the retained pages again when using a page assembly.');
 }
 async function restoreSourceFile(file){
  const generation=++ctx.sourceFileLoad;captureMapping();resetSourcePreview();
@@ -815,7 +902,8 @@ async function selectAccount(id){
  if(ctx.accountId===id)return;
  captureCloseDraft();saveDetailDraft();ctx.accountId=id;writeSmall('account-id',id);
  $('#account-picker').value=id;
- ctx.closeDraft={from:'',until:'',openingBalance:'',closingBalance:'',balanceNote:'',sourceClosing:'',periodCloseId:'',name:'',note:'',...readSmall('close-draft:'+id,{})};
+ ctx.closeDraft={from:'',until:'',openingBalance:'',closingBalance:'',balanceNote:'',sourceClosing:'',periodCloseId:'',name:'',note:'',pageImportIds:'[]',groupingNote:'',summaryScope:'STATEMENT',...readSmall('close-draft:'+id,{})};
+ invalidateAssembly();ctx.assemblyPage=0;
  invalidateClosePreview();ctx.overviewPage=0;ctx.closeListPage=0;ctx.tx.offset=0;
  closeTransactionDialog();closeRecordDialog();
  renderOverview();if(ctx.tab==='transactions')await loadTransactions(0);if(ctx.tab==='close')renderClose();
@@ -869,7 +957,16 @@ function clickHandler(event){
   else if(action==='add-part'){ctx.parts=readParts();ctx.parts.push({kind:'INCOME',amount:'',note:'',reference:'',ledgerCode:'',targetId:''});renderParts();saveDetailDraft();}
   else if(action==='remove-part'){ctx.parts=readParts();ctx.parts.splice(Number(button.dataset.index),1);renderParts();saveDetailDraft();}
   else if(action==='add-fee'){ctx.parts=readParts();let amount='';try{const remainder=postingDifference();if(remainder.difference<0n)amount=money(remainder.difference,remainder.scale);}catch{}ctx.parts.push({kind:'FEE',amount,note:'Bank processing fee',reference:'',ledgerCode:'',targetId:''});renderParts();saveDetailDraft();}
-  else if(action==='download-close-draft'){captureCloseDraft();localDownload('bank-reconciliation-working-inputs.json',json({schema:'stellar-forge.bank-close-working-inputs.v1',workspaceId:ctx.state.workspaceId,accountId:ctx.accountId,inputs:ctx.closeDraft}));}
+  else if(action==='preview-assembly')await previewAssembly();
+  else if(action==='assembly-import-page'){captureCloseDraft();captureAssemblyDraft();ctx.assemblyPage=Math.max(0,page);renderClose();}
+  else if(action==='assembly-review-page'){ctx.assemblyReviewPage=Math.max(0,page);$('#assembly-review').innerHTML=assemblyReviewHtml(ctx.assemblyPreview);}
+  else if(action==='use-assembly'){
+   if(!ctx.assemblyPreview?.eligible||ctx.assemblySignature!==assemblySignature())throw new Error('Review the complete current original page selection first.');
+   chooseClosingSource(JSON.stringify(ctx.assemblyPreview.sourceClosing));
+  }
+  else if(action==='download-assembly'){if(ctx.assemblyPreview)localDownload('bank-original-page-review.json',json(ctx.assemblyPreview));}
+  else if(action==='clear-assembly'){captureCloseDraft();ctx.closeDraft.pageImportIds='[]';invalidateAssembly();writeSmall('close-draft:'+ctx.accountId,ctx.closeDraft);renderClose();}
+  else if(action==='download-close-draft'){captureCloseDraft();captureAssemblyDraft();localDownload('bank-reconciliation-working-inputs.json',json({schema:'stellar-forge.bank-close-working-inputs.v1',workspaceId:ctx.state.workspaceId,accountId:ctx.accountId,inputs:ctx.closeDraft}));}
   else if(action==='download-close-preview'){if(ctx.closePreview)localDownload('bank-reconciliation-review.json',json(ctx.closePreview));}
   else if(action==='close-transaction-page'){ctx.closePage=Math.max(0,page);renderClosePreview();}
   else if(action==='close-problem-page'){ctx.closeProblemPage=Math.max(0,page);renderClosePreview();}
@@ -965,6 +1062,11 @@ function changeHandler(event){
    updateReceiptTotal();saveDetailDraft();
   }
   else if(input.closest('#resolve-form')){updateResolveFields();saveDetailDraft();}
+  else if(input.closest('#assembly-form')){
+   captureCloseDraft();captureAssemblyDraft();
+   if(input.dataset.pageImport){const selected=new Set(selectedPageImports());if(input.checked)selected.add(input.dataset.pageImport);else selected.delete(input.dataset.pageImport);ctx.closeDraft.pageImportIds=JSON.stringify([...selected]);}
+   invalidateAssembly();writeSmall('close-draft:'+ctx.accountId,ctx.closeDraft);renderClose();
+  }
   else if(input.closest('#close-form')){
    if(input.name==='sourceClosing')chooseClosingSource(input.value);
    else{captureCloseDraft();invalidateClosePreview();}
@@ -977,6 +1079,7 @@ function inputHandler(event){
  if(input.closest('#posting-parts')){ctx.parts=readParts();updatePostingTotal();saveDetailDraft();}
  else if(input.closest('#receipt-form')){updateReceiptTotal();saveDetailDraft();}
  else if(input.closest('#detail-dialog')&&input.name)saveDetailDraft();
+ if(input.closest('#assembly-form')&&input.name==='groupingNote'){captureAssemblyDraft();invalidateAssembly();}
  if(input.closest('#close-form')&&input.name!=='sourceClosing'){captureCloseDraft();invalidateClosePreview();}
 }
 function run(work){return Promise.resolve().then(work).catch(error=>{notice(errorMessage(error),'error');return null;});}
