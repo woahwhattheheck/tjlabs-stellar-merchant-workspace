@@ -5,9 +5,9 @@
   "applicant": "Bryce Muhlnickel / TokenJunkieLabs",
   "application": {
     "path": "application.md",
-    "bytes": 47321,
-    "sha256": "73a2c051f2f6aac37f921a4d0e897a846636c175971621e0d08ad552b481b2a5",
-    "git_blob": "f6ed178f10ac6d936914d3cc973804088d7af5e1"
+    "bytes": 47371,
+    "sha256": "b9d27b29bb9c2d603b2bd013f07a1b8eb397cb8bca17ac57cae4da28a2b1abc1",
+    "git_blob": "ce39ca42245839be7d2b841703e92b714a5dd241"
   },
   "request": {
     "basis": "prospective",
@@ -9042,9 +9042,9 @@
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "f6643a51522d724df620c07c2b9312237f77e349",
-    "bytes": 925292,
-    "sha256": "9d7cc103e02a78f8a433c1f84406a25de110b438bd03dda00a560d405e8392fa",
+    "git_blob": "fc78b8426722f83f63ef37c96f2c137abec0b377",
+    "bytes": 925504,
+    "sha256": "076855955ab1dc396eef3ffc96b11b41a5415bbee73228bb81df19c8681103cd",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
     "prior_git_blob": "9ff11768d30ce0a77f620ed0e50cde965b3e0c4a"
   },
@@ -9252,7 +9252,7 @@
         "original_purchase_baseline_unchanged": true
       }
     ],
-    "current_application_sha256": "73a2c051f2f6aac37f921a4d0e897a846636c175971621e0d08ad552b481b2a5",
+    "current_application_sha256": "b9d27b29bb9c2d603b2bd013f07a1b8eb397cb8bca17ac57cae4da28a2b1abc1",
     "economic_product_commit": "be44be564e35b63af23246bad531a95374bbb4c0",
     "economic_application_operation": "SCF-FRED-ECONOMIC-CUSTOMER-APPLICATION-20261012",
     "coastal_product_commit": "92eb1c73a3cab9781ef7dbabdc12067344fb6aa2",
@@ -9260,8 +9260,8 @@
     "composition": {
       "operation": "SCF-GRANT-REVIEWER-PUBLICATION-8910-20261012",
       "source_join": "SCF-GRANT-CUMULATIVE-COMPOSITION-81CF-20261012",
-      "canonical_front_sha256": "82efd1743ee62efd3595c3558d468c07d54decd652c0d590e686fb3f67b89d95",
-      "canonical_front_bytes": 37983,
+      "canonical_front_sha256": "e1c44eb14d5642a34bf744c7674e7d1c694a8398cefb51d510eab55fb9c10844",
+      "canonical_front_bytes": 38033,
       "renderer_git_blob": "8b01e9a74c9bbd2cf415459e05cea94bd4954f45",
       "source_editions": [
         {
@@ -10176,8 +10176,8 @@
     "route": "/grant-submission.html",
     "application_route": "/grant-data/application.md",
     "source_index_route": "/grant-data/source-index.json",
-    "application_sha256": "73a2c051f2f6aac37f921a4d0e897a846636c175971621e0d08ad552b481b2a5",
-    "application_git_blob": "f6ed178f10ac6d936914d3cc973804088d7af5e1",
+    "application_sha256": "b9d27b29bb9c2d603b2bd013f07a1b8eb397cb8bca17ac57cae4da28a2b1abc1",
+    "application_git_blob": "ce39ca42245839be7d2b841703e92b714a5dd241",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "export_schema": "stellar-forge.grant-submission-export.v1",
     "form_map_schema": "stellar-forge.grant-form-map.v1",
@@ -10374,8 +10374,8 @@
     "schema": "stellar-forge.grant-review-round-integration.v1",
     "route": "/grant-review-round.html",
     "submission_route": "/grant-submission.html",
-    "application_sha256": "73a2c051f2f6aac37f921a4d0e897a846636c175971621e0d08ad552b481b2a5",
-    "application_git_blob": "f6ed178f10ac6d936914d3cc973804088d7af5e1",
+    "application_sha256": "b9d27b29bb9c2d603b2bd013f07a1b8eb397cb8bca17ac57cae4da28a2b1abc1",
+    "application_git_blob": "ce39ca42245839be7d2b841703e92b714a5dd241",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "draft_export_schema": "stellar-forge.grant-submission-export.v1",
     "review_schema": "stellar-forge.grant-review-round.v1",
@@ -10388,8 +10388,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "9d7cc103e02a78f8a433c1f84406a25de110b438bd03dda00a560d405e8392fa",
-    "source_bytes": 925292,
+    "source_sha256": "076855955ab1dc396eef3ffc96b11b41a5415bbee73228bb81df19c8681103cd",
+    "source_bytes": 925504,
     "assets": [
       "/grant-companion.html",
       "/grant-companion.css",
