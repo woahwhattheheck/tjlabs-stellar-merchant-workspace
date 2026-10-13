@@ -32,7 +32,7 @@ The original commercial programme records an explicit USD 100 invoice, USD 25 cr
 
 ## Complete payment follow-up in the same customer case
 
-The named successor now continues the original paid implementation invoice with a complete authored demonstration order. The following amounts are the programme's explicit input to the original ledger, policies and reporting engines.
+The named successor first verifies the original implementation invoice remains paid, then continues that same customer with a complete authored demonstration order. The following amounts are the programme's explicit input to the original ledger, policies and reporting engines.
 
 | Stage | Original application records |
 | --- | --- |
@@ -58,7 +58,7 @@ Two additive files own this leg:
 - retained-customer-followup.mjs uses the original durable provider requests and retains each stage.
 - retained-customer-followup-cli.mjs inspects or continues the same saved selection and finishes its complete case delivery.
 
-RETENTION.json records followupDirectory and the original workspace identity before this leg begins. The follow-up directory contains selection.json, flow.json, every operations/<stage>/request.json and its original recovery state, plus documents/customer-response.json. All IDs are retained before their dependent provider writes.
+RETENTION.json records followupDirectory and the original workspace identity before this leg begins. The follow-up directory contains selection.json, flow.json, every operations/<stage>/request.json and its original recovery state, plus documents/customer-response.json. All IDs and complete original previews or arguments are retained before preparation. The original preparer writes into preparations/<stage>; the caller publishes its complete request/state directory atomically to operations/<stage>. An interrupted unpublished preparation keeps its original bytes under an interrupted name and reuses the same saved intent and request ID. A published operation always resumes through its original request journal.
 
 After the original programme has closed, reopen its same merchant host with the existing serve-retained-customer-case.mjs and RETENTION.json. Then inspect or continue that retained directory:
 

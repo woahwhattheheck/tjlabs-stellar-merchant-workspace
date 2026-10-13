@@ -61,6 +61,8 @@ export async function continueRetainedCustomerFollowup({directory,client,signal,
     const original=await client.invoice({invoiceId:selected.originalInvoiceId},{requestSignal:signal});
     need(original.invoice.customerId===selected.customerId&&original.invoice.status==='ISSUED',
       'The original issued invoice must still belong to this receiving customer.');
+    need(original.invoice.paymentStatus==='PAID'&&/^0(?:\.0+)?$/.test(original.invoice.amountDue),
+      'Continue from the original paid implementation invoice before recording its follow-up approval.');
     const statePath=join(directory,'flow.json');let flow;
     if(await exists(statePath))flow=await readDurableCaseInput(statePath,8_000_000);
     else{flow={schema:SCHEMA,selectionSha256:sha(json(selected)),startedAt:new Date().toISOString(),steps:{},
@@ -71,20 +73,59 @@ export async function continueRetainedCustomerFollowup({directory,client,signal,
     if(await exists(completedPath)){const result=await readDurableCaseInput(completedPath,32_000_000);
       need(result.selectionSha256===flow.selectionSha256&&result.customerId===selected.customerId,'The retained follow-up completion changed.');
       return{directory,result,replayed:true};}
-    for(const name of ['operations','documents'])await privateDir(join(directory,name));
+    for(const name of ['operations','preparations','documents'])await privateDir(join(directory,name));
     const common={url:selected.url,workspace:selected.workspace,tokenEnv:selected.tokenEnv};
     const opts={requestSignal:signal},currency={code:'USD',scale:2},date=selected.accountDate,actor=selected.actor;
     const requestIds=[];
     async function step(name,kind,build){
       signal?.throwIfAborted();lease.assertHeld();const target=join(directory,'operations',name),requestPath=join(target,'request.json');
       if(!await exists(requestPath)){
-        // Build reads only; the durable producer writes the exact request before any provider mutation.
-        need(!await exists(target),'This original preparation was interrupted before its complete request. Preserve the directory for its owner to reconcile.');
-        const built=await build();const requestId=flow.steps[name]?.requestId??randomUUID();
-        if(!flow.steps[name]){flow.steps[name]={kind,requestId,status:'PREPARING'};await replace(statePath,flow);}
-        await prepareAccountingReceivablesOperation({directory:target,...common,kind,...(built.preview?
-          {preview:built.preview,actor,requestId,...(built.reviewOptions?{reviewOptions:built.reviewOptions}:{})}:
-          {arguments:{...built.arguments,actor,requestId}})});
+        need(!await exists(target),'A published original operation lost its request. Preserve that directory and recover its original source.');
+        const preparationRoot=join(directory,'preparations'),intentPath=join(preparationRoot,name+'.json'),stage=join(preparationRoot,name);
+        let intent;
+        if(await exists(intentPath))intent=await readDurableCaseInput(intentPath,128_000_000);
+        else{
+          // Freeze complete original preview/arguments before the original preparer creates any files.
+          const built=await build(),requestId=flow.steps[name]?.requestId??randomUUID();
+          intent={schema:SCHEMA+'.preparation',name,kind,requestId,selectionSha256:flow.selectionSha256,
+            preparation:{...common,kind,...(built.preview?{preview:built.preview,actor,requestId,
+              ...(built.reviewOptions?{reviewOptions:built.reviewOptions}:{})}:{arguments:{...built.arguments,actor,requestId}})}};
+          await save(intentPath,intent);
+        }
+        need(intent.schema===SCHEMA+'.preparation'&&intent.name===name&&intent.kind===kind&&
+          intent.selectionSha256===flow.selectionSha256&&
+          (!flow.steps[name]||flow.steps[name].requestId===intent.requestId)&&
+          intent.preparation.url===selected.url&&intent.preparation.workspace===selected.workspace&&
+          intent.preparation.tokenEnv===selected.tokenEnv&&intent.preparation.kind===kind,
+          'The retained original preparation belongs to another step or customer.');
+        flow.steps[name]={kind,requestId:intent.requestId,status:'PREPARING'};await replace(statePath,flow);
+        async function prepared(){
+          if(!await exists(join(stage,'request.json'))||!await exists(join(stage,'state.json')))return false;
+          let request,state;
+          try{request=await readDurableCaseInput(join(stage,'request.json'),128_000_000);
+            state=await readDurableCaseInput(join(stage,'state.json'),32_000_000);}
+          catch(problem){if(problem instanceof SyntaxError)return false;throw problem;}
+          const {sha256,...content}=request;
+          need(request.schema==='stellar-forge.accounting-receivables-client-request.v1'&&sha(JSON.stringify(content))===sha256&&
+            request.kind===kind&&request.url===selected.url&&request.workspace===selected.workspace&&request.tokenEnv===selected.tokenEnv&&
+            request.arguments.requestId===intent.requestId&&request.arguments.actor===actor&&
+            (intent.preparation.preview?json(request.preview)===json(intent.preparation.preview):
+              json(request.arguments)===json(intent.preparation.arguments))&&
+            Object.entries(intent.preparation.reviewOptions??{}).every(([key,value])=>request.arguments[key]===value)&&
+            state.schema==='stellar-forge.accounting-receivables-client-state.v1'&&state.requestSha256===sha256&&
+            state.phase==='PREPARED'&&state.submissionAttempted===false,
+            'The original staged operation changed. Preserve its request and state for recovery.');
+          return true;
+        }
+        if(await exists(stage)&&!await prepared()){
+          // This caller never submits a staged directory. Keep its interrupted bytes and reuse the frozen intent.
+          await privateDir(stage);await rename(stage,join(preparationRoot,name+'.interrupted-'+randomUUID()));await sync(preparationRoot);
+        }
+        if(!await exists(stage))await prepareAccountingReceivablesOperation({directory:stage,...intent.preparation});
+        need(await prepared(),'The original staged preparation is incomplete.');
+        lease.assertHeld();need(!await exists(target),'The original operation was published concurrently.');
+        await rename(stage,target);await sync(join(directory,'operations'));await sync(preparationRoot);
+        flow.steps[name].status='PREPARED';await replace(statePath,flow);
       }
       const saved=await readDurableCaseInput(requestPath,128_000_000);
       need(saved.kind===kind&&saved.url===selected.url&&saved.workspace===selected.workspace&&
