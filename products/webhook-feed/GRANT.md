@@ -314,6 +314,22 @@ The original proposed Mercury USD 2,400 / five-business-day commercial scope
 and its start/acceptance milestones stay in the original Workshare; assigned
 effort and actual customer acceptance remain its native records.
 
+## Receive a colleague's worksheet review while preserving current customer work
+
+A receiving engineer can now ask a colleague to review the customer's complete worksheet without replacing edits made meanwhile. The [source-bound review model](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e795486f8a09cc71f07ec887cc101a0b628b24b3/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-returns.mjs) issues an attributed assignment containing the exact native proposal and every selected column array. The assigning operator records the reviewer and instructions; the immutable baseline retains the original workspace, programme, operation, accepted review, full source identities, duplicate report-column ordinals and additional resolved sheets.
+
+The colleague opens the [complete editable worksheet](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e795486f8a09cc71f07ec887cc101a0b628b24b3/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-editor.mjs), reviews the same original source and edits its full column selections. Unfinished headings, null labels, conversion choices and review notes remain in the working file. The [saved-file controls](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e795486f8a09cc71f07ec887cc101a0b628b24b3/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-editor.js) preserve the complete source and current view through download and independent reopening. Browser recovery distinguishes the original proposal, active assignment and issuer/reviewer role, and restoring another saved copy remains explicit.
+
+The colleague returns the complete attributed review while the original engineer retains their current customer work. The [same worksheet interface](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e795486f8a09cc71f07ec887cc101a0b628b24b3/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-columns.mjs) compares assigned, current and returned arrays by exact worksheet index. An incoming-only change can be received; a local-only change stays current; a worksheet changed differently in both copies requires an explicit decision to keep the current array or receive the returned one. Whole ordered arrays are the receiving unit. The comparison preserves duplicate labels and reordered columns without inferring an identity from their names or positions.
+
+Receiving retains the complete original return, all carried sources, explicit resolutions, before/result selections and attribution. Current unfinished notes remain. A receipt made in the colleague's own workspace stays source history; it does not mean the original engineer already adopted that return. The same distinction applies to assignments: a working copy receives choices for assignments it actually issued, while carried assignments and returns remain available as complete source. Reopening reconstructs each original returned file and the full current selection. A stale conflict choice can be removed explicitly before reviewing changed work again.
+
+The [original native action coordinator](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e795486f8a09cc71f07ec887cc101a0b628b24b3/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/event_programmes.py) saves the complete handover with its exact selected columns before dispatch. The [installed validator](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e795486f8a09cc71f07ec887cc101a0b628b24b3/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/event_workbook_review.py) checks the full original proposal, uses the maintained column model to derive the native arrays, and binds its result to that same request. The original workbook then performs its existing source, conversion, Unicode heading and current-definition checks. Saved actions provide the full working JSON and editable HTML after independent workspace restoration. The acquired events, report, workbook and whole Analysis archive continue through the same sixteen-file customer delivery.
+
+The [compact Analysis recipe](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e795486f8a09cc71f07ec887cc101a0b628b24b3/stellar/scf-starforge-20261009/distribution/selections/analysis-project.json) includes the five complete worksheet runtime files required by this native path, while the [installed contribution](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e795486f8a09cc71f07ec887cc101a0b628b24b3/stellar/scf-starforge-20261009/distribution/contributions/analysis-events.json) exports the original review model. The [complete operating course](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e795486f8a09cc71f07ec887cc101a0b628b24b3/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_WORKBOOK_COLUMNS.md) carries assignment, independent editing, concurrent change, explicit receiving, native apply, archive restore and saved-action reopening through the original customer operation. Complete working JSON and HTML allow 128 MiB; native review/CLI input retains 16 MiB and native column arrays 512 KiB. These boundaries preserve whole files instead of silently removing history.
+
+This shipped colleague-review capability strengthens the existing installation and independent maintainer handover. Its future customer-specific source meaning, deployed access, accepted useful output and recurring purchase observations remain in the same six funded packages. Before presenting the customer version, the producing maintainer opens and operates its exact installed and offline applications, personally inspects real normal/narrow screens and every attachment, and verifies the complete downloaded and restored work in the original receiving operation.
+
 ## Operate and inspect the outgoing customer result
 
 Before presenting an application, demonstration, report or export as ready,
@@ -412,7 +428,7 @@ The complete offline worksheet continuation selects its eight changed or new
 bodies at commit 601b35a99304e31dbdd1c272a2256caf0e52b455 in the public
 woahwhattheheck/tjlabs-stellar-merchant-workspace repository: six existing
 registrations advance and the complete editor generator and controller add two
-entries. All thirty-five complete selected bodies have their actual repository,
+entries. Those thirty-five preceding complete selected bodies retain their actual repository,
 immutable commit, full Git blob, UTF-8 byte count and SHA-256. Historical source
 identities stay with their original repositories. The maintained public product
 owner receives these same whole postimages into the existing distribution;
@@ -437,3 +453,15 @@ registration into the original reviewer page. Preserve the other product records
 nine answers, six-package budget, saved review/submission versions and subsequent
 chapters. The existing source-package and Source editions receiving carry the
 complete four reviewer outputs into the same saved application, Page and Site.
+
+## Following colleague-review source selection
+
+The complete colleague-return product is merged in public Merchant PR1863 at
+e795486f8a09cc71f07ec887cc101a0b628b24b3. Its twelve full changed sources
+have been independently read back. Nine existing source IDs advance; the
+source-bound return model, installed native validator and compact Analysis
+recipe add three identities. All thirty-eight registered sources retain their
+preceding editions and actual repository, commit, full Git blob, UTF-8 byte
+count and SHA-256. The existing publisher receives this whole chapter and
+declaration as the next explicit source selection; the current saved
+application and native receiving boundary remain in place.

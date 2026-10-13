@@ -333,6 +333,13 @@
           "git_blob": "70b664dac9435a1c6b6ec54d0e4ebe5320e5d6e2",
           "bytes": 29460,
           "sha256": "78752b9442441b749045633cd5a2d0772ee716839a1f87f5745f91bdfe76806d"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "e795486f8a09cc71f07ec887cc101a0b628b24b3",
+          "git_blob": "566ca7eb73138b1326d2a633cefa220e02bf53b8",
+          "bytes": 30891,
+          "sha256": "ebfd1974b7b7bbe79f28d8e2878b6c7fa86fadde7d4deab2e15dab69ccf9e074"
         }
       ]
     },
@@ -406,6 +413,13 @@
           "git_blob": "136e3f7c1aef73d57ad32d832214b719020cc8b6",
           "bytes": 3957,
           "sha256": "01323b4c8d40dc4426861f2349a05f332c0fcfdd3e42c8a8d33df50f0ff65b34"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "e795486f8a09cc71f07ec887cc101a0b628b24b3",
+          "git_blob": "06bd1068ee18036529340d8618a4dbc8911063df",
+          "bytes": 4136,
+          "sha256": "80647a536a6556f82ca7898bf0e710758740f7cf3f50449065abce290272cef9"
         }
       ]
     },
@@ -472,6 +486,13 @@
           "git_blob": "c1516659a5ea8915b9b26f3cb762530298af15cf",
           "bytes": 58206,
           "sha256": "04bbb236f52f5dfb4f7e1746909f1f0dd4bb78ca3538a1b58b2fd19824142ce4"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "e795486f8a09cc71f07ec887cc101a0b628b24b3",
+          "git_blob": "4cb1893c7627ae5166455cf8c278a0858f282991",
+          "bytes": 62063,
+          "sha256": "d9706745d655d04a3a24ddbee10ce2a2f54450efea74f180906fc7d24adc3437"
         }
       ]
     },
@@ -919,6 +940,13 @@
           "git_blob": "76b23edaf56effc26b9aebc681ccc872e4a9ca07",
           "bytes": 3020,
           "sha256": "3acd366f42354c6ec085f31beb8c0d35e69ed50bd899dd85f66e03dbf2278d0f"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "e795486f8a09cc71f07ec887cc101a0b628b24b3",
+          "git_blob": "879c747b155091ac9548b9e3913713bba4e401d0",
+          "bytes": 3157,
+          "sha256": "4afa6406a74e3690203c4cb40cff95aed8175891332fe2118faad5032fa9fb19"
         }
       ]
     },
@@ -1434,6 +1462,13 @@
           "git_blob": "efa41b3d41be4ed462fea0c04ad8ec5b1de7889c",
           "bytes": 26163,
           "sha256": "b75171d657f55338caa920fc45d5d143b3e2407dbf3c81c816f0812b78862c1c"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "e795486f8a09cc71f07ec887cc101a0b628b24b3",
+          "git_blob": "7885d0f9b1c3b02f5c7b1dacce700a25acc8e057",
+          "bytes": 45666,
+          "sha256": "c0bf195e787fac553cbdd18228ac48f34bbb8f6fb9397eb2b661cc5f75a67a65"
         }
       ]
     },
@@ -1486,6 +1521,13 @@
           "git_blob": "ee2195c450d78e4b77e5d8061a8b4c2431f61a83",
           "bytes": 5262,
           "sha256": "e8b1f900b42f24edf9b6c1ff934ac3d76e023dab9db8568ea772ec967db91d84"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "e795486f8a09cc71f07ec887cc101a0b628b24b3",
+          "git_blob": "db0de4232ce536aeb70a21bbb3e8332643b8c2ba",
+          "bytes": 5364,
+          "sha256": "39ae1fd8bee6643768dd03872ebbf9756d7925e2f205af9b29bd032fa54b2130"
         }
       ]
     },
@@ -1538,6 +1580,13 @@
           "git_blob": "da8c608323245d10cb56e8dbce61ab96c7360125",
           "bytes": 19684,
           "sha256": "b020a67a7f60958603a5bda6723a6f7004162afab535f194ef50c7369c5335d4"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "e795486f8a09cc71f07ec887cc101a0b628b24b3",
+          "git_blob": "eaff6470e8752f8a5f14f9899aee6928aaf86c30",
+          "bytes": 26801,
+          "sha256": "6467098555c2fcdaf4fd0ee530be8bff2166a5cbdd001e029e10de23792b2b32"
         }
       ]
     },
@@ -1569,6 +1618,13 @@
           "git_blob": "e930ffa40590fda13babf205deae4e1f7691a86a",
           "bytes": 5631,
           "sha256": "5a39f247265cacb941ae70e0c6a6f41aaca70bcd197bd06f63ff5d54511ab619"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "e795486f8a09cc71f07ec887cc101a0b628b24b3",
+          "git_blob": "b20a9cc395995527f176cc63d32c30debeb8c55c",
+          "bytes": 7628,
+          "sha256": "eb6529f36a72d6e41c8f548657ffb416f7ede3e2a83c99909185d831034832af"
         }
       ]
     },
@@ -1607,6 +1663,64 @@
           "git_blob": "5ca6f3f323d2acb90d80bc5a4d19694469318fae",
           "bytes": 4553,
           "sha256": "2a2c194de1a54131896023584b3623a171324e46cf7ae0d4f1825af991281d64"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "e795486f8a09cc71f07ec887cc101a0b628b24b3",
+          "git_blob": "f08198aa4de088e7a2a0aac05c6c3da72b8eddc3",
+          "bytes": 5145,
+          "sha256": "49e90fce134d4f538c9872fd3fb4ba673341710c69d6efb8fbcc4cd81e196e9a"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-workbook-review-validator",
+      "label": "Original native full worksheet review validation and same-action source retention",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/event_workbook_review.py",
+      "required": false,
+      "editions": [
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "e795486f8a09cc71f07ec887cc101a0b628b24b3",
+          "git_blob": "12028aca037e5cfa23dca5ad0f212cdca3fce232",
+          "bytes": 3186,
+          "sha256": "87fe441642c9386e58b788304d611197b89e09df76f848041c7a68920c6d0525"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-workbook-returns",
+      "label": "Complete original worksheet assignments, attributed returns and concurrent choice reconciliation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-returns.mjs",
+      "required": false,
+      "editions": [
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "e795486f8a09cc71f07ec887cc101a0b628b24b3",
+          "git_blob": "19b7358c0d9205a64f5b3d6adb9bb6db8708ae1c",
+          "bytes": 18669,
+          "sha256": "8a9b32422b220368ad73475edd868b69224c08406eb440124724a3e1abe02122"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-analysis-project-selection",
+      "label": "Complete compact Analysis selection including every installed worksheet runtime dependency",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/analysis-project.json",
+      "required": false,
+      "editions": [
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "e795486f8a09cc71f07ec887cc101a0b628b24b3",
+          "git_blob": "1ccb9e4a682cfe01aa9a0cf8ebc1c12aae33c9e0",
+          "bytes": 3754,
+          "sha256": "bfe58fc8247759fd2bf105f5e872865839d0326557aabc2a7aba3556cae6356c"
         }
       ]
     }
