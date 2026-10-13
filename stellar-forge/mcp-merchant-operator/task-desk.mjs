@@ -72,6 +72,23 @@ function nativeDraft(input,definition){
   });
   return {task:input.task,selections,...(input.predecessorId===undefined?{}:{predecessorId:input.predecessorId})};
 }
+
+function customerReview(input){
+  if(input.request.kind!=='inbox-task'||input.request.expectedTaskSha256!==input.expectedTaskSha256)
+    throw failure('TASK_DESK_CUSTOMER_TASK_CHANGED','The retained customer request belongs to another original task.');
+}
+function customerResult(value,input){
+  customerReview(input);
+  if(value?.id!==input.request.id||canonical(value.request)!==canonical(input.request)||
+     value.previewSha256!==input.expectedPreviewSha256)
+    throw failure('TASK_DESK_CUSTOMER_REQUEST_CHANGED','This named delivery belongs to a different retained request or preview. Preserve this review and inspect the original history before selecting a new ID.',
+      {expected:{request:input.request,previewSha256:input.expectedPreviewSha256},
+       actual:{id:value?.id,request:value?.request,previewSha256:value?.previewSha256,state:value?.state}});
+  if(!['PREPARING','COMPLETE'].includes(value.state))
+    throw failure('TASK_DESK_CUSTOMER_STATE','The original customer-delivery state is unrecognized.');
+  return value;
+}
+
 export class MerchantTaskDesks{
   #config;#fetch;#files;#pending=new Set();#closing=false;#close;
   constructor(config,{fetchImpl=globalThis.fetch}={}){
@@ -141,6 +158,35 @@ export class MerchantTaskDesks{
       scope,key:canonical(selection),kind:selection.kind,directory:this.#config.exportsDirectory,
       load,readId:input.readId,expectedSha256,offset:input.offset,limit:input.limit})};
   }
+
+  async #customerFile(input,definition){
+    customerReview(input);
+    if(input.expectedSha256!==undefined&&input.expectedSha256!==input.packageSha256)
+      throw failure('TASK_DESK_FILE_CHANGED','Retain the exact complete customer package SHA256.');
+    const selection={kind:'customer',taskId:input.taskId,taskSha256:input.expectedTaskSha256,
+      request:input.request,previewSha256:input.expectedPreviewSha256,
+      packageSha256:input.packageSha256,manifestSha256:input.manifestSha256};
+    const load=async()=>{
+      const connected=await this.#connect(input,definition,{newCommand:true}),client=connected.client;
+      await this.#task(client,input);
+      const original=customerResult(await client.getCustomerDelivery(input.taskId,input.request.id),input);
+      const pkg=original.package;
+      if(original.state!=='COMPLETE'||!pkg)
+        throw failure('TASK_DESK_CUSTOMER_PENDING','Continue the original reviewed preparation before reading its complete package.');
+      if(pkg.sha256!==input.packageSha256||pkg.manifestSha256!==input.manifestSha256||
+         !Number.isSafeInteger(pkg.bytes)||pkg.bytes<0||pkg.mediaType!=='application/x-ndjson'||
+         pkg.filename!==input.request.id+'.ndjson')
+        throw failure('TASK_DESK_CUSTOMER_PACKAGE_CHANGED','The original complete customer package differs from its reviewed identity.');
+      const response=await client.downloadCustomerDelivery(input.taskId,input.request.id);
+      return spool(response,{directory:this.#config.exportsDirectory,maximum:definition.maxFileBytes,
+        expectedBytes:pkg.bytes,expectedSha256:pkg.sha256,name:pkg.filename,type:pkg.mediaType});
+    };
+    return {desk:input.desk,selection,...await this.#files.read({
+      scope:'task-desk:'+input.desk,key:canonical(selection),kind:'customer',
+      directory:this.#config.exportsDirectory,load,readId:input.readId,
+      expectedSha256:input.packageSha256,offset:input.offset,limit:input.limit})};
+  }
+
   async #execute(name,input){
     if(name==='merchant_task_desks')return this.summary;
     const definition=this.#definition(input.desk);
@@ -149,7 +195,10 @@ export class MerchantTaskDesks{
     }
     if(name==='merchant_task_desk_packet_file'||name==='merchant_task_desk_rpc_file')
       return this.#file(input,definition,name==='merchant_task_desk_rpc_file');
-    const commands=new Set(['preview','create','review','execute','recover','receive']);
+    if(name.startsWith('merchant_task_desk_customer_')&&!definition.roots.customerDelivery)
+      throw failure('TASK_DESK_CUSTOMER_NOT_CONFIGURED','Select the original desk with its configured customer-delivery root.');
+    if(name==='merchant_task_desk_customer_file')return this.#customerFile(input,definition);
+    const commands=new Set(['preview','create','review','execute','recover','receive','customer_source','customer_preview','customer_prepare']);
     const operation=name.slice('merchant_task_desk_'.length);
     const connected=await this.#connect(input,definition,{newCommand:commands.has(operation)}),client=connected.client;
     const result=native=>({desk:input.desk,instanceId:connected.instanceId,bindingSha256:connected.bindingSha256,native});
@@ -178,6 +227,27 @@ export class MerchantTaskDesks{
         return result(original);
       }
       case 'packet':return result(await client.getPacket(input.taskId));
+      case 'customer_source':return result(await client.createCustomerSourceManifest({sourceRoot:input.sourceRoot,destination:input.destination}));
+      case 'customer_task':return result(await client.inspectCustomerTask(input.taskId));
+      case 'customer_deliveries':return result(await client.listCustomerDeliveries(input.taskId));
+      case 'customer_preview':{
+        const preview=await client.previewCustomerDelivery(input.taskId,input.selection);
+        if(preview?.task?.taskSha256!==input.expectedTaskSha256||
+           preview?.request?.expectedTaskSha256!==input.expectedTaskSha256)
+          throw failure('TASK_DESK_CUSTOMER_TASK_CHANGED','The original customer preview belongs to another task.');
+        return result(preview);
+      }
+      case 'customer_prepare':{
+        customerReview(input);
+        const prepared=await client.prepareCustomerDelivery(input.taskId,{
+          request:input.request,expectedPreviewSha256:input.expectedPreviewSha256});
+        return result(customerResult(prepared,input));
+      }
+      case 'customer_inspect':return result(await client.getCustomerDelivery(input.taskId,input.deliveryId));
+      case 'customer_reconcile':{
+        customerReview(input);
+        return result(customerResult(await client.getCustomerDelivery(input.taskId,input.request.id),input));
+      }
       default:throw failure('TOOL_NOT_FOUND','Unknown original InboxTask desk operation.');
     }
   }

@@ -175,12 +175,163 @@ starforge buyer-inbox-task packet-inspect --packet DIRECTORY.
 
 ## Customer delivery and receiving
 
-The desk's existing Customer delivery tab and typed client retain the complete
-task-to-reviewed-delivery path introduced in PR1323. Registered Collections
-customer-delivery tools continue to own package preparation, recipient
-history, uploads and independent customer receiving. This provider supplies
-the original caller-task operating selection and complete packet; it does not
-introduce a competing customer-package API.
+Configure the original desk with its existing --delivery directory and include
+the exact customerDelivery root in the private Merchant connection. All customer
+tools use that same running desk and native delivery store. The original
+Collections provider continues to own recipient upload/history and independent
+receiving.
+
+The complete customer package contains the selected original responses, task and
+capture identities, review materials and the full executing application source.
+Its application/x-ndjson format is the original customer-delivery archive, with
+a complete package SHA256 and an independent manifest SHA256. A packet TAR and a
+customer delivery retain their respective original formats.
+
+### Inspect source and preview a complete edition
+
+1. Call merchant_task_desk_status and retain the current instanceId. All first
+   file reads and explicit preparation/source-manifest commands require it.
+2. Call merchant_task_desk_customer_task with desk,taskId,expectedTaskSha256.
+   Inspect each intent's role, nativeState, originalStatus and recoveredReadId
+   along with the complete byte count and SHA256. The original uncertain outcome
+   and its later response read remain distinct.
+3. Call merchant_task_desk_customer_source with the same desk and instance,
+   sourceRoot and destination. Select the actual complete installed application
+   root containing the executing customer-delivery reader. Store the manifest
+   outside that source tree. The original native census requires its full reader
+   closure and license, excludes private operating state, and rejects forbidden
+   credential files. Review the returned complete files, byte count and SHA256.
+   Repeating this action accepts only the identical original manifest.
+4. Call merchant_task_desk_customer_preview with the same task/hash/instance and
+   selection containing id,title,note,intentIds,sourceRoot,sourceManifest.
+   The delivery ID is a caller-selected stable name of 1–100 letters, digits,
+   dots, underscores or hyphens; it cannot be "." or "..". Select 1–100 original
+   intent IDs. Titles are at most 160 characters and notes at most 10,000.
+5. Retain the returned native.request unchanged and native.previewSha256 before
+   preparation. Review the entire preview's task, source, selected jobs and full
+   packet files. The native preview binds the actual original packet directory;
+   the Merchant caller does not substitute its own response directory.
+
+A changed source tree needs its own complete manifest and a newly reviewed
+preview. Keep previous source and delivery editions available for continuation.
+
+### Prepare and recover the same named request
+
+Call merchant_task_desk_customer_prepare with the original task identity,
+current instance, request equal to the saved preview.request, and
+expectedPreviewSha256 equal to the saved preview.previewSha256. The tool sends
+one native preparation request. Its result is the original PREPARING or COMPLETE
+record, including the unchanged request and preview hash.
+
+After a lost reply, use merchant_task_desk_customer_reconcile with that same
+task, exact saved request and expectedPreviewSha256. This is a read: it compares
+the complete request and preview before returning the record as this caller's
+result. It works against the original store after a desk restart through the
+current host connection. It never creates or resumes a preparation.
+
+If the original delivery remains PREPARING, inspect it and explicitly call
+customer_prepare again with the unchanged request/preview and current instance.
+If the original store has no such ID, retain that absence result and explicitly
+send the same reviewed request if it is still wanted. A different request at the
+same ID returns TASK_DESK_CUSTOMER_REQUEST_CHANGED, preserving expected and
+actual identities. Keep the caller's original review, inspect that native
+history entry, choose a fresh ID, and obtain a new preview before preparing a
+different delivery.
+
+merchant_task_desk_customer_deliveries lists only this original task's saved
+deliveries and discovery issues. merchant_task_desk_customer_inspect opens an
+actual named record by deliveryId, including its own request. That browsing
+operation does not claim it matches a caller's earlier review; customer_reconcile
+performs that explicit match. No bridge call silently retries preparation or
+turns an unresolved native result into a new delivery ID.
+
+### Download the entire customer/source archive
+
+After COMPLETE, retain native.package.sha256, native.package.manifestSha256 and
+the original reviewed request/preview. Pass them to
+merchant_task_desk_customer_file as packageSha256,manifestSha256,request and
+expectedPreviewSha256 with desk,taskId,expectedTaskSha256. The first call also
+requires expectedInstanceId.
+
+Before the first returned range, the bridge reopens the original named package,
+matches its full request and preview, requires COMPLETE, and compares its
+package/manifest identity. It streams and verifies the whole original byte
+count and SHA256 into the same private retained-reader owner used by packet
+files. Continue ranges with the unchanged selection, readId,expectedSha256 equal
+to packageSha256, and nextOffset until null. The native package and its complete
+source remain in the original store when the temporary reader is released.
+
+Set the host's maxFileBytes high enough for the actual reviewed full package;
+the default is 256 MiB and the host can select up to 8 GiB. This setting is
+explicit host configuration. Native format/content/source limits still apply.
+No caller-controlled field raises the host limit.
+
+For complete atomic receiving through the installed CLI, add kind:"customer"
+to that same first-range selection and save it as an owned private JSON file:
+
+~~~sh
+starforge merchant-task-desk --connection /private/task-desk-connections.json \
+  --exports /private/merchant-exports download \
+  --input /private/customer-delivery-selection.json \
+  --output /private/customer/reviewed-task-edition-1.ndjson
+~~~
+
+The CLI reads all ranges, verifies the full native hash and length, and publishes
+the complete file atomically. An existing different output is preserved; replay
+accepts only identical bytes. It does not change the named native preparation.
+
+Use the original collections/delivery/OPERATOR.md for recipient upload,
+independent customer receiving, offline review and full source use. Those
+operations consume this exact original archive. Retain the received manifest,
+package hash and full source with the customer handover.
+
+### Typed end-to-end caller
+
+The installed public client export reuses the original desk's native customer
+types. The complete downloader has its own typed entry:
+
+~~~js
+import {MerchantTaskDesks, readTaskDeskConfiguration}
+  from "@tokenjunkielabs/starforge-merchant/merchant/task-desk";
+import {receiveTaskDeskFile}
+  from "@tokenjunkielabs/starforge-merchant/merchant/task-desk/cli";
+
+const bridge = new MerchantTaskDesks({
+  taskDesks: await readTaskDeskConfiguration("/private/task-desk-connections.json"),
+  exportsDirectory: "/private/merchant-exports",
+});
+try {
+  const selected = {desk: "original", taskId, expectedTaskSha256};
+  const status = await bridge.call("merchant_task_desk_status", {desk: selected.desk});
+  const expectedInstanceId = status.instanceId;
+  const preview = await bridge.call("merchant_task_desk_customer_preview", {
+    ...selected, expectedInstanceId,
+    selection: {
+      id: "reviewed-task-edition-1", title: "Selected task results",
+      note: "Complete responses and the executing application source.",
+      intentIds: selectedOriginalIntentIds,
+      sourceRoot: "/absolute/complete-installed-application",
+      sourceManifest: "/private/source-manifests/edition-1.json",
+    },
+  });
+  const retained = {...selected, request: preview.native.request,
+    expectedPreviewSha256: preview.native.previewSha256};
+  // Persist retained in the caller's existing durable store before sending.
+  const delivery = await bridge.call("merchant_task_desk_customer_prepare",
+    {...retained, expectedInstanceId});
+  // After uncertainty, call customer_reconcile with retained before continuing.
+  if (delivery.native.state === "COMPLETE" && delivery.native.package) {
+    const complete = await receiveTaskDeskFile(bridge, {
+      ...retained, expectedInstanceId, kind: "customer",
+      packageSha256: delivery.native.package.sha256,
+      manifestSha256: delivery.native.package.manifestSha256,
+    }, "/private/customer/reviewed-task-edition-1.ndjson");
+    console.log(complete);
+  }
+} finally {
+  await bridge.close();
+}
+~~~
 
 ## Installed JavaScript
 
@@ -199,9 +350,9 @@ native commands retain their existing lifetime.
 Source entry points:
 - task-desk.mjs: original transport owner and complete-file receiving.
 - task-desk-connection.mjs: private original launch and live-root binding.
-- catalog/task-desk.mjs: the full nineteen-tool metadata.
+- catalog/task-desk.mjs: the full twenty-seven-tool metadata.
 - providers/task-desk.mjs: original source-owned lazy provider.
-- task-desk-cli.mjs: installed command and atomic complete-file export.
+- task-desk-cli.mjs and task-desk-cli.d.mts: installed command and typed atomic complete-file export.
 - task-desk.d.mts: typed public contract.
 
 The provider and installed caller accept complete request JSON up to the original desk's 4 MiB limit. Individual fields and selection counts retain their declared schema limits.
