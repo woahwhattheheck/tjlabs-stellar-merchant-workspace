@@ -9,13 +9,15 @@
     "econdb": "stellar/scf_2026/sf49_data_commissioning/econdb/operator-cli.mjs",
     "econdb-source": "stellar/scf_2026/sf49_data_commissioning/econdb/maritime-cli.mjs",
     "econdb-project": "stellar/scf_2026/sf49_data_commissioning/econdb/maritime-project-cli.mjs",
-    "econdb-publication": "stellar/scf_2026/sf49_data_commissioning/econdb/sf30-publication.mjs"
+    "econdb-publication": "stellar/scf_2026/sf49_data_commissioning/econdb/sf30-publication.mjs",
+    "econdb-mcp": "stellar-forge/mcp-merchant-operator/econdb-cli.mjs"
   },
   "commandDescriptions": {
     "econdb": "Operate the retained maritime workspace, browser, project publication and complete handover",
     "econdb-source": "Capture or receive complete original maritime responses and review selected periods",
     "econdb-project": "Build, inspect, reopen or receive complete maritime projects and browser workspaces",
-    "econdb-publication": "Publish original maritime selections through the maintained native dataset and buyer services"
+    "econdb-publication": "Publish original maritime selections through the maintained native dataset and buyer services",
+    "econdb-mcp": "Operate original maritime workspaces through Merchant tools and receive complete resumable handovers"
   },
   "exports": {
     "./seller/econdb": "./source/stellar/scf_2026/sf49_data_commissioning/econdb/operator.mjs",
@@ -30,7 +32,12 @@
     "./seller/econdb/project-native": "./source/stellar/scf_2026/sf49_data_commissioning/econdb/maritime-project-native.mjs",
     "./seller/econdb/project-workspace": "./source/stellar/scf_2026/sf49_data_commissioning/econdb/maritime-project-workspace.mjs",
     "./seller/econdb/publication": "./source/stellar/scf_2026/sf49_data_commissioning/econdb/sf30-publication.mjs",
-    "./seller/econdb/provider": "./source/stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/econdb.mjs"
+    "./seller/econdb/provider": "./source/stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/econdb.mjs",
+    "./merchant/econdb": "./source/stellar-forge/mcp-merchant-operator/econdb-workspace.mjs",
+    "./merchant/econdb/download": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/econdb-download.d.mts",
+      "import": "./source/stellar-forge/mcp-merchant-operator/econdb-download.mjs"
+    }
   },
   "browserAssets": [
     {
@@ -115,6 +122,17 @@
     "products/econdb/OPERATING.md",
     "stellar/scf_2026/sf49_data_commissioning/econdb/PERIOD_ACCEPTANCE.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/routescan/quota.mjs",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/routescan/primitives.mjs"
-  ]
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/routescan/primitives.mjs",
+    "stellar-forge/mcp-merchant-operator/catalog/econdb-workspace.mjs",
+    "stellar-forge/mcp-merchant-operator/providers/econdb-workspaces.mjs",
+    "stellar-forge/mcp-merchant-operator/econdb-workspace.mjs",
+    "stellar-forge/mcp-merchant-operator/econdb-download.mjs",
+    "stellar-forge/mcp-merchant-operator/econdb-download.d.mts",
+    "stellar-forge/mcp-merchant-operator/econdb-cli.mjs",
+    "stellar-forge/mcp-merchant-operator/receiving/econdb-workspace.mjs",
+    "stellar-forge/mcp-merchant-operator/ECONDB_WORKSPACE.md"
+  ],
+  "merchantProviders": {
+    "econdb-workspaces": "stellar-forge/mcp-merchant-operator/providers/econdb-workspaces.mjs"
+  }
 }
