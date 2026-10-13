@@ -25,11 +25,14 @@ import { createHash, randomUUID } from 'node:crypto';
 import { failure, identifier, exact, plain, line, privateSupportDirectory } from './host-files.mjs';
 import { RetainedFileReads } from './retained-file-reads.mjs';
 import { GrantWorkspaceClient, inspectGrantAgentBinding, readGrantAgentFile,
-  GRANT_MAX_BUNDLE_BYTES, GRANT_MAX_SOURCE_BYTES } from '../../stellar/scf_2026/sf47_budget_model/workspace/agent-client.mjs';
+  GRANT_MAX_BUNDLE_BYTES, GRANT_MAX_CASE_BUNDLE_BYTES, GRANT_MAX_SOURCE_BYTES } from '../../stellar/scf_2026/sf47_budget_model/workspace/agent-client.mjs';
 
 export const GRANT_WORKSPACE_CONNECTION_SCHEMA = 'stellar-forge.sf47-workspace-connection.v1';
 const SNAPSHOT = 'stellar-forge.sf47-agent-snapshot.v1', TRANSFER = 'stellar-forge.sf47-agent-input.v1';
 const MAX_JSON = 64 * 1024 * 1024, PAGE_BYTES = 48000;
+const inputLimit = kind => kind === 'source-working-copy' ? SOURCE_COLLECTION_MAX_COPY_BYTES
+  : kind === 'case-bundle' ? GRANT_MAX_CASE_BUNDLE_BYTES : GRANT_MAX_BUNDLE_BYTES;
+const transferLimit = manifest => manifest.kind === 'case-bundle' ? GRANT_MAX_CASE_BUNDLE_BYTES : GRANT_MAX_BUNDLE_BYTES;
 const MAX_RETAINED = Math.max(MAX_JSON,GRANT_MAX_WORKBOOK_HANDOVER_BYTES,INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES,SOURCE_COLLECTION_MAX_COPY_BYTES);
 const canonicalSourceRequest = value => value === null || typeof value !== 'object' ? JSON.stringify(value)
   : Array.isArray(value) ? '['+value.map(canonicalSourceRequest).join(',')+']'
@@ -134,9 +137,9 @@ export async function readGrantWorkspaceConfiguration(filename) {
       identifier(inputAlias, 'Grant input alias');
       exact(file, ['file', 'sha256', 'kind', 'label', 'mediaType'], ['file']);
       const filename = hpath(file.file, base), stat = await lstat(filename);
-      const inputMaximum=file.kind==='source-working-copy'?SOURCE_COLLECTION_MAX_COPY_BYTES:GRANT_MAX_BUNDLE_BYTES;
+      const inputMaximum=inputLimit(file.kind);
       need(stat.isFile() && !stat.isSymbolicLink() && stat.size <= inputMaximum &&
-        await realpath(filename) === filename, 'GRANT_CONFIGURATION_ERROR', 'Declare a complete regular input file: ordinary inputs32 MiB, explicit source-working-copy inputs512 MiB.');
+        await realpath(filename) === filename, 'GRANT_CONFIGURATION_ERROR', 'Declare a complete regular input file: ordinary inputs 32 MiB, explicit case-bundle inputs 320 MiB and source-working-copy inputs 512 MiB.');
       if (file.sha256 !== undefined) sha(file.sha256);
       inputs[inputAlias] = {file:filename, label:line(file.label ?? inputAlias),
         kind:boundedText(file.kind ?? 'original', 'Input kind', 80),
@@ -335,7 +338,7 @@ export class MerchantGrantWorkspaces {
       identifier(selection.hostInput, 'Grant input alias');
       const input = binding.inputs[selection.hostInput];
       need(input, 'GRANT_INPUT_NOT_CONFIGURED', 'Choose a declared original input alias.');
-      const bound=input.kind==='source-working-copy'?(maximum??GRANT_MAX_BUNDLE_BYTES):Math.min(maximum??GRANT_MAX_BUNDLE_BYTES,GRANT_MAX_BUNDLE_BYTES);
+      const bound=Math.min(maximum??GRANT_MAX_BUNDLE_BYTES,inputLimit(input.kind));
       bytes = await readGrantAgentFile(input.file, bound);
       if (input.sha256) need(hash(bytes) === input.sha256, 'GRANT_INPUT_CHANGED', 'The declared original input hash changed.');
       metadata = {name:input.file.split(/[\\/]/).at(-1), sha256:hash(bytes), bytes:bytes.length, contentType:input.mediaType};
@@ -346,12 +349,12 @@ export class MerchantGrantWorkspaces {
       const transfer = await this.#transfer(source, selection.transferId);
       const result = await this.#committed(transfer);
       need(result, 'GRANT_TRANSFER_INCOMPLETE', 'Commit and verify the complete original input before native import.');
-      bytes = await readGrantAgentFile(join(transfer.root, 'complete'), GRANT_MAX_BUNDLE_BYTES);
+      bytes = await readGrantAgentFile(join(transfer.root, 'complete'), transferLimit(transfer.manifest));
       metadata = result;
     }
     need(hash(bytes) === sha(expected) && bytes.length === metadata.bytes, 'GRANT_INPUT_CHANGED',
       'The selected input differs from the exact reviewed SHA256 or byte count.');
-    if(maximum!==undefined)need(bytes.length<=maximum,'GRANT_INPUT_TOO_LARGE','Receive the complete input within its declared original bound.');
+    need(bytes.length<=(maximum??GRANT_MAX_BUNDLE_BYTES),'GRANT_INPUT_TOO_LARGE','Receive the complete input within its declared original bound.');
     return {bytes, metadata, sourceWorkspace:source};
   }
   async #modelInputs(alias, args, label, maximum = GRANT_MAX_SOURCE_BYTES) {
@@ -398,14 +401,17 @@ export class MerchantGrantWorkspaces {
         contentType:transfer.manifest.mediaType}, missingOffsets, chunkBytes:CHUNK};
   }
   async #receiveBegin(alias, args) {
-    name(args.filename); sha(args.sha256); uint(args.bytes, 'Input length', GRANT_MAX_BUNDLE_BYTES);
+    name(args.filename); sha(args.sha256);
+    need(args.kind === undefined || ['original','case-bundle'].includes(args.kind), 'GRANT_INVALID_INPUT', 'Select the original input kind or a complete case-bundle.');
+    uint(args.bytes, 'Input length', args.kind === 'case-bundle' ? GRANT_MAX_CASE_BUNDLE_BYTES : GRANT_MAX_BUNDLE_BYTES);
     if (args.mediaType !== undefined) boundedText(args.mediaType, 'Input MIME type', 200);
     need(typeof args.requestId === 'string' && args.requestId.length >= 1 && args.requestId.length <= 180,
       'GRANT_INVALID_INPUT', 'Retain the original transfer request ID.');
     const id = 'input-' + hash(Buffer.from(alias + '\0' + args.requestId));
     const parent = await directory(join(await this.#root(alias), 'inputs')), root = await directory(join(parent, id));
     const manifest = {schema:TRANSFER, id, workspace:alias, requestId:args.requestId, filename:args.filename,
-      bytes:args.bytes, sha256:args.sha256, mediaType:args.mediaType ?? 'application/octet-stream', chunkBytes:CHUNK};
+      bytes:args.bytes, sha256:args.sha256, mediaType:args.mediaType ?? 'application/octet-stream', chunkBytes:CHUNK,
+      ...(args.kind === 'case-bundle' ? {kind:'case-bundle'} : {})};
     await immutable(join(root, 'manifest.json'), json(manifest));
     return this.#transferStatus({root, manifest});
   }
@@ -449,7 +455,7 @@ export class MerchantGrantWorkspaces {
       try { await link(temporary, join(transfer.root, 'complete')); }
       catch (error) {
         if (error.code !== 'EEXIST') throw error;
-        const existing = await readGrantAgentFile(join(transfer.root, 'complete'), GRANT_MAX_BUNDLE_BYTES);
+        const existing = await readGrantAgentFile(join(transfer.root, 'complete'), transferLimit(transfer.manifest));
         need(existing.length === size && hash(existing) === transfer.manifest.sha256, 'GRANT_RETAINED_CONFLICT',
           'The completed input differs from this original transfer.');
       }
@@ -577,7 +583,7 @@ export class MerchantGrantWorkspaces {
         ({input, label:row.label, kind:row.kind, mediaType:row.mediaType, declaredSha256:row.sha256 ?? null}))};
       const file = binding.inputs[identifier(args.input)];
       need(file, 'GRANT_INPUT_NOT_CONFIGURED', 'Choose one original host input alias.');
-      const bytes = await readGrantAgentFile(file.file,file.kind==='source-working-copy'?SOURCE_COLLECTION_MAX_COPY_BYTES:GRANT_MAX_BUNDLE_BYTES);
+      const bytes = await readGrantAgentFile(file.file,inputLimit(file.kind));
       need(!file.sha256 || hash(bytes) === file.sha256, 'GRANT_INPUT_CHANGED', 'The declared original input changed.');
       return {workspace:alias, input:args.input, name:file.file.split(/[\\/]/).at(-1), bytes:bytes.length,
         sha256:hash(bytes), mediaType:file.mediaType, kind:file.kind};
@@ -1019,7 +1025,8 @@ export class MerchantGrantWorkspaces {
       args.portfolioId, args.alternativeId);
     else if (verb === 'export') original = await client.download(args.kind, rest);
     else if (['plan_import','case_import','source_attach','intake','support_preview','support_receive','buyer_preview','buyer_receive','settlement_preview','settlement_receive'].includes(verb)) {
-      const {input, expectedInputSha256, ...body} = rest, selected = await this.#input(alias, input, expectedInputSha256);
+      const {input, expectedInputSha256, ...body} = rest, selected = await this.#input(alias, input, expectedInputSha256,
+        verb === 'case_import' || verb === 'plan_import' && body.kind === 'case' ? GRANT_MAX_CASE_BUNDLE_BYTES : GRANT_MAX_BUNDLE_BYTES);
       if (verb === 'settlement_preview') {
         const selection=body.name===undefined&&body.selections===undefined?undefined:{name:body.name,selections:body.selections};
         original=await client.settlementPreview(body.caseId,body.expectedVersion,selected.bytes,body.filename,selection);

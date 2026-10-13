@@ -8,7 +8,7 @@ Source integration and publication do not assert that a native course or actual 
 
 Retain the earlier complete preparation **request/result**, the current native installation-show result, both complete .ckanw files, and a current original case JSON. The earlier preparation must identify the earlier archive and scope source still owned by that saved Installation. Both archives must have the same original project creation identity, catalogue origin and source kind; a moved project directory is allowed. Names or similar record contents never establish identity.
 
-Attach the later complete archive through the existing attach-dcat/case DCAT source route and retain its actual source ID. Archives remain limited to 128 MiB each and 256 MiB total original DCAT attachments; the complete native case retains its 320 MiB contract. Ordinary JSON inputs stay within 8 MiB and original case ordinary-source limits. Nothing is shortened to fit.
+Attach the later complete archive through the existing attach-dcat/case DCAT source route and retain its actual source ID. Archives remain limited to 128 MiB each and 256 MiB total original DCAT attachments; the complete native case retains its 320 MiB contract. Ordinary JSON inputs stay within 8 MiB and original case ordinary-source limits. Nothing is shortened to fit. The installed Grant client, configured case-bundle input and complete chunked transfer retain the same 320 MiB whole-case bound. The Applications handoff carries that full case with its original setup in a 432 MiB envelope; ordinary planning JSON remains 32 MiB and ordinary source uploads remain 8 MiB.
 
 In the Catalogue commissioning desk, inspect both complete archives and choose **Following edition**. Pin the earlier and later original inspections. Retain the full earlier preparation as prior-preparation, current native Installation as saved-installation, and current case as case. Enter the later archive's actual case source ID. Prepare the comparison.
 
@@ -22,7 +22,7 @@ Only explicitly enabled source and receiving text amendments can change. Payment
 
 Download the complete review JSON. Attach those exact bytes as an ordinary source to the same Operations case, retain its actual source ID, and import the now-fresh case JSON. Enter the review source ID and prepare the following Installation. The comparison basis excludes unrelated case-version changes so attaching the exact review does not invalidate the review itself; final native Preview binds the actual current case version.
 
-The desk retains unfinished review text, disabled amendment drafts, earlier comparison drafts and pending original UUID/body. Recovered old results preserve later authored reviews. Selecting new input pins does not relabel old comparison members or redirect their downloads. A failed selected-source read leaves the preceding complete selection intact.
+The desk retains unfinished review text, disabled amendment drafts, earlier comparison drafts and pending original UUID/body. Recovered old results preserve later authored reviews. Selecting new input pins does not relabel old comparison members or redirect their downloads. A failed selected-source read leaves the preceding complete selection intact. Opening a downloaded editor draft preserves a pending original request: another draft must contain that exact pending body, or the operator first continues it or explicitly retains it with the existing new-draft control.
 
 ## Prepare and save through the original Source Desk
 

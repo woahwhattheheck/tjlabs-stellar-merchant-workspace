@@ -5,6 +5,8 @@ import type { Buffer } from 'node:buffer';
 
 export const GRANT_AGENT_SCHEMA: 'stellar-forge.sf47-agent.v1';
 export const GRANT_MAX_BUNDLE_BYTES: number;
+/** Complete operated case ZIP, including original DCAT source editions: 320 MiB. */
+export const GRANT_MAX_CASE_BUNDLE_BYTES: number;
 export const GRANT_MAX_SOURCE_BYTES: number;
 export const GRANT_MAX_WORKBOOK_HANDOVER_BYTES: number;
 export const GRANT_CASE_ACTIONS: readonly GrantCaseAction[];
@@ -4637,6 +4639,7 @@ export class GrantWorkspaceClient {
   buyerPreview<T = GrantObject>(caseId: string, expectedVersion: number, bytes: Buffer, filename: string): Promise<GrantJsonResponse<T>>;
   buyerReceive<T = GrantObject>(caseId: string, bytes: Buffer, body: GrantOperationRequest & GrantObject): Promise<GrantJsonResponse<T>>;
   download<K extends keyof GrantDownloadSelections>(kind: K, selection: GrantDownloadSelections[K]): Promise<GrantNativeResponse>;
+  /** Receive the complete original case ZIP up to GRANT_MAX_CASE_BUNDLE_BYTES. */
   importBundle(kind: 'case', bytes: Buffer, body: { name: string; requestId: string; actor: string }): Promise<GrantJsonResponse<GrantCaseImportReceipt>>;
   importBundle<T = GrantObject>(kind: 'plan', bytes: Buffer, body: { name: string; requestId: string; actor?: string }): Promise<GrantJsonResponse<T>>;
   importScenario<T = GrantObject>(bytes: Buffer, body: GrantObject): Promise<GrantJsonResponse<T>>;

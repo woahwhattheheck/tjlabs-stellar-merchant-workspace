@@ -1,10 +1,10 @@
-import { GRANT_AGENT_SCHEMA, GRANT_MAX_BUNDLE_BYTES, GRANT_MAX_SOURCE_BYTES, GRANT_CASE_ACTIONS } from './agent-contracts.mjs';
+import { GRANT_AGENT_SCHEMA, GRANT_MAX_BUNDLE_BYTES, GRANT_MAX_CASE_BUNDLE_BYTES, GRANT_MAX_SOURCE_BYTES, GRANT_CASE_ACTIONS } from './agent-contracts.mjs';
 import {performGrantPlanningSourceOperation} from './source-tables-agent.mjs';
 import {planInstallationSourceOperation, performInstallationSourceOperation,
   INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES} from './installation-source-desk-agent.mjs';
 export * from './installation-source-desk-agent.mjs';
 export {grantPlanningSourceProfiles,GRANT_PLANNING_SOURCE_SCHEMA,GRANT_PLANNING_SOURCE_ACTIONS} from './source-tables-agent.mjs';
-export { GRANT_AGENT_SCHEMA, GRANT_MAX_BUNDLE_BYTES, GRANT_MAX_SOURCE_BYTES, GRANT_MAX_WORKBOOK_HANDOVER_BYTES, GRANT_CASE_ACTIONS } from './agent-contracts.mjs';
+export { GRANT_AGENT_SCHEMA, GRANT_MAX_BUNDLE_BYTES, GRANT_MAX_CASE_BUNDLE_BYTES, GRANT_MAX_SOURCE_BYTES, GRANT_MAX_WORKBOOK_HANDOVER_BYTES, GRANT_CASE_ACTIONS } from './agent-contracts.mjs';
 // MIT. Typed agent access to the original SF47 planning and delivery service.
 // This client owns no planning database, business records or financial model.
 import { constants } from 'node:fs';
@@ -629,14 +629,16 @@ function originalSource(connection) {
 function transport(connection, route, {body, contentType = 'application/json', headers = {},
   originalRequestId, timeoutMs = 30000, mutation = body !== undefined, maxResponseBytes = MAX_RESPONSE_BYTES} = {}) {
   need(Number.isSafeInteger(maxResponseBytes) && maxResponseBytes >= 1 &&
-    maxResponseBytes <= INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES, 'GRANT_RESPONSE_LIMIT',
+    maxResponseBytes <= Math.max(INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES, GRANT_MAX_CASE_BUNDLE_BYTES), 'GRANT_RESPONSE_LIMIT',
     'Use the declared complete original response bound.');
   const target = new URL(route, connection.original.url), authorization = new URL(connection.url).hash.slice('#access='.length);
   need(target.origin === new URL(connection.original.url).origin && route.startsWith('/api/'),
     'GRANT_ROUTE_INVALID', 'Use an original declared grant API route.');
   const bytes = body === undefined ? undefined : Buffer.isBuffer(body) ? body : Buffer.from(JSON.stringify(body));
-  need(bytes === undefined || bytes.length <= GRANT_MAX_BUNDLE_BYTES, 'GRANT_INPUT_TOO_LARGE',
-    'The original grant API accepts complete requests up to 32 MiB.');
+  const maximumInput = target.pathname === '/api/operations/import' && contentType === 'application/zip' && Buffer.isBuffer(body)
+    ? GRANT_MAX_CASE_BUNDLE_BYTES : GRANT_MAX_BUNDLE_BYTES;
+  need(bytes === undefined || bytes.length <= maximumInput, 'GRANT_INPUT_TOO_LARGE',
+    'The original request exceeds its declared native receiving capacity.');
   return new Promise((resolveResult, reject) => {
     let dispatched = false, settled = false;
     const uncertain = failure => {
@@ -2113,10 +2115,11 @@ export class GrantWorkspaceClient {
       'implementation-original':() => '/api/operations/' + id(args.caseId,'operation') + '/implementation-originals/' + id(args.sourceId,'source') + '/' + sha(args.sha256),
     };
     need(Object.hasOwn(routes, kind), 'GRANT_INVALID_DOWNLOAD', 'Choose a complete original grant export or source.');
-    return this.#request(routes[kind](), {});
+    return this.#request(routes[kind](), kind === 'case' ? {maxResponseBytes:GRANT_MAX_CASE_BUNDLE_BYTES} : {});
   }
   importBundle(kind, bytes, body) {
-    need(Buffer.isBuffer(bytes) && bytes.length <= GRANT_MAX_BUNDLE_BYTES, 'GRANT_INPUT_TOO_LARGE', 'Use the complete original bundle up to 32 MiB.');
+    need(Buffer.isBuffer(bytes) && bytes.length <= (kind === 'case' ? GRANT_MAX_CASE_BUNDLE_BYTES : GRANT_MAX_BUNDLE_BYTES),
+      'GRANT_INPUT_TOO_LARGE', 'Use the complete original case up to 320 MiB or planning bundle up to 32 MiB.');
     exact(body, ['name', 'requestId', 'actor'], ['name', 'requestId']);
     requestId(body.requestId); text(body.name, 'Received name', 300);
     need(['plan', 'case'].includes(kind), 'GRANT_INVALID_IMPORT', 'Choose a complete planning or operating-case bundle.');

@@ -233,22 +233,74 @@ export async function runDcatInstallationBrowser({
   await settle(page);
   need(new URL(page.url()).hash==='','BROWSER_PRIVATE_FRAGMENT_NOT_CLEARED');
  }
+ async function viewByteWindows(row){
+  check();
+  const metadata={name:row.name,bytes:row.bytes,sha256:row.sha256};
+  const path=join(viewingDirectory,String(report.views.length).padStart(5,'0')+'-bytes.html');
+  const script="const expected="+JSON.stringify(metadata).replace(/</g,'\\u003c')+";"+
+   "let file=null,offset=0,generation=0;const size=65536,$=id=>document.getElementById(id);"+
+   "async function render(){const own=++generation,selected=file,start=offset;if(!selected)return;"+
+   "const bytes=new Uint8Array(await selected.slice(start,Math.min(start+size,selected.size)).arrayBuffer());"+
+   "if(own!==generation||selected!==file||start!==offset)return;"+
+   "$('range').textContent=start+'–'+(start+bytes.length)+' of '+selected.size+' original bytes';"+
+   "$('text').textContent=new TextDecoder('utf-8').decode(bytes);"+
+   "$('hex').textContent=Array.from(bytes,(n,i)=>(i%16===0?'\\n'+(start+i).toString(16).padStart(12,'0')+'  ':'')+n.toString(16).padStart(2,'0')+' ').join('');"+
+   "$('previous').disabled=start===0;$('next').disabled=start+size>=selected.size;"+
+   "$('last').disabled=start+size>=selected.size;$('first').disabled=start===0;$('go').disabled=selected.size===0;$('offset').disabled=selected.size===0;$('offset').value=String(start);}"+
+   "$('file').onchange=async()=>{generation++;file=null;for(const id of ['first','previous','next','last','go','offset'])$(id).disabled=true;const selected=$('file').files[0];if(!selected||selected.size!==expected.bytes){$('text').textContent='';$('hex').textContent='';$('range').textContent='Choose the complete original '+expected.bytes+'-byte attachment.';return;}file=selected;offset=0;await render();};"+
+   "$('next').onclick=()=>{offset=Math.min(Math.floor((file.size-1)/size)*size,offset+size);void render();};"+
+   "$('previous').onclick=()=>{offset=Math.max(0,offset-size);void render();};"+
+   "$('first').onclick=()=>{offset=0;void render();};"+
+   "$('last').onclick=()=>{offset=Math.floor((file.size-1)/size)*size;void render();};"+
+   "$('go').onclick=()=>{const n=Number($('offset').value);if(Number.isSafeInteger(n)&&n>=0&&n<file.size){offset=n;void render();}};";
+  const viewer=await write(path,Buffer.from('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+html(row.name)+'</title><style>body{font:16px/1.5 system-ui;margin:1rem;color:#222;background:#fff}pre{white-space:pre-wrap;overflow-wrap:anywhere}button,input{font:inherit;margin:.3rem;max-width:100%}h1,p{overflow-wrap:anywhere}.controls{display:flex;flex-wrap:wrap;align-items:center}</style><h1>'+html(row.name)+'</h1><p>'+row.bytes+' bytes · SHA-256 '+row.sha256+'</p><p>Open the complete original attachment. Select any byte offset to read its original contents. Text windows may begin inside a UTF-8 character; the hexadecimal view shows the exact selected bytes.</p><label>Complete original file <input id="file" type="file"></label><p id="range" role="status">Choose the original attachment.</p><div class="controls"><button id="first" disabled>First</button><button id="previous" disabled>Previous</button><button id="next" disabled>Next</button><button id="last" disabled>Last</button><label>Byte offset <input id="offset" disabled type="number" min="0"></label><button id="go" disabled>Open offset</button></div><h2>Text window</h2><pre id="text"></pre><details id="exact-bytes"><summary>Exact original bytes</summary><pre id="hex"></pre></details><script>'+script+'</script></html>'));
+  report.downloads.push({role:'complete-source-byte-viewer',name:row.name+'.viewer.html',...viewer,
+   source:{path:row.path,bytes:row.bytes,sha256:row.sha256},complete:true});
+  const page=await newPage('original-byte-windows');
+  try{
+   await page.route('**/*',route=>['file:','data:','about:'].includes(new URL(route.request().url()).protocol)?route.continue():route.abort());
+   await page.setViewportSize({width:1440,height:1000});
+   await page.goto(pathToFileURL(path).href,{waitUntil:'load',timeout:300000});
+   await page.locator('#file').setInputFiles(row.path);
+   await page.waitForFunction(total=>document.getElementById('range').textContent==='0–'+Math.min(65536,total)+' of '+total+' original bytes',row.bytes,{timeout:120000});
+   const first=await shot(page,'attachment-byte-first-'+report.views.length);
+   if(row.bytes>65536){
+    await page.locator('#next').click();
+    await page.waitForFunction(()=>document.getElementById('range').textContent.startsWith('65536–'),null,{timeout:120000});
+    await page.locator('#previous').click();
+    await page.waitForFunction(()=>document.getElementById('range').textContent.startsWith('0–'),null,{timeout:120000});
+    await page.locator('#last').click();
+    await page.waitForFunction(total=>document.getElementById('range').textContent.includes('–'+total+' of '+total),row.bytes,{timeout:120000});
+   }
+   await page.locator('#exact-bytes > summary').click();
+   await page.setViewportSize({width:390,height:844});
+   const last=await shot(page,'attachment-byte-narrow-'+report.views.length);
+   if(row.bytes){
+    await page.locator('#offset').fill('0');await page.locator('#go').click();
+    await page.waitForFunction(()=>document.getElementById('range').textContent.startsWith('0–'),null,{timeout:120000});
+   }
+   report.views.push({path:row.path,sha256:row.sha256,bytes:row.bytes,kind:'complete-original-file-paged-viewer',
+    browserRendered:true,completeText:false,pageBytes:65536,viewerPath:path,
+    screenshots:[first.path,last.path],viewedByOperator:false});
+  }finally{await page.close({runBeforeUnload:false});}
+ }
  async function viewAttachment(row){
   check();
   if(/\.ckanw$/i.test(row.name)){
    report.views.push({path:row.path,sha256:row.sha256,kind:'original-workspace-archive',browserRendered:false,receiving:'The owning native course opens and independently receives this complete binary archive.'});return;
   }
+  // Every original file remains complete on disk; page large or binary content
+  // without constructing a multi-gigabyte JavaScript string or document.
+  if(row.bytes>16*1024*1024)return viewByteWindows(row);
   const raw=await privateRead(row.path,Math.max(MAX_FILE,row.bytes));let content;
-  try{content=decode(raw);}catch{
-   report.views.push({path:row.path,sha256:row.sha256,kind:'binary-original',browserRendered:false});return;
-  }
+  try{content=decode(raw);}catch{return viewByteWindows(row);}
   const page=await newPage('attachment-'+row.name);
   try{
    await page.setViewportSize({width:1440,height:1000});
    // The source report is original standalone HTML. Other complete text is
    // rendered losslessly in a plain-text recipient viewer, with no truncation.
    let viewPath=row.path,kind='original-html';
-   if(!/\.html?$/i.test(row.name)){
+   if(row.role==='original-source-member'||!['Dcat_Complete_Source_Report.html','Dcat_Following_Comparison.html'].includes(row.name)){
     kind='complete-text-viewer';
     viewPath=join(viewingDirectory,String(report.views.length).padStart(5,'0')+'.html');
     const viewer=await write(viewPath,Buffer.from('<!doctype html><meta charset="utf-8"><title>'+html(row.name)+'</title><style>body{font:16px system-ui;padding:1rem}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style><h1>'+html(row.name)+'</h1><p>'+row.bytes+' bytes · SHA-256 '+row.sha256+'</p><pre id="text"></pre><script>document.getElementById("text").textContent=new TextDecoder("utf-8",{fatal:true}).decode(Uint8Array.from(atob('+JSON.stringify(raw.toString('base64'))+'),c=>c.charCodeAt(0)));</script>'));
@@ -261,7 +313,9 @@ export async function runDcatInstallationBrowser({
    const top=await shot(page,'attachment-'+String(report.views.length).padStart(3,'0')+'-top');
    await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
    const bottom=await shot(page,'attachment-'+String(report.views.length).padStart(3,'0')+'-bottom');
-   report.views.push({path:row.path,sha256:row.sha256,kind,browserRendered:true,completeText:kind==='complete-text-viewer',viewerPath:viewPath,screenshots:[top.path,bottom.path],viewedByOperator:false});
+   await page.setViewportSize({width:390,height:844});
+   const narrow=await shot(page,'attachment-'+String(report.views.length).padStart(3,'0')+'-narrow');
+   report.views.push({path:row.path,sha256:row.sha256,kind,browserRendered:true,completeText:kind==='complete-text-viewer',viewerPath:viewPath,screenshots:[top.path,bottom.path,narrow.path],viewedByOperator:false});
   }finally{await page.close({runBeforeUnload:false});}
  }
 
@@ -354,7 +408,8 @@ async function followingCourse(page,actual,downloadedById,recoveredPreparation){
    for(let index=0;index<count;index++){
     const file=allFiles[memberIndex++],row=rows.nth(index);
     need((await row.textContent()).includes(file.path)&&(await row.textContent()).includes(file.sha256),'BROWSER_FOLLOWING_FILE_ROW_MISMATCH');
-    await capture(page,row.getByRole('button',{name:'Download original file',exact:true}),{role:'original-source-member',name:basename(file.path),expected:file,source:{inspectionId:actual[which+'InspectionId']??actual.request[which+'InspectionId'],path:file.path}});
+    const downloaded=await capture(page,row.getByRole('button',{name:'Download original file',exact:true}),{role:'original-source-member',name:basename(file.path),expected:file,source:{inspectionId:actual[which+'InspectionId']??actual.request[which+'InspectionId'],path:file.path}});
+    await viewAttachment(downloaded);
    }
    filePages++;
    if(await page.locator('#following-file-next').isDisabled())break;
@@ -546,7 +601,8 @@ async function followingCourse(page,actual,downloadedById,recoveredPreparation){
    for(let index=0;index<count;index++){
     const file=allFiles[memberIndex++];
     need((await memberRows.nth(index).textContent()).includes(file.path)&&(await memberRows.nth(index).textContent()).includes(file.sha256),'BROWSER_ORIGINAL_FILE_ROW_MISMATCH');
-    await capture(page,memberRows.nth(index).getByRole('button',{name:'Download original file',exact:true}),{role:'original-source-member',name:basename(file.path),expected:file,source:{inspectionId:actual.inspectionId,path:file.path}});
+    const downloaded=await capture(page,memberRows.nth(index).getByRole('button',{name:'Download original file',exact:true}),{role:'original-source-member',name:basename(file.path),expected:file,source:{inspectionId:actual.inspectionId,path:file.path}});
+    await viewAttachment(downloaded);
    }
    filePages++;
    if(await page.locator('#file-next').isDisabled())break;
