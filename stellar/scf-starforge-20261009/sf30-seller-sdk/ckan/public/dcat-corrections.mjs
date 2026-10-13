@@ -1,5 +1,6 @@
 // MIT. Catalogue correction editor within the original loopback application.
 import { parseCorrectionDocument, correctionTokens } from './dcat-correction-json.mjs';
+import { parseDcatJson, stringifyDcatJson } from './dcat-json.mjs';
 const memories = new Map(), PAGE = 30;
 function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
@@ -19,7 +20,7 @@ const note = value => el('p', { class: 'muted' }, value);
 const field = (label, control) => el('label', { class: 'grow' }, label, control);
 const code = value => el('code', { class: 'break' }, value);
 const details = (label, value, open = false) => el('details', { open: open ? '' : null },
-  el('summary', {}, label), el('pre', { class: 'migration-value' }, typeof value === 'string' ? value : JSON.stringify(value, null, 2)));
+  el('summary', {}, label), el('pre', { class: 'migration-value' }, typeof value === 'string' ? value : stringifyDcatJson(value, null, 2)));
 function control(memory, key, label, { area = false, ...attrs } = {}) {
   const node = area ? el('textarea', { rows: 4, ...attrs }, memory[key] ?? '') : el('input', { value: memory[key] ?? '', ...attrs });
   node.addEventListener('input', () => { memory[key] = node.value; }); return field(label, node);
@@ -39,12 +40,13 @@ function table(headers, rows) {
   return el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, headers.map(x => el('th', {}, x)))),
     el('tbody', {}, rows.map(values => el('tr', {}, values.map(x => el('td', {}, x)))))));
 }
-async function api(ctx, path, body) {
+async function api(ctx, path, body, exact = false) {
   const response = await fetch('/api/' + path, { method: body === undefined ? 'GET' : 'POST',
     headers: { authorization: 'Bearer ' + ctx.token, ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
-  const result = await response.json();
-  if (!response.ok) throw new Error((result.error ?? response.status) + ': ' + (result.message ?? 'The catalogue correction operation failed.'));
+  const result = exact ? parseDcatJson(new Uint8Array(await response.arrayBuffer())) : await response.json();
+  if (!response.ok) throw Object.assign(new Error((result.error ?? response.status) + ': ' + (result.message ?? 'The catalogue correction operation failed.')),
+    { responseReceived: true, status: response.status, code: result.error });
   return result;
 }
 const query = value => new URLSearchParams(Object.entries(value).filter(([, x]) => x !== undefined && x !== null).map(([k, v]) => [k, String(v)])).toString();
@@ -56,7 +58,7 @@ function memoryFor(state) {
   const key = JSON.stringify([state.directory, state.createdAt, state.catalogOrigin]);
   if (!memories.has(key)) memories.set(key, { selected: '', revisionId: '', pointer: '', offset: 0, query: '',
     sourceChoice: '', label: '', author: '', note: '', op: 'replace', editPath: '', from: '', valueText: '',
-    operations: [], queueBase: null, preview: null, attempt: null, busy: false, candidateLabel: '', profile: '3.0',
+    operations: [], queueBase: null, preview: null, attempt: null, failedRequests: [], busy: false, candidateLabel: '', profile: '3.0',
     lastInspectorKey: '', candidateMode: 'candidate' });
   return memories.get(key);
 }
@@ -71,15 +73,23 @@ function editOperation(memory) {
   return operation;
 }
 async function submit(ctx, memory, action, payload, allocated = {}) {
-  if (memory.busy || ctx.state.active) throw new Error('Follow the current workspace operation before saving another change.');
+  if (memory.busy || ctx.state.active || memory.attempt) throw new Error('Follow or reconcile the current workspace request before saving another change.');
   const body = { requestId: crypto.randomUUID(), ...payload };
-  memory.attempt = { action, body, allocated }; memory.busy = true;
+  memory.attempt = { action, body, allocated, previousSelection: memory.selected, previousRevisionId: memory.revisionId }; memory.busy = true;
   try {
     const result = await api(ctx, 'dcat/corrections/' + action, body);
     memory.attempt.response = result; ctx.acceptOperation(result);
     if (result.correctionId) memory.selected = result.correctionId;
     if (result.revisionId && action !== 'materialize') memory.revisionId = result.revisionId;
-    await ctx.refresh();
+    memory.busy = false; await ctx.refresh();
+  } catch (error) {
+    if (memory.attempt?.body.requestId === body.requestId && !memory.attempt.response &&
+        error.responseReceived && error.status >= 400 && error.status < 500) {
+      memory.attempt.rejected = true; memory.attempt.failure = error.message;
+    }
+    memory.busy = false;
+    if (ctx.current()) { try { await ctx.render(); } catch {} }
+    throw error;
   } finally { memory.busy = false; }
 }
 async function retry(ctx, memory) {
@@ -87,8 +97,29 @@ async function retry(ctx, memory) {
   memory.busy = true;
   try {
     const result = await api(ctx, 'dcat/corrections/' + memory.attempt.action, memory.attempt.body);
-    memory.attempt.response = result; ctx.acceptOperation(result); await ctx.refresh();
+    memory.attempt.response = result; ctx.acceptOperation(result); memory.busy = false; await ctx.refresh();
   } finally { memory.busy = false; }
+}
+function terminalFailure(memory, state) {
+  const attempt = memory.attempt;
+  if (!attempt) return false;
+  if (attempt.rejected) return true;
+  const operation = state.operation;
+  if (attempt.response?.id && operation?.id === attempt.response.id &&
+      ['FAILED', 'CANCELLED', 'INTERRUPTED'].includes(operation.state)) {
+    attempt.terminal = operation.state; attempt.failure = operation.error?.message ?? operation.error?.code ?? operation.error ?? operation.state;
+    return true;
+  }
+  return false;
+}
+function returnToEditing(memory, drafts) {
+  const attempt = memory.attempt;
+  if (!attempt || !(attempt.rejected || attempt.terminal)) throw new Error('Refresh or retry the original request until its outcome is known.');
+  memory.failedRequests.push(structuredClone(attempt));
+  memory.selected = attempt.previousSelection;
+  const selected = drafts.find(row => row.id === memory.selected);
+  memory.revisionId = selected?.revisions.some(row => row.id === attempt.previousRevisionId) ? attempt.previousRevisionId : selected?.headRevisionId ?? '';
+  memory.preview = null; memory.lastInspectorKey = ''; memory.attempt = null;
 }
 function completedAttempt(memory, drafts, onMaterialized) {
   const attempt = memory.attempt; if (!attempt) return;
@@ -109,6 +140,7 @@ function completedAttempt(memory, drafts, onMaterialized) {
 export async function renderDcatCorrections(ctx, { onMaterialized } = {}) {
   const memory = memoryFor(ctx.state), dcat = ctx.state.dcat ?? {}, drafts = dcat.corrections?.drafts ?? [];
   completedAttempt(memory, drafts, onMaterialized);
+  const failedAttempt = terminalFailure(memory, ctx.state);
   const busy = Boolean(ctx.state.active || memory.busy || memory.attempt);
   const area = el('div', { class: 'dcat-corrections' });
   area.append(card(el('h3', {}, 'Catalogue corrections'),
@@ -119,7 +151,15 @@ export async function renderDcatCorrections(ctx, { onMaterialized } = {}) {
     code(memory.attempt.body.requestId),
     row(button(ctx, 'Refresh operation result', () => ctx.refresh()),
       button(ctx, 'Retry original request', () => retry(ctx, memory), Boolean(ctx.state.active || memory.busy)),
-      button(ctx, 'Download original request', () => downloadLocal(memory.attempt.body, 'dcat-correction-request-' + memory.attempt.body.requestId + '.json')))));
+      button(ctx, 'Download original request', () => downloadLocal(memory.attempt.body, 'dcat-correction-request-' + memory.attempt.body.requestId + '.json')),
+      failedAttempt ? button(ctx, 'Keep failed request and return to editing', async () => {
+        returnToEditing(memory, drafts); await ctx.render();
+      }, Boolean(ctx.state.active || memory.busy)) : null),
+    failedAttempt ? note('Observed request outcome: ' + String(memory.attempt.failure)) : null));
+  if (memory.failedRequests.length) area.append(card(el('h4', {}, 'Retained failed request inputs'),
+    note('These original inputs remain available while you correct the draft and save with a new request UUID.'),
+    ...memory.failedRequests.map(item => row(code(item.body.requestId), note(String(item.failure ?? item.terminal ?? 'Rejected')),
+      button(ctx, 'Download request', () => downloadLocal(item.body, 'dcat-correction-request-' + item.body.requestId + '.json'))))));
   const choices = [
     ...(dcat.catalogs ?? []).map(item => ({ key: 'catalog:' + item.id, kind: 'catalog', id: item.id, sha256: item.sha256,
       label: 'Original · ' + (item.label || item.id), profile: item.profile })),
@@ -203,7 +243,7 @@ export async function renderDcatCorrections(ctx, { onMaterialized } = {}) {
     const findingPanel = card(el('h4', {}, 'Findings in the original reviewed candidate'),
       note('These original validator paths refer to the first immutable draft revision. Opening a finding selects that baseline so later array edits cannot silently change the record being inspected.'),
       row(button(ctx, 'Read original candidate findings', async () => {
-        const report = await api(ctx, 'dcat/reviews/' + selected.source.id);
+        const report = await api(ctx, 'dcat/reviews/' + selected.source.id, undefined, true);
         const validation = report.validation?.candidate ?? {};
         const findings = [], seen = new Set();
         for (const group of [validation, ...(validation.records ?? []), ...(validation.catalogs ?? [])]) {

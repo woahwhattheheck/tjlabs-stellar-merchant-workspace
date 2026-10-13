@@ -13,6 +13,15 @@ export function correctionTokens(pointer) {
 }
 export function parseCorrectionDocument(source) {
   if (typeof source !== 'string') fail('DCAT_CORRECTION_JSON_INVALID');
+  for (let index = 0; index < source.length; index++) {
+    const unit = source.charCodeAt(index);
+    if (unit >= 0xd800 && unit <= 0xdbff) {
+      const following = source.charCodeAt(++index);
+      if (!(following >= 0xdc00 && following <= 0xdfff)) fail('DCAT_CORRECTION_UNPAIRED_SURROGATE',
+        'Enter Unicode text with complete characters, or use an explicit JSON \\u escape for a surrogate value.');
+    } else if (unit >= 0xdc00 && unit <= 0xdfff) fail('DCAT_CORRECTION_UNPAIRED_SURROGATE',
+      'Enter Unicode text with complete characters, or use an explicit JSON \\u escape for a surrogate value.');
+  }
   let offset = source.charCodeAt(0) === 0xfeff ? 1 : 0, count = 0;
   const whitespace = () => { while (offset < source.length && /[\t\r\n ]/.test(source[offset])) offset++; };
   function string() {
