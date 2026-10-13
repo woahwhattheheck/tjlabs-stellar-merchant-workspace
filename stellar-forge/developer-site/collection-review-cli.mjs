@@ -9,6 +9,7 @@ import { startSetupServer } from './serve.mjs';
 import { createCollectionWorkspace,addCollectionSource,collectionDraft,saveCollectionRevision,receiveCollectionWorkspace,
  createCollectionPacket,openCollectionPacket,collectionReport,createCollectionArchive,collectionSourceTables,retainCollectionWorkingCopy } from './dist/collection-review-workspace.mjs';
 import { renderCollectionReview } from './dist/collection-review-report.mjs';
+import { assertCollectionPublication } from './dist/collection-review-publication.mjs';
 const json=value=>JSON.stringify(value,null,2)+'\n';
 async function read(path,limit=64*1024*1024){
  const file=await open(resolve(path),constants.O_RDONLY|(constants.O_NOFOLLOW||0)|(constants.O_NONBLOCK||0));
@@ -34,6 +35,8 @@ export const COLLECTION_REVIEW_HELP='Collection review\n\n'+
  'init --name NAME --actor OPERATOR --out NEW_WORKSPACE.json\n'+
  'source --project WORKSPACE --file ORIGINAL --format archiveblack-html|structured-json --url ORIGINAL_URL --observed-at ISO --out NEW_WORKSPACE.json\n'+
  'show --project WORKSPACE [--revision REVISION_ID]\n'+
+ 'publish --project WORKSPACE --out NEW_SHAREABLE_PACKET.json\n'+
+ 'publication-check --file COMPLETE_UTF8_OR_JSON_ARTIFACT\n'+
  'draft --project WORKSPACE [--revision REVISION_ID] [--select-all] --out NEW_DRAFT.json\n'+
  'prepare --project WORKSPACE --draft DRAFT.json --actor OPERATOR [--note NOTE] --out NEW_REQUEST.json\n'+
  'save --project WORKSPACE --request ORIGINAL_REQUEST.json --out NEW_WORKSPACE.json\n'+
@@ -55,6 +58,7 @@ export async function runCollectionReview(argv=[]){
  if(command==='init'){
   const w=await createCollectionWorkspace({name:needed(o,'name'),actor:needed(o,'actor')});console.log(json({out:await write(needed(o,'out'),await createCollectionPacket(w)),workspaceId:w.id,revision:w.headId}));return;
  }
+ if(command==='publication-check'){console.log(json(assertCollectionPublication(await read(needed(o,'file')))));return;}
  const w=await openCollectionPacket(await read(needed(o,'project')));
  let output,detail={workspaceId:w.id};
  if(command==='show'){console.log(json(await collectionReport(w,o.revision||w.headId)));return;}
@@ -75,6 +79,8 @@ export async function runCollectionReview(argv=[]){
  }else if(command==='receive'){
   const result=await receiveCollectionWorkspace(w,await openCollectionPacket(await read(needed(o,'incoming'))));
   output=await createCollectionPacket(result.workspace);detail={...detail,receivedHeadId:result.receivedHeadId,preservedHeadId:result.preservedHeadId};
+ }else if(command==='publish'){
+  output=await createCollectionPacket(w);detail.publication=assertCollectionPublication(output);
  }else if(command==='report'){output=renderCollectionReview(await collectionReport(w,o.revision||w.headId));
  }else if(command==='tables'){output=(await collectionSourceTables(w,o.revision||w.headId)).project;
  }else if(command==='export'){const result=await createCollectionArchive(w,o.revision||w.headId,{native:Boolean(o.native)});output=result.bytes;detail={...detail,files:result.manifest.files.length,bytes:output.length,revision:result.manifest.selectedRevisionId};

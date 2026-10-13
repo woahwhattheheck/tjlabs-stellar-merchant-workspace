@@ -14,6 +14,8 @@ import { sourceSelectionDirectory, sourceSelectionPath, validateSourceSelection,
 import { readDistributionBuildPin, recoverCompletedDistribution, openDistributionBuild,
   inspectDistributionBuild } from './build-state.mjs';
 
+import { assertCollectionPublication } from '../../../stellar-forge/developer-site/dist/collection-review-publication.mjs';
+
 export { inspectDistributionBuild };
 
 const json = value => JSON.stringify(value, null, 2) + '\n';
@@ -167,6 +169,10 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
         throw new RangeError(`Distribution source file exceeds ${MAX_SOURCE_FILE_BYTES} bytes (${bytes.length}): ${path}`);
       if (totalBytes > MAX_SOURCE_BYTES)
         throw new RangeError(`Distribution source exceeds ${MAX_SOURCE_BYTES} bytes: ${totalBytes}`);
+      // Published Collection Review examples must not redistribute captured
+      // provider keys. Inspect bytes before materialization without rewriting
+      // source identities or using any candidate credential.
+      if (path.startsWith('products/collection-review/examples/')) assertCollectionPublication(bytes);
       const identity = { bytes: bytes.length, sha256: digest(bytes) };
       sources.set(path, identity); loaded.set(path, identity);
     }
