@@ -15,10 +15,16 @@ def serve(directory,port=0):
    try:
     parts=urlsplit(self.path);path=parts.path;q={k:v[0] for k,v in parse_qs(parts.query).items()}
     if self.headers.get("Host")!=self.server.expected_host:raise ValueError("Unexpected host")
-    if method=="GET" and path in ("/","/app.js","/style.css"):
-     name={"/":"index.html","/app.js":"app.js","/style.css":"style.css"}[path];self.send(200,(assets/name).read_bytes(),{"/":"text/html; charset=utf-8","/app.js":"text/javascript; charset=utf-8","/style.css":"text/css; charset=utf-8"}[path]);return
+    if method=="GET" and path in ("/","/app.js","/style.css","/makeup","/makeup.html","/makeup.js","/makeup.css","/makeup_client.mjs","/client.mjs"):
+     name={"/":"index.html","/app.js":"app.js","/style.css":"style.css","/makeup":"makeup.html","/makeup.html":"makeup.html","/makeup.js":"makeup.js","/makeup.css":"makeup.css","/makeup_client.mjs":"makeup_client.mjs","/client.mjs":"client.mjs"}[path]
+     selected=(assets.parent if path.endswith(".mjs") else assets)/name
+     mime="text/css" if name.endswith(".css") else "text/javascript" if name.endswith((".js",".mjs")) else "text/html"
+     self.send(200,selected.read_bytes(),mime+"; charset=utf-8");return
     w=Workspace(root)
     if method=="GET":
+     if path.startswith("/api/makeup/"):
+      from makeup_http import get
+      self.json(200,get(root,path,q));return
      if path=="/api/state":self.json(200,{**w.state(),"token":token});return
      if path=="/api/request":self.json(200,w.request(q["id"]));return
      if path=="/api/view":self.json(200,w.view(q["id"],int(q["revision"]) if "revision" in q else None));return
@@ -36,10 +42,13 @@ def serve(directory,port=0):
     origin=self.headers.get("Origin")
     if origin and origin!="http://"+self.server.expected_host:raise ValueError("Foreign origin")
     length=int(self.headers.get("Content-Length","-1"))
-    limit=MAX_SOURCE if path=="/api/source" else MAX_PACKET if path=="/api/receive" else 4*1024*1024
+    limit=MAX_SOURCE if path=="/api/source" else MAX_PACKET if path in ("/api/receive","/api/makeup/receive") else 4*1024*1024
     if not 0<=length<=limit:raise ValueError("Request length exceeds bound")
     body=self.rfile.read(length)
     if len(body)!=length:raise ValueError("Incomplete request")
+    if path.startswith("/api/makeup/"):
+     from makeup_http import post
+     self.json(200,post(root,path,body));return
     if path=="/api/source":
      meta=json.loads(base64.b64decode(self.headers["X-Source-Metadata"],validate=True));result=w.add_source(body,meta)
     elif path=="/api/receive":result=w.receive(body)
