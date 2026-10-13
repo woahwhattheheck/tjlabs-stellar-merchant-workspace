@@ -51,6 +51,24 @@ export interface BidderUpdateArguments<K extends BidderKind = BidderKind> extend
 export interface BidderMutation<K extends BidderKind = BidderKind> {
   workspace: string; native: WorkspaceMetadata; record: BidderRecordMap[K]; alreadyApplied: boolean;
 }
+export interface EvidenceIntakeSelection {
+  workspaceId: string; noticeId: string; commandId: string; expectedRevision: number; applyRevision?: number;
+}
+export interface EvidenceIntakeArguments extends WorkspaceSelection, EvidenceIntakeSelection {
+  input: string; expectedSha256: string;
+}
+export interface EvidenceIntakeInspection {
+  workspace: string; native: WorkspaceMetadata; input: string;
+  file: { name: string; bytes: number; sha256: string };
+  selection: EvidenceIntakeSelection;
+  documents: Array<{ index: number; metadata: Record<string, unknown>; bytes: number; sha256: string }>;
+  totalBytes: number; mutation: false;
+}
+export interface EvidenceIntakeResult {
+  workspace: string; native: WorkspaceMetadata; schema: 'starforge.canadabuys.evidence-intake.v1';
+  commandId: string; intakeSha256: string; noticeId: string;
+  records: BidderRecordMap['evidence'][]; alreadyApplied: boolean;
+}
 export interface ToolArguments {
   workspaces: Record<string, never>;
   open: WorkspaceSelection;
@@ -70,6 +88,8 @@ export interface ToolArguments {
   workshare_create: WorkspaceSelection & { expectedRevision: number; record: WorkshareInput };
   workshare_update: WorkspaceSelection & { workshareId: string; expectedRevision: number; record: Omit<WorksharePatch, 'expectedRevision'> };
   qualify: WorkspaceSelection & PageSelection & { profile: Profile };
+  bidder_intake_inspect: WorkspaceSelection & { input: string; expectedSha256?: string };
+  bidder_intake: EvidenceIntakeArguments;
   bidder_status: WorkspaceSelection;
   bidder_list: WorkspaceSelection & PageSelection & { kind: BidderKind; noticeId?: string };
   bidder_record: WorkspaceSelection & { kind: BidderKind; recordId: string; revision?: number; history?: boolean };
@@ -112,6 +132,8 @@ export interface ToolResults {
   workshare_create: Status & { workshare: Workshare };
   workshare_update: Status & { workshare: Workshare };
   qualify: NativePage<ProfileMatch> & { workspace: string; profile: Profile };
+  bidder_intake_inspect: EvidenceIntakeInspection;
+  bidder_intake: EvidenceIntakeResult;
   bidder_status: { workspace: string; native: WorkspaceMetadata; schema: string; counts: Record<BidderKind, number> };
   bidder_list: BidderPage<BidderKind> & { workspace: string };
   bidder_record: { workspace: string; record: BidderRecordMap[BidderKind] & { history?: BidderRecordMap[BidderKind][] } };
@@ -150,7 +172,7 @@ export declare function canadaBuysRequest<N extends SelectedTool>(tool: N, args?
 export declare function canadaBuysTools(): Array<{ name: FullToolName; description: string; inputSchema: Record<string, unknown>;
   annotations: { readOnlyHint: boolean; idempotentHint: boolean; openWorldHint: boolean } }>;
 export declare function canadaBuysReplayPolicy<N extends SelectedTool>(tool: N, args?: ToolArguments[ShortTool<N>]):
-  { replayable: boolean; basis: string; commandId?: string; captureId?: string };
+  { replayable: boolean; basis: string; commandId?: string; captureId?: string; inputSha256?: string };
 export declare class CanadaBuysMerchantClient {
   constructor(options: { client: NativeMcpClient; workspace: string; workspaceId?: string });
   readonly endpoint: string; readonly workspace: string; readonly workspaceId: string | undefined;
@@ -174,6 +196,8 @@ export declare class CanadaBuysMerchantClient {
   createWorkshare(args: ToolArguments['workshare_create'], options?: RequestOptions): Promise<ToolResults['workshare_create']>;
   updateWorkshare(args: ToolArguments['workshare_update'], options?: RequestOptions): Promise<ToolResults['workshare_update']>;
   qualify(args: ToolArguments['qualify'], options?: RequestOptions): Promise<ToolResults['qualify']>;
+  inspectEvidenceIntake(args: ToolArguments['bidder_intake_inspect'], options?: RequestOptions): Promise<EvidenceIntakeInspection>;
+  intakeEvidence(args: EvidenceIntakeArguments, options?: RequestOptions): Promise<EvidenceIntakeResult>;
   bidderStatus(options?: RequestOptions): Promise<ToolResults['bidder_status']>;
   bidderList<K extends BidderKind>(args: Omit<ToolArguments['bidder_list'], 'kind'> & { kind: K }, options?: RequestOptions): Promise<BidderPage<K> & { workspace: string }>;
   bidderRecord<K extends BidderKind>(args: Omit<ToolArguments['bidder_record'], 'kind'> & { kind: K }, options?: RequestOptions): Promise<{ workspace: string; record: BidderRecordMap[K] & { history?: BidderRecordMap[K][] } }>;

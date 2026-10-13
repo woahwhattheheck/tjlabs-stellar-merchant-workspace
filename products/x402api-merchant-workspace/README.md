@@ -230,15 +230,31 @@ A completed paid replay returns the saved original result.
 
 ## Restart, backup and transfer
 
+Use **Project handover** in the installed merchant browser to export the complete
+project. The archive carries a consistent SQLite snapshot, every retained result,
+original configuration and handler inputs, and the complete installed source.
+The export keeps its original operation across browser or process interruption.
+
+Receive the package with `x402api-merchant-project receive`, then open its returned
+review configuration with `x402api-merchant review`. The review browser exposes the
+original invoices, payment requests, activity and full result downloads. The
+receiver preserves the original snapshot and prepares a separate runtime with
+relocated result storage. Its source archive supports later onward handover.
+
+[PORTABLE_PROJECT.md](PORTABLE_PROJECT.md) gives the complete browser, command-line,
+configuration and activation procedure. The existing Node 24 / Python 3.11 Linux
+operator profile supplies both runtimes; the merchant adds no package dependency.
+
 Stop the server gracefully before copying a workspace. The server drains
 accepted requests and active fulfillment handlers before closing the store
 and releasing its kernel lease. If a returned result cannot yet be retained,
 the close operation remains retryable with those same bytes held in memory.
 
-Copy the entire private state directory, its configuration, selected
-fulfillment files and complete application source. Keep secret configuration
-in the destination service's existing secret system. Start only one service
-owner for a given state directory.
+For a production move, export the stopped original workspace at cutover and
+receive that final operation into its selected destination. Keep the existing
+tenant and webhook environment references in the destination service's normal
+secret configuration. Start the receiving deployment after the original service
+has stopped and retained its actual returns.
 
 The store reclassifies a previous owner's unfinished handler attempt only
 after acquiring the original kernel lease. Completed results are checked and

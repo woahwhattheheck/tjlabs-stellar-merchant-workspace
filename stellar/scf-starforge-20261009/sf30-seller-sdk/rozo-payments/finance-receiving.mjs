@@ -9,6 +9,7 @@ import { receiveDelivery, hashOriginalFile } from './delivery.mjs';
 import { nativeInventory, compareNativeInventory } from './native-inventory.mjs';
 import { assert, canonical, digest } from './model.mjs';
 import { verifyAccountingBackup, restoreAccountingWorkspace } from '../../merchant-settlement-accounting/workspace/recovery.mjs';
+import { inspectFinancePredecessor, verifyAmendedAccounting } from './finance-amendment-native.mjs';
 import { inspectRozoFinanceSource } from './finance-source.mjs';
 import { inspectRozoAccountantSource } from '../../merchant-settlement-accounting/accountant/rozo-source.mjs';
 import { PRODUCT, originalJSON, retainFinance, financeChild, financeFiles, recordFinanceProcess, originalFinanceHostSources } from './finance-native-support.mjs';
@@ -19,6 +20,11 @@ export async function receiveRozoFinance({directory,receiver,python='python3',me
   const {jsonDigest}=await import('./model.mjs');
   assert(descriptor.schema==='stellar-forge.rozo-finance-receiving.v1'&&descriptor.operationId===plan.operationId&&
     descriptor.planSha256===digest(readFileSync(join(directory,'FINANCE_PLAN.json'))),'FINANCE_RECEIVE_PLAN','The original full plan bytes differ.');
+  const predecessor=plan.amendment?inspectFinancePredecessor(join(directory,'previous-finance')):null;
+  if(predecessor)assert(canonical(predecessor.identity)===canonical(plan.amendment.predecessor)&&
+    canonical(descriptor.amendment?.predecessor)===canonical(predecessor.identity)&&
+    descriptor.amendment.impactSha256===plan.amendment.preview.previewSha256,
+    'FINANCE_AMENDMENT_RECEIVE','The complete predecessor archive and reviewed impact differ.');
   const resultPath=join(receiver,'FINANCE_RECEIVED.json');
   if(existsSync(resultPath)){
     const old=originalJSON(resultPath);
@@ -71,6 +77,20 @@ export async function receiveRozoFinance({directory,receiver,python='python3',me
     assert(raw.length===close.bytes&&digest(raw)===close.sha256,'FINANCE_RECEIVE_CLOSE','The original immutable closed-period source differs.');
     inspectRozoAccountantSource(raw);
   }
+  const amendment=verifyAmendedAccounting(plan,accounting,descriptor);
+  if(predecessor){
+    const ids=[predecessor.identity.accounting.accountant.handoffId,
+      ...(predecessor.identity.buyer?[predecessor.identity.buyer.accountant.handoffId]:[])];
+    for(const id of ids){
+      const before=predecessor.final.accounting.accountant.handoffs.find(h=>h.id===id);
+      const after=accounting.accountantHandoffs.find(h=>h.id===id);
+      assert(before&&after,'FINANCE_AMENDMENT_ACCOUNTANT','Retain both original merchant and Buyer accountant handoffs.');
+      for(const [key,value]of Object.entries(before))if(key!=='revisions')assert(canonical(after[key])===canonical(value),
+        'FINANCE_AMENDMENT_ACCOUNTANT','The original issued accountant handoff changed.');
+      for(const revision of before.revisions)assert(canonical(after.revisions.find(r=>r.id===revision.id))===canonical(revision),
+        'FINANCE_AMENDMENT_ACCOUNTANT','An original accountant return changed.');
+    }
+  }
   // The original relocation restores every journal, source, issued file and credential path through its authenticated manifest.
   let buyer=null;
   if(descriptor.buyer){
@@ -87,22 +107,30 @@ export async function receiveRozoFinance({directory,receiver,python='python3',me
     assert(buyer.archive_sha256===row.sha256,'FINANCE_RECEIVE_BUYER','The native Buyer receiver selected another archive.');
     // Reopen the received native database through its copied original Store using the installed trusted reader.
     const storeModule=join(receiver,'buyer','app','sf36-spend-governor','expense-workspace');
-    const script="import json,sys\nsys.path.insert(0,sys.argv[1])\nfrom store import Store\ns=Store(sys.argv[2],node_executable=sys.argv[3])\ntry: print(json.dumps(s.state(),sort_keys=True))\nfinally: s.close()\n";
-    const opened=await financeChild(python,['-B','-c',script,storeModule,join(receiver,'buyer','project'),process.execPath]);
+    const script="import json,sys\nsys.path.insert(0,sys.argv[1])\nfrom store import Store\ns=Store(sys.argv[2],node_executable=sys.argv[3])\ntry:\n value={'state':s.state()}\n if len(sys.argv)>4: value.update(previous=s.issued(sys.argv[4]),following=s.issued(sys.argv[5]))\n print(json.dumps(value,sort_keys=True))\nfinally: s.close()\n";
+    const opened=await financeChild(python,['-B','-c',script,storeModule,join(receiver,'buyer','project'),process.execPath,
+      ...(predecessor?.identity.buyer?[predecessor.identity.buyer.closeId,descriptor.accountant.buyer.source.id]:[])]);
     recordFinanceProcess(receiver,'BUYER_REOPEN_PROCESS',opened);
     assert(opened.code===0,'FINANCE_RECEIVE_BUYER_REOPEN','The received original Buyer Store did not reopen.',500,{stderr:opened.stderr});
-    const state=JSON.parse(opened.stdout);
+    const openedState=JSON.parse(opened.stdout),state=openedState.state;
+    if(predecessor?.identity.buyer){const prior=predecessor.identity.buyer;
+      assert(jsonDigest(openedState.previous)===prior.issuedSha256&&openedState.following.previous===prior.closeId&&
+        openedState.following.sequence===openedState.previous.sequence+1&&openedState.following.period.id===prior.period.id,
+        'FINANCE_AMENDMENT_BUYER','Retain the full original issued Buyer close and its following close chain.');
+      amendment.buyer={originalClose:prior.closeId,followingClose:openedState.following.id,originalIssuedSha256:prior.issuedSha256};
+    }
     assert(state.id===final.buyer.state.id&&state.id===descriptor.buyer.binding.workspaceId&&state.revision===descriptor.buyer.revision,
       'FINANCE_RECEIVE_BUYER_IDENTITY','The original Buyer identity or revision differs.');
     for(const key of ['sources','periods','centers','labels'])assert(canonical(state[key])===canonical(final.buyer.state[key]),'FINANCE_RECEIVE_BUYER_STATE','The original Buyer '+key+' changed.');
   }
   const receivedOriginals=financeFiles(join(directory,'files')).map(f=>({...f,path:'files/'+f.path}));
   for(const row of financeFiles(backup))receivedOriginals.push({...row,path:descriptor.accounting.backup+'/'+row.path});
+  if(predecessor)for(const row of predecessor.identity.files)receivedOriginals.push({...row,path:'previous-finance/'+row.path});
   const result={schema:'stellar-forge.rozo-finance-received.v1',operationId:descriptor.operationId,
     descriptorSha256:digest(readFileSync(join(directory,'FINANCE_RECEIVING.json'))),planSha256:descriptor.planSha256,
     workspaceId:inventory.workspace.workspaceId,originId:inventory.workspace.originId,revision:inventory.workspace.revision,
     accounting:{verified,restored,revision:accounting.revision,handoffs:accounting.accountantHandoffs.length,closes:accounting.rozoFinance.closes.length},
-    buyer,requests,receivedOriginals,receivedWorkspaceFiles:financeFiles(receiver),sourceRoot:rozo.sourceRoot,applicationModule:fileURLToPath(import.meta.url),
+    buyer,...(amendment?{amendment}:{}),requests,receivedOriginals,receivedWorkspaceFiles:financeFiles(receiver),sourceRoot:rozo.sourceRoot,applicationModule:fileURLToPath(import.meta.url),
     providerCalls:0,sourceCapturesReplayed:0,completedAt:new Date().toISOString()};
   retainFinance(resultPath,result);return result;
 }

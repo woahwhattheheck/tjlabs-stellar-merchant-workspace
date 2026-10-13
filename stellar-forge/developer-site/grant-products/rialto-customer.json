@@ -62,6 +62,66 @@
           "sha256": "c5b749700fbe10e316b405820cb63659074c385eaf3ec7ff9d4175a64cd49a7c"
         }
       ]
+    },
+    {
+      "id": "rialto-installed-customer-workflow",
+      "label": "Installed original Rialto catalogue, path inputs and full customer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/rialto/README.md",
+      "commit": "2a8fb6644f629eb29971e474bfccec444e413e2c",
+      "editions": [
+        {
+          "commit": "2a8fb6644f629eb29971e474bfccec444e413e2c",
+          "bytes": 10017,
+          "sha256": "fd4ac842a1405640a3dffe7bc6e8fd17646efbff86a8a5a62e88549597b2a27a"
+        }
+      ]
+    },
+    {
+      "id": "rialto-customer-path-inputs",
+      "label": "Published path inputs and original buyer interface contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rialto/SOURCE_CONTRACT.md",
+      "commit": "656d434f4e5aa3dfd27e921c7d5decc8ac05b5f2",
+      "editions": [
+        {
+          "commit": "656d434f4e5aa3dfd27e921c7d5decc8ac05b5f2",
+          "bytes": 9718,
+          "sha256": "467fa7bd36777e07447f5ca2319871bf2842f1d90b4e8d3c5391ef180b71a675"
+        }
+      ]
+    },
+    {
+      "id": "rialto-installation-programme",
+      "label": "Complete Rialto commercial and native Installation receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/RIALTO_CUSTOMER.md",
+      "commit": "2a8fb6644f629eb29971e474bfccec444e413e2c",
+      "editions": [
+        {
+          "commit": "2a8fb6644f629eb29971e474bfccec444e413e2c",
+          "bytes": 15932,
+          "sha256": "843d18c15cff9b14b3a85263b596e6f9bcd4cf11ff45c7fd37bc801e11a2f25f"
+        }
+      ]
+    },
+    {
+      "id": "rialto-installation-runtime",
+      "label": "Original request to native Installation and independent full receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rialto/installation.mjs",
+      "commit": "2a8fb6644f629eb29971e474bfccec444e413e2c",
+      "editions": [
+        {
+          "commit": "2a8fb6644f629eb29971e474bfccec444e413e2c",
+          "bytes": 11952,
+          "sha256": "f423f3070da27d52194c97de68d6f8a12a3cae8439b539a60c08d61d5c419455"
+        }
+      ]
     }
   ]
 }

@@ -1,5 +1,10 @@
 # Buyer, QuickBooks and Xero customer operations
 
+## Complete buyer allocation worksheets
+
+The original QuickBooks client now exposes complete worksheet export, returned-file inspection, native plan preview and same-request create recovery. [ACCOUNTING-QBO-WORKSHEETS.md](ACCOUNTING-QBO-WORKSHEETS.md) contains the full host alias configuration, client and CLI journey, paged review and complete file download contracts. The worksheet creates an original DRAFT plan; its review, posting and accountant return continue through the operations described below.
+
+
 This customer interface uses the existing accounting workspace, original buyer startup, QuickBooks and Xero controllers, and the same MCP connection as the other merchant tools. It gives an operator a complete path from original source selection and preview through retained requests, response reconciliation, accountant returns and exact file delivery.
 
 The platform adapter is described in [ACCOUNTING-PLATFORMS.md](ACCOUNTING-PLATFORMS.md). Host configuration and ordinary accounting operations remain in [ACCOUNTING.md](ACCOUNTING.md). Backup, pause, restore and reader ownership use [ACCOUNTING-MAINTENANCE-CLIENT.md](ACCOUNTING-MAINTENANCE-CLIENT.md).

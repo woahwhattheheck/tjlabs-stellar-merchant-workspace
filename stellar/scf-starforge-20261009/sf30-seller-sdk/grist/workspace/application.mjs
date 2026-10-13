@@ -6,7 +6,7 @@ import { absolute, plain, need } from '../../../distribution/runtime-workspace/s
 
 const SOURCE = 'stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace';
 const STARTUP = 'stellar-forge.grist-authoring-startup.v1';
-const SOURCE_FILES = ["launch.mjs","model.mjs","cli.mjs","server.mjs","provider.mjs","packet.mjs","browser.mjs","index.html","style.css","mcp.mjs","catalog.mjs","merchant-provider.mjs","application.mjs","application-provider.mjs"];
+import {SOURCE_FILES} from './source-files.mjs';
 const HASH = /^[a-f0-9]{64}$/;
 const UUID = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
 const field = (name, label, type = 'path', required = false, description = '') =>
@@ -16,7 +16,7 @@ export function gristApplication(common) {
   return {
     id: 'grist-authoring', command: 'grist-workspace', title: 'Grist source authoring', terminal: false,
     requiredSource: SOURCE + '/launch.mjs',
-    description: 'Review original records and field observations, retain complete captures and public projections, publish through the saved dataset publisher and reopen the same private workspace.',
+    description: 'Review original records and field observations, retain complete captures and public projections, publish through the saved dataset publisher, prepare complete customer operating plans with explicit source observations and return reviews, and reopen the same private workspace.',
     fields: [
       field('workspaceDirectory', 'Initialized private Grist workspace', 'path', true,
         'Select the original workspace. Initialize a new one with grist-workspace init before reviewing this application.'),

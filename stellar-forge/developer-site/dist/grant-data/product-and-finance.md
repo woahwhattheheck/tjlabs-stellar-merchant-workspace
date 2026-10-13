@@ -3007,6 +3007,109 @@ For a building service selected into the existing funded cohort, T1 configures i
 
 The existing $38,000, 400-hour, 150-day grant programme provides that customer-specific Stellar integration. The completed application is the reusable starting point. Separately commissioned proposal preparation, engineering assembly and customer care retain their own workorders, effort and collection milestones.
 
+## Reviewer Workbench, Merchant client and managed Applications
+
+### The useful customer job
+
+A buyer commissioning a data service needs a complete result, its source and the agreed terms, ready for use after the buying session ends. A colleague may need to review that result against an earlier edition and continue work in a separate editable workspace. The merchant needs to recover an interrupted delivery against the original accepted request.
+
+The Reviewer product supports that complete operating path. It carries a retained purchase, original quotes, complete result files and source documents through a private Workbench, the typed Merchant client and the customer Console. Reviewed delivery recipes use the existing Workflow engine. Managed Applications opens, stops and reopens the selected original application. Each layer retains its own operation and source identity.
+
+A commissioned installation names the payer, merchant, buyer, source custodian and receiving reviewer. Its workorder selects the useful result or reporting edition, permitted source, host, network, asset, accounts, price and acceptance decision. The commercial unit can be the complete usable result with its agreed receiving workflow. A later source correction, reporting period or distinct decision carries its own selected scope and terms.
+
+### Operate the original purchase and complete files
+
+The operator starts by importing or selecting the complete purchase packet. The Workbench retains the packet identity, original quote IDs, complete result bytes and an immutable source selection. The primary result and earlier result remain available for comparison, together with quote history and source documents.
+
+The Workbench owns the original Buyer. Its operations retain request UUIDs, so a repeated accepted request recovers the original result. The Merchant provider and typed client attach to that selected Workbench, read its complete result and source files, and verify byte lengths and digests. Interrupted file transfers continue the original transfer. A client that borrows an existing Workbench closes its own connection; the original Workbench owner controls that application's lifetime.
+
+The customer Console brings these operations into the selected configured profile. An operator inspects complete results, downloads the source, reviews the delivery recipe and installs it in the maintained Workflow engine. The recipe keeps its selected Workbench, source, original request IDs and saved outputs. Profile changes invalidate selections and asynchronous work from the previous profile.
+
+When the operator exports an immutable purchase packet, the original Buyer closes first. This captures the selected quote histories and complete result bytes together. If the export response is lost, the original request reconciles its accepted export before reading later mutable state. Reopening the Buyer returns current connection and process facts while preserving earlier lifecycle receipts.
+
+### Continue through managed Applications
+
+The maintained Applications inspector verifies the selected READY installation, source, lock and profile, including the original grant-reviewer provider. The managed receiver then exercises the saved application and connection, launch, controller reopening, Stop, prepared restart after controller reopening, and a final closed reopen. Each live instance serves both complete original result files for byte verification and desktop and narrow browser inspection.
+
+The additive receiver saves a separate Applications journal and result. The Workbench and Merchant parent results therefore remain stable inputs for later stages. Its saved request IDs and accepted-result reconciliation allow the same operating path to continue after an interruption.
+
+Stop drains the application's owned work. The original application and browser owners close their resources independently, and the receiving result records the observed closure. Historical receiving results remain available alongside current application state.
+
+### Hand over an editable result and recover the original operation
+
+A portable purchase packet opens in another Workbench with the original packet, quote and source identities. That receiving operator owns an independently editable workspace and can produce a later edition while preserving the sender's selected edition. The Workbench, typed Merchant tools and Console expose this same full-file receiving path.
+
+A full operational checkpoint retains the original working directories, request journals, application state, outputs and native results for continuation of the original operation. The saved Workbench and Merchant checkpoints bind every regular file and retain the original directory layout. Their manifests also name the nine external runtime references that the receiving host supplies. The operating guide gives the source, runtime and restoration instructions.
+
+Private connection credentials remain with the selected operational owner. The source installer preserves replaced preimages and verifies the complete selected source. Later reviewed carrier changes retain the accepted prior receiving generations.
+
+### Demonstrated state and current receiving
+
+Following the runtime filesystem replacement, the complete required source was restored and a new receiving operation began from the unchanged original purchase. Its source selection contains 2,377 required files, including the original seller-portal assets, with the recorded Stellar SDK 16.3.1 and x402 2.28.0 dependency bindings. The original historical operation remains separately recorded.
+
+| Stage | Actual outcome |
+| --- | --- |
+| Workbench | All 14 phases completed, including complete results, export, independent receiving and cold reopening. Owned Workbenches, Buyer/application and browser closed. Full editable checkpoint saved. |
+| Merchant | All 12 phases completed, including original UUID replay, complete files, interrupted/resumed transfer, independent receiving and owner reopening. Owned Merchant and Workbenches closed. Full editable checkpoint saved. |
+| Customer Console | The original journal completed configured-profile and source/intake phases. The third phase was interrupted by the recorded process termination. The same twelve-phase continuation remains pending. |
+| Additive Applications | Complete receiver and operating guide merged; all three merged files independently read back and full source/API review passed. Selection of a compatible existing READY runtime and native/browser receiving remain pending. |
+
+This team-operated receiving work adds **zero payment transactions** to the original **18 testnet purchases, 411,000 stroops / 0.0411 XLM, with network fees separate**. Independent customer adoption is assessed through the funded installation milestones.
+
+### Apply the existing six funded packages
+
+The following names, IDs, hours, costs and targets come from the current canonical source index. The Reviewer supplies reusable starting components; the funded work selects and completes each customer's installation, independent buyer use, recovery and handover.
+
+| Existing funded package | Selected customer work | Completion in the existing programme |
+| --- | --- | --- |
+| T1-resource · Merchant-resource integration — 80h / USD 7,600 | Select each merchant's permitted source, useful result, price and receiving application; configure the merchant, Buyer, Workbench and typed client. | By day 30, the two independent merchants operate their agreed source-to-result services. |
+| T1-handover · Authority and handover — 40h / USD 3,800 | Configure source and terms authority, private connection, operational ownership and receiving responsibilities; train the second accountable operator. | The second operator reopens the installation and completes the agreed source or configuration change with earlier editions retained. |
+| T2-provider · Provider and ledger deployment — 70h / USD 6,650 | Carry the actual useful results through the merchant and two independently operated facilitators, retaining requests, approvals, settlements and complete source/result files. | By day 90, at least ten useful testnet purchases **in total across two independent buyers**, over seven consecutive calendar days. |
+| T2-threat · Deployed threat response — 50h / USD 4,750 | Complete deployment-specific access and recovery work for interrupted transfer, response uncertainty, Stop and delivery failure after settlement. | The two installed response cases demonstrate recovery of the original accepted operation and delivery of its complete intended result. |
+| T3-mainnet · Mainnet merchant rollout — 90h / USD 8,550 | Configure approved production hosts, network, asset, accounts, source terms and controlled release/rollback for recurring buyer work. | By day 150, two mainnet merchants support at least thirty useful purchases **in total across two independent buyers**, over fourteen consecutive days; both buyers return on another day. |
+| T3-recovery · Production recovery and handover — 70h / USD 6,650 | Retain source and operating state off-host, restore the original installation and complete a maintainer support case with an independent engineer. | The receiving engineer restores and reconciles the operating state, then completes the agreed next edition and handover. |
+
+The programme remains **six packages, USD 38,000, 400 prospective hours and 150 days from actual award acceptance**. Each customer-specific adaptation receives one funding assignment in the shared contributor calendar. The commissioning customer or merchant funds production hosting and upstream subscriptions; the buyer funds purchase principal and network fees.
+
+### Receive this contribution into the current application
+
+The original 5403/25FD/81CF manuscript and source owners receive this chapter into the current companion and preserve the nine applicant answers, budget and other product chapters. The existing `reviewer-guide` source ID retains its selected installed guide. The accompanying `grant-reviewer-receiving.json` adds the six measured source records in the appendix using the maintained `stellar-forge.grant-product-registration.v1` format. The initial check used the selected 183-record source-index edition. The public editions were subsequently checked on 13 October 2026 against the complete 206-record package received by the existing 25FD/81CF publisher (package SHA-256 `c08f7c49e0669d08697c0c021520c6694dfcc4f166bf2bde97c8b75c9f59d579`): the maintained registration core retained all 206 sources and funding fields, added these six sources for 212, and preserved the same result on replay. The publisher must compose them into its complete current edition together with queued contributions.
+
+The maintained composer accepts the declaration once through its packaged `grant-products` directory or a selected external file. After the original writer receives the full chapter into the existing companion, the external-file invocation is:
+
+```sh
+node stellar-forge/developer-site/grant-compose.mjs \
+  --directory /absolute/path/to/existing/developer-site/dist \
+  --product-registration /absolute/path/to/grant-reviewer-receiving.json \
+  --source-pins-output /absolute/path/to/current-source-pins.json
+```
+
+This invocation uses the complete application and companion already in that directory. The publisher retains its current manuscript adoption when selecting `--manuscript` instead. The composer returns the complete four-file source pins for the same publisher, saved draft, review and Page/Site receiving operation.
+
+### Source and operating appendix
+
+The restored operation is `893f2ff4-9a12-4eb6-8fe2-43d57613be81`. Its completed result and checkpoint identities are:
+
+| Retained artifact | Complete bytes and SHA-256 |
+| --- | --- |
+| Workbench result | 42,014 bytes; `073da3b2b18fe263f4bdb33dd939783d262ba16fa9fd9ed5396e08c0bbee9c82` |
+| Workbench editable checkpoint | 1,327,915 bytes, 96 regular files plus nine external-runtime references; `d6d0a9e7cdc8908eab32a0ed874795cf489ae87b8d929d29981a186dce010f5e` |
+| Merchant result | 28,347 bytes; `a7b05a8fee6ec80575c1a83d4c8c66202bce59f84457c8230bac04287ef922ad` |
+| Merchant editable checkpoint | 1,576,468 bytes, 184 regular files plus nine external-runtime references; `173ce7f82292d64e8095cb9cdcf0979c860c10f75f176d4df86b6671229e46e3` |
+
+PR36600, merge `b9d4636efe76311666d308dd4323210d4185bd7c`, retains the complete source installer, selection, packet index and static assets. PR36683, merge `61ad7c23bffb0627f9013f04efc8a48914e687fb`, retains the complete customer receiving guide and dated release record. PR36748, merge `ca4a20ccdd1394677d6c75ce9f367f7e0b90af74`, retains the additive Applications receiver and operating guide. Every declaration entry binds its selected merged commit, full byte length, SHA-256 and Git blob.
+
+| Source ID | Complete selected file |
+| --- | --- |
+| `reviewer-restored-source-selection` | [REQUIRED-SOURCE-SELECTION.json](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/736c62105d66f60a4b5da241e9198da39858d2fe/stellar-forge/developer-site/grant-sources/reviewer-receiving/REQUIRED-SOURCE-SELECTION.json) |
+| `reviewer-restored-native-runner` | [RUN_RECOVERED_REVIEWER.py](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/736c62105d66f60a4b5da241e9198da39858d2fe/stellar-forge/developer-site/grant-sources/reviewer-receiving/RUN_RECOVERED_REVIEWER.py) |
+| `reviewer-customer-receiving` | [CUSTOMER_RECEIVING.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/736c62105d66f60a4b5da241e9198da39858d2fe/stellar-forge/developer-site/grant-sources/reviewer-receiving/CUSTOMER_RECEIVING.md) |
+| `reviewer-receiving-release` | [RECEIVING-RELEASE.json](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/736c62105d66f60a4b5da241e9198da39858d2fe/stellar-forge/developer-site/grant-sources/reviewer-receiving/RECEIVING-RELEASE.json) |
+| `reviewer-applications-receiving` | [APPLICATIONS_RECEIVING.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/736c62105d66f60a4b5da241e9198da39858d2fe/stellar-forge/developer-site/grant-sources/reviewer-receiving/APPLICATIONS_RECEIVING.mjs) |
+| `reviewer-applications-operating` | [APPLICATIONS_RECEIVING.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/736c62105d66f60a4b5da241e9198da39858d2fe/stellar-forge/developer-site/grant-sources/reviewer-receiving/APPLICATIONS_RECEIVING.md) |
+
+The selected originating commits are in the owner's private Commons repository. This contribution includes all six complete measured source files for the original publisher's public distribution and source-link adoption. The editable operational checkpoints remain private; their recorded identities support the receiving owner's restoration workflow.
+
 ## 10. Open the existing work
 
 This page contains the substantive application. The following materials let an engineer inspect the demonstrated product and retain the original source.

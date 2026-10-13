@@ -4629,13 +4629,145 @@
         "git_blob": "a0f79521928f94a31b78e488d99d1df374798b5b",
         "bytes": 7865
       }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "736c62105d66f60a4b5da241e9198da39858d2fe",
+      "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/REQUIRED-SOURCE-SELECTION.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/736c62105d66f60a4b5da241e9198da39858d2fe/stellar-forge/developer-site/grant-sources/reviewer-receiving/REQUIRED-SOURCE-SELECTION.json",
+      "source_kind": "source-file",
+      "id": "reviewer-restored-source-selection",
+      "kind": "published-source",
+      "label": "Complete 2,377-file restored Reviewer source selection",
+      "source_registration": "grant-reviewer-receiving",
+      "git_blob": "46d08c4395ba753c72e0e1f79742366b8527c290",
+      "sha256": "0df0a2ac352d1875a1a8c9586cc72e1434117aced00c7ae79f47e73f91ebc85c",
+      "bytes": 1316825,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "736c62105d66f60a4b5da241e9198da39858d2fe",
+        "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/REQUIRED-SOURCE-SELECTION.json",
+        "git_blob": "46d08c4395ba753c72e0e1f79742366b8527c290",
+        "sha256": "0df0a2ac352d1875a1a8c9586cc72e1434117aced00c7ae79f47e73f91ebc85c",
+        "bytes": 1316825
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "736c62105d66f60a4b5da241e9198da39858d2fe",
+      "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/RUN_RECOVERED_REVIEWER.py",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/736c62105d66f60a4b5da241e9198da39858d2fe/stellar-forge/developer-site/grant-sources/reviewer-receiving/RUN_RECOVERED_REVIEWER.py",
+      "source_kind": "source-file",
+      "id": "reviewer-restored-native-runner",
+      "kind": "published-source",
+      "label": "Original nonpaying Workbench, Merchant and Console receiving runner",
+      "source_registration": "grant-reviewer-receiving",
+      "git_blob": "d986078e3d65e5a98b36f4f65d895ca78f2cd158",
+      "sha256": "2356bcebd2ab91e76d001d80fa908822a924b3e10a82f8bc8b729004f322ad7b",
+      "bytes": 24074,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "736c62105d66f60a4b5da241e9198da39858d2fe",
+        "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/RUN_RECOVERED_REVIEWER.py",
+        "git_blob": "d986078e3d65e5a98b36f4f65d895ca78f2cd158",
+        "sha256": "2356bcebd2ab91e76d001d80fa908822a924b3e10a82f8bc8b729004f322ad7b",
+        "bytes": 24074
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "736c62105d66f60a4b5da241e9198da39858d2fe",
+      "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/CUSTOMER_RECEIVING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/736c62105d66f60a4b5da241e9198da39858d2fe/stellar-forge/developer-site/grant-sources/reviewer-receiving/CUSTOMER_RECEIVING.md",
+      "source_kind": "source-file",
+      "id": "reviewer-customer-receiving",
+      "kind": "published-source",
+      "label": "Complete Reviewer customer operation, receiving and recovery guide",
+      "source_registration": "grant-reviewer-receiving",
+      "git_blob": "82d6bef32a276921e45775cbd6c47186f3499486",
+      "sha256": "9964f7f45c007d027131a3e37137769dada4913c7bbe757488ca5791dbf6e13f",
+      "bytes": 21912,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "736c62105d66f60a4b5da241e9198da39858d2fe",
+        "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/CUSTOMER_RECEIVING.md",
+        "git_blob": "82d6bef32a276921e45775cbd6c47186f3499486",
+        "sha256": "9964f7f45c007d027131a3e37137769dada4913c7bbe757488ca5791dbf6e13f",
+        "bytes": 21912
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "736c62105d66f60a4b5da241e9198da39858d2fe",
+      "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/RECEIVING-RELEASE.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/736c62105d66f60a4b5da241e9198da39858d2fe/stellar-forge/developer-site/grant-sources/reviewer-receiving/RECEIVING-RELEASE.json",
+      "source_kind": "source-file",
+      "id": "reviewer-receiving-release",
+      "kind": "published-source",
+      "label": "Dated original Workbench and Merchant completions with pending Console",
+      "source_registration": "grant-reviewer-receiving",
+      "git_blob": "332057b4a74ea556ffe9ff3245eacd9d19c2825c",
+      "sha256": "b34c8b4b44b0a72908f336e3f810a056af4982c92334c4d6d7fc2544642e3cd7",
+      "bytes": 4487,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "736c62105d66f60a4b5da241e9198da39858d2fe",
+        "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/RECEIVING-RELEASE.json",
+        "git_blob": "332057b4a74ea556ffe9ff3245eacd9d19c2825c",
+        "sha256": "b34c8b4b44b0a72908f336e3f810a056af4982c92334c4d6d7fc2544642e3cd7",
+        "bytes": 4487
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "736c62105d66f60a4b5da241e9198da39858d2fe",
+      "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/APPLICATIONS_RECEIVING.mjs",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/736c62105d66f60a4b5da241e9198da39858d2fe/stellar-forge/developer-site/grant-sources/reviewer-receiving/APPLICATIONS_RECEIVING.mjs",
+      "source_kind": "source-file",
+      "id": "reviewer-applications-receiving",
+      "kind": "published-source",
+      "label": "Additive Applications receiver preserving both completed parent results",
+      "source_registration": "grant-reviewer-receiving",
+      "git_blob": "ba1f9b0c3a88962fa7a7e9955daa50bc2c9398a6",
+      "sha256": "9e5f23538326540ee83281f7484d856796c5f28fa04efe99e23209666bad086e",
+      "bytes": 22239,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "736c62105d66f60a4b5da241e9198da39858d2fe",
+        "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/APPLICATIONS_RECEIVING.mjs",
+        "git_blob": "ba1f9b0c3a88962fa7a7e9955daa50bc2c9398a6",
+        "sha256": "9e5f23538326540ee83281f7484d856796c5f28fa04efe99e23209666bad086e",
+        "bytes": 22239
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "736c62105d66f60a4b5da241e9198da39858d2fe",
+      "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/APPLICATIONS_RECEIVING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/736c62105d66f60a4b5da241e9198da39858d2fe/stellar-forge/developer-site/grant-sources/reviewer-receiving/APPLICATIONS_RECEIVING.md",
+      "source_kind": "source-file",
+      "id": "reviewer-applications-operating",
+      "kind": "published-source",
+      "label": "Complete existing-READY-runtime Applications operation and recovery",
+      "source_registration": "grant-reviewer-receiving",
+      "git_blob": "f55c2186f07b81e21c8834603441bb12ca41167f",
+      "sha256": "d810b3b3917d15392723f769c94e2f3088f16eb49ee559f1c4b27f46a525cd7a",
+      "bytes": 15276,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "736c62105d66f60a4b5da241e9198da39858d2fe",
+        "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/APPLICATIONS_RECEIVING.md",
+        "git_blob": "f55c2186f07b81e21c8834603441bb12ca41167f",
+        "sha256": "d810b3b3917d15392723f769c94e2f3088f16eb49ee559f1c4b27f46a525cd7a",
+        "bytes": 15276
+      }
     }
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "ead8b67e14aea39c325a31fba4ee52a8054133bd",
-    "bytes": 645994,
-    "sha256": "c33b8cf931c485b53d65651e09ed4a21815cd37b8f3080fa632e3de4df143a99",
+    "git_blob": "20f24ab5b330ab3f28aba40ecbfccc11f98aa54a",
+    "bytes": 660910,
+    "sha256": "d73ddec6d3ff17889dfd65d733c06bd6103e58715c7eabc8efbce144f55529a8",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
     "prior_git_blob": "9ff11768d30ce0a77f620ed0e50cde965b3e0c4a"
   },
@@ -4933,6 +5065,7 @@
         "Editable grant planning, amendments and delivery agenda",
         "Pirate Weather recurring customer briefings and complete project receiving",
         "Audit Exchange: original building audits, energy review and editable turnover",
+        "Reviewer Workbench, Merchant client and managed Applications",
         "10. Open the existing work"
       ],
       "previous_cumulative_commit": "1945289c8d39b7850bf3b496c13c7ae5643176bf",
@@ -5172,6 +5305,24 @@
             "bytes": 2661,
             "sha256": "261a9d9b72339cdd2dc8dbdcc462164427389d36ff5517c7953499b75211a412",
             "git_blob": "7c192eae6232966222abcc2f0bfbb5b6e3647faa"
+          }
+        },
+        {
+          "id": "grant-reviewer-receiving",
+          "heading": "## Reviewer Workbench, Merchant client and managed Applications",
+          "source_ids": [
+            "reviewer-restored-source-selection",
+            "reviewer-restored-native-runner",
+            "reviewer-customer-receiving",
+            "reviewer-receiving-release",
+            "reviewer-applications-receiving",
+            "reviewer-applications-operating"
+          ],
+          "definition": {
+            "path": "grant-products/grant-reviewer-receiving.json",
+            "bytes": 3874,
+            "sha256": "1c9dfb9ffe4d9d7745f948596d465d556145cc5e5ebefe97faff4812b778f56c",
+            "git_blob": "655c72a9e478da9c93048e12cdb7b074f938f995"
           }
         },
         {
@@ -5587,8 +5738,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "c33b8cf931c485b53d65651e09ed4a21815cd37b8f3080fa632e3de4df143a99",
-    "source_bytes": 645994,
+    "source_sha256": "d73ddec6d3ff17889dfd65d733c06bd6103e58715c7eabc8efbce144f55529a8",
+    "source_bytes": 660910,
     "assets": [
       "/grant-companion.html",
       "/grant-companion.css",

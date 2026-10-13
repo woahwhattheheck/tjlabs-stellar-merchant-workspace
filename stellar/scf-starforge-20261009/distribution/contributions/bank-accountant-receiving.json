@@ -1,0 +1,37 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "bank-accountant-receiving",
+  "description": "Receive complete original Bank close archives, review statement-to-posting and customer document lineage, compare retained editions and export a private accountant review with its complete original source.",
+  "components": [
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving"
+  ],
+  "commands": {
+    "bank-accountant": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/cli.mjs"
+  },
+  "commandDescriptions": {
+    "bank-accountant": "Inspect Bank close TAR files; create, edit, compare, export and cold-receive a complete private accountant review; prepare a self-contained browser handover."
+  },
+  "exports": {
+    "./bank-accountant/receiving": {
+      "types": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/core.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/core.mjs"
+    }
+  },
+  "browserAssets": [
+    {
+      "server": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/cli.mjs",
+      "manifest": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/browser-assets.json"
+    }
+  ],
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/index.html",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/core.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/core.d.mts",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/storage.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/app.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/style.css",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/ACCOUNTANT_RECEIVING.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/browser-assets.json",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/EXERCISE.mjs"
+  ]
+}

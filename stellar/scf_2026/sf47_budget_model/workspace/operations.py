@@ -26,6 +26,7 @@ import operations_use_calendar as use_calendar
 import operations_cohort as cohort
 import operations_installations as installations
 import operations_installation_returns as installation_returns
+import operations_company_returns as company_returns
 import operations_dispatch as dispatch
 import operations_statements as statements
 import operations_performance as performance
@@ -37,6 +38,7 @@ import award_terms
 import issuer_receiving
 import operations_cash_accounts as cash_accounts
 import operations_account_reconciliation as account_reconciliation
+import operations_workflows as operating_workflows
 import operations_implementation as implementation
 import operations_engagements as engagements
 import operations_risks as risks
@@ -580,6 +582,11 @@ class Operations:
             return action()
         return self.workspace._transaction(body.get("requestId"), payload, action)
 
+
+    def operating_workflows(self, program_id, expected_version, allowed_sections=None):
+        with self._snapshot():
+            return operating_workflows.read_index(
+                self, identifier(program_id, "operation"), expected_version, allowed_sections)
 
     def funding_catalog(self, program_id):
         with self._snapshot():
@@ -1283,6 +1290,14 @@ class Operations:
         with self._snapshot():
             context = self._context(identifier(program_id, "operation"))
             return installations.preview(self, context, body)
+
+    def inspect_company_return(self, program_id, body):
+        with self._snapshot():
+            return company_returns.inspect_package(self, self._context(identifier(program_id, "operation")), body)
+
+    def linked_company_return(self, program_id, body):
+        with self._snapshot():
+            return company_returns.linked_package(self, self._context(identifier(program_id, "operation")), body)
 
     def installation_returns(self, program_id):
         with self._snapshot():

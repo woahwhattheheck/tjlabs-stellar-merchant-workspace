@@ -10,12 +10,19 @@ from operations import Operations, decoded
 import operations_calendar as calendar_model
 import operations_agenda_http as agenda_http
 import operations_use_calendar as use_calendar
+import operations_workflows as operating_workflows
 from operations_commercial_http import handle as commercial_http
 import operations_installation_sources as installation_sources
 from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static.update({"/task-outcomes-workbook.mjs": ("task-outcomes-workbook.mjs", "text/javascript; charset=utf-8"),
+                   "/task-outcomes-workbook-desk.mjs": ("task-outcomes-workbook-desk.mjs", "text/javascript; charset=utf-8"),
+                   "/TASK_OUTCOMES_WORKBOOK.md": ("TASK_OUTCOMES_WORKBOOK.md", "text/markdown; charset=utf-8")})
+    static.update({"/operations_company_returns.mjs": ("operations_company_returns.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_company_returns.css": ("operations_company_returns.css", "text/css; charset=utf-8"),
+                   "/COMPANY_RETURN_INTAKE.md": ("COMPANY_RETURN_INTAKE.md", "text/markdown; charset=utf-8")})
     static.update({"/operations_risks.mjs": ("operations_risks.mjs", "text/javascript; charset=utf-8"),
                    "/operations_risks.css": ("operations_risks.css", "text/css; charset=utf-8"),
                    "/RISK_REGISTER_OPERATOR.md": ("RISK_REGISTER_OPERATOR.md", "text/markdown; charset=utf-8")})
@@ -149,6 +156,18 @@ def read(handler, parsed):
         r"/api/operations/(operation-[a-f0-9]{32})/risk-register-history/([a-z][a-z0-9-]{1,99})", path)
     if risk_history_match:
         handler.send(200, ops.risk_history(*risk_history_match.groups()))
+        return True
+    workflow_match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/operating-workflows", path)
+    if workflow_match:
+        if set(query) != {"expectedVersion"} or len(query["expectedVersion"]) != 1:
+            raise Problem("Select the original case version for saved-workflow discovery.", 422, "INVALID_OPERATING_WORKFLOWS")
+        try:
+            expected_version = int(query["expectedVersion"][0])
+        except (ValueError, TypeError) as exc:
+            raise Problem("Use the original integer case version.", 422, "INVALID_OPERATING_WORKFLOWS") from exc
+        principal = getattr(handler, "principal", None) or {"role": "owner"}
+        handler.send(200, ops.operating_workflows(
+            workflow_match[1], expected_version, operating_workflows.visible_sections(principal.get("role"))))
         return True
     funding_match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/cost-funding(?:/(edition|request|export.zip))?", path)
     if funding_match:
@@ -412,6 +431,12 @@ def write(handler, parsed):
     if commercial_http(handler, parsed, ops, "POST"):
         return True
     if installation_sources.handle(handler, parsed, ops, "POST"):
+        return True
+    company_match = re.fullmatch(
+        r"/api/operations/(operation-[a-f0-9]{32})/installation-company-return-(inspect|linked)", path)
+    if company_match:
+        method = ops.inspect_company_return if company_match.group(2) == "inspect" else ops.linked_company_return
+        handler.send(200, method(company_match.group(1), handler.json_body()))
         return True
     risk_match = re.fullmatch(
         r"/api/operations/(operation-[a-f0-9]{32})/(risk-register-seed|risk-register-preview|risk-register-request)", path)

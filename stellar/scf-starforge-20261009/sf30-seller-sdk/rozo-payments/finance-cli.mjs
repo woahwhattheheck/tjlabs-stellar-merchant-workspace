@@ -6,16 +6,19 @@ import { assert, digest, canonical } from './model.mjs';
 import { putOriginal } from './delivery.mjs';
 import { readMerchantConfig } from '../../../../stellar-forge/mcp-merchant-operator/config.mjs';
 import { prepareRozoFinancePlan, runRozoFinance } from './native-finance.mjs';
+import { prepareFinanceAmendmentPlan } from './finance-amendment-native.mjs';
 import { originalJSON, retainFinance, financeChild } from './finance-native-support.mjs';
 const need=(flags,key)=>{assert(typeof flags[key]==='string'&&flags[key].length,'FINANCE_CLI','Supply '+key);return flags[key];};
 export async function financeCommand(command,service,flags){
-  if(command==='finance-plan'){
+  if(command==='finance-plan'||command==='finance-amendment-plan'){
     const directory=resolve(need(flags,'--directory'));mkdirSync(directory,{recursive:true,mode:0o700});
     const report={reportId:need(flags,'--report-id'),expectedReportSha256:need(flags,'--report-sha256'),
       ...(flags['--report-version']?{reportVersion:Number(flags['--report-version'])}:{})};
     const source=originalJSON(resolve(need(flags,'--source-details')));
-    const value=prepareRozoFinancePlan(service,{report,actor:need(flags,'--actor'),source,
-      ...(flags['--operation-id']?{operationId:flags['--operation-id']}:{})});
+    const options={report,actor:need(flags,'--actor'),source,...(flags['--operation-id']?{operationId:flags['--operation-id']}:{})};
+    const value=command==='finance-amendment-plan'?await prepareFinanceAmendmentPlan(service,{...options,
+      previousDirectory:resolve(need(flags,'--previous-finance-directory')),
+      purchaseSelection:flags['--purchase-selection']?originalJSON(resolve(flags['--purchase-selection'])):null}):prepareRozoFinancePlan(service,options);
     const native=await service.finance.state();
     assert(native.accounting?.sourceMode==='merchant','FINANCE_CLI_OWNER','Select the original configured merchant Accounting owner.');
     value.plan.accounting.binding=native.accounting.binding;
@@ -23,7 +26,7 @@ export async function financeCommand(command,service,flags){
     putOriginal(planFile,Buffer.from(canonical(value.plan)+'\n'));putOriginal(sourceFile,value.sourceBytes);
     retainFinance(join(directory,'finance-plan-context.json'),{schema:'stellar-forge.rozo-finance-plan-context.v1',
       workspace:service.workspace.meta(),accounting:native.accounting,buyer:native.buyer,
-      movements:value.movements,source:{...value.source,path:sourceFile}});
+      movements:value.movements,source:{...value.source,path:sourceFile},...(value.context?{amendment:value.context}:{})});
     return {state:'REVIEW_REQUIRED',planFile,source:{...value.source,path:sourceFile},
       contextFile:join(directory,'finance-plan-context.json'),operationId:value.plan.operationId};
   }
@@ -36,7 +39,7 @@ export async function financeCommand(command,service,flags){
     'FINANCE_CLI_BINDING','The reviewed plan must select exactly these original configured aliases.');
   return runRozoFinance({service,directory:resolve(need(flags,'--directory')),plan,
     backupRoot:definition.recovery.backupRoot,passEnv:definition.recovery.passEnv,
-    merchantConfig,accountingAlias:alias,maintenanceContinuation:flags['--maintenance-continuation']?originalJSON(resolve(flags['--maintenance-continuation'])):null,python:flags['--python']??process.env.ROZO_PYTHON??'python3',
+    merchantConfig,accountingAlias:alias,previousFinanceDirectory:flags['--previous-finance-directory']?resolve(flags['--previous-finance-directory']):undefined,maintenanceContinuation:flags['--maintenance-continuation']?originalJSON(resolve(flags['--maintenance-continuation'])):null,python:flags['--python']??process.env.ROZO_PYTHON??'python3',
     chromium:need(flags,'--chromium'),playwrightModule:need(flags,'--playwright-module'),
     onProgress:value=>process.stderr.write(JSON.stringify(value)+'\n')});
 }

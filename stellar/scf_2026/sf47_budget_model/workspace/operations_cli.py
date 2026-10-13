@@ -12,6 +12,7 @@ from model import Problem, MAX_BUNDLE, canonical
 from operations import Operations, MAX_SOURCE
 import operations_commercial_cli as commercial_cli
 import operations_installation_returns_cli as installation_returns_cli
+import operations_company_returns_cli as company_returns_cli
 import operations_ledger_intake as ledger_intake
 import operations_funding_cli as funding_cli
 import award_terms_cli
@@ -53,6 +54,9 @@ def register(subparsers, common):
     target.add_argument("--mode", choices=("OPERATIONS", "WALKTHROUGH"), required=True)
     for name in ("show", "report"):
         command(name, "Read the complete retained " + name, case=True, output=True)
+    target = command("operating-workflows", "Read all six saved operating workflow families from one original case version", output=True)
+    target.add_argument("case", help="Original operations case ID")
+    target.add_argument("--version", type=int, required=True, help="Expected original case version")
     command("task-outcomes", "List saved customer task comparisons and their current editions", case=True, output=True)
     target = command("task-outcomes-seed", "Prepare a new complete customer task comparison input", case=True, output=True)
     target.add_argument("--expected-version", type=int, required=True)
@@ -509,6 +513,7 @@ def register(subparsers, common):
     award_terms_cli.register(command, mutation)
     commercial_cli.register(command)
     installation_returns_cli.register(command, mutation)
+    company_returns_cli.register(command, mutation)
 
 def read_bytes(filename, maximum=MAX_BUNDLE):
     path = Path(filename).expanduser().resolve()
@@ -699,6 +704,8 @@ def operate(workspace, args):
         return funding_cli.operate(ops, args, read_bytes, publish)
     if award_terms_cli.operates(action):
         return award_terms_cli.operate(ops, args, read_bytes, publish)
+    if action.startswith("installation-company-return-"):
+        return company_returns_cli.operate(ops, args, read_bytes, publish)
     if action == "installation-returns" or action.startswith("installation-return-"):
         return installation_returns_cli.operate(ops, args, read_bytes, publish)
     if action.startswith("commercial-"):
@@ -707,6 +714,8 @@ def operate(workspace, args):
         result = {"cases": ops.list(args.plan)}
     elif action in ("show", "report"):
         result = ops.read(args.case) if action == "show" else ops.report(args.case)
+    elif action == "operating-workflows":
+        result = ops.operating_workflows(args.case, args.version)
     elif action == "task-outcomes":
         result = {"comparisons": ops.list_task_outcomes(args.case)}
     elif action == "task-outcomes-seed":

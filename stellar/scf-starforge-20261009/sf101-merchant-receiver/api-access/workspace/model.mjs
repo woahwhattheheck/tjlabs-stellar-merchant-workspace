@@ -46,7 +46,7 @@ function safeCall(value,order){
  return clone(Object.fromEntries(['orderRef','requestId','routeId','method','path','requestSha256','units','status','storedStatus',
   'revision','startedAt','deadlineAt','updatedAt','errorCode','result'].filter(key=>value[key]!==undefined).map(key=>[key,value[key]])));
 }
-function validateState(state,config){
+export function validateState(state,config){
  check(state&&state.schema===STATE_SCHEMA&&UUID.test(state.id??'')&&Number.isSafeInteger(state.revision)&&state.revision>=1&&equal(state.authority,authority(config)),'WORKSPACE_BINDING_CHANGED',409);
  for(const [key,limit]of [['profiles',MAX_PROFILES],['calls',MAX_CALLS],['tasks',MAX_TASKS],['mutations',MAX_TASKS],['history',512]])
   check(Array.isArray(state[key])&&state[key].length<=limit,'INVALID_WORKSPACE_STATE',409);

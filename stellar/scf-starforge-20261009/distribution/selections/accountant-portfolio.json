@@ -95,7 +95,10 @@
     "stellar-forge/mcp-paid-agent/package.json",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/RUNBOOK_PROFILES.md",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/examples/weekly-monthly-runbook.json",
-    "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/PORTFOLIO_GUIDE.md"
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/PORTFOLIO_GUIDE.md",
+    "stellar-forge/mcp-merchant-operator/ACCOUNTING-QBO-WORKSHEETS.md",
+    "stellar-forge/mcp-merchant-operator/accounting-qbo-worksheets-client.d.mts",
+    "stellar-forge/mcp-merchant-operator/examples/qbo-worksheet-client-receiving.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

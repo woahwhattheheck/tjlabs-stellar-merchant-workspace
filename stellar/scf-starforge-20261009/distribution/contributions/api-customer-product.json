@@ -6,10 +6,14 @@
     "products/api-customer"
   ],
   "commands": {
-    "merchant-api-pass": "stellar-forge/mcp-merchant-operator/api-pass-cli.mjs"
+    "merchant-api-pass": "stellar-forge/mcp-merchant-operator/api-pass-cli.mjs",
+    "api-pass-recovery": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/recovery-cli.mjs",
+    "api-pass-recovery-programme": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/recovery-programme.mjs"
   },
   "commandDescriptions": {
-    "merchant-api-pass": "Operate API portfolios and reviewed replacement purchases through the original customer workspace, exact retained agent requests and complete downloads."
+    "merchant-api-pass": "Operate API portfolios and reviewed replacement purchases through the original customer workspace, exact retained agent requests and complete downloads.",
+    "api-pass-recovery": "Create encrypted original customer handovers, verify and restore their complete state, resume retained operations, and explicitly reopen the verified customer.",
+    "api-pass-recovery-programme": "Capture or independently receive an actual original API customer with encrypted files, retained phases and explicit normal customer reopening."
   },
   "exports": {
     "./merchant/mcp/api-pass": "./source/stellar-forge/mcp-merchant-operator/api-pass-workspace.mjs",
@@ -25,6 +29,28 @@
       "types": "./source/stellar-forge/mcp-merchant-operator/api-pass-setup.d.mts",
       "import": "./source/stellar-forge/mcp-merchant-operator/api-pass-setup.mjs"
     },
-    "./merchant/api-pass-workspace/agent-setup": "./source/stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/agent-setup.mjs"
-  }
+    "./merchant/api-pass-workspace/agent-setup": "./source/stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/agent-setup.mjs",
+    "./merchant/api-pass-workspace/recovery": {
+      "types": "./source/stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/recovery-jobs.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/recovery-jobs.mjs"
+    },
+    "./merchant/api-pass-workspace/recovery/operations": {
+      "types": "./source/stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/recovery-cli.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/recovery-cli.mjs"
+    },
+    "./merchant/api-pass-workspace/recovery/server": {
+      "types": "./source/stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/recovery-server.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/recovery-server.mjs"
+    },
+    "./merchant/api-pass-workspace/recovery/programme": {
+      "types": "./source/stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/recovery-programme.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/recovery-programme.mjs"
+    }
+  },
+  "browserAssets": [
+    {
+      "server": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/recovery-server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/recovery-browser-assets.json"
+    }
+  ]
 }
