@@ -213,6 +213,7 @@ export async function runManagedReceiving(input){
   }
   const artifacts=[];
   for(const name of ['Original_Workspace.zip','Received_Workspace.zip','Agent_Original_Workspace.zip']){const path=join(directory,'artifacts',name),raw=await bytes(path,384*1024*1024,{privateOnly:true});const basis=await optional(join(directory,'control',name==='Received_Workspace.zip'?'managed-following-export':'managed-first-export','result.json'));
+   need(raw.length===basis.bytes&&sha(raw)===basis.sha256,'DELIVERY_CHANGED');absolute(basis.path);
    artifacts.push({path,bytes:raw.length,sha256:sha(raw),sourcePath:basis.path});}
   const result={schema:'stellar-forge.property-continuity-managed-result.v1',operationId:input.operationId,inputSha256:digest(input),state:'COMPLETE',applicationId,runtimeId:input.runtimeId,runtimeDirectory:runtime.directory,sourceSha256:SOURCE_SHA256,
    originalInputSha256,nativeResultSha256,received:await optional(join(directory,'control','managed-reopened','result.json')),
