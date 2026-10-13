@@ -1,18 +1,12 @@
 """Private same-owner HTTP and assets for approved World Bank handover intake."""
-from functools import lru_cache
-from pathlib import Path
+from . import _analysis_worldbank_intake_ui
 from .errors import StateError
 from ._analysis_export_http import send_export
 
-ROOT = Path(__file__).resolve().parents[5] / "products" / "worldbank" / "recurring"
-
-
-@lru_cache(maxsize=1)
 def assets():
-    # Installed source distributions retain this product directory unchanged.
-    return {"/worldbank-intake": ((ROOT / "index.html").read_text(encoding="utf-8"), "text/html;charset=utf-8"),
-            "/worldbank-intake.js": ((ROOT / "app.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
-            "/worldbank-intake.css": ((ROOT / "style.css").read_text(encoding="utf-8"), "text/css;charset=utf-8")}
+    return {"/worldbank-intake": (_analysis_worldbank_intake_ui.HTML, "text/html;charset=utf-8"),
+            "/worldbank-intake.js": (_analysis_worldbank_intake_ui.JS, "text/javascript;charset=utf-8"),
+            "/worldbank-intake.css": (_analysis_worldbank_intake_ui.CSS, "text/css;charset=utf-8")}
 
 
 def get(handler, workspace, url, query, parts):

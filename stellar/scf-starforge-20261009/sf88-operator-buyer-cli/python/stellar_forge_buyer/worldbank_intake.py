@@ -310,6 +310,7 @@ class WorldBankIntake:
         value = self._load(intake_id)
         delivery, original = self._retained_original(value)
         # Callers use the original descriptor-based delivery.open()/send_export.
-        return delivery, {"filename": "WorldBank_Approved_Handover.zip",
+        return delivery, {"name": "WorldBank_Approved_Handover.zip",
+                          "filename": "WorldBank_Approved_Handover.zip",
                           "mime": "application/zip", "bytes": original["bytes"],
                           "sha256": original["sha256"]}

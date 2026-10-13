@@ -50,7 +50,7 @@ Private route contract:
 
 IDs are stable 32-character lowercase hexadecimal strings. The browser supplies no executable source path. Source names use the full intake ID; an existing differing registration is preserved and reported.
 
-The handler uses the original host/Origin/X-Analysis-Capability checks, JSON size limit and descriptor-based download. Assets stay under products/worldbank/recurring. Include that whole directory and both additive Python modules in the installed source selection.
+The handler uses the original host/Origin/X-Analysis-Capability checks, JSON size limit and descriptor-based download. The packaged Python _analysis_worldbank_intake_ui module embeds all three exact frontend bodies, following the original Analysis packaging contract. The product directory retains their editable source counterparts. Include all three additive Python modules and the product directory in the installed source selection; generic wheel serving has no checkout-path dependency.
 
 ## Original receiving course
 
