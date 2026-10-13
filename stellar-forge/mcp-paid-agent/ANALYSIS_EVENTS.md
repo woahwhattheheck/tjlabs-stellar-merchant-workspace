@@ -435,3 +435,10 @@ behavior defects in the same source. Source-only execution is separate from
 this actual native/rendered course. Return the exact source edition, original
 workspace/input/programme IDs, complete downloads and real screens to the
 existing receiving owner; preserve the same original operation and deadline.
+
+
+## Complete worksheet choices after a source changes
+
+An event-apply result with WORKBOOK_COLUMN_CHOICES_REQUIRED retains every unresolved worksheet, its complete preceding columns and exact new source. Receive the entire original action record with complete_record before selecting those values. The same Event browser now provides full structured review, source-bound save/reopen and a complete readable export; the portable workbook-columns.mjs and CLI share that exact choice schema.
+
+Follow [Event workbook column continuation](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_WORKBOOK_COLUMNS.md). Its template receives the complete native proposal and actual workspace/programme; its columns command checks the complete original binding and emits all reviewed column arrays for the existing event-apply request. Preserve the original operation_id, review_sha256 and accepted note; retain a new action ID for deliberately changed column input and recover that same action unchanged after an uncertain reply. Original native conversion checks and the full sixteen-file delivery remain authoritative.
