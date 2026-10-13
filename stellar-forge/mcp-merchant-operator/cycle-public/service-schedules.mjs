@@ -9,7 +9,7 @@ const download=(value,name,type='application/json')=>{
 };
 const options=(rows,selected,label,empty='Choose…')=>'<option value="">'+esc(empty)+'</option>'+rows.map(r=>'<option value="'+esc(r.id)+'"'+(r.id===selected?' selected':'')+'>'+esc(label(r))+'</option>').join('');
 export function createServiceSchedulesUi({getState,api,notice,showError,clearError,openReview,openCycle,showPlanner}){
-  const state={catalogue:null,calendar:null,definitionId:null,selected:[],plan:null,requestId:crypto.randomUUID(),pending:null,
+  const state={catalogue:null,calendar:null,definitionId:null,selected:[],plan:null,requestId:crypto.randomUUID(),pending:null,pendingDraft:null,
     busy:false,offset:0,historyOffset:0,history:null,scope:null};
   $('service-schedules-view').innerHTML=
     '<div class="page-heading"><div><h1 id="service-schedules-title">Service calendars</h1><p>Save recurring customer periods, choose their actual source captures and continue through the original closing cycle.</p></div><button id="schedule-refresh" type="button">Refresh calendars and service history</button></div>'+
@@ -44,7 +44,7 @@ export function createServiceSchedulesUi({getState,api,notice,showError,clearErr
   function persist(){
     if(!state.scope)return;
     try{localStorage.setItem(draftKey(),JSON.stringify({definitionId:state.definitionId,form:formDraft(),selected:state.selected,
-      requestId:state.requestId,pending:state.pending,label:$('schedule-cycle-label').value,from:$('schedule-from').value,until:$('schedule-until').value}));}
+      requestId:state.requestId,pending:state.pending,pendingDraft:state.pendingDraft,label:$('schedule-cycle-label').value,from:$('schedule-from').value,until:$('schedule-until').value}));}
     catch{notice('Browser draft storage is full or unavailable. Download the original request or reviewed plan before leaving; saved calendars and preparation history remain in the work directory.');}
   }
   function restore(){
@@ -58,7 +58,7 @@ export function createServiceSchedulesUi({getState,api,notice,showError,clearErr
       state.definitionId=saved.definitionId??null;
       if(Array.isArray(saved.selected)&&saved.selected.length<=2000)state.selected=saved.selected;
       if(/^[a-f0-9-]{36}$/.test(saved.requestId??''))state.requestId=saved.requestId;
-      state.pending=saved.pending??null;
+      state.pending=saved.pending??null;state.pendingDraft=typeof saved.pendingDraft==='string'?saved.pendingDraft:null;
       for(const name of formFields)if(saved.form&&typeof saved.form[name]===(name==='active'?'boolean':'string')){
         if(name==='active')$('schedule-active').checked=saved.form[name];else $('schedule-'+name).value=saved.form[name];
       }
@@ -68,7 +68,7 @@ export function createServiceSchedulesUi({getState,api,notice,showError,clearErr
     }catch{}
   }
   async function run(work){if(state.busy)return;state.busy=true;clearError();buttons();try{await work();}catch(error){showError(error);}finally{state.busy=false;buttons();}}
-  function buttons(){for(const id of ['schedule-save','schedule-refresh','schedule-compile','schedule-prepare','schedule-recover'])$(id).disabled=state.busy;
+  function buttons(){$('service-schedules-view').inert=state.busy;$('service-schedules-view').setAttribute('aria-busy',String(state.busy));for(const id of ['schedule-save','schedule-refresh','schedule-compile','schedule-prepare','schedule-recover'])$(id).disabled=state.busy;
     $('schedule-compile').disabled=state.busy||!state.selected.length;$('schedule-prepare').disabled=state.busy||!state.plan||Boolean(state.pending);}
   function changed(){state.plan=null;$('schedule-plan-panel').hidden=true;if(!state.pending)state.requestId=crypto.randomUUID();persist();buttons();}
   function renderDefinitions(){
@@ -77,8 +77,13 @@ export function createServiceSchedulesUi({getState,api,notice,showError,clearErr
       current.map(d=>'<tr><td>'+esc(d.name)+'<small>'+esc(d.orderRef)+'</small></td><td>Every '+d.interval+' '+esc(d.cadence==='monthly'?'month(s)':'week(s)')+' from '+esc(d.anchor)+'</td><td>'+d.dueDays+' day(s) after close</td><td>'+esc(d.active?'Active':'Paused')+'</td><td><button type="button" data-schedule-edit="'+d.id+'">Edit saved settings</button></td></tr>').join('')+'</tbody></table>':'<p>No service calendars saved. Choose an assigned customer pass to create the first one.</p>';
     $('schedule-definition-history').innerHTML=state.catalogue.definitions.map(d=>'<details><summary>'+esc(d.versions.at(-1).name)+' · '+d.versions.length+' edition(s)</summary><pre>'+esc(JSON.stringify(d.versions,null,2))+'</pre></details>').join('');
     const selected=state.restoredPass??$('schedule-pass').value;state.restoredPass=null;
+    const editing=current.find(definition=>definition.id===state.definitionId);
     const rows=[...state.calendar.inventory.rows];
-    for(const definition of current){const id=definition.bindingId+':'+definition.periodIdentitySha256;if(!rows.some(r=>r.id===id))rows.push({id,customer:{name:definition.name},planLabel:'Original assignment unavailable',pass:{orderRef:definition.orderRef}});}
+    for(const definition of current){const id=definition.bindingId+':'+definition.periodIdentitySha256;
+      const position=rows.findIndex(row=>row.id===id),available=position>=0&&rows[position].customer.id===definition.customerId;
+      if(!available){const unavailable={id,customer:{id:definition.customerId,name:definition.name},planLabel:'Original assignment unavailable — pause or choose a new calendar',pass:{orderRef:definition.orderRef}};
+        if(position<0)rows.push(unavailable);else if(editing?.id===definition.id)rows[position]=unavailable;}}
+
     $('schedule-pass').innerHTML=options(rows,selected,row=>row.customer.name+' · '+row.planLabel+' · '+row.pass.orderRef,'Choose original assigned pass');
   }
   function windowArgs(){return {from:$('schedule-from').value,until:$('schedule-until').value,includePaused:$('schedule-paused').checked,offset:state.offset,limit:25};}
@@ -106,11 +111,11 @@ export function createServiceSchedulesUi({getState,api,notice,showError,clearErr
         '<label><input type="checkbox" data-schedule-choice="'+index+'" data-field="acceptDifferentBoundaries"'+(selected.acceptDifferentBoundaries?' checked':'')+'> I reviewed and choose these actual capture times if they differ from the scheduled dates.</label></article>';
     }).join('')||'<p>Select the scheduled periods to prepare together.</p>';buttons();
   }
-  function resetForm(){state.definitionId=null;$('schedule-form').reset();$('schedule-interval').value='1';$('schedule-due').value='0';$('schedule-active').checked=true;persist();}
+  function resetForm(){state.definitionId=null;if(state.catalogue&&state.calendar)renderDefinitions();$('schedule-form').reset();$('schedule-interval').value='1';$('schedule-due').value='0';$('schedule-active').checked=true;persist();}
   async function save(){
     let row=state.calendar.inventory.rows.find(r=>r.id===$('schedule-pass').value);
     const saved=state.catalogue.current.find(d=>d.id===state.definitionId);
-    if(!row&&saved&&!$('schedule-active').checked&&$('schedule-pass').value===saved.bindingId+':'+saved.periodIdentitySha256)row={customer:{id:saved.customerId},binding:{id:saved.bindingId},periodIdentitySha256:saved.periodIdentitySha256,pass:{orderRef:saved.orderRef}};
+    if(saved&&!$('schedule-active').checked&&$('schedule-pass').value===saved.bindingId+':'+saved.periodIdentitySha256)row={customer:{id:saved.customerId},binding:{id:saved.bindingId},periodIdentitySha256:saved.periodIdentitySha256,pass:{orderRef:saved.orderRef}};
     if(!row)throw Error('Choose a current original customer and pass, or pause this original unavailable assignment.');
     const definition={name:$('schedule-name').value,active:$('schedule-active').checked,customerId:row.customer.id,bindingId:row.binding.id,
       periodIdentitySha256:row.periodIdentitySha256,orderRef:row.pass.orderRef,anchor:$('schedule-anchor').value,cadence:$('schedule-cadence').value,
@@ -128,13 +133,23 @@ export function createServiceSchedulesUi({getState,api,notice,showError,clearErr
     $('schedule-plan-panel').hidden=false;persist();buttons();notice('The complete original service plan is ready to review.');
   }
   function renderPending(){$('schedule-pending').hidden=!state.pending;if(state.pending)$('schedule-pending-text').textContent=state.pending.label+' · original request '+state.pending.requestId;buttons();}
-  async function finishPreparation(result){await openCycle(result.cycle.key);if(state.pending?.requestId===result.preparation.requestId){state.pending=null;state.plan=null;state.selected=[];state.requestId=crypto.randomUUID();persist();renderPending();renderSelected();$('schedule-plan-panel').hidden=true;}notice('The original closing cycle is open for complete customer review and issuing.');}
+  const selectionDraft=()=>JSON.stringify({selected:state.selected,label:$('schedule-cycle-label').value});
+  async function finishPreparation(result){
+    await openCycle(result.cycle.key);
+    if(state.pending?.requestId===result.preparation.requestId){
+      const unchanged=state.pendingDraft!==null&&state.pendingDraft===selectionDraft();
+      state.pending=null;state.pendingDraft=null;state.requestId=crypto.randomUUID();
+      if(unchanged){state.plan=null;state.selected=[];$('schedule-plan-panel').hidden=true;}
+      persist();renderPending();renderSelected();
+    }
+    notice('The original closing cycle is open for complete customer review and issuing.');
+  }
   async function sendPending(){
     try{return await api('/api/service-schedules/prepare',state.pending);}
     catch(error){
       if([400,409].includes(error.status)&&state.pending){
         const checked=await api('/api/service-schedules/request',{requestId:state.pending.requestId}).catch(()=>null);
-        if(checked&&!checked.found){state.pending=null;state.requestId=crypto.randomUUID();persist();renderPending();}
+        if(checked&&!checked.found){state.pending=null;state.pendingDraft=null;state.requestId=crypto.randomUUID();persist();renderPending();}
       }
       throw error;
     }
@@ -143,7 +158,7 @@ export function createServiceSchedulesUi({getState,api,notice,showError,clearErr
     if(state.pending)throw Error('Recover the original preparation first.');
     const label=$('schedule-cycle-label').value.trim();if(!label)throw Error('Name the closing cycle.');
     if(!state.plan)await compile();
-    state.pending={requestId:state.requestId,label,scheduledPlan:state.plan};persist();renderPending();
+    state.pending={requestId:state.requestId,label,scheduledPlan:state.plan};state.pendingDraft=selectionDraft();persist();renderPending();
     await finishPreparation(await sendPending());
   }
   async function recover(requestId=state.pending?.requestId){
@@ -190,7 +205,7 @@ export function createServiceSchedulesUi({getState,api,notice,showError,clearErr
   });
   $('service-schedules-view').addEventListener('click',event=>{
     const button=event.target.closest('button');if(!button)return;const d=button.dataset;
-    if(d.scheduleEdit){const v=state.catalogue.current.find(x=>x.id===d.scheduleEdit);state.definitionId=v.id;
+    if(d.scheduleEdit){const v=state.catalogue.current.find(x=>x.id===d.scheduleEdit);state.definitionId=v.id;renderDefinitions();
       for(const [name,value]of Object.entries({name:v.name,pass:v.bindingId+':'+v.periodIdentitySha256,anchor:v.anchor,cadence:v.cadence,interval:v.interval,due:v.dueDays,end:v.endDate??'',notes:v.notes}))$('schedule-'+name).value=value;
       $('schedule-active').checked=v.active;$('schedule-edit').open=true;persist();$('schedule-name').focus();}
     if(d.scheduleAdd){const period=state.calendar.items.find(p=>p.id===d.scheduleAdd);
@@ -203,5 +218,5 @@ export function createServiceSchedulesUi({getState,api,notice,showError,clearErr
     if(d.schedulePreview!==undefined)run(async()=>openReview(await api('/api/preview',{selection:state.plan.plan.selections[Number(d.schedulePreview)]})));
   });
   window.addEventListener('pagehide',persist);
-  return {async show(){await refresh();}};
+  return {async show(){await run(refresh);}};
 }

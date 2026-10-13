@@ -46,7 +46,7 @@ For a failed settings import, refresh and retry the same complete export. Import
 
 ## Complete export and receiving
 
-**Download complete calendar workspace** includes all saved settings editions and every complete preparation plan, with source hashes and original request/cycle identities. Import it into the same merchant URL and workspace using **Import complete calendar workspace**. The import preserves longer local histories and rejects divergent copies of the same edition.
+**Download complete calendar workspace** includes all saved settings editions and every complete preparation plan, with source hashes and original request/cycle identities. Import it into the same merchant URL and workspace using **Import complete calendar workspace**. The import preserves longer local histories and rejects divergent copies of the same edition. It also checks the combined preparation history before saving: one scheduled period must retain one original request and cycle across both installations. If separately prepared copies conflict, both source exports remain available so the operator can resolve the original cycles before importing.
 
 The calendar export retains planning and handoff history. Receive the original saved cycle folders through the existing closing-cycle handover to continue the actual prepared reviews and statements on another installation. Imported preparation references open their existing original cycle; they do not manufacture a second cycle from an absent received folder.
 

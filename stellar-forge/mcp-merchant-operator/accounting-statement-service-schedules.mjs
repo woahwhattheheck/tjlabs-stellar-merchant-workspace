@@ -100,7 +100,9 @@ function validateCatalogue(value,workspace,endpoint){
   for(const row of value.definitions){
     need(UUID.test(row.id??'')&&!seen.has(row.id)&&Array.isArray(row.versions)&&row.versions.length>0,'Keep every calendar and its complete saved editions.','CATALOGUE');
     seen.add(row.id);
-    row.versions.forEach((version,index)=>{verifyVersion(version);need(version.id===row.id&&version.version===index+1,'Keep consecutive saved calendar editions.','EDITION');});
+    row.versions.forEach((version,index)=>{verifyVersion(version);need(version.id===row.id&&version.version===index+1,'Keep consecutive saved calendar editions.','EDITION');
+      need(['customerId','bindingId','periodIdentitySha256','orderRef'].every(key=>version[key]===row.versions[0][key]),
+        'Keep the original customer assignment and purchased pass throughout this calendar history.','EDITION');});
   }
   return value;
 }
@@ -302,9 +304,18 @@ export async function createAccountingStatementServiceSchedules({directory,url,w
           if(incoming.versions.length>existing.versions.length)existing.versions=copy(incoming.versions);
         }else next.definitions.push(copy(incoming));
       }
+      const originals=new Map((await allPreparations()).map(record=>[record.requestId,record]));
       for(const incoming of bundle.preparations){
-        const old=await optionalJson(requestPath(incoming.requestId));
+        checkScheduledPlan(incoming.scheduledPlan,next);
+        const old=originals.get(incoming.requestId);
         need(!old||old.bodySha256===incoming.bodySha256,'The same preparation identity has a different original plan.','REQUEST_CHANGED');
+        if(!old)originals.set(incoming.requestId,incoming);
+      }
+      const periodOwners=new Map();
+      for(const record of originals.values())for(const target of record.scheduledPlan.targets){
+        const owner=periodOwners.get(target.periodId);
+        need(!owner||owner===record.requestId,'This scheduled period already belongs to another original prepared cycle. Keep both workspaces and resolve that original cycle before importing.','PERIOD_CONFLICT');
+        periodOwners.set(target.periodId,record.requestId);
       }
       next.revision++;lease.assertHeld();await atomicJson(cataloguePath,next);
       for(const incoming of bundle.preparations)if(!await optionalJson(requestPath(incoming.requestId))){
