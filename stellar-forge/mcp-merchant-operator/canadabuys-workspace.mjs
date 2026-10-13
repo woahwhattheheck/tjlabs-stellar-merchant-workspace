@@ -365,10 +365,68 @@ export class MerchantCanadaBuysWorkspaces {
     entry.sellerOpening = opening;
     try { return await opening; } finally { if (entry.sellerOpening === opening) entry.sellerOpening = null; }
   }
+
+  async #intakeInput(entry, input) {
+    const selected = this.#input(entry, input.input);
+    const file = await originalFile(selected.file, { consume: true, maximum: 192 * 1024 * 1024 });
+    if (input.expectedSha256 !== undefined && file.sha256 !== input.expectedSha256)
+      throw failure('CANADABUYS_INPUT_CHANGED', 'The prepared intake differs from its inspected complete SHA256.');
+    const request = parse(file.content);
+    exact(request, ['workspaceId', 'noticeId', 'expectedRevision', 'applyRevision', 'commandId', 'documents'],
+      ['workspaceId', 'noticeId', 'expectedRevision', 'commandId', 'documents']);
+    if (request.workspaceId !== entry.model.metadata().id)
+      throw failure('CANADABUYS_INTAKE_WORKSPACE_CHANGED', 'The prepared intake belongs to another native workspace.');
+    integer(request.expectedRevision, -1);
+    if (request.applyRevision !== undefined) integer(request.applyRevision, -1);
+    if (typeof request.commandId !== 'string' || !request.commandId.trim() || request.commandId.length > 180
+        || /[\x00-\x1f\x7f]/.test(request.commandId))
+      throw failure('INVALID_PARAMS', 'Retain the original nonempty intake commandId.');
+    if (input.commandId !== undefined && request.commandId !== input.commandId)
+      throw failure('CANADABUYS_INTAKE_COMMAND_CHANGED', 'The selected input belongs to another original intake command.');
+    for (const key of ['workspaceId', 'noticeId', 'expectedRevision', 'applyRevision'])
+      if (input[key] !== undefined && input[key] !== request[key])
+        throw failure('CANADABUYS_INTAKE_SELECTION_CHANGED', 'The prepared intake changed its original ' + key + '.');
+    const notice = entry.model.getNotice(request.noticeId);
+    if (!Array.isArray(request.documents) || request.documents.length < 1 || request.documents.length > 100)
+      throw failure('INVALID_PARAMS', 'Select between 1 and 100 original documents.');
+    let totalBytes = 0;
+    const documents = request.documents.map((document, index) => {
+      if (!plain(document) || typeof document.bodyBase64 !== 'string'
+          || document.bodyBase64.length > Math.ceil(64 * 1024 * 1024 / 3) * 4)
+        throw failure('INVALID_PARAMS', 'Each intake document needs its complete original bytes within 64 MiB.');
+      const body = Buffer.from(document.bodyBase64, 'base64'), sha256 = digest(body);
+      if (body.toString('base64') !== document.bodyBase64 || body.length > 64 * 1024 * 1024
+          || document.sha256 !== undefined && document.sha256 !== sha256
+          || document.bytes !== undefined && document.bytes !== body.length)
+        throw failure('CANADABUYS_INTAKE_DOCUMENT_CHANGED', 'The original document bytes or declared identity differ.');
+      totalBytes += body.length;
+      if (totalBytes > 128 * 1024 * 1024)
+        throw failure('CANADABUYS_INTAKE_TOO_LARGE', 'The prepared document set exceeds 128 MiB.');
+      const { bodyBase64, ...metadata } = document;
+      return { index, metadata, bytes: body.length, sha256 };
+    });
+    return { request, inspection: { workspace: entry.alias, native: entry.model.metadata(),
+      input: input.input, file: { name: basename(selected.file), bytes: file.bytes, sha256: file.sha256 },
+      selection: { workspaceId: request.workspaceId, noticeId: notice.id, commandId: request.commandId,
+        expectedRevision: request.expectedRevision, ...(request.applyRevision === undefined ? {} : { applyRevision: request.applyRevision }) },
+      documents, totalBytes, mutation: false } };
+  }
+
   async #execute(entry, name, args) {
     const { workspace, ...input } = args;
     const model = entry.model;
     switch (name) {
+      case 'merchant_canadabuys_bidder_intake_inspect':
+        return (await this.#intakeInput(entry, input)).inspection;
+      case 'merchant_canadabuys_bidder_intake': {
+        const { request } = await this.#intakeInput(entry, input);
+        // The native transaction checks original command history before its save revision.
+        // Preserve expectedRevision/applyRevision and every submitted document exactly.
+        const result = model.bidderDesk.intakeEvidence(request);
+        return { workspace, native: result.workspace, schema: result.schema,
+          commandId: result.commandId, intakeSha256: result.intakeSha256, noticeId: result.noticeId,
+          records: result.records, alreadyApplied: result.alreadyApplied };
+      }
       case 'merchant_canadabuys_bidder_status': {
         const result=model.bidderDesk.status();return { workspace, native:result.workspace, schema:result.schema, counts:result.counts };
       }

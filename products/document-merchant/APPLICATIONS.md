@@ -32,6 +32,8 @@ A direct-account options file has this shape:
 
 Select actual existing account, customer and available listener settings. Choose the real provider and its existing private environment. The anonymous option applies to MintPDF's own account contract; other providers use their configured key. If the customer is selected by its original directory, use `customerDirectory` instead of `customerOptionsFile`.
 
+For a PDFMint merchant that also fulfills ordered PDF bundles, add `assemblyPaymentFile` to this complete options JSON. It selects the full original-account assembly price separately from the per-render price. Review shows both term sets; the same facilitator and managed service own both functions. See [combined rendering and assembly commissioning](COMMISSIONING.md#commission-rendering-and-ordered-pdf-assembly-together).
+
 In Runtime Workspace → **Applications**, choose **Document merchant**:
 
 1. Set **Private document merchant directory** to the commissioning JSON's exact `directory`.

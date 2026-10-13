@@ -156,6 +156,7 @@ function buttons() {
   const working = state.busy || state.composerBusy || state.customerUseBusy;
   composerPanel.setBlocked(state.busy || state.recoveryBusy || state.customerUseBusy || !state.connected);
   customerUsePanel.setBlocked(state.busy || state.recoveryBusy || state.composerBusy || !state.connected);
+  $('open-customer-delivery').disabled=working||state.recoveryBusy||!state.connected;
   $('open-customer-use').disabled=working||state.recoveryBusy||!state.connected;
   $('open-customer-use').hidden=!state.status?.directory;
   $('open-composer').disabled = working || state.recoveryBusy || !state.connected;
@@ -692,6 +693,10 @@ $('export').addEventListener('click', () => task('Saving results export…', asy
   $('export-panel').hidden = false;
   say('Results exported to the saved workspace location.');
 }));
+$('open-customer-delivery').addEventListener('click', () => {
+  if (!state.connected || state.busy || state.composerBusy || state.customerUseBusy || state.recoveryBusy) return;
+  window.open('/customer-delivery#' + encodeURIComponent(state.token), '_blank', 'noopener');
+});
 $('open-recovery').addEventListener('click', () => { showView('recovery'); buttons(); });
 $('open-customer-use').addEventListener('click',()=>{
   if(state.busy||state.composerBusy||state.customerUseBusy||state.recoveryBusy)return;

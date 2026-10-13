@@ -103,6 +103,25 @@ Use the selected account's reviewed contract and exact returned source. The reta
 
 The application keeps vendor access disabled unless the host supplies the original private configuration with enabled contracts and credential environment references. Supply it with `--property-host /private/property/vendor-host.json` or the corresponding Applications field. Credential values belong in the existing host environment. The complete official contract is retained by its source owner; this product guide links that source and preserves account-specific review.
 
+## Complete working editor and request recovery
+
+The Property panel keeps the whole working editor for the original workspace identity: reviewing operator and note, every form field (including unfinished JSON), selected workflow, source selections, all reviewed identity rows and their complete HPD/vendor/property-selection source, and the selected native record. Changing an identity source retains its earlier source-bound editor in the same panel. Open that original identity editor to continue its exact row entries; the existing native revision check identifies an older source selection before saving a new review.
+
+Use **Download complete editor** to carry all those fields together with every original browser request and retained response. **Open complete editor** receives the same JSON, first downloads the preceding editor, verifies the original workspace, then merges immutable request history before replacing visible fields. Existing pending requests keep their original inputs and receipt. Missing selected source IDs remain visible as original selections. The complete private native workspace package and selected customer resource retain their existing export controls.
+
+Each saved local editor has an atomic browser revision. When another window saves first, this window keeps its complete visible work and download. **Open saved local editor** explicitly opens the current saved copy after preserving the preceding editor; opening a downloaded editor likewise checks the current local revision before saving. The original form stays editable during ordinary queued saves. Initialization and complete receiving remain busy until their original state is restored, and a browser storage fault leaves the complete editor download available.
+
+
+### Reconcile a rejected request and continue
+
+A lost response uses **Recover this same request**. The browser reads the original serial operation journal, matches the original action and input SHA-256, and recovers the exact accepted result. A vendor operation already marked `ISSUED` retains its original evidence-recovery path.
+
+After a native input or state rejection, **Return unrecorded request to editor** reads that same journal. The request can return only when the journal reports no operation for its original key and there is no retained accepted receipt. The complete original body, hash, last failure and observed Property ID/revision remain in request history. Correct the entered fields and review current sources before saving the next decision. An `ISSUED` or `DONE` operation continues through original recovery.
+
+Completed and returned requests remain available under **Complete request history**, including their full downloads and **Read original native outcome**. Reopening an editor merges this history by immutable request key and exact input. Conflicting input or accepted responses are rejected before the visible editor changes.
+
+The browser restores Publisher availability when Property recovery or complete-editor receiving finishes. Private listener authentication and host credential configuration are outside the working editor.
+
 ## Operate through the native SDK
 
 ~~~js

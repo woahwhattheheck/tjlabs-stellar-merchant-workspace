@@ -6,16 +6,22 @@
     "products/x402api-merchant-workspace"
   ],
   "commands": {
-    "x402api-merchant": "products/x402api-merchant-workspace/server.mjs"
+    "x402api-merchant": "products/x402api-merchant-workspace/server.mjs",
+    "x402api-merchant-project": "products/x402api-merchant-workspace/portable.mjs"
   },
   "commandDescriptions": {
-    "x402api-merchant": "Operate invoices and retained paid files; export, inspect and restore complete merchant workspaces"
+    "x402api-merchant": "Operate invoices and retained paid files; export, inspect and restore complete merchant workspaces",
+    "x402api-merchant-project": "Export, inspect and receive the complete original merchant project"
   },
   "exports": {
     "./merchant/x402api": "./source/products/x402api-merchant-workspace/workspace.mjs",
     "./merchant/x402api/server": "./source/products/x402api-merchant-workspace/server.mjs",
     "./merchant/x402api/protocol": "./source/products/x402api-merchant-workspace/protocol.mjs",
-    "./merchant/x402api/portable": "./source/products/x402api-merchant-workspace/portable.mjs"
+    "./merchant/x402api/project": "./source/products/x402api-merchant-workspace/portable.mjs",
+    "./merchant/x402api/portable": "./source/products/x402api-merchant-workspace/portable.mjs",
+    "./merchant/x402api/observation": "./source/products/x402api-merchant-workspace/observation.mjs",
+    "./merchant/x402api/incident-source": "./source/stellar/scf-starforge-20261009/sf93-seller-support-bundle/x402-source.mjs",
+    "./merchant/x402api/incident-capture": "./source/stellar/scf-starforge-20261009/sf93-seller-support-bundle/x402-observation.mjs"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf31-buyer-client/response-file.mjs",
@@ -23,12 +29,17 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/result.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/store.mjs",
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/source_bundle_archive.py",
+    "stellar/scf-starforge-20261009/distribution/runtime-unpack.py",
     "stellar/scf-starforge-20261009/distribution/contributions/x402api-merchant.json",
     "stellar/scf-starforge-20261009/distribution/runtime-profile.mjs",
     "stellar/scf-starforge-20261009/distribution/specification.mjs",
     "stellar/scf-starforge-20261009/distribution/product-package.mjs",
     "stellar/scf-starforge-20261009/distribution/source-selection.mjs",
-    "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-provider.mjs"
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-provider.mjs",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/x402-desk.mjs",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/x402-render.mjs",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/X402_MERCHANT_SUPPORT.md"
   ],
   "excludeFiles": [
     "products/x402api-merchant-workspace/installed-receiving.mjs"

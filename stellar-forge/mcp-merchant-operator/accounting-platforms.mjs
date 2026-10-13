@@ -3,6 +3,7 @@ export { platformFileNames, platformDefinitions } from './catalog/accounting-pla
 // MIT. Customer operations over the original QuickBooks and Xero accountant controllers.
 import { createHash } from 'node:crypto';
 import { MerchantSourceChanges } from './accounting-source-changes.mjs';
+import { MerchantQboWorksheets } from './accounting-qbo-worksheets.mjs';
 import { resolve } from 'node:path';
 import { openMerchantQuickBooksConnection } from './accounting-quickbooks-oauth.mjs';
 import { XeroWorkspace } from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/xero-workspace.mjs';
@@ -264,6 +265,7 @@ export class MerchantPlatforms {
     this.definition = definition;
     this.oauthRuntime = { ...quickbooksOAuth, environment };
     this.sourceChanges = null;
+    this.worksheets = null;
     this.qboOAuth = null; this.opening = null; this.closing = null; this.disposal = null; this.closed = false;
     this.xero = new XeroWorkspace(workspace, accountant, { client: new XeroHttpClient({ tokenEnv: definition.xero?.tokenEnv ?? XERO_ACCESS_TOKEN_ENV }) });
   }
@@ -278,6 +280,8 @@ export class MerchantPlatforms {
         await this.qbo.recover(); await this.xero.init();
         this.sourceChanges = new MerchantSourceChanges(this.workspace, { qbo: this.qbo, xero: this.xero,
           readInput: args => this.input(args) });
+        this.worksheets = new MerchantQboWorksheets({ qbo: this.qbo,
+          readInput: (...args) => this.input(...args), formatPlan: planView, formatResult: qboResult });
       } catch (error) { await this.dispose().catch(() => {}); throw error; }
     })();
     return this.opening;
@@ -485,6 +489,7 @@ export class MerchantPlatforms {
   }
 
   async file(args) {
+    if (args.kind === 'qbo-worksheet') return this.worksheets.file(args);
     if (['qbo-source-change', 'xero-source-change'].includes(args.kind)) return this.sourceChanges.file(args);
     if (args.kind === 'xero') {
       if (!args.planId || typeof args.file !== 'string' || args.file.length > 100 ||
@@ -506,6 +511,7 @@ export class MerchantPlatforms {
     return this.qbo.file(args.planId, args.file, args.responseId);
   }
   async call(operation, args) {
+    if (operation.startsWith('merchant_accounting_qbo_worksheet_')) return this.worksheets.call(operation, args);
     if (operation.includes('_source_change_')) return this.sourceChanges.call(operation, args);
     if (operation.startsWith('merchant_accounting_xero_')) return this.xeroCall(operation, args);
     switch (operation) {

@@ -21,6 +21,12 @@
           "bytes": 17538,
           "sha256": "52f910d47c34ec34edfaeeac3eee9ace6ce21c2794e7896d26c5d97f95d0bfe2",
           "git_blob": "dafb7b6422517b1d748f0ad846430ce84ca71fc1"
+        },
+        {
+          "commit": "a514c7f22b8c4fc969f72a6d47e8228bc876c3c6",
+          "bytes": 17965,
+          "sha256": "3c4d643dfc1f6ce88122359af5440adc995d36b4fc9a87251b34e36f66253a9e",
+          "git_blob": "ee22c98736e3049116325b88fabd000b0c51093c"
         }
       ]
     },
@@ -135,6 +141,12 @@
           "bytes": 25979,
           "sha256": "c432159ea6f91b07cc6d42fd67744ac9ec83c45828619c5a233427286441d4a7",
           "git_blob": "c1b1a522a15aaf7e2b8aa496e073aab0301945f5"
+        },
+        {
+          "commit": "a514c7f22b8c4fc969f72a6d47e8228bc876c3c6",
+          "bytes": 26361,
+          "sha256": "64009ad39a20cd7caf83c68621b895a7365d4ef7841771ba5f815d76c5eaccd3",
+          "git_blob": "6ca481898dbc04526455c1cae26c1d7263a56ba3"
         }
       ]
     },
@@ -179,6 +191,12 @@
           "bytes": 20925,
           "sha256": "4a9076a02cba3891233b6929169287cdc29e2e0473c045a3061803f8d7d26337",
           "git_blob": "169b1f631d9e7cf9b1eae1cbe04811a0a1189a22"
+        },
+        {
+          "commit": "a514c7f22b8c4fc969f72a6d47e8228bc876c3c6",
+          "bytes": 25385,
+          "sha256": "491348525d558494983ebc4b008ab4b6ee61fb89d4e809d3b659be22dfb190ee",
+          "git_blob": "e1197ac986b2c1ec91e8bfd9885fa1c553bed4ff"
         }
       ]
     },
@@ -207,6 +225,12 @@
           "bytes": 20390,
           "sha256": "95241d197b47582a0c05758f1508bf39f5e1603fa21f0854f4a88e070dd081b8",
           "git_blob": "16080fb22f5952fc20e680dd38b3988e27fca398"
+        },
+        {
+          "commit": "a514c7f22b8c4fc969f72a6d47e8228bc876c3c6",
+          "bytes": 22084,
+          "sha256": "0dcca6f069ed5224861e7f6e52dacfe533049d2816e3a9b31bfa1434b084e3f5",
+          "git_blob": "0afa7f76ff22ce0beab5fc9e771221abe230c100"
         }
       ]
     },
@@ -239,6 +263,22 @@
           "bytes": 17691,
           "sha256": "c94a670e76c9d8fe8036a02e48468c96a985f4ca495be17b08e5e154f0c151de",
           "git_blob": "4b3931312eb9a5f9203696e89a44032692361cf4"
+        }
+      ]
+    },
+    {
+      "id": "document-merchant-native-facilitator",
+      "label": "One original facilitator lifetime for the exact selected rendering and assembly payments",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/document-merchant/commissioning-facilitator.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "a514c7f22b8c4fc969f72a6d47e8228bc876c3c6",
+          "bytes": 3966,
+          "sha256": "415b9b985a939233bfc750d4c0ab205b446d8c1959399f7b0c6f404e4037bac5",
+          "git_blob": "14862983a72d58e7967a82632323ef2428cfa984"
         }
       ]
     }

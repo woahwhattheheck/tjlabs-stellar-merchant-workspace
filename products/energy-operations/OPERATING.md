@@ -106,3 +106,7 @@ GridFabric's native receiver uses the same complete manifest path and its existi
 Retain the original build archive and receipt, the product's completed operation report, its complete portable workspace and customer delivery archive. Continue transfers from their recorded results. Reopening uses the original product's restore and receiving commands, preserving source editions, corrections, reviewed mappings, request history and received files.
 
 The detailed package guides are [Utility](../../stellar/scf-starforge-20261009/distribution/selections/UTILITY_ENERGY.md), [Leap](../../stellar/scf-starforge-20261009/distribution/selections/LEAP_INTERVALS.md) and [GridFabric](../../stellar/scf-starforge-20261009/distribution/selections/GRIDFABRIC_PLAID.md).
+
+## Customer Operating Plans
+
+The GridFabric selection includes Command finder and the customer procedure workflow. Run `starforge gridfabric-procedure --help` to prepare a nine-step operating plan, capture complete selected records and files from the running authenticated GridFabric workspace, and reopen the complete customer history. The [procedure guide](../../stellar/scf-starforge-20261009/distribution/discovery/GRIDFABRIC_PROCEDURES.md) covers configuration, sources, mappings, callbacks, event decisions, dispatch outcomes, reports and delivery. Import the returned plan JSON into **Command finder → Operating Plans**, then continue and return revisions through that existing workspace.

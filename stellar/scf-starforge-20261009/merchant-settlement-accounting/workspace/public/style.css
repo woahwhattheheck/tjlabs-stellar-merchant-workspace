@@ -169,8 +169,9 @@ body.working {cursor:progress}
   #recovery-preview-detail .record-values {grid-template-columns:1fr;gap:4px}
   #recovery-preview-detail .record-values dd {margin-bottom:8px}
   .recovery-progress {margin:15px}
-  .topbar {height:49px;padding:0 18px}
-  .topbar strong {font-size:10px}
+  .topbar {height:auto;min-height:49px;padding:12px 18px;flex-wrap:wrap;gap:8px 14px}
+  .topbar strong {font-size:10px;flex:1 0 100%}
+  .topbar>a {font-size:11px}
   .topbar>span {display:none}
   .layout {display:block}
   .sidebar {padding:16px 18px;border-right:0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 12px}

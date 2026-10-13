@@ -1,228 +1,301 @@
-// MIT. Receive the original completed five-invoice merchant through a whole handover.
+// MIT License. Continue the original installed five-invoice journey through complete project handover.
 import assert from 'node:assert/strict';
-import { DatabaseSync } from 'node:sqlite';
-import { createHash, randomBytes } from 'node:crypto';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
-import { pathToFileURL, fileURLToPath } from 'node:url';
-import { parseArgs } from 'node:util';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-import { exportMerchant, inspectMerchantArchive, restoreMerchant, startMerchantArchiveServer, databaseIdentity } from './portable.mjs';
-import { operationLease } from '../../stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs';
+import { createHash } from 'node:crypto';
+import { constants } from 'node:fs';
+import { open, readFile, link, unlink } from 'node:fs/promises';
+import { join, dirname } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-async function checkArchiveAuthority(archive) {
-  const { request } = await import('node:http');
-  const address = new URL(archive.url);
-  async function read(method, path, authority) {
-    return new Promise((accept, reject) => {
-      const outgoing = request(new URL(path, address), { method, headers: { Host: authority } }, response => {
-        const parts = [];
-        response.on('data', bytes => parts.push(bytes));
-        response.once('error', reject);
-        response.once('end', () => accept({ status: response.statusCode, headers: response.headers, body: Buffer.concat(parts) }));
-      });
-      outgoing.once('error', reject);
-      outgoing.setTimeout(5000, () => outgoing.destroy(new Error('ARCHIVE_AUTHORITY_CHECK_TIMEOUT')));
-      outgoing.end();
-    });
-  }
-  const valid = await read('HEAD', '/MANIFEST.json', address.host);
-  if (valid.status !== 200 || valid.body.length !== 0 || !valid.headers['x-content-sha256'] ||
-    valid.headers['cross-origin-resource-policy'] !== 'same-origin')
-    throw new Error('ARCHIVE_LOCAL_AUTHORITY_CHECK_FAILED');
-  const foreign = await read('GET', '/workspace/merchant.sqlite3', 'merchant-review.invalid:' + address.port);
-  let error = null;
-  try { error = JSON.parse(foreign.body.toString('utf8')).error; } catch {}
-  if (foreign.status !== 421 || error !== 'MERCHANT_ARCHIVE_AUTHORITY_NOT_ALLOWED' ||
-    foreign.headers['x-content-sha256'] !== undefined ||
-    foreign.headers['cross-origin-resource-policy'] !== 'same-origin')
-    throw new Error('ARCHIVE_FOREIGN_AUTHORITY_WAS_ACCEPTED');
-  return { validHost: address.host, validStatus: valid.status, foreignStatus: foreign.status,
-    refusedPath: 'workspace/merchant.sqlite3', foreignResponseBytes: foreign.body.length,
-    crossOriginResourcePolicy: valid.headers['cross-origin-resource-policy'] };
+const REQUEST = 'stellar-forge.merchant-portable-request.v1';
+const RESULT = 'stellar-forge.merchant-portable-result.v1';
+const sha = value => createHash('sha256').update(value).digest('hex');
+const readJSON = async path => { try { return JSON.parse(await readFile(path, 'utf8')); } catch (error) { if (error.code === 'ENOENT') return null; throw error; } };
+const pin = record => ({ bytes: Number(record.bytes), sha256: record.sha256 });
+const invoiceIdentity = reads => reads.invoices.map(invoice => ({
+  merchantOrderId: invoice.merchantOrderId, paymentId: invoice.paymentId,
+  reference: invoice.reference, title: invoice.title, bytes: invoice.bytes, sha256: invoice.sha256,
+  historySha256: invoice.historySha256, envelopeSha256: invoice.envelope?.sha256,
+})).sort((left, right) => left.merchantOrderId.localeCompare(right.merchantOrderId));
+
+async function settleDownload(download, path, expected, { directory, originalFile }) {
+  await directory(dirname(path));
+  const temporary = path + '.browser-download';
+  await download.saveAs(temporary);
+  assert.equal(await download.failure(), null);
+  const selected = await originalFile(temporary, expected);
+  const handle = await open(temporary, constants.O_RDONLY | constants.O_NOFOLLOW);
+  try { await handle.sync(); } finally { await handle.close(); }
+  try { await link(temporary, path); }
+  catch (error) { if (error.code !== 'EEXIST') throw error; await originalFile(path, expected); }
+  const parent = await open(dirname(path), constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
+  try { await parent.sync(); await unlink(temporary); await parent.sync(); } finally { await parent.close(); }
+  return { ...selected, path };
 }
 
-const execute=promisify(execFile),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-const {values}=parseArgs({options:{case:{type:'string'},directory:{type:'string'},'original-root':{type:'string',default:'/dev/x402api-merchant-7de2-20261012'},
-  chromium:{type:'string'},'playwright-module':{type:'string'}}});
-for(const name of ['case','directory','chromium','playwright-module'])assert.ok(values[name],name+' is required');
-const original=resolve(values.case),root=resolve(values.directory),workspace=join(original,'receiving/workspace');
-const originalConfig=join(original,'receiving/customer/merchant.configuration.json');
-await mkdir(root,{recursive:true,mode:0o700});await mkdir(join(root,'qa'),{recursive:true,mode:0o700});await mkdir(join(root,'downloads'),{recursive:true,mode:0o700});
-const events=[];
-async function record(phase,details={}){const event={phase,at:new Date().toISOString(),...details};events.push(event);await writeFile(join(root,'progress.json'),JSON.stringify(events,null,2)+'\n',{mode:0o600});process.stdout.write(JSON.stringify(event)+'\n');}
-function directRows(path,relocations=[]) {
-  const database=new DatabaseSync(path,{readOnly:true});
+/** The browser selects and downloads its own original retained export. */
+export async function exportProjectFromBrowser({ page, opening, scenario, root, identity, get,
+  save, directory, originalFile, capture, stopped, retainCompleted }) {
+  const initial = (await get(opening.url, scenario.operatorToken, '/api/project')).json();
+  assert.equal(initial.available, true);
+  const operation = identity('portable-browser-export'), selectionPath = join(root, 'portable/export-selection.json');
+  const selected = { operation, storeId: initial.storeId, sourceSha256: initial.sourceSha256 };
+  await save(selectionPath, selected, { original: true });
+  let record = initial.exports.find(value => value.operation === operation);
+  if (record?.state !== 'COMPLETE') {
+    await page.evaluate(({ storeId, operation }) => {
+      sessionStorage.setItem('merchant.pending-project-export.v1.' + storeId, operation);
+    }, selected);
+    const acknowledgement = page.waitForResponse(response => new URL(response.url()).origin === new URL(opening.url).origin &&
+      new URL(response.url()).pathname === '/api/project/exports' && response.request().method() === 'POST', { timeout: 30000 });
+    await page.locator('#export-project').click();
+    const accepted = await acknowledgement;
+    assert([200, 202].includes(accepted.status()), 'Receive the actual original export request response.');
+    record = await accepted.json(); assert.equal(record.operation, operation);
+    for (;;) {
+      stopped();
+      record = (await get(opening.url, scenario.operatorToken, '/api/project/exports/' + operation)).json();
+      if (record.state === 'COMPLETE') break;
+      assert.equal(record.state, 'PREPARING', 'Continue the original export after its actual native error: ' + (record.error ?? record.state));
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+  assert.equal(record.storeId, selected.storeId);
+  assert.equal(record.snapshot.tableCounts.merchant_orders, '5');
+  assert.equal(record.source.sha256, selected.sourceSha256);
+  await page.locator('#refresh').click();
+  const row = page.locator('#project-export-rows tr').filter({ hasText: operation });
+  await row.getByRole('button', { name: 'Download project', exact: true }).waitFor({ state: 'visible' });
+  await page.locator('#project-panel').evaluate(element => element.scrollIntoView({ block: 'start' }));
+  await capture('merchant-portable-export.png');
+  const downloadEvent = page.waitForEvent('download', { timeout: 30000 });
+  await row.getByRole('button', { name: 'Download project', exact: true }).click();
+  const download = await downloadEvent;
+  assert.equal(download.suggestedFilename(), 'merchant-project-' + operation + '.zip');
+  const archive = await settleDownload(download, join(root, 'downloads/portable/merchant-project-' + operation + '.zip'),
+    pin(record.archive), { directory, originalFile });
+
+  const manifest = (await get(opening.url, scenario.operatorToken,
+    '/api/project/exports/' + operation + '/manifest')).json();
+  const manifestEvent = page.waitForEvent('download', { timeout: 30000 });
+  await row.getByRole('button', { name: 'Contents', exact: true }).click();
+  const manifestDownload = await manifestEvent;
+  const manifestPath = join(root, 'downloads/portable/merchant-project-' + operation + '-contents.json');
+  await directory(dirname(manifestPath)); await manifestDownload.saveAs(manifestPath);
+  assert.equal(await manifestDownload.failure(), null);
+  const bytes = await readFile(manifestPath);
+  assert.deepEqual(JSON.parse(bytes), manifest);
+  const manifestFile = await originalFile(manifestPath, { bytes: bytes.length, sha256: sha(bytes) });
+  assert.equal(manifest.schema, 'stellar-forge.merchant-portable-project.v1');
+  assert.equal(manifest.original.storeId, selected.storeId);
+  assert.equal(manifest.source.sha256, selected.sourceSha256);
+  const result = { operation, storeId: selected.storeId, record, archive, manifestFile, manifest };
+  await retainCompleted('portable-original-browser-export', () =>
+    save(join(root, 'portable/export-complete.json'), result, { original: true }));
+  return result;
+}
+
+/** Every external command keeps one selected request and the native programme's
+ * existing close/output retention. The original receive UUID is reused on retry.
+ */
+export async function receivePortableProject({ root, sourceRoot, scenario, completed, exported, firstReads,
+  identity, get, save, directory, originalFile, databaseSnapshot, receiveReads, receiveBrowser,
+  runCommand, stopped, retainCompleted }) {
+  const resultPath = join(root, 'portable/complete.json'), previous = await readJSON(resultPath);
+  if (previous) { await verifyPortableReceiving(previous, { originalFile }); return previous; }
+  await originalFile(exported.archive.path, exported.archive);
+  await originalFile(exported.manifestFile.path, exported.manifestFile);
+  const sourceCLI = join(sourceRoot, 'products/x402api-merchant-workspace/portable.mjs');
+  async function native(label, action, fields, cli = sourceCLI) {
+    stopped();
+    const request = { schema: REQUEST, action, operation: identity(label), ...fields };
+    const requestPath = join(root, 'portable/requests/' + label + '.json');
+    await save(requestPath, request, { original: true });
+    const command = { executable: process.execPath, args: ['--max-old-space-size=256', cli, action, '--request', requestPath], cwd: root };
+    const ended = await runCommand(label, command);
+    const value = JSON.parse(ended.stdout);
+    assert.equal(value.schema, RESULT); assert.equal(value.state, 'COMPLETE');
+    assert.equal(value.action, action); assert.equal(value.operation, request.operation);
+    await retainCompleted(label + '-original-native-result', () =>
+      save(join(root, 'portable/native/' + label + '.json'), value, { original: true }));
+    return value;
+  }
+  const archiveSelection = { archive: exported.archive.path, archiveSha256: exported.archive.sha256 };
+  const inspected = await native('portable-inspect', 'inspect', archiveSelection);
+  assert.deepEqual(inspected.manifest, exported.manifest);
+  const receiving = await native('portable-receive', 'receive',
+    { ...archiveSelection, destination: join(root, 'portable/received') });
+  assert.equal(receiving.received.storeId, exported.storeId);
+  assert.equal(receiving.manifest.snapshot.allRowsSha256, inspected.manifest.snapshot.allRowsSha256);
+  assert.equal(receiving.received.originalRowsSha256, inspected.manifest.snapshot.allRowsSha256);
+  const received = receiving.received, database = join(received.workspaceDirectory, 'merchant.sqlite3');
+  const baselinePath = join(root, 'portable/snapshots/received.private.json');
+  const baseline = await readJSON(baselinePath) ?? databaseSnapshot(database);
+  await save(baselinePath, baseline, { original: true });
+  const serverModule = await import(pathToFileURL(join(received.sourceDirectory, 'products/x402api-merchant-workspace/server.mjs')));
+  const workspaceModule = await import(pathToFileURL(join(received.sourceDirectory, 'products/x402api-merchant-workspace/workspace.mjs')));
+  const projectModule = await import(pathToFileURL(join(received.sourceDirectory, 'products/x402api-merchant-workspace/portable.mjs')));
+  const reviewToken = sha(identity('portable-review-token'));
+  // Only the review operator reference is supplied for the received read-only
+  // application. The actual original tenant and webhook environment are absent.
+  const reviewConfiguration = await serverModule.loadMerchantReviewConfiguration(received.reviewConfigPath,
+    { allowLoopback: true, env: { MERCHANT_REVIEW_OPERATOR_TOKEN: reviewToken } });
+  const reviewScenario = { ...scenario, operatorToken: reviewToken };
+  let currentHost = null;
+  async function openReview(label, visual) {
+    stopped();
+    const savedPath = join(root, 'portable/' + label + '.json'), previous = await readJSON(savedPath);
+    if (previous) return previous;
+    const workspace = await workspaceModule.openMerchantReview({ directory: received.workspaceDirectory,
+      ...reviewConfiguration, allowLoopback: true });
+    let reviewed;
+    try {
+      currentHost = await serverModule.startMerchantServer({ workspace, operatorToken: reviewToken, port: 0 });
+      const opening = { url: currentHost.url, operationId: identity(label) };
+      const reads = await receiveReads(opening, reviewScenario, completed, label);
+      assert.equal(reads.mode, 'review');
+      assert.deepEqual(invoiceIdentity(reads), invoiceIdentity(firstReads));
+      const browser = visual ? await receiveBrowser(opening, reviewScenario, reads,
+        { label, review: true, exportProject: false }) : null;
+      reviewed = { reads, browser };
+    } finally {
+      if (currentHost) { await currentHost.close(); currentHost = null; }
+      else await workspace.close();
+    }
+    reviewed.allUserRowsSha256 = databaseSnapshot(database).allUserRowsSha256;
+    assert.equal(reviewed.allUserRowsSha256, baseline.allUserRowsSha256);
+    await retainCompleted(label + '-original-review', () => save(savedPath, reviewed, { original: true }));
+    return reviewed;
+  }
+  const review = await openReview('portable-review', true);
+  assert.equal(review.allUserRowsSha256, baseline.allUserRowsSha256);
+  const reopened = await openReview('portable-review-reopened', false);
+  assert.equal(reopened.allUserRowsSha256, baseline.allUserRowsSha256);
+
+  const env = { MERCHANT_LOCAL_TENANT: scenario.credential, MERCHANT_LOCAL_OPERATOR: scenario.operatorToken,
+    MERCHANT_LOCAL_WEBHOOK: scenario.webhookSecretsByVersion['1'] };
+  const inputModule = await import(pathToFileURL(join(received.sourceDirectory, 'products/x402api-merchant-workspace/application-inputs.mjs')));
+  const activationInputs = await inputModule.reviewMerchantInputs(received.activationConfigPath,
+    { allowLoopback: true, validateConfig: workspaceModule.validateConfig });
+  const activation = await serverModule.loadMerchantConfiguration(received.activationConfigPath,
+    { allowLoopback: true, env, expectedInputsSha256: activationInputs.inputsSha256 });
+  if (typeof activation.fulfillment.doctor === 'function')
+    await activation.fulfillment.doctor({ binding: activation.config.fulfillmentBinding });
+  const selectedSource = await projectModule.resolveMerchantProjectSource();
+  assert.equal(selectedSource.sourceArchive, received.sourceArchive);
+  assert.equal(selectedSource.sourceSha256, received.sourceSha256);
+  const activationPath = join(root, 'portable/activation.json');
+  let activated = await readJSON(activationPath), afterActivation;
+  if (!activated) {
+    const workspace = await workspaceModule.openMerchantWorkspace({ ...activation,
+      directory: received.workspaceDirectory, allowLoopback: true });
+    let project = null;
+    try {
+    project = await projectModule.createMerchantProject({ workspace, configurationFile: received.activationConfigPath,
+      ...selectedSource, outputDirectory: received.workspaceDirectory + '-exports', reviewedInputs: activation.reviewedInputs,
+      allowLoopback: true });
+    currentHost = await serverModule.startMerchantServer({ workspace, operatorToken: scenario.operatorToken, port: 0, project });
+    const opening = { url: currentHost.url, operationId: identity('portable-activated') };
+    const activatedReads = await receiveReads(opening, scenario, completed, 'portable-activated');
+    assert.equal(activatedReads.mode, 'live');
+    assert.deepEqual(invoiceIdentity(activatedReads), invoiceIdentity(firstReads));
+    const available = (await get(currentHost.url, scenario.operatorToken, '/api/project')).json();
+    assert.equal(available.available, true); assert.equal(available.storeId, exported.storeId);
+    assert.equal(available.sourceSha256, received.sourceSha256);
+    activated = { reads: activatedReads, project: available };
+  } finally {
+    if (currentHost) { await currentHost.close(); currentHost = null; }
+    else { if (project) await project.close(); await workspace.close(); }
+  }
+    afterActivation = databaseSnapshot(database);
+    assert.equal(afterActivation.businessSha256, baseline.businessSha256);
+    assert.notEqual(afterActivation.allUserRowsSha256, baseline.allUserRowsSha256);
+    activated.afterBusinessSha256 = afterActivation.businessSha256;
+    activated.allUserRowsSha256 = afterActivation.allUserRowsSha256;
+    activated.snapshot = afterActivation;
+    // Publish the full completed activation before its derived snapshot file.
+    // A resumed programme can recover both from this one retained return.
+    await retainCompleted('portable-original-activation', () => save(activationPath, activated, { original: true }));
+  } else {
+    afterActivation = databaseSnapshot(database);
+    assert.equal(afterActivation.businessSha256, activated.afterBusinessSha256);
+    assert.equal(afterActivation.allUserRowsSha256, activated.allUserRowsSha256);
+  }
+  assert.equal(activated.snapshot.allUserRowsSha256, activated.allUserRowsSha256);
+  await retainCompleted('portable-original-activation-snapshot', () =>
+    save(join(root, 'portable/snapshots/activated.private.json'), activated.snapshot, { original: true }));
+  // This is the same original receiving operation, after its actual application
+  // has added runtime history. It must preserve that used runtime in place.
+  const repeatRequest = { schema: REQUEST, action: 'receive', operation: receiving.operation,
+    ...archiveSelection, destination: join(root, 'portable/received') };
+  const repeatPath = join(root, 'portable/requests/portable-repeat-receive.json');
+  await save(repeatPath, repeatRequest, { original: true });
+  const repeatedCommand = await runCommand('portable-repeat-receive', { executable: process.execPath,
+    args: ['--max-old-space-size=256', sourceCLI, 'receive', '--request', repeatPath], cwd: root });
+  const repeated = JSON.parse(repeatedCommand.stdout);
+  assert.equal(repeated.state, 'COMPLETE'); assert.equal(repeated.operation, receiving.operation); assert.equal(repeated.reused, true);
+  assert.equal(databaseSnapshot(database).allUserRowsSha256, afterActivation.allUserRowsSha256);
+  await retainCompleted('portable-original-repeat-receive', () =>
+    save(join(root, 'portable/native/portable-repeat-receive.json'), repeated, { original: true }));
+
+  // The receiving operator can carry this complete project onward. Use the
+  // restored source, relocated built-in inputs and stopped original workspace.
+  const onward = await native('portable-onward-export', 'export', {
+    directory: received.workspaceDirectory, config: received.activationConfigPath,
+    sourceArchive: received.sourceArchive, sourceSha256: received.sourceSha256,
+    expectedStoreId: exported.storeId, outputDirectory: join(root, 'portable/onward-exports'),
+    inputFiles: activation.reviewedInputs.inputs.files.map(file => ({
+      path: file.path, bytes: String(file.bytes), sha256: file.sha256, role: 'declared-input',
+    })),
+  }, join(received.sourceDirectory, 'products/x402api-merchant-workspace/portable.mjs'));
+  const onwardFile = await originalFile(onward.archive.path, pin(onward.archive));
+  const onwardInspection = await native('portable-onward-inspect', 'inspect',
+    { archive: onwardFile.path, archiveSha256: onwardFile.sha256 });
+  const onwardReceiving = await native('portable-onward-receive', 'receive', {
+    archive: onwardFile.path, archiveSha256: onwardFile.sha256, destination: join(root, 'portable/onward-received'),
+  });
+  const second = onwardReceiving.received;
+  assert.equal(second.storeId, exported.storeId);
+  const secondServer = await import(pathToFileURL(join(second.sourceDirectory, 'products/x402api-merchant-workspace/server.mjs')));
+  const secondWorkspace = await import(pathToFileURL(join(second.sourceDirectory, 'products/x402api-merchant-workspace/workspace.mjs')));
+  const secondConfig = await secondServer.loadMerchantReviewConfiguration(second.reviewConfigPath,
+    { allowLoopback: true, env: { MERCHANT_REVIEW_OPERATOR_TOKEN: reviewToken } });
+  const secondStore = await secondWorkspace.openMerchantReview({ ...secondConfig, directory: second.workspaceDirectory, allowLoopback: true });
+  let secondHost = null, onwardReads;
   try {
-    const tables=database.prepare("SELECT name FROM sqlite_schema WHERE type='table' ORDER BY name").all();
-    const output={};
-    for(const {name}of tables){
-      const rows=database.prepare('SELECT * FROM "'+name.replaceAll('"','""')+'" ORDER BY rowid').all();
-      output[name]=rows.map(row=>Object.fromEntries(Object.entries(row).map(([key,raw])=>{
-        let value=raw;
-        if((name==='merchant_orders'&&key==='data_json')||(name==='merchant_fulfillments'&&key==='result_file_json')){
-          if(value!==null){
-            const parsed=JSON.parse(value),selected=name==='merchant_orders'?parsed.result:parsed;
-            if(selected?.path){const relocation=relocations.find(item=>item.to===selected.path);if(relocation)selected.path=relocation.from;}
-            value=JSON.stringify(parsed);
-          }
-        }
-        if(value instanceof Uint8Array)value={base64:Buffer.from(value).toString('base64')};
-        return[key,value];
-      })));
-    }
-    return output;
-  } finally{database.close();}
+    secondHost = await secondServer.startMerchantServer({ workspace: secondStore, operatorToken: reviewToken, port: 0 });
+    onwardReads = await receiveReads({ url: secondHost.url, operationId: identity('portable-onward-review') },
+      reviewScenario, completed, 'portable-onward-review');
+    assert.deepEqual(invoiceIdentity(onwardReads), invoiceIdentity(firstReads));
+  } finally { if (secondHost) await secondHost.close(); else await secondStore.close(); }
+
+  const result = { schema: 'stellar-forge.merchant-portable-receiving-journey.v1', state: 'COMPLETE',
+    originalExportOperation: exported.operation, storeId: exported.storeId,
+    export: exported, inspection: inspected, receiving, review, reopened,
+    activation: { reads: activated.reads, beforeBusinessSha256: baseline.businessSha256,
+      afterBusinessSha256: afterActivation.businessSha256, originalRowsSha256: baseline.allUserRowsSha256,
+      activatedRowsSha256: afterActivation.allUserRowsSha256 },
+    repeatedReceive: { operation: repeated.operation, reused: repeated.reused,
+      retainedRowsSha256: databaseSnapshot(database).allUserRowsSha256 },
+    onward: { export: onward, inspection: onwardInspection, receiving: onwardReceiving, reads: onwardReads, archive: onwardFile },
+    completedAt: new Date().toISOString() };
+  await verifyPortableReceiving(result, { originalFile });
+  await retainCompleted('portable-original-complete-journey', () => save(resultPath, result, { original: true }));
+  return result;
 }
-const originalRows=directRows(join(workspace,'merchant.sqlite3'));
-assert.equal(originalRows.merchant_orders.length,5);assert.ok(originalRows.merchant_orders.every(row=>row.state==='COMPLETE'));
-assert.equal(originalRows.merchant_fulfillments.length,5);assert.ok(originalRows.merchant_fulfillments.every(row=>row.state==='COMPLETE'));
-const originalDatabaseBytes=await readFile(join(workspace,'merchant.sqlite3'));
-const originalIdentityDatabase=new DatabaseSync(join(workspace,'merchant.sqlite3'),{readOnly:true});
-const identity=databaseIdentity(originalIdentityDatabase);originalIdentityDatabase.close();
-await record('original_case_received',{storeId:identity.storeId,counts:identity.counts,originalDatabaseSha256:hash(originalDatabaseBytes)});
-const selection={directory:workspace,configPath:originalConfig,output:join(root,'handover'),
-  originalRoot:resolve(values['original-root']),retainedRoot:original};
-const lease=await operationLease(join(workspace,'merchant-owner.lock'));
-try{await assert.rejects(exportMerchant(selection),error=>error.code==='RUNTIME_WORKSPACE_OPERATION_RUNNING');}
-finally{await lease.close();}
-const exported=await exportMerchant(selection);
-assert.equal(exported.invoices,5);assert.equal(exported.results,5);
-const replay=await exportMerchant(selection);assert.equal(replay.alreadyExported,true);assert.equal(replay.manifestSha256,exported.manifestSha256);
-assert.deepEqual(directRows(join(workspace,'merchant.sqlite3')),originalRows);
-assert.equal(hash(await readFile(join(workspace,'merchant.sqlite3'))),hash(originalDatabaseBytes));
-const inspected=await inspectMerchantArchive({bundle:selection.output,expectedSha256:exported.manifestSha256});
-assert.equal(inspected.summary.logicalSha256,identity.logicalSha256);
-const cli=await execute(process.execPath,[join(fileURLToPath(new URL('.',import.meta.url)),'server.mjs'),'inspect',
-  '--bundle',selection.output,'--expected-sha256',exported.manifestSha256],{maxBuffer:1024*1024});
-assert.equal(JSON.parse(cli.stdout.trim()).manifestSha256,exported.manifestSha256);
-await record('whole_export_received',{...exported,activeOwnerRejected:true,originalRowsAndDatabaseUnchanged:true,repeatIdentical:true,cliInspect:true});
-const {chromium}=await import(pathToFileURL(resolve(values['playwright-module'])).href);
-const browser=await chromium.launch({executablePath:resolve(values.chromium),headless:true});
-const errors=[],external=[];
-let archiveHost,merchantHost,archiveAuthority;
-try {
-  archiveHost=await startMerchantArchiveServer({bundle:selection.output,port:0,expectedSha256:exported.manifestSha256});
-  archiveAuthority=await checkArchiveAuthority(archiveHost);
-  const browserResults=[];
-  for(const [name,viewport]of [['desktop',{width:1440,height:1000}],['phone',{width:390,height:844}]]){
-    const context=await browser.newContext({viewport,acceptDownloads:true});
-    const page=await context.newPage();page.on('pageerror',error=>errors.push({name,error:error.message}));
-    await context.route('**/*',async route=>{
-      const url=route.request().url();if(url.startsWith('http:')||url.startsWith('https:')){
-        if(!url.startsWith(archiveHost.url+'/')){external.push(url);await route.abort();return;}
-      }
-      await route.continue();
-    });
-    await page.goto(archiveHost.url,{waitUntil:'networkidle'});
-    await page.waitForFunction(()=>document.querySelectorAll('.invoice').length===5);
-    assert.equal(await page.locator('#completed-count').textContent(),'5');
-    const downloads=[];
-    for(const mapping of inspected.manifest.resultMappings){
-      const article=page.locator('.invoice[data-order-id="'+mapping.orderId+'"]');
-      const [download]=await Promise.all([page.waitForEvent('download'),article.getByRole('link',{name:'Download delivery'}).click()]);
-      const destination=join(root,'downloads',name+'-'+mapping.orderId+'-'+download.suggestedFilename());
-      await download.saveAs(destination);const raw=await readFile(destination);
-      assert.equal(raw.length,mapping.bytes);assert.equal(hash(raw),mapping.sha256);
-      downloads.push({orderId:mapping.orderId,bytes:raw.length,sha256:hash(raw)});
-    }
-    await page.locator('.invoice').first().getByRole('button',{name:'View details'}).click();
-    assert.equal(await page.locator('#detail').isVisible(),true);
-    assert.ok(await page.locator('.history li').count()>0);assert.ok(await page.locator('.exchange').count()>0);
-    await page.locator('.history details summary').first().click();
-    assert.equal(await page.locator('.history details[open] pre').first().isVisible(),true);
-    const responseLink=page.locator('.exchange a').first(),responseHref=await responseLink.getAttribute('href');
-    const responsePath=responseHref.split('/').map(decodeURIComponent).join('/');
-    const responseIdentity=inspected.manifest.files.find(file=>file.path===responsePath);
-    assert.ok(responseIdentity,'The original provider response is inventoried');
-    const [originalResponse]=await Promise.all([page.waitForEvent('download'),responseLink.click()]);
-    const originalResponsePath=join(root,'downloads',name+'-original-provider-response.bin');
-    await originalResponse.saveAs(originalResponsePath);const responseBytes=await readFile(originalResponsePath);
-    assert.equal(responseBytes.length,responseIdentity.bytes);assert.equal(hash(responseBytes),responseIdentity.sha256);
-    await page.screenshot({path:join(root,'qa',name+'-offline-detail.png'),fullPage:true});
-    const width=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,client:document.documentElement.clientWidth}));
-    assert.ok(width.scroll<=width.client,name+' overflows');
-    await page.getByRole('button',{name:'Close details'}).click();
-    await page.locator('#search').fill(originalRows.merchant_orders[0].reference);
-    assert.ok(await page.locator('.invoice').count()>=1);
-    browserResults.push({name,viewport,downloads,layout:width,historyOpened:true,
-      originalResponseDownloaded:{path:responsePath,bytes:responseBytes.length,sha256:hash(responseBytes)},filterWorked:true});
-    await context.close();
-  }
-  await archiveHost.close();archiveHost=null;
-  const fileContext=await browser.newContext({viewport:{width:390,height:844}});
-  const filePage=await fileContext.newPage();filePage.on('pageerror',error=>errors.push({name:'local-file',error:error.message}));
-  await fileContext.route('**/*',async route=>{
-    const url=route.request().url();if(/^https?:/.test(url)){external.push(url);await route.abort();return;}await route.continue();
-  });
-  await filePage.goto(pathToFileURL(join(selection.output,'index.html')).href,{waitUntil:'load'});
-  await filePage.waitForFunction(()=>document.querySelectorAll('.invoice').length===5);
-  await fileContext.close();
-  await record('offline_operator_received',{browserResults,localFileOpened:true,errors,externalRequests:external});
-  const restored=await restoreMerchant({bundle:selection.output,directory:join(root,'restored'),expectedSha256:exported.manifestSha256});
-  assert.equal(restored.relocations.length,5);
-  assert.deepEqual(directRows(join(restored.workspace,'merchant.sqlite3'),restored.relocations),originalRows);
-  const repeated=await restoreMerchant({bundle:selection.output,directory:restored.directory,expectedSha256:exported.manifestSha256});
-  assert.equal(repeated.alreadyRestored,true);
-  const {loadMerchantConfiguration,startMerchantServer}=await import(pathToFileURL(restored.server).href);
-  const {openMerchantWorkspace,validateConfig}=await import(pathToFileURL(join(restored.directory,'source/products/x402api-merchant-workspace/workspace.mjs')).href);
-  const {reviewMerchantInputs}=await import(pathToFileURL(join(restored.directory,'source/products/x402api-merchant-workspace/application-inputs.mjs')).href);
-  const config=JSON.parse(await readFile(restored.configPath,'utf8')),env={...process.env};
-  env[config.tenantCredentialEnv]='retained-case-receiving-credential';
-  env[config.operatorTokenEnv]=randomBytes(32).toString('hex');
-  for(const name of Object.values(config.webhook.secretEnvironmentByVersion))env[name]=randomBytes(32).toString('hex');
-  const reviewedInputs=await reviewMerchantInputs(restored.configPath,{validateConfig});
-  const selected=await loadMerchantConfiguration(restored.configPath,{env,expectedInputsSha256:reviewedInputs.inputsSha256});
-  await selected.fulfillment.doctor({binding:selected.config.fulfillmentBinding});
-  const providerInvocations=[];
-  const provider=new Proxy({}, {get:(_,name)=>async(...args)=>{providerInvocations.push({method:String(name),argumentCount:args.length});throw new Error('Unexpected provider invocation while reopening original completed invoices');}});
-  const reopened=await openMerchantWorkspace({...selected,directory:restored.workspace,provider});
-  merchantHost=await startMerchantServer({workspace:reopened,operatorToken:selected.operatorToken,port:0,intervalMs:10000});
-  const authorization={authorization:'Bearer '+selected.operatorToken};
-  const stateResponse=await fetch(merchantHost.url+'/api/state',{headers:authorization});
-  assert.equal(stateResponse.status,200);const state=await stateResponse.json();
-  assert.equal(state.orders.length,5);assert.ok(state.orders.every(order=>order.state==='COMPLETE'));
-  const receivedDownloads=[];
-  for(const mapping of inspected.manifest.resultMappings){
-    const response=await fetch(merchantHost.url+'/api/orders/'+mapping.orderId+'/result',{headers:authorization});
-    assert.equal(response.status,200);const raw=Buffer.from(await response.arrayBuffer());
-    assert.equal(raw.length,mapping.bytes);assert.equal(hash(raw),mapping.sha256);
-    receivedDownloads.push({orderId:mapping.orderId,paymentId:mapping.paymentId,bytes:raw.length,sha256:hash(raw)});
-  }
-  const liveContext=await browser.newContext({viewport:{width:390,height:844},acceptDownloads:true});
-  const live=await liveContext.newPage();live.on('pageerror',error=>errors.push({name:'restored-workspace',error:error.message}));
-  await liveContext.route('**/*',async route=>{
-    const url=route.request().url();if(/^https?:/.test(url)&&!url.startsWith(merchantHost.url+'/')){
-      external.push(url);await route.abort();return;}await route.continue();
-  });
-  await live.goto(merchantHost.url,{waitUntil:'networkidle'});
-  await live.locator('#operator-token').fill(selected.operatorToken);
-  await live.locator('#connect-form').getByRole('button',{name:'Connect'}).click();
-  await live.waitForFunction(()=>document.querySelector('#count-complete')?.textContent==='5');
-  assert.equal(await live.locator('#order-rows tr').count(),5);
-  await live.screenshot({path:join(root,'qa/restored-phone-workspace.png'),fullPage:true});
-  const receivedWidth=await live.evaluate(()=>({scroll:document.documentElement.scrollWidth,client:document.documentElement.clientWidth}));
-  assert.ok(receivedWidth.scroll<=receivedWidth.client,'Restored workspace overflows');
-  await liveContext.close();await merchantHost.runTick();await merchantHost.close();merchantHost=null;
-  assert.equal(providerInvocations.length,0);assert.equal(errors.length,0);assert.equal(external.length,0);
-  const continuedRows=directRows(join(restored.workspace,'merchant.sqlite3'),restored.relocations);
-  for(const table of Object.keys(originalRows)){
-    if(table==='merchant_runtimes'){assert.equal(continuedRows[table].length,originalRows[table].length+1);for(const originalRuntime of originalRows[table])assert.ok(continuedRows[table].some(row=>JSON.stringify(row)===JSON.stringify(originalRuntime)));}
-    else assert.deepEqual(continuedRows[table],originalRows[table]);
-  }
-  assert.equal((await inspectMerchantArchive({bundle:selection.output,expectedSha256:exported.manifestSha256})).summary.logicalSha256,identity.logicalSha256);
-  await record('restored_original_merchant_received',{storeId:identity.storeId,restoration:restored,receivedDownloads,
-    receivedPhone:receivedWidth,providerInvocations,completeOriginalBusinessRowsPreserved:true,
-    fulfillmentAdapter:inspected.manifest.fulfillmentAdapter,restoredInputReview:{inputsSha256:reviewedInputs.inputsSha256,files:reviewedInputs.inputs.files},
-    originalRuntimeRowsPreserved:true,oneReceivingRuntimeClosed:true,sourceArchiveUnchanged:true});
-  const complete={schema:'stellar-forge.x402api-merchant-portable-receiving.v1',operation:'X402API-PORTABLE-MERCHANT-48DB-20261012',
-    completedAt:new Date().toISOString(),runtime:{node:process.version,platform:process.platform},originalCase:{directory:original,...identity},
-    export:exported,restoration:restored,archiveAuthority,events,providerInvocations,errors,externalRequests:external,nativeResult:join(root,'portable-native-result.json')};
-  await writeFile(complete.nativeResult,JSON.stringify(complete,null,2)+'\n',{mode:0o600});
-  process.stdout.write(JSON.stringify({phase:'portable_receiving_complete',path:complete.nativeResult,bytes:Buffer.byteLength(JSON.stringify(complete,null,2)+'\n')})+'\n');
-} finally {
-  if(archiveHost)await archiveHost.close();
-  if(merchantHost)await merchantHost.close();
-  await browser.close();
+
+export async function verifyPortableReceiving(result, { originalFile }) {
+  assert.equal(result.schema, 'stellar-forge.merchant-portable-receiving-journey.v1');
+  assert.equal(result.state, 'COMPLETE');
+  const files = [result.export.archive, result.export.manifestFile, result.onward.archive,
+    ...result.review.browser.images, ...result.review.browser.downloads,
+    ...result.review.reads.invoices.flatMap(value => [value.download, value.envelope]),
+    ...result.reopened.reads.invoices.flatMap(value => [value.download, value.envelope]),
+    ...result.activation.reads.invoices.flatMap(value => [value.download, value.envelope]),
+    ...result.onward.reads.invoices.flatMap(value => [value.download, value.envelope])];
+  for (const file of files) { assert(file && typeof file.path === 'string'); await originalFile(file.path, file); }
+  assert.equal(result.activation.beforeBusinessSha256, result.activation.afterBusinessSha256);
+  assert.equal(result.activation.activatedRowsSha256, result.repeatedReceive.retainedRowsSha256);
+  assert.equal(result.repeatedReceive.reused, true);
+  assert.deepEqual(result.review.browser.pageErrors, []); assert.deepEqual(result.review.browser.consoleErrors, []);
+  return { state: 'COMPLETE', files: files.length, storeId: result.storeId };
 }

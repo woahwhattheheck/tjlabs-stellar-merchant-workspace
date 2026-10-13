@@ -16,7 +16,7 @@ const HELP=[
   '  document-merchant commission offers --commerce-directory DIR [--out FILE]',
   '  document-merchant commission review|prepare --commerce-directory DIR --directory DIR --intent ID',
   '  document-merchant commission review|prepare --account-source FILE --directory DIR',
-  '       --provider mintpdf|snaplab|pdfmint [--anonymous]',
+  '       --provider mintpdf|snaplab|pdfmint [--anonymous] [--assembly-payment FILE]',
   '       (--customer-options FILE | --customer-directory DIR)',
   '       [--seller-port N] [--customer-port N] [--operator-port N] [--operations-port N]',
   '       [--expected-selection SHA] [--out FILE]',
@@ -38,9 +38,9 @@ function parse(argv){
   const byCommand={
     offers:['commerce-directory','out'],
     review:['account-source','commerce-directory','directory','intent','provider','anonymous','customer-options','customer-directory',
-      'seller-port','customer-port','operator-port','operations-port','out'],
+      'seller-port','customer-port','operator-port','operations-port','assembly-payment','out'],
     prepare:['account-source','commerce-directory','directory','intent','provider','anonymous','customer-options','customer-directory',
-      'seller-port','customer-port','operator-port','operations-port','expected-selection','out'],
+      'seller-port','customer-port','operator-port','operations-port','assembly-payment','expected-selection','out'],
     inspect:['directory','out'],serve:['directory','expected-selection'],
     launch:['options','managed-source','expected-selection','managed-launch']
   };
@@ -71,7 +71,7 @@ function input(options){
     anonymous:options.anonymous===true};
   if(Boolean(options['customer-options'])===Boolean(options['customer-directory']))
     fail('Select one complete --customer-options FILE or the original --customer-directory DIR.');
-  for(const [flag,key] of [['customer-options','customerOptionsFile'],['customer-directory','customerDirectory']])
+  for(const [flag,key] of [['customer-options','customerOptionsFile'],['customer-directory','customerDirectory'],['assembly-payment','assemblyPaymentFile']])
     if(options[flag])value[key]=absolute(resolve(options[flag]));
   for(const [flag,key] of [['seller-port','sellerPort'],['customer-port','customerPort'],
     ['operator-port','operatorPort'],['operations-port','operationsPort']]){

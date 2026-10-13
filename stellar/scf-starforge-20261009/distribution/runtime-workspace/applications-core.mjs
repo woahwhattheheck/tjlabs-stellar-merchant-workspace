@@ -223,8 +223,10 @@ async function view(root, saved, { homes = null, historyLimit = 30, observations
 }
 export async function applicationsState(root, { historyLimit = 30 } = {}, observations = null) {
   historyLimit = applicationHistoryLimit(historyLimit);
-  await initializeApplications(root);
-  const names = (await readdir(join(root, 'applications'))).filter(name => /^[a-f0-9]{24}$/.test(name));
+  // Observed overview requests stay read-only during backup and receiving.
+  if (!observations) await initializeApplications(root);
+  const names = (await readdir(join(root, 'applications')).catch(error =>
+    observations && error.code === 'ENOENT' ? [] : Promise.reject(error))).filter(name => /^[a-f0-9]{24}$/.test(name));
   const homes = new Map();
   const items = await Promise.all(names.map(async id => {
     try { return await view(root, await application(root, id), { homes, historyLimit, observations }); }

@@ -2,6 +2,7 @@
 import { createHash } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import { openMerchantFileClient } from './retained-download.mjs';
+import { qboWorksheetFileSelectors } from './catalog/accounting-qbo-worksheets.mjs';
 
 const PREFIX = 'merchant_accounting_maintenance_';
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
@@ -15,7 +16,7 @@ const FIELDS = {
   restore: ['backupId', 'expectedSha256', 'externalWritersStopped', 'relocate', 'expectedWorkspaceId', 'expectedSourcesSha256'],
   cancel: ['jobId'],
 };
-const FILE_FIELDS = ['kind', 'changeId', 'recoveryId', 'runId', 'exportId', 'collectionId', 'sourceId',
+const FILE_FIELDS = [...qboWorksheetFileSelectors, 'kind', 'changeId', 'recoveryId', 'runId', 'exportId', 'collectionId', 'sourceId',
   'reviewId', 'closeId', 'handoffId', 'revisionId', 'adjustmentId', 'jobId', 'planId', 'responseId', 'nativePost', 'attemptId', 'file', 'statementId', 'customerId', 'usageId', 'usageOpeningId', 'replacesId', 'from', 'until', 'profileId', 'captureId', 'returnId', 'rollbackId', 'scope', 'cycleId', 'fileId', 'receivedId', 'clientId', 'documentId', 'invoiceId', 'paymentRequestId', 'refundId', 'bankImportId', 'batchId', 'asOf',
   'collectionCaseId', 'owner', 'status', 'search', 'cashPlanId', 'editionId', 'leftId', 'rightId',
   'leftEditionId', 'rightEditionId', 'creditDecisionId', 'publicationId', 'customerResponseId'];
@@ -152,7 +153,7 @@ export function createAccountingMaintenanceClient({ workspace, call } = {}) {
     /** Consume one original file, retaining its selectors and SHA on every chunk. */
     async *fileChunks(selection, { expectedSha256, chunkBytes = 65536, signal } = {}) {
       exact(selection, FILE_FIELDS);
-      if (!['response', 'report', 'export', 'collection', 'pricing', 'period', 'accountant', 'adjustment', 'qbo', 'xero', 'qbo-source-change', 'xero-source-change', 'customer-statement', 'customer-statement-preview', 'customer-usage-period-preview', 'cryptoworth', 'runbooks', 'portfolio', 'buyer-source', 'receivables-document', 'receivables-quote', 'receivables-preview', 'receivables-payment', 'receivables-refund', 'receivables-bank', 'receivables-remittance', 'receivables-customer',
+      if (!['response', 'report', 'export', 'collection', 'pricing', 'period', 'accountant', 'adjustment', 'qbo', 'xero', 'qbo-source-change', 'xero-source-change', 'qbo-worksheet', 'customer-statement', 'customer-statement-preview', 'customer-usage-period-preview', 'cryptoworth', 'runbooks', 'portfolio', 'buyer-source', 'receivables-document', 'receivables-quote', 'receivables-preview', 'receivables-payment', 'receivables-refund', 'receivables-bank', 'receivables-remittance', 'receivables-customer', 'commissioning-source', 'commissioning-capture',
         'receivables-collection', 'receivables-collections', 'receivables-cash-plan', 'receivables-cash-plan-comparison',
         'receivables-credit-decision', 'receivables-customer-account', 'receivables-customer-response'].includes(selection.kind))
         throw fail('ARGUMENTS', 'Choose an original accounting file kind.');
