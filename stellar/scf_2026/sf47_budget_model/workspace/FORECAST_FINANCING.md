@@ -191,3 +191,35 @@ Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/arch
 
 
 Keep the existing GitHub Actions zero-spend policy. This feature neither enables nor dispatches hosted CI.
+
+## Installed Grant Operations and Merchant selection
+
+Use the complete original Grant Operations distribution. The selected recipe is `stellar/scf-starforge-20261009/distribution/selections/grant-operations.json`; its `grant-workspace` contribution selects the full SF47 component and `managed-source.json`. The builder includes every managed source, follows original Node/browser dependencies and records complete byte counts and SHA-256 values. This includes the native batch, original calculator, authenticated HTTP/staff route, typed client, CLI, browser host, options desk, Planning limits module, stylesheet and recovery dependencies together. Copying only the browser files into an earlier runtime does not update that native selection.
+
+The release producer uses the existing builder against the deliberately selected immutable public source commit:
+
+```sh
+node /absolute/maintained/source/stellar/scf-starforge-20261009/distribution/build.mjs --repo /absolute/original-git-cache/repository.git --ref FULL_IMMUTABLE_COMMIT --selection grant-operations --out /absolute/new-grant-release --offline
+```
+
+Use `--offline` when the original Git objects are already retained. A resumed build uses the same output, selected commit and `--resume`; a following source edition uses a new output. Keep the resulting TGZ, archive hash, manifest and original build receipt. Inspect the selected archive's `sourceSelection.id`, `sourceCommit` and complete source entries. The original manifest must contain `forecast_financing.py`, `forecast-financing.mjs`, `forecast-financing-desk.mjs`, `forecast-financing-decision.mjs`, `forecast-financing.css`, and their complete original host/client/CLI/calculator dependencies at that same release.
+
+Follow [Grant Operations installation and operation](../../../../products/grant-operations/OPERATING.md) and its original runtime installer to prepare, install and inspect that complete release. An upgrade prepares a separate runtime, preserves the earlier installation and does not change the source of an accepted running application. In Applications, select the reviewed runtime with the **same original private grant workspace**, review the actual source/path/selection hash, save the setup, and use the original lifecycle to start it at the selected explicit origin/port. Preserve the original scenario, actual case and all stored financial events; do not initialize a replacement case to demonstrate this feature. The managed launcher verifies the full installed source selection before serving it. Only the original service owner stops or changes an active application.
+
+The installed dispatcher also exposes the existing headless operation:
+
+```sh
+node /absolute/maintained/source/stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs run --dir /absolute/installed/grant-runtime -- grant-workspace --python /absolute/selected/python operations --workspace /absolute/original/private-workspace forecast-options-preview --case ORIGINAL_CASE_ID --expected-version CURRENT_CASE_VERSION --options /absolute/private/options.json --output /absolute/private/new-comparison.json
+```
+
+The output path is a new private file. A live service already holding the workspace remains the original owner; use its authenticated browser/client/Merchant connection instead of opening a competing headless writer. Read the actual current version immediately before calculation. The original native endpoint rejects a stale version for the whole batch; do not rewrite a pending request to appear current.
+
+The existing Merchant grant provider exposes `merchant_grant_forecast_options_preview` with the original workspace alias, case ID, expected version and complete `inputs: {options: [{id, name, inputs}]}`, or a verified retained input-file alias/pointer selecting that same wrapper. Its exact retained file SHA is required for an aliased source. The adapter delegates to `GrantWorkspaceClient.forecastOptionsPreview`, retains the complete native result and exposes the original snapshot/rows/file-reading continuation. It neither saves a forecast nor records funding. The provider is part of the same selected `merchant-provider-grant-workspaces` contribution; no separate provider or calculator is installed.
+
+### Original operating course after source adoption
+
+F47A's existing `case_planning_browser.mjs` continuation owns the supplied-page course. Continue the original case, original native requests and actual v32 source through that parent. Compare at least two clearly named, complete authored input alternatives at one actual native case version. Inspect the native source/version and every conditional assumption; replace one option and reopen its full earlier name/note/input; enter exact limits and preserve a partial limit before reopening; retain separate assessments; inspect a historical comparison after all its options are archived. Adopt only the explicitly selected calculated option through the before/after review and original Preview/Save.
+
+Download and reopen the complete study, assessment detail and CSV, original source bytes and native case export. Confirm the selected original report, criteria, unknown/zero values, all source attachments and unchanged pending request survive receiving. A changed source case requires a fresh native comparison before adoption. Preserve earlier completed native phases and every original forecast rather than rerunning financial events.
+
+The producing peer must open the exact installed application and LOOK at the actual desktop and narrow render, operate capture/replace/archive, comparison, filtering, paging, limits, criteria reuse, adoption and download controls, and inspect populated, empty, loading and error states. Open every outgoing attachment and usable archive member, then inspect the cold-reopened application. Source execution or review alone is not evidence that this installed course ran. When the seat lacks a current equipped host, retain the original accepting receiver and complete exact source/input; do not label another callback author as that host or create a duplicate application.

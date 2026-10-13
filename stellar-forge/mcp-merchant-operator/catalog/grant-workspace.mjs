@@ -272,6 +272,13 @@ const forecastInput = {...object,
   properties:{fxRates:{type:'array', items:retainedFxRate, maxItems:100},
     commercial:{type:'array', items:forecastCommercialInput, maxItems:50}}};
 const forecastModelInput = {...modelInput, inputs:forecastInput};
+const forecastOptionsInput = {type:'object',additionalProperties:false,
+  description:'Complete finite comparison request. Every option retains its original stable ID, name and full native Forecast inputs; no option is inferred or silently omitted.',
+  properties:{options:{type:'array',minItems:1,maxItems:24,items:{type:'object',additionalProperties:false,
+    properties:{id:{type:'string',minLength:1,maxLength:100,pattern:'^[A-Za-z0-9][A-Za-z0-9._-]*$'},
+      name:nonempty(200),inputs:forecastInput},required:['id','name','inputs']}}},
+  required:['options']};
+const forecastOptionsModelInput = {...modelInput,inputs:forecastOptionsInput};
 const createCase = {planId:id('plan'), selectedRevision:integer, expectedContentSha256:digest,
   name:nonempty(300), mode:{enum:['OPERATIONS', 'WALKTHROUGH']}, calendarStart:{type:['string','null']},
   actor:nonempty(300), requestId:requestIdentifier};
@@ -634,6 +641,8 @@ export const grantWorkspaceTools = [
     {...ws, caseId:id('operation'), forecastId:id('forecast')}, ['workspace','caseId','forecastId'], true),
   tool('forecast_preview', 'Run the complete original remaining-work/cash forecast, including native quoted currencies, explicit sourced FX, native payment/cost credits and valuation coverage. Supply original inputs inline or a verified reference with inputPointer.',
     {...ws, ...caseSelection, ...forecastModelInput}, ['workspace','caseId','expectedVersion'], true),
+  tool('forecast_options_preview', 'Compare one through 24 complete financing options against one locked original case version through the native Forecast calculator. Supply inputs:{options:[{id,name,inputs}]} inline, or an exact retained input reference selecting that complete object. Preserve all source IDs, unknown amounts and original inputs. Returns every full native preview and common source/request hashes as a retained original snapshot; it does not save or adopt a Forecast or choose an option.',
+    {...ws,...caseSelection,...forecastOptionsModelInput},['workspace','caseId','expectedVersion'],true),
   tool('forecast_save', 'Save the complete reviewed forecast, retaining original currencies, rates, credits, timing and source snapshot under its original case version, preview SHA256 and request ID.',
     {...ws, ...caseSelection, ...forecastModelInput, ...originalRequest, expectedPreviewSha256:digest},
     ['workspace','caseId','expectedVersion','requestId','actor','expectedPreviewSha256']),

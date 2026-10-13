@@ -1006,6 +1006,11 @@ export class MerchantGrantWorkspaces {
       await this.#modelInputs(alias, args, 'Amendment calendar export'));
     else if (verb === 'forecast_preview') original = await client.forecastPreview(args.caseId, args.expectedVersion,
       await this.#modelInputs(alias, args, 'Forecast'));
+    else if (verb === 'forecast_options_preview') {
+      const comparison = await this.#modelInputs(alias, args, 'Forecast financing options');
+      exact(comparison, ['options'], ['options']);
+      original = await client.forecastOptionsPreview(args.caseId, args.expectedVersion, comparison.options);
+    }
     else if (verb === 'forecast_save') {
       const {caseId, input, inputPointer, expectedInputSha256, ...body} = rest;
       original = await client.forecastSave(caseId, {...body, inputs:await this.#modelInputs(alias, args, 'Forecast')});

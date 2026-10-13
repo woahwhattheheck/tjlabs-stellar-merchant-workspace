@@ -278,6 +278,20 @@ grant operations --workspace "$GRANT_DATA" forecast-save --case CASE_ID --expect
 
 The saved forecast retains its source snapshot and exact input. A changed case does not rewrite that old forecast; it changes the native current-source comparison.
 
+### Compare complete financing options and Planning limits
+
+In the same Forecast view, open **Financing options**. Capture each named option from the complete current draft, including its source context, unfinished values and note. Review the complete input before replacing an option; the earlier name, note and input remain in its history. Calculate up to24 active options through one native case-version snapshot. This operation previews alternatives and records no cash, award, invoice or saved forecast.
+
+Use **Planning limits** to enter the actual cash measure and limit, peak weekly-equivalent effort and overloaded-day tolerance. Starting cash required and extra funding after known opening cash are separate measures. Missing amounts remain unknown; undated selected work cannot pass capacity and unvalued liabilities cannot pass combined funding. Each option has explicit meets, exceeds or unresolved results. A shortlist compares only complete options with the same work and liability coverage; it is conditional on those entered assumptions. Read every reason and original report before adopting a calculated option through the original before/after review, Forecast preview and Save.
+
+Retain complete studies, earlier comparisons and assessments, raw partial limits, attachments and pending source requests through the existing working-file download/reopen. The [complete financing guide](../../stellar/scf_2026/sf47_budget_model/workspace/FORECAST_FINANCING.md) covers browser controls, native batch and typed client, installed Merchant access, original source-save recovery, current-source selection and the original equipped operating course. Build/install the complete selected release through section2; copying only this desk into an earlier runtime leaves the native route and its source selection behind.
+
+```sh
+grant operations --workspace "$GRANT_DATA" forecast-options-preview --case CASE_ID --expected-version CASE_VERSION --options /absolute/private/complete-options.json --output /absolute/private/new-options-comparison.json
+```
+
+The headless command uses the original workspace lock. For a running managed application, use its existing authenticated client or Merchant connection instead of opening another writer. Keep the original case and native request identity when resuming work.
+
 From that saved forecast, open Portfolio and seed the complete remaining task set. Enter real resource availability, working weekdays, dated exceptions, effort and dependencies. Review every alternative's allocation, unfinished work, lateness and resulting cash assumptions. Saving an incomplete alternative preserves its findings; selecting dates for a new forecast requires an original READY alternative.
 
 The selection returns an editable native forecast input. Carry that exact object into a new forecast preview, then save its reviewed result. Keep the original portfolio and first forecast intact. The source field is taskId; selection does not create unrelated work rows.
