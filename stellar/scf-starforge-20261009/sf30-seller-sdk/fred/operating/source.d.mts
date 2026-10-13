@@ -66,3 +66,21 @@ export function fredOperatingHistory(state: {
 export function captureFredOperatingSource(options: CaptureFredOperatingSourceOptions): Promise<FredOperatingPackageResult>;
 export function inspectFredOperatingSourcePackage(options: InspectFredOperatingSourcePackageOptions): Promise<FredOperatingPackageResult>;
 export function receiveFredOperatingSource(options: ReceiveFredOperatingSourceOptions): Promise<FredOperatingReceiveResult>;
+
+export interface InspectFredOperatingSourceDocumentsOptions {
+  source: FredOperatingSource;
+  manifest: {
+    schema: 'stellar-forge.fred-operating-package.v1';
+    source: FredOperatingArtifact; projectId: string; bundleSha256: string;
+    files: FredOperatingArtifact[]; bytes: number;
+  };
+  bundle: Record<string, unknown>;
+  expectedSource: FredOperatingArtifact;
+}
+/** Recomputes source meaning; caller separately verifies every original member byte. */
+export function inspectFredOperatingSourceDocuments(options: InspectFredOperatingSourceDocumentsOptions): {
+  source: FredOperatingSource;
+  manifest: InspectFredOperatingSourceDocumentsOptions['manifest'];
+  bundle: Record<string, unknown>;
+  sourceFile: FredOperatingArtifact;
+};
