@@ -59,18 +59,23 @@ export class CanadaBuysClient {
           }
         } finally { reader.releaseLock(); }
       }
-      const joined = new Uint8Array(bytes);
+      let joined = new Uint8Array(bytes);
       let position = 0;
       for (const chunk of chunks) { joined.set(chunk, position); position += chunk.byteLength; }
+      chunks.length = 0;
       if (binary && response.ok) return {
         mime: response.headers.get('content-type') ?? 'application/octet-stream',
         filename: response.headers.get('content-disposition')?.match(/filename="?([^";]+)"?/)?.[1] ?? null,
         body: joined, bytes
       };
       const bodyText = new TextDecoder('utf-8', { fatal: true }).decode(joined);
+      joined = null;
       let value;
       const json = response.headers.get('content-type')?.includes('json');
-      if (json && bodyText) {
+      // A successful raw download returns its exact text; parsing it would
+      // allocate a second complete report tree that no caller receives.
+      // Error responses still retain the original structured error contract.
+      if (json && bodyText && (!raw || !response.ok)) {
         try { value = JSON.parse(bodyText); }
         catch { throw new CanadaBuysClientError('Operator returned invalid JSON.', { code: 'INVALID_RESPONSE', status: response.status }); }
       }
