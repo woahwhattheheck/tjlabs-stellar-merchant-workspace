@@ -9,9 +9,11 @@ import {execFileSync} from 'node:child_process';
 const args=process.argv.slice(2),option=name=>{const i=args.indexOf(name);return i<0?null:args[i+1];};
 const input=JSON.parse(await readFile(option('--context'),'utf8')),mode=option('--mode')||'operate';
 const portfolioMode=mode==='portfolio'||mode==='portfolio-cold';
+const financingMode=mode==='financing'||mode==='financing-cold';
+if(financingMode){assert.ok(input.financing?.input&&typeof input.financing.directory==='string','Retain the complete original financing input and receiving directory');assert.equal(input.financing.input.browserPlacement,'isolated-cloud');assert.equal(new URL(input.baseUrl).origin,input.financing.input.origin);}
 assert.match(input.caseId,/^operation-[a-f0-9]{32}$/);
 assert.match(input.asOfDate,/^\d{4}-\d{2}-\d{2}$/);
-const root=resolve(input.directory),out=join(root,portfolioMode?(mode==='portfolio-cold'?'browser-portfolio-cold':'browser-portfolio'):(mode==='cold'?'browser-cold':'browser'));
+const root=resolve(input.directory),out=join(root,financingMode?(mode==='financing-cold'?'browser-financing-cold':'browser-financing'):portfolioMode?(mode==='portfolio-cold'?'browser-portfolio-cold':'browser-portfolio'):(mode==='cold'?'browser-cold':'browser'));
 const exportsDirectory=join(out,'exports');
 await mkdir(exportsDirectory,{recursive:true,mode:0o700});
 const json=value=>JSON.stringify(value,null,2)+'\n';
@@ -26,7 +28,7 @@ async function native(path,{binary=false}={}){
   if(!response.ok)throw new Error('Original native read '+path+' returned '+response.status+': '+(await response.text()).slice(0,1000));
   return binary?Buffer.from(await response.arrayBuffer()):response.json();
 }
-const progressPath=join(root,portfolioMode?(mode==='portfolio-cold'?'browser-portfolio-cold-progress.json':'browser-portfolio-progress.json'):(mode==='cold'?'browser-cold-progress.json':'browser-progress.json'));
+const progressPath=join(root,financingMode?(mode==='financing-cold'?'browser-financing-cold-progress.json':'browser-financing-progress.json'):portfolioMode?(mode==='portfolio-cold'?'browser-portfolio-cold-progress.json':'browser-portfolio-progress.json'):(mode==='cold'?'browser-cold-progress.json':'browser-progress.json'));
 let progress=await exists(progressPath)?JSON.parse(await readFile(progressPath,'utf8')):
   {schema:'stellar-forge.sf47-case-workbook-browser.v1',operationId:input.operationId,caseId:input.caseId,planId:input.planId,asOfDate:input.asOfDate,startedAt:stamp(),phases:{},files:{}};
 assert.equal(progress.caseId,input.caseId);assert.equal(progress.planId,input.planId);assert.equal(progress.asOfDate,input.asOfDate);
@@ -41,7 +43,7 @@ async function phase(name,work){
 const modulePath=process.env.SF47_PLAYWRIGHT_MODULE||'/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.js';
 const chrome=process.env.SF47_CHROMIUM||'/workspace/scratch/705ebf077387/browser-runtime/chrome-headless-shell-linux64/chrome-headless-shell';
 const {chromium}=await import(pathToFileURL(modulePath).href);
-const browser=await chromium.launchPersistentContext(join(root,portfolioMode?'portfolio-browser-profile':(mode==='cold'?'cold-browser-profile':'browser-profile')),{
+const browser=await chromium.launchPersistentContext(join(root,portfolioMode?'portfolio-browser-profile':((mode==='cold'||mode==='financing-cold')?'cold-browser-profile':'browser-profile')),{
   executablePath:chrome,headless:true,viewport:{width:1440,height:1000},acceptDownloads:true,
   args:['--no-sandbox','--disable-dev-shm-usage']});
 const page=browser.pages()[0]||await browser.newPage();
@@ -50,7 +52,7 @@ const pageErrors=[];
 page.on('pageerror',error=>pageErrors.push({at:stamp(),message:error.message}));
 page.on('console',message=>{if(message.type()==='error')pageErrors.push({at:stamp(),message:message.text().replaceAll(input.ownerKey,'[private]')});});
 let dialogDecision='accept';
-page.on('dialog',async dialog=>{if(dialog.type()==='beforeunload'||dialogDecision==='accept')await dialog.accept();else await dialog.dismiss();});
+page.on('dialog',async dialog=>{if(financingMode&&dialog.type()!=='beforeunload')await dialog.dismiss();else if(dialog.type()==='beforeunload'||dialogDecision==='accept')await dialog.accept();else await dialog.dismiss();});
 async function waitFor(check,message,timeout=45000){
   const until=Date.now()+timeout;let last;
   while(Date.now()<until){try{const value=await check();if(value)return value;}catch(error){last=error;}
@@ -243,6 +245,26 @@ async function operateDeliveryAgenda(prefix){
 }
 
 try{
+  if(financingMode){
+    // The original persistent context stays owned here. Never navigate an occupied page.
+    // An empty original page may open only the owner's exact declared application URL.
+    if(page.url()==='about:blank'){
+      const declared=new URL(input.financing.input.pageURL);
+      assert.equal(declared.origin,input.financing.input.origin);
+      await page.goto(declared.href,{waitUntil:'domcontentloaded'});
+    }
+    const {receiveFinancingOptions,inspectFinancingOptions}=await import('./forecast-financing-receiving.mjs');
+    await mkdir(resolve(input.financing.directory),{recursive:true,mode:0o700});
+    if(mode==='financing-cold'){
+      assert.ok(input.financing.priorResult,'Retain the first complete financing result');
+      const priorResult=JSON.parse(await readFile(input.financing.priorResult,'utf8'));
+      await inspectFinancingOptions({page,directory:input.financing.directory,input:input.financing.input,priorResult,programId:input.caseId});
+    }else{
+      assert.equal(input.caseId,input.financing.input.programId);
+      await receiveFinancingOptions({page,directory:input.financing.directory,input:input.financing.input});
+    }
+    // The supplied-page module owns the durable complete result. Do not rewrite it here.
+  }else{
   await openApplication();
   if(portfolioMode){
     const {operatePortfolioWorkingCopies}=await import('./portfolio-working-copies-browser.mjs');
@@ -523,6 +545,7 @@ try{
       completedAt:stamp(),phases:progress.phases,files:progress.files,visualReview:progress.visualReview||{},pageErrors};
     await atomic(join(root,'browser-result.json'),result);
   }
+}
 }catch(error){
   progress.interruption={at:stamp(),phase:progress.currentPhase,type:error.name,message:error.message};
   await saveProgress();

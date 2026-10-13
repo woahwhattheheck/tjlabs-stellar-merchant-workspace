@@ -901,6 +901,8 @@
     "../../../../products/material-catalog/recipient/workspace.mjs",
     "../../../../products/material-catalog/recipient/reader.html",
     "MATERIAL_CATALOGUE_OPERATOR.md",
-    "forecast-financing-decision.mjs"
+    "forecast-financing-decision.mjs",
+    "forecast-financing-receiving.mjs",
+    "FORECAST_FINANCING_RECEIVING.md"
   ]
 }

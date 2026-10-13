@@ -44,7 +44,7 @@ function assertions(value,expected={},absent=[]){
 function validateInput(input){
  need(input&&input.schema===SCHEMA,'Use the declared original receiving input');
  identity(input.operationId,'the original course operation ID');
- need(input.browserPlacement==='isolated-cloud','Use only the existing original isolated-cloud browser. Local Codex in-app browser is reserved for Bryce from 2026-10-13 16:00 UTC until explicit release.');
+ need(input.browserPlacement==='isolated-cloud','Use only the existing original isolated-cloud browser. Keep the selected isolated-cloud placement and the actual original browser owner’s current instructions.');
  need(/^operation-[a-f0-9]{32}$/.test(input.programId),'Retain the original native case ID');
  const u=new URL(input.origin);need(['http:','https:'].includes(u.protocol)&&u.origin===input.origin,'Use the exact original HTTP origin');
  need(typeof input.pageURL==='string'&&new URL(input.pageURL).origin===input.origin,'Use the original application page URL');
@@ -66,6 +66,9 @@ function absolute(origin,url){const u=new URL(url,origin);need(u.origin===origin
 async function api(page,origin,url){
  const r=await page.request.get(absolute(origin,url),{headers:{'Cache-Control':'no-store'}});
  need(r.ok(),'Original read failed ('+r.status()+'): '+url);return r.json();
+}
+async function verifyServedSources(page,input){
+ for(const pin of input.servedSources){const r=await page.request.get(absolute(input.origin,pin.url),{headers:{'Cache-Control':'no-store'}});need(r.ok(),'Actual installed source unavailable');const b=await r.body();need(b.length===pin.bytes&&sha(b)===pin.sha256,'Actual served source differs: '+pin.url);}
 }
 async function staff(page,input){
  need(new URL(page.url()).origin===input.origin,'The supplied page left its original origin');
@@ -368,6 +371,7 @@ export async function receiveCustomerFunding({page,directory,input}){
  validateInput(input);need(page&&typeof page.route==='function','Supply the original existing page; the parent owns its browser and controller');
  const J=await journal(directory,input),final=path.join(J.dir,'CUSTOMER_FUNDING_COMPLETE.json');
  if(await exists(final)){const result=await readJSON(final);need(result.inputSha256===J.fingerprint,'Complete course input changed');for(const p of result.phases)for(const a of p.result.artifacts||[])await J.verify(a);for(const item of result.workingCustody||[])await J.verify(item.artifact);return result;}
+ await verifyServedSources(page,input);
  await openDesk(page,input);
  await J.phase('original-source',async pending=>{
   const initial=await guardWorking(page,input,J,{initial:!pending.initialWorking});
@@ -376,7 +380,6 @@ export async function receiveCustomerFunding({page,directory,input}){
   need(original.program.id===input.originalProgramId||original.program.origin?.programId===input.originalProgramId,'Existing local case is not derived from the complete original archive');
   need(sha(canonical(original.records.cash))===input.baseline.cashSha256,'Original observed cash register differs');
   const artifacts=[],forecasts=[];
-  for(const pin of input.servedSources){const r=await page.request.get(absolute(input.origin,pin.url));need(r.ok(),'Actual installed source unavailable');const b=await r.body();need(b.length===pin.bytes&&sha(b)===pin.sha256,'Actual served source differs: '+pin.url);}
   for(const pin of input.baseline.forecasts){const saved=await api(page,input.origin,'/api/operations/'+input.programId+'/forecasts/'+pin.id);need(saved.sha256===pin.sha256,'An original Forecast changed');forecasts.push(rawSaved(saved));await openSaved(page,input,pin.id,J);}
   const sources=[];for(const s of original.sources||[]){const r=await page.request.get(absolute(input.origin,'/api/operations/'+input.programId+'/sources/'+s.id));need(r.ok(),'Original source unavailable');const b=await r.body();need(b.length===s.bytes&&sha(b)===s.sha256,'Original attached bytes differ');sources.push({...s,artifact:await J.artifact('original-'+s.id,b)});artifacts.push(sources.at(-1).artifact);}
   artifacts.push(pending.initialWorking,await J.artifact('original-case.json',encoded(original)),await J.artifact('original-forecasts.json',encoded(forecasts)));
@@ -428,6 +431,7 @@ export async function inspectCustomerFunding({page,directory,input,priorResult,p
  const J=await journal(directory,input),first=await readJSON(path.join(J.dir,'CUSTOMER_FUNDING_COMPLETE.json'));
  need(same(priorResult,first)&&first.inputSha256===J.fingerprint,'Retain the exact first completed result through independent receiving');
  // Native APIs are read-only in this inspection. The supplied page may open saved editions.
+ await verifyServedSources(page,input);
  await openDesk(page,input,programId);await guardWorking(page,input,J,{programId,cleanOnly:true});const c=await context(page,input,programId),original=first.phases.find(p=>p.id==='original-source').result;
  need(programId===input.programId||c.program.origin?.programId===input.programId,'Restored case is not derived from the original case');
  need(same(c.records.cash,original.case.records.cash),'Restored original actual cash changed');
