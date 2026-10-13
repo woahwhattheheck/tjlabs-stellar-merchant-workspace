@@ -143,6 +143,7 @@ Preparation retains the full original request before attaching or reviewing. It 
 | `starts/` | Original reviewed start request and its retained response. |
 | `exports/` | Original request-bound workspace and customer-delivery packets. |
 | `received/` | Independently received workspaces exposed by the original merchant provider. |
+| `merchant-releases/` and `merchant-exports/` | Original SF82 release state and private Merchant host exports, kept separately from customer packet exports. |
 
 A stopped preparation resumes with `prepare --directory /absolute/customer-setup`. It uses the already-retained original request. Supplying changed source text, another request ID or a different setup request under that same directory is rejected.
 
@@ -181,6 +182,8 @@ Use `recover --operation-id ORIGINAL_OPERATION_UUID` to reconnect to an interrup
 A setup status may report `superseded: true` after someone intentionally saves a later Applications revision. It still identifies its original save and may recover or stop the original operation. Starting new work from the old setup is rejected; prepare a new reviewed setup against the current application revision.
 
 ## Use the maintained Merchant MCP connection
+
+The setup creates the original complete `stellar-forge.merchant-mcp.v1` host configuration with its name, empty source catalog, retained SF82 release store, private host export directory and `recordMasteringConnection`. It validates those actual files with the native Merchant configuration reader before completing the Applications review. Reopening preparation resumes the original release initializer and preserves its existing state and history.
 
 The setup exposes the original `recordMasteringConnection` through `merchant.json`. The maintained Merchant host loads the source-selected lazy provider and its eight tools. Start the original stdio command with the exact private configuration:
 

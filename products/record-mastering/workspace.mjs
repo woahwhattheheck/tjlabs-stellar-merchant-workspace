@@ -5,6 +5,8 @@ import { pathToFileURL, fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { inspectMerchantRuntime } from '../../stellar/scf-starforge-20261009/sf46-release/runtime-package.mjs';
 import { openRuntimeWorkspace } from '../../stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs';
+import { initReleaseStore } from '../../stellar/scf-starforge-20261009/sf82-seller-pilot/releases.mjs';
+import { readMerchantConfig } from '../../stellar-forge/mcp-merchant-operator/config.mjs';
 import { absolute, makePrivate, privateDirectory, regular, readJSON, saveJSON, operationLease,
   operationId, canonical, json, digest, need, plain } from '../../stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs';
 
@@ -100,7 +102,7 @@ async function report(root, saved = null) {
     if (saved.workspace) try { originals = await native(saved); } catch (error) { originalError = problem(error); }
     const paths = { connection: join(root, 'record-mastering.json'), merchantConfiguration: join(root, 'merchant.json'),
       prepareRequest: join(root, 'request.json'), source: join(root, 'source.json'), exports: join(root, 'exports'),
-      receiveRoot: join(root, 'received'), operatorGuide: 'products/record-mastering/OPERATING.md' };
+      receiveRoot: join(root, 'received'), merchantReleases: join(root, 'merchant-releases'), merchantExports: join(root, 'merchant-exports'), operatorGuide: 'products/record-mastering/OPERATING.md' };
     return { schema: PRODUCT_SCHEMA + '.status', directory: root, phase: saved.phase,
       requestSha256: saved.requestSha256, runtime: saved.runtime ?? null,
       originalWorkspace: originals ? { binding: originals.binding, status: originals.status } : null, originalError,
@@ -147,14 +149,19 @@ export async function prepareMasteringProduct({ directory, requestFile = null, r
         need(!input.sha256 || identity.sha256 === input.sha256, 'MASTERING_PRODUCT_INPUT_CHANGED');
         originalInputs[name] = { path, sha256: identity.sha256 };
       }
-      for (const name of ['exports', 'received', 'starts']) await folder(join(root, name), true);
+      for (const name of ['exports', 'received', 'starts', 'merchant-exports']) await folder(join(root, name), true);
       const connection = { schema: 'stellar-forge.record-mastering.v1.connection',
         workspaces: { [saved.request.alias]: { directory: saved.request.workspaceDirectory,
           label: saved.request.label, inputs: originalInputs, exportsDirectory: join(root, 'exports'), receiveRoot: join(root, 'received') } } };
       await retain(join(root, 'record-mastering.json'), connection);
       selectedNative.merchant.readMasteringConfiguration(join(root, 'record-mastering.json'));
-      const merchantConfiguration = { recordMasteringConnection: join(root, 'record-mastering.json') };
+      // Resume only this setup's original SF82 store; its complete existing history remains unchanged.
+      await initReleaseStore(join(root, 'merchant-releases'), { resume: true });
+      const merchantConfiguration = { schema: 'stellar-forge.merchant-mcp.v1', name: saved.request.label,
+        sources: {}, releaseStore: join(root, 'merchant-releases'), exportsDirectory: join(root, 'merchant-exports'),
+        recordMasteringConnection: join(root, 'record-mastering.json') };
       await retain(join(root, 'merchant.json'), merchantConfiguration);
+      await readMerchantConfig(join(root, 'merchant.json'));
       const model = await openRuntimeWorkspace({ directory: saved.request.runtimeWorkspaceDirectory });
       try {
         const attached = await model.attach({ directory: saved.request.runtimeDirectory, label: (saved.request.label + ' runtime').slice(0, 120) });
